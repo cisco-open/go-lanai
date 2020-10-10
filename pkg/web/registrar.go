@@ -26,34 +26,29 @@ func NewRegistrar(g *gin.Engine) *Registrar {
 	}
 }
 
-func (r *Registrar) Register(mapping interface{}) {
+func (r *Registrar) Register(mapping Mapping) {
 	// TODO better error handling
 	switch mapping.(type) {
-	case *Mapping:
-		r.registerByMapping(mapping.(*Mapping))
+	case EndpointMapping:
+		r.registerByMapping(mapping.(EndpointMapping))
 	}
 }
 
-func (r *Registrar) registerByMapping(m *Mapping) {
+func (r *Registrar) registerByMapping(m EndpointMapping) {
 	s := httptransport.NewServer(
-		m.Endpoint,
-		m.DecodeRequestFunc,
-		m.EncodeResponseFunc,
+		m.Endpoint(),
+		m.DecodeRequestFunc(),
+		m.EncodeResponseFunc(),
 		r.options...,
 	)
 
 	handlerFunc := MakeGinHandlerFunc(s)
-	if m.MappingFunc != nil {
-		m.MappingFunc(r.engine, handlerFunc)
-	} else {
-		r.engine.Handle(m.Method, m.Path, handlerFunc)
-	}
+	r.engine.Handle(m.Method(), m.Path(), handlerFunc)
 }
 
 /**************************
 	first class functions
 ***************************/
-
 func MakeGinHandlerFunc(s *httptransport.Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reqCtx := context.WithValue(c.Request.Context(), kGinContextKey, c)
