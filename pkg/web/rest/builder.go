@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"net/http"
 )
 
 type MappingBuilder interface {
@@ -11,6 +12,15 @@ type MappingBuilder interface {
 	Path(string) MappingBuilder
 	Method(string) MappingBuilder
 	EndpointFunc(EndpointFunc) MappingBuilder
+
+	// convenient functions
+	Get(string) MappingBuilder
+	Post(string) MappingBuilder
+	Put(string) MappingBuilder
+	Patch(string) MappingBuilder
+	Delete(string) MappingBuilder
+	Options(string) MappingBuilder
+	Head(string) MappingBuilder
 
 	// Overrides
 	Endpoint(endpoint.Endpoint) MappingBuilder
@@ -65,6 +75,35 @@ func (b *mappingBuilder) Method(method string) MappingBuilder {
 func (b *mappingBuilder) EndpointFunc(endpointFunc EndpointFunc) MappingBuilder {
 	b.endpointFunc = endpointFunc
 	return b
+}
+
+// Convenient setters
+func (b *mappingBuilder) Get(path string) MappingBuilder {
+	return b.Path(path).Method(http.MethodGet)
+}
+
+func (b *mappingBuilder) Post(path string) MappingBuilder {
+	return b.Path(path).Method(http.MethodPost)
+}
+
+func (b *mappingBuilder) Put(path string) MappingBuilder {
+	return b.Path(path).Method(http.MethodPut)
+}
+
+func (b *mappingBuilder) Patch(path string) MappingBuilder {
+	return b.Path(path).Method(http.MethodPatch)
+}
+
+func (b *mappingBuilder) Delete(path string) MappingBuilder {
+	return b.Path(path).Method(http.MethodDelete)
+}
+
+func (b *mappingBuilder) Options(path string) MappingBuilder {
+	return b.Path(path).Method(http.MethodOptions)
+}
+
+func (b *mappingBuilder) Head(path string) MappingBuilder {
+	return b.Path(path).Method(http.MethodHead)
 }
 
 // Overrides

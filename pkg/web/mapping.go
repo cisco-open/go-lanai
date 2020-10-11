@@ -17,6 +17,8 @@ type Mapping interface {
 	Method() string
 }
 
+// EndpointMapping defines REST API mapping.
+// REST API is usually implemented by Controller and accept/produce JSON objects
 type EndpointMapping interface {
 	Mapping
 	Endpoint() endpoint.Endpoint
@@ -26,16 +28,16 @@ type EndpointMapping interface {
 	EncodeResponseFunc() httptransport.EncodeResponseFunc
 }
 
-// TODO for static resource mapping
+// StaticMapping defines static assets mapping. e.g. javascripts, css, images, etc
 type StaticMapping interface {
 	Mapping
-	StaticFile() string
+	StaticRoot() string
 }
 
-type endpoints struct {
-
+// TODO
+// MvcMapping defines templated MVC mapping. e.g. html templates
+// Templated MVC is usually implemented by Controller and produce a template and model for dynamic html generation
+type MvcMapping interface {
+	Mapping
+	TemplateRoot() string
 }
-
-//func (c *endpoints) Mappings() {
-//	t := reflect.TypeOf(c)
-//}
