@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"encoding/base64"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -8,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-var AuthModule = fx.Options(fx.Provide(NewBasicAuth))
 
 type Authenticator interface {
 	AuthHandler() gin.HandlerFunc
@@ -59,4 +58,22 @@ func (auth *BasicAuth) AuthHandler() gin.HandlerFunc {
 		// c.MustGet(gin.AuthUserKey).
 		ctx.Set(gin.AuthUserKey, user)
 	}
+}
+
+/**************************
+	Setup
+***************************/
+type setupComponents struct {
+	fx.In
+	Gin *gin.Engine
+	BasicAuth Authenticator
+}
+
+func setup(lc fx.Lifecycle, dep setupComponents) {
+	lc.Append(fx.Hook{
+		OnStart: func(_ context.Context) error {
+			dep.Gin.Use(dep.BasicAuth.AuthHandler())
+			return nil
+		},
+	})
 }
