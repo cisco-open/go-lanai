@@ -7,7 +7,12 @@ import (
 
 type MappingFunc func(registrar *Registrar)
 
+type Controller interface {
+	Endpoints() []Mapping
+}
+
 type Mapping interface {
+	Name() string
 	Path() string
 	Method() string
 }
@@ -26,3 +31,11 @@ type StaticMapping interface {
 	Mapping
 	StaticFile() string
 }
+
+type endpoints struct {
+
+}
+
+//func (c *endpoints) Mappings() {
+//	t := reflect.TypeOf(c)
+//}

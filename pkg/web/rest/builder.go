@@ -7,6 +7,7 @@ import (
 )
 
 type MappingBuilder interface {
+	Name(string) MappingBuilder
 	Path(string) MappingBuilder
 	Method(string) MappingBuilder
 	EndpointFunc(EndpointFunc) MappingBuilder
@@ -23,6 +24,7 @@ type MappingBuilder interface {
 }
 
 type mappingBuilder struct {
+	name 		 string
 	path         string
 	method       string
 	endpointFunc EndpointFunc
@@ -33,13 +35,23 @@ type mappingBuilder struct {
 	encodeResponseFunc httptransport.EncodeResponseFunc
 }
 
-func NewBuilder() MappingBuilder {
-	return &mappingBuilder{}
+func NewBuilder(names ...string) MappingBuilder {
+	name := "unknown"
+	if len(names) > 0 {
+		name = names[0]
+	}
+	return &mappingBuilder{
+		name: name,
+	}
 }
 
 /*****************************
 	MappingBuilder Impl
 ******************************/
+func (b *mappingBuilder) Name(name string) MappingBuilder {
+	b.name = name
+	return b
+}
 func (b *mappingBuilder) Path(path string) MappingBuilder {
 	b.path = path
 	return b
@@ -98,6 +110,7 @@ func (b *mappingBuilder) validate() (err error) {
 
 func (b *mappingBuilder) buildMapping() *endpointMapping {
 	m := &endpointMapping {
+		name: b.name,
 		path: b.path,
 		method: b.method,
 		endpointFunc: b.endpointFunc,

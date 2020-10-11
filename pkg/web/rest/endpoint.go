@@ -25,8 +25,9 @@ import (
 type EndpointFunc interface{}
 
 type endpointMapping struct {
-	path         string
-	method       string
+	name 		string
+	path        string
+	method      string
 	endpointFunc EndpointFunc
 	endpoint           endpoint.Endpoint
 	decodeRequestFunc  httptransport.DecodeRequestFunc
@@ -44,6 +45,10 @@ type endpointFuncMetadata struct {
 /*****************************
 	EndpointMapping Interface
 ******************************/
+func (m *endpointMapping) Name() string {
+	return m.name
+}
+
 func (m *endpointMapping) Path() string {
 	return m.path
 }
@@ -73,10 +78,8 @@ func (m *endpointMapping) EncodeResponseFunc() httptransport.EncodeResponseFunc 
 }
 
 /*****************************
-	????
+	Metadata
 ******************************/
-
-
 // MakeEndpointFuncMetadata uses reflect to analyze the given rest function and create a endpointFuncMetadata
 // this function panic if given function have incorrect signature
 func MakeEndpointFuncMetadata(endpointFunc EndpointFunc) *endpointFuncMetadata {
