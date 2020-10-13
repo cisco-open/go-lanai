@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"go.uber.org/fx"
 	"net/http"
+	"reflect"
 )
 
 const (
@@ -20,6 +22,7 @@ type Registrar struct {
 
 // TODO support customizers
 func NewRegistrar(g *gin.Engine) *Registrar {
+	fmt.Println("[web] - NewRegistrar")
 	return &Registrar{
 		engine: g,
 		options: []httptransport.ServerOption{
@@ -29,12 +32,31 @@ func NewRegistrar(g *gin.Engine) *Registrar {
 }
 
 // Register is the entry point to register Controller, Mapping and other web related objects
-// supported parameter type are:
+// supported items type are:
 // 	- Controller
 //  - EndpointMapping
 //  - StaticMapping
 //  - MvcMapping
-func (r *Registrar) Register(i interface{}) (err error) {
+//  - struct that contains exported Controller fields
+func (r *Registrar) Register(items...interface{}) (err error) {
+	for _, i := range items {
+		if err = r.register(i); err != nil {
+			break
+		}
+	}
+	return
+}
+
+// RegisterWithLifecycle is a convenient function to schedule item registration in FX lifecycle
+func (r *Registrar) RegisterWithLifecycle(lc fx.Lifecycle, items...interface{}) {
+	lc.Append(fx.Hook{
+		OnStart: func(context.Context) (err error) {
+			return r.Register(items...)
+		},
+	})
+}
+
+func (r *Registrar) register(i interface{}) (err error) {
 	switch i.(type) {
 	case Controller:
 		err = r.registerController(i.(Controller))
@@ -45,7 +67,33 @@ func (r *Registrar) Register(i interface{}) (err error) {
 	case StaticMapping:
 		err = r.registerStaticMapping(i.(StaticMapping))
 	default:
-		err = errors.New(fmt.Sprintf("unsupported type [%T]", i))
+		err = r.registerUnknownType(i)
+	}
+	return
+}
+
+func (r *Registrar) registerUnknownType(i interface{}) (err error) {
+	v := reflect.ValueOf(i)
+
+	// get struct value
+	if v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct {
+		v = v.Elem()
+	} else if v.Kind() != reflect.Struct {
+		return errors.New(fmt.Sprintf("unsupported type [%T]", i))
+	}
+
+	// go through fields and register
+	for idx := 0; idx < v.NumField(); idx++ {
+		// only care controller fields
+		c := v.Field(idx).Interface()
+		if _,ok := c.(Controller); !ok {
+			continue
+		}
+
+		err = r.register(c)
+		if err != nil {
+			return err
+		}
 	}
 	return
 }

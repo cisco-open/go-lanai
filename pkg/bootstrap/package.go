@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
 	"go.uber.org/fx"
 )
 
@@ -21,8 +22,10 @@ func init() {
 
 
 func bootstrap(lc fx.Lifecycle) {
+	fmt.Println("[bootstrap] - bootstrap")
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+			fmt.Println("[bootstrap] - OnStart")
 			ctx.(*Context).PutValue("key", "value")
 			return nil
 		},
