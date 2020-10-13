@@ -21,11 +21,9 @@ func init() {
 
 
 func bootstrap(lc fx.Lifecycle) {
-
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			// TODO this line is not possible until bootstrap.Context is fixed
-			//ctx.(*Context).PutValue("key", "value")
+			ctx.(*Context).PutValue("key", "value")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

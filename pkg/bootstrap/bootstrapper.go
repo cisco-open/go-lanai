@@ -2,8 +2,11 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
 	"go.uber.org/fx"
+	"os"
 	"sort"
+	"strings"
 	"sync"
 )
 
@@ -56,29 +59,42 @@ func NewApp(adhocOptions...fx.Option) *App {
 	for _,m := range b.modules {
 		options = append(options, m.Invokes...)
 	}
-	return &App{fx.New(options...)}
+	return &App{App: fx.New(options...)}
 }
 
 func (app *App) Run() {
 	// TODO to be revised:
-	// 	1. Support Timeout in bootstrap.Context and make cancellable context as parent (swap parent and child)
+	//  1. (Solved)	Support Timeout in bootstrap.Context and make cancellable context as startParent (swap startParent and child)
 	//  2. Restore logging
 	done := app.Done()
-	startCtx, cancel := context.WithTimeout(bootstrapContext, app.StartTimeout())
+	startParent, cancel := context.WithTimeout(context.Background(), app.StartTimeout())
+	startCtx := bootstrapContext.UpdateParent(startParent)
 	defer cancel()
 
 	if err := app.Start(startCtx); err != nil {
 		//app.logger.Fatalf("ERROR\t\tFailed to start: %v", err)
+		fmt.Printf("ERROR\t\tFailed to start up: %v\n", err)
+		exit(1)
 	}
 
-	<-done
+	printSignal(<-done)
 	//app.logger.PrintSignal(<-done)
 
-	stopCtx, cancel := context.WithTimeout(bootstrapContext, app.StopTimeout())
+	stopParent, cancel := context.WithTimeout(context.Background(), app.StopTimeout())
+	stopCtx := bootstrapContext.UpdateParent(stopParent)
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {
 		//app.logger.Fatalf("ERROR\t\tFailed to stop cleanly: %v", err)
+		fmt.Printf("ERROR\t\tFailed to gracefully shutdown: %v\n", err)
+		exit(1)
 	}
 }
 
+func printSignal(signal os.Signal) {
+	fmt.Println(strings.ToUpper(signal.String()))
+}
+
+func exit(code int) {
+	os.Exit(code)
+}

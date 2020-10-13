@@ -2,17 +2,20 @@ package bootstrap
 
 import (
 	"context"
-	"time"
 )
 
 type LifecycleHandler func(context.Context) error
 
+// A Context carries addition data for application.
+// delegates all other context calls to the embedded Context.
 type Context struct {
+	context.Context
 	Environment map[string]interface{}
 }
 
 func NewContext() *Context {
 	return &Context{
+		Context: context.Background(),
 		Environment: make(map[string]interface{}),
 	}
 }
@@ -20,26 +23,19 @@ func NewContext() *Context {
 /**************************
  context.Context Interface
 ***************************/
-func (*Context) Deadline() (deadline time.Time, ok bool) {
-	return
+func (c *Context) UpdateParent(parent context.Context) *Context {
+	c.Context = parent
+	return c
 }
 
-func (*Context) Done() <-chan struct{} {
-	return nil
+func (c *Context) Value(key interface{}) interface{} {
+	return c.Environment[key.(string)]
 }
 
-func (*Context) Err() error {
-	return nil
+func (_ *Context) String() string {
+	return "bootstrap context"
 }
 
-func (ctx *Context) Value(key interface{}) interface{} {
-	return ctx.Environment[key.(string)]
-}
-
-func (e *Context) String() string {
-	return "Bootstrap context"
-}
-
-func (ctx *Context) PutValue(key string, value interface{}) {
-	ctx.Environment[key] = value
+func (c *Context) PutValue(key string, value interface{}) {
+	c.Environment[key] = value
 }
