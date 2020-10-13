@@ -101,7 +101,7 @@ func (r *Registrar) registerUnknownType(i interface{}) (err error) {
 func (r *Registrar) registerController(c Controller) (err error) {
 	endpoints := c.Endpoints()
 	for _, m := range endpoints {
-		if err = r.Register(m); err != nil {
+		if err = r.register(m); err != nil {
 			err = fmt.Errorf("invalid endpoint mapping in Controller [%T]: %v", c, err.Error())
 			break
 		}
