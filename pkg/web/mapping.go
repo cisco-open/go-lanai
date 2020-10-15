@@ -42,7 +42,6 @@ type MvcMapping interface {
 // REST API is usually implemented by Controller and accept/produce JSON objects
 type EndpointMapping MvcMapping
 
-// TODO
 // TemplateMapping defines templated MVC mapping. e.g. html templates
 // Templated MVC is usually implemented by Controller and produce a template and model for dynamic html generation
 type TemplateMapping MvcMapping

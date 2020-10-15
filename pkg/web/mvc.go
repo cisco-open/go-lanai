@@ -107,26 +107,47 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 }
 
 func validateFunc(f *reflect.Value, validator MvcHandlerFuncValidator) (err error) {
-	// TODO define error type
-	errTemplate := "invalid HTTP rest signature: %v"
 	// For now, we check function signature at runtime.
-	//I wish there is a way to check it at compile-time that I didn't know of
+	// I wish there is a way to check it at compile-time that I didn't know of
 	t := f.Type()
+	ctxType := reflect.TypeOf((*context.Context)(nil)).Elem()
+	errorType := reflect.TypeOf((*error)(nil)).Elem()
 	switch {
 	case f.Kind() != reflect.Func:
-		return errors.New(fmt.Sprintf(errTemplate, "rest should be a function"))
-	case t.NumIn() < 2: // TODO|| t.In(0).ConvertibleTo(context.Context)
-		return errors.New(fmt.Sprintf(errTemplate, "rest should have at least two input parameters, " +
-			"which the first is context.Context and the second is a struct or pointer to struct"))
-	case t.NumOut() < 2: // TODO|| t.In(0).ConvertibleTo(context.Context)
-		return errors.New(fmt.Sprintf(errTemplate, "rest should have at least two output parameters, " +
-			"which the first is struct or pointer to struct and the second is error"))
+		return &errorInvalidMvcHandlerFunc{
+			reason: errors.New("expecting a function"),
+			target: f,
+		}
+	// In params validation
+	case t.NumIn() < 2:
+		fallthrough
+	case !t.In(0).ConvertibleTo(ctxType):
+		fallthrough
+	case !isStructOrPtrToStruct(t.In(1)):
+		return &errorInvalidMvcHandlerFunc{
+			reason: errors.New("function should have at least two input parameters, where the first is context.Context and the second is a struct or pointer to struct"),
+			target: f,
+		}
+	// Out params validation
+	case t.NumOut() < 2:
+		fallthrough
+	case !t.Out(t.NumOut() - 1).ConvertibleTo(errorType):
+		return &errorInvalidMvcHandlerFunc{
+			reason: errors.New("function should have at least two output parameters, where the first is struct or pointer to struct and the last is error"),
+			target: f,
+		}
 	}
 
 	if validator != nil {
 		return validator(f)
 	}
 	return nil
+}
+
+func isStructOrPtrToStruct(t reflect.Type) (ret bool) {
+	ret = t.Kind() == reflect.Struct
+	ret = ret || t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct
+	return
 }
 
 /*********************
