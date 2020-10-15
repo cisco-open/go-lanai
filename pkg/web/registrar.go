@@ -22,7 +22,6 @@ type Registrar struct {
 
 // TODO support customizers
 func NewRegistrar(g *gin.Engine) *Registrar {
-	fmt.Println("[web] - NewRegistrar")
 	return &Registrar{
 		engine: g,
 		options: []httptransport.ServerOption{
@@ -31,12 +30,19 @@ func NewRegistrar(g *gin.Engine) *Registrar {
 	}
 }
 
+// initialize should be called during application startup, last change to change configurations, load templates, etc
+func (r *Registrar) initialize() (err error) {
+	// TODO support customizers
+	r.engine.LoadHTMLGlob("web/template/*")
+	return
+}
+
 // Register is the entry point to register Controller, Mapping and other web related objects
 // supported items type are:
 // 	- Controller
 //  - EndpointMapping
 //  - StaticMapping
-//  - MvcMapping
+//  - TemplateMapping
 //  - struct that contains exported Controller fields
 func (r *Registrar) Register(items...interface{}) (err error) {
 	for _, i := range items {
@@ -60,8 +66,6 @@ func (r *Registrar) register(i interface{}) (err error) {
 	switch i.(type) {
 	case Controller:
 		err = r.registerController(i.(Controller))
-	case EndpointMapping:
-		err = r.registerEndpointMapping(i.(EndpointMapping))
 	case MvcMapping:
 		err = r.registerMvcMapping(i.(MvcMapping))
 	case StaticMapping:
@@ -109,7 +113,7 @@ func (r *Registrar) registerController(c Controller) (err error) {
 	return
 }
 
-func (r *Registrar) registerEndpointMapping(m EndpointMapping) error {
+func (r *Registrar) registerMvcMapping(m EndpointMapping) error {
 	s := httptransport.NewServer(
 		m.Endpoint(),
 		m.DecodeRequestFunc(),
@@ -125,11 +129,6 @@ func (r *Registrar) registerEndpointMapping(m EndpointMapping) error {
 func (r *Registrar) registerStaticMapping(m StaticMapping) error {
 	// TODO handle suffix rewrite, e.g. /path/to/swagger -> /path/to/swagger.html
 	r.engine.Static(m.Path(), m.StaticRoot())
-	return nil
-}
-
-func (r *Registrar) registerMvcMapping(_ MvcMapping) error {
-	// TODO finish this. It's needed for login page generation
 	return nil
 }
 
