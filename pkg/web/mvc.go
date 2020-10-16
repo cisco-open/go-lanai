@@ -19,6 +19,7 @@ type mvcMapping struct {
 	encodeRequestFunc  httptransport.EncodeRequestFunc
 	decodeResponseFunc httptransport.DecodeResponseFunc
 	encodeResponseFunc httptransport.EncodeResponseFunc
+	errorEncoder	   httptransport.ErrorEncoder
 }
 
 func NewMvcMapping(name, path, method string,
@@ -26,7 +27,8 @@ func NewMvcMapping(name, path, method string,
 	decodeRequestFunc httptransport.DecodeRequestFunc,
 	encodeRequestFunc httptransport.EncodeRequestFunc,
 	decodeResponseFunc httptransport.DecodeResponseFunc,
-	encodeResponseFunc httptransport.EncodeResponseFunc) MvcMapping {
+	encodeResponseFunc httptransport.EncodeResponseFunc,
+	errorEncoder httptransport.ErrorEncoder) MvcMapping {
 	return &mvcMapping{
 		name: name,
 		path: path,
@@ -36,6 +38,7 @@ func NewMvcMapping(name, path, method string,
 		encodeRequestFunc: encodeRequestFunc,
 		decodeResponseFunc: decodeResponseFunc,
 		encodeResponseFunc: encodeResponseFunc,
+		errorEncoder: errorEncoder,
 	}
 }
 
@@ -72,6 +75,10 @@ func (m *mvcMapping) DecodeResponseFunc() httptransport.DecodeResponseFunc {
 
 func (m *mvcMapping) EncodeResponseFunc() httptransport.EncodeResponseFunc {
 	return m.encodeResponseFunc
+}
+
+func (m *mvcMapping) ErrorEncoder() httptransport.ErrorEncoder {
+	return m.errorEncoder
 }
 
 /*****************************
@@ -188,7 +195,7 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 			ginCtx.ShouldBind,
 			validateBinding)
 
-		return toRet.Interface(), err
+		return toRet.Interface(), HttpError(err)
 	}
 }
 

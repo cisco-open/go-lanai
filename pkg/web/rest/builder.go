@@ -159,7 +159,9 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 
 	b.customize(m)
 	return web.NewMvcMapping(b.name, b.path, b.method,
-		m.endpoint, m.decodeRequestFunc, m.encodeRequestFunc, m.decodeResponseFunc, m.encodeResponseFunc)
+		m.endpoint, m.decodeRequestFunc, m.encodeRequestFunc,
+		m.decodeResponseFunc, m.encodeResponseFunc,
+		nil)
 }
 
 func (b *MappingBuilder) customize(m *mapping) {

@@ -32,6 +32,7 @@ func NewRegistrar(g *gin.Engine) *Registrar {
 		engine: g,
 		options: []httptransport.ServerOption{
 			httptransport.ServerBefore(ginContextExtractor),
+			httptransport.ServerErrorEncoder(defaultErrorEncoder),
 		},
 		validator: binding.Validator,
 	}
@@ -125,12 +126,17 @@ func (r *Registrar) registerController(c Controller) (err error) {
 	return
 }
 
-func (r *Registrar) registerMvcMapping(m EndpointMapping) error {
+func (r *Registrar) registerMvcMapping(m MvcMapping) error {
+	options := r.options
+	if m.ErrorEncoder() != nil {
+		options = append(r.options, httptransport.ServerErrorEncoder(m.ErrorEncoder()))
+	}
+
 	s := httptransport.NewServer(
 		m.Endpoint(),
 		m.DecodeRequestFunc(),
 		m.EncodeResponseFunc(),
-		r.options...,
+		options...,
 	)
 
 	handlerFunc := MakeGinHandlerFunc(s)

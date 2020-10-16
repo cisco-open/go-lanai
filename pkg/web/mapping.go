@@ -38,6 +38,7 @@ type MvcMapping interface {
 	EncodeRequestFunc() httptransport.EncodeRequestFunc
 	DecodeResponseFunc() httptransport.DecodeResponseFunc
 	EncodeResponseFunc() httptransport.EncodeResponseFunc
+	ErrorEncoder() httptransport.ErrorEncoder
 }
 
 // EndpointMapping defines REST API mapping.
