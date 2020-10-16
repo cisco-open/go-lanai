@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -178,44 +177,53 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 			return nil, nil
 		}
 
-		req := instantiateByType(s.request)
+		toBind, toRet := instantiateByType(s.request)
 		ginCtx := c.(*gin.Context)
 
 		// We always try to bind Header, Uri and Query. other bindings are determined by Content-Type (in ShouldBind)
-		err = doBindRequest(req,
+		err = bind(toBind,
 			ginCtx.ShouldBindHeader,
 			ginCtx.ShouldBindUri,
 			ginCtx.ShouldBindQuery,
-			ginCtx.ShouldBind)
+			ginCtx.ShouldBind,
+			validateBinding)
 
-		if err != nil {
-			fmt.Println(err)
-		}
-		return req, err
+		return toRet.Interface(), err
 	}
 }
 
-type requestBindingFunc func(interface{}) error
+type bindingFunc func(interface{}) error
 
-func doBindRequest(obj interface{}, bindFuncs ...requestBindingFunc) (err error) {
-	for _, bindFunc := range bindFuncs {
-		if err = bindFunc(obj); err != nil {
+func bind(obj interface{}, bindings ...bindingFunc) (err error) {
+	for _, b := range bindings {
+		if err = b(obj); err != nil {
 			return
 		}
+	}
+	return
+}
+
+func validateBinding(obj interface{}) error {
+	if bindingValidator != nil {
+		return bindingValidator.ValidateStruct(obj)
 	}
 	return nil
 }
 
-func instantiateByType(t reflect.Type) interface{} {
-	var obj reflect.Value
+// returned ptr is the pointer regardless if given type is Ptr or other type
+// returned value is actually the value with given type
+func instantiateByType(t reflect.Type) (ptr interface{}, value *reflect.Value) {
+	var p reflect.Value
 	switch t.Kind() {
 	case reflect.Ptr:
 		t = t.Elem()
-		obj = reflect.New(t)
+		p = reflect.New(t)
+		return p.Interface(), &p
 	default:
-		obj = reflect.New(t)
+		p = reflect.New(t)
+		v := p.Elem()
+		return p.Interface(), &v
 	}
-	return obj.Interface()
 }
 
 /**********************************

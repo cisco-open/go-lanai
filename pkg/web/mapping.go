@@ -5,8 +5,10 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 )
 
+// Validation reference: https://godoc.org/github.com/go-playground/validator#hdr-Baked_In_Validators_and_Tags
+
 type Controller interface {
-	Endpoints() []Mapping
+	Mappings() []Mapping
 }
 
 // MvcHandlerFunc is a function with following signature

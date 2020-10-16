@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"go.uber.org/fx"
 	"net/http"
@@ -15,9 +16,14 @@ const (
 	kGinContextKey = "GinContext"
 )
 
+var (
+	bindingValidator binding.StructValidator
+)
+
 type Registrar struct {
 	engine *gin.Engine
 	options []httptransport.ServerOption
+	validator binding.StructValidator
 }
 
 // TODO support customizers
@@ -27,6 +33,7 @@ func NewRegistrar(g *gin.Engine) *Registrar {
 		options: []httptransport.ServerOption{
 			httptransport.ServerBefore(ginContextExtractor),
 		},
+		validator: binding.Validator,
 	}
 }
 
@@ -34,6 +41,11 @@ func NewRegistrar(g *gin.Engine) *Registrar {
 func (r *Registrar) initialize() (err error) {
 	// TODO support customizers
 	r.engine.LoadHTMLGlob("web/template/*")
+	// we disable auto-validation. We will invoke our own validation manually.
+	// Also we need to make the validator available globally for any request decoder to access.
+	// The alternative approach is to put the validator into each gin.Context
+	binding.Validator = nil
+	bindingValidator = r.validator
 	return
 }
 
@@ -103,7 +115,7 @@ func (r *Registrar) registerUnknownType(i interface{}) (err error) {
 }
 
 func (r *Registrar) registerController(c Controller) (err error) {
-	endpoints := c.Endpoints()
+	endpoints := c.Mappings()
 	for _, m := range endpoints {
 		if err = r.register(m); err != nil {
 			err = fmt.Errorf("invalid endpoint mapping in Controller [%T]: %v", c, err.Error())
