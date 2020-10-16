@@ -3,7 +3,9 @@ package rest
 import (
 	"bytes"
 	"context"
+	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"encoding/json"
+	httptransport "github.com/go-kit/kit/transport/http"
 	"io/ioutil"
 	"net/http"
 )
@@ -30,6 +32,16 @@ func jsonEncodeResponseFunc(_ context.Context, w http.ResponseWriter, response i
 	// TODO review this part
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
+}
+
+/*****************************
+	JSON Error Encoder
+******************************/
+func jsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
+	if _,ok := err.(json.Marshaler); !ok {
+		err = web.HttpError(err)
+	}
+	httptransport.DefaultErrorEncoder(c, err, w)
 }
 
 

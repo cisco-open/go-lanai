@@ -106,7 +106,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	return web.NewMvcMapping(b.name, b.path, b.method,
 		e, decodeRequestFunc, nil,
 		nil, encodeResponseFunc,
-		nil)
+		templateErrorEncoder)
 }
 
 // this is an additional validator, we assume basic validation is done (meaning given value web.MvcHandlerFunc)

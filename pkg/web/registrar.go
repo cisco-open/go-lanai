@@ -32,7 +32,6 @@ func NewRegistrar(g *gin.Engine) *Registrar {
 		engine: g,
 		options: []httptransport.ServerOption{
 			httptransport.ServerBefore(ginContextExtractor),
-			httptransport.ServerErrorEncoder(defaultErrorEncoder),
 		},
 		validator: binding.Validator,
 	}

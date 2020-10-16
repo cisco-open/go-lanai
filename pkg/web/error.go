@@ -1,7 +1,6 @@
 package web
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -104,39 +103,14 @@ func (_ ValidationErrors) StatusCode() int {
 ******************************/
 func HttpError(err error) error {
 	switch err.(type) {
+	case nil:
+		return nil
 	case httpError:
 		return err
 	case validator.ValidationErrors:
 		return ValidationErrors{err.(validator.ValidationErrors)}
 	}
 	return httpError{error: err, sc: http.StatusInternalServerError}
-}
-
-/*****************************
-	Default Error Encoder
-******************************/
-// currently identical with httptransport.DefaultErrorEncoder
-func defaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
-	contentType, body := "text/plain; charset=utf-8", []byte(err.Error())
-	if marshaler, ok := err.(json.Marshaler); ok {
-		if jsonBody, marshalErr := marshaler.MarshalJSON(); marshalErr == nil {
-			contentType, body = "application/json; charset=utf-8", jsonBody
-		}
-	}
-	w.Header().Set("Content-Type", contentType)
-	if headerer, ok := err.(httptransport.Headerer); ok {
-		for k, values := range headerer.Headers() {
-			for _, v := range values {
-				w.Header().Add(k, v)
-			}
-		}
-	}
-	code := http.StatusInternalServerError
-	if sc, ok := err.(httptransport.StatusCoder); ok {
-		code = sc.StatusCode()
-	}
-	w.WriteHeader(code)
-	_,_ = w.Write(body)
 }
 
 /*****************************
