@@ -9,8 +9,10 @@ import (
 
 var Module = &bootstrap.Module{
 	Precedence: 0,
-	Provides: []fx.Option{fx.Provide(gin.Default, web)},
-	Invokes: []fx.Option{fx.Invoke(setup)},
+	PriorityOptions: []fx.Option{
+		fx.Provide(gin.Default, web),
+		fx.Invoke(setup),
+	},
 }
 
 func init() {

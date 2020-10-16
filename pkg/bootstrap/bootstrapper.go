@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"os"
 	"sort"
@@ -25,7 +26,7 @@ type App struct {
 func bootstrapper() *Bootstrapper {
 	once.Do(func() {
 		bootstrapperInstance = &Bootstrapper{
-			modules: []*Module{anonymousModule()},
+			modules: []*Module{applicationMainModule(), anonymousModule()},
 		}
 	})
 	return bootstrapperInstance
@@ -36,29 +37,35 @@ func Register(m *Module) {
 	b.modules = append(b.modules, m)
 }
 
-func AddProvides(options...fx.Option) {
+func AddOptions(options...fx.Option) {
 	m := anonymousModule()
-	m.Provides = append(m.Provides, options...)
+	m.PriorityOptions = append(m.PriorityOptions, options...)
 }
 
-func AddInvokes(options...fx.Option) {
-	m := anonymousModule()
-	m.Invokes = append(m.Invokes, options...)
-}
+func NewApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
+	DefaultModule.PriorityOptions = append(DefaultModule.PriorityOptions, fx.Supply(cmd))
+	for _,o := range priorityOptions {
+		applicationMainModule().PriorityOptions = append(applicationMainModule().PriorityOptions, o)
+	}
 
-func NewApp(adhocOptions...fx.Option) *App {
+	for _,o := range regularOptions {
+		applicationMainModule().Options = append(applicationMainModule().Options, o)
+	}
+
 	b := bootstrapper()
 	sort.SliceStable(b.modules, func(i, j int) bool { return b.modules[i].Precedence < b.modules[j].Precedence })
-	// add Provides first
-	var options = adhocOptions
+
+	// add priority options first
+	var options []fx.Option
 	for _,m := range b.modules {
-		options = append(options, m.Provides...)
+		options = append(options, m.PriorityOptions...)
 	}
 
-	// add Invokes at the end
+	// add other options later
 	for _,m := range b.modules {
-		options = append(options, m.Invokes...)
+		options = append(options, m.Options...)
 	}
+
 	return &App{App: fx.New(options...)}
 }
 
@@ -68,7 +75,7 @@ func (app *App) Run() {
 	//  2. Restore logging
 	done := app.Done()
 	startParent, cancel := context.WithTimeout(context.Background(), app.StartTimeout())
-	startCtx := bootstrapContext.UpdateParent(startParent)
+	startCtx := applicationContext.UpdateParent(startParent) //This is so that we know that the context in the life cycle hook is the bootstrap context
 	defer cancel()
 
 	if err := app.Start(startCtx); err != nil {
@@ -81,7 +88,7 @@ func (app *App) Run() {
 	//app.logger.PrintSignal(<-done)
 
 	stopParent, cancel := context.WithTimeout(context.Background(), app.StopTimeout())
-	stopCtx := bootstrapContext.UpdateParent(stopParent)
+	stopCtx := applicationContext.UpdateParent(stopParent)
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {
@@ -90,6 +97,7 @@ func (app *App) Run() {
 		exit(1)
 	}
 }
+
 
 func printSignal(signal os.Signal) {
 	fmt.Println(strings.ToUpper(signal.String()))

@@ -13,11 +13,14 @@ const (
 var anonymousOnce sync.Once
 var anonymous *Module
 
+var applicationMainOnce sync.Once
+var applicationMain *Module
+
 type Module struct {
 	// Precedence basically govern the order or invokers between different Bootstrapper
-	Precedence int
-	Provides []fx.Option
-	Invokes  []fx.Option
+	Precedence      int
+	PriorityOptions []fx.Option
+	Options 		[]fx.Option
 }
 
 func anonymousModule() *Module {
@@ -27,4 +30,13 @@ func anonymousModule() *Module {
 		}
 	})
 	return anonymous
+}
+
+func applicationMainModule() *Module {
+	applicationMainOnce.Do(func() {
+		applicationMain = &Module {
+			Precedence: HighestPrecedence + 1,
+		}
+	})
+	return applicationMain
 }

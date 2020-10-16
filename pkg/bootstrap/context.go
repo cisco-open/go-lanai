@@ -2,40 +2,53 @@ package bootstrap
 
 import (
 	"context"
+	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+	"fmt"
 )
 
 type LifecycleHandler func(context.Context) error
 
 // A Context carries addition data for application.
 // delegates all other context calls to the embedded Context.
-type Context struct {
+type ApplicationContext struct {
 	context.Context
-	Environment map[string]interface{}
+	applicationConfig *config.Config
 }
 
-func NewContext() *Context {
-	return &Context{
+func NewContext() *ApplicationContext {
+	return &ApplicationContext{
 		Context: context.Background(),
-		Environment: make(map[string]interface{}),
+		applicationConfig: config.NewConfig(),
 	}
 }
 
 /**************************
  context.Context Interface
 ***************************/
-func (c *Context) UpdateParent(parent context.Context) *Context {
+func (c *ApplicationContext) UpdateParent(parent context.Context) *ApplicationContext {
 	c.Context = parent
 	return c
 }
 
-func (c *Context) Value(key interface{}) interface{} {
-	return c.Environment[key.(string)]
+func (_ *ApplicationContext) String() string {
+	return "application context"
 }
 
-func (_ *Context) String() string {
-	return "bootstrap context"
+func (c *ApplicationContext) Value(key interface{}) interface{} {
+	//TODO: This method is meant to be accessed only after application context is loaded completely
+	// PANIC if this method is called before fully ready
+
+	value, error := c.applicationConfig.Value(key.(string))
+
+	if error == nil {
+		return value
+	}
+
+	return nil
 }
 
-func (c *Context) PutValue(key string, value interface{}) {
-	c.Environment[key] = value
+func (c *ApplicationContext) dumpConfigurations() {
+	c.applicationConfig.Each(func(key string, value interface{}) {
+		fmt.Println(key + ": " + fmt.Sprintf("%v", value))
+	})
 }
