@@ -32,6 +32,7 @@ func (e *errorInvalidMvcHandlerFunc) Error() string {
 	Generic Http Error
 ***************************/
 type HttpErrorResponse struct {
+	StatusText string `json:"error,omitempty"`
 	Message string `json:"message,omitempty"`
 	Details map[string]string`json:"details,omitempty"`
 }
@@ -48,7 +49,10 @@ func (e httpError) MarshalJSON() ([]byte, error) {
 	if original,ok := e.error.(json.Marshaler); ok {
 		return original.MarshalJSON()
 	}
-	err := &HttpErrorResponse{Message: e.Error()}
+	err := &HttpErrorResponse{
+		StatusText: http.StatusText(e.StatusCode()),
+		Message: e.Error(),
+	}
 	return json.Marshal(err)
 }
 
@@ -81,6 +85,7 @@ type ValidationErrors struct {
 // json.Marshaler
 func (e ValidationErrors) MarshalJSON() ([]byte, error) {
 	err := &HttpErrorResponse{
+		StatusText: http.StatusText(e.StatusCode()),
 		Message: "validation failed",
 		Details: make(map[string]string, len(e.ValidationErrors)),
 	}

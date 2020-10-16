@@ -59,7 +59,8 @@ func templateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 	// TODO merge model with global overrides
 	ctx.HTML(code, "error.tmpl", gin.H{
 		"error": err,
-		"sc": code,
+		"StatusCode": code,
+		"StatusText": http.StatusText(code),
 	})
 }
 
