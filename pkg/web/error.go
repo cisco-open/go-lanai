@@ -37,15 +37,15 @@ type HttpErrorResponse struct {
 	Details map[string]string`json:"details,omitempty"`
 }
 
-type httpError struct {
+type HttpError struct {
 	error
-	sc int
-	header http.Header
+	SC int
+	H  http.Header
 }
 
 // TODO consider implement Unwrap
 
-func (e httpError) MarshalJSON() ([]byte, error) {
+func (e HttpError) MarshalJSON() ([]byte, error) {
 	if original,ok := e.error.(json.Marshaler); ok {
 		return original.MarshalJSON()
 	}
@@ -57,22 +57,22 @@ func (e httpError) MarshalJSON() ([]byte, error) {
 }
 
 // httptransport.StatusCoder
-func (e httpError) StatusCode() int {
+func (e HttpError) StatusCode() int {
 	if original,ok := e.error.(httptransport.StatusCoder); ok {
 		return original.StatusCode()
-	} else if e.sc == 0 {
+	} else if e.SC == 0 {
 		return http.StatusInternalServerError
 	} else {
-		return e.sc
+		return e.SC
 	}
 }
 
 // httptransport.Headerer
-func (e httpError) Headers() http.Header {
+func (e HttpError) Headers() http.Header {
 	if original,ok := e.error.(httptransport.Headerer); ok {
 		return original.Headers()
 	}
-	return e.header
+	return e.H
 }
 
 /**************************
@@ -106,16 +106,35 @@ func (_ ValidationErrors) StatusCode() int {
 /*****************************
 	Helper Functions
 ******************************/
-func HttpError(err error) error {
+func ToHttpError(err error) error {
 	switch err.(type) {
 	case nil:
 		return nil
-	case httpError:
+	case HttpError:
 		return err
 	case validator.ValidationErrors:
 		return ValidationErrors{err.(validator.ValidationErrors)}
 	}
-	return httpError{error: err, sc: http.StatusInternalServerError}
+	return HttpError{error: err, SC: http.StatusInternalServerError}
+}
+
+func NewHttpError(sc int, err error, headers ...http.Header) error {
+	var h http.Header
+	if len(headers) != 0 {
+		h = make(http.Header)
+		for _,toMerge := range headers {
+			mergeHeaders(h, toMerge)
+		}
+	}
+	return HttpError{error: err, SC: sc, H: h}
+}
+
+func mergeHeaders(src http.Header, toMerge http.Header) {
+	for k, values := range toMerge {
+		for _, v := range values {
+			src.Add(k, v)
+		}
+	}
 }
 
 /*****************************

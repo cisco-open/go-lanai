@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -81,100 +80,112 @@ func (m *mvcMapping) ErrorEncoder() httptransport.ErrorEncoder {
 	return m.errorEncoder
 }
 
-/*****************************
-	Func Metadata
-******************************/
-// MvcHandlerFuncValidator validate MvcHandlerFunc signature
-type MvcHandlerFuncValidator func(f *reflect.Value) error
-
-type mvcMetadata struct {
-	function *reflect.Value
-	request reflect.Type
-	response reflect.Type
+/*********************
+	ResponseEntity
+**********************/
+type ResponseEntity interface {
+	httptransport.StatusCoder
+	httptransport.Headerer
+	Body() interface{}
 }
 
-// MakeFuncMetadata uses reflect to analyze the given rest function and create a endpointFuncMetadata
-// this function panic if given function have incorrect signature
-// Caller can provide an optional validator to further validate function signature on top of default validation
-func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValidator) *mvcMetadata {
-	f := reflect.ValueOf(endpointFunc)
-	err := validateFunc(&f, validator)
-	if err != nil {
-		//TODO better fatal error handling
-		panic(err)
-	}
-
-	t := f.Type()
-	return &mvcMetadata{
-		request: t.In(1),
-		response: t.Out(0),
-		function: &f,
-	}
+type Response struct {
+	SC int
+	H  http.Header
+	B  interface{}
 }
 
-func validateFunc(f *reflect.Value, validator MvcHandlerFuncValidator) (err error) {
-	// For now, we check function signature at runtime.
-	// I wish there is a way to check it at compile-time that I didn't know of
-	t := f.Type()
-	ctxType := reflect.TypeOf((*context.Context)(nil)).Elem()
-	errorType := reflect.TypeOf((*error)(nil)).Elem()
-	switch {
-	case f.Kind() != reflect.Func:
-		return &errorInvalidMvcHandlerFunc{
-			reason: errors.New("expecting a function"),
-			target: f,
-		}
-	// In params validation
-	case t.NumIn() < 2:
-		fallthrough
-	case !t.In(0).ConvertibleTo(ctxType):
-		fallthrough
-	case !isStructOrPtrToStruct(t.In(1)):
-		return &errorInvalidMvcHandlerFunc{
-			reason: errors.New("function should have at least two input parameters, where the first is context.Context and the second is a struct or pointer to struct"),
-			target: f,
-		}
-	// Out params validation
-	case t.NumOut() < 2:
-		fallthrough
-	case !t.Out(t.NumOut() - 1).ConvertibleTo(errorType):
-		return &errorInvalidMvcHandlerFunc{
-			reason: errors.New("function should have at least two output parameters, where the first is struct or pointer to struct and the last is error"),
-			target: f,
-		}
-	}
-
-	if validator != nil {
-		return validator(f)
-	}
-	return nil
+func (r *Response) StatusCode() int {
+	return r.SC
 }
 
-func isStructOrPtrToStruct(t reflect.Type) (ret bool) {
-	ret = t.Kind() == reflect.Struct
-	ret = ret || t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct
-	return
+func (r *Response) Headers() http.Header {
+	return r.H
+}
+
+func (r *Response) Body() interface{} {
+	return r.B
+}
+
+/**********************************
+	LazyHeaderWriter
+***********************************/
+// LazyHeaderWriter makes sure that status code and headers is overwritten at last second (when invoke Write([]byte) (int, error).
+// Calling WriteHeader(int) would not actually send the header. Calling it multiple times to update status code
+// Doing so allows response encoder and error handling to send different header and status code
+type LazyHeaderWriter struct {
+	http.ResponseWriter
+	sc     int
+	header http.Header
+}
+
+func (w *LazyHeaderWriter) Header() http.Header {
+	return w.header
+}
+
+func (w *LazyHeaderWriter) WriteHeader(code int) {
+	w.sc = code
+}
+
+func (w *LazyHeaderWriter) Write(p []byte) (int, error) {
+	w.WriteHeaderNow()
+	return w.ResponseWriter.Write(p)
+}
+
+func (w *LazyHeaderWriter) WriteHeaderNow() {
+	// Merge header overwrite
+	for k, v := range w.header {
+		w.ResponseWriter.Header()[k] = v
+	}
+	w.ResponseWriter.WriteHeader(w.sc)
+}
+
+func NewLazyHeaderWriter(w http.ResponseWriter) *LazyHeaderWriter {
+	// make a copy of current header from wrapped writer
+	header := make(http.Header)
+	for k, v := range w.Header() {
+		header[k] = v
+	}
+	return &LazyHeaderWriter{ResponseWriter: w, sc: http.StatusOK, header: header}
 }
 
 /*********************
 	go-kit Endpoint
 **********************/
 // MakeEndpoint convert given mvcMetadata to kit/endpoint.Endpoint
-func MakeEndpoint(s *mvcMetadata) endpoint.Endpoint {
+func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
+	// Note: we assume given metadata is valid, so we don't do out-of-index or type check
 	return func(c context.Context, request interface{}) (response interface{}, err error) {
-		params := []reflect.Value{reflect.ValueOf(c), reflect.ValueOf(request)}
-		rets := s.function.Call(params)
-		switch {
-		case rets[1].IsZero():
-			return rets[0].Interface(), nil
-		default:
-			return rets[0].Interface(), rets[1].Interface().(error)
+		// prepare input params
+		in := make([]reflect.Value, m.in.count)
+		in[m.in.context.i] = reflect.ValueOf(c)
+		in[m.in.request.i] = reflect.ValueOf(request)
+
+		out := m.function.Call(in)
+
+		// post process output
+		err, _ = out[m.out.error.i].Interface().(error)
+		response = out[m.out.response.i].Interface()
+		if !m.out.sc.isValid() && !m.out.header.isValid() {
+			return response, err
 		}
+
+		// if necessary, wrap the response
+		wrapper := &Response{B: response}
+		if m.out.sc.isValid() {
+			wrapper.SC = int(out[m.out.sc.i].Int())
+		}
+
+		if m.out.header.isValid() {
+			wrapper.H, _ = out[m.out.header.i].Interface().(http.Header)
+		}
+
+		return wrapper, err
 	}
 }
 
 /**********************************
-	Generic Request Decoder
+	go-kit Request Decoder
 ***********************************/
 // bindable requestType can only be struct or pointer of struct
 func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequestFunc {
@@ -187,7 +198,7 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 		toBind, toRet := instantiateByType(s.request)
 		ginCtx := c.(*gin.Context)
 
-		// We always try to bind Header, Uri and Query. other bindings are determined by Content-Type (in ShouldBind)
+		// We always try to bind H, Uri and Query. other bindings are determined by Content-Type (in ShouldBind)
 		err = bind(toBind,
 			ginCtx.ShouldBindHeader,
 			ginCtx.ShouldBindUri,
@@ -195,7 +206,7 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 			ginCtx.ShouldBind,
 			validateBinding)
 
-		return toRet.Interface(), HttpError(err)
+		return toRet.Interface(), ToHttpError(err)
 	}
 }
 

@@ -111,10 +111,21 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 
 // this is an additional validator, we assume basic validation is done (meaning given value web.MvcHandlerFunc)
 func validateHandlerFunc(f *reflect.Value) error {
-	t := f.Type().Out(0)
+	t := f.Type()
 	// check response type
-	if !t.ConvertibleTo(reflect.TypeOf(&ModelView{})) {
-		return errors.New("ModelViewHandlerFunc need return ModelView or *ModelView as first parameter")
+	foundMV := false
+	for i := t.NumOut() - 1; i >= 0; i-- {
+		if t.Out(i).ConvertibleTo(reflect.TypeOf(&ModelView{})) {
+			foundMV = true
+			break
+		}
 	}
+
+	switch {
+	case !foundMV:
+		return errors.New("ModelViewHandlerFunc need return ModelView or *ModelView")
+	//more checks if needed
+	}
+
 	return nil
 }

@@ -2,6 +2,7 @@ package template
 
 import (
 	"context"
+	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"errors"
 	"github.com/gin-gonic/gin"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -11,8 +12,6 @@ import (
 type Model gin.H
 
 type ModelView struct {
-	// StatusCode when left zero, default is 200
-	StatusCode int
 	// View is the name of template file
 	View string
 	// Model is map[string]interface{}
@@ -27,15 +26,22 @@ func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, res
 	if !ok {
 		return errors.New("unable to use template: context is not available")
 	}
+
+	// get status code
+	status := 200
+	if coder, ok := response.(httptransport.StatusCoder); ok {
+		status = coder.StatusCode()
+	}
+
+	if entity, ok := response.(web.ResponseEntity); ok {
+		response = entity.Body()
+	}
+
 	mv, ok := response.(*ModelView)
 	if !ok {
 		return errors.New("unable to use template: response is not *template.ModelView")
 	}
 
-	status := 200
-	if mv.StatusCode != 0 {
-		status = mv.StatusCode
-	}
 	// TODO merge model with global overrides
 	ctx.HTML(status, mv.View, mv.Model)
 	return nil
