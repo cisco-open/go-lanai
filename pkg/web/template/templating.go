@@ -33,7 +33,7 @@ func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, res
 		status = coder.StatusCode()
 	}
 
-	if entity, ok := response.(web.ResponseEntity); ok {
+	if entity, ok := response.(web.BodyContainer); ok {
 		response = entity.Body()
 	}
 

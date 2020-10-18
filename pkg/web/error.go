@@ -76,8 +76,17 @@ func (e HttpError) Headers() http.Header {
 }
 
 /**************************
-	Other HTTP Errors
+	BadRequest Errors
 ***************************/
+type BadRequestError struct {
+	error
+}
+
+// httptransport.StatusCoder
+func (_ BadRequestError) StatusCode() int {
+	return http.StatusBadRequest
+}
+
 type ValidationErrors struct {
 	validator.ValidationErrors
 }
@@ -104,8 +113,19 @@ func (_ ValidationErrors) StatusCode() int {
 }
 
 /*****************************
-	Helper Functions
+	Constructor Functions
 ******************************/
+func NewHttpError(sc int, err error, headers ...http.Header) error {
+	var h http.Header
+	if len(headers) != 0 {
+		h = make(http.Header)
+		for _,toMerge := range headers {
+			mergeHeaders(h, toMerge)
+		}
+	}
+	return HttpError{error: err, SC: sc, H: h}
+}
+
 func ToHttpError(err error) error {
 	switch err.(type) {
 	case nil:
@@ -118,15 +138,16 @@ func ToHttpError(err error) error {
 	return HttpError{error: err, SC: http.StatusInternalServerError}
 }
 
-func NewHttpError(sc int, err error, headers ...http.Header) error {
-	var h http.Header
-	if len(headers) != 0 {
-		h = make(http.Header)
-		for _,toMerge := range headers {
-			mergeHeaders(h, toMerge)
-		}
+func toBadRequestError(err error) error {
+	switch err.(type) {
+	case nil:
+		return nil
+	case BadRequestError:
+		return err
+	case validator.ValidationErrors:
+		return ValidationErrors{err.(validator.ValidationErrors)}
 	}
-	return HttpError{error: err, SC: sc, H: h}
+	return BadRequestError{error: err}
 }
 
 func mergeHeaders(src http.Header, toMerge http.Header) {

@@ -81,11 +81,9 @@ func (m *mvcMapping) ErrorEncoder() httptransport.ErrorEncoder {
 }
 
 /*********************
-	ResponseEntity
+	Response
 **********************/
-type ResponseEntity interface {
-	httptransport.StatusCoder
-	httptransport.Headerer
+type BodyContainer interface {
 	Body() interface{}
 }
 
@@ -95,14 +93,17 @@ type Response struct {
 	B  interface{}
 }
 
+// httptransport.StatusCoder
 func (r *Response) StatusCode() int {
 	return r.SC
 }
 
+// httptransport.Headerer
 func (r *Response) Headers() http.Header {
 	return r.H
 }
 
+// BodyContainer
 func (r *Response) Body() interface{} {
 	return r.B
 }
@@ -206,7 +207,7 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 			ginCtx.ShouldBind,
 			validateBinding)
 
-		return toRet.Interface(), ToHttpError(err)
+		return toRet.Interface(), toBadRequestError(err)
 	}
 }
 
