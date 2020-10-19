@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"go.uber.org/fx"
 	"net/http"
@@ -15,20 +16,37 @@ const (
 	kGinContextKey = "GinContext"
 )
 
+var (
+	bindingValidator binding.StructValidator
+)
+
 type Registrar struct {
 	engine *gin.Engine
 	options []httptransport.ServerOption
+	validator binding.StructValidator
 }
 
 // TODO support customizers
 func NewRegistrar(g *gin.Engine) *Registrar {
-	fmt.Println("[web] - NewRegistrar")
 	return &Registrar{
 		engine: g,
 		options: []httptransport.ServerOption{
 			httptransport.ServerBefore(ginContextExtractor),
 		},
+		validator: binding.Validator,
 	}
+}
+
+// initialize should be called during application startup, last change to change configurations, load templates, etc
+func (r *Registrar) initialize() (err error) {
+	// TODO support customizers
+	r.engine.LoadHTMLGlob("web/template/*")
+	// we disable auto-validation. We will invoke our own validation manually.
+	// Also we need to make the validator available globally for any request decoder to access.
+	// The alternative approach is to put the validator into each gin.Context
+	binding.Validator = nil
+	bindingValidator = r.validator
+	return
 }
 
 // Register is the entry point to register Controller, Mapping and other web related objects
@@ -36,7 +54,7 @@ func NewRegistrar(g *gin.Engine) *Registrar {
 // 	- Controller
 //  - EndpointMapping
 //  - StaticMapping
-//  - MvcMapping
+//  - TemplateMapping
 //  - struct that contains exported Controller fields
 func (r *Registrar) Register(items...interface{}) (err error) {
 	for _, i := range items {
@@ -60,8 +78,6 @@ func (r *Registrar) register(i interface{}) (err error) {
 	switch i.(type) {
 	case Controller:
 		err = r.registerController(i.(Controller))
-	case EndpointMapping:
-		err = r.registerEndpointMapping(i.(EndpointMapping))
 	case MvcMapping:
 		err = r.registerMvcMapping(i.(MvcMapping))
 	case StaticMapping:
@@ -99,7 +115,7 @@ func (r *Registrar) registerUnknownType(i interface{}) (err error) {
 }
 
 func (r *Registrar) registerController(c Controller) (err error) {
-	endpoints := c.Endpoints()
+	endpoints := c.Mappings()
 	for _, m := range endpoints {
 		if err = r.register(m); err != nil {
 			err = fmt.Errorf("invalid endpoint mapping in Controller [%T]: %v", c, err.Error())
@@ -109,12 +125,17 @@ func (r *Registrar) registerController(c Controller) (err error) {
 	return
 }
 
-func (r *Registrar) registerEndpointMapping(m EndpointMapping) error {
+func (r *Registrar) registerMvcMapping(m MvcMapping) error {
+	options := r.options
+	if m.ErrorEncoder() != nil {
+		options = append(r.options, httptransport.ServerErrorEncoder(m.ErrorEncoder()))
+	}
+
 	s := httptransport.NewServer(
 		m.Endpoint(),
 		m.DecodeRequestFunc(),
 		m.EncodeResponseFunc(),
-		r.options...,
+		options...,
 	)
 
 	handlerFunc := MakeGinHandlerFunc(s)
@@ -125,11 +146,6 @@ func (r *Registrar) registerEndpointMapping(m EndpointMapping) error {
 func (r *Registrar) registerStaticMapping(m StaticMapping) error {
 	// TODO handle suffix rewrite, e.g. /path/to/swagger -> /path/to/swagger.html
 	r.engine.Static(m.Path(), m.StaticRoot())
-	return nil
-}
-
-func (r *Registrar) registerMvcMapping(_ MvcMapping) error {
-	// TODO finish this. It's needed for login page generation
 	return nil
 }
 

@@ -57,12 +57,13 @@ func setup(lc fx.Lifecycle, dep setupComponents) {
 }
 
 func makeMappingRegistrationOnStartHandler(dep *setupComponents) bootstrap.LifecycleHandler {
-	return func(ctx context.Context) error {
+	return func(ctx context.Context) (err error) {
+		err = dep.Registrar.initialize()
 		errChan := make(chan error)
 		go func() {
 			errChan <- dep.GinEngine.Run()
 			defer func() {close(errChan)}()
 		}()
-		return nil
+		return
 	}
 }
