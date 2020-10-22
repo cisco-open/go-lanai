@@ -1,10 +1,9 @@
-package security
+package basic_auth
 
 import (
-	"context"
+	"cto-github.cisco.com/livdu/jupiter/pkg/security"
 	"encoding/base64"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/fx"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,11 +14,15 @@ type Authenticator interface {
 }
 
 type BasicAuth struct {
-	store AccountStore
+	store security.AccountStore
 }
 
-func NewBasicAuth(store AccountStore) Authenticator {
+func NewBasicAuth(store security.AccountStore) Authenticator {
 	return &BasicAuth{store}
+}
+
+func (auth *BasicAuth) HandlerFunc() gin.HandlerFunc {
+	return auth.AuthHandler()
 }
 
 func (auth *BasicAuth) AuthHandler() gin.HandlerFunc {
@@ -58,22 +61,4 @@ func (auth *BasicAuth) AuthHandler() gin.HandlerFunc {
 		// c.MustGet(gin.AuthUserKey).
 		ctx.Set(gin.AuthUserKey, user)
 	}
-}
-
-/**************************
-	Setup
-***************************/
-type setupComponents struct {
-	fx.In
-	Gin *gin.Engine
-	BasicAuth Authenticator
-}
-
-func setup(lc fx.Lifecycle, dep setupComponents) {
-	lc.Append(fx.Hook{
-		OnStart: func(_ context.Context) error {
-			dep.Gin.Use(dep.BasicAuth.AuthHandler())
-			return nil
-		},
-	})
 }

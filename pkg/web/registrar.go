@@ -14,6 +14,7 @@ import (
 
 const (
 	kGinContextKey = "GinContext"
+	DefaultGroup = "/"
 )
 
 var (
@@ -22,8 +23,11 @@ var (
 
 type Registrar struct {
 	engine *gin.Engine
-	options []httptransport.ServerOption
+	// go-kit middleware options
+	options   []httptransport.ServerOption
 	validator binding.StructValidator
+	// gin-gonic middleware providers
+	middlewares []MiddlewareMapping
 }
 
 // TODO support customizers
@@ -55,6 +59,7 @@ func (r *Registrar) initialize() (err error) {
 //  - EndpointMapping
 //  - StaticMapping
 //  - TemplateMapping
+//  - MiddlewareMapping
 //  - struct that contains exported Controller fields
 func (r *Registrar) Register(items...interface{}) (err error) {
 	for _, i := range items {
@@ -82,6 +87,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 		err = r.registerMvcMapping(i.(MvcMapping))
 	case StaticMapping:
 		err = r.registerStaticMapping(i.(StaticMapping))
+	case MiddlewareMapping:
+		err = r.registerMiddlewareMapping(i.(MiddlewareMapping))
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -139,20 +146,59 @@ func (r *Registrar) registerMvcMapping(m MvcMapping) error {
 	)
 
 	handlerFunc := MakeGinHandlerFunc(s)
-	r.engine.Handle(m.Method(), m.Path(), handlerFunc)
-	return nil
+	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), m.Method())
+	r.engine.Group(DefaultGroup).Use(middlewares...).Handle(m.Method(), m.Path(), handlerFunc)
+	return err
 }
 
 func (r *Registrar) registerStaticMapping(m StaticMapping) error {
 	// TODO handle suffix rewrite, e.g. /path/to/swagger -> /path/to/swagger.html
-	r.engine.Static(m.Path(), m.StaticRoot())
+	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), http.MethodGet, http.MethodHead)
+	r.engine.Group(DefaultGroup).Use(middlewares...).Static(m.Path(), m.StaticRoot())
+	return err
+}
+
+func (r *Registrar) registerMiddlewareMapping(m MiddlewareMapping) error {
+	r.middlewares = append(r.middlewares, m)
 	return nil
+}
+
+func (r *Registrar) findMiddlewares(group, relativePath string, methods...string) (gin.HandlersChain, error) {
+	var handlers = make([]gin.HandlerFunc, len(r.middlewares))
+	var i = 0
+	for _,mw := range r.middlewares {
+		switch match, err := r.routeMatches(mw.Matcher(), group, relativePath, methods...); {
+		case err != nil:
+			return []gin.HandlerFunc{}, err
+		case match:
+			handlers[i] = mw.HandlerFunc()
+			i++
+		}
+	}
+	return handlers[:i], nil
+}
+
+func (r *Registrar) routeMatches(matcher RouteMatcher, group, relativePath string, methods...string) (bool, error) {
+	switch {
+	case len(methods) == 0:
+		return false, fmt.Errorf("unable to register middleware: method is missing for %s", relativePath)
+	case matcher == nil:
+		return true, nil // no matcher, any value is a match
+	}
+
+	// match if any given method matches
+	for _,m := range methods {
+		ret, err := matcher.Matches(Route{Group: group, Path: relativePath, Method: m})
+		if ret || err != nil {
+			return ret, err
+		}
+	}
+	return false, nil
 }
 
 /**************************
 	first class functions
 ***************************/
-
 func MakeGinHandlerFunc(s *httptransport.Server) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reqCtx := context.WithValue(c.Request.Context(), kGinContextKey, c)
