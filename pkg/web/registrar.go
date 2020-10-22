@@ -10,6 +10,7 @@ import (
 	"go.uber.org/fx"
 	"net/http"
 	"reflect"
+	"sort"
 )
 
 const (
@@ -165,6 +166,7 @@ func (r *Registrar) registerMiddlewareMapping(m MiddlewareMapping) error {
 
 func (r *Registrar) findMiddlewares(group, relativePath string, methods...string) (gin.HandlersChain, error) {
 	var handlers = make([]gin.HandlerFunc, len(r.middlewares))
+	sort.SliceStable(r.middlewares, func(i,j int) bool { return r.middlewares[i].Order() < r.middlewares[j].Order()})
 	var i = 0
 	for _,mw := range r.middlewares {
 		switch match, err := r.routeMatches(mw.Matcher(), group, relativePath, methods...); {

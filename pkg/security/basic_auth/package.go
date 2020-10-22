@@ -36,6 +36,7 @@ func setup(_ fx.Lifecycle, dep setupComponents) {
 
 	auth := middleware.NewBuilder("basic auth").
 		ApplyTo(route.WithPattern("/api/**")).
+		Order(0).
 		With(dep.BasicAuth.(web.Middleware)).
 		Build()
 

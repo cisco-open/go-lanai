@@ -2,6 +2,7 @@ package basic_auth
 
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/security"
+	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"encoding/base64"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -21,6 +22,11 @@ func NewBasicAuth(store security.AccountStore) Authenticator {
 	return &BasicAuth{store}
 }
 
+func (auth *BasicAuth) ConditionFunc() web.ConditionalMiddlewareFunc {
+	return func(r *http.Request) bool {
+		return true
+	}
+}
 func (auth *BasicAuth) HandlerFunc() gin.HandlerFunc {
 	return auth.AuthHandler()
 }

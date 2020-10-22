@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/middleware"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/route"
 	"go.uber.org/fx"
+	"net/http"
 )
 
 var Module = &bootstrap.Module{
@@ -33,9 +34,13 @@ type setupComponents struct {
 }
 
 func setup(_ fx.Lifecycle, dep setupComponents) {
-	session := middleware.NewBuilder("basic auth").
-		ApplyTo(route.WithPrefix("/page").Or(route.WithRegex("/static/.*")) ).
+	session := middleware.NewBuilder("session").
+		ApplyTo(route.WithPrefix("/page").
+			Or(route.WithRegex("/static/.*")).
+			Or(route.WithPattern("/api/**")) ).
+		Order(-1).
 		Use(dep.SessionManager.SessionHandlerFunc()).
+		WithCondition(func (r *http.Request) bool { return true }).
 		Build()
 
 	if err := dep.Registerer.Register(session); err != nil {

@@ -56,6 +56,7 @@ type TemplateMapping MvcMapping
 type MiddlewareMapping interface {
 	Mapping
 	Matcher() RouteMatcher
+	Order() int
 	HandlerFunc() gin.HandlerFunc
 }
 
@@ -66,6 +67,6 @@ type Route struct {
 	Group string
 }
 
-// RouteMatcher accepts *Route
+// RouteMatcher accepts *Route or Route
 type RouteMatcher matcher.ChainableMatcher
 

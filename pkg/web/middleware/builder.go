@@ -10,6 +10,7 @@ type MappingBuilder struct {
 	name       string
 	middleware web.Middleware
 	matcher    web.RouteMatcher
+	order      int
 	// overrides
 	condition   web.ConditionalMiddlewareFunc
 	handlerFunc gin.HandlerFunc
@@ -22,6 +23,7 @@ func NewBuilder(names ...string) *MappingBuilder {
 	}
 	return &MappingBuilder{
 		name: name,
+		order: 0,
 	}
 }
 
@@ -30,6 +32,11 @@ func NewBuilder(names ...string) *MappingBuilder {
 ******************************/
 func (b *MappingBuilder) Name(name string) *MappingBuilder {
 	b.name = name
+	return b
+}
+
+func (b *MappingBuilder) Order(order int) *MappingBuilder {
+	b.order = order
 	return b
 }
 
@@ -75,7 +82,7 @@ func (b *MappingBuilder) Build() web.MiddlewareMapping {
 		panic(fmt.Errorf("unable to build '%s' middleware mapping: missing HandlerFunc. please use With(...) or Use(...)", b.name))
 	}
 
-	return web.NewMiddlewareMapping(b.name, b.matcher, makeConditionalHandlerFunc(handlerFunc, conditionFunc))
+	return web.NewMiddlewareMapping(b.name, b.order, b.matcher, makeConditionalHandlerFunc(handlerFunc, conditionFunc))
 }
 
 func makeConditionalHandlerFunc(handlerFunc gin.HandlerFunc, conditionFunc web.ConditionalMiddlewareFunc) gin.HandlerFunc {

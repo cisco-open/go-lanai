@@ -17,14 +17,16 @@ type Middleware interface {
 
 type middlewareMapping struct {
 	name               string
+	order              int
 	matcher            RouteMatcher
 	handlerFunc        gin.HandlerFunc
 }
 
-func NewMiddlewareMapping(name string, matcher RouteMatcher, handlerFunc gin.HandlerFunc) MiddlewareMapping {
+func NewMiddlewareMapping(name string, order int, matcher RouteMatcher, handlerFunc gin.HandlerFunc) MiddlewareMapping {
 	return &middlewareMapping {
 		name: name,
 		matcher: matcher,
+		order: order,
 		handlerFunc: handlerFunc,
 	}
 }
@@ -35,6 +37,10 @@ func (mm *middlewareMapping) Name() string {
 
 func (mm *middlewareMapping) Matcher() RouteMatcher {
 	return mm.matcher
+}
+
+func (mm *middlewareMapping) Order() int {
+	return mm.order
 }
 
 func (mm *middlewareMapping) HandlerFunc() gin.HandlerFunc {

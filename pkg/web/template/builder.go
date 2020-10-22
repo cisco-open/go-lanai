@@ -23,7 +23,6 @@ type MappingBuilder struct {
 	path               string
 	method             string
 	handlerFunc       ModelViewHandlerFunc
-	template 		   string
 }
 
 func NewBuilder(names ...string) *MappingBuilder {
