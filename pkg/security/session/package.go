@@ -35,7 +35,7 @@ type setupComponents struct {
 func setup(_ fx.Lifecycle, dep setupComponents) {
 	session := middleware.NewBuilder("basic auth").
 		ApplyTo(route.WithPrefix("/page").Or(route.WithRegex("/static/.*")) ).
-		With(dep.SessionManager).
+		Use(dep.SessionManager.SessionHandlerFunc()).
 		Build()
 
 	if err := dep.Registerer.Register(session); err != nil {

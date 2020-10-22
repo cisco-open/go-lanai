@@ -16,7 +16,7 @@ func NewManager() *Manager {
 	return &Manager{store: store}
 }
 
-func (m *Manager) HandlerFunc() gin.HandlerFunc {
+func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		//TODO
 		fmt.Println("TODO load or create Session")

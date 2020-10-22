@@ -121,6 +121,27 @@ func (m *RegexMatcher) Or(matchers ...matcher.Matcher) matcher.ChainableMatcher 
 func (m *RegexMatcher) And(matchers ...matcher.Matcher) matcher.ChainableMatcher {
 	return matcher.And(m, matchers...)
 }
+
+// GroupMatcher checks web.Route's group with exact match
+type GroupMatcher struct {
+	expected string
+}
+func (m *GroupMatcher) Matches(i interface{}) (ret bool, err error) {
+	var route *web.Route
+	if route, err = interfaceToRoute(i); err != nil {
+		return
+	}
+	return m.expected != "" && m.expected == route.Group, nil
+}
+
+func (m *GroupMatcher) Or(matchers ...matcher.Matcher) matcher.ChainableMatcher {
+	return matcher.Or(m, matchers...)
+}
+
+func (m *GroupMatcher) And(matchers ...matcher.Matcher) matcher.ChainableMatcher {
+	return matcher.And(m, matchers...)
+}
+
 /**************************
 	Constructors
 ***************************/
@@ -152,6 +173,10 @@ func WithRegex(regex string, methods...string) web.RouteMatcher {
 	pMatcher := &RegexMatcher{regex}
 	mMatcher := WithMethods(methods...)
 	return pMatcher.And(mMatcher)
+}
+
+func WithGroup(group string) web.RouteMatcher {
+	return &GroupMatcher{group}
 }
 
 /**************************
