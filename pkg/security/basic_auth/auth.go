@@ -66,5 +66,6 @@ func (auth *BasicAuth) AuthHandler() gin.HandlerFunc {
 		// The user credentials was found, set user's id to key AuthUserKey in this context, the user's id can be read later using
 		// c.MustGet(gin.AuthUserKey).
 		ctx.Set(gin.AuthUserKey, user)
+		ctx.Next()
 	}
 }

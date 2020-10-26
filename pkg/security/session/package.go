@@ -34,16 +34,25 @@ type setupComponents struct {
 }
 
 func setup(_ fx.Lifecycle, dep setupComponents) {
+	var matcher = route.WithPrefix("/page").
+		Or(route.WithRegex("/static/.*")).
+		Or(route.WithPattern("/api/**"))
+
 	session := middleware.NewBuilder("session").
-		ApplyTo(route.WithPrefix("/page").
-			Or(route.WithRegex("/static/.*")).
-			Or(route.WithPattern("/api/**")) ).
+		ApplyTo(matcher).
 		Order(-1).
 		Use(dep.SessionManager.SessionHandlerFunc()).
 		WithCondition(func (r *http.Request) bool { return true }).
 		Build()
 
-	if err := dep.Registerer.Register(session); err != nil {
+	postSession := middleware.NewBuilder("post-session").
+		ApplyTo(matcher).
+		Order(0).
+		Use(dep.SessionManager.SessionPostHandlerFunc()).
+		WithCondition(func (r *http.Request) bool { return true }).
+		Build()
+
+	if err := dep.Registerer.Register(session, postSession); err != nil {
 		panic(err)
 	}
 }
