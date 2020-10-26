@@ -10,8 +10,10 @@ import (
 
 var Module = &bootstrap.Module{
 	Precedence: -1,
-	Provides: []fx.Option{fx.Provide(NewBasicAuth)},
-	Invokes: []fx.Option{fx.Invoke(setup)},
+	Options: []fx.Option{
+		fx.Provide(NewBasicAuth),
+		fx.Invoke(setup),
+	},
 }
 
 func init() {

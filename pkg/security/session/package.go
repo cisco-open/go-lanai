@@ -11,8 +11,10 @@ import (
 
 var Module = &bootstrap.Module{
 	Precedence: -1,
-	Provides: []fx.Option{fx.Provide(NewManager)},
-	Invokes: []fx.Option{fx.Invoke(setup)},
+	Options: []fx.Option{
+		fx.Provide(NewManager),
+		fx.Invoke(setup),
+	},
 }
 
 func init() {
