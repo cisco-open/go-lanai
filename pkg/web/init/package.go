@@ -1,16 +1,17 @@
-package web
+package init
 
 import (
 	"context"
 	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
+	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
 
 var Module = &bootstrap.Module{
-	Precedence: 0,
+	Precedence: 1000,
 	PriorityOptions: []fx.Option{
-		fx.Provide(gin.Default, NewRegistrar),
+		fx.Provide(gin.Default, web.NewRegistrar),
 		fx.Invoke(setup),
 	},
 }
@@ -34,9 +35,10 @@ func Use() {
 ***************************/
 type setupComponents struct {
 	fx.In
-	Registrar *Registrar
+	Registrar *web.Registrar
 	// TODO we could include security configurations, customizations here
 }
+
 func setup(lc fx.Lifecycle, dep setupComponents) {
 	lc.Append(fx.Hook{
 		OnStart: makeMappingRegistrationOnStartHandler(&dep),

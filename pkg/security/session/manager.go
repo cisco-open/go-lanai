@@ -41,9 +41,6 @@ func NewManager(ctx *bootstrap.ApplicationContext, store Store) *Manager {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	// TODO better keyPairs for sessions
-	//store := sessions.NewFilesystemStore("session/", []byte("secret"))
-
 	return &Manager{store: store.Options(options)}
 }
 
@@ -58,6 +55,12 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 		if err != nil {
 			_ = c.Error(err)
 		}
+
+		// TODO logger
+		if s != nil && s.IsNew {
+			fmt.Printf("New Session %v\n", s.ID)
+		}
+
 		session := &Session{
 			session: s,
 			request: c.Request,

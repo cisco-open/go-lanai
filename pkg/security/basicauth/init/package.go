@@ -1,7 +1,9 @@
-package basicauth
+package init
 
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
+	"cto-github.cisco.com/livdu/jupiter/pkg/security"
+	"cto-github.cisco.com/livdu/jupiter/pkg/security/basicauth"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/middleware"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/route"
@@ -9,9 +11,9 @@ import (
 )
 
 var Module = &bootstrap.Module{
-	Precedence: -1,
+	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
-		fx.Provide(NewBasicAuth),
+		fx.Provide(basicauth.NewBasicAuth),
 		fx.Invoke(setup),
 	},
 }
@@ -30,7 +32,7 @@ func Use() {
 ***************************/
 type setupComponents struct {
 	fx.In
-	BasicAuth Authenticator
+	BasicAuth  basicauth.Authenticator
 	Registerer *web.Registrar
 }
 

@@ -1,7 +1,10 @@
-package session
+package init
 
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
+	"cto-github.cisco.com/livdu/jupiter/pkg/security"
+	"cto-github.cisco.com/livdu/jupiter/pkg/security/session"
+	"cto-github.cisco.com/livdu/jupiter/pkg/security/session/store"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/middleware"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/route"
@@ -10,9 +13,9 @@ import (
 )
 
 var Module = &bootstrap.Module{
-	Precedence: -1,
+	Precedence: security.MinSecurityPrecedence + 10,
 	Options: []fx.Option{
-		fx.Provide(NewManager),
+		fx.Provide(session.NewManager, NewSessionStore),
 		fx.Invoke(setup),
 	},
 }
@@ -27,12 +30,28 @@ func Use() {
 }
 
 /**************************
+	Provider
+***************************/
+func NewSessionStore(ctx *bootstrap.ApplicationContext) session.Store {
+	var secret []byte
+	switch v := ctx.Value("security.session.secret"); v.(type) {
+	case string:
+		secret = []byte(v.(string))
+	default:
+		return nil
+	}
+
+	// TODO create different type based on properties
+	return store.NewMemoryStore(secret)
+}
+
+/**************************
 	Setup
 ***************************/
 type setupComponents struct {
 	fx.In
 	Registerer *web.Registrar
-	SessionManager *Manager
+	SessionManager *session.Manager
 }
 
 func setup(_ fx.Lifecycle, dep setupComponents) {
@@ -40,21 +59,21 @@ func setup(_ fx.Lifecycle, dep setupComponents) {
 		Or(route.WithRegex("/static/.*")).
 		Or(route.WithPattern("/api/**"))
 
-	session := middleware.NewBuilder("session").
+	sessionMiddleware := middleware.NewBuilder("sessionMiddleware").
 		ApplyTo(matcher).
 		Order(-1).
 		Use(dep.SessionManager.SessionHandlerFunc()).
 		WithCondition(func (r *http.Request) bool { return true }).
 		Build()
 
-	postSession := middleware.NewBuilder("post-session").
+	sessionTestMiddleware := middleware.NewBuilder("post-sessionMiddleware").
 		ApplyTo(matcher).
 		Order(0).
 		Use(dep.SessionManager.SessionTestHandlerFunc()).
 		WithCondition(func (r *http.Request) bool { return true }).
 		Build()
 
-	if err := dep.Registerer.Register(session, postSession); err != nil {
+	if err := dep.Registerer.Register(sessionMiddleware, sessionTestMiddleware); err != nil {
 		panic(err)
 	}
 }
