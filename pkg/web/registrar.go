@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -9,13 +10,18 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"go.uber.org/fx"
 	"net/http"
+	"path"
 	"reflect"
 	"sort"
+	"time"
 )
 
 const (
 	kGinContextKey = "GinContext"
 	DefaultGroup = "/"
+
+	PropertyServerPort		  = "server.port"
+	PropertyServerContextPath = "server.servlet.context-path"
 )
 
 var (
@@ -24,6 +30,8 @@ var (
 
 type Registrar struct {
 	engine *gin.Engine
+	router gin.IRouter
+	context *bootstrap.ApplicationContext
 	// go-kit middleware options
 	options   []httptransport.ServerOption
 	validator binding.StructValidator
@@ -32,9 +40,10 @@ type Registrar struct {
 }
 
 // TODO support customizers
-func NewRegistrar(g *gin.Engine) *Registrar {
+func NewRegistrar(g *gin.Engine, ctx *bootstrap.ApplicationContext) *Registrar {
 	return &Registrar{
 		engine: g,
+		context: ctx,
 		options: []httptransport.ServerOption{
 			httptransport.ServerBefore(ginContextExtractor),
 		},
@@ -51,6 +60,27 @@ func (r *Registrar) initialize() (err error) {
 	// The alternative approach is to put the validator into each gin.Context
 	binding.Validator = nil
 	bindingValidator = r.validator
+	return
+}
+
+// Run configure and start gin engine
+func (r *Registrar) Run() (err error) {
+	if err = r.initialize(); err != nil {
+		return
+	}
+	//TODO config server with more options, and proper error handling
+	var port = r.context.Value(PropertyServerPort)
+	var contextPath = path.Clean("/" + r.context.Value(PropertyServerContextPath).(string))
+	var addr = fmt.Sprintf(":%v", port)
+	r.router = r.engine.Group(contextPath)
+	s := &http.Server{
+		Addr:           addr,
+		Handler:        r.engine,
+		ReadTimeout:    60 * time.Second,
+		WriteTimeout:   60 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+	go s.ListenAndServe()
 	return
 }
 
@@ -148,14 +178,14 @@ func (r *Registrar) registerMvcMapping(m MvcMapping) error {
 
 	handlerFunc := MakeGinHandlerFunc(s)
 	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), m.Method())
-	r.engine.Group(DefaultGroup).Use(middlewares...).Handle(m.Method(), m.Path(), handlerFunc)
+	r.router.Group(DefaultGroup).Use(middlewares...).Handle(m.Method(), m.Path(), handlerFunc)
 	return err
 }
 
 func (r *Registrar) registerStaticMapping(m StaticMapping) error {
 	// TODO handle suffix rewrite, e.g. /path/to/swagger -> /path/to/swagger.html
 	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), http.MethodGet, http.MethodHead)
-	r.engine.Group(DefaultGroup).Use(middlewares...).Static(m.Path(), m.StaticRoot())
+	r.router.Group(DefaultGroup).Use(middlewares...).Static(m.Path(), m.StaticRoot())
 	return err
 }
 

@@ -1,4 +1,4 @@
-package basic_auth
+package basicauth
 
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/security"

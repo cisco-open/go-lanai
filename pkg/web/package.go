@@ -10,7 +10,7 @@ import (
 var Module = &bootstrap.Module{
 	Precedence: 0,
 	PriorityOptions: []fx.Option{
-		fx.Provide(gin.Default, web),
+		fx.Provide(gin.Default, NewRegistrar),
 		fx.Invoke(setup),
 	},
 }
@@ -27,21 +27,7 @@ func Use() {
 /**************************
 	Provide dependencies
 ***************************/
-type prerequisites struct {
-	fx.In
-	GinEngine *gin.Engine
-}
 
-type components struct {
-	fx.Out
-	Registrar *Registrar
-}
-
-func web(d prerequisites) (components, error) {
-	return components{
-		Registrar: NewRegistrar(d.GinEngine),
-	}, nil
-}
 
 /**************************
 	Setup
@@ -49,7 +35,6 @@ func web(d prerequisites) (components, error) {
 type setupComponents struct {
 	fx.In
 	Registrar *Registrar
-	GinEngine *gin.Engine
 	// TODO we could include security configurations, customizations here
 }
 func setup(lc fx.Lifecycle, dep setupComponents) {
@@ -60,12 +45,6 @@ func setup(lc fx.Lifecycle, dep setupComponents) {
 
 func makeMappingRegistrationOnStartHandler(dep *setupComponents) bootstrap.LifecycleHandler {
 	return func(ctx context.Context) (err error) {
-		err = dep.Registrar.initialize()
-		errChan := make(chan error)
-		go func() {
-			errChan <- dep.GinEngine.Run()
-			defer func() {close(errChan)}()
-		}()
-		return
+		return dep.Registrar.Run()
 	}
 }

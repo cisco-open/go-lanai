@@ -50,7 +50,7 @@ func setup(_ fx.Lifecycle, dep setupComponents) {
 	postSession := middleware.NewBuilder("post-session").
 		ApplyTo(matcher).
 		Order(0).
-		Use(dep.SessionManager.SessionPostHandlerFunc()).
+		Use(dep.SessionManager.SessionTestHandlerFunc()).
 		WithCondition(func (r *http.Request) bool { return true }).
 		Build()
 
