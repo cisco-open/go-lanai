@@ -1,4 +1,4 @@
-package config
+package appconfig
 
 import (
 	"encoding/json"
@@ -37,7 +37,7 @@ func (c *Config) Load(force bool) error {
 	//sort based on precedence
 	sort.SliceStable(c.Providers, func(i, j int) bool { return c.Providers[i].GetPrecedence() > c.Providers[j].GetPrecedence() })
 
-	// Load config from each provider if it's not loaded yet, or if force reload.
+	// Load appconfig from each provider if it's not loaded yet, or if force reload.
 	for _, provider := range c.Providers {
 		if !provider.isValid() || force {
 			provider.Load()

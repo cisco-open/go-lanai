@@ -2,10 +2,10 @@ package init
 
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
-	"cto-github.cisco.com/livdu/jupiter/pkg/config"
-	"cto-github.cisco.com/livdu/jupiter/pkg/config/commandprovider"
-	"cto-github.cisco.com/livdu/jupiter/pkg/config/consulprovider"
-	"cto-github.cisco.com/livdu/jupiter/pkg/config/fileprovider"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/commandprovider"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/consulprovider"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/fileprovider"
 	"cto-github.cisco.com/livdu/jupiter/pkg/consul"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -60,11 +60,11 @@ type bootstrapConfigParam struct {
 
 type bootstrapConfigResult struct {
 	fx.Out
-	Config *config.Config `name:"bootstrap_config"`
+	Config *appconfig.Config `name:"bootstrap_config"`
 }
 
 func newBootstrapConfig(p bootstrapConfigParam) bootstrapConfigResult {
-	bootstrapConfig := config.NewConfig(p.FileProvider, p.CmdProvider)
+	bootstrapConfig := appconfig.NewConfig(p.FileProvider, p.CmdProvider)
 	bootstrapConfig.Load(false)
 
 	return bootstrapConfigResult{Config: bootstrapConfig}
@@ -72,7 +72,7 @@ func newBootstrapConfig(p bootstrapConfigParam) bootstrapConfigResult {
 
 type consulConfigPropertiesParam struct {
 	fx.In
-	Config *config.Config `name:"bootstrap_config"`
+	Config *appconfig.Config `name:"bootstrap_config"`
 }
 
 func newConsulConfigProperties(param consulConfigPropertiesParam) *consulprovider.ConsulConfigProperties {
@@ -80,20 +80,20 @@ func newConsulConfigProperties(param consulConfigPropertiesParam) *consulprovide
 		Prefix: "userviceconfiguration",
 		DefaultContext: "defaultapplication",
 	}
-	param.Config.Bind(p, "spring.cloud.consul.config")
+	param.Config.Bind(p, "spring.cloud.consul.appconfig")
 	return p
 }
 
 type consulProviderParam struct {
 	fx.In
-	Config *config.Config `name:"bootstrap_config"`
+	Config *appconfig.Config `name:"bootstrap_config"`
 	ConsulConfigProperties *consulprovider.ConsulConfigProperties
 	ConsulConnection *consul.Connection
 }
 
 type consulProviderResults struct {
 	fx.Out
-	Providers []config.Provider `name:consul_providers`
+	Providers []appconfig.Provider `name:consul_providers`
 }
 
 func newConsulProvider(param consulProviderParam) consulProviderResults {
@@ -114,7 +114,7 @@ func newConsulProvider(param consulProviderParam) consulProviderResults {
 		fmt.Sprintf("%s/%s", consulConfigProperties.Prefix, appName),
 		consulConnection,
 	)
-	return consulProviderResults{Providers: []config.Provider{defaultContextConsulProvider, applicationContextConsulProvider}}
+	return consulProviderResults{Providers: []appconfig.Provider{defaultContextConsulProvider, applicationContextConsulProvider}}
 }
 
 type applicationFileProviderResult struct {
@@ -130,8 +130,8 @@ func newApplicationFileProvider() applicationFileProviderResult {
 type loadApplicationConfigParam struct {
 	fx.In
 	FileProvider       *fileprovider.ConfigProvider `name:"application_file_provider"`
-	ConsulProviders	   []config.Provider `name:consul_providers`
-	Config             *config.Config `name:"bootstrap_config"`
+	ConsulProviders	   []appconfig.Provider      `name:consul_providers`
+	Config             *appconfig.Config            `name:"bootstrap_config"`
 	ApplicationContext *bootstrap.ApplicationContext
 }
 

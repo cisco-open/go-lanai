@@ -1,7 +1,7 @@
 package fileprovider
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,7 +17,7 @@ const (
 type PropertyParser func([]byte) (map[string]interface{}, error)
 
 type ConfigProvider struct {
-	config.ProviderMeta
+	appconfig.ProviderMeta
 	reader io.Reader
 	propertyParser PropertyParser
 }
@@ -27,8 +27,8 @@ func newProvider(description string, precedence int, filePath string, reader io.
 	switch fileExt {
 	case ".yml", ".yaml":
 		return &ConfigProvider{
-			ProviderMeta:   config.ProviderMeta{Description: description, Precedence: precedence},
-			reader:  reader,
+			ProviderMeta:   appconfig.ProviderMeta{Description: description, Precedence: precedence},
+			reader:         reader,
 			propertyParser: NewYamlPropertyParser(),
 		}
 	/*
@@ -42,7 +42,7 @@ func newProvider(description string, precedence int, filePath string, reader io.
 		return NewCachedLoader(NewPropertiesFile(name, fileName, reader))
 	 */
 	default:
-		fmt.Printf("Unknown config file extension: ", fileExt)
+		fmt.Printf("Unknown appconfig file extension: ", fileExt)
 		return nil
 	}
 }

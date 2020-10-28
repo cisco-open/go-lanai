@@ -6,7 +6,7 @@ import (
 
 //import (
 //	"context"
-//	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+//	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 //	"fmt"
 //	"github.com/pkg/errors"
 //	json "github.com/yosuke-furukawa/json5/encoding/json5" //TODO: revisit library usage
@@ -25,7 +25,7 @@ import (
 //}
 //
 //func (f *JSONFile) Load(ctx context.Context) (map[string]interface{}, error) {
-//	fmt.Printf("Loading JSON config: %s", f.path)
+//	fmt.Printf("Loading JSON appconfig: %s", f.path)
 //
 //	encodedJSON, err := f.reader()
 //	if err != nil {
@@ -43,7 +43,7 @@ import (
 //	}
 //
 //	if ctx.Err() != nil {
-//		return nil, errors.Wrap(ctx.Err(), "Failed to load JSON config")
+//		return nil, errors.Wrap(ctx.Err(), "Failed to load JSON appconfig")
 //	}
 //
 //	return settings, nil
@@ -71,7 +71,7 @@ import (
 //		}
 //
 //		for k, v := range settings {
-//			flattened[config.NormalizeKey(k)] = v
+//			flattened[appconfig.NormalizeKey(k)] = v
 //		}
 //	}
 //
@@ -84,7 +84,7 @@ import (
 //	} else if arrayChild, ok := value.([]interface{}); ok {
 //		return flattenArray(arrayChild, token)
 //	} else { // Scalar
-//		key := config.NormalizeKey(token)
+//		key := appconfig.NormalizeKey(token)
 //		value := fmt.Sprintf("%v", value)
 //		return map[string]interface{}{key: value}, nil
 //	}
@@ -93,7 +93,7 @@ import (
 //func flattenArray(input []interface{}, namespace string) (map[string]interface{}, error) {
 //	flattened := make(map[string]interface{})
 //	for k, v := range input {
-//		token := config.NormalizeKey(namespace) + fmt.Sprintf("[%d]", k)
+//		token := appconfig.NormalizeKey(namespace) + fmt.Sprintf("[%d]", k)
 //
 //		settings, err := flattenChild(v, token)
 //		if err != nil {
@@ -101,7 +101,7 @@ import (
 //		}
 //
 //		for k, v := range settings {
-//			flattened[config.NormalizeKey(k)] = v
+//			flattened[appconfig.NormalizeKey(k)] = v
 //		}
 //	}
 //	return flattened, nil

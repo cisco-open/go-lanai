@@ -2,7 +2,7 @@ package init
 
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
-	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"cto-github.cisco.com/livdu/jupiter/pkg/consul"
 	"go.uber.org/fx"
 )
@@ -26,7 +26,7 @@ func Use() {
 
 type bootstrapConfigParam struct {
 	fx.In
-	Config *config.Config `name:"bootstrap_config"`
+	Config *appconfig.Config `name:"bootstrap_config"`
 }
 
 func newConnectionProperties(param bootstrapConfigParam) *consul.ConnectionProperties {

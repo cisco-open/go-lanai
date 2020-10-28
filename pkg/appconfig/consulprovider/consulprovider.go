@@ -1,13 +1,13 @@
 package consulprovider
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"cto-github.cisco.com/livdu/jupiter/pkg/consul"
 	"fmt"
 )
 
 const (
-	ConfigRootConsulConfigProvider = "spring.cloud.consul.config" //TODO: name should be changed
+	ConfigRootConsulConfigProvider = "spring.cloud.consul.appconfig" //TODO: name should be changed
 	ConfigKeyAppName               = "spring.application.name"
 )
 
@@ -18,7 +18,7 @@ type ConsulConfigProperties struct {
 }
 
 type ConfigProvider struct {
-	config.ProviderMeta
+	appconfig.ProviderMeta
 	contextPath  string
 	connection   *consul.Connection
 }
@@ -34,7 +34,7 @@ func (f *ConfigProvider) Load() {
 
 	//TODO: error handling
 	defaultSettings, _ = f.connection.ListKeyValuePairs(f.contextPath)
-	unFlattenedSettings, _ := config.UnFlatten(defaultSettings)
+	unFlattenedSettings, _ := appconfig.UnFlatten(defaultSettings)
 
 	f.Settings = unFlattenedSettings
 
@@ -43,7 +43,7 @@ func (f *ConfigProvider) Load() {
 
 func NewConsulProvider(description string, precedence int, contextPath string, conn *consul.Connection) *ConfigProvider {
 	return &ConfigProvider{
-			ProviderMeta: config.ProviderMeta{Description: description, Precedence: precedence},
+			ProviderMeta: appconfig.ProviderMeta{Description: description, Precedence: precedence},
 			contextPath:  contextPath, //fmt.Sprintf("%s/%s", f.sourceConfig.Prefix, f.contextPath)
 			connection:   conn,
 		}

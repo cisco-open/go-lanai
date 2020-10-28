@@ -51,7 +51,7 @@ func (c *Connection) ListKeyValuePairs(path string) (results map[string]interfac
 	if err != nil {
 		return nil, err
 	} else if entries == nil {
-		fmt.Printf("No config retrieved from consul (%s): %s\n", c.Host(), path)
+		fmt.Printf("No appconfig retrieved from consul (%s): %s\n", c.Host(), path)
 	} else {
 		fmt.Printf("Retrieved %d configs from consul (%s): %s", len(entries), c.Host(), path)
 	}
