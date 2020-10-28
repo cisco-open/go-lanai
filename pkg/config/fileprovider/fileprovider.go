@@ -3,6 +3,7 @@ package fileprovider
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/config"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -13,29 +14,21 @@ const (
 	configsDirectory = "configs"
 )
 
-type ContentReader func() ([]byte, error)
-
-type PropertyParser func(reader ContentReader) (map[string]interface{}, error)
+type PropertyParser func([]byte) (map[string]interface{}, error)
 
 type ConfigProvider struct {
 	config.ProviderMeta
-	contentReader ContentReader
+	reader io.Reader
 	propertyParser PropertyParser
 }
 
-func fileContentReader(filePath string) ContentReader {
-	return func() (bytes []byte, err error) {
-		return ioutil.ReadFile(filePath)
-	}
-}
-
-func newProvider(description string, precedence int, filePath string, reader ContentReader) *ConfigProvider {
+func newProvider(description string, precedence int, filePath string, reader io.Reader) *ConfigProvider {
 	fileExt := strings.ToLower(path.Ext(filePath))
 	switch fileExt {
 	case ".yml", ".yaml":
 		return &ConfigProvider{
 			ProviderMeta:   config.ProviderMeta{Description: description, Precedence: precedence},
-			contentReader:  reader,
+			reader:  reader,
 			propertyParser: NewYamlPropertyParser(),
 		}
 	/*
@@ -57,22 +50,23 @@ func newProvider(description string, precedence int, filePath string, reader Con
 func (configProvider *ConfigProvider) Load() {
 	configProvider.Valid = false
 
-	configProvider.Settings = make(map[string]interface{})
+	encoded, _ := ioutil.ReadAll(configProvider.reader)
+	//TODO: error handling
 
-	settings, error := configProvider.propertyParser(configProvider.contentReader)
-	//TODO: should error be propagated up?
-	if error == nil {
-		for k, v := range settings {
-			configProvider.Settings[config.NormalizeKey(k)] = v
-		}
-	}
+	settings, _ := configProvider.propertyParser(encoded)
+	//TODO: error handling
+
+	configProvider.Settings = settings
+
+	configProvider.Valid = true
 }
 
 func NewFileProvidersFromBaseName(description string, precedence int, baseName string, ext string) *ConfigProvider {
 	fullPath := path.Join(configsDirectory, baseName + "." + ext)
 	info, err := os.Stat(fullPath)
 	if !os.IsNotExist(err) && !info.IsDir() {
-		return newProvider(description, precedence, fullPath, fileContentReader(fullPath))
+		file, _ := os.Open(fullPath);
+		return newProvider(description, precedence, fullPath, file)
 	}
 	return nil
 }

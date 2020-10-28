@@ -38,20 +38,24 @@ func (f *ConfigProvider) Load() {
 	//}
 	f.Valid = false
 
-	f.Settings = make(map[string] interface{})
+	settings := make(map[string] interface{})
 
 	f.flagSet.VisitAll(func(flag *pflag.Flag) {
 		key := config.NormalizeKey(f.prefix + flag.Name)
-		f.Settings[key] = flag.Value.String()
+		settings[key] = flag.Value.String()
 	})
 
 	// Apply extras
 	for k, v := range f.extras {
-		f.Settings[k] = v
+		settings[k] = v
 	}
 
 	// Apply application name
-	f.Settings[configKeyAppName] = f.appName
+	settings[configKeyAppName] = f.appName
+
+	unFlattened, _ := config.UnFlatten(settings)
+
+	f.Settings = unFlattened
 
 	f.Valid = true
 }

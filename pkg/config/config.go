@@ -1,9 +1,9 @@
 package config
 
 import (
-	"fmt"
+	"encoding/json"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
-	"regexp"
 	"sort"
 	"strings"
 )
@@ -32,6 +32,7 @@ func (c *Config) Loaded() bool {
 	return c.settings != nil
 }
 
+//TODO: change this to functional configuration
 func (c *Config) Load(force bool) error {
 	//sort based on precedence
 	sort.SliceStable(c.Providers, func(i, j int) bool { return c.Providers[i].GetPrecedence() > c.Providers[j].GetPrecedence() })
@@ -43,122 +44,21 @@ func (c *Config) Load(force bool) error {
 		}
 	}
 
-	settings := make(map[string]interface{})
+	merged := make(map[string]interface{})
 	// merge data
 	for _, provider := range c.Providers {
-		for k, v := range provider.GetSettings() {
-			settings[k] = v
+		error := mergo.Merge(&merged, provider.GetSettings())
+
+		if error != nil {
+			return error
 		}
 	}
 
-	// Resolve variables in the config
-	if err := c.resolve(settings); err != nil {
-		return errors.Wrap(err, "Failed to resolve variables")
-	}
-
-	c.settings = settings
+	c.settings = merged
 	return nil
 }
 
-//TODO: review the implementation
-func (c *Config) resolveValueHelper(nested map[string]bool,
-	resolved, settings map[string]interface{}, value string) (string, error) {
-	variableRegex, _ := regexp.Compile(`\${([\w._\-]+)(:(.*))?}`)
-	if !strings.Contains(value, "${") {
-		return value, nil
-	}
 
-	var refStrings []string
-	depth := 0
-	refString := ""
-	for i, c := range value {
-		if value[i] == '$' && i+1 < len(value) && value[i+1] == '{' {
-			depth++
-		}
-		if depth > 0 {
-			refString += string(c)
-		}
-		if value[i] == '}' && depth > 0 {
-			depth--
-		}
-		if depth == 0 && len(refString) > 0 {
-			refStrings = append(refStrings, refString)
-			refString = ""
-		}
-	}
-
-	if depth != 0 {
-		fmt.Println("Malformed string %s", value)
-		// return raw string
-		return value, nil
-	}
-
-	for _, rs := range refStrings {
-		match := variableRegex.FindStringSubmatch(rs)
-		if len(match) > 0 {
-			//ignore case
-			refName := c.alias(match[1])
-			refValue := ""
-			//check if variable is already in the stack
-			if _, ok := nested[refName]; ok {
-				return "", errors.Errorf("Circular variable reference detected: '%s' already in %v",
-					refName, nested)
-			} else {
-				nested[refName] = true
-			}
-			// check lasted resolved values first
-			if rv, ok := resolved[refName]; ok {
-				refValue = rv.(string)
-			} else if sv, ok := settings[refName]; ok {
-				refValue = sv.(string)
-			}
-			// resolve the references in the value.
-			refValue, err := c.resolveValueHelper(nested, resolved, settings, refValue)
-			if err != nil {
-				return "", err
-			}
-			if len(refValue) > 0 {
-				resolved[refName] = refValue
-			} else if len(match) >= 4 && len(match[3]) > 0 {
-				// if not able to resolve the value and default value is set
-				refValue, err = c.resolveValueHelper(nested, resolved, settings, match[3])
-			}
-			if err != nil {
-				return "", err
-			}
-			//remove resolved variable from nested map.
-			delete(nested, refName)
-			value = strings.Replace(value, rs, refValue, -1)
-		}
-	}
-	return value, nil
-}
-
-// Expand all references to ${variables} inside value
-func (c *Config) resolveValue(resolved, settings map[string]interface{}, value string) string {
-	nested := make(map[string]bool)
-	value, err := c.resolveValueHelper(nested, resolved, settings, value)
-	if err != nil {
-		fmt.Println("Not able to resolve value!")
-		return ""
-	}
-	return value
-}
-
-// Expand all references to ${variables}
-func (c *Config) resolve(settings map[string]interface{}) error {
-	resolved := make(map[string]interface{})
-
-	for k, v := range settings {
-		resolved[k] = c.resolveValue(resolved, settings, v.(string))
-	}
-
-	for k, v := range resolved {
-		settings[k] = v
-	}
-
-	return nil
-}
 
 func (c *Config) Value(key string) (interface{}, error) {
 	if !c.Loaded() {
@@ -173,19 +73,25 @@ func (c *Config) Value(key string) (interface{}, error) {
 	}
 }
 
-func (c *Config) Populate(target interface{}, prefix string) error {
-	// Wrap the properties map in a partial config
-	stringSettings := make(map[string]string)
-	for k, v := range c.settings {
-		stringSettings[k] = fmt.Sprintf("%v", v)
+func (c *Config) Bind(target interface{}, prefix string) error {
+	keys := strings.Split(prefix, ".")
+
+	var source interface{} = c.settings
+
+	//TODO: switch on type
+	for i := 0; i < len(keys); i++ {
+		source = source.(map[string] interface{})[keys[i]]
 	}
 
-	partialConfig := NewPartialConfig(stringSettings, c)
-	// Filter by prefix
-	partialConfig = partialConfig.FilterStripPrefix(NormalizeKey(prefix))
+	//TODO: error handling
+	serialized, error := json.Marshal(source)
 
-	// Populate the object from the properties map
-	return partialConfig.Populate(target)
+	if error == nil {
+		error = json.Unmarshal(serialized, target)
+	}
+
+
+	return nil
 }
 
 func (c *Config) alias(key string) string {
@@ -193,8 +99,8 @@ func (c *Config) alias(key string) string {
 	return NormalizeKey(key)
 }
 
-func (c *Config) Each(target func(string, interface{})) {
-	for name, value := range c.settings {
-		target(name, value)
-	}
+//TODO: this needs to become recursive - similar to the flat method
+func (c *Config) Each(apply func(string, interface{})) {
+	VisitEach(c.settings, apply)
 }
+

@@ -1,6 +1,8 @@
 package config
 
-import "strings"
+import (
+	"strings"
+)
 
 func NormalizeKey(key string) string {
 	return strings.ToLower(

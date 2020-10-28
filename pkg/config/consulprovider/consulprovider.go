@@ -7,14 +7,14 @@ import (
 )
 
 const (
-	ConfigRootConsulConfigProvider = "spring.cloud.consul.config"
+	ConfigRootConsulConfigProvider = "spring.cloud.consul.config" //TODO: name should be changed
 	ConfigKeyAppName               = "spring.application.name"
 )
 
-type ConfigProviderConfig struct {
-	Enabled        bool   `config:"default=false"`
-	Prefix         string `config:"default=userviceconfiguration"`
-	DefaultContext string `config:"default=defaultapplication"`
+type ConsulConfigProperties struct {
+	Enabled        bool   `json:enabled`
+	Prefix         string `json:prefix`
+	DefaultContext string `json:"default-context`
 }
 
 type ConfigProvider struct {
@@ -34,10 +34,9 @@ func (f *ConfigProvider) Load() {
 
 	//TODO: error handling
 	defaultSettings, _ = f.connection.ListKeyValuePairs(f.contextPath)
+	unFlattenedSettings, _ := config.UnFlatten(defaultSettings)
 
-	for k, v := range defaultSettings {
-		f.Settings[config.NormalizeKey(k)] = v
-	}
+	f.Settings = unFlattenedSettings
 
 	f.Valid = true
 }

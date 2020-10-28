@@ -17,22 +17,22 @@ var (
 	ErrNoInstances = errors.New("No matching service instances found")
 )
 
-type ConnectionConfig struct {
-	Enabled bool   `config:"default=true"`
-	Host    string `config:"default=localhost"`
-	Port    int    `config:"default=8500"`
-	Scheme  string `config:"default=http"`
+type ConnectionProperties struct {
+	Enabled bool   `json:enabled`
+	Host    string `json:host`
+	Port    int    `json:port`
+	Scheme  string `json:scheme`
 	Config  struct {
-		AclToken string `config:"default="`
+		AclToken string `json:"acl-token`
 	}
 }
 
-func (c ConnectionConfig) Address() string {
+func (c ConnectionProperties) Address() string {
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }
 
 type Connection struct {
-	config *ConnectionConfig
+	config *ConnectionProperties
 	client *api.Client
 }
 
@@ -113,7 +113,7 @@ func (c *Connection) SetKeyValue(ctx context.Context, path string, value []byte)
 	return nil
 }
 
-func NewConnection(connectionConfig *ConnectionConfig) (*Connection, error) {
+func NewConnection(connectionConfig *ConnectionProperties) (*Connection, error) {
 	if !connectionConfig.Enabled {
 		return nil, ErrDisabled
 	}

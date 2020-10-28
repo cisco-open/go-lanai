@@ -12,19 +12,22 @@ type LifecycleHandler func(context.Context) error
 // delegates all other context calls to the embedded Context.
 type ApplicationContext struct {
 	context.Context
-	applicationConfig *config.Config
+	applicationConfig *config.Config //TODO: rename to config
 }
 
 func NewContext() *ApplicationContext {
 	return &ApplicationContext{
 		Context: context.Background(),
-		applicationConfig: config.NewConfig(),
 	}
 }
 
 /**************************
  context.Context Interface
 ***************************/
+func (c *ApplicationContext) UpdateConfig(config *config.Config) {
+	c.applicationConfig = config
+}
+
 func (c *ApplicationContext) UpdateParent(parent context.Context) *ApplicationContext {
 	c.Context = parent
 	return c
