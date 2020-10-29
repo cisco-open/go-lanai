@@ -2,10 +2,6 @@ package security
 
 import "context"
 
-const (
-	ContextKeySecurity = "kSecurity"
-)
-
 type Authentication interface {
 	Principal() interface{}
 	Permissions() []string

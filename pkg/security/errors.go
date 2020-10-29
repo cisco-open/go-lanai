@@ -4,10 +4,12 @@ import "errors"
 
 
 const (
-	errorTypeOffset         = 24
+	Reserved        		= 11 << 24
+
+	errorTypeOffset         = 16
 	errorTypeMask           = ^int(0) << errorTypeOffset
 
-	errorSubTypeOffset      = 12
+	errorSubTypeOffset      = 10
 	errorSubTypeMask        = ^int(0) << errorSubTypeOffset
 
 	defaultErrorCodeMask    = ^int(0)
@@ -15,7 +17,7 @@ const (
 // All "Type" values are used as mask
 const (
 	_ = iota
-	ErrorTypeCodeAuthentication = iota << errorTypeOffset
+	ErrorTypeCodeAuthentication = Reserved + iota << errorTypeOffset
 	ErrorTypeCodeAccessControl
 )
 

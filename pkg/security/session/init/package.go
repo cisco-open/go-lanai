@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/middleware"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/route"
+	"fmt"
 	"go.uber.org/fx"
 	"net/http"
 )
@@ -15,7 +16,7 @@ import (
 var Module = &bootstrap.Module{
 	Precedence: security.MinSecurityPrecedence + 10,
 	Options: []fx.Option{
-		fx.Provide(session.NewManager, NewSessionStore),
+		fx.Provide(session.NewManager, newSessionStore, security.BindSessionProperties),
 		fx.Invoke(setup),
 	},
 }
@@ -32,17 +33,14 @@ func Use() {
 /**************************
 	Provider
 ***************************/
-func NewSessionStore(ctx *bootstrap.ApplicationContext) session.Store {
-	var secret []byte
-	switch v := ctx.Value("security.session.secret"); v.(type) {
-	case string:
-		secret = []byte(v.(string))
+func newSessionStore(properties security.SessionProperties) session.Store {
+	secret := []byte(properties.Secret)
+	switch properties.StoreType {
+	case security.SessionStoreTypeMemory:
+		return store.NewMemoryStore(secret)
 	default:
-		return nil
+		panic(fmt.Errorf("unsupported session storage"))
 	}
-
-	// TODO create different type based on properties
-	return store.NewMemoryStore(secret)
 }
 
 /**************************
@@ -69,7 +67,7 @@ func setup(_ fx.Lifecycle, dep setupComponents) {
 	sessionTestMiddleware := middleware.NewBuilder("post-sessionMiddleware").
 		ApplyTo(matcher).
 		Order(0).
-		Use(dep.SessionManager.SessionTestHandlerFunc()).
+		Use(session.SessionDebugHandlerFunc()).
 		WithCondition(func (r *http.Request) bool { return true }).
 		Build()
 

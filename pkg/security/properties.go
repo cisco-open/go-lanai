@@ -1,0 +1,55 @@
+package security
+
+import (
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
+	"github.com/pkg/errors"
+	"go.uber.org/fx"
+)
+
+/***********************
+	General
+************************/
+type bindingDependencies struct {
+	fx.In
+	Config *appconfig.Config `name:"bootstrap_config"`
+}
+
+/***********************
+	Session
+************************/
+const (
+	SessionStoreTypeMemory = iota
+	SessionStoreTypeRedis
+)
+
+type SessionStoreType int
+
+const SessionPropertiesPrefix = "security.session"
+
+type SessionProperties struct {
+	StoreType SessionStoreType  `json:"storage"`
+	Secret    string            `json:"secret"`
+	Cookie    *CookieProperties `json:"domain"`
+}
+
+type CookieProperties struct {
+	Domain string `json:"domain"`
+}
+
+//NewSessionProperties create a SessionProperties with default values
+func NewSessionProperties() *SessionProperties {
+	return &SessionProperties {
+		StoreType: SessionStoreTypeMemory,
+		Secret: "default-session-secret",
+		Cookie: &CookieProperties{ },
+	}
+}
+
+//BindSessionProperties create and bind SessionProperties, with a optional prefix
+func BindSessionProperties(d bindingDependencies) SessionProperties {
+	props := NewSessionProperties()
+	if err := d.Config.Bind(props, SessionPropertiesPrefix); err != nil {
+		panic(errors.Wrap(err, "failed to bind SessionProperties"))
+	}
+	return *props
+}

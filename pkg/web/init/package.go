@@ -11,7 +11,7 @@ import (
 var Module = &bootstrap.Module{
 	Precedence: 1000,
 	PriorityOptions: []fx.Option{
-		fx.Provide(gin.Default, web.NewRegistrar),
+		fx.Provide(web.BindServerProperties, gin.Default, web.NewRegistrar),
 		fx.Invoke(setup),
 	},
 }

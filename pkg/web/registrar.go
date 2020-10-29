@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -19,9 +18,6 @@ import (
 const (
 	kGinContextKey = "GinContext"
 	DefaultGroup = "/"
-
-	PropertyServerPort		  = "server.port"
-	PropertyServerContextPath = "server.servlet.context-path"
 )
 
 var (
@@ -29,9 +25,9 @@ var (
 )
 
 type Registrar struct {
-	engine *gin.Engine
-	router gin.IRouter
-	context *bootstrap.ApplicationContext
+	engine     *gin.Engine
+	router     gin.IRouter
+	properties ServerProperties
 	// go-kit middleware options
 	options   []httptransport.ServerOption
 	validator binding.StructValidator
@@ -40,10 +36,10 @@ type Registrar struct {
 }
 
 // TODO support customizers
-func NewRegistrar(g *gin.Engine, ctx *bootstrap.ApplicationContext) *Registrar {
+func NewRegistrar(g *gin.Engine, properties ServerProperties) *Registrar {
 	return &Registrar{
-		engine: g,
-		context: ctx,
+		engine:     g,
+		properties: properties,
 		options: []httptransport.ServerOption{
 			httptransport.ServerBefore(ginContextExtractor),
 		},
@@ -68,11 +64,12 @@ func (r *Registrar) Run() (err error) {
 	if err = r.initialize(); err != nil {
 		return
 	}
+
 	//TODO config server with more options, and proper error handling
-	var port = r.context.Value(PropertyServerPort)
-	var contextPath = path.Clean("/" + r.context.Value(PropertyServerContextPath).(string))
-	var addr = fmt.Sprintf(":%v", port)
+	var contextPath = path.Clean("/" + r.properties.ContextPath)
 	r.router = r.engine.Group(contextPath)
+
+	var addr = fmt.Sprintf(":%v", r.properties.Port)
 	s := &http.Server{
 		Addr:           addr,
 		Handler:        r.engine,
