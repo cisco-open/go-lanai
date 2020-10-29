@@ -4,11 +4,13 @@ import "errors"
 
 
 const (
-	errorTypeOffset         = 16
-	errorTypeMask           = 0xffffffff << errorTypeOffset
+	errorTypeOffset         = 24
+	errorTypeMask           = ^int(0) << errorTypeOffset
 
-	errorSubTypeOffset      = 8
-	errorSubTypeMask        = 0xffffffff << errorSubTypeOffset
+	errorSubTypeOffset      = 12
+	errorSubTypeMask        = ^int(0) << errorSubTypeOffset
+
+	defaultErrorCodeMask    = ^int(0)
 )
 // All "Type" values are used as mask
 const (
@@ -47,50 +49,26 @@ var (
 	ErrorSubTypeUsernamePasswordAuth = newErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))
 )
 
-type ErrorCodeMasker interface {
-	Mask() int
-}
-
 type ErrorCoder interface {
 	Code() int
+}
+
+type ComparableErrorCoder interface {
+	CodeMask() int
 }
 
 type codedError struct {
 	code int
 	error
+	mask int
 }
 
 func (e *codedError) Code() int {
 	return e.code
 }
 
-type parentCodedError struct {
-	codedError
-	mask int
-}
-
-func (e *parentCodedError) Mask() int {
+func (e *codedError) CodeMask() int {
 	return e.mask
-}
-
-func newErrorType(code int, e error) *parentCodedError {
-	return &parentCodedError{
-		codedError: codedError{
-			code:  code,
-			error: e,
-		},
-		mask: errorTypeMask,
-	}
-}
-
-func newErrorSubType(code int, e error) *parentCodedError {
-	return &parentCodedError{
-		codedError: codedError{
-			code:  code,
-			error: e,
-		},
-		mask: errorSubTypeMask,
-	}
 }
 
 // Is return true if
@@ -98,8 +76,8 @@ func newErrorSubType(code int, e error) *parentCodedError {
 //  2. target is a type/sub-type error and the receiver error is in same type/sub-type
 func (e *codedError) Is(target error) bool {
 	compare := e.code
-	if masker, ok := target.(ErrorCodeMasker); ok {
-		compare = e.code & masker.Mask()
+	if masker, ok := target.(ComparableErrorCoder); ok {
+		compare = e.code & masker.CodeMask()
 	}
 
 	coder, ok := target.(ErrorCoder)
@@ -109,11 +87,32 @@ func (e *codedError) Is(target error) bool {
 /************************
 	Constructors
 *************************/
-func NewAuthenticatorNotAvailableError(text string) error {
+func newCodedError(code int, e error, mask int) error {
 	return &codedError{
-		code: ErrorCodeAuthenticatorNotAvailable,
-		error: errors.New(text),
+		code: code,
+		error: e,
+		mask: mask,
 	}
+}
+
+func newErrorType(code int, e error) error {
+	return newCodedError(code, e, errorTypeMask)
+}
+
+func newErrorSubType(code int, e error) error {
+	return newCodedError(code, e, errorSubTypeMask)
+}
+
+func NewAuthenticationError(text string) error {
+	return newCodedError(ErrorTypeCodeAuthentication, errors.New(text), errorTypeMask)
+}
+
+func NewAccessControlError(text string) error {
+	return newCodedError(ErrorTypeCodeAccessControl, errors.New(text), errorTypeMask)
+}
+
+func NewAuthenticatorNotAvailableError(text string) error {
+	return newCodedError(ErrorCodeAuthenticatorNotAvailable, errors.New(text), defaultErrorCodeMask)
 }
 
 func NewUsernameNotFoundError(text string) error {

@@ -13,12 +13,6 @@ type Authentication interface {
 	Details() interface{}
 }
 
-type Candidate interface {
-	Principal() interface{}
-	Credentials() interface{}
-	Details() interface{}
-}
-
 // EmptyAuthentication represent unauthenticated user.
 // Note: anonymous user is considered authenticated
 type EmptyAuthentication string
