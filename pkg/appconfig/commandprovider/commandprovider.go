@@ -1,7 +1,7 @@
 package commandprovider
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -13,7 +13,7 @@ const (
 )
 
 type ConfigProvider struct {
-	config.ProviderMeta
+	appconfig.ProviderMeta
 	prefix  string
 	appName string
 	extras  map[string]string
@@ -22,7 +22,7 @@ type ConfigProvider struct {
 }
 
 func (f *ConfigProvider) Load() {
-	fmt.Println("Loading command line config")
+	fmt.Println("Loading command line appconfig")
 
 	//TODO: review the commented out section to see if it's actually needed
 	//f.once.Do(func() {
@@ -38,20 +38,24 @@ func (f *ConfigProvider) Load() {
 	//}
 	f.Valid = false
 
-	f.Settings = make(map[string] interface{})
+	settings := make(map[string] interface{})
 
 	f.flagSet.VisitAll(func(flag *pflag.Flag) {
-		key := config.NormalizeKey(f.prefix + flag.Name)
-		f.Settings[key] = flag.Value.String()
+		key := appconfig.NormalizeKey(f.prefix + flag.Name)
+		settings[key] = flag.Value.String()
 	})
 
 	// Apply extras
 	for k, v := range f.extras {
-		f.Settings[k] = v
+		settings[k] = v
 	}
 
 	// Apply application name
-	f.Settings[configKeyAppName] = f.appName
+	settings[configKeyAppName] = f.appName
+
+	unFlattened, _ := appconfig.UnFlatten(settings)
+
+	f.Settings = unFlattened
 
 	f.Valid = true
 }
@@ -75,9 +79,9 @@ func NewCobraProvider(description string, precedence int, command *cobra.Command
 	flagSet := extractFlagSet(command)
 
 	return &ConfigProvider{
-		ProviderMeta: config.ProviderMeta{Description: description, Precedence: precedence},
-		prefix:  prefix,
-		flagSet: flagSet,
-		appName: command.Root().Name(),
+		ProviderMeta: appconfig.ProviderMeta{Description: description, Precedence: precedence},
+		prefix:       prefix,
+		flagSet:      flagSet,
+		appName:      command.Root().Name(),
 	}
 }

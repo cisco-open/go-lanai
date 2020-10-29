@@ -91,7 +91,7 @@ func (b *MappingBuilder) validate() (err error) {
 func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	// For templated HTMLs, it's usually browser-to-service communication
 	// Since we don't usually need to do service-to-service communication,
-	//we don't need to config request encoder and response decoder
+	//we don't need to appconfig request encoder and response decoder
 	var e           endpoint.Endpoint
 	var decodeRequestFunc = httptransport.NopRequestDecoder
 	var encodeResponseFunc = ginTemplateEncodeResponseFunc

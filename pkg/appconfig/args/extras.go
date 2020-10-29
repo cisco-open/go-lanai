@@ -1,7 +1,7 @@
 package args
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"os"
 	"strings"
 )
@@ -24,7 +24,7 @@ func Extras(exists func(name string) bool) (extras map[string]string) {
 		v = v[2:]
 		split := strings.SplitN(v, "=", 2)
 		if len(split) == 2 {
-			key := config.NormalizeKey(split[0])
+			key := appconfig.NormalizeKey(split[0])
 			extras[key] = split[1]
 			strip = append(strip, n)
 		} else if n == len(args)-1 {
@@ -35,7 +35,7 @@ func Extras(exists func(name string) bool) (extras map[string]string) {
 			// Flag exists
 			n++
 		} else {
-			key := config.NormalizeKey(v)
+			key := appconfig.NormalizeKey(v)
 			extras[key] = args[n+1]
 			strip = append(strip, n, n+1)
 			n++

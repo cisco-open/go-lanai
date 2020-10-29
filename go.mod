@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/sessions v1.1.3
 	github.com/hashicorp/consul/api v1.3.0
+	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/quasoft/memstore v0.0.0-20180925164028-84a050167438
 	github.com/spf13/cobra v1.1.0

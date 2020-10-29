@@ -2,7 +2,7 @@ package bootstrap
 
 import (
 	"context"
-	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"fmt"
 )
 
@@ -12,19 +12,22 @@ type LifecycleHandler func(context.Context) error
 // delegates all other context calls to the embedded Context.
 type ApplicationContext struct {
 	context.Context
-	applicationConfig *config.Config
+	applicationConfig *appconfig.Config //TODO: rename to appconfig
 }
 
 func NewContext() *ApplicationContext {
 	return &ApplicationContext{
 		Context: context.Background(),
-		applicationConfig: config.NewConfig(),
 	}
 }
 
 /**************************
  context.Context Interface
 ***************************/
+func (c *ApplicationContext) UpdateConfig(config *appconfig.Config) {
+	c.applicationConfig = config
+}
+
 func (c *ApplicationContext) UpdateParent(parent context.Context) *ApplicationContext {
 	c.Context = parent
 	return c

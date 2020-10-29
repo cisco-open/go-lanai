@@ -1,24 +1,24 @@
 package consulprovider
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/config"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"cto-github.cisco.com/livdu/jupiter/pkg/consul"
 	"fmt"
 )
 
 const (
-	ConfigRootConsulConfigProvider = "spring.cloud.consul.config"
+	ConfigRootConsulConfigProvider = "spring.cloud.consul.appconfig" //TODO: name should be changed
 	ConfigKeyAppName               = "spring.application.name"
 )
 
-type ConfigProviderConfig struct {
-	Enabled        bool   `config:"default=false"`
-	Prefix         string `config:"default=userviceconfiguration"`
-	DefaultContext string `config:"default=defaultapplication"`
+type ConsulConfigProperties struct {
+	Enabled        bool   `json:enabled`
+	Prefix         string `json:prefix`
+	DefaultContext string `json:"default-context`
 }
 
 type ConfigProvider struct {
-	config.ProviderMeta
+	appconfig.ProviderMeta
 	contextPath  string
 	connection   *consul.Connection
 }
@@ -34,17 +34,16 @@ func (f *ConfigProvider) Load() {
 
 	//TODO: error handling
 	defaultSettings, _ = f.connection.ListKeyValuePairs(f.contextPath)
+	unFlattenedSettings, _ := appconfig.UnFlatten(defaultSettings)
 
-	for k, v := range defaultSettings {
-		f.Settings[config.NormalizeKey(k)] = v
-	}
+	f.Settings = unFlattenedSettings
 
 	f.Valid = true
 }
 
 func NewConsulProvider(description string, precedence int, contextPath string, conn *consul.Connection) *ConfigProvider {
 	return &ConfigProvider{
-			ProviderMeta: config.ProviderMeta{Description: description, Precedence: precedence},
+			ProviderMeta: appconfig.ProviderMeta{Description: description, Precedence: precedence},
 			contextPath:  contextPath, //fmt.Sprintf("%s/%s", f.sourceConfig.Prefix, f.contextPath)
 			connection:   conn,
 		}
