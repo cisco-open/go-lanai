@@ -109,3 +109,16 @@ func uf(k string, v interface{}, opts *Options) (n interface{}) {
 
 	return
 }
+
+func UnFlattenKey(k string, configures...func(*Options)) []string {
+	//TODO: deduplicate
+	opts := &Options{
+		Delimiter: ".",
+	}
+
+	for _, configure := range configures {
+		configure(opts)
+	}
+
+	return strings.Split(k, opts.Delimiter)
+}

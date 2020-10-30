@@ -29,7 +29,7 @@ func bootstrap(lc fx.Lifecycle) {
 
 			fmt.Println("[bootstrap] - On Application Start")
 			ac.dumpConfigurations()
-
+			
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

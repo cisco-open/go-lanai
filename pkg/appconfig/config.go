@@ -60,19 +60,22 @@ func (c *Config) Load(force bool) error {
 	return nil
 }
 
-
-
 func (c *Config) Value(key string) (interface{}, error) {
 	if !c.Loaded() {
 		return "", ErrNotLoaded
 	}
 
 	targetKey := c.alias(key)
-	if val, ok := c.settings[targetKey]; !ok {
-		return "", errors.Wrap(ErrNotFound, key)
-	} else {
-		return val, nil
+
+	nestedKeys := UnFlattenKey(targetKey)
+
+	var tmp interface{} = c.settings
+	for _, k := range nestedKeys {
+		//TODO: case check
+		tmp = (tmp.(map[string]interface{}))[k]
 	}
+
+	return tmp, nil
 }
 
 func (c *Config) Bind(target interface{}, prefix string) error {
