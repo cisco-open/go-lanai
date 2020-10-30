@@ -61,7 +61,11 @@ type bootstrapConfigParam struct {
 
 func newBootstrapConfig(p bootstrapConfigParam) *appconfig.BootstrapConfig {
 	bootstrapConfig := appconfig.NewBootstrapConfig(p.FileProvider, p.CmdProvider)
-	bootstrapConfig.Load(false)
+
+	error := bootstrapConfig.Load(false)
+	if error != nil {
+		panic(error)
+	}
 
 	return bootstrapConfig
 }
@@ -124,7 +128,12 @@ func newApplicationConfig(p newApplicationConfigParam) *appconfig.ApplicationCon
 	mergedProvider = append(mergedProvider, p.BootstrapConfig.Providers...)
 
 	applicationConfig := appconfig.NewApplicationConfig(mergedProvider...)
-	applicationConfig.Load(false)
+
+	error := applicationConfig.Load(false)
+
+	if error != nil {
+		panic(error)
+	}
 
 	return applicationConfig
 }

@@ -32,6 +32,16 @@ func (_ *ApplicationContext) String() string {
 	return "application context"
 }
 
+func (c *ApplicationContext) Value(key interface{}) interface{} {
+	value, error := c.config.Value(key.(string))
+
+	if error == nil {
+		return value
+	}
+
+	return nil
+}
+
 /*************
 * unexported methods
 **************/
