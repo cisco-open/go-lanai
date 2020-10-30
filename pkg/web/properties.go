@@ -3,16 +3,7 @@ package web
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"github.com/pkg/errors"
-	"go.uber.org/fx"
 )
-
-/***********************
-	General
-************************/
-type bindingDependencies struct {
-	fx.In
-	Config *appconfig.Config `name:"bootstrap_config"`
-}
 
 /***********************
 	Server
@@ -33,9 +24,9 @@ func NewServerProperties() *ServerProperties {
 }
 
 //BindServerProperties create and bind a ServerProperties using default prefix
-func BindServerProperties(d bindingDependencies) ServerProperties {
+func BindServerProperties(cfg *appconfig.ApplicationConfig) ServerProperties {
 	props := NewServerProperties()
-	if err := d.Config.Bind(props, ServerPropertiesPrefix); err != nil {
+	if err := cfg.Bind(props, ServerPropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind ServerProperties"))
 	}
 	return *props

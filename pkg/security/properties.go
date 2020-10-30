@@ -3,16 +3,7 @@ package security
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"github.com/pkg/errors"
-	"go.uber.org/fx"
 )
-
-/***********************
-	General
-************************/
-type bindingDependencies struct {
-	fx.In
-	Config *appconfig.Config `name:"bootstrap_config"`
-}
 
 /***********************
 	Session
@@ -46,9 +37,9 @@ func NewSessionProperties() *SessionProperties {
 }
 
 //BindSessionProperties create and bind SessionProperties, with a optional prefix
-func BindSessionProperties(d bindingDependencies) SessionProperties {
+func BindSessionProperties(cfg *appconfig.ApplicationConfig) SessionProperties {
 	props := NewSessionProperties()
-	if err := d.Config.Bind(props, SessionPropertiesPrefix); err != nil {
+	if err := cfg.Bind(props, SessionPropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind SessionProperties"))
 	}
 	return *props
