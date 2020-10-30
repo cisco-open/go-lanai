@@ -33,13 +33,7 @@ func (_ *ApplicationContext) String() string {
 }
 
 func (c *ApplicationContext) Value(key interface{}) interface{} {
-	value, error := c.config.Value(key.(string))
-
-	if error == nil {
-		return value
-	}
-
-	return nil
+	return c.config.Value(key.(string))
 }
 
 /*************

@@ -8,7 +8,7 @@ import (
 	"github.com/imdario/mergo"
 )
 
-//TODO: we don't support the case where the key contains an index.
+//TODO: when unflatten, we don't support the case where the key contains an index yet.
 
 // Options the flatten options.
 // By default: Demiliter = "."

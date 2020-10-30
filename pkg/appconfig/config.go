@@ -9,7 +9,6 @@ import (
 )
 
 var ErrNotLoaded = errors.New("Configuration not loaded")
-var ErrNotFound = errors.New("Missing required setting")
 
 type config struct {
 	Providers     []Provider //such as yaml provider, commandline etc.
@@ -26,7 +25,7 @@ type ApplicationConfig struct {
 }
 
 type ConfigAccessor interface {
-	Value(key string) (interface{}, error)
+	Value(key string) interface{}
 	Bind(target interface{}, prefix string) error
 	Each(apply func(string, interface{}))
 }
@@ -70,10 +69,11 @@ func (c *config) Load(force bool) (loadError error) {
 		mergoConfig.Overwrite = true
 	}
 	for _, provider := range c.Providers {
-		error := mergo.Merge(&merged, provider.GetSettings(), mergeOption)
-
-		if error != nil {
-			return errors.Wrap(error, "Failed to merge properties from property sources")
+		if provider.GetSettings() != nil {
+			error := mergo.Merge(&merged, provider.GetSettings(), mergeOption)
+			if error != nil {
+				return errors.Wrap(error, "Failed to merge properties from property sources")
+			}
 		}
 	}
 
@@ -81,9 +81,9 @@ func (c *config) Load(force bool) (loadError error) {
 	return nil
 }
 
-func (c *config) Value(key string) (interface{}, error) {
+func (c *config) Value(key string) interface{} {
 	if !c.isLoaded {
-		return "", ErrNotLoaded
+		return nil
 	}
 
 	targetKey := c.alias(key)
@@ -92,11 +92,14 @@ func (c *config) Value(key string) (interface{}, error) {
 
 	var tmp interface{} = c.settings
 	for _, k := range nestedKeys {
-		//TODO: case check
-		tmp = (tmp.(map[string]interface{}))[k]
+		if _, ok := tmp.(map[string] interface{}); ok {
+			tmp = (tmp.(map[string]interface{}))[k]
+		} else {
+			return nil
+		}
 	}
 
-	return tmp, nil
+	return tmp
 }
 
 func (c *config) Bind(target interface{}, prefix string) error {
@@ -104,20 +107,22 @@ func (c *config) Bind(target interface{}, prefix string) error {
 
 	var source interface{} = c.settings
 
-	//TODO: switch on type
 	for i := 0; i < len(keys); i++ {
-		source = source.(map[string] interface{})[keys[i]]
+
+		if _, ok := source.(map[string] interface{}); ok {
+			source = source.(map[string] interface{})[keys[i]]
+		} else {
+			return errors.New("prefix doesn't exist")
+		}
 	}
 
-	//TODO: error handling
 	serialized, error := json.Marshal(source)
 
 	if error == nil {
 		error = json.Unmarshal(serialized, target)
 	}
 
-
-	return nil
+	return error
 }
 
 func (c *config) Each(apply func(string, interface{})) {

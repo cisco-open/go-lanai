@@ -85,7 +85,7 @@ type consulProviderResults struct {
 }
 
 func newConsulProvider(	bootstrapConfig *appconfig.BootstrapConfig, consulConfigProperties *consulprovider.ConsulConfigProperties, consulConnection *consul.Connection) consulProviderResults {
-	appName, _ := bootstrapConfig.Value(consulprovider.ConfigKeyAppName)
+	appName := bootstrapConfig.Value(consulprovider.ConfigKeyAppName)
 
 	//1. default contexts
 	defaultContextConsulProvider := consulprovider.NewConsulProvider(

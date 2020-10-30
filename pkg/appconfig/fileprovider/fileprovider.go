@@ -2,6 +2,7 @@ package fileprovider
 
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/parser"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,12 +15,10 @@ const (
 	configsDirectory = "configs"
 )
 
-type PropertyParser func([]byte) (map[string]interface{}, error)
-
 type ConfigProvider struct {
 	appconfig.ProviderMeta
 	reader io.Reader
-	propertyParser PropertyParser
+	propertyParser parser.PropertyParser
 }
 
 func newProvider(description string, precedence int, filePath string, reader io.Reader) *ConfigProvider {
@@ -29,7 +28,7 @@ func newProvider(description string, precedence int, filePath string, reader io.
 		return &ConfigProvider{
 			ProviderMeta:   appconfig.ProviderMeta{Description: description, Precedence: precedence},
 			reader:         reader,
-			propertyParser: NewYamlPropertyParser(),
+			propertyParser: parser.NewYamlPropertyParser(),
 		}
 	//TODO: impl the following
 	/*
