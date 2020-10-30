@@ -2,9 +2,9 @@ package appconfig
 
 type ProviderMeta struct {
 	Description string
-	Valid    bool //invalid if not loaded or during load
-	Settings map[string]interface{} //storage for the settings loaded by the provider
-	Precedence int //the precedence for which the settings will take effect.
+	IsLoaded    bool                   //invalid if not loaded or during load
+	Settings    map[string]interface{} //storage for the settings loaded by the provider
+	Precedence  int                    //the precedence for which the settings will take effect.
 }
 
 func (providerMeta ProviderMeta) GetSettings() map[string]interface{} {
@@ -19,6 +19,6 @@ func (providerMeta ProviderMeta) GetDescription() string {
 	return providerMeta.Description
 }
 
-func (providerMeta ProviderMeta) isValid() bool {
-	return providerMeta.Valid
+func (providerMeta ProviderMeta) isLoaded() bool {
+	return providerMeta.IsLoaded
 }

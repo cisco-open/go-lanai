@@ -12,7 +12,7 @@ type LifecycleHandler func(context.Context) error
 // delegates all other context calls to the embedded Context.
 type ApplicationContext struct {
 	context.Context
-	applicationConfig *appconfig.Config //TODO: rename to appconfig
+	config *appconfig.ApplicationConfig
 }
 
 func NewContext() *ApplicationContext {
@@ -21,37 +21,35 @@ func NewContext() *ApplicationContext {
 	}
 }
 
+func (c *ApplicationContext) getConfig() appconfig.ConfigAccessor {
+	return c.config
+}
+
 /**************************
  context.Context Interface
 ***************************/
-func (c *ApplicationContext) UpdateConfig(config *appconfig.Config) {
-	c.applicationConfig = config
-}
-
-func (c *ApplicationContext) UpdateParent(parent context.Context) *ApplicationContext {
-	c.Context = parent
-	return c
-}
-
 func (_ *ApplicationContext) String() string {
 	return "application context"
 }
 
 func (c *ApplicationContext) Value(key interface{}) interface{} {
-	//TODO: This method is meant to be accessed only after application context is loaded completely
-	// PANIC if this method is called before fully ready
+	return c.config.Value(key.(string))
+}
 
-	value, error := c.applicationConfig.Value(key.(string))
+/*************
+* unexported methods
+**************/
+func (c *ApplicationContext) updateConfig(config *appconfig.ApplicationConfig) {
+	c.config = config
+}
 
-	if error == nil {
-		return value
-	}
-
-	return nil
+func (c *ApplicationContext) updateParent(parent context.Context) *ApplicationContext {
+	c.Context = parent
+	return c
 }
 
 func (c *ApplicationContext) dumpConfigurations() {
-	c.applicationConfig.Each(func(key string, value interface{}) {
+	c.config.Each(func(key string, value interface{}) {
 		fmt.Println(key + ": " + fmt.Sprintf("%v", value))
 	})
 }

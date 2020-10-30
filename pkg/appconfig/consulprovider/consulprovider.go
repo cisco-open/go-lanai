@@ -3,18 +3,17 @@ package consulprovider
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"cto-github.cisco.com/livdu/jupiter/pkg/consul"
-	"fmt"
 )
 
 const (
-	ConfigRootConsulConfigProvider = "spring.cloud.consul.appconfig" //TODO: name should be changed
+	ConfigRootConsulConfigProvider = "spring.cloud.consul.config"
 	ConfigKeyAppName               = "spring.application.name"
 )
 
 type ConsulConfigProperties struct {
-	Enabled        bool   `json:enabled`
-	Prefix         string `json:prefix`
-	DefaultContext string `json:"default-context`
+	Enabled        bool   `json:"enabled"`
+	Prefix         string `json:"prefix"`
+	DefaultContext string `json:"default-context"`
 }
 
 type ConfigProvider struct {
@@ -23,22 +22,33 @@ type ConfigProvider struct {
 	connection   *consul.Connection
 }
 
-func (f *ConfigProvider) Load() {
-	f.Valid = false
+func (configProvider *ConfigProvider) Load() (loadError error) {
+	defer func(){
+		if loadError != nil {
+			configProvider.IsLoaded = false
+		} else {
+			configProvider.IsLoaded = true
+		}
+	}()
 
-	f.Settings = make(map[string]interface{})
+	configProvider.Settings = make(map[string]interface{})
 
 	// load keys from default context
-	fmt.Printf("Loading configuration from consul (%s): %s)", f.connection.Host(), f.contextPath)
 	var defaultSettings map[string]interface{}
 
-	//TODO: error handling
-	defaultSettings, _ = f.connection.ListKeyValuePairs(f.contextPath)
-	unFlattenedSettings, _ := appconfig.UnFlatten(defaultSettings)
+	defaultSettings, loadError = configProvider.connection.ListKeyValuePairs(configProvider.contextPath)
+	if loadError != nil {
+		return loadError
+	}
 
-	f.Settings = unFlattenedSettings
+	unFlattenedSettings, loadError := appconfig.UnFlatten(defaultSettings)
+	if loadError != nil {
+		return loadError
+	}
 
-	f.Valid = true
+	configProvider.Settings = unFlattenedSettings
+
+	return nil
 }
 
 func NewConsulProvider(description string, precedence int, contextPath string, conn *consul.Connection) *ConfigProvider {

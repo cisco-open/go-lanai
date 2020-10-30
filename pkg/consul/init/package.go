@@ -24,16 +24,11 @@ func Use() {
 
 }
 
-type bootstrapConfigParam struct {
-	fx.In
-	Config *appconfig.Config `name:"bootstrap_config"`
-}
-
-func newConnectionProperties(param bootstrapConfigParam) *consul.ConnectionProperties {
+func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *consul.ConnectionProperties {
 	c := &consul.ConnectionProperties{
 		//TODO: defaults can be specified here
 	}
-	param.Config.Bind(c, "spring.cloud.consul")
+	bootstrapConfig.Bind(c, "spring.cloud.consul")
 	return c
 }
 

@@ -15,13 +15,14 @@ import (
 var ConfigModule = &bootstrap.Module{
 	Precedence: bootstrap.HighestPrecedence,
 	PriorityOptions: []fx.Option{
-		fx.Provide(newCommandProvider),
-		fx.Provide(newBootstrapFileProvider),
-		fx.Provide(newBootstrapConfig),
-		fx.Provide(newApplicationFileProvider),
-		fx.Provide(newConsulProvider),
-		fx.Provide(newConsulConfigProperties),
-		fx.Invoke(loadApplicationConfig),
+		fx.Provide(
+			newCommandProvider,
+			newBootstrapFileProvider,
+			newBootstrapConfig,
+			newApplicationFileProvider,
+			newConsulProvider,
+			newConsulConfigProperties,
+			newApplicationConfig),
 	},
 }
 
@@ -58,37 +59,24 @@ type bootstrapConfigParam struct {
 	FileProvider *fileprovider.ConfigProvider `name:"bootstrap_file_provider"`
 }
 
-type bootstrapConfigResult struct {
-	fx.Out
-	Config *appconfig.Config `name:"bootstrap_config"`
+func newBootstrapConfig(p bootstrapConfigParam) *appconfig.BootstrapConfig {
+	bootstrapConfig := appconfig.NewBootstrapConfig(p.FileProvider, p.CmdProvider)
+
+	error := bootstrapConfig.Load(false)
+	if error != nil {
+		panic(error)
+	}
+
+	return bootstrapConfig
 }
 
-func newBootstrapConfig(p bootstrapConfigParam) bootstrapConfigResult {
-	bootstrapConfig := appconfig.NewConfig(p.FileProvider, p.CmdProvider)
-	bootstrapConfig.Load(false)
-
-	return bootstrapConfigResult{Config: bootstrapConfig}
-}
-
-type consulConfigPropertiesParam struct {
-	fx.In
-	Config *appconfig.Config `name:"bootstrap_config"`
-}
-
-func newConsulConfigProperties(param consulConfigPropertiesParam) *consulprovider.ConsulConfigProperties {
+func newConsulConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *consulprovider.ConsulConfigProperties {
 	p := &consulprovider.ConsulConfigProperties{
 		Prefix: "userviceconfiguration",
 		DefaultContext: "defaultapplication",
 	}
-	param.Config.Bind(p, "spring.cloud.consul.appconfig")
+	bootstrapConfig.Bind(p, consulprovider.ConfigRootConsulConfigProvider)
 	return p
-}
-
-type consulProviderParam struct {
-	fx.In
-	Config *appconfig.Config `name:"bootstrap_config"`
-	ConsulConfigProperties *consulprovider.ConsulConfigProperties
-	ConsulConnection *consul.Connection
 }
 
 type consulProviderResults struct {
@@ -96,10 +84,8 @@ type consulProviderResults struct {
 	Providers []appconfig.Provider `name:consul_providers`
 }
 
-func newConsulProvider(param consulProviderParam) consulProviderResults {
-	consulConfigProperties := param.ConsulConfigProperties
-	consulConnection := param.ConsulConnection
-	appName, _ := param.Config.Value(consulprovider.ConfigKeyAppName)
+func newConsulProvider(	bootstrapConfig *appconfig.BootstrapConfig, consulConfigProperties *consulprovider.ConsulConfigProperties, consulConnection *consul.Connection) consulProviderResults {
+	appName := bootstrapConfig.Value(consulprovider.ConfigKeyAppName)
 
 	//1. default contexts
 	defaultContextConsulProvider := consulprovider.NewConsulProvider(
@@ -127,21 +113,29 @@ func newApplicationFileProvider() applicationFileProviderResult {
 	return applicationFileProviderResult{FileProvider: p}
 }
 
-type loadApplicationConfigParam struct {
+type newApplicationConfigParam struct {
 	fx.In
 	FileProvider       *fileprovider.ConfigProvider `name:"application_file_provider"`
 	ConsulProviders	   []appconfig.Provider      `name:consul_providers`
-	Config             *appconfig.Config            `name:"bootstrap_config"`
-	ApplicationContext *bootstrap.ApplicationContext
+	BootstrapConfig    *appconfig.BootstrapConfig
 }
 
-func loadApplicationConfig(lc fx.Lifecycle, param loadApplicationConfigParam) {
-	param.Config.AddProvider(param.FileProvider)
-	for _, provider := range param.ConsulProviders {
-		param.Config.AddProvider(provider)
+func newApplicationConfig(p newApplicationConfigParam) *appconfig.ApplicationConfig {
+	var mergedProvider []appconfig.Provider
+
+	mergedProvider = append(mergedProvider, p.FileProvider)
+	mergedProvider = append(mergedProvider, p.ConsulProviders...)
+	mergedProvider = append(mergedProvider, p.BootstrapConfig.Providers...)
+
+	applicationConfig := appconfig.NewApplicationConfig(mergedProvider...)
+
+	error := applicationConfig.Load(false)
+
+	if error != nil {
+		panic(error)
 	}
-	param.Config.Load(false)
-	param.ApplicationContext.UpdateConfig(param.Config)
+
+	return applicationConfig
 }
 
 // Maker func, does nothing. Allow service to include this module in main()

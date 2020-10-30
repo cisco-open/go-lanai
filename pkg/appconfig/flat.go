@@ -8,7 +8,7 @@ import (
 	"github.com/imdario/mergo"
 )
 
-//TODO: we don't support the case where the key contains an index.
+//TODO: when unflatten, we don't support the case where the key contains an index yet.
 
 // Options the flatten options.
 // By default: Demiliter = "."
@@ -69,6 +69,8 @@ func recursiveVisit(key string, value interface{}, apply func(string, interface{
 	return
 }
 
+//TODO: snake case
+
 // Unflatten the map, it returns a nested map of a map
 // By default, the flatten has Delimiter = "."
 func UnFlatten(flat map[string]interface{}, configures...func(*Options)) (nested map[string]interface{}, err error) {
@@ -106,4 +108,17 @@ func uf(k string, v interface{}, opts *Options) (n interface{}) {
 	}
 
 	return
+}
+
+func UnFlattenKey(k string, configures...func(*Options)) []string {
+	//TODO: deduplicate
+	opts := &Options{
+		Delimiter: ".",
+	}
+
+	for _, configure := range configures {
+		configure(opts)
+	}
+
+	return strings.Split(k, opts.Delimiter)
 }

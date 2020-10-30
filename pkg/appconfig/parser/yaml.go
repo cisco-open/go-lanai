@@ -1,12 +1,10 @@
-package fileprovider
+package parser
 
 import (
 	//"gopkg.in/yaml.v2"
 	"encoding/json"
 	"github.com/ghodss/yaml"
 )
-
-//TODO: different package
 
 func NewYamlPropertyParser() PropertyParser {
 
