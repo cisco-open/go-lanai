@@ -16,9 +16,16 @@ type Config struct {
 	settings      map[string]interface{}
 }
 
-func NewConfig(providers ...Provider) *Config {
+func NewConfig(parent *Config, providers ...Provider) *Config {
+	var mergedProviders []Provider
+	if parent != nil {
+		mergedProviders = append(parent.Providers, providers...)
+	} else {
+		mergedProviders = providers
+	}
+
 	return &Config{
-		Providers:     providers,
+		Providers:     mergedProviders,
 		settings:      nil,
 	}
 }
@@ -27,12 +34,10 @@ func (c *Config) AddProvider(provider Provider) {
 	c.Providers = append(c.Providers, provider)
 }
 
-//TODO: is this function necessary? or correct? just because settings is not nil doesn't necessarily mean loading is complete
 func (c *Config) Loaded() bool {
 	return c.settings != nil
 }
 
-//TODO: change this to functional configuration
 func (c *Config) Load(force bool) error {
 	//sort based on precedence
 	sort.SliceStable(c.Providers, func(i, j int) bool { return c.Providers[i].GetPrecedence() > c.Providers[j].GetPrecedence() })

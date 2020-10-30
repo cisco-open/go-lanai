@@ -15,13 +15,14 @@ import (
 var ConfigModule = &bootstrap.Module{
 	Precedence: bootstrap.HighestPrecedence,
 	PriorityOptions: []fx.Option{
-		fx.Provide(newCommandProvider),
-		fx.Provide(newBootstrapFileProvider),
-		fx.Provide(newBootstrapConfig),
-		fx.Provide(newApplicationFileProvider),
-		fx.Provide(newConsulProvider),
-		fx.Provide(newConsulConfigProperties),
-		fx.Invoke(loadApplicationConfig),
+		fx.Provide(
+			newCommandProvider,
+			newBootstrapFileProvider,
+			newBootstrapConfig,
+			newApplicationFileProvider,
+			newConsulProvider,
+			newConsulConfigProperties,
+			newApplicationConfig),
 	},
 }
 
@@ -36,11 +37,6 @@ const (
 	ApplicationLocalFilePrecedence = iota
 	BootstrapLocalFilePrecedence   = iota
 )
-
-//TODO: each provide does the load and then adds itself to the config in application context.
-// The invoke can be empty and just act as a trigger point
-// This way the application context is growing as providers becomes ready
-// The invoke can just add a flag to indicate that its fully loaded.
 
 func newCommandProvider(cmd *cobra.Command) *commandprovider.ConfigProvider {
 	p := commandprovider.NewCobraProvider("command line", CommandlinePrecedence, cmd, "cli.flag.")
@@ -69,7 +65,7 @@ type bootstrapConfigResult struct {
 }
 
 func newBootstrapConfig(p bootstrapConfigParam) bootstrapConfigResult {
-	bootstrapConfig := appconfig.NewConfig(p.FileProvider, p.CmdProvider)
+	bootstrapConfig := appconfig.NewConfig(nil, p.FileProvider, p.CmdProvider)
 	bootstrapConfig.Load(false)
 
 	return bootstrapConfigResult{Config: bootstrapConfig}
@@ -132,21 +128,27 @@ func newApplicationFileProvider() applicationFileProviderResult {
 	return applicationFileProviderResult{FileProvider: p}
 }
 
-type loadApplicationConfigParam struct {
+type newApplicationConfigParam struct {
 	fx.In
 	FileProvider       *fileprovider.ConfigProvider `name:"application_file_provider"`
 	ConsulProviders	   []appconfig.Provider      `name:consul_providers`
 	Config             *appconfig.Config            `name:"bootstrap_config"`
-	ApplicationContext *bootstrap.ApplicationContext
 }
 
-func loadApplicationConfig(lc fx.Lifecycle, param loadApplicationConfigParam) {
-	param.Config.AddProvider(param.FileProvider)
-	for _, provider := range param.ConsulProviders {
-		param.Config.AddProvider(provider)
+type applicationConfigResults struct {
+	fx.Out
+	Config *appconfig.Config `name:"application_config"`
+}
+func newApplicationConfig(p newApplicationConfigParam) applicationConfigResults {
+	applicationConfig := appconfig.NewConfig(p.Config, p.FileProvider)
+
+	applicationConfig.AddProvider(p.FileProvider)
+	for _, provider := range p.ConsulProviders {
+		applicationConfig.AddProvider(provider)
 	}
-	param.Config.Load(false)
-	param.ApplicationContext.UpdateConfig(param.Config)
+	applicationConfig.Load(false)
+
+	return applicationConfigResults{Config:applicationConfig}
 }
 
 // Maker func, does nothing. Allow service to include this module in main()

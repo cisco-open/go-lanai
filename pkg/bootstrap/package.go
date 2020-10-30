@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
 	"fmt"
 	"go.uber.org/fx"
 )
@@ -11,7 +12,7 @@ var applicationContext = NewContext()
 var DefaultModule = &Module{
 	Precedence: HighestPrecedence,
 	PriorityOptions: []fx.Option{
-		fx.Supply(applicationContext),
+		fx.Provide(provideApplicationContext),
 		fx.Invoke(bootstrap),
 	},
 }
@@ -20,7 +21,16 @@ func init() {
 	Register(DefaultModule)
 }
 
-func bootstrap(lc fx.Lifecycle) {
+type provideApplicationContextParam struct {
+	fx.In
+	Config *appconfig.Config `name:"application_config"`
+}
+func provideApplicationContext(p provideApplicationContextParam) *ApplicationContext {
+	applicationContext.UpdateConfig(p.Config)
+	return applicationContext
+}
+
+func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
 	fmt.Println("[bootstrap] - bootstrap")
 
 	lc.Append(fx.Hook{
@@ -29,7 +39,7 @@ func bootstrap(lc fx.Lifecycle) {
 
 			fmt.Println("[bootstrap] - On Application Start")
 			ac.dumpConfigurations()
-			
+
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
