@@ -1,6 +1,9 @@
 package passwd
 
-import "cto-github.cisco.com/livdu/jupiter/pkg/security"
+import (
+	"cto-github.cisco.com/livdu/jupiter/pkg/security"
+	"encoding/gob"
+)
 
 /************************
 	security.Candidate
@@ -27,27 +30,43 @@ func (upp *UsernamePasswordPair) Details() interface{} {
 }
 
 /******************************
+	Serialization
+******************************/
+func GobRegister() {
+	gob.Register((*usernamePasswordAuthentication)(nil))
+}
+
+/******************************
 	security.Authentication
 ******************************/
-// UsernamePasswordAuthentication
+type UsernamePasswordAuthentication interface {
+	security.Authentication
+	IsUsernamePasswordAuthentication() bool
+}
+
+// usernamePasswordAuthentication
 // Note: all fields should not be used directly. It's exported only because gob only deal with exported field
-type UsernamePasswordAuthentication struct {
+type usernamePasswordAuthentication struct {
 	Account     security.Account
 	PermissionList []string
 }
 
-func (auth *UsernamePasswordAuthentication) Principal() interface{} {
+func (auth *usernamePasswordAuthentication) Principal() interface{} {
 	return auth.Account
 }
 
-func (auth *UsernamePasswordAuthentication) Permissions() []string {
+func (auth *usernamePasswordAuthentication) Permissions() []string {
 	return auth.PermissionList
 }
 
-func (auth *UsernamePasswordAuthentication) Authenticated() bool {
+func (auth *usernamePasswordAuthentication) Authenticated() bool {
 	return true
 }
 
-func (auth *UsernamePasswordAuthentication) Details() interface{} {
+func (auth *usernamePasswordAuthentication) Details() interface{} {
 	return auth.Account
+}
+
+func (auth *usernamePasswordAuthentication) IsUsernamePasswordAuthentication() bool {
+	return true
 }

@@ -9,7 +9,6 @@ import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/middleware"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/route"
-	"encoding/gob"
 	"fmt"
 	"go.uber.org/fx"
 	"net/http"
@@ -92,6 +91,6 @@ func setup(_ fx.Lifecycle, dep setupComponents) {
 }
 
 func registerTypes() {
-	gob.Register(security.EmptyAuthentication(""))
-	gob.Register((*passwd.UsernamePasswordAuthentication)(nil))
+	security.GobRegister()
+	passwd.GobRegister()
 }

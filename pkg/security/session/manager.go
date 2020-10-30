@@ -88,6 +88,8 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 
 		if auth, ok := current.Get(sessionKeySecurity).(security.Authentication); ok {
 			c.Set(security.ContextKeySecurity, auth)
+		} else {
+			c.Set(security.ContextKeySecurity, nil)
 		}
 	}
 }

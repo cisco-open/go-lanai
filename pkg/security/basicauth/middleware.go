@@ -21,7 +21,7 @@ func NewBasicAuthMiddleware(store security.Authenticator) *BasicAuthMiddleware {
 func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
-		currentAuth, ok := security.Get(ctx).(*passwd.UsernamePasswordAuthentication)
+		currentAuth, ok := security.Get(ctx).(passwd.UsernamePasswordAuthentication)
 		if ok && currentAuth.Authenticated() {
 			// already authenticated
 			basic.handleSuccess(ctx, nil)

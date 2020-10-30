@@ -1,6 +1,9 @@
 package security
 
-import "context"
+import (
+	"context"
+	"encoding/gob"
+)
 
 const (
 	HighestMiddlewareOrder = int(- 1 << 18 + 1) // -0x3ffff = -262143
@@ -36,6 +39,10 @@ func (EmptyAuthentication) Permissions() []string {
 
 func (EmptyAuthentication) MoreActionRequired() bool {
 	return false
+}
+
+func GobRegister() {
+	gob.Register(EmptyAuthentication(""))
 }
 
 func Get(ctx context.Context) Authentication {

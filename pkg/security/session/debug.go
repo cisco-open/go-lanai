@@ -13,7 +13,7 @@ func SessionDebugHandlerFunc() gin.HandlerFunc {
 
 		auth := security.Get(ctx)
 		if auth.Authenticated() {
-			fmt.Printf("Already authenticated with user %v\n", auth.Principal())
+			fmt.Printf("Already authenticated as %T\n", auth)
 		}
 
 		session := Get(ctx)
