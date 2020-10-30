@@ -11,10 +11,18 @@ import (
 var ErrNotLoaded = errors.New("Configuration not loaded")
 var ErrNotFound = errors.New("Missing required setting")
 
-type Config struct {
+type config struct {
 	Providers     []Provider //such as yaml provider, commandline etc.
 	settings      map[string]interface{}
 	isLoaded 	  bool
+}
+
+type BootstrapConfig struct {
+	*config
+}
+
+type ApplicationConfig struct {
+	*config
 }
 
 type ConfigAccessor interface {
@@ -23,14 +31,15 @@ type ConfigAccessor interface {
 	Each(apply func(string, interface{}))
 }
 
-func NewConfig(providers ...Provider) *Config {
-	return &Config{
-		Providers:     providers,
-		settings:      nil,
-	}
+func NewBootstrapConfig(providers ...Provider) *BootstrapConfig {
+	return &BootstrapConfig{&config{Providers: providers}}
 }
 
-func (c *Config) Load(force bool) (loadError error) {
+func NewApplicationConfig(providers ...Provider) *ApplicationConfig {
+	return &ApplicationConfig{&config{Providers: providers}}
+}
+
+func (c *config) Load(force bool) (loadError error) {
 	defer func() {
 		if loadError != nil {
 			c.isLoaded = false
@@ -57,8 +66,11 @@ func (c *Config) Load(force bool) (loadError error) {
 
 	merged := make(map[string]interface{})
 	// merge data
+	mergeOption := func(mergoConfig *mergo.Config) {
+		mergoConfig.Overwrite = true
+	}
 	for _, provider := range c.Providers {
-		error := mergo.Merge(&merged, provider.GetSettings())
+		error := mergo.Merge(&merged, provider.GetSettings(), mergeOption)
 
 		if error != nil {
 			return errors.Wrap(error, "Failed to merge properties from property sources")
@@ -69,7 +81,7 @@ func (c *Config) Load(force bool) (loadError error) {
 	return nil
 }
 
-func (c *Config) Value(key string) (interface{}, error) {
+func (c *config) Value(key string) (interface{}, error) {
 	if !c.isLoaded {
 		return "", ErrNotLoaded
 	}
@@ -87,7 +99,7 @@ func (c *Config) Value(key string) (interface{}, error) {
 	return tmp, nil
 }
 
-func (c *Config) Bind(target interface{}, prefix string) error {
+func (c *config) Bind(target interface{}, prefix string) error {
 	keys := strings.Split(prefix, ".")
 
 	var source interface{} = c.settings
@@ -108,11 +120,11 @@ func (c *Config) Bind(target interface{}, prefix string) error {
 	return nil
 }
 
-func (c *Config) Each(apply func(string, interface{})) {
+func (c *config) Each(apply func(string, interface{})) {
 	VisitEach(c.settings, apply)
 }
 
-func (c *Config) alias(key string) string {
+func (c *config) alias(key string) string {
 	// Return the actual target key name mapping through aliases
 	return NormalizeKey(key)
 }

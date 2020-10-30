@@ -21,12 +21,8 @@ func init() {
 	Register(DefaultModule)
 }
 
-type provideApplicationContextParam struct {
-	fx.In
-	Config *appconfig.Config `name:"application_config"`
-}
-func provideApplicationContext(p provideApplicationContextParam) *ApplicationContext {
-	applicationContext.updateConfig(p.Config)
+func provideApplicationContext(config *appconfig.ApplicationConfig) *ApplicationContext {
+	applicationContext.updateConfig(config)
 	return applicationContext
 }
 

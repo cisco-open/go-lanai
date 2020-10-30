@@ -12,7 +12,7 @@ type LifecycleHandler func(context.Context) error
 // delegates all other context calls to the embedded Context.
 type ApplicationContext struct {
 	context.Context
-	config *appconfig.Config
+	config *appconfig.ApplicationConfig
 }
 
 func NewContext() *ApplicationContext {
@@ -35,7 +35,7 @@ func (_ *ApplicationContext) String() string {
 /*************
 * unexported methods
 **************/
-func (c *ApplicationContext) updateConfig(config *appconfig.Config) {
+func (c *ApplicationContext) updateConfig(config *appconfig.ApplicationConfig) {
 	c.config = config
 }
 
