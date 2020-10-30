@@ -3,11 +3,13 @@ package init
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
 	"cto-github.cisco.com/livdu/jupiter/pkg/security"
+	"cto-github.cisco.com/livdu/jupiter/pkg/security/passwd"
 	"cto-github.cisco.com/livdu/jupiter/pkg/security/session"
 	"cto-github.cisco.com/livdu/jupiter/pkg/security/session/store"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/middleware"
 	"cto-github.cisco.com/livdu/jupiter/pkg/web/route"
+	"encoding/gob"
 	"fmt"
 	"go.uber.org/fx"
 	"net/http"
@@ -20,6 +22,11 @@ var Module = &bootstrap.Module{
 		fx.Invoke(setup),
 	},
 }
+
+const (
+	MWOrderSessionHandling = security.HighestMiddlewareOrder + 100
+	MWOrderAuthPersistence = MWOrderSessionHandling + 10
+)
 
 func init() {
 	bootstrap.Register(Module)
@@ -37,6 +44,7 @@ func newSessionStore(properties security.SessionProperties) session.Store {
 	secret := []byte(properties.Secret)
 	switch properties.StoreType {
 	case security.SessionStoreTypeMemory:
+		registerTypes()
 		return store.NewMemoryStore(secret)
 	default:
 		panic(fmt.Errorf("unsupported session storage"))
@@ -57,21 +65,33 @@ func setup(_ fx.Lifecycle, dep setupComponents) {
 		Or(route.WithRegex("/static/.*")).
 		Or(route.WithPattern("/api/**"))
 
-	sessionMiddleware := middleware.NewBuilder("sessionMiddleware").
+	sessionHandler := middleware.NewBuilder("sessionMiddleware").
 		ApplyTo(matcher).
-		Order(-1).
+		Order(MWOrderSessionHandling).
 		Use(dep.SessionManager.SessionHandlerFunc()).
 		WithCondition(func (r *http.Request) bool { return true }).
 		Build()
 
-	sessionTestMiddleware := middleware.NewBuilder("post-sessionMiddleware").
+	authPersist := middleware.NewBuilder("sessionMiddleware").
 		ApplyTo(matcher).
-		Order(0).
+		Order(MWOrderAuthPersistence).
+		Use(dep.SessionManager.AuthenticationPersistenceHandlerFunc()).
+		WithCondition(func (r *http.Request) bool { return true }).
+		Build()
+
+	test := middleware.NewBuilder("post-sessionMiddleware").
+		ApplyTo(matcher).
+		Order(MWOrderAuthPersistence + 10).
 		Use(session.SessionDebugHandlerFunc()).
 		WithCondition(func (r *http.Request) bool { return true }).
 		Build()
 
-	if err := dep.Registerer.Register(sessionMiddleware, sessionTestMiddleware); err != nil {
+	if err := dep.Registerer.Register(sessionHandler, authPersist, test); err != nil {
 		panic(err)
 	}
+}
+
+func registerTypes() {
+	gob.Register(security.EmptyAuthentication(""))
+	gob.Register((*passwd.UsernamePasswordAuthentication)(nil))
 }

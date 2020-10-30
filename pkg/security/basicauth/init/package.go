@@ -19,6 +19,10 @@ var Module = &bootstrap.Module{
 	},
 }
 
+const (
+	MWOrderBasicAuth = security.HighestMiddlewareOrder + 200
+)
+
 func init() {
 	bootstrap.Register(Module)
 }
@@ -57,7 +61,7 @@ func setup(_ fx.Lifecycle, dep setupComponents) {
 
 	auth := middleware.NewBuilder("basic auth").
 		ApplyTo(route.WithPattern("/api/**")).
-		Order(0).
+		Order(MWOrderBasicAuth).
 		With(web.Middleware(dep.BasicAuth)).
 		Build()
 

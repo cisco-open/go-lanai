@@ -2,6 +2,11 @@ package security
 
 import "context"
 
+const (
+	HighestMiddlewareOrder = int(- 1 << 18 + 1) // -0x3ffff = -262143
+	LowestMiddlewareOrder = HighestMiddlewareOrder + 0xffff // -0x30000 = -196608
+)
+
 type Authentication interface {
 	Principal() interface{}
 	Permissions() []string

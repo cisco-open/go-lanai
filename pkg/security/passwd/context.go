@@ -29,17 +29,19 @@ func (upp *UsernamePasswordPair) Details() interface{} {
 /******************************
 	security.Authentication
 ******************************/
+// UsernamePasswordAuthentication
+// Note: all fields should not be used directly. It's exported only because gob only deal with exported field
 type UsernamePasswordAuthentication struct {
-	principal security.Account
-	permissions []string
+	Account     security.Account
+	PermissionList []string
 }
 
 func (auth *UsernamePasswordAuthentication) Principal() interface{} {
-	return auth.principal
+	return auth.Account
 }
 
 func (auth *UsernamePasswordAuthentication) Permissions() []string {
-	return auth.permissions
+	return auth.PermissionList
 }
 
 func (auth *UsernamePasswordAuthentication) Authenticated() bool {
@@ -47,5 +49,5 @@ func (auth *UsernamePasswordAuthentication) Authenticated() bool {
 }
 
 func (auth *UsernamePasswordAuthentication) Details() interface{} {
-	return auth.principal
+	return auth.Account
 }

@@ -45,32 +45,96 @@ func NewManager(store Store, sessionProps security.SessionProperties, serverProp
 	return &Manager{store: store.Options(options)}
 }
 
-// Session management for HTTP requests
+// SessionHandlerFunc provide middleware for basic session management
 func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// TODO better error handling
 		// defer is FILO
-		defer c.Next()
 		defer gcontext.Clear(c.Request)
+		defer m.saveSession(c)
+		defer c.Next()
 
-		s, err := m.store.Get(c.Request, DefaultName)
+		existing, err := m.store.Get(c.Request, DefaultName)
 		if err != nil {
 			_ = c.Error(err)
+			return
 		}
+
+		// TODO validate session
 
 		// TODO logger
-		if s != nil && s.IsNew {
-			fmt.Printf("New Session %v\n", s.ID)
+		if existing != nil && existing.IsNew {
+			fmt.Printf("New Session %v\n", existing.ID)
 		}
 
-		session := &Session{
-			session: s,
-			request: c.Request,
-			writer: c.Writer,
-		}
-		c.Set(ContextKeySession, session)
+		m.registerSession(c, existing)
 	}
 }
 
+// AuthenticationPersistenceHandlerFunc provide middleware to load security from session and save it at end
+func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// TODO better error handling
+		// defer is FILO
+		defer m.persistAuthentication(c)
+		defer c.Next()
+
+		// load security from session
+		current := m.getCurrent(c)
+		if current == nil {
+			// no session found in current context, do nothing
+			return
+		}
+
+		if auth, ok := current.Get(sessionKeySecurity).(security.Authentication); ok {
+			c.Set(security.ContextKeySecurity, auth)
+		}
+	}
+}
+
+
+func (m *Manager) getCurrent(c *gin.Context) *Session {
+	switch i,_ := c.Get(ContextKeySession); i.(type) {
+	case *Session:
+		return i.(*Session)
+	default:
+		return nil
+	}
+}
+
+func (m *Manager) registerSession(c *gin.Context, s *sessions.Session) {
+	session := &Session{
+		session: s,
+		request: c.Request,
+		writer:  c.Writer,
+	}
+	c.Set(ContextKeySession, session)
+}
+
+func (m *Manager) saveSession(c *gin.Context) {
+	session := m.getCurrent(c)
+	if session == nil {
+		return
+	}
+
+	if err := session.Save(); err != nil {
+		_ = c.Error(err)
+	}
+}
+
+func (m *Manager) persistAuthentication(c *gin.Context) {
+	session := m.getCurrent(c)
+	if session == nil {
+		return
+	}
+
+	auth := security.Get(c)
+	session.Set(sessionKeySecurity, auth)
+
+	if err := session.Save(); err != nil {
+		_ = c.Error(err)
+	}
+}
 
 
 

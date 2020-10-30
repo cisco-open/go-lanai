@@ -1,6 +1,7 @@
 package session
 
 import (
+	"cto-github.cisco.com/livdu/jupiter/pkg/security"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
@@ -9,6 +10,12 @@ import (
 
 func SessionDebugHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+
+		auth := security.Get(ctx)
+		if auth.Authenticated() {
+			fmt.Printf("Already authenticated with user %v\n", auth.Principal())
+		}
+
 		session := Get(ctx)
 		if session.Get("TEST") == nil {
 
@@ -20,6 +27,7 @@ func SessionDebugHandlerFunc() gin.HandlerFunc {
 		} else {
 			fmt.Printf("Have Session Value %s\n", "TEST")
 		}
+
 		ctx.Next()
 	}
 }

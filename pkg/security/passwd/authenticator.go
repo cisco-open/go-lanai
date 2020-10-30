@@ -45,8 +45,8 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 	// TODO post password check
 
 	auth := UsernamePasswordAuthentication{
-		principal: user,
-		permissions: []string {
+		Account: user,
+		PermissionList: []string {
 			//TODO
 			"authenticated",
 		},
