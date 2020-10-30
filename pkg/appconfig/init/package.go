@@ -37,6 +37,11 @@ const (
 	BootstrapLocalFilePrecedence   = iota
 )
 
+//TODO: each provide does the load and then adds itself to the config in application context.
+// The invoke can be empty and just act as a trigger point
+// This way the application context is growing as providers becomes ready
+// The invoke can just add a flag to indicate that its fully loaded.
+
 func newCommandProvider(cmd *cobra.Command) *commandprovider.ConfigProvider {
 	p := commandprovider.NewCobraProvider("command line", CommandlinePrecedence, cmd, "cli.flag.")
 	return p
@@ -80,7 +85,7 @@ func newConsulConfigProperties(param consulConfigPropertiesParam) *consulprovide
 		Prefix: "userviceconfiguration",
 		DefaultContext: "defaultapplication",
 	}
-	param.Config.Bind(p, "spring.cloud.consul.appconfig")
+	param.Config.Bind(p, consulprovider.ConfigRootConsulConfigProvider)
 	return p
 }
 

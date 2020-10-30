@@ -2,8 +2,8 @@ package appconfig
 
 type Provider interface {
 	GetDescription() string
-	Load()
+	Load() error
 	GetSettings() map[string]interface{}
 	GetPrecedence() int
-	isValid() bool
+	isLoaded() bool
 }

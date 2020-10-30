@@ -31,6 +31,7 @@ func newProvider(description string, precedence int, filePath string, reader io.
 			reader:         reader,
 			propertyParser: NewYamlPropertyParser(),
 		}
+	//TODO: impl the following
 	/*
 	case ".ini":
 		return NewCachedLoader(NewINIFile(name, fileName, reader))
@@ -47,18 +48,27 @@ func newProvider(description string, precedence int, filePath string, reader io.
 	}
 }
 
-func (configProvider *ConfigProvider) Load() {
-	configProvider.Valid = false
+func (configProvider *ConfigProvider) Load() (loadError error) {
+	defer func(){
+		if loadError != nil {
+			configProvider.IsLoaded = false
+		} else {
+			configProvider.IsLoaded = true
+		}
+	}()
 
-	encoded, _ := ioutil.ReadAll(configProvider.reader)
-	//TODO: error handling
+	encoded, loadError := ioutil.ReadAll(configProvider.reader)
+	if loadError != nil {
+		return loadError
+	}
 
-	settings, _ := configProvider.propertyParser(encoded)
-	//TODO: error handling
-
+	settings, loadError := configProvider.propertyParser(encoded)
+	if loadError != nil {
+		return loadError
+	}
 	configProvider.Settings = settings
 
-	configProvider.Valid = true
+	return nil
 }
 
 func NewFileProvidersFromBaseName(description string, precedence int, baseName string, ext string) *ConfigProvider {

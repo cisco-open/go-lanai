@@ -69,6 +69,8 @@ func recursiveVisit(key string, value interface{}, apply func(string, interface{
 	return
 }
 
+//TODO: snake case
+
 // Unflatten the map, it returns a nested map of a map
 // By default, the flatten has Delimiter = "."
 func UnFlatten(flat map[string]interface{}, configures...func(*Options)) (nested map[string]interface{}, err error) {

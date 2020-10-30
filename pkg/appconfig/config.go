@@ -39,10 +39,12 @@ func (c *Config) Load(force bool) error {
 
 	// Load appconfig from each provider if it's not loaded yet, or if force reload.
 	for _, provider := range c.Providers {
-		if !provider.isValid() || force {
+		if !provider.isLoaded() || force {
 			provider.Load()
 		}
 	}
+
+	//TODO: resolve place holder
 
 	merged := make(map[string]interface{})
 	// merge data

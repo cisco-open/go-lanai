@@ -2,7 +2,7 @@ package commandprovider
 
 import (
 	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
-	"fmt"
+	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/args"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"sync"
@@ -14,74 +14,69 @@ const (
 
 type ConfigProvider struct {
 	appconfig.ProviderMeta
-	prefix  string
-	appName string
-	extras  map[string]string
-	flagSet *pflag.FlagSet
-	once    sync.Once
+	prefix        string
+	appName       string
+	declaredFlags map[string]string //flags pre-declared by our command (e.g. --help). Cobra will parse these.
+	dynamicFlags  map[string]string //flags not declared by us, so we need to parse these ourselves.
+	once          sync.Once
 }
 
-func (f *ConfigProvider) Load() {
-	fmt.Println("Loading command line appconfig")
+func (configProvider *ConfigProvider) Load() (loadError error) {
+	defer func(){
+		if loadError != nil {
+			configProvider.IsLoaded = false
+		} else {
+			configProvider.IsLoaded = true
+		}
+	}()
 
-	//TODO: review the commented out section to see if it's actually needed
-	//f.once.Do(func() {
-	//	f.extras = args.Extras(func(name string) bool {
-	//		return f.flagSet.Lookup(name) != nil
-	//	})
-	//})
-	//
-	//if !f.flagSet.Parsed() {
-	//	if err := f.flagSet.Parse(os.Args[1:]); err != nil {
-	//		return
-	//	}
-	//}
-	f.Valid = false
+	configProvider.once.Do(func() {
+		configProvider.dynamicFlags = args.Extras(func(name string) bool {
+			_, exists := configProvider.declaredFlags[name]
+			return exists
+		})
+	})
 
 	settings := make(map[string] interface{})
 
-	f.flagSet.VisitAll(func(flag *pflag.Flag) {
-		key := appconfig.NormalizeKey(f.prefix + flag.Name)
-		settings[key] = flag.Value.String()
-	})
+	for k, v := range configProvider.dynamicFlags {
+		settings[k] = v
+	}
 
-	// Apply extras
-	for k, v := range f.extras {
+	for k, v := range configProvider.dynamicFlags {
 		settings[k] = v
 	}
 
 	// Apply application name
-	settings[configKeyAppName] = f.appName
+	settings[configKeyAppName] = configProvider.appName
 
-	unFlattened, _ := appconfig.UnFlatten(settings)
+	unFlattened, loadError := appconfig.UnFlatten(settings)
 
-	f.Settings = unFlattened
+	if loadError != nil {
+		return loadError
+	}
 
-	f.Valid = true
+	configProvider.Settings = unFlattened
+
+	return nil
 }
 
-func extractFlagSet(command *cobra.Command) *pflag.FlagSet {
-	flagSet := pflag.NewFlagSet(command.Name(), pflag.ContinueOnError)
-	flagSet.ParseErrorsWhitelist.UnknownFlags = true
-
-	command.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
-		flagSet.AddFlag(flag)
-	})
-
-	command.LocalFlags().VisitAll(func(flag *pflag.Flag) {
-		flagSet.AddFlag(flag)
-	})
-
-	return flagSet
-}
 
 func NewCobraProvider(description string, precedence int, command *cobra.Command, prefix string) *ConfigProvider {
-	flagSet := extractFlagSet(command)
+
+	flagSet := make(map[string]string)
+
+	extractFlag := func(flag *pflag.Flag) {
+		flagSet[appconfig.NormalizeKey(prefix + flag.Name)] = flag.Value.String()
+	}
+
+	command.InheritedFlags().VisitAll(extractFlag)
+	command.LocalFlags().VisitAll(extractFlag)
 
 	return &ConfigProvider{
-		ProviderMeta: appconfig.ProviderMeta{Description: description, Precedence: precedence},
-		prefix:       prefix,
-		flagSet:      flagSet,
-		appName:      command.Root().Name(),
+		ProviderMeta:  appconfig.ProviderMeta{Description: description, Precedence: precedence},
+		prefix:        prefix,
+		declaredFlags: flagSet,
+		appName:       command.Root().Name(),
 	}
 }
