@@ -14,6 +14,7 @@ var ErrNotFound = errors.New("Missing required setting")
 type Config struct {
 	Providers     []Provider //such as yaml provider, commandline etc.
 	settings      map[string]interface{}
+	isLoaded 	  bool
 }
 
 type ConfigAccessor interface {
@@ -29,14 +30,26 @@ func NewConfig(providers ...Provider) *Config {
 	}
 }
 
-func (c *Config) Load(force bool) error {
+func (c *Config) Load(force bool) (loadError error) {
+	defer func() {
+		if loadError != nil {
+			c.isLoaded = false
+		} else {
+			c.isLoaded = true
+		}
+	}()
+
 	//sort based on precedence
 	sort.SliceStable(c.Providers, func(i, j int) bool { return c.Providers[i].GetPrecedence() > c.Providers[j].GetPrecedence() })
 
 	// Load appconfig from each provider if it's not loaded yet, or if force reload.
 	for _, provider := range c.Providers {
 		if !provider.isLoaded() || force {
-			provider.Load()
+			error := provider.Load()
+
+			if error != nil {
+				return errors.Wrap(error, "Failed to load properties")
+			}
 		}
 	}
 
@@ -48,7 +61,7 @@ func (c *Config) Load(force bool) error {
 		error := mergo.Merge(&merged, provider.GetSettings())
 
 		if error != nil {
-			return error
+			return errors.Wrap(error, "Failed to merge properties from property sources")
 		}
 	}
 
@@ -57,7 +70,7 @@ func (c *Config) Load(force bool) error {
 }
 
 func (c *Config) Value(key string) (interface{}, error) {
-	if !c.loaded() {
+	if !c.isLoaded {
 		return "", ErrNotLoaded
 	}
 
@@ -103,8 +116,3 @@ func (c *Config) alias(key string) string {
 	// Return the actual target key name mapping through aliases
 	return NormalizeKey(key)
 }
-
-func (c *Config) loaded() bool {
-	return c.settings != nil
-}
-
