@@ -75,7 +75,7 @@ func (app *App) Run() {
 	//  2. Restore logging
 	done := app.Done()
 	startParent, cancel := context.WithTimeout(context.Background(), app.StartTimeout())
-	startCtx := applicationContext.UpdateParent(startParent) //This is so that we know that the context in the life cycle hook is the bootstrap context
+	startCtx := applicationContext.updateParent(startParent) //This is so that we know that the context in the life cycle hook is the bootstrap context
 	defer cancel()
 
 	if err := app.Start(startCtx); err != nil {
@@ -88,7 +88,7 @@ func (app *App) Run() {
 	//app.logger.PrintSignal(<-done)
 
 	stopParent, cancel := context.WithTimeout(context.Background(), app.StopTimeout())
-	stopCtx := applicationContext.UpdateParent(stopParent)
+	stopCtx := applicationContext.updateParent(stopParent)
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {

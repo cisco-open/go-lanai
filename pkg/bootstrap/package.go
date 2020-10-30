@@ -26,7 +26,7 @@ type provideApplicationContextParam struct {
 	Config *appconfig.Config `name:"application_config"`
 }
 func provideApplicationContext(p provideApplicationContextParam) *ApplicationContext {
-	applicationContext.UpdateConfig(p.Config)
+	applicationContext.updateConfig(p.Config)
 	return applicationContext
 }
 

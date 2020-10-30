@@ -16,26 +16,17 @@ type Config struct {
 	settings      map[string]interface{}
 }
 
-func NewConfig(parent *Config, providers ...Provider) *Config {
-	var mergedProviders []Provider
-	if parent != nil {
-		mergedProviders = append(parent.Providers, providers...)
-	} else {
-		mergedProviders = providers
-	}
+type ConfigAccessor interface {
+	Value(key string) (interface{}, error)
+	Bind(target interface{}, prefix string) error
+	Each(apply func(string, interface{}))
+}
 
+func NewConfig(providers ...Provider) *Config {
 	return &Config{
-		Providers:     mergedProviders,
+		Providers:     providers,
 		settings:      nil,
 	}
-}
-
-func (c *Config) AddProvider(provider Provider) {
-	c.Providers = append(c.Providers, provider)
-}
-
-func (c *Config) Loaded() bool {
-	return c.settings != nil
 }
 
 func (c *Config) Load(force bool) error {
@@ -66,7 +57,7 @@ func (c *Config) Load(force bool) error {
 }
 
 func (c *Config) Value(key string) (interface{}, error) {
-	if !c.Loaded() {
+	if !c.loaded() {
 		return "", ErrNotLoaded
 	}
 
@@ -104,13 +95,16 @@ func (c *Config) Bind(target interface{}, prefix string) error {
 	return nil
 }
 
+func (c *Config) Each(apply func(string, interface{})) {
+	VisitEach(c.settings, apply)
+}
+
 func (c *Config) alias(key string) string {
 	// Return the actual target key name mapping through aliases
 	return NormalizeKey(key)
 }
 
-//TODO: this needs to become recursive - similar to the flat method
-func (c *Config) Each(apply func(string, interface{})) {
-	VisitEach(c.settings, apply)
+func (c *Config) loaded() bool {
+	return c.settings != nil
 }
 

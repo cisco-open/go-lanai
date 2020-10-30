@@ -21,33 +21,27 @@ func NewContext() *ApplicationContext {
 	}
 }
 
+func (c *ApplicationContext) getConfig() appconfig.ConfigAccessor {
+	return c.config
+}
+
 /**************************
  context.Context Interface
 ***************************/
-func (c *ApplicationContext) UpdateConfig(config *appconfig.Config) {
-	c.config = config
-}
-
-func (c *ApplicationContext) UpdateParent(parent context.Context) *ApplicationContext {
-	c.Context = parent
-	return c
-}
-
 func (_ *ApplicationContext) String() string {
 	return "application context"
 }
 
-func (c *ApplicationContext) Value(key interface{}) interface{} {
-	//TODO: This method is meant to be accessed only after application context is loaded completely
-	// PANIC if this method is called before fully ready
+/*************
+* unexported methods
+**************/
+func (c *ApplicationContext) updateConfig(config *appconfig.Config) {
+	c.config = config
+}
 
-	value, error := c.config.Value(key.(string))
-
-	if error == nil {
-		return value
-	}
-
-	return nil
+func (c *ApplicationContext) updateParent(parent context.Context) *ApplicationContext {
+	c.Context = parent
+	return c
 }
 
 func (c *ApplicationContext) dumpConfigurations() {

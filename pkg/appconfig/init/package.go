@@ -65,7 +65,7 @@ type bootstrapConfigResult struct {
 }
 
 func newBootstrapConfig(p bootstrapConfigParam) bootstrapConfigResult {
-	bootstrapConfig := appconfig.NewConfig(nil, p.FileProvider, p.CmdProvider)
+	bootstrapConfig := appconfig.NewConfig(p.FileProvider, p.CmdProvider)
 	bootstrapConfig.Load(false)
 
 	return bootstrapConfigResult{Config: bootstrapConfig}
@@ -140,12 +140,13 @@ type applicationConfigResults struct {
 	Config *appconfig.Config `name:"application_config"`
 }
 func newApplicationConfig(p newApplicationConfigParam) applicationConfigResults {
-	applicationConfig := appconfig.NewConfig(p.Config, p.FileProvider)
+	var mergedProvider []appconfig.Provider
 
-	applicationConfig.AddProvider(p.FileProvider)
-	for _, provider := range p.ConsulProviders {
-		applicationConfig.AddProvider(provider)
-	}
+	mergedProvider = append(mergedProvider, p.FileProvider)
+	mergedProvider = append(mergedProvider, p.ConsulProviders...)
+	mergedProvider = append(mergedProvider, p.Config.Providers...)
+
+	applicationConfig := appconfig.NewConfig(mergedProvider...)
 	applicationConfig.Load(false)
 
 	return applicationConfigResults{Config:applicationConfig}
