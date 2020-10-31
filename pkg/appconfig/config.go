@@ -61,17 +61,26 @@ func (c *config) Load(force bool) (loadError error) {
 		}
 	}
 
-	//TODO: resolve place holder
+	//TODO: resolve place holder, resolve snake-case
 
 	merged := make(map[string]interface{})
 	// merge data
 	mergeOption := func(mergoConfig *mergo.Config) {
 		mergoConfig.Overwrite = true
 	}
+
+	keyFormatter := func(k string) string {
+		return k //TODO: the proper formatter here. turn everything into camel case
+	}
+
 	for _, provider := range c.Providers {
 		if provider.GetSettings() != nil {
-			error := mergo.Merge(&merged, provider.GetSettings(), mergeOption)
+			formatted, error := ProcessKeyFormat(provider.GetSettings(), keyFormatter)
 			if error != nil {
+				return errors.Wrap(error, "Failed to format keys before merge")
+			}
+			mergeError := mergo.Merge(&merged, formatted, mergeOption)
+			if mergeError != nil {
 				return errors.Wrap(error, "Failed to merge properties from property sources")
 			}
 		}
@@ -86,7 +95,7 @@ func (c *config) Value(key string) interface{} {
 		return nil
 	}
 
-	targetKey := c.alias(key)
+	targetKey := NormalizeKey(key)
 
 	nestedKeys := UnFlattenKey(targetKey)
 
@@ -129,7 +138,3 @@ func (c *config) Each(apply func(string, interface{})) {
 	VisitEach(c.settings, apply)
 }
 
-func (c *config) alias(key string) string {
-	// Return the actual target key name mapping through aliases
-	return NormalizeKey(key)
-}
