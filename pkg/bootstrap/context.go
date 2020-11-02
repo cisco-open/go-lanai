@@ -21,7 +21,7 @@ func NewContext() *ApplicationContext {
 	}
 }
 
-func (c *ApplicationContext) getConfig() appconfig.ConfigAccessor {
+func (c *ApplicationContext) GetConfig() appconfig.ConfigAccessor {
 	return c.config
 }
 
