@@ -15,13 +15,13 @@ type Options struct {
 	Delimiter string
 }
 
-func ProcessKeyFormat(nested map[string]interface{}, processor func(string) string) (map[string]interface{}, error) {
-	result, error := processKeyFormat(nested, processor)
+func ProcessKeyFormat(nested map[string]interface{}, processor func(string, ...func(*Options)) string) (map[string]interface{}, error) {
+	result, err := processKeyFormat(nested, processor)
 
-	return result.(map[string]interface{}), error
+	return result.(map[string]interface{}), err
 }
 
-func processKeyFormat(value interface{}, processor func(string) string) (interface{}, error) {
+func processKeyFormat(value interface{}, processor func(string, ...func(*Options)) string) (interface{}, error) {
 
 	switch value := value.(type) {
 	case map[string]interface{}:
