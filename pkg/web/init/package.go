@@ -1,16 +1,17 @@
-package web
+package init
 
 import (
 	"context"
 	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
+	"cto-github.cisco.com/livdu/jupiter/pkg/web"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
 
 var Module = &bootstrap.Module{
-	Precedence: 0,
+	Precedence: 1000,
 	PriorityOptions: []fx.Option{
-		fx.Provide(gin.Default, web),
+		fx.Provide(web.BindServerProperties, gin.Default, web.NewRegistrar),
 		fx.Invoke(setup),
 	},
 }
@@ -27,31 +28,17 @@ func Use() {
 /**************************
 	Provide dependencies
 ***************************/
-type prerequisites struct {
-	fx.In
-	GinEngine *gin.Engine
-}
 
-type components struct {
-	fx.Out
-	Registrar *Registrar
-}
-
-func web(d prerequisites) (components, error) {
-	return components{
-		Registrar: NewRegistrar(d.GinEngine),
-	}, nil
-}
 
 /**************************
 	Setup
 ***************************/
 type setupComponents struct {
 	fx.In
-	Registrar *Registrar
-	GinEngine *gin.Engine
+	Registrar *web.Registrar
 	// TODO we could include security configurations, customizations here
 }
+
 func setup(lc fx.Lifecycle, dep setupComponents) {
 	lc.Append(fx.Hook{
 		OnStart: makeMappingRegistrationOnStartHandler(&dep),
@@ -60,12 +47,6 @@ func setup(lc fx.Lifecycle, dep setupComponents) {
 
 func makeMappingRegistrationOnStartHandler(dep *setupComponents) bootstrap.LifecycleHandler {
 	return func(ctx context.Context) (err error) {
-		err = dep.Registrar.initialize()
-		errChan := make(chan error)
-		go func() {
-			errChan <- dep.GinEngine.Run()
-			defer func() {close(errChan)}()
-		}()
-		return
+		return dep.Registrar.Run()
 	}
 }

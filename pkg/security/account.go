@@ -1,12 +1,13 @@
 package security
 
-type User interface {
+type Account interface {
 	Username() string
 	Password() string
+
 }
 
 type AccountStore interface {
-	LoadUserByUsername(username string) (User, error)
+	LoadAccountByUsername(username string) (Account, error)
 }
 
 
