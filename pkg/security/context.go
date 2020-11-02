@@ -37,10 +37,6 @@ func (EmptyAuthentication) Permissions() []string {
 	return []string{}
 }
 
-func (EmptyAuthentication) MoreActionRequired() bool {
-	return false
-}
-
 func GobRegister() {
 	gob.Register(EmptyAuthentication(""))
 }

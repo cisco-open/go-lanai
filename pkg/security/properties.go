@@ -1,7 +1,7 @@
 package security
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
+	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
 	"github.com/pkg/errors"
 )
 
@@ -37,9 +37,9 @@ func NewSessionProperties() *SessionProperties {
 }
 
 //BindSessionProperties create and bind SessionProperties, with a optional prefix
-func BindSessionProperties(cfg *appconfig.ApplicationConfig) SessionProperties {
+func BindSessionProperties(ctx *bootstrap.ApplicationContext) SessionProperties {
 	props := NewSessionProperties()
-	if err := cfg.Bind(props, SessionPropertiesPrefix); err != nil {
+	if err := ctx.Config().Bind(props, SessionPropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind SessionProperties"))
 	}
 	return *props

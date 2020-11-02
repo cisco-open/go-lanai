@@ -1,7 +1,7 @@
 package web
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
+	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
 	"github.com/pkg/errors"
 )
 
@@ -24,9 +24,9 @@ func NewServerProperties() *ServerProperties {
 }
 
 //BindServerProperties create and bind a ServerProperties using default prefix
-func BindServerProperties(cfg *appconfig.ApplicationConfig) ServerProperties {
+func BindServerProperties(ctx *bootstrap.ApplicationContext) ServerProperties {
 	props := NewServerProperties()
-	if err := cfg.Bind(props, ServerPropertiesPrefix); err != nil {
+	if err := ctx.Config().Bind(props, ServerPropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind ServerProperties"))
 	}
 	return *props

@@ -94,7 +94,7 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-
+//TODO remove this, duplicate with Get()
 func (m *Manager) getCurrent(c *gin.Context) *Session {
 	switch i,_ := c.Get(ContextKeySession); i.(type) {
 	case *Session:

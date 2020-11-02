@@ -38,7 +38,7 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 	// TODO check account status
 
 	// Check password
-	if upp.Principal().(string) != user.Username() || !a.passwdEncoder.Matches(upp.Password, user.Password()) {
+	if upp.Username != user.Username() || !a.passwdEncoder.Matches(upp.Password, user.Password()) {
 		return nil, security.NewBadCredentialsError("incorrect credentials")
 	}
 
