@@ -10,7 +10,7 @@ require (
 	github.com/go-kit/kit v0.10.0
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/hashicorp/consul/api v1.3.0
-	github.com/imdario/mergo v0.3.11 // indirect
+	github.com/imdario/mergo v0.3.11
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5

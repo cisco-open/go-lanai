@@ -67,7 +67,7 @@ func NewCobraProvider(description string, precedence int, command *cobra.Command
 	flagSet := make(map[string]string)
 
 	extractFlag := func(flag *pflag.Flag) {
-		flagSet[appconfig.NormalizeKey(prefix + flag.Name)] = flag.Value.String()
+		flagSet[prefix + flag.Name] = flag.Value.String()
 	}
 
 	command.InheritedFlags().VisitAll(extractFlag)
