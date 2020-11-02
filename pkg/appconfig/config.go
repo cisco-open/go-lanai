@@ -69,13 +69,9 @@ func (c *config) Load(force bool) (loadError error) {
 		mergoConfig.Overwrite = true
 	}
 
-	keyFormatter := func(k string) string {
-		return k //TODO: the proper formatter here. turn everything into camel case
-	}
-
 	for _, provider := range c.Providers {
 		if provider.GetSettings() != nil {
-			formatted, error := ProcessKeyFormat(provider.GetSettings(), keyFormatter)
+			formatted, error := ProcessKeyFormat(provider.GetSettings(), NormalizeKey)
 			if error != nil {
 				return errors.Wrap(error, "Failed to format keys before merge")
 			}
@@ -111,6 +107,10 @@ func (c *config) Value(key string) interface{} {
 	return tmp
 }
 
+/*
+ * The keys from property sources are normalized to snake case if they are camel case.
+ * Therefore the binding expects the json tag to be in snake case.
+ */
 func (c *config) Bind(target interface{}, prefix string) error {
 	keys := strings.Split(prefix, ".")
 

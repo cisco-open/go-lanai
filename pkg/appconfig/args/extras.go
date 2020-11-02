@@ -24,7 +24,7 @@ func Extras(exists func(name string) bool) (extras map[string]string) {
 		v = v[2:]
 		split := strings.SplitN(v, "=", 2)
 		if len(split) == 2 {
-			key := appconfig.NormalizeKey(split[0])
+			key := split[0]
 			extras[key] = split[1]
 			strip = append(strip, n)
 		} else if n == len(args)-1 {
