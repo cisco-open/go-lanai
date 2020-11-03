@@ -1,7 +1,7 @@
 package store
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"github.com/gorilla/sessions"
 	"github.com/quasoft/memstore"
 )

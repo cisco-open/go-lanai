@@ -2,8 +2,8 @@ package session
 
 import (
 	"context"
-	"cto-github.cisco.com/livdu/jupiter/pkg/security"
-	"cto-github.cisco.com/livdu/jupiter/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	gcontext "github.com/gorilla/context"

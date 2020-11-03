@@ -1,7 +1,7 @@
 package session
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"

@@ -1,8 +1,8 @@
 package commandprovider
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/args"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/args"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"sync"

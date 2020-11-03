@@ -1,8 +1,8 @@
 package consulprovider
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
-	"cto-github.cisco.com/livdu/jupiter/pkg/consul"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 )
 
 const (

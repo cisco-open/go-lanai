@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"errors"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"

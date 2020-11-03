@@ -2,8 +2,8 @@ package init
 
 import (
 	"context"
-	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
-	"cto-github.cisco.com/livdu/jupiter/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
