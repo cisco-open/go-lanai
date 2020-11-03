@@ -58,7 +58,7 @@ func processKeyFormat(value interface{}, processor func(string, ...func(*Options
 	}
 }
 
-func VisitEach(nested map[string]interface{}, apply func(string, interface{}), configures...func(*Options)) error {
+func VisitEach(nested map[string]interface{}, apply func(string, interface{}) error, configures...func(*Options)) error {
 	opts := &Options{
 		Delimiter: ".",
 	}
@@ -70,7 +70,8 @@ func VisitEach(nested map[string]interface{}, apply func(string, interface{}), c
 	return recursiveVisit("", nested, apply, opts)
 }
 
-func recursiveVisit(key string, value interface{}, apply func(string, interface{}), opts *Options) (err error) {
+//the recursive visit stops at the first error
+func recursiveVisit(key string, value interface{}, apply func(string, interface{}) error, opts *Options) (err error) {
 	switch value := value.(type) {
 	case map[string]interface{}:
 		//if empty map, can't do anything
@@ -95,9 +96,9 @@ func recursiveVisit(key string, value interface{}, apply func(string, interface{
 			return
 		}
 		for i, v := range value {
-			newKey := strconv.Itoa(i)
+			newKey := "[" + strconv.Itoa(i) + "]"
 			if key != "" {
-				newKey = key + opts.Delimiter + newKey
+				newKey = key + newKey
 			}
 			fe := recursiveVisit(newKey, v, apply, opts)
 			if fe != nil {
@@ -106,7 +107,7 @@ func recursiveVisit(key string, value interface{}, apply func(string, interface{
 			}
 		}
 	default:
-		apply(key, value)
+		err = apply(key, value)
 	}
 	return
 }
@@ -114,7 +115,7 @@ func recursiveVisit(key string, value interface{}, apply func(string, interface{
 //TODO: snake case
 
 //We don't support key with index number at the end here.
-//TODO: Because it is only useful for system properties to override list. So it should be taken care of by the environment properties provider
+//TODO: Because it is only useful for system properties and command line to override list. So it should be taken care of by the environment properties provider
 //  ie:
 //  spring.my-example.url[0]=https://example.com
 // or

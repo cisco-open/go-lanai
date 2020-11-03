@@ -21,7 +21,7 @@ type ConfigProvider struct {
 	propertyParser parser.PropertyParser
 }
 
-func newProvider(description string, precedence int, filePath string, reader io.Reader) *ConfigProvider {
+func NewProvider(description string, precedence int, filePath string, reader io.Reader) *ConfigProvider {
 	fileExt := strings.ToLower(path.Ext(filePath))
 	switch fileExt {
 	case ".yml", ".yaml":
@@ -75,7 +75,7 @@ func NewFileProvidersFromBaseName(description string, precedence int, baseName s
 	info, err := os.Stat(fullPath)
 	if !os.IsNotExist(err) && !info.IsDir() {
 		file, _ := os.Open(fullPath);
-		return newProvider(description, precedence, fullPath, file)
+		return NewProvider(description, precedence, fullPath, file)
 	}
 	return nil
 }

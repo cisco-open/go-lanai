@@ -49,7 +49,8 @@ func (c *ApplicationContext) updateParent(parent context.Context) *ApplicationCo
 }
 
 func (c *ApplicationContext) dumpConfigurations() {
-	c.config.Each(func(key string, value interface{}) {
+	c.config.Each(func(key string, value interface{})error {
 		fmt.Println(key + ": " + fmt.Sprintf("%v", value))
+		return nil
 	})
 }

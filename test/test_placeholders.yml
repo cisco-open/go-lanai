@@ -1,0 +1,18 @@
+a:
+  b:
+    c: 1_${d.e.f}
+d:
+  e:
+    f: ${g.h.i}
+g:
+  h:
+    i: my_value
+
+j:
+  k:
+    - ${a.b.c}
+    - ${g.h.i}
+
+l: ${a.b.c}${d.e.f}
+
+m: ${j.k}
