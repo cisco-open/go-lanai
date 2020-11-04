@@ -1,8 +1,8 @@
 package route
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/utils/matcher"
-	"cto-github.cisco.com/livdu/jupiter/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"github.com/bmatcuk/doublestar"
 	pathutils "path"

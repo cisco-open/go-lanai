@@ -1,8 +1,8 @@
 package basicauth
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/security"
-	"cto-github.cisco.com/livdu/jupiter/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"encoding/base64"
 	"github.com/gin-gonic/gin"
 	"net/http"

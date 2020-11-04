@@ -1,9 +1,9 @@
 package init
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
-	"cto-github.cisco.com/livdu/jupiter/pkg/consul"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"go.uber.org/fx"
 )
 

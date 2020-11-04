@@ -1,14 +1,14 @@
 package init
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
-	"cto-github.cisco.com/livdu/jupiter/pkg/security"
-	"cto-github.cisco.com/livdu/jupiter/pkg/security/passwd"
-	"cto-github.cisco.com/livdu/jupiter/pkg/security/session"
-	"cto-github.cisco.com/livdu/jupiter/pkg/security/session/store"
-	"cto-github.cisco.com/livdu/jupiter/pkg/web"
-	"cto-github.cisco.com/livdu/jupiter/pkg/web/middleware"
-	"cto-github.cisco.com/livdu/jupiter/pkg/web/route"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/store"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/route"
 	"fmt"
 	"go.uber.org/fx"
 	"net/http"

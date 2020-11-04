@@ -2,7 +2,7 @@ package bootstrap
 
 import (
 	"context"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"fmt"
 )
 

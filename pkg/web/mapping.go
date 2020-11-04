@@ -1,7 +1,7 @@
 package web
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/utils/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"

@@ -3,7 +3,7 @@ package rest
 import (
 	"bytes"
 	"context"
-	"cto-github.cisco.com/livdu/jupiter/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/json"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"io/ioutil"

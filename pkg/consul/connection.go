@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/consul/api"
-	"github.com/pkg/errors"
+	"errors"
 	"strings"
 )
 
@@ -18,12 +18,12 @@ var (
 )
 
 type ConnectionProperties struct {
-	Enabled bool   `json:enabled`
-	Host    string `json:host`
-	Port    int    `json:port`
-	Scheme  string `json:scheme`
+	Enabled bool   `json:"enabled"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	Scheme  string `json:"scheme"`
 	Config  struct {
-		AclToken string `json:"acl-token`
+		AclToken string `json:"acl-token"`
 	}
 }
 

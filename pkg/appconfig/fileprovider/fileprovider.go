@@ -1,8 +1,8 @@
 package fileprovider
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/parser"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/parser"
 	"fmt"
 	"io"
 	"io/ioutil"

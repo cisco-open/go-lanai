@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"errors"
 	"testing"
 )

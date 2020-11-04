@@ -1,7 +1,7 @@
 package web
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"github.com/pkg/errors"
 )
 

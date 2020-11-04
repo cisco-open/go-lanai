@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )

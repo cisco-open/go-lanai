@@ -1,12 +1,12 @@
 package init
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/bootstrap"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/commandprovider"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/consulprovider"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/fileprovider"
-	"cto-github.cisco.com/livdu/jupiter/pkg/consul"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/commandprovider"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/consulprovider"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/fileprovider"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
