@@ -1,8 +1,8 @@
 package test
 
 import (
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig"
-	"cto-github.cisco.com/livdu/jupiter/pkg/appconfig/fileprovider"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/fileprovider"
 	"fmt"
 	"os"
 	"reflect"
