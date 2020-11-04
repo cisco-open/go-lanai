@@ -112,18 +112,14 @@ func recursiveVisit(key string, value interface{}, apply func(string, interface{
 	return
 }
 
-//TODO: snake case
-
-//We don't support key with index number at the end here.
-//TODO: Because it is only useful for system properties and command line to override list. So it should be taken care of by the environment properties provider
+//TODO: It is useful for system properties and command line to override list
 //  ie:
 //  spring.my-example.url[0]=https://example.com
 // or
 //  spring.my-example.url=https://example.com,https://spring.io
-// Therefore we need to:
-//   1. check if key ends with []
-//   2. hash them into the comma format
-//   3. process the commas separately
+// so we should support it too
+// Similar logic is already implemented in config.updateMapUsingFlatKey method
+// Unflatten just split the key into [spring, my-example, url[0]]. It's up to the calling method to process that
 
 // Unflatten the map, it returns a nested map of a map
 // By default, the flatten has Delimiter = "."

@@ -281,7 +281,6 @@ type bracket struct {
 	index int
 }
 
-//TODO: allow multiple place holder (but don't allow nested place holder)
 func parsePlaceHolder(strValue string) (placeHolderKeys []string, isEmbedded bool, error error) {
 	//use this as a stack to check for nested place holder brackets
 	//the algorithm is to put left bracket on the stack, and pop it off when we see a right bracket
