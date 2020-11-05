@@ -1,6 +1,7 @@
 package appconfig
 
 import (
+	"github.com/pkg/errors"
 	"reflect"
 	"strconv"
 	"strings"
@@ -112,20 +113,20 @@ func recursiveVisit(key string, value interface{}, apply func(string, interface{
 	return
 }
 
-//TODO: It is useful for system properties and command line to override list
-//  ie:
-//  spring.my-example.url[0]=https://example.com
-// or
-//  spring.my-example.url=https://example.com,https://spring.io
-// so we should support it too
-// Similar logic is already implemented in config.updateMapUsingFlatKey method
-// Unflatten just split the key into [spring, my-example, url[0]]. It's up to the calling method to process that
+type UfOptions struct {
+	Delimiter   string
+	AppendSlice bool
+}
 
-// Unflatten the map, it returns a nested map of a map
-// By default, the flatten has Delimiter = "."
-func UnFlatten(flat map[string]interface{}, configures...func(*Options)) (nested map[string]interface{}, err error) {
-	opts := &Options{
-		Delimiter: ".",
+// This method supports un-flattening keys with index like the following
+//  my-example.url[0]=https://example.com
+// The indexed entries are treated like an unsorted list. The result will be a list but the order is not
+// guaranteed to reflect the index order.
+// A key with multiple index (a.b[0].c[0) is not supported
+func UnFlatten(flat map[string]interface{}, configures...func(*UfOptions)) (nested map[string]interface{}, err error) {
+	opts := &UfOptions{
+		Delimiter:   ".",
+		AppendSlice: true,
 	}
 
 	for _, configure := range configures {
@@ -135,8 +136,13 @@ func UnFlatten(flat map[string]interface{}, configures...func(*Options)) (nested
 	nested = make(map[string]interface{})
 
 	for k, v := range flat {
-		temp := uf(k, v, opts).(map[string]interface{})
-		err = mergo.Merge(&nested, temp)
+		temp, error := uf(k, v, opts)
+		if error != nil {
+			return nil, errors.Wrap(error, "cannot un-flatten due to error in key: " + k)
+		}
+		err = mergo.Merge(&nested, temp, func(c *mergo.Config) {
+			c.AppendSlice = opts.AppendSlice
+		})
 		if err != nil {
 			return
 		}
@@ -146,18 +152,38 @@ func UnFlatten(flat map[string]interface{}, configures...func(*Options)) (nested
 }
 
 
-func uf(k string, v interface{}, opts *Options) (n interface{}) {
+func uf(k string, v interface{}, opts *UfOptions) (n interface{}, err error) {
+	indexOccurance := 0
+
 	n = v
 
 	keys := strings.Split(k, opts.Delimiter)
 
 	for i := len(keys) - 1; i >= 0; i-- {
+		currKey := keys[i]
 		temp := make(map[string]interface{})
-		temp[keys[i]] = n
+
+		bracketLeft := strings.Index(currKey, "[")
+		bracketRight := strings.Index(currKey, "]")
+
+		if bracketLeft > 0 && bracketRight == len(currKey) -1 {
+			index, error := strconv.Atoi(currKey[bracketLeft+1 : bracketRight])
+			if error != nil || index < 0 {
+				return nil, errors.Wrap(error, "key:"+" has index marker [], but the index is not valid integer.")
+			} else if indexOccurance > 0 {
+				return nil, errors.New("key:"+" has multiple index marker []. This is not supported")
+			} else {
+				currKey = currKey[0:bracketLeft]
+				temp[currKey] = []interface{}{n}
+				indexOccurance = indexOccurance + 1
+			}
+		} else {
+			temp[currKey] = n
+		}
+
 		n = temp
 	}
-
-	return
+	return n, nil
 }
 
 func UnFlattenKey(k string, configures...func(*Options)) []string {

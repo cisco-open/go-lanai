@@ -51,3 +51,37 @@ func TestParsePlaceHolders(t *testing.T) {
 	}
 	fmt.Println(error)
 }
+
+func TestUnFlatten(t *testing.T) {
+	flat := map[string]interface{} {
+		"e.f.g[0]" : "f_g_0",
+		"e.f.g[1]" : "f_g_1",
+	}
+	nested, err := UnFlatten(flat)
+
+	if err != nil {
+		t.Errorf("Couldn't un-flatten map")
+	}
+
+	e := nested["e"].(map[string]interface{})
+	f := e["f"].(map[string]interface{})
+	g := f["g"].([]interface{})
+
+	if len(g) != 2 {
+		t.Errorf("second level array not unflattened properly")
+	}
+
+	flat = map[string]interface{} {
+		"e.f[0].g[0]" : "f_0_g_0",
+	}
+
+	nested, err = UnFlatten(flat)
+
+	if err == nil {
+		t.Errorf("expected error")
+	}
+
+	fmt.Println(err)
+
+
+}
