@@ -42,7 +42,7 @@ func AddOptions(options...fx.Option) {
 	m.PriorityOptions = append(m.PriorityOptions, options...)
 }
 
-func NewApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
+func newApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
 	DefaultModule.PriorityOptions = append(DefaultModule.PriorityOptions, fx.Supply(cmd))
 	for _,o := range priorityOptions {
 		applicationMainModule().PriorityOptions = append(applicationMainModule().PriorityOptions, o)

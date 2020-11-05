@@ -13,29 +13,37 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package bootstrap
 
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 	"os"
 )
 
 // rootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Short: "root command short description",
-	Long: `root command long description`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+var rootCmd = &cobra.Command{
+	Short: "A go-lanai based application.",
+	Long: "This is a go-lanai based application.",
 	FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if err := RootCmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func NewAppCmd(appName string, priorityOptions []fx.Option, regularOptions []fx.Option) {
+	rootCmd.Use = appName
+	app := newApp(rootCmd, priorityOptions, regularOptions)
+	rootCmd.Run = func(cmd *cobra.Command, args []string) {
+		app.Run()
+	}
+
+	//To add more cmd. Declare the cmd as a variable similar to rootCmd. And add it to rootCmd here.
 }
