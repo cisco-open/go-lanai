@@ -21,12 +21,12 @@ type ConfigProvider struct {
 	propertyParser parser.PropertyParser
 }
 
-func NewProvider(description string, precedence int, filePath string, reader io.Reader) *ConfigProvider {
+func NewProvider(precedence int, filePath string, reader io.Reader) *ConfigProvider {
 	fileExt := strings.ToLower(path.Ext(filePath))
 	switch fileExt {
 	case ".yml", ".yaml":
 		return &ConfigProvider{
-			ProviderMeta:   appconfig.ProviderMeta{Description: description, Precedence: precedence},
+			ProviderMeta:   appconfig.ProviderMeta{Precedence: precedence},
 			reader:         reader,
 			propertyParser: parser.NewYamlPropertyParser(),
 		}
@@ -70,12 +70,12 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	return nil
 }
 
-func NewFileProvidersFromBaseName(description string, precedence int, baseName string, ext string) *ConfigProvider {
+func NewFileProvidersFromBaseName(precedence int, baseName string, ext string) *ConfigProvider {
 	fullPath := path.Join(configsDirectory, baseName + "." + ext)
 	info, err := os.Stat(fullPath)
 	if !os.IsNotExist(err) && !info.IsDir() {
 		file, _ := os.Open(fullPath);
-		return NewProvider(description, precedence, fullPath, file)
+		return NewProvider(precedence, fullPath, file)
 	}
 	return nil
 }

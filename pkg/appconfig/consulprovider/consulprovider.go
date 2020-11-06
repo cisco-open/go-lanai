@@ -14,6 +14,7 @@ type ConsulConfigProperties struct {
 	Enabled        bool   `json:"enabled"`
 	Prefix         string `json:"prefix"`
 	DefaultContext string `json:"default-context"`
+	ProfileSeparator string `json:"profile-separator"`
 }
 
 type ConfigProvider struct {
@@ -51,9 +52,9 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	return nil
 }
 
-func NewConsulProvider(description string, precedence int, contextPath string, conn *consul.Connection) *ConfigProvider {
+func NewConsulProvider(precedence int, contextPath string, conn *consul.Connection) *ConfigProvider {
 	return &ConfigProvider{
-			ProviderMeta: appconfig.ProviderMeta{Description: description, Precedence: precedence},
+			ProviderMeta: appconfig.ProviderMeta{Precedence: precedence},
 			contextPath:  contextPath, //fmt.Sprintf("%s/%s", f.sourceConfig.Prefix, f.contextPath)
 			connection:   conn,
 		}

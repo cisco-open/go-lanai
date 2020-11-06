@@ -39,8 +39,8 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 
 	settings := make(map[string] interface{})
 
-	for k, v := range configProvider.dynamicFlags {
-		settings[k] = v
+	for k, v := range configProvider.declaredFlags {
+		settings[configProvider.prefix + k] = v
 	}
 
 	for k, v := range configProvider.dynamicFlags {
@@ -67,14 +67,14 @@ func NewCobraProvider(description string, precedence int, command *cobra.Command
 	flagSet := make(map[string]string)
 
 	extractFlag := func(flag *pflag.Flag) {
-		flagSet[prefix + flag.Name] = flag.Value.String()
+		flagSet[flag.Name] = flag.Value.String()
 	}
 
 	command.InheritedFlags().VisitAll(extractFlag)
 	command.LocalFlags().VisitAll(extractFlag)
 
 	return &ConfigProvider{
-		ProviderMeta:  appconfig.ProviderMeta{Description: description, Precedence: precedence},
+		ProviderMeta:  appconfig.ProviderMeta{Precedence: precedence},
 		prefix:        prefix,
 		declaredFlags: flagSet,
 		appName:       command.Root().Name(),
