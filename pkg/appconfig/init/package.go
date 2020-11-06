@@ -1,11 +1,11 @@
 package init
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/commandprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/consulprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/fileprovider"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -31,6 +31,7 @@ func init() {
 }
 
 const (
+	//TODO: need to leave space for app specific and profile specific providers
 	ConsulAppPrecedence            = iota
 	ConsulDefaultPrecedence        = iota
 	CommandlinePrecedence          = iota
@@ -49,6 +50,7 @@ type bootstrapFileProviderResult struct {
 }
 
 func newBootstrapFileProvider() bootstrapFileProviderResult {
+	//TODO: one each for app specific and profile specific providers
 	p := fileprovider.NewFileProvidersFromBaseName("bootstrap file properties", BootstrapLocalFilePrecedence, "bootstrap", "yml")
 	return bootstrapFileProviderResult{FileProvider: p}
 }
@@ -87,6 +89,8 @@ type consulProviderResults struct {
 func newConsulProvider(	bootstrapConfig *appconfig.BootstrapConfig, consulConfigProperties *consulprovider.ConsulConfigProperties, consulConnection *consul.Connection) consulProviderResults {
 	appName := bootstrapConfig.Value(consulprovider.ConfigKeyAppName)
 
+	//TODO: profile specific ones
+
 	//1. default contexts
 	defaultContextConsulProvider := consulprovider.NewConsulProvider(
 		"consul provider - default context",
@@ -109,6 +113,7 @@ type applicationFileProviderResult struct {
 }
 
 func newApplicationFileProvider() applicationFileProviderResult {
+	//TODO: return a list of these for application specific, and one for each profile
 	p := fileprovider.NewFileProvidersFromBaseName("application file properties", ApplicationLocalFilePrecedence, "application", "yml")
 	return applicationFileProviderResult{FileProvider: p}
 }

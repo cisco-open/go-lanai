@@ -16,6 +16,7 @@ limitations under the License.
 package bootstrap
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/profile"
 	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -40,8 +41,10 @@ func Execute() {
 
 func NewAppCmd(appName string, priorityOptions []fx.Option, regularOptions []fx.Option) {
 	rootCmd.Use = appName
-	app := newApp(rootCmd, priorityOptions, regularOptions)
+	rootCmd.PersistentFlags().StringSliceVar(&profile.Profiles, "profiles", []string{}, "List of comma separated profiles.")
+
 	rootCmd.Run = func(cmd *cobra.Command, args []string) {
+		app := newApp(rootCmd, priorityOptions, regularOptions)
 		app.Run()
 	}
 
