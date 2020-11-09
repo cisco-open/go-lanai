@@ -198,20 +198,6 @@ func UnFlattenKey(k string, configures...func(*Options)) []string {
 	return strings.Split(k, opts.Delimiter)
 }
 
-/*
-Allow relaxed binding. The following should all bind to the same
-
-acme.my-project.person.first-name
-acme.myProject.person.firstName
-
-we want to standardize on the snake case convention. So our algorithm is to
-find the upper case letter, and if it's not preceded by a dash, then insert the dash
-
-TODO: environment variables have ACME_MYPROJECT_PERSON_FIRSTNAME.
- This should be taken care of by the environment provider first to acme.myproject.person.firstname
-
-*/
-
 const dash = rune('-')
 
 func NormalizeKey(key string, configures...func(*Options)) string {
@@ -223,12 +209,12 @@ func NormalizeKey(key string, configures...func(*Options)) string {
 		var normalized []rune
 		for pos, char := range key {
 			if unicode.IsUpper(char) {
-				if pos>0 {
+				if pos>0 && unicode.IsLower([]rune(key)[pos-1]) {
 					normalized = append(normalized, dash)
 				}
 				normalized = append(normalized, unicode.ToLower(char))
 			} else {
-				normalized = append(normalized, char)
+				normalized = append(normalized, unicode.ToLower(char))
 			}
 		}
 

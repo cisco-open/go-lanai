@@ -19,7 +19,7 @@ func TestResolvePlaceHolders(t *testing.T) {
 		t.Errorf("can't open test file")
 	}
 
-	p := fileprovider.NewProvider("test", 0, fullPath, file)
+	p := fileprovider.NewProvider(0, fullPath, file)
 	c := appconfig.NewApplicationConfig(p)
 
 	c.Load(true)
@@ -56,7 +56,7 @@ func TestResolvePlaceHoldersWithCircularReference(t *testing.T) {
 		t.Errorf("can't open test file")
 	}
 
-	p := fileprovider.NewProvider("test", 0, fullPath, file)
+	p := fileprovider.NewProvider(0, fullPath, file)
 	c := appconfig.NewApplicationConfig(p)
 
 	error = c.Load(true)

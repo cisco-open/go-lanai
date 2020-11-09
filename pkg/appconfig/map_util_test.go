@@ -30,10 +30,18 @@ func TestNormalizeKey(t *testing.T) {
 	}
 
 	key = "AcmE.MyProjecT.PersoN.FirstNamE"
-	expected = "a-cm-e.my-projec-t.p-erso-n.first-nam-e"
+	expected = "acm-e.my-projec-t.perso-n.first-nam-e"
 	actual = NormalizeKey(key)
 
-	if strings.Compare(expected, actual) == 0 {
+	if strings.Compare(expected, actual) != 0 {
+		t.Errorf("expected %s, got %s", expected, actual)
+	}
+
+	key = "ACME.MYPROJECT.PERSON.FIRSTNAME"
+	expected = "acme.myproject.person.firstname"
+	actual = NormalizeKey(key)
+
+	if strings.Compare(expected, actual) != 0 {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
 

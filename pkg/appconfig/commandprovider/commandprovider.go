@@ -62,7 +62,7 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 }
 
 
-func NewCobraProvider(description string, precedence int, command *cobra.Command, prefix string) *ConfigProvider {
+func NewCobraProvider(precedence int, command *cobra.Command, prefix string) *ConfigProvider {
 
 	flagSet := make(map[string]string)
 

@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/commandprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/consulprovider"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/envprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/fileprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
@@ -18,6 +19,7 @@ var ConfigModule = &bootstrap.Module{
 	PriorityOptions: []fx.Option{
 		fx.Provide(
 			newCommandProvider,
+			newOsEnvProvider,
 			newBootstrapFileProvider,
 			newBootstrapConfig,
 			newApplicationFileProvider,
@@ -38,12 +40,18 @@ const (
 	//lower integer means higher precedence, therefore the list here is high to low in terms of precedence
 	consulPrecedence               = iota * precendencGap
 	commandlinePrecedence          = iota * precendencGap
+	osEnvPrecedence				   = iota * precendencGap
 	applicationLocalFilePrecedence = iota * precendencGap
 	bootstrapLocalFilePrecedence   = iota * precendencGap
 )
 
 func newCommandProvider(cmd *cobra.Command) *commandprovider.ConfigProvider {
-	p := commandprovider.NewCobraProvider("command line", commandlinePrecedence, cmd, "cli.flag.")
+	p := commandprovider.NewCobraProvider(commandlinePrecedence, cmd, "cli.flag.")
+	return p
+}
+
+func newOsEnvProvider() *envprovider.ConfigProvider {
+	p := envprovider.NewEnvProvider(osEnvPrecedence)
 	return p
 }
 
@@ -74,13 +82,14 @@ func newBootstrapFileProvider() bootstrapFileProviderResult {
 type bootstrapConfigParam struct {
 	fx.In
 	CmdProvider  *commandprovider.ConfigProvider
+	OsEnvProvider *envprovider.ConfigProvider
 	FileProvider []*fileprovider.ConfigProvider `name:"bootstrap_file_provider"`
 }
 
 func newBootstrapConfig(p bootstrapConfigParam) *appconfig.BootstrapConfig {
 	providers := make([]appconfig.Provider, 0, len(p.FileProvider) + 1)
 
-	providers = append(providers, p.CmdProvider)
+	providers = append(providers, p.CmdProvider, p.OsEnvProvider)
 
 	for _, provider := range p.FileProvider {
 		providers = append(providers, provider)
