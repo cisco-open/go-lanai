@@ -23,6 +23,6 @@ func init() {
 	passwd.GobRegister()
 }
 
-func setup(init security.Initializer, c *SessionConfigurer) {
+func setup(init security.Registrar, c *SessionConfigurer) {
 	init.(security.FeatureRegistrar).RegisterFeatureConfigurer(SessionConfigurerType, c)
 }

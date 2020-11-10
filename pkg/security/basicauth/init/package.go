@@ -19,6 +19,6 @@ func init() {
 	bootstrap.Register(BasicAuthModule)
 }
 
-func setup(init security.Initializer, c *BasicAuthConfigurer) {
+func setup(init security.Registrar, c *BasicAuthConfigurer) {
 	init.(security.FeatureRegistrar).RegisterFeatureConfigurer(BasicAuthConfigurerType, c)
 }

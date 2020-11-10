@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	basic "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth/init"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/configurer"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	session "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/route"
@@ -19,7 +20,7 @@ func Use() {
 
 }
 
-func configureSecurity(init security.Initializer, store security.AccountStore) {
+func configureSecurity(init configurer.Initializer, store security.AccountStore) {
 	init.Register(&TestSecurityConfigurer {
 		accountStore: store,
 	})
@@ -31,7 +32,7 @@ type TestSecurityConfigurer struct {
 	accountStore security.AccountStore
 }
 
-func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
+func (c *TestSecurityConfigurer) Configure(ws configurer.WebSecurity) {
 
 	ws.ApplyTo(route.WithPattern("/api/**"))
 
@@ -45,7 +46,7 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 type AnotherSecurityConfigurer struct {
 }
 
-func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
+func (c *AnotherSecurityConfigurer) Configure(ws configurer.WebSecurity) {
 
 	ws.ApplyTo(route.WithPattern("/page/**"))
 

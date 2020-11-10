@@ -10,7 +10,7 @@ var Module = &bootstrap.Module{
 	Name: "security",
 	Precedence: MaxSecurityPrecedence,
 	Options: []fx.Option{
-		fx.Provide(New, newGlobalAuthenticator),
+		fx.Provide(provideSecurityInitialization),
 		fx.Invoke(initialize),
 	},
 }
@@ -27,19 +27,35 @@ func Use() {
 /**************************
 	Provider
 ***************************/
-func newGlobalAuthenticator() Authenticator {
-	return NewAuthenticator()
+type global struct {
+	fx.Out
+	Initializer Initializer
+	Registrar Registrar
+	Authenticator Authenticator
 }
 
+// We let configurer.initializer can be autowired as both Initializer and Registrar
+func provideSecurityInitialization() global {
+	initializer := newSecurity()
+	return global{
+		Initializer: initializer,
+		Registrar: initializer,
+		Authenticator: NewAuthenticator(),
+	}
+}
+
+/**************************
+	Initialize
+***************************/
 type dependencies struct {
 	fx.In
-	Registerer *web.Registrar
+	Registerer  *web.Registrar
 	Initializer Initializer
 }
 
 func initialize(di dependencies) {
 	// TODO error handling
-	if err := di.Initializer.(*initializer).initialize(di.Registerer); err != nil {
+	if err := di.Initializer.Initialize(di.Registerer); err != nil {
 		//panic(err)
 	}
 }

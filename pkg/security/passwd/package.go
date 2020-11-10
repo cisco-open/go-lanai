@@ -19,6 +19,6 @@ func init() {
 	bootstrap.Register(PasswordAuthModule)
 }
 
-func setup(init security.Initializer, c *PasswordAuthConfigurer) {
+func setup(init security.Registrar, c *PasswordAuthConfigurer) {
 	init.(security.FeatureRegistrar).RegisterFeatureConfigurer(PasswordAuthConfigurerType, c)
 }
