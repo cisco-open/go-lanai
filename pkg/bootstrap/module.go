@@ -8,6 +8,10 @@ import (
 const (
 	LowestPrecedence = int(^uint(0) >> 1) // max int
 	HighestPrecedence = -LowestPrecedence - 1 // min int
+
+	FrameworkModulePrecedence = LowestPrecedence - 100000
+	AnonymousModulePrecedence = FrameworkModulePrecedence - 1
+	PriorityModulePrecedence = HighestPrecedence + 1
 )
 
 var anonymousOnce sync.Once
@@ -18,6 +22,7 @@ var applicationMain *Module
 
 type Module struct {
 	// Precedence basically govern the order or invokers between different Bootstrapper
+	Name            string
 	Precedence      int
 	PriorityOptions []fx.Option
 	Options 		[]fx.Option
@@ -26,7 +31,8 @@ type Module struct {
 func anonymousModule() *Module {
 	anonymousOnce.Do(func() {
 		anonymous = &Module{
-			Precedence: LowestPrecedence,
+			Name: "anonymous",
+			Precedence: AnonymousModulePrecedence,
 		}
 	})
 	return anonymous
@@ -35,7 +41,8 @@ func anonymousModule() *Module {
 func applicationMainModule() *Module {
 	applicationMainOnce.Do(func() {
 		applicationMain = &Module {
-			Precedence: HighestPrecedence + 1,
+			Name: "main",
+			Precedence: PriorityModulePrecedence,
 		}
 	})
 	return applicationMain

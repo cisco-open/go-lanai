@@ -13,6 +13,7 @@ import (
 )
 
 var ConfigModule = &bootstrap.Module{
+	Name: "bootstrap config",
 	Precedence: bootstrap.HighestPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(

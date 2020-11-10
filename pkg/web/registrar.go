@@ -37,8 +37,12 @@ type Registrar struct {
 
 // TODO support customizers
 func NewRegistrar(g *gin.Engine, properties ServerProperties) *Registrar {
+
+	var contextPath = path.Clean("/" + properties.ContextPath)
+
 	return &Registrar{
 		engine:     g,
+		router: 	g.Group(contextPath),
 		properties: properties,
 		options: []httptransport.ServerOption{
 			httptransport.ServerBefore(ginContextExtractor),
@@ -64,10 +68,6 @@ func (r *Registrar) Run() (err error) {
 	if err = r.initialize(); err != nil {
 		return
 	}
-
-	//TODO config server with more options, and proper error handling
-	var contextPath = path.Clean("/" + r.properties.ContextPath)
-	r.router = r.engine.Group(contextPath)
 
 	var addr = fmt.Sprintf(":%v", r.properties.Port)
 	s := &http.Server{

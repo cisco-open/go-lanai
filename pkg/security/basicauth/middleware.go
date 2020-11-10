@@ -14,8 +14,8 @@ type BasicAuthMiddleware struct {
 	authenticator security.Authenticator
 }
 
-func NewBasicAuthMiddleware(store security.Authenticator) *BasicAuthMiddleware {
-	return &BasicAuthMiddleware{store}
+func NewBasicAuthMiddleware(auth security.Authenticator) *BasicAuthMiddleware {
+	return &BasicAuthMiddleware{auth}
 }
 
 func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
