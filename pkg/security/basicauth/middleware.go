@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"encoding/base64"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -38,7 +39,7 @@ func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 
 		pair := strings.SplitN(string(decoded), ":", 2)
 		if len(pair) < 2 {
-			basic.handleError(ctx, err)
+			basic.handleError(ctx, fmt.Errorf("invalid Authorization header"))
 			return
 		}
 

@@ -3,7 +3,7 @@ package example
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	basic "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth/init"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	session "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/route"
@@ -38,7 +38,7 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 	passwd.Configure(ws).
 		AccountStore(c.accountStore).
 		PasswordEncoder(passwd.NewNoopPasswordEncoder())
-	basic.Configure(ws)
+	basicauth.Configure(ws)
 }
 
 
@@ -50,6 +50,6 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 	ws.ApplyTo(route.WithPattern("/page/**"))
 
 	session.Configure(ws)
-	basic.Configure(ws)
+	basicauth.Configure(ws)
 	passwd.Configure(ws)
 }

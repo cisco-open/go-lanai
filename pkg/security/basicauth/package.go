@@ -1,4 +1,4 @@
-package init
+package basicauth
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -6,6 +6,7 @@ import (
 	"go.uber.org/fx"
 )
 
+//goland:noinspection GoNameStartsWithPackageName
 var BasicAuthModule = &bootstrap.Module{
 	Name: "basic auth",
 	Precedence: security.MinSecurityPrecedence + 20,
