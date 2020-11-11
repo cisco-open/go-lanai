@@ -27,36 +27,39 @@ func Use() {
 /**************************
 	Provider
 ***************************/
+type dependencies struct {
+	fx.In
+	GlobalAuthenticator Authenticator `optional:"true"`
+	// may be generic security properties
+}
+
 type global struct {
 	fx.Out
 	Initializer Initializer
 	Registrar Registrar
-	Authenticator Authenticator
 }
 
 // We let configurer.initializer can be autowired as both Initializer and Registrar
-func provideSecurityInitialization() global {
-	initializer := newSecurity()
+func provideSecurityInitialization(di dependencies) global {
+	initializer := newSecurity(di.GlobalAuthenticator)
 	return global{
 		Initializer: initializer,
 		Registrar: initializer,
-		Authenticator: NewAuthenticator(),
 	}
 }
 
 /**************************
 	Initialize
 ***************************/
-type dependencies struct {
+type initDI struct {
 	fx.In
 	Registerer  *web.Registrar
 	Initializer Initializer
 }
 
-func initialize(di dependencies) {
-	// TODO error handling
+func initialize(di initDI) {
 	if err := di.Initializer.Initialize(di.Registerer); err != nil {
-		//panic(err)
+		panic(err)
 	}
 }
 

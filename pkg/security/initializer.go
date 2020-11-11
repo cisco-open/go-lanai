@@ -1,9 +1,11 @@
 package security
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"reflect"
+	"sort"
 	"sync"
 )
 
@@ -13,16 +15,18 @@ import (
 type initializer struct {
 	initialized bool
 	initializing bool
-	featureConfigurers map[reflect.Type]FeatureConfigurer
+	featureConfigurers map[FeatureIdentifier]FeatureConfigurer
 	configurers []Configurer
+	globalAuthenticator Authenticator
 }
 
 var initializeMutex sync.Mutex
 
-func newSecurity() *initializer {
+func newSecurity(globalAuth Authenticator) *initializer {
 	return &initializer{
-		featureConfigurers: map[reflect.Type]FeatureConfigurer{},
+		featureConfigurers: map[FeatureIdentifier]FeatureConfigurer{},
 		configurers: []Configurer{},
+		globalAuthenticator: globalAuth,
 	}
 }
 
@@ -34,12 +38,12 @@ func (init *initializer) Register(configurers ...Configurer) {
 	init.configurers = append(init.configurers, configurers...)
 }
 
-func (init *initializer) RegisterFeatureConfigurer(configurerType reflect.Type, configurer FeatureConfigurer) {
+func (init *initializer) RegisterFeature(featureId FeatureIdentifier, featureConfigurer FeatureConfigurer) {
 	// TODO proper lock
 	if err := init.validateState("register security.FeatureConfigurer"); err != nil {
 		panic(err)
 	}
-	init.featureConfigurers[configurerType] = configurer
+	init.featureConfigurers[featureId] = featureConfigurer
 }
 
 func (init *initializer) validateState(action string) error {
@@ -61,8 +65,14 @@ func (init *initializer) Initialize(registrar *web.Registrar) error {
 		return fmt.Errorf("security.Initializer.initialize cannot be called twice")
 	}
 
-	// TODO sort configurer
 	init.initializing = true
+
+	// sort configurer
+	sort.Slice(init.configurers, func(i,j int) bool {
+		return order.OrderedFirstCompare(init.configurers[i], init.configurers[j])
+	})
+
+	// go through each configurer
 	for _,configurer := range init.configurers {
 		builder, err := init.build(configurer)
 		if err != nil {
@@ -75,7 +85,7 @@ func (init *initializer) Initialize(registrar *web.Registrar) error {
 			}
 			// TODO logger
 			fmt.Printf("registered security middleware [%d][%s] %v -> %v \n",
-				mapping.Order(), mapping.Name(), mapping.Matcher(), reflect.TypeOf(mapping.HandlerFunc()))
+				mapping.Order(), mapping.Name(), mapping.Matcher(), reflect.ValueOf(mapping.HandlerFunc()).String())
 		}
 	}
 
@@ -86,25 +96,55 @@ func (init *initializer) Initialize(registrar *web.Registrar) error {
 
 func (init *initializer) build(configurer Configurer) (WebSecurityMiddlewareBuilder, error) {
 	// collect security configs
-	webSecurity := newWebSecurity()
-	configurer.Configure(webSecurity)
+	ws := newWebSecurity(NewAuthenticator())
+	configurer.Configure(ws)
 
 	// configure web security
-	templates := webSecurity.middlewareTemplates
-	for _, f := range webSecurity.Features() {
-		fc, ok := init.featureConfigurers[f.ConfigurerType()]
+	features := ws.Features()
+	sort.Slice(features, func(i,j int) bool {
+		return order.OrderedFirstCompare(features[i], features[j])
+	})
+
+	for _, f := range ws.Features() {
+		fc, ok := init.featureConfigurers[f.Identifier()]
 		if !ok {
 			return nil, fmt.Errorf("unable to build security feature %T: no FeatureConfigurer found", f)
 		}
 
-		additional, err := fc.Build(f)
+		err := fc.Apply(f, ws)
 		if err != nil {
 			return nil, err
 		}
-		templates = append(templates, additional...)
 	}
-	webSecurity.middlewareTemplates = templates
-	return webSecurity, nil
+
+	if err := init.process(ws); err != nil {
+		return nil, err
+	}
+	return ws, nil
+}
+
+func (init *initializer) process(ws *webSecurity)  error {
+	if len(ws.middlewareTemplates) == 0 {
+		return fmt.Errorf("no middleware were configuered for WebSecurity %v", ws)
+	}
+
+	switch {
+	case !hasConcreteAuthenticator(ws.authenticator) && !hasConcreteAuthenticator(init.globalAuthenticator):
+		return fmt.Errorf("no concrete authenticator is configured for WebSecurity %v, and global authenticator is not configurered neither", ws)
+	case !hasConcreteAuthenticator(ws.authenticator):
+		// ws has no concrete authenticator, but global authenticator is configured, use it
+		ws.authenticator = init.globalAuthenticator
+	}
+	return nil
+}
+
+func hasConcreteAuthenticator(auth Authenticator) bool {
+	if auth == nil {
+		return false
+	}
+
+	composite, ok := auth.(*CompositeAuthenticator)
+	return !ok || len(composite.authenticators) != 0
 }
 
 

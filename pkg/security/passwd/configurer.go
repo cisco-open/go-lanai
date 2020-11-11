@@ -2,11 +2,21 @@ package passwd
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
-	"reflect"
 )
 
-var PasswordAuthConfigurerType = reflect.TypeOf((*PasswordAuthConfigurer)(nil))
+const (
+	PasswordAuthenticatorFeatureId = FeatureId("Hotmail")
+)
+
+// FeatureId is ordered
+type FeatureId string
+
+// order.Ordered interface
+func (FeatureId) Order() int {
+	return order.Highest
+}
 
 // We currently don't have any stuff to configure
 type PasswordAuthFeature struct {
@@ -14,8 +24,8 @@ type PasswordAuthFeature struct {
 	passwordEncoder PasswordEncoder
 }
 
-func (f *PasswordAuthFeature) ConfigurerType() reflect.Type {
-	return PasswordAuthConfigurerType
+func (f *PasswordAuthFeature) Identifier() security.FeatureIdentifier {
+	return PasswordAuthenticatorFeatureId
 }
 
 func (f *PasswordAuthFeature) AccountStore(as security.AccountStore) *PasswordAuthFeature {
@@ -38,19 +48,51 @@ func Configure(ws security.WebSecurity) *PasswordAuthFeature {
 }
 
 type PasswordAuthConfigurer struct {
-	authenticator security.Authenticator
+	accountStore security.AccountStore
+	passwordEncoder PasswordEncoder
 }
 
-func newPasswordAuthConfigurer(auth security.Authenticator) *PasswordAuthConfigurer {
-	return &PasswordAuthConfigurer{
-		authenticator: auth,
+func newPasswordAuthConfigurer(store security.AccountStore, encoder PasswordEncoder) *PasswordAuthConfigurer {
+	return &PasswordAuthConfigurer {
+		accountStore: store,
+		passwordEncoder: encoder,
 	}
 }
 
-func (pac *PasswordAuthConfigurer) Build(f security.Feature) ([]security.MiddlewareTemplate, error) {
-	// TODO error handling
-	passwdFeature := f.(*PasswordAuthFeature)
-	auth := NewAuthenticator(passwdFeature.accountStore, passwdFeature.passwordEncoder)
-	pac.authenticator.(*security.CompositeAuthenticator).Add(auth)
-	return []security.MiddlewareTemplate{}, nil
+func (pac *PasswordAuthConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
+	// Validate
+	if err := pac.validate(feature.(*PasswordAuthFeature), ws); err != nil {
+		return err
+	}
+	f := feature.(*PasswordAuthFeature)
+
+
+	// set defaults if necessary
+	pac.setDefaultsIfNecessary(f)
+
+	auth := NewAuthenticator(f.accountStore, f.passwordEncoder)
+	ws.Authenticator().(*security.CompositeAuthenticator).Add(auth)
+	return nil
+}
+
+func (pac *PasswordAuthConfigurer) validate(f *PasswordAuthFeature, ws security.WebSecurity) error {
+
+	if _,ok := ws.Authenticator().(*security.CompositeAuthenticator); !ok {
+		return fmt.Errorf("unable to add password authenticator to %T", ws.Authenticator())
+	}
+
+	if f.accountStore == nil && pac.accountStore == nil {
+		return fmt.Errorf("unable to create password authenticator: account store is not set")
+	}
+	return nil
+}
+
+func (pac *PasswordAuthConfigurer) setDefaultsIfNecessary(f *PasswordAuthFeature) {
+	if f.accountStore == nil {
+		f.accountStore = pac.accountStore
+	}
+
+	if f.passwordEncoder == nil {
+		f.passwordEncoder = pac.passwordEncoder
+	}
 }

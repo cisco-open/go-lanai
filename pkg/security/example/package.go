@@ -51,4 +51,5 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	session.Configure(ws)
 	basic.Configure(ws)
+	passwd.Configure(ws)
 }

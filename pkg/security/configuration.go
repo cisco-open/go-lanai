@@ -3,9 +3,11 @@ package security
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"reflect"
 )
 
+const (
+	WSSharedKeyAuthenticatorManager = "kAuthenticator"
+)
 /************************************
 	Interfaces for setting security
 *************************************/
@@ -42,19 +44,41 @@ type Initializer interface {
 // it holds the middleware's gin.HandlerFunc and its order
 type MiddlewareTemplate *middleware.MappingBuilder
 
+// FeatureIdentifier is unique for each feature.
+// Security initializer use this value to locate corresponding FeatureConfigurer
+// or sort configuration order
+type FeatureIdentifier interface{}
+
 // Feature holds security settings of specific feature.
+// Any Feature should have a corresponding FeatureConfigurer
 type Feature interface {
-	ConfigurerType() reflect.Type
+	Identifier() FeatureIdentifier
 }
 
 // WebSecurity holds information on security configuration
 type WebSecurity interface {
 	ApplyTo(r web.RouteMatcher) WebSecurity
-	Add(MiddlewareTemplate) WebSecurity
-	Remove(MiddlewareTemplate) WebSecurity
+	// Add add MiddlewareTemplate
+	Add(...MiddlewareTemplate) WebSecurity
+
+	// Remove remove MiddlewareTemplate
+	Remove(...MiddlewareTemplate) WebSecurity
+
+	// Shared get shared value
+	Shared(key string) interface{}
+
+	// AddShared add shared value. returns error when the key already exists
+	AddShared(key string, value interface{}) error
+
+	// returns Authenticator
+	Authenticator() Authenticator
+
+	// Features get currently configured Feature list
 	Features() []Feature
 }
 
-
+/****************************************
+	Convenient Types
+*****************************************/
 
 

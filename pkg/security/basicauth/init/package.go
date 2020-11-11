@@ -10,8 +10,7 @@ var BasicAuthModule = &bootstrap.Module{
 	Name: "basic auth",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
-		fx.Provide(newBasicAuthConfigurer),
-		fx.Invoke(setup),
+		fx.Invoke(register),
 	},
 }
 
@@ -19,6 +18,7 @@ func init() {
 	bootstrap.Register(BasicAuthModule)
 }
 
-func setup(init security.Registrar, c *BasicAuthConfigurer) {
-	init.(security.FeatureRegistrar).RegisterFeatureConfigurer(BasicAuthConfigurerType, c)
+func register(init security.Registrar) {
+	configurer := newBasicAuthConfigurer()
+	init.(security.FeatureRegistrar).RegisterFeature(BasicFeatureId, configurer)
 }

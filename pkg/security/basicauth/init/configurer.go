@@ -5,22 +5,20 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
-	"reflect"
 )
 
 const (
 	MWOrderBasicAuth = security.HighestMiddlewareOrder + 200
+	BasicFeatureId = "BasicAuth"
 )
-
-var BasicAuthConfigurerType = reflect.TypeOf((*BasicAuthConfigurer)(nil))
 
 // We currently don't have any stuff to configure
 type BasicAuthFeature struct {
 	// TODO we may want to override authenticator and other stuff
 }
 
-func (f *BasicAuthFeature) ConfigurerType() reflect.Type {
-	return BasicAuthConfigurerType
+func (f *BasicAuthFeature) Identifier() security.FeatureIdentifier {
+	return BasicFeatureId
 }
 
 func Configure(ws security.WebSecurity) *BasicAuthFeature {
@@ -33,21 +31,21 @@ func Configure(ws security.WebSecurity) *BasicAuthFeature {
 }
 
 type BasicAuthConfigurer struct {
-	authenticator security.Authenticator
+
 }
 
-func newBasicAuthConfigurer(auth security.Authenticator) *BasicAuthConfigurer {
+func newBasicAuthConfigurer() *BasicAuthConfigurer {
 	return &BasicAuthConfigurer{
-		authenticator: auth,
 	}
 }
 
-func (bac *BasicAuthConfigurer) Build(_ security.Feature) ([]security.MiddlewareTemplate, error) {
+func (bac *BasicAuthConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 	// TODO
-	basicAuth := basicauth.NewBasicAuthMiddleware(bac.authenticator)
+	basicAuth := basicauth.NewBasicAuthMiddleware(ws.Authenticator())
 	auth := middleware.NewBuilder("basic auth").
 		Order(MWOrderBasicAuth).
 		Use(basicAuth.HandlerFunc())
 
-	return []security.MiddlewareTemplate{auth}, nil
+	ws.Add(auth)
+	return nil
 }

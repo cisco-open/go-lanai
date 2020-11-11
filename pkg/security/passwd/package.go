@@ -10,8 +10,7 @@ var PasswordAuthModule = &bootstrap.Module{
 	Name: "passwd authenticator",
 	Precedence: security.MinSecurityPrecedence + 30,
 	Options: []fx.Option{
-		fx.Provide(newPasswordAuthConfigurer),
-		fx.Invoke(setup),
+		fx.Invoke(register),
 	},
 }
 
@@ -19,6 +18,13 @@ func init() {
 	bootstrap.Register(PasswordAuthModule)
 }
 
-func setup(init security.Registrar, c *PasswordAuthConfigurer) {
-	init.(security.FeatureRegistrar).RegisterFeatureConfigurer(PasswordAuthConfigurerType, c)
+type dependencies struct {
+	fx.In
+	AccountStore security.AccountStore `optional:"true"`
+	PasswordEncoder PasswordEncoder `optional:"true"`
+}
+
+func register(init security.Registrar, di dependencies) {
+	configurer := newPasswordAuthConfigurer(di.AccountStore, di.PasswordEncoder)
+	init.(security.FeatureRegistrar).RegisterFeature(PasswordAuthenticatorFeatureId, configurer)
 }

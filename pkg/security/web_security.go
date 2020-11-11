@@ -15,12 +15,16 @@ type webSecurity struct {
 	condition           web.ConditionalMiddlewareFunc
 	middlewareTemplates []MiddlewareTemplate
 	features            []Feature
+	shared 				map[string]interface{}
+	authenticator 		Authenticator
 }
 
-func newWebSecurity() *webSecurity {
+func newWebSecurity(authenticator Authenticator) *webSecurity {
 	return &webSecurity{
 		middlewareTemplates: []MiddlewareTemplate{},
 		features: []Feature{},
+		shared: map[string]interface{}{},
+		authenticator: authenticator,
 	}
 }
 
@@ -34,14 +38,32 @@ func (ws *webSecurity) ApplyTo(r web.RouteMatcher) WebSecurity {
 	return ws
 }
 
-func (ws *webSecurity) Add(b MiddlewareTemplate) WebSecurity {
-	ws.middlewareTemplates = append(ws.middlewareTemplates, b)
+func (ws *webSecurity) Add(templates ...MiddlewareTemplate) WebSecurity {
+	ws.middlewareTemplates = append(ws.middlewareTemplates, templates...)
 	return ws
 }
 
-func (ws *webSecurity) Remove(b MiddlewareTemplate) WebSecurity {
-	ws.middlewareTemplates = remove(ws.middlewareTemplates, b)
+func (ws *webSecurity) Remove(templates ...MiddlewareTemplate) WebSecurity {
+	for _, t := range templates {
+		ws.middlewareTemplates = remove(ws.middlewareTemplates, t)
+	}
 	return ws
+}
+
+func (ws *webSecurity) Shared(key string) interface{} {
+	return ws.shared[key]
+}
+
+func (ws *webSecurity) AddShared(key string, value interface{}) error {
+	if _, exists := ws.shared[key]; exists {
+		return fmt.Errorf("cannot add shared value to WebSecurity %v: key [%s] already exists", ws, key)
+	}
+	ws.shared[key] = value
+	return nil
+}
+
+func (ws *webSecurity) Authenticator() Authenticator {
+	return ws.authenticator
 }
 
 /* FeatureModifier interface */
@@ -83,6 +105,13 @@ func (ws *webSecurity) Build() []web.MiddlewareMapping {
 	return mappings
 }
 
+// Other interfaces
+func (ws *webSecurity) String() string {
+	// TODO
+	return fmt.Sprintf("matcher=%v condition=%v features=%v", ws.routeMatcher, ws.condition, ws.features)
+}
+
+// unexported
 func remove(slice []MiddlewareTemplate, item MiddlewareTemplate) []MiddlewareTemplate {
 	for i,obj := range slice {
 		if obj != item {
@@ -97,7 +126,7 @@ func remove(slice []MiddlewareTemplate, item MiddlewareTemplate) []MiddlewareTem
 
 func findFeatureIndex(slice []Feature, f Feature) int {
 	for i, obj := range slice {
-		if f.ConfigurerType().ConvertibleTo(obj.ConfigurerType()) {
+		if f.Identifier() == obj.Identifier() {
 			return i
 		}
 	}
