@@ -17,6 +17,7 @@ type BasicAuthFeature struct {
 	// TODO we may want to override authenticator and other stuff
 }
 
+// Standard security.Feature entrypoint
 func (f *BasicAuthFeature) Identifier() security.FeatureIdentifier {
 	return BasicFeatureId
 }
@@ -28,6 +29,11 @@ func Configure(ws security.WebSecurity) *BasicAuthFeature {
 		return feature
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
+}
+
+// Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+func New() *BasicAuthFeature {
+	return &BasicAuthFeature{}
 }
 
 //goland:noinspection GoNameStartsWithPackageName

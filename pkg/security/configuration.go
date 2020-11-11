@@ -57,12 +57,17 @@ type Feature interface {
 
 // WebSecurity holds information on security configuration
 type WebSecurity interface {
+
 	ApplyTo(r web.RouteMatcher) WebSecurity
-	// Add add MiddlewareTemplate
+
+	// Add is DSL style setter to add MiddlewareTemplate
 	Add(...MiddlewareTemplate) WebSecurity
 
-	// Remove remove MiddlewareTemplate
+	// Remove is DSL style setter to add remove MiddlewareTemplate
 	Remove(...MiddlewareTemplate) WebSecurity
+
+	// With is DSL style setter to enable features
+	With(f Feature) WebSecurity
 
 	// Shared get shared value
 	Shared(key string) interface{}

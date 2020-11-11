@@ -38,6 +38,7 @@ func (f *PasswordAuthFeature) PasswordEncoder(pe PasswordEncoder) *PasswordAuthF
 	return f
 }
 
+// Standard security.Feature entrypoint
 func Configure(ws security.WebSecurity) *PasswordAuthFeature {
 	feature := &PasswordAuthFeature{}
 	if fm, ok := ws.(security.FeatureModifier); ok {
@@ -45,6 +46,11 @@ func Configure(ws security.WebSecurity) *PasswordAuthFeature {
 		return feature
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
+}
+
+// Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+func New() *PasswordAuthFeature {
+	return &PasswordAuthFeature{}
 }
 
 type PasswordAuthConfigurer struct {

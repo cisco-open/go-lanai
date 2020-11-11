@@ -33,12 +33,13 @@ type TestSecurityConfigurer struct {
 
 func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 
-	ws.ApplyTo(route.WithPattern("/api/**"))
-
-	passwd.Configure(ws).
-		AccountStore(c.accountStore).
-		PasswordEncoder(passwd.NewNoopPasswordEncoder())
-	basicauth.Configure(ws)
+	// DSL style example
+	ws.ApplyTo(route.WithPattern("/api/**")).
+		With(passwd.New().
+			AccountStore(c.accountStore).
+			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
+		).
+		With(basicauth.New())
 }
 
 
@@ -47,6 +48,7 @@ type AnotherSecurityConfigurer struct {
 
 func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
+	// non-DSL style example
 	ws.ApplyTo(route.WithPattern("/page/**"))
 
 	session.Configure(ws)

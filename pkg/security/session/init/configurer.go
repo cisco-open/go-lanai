@@ -24,6 +24,7 @@ func (f *SessionFeature) Identifier() security.FeatureIdentifier {
 	return SessionFeatureId
 }
 
+// Standard security.Feature entrypoint
 func Configure(ws security.WebSecurity) *SessionFeature {
 	feature := &SessionFeature{}
 	if fc, ok := ws.(security.FeatureModifier); ok {
@@ -31,6 +32,11 @@ func Configure(ws security.WebSecurity) *SessionFeature {
 		return feature
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
+}
+
+// Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+func New() *SessionFeature {
+	return &SessionFeature{}
 }
 
 type SessionConfigurer struct {

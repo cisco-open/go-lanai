@@ -38,6 +38,13 @@ func (ws *webSecurity) ApplyTo(r web.RouteMatcher) WebSecurity {
 	return ws
 }
 
+func (ws *webSecurity) With(f Feature) WebSecurity {
+	if err := ws.Enable(f); err != nil {
+		panic(err)
+	}
+	return ws
+}
+
 func (ws *webSecurity) Add(templates ...MiddlewareTemplate) WebSecurity {
 	ws.middlewareTemplates = append(ws.middlewareTemplates, templates...)
 	return ws
