@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
+	"net/http"
 )
 
 /*****************************
@@ -12,7 +13,7 @@ import (
 ******************************/
 type webSecurity struct {
 	routeMatcher        web.RouteMatcher
-	condition           web.ConditionalMiddlewareFunc
+	conditionMatcher    web.MWConditionMatcher
 	middlewareTemplates []MiddlewareTemplate
 	features            []Feature
 	shared 				map[string]interface{}
@@ -33,8 +34,13 @@ func (ws *webSecurity) Features() []Feature {
 	return ws.features
 }
 
-func (ws *webSecurity) ApplyTo(r web.RouteMatcher) WebSecurity {
-	ws.routeMatcher = r
+func (ws *webSecurity) Route(rm web.RouteMatcher) WebSecurity {
+	ws.routeMatcher = rm
+	return ws
+}
+
+func (ws *webSecurity) Condition(mwcm web.MWConditionMatcher) WebSecurity {
+	ws.conditionMatcher = mwcm
 	return ws
 }
 
@@ -103,8 +109,8 @@ func (ws *webSecurity) Build() []web.MiddlewareMapping {
 		}
 		builder = builder.ApplyTo(ws.routeMatcher)
 
-		if ws.condition != nil {
-			builder = builder.WithCondition(ws.condition)
+		if ws.conditionMatcher != nil {
+			builder = builder.WithCondition(conditionFunc(ws.conditionMatcher) )
 		}
 
 		mappings[i] = builder.Build()
@@ -115,7 +121,7 @@ func (ws *webSecurity) Build() []web.MiddlewareMapping {
 // Other interfaces
 func (ws *webSecurity) String() string {
 	// TODO
-	return fmt.Sprintf("matcher=%v condition=%v features=%v", ws.routeMatcher, ws.condition, ws.features)
+	return fmt.Sprintf("matcher=%v condition=%v features=%v", ws.routeMatcher, ws.conditionMatcher, ws.features)
 }
 
 // unexported
@@ -138,6 +144,16 @@ func findFeatureIndex(slice []Feature, f Feature) int {
 		}
 	}
 	return -1
+}
+
+func conditionFunc(matcher web.MWConditionMatcher) web.MWConditionFunc {
+	return func(req *http.Request) bool {
+		if matches, err := matcher.Matches(req); err != nil {
+			return false
+		} else {
+			return matches
+		}
+	}
 }
 
 

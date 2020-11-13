@@ -1,13 +1,11 @@
 package security
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 )
 
-const (
-	WSSharedKeyAuthenticatorManager = "kAuthenticator"
-)
 /************************************
 	Interfaces for setting security
 *************************************/
@@ -44,6 +42,9 @@ type Initializer interface {
 // it holds the middleware's gin.HandlerFunc and its order
 type MiddlewareTemplate *middleware.MappingBuilder
 
+// MiddlewareCondition accept *http.Request and can be translated to web.MWConditionFunc
+type MiddlewareCondition matcher.ChainableMatcher
+
 // FeatureIdentifier is unique for each feature.
 // Security initializer use this value to locate corresponding FeatureConfigurer
 // or sort configuration order
@@ -58,7 +59,11 @@ type Feature interface {
 // WebSecurity holds information on security configuration
 type WebSecurity interface {
 
-	ApplyTo(r web.RouteMatcher) WebSecurity
+	// Route configure the path and method pattern which this WebSecurity applies to
+	Route(web.RouteMatcher) WebSecurity
+
+	// Condition sets additional conditions of incoming request which this WebSecurity applies to
+	Condition(mwcm web.MWConditionMatcher) WebSecurity
 
 	// Add is DSL style setter to add MiddlewareTemplate
 	Add(...MiddlewareTemplate) WebSecurity

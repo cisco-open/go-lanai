@@ -12,7 +12,7 @@ type MappingBuilder struct {
 	matcher    web.RouteMatcher
 	order      int
 	// overrides
-	condition   web.ConditionalMiddlewareFunc
+	condition   web.MWConditionFunc
 	handlerFunc gin.HandlerFunc
 }
 
@@ -55,13 +55,13 @@ func (b *MappingBuilder) Use(handlerFunc gin.HandlerFunc) *MappingBuilder {
 	return b
 }
 
-func (b *MappingBuilder) WithCondition(condition web.ConditionalMiddlewareFunc) *MappingBuilder {
+func (b *MappingBuilder) WithCondition(condition web.MWConditionFunc) *MappingBuilder {
 	b.condition = condition
 	return b
 }
 
 func (b *MappingBuilder) Build() web.MiddlewareMapping {
-	var conditionFunc web.ConditionalMiddlewareFunc
+	var conditionFunc web.MWConditionFunc
 	var handlerFunc gin.HandlerFunc
 	if b.middleware != nil {
 		handlerFunc = b.middleware.HandlerFunc()
@@ -85,7 +85,7 @@ func (b *MappingBuilder) Build() web.MiddlewareMapping {
 	return web.NewMiddlewareMapping(b.name, b.order, b.matcher, makeConditionalHandlerFunc(handlerFunc, conditionFunc))
 }
 
-func makeConditionalHandlerFunc(handlerFunc gin.HandlerFunc, conditionFunc web.ConditionalMiddlewareFunc) gin.HandlerFunc {
+func makeConditionalHandlerFunc(handlerFunc gin.HandlerFunc, conditionFunc web.MWConditionFunc) gin.HandlerFunc {
 	if conditionFunc == nil {
 		return handlerFunc
 	}
