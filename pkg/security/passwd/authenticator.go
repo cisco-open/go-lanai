@@ -32,7 +32,7 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 	// Search user in the slice of allowed credentials
 	user, err := a.store.LoadAccountByUsername(upp.Username)
 	if err != nil {
-		return nil, security.NewUsernameNotFoundError(fmt.Sprintf("Cannot find account with username %v", upp.Principal()))
+		return nil, security.NewUsernameNotFoundError(fmt.Sprintf("cannot find account with username %v", upp.Principal()))
 	}
 
 	// TODO check account status

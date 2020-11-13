@@ -20,12 +20,15 @@ const (
 )
 
 func Get(c context.Context) *Session {
-	switch s := c.Value(ContextKeySession); s.(type) {
-	case *Session:
-		return s.(*Session)
+	var session *Session
+	switch c.(type) {
+	case *gin.Context:
+		i,_ := c.(*gin.Context).Get(ContextKeySession)
+		session = i.(*Session)
 	default:
-		return nil
+		session,_ = c.Value(ContextKeySession).(*Session)
 	}
+	return session
 }
 
 type Manager struct {
@@ -80,7 +83,7 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 		defer c.Next()
 
 		// load security from session
-		current := m.getCurrent(c)
+		current := Get(c)
 		if current == nil {
 			// no session found in current context, do nothing
 			return
@@ -94,16 +97,6 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-//TODO remove this, duplicate with Get()
-func (m *Manager) getCurrent(c *gin.Context) *Session {
-	switch i,_ := c.Get(ContextKeySession); i.(type) {
-	case *Session:
-		return i.(*Session)
-	default:
-		return nil
-	}
-}
-
 func (m *Manager) registerSession(c *gin.Context, s *sessions.Session) {
 	session := &Session{
 		session: s,
@@ -114,7 +107,7 @@ func (m *Manager) registerSession(c *gin.Context, s *sessions.Session) {
 }
 
 func (m *Manager) saveSession(c *gin.Context) {
-	session := m.getCurrent(c)
+	session := Get(c)
 	if session == nil {
 		return
 	}
@@ -125,7 +118,7 @@ func (m *Manager) saveSession(c *gin.Context) {
 }
 
 func (m *Manager) persistAuthentication(c *gin.Context) {
-	session := m.getCurrent(c)
+	session := Get(c)
 	if session == nil {
 		return
 	}

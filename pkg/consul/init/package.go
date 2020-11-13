@@ -7,7 +7,8 @@ import (
 	"go.uber.org/fx"
 )
 
-var Module = &bootstrap.Module{
+var Module = &bootstrap.Module {
+	Name: "consul",
 	Precedence: -1,
 	PriorityOptions: []fx.Option{
 		fx.Provide(newConnectionProperties),

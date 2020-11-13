@@ -9,7 +9,8 @@ import (
 )
 
 var Module = &bootstrap.Module{
-	Precedence: 1000,
+	Name: "web",
+	Precedence: bootstrap.FrameworkModulePrecedence + 1000,
 	PriorityOptions: []fx.Option{
 		fx.Provide(web.BindServerProperties, gin.Default, web.NewRegistrar),
 		fx.Invoke(setup),
