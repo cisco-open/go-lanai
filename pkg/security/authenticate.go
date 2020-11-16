@@ -15,18 +15,27 @@ type Authenticator interface {
 	Authenticate(Candidate) (Authentication, error)
 }
 
-type CompositeAuthenticator []Authenticator
-
-func NewAuthenticator(authenticators ...Authenticator) Authenticator {
-	return CompositeAuthenticator(authenticators)
+type CompositeAuthenticator struct {
+	authenticators []Authenticator
 }
 
-func (a CompositeAuthenticator) Authenticate(candidate Candidate) (auth Authentication, err error) {
-	for _,authenticator := range a {
+func NewAuthenticator(authenticators ...Authenticator) Authenticator {
+	return &CompositeAuthenticator {
+		authenticators: authenticators,
+	}
+}
+
+func (a *CompositeAuthenticator) Authenticate(candidate Candidate) (auth Authentication, err error) {
+	for _,authenticator := range a.authenticators {
 		auth, err = authenticator.Authenticate(candidate)
 		if auth != nil || err != nil {
 			return
 		}
 	}
 	return nil, NewAuthenticatorNotAvailableError(fmt.Sprintf("unable to find authenticator for cadidate %T", candidate))
+}
+
+func (a *CompositeAuthenticator) Add(authenticator Authenticator) *CompositeAuthenticator {
+	a.authenticators = append(a.authenticators, authenticator)
+	return a
 }
