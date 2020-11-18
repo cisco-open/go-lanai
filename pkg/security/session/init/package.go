@@ -2,6 +2,7 @@ package init
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -12,7 +13,7 @@ var SessionModule = &bootstrap.Module{
 	Name: "session",
 	Precedence: security.MinSecurityPrecedence + 10,
 	Options: []fx.Option{
-		fx.Provide(security.BindSessionProperties, newSessionConfigurer),
+		fx.Provide(security.BindSessionProperties),
 		fx.Invoke(register),
 	},
 }
@@ -25,7 +26,7 @@ func init() {
 }
 
 
-func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties) {
-	configurer := newSessionConfigurer(sessionProps, serverProps)
+func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties, connection *redis.Connection) {
+	configurer := newSessionConfigurer(sessionProps, serverProps, connection)
 	init.(security.FeatureRegistrar).RegisterFeature(SessionFeatureId, configurer)
 }

@@ -25,12 +25,8 @@ func Use() {
 }
 
 func newConnectionProperties(ac *bootstrap.ApplicationContext) *ConnectionProperties {
-	r := &ConnectionProperties{
-		//TODO: defaults here
-	}
-
+	r := &ConnectionProperties{}
 	ac.Config().Bind(r, ConfigRootRedisConnection)
-
 	return r
 }
 

@@ -1,18 +1,21 @@
 package init
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/store"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
+	"net/http"
+	"path"
+	"strings"
 )
 
 const (
 	MWOrderSessionHandling = security.HighestMiddlewareOrder + 100
 	MWOrderAuthPersistence = MWOrderSessionHandling + 10
-	SessionFeatureId       = "Session"
+	SessionFeatureId       = "RequestSession"
 )
 
 // We currently don't have any stuff to configure
@@ -42,19 +45,40 @@ func New() *SessionFeature {
 type SessionConfigurer struct {
 	sessionProps security.SessionProperties
 	serverProps web.ServerProperties
+	connection *redis.Connection
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties) *SessionConfigurer {
+func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, connection *redis.Connection) *SessionConfigurer {
 	return &SessionConfigurer{
 		sessionProps: sessionProps,
 		serverProps: serverProps,
+		connection: connection,
 	}
 }
 
 func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
-	// TODO
-	sessionStore := newSessionStore(sc.sessionProps)
-	manager := session.NewManager(sessionStore, sc.sessionProps, sc.serverProps)
+	var sameSite http.SameSite
+	switch strings.ToLower(sc.sessionProps.Cookie.SameSite) {
+	case "lax":
+		sameSite = http.SameSiteLaxMode
+	case "strict":
+		sameSite = http.SameSiteStrictMode
+	case "none":
+		sameSite = http.SameSiteNoneMode
+	default:
+		sameSite = http.SameSiteDefaultMode
+	}
+	configureOptions := func(options *session.Options) {
+		options.Path = path.Clean("/" + sc.serverProps.ContextPath)
+		options.Domain = sc.sessionProps.Cookie.Domain
+		options.MaxAge = sc.sessionProps.Cookie.MaxAge
+		options.Secure = sc.sessionProps.Cookie.Secure
+		options.HttpOnly = sc.sessionProps.Cookie.HttpOnly
+		options.SameSite = sameSite
+	}
+	sessionStore := session.NewRedisStore(sc.connection, configureOptions)
+
+	manager := session.NewManager(sessionStore)
 
 	sessionHandler := middleware.NewBuilder("sessionMiddleware").
 		Order(MWOrderSessionHandling).
@@ -70,14 +94,4 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 
 	ws.Add(sessionHandler, authPersist, test)
 	return nil
-}
-
-func newSessionStore(properties security.SessionProperties) session.Store {
-	secret := []byte(properties.Secret)
-	switch properties.StoreType {
-	case security.SessionStoreTypeMemory:
-		return store.NewMemoryStore(secret)
-	default:
-		panic(fmt.Errorf("unsupported session storage"))
-	}
 }

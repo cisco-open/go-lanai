@@ -24,10 +24,10 @@ type ConnectionProperties struct {
 	DB int `json:"db"`
 
 	// Common options.
-	Username         string `json:"username"`
-	Password         string `json:"password"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 
-	MaxRetries      int `json:"max-retries"`
+	MaxRetries      int           `json:"max-retries"`
 	MinRetryBackoff time.Duration `json:"min-retry-backoff"`
 	MaxRetryBackoff time.Duration `json:"max-retry-backoff"`
 
@@ -35,8 +35,8 @@ type ConnectionProperties struct {
 	ReadTimeout  time.Duration `json:"read-timeout"`
 	WriteTimeout time.Duration `json:"write-timeout"`
 
-	PoolSize           int `json:"pool-size"`
-	MinIdleConns       int `json:"min-idle-conns"`
+	PoolSize           int           `json:"pool-size"`
+	MinIdleConns       int           `json:"min-idle-conns"`
 	MaxConnAge         time.Duration `json:"max-conn-age"`
 	PoolTimeout        time.Duration `json:"pool-timeout"`
 	IdleTimeout        time.Duration `json:"idle-timeout"`
@@ -45,47 +45,46 @@ type ConnectionProperties struct {
 	//path to root certificates files
 	RootCertificates string `json:"root-certificates"`
 
-
 	// Only cluster clients.
 
-	MaxRedirects   int `json:"max-redirects"`
+	MaxRedirects   int  `json:"max-redirects"`
 	ReadOnly       bool `json:"read-only"`
 	RouteByLatency bool `json:"route-by-latency"`
 	RouteRandomly  bool `json:"route-randomly"`
 
 	// The sentinel master name.
 	// Only failover clients.
-	MasterName string `json:"master-name"`
+	MasterName       string `json:"master-name"`
 	SentinelPassword string `json:"sentinel-password"`
 }
 
 func GetUniversalOptions(p *ConnectionProperties) (*redis.UniversalOptions, error) {
 	universal := &redis.UniversalOptions{
-		Addrs: p.Addrs,
-		DB: p.DB,
-		Username: p.Username,
-		Password: p.Password,
-		MaxRetries: p.MaxRetries,
-		MinRetryBackoff: p.MinRetryBackoff,
-		MaxRetryBackoff: p.MaxRetryBackoff,
-		DialTimeout: p.DialTimeout,
-		ReadTimeout: p.ReadTimeout,
-		WriteTimeout: p.WriteTimeout,
-		PoolSize: p.PoolSize,
-		MinIdleConns: p.MinIdleConns,
-		MaxConnAge: p.MaxConnAge,
-		PoolTimeout: p.PoolTimeout,
-		IdleTimeout: p.IdleTimeout,
+		Addrs:              p.Addrs,
+		DB:                 p.DB,
+		Username:           p.Username,
+		Password:           p.Password,
+		MaxRetries:         p.MaxRetries,
+		MinRetryBackoff:    p.MinRetryBackoff,
+		MaxRetryBackoff:    p.MaxRetryBackoff,
+		DialTimeout:        p.DialTimeout,
+		ReadTimeout:        p.ReadTimeout,
+		WriteTimeout:       p.WriteTimeout,
+		PoolSize:           p.PoolSize,
+		MinIdleConns:       p.MinIdleConns,
+		MaxConnAge:         p.MaxConnAge,
+		PoolTimeout:        p.PoolTimeout,
+		IdleTimeout:        p.IdleTimeout,
 		IdleCheckFrequency: p.IdleCheckFrequency,
 		// Only cluster clients.
-		MaxRedirects: p.MaxRedirects,
-		ReadOnly: p.ReadOnly,
+		MaxRedirects:   p.MaxRedirects,
+		ReadOnly:       p.ReadOnly,
 		RouteByLatency: p.RouteByLatency,
-		RouteRandomly: p.RouteRandomly,
+		RouteRandomly:  p.RouteRandomly,
 
 		// The sentinel master name.
 		// Only failover clients.
-		MasterName: p.MasterName,
+		MasterName:       p.MasterName,
 		SentinelPassword: p.SentinelPassword,
 	}
 
@@ -93,13 +92,13 @@ func GetUniversalOptions(p *ConnectionProperties) (*redis.UniversalOptions, erro
 		file, err := os.Open(p.RootCertificates)
 
 		if err != nil {
-			return nil, errors.Wrap(err, "Cannot open root certificates file: " + p.RootCertificates)
+			return nil, errors.Wrap(err, "Cannot open root certificates file: "+p.RootCertificates)
 		}
 
 		data, err := ioutil.ReadAll(file)
 
 		if err != nil {
-			return nil, errors.Wrap(err, "Cannot read root certificates file: " + p.RootCertificates)
+			return nil, errors.Wrap(err, "Cannot read root certificates file: "+p.RootCertificates)
 		}
 
 		root := x509.NewCertPool()
