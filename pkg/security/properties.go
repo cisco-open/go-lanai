@@ -19,6 +19,8 @@ const SessionPropertiesPrefix = "security.session"
 
 type SessionProperties struct {
 	Cookie    *CookieProperties
+	IdleTimeout string `json:"idle-timeout"`
+	AbsoluteTimeout string `json:"absolute-timeout"`
 }
 
 type CookieProperties struct {
@@ -32,7 +34,12 @@ type CookieProperties struct {
 //NewSessionProperties create a SessionProperties with default values
 func NewSessionProperties() *SessionProperties {
 	return &SessionProperties {
-		Cookie: &CookieProperties{ },
+		Cookie: &CookieProperties{
+			HttpOnly: true,
+			SameSite: "lax",
+		},
+		IdleTimeout: "900s",
+		AbsoluteTimeout: "1800s",
 	}
 }
 

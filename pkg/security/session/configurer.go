@@ -1,15 +1,15 @@
-package init
+package session
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
 	"net/http"
 	"path"
 	"strings"
+	"time"
 )
 
 const (
@@ -68,17 +68,29 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 	default:
 		sameSite = http.SameSiteDefaultMode
 	}
-	configureOptions := func(options *session.Options) {
+
+	idleTimeout, err := time.ParseDuration(sc.sessionProps.IdleTimeout)
+	if err != nil {
+		return err
+	}
+	absTimeout, err := time.ParseDuration(sc.sessionProps.AbsoluteTimeout)
+	if err != nil {
+		return err
+	}
+
+	configureOptions := func(options *Options) {
 		options.Path = path.Clean("/" + sc.serverProps.ContextPath)
 		options.Domain = sc.sessionProps.Cookie.Domain
 		options.MaxAge = sc.sessionProps.Cookie.MaxAge
 		options.Secure = sc.sessionProps.Cookie.Secure
 		options.HttpOnly = sc.sessionProps.Cookie.HttpOnly
 		options.SameSite = sameSite
+		options.IdleTimeout = idleTimeout
+		options.AbsoluteTimeout = absTimeout
 	}
-	sessionStore := session.NewRedisStore(sc.connection, configureOptions)
+	sessionStore := NewRedisStore(sc.connection, configureOptions)
 
-	manager := session.NewManager(sessionStore)
+	manager := NewManager(sessionStore)
 
 	sessionHandler := middleware.NewBuilder("sessionMiddleware").
 		Order(MWOrderSessionHandling).
@@ -90,7 +102,7 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 
 	test := middleware.NewBuilder("post-sessionMiddleware").
 		Order(MWOrderAuthPersistence + 10).
-		Use(session.SessionDebugHandlerFunc())
+		Use(SessionDebugHandlerFunc())
 
 	ws.Add(sessionHandler, authPersist, test)
 	return nil

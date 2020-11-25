@@ -41,7 +41,6 @@ func NewManager(store Store) *Manager {
 // SessionHandlerFunc provide middleware for basic session management
 func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO better error handling
 		// defer is FILO
 		defer gcontext.Clear(c.Request)
 		defer m.saveSession(c)
@@ -54,6 +53,7 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 		}
 
 		session, err := m.store.Get(id, DefaultName)
+		// If session store is not operating properly, we cannot continue for endpoints that needs session
 		if err != nil {
 			_ = c.Error(err)
 			return

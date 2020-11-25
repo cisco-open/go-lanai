@@ -1,4 +1,4 @@
-package init
+package session
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"

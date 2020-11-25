@@ -25,9 +25,6 @@ type Store interface {
 	Get(id string, name string) (*Session, error)
 
 	// New should create and return a new session.
-	//
-	// Note that New should never return a nil session, even in the case of
-	// an error if using the Registry infrastructure to cache the session.
 	New(name string) (*Session, error)
 
 	// Save should persist session to the underlying store implementation.
@@ -44,21 +41,16 @@ type RedisStore struct {
 	connection *redis.Connection
 }
 
-type notFoundError struct{
-	id string
-}
+func NewRedisStore(connection *redis.Connection, options ...func(*Options)) *RedisStore {
+	gob.Register(time.Time{})
 
-func (e *notFoundError) Error() string {
-	return fmt.Sprintf("redis store: session not found %s", e.id)
-}
-
-func NewRedisStore(connection *redis.Connection, options ...func(*Options)) Store {
 	//defaults
 	o := &Options{
 		Path:   "/",
-		MaxAge: 86400 * 30,
 		HttpOnly: true,
 		SameSite: http.SameSiteDefaultMode,
+		IdleTimeout: 900*time.Second,
+		AbsoluteTimeout: 1800*time.Second,
 	}
 
 	for _, opt := range options {
@@ -78,17 +70,16 @@ func (s *RedisStore) Options() *Options {
 
 func (s *RedisStore) Get(id string, name string) (*Session, error) {
 	if id != "" {
-		session := NewSession(s, name)
-		session.ID = id
-		err := s.load(session) //TODO: should session expired be handled here or at higher level?
-		if err == nil {
-			session.IsNew = false
+		session, err := s.load(id, name)
+
+		if err != nil {
+			return nil, err
 		}
 
-		if _, ok := err.(*notFoundError); ok {
-			return session, nil
+		if session == nil {
+			return s.New(name)
 		} else {
-			return session, err
+			return session, nil
 		}
 	} else {
 		return s.New(name)
@@ -98,6 +89,10 @@ func (s *RedisStore) Get(id string, name string) (*Session, error) {
 // New will create a new session.
 func (s *RedisStore) New(name string) (*Session, error) {
 	session := NewSession(s, name)
+
+	session.lastAccessed = time.Now()
+	session.Values[createdTimeKey] = time.Now()
+
 	random := securecookie.GenerateRandomKey(32)
 
 	if random == nil {
@@ -110,14 +105,13 @@ func (s *RedisStore) New(name string) (*Session, error) {
 	return session, nil
 }
 
-// Save adds a single session to the response.
+// Save adds a single session to the persistence layer
 func (s *RedisStore) Save(session *Session) error {
 	if session.ID == "" {
 		return errors.New("session id is empty")
 	}
 
 	session.lastAccessed = time.Now()
-
 	err := s.save(session)
 	if err == nil {
 		session.dirty = false
@@ -126,23 +120,27 @@ func (s *RedisStore) Save(session *Session) error {
 }
 
 func (s *RedisStore) Delete(session *Session) error {
-	return nil
+	cmd := s.connection.Del(context.Background(), session.ID)
+	return cmd.Err()
 }
 
-func (s *RedisStore) load(session *Session) error {
-	key := fmt.Sprintf("%s:%s", session.Name(), session.ID)
+func (s *RedisStore) load(id string, name string) (*Session, error) {
+	key := fmt.Sprintf("%s:%s", name, id)
 
 	cmd := s.connection.HGetAll(context.Background(), key)
 
 	result, err := cmd.Result()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(result) == 0 {
-		return &notFoundError{id: session.ID}
+		return nil, nil
 	}
+
+	session := NewSession(s, name)
+	session.ID = id
 
 	for k, v := range result {
 		if k == sessionValueField {
@@ -156,31 +154,45 @@ func (s *RedisStore) load(session *Session) error {
 		}
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	session.IsNew = false
+
+	if session.isExpired() {
+		return nil, nil
+	} else {
+		return session, nil
+	}
 }
 
 func (s *RedisStore) save(session *Session) error {
-	//TODO: calculate ttl
-
 	key := fmt.Sprintf("%s:%s", session.Name(), session.ID)
 	var args []interface{}
 
 	if values, err := Serialize(session.Values); err == nil {
 		args = append(args, sessionValueField, values)
+	} else {
+		return nil
 	}
 
 	if options, err := Serialize(session.Options); err == nil {
 		args = append(args, sessionOptionField, options)
+	} else {
+		return nil
 	}
 
 	args = append(args, sessionLastAccessedField, session.lastAccessed.Unix())
 
-	cmd := s.connection.HSet(context.Background(), key, args...)
+	hsetCmd := s.connection.HSet(context.Background(), key, args...)
 
-	return cmd.Err()
+	if hsetCmd.Err() != nil {
+		return hsetCmd.Err()
+	}
+
+	exp := session.expiration()
+	expCmd := s.connection.ExpireAt(context.Background(), key, exp)
+	return expCmd.Err()
 }
 
 func Serialize(src interface{}) ([]byte, error) {

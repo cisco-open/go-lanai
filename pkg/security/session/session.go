@@ -7,8 +7,7 @@ import (
 
 // Default flashes key.
 const flashesKey = "_flash"
-
-type Attributes map[interface{}]interface{}
+const createdTimeKey = "_created"
 
 type Session struct {
 	//Used to indicate if the session Values has been modified - and should be saved
@@ -21,7 +20,9 @@ type Session struct {
 	// user data.
 	ID string
 	// Values contains the user-data for the session.
-	Values  Attributes
+	// Because the value is declared as interface, any concrete type that is stored in the Values map need to register with gob
+	// if used with a store that serializes using gob. See NewRedisStore
+	Values  map[interface{}]interface{}
 	Options *Options
 	IsNew   bool
 	store   Store
@@ -31,27 +32,31 @@ type Session struct {
 type Options struct {
 	Path   string
 	Domain string
-	// MaxAge=0 means no Max-Age attribute specified and the cookie will be
-	// deleted after the browser session ends.
-	// MaxAge<0 means delete cookie immediately.
-	// MaxAge>0 means Max-Age attribute present and given in seconds.
+
+	// Determines how the cookie's "Max-Age" attribute will be set
+	// MaxAge=0 means no 'Max-Age' attribute specified.
+	// MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'
+	// MaxAge>0 means Max-Age attribute present and given in seconds
 	MaxAge   int
 	Secure   bool
 	HttpOnly bool
 	// Defaults to http.SameSiteDefaultMode
 	SameSite http.SameSite
+
+	IdleTimeout time.Duration
+	AbsoluteTimeout time.Duration
 }
 
 func NewSession(store Store, name string) *Session {
 	opts := *store.Options() // a copy of the store's option
+
 	return &Session{
-		Values:  make(Attributes),
+		Values:  make(map[interface{}]interface{}),
 		store:   store,
 		name:    name,
 		Options: &opts,
 		IsNew: true,
 		dirty: false,
-		lastAccessed: time.Now(),
 	}
 }
 
@@ -84,8 +89,6 @@ func newCookieFromOptions(name, value string, options *Options) *http.Cookie {
 	}
 
 }
-
-//TODO: declare these methods as interface
 
 // ID returns the name used to register the session.
 func (s *Session) GetID() string {
@@ -159,11 +162,6 @@ func (s *Session) AddFlash(value interface{}, flashKey ...string) {
 	s.SetDirty()
 }
 
-// Options sets configuration for a session.
-func (s *Session) WithOptions(options *Options) {
-	s.Options = options
-}
-
 // Save is a convenience method to save this session. It is the same as calling
 // store.Save(request, response, session).
 func (s *Session) Save() (err error) {
@@ -181,4 +179,31 @@ func (s *Session) IsDirty() bool {
 
 func (s *Session) SetDirty()  {
 	s.dirty = true
+}
+
+func (s *Session) isExpired() bool {
+	now := time.Now()
+	exp := s.expiration()
+
+	return exp.Before(now)
+}
+
+func (s *Session) createdOn() time.Time {
+	if t, ok := s.Values[createdTimeKey]; ok {
+		return t.(time.Time)
+	} else {
+		return time.Time{}
+	}
+}
+
+func (s *Session) expiration() time.Time {
+	idleExpiration := s.lastAccessed.Add(s.Options.IdleTimeout)
+	absExpiration := s.createdOn().Add(s.Options.AbsoluteTimeout)
+
+	//whichever is the earliest
+	if idleExpiration.Before(absExpiration) {
+		return idleExpiration
+	} else {
+		return absExpiration
+	}
 }
