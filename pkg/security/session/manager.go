@@ -3,13 +3,10 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	gcontext "github.com/gorilla/context"
-	"github.com/gorilla/sessions"
 	"net/http"
-	"path"
 )
 
 const (
@@ -24,7 +21,7 @@ func Get(c context.Context) *Session {
 	switch c.(type) {
 	case *gin.Context:
 		i,_ := c.(*gin.Context).Get(ContextKeySession)
-		session = i.(*Session)
+		session,_ = i.(*Session)
 	default:
 		session,_ = c.Value(ContextKeySession).(*Session)
 	}
@@ -35,29 +32,28 @@ type Manager struct {
 	store Store
 }
 
-func NewManager(store Store, sessionProps security.SessionProperties, serverProps web.ServerProperties) *Manager {
-	options := &sessions.Options{
-		Path: path.Clean("/" + serverProps.ContextPath),
-		Domain: sessionProps.Cookie.Domain,
-		MaxAge: 0,
-		Secure: false,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+func NewManager(store Store) *Manager {
+	return &Manager{
+		store: store,
 	}
-
-	return &Manager{store: store.Options(options)}
 }
 
 // SessionHandlerFunc provide middleware for basic session management
 func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO better error handling
 		// defer is FILO
 		defer gcontext.Clear(c.Request)
 		defer m.saveSession(c)
 		defer c.Next()
 
-		existing, err := m.store.Get(c.Request, DefaultName)
+		var id string
+
+		if cookie, err := c.Request.Cookie(DefaultName); err == nil {
+			id = cookie.Value
+		}
+
+		session, err := m.store.Get(id, DefaultName)
+		// If session store is not operating properly, we cannot continue for endpoints that needs session
 		if err != nil {
 			_ = c.Error(err)
 			return
@@ -66,11 +62,12 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 		// TODO validate session
 
 		// TODO logger
-		if existing != nil && existing.IsNew {
-			fmt.Printf("New Session %v\n", existing.ID)
+		if session != nil && session.isNew {
+			fmt.Printf("New Session %v\n", session.id)
+			http.SetCookie(c.Writer, NewCookie(session.Name(), session.id, session.options))
 		}
 
-		m.registerSession(c, existing)
+		m.registerSession(c, session)
 	}
 }
 
@@ -97,13 +94,8 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-func (m *Manager) registerSession(c *gin.Context, s *sessions.Session) {
-	session := &Session{
-		session: s,
-		request: c.Request,
-		writer:  c.Writer,
-	}
-	c.Set(ContextKeySession, session)
+func (m *Manager) registerSession(c *gin.Context, s *Session) {
+	c.Set(ContextKeySession, s)
 }
 
 func (m *Manager) saveSession(c *gin.Context) {
@@ -112,7 +104,9 @@ func (m *Manager) saveSession(c *gin.Context) {
 		return
 	}
 
-	if err := session.Save(); err != nil {
+	err := m.store.Save(session)
+
+	if err != nil {
 		_ = c.Error(err)
 	}
 }
@@ -125,11 +119,4 @@ func (m *Manager) persistAuthentication(c *gin.Context) {
 
 	auth := security.Get(c)
 	session.Set(sessionKeySecurity, auth)
-
-	if err := session.Save(); err != nil {
-		_ = c.Error(err)
-	}
 }
-
-
-

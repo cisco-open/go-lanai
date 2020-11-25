@@ -20,10 +20,6 @@ func SessionDebugHandlerFunc() gin.HandlerFunc {
 		if session.Get("TEST") == nil {
 
 			session.Set("TEST", RandomString(10240))
-			err := session.Save()
-			if err != nil {
-				fmt.Printf("ERROR when saving session: %v\n", err)
-			}
 		} else {
 			fmt.Printf("Have Session Value %s\n", "TEST")
 		}

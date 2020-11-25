@@ -5,7 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	session "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/init"
+	session2 "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/route"
 	"go.uber.org/fx"
@@ -54,7 +54,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 	ws.Route(route.WithPattern("/page/**")).
 		Condition(utils.WithDomain("localhost:8080"))
 
-	session.Configure(ws)
+	session2.Configure(ws)
 	basicauth.Configure(ws)
 	passwd.Configure(ws)
 }
