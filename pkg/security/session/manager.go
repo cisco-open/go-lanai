@@ -62,9 +62,9 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 		// TODO validate session
 
 		// TODO logger
-		if session != nil && session.IsNew {
-			fmt.Printf("New Session %v\n", session.ID)
-			http.SetCookie(c.Writer, NewCookie(session.Name(), session.ID, session.Options))
+		if session != nil && session.isNew {
+			fmt.Printf("New Session %v\n", session.id)
+			http.SetCookie(c.Writer, NewCookie(session.Name(), session.id, session.options))
 		}
 
 		m.registerSession(c, session)

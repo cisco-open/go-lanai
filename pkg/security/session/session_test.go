@@ -14,10 +14,10 @@ func TestFlashes(t *testing.T) {
 	var flashes []interface{}
 
 	session := &Session{
-		Values:  make(map[interface{}]interface{}),
-		name:    "session-key",
-		IsNew: true,
-		dirty: false,
+		values: make(map[interface{}]interface{}),
+		name:   "session-key",
+		isNew:  true,
+		dirty:  false,
 	}
 
 	// Get a flash.
@@ -76,19 +76,19 @@ func TestFlashes(t *testing.T) {
 
 func TestExpiration(t *testing.T) {
 	s := &Session{
-		Values:  make(map[interface{}]interface{}),
-		name:    "session-key",
-		Options: &Options{
+		values: make(map[interface{}]interface{}),
+		name:   "session-key",
+		options: &Options{
 			IdleTimeout: 900 * time.Second,
 			AbsoluteTimeout: 1800 * time.Second,
 		},
-		IsNew: true,
+		isNew: true,
 		dirty: false,
 	}
 
 	//test scenario for a just created session
 	s.lastAccessed = time.Now()
-	s.Values[createdTimeKey] = time.Now()
+	s.values[createdTimeKey] = time.Now()
 
 	if s.isExpired() {
 		t.Errorf("just created session should not be expired")
@@ -96,25 +96,25 @@ func TestExpiration(t *testing.T) {
 
 	//test scenario for a idle timeout
 	s.lastAccessed = time.Now().Add(-901 * time.Second)
-	s.Values[createdTimeKey] = time.Now().Add(-901 * time.Second)
+	s.values[createdTimeKey] = time.Now().Add(-901 * time.Second)
 
 	if !s.isExpired() {
-		t.Errorf("last accessed at %v, with idle timeout %v should be expired", s.lastAccessed, s.Options.IdleTimeout)
+		t.Errorf("last accessed at %v, with idle timeout %v should be expired", s.lastAccessed, s.options.IdleTimeout)
 	}
 
 	//test scenario for a absolute timeout
 	s.lastAccessed = time.Now().Add(-450 * time.Second)
-	s.Values[createdTimeKey] = time.Now().Add(-1801 * time.Second)
+	s.values[createdTimeKey] = time.Now().Add(-1801 * time.Second)
 
 	if !s.isExpired() {
-		t.Errorf("created at %v, with abs timeout %v should be expired", s.Values[createdTimeKey], s.Options.AbsoluteTimeout)
+		t.Errorf("created at %v, with abs timeout %v should be expired", s.values[createdTimeKey], s.options.AbsoluteTimeout)
 	}
 
 	//test scenario for a not expired session
 	s.lastAccessed = time.Now().Add(-450 * time.Second)
-	s.Values[createdTimeKey] = time.Now().Add(-1700 * time.Second)
+	s.values[createdTimeKey] = time.Now().Add(-1700 * time.Second)
 
 	if s.isExpired() {
-		t.Errorf("created at %v, last accessed at %v should be valid", s.Values[createdTimeKey], s.lastAccessed)
+		t.Errorf("created at %v, last accessed at %v should be valid", s.values[createdTimeKey], s.lastAccessed)
 	}
 }

@@ -91,7 +91,7 @@ func (s *RedisStore) New(name string) (*Session, error) {
 	session := NewSession(s, name)
 
 	session.lastAccessed = time.Now()
-	session.Values[createdTimeKey] = time.Now()
+	session.values[createdTimeKey] = time.Now()
 
 	random := securecookie.GenerateRandomKey(32)
 
@@ -99,7 +99,7 @@ func (s *RedisStore) New(name string) (*Session, error) {
 		return nil, errors.New("system failed to generate random value for session id")
 	}
 
-	session.ID = strings.TrimRight(
+	session.id = strings.TrimRight(
 		base32.StdEncoding.EncodeToString(random), "=")
 
 	return session, nil
@@ -107,7 +107,7 @@ func (s *RedisStore) New(name string) (*Session, error) {
 
 // Save adds a single session to the persistence layer
 func (s *RedisStore) Save(session *Session) error {
-	if session.ID == "" {
+	if session.id == "" {
 		return errors.New("session id is empty")
 	}
 
@@ -120,7 +120,7 @@ func (s *RedisStore) Save(session *Session) error {
 }
 
 func (s *RedisStore) Delete(session *Session) error {
-	cmd := s.connection.Del(context.Background(), session.ID)
+	cmd := s.connection.Del(context.Background(), session.id)
 	return cmd.Err()
 }
 
@@ -140,13 +140,13 @@ func (s *RedisStore) load(id string, name string) (*Session, error) {
 	}
 
 	session := NewSession(s, name)
-	session.ID = id
+	session.id = id
 
 	for k, v := range result {
 		if k == sessionValueField {
-			err = Deserialize(strings.NewReader(v), &session.Values)
+			err = Deserialize(strings.NewReader(v), &session.values)
 		} else if k == sessionOptionField {
-			err = Deserialize(strings.NewReader(v), &session.Options)
+			err = Deserialize(strings.NewReader(v), &session.options)
 		} else if k == sessionLastAccessedField {
 			timeStamp, e := strconv.ParseInt(v, 10, 0)
 			session.lastAccessed = time.Unix(timeStamp, 0)
@@ -157,7 +157,7 @@ func (s *RedisStore) load(id string, name string) (*Session, error) {
 			return nil, err
 		}
 	}
-	session.IsNew = false
+	session.isNew = false
 
 	if session.isExpired() {
 		return nil, nil
@@ -167,25 +167,27 @@ func (s *RedisStore) load(id string, name string) (*Session, error) {
 }
 
 func (s *RedisStore) save(session *Session) error {
-	key := fmt.Sprintf("%s:%s", session.Name(), session.ID)
+	key := fmt.Sprintf("%s:%s", session.Name(), session.id)
 	var args []interface{}
 
-	if values, err := Serialize(session.Values); err == nil {
-		args = append(args, sessionValueField, values)
-	} else {
-		return nil
+	if session.IsDirty() || session.isNew {
+		if values, err := Serialize(session.values); err == nil {
+			args = append(args, sessionValueField, values)
+		} else {
+			return nil
+		}
 	}
 
-	if options, err := Serialize(session.Options); err == nil {
-		args = append(args, sessionOptionField, options)
-	} else {
-		return nil
+	if session.isNew {
+		if options, err := Serialize(session.options); err == nil {
+			args = append(args, sessionOptionField, options)
+		} else {
+			return nil
+		}
 	}
 
 	args = append(args, sessionLastAccessedField, session.lastAccessed.Unix())
-
 	hsetCmd := s.connection.HSet(context.Background(), key, args...)
-
 	if hsetCmd.Err() != nil {
 		return hsetCmd.Err()
 	}
