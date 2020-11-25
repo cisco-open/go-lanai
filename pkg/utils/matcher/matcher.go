@@ -52,6 +52,14 @@ func (m NoopMatcher) And(matchers ...Matcher) ChainableMatcher {
 	return And(m, matchers...)
 }
 
+func (m NoopMatcher) String() string {
+	if m {
+		return "matches any"
+	} else {
+		return "matches none"
+	}
+}
+
 // OrMatcher chain a list of matchers with OR operator
 type OrMatcher []Matcher
 
@@ -110,3 +118,20 @@ func (m *NegateMatcher) And(matchers ...Matcher) ChainableMatcher {
 	return And(m, matchers...)
 }
 
+// TODO review use cases to determine if this class is necessary
+// GenericMatcher implements ChainableMatcher
+type GenericMatcher struct {
+	matchFunc func(interface{}) (bool, error)
+}
+
+func (m *GenericMatcher) Matches(i interface{}) (bool, error) {
+	return m.matchFunc(i)
+}
+
+func (m *GenericMatcher) Or(matchers ...Matcher) ChainableMatcher {
+	return Or(m, matchers...)
+}
+
+func (m *GenericMatcher) And(matchers ...Matcher) ChainableMatcher {
+	return And(m, matchers...)
+}

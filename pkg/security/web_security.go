@@ -1,9 +1,9 @@
 package security
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/route"
 	"fmt"
 	"net/http"
 )
@@ -105,7 +105,7 @@ func (ws *webSecurity) Build() []web.MiddlewareMapping {
 	for i, template := range ws.middlewareTemplates {
 		builder := (*middleware.MappingBuilder)(template)
 		if ws.routeMatcher == nil {
-			ws.routeMatcher = matcher.Any()
+			ws.routeMatcher = route.AnyRoute()
 		}
 		builder = builder.ApplyTo(ws.routeMatcher)
 

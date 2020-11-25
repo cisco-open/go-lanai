@@ -8,8 +8,8 @@ import (
 
 type MWConditionFunc func(*http.Request) bool
 
-// RouteMatcher accepts *http.Request or http.Request
-type MWConditionMatcher matcher.ChainableMatcher
+// MWConditionMatcher accepts *http.Request or http.Request
+type MWConditionMatcher matcher.RequestMatcher
 
 type ConditionalMiddleware interface {
 	ConditionFunc() MWConditionFunc

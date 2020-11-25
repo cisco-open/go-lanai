@@ -23,7 +23,7 @@ func (f *BasicAuthFeature) Identifier() security.FeatureIdentifier {
 }
 
 func Configure(ws security.WebSecurity) *BasicAuthFeature {
-	feature := &BasicAuthFeature{}
+	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
 		_ = fc.Enable(feature) // we ignore error here
 		return feature

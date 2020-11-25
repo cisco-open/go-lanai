@@ -6,7 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	session "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/route"
 	"go.uber.org/fx"
 )
@@ -36,7 +36,7 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// DSL style example
 	ws.Route(route.WithPattern("/api/**")).
-		Condition(utils.WithDomain("localhost:8080")).
+		Condition(matcher.RequestWithHost("localhost:8080")).
 		With(passwd.New().
 			AccountStore(c.accountStore).
 			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
@@ -52,7 +52,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// non-DSL style example
 	ws.Route(route.WithPattern("/page/**")).
-		Condition(utils.WithDomain("localhost:8080"))
+		Condition(matcher.RequestWithHost("localhost:8080"))
 
 	session.Configure(ws)
 	basicauth.Configure(ws)
