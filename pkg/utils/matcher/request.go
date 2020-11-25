@@ -62,6 +62,10 @@ func (m *requestMatcher) String() string {
 /**************************
 	Constructors
 ***************************/
+func AnyRequest() RequestMatcher {
+	return wrapAsRequestMatcher(Any())
+}
+
 // TODO support wildcard
 func RequestWithHost(expected string) RequestMatcher {
 	delegate := WithString(expected, true)

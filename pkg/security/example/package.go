@@ -3,6 +3,7 @@ package example
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	session "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/init"
@@ -41,7 +42,10 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 			AccountStore(c.accountStore).
 			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
 		).
-		With(basicauth.New())
+		With(basicauth.New()).
+		With(access.New().
+			Request(matcher.AnyRequest()).Authenticated(),
+		)
 }
 
 
@@ -55,6 +59,9 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		Condition(matcher.RequestWithHost("localhost:8080"))
 
 	session.Configure(ws)
-	basicauth.Configure(ws)
+	//basicauth.Configure(ws)
 	passwd.Configure(ws)
+	access.Configure(ws).
+		Request(matcher.RequestWithPattern("/**/page/public")).PermitAll().
+		Request(matcher.AnyRequest()).Authenticated()
 }
