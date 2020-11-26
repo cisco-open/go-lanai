@@ -10,11 +10,13 @@ import (
 )
 
 const (
-	ModelKeyError = "error"
-	ModelKeyErrorCode = "errorCode"
-	ModelKeyStatusCode = "statusCode"
-	ModelKeyStatusText = "statusText"
-	ModelKeyMessage = "message"
+	ModelKeyError          = "error"
+	ModelKeyErrorCode      = "errorCode"
+	ModelKeyStatusCode     = "statusCode"
+	ModelKeyStatusText     = "statusText"
+	ModelKeyMessage        = "message"
+	ModelKeySession        = "session"
+	ModelKeyRequestContext = "rc"
 )
 
 type Model gin.H
@@ -50,7 +52,8 @@ func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, res
 		return errors.New("unable to use template: response is not *template.ModelView")
 	}
 
-	// TODO merge model with global overrides
+	mv.Model[ModelKeySession] = ctx.Value(web.ContextKeySession)
+	mv.Model[ModelKeyRequestContext] = MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath)
 	ctx.HTML(status, mv.View, mv.Model)
 	return nil
 }
@@ -70,11 +73,12 @@ func templateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 		code = sc.StatusCode()
 	}
 
-	// TODO merge model with global overrides
 	ctx.HTML(code, "error.tmpl", gin.H{
 		ModelKeyError: err,
 		ModelKeyStatusCode: code,
 		ModelKeyStatusText: http.StatusText(code),
+		ModelKeySession: ctx.Value(web.ContextKeySession),
+		ModelKeyRequestContext: MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath),
 	})
 }
 

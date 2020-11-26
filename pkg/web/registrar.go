@@ -25,22 +25,19 @@ var (
 )
 
 type Registrar struct {
-	engine     *gin.Engine
-	router     gin.IRouter
-	properties ServerProperties
-	// go-kit middleware options
-	options   []httptransport.ServerOption
-	validator binding.StructValidator
-	// gin-gonic middleware providers
-	middlewares []MiddlewareMapping
+	engine            *gin.Engine
+	router            gin.IRouter
+	properties        ServerProperties
+	options           []httptransport.ServerOption // options go-kit middleware options
+	validator         binding.StructValidator
+	middlewares       []MiddlewareMapping // middlewares gin-gonic middleware providers
 }
 
 // TODO support customizers
 func NewRegistrar(g *gin.Engine, properties ServerProperties) *Registrar {
 
 	var contextPath = path.Clean("/" + properties.ContextPath)
-
-	return &Registrar{
+	registrar := &Registrar{
 		engine:     g,
 		router: 	g.Group(contextPath),
 		properties: properties,
@@ -49,6 +46,10 @@ func NewRegistrar(g *gin.Engine, properties ServerProperties) *Registrar {
 		},
 		validator: binding.Validator,
 	}
+
+	// add some global middlewares
+	_ = registrar.addGlobalMiddleware("pre-process", HighestMiddlewareOrder, registrar.preProcessMiddleware)
+	return registrar
 }
 
 // initialize should be called during application startup, last change to change configurations, load templates, etc
@@ -61,6 +62,12 @@ func (r *Registrar) initialize() (err error) {
 	binding.Validator = nil
 	bindingValidator = r.validator
 	return
+}
+
+// addGlobalMiddleware add middleware to all mapping
+func (r *Registrar) addGlobalMiddleware(name string, order int, handlerFunc gin.HandlerFunc) error {
+	mapping := NewMiddlewareMapping(name, order, AnyRoute(), handlerFunc)
+	return r.Register(mapping)
 }
 
 // Run configure and start gin engine
@@ -225,6 +232,13 @@ func (r *Registrar) routeMatches(matcher RouteMatcher, group, relativePath strin
 	return false, nil
 }
 
+/*******************************
+	some global middlewares
+********************************/
+func (r *Registrar) preProcessMiddleware(c *gin.Context) {
+	c.Set(ContextKeyContextPath, r.properties.ContextPath)
+}
+
 /**************************
 	first class functions
 ***************************/
@@ -242,6 +256,8 @@ func ginContextExtractor(ctx context.Context, r *http.Request) (ret context.Cont
 	}
 	return
 }
+
+
 
 
 

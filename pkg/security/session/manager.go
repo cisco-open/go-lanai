@@ -3,27 +3,26 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	gcontext "github.com/gorilla/context"
 	"net/http"
 )
 
 const (
-	ContextKeySession = "kSession"
 	DefaultName = "SESSION"
-
 	sessionKeySecurity = "kSecurity"
+	contextKeySession = web.ContextKeySession
 )
 
 func Get(c context.Context) *Session {
 	var session *Session
 	switch c.(type) {
 	case *gin.Context:
-		i,_ := c.(*gin.Context).Get(ContextKeySession)
+		i,_ := c.(*gin.Context).Get(contextKeySession)
 		session,_ = i.(*Session)
 	default:
-		session,_ = c.Value(ContextKeySession).(*Session)
+		session,_ = c.Value(contextKeySession).(*Session)
 	}
 	return session
 }
@@ -42,7 +41,6 @@ func NewManager(store Store) *Manager {
 func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// defer is FILO
-		defer gcontext.Clear(c.Request)
 		defer m.saveSession(c)
 		defer c.Next()
 
@@ -95,7 +93,7 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 }
 
 func (m *Manager) registerSession(c *gin.Context, s *Session) {
-	c.Set(ContextKeySession, s)
+	c.Set(contextKeySession, s)
 }
 
 func (m *Manager) saveSession(c *gin.Context) {
