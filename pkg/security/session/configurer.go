@@ -13,9 +13,7 @@ import (
 )
 
 const (
-	MWOrderSessionHandling = security.HighestMiddlewareOrder + 100
-	MWOrderAuthPersistence = MWOrderSessionHandling + 10
-	SessionFeatureId       = "RequestSession"
+	FeatureId              = "RequestSession"
 )
 
 // We currently don't have any stuff to configure
@@ -24,7 +22,7 @@ type SessionFeature struct {
 }
 
 func (f *SessionFeature) Identifier() security.FeatureIdentifier {
-	return SessionFeatureId
+	return FeatureId
 }
 
 // Standard security.Feature entrypoint
@@ -93,15 +91,15 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 	manager := NewManager(sessionStore)
 
 	sessionHandler := middleware.NewBuilder("sessionMiddleware").
-		Order(MWOrderSessionHandling).
+		Order(security.MWOrderSessionHandling).
 		Use(manager.SessionHandlerFunc())
 
 	authPersist := middleware.NewBuilder("sessionMiddleware").
-		Order(MWOrderAuthPersistence).
+		Order(security.MWOrderAuthPersistence).
 		Use(manager.AuthenticationPersistenceHandlerFunc())
 
 	test := middleware.NewBuilder("post-sessionMiddleware").
-		Order(MWOrderAuthPersistence + 10).
+		Order(security.MWOrderAuthPersistence + 10).
 		Use(SessionDebugHandlerFunc())
 
 	ws.Add(sessionHandler, authPersist, test)

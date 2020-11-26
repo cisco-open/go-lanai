@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"strconv"
 	"strings"
 )
@@ -72,5 +71,6 @@ func (basic *BasicAuthMiddleware) handleSuccess(c *gin.Context, new security.Aut
 func (basic *BasicAuthMiddleware) handleError(c *gin.Context, err error) {
 	realm := "Basic realm=" + strconv.Quote("Authorization Required")
 	c.Header("WWW-Authenticate", realm)
-	_ = c.AbortWithError(http.StatusUnauthorized, err)
+	//_ = c.AbortWithError(http.StatusUnauthorized, err)
+	c.Abort()
 }

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	PasswordAuthenticatorFeatureId = FeatureId("Hotmail")
+	PasswordAuthenticatorFeatureId = FeatureId("passwdAuth")
 )
 
 // FeatureId is ordered

@@ -4,11 +4,16 @@ import "errors"
 
 
 const (
-	Reserved        		= 11 << 24
+	// security reserved
+	ReservedOffset			= 24
+	Reserved        		= 11 << ReservedOffset
+	ReservedMask			= ^int(0) << ReservedOffset
 
+	// error type bits
 	errorTypeOffset         = 16
 	errorTypeMask           = ^int(0) << errorTypeOffset
 
+	// error sub type bits
 	errorSubTypeOffset      = 10
 	errorSubTypeMask        = ^int(0) << errorSubTypeOffset
 
@@ -52,7 +57,7 @@ const (
 
 // ErrorTypes, can be used in errors.Is
 var (
-	ErrorTypeSecurity				 = newErrorType(Reserved, errors.New("error type: security"))
+	ErrorTypeSecurity				 = newCodedError(Reserved, errors.New("error type: security"), ReservedMask)
 	ErrorTypeAuthentication          = newErrorType(ErrorTypeCodeAuthentication, errors.New("error type: authentication"))
 	ErrorTypeAccessControl           = newErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
 

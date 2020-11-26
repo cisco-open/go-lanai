@@ -11,7 +11,7 @@ import (
 type ErrorHandlingMiddleware struct {
 	entryPoint security.AuthenticationEntryPoint
 	accessDeniedHandler security.AccessDeniedHandler
-
+	authErrorHandler security.AuthenticationErrorHandler
 }
 
 func NewErrorHandlingMiddleware() *ErrorHandlingMiddleware {
@@ -58,7 +58,7 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorTypeAuthentication):
 		fallthrough
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorSubTypeInsufficientAuth):
-		eh.entryPoint.Commence(c, c.Request, c.Writer)
+		eh.entryPoint.Commence(c, c.Request, c.Writer, err)
 	case eh.accessDeniedHandler != nil && errors.Is(err, security.ErrorSubTypeAccessDenied):
 		eh.accessDeniedHandler.HandleAccessDenied(c, c.Request, c.Writer, err)
 	default:

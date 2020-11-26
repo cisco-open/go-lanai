@@ -8,6 +8,9 @@ import (
 
 func TestTypeComparison(t *testing.T) {
 	switch {
+	case !errors.Is(security.ErrorSubTypeInternalError, security.ErrorTypeSecurity):
+		t.Errorf("ErrorType should match ErrorTypeSecurity")
+
 	case !errors.Is(security.ErrorSubTypeInternalError, security.ErrorSubTypeInternalError):
 		t.Errorf("ErrorType should match itself")
 
@@ -30,6 +33,9 @@ func TestAuthenticatorNotAvailableError(t *testing.T) {
 	another := security.NewAuthenticatorNotAvailableError("different message")
 	nonCoded := errors.New("non-coded error")
 	switch {
+	case !errors.Is(ana, security.ErrorTypeSecurity):
+		t.Errorf("NewAuthenticatorNotAvailableError should match ErrorTypeSecurity")
+
 	case !errors.Is(ana, security.ErrorTypeAuthentication):
 		t.Errorf("NewAuthenticatorNotAvailableError should match ErrorTypeAuthentication")
 
@@ -55,6 +61,9 @@ func TestBadCredentialsError(t *testing.T) {
 	another := security.NewBadCredentialsError("different message")
 	nonCoded := errors.New("non-coded error")
 	switch {
+	case !errors.Is(coded, security.ErrorTypeSecurity):
+		t.Errorf("NewAuthenticatorNotAvailableError should match ErrorTypeSecurity")
+
 	case !errors.Is(coded, security.ErrorTypeAuthentication):
 		t.Errorf("NewBadCredentialsError should match ErrorTypeAuthentication")
 

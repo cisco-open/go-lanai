@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	MWOrderBasicAuth = security.HighestMiddlewareOrder + 200
 	BasicFeatureId = "BasicAuth"
 )
 
@@ -50,7 +49,7 @@ func (bac *BasicAuthConfigurer) Apply(_ security.Feature, ws security.WebSecurit
 	// TODO
 	basicAuth := NewBasicAuthMiddleware(ws.Authenticator())
 	auth := middleware.NewBuilder("basic auth").
-		Order(MWOrderBasicAuth).
+		Order(security.MWOrderBasicAuth).
 		Use(basicAuth.HandlerFunc())
 
 	ws.Add(auth)

@@ -10,7 +10,6 @@ import (
 )
 
 type DefaultAccessDeniedHandler struct {
-	entryPoint security.AuthenticationEntryPoint
 }
 
 func (h *DefaultAccessDeniedHandler) HandleAccessDenied(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
@@ -25,10 +24,20 @@ func (h *DefaultAccessDeniedHandler) HandleAccessDenied(c context.Context, r *ht
 	}
 }
 
-type DefaultSecurityErrorHandler struct {
-	entryPoint security.AuthenticationEntryPoint
+type DefaultAuthenticationErrorHandler struct {
 }
 
+func (h *DefaultAuthenticationErrorHandler) HandleAuthenticationError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
+	ctx, ok := c.(*gin.Context)
+	if !ok {
+		return
+	}
+	if isJson(r) {
+		writeErrorAsJson(ctx, http.StatusForbidden, err)
+	} else {
+		writeErrorAsHtml(ctx, http.StatusForbidden, err)
+	}
+}
 
 /**************************
 	Helpers

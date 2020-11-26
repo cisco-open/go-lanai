@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	MWOrderAccessControl = security.LowestMiddlewareOrder - 200
 	FeatureId = "AC"
 )
 
@@ -38,7 +37,7 @@ func (acc *AccessControlConfigurer) Apply(feature security.Feature, ws security.
 	// register middlewares
 	mw := NewAccessControlMiddleware(decisionMakers...)
 	ac := middleware.NewBuilder("access control").
-		Order(MWOrderAccessControl).
+		Order(security.MWOrderAccessControl).
 		Use(mw.ACHandlerFunc())
 
 	ws.Add(ac)

@@ -54,6 +54,7 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 		// If session store is not operating properly, we cannot continue for endpoints that needs session
 		if err != nil {
 			_ = c.Error(err)
+			c.Abort()
 			return
 		}
 

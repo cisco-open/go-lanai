@@ -65,5 +65,6 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 	access.Configure(ws).
 		Request(matcher.RequestWithPattern("/**/page/public")).PermitAll().
 		Request(matcher.AnyRequest()).Authenticated()
-	errorhandling.Configure(ws)
+	errorhandling.Configure(ws).
+		AuthenticationEntryPoint(errorhandling.NewRedirectWithRelativePath("/error"))
 }

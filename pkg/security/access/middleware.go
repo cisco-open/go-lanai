@@ -36,4 +36,5 @@ func (ac *AccessControlMiddleware) ACHandlerFunc() gin.HandlerFunc {
 func (ac *AccessControlMiddleware) handleError(c *gin.Context, err error) {
 	// We add the error and let the error handling middleware to render it
 	_ = c.Error(err)
+	c.Abort()
 }

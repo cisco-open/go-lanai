@@ -28,5 +28,5 @@ func init() {
 
 func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties, connection *redis.Connection) {
 	configurer := newSessionConfigurer(sessionProps, serverProps, connection)
-	init.(security.FeatureRegistrar).RegisterFeature(SessionFeatureId, configurer)
+	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

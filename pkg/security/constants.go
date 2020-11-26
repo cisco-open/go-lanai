@@ -7,4 +7,16 @@ const (
 	MaxSecurityPrecedence = bootstrap.FrameworkModulePrecedence + 2999
 
 	ContextKeySecurity = "kSecurity"
+
+)
+
+// Middleware Orders
+const (
+	_ = iota
+	MWOrderSessionHandling = HighestMiddlewareOrder + iota * 20
+	MWOrderErrorHandling
+	MWOrderAuthPersistence
+	MWOrderBasicAuth
+	// ... TODO more MW goes here
+	MWOrderAccessControl = LowestMiddlewareOrder - 200
 )

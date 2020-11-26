@@ -17,5 +17,5 @@ type AuthenticationErrorHandler interface {
 
 // AuthenticationEntryPoint kicks off authentication process
 type AuthenticationEntryPoint interface {
-	Commence(context.Context, *http.Request, http.ResponseWriter,)
+	Commence(context.Context, *http.Request, http.ResponseWriter, error)
 }
