@@ -17,7 +17,9 @@ type DecisionMakerFunc func(context.Context, *http.Request) (handled bool, decis
 type AcrMatcher matcher.RequestMatcher
 
 // ControlFunc make access control decision based on security.Authentication
-type ControlFunc func(security.Authentication) bool
+// "decision" indicate whether the access is grated
+// "reason" is optional and is used when access is denied. if not specified, security.NewAccessDeniedError will be used
+type ControlFunc func(security.Authentication) (decision bool, reason error)
 
 func MakeDecisionMakerFunc(matcher AcrMatcher, cf ControlFunc) DecisionMakerFunc {
 	return func(ctx context.Context, r *http.Request) (bool, error) {
@@ -27,10 +29,13 @@ func MakeDecisionMakerFunc(matcher AcrMatcher, cf ControlFunc) DecisionMakerFunc
 		}
 
 		auth := security.Get(ctx)
-		if cf(auth) {
+		granted, reason := cf(auth)
+		if granted {
 			return true, nil
+		} else if reason != nil {
+			return true, reason
 		} else {
-			return true, security.NewAccessControlError("access denied")
+			return true, security.NewAccessDeniedError("access denied")
 		}
 	}
 }

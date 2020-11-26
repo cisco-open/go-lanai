@@ -29,7 +29,7 @@ const (
 	ErrorSubTypeCodeUsernamePasswordAuth
 )
 
-// ErrorSubTypeAuthInternal
+// ErrorSubTypeCodeInternal
 const (
 	_ = iota
 	ErrorCodeAuthenticatorNotAvailable = ErrorSubTypeCodeInternal + iota
@@ -42,13 +42,25 @@ const (
 	ErrorCodeBadCredentials
 )
 
+// All "SubType" values are used as mask
+// sub types of ErrorTypeCodeAccessControl
+const (
+	_ = iota
+	ErrorSubTypeCodeAccessDenied = ErrorTypeCodeAccessControl + iota << errorSubTypeOffset
+	ErrorSubTypeCodeInsufficientAuth
+)
+
 // ErrorTypes, can be used in errors.Is
 var (
+	ErrorTypeSecurity				 = newErrorType(Reserved, errors.New("error type: security"))
 	ErrorTypeAuthentication          = newErrorType(ErrorTypeCodeAuthentication, errors.New("error type: authentication"))
 	ErrorTypeAccessControl           = newErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
 
 	ErrorSubTypeInternalError        = newErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeUsernamePasswordAuth = newErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))
+
+	ErrorSubTypeAccessDenied         = newErrorSubType(ErrorSubTypeCodeAccessDenied, errors.New("error sub-type: access denied"))
+	ErrorSubTypeInsufficientAuth     = newErrorSubType(ErrorSubTypeCodeInsufficientAuth, errors.New("error sub-type: insufficient auth"))
 )
 
 type ErrorCoder interface {
@@ -105,29 +117,38 @@ func newErrorSubType(code int, e error) error {
 	return newCodedError(code, e, errorSubTypeMask)
 }
 
-func NewAuthenticationError(text string) error {
-	return newCodedError(ErrorTypeCodeAuthentication, errors.New(text), errorTypeMask)
+// NewCodedError creates concrete error. it cannot be used as ErrorType or ErrorSubType comparison
+func NewCodedError(code int, e error) error {
+	return newCodedError(code, e, defaultErrorCodeMask)
 }
 
-func NewAccessControlError(text string) error {
-	return newCodedError(ErrorTypeCodeAccessControl, errors.New(text), errorTypeMask)
+/* AuthenticationError family */
+
+func NewAuthenticationError(text string) error {
+	return NewCodedError(ErrorTypeCodeAuthentication, errors.New(text))
 }
 
 func NewAuthenticatorNotAvailableError(text string) error {
-	return newCodedError(ErrorCodeAuthenticatorNotAvailable, errors.New(text), defaultErrorCodeMask)
+	return NewCodedError(ErrorCodeAuthenticatorNotAvailable, errors.New(text))
 }
 
 func NewUsernameNotFoundError(text string) error {
-	return &codedError{
-		code: ErrorCodeUsernameNotFound,
-		error: errors.New(text),
-	}
+	return NewCodedError(ErrorCodeUsernameNotFound, errors.New(text))
 }
 
 func NewBadCredentialsError(text string) error {
-	return &codedError{
-		code: ErrorCodeBadCredentials,
-		error: errors.New(text),
-	}
+	return NewCodedError(ErrorCodeBadCredentials, errors.New(text))
 }
 
+/* AccessControlError family */
+func NewAccessControlError(text string) error {
+	return NewCodedError(ErrorTypeCodeAccessControl, errors.New(text))
+}
+
+func NewAccessDeniedError(text string) error {
+	return NewCodedError(ErrorSubTypeCodeAccessDenied, errors.New(text))
+}
+
+func NewInsufficientAuthError(text string) error {
+	return NewCodedError(ErrorSubTypeCodeInsufficientAuth, errors.New(text))
+}

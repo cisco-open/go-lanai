@@ -9,6 +9,14 @@ import (
 	"net/http"
 )
 
+const (
+	ModelKeyError = "error"
+	ModelKeyErrorCode = "errorCode"
+	ModelKeyStatusCode = "statusCode"
+	ModelKeyStatusText = "statusText"
+	ModelKeyMessage = "message"
+)
+
 type Model gin.H
 
 type ModelView struct {
@@ -64,9 +72,9 @@ func templateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 
 	// TODO merge model with global overrides
 	ctx.HTML(code, "error.tmpl", gin.H{
-		"error": err,
-		"StatusCode": code,
-		"StatusText": http.StatusText(code),
+		ModelKeyError: err,
+		ModelKeyStatusCode: code,
+		ModelKeyStatusText: http.StatusText(code),
 	})
 }
 

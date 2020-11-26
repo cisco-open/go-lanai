@@ -40,12 +40,37 @@ func TestAuthenticatorNotAvailableError(t *testing.T) {
 		t.Errorf("Two NewAuthenticatorNotAvailableError should match each other")
 
 	case errors.Is(ana, nonCoded):
-		t.Errorf("NewAuthenticatorNotAvailableError should not match non-coded errors")
+		t.Errorf("NewAuthenticatorNotAvailableError should not match non-coded error")
 
 	case errors.Is(ana, security.ErrorTypeAccessControl):
 		t.Errorf("NewAuthenticatorNotAvailableError should not match ErrorTypeAccessControl")
 
 	case errors.Is(ana, security.ErrorSubTypeUsernamePasswordAuth):
 		t.Errorf("NewAuthenticatorNotAvailableError should not match ErrorSubTypeUsernamePasswordAuth")
+	}
+}
+
+func TestBadCredentialsError(t *testing.T) {
+	coded := security.NewBadCredentialsError("wrong password")
+	another := security.NewBadCredentialsError("different message")
+	nonCoded := errors.New("non-coded error")
+	switch {
+	case !errors.Is(coded, security.ErrorTypeAuthentication):
+		t.Errorf("NewBadCredentialsError should match ErrorTypeAuthentication")
+
+	case !errors.Is(coded, security.ErrorSubTypeUsernamePasswordAuth):
+		t.Errorf("NewBadCredentialsError should match ErrorSubTypeUsernamePasswordAuth")
+
+	case !errors.Is(coded, another):
+		t.Errorf("Two NewBadCredentialsError should match each other")
+
+	case errors.Is(coded, nonCoded):
+		t.Errorf("NewBadCredentialsError should not match non-coded error")
+
+	case errors.Is(coded, security.ErrorTypeAccessControl):
+		t.Errorf("NewBadCredentialsError should not match ErrorTypeAccessControl")
+
+	case errors.Is(coded, security.ErrorSubTypeInternalError):
+		t.Errorf("NewBadCredentialsError should not match ErrorSubTypeInternalError")
 	}
 }

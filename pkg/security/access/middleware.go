@@ -27,9 +27,9 @@ func (ac *AccessControlMiddleware) ACHandlerFunc() gin.HandlerFunc {
 		if err != nil {
 			// access denied
 			ac.handleError(ctx, err)
+		} else {
+			ctx.Next()
 		}
-
-		ctx.Next()
 	}
 }
 

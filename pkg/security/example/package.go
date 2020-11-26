@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	session "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
@@ -45,7 +46,7 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(basicauth.New()).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
-		)
+		).With(errorhandling.New())
 }
 
 
@@ -64,4 +65,5 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 	access.Configure(ws).
 		Request(matcher.RequestWithPattern("/**/page/public")).PermitAll().
 		Request(matcher.AnyRequest()).Authenticated()
+	errorhandling.Configure(ws)
 }

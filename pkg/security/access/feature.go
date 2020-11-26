@@ -27,13 +27,13 @@ func (ac *AccessControl) Authenticated() *AccessControlFeature {
 	return ac.owner
 }
 
-func (ac *AccessControl) AllowIf(cf ControlFunc) *AccessControlFeature {
-	ac.control = cf
+func (ac *AccessControl) HasPermissions(permissions...string) *AccessControlFeature {
+	ac.control = HasPermissions(permissions...)
 	return ac.owner
 }
 
-func (ac *AccessControl) DenyIf(cf ControlFunc) *AccessControlFeature {
-	ac.control = not(cf)
+func (ac *AccessControl) AllowIf(cf ControlFunc) *AccessControlFeature {
+	ac.control = cf
 	return ac.owner
 }
 
@@ -74,20 +74,40 @@ func New() *AccessControlFeature {
 /**************************
 	Common ControlFunc
 ***************************/
-func PermitAll(_ security.Authentication) bool {
-	return true
+func PermitAll(_ security.Authentication) (bool, error) {
+	return true, nil
 }
 
-func DenyAll(_ security.Authentication) bool {
-	return false
+func DenyAll(_ security.Authentication) (bool, error) {
+	return false, nil
 }
 
-func Authenticated(auth security.Authentication) bool {
-	return auth.Authenticated()
+func Authenticated(auth security.Authentication) (bool, error) {
+	if auth.Authenticated() {
+		return true, nil
+	}
+	return false, security.NewInsufficientAuthError("not authenticated")
 }
 
-func not(cf ControlFunc) ControlFunc {
-	return func(auth security.Authentication) bool {
-		return !cf(auth)
+func HasPermissions(permissions...string) ControlFunc {
+	return func(auth security.Authentication) (bool, error) {
+		if !auth.Authenticated() {
+			return false, security.NewInsufficientAuthError("not authenticated")
+		}
+
+		for _,p := range permissions {
+			var found bool
+			for _,granted := range auth.Permissions() {
+				if p == granted {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false, nil
+			}
+		}
+
+		return true, nil
 	}
 }
