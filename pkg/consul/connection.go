@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	ConfigRootConsulConnection = "spring.cloud.consul"
+	ConfigRootConsulConnection = "cloud.consul"
 )
 
 var (

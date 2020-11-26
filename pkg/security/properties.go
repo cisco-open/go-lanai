@@ -18,21 +18,28 @@ type SessionStoreType int
 const SessionPropertiesPrefix = "security.session"
 
 type SessionProperties struct {
-	StoreType SessionStoreType  `json:"storage"`
-	Secret    string            `json:"secret"`
-	Cookie    *CookieProperties `json:"domain"`
+	Cookie    *CookieProperties
+	IdleTimeout string `json:"idle-timeout"`
+	AbsoluteTimeout string `json:"absolute-timeout"`
 }
 
 type CookieProperties struct {
 	Domain string `json:"domain"`
+	MaxAge int `json:"max-age"`
+	Secure bool `json:"secure"`
+	HttpOnly bool `json:"http-only"`
+	SameSite string `json:"same-site"`
 }
 
 //NewSessionProperties create a SessionProperties with default values
 func NewSessionProperties() *SessionProperties {
 	return &SessionProperties {
-		StoreType: SessionStoreTypeMemory,
-		Secret: "default-session-secret",
-		Cookie: &CookieProperties{ },
+		Cookie: &CookieProperties{
+			HttpOnly: true,
+			SameSite: "lax",
+		},
+		IdleTimeout: "900s",
+		AbsoluteTimeout: "1800s",
 	}
 }
 

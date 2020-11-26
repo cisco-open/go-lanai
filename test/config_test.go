@@ -66,5 +66,8 @@ func TestResolvePlaceHoldersWithCircularReference(t *testing.T) {
 	}
 
 	fmt.Println(error)
+}
+
+func TestBindRedisProperties(t *testing.T) {
 
 }

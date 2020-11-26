@@ -29,7 +29,7 @@ func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *consul
 	c := &consul.ConnectionProperties{
 		//TODO: defaults can be specified here
 	}
-	bootstrapConfig.Bind(c, "spring.cloud.consul")
+	bootstrapConfig.Bind(c, consul.ConfigRootConsulConnection)
 	return c
 }
 
