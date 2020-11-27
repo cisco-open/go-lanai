@@ -29,8 +29,7 @@ func (f *SessionFeature) Identifier() security.FeatureIdentifier {
 func Configure(ws security.WebSecurity) *SessionFeature {
 	feature := &SessionFeature{}
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		_ = fc.Enable(feature) // we ignore error here
-		return feature
+		return fc.Enable(feature).(*SessionFeature)
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }

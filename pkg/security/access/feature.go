@@ -60,8 +60,7 @@ func (f *AccessControlFeature) Request(matcher AcrMatcher) *AccessControl {
 func Configure(ws security.WebSecurity) *AccessControlFeature {
 	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		_ = fc.Enable(feature) // we ignore error here
-		return feature
+		return  fc.Enable(feature).(*AccessControlFeature)
 	}
 	panic(fmt.Errorf("unable to configure access control: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }

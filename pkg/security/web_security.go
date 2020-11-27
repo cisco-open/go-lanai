@@ -45,8 +45,9 @@ func (ws *webSecurity) Condition(mwcm web.MWConditionMatcher) WebSecurity {
 }
 
 func (ws *webSecurity) With(f Feature) WebSecurity {
-	if err := ws.Enable(f); err != nil {
-		panic(err)
+	existing := ws.Enable(f)
+	if existing != f {
+		panic(fmt.Errorf("cannot re-enable feature [%v] using With()", f.Identifier()))
 	}
 	return ws
 }
@@ -80,13 +81,13 @@ func (ws *webSecurity) Authenticator() Authenticator {
 }
 
 /* FeatureModifier interface */
-func (ws *webSecurity) Enable(f Feature) error {
+func (ws *webSecurity) Enable(f Feature) Feature {
 	if i := findFeatureIndex(ws.features, f); i >= 0 {
 		// already have this feature
-		return fmt.Errorf("cannot re-enable security feature %T", f)
+		return ws.features[i]
 	}
 	ws.features = append(ws.features, f)
-	return nil
+	return f
 }
 
 func (ws *webSecurity) Disable(f Feature) {

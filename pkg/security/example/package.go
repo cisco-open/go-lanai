@@ -37,16 +37,17 @@ type TestSecurityConfigurer struct {
 func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// DSL style example
+	// for REST API
 	ws.Route(route.WithPattern("/api/**")).
 		Condition(matcher.RequestWithHost("localhost:8080")).
 		With(passwd.New().
 			AccountStore(c.accountStore).
 			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
 		).
-		With(basicauth.New()).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
 		).
+		With(basicauth.New()).
 		With(errorhandling.New())
 }
 
@@ -56,16 +57,17 @@ type AnotherSecurityConfigurer struct {
 
 func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
-	// non-DSL style example
+	// For Page
 	ws.Route(route.WithPattern("/page/**")).
-		Condition(matcher.RequestWithHost("localhost:8080"))
-
-	session.Configure(ws)
-	basicauth.Configure(ws)
-	passwd.Configure(ws)
-	access.Configure(ws).
-		Request(matcher.RequestWithPattern("/**/page/public")).PermitAll().
-		Request(matcher.AnyRequest()).Authenticated()
-	errorhandling.Configure(ws).
-		AuthenticationEntryPoint(errorhandling.NewRedirectWithRelativePath("/error"))
+		Condition(matcher.RequestWithHost("localhost:8080")).
+		With(basicauth.New()).
+		With(session.New()).
+		With(passwd.New()).
+		With(access.New().
+			Request(matcher.RequestWithPattern("/**/page/public")).PermitAll().
+			Request(matcher.AnyRequest()).Authenticated(),
+		).
+		With(errorhandling.New(),
+			//AuthenticationEntryPoint(errorhandling.NewRedirectWithRelativePath("/error"))
+		)
 }

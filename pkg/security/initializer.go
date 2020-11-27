@@ -105,7 +105,7 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMiddlewareBuil
 		return order.OrderedFirstCompare(features[i], features[j])
 	})
 
-	for _, f := range ws.Features() {
+	for _, f := range features {
 		fc, ok := init.featureConfigurers[f.Identifier()]
 		if !ok {
 			return nil, fmt.Errorf("unable to build security feature %T: no FeatureConfigurer found", f)

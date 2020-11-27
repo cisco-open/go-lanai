@@ -2,21 +2,12 @@ package passwd
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
 )
 
-const (
-	PasswordAuthenticatorFeatureId = FeatureId("passwdAuth")
+var (
+	PasswordAuthenticatorFeatureId = security.PriorityFeatureId("passwdAuth", security.FeatureOrderAuthenticator)
 )
-
-// FeatureId is ordered
-type FeatureId string
-
-// order.Ordered interface
-func (FeatureId) Order() int {
-	return order.Highest
-}
 
 // We currently don't have any stuff to configure
 type PasswordAuthFeature struct {
@@ -42,8 +33,7 @@ func (f *PasswordAuthFeature) PasswordEncoder(pe PasswordEncoder) *PasswordAuthF
 func Configure(ws security.WebSecurity) *PasswordAuthFeature {
 	feature := &PasswordAuthFeature{}
 	if fm, ok := ws.(security.FeatureModifier); ok {
-		_ = fm.Enable(feature) // we ignore error here
-		return feature
+		return fm.Enable(feature).(*PasswordAuthFeature)
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }

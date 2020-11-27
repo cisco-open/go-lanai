@@ -6,8 +6,8 @@ import (
 	"fmt"
 )
 
-const (
-	FeatureId       = "ErrorHandling"
+var (
+	FeatureId       = security.FeatureId("ErrorHandling", security.FeatureOrderErrorHandling)
 )
 
 // We currently don't have any stuff to configure
@@ -43,8 +43,7 @@ func (f *ErrorHandlingFeature) AuthenticationErrorHandler(v security.Authenticat
 func Configure(ws security.WebSecurity) *ErrorHandlingFeature {
 	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		_ = fc.Enable(feature) // we ignore error here
-		return feature
+		return fc.Enable(feature).(*ErrorHandlingFeature)
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }

@@ -2,12 +2,13 @@ package basicauth
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
 )
 
-const (
-	FeatureId = "BasicAuth"
+var (
+	FeatureId = security.FeatureId("BasicAuth", security.FeatureOrderBasicAuth)
 )
 
 // We currently don't have any stuff to configure
@@ -24,8 +25,7 @@ func (f *BasicAuthFeature) Identifier() security.FeatureIdentifier {
 func Configure(ws security.WebSecurity) *BasicAuthFeature {
 	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		_ = fc.Enable(feature) // we ignore error here
-		return feature
+		return fc.Enable(feature).(*BasicAuthFeature)
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
@@ -46,7 +46,11 @@ func newBasicAuthConfigurer() *BasicAuthConfigurer {
 }
 
 func (bac *BasicAuthConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
-	// TODO
+	// configure other dependent features
+	errorhandling.Configure(ws).
+		AuthenticationEntryPoint(NewBasicAuthEntryPoint())
+
+	// configure middlewares
 	basicAuth := NewBasicAuthMiddleware(ws.Authenticator())
 	auth := middleware.NewBuilder("basic auth").
 		Order(security.MWOrderBasicAuth).

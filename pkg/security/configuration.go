@@ -91,4 +91,33 @@ type WebSecurity interface {
 	Convenient Types
 *****************************************/
 
+// FeatureId is ordered
+type featureId struct {
+	id string
+	order int
+}
+
+// order.Ordered interface
+func (id featureId) Order() int {
+	return id.order
+}
+
+func FeatureId(id string, order int) FeatureIdentifier {
+	return featureId{id: id, order: order}
+}
+
+// priorityFeatureId is priority Ordered
+type priorityFeatureId struct {
+	id string
+	order int
+}
+
+// order.PriorityOrdered interface
+func (id priorityFeatureId) PriorityOrder() int {
+	return id.order
+}
+
+func PriorityFeatureId(id string, order int) FeatureIdentifier {
+	return priorityFeatureId{id: id, order: order}
+}
 

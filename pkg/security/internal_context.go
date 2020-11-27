@@ -11,7 +11,11 @@ import (
 // Should not used directly by service
 // use corresponding feature's Configure(WebSecurity) instead
 type FeatureModifier interface {
-	Enable(Feature) error
+	// Enable kick off configuration of give Feature.
+	// If the given Feature is not enabled yet, it's added to the receiver and returned
+	// If the given Feature is already enabled, the already enabled Feature is returned
+	Enable(Feature) Feature
+	// Disable remove given feature using its FeatureIdentifier
 	Disable(Feature)
 }
 
