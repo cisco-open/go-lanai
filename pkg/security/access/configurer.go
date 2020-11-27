@@ -7,8 +7,8 @@ import (
 	"fmt"
 )
 
-const (
-	FeatureId = "AC"
+var (
+	FeatureId = security.SimpleFeatureId("AC")
 )
 
 //goland:noinspection GoNameStartsWithPackageName

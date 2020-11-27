@@ -16,6 +16,7 @@ type webSecurity struct {
 	conditionMatcher    web.MWConditionMatcher
 	middlewareTemplates []MiddlewareTemplate
 	features            []Feature
+	applied				map[FeatureIdentifier]struct{}
 	shared 				map[string]interface{}
 	authenticator 		Authenticator
 }
@@ -24,6 +25,7 @@ func newWebSecurity(authenticator Authenticator) *webSecurity {
 	return &webSecurity{
 		middlewareTemplates: []MiddlewareTemplate{},
 		features: []Feature{},
+		applied: map[FeatureIdentifier]struct{}{},
 		shared: map[string]interface{}{},
 		authenticator: authenticator,
 	}
@@ -82,6 +84,10 @@ func (ws *webSecurity) Authenticator() Authenticator {
 
 /* FeatureModifier interface */
 func (ws *webSecurity) Enable(f Feature) Feature {
+	if _,exists := ws.applied[f.Identifier()]; exists {
+		panic(fmt.Errorf("attempt to configure security feature [%v] after it has been applied", f.Identifier()))
+	}
+
 	if i := findFeatureIndex(ws.features, f); i >= 0 {
 		// already have this feature
 		return ws.features[i]

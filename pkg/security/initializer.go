@@ -102,7 +102,7 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMiddlewareBuil
 	// configure web security
 	features := ws.Features()
 	sort.Slice(features, func(i,j int) bool {
-		return order.OrderedFirstCompare(features[i], features[j])
+		return order.OrderedFirstCompare(features[i].Identifier(), features[j].Identifier())
 	})
 
 	for _, f := range features {
@@ -112,6 +112,8 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMiddlewareBuil
 		}
 
 		err := fc.Apply(f, ws)
+		// mark applied
+		ws.applied[f.Identifier()] = struct{}{}
 		if err != nil {
 			return nil, err
 		}

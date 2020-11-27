@@ -28,7 +28,7 @@ const (
 // Feature Orders, if feature is not listed here, it's unordered. Unordered features are applied at last
 const (
 	_ = iota
-	FeatureOrderAuthenticator = order.Highest + iota * 100
+	FeatureOrderAuthenticator = iota * 100
 	FeatureOrderBasicAuth
 	// ... TODO more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200

@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"fmt"
 )
 
 /************************************
@@ -48,7 +49,10 @@ type MiddlewareCondition matcher.ChainableMatcher
 // FeatureIdentifier is unique for each feature.
 // Security initializer use this value to locate corresponding FeatureConfigurer
 // or sort configuration order
-type FeatureIdentifier interface{}
+type FeatureIdentifier interface {
+	fmt.Stringer
+	fmt.GoStringer
+}
 
 // Feature holds security settings of specific feature.
 // Any Feature should have a corresponding FeatureConfigurer
@@ -90,8 +94,23 @@ type WebSecurity interface {
 /****************************************
 	Convenient Types
 *****************************************/
+type simpleFeatureId string
+// FeatureIdentifier interface
+func (id simpleFeatureId) String() string {
+	return string(id)
+}
 
-// FeatureId is ordered
+// FeatureIdentifier interface
+func (id simpleFeatureId) GoString() string {
+	return string(id)
+}
+
+// SimpleFeatureId create unordered FeatureIdentifier
+func SimpleFeatureId(id string) FeatureIdentifier {
+	return simpleFeatureId(id)
+}
+
+// featureId is ordered
 type featureId struct {
 	id string
 	order int
@@ -102,6 +121,17 @@ func (id featureId) Order() int {
 	return id.order
 }
 
+// FeatureIdentifier interface
+func (id featureId) String() string {
+	return id.id
+}
+
+// FeatureIdentifier interface
+func (id featureId) GoString() string {
+	return id.id
+}
+
+// FeatureId create an ordered FeatureIdentifier
 func FeatureId(id string, order int) FeatureIdentifier {
 	return featureId{id: id, order: order}
 }
@@ -117,6 +147,17 @@ func (id priorityFeatureId) PriorityOrder() int {
 	return id.order
 }
 
+// FeatureIdentifier interface
+func (id priorityFeatureId) String() string {
+	return id.id
+}
+
+// FeatureIdentifier interface
+func (id priorityFeatureId) GoString() string {
+	return id.id
+}
+
+// PriorityFeatureId create an priority ordered FeatureIdentifier
 func PriorityFeatureId(id string, order int) FeatureIdentifier {
 	return priorityFeatureId{id: id, order: order}
 }

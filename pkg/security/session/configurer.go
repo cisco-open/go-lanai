@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-const (
-	FeatureId              = "RequestSession"
+var (
+	FeatureId = security.SimpleFeatureId("Session")
 )
 
 // We currently don't have any stuff to configure
