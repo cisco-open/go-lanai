@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	BasicFeatureId = "BasicAuth"
+	FeatureId = "BasicAuth"
 )
 
 // We currently don't have any stuff to configure
@@ -18,7 +18,7 @@ type BasicAuthFeature struct {
 
 // Standard security.Feature entrypoint
 func (f *BasicAuthFeature) Identifier() security.FeatureIdentifier {
-	return BasicFeatureId
+	return FeatureId
 }
 
 func Configure(ws security.WebSecurity) *BasicAuthFeature {

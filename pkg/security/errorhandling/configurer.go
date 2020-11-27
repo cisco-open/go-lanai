@@ -92,12 +92,12 @@ func (ehc *ErrorHandlingConfigurer) validate(f *ErrorHandlingFeature, ws securit
 
 	if f.authEntryPoint == nil && f.authErrorHandler == nil {
 		fmt.Printf("for route matches [%v], using default authentication error handler", ws)
-		f.authErrorHandler = &DefaultAuthenticationErrorHandler{}
+		f.authErrorHandler = &security.DefaultAuthenticationErrorHandler{}
 	}
 
 	if f.accessDeniedHandler == nil {
 		fmt.Printf("for route matches [%v], using default access denied handler", ws)
-		f.accessDeniedHandler = &DefaultAccessDeniedHandler{}
+		f.accessDeniedHandler = &security.DefaultAccessDeniedHandler{}
 	}
 	return nil
 }

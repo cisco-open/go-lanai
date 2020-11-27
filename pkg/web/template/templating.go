@@ -17,6 +17,7 @@ const (
 	ModelKeyMessage        = "message"
 	ModelKeySession        = "session"
 	ModelKeyRequestContext = "rc"
+	ModelKeySecurity 	   = "security"
 )
 
 type Model gin.H
@@ -52,8 +53,7 @@ func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, res
 		return errors.New("unable to use template: response is not *template.ModelView")
 	}
 
-	mv.Model[ModelKeySession] = ctx.Value(web.ContextKeySession)
-	mv.Model[ModelKeyRequestContext] = MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath)
+	addGlobalModelData(ctx, mv.Model)
 	ctx.HTML(status, mv.View, mv.Model)
 	return nil
 }
@@ -61,7 +61,8 @@ func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, res
 /*****************************
 	JSON Error Encoder
 ******************************/
-func templateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
+//goland:noinspection GoNameStartsWithPackageName
+func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 	ctx, ok := c.(*gin.Context)
 	if !ok {
 		httptransport.DefaultErrorEncoder(c, err, w)
@@ -73,13 +74,20 @@ func templateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 		code = sc.StatusCode()
 	}
 
-	ctx.HTML(code, "error.tmpl", gin.H{
+	model := Model{
 		ModelKeyError: err,
 		ModelKeyStatusCode: code,
 		ModelKeyStatusText: http.StatusText(code),
-		ModelKeySession: ctx.Value(web.ContextKeySession),
-		ModelKeyRequestContext: MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath),
-	})
+	}
+
+	addGlobalModelData(ctx, model)
+	ctx.HTML(code, "error.tmpl", model)
+}
+
+func addGlobalModelData(ctx *gin.Context, model Model) {
+	model[ModelKeyRequestContext] = MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath)
+	model[ModelKeySession] = ctx.Value(web.ContextKeySession)
+	model[ModelKeySecurity] = ctx.Value(web.ContextKeySecurity)
 }
 
 

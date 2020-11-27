@@ -161,7 +161,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	return web.NewMvcMapping(b.name, b.path, b.method,
 		m.endpoint, m.decodeRequestFunc, m.encodeRequestFunc,
 		m.decodeResponseFunc, m.encodeResponseFunc,
-		jsonErrorEncoder)
+		JsonErrorEncoder)
 }
 
 func (b *MappingBuilder) customize(m *mapping) {

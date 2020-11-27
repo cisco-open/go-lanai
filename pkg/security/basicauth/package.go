@@ -21,5 +21,5 @@ func init() {
 
 func register(init security.Registrar) {
 	configurer := newBasicAuthConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(BasicFeatureId, configurer)
+	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

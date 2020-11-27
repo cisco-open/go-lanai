@@ -66,7 +66,7 @@ func overwriteHeaders(w http.ResponseWriter, h httptransport.Headerer) {
 /*****************************
 	JSON Error Encoder
 ******************************/
-func jsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
+func JsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 	if _,ok := err.(json.Marshaler); !ok {
 		err = web.ToHttpError(err)
 	}

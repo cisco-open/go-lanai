@@ -46,7 +46,8 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(basicauth.New()).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
-		).With(errorhandling.New())
+		).
+		With(errorhandling.New())
 }
 
 
@@ -60,7 +61,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		Condition(matcher.RequestWithHost("localhost:8080"))
 
 	session.Configure(ws)
-	//basicauth.Configure(ws)
+	basicauth.Configure(ws)
 	passwd.Configure(ws)
 	access.Configure(ws).
 		Request(matcher.RequestWithPattern("/**/page/public")).PermitAll().

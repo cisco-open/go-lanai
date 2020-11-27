@@ -59,10 +59,10 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 		fallthrough
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorSubTypeInsufficientAuth):
 		eh.entryPoint.Commence(c, c.Request, c.Writer, err)
-	case eh.accessDeniedHandler != nil && errors.Is(err, security.ErrorSubTypeAccessDenied):
-		eh.accessDeniedHandler.HandleAccessDenied(c, c.Request, c.Writer, err)
+	case errors.Is(err, security.ErrorTypeAuthentication):
+		eh.authErrorHandler.HandleAuthenticationError(c, c.Request, c.Writer, err)
 	default:
-		// TODO goes to generic error page
+		eh.accessDeniedHandler.HandleAccessDenied(c, c.Request, c.Writer, err)
 	}
 }
 
