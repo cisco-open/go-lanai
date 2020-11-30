@@ -174,7 +174,7 @@ func (s *RedisStore) save(session *Session) error {
 		if values, err := Serialize(session.values); err == nil {
 			args = append(args, sessionValueField, values)
 		} else {
-			return nil
+			return err
 		}
 	}
 
@@ -182,7 +182,7 @@ func (s *RedisStore) save(session *Session) error {
 		if options, err := Serialize(session.options); err == nil {
 			args = append(args, sessionOptionField, options)
 		} else {
-			return nil
+			return err
 		}
 	}
 

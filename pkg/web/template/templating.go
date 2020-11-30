@@ -76,12 +76,13 @@ func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 
 	model := Model{
 		ModelKeyError: err,
+		ModelKeyMessage: err.Error(),
 		ModelKeyStatusCode: code,
 		ModelKeyStatusText: http.StatusText(code),
 	}
 
 	addGlobalModelData(ctx, model)
-	ctx.HTML(code, "error.tmpl", model)
+	ctx.HTML(code, web.ErrorTemplate, model)
 }
 
 func addGlobalModelData(ctx *gin.Context, model Model) {

@@ -4,46 +4,60 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 	"net/http"
 	urlutils "net/url"
 )
 
-type RedirectAuthenticationEntryPoint struct {
+const (
+	FlashKeyPreviousError      = "error"
+	FlashKeyPreviousStatusCode = "status"
+)
+
+type RedirectErrorHandler struct {
 	StatusCode int
 	Location *urlutils.URL
 
 }
 
-func NewRedirectWithRelativePath(path string) *RedirectAuthenticationEntryPoint {
+func NewRedirectWithRelativePath(path string) *RedirectErrorHandler {
 	url, err := urlutils.Parse(path)
 	if err != nil {
 		panic(err)
 	}
 
-	return &RedirectAuthenticationEntryPoint{
+	return &RedirectErrorHandler{
 		StatusCode: 302,
 		Location: url,
 	}
 }
 
-func NewRedirectWithURL(urlStr string) *RedirectAuthenticationEntryPoint {
+func NewRedirectWithURL(urlStr string) *RedirectErrorHandler {
 	url, err := urlutils.Parse(urlStr)
 	if err != nil {
 		panic(err)
 	}
 
-	return &RedirectAuthenticationEntryPoint{
+	return &RedirectErrorHandler{
 		StatusCode: 302,
 		Location: url,
 	}
 }
 
-func (ep *RedirectAuthenticationEntryPoint) Commence(c context.Context, r *http.Request, resp http.ResponseWriter, err error) {
+// security.AuthenticationEntryPoint
+func (ep *RedirectErrorHandler) Commence(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
+	ep.doRedirect(c, r, rw, http.StatusUnauthorized, err)
+}
+
+// security.AccessDeniedHandler
+func (ep *RedirectErrorHandler) HandleAccessDenied(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
+	ep.doRedirect(c, r, rw, http.StatusForbidden, err)
+}
+
+func (ep *RedirectErrorHandler) doRedirect(c context.Context, r *http.Request, rw http.ResponseWriter, errorSc int, err error) {
 	// save error as flash
 	s := session.Get(c)
-	s.Set(template.ModelKeyError, err)
-	s.Set(template.ModelKeyMessage, err.Error())
+	s.AddFlash(err, FlashKeyPreviousError)
+	s.AddFlash(errorSc, FlashKeyPreviousStatusCode)
 
 	loc := ep.Location.EscapedPath()
 	if !ep.Location.IsAbs() {
@@ -55,6 +69,6 @@ func (ep *RedirectAuthenticationEntryPoint) Commence(c context.Context, r *http.
 	}
 
 	// redirect
-	http.Redirect(resp, r, loc, ep.StatusCode)
+	http.Redirect(rw, r, loc, ep.StatusCode)
 }
 

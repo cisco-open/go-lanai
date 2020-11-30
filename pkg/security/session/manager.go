@@ -11,7 +11,7 @@ import (
 
 const (
 	DefaultName = "SESSION"
-	sessionKeySecurity = "kSecurity"
+	sessionKeySecurity = "Security"
 	contextKeySession = web.ContextKeySession
 )
 

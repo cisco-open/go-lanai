@@ -1,6 +1,10 @@
 package security
 
-import "fmt"
+import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"fmt"
+	"sort"
+)
 
 type Candidate interface {
 	Principal() interface{}
@@ -39,3 +43,12 @@ func (a *CompositeAuthenticator) Add(authenticator Authenticator) *CompositeAuth
 	a.authenticators = append(a.authenticators, authenticator)
 	return a
 }
+
+func (a *CompositeAuthenticator) Merge(composite *CompositeAuthenticator) *CompositeAuthenticator {
+	a.authenticators = append(a.authenticators, composite.authenticators...)
+	sort.Slice(a.authenticators, func(i,j int) bool {
+		return order.OrderedFirstCompare(a.authenticators[i], a.authenticators[j])
+	})
+	return a
+}
+

@@ -125,17 +125,22 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMiddlewareBuil
 	return ws, nil
 }
 
-func (init *initializer) process(ws *webSecurity)  error {
+func (init *initializer) process(ws *webSecurity) error {
 	if len(ws.middlewareTemplates) == 0 {
 		return fmt.Errorf("no middleware were configuered for WebSecurity %v", ws)
 	}
 
 	switch {
 	case !hasConcreteAuthenticator(ws.authenticator) && !hasConcreteAuthenticator(init.globalAuthenticator):
-		return fmt.Errorf("no concrete authenticator is configured for WebSecurity %v, and global authenticator is not configurered neither", ws)
+		//return fmt.Errorf("no concrete authenticator is configured for WebSecurity %v, and global authenticator is not configurered neither", ws)
+		ws.authenticator.(*CompositeAuthenticator).Add(&AnonymousAuthenticator{})
 	case !hasConcreteAuthenticator(ws.authenticator):
 		// ws has no concrete authenticator, but global authenticator is configured, use it
-		ws.authenticator = init.globalAuthenticator
+		if _,ok := init.globalAuthenticator.(*CompositeAuthenticator); ok {
+			ws.authenticator.(*CompositeAuthenticator).Merge(init.globalAuthenticator.(*CompositeAuthenticator))
+		} else {
+			ws.authenticator.(*CompositeAuthenticator).Add(init.globalAuthenticator)
+		}
 	}
 	return nil
 }
@@ -148,6 +153,7 @@ func hasConcreteAuthenticator(auth Authenticator) bool {
 	composite, ok := auth.(*CompositeAuthenticator)
 	return !ok || len(composite.authenticators) != 0
 }
+
 
 
 

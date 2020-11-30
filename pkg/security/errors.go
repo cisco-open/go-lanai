@@ -1,6 +1,10 @@
 package security
 
-import "errors"
+import (
+	"bytes"
+	"encoding/binary"
+	"errors"
+)
 
 
 const (
@@ -103,6 +107,41 @@ func (e *codedError) Is(target error) bool {
 	return  ok && compare == coder.Code()
 }
 
+// encoding.BinaryMarshaler interface
+// code, mask, error.Error() are written into byte array in the mentioned order
+// code and mask are written as 64 bits with binary.BigEndian
+func (e *codedError) MarshalBinary() (data []byte, err error) {
+	errString := e.Error()
+
+	buffer := bytes.NewBuffer([]byte{})
+	err = binary.Write(buffer, binary.BigEndian, int64(e.code))
+	err = binary.Write(buffer, binary.BigEndian, int64(e.mask))
+	_, err = buffer.Write([]byte(errString))
+
+	if err == nil {
+		data = buffer.Bytes()
+	}
+	return
+}
+
+// encoding.BinaryUnmarshaler interface
+func (e *codedError) UnmarshalBinary(data []byte) (err error) {
+	buffer := bytes.NewBuffer(data)
+	var code, mask int64
+	err = binary.Read(buffer, binary.BigEndian, &code)
+	err = binary.Read(buffer, binary.BigEndian, &mask)
+	errString := buffer.String()
+	if err != nil {
+		return err
+	}
+
+	e.code = int(code)
+	e.mask = int(mask)
+	e.error = errors.New(errString)
+	return
+}
+
+
 /************************
 	Constructors
 *************************/
@@ -110,7 +149,7 @@ func newCodedError(code int, e error, mask int) error {
 	return &codedError{
 		code: code,
 		error: e,
-		mask: mask,
+		mask:   mask,
 	}
 }
 

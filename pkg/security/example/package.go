@@ -28,6 +28,7 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 	})
 
 	init.Register(&AnotherSecurityConfigurer { })
+	init.Register(&ErrorPageSecurityConfigurer{})
 }
 
 type TestSecurityConfigurer struct {
@@ -58,6 +59,8 @@ type AnotherSecurityConfigurer struct {
 func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// For Page
+	handler := errorhandling.NewRedirectWithRelativePath("/error")
+
 	ws.Route(route.WithPattern("/page/**")).
 		Condition(matcher.RequestWithHost("localhost:8080")).
 		With(basicauth.New()).
@@ -65,9 +68,22 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(passwd.New()).
 		With(access.New().
 			Request(matcher.RequestWithPattern("/**/page/public")).PermitAll().
-			Request(matcher.AnyRequest()).Authenticated(),
+			Request(matcher.AnyRequest()).HasPermissions("welcomed"),
 		).
-		With(errorhandling.New(),
-			//AuthenticationEntryPoint(errorhandling.NewRedirectWithRelativePath("/error"))
+		With(errorhandling.New().
+			AuthenticationEntryPoint(handler).
+			AccessDeniedHandler(handler),
+		)
+}
+
+type ErrorPageSecurityConfigurer struct {
+}
+
+func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
+
+	ws.Route(route.WithPattern("/error")).
+		With(session.New()).
+		With(access.New().
+			Request(matcher.AnyRequest()).PermitAll(),
 		)
 }
