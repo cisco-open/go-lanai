@@ -15,11 +15,11 @@ type routeMatcher struct {
 	delegate matcher.Matcher
 }
 
-func (m *routeMatcher) RouteMatches(_ context.Context, r *web.Route) (bool, error) {
+func (m *routeMatcher) RouteMatches(c context.Context, r *web.Route) (bool, error) {
 	if m.matchableFunc == nil {
-		return m.delegate.Matches(r)
+		return m.delegate.MatchesWithContext(c, r)
 	}
-	return m.delegate.Matches(m.matchableFunc(r))
+	return m.delegate.MatchesWithContext(c, m.matchableFunc(r))
 }
 
 func (m *routeMatcher) Matches(i interface{}) (bool, error) {
@@ -64,7 +64,7 @@ func AnyRoute() web.RouteMatcher {
 	return wrapAsRouteMatcher(matcher.Any())
 }
 
-func WithMethods(methods...string) web.RouteMatcher {
+func RouteWithMethods(methods...string) web.RouteMatcher {
 	var delegate matcher.ChainableMatcher
 	if len(methods) == 0 {
 		delegate = matcher.Any()
@@ -109,7 +109,7 @@ func RouteWithPattern(pattern string, methods...string) web.RouteMatcher {
 		matchableFunc: routeAbsPath,
 		delegate: pDelegate,
 	}
-	mMatcher := WithMethods(methods...)
+	mMatcher := RouteWithMethods(methods...)
 	return wrapAsRouteMatcher(pMatcher.And(mMatcher))
 }
 
@@ -120,7 +120,7 @@ func RouteWithPrefix(prefix string, methods...string) web.RouteMatcher {
 		matchableFunc: routeAbsPath,
 		delegate: pDelegate,
 	}
-	mMatcher := WithMethods(methods...)
+	mMatcher := RouteWithMethods(methods...)
 	return wrapAsRouteMatcher(pMatcher.And(mMatcher))
 }
 
@@ -131,7 +131,7 @@ func RouteWithRegex(regex string, methods...string) web.RouteMatcher {
 		matchableFunc: routeAbsPath,
 		delegate: pDelegate,
 	}
-	mMatcher := WithMethods(methods...)
+	mMatcher := RouteWithMethods(methods...)
 	return wrapAsRouteMatcher(pMatcher.And(mMatcher))
 }
 

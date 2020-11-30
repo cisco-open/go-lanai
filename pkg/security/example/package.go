@@ -79,8 +79,8 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		)
 }
 
-type ErrorPageSecurityConfigurer struct {
-}
+//type ErrorPageSecurityConfigurer struct {
+//}
 
 //func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
 //

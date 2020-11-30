@@ -5,7 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	web "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 )
@@ -13,7 +12,7 @@ import (
 // requestMatcher implement web.RequestMatcher
 type requestMatcher struct {
 	description   string
-	matchableFunc func(context.Context, *http.Request) interface{}
+	matchableFunc func(context.Context, *http.Request) (interface{}, error)
 	delegate      matcher.Matcher
 }
 
@@ -21,7 +20,10 @@ func (m *requestMatcher) RequestMatches(c context.Context, r *http.Request) (boo
 	if m.matchableFunc == nil {
 		return m.delegate.MatchesWithContext(c, r)
 	}
-	matchable := m.matchableFunc(c, r)
+	matchable, err := m.matchableFunc(c, r)
+	if err != nil {
+		return false, err
+	}
 	return m.delegate.MatchesWithContext(c, matchable)
 }
 
@@ -96,7 +98,8 @@ func RequestWithMethods(methods...string) web.RequestMatcher {
 	}
 }
 
-// RequestWithPattern create a web.RequestMatcher with path pattern. the context path is striped when performing matching
+// RequestWithPattern create a web.RequestMatcher with path pattern.
+// if context is available when performing the match, the context path is striped
 func RequestWithPattern(pattern string, methods...string) web.RequestMatcher {
 	pDelegate := matcher.WithPathPattern(pattern)
 	pMatcher := &requestMatcher{
@@ -108,6 +111,8 @@ func RequestWithPattern(pattern string, methods...string) web.RequestMatcher {
 	return wrapAsRequestMatcher(pMatcher.And(mMatcher))
 }
 
+// RequestWithPrefix create a web.RequestMatcher with prefix
+// if context is available when performing the match, the context path is striped
 func RequestWithPrefix(prefix string, methods...string) web.RequestMatcher {
 	pDelegate := matcher.WithPrefix(prefix, true)
 	pMatcher := &requestMatcher{
@@ -119,6 +124,8 @@ func RequestWithPrefix(prefix string, methods...string) web.RequestMatcher {
 	return wrapAsRequestMatcher(pMatcher.And(mMatcher))
 }
 
+// RequestWithPrefix create a web.RequestMatcher with regular expression
+// if context is available when performing the match, the context path is striped
 func RequestWithRegex(regex string, methods...string) web.RequestMatcher {
 	pDelegate := matcher.WithRegex(regex)
 	pMatcher := &requestMatcher{
@@ -154,23 +161,19 @@ func wrapAsRequestMatcher(m matcher.Matcher) web.RequestMatcher {
 	}
 }
 
-func host(_ context.Context, r *http.Request) interface{} {
-	return r.Host
+func host(_ context.Context, r *http.Request) (interface{}, error) {
+	return r.Host, nil
 }
 
-func method(_ context.Context, r *http.Request) interface{} {
-	return r.Method
+func method(_ context.Context, r *http.Request) (interface{}, error) {
+	return r.Method, nil
 }
 
-func path(c context.Context, r *http.Request) interface{} {
+func path(c context.Context, r *http.Request) (interface{}, error) {
 	path := r.URL.Path
-	ctx, ok := c.(*gin.Context)
+	ctxPath, ok := c.Value(web.ContextKeyContextPath).(string)
 	if !ok {
-		return path
+		return nil, fmt.Errorf("context is required to match request path")
 	}
-	ctxPath, ok := ctx.Value(web.ContextKeyContextPath).(string)
-	if ok {
-		path = strings.TrimPrefix(path, ctxPath)
-	}
-	return path
+	return strings.TrimPrefix(path, ctxPath), nil
 }
