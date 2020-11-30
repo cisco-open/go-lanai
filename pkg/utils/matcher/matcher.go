@@ -1,7 +1,10 @@
 package matcher
 
+import "context"
+
 type Matcher interface {
 	Matches(interface{}) (bool, error)
+	MatchesWithContext(context.Context, interface{}) (bool, error)
 }
 
 type ChainableMatcher interface {
@@ -44,6 +47,10 @@ func (m NoopMatcher) Matches(_ interface{}) (bool, error) {
 	return bool(m), nil
 }
 
+func (m NoopMatcher) MatchesWithContext(context.Context, interface{}) (bool, error) {
+	return bool(m), nil
+}
+
 func (m NoopMatcher) Or(matchers ...Matcher) ChainableMatcher {
 	return Or(m, matchers...)
 }
@@ -72,6 +79,15 @@ func (m OrMatcher) Matches(i interface{}) (ret bool, err error) {
 	return
 }
 
+func (m OrMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) {
+	for _,item := range m {
+		if ret,err = item.MatchesWithContext(c, i); ret || err != nil {
+			break
+		}
+	}
+	return
+}
+
 func (m OrMatcher) Or(matchers ...Matcher) ChainableMatcher {
 	return Or(m, matchers...)
 }
@@ -86,6 +102,15 @@ type AndMatcher []Matcher
 func (m AndMatcher) Matches(i interface{}) (ret bool, err error) {
 	for _,item := range m {
 		if ret,err = item.Matches(i); !ret || err != nil {
+			break
+		}
+	}
+	return
+}
+
+func (m AndMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) {
+	for _,item := range m {
+		if ret,err = item.MatchesWithContext(c, i); !ret || err != nil {
 			break
 		}
 	}
@@ -110,6 +135,11 @@ func (m *NegateMatcher) Matches(i interface{}) (ret bool, err error) {
 	return !ret, err
 }
 
+func (m NegateMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) {
+	ret, err = m.Matcher.MatchesWithContext(c, i)
+	return !ret, err
+}
+
 func (m *NegateMatcher) Or(matchers ...Matcher) ChainableMatcher {
 	return Or(m, matchers...)
 }
@@ -121,11 +151,15 @@ func (m *NegateMatcher) And(matchers ...Matcher) ChainableMatcher {
 // TODO review use cases to determine if this class is necessary
 // GenericMatcher implements ChainableMatcher
 type GenericMatcher struct {
-	matchFunc func(interface{}) (bool, error)
+	matchFunc func(context.Context, interface{}) (bool, error)
 }
 
 func (m *GenericMatcher) Matches(i interface{}) (bool, error) {
-	return m.matchFunc(i)
+	return m.matchFunc(context.TODO(), i)
+}
+
+func (m GenericMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) {
+	return m.matchFunc(c, i)
 }
 
 func (m *GenericMatcher) Or(matchers ...Matcher) ChainableMatcher {

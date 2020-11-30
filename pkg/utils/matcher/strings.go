@@ -1,6 +1,7 @@
 package matcher
 
 import (
+	"context"
 	"fmt"
 	"github.com/bmatcuk/doublestar"
 	"regexp"
@@ -10,17 +11,16 @@ import (
 // StringMatcher is a typed ChainableMatcher that accept String
 type StringMatcher interface {
 	ChainableMatcher
-	StringMatches(string) (bool, error)
 }
 
 // stringMatcher implements ChainableMatcher, StringMatcher and only accept String
 type stringMatcher struct {
 	description string
-	matchFunc func(string) (bool, error)
+	matchFunc func(context.Context, string) (bool, error)
 }
 
-func (m *stringMatcher) StringMatches(value string) (bool, error) {
-	return m.matchFunc(value)
+func (m *stringMatcher) StringMatches(c context.Context, value string) (bool, error) {
+	return m.matchFunc(c, value)
 }
 
 func (m *stringMatcher) Matches(i interface{}) (bool, error) {
@@ -28,7 +28,15 @@ func (m *stringMatcher) Matches(i interface{}) (bool, error) {
 	if !ok {
 		return false, fmt.Errorf("StringMatcher doesn't support %T", i)
 	}
-	return m.StringMatches(v)
+	return m.StringMatches(context.TODO(), v)
+}
+
+func (m *stringMatcher) MatchesWithContext(c context.Context, i interface{}) (bool, error) {
+	v, ok := i.(string)
+	if !ok {
+		return false, fmt.Errorf("StringMatcher doesn't support %T", i)
+	}
+	return m.StringMatches(c, v)
 }
 
 func (m *stringMatcher) Or(matchers ...Matcher) ChainableMatcher {
@@ -52,7 +60,7 @@ func WithString(expected string, caseInsensitive bool) StringMatcher {
 		desc = desc + ", case insensitive"
 	}
 	return &stringMatcher{
-		matchFunc: func(value string) (bool, error) {
+		matchFunc: func(_ context.Context, value string) (bool, error) {
 			return MatchString(expected, value, caseInsensitive), nil
 		},
 		description: desc,
@@ -61,7 +69,7 @@ func WithString(expected string, caseInsensitive bool) StringMatcher {
 
 func WithPathPattern(pattern string) StringMatcher {
 	return &stringMatcher{
-		matchFunc: func(value string) (bool, error) {
+		matchFunc: func(_ context.Context, value string) (bool, error) {
 			return MatchPathPattern(pattern, value)
 		},
 		description: fmt.Sprintf("matches pattern [%s]", pattern),
@@ -74,7 +82,7 @@ func WithPrefix(prefix string, caseInsensitive bool) StringMatcher {
 		desc = desc + ", case insensitive"
 	}
 	return &stringMatcher{
-		matchFunc: func(value string) (bool, error) {
+		matchFunc: func(_ context.Context, value string) (bool, error) {
 			return MatchPrefix(prefix, value, caseInsensitive)
 		},
 		description: desc,
@@ -83,7 +91,7 @@ func WithPrefix(prefix string, caseInsensitive bool) StringMatcher {
 
 func WithRegex(regex string) StringMatcher {
 	return &stringMatcher{
-		matchFunc: func(value string) (bool, error) {
+		matchFunc: func(_ context.Context, value string) (bool, error) {
 			return MatchRegex(regex, value)
 		},
 		description: fmt.Sprintf("matches regex [%s]", regex),

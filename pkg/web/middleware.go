@@ -1,15 +1,15 @@
 package web
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"context"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-type MWConditionFunc func(*http.Request) bool
+type MWConditionFunc func(context.Context, *http.Request) bool
 
 // MWConditionMatcher accepts *http.Request or http.Request
-type MWConditionMatcher matcher.RequestMatcher
+type MWConditionMatcher RequestMatcher
 
 type ConditionalMiddleware interface {
 	ConditionFunc() MWConditionFunc

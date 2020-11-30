@@ -70,17 +70,9 @@ type Route struct {
 // RouteMatcher is a typed ChainableMatcher that accept *Route or Route
 type RouteMatcher interface {
 	matcher.ChainableMatcher
-	RouteMatches(*Route) (bool, error)
 }
 
-type noopRouteMatcher struct {
-	matcher.NoopMatcher
-}
-
-func (m noopRouteMatcher) RouteMatches(r *Route) (bool, error) {
-	return m.NoopMatcher.Matches(r)
-}
-
-func AnyRoute() RouteMatcher {
-	return noopRouteMatcher{true}
+// RequestMatcher is a typed ChainableMatcher that accept *http.Request or http.Request
+type RequestMatcher interface {
+	matcher.ChainableMatcher
 }

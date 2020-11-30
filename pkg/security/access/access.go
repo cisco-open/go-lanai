@@ -3,7 +3,7 @@ package access
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"net/http"
 )
 
@@ -14,7 +14,7 @@ import (
 type DecisionMakerFunc func(context.Context, *http.Request) (handled bool, decision error)
 
 // AcrMatcher short for Access Control Request Matcher, accepts *http.Request or http.Request
-type AcrMatcher matcher.RequestMatcher
+type AcrMatcher web.RequestMatcher
 
 // ControlFunc make access control decision based on security.Authentication
 // "decision" indicate whether the access is grated
@@ -23,7 +23,7 @@ type ControlFunc func(security.Authentication) (decision bool, reason error)
 
 func MakeDecisionMakerFunc(matcher AcrMatcher, cf ControlFunc) DecisionMakerFunc {
 	return func(ctx context.Context, r *http.Request) (bool, error) {
-		matches, err := matcher.Matches(r)
+		matches, err := matcher.MatchesWithContext(ctx, r)
 		if !matches || err != nil {
 			return false, err
 		}

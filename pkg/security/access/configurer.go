@@ -2,8 +2,8 @@ package access
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
 )
 

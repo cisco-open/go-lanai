@@ -1,9 +1,10 @@
 package security
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/route"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
 	"net/http"
 )
@@ -112,7 +113,7 @@ func (ws *webSecurity) Build() []web.MiddlewareMapping {
 	for i, template := range ws.middlewareTemplates {
 		builder := (*middleware.MappingBuilder)(template)
 		if ws.routeMatcher == nil {
-			ws.routeMatcher = route.AnyRoute()
+			ws.routeMatcher = matcher.AnyRoute()
 		}
 		builder = builder.ApplyTo(ws.routeMatcher)
 
@@ -154,8 +155,8 @@ func findFeatureIndex(slice []Feature, f Feature) int {
 }
 
 func conditionFunc(matcher web.MWConditionMatcher) web.MWConditionFunc {
-	return func(req *http.Request) bool {
-		if matches, err := matcher.Matches(req); err != nil {
+	return func(ctx context.Context, req *http.Request) bool {
+		if matches, err := matcher.MatchesWithContext(ctx, req); err != nil {
 			return false
 		} else {
 			return matches

@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -66,7 +67,7 @@ func (r *Registrar) initialize() (err error) {
 
 // addGlobalMiddleware add middleware to all mapping
 func (r *Registrar) addGlobalMiddleware(name string, order int, handlerFunc gin.HandlerFunc) error {
-	mapping := NewMiddlewareMapping(name, order, AnyRoute(), handlerFunc)
+	mapping := NewMiddlewareMapping(name, order, matcher.Any(), handlerFunc)
 	return r.Register(mapping)
 }
 

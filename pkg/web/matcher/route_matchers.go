@@ -1,20 +1,21 @@
-package route
+package matcher
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	pathutils "path"
 )
 
-// routeMatcher implement RequestMatcher
+// routeMatcher implement web.RouteMatcher
 type routeMatcher struct {
 	description string
 	matchableFunc func(*web.Route) interface{}
 	delegate matcher.Matcher
 }
 
-func (m *routeMatcher) RouteMatches(r *web.Route) (bool, error) {
+func (m *routeMatcher) RouteMatches(_ context.Context, r *web.Route) (bool, error) {
 	if m.matchableFunc == nil {
 		return m.delegate.Matches(r)
 	}
@@ -22,17 +23,19 @@ func (m *routeMatcher) RouteMatches(r *web.Route) (bool, error) {
 }
 
 func (m *routeMatcher) Matches(i interface{}) (bool, error) {
-	var value *web.Route
-	switch i.(type) {
-	case web.Route:
-		r := i.(web.Route)
-		value = &r
-	case *web.Route:
-		value = i.(*web.Route)
-	default:
-		return false, fmt.Errorf("RouteMatcher doesn't support %T", i)
+	value, err := interfaceToRoute(i)
+	if err != nil {
+		return false, err
 	}
-	return m.RouteMatches(value)
+	return m.RouteMatches(context.TODO(), value)
+}
+
+func (m *routeMatcher) MatchesWithContext(c context.Context, i interface{}) (bool, error) {
+	value, err := interfaceToRoute(i)
+	if err != nil {
+		return false, err
+	}
+	return m.RouteMatches(c, value)
 }
 
 func (m *routeMatcher) Or(matchers ...matcher.Matcher) matcher.ChainableMatcher {
@@ -99,7 +102,7 @@ func WithMethods(methods...string) web.RouteMatcher {
 //    c           matches character c (c != '\\', '-', ']')
 //    '\\' c      matches character c
 //    lo '-' hi   matches character c for lo <= c <= hi
-func WithPattern(pattern string, methods...string) web.RouteMatcher {
+func RouteWithPattern(pattern string, methods...string) web.RouteMatcher {
 	pDelegate := matcher.WithPathPattern(pattern)
 	pMatcher := &routeMatcher{
 		description: fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
@@ -110,7 +113,7 @@ func WithPattern(pattern string, methods...string) web.RouteMatcher {
 	return wrapAsRouteMatcher(pMatcher.And(mMatcher))
 }
 
-func WithPrefix(prefix string, methods...string) web.RouteMatcher {
+func RouteWithPrefix(prefix string, methods...string) web.RouteMatcher {
 	pDelegate := matcher.WithPrefix(prefix, true)
 	pMatcher := &routeMatcher{
 		description: fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
@@ -121,7 +124,7 @@ func WithPrefix(prefix string, methods...string) web.RouteMatcher {
 	return wrapAsRouteMatcher(pMatcher.And(mMatcher))
 }
 
-func WithRegex(regex string, methods...string) web.RouteMatcher {
+func RouteWithRegex(regex string, methods...string) web.RouteMatcher {
 	pDelegate := matcher.WithRegex(regex)
 	pMatcher := &routeMatcher{
 		description: fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
@@ -132,7 +135,7 @@ func WithRegex(regex string, methods...string) web.RouteMatcher {
 	return wrapAsRouteMatcher(pMatcher.And(mMatcher))
 }
 
-func WithGroup(group string) web.RouteMatcher {
+func RouteWithGroup(group string) web.RouteMatcher {
 	delegate := matcher.WithString(group, false)
 	return &routeMatcher{
 		description: fmt.Sprintf("group %s", delegate.(fmt.Stringer).String()),
@@ -144,6 +147,18 @@ func WithGroup(group string) web.RouteMatcher {
 /**************************
 	helpers
 ***************************/
+func interfaceToRoute(i interface{}) (*web.Route, error) {
+	switch i.(type) {
+	case web.Route:
+		r := i.(web.Route)
+		return &r, nil
+	case *web.Route:
+		return i.(*web.Route), nil
+	default:
+		return nil, fmt.Errorf("RouteMatcher doesn't support %T", i)
+	}
+}
+
 func routeGroup(r *web.Route) interface{} {
 	return r.Group
 }
