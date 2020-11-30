@@ -9,6 +9,17 @@ import (
 	"net/http"
 )
 
+const (
+	ModelKeyError          = "error"
+	ModelKeyErrorCode      = "errorCode"
+	ModelKeyStatusCode     = "statusCode"
+	ModelKeyStatusText     = "statusText"
+	ModelKeyMessage        = "message"
+	ModelKeySession        = "session"
+	ModelKeyRequestContext = "rc"
+	ModelKeySecurity 	   = "security"
+)
+
 type Model gin.H
 
 type ModelView struct {
@@ -42,7 +53,7 @@ func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, res
 		return errors.New("unable to use template: response is not *template.ModelView")
 	}
 
-	// TODO merge model with global overrides
+	addGlobalModelData(ctx, mv.Model)
 	ctx.HTML(status, mv.View, mv.Model)
 	return nil
 }
@@ -50,7 +61,8 @@ func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, res
 /*****************************
 	JSON Error Encoder
 ******************************/
-func templateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
+//goland:noinspection GoNameStartsWithPackageName
+func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 	ctx, ok := c.(*gin.Context)
 	if !ok {
 		httptransport.DefaultErrorEncoder(c, err, w)
@@ -62,12 +74,21 @@ func templateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 		code = sc.StatusCode()
 	}
 
-	// TODO merge model with global overrides
-	ctx.HTML(code, "error.tmpl", gin.H{
-		"error": err,
-		"StatusCode": code,
-		"StatusText": http.StatusText(code),
-	})
+	model := Model{
+		ModelKeyError: err,
+		ModelKeyMessage: err.Error(),
+		ModelKeyStatusCode: code,
+		ModelKeyStatusText: http.StatusText(code),
+	}
+
+	addGlobalModelData(ctx, model)
+	ctx.HTML(code, web.ErrorTemplate, model)
+}
+
+func addGlobalModelData(ctx *gin.Context, model Model) {
+	model[ModelKeyRequestContext] = MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath)
+	model[ModelKeySession] = ctx.Value(web.ContextKeySession)
+	model[ModelKeySecurity] = ctx.Value(web.ContextKeySecurity)
 }
 
 

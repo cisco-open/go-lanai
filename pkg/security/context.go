@@ -3,6 +3,7 @@ package security
 import (
 	"context"
 	"encoding/gob"
+	"errors"
 )
 
 const (
@@ -39,6 +40,9 @@ func (EmptyAuthentication) Permissions() []string {
 
 func GobRegister() {
 	gob.Register(EmptyAuthentication(""))
+	gob.Register((*AnonymousAuthentication)(nil))
+	gob.Register((*codedError)(nil))
+	gob.Register(errors.New(""))
 }
 
 func Get(ctx context.Context) Authentication {

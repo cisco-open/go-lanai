@@ -1,14 +1,23 @@
 package security
 
-import "errors"
+import (
+	"bytes"
+	"encoding/binary"
+	"errors"
+)
 
 
 const (
-	Reserved        		= 11 << 24
+	// security reserved
+	ReservedOffset			= 24
+	Reserved        		= 11 << ReservedOffset
+	ReservedMask			= ^int(0) << ReservedOffset
 
+	// error type bits
 	errorTypeOffset         = 16
 	errorTypeMask           = ^int(0) << errorTypeOffset
 
+	// error sub type bits
 	errorSubTypeOffset      = 10
 	errorSubTypeMask        = ^int(0) << errorSubTypeOffset
 
@@ -29,7 +38,7 @@ const (
 	ErrorSubTypeCodeUsernamePasswordAuth
 )
 
-// ErrorSubTypeAuthInternal
+// ErrorSubTypeCodeInternal
 const (
 	_ = iota
 	ErrorCodeAuthenticatorNotAvailable = ErrorSubTypeCodeInternal + iota
@@ -42,13 +51,25 @@ const (
 	ErrorCodeBadCredentials
 )
 
+// All "SubType" values are used as mask
+// sub types of ErrorTypeCodeAccessControl
+const (
+	_ = iota
+	ErrorSubTypeCodeAccessDenied = ErrorTypeCodeAccessControl + iota << errorSubTypeOffset
+	ErrorSubTypeCodeInsufficientAuth
+)
+
 // ErrorTypes, can be used in errors.Is
 var (
+	ErrorTypeSecurity				 = newCodedError(Reserved, errors.New("error type: security"), ReservedMask)
 	ErrorTypeAuthentication          = newErrorType(ErrorTypeCodeAuthentication, errors.New("error type: authentication"))
 	ErrorTypeAccessControl           = newErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
 
 	ErrorSubTypeInternalError        = newErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeUsernamePasswordAuth = newErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))
+
+	ErrorSubTypeAccessDenied         = newErrorSubType(ErrorSubTypeCodeAccessDenied, errors.New("error sub-type: access denied"))
+	ErrorSubTypeInsufficientAuth     = newErrorSubType(ErrorSubTypeCodeInsufficientAuth, errors.New("error sub-type: insufficient auth"))
 )
 
 type ErrorCoder interface {
@@ -86,6 +107,41 @@ func (e *codedError) Is(target error) bool {
 	return  ok && compare == coder.Code()
 }
 
+// encoding.BinaryMarshaler interface
+// code, mask, error.Error() are written into byte array in the mentioned order
+// code and mask are written as 64 bits with binary.BigEndian
+func (e *codedError) MarshalBinary() (data []byte, err error) {
+	errString := e.Error()
+
+	buffer := bytes.NewBuffer([]byte{})
+	err = binary.Write(buffer, binary.BigEndian, int64(e.code))
+	err = binary.Write(buffer, binary.BigEndian, int64(e.mask))
+	_, err = buffer.Write([]byte(errString))
+
+	if err == nil {
+		data = buffer.Bytes()
+	}
+	return
+}
+
+// encoding.BinaryUnmarshaler interface
+func (e *codedError) UnmarshalBinary(data []byte) (err error) {
+	buffer := bytes.NewBuffer(data)
+	var code, mask int64
+	err = binary.Read(buffer, binary.BigEndian, &code)
+	err = binary.Read(buffer, binary.BigEndian, &mask)
+	errString := buffer.String()
+	if err != nil {
+		return err
+	}
+
+	e.code = int(code)
+	e.mask = int(mask)
+	e.error = errors.New(errString)
+	return
+}
+
+
 /************************
 	Constructors
 *************************/
@@ -93,7 +149,7 @@ func newCodedError(code int, e error, mask int) error {
 	return &codedError{
 		code: code,
 		error: e,
-		mask: mask,
+		mask:   mask,
 	}
 }
 
@@ -105,29 +161,38 @@ func newErrorSubType(code int, e error) error {
 	return newCodedError(code, e, errorSubTypeMask)
 }
 
-func NewAuthenticationError(text string) error {
-	return newCodedError(ErrorTypeCodeAuthentication, errors.New(text), errorTypeMask)
+// NewCodedError creates concrete error. it cannot be used as ErrorType or ErrorSubType comparison
+func NewCodedError(code int, e error) error {
+	return newCodedError(code, e, defaultErrorCodeMask)
 }
 
-func NewAccessControlError(text string) error {
-	return newCodedError(ErrorTypeCodeAccessControl, errors.New(text), errorTypeMask)
+/* AuthenticationError family */
+
+func NewAuthenticationError(text string) error {
+	return NewCodedError(ErrorTypeCodeAuthentication, errors.New(text))
 }
 
 func NewAuthenticatorNotAvailableError(text string) error {
-	return newCodedError(ErrorCodeAuthenticatorNotAvailable, errors.New(text), defaultErrorCodeMask)
+	return NewCodedError(ErrorCodeAuthenticatorNotAvailable, errors.New(text))
 }
 
 func NewUsernameNotFoundError(text string) error {
-	return &codedError{
-		code: ErrorCodeUsernameNotFound,
-		error: errors.New(text),
-	}
+	return NewCodedError(ErrorCodeUsernameNotFound, errors.New(text))
 }
 
 func NewBadCredentialsError(text string) error {
-	return &codedError{
-		code: ErrorCodeBadCredentials,
-		error: errors.New(text),
-	}
+	return NewCodedError(ErrorCodeBadCredentials, errors.New(text))
 }
 
+/* AccessControlError family */
+func NewAccessControlError(text string) error {
+	return NewCodedError(ErrorTypeCodeAccessControl, errors.New(text))
+}
+
+func NewAccessDeniedError(text string) error {
+	return NewCodedError(ErrorSubTypeCodeAccessDenied, errors.New(text))
+}
+
+func NewInsufficientAuthError(text string) error {
+	return NewCodedError(ErrorSubTypeCodeInsufficientAuth, errors.New(text))
+}

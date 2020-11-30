@@ -3,7 +3,7 @@ package security
 type Account interface {
 	Username() string
 	Password() string
-
+	Permissions() []string
 }
 
 type AccountStore interface {

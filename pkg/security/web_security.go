@@ -1,9 +1,10 @@
 package security
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
 	"net/http"
 )
@@ -16,6 +17,7 @@ type webSecurity struct {
 	conditionMatcher    web.MWConditionMatcher
 	middlewareTemplates []MiddlewareTemplate
 	features            []Feature
+	applied				map[FeatureIdentifier]struct{}
 	shared 				map[string]interface{}
 	authenticator 		Authenticator
 }
@@ -24,6 +26,7 @@ func newWebSecurity(authenticator Authenticator) *webSecurity {
 	return &webSecurity{
 		middlewareTemplates: []MiddlewareTemplate{},
 		features: []Feature{},
+		applied: map[FeatureIdentifier]struct{}{},
 		shared: map[string]interface{}{},
 		authenticator: authenticator,
 	}
@@ -45,8 +48,9 @@ func (ws *webSecurity) Condition(mwcm web.MWConditionMatcher) WebSecurity {
 }
 
 func (ws *webSecurity) With(f Feature) WebSecurity {
-	if err := ws.Enable(f); err != nil {
-		panic(err)
+	existing := ws.Enable(f)
+	if existing != f {
+		panic(fmt.Errorf("cannot re-enable feature [%v] using With()", f.Identifier()))
 	}
 	return ws
 }
@@ -80,13 +84,17 @@ func (ws *webSecurity) Authenticator() Authenticator {
 }
 
 /* FeatureModifier interface */
-func (ws *webSecurity) Enable(f Feature) error {
+func (ws *webSecurity) Enable(f Feature) Feature {
+	if _,exists := ws.applied[f.Identifier()]; exists {
+		panic(fmt.Errorf("attempt to configure security feature [%v] after it has been applied", f.Identifier()))
+	}
+
 	if i := findFeatureIndex(ws.features, f); i >= 0 {
 		// already have this feature
-		return fmt.Errorf("cannot re-enable security feature %T", f)
+		return ws.features[i]
 	}
 	ws.features = append(ws.features, f)
-	return nil
+	return f
 }
 
 func (ws *webSecurity) Disable(f Feature) {
@@ -105,7 +113,7 @@ func (ws *webSecurity) Build() []web.MiddlewareMapping {
 	for i, template := range ws.middlewareTemplates {
 		builder := (*middleware.MappingBuilder)(template)
 		if ws.routeMatcher == nil {
-			ws.routeMatcher = matcher.Any()
+			ws.routeMatcher = matcher.AnyRoute()
 		}
 		builder = builder.ApplyTo(ws.routeMatcher)
 
@@ -147,8 +155,8 @@ func findFeatureIndex(slice []Feature, f Feature) int {
 }
 
 func conditionFunc(matcher web.MWConditionMatcher) web.MWConditionFunc {
-	return func(req *http.Request) bool {
-		if matches, err := matcher.Matches(req); err != nil {
+	return func(ctx context.Context, req *http.Request) bool {
+		if matches, err := matcher.MatchesWithContext(ctx, req); err != nil {
 			return false
 		} else {
 			return matches

@@ -1,4 +1,4 @@
-package basicauth
+package errorhandling
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -7,7 +7,7 @@ import (
 )
 
 //goland:noinspection GoNameStartsWithPackageName
-var BasicAuthModule = &bootstrap.Module{
+var ErrorHandlingModule = &bootstrap.Module{
 	Name: "basic auth",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
@@ -16,10 +16,10 @@ var BasicAuthModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(BasicAuthModule)
+	bootstrap.Register(ErrorHandlingModule)
 }
 
 func register(init security.Registrar) {
-	configurer := newBasicAuthConfigurer()
+	configurer := newErrorHandlingConfigurer()
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

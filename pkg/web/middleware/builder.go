@@ -91,7 +91,7 @@ func makeConditionalHandlerFunc(handlerFunc gin.HandlerFunc, conditionFunc web.M
 	}
 	
 	return func(c *gin.Context) {
-		if conditionFunc(c.Request) {
+		if conditionFunc(c, c.Request) {
 			handlerFunc(c)
 		}
 	}

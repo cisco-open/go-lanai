@@ -46,7 +46,7 @@ func jsonEncodeResponseFunc(_ context.Context, w http.ResponseWriter, response i
 	if entity, ok := response.(web.BodyContainer); ok {
 		response = entity.Body()
 		// For Debug
-		//return web.NewHttpError(405, errors.New(fmt.Sprintf("Cannot serialize response %T", entity.Body())) )
+		//return web.NewHttpError(405, error.New(fmt.Sprintf("Cannot serialize response %T", entity.Body())) )
 	}
 	return json.NewEncoder(w).Encode(response)
 }
@@ -66,7 +66,7 @@ func overwriteHeaders(w http.ResponseWriter, h httptransport.Headerer) {
 /*****************************
 	JSON Error Encoder
 ******************************/
-func jsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
+func JsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 	if _,ok := err.(json.Marshaler); !ok {
 		err = web.ToHttpError(err)
 	}

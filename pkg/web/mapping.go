@@ -67,6 +67,12 @@ type Route struct {
 	Group string
 }
 
-// RouteMatcher accepts *Route or Route
-type RouteMatcher matcher.ChainableMatcher
+// RouteMatcher is a typed ChainableMatcher that accept *Route or Route
+type RouteMatcher interface {
+	matcher.ChainableMatcher
+}
 
+// RequestMatcher is a typed ChainableMatcher that accept *http.Request or http.Request
+type RequestMatcher interface {
+	matcher.ChainableMatcher
+}

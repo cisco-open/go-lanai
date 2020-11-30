@@ -1,16 +1,17 @@
 package basicauth
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"encoding/base64"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
+//goland:noinspection GoNameStartsWithPackageName
 type BasicAuthMiddleware struct {
 	authenticator security.Authenticator
 }
@@ -30,16 +31,21 @@ func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 		}
 
 		header := ctx.GetHeader("Authorization")
+		if header == "" {
+			// Authorization header not available, bail
+			basic.handleSuccess(ctx, nil)
+			return
+		}
 		encoded := strings.TrimLeft(header, "Basic ")
 		decoded, err := base64.StdEncoding.DecodeString(encoded)
 		if err != nil {
-			basic.handleError(ctx, err)
+			basic.handleError(ctx, security.NewBadCredentialsError("invalid Authorization header"))
 			return
 		}
 
 		pair := strings.SplitN(string(decoded), ":", 2)
 		if len(pair) < 2 {
-			basic.handleError(ctx, fmt.Errorf("invalid Authorization header"))
+			basic.handleError(ctx, security.NewBadCredentialsError("invalid Authorization header"))
 			return
 		}
 
@@ -70,7 +76,22 @@ func (basic *BasicAuthMiddleware) handleSuccess(c *gin.Context, new security.Aut
 }
 
 func (basic *BasicAuthMiddleware) handleError(c *gin.Context, err error) {
+	_ = c.Error(err)
+	c.Abort()
+}
+
+//goland:noinspection GoNameStartsWithPackageName
+type BasicAuthEntryPoint struct {
+
+}
+
+func NewBasicAuthEntryPoint() *BasicAuthEntryPoint {
+	return &BasicAuthEntryPoint{}
+}
+
+func (h *BasicAuthEntryPoint) Commence(_ context.Context, _ *http.Request, w http.ResponseWriter, e error) {
 	realm := "Basic realm=" + strconv.Quote("Authorization Required")
-	c.Header("WWW-Authenticate", realm)
-	_ = c.AbortWithError(http.StatusUnauthorized, err)
+	w.Header().Set("WWW-Authenticate", realm)
+	w.WriteHeader(http.StatusUnauthorized)
+	_,_ = w.Write([]byte(e.Error()))
 }

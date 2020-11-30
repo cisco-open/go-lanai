@@ -12,10 +12,8 @@ import (
 	"time"
 )
 
-const (
-	MWOrderSessionHandling = security.HighestMiddlewareOrder + 100
-	MWOrderAuthPersistence = MWOrderSessionHandling + 10
-	SessionFeatureId       = "RequestSession"
+var (
+	FeatureId = security.SimpleFeatureId("Session")
 )
 
 // We currently don't have any stuff to configure
@@ -24,15 +22,14 @@ type SessionFeature struct {
 }
 
 func (f *SessionFeature) Identifier() security.FeatureIdentifier {
-	return SessionFeatureId
+	return FeatureId
 }
 
 // Standard security.Feature entrypoint
 func Configure(ws security.WebSecurity) *SessionFeature {
 	feature := &SessionFeature{}
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		_ = fc.Enable(feature) // we ignore error here
-		return feature
+		return fc.Enable(feature).(*SessionFeature)
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
@@ -93,15 +90,15 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 	manager := NewManager(sessionStore)
 
 	sessionHandler := middleware.NewBuilder("sessionMiddleware").
-		Order(MWOrderSessionHandling).
+		Order(security.MWOrderSessionHandling).
 		Use(manager.SessionHandlerFunc())
 
 	authPersist := middleware.NewBuilder("sessionMiddleware").
-		Order(MWOrderAuthPersistence).
+		Order(security.MWOrderAuthPersistence).
 		Use(manager.AuthenticationPersistenceHandlerFunc())
 
 	test := middleware.NewBuilder("post-sessionMiddleware").
-		Order(MWOrderAuthPersistence + 10).
+		Order(security.MWOrderAuthPersistence + 10).
 		Use(SessionDebugHandlerFunc())
 
 	ws.Add(sessionHandler, authPersist, test)

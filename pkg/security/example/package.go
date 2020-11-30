@@ -3,11 +3,12 @@ package example
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	session2 "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/route"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"go.uber.org/fx"
 )
 
@@ -26,6 +27,7 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 	})
 
 	init.Register(&AnotherSecurityConfigurer { })
+	//init.Register(&ErrorPageSecurityConfigurer{})
 }
 
 type TestSecurityConfigurer struct {
@@ -35,13 +37,18 @@ type TestSecurityConfigurer struct {
 func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// DSL style example
-	ws.Route(route.WithPattern("/api/**")).
-		Condition(utils.WithDomain("localhost:8080")).
+	// for REST API
+	ws.Route(matcher.RouteWithPattern("/api/**")).
+		Condition(matcher.RequestWithHost("localhost:8080")).
 		With(passwd.New().
 			AccountStore(c.accountStore).
 			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
 		).
-		With(basicauth.New())
+		With(access.New().
+			Request(matcher.AnyRequest()).Authenticated(),
+		).
+		With(basicauth.New()).
+		With(errorhandling.New())
 }
 
 
@@ -50,11 +57,36 @@ type AnotherSecurityConfigurer struct {
 
 func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
-	// non-DSL style example
-	ws.Route(route.WithPattern("/page/**")).
-		Condition(utils.WithDomain("localhost:8080"))
+	// For Page
+	handler := errorhandling.NewRedirectWithRelativePath("/error")
 
-	session2.Configure(ws)
-	basicauth.Configure(ws)
-	passwd.Configure(ws)
+	ws.Route(matcher.RouteWithPattern("/page/**").Or(matcher.RouteWithPattern("/error"))).
+		Condition(matcher.RequestWithHost("localhost:8080")).
+		With(basicauth.New()).
+		With(session.New()).
+		With(passwd.New()).
+		With(access.New().
+			Request(
+				matcher.RequestWithPattern("/page/public").
+					Or(matcher.RequestWithPattern("/page/public/**")).
+					Or(matcher.RequestWithPattern("/error")),
+			).PermitAll().
+			Request(matcher.AnyRequest()).HasPermissions("welcomed"),
+		).
+		With(errorhandling.New().
+			AuthenticationEntryPoint(handler).
+			AccessDeniedHandler(handler),
+		)
 }
+
+//type ErrorPageSecurityConfigurer struct {
+//}
+
+//func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
+//
+//	ws.Route(matcher.RouteWithPattern("/error")).
+//		With(session.New()).
+//		With(access.New().
+//			Request(matcher.AnyRequest()).PermitAll(),
+//		)
+//}

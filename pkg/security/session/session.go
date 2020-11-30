@@ -147,6 +147,15 @@ func (s *Session) Flashes(flashKey ...string) []interface{} {
 	return flashes
 }
 
+// Flash get the last flash message of given key. It internally uses Flashes
+func (s *Session) Flash(key string) (ret interface{}) {
+	values := s.Flashes(key)
+	if len(values) > 0 {
+		ret = values[len(values) - 1]
+	}
+	return
+}
+
 // AddFlash adds a flash message to the session.
 //
 // A single variadic argument is accepted, and it is optional: it defines

@@ -1,4 +1,4 @@
-package basicauth
+package access
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -7,19 +7,19 @@ import (
 )
 
 //goland:noinspection GoNameStartsWithPackageName
-var BasicAuthModule = &bootstrap.Module{
-	Name: "basic auth",
-	Precedence: security.MinSecurityPrecedence + 20,
+var AccessControlModule = &bootstrap.Module{
+	Name: "access control",
+	Precedence: security.MinSecurityPrecedence + 30,
 	Options: []fx.Option{
 		fx.Invoke(register),
 	},
 }
 
 func init() {
-	bootstrap.Register(BasicAuthModule)
+	bootstrap.Register(AccessControlModule)
 }
 
 func register(init security.Registrar) {
-	configurer := newBasicAuthConfigurer()
+	configurer := newAccessControlConfigurer()
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }
