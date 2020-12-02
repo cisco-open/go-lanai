@@ -1,11 +1,16 @@
 package security
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
+	"net/http"
 	"sort"
 )
 
+/*****************************
+	Abstraction
+ *****************************/
 type Candidate interface {
 	Principal() interface{}
 	Credentials() interface{}
@@ -19,6 +24,15 @@ type Authenticator interface {
 	Authenticate(Candidate) (Authentication, error)
 }
 
+// AuthenticationSuccessHandler handles authentication success event
+// The counterpart of this interface is AuthenticationErrorHandler
+type AuthenticationSuccessHandler interface {
+	HandleAuthenticationSuccess(context.Context, *http.Request, http.ResponseWriter, Authentication)
+}
+
+/*****************************
+	Common Impl.
+ *****************************/
 type CompositeAuthenticator struct {
 	authenticators []Authenticator
 }

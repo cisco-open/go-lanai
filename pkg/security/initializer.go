@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
+	"go.uber.org/fx"
 	"reflect"
 	"sort"
 	"sync"
@@ -57,7 +58,7 @@ func (init *initializer) validateState(action string) error {
 	}
 }
 
-func (init *initializer) Initialize(registrar *web.Registrar) error {
+func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) error {
 	initializeMutex.Lock()
 	defer initializeMutex.Unlock()
 
@@ -78,15 +79,30 @@ func (init *initializer) Initialize(registrar *web.Registrar) error {
 		if err != nil {
 			return err
 		}
+
 		mappings := builder.Build()
+		var nonMwMappings []interface{}
+
+		// register web.MiddlewareMapping
 		for _,mapping := range mappings {
-			if err := registrar.Register(mapping); err != nil {
-				return err
+			switch mapping.(type) {
+			case web.MiddlewareMapping:
+				mw := mapping.(web.MiddlewareMapping)
+				if err := registrar.Register(mw); err != nil {
+					return err
+				}
+				// TODO logger
+				fmt.Printf("registered security middleware [%d][%s] %v -> %v \n",
+					mw.Order(), mw.Name(), mw.Matcher(), reflect.ValueOf(mw.HandlerFunc()).String())
+			default:
+				// TODO logger
+				fmt.Printf("will register security endpoints [%s]: %v\n", mapping.Name(), mapping)
+				nonMwMappings = append(nonMwMappings, mapping)
 			}
-			// TODO logger
-			fmt.Printf("registered security middleware [%d][%s] %v -> %v \n",
-				mapping.Order(), mapping.Name(), mapping.Matcher(), reflect.ValueOf(mapping.HandlerFunc()).String())
 		}
+
+		// register other mappings, need to be done in lifecycle
+		registrar.RegisterWithLifecycle(lc, nonMwMappings...)
 	}
 
 	init.initialized = true
@@ -94,7 +110,7 @@ func (init *initializer) Initialize(registrar *web.Registrar) error {
 	return nil
 }
 
-func (init *initializer) build(configurer Configurer) (WebSecurityMiddlewareBuilder, error) {
+func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, error) {
 	// collect security configs
 	ws := newWebSecurity(NewAuthenticator())
 	configurer.Configure(ws)

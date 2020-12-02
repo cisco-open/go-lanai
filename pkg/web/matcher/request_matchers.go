@@ -156,7 +156,12 @@ func interfaceToRequest(i interface{}) (*http.Request, error) {
 }
 
 func wrapAsRequestMatcher(m matcher.Matcher) web.RequestMatcher {
+	var desc string
+	if stringer, ok := m.(fmt.Stringer); ok {
+		desc = stringer.String()
+	}
 	return &requestMatcher{
+		description: desc,
 		delegate: m,
 	}
 }

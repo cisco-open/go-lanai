@@ -8,8 +8,19 @@ import (
 //goland:noinspection GoNameStartsWithPackageName
 type AccessControl struct {
 	owner *AccessControlFeature
+	order int
 	matcher AcrMatcher
 	control ControlFunc
+}
+
+// order.Ordered
+func (ac *AccessControl) Order() int {
+	return ac.order
+}
+
+func (ac *AccessControl) WithOrder(order int) *AccessControl {
+	ac.order = order
+	return ac
 }
 
 func (ac *AccessControl) PermitAll() *AccessControlFeature {

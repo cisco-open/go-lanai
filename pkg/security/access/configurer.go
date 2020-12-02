@@ -2,13 +2,15 @@ package access
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
+	"sort"
 )
 
 var (
-	FeatureId = security.SimpleFeatureId("AC")
+	FeatureId = security.FeatureId("AC", security.FeatureOrderAccess)
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -30,6 +32,9 @@ func (acc *AccessControlConfigurer) Apply(feature security.Feature, ws security.
 
 	// construct decision maker functions
 	decisionMakers := make([]DecisionMakerFunc, len(f.acl))
+	sort.SliceStable(f.acl, func(i, j int) bool {
+		return order.OrderedFirstCompare(f.acl[i], f.acl[j])
+	})
 	for i,ac := range f.acl {
 		decisionMakers[i] = MakeDecisionMakerFunc(ac.matcher, ac.control)
 	}

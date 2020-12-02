@@ -2,6 +2,7 @@ package errorhandling
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
@@ -17,12 +18,12 @@ func ErrorWithStatus(ctx context.Context, _ web.EmptyRequest) (int, *template.Mo
 		return http.StatusInternalServerError, nil, err
 	}
 
-	code, codeOk := s.Flash(FlashKeyPreviousStatusCode).(int)
+	code, codeOk := s.Flash(redirect.FlashKeyPreviousStatusCode).(int)
 	if !codeOk {
 		code = 500
 	}
 
-	err, errOk := s.Flash(FlashKeyPreviousError).(error)
+	err, errOk := s.Flash(redirect.FlashKeyPreviousError).(error)
 	if !errOk {
 		err = errors.New("unknown error")
 	}

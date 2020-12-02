@@ -20,6 +20,8 @@ const (
 	MWOrderErrorHandling
 	MWOrderAuthPersistence
 	MWOrderBasicAuth
+	MWOrderFormLogout
+	MWOrderFormAuth
 	// ... TODO more MW goes here
 	MWOrderAccessControl = LowestMiddlewareOrder - 200
 )
@@ -29,6 +31,8 @@ const (
 	_ = iota
 	FeatureOrderAuthenticator = iota * 100
 	FeatureOrderBasicAuth
+	FeatureOrderFormLogin
+	FeatureOrderAccess
 	// ... TODO more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200
 )

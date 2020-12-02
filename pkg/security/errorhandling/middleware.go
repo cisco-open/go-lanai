@@ -3,7 +3,6 @@ package errorhandling
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,10 +52,8 @@ func (eh *ErrorHandlingMiddleware) tryHandleErrors(c *gin.Context) {
 }
 
 func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
-	fmt.Printf("security error: %s", err.Error())
+	// we assume eh.authErrorHandler and eh.accessDeniedHandler is always not nil (guaranteed by ErrorHandlingConfigurer)
 	switch {
-	case eh.entryPoint != nil && errors.Is(err, security.ErrorTypeAuthentication):
-		fallthrough
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorSubTypeInsufficientAuth):
 		eh.entryPoint.Commence(c, c.Request, c.Writer, err)
 	case errors.Is(err, security.ErrorTypeAuthentication):

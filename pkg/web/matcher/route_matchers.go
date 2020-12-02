@@ -176,7 +176,12 @@ func routeAbsPath(r *web.Route) interface{} {
 }
 
 func wrapAsRouteMatcher(m matcher.Matcher) web.RouteMatcher {
+	var desc string
+	if stringer, ok := m.(fmt.Stringer); ok {
+		desc = stringer.String()
+	}
 	return &routeMatcher{
+		description: desc,
 		delegate: m,
 	}
 }

@@ -6,7 +6,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"go.uber.org/fx"
@@ -58,20 +60,21 @@ type AnotherSecurityConfigurer struct {
 func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// For Page
-	handler := errorhandling.NewRedirectWithRelativePath("/error")
+	handler := redirect.NewRedirectWithRelativePath("/error")
 
-	ws.Route(matcher.RouteWithPattern("/page/**").Or(matcher.RouteWithPattern("/error"))).
+	ws.Route(matcher.RouteWithPattern("/page/**")).
 		Condition(matcher.RequestWithHost("localhost:8080")).
-		With(basicauth.New()).
 		With(session.New()).
 		With(passwd.New()).
 		With(access.New().
 			Request(
 				matcher.RequestWithPattern("/page/public").
-					Or(matcher.RequestWithPattern("/page/public/**")).
-					Or(matcher.RequestWithPattern("/error")),
+					Or(matcher.RequestWithPattern("/page/public/**")),
 			).PermitAll().
-			Request(matcher.AnyRequest()).HasPermissions("welcomed"),
+			Request(matcher.AnyRequest()).Authenticated(),
+		).
+		With(formlogin.New().
+			LoginSuccessUrl("/page/hello"),
 		).
 		With(errorhandling.New().
 			AuthenticationEntryPoint(handler).
@@ -79,14 +82,14 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		)
 }
 
-//type ErrorPageSecurityConfigurer struct {
-//}
+type ErrorPageSecurityConfigurer struct {
+}
 
-//func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
-//
-//	ws.Route(matcher.RouteWithPattern("/error")).
-//		With(session.New()).
-//		With(access.New().
-//			Request(matcher.AnyRequest()).PermitAll(),
-//		)
-//}
+func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
+
+	ws.Route(matcher.RouteWithPattern("/error")).
+		With(session.New()).
+		With(access.New().
+			Request(matcher.AnyRequest()).PermitAll(),
+		)
+}

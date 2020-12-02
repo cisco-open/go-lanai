@@ -24,6 +24,14 @@ type Mapping interface {
 	Name() string
 }
 
+// GenericMapping
+type GenericMapping interface {
+	Mapping
+	Path() string
+	Method() string
+	HandlerFunc() gin.HandlerFunc
+}
+
 // StaticMapping defines static assets mapping. e.g. javascripts, css, images, etc
 type StaticMapping interface {
 	Mapping
@@ -76,3 +84,37 @@ type RouteMatcher interface {
 type RequestMatcher interface {
 	matcher.ChainableMatcher
 }
+
+// GenericMapping
+type genericMapping struct {
+	name string
+	path string
+	method string
+	handlerFunc gin.HandlerFunc
+}
+
+func (g genericMapping) HandlerFunc() gin.HandlerFunc {
+	return g.handlerFunc
+}
+
+func (g genericMapping) Method() string {
+	return g.method
+}
+
+func (g genericMapping) Path() string {
+	return g.path
+}
+
+func (g genericMapping) Name() string {
+	return g.name
+}
+
+func NewGenericMapping(name, path, method string, handlerFunc gin.HandlerFunc) GenericMapping {
+	return &genericMapping{
+		name: name,
+		path: path,
+		method: method,
+		handlerFunc: handlerFunc,
+	}
+}
+

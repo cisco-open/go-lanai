@@ -125,6 +125,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 		err = r.registerStaticMapping(i.(StaticMapping))
 	case MiddlewareMapping:
 		err = r.registerMiddlewareMapping(i.(MiddlewareMapping))
+	case GenericMapping:
+		err = r.registerGenericMapping(i.(GenericMapping))
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -183,20 +185,32 @@ func (r *Registrar) registerMvcMapping(m MvcMapping) error {
 
 	handlerFunc := MakeGinHandlerFunc(s)
 	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), m.Method())
-	r.router.Group(DefaultGroup).Use(middlewares...).Handle(m.Method(), m.Path(), handlerFunc)
+	r.router.Group(DefaultGroup).
+		Use(middlewares...).
+		Handle(m.Method(), m.Path(), handlerFunc)
 	return err
 }
 
 func (r *Registrar) registerStaticMapping(m StaticMapping) error {
 	// TODO handle suffix rewrite, e.g. /path/to/swagger -> /path/to/swagger.html
 	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), http.MethodGet, http.MethodHead)
-	r.router.Group(DefaultGroup).Use(middlewares...).Static(m.Path(), m.StaticRoot())
+	r.router.Group(DefaultGroup).
+		Use(middlewares...).
+		Static(m.Path(), m.StaticRoot())
 	return err
 }
 
 func (r *Registrar) registerMiddlewareMapping(m MiddlewareMapping) error {
 	r.middlewares = append(r.middlewares, m)
 	return nil
+}
+
+func (r *Registrar) registerGenericMapping(m GenericMapping) error {
+	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), m.Method())
+	r.router.Group(DefaultGroup).
+		Use(middlewares...).
+		Handle(m.Method(), m.Path(), m.HandlerFunc())
+	return err
 }
 
 func (r *Registrar) findMiddlewares(group, relativePath string, methods...string) (gin.HandlersChain, error) {

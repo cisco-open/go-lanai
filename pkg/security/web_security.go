@@ -5,6 +5,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 	"fmt"
 	"net/http"
 )
@@ -38,12 +40,20 @@ func (ws *webSecurity) Features() []Feature {
 }
 
 func (ws *webSecurity) Route(rm web.RouteMatcher) WebSecurity {
-	ws.routeMatcher = rm
+	if ws.routeMatcher != nil {
+		ws.routeMatcher = ws.routeMatcher.Or(rm)
+	} else {
+		ws.routeMatcher = rm
+	}
 	return ws
 }
 
 func (ws *webSecurity) Condition(mwcm web.MWConditionMatcher) WebSecurity {
-	ws.conditionMatcher = mwcm
+	if ws.conditionMatcher != nil {
+		ws.conditionMatcher = ws.conditionMatcher.Or(mwcm)
+	} else {
+		ws.conditionMatcher = mwcm
+	}
 	return ws
 }
 
@@ -106,12 +116,12 @@ func (ws *webSecurity) Disable(f Feature) {
 	}
 }
 
-/* WebSecurityMiddlewareBuilder interface */
-func (ws *webSecurity) Build() []web.MiddlewareMapping {
-	mappings := make([]web.MiddlewareMapping, len(ws.middlewareTemplates))
+/* WebSecurityMappingBuilder interface */
+func (ws *webSecurity) Build() []web.Mapping {
+	mappings := make([]web.Mapping, len(ws.middlewareTemplates))
 
-	for i, template := range ws.middlewareTemplates {
-		builder := (*middleware.MappingBuilder)(template)
+	for i, tmpl := range ws.middlewareTemplates {
+		builder := (*middleware.MappingBuilder)(tmpl)
 		if ws.routeMatcher == nil {
 			ws.routeMatcher = matcher.AnyRoute()
 		}
@@ -123,7 +133,9 @@ func (ws *webSecurity) Build() []web.MiddlewareMapping {
 
 		mappings[i] = builder.Build()
 	}
-	return mappings
+
+	additional := ws.findAdditionalMappings()
+	return append(mappings, additional...)
 }
 
 // Other interfaces
@@ -133,6 +145,24 @@ func (ws *webSecurity) String() string {
 }
 
 // unexported
+// findAdditionalMappings go through shared objects and collect all web.Mapping type
+func (ws *webSecurity) findAdditionalMappings() []web.Mapping {
+	var additional []web.Mapping
+	for _, v := range ws.shared {
+		switch v.(type) {
+		case web.Mapping:
+			additional = append(additional, v.(web.Mapping))
+		case *template.MappingBuilder:
+			additional = append(additional, v.(*template.MappingBuilder).Build())
+		case *rest.MappingBuilder:
+			additional = append(additional, v.(*rest.MappingBuilder).Build())
+		case *middleware.MappingBuilder:
+			additional = append(additional, v.(*middleware.MappingBuilder).Build())
+		}
+	}
+	return additional
+}
+
 func remove(slice []MiddlewareTemplate, item MiddlewareTemplate) []MiddlewareTemplate {
 	for i,obj := range slice {
 		if obj != item {

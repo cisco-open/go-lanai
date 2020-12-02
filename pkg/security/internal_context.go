@@ -19,8 +19,8 @@ type FeatureModifier interface {
 	Disable(Feature)
 }
 
-type WebSecurityMiddlewareBuilder interface {
-	Build() []web.MiddlewareMapping
+type WebSecurityMappingBuilder interface {
+	Build() []web.Mapping
 }
 
 // FeatureConfigurer not intended to be used directly in service
