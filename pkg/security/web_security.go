@@ -3,10 +3,8 @@ package security
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
 	"net/http"
 )
@@ -15,21 +13,21 @@ import (
 	webSecurity Impl
 ******************************/
 type webSecurity struct {
-	routeMatcher        web.RouteMatcher
-	conditionMatcher    web.MWConditionMatcher
-	middlewareTemplates []MiddlewareTemplate
-	features            []Feature
-	applied				map[FeatureIdentifier]struct{}
-	shared 				map[string]interface{}
-	authenticator 		Authenticator
+	routeMatcher     web.RouteMatcher
+	conditionMatcher web.MWConditionMatcher
+	handlers         []interface{}
+	features         []Feature
+	applied          map[FeatureIdentifier]struct{}
+	shared           map[string]interface{}
+	authenticator    Authenticator
 }
 
 func newWebSecurity(authenticator Authenticator) *webSecurity {
 	return &webSecurity{
-		middlewareTemplates: []MiddlewareTemplate{},
-		features: []Feature{},
-		applied: map[FeatureIdentifier]struct{}{},
-		shared: map[string]interface{}{},
+		handlers:      []interface{}{},
+		features:      []Feature{},
+		applied:       map[FeatureIdentifier]struct{}{},
+		shared:        map[string]interface{}{},
 		authenticator: authenticator,
 	}
 }
@@ -65,14 +63,21 @@ func (ws *webSecurity) With(f Feature) WebSecurity {
 	return ws
 }
 
-func (ws *webSecurity) Add(templates ...MiddlewareTemplate) WebSecurity {
-	ws.middlewareTemplates = append(ws.middlewareTemplates, templates...)
+func (ws *webSecurity) Add(handlers ...interface{}) WebSecurity {
+	for i, h := range handlers {
+		v, err := ws.toAcceptedHandler(h)
+		if err != nil {
+			panic(err)
+		}
+		handlers[i] = v
+	}
+	ws.handlers = append(ws.handlers, handlers...)
 	return ws
 }
 
-func (ws *webSecurity) Remove(templates ...MiddlewareTemplate) WebSecurity {
-	for _, t := range templates {
-		ws.middlewareTemplates = remove(ws.middlewareTemplates, t)
+func (ws *webSecurity) Remove(handlers ...interface{}) WebSecurity {
+	for _, t := range handlers {
+		ws.handlers = remove(ws.handlers, t)
 	}
 	return ws
 }
@@ -118,24 +123,32 @@ func (ws *webSecurity) Disable(f Feature) {
 
 /* WebSecurityMappingBuilder interface */
 func (ws *webSecurity) Build() []web.Mapping {
-	mappings := make([]web.Mapping, len(ws.middlewareTemplates))
+	mappings := make([]web.Mapping, len(ws.handlers))
 
-	for i, tmpl := range ws.middlewareTemplates {
-		builder := (*middleware.MappingBuilder)(tmpl)
-		if ws.routeMatcher == nil {
-			ws.routeMatcher = matcher.AnyRoute()
+	for i, v := range ws.handlers {
+		var mapping web.Mapping
+
+		if _, ok := v.(MiddlewareTemplate); ok {
+			// non-interface types
+			mapping = ws.buildFromMiddlewareTemplate(v.(MiddlewareTemplate))
+		} else {
+			// interface types
+			switch v.(type) {
+			case web.GenericMapping:
+				mapping = v.(web.GenericMapping)
+			case web.StaticMapping:
+				mapping = v.(web.StaticMapping)
+			case web.MvcMapping:
+				mapping = v.(web.MvcMapping)
+			case web.MiddlewareMapping:
+				mapping = v.(web.MiddlewareMapping)
+			default:
+				panic(fmt.Errorf("unable to build security mappings from unsupported WebSecurity handler [%T]", v))
+			}
 		}
-		builder = builder.ApplyTo(ws.routeMatcher)
-
-		if ws.conditionMatcher != nil {
-			builder = builder.WithCondition(conditionFunc(ws.conditionMatcher) )
-		}
-
-		mappings[i] = builder.Build()
+		mappings[i] = mapping
 	}
-
-	additional := ws.findAdditionalMappings()
-	return append(mappings, additional...)
+	return mappings
 }
 
 // Other interfaces
@@ -145,25 +158,41 @@ func (ws *webSecurity) String() string {
 }
 
 // unexported
-// findAdditionalMappings go through shared objects and collect all web.Mapping type
-func (ws *webSecurity) findAdditionalMappings() []web.Mapping {
-	var additional []web.Mapping
-	for _, v := range ws.shared {
-		switch v.(type) {
-		case web.Mapping:
-			additional = append(additional, v.(web.Mapping))
-		case *template.MappingBuilder:
-			additional = append(additional, v.(*template.MappingBuilder).Build())
-		case *rest.MappingBuilder:
-			additional = append(additional, v.(*rest.MappingBuilder).Build())
-		case *middleware.MappingBuilder:
-			additional = append(additional, v.(*middleware.MappingBuilder).Build())
-		}
+func (ws *webSecurity) buildFromMiddlewareTemplate(tmpl MiddlewareTemplate) web.Mapping {
+	builder := (*middleware.MappingBuilder)(tmpl)
+	if ws.routeMatcher == nil {
+		ws.routeMatcher = matcher.AnyRoute()
 	}
-	return additional
+	builder = builder.ApplyTo(ws.routeMatcher)
+
+	if ws.conditionMatcher != nil {
+		builder = builder.WithCondition(conditionFunc(ws.conditionMatcher) )
+	}
+	return builder.Build()
 }
 
-func remove(slice []MiddlewareTemplate, item MiddlewareTemplate) []MiddlewareTemplate {
+// toAcceptedHandler perform validation and some type casting on the interface
+func (ws *webSecurity) toAcceptedHandler(v interface{}) (interface{}, error) {
+		// non-interface types
+		if _, ok := v.(*middleware.MappingBuilder); ok {
+			return MiddlewareTemplate(v.(*middleware.MappingBuilder)), nil
+		} else if _, ok := v.(MiddlewareTemplate); ok {
+			return v, nil
+		}
+
+		// interface types
+		switch v.(type) {
+		case web.GenericMapping:
+		case web.StaticMapping:
+		case web.MvcMapping:
+		case web.MiddlewareMapping:
+		default:
+			return nil, fmt.Errorf("unsupported WebSecurity handler [%T]", v)
+		}
+	return v, nil
+}
+
+func remove(slice []interface{}, item interface{}) []interface{} {
 	for i,obj := range slice {
 		if obj != item {
 			continue

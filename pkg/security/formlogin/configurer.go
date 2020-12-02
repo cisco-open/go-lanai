@@ -13,11 +13,6 @@ import (
 	"net/http"
 )
 
-const (
-	wsSharedKeyLoginProcessEndpoint = "login process endpoint"
-	wsSharedKeyLogoutEndpoint = "logout endpoint"
-)
-
 var (
 	FeatureId = security.FeatureId("FormLogin", security.FeatureOrderFormLogin)
 )
@@ -44,7 +39,7 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
-	if err := flc.configurePageAccessControl(f, ws); err != nil {
+	if err := flc.configureLoginPage(f, ws); err != nil {
 		return err
 	}
 
@@ -91,7 +86,7 @@ func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws s
 	return nil
 }
 
-func (flc *FormLoginConfigurer) configurePageAccessControl(f *FormLoginFeature, ws security.WebSecurity) error {
+func (flc *FormLoginConfigurer) configureLoginPage(f *FormLoginFeature, ws security.WebSecurity) error {
 
 	// let ws know to intercept additional url
 	routeMatcher := matcher.RouteWithPattern(f.loginUrl, http.MethodGet)
@@ -111,52 +106,56 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	}
 
 	// let ws know to intercept additional url
-	routeMatcher := matcher.RouteWithPattern(f.loginProcessUrl, http.MethodPost)
-	requestMatcher := matcher.RequestWithPattern(f.loginProcessUrl, http.MethodPost)
-	ws.Route(routeMatcher)
+	route := matcher.RouteWithPattern(f.loginUrl, http.MethodPost)
+	ws.Route(route)
 
 	// configure middlewares
+	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
 	login := NewFormAuthenticationMiddleware(FormAuthOptions{
 		Authenticator:  ws.Authenticator(),
 		SuccessHandler: f.successHandler,
 		UsernameParam:  f.usernameParam,
 		PasswordParam:  f.passwordParam,
-		RequestMatcher: requestMatcher,
 	})
-	auth := middleware.NewBuilder("form login").
+	mw := middleware.NewBuilder("form login").
+		ApplyTo(route).
 		Order(security.MWOrderFormAuth).
-		Use(login.LoginProcessHandlerFunc())
+		Use(login.LoginProcessHandlerFunc()).
+		Build()
 
-	ws.Add(auth)
+	ws.Add(mw)
 
 	// configure additional endpoint mappings to trigger middleware
-	err := ws.AddShared(wsSharedKeyLoginProcessEndpoint,
-		web.NewGenericMapping(wsSharedKeyLoginProcessEndpoint, f.loginProcessUrl, http.MethodPost, login.EmptyHandlerFunc()))
-	return err
+	ws.Add(web.NewGenericMapping("login process dummy", f.loginProcessUrl, http.MethodPost, login.EmptyHandlerFunc() ))
+	return nil
 }
 
 func (flc *FormLoginConfigurer) configureLogout(f *FormLoginFeature, ws security.WebSecurity) error {
+	supportedMethods := []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+	}
 	// let ws know to intercept additional url
-	routeMatcher := matcher.RouteWithPattern(f.logoutUrl, http.MethodGet, http.MethodPost)
-	requestMatcher := matcher.RequestWithPattern(f.logoutUrl, http.MethodGet, http.MethodPost)
-	ws.Route(routeMatcher)
-	// TODO need a endpoint to trigger this mapping
+	route := matcher.RouteWithPattern(f.logoutUrl, supportedMethods...)
+	ws.Route(route)
 
 	// configure middlewares
-	login := NewFormAuthenticationMiddleware(FormAuthOptions{
-		RequestMatcher: requestMatcher,
-	})
-	auth := middleware.NewBuilder("form logout").
+	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
+	login := NewFormAuthenticationMiddleware()
+	mw := middleware.NewBuilder("form logout").
+		ApplyTo(route).
 		Order(security.MWOrderFormLogout).
-		Use(login.LoginProcessHandlerFunc())
+		Use(login.LoginProcessHandlerFunc()).
+		Build()
 
-	ws.Add(auth)
+	ws.Add(mw)
 
 	// configure additional endpoint mappings to trigger middleware
-	err := ws.AddShared(wsSharedKeyLogoutEndpoint + " Get",
-		web.NewGenericMapping(wsSharedKeyLogoutEndpoint, f.logoutUrl, http.MethodGet, login.EmptyHandlerFunc()))
-
-	err = ws.AddShared(wsSharedKeyLogoutEndpoint + " Post",
-		web.NewGenericMapping(wsSharedKeyLogoutEndpoint, f.logoutUrl, http.MethodPost, login.EmptyHandlerFunc()))
-	return err
+	for _,method := range supportedMethods {
+		endpoint := web.NewGenericMapping("logout dummy " + method, f.logoutUrl, method, login.EmptyHandlerFunc())
+		ws.Add(endpoint)
+	}
+	return nil
 }

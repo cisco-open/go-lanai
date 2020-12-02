@@ -142,7 +142,7 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder
 }
 
 func (init *initializer) process(ws *webSecurity) error {
-	if len(ws.middlewareTemplates) == 0 {
+	if len(ws.handlers) == 0 {
 		return fmt.Errorf("no middleware were configuered for WebSecurity %v", ws)
 	}
 

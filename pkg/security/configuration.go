@@ -72,11 +72,23 @@ type WebSecurity interface {
 	// Calling this method multiple times concatenate all given matchers with OR operator
 	Condition(mwcm web.MWConditionMatcher) WebSecurity
 
-	// Add is DSL style setter to add MiddlewareTemplate
-	Add(...MiddlewareTemplate) WebSecurity
+	// Add is DSL style setter to add:
+	// - MiddlewareTemplate
+	// - web.MiddlewareMapping
+	// - web.MvcMapping
+	// - web.StaticMapping
+	// - web.GenericMapping
+	// when MiddlewareTemplate is given, WebSecurity's Route and Condition are applied to it
+	// this method panic if other type is given
+	Add(...interface{}) WebSecurity
 
-	// Remove is DSL style setter to add remove MiddlewareTemplate
-	Remove(...MiddlewareTemplate) WebSecurity
+	// Remove is DSL style setter to remove:
+	// - MiddlewareTemplate
+	// - web.MiddlewareMapping
+	// - web.MvcMapping
+	// - web.StaticMapping
+	// - web.GenericMapping
+	Remove(...interface{}) WebSecurity
 
 	// With is DSL style setter to enable features
 	With(f Feature) WebSecurity
