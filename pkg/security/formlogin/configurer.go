@@ -34,7 +34,6 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 	}
 	f := feature.(*FormLoginFeature)
 
-
 	if err := flc.configureErrorHandling(f, ws); err != nil {
 		return err
 	}
@@ -106,7 +105,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	}
 
 	// let ws know to intercept additional url
-	route := matcher.RouteWithPattern(f.loginUrl, http.MethodPost)
+	route := matcher.RouteWithPattern(f.loginProcessUrl, http.MethodPost)
 	ws.Route(route)
 
 	// configure middlewares

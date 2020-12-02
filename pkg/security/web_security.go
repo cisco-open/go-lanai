@@ -76,8 +76,12 @@ func (ws *webSecurity) Add(handlers ...interface{}) WebSecurity {
 }
 
 func (ws *webSecurity) Remove(handlers ...interface{}) WebSecurity {
-	for _, t := range handlers {
-		ws.handlers = remove(ws.handlers, t)
+	for _, h := range handlers {
+		v, err := ws.toAcceptedHandler(h)
+		if err != nil {
+			panic(err)
+		}
+		ws.handlers = remove(ws.handlers, v)
 	}
 	return ws
 }
