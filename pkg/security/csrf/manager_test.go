@@ -128,4 +128,24 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	if len(c.Errors) != 0 {
 		t.Errorf("there should be no error")
 	}
+
+	//Request without a csrf token associated with it
+	c, _ = gin.CreateTestContext(httptest.NewRecorder())
+	s.Delete(TokenAttrName) //remove the csrf token from the session
+	c.Set(web.ContextKeySession, s)
+	r = httptest.NewRequest("POST", "/process", nil)
+	r.Header.Set("X-CSRF-TOKEN", uuid.New().String())
+	c.Request = r
+
+	mockSessionStore.EXPECT().Save(gomock.Any()) //since this request's session doesn't have a csrf token, one will be generated
+
+	mw(c)
+
+	if len(c.Errors) != 1 {
+		t.Errorf("there should be one error")
+	}
+
+	if !errors.Is(c.Errors.Last().Err, security.NewInvalidCsrfTokenError("")) {
+		t.Errorf("expect invalid csrf token error, but was %v", c.Errors.Last())
+	}
 }
