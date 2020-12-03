@@ -58,7 +58,7 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 
 	// configure additional endpoint mappings to trigger middleware
 	for _,method := range supportedMethods {
-		endpoint := web.NewGenericMapping("logout dummy " + method, f.logoutUrl, method, logout.EmptyHandlerFunc())
+		endpoint := web.NewGenericMapping("logout dummy " + method, f.logoutUrl, method, logout.EndpointHandlerFunc())
 		ws.Add(endpoint)
 	}
 	return nil

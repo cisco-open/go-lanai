@@ -59,7 +59,9 @@ func (c *DefaultLoginFormController) LoginForm(ctx context.Context, r *LoginRequ
 			model[template.ModelKeyError] = err
 		}
 
-		if username, usernameOk := s.Get(SessionKeyRememberedUsername).(string); usernameOk {
+		if username, usernameOk := s.Flash(c.usernameParam).(string); usernameOk {
+			model[c.usernameParam] = username
+		} else if username, usernameOk := s.Get(SessionKeyRememberedUsername).(string); usernameOk {
 			model[LoginModelKeyRememberedUsername] = username
 		}
 	}

@@ -2,7 +2,9 @@ package logout
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type LogoutMiddleware struct {
@@ -27,10 +29,10 @@ func (mw *LogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-func (mw *LogoutMiddleware) EmptyHandlerFunc() gin.HandlerFunc {
-	return emptyHandlerFunc
+func (mw *LogoutMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
+	return notFoundHandlerFunc
 }
 
-func emptyHandlerFunc(*gin.Context) {
-
+func notFoundHandlerFunc(c *gin.Context) {
+	_ = c.AbortWithError(http.StatusNotFound, fmt.Errorf("page not found"))
 }

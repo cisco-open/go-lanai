@@ -130,6 +130,6 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	ws.Add(mw)
 
 	// configure additional endpoint mappings to trigger middleware
-	ws.Add(web.NewGenericMapping("login process dummy", f.loginProcessUrl, http.MethodPost, login.EmptyHandlerFunc() ))
+	ws.Add(web.NewGenericMapping("login process dummy", f.loginProcessUrl, http.MethodPost, login.EndpointHandlerFunc() ))
 	return nil
 }

@@ -52,6 +52,10 @@ func (eh *ErrorHandlingMiddleware) tryHandleErrors(c *gin.Context) {
 }
 
 func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
+	if c.Writer.Written() {
+		return
+	}
+
 	// we assume eh.authErrorHandler and eh.accessDeniedHandler is always not nil (guaranteed by ErrorHandlingConfigurer)
 	switch {
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorSubTypeInsufficientAuth):

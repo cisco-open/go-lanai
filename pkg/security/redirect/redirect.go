@@ -97,5 +97,6 @@ func (ep *RedirectHandler) doRedirect(c context.Context, r *http.Request, rw htt
 
 	// redirect
 	http.Redirect(rw, r, location.RequestURI(), ep.sc)
+	_,_ = rw.Write([]byte{})
 }
 

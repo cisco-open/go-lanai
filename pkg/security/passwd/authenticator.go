@@ -32,14 +32,14 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 	// Search user in the slice of allowed credentials
 	user, err := a.store.LoadAccountByUsername(upp.Username)
 	if err != nil {
-		return nil, security.NewUsernameNotFoundError(fmt.Sprintf("cannot find account with username %v", upp.Principal()))
+		return nil, security.NewUsernameNotFoundError(fmt.Sprintf("Mismatched Username and Password"))
 	}
 
 	// TODO check account status
 
 	// Check password
 	if upp.Username != user.Username() || !a.passwdEncoder.Matches(upp.Password, user.Password()) {
-		return nil, security.NewBadCredentialsError("incorrect credentials")
+		return nil, security.NewBadCredentialsError("Mismatched Username and Password")
 	}
 
 	// TODO post password check

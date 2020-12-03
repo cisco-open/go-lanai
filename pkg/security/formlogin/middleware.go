@@ -2,7 +2,11 @@ package formlogin
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type FormAuthenticationMiddleware struct {
@@ -32,16 +36,64 @@ func NewFormAuthenticationMiddleware(options... FormAuthOptions) *FormAuthentica
 
 func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// TODO
-		_ = ctx.Error(security.NewUsernameNotFoundError("Username and Password mismatched"))
-		ctx.Abort()
+
+		currentAuth, ok := security.Get(ctx).(passwd.UsernamePasswordAuthentication)
+		if ok && currentAuth.Authenticated() {
+			// already authenticated
+			mw.handleError(ctx, security.NewAuthenticationError("Already authenticated, please logout before re-login"), nil)
+			return
+		}
+
+		username := ctx.PostFormArray(mw.usernameParam)
+		if len(username) == 0 {
+			username = []string{""}
+		}
+
+		password := ctx.PostFormArray(mw.passwordParam)
+		if len(password) == 0 {
+			password = []string{""}
+		}
+
+		candidate := passwd.UsernamePasswordPair{
+			Username: username[0],
+			Password: password[0],
+		}
+		// Search auth in the slice of allowed credentials
+		auth, err := mw.authenticator.Authenticate(&candidate)
+		if err != nil {
+			mw.handleError(ctx, err, &candidate)
+			return
+		}
+		mw.handleSuccess(ctx, auth)
 	}
 }
 
-func (mw *FormAuthenticationMiddleware) EmptyHandlerFunc() gin.HandlerFunc {
-	return emptyHandlerFunc
+func (mw *FormAuthenticationMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
+	return notFoundHandlerFunc
 }
 
-func emptyHandlerFunc(*gin.Context) {
+func (mw *FormAuthenticationMiddleware) handleSuccess(c *gin.Context, new security.Authentication) {
+	if new != nil {
+		c.Set(gin.AuthUserKey, new.Principal())
+		c.Set(security.ContextKeySecurity, new)
+	}
+	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, new)
+	if c.Writer.Written() {
+		c.Abort()
+	}
+}
 
+func (mw *FormAuthenticationMiddleware) handleError(c *gin.Context, err error, candidate security.Candidate) {
+	if candidate != nil {
+		s := session.Get(c)
+		if s != nil {
+			s.AddFlash(candidate.Principal(), mw.usernameParam)
+		}
+	}
+	_ = c.Error(err)
+	c.Abort()
+}
+
+func notFoundHandlerFunc(c *gin.Context) {
+	_ = c.AbortWithError(http.StatusNotFound, fmt.Errorf("page not found"))
 }
