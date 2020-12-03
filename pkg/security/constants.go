@@ -18,6 +18,7 @@ const (
 	_ = iota
 	MWOrderSessionHandling = HighestMiddlewareOrder + iota * 20
 	MWOrderErrorHandling
+	MWOrderCsrfHandling
 	MWOrderAuthPersistence
 	MWOrderBasicAuth
 	// ... TODO more MW goes here

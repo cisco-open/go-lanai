@@ -6,7 +6,6 @@ import (
 	"errors"
 )
 
-
 const (
 	// security reserved
 	ReservedOffset			= 24
@@ -57,6 +56,13 @@ const (
 	_ = iota
 	ErrorSubTypeCodeAccessDenied = ErrorTypeCodeAccessControl + iota << errorSubTypeOffset
 	ErrorSubTypeCodeInsufficientAuth
+	ErrorSubTypeCodeCsrf
+)
+
+const (
+	_ = iota
+	ErrorCodeMissingCsrfToken = ErrorSubTypeCodeCsrf + iota
+	ErrorCodeInvalidCsrfToken
 )
 
 // ErrorTypes, can be used in errors.Is
@@ -70,6 +76,9 @@ var (
 
 	ErrorSubTypeAccessDenied         = newErrorSubType(ErrorSubTypeCodeAccessDenied, errors.New("error sub-type: access denied"))
 	ErrorSubTypeInsufficientAuth     = newErrorSubType(ErrorSubTypeCodeInsufficientAuth, errors.New("error sub-type: insufficient auth"))
+	ErrorSubTypeCsrf 				 = newErrorSubType(ErrorSubTypeCodeCsrf, errors.New("error sub-type: csrf"))
+
+
 )
 
 type ErrorCoder interface {
@@ -195,4 +204,12 @@ func NewAccessDeniedError(text string) error {
 
 func NewInsufficientAuthError(text string) error {
 	return NewCodedError(ErrorSubTypeCodeInsufficientAuth, errors.New(text))
+}
+
+func NewMissingCsrfTokenError(text string) error {
+	return NewCodedError(ErrorCodeMissingCsrfToken, errors.New(text))
+}
+
+func NewInvalidCsrfTokenError(text string) error {
+	return NewCodedError(ErrorCodeInvalidCsrfToken, errors.New(text))
 }

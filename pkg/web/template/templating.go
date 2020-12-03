@@ -18,6 +18,7 @@ const (
 	ModelKeySession        = "session"
 	ModelKeyRequestContext = "rc"
 	ModelKeySecurity 	   = "security"
+	ModelKeyCsrf 		   = "csrf"
 )
 
 type Model gin.H
@@ -89,6 +90,7 @@ func addGlobalModelData(ctx *gin.Context, model Model) {
 	model[ModelKeyRequestContext] = MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath)
 	model[ModelKeySession] = ctx.Value(web.ContextKeySession)
 	model[ModelKeySecurity] = ctx.Value(web.ContextKeySecurity)
+	model[ModelKeyCsrf] = ctx.Value(web.ContextKeyCsrf)
 }
 
 

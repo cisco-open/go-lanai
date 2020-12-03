@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+//TODO: remove
 func SessionDebugHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 

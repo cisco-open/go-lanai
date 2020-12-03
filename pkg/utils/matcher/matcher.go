@@ -1,6 +1,8 @@
 package matcher
 
-import "context"
+import (
+	"context"
+)
 
 type Matcher interface {
 	Matches(interface{}) (bool, error)

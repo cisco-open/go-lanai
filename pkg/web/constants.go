@@ -9,6 +9,7 @@ const (
 	ContextKeySecurity = "Security"
 	ContextKeySession = "Session"
 	ContextKeyContextPath = "ContextPath"
+	ContextKeyCsrf = "CSRF"
 )
 
 type EmptyRequest struct {}
