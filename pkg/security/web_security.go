@@ -125,6 +125,19 @@ func (ws *webSecurity) Disable(f Feature) {
 	}
 }
 
+/* WebSecurityReader interface */
+func (ws *webSecurity) GetRoute() web.RouteMatcher {
+	return ws.routeMatcher
+}
+
+func (ws *webSecurity) GetCondition() web.MWConditionMatcher {
+	return ws.conditionMatcher
+}
+
+func (ws *webSecurity) GetHandlers() []interface{} {
+	return ws.handlers
+}
+
 /* WebSecurityMappingBuilder interface */
 func (ws *webSecurity) Build() []web.Mapping {
 	mappings := make([]web.Mapping, len(ws.handlers))
@@ -170,7 +183,7 @@ func (ws *webSecurity) buildFromMiddlewareTemplate(tmpl MiddlewareTemplate) web.
 	builder = builder.ApplyTo(ws.routeMatcher)
 
 	if ws.conditionMatcher != nil {
-		builder = builder.WithCondition(conditionFunc(ws.conditionMatcher) )
+		builder = builder.WithCondition(WebConditionFunc(ws.conditionMatcher) )
 	}
 	return builder.Build()
 }
@@ -217,7 +230,7 @@ func findFeatureIndex(slice []Feature, f Feature) int {
 	return -1
 }
 
-func conditionFunc(matcher web.MWConditionMatcher) web.MWConditionFunc {
+func WebConditionFunc(matcher web.MWConditionMatcher) web.MWConditionFunc {
 	return func(ctx context.Context, req *http.Request) bool {
 		if matches, err := matcher.MatchesWithContext(ctx, req); err != nil {
 			return false

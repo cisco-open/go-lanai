@@ -32,6 +32,7 @@ const (
 	FeatureOrderAuthenticator = iota * 100
 	FeatureOrderBasicAuth
 	FeatureOrderFormLogin
+	FeatureOrderLogout
 	FeatureOrderAccess
 	// ... TODO more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200

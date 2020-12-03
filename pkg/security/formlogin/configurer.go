@@ -46,14 +46,10 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
-	if err := flc.configureLogout(f, ws); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, _ security.WebSecurity) error {
+func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSecurity) error {
 	if f.loginUrl == "" {
 		return fmt.Errorf("loginUrl is missing for form login")
 	}
@@ -68,6 +64,14 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, _ security.WebSecu
 
 	if f.loginErrorUrl == "" && f.failureHandler == nil {
 		f.loginErrorUrl = f.loginUrl + "?error"
+	}
+
+	if f.loginProcessCondition == nil {
+		if wsReader, ok := ws.(security.WebSecurityReader); ok {
+			f.loginProcessCondition = wsReader.GetCondition()
+		} else {
+			return fmt.Errorf("loginProcessCondition is not specified and unable to read condition from WebSecurity")
+		}
 	}
 
 	return nil
@@ -86,7 +90,6 @@ func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws s
 }
 
 func (flc *FormLoginConfigurer) configureLoginPage(f *FormLoginFeature, ws security.WebSecurity) error {
-
 	// let ws know to intercept additional url
 	routeMatcher := matcher.RouteWithPattern(f.loginUrl, http.MethodGet)
 	requestMatcher := matcher.RequestWithPattern(f.loginUrl, http.MethodGet)
@@ -110,6 +113,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	// configure middlewares
 	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
+
 	login := NewFormAuthenticationMiddleware(FormAuthOptions{
 		Authenticator:  ws.Authenticator(),
 		SuccessHandler: f.successHandler,
@@ -118,6 +122,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	})
 	mw := middleware.NewBuilder("form login").
 		ApplyTo(route).
+		WithCondition(security.WebConditionFunc(f.loginProcessCondition)).
 		Order(security.MWOrderFormAuth).
 		Use(login.LoginProcessHandlerFunc()).
 		Build()
@@ -126,35 +131,5 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(web.NewGenericMapping("login process dummy", f.loginProcessUrl, http.MethodPost, login.EmptyHandlerFunc() ))
-	return nil
-}
-
-func (flc *FormLoginConfigurer) configureLogout(f *FormLoginFeature, ws security.WebSecurity) error {
-	supportedMethods := []string{
-		http.MethodGet,
-		http.MethodPost,
-		http.MethodPut,
-		http.MethodPatch,
-	}
-	// let ws know to intercept additional url
-	route := matcher.RouteWithPattern(f.logoutUrl, supportedMethods...)
-	ws.Route(route)
-
-	// configure middlewares
-	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
-	login := NewFormAuthenticationMiddleware()
-	mw := middleware.NewBuilder("form logout").
-		ApplyTo(route).
-		Order(security.MWOrderFormLogout).
-		Use(login.LoginProcessHandlerFunc()).
-		Build()
-
-	ws.Add(mw)
-
-	// configure additional endpoint mappings to trigger middleware
-	for _,method := range supportedMethods {
-		endpoint := web.NewGenericMapping("logout dummy " + method, f.logoutUrl, method, login.EmptyHandlerFunc())
-		ws.Add(endpoint)
-	}
 	return nil
 }

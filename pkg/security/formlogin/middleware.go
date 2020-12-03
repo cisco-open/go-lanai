@@ -38,12 +38,6 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 	}
 }
 
-func (mw *FormAuthenticationMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		// TODO
-	}
-}
-
 func (mw *FormAuthenticationMiddleware) EmptyHandlerFunc() gin.HandlerFunc {
 	return emptyHandlerFunc
 }

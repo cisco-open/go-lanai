@@ -2,6 +2,7 @@ package formlogin
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 )
 
@@ -10,15 +11,15 @@ import (
  *********************************/
 //goland:noinspection GoNameStartsWithPackageName
 type FormLoginFeature struct {
-	successHandler  security.AuthenticationSuccessHandler
-	failureHandler  security.AuthenticationErrorHandler
-	loginUrl        string
-	loginProcessUrl string
-	loginErrorUrl   string
-	loginSuccessUrl string
-	logoutUrl       string
-	usernameParam   string
-	passwordParam   string
+	loginProcessCondition web.MWConditionMatcher
+	successHandler        security.AuthenticationSuccessHandler
+	failureHandler        security.AuthenticationErrorHandler
+	loginUrl              string
+	loginProcessUrl       string
+	loginErrorUrl         string
+	loginSuccessUrl       string
+	usernameParam         string
+	passwordParam         string
 }
 
 // Standard security.Feature entrypoint
@@ -36,6 +37,10 @@ func (f *FormLoginFeature) LoginProcessUrl(loginProcessUrl string) *FormLoginFea
 	return f
 }
 
+func (f *FormLoginFeature) LoginProcessCondition(condition web.MWConditionMatcher) *FormLoginFeature {
+	f.loginProcessCondition = condition
+	return f
+}
 
 func (f *FormLoginFeature) LoginSuccessUrl(loginSuccessUrl string) *FormLoginFeature {
 	f.loginSuccessUrl = loginSuccessUrl
@@ -44,11 +49,6 @@ func (f *FormLoginFeature) LoginSuccessUrl(loginSuccessUrl string) *FormLoginFea
 
 func (f *FormLoginFeature) LoginErrorUrl(loginErrorUrl string) *FormLoginFeature {
 	f.loginErrorUrl = loginErrorUrl
-	return f
-}
-
-func (f *FormLoginFeature) LogoutUrl(logoutUrl string) *FormLoginFeature {
-	f.logoutUrl = logoutUrl
 	return f
 }
 
@@ -91,7 +91,6 @@ func New() *FormLoginFeature {
 		loginUrl:        "/login",
 		loginProcessUrl: "/login",
 		loginErrorUrl:   "/login?error=true",
-		logoutUrl:       "/logout",
 		usernameParam:   "username",
 		passwordParam:   "password",
 	}

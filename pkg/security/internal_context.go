@@ -19,6 +19,12 @@ type FeatureModifier interface {
 	Disable(Feature)
 }
 
+type WebSecurityReader interface {
+	GetRoute() web.RouteMatcher
+	GetCondition() web.MWConditionMatcher
+	GetHandlers() []interface{}
+}
+
 type WebSecurityMappingBuilder interface {
 	Build() []web.Mapping
 }

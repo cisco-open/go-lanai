@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
@@ -75,6 +76,9 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		).
 		With(formlogin.New().
 			LoginSuccessUrl("/page/hello"),
+		).
+		With(logout.New().
+			SuccessUrl("/login"),
 		).
 		With(errorhandling.New().
 			AuthenticationEntryPoint(handler).
