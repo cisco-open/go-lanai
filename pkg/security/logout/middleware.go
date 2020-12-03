@@ -7,13 +7,10 @@ import (
 	"net/http"
 )
 
+//goland:noinspection GoNameStartsWithPackageName
 type LogoutMiddleware struct {
 	successHandler security.AuthenticationSuccessHandler
 	logoutHandlers []LogoutHandler
-}
-
-type LogoutOptions struct {
-	SuccessHandler security.AuthenticationSuccessHandler
 }
 
 func NewLogoutMiddleware(successHandler security.AuthenticationSuccessHandler, logoutHandlers ...LogoutHandler) *LogoutMiddleware {
@@ -25,12 +22,30 @@ func NewLogoutMiddleware(successHandler security.AuthenticationSuccessHandler, l
 
 func (mw *LogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// TODO
+		currentAuth := security.Get(ctx)
+		if currentAuth == nil || !currentAuth.Authenticated() {
+			mw.handleSuccess(ctx)
+			return
+		}
+
+		for _, handler := range mw.logoutHandlers {
+			handler.HandleLogout(ctx, ctx.Request, ctx.Writer, currentAuth)
+		}
+		mw.handleSuccess(ctx)
 	}
 }
 
 func (mw *LogoutMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
 	return notFoundHandlerFunc
+}
+
+func (mw *LogoutMiddleware) handleSuccess(c *gin.Context) {
+	c.Set(gin.AuthUserKey, nil)
+	c.Set(security.ContextKeySecurity, nil)
+	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, nil)
+	if c.Writer.Written() {
+		c.Abort()
+	}
 }
 
 func notFoundHandlerFunc(c *gin.Context) {

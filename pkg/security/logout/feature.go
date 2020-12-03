@@ -1,9 +1,11 @@
 package logout
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
+	"net/http"
 )
 
 /*********************************
@@ -12,7 +14,7 @@ import (
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutHandler interface {
 	//TODO
-	HandleLogout()
+	HandleLogout(context.Context, *http.Request, http.ResponseWriter, security.Authentication)
 }
 
 //goland:noinspection GoNameStartsWithPackageName
