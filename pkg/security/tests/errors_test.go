@@ -28,6 +28,9 @@ func TestTypeComparison(t *testing.T) {
 
 	case !errors.Is(security.ErrorSubTypeCsrf, security.ErrorTypeAccessControl):
 		t.Errorf("ErrorSubTypeCsrf should be ErrorTypeAccessControl error")
+
+	case !errors.Is(security.ErrorTypeInternal, security.ErrorTypeSecurity):
+		t.Errorf("ErrorTypeInternal should be ErrorTypeSecurity")
 	}
 }
 
@@ -134,5 +137,17 @@ func TestInvalidCsrfTokenError(t *testing.T) {
 
 	case errors.Is(coded, security.ErrorTypeAuthentication):
 		t.Errorf("NewInvalidCsrfTokenError should not match ErrorTypeAuthentication")
+	}
+}
+
+func TestInternalError(t *testing.T) {
+	coded := security.NewInternalError("some internal error")
+	switch {
+	case !errors.Is(coded, security.ErrorTypeInternal):
+		t.Errorf("NewInternalError should be ErrorTypeInternal")
+	case !errors.Is(coded, security.ErrorTypeSecurity):
+		t.Errorf("NewInternalError should be ErrorTypeSecurity")
+	case errors.Is(coded, security.ErrorTypeAuthentication):
+		t.Errorf("NewInternalError should not be ErrorTypeAuthentication")
 	}
 }

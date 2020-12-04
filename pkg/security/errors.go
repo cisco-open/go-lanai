@@ -27,6 +27,7 @@ const (
 	_ = iota
 	ErrorTypeCodeAuthentication = Reserved + iota << errorTypeOffset
 	ErrorTypeCodeAccessControl
+	ErrorTypeCodeInternal
 )
 
 // All "SubType" values are used as mask
@@ -70,6 +71,7 @@ var (
 	ErrorTypeSecurity				 = newCodedError(Reserved, errors.New("error type: security"), ReservedMask)
 	ErrorTypeAuthentication          = newErrorType(ErrorTypeCodeAuthentication, errors.New("error type: authentication"))
 	ErrorTypeAccessControl           = newErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
+	ErrorTypeInternal                = newErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
 
 	ErrorSubTypeInternalError        = newErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeUsernamePasswordAuth = newErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))
@@ -173,6 +175,11 @@ func newErrorSubType(code int, e error) error {
 // NewCodedError creates concrete error. it cannot be used as ErrorType or ErrorSubType comparison
 func NewCodedError(code int, e error) error {
 	return newCodedError(code, e, defaultErrorCodeMask)
+}
+
+/* InternalError family */
+func NewInternalError(text string) error {
+	return NewCodedError(ErrorTypeCodeInternal, errors.New(text))
 }
 
 /* AuthenticationError family */

@@ -30,7 +30,7 @@ func TestCsrfMiddlewareShouldGenerateToken(t *testing.T) {
 	c.Request = httptest.NewRequest("GET", "/form", nil)
 
 	mockSessionStore.EXPECT().Save(gomock.Any()).Do(func(s *session.Session) {
-		savedCsrfToken := s.Get(TokenAttrName)
+		savedCsrfToken := s.Get(SessionKeyCsrfToken)
 		if savedCsrfToken == nil {
 			t.Errorf("Expect the csrf token to be saved in the session")
 		}
@@ -69,7 +69,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	//Request with a invalid csrf token
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	existingCsrfToken := csrfStore.Generate(c, "_csrf", "X-CSRF-TOKEN")
-	s.Set(TokenAttrName, existingCsrfToken)
+	s.Set(SessionKeyCsrfToken, existingCsrfToken)
 
 	c.Set(web.ContextKeySession, s)
 	r := httptest.NewRequest("POST", "/process", strings.NewReader("_csrf=" + uuid.New().String()))
@@ -131,7 +131,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 
 	//Request without a csrf token associated with it
 	c, _ = gin.CreateTestContext(httptest.NewRecorder())
-	s.Delete(TokenAttrName) //remove the csrf token from the session
+	s.Delete(SessionKeyCsrfToken) //remove the csrf token from the session
 	c.Set(web.ContextKeySession, s)
 	r = httptest.NewRequest("POST", "/process", nil)
 	r.Header.Set("X-CSRF-TOKEN", uuid.New().String())
