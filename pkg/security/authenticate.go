@@ -39,9 +39,9 @@ type CompositeAuthenticator struct {
 }
 
 func NewAuthenticator(authenticators ...Authenticator) Authenticator {
-	return &CompositeAuthenticator {
-		authenticators: sortAuthenticators(authenticators),
-	}
+	ret := &CompositeAuthenticator {}
+	ret.authenticators = ret.processAuthenticators(authenticators)
+	return ret
 }
 
 func (a *CompositeAuthenticator) Authenticate(candidate Candidate) (auth Authentication, err error) {
@@ -55,7 +55,7 @@ func (a *CompositeAuthenticator) Authenticate(candidate Candidate) (auth Authent
 }
 
 func (a *CompositeAuthenticator) Add(authenticator Authenticator) *CompositeAuthenticator {
-	a.authenticators = sortAuthenticators(append(a.authenticators, authenticator))
+	a.authenticators = a.processAuthenticators(append(a.authenticators, authenticator))
 	sort.SliceStable(a.authenticators, func(i,j int) bool {
 		return order.OrderedFirstCompare(a.authenticators[i], a.authenticators[j])
 	})
@@ -63,15 +63,33 @@ func (a *CompositeAuthenticator) Add(authenticator Authenticator) *CompositeAuth
 }
 
 func (a *CompositeAuthenticator) Merge(composite *CompositeAuthenticator) *CompositeAuthenticator {
-	a.authenticators = sortAuthenticators(append(a.authenticators, composite.authenticators...))
+	a.authenticators = a.processAuthenticators(append(a.authenticators, composite.authenticators...))
 	return a
 }
 
-func sortAuthenticators(authenticators []Authenticator) []Authenticator {
+func (a *CompositeAuthenticator) processAuthenticators(authenticators []Authenticator) []Authenticator {
+	// remove self
+	authenticators = a.removeSelf(authenticators)
 	sort.SliceStable(authenticators, func(i,j int) bool {
 		return order.OrderedFirstCompare(authenticators[i], authenticators[j])
 	})
 	return authenticators
+}
+
+func (a *CompositeAuthenticator) removeSelf(authenticators []Authenticator) []Authenticator {
+	count := 0
+	for _, item := range authenticators {
+		if ptr, ok := item.(*CompositeAuthenticator); !ok || ptr != a {
+			// copy and increment index
+			authenticators[count] = item
+			count++
+		}
+	}
+	// Prevent memory leak by erasing truncated values
+	for j := count; j < len(authenticators); j++ {
+		authenticators[j] = nil
+	}
+	return authenticators[:count]
 }
 
 // *CompositeAuthenticationSuccessHandler implement AuthenticationSuccessHandler interface
@@ -80,9 +98,9 @@ type CompositeAuthenticationSuccessHandler struct {
 }
 
 func NewAuthenticationSuccessHandler(handlers ...AuthenticationSuccessHandler) *CompositeAuthenticationSuccessHandler {
-	return &CompositeAuthenticationSuccessHandler {
-		handlers: sortSuccessHandlers(handlers),
-	}
+	ret := &CompositeAuthenticationSuccessHandler {}
+	ret.handlers = ret.processSuccessHandlers(handlers)
+	return ret
 }
 
 func (h *CompositeAuthenticationSuccessHandler) HandleAuthenticationSuccess(
@@ -94,18 +112,35 @@ func (h *CompositeAuthenticationSuccessHandler) HandleAuthenticationSuccess(
 }
 
 func (h *CompositeAuthenticationSuccessHandler) Add(handler AuthenticationSuccessHandler) *CompositeAuthenticationSuccessHandler {
-	h.handlers = sortSuccessHandlers(append(h.handlers, handler))
+	h.handlers = h.processSuccessHandlers(append(h.handlers, handler))
 	return h
 }
 
 func (h *CompositeAuthenticationSuccessHandler) Merge(composite *CompositeAuthenticationSuccessHandler) *CompositeAuthenticationSuccessHandler {
-	h.handlers = sortSuccessHandlers(append(h.handlers, composite.handlers...))
+	h.handlers = h.processSuccessHandlers(append(h.handlers, composite.handlers...))
 	return h
 }
 
-func sortSuccessHandlers(handlers []AuthenticationSuccessHandler) []AuthenticationSuccessHandler {
+func (h *CompositeAuthenticationSuccessHandler) processSuccessHandlers(handlers []AuthenticationSuccessHandler) []AuthenticationSuccessHandler {
+	handlers = h.removeSelf(handlers)
 	sort.SliceStable(handlers, func(i,j int) bool {
 		return order.OrderedFirstCompare(handlers[i], handlers[j])
 	})
 	return handlers
+}
+
+func (h *CompositeAuthenticationSuccessHandler) removeSelf(items []AuthenticationSuccessHandler) []AuthenticationSuccessHandler {
+	count := 0
+	for _, item := range items {
+		if ptr, ok := item.(*CompositeAuthenticationSuccessHandler); !ok || ptr != h {
+			// copy and increment index
+			items[count] = item
+			count++
+		}
+	}
+	// Prevent memory leak by erasing truncated values
+	for j := count; j < len(items); j++ {
+		items[j] = nil
+	}
+	return items[:count]
 }

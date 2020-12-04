@@ -35,9 +35,9 @@ type CompositeAuthenticationErrorHandler struct {
 }
 
 func NewAuthenticationErrorHandler(handlers ...AuthenticationErrorHandler) *CompositeAuthenticationErrorHandler {
-	return &CompositeAuthenticationErrorHandler {
-		handlers: sortErrorHandlers(handlers),
-	}
+	ret := &CompositeAuthenticationErrorHandler{}
+	ret.handlers = ret.processErrorHandlers(handlers)
+	return ret
 }
 
 func (h *CompositeAuthenticationErrorHandler) HandleAuthenticationError(
@@ -49,20 +49,37 @@ func (h *CompositeAuthenticationErrorHandler) HandleAuthenticationError(
 }
 
 func (h *CompositeAuthenticationErrorHandler) Add(handler AuthenticationErrorHandler) *CompositeAuthenticationErrorHandler {
-	h.handlers = sortErrorHandlers(append(h.handlers, handler))
+	h.handlers = h.processErrorHandlers(append(h.handlers, handler))
 	return h
 }
 
 func (h *CompositeAuthenticationErrorHandler) Merge(composite *CompositeAuthenticationErrorHandler) *CompositeAuthenticationErrorHandler {
-	h.handlers = sortErrorHandlers(append(h.handlers, composite.handlers...))
+	h.handlers = h.processErrorHandlers(append(h.handlers, composite.handlers...))
 	return h
 }
 
-func sortErrorHandlers(handlers []AuthenticationErrorHandler) []AuthenticationErrorHandler {
+func (h *CompositeAuthenticationErrorHandler) processErrorHandlers(handlers []AuthenticationErrorHandler) []AuthenticationErrorHandler {
+	handlers = h.removeSelf(handlers)
 	sort.SliceStable(handlers, func(i,j int) bool {
 		return order.OrderedFirstCompare(handlers[i], handlers[j])
 	})
 	return handlers
+}
+
+func (h *CompositeAuthenticationErrorHandler) removeSelf(items []AuthenticationErrorHandler) []AuthenticationErrorHandler {
+	count := 0
+	for _, item := range items {
+		if ptr, ok := item.(*CompositeAuthenticationErrorHandler); !ok || ptr != h {
+			// copy and increment index
+			items[count] = item
+			count++
+		}
+	}
+	// Prevent memory leak by erasing truncated values
+	for j := count; j < len(items); j++ {
+		items[j] = nil
+	}
+	return items[:count]
 }
 
 /**************************

@@ -30,7 +30,7 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 	})
 
 	init.Register(&AnotherSecurityConfigurer { })
-	//init.Register(&ErrorPageSecurityConfigurer{})
+	init.Register(&ErrorPageSecurityConfigurer{})
 }
 
 type TestSecurityConfigurer struct {
@@ -63,9 +63,10 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// For Page
 	handler := redirect.NewRedirectWithRelativePath("/error")
+	condition := matcher.RequestWithHost("localhost:8080")
 
 	ws.Route(matcher.RouteWithPattern("/page/**")).
-		Condition(matcher.RequestWithHost("localhost:8080")).
+		Condition(condition).
 		With(session.New()).
 		With(passwd.New()).
 		With(access.New().
@@ -76,6 +77,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 			Request(matcher.AnyRequest()).Authenticated(),
 		).
 		With(formlogin.New().
+			LoginProcessCondition(condition).
 			LoginSuccessUrl("/page/hello"),
 		).
 		With(logout.New().
