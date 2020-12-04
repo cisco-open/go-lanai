@@ -18,6 +18,7 @@ const (
 const (
 	WSSharedKeyCompositeAuthSuccessHandler = "CompositeAuthSuccessHandler"
 	WSSharedKeyCompositeAuthErrorHandler = "CompositeAuthErrorHandler"
+	WSSharedKeyCompositeAccessDeniedHandler = "CompositeAccessDeniedHandler"
 )
 
 // Middleware Orders

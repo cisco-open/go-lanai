@@ -115,6 +115,7 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder
 	ws := newWebSecurity(NewAuthenticator(), map[string]interface{}{
 		WSSharedKeyCompositeAuthSuccessHandler: NewAuthenticationSuccessHandler(),
 		WSSharedKeyCompositeAuthErrorHandler: NewAuthenticationErrorHandler(),
+		WSSharedKeyCompositeAccessDeniedHandler: NewAccessDeniedHandler(),
 	})
 	configurer.Configure(ws)
 

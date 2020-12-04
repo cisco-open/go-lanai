@@ -1,10 +1,13 @@
 package csrf
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"errors"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type manager struct {
@@ -78,3 +81,21 @@ func (m *manager) CsrfHandlerFunc() gin.HandlerFunc {
 		}
 	}
 }
+
+type CsrfDeniedHandler struct {
+	delegate security.AccessDeniedHandler
+}
+
+// implement order.Ordered
+func (h *CsrfDeniedHandler) Order() int {
+	return 0
+}
+
+// implement security.AccessDeniedHandler
+func (h *CsrfDeniedHandler) HandleAccessDenied(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, security.ErrorSubTypeCsrf):
+		h.delegate.HandleAccessDenied(c, r, rw, err)
+	}
+}
+

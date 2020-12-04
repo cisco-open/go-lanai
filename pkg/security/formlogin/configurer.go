@@ -79,13 +79,18 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 }
 
 func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws security.WebSecurity) error {
+	errorRedirect := redirect.NewRedirectWithURL(f.loginErrorUrl)
 	if f.failureHandler == nil {
-		f.failureHandler = redirect.NewRedirectWithURL(f.loginErrorUrl)
+		f.failureHandler = errorRedirect
 	}
 
+	// override entry point and error handler
 	errorhandling.Configure(ws).
 		AuthenticationEntryPoint(redirect.NewRedirectWithURL(f.loginUrl)).
 		AuthenticationErrorHandler(f.failureHandler)
+
+	// adding CSRF protection err handler, while keeping default
+	csrf.Configure(ws).CsrfDeniedHandler(errorRedirect)
 
 	return nil
 }
