@@ -46,10 +46,7 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 
 	auth := usernamePasswordAuthentication{
 		Account: user,
-		PermissionList: []string {
-			//TODO
-			"authenticated",
-		},
+		PermissionList: user.Permissions(),
 	}
 	return &auth, nil
 }

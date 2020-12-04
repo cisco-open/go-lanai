@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"encoding/base32"
 	"encoding/gob"
 	"fmt"
-	"github.com/gorilla/securecookie"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
@@ -93,14 +92,7 @@ func (s *RedisStore) New(name string) (*Session, error) {
 	session.lastAccessed = time.Now()
 	session.values[createdTimeKey] = time.Now()
 
-	random := securecookie.GenerateRandomKey(32)
-
-	if random == nil {
-		return nil, errors.New("system failed to generate random value for session id")
-	}
-
-	session.id = strings.TrimRight(
-		base32.StdEncoding.EncodeToString(random), "=")
+	session.id = uuid.New().String()
 
 	return session, nil
 }

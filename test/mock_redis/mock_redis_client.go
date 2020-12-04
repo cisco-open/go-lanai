@@ -2,7 +2,7 @@
 // Source: github.com/go-redis/redis/v8 (interfaces: UniversalClient)
 
 // Package mock_v8 is a generated GoMock package.
-package mocks
+package mock_redis
 
 import (
 	context "context"

@@ -6,7 +6,6 @@ import (
 	"errors"
 )
 
-
 const (
 	// security reserved
 	ReservedOffset			= 24
@@ -28,6 +27,7 @@ const (
 	_ = iota
 	ErrorTypeCodeAuthentication = Reserved + iota << errorTypeOffset
 	ErrorTypeCodeAccessControl
+	ErrorTypeCodeInternal
 )
 
 // All "SubType" values are used as mask
@@ -57,6 +57,13 @@ const (
 	_ = iota
 	ErrorSubTypeCodeAccessDenied = ErrorTypeCodeAccessControl + iota << errorSubTypeOffset
 	ErrorSubTypeCodeInsufficientAuth
+	ErrorSubTypeCodeCsrf
+)
+
+const (
+	_ = iota
+	ErrorCodeMissingCsrfToken = ErrorSubTypeCodeCsrf + iota
+	ErrorCodeInvalidCsrfToken
 )
 
 // ErrorTypes, can be used in errors.Is
@@ -64,12 +71,16 @@ var (
 	ErrorTypeSecurity				 = newCodedError(Reserved, errors.New("error type: security"), ReservedMask)
 	ErrorTypeAuthentication          = newErrorType(ErrorTypeCodeAuthentication, errors.New("error type: authentication"))
 	ErrorTypeAccessControl           = newErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
+	ErrorTypeInternal                = newErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
 
 	ErrorSubTypeInternalError        = newErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeUsernamePasswordAuth = newErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))
 
 	ErrorSubTypeAccessDenied         = newErrorSubType(ErrorSubTypeCodeAccessDenied, errors.New("error sub-type: access denied"))
 	ErrorSubTypeInsufficientAuth     = newErrorSubType(ErrorSubTypeCodeInsufficientAuth, errors.New("error sub-type: insufficient auth"))
+	ErrorSubTypeCsrf 				 = newErrorSubType(ErrorSubTypeCodeCsrf, errors.New("error sub-type: csrf"))
+
+
 )
 
 type ErrorCoder interface {
@@ -166,6 +177,11 @@ func NewCodedError(code int, e error) error {
 	return newCodedError(code, e, defaultErrorCodeMask)
 }
 
+/* InternalError family */
+func NewInternalError(text string) error {
+	return NewCodedError(ErrorTypeCodeInternal, errors.New(text))
+}
+
 /* AuthenticationError family */
 
 func NewAuthenticationError(text string) error {
@@ -195,4 +211,12 @@ func NewAccessDeniedError(text string) error {
 
 func NewInsufficientAuthError(text string) error {
 	return NewCodedError(ErrorSubTypeCodeInsufficientAuth, errors.New(text))
+}
+
+func NewMissingCsrfTokenError(text string) error {
+	return NewCodedError(ErrorCodeMissingCsrfToken, errors.New(text))
+}
+
+func NewInvalidCsrfTokenError(text string) error {
+	return NewCodedError(ErrorCodeInvalidCsrfToken, errors.New(text))
 }
