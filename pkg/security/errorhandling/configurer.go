@@ -70,10 +70,13 @@ func (ehc *ErrorHandlingConfigurer) Apply(feature security.Feature, ws security.
 	}
 	f := feature.(*ErrorHandlingFeature)
 
+	authErrorHandler := ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler)
+	authErrorHandler.Add(f.authErrorHandler)
+
 	mw := NewErrorHandlingMiddleware()
 	mw.accessDeniedHandler = f.accessDeniedHandler
 	mw.entryPoint = f.authEntryPoint
-	mw.authErrorHandler = f.authErrorHandler
+	mw.authErrorHandler = authErrorHandler
 
 	errHandler := middleware.NewBuilder("error handling").
 		Order(security.MWOrderErrorHandling).

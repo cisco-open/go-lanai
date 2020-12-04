@@ -37,13 +37,6 @@ func NewFormAuthenticationMiddleware(options... FormAuthOptions) *FormAuthentica
 func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
-		currentAuth, ok := security.Get(ctx).(passwd.UsernamePasswordAuthentication)
-		if ok && currentAuth.Authenticated() {
-			// already authenticated
-			mw.handleError(ctx, security.NewAuthenticationError("Already authenticated, please logout before re-login"), nil)
-			return
-		}
-
 		username := ctx.PostFormArray(mw.usernameParam)
 		if len(username) == 0 {
 			username = []string{""}
@@ -52,6 +45,13 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 		password := ctx.PostFormArray(mw.passwordParam)
 		if len(password) == 0 {
 			password = []string{""}
+		}
+
+		currentAuth, ok := security.Get(ctx).(passwd.UsernamePasswordAuthentication)
+		if ok && currentAuth.Authenticated() && passwd.IsSamePrincipal(username[0], currentAuth) {
+			// We currently allow re-authenticate without logout.
+			// If we don't want to allow it, we need to figure out how to error out without clearing the authentication.
+			// Note: currently, clearing authentication happens in error handling middleware on all SecurityAuthenticationError
 		}
 
 		candidate := passwd.UsernamePasswordPair{

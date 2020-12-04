@@ -14,21 +14,18 @@ import (
 //goland:noinspection GoNameStartsWithPackageName
 type BasicAuthMiddleware struct {
 	authenticator security.Authenticator
+	successHandler security.AuthenticationSuccessHandler
 }
 
-func NewBasicAuthMiddleware(auth security.Authenticator) *BasicAuthMiddleware {
-	return &BasicAuthMiddleware{auth}
+func NewBasicAuthMiddleware(authenticator security.Authenticator, successHandler security.AuthenticationSuccessHandler) *BasicAuthMiddleware {
+	return &BasicAuthMiddleware{
+		authenticator:  authenticator,
+		successHandler: successHandler,
+	}
 }
 
 func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-
-		currentAuth, ok := security.Get(ctx).(passwd.UsernamePasswordAuthentication)
-		if ok && currentAuth.Authenticated() {
-			// already authenticated
-			basic.handleSuccess(ctx, nil)
-			return
-		}
 
 		header := ctx.GetHeader("Authorization")
 		if header == "" {
@@ -46,6 +43,13 @@ func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 		pair := strings.SplitN(string(decoded), ":", 2)
 		if len(pair) < 2 {
 			basic.handleError(ctx, security.NewBadCredentialsError("invalid Authorization header"))
+			return
+		}
+
+		currentAuth, ok := security.Get(ctx).(passwd.UsernamePasswordAuthentication)
+		if ok && currentAuth.Authenticated() && passwd.IsSamePrincipal(pair[0], currentAuth) {
+			// already authenticated
+			basic.handleSuccess(ctx, nil)
 			return
 		}
 
@@ -67,10 +71,10 @@ func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 }
 
 func (basic *BasicAuthMiddleware) handleSuccess(c *gin.Context, new security.Authentication) {
-	// TODO delegate to authentication handler to support session fixation and more
 	if new != nil {
 		c.Set(gin.AuthUserKey, new.Principal())
 		c.Set(security.ContextKeySecurity, new)
+		basic.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, new)
 	}
 	c.Next()
 }
@@ -81,17 +85,30 @@ func (basic *BasicAuthMiddleware) handleError(c *gin.Context, err error) {
 }
 
 //goland:noinspection GoNameStartsWithPackageName
-type BasicAuthEntryPoint struct {
-
-}
+type BasicAuthEntryPoint struct {}
 
 func NewBasicAuthEntryPoint() *BasicAuthEntryPoint {
 	return &BasicAuthEntryPoint{}
 }
 
-func (h *BasicAuthEntryPoint) Commence(_ context.Context, _ *http.Request, w http.ResponseWriter, e error) {
+func (h *BasicAuthEntryPoint) Commence(_ context.Context, _ *http.Request, rw http.ResponseWriter, err error) {
+	writeBasicAuthChallenge(rw, err)
+}
+
+//goland:noinspection GoNameStartsWithPackageName
+type BasicAuthErrorHandler struct {}
+
+func NewBasicAuthErrorHandler() *BasicAuthErrorHandler {
+	return &BasicAuthErrorHandler{}
+}
+
+func (h *BasicAuthErrorHandler) HandleAuthenticationError(_ context.Context, _ *http.Request, rw http.ResponseWriter, err error) {
+	writeBasicAuthChallenge(rw, err)
+}
+
+func writeBasicAuthChallenge(rw http.ResponseWriter, err error) {
 	realm := "Basic realm=" + strconv.Quote("Authorization Required")
-	w.Header().Set("WWW-Authenticate", realm)
-	w.WriteHeader(http.StatusUnauthorized)
-	_,_ = w.Write([]byte(e.Error()))
+	rw.Header().Set("WWW-Authenticate", realm)
+	rw.WriteHeader(http.StatusUnauthorized)
+	_,_ = rw.Write([]byte(err.Error()))
 }

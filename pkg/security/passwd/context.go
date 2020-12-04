@@ -70,3 +70,16 @@ func (auth *usernamePasswordAuthentication) Details() interface{} {
 func (auth *usernamePasswordAuthentication) IsUsernamePasswordAuthentication() bool {
 	return true
 }
+
+func IsSamePrincipal(username string, currentAuth security.Authentication) bool {
+	if currentAuth == nil || !currentAuth.Authenticated() {
+		return false
+	}
+
+	if account, ok := currentAuth.Principal().(security.Account); ok && username == account.Username() {
+		return true
+	} else if principal, ok := currentAuth.Principal().(string); ok && username == principal {
+		return true
+	}
+	return false
+}

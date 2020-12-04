@@ -22,12 +22,12 @@ type webSecurity struct {
 	authenticator    Authenticator
 }
 
-func newWebSecurity(authenticator Authenticator) *webSecurity {
+func newWebSecurity(authenticator Authenticator, shared map[string]interface{}) *webSecurity {
 	return &webSecurity{
 		handlers:      []interface{}{},
 		features:      []Feature{},
 		applied:       map[FeatureIdentifier]struct{}{},
-		shared:        map[string]interface{}{},
+		shared:        shared,
 		authenticator: authenticator,
 	}
 }

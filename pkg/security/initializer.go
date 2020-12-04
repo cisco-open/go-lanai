@@ -112,7 +112,10 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 
 func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, error) {
 	// collect security configs
-	ws := newWebSecurity(NewAuthenticator())
+	ws := newWebSecurity(NewAuthenticator(), map[string]interface{}{
+		WSSharedKeyCompositeAuthSuccessHandler: NewAuthenticationSuccessHandler(),
+		WSSharedKeyCompositeAuthErrorHandler: NewAuthenticationErrorHandler(),
+	})
 	configurer.Configure(ws)
 
 	// configure web security

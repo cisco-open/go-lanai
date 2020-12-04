@@ -106,6 +106,8 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	if f.successHandler == nil {
 		f.successHandler = redirect.NewRedirectWithURL(f.loginSuccessUrl)
 	}
+	authSuccessHandler := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler)
+	authSuccessHandler.Add(f.successHandler)
 
 	// let ws know to intercept additional url
 	route := matcher.RouteWithPattern(f.loginProcessUrl, http.MethodPost)
@@ -116,7 +118,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	login := NewFormAuthenticationMiddleware(FormAuthOptions{
 		Authenticator:  ws.Authenticator(),
-		SuccessHandler: f.successHandler,
+		SuccessHandler: authSuccessHandler,
 		UsernameParam:  f.usernameParam,
 		PasswordParam:  f.passwordParam,
 	})
