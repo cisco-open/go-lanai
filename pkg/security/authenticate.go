@@ -1,11 +1,16 @@
 package security
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
+	"net/http"
 	"sort"
 )
 
+/*****************************
+	Abstraction
+ *****************************/
 type Candidate interface {
 	Principal() interface{}
 	Credentials() interface{}
@@ -19,14 +24,24 @@ type Authenticator interface {
 	Authenticate(Candidate) (Authentication, error)
 }
 
+// AuthenticationSuccessHandler handles authentication success event
+// The counterpart of this interface is AuthenticationErrorHandler
+type AuthenticationSuccessHandler interface {
+	HandleAuthenticationSuccess(context.Context, *http.Request, http.ResponseWriter, Authentication)
+}
+
+/*****************************
+	Common Impl.
+ *****************************/
+// *CompositeAuthenticator implement Authenticator interface
 type CompositeAuthenticator struct {
 	authenticators []Authenticator
 }
 
 func NewAuthenticator(authenticators ...Authenticator) Authenticator {
-	return &CompositeAuthenticator {
-		authenticators: authenticators,
-	}
+	ret := &CompositeAuthenticator {}
+	ret.authenticators = ret.processAuthenticators(authenticators)
+	return ret
 }
 
 func (a *CompositeAuthenticator) Authenticate(candidate Candidate) (auth Authentication, err error) {
@@ -40,15 +55,92 @@ func (a *CompositeAuthenticator) Authenticate(candidate Candidate) (auth Authent
 }
 
 func (a *CompositeAuthenticator) Add(authenticator Authenticator) *CompositeAuthenticator {
-	a.authenticators = append(a.authenticators, authenticator)
-	return a
-}
-
-func (a *CompositeAuthenticator) Merge(composite *CompositeAuthenticator) *CompositeAuthenticator {
-	a.authenticators = append(a.authenticators, composite.authenticators...)
-	sort.Slice(a.authenticators, func(i,j int) bool {
+	a.authenticators = a.processAuthenticators(append(a.authenticators, authenticator))
+	sort.SliceStable(a.authenticators, func(i,j int) bool {
 		return order.OrderedFirstCompare(a.authenticators[i], a.authenticators[j])
 	})
 	return a
 }
 
+func (a *CompositeAuthenticator) Merge(composite *CompositeAuthenticator) *CompositeAuthenticator {
+	a.authenticators = a.processAuthenticators(append(a.authenticators, composite.authenticators...))
+	return a
+}
+
+func (a *CompositeAuthenticator) processAuthenticators(authenticators []Authenticator) []Authenticator {
+	// remove self
+	authenticators = a.removeSelf(authenticators)
+	sort.SliceStable(authenticators, func(i,j int) bool {
+		return order.OrderedFirstCompare(authenticators[i], authenticators[j])
+	})
+	return authenticators
+}
+
+func (a *CompositeAuthenticator) removeSelf(authenticators []Authenticator) []Authenticator {
+	count := 0
+	for _, item := range authenticators {
+		if ptr, ok := item.(*CompositeAuthenticator); !ok || ptr != a {
+			// copy and increment index
+			authenticators[count] = item
+			count++
+		}
+	}
+	// Prevent memory leak by erasing truncated values
+	for j := count; j < len(authenticators); j++ {
+		authenticators[j] = nil
+	}
+	return authenticators[:count]
+}
+
+// *CompositeAuthenticationSuccessHandler implement AuthenticationSuccessHandler interface
+type CompositeAuthenticationSuccessHandler struct {
+	handlers []AuthenticationSuccessHandler
+}
+
+func NewAuthenticationSuccessHandler(handlers ...AuthenticationSuccessHandler) *CompositeAuthenticationSuccessHandler {
+	ret := &CompositeAuthenticationSuccessHandler {}
+	ret.handlers = ret.processSuccessHandlers(handlers)
+	return ret
+}
+
+func (h *CompositeAuthenticationSuccessHandler) HandleAuthenticationSuccess(
+	c context.Context, r *http.Request, rw http.ResponseWriter, auth Authentication) {
+
+	for _,handler := range h.handlers {
+		handler.HandleAuthenticationSuccess(c, r, rw, auth)
+	}
+}
+
+func (h *CompositeAuthenticationSuccessHandler) Add(handler AuthenticationSuccessHandler) *CompositeAuthenticationSuccessHandler {
+	h.handlers = h.processSuccessHandlers(append(h.handlers, handler))
+	return h
+}
+
+func (h *CompositeAuthenticationSuccessHandler) Merge(composite *CompositeAuthenticationSuccessHandler) *CompositeAuthenticationSuccessHandler {
+	h.handlers = h.processSuccessHandlers(append(h.handlers, composite.handlers...))
+	return h
+}
+
+func (h *CompositeAuthenticationSuccessHandler) processSuccessHandlers(handlers []AuthenticationSuccessHandler) []AuthenticationSuccessHandler {
+	handlers = h.removeSelf(handlers)
+	sort.SliceStable(handlers, func(i,j int) bool {
+		return order.OrderedFirstCompare(handlers[i], handlers[j])
+	})
+	return handlers
+}
+
+func (h *CompositeAuthenticationSuccessHandler) removeSelf(items []AuthenticationSuccessHandler) []AuthenticationSuccessHandler {
+	count := 0
+	for _, item := range items {
+		if ptr, ok := item.(*CompositeAuthenticationSuccessHandler); !ok || ptr != h {
+			// copy and increment index
+			items[count] = item
+			count++
+		}
+	}
+	// Prevent memory leak by erasing truncated values
+	for j := count; j < len(items); j++ {
+		items[j] = nil
+	}
+	return items[:count]
+}

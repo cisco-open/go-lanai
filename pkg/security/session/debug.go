@@ -1,10 +1,12 @@
 package session
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
+	"net/http"
 	"time"
 )
 
@@ -39,4 +41,22 @@ func RandomString(length int) string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+
+type DebugAuthSuccessHandler struct {}
+
+func (h *DebugAuthSuccessHandler) HandleAuthenticationSuccess(
+	_ context.Context, _ *http.Request, _ http.ResponseWriter, auth security.Authentication) {
+	if auth == nil {
+		fmt.Printf("[DEBUG] session knows auth succeeded with nil \n")
+	} else {
+		fmt.Printf("[DEBUG] session knows auth succeeded with %v \n", auth.Principal())
+	}
+}
+
+type DebugAuthErrorHandler struct {}
+
+func (h *DebugAuthErrorHandler) HandleAuthenticationError(_ context.Context, _ *http.Request, _ http.ResponseWriter, err error) {
+	fmt.Printf("[DEBUG] session knows auth failed with %v \n", err.Error())
 }

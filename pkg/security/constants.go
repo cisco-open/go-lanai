@@ -9,18 +9,27 @@ import (
 const (
 	MinSecurityPrecedence = bootstrap.FrameworkModulePrecedence + 2000
 	MaxSecurityPrecedence = bootstrap.FrameworkModulePrecedence + 2999
+)
 
+const (
 	ContextKeySecurity = web.ContextKeySecurity
+)
+
+const (
+	WSSharedKeyCompositeAuthSuccessHandler = "CompositeAuthSuccessHandler"
+	WSSharedKeyCompositeAuthErrorHandler = "CompositeAuthErrorHandler"
 )
 
 // Middleware Orders
 const (
 	_ = iota
 	MWOrderSessionHandling = HighestMiddlewareOrder + iota * 20
+	MWOrderAuthPersistence
 	MWOrderErrorHandling
 	MWOrderCsrfHandling
-	MWOrderAuthPersistence
 	MWOrderBasicAuth
+	MWOrderFormLogout
+	MWOrderFormAuth
 	// ... TODO more MW goes here
 	MWOrderAccessControl = LowestMiddlewareOrder - 200
 )
@@ -30,6 +39,10 @@ const (
 	_ = iota
 	FeatureOrderAuthenticator = iota * 100
 	FeatureOrderBasicAuth
+	FeatureOrderFormLogin
+	FeatureOrderLogout
+	FeatureOrderCsrf
+	FeatureOrderAccess
 	// ... TODO more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200
 )

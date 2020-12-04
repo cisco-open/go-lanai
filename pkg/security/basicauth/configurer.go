@@ -46,12 +46,18 @@ func newBasicAuthConfigurer() *BasicAuthConfigurer {
 }
 
 func (bac *BasicAuthConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
+
 	// configure other dependent features
 	errorhandling.Configure(ws).
-		AuthenticationEntryPoint(NewBasicAuthEntryPoint())
+		AuthenticationEntryPoint(NewBasicAuthEntryPoint()).
+		AuthenticationErrorHandler(NewBasicAuthErrorHandler())
 
 	// configure middlewares
-	basicAuth := NewBasicAuthMiddleware(ws.Authenticator())
+	basicAuth := NewBasicAuthMiddleware(
+		ws.Authenticator(),
+		ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler),
+		)
+
 	auth := middleware.NewBuilder("basic auth").
 		Order(security.MWOrderBasicAuth).
 		Use(basicAuth.HandlerFunc())

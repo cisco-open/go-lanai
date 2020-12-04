@@ -7,7 +7,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"go.uber.org/fx"
@@ -28,7 +31,7 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 	})
 
 	init.Register(&AnotherSecurityConfigurer { })
-	//init.Register(&ErrorPageSecurityConfigurer{})
+	init.Register(&ErrorPageSecurityConfigurer{})
 }
 
 type TestSecurityConfigurer struct {
@@ -41,6 +44,7 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 	// for REST API
 	ws.Route(matcher.RouteWithPattern("/api/**")).
 		Condition(matcher.RequestWithHost("localhost:8080")).
+		With(session.New()).
 		With(passwd.New().
 			AccountStore(c.accountStore).
 			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
@@ -59,20 +63,26 @@ type AnotherSecurityConfigurer struct {
 func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// For Page
-	handler := errorhandling.NewRedirectWithRelativePath("/error")
+	handler := redirect.NewRedirectWithRelativePath("/error")
+	condition := matcher.RequestWithHost("localhost:8080")
 
-	ws.Route(matcher.RouteWithPattern("/page/**").Or(matcher.RouteWithPattern("/error"))).
-		Condition(matcher.RequestWithHost("localhost:8080")).
-		With(basicauth.New()).
+	ws.Route(matcher.RouteWithPattern("/page/**")).
+		Condition(condition).
 		With(session.New()).
 		With(passwd.New()).
 		With(access.New().
 			Request(
 				matcher.RequestWithPattern("/page/public").
-					Or(matcher.RequestWithPattern("/page/public/**")).
-					Or(matcher.RequestWithPattern("/error")),
+					Or(matcher.RequestWithPattern("/page/public/**")),
 			).PermitAll().
-			Request(matcher.AnyRequest()).HasPermissions("welcomed"),
+			Request(matcher.AnyRequest()).Authenticated(),
+		).
+		With(formlogin.New().
+			LoginProcessCondition(condition).
+			LoginSuccessUrl("/page/hello"),
+		).
+		With(logout.New().
+			SuccessUrl("/login"),
 		).
 		With(errorhandling.New().
 			AuthenticationEntryPoint(handler).
@@ -81,14 +91,14 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(csrf.New())
 }
 
-//type ErrorPageSecurityConfigurer struct {
-//}
+type ErrorPageSecurityConfigurer struct {
+}
 
-//func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
-//
-//	ws.Route(matcher.RouteWithPattern("/error")).
-//		With(session.New()).
-//		With(access.New().
-//			Request(matcher.AnyRequest()).PermitAll(),
-//		)
-//}
+func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
+
+	ws.Route(matcher.RouteWithPattern("/error")).
+		With(session.New()).
+		With(access.New().
+			Request(matcher.AnyRequest()).PermitAll(),
+		)
+}

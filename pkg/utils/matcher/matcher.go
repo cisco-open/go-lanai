@@ -2,6 +2,8 @@ package matcher
 
 import (
 	"context"
+	"fmt"
+	"strings"
 )
 
 type Matcher interface {
@@ -98,6 +100,14 @@ func (m OrMatcher) And(matchers ...Matcher) ChainableMatcher {
 	return And(m, matchers...)
 }
 
+func (m OrMatcher) String() string {
+	descs := make([]string, len(m))
+	for i,item := range m {
+		descs[i] = item.(fmt.Stringer).String()
+	}
+	return strings.Join(descs, " OR ")
+}
+
 // AndMatcher chain a list of matchers with AND operator
 type AndMatcher []Matcher
 
@@ -127,6 +137,14 @@ func (m AndMatcher) And(matchers ...Matcher) ChainableMatcher {
 	return And(m, matchers...)
 }
 
+func (m AndMatcher) String() string {
+	descs := make([]string, len(m))
+	for i,item := range m {
+		descs[i] = item.(fmt.Stringer).String()
+	}
+	return strings.Join(descs, " AND ")
+}
+
 // NegateMatcher apply ! operator to embedded Matcher
 type NegateMatcher struct {
 	Matcher
@@ -150,6 +168,11 @@ func (m *NegateMatcher) And(matchers ...Matcher) ChainableMatcher {
 	return And(m, matchers...)
 }
 
+
+func (m NegateMatcher) String() string {
+	return fmt.Sprintf("Not(%v)", m.Matcher)
+}
+
 // TODO review use cases to determine if this class is necessary
 // GenericMatcher implements ChainableMatcher
 type GenericMatcher struct {
@@ -170,4 +193,8 @@ func (m *GenericMatcher) Or(matchers ...Matcher) ChainableMatcher {
 
 func (m *GenericMatcher) And(matchers ...Matcher) ChainableMatcher {
 	return And(m, matchers...)
+}
+
+func (m *GenericMatcher) String() string {
+	return fmt.Sprintf("generic matcher with func [%T]", m.matchFunc)
 }

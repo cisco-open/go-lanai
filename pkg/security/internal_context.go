@@ -19,8 +19,14 @@ type FeatureModifier interface {
 	Disable(Feature)
 }
 
-type WebSecurityMiddlewareBuilder interface {
-	Build() []web.MiddlewareMapping
+type WebSecurityReader interface {
+	GetRoute() web.RouteMatcher
+	GetCondition() web.MWConditionMatcher
+	GetHandlers() []interface{}
+}
+
+type WebSecurityMappingBuilder interface {
+	Build() []web.Mapping
 }
 
 // FeatureConfigurer not intended to be used directly in service

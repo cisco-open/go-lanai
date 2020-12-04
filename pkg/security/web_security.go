@@ -3,8 +3,8 @@ package security
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
 	"net/http"
 )
@@ -13,21 +13,21 @@ import (
 	webSecurity Impl
 ******************************/
 type webSecurity struct {
-	routeMatcher        web.RouteMatcher
-	conditionMatcher    web.MWConditionMatcher
-	middlewareTemplates []MiddlewareTemplate
-	features            []Feature
-	applied				map[FeatureIdentifier]struct{}
-	shared 				map[string]interface{}
-	authenticator 		Authenticator
+	routeMatcher     web.RouteMatcher
+	conditionMatcher web.MWConditionMatcher
+	handlers         []interface{}
+	features         []Feature
+	applied          map[FeatureIdentifier]struct{}
+	shared           map[string]interface{}
+	authenticator    Authenticator
 }
 
-func newWebSecurity(authenticator Authenticator) *webSecurity {
+func newWebSecurity(authenticator Authenticator, shared map[string]interface{}) *webSecurity {
 	return &webSecurity{
-		middlewareTemplates: []MiddlewareTemplate{},
-		features: []Feature{},
-		applied: map[FeatureIdentifier]struct{}{},
-		shared: map[string]interface{}{},
+		handlers:      []interface{}{},
+		features:      []Feature{},
+		applied:       map[FeatureIdentifier]struct{}{},
+		shared:        shared,
 		authenticator: authenticator,
 	}
 }
@@ -38,12 +38,20 @@ func (ws *webSecurity) Features() []Feature {
 }
 
 func (ws *webSecurity) Route(rm web.RouteMatcher) WebSecurity {
-	ws.routeMatcher = rm
+	if ws.routeMatcher != nil {
+		ws.routeMatcher = ws.routeMatcher.Or(rm)
+	} else {
+		ws.routeMatcher = rm
+	}
 	return ws
 }
 
 func (ws *webSecurity) Condition(mwcm web.MWConditionMatcher) WebSecurity {
-	ws.conditionMatcher = mwcm
+	if ws.conditionMatcher != nil {
+		ws.conditionMatcher = ws.conditionMatcher.Or(mwcm)
+	} else {
+		ws.conditionMatcher = mwcm
+	}
 	return ws
 }
 
@@ -55,14 +63,25 @@ func (ws *webSecurity) With(f Feature) WebSecurity {
 	return ws
 }
 
-func (ws *webSecurity) Add(templates ...MiddlewareTemplate) WebSecurity {
-	ws.middlewareTemplates = append(ws.middlewareTemplates, templates...)
+func (ws *webSecurity) Add(handlers ...interface{}) WebSecurity {
+	for i, h := range handlers {
+		v, err := ws.toAcceptedHandler(h)
+		if err != nil {
+			panic(err)
+		}
+		handlers[i] = v
+	}
+	ws.handlers = append(ws.handlers, handlers...)
 	return ws
 }
 
-func (ws *webSecurity) Remove(templates ...MiddlewareTemplate) WebSecurity {
-	for _, t := range templates {
-		ws.middlewareTemplates = remove(ws.middlewareTemplates, t)
+func (ws *webSecurity) Remove(handlers ...interface{}) WebSecurity {
+	for _, h := range handlers {
+		v, err := ws.toAcceptedHandler(h)
+		if err != nil {
+			panic(err)
+		}
+		ws.handlers = remove(ws.handlers, v)
 	}
 	return ws
 }
@@ -106,22 +125,45 @@ func (ws *webSecurity) Disable(f Feature) {
 	}
 }
 
-/* WebSecurityMiddlewareBuilder interface */
-func (ws *webSecurity) Build() []web.MiddlewareMapping {
-	mappings := make([]web.MiddlewareMapping, len(ws.middlewareTemplates))
+/* WebSecurityReader interface */
+func (ws *webSecurity) GetRoute() web.RouteMatcher {
+	return ws.routeMatcher
+}
 
-	for i, template := range ws.middlewareTemplates {
-		builder := (*middleware.MappingBuilder)(template)
-		if ws.routeMatcher == nil {
-			ws.routeMatcher = matcher.AnyRoute()
+func (ws *webSecurity) GetCondition() web.MWConditionMatcher {
+	return ws.conditionMatcher
+}
+
+func (ws *webSecurity) GetHandlers() []interface{} {
+	return ws.handlers
+}
+
+/* WebSecurityMappingBuilder interface */
+func (ws *webSecurity) Build() []web.Mapping {
+	mappings := make([]web.Mapping, len(ws.handlers))
+
+	for i, v := range ws.handlers {
+		var mapping web.Mapping
+
+		if _, ok := v.(MiddlewareTemplate); ok {
+			// non-interface types
+			mapping = ws.buildFromMiddlewareTemplate(v.(MiddlewareTemplate))
+		} else {
+			// interface types
+			switch v.(type) {
+			case web.GenericMapping:
+				mapping = v.(web.GenericMapping)
+			case web.StaticMapping:
+				mapping = v.(web.StaticMapping)
+			case web.MvcMapping:
+				mapping = v.(web.MvcMapping)
+			case web.MiddlewareMapping:
+				mapping = v.(web.MiddlewareMapping)
+			default:
+				panic(fmt.Errorf("unable to build security mappings from unsupported WebSecurity handler [%T]", v))
+			}
 		}
-		builder = builder.ApplyTo(ws.routeMatcher)
-
-		if ws.conditionMatcher != nil {
-			builder = builder.WithCondition(conditionFunc(ws.conditionMatcher) )
-		}
-
-		mappings[i] = builder.Build()
+		mappings[i] = mapping
 	}
 	return mappings
 }
@@ -133,7 +175,41 @@ func (ws *webSecurity) String() string {
 }
 
 // unexported
-func remove(slice []MiddlewareTemplate, item MiddlewareTemplate) []MiddlewareTemplate {
+func (ws *webSecurity) buildFromMiddlewareTemplate(tmpl MiddlewareTemplate) web.Mapping {
+	builder := (*middleware.MappingBuilder)(tmpl)
+	if ws.routeMatcher == nil {
+		ws.routeMatcher = matcher.AnyRoute()
+	}
+	builder = builder.ApplyTo(ws.routeMatcher)
+
+	if ws.conditionMatcher != nil {
+		builder = builder.WithCondition(WebConditionFunc(ws.conditionMatcher) )
+	}
+	return builder.Build()
+}
+
+// toAcceptedHandler perform validation and some type casting on the interface
+func (ws *webSecurity) toAcceptedHandler(v interface{}) (interface{}, error) {
+		// non-interface types
+		if _, ok := v.(*middleware.MappingBuilder); ok {
+			return MiddlewareTemplate(v.(*middleware.MappingBuilder)), nil
+		} else if _, ok := v.(MiddlewareTemplate); ok {
+			return v, nil
+		}
+
+		// interface types
+		switch v.(type) {
+		case web.GenericMapping:
+		case web.StaticMapping:
+		case web.MvcMapping:
+		case web.MiddlewareMapping:
+		default:
+			return nil, fmt.Errorf("unsupported WebSecurity handler [%T]", v)
+		}
+	return v, nil
+}
+
+func remove(slice []interface{}, item interface{}) []interface{} {
 	for i,obj := range slice {
 		if obj != item {
 			continue
@@ -154,7 +230,7 @@ func findFeatureIndex(slice []Feature, f Feature) int {
 	return -1
 }
 
-func conditionFunc(matcher web.MWConditionMatcher) web.MWConditionFunc {
+func WebConditionFunc(matcher web.MWConditionMatcher) web.MWConditionFunc {
 	return func(ctx context.Context, req *http.Request) bool {
 		if matches, err := matcher.MatchesWithContext(ctx, req); err != nil {
 			return false

@@ -3,7 +3,6 @@ package errorhandling
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,14 +52,22 @@ func (eh *ErrorHandlingMiddleware) tryHandleErrors(c *gin.Context) {
 }
 
 func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
-	fmt.Printf("security error: %s", err.Error())
+	if c.Writer.Written() {
+		return
+	}
+
+	// we assume eh.authErrorHandler and eh.accessDeniedHandler is always not nil (guaranteed by ErrorHandlingConfigurer)
 	switch {
-	case eh.entryPoint != nil && errors.Is(err, security.ErrorTypeAuthentication):
-		fallthrough
+	case errors.Is(err, security.ErrorTypeInternal):
+		eh.authErrorHandler.HandleAuthenticationError(c, c.Request, c.Writer, err)
+
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorSubTypeInsufficientAuth):
 		eh.entryPoint.Commence(c, c.Request, c.Writer, err)
+
 	case errors.Is(err, security.ErrorTypeAuthentication):
+		eh.clearAuthentication(c)
 		eh.authErrorHandler.HandleAuthenticationError(c, c.Request, c.Writer, err)
+		
 	default:
 		eh.accessDeniedHandler.HandleAccessDenied(c, c.Request, c.Writer, err)
 	}
@@ -69,3 +76,7 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 /**************************
 	Helpers
 ***************************/
+func (eh *ErrorHandlingMiddleware) clearAuthentication(ctx *gin.Context) {
+	ctx.Set(gin.AuthUserKey, nil)
+	ctx.Set(security.ContextKeySecurity, nil)
+}

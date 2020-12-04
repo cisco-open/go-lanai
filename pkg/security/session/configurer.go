@@ -54,6 +54,8 @@ func newSessionConfigurer(sessionProps security.SessionProperties, serverProps w
 }
 
 func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
+
+	// configure session store
 	var sameSite http.SameSite
 	switch strings.ToLower(sc.sessionProps.Cookie.SameSite) {
 	case "lax":
@@ -87,6 +89,7 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 	}
 	sessionStore := NewRedisStore(sc.connection, configureOptions)
 
+	// configure middleware
 	manager := NewManager(sessionStore)
 
 	sessionHandler := middleware.NewBuilder("sessionMiddleware").
@@ -102,5 +105,12 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 		Use(SessionDebugHandlerFunc())
 
 	ws.Add(sessionHandler, authPersist, test)
+
+	// configure auth success/error handler
+	// TODO session fixation goes here
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(&DebugAuthSuccessHandler{})
+	ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
+		Add(&DebugAuthErrorHandler{})
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
+	"go.uber.org/fx"
 )
 
 /************************************
@@ -29,10 +30,10 @@ type Registrar interface {
 
 // Initializer is the entry point to bootstrap security
 type Initializer interface {
-	// Register is the entry point for all security configuration.
+	// Initialize is the entry point for all security configuration.
 	// Microservice or other library packages typically call this in Provide or Invoke functions
 	// Note: use this function inside fx.Lifecycle takes no effect
-	Initialize(registrar *web.Registrar) error
+	Initialize(lc fx.Lifecycle, registrar *web.Registrar) error
 }
 
 /****************************************
@@ -64,16 +65,30 @@ type Feature interface {
 type WebSecurity interface {
 
 	// Route configure the path and method pattern which this WebSecurity applies to
+	// Calling this method multiple times concatenate all given matchers with OR operator
 	Route(web.RouteMatcher) WebSecurity
 
 	// Condition sets additional conditions of incoming request which this WebSecurity applies to
+	// Calling this method multiple times concatenate all given matchers with OR operator
 	Condition(mwcm web.MWConditionMatcher) WebSecurity
 
-	// Add is DSL style setter to add MiddlewareTemplate
-	Add(...MiddlewareTemplate) WebSecurity
+	// Add is DSL style setter to add:
+	// - MiddlewareTemplate
+	// - web.MiddlewareMapping
+	// - web.MvcMapping
+	// - web.StaticMapping
+	// - web.GenericMapping
+	// when MiddlewareTemplate is given, WebSecurity's Route and Condition are applied to it
+	// this method panic if other type is given
+	Add(...interface{}) WebSecurity
 
-	// Remove is DSL style setter to add remove MiddlewareTemplate
-	Remove(...MiddlewareTemplate) WebSecurity
+	// Remove is DSL style setter to remove:
+	// - MiddlewareTemplate
+	// - web.MiddlewareMapping
+	// - web.MvcMapping
+	// - web.StaticMapping
+	// - web.GenericMapping
+	Remove(...interface{}) WebSecurity
 
 	// With is DSL style setter to enable features
 	With(f Feature) WebSecurity

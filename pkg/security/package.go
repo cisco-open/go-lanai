@@ -57,8 +57,8 @@ type initDI struct {
 	Initializer Initializer
 }
 
-func initialize(di initDI) {
-	if err := di.Initializer.Initialize(di.Registerer); err != nil {
+func initialize(lc fx.Lifecycle, di initDI) {
+	if err := di.Initializer.Initialize(lc, di.Registerer); err != nil {
 		panic(err)
 	}
 }
