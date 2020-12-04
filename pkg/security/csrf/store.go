@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const TokenAttrName = "CsrfToken"
+const SessionKeyCsrfToken = "CsrfToken"
 
 /**
  The header name and parameter name are part of the token in case some components down the line needs them.
@@ -64,7 +64,7 @@ func (store *SessionBackedStore) SaveToken(c *gin.Context, token *Token) error {
 		return errors.New("can't save csrf token to session, because the request has no session")
 	}
 
-	s.Set(TokenAttrName, token)
+	s.Set(SessionKeyCsrfToken, token)
 	return s.Save()
 }
 
@@ -75,7 +75,7 @@ func (store *SessionBackedStore) LoadToken(c *gin.Context) (*Token, error) {
 		return nil, errors.New("can't load csrf token from session, because the request has no session")
 	}
 
-	attr := s.Get(TokenAttrName)
+	attr := s.Get(SessionKeyCsrfToken)
 
 	if attr == nil {
 		return nil, nil

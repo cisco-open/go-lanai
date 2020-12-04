@@ -37,13 +37,17 @@ func (m *manager) CsrfHandlerFunc() gin.HandlerFunc {
 		// this means there's something wrong with reading the csrf token from storage - e.g. can't deserialize or can't access storage
 		// this means we can't recover, so abort
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(security.NewInternalError(err.Error()))
 			c.Abort()
 		}
 
 		if expectedToken == nil {
 			expectedToken = m.tokenStore.Generate(c, m.parameterName, m.headerName)
-			m.tokenStore.SaveToken(c, expectedToken)
+			err = m.tokenStore.SaveToken(c, expectedToken)
+			if err != nil {
+				_ = c.Error(security.NewInternalError(err.Error()))
+				c.Abort()
+			}
 		}
 
 		//This so that the templates knows what to render to
@@ -52,7 +56,7 @@ func (m *manager) CsrfHandlerFunc() gin.HandlerFunc {
 
 		matches, err := m.requireProtection.MatchesWithContext(c, c.Request)
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(security.NewInternalError(err.Error()))
 			c.Abort()
 		}
 
