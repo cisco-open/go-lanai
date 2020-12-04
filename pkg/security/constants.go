@@ -41,6 +41,7 @@ const (
 	FeatureOrderBasicAuth
 	FeatureOrderFormLogin
 	FeatureOrderLogout
+	FeatureOrderCsrf
 	FeatureOrderAccess
 	// ... TODO more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200

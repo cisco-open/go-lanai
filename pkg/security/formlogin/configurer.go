@@ -3,6 +3,7 @@ package formlogin
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
@@ -111,6 +112,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	// let ws know to intercept additional url
 	route := matcher.RouteWithPattern(f.loginProcessUrl, http.MethodPost)
+	csrfMatcher := matcher.RequestWithPattern(f.loginProcessUrl, http.MethodPost)
 	ws.Route(route)
 
 	// configure middlewares
@@ -133,5 +135,8 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(web.NewGenericMapping("login process dummy", f.loginProcessUrl, http.MethodPost, login.EndpointHandlerFunc() ))
+
+	// protect login process with csrf
+	csrf.Configure(ws).CsrfProtectionMatcher(csrfMatcher)
 	return nil
 }

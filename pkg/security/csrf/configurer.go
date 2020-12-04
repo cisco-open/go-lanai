@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"fmt"
 )
 
 /**
@@ -11,10 +12,18 @@ import (
 	https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#synchronizer-token-pattern
  */
 
-var FeatureId = security.SimpleFeatureId("csrf")
+var FeatureId = security.FeatureId("csrf", security.FeatureOrderCsrf)
 
 type Feature struct {
 	RequireCsrfProtectionMatcher web.RequestMatcher
+}
+
+func Configure(ws security.WebSecurity) *Feature {
+	feature := New()
+	if fc, ok := ws.(security.FeatureModifier); ok {
+		return  fc.Enable(feature).(*Feature)
+	}
+	panic(fmt.Errorf("unable to configure CSRF: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
 func New() *Feature {
