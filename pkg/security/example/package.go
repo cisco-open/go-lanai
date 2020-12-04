@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
@@ -86,7 +87,8 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(errorhandling.New().
 			AuthenticationEntryPoint(handler).
 			AccessDeniedHandler(handler),
-		)
+		).
+		With(csrf.New())
 }
 
 type ErrorPageSecurityConfigurer struct {

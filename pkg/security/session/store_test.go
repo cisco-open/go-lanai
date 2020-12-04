@@ -6,7 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
 	"encoding/gob"
 	"fmt"
 	goRedis "github.com/go-redis/redis/v8"
@@ -28,6 +28,12 @@ func (u *testUser) Username() string {
 func (u *testUser) Password() string {
 	return u.Pass
 }
+
+func (u *testUser) Permissions() []string {
+	var p []string
+	return p
+}
+
 
 type testAuthentication struct {
 	Account     security.Account
@@ -58,7 +64,7 @@ func TestSerialization(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mocks.NewMockUniversalClient(ctrl)
+	mock := mock_redis.NewMockUniversalClient(ctrl)
 	connection := &redis.Connection{
 		UniversalClient: mock,
 	}
@@ -125,7 +131,7 @@ func Test_Get_Not_Exist_Session_Should_Create_New(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mocks.NewMockUniversalClient(ctrl)
+	mock := mock_redis.NewMockUniversalClient(ctrl)
 	connection := &redis.Connection{
 		UniversalClient: mock,
 	}
@@ -167,7 +173,7 @@ func Test_Get_Exist_Session_Should_Return_Existing(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mocks.NewMockUniversalClient(ctrl)
+	mock := mock_redis.NewMockUniversalClient(ctrl)
 	connection := &redis.Connection{
 		UniversalClient: mock,
 	}
@@ -229,7 +235,7 @@ func TestSaveNewSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mocks.NewMockUniversalClient(ctrl)
+	mock := mock_redis.NewMockUniversalClient(ctrl)
 	connection := &redis.Connection{
 		UniversalClient: mock,
 	}
@@ -277,7 +283,7 @@ func TestSaveDirtySession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mocks.NewMockUniversalClient(ctrl)
+	mock := mock_redis.NewMockUniversalClient(ctrl)
 	connection := &redis.Connection{
 		UniversalClient: mock,
 	}
@@ -331,7 +337,7 @@ func TestSaveAccessedSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mocks.NewMockUniversalClient(ctrl)
+	mock := mock_redis.NewMockUniversalClient(ctrl)
 	connection := &redis.Connection{
 		UniversalClient: mock,
 	}

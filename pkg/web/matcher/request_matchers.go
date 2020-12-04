@@ -69,6 +69,10 @@ func AnyRequest() web.RequestMatcher {
 	return wrapAsRequestMatcher(matcher.Any())
 }
 
+func NotRequest(m web.RequestMatcher) web.RequestMatcher {
+	return wrapAsRequestMatcher(matcher.Not(m))
+}
+
 // TODO support wildcard
 func RequestWithHost(expected string) web.RequestMatcher {
 	delegate := matcher.WithString(expected, true)
@@ -92,7 +96,7 @@ func RequestWithMethods(methods...string) web.RequestMatcher {
 	}
 
 	return &requestMatcher{
-		description:   fmt.Sprintf("method %s", delegate.(fmt.Stringer).String()),
+		description:   fmt.Sprintf("method %v", delegate),
 		matchableFunc: method,
 		delegate:      delegate,
 	}

@@ -26,6 +26,7 @@ const (
 	MWOrderSessionHandling = HighestMiddlewareOrder + iota * 20
 	MWOrderAuthPersistence
 	MWOrderErrorHandling
+	MWOrderCsrfHandling
 	MWOrderBasicAuth
 	MWOrderFormLogout
 	MWOrderFormAuth

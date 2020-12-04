@@ -25,6 +25,9 @@ func TestTypeComparison(t *testing.T) {
 
 	case errors.Is(security.ErrorSubTypeInternalError, security.ErrorSubTypeUsernamePasswordAuth):
 		t.Errorf("Different ErrorSubType should not match each other")
+
+	case !errors.Is(security.ErrorSubTypeCsrf, security.ErrorTypeAccessControl):
+		t.Errorf("ErrorSubTypeCsrf should be ErrorTypeAccessControl error")
 	}
 }
 
@@ -81,5 +84,55 @@ func TestBadCredentialsError(t *testing.T) {
 
 	case errors.Is(coded, security.ErrorSubTypeInternalError):
 		t.Errorf("NewBadCredentialsError should not match ErrorSubTypeInternalError")
+	}
+}
+
+func TestMissingCsrfTokenError(t *testing.T) {
+	coded := security.NewMissingCsrfTokenError("missing csrf token")
+	another := security.NewMissingCsrfTokenError("different message")
+	nonCoded := errors.New("non-coded error")
+	switch {
+	case !errors.Is(coded, security.ErrorTypeSecurity):
+		t.Errorf("NewMissingCsrfTokenError should match ErrorTypeSecurity")
+
+	case !errors.Is(coded, security.ErrorTypeAccessControl):
+		t.Errorf("NewMissingCsrfTokenError should match ErrorTypeAccessControl")
+
+	case !errors.Is(coded, security.ErrorSubTypeCsrf):
+		t.Errorf("NewMissingCsrfTokenError should match ErrorSubTypeCsrf")
+
+	case !errors.Is(coded, another):
+		t.Errorf("Two NewMissingCsrfTokenError should match each other")
+
+	case errors.Is(coded, nonCoded):
+		t.Errorf("NewMissingCsrfTokenError should not match non-coded error")
+
+	case errors.Is(coded, security.ErrorTypeAuthentication):
+		t.Errorf("NewMissingCsrfTokenError should not match ErrorTypeAuthentication")
+	}
+}
+
+func TestInvalidCsrfTokenError(t *testing.T) {
+	coded := security.NewInvalidCsrfTokenError("invalid csrf token")
+	another := security.NewInvalidCsrfTokenError("different message")
+	nonCoded := errors.New("non-coded error")
+	switch {
+	case !errors.Is(coded, security.ErrorTypeSecurity):
+		t.Errorf("NewInvalidCsrfTokenError should match ErrorTypeSecurity")
+
+	case !errors.Is(coded, security.ErrorTypeAccessControl):
+		t.Errorf("NewInvalidCsrfTokenError should match ErrorTypeAccessControl")
+
+	case !errors.Is(coded, security.ErrorSubTypeCsrf):
+		t.Errorf("NewInvalidCsrfTokenError should match ErrorSubTypeCsrf")
+
+	case !errors.Is(coded, another):
+		t.Errorf("Two NewInvalidCsrfTokenError should match each other")
+
+	case errors.Is(coded, nonCoded):
+		t.Errorf("NewInvalidCsrfTokenError should not match non-coded error")
+
+	case errors.Is(coded, security.ErrorTypeAuthentication):
+		t.Errorf("NewInvalidCsrfTokenError should not match ErrorTypeAuthentication")
 	}
 }
