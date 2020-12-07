@@ -13,7 +13,7 @@ const (
 
 type Authentication interface {
 	Principal() interface{}
-	Permissions() []string
+	Permissions() map[string]interface{}
 	Authenticated() bool
 	Details() interface{}
 }
@@ -34,8 +34,8 @@ func (EmptyAuthentication) Authenticated() bool {
 	return false
 }
 
-func (EmptyAuthentication) Permissions() []string {
-	return []string{}
+func (EmptyAuthentication) Permissions() map[string]interface{} {
+	return map[string]interface{}{}
 }
 
 func GobRegister() {
@@ -51,4 +51,14 @@ func Get(ctx context.Context) Authentication {
 		secCtx = EmptyAuthentication("EmptyAuthentication")
 	}
 	return secCtx
+}
+
+func HasPermissions(auth Authentication, permissions...string) bool {
+	for _,p := range permissions {
+		_, ok := auth.Permissions()[p]
+		if !ok {
+			return false
+		}
+	}
+	return true
 }

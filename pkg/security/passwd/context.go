@@ -5,6 +5,12 @@ import (
 	"encoding/gob"
 )
 
+const (
+	SpecialPermissionMFAPending = "MFAPending"
+	SpecialPermissionOtpId = "OtpId"
+	DetailsKeyUseMFA = "UseMFA"
+)
+
 /************************
 	security.Candidate
 ************************/
@@ -12,6 +18,7 @@ import (
 type UsernamePasswordPair struct {
 	Username string
 	Password string
+	DetailsMap map[interface{}]interface{}
 }
 
 // security.Candidate
@@ -26,6 +33,47 @@ func (upp *UsernamePasswordPair) Credentials() interface{} {
 
 // security.Candidate
 func (upp *UsernamePasswordPair) Details() interface{} {
+	return upp.DetailsMap
+}
+
+// MFAUsernameOtpPair is the supported security.Candidate for MFA authentication
+type MFAUsernameOtpPair struct {
+	Username string
+	OTP string
+}
+
+// security.Candidate
+func (uop *MFAUsernameOtpPair) Principal() interface{} {
+	return uop.Username
+}
+
+// security.Candidate
+func (uop *MFAUsernameOtpPair) Credentials() interface{} {
+	return uop.OTP
+}
+
+// security.Candidate
+func (uop *MFAUsernameOtpPair) Details() interface{} {
+	return nil
+}
+
+// MFAOtpRefresh is the supported security.Candidate for MFA OTP refresh
+type MFAOtpRefresh struct {
+	Username string
+}
+
+// security.Candidate
+func (uop *MFAOtpRefresh) Principal() interface{} {
+	return uop.Username
+}
+
+// security.Candidate
+func (uop *MFAOtpRefresh) Credentials() interface{} {
+	return nil
+}
+
+// security.Candidate
+func (uop *MFAOtpRefresh) Details() interface{} {
 	return nil
 }
 
@@ -39,24 +87,27 @@ func GobRegister() {
 /******************************
 	security.Authentication
 ******************************/
+// UsernamePasswordAuthentication implements security.Authentication
 type UsernamePasswordAuthentication interface {
 	security.Authentication
-	IsUsernamePasswordAuthentication() bool
+	IsMFAPending() bool
+	OTPIdentifier() string
 }
 
 // usernamePasswordAuthentication
 // Note: all fields should not be used directly. It's exported only because gob only deal with exported field
 type usernamePasswordAuthentication struct {
-	Account     security.Account
-	PermissionList []string
+	account     security.Account
+	permissions map[string]interface{}
+	details map[interface{}]interface{}
 }
 
 func (auth *usernamePasswordAuthentication) Principal() interface{} {
-	return auth.Account
+	return auth.account
 }
 
-func (auth *usernamePasswordAuthentication) Permissions() []string {
-	return auth.PermissionList
+func (auth *usernamePasswordAuthentication) Permissions() map[string]interface{} {
+	return auth.permissions
 }
 
 func (auth *usernamePasswordAuthentication) Authenticated() bool {
@@ -64,11 +115,19 @@ func (auth *usernamePasswordAuthentication) Authenticated() bool {
 }
 
 func (auth *usernamePasswordAuthentication) Details() interface{} {
-	return auth.Account
+	return auth.account
 }
 
-func (auth *usernamePasswordAuthentication) IsUsernamePasswordAuthentication() bool {
-	return true
+func (auth *usernamePasswordAuthentication) IsMFAPending() bool {
+	return security.HasPermissions(auth, SpecialPermissionMFAPending)
+}
+
+func (auth *usernamePasswordAuthentication) OTPIdentifier() string {
+	v, ok := auth.Permissions()[SpecialPermissionOtpId].(string)
+	if ok {
+		return v
+	}
+	return ""
 }
 
 func IsSamePrincipal(username string, currentAuth security.Authentication) bool {

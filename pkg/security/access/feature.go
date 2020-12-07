@@ -104,20 +104,6 @@ func HasPermissions(permissions...string) ControlFunc {
 		if !auth.Authenticated() {
 			return false, security.NewInsufficientAuthError("not authenticated")
 		}
-
-		for _,p := range permissions {
-			var found bool
-			for _,granted := range auth.Permissions() {
-				if p == granted {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return false, nil
-			}
-		}
-
-		return true, nil
+		return security.HasPermissions(auth, permissions...), nil
 	}
 }

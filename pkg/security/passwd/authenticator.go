@@ -44,9 +44,13 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 
 	// TODO post password check
 
+	permissions := map[string]interface{}{}
+	for _,p := range user.Permissions() {
+		permissions[p] = true
+	}
 	auth := usernamePasswordAuthentication{
-		Account: user,
-		PermissionList: user.Permissions(),
+		account:     user,
+		permissions: permissions,
 	}
 	return &auth, nil
 }

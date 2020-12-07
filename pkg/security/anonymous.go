@@ -25,8 +25,8 @@ func (aa *AnonymousAuthentication) Principal() interface{} {
 	return aa.candidate.Principal()
 }
 
-func (_ *AnonymousAuthentication) Permissions() []string {
-	return []string{}
+func (_ *AnonymousAuthentication) Permissions() map[string]interface{} {
+	return map[string]interface{}{}
 }
 
 func (_ *AnonymousAuthentication) Authenticated() bool {
