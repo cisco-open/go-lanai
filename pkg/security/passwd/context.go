@@ -3,6 +3,7 @@ package passwd
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"encoding/gob"
+	"time"
 )
 
 const (
@@ -10,15 +11,32 @@ const (
 	SpecialPermissionOtpId = "OtpId"
 	DetailsKeyUseMFA = "UseMFA"
 )
+/******************************
+	Serialization
+******************************/
+func GobRegister() {
+	gob.Register((*usernamePasswordAuthentication)(nil))
+	gob.Register((*timeBasedOtp)(nil))
+	gob.Register(TOTP{})
+	gob.Register(time.Time{})
+	gob.Register(time.Duration(0))
+}
 
 /************************
 	security.Candidate
 ************************/
+type MFAMode int
+const(
+	MFAModeSkip = iota
+	MFAModeOptional
+	MFAModeMust
+)
 // UsernamePasswordPair is the supported security.Candidate of this authenticator
 type UsernamePasswordPair struct {
 	Username string
 	Password string
 	DetailsMap map[interface{}]interface{}
+	EnforceMFA MFAMode
 }
 
 // security.Candidate
@@ -78,13 +96,6 @@ func (uop *MFAOtpRefresh) Details() interface{} {
 }
 
 /******************************
-	Serialization
-******************************/
-func GobRegister() {
-	gob.Register((*usernamePasswordAuthentication)(nil))
-}
-
-/******************************
 	security.Authentication
 ******************************/
 // UsernamePasswordAuthentication implements security.Authentication
@@ -97,17 +108,17 @@ type UsernamePasswordAuthentication interface {
 // usernamePasswordAuthentication
 // Note: all fields should not be used directly. It's exported only because gob only deal with exported field
 type usernamePasswordAuthentication struct {
-	account     security.Account
-	permissions map[string]interface{}
-	details map[interface{}]interface{}
+	Acct       security.Account
+	Perms      map[string]interface{}
+	DetailsMap map[interface{}]interface{}
 }
 
 func (auth *usernamePasswordAuthentication) Principal() interface{} {
-	return auth.account
+	return auth.Acct
 }
 
 func (auth *usernamePasswordAuthentication) Permissions() map[string]interface{} {
-	return auth.permissions
+	return auth.Perms
 }
 
 func (auth *usernamePasswordAuthentication) Authenticated() bool {
@@ -115,7 +126,7 @@ func (auth *usernamePasswordAuthentication) Authenticated() bool {
 }
 
 func (auth *usernamePasswordAuthentication) Details() interface{} {
-	return auth.account
+	return auth.Acct
 }
 
 func (auth *usernamePasswordAuthentication) IsMFAPending() bool {

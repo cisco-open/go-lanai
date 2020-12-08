@@ -31,6 +31,22 @@ type totpFactory struct {
 	secretSize int
 }
 
+type totpFactoryOptions func(*totpFactory)
+
+func newTotpFactory(options...totpFactoryOptions) *totpFactory {
+	factory := &totpFactory{
+		skew: 0,
+		digits: 6,
+		alg: otp.AlgorithmSHA1,
+		secretSize: 20,
+	}
+
+	for _,opt := range options {
+		opt(factory)
+	}
+	return factory
+}
+
 func (f *totpFactory) Generate(ttl time.Duration) (ret TOTP, err error) {
 	secret, err := f.generateSecret()
 	if err != nil {
@@ -71,8 +87,7 @@ func (f *totpFactory) Validate(value TOTP) (valid bool, err error) {
 		return false, fmt.Errorf("ttl should be greater or equals to 1 seconds")
 	}
 
-	now := time.Now()
-	return totp.ValidateCustom(value.Passcode, value.Secret, now, totp.ValidateOpts{
+	return totp.ValidateCustom(value.Passcode, value.Secret, time.Now(), totp.ValidateOpts{
 		Period:    uint(value.TTL.Round(time.Second).Seconds()),
 		Skew:      f.skew,
 		Digits:    f.digits,

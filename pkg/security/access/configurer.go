@@ -24,7 +24,7 @@ func newAccessControlConfigurer() *AccessControlConfigurer {
 }
 
 func (acc *AccessControlConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
-	// Validate
+	// Verify
 	if err := acc.validate(feature.(*AccessControlFeature), ws); err != nil {
 		return err
 	}

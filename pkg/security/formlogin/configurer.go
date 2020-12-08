@@ -29,7 +29,7 @@ func newFormLoginConfigurer() *FormLoginConfigurer {
 }
 
 func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
-	// Validate
+	// Verify
 	if err := flc.validate(feature.(*FormLoginFeature), ws); err != nil {
 		return err
 	}

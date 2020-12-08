@@ -57,6 +57,7 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 		candidate := passwd.UsernamePasswordPair{
 			Username: username[0],
 			Password: password[0],
+			EnforceMFA: passwd.MFAModeOptional,
 		}
 		// Search auth in the slice of allowed credentials
 		auth, err := mw.authenticator.Authenticate(&candidate)

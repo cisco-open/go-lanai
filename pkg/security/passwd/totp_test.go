@@ -1,17 +1,15 @@
 package passwd
 
 import (
-	"github.com/pquerna/otp"
 	"testing"
 	"time"
 )
 
-var otpFactory TOTPFactory = &totpFactory{
-	skew: 0,
-	digits: 6,
-	alg: otp.AlgorithmSHA1,
-	secretSize: 20,
-}
+
+var otpFactory TOTPFactory = newTotpFactory(func(f *totpFactory) {
+	f.digits = 6
+	f.secretSize = 20
+})
 
 func TestOtpGeneration(t *testing.T) {
 	now := time.Now()
@@ -73,28 +71,28 @@ func TestValidateGeneratedCode(t *testing.T) {
 
 	switch {
 	case err != nil:
-		t.Errorf("Validate should not return error")
+		t.Errorf("Verify should not return error")
 
 	case !valid:
-		t.Errorf("Validate should return valid result")
+		t.Errorf("Verify should return valid result")
 	}
 
 	valid, err = otpFactory.Validate(TOTP{Secret: totp.Secret, Passcode: "000000", TTL: time.Second * 10, Expire: totp.Expire})
 	switch {
 	case err != nil:
-		t.Errorf("Validate should not return error")
+		t.Errorf("Verify should not return error")
 
 	case valid:
-		t.Errorf("Validate should return invalid result for wrong passcode")
+		t.Errorf("Verify should return invalid result for wrong passcode")
 	}
 
 	valid, err = otpFactory.Validate(TOTP{Secret: "abcdefg", Passcode: totp.Passcode, TTL: time.Second * 10, Expire: totp.Expire})
 	switch {
 	case err != nil:
-		t.Errorf("Validate should not return error")
+		t.Errorf("Verify should not return error")
 
 	case valid:
-		t.Errorf("Validate should return invalid result for wrong secret")
+		t.Errorf("Verify should return invalid result for wrong secret")
 	}
 
 	totp, _ = otpFactory.Generate(time.Second * 1)
@@ -102,9 +100,34 @@ func TestValidateGeneratedCode(t *testing.T) {
 	valid, err = otpFactory.Validate(totp)
 	switch {
 	case err != nil:
-		t.Errorf("Validate should not return error")
+		t.Errorf("Verify should not return error")
 
 	case valid:
-		t.Errorf("Validate should return invalid result for expired OTP")
+		t.Errorf("Verify should return invalid result for expired OTP")
+	}
+}
+
+func TestValidateRefreshedCode(t *testing.T) {
+	original, _ := otpFactory.Generate(time.Second * 10)
+	totp, err := otpFactory.Refresh(original.Secret, time.Second * 5)
+	valid, err := otpFactory.Validate(totp)
+
+	switch {
+	case err != nil:
+		t.Errorf("Verify should not return error")
+
+	case !valid:
+		t.Errorf("Verify should return valid result")
+	}
+
+	totp, _ = otpFactory.Refresh(original.Secret, time.Second * 1)
+	time.Sleep(time.Millisecond * 1050)
+	valid, err = otpFactory.Validate(totp)
+	switch {
+	case err != nil:
+		t.Errorf("Verify should not return error")
+
+	case valid:
+		t.Errorf("Verify should return invalid result for expired OTP")
 	}
 }

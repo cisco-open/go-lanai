@@ -64,7 +64,7 @@ func newErrorHandlingConfigurer() *ErrorHandlingConfigurer {
 }
 
 func (ehc *ErrorHandlingConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
-	// Validate
+	// Verify
 	if err := ehc.validate(feature.(*ErrorHandlingFeature), ws); err != nil {
 		return err
 	}

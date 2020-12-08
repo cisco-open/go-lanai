@@ -4,6 +4,7 @@ type Account interface {
 	Username() string
 	Password() string
 	Permissions() []string
+	UseMFA() bool
 }
 
 type AccountStore interface {

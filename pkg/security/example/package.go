@@ -13,7 +13,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"fmt"
 	"go.uber.org/fx"
+	"time"
 )
 
 func init() {
@@ -69,7 +71,11 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 	ws.Route(matcher.RouteWithPattern("/page/**")).
 		Condition(condition).
 		With(session.New()).
-		With(passwd.New()).
+		With(passwd.New().
+			MFA(true).
+			OtpTTL(5 * time.Minute).
+		MFAEventListeners(debugPrintOTP),
+		).
 		With(access.New().
 			Request(
 				matcher.RequestWithPattern("/page/public").
@@ -101,4 +107,11 @@ func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(access.New().
 			Request(matcher.AnyRequest()).PermitAll(),
 		)
+}
+
+func debugPrintOTP(event passwd.MFAEvent, otp passwd.OTP, principal interface{}) {
+	switch event {
+	case passwd.MFAEventOtpCreate, passwd.MFAEventOtpRefresh:
+		fmt.Printf("[DEBUG] OTP: %s \n", otp.Passcode())
+	}
 }
