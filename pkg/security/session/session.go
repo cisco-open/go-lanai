@@ -173,6 +173,10 @@ func (s *Session) AddFlash(value interface{}, flashKey ...string) {
 	s.SetDirty()
 }
 
+func (s *Session) ChangeId() error {
+	return s.store.ChangeId(s)
+}
+
 // Save is a convenience method to save this session. It is the same as calling
 // store.Save(request, response, session).
 func (s *Session) Save() (err error) {

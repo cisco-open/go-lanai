@@ -33,8 +33,23 @@ type Store interface {
 	Delete(s *Session) error
 
 	Options() *Options
+
+	FindByPrincipalName(principal string) ([]*Session, error)
+
+	ChangeId(s *Session) error
 }
 
+/**
+	Session is implemented as a HSET in redis.
+	Session is expired using Redis TTL. The TTL is slightly longer than the expiration time so that when the session is
+	expired, we can still get the session details (if necessary).
+
+	Currently we don't have a need for "on session expired" event. If we do have a need for this in the future,
+	we can use https://redis.io/topics/notifications and listen on the TTL event. Once caveat of using the redis
+	notification is that it may not generate a event until the key is being accessed. So if we want to have deterministic
+	behaviour on when the event is fired, we would need to implement a scheduler ourselves that access these keys that
+	are expired which will force redis to generate the event.
+ */
 type RedisStore struct {
 	options    *Options
 	connection *redis.Connection
@@ -116,8 +131,24 @@ func (s *RedisStore) Delete(session *Session) error {
 	return cmd.Err()
 }
 
+func (s *RedisStore) FindByPrincipalName(principal string) ([]*Session, error) {
+	//TODO:
+	return []*Session{}, nil
+}
+
+func (s *RedisStore) ChangeId(session *Session) error {
+	newId := uuid.New().String()
+	cmd := s.connection.Rename(context.Background(), getKey(session.Name(), session.id), getKey(session.Name(), newId))
+	err := cmd.Err()
+	if err != nil {
+		return err
+	}
+	session.id = newId
+	return nil
+}
+
 func (s *RedisStore) load(id string, name string) (*Session, error) {
-	key := fmt.Sprintf("%s:%s", name, id)
+	key := getKey(name, id)
 
 	cmd := s.connection.HGetAll(context.Background(), key)
 
@@ -159,7 +190,7 @@ func (s *RedisStore) load(id string, name string) (*Session, error) {
 }
 
 func (s *RedisStore) save(session *Session) error {
-	key := fmt.Sprintf("%s:%s", session.Name(), session.id)
+	key := getKey(session.Name(), session.id)
 	var args []interface{}
 
 	if session.IsDirty() || session.isNew {
@@ -187,6 +218,10 @@ func (s *RedisStore) save(session *Session) error {
 	exp := session.expiration()
 	expCmd := s.connection.ExpireAt(context.Background(), key, exp)
 	return expCmd.Err()
+}
+
+func getKey(name string, id string) string {
+	return fmt.Sprintf("%s:%s", name, id)
 }
 
 func Serialize(src interface{}) ([]byte, error) {

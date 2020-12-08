@@ -183,9 +183,12 @@ func NewInternalError(text string) error {
 }
 
 /* AuthenticationError family */
-
 func NewAuthenticationError(text string) error {
 	return NewCodedError(ErrorTypeCodeAuthentication, errors.New(text))
+}
+
+func NewAuthenticationInternalError(text string) error {
+	return NewCodedError(ErrorSubTypeCodeInternal, errors.New(text))
 }
 
 func NewAuthenticatorNotAvailableError(text string) error {

@@ -107,7 +107,8 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 	ws.Add(sessionHandler, authPersist, test)
 
 	// configure auth success/error handler
-	// TODO session fixation goes here
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(&ChangeSessionHandler{})
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(&DebugAuthSuccessHandler{})
 	ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
