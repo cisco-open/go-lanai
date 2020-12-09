@@ -40,6 +40,7 @@ const (
 	_ = iota
 	FeatureOrderAuthenticator = iota * 100
 	FeatureOrderBasicAuth
+	FeatureOrderMFA
 	FeatureOrderFormLogin
 	FeatureOrderLogout
 	FeatureOrderCsrf

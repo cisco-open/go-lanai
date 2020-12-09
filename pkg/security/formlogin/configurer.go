@@ -47,6 +47,12 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
+	if err := flc.configureMfaPage(f, ws); err != nil {
+		return err
+	}
+
+	//TODO
+
 	return nil
 }
 
@@ -64,14 +70,30 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 	}
 
 	if f.loginErrorUrl == "" && f.failureHandler == nil {
-		f.loginErrorUrl = f.loginUrl + "?error"
+		f.loginErrorUrl = f.loginUrl + "?error=true"
 	}
 
-	if f.loginProcessCondition == nil {
+	if f.mfaEnabled && f.mfaUrl == "" {
+		return fmt.Errorf("mfaUrl is missing for MFA")
+	}
+
+	if f.mfaEnabled && f.mfaSuccessUrl == "" && f.successHandler == nil {
+		f.mfaSuccessUrl = f.loginSuccessUrl
+	}
+
+	if f.mfaEnabled &&  f.mfaVerifyUrl == "" {
+		f.mfaVerifyUrl = f.mfaUrl
+	}
+
+	if f.mfaErrorUrl == "" && f.failureHandler == nil {
+		f.mfaErrorUrl = f.mfaUrl + "?error=true"
+	}
+
+	if f.formProcessCondition == nil {
 		if wsReader, ok := ws.(security.WebSecurityReader); ok {
-			f.loginProcessCondition = wsReader.GetCondition()
+			f.formProcessCondition = wsReader.GetCondition()
 		} else {
-			return fmt.Errorf("loginProcessCondition is not specified and unable to read condition from WebSecurity")
+			return fmt.Errorf("formProcessCondition is not specified and unable to read condition from WebSecurity")
 		}
 	}
 
@@ -80,13 +102,30 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 
 func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws security.WebSecurity) error {
 	errorRedirect := redirect.NewRedirectWithURL(f.loginErrorUrl)
+	mfaErrorRedirect := redirect.NewRedirectWithURL(f.mfaErrorUrl)
+
 	if f.failureHandler == nil {
 		f.failureHandler = errorRedirect
 	}
 
+	var entryPoint security.AuthenticationEntryPoint = redirect.NewRedirectWithURL(f.loginUrl)
+	if f.mfaEnabled {
+		if _, ok := f.failureHandler.(*MfaAwareAuthenticationErrorHandler); !ok {
+			f.failureHandler = &MfaAwareAuthenticationErrorHandler{
+				delegate: f.failureHandler,
+				mfaPendingDelegate: mfaErrorRedirect,
+			}
+		}
+
+		entryPoint = &MfaAwareAuthenticationEntryPoint {
+			delegate: entryPoint,
+			mfaPendingDelegate: redirect.NewRedirectWithURL(f.mfaUrl),
+		}
+	}
+
 	// override entry point and error handler
 	errorhandling.Configure(ws).
-		AuthenticationEntryPoint(redirect.NewRedirectWithURL(f.loginUrl)).
+		AuthenticationEntryPoint(entryPoint).
 		AuthenticationErrorHandler(f.failureHandler)
 
 	// adding CSRF protection err handler, while keeping default
@@ -108,9 +147,30 @@ func (flc *FormLoginConfigurer) configureLoginPage(f *FormLoginFeature, ws secur
 	return nil
 }
 
+func (flc *FormLoginConfigurer) configureMfaPage(f *FormLoginFeature, ws security.WebSecurity) error {
+	// let ws know to intercept additional url
+	routeMatcher := matcher.RouteWithPattern(f.mfaUrl, http.MethodGet)
+	requestMatcher := matcher.RequestWithPattern(f.mfaUrl, http.MethodGet)
+	ws.Route(routeMatcher)
+
+	// configure access
+	access.Configure(ws).
+		//TODO
+		Request(requestMatcher).WithOrder(order.Highest).PermitAll()
+
+	return nil
+}
+
 func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
 	if f.successHandler == nil {
 		f.successHandler = redirect.NewRedirectWithURL(f.loginSuccessUrl)
+	}
+
+	if _, ok := f.successHandler.(*MfaAwareSuccessHandler); f.mfaEnabled && !ok {
+		f.successHandler = &MfaAwareSuccessHandler{
+			delegate: f.successHandler,
+			mfaPendingDelegate: redirect.NewRedirectWithURL(f.mfaUrl),
+		}
 	}
 	authSuccessHandler := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler)
 	authSuccessHandler.Add(f.successHandler)
@@ -131,7 +191,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	})
 	mw := middleware.NewBuilder("form login").
 		ApplyTo(route).
-		WithCondition(security.WebConditionFunc(f.loginProcessCondition)).
+		WithCondition(security.WebConditionFunc(f.formProcessCondition)).
 		Order(security.MWOrderFormAuth).
 		Use(login.LoginProcessHandlerFunc()).
 		Build()

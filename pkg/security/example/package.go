@@ -74,18 +74,19 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(passwd.New().
 			MFA(true).
 			OtpTTL(5 * time.Minute).
-		MFAEventListeners(debugPrintOTP),
+			MFAEventListeners(debugPrintOTP),
 		).
 		With(access.New().
 			Request(
 				matcher.RequestWithPattern("/page/public").
 					Or(matcher.RequestWithPattern("/page/public/**")),
 			).PermitAll().
-			Request(matcher.AnyRequest()).Authenticated(),
+			Request(matcher.AnyRequest()).HasPermissions("welcomed"),
 		).
 		With(formlogin.New().
-			LoginProcessCondition(condition).
-			LoginSuccessUrl("/page/hello"),
+			FormProcessCondition(condition).
+			LoginSuccessUrl("/page/hello").
+			EnableMFA(),
 		).
 		With(logout.New().
 			SuccessUrl("/login"),
