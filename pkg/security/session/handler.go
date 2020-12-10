@@ -104,7 +104,9 @@ func (h *ConcurrentSessionHandler) PriorityOrder() int {
 }
 
 func getPrincipalName(auth security.Authentication) (string, error) {
-	if account, ok := auth.Principal().(security.Account); ok {
+	if auth == nil {
+		return "", nil
+	} else if account, ok := auth.Principal().(security.Account); ok {
 		return account.Username(), nil
 	} else if principal, ok := auth.Principal().(string); ok {
 		return principal, nil
@@ -127,7 +129,7 @@ func (h *DeleteSessionOnLogoutHandler) HandleAuthenticationSuccess(c context.Con
 		panic(security.NewInternalAuthenticationError(err.Error()))
 	}
 
-	p, err := getPrincipalName(to)
+	p, err := getPrincipalName(from)
 	if err == nil {
 		//ignore error here since even if it can't be deleted from this index, it'll be cleaned up
 		// on read since the session itself is already deleted successfully

@@ -23,7 +23,7 @@ func NewLogoutMiddleware(successHandler security.AuthenticationSuccessHandler, l
 func (mw *LogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		before := security.Get(ctx)
-		if before == nil || before.State() != security.StateAnonymous {
+		if before == nil || before.State() == security.StateAnonymous {
 			mw.handleSuccess(ctx, before)
 			return
 		}
