@@ -2,6 +2,7 @@ package passwd
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"go.uber.org/fx"
 )
@@ -20,11 +21,12 @@ func init() {
 
 type dependencies struct {
 	fx.In
-	AccountStore security.AccountStore `optional:"true"`
-	PasswordEncoder PasswordEncoder `optional:"true"`
+	AccountStore    security.AccountStore `optional:"true"`
+	PasswordEncoder PasswordEncoder       `optional:"true"`
+	Redis           *redis.Connection     `optional:"true"`
 }
 
 func register(init security.Registrar, di dependencies) {
-	configurer := newPasswordAuthConfigurer(di.AccountStore, di.PasswordEncoder)
+	configurer := newPasswordAuthConfigurer(di.AccountStore, di.PasswordEncoder, di.Redis)
 	init.(security.FeatureRegistrar).RegisterFeature(PasswordAuthenticatorFeatureId, configurer)
 }

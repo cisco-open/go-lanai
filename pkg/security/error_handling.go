@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
 	"strings"
@@ -82,6 +83,59 @@ func (h *CompositeAuthenticationErrorHandler) removeSelf(items []AuthenticationE
 	return items[:count]
 }
 
+// *CompositeAccessDeniedHandler implement AccessDeniedHandler interface
+type CompositeAccessDeniedHandler struct {
+	handlers []AccessDeniedHandler
+}
+
+func NewAccessDeniedHandler(handlers ...AccessDeniedHandler) *CompositeAccessDeniedHandler {
+	ret := &CompositeAccessDeniedHandler{}
+	ret.handlers = ret.processErrorHandlers(handlers)
+	return ret
+}
+
+func (h *CompositeAccessDeniedHandler) HandleAccessDenied(
+	c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
+
+	for _,handler := range h.handlers {
+		handler.HandleAccessDenied(c, r, rw, err)
+	}
+}
+
+func (h *CompositeAccessDeniedHandler) Add(handler AccessDeniedHandler) *CompositeAccessDeniedHandler {
+	h.handlers = h.processErrorHandlers(append(h.handlers, handler))
+	return h
+}
+
+func (h *CompositeAccessDeniedHandler) Merge(composite *CompositeAccessDeniedHandler) *CompositeAccessDeniedHandler {
+	h.handlers = h.processErrorHandlers(append(h.handlers, composite.handlers...))
+	return h
+}
+
+func (h *CompositeAccessDeniedHandler) processErrorHandlers(handlers []AccessDeniedHandler) []AccessDeniedHandler {
+	handlers = h.removeSelf(handlers)
+	sort.SliceStable(handlers, func(i,j int) bool {
+		return order.OrderedFirstCompare(handlers[i], handlers[j])
+	})
+	return handlers
+}
+
+func (h *CompositeAccessDeniedHandler) removeSelf(items []AccessDeniedHandler) []AccessDeniedHandler {
+	count := 0
+	for _, item := range items {
+		if ptr, ok := item.(*CompositeAccessDeniedHandler); !ok || ptr != h {
+			// copy and increment index
+			items[count] = item
+			count++
+		}
+	}
+	// Prevent memory leak by erasing truncated values
+	for j := count; j < len(items); j++ {
+		items[j] = nil
+	}
+	return items[:count]
+}
+
 /**************************
 	Default Impls
 ***************************/
@@ -90,6 +144,10 @@ type DefaultAccessDeniedHandler struct {
 }
 
 func (h *DefaultAccessDeniedHandler) HandleAccessDenied(ctx context.Context, r *http.Request, rw http.ResponseWriter, err error) {
+	if ginRw, ok := rw.(gin.ResponseWriter); ok && ginRw.Written() {
+		return
+	}
+	
 	if isJson(r) {
 		writeErrorAsJson(ctx, http.StatusForbidden, err, rw)
 	} else {
@@ -102,6 +160,10 @@ type DefaultAuthenticationErrorHandler struct {
 }
 
 func (h *DefaultAuthenticationErrorHandler) HandleAuthenticationError(ctx context.Context, r *http.Request, rw http.ResponseWriter, err error) {
+	if ginRw, ok := rw.(gin.ResponseWriter); ok && ginRw.Written() {
+		return
+	}
+
 	if isJson(r) {
 		writeErrorAsJson(ctx, http.StatusForbidden, err, rw)
 	} else {

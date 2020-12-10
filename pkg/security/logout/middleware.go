@@ -22,16 +22,16 @@ func NewLogoutMiddleware(successHandler security.AuthenticationSuccessHandler, l
 
 func (mw *LogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentAuth := security.Get(ctx)
-		if currentAuth == nil || !currentAuth.Authenticated() {
-			mw.handleSuccess(ctx)
+		before := security.Get(ctx)
+		if before == nil || before.State() != security.StateAnonymous {
+			mw.handleSuccess(ctx, before)
 			return
 		}
 
 		for _, handler := range mw.logoutHandlers {
-			handler.HandleLogout(ctx, ctx.Request, ctx.Writer, currentAuth)
+			handler.HandleLogout(ctx, ctx.Request, ctx.Writer, before)
 		}
-		mw.handleSuccess(ctx)
+		mw.handleSuccess(ctx, before)
 	}
 }
 
@@ -39,10 +39,10 @@ func (mw *LogoutMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
 	return notFoundHandlerFunc
 }
 
-func (mw *LogoutMiddleware) handleSuccess(c *gin.Context) {
+func (mw *LogoutMiddleware) handleSuccess(c *gin.Context, before security.Authentication) {
 	c.Set(gin.AuthUserKey, nil)
 	c.Set(security.ContextKeySecurity, nil)
-	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, nil)
+	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, nil)
 	if c.Writer.Written() {
 		c.Abort()
 	}

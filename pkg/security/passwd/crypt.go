@@ -9,7 +9,7 @@ type PasswordEncoder interface {
 type noopPasswordEncoder string
 
 func NewNoopPasswordEncoder() PasswordEncoder {
-	return noopPasswordEncoder("text")
+	return noopPasswordEncoder("clear text")
 }
 func (noopPasswordEncoder) Encode(rawPassword string) string {
 	return rawPassword

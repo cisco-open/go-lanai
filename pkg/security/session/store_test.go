@@ -34,6 +34,10 @@ func (u *testUser) Permissions() []string {
 	return p
 }
 
+func (u *testUser) UseMFA() bool {
+	return false
+}
+
 
 type testAuthentication struct {
 	Account     security.Account

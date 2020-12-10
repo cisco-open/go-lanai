@@ -11,15 +11,23 @@ import (
  *********************************/
 //goland:noinspection GoNameStartsWithPackageName
 type FormLoginFeature struct {
-	loginProcessCondition web.MWConditionMatcher
-	successHandler        security.AuthenticationSuccessHandler
-	failureHandler        security.AuthenticationErrorHandler
-	loginUrl              string
-	loginProcessUrl       string
-	loginErrorUrl         string
-	loginSuccessUrl       string
-	usernameParam         string
-	passwordParam         string
+	formProcessCondition web.MWConditionMatcher
+	successHandler       security.AuthenticationSuccessHandler
+	failureHandler       security.AuthenticationErrorHandler
+	loginUrl             string
+	loginProcessUrl      string
+	loginErrorUrl        string
+	loginSuccessUrl      string
+	usernameParam        string
+	passwordParam        string
+
+	mfaEnabled    bool
+	mfaUrl        string
+	mfaVerifyUrl  string
+	mfaRefreshUrl string
+	mfaErrorUrl   string
+	mfaSuccessUrl string
+	otpParam      string
 }
 
 // Standard security.Feature entrypoint
@@ -37,8 +45,8 @@ func (f *FormLoginFeature) LoginProcessUrl(loginProcessUrl string) *FormLoginFea
 	return f
 }
 
-func (f *FormLoginFeature) LoginProcessCondition(condition web.MWConditionMatcher) *FormLoginFeature {
-	f.loginProcessCondition = condition
+func (f *FormLoginFeature) FormProcessCondition(condition web.MWConditionMatcher) *FormLoginFeature {
+	f.formProcessCondition = condition
 	return f
 }
 
@@ -74,6 +82,41 @@ func (f *FormLoginFeature) FailureHandler(failureHandler security.Authentication
 	return f
 }
 
+func (f *FormLoginFeature) EnableMFA() *FormLoginFeature {
+	f.mfaEnabled = true
+	return f
+}
+
+func (f *FormLoginFeature) MfaUrl(mfaUrl string) *FormLoginFeature {
+	f.mfaUrl = mfaUrl
+	return f
+}
+
+func (f *FormLoginFeature) MfaVerifyUrl(mfaVerifyUrl string) *FormLoginFeature {
+	f.mfaVerifyUrl = mfaVerifyUrl
+	return f
+}
+
+func (f *FormLoginFeature) MfaRefreshUrl(mfaRefreshUrl string) *FormLoginFeature {
+	f.mfaRefreshUrl = mfaRefreshUrl
+	return f
+}
+
+func (f *FormLoginFeature) MfaSuccessUrl(mfaSuccessUrl string) *FormLoginFeature {
+	f.mfaSuccessUrl = mfaSuccessUrl
+	return f
+}
+
+func (f *FormLoginFeature) MfaErrorUrl(mfaErrorUrl string) *FormLoginFeature {
+	f.mfaErrorUrl = mfaErrorUrl
+	return f
+}
+
+func (f *FormLoginFeature) OtpParameter(otpParam string) *FormLoginFeature {
+	f.otpParam = otpParam
+	return f
+}
+
 /*********************************
 	Constructors and Configure
  *********************************/
@@ -93,5 +136,11 @@ func New() *FormLoginFeature {
 		loginErrorUrl:   "/login?error=true",
 		usernameParam:   "username",
 		passwordParam:   "password",
+
+		mfaUrl:       "/login/mfa",
+		mfaVerifyUrl: "/login/mfa",
+		mfaRefreshUrl: "/login/mfa/refresh",
+		mfaErrorUrl:  "/login/mfa?error=true",
+		otpParam:     "otp",
 	}
 }

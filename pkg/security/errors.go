@@ -188,6 +188,10 @@ func NewAuthenticationError(text string) error {
 	return NewCodedError(ErrorTypeCodeAuthentication, errors.New(text))
 }
 
+func NewInternalAuthenticationError(text string) error {
+	return NewCodedError(ErrorSubTypeCodeInternal, errors.New(text))
+}
+
 func NewAuthenticatorNotAvailableError(text string) error {
 	return NewCodedError(ErrorCodeAuthenticatorNotAvailable, errors.New(text))
 }
