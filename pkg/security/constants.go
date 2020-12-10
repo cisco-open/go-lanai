@@ -51,5 +51,6 @@ const (
 const (
 	_ = iota
 	HandlerOrderChangeSession = iota * 100
+	HandlerOrderConcurrentSession
 
 )

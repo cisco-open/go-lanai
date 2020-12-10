@@ -1,6 +1,7 @@
 package session
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"net/http"
 	"time"
 )
@@ -29,6 +30,8 @@ type Session struct {
 	isNew   bool
 	store   Store
 	name    string
+
+	originalAuth security.Authentication
 }
 
 type Options struct {

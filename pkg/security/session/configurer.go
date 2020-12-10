@@ -18,7 +18,7 @@ var (
 
 // We currently don't have any stuff to configure
 type SessionFeature struct {
-
+	//TODO: allow configuring a getMaxSessions function
 }
 
 func (f *SessionFeature) Identifier() security.FeatureIdentifier {
@@ -113,5 +113,16 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 		Add(&DebugAuthSuccessHandler{})
 	ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
 		Add(&DebugAuthErrorHandler{})
+
+	concurrentSessionHandler := &ConcurrentSessionHandler{
+		sessionStore: sessionStore,
+		getMaxSessions: func() int {
+			//TODO: get this from configuration file
+			return 5
+		},
+	}
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(concurrentSessionHandler)
+
 	return nil
 }

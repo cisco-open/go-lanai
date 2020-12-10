@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultName = "SESSION"
+	DefaultName = "SESSION" //TODO: move this into store and make the store functions optional
 	sessionKeySecurity = "Security"
 	contextKeySession = web.ContextKeySession
 )
