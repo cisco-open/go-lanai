@@ -3,15 +3,39 @@ package passwd
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"encoding/gob"
+	"time"
 )
+
+const (
+	SpecialPermissionMFAPending = "MFAPending"
+	SpecialPermissionOtpId = "OtpId"
+)
+/******************************
+	Serialization
+******************************/
+func GobRegister() {
+	gob.Register((*usernamePasswordAuthentication)(nil))
+	gob.Register((*timeBasedOtp)(nil))
+	gob.Register(TOTP{})
+	gob.Register(time.Time{})
+	gob.Register(time.Duration(0))
+}
 
 /************************
 	security.Candidate
 ************************/
+type MFAMode int
+const(
+	MFAModeSkip = iota
+	MFAModeOptional
+	MFAModeMust
+)
 // UsernamePasswordPair is the supported security.Candidate of this authenticator
 type UsernamePasswordPair struct {
 	Username string
 	Password string
+	DetailsMap map[interface{}]interface{}
+	EnforceMFA MFAMode
 }
 
 // security.Candidate
@@ -26,53 +50,104 @@ func (upp *UsernamePasswordPair) Credentials() interface{} {
 
 // security.Candidate
 func (upp *UsernamePasswordPair) Details() interface{} {
+	return upp.DetailsMap
+}
+
+// MFAUsernameOtpPair is the supported security.Candidate for MFA authentication
+type MFAUsernameOtpPair struct {
+	Username string
+	OTP string
+}
+
+// security.Candidate
+func (uop *MFAUsernameOtpPair) Principal() interface{} {
+	return uop.Username
+}
+
+// security.Candidate
+func (uop *MFAUsernameOtpPair) Credentials() interface{} {
+	return uop.OTP
+}
+
+// security.Candidate
+func (uop *MFAUsernameOtpPair) Details() interface{} {
+	return nil
+}
+
+// MFAOtpRefresh is the supported security.Candidate for MFA OTP refresh
+type MFAOtpRefresh struct {
+	Username string
+}
+
+// security.Candidate
+func (uop *MFAOtpRefresh) Principal() interface{} {
+	return uop.Username
+}
+
+// security.Candidate
+func (uop *MFAOtpRefresh) Credentials() interface{} {
+	return nil
+}
+
+// security.Candidate
+func (uop *MFAOtpRefresh) Details() interface{} {
 	return nil
 }
 
 /******************************
-	Serialization
-******************************/
-func GobRegister() {
-	gob.Register((*usernamePasswordAuthentication)(nil))
-}
-
-/******************************
 	security.Authentication
 ******************************/
+// UsernamePasswordAuthentication implements security.Authentication
 type UsernamePasswordAuthentication interface {
 	security.Authentication
-	IsUsernamePasswordAuthentication() bool
+	IsMFAPending() bool
+	OTPIdentifier() string
 }
 
 // usernamePasswordAuthentication
 // Note: all fields should not be used directly. It's exported only because gob only deal with exported field
 type usernamePasswordAuthentication struct {
-	Account     security.Account
-	PermissionList []string
+	Acct       security.Account
+	Perms      map[string]interface{}
+	DetailsMap map[interface{}]interface{}
 }
 
 func (auth *usernamePasswordAuthentication) Principal() interface{} {
-	return auth.Account
+	return auth.Acct
 }
 
-func (auth *usernamePasswordAuthentication) Permissions() []string {
-	return auth.PermissionList
+func (auth *usernamePasswordAuthentication) Permissions() map[string]interface{} {
+	return auth.Perms
 }
 
-func (auth *usernamePasswordAuthentication) Authenticated() bool {
-	return true
+func (auth *usernamePasswordAuthentication) State() security.AuthenticationState {
+	switch {
+	case auth.IsMFAPending():
+		return security.StatePrincipalKnown
+	default:
+		return security.StateAuthenticated
+	}
 }
 
 func (auth *usernamePasswordAuthentication) Details() interface{} {
-	return auth.Account
+	return auth.Acct
 }
 
-func (auth *usernamePasswordAuthentication) IsUsernamePasswordAuthentication() bool {
-	return true
+func (auth *usernamePasswordAuthentication) IsMFAPending() bool {
+	_, ok := auth.Permissions()[SpecialPermissionOtpId].(string)
+	return ok
+}
+
+func (auth *usernamePasswordAuthentication) OTPIdentifier() string {
+	v, ok := auth.Permissions()[SpecialPermissionOtpId].(string)
+	if ok {
+		return v
+	}
+	return ""
 }
 
 func IsSamePrincipal(username string, currentAuth security.Authentication) bool {
-	if currentAuth == nil || !currentAuth.Authenticated() {
+	if currentAuth == nil || currentAuth.State() < security.StatePrincipalKnown {
 		return false
 	}
 

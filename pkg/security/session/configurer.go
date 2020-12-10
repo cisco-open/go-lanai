@@ -124,5 +124,11 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(concurrentSessionHandler)
 
+	deleteSessionHandler := &DeleteSessionOnLogoutHandler{
+		sessionStore: sessionStore,
+	}
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(deleteSessionHandler)
+
 	return nil
 }

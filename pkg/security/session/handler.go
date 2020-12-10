@@ -13,7 +13,11 @@ import (
  */
 type ChangeSessionHandler struct{}
 
-func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, w http.ResponseWriter, _ security.Authentication) {
+func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
+	if !security.IsBeingAuthenticated(from, to) {
+		return
+	}
+
 	s := Get(c)
 	if s == nil {
 		return
@@ -22,7 +26,7 @@ func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, _ 
 	err := s.ChangeId()
 
 	if err == nil {
-		http.SetCookie(w, NewCookie(s.Name(), s.id, s.options))
+		http.SetCookie(rw, NewCookie(s.Name(), s.id, s.options))
 	} else {
 		panic(security.NewInternalError("Failed to update session ID"))
 	}
@@ -40,13 +44,17 @@ type ConcurrentSessionHandler struct{
 	getMaxSessions GetMaximumSessions
 }
 
-func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, w http.ResponseWriter, auth security.Authentication) {
+func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, _ http.ResponseWriter, from, to security.Authentication) {
+	if !security.IsBeingAuthenticated(from, to) {
+		return
+	}
+
 	s := Get(c)
 	if s == nil {
 		return
 	}
 
-	p, err := getPrincipalName(auth)
+	p, err := getPrincipalName(to)
 	if err != nil {
 		//Auth is something we don't recognize, this indicates a program error
 		panic(security.NewInternalError(err.Error()))
@@ -105,12 +113,24 @@ func getPrincipalName(auth security.Authentication) (string, error) {
 	}
 }
 
-
-//TODO:
-type LogoutSuccessHandler struct {
-
+type DeleteSessionOnLogoutHandler struct {
+	sessionStore Store
 }
 
-func (h *LogoutSuccessHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, w http.ResponseWriter, auth security.Authentication) {
+func (h *DeleteSessionOnLogoutHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, _ http.ResponseWriter, from, to security.Authentication) {
+	if !security.IsBeingUnAuthenticated(from, to) {
+		return
+	}
+	s := Get(c)
+	err := h.sessionStore.Delete(s)
+	if err != nil {
+		panic(security.NewInternalAuthenticationError(err.Error()))
+	}
 
+	p, err := getPrincipalName(to)
+	if err == nil {
+		//ignore error here since even if it can't be deleted from this index, it'll be cleaned up
+		// on read since the session itself is already deleted successfully
+		_ = h.sessionStore.RemoveFromPrincipalIndex(p , s)
+	}
 }

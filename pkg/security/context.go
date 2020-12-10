@@ -11,10 +11,17 @@ const (
 	LowestMiddlewareOrder = HighestMiddlewareOrder + 0xffff // -0x30000 = -196608
 )
 
+type AuthenticationState int
+const (
+	StateAnonymous = AuthenticationState(iota)
+	StatePrincipalKnown
+	StateAuthenticated
+)
+
 type Authentication interface {
 	Principal() interface{}
-	Permissions() []string
-	Authenticated() bool
+	Permissions() map[string]interface{}
+	State() AuthenticationState
 	Details() interface{}
 }
 
@@ -30,12 +37,12 @@ func (EmptyAuthentication) Details() interface{} {
 	return nil
 }
 
-func (EmptyAuthentication) Authenticated() bool {
-	return false
+func (EmptyAuthentication) State() AuthenticationState {
+	return StateAnonymous
 }
 
-func (EmptyAuthentication) Permissions() []string {
-	return []string{}
+func (EmptyAuthentication) Permissions() map[string]interface{} {
+	return map[string]interface{}{}
 }
 
 func GobRegister() {
@@ -51,4 +58,30 @@ func Get(ctx context.Context) Authentication {
 		secCtx = EmptyAuthentication("EmptyAuthentication")
 	}
 	return secCtx
+}
+
+func HasPermissions(auth Authentication, permissions...string) bool {
+	for _,p := range permissions {
+		_, ok := auth.Permissions()[p]
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func IsFullyAuthenticated(auth Authentication) bool {
+	return auth.State() >= StateAuthenticated
+}
+
+func IsBeingAuthenticated(from, to Authentication) bool {
+	fromUnauthenticatedState := from == nil || from.State() < StateAuthenticated
+	toAuthenticatedState := to != nil && to.State() > StatePrincipalKnown
+	return fromUnauthenticatedState && toAuthenticatedState
+}
+
+func IsBeingUnAuthenticated(from, to Authentication) bool {
+	fromAuthenticated := from != nil && from.State() > StateAnonymous
+	toUnAuthenticatedState := to == nil || to.State() <= StateAnonymous
+	return fromAuthenticated && toUnAuthenticatedState
 }

@@ -2,25 +2,36 @@ package passwd
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"fmt"
+)
+
+const (
+	MessageUserNotFound = "Mismatched Username and Password"
+	MessageBadCredential = "Mismatched Username and Password"
+	MessageOtpNotAvailable = "MFA required but temprorily unavailable"
 )
 
 /******************************
 	security.Authenticator
 ******************************/
 type Authenticator struct {
-	store security.AccountStore
-	passwdEncoder PasswordEncoder
+	accountStore      security.AccountStore
+	passwdEncoder     PasswordEncoder
+	otpStore          OTPStore
+	mfaEventListeners []MFAEventListenerFunc
 }
 
-func NewAuthenticator(store security.AccountStore, passwdEncoder PasswordEncoder) *Authenticator{
-	if passwdEncoder == nil {
-		passwdEncoder = NewNoopPasswordEncoder()
+type AuthenticatorOptions func(*Authenticator)
+
+func NewAuthenticator(options...AuthenticatorOptions) *Authenticator {
+	ret := &Authenticator{
+		passwdEncoder: NewNoopPasswordEncoder(),
+		mfaEventListeners: []MFAEventListenerFunc{},
 	}
-	return &Authenticator{
-		store: store,
-		passwdEncoder: passwdEncoder,
+
+	for _,opt := range options {
+		opt(ret)
 	}
+	return ret
 }
 
 func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Authentication, error) {
@@ -30,23 +41,62 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 	}
 
 	// Search user in the slice of allowed credentials
-	user, err := a.store.LoadAccountByUsername(upp.Username)
+	user, err := a.accountStore.LoadAccountByUsername(upp.Username)
 	if err != nil {
-		return nil, security.NewUsernameNotFoundError(fmt.Sprintf("Mismatched Username and Password"))
+		return nil, security.NewUsernameNotFoundError(MessageUserNotFound)
 	}
 
 	// TODO check account status
 
 	// Check password
 	if upp.Username != user.Username() || !a.passwdEncoder.Matches(upp.Password, user.Password()) {
-		return nil, security.NewBadCredentialsError("Mismatched Username and Password")
+		return nil, security.NewBadCredentialsError(MessageBadCredential)
 	}
 
 	// TODO post password check
 
-	auth := usernamePasswordAuthentication{
-		Account: user,
-		PermissionList: user.Permissions(),
+	auth, err := a.CreateSuccessAuthentication(upp, user)
+	return auth, nil
+}
+
+// exported for override posibility
+func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordPair, account security.Account) (security.Authentication, error) {
+
+	permissions := map[string]interface{}{}
+
+	// MFA support
+	if candidate.EnforceMFA == MFAModeMust || candidate.EnforceMFA != MFAModeSkip && account.UseMFA() {
+		// MFA required
+		if a.otpStore == nil {
+			return nil, security.NewInternalAuthenticationError(MessageOtpNotAvailable)
+		}
+
+		otp, err := a.otpStore.New()
+		if err != nil {
+			return nil, security.NewInternalAuthenticationError(MessageOtpNotAvailable)
+		}
+		a.notifyMfaEvent(MFAEventOtpCreate, otp, account)
+		permissions[SpecialPermissionMFAPending] = true
+		permissions[SpecialPermissionOtpId] = otp.ID()
+	} else {
+		// MFA skipped
+		for _,p := range account.Permissions() {
+			permissions[p] = true
+		}
 	}
+
+	auth := usernamePasswordAuthentication{
+		Acct:       account,
+		Perms:      permissions,
+		DetailsMap: candidate.DetailsMap,
+	}
+	// TODO chance for other components to add details
 	return &auth, nil
 }
+
+func (a *Authenticator) notifyMfaEvent(event MFAEvent, otp OTP, account security.Account) {
+	for _,listener := range a.mfaEventListeners {
+		listener(event, otp, account)
+	}
+}
+

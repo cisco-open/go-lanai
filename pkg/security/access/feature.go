@@ -93,31 +93,23 @@ func DenyAll(_ security.Authentication) (bool, error) {
 }
 
 func Authenticated(auth security.Authentication) (bool, error) {
-	if auth.Authenticated() {
+	if auth.State() >= security.StateAuthenticated {
 		return true, nil
 	}
-	return false, security.NewInsufficientAuthError("not authenticated")
+	return false, security.NewInsufficientAuthError("not fully authenticated")
 }
 
 func HasPermissions(permissions...string) ControlFunc {
 	return func(auth security.Authentication) (bool, error) {
-		if !auth.Authenticated() {
+		switch {
+		case auth.State() > security.StateAnonymous && security.HasPermissions(auth, permissions...):
+			return true, nil
+		case auth.State() < security.StatePrincipalKnown:
 			return false, security.NewInsufficientAuthError("not authenticated")
+		case auth.State() < security.StateAuthenticated:
+			return false, security.NewInsufficientAuthError("not fully authenticated")
+		default:
+			return false, security.NewAccessDeniedError("access denied")
 		}
-
-		for _,p := range permissions {
-			var found bool
-			for _,granted := range auth.Permissions() {
-				if p == granted {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return false, nil
-			}
-		}
-
-		return true, nil
 	}
 }

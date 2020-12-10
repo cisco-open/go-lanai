@@ -25,7 +25,7 @@ func newLogoutConfigurer() *LogoutConfigurer {
 }
 
 func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
-	// Validate
+	// Verify
 	if err := flc.validate(feature.(*LogoutFeature), ws); err != nil {
 		return err
 	}

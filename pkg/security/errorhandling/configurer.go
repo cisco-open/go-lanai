@@ -64,7 +64,7 @@ func newErrorHandlingConfigurer() *ErrorHandlingConfigurer {
 }
 
 func (ehc *ErrorHandlingConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
-	// Validate
+	// Verify
 	if err := ehc.validate(feature.(*ErrorHandlingFeature), ws); err != nil {
 		return err
 	}
@@ -73,9 +73,12 @@ func (ehc *ErrorHandlingConfigurer) Apply(feature security.Feature, ws security.
 	authErrorHandler := ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler)
 	authErrorHandler.Add(f.authErrorHandler)
 
+	accessDeniedHandler := ws.Shared(security.WSSharedKeyCompositeAccessDeniedHandler).(*security.CompositeAccessDeniedHandler)
+	accessDeniedHandler.Add(f.accessDeniedHandler)
+
 	mw := NewErrorHandlingMiddleware()
-	mw.accessDeniedHandler = f.accessDeniedHandler
 	mw.entryPoint = f.authEntryPoint
+	mw.accessDeniedHandler = accessDeniedHandler
 	mw.authErrorHandler = authErrorHandler
 
 	errHandler := middleware.NewBuilder("error handling").

@@ -8,6 +8,7 @@ import (
 
 type ChangeCsrfHanlder struct{}
 
-func (h *ChangeCsrfHanlder) HandleAuthenticationSuccess(c context.Context, r *http.Request, w http.ResponseWriter, a security.Authentication) {
+//TODO
+func (h *ChangeCsrfHanlder) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
 
 }

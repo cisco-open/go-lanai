@@ -47,8 +47,9 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 			password = []string{""}
 		}
 
-		currentAuth, ok := security.Get(ctx).(passwd.UsernamePasswordAuthentication)
-		if ok && currentAuth.Authenticated() && passwd.IsSamePrincipal(username[0], currentAuth) {
+		before := security.Get(ctx)
+		currentAuth, ok := before.(passwd.UsernamePasswordAuthentication)
+		if ok && passwd.IsSamePrincipal(username[0], currentAuth) {
 			// We currently allow re-authenticate without logout.
 			// If we don't want to allow it, we need to figure out how to error out without clearing the authentication.
 			// Note: currently, clearing authentication happens in error handling middleware on all SecurityAuthenticationError
@@ -57,6 +58,7 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 		candidate := passwd.UsernamePasswordPair{
 			Username: username[0],
 			Password: password[0],
+			EnforceMFA: passwd.MFAModeOptional,
 		}
 		// Search auth in the slice of allowed credentials
 		auth, err := mw.authenticator.Authenticate(&candidate)
@@ -64,7 +66,7 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 			mw.handleError(ctx, err, &candidate)
 			return
 		}
-		mw.handleSuccess(ctx, auth)
+		mw.handleSuccess(ctx, before, auth)
 	}
 }
 
@@ -72,12 +74,12 @@ func (mw *FormAuthenticationMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
 	return notFoundHandlerFunc
 }
 
-func (mw *FormAuthenticationMiddleware) handleSuccess(c *gin.Context, new security.Authentication) {
+func (mw *FormAuthenticationMiddleware) handleSuccess(c *gin.Context, before, new security.Authentication) {
 	if new != nil {
 		c.Set(gin.AuthUserKey, new.Principal())
 		c.Set(security.ContextKeySecurity, new)
 	}
-	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, new)
+	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, new)
 	if c.Writer.Written() {
 		c.Abort()
 	}

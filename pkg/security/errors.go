@@ -187,7 +187,7 @@ func NewAuthenticationError(text string) error {
 	return NewCodedError(ErrorTypeCodeAuthentication, errors.New(text))
 }
 
-func NewAuthenticationInternalError(text string) error {
+func NewInternalAuthenticationError(text string) error {
 	return NewCodedError(ErrorSubTypeCodeInternal, errors.New(text))
 }
 
