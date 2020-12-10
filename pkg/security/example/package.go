@@ -46,7 +46,7 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 	// for REST API
 	ws.Route(matcher.RouteWithPattern("/api/**")).
 		Condition(matcher.RequestWithHost("localhost:8080")).
-		With(session.New()).
+		//With(session.New()).
 		With(passwd.New().
 			AccountStore(c.accountStore).
 			PasswordEncoder(passwd.NewNoopPasswordEncoder()),

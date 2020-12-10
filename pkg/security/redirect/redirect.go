@@ -65,7 +65,7 @@ func (ep *RedirectHandler) HandleAccessDenied(c context.Context, r *http.Request
 }
 
 // security.AuthenticationSuccessHandler
-func (ep *RedirectHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) {
+func (ep *RedirectHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
 	ep.doRedirect(c, r, rw, nil)
 }
 

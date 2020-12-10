@@ -9,7 +9,6 @@ import (
 const (
 	SpecialPermissionMFAPending = "MFAPending"
 	SpecialPermissionOtpId = "OtpId"
-	DetailsKeyUseMFA = "UseMFA"
 )
 /******************************
 	Serialization
@@ -121,8 +120,13 @@ func (auth *usernamePasswordAuthentication) Permissions() map[string]interface{}
 	return auth.Perms
 }
 
-func (auth *usernamePasswordAuthentication) Authenticated() bool {
-	return true
+func (auth *usernamePasswordAuthentication) State() security.AuthenticationState {
+	switch {
+	case auth.IsMFAPending():
+		return security.StatePrincipalKnown
+	default:
+		return security.StateAuthenticated
+	}
 }
 
 func (auth *usernamePasswordAuthentication) Details() interface{} {
@@ -130,7 +134,8 @@ func (auth *usernamePasswordAuthentication) Details() interface{} {
 }
 
 func (auth *usernamePasswordAuthentication) IsMFAPending() bool {
-	return security.HasPermissions(auth, SpecialPermissionMFAPending)
+	_, ok := auth.Permissions()[SpecialPermissionOtpId].(string)
+	return ok
 }
 
 func (auth *usernamePasswordAuthentication) OTPIdentifier() string {
@@ -142,7 +147,7 @@ func (auth *usernamePasswordAuthentication) OTPIdentifier() string {
 }
 
 func IsSamePrincipal(username string, currentAuth security.Authentication) bool {
-	if currentAuth == nil || !currentAuth.Authenticated() {
+	if currentAuth == nil || currentAuth.State() < security.StatePrincipalKnown {
 		return false
 	}
 

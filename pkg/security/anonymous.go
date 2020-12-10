@@ -29,8 +29,8 @@ func (_ *AnonymousAuthentication) Permissions() map[string]interface{} {
 	return map[string]interface{}{}
 }
 
-func (_ *AnonymousAuthentication) Authenticated() bool {
-	return false
+func (_ *AnonymousAuthentication) State() AuthenticationState {
+	return StateAnonymous
 }
 
 func (aa *AnonymousAuthentication) Details() interface{} {

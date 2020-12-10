@@ -27,7 +27,7 @@ type Authenticator interface {
 // AuthenticationSuccessHandler handles authentication success event
 // The counterpart of this interface is AuthenticationErrorHandler
 type AuthenticationSuccessHandler interface {
-	HandleAuthenticationSuccess(context.Context, *http.Request, http.ResponseWriter, Authentication)
+	HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to Authentication)
 }
 
 /*****************************
@@ -104,10 +104,10 @@ func NewAuthenticationSuccessHandler(handlers ...AuthenticationSuccessHandler) *
 }
 
 func (h *CompositeAuthenticationSuccessHandler) HandleAuthenticationSuccess(
-	c context.Context, r *http.Request, rw http.ResponseWriter, auth Authentication) {
+	c context.Context, r *http.Request, rw http.ResponseWriter, from, to Authentication) {
 
 	for _,handler := range h.handlers {
-		handler.HandleAuthenticationSuccess(c, r, rw, auth)
+		handler.HandleAuthenticationSuccess(c, r, rw, from, to)
 	}
 }
 

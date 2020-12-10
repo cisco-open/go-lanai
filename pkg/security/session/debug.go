@@ -15,7 +15,7 @@ func SessionDebugHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		auth := security.Get(ctx)
-		if auth.Authenticated() {
+		if auth.State() > security.StateAnonymous {
 			fmt.Printf("Already authenticated as %T\n", auth)
 		}
 
@@ -47,12 +47,8 @@ func RandomString(length int) string {
 type DebugAuthSuccessHandler struct {}
 
 func (h *DebugAuthSuccessHandler) HandleAuthenticationSuccess(
-	_ context.Context, _ *http.Request, _ http.ResponseWriter, auth security.Authentication) {
-	if auth == nil {
-		fmt.Printf("[DEBUG] session knows auth succeeded with nil \n")
-	} else {
-		fmt.Printf("[DEBUG] session knows auth succeeded with %v \n", auth.Principal())
-	}
+	_ context.Context, _ *http.Request, _ http.ResponseWriter, from, to security.Authentication) {
+	fmt.Printf("[DEBUG] session knows auth succeeded: from [%v] to [%v] \n", from, to)
 }
 
 type DebugAuthErrorHandler struct {}

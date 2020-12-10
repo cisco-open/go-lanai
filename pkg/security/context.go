@@ -11,10 +11,17 @@ const (
 	LowestMiddlewareOrder = HighestMiddlewareOrder + 0xffff // -0x30000 = -196608
 )
 
+type AuthenticationState int
+const (
+	StateAnonymous = AuthenticationState(iota)
+	StatePrincipalKnown
+	StateAuthenticated
+)
+
 type Authentication interface {
 	Principal() interface{}
 	Permissions() map[string]interface{}
-	Authenticated() bool
+	State() AuthenticationState
 	Details() interface{}
 }
 
@@ -30,8 +37,8 @@ func (EmptyAuthentication) Details() interface{} {
 	return nil
 }
 
-func (EmptyAuthentication) Authenticated() bool {
-	return false
+func (EmptyAuthentication) State() AuthenticationState {
+	return StateAnonymous
 }
 
 func (EmptyAuthentication) Permissions() map[string]interface{} {
@@ -61,4 +68,8 @@ func HasPermissions(auth Authentication, permissions...string) bool {
 		}
 	}
 	return true
+}
+
+func IsFullyAuthenticated(auth Authentication) bool {
+	return auth.State() >= StateAuthenticated
 }

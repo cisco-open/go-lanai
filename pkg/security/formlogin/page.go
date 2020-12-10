@@ -9,37 +9,39 @@ import (
 )
 
 const (
-	LoginModelKeyUsernameParam = "usernameParam"
-	LoginModelKeyPasswordParam = "passwordParam"
-	LoginModelKeyLoginProcessUrl = "loginProcessUrl"
+	LoginModelKeyUsernameParam      = "usernameParam"
+	LoginModelKeyPasswordParam      = "passwordParam"
+	LoginModelKeyLoginProcessUrl    = "loginProcessUrl"
 	LoginModelKeyRememberedUsername = "rememberedUsername"
-	LoginModelKeyShowError = "showError"
-	LoginModelKeyOtpParam         = "otpParam"
-	LoginModelKeyOtpVerifyUrl    = "otpVerifyUrl"
+	LoginModelKeyOtpParam           = "otpParam"
+	LoginModelKeyMfaVerifyUrl       = "mfaVerifyUrl"
+	LoginModelKeyMfaRefreshUrl      = "mfaRefreshUrl"
 )
 
 type DefaultFormLoginController struct {
 	loginTemplate   string
+	loginProcessUrl string
 	usernameParam   string
 	passwordParam   string
-	loginProcessUrl string
 
-	mfaTemplate  string
-	otpParam     string
-	mfaVerifyUrl string
+	mfaTemplate   string
+	mfaVerifyUrl  string
+	mfaRefreshUrl string
+	otpParam      string
 }
 
 type PageOptionsFunc func(*DefaultFormLoginPageOptions)
 
 type DefaultFormLoginPageOptions struct {
-	LoginTemplate string
+	LoginTemplate   string
 	UsernameParam   string
 	PasswordParam   string
 	LoginProcessUrl string
 
-	MfaTemplate string
-	OtpParam string
-	MfaVerifyUrl string
+	MfaTemplate   string
+	OtpParam      string
+	MfaVerifyUrl  string
+	MfaRefreshUrl string
 }
 
 func NewDefaultLoginFormController(options...PageOptionsFunc) *DefaultFormLoginController {
@@ -50,13 +52,14 @@ func NewDefaultLoginFormController(options...PageOptionsFunc) *DefaultFormLoginC
 
 	return &DefaultFormLoginController{
 		loginTemplate:   opts.LoginTemplate,
+		loginProcessUrl: opts.LoginProcessUrl,
 		usernameParam:   opts.UsernameParam,
 		passwordParam:   opts.PasswordParam,
-		loginProcessUrl: opts.LoginProcessUrl,
 
-		mfaTemplate:  opts.MfaTemplate,
-		otpParam:     opts.OtpParam,
-		mfaVerifyUrl: opts.MfaVerifyUrl,
+		mfaTemplate:   opts.MfaTemplate,
+		mfaVerifyUrl:  opts.MfaVerifyUrl,
+		mfaRefreshUrl: opts.MfaRefreshUrl,
+		otpParam:      opts.OtpParam,
 	}
 }
 
@@ -71,7 +74,7 @@ type OTPVerificationRequest struct {
 func (c *DefaultFormLoginController) Mappings() []web.Mapping {
 	return []web.Mapping{
 		template.NewBuilder().Get("/login").HandlerFunc(c.LoginForm).Build(),
-		template.NewBuilder().Get("/login/otp").HandlerFunc(c.OtpVerificationForm).Build(),
+		template.NewBuilder().Get("/login/mfa").HandlerFunc(c.OtpVerificationForm).Build(),
 	}
 }
 
@@ -82,13 +85,9 @@ func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequ
 		LoginModelKeyLoginProcessUrl: c.loginProcessUrl,
 	}
 
-	if r.Error {
-		model[LoginModelKeyShowError] = true
-	}
-
 	s := session.Get(ctx)
 	if s != nil {
-		if err, errOk := s.Flash(redirect.FlashKeyPreviousError).(error); errOk {
+		if err, errOk := s.Flash(redirect.FlashKeyPreviousError).(error); errOk && r.Error {
 			model[template.ModelKeyError] = err
 		}
 
@@ -107,8 +106,9 @@ func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequ
 
 func (c *DefaultFormLoginController) OtpVerificationForm(ctx context.Context, r *OTPVerificationRequest) (*template.ModelView, error) {
 	model := template.Model{
-		LoginModelKeyOtpParam:     c.otpParam,
-		LoginModelKeyOtpVerifyUrl: c.mfaVerifyUrl,
+		LoginModelKeyOtpParam:      c.otpParam,
+		LoginModelKeyMfaVerifyUrl:  c.mfaVerifyUrl,
+		LoginModelKeyMfaRefreshUrl: c.mfaRefreshUrl,
 	}
 
 	s := session.Get(ctx)

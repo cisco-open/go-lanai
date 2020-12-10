@@ -26,12 +26,13 @@ type MfaAwareSuccessHandler struct {
 	mfaPendingDelegate security.AuthenticationSuccessHandler
 }
 
-func (h *MfaAwareSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) {
-	userAuth,ok := auth.(passwd.UsernamePasswordAuthentication)
+func (h *MfaAwareSuccessHandler) HandleAuthenticationSuccess(
+	c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
+	userAuth,ok := to.(passwd.UsernamePasswordAuthentication)
 	if ok && userAuth.IsMFAPending() {
-		h.mfaPendingDelegate.HandleAuthenticationSuccess(c, r, rw, auth)
+		h.mfaPendingDelegate.HandleAuthenticationSuccess(c, r, rw, from, to)
 	} else {
-		h.delegate.HandleAuthenticationSuccess(c, r, rw, auth)
+		h.delegate.HandleAuthenticationSuccess(c, r, rw, from, to)
 	}
 }
 

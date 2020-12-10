@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -155,8 +156,8 @@ func (flc *FormLoginConfigurer) configureMfaPage(f *FormLoginFeature, ws securit
 
 	// configure access
 	access.Configure(ws).
-		//TODO
-		Request(requestMatcher).WithOrder(order.Highest).PermitAll()
+		Request(requestMatcher).WithOrder(order.Highest).
+		HasPermissions(passwd.SpecialPermissionMFAPending, passwd.SpecialPermissionOtpId)
 
 	return nil
 }
