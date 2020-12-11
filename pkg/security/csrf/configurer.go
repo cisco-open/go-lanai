@@ -62,8 +62,16 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 			Add(handler)
 	}
 
-	// configure middleware
 	tokenStore := newSessionBackedStore()
+
+	//Add authentication success handler
+	successHandler := &ChangeCsrfHanlder{
+		csrfTokenStore: tokenStore,
+	}
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(successHandler)
+
+	// configure middleware
 	manager := newManager(tokenStore, f.RequireCsrfProtectionMatcher)
 	csrfHandler := middleware.NewBuilder("csrfMiddleware").
 		Order(security.MWOrderCsrfHandling).

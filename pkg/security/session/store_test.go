@@ -44,16 +44,28 @@ type testAuthentication struct {
 	PermissionList []string
 }
 
+func (auth *testAuthentication) IsMFAPending() bool {
+	return false
+}
+
+func (auth *testAuthentication) OTPIdentifier() string {
+	return ""
+}
+
 func (auth *testAuthentication) Principal() interface{} {
 	return auth.Account
 }
 
-func (auth *testAuthentication) Permissions() []string {
-	return auth.PermissionList
+func (auth *testAuthentication) Permissions() map[string]interface{} {
+	result := make(map[string]interface{})
+	for _, p := range auth.PermissionList {
+		result[p] = true
+	}
+	return result
 }
 
-func (auth *testAuthentication) Authenticated() bool {
-	return true
+func (auth *testAuthentication) State() security.AuthenticationState {
+	return security.StateAuthenticated
 }
 
 func (auth *testAuthentication) Details() interface{} {
@@ -141,7 +153,7 @@ func Test_Get_Not_Exist_Session_Should_Create_New(t *testing.T) {
 	}
 
 	mock.EXPECT().
-		HGetAll(gomock.Any(), gomock.Eq("session_name:session_id")).
+		HGetAll(gomock.Any(), gomock.Eq("LANAI:SESSION:session_name:session_id")).
 		Return(&goRedis.StringStringMapCmd{})
 
 	store := NewRedisStore(connection)
@@ -205,7 +217,7 @@ func Test_Get_Exist_Session_Should_Return_Existing(t *testing.T) {
 	hset[sessionOptionField] = string(optionBytes)
 
 	mock.EXPECT().
-		HGetAll(gomock.Any(), gomock.Eq("session_name:session_id")).
+		HGetAll(gomock.Any(), gomock.Eq("LANAI:SESSION:session_name:session_id")).
 		Return(goRedis.NewStringStringMapResult(hset, nil))
 
 	session, err := store.Get("session_id", "session_name")
@@ -252,7 +264,7 @@ func TestSaveNewSession(t *testing.T) {
 	}
 
 	mock.EXPECT().HSet(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionValueField, gomock.Any(),
 		sessionOptionField, gomock.Any(),
 		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
@@ -260,7 +272,7 @@ func TestSaveNewSession(t *testing.T) {
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time
 	mock.EXPECT().ExpireAt(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		gomock.Any()).
 		Do(func(ctx context.Context, key string, tm time.Time){
 			expiresAt = tm
@@ -306,14 +318,14 @@ func TestSaveDirtySession(t *testing.T) {
 
 	//since it's dirty, but it's not new, we only expect two fields to be serialized and saved
 	mock.EXPECT().HSet(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionValueField, gomock.Any(),
 		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time
 	mock.EXPECT().ExpireAt(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		gomock.Any()).
 		Do(func(ctx context.Context, key string, tm time.Time){
 			expiresAt = tm
@@ -358,13 +370,13 @@ func TestSaveAccessedSession(t *testing.T) {
 
 	//since it's not new and not dirty, we only expect one field to be serialized and saved
 	mock.EXPECT().HSet(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time
 	mock.EXPECT().ExpireAt(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		gomock.Any()).
 		Do(func(ctx context.Context, key string, tm time.Time){
 			expiresAt = tm

@@ -105,6 +105,20 @@ func (mr *MockStoreMockRecorder) Options() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Options", reflect.TypeOf((*MockStore)(nil).Options))
 }
 
+// ChangeId mocks base method
+func (m *MockStore) ChangeId(s *session.Session) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeId", s)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ChangeId indicates an expected call of ChangeId
+func (mr *MockStoreMockRecorder) ChangeId(s interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeId", reflect.TypeOf((*MockStore)(nil).ChangeId), s)
+}
+
 // AddToPrincipalIndex mocks base method
 func (m *MockStore) AddToPrincipalIndex(principal string, session *session.Session) error {
 	m.ctrl.T.Helper()
@@ -120,22 +134,17 @@ func (mr *MockStoreMockRecorder) AddToPrincipalIndex(principal, session interfac
 }
 
 // RemoveFromPrincipalIndex mocks base method
-func (m *MockStore) RemoveFromPrincipalIndex(principal string, sessions ...*session.Session) error {
+func (m *MockStore) RemoveFromPrincipalIndex(principal string, sessions *session.Session) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{principal}
-	for _, a := range sessions {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "RemoveFromPrincipalIndex", varargs...)
+	ret := m.ctrl.Call(m, "RemoveFromPrincipalIndex", principal, sessions)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RemoveFromPrincipalIndex indicates an expected call of RemoveFromPrincipalIndex
-func (mr *MockStoreMockRecorder) RemoveFromPrincipalIndex(principal interface{}, sessions ...interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) RemoveFromPrincipalIndex(principal, sessions interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{principal}, sessions...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFromPrincipalIndex", reflect.TypeOf((*MockStore)(nil).RemoveFromPrincipalIndex), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFromPrincipalIndex", reflect.TypeOf((*MockStore)(nil).RemoveFromPrincipalIndex), principal, sessions)
 }
 
 // FindByPrincipalName mocks base method
@@ -151,18 +160,4 @@ func (m *MockStore) FindByPrincipalName(principal, sessionName string) ([]*sessi
 func (mr *MockStoreMockRecorder) FindByPrincipalName(principal, sessionName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByPrincipalName", reflect.TypeOf((*MockStore)(nil).FindByPrincipalName), principal, sessionName)
-}
-
-// ChangeId mocks base method
-func (m *MockStore) ChangeId(s *session.Session) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChangeId", s)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ChangeId indicates an expected call of ChangeId
-func (mr *MockStoreMockRecorder) ChangeId(s interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeId", reflect.TypeOf((*MockStore)(nil).ChangeId), s)
 }
