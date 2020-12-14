@@ -49,7 +49,8 @@ func (pac *PasswordAuthConfigurer) Apply(feature security.Feature, ws security.W
 		mfaVerify := NewMFAVerifyAuthenticator(defaultOpts, mfaOpts)
 		ws.Authenticator().(*security.CompositeAuthenticator).Add(mfaVerify)
 
-		//TODO Refresh authenticator
+		mfaRefresh := NewMFARefreshAuthenticator(defaultOpts, mfaOpts)
+		ws.Authenticator().(*security.CompositeAuthenticator).Add(mfaRefresh)
 	}
 	return nil
 }

@@ -50,6 +50,9 @@ const (
 	_ = iota
 	ErrorCodeUsernameNotFound = ErrorSubTypeCodeUsernamePasswordAuth + iota
 	ErrorCodeBadCredentials
+	ErrorCodeCredentialsExpired
+	ErrorCodeMaxAttemptsReached
+	ErrorCodeAccountStatus
 )
 
 // All "SubType" values are used as mask
@@ -296,6 +299,18 @@ func NewUsernameNotFoundError(value interface{}, causes...interface{}) error {
 
 func NewBadCredentialsError(value interface{}, causes...interface{}) error {
 	return NewCodedError(ErrorCodeBadCredentials, value, causes...)
+}
+
+func NewCredentialsExpiredError(value interface{}, causes...interface{}) error {
+	return NewCodedError(ErrorCodeCredentialsExpired, value, causes...)
+}
+
+func NewMaxAttemptsReachedError(value interface{}, causes...interface{}) error {
+	return NewCodedError(ErrorCodeMaxAttemptsReached, value, causes...)
+}
+
+func NewAccountStatusError(value interface{}, causes...interface{}) error {
+	return NewCodedError(ErrorCodeAccountStatus, value, causes...)
 }
 
 /* AccessControlError family */

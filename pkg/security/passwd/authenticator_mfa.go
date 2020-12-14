@@ -7,6 +7,7 @@ import (
 
 const (
 	MessageInvalidPasscode = "Invalid Passcode"
+	MessageCannotRefresh = "Unable to refresh passcode"
 	MessageInvalidAccountStatus = "Issue with current account status"
 	MessageMaxAttemptsReached = "You have reached the maximum allowed passcode verification attempts"
 	MessageMaxRefreshAttemptsReached = "You have reached the maximum allowed passcode refresh attempts"
@@ -49,18 +50,21 @@ func (a *MfaVerifyAuthenticator) Authenticate(candidate security.Candidate) (sec
 
 	// Check OTP
 	id := verify.CurrentAuth.OTPIdentifier()
-	switch _, more, err := a.otpStore.Verify(id, verify.OTP); {
+	switch otp, more, err := a.otpStore.Verify(id, verify.OTP); {
 	case err != nil && more:
+		notifyMfaEvent(a.mfaEventListeners, MFAEventVerificationFailure, otp, user)
 		return nil, security.NewBadCredentialsError(MessageInvalidPasscode, err)
 	case err != nil:
+		notifyMfaEvent(a.mfaEventListeners, MFAEventVerificationFailure, otp, user)
 		msg := fmt.Errorf("%s: %s", MessageInvalidPasscode, err.Error())
 		return nil, security.NewBadCredentialsError(msg, err)
+	default:
+		notifyMfaEvent(a.mfaEventListeners, MFAEventVerificationSuccess, otp, user)
 	}
 
 	// TODO post passcode check
 
-	auth, err := a.CreateSuccessAuthentication(verify, user)
-	return auth, nil
+	return a.CreateSuccessAuthentication(verify, user)
 }
 
 // exported for override posibility
@@ -86,10 +90,62 @@ func (a *MfaVerifyAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpVe
 	return &auth, nil
 }
 
-func (a *MfaVerifyAuthenticator) notifyMfaEvent(event MFAEvent, otp OTP, account security.Account) {
-	for _,listener := range a.mfaEventListeners {
-		listener(event, otp, account)
+/********************************
+	MfaVerifyAuthenticator
+*********************************/
+type MfaRefreshAuthenticator struct {
+	accountStore      security.AccountStore
+	otpStore          OTPStore
+	mfaEventListeners []MFAEventListenerFunc
+}
+
+func NewMFARefreshAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaRefreshAuthenticator {
+	options := AuthenticatorOptions {
+		MFAEventListeners: []MFAEventListenerFunc{},
 	}
+	for _,optFunc := range optionFuncs {
+		optFunc(&options)
+	}
+	return &MfaRefreshAuthenticator{
+		accountStore:      options.AccountStore,
+		otpStore:          options.OTPStore,
+		mfaEventListeners: options.MFAEventListeners,
+	}
+}
+
+func (a *MfaRefreshAuthenticator) Authenticate(candidate security.Candidate) (security.Authentication, error) {
+	refresh, ok := candidate.(*MFAOtpRefresh)
+	if !ok {
+		return nil, nil
+	}
+
+	// check if OTP refresh should be performed
+	user, err := checkCurrentAuth(refresh.CurrentAuth, a.accountStore)
+	if err != nil {
+		return nil, err
+	}
+
+	// Refresh OTP
+	id := refresh.CurrentAuth.OTPIdentifier()
+	switch otp, more, err := a.otpStore.Refresh(id); {
+	case err != nil && more:
+		return nil, security.NewBadCredentialsError(MessageCannotRefresh, err)
+	case err != nil:
+		msg := fmt.Errorf("%s: %s", MessageCannotRefresh, err.Error())
+		return nil, security.NewBadCredentialsError(msg, err)
+	default:
+		notifyMfaEvent(a.mfaEventListeners, MFAEventOtpRefresh, otp, user)
+	}
+
+	// TODO post passcode refresh
+
+	return a.CreateSuccessAuthentication(refresh, user)
+}
+
+// exported for override posibility
+func (a *MfaRefreshAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpRefresh, account security.Account) (security.Authentication, error) {
+	// TODO chance for other components to add details
+	return candidate.CurrentAuth, nil
 }
 
 /************************
@@ -114,5 +170,11 @@ func checkCurrentAuth(currentAuth UsernamePasswordAuthentication, accountStore s
 	}
 	// TODO check account status
 	return user, nil
+}
+
+func notifyMfaEvent(listeners []MFAEventListenerFunc, event MFAEvent, otp OTP, account security.Account) {
+	for _,listener := range listeners {
+		listener(event, otp, account)
+	}
 }
 

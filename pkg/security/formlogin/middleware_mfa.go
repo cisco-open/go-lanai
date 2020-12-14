@@ -47,7 +47,7 @@ func (mw *MfaAuthenticationMiddleware) OtpVerifyHandlerFunc() gin.HandlerFunc {
 			mw.handleError(ctx, err, nil)
 			return
 		}
-		
+
 		candidate := passwd.MFAOtpVerification{
 			CurrentAuth: before,
 			OTP:         otp[0],

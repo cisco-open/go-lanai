@@ -52,7 +52,7 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
-	if err := flc.configureOtpVerify(f, ws); err != nil {
+	if err := flc.configureMfaProcessing(f, ws); err != nil {
 		return err
 	}
 
@@ -208,12 +208,15 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	return nil
 }
 
-func (flc *FormLoginConfigurer) configureOtpVerify(f *FormLoginFeature, ws security.WebSecurity) error {
+func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
 	authSuccessHandler := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler)
 
 	// let ws know to intercept additional url
-	route := matcher.RouteWithPattern(f.mfaVerifyUrl, http.MethodPost)
-	ws.Route(route)
+	routeVerify := matcher.RouteWithPattern(f.mfaVerifyUrl, http.MethodPost)
+	routeRefresh :=	matcher.RouteWithPattern(f.mfaRefreshUrl, http.MethodPost)
+	requestMatcher := matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost).
+		Or(matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost))
+	ws.Route(routeVerify).Route(routeRefresh)
 
 	// configure middlewares
 	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
@@ -223,17 +226,31 @@ func (flc *FormLoginConfigurer) configureOtpVerify(f *FormLoginFeature, ws secur
 		opts.SuccessHandler = authSuccessHandler
 		opts.OtpParam =  f.otpParam
 	})
-	mw := middleware.NewBuilder("otp verify").
-		ApplyTo(route).
+
+	verifyMW := middleware.NewBuilder("otp verify").
+		ApplyTo(routeVerify).
 		WithCondition(security.WebConditionFunc(f.formProcessCondition)).
 		Order(security.MWOrderFormAuth).
 		Use(login.OtpVerifyHandlerFunc()).
 		Build()
 
-	ws.Add(mw)
+	refreshMW := middleware.NewBuilder("otp refresh").
+		ApplyTo(routeRefresh).
+		WithCondition(security.WebConditionFunc(f.formProcessCondition)).
+		Order(security.MWOrderFormAuth).
+		Use(login.OtpRefreshHandlerFunc()).
+		Build()
+
+	ws.Add(verifyMW, refreshMW)
 
 	// configure additional endpoint mappings to trigger middleware
-	ws.Add(web.NewGenericMapping("otp verify dummy", f.mfaVerifyUrl, http.MethodPost, login.EndpointHandlerFunc() ))
+	ws.Add(web.NewGenericMapping("otp verify dummy", f.mfaVerifyUrl, http.MethodPost, login.EndpointHandlerFunc()) )
+	ws.Add(web.NewGenericMapping("otp refresh dummy", f.mfaRefreshUrl, http.MethodPost, login.EndpointHandlerFunc()) )
+
+	// configure access
+	access.Configure(ws).
+		Request(requestMatcher).WithOrder(order.Highest).
+		HasPermissions(passwd.SpecialPermissionMFAPending, passwd.SpecialPermissionOtpId)
 
 	return nil
 }

@@ -36,10 +36,10 @@ type OTPStore interface {
 	Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error)
 
 	// Refresh regenerate OTP passcode without changing secret and ID
-	// It returns the loaded OTP regardless the verification result.
+	// It returns the loaded or refreshed OTP regardless the verification result.
 	// It returns false if it reaches maximum attempts limit. otherwise returns true
 	// error parameter indicate wether the passcode is refreshed
-	Refresh(id string) (loaded OTP, hasMoreChances bool, err error)
+	Refresh(id string) (refreshed OTP, hasMoreChances bool, err error)
 
 	// Delete delete OTP by ID
 	Delete(id string) error
@@ -153,7 +153,7 @@ func (os *redisTotpStore) Verify(id, passcode string) (loaded OTP, hasMoreChance
 	// load OTP by ID
 	otp, e := os.load(id);
 	if otp == nil || e != nil {
-		return nil, false, security.NewAuthenticationError(e, "Passcode already expired", e)
+		return nil, false, security.NewCredentialsExpiredError("Passcode already expired", e)
 	}
 
 	// schedule for post verification
@@ -161,7 +161,7 @@ func (os *redisTotpStore) Verify(id, passcode string) (loaded OTP, hasMoreChance
 
 	// check verification attempts
 	if otp.IncrementAttempts(); otp.Attempts() >= os.maxVerifyLimit {
-		return nil, false, security.NewAuthenticationError("Max verification attempts exceeded")
+		return nil, false, security.NewMaxAttemptsReachedError("Max verification attempts exceeded")
 	}
 
 	toValidate := TOTP{
@@ -174,7 +174,7 @@ func (os *redisTotpStore) Verify(id, passcode string) (loaded OTP, hasMoreChance
 	loaded = otp
 	hasMoreChances = otp.Attempts() < os.maxVerifyLimit
 	if valid, e := os.factory.Validate(toValidate); e != nil || !valid {
-		err = security.NewAuthenticationError("Max verification attempts exceeded", e)
+		err = security.NewBadCredentialsError("Passcode doesn't match", e)
 	}
 	return
 }
@@ -183,7 +183,7 @@ func (os *redisTotpStore) Refresh(id string) (loaded OTP, hasMoreChances bool, e
 	// load OTP by ID
 	otp, e := os.load(id);
 	if e != nil {
-		return nil, false, security.NewAuthenticationError(e, "Passcode already expired", e)
+		return nil, false, security.NewCredentialsExpiredError("Max refresh/resend attempts exceeded", e)
 	}
 
 	// schedule for post refresh
@@ -192,13 +192,13 @@ func (os *redisTotpStore) Refresh(id string) (loaded OTP, hasMoreChances bool, e
 
 	// check refresh attempts
 	if otp.IncrementRefreshes(); otp.Refreshes() >= os.maxRefreshLimit {
-		return loaded, false, security.NewAuthenticationError("Max refresh/resend attempts exceeded")
+		return loaded, false, security.NewMaxAttemptsReachedError("Max refresh/resend attempts exceeded")
 	}
 
 	// calculate remining time
 	ttl := otp.Expire().Sub(time.Now())
 	if ttl <= 0 {
-		return loaded, false, security.NewAuthenticationError("Passcode already expired")
+		return loaded, false, security.NewCredentialsExpiredError("Passcode already expired")
 	}
 
 	// do refresh
