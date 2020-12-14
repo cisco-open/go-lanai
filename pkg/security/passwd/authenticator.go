@@ -20,18 +20,31 @@ type Authenticator struct {
 	mfaEventListeners []MFAEventListenerFunc
 }
 
-type AuthenticatorOptions func(*Authenticator)
+type AuthenticatorOptionsFunc func(*AuthenticatorOptions)
 
-func NewAuthenticator(options...AuthenticatorOptions) *Authenticator {
-	ret := &Authenticator{
-		passwdEncoder: NewNoopPasswordEncoder(),
-		mfaEventListeners: []MFAEventListenerFunc{},
-	}
+type AuthenticatorOptions struct {
+	AccountStore      security.AccountStore
+	PasswordEncoder   PasswordEncoder
+	OTPStore          OTPStore
+	MFAEventListeners []MFAEventListenerFunc
+}
 
-	for _,opt := range options {
-		opt(ret)
+func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
+	options := AuthenticatorOptions {
+		PasswordEncoder: NewNoopPasswordEncoder(),
+		MFAEventListeners: []MFAEventListenerFunc{},
 	}
-	return ret
+	for _,optFunc := range optionFuncs {
+		if optFunc != nil {
+			optFunc(&options)
+		}
+	}
+	return &Authenticator{
+		accountStore: options.AccountStore,
+		passwdEncoder:     options.PasswordEncoder,
+		otpStore:          options.OTPStore,
+		mfaEventListeners: options.MFAEventListeners,
+	}
 }
 
 func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Authentication, error) {
@@ -43,7 +56,7 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 	// Search user in the slice of allowed credentials
 	user, err := a.accountStore.LoadAccountByUsername(upp.Username)
 	if err != nil {
-		return nil, security.NewUsernameNotFoundError(MessageUserNotFound)
+		return nil, security.NewUsernameNotFoundError(MessageUserNotFound, err)
 	}
 
 	// TODO check account status

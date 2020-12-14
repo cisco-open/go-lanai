@@ -16,22 +16,28 @@ type FormAuthenticationMiddleware struct {
 	passwordParam  string
 }
 
-type FormAuthOptions struct {
+type FormAuthMWOptionsFunc func(*FormAuthMWOptions)
+
+type FormAuthMWOptions struct {
 	Authenticator  security.Authenticator
 	SuccessHandler security.AuthenticationSuccessHandler
 	UsernameParam  string
 	PasswordParam  string
 }
 
-func NewFormAuthenticationMiddleware(options... FormAuthOptions) *FormAuthenticationMiddleware {
-	mw :=  &FormAuthenticationMiddleware{}
-	for _,ops := range options {
-		mw.authenticator = ops.Authenticator
-		mw.successHandler = ops.SuccessHandler
-		mw.usernameParam = ops.UsernameParam
-		mw.passwordParam = ops.PasswordParam
+func NewFormAuthenticationMiddleware(optionFuncs... FormAuthMWOptionsFunc) *FormAuthenticationMiddleware {
+	opts := FormAuthMWOptions{}
+	for _, optFunc := range optionFuncs {
+		if optFunc != nil {
+			optFunc(&opts)
+		}
 	}
-	return mw
+	return &FormAuthenticationMiddleware{
+		authenticator: opts.Authenticator,
+		successHandler: opts.SuccessHandler,
+		usernameParam: opts.UsernameParam,
+		passwordParam: opts.PasswordParam,
+	}
 }
 
 func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFunc {
@@ -60,7 +66,7 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 			Password: password[0],
 			EnforceMFA: passwd.MFAModeOptional,
 		}
-		// Search auth in the slice of allowed credentials
+		// Authenticate
 		auth, err := mw.authenticator.Authenticate(&candidate)
 		if err != nil {
 			mw.handleError(ctx, err, &candidate)
@@ -86,6 +92,7 @@ func (mw *FormAuthenticationMiddleware) handleSuccess(c *gin.Context, before, ne
 }
 
 func (mw *FormAuthenticationMiddleware) handleError(c *gin.Context, err error, candidate security.Candidate) {
+	security.Clear(c)
 	if candidate != nil {
 		s := session.Get(c)
 		if s != nil {

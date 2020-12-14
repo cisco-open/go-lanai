@@ -78,6 +78,7 @@ func (basic *BasicAuthMiddleware) handleSuccess(c *gin.Context, before, new secu
 }
 
 func (basic *BasicAuthMiddleware) handleError(c *gin.Context, err error) {
+	security.Clear(c)
 	_ = c.Error(err)
 	c.Abort()
 }

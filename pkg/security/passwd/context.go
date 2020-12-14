@@ -53,40 +53,40 @@ func (upp *UsernamePasswordPair) Details() interface{} {
 	return upp.DetailsMap
 }
 
-// MFAUsernameOtpPair is the supported security.Candidate for MFA authentication
-type MFAUsernameOtpPair struct {
-	Username string
+// MFAOtpVerification is the supported security.Candidate for MFA authentication
+type MFAOtpVerification struct {
+	CurrentAuth UsernamePasswordAuthentication
 	OTP string
 }
 
 // security.Candidate
-func (uop *MFAUsernameOtpPair) Principal() interface{} {
-	return uop.Username
+func (uop *MFAOtpVerification) Principal() interface{} {
+	return uop.CurrentAuth.Principal()
 }
 
 // security.Candidate
-func (uop *MFAUsernameOtpPair) Credentials() interface{} {
+func (uop *MFAOtpVerification) Credentials() interface{} {
 	return uop.OTP
 }
 
 // security.Candidate
-func (uop *MFAUsernameOtpPair) Details() interface{} {
+func (uop *MFAOtpVerification) Details() interface{} {
 	return nil
 }
 
 // MFAOtpRefresh is the supported security.Candidate for MFA OTP refresh
 type MFAOtpRefresh struct {
-	Username string
+	CurrentAuth UsernamePasswordAuthentication
 }
 
 // security.Candidate
 func (uop *MFAOtpRefresh) Principal() interface{} {
-	return uop.Username
+	return uop.CurrentAuth.Principal()
 }
 
 // security.Candidate
 func (uop *MFAOtpRefresh) Credentials() interface{} {
-	return nil
+	return uop.CurrentAuth.OTPIdentifier()
 }
 
 // security.Candidate

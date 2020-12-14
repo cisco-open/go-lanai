@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -58,6 +59,22 @@ func Get(ctx context.Context) Authentication {
 		secCtx = EmptyAuthentication("EmptyAuthentication")
 	}
 	return secCtx
+}
+
+func Clear(ctx *gin.Context) {
+	ctx.Set(gin.AuthUserKey, nil)
+	ctx.Set(ContextKeySecurity, nil)
+}
+
+// TryClear attempt to clear security context. Return true if succeeded
+func TryClear(ctx context.Context) bool {
+	switch ctx.(type) {
+	case *gin.Context:
+		Clear(ctx.(*gin.Context))
+	default:
+		return false
+	}
+	return true
 }
 
 func HasPermissions(auth Authentication, permissions...string) bool {

@@ -2,6 +2,7 @@ package passwd
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -22,9 +23,25 @@ type OTP interface {
 }
 
 type OTPStore interface {
+	// New create new OTP and save it
 	New() (OTP, error)
-	Verify(id, passcode string) (OTP, error)
-	Refresh(id string) (OTP, error)
+
+	// Get loads OTP by ID
+	Get(id string) (OTP, error)
+
+	// Verify use Get to load OTP and check the given passcode against the loaded OTP.
+	// It returns the loaded OTP regardless the verification result.
+	// It returns false if it reaches maximum attempts limit. otherwise returns true
+	// error parameter indicate wether the given passcode is valid. It's nil if it's valid
+	Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error)
+
+	// Refresh regenerate OTP passcode without changing secret and ID
+	// It returns the loaded OTP regardless the verification result.
+	// It returns false if it reaches maximum attempts limit. otherwise returns true
+	// error parameter indicate wether the passcode is refreshed
+	Refresh(id string) (loaded OTP, hasMoreChances bool, err error)
+
+	// Delete delete OTP by ID
 	Delete(id string) error
 }
 
@@ -124,11 +141,19 @@ func (os *redisTotpStore) New() (OTP, error) {
 	return otp, nil
 }
 
-func (os *redisTotpStore) Verify(id, passcode string) (OTP, error) {
-	// load OTP by ID
+func (os *redisTotpStore) Get(id string) (OTP, error) {
 	otp, err := os.load(id);
 	if err != nil {
-		return nil, errors.Wrapf(err, "Invalid passcode")
+		return nil, err
+	}
+	return otp, nil
+}
+
+func (os *redisTotpStore) Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error) {
+	// load OTP by ID
+	otp, e := os.load(id);
+	if otp == nil || e != nil {
+		return nil, false, security.NewAuthenticationError(e, "Passcode already expired", e)
 	}
 
 	// schedule for post verification
@@ -136,7 +161,7 @@ func (os *redisTotpStore) Verify(id, passcode string) (OTP, error) {
 
 	// check verification attempts
 	if otp.IncrementAttempts(); otp.Attempts() >= os.maxVerifyLimit {
-		return nil, fmt.Errorf("Max verification attempts exceeded")
+		return nil, false, security.NewAuthenticationError("Max verification attempts exceeded")
 	}
 
 	toValidate := TOTP{
@@ -146,42 +171,44 @@ func (os *redisTotpStore) Verify(id, passcode string) (OTP, error) {
 		Expire:   time.Now().Add(otp.TTL()),
 	}
 
-	if valid, err := os.factory.Validate(toValidate); err != nil {
-		return nil, errors.Wrapf(err, "Invalid passcode")
-	} else if !valid {
-		return nil, fmt.Errorf("Invalid passcode")
+	loaded = otp
+	hasMoreChances = otp.Attempts() < os.maxVerifyLimit
+	if valid, e := os.factory.Validate(toValidate); e != nil || !valid {
+		err = security.NewAuthenticationError("Max verification attempts exceeded", e)
 	}
-	return otp, nil
+	return
 }
 
-func (os *redisTotpStore) Refresh(id string) (OTP, error) {
+func (os *redisTotpStore) Refresh(id string) (loaded OTP, hasMoreChances bool, err error) {
 	// load OTP by ID
-	otp, err := os.load(id);
-	if err != nil {
-		return nil, errors.Wrapf(err, "No passcode available")
+	otp, e := os.load(id);
+	if e != nil {
+		return nil, false, security.NewAuthenticationError(e, "Passcode already expired", e)
 	}
 
 	// schedule for post refresh
+	loaded = otp
 	defer os.cleanup(otp)
 
 	// check refresh attempts
 	if otp.IncrementRefreshes(); otp.Refreshes() >= os.maxRefreshLimit {
-		return nil, fmt.Errorf("Max refresh/resend attempts exceeded")
+		return loaded, false, security.NewAuthenticationError("Max refresh/resend attempts exceeded")
 	}
 
 	// calculate remining time
 	ttl := otp.Expire().Sub(time.Now())
 	if ttl <= 0 {
-		return nil, fmt.Errorf("Passcode already expired")
+		return loaded, false, security.NewAuthenticationError("Passcode already expired")
 	}
 
 	// do refresh
-	refreshed, err := os.factory.Refresh(otp.secret(), ttl)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Unabled to refresh/resend passcode")
+	hasMoreChances = otp.Refreshes() < os.maxRefreshLimit
+	refreshed, e := os.factory.Refresh(otp.secret(), ttl)
+	if e != nil {
+		return loaded, hasMoreChances, security.NewAuthenticationError("Unabled to refresh/resend passcode", e)
 	}
 	otp.Value = refreshed
-	return otp, nil
+	return
 }
 
 func (os *redisTotpStore) Delete(id string) error {

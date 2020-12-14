@@ -44,11 +44,15 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
+	if err := flc.configureMfaPage(f, ws); err != nil {
+		return err
+	}
+
 	if err := flc.configureLoginProcessing(f, ws); err != nil {
 		return err
 	}
 
-	if err := flc.configureMfaPage(f, ws); err != nil {
+	if err := flc.configureOtpVerify(f, ws); err != nil {
 		return err
 	}
 
@@ -178,17 +182,16 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	// let ws know to intercept additional url
 	route := matcher.RouteWithPattern(f.loginProcessUrl, http.MethodPost)
-	csrfMatcher := matcher.RequestWithPattern(f.loginProcessUrl, http.MethodPost)
 	ws.Route(route)
 
 	// configure middlewares
 	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
 
-	login := NewFormAuthenticationMiddleware(FormAuthOptions{
-		Authenticator:  ws.Authenticator(),
-		SuccessHandler: authSuccessHandler,
-		UsernameParam:  f.usernameParam,
-		PasswordParam:  f.passwordParam,
+	login := NewFormAuthenticationMiddleware(func(opts *FormAuthMWOptions) {
+		opts.Authenticator = ws.Authenticator()
+		opts.SuccessHandler = authSuccessHandler
+		opts.UsernameParam =  f.usernameParam
+		opts.PasswordParam = f.passwordParam
 	})
 	mw := middleware.NewBuilder("form login").
 		ApplyTo(route).
@@ -202,7 +205,43 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(web.NewGenericMapping("login process dummy", f.loginProcessUrl, http.MethodPost, login.EndpointHandlerFunc() ))
 
-	// protect login process with csrf
+	return nil
+}
+
+func (flc *FormLoginConfigurer) configureOtpVerify(f *FormLoginFeature, ws security.WebSecurity) error {
+	authSuccessHandler := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler)
+
+	// let ws know to intercept additional url
+	route := matcher.RouteWithPattern(f.mfaVerifyUrl, http.MethodPost)
+	ws.Route(route)
+
+	// configure middlewares
+	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
+
+	login := NewMfaAuthenticationMiddleware(func(opts *MfaMWOptions) {
+		opts.Authenticator = ws.Authenticator()
+		opts.SuccessHandler = authSuccessHandler
+		opts.OtpParam =  f.otpParam
+	})
+	mw := middleware.NewBuilder("otp verify").
+		ApplyTo(route).
+		WithCondition(security.WebConditionFunc(f.formProcessCondition)).
+		Order(security.MWOrderFormAuth).
+		Use(login.OtpVerifyHandlerFunc()).
+		Build()
+
+	ws.Add(mw)
+
+	// configure additional endpoint mappings to trigger middleware
+	ws.Add(web.NewGenericMapping("otp verify dummy", f.mfaVerifyUrl, http.MethodPost, login.EndpointHandlerFunc() ))
+
+	return nil
+}
+
+func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.WebSecurity) error {
+	csrfMatcher := matcher.RequestWithPattern(f.loginProcessUrl, http.MethodPost).
+		Or(matcher.RequestWithPattern(f.mfaVerifyUrl, http.MethodPost)).
+		Or(matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost))
 	csrf.Configure(ws).CsrfProtectionMatcher(csrfMatcher)
 	return nil
 }
