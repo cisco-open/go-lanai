@@ -3,6 +3,7 @@ package session
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -68,7 +69,7 @@ func NewSession(store Store, name string) *Session {
 // NewCookie returns an http.Cookie with the options set. It also sets
 // the Expires field calculated based on the MaxAge value, for Internet
 // Explorer compatibility.
-func NewCookie(name, value string, options *Options) *http.Cookie {
+func NewCookie(name, value string, options *Options, r *http.Request) *http.Cookie {
 	cookie := newCookieFromOptions(name, value, options)
 	if options.MaxAge > 0 {
 		d := time.Duration(options.MaxAge) * time.Second
@@ -77,6 +78,13 @@ func NewCookie(name, value string, options *Options) *http.Cookie {
 		// Set it to the past to expire now.
 		cookie.Expires = time.Unix(1, 0)
 	}
+
+	protoHeader := r.Header.Get("X-Forwarded-Proto")
+
+	if !options.Secure {
+		cookie.Secure = strings.Contains(protoHeader, "https")
+	}
+
 	return cookie
 }
 

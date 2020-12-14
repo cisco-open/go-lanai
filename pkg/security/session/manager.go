@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultName = "SESSION" //TODO: move this into store and make the store functions optional
+	DefaultName = "SESSION"
 	sessionKeySecurity = "Security"
 	contextKeySession = web.ContextKeySession
 )
@@ -57,12 +57,10 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 			return
 		}
 
-		// TODO validate session
-
 		// TODO logger
 		if session != nil && session.isNew {
 			fmt.Printf("New Session %v\n", session.id)
-			http.SetCookie(c.Writer, NewCookie(session.Name(), session.id, session.options))
+			http.SetCookie(c.Writer, NewCookie(session.Name(), session.id, session.options, c.Request))
 		}
 
 		m.registerSession(c, session)

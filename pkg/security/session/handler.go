@@ -13,7 +13,7 @@ import (
  */
 type ChangeSessionHandler struct{}
 
-func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
+func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
 	if !security.IsBeingAuthenticated(from, to) {
 		return
 	}
@@ -26,7 +26,7 @@ func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, _ 
 	err := s.ChangeId()
 
 	if err == nil {
-		http.SetCookie(rw, NewCookie(s.Name(), s.id, s.options))
+		http.SetCookie(rw, NewCookie(s.Name(), s.id, s.options, r))
 	} else {
 		panic(security.NewInternalError("Failed to update session ID"))
 	}

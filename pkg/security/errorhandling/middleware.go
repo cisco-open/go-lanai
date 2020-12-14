@@ -62,7 +62,7 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 		eh.authErrorHandler.HandleAuthenticationError(c, c.Request, c.Writer, err)
 
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorSubTypeInsufficientAuth):
-		eh.entryPoint.Commence(c, c.Request, c.Writer, err)
+		eh.entryPoint.Commence(c, c.Request, c.Writer, err) //TODO: some entry point should cache the request, and the entry point handler needs to be able to get the cached request
 
 	case errors.Is(err, security.ErrorTypeAuthentication):
 		eh.clearAuthentication(c)
