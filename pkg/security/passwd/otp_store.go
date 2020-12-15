@@ -1,12 +1,21 @@
 package passwd
 
 import (
+	"bytes"
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"encoding/gob"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"io"
+	"strings"
 	"time"
+)
+
+const (
+	redisKeyPrefixOtp = "OTP-"
 )
 
 type OTP interface {
@@ -22,7 +31,7 @@ type OTP interface {
 	secret() string
 }
 
-type OTPStore interface {
+type OTPManager interface {
 	// New create new OTP and save it
 	New() (OTP, error)
 
@@ -42,6 +51,12 @@ type OTPStore interface {
 	Refresh(id string) (refreshed OTP, hasMoreChances bool, err error)
 
 	// Delete delete OTP by ID
+	Delete(id string) error
+}
+
+type OTPStore interface {
+	Save(OTP) error
+	Load(id string) (OTP, error)
 	Delete(id string) error
 }
 
@@ -92,39 +107,39 @@ func (v *timeBasedOtp) IncrementRefreshes() {
 	v.RefreshCount ++
 }
 
-// redisTotpStore implements OTPStore
-type redisTotpStore struct {
-	redisClient     *redis.Connection
+// totpManager implements OTPManager
+type totpManager struct {
 	factory         TOTPFactory
+	store           OTPStore
 	ttl             time.Duration
 	maxVerifyLimit  uint
 	maxRefreshLimit uint
 }
 
-type redisTotpStoreOptions func(*redisTotpStore)
+type totpManagerOptionsFunc func(*totpManager)
 
-func newRedisTotpStore(redisClient *redis.Connection, options...redisTotpStoreOptions) *redisTotpStore {
-	store := &redisTotpStore{
-		redisClient: redisClient,
+func newTotpManager(options...totpManagerOptionsFunc) *totpManager {
+	manager := &totpManager{
 		factory: newTotpFactory(),
+		store: inmemOtpStore(make(map[string]OTP)),
 		ttl: time.Minute * 10,
 		maxVerifyLimit: 3,
 		maxRefreshLimit: 3,
 	}
 
 	for _,opt := range options {
-		opt(store)
+		opt(manager)
 	}
-	return store
+	return manager
 }
 
-func (os *redisTotpStore) New() (OTP, error) {
+func (m *totpManager) New() (OTP, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, errors.Wrapf(err, "Unable to create TOTP")
 	}
 
-	value, err := os.factory.Generate(os.ttl)
+	value, err := m.factory.Generate(m.ttl)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Unable to create TOTP")
 	}
@@ -135,32 +150,32 @@ func (os *redisTotpStore) New() (OTP, error) {
 	}
 
 	// save
-	if err := os.save(otp); err != nil {
+	if err := m.store.Save(otp); err != nil {
 		return nil, err
 	}
 	return otp, nil
 }
 
-func (os *redisTotpStore) Get(id string) (OTP, error) {
-	otp, err := os.load(id);
+func (m *totpManager) Get(id string) (OTP, error) {
+	otp, err := m.store.Load(id);
 	if err != nil {
 		return nil, err
 	}
 	return otp, nil
 }
 
-func (os *redisTotpStore) Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error) {
+func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error) {
 	// load OTP by ID
-	otp, e := os.load(id);
+	otp, e := m.store.Load(id);
 	if otp == nil || e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode already expired", e)
 	}
 
 	// schedule for post verification
-	defer os.cleanup(otp)
+	defer m.cleanup(otp)
 
 	// check verification attempts
-	if otp.IncrementAttempts(); otp.Attempts() >= os.maxVerifyLimit {
+	if otp.IncrementAttempts(); otp.Attempts() >= m.maxVerifyLimit {
 		return nil, false, security.NewMaxAttemptsReachedError("Max verification attempts exceeded")
 	}
 
@@ -172,26 +187,30 @@ func (os *redisTotpStore) Verify(id, passcode string) (loaded OTP, hasMoreChance
 	}
 
 	loaded = otp
-	hasMoreChances = otp.Attempts() < os.maxVerifyLimit
-	if valid, e := os.factory.Validate(toValidate); e != nil || !valid {
+	hasMoreChances = otp.Attempts() < m.maxVerifyLimit
+	if valid, e := m.factory.Validate(toValidate); e != nil || !valid {
 		err = security.NewBadCredentialsError("Passcode doesn't match", e)
 	}
 	return
 }
 
-func (os *redisTotpStore) Refresh(id string) (loaded OTP, hasMoreChances bool, err error) {
+func (m *totpManager) Refresh(id string) (loaded OTP, hasMoreChances bool, err error) {
 	// load OTP by ID
-	otp, e := os.load(id);
+	loaded, e := m.store.Load(id);
 	if e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode expired", e)
 	}
 
+	otp, ok := loaded.(*timeBasedOtp)
+	if !ok {
+		return nil, false, security.NewCredentialsExpiredError("Passcode expired", e)
+	}
+
 	// schedule for post refresh
-	loaded = otp
-	defer os.cleanup(otp)
+	defer m.cleanup(otp)
 
 	// check refresh attempts
-	if otp.IncrementRefreshes(); otp.Refreshes() >= os.maxRefreshLimit {
+	if otp.IncrementRefreshes(); otp.Refreshes() >= m.maxRefreshLimit {
 		return loaded, false, security.NewMaxAttemptsReachedError("Max refresh/resend attempts exceeded")
 	}
 
@@ -202,8 +221,8 @@ func (os *redisTotpStore) Refresh(id string) (loaded OTP, hasMoreChances bool, e
 	}
 
 	// do refresh
-	hasMoreChances = otp.Refreshes() < os.maxRefreshLimit
-	refreshed, e := os.factory.Refresh(otp.secret(), ttl)
+	hasMoreChances = otp.Refreshes() < m.maxRefreshLimit
+	refreshed, e := m.factory.Refresh(otp.secret(), ttl)
 	if e != nil {
 		return loaded, hasMoreChances, security.NewAuthenticationError("Unabled to refresh/resend passcode", e)
 	}
@@ -211,41 +230,102 @@ func (os *redisTotpStore) Refresh(id string) (loaded OTP, hasMoreChances bool, e
 	return
 }
 
-func (os *redisTotpStore) Delete(id string) error {
-	return os.delete(id)
+func (m *totpManager) Delete(id string) error {
+	return m.store.Delete(id)
 }
 
-func (os *redisTotpStore) cleanup(otp *timeBasedOtp) {
+func (m *totpManager) cleanup(otp OTP) {
 	if time.Now().After(otp.Expire()) {
 		// expired try to delete the record
-		_ = os.delete(otp.ID())
+		_ = m.store.Delete(otp.ID())
 	} else {
 		// not expired, save it
-		_ = os.save(otp)
+		_ = m.store.Save(otp)
 	}
 }
 
-var devOtpMap map[string]*timeBasedOtp = make(map[string]*timeBasedOtp)
+// inmemOtpStore implements OTPStore
+type inmemOtpStore map[string]OTP
 
-func (os *redisTotpStore) save(otp *timeBasedOtp) error {
-	//TODO
-	devOtpMap[otp.Identifier] = otp
+func (s inmemOtpStore) Save(otp OTP) error {
+	s[otp.ID()] = otp
 	return nil
 }
 
-func (os *redisTotpStore) load(id string) (*timeBasedOtp, error) {
-	//TODO
-	if otp, ok := devOtpMap[id]; ok {
+func (s inmemOtpStore) Load(id string) (OTP, error) {
+	if otp, ok := s[id]; ok {
 		return otp, nil
 	}
 	return nil, fmt.Errorf("not found with id %s", id)
 }
 
-func (os *redisTotpStore) delete(id string) error {
-	//TODO
-	if _, ok := devOtpMap[id]; ok {
-		delete(devOtpMap, id)
+func (s inmemOtpStore) Delete(id string) error {
+	if _, ok := s[id]; ok {
+		delete(s, id)
 		return nil
 	}
 	return fmt.Errorf("not found with id %s", id)
+}
+
+// redisOtpStore implements OTPStore
+type redisOtpStore struct {
+	redisClient redis.Client
+}
+
+func newRedisOtpStore(redisClient redis.Client) *redisOtpStore {
+	return &redisOtpStore{
+		redisClient: redisClient,
+	}
+}
+
+func (s *redisOtpStore) Save(otp OTP) error {
+
+	bytes, err := serialize(otp)
+	if err != nil {
+		return err
+	}
+
+	key := s.key(otp.ID())
+	ttl := otp.Expire().Sub(time.Now())
+	cmd := s.redisClient.Set(context.Background(), key, bytes, ttl)
+	return cmd.Err()
+}
+
+func (s *redisOtpStore) Load(id string) (OTP, error) {
+	key := s.key(id)
+	cmd := s.redisClient.Get(context.Background(), key)
+	val, err := cmd.Result()
+	if err != nil {
+		return nil, err
+	}
+
+	return deserialize(strings.NewReader(val))
+}
+
+func (s *redisOtpStore) Delete(id string) error {
+	key := s.key(id)
+	cmd := s.redisClient.Del(context.Background(), key)
+	return cmd.Err()
+}
+
+func (s *redisOtpStore) key(id string) string {
+	return redisKeyPrefixOtp + id
+}
+
+func serialize(otp OTP) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(&otp); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func deserialize(src io.Reader) (OTP, error) {
+	dec := gob.NewDecoder(src)
+	var otp OTP
+	if err := dec.Decode(&otp); err != nil {
+		return nil, err
+	}
+	return otp, nil
 }

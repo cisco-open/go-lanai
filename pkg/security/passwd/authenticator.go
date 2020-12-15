@@ -16,7 +16,7 @@ const (
 type Authenticator struct {
 	accountStore      security.AccountStore
 	passwdEncoder     PasswordEncoder
-	otpStore          OTPStore
+	otpManager        OTPManager
 	mfaEventListeners []MFAEventListenerFunc
 }
 
@@ -25,7 +25,7 @@ type AuthenticatorOptionsFunc func(*AuthenticatorOptions)
 type AuthenticatorOptions struct {
 	AccountStore      security.AccountStore
 	PasswordEncoder   PasswordEncoder
-	OTPStore          OTPStore
+	OTPManager        OTPManager
 	MFAEventListeners []MFAEventListenerFunc
 }
 
@@ -40,9 +40,9 @@ func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
 		}
 	}
 	return &Authenticator{
-		accountStore: options.AccountStore,
+		accountStore:      options.AccountStore,
 		passwdEncoder:     options.PasswordEncoder,
-		otpStore:          options.OTPStore,
+		otpManager:        options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
 	}
 }
@@ -79,11 +79,11 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 	// MFA support
 	if candidate.EnforceMFA == MFAModeMust || candidate.EnforceMFA != MFAModeSkip && account.UseMFA() {
 		// MFA required
-		if a.otpStore == nil {
+		if a.otpManager == nil {
 			return nil, security.NewInternalAuthenticationError(MessageOtpNotAvailable)
 		}
 
-		otp, err := a.otpStore.New()
+		otp, err := a.otpManager.New()
 		if err != nil {
 			return nil, security.NewInternalAuthenticationError(MessageOtpNotAvailable)
 		}

@@ -33,7 +33,7 @@ func GobRegister() {
 }
 
 
-func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties, connection *redis.Connection) {
-	configurer := newSessionConfigurer(sessionProps, serverProps, connection)
+func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties, redisClient redis.Client) {
+	configurer := newSessionConfigurer(sessionProps, serverProps, redisClient)
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

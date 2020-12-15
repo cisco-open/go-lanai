@@ -42,10 +42,10 @@ func New() *SessionFeature {
 type SessionConfigurer struct {
 	sessionProps security.SessionProperties
 	serverProps web.ServerProperties
-	connection *redis.Connection
+	connection redis.Client
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, connection *redis.Connection) *SessionConfigurer {
+func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, connection redis.Client) *SessionConfigurer {
 	return &SessionConfigurer{
 		sessionProps: sessionProps,
 		serverProps: serverProps,

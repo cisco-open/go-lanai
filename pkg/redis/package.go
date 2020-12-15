@@ -11,7 +11,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.LowestPrecedence,
 	Options: []fx.Option{
 		fx.Provide(newConnectionProperties),
-		fx.Provide(newConnection),
+		fx.Provide(newClient),
 	},
 }
 
@@ -30,7 +30,7 @@ func newConnectionProperties(ac *bootstrap.ApplicationContext) *ConnectionProper
 	return r
 }
 
-func newConnection(p *ConnectionProperties) *Connection {
+func newClient(p *ConnectionProperties) Client {
 
 	opts, err := GetUniversalOptions(p)
 
@@ -40,8 +40,8 @@ func newConnection(p *ConnectionProperties) *Connection {
 
 	rdb := redis.NewUniversalClient(opts)
 
-	c := &Connection{
-		rdb,
+	c := &client {
+		UniversalClient: rdb,
 	}
 
 	return c

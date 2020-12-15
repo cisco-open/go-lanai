@@ -3,7 +3,6 @@ package session
 import (
 	"bytes"
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
@@ -41,27 +40,31 @@ func (u *testUser) UseMFA() bool {
 
 type testAuthentication struct {
 	Account     security.Account
-	PermissionList []string
+	PermissionList map[string]interface{}
 }
 
 func (auth *testAuthentication) Principal() interface{} {
 	return auth.Account
 }
 
-func (auth *testAuthentication) Permissions() []string {
+func (auth *testAuthentication) Permissions() map[string]interface{} {
 	return auth.PermissionList
 }
 
-func (auth *testAuthentication) Authenticated() bool {
-	return true
+func (auth *testAuthentication) State() security.AuthenticationState {
+	return security.StateAuthenticated
 }
 
 func (auth *testAuthentication) Details() interface{} {
 	return auth.Account
 }
 
-func (auth *testAuthentication) IsUsernamePasswordAuthentication() bool {
-	return true
+func (auth *testAuthentication) IsMFAPending() bool {
+	return false
+}
+
+func (auth *testAuthentication) OTPIdentifier() string {
+	return ""
 }
 
 func TestSerialization(t *testing.T) {
@@ -69,9 +72,7 @@ func TestSerialization(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock_redis.NewMockUniversalClient(ctrl)
-	connection := &redis.Connection{
-		UniversalClient: mock,
-	}
+	connection := mock
 
 	store := NewRedisStore(connection)
 	s := NewSession(store, DefaultName)
@@ -81,7 +82,7 @@ func TestSerialization(t *testing.T) {
 			User: "test_user",
 			Pass: "test_pass",
 		},
-		PermissionList: []string{"perm_a", "perm_b"},
+		PermissionList: map[string]interface{}{"perm_a": true, "perm_b": true},
 	}
 
 	s.values["auth"] = auth
@@ -136,9 +137,7 @@ func Test_Get_Not_Exist_Session_Should_Create_New(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock_redis.NewMockUniversalClient(ctrl)
-	connection := &redis.Connection{
-		UniversalClient: mock,
-	}
+	connection := mock
 
 	mock.EXPECT().
 		HGetAll(gomock.Any(), gomock.Eq("session_name:session_id")).
@@ -178,9 +177,7 @@ func Test_Get_Exist_Session_Should_Return_Existing(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock_redis.NewMockUniversalClient(ctrl)
-	connection := &redis.Connection{
-		UniversalClient: mock,
-	}
+	connection := mock
 	store := NewRedisStore(connection)
 
 	var sessionValues = make(map[interface{}]interface{})
@@ -240,9 +237,7 @@ func TestSaveNewSession(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock_redis.NewMockUniversalClient(ctrl)
-	connection := &redis.Connection{
-		UniversalClient: mock,
-	}
+	connection := mock
 
 	store := NewRedisStore(connection)
 	session, _ := store.New("session_name")
@@ -288,9 +283,7 @@ func TestSaveDirtySession(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock_redis.NewMockUniversalClient(ctrl)
-	connection := &redis.Connection{
-		UniversalClient: mock,
-	}
+	connection := mock
 
 	store := NewRedisStore(connection)
 	session, _ := store.New("session_name")
@@ -342,9 +335,7 @@ func TestSaveAccessedSession(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock_redis.NewMockUniversalClient(ctrl)
-	connection := &redis.Connection{
-		UniversalClient: mock,
-	}
+	connection := mock
 
 	store := NewRedisStore(connection)
 	session, _ := store.New("session_name")

@@ -114,6 +114,10 @@ func GetUniversalOptions(p *ConnectionProperties) (*redis.UniversalOptions, erro
 	return universal, nil
 }
 
-type Connection struct {
+type Client interface {
+	redis.UniversalClient
+}
+
+type client struct {
 	redis.UniversalClient
 }

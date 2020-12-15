@@ -16,13 +16,14 @@ var (
 type PasswordAuthConfigurer struct {
 	accountStore security.AccountStore
 	passwordEncoder PasswordEncoder
-	redisClient *redis.Connection
+	redisClient redis.Client
 }
 
-func newPasswordAuthConfigurer(store security.AccountStore, encoder PasswordEncoder, conn *redis.Connection) *PasswordAuthConfigurer {
+func newPasswordAuthConfigurer(store security.AccountStore, encoder PasswordEncoder, redisClient redis.Client) *PasswordAuthConfigurer {
 	return &PasswordAuthConfigurer {
-		accountStore: store,
+		accountStore:    store,
 		passwordEncoder: encoder,
+		redisClient:     redisClient,
 	}
 }
 
@@ -101,14 +102,17 @@ func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) Authentica
 		f.otpRefreshLimit = 3
 	}
 
-	otpStore := newRedisTotpStore(pac.redisClient, func(s *redisTotpStore) {
+	otpManager := newTotpManager(func(s *totpManager) {
 		s.ttl = f.otpTTL
 		s.maxVerifyLimit = f.otpVerifyLimit
 		s.maxRefreshLimit = f.otpRefreshLimit
+		if pac.redisClient != nil {
+			s.store = newRedisOtpStore(pac.redisClient)
+		}
 	})
 
 	return func(opts *AuthenticatorOptions) {
-		opts.OTPStore = otpStore
+		opts.OTPManager = otpManager
 		sort.SliceStable(f.mfaEventListeners, func(i,j int) bool {
 			return order.OrderedFirstCompare(f.mfaEventListeners[i], f.mfaEventListeners[j])
 		})

@@ -27,7 +27,7 @@ var (
 *********************************/
 type MfaVerifyAuthenticator struct {
 	accountStore      security.AccountStore
-	otpStore          OTPStore
+	otpStore          OTPManager
 	mfaEventListeners []MFAEventListenerFunc
 }
 
@@ -40,7 +40,7 @@ func NewMFAVerifyAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaVerif
 	}
 	return &MfaVerifyAuthenticator{
 		accountStore:      options.AccountStore,
-		otpStore:          options.OTPStore,
+		otpStore:          options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
 	}
 }
@@ -119,7 +119,7 @@ func (a *MfaVerifyAuthenticator) translate(err error, more bool) error {
 *********************************/
 type MfaRefreshAuthenticator struct {
 	accountStore      security.AccountStore
-	otpStore          OTPStore
+	otpStore          OTPManager
 	mfaEventListeners []MFAEventListenerFunc
 }
 
@@ -132,7 +132,7 @@ func NewMFARefreshAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaRefr
 	}
 	return &MfaRefreshAuthenticator{
 		accountStore:      options.AccountStore,
-		otpStore:          options.OTPStore,
+		otpStore:          options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
 	}
 }
