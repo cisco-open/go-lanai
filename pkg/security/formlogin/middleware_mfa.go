@@ -6,6 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+
+)
+
 type MfaAuthenticationMiddleware struct {
 	authenticator  security.Authenticator
 	successHandler security.AuthenticationSuccessHandler
@@ -108,6 +112,19 @@ func (mw *MfaAuthenticationMiddleware) handleSuccess(c *gin.Context, before, new
 }
 
 func (mw *MfaAuthenticationMiddleware) handleError(c *gin.Context, err error, candidate security.Candidate) {
+	if mw.shouldClear(err) {
+		security.Clear(c)
+	}
 	_ = c.Error(err)
 	c.Abort()
+}
+
+func (mw *MfaAuthenticationMiddleware) shouldClear(err error) bool {
+	switch coder, ok := err.(security.ErrorCoder); ok {
+	case coder.Code() == security.ErrorCodeCredentialsExpired:
+		return true
+	case coder.Code() == security.ErrorCodeMaxAttemptsReached:
+		return true
+	}
+	return false
 }

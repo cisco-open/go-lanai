@@ -50,6 +50,7 @@ func GobRegister() {
 	gob.Register(EmptyAuthentication(""))
 	gob.Register((*AnonymousAuthentication)(nil))
 	gob.Register((*codedError)(nil))
+	gob.Register((*nestedError)(nil))
 	gob.Register(errors.New(""))
 }
 

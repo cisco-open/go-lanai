@@ -183,7 +183,7 @@ func (os *redisTotpStore) Refresh(id string) (loaded OTP, hasMoreChances bool, e
 	// load OTP by ID
 	otp, e := os.load(id);
 	if e != nil {
-		return nil, false, security.NewCredentialsExpiredError("Max refresh/resend attempts exceeded", e)
+		return nil, false, security.NewCredentialsExpiredError("Passcode expired", e)
 	}
 
 	// schedule for post refresh

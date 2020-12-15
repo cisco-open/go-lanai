@@ -68,8 +68,7 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 
 	// TODO post password check
 
-	auth, err := a.CreateSuccessAuthentication(upp, user)
-	return auth, nil
+	return a.CreateSuccessAuthentication(upp, user)
 }
 
 // exported for override posibility
@@ -88,9 +87,10 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 		if err != nil {
 			return nil, security.NewInternalAuthenticationError(MessageOtpNotAvailable)
 		}
-		a.notifyMfaEvent(MFAEventOtpCreate, otp, account)
 		permissions[SpecialPermissionMFAPending] = true
 		permissions[SpecialPermissionOtpId] = otp.ID()
+
+		broadcastMFAEvent(MFAEventOtpCreate, otp, account, a.mfaEventListeners...)
 	} else {
 		// MFA skipped
 		for _,p := range account.Permissions() {
@@ -107,9 +107,4 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 	return &auth, nil
 }
 
-func (a *Authenticator) notifyMfaEvent(event MFAEvent, otp OTP, account security.Account) {
-	for _,listener := range a.mfaEventListeners {
-		listener(event, otp, account)
-	}
-}
 
