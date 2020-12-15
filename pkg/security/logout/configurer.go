@@ -31,12 +31,6 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	}
 	f := feature.(*LogoutFeature)
 
-	if f.successHandler == nil {
-		f.successHandler = redirect.NewRedirectWithURL(f.successUrl)
-	}
-	authSuccessHandler := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler)
-	authSuccessHandler.Add(f.successHandler)
-
 	supportedMethods := []string{
 		http.MethodGet,
 		http.MethodPost,
@@ -49,7 +43,7 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 
 	// configure middlewares
 	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
-	logout := NewLogoutMiddleware(authSuccessHandler, f.logoutHandlers...)
+	logout := NewLogoutMiddleware(flc.effectiveSuccessHandler(f, ws), f.logoutHandlers...)
 	mw := middleware.NewBuilder("form logout").
 		ApplyTo(route).
 		WithCondition(security.WebConditionFunc(f.condition)).
@@ -85,4 +79,17 @@ func (flc *LogoutConfigurer) validate(f *LogoutFeature, ws security.WebSecurity)
 	}
 
 	return nil
+}
+
+func (flc *LogoutConfigurer) effectiveSuccessHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
+
+	if f.successHandler == nil {
+		f.successHandler = redirect.NewRedirectWithURL(f.successUrl)
+	}
+
+	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
+		return security.NewAuthenticationSuccessHandler(globalHandler, f.successHandler)
+	} else {
+		return f.successHandler
+	}
 }

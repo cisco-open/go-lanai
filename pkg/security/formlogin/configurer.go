@@ -167,18 +167,6 @@ func (flc *FormLoginConfigurer) configureMfaPage(f *FormLoginFeature, ws securit
 }
 
 func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
-	if f.successHandler == nil {
-		f.successHandler = redirect.NewRedirectWithURL(f.loginSuccessUrl)
-	}
-
-	if _, ok := f.successHandler.(*MfaAwareSuccessHandler); f.mfaEnabled && !ok {
-		f.successHandler = &MfaAwareSuccessHandler{
-			delegate: f.successHandler,
-			mfaPendingDelegate: redirect.NewRedirectWithURL(f.mfaUrl),
-		}
-	}
-	authSuccessHandler := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler)
-	authSuccessHandler.Add(f.successHandler)
 
 	// let ws know to intercept additional url
 	route := matcher.RouteWithPattern(f.loginProcessUrl, http.MethodPost)
@@ -189,7 +177,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	login := NewFormAuthenticationMiddleware(func(opts *FormAuthMWOptions) {
 		opts.Authenticator = ws.Authenticator()
-		opts.SuccessHandler = authSuccessHandler
+		opts.SuccessHandler = flc.effectiveSuccessHandler(f, ws)
 		opts.UsernameParam =  f.usernameParam
 		opts.PasswordParam = f.passwordParam
 	})
@@ -209,7 +197,6 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 }
 
 func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
-	authSuccessHandler := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler)
 
 	// let ws know to intercept additional url
 	routeVerify := matcher.RouteWithPattern(f.mfaVerifyUrl, http.MethodPost)
@@ -220,10 +207,9 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 
 	// configure middlewares
 	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
-
 	login := NewMfaAuthenticationMiddleware(func(opts *MfaMWOptions) {
 		opts.Authenticator = ws.Authenticator()
-		opts.SuccessHandler = authSuccessHandler
+		opts.SuccessHandler = flc.effectiveSuccessHandler(f, ws)
 		opts.OtpParam =  f.otpParam
 	})
 
@@ -261,4 +247,25 @@ func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.W
 		Or(matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost))
 	csrf.Configure(ws).CsrfProtectionMatcher(csrfMatcher)
 	return nil
+}
+
+func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
+
+	if f.successHandler == nil {
+		f.successHandler = redirect.NewRedirectWithURL(f.loginSuccessUrl)
+	}
+
+	if _, ok := f.successHandler.(*MfaAwareSuccessHandler); f.mfaEnabled && !ok {
+		f.successHandler = &MfaAwareSuccessHandler{
+			delegate: f.successHandler,
+			mfaPendingDelegate: redirect.NewRedirectWithURL(f.mfaUrl),
+		}
+	}
+
+
+	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
+		return security.NewAuthenticationSuccessHandler(globalHandler, f.successHandler)
+	} else {
+		return f.successHandler
+	}
 }
