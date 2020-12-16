@@ -42,7 +42,7 @@ func NewProvider(precedence int, filePath string, reader io.Reader) *ConfigProvi
 		return NewCachedLoader(NewPropertiesFile(name, fileName, reader))
 	 */
 	default:
-		fmt.Printf("Unknown appconfig file extension: ", fileExt)
+		fmt.Printf("Unknown appconfig file extension: %s", fileExt)
 		return nil
 	}
 }

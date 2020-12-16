@@ -42,10 +42,10 @@ func New() *SessionFeature {
 type SessionConfigurer struct {
 	sessionProps security.SessionProperties
 	serverProps web.ServerProperties
-	connection *redis.Connection
+	connection redis.Client
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, connection *redis.Connection) *SessionConfigurer {
+func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, connection redis.Client) *SessionConfigurer {
 	return &SessionConfigurer{
 		sessionProps: sessionProps,
 		serverProps: serverProps,
@@ -100,11 +100,11 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 		Order(security.MWOrderAuthPersistence).
 		Use(manager.AuthenticationPersistenceHandlerFunc())
 
-	test := middleware.NewBuilder("post-sessionMiddleware").
-		Order(security.MWOrderAuthPersistence + 10).
-		Use(SessionDebugHandlerFunc())
+	//test := middleware.NewBuilder("post-sessionMiddleware").
+	//	Order(security.MWOrderAuthPersistence + 10).
+	//	Use(SessionDebugHandlerFunc())
 
-	ws.Add(sessionHandler, authPersist, test)
+	ws.Add(sessionHandler, authPersist)
 
 	// configure auth success/error handler
 	// TODO session fixation goes here
