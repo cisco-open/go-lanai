@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/gob"
 	"fmt"
 	"github.com/google/uuid"
@@ -87,6 +88,7 @@ type RedisStore struct {
 
 func NewRedisStore(connection *redis.Connection, options ...func(*Options)) *RedisStore {
 	gob.Register(time.Time{})
+	gob.Register((*web.CachedRequest)(nil))
 
 	//defaults
 	o := &Options{

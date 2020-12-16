@@ -26,7 +26,7 @@ var (
 )
 
 type Registrar struct {
-	engine            *gin.Engine
+	engine            *Engine
 	router            gin.IRouter
 	properties        ServerProperties
 	options           []httptransport.ServerOption // options go-kit middleware options
@@ -35,7 +35,7 @@ type Registrar struct {
 }
 
 // TODO support customizers
-func NewRegistrar(g *gin.Engine, properties ServerProperties) *Registrar {
+func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 
 	var contextPath = path.Clean("/" + properties.ContextPath)
 	registrar := &Registrar{
@@ -72,6 +72,7 @@ func (r *Registrar) addGlobalMiddleware(name string, order int, handlerFunc gin.
 }
 
 // Run configure and start gin engine
+// TODO: instead of provide a gin engine, we provide a wrapper so that r.engine is our wrapper
 func (r *Registrar) Run() (err error) {
 	if err = r.initialize(); err != nil {
 		return

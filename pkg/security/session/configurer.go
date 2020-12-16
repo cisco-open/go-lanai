@@ -1,15 +1,9 @@
 package session
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
-	"net/http"
-	"path"
-	"strings"
-	"time"
 )
 
 var (
@@ -40,57 +34,18 @@ func New() *SessionFeature {
 }
 
 type SessionConfigurer struct {
-	sessionProps security.SessionProperties
-	serverProps web.ServerProperties
-	connection *redis.Connection
+	store Store
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, connection *redis.Connection) *SessionConfigurer {
+func newSessionConfigurer(store Store) *SessionConfigurer {
 	return &SessionConfigurer{
-		sessionProps: sessionProps,
-		serverProps: serverProps,
-		connection: connection,
+		store: store,
 	}
 }
 
 func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
-
-	// configure session store
-	var sameSite http.SameSite
-	switch strings.ToLower(sc.sessionProps.Cookie.SameSite) {
-	case "lax":
-		sameSite = http.SameSiteLaxMode
-	case "strict":
-		sameSite = http.SameSiteStrictMode
-	case "none":
-		sameSite = http.SameSiteNoneMode
-	default:
-		sameSite = http.SameSiteDefaultMode
-	}
-
-	idleTimeout, err := time.ParseDuration(sc.sessionProps.IdleTimeout)
-	if err != nil {
-		return err
-	}
-	absTimeout, err := time.ParseDuration(sc.sessionProps.AbsoluteTimeout)
-	if err != nil {
-		return err
-	}
-
-	configureOptions := func(options *Options) {
-		options.Path = path.Clean("/" + sc.serverProps.ContextPath)
-		options.Domain = sc.sessionProps.Cookie.Domain
-		options.MaxAge = sc.sessionProps.Cookie.MaxAge
-		options.Secure = sc.sessionProps.Cookie.Secure
-		options.HttpOnly = sc.sessionProps.Cookie.HttpOnly
-		options.SameSite = sameSite
-		options.IdleTimeout = idleTimeout
-		options.AbsoluteTimeout = absTimeout
-	}
-	sessionStore := NewRedisStore(sc.connection, configureOptions)
-
 	// configure middleware
-	manager := NewManager(sessionStore)
+	manager := NewManager(sc.store)
 
 	sessionHandler := middleware.NewBuilder("sessionMiddleware").
 		Order(security.MWOrderSessionHandling).
@@ -115,7 +70,7 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 		Add(&DebugAuthErrorHandler{})
 
 	concurrentSessionHandler := &ConcurrentSessionHandler{
-		sessionStore: sessionStore,
+		sessionStore: sc.store,
 		getMaxSessions: func() int {
 			//TODO: get this from configuration file
 			return 5
@@ -125,7 +80,7 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 		Add(concurrentSessionHandler)
 
 	deleteSessionHandler := &DeleteSessionOnLogoutHandler{
-		sessionStore: sessionStore,
+		sessionStore: sc.store,
 	}
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(deleteSessionHandler)

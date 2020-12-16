@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
 
@@ -12,7 +11,7 @@ var Module = &bootstrap.Module{
 	Name: "web",
 	Precedence: bootstrap.FrameworkModulePrecedence + 1000,
 	PriorityOptions: []fx.Option{
-		fx.Provide(web.BindServerProperties, gin.Default, web.NewRegistrar),
+		fx.Provide(web.BindServerProperties, web.NewEngine, web.NewRegistrar),
 		fx.Invoke(setup),
 	},
 }
@@ -29,7 +28,7 @@ func Use() {
 /**************************
 	Provide dependencies
 ***************************/
-
+//TODO: provide a RequestCache
 
 /**************************
 	Setup
