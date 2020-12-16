@@ -2,12 +2,15 @@ package passwd
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"errors"
 )
 
 const (
 	MessageUserNotFound = "Mismatched Username and Password"
 	MessageBadCredential = "Mismatched Username and Password"
 	MessageOtpNotAvailable = "MFA required but temprorily unavailable"
+	MessageAccountStatus = "Inactive Account"
 )
 
 /******************************
@@ -18,6 +21,7 @@ type Authenticator struct {
 	passwdEncoder     PasswordEncoder
 	otpManager        OTPManager
 	mfaEventListeners []MFAEventListenerFunc
+	checkers 		  []AuthenticationDecisionMaker
 }
 
 type AuthenticatorOptionsFunc func(*AuthenticatorOptions)
@@ -27,6 +31,7 @@ type AuthenticatorOptions struct {
 	PasswordEncoder   PasswordEncoder
 	OTPManager        OTPManager
 	MFAEventListeners []MFAEventListenerFunc
+	Checkers 			  []AuthenticationDecisionMaker
 }
 
 func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
@@ -44,6 +49,7 @@ func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
 		passwdEncoder:     options.PasswordEncoder,
 		otpManager:        options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
+		checkers: 		   options.Checkers,
 	}
 }
 
@@ -59,16 +65,30 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 		return nil, security.NewUsernameNotFoundError(MessageUserNotFound, err)
 	}
 
-	// TODO check account status
+	// pre checks
+	ctx := utils.NewMutableContext()
+	if err := performChecks(a.checkers, ctx, upp, user, nil); err != nil {
+		return nil, a.translate(err)
+	}
 
 	// Check password
-	if upp.Username != user.Username() || !a.passwdEncoder.Matches(upp.Password, user.Password()) {
+	if password, ok := user.Credentials().(string);
+		!ok || upp.Username != user.Username() || !a.passwdEncoder.Matches(upp.Password, password) {
 		return nil, security.NewBadCredentialsError(MessageBadCredential)
 	}
 
-	// TODO post password check
+	// create authentication
+	auth, err := a.CreateSuccessAuthentication(upp, user)
+	if err != nil {
+		return nil, a.translate(err)
+	}
 
-	return a.CreateSuccessAuthentication(upp, user)
+	// post checks
+	if err := performChecks(a.checkers, ctx, upp, user, auth); err != nil {
+		return nil, a.translate(err)
+	}
+
+	return auth, nil
 }
 
 // exported for override posibility
@@ -103,8 +123,18 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 		Perms:      permissions,
 		DetailsMap: candidate.DetailsMap,
 	}
-	// TODO chance for other components to add details
+
 	return &auth, nil
+}
+
+func (a *Authenticator) translate(err error) error {
+
+	switch {
+	case errors.Is(err, security.ErrorTypeSecurity):
+		return err
+	default:
+		return security.NewAccountStatusError(MessageAccountStatus, err)
+	}
 }
 
 

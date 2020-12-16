@@ -2,6 +2,7 @@ package passwd
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
 )
 
@@ -29,6 +30,7 @@ type MfaVerifyAuthenticator struct {
 	accountStore      security.AccountStore
 	otpStore          OTPManager
 	mfaEventListeners []MFAEventListenerFunc
+	checkers 		  []AuthenticationDecisionMaker
 }
 
 func NewMFAVerifyAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaVerifyAuthenticator {
@@ -42,6 +44,7 @@ func NewMFAVerifyAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaVerif
 		accountStore:      options.AccountStore,
 		otpStore:          options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
+		checkers: 		   options.Checkers,
 	}
 }
 
@@ -57,6 +60,12 @@ func (a *MfaVerifyAuthenticator) Authenticate(candidate security.Candidate) (sec
 		return nil, err
 	}
 
+	// pre checks
+	ctx := utils.NewMutableContext()
+	if err := performChecks(a.checkers, ctx, verify, user, nil); err != nil {
+		return nil, a.translate(err, true)
+	}
+
 	// Check OTP
 	id := verify.CurrentAuth.OTPIdentifier()
 	switch otp, more, err := a.otpStore.Verify(id, verify.OTP); {
@@ -67,11 +76,14 @@ func (a *MfaVerifyAuthenticator) Authenticate(candidate security.Candidate) (sec
 		broadcastMFAEvent(MFAEventVerificationSuccess, otp, user, a.mfaEventListeners...)
 	}
 
-	// TODO post passcode check
-
 	auth, err := a.CreateSuccessAuthentication(verify, user)
 	if err != nil {
 		return auth, a.translate(err, true)
+	}
+
+	// post checks
+	if err := performChecks(a.checkers, ctx, verify, user, auth); err != nil {
+		return nil, a.translate(err, true)
 	}
 	return auth, err
 }
@@ -121,6 +133,7 @@ type MfaRefreshAuthenticator struct {
 	accountStore      security.AccountStore
 	otpStore          OTPManager
 	mfaEventListeners []MFAEventListenerFunc
+	checkers 			  []AuthenticationDecisionMaker
 }
 
 func NewMFARefreshAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaRefreshAuthenticator {
@@ -134,6 +147,7 @@ func NewMFARefreshAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaRefr
 		accountStore:      options.AccountStore,
 		otpStore:          options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
+		checkers: 		   options.Checkers,
 	}
 }
 
@@ -149,6 +163,12 @@ func (a *MfaRefreshAuthenticator) Authenticate(candidate security.Candidate) (se
 		return nil, err
 	}
 
+	// pre checks
+	ctx := utils.NewMutableContext()
+	if err := performChecks(a.checkers, ctx, refresh, user, nil); err != nil {
+		return nil, a.translate(err, true)
+	}
+
 	// Refresh OTP
 	id := refresh.CurrentAuth.OTPIdentifier()
 	switch otp, more, err := a.otpStore.Refresh(id); {
@@ -158,18 +178,20 @@ func (a *MfaRefreshAuthenticator) Authenticate(candidate security.Candidate) (se
 		broadcastMFAEvent(MFAEventOtpRefresh, otp, user, a.mfaEventListeners...)
 	}
 
-	// TODO post passcode refresh
-
 	auth, err := a.CreateSuccessAuthentication(refresh, user)
 	if err != nil {
 		return auth, a.translate(err, true)
+	}
+
+	// post checks
+	if err := performChecks(a.checkers, ctx, refresh, user, auth); err != nil {
+		return nil, a.translate(err, true)
 	}
 	return auth, err
 }
 
 // exported for override posibility
 func (a *MfaRefreshAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpRefresh, account security.Account) (security.Authentication, error) {
-	// TODO chance for other components to add details
 	return candidate.CurrentAuth, nil
 }
 
@@ -208,7 +230,7 @@ func checkCurrentAuth(currentAuth UsernamePasswordAuthentication, accountStore s
 	if err != nil {
 		return nil, security.NewUsernameNotFoundError(MessageInvalidAccountStatus, err)
 	}
-	// TODO check account status
+
 	return user, nil
 }
 

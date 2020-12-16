@@ -20,17 +20,29 @@ type testUser struct {
 	Pass string
 }
 
+func (u *testUser) Type() security.AccountType {
+	return security.AccountTypeDefault
+}
+
 func (u *testUser) Username() string {
 	return u.User
 }
 
-func (u *testUser) Password() string {
+func (u *testUser) Credentials() interface{} {
 	return u.Pass
 }
 
 func (u *testUser) Permissions() []string {
 	var p []string
 	return p
+}
+
+func (u *testUser) Disabled() bool {
+	return false
+}
+
+func (u *testUser) Locked() bool {
+	return false
 }
 
 func (u *testUser) UseMFA() bool {
@@ -123,7 +135,7 @@ func TestSerialization(t *testing.T) {
 		t.Errorf("principal is not account")
 	}
 
-	if account.Password() != "test_pass" || account.Username() != "test_user" {
+	if account.Credentials() != "test_pass" || account.Username() != "test_user" {
 		t.Errorf("account username password does not match")
 	}
 

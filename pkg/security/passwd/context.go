@@ -19,6 +19,8 @@ func GobRegister() {
 	gob.Register(TOTP{})
 	gob.Register(time.Time{})
 	gob.Register(time.Duration(0))
+	gob.Register((*UsernamePasswordAccount)(nil))
+	gob.Register((*UserDetails)(nil))
 }
 
 /************************
@@ -30,6 +32,7 @@ const(
 	MFAModeOptional
 	MFAModeMust
 )
+
 // UsernamePasswordPair is the supported security.Candidate of this authenticator
 type UsernamePasswordPair struct {
 	Username string
