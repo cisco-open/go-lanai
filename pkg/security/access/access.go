@@ -30,11 +30,12 @@ func MakeDecisionMakerFunc(matcher AcrMatcher, cf ControlFunc) DecisionMakerFunc
 
 		auth := security.Get(ctx)
 		granted, reason := cf(auth)
-		if granted {
+		switch {
+		case granted:
 			return true, nil
-		} else if reason != nil {
+		case reason != nil:
 			return true, reason
-		} else {
+		default:
 			return true, security.NewAccessDeniedError("access denied")
 		}
 	}

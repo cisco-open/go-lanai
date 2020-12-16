@@ -16,13 +16,14 @@ var (
 type PasswordAuthConfigurer struct {
 	accountStore security.AccountStore
 	passwordEncoder PasswordEncoder
-	redisClient *redis.Connection
+	redisClient redis.Client
 }
 
-func newPasswordAuthConfigurer(store security.AccountStore, encoder PasswordEncoder, conn *redis.Connection) *PasswordAuthConfigurer {
+func newPasswordAuthConfigurer(store security.AccountStore, encoder PasswordEncoder, redisClient redis.Client) *PasswordAuthConfigurer {
 	return &PasswordAuthConfigurer {
-		accountStore: store,
+		accountStore:    store,
 		passwordEncoder: encoder,
+		redisClient:     redisClient,
 	}
 }
 
@@ -33,14 +34,25 @@ func (pac *PasswordAuthConfigurer) Apply(feature security.Feature, ws security.W
 	}
 	f := feature.(*PasswordAuthFeature)
 
-	if err := pac.applyPasswordAuthenticators(f, ws); err != nil {
-		return err
+	// options
+	defaultOpts := pac.defaultOptions(f)
+	var mfaOpts AuthenticatorOptionsFunc
+	if f.mfaEnabled {
+		mfaOpts = pac.mfaOptions(f)
 	}
 
-	if err := pac.applyMfaAuthenticators(f, ws); err != nil {
-		return err
-	}
+	// username passowrd authenticator
+	auth := NewAuthenticator(defaultOpts, mfaOpts)
+	ws.Authenticator().(*security.CompositeAuthenticator).Add(auth)
 
+	// MFA
+	if f.mfaEnabled {
+		mfaVerify := NewMFAVerifyAuthenticator(defaultOpts, mfaOpts)
+		ws.Authenticator().(*security.CompositeAuthenticator).Add(mfaVerify)
+
+		mfaRefresh := NewMFARefreshAuthenticator(defaultOpts, mfaOpts)
+		ws.Authenticator().(*security.CompositeAuthenticator).Add(mfaRefresh)
+	}
 	return nil
 }
 
@@ -56,25 +68,7 @@ func (pac *PasswordAuthConfigurer) validate(f *PasswordAuthFeature, ws security.
 	return nil
 }
 
-func (pac *PasswordAuthConfigurer) applyPasswordAuthenticators(f *PasswordAuthFeature, ws security.WebSecurity) error {
-	// set defaults if necessary
-	pac.defaultOptions(f)
-
-	// username passowrd authenticator
-	auth := NewAuthenticator(pac.defaultOptions(f), pac.mfaOptions(f))
-	ws.Authenticator().(*security.CompositeAuthenticator).Add(auth)
-	return nil
-}
-
-func (pac *PasswordAuthConfigurer) applyMfaAuthenticators(f *PasswordAuthFeature, ws security.WebSecurity) error {
-	if !f.mfaEnabled {
-		return nil
-	}
-	// TODO
-	return nil
-}
-
-func (pac *PasswordAuthConfigurer) defaultOptions(f *PasswordAuthFeature) AuthenticatorOptions {
+func (pac *PasswordAuthConfigurer) defaultOptions(f *PasswordAuthFeature) AuthenticatorOptionsFunc {
 	if f.accountStore == nil {
 		f.accountStore = pac.accountStore
 	}
@@ -83,17 +77,17 @@ func (pac *PasswordAuthConfigurer) defaultOptions(f *PasswordAuthFeature) Authen
 		f.passwordEncoder = pac.passwordEncoder
 	}
 
-	return func(a *Authenticator) {
-		a.accountStore = f.accountStore
+	return func(opts *AuthenticatorOptions) {
+		opts.AccountStore = f.accountStore
 		if f.passwordEncoder != nil {
-			a.passwdEncoder = f.passwordEncoder
+			opts.PasswordEncoder = f.passwordEncoder
 		}
 	}
 }
 
-func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) AuthenticatorOptions {
+func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) AuthenticatorOptionsFunc {
 	if !f.mfaEnabled {
-		return func(*Authenticator) {}
+		return func(*AuthenticatorOptions) {}
 	}
 
 	if f.otpTTL <= 0 {
@@ -108,17 +102,20 @@ func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) Authentica
 		f.otpRefreshLimit = 3
 	}
 
-	otpStore := newRedisTotpStore(pac.redisClient, func(s *redisTotpStore) {
+	otpManager := newTotpManager(func(s *totpManager) {
 		s.ttl = f.otpTTL
 		s.maxVerifyLimit = f.otpVerifyLimit
 		s.maxRefreshLimit = f.otpRefreshLimit
+		if pac.redisClient != nil {
+			s.store = newRedisOtpStore(pac.redisClient)
+		}
 	})
 
-	return func(a *Authenticator) {
-		a.otpStore = otpStore
+	return func(opts *AuthenticatorOptions) {
+		opts.OTPManager = otpManager
 		sort.SliceStable(f.mfaEventListeners, func(i,j int) bool {
 			return order.OrderedFirstCompare(f.mfaEventListeners[i], f.mfaEventListeners[j])
 		})
-		a.mfaEventListeners = f.mfaEventListeners
+		opts.MFAEventListeners = f.mfaEventListeners
 	}
 }

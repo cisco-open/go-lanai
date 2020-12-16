@@ -83,10 +83,10 @@ type Store interface {
 */
 type RedisStore struct {
 	options    *Options
-	connection *redis.Connection
+	connection redis.Client
 }
 
-func NewRedisStore(connection *redis.Connection, options ...func(*Options)) *RedisStore {
+func NewRedisStore(connection redis.Client, options ...func(*Options)) *RedisStore {
 	gob.Register(time.Time{})
 	gob.Register((*web.CachedRequest)(nil))
 

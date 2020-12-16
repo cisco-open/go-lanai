@@ -67,9 +67,8 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 		eh.entryPoint.Commence(c, c.Request, c.Writer, err)
 
 	case errors.Is(err, security.ErrorTypeAuthentication):
-		eh.clearAuthentication(c)
 		eh.authErrorHandler.HandleAuthenticationError(c, c.Request, c.Writer, err)
-		
+
 	default:
 		eh.accessDeniedHandler.HandleAccessDenied(c, c.Request, c.Writer, err)
 	}
@@ -78,7 +77,3 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 /**************************
 	Helpers
 ***************************/
-func (eh *ErrorHandlingMiddleware) clearAuthentication(ctx *gin.Context) {
-	ctx.Set(gin.AuthUserKey, nil)
-	ctx.Set(security.ContextKeySecurity, nil)
-}

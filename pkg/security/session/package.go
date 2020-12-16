@@ -42,7 +42,7 @@ func register(init security.Registrar, sessionStore Store) {
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }
 
-func newSessionStore(sessionProps security.SessionProperties, serverProps web.ServerProperties, connection *redis.Connection) Store {
+func newSessionStore(sessionProps security.SessionProperties, serverProps web.ServerProperties, client redis.Client) Store {
 	// configure session store
 	var sameSite http.SameSite
 	switch strings.ToLower(sessionProps.Cookie.SameSite) {
@@ -75,7 +75,7 @@ func newSessionStore(sessionProps security.SessionProperties, serverProps web.Se
 		options.IdleTimeout = idleTimeout
 		options.AbsoluteTimeout = absTimeout
 	}
-	sessionStore := NewRedisStore(connection, configureOptions)
+	sessionStore := NewRedisStore(client, configureOptions)
 
 	return sessionStore
 }

@@ -16,22 +16,35 @@ const (
 type Authenticator struct {
 	accountStore      security.AccountStore
 	passwdEncoder     PasswordEncoder
-	otpStore          OTPStore
+	otpManager        OTPManager
 	mfaEventListeners []MFAEventListenerFunc
 }
 
-type AuthenticatorOptions func(*Authenticator)
+type AuthenticatorOptionsFunc func(*AuthenticatorOptions)
 
-func NewAuthenticator(options...AuthenticatorOptions) *Authenticator {
-	ret := &Authenticator{
-		passwdEncoder: NewNoopPasswordEncoder(),
-		mfaEventListeners: []MFAEventListenerFunc{},
-	}
+type AuthenticatorOptions struct {
+	AccountStore      security.AccountStore
+	PasswordEncoder   PasswordEncoder
+	OTPManager        OTPManager
+	MFAEventListeners []MFAEventListenerFunc
+}
 
-	for _,opt := range options {
-		opt(ret)
+func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
+	options := AuthenticatorOptions {
+		PasswordEncoder: NewNoopPasswordEncoder(),
+		MFAEventListeners: []MFAEventListenerFunc{},
 	}
-	return ret
+	for _,optFunc := range optionFuncs {
+		if optFunc != nil {
+			optFunc(&options)
+		}
+	}
+	return &Authenticator{
+		accountStore:      options.AccountStore,
+		passwdEncoder:     options.PasswordEncoder,
+		otpManager:        options.OTPManager,
+		mfaEventListeners: options.MFAEventListeners,
+	}
 }
 
 func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Authentication, error) {
@@ -43,7 +56,7 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 	// Search user in the slice of allowed credentials
 	user, err := a.accountStore.LoadAccountByUsername(upp.Username)
 	if err != nil {
-		return nil, security.NewUsernameNotFoundError(MessageUserNotFound)
+		return nil, security.NewUsernameNotFoundError(MessageUserNotFound, err)
 	}
 
 	// TODO check account status
@@ -55,8 +68,7 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 
 	// TODO post password check
 
-	auth, err := a.CreateSuccessAuthentication(upp, user)
-	return auth, nil
+	return a.CreateSuccessAuthentication(upp, user)
 }
 
 // exported for override posibility
@@ -67,17 +79,18 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 	// MFA support
 	if candidate.EnforceMFA == MFAModeMust || candidate.EnforceMFA != MFAModeSkip && account.UseMFA() {
 		// MFA required
-		if a.otpStore == nil {
+		if a.otpManager == nil {
 			return nil, security.NewInternalAuthenticationError(MessageOtpNotAvailable)
 		}
 
-		otp, err := a.otpStore.New()
+		otp, err := a.otpManager.New()
 		if err != nil {
 			return nil, security.NewInternalAuthenticationError(MessageOtpNotAvailable)
 		}
-		a.notifyMfaEvent(MFAEventOtpCreate, otp, account)
 		permissions[SpecialPermissionMFAPending] = true
 		permissions[SpecialPermissionOtpId] = otp.ID()
+
+		broadcastMFAEvent(MFAEventOtpCreate, otp, account, a.mfaEventListeners...)
 	} else {
 		// MFA skipped
 		for _,p := range account.Permissions() {
@@ -94,9 +107,4 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 	return &auth, nil
 }
 
-func (a *Authenticator) notifyMfaEvent(event MFAEvent, otp OTP, account security.Account) {
-	for _,listener := range a.mfaEventListeners {
-		listener(event, otp, account)
-	}
-}
 

@@ -23,7 +23,7 @@ type dependencies struct {
 	fx.In
 	AccountStore    security.AccountStore `optional:"true"`
 	PasswordEncoder PasswordEncoder       `optional:"true"`
-	Redis           *redis.Connection     `optional:"true"`
+	Redis           redis.Client         `optional:"true"`
 }
 
 func register(init security.Registrar, di dependencies) {

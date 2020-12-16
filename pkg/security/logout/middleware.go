@@ -40,8 +40,7 @@ func (mw *LogoutMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
 }
 
 func (mw *LogoutMiddleware) handleSuccess(c *gin.Context, before security.Authentication) {
-	c.Set(gin.AuthUserKey, nil)
-	c.Set(security.ContextKeySecurity, nil)
+	security.Clear(c)
 	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, nil)
 	if c.Writer.Written() {
 		c.Abort()

@@ -11,39 +11,39 @@ var (
 )
 
 // We currently don't have any stuff to configure
-type SessionFeature struct {
+type Feature struct {
 	//TODO: allow configuring a getMaxSessions function
 }
 
-func (f *SessionFeature) Identifier() security.FeatureIdentifier {
+func (f *Feature) Identifier() security.FeatureIdentifier {
 	return FeatureId
 }
 
 // Standard security.Feature entrypoint
-func Configure(ws security.WebSecurity) *SessionFeature {
-	feature := &SessionFeature{}
+func Configure(ws security.WebSecurity) *Feature {
+	feature := &Feature{}
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		return fc.Enable(feature).(*SessionFeature)
+		return fc.Enable(feature).(*Feature)
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
 // Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
-func New() *SessionFeature {
-	return &SessionFeature{}
+func New() *Feature {
+	return &Feature{}
 }
 
-type SessionConfigurer struct {
+type Configurer struct {
 	store Store
 }
 
-func newSessionConfigurer(store Store) *SessionConfigurer {
-	return &SessionConfigurer{
+func newSessionConfigurer(store Store) *Configurer {
+	return &Configurer{
 		store: store,
 	}
 }
 
-func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
+func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 	// configure middleware
 	manager := NewManager(sc.store)
 
@@ -55,11 +55,11 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 		Order(security.MWOrderAuthPersistence).
 		Use(manager.AuthenticationPersistenceHandlerFunc())
 
-	test := middleware.NewBuilder("post-sessionMiddleware").
-		Order(security.MWOrderAuthPersistence + 10).
-		Use(SessionDebugHandlerFunc())
+	//test := middleware.NewBuilder("post-sessionMiddleware").
+	//	Order(security.MWOrderAuthPersistence + 10).
+	//	Use(SessionDebugHandlerFunc())
 
-	ws.Add(sessionHandler, authPersist, test)
+	ws.Add(sessionHandler, authPersist)
 
 	// configure auth success/error handler
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
