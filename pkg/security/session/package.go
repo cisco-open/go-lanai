@@ -37,8 +37,8 @@ func GobRegister() {
 }
 
 
-func register(init security.Registrar, sessionStore Store) {
-	configurer := newSessionConfigurer(sessionStore)
+func register(init security.Registrar, sessionStore Store, sessionProps security.SessionProperties) {
+	configurer := newSessionConfigurer(sessionStore, sessionProps)
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }
 

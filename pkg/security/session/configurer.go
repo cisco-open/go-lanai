@@ -12,7 +12,7 @@ var (
 
 // We currently don't have any stuff to configure
 type Feature struct {
-	//TODO: allow configuring a getMaxSessions function
+	maxSessionsFunc GetMaximumSessions
 }
 
 func (f *Feature) Identifier() security.FeatureIdentifier {
@@ -35,15 +35,19 @@ func New() *Feature {
 
 type Configurer struct {
 	store Store
+	sessionProps security.SessionProperties
 }
 
-func newSessionConfigurer(store Store) *Configurer {
+func newSessionConfigurer(store Store, sessionProps security.SessionProperties) *Configurer {
 	return &Configurer{
 		store: store,
+		sessionProps: sessionProps,
 	}
 }
 
-func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
+func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) error {
+	f := feature.(*Feature)
+
 	// configure middleware
 	manager := NewManager(sc.store)
 
@@ -69,12 +73,17 @@ func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 	ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
 		Add(&DebugAuthErrorHandler{})
 
+	maxSessionsFunc := f.maxSessionsFunc
+	if maxSessionsFunc == nil {
+		maxSessions := sc.sessionProps.MaxConcurrentSession
+		maxSessionsFunc = func() int {
+			return maxSessions
+		}
+	}
+
 	concurrentSessionHandler := &ConcurrentSessionHandler{
-		sessionStore: sc.store,
-		getMaxSessions: func() int {
-			//TODO: get this from configuration file
-			return 5
-		},
+		sessionStore:   sc.store,
+		getMaxSessions: maxSessionsFunc,
 	}
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(concurrentSessionHandler)

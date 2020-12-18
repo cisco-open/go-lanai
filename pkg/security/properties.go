@@ -21,6 +21,7 @@ type SessionProperties struct {
 	Cookie    *CookieProperties
 	IdleTimeout string `json:"idle-timeout"`
 	AbsoluteTimeout string `json:"absolute-timeout"`
+	MaxConcurrentSession int `json:"max-concurrent-sessions"`
 }
 
 type CookieProperties struct {
@@ -40,6 +41,7 @@ func NewSessionProperties() *SessionProperties {
 		},
 		IdleTimeout: "900s",
 		AbsoluteTimeout: "1800s",
+		MaxConcurrentSession: 0, //unlimited
 	}
 }
 

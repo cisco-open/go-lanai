@@ -158,15 +158,15 @@ func (s *RedisStore) Save(session *Session) error {
 }
 
 func (s *RedisStore) Delete(session *Session) error {
-	cmd := s.connection.Del(context.Background(), session.id)
+	cmd := s.connection.Del(context.Background(), getRedisSessionKey(session.Name(), session.GetID()))
 	return cmd.Err()
 }
 
 func (s *RedisStore) FindByPrincipalName(principal string, sessionName string) ([]*Session, error) {
 	//iterate through the set members using default count
-	cursor := uint64(0)
+	cursor:= uint64(0)
 	var ids []string
-	for cursor != 0 {
+	for ok := true; ok ; ok = cursor!= 0 {
 		cmd := s.connection.SScan(context.Background(), getRedisPrincipalIndexKey(principal, sessionName), cursor, "", 0)
 		keys, next, err := cmd.Result()
 		cursor = next
