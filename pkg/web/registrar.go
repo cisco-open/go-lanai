@@ -72,7 +72,6 @@ func (r *Registrar) addGlobalMiddleware(name string, order int, handlerFunc gin.
 }
 
 // Run configure and start gin engine
-// TODO: instead of provide a gin engine, we provide a wrapper so that r.engine is our wrapper
 func (r *Registrar) Run() (err error) {
 	if err = r.initialize(); err != nil {
 		return

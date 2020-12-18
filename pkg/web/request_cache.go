@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
@@ -16,7 +17,7 @@ type CachedRequest interface {
 }
 
 type RequestCacheAccessor interface {
-	PopMatchedRequest(r *http.Request) CachedRequest
+	PopMatchedRequest(r *http.Request) (CachedRequest, error)
 }
 
 type Engine struct {
@@ -25,7 +26,13 @@ type Engine struct {
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cached := e.requestCacheMatcher.PopMatchedRequest(r)
+	cached, err := e.requestCacheMatcher.PopMatchedRequest(r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = fmt.Fprint(w, "Internal error with request cache")
+		return
+	}
+
 	if cached != nil {
 		r.Method = cached.GetMethod()
 		//because popMatchRequest only matches on GET, so incoming request body is always http.nobody

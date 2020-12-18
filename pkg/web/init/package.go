@@ -28,7 +28,6 @@ func Use() {
 /**************************
 	Provide dependencies
 ***************************/
-//TODO: provide a RequestCache
 
 /**************************
 	Setup

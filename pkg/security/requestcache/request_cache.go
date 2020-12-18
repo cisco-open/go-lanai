@@ -82,7 +82,7 @@ type Accessor struct {
 	store session.Store
 }
 
-func (m *Accessor) PopMatchedRequest(r *http.Request) web.CachedRequest {
+func (m *Accessor) PopMatchedRequest(r *http.Request) (web.CachedRequest, error) {
 	if cookie, err := r.Cookie(session.DefaultName); err == nil {
 		id := cookie.Value
 		if s, err := m.store.Get(id, session.DefaultName); err == nil {
@@ -91,13 +91,13 @@ func (m *Accessor) PopMatchedRequest(r *http.Request) web.CachedRequest {
 				s.Delete(SessionKeyCachedRequest)
 				err := m.store.Save(s)
 				if err != nil {
-					//TODO: return err
+					return nil, err
 				}
-				return cached
+				return cached, nil
 			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func requestMatches(r *http.Request, cached *Request) bool {
