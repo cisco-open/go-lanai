@@ -67,6 +67,16 @@ func WithString(expected string, caseInsensitive bool) StringMatcher {
 	}
 }
 
+func AnyNonEmptyString() StringMatcher {
+	desc := fmt.Sprintf("matches any non-empty string")
+	return &stringMatcher{
+		matchFunc: func(_ context.Context, value string) (bool, error) {
+			return value != "", nil
+		},
+		description: desc,
+	}
+}
+
 func WithPathPattern(pattern string) StringMatcher {
 	return &stringMatcher{
 		matchFunc: func(_ context.Context, value string) (bool, error) {

@@ -4,7 +4,9 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	web "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 )
@@ -67,6 +69,10 @@ func (m *requestMatcher) String() string {
 ***************************/
 func AnyRequest() web.RequestMatcher {
 	return wrapAsRequestMatcher(matcher.Any())
+}
+
+func NoneRequest() web.RequestMatcher {
+	return wrapAsRequestMatcher(matcher.None())
 }
 
 func NotRequest(m web.RequestMatcher) web.RequestMatcher {
@@ -142,7 +148,52 @@ func RequestWithRegex(regex string, methods...string) web.RequestMatcher {
 	return wrapAsRequestMatcher(pMatcher.And(mMatcher))
 }
 
-// TODO more request matchers
+func RequestWithHeader(name string, value string, prefix bool) web.RequestMatcher {
+	matchable := func(_ context.Context, r *http.Request) (interface{}, error) {
+		return r.Header.Get(name), nil
+	}
+
+	var delegate matcher.Matcher
+
+	if prefix {
+		delegate = matcher.WithPrefix(value, true)
+	} else {
+		delegate = matcher.WithString(value, true)
+	}
+
+	return &requestMatcher{
+		description: fmt.Sprintf("matches header %s:%s", name, value),
+		matchableFunc: matchable,
+		delegate: delegate,
+	}
+}
+
+func RequestHasHeader(name string) web.RequestMatcher {
+	matchable := func(_ context.Context, r *http.Request) (interface{}, error) {
+		return r.Header.Get(name), nil
+	}
+	return &requestMatcher{
+		description: fmt.Sprintf("matches have header %s", name),
+		matchableFunc: matchable,
+		delegate: matcher.AnyNonEmptyString(),
+	}
+}
+
+func RequestHasPostParameter(name string) web.RequestMatcher {
+	matchable := func(ctx context.Context, r *http.Request) (interface{}, error) {
+		if g, ok := ctx.(*gin.Context); ok {
+			p, _ := g.GetPostForm(name)
+			return p, nil
+		}
+		return nil, errors.New("can't get post param from context. Context is not *gin.Context")
+	}
+
+	return &requestMatcher{
+		description: fmt.Sprintf("matches have parameter %s", name),
+		matchableFunc: matchable,
+		delegate: matcher.AnyNonEmptyString(),
+	}
+}
 
 /**************************
 	helpers

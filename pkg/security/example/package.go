@@ -58,7 +58,6 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(errorhandling.New())
 }
 
-
 type AnotherSecurityConfigurer struct {
 }
 
@@ -95,7 +94,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 			AuthenticationEntryPoint(handler).
 			AccessDeniedHandler(handler),
 		).
-		With(csrf.New())
+		With(csrf.New().IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern("/page/process")))
 }
 
 type ErrorPageSecurityConfigurer struct {

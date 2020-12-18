@@ -1,9 +1,10 @@
 package session
 
 import (
+	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 )
@@ -11,16 +12,19 @@ import (
 const SessionKeyCachedRequest = "CachedRequest"
 
 func SaveRequest(ctx *gin.Context) {
-	//TODO: not all request should be saved
-	// see Spring RequestCacheConfigurable.createDefaultSavedRequestMatcher
-
 	s := Get(ctx)
-	body, _ := ioutil.ReadAll(ctx.Request.Body)
+	// we don't know if other components have already parsed the form.
+	// if other components have already parsed the form, then the body is already read, so if we read it again we'll just get ""
+	// therefore we call parseForm to make sure it's read into the form field, and we serialize the form field ourselves.
+	_ = ctx.Request.ParseForm()
+
 	cached := &web.CachedRequest{
 		Method:   ctx.Request.Method,
 		URL:      ctx.Request.URL,
 		Host:     ctx.Request.Host,
-		BodyData: string(body),
+		PostForm: ctx.Request.PostForm,
+		Form: 	  ctx.Request.Form,
+		Header:   ctx.Request.Header,
 	}
 	s.Set(SessionKeyCachedRequest, cached)
 }
@@ -55,11 +59,34 @@ func (m *RequestCacheMatcher) PopMatchedRequest(r *http.Request) *web.CachedRequ
 	return nil
 }
 
-
 func requestMatches(r *http.Request, cached *web.CachedRequest) bool {
 	// Only support matching incoming GET command, because we will only issue redirect after auth success.
 	if r.Method != "GET" {
 		return false
 	}
 	return reflect.DeepEqual(r.URL, cached.URL) && r.Host == cached.Host
+}
+
+func NewSavedRequestAuthenticationSuccessHandler(fallback security.AuthenticationSuccessHandler) security.AuthenticationSuccessHandler {
+	return &SavedRequestAuthenticationSuccessHandler{
+		fallback: fallback,
+	}
+}
+
+type SavedRequestAuthenticationSuccessHandler struct {
+	fallback security.AuthenticationSuccessHandler
+}
+
+func (h *SavedRequestAuthenticationSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
+	if g, ok := c.(*gin.Context); ok {
+		cached := GetCachedRequest(g)
+
+		if cached != nil {
+			http.Redirect(rw, r, cached.URL.RequestURI(), 302)
+			_,_ = rw.Write([]byte{})
+			return
+		}
+	}
+
+	h.fallback.HandleAuthenticationSuccess(c, r, rw, from, to)
 }

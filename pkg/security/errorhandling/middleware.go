@@ -2,7 +2,10 @@ package errorhandling
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"errors"
 	"github.com/gin-gonic/gin"
 )
@@ -12,10 +15,20 @@ type ErrorHandlingMiddleware struct {
 	entryPoint security.AuthenticationEntryPoint
 	accessDeniedHandler security.AccessDeniedHandler
 	authErrorHandler security.AuthenticationErrorHandler
+	saveRequestMatcher web.RequestMatcher
 }
 
 func NewErrorHandlingMiddleware() *ErrorHandlingMiddleware {
-	return &ErrorHandlingMiddleware{}
+	notFavicon := matcher.NotRequest(matcher.RequestWithPattern("/**/favicon.*"))
+	notXMLHttpRequest := matcher.NotRequest(matcher.RequestWithHeader("X-Requested-With", "XMLHttpRequest", false))
+	notTrailer := matcher.NotRequest(matcher.RequestHasHeader("Trailer"))
+	notMultiPart := matcher.NotRequest(matcher.RequestWithHeader("Content-Type", "multipart/form-data", true))
+	notCsrf := matcher.NotRequest(matcher.RequestHasHeader(csrf.CsrfHeaderName).Or(matcher.RequestHasPostParameter(csrf.CsrfParamName)))
+
+	savedRequestMatcher := notFavicon.And(notXMLHttpRequest).And(notTrailer).And(notMultiPart).And(notCsrf)
+	return &ErrorHandlingMiddleware{
+		saveRequestMatcher: savedRequestMatcher,
+	}
 }
 
 func (eh *ErrorHandlingMiddleware) HandlerFunc() gin.HandlerFunc {
@@ -63,7 +76,10 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 		eh.authErrorHandler.HandleAuthenticationError(c, c.Request, c.Writer, err)
 
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorSubTypeInsufficientAuth):
-		session.SaveRequest(c)
+		if match, err := eh.saveRequestMatcher.MatchesWithContext(c, c.Request); match && err == nil{
+			session.SaveRequest(c)
+		}
+
 		eh.entryPoint.Commence(c, c.Request, c.Writer, err)
 
 	case errors.Is(err, security.ErrorTypeAuthentication):
