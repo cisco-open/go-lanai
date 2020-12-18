@@ -36,6 +36,10 @@ func NewMutableContext() MutableContext {
 }
 
 func MakeMutableContext(parent context.Context) MutableContext {
+	if mutable, ok := parent.(MutableContext); ok {
+		return mutable
+	}
+
 	return &mutableContext{
 		Context: parent,
 		values: make(map[interface{}]interface{}),

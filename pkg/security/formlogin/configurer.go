@@ -56,6 +56,10 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
+	if err := flc.configureCSRF(f, ws); err != nil {
+		return err
+	}
+
 	//TODO
 
 	return nil

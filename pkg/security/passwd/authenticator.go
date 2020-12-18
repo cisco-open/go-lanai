@@ -60,13 +60,13 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Aut
 	}
 
 	// Search user in the slice of allowed credentials
-	user, err := a.accountStore.LoadAccountByUsername(upp.Username)
+	ctx := utils.NewMutableContext()
+	user, err := a.accountStore.LoadAccountByUsername(ctx, upp.Username)
 	if err != nil {
 		return nil, security.NewUsernameNotFoundError(MessageUserNotFound, err)
 	}
 
 	// pre checks
-	ctx := utils.NewMutableContext()
 	if err := performChecks(a.checkers, ctx, upp, user, nil); err != nil {
 		return nil, a.translate(err)
 	}

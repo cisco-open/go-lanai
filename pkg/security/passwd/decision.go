@@ -107,3 +107,30 @@ func isFinalStage(_ context.Context, can security.Candidate, _ security.Account,
 /******************************
 	Common Checks
  ******************************/
+// AccountStatusChecker check account status and also auto unlock account if locking rules allows
+type AccountStatusChecker struct {}
+
+func (adm *AccountStatusChecker) Decide(_ context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
+	switch {
+	case acct.Disabled():
+		return security.NewAccountStatusError("Account is disabled")
+	case acct.Locked():
+		return security.NewAccountStatusError("Account is locked")
+	default:
+		return nil
+	}
+}
+
+type PasswordPolicyChecker struct {}
+
+func (adm *PasswordPolicyChecker) Decide(_ context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
+	switch {
+	case acct.Disabled():
+		return security.NewAccountStatusError("Account is disabled")
+	case acct.Locked():
+		return security.NewAccountStatusError("Account is locked")
+	default:
+		return nil
+	}
+}
+

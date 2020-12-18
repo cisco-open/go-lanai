@@ -1,6 +1,7 @@
 package passwd
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
@@ -55,13 +56,13 @@ func (a *MfaVerifyAuthenticator) Authenticate(candidate security.Candidate) (sec
 	}
 
 	// check if OTP verification should be performed
-	user, err := checkCurrentAuth(verify.CurrentAuth, a.accountStore)
+	ctx := utils.NewMutableContext()
+	user, err := checkCurrentAuth(ctx, verify.CurrentAuth, a.accountStore)
 	if err != nil {
 		return nil, err
 	}
 
 	// pre checks
-	ctx := utils.NewMutableContext()
 	if err := performChecks(a.checkers, ctx, verify, user, nil); err != nil {
 		return nil, a.translate(err, true)
 	}
@@ -158,13 +159,13 @@ func (a *MfaRefreshAuthenticator) Authenticate(candidate security.Candidate) (se
 	}
 
 	// check if OTP refresh should be performed
-	user, err := checkCurrentAuth(refresh.CurrentAuth, a.accountStore)
+	ctx := utils.NewMutableContext()
+	user, err := checkCurrentAuth(ctx, refresh.CurrentAuth, a.accountStore)
 	if err != nil {
 		return nil, err
 	}
 
 	// pre checks
-	ctx := utils.NewMutableContext()
 	if err := performChecks(a.checkers, ctx, refresh, user, nil); err != nil {
 		return nil, a.translate(err, true)
 	}
@@ -213,7 +214,7 @@ func (a *MfaRefreshAuthenticator) translate(err error, more bool) error {
 /************************
 	Helpers
  ************************/
-func checkCurrentAuth(currentAuth UsernamePasswordAuthentication, accountStore security.AccountStore) (security.Account, error) {
+func checkCurrentAuth(ctx context.Context, currentAuth UsernamePasswordAuthentication, accountStore security.AccountStore) (security.Account, error) {
 	if currentAuth == nil {
 		return nil, security.NewUsernameNotFoundError(MessageInvalidAccountStatus)
 	}
@@ -226,7 +227,7 @@ func checkCurrentAuth(currentAuth UsernamePasswordAuthentication, accountStore s
 		username = currentAuth.Principal().(security.Account).Username()
 	}
 
-	user, err := accountStore.LoadAccountByUsername(username)
+	user, err := accountStore.LoadAccountByUsername(ctx, username)
 	if err != nil {
 		return nil, security.NewUsernameNotFoundError(MessageInvalidAccountStatus, err)
 	}

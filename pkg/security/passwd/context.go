@@ -21,6 +21,8 @@ func GobRegister() {
 	gob.Register(time.Duration(0))
 	gob.Register((*UsernamePasswordAccount)(nil))
 	gob.Register((*UserDetails)(nil))
+	gob.Register((*LockingRule)(nil))
+	gob.Register((*PasswordPolicy)(nil))
 }
 
 /************************

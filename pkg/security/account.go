@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"strings"
 	"time"
 )
@@ -33,6 +34,7 @@ func ParseAccountType(value interface{}) AccountType {
 }
 
 type Account interface {
+	ID() interface{}
 	Type() AccountType
 	Username() string
 	Credentials() interface{}
@@ -43,39 +45,21 @@ type Account interface {
 }
 
 type AccountStore interface {
-	LoadAccountByUsername(username string) (Account, error)
+	LoadAccountById(ctx context.Context, id interface{}) (Account, error)
+	LoadAccountByUsername(ctx context.Context, username string) (Account, error)
+	LoadLockingRules(ctx context.Context, acct Account) (AccountLockingRule, error)
+	LoadPasswordPolicy(ctx context.Context, acct Account) (AccountPasswordPolicy, error)
 }
-
-/******************************
-	Abstraction - Status
- ******************************/
 
 /*********************************
 	Abstraction - Auth History
  *********************************/
 type AccountHistory interface {
-	Account
 	LastLoginTime() time.Time
 	LoginFailures() []time.Time
 	SerialFailedAttempts() int
-}
-
-/*********************************
-	Abstraction - Locking Rules
- *********************************/
-type AccountLockingRule interface {
-	Account
 	LockoutTime() time.Time
-	LockingRuleName() string // TODO
-}
-
-/*********************************
-	Abstraction - Passwd Policy
- *********************************/
-type AccountPasswordPolicy interface {
-	Account
 	PwdChangedTime() time.Time
-	PwdPolicyName() string // TODO
 	GracefulAuthCount() int
 }
 
@@ -83,7 +67,6 @@ type AccountPasswordPolicy interface {
 	Abstraction - Multi Tenancy
  *********************************/
 type AccountTenancy interface {
-	Account
 	DefaultTenantId() string
 	Tenants() []string
 }
@@ -92,7 +75,6 @@ type AccountTenancy interface {
 	Abstraction - Mutator
  *********************************/
 type AccountUpdater interface {
-	Account
 	IncrementFailedAttempts()
 	IncrementGracefulAuthCount()
 	Lock()
@@ -101,4 +83,36 @@ type AccountUpdater interface {
 	RecordSuccess(loginTime time.Time)
 	ResetFailedAttempts()
 	ResetGracefulAuthCount()
+}
+
+/*********************************
+	Abstraction - Locking Rules
+ *********************************/
+type AccountLockingRule interface {
+	// LockoutPolicyName the name of locking rule
+	LockoutPolicyName() string
+	// LockoutEnabled indicate whether account locking is enabled
+	LockoutEnabled() bool
+	// LockoutDuration specify how long the account should be locked after consecutive login failures
+	LockoutDuration() time.Duration
+	// LockoutFailuresLimit specify how many consecutive login failures required to lock the account
+	LockoutFailuresLimit() int
+	// LockoutFailuresInterval specify how long between two login failures to be considered as  consecutive login failures
+	LockoutFailuresInterval() time.Duration
+}
+
+/*********************************
+	Abstraction - Passwd Policy
+ *********************************/
+type AccountPasswordPolicy interface {
+	// PwdPolicyName the name of password polcy
+	PwdPolicyName() string
+	// PwdPolicyEnforced indicate whether password policy is enabled
+	PwdPolicyEnforced() bool
+	// PwdMaxAge specify how long a password is valid before expiry
+	PwdMaxAge() time.Duration
+	// PwdExpiryWarningPeriod specify how long before password expiry the system should warn user
+	PwdExpiryWarningPeriod() time.Duration
+	// GracefulAuthLimit specify how many logins is allowed after password expiry
+	GracefulAuthLimit() int
 }
