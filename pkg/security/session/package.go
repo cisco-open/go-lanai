@@ -14,18 +14,18 @@ import (
 	"time"
 )
 
-var SessionModule = &bootstrap.Module{
+var Module = &bootstrap.Module{
 	Name: "session",
 	Precedence: security.MinSecurityPrecedence + 10,
 	Options: []fx.Option{
-		fx.Provide(security.BindSessionProperties, newSessionStore, newRequestCacheMatcher),
+		fx.Provide(security.BindSessionProperties, newSessionStore),
 		fx.Invoke(register),
 	},
 }
 
 
 func init() {
-	bootstrap.Register(SessionModule)
+	bootstrap.Register(Module)
 
 	GobRegister()
 	security.GobRegister()
@@ -78,11 +78,4 @@ func newSessionStore(sessionProps security.SessionProperties, serverProps web.Se
 	sessionStore := NewRedisStore(client, configureOptions)
 
 	return sessionStore
-}
-
-func newRequestCacheMatcher(sessionStore Store) web.RequestCacheMatcher {
-	m := &RequestCacheMatcher{
-		store: sessionStore,
-	}
-	return m
 }

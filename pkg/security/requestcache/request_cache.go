@@ -1,24 +1,60 @@
-package session
+package requestcache
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"net/url"
 	"reflect"
 )
 
 const SessionKeyCachedRequest = "CachedRequest"
 
+type Request struct {
+	Method   string
+	URL      *url.URL
+	Header   http.Header
+	Form 	 url.Values
+	PostForm url.Values
+	Host     string
+}
+
+func(r *Request) GetMethod()   string {
+	return r.Method
+}
+
+func(r *Request) GetURL()      *url.URL {
+	return r.URL
+}
+
+func(r *Request) GetHeader()   http.Header {
+	return r.Header
+}
+
+func(r *Request) GetForm() 	 url.Values {
+	return r.Form
+}
+
+func(r *Request) GetPostForm() url.Values {
+	return r.PostForm
+}
+
+func(r *Request) GetHost()     string {
+	return r.Host
+}
+
+
 func SaveRequest(ctx *gin.Context) {
-	s := Get(ctx)
+	s := session.Get(ctx)
 	// we don't know if other components have already parsed the form.
 	// if other components have already parsed the form, then the body is already read, so if we read it again we'll just get ""
 	// therefore we call parseForm to make sure it's read into the form field, and we serialize the form field ourselves.
 	_ = ctx.Request.ParseForm()
 
-	cached := &web.CachedRequest{
+	cached := &Request{
 		Method:   ctx.Request.Method,
 		URL:      ctx.Request.URL,
 		Host:     ctx.Request.Host,
@@ -29,29 +65,34 @@ func SaveRequest(ctx *gin.Context) {
 	s.Set(SessionKeyCachedRequest, cached)
 }
 
-func GetCachedRequest(ctx *gin.Context) *web.CachedRequest {
-	s := Get(ctx)
-	cached, _ := s.Get(SessionKeyCachedRequest).(*web.CachedRequest)
+func GetCachedRequest(ctx *gin.Context) *Request {
+	s := session.Get(ctx)
+	cached, _ := s.Get(SessionKeyCachedRequest).(*Request)
 	return cached
 }
 
 func RemoveCachedRequest(ctx *gin.Context) {
-	s := Get(ctx)
+	s := session.Get(ctx)
 	s.Delete(SessionKeyCachedRequest)
 }
 
-type RequestCacheMatcher struct {
-	store Store
+// Designed to be used by code outside of the security package.
+// Implements the web.RequestCacheAccessor interface
+type Accessor struct {
+	store session.Store
 }
 
-func (m *RequestCacheMatcher) PopMatchedRequest(r *http.Request) *web.CachedRequest {
-	if cookie, err := r.Cookie(DefaultName); err == nil {
+func (m *Accessor) PopMatchedRequest(r *http.Request) web.CachedRequest {
+	if cookie, err := r.Cookie(session.DefaultName); err == nil {
 		id := cookie.Value
-		if s, err := m.store.Get(id, DefaultName); err == nil {
-			cached, ok := s.Get(SessionKeyCachedRequest).(*web.CachedRequest)
+		if s, err := m.store.Get(id, session.DefaultName); err == nil {
+			cached, ok := s.Get(SessionKeyCachedRequest).(*Request)
 			if ok && cached != nil && requestMatches(r, cached) {
 				s.Delete(SessionKeyCachedRequest)
-				m.store.Save(s)
+				err := m.store.Save(s)
+				if err != nil {
+					//TODO: return err
+				}
 				return cached
 			}
 		}
@@ -59,7 +100,7 @@ func (m *RequestCacheMatcher) PopMatchedRequest(r *http.Request) *web.CachedRequ
 	return nil
 }
 
-func requestMatches(r *http.Request, cached *web.CachedRequest) bool {
+func requestMatches(r *http.Request, cached *Request) bool {
 	// Only support matching incoming GET command, because we will only issue redirect after auth success.
 	if r.Method != "GET" {
 		return false

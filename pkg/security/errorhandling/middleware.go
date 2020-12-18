@@ -3,7 +3,7 @@ package errorhandling
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/requestcache"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"errors"
@@ -77,7 +77,7 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 
 	case eh.entryPoint != nil && errors.Is(err, security.ErrorSubTypeInsufficientAuth):
 		if match, err := eh.saveRequestMatcher.MatchesWithContext(c, c.Request); match && err == nil{
-			session.SaveRequest(c)
+			requestcache.SaveRequest(c)
 		}
 
 		eh.entryPoint.Commence(c, c.Request, c.Writer, err)
