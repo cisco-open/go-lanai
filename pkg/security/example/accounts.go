@@ -3,7 +3,6 @@ package example
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"github.com/pkg/errors"
-	"time"
 )
 
 const InmemoryAccountsPropertiesPrefix = "security.in-memory"
@@ -23,15 +22,15 @@ type PropertiesBasedAccount struct {
 }
 
 type PropertiesBasedAccountPolicy struct {
-	Name                string        `json:"name"`
-	LockingEnabled      bool          `json:"lock-enabled"`
-	LockoutDuration     time.Duration `json:"lock-duration"`
-	FailuresLimit       int           `json:"failure-limit"`
-	FailuresInterval    time.Duration `json:"failure-interval"`
-	AgingEnabled        bool          `json:"aging-enabled"`
-	MaxAge              time.Duration `json:"max-age"`
-	ExpiryWarningPeriod time.Duration `json:"warning-period"`
-	GracefulAuthLimit   int           `json:"graceful-auth-limit"`
+	Name                string `json:"name"`
+	LockingEnabled      bool   `json:"lock-enabled"`
+	LockoutDuration     string `json:"lock-duration"`
+	FailuresLimit       int    `json:"failure-limit"`
+	FailuresInterval    string `json:"failure-interval"`
+	AgingEnabled        bool   `json:"aging-enabled"`
+	MaxAge              string `json:"max-age"`
+	ExpiryWarningPeriod string `json:"warning-period"`
+	GracefulAuthLimit   int    `json:"graceful-auth-limit"`
 }
 
 type AccountsProperties struct {

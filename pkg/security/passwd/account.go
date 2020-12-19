@@ -26,19 +26,19 @@ type UserDetails struct {
 }
 
 type LockingRule struct {
-	Name 					string
-	Enabled                 bool
-	LockoutDuration         time.Duration
+	Name             string
+	Enabled          bool
+	LockoutDuration  time.Duration
 	FailuresLimit    int
 	FailuresInterval time.Duration
 }
 
 type PasswordPolicy struct {
-	Name					string
-	Enabled                 bool
-	MaxAge time.Duration
+	Name                string
+	Enabled             bool
+	MaxAge              time.Duration
 	ExpiryWarningPeriod time.Duration
-	GracefulAuthLimit int
+	GracefulAuthLimit   int
 }
 
 type UsernamePasswordAccount struct {
@@ -139,7 +139,7 @@ func (a *UsernamePasswordAccount) Lock() {
 }
 
 func (a *UsernamePasswordAccount) Unlock() {
-	a.UserDetails.LockoutTime = *new(time.Time)
+	a.UserDetails.LockoutTime = time.Time{}
 	a.UserDetails.Locked = false
 }
 

@@ -3,6 +3,13 @@ package passwd
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"time"
+)
+
+const (
+	MessageAccountDisabled = "Account Disabled"
+	MessageAccountLocked = "Account Locked"
+	MessagePasswordLoginNotAllowed = "Password Login not Allowed"
 )
 
 /******************************
@@ -108,29 +115,66 @@ func isFinalStage(_ context.Context, can security.Candidate, _ security.Account,
 	Common Checks
  ******************************/
 // AccountStatusChecker check account status and also auto unlock account if locking rules allows
-type AccountStatusChecker struct {}
+type AccountStatusChecker struct {
+	store security.AccountStore
+}
 
-func (adm *AccountStatusChecker) Decide(_ context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
+func NewAccountStatusChecker(store security.AccountStore) *AccountStatusChecker {
+	return &AccountStatusChecker{store: store}
+}
+
+func (adm *AccountStatusChecker) Decide(ctx context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
 	switch {
 	case acct.Disabled():
-		return security.NewAccountStatusError("Account is disabled")
+		return security.NewAccountStatusError(MessageAccountDisabled)
+	case acct.Type() != security.AccountTypeDefault:
+		return security.NewAccountStatusError(MessagePasswordLoginNotAllowed)
 	case acct.Locked():
-		return security.NewAccountStatusError("Account is locked")
+		return adm.decideAutoUnlock(ctx, acct)
 	default:
 		return nil
 	}
 }
 
-type PasswordPolicyChecker struct {}
-
-func (adm *PasswordPolicyChecker) Decide(_ context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
-	switch {
-	case acct.Disabled():
-		return security.NewAccountStatusError("Account is disabled")
-	case acct.Locked():
-		return security.NewAccountStatusError("Account is locked")
-	default:
+func (adm *AccountStatusChecker) decideAutoUnlock(ctx context.Context, acct security.Account) (err error) {
+	if !acct.Locked() {
 		return nil
 	}
+
+	err = security.NewAccountStatusError(MessageAccountLocked)
+
+	history, hok := acct.(security.AccountHistory)
+	updater, uok := acct.(security.AccountUpdater)
+	if !hok || !uok || history.LockoutTime().IsZero() {
+		return
+	}
+
+	rules, err := adm.store.LoadLockingRules(ctx, acct)
+	if err != nil || !rules.LockoutEnabled() || rules.LockoutDuration() <= 0 {
+		return
+	}
+
+	if time.Now().After(history.LockoutTime().Add(rules.LockoutDuration()) ) {
+		updater.Unlock()
+	}
+
+	if !acct.Locked() {
+		return nil
+	}
+
+	return
+}
+
+// PasswordPolicyChecker takes account password policy into consideration
+type PasswordPolicyChecker struct {
+	store security.AccountStore
+}
+
+func NewPasswordPolicyChecker(store security.AccountStore) *PasswordPolicyChecker {
+	return &PasswordPolicyChecker{store: store}
+}
+
+func (adm *PasswordPolicyChecker) Decide(_ context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
+	return nil
 }
 

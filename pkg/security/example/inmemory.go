@@ -140,5 +140,19 @@ func createAccount(props *PropertiesBasedAccount) security.Account {
 }
 
 func populateAccountPolicy(acct *passwd.UsernamePasswordAccount, props *PropertiesBasedAccountPolicy) {
+	acct.LockingRule = passwd.LockingRule{
+		Name:             props.Name,
+		Enabled:          props.LockingEnabled,
+		LockoutDuration:  utils.ParseDuration(props.LockoutDuration),
+		FailuresLimit:    props.FailuresLimit,
+		FailuresInterval: utils.ParseDuration(props.FailuresInterval),
+	}
 
+	acct.PasswordPolicy = passwd.PasswordPolicy{
+		Name:                props.Name,
+		Enabled:             props.AgingEnabled,
+		MaxAge:              utils.ParseDuration(props.MaxAge),
+		ExpiryWarningPeriod: utils.ParseDuration(props.ExpiryWarningPeriod),
+		GracefulAuthLimit:   props.GracefulAuthLimit,
+	}
 }

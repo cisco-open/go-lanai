@@ -77,10 +77,18 @@ func (pac *PasswordAuthConfigurer) defaultOptions(f *PasswordAuthFeature) Authen
 		f.passwordEncoder = pac.passwordEncoder
 	}
 
+	// TODO maybe customizeble via Feature
+	acctStatusChecker := NewAccountStatusChecker(f.accountStore)
+	passwordChecker := NewPasswordPolicyChecker(f.accountStore)
+
 	return func(opts *AuthenticatorOptions) {
 		opts.AccountStore = f.accountStore
 		if f.passwordEncoder != nil {
 			opts.PasswordEncoder = f.passwordEncoder
+		}
+		opts.Checkers = []AuthenticationDecisionMaker{
+			PreCheck(acctStatusChecker),
+			FinalCheck(passwordChecker),
 		}
 	}
 }
@@ -111,11 +119,19 @@ func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) Authentica
 		}
 	})
 
+	// TODO maybe customizeble via Feature
+	acctStatusChecker := NewAccountStatusChecker(f.accountStore)
+	passwordChecker := NewPasswordPolicyChecker(f.accountStore)
+
 	return func(opts *AuthenticatorOptions) {
 		opts.OTPManager = otpManager
 		sort.SliceStable(f.mfaEventListeners, func(i,j int) bool {
 			return order.OrderedFirstCompare(f.mfaEventListeners[i], f.mfaEventListeners[j])
 		})
 		opts.MFAEventListeners = f.mfaEventListeners
+		opts.Checkers = []AuthenticationDecisionMaker{
+			PreCheck(acctStatusChecker),
+			FinalCheck(passwordChecker),
+		}
 	}
 }
