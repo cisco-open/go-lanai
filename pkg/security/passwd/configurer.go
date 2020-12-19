@@ -87,7 +87,7 @@ func (pac *PasswordAuthConfigurer) defaultOptions(f *PasswordAuthFeature) Authen
 			opts.PasswordEncoder = f.passwordEncoder
 		}
 		opts.Checkers = []AuthenticationDecisionMaker{
-			PreCheck(acctStatusChecker),
+			PreCredentialsCheck(acctStatusChecker),
 			FinalCheck(passwordChecker),
 		}
 	}
@@ -122,6 +122,7 @@ func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) Authentica
 	// TODO maybe customizeble via Feature
 	acctStatusChecker := NewAccountStatusChecker(f.accountStore)
 	passwordChecker := NewPasswordPolicyChecker(f.accountStore)
+	persistAccountProcessor := NewPersistAccountPostProcessor(f.accountStore)
 
 	return func(opts *AuthenticatorOptions) {
 		opts.OTPManager = otpManager
@@ -130,8 +131,11 @@ func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) Authentica
 		})
 		opts.MFAEventListeners = f.mfaEventListeners
 		opts.Checkers = []AuthenticationDecisionMaker{
-			PreCheck(acctStatusChecker),
+			PreCredentialsCheck(acctStatusChecker),
 			FinalCheck(passwordChecker),
+		}
+		opts.PostProcessors = []PostAuthenticationProcessor{
+			persistAccountProcessor,
 		}
 	}
 }

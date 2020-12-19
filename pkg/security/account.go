@@ -49,6 +49,7 @@ type AccountStore interface {
 	LoadAccountByUsername(ctx context.Context, username string) (Account, error)
 	LoadLockingRules(ctx context.Context, acct Account) (AccountLockingRule, error)
 	LoadPasswordPolicy(ctx context.Context, acct Account) (AccountPasswordPolicy, error)
+	Save(ctx context.Context, acct Account) error
 }
 
 /*********************************

@@ -15,47 +15,57 @@ const (
 /******************************
 	abstracts
  ******************************/
+// AuthenticationDecisionMaker is invoked at various stages of authentication decision making process.
+// If AuthenticationDecisionMaker implement order.Ordered interface, its order is respected using order.OrderedFirstCompare.
+// This means highest priority is executed first and non-ordered decision makers run at last.
+//
+// Note: each AuthenticationDecisionMaker will get invoked multiple times during the authentication process.
+// 		 So implementations should check stage before making desisions. Or use ConditionalDecisionMaker
 type AuthenticationDecisionMaker interface {
-	// Decide makes decision on whether the Authenticator should approve the auth request
-	// returned error indecate the reason of rejection. returns nil when approved
+	// Decide makes decision on whether the Authenticator should approve the auth request.
+	// the returned error indicate the reason of rejection. returns nil when approved
 	// 	 - The security.Authentication is nil when credentials has not been validated (pre check)
 	// 	 - The security.Authentication is non-nil when credentials has been validated (post check).
-	//     The non-nil is the proposed authentication to be returned by Authenticator
+	//     The non-nil value is the proposed authentication to be returned by Authenticator
 	//
 	// If any of input paramters are mutable, AuthenticationDecisionMaker is allowed to change it
 	Decide(context.Context, security.Candidate, security.Account, security.Authentication) error
 }
 
-type StageConditionFunc func(context.Context, security.Candidate, security.Account, security.Authentication) bool
+/******************************
+	Common Implementation
+ ******************************/
+type DecisionMakerConditionFunc func(context.Context, security.Candidate, security.Account, security.Authentication) bool
 
-type StageAwareDecisionMaker struct {
-	delegate AuthenticationDecisionMaker
-	condition StageConditionFunc
+// ConditionalDecisionMaker implements AuthenticationDecisionMaker with ability to skip based on condiitons
+type ConditionalDecisionMaker struct {
+	delegate  AuthenticationDecisionMaker
+	condition DecisionMakerConditionFunc
 }
 
-func (dm *StageAwareDecisionMaker) Decide(ctx context.Context, c security.Candidate, acct security.Account, auth security.Authentication) error {
+func (dm *ConditionalDecisionMaker) Decide(ctx context.Context, c security.Candidate, acct security.Account, auth security.Authentication) error {
 	if dm.delegate == nil || dm.condition != nil && !dm.condition(ctx, c, acct, auth) {
 		return nil
 	}
 	return dm.delegate.Decide(ctx, c, acct, auth)
 }
 
-func PreCheck(delegate AuthenticationDecisionMaker) AuthenticationDecisionMaker {
-	return &StageAwareDecisionMaker{
-		delegate: delegate,
-		condition: isPreCheck,
+func PreCredentialsCheck(delegate AuthenticationDecisionMaker) AuthenticationDecisionMaker {
+	return &ConditionalDecisionMaker{
+		delegate:  delegate,
+		condition: isPreCredentialsCheck,
 	}
 }
 
-func PostCheck(delegate AuthenticationDecisionMaker) AuthenticationDecisionMaker {
-	return &StageAwareDecisionMaker{
-		delegate: delegate,
-		condition: isPostCheck,
+func PostCredentialsCheck(delegate AuthenticationDecisionMaker) AuthenticationDecisionMaker {
+	return &ConditionalDecisionMaker{
+		delegate:  delegate,
+		condition: isPostCredentialsCheck,
 	}
 }
 
 func FinalCheck(delegate AuthenticationDecisionMaker) AuthenticationDecisionMaker {
-	return &StageAwareDecisionMaker{
+	return &ConditionalDecisionMaker{
 		delegate: delegate,
 		condition: isFinalStage,
 	}
@@ -64,7 +74,7 @@ func FinalCheck(delegate AuthenticationDecisionMaker) AuthenticationDecisionMake
 /******************************
 	helpers
  ******************************/
-func performChecks(checkers []AuthenticationDecisionMaker, ctx context.Context, can security.Candidate, acct security.Account, auth security.Authentication) error {
+func makeDecision(checkers []AuthenticationDecisionMaker, ctx context.Context, can security.Candidate, acct security.Account, auth security.Authentication) error {
 	for _, checker := range checkers {
 		if err := checker.Decide(ctx, can, acct, auth); err != nil {
 			return err
@@ -73,15 +83,15 @@ func performChecks(checkers []AuthenticationDecisionMaker, ctx context.Context, 
 	return nil
 }
 
-func isPreCheck(_ context.Context, _ security.Candidate, _ security.Account, auth security.Authentication) bool {
+func isPreCredentialsCheck(_ context.Context, _ security.Candidate, _ security.Account, auth security.Authentication) bool {
 	return auth == nil
 }
 
-func isPostCheck(_ context.Context, _ security.Candidate, _ security.Account, auth security.Authentication) bool {
+func isPostCredentialsCheck(_ context.Context, _ security.Candidate, _ security.Account, auth security.Authentication) bool {
 	return auth != nil
 }
 
-func isPreMFA(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
+func isPreMFAVerify(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
 	if auth != nil {
 		return false
 	}
@@ -94,7 +104,7 @@ func isPreMFA(_ context.Context, can security.Candidate, _ security.Account, aut
 	return isMFARefresh
 }
 
-func isPostMFA(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
+func isPostMFAVerify(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
 	if auth == nil {
 		return false
 	}
@@ -149,8 +159,8 @@ func (adm *AccountStatusChecker) decideAutoUnlock(ctx context.Context, acct secu
 		return
 	}
 
-	rules, err := adm.store.LoadLockingRules(ctx, acct)
-	if err != nil || !rules.LockoutEnabled() || rules.LockoutDuration() <= 0 {
+	rules, e := adm.store.LoadLockingRules(ctx, acct)
+	if e != nil || rules == nil || !rules.LockoutEnabled() || rules.LockoutDuration() <= 0 {
 		return
 	}
 
@@ -175,6 +185,7 @@ func NewPasswordPolicyChecker(store security.AccountStore) *PasswordPolicyChecke
 }
 
 func (adm *PasswordPolicyChecker) Decide(_ context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
+	// TODO
 	return nil
 }
 

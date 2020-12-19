@@ -32,6 +32,7 @@ type MfaVerifyAuthenticator struct {
 	otpStore          OTPManager
 	mfaEventListeners []MFAEventListenerFunc
 	checkers 		  []AuthenticationDecisionMaker
+	postProcessors	  []PostAuthenticationProcessor
 }
 
 func NewMFAVerifyAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaVerifyAuthenticator {
@@ -46,47 +47,60 @@ func NewMFAVerifyAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaVerif
 		otpStore:          options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
 		checkers: 		   options.Checkers,
+		postProcessors:    options.PostProcessors,
 	}
 }
 
-func (a *MfaVerifyAuthenticator) Authenticate(candidate security.Candidate) (security.Authentication, error) {
+func (a *MfaVerifyAuthenticator) Authenticate(candidate security.Candidate) (auth security.Authentication, err error) {
 	verify, ok := candidate.(*MFAOtpVerification)
 	if !ok {
 		return nil, nil
 	}
 
+	// schedule post processing
+	var ctx context.Context
+	var user security.Account
+	defer func() {
+		applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
+	}()
+
 	// check if OTP verification should be performed
-	ctx := utils.NewMutableContext()
-	user, err := checkCurrentAuth(ctx, verify.CurrentAuth, a.accountStore)
+	ctx = utils.NewMutableContext()
+	user, err = checkCurrentAuth(ctx, verify.CurrentAuth, a.accountStore)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	// pre checks
-	if err := performChecks(a.checkers, ctx, verify, user, nil); err != nil {
-		return nil, a.translate(err, true)
+	if e := makeDecision(a.checkers, ctx, verify, user, nil); e != nil {
+		err = a.translate(e, true)
+		return
 	}
 
 	// Check OTP
 	id := verify.CurrentAuth.OTPIdentifier()
-	switch otp, more, err := a.otpStore.Verify(id, verify.OTP); {
-	case err != nil:
+	switch otp, more, e := a.otpStore.Verify(id, verify.OTP); {
+	case e != nil:
 		broadcastMFAEvent(MFAEventVerificationFailure, otp, user, a.mfaEventListeners...)
-		return nil, a.translate(err, more)
+		err = a.translate(e, more)
+		return
 	default:
 		broadcastMFAEvent(MFAEventVerificationSuccess, otp, user, a.mfaEventListeners...)
 	}
 
-	auth, err := a.CreateSuccessAuthentication(verify, user)
-	if err != nil {
-		return auth, a.translate(err, true)
+	newAuth, e := a.CreateSuccessAuthentication(verify, user)
+	if e != nil {
+		err = a.translate(e, true)
+		return
 	}
 
 	// post checks
-	if err := performChecks(a.checkers, ctx, verify, user, auth); err != nil {
-		return nil, a.translate(err, true)
+	if e := makeDecision(a.checkers, ctx, verify, user, newAuth); e != nil {
+		err = e
+		return
 	}
-	return auth, err
+	auth = newAuth
+	return
 }
 
 // exported for override posibility
@@ -134,7 +148,8 @@ type MfaRefreshAuthenticator struct {
 	accountStore      security.AccountStore
 	otpStore          OTPManager
 	mfaEventListeners []MFAEventListenerFunc
-	checkers 			  []AuthenticationDecisionMaker
+	checkers          []AuthenticationDecisionMaker
+	postProcessors    []PostAuthenticationProcessor
 }
 
 func NewMFARefreshAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaRefreshAuthenticator {
@@ -148,47 +163,61 @@ func NewMFARefreshAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaRefr
 		accountStore:      options.AccountStore,
 		otpStore:          options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
-		checkers: 		   options.Checkers,
+		checkers:          options.Checkers,
+		postProcessors:    options.PostProcessors,
 	}
 }
 
-func (a *MfaRefreshAuthenticator) Authenticate(candidate security.Candidate) (security.Authentication, error) {
+func (a *MfaRefreshAuthenticator) Authenticate(candidate security.Candidate) (auth security.Authentication, err error) {
 	refresh, ok := candidate.(*MFAOtpRefresh)
 	if !ok {
 		return nil, nil
 	}
 
+	// schedule post processing
+	var ctx context.Context
+	var user security.Account
+	defer func() {
+		applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
+	}()
+
 	// check if OTP refresh should be performed
-	ctx := utils.NewMutableContext()
-	user, err := checkCurrentAuth(ctx, refresh.CurrentAuth, a.accountStore)
+	ctx = utils.NewMutableContext()
+	user, err = checkCurrentAuth(ctx, refresh.CurrentAuth, a.accountStore)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	// pre checks
-	if err := performChecks(a.checkers, ctx, refresh, user, nil); err != nil {
-		return nil, a.translate(err, true)
+	if e := makeDecision(a.checkers, ctx, refresh, user, nil); e != nil {
+		err = a.translate(e, true)
+		return
 	}
 
 	// Refresh OTP
 	id := refresh.CurrentAuth.OTPIdentifier()
-	switch otp, more, err := a.otpStore.Refresh(id); {
-	case err != nil:
-		return nil, a.translate(err, more)
+	switch otp, more, e := a.otpStore.Refresh(id); {
+	case e != nil:
+		err = a.translate(e, more)
+		return
 	default:
 		broadcastMFAEvent(MFAEventOtpRefresh, otp, user, a.mfaEventListeners...)
 	}
 
-	auth, err := a.CreateSuccessAuthentication(refresh, user)
-	if err != nil {
-		return auth, a.translate(err, true)
+	newAuth, e := a.CreateSuccessAuthentication(refresh, user)
+	if e != nil {
+		err = a.translate(e, true)
+		return
 	}
 
 	// post checks
-	if err := performChecks(a.checkers, ctx, refresh, user, auth); err != nil {
-		return nil, a.translate(err, true)
+	if e := makeDecision(a.checkers, ctx, refresh, user, newAuth); e != nil {
+		err = e
+		return
 	}
-	return auth, err
+
+	auth = newAuth
+	return
 }
 
 // exported for override posibility

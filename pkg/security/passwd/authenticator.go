@@ -1,6 +1,7 @@
 package passwd
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
@@ -22,6 +23,7 @@ type Authenticator struct {
 	otpManager        OTPManager
 	mfaEventListeners []MFAEventListenerFunc
 	checkers 		  []AuthenticationDecisionMaker
+	postProcessors	  []PostAuthenticationProcessor
 }
 
 type AuthenticatorOptionsFunc func(*AuthenticatorOptions)
@@ -31,7 +33,8 @@ type AuthenticatorOptions struct {
 	PasswordEncoder   PasswordEncoder
 	OTPManager        OTPManager
 	MFAEventListeners []MFAEventListenerFunc
-	Checkers 			  []AuthenticationDecisionMaker
+	Checkers          []AuthenticationDecisionMaker
+	PostProcessors    []PostAuthenticationProcessor
 }
 
 func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
@@ -49,46 +52,61 @@ func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
 		passwdEncoder:     options.PasswordEncoder,
 		otpManager:        options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
-		checkers: 		   options.Checkers,
+		checkers:          options.Checkers,
+		postProcessors:    options.PostProcessors,
 	}
 }
 
-func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Authentication, error) {
+func (a *Authenticator) Authenticate(candidate security.Candidate) (auth security.Authentication, err error) {
 	upp, ok := candidate.(*UsernamePasswordPair)
 	if !ok {
 		return nil, nil
 	}
 
+	// schedule post processing
+	var ctx context.Context
+	var user security.Account
+	defer func() {
+		applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
+	}()
+
 	// Search user in the slice of allowed credentials
-	ctx := utils.NewMutableContext()
-	user, err := a.accountStore.LoadAccountByUsername(ctx, upp.Username)
-	if err != nil {
-		return nil, security.NewUsernameNotFoundError(MessageUserNotFound, err)
+	ctx = utils.NewMutableContext()
+	user, e := a.accountStore.LoadAccountByUsername(ctx, upp.Username)
+	if e != nil {
+		err = security.NewUsernameNotFoundError(MessageUserNotFound, e)
+		return
 	}
 
 	// pre checks
-	if err := performChecks(a.checkers, ctx, upp, user, nil); err != nil {
-		return nil, a.translate(err)
+	if e := makeDecision(a.checkers, ctx, upp, user, nil); e != nil {
+		err = a.translate(e)
+		return
 	}
 
 	// Check password
 	if password, ok := user.Credentials().(string);
 		!ok || upp.Username != user.Username() || !a.passwdEncoder.Matches(upp.Password, password) {
-		return nil, security.NewBadCredentialsError(MessageBadCredential)
+
+		err = security.NewBadCredentialsError(MessageBadCredential)
+		return
 	}
 
 	// create authentication
-	auth, err := a.CreateSuccessAuthentication(upp, user)
-	if err != nil {
-		return nil, a.translate(err)
+	newAuth, e := a.CreateSuccessAuthentication(upp, user)
+	if e != nil {
+		err = a.translate(e)
+		return
 	}
 
 	// post checks
-	if err := performChecks(a.checkers, ctx, upp, user, auth); err != nil {
-		return nil, a.translate(err)
+	if e := makeDecision(a.checkers, ctx, upp, user, newAuth); e != nil {
+		err = a.translate(e)
+		return
 	}
 
-	return auth, nil
+	auth = newAuth
+	return
 }
 
 // exported for override posibility

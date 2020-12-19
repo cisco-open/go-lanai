@@ -14,24 +14,24 @@ var (
 	contextKeyAccountPolicy = "Policy-Acct-"
 )
 
-// in memory Store
+// in memory security.AccountStore
 type InMemoryStore struct {
-	accountLookupByUsername map[string]*PropertiesBasedAccount
-	accountLookupById       map[interface{}]*PropertiesBasedAccount
+	accountLookupByUsername map[string]*passwd.UsernamePasswordAccount
+	accountLookupById       map[interface{}]*passwd.UsernamePasswordAccount
 	policiesLookupByName    map[string]*PropertiesBasedAccountPolicy
 }
 
 func NewInMemoryStore(acctProps AccountsProperties, acctPolicyProps AccountPoliciesProperties) security.AccountStore {
 	store := InMemoryStore{
-		accountLookupByUsername: map[string]*PropertiesBasedAccount{},
-		accountLookupById:       map[interface{}]*PropertiesBasedAccount{},
+		accountLookupByUsername: map[string]*passwd.UsernamePasswordAccount{},
+		accountLookupById:       map[interface{}]*passwd.UsernamePasswordAccount{},
 		policiesLookupByName:    map[string]*PropertiesBasedAccountPolicy{},
 	}
-	for k,acct := range acctProps.Accounts {
-		acct.ID = k
-		copy := acct
-		store.accountLookupByUsername[acct.Username] = &copy
-		store.accountLookupById[acct.ID] = &copy
+	for k, props := range acctProps.Accounts {
+		props.ID = k
+		acct := createAccount(&props)
+		store.accountLookupByUsername[props.Username] = acct
+		store.accountLookupById[props.ID] = acct
 	}
 
 	for k, policy := range acctPolicyProps.Policies {
@@ -43,13 +43,21 @@ func NewInMemoryStore(acctProps AccountsProperties, acctPolicyProps AccountPolic
 	return &store
 }
 
+func (store *InMemoryStore) Save(ctx context.Context, acct security.Account) error {
+	if userAcct, ok := acct.(*passwd.UsernamePasswordAccount); ok {
+		store.accountLookupById[userAcct.ID()] = userAcct
+		store.accountLookupByUsername[userAcct.Username()] = userAcct
+	}
+	return nil
+}
+
 func (store *InMemoryStore) LoadAccountById(_ context.Context, id interface{}) (security.Account, error) {
 	u, ok := store.accountLookupById[id]
 	if !ok {
 		return nil, errors.New("user ID not found")
 	}
 
-	return createAccount(u), nil
+	return u, nil
 }
 
 func (store *InMemoryStore) LoadAccountByUsername(_ context.Context, username string) (security.Account, error) {
@@ -58,7 +66,7 @@ func (store *InMemoryStore) LoadAccountByUsername(_ context.Context, username st
 		return nil, errors.New("username not found")
 	}
 
-	return createAccount(u), nil
+	return u, nil
 }
 
 func (store *InMemoryStore) LoadLockingRules(ctx context.Context, acct security.Account) (security.AccountLockingRule, error) {
@@ -108,7 +116,7 @@ func (store *InMemoryStore) tryLoadPolicy(ctx context.Context, account *passwd.U
 	return policy, nil
 }
 
-func createAccount(props *PropertiesBasedAccount) security.Account {
+func createAccount(props *PropertiesBasedAccount) *passwd.UsernamePasswordAccount {
 	acct := passwd.NewUsernamePasswordAccount(&passwd.UserDetails{
 		ID:              props.ID,
 		Type:            security.ParseAccountType(props.Type),
