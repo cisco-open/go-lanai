@@ -128,6 +128,10 @@ func NewAccountStatusChecker(store security.AccountStore) *AccountStatusChecker 
 }
 
 func (adm *AccountStatusChecker) Decide(ctx context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
+	if acct == nil {
+		return nil
+	}
+
 	switch {
 	case acct.Disabled():
 		return security.NewAccountStatusError(MessageAccountDisabled)
@@ -178,8 +182,56 @@ func NewPasswordPolicyChecker(store security.AccountStore) *PasswordPolicyChecke
 	return &PasswordPolicyChecker{store: store}
 }
 
-func (adm *PasswordPolicyChecker) Decide(_ context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
-	// TODO
+func (c *PasswordPolicyChecker) Decide(ctx context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
+	history, hok := acct.(security.AccountHistory)
+	_, uok := acct.(security.AccountUpdater)
+	if !hok || !uok {
+		return nil
+	}
+
+	policy, e := c.store.LoadPasswordPolicy(ctx, acct)
+	if e != nil || policy == nil || !policy.PwdPolicyEnforced() || policy.PwdMaxAge() <= 0 {
+		return nil
+	}
+
+	switch {
+	case history.PwdChangedTime().Add(policy.PwdMaxAge()).Before(time.Now()):
+		return c.decideExpiredPassword(ctx, acct, policy, auth)
+	default:
+		return c.decideNonExpiredPassword(ctx, acct, policy, auth)
+	}
+}
+
+func (c *PasswordPolicyChecker) decideNonExpiredPassword(
+	_ context.Context, acct security.Account, policy security.AccountPasswordPolicy, auth security.Authentication) (err error) {
+
+	// reset graceful auth
+	acct.(security.AccountUpdater).IncrementGracefulAuthCount()
+
+	// check if expiring soon
+	toExpire := policy.PwdMaxAge() - time.Now().Sub(acct.(security.AccountHistory).PwdChangedTime())
+	if toExpire >= 0 && toExpire < policy.PwdExpiryWarningPeriod() {
+		// TODO add warning
+	}
+	return nil
+}
+
+func (c *PasswordPolicyChecker) decideExpiredPassword(
+	_ context.Context, acct security.Account, policy security.AccountPasswordPolicy, auth security.Authentication) error {
+
+	switch remaining := policy.GracefulAuthLimit() - acct.(security.AccountHistory).GracefulAuthCount(); {
+	case remaining <= 0:
+		// No more graceful auth
+		return security.NewCredentialsExpiredError(MessagePasswordExpired)
+	case remaining == 1:
+		// Last chance
+		// TODO add warning
+	default:
+		// more chance available
+		//TODO add warning
+	}
+
+	acct.(security.AccountUpdater).IncrementGracefulAuthCount()
 	return nil
 }
 

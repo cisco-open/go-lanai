@@ -30,7 +30,7 @@ type PostAuthenticationProcessor interface {
 	// If the context.Context and security.Account paramters are mutable, PostAuthenticationProcessor is allowed to change it
 	// Note: PostAuthenticationProcessor typically shouldn't overwrite authentication decision (rejected or approved)
 	// 		 However, it is allowed to modify result by returning different AuthenticationResult.
-	//       This is usuful when PostAuthenticationProcessor want to returns different error or modify authentication
+	//       This is useful when PostAuthenticationProcessor want to returns different error or add more details to authentication
 	Process(context.Context, security.Account, AuthenticationResult) AuthenticationResult
 }
 

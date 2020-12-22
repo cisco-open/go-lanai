@@ -26,6 +26,7 @@ const (
 	MessageAccountLocked             = "Account Locked"
 	MessagePasswordLoginNotAllowed   = "Password Login not Allowed"
 	MessageAccountLockedWithReason   = "Account locked due to too many failed attempts"
+	MessagePasswordExpired           = "User credentials have expired"
 )
 
 // For error translation
