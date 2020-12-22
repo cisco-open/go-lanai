@@ -6,12 +6,6 @@ import (
 	"time"
 )
 
-const (
-	MessageAccountDisabled = "Account Disabled"
-	MessageAccountLocked = "Account Locked"
-	MessagePasswordLoginNotAllowed = "Password Login not Allowed"
-)
-
 /******************************
 	abstracts
  ******************************/

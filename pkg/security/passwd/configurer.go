@@ -77,19 +77,16 @@ func (pac *PasswordAuthConfigurer) defaultOptions(f *PasswordAuthFeature) Authen
 		f.passwordEncoder = pac.passwordEncoder
 	}
 
-	// TODO maybe customizeble via Feature
-	acctStatusChecker := NewAccountStatusChecker(f.accountStore)
-	passwordChecker := NewPasswordPolicyChecker(f.accountStore)
+	decisionMakers := pac.prepareDecisionMakers(f)
+	processors := pac.preparePostProcessors(f)
 
 	return func(opts *AuthenticatorOptions) {
 		opts.AccountStore = f.accountStore
 		if f.passwordEncoder != nil {
 			opts.PasswordEncoder = f.passwordEncoder
 		}
-		opts.Checkers = []AuthenticationDecisionMaker{
-			PreCredentialsCheck(acctStatusChecker),
-			FinalCheck(passwordChecker),
-		}
+		opts.Checkers = decisionMakers
+		opts.PostProcessors = processors
 	}
 }
 
@@ -119,10 +116,8 @@ func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) Authentica
 		}
 	})
 
-	// TODO maybe customizeble via Feature
-	acctStatusChecker := NewAccountStatusChecker(f.accountStore)
-	passwordChecker := NewPasswordPolicyChecker(f.accountStore)
-	persistAccountProcessor := NewPersistAccountPostProcessor(f.accountStore)
+	decisionMakers := pac.prepareDecisionMakers(f)
+	processors := pac.preparePostProcessors(f)
 
 	return func(opts *AuthenticatorOptions) {
 		opts.OTPManager = otpManager
@@ -130,12 +125,27 @@ func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) Authentica
 			return order.OrderedFirstCompare(f.mfaEventListeners[i], f.mfaEventListeners[j])
 		})
 		opts.MFAEventListeners = f.mfaEventListeners
-		opts.Checkers = []AuthenticationDecisionMaker{
-			PreCredentialsCheck(acctStatusChecker),
-			FinalCheck(passwordChecker),
-		}
-		opts.PostProcessors = []PostAuthenticationProcessor{
-			persistAccountProcessor,
-		}
+		opts.Checkers = decisionMakers
+		opts.PostProcessors = processors
+	}
+}
+
+func (pac *PasswordAuthConfigurer) prepareDecisionMakers(f *PasswordAuthFeature) []AuthenticationDecisionMaker {
+	// TODO maybe customizeble via Feature
+	acctStatusChecker := NewAccountStatusChecker(f.accountStore)
+	passwordChecker := NewPasswordPolicyChecker(f.accountStore)
+
+	return []AuthenticationDecisionMaker{
+		PreCredentialsCheck(acctStatusChecker),
+		FinalCheck(passwordChecker),
+	}
+}
+
+func (pac *PasswordAuthConfigurer) preparePostProcessors(f *PasswordAuthFeature) []PostAuthenticationProcessor {
+	// TODO maybe customizeble via Feature
+	return []PostAuthenticationProcessor{
+		NewPersistAccountPostProcessor(f.accountStore),
+		NewAccountStatusPostProcessor(f.accountStore),
+		NewAccountLockingPostProcessor(f.accountStore),
 	}
 }

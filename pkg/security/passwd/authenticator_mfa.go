@@ -7,23 +7,6 @@ import (
 	"errors"
 )
 
-const (
-	MessageInvalidPasscode = "Bad Verification Code"
-	MessagePasscodeExpired = "Verification Code Expired"
-	MessageCannotRefresh = "Unable to Refresh"
-	MessageMaxAttemptsReached = "No More Verification Attempts Allowed"
-	MessageMaxRefreshAttemptsReached = "No More Resend Attempts Allowed"
-	MessageInvalidAccountStatus = "Issue with current account status"
-)
-
-// For error translation
-var (
-	errorBadCredentials     = security.NewBadCredentialsError("bad creds")
-	errorCredentialsExpired = security.NewCredentialsExpiredError("cred exp")
-	errorMaxAttemptsReached = security.NewMaxAttemptsReachedError("max attempts")
-	errorAccountStatus      = security.NewAccountStatusError("acct status")
-)
-
 /********************************
 	MfaVerifyAuthenticator
 *********************************/
@@ -61,7 +44,7 @@ func (a *MfaVerifyAuthenticator) Authenticate(candidate security.Candidate) (aut
 	var ctx context.Context
 	var user security.Account
 	defer func() {
-		applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
+		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
 	}()
 
 	// check if OTP verification should be performed
@@ -178,7 +161,7 @@ func (a *MfaRefreshAuthenticator) Authenticate(candidate security.Candidate) (au
 	var ctx context.Context
 	var user security.Account
 	defer func() {
-		applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
+		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
 	}()
 
 	// check if OTP refresh should be performed

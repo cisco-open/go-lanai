@@ -4,14 +4,9 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"errors"
-)
-
-const (
-	MessageUserNotFound = "Mismatched Username and Password"
-	MessageBadCredential = "Mismatched Username and Password"
-	MessageOtpNotAvailable = "MFA required but temprorily unavailable"
-	MessageAccountStatus = "Inactive Account"
+	"sort"
 )
 
 /******************************
@@ -47,6 +42,12 @@ func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
 			optFunc(&options)
 		}
 	}
+	sort.SliceStable(options.Checkers, func(i,j int) bool {
+		return order.OrderedFirstCompare(options.Checkers[i], options.Checkers[j])
+	})
+	sort.SliceStable(options.PostProcessors, func(i,j int) bool {
+		return order.OrderedFirstCompareReverse(options.PostProcessors[i], options.PostProcessors[j])
+	})
 	return &Authenticator{
 		accountStore:      options.AccountStore,
 		passwdEncoder:     options.PasswordEncoder,
@@ -67,7 +68,7 @@ func (a *Authenticator) Authenticate(candidate security.Candidate) (auth securit
 	var ctx context.Context
 	var user security.Account
 	defer func() {
-		applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
+		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
 	}()
 
 	// Search user in the slice of allowed credentials

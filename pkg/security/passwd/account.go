@@ -2,6 +2,7 @@ package passwd
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"fmt"
 	"time"
 )
 
@@ -136,11 +137,15 @@ func (a *UsernamePasswordAccount) Lock() {
 		a.UserDetails.LockoutTime = time.Now()
 	}
 	a.UserDetails.Locked = true
+	// TODO proper logging
+	fmt.Printf("Account[%s] Locked\n", a.UserDetails.Username)
 }
 
 func (a *UsernamePasswordAccount) Unlock() {
 	a.UserDetails.LockoutTime = time.Time{}
 	a.UserDetails.Locked = false
+	// TODO proper logging
+	fmt.Printf("Account[%s] Unlocked\n", a.UserDetails.Username)
 }
 
 func (a *UsernamePasswordAccount) RecordFailure(failureTime time.Time, limit int) {
@@ -157,10 +162,15 @@ func (a *UsernamePasswordAccount) RecordSuccess(loginTime time.Time) {
 
 func (a *UsernamePasswordAccount) ResetFailedAttempts() {
 	a.UserDetails.SerialFailedAttempts = 0
+	a.UserDetails.LoginFailures = []time.Time{}
+	// TODO proper logging
+	fmt.Printf("Account[%s] Failure reset\n", a.UserDetails.Username)
 }
 
 func (a *UsernamePasswordAccount) ResetGracefulAuthCount() {
 	a.UserDetails.GracefulAuthCount = 0
+	// TODO proper logging
+	fmt.Printf("Account[%s] Graceful Auth Reset\n", a.UserDetails.Username)
 }
 
 /***********************************

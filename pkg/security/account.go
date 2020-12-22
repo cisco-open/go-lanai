@@ -45,10 +45,15 @@ type Account interface {
 }
 
 type AccountStore interface {
+	// LoadAccountById find account by its ID
 	LoadAccountById(ctx context.Context, id interface{}) (Account, error)
+	// LoadAccountByUsername find account by its Username
 	LoadAccountByUsername(ctx context.Context, username string) (Account, error)
+	// LoadLockingRules load given account's locking rule. It's recommended to cache the result
 	LoadLockingRules(ctx context.Context, acct Account) (AccountLockingRule, error)
+	// LoadPasswordPolicy load given account's password policy. It's recommended to cache the result
 	LoadPasswordPolicy(ctx context.Context, acct Account) (AccountPasswordPolicy, error)
+	// Save save the account if necessary
 	Save(ctx context.Context, acct Account) error
 }
 
@@ -98,7 +103,7 @@ type AccountLockingRule interface {
 	LockoutDuration() time.Duration
 	// LockoutFailuresLimit specify how many consecutive login failures required to lock the account
 	LockoutFailuresLimit() int
-	// LockoutFailuresInterval specify how long between two login failures to be considered as  consecutive login failures
+	// LockoutFailuresInterval specify how long between the first and the last login failures to be considered as consecutive login failures
 	LockoutFailuresInterval() time.Duration
 }
 

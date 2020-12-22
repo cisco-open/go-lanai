@@ -139,7 +139,7 @@ func createAccount(props *PropertiesBasedAccount) *passwd.UsernamePasswordAccoun
 			startupTime.Add(-2 * time.Minute),
 		},
 		SerialFailedAttempts: 5,
-		LockoutTime:          startupTime.Add(-2 * time.Minute),
+		LockoutTime:          startupTime.Add(-5 * time.Minute),
 		PwdChangedTime:       startupTime.Add(-30 * 24 * time.Hour),
 		GracefulAuthCount:    0,
 	})

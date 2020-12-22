@@ -10,6 +10,32 @@ const (
 	SpecialPermissionMFAPending = "MFAPending"
 	SpecialPermissionOtpId = "OtpId"
 )
+
+const (
+	MessageUserNotFound              = "Mismatched Username and Password"
+	MessageBadCredential             = "Mismatched Username and Password"
+	MessageOtpNotAvailable           = "MFA required but temprorily unavailable"
+	MessageAccountStatus             = "Inactive Account"
+	MessageInvalidPasscode           = "Bad Verification Code"
+	MessagePasscodeExpired           = "Verification Code Expired"
+	MessageCannotRefresh             = "Unable to Refresh"
+	MessageMaxAttemptsReached        = "No More Verification Attempts Allowed"
+	MessageMaxRefreshAttemptsReached = "No More Resend Attempts Allowed"
+	MessageInvalidAccountStatus      = "Issue with current account status"
+	MessageAccountDisabled           = "Account Disabled"
+	MessageAccountLocked             = "Account Locked"
+	MessagePasswordLoginNotAllowed   = "Password Login not Allowed"
+	MessageAccountLockedWithReason   = "Account locked due to too many failed attempts"
+)
+
+// For error translation
+var (
+	errorBadCredentials     = security.NewBadCredentialsError("bad creds")
+	errorCredentialsExpired = security.NewCredentialsExpiredError("cred exp")
+	errorMaxAttemptsReached = security.NewMaxAttemptsReachedError("max attempts")
+	errorAccountStatus      = security.NewAccountStatusError("acct status")
+)
+
 /******************************
 	Serialization
 ******************************/
