@@ -124,10 +124,6 @@ func (a *UsernamePasswordAccount) GracefulAuthCount() int {
 /***********************************
 	security.AccountUpdater
  ***********************************/
-func (a *UsernamePasswordAccount) IncrementFailedAttempts() {
-	a.UserDetails.SerialFailedAttempts ++
-}
-
 func (a *UsernamePasswordAccount) IncrementGracefulAuthCount() {
 	a.UserDetails.GracefulAuthCount ++
 }
@@ -142,7 +138,7 @@ func (a *UsernamePasswordAccount) Lock() {
 }
 
 func (a *UsernamePasswordAccount) Unlock() {
-	a.UserDetails.LockoutTime = time.Time{}
+	// we don't clear lockout time for record keeping purpose
 	a.UserDetails.Locked = false
 	// TODO proper logging
 	fmt.Printf("Account[%s] Unlocked\n", a.UserDetails.Username)
@@ -154,6 +150,7 @@ func (a *UsernamePasswordAccount) RecordFailure(failureTime time.Time, limit int
 		failures = failures[len(failures) - limit:]
 	}
 	a.UserDetails.LoginFailures = failures
+	a.UserDetails.SerialFailedAttempts = len(failures)
 }
 
 func (a *UsernamePasswordAccount) RecordSuccess(loginTime time.Time) {
@@ -201,13 +198,13 @@ func (a *UsernamePasswordAccount) LockoutFailuresInterval() time.Duration {
 }
 
 /***********************************
-	security.AccountPasswordPolicy
+	security.AccountPwdAgingRule
  ***********************************/
-func (a *UsernamePasswordAccount) PwdPolicyName() string {
+func (a *UsernamePasswordAccount) PwdAgingPolicyName() string {
 	return a.PasswordPolicy.Name
 }
 
-func (a *UsernamePasswordAccount) PwdPolicyEnforced() bool {
+func (a *UsernamePasswordAccount) PwdAgingRuleEnforced() bool {
 	return a.PasswordPolicy.Enabled
 }
 

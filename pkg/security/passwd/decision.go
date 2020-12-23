@@ -3,6 +3,7 @@ package passwd
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"fmt"
 	"time"
 )
 
@@ -189,8 +190,8 @@ func (c *PasswordPolicyChecker) Decide(ctx context.Context, _ security.Candidate
 		return nil
 	}
 
-	policy, e := c.store.LoadPasswordPolicy(ctx, acct)
-	if e != nil || policy == nil || !policy.PwdPolicyEnforced() || policy.PwdMaxAge() <= 0 {
+	policy, e := c.store.LoadPwdAgingRules(ctx, acct)
+	if e != nil || policy == nil || !policy.PwdAgingRuleEnforced() || policy.PwdMaxAge() <= 0 {
 		return nil
 	}
 
@@ -203,7 +204,7 @@ func (c *PasswordPolicyChecker) Decide(ctx context.Context, _ security.Candidate
 }
 
 func (c *PasswordPolicyChecker) decideNonExpiredPassword(
-	_ context.Context, acct security.Account, policy security.AccountPasswordPolicy, auth security.Authentication) (err error) {
+	_ context.Context, acct security.Account, policy security.AccountPwdAgingRule, auth security.Authentication) (err error) {
 
 	// reset graceful auth
 	acct.(security.AccountUpdater).IncrementGracefulAuthCount()
@@ -211,13 +212,13 @@ func (c *PasswordPolicyChecker) decideNonExpiredPassword(
 	// check if expiring soon
 	toExpire := policy.PwdMaxAge() - time.Now().Sub(acct.(security.AccountHistory).PwdChangedTime())
 	if toExpire >= 0 && toExpire < policy.PwdExpiryWarningPeriod() {
-		// TODO add warning
+		c.addWarning(auth, fmt.Sprintf("Password is expring in %s", toExpire.String()))
 	}
 	return nil
 }
 
 func (c *PasswordPolicyChecker) decideExpiredPassword(
-	_ context.Context, acct security.Account, policy security.AccountPasswordPolicy, auth security.Authentication) error {
+	_ context.Context, acct security.Account, policy security.AccountPwdAgingRule, auth security.Authentication) error {
 
 	switch remaining := policy.GracefulAuthLimit() - acct.(security.AccountHistory).GracefulAuthCount(); {
 	case remaining <= 0:
@@ -225,13 +226,36 @@ func (c *PasswordPolicyChecker) decideExpiredPassword(
 		return security.NewCredentialsExpiredError(MessagePasswordExpired)
 	case remaining == 1:
 		// Last chance
-		// TODO add warning
+		c.addWarning(auth, "Last Graceful Login")
 	default:
 		// more chance available
-		//TODO add warning
+		c.addWarning(auth, fmt.Sprintf("%d Graceful Login Left", remaining))
 	}
 
 	acct.(security.AccountUpdater).IncrementGracefulAuthCount()
 	return nil
+}
+
+func (c *PasswordPolicyChecker) addWarning(auth security.Authentication, warning interface{}) {
+	details, ok := auth.Details().(map[interface{}]interface{})
+	if !ok || details == nil {
+		return
+	}
+
+	var existing []interface{}
+	switch w := details[DetailsKeyAuthWarning]; w.(type) {
+	case nil:
+		existing = []interface{}{}
+	case []interface{}:
+		existing = w.([]interface{})
+	default:
+		existing = []interface{}{w}
+	}
+
+	if warnings, ok := warning.([]interface{}); ok {
+		details[DetailsKeyAuthWarning] = append(existing, warnings...)
+	} else {
+		details[DetailsKeyAuthWarning] = append(existing, warning)
+	}
 }
 

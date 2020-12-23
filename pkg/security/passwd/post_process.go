@@ -149,12 +149,13 @@ func (p *AccountLockingPostProcessor) Process(ctx context.Context, acct security
 		return result
 	}
 
-	// Note: we assume AccountStatusPostProcessor already updated login success/failure records
+	// Note 1: we assume AccountStatusPostProcessor already updated login success/failure records
+	// Note 2: we don't count login failure before last lockout time. whether this is necessary is TBD
 	// find first login failure within FailureInterval
 	now := time.Now()
-	var count int
+	count := 0
 	for _,t := range history.LoginFailures() {
-		if interval := now.Sub(t); interval >= 0 && interval <= rules.LockoutFailuresInterval() {
+		if interval := now.Sub(t); interval <= rules.LockoutFailuresInterval() && t.After(history.LockoutTime()) {
 			count ++
 		}
 	}
@@ -163,7 +164,7 @@ func (p *AccountLockingPostProcessor) Process(ctx context.Context, acct security
 	if count >= rules.LockoutFailuresLimit() {
 		updater.Lock()
 		// Optional, change error message
-		result.Error = security.NewAccountStatusError(MessageAccountLockedWithReason, result.Error)
+		result.Error = security.NewAccountStatusError(MessageLockedDueToBadCredential, result.Error)
 	}
 	return result
 }

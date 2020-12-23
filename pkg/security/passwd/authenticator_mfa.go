@@ -95,9 +95,11 @@ func (a *MfaVerifyAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpVe
 	}
 
 	details, ok := candidate.CurrentAuth.Details().(map[interface{}]interface{})
-	if !ok {
-		details := map[interface{}]interface{}{}
-		details["Literal"] = candidate.CurrentAuth.Details()
+	if details == nil || !ok {
+		details = map[interface{}]interface{}{}
+		if candidate.CurrentAuth.Details() != nil {
+			details["Literal"] = candidate.CurrentAuth.Details()
+		}
 	}
 
 	auth := usernamePasswordAuthentication{

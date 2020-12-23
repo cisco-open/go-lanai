@@ -14,6 +14,7 @@ const (
 	AccountTypeDefault AccountType = iota
 	AccountTypeApp
 	AccountTypeFederated
+	AccountTypeSystem
 	AccountTypeUnknown
 )
 func ParseAccountType(value interface{}) AccountType {
@@ -28,6 +29,8 @@ func ParseAccountType(value interface{}) AccountType {
 		return AccountTypeApp
 	case "fed" == strings.ToLower(v):
 		return AccountTypeFederated
+	case "system" == strings.ToLower(v):
+		return AccountTypeSystem
 	default:
 		return AccountTypeUnknown
 	}
@@ -51,8 +54,8 @@ type AccountStore interface {
 	LoadAccountByUsername(ctx context.Context, username string) (Account, error)
 	// LoadLockingRules load given account's locking rule. It's recommended to cache the result
 	LoadLockingRules(ctx context.Context, acct Account) (AccountLockingRule, error)
-	// LoadPasswordPolicy load given account's password policy. It's recommended to cache the result
-	LoadPasswordPolicy(ctx context.Context, acct Account) (AccountPasswordPolicy, error)
+	// LoadPwdAgingRules load given account's password policy. It's recommended to cache the result
+	LoadPwdAgingRules(ctx context.Context, acct Account) (AccountPwdAgingRule, error)
 	// Save save the account if necessary
 	Save(ctx context.Context, acct Account) error
 }
@@ -81,14 +84,13 @@ type AccountTenancy interface {
 	Abstraction - Mutator
  *********************************/
 type AccountUpdater interface {
-	IncrementFailedAttempts()
 	IncrementGracefulAuthCount()
+	ResetGracefulAuthCount()
 	Lock()
 	Unlock()
 	RecordFailure(failureTime time.Time, limit int)
 	RecordSuccess(loginTime time.Time)
 	ResetFailedAttempts()
-	ResetGracefulAuthCount()
 }
 
 /*********************************
@@ -108,13 +110,13 @@ type AccountLockingRule interface {
 }
 
 /*********************************
-	Abstraction - Passwd Policy
+	Abstraction - Aging Rules
  *********************************/
-type AccountPasswordPolicy interface {
+type AccountPwdAgingRule interface {
 	// PwdPolicyName the name of password polcy
-	PwdPolicyName() string
+	PwdAgingPolicyName() string
 	// PwdPolicyEnforced indicate whether password policy is enabled
-	PwdPolicyEnforced() bool
+	PwdAgingRuleEnforced() bool
 	// PwdMaxAge specify how long a password is valid before expiry
 	PwdMaxAge() time.Duration
 	// PwdExpiryWarningPeriod specify how long before password expiry the system should warn user

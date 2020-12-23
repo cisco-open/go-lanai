@@ -137,10 +137,14 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 		}
 	}
 
+	details := candidate.DetailsMap
+	if details == nil {
+		details = map[interface{}]interface{}{}
+	}
 	auth := usernamePasswordAuthentication{
 		Acct:       account,
 		Perms:      permissions,
-		DetailsMap: candidate.DetailsMap,
+		DetailsMap: details,
 	}
 
 	return &auth, nil

@@ -8,7 +8,11 @@ import (
 
 const (
 	SpecialPermissionMFAPending = "MFAPending"
-	SpecialPermissionOtpId = "OtpId"
+	SpecialPermissionOtpId      = "OtpId"
+)
+
+const (
+	DetailsKeyAuthWarning = "AuthWarning"
 )
 
 const (
@@ -25,7 +29,7 @@ const (
 	MessageAccountDisabled           = "Account Disabled"
 	MessageAccountLocked             = "Account Locked"
 	MessagePasswordLoginNotAllowed   = "Password Login not Allowed"
-	MessageAccountLockedWithReason   = "Account locked due to too many failed attempts"
+	MessageLockedDueToBadCredential  = "Mismatched Username and Password. Account locked due to too many failed attempts"
 	MessagePasswordExpired           = "User credentials have expired"
 )
 
@@ -162,7 +166,7 @@ func (auth *usernamePasswordAuthentication) State() security.AuthenticationState
 }
 
 func (auth *usernamePasswordAuthentication) Details() interface{} {
-	return auth.Acct
+	return auth.DetailsMap
 }
 
 func (auth *usernamePasswordAuthentication) IsMFAPending() bool {

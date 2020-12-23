@@ -89,13 +89,13 @@ func (store *InMemoryStore) LoadLockingRules(ctx context.Context, acct security.
 	return account, nil
 }
 
-func (store *InMemoryStore) LoadPasswordPolicy(ctx context.Context, acct security.Account) (security.AccountPasswordPolicy, error) {
+func (store *InMemoryStore) LoadPwdAgingRules(ctx context.Context, acct security.Account) (security.AccountPwdAgingRule, error) {
 	ret, err := store.LoadLockingRules(ctx, acct)
 	if err != nil {
 		return nil, err
 	}
 
-	return ret.(security.AccountPasswordPolicy), nil
+	return ret.(security.AccountPwdAgingRule), nil
 }
 
 // Note, caching loaded policy in ctx is not needed for in-memory store. The implmenetation is for reference only
@@ -139,7 +139,7 @@ func createAccount(props *PropertiesBasedAccount) *passwd.UsernamePasswordAccoun
 			startupTime.Add(-2 * time.Minute),
 		},
 		SerialFailedAttempts: 5,
-		LockoutTime:          startupTime.Add(-5 * time.Minute),
+		LockoutTime:          startupTime.Add(-30 * time.Minute),
 		PwdChangedTime:       startupTime.Add(-30 * 24 * time.Hour),
 		GracefulAuthCount:    0,
 	})
