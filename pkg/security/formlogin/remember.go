@@ -11,17 +11,17 @@ const (
 	detailsKeyShouldRemember = "RememberMe"
 )
 
-type RememberMeSuccessHandler struct {
+type RememberUsernameSuccessHandler struct {
 	rememberMeParam string
 }
 
-func NewRememberMeSuccessHandler(rememberMeParam string) *RememberMeSuccessHandler {
-	return &RememberMeSuccessHandler{
+func NewRememberUsernameSuccessHandler(rememberMeParam string) *RememberUsernameSuccessHandler {
+	return &RememberUsernameSuccessHandler{
 		rememberMeParam: rememberMeParam,
 	}
 }
 
-func (h *RememberMeSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, _ http.ResponseWriter, _, to security.Authentication) {
+func (h *RememberUsernameSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, _ http.ResponseWriter, _, to security.Authentication) {
 	details, ok := to.Details().(map[interface{}]interface{})
 	if !ok {
 		details = map[interface{}]interface{}{}

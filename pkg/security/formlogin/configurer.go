@@ -266,11 +266,11 @@ func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws 
 		}
 	}
 
-	rememberMeHandler := NewRememberMeSuccessHandler(f.rememberMeParam)
+	rememberUsernameHandler := NewRememberUsernameSuccessHandler(f.rememberMeParam)
 
 	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
-		return security.NewAuthenticationSuccessHandler(globalHandler, rememberMeHandler, f.successHandler)
+		return security.NewAuthenticationSuccessHandler(globalHandler, rememberUsernameHandler, f.successHandler)
 	} else {
-		return security.NewAuthenticationSuccessHandler(rememberMeHandler, f.successHandler)
+		return security.NewAuthenticationSuccessHandler(rememberUsernameHandler, f.successHandler)
 	}
 }
