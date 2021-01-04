@@ -16,7 +16,7 @@ import (
 
 func TestCsrfMiddlewareShouldGenerateToken(t *testing.T) {
 	csrfStore := newSessionBackedStore()
-	manager := newManager(csrfStore, nil)
+	manager := newManager(csrfStore, nil, nil)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -57,7 +57,7 @@ func TestCsrfMiddlewareShouldGenerateToken(t *testing.T) {
 
 func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	csrfStore := newSessionBackedStore()
-	manager := newManager(csrfStore, nil)
+	manager := newManager(csrfStore, nil, nil)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
