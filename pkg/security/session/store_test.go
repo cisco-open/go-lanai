@@ -20,6 +20,10 @@ type testUser struct {
 	Pass string
 }
 
+func (u *testUser) ID() interface{} {
+	return u.User
+}
+
 func (u *testUser) Type() security.AccountType {
 	return security.AccountTypeDefault
 }
@@ -69,6 +73,10 @@ func (auth *testAuthentication) State() security.AuthenticationState {
 
 func (auth *testAuthentication) Details() interface{} {
 	return auth.Account
+}
+
+func (auth *testAuthentication) Username() string {
+	return auth.Account.Username()
 }
 
 func (auth *testAuthentication) IsMFAPending() bool {

@@ -93,6 +93,7 @@ func (upp *UsernamePasswordPair) Details() interface{} {
 type MFAOtpVerification struct {
 	CurrentAuth UsernamePasswordAuthentication
 	OTP string
+	DetailsMap map[interface{}]interface{}
 }
 
 // security.Candidate
@@ -107,12 +108,13 @@ func (uop *MFAOtpVerification) Credentials() interface{} {
 
 // security.Candidate
 func (uop *MFAOtpVerification) Details() interface{} {
-	return nil
+	return uop.DetailsMap
 }
 
 // MFAOtpRefresh is the supported security.Candidate for MFA OTP refresh
 type MFAOtpRefresh struct {
 	CurrentAuth UsernamePasswordAuthentication
+	DetailsMap map[interface{}]interface{}
 }
 
 // security.Candidate
@@ -127,7 +129,7 @@ func (uop *MFAOtpRefresh) Credentials() interface{} {
 
 // security.Candidate
 func (uop *MFAOtpRefresh) Details() interface{} {
-	return nil
+	return uop.DetailsMap
 }
 
 /******************************
@@ -136,6 +138,7 @@ func (uop *MFAOtpRefresh) Details() interface{} {
 // UsernamePasswordAuthentication implements security.Authentication
 type UsernamePasswordAuthentication interface {
 	security.Authentication
+	Username() string
 	IsMFAPending() bool
 	OTPIdentifier() string
 }
@@ -167,6 +170,10 @@ func (auth *usernamePasswordAuthentication) State() security.AuthenticationState
 
 func (auth *usernamePasswordAuthentication) Details() interface{} {
 	return auth.DetailsMap
+}
+
+func (auth *usernamePasswordAuthentication) Username() string {
+	return auth.Acct.Username()
 }
 
 func (auth *usernamePasswordAuthentication) IsMFAPending() bool {

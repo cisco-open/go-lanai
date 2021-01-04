@@ -233,15 +233,7 @@ func checkCurrentAuth(ctx context.Context, currentAuth UsernamePasswordAuthentic
 		return nil, security.NewUsernameNotFoundError(MessageInvalidAccountStatus)
 	}
 
-	var username string
-	switch currentAuth.Principal().(type) {
-	case string:
-		username = currentAuth.Principal().(string)
-	case security.Account:
-		username = currentAuth.Principal().(security.Account).Username()
-	}
-
-	user, err := accountStore.LoadAccountByUsername(ctx, username)
+	user, err := accountStore.LoadAccountByUsername(ctx, currentAuth.Username())
 	if err != nil {
 		return nil, security.NewUsernameNotFoundError(MessageInvalidAccountStatus, err)
 	}
