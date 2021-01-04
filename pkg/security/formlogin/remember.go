@@ -8,16 +8,16 @@ import (
 )
 
 const (
-	detailsKeyShouldRemember = "RememberMe"
+	detailsKeyShouldRememberUsername = "RememberUsername"
 )
 
 type RememberUsernameSuccessHandler struct {
-	rememberMeParam string
+	rememberParam string
 }
 
-func NewRememberUsernameSuccessHandler(rememberMeParam string) *RememberUsernameSuccessHandler {
+func NewRememberUsernameSuccessHandler(rememberParam string) *RememberUsernameSuccessHandler {
 	return &RememberUsernameSuccessHandler{
-		rememberMeParam: rememberMeParam,
+		rememberParam: rememberParam,
 	}
 }
 
@@ -28,9 +28,9 @@ func (h *RememberUsernameSuccessHandler) HandleAuthenticationSuccess(c context.C
 	}
 
 	// set remember-me decision to auth's details if request has such parameter
-	remember := r.PostForm.Get(h.rememberMeParam)
+	remember := r.PostForm.Get(h.rememberParam)
 	if remember != "" {
-		details[detailsKeyShouldRemember] = true
+		details[detailsKeyShouldRememberUsername] = true
 	}
 
 	// auth process not finished yet, bail
@@ -44,7 +44,7 @@ func (h *RememberUsernameSuccessHandler) HandleAuthenticationSuccess(c context.C
 	}
 
 	// read remember-me decision from auth
-	if doRemember, ok := details[detailsKeyShouldRemember].(bool); !ok || !doRemember {
+	if doRemember, ok := details[detailsKeyShouldRememberUsername].(bool); !ok || !doRemember {
 		// cleanup session
 		s.Set(SessionKeyRememberedUsername, nil)
 		return
