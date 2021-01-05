@@ -128,7 +128,7 @@ func NewAccountStatusChecker(store security.AccountStore) *AccountStatusChecker 
 	return &AccountStatusChecker{store: store}
 }
 
-func (adm *AccountStatusChecker) Decide(ctx context.Context, _ security.Candidate, acct security.Account, auth security.Authentication) error {
+func (adm *AccountStatusChecker) Decide(ctx context.Context, _ security.Candidate, acct security.Account, _ security.Authentication) error {
 	if acct == nil {
 		return nil
 	}

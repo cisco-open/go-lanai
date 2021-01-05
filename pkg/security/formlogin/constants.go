@@ -1,5 +1,5 @@
 package formlogin
 
 const (
-	SessionKeyRememberedUsername = "RememberedUsername"
+	CookieKeyRememberedUsername = "RememberedUsername"
 )

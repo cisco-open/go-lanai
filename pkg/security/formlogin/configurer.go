@@ -21,11 +21,14 @@ var (
 
 //goland:noinspection GoNameStartsWithPackageName
 type FormLoginConfigurer struct {
-
+	cookieProps security.CookieProperties
+	serverProps web.ServerProperties
 }
 
-func newFormLoginConfigurer() *FormLoginConfigurer {
+func newFormLoginConfigurer(cookieProps security.CookieProperties, serverProps web.ServerProperties) *FormLoginConfigurer {
 	return &FormLoginConfigurer{
+		cookieProps: cookieProps,
+		serverProps: serverProps,
 	}
 }
 
@@ -266,7 +269,7 @@ func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws 
 		}
 	}
 
-	rememberUsernameHandler := NewRememberUsernameSuccessHandler(f.rememberParam)
+	rememberUsernameHandler := NewRememberUsernameSuccessHandler(flc.cookieProps, flc.serverProps, f.rememberParam)
 
 	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
 		return security.NewAuthenticationSuccessHandler(globalHandler, rememberUsernameHandler, f.successHandler)
