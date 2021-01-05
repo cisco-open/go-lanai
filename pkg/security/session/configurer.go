@@ -6,9 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
-	"net/http"
 	"path"
-	"strings"
 	"time"
 )
 
@@ -56,18 +54,6 @@ func newSessionConfigurer(sessionProps security.SessionProperties, serverProps w
 func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 
 	// configure session store
-	var sameSite http.SameSite
-	switch strings.ToLower(sc.sessionProps.Cookie.SameSite) {
-	case "lax":
-		sameSite = http.SameSiteLaxMode
-	case "strict":
-		sameSite = http.SameSiteStrictMode
-	case "none":
-		sameSite = http.SameSiteNoneMode
-	default:
-		sameSite = http.SameSiteDefaultMode
-	}
-
 	idleTimeout, err := time.ParseDuration(sc.sessionProps.IdleTimeout)
 	if err != nil {
 		return err
@@ -83,7 +69,7 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 		options.MaxAge = sc.sessionProps.Cookie.MaxAge
 		options.Secure = sc.sessionProps.Cookie.Secure
 		options.HttpOnly = sc.sessionProps.Cookie.HttpOnly
-		options.SameSite = sameSite
+		options.SameSite = sc.sessionProps.Cookie.SameSite()
 		options.IdleTimeout = idleTimeout
 		options.AbsoluteTimeout = absTimeout
 	}

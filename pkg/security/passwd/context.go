@@ -8,8 +8,39 @@ import (
 
 const (
 	SpecialPermissionMFAPending = "MFAPending"
-	SpecialPermissionOtpId = "OtpId"
+	SpecialPermissionOtpId      = "OtpId"
 )
+
+const (
+	DetailsKeyAuthWarning = "AuthWarning"
+)
+
+const (
+	MessageUserNotFound              = "Mismatched Username and Password"
+	MessageBadCredential             = "Mismatched Username and Password"
+	MessageOtpNotAvailable           = "MFA required but temprorily unavailable"
+	MessageAccountStatus             = "Inactive Account"
+	MessageInvalidPasscode           = "Bad Verification Code"
+	MessagePasscodeExpired           = "Verification Code Expired"
+	MessageCannotRefresh             = "Unable to Refresh"
+	MessageMaxAttemptsReached        = "No More Verification Attempts Allowed"
+	MessageMaxRefreshAttemptsReached = "No More Resend Attempts Allowed"
+	MessageInvalidAccountStatus      = "Issue with current account status"
+	MessageAccountDisabled           = "Account Disabled"
+	MessageAccountLocked             = "Account Locked"
+	MessagePasswordLoginNotAllowed   = "Password Login not Allowed"
+	MessageLockedDueToBadCredential  = "Mismatched Username and Password. Account locked due to too many failed attempts"
+	MessagePasswordExpired           = "User credentials have expired"
+)
+
+// For error translation
+var (
+	errorBadCredentials     = security.NewBadCredentialsError("bad creds")
+	errorCredentialsExpired = security.NewCredentialsExpiredError("cred exp")
+	errorMaxAttemptsReached = security.NewMaxAttemptsReachedError("max attempts")
+	errorAccountStatus      = security.NewAccountStatusError("acct status")
+)
+
 /******************************
 	Serialization
 ******************************/
@@ -19,6 +50,10 @@ func GobRegister() {
 	gob.Register(TOTP{})
 	gob.Register(time.Time{})
 	gob.Register(time.Duration(0))
+	gob.Register((*UsernamePasswordAccount)(nil))
+	gob.Register((*UserDetails)(nil))
+	gob.Register((*LockingRule)(nil))
+	gob.Register((*PasswordPolicy)(nil))
 }
 
 /************************
@@ -30,6 +65,7 @@ const(
 	MFAModeOptional
 	MFAModeMust
 )
+
 // UsernamePasswordPair is the supported security.Candidate of this authenticator
 type UsernamePasswordPair struct {
 	Username string
@@ -57,6 +93,7 @@ func (upp *UsernamePasswordPair) Details() interface{} {
 type MFAOtpVerification struct {
 	CurrentAuth UsernamePasswordAuthentication
 	OTP string
+	DetailsMap map[interface{}]interface{}
 }
 
 // security.Candidate
@@ -71,12 +108,13 @@ func (uop *MFAOtpVerification) Credentials() interface{} {
 
 // security.Candidate
 func (uop *MFAOtpVerification) Details() interface{} {
-	return nil
+	return uop.DetailsMap
 }
 
 // MFAOtpRefresh is the supported security.Candidate for MFA OTP refresh
 type MFAOtpRefresh struct {
 	CurrentAuth UsernamePasswordAuthentication
+	DetailsMap map[interface{}]interface{}
 }
 
 // security.Candidate
@@ -91,7 +129,7 @@ func (uop *MFAOtpRefresh) Credentials() interface{} {
 
 // security.Candidate
 func (uop *MFAOtpRefresh) Details() interface{} {
-	return nil
+	return uop.DetailsMap
 }
 
 /******************************
@@ -100,6 +138,7 @@ func (uop *MFAOtpRefresh) Details() interface{} {
 // UsernamePasswordAuthentication implements security.Authentication
 type UsernamePasswordAuthentication interface {
 	security.Authentication
+	Username() string
 	IsMFAPending() bool
 	OTPIdentifier() string
 }
@@ -130,7 +169,11 @@ func (auth *usernamePasswordAuthentication) State() security.AuthenticationState
 }
 
 func (auth *usernamePasswordAuthentication) Details() interface{} {
-	return auth.Acct
+	return auth.DetailsMap
+}
+
+func (auth *usernamePasswordAuthentication) Username() string {
+	return auth.Acct.Username()
 }
 
 func (auth *usernamePasswordAuthentication) IsMFAPending() bool {

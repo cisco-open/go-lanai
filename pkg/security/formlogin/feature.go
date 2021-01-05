@@ -20,6 +20,7 @@ type FormLoginFeature struct {
 	loginSuccessUrl      string
 	usernameParam        string
 	passwordParam        string
+	rememberParam        string
 
 	mfaEnabled    bool
 	mfaUrl        string
@@ -67,6 +68,11 @@ func (f *FormLoginFeature) UsernameParameter(usernameParam string) *FormLoginFea
 
 func (f *FormLoginFeature) PasswordParameter(passwordParam string) *FormLoginFeature {
 	f.passwordParam = passwordParam
+	return f
+}
+
+func (f *FormLoginFeature) RememberParameter(rememberParam string) *FormLoginFeature {
+	f.rememberParam = rememberParam
 	return f
 }
 
@@ -136,11 +142,12 @@ func New() *FormLoginFeature {
 		loginErrorUrl:   "/login?error=true",
 		usernameParam:   "username",
 		passwordParam:   "password",
+		rememberParam:   "remember-me",
 
-		mfaUrl:       "/login/mfa",
-		mfaVerifyUrl: "/login/mfa",
+		mfaUrl:        "/login/mfa",
+		mfaVerifyUrl:  "/login/mfa",
 		mfaRefreshUrl: "/login/mfa/refresh",
-		mfaErrorUrl:  "/login/mfa?error=true",
-		otpParam:     "otp",
+		mfaErrorUrl:   "/login/mfa?error=true",
+		otpParam:      "otp",
 	}
 }
