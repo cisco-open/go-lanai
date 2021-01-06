@@ -3,8 +3,8 @@ package utils
 import "time"
 
 const (
-	ISO8601Seconds      = "2006-01-02T15:04:05Z"
-	ISO8601Milliseconds = "2006-01-02T15:04:05.000Z"
+	ISO8601Seconds      = "2006-01-02T15:04:05Z07:00" //time.RFC3339
+	ISO8601Milliseconds = "2006-01-02T15:04:05.000Z07:00"
 )
 
 func ParseTimeISO8601(v string) time.Time {
