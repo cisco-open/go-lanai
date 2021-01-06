@@ -10,9 +10,6 @@ import (
 	"net/http"
 )
 
-const CsrfParamName = "_csrf"
-const CsrfHeaderName = "X-CSRF-TOKEN"
-
 var DefaultProtectionMatcher = matcher.NotRequest(matcher.RequestWithMethods("GET", "HEAD", "TRACE", "OPTIONS"))
 var DefaultIgnoreMatcher = matcher.NoneRequest()
 
@@ -36,8 +33,8 @@ func newManager(tokenStore TokenStore, csrfProtectionMatcher web.RequestMatcher,
 
 	return &manager{
 		tokenStore: tokenStore,
-		parameterName: CsrfParamName,
-		headerName: CsrfHeaderName,
+		parameterName: security.CsrfParamName,
+		headerName: security.CsrfHeaderName,
 		requireProtection: csrfProtectionMatcher,
 		ignoreProtection: ignoreProtectionMatcher,
 	}

@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_session"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -147,5 +148,51 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 
 	if !errors.Is(c.Errors.Last().Err, security.NewInvalidCsrfTokenError("")) {
 		t.Errorf("expect invalid csrf token error, but was %v", c.Errors.Last())
+	}
+}
+
+func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
+	csrfStore := newSessionBackedStore()
+
+	protectionMatcher := matcher.RequestWithMethods("POST")
+	ignoreMatcher := matcher.RequestWithPattern("/ignore")
+
+	manager := newManager(csrfStore, protectionMatcher, ignoreMatcher)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockSessionStore := mock_session.NewMockStore(ctrl)
+
+	mockSessionStore.EXPECT().Options().Return(&session.Options{})
+	s := session.NewSession(mockSessionStore, session.DefaultName)
+
+	//Request with a invalid csrf token against the protected path
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	existingCsrfToken := csrfStore.Generate(c, "_csrf", "X-CSRF-TOKEN")
+	s.Set(SessionKeyCsrfToken, existingCsrfToken)
+
+	c.Set(web.ContextKeySession, s)
+	r := httptest.NewRequest("POST", "/process", strings.NewReader("_csrf=" + uuid.New().String()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Request = r
+	c.Set(web.ContextKeyContextPath, "")
+	mw := manager.CsrfHandlerFunc()
+	mw(c)
+
+	if len(c.Errors) != 1 {
+		t.Errorf("there should be one error")
+	}
+
+	//Request with a invalid csrf token against the ignored path
+	c, _ = gin.CreateTestContext(httptest.NewRecorder())
+	c.Set(web.ContextKeySession, s)
+	r = httptest.NewRequest("POST", "/ignore", strings.NewReader("_csrf=" + uuid.New().String()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Request = r
+	c.Set(web.ContextKeyContextPath, "")
+	mw(c)
+
+	if len(c.Errors) != 0 {
+		t.Errorf("there should be no error")
 	}
 }

@@ -69,7 +69,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	ws.Route(matcher.RouteWithPattern("/page/**")).
 		Condition(condition).
-		With(session.New()).
+		With(session.New().EnableRequestCache(true)).
 		With(passwd.New().
 			MFA(true).
 			OtpTTL(5 * time.Minute).

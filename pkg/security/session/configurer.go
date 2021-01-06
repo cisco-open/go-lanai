@@ -1,9 +1,15 @@
 package session
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
+	"net/http"
+	"path"
+	"strings"
+	"time"
 )
 
 var (
@@ -13,10 +19,21 @@ var (
 // We currently don't have any stuff to configure
 type Feature struct {
 	maxSessionsFunc GetMaximumSessions
+	requestCacheEnabled bool
 }
 
 func (f *Feature) Identifier() security.FeatureIdentifier {
 	return FeatureId
+}
+
+func (f *Feature) MaxSessionFunc(maxSessionFunc GetMaximumSessions) *Feature {
+	f.maxSessionsFunc = maxSessionFunc
+	return f
+}
+
+func (f *Feature) EnableRequestCache(enable bool) *Feature {
+	f.requestCacheEnabled = enable
+	return f
 }
 
 // Standard security.Feature entrypoint
@@ -34,19 +51,30 @@ func New() *Feature {
 }
 
 type Configurer struct {
-	store Store
 	sessionProps security.SessionProperties
+	serverProps web.ServerProperties
+	redisClient redis.Client
+
+	//cached store instance
+	store Store
+	//cached request processor instance
+	requestPreProcessor web.RequestPreProcessor
 }
 
-func newSessionConfigurer(store Store, sessionProps security.SessionProperties) *Configurer {
+func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, redisClient redis.Client) *Configurer {
 	return &Configurer{
-		store: store,
 		sessionProps: sessionProps,
+		serverProps: serverProps,
+		redisClient: redisClient,
 	}
 }
 
 func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) error {
 	f := feature.(*Feature)
+
+	if sc.store == nil {
+		sc.store = newSessionStore(sc.sessionProps, sc.serverProps, sc.redisClient)
+	}
 
 	// configure middleware
 	manager := NewManager(sc.store)
@@ -94,5 +122,52 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(deleteSessionHandler)
 
+	if f.requestCacheEnabled && sc.requestPreProcessor == nil {
+		sc.requestPreProcessor = &CachedRequestPreProcessor{
+			store: sc.store,
+		}
+	}
 	return nil
+}
+
+func (sc *Configurer) GetPreProcessor() web.RequestPreProcessor {
+	return sc.requestPreProcessor
+}
+
+func newSessionStore(sessionProps security.SessionProperties, serverProps web.ServerProperties, client redis.Client) Store {
+	// configure session store
+	var sameSite http.SameSite
+	switch strings.ToLower(sessionProps.Cookie.SameSite) {
+	case "lax":
+		sameSite = http.SameSiteLaxMode
+	case "strict":
+		sameSite = http.SameSiteStrictMode
+	case "none":
+		sameSite = http.SameSiteNoneMode
+	default:
+		sameSite = http.SameSiteDefaultMode
+	}
+
+	idleTimeout, err := time.ParseDuration(sessionProps.IdleTimeout)
+	if err != nil {
+		panic(err)
+	}
+	absTimeout, err := time.ParseDuration(sessionProps.AbsoluteTimeout)
+	if err != nil {
+		panic(err)
+	}
+
+	configureOptions := func(options *Options) {
+		options.Path = path.Clean("/" + serverProps.ContextPath)
+		options.Domain = sessionProps.Cookie.Domain
+		options.MaxAge = sessionProps.Cookie.MaxAge
+		options.Secure = sessionProps.Cookie.Secure
+		options.HttpOnly = sessionProps.Cookie.HttpOnly
+		options.SameSite = sameSite
+		options.IdleTimeout = idleTimeout
+		options.AbsoluteTimeout = absTimeout
+	}
+	sessionStore := NewRedisStore(client, configureOptions)
+
+	return sessionStore
 }

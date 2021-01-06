@@ -193,7 +193,9 @@ func (s *RedisStore) FindByPrincipalName(principal string, sessionName string) (
 	}
 
 	//clean up the expired entries from the index
-	s.connection.SRem(context.Background(), getRedisPrincipalIndexKey(principal, sessionName), expired...)
+	if len(expired) > 0 {
+		s.connection.SRem(context.Background(), getRedisPrincipalIndexKey(principal, sessionName), expired...)
+	}
 
 	return found, nil
 }

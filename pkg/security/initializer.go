@@ -73,11 +73,17 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 		return order.OrderedFirstCompare(init.configurers[i], init.configurers[j])
 	})
 
+	allApplied := make(map[FeatureIdentifier]struct{})
+
 	// go through each configurer
 	for _,configurer := range init.configurers {
-		builder, err := init.build(configurer)
+		builder, applied, err := init.build(configurer)
 		if err != nil {
 			return err
+		}
+
+		for k, v := range applied {
+			allApplied[k] = v
 		}
 
 		mappings := builder.Build()
@@ -105,12 +111,22 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 		registrar.RegisterWithLifecycle(lc, nonMwMappings...)
 	}
 
+	for id, _ := range allApplied {
+		fc := init.featureConfigurers[id]
+		if p, ok := fc.(web.RequestPreProcessorProvider); ok {
+			processor := p.GetPreProcessor()
+			if processor != nil {
+				registrar.Register(processor)
+			}
+		}
+	}
+
 	init.initialized = true
 	init.initializing = false
 	return nil
 }
 
-func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, error) {
+func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, map[FeatureIdentifier]struct{}, error) {
 	// collect security configs
 	ws := newWebSecurity(NewAuthenticator(), map[string]interface{}{
 		WSSharedKeyCompositeAuthSuccessHandler: NewAuthenticationSuccessHandler(),
@@ -128,21 +144,21 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder
 	for _, f := range features {
 		fc, ok := init.featureConfigurers[f.Identifier()]
 		if !ok {
-			return nil, fmt.Errorf("unable to build security feature %T: no FeatureConfigurer found", f)
+			return nil, nil, fmt.Errorf("unable to build security feature %T: no FeatureConfigurer found", f)
 		}
 
 		err := fc.Apply(f, ws)
 		// mark applied
 		ws.applied[f.Identifier()] = struct{}{}
 		if err != nil {
-			return nil, err
+			return nil, ws.applied, err
 		}
 	}
 
 	if err := init.process(ws); err != nil {
-		return nil, err
+		return nil, ws.applied, err
 	}
-	return ws, nil
+	return ws, ws.applied, nil
 }
 
 func (init *initializer) process(ws *webSecurity) error {

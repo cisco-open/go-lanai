@@ -7,7 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/requestcache"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -131,7 +131,7 @@ func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws s
 
 	// override entry point and error handler
 	errorhandling.Configure(ws).
-		AuthenticationEntryPoint(entryPoint).
+		AuthenticationEntryPoint(session.NewSaveRequestEntryPoint(entryPoint)).
 		AuthenticationErrorHandler(f.failureHandler)
 
 	// adding CSRF protection err handler, while keeping default
@@ -253,7 +253,7 @@ func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.W
 func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
 
 	if f.successHandler == nil {
-		f.successHandler = requestcache.NewSavedRequestAuthenticationSuccessHandler(redirect.NewRedirectWithURL(f.loginSuccessUrl))
+		f.successHandler = session.NewSavedRequestAuthenticationSuccessHandler(redirect.NewRedirectWithURL(f.loginSuccessUrl))
 	}
 
 	if _, ok := f.successHandler.(*MfaAwareSuccessHandler); f.mfaEnabled && !ok {

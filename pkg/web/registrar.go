@@ -127,6 +127,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 		err = r.registerMiddlewareMapping(i.(MiddlewareMapping))
 	case GenericMapping:
 		err = r.registerGenericMapping(i.(GenericMapping))
+	case RequestPreProcessor:
+		err = r.registerRequestPreProcessor(i.(RequestPreProcessor))
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -211,6 +213,11 @@ func (r *Registrar) registerGenericMapping(m GenericMapping) error {
 		Use(middlewares...).
 		Handle(m.Method(), m.Path(), m.HandlerFunc())
 	return err
+}
+
+func (r *Registrar) registerRequestPreProcessor(p RequestPreProcessor) error {
+	r.engine.addRequestPreProcessor(p)
+	return nil
 }
 
 func (r *Registrar) findMiddlewares(group, relativePath string, methods...string) (gin.HandlersChain, error) {

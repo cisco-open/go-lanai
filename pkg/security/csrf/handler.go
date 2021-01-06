@@ -10,10 +10,13 @@ import (
 
 type ChangeCsrfHanlder struct{
 	csrfTokenStore TokenStore
-
 }
 
-func (h *ChangeCsrfHanlder) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
+func (h *ChangeCsrfHanlder) HandleAuthenticationSuccess(c context.Context, _ *http.Request, _ http.ResponseWriter, from, to security.Authentication) {
+	if !security.IsBeingAuthenticated(from, to) {
+		return
+	}
+
 	if gc, ok := c.(*gin.Context); ok {
 		t, err := h.csrfTokenStore.LoadToken(gc)
 

@@ -56,3 +56,7 @@ const (
 	HandlerOrderConcurrentSession
 
 )
+
+// CSRF headers and parameter names - shared by CSRF feature and session feature's request cache
+const CsrfParamName = "_csrf"
+const CsrfHeaderName = "X-CSRF-TOKEN"
