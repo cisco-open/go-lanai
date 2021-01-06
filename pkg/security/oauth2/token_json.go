@@ -10,9 +10,12 @@ import (
 
 type valueConverterFunc func(v interface{}) (reflect.Value, error)
 
-/** DefaultAccessToken **/
+/************************
+	DefaultAccessToken
+ ************************/
 var accessTokenIgnoredDetails = utils.NewStringSet(
-	JsonFieldAccessTokenValue, JsonFieldTokenType, JsonFieldScopes, JsonFieldExpiryTime, JsonFieldExpiresIn)
+	JsonFieldAccessTokenValue, JsonFieldTokenType, JsonFieldScopes,
+	JsonFieldExpiryTime, JsonFieldExpiresIn, JsonFieldRefreshTokenValue)
 
 // json.Marshaler
 func (t *DefaultAccessToken) MarshalJSON() ([]byte, error) {
@@ -25,6 +28,9 @@ func (t *DefaultAccessToken) MarshalJSON() ([]byte, error) {
 	data[JsonFieldScopes] = t.scopes
 	data[JsonFieldExpiryTime] = t.expiryTime.Format(utils.ISO8601Seconds)
 	data[JsonFieldExpiresIn] = int(t.expiryTime.Sub(time.Now()).Seconds())
+	if t.refreshToken != nil {
+		data[JsonFieldRefreshTokenValue] = t.refreshToken
+	}
 
 	return json.Marshal(data)
 }
@@ -37,23 +43,27 @@ func (t *DefaultAccessToken) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if err := extractField(parsed, JsonFieldAccessTokenValue, true, reflect.ValueOf(&t.value), anyToString); err != nil {
+	if err := extractField(parsed, JsonFieldAccessTokenValue, true, &t.value, anyToString); err != nil {
 		return err
 	}
 
-	if err := extractField(parsed, JsonFieldTokenType, true, reflect.ValueOf(&t.tokenType), anyToTokenType); err != nil {
+	if err := extractField(parsed, JsonFieldTokenType, true, &t.tokenType, stringToTokenType); err != nil {
 		return err
 	}
 
-	if err := extractField(parsed, JsonFieldScopes, true, reflect.ValueOf(&t.scopes), sliceToStringSet); err != nil {
+	if err := extractField(parsed, JsonFieldScopes, true, &t.scopes, sliceToStringSet); err != nil {
 		return err
 	}
 
 	// default to parse expiry time from JsonFieldExpiryTime field, fall back to JsonFieldExpiresIn
-	if err := extractField(parsed, JsonFieldExpiryTime, true, reflect.ValueOf(&t.expiryTime), expiryToTime); err != nil {
-		if err := extractField(parsed, JsonFieldExpiresIn, true, reflect.ValueOf(&t.expiryTime), expireInToTime); err != nil {
+	if err := extractField(parsed, JsonFieldExpiryTime, false, &t.expiryTime, expiryToTime); err != nil {
+		if err := extractField(parsed, JsonFieldExpiresIn, true, &t.expiryTime, expireInToTime); err != nil {
 			return err
 		}
+	}
+
+	if err := extractField(parsed, JsonFieldRefreshTokenValue, false, &t.refreshToken, stringToRefreshToken); err != nil {
+		return err
 	}
 
 	// put the rest of fields to details
@@ -65,7 +75,23 @@ func (t *DefaultAccessToken) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func extractField(data map[string]interface{}, field string, required bool, dest reflect.Value, converter valueConverterFunc) error {
+/************************
+	DefaultRefreshToken
+ ************************/
+// json.Marshaler only DefaultRefreshToken.value is serialized
+func (t *DefaultRefreshToken) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.value)
+}
+
+// json.Unmarshaler
+func (t *DefaultRefreshToken) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &t.value)
+}
+
+/************************
+	Helpers
+ ************************/
+func extractField(data map[string]interface{}, field string, required bool, destPtr interface{}, converter valueConverterFunc) error {
 	v, ok := data[field]
 	switch {
 	case !ok && required:
@@ -79,6 +105,7 @@ func extractField(data map[string]interface{}, field string, required bool, dest
 		return fmt.Errorf("cannot parse field [%s]: %s", field, err.Error())
 	}
 
+	dest :=reflect.ValueOf(destPtr)
 	if !dest.CanSet() {
 		dest = dest.Elem()
 	}
@@ -95,7 +122,7 @@ func anyToString(v interface{}) (reflect.Value, error) {
 	return reflect.ValueOf(v), nil
 }
 
-func anyToTokenType(v interface{}) (reflect.Value, error) {
+func stringToTokenType(v interface{}) (reflect.Value, error) {
 	s, ok := v.(string)
 	if !ok {
 		return reflect.Value{}, fmt.Errorf("invalid field type. expected string")
@@ -143,4 +170,12 @@ func expireInToTime(v interface{}) (reflect.Value, error) {
 
 	time := time.Now().Add(time.Duration(secs) * time.Second)
 	return reflect.ValueOf(time), nil
+}
+
+func stringToRefreshToken(v interface{}) (reflect.Value, error) {
+	s, ok := v.(string)
+	if !ok {
+		return reflect.Value{}, fmt.Errorf("invalid field type. expected string")
+	}
+	return reflect.ValueOf(NewDefaultRefreshToken(s)), nil
 }

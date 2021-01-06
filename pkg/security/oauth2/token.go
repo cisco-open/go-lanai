@@ -42,23 +42,18 @@ type RefreshToken interface {
 	Details() map[string]interface{}
 }
 
-/*****************************
-	Common Implementations
- *****************************/
-// DefaultAccessToken implements AccessToken, json.
+/*******************************
+	Common Impl. AccessToken
+ *******************************/
+// DefaultAccessToken implements AccessToken
 type DefaultAccessToken struct {
 	tokenType    TokenType
 	value        string
 	expiryTime   time.Time
 	scopes       utils.StringSet
-	refreshToken RefreshToken
+	refreshToken *DefaultRefreshToken
 	details      map[string]interface{}
 	claims       map[string]interface{}
-}
-
-// embeded accessToken for marshaling
-type accessToken struct {
-
 }
 
 func NewDefaultAccessToken(value string) *DefaultAccessToken {
@@ -69,6 +64,31 @@ func NewDefaultAccessToken(value string) *DefaultAccessToken {
 		claims: map[string]interface{}{},
 		details: map[string]interface{}{},
 	}
+}
+
+func FromAccessToken(token AccessToken) *DefaultAccessToken {
+	if t, ok := token.(*DefaultAccessToken); ok {
+		return &DefaultAccessToken{
+			value: t.value,
+			tokenType: t.tokenType,
+			expiryTime: t.expiryTime,
+			scopes: t.scopes.Copy(),
+			claims: copyMap(t.claims),
+			details: copyMap(t.details),
+			refreshToken: t.refreshToken,
+		}
+	}
+
+	copy := &DefaultAccessToken{
+		value: token.Value(),
+		tokenType: token.Type(),
+		expiryTime: token.ExpiryTime(),
+		scopes: token.Scopes().Copy(),
+		claims: map[string]interface{}{},
+		details: copyMap(token.Details()),
+	}
+	copy.SetRefreshToken(token.RefreshToken())
+	return copy
 }
 
 // AccessToken
@@ -102,6 +122,9 @@ func (t *DefaultAccessToken) Scopes() utils.StringSet {
 
 // AccessToken
 func (t *DefaultAccessToken) RefreshToken() RefreshToken {
+	if t.refreshToken == nil {
+		return nil
+	}
 	return t.refreshToken
 }
 
@@ -121,7 +144,11 @@ func (t *DefaultAccessToken) SetExpireTime(v time.Time) *DefaultAccessToken {
 }
 
 func (t *DefaultAccessToken) SetRefreshToken(v RefreshToken) *DefaultAccessToken {
-	t.refreshToken = v
+	if refresh, ok := v.(*DefaultRefreshToken); ok {
+		t.refreshToken = refresh
+	} else {
+		t.refreshToken = FromRefreshToken(v)
+	}
 	return t
 }
 
@@ -141,7 +168,6 @@ func (t *DefaultAccessToken) PutDetails(key string, value interface{}) *DefaultA
 	} else {
 		t.details[key] = value
 	}
-
 	return t
 }
 
@@ -154,6 +180,86 @@ func (t *DefaultAccessToken) PutClaim(key string, value interface{}) *DefaultAcc
 	return t
 }
 
+/********************************
+	Common Impl. RefreshToken
+ ********************************/
+type DefaultRefreshToken struct {
+	value        string
+	details      map[string]interface{}
+	claims       map[string]interface{} // TODO
+}
 
+func NewDefaultRefreshToken(value string) *DefaultRefreshToken {
+	return &DefaultRefreshToken{
+		value: value,
+		details: map[string]interface{}{},
+		claims: map[string]interface{}{},
+	}
+}
+
+func FromRefreshToken(token RefreshToken) *DefaultRefreshToken {
+	if t, ok := token.(*DefaultRefreshToken); ok {
+		return &DefaultRefreshToken{
+			value: t.value,
+			details: copyMap(t.details),
+			claims: copyMap(t.claims),
+		}
+	}
+
+	return &DefaultRefreshToken{
+		value: token.Value(),
+		details: copyMap(token.Details()),
+		claims: map[string]interface{}{},
+	}
+}
+
+// RefreshToken
+func (t *DefaultRefreshToken) Value() string {
+	return t.value
+}
+
+// RefreshToken
+func (t *DefaultRefreshToken) Details() map[string]interface{} {
+	return t.details
+}
+
+func (t *DefaultRefreshToken) Claims() map[string]interface{} {
+	return t.claims
+}
+
+// Setters
+func (t *DefaultRefreshToken) SetValue(v string) *DefaultRefreshToken {
+	t.value = v
+	return t
+}
+
+func (t *DefaultRefreshToken) PutDetails(key string, value interface{}) *DefaultRefreshToken {
+	if value == nil {
+		delete(t.details, key)
+	} else {
+		t.details[key] = value
+	}
+	return t
+}
+
+func (t *DefaultRefreshToken) PutClaim(key string, value interface{}) *DefaultRefreshToken {
+	if value == nil {
+		delete(t.claims, key)
+	} else {
+		t.claims[key] = value
+	}
+	return t
+}
+
+/********************************
+	Helpers
+ ********************************/
+func copyMap(src map[string]interface{}) map[string]interface{} {
+	dest := map[string]interface{}{}
+	for k,v := range src {
+		dest[k] = v
+	}
+	return dest
+}
 
 

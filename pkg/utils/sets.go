@@ -50,6 +50,14 @@ func (s StringSet) Values() []string {
 	return values
 }
 
+func (s StringSet) Copy() StringSet {
+	copy := NewStringSet()
+	for k,_ := range s {
+		copy[k] = void{}
+	}
+	return copy
+}
+
 // json.Marshaler
 func (s StringSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Values())
@@ -108,6 +116,14 @@ func (s Set) Values() []interface{} {
 		i++
 	}
 	return values
+}
+
+func (s Set) Copy() Set {
+	copy := NewSet()
+	for k,_ := range s {
+		copy[k] = void{}
+	}
+	return copy
 }
 
 // json.Marshaler

@@ -6,4 +6,5 @@ const (
 	JsonFieldExpiryTime = "expiry"
 	JsonFieldExpiresIn = "expires_in"
 	JsonFieldScopes = "scope"
+	JsonFieldRefreshTokenValue = "refresh_token"
 )
