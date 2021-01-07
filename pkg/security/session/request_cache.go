@@ -77,9 +77,11 @@ func (m *CachedRequestPreProcessor) Process(r *http.Request) error {
 				r.Form = cached.Form
 				r.PostForm = cached.PostForm
 				//get all the headers from the cached request except the cookie header
-				cookie := r.Header["Cookie"]
-				r.Header = cached.Header
-				r.Header["Cookie"] = cookie
+				if cached.Header != nil {
+					cookie := r.Header["Cookie"]
+					r.Header = cached.Header
+					r.Header["Cookie"] = cookie
+				}
 				return nil
 			}
 		}
@@ -106,6 +108,10 @@ type SavedRequestAuthenticationSuccessHandler struct {
 }
 
 func (h *SavedRequestAuthenticationSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
+	if !security.IsBeingAuthenticated(from, to) {
+		return
+	}
+
 	if g, ok := c.(*gin.Context); ok {
 		cached := GetCachedRequest(g)
 
@@ -140,7 +146,8 @@ func NewSaveRequestEntryPoint(delegate security.AuthenticationEntryPoint) *SaveR
 }
 
 func (s *SaveRequestEntryPoint) Commence(c context.Context, r *http.Request, w http.ResponseWriter, e error) {
-	if match, err := s.saveRequestMatcher.MatchesWithContext(c, r); match && err == nil{
+	match, err := s.saveRequestMatcher.MatchesWithContext(c, r)
+	if match && err == nil{
 		SaveRequest(c.(*gin.Context))
 	}
 	s.delegate.Commence(c, r, w, e)
