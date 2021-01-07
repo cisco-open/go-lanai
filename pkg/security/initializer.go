@@ -114,7 +114,7 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 	for id, _ := range allApplied {
 		fc := init.featureConfigurers[id]
 		if p, ok := fc.(web.RequestPreProcessorProvider); ok {
-			processor := p.GetPreProcessor()
+			processor := p.ProvidePreProcessor()
 			if processor != nil {
 				registrar.Register(processor)
 			}

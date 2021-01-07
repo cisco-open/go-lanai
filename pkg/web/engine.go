@@ -7,7 +7,7 @@ import (
 )
 
 type RequestPreProcessorProvider interface {
-	GetPreProcessor() RequestPreProcessor
+	ProvidePreProcessor() RequestPreProcessor
 }
 
 type RequestPreProcessor interface {

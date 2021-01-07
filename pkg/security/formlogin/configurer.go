@@ -77,8 +77,8 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 		return fmt.Errorf("loginUrl is missing for form login")
 	}
 
-	if f.loginSuccessUrl == "" && f.successHandler == nil {
-		return fmt.Errorf("loginSuccessUrl and successHanlder are missing for form login")
+	if f.successHandler == nil {
+		f.successHandler = session.NewSavedRequestAuthenticationSuccessHandler(redirect.NewRedirectWithURL("/"))
 	}
 
 	if f.loginProcessUrl == "" {
@@ -91,10 +91,6 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 
 	if f.mfaEnabled && f.mfaUrl == "" {
 		return fmt.Errorf("mfaUrl is missing for MFA")
-	}
-
-	if f.mfaEnabled && f.mfaSuccessUrl == "" && f.successHandler == nil {
-		f.mfaSuccessUrl = f.loginSuccessUrl
 	}
 
 	if f.mfaEnabled &&  f.mfaVerifyUrl == "" {
@@ -266,11 +262,6 @@ func (flc *FormLoginConfigurer) configureSession(f *FormLoginFeature, ws securit
 }
 
 func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
-
-	if f.successHandler == nil {
-		f.successHandler = session.NewSavedRequestAuthenticationSuccessHandler(redirect.NewRedirectWithURL(f.loginSuccessUrl))
-	}
-
 	if _, ok := f.successHandler.(*MfaAwareSuccessHandler); f.mfaEnabled && !ok {
 		f.successHandler = &MfaAwareSuccessHandler{
 			delegate: f.successHandler,

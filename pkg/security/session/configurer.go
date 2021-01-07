@@ -57,7 +57,7 @@ type Configurer struct {
 	//cached store instance
 	store Store
 	//cached request processor instance
-	requestPreProcessor web.RequestPreProcessor
+	requestPreProcessor *CachedRequestPreProcessor
 }
 
 func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, redisClient redis.Client) *Configurer {
@@ -150,6 +150,9 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 	return nil
 }
 
-func (sc *Configurer) GetPreProcessor() web.RequestPreProcessor {
+func (sc *Configurer) ProvidePreProcessor() web.RequestPreProcessor {
+	if sc.requestPreProcessor == nil {
+		return nil
+	}
 	return sc.requestPreProcessor
 }

@@ -65,7 +65,6 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		).
 		With(formlogin.New().
 			FormProcessCondition(condition).
-			LoginSuccessUrl("/page/hello").
 			EnableMFA(),
 		).
 		With(logout.New().
