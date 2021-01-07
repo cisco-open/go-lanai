@@ -22,11 +22,14 @@ var (
 
 //goland:noinspection GoNameStartsWithPackageName
 type FormLoginConfigurer struct {
-
+	cookieProps security.CookieProperties
+	serverProps web.ServerProperties
 }
 
-func newFormLoginConfigurer() *FormLoginConfigurer {
+func newFormLoginConfigurer(cookieProps security.CookieProperties, serverProps web.ServerProperties) *FormLoginConfigurer {
 	return &FormLoginConfigurer{
+		cookieProps: cookieProps,
+		serverProps: serverProps,
 	}
 }
 
@@ -57,6 +60,13 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
+	if err := flc.configureCSRF(f, ws); err != nil {
+		return err
+	}
+
+	if err := flc.configureSession(f, ws); err != nil {
+		return err
+	}
 	//TODO
 
 	return nil
@@ -250,6 +260,11 @@ func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.W
 	return nil
 }
 
+func (flc *FormLoginConfigurer) configureSession(f *FormLoginFeature, ws security.WebSecurity) error {
+	session.Configure(ws).EnableRequestCache(true)
+	return nil
+}
+
 func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
 
 	if f.successHandler == nil {
@@ -263,10 +278,11 @@ func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws 
 		}
 	}
 
+	rememberUsernameHandler := NewRememberUsernameSuccessHandler(flc.cookieProps, flc.serverProps, f.rememberParam)
 
 	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
-		return security.NewAuthenticationSuccessHandler(globalHandler, f.successHandler)
+		return security.NewAuthenticationSuccessHandler(globalHandler, rememberUsernameHandler, f.successHandler)
 	} else {
-		return f.successHandler
+		return security.NewAuthenticationSuccessHandler(rememberUsernameHandler, f.successHandler)
 	}
 }

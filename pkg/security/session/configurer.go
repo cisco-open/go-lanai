@@ -6,9 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
-	"net/http"
 	"path"
-	"strings"
 	"time"
 )
 
@@ -72,8 +70,29 @@ func newSessionConfigurer(sessionProps security.SessionProperties, serverProps w
 func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) error {
 	f := feature.(*Feature)
 
+	// configure session store
+	idleTimeout, err := time.ParseDuration(sc.sessionProps.IdleTimeout)
+	if err != nil {
+		return err
+	}
+	absTimeout, err := time.ParseDuration(sc.sessionProps.AbsoluteTimeout)
+	if err != nil {
+		return err
+	}
+
+	configureOptions := func(options *Options) {
+		options.Path = path.Clean("/" + sc.serverProps.ContextPath)
+		options.Domain = sc.sessionProps.Cookie.Domain
+		options.MaxAge = sc.sessionProps.Cookie.MaxAge
+		options.Secure = sc.sessionProps.Cookie.Secure
+		options.HttpOnly = sc.sessionProps.Cookie.HttpOnly
+		options.SameSite = sc.sessionProps.Cookie.SameSite()
+		options.IdleTimeout = idleTimeout
+		options.AbsoluteTimeout = absTimeout
+	}
+
 	if sc.store == nil {
-		sc.store = newSessionStore(sc.sessionProps, sc.serverProps, sc.redisClient)
+		sc.store = NewRedisStore(sc.redisClient, configureOptions)
 	}
 
 	// configure middleware
@@ -132,42 +151,4 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 
 func (sc *Configurer) GetPreProcessor() web.RequestPreProcessor {
 	return sc.requestPreProcessor
-}
-
-func newSessionStore(sessionProps security.SessionProperties, serverProps web.ServerProperties, client redis.Client) Store {
-	// configure session store
-	var sameSite http.SameSite
-	switch strings.ToLower(sessionProps.Cookie.SameSite) {
-	case "lax":
-		sameSite = http.SameSiteLaxMode
-	case "strict":
-		sameSite = http.SameSiteStrictMode
-	case "none":
-		sameSite = http.SameSiteNoneMode
-	default:
-		sameSite = http.SameSiteDefaultMode
-	}
-
-	idleTimeout, err := time.ParseDuration(sessionProps.IdleTimeout)
-	if err != nil {
-		panic(err)
-	}
-	absTimeout, err := time.ParseDuration(sessionProps.AbsoluteTimeout)
-	if err != nil {
-		panic(err)
-	}
-
-	configureOptions := func(options *Options) {
-		options.Path = path.Clean("/" + serverProps.ContextPath)
-		options.Domain = sessionProps.Cookie.Domain
-		options.MaxAge = sessionProps.Cookie.MaxAge
-		options.Secure = sessionProps.Cookie.Secure
-		options.HttpOnly = sessionProps.Cookie.HttpOnly
-		options.SameSite = sameSite
-		options.IdleTimeout = idleTimeout
-		options.AbsoluteTimeout = absTimeout
-	}
-	sessionStore := NewRedisStore(client, configureOptions)
-
-	return sessionStore
 }

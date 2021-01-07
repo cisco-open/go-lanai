@@ -1,13 +1,12 @@
 package passwd
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-)
-
-const (
-	MessageUserNotFound = "Mismatched Username and Password"
-	MessageBadCredential = "Mismatched Username and Password"
-	MessageOtpNotAvailable = "MFA required but temprorily unavailable"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"errors"
+	"sort"
 )
 
 /******************************
@@ -18,6 +17,8 @@ type Authenticator struct {
 	passwdEncoder     PasswordEncoder
 	otpManager        OTPManager
 	mfaEventListeners []MFAEventListenerFunc
+	checkers 		  []AuthenticationDecisionMaker
+	postProcessors	  []PostAuthenticationProcessor
 }
 
 type AuthenticatorOptionsFunc func(*AuthenticatorOptions)
@@ -27,6 +28,8 @@ type AuthenticatorOptions struct {
 	PasswordEncoder   PasswordEncoder
 	OTPManager        OTPManager
 	MFAEventListeners []MFAEventListenerFunc
+	Checkers          []AuthenticationDecisionMaker
+	PostProcessors    []PostAuthenticationProcessor
 }
 
 func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
@@ -39,36 +42,72 @@ func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
 			optFunc(&options)
 		}
 	}
+	sort.SliceStable(options.Checkers, func(i,j int) bool {
+		return order.OrderedFirstCompare(options.Checkers[i], options.Checkers[j])
+	})
+	sort.SliceStable(options.PostProcessors, func(i,j int) bool {
+		return order.OrderedFirstCompareReverse(options.PostProcessors[i], options.PostProcessors[j])
+	})
 	return &Authenticator{
 		accountStore:      options.AccountStore,
 		passwdEncoder:     options.PasswordEncoder,
 		otpManager:        options.OTPManager,
 		mfaEventListeners: options.MFAEventListeners,
+		checkers:          options.Checkers,
+		postProcessors:    options.PostProcessors,
 	}
 }
 
-func (a *Authenticator) Authenticate(candidate security.Candidate) (security.Authentication, error) {
+func (a *Authenticator) Authenticate(candidate security.Candidate) (auth security.Authentication, err error) {
 	upp, ok := candidate.(*UsernamePasswordPair)
 	if !ok {
 		return nil, nil
 	}
 
+	// schedule post processing
+	var ctx context.Context
+	var user security.Account
+	defer func() {
+		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
+	}()
+
 	// Search user in the slice of allowed credentials
-	user, err := a.accountStore.LoadAccountByUsername(upp.Username)
-	if err != nil {
-		return nil, security.NewUsernameNotFoundError(MessageUserNotFound, err)
+	ctx = utils.NewMutableContext()
+	user, e := a.accountStore.LoadAccountByUsername(ctx, upp.Username)
+	if e != nil {
+		err = security.NewUsernameNotFoundError(MessageUserNotFound, e)
+		return
 	}
 
-	// TODO check account status
+	// pre checks
+	if e := makeDecision(a.checkers, ctx, upp, user, nil); e != nil {
+		err = a.translate(e)
+		return
+	}
 
 	// Check password
-	if upp.Username != user.Username() || !a.passwdEncoder.Matches(upp.Password, user.Password()) {
-		return nil, security.NewBadCredentialsError(MessageBadCredential)
+	if password, ok := user.Credentials().(string);
+		!ok || upp.Username != user.Username() || !a.passwdEncoder.Matches(upp.Password, password) {
+
+		err = security.NewBadCredentialsError(MessageBadCredential)
+		return
 	}
 
-	// TODO post password check
+	// create authentication
+	newAuth, e := a.CreateSuccessAuthentication(upp, user)
+	if e != nil {
+		err = a.translate(e)
+		return
+	}
 
-	return a.CreateSuccessAuthentication(upp, user)
+	// post checks
+	if e := makeDecision(a.checkers, ctx, upp, user, newAuth); e != nil {
+		err = a.translate(e)
+		return
+	}
+
+	auth = newAuth
+	return
 }
 
 // exported for override posibility
@@ -98,13 +137,27 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 		}
 	}
 
+	details := candidate.DetailsMap
+	if details == nil {
+		details = map[interface{}]interface{}{}
+	}
 	auth := usernamePasswordAuthentication{
 		Acct:       account,
 		Perms:      permissions,
-		DetailsMap: candidate.DetailsMap,
+		DetailsMap: details,
 	}
-	// TODO chance for other components to add details
+
 	return &auth, nil
+}
+
+func (a *Authenticator) translate(err error) error {
+
+	switch {
+	case errors.Is(err, security.ErrorTypeSecurity):
+		return err
+	default:
+		return security.NewAccountStatusError(MessageAccountStatus, err)
+	}
 }
 
 

@@ -20,17 +20,33 @@ type testUser struct {
 	Pass string
 }
 
+func (u *testUser) ID() interface{} {
+	return u.User
+}
+
+func (u *testUser) Type() security.AccountType {
+	return security.AccountTypeDefault
+}
+
 func (u *testUser) Username() string {
 	return u.User
 }
 
-func (u *testUser) Password() string {
+func (u *testUser) Credentials() interface{} {
 	return u.Pass
 }
 
 func (u *testUser) Permissions() []string {
 	var p []string
 	return p
+}
+
+func (u *testUser) Disabled() bool {
+	return false
+}
+
+func (u *testUser) Locked() bool {
+	return false
 }
 
 func (u *testUser) UseMFA() bool {
@@ -41,14 +57,6 @@ func (u *testUser) UseMFA() bool {
 type testAuthentication struct {
 	Account     security.Account
 	PermissionList map[string]interface{}
-}
-
-func (auth *testAuthentication) IsMFAPending() bool {
-	return false
-}
-
-func (auth *testAuthentication) OTPIdentifier() string {
-	return ""
 }
 
 func (auth *testAuthentication) Principal() interface{} {
@@ -65,6 +73,18 @@ func (auth *testAuthentication) State() security.AuthenticationState {
 
 func (auth *testAuthentication) Details() interface{} {
 	return auth.Account
+}
+
+func (auth *testAuthentication) Username() string {
+	return auth.Account.Username()
+}
+
+func (auth *testAuthentication) IsMFAPending() bool {
+	return false
+}
+
+func (auth *testAuthentication) OTPIdentifier() string {
+	return ""
 }
 
 func TestSerialization(t *testing.T) {
@@ -123,7 +143,7 @@ func TestSerialization(t *testing.T) {
 		t.Errorf("principal is not account")
 	}
 
-	if account.Password() != "test_pass" || account.Username() != "test_user" {
+	if account.Credentials() != "test_pass" || account.Username() != "test_user" {
 		t.Errorf("account username password does not match")
 	}
 
@@ -153,6 +173,7 @@ func Test_Get_Not_Exist_Session_Should_Create_New(t *testing.T) {
 
 	if session == nil {
 		t.Error("expect a new session to be returned")
+		return
 	}
 
 	if !session.isNew {
@@ -213,6 +234,7 @@ func Test_Get_Exist_Session_Should_Return_Existing(t *testing.T) {
 
 	if session == nil {
 		t.Error("expect a new session to be returned")
+		return
 	}
 
 	if session.isNew {
@@ -263,7 +285,7 @@ func TestSaveNewSession(t *testing.T) {
 		Return(&goRedis.BoolCmd{})
 
 
-	store.Save(session)
+	_ = store.Save(session)
 
 	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
 		t.Error("session last accessed time should be updated")
@@ -314,7 +336,7 @@ func TestSaveDirtySession(t *testing.T) {
 		Return(&goRedis.BoolCmd{})
 
 
-	store.Save(session)
+	_ = store.Save(session)
 
 	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
 		t.Error("session last accessed time should be updated")
@@ -363,7 +385,7 @@ func TestSaveAccessedSession(t *testing.T) {
 		Return(&goRedis.BoolCmd{})
 
 
-	store.Save(session)
+	_ = store.Save(session)
 
 	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
 		t.Error("session last accessed time should be updated")

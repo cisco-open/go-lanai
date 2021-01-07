@@ -3,6 +3,7 @@ package formlogin
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 )
 
@@ -19,7 +20,7 @@ func init() {
 	bootstrap.Register(Module)
 }
 
-func register(init security.Registrar) {
-	configurer := newFormLoginConfigurer()
+func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties) {
+	configurer := newFormLoginConfigurer(sessionProps.Cookie, serverProps)
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }
