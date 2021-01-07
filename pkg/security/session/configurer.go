@@ -15,43 +15,61 @@ var (
 )
 
 // We currently don't have any stuff to configure
-type SessionFeature struct {
-
+type Feature struct {
+	maxSessionsFunc GetMaximumSessions
+	requestCacheEnabled bool
 }
 
-func (f *SessionFeature) Identifier() security.FeatureIdentifier {
+func (f *Feature) Identifier() security.FeatureIdentifier {
 	return FeatureId
 }
 
+func (f *Feature) MaxSessionFunc(maxSessionFunc GetMaximumSessions) *Feature {
+	f.maxSessionsFunc = maxSessionFunc
+	return f
+}
+
+//this enables request cache request preprocessor for the entire application
+func (f *Feature) EnableRequestCachePreProcessor() *Feature {
+	f.requestCacheEnabled = true
+	return f
+}
+
 // Standard security.Feature entrypoint
-func Configure(ws security.WebSecurity) *SessionFeature {
-	feature := &SessionFeature{}
+func Configure(ws security.WebSecurity) *Feature {
+	feature := &Feature{}
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		return fc.Enable(feature).(*SessionFeature)
+		return fc.Enable(feature).(*Feature)
 	}
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
 // Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
-func New() *SessionFeature {
-	return &SessionFeature{}
+func New() *Feature {
+	return &Feature{}
 }
 
-type SessionConfigurer struct {
+type Configurer struct {
 	sessionProps security.SessionProperties
 	serverProps web.ServerProperties
-	connection redis.Client
+	redisClient redis.Client
+
+	//cached store instance
+	store Store
+	//cached request processor instance
+	requestPreProcessor *CachedRequestPreProcessor
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, connection redis.Client) *SessionConfigurer {
-	return &SessionConfigurer{
+func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, redisClient redis.Client) *Configurer {
+	return &Configurer{
 		sessionProps: sessionProps,
 		serverProps: serverProps,
-		connection: connection,
+		redisClient: redisClient,
 	}
 }
 
-func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
+func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) error {
+	f := feature.(*Feature)
 
 	// configure session store
 	idleTimeout, err := time.ParseDuration(sc.sessionProps.IdleTimeout)
@@ -73,10 +91,13 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 		options.IdleTimeout = idleTimeout
 		options.AbsoluteTimeout = absTimeout
 	}
-	sessionStore := NewRedisStore(sc.connection, configureOptions)
+
+	if sc.store == nil {
+		sc.store = NewRedisStore(sc.redisClient, configureOptions)
+	}
 
 	// configure middleware
-	manager := NewManager(sessionStore)
+	manager := NewManager(sc.store)
 
 	sessionHandler := middleware.NewBuilder("sessionMiddleware").
 		Order(security.MWOrderSessionHandling).
@@ -93,10 +114,45 @@ func (sc *SessionConfigurer) Apply(_ security.Feature, ws security.WebSecurity) 
 	ws.Add(sessionHandler, authPersist)
 
 	// configure auth success/error handler
-	// TODO session fixation goes here
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(&ChangeSessionHandler{})
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(&DebugAuthSuccessHandler{})
 	ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
 		Add(&DebugAuthErrorHandler{})
+
+	maxSessionsFunc := f.maxSessionsFunc
+	if maxSessionsFunc == nil {
+		maxSessions := sc.sessionProps.MaxConcurrentSession
+		maxSessionsFunc = func() int {
+			return maxSessions
+		}
+	}
+
+	concurrentSessionHandler := &ConcurrentSessionHandler{
+		sessionStore:   sc.store,
+		getMaxSessions: maxSessionsFunc,
+	}
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(concurrentSessionHandler)
+
+	deleteSessionHandler := &DeleteSessionOnLogoutHandler{
+		sessionStore: sc.store,
+	}
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(deleteSessionHandler)
+
+	if f.requestCacheEnabled && sc.requestPreProcessor == nil {
+		sc.requestPreProcessor = &CachedRequestPreProcessor{
+			store: sc.store,
+		}
+	}
 	return nil
+}
+
+func (sc *Configurer) ProvidePreProcessor() web.RequestPreProcessor {
+	if sc.requestPreProcessor == nil {
+		return nil
+	}
+	return sc.requestPreProcessor
 }

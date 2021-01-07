@@ -10,7 +10,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var SessionModule = &bootstrap.Module{
+var Module = &bootstrap.Module{
 	Name: "session",
 	Precedence: security.MinSecurityPrecedence + 10,
 	Options: []fx.Option{
@@ -21,7 +21,7 @@ var SessionModule = &bootstrap.Module{
 
 
 func init() {
-	bootstrap.Register(SessionModule)
+	bootstrap.Register(Module)
 
 	GobRegister()
 	security.GobRegister()
@@ -29,11 +29,11 @@ func init() {
 }
 
 func GobRegister() {
+	gob.Register((*CachedRequest)(nil))
 	gob.Register([]interface{}{})
 }
 
-
-func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties, redisClient redis.Client) {
-	configurer := newSessionConfigurer(sessionProps, serverProps, redisClient)
+func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties, client redis.Client) {
+	configurer := newSessionConfigurer(sessionProps, serverProps, client)
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

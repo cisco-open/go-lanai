@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -63,6 +64,9 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
+	if err := flc.configureSession(f, ws); err != nil {
+		return err
+	}
 	//TODO
 
 	return nil
@@ -73,8 +77,8 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 		return fmt.Errorf("loginUrl is missing for form login")
 	}
 
-	if f.loginSuccessUrl == "" && f.successHandler == nil {
-		return fmt.Errorf("loginSuccessUrl and successHanlder are missing for form login")
+	if f.successHandler == nil {
+		f.successHandler = session.NewSavedRequestAuthenticationSuccessHandler(redirect.NewRedirectWithURL("/"))
 	}
 
 	if f.loginProcessUrl == "" {
@@ -87,10 +91,6 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 
 	if f.mfaEnabled && f.mfaUrl == "" {
 		return fmt.Errorf("mfaUrl is missing for MFA")
-	}
-
-	if f.mfaEnabled && f.mfaSuccessUrl == "" && f.successHandler == nil {
-		f.mfaSuccessUrl = f.loginSuccessUrl
 	}
 
 	if f.mfaEnabled &&  f.mfaVerifyUrl == "" {
@@ -137,7 +137,7 @@ func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws s
 
 	// override entry point and error handler
 	errorhandling.Configure(ws).
-		AuthenticationEntryPoint(entryPoint).
+		AuthenticationEntryPoint(session.NewSaveRequestEntryPoint(entryPoint)).
 		AuthenticationErrorHandler(f.failureHandler)
 
 	// adding CSRF protection err handler, while keeping default
@@ -252,16 +252,16 @@ func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.W
 	csrfMatcher := matcher.RequestWithPattern(f.loginProcessUrl, http.MethodPost).
 		Or(matcher.RequestWithPattern(f.mfaVerifyUrl, http.MethodPost)).
 		Or(matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost))
-	csrf.Configure(ws).CsrfProtectionMatcher(csrfMatcher)
+	csrf.Configure(ws).AddCsrfProtectionMatcher(csrfMatcher)
+	return nil
+}
+
+func (flc *FormLoginConfigurer) configureSession(f *FormLoginFeature, ws security.WebSecurity) error {
+	session.Configure(ws).EnableRequestCachePreProcessor()
 	return nil
 }
 
 func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
-
-	if f.successHandler == nil {
-		f.successHandler = redirect.NewRedirectWithURL(f.loginSuccessUrl)
-	}
-
 	if _, ok := f.successHandler.(*MfaAwareSuccessHandler); f.mfaEnabled && !ok {
 		f.successHandler = &MfaAwareSuccessHandler{
 			delegate: f.successHandler,

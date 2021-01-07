@@ -26,7 +26,7 @@ var (
 )
 
 type Registrar struct {
-	engine            *gin.Engine
+	engine            *Engine
 	router            gin.IRouter
 	properties        ServerProperties
 	options           []httptransport.ServerOption // options go-kit middleware options
@@ -35,7 +35,7 @@ type Registrar struct {
 }
 
 // TODO support customizers
-func NewRegistrar(g *gin.Engine, properties ServerProperties) *Registrar {
+func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 
 	var contextPath = path.Clean("/" + properties.ContextPath)
 	registrar := &Registrar{
@@ -127,6 +127,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 		err = r.registerMiddlewareMapping(i.(MiddlewareMapping))
 	case GenericMapping:
 		err = r.registerGenericMapping(i.(GenericMapping))
+	case RequestPreProcessor:
+		err = r.registerRequestPreProcessor(i.(RequestPreProcessor))
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -211,6 +213,11 @@ func (r *Registrar) registerGenericMapping(m GenericMapping) error {
 		Use(middlewares...).
 		Handle(m.Method(), m.Path(), m.HandlerFunc())
 	return err
+}
+
+func (r *Registrar) registerRequestPreProcessor(p RequestPreProcessor) error {
+	r.engine.addRequestPreProcessor(p)
+	return nil
 }
 
 func (r *Registrar) findMiddlewares(group, relativePath string, methods...string) (gin.HandlersChain, error) {

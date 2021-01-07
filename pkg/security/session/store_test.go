@@ -160,7 +160,7 @@ func Test_Get_Not_Exist_Session_Should_Create_New(t *testing.T) {
 	connection := mock
 
 	mock.EXPECT().
-		HGetAll(gomock.Any(), gomock.Eq("session_name:session_id")).
+		HGetAll(gomock.Any(), gomock.Eq("LANAI:SESSION:session_name:session_id")).
 		Return(&goRedis.StringStringMapCmd{})
 
 	store := NewRedisStore(connection)
@@ -173,6 +173,7 @@ func Test_Get_Not_Exist_Session_Should_Create_New(t *testing.T) {
 
 	if session == nil {
 		t.Error("expect a new session to be returned")
+		return
 	}
 
 	if !session.isNew {
@@ -222,7 +223,7 @@ func Test_Get_Exist_Session_Should_Return_Existing(t *testing.T) {
 	hset[sessionOptionField] = string(optionBytes)
 
 	mock.EXPECT().
-		HGetAll(gomock.Any(), gomock.Eq("session_name:session_id")).
+		HGetAll(gomock.Any(), gomock.Eq("LANAI:SESSION:session_name:session_id")).
 		Return(goRedis.NewStringStringMapResult(hset, nil))
 
 	session, err := store.Get("session_id", "session_name")
@@ -233,6 +234,7 @@ func Test_Get_Exist_Session_Should_Return_Existing(t *testing.T) {
 
 	if session == nil {
 		t.Error("expect a new session to be returned")
+		return
 	}
 
 	if session.isNew {
@@ -267,7 +269,7 @@ func TestSaveNewSession(t *testing.T) {
 	}
 
 	mock.EXPECT().HSet(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionValueField, gomock.Any(),
 		sessionOptionField, gomock.Any(),
 		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
@@ -275,7 +277,7 @@ func TestSaveNewSession(t *testing.T) {
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time
 	mock.EXPECT().ExpireAt(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		gomock.Any()).
 		Do(func(ctx context.Context, key string, tm time.Time){
 			expiresAt = tm
@@ -283,7 +285,7 @@ func TestSaveNewSession(t *testing.T) {
 		Return(&goRedis.BoolCmd{})
 
 
-	store.Save(session)
+	_ = store.Save(session)
 
 	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
 		t.Error("session last accessed time should be updated")
@@ -319,14 +321,14 @@ func TestSaveDirtySession(t *testing.T) {
 
 	//since it's dirty, but it's not new, we only expect two fields to be serialized and saved
 	mock.EXPECT().HSet(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionValueField, gomock.Any(),
 		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time
 	mock.EXPECT().ExpireAt(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		gomock.Any()).
 		Do(func(ctx context.Context, key string, tm time.Time){
 			expiresAt = tm
@@ -334,7 +336,7 @@ func TestSaveDirtySession(t *testing.T) {
 		Return(&goRedis.BoolCmd{})
 
 
-	store.Save(session)
+	_ = store.Save(session)
 
 	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
 		t.Error("session last accessed time should be updated")
@@ -369,13 +371,13 @@ func TestSaveAccessedSession(t *testing.T) {
 
 	//since it's not new and not dirty, we only expect one field to be serialized and saved
 	mock.EXPECT().HSet(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time
 	mock.EXPECT().ExpireAt(gomock.Any(),
-		fmt.Sprintf("%s:%s", session.name, session.id),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		gomock.Any()).
 		Do(func(ctx context.Context, key string, tm time.Time){
 			expiresAt = tm
@@ -383,7 +385,7 @@ func TestSaveAccessedSession(t *testing.T) {
 		Return(&goRedis.BoolCmd{})
 
 
-	store.Save(session)
+	_ = store.Save(session)
 
 	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
 		t.Error("session last accessed time should be updated")

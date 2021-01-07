@@ -155,7 +155,7 @@ func (e *codedError) MarshalBinary() ([]byte, error) {
 }
 
 // encoding.BinaryUnmarshaler interface
-func (e *codedError) UnmarshalBinary(data []byte) (error) {
+func (e *codedError) UnmarshalBinary(data []byte) error {
 	buffer := bytes.NewBuffer(data)
 	var code, mask int64
 	if err := binary.Read(buffer, binary.BigEndian, &code); err != nil {

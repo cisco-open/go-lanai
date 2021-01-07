@@ -10,24 +10,33 @@ import (
 	"net/http"
 )
 
+var DefaultProtectionMatcher = matcher.NotRequest(matcher.RequestWithMethods("GET", "HEAD", "TRACE", "OPTIONS"))
+var DefaultIgnoreMatcher = matcher.NoneRequest()
+
 type manager struct {
 	tokenStore TokenStore
 	requireProtection web.RequestMatcher
+	ignoreProtection web.RequestMatcher
 	parameterName string
 	headerName string
 
 }
 
-func newManager(tokenStore TokenStore, csrfProtectionMatcher web.RequestMatcher) *manager {
+func newManager(tokenStore TokenStore, csrfProtectionMatcher web.RequestMatcher, ignoreProtectionMatcher web.RequestMatcher) *manager {
 	if csrfProtectionMatcher == nil {
-		csrfProtectionMatcher = matcher.NotRequest(matcher.RequestWithMethods("GET", "HEAD", "TRACE", "OPTIONS"))
+		csrfProtectionMatcher = DefaultProtectionMatcher
+	}
+
+	if ignoreProtectionMatcher == nil {
+		ignoreProtectionMatcher = DefaultIgnoreMatcher
 	}
 
 	return &manager{
 		tokenStore: tokenStore,
-		parameterName: "_csrf",
-		headerName: "X-CSRF-TOKEN",
+		parameterName: security.CsrfParamName,
+		headerName: security.CsrfHeaderName,
 		requireProtection: csrfProtectionMatcher,
+		ignoreProtection: ignoreProtectionMatcher,
 	}
 }
 
@@ -63,7 +72,13 @@ func (m *manager) CsrfHandlerFunc() gin.HandlerFunc {
 			c.Abort()
 		}
 
-		if matches {
+		ignores, err := m.ignoreProtection.MatchesWithContext(c, c.Request)
+		if err != nil {
+			_ = c.Error(security.NewInternalError(err.Error()))
+			c.Abort()
+		}
+
+		if matches && !ignores {
 			actualToken := c.GetHeader(m.headerName)
 
 			if actualToken == "" {

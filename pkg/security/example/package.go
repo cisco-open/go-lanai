@@ -28,4 +28,3 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 	init.Register(&AnotherSecurityConfigurer { })
 	init.Register(&ErrorPageSecurityConfigurer{})
 }
-

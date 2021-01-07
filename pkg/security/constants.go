@@ -48,3 +48,15 @@ const (
 	// ... TODO more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200
 )
+
+// AuthenticationSuccessHandler Orders, if not listed here, it's unordered. Unordered handlers are applied at last
+const (
+	_ = iota
+	HandlerOrderChangeSession = iota * 100
+	HandlerOrderConcurrentSession
+
+)
+
+// CSRF headers and parameter names - shared by CSRF feature and session feature's request cache
+const CsrfParamName = "_csrf"
+const CsrfHeaderName = "X-CSRF-TOKEN"

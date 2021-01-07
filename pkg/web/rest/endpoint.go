@@ -46,7 +46,7 @@ func jsonEncodeResponseFunc(_ context.Context, w http.ResponseWriter, response i
 	if entity, ok := response.(web.BodyContainer); ok {
 		response = entity.Body()
 		// For Debug
-		//return web.NewHttpError(405, error.New(fmt.Sprintf("Cannot serialize response %T", entity.Body())) )
+		//return web.NewHttpError(405, error.New(fmt.Sprintf("Cannot serialize response %T", entity.BodyData())) )
 	}
 	return json.NewEncoder(w).Encode(response)
 }

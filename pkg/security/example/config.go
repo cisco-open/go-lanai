@@ -65,7 +65,6 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 		).
 		With(formlogin.New().
 			FormProcessCondition(condition).
-			LoginSuccessUrl("/page/hello").
 			EnableMFA(),
 		).
 		With(logout.New().
@@ -75,7 +74,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 			AuthenticationEntryPoint(handler).
 			AccessDeniedHandler(handler),
 		).
-		With(csrf.New())
+		With(csrf.New().IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern("/page/process")))
 }
 
 type ErrorPageSecurityConfigurer struct {

@@ -17,7 +17,6 @@ type FormLoginFeature struct {
 	loginUrl             string
 	loginProcessUrl      string
 	loginErrorUrl        string
-	loginSuccessUrl      string
 	usernameParam        string
 	passwordParam        string
 	rememberParam        string
@@ -27,7 +26,6 @@ type FormLoginFeature struct {
 	mfaVerifyUrl  string
 	mfaRefreshUrl string
 	mfaErrorUrl   string
-	mfaSuccessUrl string
 	otpParam      string
 }
 
@@ -48,11 +46,6 @@ func (f *FormLoginFeature) LoginProcessUrl(loginProcessUrl string) *FormLoginFea
 
 func (f *FormLoginFeature) FormProcessCondition(condition web.MWConditionMatcher) *FormLoginFeature {
 	f.formProcessCondition = condition
-	return f
-}
-
-func (f *FormLoginFeature) LoginSuccessUrl(loginSuccessUrl string) *FormLoginFeature {
-	f.loginSuccessUrl = loginSuccessUrl
 	return f
 }
 
@@ -105,11 +98,6 @@ func (f *FormLoginFeature) MfaVerifyUrl(mfaVerifyUrl string) *FormLoginFeature {
 
 func (f *FormLoginFeature) MfaRefreshUrl(mfaRefreshUrl string) *FormLoginFeature {
 	f.mfaRefreshUrl = mfaRefreshUrl
-	return f
-}
-
-func (f *FormLoginFeature) MfaSuccessUrl(mfaSuccessUrl string) *FormLoginFeature {
-	f.mfaSuccessUrl = mfaSuccessUrl
 	return f
 }
 

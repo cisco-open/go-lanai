@@ -15,8 +15,9 @@ import (
 var FeatureId = security.FeatureId("csrf", security.FeatureOrderCsrf)
 
 type Feature struct {
-	RequireCsrfProtectionMatcher web.RequestMatcher
-	csrfDeniedHandler security.AccessDeniedHandler
+	requireCsrfProtectionMatchers []web.RequestMatcher
+	ignoreCsrfProtectionMatchers  []web.RequestMatcher
+	csrfDeniedHandler             security.AccessDeniedHandler
 }
 
 func Configure(ws security.WebSecurity) *Feature {
@@ -31,8 +32,13 @@ func New() *Feature {
 	return &Feature{}
 }
 
-func (f *Feature) CsrfProtectionMatcher(m web.RequestMatcher) *Feature {
-	f.RequireCsrfProtectionMatcher = m
+func (f *Feature) AddCsrfProtectionMatcher(m web.RequestMatcher) *Feature {
+	f.requireCsrfProtectionMatchers = append(f.requireCsrfProtectionMatchers, m)
+	return f
+}
+
+func (f *Feature) IgnoreCsrfProtectionMatcher(m web.RequestMatcher) *Feature {
+	f.ignoreCsrfProtectionMatchers = append(f.ignoreCsrfProtectionMatchers, m)
 	return f
 }
 
@@ -62,9 +68,27 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 			Add(handler)
 	}
 
-	// configure middleware
 	tokenStore := newSessionBackedStore()
-	manager := newManager(tokenStore, f.RequireCsrfProtectionMatcher)
+
+	//Add authentication success handler
+	successHandler := &ChangeCsrfHanlder{
+		csrfTokenStore: tokenStore,
+	}
+	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+		Add(successHandler)
+
+	// configure middleware
+	requiredCsrfProtectionMatcher := DefaultProtectionMatcher
+	for _, matcher := range f.requireCsrfProtectionMatchers {
+		requiredCsrfProtectionMatcher = requiredCsrfProtectionMatcher.Or(matcher)
+	}
+
+	ignoreCsrfProtectionMatcher := DefaultIgnoreMatcher
+	for _, matcher := range f.ignoreCsrfProtectionMatchers {
+		ignoreCsrfProtectionMatcher = ignoreCsrfProtectionMatcher.Or(matcher)
+	}
+
+	manager := newManager(tokenStore, requiredCsrfProtectionMatcher, ignoreCsrfProtectionMatcher)
 	csrfHandler := middleware.NewBuilder("csrfMiddleware").
 		Order(security.MWOrderCsrfHandling).
 		Use(manager.CsrfHandlerFunc())

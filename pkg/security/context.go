@@ -91,3 +91,15 @@ func HasPermissions(auth Authentication, permissions...string) bool {
 func IsFullyAuthenticated(auth Authentication) bool {
 	return auth.State() >= StateAuthenticated
 }
+
+func IsBeingAuthenticated(from, to Authentication) bool {
+	fromUnauthenticatedState := from == nil || from.State() < StateAuthenticated
+	toAuthenticatedState := to != nil && to.State() > StatePrincipalKnown
+	return fromUnauthenticatedState && toAuthenticatedState
+}
+
+func IsBeingUnAuthenticated(from, to Authentication) bool {
+	fromAuthenticated := from != nil && from.State() > StateAnonymous
+	toUnAuthenticatedState := to == nil || to.State() <= StateAnonymous
+	return fromAuthenticated && toUnAuthenticatedState
+}
