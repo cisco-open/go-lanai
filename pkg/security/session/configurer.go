@@ -29,8 +29,9 @@ func (f *Feature) MaxSessionFunc(maxSessionFunc GetMaximumSessions) *Feature {
 	return f
 }
 
-func (f *Feature) EnableRequestCache(enable bool) *Feature {
-	f.requestCacheEnabled = enable
+//this enables request cache request preprocessor for the entire application
+func (f *Feature) EnableRequestCachePreProcessor() *Feature {
+	f.requestCacheEnabled = true
 	return f
 }
 

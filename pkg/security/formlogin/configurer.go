@@ -261,7 +261,7 @@ func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.W
 }
 
 func (flc *FormLoginConfigurer) configureSession(f *FormLoginFeature, ws security.WebSecurity) error {
-	session.Configure(ws).EnableRequestCache(true)
+	session.Configure(ws).EnableRequestCachePreProcessor()
 	return nil
 }
 
