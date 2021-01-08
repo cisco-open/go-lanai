@@ -47,8 +47,11 @@ func TestAccessTokenJSONSerialization(t *testing.T) {
 	case parsed.Type().HttpHeader() != "Bearer":
 		t.Errorf("parsed token http header should be [%s], but is [%s]\n", "Bearer", parsed.Type().HttpHeader())
 
+	case parsed.IssueTime().IsZero():
+		t.Errorf("parsed issue time should not be zero\n")
+
 	case parsed.ExpiryTime().IsZero():
-		t.Errorf("parsed expire time should not be zero\n")
+		t.Errorf("parsed expiry time should not be zero\n")
 
 	case len(parsed.Scopes()) != 2:
 		t.Errorf("parsed scopes should have [%d] items, but has [%d]\n", 2, len(parsed.Scopes()))

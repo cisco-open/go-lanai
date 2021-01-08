@@ -12,8 +12,8 @@ import (
 type TokenType string
 const(
 	TokenTypeBearer = "bearer"
-	TokenTypeMac = "mac"
-	TokenTypeBasic = "basic"
+	TokenTypeMac    = "mac"
+	TokenTypeBasic  = "basic"
 )
 
 func (t TokenType) HttpHeader() string {
@@ -30,11 +30,13 @@ func (t TokenType) HttpHeader() string {
 type AccessToken interface {
 	Value() string
 	Type() TokenType
+	IssueTime() time.Time
 	ExpiryTime() time.Time
 	Expired() bool
 	Scopes() utils.StringSet
 	Details() map[string]interface{}
 	RefreshToken() RefreshToken
+	// TODO add "iat" as a field
 }
 
 type RefreshToken interface {
@@ -50,6 +52,7 @@ type DefaultAccessToken struct {
 	tokenType    TokenType
 	value        string
 	expiryTime   time.Time
+	issueTime	 time.Time
 	scopes       utils.StringSet
 	refreshToken *DefaultRefreshToken
 	details      map[string]interface{}
@@ -58,34 +61,37 @@ type DefaultAccessToken struct {
 
 func NewDefaultAccessToken(value string) *DefaultAccessToken {
 	return &DefaultAccessToken{
-		value: value,
+		value:     value,
 		tokenType: TokenTypeBearer,
-		scopes: utils.NewStringSet(),
-		claims: map[string]interface{}{},
-		details: map[string]interface{}{},
+		scopes:    utils.NewStringSet(),
+		issueTime: time.Now(),
+		claims:    map[string]interface{}{},
+		details:   map[string]interface{}{},
 	}
 }
 
 func FromAccessToken(token AccessToken) *DefaultAccessToken {
 	if t, ok := token.(*DefaultAccessToken); ok {
 		return &DefaultAccessToken{
-			value: t.value,
-			tokenType: t.tokenType,
-			expiryTime: t.expiryTime,
-			scopes: t.scopes.Copy(),
-			claims: copyMap(t.claims),
-			details: copyMap(t.details),
+			value:        t.value,
+			tokenType:    t.tokenType,
+			expiryTime:   t.expiryTime,
+			issueTime:    t.issueTime,
+			scopes:       t.scopes.Copy(),
+			claims:       copyMap(t.claims),
+			details:      copyMap(t.details),
 			refreshToken: t.refreshToken,
 		}
 	}
 
 	copy := &DefaultAccessToken{
-		value: token.Value(),
-		tokenType: token.Type(),
+		value:      token.Value(),
+		tokenType:  token.Type(),
 		expiryTime: token.ExpiryTime(),
-		scopes: token.Scopes().Copy(),
-		claims: map[string]interface{}{},
-		details: copyMap(token.Details()),
+		issueTime:  token.IssueTime(),
+		scopes:     token.Scopes().Copy(),
+		claims:     map[string]interface{}{},
+		details:    copyMap(token.Details()),
 	}
 	copy.SetRefreshToken(token.RefreshToken())
 	return copy
@@ -104,6 +110,11 @@ func (t *DefaultAccessToken) Details() map[string]interface{} {
 // AccessToken
 func (t *DefaultAccessToken) Type() TokenType {
 	return t.tokenType
+}
+
+// AccessToken
+func (t *DefaultAccessToken) IssueTime() time.Time {
+	return t.expiryTime
 }
 
 // AccessToken
