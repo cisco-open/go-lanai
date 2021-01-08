@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	FeatureId = security.SimpleFeatureId("request_cache")
+	FeatureId = security.FeatureId("request_cache", security.FeatureOrderRequestCache)
 )
 
 type Feature struct {

@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	FeatureId = security.SimpleFeatureId("Session")
+	FeatureId = security.FeatureId("Session", security.FeatureOrderSession)
 )
 
 // We currently don't have any stuff to configure

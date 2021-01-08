@@ -47,6 +47,8 @@ const (
 	FeatureOrderLogout
 	FeatureOrderCsrf
 	FeatureOrderAccess
+	FeatureOrderSession
+	FeatureOrderRequestCache
 	// ... TODO more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200
 )
