@@ -19,6 +19,8 @@ const (
 	WSSharedKeyCompositeAuthSuccessHandler = "CompositeAuthSuccessHandler"
 	WSSharedKeyCompositeAuthErrorHandler = "CompositeAuthErrorHandler"
 	WSSharedKeyCompositeAccessDeniedHandler = "CompositeAccessDeniedHandler"
+	WSSharedKeySessionStore = "SessionStore"
+	WSSharedKeyRequestPreProcessors = "RequestPreProcessors"
 )
 
 // Middleware Orders
@@ -45,6 +47,8 @@ const (
 	FeatureOrderLogout
 	FeatureOrderCsrf
 	FeatureOrderAccess
+	FeatureOrderSession
+	FeatureOrderRequestCache
 	// ... TODO more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200
 )

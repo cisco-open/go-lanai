@@ -1,8 +1,9 @@
-package session
+package request_cache
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"github.com/gin-gonic/gin"
@@ -23,7 +24,7 @@ type CachedRequest struct {
 }
 
 func SaveRequest(ctx *gin.Context) {
-	s := Get(ctx)
+	s := session.Get(ctx)
 	// we don't know if other components have already parsed the form.
 	// if other components have already parsed the form, then the body is already read, so if we read it again we'll just get ""
 	// therefore we call parseForm to make sure it's read into the form field, and we serialize the form field ourselves.
@@ -41,30 +42,42 @@ func SaveRequest(ctx *gin.Context) {
 }
 
 func GetCachedRequest(ctx *gin.Context) *CachedRequest {
-	s := Get(ctx)
+	s := session.Get(ctx)
 	cached, _ := s.Get(SessionKeyCachedRequest).(*CachedRequest)
 	return cached
 }
 
 func RemoveCachedRequest(ctx *gin.Context) {
-	s := Get(ctx)
+	s := session.Get(ctx)
 	s.Delete(SessionKeyCachedRequest)
 }
 
 // Designed to be used by code outside of the security package.
 // Implements the web.RequestCacheAccessor interface
 type CachedRequestPreProcessor struct {
-	store Store
+	store session.Store
+	name web.RequestPreProcessorName
 }
 
-func (m *CachedRequestPreProcessor) Process(r *http.Request) error {
-	if cookie, err := r.Cookie(DefaultName); err == nil {
+func newCachedRequestPreProcessor(store session.Store) *CachedRequestPreProcessor {
+	return &CachedRequestPreProcessor{
+		store:store,
+		name: "CachedRequestPreProcessor",
+	}
+}
+
+func (p *CachedRequestPreProcessor) Name() web.RequestPreProcessorName {
+	return p.name
+}
+
+func (p *CachedRequestPreProcessor) Process(r *http.Request) error {
+	if cookie, err := r.Cookie(session.DefaultName); err == nil {
 		id := cookie.Value
-		if s, err := m.store.Get(id, DefaultName); err == nil {
+		if s, err := p.store.Get(id, session.DefaultName); err == nil {
 			cached, ok := s.Get(SessionKeyCachedRequest).(*CachedRequest)
 			if ok && cached != nil && requestMatches(r, cached) {
 				s.Delete(SessionKeyCachedRequest)
-				err := m.store.Save(s)
+				err := p.store.Save(s)
 				if err != nil {
 					return err
 				}

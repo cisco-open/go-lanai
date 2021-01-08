@@ -29,11 +29,19 @@ func init() {
 }
 
 func GobRegister() {
-	gob.Register((*CachedRequest)(nil))
 	gob.Register([]interface{}{})
 }
 
-func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties, client redis.Client) {
-	configurer := newSessionConfigurer(sessionProps, serverProps, client)
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+type registerParams struct {
+	fx.In
+	Init security.Registrar
+	SessionProps security.SessionProperties
+	ServerProps web.ServerProperties
+	Client redis.Client
+	MaxSessionsFunc GetMaximumSessions `optional:"true"`
+}
+
+func register(di registerParams) {
+	configurer := newSessionConfigurer(di.SessionProps, di.ServerProps, di.Client, di.MaxSessionsFunc)
+	di.Init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

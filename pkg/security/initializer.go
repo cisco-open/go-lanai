@@ -73,17 +73,19 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 		return order.OrderedFirstCompare(init.configurers[i], init.configurers[j])
 	})
 
-	allApplied := make(map[FeatureIdentifier]struct{})
+	mergedRequestPreProcessors := make(map[web.RequestPreProcessorName]web.RequestPreProcessor)
 
 	// go through each configurer
 	for _,configurer := range init.configurers {
-		builder, applied, err := init.build(configurer)
+		builder, requestPreProcessors, err := init.build(configurer)
 		if err != nil {
 			return err
 		}
 
-		for k, v := range applied {
-			allApplied[k] = v
+		for k, v := range requestPreProcessors {
+			if _, ok := mergedRequestPreProcessors[k]; !ok {
+				mergedRequestPreProcessors[k] = v
+			}
 		}
 
 		mappings := builder.Build()
@@ -111,14 +113,8 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 		registrar.RegisterWithLifecycle(lc, nonMwMappings...)
 	}
 
-	for id, _ := range allApplied {
-		fc := init.featureConfigurers[id]
-		if p, ok := fc.(web.RequestPreProcessorProvider); ok {
-			processor := p.ProvidePreProcessor()
-			if processor != nil {
-				registrar.Register(processor)
-			}
-		}
+	for _, v := range mergedRequestPreProcessors {
+		registrar.Register(v)
 	}
 
 	init.initialized = true
@@ -126,7 +122,7 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 	return nil
 }
 
-func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, map[FeatureIdentifier]struct{}, error) {
+func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, map[web.RequestPreProcessorName]web.RequestPreProcessor, error) {
 	// collect security configs
 	ws := newWebSecurity(NewAuthenticator(), map[string]interface{}{
 		WSSharedKeyCompositeAuthSuccessHandler: NewAuthenticationSuccessHandler(),
@@ -151,14 +147,20 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder
 		// mark applied
 		ws.applied[f.Identifier()] = struct{}{}
 		if err != nil {
-			return nil, ws.applied, err
+			return nil, nil, err
 		}
 	}
 
 	if err := init.process(ws); err != nil {
-		return nil, ws.applied, err
+		return nil, nil, err
 	}
-	return ws, ws.applied, nil
+
+	var processors map[web.RequestPreProcessorName]web.RequestPreProcessor = nil
+	if ws.Shared(WSSharedKeyRequestPreProcessors) != nil {
+		processors = ws.Shared(WSSharedKeyRequestPreProcessors).(map[web.RequestPreProcessorName]web.RequestPreProcessor)
+	}
+
+	return ws, processors, nil
 }
 
 func (init *initializer) process(ws *webSecurity) error {

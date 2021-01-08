@@ -2,6 +2,7 @@ package session
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"github.com/google/uuid"
 	"net/http"
 	"strings"
 	"time"
@@ -64,6 +65,14 @@ func NewSession(store Store, name string) *Session {
 		isNew:   true,
 		dirty:   false,
 	}
+}
+
+func CreateSession(store Store, name string) *Session {
+	s := NewSession(store, name)
+	s.lastAccessed = time.Now()
+	s.values[createdTimeKey] = time.Now()
+	s.id = uuid.New().String()
+	return s
 }
 
 // NewCookie returns an http.Cookie with the options set. It also sets

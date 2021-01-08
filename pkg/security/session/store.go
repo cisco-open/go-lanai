@@ -133,13 +133,7 @@ func (s *RedisStore) Get(id string, name string) (*Session, error) {
 
 // New will create a new session.
 func (s *RedisStore) New(name string) (*Session, error) {
-	session := NewSession(s, name)
-
-	session.lastAccessed = time.Now()
-	session.values[createdTimeKey] = time.Now()
-
-	session.id = uuid.New().String()
-
+	session := CreateSession(s, name)
 	return session, nil
 }
 
