@@ -6,12 +6,11 @@ import (
 	"net/http"
 )
 
-type RequestPreProcessorProvider interface {
-	ProvidePreProcessor() RequestPreProcessor
-}
+type RequestPreProcessorName string
 
 type RequestPreProcessor interface {
 	Process(r *http.Request) error
+	Name() RequestPreProcessorName
 }
 
 type Engine struct {

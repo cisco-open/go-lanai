@@ -16,23 +16,10 @@ var (
 
 // We currently don't have any stuff to configure
 type Feature struct {
-	maxSessionsFunc GetMaximumSessions
-	requestCacheEnabled bool
 }
 
 func (f *Feature) Identifier() security.FeatureIdentifier {
 	return FeatureId
-}
-
-func (f *Feature) MaxSessionFunc(maxSessionFunc GetMaximumSessions) *Feature {
-	f.maxSessionsFunc = maxSessionFunc
-	return f
-}
-
-//this enables request cache request preprocessor for the entire application
-func (f *Feature) EnableRequestCachePreProcessor() *Feature {
-	f.requestCacheEnabled = true
-	return f
 }
 
 // Standard security.Feature entrypoint
@@ -53,24 +40,23 @@ type Configurer struct {
 	sessionProps security.SessionProperties
 	serverProps web.ServerProperties
 	redisClient redis.Client
+	maxSessionsFunc GetMaximumSessions
 
 	//cached store instance
 	store Store
-	//cached request processor instance
-	requestPreProcessor *CachedRequestPreProcessor
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties, redisClient redis.Client) *Configurer {
+func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties,
+	redisClient redis.Client, maxSessionsFunc GetMaximumSessions) *Configurer {
 	return &Configurer{
 		sessionProps: sessionProps,
 		serverProps: serverProps,
 		redisClient: redisClient,
+		maxSessionsFunc: maxSessionsFunc,
 	}
 }
 
-func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) error {
-	f := feature.(*Feature)
-
+func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 	// configure session store
 	idleTimeout, err := time.ParseDuration(sc.sessionProps.IdleTimeout)
 	if err != nil {
@@ -92,8 +78,15 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 		options.AbsoluteTimeout = absTimeout
 	}
 
+	// the store cached in configurer is to make sure that each session configurer
+	// use the same store
 	if sc.store == nil {
 		sc.store = NewRedisStore(sc.redisClient, configureOptions)
+	}
+
+	// the ws shared store is to share this store with other feature configurer can have access to store.
+	if ws.Shared(security.WSSharedKeySessionStore) == nil {
+		_ = ws.AddShared(security.WSSharedKeySessionStore, sc.store)
 	}
 
 	// configure middleware
@@ -121,7 +114,7 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 	ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
 		Add(&DebugAuthErrorHandler{})
 
-	maxSessionsFunc := f.maxSessionsFunc
+	maxSessionsFunc := sc.maxSessionsFunc
 	if maxSessionsFunc == nil {
 		maxSessions := sc.sessionProps.MaxConcurrentSession
 		maxSessionsFunc = func() int {
@@ -141,18 +134,5 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 	}
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(deleteSessionHandler)
-
-	if f.requestCacheEnabled && sc.requestPreProcessor == nil {
-		sc.requestPreProcessor = &CachedRequestPreProcessor{
-			store: sc.store,
-		}
-	}
 	return nil
-}
-
-func (sc *Configurer) ProvidePreProcessor() web.RequestPreProcessor {
-	if sc.requestPreProcessor == nil {
-		return nil
-	}
-	return sc.requestPreProcessor
 }

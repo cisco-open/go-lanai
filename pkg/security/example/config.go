@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
@@ -74,7 +75,8 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 			AuthenticationEntryPoint(handler).
 			AccessDeniedHandler(handler),
 		).
-		With(csrf.New().IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern("/page/process")))
+		With(csrf.New().IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern("/page/process"))).
+		With(request_cache.New())
 }
 
 type ErrorPageSecurityConfigurer struct {
