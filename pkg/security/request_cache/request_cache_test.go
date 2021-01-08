@@ -53,6 +53,8 @@ func TestCachedRequestPreProcessor_Process(t *testing.T) {
 
 	processor := newCachedRequestPreProcessor(mockSessionStore)
 
+	mockSessionStore.EXPECT().Options().Return(&session.Options{})
+
 	s := session.CreateSession(mockSessionStore, session.DefaultName)
 
 	cached := &CachedRequest{
@@ -63,7 +65,7 @@ func TestCachedRequestPreProcessor_Process(t *testing.T) {
 	}
 
 	s.Set(SessionKeyCachedRequest, cached)
-	mockSessionStore.EXPECT().Get(s.GetID(), s.Name()).Return(s)
+	mockSessionStore.EXPECT().Get(s.GetID(), s.Name()).Return(s, nil)
 	mockSessionStore.EXPECT().Save(s).Do(func(session *session.Session) {
 		if session.Get(SessionKeyCachedRequest) != nil {
 			t.Errorf("cached request should be removed from the session")
