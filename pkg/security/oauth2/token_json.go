@@ -14,7 +14,7 @@ type valueConverterFunc func(v interface{}) (reflect.Value, error)
 	DefaultAccessToken
  ************************/
 var accessTokenIgnoredDetails = utils.NewStringSet(
-	JsonFieldAccessTokenValue, JsonFieldTokenType, JsonFieldScopes,
+	JsonFieldAccessTokenValue, JsonFieldTokenType, JsonFieldScope,
 	JsonFieldExpiryTime, JsonFieldIssueTime, JsonFieldExpiresIn, JsonFieldRefreshTokenValue)
 
 // json.Marshaler
@@ -25,7 +25,7 @@ func (t *DefaultAccessToken) MarshalJSON() ([]byte, error) {
 	}
 	data[JsonFieldAccessTokenValue] = t.value
 	data[JsonFieldTokenType] = t.tokenType
-	data[JsonFieldScopes] = t.scopes
+	data[JsonFieldScope] = t.scopes
 	data[JsonFieldIssueTime] = t.issueTime.Format(utils.ISO8601Seconds)
 	data[JsonFieldExpiryTime] = t.expiryTime.Format(utils.ISO8601Seconds)
 	data[JsonFieldExpiresIn] = int(t.expiryTime.Sub(time.Now()).Seconds())
@@ -52,7 +52,7 @@ func (t *DefaultAccessToken) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if err := extractField(parsed, JsonFieldScopes, true, &t.scopes, sliceToStringSet); err != nil {
+	if err := extractField(parsed, JsonFieldScope, true, &t.scopes, sliceToStringSet); err != nil {
 		return err
 	}
 
