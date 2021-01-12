@@ -19,7 +19,7 @@ type LogoutHandler interface {
 
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutFeature struct {
-	condition        web.MWConditionMatcher
+	condition        web.RequestMatcher
 	successHandler   security.AuthenticationSuccessHandler
 	successUrl 	     string
 	logoutHandlers   []LogoutHandler
@@ -36,7 +36,7 @@ func (f *LogoutFeature) AddLogoutHandler(logoutHandler LogoutHandler) *LogoutFea
 	return f
 }
 
-func (f *LogoutFeature) Condition(condition web.MWConditionMatcher) *LogoutFeature {
+func (f *LogoutFeature) Condition(condition web.RequestMatcher) *LogoutFeature {
 	f.condition = condition
 	return f
 }

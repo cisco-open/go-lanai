@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
@@ -187,7 +188,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	})
 	mw := middleware.NewBuilder("form login").
 		ApplyTo(route).
-		WithCondition(security.WebConditionFunc(f.formProcessCondition)).
+		WithCondition(f.formProcessCondition).
 		Order(security.MWOrderFormAuth).
 		Use(login.LoginProcessHandlerFunc()).
 		Build()
@@ -195,7 +196,10 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	ws.Add(mw)
 
 	// configure additional endpoint mappings to trigger middleware
-	ws.Add(web.NewGenericMapping("login process dummy", f.loginProcessUrl, http.MethodPost, login.EndpointHandlerFunc() ))
+	ws.Add(mapping.Post(f.loginProcessUrl).
+		HandlerFunc(login.EndpointHandlerFunc()).
+		Name("login process dummy").
+		Build() )
 
 	return nil
 }
@@ -219,14 +223,14 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 
 	verifyMW := middleware.NewBuilder("otp verify").
 		ApplyTo(routeVerify).
-		WithCondition(security.WebConditionFunc(f.formProcessCondition)).
+		WithCondition(f.formProcessCondition).
 		Order(security.MWOrderFormAuth).
 		Use(login.OtpVerifyHandlerFunc()).
 		Build()
 
 	refreshMW := middleware.NewBuilder("otp refresh").
 		ApplyTo(routeRefresh).
-		WithCondition(security.WebConditionFunc(f.formProcessCondition)).
+		WithCondition(f.formProcessCondition).
 		Order(security.MWOrderFormAuth).
 		Use(login.OtpRefreshHandlerFunc()).
 		Build()
@@ -234,8 +238,14 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 	ws.Add(verifyMW, refreshMW)
 
 	// configure additional endpoint mappings to trigger middleware
-	ws.Add(web.NewGenericMapping("otp verify dummy", f.mfaVerifyUrl, http.MethodPost, login.EndpointHandlerFunc()) )
-	ws.Add(web.NewGenericMapping("otp refresh dummy", f.mfaRefreshUrl, http.MethodPost, login.EndpointHandlerFunc()) )
+	ws.Add(mapping.Post(f.mfaVerifyUrl).
+		HandlerFunc(login.EndpointHandlerFunc()).
+		Name("otp verify dummy").
+		Build() )
+	ws.Add(mapping.Post(f.mfaRefreshUrl).
+		HandlerFunc(login.EndpointHandlerFunc()).
+		Name("otp refresh dummy").
+		Build() )
 
 	// configure access
 	access.Configure(ws).

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	pathutils "path"
 )
-
 // routeMatcher implement web.RouteMatcher
 type routeMatcher struct {
 	description string

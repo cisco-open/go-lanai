@@ -20,6 +20,6 @@ func init() {
 }
 
 func register(init security.Registrar) {
-	configurer := newBasicAuthConfigurer()
+	configurer := newOAuth2AuthConfigurer()
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

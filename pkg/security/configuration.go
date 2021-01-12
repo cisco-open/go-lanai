@@ -44,7 +44,7 @@ type Initializer interface {
 // it holds the middleware's gin.HandlerFunc and its order
 type MiddlewareTemplate *middleware.MappingBuilder
 
-// MiddlewareCondition accept *http.Request and can be translated to web.MWConditionFunc
+// MiddlewareCondition accept *http.Request and can be translated to web.MappingConditionFunc
 type MiddlewareCondition matcher.ChainableMatcher
 
 // FeatureIdentifier is unique for each feature.
@@ -70,14 +70,14 @@ type WebSecurity interface {
 
 	// Condition sets additional conditions of incoming request which this WebSecurity applies to
 	// Calling this method multiple times concatenate all given matchers with OR operator
-	Condition(mwcm web.MWConditionMatcher) WebSecurity
+	Condition(mwcm web.RequestMatcher) WebSecurity
 
 	// Add is DSL style setter to add:
 	// - MiddlewareTemplate
 	// - web.MiddlewareMapping
 	// - web.MvcMapping
 	// - web.StaticMapping
-	// - web.GenericMapping
+	// - web.SimpleMapping
 	// when MiddlewareTemplate is given, WebSecurity's Route and Condition are applied to it
 	// this method panic if other type is given
 	Add(...interface{}) WebSecurity
@@ -87,7 +87,7 @@ type WebSecurity interface {
 	// - web.MiddlewareMapping
 	// - web.MvcMapping
 	// - web.StaticMapping
-	// - web.GenericMapping
+	// - web.SimpleMapping
 	Remove(...interface{}) WebSecurity
 
 	// With is DSL style setter to enable features

@@ -74,8 +74,8 @@ type OTPVerificationRequest struct {
 
 func (c *DefaultFormLoginController) Mappings() []web.Mapping {
 	return []web.Mapping{
-		template.NewBuilder().Get("/login").HandlerFunc(c.LoginForm).Build(),
-		template.NewBuilder().Get("/login/mfa").HandlerFunc(c.OtpVerificationForm).Build(),
+		template.New().Get("/login").HandlerFunc(c.LoginForm).Build(),
+		template.New().Get("/login/mfa").HandlerFunc(c.OtpVerificationForm).Build(),
 	}
 }
 

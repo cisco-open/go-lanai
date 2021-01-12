@@ -19,22 +19,5 @@ func newOAuth2AuthConfigurer() *OAuth2AuthServerConfigurer {
 }
 
 func (bac *OAuth2AuthServerConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
-
-	//// configure other dependent features
-	//errorhandling.Configure(ws).
-	//	AuthenticationEntryPoint(NewBasicAuthEntryPoint()).
-	//	AuthenticationErrorHandler(NewBasicAuthErrorHandler())
-	//
-	//// configure middlewares
-	//basicAuth := NewBasicAuthMiddleware(
-	//	ws.Authenticator(),
-	//	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler),
-	//	)
-	//
-	//auth := middleware.NewBuilder("basic auth").
-	//	Order(security.MWOrderBasicAuth).
-	//	Use(basicAuth.HandlerFunc())
-	//
-	//ws.Add(auth)
 	return nil
 }

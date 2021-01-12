@@ -26,6 +26,7 @@ func WrapOAuth2ClientStore(clientStore OAuth2ClientStore) *OAuth2ClientAccountSt
 	}
 }
 
+// security.AccountStore
 func (s *OAuth2ClientAccountStore) LoadAccountById(ctx context.Context, id interface{}) (security.Account, error) {
 	switch id.(type) {
 	case string:
@@ -35,6 +36,7 @@ func (s *OAuth2ClientAccountStore) LoadAccountById(ctx context.Context, id inter
 	}
 }
 
+// security.AccountStore
 func (s *OAuth2ClientAccountStore) LoadAccountByUsername(ctx context.Context, username string) (security.Account, error) {
 
 	if client, err := s.OAuth2ClientStore.LoadClientByClientId(ctx, username); err != nil {
@@ -46,14 +48,17 @@ func (s *OAuth2ClientAccountStore) LoadAccountByUsername(ctx context.Context, us
 	}
 }
 
+// security.AccountStore
 func (s *OAuth2ClientAccountStore) LoadLockingRules(ctx context.Context, acct security.Account) (security.AccountLockingRule, error) {
 	return nil, security.NewInternalAuthenticationError("client doesn't have locking rule")
 }
 
+// security.AccountStore
 func (s *OAuth2ClientAccountStore) LoadPwdAgingRules(ctx context.Context, acct security.Account) (security.AccountPwdAgingRule, error) {
 	return nil, security.NewInternalAuthenticationError("client doesn't have aging rule")
 }
 
+// security.AccountStore
 func (s *OAuth2ClientAccountStore) Save(ctx context.Context, acct security.Account) error {
 	return security.NewInternalAuthenticationError("client is inmutable during authentication")
 }
