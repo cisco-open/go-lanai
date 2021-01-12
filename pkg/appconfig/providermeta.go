@@ -2,7 +2,7 @@ package appconfig
 
 type ProviderMeta struct {
 	IsLoaded    bool                   //invalid if not loaded or during load
-	Settings    map[string]interface{} //storage for the settings loaded by the provider
+	Settings    map[string]interface{} //storage for the settings loaded by the authorize
 	Precedence  int                    //the precedence for which the settings will take effect.
 }
 

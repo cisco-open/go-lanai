@@ -1,15 +1,17 @@
 package web
 
 const (
-	LowestMiddlewareOrder = int(^uint(0) >> 1) // max int
+	LowestMiddlewareOrder  = int(^uint(0) >> 1)         // max int
 	HighestMiddlewareOrder = -LowestMiddlewareOrder - 1 // min int
 
 	ErrorTemplate = "error.tmpl"
 
-	ContextKeySecurity = "Security"
-	ContextKeySession = "Session"
+	ContextKeySecurity    = "Security"
+	ContextKeySession     = "Session"
 	ContextKeyContextPath = "ContextPath"
-	ContextKeyCsrf = "CSRF"
+	ContextKeyCsrf        = "CSRF"
+
+	MethodAny = "ANY"
 )
 
 type EmptyRequest struct {}

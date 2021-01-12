@@ -11,10 +11,12 @@ import (
 	"strings"
 )
 
+type matchableFunc func(context.Context, *http.Request) (interface{}, error)
+
 // requestMatcher implement web.RequestMatcher
 type requestMatcher struct {
 	description   string
-	matchableFunc func(context.Context, *http.Request) (interface{}, error)
+	matchableFunc matchableFunc
 	delegate      matcher.Matcher
 }
 
@@ -195,6 +197,14 @@ func RequestHasPostParameter(name string) web.RequestMatcher {
 	}
 }
 
+func RequestWithParam(name, value string) web.RequestMatcher {
+	return &requestMatcher{
+		description: fmt.Sprintf("matches have parameter %s", name),
+		matchableFunc: param(name),
+		delegate: matcher.WithString(value, true),
+	}
+}
+
 /**************************
 	helpers
 ***************************/
@@ -237,3 +247,13 @@ func path(c context.Context, r *http.Request) (interface{}, error) {
 	}
 	return strings.TrimPrefix(path, ctxPath), nil
 }
+
+func param(name string) matchableFunc {
+	return func (c context.Context, r *http.Request) (interface{}, error) {
+		if e := r.ParseForm(); e != nil {
+			return nil, e
+		}
+		return r.Form.Get(name), nil
+	}
+}
+

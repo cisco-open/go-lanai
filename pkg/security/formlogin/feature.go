@@ -11,7 +11,7 @@ import (
  *********************************/
 //goland:noinspection GoNameStartsWithPackageName
 type FormLoginFeature struct {
-	formProcessCondition web.MWConditionMatcher
+	formProcessCondition web.RequestMatcher
 	successHandler       security.AuthenticationSuccessHandler
 	failureHandler       security.AuthenticationErrorHandler
 	loginUrl             string
@@ -44,7 +44,7 @@ func (f *FormLoginFeature) LoginProcessUrl(loginProcessUrl string) *FormLoginFea
 	return f
 }
 
-func (f *FormLoginFeature) FormProcessCondition(condition web.MWConditionMatcher) *FormLoginFeature {
+func (f *FormLoginFeature) FormProcessCondition(condition web.RequestMatcher) *FormLoginFeature {
 	f.formProcessCondition = condition
 	return f
 }

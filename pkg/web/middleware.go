@@ -1,18 +1,11 @@
 package web
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
-type MWConditionFunc func(context.Context, *http.Request) bool
-
-// MWConditionMatcher accepts *http.Request or http.Request
-type MWConditionMatcher RequestMatcher
-
 type ConditionalMiddleware interface {
-	ConditionFunc() MWConditionFunc
+	Condition() RequestMatcher
 }
 
 type Middleware interface {

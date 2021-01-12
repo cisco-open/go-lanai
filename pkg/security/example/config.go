@@ -69,7 +69,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 			EnableMFA(),
 		).
 		With(logout.New().
-			SuccessUrl("/login"),
+			SuccessUrl("/page/hello"),
 		).
 		With(errorhandling.New().
 			AuthenticationEntryPoint(handler).

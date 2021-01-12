@@ -89,28 +89,22 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 		}
 
 		mappings := builder.Build()
-		var nonMwMappings []interface{}
-
-		// register web.MiddlewareMapping
+		// register web.Mapping
 		for _,mapping := range mappings {
+			if err := registrar.Register(mapping); err != nil {
+				return err
+			}
 			switch mapping.(type) {
 			case web.MiddlewareMapping:
 				mw := mapping.(web.MiddlewareMapping)
-				if err := registrar.Register(mw); err != nil {
-					return err
-				}
 				// TODO logger
 				fmt.Printf("registered security middleware [%d][%s] %v -> %v \n",
 					mw.Order(), mw.Name(), mw.Matcher(), reflect.ValueOf(mw.HandlerFunc()).String())
 			default:
 				// TODO logger
-				fmt.Printf("will register security endpoints [%s]: %v\n", mapping.Name(), mapping)
-				nonMwMappings = append(nonMwMappings, mapping)
+				fmt.Printf("registered security endpoints [%s]: %v\n", mapping.Name(), mapping)
 			}
 		}
-
-		// register other mappings, need to be done in lifecycle
-		registrar.RegisterWithLifecycle(lc, nonMwMappings...)
 	}
 
 	for _, v := range mergedRequestPreProcessors {

@@ -21,7 +21,7 @@ type FeatureModifier interface {
 
 type WebSecurityReader interface {
 	GetRoute() web.RouteMatcher
-	GetCondition() web.MWConditionMatcher
+	GetCondition() web.RequestMatcher
 	GetHandlers() []interface{}
 }
 

@@ -14,8 +14,8 @@ type mutableContext struct {
 
 func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
 	// get value from value map first, in case the key-value pair is overwritten
-	ret = ctx.values[key]
-	if ret == nil {
+	ret, ok := ctx.values[key]
+	if !ok || ret == nil {
 		ret = ctx.Context.Value(key)
 	}
 	return
@@ -24,6 +24,8 @@ func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
 func (ctx *mutableContext) SetValue(key interface{}, value interface{}) MutableContext {
 	if key != nil && value != nil {
 		ctx.values[key] = value
+	} else if key != nil {
+		delete(ctx.values, key)
 	}
 	return ctx
 }

@@ -3,6 +3,7 @@ package rest
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"errors"
+	"fmt"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
@@ -22,6 +23,7 @@ type MappingBuilder struct {
 	name               string
 	path               string
 	method             string
+	condition          web.RequestMatcher
 	endpointFunc       EndpointFunc
 	endpoint           endpoint.Endpoint
 	decodeRequestFunc  httptransport.DecodeRequestFunc
@@ -30,14 +32,48 @@ type MappingBuilder struct {
 	encodeResponseFunc httptransport.EncodeResponseFunc
 }
 
-func NewBuilder(names ...string) *MappingBuilder {
-	name := "unknown"
+func New(names ...string) *MappingBuilder {
+	var name string
 	if len(names) > 0 {
 		name = names[0]
 	}
 	return &MappingBuilder{
 		name: name,
+		method: web.MethodAny,
 	}
+}
+
+// Convenient Constructors
+func Any(path string) *MappingBuilder {
+	return New().Path(path).Method(web.MethodAny)
+}
+
+func Get(path string) *MappingBuilder {
+	return New().Get(path)
+}
+
+func Post(path string) *MappingBuilder {
+	return New().Post(path)
+}
+
+func Put(path string) *MappingBuilder {
+	return New().Put(path)
+}
+
+func Patch(path string) *MappingBuilder {
+	return New().Patch(path)
+}
+
+func Delete(path string) *MappingBuilder {
+	return New().Delete(path)
+}
+
+func Options(path string) *MappingBuilder {
+	return New().Options(path)
+}
+
+func Head(path string) *MappingBuilder {
+	return New().Head(path)
 }
 
 /*****************************
@@ -54,6 +90,11 @@ func (b *MappingBuilder) Path(path string) *MappingBuilder {
 
 func (b *MappingBuilder) Method(method string) *MappingBuilder {
 	b.method = method
+	return b
+}
+
+func (b *MappingBuilder) Condition(condition web.RequestMatcher) *MappingBuilder {
+	b.condition = condition
 	return b
 }
 
@@ -137,13 +178,21 @@ type mapping struct {
 
 // TODO more validation and better error handling
 func (b *MappingBuilder) validate() (err error) {
-	if b.path == "" || b.method == "" {
+	if b.path == "" {
 		err = errors.New("empty Path")
 	}
 	return
 }
 
 func (b *MappingBuilder) buildMapping() web.MvcMapping {
+	if b.method == "" {
+		b.method = web.MethodAny
+	}
+
+	if b.name == "" {
+		b.name = fmt.Sprintf("%s %s", b.method, b.path)
+	}
+
 	m := &mapping{
 		decodeRequestFunc:  httptransport.NopRequestDecoder,
 		encodeRequestFunc:  jsonEncodeRequestFunc,
@@ -158,7 +207,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	}
 
 	b.customize(m)
-	return web.NewMvcMapping(b.name, b.path, b.method,
+	return web.NewMvcMapping(b.name, b.path, b.method, b.condition,
 		m.endpoint, m.decodeRequestFunc, m.encodeRequestFunc,
 		m.decodeResponseFunc, m.encodeResponseFunc,
 		JsonErrorEncoder)

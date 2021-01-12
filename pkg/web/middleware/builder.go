@@ -12,7 +12,7 @@ type MappingBuilder struct {
 	matcher    web.RouteMatcher
 	order      int
 	// overrides
-	condition   web.MWConditionFunc
+	condition   web.RequestMatcher
 	handlerFunc gin.HandlerFunc
 }
 
@@ -55,18 +55,18 @@ func (b *MappingBuilder) Use(handlerFunc gin.HandlerFunc) *MappingBuilder {
 	return b
 }
 
-func (b *MappingBuilder) WithCondition(condition web.MWConditionFunc) *MappingBuilder {
+func (b *MappingBuilder) WithCondition(condition web.RequestMatcher) *MappingBuilder {
 	b.condition = condition
 	return b
 }
 
 func (b *MappingBuilder) Build() web.MiddlewareMapping {
-	var conditionFunc web.MWConditionFunc
+	var conditionFunc web.RequestMatcher
 	var handlerFunc gin.HandlerFunc
 	if b.middleware != nil {
 		handlerFunc = b.middleware.HandlerFunc()
 		if conditional,ok := b.middleware.(web.ConditionalMiddleware); ok {
-			conditionFunc = conditional.ConditionFunc()
+			conditionFunc = conditional.Condition()
 		}
 	}
 
@@ -85,13 +85,13 @@ func (b *MappingBuilder) Build() web.MiddlewareMapping {
 	return web.NewMiddlewareMapping(b.name, b.order, b.matcher, makeConditionalHandlerFunc(handlerFunc, conditionFunc))
 }
 
-func makeConditionalHandlerFunc(handlerFunc gin.HandlerFunc, conditionFunc web.MWConditionFunc) gin.HandlerFunc {
-	if conditionFunc == nil {
+func makeConditionalHandlerFunc(handlerFunc gin.HandlerFunc, condition web.RequestMatcher) gin.HandlerFunc {
+	if condition == nil {
 		return handlerFunc
 	}
 	
 	return func(c *gin.Context) {
-		if conditionFunc(c, c.Request) {
+		if matches, e := condition.MatchesWithContext(c, c.Request); e == nil && matches {
 			handlerFunc(c)
 		}
 	}

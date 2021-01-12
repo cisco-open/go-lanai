@@ -3,6 +3,7 @@ package template
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"errors"
+	"fmt"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
@@ -19,20 +20,35 @@ import (
 type ModelViewHandlerFunc web.MvcHandlerFunc
 
 type MappingBuilder struct {
-	name               string
-	path               string
-	method             string
-	handlerFunc       ModelViewHandlerFunc
+	name        string
+	path        string
+	method      string
+	condition   web.RequestMatcher
+	handlerFunc ModelViewHandlerFunc
 }
 
-func NewBuilder(names ...string) *MappingBuilder {
-	name := "unknown"
+func New(names ...string) *MappingBuilder {
+	var name string
 	if len(names) > 0 {
 		name = names[0]
 	}
 	return &MappingBuilder{
 		name: name,
+		method: web.MethodAny,
 	}
+}
+
+// Convenient Constructors
+func Any(path string) *MappingBuilder {
+	return New().Path(path).Method(web.MethodAny)
+}
+
+func Get(path string) *MappingBuilder {
+	return New().Get(path)
+}
+
+func Post(path string) *MappingBuilder {
+	return New().Post(path)
 }
 
 /*****************************
@@ -49,6 +65,11 @@ func (b *MappingBuilder) Path(path string) *MappingBuilder {
 
 func (b *MappingBuilder) Method(method string) *MappingBuilder {
 	b.method = method
+	return b
+}
+
+func (b *MappingBuilder) Condition(condition web.RequestMatcher) *MappingBuilder {
+	b.condition = condition
 	return b
 }
 
@@ -78,7 +99,7 @@ func (b *MappingBuilder) Build() web.TemplateMapping {
 ******************************/
 // TODO more validation and better error handling
 func (b *MappingBuilder) validate() (err error) {
-	if b.path == "" || b.method == "" {
+	if b.path == "" {
 		err = errors.New("empty Path")
 	}
 
@@ -89,9 +110,17 @@ func (b *MappingBuilder) validate() (err error) {
 }
 
 func (b *MappingBuilder) buildMapping() web.MvcMapping {
+	if b.method == "" {
+		b.method = web.MethodAny
+	}
+
+	if b.name == "" {
+		b.name = fmt.Sprintf("%s %s", b.method, b.path)
+	}
+
 	// For templated HTMLs, it's usually browser-to-service communication
 	// Since we don't usually need to do service-to-service communication,
-	//we don't need to appconfig request encoder and response decoder
+	//we don't need to apply config request encoder and response decoder
 	var e           endpoint.Endpoint
 	var decodeRequestFunc = httptransport.NopRequestDecoder
 	var encodeResponseFunc = ginTemplateEncodeResponseFunc
@@ -102,7 +131,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 		decodeRequestFunc = web.MakeGinBindingDecodeRequestFunc(metadata)
 	}
 
-	return web.NewMvcMapping(b.name, b.path, b.method,
+	return web.NewMvcMapping(b.name, b.path, b.method, b.condition,
 		e, decodeRequestFunc, nil,
 		nil, encodeResponseFunc,
 		TemplateErrorEncoder)

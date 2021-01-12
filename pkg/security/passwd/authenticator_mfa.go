@@ -34,21 +34,20 @@ func NewMFAVerifyAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaVerif
 	}
 }
 
-func (a *MfaVerifyAuthenticator) Authenticate(candidate security.Candidate) (auth security.Authentication, err error) {
+func (a *MfaVerifyAuthenticator) Authenticate(ctx context.Context, candidate security.Candidate) (auth security.Authentication, err error) {
 	verify, ok := candidate.(*MFAOtpVerification)
 	if !ok {
 		return nil, nil
 	}
 
 	// schedule post processing
-	var ctx context.Context
+	ctx = utils.MakeMutableContext(ctx)
 	var user security.Account
 	defer func() {
 		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
 	}()
 
 	// check if OTP verification should be performed
-	ctx = utils.NewMutableContext()
 	user, err = checkCurrentAuth(ctx, verify.CurrentAuth, a.accountStore)
 	if err != nil {
 		return
@@ -153,21 +152,20 @@ func NewMFARefreshAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *MfaRefr
 	}
 }
 
-func (a *MfaRefreshAuthenticator) Authenticate(candidate security.Candidate) (auth security.Authentication, err error) {
+func (a *MfaRefreshAuthenticator) Authenticate(ctx context.Context, candidate security.Candidate) (auth security.Authentication, err error) {
 	refresh, ok := candidate.(*MFAOtpRefresh)
 	if !ok {
 		return nil, nil
 	}
 
 	// schedule post processing
-	var ctx context.Context
+	ctx = utils.MakeMutableContext(ctx)
 	var user security.Account
 	defer func() {
 		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
 	}()
 
 	// check if OTP refresh should be performed
-	ctx = utils.NewMutableContext()
 	user, err = checkCurrentAuth(ctx, refresh.CurrentAuth, a.accountStore)
 	if err != nil {
 		return
