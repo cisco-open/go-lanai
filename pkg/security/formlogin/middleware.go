@@ -67,7 +67,7 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 			EnforceMFA: passwd.MFAModeOptional,
 		}
 		// Authenticate
-		auth, err := mw.authenticator.Authenticate(&candidate)
+		auth, err := mw.authenticator.Authenticate(ctx, &candidate)
 		if err != nil {
 			mw.handleError(ctx, err, &candidate)
 			return

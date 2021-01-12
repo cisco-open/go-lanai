@@ -59,7 +59,7 @@ func (mw *MfaAuthenticationMiddleware) OtpVerifyHandlerFunc() gin.HandlerFunc {
 		}
 
 		// authenticate
-		auth, err := mw.authenticator.Authenticate(&candidate)
+		auth, err := mw.authenticator.Authenticate(ctx, &candidate)
 		if err != nil {
 			mw.handleError(ctx, err, &candidate)
 			return
@@ -81,7 +81,7 @@ func (mw *MfaAuthenticationMiddleware) OtpRefreshHandlerFunc() gin.HandlerFunc {
 		}
 
 		// authenticate
-		auth, err := mw.authenticator.Authenticate(&candidate)
+		auth, err := mw.authenticator.Authenticate(ctx, &candidate)
 		if err != nil {
 			mw.handleError(ctx, err, &candidate)
 			return

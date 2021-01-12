@@ -58,21 +58,20 @@ func NewAuthenticator(optionFuncs...AuthenticatorOptionsFunc) *Authenticator {
 	}
 }
 
-func (a *Authenticator) Authenticate(candidate security.Candidate) (auth security.Authentication, err error) {
+func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Candidate) (auth security.Authentication, err error) {
 	upp, ok := candidate.(*UsernamePasswordPair)
 	if !ok {
 		return nil, nil
 	}
 
 	// schedule post processing
-	var ctx context.Context
+	ctx = utils.MakeMutableContext(ctx)
 	var user security.Account
 	defer func() {
 		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
 	}()
 
 	// Search user in the slice of allowed credentials
-	ctx = utils.NewMutableContext()
 	user, e := a.accountStore.LoadAccountByUsername(ctx, upp.Username)
 	if e != nil {
 		err = security.NewUsernameNotFoundError(MessageUserNotFound, e)

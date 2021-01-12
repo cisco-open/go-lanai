@@ -58,7 +58,7 @@ func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 			Password: pair[1],
 		}
 		// Search auth in the slice of allowed credentials
-		auth, err := basic.authenticator.Authenticate(&candidate)
+		auth, err := basic.authenticator.Authenticate(ctx, &candidate)
 		if err != nil {
 			basic.handleError(ctx, err)
 			return

@@ -21,7 +21,7 @@ type Authenticator interface {
 	// Authenticate function takes the Candidate and authenticate it.
 	// if the Candidate type is not supported, return nil,nil
 	// if the Candidate is rejected, non-nil error, and the returned Authentication is ignored
-	Authenticate(Candidate) (Authentication, error)
+	Authenticate(context.Context, Candidate) (Authentication, error)
 }
 
 // AuthenticationSuccessHandler handles authentication success event
@@ -44,9 +44,9 @@ func NewAuthenticator(authenticators ...Authenticator) Authenticator {
 	return ret
 }
 
-func (a *CompositeAuthenticator) Authenticate(candidate Candidate) (auth Authentication, err error) {
+func (a *CompositeAuthenticator) Authenticate(ctx context.Context, candidate Candidate) (auth Authentication, err error) {
 	for _,authenticator := range a.authenticators {
-		auth, err = authenticator.Authenticate(candidate)
+		auth, err = authenticator.Authenticate(ctx, candidate)
 		if auth != nil || err != nil {
 			return
 		}
