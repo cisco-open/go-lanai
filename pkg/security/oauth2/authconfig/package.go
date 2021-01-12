@@ -1,4 +1,4 @@
-package authorize
+package authconfig
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -8,7 +8,7 @@ import (
 
 //goland:noinspection GoNameStartsWithPackageName
 var OAuth2AuthorizeModule = &bootstrap.Module{
-	Name: "oauth2 authorization",
+	Name: "oauth2 authconfig",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
 		fx.Invoke(register),
@@ -21,5 +21,5 @@ func init() {
 
 func register(init security.Registrar) {
 	configurer := newOAuth2AuthConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	init.(security.FeatureRegistrar).RegisterFeature(OAuth2TokenFeatureId, configurer)
 }

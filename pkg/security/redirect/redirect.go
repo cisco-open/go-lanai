@@ -81,8 +81,10 @@ func (ep *RedirectHandler) doRedirect(c context.Context, r *http.Request, rw htt
 	// save flashes
 	if flashes != nil && len(flashes) != 0 {
 		s := session.Get(c)
-		for k,v := range flashes {
-			s.AddFlash(v, k)
+		if s != nil {
+			for k,v := range flashes {
+				s.AddFlash(v, k)
+			}
 		}
 	}
 
