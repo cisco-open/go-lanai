@@ -90,10 +90,6 @@ func (mw *MfaAuthenticationMiddleware) OtpRefreshHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-func (mw *MfaAuthenticationMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
-	return notFoundHandlerFunc
-}
-
 func (mw *MfaAuthenticationMiddleware) currentAuth(ctx *gin.Context) (passwd.UsernamePasswordAuthentication, error) {
 	if currentAuth, ok := security.Get(ctx).(passwd.UsernamePasswordAuthentication); !ok || !currentAuth.IsMFAPending() {
 		return nil, security.NewAccessDeniedError("MFA is not in progess")

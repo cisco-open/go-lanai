@@ -50,7 +50,7 @@ func NewAccountsProperties() *AccountsProperties {
 func BindAccountsProperties(ctx *bootstrap.ApplicationContext) AccountsProperties {
 	props := NewAccountsProperties()
 	if err := ctx.Config().Bind(props, InmemoryAccountsPropertiesPrefix); err != nil {
-		panic(errors.Wrap(err, "failed to bind SessionProperties"))
+		panic(errors.Wrap(err, "failed to bind AccountsProperties"))
 	}
 	return *props
 }
@@ -64,7 +64,7 @@ func NewAccountPoliciesProperties() *AccountPoliciesProperties {
 func BindAccountPoliciesProperties(ctx *bootstrap.ApplicationContext) AccountPoliciesProperties {
 	props := NewAccountPoliciesProperties()
 	if err := ctx.Config().Bind(props, InmemoryAccountsPropertiesPrefix); err != nil {
-		panic(errors.Wrap(err, "failed to bind SessionProperties"))
+		panic(errors.Wrap(err, "failed to bind AccountPoliciesProperties"))
 	}
 	return *props
 }

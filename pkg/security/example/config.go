@@ -3,7 +3,6 @@ package example
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
@@ -21,23 +20,23 @@ type TestSecurityConfigurer struct {
 	accountStore security.AccountStore
 }
 
-func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
-
-	// DSL style example
-	// for REST API
-	ws.Route(matcher.RouteWithPattern("/api/**")).
-		Condition(matcher.RequestWithHost("localhost:8080")).
-		//With(session.New()).
-		With(passwd.New().
-			AccountStore(c.accountStore).
-			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
-		).
-		With(access.New().
-			Request(matcher.AnyRequest()).Authenticated(),
-		).
-		With(basicauth.New()).
-		With(errorhandling.New())
-}
+//func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
+//
+//	// DSL style example
+//	// for REST API
+//	ws.Route(matcher.RouteWithPattern("/api/**")).
+//		Condition(matcher.RequestWithHost("localhost:8080")).
+//		//With(session.New()).
+//		With(passwd.New().
+//			AccountStore(c.accountStore).
+//			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
+//		).
+//		With(access.New().
+//			Request(matcher.AnyRequest()).Authenticated(),
+//		).
+//		With(basicauth.New()).
+//		With(errorhandling.New())
+//}
 
 
 type AnotherSecurityConfigurer struct {

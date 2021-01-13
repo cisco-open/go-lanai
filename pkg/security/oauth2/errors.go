@@ -25,6 +25,8 @@ const (
 	_ = iota
 	ErrorCodeGranterNotAvalable = ErrorSubTypeCodeOAuth2Auth + iota
 	ErrorCodeInvalidTokenRequest
+	ErrorCodeClientNotFound
+	ErrorCodeInvalidClientCredentials
 )
 
 // ErrorSubTypeCodeOAuth2Res
@@ -57,6 +59,14 @@ func NewGranterNotAvailableError(value interface{}, causes...interface{}) error 
 
 func NewInvalidTokenRequestError(value interface{}, causes...interface{}) error {
 	return security.NewCodedError(ErrorCodeInvalidTokenRequest, value, causes...)
+}
+
+func NewInvalidClientCredentialsError(value interface{}, causes...interface{}) error {
+	return security.NewCodedError(ErrorCodeInvalidClientCredentials, value, causes...)
+}
+
+func NewClientNotFoundError(value interface{}, causes...interface{}) error {
+	return security.NewCodedError(ErrorCodeClientNotFound, value, causes...)
 }
 
 /* OAuth2Res family */

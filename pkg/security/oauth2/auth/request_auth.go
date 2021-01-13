@@ -37,7 +37,7 @@ func NewAuthorizeRequest(req *http.Request) *AuthorizeRequest {
 	}
 }
 
-func parseAuthorizeRequest(req *http.Request) (*AuthorizeRequest, error) {
+func ParseAuthorizeRequest(req *http.Request) (*AuthorizeRequest, error) {
 	if err := req.ParseForm(); err != nil {
 		return nil, err
 	}

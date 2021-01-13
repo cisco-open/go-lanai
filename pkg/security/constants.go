@@ -35,7 +35,7 @@ const (
 	MWOrderFormAuth
 	// ... TODO more MW goes here
 	MWOrderAccessControl = LowestMiddlewareOrder - 200
-	MWOrderOAuth2Endpoints = LowestMiddlewareOrder - 100
+	MWOrderOAuth2Endpoints = MWOrderAccessControl + 100
 )
 
 // Feature Orders, if feature is not listed here, it's unordered. Unordered features are applied at last
@@ -43,11 +43,10 @@ const (
 	_ = iota
 	FeatureOrderAuthenticator = iota * 100
 	FeatureOrderBasicAuth
-	FeatureOrderOAuth2AuthEndpoint
-	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderMFA
 	FeatureOrderFormLogin
 	FeatureOrderLogout
+	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderCsrf
 	FeatureOrderAccess
 	FeatureOrderSession

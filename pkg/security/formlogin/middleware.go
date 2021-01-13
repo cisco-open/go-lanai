@@ -4,9 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type FormAuthenticationMiddleware struct {
@@ -76,10 +74,6 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 	}
 }
 
-func (mw *FormAuthenticationMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
-	return notFoundHandlerFunc
-}
-
 func (mw *FormAuthenticationMiddleware) handleSuccess(c *gin.Context, before, new security.Authentication) {
 	if new != nil {
 		c.Set(gin.AuthUserKey, new.Principal())
@@ -101,8 +95,4 @@ func (mw *FormAuthenticationMiddleware) handleError(c *gin.Context, err error, c
 	}
 	_ = c.Error(err)
 	c.Abort()
-}
-
-func notFoundHandlerFunc(c *gin.Context) {
-	_ = c.AbortWithError(http.StatusNotFound, fmt.Errorf("page not found"))
 }

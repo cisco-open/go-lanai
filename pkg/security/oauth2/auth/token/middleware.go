@@ -1,30 +1,29 @@
-package auth
+package token
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"fmt"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 /***********************
 	Token Endpoint
  ***********************/
 type TokenEndpointMiddleware struct {
-	granter TokenGranter
+	granter     auth.TokenGranter
 	//TODO
 }
 
 type TokenEndpointOptionsFunc func(*TokenEndpointOptions)
 
 type TokenEndpointOptions struct {
-	Granter *CompositeTokenGranter
+	Granter     *auth.CompositeTokenGranter
 }
 
 func NewTokenEndpointMiddleware(optionFuncs...TokenEndpointOptionsFunc) *TokenEndpointMiddleware {
 	opts := TokenEndpointOptions{
-		Granter: NewCompositeTokenGranter(),
+		Granter: auth.NewCompositeTokenGranter(),
 	}
 	for _, optFunc := range optionFuncs {
 		if optFunc != nil {
@@ -39,7 +38,7 @@ func NewTokenEndpointMiddleware(optionFuncs...TokenEndpointOptionsFunc) *TokenEn
 func (mw *TokenEndpointMiddleware) TokenHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO
-		tokenReuqest, e := parseTokenRequest(ctx.Request)
+		tokenReuqest, e := auth.ParseTokenRequest(ctx.Request)
 		if e != nil {
 			mw.handleError(ctx, oauth2.NewInvalidTokenRequestError("invalid token request", e))
 			return
@@ -55,10 +54,6 @@ func (mw *TokenEndpointMiddleware) TokenHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-func (mw *TokenEndpointMiddleware) EndpointHandlerFunc() gin.HandlerFunc {
-	return notFoundHandlerFunc
-}
-
 // TODO
 func (mw *TokenEndpointMiddleware) handleSuccess(c *gin.Context, v interface{}) {
 	c.JSON(200, v)
@@ -70,8 +65,4 @@ func (mw *TokenEndpointMiddleware) handleError(c *gin.Context, err error) {
 	security.Clear(c)
 	_ = c.Error(err)
 	c.Abort()
-}
-
-func notFoundHandlerFunc(c *gin.Context) {
-	_ = c.AbortWithError(http.StatusNotFound, fmt.Errorf("page not found"))
 }

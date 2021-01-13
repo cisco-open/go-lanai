@@ -113,7 +113,7 @@ func (c *DefaultOAuth2Client) MaxTokensPerUser() int {
 }
 
 /** security.Account **/
-func (c *DefaultOAuth2Client) ID() string {
+func (c *DefaultOAuth2Client) ID() interface{} {
 	return c.ClientDetails.ClientId
 }
 

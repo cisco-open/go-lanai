@@ -28,7 +28,7 @@ func NewTokenRequest(req *http.Request) *TokenRequest {
 	}
 }
 
-func parseTokenRequest(req *http.Request) (*TokenRequest, error) {
+func ParseTokenRequest(req *http.Request) (*TokenRequest, error) {
 	if err := req.ParseForm(); err != nil {
 		return nil, err
 	}
