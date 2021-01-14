@@ -1,4 +1,4 @@
-package token
+package grants
 
 import (
 	"context"
@@ -16,6 +16,7 @@ func NewClientCredentialsGranter() *ClientCredentialsGranter {
 }
 
 func (g *ClientCredentialsGranter) Grant(ctx context.Context, request *auth.TokenRequest) (oauth2.AccessToken, error) {
-	return nil, oauth2.NewInvalidTokenRequestError("invalid token request")
+	//return nil, oauth2.NewInvalidTokenRequestError("invalid token request")
+	return oauth2.NewDefaultAccessToken("TODO"), nil
 }
 

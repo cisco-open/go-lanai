@@ -27,6 +27,9 @@ const (
 	ErrorCodeInvalidTokenRequest
 	ErrorCodeClientNotFound
 	ErrorCodeInvalidClientCredentials
+	ErrorCodeInvalidGrant
+	ErrorCodeInvalidScope
+	ErrorCodeInvalidRedirectUri
 )
 
 // ErrorSubTypeCodeOAuth2Res
@@ -67,6 +70,18 @@ func NewInvalidClientCredentialsError(value interface{}, causes...interface{}) e
 
 func NewClientNotFoundError(value interface{}, causes...interface{}) error {
 	return security.NewCodedError(ErrorCodeClientNotFound, value, causes...)
+}
+
+func NewInvalidGrantError(value interface{}, causes...interface{}) error {
+	return security.NewCodedError(ErrorCodeInvalidGrant, value, causes...)
+}
+
+func NewInvalidScopeError(value interface{}, causes...interface{}) error {
+	return security.NewCodedError(ErrorCodeInvalidScope, value, causes...)
+}
+
+func NewInvalidRedirectUriError(value interface{}, causes...interface{}) error {
+	return security.NewCodedError(ErrorCodeInvalidRedirectUri, value, causes...)
 }
 
 /* OAuth2Res family */

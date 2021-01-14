@@ -15,7 +15,6 @@ type OAuth2Client interface {
 	Secret() string
 	GrantTypes() utils.StringSet
 	RedirectUris() utils.StringSet
-	Scoped() bool
 	Scopes() utils.StringSet
 	AutoApproveScopes() utils.StringSet
 	AccessTokenValidity() time.Duration
@@ -78,10 +77,6 @@ func (c *DefaultOAuth2Client) GrantTypes() utils.StringSet {
 
 func (c *DefaultOAuth2Client) RedirectUris() utils.StringSet {
 	return c.ClientDetails.RedirectUris
-}
-
-func (c *DefaultOAuth2Client) Scoped() bool {
-	return c.ClientDetails.Scopes != nil && len(c.ClientDetails.Scopes) != 0
 }
 
 func (c *DefaultOAuth2Client) Scopes() utils.StringSet {
