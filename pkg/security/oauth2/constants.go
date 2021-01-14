@@ -21,6 +21,10 @@ const (
 )
 
 const (
+	ExtensionAuthenticatedClient = "kAuthenticatedClient"
+)
+
+const (
 	GrantTypeClientCredentials = "client_credentials"
 	GrantTypePassword = "password"
 	GrantTypeAuthCode = "authorization_code"

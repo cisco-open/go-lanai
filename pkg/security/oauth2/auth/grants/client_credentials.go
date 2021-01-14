@@ -16,7 +16,18 @@ func NewClientCredentialsGranter() *ClientCredentialsGranter {
 }
 
 func (g *ClientCredentialsGranter) Grant(ctx context.Context, request *auth.TokenRequest) (oauth2.AccessToken, error) {
-	//return nil, oauth2.NewInvalidTokenRequestError("invalid token request")
+	if oauth2.GrantTypeClientCredentials != request.GrantType {
+		return nil, nil
+	}
+
+	client := auth.RetrieveAuthenticatedClient(ctx)
+
+	// check scope
+	if e := auth.ValidateScope(ctx, request, client); e != nil {
+		return nil, e
+	}
+
+	// TODO create real token
 	return oauth2.NewDefaultAccessToken("TODO"), nil
 }
 

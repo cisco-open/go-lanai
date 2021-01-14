@@ -39,6 +39,11 @@ func (f *TokenFeature) Path(path string) *TokenFeature {
 }
 
 func (f *TokenFeature) AddGranter(granter auth.TokenGranter) *TokenFeature {
-	f.granters = append(f.granters, granter)
+	if composite, ok := granter.(*auth.CompositeTokenGranter); ok {
+		f.granters = append(f.granters, composite.Delegates()...)
+	} else {
+		f.granters = append(f.granters, granter)
+	}
+
 	return f
 }

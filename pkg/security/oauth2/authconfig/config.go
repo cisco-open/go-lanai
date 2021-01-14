@@ -3,6 +3,7 @@ package authconfig
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 )
 
@@ -31,6 +32,7 @@ type AuthorizationServerConfiguration struct {
 	ClientSecretEncoder passwd.PasswordEncoder
 	Endpoints           AuthorizationServerEndpoints
 	sharedErrorHandler  *auth.OAuth2ErrorHanlder
+	shardTokenGranter   auth.TokenGranter
 	// TODO
 }
 
@@ -48,5 +50,15 @@ func (c *AuthorizationServerConfiguration) errorHandler() *auth.OAuth2ErrorHanld
 	return c.sharedErrorHandler
 }
 
+func (c *AuthorizationServerConfiguration) tokenGranter() auth.TokenGranter {
+	if c.shardTokenGranter == nil {
+		c.shardTokenGranter = auth.NewCompositeTokenGranter(
+			grants.NewAuthorizationCodeGranter(),
+			grants.NewClientCredentialsGranter(),
+			grants.NewPasswordGranter(),
+		)
+	}
+	return c.shardTokenGranter
+}
 
 

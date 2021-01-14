@@ -41,3 +41,7 @@ func (g *CompositeTokenGranter) Add(granter TokenGranter) *CompositeTokenGranter
 	g.delegates = append(g.delegates, granter)
 	return g
 }
+
+func (g *CompositeTokenGranter) Delegates() []TokenGranter {
+	return g.delegates
+}
