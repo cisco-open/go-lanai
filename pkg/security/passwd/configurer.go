@@ -1,12 +1,10 @@
 package passwd
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
-	"sort"
-	"time"
 )
 
 var (
@@ -34,25 +32,25 @@ func (pac *PasswordAuthConfigurer) Apply(feature security.Feature, ws security.W
 	}
 	f := feature.(*PasswordAuthFeature)
 
-	// options
-	defaultOpts := pac.defaultOptions(f)
-	var mfaOpts AuthenticatorOptionsFunc
-	if f.mfaEnabled {
-		mfaOpts = pac.mfaOptions(f)
+	// Build authenticator
+	ctx := context.Background()
+	defaults := &builderDefaults{
+		accountStore: pac.accountStore,
+		passwordEncoder: pac.passwordEncoder,
+		redisClient: pac.redisClient,
+	}
+	authenticator, err := NewAuthenticatorBuilder(f, defaults).Build(ctx)
+	if err != nil {
+		return err
 	}
 
-	// username passowrd authenticator
-	auth := NewAuthenticator(defaultOpts, mfaOpts)
-	ws.Authenticator().(*security.CompositeAuthenticator).Add(auth)
-
-	// MFA
-	if f.mfaEnabled {
-		mfaVerify := NewMFAVerifyAuthenticator(defaultOpts, mfaOpts)
-		ws.Authenticator().(*security.CompositeAuthenticator).Add(mfaVerify)
-
-		mfaRefresh := NewMFARefreshAuthenticator(defaultOpts, mfaOpts)
-		ws.Authenticator().(*security.CompositeAuthenticator).Add(mfaRefresh)
+	// Add authenticator to WS, flatten if multiple
+	if composite, ok := authenticator.(*security.CompositeAuthenticator); ok {
+		ws.Authenticator().(*security.CompositeAuthenticator).Merge(composite)
+	} else {
+		ws.Authenticator().(*security.CompositeAuthenticator).Add(authenticator)
 	}
+
 	return nil
 }
 
@@ -68,84 +66,5 @@ func (pac *PasswordAuthConfigurer) validate(f *PasswordAuthFeature, ws security.
 	return nil
 }
 
-func (pac *PasswordAuthConfigurer) defaultOptions(f *PasswordAuthFeature) AuthenticatorOptionsFunc {
-	if f.accountStore == nil {
-		f.accountStore = pac.accountStore
-	}
 
-	if f.passwordEncoder == nil {
-		f.passwordEncoder = pac.passwordEncoder
-	}
 
-	decisionMakers := pac.prepareDecisionMakers(f)
-	processors := pac.preparePostProcessors(f)
-
-	return func(opts *AuthenticatorOptions) {
-		opts.AccountStore = f.accountStore
-		if f.passwordEncoder != nil {
-			opts.PasswordEncoder = f.passwordEncoder
-		}
-		opts.Checkers = decisionMakers
-		opts.PostProcessors = processors
-	}
-}
-
-func (pac *PasswordAuthConfigurer) mfaOptions(f *PasswordAuthFeature) AuthenticatorOptionsFunc {
-	if !f.mfaEnabled {
-		return func(*AuthenticatorOptions) {}
-	}
-
-	if f.otpTTL <= 0 {
-		f.otpTTL = 10 * time.Minute
-	}
-
-	if f.otpVerifyLimit <= 0 {
-		f.otpVerifyLimit = 3
-	}
-
-	if f.otpRefreshLimit <= 0 {
-		f.otpRefreshLimit = 3
-	}
-
-	otpManager := newTotpManager(func(s *totpManager) {
-		s.ttl = f.otpTTL
-		s.maxVerifyLimit = f.otpVerifyLimit
-		s.maxRefreshLimit = f.otpRefreshLimit
-		if pac.redisClient != nil {
-			s.store = newRedisOtpStore(pac.redisClient)
-		}
-	})
-
-	decisionMakers := pac.prepareDecisionMakers(f)
-	processors := pac.preparePostProcessors(f)
-
-	return func(opts *AuthenticatorOptions) {
-		opts.OTPManager = otpManager
-		sort.SliceStable(f.mfaEventListeners, func(i,j int) bool {
-			return order.OrderedFirstCompare(f.mfaEventListeners[i], f.mfaEventListeners[j])
-		})
-		opts.MFAEventListeners = f.mfaEventListeners
-		opts.Checkers = decisionMakers
-		opts.PostProcessors = processors
-	}
-}
-
-func (pac *PasswordAuthConfigurer) prepareDecisionMakers(f *PasswordAuthFeature) []AuthenticationDecisionMaker {
-	// TODO maybe customizeble via Feature
-	acctStatusChecker := NewAccountStatusChecker(f.accountStore)
-	passwordChecker := NewPasswordPolicyChecker(f.accountStore)
-
-	return []AuthenticationDecisionMaker{
-		PreCredentialsCheck(acctStatusChecker),
-		FinalCheck(passwordChecker),
-	}
-}
-
-func (pac *PasswordAuthConfigurer) preparePostProcessors(f *PasswordAuthFeature) []PostAuthenticationProcessor {
-	// TODO maybe customizeble via Feature
-	return []PostAuthenticationProcessor{
-		NewPersistAccountPostProcessor(f.accountStore),
-		NewAccountStatusPostProcessor(f.accountStore),
-		NewAccountLockingPostProcessor(f.accountStore),
-	}
-}
