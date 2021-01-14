@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
+	"net/http"
 )
 
 var (
@@ -29,9 +30,6 @@ func (c *TokenEndpointConfigurer) Apply(feature security.Feature, ws security.We
 		return err
 	}
 
-	// set route
-	ws.Route(matcher.RouteWithPattern(f.path))
-
 	//TODO prepare middlewares
 	tokenMw := NewTokenEndpointMiddleware(func(opts *TokenEndpointOptions) {
 		opts.Granter = auth.NewCompositeTokenGranter(f.granters...)
@@ -39,6 +37,7 @@ func (c *TokenEndpointConfigurer) Apply(feature security.Feature, ws security.We
 
 	// install middlewares
 	tokenMapping := middleware.NewBuilder("token endpoint").
+		ApplyTo(matcher.RouteWithPattern(f.path, http.MethodPost)).
 		Order(security.MWOrderOAuth2Endpoints).
 		Use(tokenMw.TokenHandlerFunc())
 

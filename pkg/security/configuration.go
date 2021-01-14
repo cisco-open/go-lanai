@@ -41,11 +41,13 @@ type Initializer interface {
     specifying web security specs
 *****************************************/
 // MiddlewareTemplate is partially configured middleware.MappingBuilder.
-// it holds the middleware's gin.HandlerFunc and its order
+// it holds the middleware's gin.HandlerFunc and order
+// if its route matcher and condition is not set, WebSecurity would make it matches WebSecurity's own values
 type MiddlewareTemplate *middleware.MappingBuilder
 
-// SimpleHandlerTemplate is partially configured mapping.MappingBuilder
-// it holds the simple mapping's gin.HandlerFunc and its order
+// SimpleMappingTemplate is partially configured mapping.MappingBuilder
+// it holds the simple mapping's path, gin.HandlerFunc and order
+// if its condition is not set, WebSecurity would make it matches WebSecurity's own values
 type SimpleMappingTemplate *mapping.MappingBuilder
 
 // FeatureIdentifier is unique for each feature.

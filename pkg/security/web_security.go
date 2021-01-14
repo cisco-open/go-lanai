@@ -180,9 +180,12 @@ func (ws *webSecurity) buildFromMiddlewareTemplate(tmpl MiddlewareTemplate) web.
 	if ws.routeMatcher == nil {
 		ws.routeMatcher = matcher.AnyRoute()
 	}
-	builder = builder.ApplyTo(ws.routeMatcher)
 
-	if ws.conditionMatcher != nil {
+	if builder.GetRouteMatcher() == nil {
+		builder = builder.ApplyTo(ws.routeMatcher)
+	}
+
+	if ws.conditionMatcher != nil && builder.GetCondition() == nil {
 		builder = builder.WithCondition(ws.conditionMatcher)
 	}
 	return builder.Build()
@@ -194,7 +197,7 @@ func (ws *webSecurity) buildFromSimpleMappingTemplate(tmpl SimpleMappingTemplate
 		ws.routeMatcher = matcher.AnyRoute()
 	}
 
-	if ws.conditionMatcher != nil {
+	if ws.conditionMatcher != nil && builder.GetCondition() == nil {
 		builder = builder.Condition(ws.conditionMatcher)
 	}
 	return builder.Build()

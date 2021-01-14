@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	PasswordAuthenticatorFeatureId = security.PriorityFeatureId("passwdAuth", security.FeatureOrderAuthenticator)
+	PasswordAuthenticatorFeatureId = security.FeatureId("passwdAuth", security.FeatureOrderAuthenticator)
 )
 
 type PasswordAuthConfigurer struct {

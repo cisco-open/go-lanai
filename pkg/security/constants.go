@@ -42,12 +42,13 @@ const (
 // Feature Orders, if feature is not listed here, it's unordered. Unordered features are applied at last
 const (
 	_ = iota * 100
+	FeatureOrderOAuth2ClientAuth
 	FeatureOrderAuthenticator
-	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderBasicAuth
 	FeatureOrderMFA
 	FeatureOrderFormLogin
 	FeatureOrderLogout
+	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderCsrf
 	FeatureOrderAccess
 	FeatureOrderSession

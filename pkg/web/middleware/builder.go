@@ -85,6 +85,28 @@ func (b *MappingBuilder) Build() web.MiddlewareMapping {
 	return web.NewMiddlewareMapping(b.name, b.order, b.matcher, makeConditionalHandlerFunc(handlerFunc, conditionFunc))
 }
 
+/*****************************
+	Getters
+******************************/
+func (b *MappingBuilder) GetRouteMatcher() web.RouteMatcher {
+	return b.matcher
+}
+
+func (b *MappingBuilder) GetCondition() web.RequestMatcher {
+	return b.condition
+}
+
+func (b *MappingBuilder) GetName() string {
+	return b.name
+}
+
+func (b *MappingBuilder) GetOrder() int {
+	return b.order
+}
+
+/*****************************
+	Helpers
+******************************/
 func makeConditionalHandlerFunc(handlerFunc gin.HandlerFunc, condition web.RequestMatcher) gin.HandlerFunc {
 	if condition == nil {
 		return handlerFunc
