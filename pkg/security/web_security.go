@@ -16,9 +16,10 @@ type webSecurity struct {
 	conditionMatcher web.RequestMatcher
 	handlers         []interface{}
 	features         []Feature
-	applied          map[FeatureIdentifier]struct{}
 	shared           map[string]interface{}
 	authenticator    Authenticator
+	applied          map[FeatureIdentifier]struct{}
+	featuresChanged  bool
 }
 
 func newWebSecurity(authenticator Authenticator, shared map[string]interface{}) *webSecurity {
@@ -111,6 +112,7 @@ func (ws *webSecurity) Enable(f Feature) Feature {
 		// already have this feature
 		return ws.features[i]
 	}
+	ws.featuresChanged = true
 	ws.features = append(ws.features, f)
 	return f
 }
@@ -118,6 +120,7 @@ func (ws *webSecurity) Enable(f Feature) Feature {
 func (ws *webSecurity) Disable(f Feature) {
 	if i := findFeatureIndex(ws.features, f); i >= 0 {
 		// already have this feature
+		ws.featuresChanged = true
 		copy(ws.features[i:], ws.features[i + 1:])
 		ws.features[len(ws.features) - 1] = nil
 		ws.features = ws.features[:len(ws.features) - 1]

@@ -27,7 +27,7 @@ func Use() {
 }
 
 func configureSecurity(init security.Registrar, store security.AccountStore) {
-
+	init.Register(&TestSecurityConfigurer { accountStore: store })
 	init.Register(&AnotherSecurityConfigurer { })
 	init.Register(&ErrorPageSecurityConfigurer{})
 }
