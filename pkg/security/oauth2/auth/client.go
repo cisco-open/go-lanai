@@ -1,4 +1,4 @@
-package authorize
+package auth
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
@@ -15,7 +15,6 @@ type OAuth2Client interface {
 	Secret() string
 	GrantTypes() utils.StringSet
 	RedirectUris() utils.StringSet
-	Scoped() bool
 	Scopes() utils.StringSet
 	AutoApproveScopes() utils.StringSet
 	AccessTokenValidity() time.Duration
@@ -80,10 +79,6 @@ func (c *DefaultOAuth2Client) RedirectUris() utils.StringSet {
 	return c.ClientDetails.RedirectUris
 }
 
-func (c *DefaultOAuth2Client) Scoped() bool {
-	return c.ClientDetails.Scopes != nil && len(c.ClientDetails.Scopes) != 0
-}
-
 func (c *DefaultOAuth2Client) Scopes() utils.StringSet {
 	return c.ClientDetails.Scopes
 }
@@ -113,7 +108,7 @@ func (c *DefaultOAuth2Client) MaxTokensPerUser() int {
 }
 
 /** security.Account **/
-func (c *DefaultOAuth2Client) ID() string {
+func (c *DefaultOAuth2Client) ID() interface{} {
 	return c.ClientDetails.ClientId
 }
 

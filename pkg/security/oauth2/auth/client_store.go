@@ -1,4 +1,4 @@
-package authorize
+package auth
 
 import (
 	"context"

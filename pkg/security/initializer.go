@@ -126,22 +126,36 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder
 	configurer.Configure(ws)
 
 	// configure web security
-	features := ws.Features()
-	sort.Slice(features, func(i,j int) bool {
-		return order.OrderedFirstCompare(features[i].Identifier(), features[j].Identifier())
-	})
+	// Note: We want to allow feature's configurer to add/remove other features while in the iteration.
+	//		 Adding/removing features that have lower order than the current feature should panic
+	// 		 Doing so would result in performance reduction on iteration. But it's small price we are willing to pay
+	sortFeatures(ws.Features())
+	for i := 0; i < len(ws.Features()); i++ {
+		f := ws.Features()[i]
 
-	for _, f := range features {
+		// get corresponding feature configurer
 		fc, ok := init.featureConfigurers[f.Identifier()]
 		if !ok {
 			return nil, nil, fmt.Errorf("unable to build security feature %T: no FeatureConfigurer found", f)
 		}
 
-		err := fc.Apply(f, ws)
-		// mark applied
+		// mark/reset some flags
 		ws.applied[f.Identifier()] = struct{}{}
-		if err != nil {
-			return nil, nil, err
+		ws.featuresChanged = false
+
+		// apply configurer
+		if err := fc.Apply(f, ws); err != nil {
+			return nil, nil, fmt.Errorf("Error during process WebSecurity [%v]: %v", ws, err)
+		}
+
+		// the applied configurer may have enabled more features. (ws.Features() is different)
+		if !ws.featuresChanged {
+			continue
+		}
+
+		// handle feature change
+		if err := init.handleFeaturesChanged(i, f, ws.Features()); err != nil {
+			return nil, nil, fmt.Errorf("Error during process WebSecurity [%v]: %v", ws, err)
 		}
 	}
 
@@ -155,6 +169,34 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder
 	}
 
 	return ws, processors, nil
+}
+
+// handleFeaturesChanged is invoked if feature list changed during iteration.
+// we need to
+// 	1. check if current feature's index didn't change (in case elements before current were removed)
+// 	2. re-sort the remaining (un-processed) features from current index
+// 	3. check if any remaining features (likely newly added) has lower order than current
+func (init *initializer) handleFeaturesChanged(i int, f Feature, features []Feature) error {
+	if i == len(features) - 1 {
+		// last one, nothing is needed
+		return nil
+	}
+
+	// step 1
+	if features[i] != f {
+		return fmt.Errorf("feature configurer for [%v] attempted to disable already applied features", f.Identifier())
+	}
+
+	// step 2
+	sortFeatures(features[i+1:])
+
+	// step 3
+	next := features[i+1]
+	if featureOrderLess(next, f) {
+		return fmt.Errorf("feature configurer for [%v] attempted to enable feature [%v] which won't be processed", f.Identifier(), next.Identifier())
+	}
+
+	return nil
 }
 
 func (init *initializer) process(ws *webSecurity) error {
@@ -184,6 +226,16 @@ func hasConcreteAuthenticator(auth Authenticator) bool {
 
 	composite, ok := auth.(*CompositeAuthenticator)
 	return !ok || len(composite.authenticators) != 0
+}
+
+func sortFeatures(features []Feature) {
+	sort.Slice(features, func(i,j int) bool {
+		return featureOrderLess(features[i], features[j])
+	})
+}
+
+func featureOrderLess(l Feature, r Feature) bool {
+	return order.OrderedFirstCompare(l.Identifier(), r.Identifier())
 }
 
 

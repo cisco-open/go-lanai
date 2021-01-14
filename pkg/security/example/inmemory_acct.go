@@ -15,14 +15,14 @@ var (
 )
 
 // in memory security.AccountStore
-type InMemoryStore struct {
+type InMemoryAccountStore struct {
 	accountLookupByUsername map[string]*passwd.UsernamePasswordAccount
 	accountLookupById       map[interface{}]*passwd.UsernamePasswordAccount
 	policiesLookupByName    map[string]*PropertiesBasedAccountPolicy
 }
 
-func NewInMemoryStore(acctProps AccountsProperties, acctPolicyProps AccountPoliciesProperties) security.AccountStore {
-	store := InMemoryStore{
+func NewInMemoryAccountStore(acctProps AccountsProperties, acctPolicyProps AccountPoliciesProperties) security.AccountStore {
+	store := InMemoryAccountStore{
 		accountLookupByUsername: map[string]*passwd.UsernamePasswordAccount{},
 		accountLookupById:       map[interface{}]*passwd.UsernamePasswordAccount{},
 		policiesLookupByName:    map[string]*PropertiesBasedAccountPolicy{},
@@ -43,7 +43,7 @@ func NewInMemoryStore(acctProps AccountsProperties, acctPolicyProps AccountPolic
 	return &store
 }
 
-func (store *InMemoryStore) Save(ctx context.Context, acct security.Account) error {
+func (store *InMemoryAccountStore) Save(ctx context.Context, acct security.Account) error {
 	if userAcct, ok := acct.(*passwd.UsernamePasswordAccount); ok {
 		store.accountLookupById[userAcct.ID()] = userAcct
 		store.accountLookupByUsername[userAcct.Username()] = userAcct
@@ -51,7 +51,7 @@ func (store *InMemoryStore) Save(ctx context.Context, acct security.Account) err
 	return nil
 }
 
-func (store *InMemoryStore) LoadAccountById(_ context.Context, id interface{}) (security.Account, error) {
+func (store *InMemoryAccountStore) LoadAccountById(_ context.Context, id interface{}) (security.Account, error) {
 	u, ok := store.accountLookupById[id]
 	if !ok {
 		return nil, errors.New("user ID not found")
@@ -60,7 +60,7 @@ func (store *InMemoryStore) LoadAccountById(_ context.Context, id interface{}) (
 	return u, nil
 }
 
-func (store *InMemoryStore) LoadAccountByUsername(_ context.Context, username string) (security.Account, error) {
+func (store *InMemoryAccountStore) LoadAccountByUsername(_ context.Context, username string) (security.Account, error) {
 	u, ok := store.accountLookupByUsername[username]
 	if !ok {
 		return nil, errors.New("username not found")
@@ -69,7 +69,7 @@ func (store *InMemoryStore) LoadAccountByUsername(_ context.Context, username st
 	return u, nil
 }
 
-func (store *InMemoryStore) LoadLockingRules(ctx context.Context, acct security.Account) (security.AccountLockingRule, error) {
+func (store *InMemoryAccountStore) LoadLockingRules(ctx context.Context, acct security.Account) (security.AccountLockingRule, error) {
 	account, ok := acct.(*passwd.UsernamePasswordAccount)
 	if !ok {
 		return nil, errors.New("unsupported account")
@@ -89,7 +89,7 @@ func (store *InMemoryStore) LoadLockingRules(ctx context.Context, acct security.
 	return account, nil
 }
 
-func (store *InMemoryStore) LoadPwdAgingRules(ctx context.Context, acct security.Account) (security.AccountPwdAgingRule, error) {
+func (store *InMemoryAccountStore) LoadPwdAgingRules(ctx context.Context, acct security.Account) (security.AccountPwdAgingRule, error) {
 	ret, err := store.LoadLockingRules(ctx, acct)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (store *InMemoryStore) LoadPwdAgingRules(ctx context.Context, acct security
 }
 
 // Note, caching loaded policy in ctx is not needed for in-memory store. The implmenetation is for reference only
-func (store *InMemoryStore) tryLoadPolicy(ctx context.Context, account *passwd.UsernamePasswordAccount) (*PropertiesBasedAccountPolicy, error) {
+func (store *InMemoryAccountStore) tryLoadPolicy(ctx context.Context, account *passwd.UsernamePasswordAccount) (*PropertiesBasedAccountPolicy, error) {
 	ctxKey := contextKeyAccountPolicy + account.ID().(string)
 	policy, ok := ctx.Value(ctxKey).(*PropertiesBasedAccountPolicy)
 	if !ok {

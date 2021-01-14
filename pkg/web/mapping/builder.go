@@ -127,6 +127,25 @@ func (b *MappingBuilder) Build() web.SimpleMapping {
 }
 
 /*****************************
+	Getters
+******************************/
+func (b *MappingBuilder) GetPath() string {
+	return b.path
+}
+
+func (b *MappingBuilder) GetMethod() string {
+	return b.method
+}
+
+func (b *MappingBuilder) GetCondition() web.RequestMatcher {
+	return b.condition
+}
+
+func (b *MappingBuilder) GetName() string {
+	return b.name
+}
+
+/*****************************
 	Private
 ******************************/
 // TODO more validation and better error handling

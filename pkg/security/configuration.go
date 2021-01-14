@@ -1,8 +1,8 @@
 package security
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
 	"go.uber.org/fx"
@@ -41,11 +41,14 @@ type Initializer interface {
     specifying web security specs
 *****************************************/
 // MiddlewareTemplate is partially configured middleware.MappingBuilder.
-// it holds the middleware's gin.HandlerFunc and its order
+// it holds the middleware's gin.HandlerFunc and order
+// if its route matcher and condition is not set, WebSecurity would make it matches WebSecurity's own values
 type MiddlewareTemplate *middleware.MappingBuilder
 
-// MiddlewareCondition accept *http.Request and can be translated to web.MappingConditionFunc
-type MiddlewareCondition matcher.ChainableMatcher
+// SimpleMappingTemplate is partially configured mapping.MappingBuilder
+// it holds the simple mapping's path, gin.HandlerFunc and order
+// if its condition is not set, WebSecurity would make it matches WebSecurity's own values
+type SimpleMappingTemplate *mapping.MappingBuilder
 
 // FeatureIdentifier is unique for each feature.
 // Security initializer use this value to locate corresponding FeatureConfigurer

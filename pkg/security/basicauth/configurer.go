@@ -14,6 +14,7 @@ var (
 // We currently don't have any stuff to configure
 //goland:noinspection GoNameStartsWithPackageName
 type BasicAuthFeature struct {
+	entryPoint security.AuthenticationEntryPoint
 	// TODO we may want to override authenticator and other stuff
 }
 
@@ -32,7 +33,14 @@ func Configure(ws security.WebSecurity) *BasicAuthFeature {
 
 // Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func New() *BasicAuthFeature {
-	return &BasicAuthFeature{}
+	return &BasicAuthFeature{
+		entryPoint: NewBasicAuthEntryPoint(),
+	}
+}
+
+func (f *BasicAuthFeature) EntryPoint(entrypoint security.AuthenticationEntryPoint) *BasicAuthFeature {
+	f.entryPoint = entrypoint
+	return f
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -45,12 +53,17 @@ func newBasicAuthConfigurer() *BasicAuthConfigurer {
 	}
 }
 
-func (bac *BasicAuthConfigurer) Apply(_ security.Feature, ws security.WebSecurity) error {
+func (bac *BasicAuthConfigurer) Apply(f security.Feature, ws security.WebSecurity) error {
 
-	// configure other dependent features
-	errorhandling.Configure(ws).
-		AuthenticationEntryPoint(NewBasicAuthEntryPoint()).
-		AuthenticationErrorHandler(NewBasicAuthErrorHandler())
+	// additional error handling
+	errorHandler := ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler)
+	errorHandler.Add(NewBasicAuthErrorHandler())
+
+	// default is NewBasicAuthEntryPoint(). But security.Configurer have chance to overwrite it or unset it
+	if entrypoint := f.(*BasicAuthFeature).entryPoint; entrypoint != nil {
+		errorhandling.Configure(ws).
+			AuthenticationEntryPoint(entrypoint)
+	}
 
 	// configure middlewares
 	basicAuth := NewBasicAuthMiddleware(

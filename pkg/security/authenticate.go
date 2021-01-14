@@ -24,6 +24,10 @@ type Authenticator interface {
 	Authenticate(context.Context, Candidate) (Authentication, error)
 }
 
+type AuthenticatorBuilder interface {
+	Build(context.Context) (Authenticator, error)
+}
+
 // AuthenticationSuccessHandler handles authentication success event
 // The counterpart of this interface is AuthenticationErrorHandler
 type AuthenticationSuccessHandler interface {
@@ -144,3 +148,25 @@ func (h *CompositeAuthenticationSuccessHandler) removeSelf(items []Authenticatio
 	}
 	return items[:count]
 }
+
+// CompositeAuthenticatorBuilder implements AuthenticatorBuilder
+type CompositeAuthenticatorBuilder struct {
+	builders []AuthenticatorBuilder
+}
+
+func NewAuthenticatorBuilder() *CompositeAuthenticatorBuilder {
+	return &CompositeAuthenticatorBuilder{builders: []AuthenticatorBuilder{}}
+}
+
+func (b *CompositeAuthenticatorBuilder) Build(c context.Context) (Authenticator, error) {
+	authenticators := make([]Authenticator, len(b.builders))
+	for i, builder := range b.builders {
+		a, err := builder.Build(c)
+		if err != nil {
+			return nil, err
+		}
+		authenticators[i] = a
+	}
+	return NewAuthenticator(authenticators...), nil
+}
+

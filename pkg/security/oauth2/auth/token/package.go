@@ -1,4 +1,4 @@
-package authorize
+package token
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -7,8 +7,8 @@ import (
 )
 
 //goland:noinspection GoNameStartsWithPackageName
-var OAuth2AuthorizeModule = &bootstrap.Module{
-	Name: "oauth2 authorization",
+var Module = &bootstrap.Module{
+	Name: "oauth2 auth - token",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
 		fx.Invoke(register),
@@ -16,7 +16,7 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(OAuth2AuthorizeModule)
+	bootstrap.Register(Module)
 }
 
 func register(init security.Registrar) {

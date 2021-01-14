@@ -2,6 +2,7 @@ package security
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
@@ -15,9 +16,10 @@ type webSecurity struct {
 	conditionMatcher web.RequestMatcher
 	handlers         []interface{}
 	features         []Feature
-	applied          map[FeatureIdentifier]struct{}
 	shared           map[string]interface{}
 	authenticator    Authenticator
+	applied          map[FeatureIdentifier]struct{}
+	featuresChanged  bool
 }
 
 func newWebSecurity(authenticator Authenticator, shared map[string]interface{}) *webSecurity {
@@ -110,6 +112,7 @@ func (ws *webSecurity) Enable(f Feature) Feature {
 		// already have this feature
 		return ws.features[i]
 	}
+	ws.featuresChanged = true
 	ws.features = append(ws.features, f)
 	return f
 }
@@ -117,6 +120,7 @@ func (ws *webSecurity) Enable(f Feature) Feature {
 func (ws *webSecurity) Disable(f Feature) {
 	if i := findFeatureIndex(ws.features, f); i >= 0 {
 		// already have this feature
+		ws.featuresChanged = true
 		copy(ws.features[i:], ws.features[i + 1:])
 		ws.features[len(ws.features) - 1] = nil
 		ws.features = ws.features[:len(ws.features) - 1]
@@ -143,23 +147,21 @@ func (ws *webSecurity) Build() []web.Mapping {
 	for i, v := range ws.handlers {
 		var mapping web.Mapping
 
-		if _, ok := v.(MiddlewareTemplate); ok {
-			// non-interface types
+		switch v.(type) {
+		case MiddlewareTemplate:
 			mapping = ws.buildFromMiddlewareTemplate(v.(MiddlewareTemplate))
-		} else {
-			// interface types
-			switch v.(type) {
-			case web.SimpleMapping:
-				mapping = v.(web.SimpleMapping)
-			case web.StaticMapping:
-				mapping = v.(web.StaticMapping)
-			case web.MvcMapping:
-				mapping = v.(web.MvcMapping)
-			case web.MiddlewareMapping:
-				mapping = v.(web.MiddlewareMapping)
-			default:
-				panic(fmt.Errorf("unable to build security mappings from unsupported WebSecurity handler [%T]", v))
-			}
+		case SimpleMappingTemplate:
+			mapping = ws.buildFromSimpleMappingTemplate(v.(SimpleMappingTemplate))
+		case web.SimpleMapping:
+			mapping = v.(web.SimpleMapping)
+		case web.StaticMapping:
+			mapping = v.(web.StaticMapping)
+		case web.MvcMapping:
+			mapping = v.(web.MvcMapping)
+		case web.MiddlewareMapping:
+			mapping = v.(web.MiddlewareMapping)
+		default:
+			panic(fmt.Errorf("unable to build security mappings from unsupported WebSecurity handler [%T]", v))
 		}
 		mappings[i] = mapping
 	}
@@ -178,10 +180,25 @@ func (ws *webSecurity) buildFromMiddlewareTemplate(tmpl MiddlewareTemplate) web.
 	if ws.routeMatcher == nil {
 		ws.routeMatcher = matcher.AnyRoute()
 	}
-	builder = builder.ApplyTo(ws.routeMatcher)
 
-	if ws.conditionMatcher != nil {
+	if builder.GetRouteMatcher() == nil {
+		builder = builder.ApplyTo(ws.routeMatcher)
+	}
+
+	if ws.conditionMatcher != nil && builder.GetCondition() == nil {
 		builder = builder.WithCondition(ws.conditionMatcher)
+	}
+	return builder.Build()
+}
+
+func (ws *webSecurity) buildFromSimpleMappingTemplate(tmpl SimpleMappingTemplate) web.Mapping {
+	builder := (*mapping.MappingBuilder)(tmpl)
+	if ws.routeMatcher == nil {
+		ws.routeMatcher = matcher.AnyRoute()
+	}
+
+	if ws.conditionMatcher != nil && builder.GetCondition() == nil {
+		builder = builder.Condition(ws.conditionMatcher)
 	}
 	return builder.Build()
 }
@@ -189,14 +206,16 @@ func (ws *webSecurity) buildFromMiddlewareTemplate(tmpl MiddlewareTemplate) web.
 // toAcceptedHandler perform validation and some type casting on the interface
 func (ws *webSecurity) toAcceptedHandler(v interface{}) (interface{}, error) {
 		// non-interface types
-		if _, ok := v.(*middleware.MappingBuilder); ok {
-			return MiddlewareTemplate(v.(*middleware.MappingBuilder)), nil
-		} else if _, ok := v.(MiddlewareTemplate); ok {
-			return v, nil
+		if casted, ok := v.(*middleware.MappingBuilder); ok {
+			return MiddlewareTemplate(casted), nil
+		} else if casted, ok := v.(*mapping.MappingBuilder); ok {
+			return SimpleMappingTemplate(casted), nil
 		}
 
 		// interface types
 		switch v.(type) {
+		case MiddlewareTemplate:
+		case SimpleMappingTemplate:
 		case web.SimpleMapping:
 		case web.StaticMapping:
 		case web.MvcMapping:

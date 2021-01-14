@@ -17,5 +17,17 @@ const (
 	ParameterScope = "scope"
 	ParameterState = "state"
 	ParameterGrantType = "grant_type"
-	//Parameter = "state"
+	//Parameter = ""
+)
+
+const (
+	ExtensionAuthenticatedClient = "kAuthenticatedClient"
+)
+
+const (
+	GrantTypeClientCredentials = "client_credentials"
+	GrantTypePassword = "password"
+	GrantTypeAuthCode = "authorization_code"
+	GrantTypeImplicit = "implicit"
+	GrantTypeRefresh = "refresh_token"
 )

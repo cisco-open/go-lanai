@@ -2,6 +2,9 @@ package security
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 /***************************************
@@ -39,4 +42,8 @@ type FeatureRegistrar interface {
 	// not intended to be used directly in service
 	//
 	RegisterFeature(featureId FeatureIdentifier, featureConfigurer FeatureConfigurer)
+}
+
+func NoopHandlerFunc(c *gin.Context) {
+	_ = c.AbortWithError(http.StatusNotFound, fmt.Errorf("page not found"))
 }
