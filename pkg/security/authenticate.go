@@ -21,7 +21,11 @@ type Authenticator interface {
 	// Authenticate function takes the Candidate and authenticate it.
 	// if the Candidate type is not supported, return nil,nil
 	// if the Candidate is rejected, non-nil error, and the returned Authentication is ignored
-	Authenticate(Candidate) (Authentication, error)
+	Authenticate(context.Context, Candidate) (Authentication, error)
+}
+
+type AuthenticatorBuilder interface {
+	Build(context.Context) (Authenticator, error)
 }
 
 // AuthenticationSuccessHandler handles authentication success event
@@ -44,9 +48,9 @@ func NewAuthenticator(authenticators ...Authenticator) Authenticator {
 	return ret
 }
 
-func (a *CompositeAuthenticator) Authenticate(candidate Candidate) (auth Authentication, err error) {
+func (a *CompositeAuthenticator) Authenticate(ctx context.Context, candidate Candidate) (auth Authentication, err error) {
 	for _,authenticator := range a.authenticators {
-		auth, err = authenticator.Authenticate(candidate)
+		auth, err = authenticator.Authenticate(ctx, candidate)
 		if auth != nil || err != nil {
 			return
 		}
@@ -144,3 +148,25 @@ func (h *CompositeAuthenticationSuccessHandler) removeSelf(items []Authenticatio
 	}
 	return items[:count]
 }
+
+// CompositeAuthenticatorBuilder implements AuthenticatorBuilder
+type CompositeAuthenticatorBuilder struct {
+	builders []AuthenticatorBuilder
+}
+
+func NewAuthenticatorBuilder() *CompositeAuthenticatorBuilder {
+	return &CompositeAuthenticatorBuilder{builders: []AuthenticatorBuilder{}}
+}
+
+func (b *CompositeAuthenticatorBuilder) Build(c context.Context) (Authenticator, error) {
+	authenticators := make([]Authenticator, len(b.builders))
+	for i, builder := range b.builders {
+		a, err := builder.Build(c)
+		if err != nil {
+			return nil, err
+		}
+		authenticators[i] = a
+	}
+	return NewAuthenticator(authenticators...), nil
+}
+

@@ -13,7 +13,7 @@ import (
 var ErrNotLoaded = errors.New("Configuration not loaded")
 
 type config struct {
-	Providers     []Provider //such as yaml provider, commandline etc.
+	Providers     []Provider //such as yaml auth, commandline etc.
 	settings      map[string]interface{}
 	isLoaded 	  bool
 }
@@ -53,7 +53,7 @@ func (c *config) Load(force bool) (loadError error) {
 	//sort based on precedence
 	sort.SliceStable(c.Providers, func(i, j int) bool { return c.Providers[i].GetPrecedence() > c.Providers[j].GetPrecedence() })
 
-	// Load appconfig from each provider if it's not loaded yet, or if force reload.
+	// Load appconfig from each auth if it's not loaded yet, or if force reload.
 	for _, provider := range c.Providers {
 		if !provider.isLoaded() || force {
 			error := provider.Load()

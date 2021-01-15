@@ -58,7 +58,7 @@ func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 			Password: pair[1],
 		}
 		// Search auth in the slice of allowed credentials
-		auth, err := basic.authenticator.Authenticate(&candidate)
+		auth, err := basic.authenticator.Authenticate(ctx, &candidate)
 		if err != nil {
 			basic.handleError(ctx, err)
 			return
@@ -99,7 +99,6 @@ func (h *BasicAuthEntryPoint) Commence(c context.Context, r *http.Request, rw ht
 
 //goland:noinspection GoNameStartsWithPackageName
 type BasicAuthErrorHandler struct {
-	security.DefaultAuthenticationErrorHandler
 }
 
 func NewBasicAuthErrorHandler() *BasicAuthErrorHandler {
@@ -108,11 +107,9 @@ func NewBasicAuthErrorHandler() *BasicAuthErrorHandler {
 
 func (h *BasicAuthErrorHandler) HandleAuthenticationError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 	writeBasicAuthChallenge(rw, err)
-	h.DefaultAuthenticationErrorHandler.HandleAuthenticationError(c, r, rw, err)
 }
 
 func writeBasicAuthChallenge(rw http.ResponseWriter, err error) {
 	realm := "Basic realm=" + strconv.Quote("Authorization Required")
 	rw.Header().Set("WWW-Authenticate", realm)
-	rw.WriteHeader(http.StatusUnauthorized)
 }

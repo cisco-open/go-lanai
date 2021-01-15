@@ -3,7 +3,7 @@ package logout
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
@@ -46,7 +46,7 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	logout := NewLogoutMiddleware(flc.effectiveSuccessHandler(f, ws), f.logoutHandlers...)
 	mw := middleware.NewBuilder("form logout").
 		ApplyTo(route).
-		WithCondition(security.WebConditionFunc(f.condition)).
+		WithCondition(f.condition).
 		Order(security.MWOrderFormLogout).
 		Use(logout.LogoutHandlerFunc()).
 		Build()
@@ -55,7 +55,10 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 
 	// configure additional endpoint mappings to trigger middleware
 	for _,method := range supportedMethods {
-		endpoint := web.NewGenericMapping("logout dummy " + method, f.logoutUrl, method, logout.EndpointHandlerFunc())
+		endpoint := mapping.New("logout dummy " + method).
+			Method(method).Path(f.logoutUrl).
+			HandlerFunc(security.NoopHandlerFunc).
+			Build()
 		ws.Add(endpoint)
 	}
 	return nil

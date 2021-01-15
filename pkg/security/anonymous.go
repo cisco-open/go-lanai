@@ -1,5 +1,7 @@
 package security
 
+import "context"
+
 type AnonymousCandidate map[string]interface{}
 
 // security.Candidate
@@ -39,7 +41,7 @@ func (aa *AnonymousAuthentication) Details() interface{} {
 
 type AnonymousAuthenticator struct{}
 
-func (a *AnonymousAuthenticator) Authenticate(candidate Candidate) (auth Authentication, err error) {
+func (a *AnonymousAuthenticator) Authenticate(_ context.Context, candidate Candidate) (auth Authentication, err error) {
 	if ac, ok := candidate.(AnonymousCandidate); ok {
 		return &AnonymousAuthentication{candidate: ac}, nil
 	}

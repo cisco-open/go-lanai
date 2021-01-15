@@ -5,10 +5,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"regexp"
 )
 
 // Validation reference: https://godoc.org/github.com/go-playground/validator#hdr-Baked_In_Validators_and_Tags
 
+var (
+	pathParamPattern, _ = regexp.Compile(`\/:[^\/]*`)
+)
+
+/*********************************
+	Mappings
+ *********************************/
 type Controller interface {
 	Mappings() []Mapping
 }
@@ -24,14 +32,6 @@ type Mapping interface {
 	Name() string
 }
 
-// GenericMapping
-type GenericMapping interface {
-	Mapping
-	Path() string
-	Method() string
-	HandlerFunc() gin.HandlerFunc
-}
-
 // StaticMapping defines static assets mapping. e.g. javascripts, css, images, etc
 type StaticMapping interface {
 	Mapping
@@ -39,12 +39,24 @@ type StaticMapping interface {
 	StaticRoot() string
 }
 
-// MvcMapping defines HTTP handling that follows MVC pattern
-// could be EndpointMapping or TemplateMapping
-type MvcMapping interface {
+// RoutedMapping
+type RoutedMapping interface {
 	Mapping
 	Path() string
 	Method() string
+	Condition() RequestMatcher
+}
+
+// SimpleMapping
+type SimpleMapping interface {
+	RoutedMapping
+	HandlerFunc() gin.HandlerFunc
+}
+
+// MvcMapping defines HTTP handling that follows MVC pattern
+// could be EndpointMapping or TemplateMapping
+type MvcMapping interface {
+	RoutedMapping
 	Endpoint() endpoint.Endpoint
 	DecodeRequestFunc() httptransport.DecodeRequestFunc
 	EncodeRequestFunc() httptransport.EncodeRequestFunc
@@ -68,6 +80,9 @@ type MiddlewareMapping interface {
 	HandlerFunc() gin.HandlerFunc
 }
 
+/*********************************
+	Routing Matchers
+ *********************************/
 // Route contains information needed for registering handler func in gin.Engine
 type Route struct {
 	Method string
@@ -85,32 +100,26 @@ type RequestMatcher interface {
 	matcher.ChainableMatcher
 }
 
-// GenericMapping
-type genericMapping struct {
-	name string
-	path string
-	method string
+// NormalizedPath removes path parameter name from path.
+// path "/path/with/:param" is effectively same as "path/with/:other_param_name"
+func NormalizedPath(path string) string {
+	return pathParamPattern.ReplaceAllString(path, "/:var")
+}
+
+/*********************************
+	SimpleMapping
+ *********************************/
+// implmenets SimpleMapping
+type simpleMapping struct {
+	name        string
+	path        string
+	method      string
+	condition   RequestMatcher
 	handlerFunc gin.HandlerFunc
 }
 
-func (g genericMapping) HandlerFunc() gin.HandlerFunc {
-	return g.handlerFunc
-}
-
-func (g genericMapping) Method() string {
-	return g.method
-}
-
-func (g genericMapping) Path() string {
-	return g.path
-}
-
-func (g genericMapping) Name() string {
-	return g.name
-}
-
-func NewGenericMapping(name, path, method string, handlerFunc gin.HandlerFunc) GenericMapping {
-	return &genericMapping{
+func NewSimpleMapping(name, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) SimpleMapping {
+	return &simpleMapping{
 		name: name,
 		path: path,
 		method: method,
@@ -118,3 +127,22 @@ func NewGenericMapping(name, path, method string, handlerFunc gin.HandlerFunc) G
 	}
 }
 
+func (g simpleMapping) HandlerFunc() gin.HandlerFunc {
+	return g.handlerFunc
+}
+
+func (g simpleMapping) Condition() RequestMatcher {
+	return g.condition
+}
+
+func (g simpleMapping) Method() string {
+	return g.method
+}
+
+func (g simpleMapping) Path() string {
+	return g.path
+}
+
+func (g simpleMapping) Name() string {
+	return g.name
+}

@@ -13,25 +13,28 @@ type mvcMapping struct {
 	name               string
 	path               string
 	method             string
+	condition          RequestMatcher
 	endpoint           endpoint.Endpoint
 	decodeRequestFunc  httptransport.DecodeRequestFunc
 	encodeRequestFunc  httptransport.EncodeRequestFunc
 	decodeResponseFunc httptransport.DecodeResponseFunc
 	encodeResponseFunc httptransport.EncodeResponseFunc
-	errorEncoder	   httptransport.ErrorEncoder
+	errorEncoder       httptransport.ErrorEncoder
 }
 
-func NewMvcMapping(name, path, method string,
+func NewMvcMapping(name, path, method string, condition RequestMatcher,
 	endpoint endpoint.Endpoint,
 	decodeRequestFunc httptransport.DecodeRequestFunc,
 	encodeRequestFunc httptransport.EncodeRequestFunc,
 	decodeResponseFunc httptransport.DecodeResponseFunc,
 	encodeResponseFunc httptransport.EncodeResponseFunc,
 	errorEncoder httptransport.ErrorEncoder) MvcMapping {
+
 	return &mvcMapping{
 		name: name,
 		path: path,
 		method: method,
+		condition: condition,
 		endpoint: endpoint,
 		decodeRequestFunc: decodeRequestFunc,
 		encodeRequestFunc: encodeRequestFunc,
@@ -54,6 +57,10 @@ func (m *mvcMapping) Path() string {
 
 func (m *mvcMapping) Method() string {
 	return m.method
+}
+
+func (m *mvcMapping) Condition() RequestMatcher {
+	return m.condition
 }
 
 func (m *mvcMapping) Endpoint() endpoint.Endpoint {

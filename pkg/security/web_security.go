@@ -1,12 +1,11 @@
 package security
 
 import (
-	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
-	"net/http"
 )
 
 /*****************************
@@ -14,12 +13,13 @@ import (
 ******************************/
 type webSecurity struct {
 	routeMatcher     web.RouteMatcher
-	conditionMatcher web.MWConditionMatcher
+	conditionMatcher web.RequestMatcher
 	handlers         []interface{}
 	features         []Feature
-	applied          map[FeatureIdentifier]struct{}
 	shared           map[string]interface{}
 	authenticator    Authenticator
+	applied          map[FeatureIdentifier]struct{}
+	featuresChanged  bool
 }
 
 func newWebSecurity(authenticator Authenticator, shared map[string]interface{}) *webSecurity {
@@ -46,7 +46,7 @@ func (ws *webSecurity) Route(rm web.RouteMatcher) WebSecurity {
 	return ws
 }
 
-func (ws *webSecurity) Condition(mwcm web.MWConditionMatcher) WebSecurity {
+func (ws *webSecurity) Condition(mwcm web.RequestMatcher) WebSecurity {
 	if ws.conditionMatcher != nil {
 		ws.conditionMatcher = ws.conditionMatcher.Or(mwcm)
 	} else {
@@ -112,6 +112,7 @@ func (ws *webSecurity) Enable(f Feature) Feature {
 		// already have this feature
 		return ws.features[i]
 	}
+	ws.featuresChanged = true
 	ws.features = append(ws.features, f)
 	return f
 }
@@ -119,6 +120,7 @@ func (ws *webSecurity) Enable(f Feature) Feature {
 func (ws *webSecurity) Disable(f Feature) {
 	if i := findFeatureIndex(ws.features, f); i >= 0 {
 		// already have this feature
+		ws.featuresChanged = true
 		copy(ws.features[i:], ws.features[i + 1:])
 		ws.features[len(ws.features) - 1] = nil
 		ws.features = ws.features[:len(ws.features) - 1]
@@ -130,7 +132,7 @@ func (ws *webSecurity) GetRoute() web.RouteMatcher {
 	return ws.routeMatcher
 }
 
-func (ws *webSecurity) GetCondition() web.MWConditionMatcher {
+func (ws *webSecurity) GetCondition() web.RequestMatcher {
 	return ws.conditionMatcher
 }
 
@@ -145,23 +147,21 @@ func (ws *webSecurity) Build() []web.Mapping {
 	for i, v := range ws.handlers {
 		var mapping web.Mapping
 
-		if _, ok := v.(MiddlewareTemplate); ok {
-			// non-interface types
+		switch v.(type) {
+		case MiddlewareTemplate:
 			mapping = ws.buildFromMiddlewareTemplate(v.(MiddlewareTemplate))
-		} else {
-			// interface types
-			switch v.(type) {
-			case web.GenericMapping:
-				mapping = v.(web.GenericMapping)
-			case web.StaticMapping:
-				mapping = v.(web.StaticMapping)
-			case web.MvcMapping:
-				mapping = v.(web.MvcMapping)
-			case web.MiddlewareMapping:
-				mapping = v.(web.MiddlewareMapping)
-			default:
-				panic(fmt.Errorf("unable to build security mappings from unsupported WebSecurity handler [%T]", v))
-			}
+		case SimpleMappingTemplate:
+			mapping = ws.buildFromSimpleMappingTemplate(v.(SimpleMappingTemplate))
+		case web.SimpleMapping:
+			mapping = v.(web.SimpleMapping)
+		case web.StaticMapping:
+			mapping = v.(web.StaticMapping)
+		case web.MvcMapping:
+			mapping = v.(web.MvcMapping)
+		case web.MiddlewareMapping:
+			mapping = v.(web.MiddlewareMapping)
+		default:
+			panic(fmt.Errorf("unable to build security mappings from unsupported WebSecurity handler [%T]", v))
 		}
 		mappings[i] = mapping
 	}
@@ -171,7 +171,7 @@ func (ws *webSecurity) Build() []web.Mapping {
 // Other interfaces
 func (ws *webSecurity) String() string {
 	// TODO
-	return fmt.Sprintf("matcher=%v condition=%v features=%v", ws.routeMatcher, ws.conditionMatcher, ws.features)
+	return fmt.Sprintf("matcher=%v, condition=%v, features=%v", ws.routeMatcher, ws.conditionMatcher, ws.features)
 }
 
 // unexported
@@ -180,10 +180,25 @@ func (ws *webSecurity) buildFromMiddlewareTemplate(tmpl MiddlewareTemplate) web.
 	if ws.routeMatcher == nil {
 		ws.routeMatcher = matcher.AnyRoute()
 	}
-	builder = builder.ApplyTo(ws.routeMatcher)
 
-	if ws.conditionMatcher != nil {
-		builder = builder.WithCondition(WebConditionFunc(ws.conditionMatcher) )
+	if builder.GetRouteMatcher() == nil {
+		builder = builder.ApplyTo(ws.routeMatcher)
+	}
+
+	if ws.conditionMatcher != nil && builder.GetCondition() == nil {
+		builder = builder.WithCondition(ws.conditionMatcher)
+	}
+	return builder.Build()
+}
+
+func (ws *webSecurity) buildFromSimpleMappingTemplate(tmpl SimpleMappingTemplate) web.Mapping {
+	builder := (*mapping.MappingBuilder)(tmpl)
+	if ws.routeMatcher == nil {
+		ws.routeMatcher = matcher.AnyRoute()
+	}
+
+	if ws.conditionMatcher != nil && builder.GetCondition() == nil {
+		builder = builder.Condition(ws.conditionMatcher)
 	}
 	return builder.Build()
 }
@@ -191,15 +206,17 @@ func (ws *webSecurity) buildFromMiddlewareTemplate(tmpl MiddlewareTemplate) web.
 // toAcceptedHandler perform validation and some type casting on the interface
 func (ws *webSecurity) toAcceptedHandler(v interface{}) (interface{}, error) {
 		// non-interface types
-		if _, ok := v.(*middleware.MappingBuilder); ok {
-			return MiddlewareTemplate(v.(*middleware.MappingBuilder)), nil
-		} else if _, ok := v.(MiddlewareTemplate); ok {
-			return v, nil
+		if casted, ok := v.(*middleware.MappingBuilder); ok {
+			return MiddlewareTemplate(casted), nil
+		} else if casted, ok := v.(*mapping.MappingBuilder); ok {
+			return SimpleMappingTemplate(casted), nil
 		}
 
 		// interface types
 		switch v.(type) {
-		case web.GenericMapping:
+		case MiddlewareTemplate:
+		case SimpleMappingTemplate:
+		case web.SimpleMapping:
 		case web.StaticMapping:
 		case web.MvcMapping:
 		case web.MiddlewareMapping:
@@ -230,14 +247,5 @@ func findFeatureIndex(slice []Feature, f Feature) int {
 	return -1
 }
 
-func WebConditionFunc(matcher web.MWConditionMatcher) web.MWConditionFunc {
-	return func(ctx context.Context, req *http.Request) bool {
-		if matches, err := matcher.MatchesWithContext(ctx, req); err != nil {
-			return false
-		} else {
-			return matches
-		}
-	}
-}
 
 

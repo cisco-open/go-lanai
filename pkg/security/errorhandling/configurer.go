@@ -91,17 +91,18 @@ func (ehc *ErrorHandlingConfigurer) Apply(feature security.Feature, ws security.
 
 
 func (ehc *ErrorHandlingConfigurer) validate(f *ErrorHandlingFeature, ws security.WebSecurity) error {
-	if f.authEntryPoint != nil && f.authErrorHandler != nil {
-		fmt.Printf("for route matches [%v], authentication error handler will be ignored because entry point is set", ws)
+	// TODO proper logging
+	if f.authEntryPoint == nil {
+		fmt.Printf("for route matches [%v], authentication entry point is not set. fallback to access denied handler\n", ws)
 	}
 
-	if f.authEntryPoint == nil && f.authErrorHandler == nil {
-		fmt.Printf("for route matches [%v], using default authentication error handler", ws)
+	if f.authErrorHandler == nil {
+		fmt.Printf("for route matches [%v], using default authentication error handler\n", ws)
 		f.authErrorHandler = &security.DefaultAuthenticationErrorHandler{}
 	}
 
 	if f.accessDeniedHandler == nil {
-		fmt.Printf("for route matches [%v], using default access denied handler", ws)
+		fmt.Printf("for route matches [%v], using default access denied handler\n", ws)
 		f.accessDeniedHandler = &security.DefaultAccessDeniedHandler{}
 	}
 	return nil

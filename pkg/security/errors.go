@@ -14,28 +14,29 @@ const (
 	ReservedMask			= ^int(0) << ReservedOffset
 
 	// error type bits
-	errorTypeOffset         = 16
-	errorTypeMask           = ^int(0) << errorTypeOffset
+	ErrorTypeOffset = 16
+	ErrorTypeMask   = ^int(0) << ErrorTypeOffset
 
 	// error sub type bits
-	errorSubTypeOffset      = 10
-	errorSubTypeMask        = ^int(0) << errorSubTypeOffset
+	ErrorSubTypeOffset = 10
+	ErrorSubTypeMask   = ^int(0) << ErrorSubTypeOffset
 
-	defaultErrorCodeMask    = ^int(0)
+	defaultErrorCodeMask = ^int(0)
 )
 // All "Type" values are used as mask
 const (
 	_ = iota
-	ErrorTypeCodeAuthentication = Reserved + iota << errorTypeOffset
+	ErrorTypeCodeAuthentication = Reserved + iota << ErrorTypeOffset
 	ErrorTypeCodeAccessControl
 	ErrorTypeCodeInternal
+	ErrorTypeCodeOAuth2
 )
 
 // All "SubType" values are used as mask
 // sub types of ErrorTypeCodeAuthentication
 const (
 	_ = iota
-	ErrorSubTypeCodeInternal             = ErrorTypeCodeAuthentication + iota << errorSubTypeOffset
+	ErrorSubTypeCodeInternal             = ErrorTypeCodeAuthentication + iota <<ErrorSubTypeOffset
 	ErrorSubTypeCodeUsernamePasswordAuth
 )
 
@@ -59,7 +60,7 @@ const (
 // sub types of ErrorTypeCodeAccessControl
 const (
 	_ = iota
-	ErrorSubTypeCodeAccessDenied = ErrorTypeCodeAccessControl + iota << errorSubTypeOffset
+	ErrorSubTypeCodeAccessDenied = ErrorTypeCodeAccessControl + iota <<ErrorSubTypeOffset
 	ErrorSubTypeCodeInsufficientAuth
 	ErrorSubTypeCodeCsrf
 )
@@ -73,16 +74,16 @@ const (
 // ErrorTypes, can be used in errors.Is
 var (
 	ErrorTypeSecurity				 = newCodedError(Reserved, errors.New("error type: security"), ReservedMask, nil)
-	ErrorTypeAuthentication          = newErrorType(ErrorTypeCodeAuthentication, errors.New("error type: authentication"))
-	ErrorTypeAccessControl           = newErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
-	ErrorTypeInternal                = newErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
+	ErrorTypeAuthentication          = NewErrorType(ErrorTypeCodeAuthentication, errors.New("error type: authentication"))
+	ErrorTypeAccessControl           = NewErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
+	ErrorTypeInternal                = NewErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
 
-	ErrorSubTypeInternalError        = newErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
-	ErrorSubTypeUsernamePasswordAuth = newErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))
+	ErrorSubTypeInternalError        = NewErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
+	ErrorSubTypeUsernamePasswordAuth = NewErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))
 
-	ErrorSubTypeAccessDenied         = newErrorSubType(ErrorSubTypeCodeAccessDenied, errors.New("error sub-type: access denied"))
-	ErrorSubTypeInsufficientAuth     = newErrorSubType(ErrorSubTypeCodeInsufficientAuth, errors.New("error sub-type: insufficient auth"))
-	ErrorSubTypeCsrf 				 = newErrorSubType(ErrorSubTypeCodeCsrf, errors.New("error sub-type: csrf"))
+	ErrorSubTypeAccessDenied         = NewErrorSubType(ErrorSubTypeCodeAccessDenied, errors.New("error sub-type: access denied"))
+	ErrorSubTypeInsufficientAuth     = NewErrorSubType(ErrorSubTypeCodeInsufficientAuth, errors.New("error sub-type: insufficient auth"))
+	ErrorSubTypeCsrf 				 = NewErrorSubType(ErrorSubTypeCodeCsrf, errors.New("error sub-type: csrf"))
 
 
 )
@@ -225,12 +226,12 @@ func newCodedError(code int, e error, mask int, cause error) error {
 	}
 }
 
-func newErrorType(code int, e error) error {
-	return newCodedError(code, e, errorTypeMask, nil)
+func NewErrorType(code int, e error) error {
+	return newCodedError(code, e, ErrorTypeMask, nil)
 }
 
-func newErrorSubType(code int, e error) error {
-	return newCodedError(code, e, errorSubTypeMask, nil)
+func NewErrorSubType(code int, e error) error {
+	return newCodedError(code, e, ErrorSubTypeMask, nil)
 }
 
 // construct error from supported item: string, error, fmt.Stringer

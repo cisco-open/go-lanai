@@ -165,9 +165,9 @@ func (h *DefaultAuthenticationErrorHandler) HandleAuthenticationError(ctx contex
 	}
 
 	if isJson(r) {
-		writeErrorAsJson(ctx, http.StatusForbidden, err, rw)
+		writeErrorAsJson(ctx, http.StatusUnauthorized, err, rw)
 	} else {
-		writeErrorAsHtml(ctx, http.StatusForbidden, err, rw)
+		writeErrorAsHtml(ctx, http.StatusUnauthorized, err, rw)
 	}
 }
 
