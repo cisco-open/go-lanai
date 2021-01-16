@@ -1,7 +1,11 @@
 package log
 
 import (
+	"fmt"
 	"github.com/go-kit/kit/log"
+	kit_logurs "github.com/go-kit/kit/log/logrus"
+	"github.com/sirupsen/logrus"
+	"io"
 	"os"
 )
 
@@ -86,15 +90,40 @@ func buildTemplateLoggerFromConfig(properties *Properties) log.Logger {
 			if format == formatJson {
 				composite.addLogger(log.NewJSONLogger(log.NewSyncWriter(os.Stdout)))
 			} else {
-				composite.addLogger(log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout)))
+				composite.addLogger(makeTextLogger(log.NewSyncWriter(os.Stdout)))
 			}
 		default:
-			composite.addLogger(log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout)))
+			composite.addLogger(makeTextLogger(log.NewSyncWriter(os.Stdout)))
 		}
 	}
 
 	if len(composite.delegates) == 0 {
-		composite.addLogger(log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout)))
+		composite.addLogger(makeTextLogger(log.NewSyncWriter(os.Stdout)))
 	}
 	return log.With(composite, "ts", log.DefaultTimestampUTC, "caller", log.Caller(7))
+}
+
+type CustomFormatter struct {
+	*logrus.TextFormatter
+}
+
+func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	entry.Level, _ = logrus.ParseLevel(entry.Data["level"].(fmt.Stringer).String())
+	entry.Message = entry.Data[messageKey].(string)
+	delete(entry.Data, "ts")
+	delete(entry.Data, "level")
+	delete(entry.Data, messageKey)
+	return f.TextFormatter.Format(entry)
+}
+
+func makeTextLogger(w io.Writer) log.Logger{
+	logrusLogger := logrus.New()
+	logrusLogger.Out = w
+	formatter := &CustomFormatter{
+		&logrus.TextFormatter{},
+	}
+	//TODO: sort fields
+	logrusLogger.SetFormatter(formatter)
+	logger := kit_logurs.NewLogrusLogger(logrusLogger)
+	return logger
 }
