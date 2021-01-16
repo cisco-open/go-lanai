@@ -30,16 +30,16 @@ func newKitLogger(name string, templateLogger log.Logger, logLevel LoggingLevel,
 }
 
 func (k *kitLogger) Debug(msg string, args... interface{}) {
-	_ = level.Debug(k.swapLogger).Log(k.buildLogEntry(msg, args...)...)
+	_ = level.Debug(k.swapLogger).Log(buildLogEntry(k.name, msg, args...)...)
 }
 func (k *kitLogger) Info(msg string, args... interface{}) {
-	_ = level.Info(k.swapLogger).Log(k.buildLogEntry( msg, args...)...)
+	_ = level.Info(k.swapLogger).Log(buildLogEntry(k.name, msg, args...)...)
 }
 func (k *kitLogger) Warn(msg string, args... interface{}) {
-	_ = level.Warn(k.swapLogger).Log(k.buildLogEntry(msg, args...)...)
+	_ = level.Warn(k.swapLogger).Log(buildLogEntry(k.name, msg, args...)...)
 }
 func (k *kitLogger) Error(msg string, args... interface{}) {
-	_ = level.Error(k.swapLogger).Log(k.buildLogEntry(msg, args...)...)
+	_ = level.Error(k.swapLogger).Log(buildLogEntry(k.name, msg, args...)...)
 }
 func (k *kitLogger) WithContext(ctx context.Context) Logger {
 	var ctxFields []interface{}
@@ -54,7 +54,8 @@ func (k *kitLogger) WithContext(ctx context.Context) Logger {
 
 	return &ContextLogger{
 		ctxFields: ctxFields,
-		delegate: k,
+		swapLogger: k.swapLogger,
+		name: k.name,
 	}
 }
 
@@ -80,9 +81,9 @@ func (k *kitLogger) getName() string {
 	return k.name
 }
 
-func (k *kitLogger) buildLogEntry(msg string, args...interface{}) []interface{} {
+func buildLogEntry(name string, msg string, args...interface{}) []interface{} {
 	kvs := make([]interface{}, len(args)+4)
-	kvs[0], kvs[1] = nameKey, k.name
+	kvs[0], kvs[1] = nameKey, name
 	kvs[2], kvs[3] = messageKey, msg
 	copy(kvs[4:], args)
 	return kvs
@@ -105,20 +106,21 @@ func (c *CompositeKitLogger) Log(keyvals ...interface{}) error {
 
 type ContextLogger struct {
 	ctxFields []interface{}
-	delegate *kitLogger
+	swapLogger *log.SwapLogger
+	name string
 }
 
 func (l *ContextLogger) Debug(msg string, args... interface{}) {
-	l.delegate.Debug(msg, combineSlices(l.ctxFields, args)...)
+	_ = level.Debug(l.swapLogger).Log(buildLogEntry(l.name, msg, combineSlices(l.ctxFields, args)...)...)
 }
 func (l *ContextLogger) Info(msg string, args... interface{}) {
-	l.delegate.Info(msg, combineSlices(l.ctxFields, args)...)
+	_ = level.Info(l.swapLogger).Log(buildLogEntry(l.name, msg, combineSlices(l.ctxFields, args)...)...)
 }
 func (l *ContextLogger) Warn(msg string, args... interface{}) {
-	l.delegate.Warn(msg, combineSlices(l.ctxFields, args)...)
+	_ = level.Warn(l.swapLogger).Log(buildLogEntry(l.name, msg, combineSlices(l.ctxFields, args)...)...)
 }
 func (l *ContextLogger) Error(msg string, args... interface{}) {
-	l.delegate.Error(msg, combineSlices(l.ctxFields, args)...)
+	_ = level.Error(l.swapLogger).Log(buildLogEntry(l.name, msg, combineSlices(l.ctxFields, args)...)...)
 }
 
 func combineSlices(first []interface{}, second []interface{}) []interface{} {

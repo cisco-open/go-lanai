@@ -96,6 +96,5 @@ func buildTemplateLoggerFromConfig(properties *Properties) log.Logger {
 	if len(composite.delegates) == 0 {
 		composite.addLogger(log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout)))
 	}
-
-	return log.With(composite, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
+	return log.With(composite, "ts", log.DefaultTimestampUTC, "caller", log.Caller(7))
 }
