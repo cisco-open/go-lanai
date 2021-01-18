@@ -3,11 +3,12 @@ package bootstrap
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"fmt"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"go.uber.org/fx"
 )
 
 var applicationContext = NewContext()
+var logger = log.GetNamedLogger("bootstrap")
 
 var DefaultModule = &Module{
 	Precedence: HighestPrecedence,
@@ -27,15 +28,18 @@ func provideApplicationContext(config *appconfig.ApplicationConfig) *Application
 }
 
 func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
-	fmt.Println("[bootstrap] - bootstrap")
+	logProperties := &log.Properties{}
+	err := ac.config.Bind(logProperties, "log")
+	if err == nil {
+		err = log.UpdateLoggingConfiguration(logProperties)
+	}
+	if err != nil {
+		logger.Error( "Error updating logging configuration", "error", err)
+	}
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			ac := ctx.(*ApplicationContext)
-
-			fmt.Println("[bootstrap] - On Application Start")
-			ac.dumpConfigurations()
-
+			logger.Info("On Application Start")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
