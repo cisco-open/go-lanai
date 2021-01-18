@@ -6,10 +6,6 @@ import (
 	"github.com/go-kit/kit/log/level"
 )
 
-const messageKey = "msg"
-const nameKey = "logger"
-
-
 type kitLogger struct {
 	swapLogger     *log.SwapLogger
 	templateLogger log.Logger

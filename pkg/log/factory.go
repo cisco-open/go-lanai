@@ -13,6 +13,25 @@ const levelDefault = "default"
 const formatJson = "json"
 const outputConsole = "console"
 
+//common fields added by us
+const messageKey = "msg"
+const nameKey = "logger"
+const timestampKey = "ts"
+const callerKey = "caller"
+const levelKey = "level"
+
+//field added by logrus
+const timeKey = "time"
+
+// Used for sorting logrus text fields
+var textFieldOrders = map[string]int{
+	timeKey: 0,
+	nameKey: 1,
+	levelKey: 2,
+	callerKey: 3,
+	messageKey: 4,
+}
+
 type kitLoggerFactory struct {
 	rootLogLevel   LoggingLevel
 	logLevels      map[string]LoggingLevel
@@ -100,18 +119,20 @@ func buildTemplateLoggerFromConfig(properties *Properties) log.Logger {
 	if len(composite.delegates) == 0 {
 		composite.addLogger(makeTextLogger(log.NewSyncWriter(os.Stdout)))
 	}
-	return log.With(composite, "ts", log.DefaultTimestampUTC, "caller", log.Caller(7))
+	return log.With(composite, timestampKey, log.DefaultTimestampUTC, callerKey, log.Caller(7))
 }
 
 type CustomFormatter struct {
 	*logrus.TextFormatter
 }
 
+//Because logrus logger provides its own time, level and message fields,
+//we need to remove the fields that we added when using logrus
 func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	entry.Level, _ = logrus.ParseLevel(entry.Data["level"].(fmt.Stringer).String())
 	entry.Message = entry.Data[messageKey].(string)
-	delete(entry.Data, "ts")
-	delete(entry.Data, "level")
+	delete(entry.Data, timestampKey)
+	delete(entry.Data, levelKey)
 	delete(entry.Data, messageKey)
 	return f.TextFormatter.Format(entry)
 }
@@ -122,7 +143,22 @@ func makeTextLogger(w io.Writer) log.Logger{
 	formatter := &CustomFormatter{
 		&logrus.TextFormatter{},
 	}
-	//TODO: sort fields
+	formatter.SortingFunc = func(input []string) {
+		var priority = make([]string, len(textFieldOrders))
+		var others = make([]string, len(input) - len(textFieldOrders))
+
+		index := 0
+		for _, v := range input {
+			if i, ok := textFieldOrders[v]; ok {
+				priority[i] = v
+			} else {
+				others[index] = v
+				index++
+			}
+		}
+		copy(input[:len(priority)], priority)
+		copy(input[len(priority):], others)
+	}
 	logrusLogger.SetFormatter(formatter)
 	logger := kit_logurs.NewLogrusLogger(logrusLogger)
 	return logger
