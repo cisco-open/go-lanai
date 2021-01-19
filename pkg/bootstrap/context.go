@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"fmt"
 )
 
 type LifecycleHandler func(context.Context) error
@@ -46,11 +45,4 @@ func (c *ApplicationContext) updateConfig(config *appconfig.ApplicationConfig) {
 func (c *ApplicationContext) updateParent(parent context.Context) *ApplicationContext {
 	c.Context = parent
 	return c
-}
-
-func (c *ApplicationContext) dumpConfigurations() {
-	c.config.Each(func(key string, value interface{})error {
-		fmt.Println(key + ": " + fmt.Sprintf("%v", value))
-		return nil
-	})
 }
