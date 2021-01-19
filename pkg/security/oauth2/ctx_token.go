@@ -27,21 +27,24 @@ func (t TokenType) HttpHeader() string {
 	}
 }
 
-type AccessToken interface {
+type Token interface {
 	Value() string
-	Type() TokenType
-	IssueTime() time.Time
 	ExpiryTime() time.Time
 	Expired() bool
-	Scopes() utils.StringSet
 	Details() map[string]interface{}
+}
+
+type AccessToken interface {
+	Token
+	Type() TokenType
+	IssueTime() time.Time
+	Scopes() utils.StringSet
 	RefreshToken() RefreshToken
-	// TODO add "iat" as a field
 }
 
 type RefreshToken interface {
-	Value() string
-	Details() map[string]interface{}
+	Token
+	WillExpire() bool
 }
 
 /*******************************
@@ -122,6 +125,7 @@ func (t *DefaultAccessToken) ExpiryTime() time.Time {
 	return t.expiryTime
 }
 
+// AccessToken
 func (t *DefaultAccessToken) Expired() bool {
 	return !t.expiryTime.IsZero() && t.expiryTime.After(time.Now())
 }
@@ -196,6 +200,7 @@ func (t *DefaultAccessToken) PutClaim(key string, value interface{}) *DefaultAcc
  ********************************/
 type DefaultRefreshToken struct {
 	value        string
+	expiryTime   time.Time
 	details      map[string]interface{}
 	claims       map[string]interface{} // TODO
 }
@@ -233,6 +238,22 @@ func (t *DefaultRefreshToken) Value() string {
 func (t *DefaultRefreshToken) Details() map[string]interface{} {
 	return t.details
 }
+
+// RefreshToken
+func (t *DefaultRefreshToken) ExpiryTime() time.Time {
+	return t.expiryTime
+}
+
+// RefreshToken
+func (t *DefaultRefreshToken) Expired() bool {
+	return !t.expiryTime.IsZero() && t.expiryTime.After(time.Now())
+}
+
+// RefreshToken
+func (t *DefaultRefreshToken) WillExpire() bool {
+	return !t.expiryTime.IsZero()
+}
+
 
 func (t *DefaultRefreshToken) Claims() map[string]interface{} {
 	return t.claims

@@ -58,7 +58,7 @@ func (mw *TokenEndpointMiddleware) TokenHandlerFunc() gin.HandlerFunc {
 		}
 
 		// check grant
-		if e := auth.ValidateGrant(ctx, tokenReuqest, client); e != nil {
+		if e := auth.ValidateGrant(ctx, client, tokenReuqest.GrantType); e != nil {
 			mw.handleError(ctx, e)
 			return
 		}

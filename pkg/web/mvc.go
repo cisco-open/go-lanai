@@ -193,7 +193,7 @@ func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
 }
 
 /**********************************
-	go-kit Request Decoder
+	go-kit RequestDetails Decoder
 ***********************************/
 // bindable requestType can only be struct or pointer of struct
 func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequestFunc {

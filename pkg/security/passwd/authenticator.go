@@ -140,6 +140,7 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 	if details == nil {
 		details = map[interface{}]interface{}{}
 	}
+	// TODO erase account credentials or store username only
 	auth := usernamePasswordAuthentication{
 		Acct:       account,
 		Perms:      permissions,

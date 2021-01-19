@@ -75,7 +75,7 @@ func (store *InMemoryAccountStore) LoadLockingRules(ctx context.Context, acct se
 		return nil, errors.New("unsupported account")
 	}
 
-	if account.UserDetails.PolicyName == "" {
+	if account.AccountDetails.PolicyName == "" {
 		// no policy name available, return without loading (this will contains default values)
 		return account, nil
 	}
@@ -117,7 +117,7 @@ func (store *InMemoryAccountStore) tryLoadPolicy(ctx context.Context, account *p
 }
 
 func createAccount(props *PropertiesBasedAccount) *passwd.UsernamePasswordAccount {
-	acct := passwd.NewUsernamePasswordAccount(&passwd.UserDetails{
+	acct := passwd.NewUsernamePasswordAccount(&passwd.AccountDetails{
 		ID:              props.ID,
 		Type:            security.ParseAccountType(props.Type),
 		Username:        props.Username,

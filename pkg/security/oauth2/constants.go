@@ -12,11 +12,17 @@ const (
 
 const (
 	ParameterClientId = "client_id"
+	ParameterClientSecret = "client_secret"
 	ParameterResponseType = "response_type"
 	ParameterRedirectUri = "redirect_uri"
 	ParameterScope = "scope"
 	ParameterState = "state"
 	ParameterGrantType = "grant_type"
+	ParameterUsername = "username"
+	ParameterPassword = "password"
+	ParameterTenantId = "tenant_id"
+	ParameterTenantName = "tenant_name"
+	ParameterNonce = "nonce"
 	//Parameter = ""
 )
 

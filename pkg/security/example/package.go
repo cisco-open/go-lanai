@@ -35,6 +35,7 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 type dependencies struct {
 	fx.In
 	ClientStore auth.OAuth2ClientStore
+	AccountStore security.AccountStore
 	// TODO properties
 }
 
@@ -42,6 +43,8 @@ func newAuthServerConfigurer(deps dependencies) authconfig.AuthorizationServerCo
 	return func(config *authconfig.AuthorizationServerConfiguration) {
 		config.ClientStore = deps.ClientStore
 		config.ClientSecretEncoder = passwd.NewNoopPasswordEncoder()
+		config.UserAccountStore = deps.AccountStore
+		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
 		config.Endpoints = authconfig.AuthorizationServerEndpoints{
 			Authorize: "/v2/authorize",
 			Token: "/v2/token",

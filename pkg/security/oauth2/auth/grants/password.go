@@ -2,17 +2,32 @@ package grants
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"fmt"
 )
 
 // ClientCredentialsGranter implements auth.TokenGranter
 type PasswordGranter struct {
-
+	authenticator security.Authenticator
+	authService   auth.AuthorizationService
 }
 
-func NewPasswordGranter() *PasswordGranter {
-	return &PasswordGranter{}
+func NewPasswordGranter(authenticator security.Authenticator, authService auth.AuthorizationService) *PasswordGranter {
+	if authenticator == nil {
+		panic(fmt.Errorf("cannot create PasswordGranter without authenticator."))
+	}
+
+	if authService == nil {
+		panic(fmt.Errorf("cannot create PasswordGranter without token service."))
+	}
+
+	return &PasswordGranter{
+		authenticator: authenticator,
+		authService:   authService,
+	}
 }
 
 func (g *PasswordGranter) Grant(ctx context.Context, request *auth.TokenRequest) (oauth2.AccessToken, error) {
@@ -22,13 +37,39 @@ func (g *PasswordGranter) Grant(ctx context.Context, request *auth.TokenRequest)
 
 	client := auth.RetrieveAuthenticatedClient(ctx)
 
-	// check scope
-	if e := auth.ValidateScope(ctx, request, client); e != nil {
+	// common check
+	if e := CommonPreGrantValidation(ctx, client, request); e != nil {
 		return nil, e
 	}
 
-	// TODO create real token
-	return oauth2.NewDefaultAccessToken("TODO"), nil
+	// extract username & password
+	username, uOk := request.Parameters[oauth2.ParameterUsername]
+	password, pOk := request.Parameters[oauth2.ParameterPassword]
+	delete(request.Parameters, oauth2.ParameterPassword)
+	if !uOk || !pOk {
+		return nil, oauth2.NewInvalidTokenRequestError("missing 'username' and 'password'")
+	}
+
+	// authenticate
+	candidate := passwd.UsernamePasswordPair{
+		Username: username,
+		Password: password,
+	}
+
+	userAuth, err := g.authenticator.Authenticate(ctx, &candidate)
+	if err != nil || userAuth.State() < security.StateAuthenticated {
+		return nil, oauth2.NewInvalidTokenRequestError(err.Error(), err)
+	}
+
+	// create authentication
+	req := request.OAuth2Request(client)
+	oauth, e := g.authService.CreateAuthentication(ctx, req, userAuth)
+	if e != nil {
+		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+	}
+
+	return g.authService.CreateAccessToken(ctx, oauth)
+	//return oauth2.NewDefaultAccessToken(fmt.Sprintf("TODO for user [%v]", userAuth.Principal())), nil
 }
 
 
