@@ -10,7 +10,7 @@ import (
 	Abstract
  *********************/
 type JwtEncoder interface {
-	Encode(ctx context.Context, claims Claims) (string, error)
+	Encode(ctx context.Context, claims interface{}) (string, error)
 }
 
 /*********************
@@ -32,8 +32,17 @@ func NewRS256JwtEncoder(jwkStore JwkStore, defaultKid string) *RSJwtEncoder {
 	}
 }
 
-func (enc *RSJwtEncoder) Encode(ctx context.Context, claims Claims) (string, error) {
-	token := jwt.NewWithClaims(enc.method, &jwtGoCompatibleClaims{claims: claims})
+func (enc *RSJwtEncoder) Encode(ctx context.Context, claims interface{}) (string, error) {
+	// type checks
+	var token *jwt.Token
+	switch claims.(type) {
+	case jwt.Claims:
+		token = jwt.NewWithClaims(enc.method, claims.(jwt.Claims))
+	default:
+		token = jwt.NewWithClaims(enc.method, &jwtGoCompatibleClaims{claims: claims})
+	}
+
+	// choose PrivateKey to use
 	jwk, e := enc.findJwk(ctx)
 	if e != nil {
 		return "", e
