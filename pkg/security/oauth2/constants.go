@@ -37,3 +37,18 @@ const (
 	GrantTypeImplicit = "implicit"
 	GrantTypeRefresh = "refresh_token"
 )
+
+const (
+	/**
+	 * JWT standard
+	 * https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-13#section-4.1
+	 */
+	ClaimIssuer = "iss"
+	ClaimSubject = "sub"
+	ClaimAudience = "aud"
+	ClaimExpire = "exp"
+	ClaimNotBefore = "nbf"
+	ClaimIssueAt = "iat"
+	ClaimJwtId = "jti"
+	//Claim = ""
+)

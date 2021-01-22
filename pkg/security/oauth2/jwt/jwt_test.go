@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"github.com/google/uuid"
 	. "github.com/onsi/gomega"
 	"reflect"
@@ -13,7 +14,7 @@ const (
 	testDefaultKid = "default"
 )
 
-var claims = MapClaims {
+var claims = oauth2.MapClaims {
 	"aud": []interface{}{"target"},
 	"exp": time.Now().Add(24 * time.Hour).Unix(),
 	"jti": uuid.New().String(),
@@ -158,15 +159,15 @@ func SubTestJwtDecodeFailedWithNonExistingKey(jwtVal string) SubTest {
 /*************************
 	Helpers
  *************************/
-func assertDecodeResult(g *WithT, decoded Claims, err error) {
+func assertDecodeResult(g *WithT, decoded oauth2.Claims, err error) {
 	g.Expect(err).NotTo(HaveOccurred(), "Decode should not return error.")
 	g.Expect(decoded).NotTo(BeNil(), "Decode should return non-nil claims")
 }
 
-func assertMapClaims(g *WithT, expected MapClaims, decoded Claims) {
+func assertMapClaims(g *WithT, expected oauth2.MapClaims, decoded oauth2.Claims) {
 
-	g.Expect(decoded).To(BeAssignableToTypeOf(MapClaims{}), "MapClaims is expected")
-	actual := decoded.(MapClaims)
+	g.Expect(decoded).To(BeAssignableToTypeOf(oauth2.MapClaims{}), "MapClaims is expected")
+	actual := decoded.(oauth2.MapClaims)
 
 	g.Expect(len(actual)).To(Equal(len(expected)), "actual MapClaims should have same size")
 	for k,v := range actual {
@@ -174,7 +175,7 @@ func assertMapClaims(g *WithT, expected MapClaims, decoded Claims) {
 	}
 }
 
-func assertCustomClaims(g *WithT, expected MapClaims, decoded Claims) {
+func assertCustomClaims(g *WithT, expected oauth2.MapClaims, decoded oauth2.Claims) {
 
 	g.Expect(decoded).To(BeAssignableToTypeOf(customClaims{}), "custom claims is expected")
 	actual := decoded.(customClaims)
@@ -201,6 +202,10 @@ func (c customClaims) Get(claim string) interface{} {
 
 func (c customClaims) Has(claim string) bool {
 	return !c.value(claim).IsZero()
+}
+
+func (c customClaims) Set(claim string, value interface{}) {
+	panic("we don't support this")
 }
 
 func (c customClaims) value(claim string) reflect.Value {

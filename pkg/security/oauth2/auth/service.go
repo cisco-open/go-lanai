@@ -4,7 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"fmt"
+	"github.com/google/uuid"
 )
 
 type AuthorizationService interface {
@@ -53,5 +53,25 @@ func (s *DetailsPersistentAuthorizationService) RefreshAccessToken(ctx context.C
 }
 
 func (s *DetailsPersistentAuthorizationService) CreateAccessToken(c context.Context, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
-	return oauth2.NewDefaultAccessToken(fmt.Sprintf("TODO for [%v]", oauth.Principal())), nil
+	var token *oauth2.DefaultAccessToken
+
+	existing, e := s.tokenStore.ReusableAccessToken(c, oauth)
+	if e != nil || existing == nil {
+		token = oauth2.NewDefaultAccessToken(uuid.New().String())
+	} else if t, ok := existing.(*oauth2.DefaultAccessToken); !ok {
+		token = oauth2.FromAccessToken(t)
+	} else {
+		token = t
+	}
+
+	// TODO setup claims
+	claims := oauth2.MapClaims{
+
+	}
+	token.Claims = claims
+
+	// TODO Enhance token
+
+	// save token
+	return s.tokenStore.SaveAccessToken(c, token, oauth)
 }

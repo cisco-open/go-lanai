@@ -5,6 +5,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 )
 
@@ -34,12 +36,15 @@ type AuthorizationServerConfiguration struct {
 	Endpoints                   AuthorizationServerEndpoints
 	UserAccountStore            security.AccountStore
 	UserPasswordEncoder         passwd.PasswordEncoder
+	TokenStore 					auth.TokenStore
+	JwkStore 					jwt.JwkStore
 	sharedErrorHandler          *auth.OAuth2ErrorHanlder
 	sharedTokenGranter          auth.TokenGranter
-	sharedTokenStore            auth.TokenStore
-	sharedAuthService			auth.AuthorizationService
+	sharedAuthService           auth.AuthorizationService
 	sharedPasswordAuthenticator security.Authenticator
-	sharedContextDetailsStore 	security.ContextDetailsStore
+	sharedContextDetailsStore   security.ContextDetailsStore
+	sharedJwtEncoder            jwt.JwtEncoder
+	sharedJwtDecoder            jwt.JwtDecoder
 	// TODO
 }
 
@@ -108,11 +113,11 @@ func (c *AuthorizationServerConfiguration) contextDetailsStore() security.Contex
 }
 
 func (c *AuthorizationServerConfiguration) tokenStore() auth.TokenStore {
-	if c.sharedTokenStore == nil {
-		// TODO
-		c.sharedTokenStore = auth.NewJwtTokenStore(c.contextDetailsStore())
+	if c.TokenStore == nil {
+		reader := common.NewJwtTokenStoreReader(c.contextDetailsStore(), c.jwtDecoder())
+		c.TokenStore = auth.NewJwtTokenStore(reader, c.contextDetailsStore(), c.jwtEncoder())
 	}
-	return c.sharedTokenStore
+	return c.TokenStore
 }
 
 func (c *AuthorizationServerConfiguration) authorizationService() auth.AuthorizationService {
@@ -123,6 +128,30 @@ func (c *AuthorizationServerConfiguration) authorizationService() auth.Authoriza
 	}
 
 	return c.sharedAuthService
+}
+
+func (c *AuthorizationServerConfiguration) jwkStore() jwt.JwkStore {
+	if c.JwkStore == nil {
+		// TODO
+		c.JwkStore = jwt.NewStaticJwkStore("default")
+	}
+	return c.JwkStore
+}
+
+func (c *AuthorizationServerConfiguration) jwtEncoder() jwt.JwtEncoder {
+	if c.sharedJwtEncoder == nil {
+		// TODO
+		c.sharedJwtEncoder = jwt.NewRS256JwtEncoder(c.jwkStore(), "default")
+	}
+	return c.sharedJwtEncoder
+}
+
+func (c *AuthorizationServerConfiguration) jwtDecoder() jwt.JwtDecoder {
+	if c.sharedJwtDecoder == nil {
+		// TODO
+		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), "default")
+	}
+	return c.sharedJwtDecoder
 }
 
 

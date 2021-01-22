@@ -3,6 +3,7 @@ package jwt
 import (
 	"context"
 	"crypto/rsa"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -10,7 +11,7 @@ import (
 	Abstract
  *********************/
 type JwtDecoder interface {
-	Decode(ctx context.Context, token string) (MapClaims, error)
+	Decode(ctx context.Context, token string) (oauth2.Claims, error)
 	DecodeWithClaims(ctx context.Context, token string, claims interface{}) error
 }
 
@@ -36,8 +37,8 @@ func NewRS256JwtDecoder(jwkStore JwkStore, defaultKid string) *RSJwtDecoder {
 	}
 }
 
-func (dec *RSJwtDecoder) Decode(ctx context.Context, tokenString string) (MapClaims, error) {
-	claims := MapClaims{}
+func (dec *RSJwtDecoder) Decode(ctx context.Context, tokenString string) (oauth2.Claims, error) {
+	claims := oauth2.MapClaims{}
 	if e := dec.DecodeWithClaims(ctx, tokenString, &claims); e != nil {
 		return nil, e
 	}

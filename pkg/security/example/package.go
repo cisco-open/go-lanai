@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/authconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"go.uber.org/fx"
 )
@@ -45,6 +46,7 @@ func newAuthServerConfigurer(deps dependencies) authconfig.AuthorizationServerCo
 		config.ClientSecretEncoder = passwd.NewNoopPasswordEncoder()
 		config.UserAccountStore = deps.AccountStore
 		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
+		config.JwkStore = jwt.NewStaticJwkStore("default")
 		config.Endpoints = authconfig.AuthorizationServerEndpoints{
 			Authorize: "/v2/authorize",
 			Token: "/v2/token",
