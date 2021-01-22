@@ -13,6 +13,8 @@ import (
  */
 type ChangeSessionHandler struct{}
 
+//TODO: it's possible that this session is not saved yet (i.e. an auth request came in without previous session and got authenticated)
+// if that's the case don't need to change it's id
 func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
 	if !security.IsBeingAuthenticated(from, to) {
 		return
@@ -23,12 +25,17 @@ func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, r 
 		return
 	}
 
+	//if this is a new session that hasn't been saved, then we don't need to change it
+	if s.isNew {
+		return
+	}
+
 	err := s.ChangeId()
 
 	if err == nil {
 		http.SetCookie(rw, NewCookie(s.Name(), s.id, s.options, r))
 	} else {
-		panic(security.NewInternalError("Failed to update session ID"))
+		panic(security.NewInternalError("Failed to update session ID", err))
 	}
 }
 

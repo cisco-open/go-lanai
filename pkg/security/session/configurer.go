@@ -96,7 +96,7 @@ func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 		Order(security.MWOrderSessionHandling).
 		Use(manager.SessionHandlerFunc())
 
-	authPersist := middleware.NewBuilder("sessionMiddleware").
+	authPersist := middleware.NewBuilder("authPersistMiddleware").
 		Order(security.MWOrderAuthPersistence).
 		Use(manager.AuthenticationPersistenceHandlerFunc())
 

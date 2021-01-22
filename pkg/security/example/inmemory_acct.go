@@ -54,7 +54,7 @@ func (store *InMemoryAccountStore) Save(ctx context.Context, acct security.Accou
 func (store *InMemoryAccountStore) LoadAccountById(_ context.Context, id interface{}) (security.Account, error) {
 	u, ok := store.accountLookupById[id]
 	if !ok {
-		return nil, errors.New("user ID not found")
+		return nil, errors.New("user Domain not found")
 	}
 
 	return u, nil
@@ -163,4 +163,20 @@ func populateAccountPolicy(acct *passwd.UsernamePasswordAccount, props *Properti
 		ExpiryWarningPeriod: utils.ParseDuration(props.ExpiryWarningPeriod),
 		GracefulAuthLimit:   props.GracefulAuthLimit,
 	}
+}
+
+//TODO
+type InMemoryFederatedAccountStore struct {
+	
+}
+
+func (i *InMemoryFederatedAccountStore) LoadAccountByExternalId(externalIdName string, externalIdValue string, externalIdpName string) (security.Account, error) {
+	return passwd.NewUsernamePasswordAccount(&passwd.UserDetails{
+		ID:              "user-tishi",
+		Type:            security.AccountTypeFederated,
+		Username:        "tishi"}), nil
+}
+
+func NewInMemoryFederatedAccountStore() security.FederatedAccountStore{
+	return &InMemoryFederatedAccountStore{}
 }

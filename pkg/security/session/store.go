@@ -92,7 +92,7 @@ func NewRedisStore(connection redis.Client, options ...func(*Options)) *RedisSto
 	o := &Options{
 		Path:   "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteDefaultMode,
+		SameSite: http.SameSiteNoneMode,
 		IdleTimeout: 900*time.Second,
 		AbsoluteTimeout: 1800*time.Second,
 	}
@@ -147,6 +147,7 @@ func (s *RedisStore) Save(session *Session) error {
 	err := s.save(session)
 	if err == nil {
 		session.dirty = false
+		session.isNew = false
 	}
 	return err
 }
