@@ -36,6 +36,7 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 		TokenEnhancer: NewCompositeTokenEnhancer(
 			&ExpiryTokenEnhancer{},
 			&BasicClaimsTokenEnhancer{},
+			&LegacyTokenEnhancer{},
 		),
 	}
 	for _, opt := range opts {

@@ -42,6 +42,9 @@ func (g *ClientCredentialsGranter) Grant(ctx context.Context, request *auth.Toke
 	}
 
 	// additional check
+	if request.Scopes == nil || len(request.Scopes) == 0 {
+		request.Scopes = client.Scopes()
+	}
 	if e := auth.ValidateAllAutoApprovalScopes(ctx, client, request.Scopes); e != nil {
 		return nil, e
 	}

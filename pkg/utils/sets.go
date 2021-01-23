@@ -1,6 +1,9 @@
 package utils
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type void struct{}
 
@@ -19,6 +22,27 @@ func NewStringSetFromSet(set Set) StringSet {
 		}
 	}
 	return stringSet
+}
+
+func NewStringSetFrom(i interface{}) StringSet {
+	switch i.(type) {
+	case StringSet:
+		return i.(StringSet).Copy()
+	case Set:
+		return NewStringSetFromSet(i.(Set))
+	case []string:
+		return NewStringSet(i.([]string)...)
+	case []interface{}:
+		slice := []string{}
+		for _,v := range i.([]interface{}) {
+			if s,ok := v.(string); ok {
+				slice = append(slice, s)
+			}
+		}
+		return NewStringSet(slice...)
+	default:
+		panic(fmt.Errorf("new StringSet from unsupported type %T", i))
+	}
 }
 
 func (s StringSet) Add(values...string) StringSet {
@@ -58,6 +82,10 @@ func (s StringSet) Copy() StringSet {
 	return copy
 }
 
+func (s StringSet) ToSet() Set {
+	return NewSetFromStringSet(s)
+}
+
 // json.Marshaler
 func (s StringSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Values())
@@ -87,6 +115,25 @@ func NewSetFromStringSet(stringSet StringSet) Set {
 		set[k] = void{}
 	}
 	return set
+}
+
+func NewSetFrom(i interface{}) Set {
+	switch i.(type) {
+	case StringSet:
+		return NewSetFromStringSet(i.(StringSet))
+	case Set:
+		return i.(Set).Copy()
+	case []string:
+		slice := []interface{}{}
+		for _,v := range i.([]string) {
+			slice = append(slice, v)
+		}
+		return NewSet(slice...)
+	case []interface{}:
+		return NewSet(i.([]interface{})...)
+	default:
+		panic(fmt.Errorf("new StringSet from unsupported type %T", i))
+	}
 }
 
 func (s Set) Add(values...interface{}) Set {

@@ -51,4 +51,23 @@ const (
 	ClaimIssueAt = "iat"
 	ClaimJwtId = "jti"
 	//Claim = ""
+
+	/**
+	 * Standard CheckToken
+	 * https://tools.ietf.org/html/rfc7662#section-2.2
+	 */
+	ClaimActive = "active"
+	ClaimScope = "scope"
+	ClaimClientId = "client_id"
+	ClaimUsername = "username"
+	ClaimTokenType = "token_type"
+	//Claim = ""
+
+	/**
+	 * NFV Additions - Legacy
+	 */
+	ClaimLegacyTenantId = "tenantId"
+	ClaimLegacyFirstName = "firstName"
+	ClaimLegacyLastName = "lastName"
+	ClaimLegacyUsername = "user_name"
 )

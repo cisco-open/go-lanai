@@ -1,130 +1,149 @@
 package oauth2
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
-	"testing"
 	. "github.com/onsi/gomega"
+	"testing"
 	"time"
 )
-type SubTest func(*testing.T)
+
+const ExtraKey = "additional"
+
+var now = time.Now().Truncate(time.Second)
 
 var refBasic = map[string]interface{} {
 	ClaimAudience: "test-audience",
-	ClaimExpire: time.Now(),
+	ClaimExpire: now,
 	ClaimJwtId: "test-id",
-	ClaimIssueAt: time.Now(),
+	ClaimIssueAt: now,
 	ClaimIssuer: "test-issuer",
-	ClaimNotBefore: time.Now(),
+	ClaimNotBefore: now,
 	ClaimSubject: "test-subject",
+	ClaimClientId: "test-client-id",
+	ClaimScope: utils.NewStringSet("read", "write"),
 }
 
-var refEmbedding = map[string]interface{} {
+var refMore = map[string]interface{} {
+	ClaimAudience: "test-audience",
+	ClaimExpire: now,
+	ClaimJwtId: "test-id",
+	ClaimIssueAt: now,
+	ClaimIssuer: "test-issuer",
+	ClaimNotBefore: now,
+	ClaimSubject: "test-subject",
+	ClaimClientId: "test-client-id",
+	ClaimScope: utils.NewStringSet("read", "write"),
 	"first": "test-first-name",
 	"last": "test-last-name",
 }
 
-var refBasicClaims = BasicClaims{
-	Audience: refBasic[ClaimAudience].(string),
-	ExpiresAt: refBasic[ClaimExpire].(time.Time),
-	Id: refBasic[ClaimJwtId].(string),
-	IssuedAt: refBasic[ClaimIssueAt].(time.Time),
-	Issuer: refBasic[ClaimIssuer].(string),
-	NotBefore: refBasic[ClaimNotBefore].(time.Time),
-	Subject: refBasic[ClaimSubject].(string),
+var refExtra = map[string]interface{} {
+	ClaimAudience: "test-audience",
+	ClaimExpire: now,
+	ClaimJwtId: "test-id",
+	ClaimIssueAt: now,
+	ClaimIssuer: "test-issuer",
+	ClaimNotBefore: now,
+	ClaimSubject: "test-subject",
+	ClaimClientId: "test-client-id",
+	ClaimScope: utils.NewStringSet("read", "write"),
+	"first": "test-first-name",
+	"last": "test-last-name",
+	"extra1": "test-extra-value-1",
+	"extra2": "test-extra-value-2",
 }
 
-var refEmbeddingClaims = embeddingClaims{
-	BasicClaims: refBasicClaims,
-	FirstName: refEmbedding["first"].(string),
-	LastName: refEmbedding["last"].(string),
-}
+
 
 /*************************
 	Test Cases
  *************************/
-func TestBasicClaimsGetters(t *testing.T) {
-	claims := &refBasicClaims
-	assertClaimsUsingGetter(t, refBasic, claims)
+func TestBasicClaims(t *testing.T) {
+	t.Run("GettersTest", GettersTest(newRefBasicClaims(), refBasic))
+	t.Run("SettersTest", SettersTest(newRefBasicClaims(), refBasic, assertBasicClaims))
+	t.Run("JsonTest", JsonTest(newRefBasicClaims(), &BasicClaims{}, refBasic, assertBasicClaims))
 }
 
-func TestBasicClaimsSetters(t *testing.T) {
-	// call setters
-	claims := &BasicClaims{}
-	for k, v := range refBasic {
-		claims.Set(k, v)
+func TestFieldEmbeddingClaims(t *testing.T) {
+	t.Run("GettersTest", GettersTest(newRefFieldEmbeddingClaims(), refMore))
+	t.Run("SettersTest", SettersTest(newRefFieldEmbeddingClaims(), refMore, assertFieldEmbeddingClaims))
+	t.Run("JsonTest", JsonTest(newRefFieldEmbeddingClaims(), &fieldEmbeddingClaims{}, refMore, assertFieldEmbeddingClaims))
+}
+
+func TestInterfaceEmbeddingClaims(t *testing.T) {
+	t.Run("GettersTest",
+		GettersTest(newRefInterfaceEmbeddingClaims(), refExtra))
+	t.Run("SettersTest",
+		SettersTest(newRefInterfaceEmbeddingClaims(), refExtra, assertInterfaceEmbeddingClaims))
+	t.Run("JsonTest",
+		JsonTest(newRefInterfaceEmbeddingClaims(), &interfaceEmbeddingClaims{
+			Claims: &BasicClaims{},
+			Extra: MapClaims{},
+		}, refExtra, assertInterfaceEmbeddingClaims))
+	t.Run("JsonTestWithDifferentEmbedded",
+		JsonTest(newRefInterfaceEmbeddingClaims(), &interfaceEmbeddingClaims{
+			Claims: MapClaims{},
+			Extra: MapClaims{},
+		}, refExtra, assertAlternativeInterfaceEmbeddingClaims))
+}
+
+/*************************
+	Sub Tests
+ *************************/
+func GettersTest(claims Claims, expected map[string]interface{}) func(*testing.T) {
+	return func(t *testing.T) {
+		assertClaimsUsingGetter(t, expected, claims)
 	}
-
-	assertBasicClaims(t, refBasic, claims)
 }
 
-func TestBasicClaimsJson(t *testing.T) {
-	claims := &refBasicClaims
-
-	// marshal
-	str, err := json.Marshal(claims)
-	g := NewWithT(t)
-	g.Expect(err).NotTo(HaveOccurred(), "JSON marshal should not return error")
-	g.Expect(str).NotTo(BeZero(), "JSON marshal should not return empty string")
-
-	t.Logf("JSON: %s", str)
-
-	// unmarshal
-	parsed := BasicClaims{}
-	err = json.Unmarshal([]byte(str), &parsed)
-	g.Expect(err).NotTo(HaveOccurred(), "JSON unmarshal should not return error")
-	assertBasicClaims(t, refBasic, claims)
-}
-
-func TestEmbeddingClaimsGetters(t *testing.T) {
-	claims := &refEmbeddingClaims
-	assertClaimsUsingGetter(t, refBasic, claims)
-	assertClaimsUsingGetter(t, refEmbedding, claims)
-}
-
-func TestEmbeddingClaimsSetters(t *testing.T) {
-	// call setters
-	claims := &embeddingClaims{}
-	for k, v := range refBasic {
-		claims.Set(k, v)
+func SettersTest(claims Claims, values map[string]interface{}, assertFunc claimsAssertion) func(*testing.T) {
+	return func(t *testing.T) {
+		// call setters
+		for k, v := range values {
+			claims.Set(k, v)
+		}
+		assertFunc(t, values, claims)
 	}
-
-	for k, v := range refEmbedding {
-		claims.Set(k, v)
-	}
-
-	assertEmbeddingClaims(t, refBasic, claims)
 }
 
-func TestEmbeddingClaimsJson(t *testing.T) {
-	claims := &refEmbeddingClaims
+func JsonTest(claims Claims, empty Claims, expected map[string]interface{}, assertFunc claimsAssertion) func(*testing.T) {
+	return func(t *testing.T) {
+		// marshal
+		str, err := json.Marshal(claims)
+		g := NewWithT(t)
+		g.Expect(err).NotTo(HaveOccurred(), "JSON marshal should not return error")
+		g.Expect(str).NotTo(BeZero(), "JSON marshal should not return empty string")
 
-	// marshal
-	str, err := json.Marshal(claims)
-	g := NewWithT(t)
-	g.Expect(err).NotTo(HaveOccurred(), "JSON marshal should not return error")
-	g.Expect(str).NotTo(BeZero(), "JSON marshal should not return empty string")
+		t.Logf("JSON: %s", str)
 
-	t.Logf("JSON: %s", str)
+		// unmarshal
+		parsed := empty
+		err = json.Unmarshal([]byte(str), &parsed)
+		g.Expect(err).NotTo(HaveOccurred(), "JSON unmarshal should not return error")
 
-	// unmarshal
-	parsed := BasicClaims{}
-	err = json.Unmarshal([]byte(str), &parsed)
-	g.Expect(err).NotTo(HaveOccurred(), "JSON unmarshal should not return error")
-	assertEmbeddingClaims(t, refBasic, claims)
+		assertFunc(t, expected, parsed)
+	}
 }
 
 /*************************
 	Helpers
  *************************/
+type claimsAssertion func(*testing.T, map[string]interface{}, Claims)
+
 func assertClaimsUsingGetter(t *testing.T, ref map[string]interface{}, actual Claims) {
 	g := NewWithT(t)
 	for k, v := range ref {
+		if k == ExtraKey {
+			continue
+		}
 		g.Expect(actual.Get(k)).To(BeEquivalentTo(v), "claim [%s] should be correct", k)
 	}
 }
 
-func assertBasicClaims(t *testing.T, ref map[string]interface{}, actual *BasicClaims) {
+func assertBasicClaims(t *testing.T, ref map[string]interface{}, claims Claims) {
 	g := NewWithT(t)
+	actual := claims.(*BasicClaims)
 	g.Expect(actual.Audience).To(Equal(ref[ClaimAudience]))
 	g.Expect(actual.ExpiresAt).To(Equal(ref[ClaimExpire]))
 	g.Expect(actual.Id).To(Equal(ref[ClaimJwtId]))
@@ -132,10 +151,13 @@ func assertBasicClaims(t *testing.T, ref map[string]interface{}, actual *BasicCl
 	g.Expect(actual.Issuer).To(Equal(ref[ClaimIssuer]))
 	g.Expect(actual.NotBefore).To(Equal(ref[ClaimNotBefore]))
 	g.Expect(actual.Subject).To(Equal(ref[ClaimSubject]))
+	g.Expect(actual.Scopes).To(Equal(ref[ClaimScope]))
+	g.Expect(actual.ClientId).To(Equal(ref[ClaimClientId]))
 }
 
-func assertEmbeddingClaims(t *testing.T, ref map[string]interface{}, actual *embeddingClaims) {
+func assertFieldEmbeddingClaims(t *testing.T, ref map[string]interface{}, claims Claims) {
 	g := NewWithT(t)
+	actual := claims.(*fieldEmbeddingClaims)
 	g.Expect(actual.Audience).To(Equal(ref[ClaimAudience]))
 	g.Expect(actual.ExpiresAt).To(Equal(ref[ClaimExpire]))
 	g.Expect(actual.Id).To(Equal(ref[ClaimJwtId]))
@@ -143,38 +165,129 @@ func assertEmbeddingClaims(t *testing.T, ref map[string]interface{}, actual *emb
 	g.Expect(actual.Issuer).To(Equal(ref[ClaimIssuer]))
 	g.Expect(actual.NotBefore).To(Equal(ref[ClaimNotBefore]))
 	g.Expect(actual.Subject).To(Equal(ref[ClaimSubject]))
-	g.Expect(actual.FirstName).To(Equal(refEmbedding["first"]))
-	g.Expect(actual.LastName).To(Equal(refEmbedding["last"]))
+	g.Expect(actual.Scopes).To(Equal(ref[ClaimScope]))
+	g.Expect(actual.ClientId).To(Equal(ref[ClaimClientId]))
+	g.Expect(actual.FirstName).To(Equal(ref["first"]))
+	g.Expect(actual.LastName).To(Equal(ref["last"]))
+}
+
+func assertInterfaceEmbeddingClaims(t *testing.T, ref map[string]interface{}, claims Claims) {
+	g := NewWithT(t)
+	actual := claims.(*interfaceEmbeddingClaims)
+	g.Expect(actual.FirstName).To(Equal(ref["first"]))
+	g.Expect(actual.LastName).To(Equal(ref["last"]))
+
+	for k, v := range ref {
+		g.Expect(actual.Get(k)).To(Equal(v))
+	}
+}
+
+func assertAlternativeInterfaceEmbeddingClaims(t *testing.T, ref map[string]interface{}, claims Claims) {
+	g := NewWithT(t)
+	actual := claims.(*interfaceEmbeddingClaims)
+	for k, v := range ref {
+		if t, ok := v.(time.Time); ok {
+			g.Expect(actual.Get(k)).To(Equal(t.Unix()))
+		} else if s, ok := v.(utils.StringSet); ok {
+			g.Expect(actual.Get(k)).To(BeEquivalentTo(s.ToSet().Values()))
+		} else {
+			g.Expect(actual.Get(k)).To(Equal(v))
+		}
+	}
+}
+
+func newRefBasicClaims() *BasicClaims {
+	return &BasicClaims {
+		Audience: refBasic[ClaimAudience].(string),
+		ExpiresAt: refBasic[ClaimExpire].(time.Time),
+		Id: refBasic[ClaimJwtId].(string),
+		IssuedAt: refBasic[ClaimIssueAt].(time.Time),
+		Issuer: refBasic[ClaimIssuer].(string),
+		NotBefore: refBasic[ClaimNotBefore].(time.Time),
+		Subject: refBasic[ClaimSubject].(string),
+		Scopes: refBasic[ClaimScope].(utils.StringSet),
+		ClientId: refBasic[ClaimClientId].(string),
+	}
+}
+
+func newRefFieldEmbeddingClaims() *fieldEmbeddingClaims {
+	return &fieldEmbeddingClaims{
+		BasicClaims: *newRefBasicClaims(),
+		FirstName:   refMore["first"].(string),
+		LastName:    refMore["last"].(string),
+	}
+}
+
+func newRefInterfaceEmbeddingClaims() *interfaceEmbeddingClaims {
+	basic := newRefBasicClaims()
+	return &interfaceEmbeddingClaims{
+		Claims:  basic,
+		FirstName: refExtra["first"].(string),
+		LastName:  refExtra["last"].(string),
+		Extra: MapClaims{
+			"extra1": refExtra["extra1"],
+			"extra2": refExtra["extra2"],
+		},
+	}
 }
 
 /*************************
 	composite Type
  *************************/
-type embeddingClaims struct {
-	StructClaimsMapper
+// fieldEmbeddingClaims
+type fieldEmbeddingClaims struct {
+	FieldClaimsMapper
 	BasicClaims
 	FirstName  string    `claim:"first"`
 	LastName  string    `claim:"last"`
 }
 
-func (c *embeddingClaims) MarshalJSON() ([]byte, error) {
-	return c.StructClaimsMapper.DoMarshalJSON(c)
+func (c *fieldEmbeddingClaims) MarshalJSON() ([]byte, error) {
+	return c.FieldClaimsMapper.DoMarshalJSON(c)
 }
 
-func (c *embeddingClaims) UnmarshalJSON(bytes []byte) error {
-	return c.StructClaimsMapper.DoUnmarshalJSON(c, bytes)
+func (c *fieldEmbeddingClaims) UnmarshalJSON(bytes []byte) error {
+	return c.FieldClaimsMapper.DoUnmarshalJSON(c, bytes)
 }
 
-func (c *embeddingClaims) Get(claim string) interface{} {
-	return c.StructClaimsMapper.Get(c, claim)
+func (c *fieldEmbeddingClaims) Get(claim string) interface{} {
+	return c.FieldClaimsMapper.Get(c, claim)
 }
 
-func (c *embeddingClaims) Has(claim string) bool {
-	return c.StructClaimsMapper.Has(c, claim)
+func (c *fieldEmbeddingClaims) Has(claim string) bool {
+	return c.FieldClaimsMapper.Has(c, claim)
 }
 
-func (c *embeddingClaims) Set(claim string, value interface{}) {
-	c.StructClaimsMapper.Set(c, claim, value)
+func (c *fieldEmbeddingClaims) Set(claim string, value interface{}) {
+	c.FieldClaimsMapper.Set(c, claim, value)
 }
 
+// interfaceEmbeddingClaims
+type interfaceEmbeddingClaims struct {
+	FieldClaimsMapper
+	Claims
+	FirstName string `claim:"first"`
+	LastName  string `claim:"last"`
+	Extra     Claims
+}
+
+func (c *interfaceEmbeddingClaims) MarshalJSON() ([]byte, error) {
+	return c.FieldClaimsMapper.DoMarshalJSON(c)
+}
+
+func (c *interfaceEmbeddingClaims) UnmarshalJSON(bytes []byte) error {
+	return c.FieldClaimsMapper.DoUnmarshalJSON(c, bytes)
+}
+
+func (c *interfaceEmbeddingClaims) Get(claim string) interface{} {
+	return c.FieldClaimsMapper.Get(c, claim)
+}
+
+func (c *interfaceEmbeddingClaims) Has(claim string) bool {
+	return c.FieldClaimsMapper.Has(c, claim)
+}
+
+func (c *interfaceEmbeddingClaims) Set(claim string, value interface{}) {
+	c.FieldClaimsMapper.Set(c, claim, value)
+}
 
