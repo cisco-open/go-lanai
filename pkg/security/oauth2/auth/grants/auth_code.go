@@ -9,16 +9,16 @@ import (
 
 // ClientCredentialsGranter implements auth.TokenGranter
 type AuthorizationCodeGranter struct {
-	tokenService auth.AuthorizationService
+	authService auth.AuthorizationService
 }
 
-func NewAuthorizationCodeGranter(tokenService auth.AuthorizationService) *AuthorizationCodeGranter {
-	if tokenService == nil {
+func NewAuthorizationCodeGranter(authService auth.AuthorizationService) *AuthorizationCodeGranter {
+	if authService == nil {
 		panic(fmt.Errorf("cannot create AuthorizationCodeGranter without token service."))
 	}
 
 	return &AuthorizationCodeGranter{
-		tokenService: tokenService,
+		authService: authService,
 	}
 }
 
@@ -34,8 +34,20 @@ func (g *AuthorizationCodeGranter) Grant(ctx context.Context, request *auth.Toke
 		return nil, e
 	}
 
-	// TODO create real token
-	return oauth2.NewDefaultAccessToken("TODO"), nil
+	// TODO create real authentication
+	// create authentication
+	req := request.OAuth2Request(client)
+	oauth, e := g.authService.CreateAuthentication(ctx, req, nil)
+	if e != nil {
+		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+	}
+
+	// create token
+	token, e := g.authService.CreateAccessToken(ctx, oauth)
+	if e != nil {
+		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+	}
+	return token, nil
 }
 
 

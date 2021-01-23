@@ -13,10 +13,22 @@ type jwtTokenStoreReader struct {
 	jwtDecoder jwt.JwtDecoder
 }
 
-func NewJwtTokenStoreReader(detailsStore security.ContextDetailsStore, jwtDecoder jwt.JwtDecoder) oauth2.TokenStoreReader {
+type JTSROptions func(opt *JTSROption)
+
+type JTSROption struct {
+	DetailsStore security.ContextDetailsStore
+	Decoder jwt.JwtDecoder
+}
+
+func NewJwtTokenStoreReader(opts...JTSROptions) *jwtTokenStoreReader {
+	opt := JTSROption{}
+	for _, optFunc := range opts {
+		optFunc(&opt)
+	}
+
 	return &jwtTokenStoreReader{
-		detailsStore: detailsStore,
-		jwtDecoder: jwtDecoder,
+		detailsStore: opt.DetailsStore,
+		jwtDecoder: opt.Decoder,
 	}
 }
 

@@ -5,7 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 )
@@ -114,15 +113,19 @@ func (c *AuthorizationServerConfiguration) contextDetailsStore() security.Contex
 
 func (c *AuthorizationServerConfiguration) tokenStore() auth.TokenStore {
 	if c.TokenStore == nil {
-		reader := common.NewJwtTokenStoreReader(c.contextDetailsStore(), c.jwtDecoder())
-		c.TokenStore = auth.NewJwtTokenStore(reader, c.contextDetailsStore(), c.jwtEncoder())
+		c.TokenStore = auth.NewJwtTokenStore(func(opt *auth.JTSOption) {
+			opt.DetailsStore = c.contextDetailsStore()
+			opt.Encoder = c.jwtEncoder()
+			opt.Decoder = c.jwtDecoder()
+			// TODO enhancers
+		})
 	}
 	return c.TokenStore
 }
 
 func (c *AuthorizationServerConfiguration) authorizationService() auth.AuthorizationService {
 	if c.sharedAuthService == nil {
-		c.sharedAuthService = auth.NewDetailsPersistentAuthorizationService(func(conf *auth.AuthServiceConfig) {
+		c.sharedAuthService = auth.NewDefaultAuthorizationService(func(conf *auth.DASOption) {
 			conf.TokenStore = c.tokenStore()
 		})
 	}

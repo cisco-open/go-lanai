@@ -61,6 +61,11 @@ func (g *PasswordGranter) Grant(ctx context.Context, request *auth.TokenRequest)
 		return nil, oauth2.NewInvalidTokenRequestError(err.Error(), err)
 	}
 
+	// additional check
+	if e := auth.ValidateAllAutoApprovalScopes(ctx, client, request.Scopes); e != nil {
+		return nil, e
+	}
+
 	// create authentication
 	req := request.OAuth2Request(client)
 	oauth, e := g.authService.CreateAuthentication(ctx, req, userAuth)
@@ -68,8 +73,12 @@ func (g *PasswordGranter) Grant(ctx context.Context, request *auth.TokenRequest)
 		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
 	}
 
-	return g.authService.CreateAccessToken(ctx, oauth)
-	//return oauth2.NewDefaultAccessToken(fmt.Sprintf("TODO for user [%v]", userAuth.Principal())), nil
+	// create token
+	token, e := g.authService.CreateAccessToken(ctx, oauth)
+	if e != nil {
+		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+	}
+	return token, nil
 }
 
 

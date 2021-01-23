@@ -13,13 +13,12 @@ import (
  ***********************/
 func RetrieveAuthenticatedClient(c context.Context) OAuth2Client {
 	sec := security.Get(c)
-	if sec.State() < security.StateAuthenticated {
+	if sec.State() < security.StatePrincipalKnown {
 		return nil
 	}
 
 	if client, ok := sec.Principal().(OAuth2Client); ok {
 		return client
-
 	}
 	return nil
 }
@@ -49,6 +48,15 @@ func ValidateAllScopes(c context.Context, client OAuth2Client, scopes utils.Stri
 	for scope, _ := range scopes {
 		if !client.Scopes().Has(scope) {
 			return oauth2.NewInvalidScopeError("unauthorized scope: " + scope)
+		}
+	}
+	return nil
+}
+
+func ValidateAllAutoApprovalScopes(c context.Context, client OAuth2Client, scopes utils.StringSet) error {
+	for scope, _ := range scopes {
+		if !client.AutoApproveScopes().Has(scope) {
+			return oauth2.NewInvalidScopeError("scope not auto approved: " + scope)
 		}
 	}
 	return nil

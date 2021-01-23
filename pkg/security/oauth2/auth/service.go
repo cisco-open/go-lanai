@@ -16,31 +16,39 @@ type AuthorizationService interface {
 /****************************
 	Default implementation
  ****************************/
-type AuthorizationServiceOptionsFunc func(*AuthServiceConfig)
+type DASOptions func(*DASOption)
 
-type AuthServiceConfig struct {
-	TokenStore TokenStore
+type DASOption struct {
+	TokenStore    TokenStore
+	TokenEnhancer TokenEnhancer
 	// TODO...
 }
 
-// DetailsPersistentAuthorizationService implements AuthorizationService
-type DetailsPersistentAuthorizationService struct {
-	tokenStore TokenStore
+// DefaultAuthorizationService implements AuthorizationService
+type DefaultAuthorizationService struct {
+	tokenStore    TokenStore
+	tokenEnhancer TokenEnhancer
 	// TODO...
 }
 
-func NewDetailsPersistentAuthorizationService(opts...AuthorizationServiceOptionsFunc) *DetailsPersistentAuthorizationService {
-	conf := AuthServiceConfig{}
+func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationService {
+	conf := DASOption{
+		TokenEnhancer: NewCompositeTokenEnhancer(
+			&ExpiryTokenEnhancer{},
+			&BasicClaimsTokenEnhancer{},
+		),
+	}
 	for _, opt := range opts {
 		opt(&conf)
 	}
-	return &DetailsPersistentAuthorizationService{
+	return &DefaultAuthorizationService{
 		tokenStore: conf.TokenStore,
+		tokenEnhancer: conf.TokenEnhancer,
 		// TODO...
 	}
 }
 
-func (s *DetailsPersistentAuthorizationService) CreateAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (oauth2.Authentication, error) {
+func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (oauth2.Authentication, error) {
 	oauth := oauth2.NewAuthentication(func(conf *oauth2.AuthConfig) {
 		conf.Request = request
 		conf.UserAuth = userAuth
@@ -48,11 +56,12 @@ func (s *DetailsPersistentAuthorizationService) CreateAuthentication(ctx context
 	return oauth, nil
 }
 
-func (s *DetailsPersistentAuthorizationService) RefreshAccessToken(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error) {
+func (s *DefaultAuthorizationService) RefreshAccessToken(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error) {
+	// TODO
 	panic("implement me")
 }
 
-func (s *DetailsPersistentAuthorizationService) CreateAccessToken(c context.Context, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (s *DefaultAuthorizationService) CreateAccessToken(c context.Context, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	var token *oauth2.DefaultAccessToken
 
 	existing, e := s.tokenStore.ReusableAccessToken(c, oauth)
@@ -64,14 +73,12 @@ func (s *DetailsPersistentAuthorizationService) CreateAccessToken(c context.Cont
 		token = t
 	}
 
-	// TODO setup claims
-	claims := oauth2.MapClaims{
-
-	}
-	token.Claims = claims
-
 	// TODO Enhance token
+	enhanced, e := s.tokenEnhancer.Enhance(c, token, oauth)
+	if e != nil {
+		return nil, e
+	}
 
 	// save token
-	return s.tokenStore.SaveAccessToken(c, token, oauth)
+	return s.tokenStore.SaveAccessToken(c, enhanced, oauth)
 }

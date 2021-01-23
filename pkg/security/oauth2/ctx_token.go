@@ -115,7 +115,7 @@ func (t *DefaultAccessToken) Type() TokenType {
 
 // AccessToken
 func (t *DefaultAccessToken) IssueTime() time.Time {
-	return t.expiryTime
+	return t.issueTime
 }
 
 // AccessToken
@@ -144,6 +144,11 @@ func (t *DefaultAccessToken) RefreshToken() RefreshToken {
 // Setters
 func (t *DefaultAccessToken) SetValue(v string) *DefaultAccessToken {
 	t.value = v
+	return t
+}
+
+func (t *DefaultAccessToken) SetIssueTime(v time.Time) *DefaultAccessToken {
+	t.issueTime = v.UTC()
 	return t
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"fmt"
 )
@@ -11,15 +12,35 @@ import (
 // jwtTokenStore implements TokenStore and delegate oauth2.TokenStoreReader portion to embedded interface
 type jwtTokenStore struct {
 	oauth2.TokenStoreReader
-	detailsStore security.ContextDetailsStore
-	jwtEncoder jwt.JwtEncoder
+	detailsStore  security.ContextDetailsStore
+	jwtEncoder    jwt.JwtEncoder
 }
 
-func NewJwtTokenStore(reader oauth2.TokenStoreReader, detailsStore security.ContextDetailsStore, jwtEncoder jwt.JwtEncoder) TokenStore {
+type JTSOptions func(opt *JTSOption)
+
+type JTSOption struct {
+	Reader       oauth2.TokenStoreReader
+	DetailsStore security.ContextDetailsStore
+	Encoder      jwt.JwtEncoder
+	Decoder      jwt.JwtDecoder
+}
+
+func NewJwtTokenStore(opts...JTSOptions) *jwtTokenStore {
+	opt := JTSOption{}
+	for _, optFunc := range opts {
+		optFunc(&opt)
+	}
+
+	if opt.Reader == nil {
+		opt.Reader = common.NewJwtTokenStoreReader(func(o *common.JTSROption) {
+			o.DetailsStore = opt.DetailsStore
+			o.Decoder = opt.Decoder
+		})
+	}
 	return &jwtTokenStore{
-		TokenStoreReader: reader,
-		detailsStore:     detailsStore,
-		jwtEncoder:       jwtEncoder,
+		TokenStoreReader: opt.Reader,
+		detailsStore:     opt.DetailsStore,
+		jwtEncoder:       opt.Encoder,
 	}
 }
 
