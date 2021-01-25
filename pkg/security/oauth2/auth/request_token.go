@@ -19,7 +19,7 @@ func (r *TokenRequest) Context() utils.MutableContext {
 	return r.context
 }
 
-func (r *TokenRequest) OAuth2Request(client OAuth2Client) oauth2.OAuth2Request {
+func (r *TokenRequest) OAuth2Request(client oauth2.OAuth2Client) oauth2.OAuth2Request {
 	return oauth2.NewOAuth2Request(func(details *oauth2.RequestDetails) {
 		details.Parameters = r.Parameters
 		details.ClientId = client.ClientId()

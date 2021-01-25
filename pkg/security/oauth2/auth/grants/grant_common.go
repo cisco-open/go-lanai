@@ -2,10 +2,11 @@ package grants
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 )
 
-func CommonPreGrantValidation(c context.Context, client auth.OAuth2Client, request *auth.TokenRequest) error {
+func CommonPreGrantValidation(c context.Context, client oauth2.OAuth2Client, request *auth.TokenRequest) error {
 	// check scope
 	if e := auth.ValidateGrant(c, client, request.GrantType); e != nil {
 		return e

@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"github.com/google/uuid"
 )
 
@@ -19,15 +20,17 @@ type AuthorizationService interface {
 type DASOptions func(*DASOption)
 
 type DASOption struct {
-	TokenStore    TokenStore
-	TokenEnhancer TokenEnhancer
+	DetailsFactory *common.ContextDetailsFactory
+	TokenStore     TokenStore
+	TokenEnhancer  TokenEnhancer
 	// TODO...
 }
 
 // DefaultAuthorizationService implements AuthorizationService
 type DefaultAuthorizationService struct {
-	tokenStore    TokenStore
-	tokenEnhancer TokenEnhancer
+	detailsFactory *common.ContextDetailsFactory
+	tokenStore     TokenStore
+	tokenEnhancer  TokenEnhancer
 	// TODO...
 }
 
@@ -43,16 +46,28 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 		opt(&conf)
 	}
 	return &DefaultAuthorizationService{
+		detailsFactory: conf.DetailsFactory,
 		tokenStore: conf.TokenStore,
 		tokenEnhancer: conf.TokenEnhancer,
 		// TODO...
 	}
 }
 
-func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (oauth2.Authentication, error) {
+func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (ret oauth2.Authentication, err error) {
+
+	var details security.ContextDetails
+	if userAuth != nil {
+		if details, err = s.detailsFactory.New(ctx, request, userAuth); err != nil {
+			return
+		}
+	} else {
+		// TODO create basic details
+	}
+
 	oauth := oauth2.NewAuthentication(func(conf *oauth2.AuthConfig) {
 		conf.Request = request
 		conf.UserAuth = userAuth
+		conf.Details = details
 	})
 	return oauth, nil
 }

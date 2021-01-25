@@ -3,8 +3,10 @@ package authconfig
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 )
@@ -30,13 +32,15 @@ type AuthorizationServerEndpoints struct {
 }
 
 type AuthorizationServerConfiguration struct {
-	ClientStore                 auth.OAuth2ClientStore
+	ClientStore                 oauth2.OAuth2ClientStore
 	ClientSecretEncoder         passwd.PasswordEncoder
 	Endpoints                   AuthorizationServerEndpoints
 	UserAccountStore            security.AccountStore
+	TenantStore                 security.TenantStore
+	ProviderStore               security.ProviderStore
 	UserPasswordEncoder         passwd.PasswordEncoder
-	TokenStore 					auth.TokenStore
-	JwkStore 					jwt.JwkStore
+	TokenStore                  auth.TokenStore
+	JwkStore                    jwt.JwkStore
 	sharedErrorHandler          *auth.OAuth2ErrorHanlder
 	sharedTokenGranter          auth.TokenGranter
 	sharedAuthService           auth.AuthorizationService
@@ -44,6 +48,7 @@ type AuthorizationServerConfiguration struct {
 	sharedContextDetailsStore   security.ContextDetailsStore
 	sharedJwtEncoder            jwt.JwtEncoder
 	sharedJwtDecoder            jwt.JwtDecoder
+	sharedDetailsFactory        *common.ContextDetailsFactory
 	// TODO
 }
 
@@ -127,6 +132,7 @@ func (c *AuthorizationServerConfiguration) authorizationService() auth.Authoriza
 	if c.sharedAuthService == nil {
 		c.sharedAuthService = auth.NewDefaultAuthorizationService(func(conf *auth.DASOption) {
 			conf.TokenStore = c.tokenStore()
+			conf.DetailsFactory = c.contextDetailsFactory()
 		})
 	}
 
@@ -155,6 +161,18 @@ func (c *AuthorizationServerConfiguration) jwtDecoder() jwt.JwtDecoder {
 		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), "default")
 	}
 	return c.sharedJwtDecoder
+}
+
+func (c *AuthorizationServerConfiguration) contextDetailsFactory() *common.ContextDetailsFactory {
+	if c.sharedDetailsFactory == nil {
+		c.sharedDetailsFactory = common.NewContextDetailsFactory(func(opt *common.FactoryOption) {
+			opt.ClientStore = c.ClientStore
+			opt.AccountStore = c.UserAccountStore
+			opt.TenantStore = c.TenantStore
+			opt.ProviderStore = c.ProviderStore
+		})
+	}
+	return c.sharedDetailsFactory
 }
 
 

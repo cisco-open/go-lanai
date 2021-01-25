@@ -11,19 +11,19 @@ import (
 /***********************
 	Common Functions
  ***********************/
-func RetrieveAuthenticatedClient(c context.Context) OAuth2Client {
+func RetrieveAuthenticatedClient(c context.Context) oauth2.OAuth2Client {
 	sec := security.Get(c)
 	if sec.State() < security.StatePrincipalKnown {
 		return nil
 	}
 
-	if client, ok := sec.Principal().(OAuth2Client); ok {
+	if client, ok := sec.Principal().(oauth2.OAuth2Client); ok {
 		return client
 	}
 	return nil
 }
 
-func ValidateGrant(c context.Context, client OAuth2Client, grantType string) error {
+func ValidateGrant(c context.Context, client oauth2.OAuth2Client, grantType string) error {
 	if grantType == "" {
 		return oauth2.NewInvalidTokenRequestError("missing grant_type")
 	}
@@ -35,7 +35,7 @@ func ValidateGrant(c context.Context, client OAuth2Client, grantType string) err
 	return nil
 }
 
-func ValidateScope(c context.Context, client OAuth2Client, scopes...string) error {
+func ValidateScope(c context.Context, client oauth2.OAuth2Client, scopes...string) error {
 	for _, scope := range scopes {
 		if !client.Scopes().Has(scope) {
 			return oauth2.NewInvalidScopeError("unauthorized scope: " + scope)
@@ -44,7 +44,7 @@ func ValidateScope(c context.Context, client OAuth2Client, scopes...string) erro
 	return nil
 }
 
-func ValidateAllScopes(c context.Context, client OAuth2Client, scopes utils.StringSet) error {
+func ValidateAllScopes(c context.Context, client oauth2.OAuth2Client, scopes utils.StringSet) error {
 	for scope, _ := range scopes {
 		if !client.Scopes().Has(scope) {
 			return oauth2.NewInvalidScopeError("unauthorized scope: " + scope)
@@ -53,7 +53,7 @@ func ValidateAllScopes(c context.Context, client OAuth2Client, scopes utils.Stri
 	return nil
 }
 
-func ValidateAllAutoApprovalScopes(c context.Context, client OAuth2Client, scopes utils.StringSet) error {
+func ValidateAllAutoApprovalScopes(c context.Context, client oauth2.OAuth2Client, scopes utils.StringSet) error {
 	for scope, _ := range scopes {
 		if !client.AutoApproveScopes().Has(scope) {
 			return oauth2.NewInvalidScopeError("scope not auto approved: " + scope)

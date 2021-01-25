@@ -17,6 +17,7 @@ type ContextDetails interface {
 	TenantDetails
 	UserDetails
 	CredentialDetails
+	KeyValueDetails
 }
 
 type ProviderDetails interface {
@@ -45,9 +46,16 @@ type UserDetails interface {
 
 type CredentialDetails interface {
 	ExpiryTime() time.Time
-	Roles() utils.StringSet
 	IssueTime() time.Time
+	Roles() utils.StringSet
+	Permissions() utils.StringSet
 	AuthenticationTime() time.Time
-	OritinalUsername() string
-	Masqueraded() bool
+	OriginalUsername() string
+	Proxied() bool
+}
+
+type KeyValueDetails interface {
+	Value(string) (interface{}, bool)
+	SetValue(string, interface{})
+	SetValues(map[string]interface{})
 }
