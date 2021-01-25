@@ -28,13 +28,12 @@ func (e *ExpiryTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
 	}
 
-	// we assume client is available at this point
-	client := RetrieveAuthenticatedClient(c)
-
-	// TODO check extensions
-	t.SetIssueTime(time.Now())
-	expire := t.IssueTime().Add(client.AccessTokenValidity())
-	t.SetExpireTime(expire)
+	if authDetails, ok := oauth.Details().(security.AuthenticationDetails); ok {
+		t.SetIssueTime(authDetails.IssueTime())
+		t.SetExpireTime(authDetails.ExpiryTime())
+	} else {
+		t.SetIssueTime(time.Now())
+	}
 	return t, nil
 }
 

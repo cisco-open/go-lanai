@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -112,7 +113,7 @@ func (store *InMemoryAccountStore) tryLoadPolicy(ctx context.Context, account *p
 	}
 
 	// try to cache loaded policy in context
-	utils.MakeMutableContext(ctx).SetValue(ctxKey, policy)
+	utils.MakeMutableContext(ctx).Set(ctxKey, policy)
 	return policy, nil
 }
 
@@ -143,6 +144,19 @@ func createAccount(props *PropertiesBasedAccount) *passwd.UsernamePasswordAccoun
 		PwdChangedTime:       startupTime.Add(-30 * 24 * time.Hour),
 		GracefulAuthCount:    0,
 	})
+
+	// metadata
+	names := strings.Split(props.FullName, " ")
+	if len(names) > 0 {
+		acct.AccountMetadata.FirstName = names[0]
+	}
+
+	if len(names) > 1 {
+		acct.AccountMetadata.LastName = names[len(names) - 1]
+	}
+	acct.AccountMetadata.Email = props.Email
+	acct.AccountMetadata.RoleNames = props.Permissions
+	acct.AccountMetadata.Extra = map[string]interface{}{}
 
 	return acct
 }

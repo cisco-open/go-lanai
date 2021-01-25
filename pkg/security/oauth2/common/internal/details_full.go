@@ -40,7 +40,14 @@ type AuthenticationDetails struct {
 	Proxied            bool
 }
 
-type ContextDetails struct {
+// FullContextDetails implements
+// - security.UserDetails
+// - security.TenantDetails
+// - security.ProviderDetails
+// - security.AuthenticationDetails
+// - security.ProxiedUserDetails
+// - security.KeyValueDetails
+type FullContextDetails struct {
 	Provider       ProviderDetails
 	Tenant         TenantDetails
 	User           UserDetails
@@ -49,122 +56,123 @@ type ContextDetails struct {
 }
 
 // security.ProviderDetails
-func (d *ContextDetails) ProviderId() string {
+func (d *FullContextDetails) ProviderId() string {
 	return d.Provider.Id
 }
 
 // security.ProviderDetails
-func (d *ContextDetails) ProviderName() string {
+func (d *FullContextDetails) ProviderName() string {
 	return d.Provider.Name
 }
 
 // security.ProviderDetails
-func (d *ContextDetails) ProviderDisplayName() string {
+func (d *FullContextDetails) ProviderDisplayName() string {
 	return d.Provider.DisplayName
 }
 
 // security.TenantDetails
-func (d *ContextDetails) TenantId() string {
+func (d *FullContextDetails) TenantId() string {
 	return d.Tenant.Id
 }
 
 // security.TenantDetails
-func (d *ContextDetails) TenantName() string {
+func (d *FullContextDetails) TenantName() string {
 	return d.Tenant.Name
 }
 
 // security.TenantDetails
-func (d *ContextDetails) TenantSuspended() bool {
+func (d *FullContextDetails) TenantSuspended() bool {
 	return d.Tenant.Suspended
 }
 
 // security.UserDetails
-func (d *ContextDetails) UserId() string {
+func (d *FullContextDetails) UserId() string {
 	return d.User.Id
 }
 
 // security.UserDetails
-func (d *ContextDetails) Username() string {
+func (d *FullContextDetails) Username() string {
 	return d.User.Username
 }
 
 // security.UserDetails
-func (d *ContextDetails) AccountType() security.AccountType {
+func (d *FullContextDetails) AccountType() security.AccountType {
 	return d.User.AccountType
 }
 
 // security.UserDetails
-func (d *ContextDetails) AssignedTenantIds() utils.StringSet {
+func (d *FullContextDetails) AssignedTenantIds() utils.StringSet {
 	return d.User.AssignedTenantIds
 }
 
 // security.UserDetails
-func (d *ContextDetails) LocaleCode() string {
+func (d *FullContextDetails) LocaleCode() string {
 	return d.User.LocaleCode
 }
 
 // security.UserDetails
-func (d *ContextDetails) CurrencyCode() string {
+func (d *FullContextDetails) CurrencyCode() string {
 	return d.User.CurrencyCode
 }
 
 // security.UserDetails
-func (d *ContextDetails) FirstName() string {
+func (d *FullContextDetails) FirstName() string {
 	return d.User.FirstName
 }
 
 // security.UserDetails
-func (d *ContextDetails) LastName() string {
+func (d *FullContextDetails) LastName() string {
 	return d.User.LastName
 }
 
 // security.UserDetails
-func (d *ContextDetails) Email() string {
+func (d *FullContextDetails) Email() string {
 	return d.User.Email
 }
 
-// security.CredentialDetails
-func (d *ContextDetails) ExpiryTime() time.Time {
+// security.AuthenticationDetails
+func (d *FullContextDetails) ExpiryTime() time.Time {
 	return d.Authentication.ExpiryTime
 }
 
-// security.CredentialDetails
-func (d *ContextDetails) IssueTime() time.Time {
+// security.AuthenticationDetails
+func (d *FullContextDetails) IssueTime() time.Time {
 	return d.Authentication.IssueTime
 }
 
-// security.CredentialDetails
-func (d *ContextDetails) Roles() utils.StringSet {
+// security.AuthenticationDetails
+func (d *FullContextDetails) Roles() utils.StringSet {
 	return d.Authentication.Roles
 }
 
-// security.CredentialDetails
-func (d *ContextDetails) Permissions() utils.StringSet {
+// security.AuthenticationDetails
+func (d *FullContextDetails) Permissions() utils.StringSet {
 	return d.Authentication.Permissions
 }
 
-// security.CredentialDetails
-func (d *ContextDetails) AuthenticationTime() time.Time {
+// security.AuthenticationDetails
+func (d *FullContextDetails) AuthenticationTime() time.Time {
 	return d.Authentication.AuthenticationTime
 }
 
-// security.CredentialDetails
-func (d *ContextDetails) OriginalUsername() string {
+// security.ProxiedUserDetails
+func (d *FullContextDetails) OriginalUsername() string {
 	return d.Authentication.OriginalUsername
 }
 
-// security.CredentialDetails
-func (d *ContextDetails) Proxied() bool {
+// security.ProxiedUserDetails
+func (d *FullContextDetails) Proxied() bool {
 	return d.Authentication.Proxied
 }
 
 // security.KeyValueDetails
-func (d *ContextDetails) Value(key string) (v interface{}, ok bool) {
+func (d *FullContextDetails) Value(key string) (v interface{}, ok bool) {
 	v, ok = d.KV[key]
 	return
 }
 
-func (d *ContextDetails) SetValue(key string, value interface{}) {
+// security.KeyValueDetails
+func (d *FullContextDetails) SetValue(key string, value interface{}) {
 	if value == nil {
 		delete(d.KV, key)
 	} else {
@@ -172,6 +180,7 @@ func (d *ContextDetails) SetValue(key string, value interface{}) {
 	}
 }
 
-func (d *ContextDetails) SetValues(values map[string]interface{}) {
+// security.KeyValueDetails
+func (d *FullContextDetails) SetValues(values map[string]interface{}) {
 	d.KV = values
 }

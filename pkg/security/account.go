@@ -124,3 +124,16 @@ type AccountPwdAgingRule interface {
 	// GracefulAuthLimit specify how many logins is allowed after password expiry
 	GracefulAuthLimit() int
 }
+
+/*********************************
+	Abstraction - Metadata
+ *********************************/
+type AccountMetadata interface {
+	RoleNames() []string
+	FirstName() string
+	LastName() string
+	Email() string
+	LocaleCode() string
+	CurrencyCode() string
+	Value(key string) interface{}
+}

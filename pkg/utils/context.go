@@ -2,9 +2,10 @@ package utils
 
 import "context"
 
+// MutableContext matches *gin.Context
 type MutableContext interface {
 	context.Context
-	SetValue(key interface{}, value interface{}) MutableContext
+	Set(key string, value interface{})
 }
 
 type mutableContext struct {
@@ -21,13 +22,12 @@ func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
 	return
 }
 
-func (ctx *mutableContext) SetValue(key interface{}, value interface{}) MutableContext {
-	if key != nil && value != nil {
+func (ctx *mutableContext) Set(key string, value interface{}) {
+	if key != "" && value != nil {
 		ctx.values[key] = value
-	} else if key != nil {
+	} else if key != "" {
 		delete(ctx.values, key)
 	}
-	return ctx
 }
 
 func NewMutableContext() MutableContext {

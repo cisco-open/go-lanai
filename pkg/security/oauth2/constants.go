@@ -27,7 +27,17 @@ const (
 )
 
 const (
-	ExtensionAuthenticatedClient = "kAuthenticatedClient"
+	//Extension     = ""
+)
+
+const (
+	CtxKeyAuthenticatedClient     = "kAuthenticatedClient"
+	CtxKeyAuthenticatedAccount    = "kAuthenticatedAccount"
+	CtxKeyAuthorizedTenant        = "kAuthorizedTenant"
+	CtxKeyAuthorizedProvider      = "kAuthorizedProvider"
+	CtxKeyAuthorizationExpiryTime = "kAuthorizationExpiryTime"
+	CtxKeyAuthorizationIssueTime  = "kAuthorizationIssueTime"
+	CtxKeyAuthenticationTime      = "kAuthenticationTime"
 )
 
 const (

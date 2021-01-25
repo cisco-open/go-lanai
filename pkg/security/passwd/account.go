@@ -42,10 +42,21 @@ type PasswordPolicy struct {
 	GracefulAuthLimit   int
 }
 
+type AccountMetadata struct {
+	RoleNames    []string
+	FirstName    string
+	LastName     string
+	Email        string
+	LocaleCode   string
+	CurrencyCode string
+	Extra        map[string]interface{}
+}
+
 type UsernamePasswordAccount struct {
 	AccountDetails
 	LockingRule
 	PasswordPolicy
+	AccountMetadata
 }
 
 func NewUsernamePasswordAccount(details *AccountDetails) *UsernamePasswordAccount {
@@ -218,4 +229,46 @@ func (a *UsernamePasswordAccount) PwdExpiryWarningPeriod() time.Duration {
 
 func (a *UsernamePasswordAccount) GracefulAuthLimit() int {
 	return a.PasswordPolicy.GracefulAuthLimit
+}
+
+/***********************************
+	security.AccountMetadata
+ ***********************************/
+func (a *UsernamePasswordAccount) RoleNames() []string {
+	if a.AccountMetadata.RoleNames == nil {
+		return []string{}
+	}
+	return a.AccountMetadata.RoleNames
+}
+
+func (a *UsernamePasswordAccount) FirstName() string {
+	return a.AccountMetadata.FirstName
+}
+
+func (a *UsernamePasswordAccount) LastName() string {
+	return a.AccountMetadata.LastName
+}
+
+func (a *UsernamePasswordAccount) Email() string {
+	return a.AccountMetadata.Email
+}
+
+func (a *UsernamePasswordAccount) LocaleCode() string {
+	return a.AccountMetadata.LocaleCode
+}
+
+func (a *UsernamePasswordAccount) CurrencyCode() string {
+	return a.AccountMetadata.CurrencyCode
+}
+
+func (a *UsernamePasswordAccount) Value(key string) interface{} {
+	if a.AccountMetadata.Extra == nil {
+		return nil
+	}
+
+	v, ok := a.AccountMetadata.Extra[key]
+	if !ok {
+		return nil
+	}
+	return v
 }

@@ -16,7 +16,8 @@ type ContextDetails interface {
 	ProviderDetails
 	TenantDetails
 	UserDetails
-	CredentialDetails
+	AuthenticationDetails
+	ProxiedUserDetails
 	KeyValueDetails
 }
 
@@ -44,12 +45,15 @@ type UserDetails interface {
 	Email() string
 }
 
-type CredentialDetails interface {
+type AuthenticationDetails interface {
 	ExpiryTime() time.Time
 	IssueTime() time.Time
 	Roles() utils.StringSet
 	Permissions() utils.StringSet
 	AuthenticationTime() time.Time
+}
+
+type ProxiedUserDetails interface {
 	OriginalUsername() string
 	Proxied() bool
 }

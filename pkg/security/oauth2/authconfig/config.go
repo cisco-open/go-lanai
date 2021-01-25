@@ -133,6 +133,10 @@ func (c *AuthorizationServerConfiguration) authorizationService() auth.Authoriza
 		c.sharedAuthService = auth.NewDefaultAuthorizationService(func(conf *auth.DASOption) {
 			conf.TokenStore = c.tokenStore()
 			conf.DetailsFactory = c.contextDetailsFactory()
+			conf.ClientStore = c.ClientStore
+			conf.AccountStore = c.UserAccountStore
+			conf.TenantStore = c.TenantStore
+			conf.ProviderStore = c.ProviderStore
 		})
 	}
 
@@ -165,12 +169,7 @@ func (c *AuthorizationServerConfiguration) jwtDecoder() jwt.JwtDecoder {
 
 func (c *AuthorizationServerConfiguration) contextDetailsFactory() *common.ContextDetailsFactory {
 	if c.sharedDetailsFactory == nil {
-		c.sharedDetailsFactory = common.NewContextDetailsFactory(func(opt *common.FactoryOption) {
-			opt.ClientStore = c.ClientStore
-			opt.AccountStore = c.UserAccountStore
-			opt.TenantStore = c.TenantStore
-			opt.ProviderStore = c.ProviderStore
-		})
+		c.sharedDetailsFactory = common.NewContextDetailsFactory()
 	}
 	return c.sharedDetailsFactory
 }
