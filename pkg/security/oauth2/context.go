@@ -15,9 +15,9 @@ type Authentication interface {
 	AccessToken() AccessToken
 }
 
-type AuthenticationOptionsFunc func(*AuthConfig)
+type AuthenticationOptions func(*AuthOption)
 
-type AuthConfig struct {
+type AuthOption struct {
 	Request  OAuth2Request
 	UserAuth security.Authentication
 	Token    AccessToken
@@ -33,8 +33,8 @@ type authentication struct {
 	details   interface{}
 }
 
-func NewAuthentication(opts...AuthenticationOptionsFunc) Authentication {
-	config := AuthConfig{}
+func NewAuthentication(opts...AuthenticationOptions) Authentication {
+	config := AuthOption{}
 	for _, opt := range opts {
 		opt(&config)
 	}
@@ -92,4 +92,56 @@ func calculateState(req OAuth2Request, userAuth security.Authentication) securit
 	}
 	return security.StateAnonymous
 }
+
+/******************************
+	UserAuthentication
+******************************/
+type UserAuthOptions func(option *UserAuthOption)
+
+type UserAuthOption struct {
+	Principal   string
+	Permissions map[string]interface{}
+	State       security.AuthenticationState
+	Details     map[string]interface{}
+}
+
+// userAuthentication implments security.Authentication.
+// it represents basic information that could be typically extracted from JWT claims
+type userAuthentication struct {
+	Subject       string                       `json:"principal"`
+	PermissionMap map[string]interface{}       `json:"permissions"`
+	StateValue    security.AuthenticationState `json:"state"`
+	DetailsMap    map[string]interface{}       `json:"details"`
+}
+
+func NewUserAuthentication(opts...UserAuthOptions) *userAuthentication {
+	opt := UserAuthOption{}
+	for _, f := range opts {
+		f(&opt)
+	}
+	return &userAuthentication{
+		Subject:       opt.Principal,
+		PermissionMap: opt.Permissions,
+		StateValue:    opt.State,
+		DetailsMap:    opt.Details,
+	}
+}
+
+func (a *userAuthentication) Principal() interface{} {
+	return a.Subject
+}
+
+func (a *userAuthentication) Permissions() map[string]interface{} {
+	return a.PermissionMap
+}
+
+func (a *userAuthentication) State() security.AuthenticationState {
+	return a.StateValue
+}
+
+func (a *userAuthentication) Details() interface{} {
+	return a.DetailsMap
+}
+
+
 

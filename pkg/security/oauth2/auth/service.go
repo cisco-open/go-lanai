@@ -75,59 +75,20 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 	}
 }
 
-type authFacts struct {
-	request  oauth2.OAuth2Request
-	client   oauth2.OAuth2Client
-	account  security.Account
-	tenant   *security.Tenant
-	provider *security.Provider
-}
-
 func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (oauth oauth2.Authentication, err error) {
 
-	now := time.Now().UTC()
-
-	facts, e := s.loadAndVerifyFacts(ctx, request, userAuth)
-	if e != nil {
-		return nil, e
-	}
-
-	mutableCtx, ok := ctx.(utils.MutableContext);
-	if  !ok {
-		return nil, newImmutableContextError()
-	}
-
-	mutableCtx.Set(oauth2.CtxKeyAuthenticatedClient, facts.client)
-	mutableCtx.Set(oauth2.CtxKeyAuthenticatedAccount, facts.account)
-	mutableCtx.Set(oauth2.CtxKeyAuthorizedTenant, facts.tenant)
-	mutableCtx.Set(oauth2.CtxKeyAuthorizedProvider, facts.provider)
-	mutableCtx.Set(oauth2.CtxKeyAuthorizationIssueTime, now)
-
-	// expiry
-	expiry := s.determineExpiryTime(ctx, request, facts)
-	if !expiry.IsZero() {
-		mutableCtx.Set(oauth2.CtxKeyAuthorizationExpiryTime, expiry)
-	}
-
-	// auth time
-	authTime := s.determineAuthenticationTime(ctx, userAuth)
-	if !authTime.IsZero() {
-		mutableCtx.Set(oauth2.CtxKeyAuthenticationTime, authTime)
-	}
-
-	if userAuth == nil {
-		mutableCtx.Set(oauth2.CtxKeyAuthenticationTime, now)
-	} else {
-		// TODO, grab authentication time
-	}
-
-	// create context details
-	details, err := s.detailsFactory.New(ctx, request)
+	details, err := s.createContextDetails(ctx, request, userAuth)
 	if err != nil {
 		return
 	}
 
-	oauth = oauth2.NewAuthentication(func(conf *oauth2.AuthConfig) {
+	// reconstruct user auth based on newly loaded facts (account may changed)
+	if userAuth, err = s.createUserAuthentication(ctx, request, userAuth); err != nil {
+		return
+	}
+
+	// create the result
+	oauth = oauth2.NewAuthentication(func(conf *oauth2.AuthOption) {
 		conf.Request = request
 		conf.UserAuth = userAuth
 		conf.Details = details
@@ -162,8 +123,79 @@ func (s *DefaultAuthorizationService) CreateAccessToken(c context.Context, oauth
 }
 
 /****************************
-	Helpers
+	Authorization Helpers
  ****************************/
+type authFacts struct {
+	request  oauth2.OAuth2Request
+	client   oauth2.OAuth2Client
+	account  security.Account
+	tenant   *security.Tenant
+	provider *security.Provider
+}
+
+func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.AuthenticationDetails, error) {
+	now := time.Now().UTC()
+
+	facts, e := s.loadAndVerifyFacts(ctx, request, userAuth)
+	if e != nil {
+		return nil, e
+	}
+
+	mutableCtx, ok := ctx.(utils.MutableContext);
+	if !ok {
+		return nil, newImmutableContextError()
+	}
+
+	mutableCtx.Set(oauth2.CtxKeyAuthenticatedClient, facts.client)
+	mutableCtx.Set(oauth2.CtxKeyAuthenticatedAccount, facts.account)
+	mutableCtx.Set(oauth2.CtxKeyAuthorizedTenant, facts.tenant)
+	mutableCtx.Set(oauth2.CtxKeyAuthorizedProvider, facts.provider)
+	mutableCtx.Set(oauth2.CtxKeyAuthorizationIssueTime, now)
+
+	// expiry
+	expiry := s.determineExpiryTime(ctx, request, facts)
+	if !expiry.IsZero() {
+		mutableCtx.Set(oauth2.CtxKeyAuthorizationExpiryTime, expiry)
+	}
+
+	// auth time
+	authTime := s.determineAuthenticationTime(ctx, userAuth)
+	if !authTime.IsZero() {
+		mutableCtx.Set(oauth2.CtxKeyAuthenticationTime, authTime)
+	}
+
+	// create context details
+	return s.detailsFactory.New(ctx, request)
+}
+
+func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.Authentication, error) {
+	if userAuth == nil {
+		return nil, nil
+	}
+
+	account, ok := ctx.Value(oauth2.CtxKeyAuthenticatedAccount).(security.Account)
+	if !ok {
+		return userAuth, nil
+	}
+
+	permissions := map[string]interface{}{}
+	for _, v := range account.Permissions() {
+		permissions[v] = struct{}{}
+	}
+
+	details, ok := userAuth.Details().(map[string]interface{})
+	if !ok || details == nil {
+		details = map[string]interface{}{}
+	}
+
+	return oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
+		opt.Principal = account.Username()
+		opt.Permissions = permissions
+		opt.State = userAuth.State()
+		opt.Details = details
+	}), nil
+}
+
 func (f *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (*authFacts, error) {
 	client := RetrieveAuthenticatedClient(ctx)
 	if client == nil {
@@ -296,11 +328,19 @@ func (f *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Co
 		return
 	}
 
-	if t, ok := v.(time.Time); ok {
-		return t
+
+	switch v.(type) {
+	case time.Time:
+		authTime = v.(time.Time)
+	case string:
+		authTime = utils.ParseTime(utils.ISO8601Milliseconds, v.(string))
 	}
 	return
 }
+
+/****************************
+	Token Helpers
+ ****************************/
 
 /****************************
 	Errors

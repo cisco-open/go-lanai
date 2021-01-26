@@ -32,7 +32,7 @@ func (e *ExpiryTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
 		t.SetIssueTime(authDetails.IssueTime())
 		t.SetExpireTime(authDetails.ExpiryTime())
 	} else {
-		t.SetIssueTime(time.Now())
+		t.SetIssueTime(time.Now().UTC())
 	}
 	return t, nil
 }
