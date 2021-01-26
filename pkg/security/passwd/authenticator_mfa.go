@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
+	"time"
 )
 
 /********************************
@@ -93,13 +94,14 @@ func (a *MfaVerifyAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpVe
 		permissions[p] = true
 	}
 
-	details, ok := candidate.CurrentAuth.Details().(map[interface{}]interface{})
+	details, ok := candidate.CurrentAuth.Details().(map[string]interface{})
 	if details == nil || !ok {
-		details = map[interface{}]interface{}{}
+		details = map[string]interface{}{}
 		if candidate.CurrentAuth.Details() != nil {
 			details["Literal"] = candidate.CurrentAuth.Details()
 		}
 	}
+	details[security.DetailsKeyAuthTime] = time.Now().UTC()
 
 	auth := usernamePasswordAuthentication{
 		Acct:       account,

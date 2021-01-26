@@ -98,6 +98,15 @@ func (a *UsernamePasswordAccount) UseMFA() bool {
 	return a.AccountDetails.UseMFA
 }
 
+func (a *UsernamePasswordAccount) CacheableCopy() security.Account {
+	copy := UsernamePasswordAccount{
+		AccountDetails: a.AccountDetails,
+		AccountMetadata: a.AccountMetadata,
+	}
+	copy.AccountDetails.Credentials = nil
+	return &copy
+}
+
 /***********************************
 	implements security.AccountTenancy
  ***********************************/

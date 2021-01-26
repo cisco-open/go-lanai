@@ -119,3 +119,11 @@ func (c *DefaultOAuth2Client) Locked() bool {
 func (c *DefaultOAuth2Client) UseMFA() bool {
 	return false
 }
+
+func (c *DefaultOAuth2Client) CacheableCopy() security.Account {
+	copy := DefaultOAuth2Client {
+		ClientDetails: c.ClientDetails,
+	}
+	copy.ClientDetails.Secret = ""
+	return &copy
+}

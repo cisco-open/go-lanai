@@ -45,6 +45,9 @@ type Account interface {
 	Disabled() bool
 	Locked() bool
 	UseMFA() bool
+	// CacheableCopy should returns a copy of Account that suitable for putting into cache.
+	// e.g. the CacheableCopy should be able to be serialized and shouldn't contains Credentials or any reloadable content
+	CacheableCopy() Account
 }
 
 type AccountStore interface {

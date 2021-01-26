@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"errors"
 	"sort"
+	"time"
 )
 
 /******************************
@@ -112,6 +113,11 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 // exported for override posibility
 func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordPair, account security.Account) (security.Authentication, error) {
 
+	details := candidate.DetailsMap
+	if details == nil {
+		details = map[string]interface{}{}
+	}
+
 	permissions := map[string]interface{}{}
 
 	// MFA support
@@ -130,19 +136,16 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 
 		broadcastMFAEvent(MFAEventOtpCreate, otp, account, a.mfaEventListeners...)
 	} else {
+		details[security.DetailsKeyAuthTime] = time.Now().UTC()
 		// MFA skipped
 		for _,p := range account.Permissions() {
 			permissions[p] = true
 		}
 	}
 
-	details := candidate.DetailsMap
-	if details == nil {
-		details = map[interface{}]interface{}{}
-	}
-	// TODO erase account credentials or store username only
+	copy := account.CacheableCopy()
 	auth := usernamePasswordAuthentication{
-		Acct:       account,
+		Acct:       copy,
 		Perms:      permissions,
 		DetailsMap: details,
 	}

@@ -16,6 +16,11 @@ const (
 )
 
 const (
+	DetailsKeyAuthWarning = "AuthWarning"
+	DetailsKeyAuthTime    = "AuthTime"
+)
+
+const (
 	WSSharedKeyCompositeAuthSuccessHandler = "CompositeAuthSuccessHandler"
 	WSSharedKeyCompositeAuthErrorHandler = "CompositeAuthErrorHandler"
 	WSSharedKeyCompositeAccessDeniedHandler = "CompositeAccessDeniedHandler"
