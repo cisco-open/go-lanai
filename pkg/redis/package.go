@@ -2,16 +2,15 @@ package redis
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"github.com/go-redis/redis/v8"
-	"github.com/pkg/errors"
 	"go.uber.org/fx"
 )
 
 var Module = &bootstrap.Module{
 	Precedence: bootstrap.LowestPrecedence,
 	Options: []fx.Option{
-		fx.Provide(newConnectionProperties),
-		fx.Provide(newClient),
+		fx.Provide(BindSessionProperties),
+		fx.Provide(NewClientFactory),
+		fx.Provide(newDefaultClient),
 	},
 }
 
@@ -24,25 +23,13 @@ func Use() {
 
 }
 
-func newConnectionProperties(ac *bootstrap.ApplicationContext) *ConnectionProperties {
-	r := &ConnectionProperties{}
-	ac.Config().Bind(r, ConfigRootRedisConnection)
-	return r
-}
+func newDefaultClient(f ClientFactory, p ConnectionProperties) Client {
+	c, e := f.New(func(opt *ClientOption) {
+		opt.DbIndex = p.DB
+	})
 
-func newClient(p *ConnectionProperties) Client {
-
-	opts, err := GetUniversalOptions(p)
-
-	if err != nil {
-		panic(errors.Wrap(err, "Invalid redis configuration"))
+	if e != nil {
+		panic(e)
 	}
-
-	rdb := redis.NewUniversalClient(opts)
-
-	c := &client {
-		UniversalClient: rdb,
-	}
-
 	return c
 }

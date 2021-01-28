@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/google/uuid"
 	"time"
@@ -67,7 +66,6 @@ func (e *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.Acces
 
 	if t.Claims != nil {
 		basic.Id = t.Claims.Get(oauth2.ClaimJwtId).(string)
-		basic.Scopes = utils.NewStringSetFrom(t.Claims.Get(oauth2.ClaimScope))
 	}
 
 	if oauth.UserAuthentication() != nil {

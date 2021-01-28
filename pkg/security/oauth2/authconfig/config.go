@@ -2,6 +2,7 @@ package authconfig
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
@@ -29,6 +30,7 @@ type AuthorizationServerEndpoints struct {
 	Token      string
 	CheckToken string
 	UserInfo   string
+	JwkSet     string
 }
 
 type AuthorizationServerConfiguration struct {
@@ -41,6 +43,7 @@ type AuthorizationServerConfiguration struct {
 	UserPasswordEncoder         passwd.PasswordEncoder
 	TokenStore                  auth.TokenStore
 	JwkStore                    jwt.JwkStore
+	RedisClientFactory          redis.ClientFactory
 	sharedErrorHandler          *auth.OAuth2ErrorHanlder
 	sharedTokenGranter          auth.TokenGranter
 	sharedAuthService           auth.AuthorizationService
@@ -108,12 +111,10 @@ func (c *AuthorizationServerConfiguration) passwordGrantAuthenticator() security
 }
 
 func (c *AuthorizationServerConfiguration) contextDetailsStore() security.ContextDetailsStore {
-	// TODO
 	if c.sharedContextDetailsStore == nil {
-
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.RedisClientFactory)
 	}
-	//return c.sharedContextDetailsStore
-	return nil
+	return c.sharedContextDetailsStore
 }
 
 func (c *AuthorizationServerConfiguration) tokenStore() auth.TokenStore {

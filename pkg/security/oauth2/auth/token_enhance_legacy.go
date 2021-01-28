@@ -67,7 +67,6 @@ func (e *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
 	legacy := &legacyClaims{
 		BasicClaims: basic,
 		Username: basic.Subject,
-		// TODO all other fields requires ContextDetails
 	}
 
 	if ud, ok := oauth.Details().(security.UserDetails); ok {

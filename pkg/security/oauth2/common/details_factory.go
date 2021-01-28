@@ -40,7 +40,7 @@ type facts struct {
 	authTime   time.Time
 }
 
-func (f *ContextDetailsFactory) New(ctx context.Context, request oauth2.OAuth2Request) (security.AuthenticationDetails, error) {
+func (f *ContextDetailsFactory) New(ctx context.Context, request oauth2.OAuth2Request) (security.ContextDetails, error) {
 	facts := f.loadFacts(ctx, request)
 	return f.create(ctx, facts)
 }
@@ -82,7 +82,6 @@ func (f *ContextDetailsFactory) loadFacts(ctx context.Context, request oauth2.OA
 		facts.authTime = facts.issueTime
 	}
 
-	//client: ctx.Value(oauth2.CtxKeyAuthenticatedClient).(oauth2.OAuth2Client),
 	return &facts
 }
 

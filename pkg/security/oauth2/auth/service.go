@@ -96,11 +96,6 @@ func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context, 
 	return
 }
 
-func (s *DefaultAuthorizationService) RefreshAccessToken(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error) {
-	// TODO
-	panic("implement me")
-}
-
 func (s *DefaultAuthorizationService) CreateAccessToken(c context.Context, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	var token *oauth2.DefaultAccessToken
 
@@ -122,6 +117,11 @@ func (s *DefaultAuthorizationService) CreateAccessToken(c context.Context, oauth
 	return s.tokenStore.SaveAccessToken(c, enhanced, oauth)
 }
 
+func (s *DefaultAuthorizationService) RefreshAccessToken(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error) {
+	// TODO
+	panic("implement me")
+}
+
 /****************************
 	Authorization Helpers
  ****************************/
@@ -133,7 +133,7 @@ type authFacts struct {
 	provider *security.Provider
 }
 
-func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.AuthenticationDetails, error) {
+func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.ContextDetails, error) {
 	now := time.Now().UTC()
 
 	facts, e := s.loadAndVerifyFacts(ctx, request, userAuth)
@@ -180,7 +180,7 @@ func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Conte
 
 	permissions := map[string]interface{}{}
 	for _, v := range account.Permissions() {
-		permissions[v] = struct{}{}
+		permissions[v] = true
 	}
 
 	details, ok := userAuth.Details().(map[string]interface{})

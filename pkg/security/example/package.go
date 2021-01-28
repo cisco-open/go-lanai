@@ -2,6 +2,7 @@ package example
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/authconfig"
@@ -37,10 +38,11 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 
 type dependencies struct {
 	fx.In
-	ClientStore   oauth2.OAuth2ClientStore
-	AccountStore  security.AccountStore
-	TenantStore   security.TenantStore
-	ProviderStore security.ProviderStore
+	ClientStore        oauth2.OAuth2ClientStore
+	AccountStore       security.AccountStore
+	TenantStore        security.TenantStore
+	ProviderStore      security.ProviderStore
+	RedisClientFactory redis.ClientFactory
 	// TODO properties
 }
 
@@ -53,11 +55,13 @@ func newAuthServerConfigurer(deps dependencies) authconfig.AuthorizationServerCo
 		config.ProviderStore = deps.ProviderStore
 		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
 		config.JwkStore = jwt.NewStaticJwkStore("default")
+		config.RedisClientFactory = deps.RedisClientFactory
 		config.Endpoints = authconfig.AuthorizationServerEndpoints{
 			Authorize: "/v2/authorize",
 			Token: "/v2/token",
 			CheckToken: "/v2/check_token",
 			UserInfo: "/v2/userinfo",
+			JwkSet: "/v2/jwks",
 		}
 	}
 }

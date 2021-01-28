@@ -8,16 +8,12 @@ import (
 
 type ContextDetailsStore interface {
 	ReadContextDetails(ctx context.Context, key interface{}) (ContextDetails, error)
-	SaveContextDetails(ctx context.Context, details ContextDetails) (key interface{}, err error)
+	SaveContextDetails(ctx context.Context, key interface{}, details ContextDetails) error
 	RemoveContextDetails(ctx context.Context, key interface{}) error
 }
 
 type ContextDetails interface {
-	ProviderDetails
-	TenantDetails
-	UserDetails
 	AuthenticationDetails
-	ProxiedUserDetails
 	KeyValueDetails
 }
 

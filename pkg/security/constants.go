@@ -16,6 +16,19 @@ const (
 )
 
 const (
+	/**
+	 * Note about compatibility reference:
+	 *
+	 * Whenever an incompatible security model changes (in terms of serialization) is made to the class,
+	 * we should update the version tag.
+	 *
+	 * For now we use project version + incremental number as tag, but we could also use timestamp or date
+	 */
+	CompatibilityReference = "4000"
+	CompatibilityReferenceTag = "SMCR" // SMCR = Security Model Compatibility Ref
+)
+
+const (
 	DetailsKeyAuthWarning = "AuthWarning"
 	DetailsKeyAuthTime    = "AuthTime"
 )
