@@ -71,6 +71,10 @@ func ParseAuthorizeRequest(req *http.Request) (*AuthorizeRequest, error) {
 	}, nil
 }
 
+
+/************************
+	Helpers
+ ************************/
 func flattenValuesToMap(src url.Values) (dest map[string]interface{}) {
 	dest = map[string]interface{}{}
 	for k, v := range src {

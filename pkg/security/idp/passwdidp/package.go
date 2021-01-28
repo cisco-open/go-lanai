@@ -18,5 +18,5 @@ func Use() {
 }
 
 func configureSecurity(init security.Registrar, store security.AccountStore) {
-	init.Register(&TokenEndpointSecurityConfigurer {})
+	// TODO this might not be needed
 }

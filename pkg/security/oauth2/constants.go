@@ -31,13 +31,14 @@ const (
 )
 
 const (
-	CtxKeyAuthenticatedClient     = "kAuthenticatedClient"
-	CtxKeyAuthenticatedAccount    = "kAuthenticatedAccount"
-	CtxKeyAuthorizedTenant        = "kAuthorizedTenant"
-	CtxKeyAuthorizedProvider      = "kAuthorizedProvider"
-	CtxKeyAuthorizationExpiryTime = "kAuthorizationExpiryTime"
-	CtxKeyAuthorizationIssueTime  = "kAuthorizationIssueTime"
-	CtxKeyAuthenticationTime      = "kAuthenticationTime"
+	CtxKeyAuthenticatedClient       = "kAuthenticatedClient"
+	CtxKeyAuthenticatedAccount      = "kAuthenticatedAccount"
+	CtxKeyAuthorizedTenant          = "kAuthorizedTenant"
+	CtxKeyAuthorizedProvider        = "kAuthorizedProvider"
+	CtxKeyAuthorizationExpiryTime   = "kAuthorizationExpiryTime"
+	CtxKeyAuthorizationIssueTime    = "kAuthorizationIssueTime"
+	CtxKeyAuthenticationTime        = "kAuthenticationTime"
+	CtxKeyValidatedAuthorizeRequest = "kAuthenticationTime"
 )
 
 const (

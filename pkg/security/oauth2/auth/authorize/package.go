@@ -1,25 +1,28 @@
-package token
+package authorize
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"go.uber.org/fx"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
 var Module = &bootstrap.Module{
-	Name: "oauth2 auth - token",
+	Name: "oauth2 auth - authorize",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
 		fx.Invoke(register),
 	},
 }
 
+var logger = log.GetNamedLogger("AuthorizeEndpoint")
+
 func init() {
 	bootstrap.Register(Module)
 }
 
 func register(init security.Registrar) {
-	configurer := newOAuth2TokenEndpointConfigurer()
+	configurer := newOAuth2AuhtorizeEndpointConfigurer()
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

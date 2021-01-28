@@ -2,11 +2,24 @@ package authconfig
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/clientauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 )
 
+/***************************
+	addtional abstractions
+ ***************************/
+type IdpSecurityConfigurer interface {
+	ConfigureAuthorizeEndpoint(path string, ws security.WebSecurity)
+}
+
+/***************************
+	security configurers
+ ***************************/
+// ClientAuthEndpointsConfigurer implements security.Configurer
+// responsible to configure endpoints using client auth
 type ClientAuthEndpointsConfigurer struct {
 	config *AuthorizationServerConfiguration
 }
@@ -24,4 +37,20 @@ func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 			Path(c.config.Endpoints.Token).
 			AddGranter(c.config.tokenGranter()),
 		)
+}
+
+// AuthorizeEndpointConfigurer implements security.Configurer
+// responsible to configure //todo
+type AuthorizeEndpointConfigurer struct {
+	config *AuthorizationServerConfiguration
+	delegate IdpSecurityConfigurer
+}
+
+func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
+	path := c.config.Endpoints.Authorize
+	ws.Route(matcher.RouteWithPattern(path)).
+		With(authorize.NewEndpoint().
+			Path(path),
+		)
+	c.delegate.ConfigureAuthorizeEndpoint(path, ws)
 }

@@ -65,7 +65,6 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 			Request(matcher.AnyRequest()).HasPermissions("welcomed"),
 		).
 		With(formlogin.New().
-			FormProcessCondition(condition).
 			EnableMFA(),
 		).
 		With(logout.New().

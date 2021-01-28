@@ -99,14 +99,6 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 		f.mfaErrorUrl = f.mfaUrl + "?error=true"
 	}
 
-	if f.formProcessCondition == nil {
-		if wsReader, ok := ws.(security.WebSecurityReader); ok {
-			f.formProcessCondition = wsReader.GetCondition()
-		} else {
-			return fmt.Errorf("formProcessCondition is not specified and unable to read condition from WebSecurity")
-		}
-	}
-
 	return nil
 }
 
@@ -188,18 +180,15 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	})
 	mw := middleware.NewBuilder("form login").
 		ApplyTo(route).
-		WithCondition(f.formProcessCondition).
 		Order(security.MWOrderFormAuth).
-		Use(login.LoginProcessHandlerFunc()).
-		Build()
+		Use(login.LoginProcessHandlerFunc())
 
 	ws.Add(mw)
 
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(mapping.Post(f.loginProcessUrl).
 		HandlerFunc(security.NoopHandlerFunc).
-		Name("login process dummy").
-		Build() )
+		Name("login process dummy") )
 
 	return nil
 }
@@ -223,29 +212,23 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 
 	verifyMW := middleware.NewBuilder("otp verify").
 		ApplyTo(routeVerify).
-		WithCondition(f.formProcessCondition).
 		Order(security.MWOrderFormAuth).
-		Use(login.OtpVerifyHandlerFunc()).
-		Build()
+		Use(login.OtpVerifyHandlerFunc())
 
 	refreshMW := middleware.NewBuilder("otp refresh").
 		ApplyTo(routeRefresh).
-		WithCondition(f.formProcessCondition).
 		Order(security.MWOrderFormAuth).
-		Use(login.OtpRefreshHandlerFunc()).
-		Build()
+		Use(login.OtpRefreshHandlerFunc())
 
 	ws.Add(verifyMW, refreshMW)
 
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(mapping.Post(f.mfaVerifyUrl).
 		HandlerFunc(security.NoopHandlerFunc).
-		Name("otp verify dummy").
-		Build() )
+		Name("otp verify dummy") )
 	ws.Add(mapping.Post(f.mfaRefreshUrl).
 		HandlerFunc(security.NoopHandlerFunc).
-		Name("otp refresh dummy").
-		Build() )
+		Name("otp refresh dummy") )
 
 	// configure access
 	access.Configure(ws).

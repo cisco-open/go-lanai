@@ -2,7 +2,6 @@ package formlogin
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 )
 
@@ -11,7 +10,6 @@ import (
  *********************************/
 //goland:noinspection GoNameStartsWithPackageName
 type FormLoginFeature struct {
-	formProcessCondition web.RequestMatcher
 	successHandler       security.AuthenticationSuccessHandler
 	failureHandler       security.AuthenticationErrorHandler
 	loginUrl             string
@@ -41,11 +39,6 @@ func (f *FormLoginFeature) LoginUrl(loginUrl string) *FormLoginFeature {
 
 func (f *FormLoginFeature) LoginProcessUrl(loginProcessUrl string) *FormLoginFeature {
 	f.loginProcessUrl = loginProcessUrl
-	return f
-}
-
-func (f *FormLoginFeature) FormProcessCondition(condition web.RequestMatcher) *FormLoginFeature {
-	f.formProcessCondition = condition
 	return f
 }
 

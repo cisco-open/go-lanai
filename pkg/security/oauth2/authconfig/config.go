@@ -20,6 +20,9 @@ func ConfigureAuthorizationServer(registrar security.Registrar, configurer Autho
 	configurer(config)
 
 	registrar.Register(&ClientAuthEndpointsConfigurer{config: config})
+	for _, configuer := range config.idpConfigurers {
+		registrar.Register(&AuthorizeEndpointConfigurer{config: config, delegate: configuer})
+	}
 }
 
 /****************************
@@ -34,16 +37,20 @@ type AuthorizationServerEndpoints struct {
 }
 
 type AuthorizationServerConfiguration struct {
-	ClientStore                 oauth2.OAuth2ClientStore
-	ClientSecretEncoder         passwd.PasswordEncoder
-	Endpoints                   AuthorizationServerEndpoints
-	UserAccountStore            security.AccountStore
-	TenantStore                 security.TenantStore
-	ProviderStore               security.ProviderStore
-	UserPasswordEncoder         passwd.PasswordEncoder
-	TokenStore                  auth.TokenStore
-	JwkStore                    jwt.JwkStore
-	RedisClientFactory          redis.ClientFactory
+	// configurable items
+	ClientStore         oauth2.OAuth2ClientStore
+	ClientSecretEncoder passwd.PasswordEncoder
+	Endpoints           AuthorizationServerEndpoints
+	UserAccountStore    security.AccountStore
+	TenantStore         security.TenantStore
+	ProviderStore       security.ProviderStore
+	UserPasswordEncoder passwd.PasswordEncoder
+	TokenStore          auth.TokenStore
+	JwkStore            jwt.JwkStore
+	RedisClientFactory  redis.ClientFactory
+
+	// not directly configurable items
+	idpConfigurers 				[]IdpSecurityConfigurer
 	sharedErrorHandler          *auth.OAuth2ErrorHanlder
 	sharedTokenGranter          auth.TokenGranter
 	sharedAuthService           auth.AuthorizationService
@@ -52,7 +59,12 @@ type AuthorizationServerConfiguration struct {
 	sharedJwtEncoder            jwt.JwtEncoder
 	sharedJwtDecoder            jwt.JwtDecoder
 	sharedDetailsFactory        *common.ContextDetailsFactory
+
 	// TODO
+}
+
+func (c *AuthorizationServerConfiguration) AddIdp(configurer IdpSecurityConfigurer) {
+	c.idpConfigurers = append(c.idpConfigurers, configurer)
 }
 
 func (c *AuthorizationServerConfiguration) clientSecretEncoder() passwd.PasswordEncoder {

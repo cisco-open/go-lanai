@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/authconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
@@ -48,6 +49,7 @@ type dependencies struct {
 
 func newAuthServerConfigurer(deps dependencies) authconfig.AuthorizationServerConfigurer {
 	return func(config *authconfig.AuthorizationServerConfiguration) {
+		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer())
 		config.ClientStore = deps.ClientStore
 		config.ClientSecretEncoder = passwd.NewNoopPasswordEncoder()
 		config.UserAccountStore = deps.AccountStore

@@ -49,6 +49,7 @@ const (
 	MWOrderAuthPersistence
 	MWOrderErrorHandling
 	MWOrderCsrfHandling
+	MWOrderOAuth2AuthValidation
 	MWOrderBasicAuth
 	MWOrderFormLogout
 	MWOrderFormAuth
@@ -67,6 +68,7 @@ const (
 	FeatureOrderFormLogin
 	FeatureOrderLogout
 	FeatureOrderOAuth2TokenEndpoint
+	FeatureOrderOAuth2AuthorizeEndpoint
 	FeatureOrderCsrf
 	FeatureOrderAccess
 	FeatureOrderSession

@@ -29,6 +29,7 @@ const (
 	ErrorCodeInvalidClientCredentials
 	ErrorCodeInvalidGrant
 	ErrorCodeInvalidScope
+	ErrorCodeInvalidAuthorizeRequest
 	ErrorCodeInvalidRedirectUri
 )
 
@@ -78,6 +79,10 @@ func NewInvalidGrantError(value interface{}, causes...interface{}) error {
 
 func NewInvalidScopeError(value interface{}, causes...interface{}) error {
 	return security.NewCodedError(ErrorCodeInvalidScope, value, causes...)
+}
+
+func NewInvalidAuthorizeRequestError(value interface{}, causes...interface{}) error {
+	return security.NewCodedError(ErrorCodeInvalidAuthorizeRequest, value, causes...)
 }
 
 func NewInvalidRedirectUriError(value interface{}, causes...interface{}) error {
