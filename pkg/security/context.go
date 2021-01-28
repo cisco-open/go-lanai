@@ -52,6 +52,11 @@ func GobRegister() {
 	gob.Register((*codedError)(nil))
 	gob.Register((*nestedError)(nil))
 	gob.Register(errors.New(""))
+	gob.Register((*DefaultAccount)(nil))
+	gob.Register((*AcctDetails)(nil))
+	gob.Register((*AcctLockingRule)(nil))
+	gob.Register((*AcctPasswordPolicy)(nil))
+	gob.Register((*AccountMetadata)(nil))
 }
 
 func Get(ctx context.Context) Authentication {

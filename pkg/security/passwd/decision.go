@@ -237,13 +237,13 @@ func (c *PasswordPolicyChecker) decideExpiredPassword(
 }
 
 func (c *PasswordPolicyChecker) addWarning(auth security.Authentication, warning interface{}) {
-	details, ok := auth.Details().(map[interface{}]interface{})
+	details, ok := auth.Details().(map[string]interface{})
 	if !ok || details == nil {
 		return
 	}
 
 	var existing []interface{}
-	switch w := details[DetailsKeyAuthWarning]; w.(type) {
+	switch w := details[security.DetailsKeyAuthWarning]; w.(type) {
 	case nil:
 		existing = []interface{}{}
 	case []interface{}:
@@ -253,9 +253,9 @@ func (c *PasswordPolicyChecker) addWarning(auth security.Authentication, warning
 	}
 
 	if warnings, ok := warning.([]interface{}); ok {
-		details[DetailsKeyAuthWarning] = append(existing, warnings...)
+		details[security.DetailsKeyAuthWarning] = append(existing, warnings...)
 	} else {
-		details[DetailsKeyAuthWarning] = append(existing, warning)
+		details[security.DetailsKeyAuthWarning] = append(existing, warning)
 	}
 }
 

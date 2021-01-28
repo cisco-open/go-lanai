@@ -2,6 +2,7 @@ package clientauth
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"fmt"
@@ -10,9 +11,9 @@ import (
 // We currently don't have any stuff to configure
 //goland:noinspection GoNameStartsWithPackageName
 type ClientAuthFeature struct {
-	clientStore auth.OAuth2ClientStore
+	clientStore         oauth2.OAuth2ClientStore
 	clientSecretEncoder passwd.PasswordEncoder
-	errorHandler *auth.OAuth2ErrorHanlder
+	errorHandler        *auth.OAuth2ErrorHanlder
 }
 
 // Standard security.Feature entrypoint
@@ -35,7 +36,7 @@ func New() *ClientAuthFeature {
 }
 
 /** Setters **/
-func (f *ClientAuthFeature) ClientStore(clientStore auth.OAuth2ClientStore) *ClientAuthFeature {
+func (f *ClientAuthFeature) ClientStore(clientStore oauth2.OAuth2ClientStore) *ClientAuthFeature {
 	f.clientStore = clientStore
 	return f
 }

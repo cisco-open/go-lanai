@@ -55,7 +55,7 @@ func (mw *MfaAuthenticationMiddleware) OtpVerifyHandlerFunc() gin.HandlerFunc {
 		candidate := passwd.MFAOtpVerification{
 			CurrentAuth: before,
 			OTP:         otp[0],
-			DetailsMap:  map[interface{}]interface{}{},
+			DetailsMap:  map[string]interface{}{},
 		}
 
 		// authenticate
@@ -77,7 +77,7 @@ func (mw *MfaAuthenticationMiddleware) OtpRefreshHandlerFunc() gin.HandlerFunc {
 		}
 		candidate := passwd.MFAOtpRefresh{
 			CurrentAuth: before,
-			DetailsMap:  map[interface{}]interface{}{},
+			DetailsMap:  map[string]interface{}{},
 		}
 
 		// authenticate

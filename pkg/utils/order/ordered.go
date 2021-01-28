@@ -1,5 +1,11 @@
 package order
 
+import (
+	"fmt"
+	"reflect"
+	"sort"
+)
+
 const (
 	Lowest = int(^uint(0) >> 1) // max int
 	Highest = -Lowest - 1 // min int
@@ -13,8 +19,35 @@ type PriorityOrdered interface {
 	PriorityOrder() int
 }
 
-// ComparatorFunc is used for sort to compare two interface's order
-type ComparatorFunc func(left interface{}, right interface{}) bool
+// LessFunc is accepted less func by sort.Slice and sort.SliceStable
+type LessFunc func(i, j int) bool
+
+// CompareFunc is used to compare two interface's order,
+type CompareFunc func(left interface{}, right interface{}) bool
+
+// Sort wraps sort.Slice with LessFunc constructed from given CompareFunc using reflect
+// function panic if given interface is not slice
+func Sort(slice interface{}, compareFunc CompareFunc) {
+	sv := reflect.ValueOf(slice)
+	if sv.Kind() != reflect.Slice {
+		panic(fmt.Errorf("Sort only support slice, but got %T", slice))
+	}
+	sort.Slice(slice, func(i,j int) bool {
+		return compareFunc(sv.Index(i).Interface(), sv.Index(j).Interface())
+	})
+}
+
+// SortStable wraps sort.SliceStable with LessFunc constructed from given CompareFunc using reflect
+// function panic if given interface is not slice
+func SortStable(slice interface{}, compareFunc CompareFunc) {
+	sv := reflect.ValueOf(slice)
+	if sv.Kind() != reflect.Slice {
+		panic(fmt.Errorf("Sort only support slice, but got %T", slice))
+	}
+	sort.SliceStable(slice, func(i,j int) bool {
+		return compareFunc(sv.Index(i).Interface(), sv.Index(j).Interface())
+	})
+}
 
 // OrderedFirstCompare compares objects based on order interfaces with following rule
 // - PriorityOrdered wins over other types

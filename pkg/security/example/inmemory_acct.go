@@ -3,9 +3,9 @@ package example
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -16,15 +16,15 @@ var (
 
 // in memory security.AccountStore
 type InMemoryAccountStore struct {
-	accountLookupByUsername map[string]*passwd.UsernamePasswordAccount
-	accountLookupById       map[interface{}]*passwd.UsernamePasswordAccount
+	accountLookupByUsername map[string]*security.DefaultAccount
+	accountLookupById       map[interface{}]*security.DefaultAccount
 	policiesLookupByName    map[string]*PropertiesBasedAccountPolicy
 }
 
 func NewInMemoryAccountStore(acctProps AccountsProperties, acctPolicyProps AccountPoliciesProperties) security.AccountStore {
 	store := InMemoryAccountStore{
-		accountLookupByUsername: map[string]*passwd.UsernamePasswordAccount{},
-		accountLookupById:       map[interface{}]*passwd.UsernamePasswordAccount{},
+		accountLookupByUsername: map[string]*security.DefaultAccount{},
+		accountLookupById:       map[interface{}]*security.DefaultAccount{},
 		policiesLookupByName:    map[string]*PropertiesBasedAccountPolicy{},
 	}
 	for k, props := range acctProps.Accounts {
@@ -44,7 +44,7 @@ func NewInMemoryAccountStore(acctProps AccountsProperties, acctPolicyProps Accou
 }
 
 func (store *InMemoryAccountStore) Save(ctx context.Context, acct security.Account) error {
-	if userAcct, ok := acct.(*passwd.UsernamePasswordAccount); ok {
+	if userAcct, ok := acct.(*security.DefaultAccount); ok {
 		store.accountLookupById[userAcct.ID()] = userAcct
 		store.accountLookupByUsername[userAcct.Username()] = userAcct
 	}
@@ -70,12 +70,12 @@ func (store *InMemoryAccountStore) LoadAccountByUsername(_ context.Context, user
 }
 
 func (store *InMemoryAccountStore) LoadLockingRules(ctx context.Context, acct security.Account) (security.AccountLockingRule, error) {
-	account, ok := acct.(*passwd.UsernamePasswordAccount)
+	account, ok := acct.(*security.DefaultAccount)
 	if !ok {
 		return nil, errors.New("unsupported account")
 	}
 
-	if account.UserDetails.PolicyName == "" {
+	if account.AcctDetails.PolicyName == "" {
 		// no policy name available, return without loading (this will contains default values)
 		return account, nil
 	}
@@ -99,7 +99,7 @@ func (store *InMemoryAccountStore) LoadPwdAgingRules(ctx context.Context, acct s
 }
 
 // Note, caching loaded policy in ctx is not needed for in-memory store. The implmenetation is for reference only
-func (store *InMemoryAccountStore) tryLoadPolicy(ctx context.Context, account *passwd.UsernamePasswordAccount) (*PropertiesBasedAccountPolicy, error) {
+func (store *InMemoryAccountStore) tryLoadPolicy(ctx context.Context, account *security.DefaultAccount) (*PropertiesBasedAccountPolicy, error) {
 	ctxKey := contextKeyAccountPolicy + account.ID().(string)
 	policy, ok := ctx.Value(ctxKey).(*PropertiesBasedAccountPolicy)
 	if !ok {
@@ -112,12 +112,14 @@ func (store *InMemoryAccountStore) tryLoadPolicy(ctx context.Context, account *p
 	}
 
 	// try to cache loaded policy in context
-	utils.MakeMutableContext(ctx).SetValue(ctxKey, policy)
+	if mutable, ok := ctx.(utils.MutableContext); ok {
+		mutable.Set(ctxKey, policy)
+	}
 	return policy, nil
 }
 
-func createAccount(props *PropertiesBasedAccount) *passwd.UsernamePasswordAccount {
-	acct := passwd.NewUsernamePasswordAccount(&passwd.UserDetails{
+func createAccount(props *PropertiesBasedAccount) *security.DefaultAccount {
+	acct := security.NewUsernamePasswordAccount(&security.AcctDetails{
 		ID:              props.ID,
 		Type:            security.ParseAccountType(props.Type),
 		Username:        props.Username,
@@ -144,11 +146,24 @@ func createAccount(props *PropertiesBasedAccount) *passwd.UsernamePasswordAccoun
 		GracefulAuthCount:    0,
 	})
 
+	// metadata
+	names := strings.Split(props.FullName, " ")
+	if len(names) > 0 {
+		acct.AcctMetadata.FirstName = names[0]
+	}
+
+	if len(names) > 1 {
+		acct.AcctMetadata.LastName = names[len(names) - 1]
+	}
+	acct.AcctMetadata.Email = props.Email
+	acct.AcctMetadata.RoleNames = props.Permissions
+	acct.AcctMetadata.Extra = map[string]interface{}{}
+
 	return acct
 }
 
-func populateAccountPolicy(acct *passwd.UsernamePasswordAccount, props *PropertiesBasedAccountPolicy) {
-	acct.LockingRule = passwd.LockingRule{
+func populateAccountPolicy(acct *security.DefaultAccount, props *PropertiesBasedAccountPolicy) {
+	acct.AcctLockingRule = security.AcctLockingRule{
 		Name:             props.Name,
 		Enabled:          props.LockingEnabled,
 		LockoutDuration:  utils.ParseDuration(props.LockoutDuration),
@@ -156,7 +171,7 @@ func populateAccountPolicy(acct *passwd.UsernamePasswordAccount, props *Properti
 		FailuresInterval: utils.ParseDuration(props.FailuresInterval),
 	}
 
-	acct.PasswordPolicy = passwd.PasswordPolicy{
+	acct.AcctPasswordPolicy = security.AcctPasswordPolicy{
 		Name:                props.Name,
 		Enabled:             props.AgingEnabled,
 		MaxAge:              utils.ParseDuration(props.MaxAge),

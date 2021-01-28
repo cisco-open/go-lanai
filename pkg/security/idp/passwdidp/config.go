@@ -22,7 +22,7 @@ func (c *TokenEndpointSecurityConfigurer) Configure(ws security.WebSecurity) {
 		With(passwd.New()).
 		//With(token.NewTokenEndpoint()).
 		//With(access.New().
-		//	Request(matcher.AnyRequest()).Authenticated(),
+		//	RequestDetails(matcher.AnyRequest()).Authenticated(),
 		//).
 		With(errorhandling.New().
 			AuthenticationEntryPoint(handler).

@@ -3,24 +3,18 @@ package auth
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 )
-
-/***********************************
-	Abstraction
- ***********************************/
-type OAuth2ClientStore interface {
-	LoadClientByClientId(ctx context.Context, clientId string) (OAuth2Client, error)
-}
 
 /***********************************
 	default implmentation
  ***********************************/
 // OAuth2ClientAccountStore wraps an delegate and implement both security.AccountStore and client OAuth2ClientStore
 type OAuth2ClientAccountStore struct {
-	OAuth2ClientStore
+	oauth2.OAuth2ClientStore
 }
 
-func WrapOAuth2ClientStore(clientStore OAuth2ClientStore) *OAuth2ClientAccountStore {
+func WrapOAuth2ClientStore(clientStore oauth2.OAuth2ClientStore) *OAuth2ClientAccountStore {
 	return &OAuth2ClientAccountStore{
 		OAuth2ClientStore: clientStore,
 	}

@@ -13,7 +13,7 @@ import (
 // otherwise, return true, security.ErrorTypeCodeAccessControl error
 type DecisionMakerFunc func(context.Context, *http.Request) (handled bool, decision error)
 
-// AcrMatcher short for Access Control Request Matcher, accepts *http.Request or http.Request
+// AcrMatcher short for Access Control RequestDetails Matcher, accepts *http.Request or http.Request
 type AcrMatcher web.RequestMatcher
 
 // ControlFunc make access control decision based on security.Authentication

@@ -53,6 +53,14 @@ func (u *testUser) UseMFA() bool {
 	return false
 }
 
+func (c *testUser) CacheableCopy() security.Account {
+	copy := testUser{
+		User: c.User,
+		Pass: "",
+	}
+	return &copy
+}
+
 
 type testAuthentication struct {
 	Account     security.Account

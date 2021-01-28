@@ -27,6 +27,22 @@ func (r *AuthorizeRequest) Context() utils.MutableContext {
 	return r.context
 }
 
+func (r *AuthorizeRequest) OAuth2Request() oauth2.OAuth2Request {
+	return oauth2.NewOAuth2Request(func(details *oauth2.RequestDetails) {
+		if grantType, ok := r.Parameters[oauth2.ParameterGrantType]; ok {
+			details.GrantType = grantType
+		}
+
+		details.Parameters = r.Parameters
+		details.ClientId = r.ClientId
+		details.Scopes = r.Scopes
+		details.Approved = true
+		details.RedirectUri = r.RedirectUri
+		details.ResponseTypes = r.ResponseTypes
+		details.Extensions = r.Extensions
+	})
+}
+
 func NewAuthorizeRequest(req *http.Request) *AuthorizeRequest {
 	return &AuthorizeRequest{
 		Parameters:    map[string]string{},
