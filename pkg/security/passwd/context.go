@@ -46,11 +46,6 @@ func GobRegister() {
 	gob.Register(TOTP{})
 	gob.Register(time.Time{})
 	gob.Register(time.Duration(0))
-	gob.Register((*UsernamePasswordAccount)(nil))
-	gob.Register((*AccountDetails)(nil))
-	gob.Register((*LockingRule)(nil))
-	gob.Register((*PasswordPolicy)(nil))
-	gob.Register((*AccountMetadata)(nil))
 }
 
 /************************
