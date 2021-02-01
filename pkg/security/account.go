@@ -45,6 +45,9 @@ type Account interface {
 	Disabled() bool
 	Locked() bool
 	UseMFA() bool
+	// CacheableCopy should returns a copy of Account that suitable for putting into cache.
+	// e.g. the CacheableCopy should be able to be serialized and shouldn't contains Credentials or any reloadable content
+	CacheableCopy() Account
 }
 
 type AccountStore interface {
@@ -127,4 +130,17 @@ type AccountPwdAgingRule interface {
 	PwdExpiryWarningPeriod() time.Duration
 	// GracefulAuthLimit specify how many logins is allowed after password expiry
 	GracefulAuthLimit() int
+}
+
+/*********************************
+	Abstraction - Metadata
+ *********************************/
+type AccountMetadata interface {
+	RoleNames() []string
+	FirstName() string
+	LastName() string
+	Email() string
+	LocaleCode() string
+	CurrencyCode() string
+	Value(key string) interface{}
 }

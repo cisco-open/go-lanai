@@ -28,9 +28,9 @@ func NewRememberUsernameSuccessHandler(cookieProps security.CookieProperties, se
 }
 
 func (h *RememberUsernameSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, _, to security.Authentication) {
-	details, ok := to.Details().(map[interface{}]interface{})
+	details, ok := to.Details().(map[string]interface{})
 	if !ok {
-		details = map[interface{}]interface{}{}
+		details = map[string]interface{}{}
 	}
 
 	// set remember-me decision to auth's details if request has such parameter

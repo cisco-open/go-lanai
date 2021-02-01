@@ -19,6 +19,8 @@ type PropertiesBasedAccount struct {
 	DefaultTenantId   string   `json:"default-tenant-id"`
 	Tenants           []string `json:"tenants"`
 	AccountPolicyName string   `json:"policy-name"`
+	FullName          string   `json:"full-name"`
+	Email             string   `json:"email"`
 }
 
 type PropertiesBasedAccountPolicy struct {

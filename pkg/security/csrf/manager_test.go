@@ -67,7 +67,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, session.DefaultName)
 
-	//Request with a invalid csrf token
+	//RequestDetails with a invalid csrf token
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	existingCsrfToken := csrfStore.Generate(c, "_csrf", "X-CSRF-TOKEN")
 	s.Set(SessionKeyCsrfToken, existingCsrfToken)
@@ -87,7 +87,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 		t.Errorf("expect invalid csrf token error, but was %v", c.Errors.Last())
 	}
 
-	//Request without csrf token
+	//RequestDetails without csrf token
 	c, _ = gin.CreateTestContext(httptest.NewRecorder())
 	c.Set(web.ContextKeySession, s)
 	r = httptest.NewRequest("POST", "/process", strings.NewReader("a=b"))
@@ -104,7 +104,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 		t.Errorf("expect missing csrf token error, but was %v", c.Errors.Last())
 	}
 
-	//Request with expected csrf token
+	//RequestDetails with expected csrf token
 	c, _ = gin.CreateTestContext(httptest.NewRecorder())
 	c.Set(web.ContextKeySession, s)
 	r = httptest.NewRequest("POST", "/process", strings.NewReader("_csrf=" + existingCsrfToken.Value))
@@ -117,7 +117,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 		t.Errorf("there should be no error")
 	}
 
-	//Request with expected csrf token in header instead of form parameter
+	//RequestDetails with expected csrf token in header instead of form parameter
 	c, _ = gin.CreateTestContext(httptest.NewRecorder())
 	c.Set(web.ContextKeySession, s)
 	r = httptest.NewRequest("POST", "/process", nil)
@@ -130,7 +130,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 		t.Errorf("there should be no error")
 	}
 
-	//Request without a csrf token associated with it
+	//RequestDetails without a csrf token associated with it
 	c, _ = gin.CreateTestContext(httptest.NewRecorder())
 	s.Delete(SessionKeyCsrfToken) //remove the csrf token from the session
 	c.Set(web.ContextKeySession, s)
@@ -166,7 +166,7 @@ func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, session.DefaultName)
 
-	//Request with a invalid csrf token against the protected path
+	//RequestDetails with a invalid csrf token against the protected path
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	existingCsrfToken := csrfStore.Generate(c, "_csrf", "X-CSRF-TOKEN")
 	s.Set(SessionKeyCsrfToken, existingCsrfToken)
@@ -183,7 +183,7 @@ func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
 		t.Errorf("there should be one error")
 	}
 
-	//Request with a invalid csrf token against the ignored path
+	//RequestDetails with a invalid csrf token against the ignored path
 	c, _ = gin.CreateTestContext(httptest.NewRecorder())
 	c.Set(web.ContextKeySession, s)
 	r = httptest.NewRequest("POST", "/ignore", strings.NewReader("_csrf=" + uuid.New().String()))

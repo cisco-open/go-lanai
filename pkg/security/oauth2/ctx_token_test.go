@@ -59,8 +59,8 @@ func TestAccessTokenJSONSerialization(t *testing.T) {
 	case len(parsed.Details()) != 2:
 		t.Errorf("parsed details should have [%d] items, but has [%d]\n", 2, len(parsed.Details()))
 
-	case len(parsed.Claims()) != 0:
-		t.Errorf("parsed claims should be empty (ignored), but has [%d] items\n", len(parsed.Claims()))
+	case parsed.Claims != nil:
+		t.Errorf("parsed claims should be empty (ignored), but got %v\n", parsed.Claims)
 
 	case parsed.RefreshToken().Value() != "refresh token value":
 		t.Errorf("parsed refresh token should be correct\n")

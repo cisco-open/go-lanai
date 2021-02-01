@@ -27,21 +27,24 @@ func (t TokenType) HttpHeader() string {
 	}
 }
 
-type AccessToken interface {
+type Token interface {
 	Value() string
-	Type() TokenType
-	IssueTime() time.Time
 	ExpiryTime() time.Time
 	Expired() bool
-	Scopes() utils.StringSet
 	Details() map[string]interface{}
+}
+
+type AccessToken interface {
+	Token
+	Type() TokenType
+	IssueTime() time.Time
+	Scopes() utils.StringSet
 	RefreshToken() RefreshToken
-	// TODO add "iat" as a field
 }
 
 type RefreshToken interface {
-	Value() string
-	Details() map[string]interface{}
+	Token
+	WillExpire() bool
 }
 
 /*******************************
@@ -49,6 +52,7 @@ type RefreshToken interface {
  *******************************/
 // DefaultAccessToken implements AccessToken
 type DefaultAccessToken struct {
+	Claims       Claims
 	tokenType    TokenType
 	value        string
 	expiryTime   time.Time
@@ -56,7 +60,6 @@ type DefaultAccessToken struct {
 	scopes       utils.StringSet
 	refreshToken *DefaultRefreshToken
 	details      map[string]interface{}
-	claims       map[string]interface{}
 }
 
 func NewDefaultAccessToken(value string) *DefaultAccessToken {
@@ -65,7 +68,6 @@ func NewDefaultAccessToken(value string) *DefaultAccessToken {
 		tokenType: TokenTypeBearer,
 		scopes:    utils.NewStringSet(),
 		issueTime: time.Now(),
-		claims:    map[string]interface{}{},
 		details:   map[string]interface{}{},
 	}
 }
@@ -78,7 +80,7 @@ func FromAccessToken(token AccessToken) *DefaultAccessToken {
 			expiryTime:   t.expiryTime,
 			issueTime:    t.issueTime,
 			scopes:       t.scopes.Copy(),
-			claims:       copyMap(t.claims),
+			Claims:       t.Claims,
 			details:      copyMap(t.details),
 			refreshToken: t.refreshToken,
 		}
@@ -90,7 +92,6 @@ func FromAccessToken(token AccessToken) *DefaultAccessToken {
 		expiryTime: token.ExpiryTime(),
 		issueTime:  token.IssueTime(),
 		scopes:     token.Scopes().Copy(),
-		claims:     map[string]interface{}{},
 		details:    copyMap(token.Details()),
 	}
 	copy.SetRefreshToken(token.RefreshToken())
@@ -114,7 +115,7 @@ func (t *DefaultAccessToken) Type() TokenType {
 
 // AccessToken
 func (t *DefaultAccessToken) IssueTime() time.Time {
-	return t.expiryTime
+	return t.issueTime
 }
 
 // AccessToken
@@ -122,6 +123,7 @@ func (t *DefaultAccessToken) ExpiryTime() time.Time {
 	return t.expiryTime
 }
 
+// AccessToken
 func (t *DefaultAccessToken) Expired() bool {
 	return !t.expiryTime.IsZero() && t.expiryTime.After(time.Now())
 }
@@ -139,13 +141,14 @@ func (t *DefaultAccessToken) RefreshToken() RefreshToken {
 	return t.refreshToken
 }
 
-func (t *DefaultAccessToken) Claims() map[string]interface{} {
-	return t.claims
-}
-
 // Setters
 func (t *DefaultAccessToken) SetValue(v string) *DefaultAccessToken {
 	t.value = v
+	return t
+}
+
+func (t *DefaultAccessToken) SetIssueTime(v time.Time) *DefaultAccessToken {
+	t.issueTime = v.UTC()
 	return t
 }
 
@@ -183,11 +186,7 @@ func (t *DefaultAccessToken) PutDetails(key string, value interface{}) *DefaultA
 }
 
 func (t *DefaultAccessToken) PutClaim(key string, value interface{}) *DefaultAccessToken {
-	if value == nil {
-		delete(t.claims, key)
-	} else {
-		t.claims[key] = value
-	}
+	t.Claims.Set(key, value)
 	return t
 }
 
@@ -195,16 +194,16 @@ func (t *DefaultAccessToken) PutClaim(key string, value interface{}) *DefaultAcc
 	Common Impl. RefreshToken
  ********************************/
 type DefaultRefreshToken struct {
+	Claims       Claims
 	value        string
+	expiryTime   time.Time
 	details      map[string]interface{}
-	claims       map[string]interface{} // TODO
 }
 
 func NewDefaultRefreshToken(value string) *DefaultRefreshToken {
 	return &DefaultRefreshToken{
 		value: value,
 		details: map[string]interface{}{},
-		claims: map[string]interface{}{},
 	}
 }
 
@@ -213,14 +212,13 @@ func FromRefreshToken(token RefreshToken) *DefaultRefreshToken {
 		return &DefaultRefreshToken{
 			value: t.value,
 			details: copyMap(t.details),
-			claims: copyMap(t.claims),
+			Claims: t.Claims,
 		}
 	}
 
 	return &DefaultRefreshToken{
 		value: token.Value(),
 		details: copyMap(token.Details()),
-		claims: map[string]interface{}{},
 	}
 }
 
@@ -234,8 +232,19 @@ func (t *DefaultRefreshToken) Details() map[string]interface{} {
 	return t.details
 }
 
-func (t *DefaultRefreshToken) Claims() map[string]interface{} {
-	return t.claims
+// RefreshToken
+func (t *DefaultRefreshToken) ExpiryTime() time.Time {
+	return t.expiryTime
+}
+
+// RefreshToken
+func (t *DefaultRefreshToken) Expired() bool {
+	return !t.expiryTime.IsZero() && t.expiryTime.After(time.Now())
+}
+
+// RefreshToken
+func (t *DefaultRefreshToken) WillExpire() bool {
+	return !t.expiryTime.IsZero()
 }
 
 // Setters
@@ -254,11 +263,7 @@ func (t *DefaultRefreshToken) PutDetails(key string, value interface{}) *Default
 }
 
 func (t *DefaultRefreshToken) PutClaim(key string, value interface{}) *DefaultRefreshToken {
-	if value == nil {
-		delete(t.claims, key)
-	} else {
-		t.claims[key] = value
-	}
+	t.Claims.Set(key, value)
 	return t
 }
 

@@ -1,9 +1,14 @@
 package authconfig
 
 import (
+	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 )
 
@@ -25,14 +30,28 @@ type AuthorizationServerEndpoints struct {
 	Token      string
 	CheckToken string
 	UserInfo   string
+	JwkSet     string
 }
 
 type AuthorizationServerConfiguration struct {
-	ClientStore         auth.OAuth2ClientStore
-	ClientSecretEncoder passwd.PasswordEncoder
-	Endpoints           AuthorizationServerEndpoints
-	sharedErrorHandler  *auth.OAuth2ErrorHanlder
-	shardTokenGranter   auth.TokenGranter
+	ClientStore                 oauth2.OAuth2ClientStore
+	ClientSecretEncoder         passwd.PasswordEncoder
+	Endpoints                   AuthorizationServerEndpoints
+	UserAccountStore            security.AccountStore
+	TenantStore                 security.TenantStore
+	ProviderStore               security.ProviderStore
+	UserPasswordEncoder         passwd.PasswordEncoder
+	TokenStore                  auth.TokenStore
+	JwkStore                    jwt.JwkStore
+	RedisClientFactory          redis.ClientFactory
+	sharedErrorHandler          *auth.OAuth2ErrorHanlder
+	sharedTokenGranter          auth.TokenGranter
+	sharedAuthService           auth.AuthorizationService
+	sharedPasswordAuthenticator security.Authenticator
+	sharedContextDetailsStore   security.ContextDetailsStore
+	sharedJwtEncoder            jwt.JwtEncoder
+	sharedJwtDecoder            jwt.JwtDecoder
+	sharedDetailsFactory        *common.ContextDetailsFactory
 	// TODO
 }
 
@@ -43,6 +62,13 @@ func (c *AuthorizationServerConfiguration) clientSecretEncoder() passwd.Password
 	return c.ClientSecretEncoder
 }
 
+func (c *AuthorizationServerConfiguration) userPasswordEncoder() passwd.PasswordEncoder {
+	if c.UserPasswordEncoder == nil {
+		c.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
+	}
+	return c.UserPasswordEncoder
+}
+
 func (c *AuthorizationServerConfiguration) errorHandler() *auth.OAuth2ErrorHanlder {
 	if c.sharedErrorHandler == nil {
 		c.sharedErrorHandler = auth.NewOAuth2ErrorHanlder()
@@ -51,14 +77,102 @@ func (c *AuthorizationServerConfiguration) errorHandler() *auth.OAuth2ErrorHanld
 }
 
 func (c *AuthorizationServerConfiguration) tokenGranter() auth.TokenGranter {
-	if c.shardTokenGranter == nil {
-		c.shardTokenGranter = auth.NewCompositeTokenGranter(
-			grants.NewAuthorizationCodeGranter(),
-			grants.NewClientCredentialsGranter(),
-			grants.NewPasswordGranter(),
-		)
+	if c.sharedTokenGranter == nil {
+		granters := []auth.TokenGranter {
+			grants.NewAuthorizationCodeGranter(c.authorizationService()),
+			grants.NewClientCredentialsGranter(c.authorizationService()),
+		}
+
+		// password granter is optional
+		if c.passwordGrantAuthenticator() != nil {
+			passwordGranter := grants.NewPasswordGranter(c.passwordGrantAuthenticator(), c.authorizationService())
+			granters = append(granters, passwordGranter)
+		}
+
+		c.sharedTokenGranter = auth.NewCompositeTokenGranter(granters...)
 	}
-	return c.shardTokenGranter
+	return c.sharedTokenGranter
+}
+
+func (c *AuthorizationServerConfiguration) passwordGrantAuthenticator() security.Authenticator {
+	if c.sharedPasswordAuthenticator == nil && c.UserAccountStore != nil {
+		authenticator, err := passwd.NewAuthenticatorBuilder(
+			passwd.New().
+				AccountStore(c.UserAccountStore).
+				PasswordEncoder(c.userPasswordEncoder()).
+				MFA(false),
+		).Build(context.Background())
+
+		if err == nil {
+			c.sharedPasswordAuthenticator = authenticator
+		}
+	}
+	return c.sharedPasswordAuthenticator
+}
+
+func (c *AuthorizationServerConfiguration) contextDetailsStore() security.ContextDetailsStore {
+	if c.sharedContextDetailsStore == nil {
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.RedisClientFactory)
+	}
+	return c.sharedContextDetailsStore
+}
+
+func (c *AuthorizationServerConfiguration) tokenStore() auth.TokenStore {
+	if c.TokenStore == nil {
+		c.TokenStore = auth.NewJwtTokenStore(func(opt *auth.JTSOption) {
+			opt.DetailsStore = c.contextDetailsStore()
+			opt.Encoder = c.jwtEncoder()
+			opt.Decoder = c.jwtDecoder()
+			// TODO enhancers
+		})
+	}
+	return c.TokenStore
+}
+
+func (c *AuthorizationServerConfiguration) authorizationService() auth.AuthorizationService {
+	if c.sharedAuthService == nil {
+		c.sharedAuthService = auth.NewDefaultAuthorizationService(func(conf *auth.DASOption) {
+			conf.TokenStore = c.tokenStore()
+			conf.DetailsFactory = c.contextDetailsFactory()
+			conf.ClientStore = c.ClientStore
+			conf.AccountStore = c.UserAccountStore
+			conf.TenantStore = c.TenantStore
+			conf.ProviderStore = c.ProviderStore
+		})
+	}
+
+	return c.sharedAuthService
+}
+
+func (c *AuthorizationServerConfiguration) jwkStore() jwt.JwkStore {
+	if c.JwkStore == nil {
+		// TODO
+		c.JwkStore = jwt.NewStaticJwkStore("default")
+	}
+	return c.JwkStore
+}
+
+func (c *AuthorizationServerConfiguration) jwtEncoder() jwt.JwtEncoder {
+	if c.sharedJwtEncoder == nil {
+		// TODO
+		c.sharedJwtEncoder = jwt.NewRS256JwtEncoder(c.jwkStore(), "default")
+	}
+	return c.sharedJwtEncoder
+}
+
+func (c *AuthorizationServerConfiguration) jwtDecoder() jwt.JwtDecoder {
+	if c.sharedJwtDecoder == nil {
+		// TODO
+		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), "default")
+	}
+	return c.sharedJwtDecoder
+}
+
+func (c *AuthorizationServerConfiguration) contextDetailsFactory() *common.ContextDetailsFactory {
+	if c.sharedDetailsFactory == nil {
+		c.sharedDetailsFactory = common.NewContextDetailsFactory()
+	}
+	return c.sharedDetailsFactory
 }
 
 

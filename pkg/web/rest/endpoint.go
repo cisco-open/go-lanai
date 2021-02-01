@@ -11,7 +11,7 @@ import (
 )
 
 /**********************************
-	Json Request Encoder
+	Json RequestDetails Encoder
 ***********************************/
 // FIXME this is not a correct implementation, because request should contains FormData bindings, URI bindings, etc
 func jsonEncodeRequestFunc(_ context.Context, r *http.Request, request interface{}) error {

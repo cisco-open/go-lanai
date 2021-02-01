@@ -12,10 +12,6 @@ const (
 )
 
 const (
-	DetailsKeyAuthWarning = "AuthWarning"
-)
-
-const (
 	MessageUserNotFound              = "Mismatched Username and Password"
 	MessageBadCredential             = "Mismatched Username and Password"
 	MessageOtpNotAvailable           = "MFA required but temprorily unavailable"
@@ -50,10 +46,6 @@ func GobRegister() {
 	gob.Register(TOTP{})
 	gob.Register(time.Time{})
 	gob.Register(time.Duration(0))
-	gob.Register((*UsernamePasswordAccount)(nil))
-	gob.Register((*UserDetails)(nil))
-	gob.Register((*LockingRule)(nil))
-	gob.Register((*PasswordPolicy)(nil))
 }
 
 /************************
@@ -70,7 +62,7 @@ const(
 type UsernamePasswordPair struct {
 	Username string
 	Password string
-	DetailsMap map[interface{}]interface{}
+	DetailsMap map[string]interface{}
 	EnforceMFA MFAMode
 }
 
@@ -93,7 +85,7 @@ func (upp *UsernamePasswordPair) Details() interface{} {
 type MFAOtpVerification struct {
 	CurrentAuth UsernamePasswordAuthentication
 	OTP string
-	DetailsMap map[interface{}]interface{}
+	DetailsMap map[string]interface{}
 }
 
 // security.Candidate
@@ -114,7 +106,7 @@ func (uop *MFAOtpVerification) Details() interface{} {
 // MFAOtpRefresh is the supported security.Candidate for MFA OTP refresh
 type MFAOtpRefresh struct {
 	CurrentAuth UsernamePasswordAuthentication
-	DetailsMap map[interface{}]interface{}
+	DetailsMap map[string]interface{}
 }
 
 // security.Candidate
@@ -148,7 +140,7 @@ type UsernamePasswordAuthentication interface {
 type usernamePasswordAuthentication struct {
 	Acct       security.Account
 	Perms      map[string]interface{}
-	DetailsMap map[interface{}]interface{}
+	DetailsMap map[string]interface{}
 }
 
 func (auth *usernamePasswordAuthentication) Principal() interface{} {

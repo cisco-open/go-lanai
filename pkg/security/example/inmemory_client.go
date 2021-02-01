@@ -7,12 +7,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
-// in memory auth.OAuth2ClientStore
+// in memory oauth2.OAuth2ClientStore
 type InMemoryClientStore struct {
 	lookupByClientId map[string]*auth.DefaultOAuth2Client
 }
 
-func NewInMemoryClientStore(props ClientsProperties) auth.OAuth2ClientStore {
+func NewInMemoryClientStore(props ClientsProperties) oauth2.OAuth2ClientStore {
 	lookup := make(map[string]*auth.DefaultOAuth2Client)
 	for _,v := range props.Clients {
 		lookup[v.ClientId] = newOAuth2Client(v)
@@ -22,7 +22,7 @@ func NewInMemoryClientStore(props ClientsProperties) auth.OAuth2ClientStore {
 	}
 }
 
-func (s *InMemoryClientStore) LoadClientByClientId(c context.Context, clientId string) (auth.OAuth2Client, error) {
+func (s *InMemoryClientStore) LoadClientByClientId(c context.Context, clientId string) (oauth2.OAuth2Client, error) {
 	if client, ok := s.lookupByClientId[clientId]; ok {
 		return client, nil
 	}

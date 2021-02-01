@@ -177,7 +177,7 @@ func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder
 // 	2. re-sort the remaining (un-processed) features from current index
 // 	3. check if any remaining features (likely newly added) has lower order than current
 func (init *initializer) handleFeaturesChanged(i int, f Feature, features []Feature) error {
-	if i == len(features) - 1 {
+	if i >= len(features) - 1 {
 		// last one, nothing is needed
 		return nil
 	}

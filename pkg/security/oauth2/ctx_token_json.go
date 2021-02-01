@@ -27,8 +27,11 @@ func (t *DefaultAccessToken) MarshalJSON() ([]byte, error) {
 	data[JsonFieldTokenType] = t.tokenType
 	data[JsonFieldScope] = t.scopes
 	data[JsonFieldIssueTime] = t.issueTime.Format(utils.ISO8601Seconds)
-	data[JsonFieldExpiryTime] = t.expiryTime.Format(utils.ISO8601Seconds)
-	data[JsonFieldExpiresIn] = int(t.expiryTime.Sub(time.Now()).Seconds())
+	if !t.expiryTime.IsZero() {
+		data[JsonFieldExpiryTime] = t.expiryTime.Format(utils.ISO8601Seconds)
+		data[JsonFieldExpiresIn] = int(t.expiryTime.Sub(time.Now()).Seconds())
+	}
+
 	if t.refreshToken != nil {
 		data[JsonFieldRefreshTokenValue] = t.refreshToken
 	}
@@ -62,8 +65,8 @@ func (t *DefaultAccessToken) UnmarshalJSON(data []byte) error {
 	}
 
 	// default to parse expiry time from JsonFieldExpiryTime field, fall back to JsonFieldExpiresIn
-	if err := extractField(parsed, JsonFieldExpiryTime, true, &t.expiryTime, expiryToTime); err != nil {
-		if err := extractField(parsed, JsonFieldExpiresIn, true, &t.expiryTime, expireInToTimeConverter(t.issueTime)); err != nil {
+	if err := extractField(parsed, JsonFieldExpiryTime, false, &t.expiryTime, expiryToTime); err != nil {
+		if err := extractField(parsed, JsonFieldExpiresIn, false, &t.expiryTime, expireInToTimeConverter(t.issueTime)); err != nil {
 			return err
 		}
 	}
