@@ -180,7 +180,6 @@ func populateAccountPolicy(acct *security.DefaultAccount, props *PropertiesBased
 	}
 }
 
-//TODO
 type InMemoryFederatedAccountStore struct {
 	
 }

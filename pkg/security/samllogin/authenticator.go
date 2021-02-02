@@ -12,7 +12,9 @@ type AssertionCandidate struct {
 }
 
 func (a *AssertionCandidate) Principal() interface{} {
-	//TODO: handle nil
+	if a.Assertion.Subject == nil || a.Assertion.Subject.NameID == nil {
+		return nil
+	}
 	return a.Assertion.Subject.NameID.Value
 }
 

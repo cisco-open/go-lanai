@@ -4,8 +4,10 @@ import (
 	"context"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 )
 
 type CacheableIdpClientManager struct {
@@ -89,12 +91,24 @@ func (m *CacheableIdpClientManager) GetClientByEntityId(entityId string) (client
 }
 
 func (m *CacheableIdpClientManager) resolveIdpMetadata(metadataLocation string) (*saml.EntityDescriptor, error) {
-	//TODO support file location
-	//TODO trust check
 	metadataUrl, err := url.Parse(metadataLocation)
 	if err != nil {
 		return nil, err
 	}
-	metadata, err := samlsp.FetchMetadata(context.TODO(), m.httpClient, *metadataUrl)
-	return metadata, err
+
+	if metadataUrl.Scheme == "file" {
+		file, err := os.Open(metadataUrl.Path)
+		if err != nil {
+			return nil, err
+		}
+		raw, err := ioutil.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+		metadata, err := samlsp.ParseMetadata(raw)
+		return metadata, err
+	} else {
+		metadata, err := samlsp.FetchMetadata(context.TODO(), m.httpClient, *metadataUrl)
+		return metadata, err
+	}
 }

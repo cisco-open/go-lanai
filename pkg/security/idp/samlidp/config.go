@@ -12,12 +12,10 @@ type SamlConfigurer struct {
 
 }
 
-//TODO: this configurer should add a conditional middleware to the /authorize route
-// it should also add the metadata endpoint
 func (c *SamlConfigurer) Configure(ws security.WebSecurity) {
 	condition := matcher.RequestWithHost("saml.vms.com:8080") //TODO: this condition should be dynamic
 
-	ws.Route(matcher.RouteWithPattern("/v2/authorize")). //TODO: authorize endpoint not installed yet... test it by adding a fake endpoint
+	ws.Route(matcher.RouteWithPattern("/v2/authorize")).
 		Condition(condition).
 		With(samllogin.New()).
 		With(session.New()).
