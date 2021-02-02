@@ -64,7 +64,7 @@ func ParseAuthorizeRequest(req *http.Request) (*AuthorizeRequest, error) {
 		ClientId:      extractStringParam(oauth2.ParameterClientId, values),
 		ResponseTypes: extractStringSetParam(oauth2.ParameterResponseType, " ", values),
 		Scopes:        extractStringSetParam(oauth2.ParameterScope, " ", values),
-		RedirectUri:   extractStringParam(oauth2.ParameterResponseType, values),
+		RedirectUri:   extractStringParam(oauth2.ParameterRedirectUri, values),
 		State:         extractStringParam(oauth2.ParameterState, values),
 		Extensions:    values,
 		context:       utils.MakeMutableContext(req.Context()),

@@ -12,7 +12,7 @@ import (
 	addtional abstractions
  ***************************/
 type IdpSecurityConfigurer interface {
-	ConfigureAuthorizeEndpoint(path string, ws security.WebSecurity)
+	Configure(ws security.WebSecurity, config *AuthorizationServerConfiguration)
 }
 
 /***************************
@@ -50,7 +50,8 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 	path := c.config.Endpoints.Authorize
 	ws.Route(matcher.RouteWithPattern(path)).
 		With(authorize.NewEndpoint().
-			Path(path),
+			Path(path).
+			RequestProcessors(c.config.authorizeRequestProcessor()),
 		)
-	c.delegate.ConfigureAuthorizeEndpoint(path, ws)
+	c.delegate.Configure(ws, c.config)
 }

@@ -31,6 +31,7 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 
 	//TODO prepare middlewares
 	authorizeMW := NewTokenEndpointMiddleware(func(opts *AuthorizeMWOption) {
+		opts.RequestProcessor = f.requestProcessor
 	})
 
 	// install middlewares

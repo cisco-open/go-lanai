@@ -34,6 +34,7 @@ type AuthorizationServerEndpoints struct {
 	CheckToken string
 	UserInfo   string
 	JwkSet     string
+	Logout     string
 }
 
 type AuthorizationServerConfiguration struct {
@@ -50,7 +51,7 @@ type AuthorizationServerConfiguration struct {
 	RedisClientFactory  redis.ClientFactory
 
 	// not directly configurable items
-	idpConfigurers 				[]IdpSecurityConfigurer
+	idpConfigurers              []IdpSecurityConfigurer
 	sharedErrorHandler          *auth.OAuth2ErrorHanlder
 	sharedTokenGranter          auth.TokenGranter
 	sharedAuthService           auth.AuthorizationService
@@ -59,6 +60,7 @@ type AuthorizationServerConfiguration struct {
 	sharedJwtEncoder            jwt.JwtEncoder
 	sharedJwtDecoder            jwt.JwtDecoder
 	sharedDetailsFactory        *common.ContextDetailsFactory
+	sharedARProcessor           auth.AuthorizeRequestProcessor
 
 	// TODO
 }
@@ -185,6 +187,18 @@ func (c *AuthorizationServerConfiguration) contextDetailsFactory() *common.Conte
 		c.sharedDetailsFactory = common.NewContextDetailsFactory()
 	}
 	return c.sharedDetailsFactory
+}
+
+func (c *AuthorizationServerConfiguration) authorizeRequestProcessor() auth.AuthorizeRequestProcessor {
+	if c.sharedARProcessor == nil {
+		//TODO OIDC overwrite
+		std := auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
+			opt.ClientStore = c.ClientStore
+			opt.ResponseTypes = auth.StandardResponseTypes
+		})
+		c.sharedARProcessor = auth.NewCompositeAuthorizeRequestProcessor(std)
+	}
+	return c.sharedARProcessor
 }
 
 

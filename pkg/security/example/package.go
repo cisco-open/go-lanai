@@ -64,6 +64,7 @@ func newAuthServerConfigurer(deps dependencies) authconfig.AuthorizationServerCo
 			CheckToken: "/v2/check_token",
 			UserInfo: "/v2/userinfo",
 			JwkSet: "/v2/jwks",
+			Logout: "/v2/logout",
 		}
 	}
 }

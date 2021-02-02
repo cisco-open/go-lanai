@@ -38,7 +38,8 @@ const (
 	CtxKeyAuthorizationExpiryTime   = "kAuthorizationExpiryTime"
 	CtxKeyAuthorizationIssueTime    = "kAuthorizationIssueTime"
 	CtxKeyAuthenticationTime        = "kAuthenticationTime"
-	CtxKeyValidatedAuthorizeRequest = "kAuthenticationTime"
+	CtxKeyValidatedAuthorizeRequest = "kValidatedAuthRequest"
+	CtxKeyResolvedAuthorizeRedirect = "kResolvedRedirect"
 )
 
 const (

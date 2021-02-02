@@ -35,15 +35,15 @@ func (e *CompositeAuthorizeRequestProcessor) Process(ctx context.Context, reques
 	return request, nil
 }
 
-func (e *CompositeAuthorizeRequestProcessor) Add(enhancers... AuthorizeRequestProcessor) {
-	e.delegates = append(e.delegates, flattenProcessors(enhancers)...)
+func (e *CompositeAuthorizeRequestProcessor) Add(processors ... AuthorizeRequestProcessor) {
+	e.delegates = append(e.delegates, flattenProcessors(processors)...)
 	// resort the delegates
 	order.SortStable(e.delegates, order.OrderedFirstCompare)
 }
 
-func (e *CompositeAuthorizeRequestProcessor) Remove(enhancer AuthorizeRequestProcessor) {
+func (e *CompositeAuthorizeRequestProcessor) Remove(processor AuthorizeRequestProcessor) {
 	for i, item := range e.delegates {
-		if item != enhancer {
+		if item != processor {
 			continue
 		}
 

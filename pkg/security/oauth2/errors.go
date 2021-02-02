@@ -65,7 +65,7 @@ func NewInvalidTokenRequestError(value interface{}, causes...interface{}) error 
 	return security.NewCodedError(ErrorCodeInvalidTokenRequest, value, causes...)
 }
 
-func NewInvalidClientCredentialsError(value interface{}, causes...interface{}) error {
+func NewInvalidClientError(value interface{}, causes...interface{}) error {
 	return security.NewCodedError(ErrorCodeInvalidClientCredentials, value, causes...)
 }
 

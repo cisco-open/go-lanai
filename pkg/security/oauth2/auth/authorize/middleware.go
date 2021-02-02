@@ -1,10 +1,13 @@
 package authorize
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -48,8 +51,9 @@ func (mw *AuhtorizeEndpointMiddleware) PreAuthenticateHandlerFunc() gin.HandlerF
 			return
 		}
 
-		// validate and process
+		// validate and process, regardless the result, we might want to transfer some context from request to current context
 		processed, e := mw.requestProcessor.Process(ctx, request)
+		mw.transferContextValues(request.Context(), ctx)
 		if e != nil {
 			mw.handleError(ctx, e)
 			return
@@ -90,4 +94,24 @@ func (mw *AuhtorizeEndpointMiddleware) handleError(c *gin.Context, err error) {
 	security.Clear(c)
 	_ = c.Error(err)
 	c.Abort()
+}
+
+func (mw *AuhtorizeEndpointMiddleware) transferContextValues(src context.Context, dst *gin.Context) {
+	listable, ok := src.(utils.ListableContext)
+	if !ok {
+		return
+	}
+
+	for k, v := range listable.Values() {
+		key := ""
+		switch k.(type) {
+		case string:
+			key = k.(string)
+		case fmt.Stringer:
+			key = k.(fmt.Stringer).String()
+		default:
+			continue
+		}
+		dst.Set(key, v)
+	}
 }

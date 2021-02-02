@@ -6,6 +6,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/authconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
@@ -25,7 +27,7 @@ func NewPasswordIdpSecurityConfigurer() *PasswordIdpSecurityConfigurer {
 	}
 }
 
-func (c *PasswordIdpSecurityConfigurer) ConfigureAuthorizeEndpoint(path string, ws security.WebSecurity) {
+func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authconfig.AuthorizationServerConfiguration) {
 	// TODO
 	// For Authorize endpoint
 	handler := redirect.NewRedirectWithRelativePath("/error")
@@ -44,15 +46,17 @@ func (c *PasswordIdpSecurityConfigurer) ConfigureAuthorizeEndpoint(path string, 
 		With(formlogin.New().
 			EnableMFA(),
 		).
-		//With(logout.New().
-		//	SuccessUrl("/page/hello"),
-		//).
+		With(logout.New().
+			LogoutUrl(config.Endpoints.Logout),
+			// TODO SSO logout success handler
+			//SuccessHandler()
+		).
 		With(errorhandling.New().
 			AuthenticationEntryPoint(handler).
 			AccessDeniedHandler(handler),
 		).
 		With(csrf.New().
-			IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(path)),
+			IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(config.Endpoints.Authorize)),
 		).
 		With(request_cache.New())
 }

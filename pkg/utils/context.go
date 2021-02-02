@@ -8,6 +8,12 @@ type MutableContext interface {
 	Set(key string, value interface{})
 }
 
+type ListableContext interface {
+	context.Context
+	Values() map[interface{}]interface{}
+}
+
+// mutableContext implements MutableContext and ListableContext
 type mutableContext struct {
 	context.Context
 	values map[interface{}]interface{}
@@ -35,6 +41,10 @@ func NewMutableContext() MutableContext {
 		Context: context.Background(),
 		values: make(map[interface{}]interface{}),
 	}
+}
+
+func (ctx *mutableContext) Values() map[interface{}]interface{} {
+	return ctx.values
 }
 
 func MakeMutableContext(parent context.Context) MutableContext {
