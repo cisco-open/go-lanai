@@ -23,6 +23,7 @@ func init() {
 		fx.Provide(NewProviderStore),
 		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(NewInMemoryIdpManager),
+		fx.Provide(NewInMemAuthFlowManager),
 		fx.Invoke(configureSecurity),
 	)
 }

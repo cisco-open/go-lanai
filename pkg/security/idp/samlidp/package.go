@@ -3,6 +3,7 @@ package samlidp
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"go.uber.org/fx"
 )
 
@@ -29,7 +30,9 @@ func Use() {
 
 }
 
-func configureSecurity(init security.Registrar) {
-	init.Register(&SamlConfigurer{})
+func configureSecurity(init security.Registrar, manager idp.AuthFlowManager) {
+	init.Register(&SamlConfigurer{
+		authFlowManager: manager,
+	})
 
 }

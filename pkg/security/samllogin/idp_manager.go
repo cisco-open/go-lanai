@@ -3,7 +3,7 @@ package samllogin
 //TODO: merge this with form login
 type IdentityProviderDetails struct {
 	EntityId         string
-	Domain           string //internal Domain
+	Domain           string
 	MetadataLocation string
 	ExternalIdName   string
 	ExternalIdpName  string
