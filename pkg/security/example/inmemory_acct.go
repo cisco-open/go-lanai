@@ -186,7 +186,7 @@ type InMemoryFederatedAccountStore struct {
 }
 
 func (i *InMemoryFederatedAccountStore) LoadAccountByExternalId(externalIdName string, externalIdValue string, externalIdpName string) (security.Account, error) {
-	return passwd.NewUsernamePasswordAccount(&passwd.UserDetails{
+	return security.NewUsernamePasswordAccount(&security.AcctDetails{
 		ID:              "user-tishi",
 		Type:            security.AccountTypeFederated,
 		Username:        "tishi"}), nil
