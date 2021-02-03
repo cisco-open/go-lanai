@@ -61,7 +61,10 @@ func (a *Authenticator) Authenticate(_ context.Context, candidate security.Candi
 		return nil, nil
 	}
 
-	idp := a.idpManager.GetIdentityProviderByEntityId(assertionCandidate.Assertion.Issuer.Value)
+	idp, err := a.idpManager.GetIdentityProviderByEntityId(assertionCandidate.Assertion.Issuer.Value)
+	if err != nil {
+		return nil, security.NewInternalAuthenticationError("Coudln't find idp metadata matching the assertion")
+	}
 
 	user, err := a.accountStore.LoadAccountByExternalId(idp.ExternalIdName, assertionCandidate.Principal().(string), idp.ExternalIdpName)
 

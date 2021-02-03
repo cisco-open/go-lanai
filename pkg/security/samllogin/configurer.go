@@ -27,39 +27,25 @@ type SamlAuthConfigurer struct {
 func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
 	f := feature.(*Feature)
 
-	opts := s.getServiceProviderConfiguration(f)
-	sp := s.makeServiceProvider(opts)
-	tracker := s.makeRequestTracker(opts, &sp)
-	if f.successHandler == nil {
-		f.successHandler = NewTrackedRequestSuccessHandler(tracker)
-	}
-
-	authenticator := &Authenticator{
-		accountStore: s.accountStore,
-		idpManager: s.idpManager,
-	}
-
-	clientManager := NewCacheableIdpClientManager(sp)
-
-	service := NewMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
+	m := s.makeMiddleware(f, ws)
 
 	ws.Route(matcher.RouteWithPattern(f.acsPath)).
 		Route(matcher.RouteWithPattern(f.metadataPath)).
 		Add(mapping.Get(f.metadataPath).
-			HandlerFunc(service.MetadataHandlerFunc).
-			Name("saml service metadata").
+			HandlerFunc(m.MetadataHandlerFunc).
+			Name("saml m metadata").
 			Build()).
 		Add(mapping.Post(f.acsPath).
-			HandlerFunc(service.ACSHandlerFunc).
-			Name("saml assertion consumer service").
+			HandlerFunc(m.ACSHandlerFunc).
+			Name("saml assertion consumer m").
 			Build()).
 		Add(middleware.NewBuilder("saml idp metadata refresh").
 			Order(security.MWOrderSAMLMetadataRefresh).
-			Use(service.RefreshMetadataHandler()))
+			Use(m.RefreshMetadataHandler()))
 
 	//authentication entry point
 	errorhandling.Configure(ws).
-		AuthenticationEntryPoint(request_cache.NewSaveRequestEntryPoint(service))
+		AuthenticationEntryPoint(request_cache.NewSaveRequestEntryPoint(m))
 	return nil
 }
 
@@ -152,6 +138,24 @@ func (s *SamlAuthConfigurer)  makeRequestTracker(opts Options, provider *saml.Se
 		SameSite: 		 sameSite,
 	}
 	return tracker
+}
+
+func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity) *ServiceProviderMiddleware {
+	opts := s.getServiceProviderConfiguration(f)
+	sp := s.makeServiceProvider(opts)
+	tracker := s.makeRequestTracker(opts, &sp)
+	if f.successHandler == nil {
+		f.successHandler = NewTrackedRequestSuccessHandler(tracker)
+	}
+
+	authenticator := &Authenticator{
+		accountStore: s.accountStore,
+		idpManager: s.idpManager,
+	}
+
+	clientManager := NewCacheableIdpClientManager(sp)
+
+	return NewMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
 }
 
 func newSamlAuthConfigurer(properties ServiceProviderProperties, serverProps web.ServerProperties, idpManager IdentityProviderManager,

@@ -11,6 +11,7 @@ import (
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/common/log"
 	"net"
 	"net/http"
 	"net/url"
@@ -201,6 +202,7 @@ func (sp *ServiceProviderMiddleware) ACSHandlerFunc(c *gin.Context) {
 
 	assertion, err := delegate.ParseResponse(r, possibleRequestIDs)
 	if err != nil {
+		log.Error("error processing assertion", "err", err)
 		sp.handleError(c, security.NewInternalAuthenticationError("error processing assertion", err))
 		return
 	}

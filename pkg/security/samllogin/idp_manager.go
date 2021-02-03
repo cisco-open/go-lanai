@@ -12,5 +12,5 @@ type IdentityProviderDetails struct {
 
 type IdentityProviderManager interface {
 	GetAllIdentityProvider() []IdentityProviderDetails
-	GetIdentityProviderByEntityId(entityId string) IdentityProviderDetails
+	GetIdentityProviderByEntityId(entityId string) (IdentityProviderDetails, error)
 }

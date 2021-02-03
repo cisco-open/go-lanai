@@ -5,6 +5,7 @@ import (
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -50,9 +51,20 @@ func (m *CacheableIdpClientManager) RefreshCache(identityProviders []IdentityPro
 			//make a copy
 			client := m.template
 			client.IDPMetadata = idpDescriptor
-			client.AcsURL.Host = details.Domain
-			client.SloURL.Host = details.Domain
 
+			_, port, err := net.SplitHostPort(client.AcsURL.Host)
+			if err == nil {
+				client.AcsURL.Host = net.JoinHostPort(details.Domain, port)
+			} else {
+				client.AcsURL.Host = details.Domain
+			}
+
+			_, port, err = net.SplitHostPort(client.SloURL.Host)
+			if err == nil {
+				client.SloURL.Host = net.JoinHostPort(details.Domain, port)
+			} else {
+				client.SloURL.Host = details.Domain
+			}
 			m.cache[details] = &client
 		} else {
 			logger.Error("could not resolve idp metadata", "details", details)
