@@ -11,6 +11,7 @@ import (
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
+	"net"
 	"net/http"
 	"net/url"
 )
@@ -102,8 +103,12 @@ func (sp *ServiceProviderMiddleware) MetadataHandlerFunc(c *gin.Context) {
 	_, _ = w.Write(buf)
 }
 
-func (sp *ServiceProviderMiddleware) MakeAuthenticationRequest(idpIdentifier string, r *http.Request, w http.ResponseWriter) error {
-	client, ok := sp.clientManager.GetClientByDomain(idpIdentifier)
+func (sp *ServiceProviderMiddleware) MakeAuthenticationRequest(r *http.Request, w http.ResponseWriter) error {
+	host, _, err := net.SplitHostPort(r.Host)
+	if err != nil {
+		host = r.Host
+	}
+	client, ok := sp.clientManager.GetClientByDomain(host)
 
 	if !ok {
 		return security.NewInternalAuthenticationError("cannot find idp for this domain")
@@ -225,8 +230,7 @@ func (sp *ServiceProviderMiddleware) RefreshMetadataHandler() gin.HandlerFunc {
 }
 
 func (sp *ServiceProviderMiddleware) Commence(c context.Context, r *http.Request, w http.ResponseWriter, _ error) {
-	//TODO: extract the domain related condition out so that it can be anything
-	err := sp.MakeAuthenticationRequest(r.Host, r, w)
+	err := sp.MakeAuthenticationRequest(r, w)
 	if err != nil {
 		sp.fallbackEntryPoint.Commence(c, r, w, err)
 	}

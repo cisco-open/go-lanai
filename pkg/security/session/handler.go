@@ -13,8 +13,6 @@ import (
  */
 type ChangeSessionHandler struct{}
 
-//TODO: it's possible that this session is not saved yet (i.e. an auth request came in without previous session and got authenticated)
-// if that's the case don't need to change it's id
 func (h *ChangeSessionHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
 	if !security.IsBeingAuthenticated(from, to) {
 		return

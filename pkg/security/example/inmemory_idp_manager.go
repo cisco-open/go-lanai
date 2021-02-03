@@ -7,7 +7,7 @@ type InMemoryIdpManager struct {}
 func (i *InMemoryIdpManager) GetAllIdentityProvider() []samllogin.IdentityProviderDetails {
 	return []samllogin.IdentityProviderDetails{
 		samllogin.IdentityProviderDetails{
-			Domain:           "saml.vms.com:8080",
+			Domain:           "saml.vms.com",
 			MetadataLocation: "https://dev-940621.oktapreview.com/app/exkwj65c2kC1vwtYi0h7/sso/saml/metadata",
 			ExternalIdpName: "okta",
 			ExternalIdName: "email",
