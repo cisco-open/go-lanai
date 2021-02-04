@@ -51,7 +51,7 @@ type Account interface {
 }
 
 type AccountStore interface {
-	// LoadAccountById find account by its ID
+	// LoadAccountById find account by its Domain
 	LoadAccountById(ctx context.Context, id interface{}) (Account, error)
 	// LoadAccountByUsername find account by its Username
 	LoadAccountByUsername(ctx context.Context, username string) (Account, error)
@@ -61,6 +61,10 @@ type AccountStore interface {
 	LoadPwdAgingRules(ctx context.Context, acct Account) (AccountPwdAgingRule, error)
 	// Save save the account if necessary
 	Save(ctx context.Context, acct Account) error
+}
+
+type FederatedAccountStore interface {
+	LoadAccountByExternalId(externalIdName string, externalIdValue string, externalIdpName string) (Account, error)
 }
 
 /*********************************

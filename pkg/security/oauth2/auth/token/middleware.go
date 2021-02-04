@@ -54,7 +54,7 @@ func (mw *TokenEndpointMiddleware) TokenHandlerFunc() gin.HandlerFunc {
 
 		// see if client id matches
 		if tokenReuqest.ClientId != "" && tokenReuqest.ClientId != client.ClientId() {
-			mw.handleError(ctx, oauth2.NewInvalidTokenRequestError("given client ID does not match authenticated client"))
+			mw.handleError(ctx, oauth2.NewInvalidTokenRequestError("given client Domain does not match authenticated client"))
 			return
 		}
 

@@ -25,6 +25,7 @@ func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 
 	sessionStore := NewRedisStore(mockRedis)
 	s, _ := sessionStore.New(DefaultName)
+	s.isNew = false //if session is new it won't get changed
 
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)

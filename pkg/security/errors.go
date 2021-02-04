@@ -38,6 +38,7 @@ const (
 	_ = iota
 	ErrorSubTypeCodeInternal             = ErrorTypeCodeAuthentication + iota <<ErrorSubTypeOffset
 	ErrorSubTypeCodeUsernamePasswordAuth
+	ErrorSubTypeCodeExternalSamlAuth
 )
 
 // ErrorSubTypeCodeInternal
@@ -80,6 +81,7 @@ var (
 
 	ErrorSubTypeInternalError        = NewErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeUsernamePasswordAuth = NewErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))
+	ErrorSubTypeExternalSamlAuth     = NewErrorSubType(ErrorSubTypeCodeExternalSamlAuth, errors.New("error sub-type: external saml"))
 
 	ErrorSubTypeAccessDenied         = NewErrorSubType(ErrorSubTypeCodeAccessDenied, errors.New("error sub-type: access denied"))
 	ErrorSubTypeInsufficientAuth     = NewErrorSubType(ErrorSubTypeCodeInsufficientAuth, errors.New("error sub-type: insufficient auth"))
@@ -292,6 +294,10 @@ func NewInternalAuthenticationError(value interface{}, causes...interface{}) err
 
 func NewAuthenticatorNotAvailableError(value interface{}, causes...interface{}) error {
 	return NewCodedError(ErrorCodeAuthenticatorNotAvailable, value, causes...)
+}
+
+func NewExternalSamlAuthenticationError(value interface{}, causes...interface{}) error {
+	return NewCodedError(ErrorSubTypeCodeExternalSamlAuth, value, causes...)
 }
 
 func NewUsernameNotFoundError(value interface{}, causes...interface{}) error {

@@ -35,7 +35,7 @@ type OTPManager interface {
 	// New create new OTP and save it
 	New() (OTP, error)
 
-	// Get loads OTP by ID
+	// Get loads OTP by Domain
 	Get(id string) (OTP, error)
 
 	// Verify use Get to load OTP and check the given passcode against the loaded OTP.
@@ -44,13 +44,13 @@ type OTPManager interface {
 	// error parameter indicate wether the given passcode is valid. It's nil if it's valid
 	Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error)
 
-	// Refresh regenerate OTP passcode without changing secret and ID
+	// Refresh regenerate OTP passcode without changing secret and Domain
 	// It returns the loaded or refreshed OTP regardless the verification result.
 	// It returns false if it reaches maximum attempts limit. otherwise returns true
 	// error parameter indicate wether the passcode is refreshed
 	Refresh(id string) (refreshed OTP, hasMoreChances bool, err error)
 
-	// Delete delete OTP by ID
+	// Delete delete OTP by Domain
 	Delete(id string) error
 }
 
@@ -165,7 +165,7 @@ func (m *totpManager) Get(id string) (OTP, error) {
 }
 
 func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error) {
-	// load OTP by ID
+	// load OTP by Domain
 	otp, e := m.store.Load(id);
 	if otp == nil || e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode already expired", e)
@@ -195,7 +195,7 @@ func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bo
 }
 
 func (m *totpManager) Refresh(id string) (loaded OTP, hasMoreChances bool, err error) {
-	// load OTP by ID
+	// load OTP by Domain
 	loaded, e := m.store.Load(id);
 	if e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode expired", e)

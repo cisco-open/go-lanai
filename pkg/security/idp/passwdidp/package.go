@@ -3,6 +3,7 @@ package passwdidp
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"go.uber.org/fx"
 )
 
@@ -17,6 +18,8 @@ func Use() {
 
 }
 
-func configureSecurity(init security.Registrar, store security.AccountStore) {
-	init.Register(&TokenEndpointSecurityConfigurer {})
+func configureSecurity(init security.Registrar, store security.AccountStore, manager idp.AuthFlowManager) {
+	init.Register(&TokenEndpointSecurityConfigurer {
+		authFlowManager: manager,
+	})
 }

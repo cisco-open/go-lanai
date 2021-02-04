@@ -52,7 +52,6 @@ func NewSessionProperties() *SessionProperties {
 	return &SessionProperties {
 		Cookie: CookieProperties{
 			HttpOnly: true,
-			SameSiteString: "lax",
 		},
 		IdleTimeout: "900s",
 		AbsoluteTimeout: "1800s",
