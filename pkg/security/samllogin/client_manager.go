@@ -16,20 +16,20 @@ type CacheableIdpClientManager struct {
 	//for fetching idp metadata
 	httpClient *http.Client
 
-	cache map[IdentityProviderDetails]*saml.ServiceProvider
+	cache map[SamlIdpDetails]*saml.ServiceProvider
 }
 
 func NewCacheableIdpClientManager(template saml.ServiceProvider) *CacheableIdpClientManager {
 	return &CacheableIdpClientManager{
 		template: template,
 		httpClient:          http.DefaultClient,
-		cache: make(map[IdentityProviderDetails]*saml.ServiceProvider),
+		cache: make(map[SamlIdpDetails]*saml.ServiceProvider),
 	}
 }
 
-func (m *CacheableIdpClientManager) RefreshCache(identityProviders []IdentityProviderDetails) {
-	keep := make(map[IdentityProviderDetails]bool)
-	var add []IdentityProviderDetails
+func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdpDetails) {
+	keep := make(map[SamlIdpDetails]bool)
+	var add []SamlIdpDetails
 
 	for _, details := range identityProviders {
 		if _, ok := m.cache[details]; !ok {
@@ -39,7 +39,7 @@ func (m *CacheableIdpClientManager) RefreshCache(identityProviders []IdentityPro
 		}
 	}
 
-	for details, _ := range m.cache {
+	for details := range m.cache {
 		if _, ok := keep[details]; !ok {
 			delete(m.cache, details)
 		}
@@ -82,7 +82,7 @@ func (m *CacheableIdpClientManager) GetAllClients() []*saml.ServiceProvider {
 	return clients
 }
 
-func (m *CacheableIdpClientManager) GetClientByComparator(comparator func(details IdentityProviderDetails) bool) (client *saml.ServiceProvider, ok bool) {
+func (m *CacheableIdpClientManager) GetClientByComparator(comparator func(details SamlIdpDetails) bool) (client *saml.ServiceProvider, ok bool) {
 	for details, client := range m.cache {
 		if comparator(details) {
 			return client, true
@@ -92,12 +92,12 @@ func (m *CacheableIdpClientManager) GetClientByComparator(comparator func(detail
 }
 
 func (m *CacheableIdpClientManager) GetClientByDomain(domain string) (client *saml.ServiceProvider, ok bool) {
-	return m.GetClientByComparator(func(details IdentityProviderDetails) bool {
+	return m.GetClientByComparator(func(details SamlIdpDetails) bool {
 		return details.Domain == domain
 	})
 }
 func (m *CacheableIdpClientManager) GetClientByEntityId(entityId string) (client *saml.ServiceProvider, ok bool) {
-	return m.GetClientByComparator(func(details IdentityProviderDetails) bool {
+	return m.GetClientByComparator(func(details SamlIdpDetails) bool {
 		return details.EntityId == entityId
 	})
 }
@@ -107,20 +107,24 @@ func (m *CacheableIdpClientManager) resolveIdpMetadata(metadataLocation string) 
 	if err != nil {
 		return nil, err
 	}
-
-	if metadataUrl.Scheme == "file" {
-		file, err := os.Open(metadataUrl.Path)
-		if err != nil {
-			return nil, err
-		}
-		raw, err := ioutil.ReadAll(file)
-		if err != nil {
-			return nil, err
-		}
-		metadata, err := samlsp.ParseMetadata(raw)
-		return metadata, err
+	//if it's not url or file url, assume it's relative path
+	if metadataUrl.Scheme == "file" || metadataUrl.Scheme == "" {
+		return parseMetadataFromFile(metadataUrl.Path)
 	} else {
 		metadata, err := samlsp.FetchMetadata(context.TODO(), m.httpClient, *metadataUrl)
 		return metadata, err
 	}
+}
+
+func parseMetadataFromFile(fileLocation string) (*saml.EntityDescriptor, error){
+	file, err := os.Open(fileLocation)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	metadata, err := samlsp.ParseMetadata(raw)
+	return metadata, err
 }

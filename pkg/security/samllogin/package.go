@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/gob"
 	"github.com/pkg/errors"
@@ -28,7 +29,7 @@ func init() {
 }
 
 func register(init security.Registrar, properties ServiceProviderProperties,
-	serverProps web.ServerProperties, idpManager IdentityProviderManager,
+	serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
 	accountStore security.FederatedAccountStore) {
 
 	configurer := newSamlAuthConfigurer(properties, serverProps, idpManager, accountStore)

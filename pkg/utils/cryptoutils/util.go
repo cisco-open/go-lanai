@@ -1,4 +1,4 @@
-package samllogin
+package cryptoutils
 
 import (
 	"crypto/rsa"

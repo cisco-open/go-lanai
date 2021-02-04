@@ -1,12 +1,15 @@
 package example
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/samllogin"
+import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/samllogin"
+)
 
 type InMemoryIdpManager struct {}
 
-func (i *InMemoryIdpManager) GetAllIdentityProvider() []samllogin.IdentityProviderDetails {
-	return []samllogin.IdentityProviderDetails{
-		samllogin.IdentityProviderDetails{
+func (i *InMemoryIdpManager) GetAllIdentityProvider() []idp.IdentityProviderDetails {
+	return []idp.IdentityProviderDetails{
+		samllogin.SamlIdpDetails{
 			Domain:           "saml.vms.com",
 			MetadataLocation: "https://dev-940621.oktapreview.com/app/exkwj65c2kC1vwtYi0h7/sso/saml/metadata",
 			ExternalIdpName: "okta",
@@ -15,8 +18,8 @@ func (i *InMemoryIdpManager) GetAllIdentityProvider() []samllogin.IdentityProvid
 		}}
 }
 
-func (i *InMemoryIdpManager) GetIdentityProviderByEntityId(entityId string) (samllogin.IdentityProviderDetails, error) {
-	return samllogin.IdentityProviderDetails{
+func (i *InMemoryIdpManager) GetIdentityProviderByEntityId(entityId string) (idp.IdentityProviderDetails, error) {
+	return samllogin.SamlIdpDetails{
 		Domain:           "saml.vms.com",
 		MetadataLocation: "https://dev-940621.oktapreview.com/app/exkwj65c2kC1vwtYi0h7/sso/saml/metadata",
 		ExternalIdpName: "okta",
@@ -25,6 +28,6 @@ func (i *InMemoryIdpManager) GetIdentityProviderByEntityId(entityId string) (sam
 	}, nil
 }
 
-func NewInMemoryIdpManager() samllogin.IdentityProviderManager {
+func NewInMemoryIdpManager() idp.IdentityProviderManager {
 	return &InMemoryIdpManager{}
 }

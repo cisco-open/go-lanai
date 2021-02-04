@@ -21,9 +21,6 @@ func (c *SamlConfigurer) Configure(ws security.WebSecurity) {
 		With(samllogin.New()).
 		With(session.New()).
 		With(access.New().
-			Request(
-				matcher.RequestWithPattern("/saml/**"), //the two endpoints saml provides (/saml/metadata and /saml/sso) are public
-			).PermitAll().
 			Request(matcher.AnyRequest()).Authenticated(),
 		)
 }

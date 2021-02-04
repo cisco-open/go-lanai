@@ -1,6 +1,6 @@
 package samllogin
 
-type IdentityProviderDetails struct {
+type SamlIdpDetails struct {
 	EntityId         string
 	Domain           string
 	MetadataLocation string
@@ -10,7 +10,6 @@ type IdentityProviderDetails struct {
 	// this is optional because both Spring and Okta's metadata are not signed
 }
 
-type IdentityProviderManager interface {
-	GetAllIdentityProvider() []IdentityProviderDetails
-	GetIdentityProviderByEntityId(entityId string) (IdentityProviderDetails, error)
+func (s SamlIdpDetails) GetDomain() string {
+	return s.Domain
 }
