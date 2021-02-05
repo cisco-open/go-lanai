@@ -98,11 +98,11 @@ func (m MetadataMatcher) Match(actual interface{}) (success bool, err error) {
 		return false, nil
 	}
 
-	if descriptor.SPSSODescriptors[0].AssertionConsumerServices[0].Location != "http://vms.com:8080/europa/saml/sso" {
+	if descriptor.SPSSODescriptors[0].AssertionConsumerServices[0].Location != "http://vms.com:8080/europa/saml/SSO" {
 		return false, nil
 	}
 
-	if descriptor.SPSSODescriptors[0].AssertionConsumerServices[1].Location != "http://saml.vms.com:8080/europa/saml/sso" {
+	if descriptor.SPSSODescriptors[0].AssertionConsumerServices[1].Location != "http://saml.vms.com:8080/europa/saml/SSO" {
 		return false, nil
 	}
 

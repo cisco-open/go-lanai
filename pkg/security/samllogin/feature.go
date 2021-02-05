@@ -18,7 +18,7 @@ type Feature struct {
 func New() *Feature {
 	return &Feature{
 		metadataPath: "/saml/metadata",
-		acsPath:      "/saml/sso", //TODO: our endpoint registration is not case sensitive, but gin is
+		acsPath:      "/saml/SSO",
 		sloPath:      "/saml/slo",
 		errorPath: 	  "/error",
 	}

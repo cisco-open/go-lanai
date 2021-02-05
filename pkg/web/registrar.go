@@ -194,7 +194,7 @@ func (r *Registrar) registerController(c Controller) (err error) {
 
 func (r *Registrar) registerRoutedMapping(m RoutedMapping) error {
 	method := strings.ToUpper(m.Method())
-	path := NormalizedPath(strings.ToLower(m.Path()))
+	path := NormalizedPath(m.Path())
 
 	paths, ok := r.routedMappings[method]
 	if !ok {
@@ -272,12 +272,12 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 	}
 
 	handlerFuncs := make([]gin.HandlerFunc, len(mappings))
-	path := strings.ToLower(mappings[0].Path())
+	path := mappings[0].Path()
 	unconditionalFound := false
 	for i, m := range mappings {
 		// validate method and path with best efforts
 		switch {
-		case path != strings.ToLower(m.Path()):
+		case path != m.Path():
 			return fmt.Errorf("attempt to register multiple RoutedMappings with inconsist path parameters: " +
 				"expected [%s %s] but got [%s %s]", method, path, m.Method(), m.Path())
 		case m.Condition() == nil && unconditionalFound:
