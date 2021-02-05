@@ -9,7 +9,7 @@ import (
 /***********************************
 	default implmentation
  ***********************************/
-// OAuth2ClientAccountStore wraps an delegate and implement both security.AccountStore and client OAuth2ClientStore
+// OAuth2ClientAccountStore wraps an delegate and implement both security.AccountStore and client oauth2.OAuth2ClientStore
 type OAuth2ClientAccountStore struct {
 	oauth2.OAuth2ClientStore
 }

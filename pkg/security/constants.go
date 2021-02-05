@@ -50,6 +50,7 @@ const (
 	MWOrderErrorHandling
 	MWOrderCsrfHandling
 	MWOrderOAuth2AuthValidation
+	MWOrderPreAuth
 	MWOrderBasicAuth
 	MWOrderFormLogout
 	MWOrderFormAuth

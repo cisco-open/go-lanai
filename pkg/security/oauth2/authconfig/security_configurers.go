@@ -51,7 +51,8 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 	ws.Route(matcher.RouteWithPattern(path)).
 		With(authorize.NewEndpoint().
 			Path(path).
-			RequestProcessors(c.config.authorizeRequestProcessor()),
+			RequestProcessors(c.config.authorizeRequestProcessor()).
+			ErrorHandler(c.config.errorHandler()),
 		)
 	c.delegate.Configure(ws, c.config)
 }

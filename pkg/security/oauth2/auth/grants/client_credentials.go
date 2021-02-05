@@ -31,7 +31,7 @@ func (g *ClientCredentialsGranter) Grant(ctx context.Context, request *auth.Toke
 	// for client credentials grant, client have to be authenticated via username/password
 	sec := security.Get(ctx)
 	if sec.State() < security.StateAuthenticated {
-		return nil, oauth2.NewInvalidClientError("client_credentials requires client secret validated")
+		return nil, oauth2.NewInvalidGrantError("client_credentials requires client secret validated")
 	}
 
 	client := auth.RetrieveAuthenticatedClient(ctx)

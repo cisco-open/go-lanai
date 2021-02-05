@@ -51,8 +51,12 @@ func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request
 	if e := p.validateRedirectUri(ctx, request, client); e != nil {
 		return nil, e
 	}
+
 	// starting from this point, we know that redirect uri can be used
 	request.Context().Set(oauth2.CtxKeyResolvedAuthorizeRedirect, request.RedirectUri)
+	if request.State != "" {
+		request.Context().Set(oauth2.CtxKeyResolvedAuthorizeState, request.State)
+	}
 
 	if e := p.validateScope(ctx, request, client); e != nil {
 		return nil, e
@@ -68,7 +72,7 @@ func (p *StandardAuthorizeRequestProcessor) validateResponseTypes(c context.Cont
 
 	for k, _ := range request.ResponseTypes {
 		if !p.responseTypes.Has(strings.ToLower(k)) {
-			return oauth2.NewInvalidAuthorizeRequestError(fmt.Sprintf("unsupported response type: %s", k))
+			return oauth2.NewInvalidResponseTypeError(fmt.Sprintf("unsupported response type: %s", k))
 		}
 	}
 
@@ -82,7 +86,7 @@ func (p *StandardAuthorizeRequestProcessor) validateClientId(c context.Context, 
 
 	client, e := p.clientStore.LoadClientByClientId(c, request.ClientId)
 	if e != nil {
-		return nil, oauth2.NewInvalidClientError("invalid client")
+		return nil, oauth2.NewClientNotFoundError("invalid client")
 	}
 	return client, nil
 }

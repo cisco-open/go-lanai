@@ -50,6 +50,7 @@ func (mw *AuhtorizeEndpointMiddleware) PreAuthenticateHandlerFunc() gin.HandlerF
 			mw.handleError(ctx, oauth2.NewInvalidAuthorizeRequestError("invalid authorize request", e))
 			return
 		}
+		ctx.Set(oauth2.CtxKeyReceivedAuthorizeRequest, request)
 
 		// validate and process, regardless the result, we might want to transfer some context from request to current context
 		processed, e := mw.requestProcessor.Process(ctx, request)
@@ -87,7 +88,7 @@ func (mw *AuhtorizeEndpointMiddleware) handleSuccess(c *gin.Context, v interface
 
 // TODO
 func (mw *AuhtorizeEndpointMiddleware) handleError(c *gin.Context, err error) {
-	if errors.Is(err, oauth2.ErrorTypeOAuth2) {
+	if !errors.Is(err, oauth2.ErrorTypeOAuth2) {
 		err = oauth2.NewInvalidAuthorizeRequestError(err.Error(), err)
 	}
 

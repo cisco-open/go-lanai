@@ -9,8 +9,9 @@ import (
 // We currently don't have any stuff to configure
 //goland:noinspection GoNameStartsWithPackageName
 type AuthorizeFeature struct {
-	path string
+	path             string
 	requestProcessor *auth.CompositeAuthorizeRequestProcessor
+	errorHandler     *auth.OAuth2ErrorHandler
 }
 
 // Standard security.Feature entrypoint
@@ -40,5 +41,10 @@ func (f *AuthorizeFeature) Path(path string) *AuthorizeFeature {
 
 func (f *AuthorizeFeature) RequestProcessors(processors ...auth.AuthorizeRequestProcessor) *AuthorizeFeature {
 	f.requestProcessor = auth.NewCompositeAuthorizeRequestProcessor(processors...)
+	return f
+}
+
+func (f *AuthorizeFeature) ErrorHandler(errorHandler *auth.OAuth2ErrorHandler) *AuthorizeFeature {
+	f.errorHandler = errorHandler
 	return f
 }

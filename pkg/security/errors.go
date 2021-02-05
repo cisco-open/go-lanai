@@ -100,30 +100,30 @@ type NestedError interface {
 	Cause() error
 }
 
-// codedError implements Code, CodeMask, NestedError
-type codedError struct {
+// CodedError implements Code, CodeMask, NestedError
+type CodedError struct {
 	code int
 	error
 	mask int
 	cause error
 }
 
-func (e *codedError) Code() int {
+func (e *CodedError) Code() int {
 	return e.code
 }
 
-func (e *codedError) CodeMask() int {
+func (e *CodedError) CodeMask() int {
 	return e.mask
 }
 
-func (e *codedError) Cause() error {
+func (e *CodedError) Cause() error {
 	return e.cause
 }
 
 // Is return true if
 //	1. target has same code, OR
 //  2. target is a type/sub-type error and the receiver error is in same type/sub-type
-func (e *codedError) Is(target error) bool {
+func (e *CodedError) Is(target error) bool {
 	compare := e.code
 	if masker, ok := target.(ComparableErrorCoder); ok {
 		compare = e.code & masker.CodeMask()
@@ -137,7 +137,7 @@ func (e *codedError) Is(target error) bool {
 // code, mask, error.Error() are written into byte array in the mentioned order
 // code and mask are written as 64 bits with binary.BigEndian
 // Note: currently we don't serialize Cause() to avoid cyclic reference
-func (e *codedError) MarshalBinary() ([]byte, error) {
+func (e *CodedError) MarshalBinary() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
 	if err := binary.Write(buffer, binary.BigEndian, int64(e.code)); err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func (e *codedError) MarshalBinary() ([]byte, error) {
 }
 
 // encoding.BinaryUnmarshaler interface
-func (e *codedError) UnmarshalBinary(data []byte) error {
+func (e *CodedError) UnmarshalBinary(data []byte) error {
 	buffer := bytes.NewBuffer(data)
 	var code, mask int64
 	if err := binary.Read(buffer, binary.BigEndian, &code); err != nil {
@@ -217,8 +217,8 @@ func (e *nestedError) UnmarshalBinary(data []byte) (err error) {
 /************************
 	Constructors
 *************************/
-func newCodedError(code int, e error, mask int, cause error) error {
-	return &codedError{
+func newCodedError(code int, e error, mask int, cause error) *CodedError {
+	return &CodedError{
 		code: code,
 		error: e,
 		mask:   mask,
@@ -252,7 +252,7 @@ func construct(e interface{}) error {
 
 // NewCodedError creates concrete error. it cannot be used as ErrorType or ErrorSubType comparison
 // supported item are string, error, fmt.Stringer
-func NewCodedError(code int, e interface{}, causes...interface{}) error {
+func NewCodedError(code int, e interface{}, causes...interface{}) *CodedError {
 	err := construct(e)
 	if len(causes) == 0 {
 		return newCodedError(code, err, defaultErrorCodeMask, nil)

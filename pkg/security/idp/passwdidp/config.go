@@ -17,6 +17,7 @@ import (
 	"time"
 )
 
+// PasswordIdpSecurityConfigurer implements authconfig.IdpSecurityConfigurer
 type PasswordIdpSecurityConfigurer struct {
 
 }

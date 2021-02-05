@@ -13,7 +13,7 @@ import (
 type ClientAuthFeature struct {
 	clientStore         oauth2.OAuth2ClientStore
 	clientSecretEncoder passwd.PasswordEncoder
-	errorHandler        *auth.OAuth2ErrorHanlder
+	errorHandler        *auth.OAuth2ErrorHandler
 }
 
 // Standard security.Feature entrypoint
@@ -46,7 +46,7 @@ func (f *ClientAuthFeature) ClientSecretEncoder(clientSecretEncoder passwd.Passw
 	return f
 }
 
-func (f *ClientAuthFeature) ErrorHandler(errorHandler *auth.OAuth2ErrorHanlder) *ClientAuthFeature {
+func (f *ClientAuthFeature) ErrorHandler(errorHandler *auth.OAuth2ErrorHandler) *ClientAuthFeature {
 	f.errorHandler = errorHandler
 	return f
 }

@@ -2,6 +2,8 @@ package authorize
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
@@ -28,6 +30,10 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 	if err := c.validate(f, ws); err != nil {
 		return err
 	}
+
+	// configure other features
+	errorhandling.Configure(ws).
+		AdditionalErrorHandler(f.errorHandler)
 
 	//TODO prepare middlewares
 	authorizeMW := NewTokenEndpointMiddleware(func(opts *AuthorizeMWOption) {
@@ -57,6 +63,10 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 func (c *AuthorizeEndpointConfigurer) validate(f *AuthorizeFeature, ws security.WebSecurity) error {
 	if f.path == "" {
 		return fmt.Errorf("token endpoint is not set")
+	}
+
+	if f.errorHandler == nil {
+		f.errorHandler = auth.NewOAuth2ErrorHanlder()
 	}
 
 	//if f.granters == nil || len(f.granters) == 0 {

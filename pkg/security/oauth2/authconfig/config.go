@@ -52,7 +52,7 @@ type AuthorizationServerConfiguration struct {
 
 	// not directly configurable items
 	idpConfigurers              []IdpSecurityConfigurer
-	sharedErrorHandler          *auth.OAuth2ErrorHanlder
+	sharedErrorHandler          *auth.OAuth2ErrorHandler
 	sharedTokenGranter          auth.TokenGranter
 	sharedAuthService           auth.AuthorizationService
 	sharedPasswordAuthenticator security.Authenticator
@@ -83,7 +83,7 @@ func (c *AuthorizationServerConfiguration) userPasswordEncoder() passwd.Password
 	return c.UserPasswordEncoder
 }
 
-func (c *AuthorizationServerConfiguration) errorHandler() *auth.OAuth2ErrorHanlder {
+func (c *AuthorizationServerConfiguration) errorHandler() *auth.OAuth2ErrorHandler {
 	if c.sharedErrorHandler == nil {
 		c.sharedErrorHandler = auth.NewOAuth2ErrorHanlder()
 	}

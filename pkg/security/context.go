@@ -49,7 +49,7 @@ func (EmptyAuthentication) Permissions() map[string]interface{} {
 func GobRegister() {
 	gob.Register(EmptyAuthentication(""))
 	gob.Register((*AnonymousAuthentication)(nil))
-	gob.Register((*codedError)(nil))
+	gob.Register((*CodedError)(nil))
 	gob.Register((*nestedError)(nil))
 	gob.Register(errors.New(""))
 	gob.Register((*DefaultAccount)(nil))

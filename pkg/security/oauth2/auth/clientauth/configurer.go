@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
 )
 
@@ -31,6 +32,7 @@ func (c *ClientAuthConfigurer) Apply(feature security.Feature, ws security.WebSe
 		return err
 	}
 
+	// configure other features
 	passwd.Configure(ws).
 		AccountStore(c.clientAccountStore(f)).
 		PasswordEncoder(f.clientSecretEncoder).
@@ -42,8 +44,16 @@ func (c *ClientAuthConfigurer) Apply(feature security.Feature, ws security.WebSe
 		Request(matcher.AnyRequest()).
 		Authenticated()
 	errorhandling.Configure(ws).
-		AccessDeniedHandler(f.errorHandler).
-		AuthenticationErrorHandler(f.errorHandler)
+		AdditionalErrorHandler(f.errorHandler)
+
+	// TODO add middleware to translate authentication error to oauth2 error
+	mw := NewClientAuthMiddleware()
+	ws.Add(middleware.NewBuilder("client auth error translator").
+		Order(security.MWOrderPreAuth).
+		Use(mw.ErrorTranslationHandlerFunc()),
+	)
+
+	// TODO add middleware to handle form client auth
 
 	return nil
 }
