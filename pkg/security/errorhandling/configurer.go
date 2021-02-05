@@ -13,9 +13,10 @@ var (
 // We currently don't have any stuff to configure
 //goland:noinspection GoNameStartsWithPackageName
 type ErrorHandlingFeature struct {
-	authEntryPoint security.AuthenticationEntryPoint
+	authEntryPoint      security.AuthenticationEntryPoint
 	accessDeniedHandler security.AccessDeniedHandler
-	authErrorHandler security.AuthenticationErrorHandler
+	authErrorHandler    security.AuthenticationErrorHandler
+	errorHandler        *security.CompositeErrorHandler
 }
 
 // Standard security.Feature entrypoint
@@ -33,10 +34,17 @@ func (f *ErrorHandlingFeature) AccessDeniedHandler(v security.AccessDeniedHandle
 	return f
 }
 
-// AuthenticationErrorHandler set authentication error handler override.
-//If AuthenticationEntryPoint is provided, this value is ignored
 func (f *ErrorHandlingFeature) AuthenticationErrorHandler(v security.AuthenticationErrorHandler) *ErrorHandlingFeature {
 	f.authErrorHandler = v
+	return f
+}
+
+// AdditionalErrorHandler add security.ErrorHandler to existing list.
+// This value is typically used by other features, because there are no other type of concrete errors except for
+// AuthenticationError and AccessControlError,
+// which are handled by AccessDeniedHandler, AuthenticationErrorHandler and AuthenticationEntryPoint
+func (f *ErrorHandlingFeature) AdditionalErrorHandler(v security.ErrorHandler) *ErrorHandlingFeature {
+	f.errorHandler.Add(v)
 	return f
 }
 
@@ -50,7 +58,9 @@ func Configure(ws security.WebSecurity) *ErrorHandlingFeature {
 
 // Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func New() *ErrorHandlingFeature {
-	return &ErrorHandlingFeature{}
+	return &ErrorHandlingFeature{
+		errorHandler: security.NewErrorHandler(),
+	}
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -80,6 +90,7 @@ func (ehc *ErrorHandlingConfigurer) Apply(feature security.Feature, ws security.
 	mw.entryPoint = f.authEntryPoint
 	mw.accessDeniedHandler = accessDeniedHandler
 	mw.authErrorHandler = authErrorHandler
+	mw.errorHandler = f.errorHandler
 
 	errHandler := middleware.NewBuilder("error handling").
 		Order(security.MWOrderErrorHandling).
@@ -105,5 +116,9 @@ func (ehc *ErrorHandlingConfigurer) validate(f *ErrorHandlingFeature, ws securit
 		fmt.Printf("for route matches [%v], using default access denied handler\n", ws)
 		f.accessDeniedHandler = &security.DefaultAccessDeniedHandler{}
 	}
+
+	// always add a default to the end. note: DefaultErrorHandler is unordered
+	f.errorHandler.Add(&security.DefaultErrorHandler{})
 	return nil
 }
+

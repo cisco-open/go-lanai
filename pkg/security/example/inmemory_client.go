@@ -26,7 +26,7 @@ func (s *InMemoryClientStore) LoadClientByClientId(c context.Context, clientId s
 	if client, ok := s.lookupByClientId[clientId]; ok {
 		return client, nil
 	}
-	return nil, oauth2.NewClientNotFoundError("invalid client-id")
+	return nil, oauth2.NewClientNotFoundError("invalid client")
 }
 
 func newOAuth2Client(props PropertiesBasedClient) *auth.DefaultOAuth2Client {

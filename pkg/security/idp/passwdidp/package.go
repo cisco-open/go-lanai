@@ -9,7 +9,7 @@ import (
 
 func init() {
 	bootstrap.AddOptions(
-		fx.Invoke(configureSecurity),
+		fx.Invoke(NewPasswordIdpSecurityConfigurer),
 	)
 }
 
@@ -19,7 +19,5 @@ func Use() {
 }
 
 func configureSecurity(init security.Registrar, store security.AccountStore, manager idp.AuthFlowManager) {
-	init.Register(&TokenEndpointSecurityConfigurer {
-		authFlowManager: manager,
-	})
+	// TODO this might not be needed
 }

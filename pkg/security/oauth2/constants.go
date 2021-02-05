@@ -23,6 +23,8 @@ const (
 	ParameterTenantId = "tenant_id"
 	ParameterTenantName = "tenant_name"
 	ParameterNonce = "nonce"
+	ParameterError = "error"
+	ParameterErrorDescription = "error_description"
 	//Parameter = ""
 )
 
@@ -31,13 +33,17 @@ const (
 )
 
 const (
-	CtxKeyAuthenticatedClient     = "kAuthenticatedClient"
-	CtxKeyAuthenticatedAccount    = "kAuthenticatedAccount"
-	CtxKeyAuthorizedTenant        = "kAuthorizedTenant"
-	CtxKeyAuthorizedProvider      = "kAuthorizedProvider"
-	CtxKeyAuthorizationExpiryTime = "kAuthorizationExpiryTime"
-	CtxKeyAuthorizationIssueTime  = "kAuthorizationIssueTime"
-	CtxKeyAuthenticationTime      = "kAuthenticationTime"
+	CtxKeyAuthenticatedClient       = "kAuthenticatedClient"
+	CtxKeyAuthenticatedAccount      = "kAuthenticatedAccount"
+	CtxKeyAuthorizedTenant          = "kAuthorizedTenant"
+	CtxKeyAuthorizedProvider        = "kAuthorizedProvider"
+	CtxKeyAuthorizationExpiryTime   = "kAuthorizationExpiryTime"
+	CtxKeyAuthorizationIssueTime    = "kAuthorizationIssueTime"
+	CtxKeyAuthenticationTime        = "kAuthenticationTime"
+	CtxKeyReceivedAuthorizeRequest  = "kReceivedAuthRequest"
+	CtxKeyValidatedAuthorizeRequest = "kValidatedAuthRequest"
+	CtxKeyResolvedAuthorizeRedirect = "kResolvedRedirect"
+	CtxKeyResolvedAuthorizeState    = "kResolvedState"
 )
 
 const (

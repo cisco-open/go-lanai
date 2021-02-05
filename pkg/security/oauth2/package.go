@@ -5,4 +5,5 @@ import "encoding/gob"
 func init() {
 	gob.Register((*authentication)(nil))
 	gob.Register((*OAuth2Request)(nil))
+	gob.Register((*OAuth2Error)(nil))
 }

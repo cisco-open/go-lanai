@@ -47,7 +47,7 @@ func (g *PasswordGranter) Grant(ctx context.Context, request *auth.TokenRequest)
 	password, pOk := request.Parameters[oauth2.ParameterPassword]
 	delete(request.Parameters, oauth2.ParameterPassword)
 	if !uOk || !pOk {
-		return nil, oauth2.NewInvalidTokenRequestError("missing 'username' and 'password'")
+		return nil, oauth2.NewInvalidGrantError("missing 'username' and 'password'")
 	}
 
 	// authenticate
@@ -58,7 +58,7 @@ func (g *PasswordGranter) Grant(ctx context.Context, request *auth.TokenRequest)
 
 	userAuth, err := g.authenticator.Authenticate(ctx, &candidate)
 	if err != nil || userAuth.State() < security.StateAuthenticated {
-		return nil, oauth2.NewInvalidTokenRequestError(err.Error(), err)
+		return nil, oauth2.NewInvalidGrantError(err.Error(), err)
 	}
 
 	// additional check

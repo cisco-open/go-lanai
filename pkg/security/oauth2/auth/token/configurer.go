@@ -18,7 +18,7 @@ var (
 type TokenEndpointConfigurer struct {
 }
 
-func newOAuth2AuthConfigurer() *TokenEndpointConfigurer {
+func newOAuth2TokenEndpointConfigurer() *TokenEndpointConfigurer {
 	return &TokenEndpointConfigurer{
 	}
 }

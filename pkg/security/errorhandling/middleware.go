@@ -8,9 +8,10 @@ import (
 
 //goland:noinspection GoNameStartsWithPackageName
 type ErrorHandlingMiddleware struct {
-	entryPoint security.AuthenticationEntryPoint
+	entryPoint          security.AuthenticationEntryPoint
 	accessDeniedHandler security.AccessDeniedHandler
-	authErrorHandler security.AuthenticationErrorHandler
+	authErrorHandler    security.AuthenticationErrorHandler
+	errorHandler 		security.ErrorHandler
 }
 
 func NewErrorHandlingMiddleware() *ErrorHandlingMiddleware {
@@ -67,8 +68,11 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 	case errors.Is(err, security.ErrorTypeAuthentication):
 		eh.authErrorHandler.HandleAuthenticationError(c, c.Request, c.Writer, err)
 
-	default:
+	case errors.Is(err, security.ErrorTypeAccessControl):
 		eh.accessDeniedHandler.HandleAccessDenied(c, c.Request, c.Writer, err)
+
+	default:
+		eh.errorHandler.HandleError(c, c.Request, c.Writer, err)
 	}
 }
 

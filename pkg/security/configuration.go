@@ -75,6 +75,10 @@ type WebSecurity interface {
 	// Calling this method multiple times concatenate all given matchers with OR operator
 	Condition(mwcm web.RequestMatcher) WebSecurity
 
+	// AndCondition sets additional conditions of incoming request which this WebSecurity applies to
+	// Calling this method multiple times concatenate all given matchers with AND operator
+	AndCondition(mwcm web.RequestMatcher) WebSecurity
+
 	// Add is DSL style setter to add:
 	// - MiddlewareTemplate
 	// - web.MiddlewareMapping

@@ -350,11 +350,11 @@ func newImmutableContextError(reasons ...interface{}) error {
 }
 
 func newInvalidClientError(reasons ...interface{}) error {
-	return oauth2.NewInternalError("trying authroize with unknown client", reasons...)
+	return oauth2.NewInvalidGrantError("trying authroize with unknown client", reasons...)
 }
 
 func newUnauthenticatedUserError(reasons ...interface{}) error {
-	return oauth2.NewInternalError("trying authroize with unauthenticated user", reasons...)
+	return oauth2.NewInvalidGrantError("trying authroize with unauthenticated user", reasons...)
 }
 
 func newInvalidUserError(reasons ...interface{}) error {

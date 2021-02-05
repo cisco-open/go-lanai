@@ -1,4 +1,4 @@
-package authconfig
+package authserver
 
 import (
 	"context"
@@ -12,39 +12,47 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 )
 
-type AuthorizationServerConfigurer func(*AuthorizationServerConfiguration)
+type AuthorizationServerConfigurer func(*Configuration)
 
 // Configuration entry point
 func ConfigureAuthorizationServer(registrar security.Registrar, configurer AuthorizationServerConfigurer) {
-	config := &AuthorizationServerConfiguration{}
+	config := &Configuration{}
 	configurer(config)
 
 	registrar.Register(&ClientAuthEndpointsConfigurer{config: config})
+	for _, configuer := range config.idpConfigurers {
+		registrar.Register(&AuthorizeEndpointConfigurer{config: config, delegate: configuer})
+	}
 }
 
 /****************************
 	configuration
  ****************************/
-type AuthorizationServerEndpoints struct {
+type Endpoints struct {
 	Authorize  string
 	Token      string
 	CheckToken string
 	UserInfo   string
 	JwkSet     string
+	Logout     string
 }
 
-type AuthorizationServerConfiguration struct {
-	ClientStore                 oauth2.OAuth2ClientStore
-	ClientSecretEncoder         passwd.PasswordEncoder
-	Endpoints                   AuthorizationServerEndpoints
-	UserAccountStore            security.AccountStore
-	TenantStore                 security.TenantStore
-	ProviderStore               security.ProviderStore
-	UserPasswordEncoder         passwd.PasswordEncoder
-	TokenStore                  auth.TokenStore
-	JwkStore                    jwt.JwkStore
-	RedisClientFactory          redis.ClientFactory
-	sharedErrorHandler          *auth.OAuth2ErrorHanlder
+type Configuration struct {
+	// configurable items
+	ClientStore         oauth2.OAuth2ClientStore
+	ClientSecretEncoder passwd.PasswordEncoder
+	Endpoints           Endpoints
+	UserAccountStore    security.AccountStore
+	TenantStore         security.TenantStore
+	ProviderStore       security.ProviderStore
+	UserPasswordEncoder passwd.PasswordEncoder
+	TokenStore          auth.TokenStore
+	JwkStore            jwt.JwkStore
+	RedisClientFactory  redis.ClientFactory
+
+	// not directly configurable items
+	idpConfigurers              []IdpSecurityConfigurer
+	sharedErrorHandler          *auth.OAuth2ErrorHandler
 	sharedTokenGranter          auth.TokenGranter
 	sharedAuthService           auth.AuthorizationService
 	sharedPasswordAuthenticator security.Authenticator
@@ -52,31 +60,37 @@ type AuthorizationServerConfiguration struct {
 	sharedJwtEncoder            jwt.JwtEncoder
 	sharedJwtDecoder            jwt.JwtDecoder
 	sharedDetailsFactory        *common.ContextDetailsFactory
+	sharedARProcessor           auth.AuthorizeRequestProcessor
+
 	// TODO
 }
 
-func (c *AuthorizationServerConfiguration) clientSecretEncoder() passwd.PasswordEncoder {
+func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {
+	c.idpConfigurers = append(c.idpConfigurers, configurer)
+}
+
+func (c *Configuration) clientSecretEncoder() passwd.PasswordEncoder {
 	if c.ClientSecretEncoder == nil {
 		c.ClientSecretEncoder = passwd.NewNoopPasswordEncoder()
 	}
 	return c.ClientSecretEncoder
 }
 
-func (c *AuthorizationServerConfiguration) userPasswordEncoder() passwd.PasswordEncoder {
+func (c *Configuration) userPasswordEncoder() passwd.PasswordEncoder {
 	if c.UserPasswordEncoder == nil {
 		c.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
 	}
 	return c.UserPasswordEncoder
 }
 
-func (c *AuthorizationServerConfiguration) errorHandler() *auth.OAuth2ErrorHanlder {
+func (c *Configuration) errorHandler() *auth.OAuth2ErrorHandler {
 	if c.sharedErrorHandler == nil {
 		c.sharedErrorHandler = auth.NewOAuth2ErrorHanlder()
 	}
 	return c.sharedErrorHandler
 }
 
-func (c *AuthorizationServerConfiguration) tokenGranter() auth.TokenGranter {
+func (c *Configuration) tokenGranter() auth.TokenGranter {
 	if c.sharedTokenGranter == nil {
 		granters := []auth.TokenGranter {
 			grants.NewAuthorizationCodeGranter(c.authorizationService()),
@@ -94,7 +108,7 @@ func (c *AuthorizationServerConfiguration) tokenGranter() auth.TokenGranter {
 	return c.sharedTokenGranter
 }
 
-func (c *AuthorizationServerConfiguration) passwordGrantAuthenticator() security.Authenticator {
+func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 	if c.sharedPasswordAuthenticator == nil && c.UserAccountStore != nil {
 		authenticator, err := passwd.NewAuthenticatorBuilder(
 			passwd.New().
@@ -110,14 +124,14 @@ func (c *AuthorizationServerConfiguration) passwordGrantAuthenticator() security
 	return c.sharedPasswordAuthenticator
 }
 
-func (c *AuthorizationServerConfiguration) contextDetailsStore() security.ContextDetailsStore {
+func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
 		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.RedisClientFactory)
 	}
 	return c.sharedContextDetailsStore
 }
 
-func (c *AuthorizationServerConfiguration) tokenStore() auth.TokenStore {
+func (c *Configuration) tokenStore() auth.TokenStore {
 	if c.TokenStore == nil {
 		c.TokenStore = auth.NewJwtTokenStore(func(opt *auth.JTSOption) {
 			opt.DetailsStore = c.contextDetailsStore()
@@ -129,7 +143,7 @@ func (c *AuthorizationServerConfiguration) tokenStore() auth.TokenStore {
 	return c.TokenStore
 }
 
-func (c *AuthorizationServerConfiguration) authorizationService() auth.AuthorizationService {
+func (c *Configuration) authorizationService() auth.AuthorizationService {
 	if c.sharedAuthService == nil {
 		c.sharedAuthService = auth.NewDefaultAuthorizationService(func(conf *auth.DASOption) {
 			conf.TokenStore = c.tokenStore()
@@ -144,7 +158,7 @@ func (c *AuthorizationServerConfiguration) authorizationService() auth.Authoriza
 	return c.sharedAuthService
 }
 
-func (c *AuthorizationServerConfiguration) jwkStore() jwt.JwkStore {
+func (c *Configuration) jwkStore() jwt.JwkStore {
 	if c.JwkStore == nil {
 		// TODO
 		c.JwkStore = jwt.NewStaticJwkStore("default")
@@ -152,7 +166,7 @@ func (c *AuthorizationServerConfiguration) jwkStore() jwt.JwkStore {
 	return c.JwkStore
 }
 
-func (c *AuthorizationServerConfiguration) jwtEncoder() jwt.JwtEncoder {
+func (c *Configuration) jwtEncoder() jwt.JwtEncoder {
 	if c.sharedJwtEncoder == nil {
 		// TODO
 		c.sharedJwtEncoder = jwt.NewRS256JwtEncoder(c.jwkStore(), "default")
@@ -160,7 +174,7 @@ func (c *AuthorizationServerConfiguration) jwtEncoder() jwt.JwtEncoder {
 	return c.sharedJwtEncoder
 }
 
-func (c *AuthorizationServerConfiguration) jwtDecoder() jwt.JwtDecoder {
+func (c *Configuration) jwtDecoder() jwt.JwtDecoder {
 	if c.sharedJwtDecoder == nil {
 		// TODO
 		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), "default")
@@ -168,11 +182,23 @@ func (c *AuthorizationServerConfiguration) jwtDecoder() jwt.JwtDecoder {
 	return c.sharedJwtDecoder
 }
 
-func (c *AuthorizationServerConfiguration) contextDetailsFactory() *common.ContextDetailsFactory {
+func (c *Configuration) contextDetailsFactory() *common.ContextDetailsFactory {
 	if c.sharedDetailsFactory == nil {
 		c.sharedDetailsFactory = common.NewContextDetailsFactory()
 	}
 	return c.sharedDetailsFactory
+}
+
+func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcessor {
+	if c.sharedARProcessor == nil {
+		//TODO OIDC overwrite
+		std := auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
+			opt.ClientStore = c.ClientStore
+			opt.ResponseTypes = auth.StandardResponseTypes
+		})
+		c.sharedARProcessor = auth.NewCompositeAuthorizeRequestProcessor(std)
+	}
+	return c.sharedARProcessor
 }
 
 

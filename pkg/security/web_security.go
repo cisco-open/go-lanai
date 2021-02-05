@@ -55,6 +55,15 @@ func (ws *webSecurity) Condition(mwcm web.RequestMatcher) WebSecurity {
 	return ws
 }
 
+func (ws *webSecurity) AndCondition(mwcm web.RequestMatcher) WebSecurity {
+	if ws.conditionMatcher != nil {
+		ws.conditionMatcher = ws.conditionMatcher.And(mwcm)
+	} else {
+		ws.conditionMatcher = mwcm
+	}
+	return ws
+}
+
 func (ws *webSecurity) With(f Feature) WebSecurity {
 	existing := ws.Enable(f)
 	if existing != f {

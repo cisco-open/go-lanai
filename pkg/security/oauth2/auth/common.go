@@ -12,6 +12,10 @@ import (
 	Common Functions
  ***********************/
 func RetrieveAuthenticatedClient(c context.Context) oauth2.OAuth2Client {
+	if client, ok := c.Value(oauth2.CtxKeyAuthenticatedClient).(oauth2.OAuth2Client); ok {
+		return client
+	}
+
 	sec := security.Get(c)
 	if sec.State() < security.StatePrincipalKnown {
 		return nil
@@ -29,7 +33,7 @@ func ValidateGrant(c context.Context, client oauth2.OAuth2Client, grantType stri
 	}
 
 	if !client.GrantTypes().Has(grantType) {
-		return oauth2.NewInvalidGrantError(fmt.Sprintf("grant type '%s' is not allowed by this client '%s'", grantType, client.ClientId()))
+		return oauth2.NewUnauthorizedClientError(fmt.Sprintf("grant type '%s' is not allowed by this client '%s'", grantType, client.ClientId()))
 	}
 
 	return nil
@@ -38,7 +42,7 @@ func ValidateGrant(c context.Context, client oauth2.OAuth2Client, grantType stri
 func ValidateScope(c context.Context, client oauth2.OAuth2Client, scopes...string) error {
 	for _, scope := range scopes {
 		if !client.Scopes().Has(scope) {
-			return oauth2.NewInvalidScopeError("unauthorized scope: " + scope)
+			return oauth2.NewInvalidScopeError("invalid scope: " + scope)
 		}
 	}
 	return nil
@@ -47,7 +51,7 @@ func ValidateScope(c context.Context, client oauth2.OAuth2Client, scopes...strin
 func ValidateAllScopes(c context.Context, client oauth2.OAuth2Client, scopes utils.StringSet) error {
 	for scope, _ := range scopes {
 		if !client.Scopes().Has(scope) {
-			return oauth2.NewInvalidScopeError("unauthorized scope: " + scope)
+			return oauth2.NewInvalidScopeError("invalid scope: " + scope)
 		}
 	}
 	return nil
@@ -56,7 +60,7 @@ func ValidateAllScopes(c context.Context, client oauth2.OAuth2Client, scopes uti
 func ValidateAllAutoApprovalScopes(c context.Context, client oauth2.OAuth2Client, scopes utils.StringSet) error {
 	for scope, _ := range scopes {
 		if !client.AutoApproveScopes().Has(scope) {
-			return oauth2.NewInvalidScopeError("scope not auto approved: " + scope)
+			return oauth2.NewAccessRejectedError("scope not auto approved: " + scope)
 		}
 	}
 	return nil

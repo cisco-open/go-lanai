@@ -123,6 +123,7 @@ func NewSimpleMapping(name, path, method string, condition RequestMatcher, handl
 		name: name,
 		path: path,
 		method: method,
+		condition: condition,
 		handlerFunc: handlerFunc,
 	}
 }
