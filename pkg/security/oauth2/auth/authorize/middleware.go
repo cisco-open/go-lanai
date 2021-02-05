@@ -54,13 +54,14 @@ func (mw *AuhtorizeEndpointMiddleware) PreAuthenticateHandlerFunc() gin.HandlerF
 
 		// validate and process, regardless the result, we might want to transfer some context from request to current context
 		processed, e := mw.requestProcessor.Process(ctx, request)
-		mw.transferContextValues(request.Context(), ctx)
 		if e != nil {
+			mw.transferContextValues(request.Context(), ctx)
 			mw.handleError(ctx, e)
 			return
 		}
 
 		// everything is ok, set it to context for later usage
+		mw.transferContextValues(processed.Context(), ctx)
 		ctx.Set(oauth2.CtxKeyValidatedAuthorizeRequest, processed)
 	}
 }

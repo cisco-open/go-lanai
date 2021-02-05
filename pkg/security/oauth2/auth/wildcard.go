@@ -22,6 +22,8 @@ const (
 )
 
 var (
+	// Warning: if pattern with custom scheme is provided, it's required to add "/" after ":".
+	// 			e.g. "custom-scheme:/some_path" is a valid pattern, but "custom-scheme:some_path" is not
 	pUrl = fmt.Sprintf(`^(%s:[/]{1,2})?(%s@)?%s(:%s)?%s(\?%s)?(#%s)?`,
 		pScheme, pUserInfo, pDomain, pPort, pPath, pParams, pFragment)
 

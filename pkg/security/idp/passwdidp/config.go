@@ -35,7 +35,7 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 	handler := redirect.NewRedirectWithRelativePath("/error")
 	condition := idp.RequestWithAuthenticationMethod(idp.InternalIdpForm, c.authFlowManager)
 
-	ws.Condition(condition).
+	ws.AndCondition(condition).
 		With(session.New()).
 		With(passwd.New().
 			MFA(true).

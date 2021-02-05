@@ -27,7 +27,7 @@ func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *a
 	handler := redirect.NewRedirectWithRelativePath("/error")
 	condition := idp.RequestWithAuthenticationMethod(idp.ExternalIdpSAML, c.authFlowManager)
 
-	ws.Condition(condition).
+	ws.AndCondition(condition).
 		With(samllogin.New()).
 		With(session.New()).
 		With(access.New().

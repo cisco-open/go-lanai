@@ -24,21 +24,7 @@ func NewOAuth2ErrorHanlder() *OAuth2ErrorHandler {
 
 // security.ErrorHandler
 func (h *OAuth2ErrorHandler) HandleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
-	//err = h.translateError(c, err)
 	h.handleError(c, r, rw, err)
-}
-
-func (h *OAuth2ErrorHandler) translateError(c context.Context, err error) error {
-	switch {
-	case errors.Is(err, oauth2.ErrorTypeOAuth2):
-		return err
-	case errors.Is(err, security.ErrorSubTypeUsernamePasswordAuth):
-		return oauth2.NewInvalidClientError("invalid client", err)
-	case errors.Is(err, security.ErrorTypeSecurity):
-		return err
-	default:
-		return oauth2.NewInvalidGrantError(err.Error(), err)
-	}
 }
 
 func (h *OAuth2ErrorHandler) handleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
