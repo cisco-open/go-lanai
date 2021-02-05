@@ -1,4 +1,4 @@
-package authconfig
+package authserver
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
@@ -12,7 +12,7 @@ import (
 	addtional abstractions
  ***************************/
 type IdpSecurityConfigurer interface {
-	Configure(ws security.WebSecurity, config *AuthorizationServerConfiguration)
+	Configure(ws security.WebSecurity, config *Configuration)
 }
 
 /***************************
@@ -21,7 +21,7 @@ type IdpSecurityConfigurer interface {
 // ClientAuthEndpointsConfigurer implements security.Configurer
 // responsible to configure endpoints using client auth
 type ClientAuthEndpointsConfigurer struct {
-	config *AuthorizationServerConfiguration
+	config *Configuration
 }
 
 func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
@@ -42,7 +42,7 @@ func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 // AuthorizeEndpointConfigurer implements security.Configurer
 // responsible to configure //todo
 type AuthorizeEndpointConfigurer struct {
-	config *AuthorizationServerConfiguration
+	config *Configuration
 	delegate IdpSecurityConfigurer
 }
 

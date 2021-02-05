@@ -26,7 +26,7 @@ func Configure(ws security.WebSecurity) *ClientAuthFeature {
 	if fc, ok := ws.(security.FeatureModifier); ok {
 		return fc.Enable(feature).(*ClientAuthFeature)
 	}
-	panic(fmt.Errorf("unable to configure oauth2 authconfig: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
+	panic(fmt.Errorf("unable to configure oauth2 authserver: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
 // Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity

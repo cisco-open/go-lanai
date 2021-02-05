@@ -4,11 +4,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/authconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"go.uber.org/fx"
@@ -53,8 +53,8 @@ type dependencies struct {
 	// TODO properties
 }
 
-func newAuthServerConfigurer(deps dependencies) authconfig.AuthorizationServerConfigurer {
-	return func(config *authconfig.AuthorizationServerConfiguration) {
+func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerConfigurer {
+	return func(config *authserver.Configuration) {
 		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer(deps.AuthFlowManager))
 		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer(deps.AuthFlowManager))
 
@@ -66,7 +66,7 @@ func newAuthServerConfigurer(deps dependencies) authconfig.AuthorizationServerCo
 		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
 		config.JwkStore = jwt.NewStaticJwkStore("default")
 		config.RedisClientFactory = deps.RedisClientFactory
-		config.Endpoints = authconfig.AuthorizationServerEndpoints{
+		config.Endpoints = authserver.Endpoints{
 			Authorize: "/v2/authorize",
 			Token: "/v2/token",
 			CheckToken: "/v2/check_token",

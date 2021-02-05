@@ -3,16 +3,16 @@ package samlidp
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/authconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/samllogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 )
 
-// SamlIdpSecurityConfigurer implements authconfig.IdpSecurityConfigurer
+// SamlIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
 type SamlIdpSecurityConfigurer struct {
 	authFlowManager idp.AuthFlowManager
 }
@@ -23,7 +23,7 @@ func NewSamlIdpSecurityConfigurer(authFlowManager idp.AuthFlowManager) *SamlIdpS
 	}
 }
 
-func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authconfig.AuthorizationServerConfiguration) {
+func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
 	handler := redirect.NewRedirectWithRelativePath("/error")
 	condition := idp.RequestWithAuthenticationMethod(idp.ExternalIdpSAML, c.authFlowManager)
 
