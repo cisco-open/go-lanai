@@ -4,7 +4,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/authconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
@@ -47,12 +49,15 @@ type dependencies struct {
 	TenantStore        security.TenantStore
 	ProviderStore      security.ProviderStore
 	RedisClientFactory redis.ClientFactory
+	AuthFlowManager    idp.AuthFlowManager
 	// TODO properties
 }
 
 func newAuthServerConfigurer(deps dependencies) authconfig.AuthorizationServerConfigurer {
 	return func(config *authconfig.AuthorizationServerConfiguration) {
-		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer())
+		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer(deps.AuthFlowManager))
+		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer(deps.AuthFlowManager))
+
 		config.ClientStore = deps.ClientStore
 		config.ClientSecretEncoder = passwd.NewNoopPasswordEncoder()
 		config.UserAccountStore = deps.AccountStore

@@ -31,8 +31,5 @@ func Use() {
 }
 
 func configureSecurity(init security.Registrar, manager idp.AuthFlowManager) {
-	init.Register(&SamlConfigurer{
-		authFlowManager: manager,
-	})
-
+	// TODO might not needed
 }

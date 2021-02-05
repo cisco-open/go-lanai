@@ -23,9 +23,9 @@ type PasswordIdpSecurityConfigurer struct {
 	authFlowManager idp.AuthFlowManager
 }
 
-func NewPasswordIdpSecurityConfigurer() *PasswordIdpSecurityConfigurer {
+func NewPasswordIdpSecurityConfigurer(authFlowManager idp.AuthFlowManager) *PasswordIdpSecurityConfigurer {
 	return &PasswordIdpSecurityConfigurer{
-
+		authFlowManager: authFlowManager,
 	}
 }
 
@@ -54,7 +54,6 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 			//SuccessHandler()
 		).
 		With(errorhandling.New().
-			AuthenticationEntryPoint(handler).
 			AccessDeniedHandler(handler),
 		).
 		With(csrf.New().

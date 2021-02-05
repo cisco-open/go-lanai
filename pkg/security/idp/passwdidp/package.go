@@ -9,7 +9,7 @@ import (
 
 func init() {
 	bootstrap.AddOptions(
-		fx.Invoke(configureSecurity),
+		fx.Invoke(NewPasswordIdpSecurityConfigurer),
 	)
 }
 
