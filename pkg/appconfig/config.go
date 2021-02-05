@@ -121,15 +121,50 @@ func value(nested map[string]interface{}, flatKey string) interface{} {
 		//if we are not at the leaf yet
 		//we move tmp to the next level
 		if i < len(nestedKeys)-1 {
-			tmp = (tmp.(map[string]interface{}))[nestedKey]
+			m, ok := tmp.(map[string]interface{})
+			if !ok {
+				return nil
+			}
+			tmp, ok = m[nestedKey]
+			if !ok {
+				return nil
+			}
 			if index > -1  {
-				tmp = tmp.([]interface{})[index]
+				s, ok := tmp.([]interface{})
+				if !ok {
+					return nil	
+				}
+				if len(s)<=index {
+					return nil
+				} 
+				tmp = s[index]
 			}
 		} else {
 			if index > -1 {
-				tmp = ((tmp.(map[string]interface{}))[nestedKey].([]interface{}))[index]
+				m, ok := tmp.(map[string]interface{})
+				if !ok {
+					return nil
+				}
+				_, ok = m[nestedKey]
+				if !ok {
+					return nil
+				}
+
+				s, ok := m[nestedKey].([]interface{})
+				if !ok {
+					return nil
+				}
+
+				if len(s) <= index {
+					return nil
+				}
+				tmp = s[index]
 			} else {
-				tmp = (tmp.(map[string]interface{}))[nestedKey]
+				m, ok := tmp.(map[string]interface{})
+				if !ok {
+					return nil
+				}
+				tmp = m[nestedKey]
 			}
 		}
 	}

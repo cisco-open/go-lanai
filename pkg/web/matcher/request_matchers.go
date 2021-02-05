@@ -205,6 +205,14 @@ func RequestWithParam(name, value string) web.RequestMatcher {
 	}
 }
 
+func CustomMatcher(description string, matchable matchableFunc, delegate matcher.Matcher ) web.RequestMatcher {
+	return &requestMatcher{
+		description: description,
+		matchableFunc: matchable,
+		delegate: delegate,
+	}
+}
+
 /**************************
 	helpers
 ***************************/

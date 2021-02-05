@@ -18,10 +18,13 @@ func init() {
 		fx.Provide(BindAccountPoliciesProperties),
 		fx.Provide(BindClientsProperties),
 		fx.Provide(NewInMemoryAccountStore),
+		fx.Provide(NewInMemoryFederatedAccountStore),
 		fx.Provide(NewInMemoryClientStore),
 		fx.Provide(NewTenantStore),
 		fx.Provide(NewProviderStore),
 		fx.Provide(newAuthServerConfigurer),
+		fx.Provide(NewInMemoryIdpManager),
+		fx.Provide(NewInMemAuthFlowManager),
 		fx.Invoke(configureSecurity),
 	)
 }

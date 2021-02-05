@@ -80,6 +80,7 @@ func CreateSession(store Store, name string) *Session {
 // Explorer compatibility.
 func NewCookie(name, value string, options *Options, r *http.Request) *http.Cookie {
 	cookie := newCookieFromOptions(name, value, options)
+
 	if options.MaxAge > 0 {
 		d := time.Duration(options.MaxAge) * time.Second
 		cookie.Expires = time.Now().Add(d)

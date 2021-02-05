@@ -44,7 +44,6 @@ const (
 // Middleware Orders
 const (
 	_ = HighestMiddlewareOrder + iota * 20
-
 	MWOrderSessionHandling
 	MWOrderAuthPersistence
 	MWOrderErrorHandling
@@ -54,6 +53,7 @@ const (
 	MWOrderBasicAuth
 	MWOrderFormLogout
 	MWOrderFormAuth
+	MWOrderSAMLMetadataRefresh
 	// ... TODO more MW goes here
 	MWOrderAccessControl = LowestMiddlewareOrder - 200
 	MWOrderOAuth2Endpoints = MWOrderAccessControl + 100
@@ -65,8 +65,8 @@ const (
 	FeatureOrderOAuth2ClientAuth
 	FeatureOrderAuthenticator
 	FeatureOrderBasicAuth
-	FeatureOrderMFA
 	FeatureOrderFormLogin
+	FeatureOrderSamlLogin
 	FeatureOrderLogout
 	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderOAuth2AuthorizeEndpoint

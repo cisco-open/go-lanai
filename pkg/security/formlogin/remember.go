@@ -81,7 +81,7 @@ func (h *RememberUsernameSuccessHandler) newCookie(name, value string, maxAge in
 		Expires:  calculateCookieExpires(maxAge),
 		Secure:   h.cookieProps.Secure,
 		HttpOnly: h.cookieProps.HttpOnly,
-		SameSite: h.cookieProps.SameSite(),
+		SameSite: http.SameSiteStrictMode, //The remember me cookie should not be used cross site (unlike the session cookie which need to work cross site for sso)
 	}
 
 	return cookie

@@ -82,6 +82,57 @@ func TestUnFlatten(t *testing.T) {
 	}
 
 	fmt.Println(err)
+}
 
+func TestGettingValue(t *testing.T) {
+	nested := make(map[string]interface{})
+	v := value(nested, "a.b.c")
 
+	if v != nil {
+		t.Errorf("should get nil value")
+	}
+
+	nested = map[string]interface{}{
+		"a" : map[string]interface{} {
+			"b":map[string]interface{} {
+				"c":"c_value",
+			},
+		},
+	}
+
+	v = value(nested, "a.b.c")
+
+	if v != "c_value" {
+		t.Errorf("expected %s, got %s", "c_value", v)
+	}
+}
+
+func TestGettingArrayValue(t *testing.T) {
+	nested := map[string]interface{}{
+		"a" : map[string]interface{}{
+			"b":[]interface{}{
+				map[string]interface{}{
+					"c":[]interface{}{
+						"c1",
+					},
+				},
+			},
+		},
+	}
+	v := value(nested, "a.b[1]")
+
+	if v != nil {
+		t.Errorf("should get nil value")
+	}
+
+	v = value(nested, "a.b[0].c[1]")
+
+	if v != nil {
+		t.Errorf("should get nil value")
+	}
+
+	v = value(nested, "a.b[0].c[0]")
+	if v != "c1" {
+		t.Errorf("expected %s, actual %s", "c1", v)
+	}
 }

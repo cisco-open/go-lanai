@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/authconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
@@ -19,7 +20,7 @@ import (
 
 // PasswordIdpSecurityConfigurer implements authconfig.IdpSecurityConfigurer
 type PasswordIdpSecurityConfigurer struct {
-
+	authFlowManager idp.AuthFlowManager
 }
 
 func NewPasswordIdpSecurityConfigurer() *PasswordIdpSecurityConfigurer {
@@ -32,7 +33,7 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 	// TODO
 	// For Authorize endpoint
 	handler := redirect.NewRedirectWithRelativePath("/error")
-	condition := matcher.RequestWithHost("internal.vms.com:8080")
+	condition := idp.RequestWithAuthenticationMethod(idp.InternalIdpForm, c.authFlowManager)
 
 	ws.Condition(condition).
 		With(session.New()).
