@@ -2,7 +2,6 @@ package example
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
@@ -48,7 +47,6 @@ type dependencies struct {
 	AccountStore       security.AccountStore
 	TenantStore        security.TenantStore
 	ProviderStore      security.ProviderStore
-	RedisClientFactory redis.ClientFactory
 	AuthFlowManager    idp.AuthFlowManager
 	// TODO properties
 }
@@ -65,9 +63,9 @@ func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerCo
 		config.ProviderStore = deps.ProviderStore
 		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
 		config.JwkStore = jwt.NewStaticJwkStore("default")
-		config.RedisClientFactory = deps.RedisClientFactory
 		config.Endpoints = authserver.Endpoints{
 			Authorize: "/v2/authorize",
+			Approval: "/v2/approve",
 			Token: "/v2/token",
 			CheckToken: "/v2/check_token",
 			UserInfo: "/v2/userinfo",

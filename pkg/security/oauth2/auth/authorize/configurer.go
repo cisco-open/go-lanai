@@ -3,6 +3,7 @@ package authorize
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -36,37 +37,53 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 		AdditionalErrorHandler(f.errorHandler)
 
 	//TODO prepare middlewares
+	authRouteMatcher := matcher.RouteWithPattern(f.path, http.MethodGet, http.MethodPost)
+	approveRouteMatcher := matcher.RouteWithPattern(f.approvalPath, http.MethodPost)
+	approveRequestMatcher := matcher.RequestWithPattern(f.approvalPath, http.MethodPost).
+		And(matcher.RequestHasPostParameter(oauth2.ParameterUserApproval))
+
 	authorizeMW := NewTokenEndpointMiddleware(func(opts *AuthorizeMWOption) {
 		opts.RequestProcessor = f.requestProcessor
+		opts.AuthorizeHanlder = f.authorizeHanlder
+		opts.ApprovalMatcher = approveRequestMatcher
 	})
 
 	// install middlewares
 	preAuth := middleware.NewBuilder("authorize validation").
-		ApplyTo(matcher.RouteWithPattern(f.path, http.MethodGet, http.MethodPost)).
+		ApplyTo(authRouteMatcher.Or(approveRouteMatcher)).
 		Order(security.MWOrderOAuth2AuthValidation).
 		Use(authorizeMW.PreAuthenticateHandlerFunc())
 
-	ep := middleware.NewBuilder("authorize endpoint").
-		ApplyTo(matcher.RouteWithPattern(f.path, http.MethodGet, http.MethodPost)).
-		Order(security.MWOrderOAuth2Endpoints).
-		Use(authorizeMW.AuthroizeHandlerFunc())
+	ws.Add(preAuth)
 
-	ws.Add(preAuth, ep)
+	// install authorize endpoint
+	epGet := mapping.Get(f.path).Name("authorize GET").
+		HandlerFunc(authorizeMW.AuthroizeHandlerFunc())
+	epPost := mapping.Post(f.path).Name("authorize Post").
+		HandlerFunc(authorizeMW.AuthroizeHandlerFunc())
 
-	// add dummy handler
-	ws.Add(mapping.Get(f.path).HandlerFunc(security.NoopHandlerFunc))
-	ws.Add(mapping.Post(f.path).HandlerFunc(security.NoopHandlerFunc))
+	ws.Route(authRouteMatcher).Add(epGet, epPost)
+
+	// install approve endpoint
+	approve := mapping.Post(f.approvalPath).Name("approve endpoint").
+		HandlerFunc(authorizeMW.ApproveOrDenyHandlerFunc())
+
+	ws.Route(approveRouteMatcher).Add(approve)
 
 	return nil
 }
 
 func (c *AuthorizeEndpointConfigurer) validate(f *AuthorizeFeature, ws security.WebSecurity) error {
 	if f.path == "" {
-		return fmt.Errorf("token endpoint is not set")
+		return fmt.Errorf("authorize endpoint path is not set")
 	}
 
 	if f.errorHandler == nil {
 		f.errorHandler = auth.NewOAuth2ErrorHanlder()
+	}
+
+	if f.authorizeHanlder == nil {
+		return fmt.Errorf("auhtorize handler is not set")
 	}
 
 	//if f.granters == nil || len(f.granters) == 0 {

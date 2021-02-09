@@ -39,19 +39,27 @@ func New() *Feature {
 type Configurer struct {
 	sessionProps security.SessionProperties
 	serverProps web.ServerProperties
-	redisClient redis.Client
 	maxSessionsFunc GetMaximumSessions
 
-	//cached store instance
+	//cached instances
+	redisClient redis.Client
 	store Store
 }
 
 func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties,
-	redisClient redis.Client, maxSessionsFunc GetMaximumSessions) *Configurer {
+	redisClientFactory redis.ClientFactory, maxSessionsFunc GetMaximumSessions) *Configurer {
+
+	redisClient, e := redisClientFactory.New(func(opt *redis.ClientOption) {
+		opt.DbIndex = sessionProps.DbIndex
+	})
+	if e != nil {
+		panic(e)
+	}
+
 	return &Configurer{
-		sessionProps: sessionProps,
-		serverProps: serverProps,
-		redisClient: redisClient,
+		sessionProps:    sessionProps,
+		serverProps:     serverProps,
+		redisClient:     redisClient,
 		maxSessionsFunc: maxSessionsFunc,
 	}
 }

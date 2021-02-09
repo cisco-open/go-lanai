@@ -10,18 +10,30 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"go.uber.org/fx"
 )
 
 type AuthorizationServerConfigurer func(*Configuration)
 
-// Configuration entry point
-func ConfigureAuthorizationServer(registrar security.Registrar, configurer AuthorizationServerConfigurer) {
-	config := &Configuration{}
-	configurer(config)
+type dependencies struct {
+	fx.In
+	SecurityRegistrar  security.Registrar
+	Configurer         AuthorizationServerConfigurer
+	RedisClientFactory redis.ClientFactory
+	SessionProps       security.SessionProperties
+}
 
-	registrar.Register(&ClientAuthEndpointsConfigurer{config: config})
+// Configuration entry point
+func ConfigureAuthorizationServer(deps dependencies) {
+	config := &Configuration{
+		redisClientFactory: deps.RedisClientFactory,
+		sessionProperties:  deps.SessionProps,
+	}
+	deps.Configurer(config)
+
+	deps.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: config})
 	for _, configuer := range config.idpConfigurers {
-		registrar.Register(&AuthorizeEndpointConfigurer{config: config, delegate: configuer})
+		deps.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: config, delegate: configuer})
 	}
 }
 
@@ -30,6 +42,7 @@ func ConfigureAuthorizationServer(registrar security.Registrar, configurer Autho
  ****************************/
 type Endpoints struct {
 	Authorize  string
+	Approval   string
 	Token      string
 	CheckToken string
 	UserInfo   string
@@ -48,9 +61,10 @@ type Configuration struct {
 	UserPasswordEncoder passwd.PasswordEncoder
 	TokenStore          auth.TokenStore
 	JwkStore            jwt.JwkStore
-	RedisClientFactory  redis.ClientFactory
 
 	// not directly configurable items
+	redisClientFactory          redis.ClientFactory
+	sessionProperties           security.SessionProperties
 	idpConfigurers              []IdpSecurityConfigurer
 	sharedErrorHandler          *auth.OAuth2ErrorHandler
 	sharedTokenGranter          auth.TokenGranter
@@ -61,7 +75,8 @@ type Configuration struct {
 	sharedJwtDecoder            jwt.JwtDecoder
 	sharedDetailsFactory        *common.ContextDetailsFactory
 	sharedARProcessor           auth.AuthorizeRequestProcessor
-
+	sharedAuthHanlder           auth.AuthorizeHandler
+	sharedAuthCodeStore         auth.AuthorizationCodeStore
 	// TODO
 }
 
@@ -93,7 +108,7 @@ func (c *Configuration) errorHandler() *auth.OAuth2ErrorHandler {
 func (c *Configuration) tokenGranter() auth.TokenGranter {
 	if c.sharedTokenGranter == nil {
 		granters := []auth.TokenGranter {
-			grants.NewAuthorizationCodeGranter(c.authorizationService()),
+			grants.NewAuthorizationCodeGranter(c.authorizationService(), c.authorizeCodeStore()),
 			grants.NewClientCredentialsGranter(c.authorizationService()),
 		}
 
@@ -126,7 +141,7 @@ func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
-		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.RedisClientFactory)
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.redisClientFactory)
 	}
 	return c.sharedContextDetailsStore
 }
@@ -191,7 +206,7 @@ func (c *Configuration) contextDetailsFactory() *common.ContextDetailsFactory {
 
 func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcessor {
 	if c.sharedARProcessor == nil {
-		//TODO OIDC overwrite
+		//TODO OIDC extension
 		std := auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
 			opt.ClientStore = c.ClientStore
 			opt.ResponseTypes = auth.StandardResponseTypes
@@ -201,4 +216,23 @@ func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcess
 	return c.sharedARProcessor
 }
 
+func (c *Configuration) authorizeHanlder() auth.AuthorizeHandler {
+	if c.sharedAuthHanlder == nil {
+		//TODO OIDC extension
+		c.sharedAuthHanlder = auth.NewAuthorizeHandler(func(opt *auth.AuthHandlerOption) {
+			//opt.Extensions = OIDC extensions
+			opt.ApprovalPageTmpl = "authorize.tmpl"
+			opt.ApprovalUrl = c.Endpoints.Approval
+			opt.AuthService = c.authorizationService()
+			opt.AuthCodeStore = c.authorizeCodeStore()
+		})
+	}
+	return c.sharedAuthHanlder
+}
 
+func (c *Configuration) authorizeCodeStore() auth.AuthorizationCodeStore {
+	if c.sharedAuthCodeStore == nil {
+		c.sharedAuthCodeStore = auth.NewRedisAuthorizationCodeStore(c.redisClientFactory, c.sessionProperties.DbIndex)
+	}
+	return c.sharedAuthCodeStore
+}

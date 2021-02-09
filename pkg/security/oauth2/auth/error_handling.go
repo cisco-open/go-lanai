@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 )
 
 var (
@@ -73,71 +72,32 @@ func tryWriteErrorAsRedirect(c context.Context, r *http.Request, rw http.Respons
 		return
 	}
 
-	urlStr, ok := findRedirectUri(c, r)
-	if !ok {
-		// fallback to default
-		writeOAuth2Error(c, r, rw, err)
-		return
-	}
-
 	params := map[string]string{}
 	params[oauth2.ParameterError] = err.TranslateErrorCode()
 	params[oauth2.ParameterErrorDescription] = err.Error()
 
-	if state, ok := findRedirectState(c, r); ok {
-		params[oauth2.ParameterState] = state
-	}
-
-	redirectUrl, e := appendRedirectUrl(urlStr, params)
+	// TODO support fragment
+	ar := findAuthorizeRequest(c, r)
+	redirectUrl, e := composeRedirectUrl(c, ar, params, false)
 	if e != nil {
 		// fallback to default
 		writeOAuth2Error(c, r, rw, err)
 		return
 	}
 	http.Redirect(rw, r, redirectUrl, http.StatusFound)
+	rw.Write([]byte{})
 }
 
-func findRedirectUri(c context.Context, r *http.Request) (string, bool) {
-	value, ok := c.Value(oauth2.CtxKeyResolvedAuthorizeRedirect).(string)
-	return value, ok
-}
-
-func findRedirectState(c context.Context, r *http.Request) (string, bool) {
-	if ar, e := findAuthorizeRequest(c, r); e == nil && ar.State != "" {
-		return ar.RedirectUri, true
-	}
-	value, ok := c.Value(oauth2.CtxKeyResolvedAuthorizeState).(string)
-	return value, ok
-}
-
-func findAuthorizeRequest(c context.Context, r *http.Request) (*AuthorizeRequest, error) {
+func findAuthorizeRequest(c context.Context, r *http.Request) *AuthorizeRequest {
 	if ar, ok := c.Value(oauth2.CtxKeyValidatedAuthorizeRequest).(*AuthorizeRequest); ok {
-		return ar, nil
+		return ar
 	}
 
 	if ar, ok := c.Value(oauth2.CtxKeyReceivedAuthorizeRequest).(*AuthorizeRequest); ok {
-		return ar, nil
+		return ar
 	}
 
-	// last resort, try parse from request
-	return ParseAuthorizeRequest(r)
-}
-
-func appendRedirectUrl(redirectUrl string, params map[string]string) (string, error) {
-	loc, e := url.ParseRequestURI(redirectUrl)
-	if e != nil || !loc.IsAbs() {
-		return "", oauth2.NewInvalidRedirectUriError("invalid redirect_uri")
-	}
-
-	// TODO support fragments
-	query := loc.Query()
-	for k, v := range params {
-		query.Add(k, v)
-	}
-	loc.RawQuery = query.Encode()
-
-	loc.Redacted()
-	return loc.String(), nil
+	return nil
 }
 
 

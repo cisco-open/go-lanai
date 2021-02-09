@@ -25,6 +25,10 @@ const (
 	ParameterNonce = "nonce"
 	ParameterError = "error"
 	ParameterErrorDescription = "error_description"
+	ParameterCodeChallenge = "code_challenge"
+	ParameterCodeChallengeMethod = "code_challenge_method"
+	ParameterAuthCode = "code"
+	ParameterUserApproval = "user_oauth_approval"
 	//Parameter = ""
 )
 

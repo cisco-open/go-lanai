@@ -1,7 +1,6 @@
 package token
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"errors"
@@ -92,7 +91,6 @@ func (mw *TokenEndpointMiddleware) handleError(c *gin.Context, err error) {
 		err = oauth2.NewInvalidGrantError(err.Error(), err)
 	}
 
-	security.Clear(c)
 	_ = c.Error(err)
 	c.Abort()
 }

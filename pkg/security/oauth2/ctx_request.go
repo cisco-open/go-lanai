@@ -35,7 +35,7 @@ type RequestDetails struct {
 	Extensions    map[string]interface{} `json:"extensions"`
 }
 
-type RequestOptionsFunc func(*RequestDetails)
+type RequestOptionsFunc func(opt *RequestDetails)
 
 type oauth2Request struct {
 	RequestDetails
