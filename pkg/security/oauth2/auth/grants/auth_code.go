@@ -44,7 +44,7 @@ func (g *AuthorizationCodeGranter) Grant(ctx context.Context, request *auth.Toke
 	client := auth.RetrieveAuthenticatedClient(ctx)
 
 	// common check
-	if e := CommonPreGrantValidation(ctx, client, request); e != nil {
+	if e := auth.ValidateGrant(ctx, client, request.GrantType); e != nil {
 		return nil, e
 	}
 
@@ -55,8 +55,10 @@ func (g *AuthorizationCodeGranter) Grant(ctx context.Context, request *auth.Toke
 	}
 
 	stored, e := g.authCodeStore.ConsumeAuhtorizationCode(ctx, code, true)
-	if e != nil || !stored.OAuth2Request().Approved() || stored.UserAuthentication() == nil {
+	if e != nil {
 		return nil, e
+	} else if !stored.OAuth2Request().Approved() || stored.UserAuthentication() == nil {
+		return nil, oauth2.NewInvalidGrantError("original authorize request is invalid")
 	}
 
 	// check redirect uri
@@ -99,7 +101,7 @@ func validateRedirectUri(stored oauth2.OAuth2Request, request *auth.TokenRequest
 	}
 
 	reqRedirect, ok := request.Parameters[oauth2.ParameterRedirectUri]
-	if !ok || reqRedirect != origRedirect {
+	if !ok {
 		return oauth2.NewInvalidTokenRequestError("redirect_uri is required because redirect URL was provided when obtaining the auth code")
 	} else if reqRedirect != origRedirect {
 		return oauth2.NewInvalidGrantError("redirect_uri doesn't match the original redirect URL used when obtaining the auth code")

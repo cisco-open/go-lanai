@@ -36,7 +36,6 @@ func appendRedirectUrl(redirectUrl string, params map[string]string) (string, er
 	}
 	loc.RawQuery = query.Encode()
 
-	loc.Redacted()
 	return loc.String(), nil
 }
 

@@ -17,7 +17,6 @@ const (
 )
 
 type ResponseHandlerFunc func(ctx *gin.Context)
-type AccessTokenProvider func() (oauth2.AccessToken, error)
 
 type AuthorizeHandler interface {
 	// HandleApproved makes various ResponseHandlerFunc of authorization based on
@@ -129,7 +128,7 @@ func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *A
 
 	redirect, e := composeRedirectUrl(ctx, r, values, false)
 	if e != nil {
-		return nil,e
+		return nil, e
 	}
 	return func(c *gin.Context) {
 		c.Redirect(http.StatusFound, redirect)

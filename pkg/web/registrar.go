@@ -291,7 +291,7 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 		case MvcMapping:
 			handlerFuncs[i] = r.makeHandlerFuncFromMvcMapping(m.(MvcMapping))
 		case SimpleMapping:
-			handlerFuncs[i] = m.(SimpleMapping).HandlerFunc()
+			handlerFuncs[i] = MakeConditionalHandlerFunc(m.(SimpleMapping).HandlerFunc(), m.Condition())
 		}
 	}
 
@@ -377,10 +377,13 @@ func MakeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerF
 		s.ServeHTTP(c.Writer, c.Request)
 	}
 
+	return MakeConditionalHandlerFunc(handler, rm)
+}
+
+func MakeConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
 	if rm == nil {
 		return handler
 	}
-
 	return func(c *gin.Context) {
 		if matches, e := rm.MatchesWithContext(c, c.Request); e == nil && matches {
 			handler(c)
