@@ -28,7 +28,7 @@ func jsonEncodeRequestFunc(_ context.Context, r *http.Request, request interface
 /**********************************
 	JSON Response Encoder
 ***********************************/
-func jsonEncodeResponseFunc(_ context.Context, w http.ResponseWriter, response interface{}) error {
+func JsonEncodeResponseFunc(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	// overwrite headers
 	if headerer, ok := response.(httptransport.Headerer); ok {
 		w = web.NewLazyHeaderWriter(w)

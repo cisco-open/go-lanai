@@ -197,7 +197,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 		decodeRequestFunc:  httptransport.NopRequestDecoder,
 		encodeRequestFunc:  jsonEncodeRequestFunc,
 		decodeResponseFunc: nil, // TODO
-		encodeResponseFunc: jsonEncodeResponseFunc,
+		encodeResponseFunc: JsonEncodeResponseFunc,
 	}
 
 	if b.endpointFunc != nil {

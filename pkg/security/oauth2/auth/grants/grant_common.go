@@ -7,7 +7,7 @@ import (
 )
 
 func CommonPreGrantValidation(c context.Context, client oauth2.OAuth2Client, request *auth.TokenRequest) error {
-	// check scope
+	// check grant
 	if e := auth.ValidateGrant(c, client, request.GrantType); e != nil {
 		return e
 	}

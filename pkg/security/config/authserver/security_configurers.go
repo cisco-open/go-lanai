@@ -47,13 +47,13 @@ type AuthorizeEndpointConfigurer struct {
 }
 
 func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
-	path := c.config.Endpoints.Authorize
-	ws.Route(matcher.RouteWithPattern(path)).
-		// TODO add condtion that exclude SAML
-		With(authorize.NewEndpoint().
-			Path(path).
-			RequestProcessors(c.config.authorizeRequestProcessor()).
-			ErrorHandler(c.config.errorHandler()),
-		)
+	// TODO add condtion that exclude SAML
+	ws.With(authorize.NewEndpoint().
+		Path(c.config.Endpoints.Authorize).
+		ApprovalPath(c.config.Endpoints.Approval).
+		RequestProcessors(c.config.authorizeRequestProcessor()).
+		ErrorHandler(c.config.errorHandler()).
+		AuthorizeHanlder(c.config.authorizeHanlder()),
+	)
 	c.delegate.Configure(ws, c.config)
 }

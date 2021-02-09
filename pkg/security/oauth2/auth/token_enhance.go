@@ -41,7 +41,7 @@ func (e *CompositeTokenEnhancer) Enhance(ctx context.Context, token oauth2.Acces
 
 func (e *CompositeTokenEnhancer) Add(enhancers... TokenEnhancer) {
 	e.delegates = append(e.delegates, flattenEnhancers(enhancers)...)
-	// resort the delegates
+	// resort the extensions
 	order.SortStable(e.delegates, order.OrderedFirstCompare)
 }
 

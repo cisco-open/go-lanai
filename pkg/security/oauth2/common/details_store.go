@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	RedisDB = 13
+	redisDB = 13
 
 	prefixAccessTokenToDetails = "AAT"
 	prefixRefreshTokenToDetails = "ART"
@@ -47,7 +47,7 @@ type RedisContextDetailsStore struct {
 
 func NewRedisContextDetailsStore(cf redis.ClientFactory) *RedisContextDetailsStore {
 	client, e := cf.New(func(opt *redis.ClientOption) {
-		opt.DbIndex = RedisDB
+		opt.DbIndex = redisDB
 	})
 	if e != nil {
 		panic(e)

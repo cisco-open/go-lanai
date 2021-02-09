@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"net/http"
@@ -19,6 +20,11 @@ func (r *TokenRequest) Context() utils.MutableContext {
 	return r.context
 }
 
+func (r *TokenRequest) WithContext(ctx context.Context) *TokenRequest {
+	r.context = utils.MakeMutableContext(ctx)
+	return r
+}
+
 func (r *TokenRequest) OAuth2Request(client oauth2.OAuth2Client) oauth2.OAuth2Request {
 	return oauth2.NewOAuth2Request(func(details *oauth2.RequestDetails) {
 		details.Parameters = r.Parameters
@@ -30,12 +36,12 @@ func (r *TokenRequest) OAuth2Request(client oauth2.OAuth2Client) oauth2.OAuth2Re
 	})
 }
 
-func NewTokenRequest(req *http.Request) *TokenRequest {
+func NewTokenRequest() *TokenRequest {
 	return &TokenRequest{
 		Parameters:    map[string]string{},
 		Scopes:        utils.NewStringSet(),
 		Extensions:    map[string]interface{}{},
-		context:       utils.MakeMutableContext(req.Context()),
+		context:       utils.NewMutableContext(),
 	}
 }
 

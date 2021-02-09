@@ -33,7 +33,7 @@ type ModelView struct {
 /**********************************
 	Response Encoder
 ***********************************/
-func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, response interface{}) error {
+func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, response interface{}) error {
 	ctx, ok := c.(*gin.Context)
 	if !ok {
 		return errors.New("unable to use template: context is not available")
@@ -54,7 +54,7 @@ func ginTemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, res
 		return errors.New("unable to use template: response is not *template.ModelView")
 	}
 
-	addGlobalModelData(ctx, mv.Model)
+	AddGlobalModelData(ctx, mv.Model)
 	ctx.HTML(status, mv.View, mv.Model)
 	return nil
 }
@@ -82,11 +82,11 @@ func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 		ModelKeyStatusText: http.StatusText(code),
 	}
 
-	addGlobalModelData(ctx, model)
+	AddGlobalModelData(ctx, model)
 	ctx.HTML(code, web.ErrorTemplate, model)
 }
 
-func addGlobalModelData(ctx *gin.Context, model Model) {
+func AddGlobalModelData(ctx *gin.Context, model Model) {
 	model[ModelKeyRequestContext] = MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath)
 	model[ModelKeySession] = ctx.Value(web.ContextKeySession)
 	model[ModelKeySecurity] = ctx.Value(web.ContextKeySecurity)

@@ -65,3 +65,17 @@ func ValidateAllAutoApprovalScopes(c context.Context, client oauth2.OAuth2Client
 	}
 	return nil
 }
+
+// approval param is a map with scope as keys and approval status as values
+func ValidateApproval(c context.Context, approval map[string]bool, client oauth2.OAuth2Client, scopes utils.StringSet) error {
+	if e := ValidateAllScopes(c, client, scopes); e != nil {
+		return e
+	}
+
+	for scope, _ := range scopes {
+		if approved, ok := approval[scope]; !ok || !approved {
+			return oauth2.NewAccessRejectedError(fmt.Sprintf("user disapproved scope [%s]", scope))
+		}
+	}
+	return nil
+}
