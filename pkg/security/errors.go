@@ -30,6 +30,7 @@ const (
 	ErrorTypeCodeAccessControl
 	ErrorTypeCodeInternal
 	ErrorTypeCodeOAuth2
+	ErrorTypeCodeSaml
 )
 
 // All "SubType" values are used as mask
@@ -78,6 +79,7 @@ var (
 	ErrorTypeAuthentication          = NewErrorType(ErrorTypeCodeAuthentication, errors.New("error type: authentication"))
 	ErrorTypeAccessControl           = NewErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
 	ErrorTypeInternal                = NewErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
+	ErrorTypeSaml 					 = NewErrorType(ErrorTypeCodeSaml, errors.New("error type: saml"))
 
 	ErrorSubTypeInternalError        = NewErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeUsernamePasswordAuth = NewErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))

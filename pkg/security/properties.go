@@ -67,3 +67,16 @@ func BindSessionProperties(ctx *bootstrap.ApplicationContext) SessionProperties 
 	}
 	return *props
 }
+
+const SamlPropertiesPrefix = "security.auth.saml"
+
+type SamlProperties struct {
+	RootUrl string `json:"root-url"`
+	CertificateFile string `json:"certificate-file"`
+	KeyFile string  `json:"key-file"`
+	KeyPassword string `json:"key-password"`
+}
+
+func NewSamlProperties() *SamlProperties {
+	return &SamlProperties{}
+}

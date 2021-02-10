@@ -65,13 +65,13 @@ func TestPositiveMatch(t *testing.T) {
 		"https://wildcard.test.com:443") )
 
 	// normalized path
-	t.Run("Normialized Path", PositiveTest(
+	t.Run("Normialized SsoPath", PositiveTest(
 		"https://wildcard.test.com",
 		"https://wildcard.test.com/") )
-	t.Run("Normialized Path", PositiveTest(
+	t.Run("Normialized SsoPath", PositiveTest(
 		"https://wildcard.test.com/",
 		"https://wildcard.test.com") )
-	t.Run("Normialized Path", PositiveTest(
+	t.Run("Normialized SsoPath", PositiveTest(
 		"http://wildcard.test.com:80",
 		"http://wildcard.test.com/") )
 
@@ -121,10 +121,10 @@ func TestNegativeExactMatch(t *testing.T) {
 		"http://*.test.com:*/**?param1=val1&param2=val2") )
 
 	// path mismatch
-	t.Run("Path", NegativeTest(
+	t.Run("SsoPath", NegativeTest(
 		"https://wildcard.test.com:4321/path/to/redirect.html?param1=val1&param2=val2",
 		"*.test.com:*/path/") )
-	t.Run("Path", NegativeTest(
+	t.Run("SsoPath", NegativeTest(
 		"https://wildcard.test.com/path/to/redirect.html?param1=val1&param2=val2",
 		"wildcard.test.com/") )
 
@@ -163,13 +163,13 @@ func TestNegativeWildcardMatch(t *testing.T) {
 		"http://*.test.com/**") )
 
 	// path mismatch
-	t.Run("Path Exact", NegativeTest(
+	t.Run("SsoPath Exact", NegativeTest(
 		"https://wildcard.test.com:1234/not/path/to/redirect.html?param1=val1&param2=val2",
 		"http://*.test.com:*/path/to/redirect.html") )
-	t.Run("Path MultiChar", NegativeTest(
+	t.Run("SsoPath MultiChar", NegativeTest(
 		"https://wildcard.test.com:1234/path/to/redirect.jsp?param1=val1&param2=val2",
 		"http://*.test.com:*/path/to/*.html") )
-	t.Run("Path NoPattern", NegativeTest(
+	t.Run("SsoPath NoPattern", NegativeTest(
 		"https://wildcard.test.com",
 		"http://*.test.com:*/") )
 	//t.Run("", NegativeTest(

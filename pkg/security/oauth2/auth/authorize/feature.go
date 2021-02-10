@@ -3,6 +3,7 @@ package authorize
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 )
 
@@ -10,6 +11,7 @@ import (
 //goland:noinspection GoNameStartsWithPackageName
 type AuthorizeFeature struct {
 	path             string
+	condition 		 web.RequestMatcher
 	requestProcessor *auth.CompositeAuthorizeRequestProcessor
 	errorHandler     *auth.OAuth2ErrorHandler
 }
@@ -36,6 +38,11 @@ func NewEndpoint() *AuthorizeFeature {
 /** Setters **/
 func (f *AuthorizeFeature) Path(path string) *AuthorizeFeature {
 	f.path = path
+	return f
+}
+
+func (f *AuthorizeFeature) Condition(condition web.RequestMatcher) *AuthorizeFeature {
+	f.condition = condition
 	return f
 }
 

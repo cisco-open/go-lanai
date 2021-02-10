@@ -10,6 +10,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"net/url"
 )
 
 type AuthorizationServerConfigurer func(*Configuration)
@@ -28,13 +30,21 @@ func ConfigureAuthorizationServer(registrar security.Registrar, configurer Autho
 /****************************
 	configuration
  ****************************/
+//TODO: constructor
+type ConditionalEndpoint struct {
+	Location *url.URL
+	Condition web.RequestMatcher
+}
+
 type Endpoints struct {
-	Authorize  string
+	Authorize  ConditionalEndpoint
 	Token      string
 	CheckToken string
 	UserInfo   string
 	JwkSet     string
 	Logout     string
+	SamlSso    ConditionalEndpoint
+	SamlMetadata string
 }
 
 type Configuration struct {

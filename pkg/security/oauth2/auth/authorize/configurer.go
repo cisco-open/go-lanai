@@ -44,12 +44,12 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 	preAuth := middleware.NewBuilder("authorize validation").
 		ApplyTo(matcher.RouteWithPattern(f.path, http.MethodGet, http.MethodPost)).
 		Order(security.MWOrderOAuth2AuthValidation).
-		Use(authorizeMW.PreAuthenticateHandlerFunc())
+		Use(authorizeMW.PreAuthenticateHandlerFunc(f.condition))
 
 	ep := middleware.NewBuilder("authorize endpoint").
 		ApplyTo(matcher.RouteWithPattern(f.path, http.MethodGet, http.MethodPost)).
 		Order(security.MWOrderOAuth2Endpoints).
-		Use(authorizeMW.AuthroizeHandlerFunc())
+		Use(authorizeMW.AuthroizeHandlerFunc(f.condition))
 
 	ws.Add(preAuth, ep)
 

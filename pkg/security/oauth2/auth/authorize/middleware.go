@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -42,8 +43,12 @@ func NewTokenEndpointMiddleware(opts...AuthorizeMWOptions) *AuhtorizeEndpointMid
 	}
 }
 
-func (mw *AuhtorizeEndpointMiddleware) PreAuthenticateHandlerFunc() gin.HandlerFunc {
+func (mw *AuhtorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+			return
+		}
+
 		// parse request
 		request, e := auth.ParseAuthorizeRequest(ctx.Request)
 		if e != nil {
@@ -66,8 +71,12 @@ func (mw *AuhtorizeEndpointMiddleware) PreAuthenticateHandlerFunc() gin.HandlerF
 	}
 }
 
-func (mw *AuhtorizeEndpointMiddleware) AuthroizeHandlerFunc() gin.HandlerFunc {
+func (mw *AuhtorizeEndpointMiddleware) AuthroizeHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+			return
+		}
+
 		request, ok := ctx.Value(oauth2.CtxKeyValidatedAuthorizeRequest).(*auth.AuthorizeRequest)
 		if !ok {
 			mw.handleError(ctx, oauth2.NewInternalError("authorize request not processed"))

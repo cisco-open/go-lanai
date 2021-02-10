@@ -1,14 +1,10 @@
 package samllogin
 
 import (
-	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml_util"
 	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/samlsp"
-	"io/ioutil"
 	"net"
 	"net/http"
-	"net/url"
-	"os"
 )
 
 type CacheableIdpClientManager struct {
@@ -46,7 +42,7 @@ func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdpDeta
 	}
 
 	for _, details := range add {
-		idpDescriptor, err := m.resolveIdpMetadata(details.MetadataLocation)
+		idpDescriptor, err := saml_util.ResolveMetadata(details.MetadataLocation, m.httpClient)
 		if err == nil {
 			//make a copy
 			client := m.template
@@ -100,31 +96,4 @@ func (m *CacheableIdpClientManager) GetClientByEntityId(entityId string) (client
 	return m.GetClientByComparator(func(details SamlIdpDetails) bool {
 		return details.EntityId == entityId
 	})
-}
-
-func (m *CacheableIdpClientManager) resolveIdpMetadata(metadataLocation string) (*saml.EntityDescriptor, error) {
-	metadataUrl, err := url.Parse(metadataLocation)
-	if err != nil {
-		return nil, err
-	}
-	//if it's not url or file url, assume it's relative path
-	if metadataUrl.Scheme == "file" || metadataUrl.Scheme == "" {
-		return parseMetadataFromFile(metadataUrl.Path)
-	} else {
-		metadata, err := samlsp.FetchMetadata(context.TODO(), m.httpClient, *metadataUrl)
-		return metadata, err
-	}
-}
-
-func parseMetadataFromFile(fileLocation string) (*saml.EntityDescriptor, error){
-	file, err := os.Open(fileLocation)
-	if err != nil {
-		return nil, err
-	}
-	raw, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-	metadata, err := samlsp.ParseMetadata(raw)
-	return metadata, err
 }

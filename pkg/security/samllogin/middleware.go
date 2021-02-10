@@ -22,7 +22,7 @@ import (
 	A SAML service provider should be able to work with multiple identity providers.
 	Because the saml package assumes a service provider is configured with one idp only,
 	we use the internal field to store information about this service provider,
-	and we will create new saml.ServiceProvider struct for each new IDP connection when its needed.
+	and we will create new saml.ServiceProvider struct for each new idp connection when its needed.
  */
 type ServiceProviderMiddleware struct {
 	//using value instead of pointer here because we need to copy it when connecting to specific idps.
@@ -127,7 +127,7 @@ func (sp *ServiceProviderMiddleware) MakeAuthenticationRequest(r *http.Request, 
 	}
 
 	if bindingLocation == "" {
-		return security.NewExternalSamlAuthenticationError("IDP does not have supported bindings.")
+		return security.NewExternalSamlAuthenticationError("idp does not have supported bindings.")
 	}
 
 	authReq, err := client.MakeAuthenticationRequest(bindingLocation)
