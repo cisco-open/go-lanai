@@ -15,6 +15,7 @@ type Claims interface {
 	Get(claim string) interface{}
 	Has(claim string) bool
 	Set(claim string, value interface{})
+	Values() map[string]interface{}
 }
 
 /*********************
@@ -24,7 +25,7 @@ type Claims interface {
 type MapClaims map[string]interface{}
 
 func (c MapClaims) MarshalJSON() ([]byte, error) {
-	m, e := c.toMap()
+	m, e := c.toMap(true)
 	if e != nil {
 		return nil, e
 	}
@@ -53,14 +54,26 @@ func (c MapClaims) Set(claim string, value interface{}) {
 	c[claim] = value
 }
 
-func (c MapClaims) toMap() (map[string]interface{}, error) {
+func (c MapClaims) Values() map[string]interface{} {
+	ret, e := c.toMap(false)
+	if e != nil {
+		return map[string]interface{}{};
+	}
+	return ret
+}
+
+func (c MapClaims) toMap(convert bool) (map[string]interface{}, error) {
 	ret := map[string]interface{}{}
 	for k, v := range c {
-		value, e := claimMarshalConvert(reflect.ValueOf(v));
-		if e != nil {
-			return nil, e
+		if convert {
+			value, e := claimMarshalConvert(reflect.ValueOf(v));
+			if e != nil {
+				return nil, e
+			}
+			ret[k] = value.Interface()
+		} else {
+			ret[k] = v
 		}
-		ret[k] = value.Interface()
 	}
 	return ret, nil
 }
@@ -111,3 +124,6 @@ func (c *BasicClaims) Set(claim string, value interface{}) {
 	c.FieldClaimsMapper.Set(c, claim, value)
 }
 
+func (c *BasicClaims) Values() map[string]interface{} {
+	return c.FieldClaimsMapper.Values(c)
+}

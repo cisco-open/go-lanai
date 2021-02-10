@@ -42,6 +42,9 @@ type facts struct {
 
 func (f *ContextDetailsFactory) New(ctx context.Context, request oauth2.OAuth2Request) (security.ContextDetails, error) {
 	facts := f.loadFacts(ctx, request)
+	if facts.account == nil || facts.tenant == nil || facts.provider == nil {
+		return f.createSimple(ctx, facts)
+	}
 	return f.create(ctx, facts)
 }
 

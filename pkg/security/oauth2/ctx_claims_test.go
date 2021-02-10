@@ -262,6 +262,10 @@ func (c *fieldEmbeddingClaims) Set(claim string, value interface{}) {
 	c.FieldClaimsMapper.Set(c, claim, value)
 }
 
+func (c *fieldEmbeddingClaims) Values() map[string]interface{} {
+	return c.FieldClaimsMapper.Values(c)
+}
+
 // interfaceEmbeddingClaims
 type interfaceEmbeddingClaims struct {
 	FieldClaimsMapper
@@ -291,3 +295,6 @@ func (c *interfaceEmbeddingClaims) Set(claim string, value interface{}) {
 	c.FieldClaimsMapper.Set(c, claim, value)
 }
 
+func (c *interfaceEmbeddingClaims) Values() map[string]interface{} {
+	return c.FieldClaimsMapper.Values(c)
+}

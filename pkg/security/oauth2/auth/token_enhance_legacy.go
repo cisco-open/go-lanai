@@ -40,6 +40,10 @@ func (c *legacyClaims) Set(claim string, value interface{}) {
 	c.FieldClaimsMapper.Set(c, claim, value)
 }
 
+func (c *legacyClaims) Values() map[string]interface{} {
+	return c.FieldClaimsMapper.Values(c)
+}
+
 // LegacyTokenEnhancer impelments order.Ordered and TokenEnhancer
 type LegacyTokenEnhancer struct {
 

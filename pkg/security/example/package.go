@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
@@ -23,9 +24,10 @@ func init() {
 		fx.Provide(NewInMemoryClientStore),
 		fx.Provide(NewTenantStore),
 		fx.Provide(NewProviderStore),
-		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(NewInMemoryIdpManager),
 		fx.Provide(NewInMemAuthFlowManager),
+		fx.Provide(newAuthServerConfigurer),
+		fx.Provide(newResServerConfigurer),
 		fx.Invoke(configureSecurity),
 	)
 }
@@ -71,6 +73,18 @@ func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerCo
 			UserInfo: "/v2/userinfo",
 			JwkSet: "/v2/jwks",
 			Logout: "/v2/logout",
+		}
+	}
+}
+
+func newResServerConfigurer(deps dependencies) resserver.ResourceServerConfigurer {
+	return func(config *resserver.Configuration) {
+		config.JwkStore = jwt.NewStaticJwkStore("default")
+		config.RemoteEndpoints = resserver.RemoteEndpoints{
+			Token: "http://localhost:8080/europa/v2/token",
+			CheckToken: "http://localhost:8080/europa/v2/check_token",
+			UserInfo: "http://localhost:8080/europa/v2/userinfo",
+			JwkSet: "http://localhost:8080/europa/v2/jwks",
 		}
 	}
 }
