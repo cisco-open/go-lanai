@@ -64,11 +64,11 @@ func (r *RedisContextDetailsStore) ReadContextDetails(c context.Context, key int
 	case oauth2.AccessToken:
 		return r.loadDetailsFromAccessToken(c, key.(oauth2.AccessToken))
 	case oauth2.RefreshToken:
+		// TODO implement this
 		return nil, fmt.Errorf("loading context details using refresh token is not implemented yet")
 	default:
 		return nil, fmt.Errorf("unsupported key type %T", key)
 	}
-
 }
 
 func (r *RedisContextDetailsStore) SaveContextDetails(ctx context.Context, key interface{}, details security.ContextDetails) error {

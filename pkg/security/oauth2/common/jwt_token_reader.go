@@ -39,7 +39,7 @@ func (r *jwtTokenStoreReader) ReadAuthentication(c context.Context, token oauth2
 	case oauth2.AccessToken:
 		return r.readAuthenticationFromAccessToken(c, token.(oauth2.AccessToken))
 	case oauth2.RefreshToken:
-		return r.readAuthenticationFromRefreshToken(c, token.(oauth2.AccessToken))
+		return r.readAuthenticationFromRefreshToken(c, token.(oauth2.RefreshToken))
 	default:
 		return nil, oauth2.NewInternalError(fmt.Sprintf("token impl [%T] is not supported", token))
 	}
@@ -106,7 +106,7 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
 	}), nil
 }
 
-func (r *jwtTokenStoreReader) readAuthenticationFromRefreshToken(c context.Context, token oauth2.AccessToken) (oauth2.Authentication, error) {
+func (r *jwtTokenStoreReader) readAuthenticationFromRefreshToken(c context.Context, token oauth2.RefreshToken) (oauth2.Authentication, error) {
 	// TODO implement me
 	panic("implement me")
 }

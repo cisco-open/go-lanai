@@ -113,6 +113,11 @@ func parsePrivateKey(block *pem.Block, password string) (interface{}, error) {
 }
 
 func parsePublicKey(block *pem.Block) (interface{}, error) {
+	// try PKCS1 first
+	if key, e := x509.ParsePKCS1PublicKey(block.Bytes); e == nil {
+		return key, nil
+	}
+	// fallback to PKIX
 	return x509.ParsePKIXPublicKey(block.Bytes)
 }
 

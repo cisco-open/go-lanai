@@ -10,15 +10,14 @@ import (
 
 const (
 	bearerTokenPrefix = "Bearer "
-	scopeParamPrefix = "scope."
 )
-/***********************
-	Authorize Endpoint
- ***********************/
+
+/****************************
+	Token Authentication
+ ****************************/
 type TokenAuthMiddleware struct {
 	authenticator  security.Authenticator
 	successHandler security.AuthenticationSuccessHandler
-	//TODO
 }
 
 type TokenAuthMWOptions func(opt *TokenAuthMWOption)
@@ -26,13 +25,10 @@ type TokenAuthMWOptions func(opt *TokenAuthMWOption)
 type TokenAuthMWOption struct {
 	Authenticator  security.Authenticator
 	SuccessHandler security.AuthenticationSuccessHandler
-	//TODO
 }
 
 func NewTokenAuthMiddleware(opts...TokenAuthMWOptions) *TokenAuthMiddleware {
-	opt := TokenAuthMWOption{
-		//TODO
-	}
+	opt := TokenAuthMWOption{}
 	for _, optFunc := range opts {
 		if optFunc != nil {
 			optFunc(&opt)
@@ -48,12 +44,9 @@ func NewTokenAuthMiddleware(opts...TokenAuthMWOptions) *TokenAuthMiddleware {
 func (mw *TokenAuthMiddleware) AuthenticateHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
+		// We always re-authenticate by clearing current auth
 		before := security.Get(ctx)
-		if before != nil &&  before.State() >= security.StatePrincipalKnown {
-			// this should not happen if the configuration is correct.
-			// if session is enabled, this could happen. We always re-authenticate by clearing current auth
-			security.Clear(ctx)
-		}
+		security.Clear(ctx)
 
 		// grab bearer token and create candidate
 		header := ctx.GetHeader("Authorization")
