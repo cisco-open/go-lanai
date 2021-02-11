@@ -9,7 +9,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"go.uber.org/fx"
 )
@@ -45,11 +44,11 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 
 type dependencies struct {
 	fx.In
-	ClientStore        oauth2.OAuth2ClientStore
-	AccountStore       security.AccountStore
-	TenantStore        security.TenantStore
-	ProviderStore      security.ProviderStore
-	AuthFlowManager    idp.AuthFlowManager
+	ClientStore      oauth2.OAuth2ClientStore
+	AccountStore     security.AccountStore
+	TenantStore      security.TenantStore
+	ProviderStore    security.ProviderStore
+	AuthFlowManager  idp.AuthFlowManager
 	// TODO properties
 }
 
@@ -64,7 +63,6 @@ func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerCo
 		config.TenantStore = deps.TenantStore
 		config.ProviderStore = deps.ProviderStore
 		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
-		config.JwkStore = jwt.NewStaticJwkStore("default")
 		config.Endpoints = authserver.Endpoints{
 			Authorize: "/v2/authorize",
 			Approval: "/v2/approve",
@@ -79,7 +77,6 @@ func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerCo
 
 func newResServerConfigurer(deps dependencies) resserver.ResourceServerConfigurer {
 	return func(config *resserver.Configuration) {
-		config.JwkStore = jwt.NewStaticJwkStore("default")
 		config.RemoteEndpoints = resserver.RemoteEndpoints{
 			Token: "http://localhost:8080/europa/v2/token",
 			CheckToken: "http://localhost:8080/europa/v2/check_token",

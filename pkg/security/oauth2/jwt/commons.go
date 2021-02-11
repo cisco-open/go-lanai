@@ -7,7 +7,8 @@ import (
 )
 
 func printPrivateKey(key *rsa.PrivateKey) string {
-	bytes := x509.MarshalPKCS1PrivateKey(key)
+	//bytes := x509.MarshalPKCS1PrivateKey(key)
+	bytes, _ := x509.MarshalPKCS8PrivateKey(key)
 	return base64.StdEncoding.EncodeToString(bytes)
 }
 

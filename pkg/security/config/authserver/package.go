@@ -11,6 +11,7 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 	Name: "oauth2 authserver",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
+		//fx.Provide(jwt.BindCryptoProperties),
 		fx.Invoke(ConfigureAuthorizationServer),
 	},
 }

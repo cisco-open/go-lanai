@@ -17,12 +17,14 @@ type dependencies struct {
 	Configurer         ResourceServerConfigurer
 	SecurityRegistrar  security.Registrar
 	RedisClientFactory redis.ClientFactory
+	CryptoProperties   jwt.CryptoProperties
 }
 
 // Configuration entry point
 func ConfigureResourceServer(deps dependencies) {
 	config := &Configuration{
 		redisClientFactory: deps.RedisClientFactory,
+		cryptoProperties: deps.CryptoProperties,
 	}
 	deps.Configurer(config)
 
@@ -50,11 +52,11 @@ type Configuration struct {
 	JwkStore         jwt.JwkStore
 
 	// not directly configurable items
-	redisClientFactory          redis.ClientFactory
-	sessionProperties           security.SessionProperties
-	sharedErrorHandler          *tokenauth.OAuth2ErrorHandler
-	sharedContextDetailsStore   security.ContextDetailsStore
-	sharedJwtDecoder            jwt.JwtDecoder
+	redisClientFactory        redis.ClientFactory
+	cryptoProperties          jwt.CryptoProperties
+	sharedErrorHandler        *tokenauth.OAuth2ErrorHandler
+	sharedContextDetailsStore security.ContextDetailsStore
+	sharedJwtDecoder          jwt.JwtDecoder
 	// TODO
 }
 
@@ -84,8 +86,7 @@ func (c *Configuration) tokenStoreReader() oauth2.TokenStoreReader {
 
 func (c *Configuration) jwkStore() jwt.JwkStore {
 	if c.JwkStore == nil {
-		// TODO
-		c.JwkStore = jwt.NewStaticJwkStore("default")
+		c.JwkStore = jwt.NewFileJwkStore(c.cryptoProperties)
 	}
 	return c.JwkStore
 }

@@ -20,14 +20,16 @@ type dependencies struct {
 	SecurityRegistrar  security.Registrar
 	Configurer         AuthorizationServerConfigurer
 	RedisClientFactory redis.ClientFactory
-	SessionProps       security.SessionProperties
+	SessionProperties  security.SessionProperties
+	CryptoProperties   jwt.CryptoProperties
 }
 
 // Configuration entry point
 func ConfigureAuthorizationServer(deps dependencies) {
 	config := &Configuration{
 		redisClientFactory: deps.RedisClientFactory,
-		sessionProperties:  deps.SessionProps,
+		sessionProperties:  deps.SessionProperties,
+		cryptoProperties:   deps.CryptoProperties,
 	}
 	deps.Configurer(config)
 
@@ -63,20 +65,21 @@ type Configuration struct {
 	JwkStore            jwt.JwkStore
 
 	// not directly configurable items
-	redisClientFactory          redis.ClientFactory
-	sessionProperties           security.SessionProperties
-	idpConfigurers              []IdpSecurityConfigurer
-	sharedErrorHandler          *auth.OAuth2ErrorHandler
-	sharedTokenGranter          auth.TokenGranter
-	sharedAuthService           auth.AuthorizationService
-	sharedPasswordAuthenticator security.Authenticator
-	sharedContextDetailsStore   security.ContextDetailsStore
-	sharedJwtEncoder            jwt.JwtEncoder
-	sharedJwtDecoder            jwt.JwtDecoder
-	sharedDetailsFactory        *common.ContextDetailsFactory
-	sharedARProcessor           auth.AuthorizeRequestProcessor
-	sharedAuthHanlder           auth.AuthorizeHandler
-	sharedAuthCodeStore         auth.AuthorizationCodeStore
+	redisClientFactory        redis.ClientFactory
+	sessionProperties         security.SessionProperties
+	cryptoProperties          jwt.CryptoProperties
+	idpConfigurers            []IdpSecurityConfigurer
+	sharedErrorHandler        *auth.OAuth2ErrorHandler
+	sharedTokenGranter        auth.TokenGranter
+	sharedAuthService         auth.AuthorizationService
+	sharedPasswdAuthenticator security.Authenticator
+	sharedContextDetailsStore security.ContextDetailsStore
+	sharedJwtEncoder          jwt.JwtEncoder
+	sharedJwtDecoder          jwt.JwtDecoder
+	sharedDetailsFactory      *common.ContextDetailsFactory
+	sharedARProcessor         auth.AuthorizeRequestProcessor
+	sharedAuthHanlder         auth.AuthorizeHandler
+	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	// TODO
 }
 
@@ -124,7 +127,7 @@ func (c *Configuration) tokenGranter() auth.TokenGranter {
 }
 
 func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
-	if c.sharedPasswordAuthenticator == nil && c.UserAccountStore != nil {
+	if c.sharedPasswdAuthenticator == nil && c.UserAccountStore != nil {
 		authenticator, err := passwd.NewAuthenticatorBuilder(
 			passwd.New().
 				AccountStore(c.UserAccountStore).
@@ -133,10 +136,10 @@ func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 		).Build(context.Background())
 
 		if err == nil {
-			c.sharedPasswordAuthenticator = authenticator
+			c.sharedPasswdAuthenticator = authenticator
 		}
 	}
-	return c.sharedPasswordAuthenticator
+	return c.sharedPasswdAuthenticator
 }
 
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
@@ -175,8 +178,7 @@ func (c *Configuration) authorizationService() auth.AuthorizationService {
 
 func (c *Configuration) jwkStore() jwt.JwkStore {
 	if c.JwkStore == nil {
-		// TODO
-		c.JwkStore = jwt.NewStaticJwkStore("default")
+		c.JwkStore = jwt.NewFileJwkStore(c.cryptoProperties)
 	}
 	return c.JwkStore
 }
