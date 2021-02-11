@@ -7,27 +7,27 @@ import (
 )
 
 type ProviderDetails struct {
-	Id string
-	Name string
+	Id          string
+	Name        string
 	DisplayName string
 }
 
 type TenantDetails struct {
-	Id string
-	Name string
+	Id        string
+	Name      string
 	Suspended bool
 }
 
 type UserDetails struct {
-	Id string
-	Username string
-	AccountType security.AccountType
+	Id                string
+	Username          string
+	AccountType       security.AccountType
 	AssignedTenantIds utils.StringSet
-	LocaleCode string
-	CurrencyCode string
-	FirstName string
-	LastName string
-	Email string
+	LocaleCode        string
+	CurrencyCode      string
+	FirstName         string
+	LastName          string
+	Email             string
 }
 
 type AuthenticationDetails struct {
@@ -53,6 +53,21 @@ type FullContextDetails struct {
 	User           UserDetails
 	Authentication AuthenticationDetails
 	KV             map[string]interface{}
+}
+
+func NewFullContextDetails() *FullContextDetails {
+	return &FullContextDetails{
+		Provider: ProviderDetails{},
+		Tenant:   TenantDetails{},
+		User: UserDetails{
+			AssignedTenantIds: utils.NewStringSet(),
+		},
+		Authentication: AuthenticationDetails{
+			Roles:       utils.NewStringSet(),
+			Permissions: utils.NewStringSet(),
+		},
+		KV: map[string]interface{}{},
+	}
 }
 
 // security.ProviderDetails

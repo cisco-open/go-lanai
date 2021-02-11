@@ -53,6 +53,7 @@ const (
 	MWOrderBasicAuth
 	MWOrderFormLogout
 	MWOrderFormAuth
+	MWOrderOAuth2TokenAuth
 	MWOrderSAMLMetadataRefresh
 	// ... TODO more MW goes here
 	MWOrderAccessControl = LowestMiddlewareOrder - 200
@@ -70,6 +71,7 @@ const (
 	FeatureOrderLogout
 	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderOAuth2AuthorizeEndpoint
+	FeatureOrderOAuth2TokenAuth
 	FeatureOrderCsrf
 	FeatureOrderAccess
 	FeatureOrderSession

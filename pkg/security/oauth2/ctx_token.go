@@ -125,7 +125,7 @@ func (t *DefaultAccessToken) ExpiryTime() time.Time {
 
 // AccessToken
 func (t *DefaultAccessToken) Expired() bool {
-	return !t.expiryTime.IsZero() && t.expiryTime.After(time.Now())
+	return !t.expiryTime.IsZero() && t.expiryTime.Before(time.Now())
 }
 
 // AccessToken
@@ -239,7 +239,7 @@ func (t *DefaultRefreshToken) ExpiryTime() time.Time {
 
 // RefreshToken
 func (t *DefaultRefreshToken) Expired() bool {
-	return !t.expiryTime.IsZero() && t.expiryTime.After(time.Now())
+	return !t.expiryTime.IsZero() && t.expiryTime.Before(time.Now())
 }
 
 // RefreshToken

@@ -3,11 +3,11 @@ package example
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
@@ -27,15 +27,10 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 	// for REST API
 	ws.Route(matcher.RouteWithPattern("/api/**")).
 		Condition(matcher.RequestWithHost("localhost:8080")).
-		//With(session.New()).
-		With(passwd.New().
-			AccountStore(c.accountStore).
-			PasswordEncoder(passwd.NewNoopPasswordEncoder()),
-		).
+		With(tokenauth.New()).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
 		).
-		With(basicauth.New()).
 		With(errorhandling.New())
 }
 

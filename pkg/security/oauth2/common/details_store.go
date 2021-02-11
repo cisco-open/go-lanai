@@ -60,7 +60,15 @@ func NewRedisContextDetailsStore(cf redis.ClientFactory) *RedisContextDetailsSto
 }
 
 func (r *RedisContextDetailsStore) ReadContextDetails(c context.Context, key interface{}) (security.ContextDetails, error) {
-	panic("implement me")
+	switch key.(type) {
+	case oauth2.AccessToken:
+		return r.loadDetailsFromAccessToken(c, key.(oauth2.AccessToken))
+	case oauth2.RefreshToken:
+		// TODO implement this
+		return nil, fmt.Errorf("loading context details using refresh token is not implemented yet")
+	default:
+		return nil, fmt.Errorf("unsupported key type %T", key)
+	}
 }
 
 func (r *RedisContextDetailsStore) SaveContextDetails(ctx context.Context, key interface{}, details security.ContextDetails) error {
@@ -73,12 +81,12 @@ func (r *RedisContextDetailsStore) SaveContextDetails(ctx context.Context, key i
 
 	switch key.(type) {
 	case oauth2.AccessToken:
-		r.saveAccessTokenToDetails(ctx, key.(oauth2.AccessToken), details)
+		return r.saveAccessTokenToDetails(ctx, key.(oauth2.AccessToken), details)
+	case oauth2.RefreshToken:
+		return fmt.Errorf("Saving context details using refresh token is not implemented yet")
 	default:
 		return fmt.Errorf("unsupported key type %T", key)
 	}
-
-	return nil
 }
 
 func (r *RedisContextDetailsStore) RemoveContextDetails(c context.Context, key interface{}) error {
@@ -105,6 +113,15 @@ func (r *RedisContextDetailsStore) doSave(c context.Context, keyFunc keyFunc, va
 	return status.Err()
 }
 
+func (r *RedisContextDetailsStore) doLoad(c context.Context, keyFunc keyFunc, value interface{}) error {
+	k := keyFunc(r.vTag)
+	cmd := r.client.Get(c, k)
+	if cmd.Err() != nil {
+		return cmd.Err()
+	}
+	return json.Unmarshal([]byte(cmd.Val()), value)
+}
+
 func (r *RedisContextDetailsStore) saveAccessTokenToDetails(c context.Context, t oauth2.AccessToken, details security.ContextDetails) error {
 	if e := r.doSave(c, keyFuncAccessTokenToDetails(t), details, t.ExpiryTime()); e != nil {
 		return e
@@ -117,6 +134,23 @@ func (r *RedisContextDetailsStore) saveAccessTokenToDetails(c context.Context, t
 		}
 	}
 	return nil
+}
+
+func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context, t oauth2.AccessToken) (security.ContextDetails, error) {
+	fullDetails := internal.NewFullContextDetails()
+	if e := r.doLoad(c, keyFuncAccessTokenToDetails(t), &fullDetails); e != nil {
+		return nil, e
+	}
+
+	if fullDetails.User.Id == "" || fullDetails.User.Username == "" {
+		// no user details, we assume it's a simple context
+		return &internal.SimpleContextDetails{
+			Authentication: fullDetails.Authentication,
+			KV:             fullDetails.KV,
+		}, nil
+	}
+
+	return fullDetails, nil
 }
 
 /*********************

@@ -13,6 +13,16 @@ type SimpleContextDetails struct {
 	KV             map[string]interface{}
 }
 
+func NewSimpleContextDetails() *SimpleContextDetails {
+	return &SimpleContextDetails{
+		Authentication: AuthenticationDetails{
+			Roles:       utils.NewStringSet(),
+			Permissions: utils.NewStringSet(),
+		},
+		KV: map[string]interface{}{},
+	}
+}
+
 // security.AuthenticationDetails
 func (d *SimpleContextDetails) ExpiryTime() time.Time {
 	return d.Authentication.ExpiryTime

@@ -4,11 +4,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"go.uber.org/fx"
 )
@@ -23,9 +23,10 @@ func init() {
 		fx.Provide(NewInMemoryClientStore),
 		fx.Provide(NewTenantStore),
 		fx.Provide(NewProviderStore),
-		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(NewInMemoryIdpManager),
 		fx.Provide(NewInMemAuthFlowManager),
+		fx.Provide(newAuthServerConfigurer),
+		fx.Provide(newResServerConfigurer),
 		fx.Invoke(configureSecurity),
 	)
 }
@@ -43,11 +44,11 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 
 type dependencies struct {
 	fx.In
-	ClientStore        oauth2.OAuth2ClientStore
-	AccountStore       security.AccountStore
-	TenantStore        security.TenantStore
-	ProviderStore      security.ProviderStore
-	AuthFlowManager    idp.AuthFlowManager
+	ClientStore      oauth2.OAuth2ClientStore
+	AccountStore     security.AccountStore
+	TenantStore      security.TenantStore
+	ProviderStore    security.ProviderStore
+	AuthFlowManager  idp.AuthFlowManager
 	// TODO properties
 }
 
@@ -62,7 +63,6 @@ func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerCo
 		config.TenantStore = deps.TenantStore
 		config.ProviderStore = deps.ProviderStore
 		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
-		config.JwkStore = jwt.NewStaticJwkStore("default")
 		config.Endpoints = authserver.Endpoints{
 			Authorize: "/v2/authorize",
 			Approval: "/v2/approve",
@@ -71,6 +71,17 @@ func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerCo
 			UserInfo: "/v2/userinfo",
 			JwkSet: "/v2/jwks",
 			Logout: "/v2/logout",
+		}
+	}
+}
+
+func newResServerConfigurer(deps dependencies) resserver.ResourceServerConfigurer {
+	return func(config *resserver.Configuration) {
+		config.RemoteEndpoints = resserver.RemoteEndpoints{
+			Token: "http://localhost:8080/europa/v2/token",
+			CheckToken: "http://localhost:8080/europa/v2/check_token",
+			UserInfo: "http://localhost:8080/europa/v2/userinfo",
+			JwkSet: "http://localhost:8080/europa/v2/jwks",
 		}
 	}
 }
