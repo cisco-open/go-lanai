@@ -19,6 +19,11 @@ type KeyFormatType string
 
 type CryptoProperties struct {
 	Keys map[string]CryptoKeyProperties `json:"keys"`
+	Jwt JwtProperties `json:"jwt"`
+}
+
+type JwtProperties struct {
+	KeyName string `json:"key-name"`
 }
 
 type CryptoKeyProperties struct {
@@ -32,7 +37,7 @@ func (p CryptoKeyProperties) Format() KeyFormatType {
 	return KeyFormatType(strings.ToLower(p.KeyFormat))
 }
 
-//NewSessionProperties create a SessionProperties with default values
+//CryptoProperties create a SessionProperties with default values
 func NewCryptoProperties() *CryptoProperties {
 	return &CryptoProperties {
 		Keys: map[string]CryptoKeyProperties{},

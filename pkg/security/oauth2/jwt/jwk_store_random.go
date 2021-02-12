@@ -36,7 +36,7 @@ func (s *SingleJwkStore) LoadByName(_ context.Context, name string) (Jwk, error)
 	return nil, fmt.Errorf("Cannot find JWK with name [%s]", name)
 }
 
-func (s *SingleJwkStore) LoadAll(_ context.Context) ([]Jwk, error) {
+func (s *SingleJwkStore) LoadAll(ctx context.Context, names ...string) ([]Jwk, error) {
 	return []Jwk{s.jwk}, nil
 }
 

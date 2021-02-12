@@ -185,8 +185,7 @@ func (c *Configuration) jwkStore() jwt.JwkStore {
 
 func (c *Configuration) jwtEncoder() jwt.JwtEncoder {
 	if c.sharedJwtEncoder == nil {
-		// TODO
-		c.sharedJwtEncoder = jwt.NewRS256JwtEncoder(c.jwkStore(), "default")
+		c.sharedJwtEncoder = jwt.NewRS256JwtEncoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
 	}
 	return c.sharedJwtEncoder
 }
@@ -194,7 +193,7 @@ func (c *Configuration) jwtEncoder() jwt.JwtEncoder {
 func (c *Configuration) jwtDecoder() jwt.JwtDecoder {
 	if c.sharedJwtDecoder == nil {
 		// TODO
-		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), "default")
+		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
 	}
 	return c.sharedJwtDecoder
 }

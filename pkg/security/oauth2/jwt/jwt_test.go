@@ -102,7 +102,7 @@ func SubTestJwtDecodeSuccessWithSameKey(jwtVal string, jwkStore JwkStore) SubTes
 
 func SubTestJwtDecodeSuccessWithRotatedKey(jwtVal string, jwkStore JwkRotator) SubTest {
 	return func(t *testing.T) {
-		if err := jwkStore.Rotate(context.Background()); err != nil {
+		if err := jwkStore.Rotate(context.Background(), ""); err != nil {
 			t.Errorf("StaticJwkStore key roation should not have error, but got %v", err)
 		}
 		dec := NewRS256JwtDecoder(jwkStore, testDefaultKid)
@@ -187,13 +187,22 @@ func assertCustomClaims(g *WithT, expected oauth2.MapClaims, decoded oauth2.Clai
 
 // customClaims implements Claims
 type customClaims struct {
-	Audiance  []interface{} `json:"aud"`
-	Expiry    int64         `json:"exp"`
-	Id        string        `json:"jti"`
-	IssueAt   int64         `json:"iat"`
-	NotBefore int64         `json:"nbf"`
-	Issuer    string        `json:"iss"`
-	Subject   string        `json:"sub"`
+	oauth2.FieldClaimsMapper
+	Audiance  []interface{} `claim:"aud"`
+	Expiry    int64         `claim:"exp"`
+	Id        string        `claim:"jti"`
+	IssueAt   int64         `claim:"iat"`
+	NotBefore int64         `claim:"nbf"`
+	Issuer    string        `claim:"iss"`
+	Subject   string        `claim:"sub"`
+}
+
+func (c *customClaims) MarshalJSON() ([]byte, error) {
+	return c.FieldClaimsMapper.DoMarshalJSON(c)
+}
+
+func (c *customClaims) UnmarshalJSON(bytes []byte) error {
+	return c.FieldClaimsMapper.DoUnmarshalJSON(c, bytes)
 }
 
 func (c customClaims) Get(claim string) interface{} {
@@ -206,6 +215,18 @@ func (c customClaims) Has(claim string) bool {
 
 func (c customClaims) Set(claim string, value interface{}) {
 	panic("we don't support this")
+}
+
+func (c customClaims) Values() map[string]interface{} {
+	return map[string]interface{}{
+		`aud`: c.Audiance,
+		`exp`: c.Expiry,
+		`jti`: c.Id,
+		`iat`: c.IssueAt,
+		`nbf`: c.NotBefore,
+		`iss`: c.Issuer,
+		`sub`: c.Subject,
+	}
 }
 
 func (c customClaims) value(claim string) reflect.Value {
@@ -229,11 +250,20 @@ func (c customClaims) value(claim string) reflect.Value {
 	}
 }
 
-// customCompatibleClaims wraps customClaims and implements jwt.Claims
+// customCompatibleClaims wraps customClaims and implements oauth2.Claims
 type customCompatibleClaims struct {
+	oauth2.FieldClaimsMapper
 	customClaims
 }
 
 func (c customCompatibleClaims) Valid() error {
 	return nil
+}
+
+func (c *customCompatibleClaims) MarshalJSON() ([]byte, error) {
+	return c.FieldClaimsMapper.DoMarshalJSON(c)
+}
+
+func (c *customCompatibleClaims) UnmarshalJSON(bytes []byte) error {
+	return c.FieldClaimsMapper.DoUnmarshalJSON(c, bytes)
 }

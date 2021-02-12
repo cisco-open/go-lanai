@@ -93,7 +93,7 @@ func (c *Configuration) jwkStore() jwt.JwkStore {
 
 func (c *Configuration) jwtDecoder() jwt.JwtDecoder {
 	if c.sharedJwtDecoder == nil {
-		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), "default")
+		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
 	}
 	return c.sharedJwtDecoder
 }

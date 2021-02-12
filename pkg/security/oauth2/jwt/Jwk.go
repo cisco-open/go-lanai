@@ -21,15 +21,21 @@ type PrivateJwk interface {
 }
 
 type JwkStore interface {
+	// LoadByKid returns the JWK associated with given KID.
+	// This method is usually used when decoding/verifiying JWT token
 	LoadByKid(ctx context.Context, kid string) (Jwk, error)
+	// LoadByKid returns the JWK associated with given name.
+	// The method might return different JWK for same name, if the store is also support rotation
+	// This method is usually used when encoding/encrypt JWT token
 	LoadByName(ctx context.Context, name string) (Jwk, error)
-	LoadAll(ctx context.Context) ([]Jwk, error)
+	// LoadAll return all JWK with given names. If name is not provided, all JWK is returned
+	LoadAll(ctx context.Context, names ...string) ([]Jwk, error)
 }
 
 type JwkRotator interface {
 	JwkStore
-	Rotate(ctx context.Context) error
-	Current(ctx context.Context) (Jwk, error)
+	// Rotate change JWK of given name to next candicate
+	Rotate(ctx context.Context, name string) error
 }
 
 /*********************
