@@ -102,7 +102,7 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 					mw.Order(), mw.Name(), mw.Matcher(), reflect.ValueOf(mw.HandlerFunc()).String())
 			default:
 				// TODO logger
-				fmt.Printf("registered security endpoints [%s]: %v\n", mapping.Name(), mapping)
+				fmt.Printf("registered security misc [%s]: %v\n", mapping.Name(), mapping)
 			}
 		}
 	}

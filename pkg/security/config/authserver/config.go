@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 )
 
@@ -17,6 +18,7 @@ type AuthorizationServerConfigurer func(*Configuration)
 
 type dependencies struct {
 	fx.In
+	WebRegistrar       *web.Registrar
 	SecurityRegistrar  security.Registrar
 	Configurer         AuthorizationServerConfigurer
 	RedisClientFactory redis.ClientFactory
@@ -26,17 +28,19 @@ type dependencies struct {
 
 // Configuration entry point
 func ConfigureAuthorizationServer(deps dependencies) {
-	config := &Configuration{
+	config := Configuration{
 		redisClientFactory: deps.RedisClientFactory,
 		sessionProperties:  deps.SessionProperties,
 		cryptoProperties:   deps.CryptoProperties,
 	}
-	deps.Configurer(config)
+	deps.Configurer(&config)
 
-	deps.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: config})
+	deps.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: &config})
 	for _, configuer := range config.idpConfigurers {
-		deps.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: config, delegate: configuer})
+		deps.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: &config, delegate: configuer})
 	}
+
+	registerEndpoints(deps.WebRegistrar, &config)
 }
 
 /****************************

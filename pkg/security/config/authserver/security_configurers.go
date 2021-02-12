@@ -19,7 +19,7 @@ type IdpSecurityConfigurer interface {
 	security configurers
  ***************************/
 // ClientAuthEndpointsConfigurer implements security.Configurer
-// responsible to configure endpoints using client auth
+// responsible to configure misc using client auth
 type ClientAuthEndpointsConfigurer struct {
 	config *Configuration
 }
