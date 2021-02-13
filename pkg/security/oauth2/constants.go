@@ -37,6 +37,18 @@ const (
 )
 
 const (
+	ScopeRead            = "read"
+	ScopeWrite           = "write"
+	ScopeTokenDetails    = "token_details"
+	ScopeTenantHierarchy = "tenant_hierarchy"
+	ScopeOidc            = "openid"
+	ScopeOidcProfile     = "profile"
+	ScopeOidcEmail       = "email"
+	ScopeOidcAddress     = "address"
+	ScopeOidcPhone       = "phone"
+)
+
+const (
 	CtxKeyAuthenticatedClient       = "kAuthenticatedClient"
 	CtxKeyAuthenticatedAccount      = "kAuthenticatedAccount"
 	CtxKeyAuthorizedTenant          = "kAuthorizedTenant"

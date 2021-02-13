@@ -11,12 +11,28 @@ import (
  ******************************/
 type AccountType int
 const (
-	AccountTypeDefault AccountType = iota
+	AccountTypeUnknown AccountType = iota
+	AccountTypeDefault
 	AccountTypeApp
 	AccountTypeFederated
 	AccountTypeSystem
-	AccountTypeUnknown
 )
+
+func (t AccountType) String() string {
+	switch t {
+	case AccountTypeDefault:
+		return "user"
+	case AccountTypeApp:
+		return "app"
+	case AccountTypeFederated:
+		return "fed"
+	case AccountTypeSystem:
+		return "system"
+	default:
+		return ""
+	}
+}
+
 func ParseAccountType(value interface{}) AccountType {
 	if v, ok := value.(AccountType); ok {
 		return v

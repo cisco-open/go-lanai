@@ -93,6 +93,17 @@ func (r *RedisContextDetailsStore) RemoveContextDetails(c context.Context, key i
 	panic("implement me")
 }
 
+func (r *RedisContextDetailsStore) ContextDetailsExists(c context.Context, key interface{}) bool {
+	switch key.(type) {
+	case oauth2.AccessToken:
+		return r.exists(c, keyFuncAccessTokenToDetails(key.(oauth2.AccessToken)) )
+	case oauth2.RefreshToken:
+		panic("Saving context details using refresh token is not implemented yet")
+	default:
+		return false
+	}
+}
+
 /*********************
 	Helpers
  *********************/
@@ -120,6 +131,12 @@ func (r *RedisContextDetailsStore) doLoad(c context.Context, keyFunc keyFunc, va
 		return cmd.Err()
 	}
 	return json.Unmarshal([]byte(cmd.Val()), value)
+}
+
+func (r *RedisContextDetailsStore) exists(c context.Context, keyFunc keyFunc) bool {
+	k := keyFunc(r.vTag)
+	cmd := r.client.Exists(c, k)
+	return cmd.Err() == nil && cmd.Val() != 0
 }
 
 func (r *RedisContextDetailsStore) saveAccessTokenToDetails(c context.Context, t oauth2.AccessToken, details security.ContextDetails) error {

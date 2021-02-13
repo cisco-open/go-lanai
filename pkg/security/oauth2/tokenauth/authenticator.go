@@ -39,16 +39,9 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 	}
 
 	// TODO add remote check_token endpoint support
-	token, e := a.tokenStoreReader.ReadAccessToken(ctx, can.Token)
+	auth, e := a.tokenStoreReader.ReadAuthentication(ctx, can.Token, oauth2.TokenHintAccessToken)
 	if e != nil {
-		return nil, oauth2.NewInvalidAccessTokenError("token is invalid", e)
-	} else if token.Expired() {
-		return nil, oauth2.NewInvalidAccessTokenError("token is expired", e)
-	}
-
-	auth, e := a.tokenStoreReader.ReadAuthentication(ctx, token)
-	if e != nil {
-		return nil, oauth2.NewInvalidAccessTokenError("token unknown", e)
+		return nil, e
 	}
 
 	// perform some checks

@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"context"
 	"crypto/rsa"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/base64"
 	"encoding/binary"
-	"fmt"
 )
 
 const (
@@ -43,7 +42,7 @@ func NewJwkSetEndpoint(jwkStore jwt.JwkStore) *JwkSetEndpoint {
 func (ep *JwkSetEndpoint) JwkSet(c context.Context, request *JwkSetRequest) (response *JwkSetResponse, err error) {
 	jwks, e := ep.jwkStore.LoadAll(c)
 	if e != nil {
-		return nil, web.NewHttpError(400, fmt.Errorf(e.Error()))
+		return nil, oauth2.NewGenericError(e.Error())
 	}
 
 	resp := JwkSetResponse{

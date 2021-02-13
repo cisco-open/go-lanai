@@ -14,7 +14,7 @@ type CheckTokenClaims struct {
 	 * Standard Check Token claims
 	 *******************************/
 	oauth2.BasicClaims
-	Active   bool   `claim:"active"`
+	Active   *bool   `claim:"active"`
 	Username string `claim:"username"`
 
 	/*******************************
@@ -34,11 +34,35 @@ type CheckTokenClaims struct {
 	Currency        string          `claim:"currency"`
 	TenantId        string          `claim:"tenant_id"`
 	TenantName      string          `claim:"tenant_name"`
-	TenantSuspended bool            `claim:"tenant_suspended"`
+	TenantSuspended *bool           `claim:"tenant_suspended"`
 	ProviderId      string          `claim:"provider_id"`
 	ProviderName    string          `claim:"provider_name"`
 	AssignedTenants utils.StringSet `claim:"assigned_tenants"`
 	Roles           utils.StringSet `claim:"roles"`
 	Permissions     utils.StringSet `claim:"permissions"`
 	OrigUsername    string          `claim:"original_username"`
+}
+
+func (c *CheckTokenClaims) MarshalJSON() ([]byte, error) {
+	return c.FieldClaimsMapper.DoMarshalJSON(c)
+}
+
+func (c *CheckTokenClaims) UnmarshalJSON(bytes []byte) error {
+	return c.FieldClaimsMapper.DoUnmarshalJSON(c, bytes)
+}
+
+func (c *CheckTokenClaims) Get(claim string) interface{} {
+	return c.FieldClaimsMapper.Get(c, claim)
+}
+
+func (c *CheckTokenClaims) Has(claim string) bool {
+	return c.FieldClaimsMapper.Has(c, claim)
+}
+
+func (c *CheckTokenClaims) Set(claim string, value interface{}) {
+	c.FieldClaimsMapper.Set(c, claim, value)
+}
+
+func (c *CheckTokenClaims) Values() map[string]interface{} {
+	return c.FieldClaimsMapper.Values(c)
 }
