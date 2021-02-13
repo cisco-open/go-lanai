@@ -28,6 +28,7 @@ func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 	// TODO Complete this
 	// For Token endpoint
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.Token)).
+		Route(matcher.RouteWithPattern(c.config.Endpoints.CheckToken)).
 		With(clientauth.New().
 			ClientStore(c.config.ClientStore).
 			ClientSecretEncoder(c.config.clientSecretEncoder()).

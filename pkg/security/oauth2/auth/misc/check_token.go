@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
@@ -38,13 +39,17 @@ func NewCheckTokenEndpoint(tokenStoreReader oauth2.TokenStoreReader) *CheckToken
 }
 
 func (ep *CheckTokenEndpoint) CheckToken(c context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
-	// TODO check client auth
+	client := auth.RetrieveAuthenticatedClient(c)
+	if client == nil {
+		return nil, oauth2.NewInvalidClientError("check token endpoint requires client authentication")
+	}
 
+	// TBD: maybe we should disallow client to check the token that wasn't issued to same client
 	switch request.Hint {
 	case "":
 		fallthrough
 	case hintAccessToken:
-		if request.NoDetails || !ep.allowDetails(c) {
+		if request.NoDetails || !ep.allowDetails(c, client) {
 			return ep.checkAccessTokenWithoutDetails(c, request)
 		}
 		return ep.checkAccessTokenWithDetails(c, request)
@@ -55,9 +60,8 @@ func (ep *CheckTokenEndpoint) CheckToken(c context.Context, request *CheckTokenR
 	}
 }
 
-func (ep *CheckTokenEndpoint) allowDetails(c context.Context) bool {
-	// TODO use client
-	return true
+func (ep *CheckTokenEndpoint) allowDetails(c context.Context, client oauth2.OAuth2Client) bool {
+	return client.Scopes() != nil && client.Scopes().Has(oauth2.ScopeTokenDetails)
 }
 
 func (ep *CheckTokenEndpoint) checkAccessTokenWithoutDetails(c context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
