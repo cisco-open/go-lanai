@@ -59,11 +59,11 @@ func (e *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
 	}
 
-	if t.Claims == nil {
+	if t.Claims() == nil {
 		return nil, oauth2.NewInternalError("LegacyTokenEnhancer need to be placed immediately after BasicClaimsEnhancer")
 	}
 
-	basic, ok := t.Claims.(*oauth2.BasicClaims)
+	basic, ok := t.Claims().(*oauth2.BasicClaims)
 	if !ok {
 		return nil, oauth2.NewInternalError("LegacyTokenEnhancer need to be placed immediately after BasicClaimsEnhancer")
 	}
@@ -83,7 +83,7 @@ func (e *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
 		legacy.TenantId = td.TenantId()
 	}
 
-	t.Claims = legacy
+	t.SetClaims(legacy)
 	return t, nil
 }
 

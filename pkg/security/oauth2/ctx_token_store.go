@@ -10,6 +10,17 @@ const (
 
 type TokenHint int
 
+func (h TokenHint) String() string {
+	switch h {
+	case TokenHintAccessToken:
+		return "access_token"
+	case TokenHintRefreshToken:
+		return "refresh_token"
+	default:
+		return "unknown"
+	}
+}
+
 type TokenStoreReader interface {
 	// ReadAuthentication load associated Authentication with Token.
 	// Token can be AccessToken or RefreshToken

@@ -41,7 +41,7 @@ func (r *jwtTokenStoreReader) ReadAuthentication(ctx context.Context, tokenValue
 	case oauth2.TokenHintRefreshToken:
 		return r.readAuthenticationFromRefreshToken(ctx, tokenValue)
 	default:
-		return nil, oauth2.NewUnsupportedTokenTypeError(fmt.Sprintf("token type [%s] is not supported", hint))
+		return nil, oauth2.NewUnsupportedTokenTypeError(fmt.Sprintf("token type [%s] is not supported", hint.String()))
 	}
 }
 
@@ -75,7 +75,7 @@ func (r *jwtTokenStoreReader) parseAccessToken(c context.Context, value string) 
 
 	token := internal.DecodedAccessToken{}
 	token.TokenValue = value
-	token.Claims = &claims
+	token.DecodedClaims = &claims
 	token.ExpireAt = claims.ExpiresAt
 	token.IssuedAt = claims.IssuedAt
 	token.ScopesSet = claims.Scopes.Copy()
@@ -90,7 +90,7 @@ func (r *jwtTokenStoreReader) parseRefreshToken(c context.Context, value string)
 
 	token := internal.DecodedRefreshToken{}
 	token.TokenValue = value
-	token.Claims = &claims
+	token.DecodedClaims = &claims
 	token.ExpireAt = claims.ExpiresAt
 	token.IssuedAt = claims.IssuedAt
 	token.ScopesSet = claims.Scopes.Copy()
@@ -104,7 +104,7 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
 		return nil, e
 	}
 
-	claims := token.Claims
+	claims := token.DecodedClaims
 	if claims == nil {
 		return nil, oauth2.NewInvalidAccessTokenError("token contains no claims")
 	}

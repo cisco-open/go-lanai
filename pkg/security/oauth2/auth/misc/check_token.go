@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/claims"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
@@ -82,7 +83,7 @@ func (ep *CheckTokenEndpoint) checkAccessTokenWithDetails(c context.Context, req
 		return ep.inactiveTokenResponse(), nil
 	}
 
-	return ep.activeTokenResponseWithDetails(auth.(oauth2.Authentication)), nil
+	return ep.activeTokenResponseWithDetails(c, auth.(oauth2.Authentication)), nil
 }
 
 func (ep *CheckTokenEndpoint) checkRefreshToken(c context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
@@ -102,41 +103,53 @@ func (ep *CheckTokenEndpoint) activeTokenResponseWithoutDetails() *CheckTokenCla
 	}
 }
 
-func (ep *CheckTokenEndpoint) activeTokenResponseWithDetails(auth oauth2.Authentication) *CheckTokenClaims {
-	// TODO proper claims generation
-	claims := CheckTokenClaims{
+func (ep *CheckTokenEndpoint) activeTokenResponseWithDetails(ctx context.Context, auth oauth2.Authentication) *CheckTokenClaims {
+	c := CheckTokenClaims{
 		Active: &utils.TRUE,
-		BasicClaims: oauth2.BasicClaims{
-			Audience:  auth.OAuth2Request().ClientId(),
-			ExpiresAt: auth.Details().(security.ContextDetails).ExpiryTime(),
-			//Id: auth.AccessToken().Id,
-			IssuedAt: auth.Details().(security.ContextDetails).IssueTime(),
-			//Issuer: auth.AccessToken(),
-			//NotBefore: auth.AccessToken(),
-			Subject:  auth.UserAuthentication().Principal().(string),
-			Scopes:   auth.OAuth2Request().Scopes(),
-			ClientId: auth.OAuth2Request().ClientId(),
-		},
-		Username:  auth.UserAuthentication().Principal().(string),
-		AuthTime:  auth.Details().(security.ContextDetails).AuthenticationTime(),
-		FirstName: auth.Details().(security.UserDetails).FirstName(),
-		LastName:  auth.Details().(security.UserDetails).LastName(),
-		Email:     auth.Details().(security.UserDetails).Email(),
-		Locale:    auth.Details().(security.UserDetails).LocaleCode(),
-
-		UserId:          auth.Details().(security.UserDetails).UserId(),
-		AccountType:     auth.Details().(security.UserDetails).AccountType().String(),
-		Currency:        auth.Details().(security.UserDetails).CurrencyCode(),
-		AssignedTenants: auth.Details().(security.UserDetails).AssignedTenantIds(),
-		TenantId:        auth.Details().(security.TenantDetails).TenantId(),
-		TenantName:      auth.Details().(security.TenantDetails).TenantName(),
-		TenantSuspended: utils.BoolPtr(auth.Details().(security.TenantDetails).TenantSuspended()),
-		ProviderId:      auth.Details().(security.ProviderDetails).ProviderId(),
-		ProviderName:    auth.Details().(security.ProviderDetails).ProviderName(),
-		Roles:           auth.Details().(security.ContextDetails).Roles(),
-		Permissions:     auth.Details().(security.ContextDetails).Permissions(),
-		OrigUsername:    auth.Details().(security.ProxiedUserDetails).OriginalUsername(),
 	}
 
-	return &claims
+	if e := claims.Populate(ctx, &c, claims.CheckTokenClaimSpecs, auth); e != nil {
+		return ep.activeTokenResponseWithoutDetails()
+	}
+
+	return &c
 }
+
+//func (ep *CheckTokenEndpoint) activeTokenResponseWithDetails(auth oauth2.Authentication) *CheckTokenClaims {
+//	// TODO proper claims generation
+//	claims := CheckTokenClaims{
+//		Active: &utils.TRUE,
+//		BasicClaims: oauth2.BasicClaims{
+//			Audience:  auth.OAuth2Request().ClientId(),
+//			ExpiresAt: auth.Details().(security.ContextDetails).ExpiryTime(),
+//			//Id: auth.AccessToken().Id,
+//			IssuedAt: auth.Details().(security.ContextDetails).IssueTime(),
+//			//Issuer: auth.AccessToken(),
+//			//NotBefore: auth.AccessToken(),
+//			Subject:  auth.UserAuthentication().Principal().(string),
+//			Scopes:   auth.OAuth2Request().Scopes(),
+//			ClientId: auth.OAuth2Request().ClientId(),
+//		},
+//		Username:  auth.UserAuthentication().Principal().(string),
+//		AuthTime:  auth.Details().(security.ContextDetails).AuthenticationTime(),
+//		FirstName: auth.Details().(security.UserDetails).FirstName(),
+//		LastName:  auth.Details().(security.UserDetails).LastName(),
+//		Email:     auth.Details().(security.UserDetails).Email(),
+//		Locale:    auth.Details().(security.UserDetails).LocaleCode(),
+//
+//		UserId:          auth.Details().(security.UserDetails).UserId(),
+//		AccountType:     auth.Details().(security.UserDetails).AccountType().String(),
+//		Currency:        auth.Details().(security.UserDetails).CurrencyCode(),
+//		AssignedTenants: auth.Details().(security.UserDetails).AssignedTenantIds(),
+//		TenantId:        auth.Details().(security.TenantDetails).TenantId(),
+//		TenantName:      auth.Details().(security.TenantDetails).TenantName(),
+//		TenantSuspended: utils.BoolPtr(auth.Details().(security.TenantDetails).TenantSuspended()),
+//		ProviderId:      auth.Details().(security.ProviderDetails).ProviderId(),
+//		ProviderName:    auth.Details().(security.ProviderDetails).ProviderName(),
+//		Roles:           auth.Details().(security.ContextDetails).Roles(),
+//		Permissions:     auth.Details().(security.ContextDetails).Permissions(),
+//		OrigUsername:    auth.Details().(security.ProxiedUserDetails).OriginalUsername(),
+//	}
+//
+//	return &claims
+//}

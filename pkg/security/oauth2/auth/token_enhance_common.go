@@ -64,8 +64,8 @@ func (e *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.Acces
 		Scopes:   request.Scopes().Copy(),
 	}
 
-	if t.Claims != nil {
-		basic.Id = t.Claims.Get(oauth2.ClaimJwtId).(string)
+	if t.Claims() != nil && t.Claims().Has(oauth2.ClaimJwtId) {
+		basic.Id = t.Claims().Get(oauth2.ClaimJwtId).(string)
 	}
 
 	if oauth.UserAuthentication() != nil {
@@ -85,7 +85,7 @@ func (e *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.Acces
 		basic.NotBefore = t.IssueTime()
 	}
 
-	t.Claims = basic
+	t.SetClaims(basic)
 	return t, nil
 }
 

@@ -53,11 +53,11 @@ func (s *jwtTokenStore) SaveAccessToken(c context.Context, token oauth2.AccessTo
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError(fmt.Sprintf("Unsupported token implementation [%T]", token))
-	} else if t.Claims == nil {
+	} else if t.Claims() == nil {
 		return nil, oauth2.NewInternalError("claims is nil")
 	}
 
-	encoded, e := s.jwtEncoder.Encode(c, t.Claims)
+	encoded, e := s.jwtEncoder.Encode(c, t.Claims())
 	if e != nil {
 		return nil, e
 	}
@@ -77,11 +77,11 @@ func (s *jwtTokenStore) SaveRefreshToken(c context.Context, token oauth2.Refresh
 	t, ok := token.(*oauth2.DefaultRefreshToken)
 	if !ok {
 		return nil, fmt.Errorf("Unsupported token implementation [%T]", token)
-	} else if t.Claims == nil {
+	} else if t.Claims() == nil {
 		return nil, fmt.Errorf("claims is nil")
 	}
 
-	encoded, e := s.jwtEncoder.Encode(c, t.Claims)
+	encoded, e := s.jwtEncoder.Encode(c, t.Claims())
 	if e != nil {
 		return nil, e
 	}

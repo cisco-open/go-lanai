@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"fmt"
 	"net/http"
 )
 
@@ -59,4 +60,9 @@ func ParseTokenRequest(req *http.Request) (*TokenRequest, error) {
 		Extensions:    values,
 		context:       utils.MakeMutableContext(req.Context()),
 	}, nil
+}
+
+func (r *TokenRequest) String() string {
+	return fmt.Sprintf("[client=%s, grant=%s, scope=%s, ext=%s]",
+		r.ClientId, r.GrantType, r.Scopes, r.Extensions)
 }
