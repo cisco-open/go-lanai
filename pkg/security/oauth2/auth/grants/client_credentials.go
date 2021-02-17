@@ -2,7 +2,6 @@ package grants
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"fmt"
@@ -28,13 +27,11 @@ func (g *ClientCredentialsGranter) Grant(ctx context.Context, request *auth.Toke
 		return nil, nil
 	}
 
-	// for client credentials grant, client have to be authenticated via username/password
-	sec := security.Get(ctx)
-	if sec.State() < security.StateAuthenticated {
+	// for client credentials grant, client have to be authenticated via client/secret
+	client, e := auth.RetrieveFullyAuthenticatedClient(ctx)
+	if e != nil {
 		return nil, oauth2.NewInvalidGrantError("client_credentials requires client secret validated")
 	}
-
-	client := auth.RetrieveAuthenticatedClient(ctx)
 
 	// common check
 	if e := CommonPreGrantValidation(ctx, client, request); e != nil {

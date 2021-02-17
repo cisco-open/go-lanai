@@ -49,11 +49,11 @@ type LegacyTokenEnhancer struct {
 
 }
 
-func (e *LegacyTokenEnhancer) Order() int {
+func (te *LegacyTokenEnhancer) Order() int {
 	return TokenEnhancerOrderDetailsClaims
 }
 
-func (e *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (te *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)

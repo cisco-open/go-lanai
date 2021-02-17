@@ -29,6 +29,7 @@ const (
 	ParameterCodeChallengeMethod = "code_challenge_method"
 	ParameterAuthCode            = "code"
 	ParameterUserApproval        = "user_oauth_approval"
+	ParameterRefreshToken        = "refresh_token"
 	//Parameter = ""
 )
 
@@ -60,6 +61,7 @@ const (
 	CtxKeyValidatedAuthorizeRequest = "kValidatedAuthRequest"
 	CtxKeyResolvedAuthorizeRedirect = "kResolvedRedirect"
 	CtxKeyResolvedAuthorizeState    = "kResolvedState"
+	CtxKeyRefreshToken              = "kRefreshToken"
 )
 
 const (

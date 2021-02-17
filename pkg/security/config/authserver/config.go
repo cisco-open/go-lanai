@@ -117,6 +117,7 @@ func (c *Configuration) tokenGranter() auth.TokenGranter {
 		granters := []auth.TokenGranter {
 			grants.NewAuthorizationCodeGranter(c.authorizationService(), c.authorizeCodeStore()),
 			grants.NewClientCredentialsGranter(c.authorizationService()),
+			grants.NewRefreshGranter(c.authorizationService(), c.tokenStore()),
 		}
 
 		// password granter is optional
@@ -153,12 +154,17 @@ func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	return c.sharedContextDetailsStore
 }
 
+func (c *Configuration) authorizationRegistry() auth.AuthorizationRegistry {
+	return c.contextDetailsStore().(auth.AuthorizationRegistry)
+}
+
 func (c *Configuration) tokenStore() auth.TokenStore {
 	if c.TokenStore == nil {
 		c.TokenStore = auth.NewJwtTokenStore(func(opt *auth.JTSOption) {
 			opt.DetailsStore = c.contextDetailsStore()
 			opt.Encoder = c.jwtEncoder()
 			opt.Decoder = c.jwtDecoder()
+			opt.AuthRegistry = c.authorizationRegistry()
 			// TODO enhancers
 		})
 	}

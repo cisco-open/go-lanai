@@ -276,6 +276,11 @@ func (t *DefaultRefreshToken) SetValue(v string) *DefaultRefreshToken {
 	return t
 }
 
+func (t *DefaultRefreshToken) SetExpireTime(v time.Time) *DefaultRefreshToken {
+	t.expiryTime = v.UTC()
+	return t
+}
+
 func (t *DefaultRefreshToken) PutDetails(key string, value interface{}) *DefaultRefreshToken {
 	if value == nil {
 		delete(t.details, key)

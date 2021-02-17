@@ -19,6 +19,7 @@ type OAuth2Request interface {
 	RedirectUri() string
 	ResponseTypes() utils.StringSet
 	Extensions() map[string]interface{}
+	NewOAuth2Request(...RequestOptionsFunc) OAuth2Request
 }
 
 /******************************
@@ -89,6 +90,28 @@ func (r *oauth2Request) ResponseTypes() utils.StringSet {
 
 func (r *oauth2Request) Extensions() map[string]interface{} {
 	return r.RequestDetails.Extensions
+}
+
+func (r *oauth2Request) NewOAuth2Request(additional ...RequestOptionsFunc) OAuth2Request {
+	all := append([]RequestOptionsFunc{r.copyFunc()}, additional...)
+	return NewOAuth2Request(all...)
+}
+
+func (r *oauth2Request) copyFunc() RequestOptionsFunc {
+	return func(opt *RequestDetails) {
+		opt.ClientId = r.RequestDetails.ClientId
+		opt.Scopes = r.RequestDetails.Scopes.Copy()
+		opt.Approved = r.RequestDetails.Approved
+		opt.GrantType = r.RequestDetails.GrantType
+		opt.RedirectUri = r.RequestDetails.RedirectUri
+		opt.ResponseTypes = r.RequestDetails.ResponseTypes
+		for k, v := range r.RequestDetails.Parameters {
+			opt.Parameters[k] = v
+		}
+		for k, v := range r.RequestDetails.Extensions {
+			opt.Extensions[k] = v
+		}
+	}
 }
 
 // json.Marshaler

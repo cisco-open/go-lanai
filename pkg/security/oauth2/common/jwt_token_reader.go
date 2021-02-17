@@ -38,8 +38,6 @@ func (r *jwtTokenStoreReader) ReadAuthentication(ctx context.Context, tokenValue
 	switch hint {
 	case oauth2.TokenHintAccessToken:
 		return r.readAuthenticationFromAccessToken(ctx, tokenValue)
-	case oauth2.TokenHintRefreshToken:
-		return r.readAuthenticationFromRefreshToken(ctx, tokenValue)
 	default:
 		return nil, oauth2.NewUnsupportedTokenTypeError(fmt.Sprintf("token type [%s] is not supported", hint.String()))
 	}
@@ -63,7 +61,12 @@ func (r *jwtTokenStoreReader) ReadRefreshToken(c context.Context, value string) 
 	if e != nil {
 		return nil, e
 	}
-	// TODO check context store
+	switch {
+	case e != nil:
+		return nil, oauth2.NewInvalidGrantError("refresh token is invalid", e)
+	case token.WillExpire() && token.Expired():
+		return nil, oauth2.NewInvalidGrantError("refresh token is expired")
+	}
 	return token, nil
 }
 
@@ -132,24 +135,23 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
 	}), nil
 }
 
-func (r *jwtTokenStoreReader) readAuthenticationFromRefreshToken(c context.Context, tokenValue string) (oauth2.Authentication, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
 /*****************
 	Helpers
  *****************/
 func (r *jwtTokenStoreReader) createOAuth2Request(claims *internal.ExtendedClaims) oauth2.OAuth2Request {
+	clientId := claims.ClientId
+	if clientId == "" {
+		clientId = claims.Audience
+	}
 	return oauth2.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
 		opt.Parameters = map[string]string{}
-		opt.ClientId = claims.ClientId
+		opt.ClientId = clientId
 		opt.Scopes = claims.Scopes
 		opt.Approved = true
+		opt.Extensions = claims.Values()
 		//opt.GrantType =
 		//opt.RedirectUri =
 		//opt.ResponseTypes =
-		//opt.Extensions =
 	})
 }
 
