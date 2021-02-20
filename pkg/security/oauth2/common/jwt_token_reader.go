@@ -34,19 +34,43 @@ func NewJwtTokenStoreReader(opts...JTSROptions) *jwtTokenStoreReader {
 	}
 }
 
-func (r *jwtTokenStoreReader) ReadAuthentication(c context.Context, token oauth2.Token) (oauth2.Authentication, error) {
-	switch token.(type) {
-	case oauth2.AccessToken:
-		return r.readAuthenticationFromAccessToken(c, token.(oauth2.AccessToken))
-	case oauth2.RefreshToken:
-		return r.readAuthenticationFromRefreshToken(c, token.(oauth2.RefreshToken))
+func (r *jwtTokenStoreReader) ReadAuthentication(ctx context.Context, tokenValue string, hint oauth2.TokenHint) (oauth2.Authentication, error) {
+	switch hint {
+	case oauth2.TokenHintAccessToken:
+		return r.readAuthenticationFromAccessToken(ctx, tokenValue)
 	default:
-		return nil, oauth2.NewInternalError(fmt.Sprintf("token impl [%T] is not supported", token))
+		return nil, oauth2.NewUnsupportedTokenTypeError(fmt.Sprintf("token type [%s] is not supported", hint.String()))
 	}
-
 }
 
 func (r *jwtTokenStoreReader) ReadAccessToken(c context.Context, value string) (oauth2.AccessToken, error) {
+	token, e := r.parseAccessToken(c, value)
+	switch {
+	case e != nil:
+		return nil, oauth2.NewInvalidAccessTokenError("token is invalid", e)
+	case token.Expired():
+		return nil, oauth2.NewInvalidAccessTokenError("token is expired")
+	case !r.detailsStore.ContextDetailsExists(c, token):
+		return nil, oauth2.NewInvalidAccessTokenError("token is revoked")
+	}
+	return token, nil
+}
+
+func (r *jwtTokenStoreReader) ReadRefreshToken(c context.Context, value string) (oauth2.RefreshToken, error) {
+	token, e := r.parseRefreshToken(c, value)
+	if e != nil {
+		return nil, e
+	}
+	switch {
+	case e != nil:
+		return nil, oauth2.NewInvalidGrantError("refresh token is invalid", e)
+	case token.WillExpire() && token.Expired():
+		return nil, oauth2.NewInvalidGrantError("refresh token is expired")
+	}
+	return token, nil
+}
+
+func (r *jwtTokenStoreReader) parseAccessToken(c context.Context, value string) (*internal.DecodedAccessToken, error) {
 	claims := internal.ExtendedClaims{}
 	if e := r.jwtDecoder.DecodeWithClaims(c, value, &claims); e != nil {
 		return nil, e
@@ -54,31 +78,36 @@ func (r *jwtTokenStoreReader) ReadAccessToken(c context.Context, value string) (
 
 	token := internal.DecodedAccessToken{}
 	token.TokenValue = value
-	token.Claims = &claims
+	token.DecodedClaims = &claims
 	token.ExpireAt = claims.ExpiresAt
 	token.IssuedAt = claims.IssuedAt
 	token.ScopesSet = claims.Scopes.Copy()
 	return &token, nil
 }
 
-func (r *jwtTokenStoreReader) ReadRefreshToken(c context.Context, value string) (oauth2.RefreshToken, error) {
-	token := oauth2.NewDefaultRefreshToken(value)
-	// TODO decode JWT
-	return token, nil
-}
-
-func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Context, token oauth2.AccessToken) (oauth2.Authentication, error) {
-
-	var claims *internal.ExtendedClaims
-	switch token.(type) {
-	case *internal.DecodedAccessToken:
-		claims = token.(*internal.DecodedAccessToken).Claims
-	case *oauth2.DefaultAccessToken:
-		claims = internal.NewExtendedClaims(token.(*oauth2.DefaultAccessToken).Claims)
-	default:
-		return nil, oauth2.NewInternalError(fmt.Sprintf("token impl [%T] is not supported", token))
+func (r *jwtTokenStoreReader) parseRefreshToken(c context.Context, value string) (*internal.DecodedRefreshToken, error) {
+	claims := internal.ExtendedClaims{}
+	if e := r.jwtDecoder.DecodeWithClaims(c, value, &claims); e != nil {
+		return nil, e
 	}
 
+	token := internal.DecodedRefreshToken{}
+	token.TokenValue = value
+	token.DecodedClaims = &claims
+	token.ExpireAt = claims.ExpiresAt
+	token.IssuedAt = claims.IssuedAt
+	token.ScopesSet = claims.Scopes.Copy()
+	return &token, nil
+}
+
+func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Context, tokenValue string) (oauth2.Authentication, error) {
+	// parse JWT token
+	token, e := r.parseAccessToken(c, tokenValue)
+	if e != nil {
+		return nil, e
+	}
+
+	claims := token.DecodedClaims
 	if claims == nil {
 		return nil, oauth2.NewInvalidAccessTokenError("token contains no claims")
 	}
@@ -86,7 +115,7 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
 	// load context details
 	details, e := r.detailsStore.ReadContextDetails(c, token)
 	if e != nil {
-		return nil, e
+		return nil, oauth2.NewInvalidAccessTokenError("token unknown", e)
 	}
 
 	// reconstruct request
@@ -106,24 +135,23 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
 	}), nil
 }
 
-func (r *jwtTokenStoreReader) readAuthenticationFromRefreshToken(c context.Context, token oauth2.RefreshToken) (oauth2.Authentication, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
 /*****************
 	Helpers
  *****************/
 func (r *jwtTokenStoreReader) createOAuth2Request(claims *internal.ExtendedClaims) oauth2.OAuth2Request {
+	clientId := claims.ClientId
+	if clientId == "" {
+		clientId = claims.Audience
+	}
 	return oauth2.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
 		opt.Parameters = map[string]string{}
-		opt.ClientId = claims.ClientId
+		opt.ClientId = clientId
 		opt.Scopes = claims.Scopes
 		opt.Approved = true
+		opt.Extensions = claims.Values()
 		//opt.GrantType =
 		//opt.RedirectUri =
 		//opt.ResponseTypes =
-		//opt.Extensions =
 	})
 }
 

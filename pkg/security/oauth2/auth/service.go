@@ -17,8 +17,8 @@ var (
 
 type AuthorizationService interface {
 	CreateAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (oauth2.Authentication, error)
-	CreateAccessToken(ctx context.Context, authentication oauth2.Authentication) (oauth2.AccessToken, error)
-	RefreshAccessToken(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error)
+	CreateAccessToken(ctx context.Context, oauth oauth2.Authentication) (oauth2.AccessToken, error)
+	RefreshAccessToken(ctx context.Context, oauth oauth2.Authentication, refreshToken oauth2.RefreshToken) (oauth2.AccessToken, error)
 }
 
 /****************************
@@ -52,16 +52,20 @@ type DefaultAuthorizationService struct {
 }
 
 func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationService {
+	rtEnhancer := RefreshTokenEnhancer{}
 	conf := DASOption{
 		TokenEnhancer: NewCompositeTokenEnhancer(
 			&ExpiryTokenEnhancer{},
 			&BasicClaimsTokenEnhancer{},
 			&LegacyTokenEnhancer{},
+			&rtEnhancer,
 		),
 	}
 	for _, opt := range opts {
 		opt(&conf)
 	}
+
+	rtEnhancer.tokenStore = conf.TokenStore
 	return &DefaultAuthorizationService{
 		detailsFactory: conf.DetailsFactory,
 		clientStore:    conf.ClientStore,
@@ -97,16 +101,7 @@ func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context, 
 }
 
 func (s *DefaultAuthorizationService) CreateAccessToken(c context.Context, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
-	var token *oauth2.DefaultAccessToken
-
-	existing, e := s.tokenStore.ReusableAccessToken(c, oauth)
-	if e != nil || existing == nil {
-		token = oauth2.NewDefaultAccessToken(uuid.New().String())
-	} else if t, ok := existing.(*oauth2.DefaultAccessToken); !ok {
-		token = oauth2.FromAccessToken(t)
-	} else {
-		token = t
-	}
+	token := s.reuseOrNewAccessToken(c, oauth)
 
 	enhanced, e := s.tokenEnhancer.Enhance(c, token, oauth)
 	if e != nil {
@@ -117,9 +112,22 @@ func (s *DefaultAuthorizationService) CreateAccessToken(c context.Context, oauth
 	return s.tokenStore.SaveAccessToken(c, enhanced, oauth)
 }
 
-func (s *DefaultAuthorizationService) RefreshAccessToken(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error) {
-	// TODO
-	panic("implement me")
+func (s *DefaultAuthorizationService) RefreshAccessToken(c context.Context, oauth oauth2.Authentication, refreshToken oauth2.RefreshToken) (oauth2.AccessToken, error) {
+
+	// we first remove existing access token associated with this refresh token
+	// this functionality is necessary so refresh tokens can't be used to create an unlimited number of access tokens.
+	s.tokenStore.RemoveAccessToken(c, refreshToken)
+
+	token := s.reuseOrNewAccessToken(c, oauth)
+	token.SetRefreshToken(refreshToken)
+
+	enhanced, e := s.tokenEnhancer.Enhance(c, token, oauth)
+	if e != nil {
+		return nil, e
+	}
+
+	// save token
+	return s.tokenStore.SaveAccessToken(c, enhanced, oauth)
 }
 
 /****************************
@@ -209,6 +217,8 @@ func (f *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 	account, e := f.loadAccount(ctx, request, userAuth)
 	if e != nil {
 		return nil, e
+	} else if account.Locked() || account.Disabled() {
+		return nil, newInvalidUserError("unsupported user's account locked or disabled")
 	}
 
 	tenant, e := f.loadTenant(ctx, request, account)
@@ -341,6 +351,17 @@ func (f *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Co
 /****************************
 	Token Helpers
  ****************************/
+func (s *DefaultAuthorizationService) reuseOrNewAccessToken(c context.Context, oauth oauth2.Authentication) *oauth2.DefaultAccessToken {
+	existing, e := s.tokenStore.ReusableAccessToken(c, oauth)
+	if e != nil || existing == nil {
+		return oauth2.NewDefaultAccessToken(uuid.New().String())
+	} else if t, ok := existing.(*oauth2.DefaultAccessToken); !ok {
+		return oauth2.FromAccessToken(t)
+	} else {
+		return t
+	}
+}
+
 
 /****************************
 	Errors

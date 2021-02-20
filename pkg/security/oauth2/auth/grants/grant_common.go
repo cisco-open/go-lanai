@@ -18,3 +18,4 @@ func CommonPreGrantValidation(c context.Context, client oauth2.OAuth2Client, req
 	}
 	return nil
 }
+

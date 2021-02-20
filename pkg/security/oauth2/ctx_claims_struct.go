@@ -24,6 +24,8 @@ type claimsMapper interface {
 
 // FieldClaimsMapper is a helper type that can be embedded into struct based claims
 // FieldClaimsMapper implements claimsMapper
+// See BasicClaims as an example.
+// Note: having non-claims struct as fields is not recommended for deserialization
 type FieldClaimsMapper struct {
 	fields     map[string][]int // Index of fields holding claim. Includes embedded structs
 	interfaces [][]int 			// Index of directly embedded Cliams interfaces
@@ -119,11 +121,8 @@ func (m *FieldClaimsMapper) set(fv reflect.Value, setTo interface{}) error {
 		fv = fv.Elem()
 	}
 
-	if fv.Kind() == reflect.Ptr {
-		fv = fv.Elem()
-	}
-
 	if !fv.CanSet() {
+		// this shouldn't happened because struct's field value should be settable in general
 		return fmt.Errorf("field [%v] is not settable", fv.Type())
 	}
 

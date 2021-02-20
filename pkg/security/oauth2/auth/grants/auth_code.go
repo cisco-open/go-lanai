@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ignoredParamters = utils.NewStringSet(
+	authCodeIgnoreParams = utils.NewStringSet(
 		oauth2.ParameterScope,
 		oauth2.ParameterClientSecret,
 	)
@@ -72,7 +72,7 @@ func (g *AuthorizationCodeGranter) Grant(ctx context.Context, request *auth.Toke
 	}
 
 	// create authentication from stored value
-	oauthRequest, e := mergedOAuth2Request(stored.OAuth2Request(), request)
+	oauthRequest, e := mergedOAuth2Request(stored.OAuth2Request(), request, authCodeIgnoreParams)
 	if e != nil {
 		return nil, e
 	}
@@ -110,35 +110,17 @@ func validateRedirectUri(stored oauth2.OAuth2Request, request *auth.TokenRequest
 	return nil
 }
 
-func mergedOAuth2Request(src oauth2.OAuth2Request, request *auth.TokenRequest) (oauth2.OAuth2Request, error) {
-	params := map[string]string{}
-	for k, v := range src.Parameters() {
-		params[k] = v
-	}
-	for k, v := range request.Parameters {
-		if ignoredParamters.Has(k) {
-			continue
-		}
-		params[k] = v
-	}
-
-	exts := map[string]interface{}{}
-	for k, v := range src.Extensions() {
-		exts[k] = v
-	}
-	for k, v := range request.Extensions {
-		exts[k] = v
-	}
-
-	return oauth2.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
-		opt.Parameters = params
-		opt.ClientId = src.ClientId()
-		opt.Scopes = src.Scopes()
-		opt.Approved = src.Approved()
+func mergedOAuth2Request(src oauth2.OAuth2Request, request *auth.TokenRequest, ignoreParams utils.StringSet) (oauth2.OAuth2Request, error) {
+	return src.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
 		opt.GrantType = request.GrantType
-		opt.RedirectUri = src.RedirectUri()
-		opt.ResponseTypes = src.ResponseTypes()
-		opt.Extensions = exts
+		for k, v := range request.Parameters {
+			if ignoreParams.Has(k) {
+				continue
+			}
+			opt.Parameters[k] = v
+		}
+		for k, v := range request.Extensions {
+			opt.Extensions[k] = v
+		}
 	}), nil
 }
-

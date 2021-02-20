@@ -6,13 +6,13 @@ import (
 	"time"
 )
 
-// DecodedAccessToken implements oauth2.AccessToken
+// DecodedAccessToken implements oauth2.AccessToken and oauth2.ClaimsContainer
 type DecodedAccessToken struct {
-	Claims     *ExtendedClaims
-	TokenValue string
-	ExpireAt   time.Time
-	IssuedAt   time.Time
-	ScopesSet  utils.StringSet
+	DecodedClaims *ExtendedClaims
+	TokenValue    string
+	ExpireAt      time.Time
+	IssuedAt      time.Time
+	ScopesSet     utils.StringSet
 }
 
 func NewDecodedAccessToken() *DecodedAccessToken {
@@ -50,3 +50,63 @@ func (t *DecodedAccessToken) Scopes() utils.StringSet {
 func (t *DecodedAccessToken) RefreshToken() oauth2.RefreshToken {
 	return nil
 }
+
+// oauth2.ClaimsContainer
+func (t *DecodedAccessToken) Claims() oauth2.Claims {
+	return t.DecodedClaims
+}
+
+// oauth2.ClaimsContainer
+func (t *DecodedAccessToken) SetClaims(claims oauth2.Claims) {
+	if c, ok := claims.(*ExtendedClaims); ok {
+		t.DecodedClaims = c
+		return
+	}
+	t.DecodedClaims = NewExtendedClaims(claims)
+}
+
+
+// DecodedRefreshToken implements oauth2.RefreshToken and oauth2.ClaimsContainer
+type DecodedRefreshToken struct {
+	DecodedClaims *ExtendedClaims
+	TokenValue    string
+	ExpireAt      time.Time
+	IssuedAt      time.Time
+	ScopesSet     utils.StringSet
+}
+
+func (t *DecodedRefreshToken) Value() string {
+	return t.TokenValue
+}
+
+func (t *DecodedRefreshToken) ExpiryTime() time.Time {
+	return t.ExpireAt
+}
+
+func (t *DecodedRefreshToken) Expired() bool {
+	return !t.ExpireAt.IsZero() && t.ExpireAt.Before(time.Now())
+}
+
+func (t *DecodedRefreshToken) Details() map[string]interface{} {
+	return map[string]interface{}{}
+}
+
+func (t *DecodedRefreshToken) WillExpire() bool {
+	return !t.ExpireAt.IsZero()
+}
+
+// oauth2.ClaimsContainer
+func (t *DecodedRefreshToken) Claims() oauth2.Claims {
+	return t.DecodedClaims
+}
+
+// oauth2.ClaimsContainer
+func (t *DecodedRefreshToken) SetClaims(claims oauth2.Claims) {
+	if c, ok := claims.(*ExtendedClaims); ok {
+		t.DecodedClaims = c
+		return
+	}
+	t.DecodedClaims = NewExtendedClaims(claims)
+}
+
+

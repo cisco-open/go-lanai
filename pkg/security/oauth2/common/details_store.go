@@ -15,7 +15,7 @@ const (
 	redisDB = 13
 
 	prefixAccessTokenToDetails = "AAT"
-	prefixRefreshTokenToDetails = "ART"
+	prefixRefreshTokenToAuthentication = "ART"
 	prefixAccessTokenToActiveUserAndClient = "AUC"
 	prefixActiveRefreshTokenToUserAndClient = "RUC"
 	prefixRefreshToAccessToken = "R_TO_A"
@@ -39,7 +39,7 @@ const (
 	//prefix = ""
 )
 
-// RedisContextDetailsStore implements security.ContextDetailsStore
+// RedisContextDetailsStore implements security.ContextDetailsStore and auth.AuthorizationRegistry
 type RedisContextDetailsStore struct {
 	vTag   string
 	client redis.Client
@@ -59,19 +59,19 @@ func NewRedisContextDetailsStore(cf redis.ClientFactory) *RedisContextDetailsSto
 	}
 }
 
+/**********************************
+	security.ContextDetailsStore
+ **********************************/
 func (r *RedisContextDetailsStore) ReadContextDetails(c context.Context, key interface{}) (security.ContextDetails, error) {
 	switch key.(type) {
 	case oauth2.AccessToken:
 		return r.loadDetailsFromAccessToken(c, key.(oauth2.AccessToken))
-	case oauth2.RefreshToken:
-		// TODO implement this
-		return nil, fmt.Errorf("loading context details using refresh token is not implemented yet")
 	default:
 		return nil, fmt.Errorf("unsupported key type %T", key)
 	}
 }
 
-func (r *RedisContextDetailsStore) SaveContextDetails(ctx context.Context, key interface{}, details security.ContextDetails) error {
+func (r *RedisContextDetailsStore) SaveContextDetails(c context.Context, key interface{}, details security.ContextDetails) error {
 	switch details.(type) {
 	case *internal.FullContextDetails:
 	case *internal.SimpleContextDetails:
@@ -81,15 +81,54 @@ func (r *RedisContextDetailsStore) SaveContextDetails(ctx context.Context, key i
 
 	switch key.(type) {
 	case oauth2.AccessToken:
-		return r.saveAccessTokenToDetails(ctx, key.(oauth2.AccessToken), details)
-	case oauth2.RefreshToken:
-		return fmt.Errorf("Saving context details using refresh token is not implemented yet")
+		// TODO save relationships
+		return r.saveAccessTokenToDetails(c, key.(oauth2.AccessToken), details)
 	default:
 		return fmt.Errorf("unsupported key type %T", key)
 	}
 }
 
 func (r *RedisContextDetailsStore) RemoveContextDetails(c context.Context, key interface{}) error {
+	switch key.(type) {
+	case oauth2.AccessToken:
+		// TODO
+		panic("implement me")
+	default:
+		return fmt.Errorf("unsupported key type %T", key)
+	}
+}
+
+func (r *RedisContextDetailsStore) ContextDetailsExists(c context.Context, key interface{}) bool {
+	switch key.(type) {
+	case oauth2.AccessToken:
+		return r.exists(c, keyFuncAccessTokenToDetails(key.(oauth2.AccessToken)) )
+	default:
+		return false
+	}
+}
+
+/**********************************
+	auth.AuthorizationRegistry
+ **********************************/
+func (r *RedisContextDetailsStore) ReadStoredAuthorization(c context.Context, token oauth2.RefreshToken) (oauth2.Authentication, error) {
+	return r.loadAuthFromRefreshToken(c, token)
+}
+
+func (r *RedisContextDetailsStore) RegisterRefreshToken(c context.Context, token oauth2.RefreshToken, oauth oauth2.Authentication) error {
+	if e := r.saveRefreshTokenToAuth(c, token, oauth); e != nil {
+		return e
+	}
+
+	// TODO save relationship
+	return nil
+}
+
+func (r *RedisContextDetailsStore) RefreshTokenExists(c context.Context, token oauth2.RefreshToken) bool {
+	return r.exists(c, keyFuncRefreshTokenToAuth(token))
+}
+
+func (r *RedisContextDetailsStore) RevokeRefreshToken(c context.Context, token oauth2.RefreshToken) error {
+	// TODO do the magic
 	panic("implement me")
 }
 
@@ -122,17 +161,17 @@ func (r *RedisContextDetailsStore) doLoad(c context.Context, keyFunc keyFunc, va
 	return json.Unmarshal([]byte(cmd.Val()), value)
 }
 
+func (r *RedisContextDetailsStore) exists(c context.Context, keyFunc keyFunc) bool {
+	k := keyFunc(r.vTag)
+	cmd := r.client.Exists(c, k)
+	return cmd.Err() == nil && cmd.Val() != 0
+}
+
 func (r *RedisContextDetailsStore) saveAccessTokenToDetails(c context.Context, t oauth2.AccessToken, details security.ContextDetails) error {
 	if e := r.doSave(c, keyFuncAccessTokenToDetails(t), details, t.ExpiryTime()); e != nil {
 		return e
 	}
 
-	if t.RefreshToken() != nil {
-		refresh := t.RefreshToken()
-		if e := r.doSave(c, keyFuncRefreshTokenToDetails(refresh), details, refresh.ExpiryTime()); e != nil {
-			return e
-		}
-	}
 	return nil
 }
 
@@ -153,6 +192,22 @@ func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context,
 	return fullDetails, nil
 }
 
+func (r *RedisContextDetailsStore) saveRefreshTokenToAuth(c context.Context, t oauth2.RefreshToken, oauth oauth2.Authentication) error {
+	return r.doSave(c, keyFuncRefreshTokenToAuth(t), oauth, t.ExpiryTime())
+}
+
+func (r *RedisContextDetailsStore) loadAuthFromRefreshToken(c context.Context, t oauth2.RefreshToken) (oauth2.Authentication, error) {
+	oauth := oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {
+		opt.Request = oauth2.NewOAuth2Request()
+		opt.UserAuth = oauth2.NewUserAuthentication()
+		opt.Details = map[string]interface{}{}
+	})
+	if e := r.doLoad(c, keyFuncRefreshTokenToAuth(t), &oauth); e != nil {
+		return nil, e
+	}
+	return oauth, nil
+}
+
 /*********************
 	Keys
  *********************/
@@ -164,8 +219,8 @@ func keyFuncAccessTokenToDetails(t oauth2.AccessToken) keyFunc {
 	}
 }
 
-func keyFuncRefreshTokenToDetails(t oauth2.RefreshToken) keyFunc {
+func keyFuncRefreshTokenToAuth(t oauth2.RefreshToken) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToDetails, tag, t.Value())
+		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToAuthentication, tag, t.Value())
 	}
 }

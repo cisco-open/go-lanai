@@ -10,6 +10,7 @@ type ContextDetailsStore interface {
 	ReadContextDetails(ctx context.Context, key interface{}) (ContextDetails, error)
 	SaveContextDetails(ctx context.Context, key interface{}, details ContextDetails) error
 	RemoveContextDetails(ctx context.Context, key interface{}) error
+	ContextDetailsExists(ctx context.Context, key interface{}) bool
 }
 
 type ContextDetails interface {

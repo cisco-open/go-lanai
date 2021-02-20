@@ -34,6 +34,11 @@ type Token interface {
 	Details() map[string]interface{}
 }
 
+type ClaimsContainer interface {
+	Claims() Claims
+	SetClaims(claims Claims)
+}
+
 type AccessToken interface {
 	Token
 	Type() TokenType
@@ -50,9 +55,9 @@ type RefreshToken interface {
 /*******************************
 	Common Impl. AccessToken
  *******************************/
-// DefaultAccessToken implements AccessToken
+// DefaultAccessToken implements AccessToken and ClaimsContainer
 type DefaultAccessToken struct {
-	Claims       Claims
+	claims       Claims
 	tokenType    TokenType
 	value        string
 	expiryTime   time.Time
@@ -69,6 +74,7 @@ func NewDefaultAccessToken(value string) *DefaultAccessToken {
 		scopes:    utils.NewStringSet(),
 		issueTime: time.Now(),
 		details:   map[string]interface{}{},
+		claims:    MapClaims{},
 	}
 }
 
@@ -80,7 +86,7 @@ func FromAccessToken(token AccessToken) *DefaultAccessToken {
 			expiryTime:   t.expiryTime,
 			issueTime:    t.issueTime,
 			scopes:       t.scopes.Copy(),
-			Claims:       t.Claims,
+			claims:       t.claims,
 			details:      copyMap(t.details),
 			refreshToken: t.refreshToken,
 		}
@@ -141,6 +147,16 @@ func (t *DefaultAccessToken) RefreshToken() RefreshToken {
 	return t.refreshToken
 }
 
+// ClaimsContainer
+func (t *DefaultAccessToken) Claims() Claims {
+	return t.claims
+}
+
+// ClaimsContainer
+func (t *DefaultAccessToken) SetClaims(claims Claims) {
+	t.claims = claims
+}
+
 // Setters
 func (t *DefaultAccessToken) SetValue(v string) *DefaultAccessToken {
 	t.value = v
@@ -185,16 +201,12 @@ func (t *DefaultAccessToken) PutDetails(key string, value interface{}) *DefaultA
 	return t
 }
 
-func (t *DefaultAccessToken) PutClaim(key string, value interface{}) *DefaultAccessToken {
-	t.Claims.Set(key, value)
-	return t
-}
-
 /********************************
 	Common Impl. RefreshToken
  ********************************/
+// DefaultRefreshToken implements RefreshToken and ClaimsContainer
 type DefaultRefreshToken struct {
-	Claims       Claims
+	claims       Claims
 	value        string
 	expiryTime   time.Time
 	details      map[string]interface{}
@@ -202,8 +214,9 @@ type DefaultRefreshToken struct {
 
 func NewDefaultRefreshToken(value string) *DefaultRefreshToken {
 	return &DefaultRefreshToken{
-		value: value,
+		value:   value,
 		details: map[string]interface{}{},
+		claims:  MapClaims{},
 	}
 }
 
@@ -212,7 +225,7 @@ func FromRefreshToken(token RefreshToken) *DefaultRefreshToken {
 		return &DefaultRefreshToken{
 			value: t.value,
 			details: copyMap(t.details),
-			Claims: t.Claims,
+			claims: t.claims,
 		}
 	}
 
@@ -247,9 +260,24 @@ func (t *DefaultRefreshToken) WillExpire() bool {
 	return !t.expiryTime.IsZero()
 }
 
+// ClaimsContainer
+func (t *DefaultRefreshToken) Claims() Claims {
+	return t.claims
+}
+
+// ClaimsContainer
+func (t *DefaultRefreshToken) SetClaims(claims Claims) {
+	t.claims = claims
+}
+
 // Setters
 func (t *DefaultRefreshToken) SetValue(v string) *DefaultRefreshToken {
 	t.value = v
+	return t
+}
+
+func (t *DefaultRefreshToken) SetExpireTime(v time.Time) *DefaultRefreshToken {
+	t.expiryTime = v.UTC()
 	return t
 }
 
@@ -259,11 +287,6 @@ func (t *DefaultRefreshToken) PutDetails(key string, value interface{}) *Default
 	} else {
 		t.details[key] = value
 	}
-	return t
-}
-
-func (t *DefaultRefreshToken) PutClaim(key string, value interface{}) *DefaultRefreshToken {
-	t.Claims.Set(key, value)
 	return t
 }
 

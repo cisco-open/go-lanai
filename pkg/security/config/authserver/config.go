@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 )
 
@@ -17,6 +18,7 @@ type AuthorizationServerConfigurer func(*Configuration)
 
 type dependencies struct {
 	fx.In
+	WebRegistrar       *web.Registrar
 	SecurityRegistrar  security.Registrar
 	Configurer         AuthorizationServerConfigurer
 	RedisClientFactory redis.ClientFactory
@@ -26,17 +28,19 @@ type dependencies struct {
 
 // Configuration entry point
 func ConfigureAuthorizationServer(deps dependencies) {
-	config := &Configuration{
+	config := Configuration{
 		redisClientFactory: deps.RedisClientFactory,
 		sessionProperties:  deps.SessionProperties,
 		cryptoProperties:   deps.CryptoProperties,
 	}
-	deps.Configurer(config)
+	deps.Configurer(&config)
 
-	deps.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: config})
+	deps.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: &config})
 	for _, configuer := range config.idpConfigurers {
-		deps.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: config, delegate: configuer})
+		deps.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: &config, delegate: configuer})
 	}
+
+	registerEndpoints(deps.WebRegistrar, &config)
 }
 
 /****************************
@@ -113,6 +117,7 @@ func (c *Configuration) tokenGranter() auth.TokenGranter {
 		granters := []auth.TokenGranter {
 			grants.NewAuthorizationCodeGranter(c.authorizationService(), c.authorizeCodeStore()),
 			grants.NewClientCredentialsGranter(c.authorizationService()),
+			grants.NewRefreshGranter(c.authorizationService(), c.tokenStore()),
 		}
 
 		// password granter is optional
@@ -149,12 +154,17 @@ func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	return c.sharedContextDetailsStore
 }
 
+func (c *Configuration) authorizationRegistry() auth.AuthorizationRegistry {
+	return c.contextDetailsStore().(auth.AuthorizationRegistry)
+}
+
 func (c *Configuration) tokenStore() auth.TokenStore {
 	if c.TokenStore == nil {
 		c.TokenStore = auth.NewJwtTokenStore(func(opt *auth.JTSOption) {
 			opt.DetailsStore = c.contextDetailsStore()
 			opt.Encoder = c.jwtEncoder()
 			opt.Decoder = c.jwtDecoder()
+			opt.AuthRegistry = c.authorizationRegistry()
 			// TODO enhancers
 		})
 	}
@@ -185,8 +195,7 @@ func (c *Configuration) jwkStore() jwt.JwkStore {
 
 func (c *Configuration) jwtEncoder() jwt.JwtEncoder {
 	if c.sharedJwtEncoder == nil {
-		// TODO
-		c.sharedJwtEncoder = jwt.NewRS256JwtEncoder(c.jwkStore(), "default")
+		c.sharedJwtEncoder = jwt.NewRS256JwtEncoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
 	}
 	return c.sharedJwtEncoder
 }
@@ -194,7 +203,7 @@ func (c *Configuration) jwtEncoder() jwt.JwtEncoder {
 func (c *Configuration) jwtDecoder() jwt.JwtDecoder {
 	if c.sharedJwtDecoder == nil {
 		// TODO
-		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), "default")
+		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
 	}
 	return c.sharedJwtDecoder
 }

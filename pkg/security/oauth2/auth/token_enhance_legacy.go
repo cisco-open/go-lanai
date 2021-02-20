@@ -49,21 +49,21 @@ type LegacyTokenEnhancer struct {
 
 }
 
-func (e *LegacyTokenEnhancer) Order() int {
+func (te *LegacyTokenEnhancer) Order() int {
 	return TokenEnhancerOrderDetailsClaims
 }
 
-func (e *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (te *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
 	}
 
-	if t.Claims == nil {
+	if t.Claims() == nil {
 		return nil, oauth2.NewInternalError("LegacyTokenEnhancer need to be placed immediately after BasicClaimsEnhancer")
 	}
 
-	basic, ok := t.Claims.(*oauth2.BasicClaims)
+	basic, ok := t.Claims().(*oauth2.BasicClaims)
 	if !ok {
 		return nil, oauth2.NewInternalError("LegacyTokenEnhancer need to be placed immediately after BasicClaimsEnhancer")
 	}
@@ -83,7 +83,7 @@ func (e *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
 		legacy.TenantId = td.TenantId()
 	}
 
-	t.Claims = legacy
+	t.SetClaims(legacy)
 	return t, nil
 }
 

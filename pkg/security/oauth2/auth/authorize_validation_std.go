@@ -62,6 +62,9 @@ func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request
 		return nil, e
 	}
 
+	// TODO check client tenant restrictions
+	_ = client.TenantRestrictions()
+
 	return request, nil
 }
 

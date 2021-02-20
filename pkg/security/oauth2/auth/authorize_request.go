@@ -49,6 +49,11 @@ func (r *AuthorizeRequest) OAuth2Request() oauth2.OAuth2Request {
 	})
 }
 
+func (r *AuthorizeRequest) String() string {
+	return fmt.Sprintf("[client=%s, response_type=%s, redirect=%s, scope=%s, ext=%s]",
+		r.ClientId, r.ResponseTypes, r.RedirectUri, r.Scopes, r.Extensions)
+}
+
 func NewAuthorizeRequest() *AuthorizeRequest {
 	return &AuthorizeRequest{
 		Parameters:    map[string]string{},
