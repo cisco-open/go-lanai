@@ -15,6 +15,13 @@ var (
 )
 
 /*********************************
+	Customization
+ *********************************/
+type Customizer interface {
+	Customize(r *Registrar) error
+}
+
+/*********************************
 	Mappings
  *********************************/
 type Controller interface {

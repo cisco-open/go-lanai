@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -34,11 +35,11 @@ type Registrar struct {
 	validator      binding.StructValidator
 	middlewares    []MiddlewareMapping                   // middlewares gin-gonic middleware providers
 	routedMappings map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
-	staticMappings []StaticMapping                       //staticMappings all static mappings
+	staticMappings []StaticMapping                       // staticMappings all static mappings
+	customizers    []Customizer
 	initialized    bool
 }
 
-// TODO support customizers
 func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 
 	var contextPath = path.Clean("/" + properties.ContextPath)
@@ -53,15 +54,11 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		routedMappings: map[string]map[string][]RoutedMapping{},
 	}
 
-	// add some global middlewares
-	_ = registrar.addGlobalMiddleware("pre-process", HighestMiddlewareOrder, registrar.preProcessMiddleware)
 	return registrar
 }
 
 // initialize should be called during application startup, last change to change configurations, load templates, etc
 func (r *Registrar) initialize() (err error) {
-	// TODO support customizers
-
 	if r.initialized {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
@@ -74,17 +71,36 @@ func (r *Registrar) initialize() (err error) {
 	binding.Validator = nil
 	bindingValidator = r.validator
 
+	// add some common middlewares
+	mappings := []interface{}{
+		NewMiddlewareMapping("pre-process", HighestMiddlewareOrder, Any(), r.preProcessMiddleware),
+	}
+	if err = r.Register(mappings...); err != nil {
+		return
+	}
+
+	// apply customizers before install mappings
+	if err = r.applyCustomizers(); err != nil {
+		return
+	}
+
+	// before starting to register mappings, we want global MW to take effect on our main group
+	var contextPath = path.Clean("/" + r.properties.ContextPath)
+	r.router = r.engine.Group(contextPath)
+
 	// register routedMappings to gin engine
-	err = r.installMappings()
+	if err = r.installMappings(); err != nil {
+		return
+	}
 
 	r.initialized = true
 	return
 }
 
-// addGlobalMiddleware add middleware to all mapping
-func (r *Registrar) addGlobalMiddleware(name string, order int, handlerFunc gin.HandlerFunc) error {
-	mapping := NewMiddlewareMapping(name, order, Any(), handlerFunc)
-	return r.Register(mapping)
+// AddGlobalMiddleware add middleware to all mapping
+func (r *Registrar) AddGlobalMiddlewares(handlerFuncs ...gin.HandlerFunc) error {
+	r.engine.Use(handlerFuncs...)
+	return nil
 }
 
 // Run configure and start gin engine
@@ -107,6 +123,7 @@ func (r *Registrar) Run() (err error) {
 
 // Register is the entry point to register Controller, Mapping and other web related objects
 // supported items type are:
+// 	- Customizer
 // 	- Controller
 //  - EndpointMapping
 //  - StaticMapping
@@ -149,6 +166,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 		err = r.registerSimpleMapping(i.(SimpleMapping))
 	case RequestPreProcessor:
 		err = r.registerRequestPreProcessor(i.(RequestPreProcessor))
+	case Customizer:
+		err = r.registerWebCustomizer(i.(Customizer))
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -168,6 +187,10 @@ func (r *Registrar) registerUnknownType(i interface{}) (err error) {
 	// go through fields and register
 	for idx := 0; idx < v.NumField(); idx++ {
 		// only care controller fields
+		if f := v.Type().Field(idx); !reflectutils.IsExportedField(f) {
+			// unexported field
+			continue
+		}
 		c := v.Field(idx).Interface()
 		if _,ok := c.(Controller); !ok {
 			continue
@@ -230,6 +253,26 @@ func (r *Registrar) registerMiddlewareMapping(m MiddlewareMapping) error {
 
 func (r *Registrar) registerRequestPreProcessor(p RequestPreProcessor) error {
 	r.engine.addRequestPreProcessor(p)
+	return nil
+}
+
+func (r *Registrar) registerWebCustomizer(c Customizer) error {
+	if r.initialized {
+		return fmt.Errorf("cannot register web configurer after web engine have initialized")
+	}
+	r.customizers = append(r.customizers, c)
+	return nil
+}
+
+func (r *Registrar) applyCustomizers() error {
+	if r.customizers == nil {
+		return nil
+	}
+	for _, c := range r.customizers {
+		if e := c.Customize(r); e != nil {
+			return e
+		}
+	}
 	return nil
 }
 
@@ -368,7 +411,7 @@ func (r *Registrar) preProcessMiddleware(c *gin.Context) {
 }
 
 /**************************
-	first class functions
+	Helpers
 ***************************/
 func MakeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
@@ -397,6 +440,7 @@ func ginContextExtractor(ctx context.Context, r *http.Request) (ret context.Cont
 	}
 	return
 }
+
 
 
 

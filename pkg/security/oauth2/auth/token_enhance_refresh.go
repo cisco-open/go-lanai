@@ -72,7 +72,7 @@ func (te *RefreshTokenEnhancer) Enhance(ctx context.Context, token oauth2.Access
 		}
 	}
 
-	if !refresh.ExpiryTime().IsZero() {
+	if refresh.WillExpire() && !refresh.ExpiryTime().IsZero() {
 		claims.Set(oauth2.ClaimExpire, refresh.ExpiryTime())
 	}
 	refresh.SetClaims(&claims)

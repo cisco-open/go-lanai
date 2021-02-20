@@ -38,8 +38,8 @@ func (g *RefreshGranter) Grant(ctx context.Context, request *auth.TokenRequest) 
 	}
 
 	// for refresh grant, client have to be authenticated via client/secret
-	client, e := auth.RetrieveFullyAuthenticatedClient(ctx)
-	if e != nil {
+	client := auth.RetrieveAuthenticatedClient(ctx)
+	if client == nil {
 		return nil, oauth2.NewInvalidGrantError("client_credentials requires client secret validated")
 	}
 
