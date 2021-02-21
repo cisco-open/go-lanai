@@ -15,7 +15,7 @@ var (
 	)
 )
 
-// ClientCredentialsGranter implements auth.TokenGranter
+// RefreshGranter implements auth.TokenGranter
 type RefreshGranter struct {
 	authService auth.AuthorizationService
 	tokenStore  auth.TokenStore
@@ -124,6 +124,9 @@ func reduceScope(c context.Context, client oauth2.OAuth2Client, src oauth2.OAuth
 			opt.Parameters[k] = v
 		}
 		for k, v := range request.Extensions {
+			if refreshIgnoreParams.Has(k) {
+				continue
+			}
 			opt.Extensions[k] = v
 		}
 	}), nil

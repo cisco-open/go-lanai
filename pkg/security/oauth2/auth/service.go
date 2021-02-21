@@ -12,11 +12,12 @@ import (
 )
 
 var (
-
+	endOfWorld = time.Date(2999, time.December, 31, 23, 59, 59, 0, time.UTC)
 )
 
 type AuthorizationService interface {
 	CreateAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (oauth2.Authentication, error)
+	SwitchAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication, src oauth2.Authentication) (oauth2.Authentication, error)
 	CreateAccessToken(ctx context.Context, oauth oauth2.Authentication) (oauth2.AccessToken, error)
 	RefreshAccessToken(ctx context.Context, oauth oauth2.Authentication, refreshToken oauth2.RefreshToken) (oauth2.AccessToken, error)
 }
@@ -79,9 +80,33 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 	}
 }
 
-func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (oauth oauth2.Authentication, err error) {
+func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context,
+	request oauth2.OAuth2Request, userAuth security.Authentication) (oauth oauth2.Authentication, err error) {
 
-	details, err := s.createContextDetails(ctx, request, userAuth)
+	details, err := s.createContextDetails(ctx, request, userAuth, nil)
+	if err != nil {
+		return
+	}
+
+	// reconstruct user auth based on newly loaded facts (account may changed)
+	if userAuth, err = s.createUserAuthentication(ctx, request, userAuth); err != nil {
+		return
+	}
+
+	// create the result
+	oauth = oauth2.NewAuthentication(func(conf *oauth2.AuthOption) {
+		conf.Request = request
+		conf.UserAuth = userAuth
+		conf.Details = details
+	})
+	return
+}
+
+func (s *DefaultAuthorizationService) SwitchAuthentication(ctx context.Context,
+	request oauth2.OAuth2Request, userAuth security.Authentication,
+	src oauth2.Authentication) (oauth oauth2.Authentication, err error) {
+
+	details, err := s.createContextDetails(ctx, request, userAuth, src)
 	if err != nil {
 		return
 	}
@@ -139,9 +164,12 @@ type authFacts struct {
 	account  security.Account
 	tenant   *security.Tenant
 	provider *security.Provider
+	source   oauth2.Authentication
 }
 
-func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.ContextDetails, error) {
+func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
+	request oauth2.OAuth2Request, userAuth security.Authentication,
+	src oauth2.Authentication) (security.ContextDetails, error) {
 	now := time.Now().UTC()
 
 	facts, e := s.loadAndVerifyFacts(ctx, request, userAuth)
@@ -159,6 +187,10 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context, 
 	mutableCtx.Set(oauth2.CtxKeyAuthorizedTenant, facts.tenant)
 	mutableCtx.Set(oauth2.CtxKeyAuthorizedProvider, facts.provider)
 	mutableCtx.Set(oauth2.CtxKeyAuthorizationIssueTime, now)
+	if src != nil {
+		facts.source = src
+		mutableCtx.Set(oauth2.CtxKeySourceAuthentication, src)
+	}
 
 	// expiry
 	expiry := s.determineExpiryTime(ctx, request, facts)
@@ -167,7 +199,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context, 
 	}
 
 	// auth time
-	authTime := s.determineAuthenticationTime(ctx, userAuth)
+	authTime := s.determineAuthenticationTime(ctx, userAuth, facts)
 	if !authTime.IsZero() {
 		mutableCtx.Set(oauth2.CtxKeyAuthenticationTime, authTime)
 	}
@@ -313,17 +345,31 @@ func (f *DefaultAuthorizationService) loadProvider(ctx context.Context, request 
 }
 
 func (f *DefaultAuthorizationService) determineExpiryTime(ctx context.Context, request oauth2.OAuth2Request, facts *authFacts) (expiry time.Time) {
+
+	max := endOfWorld
+	// When switching context, expiry should no later than original expiry time
+	if facts.source != nil {
+		if srcAuth, ok := facts.source.Details().(security.AuthenticationDetails); ok {
+			max = srcAuth.ExpiryTime()
+		}
+	}
+
 	if facts.client.AccessTokenValidity() == 0 {
-		return
+		return minTime(expiry, max)
 	}
 
 	issueTime := ctx.Value(oauth2.CtxKeyAuthorizationIssueTime).(time.Time)
-
-	// TODO When switching context, expiry should no later than original expiry time
-	return issueTime.Add(facts.client.AccessTokenValidity())
+	expiry = issueTime.Add(facts.client.AccessTokenValidity()).UTC()
+	return minTime(expiry, max)
 }
 
-func (f *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Context, userAuth security.Authentication) (authTime time.Time) {
+func (f *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Context, userAuth security.Authentication, facts *authFacts) (authTime time.Time) {
+	if facts.source != nil {
+		if srcAuth, ok := facts.source.Details().(security.AuthenticationDetails); ok {
+			return srcAuth.AuthenticationTime()
+		}
+	}
+
 	if userAuth == nil {
 		return
 	}
@@ -349,7 +395,7 @@ func (f *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Co
 }
 
 /****************************
-	Token Helpers
+	Helpers
  ****************************/
 func (s *DefaultAuthorizationService) reuseOrNewAccessToken(c context.Context, oauth oauth2.Authentication) *oauth2.DefaultAccessToken {
 	existing, e := s.tokenStore.ReusableAccessToken(c, oauth)
@@ -359,6 +405,14 @@ func (s *DefaultAuthorizationService) reuseOrNewAccessToken(c context.Context, o
 		return oauth2.FromAccessToken(t)
 	} else {
 		return t
+	}
+}
+
+func minTime(t1, t2 time.Time) time.Time {
+	if t1.IsZero() || t1.Before(t2) {
+		return t1
+ 	} else {
+ 		return t2
 	}
 }
 

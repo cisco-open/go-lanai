@@ -30,6 +30,9 @@ const (
 	ParameterAuthCode            = "code"
 	ParameterUserApproval        = "user_oauth_approval"
 	ParameterRefreshToken        = "refresh_token"
+	ParameterAccessToken         = "access_token"
+	ParameterSwitchUsername      = "switch_username"
+	ParameterSwitchUserId        = "switch_user_id"
 	//Parameter = ""
 )
 
@@ -62,6 +65,7 @@ const (
 	CtxKeyResolvedAuthorizeRedirect = "kResolvedRedirect"
 	CtxKeyResolvedAuthorizeState    = "kResolvedState"
 	CtxKeyRefreshToken              = "kRefreshToken"
+	CtxKeySourceAuthentication      = "kSourceAuthentication"
 )
 
 const (
@@ -70,6 +74,8 @@ const (
 	GrantTypeAuthCode          = "authorization_code"
 	GrantTypeImplicit          = "implicit"
 	GrantTypeRefresh           = "refresh_token"
+	GrantTypeSwitchUser        = "urn:cisco:nfv:oauth:grant-type:switch-user"
+	GrantTypeSwitchTenant      = "urn:cisco:nfv:oauth:grant-type:switch-tenant"
 )
 
 const (
