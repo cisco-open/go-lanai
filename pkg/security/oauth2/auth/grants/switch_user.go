@@ -105,13 +105,44 @@ func (g *SwitchUserGranter) Grant(ctx context.Context, request *auth.TokenReques
 }
 
 func (g *SwitchUserGranter) validateRequest(ctx context.Context, request *auth.TokenRequest) error {
-	// TODO missing params, etc.
+	// switch_username or switch_user_id need to present
+	// if both available, we use username
+	username, nameOk := request.Extensions[oauth2.ParameterSwitchUsername].(string)
+	userId, idOk := request.Extensions[oauth2.ParameterSwitchUserId].(string)
+	if !nameOk && !idOk {
+		return oauth2.NewInvalidTokenRequestError(fmt.Sprintf("both [%s] and [%s] are missing", oauth2.ParameterSwitchUsername, oauth2.ParameterSwitchUserId))
+	}
+
+	if strings.TrimSpace(username) == "" && strings.TrimSpace(userId) == "" {
+		return oauth2.NewInvalidTokenRequestError(fmt.Sprintf("both [%s] and [%s] are empty", oauth2.ParameterSwitchUsername, oauth2.ParameterSwitchUserId))
+	}
 	return nil
 }
 
 func (g *SwitchUserGranter) validate(ctx context.Context, request *auth.TokenRequest, stored security.Authentication) error {
-	// TODO check if switch to same user, already proxied, etc
-	return g.PermissionBasedGranter.validateStoredPermissions(ctx, stored, switchUserPermissions...)
+	if e := g.PermissionBasedGranter.validateStoredPermissions(ctx, stored, switchUserPermissions...); e != nil {
+		return e
+	}
+
+	srcUser, ok := stored.Details().(security.UserDetails)
+	if !ok {
+		return oauth2.NewInvalidGrantError("access token is not associated with a valid user")
+	}
+
+	if proxy, ok := stored.Details().(security.ProxiedUserDetails); ok && proxy.Proxied() {
+		return oauth2.NewInvalidGrantError("the access token represents a masqueraded context. Nested masquerading is not supported")
+	}
+
+	username, _ := request.Extensions[oauth2.ParameterSwitchUsername].(string)
+	if strings.TrimSpace(username) == srcUser.Username() {
+		return oauth2.NewInvalidGrantError("cannot switch to same user")
+	}
+
+	userId, _ := request.Extensions[oauth2.ParameterSwitchUserId].(string)
+	if strings.TrimSpace(userId) == srcUser.UserId() {
+		return oauth2.NewInvalidGrantError("cannot switch to same user")
+	}
+	return nil
 }
 
 func (g *SwitchUserGranter) loadUserAuthentication(ctx context.Context, request *auth.TokenRequest) (security.Authentication, error) {
