@@ -205,7 +205,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	}
 
 	// create context details
-	return s.detailsFactory.New(ctx, request)
+	return s.detailsFactory.New(mutableCtx, request)
 }
 
 func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.Authentication, error) {
@@ -347,6 +347,7 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(c context.Context, tena
 		tenantIds = utils.NewStringSet(tenancy.TenantIds()...)
 	}
 
+	// TODO consider tenant hierachy
 	// check account
 	if !tenantIds.Has(tenant.Id) {
 		return oauth2.NewInvalidGrantError("user does not have access to specified tenant")
@@ -389,7 +390,11 @@ func (f *DefaultAuthorizationService) determineExpiryTime(ctx context.Context, r
 	}
 
 	if facts.client.AccessTokenValidity() == 0 {
-		return minTime(expiry, max)
+		if max == endOfWorld {
+			return
+		} else {
+			return max
+		}
 	}
 
 	issueTime := ctx.Value(oauth2.CtxKeyAuthorizationIssueTime).(time.Time)

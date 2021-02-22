@@ -113,6 +113,8 @@ func (g *PermissionBasedGranter) reduceScope(ctx context.Context, client oauth2.
 	}
 
 	return src.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
+		opt.ClientId = client.ClientId()
+		opt.RedirectUri = ""
 		opt.GrantType = request.GrantType
 		opt.Scopes = scopes
 		for k, v := range request.Parameters {
