@@ -114,7 +114,7 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 		Id: facts.account.ID().(string),
 		Username: facts.account.Username(),
 		AccountType: facts.account.Type(),
-		AssignedTenantIds: utils.NewStringSet(facts.account.(security.AccountTenancy).Tenants()...),
+		AssignedTenantIds: utils.NewStringSet(facts.account.(security.AccountTenancy).TenantIds()...),
 	}
 
 	if meta, ok := facts.account.(security.AccountMetadata); ok {
