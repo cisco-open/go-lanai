@@ -9,6 +9,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
@@ -84,6 +85,7 @@ type Configuration struct {
 	sharedARProcessor         auth.AuthorizeRequestProcessor
 	sharedAuthHanlder         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
+	sharedTokenAuthenticator  security.Authenticator
 	// TODO
 }
 
@@ -118,11 +120,13 @@ func (c *Configuration) tokenGranter() auth.TokenGranter {
 			grants.NewAuthorizationCodeGranter(c.authorizationService(), c.authorizeCodeStore()),
 			grants.NewClientCredentialsGranter(c.authorizationService()),
 			grants.NewRefreshGranter(c.authorizationService(), c.tokenStore()),
+			grants.NewSwitchUserGranter(c.authorizationService(), c.tokenAuthenticator(), c.UserAccountStore),
+			grants.NewSwitchTenantGranter(c.authorizationService(), c.tokenAuthenticator()),
 		}
 
 		// password granter is optional
 		if c.passwordGrantAuthenticator() != nil {
-			passwordGranter := grants.NewPasswordGranter(c.passwordGrantAuthenticator(), c.authorizationService())
+			passwordGranter := grants.NewPasswordGranter(c.authorizationService(), c.passwordGrantAuthenticator())
 			granters = append(granters, passwordGranter)
 		}
 
@@ -246,4 +250,13 @@ func (c *Configuration) authorizeCodeStore() auth.AuthorizationCodeStore {
 		c.sharedAuthCodeStore = auth.NewRedisAuthorizationCodeStore(c.redisClientFactory, c.sessionProperties.DbIndex)
 	}
 	return c.sharedAuthCodeStore
+}
+
+func (c *Configuration) tokenAuthenticator() security.Authenticator {
+	if c.sharedTokenAuthenticator == nil {
+		c.sharedTokenAuthenticator = tokenauth.NewAuthenticator(func(opt *tokenauth.AuthenticatorOption) {
+			opt.TokenStoreReader = c.tokenStore()
+		})
+	}
+	return c.sharedTokenAuthenticator
 }

@@ -113,7 +113,7 @@ func (a *DefaultAccount) DefaultTenantId() string {
 	return a.AcctDetails.DefaultTenantId
 }
 
-func (a *DefaultAccount) Tenants() []string {
+func (a *DefaultAccount) TenantIds() []string {
 	return a.AcctDetails.Tenants
 }
 

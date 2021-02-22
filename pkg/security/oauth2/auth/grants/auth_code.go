@@ -15,7 +15,7 @@ var (
 	)
 )
 
-// ClientCredentialsGranter implements auth.TokenGranter
+// AuthorizationCodeGranter implements auth.TokenGranter
 type AuthorizationCodeGranter struct {
 	authService   auth.AuthorizationService
 	authCodeStore auth.AuthorizationCodeStore
@@ -120,6 +120,9 @@ func mergedOAuth2Request(src oauth2.OAuth2Request, request *auth.TokenRequest, i
 			opt.Parameters[k] = v
 		}
 		for k, v := range request.Extensions {
+			if ignoreParams.Has(k) {
+				continue
+			}
 			opt.Extensions[k] = v
 		}
 	}), nil

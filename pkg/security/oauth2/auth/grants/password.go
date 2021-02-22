@@ -9,19 +9,19 @@ import (
 	"fmt"
 )
 
-// ClientCredentialsGranter implements auth.TokenGranter
+// PasswordGranter implements auth.TokenGranter
 type PasswordGranter struct {
 	authenticator security.Authenticator
 	authService   auth.AuthorizationService
 }
 
-func NewPasswordGranter(authenticator security.Authenticator, authService auth.AuthorizationService) *PasswordGranter {
+func NewPasswordGranter(authService auth.AuthorizationService, authenticator security.Authenticator) *PasswordGranter {
 	if authenticator == nil {
 		panic(fmt.Errorf("cannot create PasswordGranter without authenticator."))
 	}
 
 	if authService == nil {
-		panic(fmt.Errorf("cannot create PasswordGranter without token service."))
+		panic(fmt.Errorf("cannot create PasswordGranter without authorization service."))
 	}
 
 	return &PasswordGranter{

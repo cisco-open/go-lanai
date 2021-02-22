@@ -100,7 +100,7 @@ type AccountHistory interface {
  *********************************/
 type AccountTenancy interface {
 	DefaultTenantId() string
-	Tenants() []string
+	TenantIds() []string
 }
 
 /*********************************
