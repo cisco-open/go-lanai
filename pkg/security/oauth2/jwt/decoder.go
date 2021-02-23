@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"context"
-	"crypto/rsa"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -20,20 +19,20 @@ type JwtDecoder interface {
  *********************/
 // RSJwtEncoder implements JwtEncoder
 type RSJwtDecoder struct {
-	defaultKid string
-	jwkStore   JwkStore
-	parser     *jwt.Parser
+	jwkName  string
+	jwkStore JwkStore
+	parser   *jwt.Parser
 }
 
-func NewRS256JwtDecoder(jwkStore JwkStore, defaultKid string) *RSJwtDecoder {
+func NewRS256JwtDecoder(jwkStore JwkStore, defaultJwkName string) *RSJwtDecoder {
 	parser := &jwt.Parser{
 		UseJSONNumber: false,
 		SkipClaimsValidation: true,
 	}
 	return &RSJwtDecoder{
-		defaultKid: defaultKid,
+		jwkName:  defaultJwkName,
 		jwkStore: jwkStore,
-		parser: parser,
+		parser:   parser,
 	}
 }
 
@@ -61,17 +60,19 @@ func (dec *RSJwtDecoder) DecodeWithClaims(ctx context.Context, tokenString strin
 
 func (dec *RSJwtDecoder) keyFunc(ctx context.Context) jwt.Keyfunc {
 	return func(unverified *jwt.Token) (interface{}, error) {
-		kid, ok := unverified.Header[JwtHeaderKid].(string)
-		if !ok {
-			kid = dec.defaultKid
-		}
+		var jwk Jwk
+		var e error
 
-		jwk, e := dec.jwkStore.LoadByKid(ctx, kid)
+		switch kid, ok := unverified.Header[JwtHeaderKid].(string); {
+		case ok:
+			jwk, e = dec.jwkStore.LoadByKid(ctx, kid)
+		default:
+			jwk, e = dec.jwkStore.LoadByName(ctx, dec.jwkName)
+		}
 		if e != nil {
 			return nil, e
 		}
-		str := printPublicKey(jwk.Public().(*rsa.PublicKey))
-		_ = ctx.Value(str)
+
 		return jwk.Public(), nil
 	}
 }

@@ -37,7 +37,7 @@ func (e *CompositeAuthorizeRequestProcessor) Process(ctx context.Context, reques
 
 func (e *CompositeAuthorizeRequestProcessor) Add(processors ... AuthorizeRequestProcessor) {
 	e.delegates = append(e.delegates, flattenProcessors(processors)...)
-	// resort the delegates
+	// resort the extensions
 	order.SortStable(e.delegates, order.OrderedFirstCompare)
 }
 

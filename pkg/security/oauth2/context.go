@@ -15,7 +15,7 @@ type Authentication interface {
 	AccessToken() AccessToken
 }
 
-type AuthenticationOptions func(*AuthOption)
+type AuthenticationOptions func(opt *AuthOption)
 
 type AuthOption struct {
 	Request  OAuth2Request
@@ -96,7 +96,7 @@ func calculateState(req OAuth2Request, userAuth security.Authentication) securit
 /******************************
 	UserAuthentication
 ******************************/
-type UserAuthOptions func(option *UserAuthOption)
+type UserAuthOptions func(opt *UserAuthOption)
 
 type UserAuthOption struct {
 	Principal   string

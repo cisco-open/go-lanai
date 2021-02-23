@@ -12,8 +12,9 @@ import (
 // jwtTokenStore implements TokenStore and delegate oauth2.TokenStoreReader portion to embedded interface
 type jwtTokenStore struct {
 	oauth2.TokenStoreReader
-	detailsStore  security.ContextDetailsStore
-	jwtEncoder    jwt.JwtEncoder
+	detailsStore security.ContextDetailsStore
+	jwtEncoder   jwt.JwtEncoder
+	registry     AuthorizationRegistry
 }
 
 type JTSOptions func(opt *JTSOption)
@@ -23,6 +24,7 @@ type JTSOption struct {
 	DetailsStore security.ContextDetailsStore
 	Encoder      jwt.JwtEncoder
 	Decoder      jwt.JwtDecoder
+	AuthRegistry AuthorizationRegistry
 }
 
 func NewJwtTokenStore(opts...JTSOptions) *jwtTokenStore {
@@ -41,6 +43,17 @@ func NewJwtTokenStore(opts...JTSOptions) *jwtTokenStore {
 		TokenStoreReader: opt.Reader,
 		detailsStore:     opt.DetailsStore,
 		jwtEncoder:       opt.Encoder,
+		registry:         opt.AuthRegistry,
+	}
+}
+
+// overwrite oauth2.TokenStoreReader
+func (r *jwtTokenStore) ReadAuthentication(ctx context.Context, tokenValue string, hint oauth2.TokenHint) (oauth2.Authentication, error) {
+	switch hint {
+	case oauth2.TokenHintRefreshToken:
+		return r.readAuthenticationFromRefreshToken(ctx, tokenValue)
+	default:
+		return r.TokenStoreReader.ReadAuthentication(ctx, tokenValue, hint)
 	}
 }
 
@@ -53,11 +66,11 @@ func (s *jwtTokenStore) SaveAccessToken(c context.Context, token oauth2.AccessTo
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError(fmt.Sprintf("Unsupported token implementation [%T]", token))
-	} else if t.Claims == nil {
+	} else if t.Claims() == nil {
 		return nil, oauth2.NewInternalError("claims is nil")
 	}
 
-	encoded, e := s.jwtEncoder.Encode(c, t.Claims)
+	encoded, e := s.jwtEncoder.Encode(c, t.Claims())
 	if e != nil {
 		return nil, e
 	}
@@ -65,11 +78,11 @@ func (s *jwtTokenStore) SaveAccessToken(c context.Context, token oauth2.AccessTo
 
 	if details, ok := oauth.Details().(security.ContextDetails); ok {
 		if e := s.detailsStore.SaveContextDetails(c, token, details); e != nil {
-			return nil, oauth2.NewInternalError("cannot save token", e)
+			return nil, oauth2.NewInternalError("cannot save access token", e)
 		}
 	}
 
-	// TODO save details, etc.
+	// TODO save other stuff if needed. e.g. register access token with session, user, client, refresh token
 	return t, nil
 }
 
@@ -77,27 +90,36 @@ func (s *jwtTokenStore) SaveRefreshToken(c context.Context, token oauth2.Refresh
 	t, ok := token.(*oauth2.DefaultRefreshToken)
 	if !ok {
 		return nil, fmt.Errorf("Unsupported token implementation [%T]", token)
-	} else if t.Claims == nil {
+	} else if t.Claims() == nil {
 		return nil, fmt.Errorf("claims is nil")
 	}
 
-	encoded, e := s.jwtEncoder.Encode(c, t.Claims)
+	encoded, e := s.jwtEncoder.Encode(c, t.Claims())
 	if e != nil {
 		return nil, e
 	}
 	t.SetValue(encoded)
 
-	// TODO save details, etc.
+	s.registry.RegisterRefreshToken(c, t, oauth)
+	if e := s.registry.RegisterRefreshToken(c, t, oauth); e != nil {
+		return nil, oauth2.NewInternalError("cannot register refresh token", e)
+	}
+	// TODO save other stuff if needed, e.g. relationships between refresh, client, user, session, etc
 	return t, nil
 }
 
 func (s *jwtTokenStore) RemoveAccessToken(c context.Context, token oauth2.Token) error {
-	// TODO do the magic
+	switch token.(type) {
+	case oauth2.AccessToken:
+		// TODO just remove access token
+	case oauth2.RefreshToken:
+		// TODO remove all access token associated with this refresh token
+	}
 	return nil
 }
 
 func (s *jwtTokenStore) RemoveRefreshToken(c context.Context, token oauth2.RefreshToken) error {
-	// TODO do the magic
+	// TODO remove all access token associated with this refresh token and refresh token itself
 	return nil
 }
 
@@ -105,3 +127,22 @@ func (s *jwtTokenStore) RemoveRefreshToken(c context.Context, token oauth2.Refre
 	Helpers
  ********************/
 
+
+func (r *jwtTokenStore) readAuthenticationFromRefreshToken(c context.Context, tokenValue string) (oauth2.Authentication, error) {
+	// parse JWT token
+	token, e := r.ReadRefreshToken(c, tokenValue)
+	if e != nil {
+		return nil, e
+	}
+
+	if container, ok := token.(oauth2.ClaimsContainer); !ok || container.Claims() == nil {
+		return nil, oauth2.NewInvalidGrantError("refresh token contains no claims")
+	}
+
+	stored, e := r.registry.ReadStoredAuthorization(c, token)
+	if e != nil {
+		return nil, oauth2.NewInvalidGrantError("refresh token unknown", e)
+	}
+
+	return stored, nil
+}

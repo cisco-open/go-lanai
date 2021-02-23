@@ -12,7 +12,9 @@ import (
 type AuthorizeFeature struct {
 	path             string
 	condition 		 web.RequestMatcher
+	approvalPath     string
 	requestProcessor *auth.CompositeAuthorizeRequestProcessor
+	authorizeHanlder auth.AuthorizeHandler
 	errorHandler     *auth.OAuth2ErrorHandler
 }
 
@@ -46,6 +48,11 @@ func (f *AuthorizeFeature) Condition(condition web.RequestMatcher) *AuthorizeFea
 	return f
 }
 
+func (f *AuthorizeFeature) ApprovalPath(approvalPath string) *AuthorizeFeature {
+	f.approvalPath = approvalPath
+	return f
+}
+
 func (f *AuthorizeFeature) RequestProcessors(processors ...auth.AuthorizeRequestProcessor) *AuthorizeFeature {
 	f.requestProcessor = auth.NewCompositeAuthorizeRequestProcessor(processors...)
 	return f
@@ -53,5 +60,10 @@ func (f *AuthorizeFeature) RequestProcessors(processors ...auth.AuthorizeRequest
 
 func (f *AuthorizeFeature) ErrorHandler(errorHandler *auth.OAuth2ErrorHandler) *AuthorizeFeature {
 	f.errorHandler = errorHandler
+	return f
+}
+
+func (f *AuthorizeFeature) AuthorizeHanlder(authHanlder auth.AuthorizeHandler) *AuthorizeFeature {
+	f.authorizeHanlder = authHanlder
 	return f
 }

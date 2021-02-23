@@ -13,6 +13,7 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
 		fx.Provide(bindProperties),
+		//fx.Provide(jwt.BindCryptoProperties),
 		fx.Invoke(ConfigureAuthorizationServer),
 	},
 }

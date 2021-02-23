@@ -18,12 +18,14 @@ var (
 type accumulator func(i interface{}, claims Claims) (accumulated interface{}, shouldContinue bool)
 
 type claimsMapper interface {
-	toMap(owner interface{}) (map[string]interface{}, error)
+	toMap(owner interface{}, convert bool) (map[string]interface{}, error)
 	fromMap(owner interface{}, src map[string]interface{}) error
 }
 
 // FieldClaimsMapper is a helper type that can be embedded into struct based claims
 // FieldClaimsMapper implements claimsMapper
+// See BasicClaims as an example.
+// Note: having non-claims struct as fields is not recommended for deserialization
 type FieldClaimsMapper struct {
 	fields     map[string][]int // Index of fields holding claim. Includes embedded structs
 	interfaces [][]int 			// Index of directly embedded Cliams interfaces
@@ -71,8 +73,17 @@ func (m *FieldClaimsMapper) Set(owner interface{}, claim string, value interface
 	})
 }
 
+// return claims values as a map, without any conversion
+func (m *FieldClaimsMapper) Values(owner interface{}) map[string]interface{} {
+	values, e := m.toMap(owner, false)
+	if e != nil {
+		return map[string]interface{}{}
+	}
+	return values
+}
+
 func (m *FieldClaimsMapper) DoMarshalJSON(owner interface{}) ([]byte, error) {
-	v, e := m.toMap(owner)
+	v, e := m.toMap(owner, true)
 	if e != nil {
 		return nil, e
 	}
@@ -110,11 +121,8 @@ func (m *FieldClaimsMapper) set(fv reflect.Value, setTo interface{}) error {
 		fv = fv.Elem()
 	}
 
-	if fv.Kind() == reflect.Ptr {
-		fv = fv.Elem()
-	}
-
 	if !fv.CanSet() {
+		// this shouldn't happened because struct's field value should be settable in general
 		return fmt.Errorf("field [%v] is not settable", fv.Type())
 	}
 
@@ -134,7 +142,7 @@ func (m *FieldClaimsMapper) set(fv reflect.Value, setTo interface{}) error {
 	return nil
 }
 
-func (m *FieldClaimsMapper) toMap(owner interface{}) (map[string]interface{}, error) {
+func (m *FieldClaimsMapper) toMap(owner interface{}, convert bool) (map[string]interface{}, error) {
 	m.prepare(owner)
 
 	// try to aggregate values from internal Claims interfaces first
@@ -142,12 +150,12 @@ func (m *FieldClaimsMapper) toMap(owner interface{}) (map[string]interface{}, er
 	ret := m.aggregateEmbeddedClaims(owner, map[string]interface{}{}, func(i interface{}, claims Claims) (interface{}, bool) {
 		var values map[string]interface{}
 		if sc, ok := claims.(claimsMapper); ok {
-			values, err = sc.toMap(sc)
+			values, err = sc.toMap(sc, convert)
 			if err != nil {
 				return nil, false
 			}
 		} else if mc, ok := claims.(MapClaims); ok {
-			values, err = mc.toMap()
+			values, err = mc.toMap(convert)
 			if err != nil {
 				return nil, false
 			}
@@ -174,11 +182,15 @@ func (m *FieldClaimsMapper) toMap(owner interface{}) (map[string]interface{}, er
 	for k, index := range m.fields {
 		fv := ov.FieldByIndex(index)
 		if fv.IsValid() && !fv.IsZero() {
-			v, e := claimMarshalConvert(fv)
-			if e != nil {
-				return nil, e
+			if convert {
+				v, e := claimMarshalConvert(fv)
+				if e != nil {
+					return nil, e
+				}
+				ret[k] = v.Interface()
+			} else {
+				ret[k] = fv.Interface()
 			}
-			ret[k] = v.Interface()
 		}
 	}
 	return ret, nil

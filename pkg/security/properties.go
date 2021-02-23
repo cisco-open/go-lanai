@@ -20,17 +20,18 @@ type SessionStoreType int
 const SessionPropertiesPrefix = "security.session"
 
 type SessionProperties struct {
-	Cookie    CookieProperties
-	IdleTimeout string `json:"idle-timeout"`
-	AbsoluteTimeout string `json:"absolute-timeout"`
-	MaxConcurrentSession int `json:"max-concurrent-sessions"`
+	Cookie               CookieProperties
+	IdleTimeout          string `json:"idle-timeout"`
+	AbsoluteTimeout      string `json:"absolute-timeout"`
+	MaxConcurrentSession int    `json:"max-concurrent-sessions"`
+	DbIndex              int    `json:"db-index"`
 }
 
 type CookieProperties struct {
-	Domain string `json:"domain"`
-	MaxAge int `json:"max-age"`
-	Secure bool `json:"secure"`
-	HttpOnly bool `json:"http-only"`
+	Domain         string `json:"domain"`
+	MaxAge         int    `json:"max-age"`
+	Secure         bool   `json:"secure"`
+	HttpOnly       bool   `json:"http-only"`
 	SameSiteString string `json:"same-site"`
 }
 

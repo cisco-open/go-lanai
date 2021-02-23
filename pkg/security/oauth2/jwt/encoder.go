@@ -19,16 +19,16 @@ type JwtEncoder interface {
 
 // RSJwtEncoder implements JwtEncoder
 type RSJwtEncoder struct {
-	defaultKid string
-	jwkStore   JwkStore
-	method     jwt.SigningMethod
+	jwkName  string
+	jwkStore JwkStore
+	method   jwt.SigningMethod
 }
 
-func NewRS256JwtEncoder(jwkStore JwkStore, defaultKid string) *RSJwtEncoder {
+func NewRS256JwtEncoder(jwkStore JwkStore, jwkName string) *RSJwtEncoder {
 	return &RSJwtEncoder{
-		defaultKid: defaultKid,
+		jwkName:  jwkName,
 		jwkStore: jwkStore,
-		method: jwt.SigningMethodRS256,
+		method:   jwt.SigningMethodRS256,
 	}
 }
 
@@ -49,7 +49,7 @@ func (enc *RSJwtEncoder) Encode(ctx context.Context, claims interface{}) (string
 	}
 
 	// set kid if not default
-	if jwk.Id() != enc.defaultKid {
+	if jwk.Id() != enc.jwkName {
 		token.Header[JwtHeaderKid] = jwk.Id()
 	}
 
@@ -57,22 +57,11 @@ func (enc *RSJwtEncoder) Encode(ctx context.Context, claims interface{}) (string
 }
 
 func (enc *RSJwtEncoder) findJwk(ctx context.Context) (PrivateJwk, error) {
-	switch enc.jwkStore.(type) {
-	case JwkRotator:
-		if jwk, e := enc.jwkStore.(JwkRotator).Current(ctx); e != nil {
-			return nil, e
-		} else if private, ok := jwk.(PrivateJwk); !ok {
-			return nil, fmt.Errorf("current JWK doesn't have private key")
-		} else {
-			return private, nil
-		}
-	default:
-		if jwk, e := enc.jwkStore.LoadByKid(ctx, enc.defaultKid); e != nil {
-			return nil, e
-		} else if private, ok := jwk.(PrivateJwk); !ok {
-			return nil, fmt.Errorf("JWK with kid[%s] doesn't have private key", enc.defaultKid)
-		} else {
-			return private, nil
-		}
+	if jwk, e := enc.jwkStore.LoadByName(ctx, enc.jwkName); e != nil {
+		return nil, e
+	} else if private, ok := jwk.(PrivateJwk); !ok {
+		return nil, fmt.Errorf("JWK with name[%s] doesn't have private key", enc.jwkName)
+	} else {
+		return private, nil
 	}
 }

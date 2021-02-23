@@ -45,11 +45,11 @@ type BasicClaimsTokenEnhancer struct {
 
 }
 
-func (e *BasicClaimsTokenEnhancer) Order() int {
+func (te *BasicClaimsTokenEnhancer) Order() int {
 	return TokenEnhancerOrderBasicClaims
 }
 
-func (e *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (te *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
@@ -64,8 +64,8 @@ func (e *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.Acces
 		Scopes:   request.Scopes().Copy(),
 	}
 
-	if t.Claims != nil {
-		basic.Id = t.Claims.Get(oauth2.ClaimJwtId).(string)
+	if t.Claims() != nil && t.Claims().Has(oauth2.ClaimJwtId) {
+		basic.Id = t.Claims().Get(oauth2.ClaimJwtId).(string)
 	}
 
 	if oauth.UserAuthentication() != nil {
@@ -85,7 +85,7 @@ func (e *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.Acces
 		basic.NotBefore = t.IssueTime()
 	}
 
-	t.Claims = basic
+	t.SetClaims(basic)
 	return t, nil
 }
 

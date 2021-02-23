@@ -48,6 +48,8 @@ const (
 	ErrorCodeInvalidTokenRequest
 	ErrorCodeInvalidGrant
 	ErrorCodeInvalidScope
+	ErrorCodeUnsupportedTokenType
+	ErrorCodeGeneric
 )
 
 // TODO this category should be split into security.ErrorSubTypeCodeAuthentication, secuirty.ErrorSubTypeCodeAccessControl
@@ -71,7 +73,7 @@ var (
 )
 
 /************************
-	Error Translation
+	Error EC
 *************************/
 const (
 	// https://tools.ietf.org/html/rfc6749#section-4.1.2.1
@@ -93,6 +95,10 @@ const (
 	ErrorTranslationInvalidToken      = "invalid_token"
 	ErrorTranslationRedirectMismatch  = "redirect_uri_mismatch"
 
+	// https://tools.ietf.org/html/rfc7009#section-4.1.1
+	ErrorTranslationUnsupportedTokenType  = "unsupported_token_type"
+
+
 	// https://openid.net/specs/openid-connect-core-1_0.html#AuthError
 	// TODO
 	//ErrorTranslation = ""
@@ -107,25 +113,41 @@ type OAuth2ErrorTranslator interface {
 	TranslateStatusCode() int
 }
 
-// OAuth2Error extends security.CodedError, and implements OAuth2ErrorTranslator and serialization interfaces
+// OAuth2Error extends security.CodedError, and implements:
+//	- OAuth2ErrorTranslator
+//  - json.Marshaler
+// 	- json.Unmarshaler
+// 	- http.Headerer
+// 	- http.StatusCoder
 type OAuth2Error struct {
 	security.CodedError
-	Translation string
-	StatusCode  int
+	EC string // oauth error code
+	SC int    // status code
+}
+
+func (e *OAuth2Error) StatusCode() int {
+	return e.SC
+}
+
+func (e *OAuth2Error) Headers() http.Header {
+	header := http.Header{}
+	header.Add("Cache-Control", "no-store")
+	header.Add("Pragma", "no-cache");
+	return header
 }
 
 func (e *OAuth2Error) TranslateErrorCode() string {
-	return e.Translation
+	return e.EC
 }
 
 func (e *OAuth2Error) TranslateStatusCode() int {
-	return e.StatusCode
+	return e.SC
 }
 
 // json.Marshaler
 func (e *OAuth2Error) MarshalJSON() ([]byte, error)  {
 	data := map[string]string {
-		ParameterError: e.Translation,
+		ParameterError: e.EC,
 		ParameterErrorDescription: e.Error(),
 	}
 	return json.Marshal(data)
@@ -140,7 +162,7 @@ func (e *OAuth2Error) UnmarshalJSON(data []byte) error {
 		return e
 	}
 
-	e.Translation = values[ParameterError]
+	e.EC = values[ParameterError]
 
 	desc := values[ParameterErrorDescription]
 	e.CodedError = *security.NewCodedError(ErrorCodeResourceServerGeneral, desc)
@@ -153,9 +175,9 @@ func (e *OAuth2Error) UnmarshalJSON(data []byte) error {
 func NewOAuth2Error(code int, e interface{}, oauth2Code string, sc int, causes...interface{}) *OAuth2Error {
 	embedded := security.NewCodedError(code, e, causes...)
 	return &OAuth2Error{
-		CodedError:  *embedded,
-		Translation: oauth2Code,
-		StatusCode:  sc,
+		CodedError: *embedded,
+		EC:         oauth2Code,
+		SC:         sc,
 	}
 }
 
@@ -206,6 +228,18 @@ func NewInvalidGrantError(value interface{}, causes...interface{}) error {
 func NewInvalidScopeError(value interface{}, causes...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidScope, value,
 		ErrorTranslationInvalidScope, http.StatusBadRequest,
+		causes...)
+}
+
+func NewUnsupportedTokenTypeError(value interface{}, causes...interface{}) error {
+	return NewOAuth2Error(ErrorCodeUnsupportedTokenType, value,
+		ErrorTranslationUnsupportedTokenType, http.StatusBadRequest,
+		causes...)
+}
+
+func NewGenericError(value interface{}, causes...interface{}) error {
+	return NewOAuth2Error(ErrorCodeGeneric, value,
+		ErrorTranslationInvalidRequest, http.StatusBadRequest,
 		causes...)
 }
 

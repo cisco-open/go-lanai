@@ -29,6 +29,16 @@ const (
 )
 
 const (
+	SpecialPermissionAccessAllTenant = "ACCESS_ALL_TENANTS"
+	SpecialPermissionAPIAdmin = "IS_API_ADMIN"
+	SpecialPermissionSwitchTenant = "SWITCH_TENANT"
+	SpecialPermissionSwitchUser = "VIEW_OPERATOR_LOGIN_AS_CUSTOMER"
+	//SpecialPermissionAdmin = "IS_ADMIN"
+	//SpecialPermissionOperator = "IS_OPERATOR"
+	//SpecialPermission = ""
+)
+
+const (
 	DetailsKeyAuthWarning = "AuthWarning"
 	DetailsKeyAuthTime    = "AuthTime"
 )
@@ -53,6 +63,7 @@ const (
 	MWOrderBasicAuth
 	MWOrderFormLogout
 	MWOrderFormAuth
+	MWOrderOAuth2TokenAuth
 	MWOrderSAMLMetadataRefresh
 	// ... TODO more MW goes here
 	MWOrderAccessControl = LowestMiddlewareOrder - 200
@@ -72,6 +83,7 @@ const (
 	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderOAuth2AuthorizeEndpoint
 	FeatureOrderSamlAuthorizeEndpoint
+	FeatureOrderOAuth2TokenAuth
 	FeatureOrderCsrf
 	FeatureOrderAccess
 	FeatureOrderSession
@@ -89,5 +101,7 @@ const (
 )
 
 // CSRF headers and parameter names - shared by CSRF feature and session feature's request cache
-const CsrfParamName = "_csrf"
-const CsrfHeaderName = "X-CSRF-TOKEN"
+const (
+	CsrfParamName  = "_csrf"
+	CsrfHeaderName = "X-CSRF-TOKEN"
+)

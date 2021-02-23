@@ -20,7 +20,7 @@ type IdpSecurityConfigurer interface {
 	security configurers
  ***************************/
 // ClientAuthEndpointsConfigurer implements security.Configurer
-// responsible to configure endpoints using client auth
+// responsible to configure misc using client auth
 type ClientAuthEndpointsConfigurer struct {
 	config *Configuration
 }
@@ -29,6 +29,7 @@ func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 	// TODO Complete this
 	// For Token endpoint
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.Token)).
+		Route(matcher.RouteWithPattern(c.config.Endpoints.CheckToken)).
 		With(clientauth.New().
 			ClientStore(c.config.ClientStore).
 			ClientSecretEncoder(c.config.clientSecretEncoder()).
@@ -54,8 +55,10 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 		With(authorize.NewEndpoint().
 			Path(oauth2_path).
 			Condition(oauth2_condition).
+			ApprovalPath(c.config.Endpoints.Approval).
 			RequestProcessors(c.config.authorizeRequestProcessor()).
-			ErrorHandler(c.config.errorHandler()),
+			ErrorHandler(c.config.errorHandler()).
+			AuthorizeHanlder(c.config.authorizeHanlder()),
 		)
 
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).

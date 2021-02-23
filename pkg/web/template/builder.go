@@ -123,7 +123,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	//we don't need to apply config request encoder and response decoder
 	var e           endpoint.Endpoint
 	var decodeRequestFunc = httptransport.NopRequestDecoder
-	var encodeResponseFunc = ginTemplateEncodeResponseFunc
+	var encodeResponseFunc = TemplateEncodeResponseFunc
 
 	if b.handlerFunc != nil {
 		metadata := web.MakeFuncMetadata(b.handlerFunc, validateHandlerFunc)

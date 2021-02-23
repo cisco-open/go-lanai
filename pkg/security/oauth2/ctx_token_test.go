@@ -12,12 +12,12 @@ func TestAccessTokenJSONSerialization(t *testing.T) {
 	token := NewDefaultAccessToken("token value")
 	token.
 		SetExpireTime(time.Now().Add(2 * time.Hour)).
-		PutClaim("c1", "v1").
-		PutClaim("c2", "v2").
 		PutDetails("d1", "v1").
 		PutDetails("d2", "v1").
 		AddScopes("s1", "s2").
 		SetRefreshToken(refresh)
+	token.Claims().Set("c1", "v1")
+	token.Claims().Set("c2", "v2")
 
 	bytes , err := json.Marshal(token)
 	str := string(bytes)
@@ -59,8 +59,8 @@ func TestAccessTokenJSONSerialization(t *testing.T) {
 	case len(parsed.Details()) != 2:
 		t.Errorf("parsed details should have [%d] items, but has [%d]\n", 2, len(parsed.Details()))
 
-	case parsed.Claims != nil:
-		t.Errorf("parsed claims should be empty (ignored), but got %v\n", parsed.Claims)
+	case parsed.Claims() != nil && len(parsed.Claims().Values()) != 0:
+		t.Errorf("parsed claims should be empty (ignored), but got %v\n", parsed.Claims())
 
 	case parsed.RefreshToken().Value() != "refresh token value":
 		t.Errorf("parsed refresh token should be correct\n")

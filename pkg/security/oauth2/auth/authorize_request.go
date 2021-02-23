@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
@@ -27,6 +28,11 @@ func (r *AuthorizeRequest) Context() utils.MutableContext {
 	return r.context
 }
 
+func (r *AuthorizeRequest) WithContext(ctx context.Context) *AuthorizeRequest {
+	r.context = utils.MakeMutableContext(ctx)
+	return r
+}
+
 func (r *AuthorizeRequest) OAuth2Request() oauth2.OAuth2Request {
 	return oauth2.NewOAuth2Request(func(details *oauth2.RequestDetails) {
 		if grantType, ok := r.Parameters[oauth2.ParameterGrantType]; ok {
@@ -43,13 +49,18 @@ func (r *AuthorizeRequest) OAuth2Request() oauth2.OAuth2Request {
 	})
 }
 
-func NewAuthorizeRequest(req *http.Request) *AuthorizeRequest {
+func (r *AuthorizeRequest) String() string {
+	return fmt.Sprintf("[client=%s, response_type=%s, redirect=%s, scope=%s, ext=%s]",
+		r.ClientId, r.ResponseTypes, r.RedirectUri, r.Scopes, r.Extensions)
+}
+
+func NewAuthorizeRequest() *AuthorizeRequest {
 	return &AuthorizeRequest{
 		Parameters:    map[string]string{},
 		ResponseTypes: utils.NewStringSet(),
 		Scopes:        utils.NewStringSet(),
 		Extensions:    map[string]interface{}{},
-		context:       utils.MakeMutableContext(req.Context()),
+		context:       utils.NewMutableContext(),
 	}
 }
 

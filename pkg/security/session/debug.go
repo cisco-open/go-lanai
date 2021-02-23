@@ -24,7 +24,7 @@ func SessionDebugHandlerFunc() gin.HandlerFunc {
 
 			session.Set("TEST", RandomString(10240))
 		} else {
-			fmt.Printf("Have Session Value %s\n", "TEST")
+			fmt.Printf("Have Session Token %s\n", "TEST")
 		}
 
 		ctx.Next()

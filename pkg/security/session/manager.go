@@ -51,7 +51,7 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 		}
 
 		session, err := m.store.Get(id, DefaultName)
-		// If session store is not operating properly, we cannot continue for endpoints that needs session
+		// If session store is not operating properly, we cannot continue for misc that needs session
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return

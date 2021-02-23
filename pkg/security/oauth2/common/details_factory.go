@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common/internal"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"strings"
 	"time"
 )
 
@@ -38,10 +39,14 @@ type facts struct {
 	issueTime  time.Time
 	expriyTime time.Time
 	authTime   time.Time
+	source     oauth2.Authentication
 }
 
 func (f *ContextDetailsFactory) New(ctx context.Context, request oauth2.OAuth2Request) (security.ContextDetails, error) {
 	facts := f.loadFacts(ctx, request)
+	if facts.account == nil || facts.tenant == nil || facts.provider == nil {
+		return f.createSimple(ctx, facts)
+	}
 	return f.create(ctx, facts)
 }
 
@@ -82,6 +87,10 @@ func (f *ContextDetailsFactory) loadFacts(ctx context.Context, request oauth2.OA
 		facts.authTime = facts.issueTime
 	}
 
+	if ctx.Value(oauth2.CtxKeySourceAuthentication) != nil {
+		facts.source = ctx.Value(oauth2.CtxKeySourceAuthentication).(oauth2.Authentication)
+	}
+
 	return &facts
 }
 
@@ -105,7 +114,7 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 		Id: facts.account.ID().(string),
 		Username: facts.account.Username(),
 		AccountType: facts.account.Type(),
-		AssignedTenantIds: utils.NewStringSet(facts.account.(security.AccountTenancy).Tenants()...),
+		AssignedTenantIds: utils.NewStringSet(facts.account.(security.AccountTenancy).TenantIds()...),
 	}
 
 	if meta, ok := facts.account.(security.AccountMetadata); ok {
@@ -117,7 +126,7 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 	}
 
 	// creds
-	ad, e := f.createAuthDetails(ctx, facts) // TODO
+	ad, e := f.createAuthDetails(ctx, facts)
 	if e != nil {
 		return nil, e
 	}
@@ -159,5 +168,29 @@ func (f *ContextDetailsFactory) createAuthDetails(ctx context.Context, facts *fa
 	d.AuthenticationTime = facts.authTime
 	d.IssueTime = facts.issueTime
 	d.ExpiryTime = facts.expriyTime
+	f.populateProxyDetails(ctx, &d, facts)
 	return &d, nil
+}
+
+func (f *ContextDetailsFactory) populateProxyDetails(ctx context.Context, d *internal.AuthenticationDetails, facts *facts) {
+	if facts.source == nil {
+		return
+	}
+
+	if proxyDetails, ok := facts.source.Details().(security.ProxiedUserDetails); ok && proxyDetails.Proxied() {
+		// original details is proxied
+		d.Proxied = true
+		d.OriginalUsername = proxyDetails.OriginalUsername()
+		return
+	}
+
+	src, ok := facts.source.Details().(security.UserDetails)
+	if !ok {
+		return
+	}
+
+	if facts.account == nil || strings.TrimSpace(facts.account.Username()) != strings.TrimSpace(src.Username()) {
+		d.Proxied = true
+		d.OriginalUsername = strings.TrimSpace(src.Username())
+	}
 }

@@ -30,13 +30,9 @@ func NewStaticJwkStore(kids...string) *StaticJwkStore {
 	}
 }
 
-func (s *StaticJwkStore) Rotate(ctx context.Context) error {
+func (s *StaticJwkStore) Rotate(ctx context.Context, name string) error {
 	s.current = (s.current + 1) % len(kidRoundRobin)
 	return nil
-}
-
-func (s *StaticJwkStore) Current(ctx context.Context) (Jwk, error) {
-	return s.LoadByKid(ctx, kidRoundRobin[s.current])
 }
 
 func (s *StaticJwkStore) LoadByKid(_ context.Context, kid string) (Jwk, error) {
@@ -44,10 +40,10 @@ func (s *StaticJwkStore) LoadByKid(_ context.Context, kid string) (Jwk, error) {
 }
 
 func (s *StaticJwkStore) LoadByName(_ context.Context, name string) (Jwk, error) {
-	return s.getOrNew(name)
+	return s.getOrNew(kidRoundRobin[s.current])
 }
 
-func (s *StaticJwkStore) LoadAll(_ context.Context) ([]Jwk, error) {
+func (s *StaticJwkStore) LoadAll(ctx context.Context, names ...string) ([]Jwk, error) {
 	jwks := make([]Jwk, len(s.lookup))
 
 	i := 0

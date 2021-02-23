@@ -37,11 +37,11 @@ type registerParams struct {
 	Init security.Registrar
 	SessionProps security.SessionProperties
 	ServerProps web.ServerProperties
-	Client redis.Client
+	ClientFactory redis.ClientFactory
 	MaxSessionsFunc GetMaximumSessions `optional:"true"`
 }
 
 func register(di registerParams) {
-	configurer := newSessionConfigurer(di.SessionProps, di.ServerProps, di.Client, di.MaxSessionsFunc)
+	configurer := newSessionConfigurer(di.SessionProps, di.ServerProps, di.ClientFactory, di.MaxSessionsFunc)
 	di.Init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

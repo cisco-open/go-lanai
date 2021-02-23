@@ -211,6 +211,10 @@ func (t TestWebSecurity) Condition(mwcm web.RequestMatcher) security.WebSecurity
 	panic("implement me")
 }
 
+func (t TestWebSecurity) AndCondition(mwcm web.RequestMatcher) security.WebSecurity {
+	panic("implement me")
+}
+
 func (t TestWebSecurity) Add(i ...interface{}) security.WebSecurity {
 	panic("implement me")
 }

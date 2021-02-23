@@ -1,8 +1,10 @@
 package auth
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"fmt"
 	"net/http"
 )
 
@@ -19,6 +21,11 @@ func (r *TokenRequest) Context() utils.MutableContext {
 	return r.context
 }
 
+func (r *TokenRequest) WithContext(ctx context.Context) *TokenRequest {
+	r.context = utils.MakeMutableContext(ctx)
+	return r
+}
+
 func (r *TokenRequest) OAuth2Request(client oauth2.OAuth2Client) oauth2.OAuth2Request {
 	return oauth2.NewOAuth2Request(func(details *oauth2.RequestDetails) {
 		details.Parameters = r.Parameters
@@ -30,12 +37,12 @@ func (r *TokenRequest) OAuth2Request(client oauth2.OAuth2Client) oauth2.OAuth2Re
 	})
 }
 
-func NewTokenRequest(req *http.Request) *TokenRequest {
+func NewTokenRequest() *TokenRequest {
 	return &TokenRequest{
 		Parameters:    map[string]string{},
 		Scopes:        utils.NewStringSet(),
 		Extensions:    map[string]interface{}{},
-		context:       utils.MakeMutableContext(req.Context()),
+		context:       utils.NewMutableContext(),
 	}
 }
 
@@ -53,4 +60,9 @@ func ParseTokenRequest(req *http.Request) (*TokenRequest, error) {
 		Extensions:    values,
 		context:       utils.MakeMutableContext(req.Context()),
 	}, nil
+}
+
+func (r *TokenRequest) String() string {
+	return fmt.Sprintf("[client=%s, grant=%s, scope=%s, ext=%s]",
+		r.ClientId, r.GrantType, r.Scopes, r.Extensions)
 }
