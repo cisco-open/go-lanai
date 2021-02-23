@@ -194,7 +194,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) handleErrorWithSamlResponse(c *gin.Co
 	if errors.Is(err, ErrorSubTypeSamlSso) {
 		code := saml.StatusResponder
 		message := ""
-		if translator, ok := err.(SamlSsoErrorTranslator); ok {
+		if translator, ok := err.(SamlSsoErrorTranslator); ok { //all the saml sub types should implement the translator API
 			code = translator.TranslateErrorCode()
 			message = translator.TranslateErrorMessage()
 		}

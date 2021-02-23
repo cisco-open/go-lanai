@@ -3,6 +3,8 @@ package saml_auth
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"errors"
+	"github.com/crewjam/saml"
+	"net/http"
 )
 
 //errors maps to the status code described in section 3.2.2 of http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf
@@ -39,29 +41,43 @@ var (
 //TODO: if we need error handler to write to the service provider, we'll need some additional information here
 type SamlError struct {
 	security.CodedError
+	EC string // oauth error code
+	SC int    // status code
 }
 
-func NewSamlError(code int, e interface{}, causes...interface{}) *SamlError {
+func NewSamlError(code int, e interface{}, samlErrorCode string, httpStatusCode int, causes...interface{}) *SamlError {
 	embedded := security.NewCodedError(code, e, causes...)
 	return &SamlError{
 		CodedError:  *embedded,
 	}
 }
 
+func (s *SamlError) TranslateErrorCode() string {
+	return s.EC
+}
+
+func (s *SamlError) TranslateErrorMessage() string {
+	return s.Error()
+}
+
+func (s *SamlError) TranslateHttpStatusCode() int {
+	return s.SC
+}
+
 func NewSamlInternalError(text string, causes...interface{}) error {
-	return NewSamlError(ErrorCodeSamlInternalGeneral, errors.New(text), causes...)
+	return NewSamlError(ErrorCodeSamlInternalGeneral, errors.New(text),"", http.StatusInternalServerError, causes...)
 }
 
 func NewSamlRequesterError(text string, causes...interface{}) error {
-	return NewSamlError(ErrorCodeSamlSsoRequester, errors.New(text), causes...)
+	return NewSamlError(ErrorCodeSamlSsoRequester, errors.New(text), saml.StatusRequester, http.StatusBadRequest, causes...)
 }
 
 func NewSamlResponderError(text string, causes...interface{}) error {
-	return NewSamlError(ErrorCodeSamlSsoResponder, errors.New(text), causes...)
+	return NewSamlError(ErrorCodeSamlSsoResponder, errors.New(text), saml.StatusResponder, http.StatusInternalServerError, causes...)
 }
 
 func NewSamlRequestVersionMismatch(text string, causes...interface{}) error {
-	return NewSamlError(ErrorCodeSamlSsoRequestVersionMismatch, errors.New(text), causes...)
+	return NewSamlError(ErrorCodeSamlSsoRequestVersionMismatch, errors.New(text), saml.StatusVersionMismatch, http.StatusConflict, causes...)
 }
 
 type SamlSsoErrorTranslator interface {
