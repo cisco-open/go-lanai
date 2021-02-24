@@ -39,7 +39,7 @@ type EnvEndpoint struct {
 	appConfig appconfig.ConfigAccessor
 }
 
-func New(di regDI) *EnvEndpoint {
+func new(di regDI) *EnvEndpoint {
 	ep := EnvEndpoint{
 		appConfig: di.AppContext.Config(),
 	}

@@ -9,19 +9,11 @@ import (
 var Module = &bootstrap.Module{
 	Name: "actuator-info",
 	Precedence: actuator.MinActuatorPrecedence,
-	Options: []fx.Option{
-		fx.Invoke(register),
-	},
+	Options: []fx.Option{},
 }
 
 func init() {
 	bootstrap.Register(Module)
-}
-
-// Maker func, does nothing. Allow service to include this module in main()
-// TODO this is not needed if we have actuator config package
-func Use() {
-
 }
 
 type regDI struct {
@@ -31,7 +23,7 @@ type regDI struct {
 	AppContext    *bootstrap.ApplicationContext
 }
 
-func register(di regDI) {
-	ep := New(di)
+func Register(di regDI) {
+	ep := new(di)
 	di.Registrar.Register(ep)
 }

@@ -28,7 +28,7 @@ type AliveEndpoint struct {
 	actuator.WebEndpointBase
 }
 
-func New(di regDI) *AliveEndpoint {
+func new(di regDI) *AliveEndpoint {
 	ep := AliveEndpoint{}
 	ep.WebEndpointBase = actuator.MakeWebEndpointBase(func(opt *actuator.EndpointOption) {
 		opt.Id = ID

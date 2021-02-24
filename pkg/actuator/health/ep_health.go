@@ -28,7 +28,7 @@ type HealthEndpoint struct {
 	actuator.WebEndpointBase
 }
 
-func New(di regDI) *HealthEndpoint {
+func new(di regDI) *HealthEndpoint {
 	ep := HealthEndpoint{}
 	ep.WebEndpointBase = actuator.MakeWebEndpointBase(func(opt *actuator.EndpointOption) {
 		opt.Id = ID

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ConfigRootConsulConfigProvider = "spring.cloud.consul.config"
+	ConfigRootConsulConfigProvider = "spring.cloud.consul.init"
 	ConfigKeyAppName               = "spring.application.name"
 )
 
