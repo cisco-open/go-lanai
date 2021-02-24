@@ -21,12 +21,16 @@ type ConfigProvider struct {
 	once          sync.Once
 }
 
+func (configProvider *ConfigProvider) Name() string {
+	return "command-line"
+}
+
 func (configProvider *ConfigProvider) Load() (loadError error) {
 	defer func(){
 		if loadError != nil {
-			configProvider.IsLoaded = false
+			configProvider.Loaded = false
 		} else {
-			configProvider.IsLoaded = true
+			configProvider.Loaded = true
 		}
 	}()
 

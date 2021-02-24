@@ -206,7 +206,7 @@ func newApplicationConfig(p newApplicationConfigParam) *appconfig.ApplicationCon
 	for _, provider := range p.ConsulProviders {
 		mergedProvider = append(mergedProvider, provider)
 	}
-	mergedProvider = append(mergedProvider, p.BootstrapConfig.Providers...)
+	mergedProvider = append(mergedProvider, p.BootstrapConfig.Providers()...)
 
 	applicationConfig := appconfig.NewApplicationConfig(mergedProvider...)
 

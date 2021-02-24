@@ -13,31 +13,32 @@ import (
 var ErrNotLoaded = errors.New("Configuration not loaded")
 
 type config struct {
-	Providers     []Provider //such as yaml auth, commandline etc.
+	providers     []Provider //such as yaml auth, commandline etc.
 	settings      map[string]interface{}
 	isLoaded 	  bool
 }
 
 type BootstrapConfig struct {
-	*config
+	config
 }
 
 type ApplicationConfig struct {
-	*config
+	config
 }
 
 type ConfigAccessor interface {
 	Value(key string) interface{}
 	Bind(target interface{}, prefix string) error
 	Each(apply func(string, interface{}) error) error
+	Providers() []Provider
 }
 
 func NewBootstrapConfig(providers ...Provider) *BootstrapConfig {
-	return &BootstrapConfig{&config{Providers: providers}}
+	return &BootstrapConfig{config{providers: providers}}
 }
 
 func NewApplicationConfig(providers ...Provider) *ApplicationConfig {
-	return &ApplicationConfig{&config{Providers: providers}}
+	return &ApplicationConfig{config{providers: providers}}
 }
 
 //load will fail if place holder cannot be resolved due to circular dependency
@@ -51,11 +52,11 @@ func (c *config) Load(force bool) (loadError error) {
 	}()
 
 	//sort based on precedence
-	sort.SliceStable(c.Providers, func(i, j int) bool { return c.Providers[i].GetPrecedence() > c.Providers[j].GetPrecedence() })
+	sort.SliceStable(c.providers, func(i, j int) bool { return c.providers[i].GetPrecedence() > c.providers[j].GetPrecedence() })
 
 	// Load appconfig from each auth if it's not loaded yet, or if force reload.
-	for _, provider := range c.Providers {
-		if !provider.isLoaded() || force {
+	for _, provider := range c.providers {
+		if !provider.IsLoaded() || force {
 			error := provider.Load()
 
 			if error != nil {
@@ -70,7 +71,7 @@ func (c *config) Load(force bool) (loadError error) {
 		mergoConfig.Overwrite = true
 	}
 
-	for _, provider := range c.Providers {
+	for _, provider := range c.providers {
 		if provider.GetSettings() != nil {
 			formatted, error := ProcessKeyFormat(provider.GetSettings(), NormalizeKey)
 			if error != nil {
@@ -201,6 +202,10 @@ func (c *config) Bind(target interface{}, prefix string) error {
 //stops at the first error
 func (c *config) Each(apply func(string, interface{})error) error{
 	return VisitEach(c.settings, apply)
+}
+
+func (c *config) Providers() []Provider {
+	return c.providers
 }
 
 func resolve(nested map[string]interface{}) error {
