@@ -74,31 +74,31 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 
 		req, err := saml.NewIdpAuthnRequest(mw.idp, ctx.Request)
 		if err != nil {
-			mw.handleError(ctx, NewSamlInternalError("error decoding authentication request", err))
+			mw.handleError(ctx, nil, NewSamlInternalError("error decoding authentication request", err))
 			return
 		}
 
 		if err = UnmarshalRequest(req); err != nil {
-			mw.handleError(ctx, err)
+			mw.handleError(ctx, nil, err)
 			return
 		}
 
 		auth, exist := ctx.Get(security.ContextKeySecurity)
 		//sanity check
 		if !exist {
-			mw.handleError(ctx, NewSamlInternalError("no authentication found", err))
+			mw.handleError(ctx, nil, NewSamlInternalError("no authentication found", err))
 			return
 		}
 
 		authentication, ok := auth.(security.Authentication)
 		//sanity check
 		if !ok {
-			mw.handleError(ctx, NewSamlInternalError("authentication type is not supported"))
+			mw.handleError(ctx, nil, NewSamlInternalError("authentication type is not supported"))
 			return
 		}
 		//sanity check
 		if authentication.State() < security.StateAuthenticated {
-			mw.handleError(ctx, NewSamlInternalError("session is not authenticated"))
+			mw.handleError(ctx, nil, NewSamlInternalError("session is not authenticated"))
 			return
 		}
 
@@ -107,11 +107,11 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 		// find the service provider metadata
 		spDetails, spMetadata, err := mw.spMetadataManager.GetServiceProvider(serviceProviderID)
 		if err != nil {
-			mw.handleError(ctx, NewSamlInternalError("cannot find service provider metadata"))
+			mw.handleError(ctx, nil, NewSamlInternalError("cannot find service provider metadata"))
 			return
 		}
 		if len(spMetadata.SPSSODescriptors) != 1 {
-			mw.handleError(ctx, NewSamlInternalError("expected exactly one SP SSO descriptor in SP metadata"))
+			mw.handleError(ctx, nil, NewSamlInternalError("expected exactly one SP SSO descriptor in SP metadata"))
 			return
 		}
 		req.ServiceProviderMetadata = spMetadata
@@ -120,12 +120,12 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 		// Check that the ACS URL matches an ACS endpoint in the SP metadata.
 		// After this point, we have the endpoint to send back responses whether it's success or false
 		if err = DetermineACSEndpoint(req); err != nil {
-			mw.handleError(ctx, err)
+			mw.handleError(ctx, nil, err)
 			return
 		}
 
 		if err = ValidateAuthnRequest(req, spDetails, spMetadata); err != nil {
-			mw.handleErrorWithSamlResponse(ctx, req, err)
+			mw.handleError(ctx, req, err)
 			return
 		}
 
@@ -133,27 +133,27 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 		client, err := mw.samlClientStore.GetSamlClientById(serviceProviderID)
 		if err != nil { //we shouldn't get an error here because we already have the SP's metadata.
 			//if an error does occur, it means there's a programming error
-			mw.handleError(ctx, NewSamlInternalError("saml client not found", err))
+			mw.handleError(ctx, nil, NewSamlInternalError("saml client not found", err))
 			return
 		}
 		err = mw.validateTenantRestriction(ctx, client.GetTenantRestrictions(), authentication)
 		if err != nil {
-			mw.handleErrorWithSamlResponse(ctx, req, err)
+			mw.handleError(ctx, req, err)
 			return
 		}
 
 		if err = MakeAssertion(ctx, req, authentication, mw.attributeGenerator); err != nil {
-			mw.handleErrorWithSamlResponse(ctx, req, err)
+			mw.handleError(ctx, req, err)
 			return
 		}
 
 		if err = MakeAssertionEl(req, spDetails.SkipAssertionEncryption); err != nil {
-			mw.handleErrorWithSamlResponse(ctx, req, err)
+			mw.handleError(ctx, req, err)
 			return
 		}
 
 		if err = req.WriteResponse(ctx.Writer); err != nil {
-			mw.handleError(ctx, NewSamlInternalError("error writing saml response", err))
+			mw.handleError(ctx, nil, NewSamlInternalError("error writing saml response", err))
 			return
 		}
 	}
@@ -183,38 +183,19 @@ func (mw *SamlAuthorizeEndpointMiddleware) MetadataHandlerFunc(c *gin.Context) {
 	_, _ = w.Write(buf)
 }
 
-func (mw *SamlAuthorizeEndpointMiddleware) handleError(c *gin.Context, err error) {
+func (mw *SamlAuthorizeEndpointMiddleware) handleError(c *gin.Context, authRequest *saml.IdpAuthnRequest, err error) {
 	if !errors.Is(err, security.ErrorTypeSaml) {
 		err = NewSamlInternalError("saml sso internal error", err)
 	}
+
+	if authRequest != nil {
+		c.Set(CtxKeySamlAuthnRequest, authRequest)
+	}
+
 	_ = c.Error(err)
 	c.Abort()
 }
 
-/**
-	Handles error as saml response when possible.
-	Otherwise let the error handling handle it
-
-	See http://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf 4.1.3.5
- */
-func (mw *SamlAuthorizeEndpointMiddleware) handleErrorWithSamlResponse(c *gin.Context, authRequest *saml.IdpAuthnRequest, err error) {
-	if errors.Is(err, ErrorSubTypeSamlSso) {
-		code := saml.StatusResponder
-		message := ""
-		if translator, ok := err.(SamlSsoErrorTranslator); ok { //all the saml sub types should implement the translator API
-			code = translator.TranslateErrorCode()
-			message = translator.TranslateErrorMessage()
-		}
-		MakeErrorResponse(authRequest, code, message)
-		writeErr := authRequest.WriteResponse(c.Writer)
-
-		if writeErr != nil {
-			mw.handleError(c, writeErr)
-		}
-	} else {
-		mw.handleError(c, err)
-	}
-}
 
 func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context.Context, tenantRestriction utils.StringSet, auth security.Authentication) error {
 	if len(tenantRestriction) == 0  {

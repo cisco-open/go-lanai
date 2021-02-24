@@ -61,7 +61,7 @@ func verifySignature(req *saml.IdpAuthnRequest) error {
 
 	sigEl, err := findChild(el, "http://www.w3.org/2000/09/xmldsig#", "Signature")
 
-	if err != nil && sigEl != nil {
+	if err != nil || sigEl == nil {
 		return NewSamlRequesterError("auth request is not signed")
 	}
 

@@ -38,7 +38,13 @@ var (
 	ErrorSubTypeSamlInternal = security.NewErrorSubType(ErrorSubTypeCodeSamlInternal, errors.New("error sub-type: internal"))
 )
 
-//TODO: if we need error handler to write to the service provider, we'll need some additional information here
+type SamlSsoErrorTranslator interface {
+	error
+	TranslateErrorCode() string
+	TranslateErrorMessage() string
+	TranslateHttpStatusCode() int
+}
+
 type SamlError struct {
 	security.CodedError
 	EC string // saml error code
@@ -80,11 +86,4 @@ func NewSamlResponderError(text string, causes...interface{}) error {
 
 func NewSamlRequestVersionMismatch(text string, causes...interface{}) error {
 	return NewSamlError(ErrorCodeSamlSsoRequestVersionMismatch, errors.New(text), saml.StatusVersionMismatch, http.StatusConflict, causes...)
-}
-
-type SamlSsoErrorTranslator interface {
-	error
-	TranslateErrorCode() string
-	TranslateErrorMessage() string
-	TranslateHttpStatusCode() int
 }
