@@ -10,8 +10,7 @@ import (
 
 const (
 	ID                   = "env"
-	EnableByDefault      = true
-	infoPropertiesPrefix = "env"
+	EnableByDefault      = false
 )
 
 type Input struct {
@@ -57,6 +56,7 @@ func New(di regDI) *EnvEndpoint {
 
 // Read never returns error
 func (ep *EnvEndpoint) Read(ctx context.Context, input *Input) (*EnvDescriptor, error) {
+	// TODO maybe support match pattern
 	env := EnvDescriptor{
 		ActiveProfiles: profile.Profiles,
 		PropertySources: []PSourceDescriptor{},
