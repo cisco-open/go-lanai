@@ -99,8 +99,8 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 			meta.out.header = param {i, ot}
 		case ot.ConvertibleTo(reflect.TypeOf((*error)(nil)).Elem()):
 			meta.out.error = param {i, ot}
-		case !meta.out.response.isValid() && (isStructOrPtrToStruct(ot) || ot.Kind() == reflect.Interface):
-			// we allow interface as response
+		case !meta.out.response.isValid() && isSupportedResponseType(ot):
+			// we allow interface and map as response
 			meta.out.response = param {i, ot}
 			meta.response = ot
 		default:
@@ -164,4 +164,17 @@ func isStructOrPtrToStruct(t reflect.Type) (ret bool) {
 	ret = t.Kind() == reflect.Struct
 	ret = ret || t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct
 	return
+}
+
+func isSupportedResponseType(t reflect.Type) bool {
+	if isStructOrPtrToStruct(t) {
+		return true
+	}
+	switch t.Kind() {
+	case reflect.Interface:
+		fallthrough
+	case reflect.Map:
+		return true
+	}
+	return false
 }
