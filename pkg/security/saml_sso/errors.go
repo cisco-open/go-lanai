@@ -41,7 +41,7 @@ var (
 //TODO: if we need error handler to write to the service provider, we'll need some additional information here
 type SamlError struct {
 	security.CodedError
-	EC string // oauth error code
+	EC string // saml error code
 	SC int    // status code
 }
 
@@ -49,6 +49,8 @@ func NewSamlError(code int, e interface{}, samlErrorCode string, httpStatusCode 
 	embedded := security.NewCodedError(code, e, causes...)
 	return &SamlError{
 		CodedError:  *embedded,
+		EC: samlErrorCode,
+		SC: httpStatusCode,
 	}
 }
 

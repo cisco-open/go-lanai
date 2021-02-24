@@ -30,7 +30,9 @@ func UnmarshalRequest(req *saml.IdpAuthnRequest) error {
 //we reimplement it here to add support for them
 func ValidateAuthnRequest(req *saml.IdpAuthnRequest, spDetails SamlSpDetails, spMetadata *saml.EntityDescriptor) error {
 	if !spDetails.SkipAuthRequestSignatureVerification {
-		verifySignature(req)
+		if err := verifySignature(req); err != nil {
+			return err
+		}
 	}
 
 	if req.Request.Destination != "" &&  req.Request.Destination != req.IDP.SSOURL.String() {

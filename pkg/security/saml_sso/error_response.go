@@ -61,7 +61,6 @@ func MakeErrorResponse(req *saml.IdpAuthnRequest, code string, message string) e
 		sigEl := signedResponseEl.ChildElements()[len(signedResponseEl.ChildElements())-1]
 		response.Signature = sigEl
 		responseEl = response.Element()
-		responseEl.AddChild(req.AssertionEl)
 	}
 
 	req.ResponseEl = responseEl

@@ -20,6 +20,14 @@ func NewInMemSpManager() saml_auth.SamlClientStore {
 					SkipAuthRequestSignatureVerification: false,
 				},
 			},
+			saml_auth.DefaultSamlClient{
+				SamlSpDetails: saml_auth.SamlSpDetails{
+					EntityId: "http://localhost:8000/saml/metadata",
+					MetadataSource: "http://localhost:8000/saml/metadata",
+					SkipAssertionEncryption: true,
+					SkipAuthRequestSignatureVerification: false,
+				},
+			},
 		},
 	}
 }
@@ -33,10 +41,10 @@ func (i *InMemorySamlClientStore) GetAllSamlClient() []saml_auth.SamlClient {
 }
 
 func (i *InMemorySamlClientStore) GetSamlClientById(id string) (saml_auth.SamlClient, error) {
-	if i.details[0].EntityId == id {
-		return i.details[0], nil
-	} else {
-		return saml_auth.DefaultSamlClient{}, errors.New("not found")
+	for _, detail := range i.details {
+		if detail.EntityId == id {
+			return detail, nil
+		}
 	}
+	return saml_auth.DefaultSamlClient{}, errors.New("not found")
 }
-
