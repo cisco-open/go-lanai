@@ -18,24 +18,24 @@ var (
 )
 
 type SamlAuthorizeEndpointConfigurer struct {
-	properties             security.SamlProperties
-	serverProperties       web.ServerProperties
-	serviceProviderManager SamlClientStore
-	accountStore 		   security.AccountStore
-	attributeGenerator     AttributeGenerator
+	properties         security.SamlProperties
+	serverProperties   web.ServerProperties
+	samlClientStore    SamlClientStore
+	accountStore       security.AccountStore
+	attributeGenerator AttributeGenerator
 
 }
 
 func newSamlAuthorizeEndpointConfigurer(properties security.SamlProperties, serverProperties web.ServerProperties,
-	serviceProviderManager SamlClientStore,
+	samlClientStore SamlClientStore,
 	accountStore security.AccountStore,
 	attributeGenerator AttributeGenerator) *SamlAuthorizeEndpointConfigurer {
 
 	return &SamlAuthorizeEndpointConfigurer{
-		properties: properties,
-		serverProperties: serverProperties,
-		serviceProviderManager: serviceProviderManager,
-		accountStore: accountStore,
+		properties:         properties,
+		serverProperties:   serverProperties,
+		samlClientStore:    samlClientStore,
+		accountStore:       accountStore,
 		attributeGenerator: attributeGenerator,
 	}
 }
@@ -44,7 +44,7 @@ func (c *SamlAuthorizeEndpointConfigurer) Apply(feature security.Feature, ws sec
 	f := feature.(*Feature)
 
 	opts := c.getIdentityProviderConfiguration(f)
-	mw := NewSamlAuthorizeEndpointMiddleware(opts, c.serviceProviderManager, c.accountStore, c.attributeGenerator)
+	mw := NewSamlAuthorizeEndpointMiddleware(opts, c.samlClientStore, c.accountStore, c.attributeGenerator)
 
 	ws.
 		Add(middleware.NewBuilder("Saml Service Provider Refresh").
@@ -92,6 +92,6 @@ func (c *SamlAuthorizeEndpointConfigurer) getIdentityProviderConfiguration(f *Fe
 			Path: fmt.Sprintf("%s%s", c.serverProperties.ContextPath, f.ssoLocation.Path),
 			RawQuery: f.ssoLocation.RawQuery,
 		}),
-		serviceProviderManager: c.serviceProviderManager,
+		serviceProviderManager: c.samlClientStore,
 	}
 }
