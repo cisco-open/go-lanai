@@ -9,7 +9,7 @@ import (
 
 type AssertionCandidate struct {
 	Assertion *saml.Assertion
-	DetailsMap map[interface{}]interface{}
+	DetailsMap map[string]interface{}
 }
 
 func (a *AssertionCandidate) Principal() interface{} {
@@ -30,7 +30,7 @@ func (a *AssertionCandidate) Details() interface{} {
 type samlAssertionAuthentication struct {
 	Acct       security.Account
 	Perms      map[string]interface{}
-	DetailsMap map[interface{}]interface{}
+	DetailsMap map[string]interface{}
 }
 
 func (sa *samlAssertionAuthentication) Principal() interface{} {
@@ -84,8 +84,9 @@ func (a *Authenticator) Authenticate(_ context.Context, candidate security.Candi
 
 	details := assertionCandidate.DetailsMap
 	if details == nil {
-		details = map[interface{}]interface{}{}
+		details = make(map[string]interface{})
 	}
+	details[security.DetailsKeyAuthTime] = assertionCandidate.Assertion.IssueInstant
 
 	auth := &samlAssertionAuthentication{
 		Acct: user,

@@ -10,7 +10,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"go.uber.org/fx"
+	"net/url"
 )
 
 func init() {
@@ -25,6 +27,7 @@ func init() {
 		fx.Provide(NewProviderStore),
 		fx.Provide(NewInMemoryIdpManager),
 		fx.Provide(NewInMemAuthFlowManager),
+		fx.Provide(NewInMemSpManager),
 		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(newResServerConfigurer),
 		fx.Invoke(configureSecurity),
@@ -64,13 +67,21 @@ func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerCo
 		config.ProviderStore = deps.ProviderStore
 		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
 		config.Endpoints = authserver.Endpoints{
-			Authorize: "/v2/authorize",
+			Authorize: authserver.ConditionalEndpoint{
+				Location: &url.URL{Path: "/v2/authorize"},
+				Condition: matcher.NotRequest(matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")),
+			},
 			Approval: "/v2/approve",
 			Token: "/v2/token",
 			CheckToken: "/v2/check_token",
 			UserInfo: "/v2/userinfo",
 			JwkSet: "/v2/jwks",
 			Logout: "/v2/logout",
+			SamlSso: authserver.ConditionalEndpoint{
+				Location: &url.URL{Path:"/v2/authorize", RawQuery: "grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"},
+				Condition: matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"),
+			},
+			SamlMetadata: "/metadata",
 		}
 	}
 }

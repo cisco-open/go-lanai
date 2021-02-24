@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/clientauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
+	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml_sso"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 )
 
@@ -48,13 +49,23 @@ type AuthorizeEndpointConfigurer struct {
 }
 
 func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
-	// TODO add condtion that exclude SAML
-	ws.With(authorize.NewEndpoint().
-		Path(c.config.Endpoints.Authorize).
-		ApprovalPath(c.config.Endpoints.Approval).
-		RequestProcessors(c.config.authorizeRequestProcessor()).
-		ErrorHandler(c.config.errorHandler()).
-		AuthorizeHanlder(c.config.authorizeHanlder()),
-	)
+	oauth2_path := c.config.Endpoints.Authorize.Location.Path
+	oauth2_condition := c.config.Endpoints.Authorize.Condition
+	ws.Route(matcher.RouteWithPattern(oauth2_path)).
+		With(authorize.NewEndpoint().
+			Path(oauth2_path).
+			Condition(oauth2_condition).
+			ApprovalPath(c.config.Endpoints.Approval).
+			RequestProcessors(c.config.authorizeRequestProcessor()).
+			ErrorHandler(c.config.errorHandler()).
+			AuthorizeHanlder(c.config.authorizeHanlder()),
+		)
+
+	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
+		With(saml_auth.NewEndpoint().
+			SsoCondition(c.config.Endpoints.SamlSso.Condition).
+			SsoLocation(c.config.Endpoints.SamlSso.Location).
+			MetadataPath(c.config.Endpoints.SamlMetadata))
+
 	c.delegate.Configure(ws, c.config)
 }

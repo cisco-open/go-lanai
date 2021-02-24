@@ -22,7 +22,7 @@ import (
 )
 
 type SamlAuthConfigurer struct {
-	properties   ServiceProviderProperties
+	properties   security.SamlProperties
 	idpManager   idp.IdentityProviderManager
 	serverProps  web.ServerProperties
 	accountStore security.FederatedAccountStore
@@ -37,7 +37,8 @@ func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecu
 		Route(matcher.RouteWithPattern(f.metadataPath)).
 		Add(mapping.Get(f.metadataPath).
 			HandlerFunc(m.MetadataHandlerFunc).
-			Name("saml m metadata")).
+			//metadata is an endpoint that is available without conditions, therefore call Build() to not inherit the ws condition
+			Name("saml metadata").Build()).
 		Add(mapping.Post(f.acsPath).
 			HandlerFunc(m.ACSHandlerFunc).
 			Name("saml assertion consumer m")).
@@ -166,7 +167,7 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 	return NewMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
 }
 
-func newSamlAuthConfigurer(properties ServiceProviderProperties, serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
+func newSamlAuthConfigurer(properties security.SamlProperties, serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
 	accountStore security.FederatedAccountStore) *SamlAuthConfigurer {
 	return &SamlAuthConfigurer{
 		properties: properties,

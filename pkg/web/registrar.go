@@ -419,7 +419,6 @@ func MakeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerF
 		c.Request = c.Request.WithContext(reqCtx)
 		s.ServeHTTP(c.Writer, c.Request)
 	}
-
 	return MakeConditionalHandlerFunc(handler, rm)
 }
 

@@ -1,10 +1,12 @@
 package cryptoutils
 
 import (
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -53,6 +55,20 @@ func LoadPrivateKey(file string, keyPassword string) (*rsa.PrivateKey, error){
 			return nil, errors.New("private key is not rsa key")
 		}
 	}
+}
+
+// RandReader is the io.Reader that produces cryptographically random
+// bytes when they are need by the library. The default value is
+// rand.Reader, but it can be replaced for testing.
+var RandReader = rand.Reader
+
+func RandomBytes(n int) []byte {
+	rv := make([]byte, n)
+
+	if _, err := io.ReadFull(RandReader, rv); err != nil {
+		panic(err)
+	}
+	return rv
 }
 
 // LoadMultiBlockPem load items (cert, private key, public key, etc.) from pem file.

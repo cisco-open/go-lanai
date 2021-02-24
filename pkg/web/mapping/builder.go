@@ -152,7 +152,7 @@ func (b *MappingBuilder) GetName() string {
 func (b *MappingBuilder) validate() (err error) {
 	switch {
 	case b.path == "":
-		err = errors.New("empty Path")
+		err = errors.New("empty SsoPath")
 	case b.handlerFunc == nil:
 		err = errors.New("handler func not specified")
 	}

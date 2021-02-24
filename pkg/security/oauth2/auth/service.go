@@ -282,18 +282,9 @@ func (f *DefaultAuthorizationService) loadAccount(ctx context.Context, request o
 		return nil, newUnauthenticatedUserError()
 	}
 
-	// we want to reload user's account
-	principal := userAuth.Principal()
-	var username string
-	switch principal.(type) {
-	case security.Account:
-		username = principal.(security.Account).Username()
-	case string:
-		username = principal.(string)
-	case fmt.Stringer:
-		username = principal.(fmt.Stringer).String()
-	default:
-		return nil, newInvalidUserError(fmt.Sprintf("unsupported principal type %T", principal))
+	username, err := security.GetUserName(userAuth)
+	if err != nil {
+		return nil, newInvalidUserError(err)
 	}
 
 	acct, e := f.accountStore.LoadAccountByUsername(ctx, username)
@@ -409,27 +400,7 @@ func (f *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Co
 		}
 	}
 
-	if userAuth == nil {
-		return
-	}
-
-	details, ok := userAuth.Details().(map[string]interface{})
-	if !ok {
-		return
-	}
-
-	v, ok := details[security.DetailsKeyAuthTime]
-	if !ok {
-		return
-	}
-
-
-	switch v.(type) {
-	case time.Time:
-		authTime = v.(time.Time)
-	case string:
-		authTime = utils.ParseTime(utils.ISO8601Milliseconds, v.(string))
-	}
+	security.DetermineAuthenticationTime(ctx, userAuth)
 	return
 }
 

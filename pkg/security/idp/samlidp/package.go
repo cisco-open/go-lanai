@@ -7,18 +7,6 @@ import (
 	"go.uber.org/fx"
 )
 
-/**
-	1. Generate metadata from configuration (i.e. issuer)
-	2. Add idp metadata via API
-	3. compare saml library's code for checking assertion against that of the java implementation
-
-Implementation details:
-	1. add entry point
-	2. generate metadata and add metadata API
-	3. add idp metadata via API
- */
-
-
 func init() {
 	bootstrap.AddOptions(
 		fx.Invoke(configureSecurity),

@@ -12,9 +12,9 @@ import (
 
 //This implementation is similar to that found in samlsp.CookieRequestTracker
 //However, we don't need a reference to a ServiceProvider instance
-//and we set the cookie's Secure and Path attribute explicitly
+//and we set the cookie's Secure and SsoPath attribute explicitly
 //and we let the cookie's domain be determined by the request itself.
-//This is because our tracker needs to work with multiple ServiceProvider instances each talking to a different IDP.
+//This is because our tracker needs to work with multiple ServiceProvider instances each talking to a different idp.
 
 // CookieRequestTracker tracks requests by setting a uniquely named
 // cookie for each request.

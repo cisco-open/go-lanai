@@ -12,6 +12,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"net/url"
 	"go.uber.org/fx"
 )
 
@@ -47,14 +48,22 @@ func ConfigureAuthorizationServer(deps dependencies) {
 /****************************
 	configuration
  ****************************/
+//TODO: constructor
+type ConditionalEndpoint struct {
+	Location *url.URL
+	Condition web.RequestMatcher
+}
+
 type Endpoints struct {
-	Authorize  string
+	Authorize  ConditionalEndpoint
 	Approval   string
 	Token      string
 	CheckToken string
 	UserInfo   string
 	JwkSet     string
 	Logout     string
+	SamlSso    ConditionalEndpoint
+	SamlMetadata string
 }
 
 type Configuration struct {
