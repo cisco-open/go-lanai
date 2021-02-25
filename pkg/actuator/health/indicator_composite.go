@@ -90,9 +90,9 @@ func sanitizeDetails(health Health, deep bool) Health {
 	// sanitize details
 	switch health.(type) {
 	case *DetailedHealth:
-		health.(*DetailedHealth).Details = map[string]interface{}{}
+		health.(*DetailedHealth).Details = nil
 	case DetailedHealth:
-		health = NewDetailedHealth(health.Status(), health.Description(), map[string]interface{}{})
+		health = NewDetailedHealth(health.Status(), health.Description(), nil)
 	}
 
 	if !deep {
@@ -103,7 +103,6 @@ func sanitizeDetails(health Health, deep bool) Health {
 		for k, v := range health.(*CompositeHealth).Components {
 			health.(*CompositeHealth).Components[k] = sanitizeDetails(v, deep)
 		}
-		health.(*CompositeHealth).Components = map[string]Health{}
 	case CompositeHealth:
 		comps := map[string]Health{}
 		for k, v := range health.(CompositeHealth).Components {

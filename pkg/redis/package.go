@@ -11,6 +11,7 @@ var Module = &bootstrap.Module{
 		fx.Provide(BindSessionProperties),
 		fx.Provide(NewClientFactory),
 		fx.Provide(newDefaultClient),
+		fx.Invoke(registerHealth),
 	},
 }
 

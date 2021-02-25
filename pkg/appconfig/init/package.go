@@ -15,7 +15,7 @@ import (
 )
 
 var ConfigModule = &bootstrap.Module{
-	Name: "bootstrap init",
+	Name: "bootstrap endpoint",
 	Precedence: bootstrap.AppConfigPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(

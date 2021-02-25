@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
@@ -16,7 +17,7 @@ const (
 type Input struct{}
 
 type Output struct {
-	Health
+	health.Health
 	sc int
 }
 
@@ -37,19 +38,19 @@ func (o Output) MarshalJSON() ([]byte, error) {
 
 type EndpointOptions func(opt *EndpointOption)
 type EndpointOption struct {
-	Contributor      Indicator
-	StatusCodeMapper StatusCodeMapper
+	Contributor      health.Indicator
+	StatusCodeMapper health.StatusCodeMapper
 	MgtProperties    *actuator.ManagementProperties
-	Properties       *HealthProperties
+	Properties       *health.HealthProperties
 }
 
 // HealthEndpoint implements actuator.Endpoint, actuator.WebEndpoint
 type HealthEndpoint struct {
 	actuator.WebEndpointBase
-	contributor    Indicator
-	scMapper       StatusCodeMapper
-	showDetails    ShowMode
-	showComponents ShowMode
+	contributor    health.Indicator
+	scMapper       health.StatusCodeMapper
+	showDetails    health.ShowMode
+	showComponents health.ShowMode
 	permisions     utils.StringSet
 }
 
@@ -60,7 +61,7 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 	}
 
 	if opt.StatusCodeMapper == nil {
-		scMapper := StaticStatusCodeMapper{}
+		scMapper := health.StaticStatusCodeMapper{}
 		for k, v := range opt.Properties.Status.ScMapping {
 			scMapper[k] = v
 		}
@@ -93,7 +94,7 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 
 // Read never returns error
 func (ep *HealthEndpoint) Read(ctx context.Context, input *Input) (*Output, error) {
-	opts := Options{
+	opts := health.Options{
 		ShowDetails:     ep.shouldShowDetails(ctx),
 		ShowCompoenents: ep.shouldShowComponents(ctx),
 	}
@@ -123,9 +124,9 @@ func (ep *HealthEndpoint) isAuthorized(ctx context.Context) bool {
 
 func (ep *HealthEndpoint) shouldShowDetails(ctx context.Context) bool {
 	switch ep.showDetails {
-	case ShowModeNever:
+	case health.ShowModeNever:
 		return false
-	case ShowModeAlways:
+	case health.ShowModeAlways:
 		return true
 	default:
 		return ep.isAuthorized(ctx)
@@ -134,9 +135,9 @@ func (ep *HealthEndpoint) shouldShowDetails(ctx context.Context) bool {
 
 func (ep *HealthEndpoint) shouldShowComponents(ctx context.Context) bool {
 	switch ep.showComponents {
-	case ShowModeNever:
+	case health.ShowModeNever:
 		return false
-	case ShowModeAlways:
+	case health.ShowModeAlways:
 		return true
 	default:
 		return ep.isAuthorized(ctx)

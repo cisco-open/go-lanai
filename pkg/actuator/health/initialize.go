@@ -4,17 +4,6 @@ import (
 	"fmt"
 )
 
-func initialize(di regDI) error {
-
-	endpoint := newEndpoint(func(opt *EndpointOption) {
-		opt.MgtProperties = &di.MgtProperties
-		opt.Contributor = di.HealthIndicator
-		opt.Properties = &di.Properties
-	})
-	di.Registrar.Register(endpoint)
-	return nil
-}
-
 type Registrar interface {
 	// Register configure SystemHealthIndicator and HealthEndpoint
 	// supported input parameters are:
@@ -28,7 +17,7 @@ type SystemHealthIndicator struct {
 	CompositeIndicator
 }
 
-func newSystemHealthIndicator(di provideDI) *SystemHealthIndicator {
+func NewSystemHealthIndicator(di provideDI) *SystemHealthIndicator {
 	return &SystemHealthIndicator{
 		CompositeIndicator: CompositeIndicator{
 			name:       "system",
