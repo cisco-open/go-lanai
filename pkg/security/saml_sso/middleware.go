@@ -19,7 +19,7 @@ import (
 type Options struct {
 	Key                    crypto.PrivateKey
 	Cert                   *x509.Certificate
-	MetadataUrl            url.URL
+	EntityIdUrl            url.URL
 	SsoUrl                 url.URL
 	serviceProviderManager SamlClientStore
 }
@@ -51,7 +51,8 @@ func NewSamlAuthorizeEndpointMiddleware(opts Options,
 		Key:                     opts.Key,
 		Logger:                  saml_logger.DefaultLogger, //TODO replace with our own logger
 		Certificate:             opts.Cert,
-		MetadataURL:             opts.MetadataUrl,
+		//since we have our own middleware implementation, this value here only serves the purpose of defining the entity id.
+		MetadataURL:             opts.EntityIdUrl,
 		SSOURL:                  opts.SsoUrl,
 	}
 
