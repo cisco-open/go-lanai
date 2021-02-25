@@ -85,9 +85,10 @@ func (c *SamlAuthorizeEndpointConfigurer) getIdentityProviderConfiguration(f *Fe
 	}
 
 	return Options{
-		Key:key,
-		Cert: cert,
-		MetadataUrl: *rootURL.ResolveReference(&url.URL{Path: fmt.Sprintf("%s%s", c.serverProperties.ContextPath, f.metadataPath)}),
+		Key:         key,
+		Cert:        cert,
+		//usually this is the metadata url, but to keep consistent with existing implementation, we just use the context path
+		EntityIdUrl: *rootURL.ResolveReference(&url.URL{Path: c.serverProperties.ContextPath}),
 		SsoUrl: *rootURL.ResolveReference(&url.URL{
 			Path: fmt.Sprintf("%s%s", c.serverProperties.ContextPath, f.ssoLocation.Path),
 			RawQuery: f.ssoLocation.RawQuery,
