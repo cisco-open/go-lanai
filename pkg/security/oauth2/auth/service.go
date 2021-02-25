@@ -205,7 +205,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	}
 
 	// create context details
-	return s.detailsFactory.New(ctx, request)
+	return s.detailsFactory.New(mutableCtx, request)
 }
 
 func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.Authentication, error) {
@@ -282,18 +282,9 @@ func (f *DefaultAuthorizationService) loadAccount(ctx context.Context, request o
 		return nil, newUnauthenticatedUserError()
 	}
 
-	// we want to reload user's account
-	principal := userAuth.Principal()
-	var username string
-	switch principal.(type) {
-	case security.Account:
-		username = principal.(security.Account).Username()
-	case string:
-		username = principal.(string)
-	case fmt.Stringer:
-		username = principal.(fmt.Stringer).String()
-	default:
-		return nil, newInvalidUserError(fmt.Sprintf("unsupported principal type %T", principal))
+	username, err := security.GetUserName(userAuth)
+	if err != nil {
+		return nil, newInvalidUserError(err)
 	}
 
 	acct, e := f.accountStore.LoadAccountByUsername(ctx, username)
@@ -347,6 +338,7 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(c context.Context, tena
 		tenantIds = utils.NewStringSet(tenancy.TenantIds()...)
 	}
 
+	// TODO consider tenant hierachy
 	// check account
 	if !tenantIds.Has(tenant.Id) {
 		return oauth2.NewInvalidGrantError("user does not have access to specified tenant")
@@ -389,7 +381,11 @@ func (f *DefaultAuthorizationService) determineExpiryTime(ctx context.Context, r
 	}
 
 	if facts.client.AccessTokenValidity() == 0 {
-		return minTime(expiry, max)
+		if max == endOfWorld {
+			return
+		} else {
+			return max
+		}
 	}
 
 	issueTime := ctx.Value(oauth2.CtxKeyAuthorizationIssueTime).(time.Time)
@@ -404,27 +400,7 @@ func (f *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Co
 		}
 	}
 
-	if userAuth == nil {
-		return
-	}
-
-	details, ok := userAuth.Details().(map[string]interface{})
-	if !ok {
-		return
-	}
-
-	v, ok := details[security.DetailsKeyAuthTime]
-	if !ok {
-		return
-	}
-
-
-	switch v.(type) {
-	case time.Time:
-		authTime = v.(time.Time)
-	case string:
-		authTime = utils.ParseTime(utils.ISO8601Milliseconds, v.(string))
-	}
+	security.DetermineAuthenticationTime(ctx, userAuth)
 	return
 }
 

@@ -17,7 +17,7 @@ import (
 )
 
 func TestMetadataEndpoint(t *testing.T) {
-	prop := NewServiceProviderProperties()
+	prop := security.NewSamlProperties()
 	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
@@ -49,7 +49,7 @@ func TestAcsEndpoint(t *testing.T) {
 }
 
 func TestSamlEntryPoint(t *testing.T) {
-	prop := NewServiceProviderProperties()
+	prop := security.NewSamlProperties()
 	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
@@ -199,15 +199,15 @@ type TestWebSecurity struct {
 
 }
 
+func (t TestWebSecurity) AndCondition(mwcm web.RequestMatcher) security.WebSecurity {
+	panic("implement me")
+}
+
 func (t TestWebSecurity) Route(matcher web.RouteMatcher) security.WebSecurity {
 	panic("implement me")
 }
 
 func (t TestWebSecurity) Condition(mwcm web.RequestMatcher) security.WebSecurity {
-	panic("implement me")
-}
-
-func (t TestWebSecurity) AndCondition(mwcm web.RequestMatcher) security.WebSecurity {
 	panic("implement me")
 }
 

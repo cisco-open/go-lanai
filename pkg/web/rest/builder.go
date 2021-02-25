@@ -179,7 +179,7 @@ type mapping struct {
 // TODO more validation and better error handling
 func (b *MappingBuilder) validate() (err error) {
 	if b.path == "" {
-		err = errors.New("empty Path")
+		err = errors.New("empty SsoPath")
 	}
 	return
 }

@@ -2,17 +2,21 @@ package security
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 const (
-	HighestMiddlewareOrder = int(- 1 << 18 + 1) // -0x3ffff = -262143
-	LowestMiddlewareOrder = HighestMiddlewareOrder + 0xffff // -0x30000 = -196608
+	HighestMiddlewareOrder = int(-1<<18 + 1)                 // -0x3ffff = -262143
+	LowestMiddlewareOrder  = HighestMiddlewareOrder + 0xffff // -0x30000 = -196608
 )
 
 type AuthenticationState int
+
 const (
 	StateAnonymous = AuthenticationState(iota)
 	StatePrincipalKnown
@@ -83,8 +87,8 @@ func TryClear(ctx context.Context) bool {
 	return true
 }
 
-func HasPermissions(auth Authentication, permissions...string) bool {
-	for _,p := range permissions {
+func HasPermissions(auth Authentication, permissions ...string) bool {
+	for _, p := range permissions {
 		_, ok := auth.Permissions()[p]
 		if !ok {
 			return false
@@ -107,4 +111,44 @@ func IsBeingUnAuthenticated(from, to Authentication) bool {
 	fromAuthenticated := from != nil && from.State() > StateAnonymous
 	toUnAuthenticatedState := to == nil || to.State() <= StateAnonymous
 	return fromAuthenticated && toUnAuthenticatedState
+}
+
+func DetermineAuthenticationTime(ctx context.Context, userAuth Authentication) (authTime time.Time) {
+	if userAuth == nil {
+		return
+	}
+
+	details, ok := userAuth.Details().(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	v, ok := details[DetailsKeyAuthTime]
+	if !ok {
+		return
+	}
+
+	switch v.(type) {
+	case time.Time:
+		authTime = v.(time.Time)
+	case string:
+		authTime = utils.ParseTime(utils.ISO8601Milliseconds, v.(string))
+	}
+	return
+}
+
+func GetUserName(userAuth Authentication) (string, error){
+	principal := userAuth.Principal()
+	var username string
+	switch principal.(type) {
+	case Account:
+		username = principal.(Account).Username()
+	case string:
+		username = principal.(string)
+	case fmt.Stringer:
+		username = principal.(fmt.Stringer).String()
+	default:
+		return "", errors.New(fmt.Sprintf("unsupported principal type %T", principal))
+	}
+	return username, nil
 }

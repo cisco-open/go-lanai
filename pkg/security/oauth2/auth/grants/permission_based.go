@@ -107,12 +107,14 @@ func (g *PermissionBasedGranter) reduceScope(ctx context.Context, client oauth2.
 		// same client, we only check if 1. new scope is a subset of original, OR 2. all new scopes are auto approved
 		for scope, _ := range scopes {
 			if !original.Has(scope) && !client.AutoApproveScopes().Has(scope) {
-				return nil, oauth2.NewInvalidScopeError(fmt.Sprintf("scope [%s] is not allowed by this client"))
+				return nil, oauth2.NewInvalidScopeError(fmt.Sprintf("scope [%s] is not allowed by this client", scope))
 			}
 		}
 	}
 
 	return src.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
+		opt.ClientId = client.ClientId()
+		opt.RedirectUri = ""
 		opt.GrantType = request.GrantType
 		opt.Scopes = scopes
 		for k, v := range request.Parameters {

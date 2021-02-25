@@ -56,8 +56,12 @@ func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpoin
 	}
 }
 
-func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc() gin.HandlerFunc {
+func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+			return
+		}
+
 		// parse or load request
 		var request *auth.AuthorizeRequest
 		var err error
@@ -93,8 +97,12 @@ func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc() gin.HandlerF
 	}
 }
 
-func (mw *AuthorizeEndpointMiddleware) AuthroizeHandlerFunc() gin.HandlerFunc {
+func (mw *AuthorizeEndpointMiddleware) AuthroizeHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+			return
+		}
+
 		// sanity checks
 		request, client, user, e := mw.endpointSanityCheck(ctx)
 		if e != nil {

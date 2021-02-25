@@ -3,7 +3,6 @@ package logout
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"net/http"
 )
@@ -19,7 +18,6 @@ type LogoutHandler interface {
 
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutFeature struct {
-	condition        web.RequestMatcher
 	successHandler   security.AuthenticationSuccessHandler
 	successUrl 	     string
 	logoutHandlers   []LogoutHandler
@@ -33,11 +31,6 @@ func (f *LogoutFeature) Identifier() security.FeatureIdentifier {
 
 func (f *LogoutFeature) AddLogoutHandler(logoutHandler LogoutHandler) *LogoutFeature {
 	f.logoutHandlers = append(f.logoutHandlers, logoutHandler)
-	return f
-}
-
-func (f *LogoutFeature) Condition(condition web.RequestMatcher) *LogoutFeature {
-	f.condition = condition
 	return f
 }
 

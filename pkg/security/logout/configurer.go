@@ -46,10 +46,8 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	logout := NewLogoutMiddleware(flc.effectiveSuccessHandler(f, ws), f.logoutHandlers...)
 	mw := middleware.NewBuilder("form logout").
 		ApplyTo(route).
-		WithCondition(f.condition).
 		Order(security.MWOrderFormLogout).
-		Use(logout.LogoutHandlerFunc()).
-		Build()
+		Use(logout.LogoutHandlerFunc())
 
 	ws.Add(mw)
 
@@ -57,8 +55,7 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	for _,method := range supportedMethods {
 		endpoint := mapping.New("logout dummy " + method).
 			Method(method).Path(f.logoutUrl).
-			HandlerFunc(security.NoopHandlerFunc).
-			Build()
+			HandlerFunc(security.NoopHandlerFunc)
 		ws.Add(endpoint)
 	}
 	return nil
@@ -71,14 +68,6 @@ func (flc *LogoutConfigurer) validate(f *LogoutFeature, ws security.WebSecurity)
 
 	if f.successUrl == "" && f.successHandler == nil {
 		return fmt.Errorf("successUrl and successHandler are both missing for logout")
-	}
-
-	if f.condition == nil {
-		if wsReader, ok := ws.(security.WebSecurityReader); ok {
-			f.condition = wsReader.GetCondition()
-		} else {
-			return fmt.Errorf("condition is not specified and unable to read condition from WebSecurity")
-		}
 	}
 
 	return nil

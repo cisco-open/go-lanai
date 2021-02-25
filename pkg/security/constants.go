@@ -68,6 +68,7 @@ const (
 	// ... TODO more MW goes here
 	MWOrderAccessControl = LowestMiddlewareOrder - 200
 	MWOrderOAuth2Endpoints = MWOrderAccessControl + 100
+	MWOrderSamlAuthEndpoints = MWOrderAccessControl + 100
 )
 
 // Feature Orders, if feature is not listed here, it's unordered. Unordered features are applied at last
@@ -81,6 +82,7 @@ const (
 	FeatureOrderLogout
 	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderOAuth2AuthorizeEndpoint
+	FeatureOrderSamlAuthorizeEndpoint
 	FeatureOrderOAuth2TokenAuth
 	FeatureOrderCsrf
 	FeatureOrderAccess

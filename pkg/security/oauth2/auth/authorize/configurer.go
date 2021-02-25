@@ -52,15 +52,15 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 	preAuth := middleware.NewBuilder("authorize validation").
 		ApplyTo(authRouteMatcher.Or(approveRouteMatcher)).
 		Order(security.MWOrderOAuth2AuthValidation).
-		Use(authorizeMW.PreAuthenticateHandlerFunc())
+		Use(authorizeMW.PreAuthenticateHandlerFunc(f.condition))
 
 	ws.Add(preAuth)
 
 	// install authorize endpoint
 	epGet := mapping.Get(f.path).Name("authorize GET").
-		HandlerFunc(authorizeMW.AuthroizeHandlerFunc())
+		HandlerFunc(authorizeMW.AuthroizeHandlerFunc(f.condition))
 	epPost := mapping.Post(f.path).Name("authorize Post").
-		HandlerFunc(authorizeMW.AuthroizeHandlerFunc())
+		HandlerFunc(authorizeMW.AuthroizeHandlerFunc(f.condition))
 
 	ws.Route(authRouteMatcher).Add(epGet, epPost)
 
