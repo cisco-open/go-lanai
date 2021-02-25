@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	MinSecurityPrecedence = bootstrap.FrameworkModulePrecedence + 2000
-	MaxSecurityPrecedence = bootstrap.FrameworkModulePrecedence + 2999
+	MinSecurityPrecedence = bootstrap.SecurityPrecedence
+	MaxSecurityPrecedence = bootstrap.SecurityPrecedence + bootstrap.FrameworkModulePrecedenceBandwith
 )
 
 const (

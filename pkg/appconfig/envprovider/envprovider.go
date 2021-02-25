@@ -12,12 +12,16 @@ type ConfigProvider struct {
 
 const dot = rune('.')
 
+func (configProvider *ConfigProvider) Name() string {
+	return "environment-variable"
+}
+
 func (configProvider *ConfigProvider) Load() (loadError error) {
 	defer func() {
 		if loadError != nil {
-			configProvider.IsLoaded = false
+			configProvider.Loaded = false
 		} else {
-			configProvider.IsLoaded = true
+			configProvider.Loaded = true
 		}
 	}()
 

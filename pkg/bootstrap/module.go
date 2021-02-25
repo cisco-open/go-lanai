@@ -6,12 +6,23 @@ import (
 )
 
 const (
-	LowestPrecedence = int(^uint(0) >> 1) // max int
+	LowestPrecedence  = int(^uint(0) >> 1)    // max int
 	HighestPrecedence = -LowestPrecedence - 1 // min int
 
-	FrameworkModulePrecedence = LowestPrecedence - 100000
-	AnonymousModulePrecedence = FrameworkModulePrecedence - 1
-	PriorityModulePrecedence = HighestPrecedence + 1
+	FrameworkModulePrecedenceBandwith = 800
+	FrameworkModulePrecedence         = LowestPrecedence - 200 * FrameworkModulePrecedenceBandwith
+	AnonymousModulePrecedence         = FrameworkModulePrecedence - 1
+	PriorityModulePrecedence          = HighestPrecedence + 1
+)
+
+const (
+	_ = FrameworkModulePrecedence + iota * FrameworkModulePrecedenceBandwith
+	AppConfigPrecedence
+	ActuatorPrecedence
+	ConsulPrecedence
+	RedisPrecedence
+	WebPrecedence
+	SecurityPrecedence
 )
 
 var anonymousOnce sync.Once
@@ -25,13 +36,13 @@ type Module struct {
 	Name            string
 	Precedence      int
 	PriorityOptions []fx.Option
-	Options 		[]fx.Option
+	Options         []fx.Option
 }
 
 func anonymousModule() *Module {
 	anonymousOnce.Do(func() {
 		anonymous = &Module{
-			Name: "anonymous",
+			Name:       "anonymous",
 			Precedence: AnonymousModulePrecedence,
 		}
 	})
@@ -40,8 +51,8 @@ func anonymousModule() *Module {
 
 func applicationMainModule() *Module {
 	applicationMainOnce.Do(func() {
-		applicationMain = &Module {
-			Name: "main",
+		applicationMain = &Module{
+			Name:       "main",
 			Precedence: PriorityModulePrecedence,
 		}
 	})

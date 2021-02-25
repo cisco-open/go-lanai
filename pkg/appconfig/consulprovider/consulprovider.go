@@ -3,10 +3,11 @@ package consulprovider
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
+	"fmt"
 )
 
 const (
-	ConfigRootConsulConfigProvider = "spring.cloud.consul.config"
+	ConfigRootConsulConfigProvider = "spring.cloud.consul.endpoint"
 	ConfigKeyAppName               = "spring.application.name"
 )
 
@@ -23,12 +24,16 @@ type ConfigProvider struct {
 	connection   *consul.Connection
 }
 
+func (configProvider *ConfigProvider) Name() string {
+	return fmt.Sprintf("consul:%s", configProvider.contextPath)
+}
+
 func (configProvider *ConfigProvider) Load() (loadError error) {
 	defer func(){
 		if loadError != nil {
-			configProvider.IsLoaded = false
+			configProvider.Loaded = false
 		} else {
-			configProvider.IsLoaded = true
+			configProvider.Loaded = true
 		}
 	}()
 

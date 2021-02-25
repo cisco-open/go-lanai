@@ -15,8 +15,8 @@ import (
 )
 
 var ConfigModule = &bootstrap.Module{
-	Name: "bootstrap config",
-	Precedence: bootstrap.HighestPrecedence,
+	Name: "bootstrap endpoint",
+	Precedence: bootstrap.AppConfigPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(
 			newCommandProvider,
@@ -206,7 +206,7 @@ func newApplicationConfig(p newApplicationConfigParam) *appconfig.ApplicationCon
 	for _, provider := range p.ConsulProviders {
 		mergedProvider = append(mergedProvider, provider)
 	}
-	mergedProvider = append(mergedProvider, p.BootstrapConfig.Providers...)
+	mergedProvider = append(mergedProvider, p.BootstrapConfig.Providers()...)
 
 	applicationConfig := appconfig.NewApplicationConfig(mergedProvider...)
 

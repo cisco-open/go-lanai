@@ -67,6 +67,19 @@ func WithString(expected string, caseInsensitive bool) StringMatcher {
 	}
 }
 
+func WithSubString(substr string, caseInsensitive bool) StringMatcher {
+	desc := fmt.Sprintf("contains [%s]", substr)
+	if caseInsensitive {
+		desc = desc + ", case insensitive"
+	}
+	return &stringMatcher{
+		matchFunc: func(_ context.Context, value string) (bool, error) {
+			return MatchSubString(substr, value, caseInsensitive), nil
+		},
+		description: desc,
+	}
+}
+
 func AnyNonEmptyString() StringMatcher {
 	desc := fmt.Sprintf("matches any non-empty string")
 	return &stringMatcher{
@@ -99,6 +112,19 @@ func WithPrefix(prefix string, caseInsensitive bool) StringMatcher {
 	}
 }
 
+func WithSuffix(suffix string, caseInsensitive bool) StringMatcher {
+	desc := fmt.Sprintf("ends with [%s]", suffix)
+	if caseInsensitive {
+		desc = desc + ", case insensitive"
+	}
+	return &stringMatcher{
+		matchFunc: func(_ context.Context, value string) (bool, error) {
+			return MatchSuffix(suffix, value, caseInsensitive)
+		},
+		description: desc,
+	}
+}
+
 func WithRegex(regex string) StringMatcher {
 	return &stringMatcher{
 		matchFunc: func(_ context.Context, value string) (bool, error) {
@@ -108,14 +134,32 @@ func WithRegex(regex string) StringMatcher {
 	}
 }
 
+func WithRegexPattern(regex *regexp.Regexp) StringMatcher {
+	return &stringMatcher{
+		matchFunc: func(_ context.Context, value string) (bool, error) {
+			return MatchRegexPattern(regex, value)
+		},
+		description: fmt.Sprintf("matches regex [%s]", regex.String()),
+	}
+}
+
 /**************************
 	helpers
 ***************************/
 func MatchString(expected, actual string, caseInsensitive bool) bool {
 	if caseInsensitive {
-		return strings.ToLower(expected) == strings.ToLower(actual)
+		expected = strings.ToLower(expected)
+		actual = strings.ToLower(actual)
 	}
-	return strings.ToUpper(expected) == strings.ToUpper(actual)
+	return expected == actual
+}
+
+func MatchSubString(substr, actual string, caseInsensitive bool) bool {
+	if caseInsensitive {
+		substr = strings.ToLower(substr)
+		actual = strings.ToLower(actual)
+	}
+	return strings.Contains(actual, substr)
 }
 
 // MatchPathPattern given string with path pattern
@@ -152,6 +196,17 @@ func MatchPrefix(prefix, value string, caseInsensitive bool) (bool, error) {
 	return strings.HasPrefix(value, prefix), nil
 }
 
+func MatchSuffix(suffix, value string, caseInsensitive bool) (bool, error) {
+	if caseInsensitive {
+		return strings.HasSuffix(strings.ToLower(value), strings.ToLower(suffix)), nil
+	}
+	return strings.HasSuffix(value, suffix), nil
+}
+
 func MatchRegex(regex, value string) (bool, error) {
 	return regexp.MatchString(regex, value)
+}
+
+func MatchRegexPattern(regex *regexp.Regexp, value string) (bool, error) {
+	return regex.MatchString(value), nil
 }

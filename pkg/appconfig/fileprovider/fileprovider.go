@@ -19,6 +19,7 @@ type ConfigProvider struct {
 	appconfig.ProviderMeta
 	reader io.Reader
 	propertyParser parser.PropertyParser
+	filepath string
 }
 
 func NewProvider(precedence int, filePath string, reader io.Reader) *ConfigProvider {
@@ -29,6 +30,7 @@ func NewProvider(precedence int, filePath string, reader io.Reader) *ConfigProvi
 			ProviderMeta:   appconfig.ProviderMeta{Precedence: precedence},
 			reader:         reader,
 			propertyParser: parser.NewYamlPropertyParser(),
+			filepath: filePath,
 		}
 	//TODO: impl the following
 	/*
@@ -47,12 +49,16 @@ func NewProvider(precedence int, filePath string, reader io.Reader) *ConfigProvi
 	}
 }
 
+func (configProvider *ConfigProvider) Name() string {
+	return fmt.Sprintf("file:%s", configProvider.filepath)
+}
+
 func (configProvider *ConfigProvider) Load() (loadError error) {
 	defer func(){
 		if loadError != nil {
-			configProvider.IsLoaded = false
+			configProvider.Loaded = false
 		} else {
-			configProvider.IsLoaded = true
+			configProvider.Loaded = true
 		}
 	}()
 
