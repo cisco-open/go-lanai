@@ -37,11 +37,13 @@ type PValueDescriptor struct {
 type EnvEndpoint struct {
 	actuator.WebEndpointBase
 	appConfig appconfig.ConfigAccessor
+	sanitizer *Sanitizer
 }
 
 func new(di regDI) *EnvEndpoint {
 	ep := EnvEndpoint{
 		appConfig: di.AppContext.Config(),
+		sanitizer: NewSanitizer(di.Properties.KeysToSanitize.Values()),
 	}
 	ep.WebEndpointBase = actuator.MakeWebEndpointBase(func(opt *actuator.EndpointOption) {
 		opt.Id = ID
@@ -75,7 +77,7 @@ func (ep *EnvEndpoint) Read(ctx context.Context, input *Input) (*EnvDescriptor, 
 
 		values := provider.GetSettings()
 		appconfig.VisitEach(values, func(k string, v interface{}) error {
-			// TODO sanitize
+			v = ep.sanitizer.Sanitize(ctx, k, v)
 			psrc.Properties[k] = PValueDescriptor{Value: v, Origin: ""}
 			return nil
 		})

@@ -9,7 +9,9 @@ import (
 var Module = &bootstrap.Module{
 	Name: "actuator-env",
 	Precedence: actuator.MinActuatorPrecedence,
-	Options: []fx.Option{},
+	Options: []fx.Option{
+		fx.Provide(BindEnvProperties),
+	},
 }
 
 func init() {
@@ -21,6 +23,7 @@ type regDI struct {
 	Registrar     *actuator.Registrar
 	MgtProperties actuator.ManagementProperties
 	AppContext    *bootstrap.ApplicationContext
+	Properties    EnvProperties
 }
 
 func Register(di regDI) {
