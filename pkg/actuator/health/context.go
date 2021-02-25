@@ -15,7 +15,6 @@ const (
 type Status int
 
 // fmt.Stringer
-// text.Marshaler
 func (s Status) String() string {
 	switch s {
 	case StatusUp:

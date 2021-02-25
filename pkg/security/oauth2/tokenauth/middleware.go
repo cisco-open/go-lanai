@@ -50,6 +50,10 @@ func (mw *TokenAuthMiddleware) AuthenticateHandlerFunc() gin.HandlerFunc {
 
 		// grab bearer token and create candidate
 		header := ctx.GetHeader("Authorization")
+		if header == "" {
+			// header is not present, we continue the MW chain
+			return
+		}
 		if !strings.HasPrefix(header, bearerTokenPrefix) {
 			mw.handleError(ctx, oauth2.NewInvalidAccessTokenError("missing bearer token"))
 			return

@@ -14,6 +14,7 @@ type ManagementProperties struct {
 	Enabled       bool                               `json:"enabled"`
 	Endpoints     EndpointsProperties                `json:"endpoints"`
 	BasicEndpoint map[string]BasicEndpointProperties `json:"endpoint"`
+	Security      SecurityProperties                 `json:"security"`
 }
 
 type EndpointsProperties struct {
@@ -35,7 +36,18 @@ type WebExposureProperties struct {
 }
 
 type BasicEndpointProperties struct {
-	Enabled bool                   `json:"enabled"`
+	Enabled *bool `json:"enabled"`
+}
+
+type SecurityProperties struct {
+	EnabledByDefault bool                                  `json:"enabled-by-default"`
+	Permissions      utils.CommaSeparatedSlice             `json:"permissions"`
+	Endpoints        map[string]EndpointSecurityProperties `json:"endpoint"`
+}
+
+type EndpointSecurityProperties struct {
+	Enabled     *bool                     `json:"enabled"`
+	Permissions utils.CommaSeparatedSlice `json:"permissions"`
 }
 
 //NewSessionProperties create a SessionProperties with default values
@@ -49,6 +61,21 @@ func NewManagementProperties() *ManagementProperties {
 				Exposure: WebExposureProperties{
 					Include: utils.NewStringSet("*"),
 					Exclude: utils.NewStringSet(),
+				},
+			},
+		},
+		Security: SecurityProperties{
+			EnabledByDefault: false,
+			Permissions:      []string{},
+			Endpoints:        map[string]EndpointSecurityProperties{
+				"alive": EndpointSecurityProperties{
+					Enabled: utils.BoolPtr(false),
+				},
+				"info": EndpointSecurityProperties{
+					Enabled: utils.BoolPtr(false),
+				},
+				"health": EndpointSecurityProperties{
+					Enabled: utils.BoolPtr(false),
 				},
 			},
 		},

@@ -9,7 +9,7 @@ import (
 
 var Module = &bootstrap.Module {
 	Name: "consul",
-	Precedence: -1,
+	Precedence: bootstrap.ConsulPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(newConnectionProperties),
 		fx.Provide(newConsulConnection),

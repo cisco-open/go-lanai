@@ -19,14 +19,17 @@ type initDI struct {
 }
 
 type Registrar struct {
-	initialized bool
-	properties  ManagementProperties
-	endpoints   []Endpoint
+	initialized        bool
+	properties         *ManagementProperties
+	endpoints          []Endpoint
+	securityConfigurer security.Configurer
+	securityCustomizer ActuatorSecurityCustomizer
 }
 
 func NewRegistrar(di constructDI) *Registrar {
 	return &Registrar{
-		properties: di.Properties,
+		properties: &di.Properties,
+		securityCustomizer: &DefaultActuatorSecurityCustomizer{},
 	}
 }
 
@@ -40,16 +43,16 @@ func (r *Registrar) initialize(di initDI) error {
 	}()
 
 	// install web endpoints
-	webEndpoints := []string{}
-	for _, ep := range r.endpoints {
-		if isWeb, e := r.installWebEndpoint(di.WebRegistrar, ep); e != nil {
-			return e
-		} else if isWeb {
-			webEndpoints = append(webEndpoints, ep.Id())
-		}
+	webEndpoints, e := r.installWebEndpoints(di.WebRegistrar)
+	if e != nil {
+		return e
 	}
-	logger.Info(fmt.Sprintf("registered web endponts %v", webEndpoints))
+	logger.Info(fmt.Sprintf("registered web endponts %v", webEndpoints.EndpointIDs()))
 
+	// install security
+	if e := r.installWebSecurity(di.SecurityRegistrar, webEndpoints); e != nil {
+		return e
+	}
 	return nil
 }
 
@@ -72,29 +75,65 @@ func (r *Registrar) register(item interface{}) error {
 		r.endpoints = append(r.endpoints, item.(Endpoint))
 	case []interface{}:
 		r.Register(item.([]interface{})...)
+	case ActuatorSecurityCustomizer:
+		r.securityCustomizer = item.(ActuatorSecurityCustomizer)
 	default:
 		return fmt.Errorf("unsupported actuator type [%T]", item)
 	}
 	return nil
 }
 
-func (r *Registrar) installWebEndpoint(reg *web.Registrar, endpoint Endpoint) (bool, error) {
-
-	if reg == nil || !r.isEndpointEnabled(endpoint) || !r.shouldExposeToWeb(endpoint) {
-		return false, nil
+func (r *Registrar) installWebEndpoints(reg *web.Registrar) (WebEndpoints, error) {
+	if reg == nil || !r.properties.Enabled {
+		return nil, nil
 	}
 
-	for _, op := range endpoint.Operations() {
+	result := WebEndpoints{}
+	for _, ep := range r.endpoints {
+		if mappings, e := r.installWebEndpoint(reg, ep); e != nil {
+			return nil, e
+		} else if len(mappings) != 0 {
+			result[ep.Id()] = mappings
+		}
+	}
+	return result, nil
+}
+
+func (r *Registrar) installWebEndpoint(reg *web.Registrar, endpoint Endpoint) ([]web.Mapping, error) {
+
+	if reg == nil || !r.isEndpointEnabled(endpoint) || !r.shouldExposeToWeb(endpoint) {
+		return nil, nil
+	}
+
+	ops := endpoint.Operations()
+	mappings := make([]web.Mapping, 0, len(ops))
+	for _, op := range ops {
 		mapping, e := endpoint.(WebEndpoint).Mapping(op, "")
 		if e != nil {
-			return true, e
+			return nil, e
 		}
 
 		if e := reg.Register(mapping); e != nil {
-			return true, e
+			return nil, e
 		}
+		mappings = append(mappings, mapping)
 	}
-	return true, nil
+	return mappings, nil
+}
+
+func (r *Registrar) installWebSecurity(reg security.Registrar, endpoints WebEndpoints) error {
+	if reg == nil {
+		return nil
+	}
+
+	configurer := actuatorSecurityConfigurer{
+		properties: r.properties,
+		endpoints:  endpoints,
+		customizer: r.securityCustomizer,
+	}
+	reg.Register(&configurer)
+
+	return nil
 }
 
 /*******************************
@@ -105,10 +144,11 @@ func (r *Registrar) isEndpointEnabled(endpoint Endpoint) bool {
 		return false
 	}
 
-	if basic, ok := r.properties.BasicEndpoint[endpoint.Id()]; !ok {
+	if basic, ok := r.properties.BasicEndpoint[endpoint.Id()]; !ok || basic.Enabled == nil {
+		// not explicitly specified, use default
 		return endpoint.EnabledByDefault() || r.properties.Endpoints.EnabledByDefault
 	} else {
-		return basic.Enabled
+		return *basic.Enabled
 	}
 }
 

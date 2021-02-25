@@ -76,7 +76,7 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 		scMapper:       opt.StatusCodeMapper,
 		showDetails:    opt.Properties.ShowDetails,
 		showComponents: showComponents,
-		permisions:     opt.Properties.Permissions,
+		permisions:     utils.NewStringSet(opt.Properties.Permissions...),
 	}
 
 	properties := opt.MgtProperties

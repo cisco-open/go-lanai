@@ -6,7 +6,7 @@ import (
 )
 
 var Module = &bootstrap.Module{
-	Precedence: bootstrap.LowestPrecedence,
+	Precedence: bootstrap.RedisPrecedence,
 	Options: []fx.Option{
 		fx.Provide(BindSessionProperties),
 		fx.Provide(NewClientFactory),

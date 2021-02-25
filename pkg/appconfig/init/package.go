@@ -16,7 +16,7 @@ import (
 
 var ConfigModule = &bootstrap.Module{
 	Name: "bootstrap init",
-	Precedence: bootstrap.HighestPrecedence,
+	Precedence: bootstrap.AppConfigPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(
 			newCommandProvider,

@@ -49,7 +49,9 @@ func (c *CompositeIndicator) Health(ctx context.Context, options Options) Health
 		h := d.Health(ctx, options)
 		// although delegates should respect options, we don't want to leave any changes
 		h = trySanitize(h, options, false)
-		components[d.Name()] = h
+		if options.ShowCompoenents {
+			components[d.Name()] = h
+		}
 		statuses = append(statuses, h.Status())
 	}
 	status := c.aggregator.Aggregate(nil, statuses...)

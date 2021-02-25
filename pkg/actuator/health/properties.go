@@ -22,7 +22,7 @@ type HealthProperties struct {
 
 	// Permisions used to determine whether or not a user is authorized to be shown details.
 	// When empty, all authenticated users are authorized.
-	Permissions utils.StringSet `json:"permissions"`
+	Permissions utils.CommaSeparatedSlice `json:"permissions"`
 }
 
 type StatusOrders []Status
@@ -59,7 +59,7 @@ func NewHealthProperties() *HealthProperties {
 			Orders: StatusOrders{StatusDown, StatusOutOfService, StatusUp, StatusUnkown},
 			ScMapping: map[Status]int{},
 		},
-		Permissions: utils.NewStringSet(),
+		Permissions: []string{},
 	}
 }
 

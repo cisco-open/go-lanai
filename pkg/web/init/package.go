@@ -10,7 +10,7 @@ import (
 
 var Module = &bootstrap.Module{
 	Name: "web",
-	Precedence: bootstrap.FrameworkModulePrecedence + 1000,
+	Precedence: web.MinWebPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(web.BindServerProperties,
 			web.NewEngine,
