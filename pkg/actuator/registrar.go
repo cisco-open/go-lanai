@@ -14,8 +14,8 @@ type constructDI struct {
 
 type initDI struct {
 	fx.In
-	WebRegistrar      *web.Registrar // TODO optional
-	SecurityRegistrar security.Registrar // TODO optional
+	WebRegistrar      *web.Registrar `optional:"true"`
+	SecurityRegistrar security.Registrar `optional:"true"`
 }
 
 type Registrar struct {
@@ -80,11 +80,7 @@ func (r *Registrar) register(item interface{}) error {
 
 func (r *Registrar) installWebEndpoint(reg *web.Registrar, endpoint Endpoint) (bool, error) {
 
-	if !r.isEndpointEnabled(endpoint) {
-		return false, nil
-	}
-
-	if !r.shouldExposeToWeb(endpoint) {
+	if reg == nil || !r.isEndpointEnabled(endpoint) || !r.shouldExposeToWeb(endpoint) {
 		return false, nil
 	}
 

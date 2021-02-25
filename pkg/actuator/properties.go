@@ -60,7 +60,7 @@ func NewManagementProperties() *ManagementProperties {
 func BindManagementProperties(ctx *bootstrap.ApplicationContext) ManagementProperties {
 	props := NewManagementProperties()
 	if err := ctx.Config().Bind(props, ManagementPropertiesPrefix); err != nil {
-		panic(errors.Wrap(err, "failed to bind SessionProperties"))
+		panic(errors.Wrap(err, "failed to bind ManagementProperties"))
 	}
 	return *props
 }

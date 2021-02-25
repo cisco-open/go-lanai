@@ -75,6 +75,7 @@ func (ep *EnvEndpoint) Read(ctx context.Context, input *Input) (*EnvDescriptor, 
 
 		values := provider.GetSettings()
 		appconfig.VisitEach(values, func(k string, v interface{}) error {
+			// TODO sanitize
 			psrc.Properties[k] = PValueDescriptor{Value: v, Origin: ""}
 			return nil
 		})
