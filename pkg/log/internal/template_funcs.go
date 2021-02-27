@@ -137,6 +137,8 @@ func sprint(v interface{}) string {
 	switch v.(type) {
 	case string:
 		return v.(string)
+	case []byte:
+		return string(v.([]byte))
 	case fmt.Stringer:
 		return v.(fmt.Stringer).String()
 	case encoding.TextMarshaler:

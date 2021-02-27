@@ -54,6 +54,7 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		routedMappings: map[string]map[string][]RoutedMapping{},
 	}
 
+	registrar.AddGlobalMiddlewares(gin.Recovery())
 	return registrar
 }
 

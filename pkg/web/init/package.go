@@ -43,6 +43,7 @@ type setupComponents struct {
 }
 
 func setup(lc fx.Lifecycle, dep setupComponents) {
+	dep.Registrar.Register(web.NewLoggingCustomizer())
 	dep.Registrar.Register(dep.CorsCustomizer)
 	lc.Append(fx.Hook{
 		OnStart: makeMappingRegistrationOnStartHandler(&dep),
