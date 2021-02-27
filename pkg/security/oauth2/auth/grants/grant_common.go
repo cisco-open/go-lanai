@@ -7,7 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 )
 
-var logger = log.GetNamedLogger("OAuth2Granter")
+var logger = log.New("OAuth2Granter")
 
 func CommonPreGrantValidation(c context.Context, client oauth2.OAuth2Client, request *auth.TokenRequest) error {
 	// check grant

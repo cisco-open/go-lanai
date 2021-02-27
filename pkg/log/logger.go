@@ -1,88 +1,15 @@
 package log
 
 import (
-	"context"
+	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 )
 
-type kitLogger struct {
-	swapLogger     *log.SwapLogger
-	templateLogger log.Logger
-	name           string
-	extractors     []FieldsExtractor
-}
-
-func newKitLogger(name string, templateLogger log.Logger, logLevel LoggingLevel, extractors []FieldsExtractor) *kitLogger {
-	s := &log.SwapLogger{}
-	k := &kitLogger{
-		name: name,
-		swapLogger: s,
-		templateLogger: templateLogger,
-		extractors: extractors,
-	}
-	k.setLevel(logLevel)
-	return k
-}
-
-func (k *kitLogger) Debug(msg string, args... interface{}) {
-	_ = level.Debug(k.swapLogger).Log(buildLogEntry(k.name, msg, args...)...)
-}
-func (k *kitLogger) Info(msg string, args... interface{}) {
-	_ = level.Info(k.swapLogger).Log(buildLogEntry(k.name, msg, args...)...)
-}
-func (k *kitLogger) Warn(msg string, args... interface{}) {
-	_ = level.Warn(k.swapLogger).Log(buildLogEntry(k.name, msg, args...)...)
-}
-func (k *kitLogger) Error(msg string, args... interface{}) {
-	_ = level.Error(k.swapLogger).Log(buildLogEntry(k.name, msg, args...)...)
-}
-func (k *kitLogger) WithContext(ctx context.Context) Logger {
-	var ctxFields []interface{}
-	if ctx != nil {
-		for _, e := range k.extractors {
-			m := e(ctx)
-			for k, v := range m {
-				ctxFields = append(ctxFields, k, v)
-			}
-		}
-	}
-
-	return &ContextLogger{
-		ctxFields: ctxFields,
-		swapLogger: k.swapLogger,
-		name: k.name,
-	}
-}
-
-func (k *kitLogger) setLevel(l LoggingLevel) {
-	var opt level.Option
-	switch l {
-	case LevelDebug:
-		opt = level.AllowDebug()
-	case LevelError:
-		opt = level.AllowError()
-	case LevelInfo:
-		opt = level.AllowInfo()
-	case LevelWarn:
-		opt = level.AllowWarn()
-	default:
-		opt = level.AllowInfo()
-	}
-	logger := level.NewFilter(k.templateLogger, opt)
-	k.swapLogger.Swap(logger)
-}
-
-func (k *kitLogger) getName() string {
-	return k.name
-}
-
-func buildLogEntry(name string, msg string, args...interface{}) []interface{} {
-	kvs := make([]interface{}, len(args)+4)
-	kvs[0], kvs[1] = nameKey, name
-	kvs[2], kvs[3] = messageKey, msg
-	copy(kvs[4:], args)
-	return kvs
+// to avoid copy as possible, we reuse underlying array
+// note, kv pairs's order should not matter
+func buildLogEntry(name string, msg string, args []interface{}) []interface{} {
+	return append(args, LogKeyName, name, LogKeyMessage, msg)
 }
 
 type CompositeKitLogger struct {
@@ -100,28 +27,74 @@ func (c *CompositeKitLogger) Log(keyvals ...interface{}) error {
 	return nil
 }
 
-type ContextLogger struct {
-	ctxFields []interface{}
-	swapLogger *log.SwapLogger
-	name string
+// logger implements Logger
+type logger struct {
+	log.Logger
 }
 
-func (l *ContextLogger) Debug(msg string, args... interface{}) {
-	_ = level.Debug(l.swapLogger).Log(buildLogEntry(l.name, msg, combineSlices(l.ctxFields, args)...)...)
-}
-func (l *ContextLogger) Info(msg string, args... interface{}) {
-	_ = level.Info(l.swapLogger).Log(buildLogEntry(l.name, msg, combineSlices(l.ctxFields, args)...)...)
-}
-func (l *ContextLogger) Warn(msg string, args... interface{}) {
-	_ = level.Warn(l.swapLogger).Log(buildLogEntry(l.name, msg, combineSlices(l.ctxFields, args)...)...)
-}
-func (l *ContextLogger) Error(msg string, args... interface{}) {
-	_ = level.Error(l.swapLogger).Log(buildLogEntry(l.name, msg, combineSlices(l.ctxFields, args)...)...)
+func (l *logger) WithKV(keyvals...interface{}) Logger {
+	return l.withKV(keyvals)
 }
 
-func combineSlices(first []interface{}, second []interface{}) []interface{} {
-	mergedArgs := make([]interface{}, len(first) + len(second))
-	copy(mergedArgs[:], first)
-	copy(mergedArgs[len(first):], second)
-	return mergedArgs
+func (l *logger) Debugf(msg string, args ...interface{}) {
+
+	l.debugLogger([]interface{}{
+		LogKeyMessage, fmt.Sprintf(msg, args...),
+	}).Log()
+}
+
+func (l *logger) Infof(msg string, args ...interface{}) {
+	l.infoLogger([]interface{}{
+		LogKeyMessage, fmt.Sprintf(msg, args...),
+	}).Log()
+}
+
+func (l *logger) Warnf(msg string, args ...interface{}) {
+	l.warnLogger([]interface{}{
+		LogKeyMessage, fmt.Sprintf(msg, args...),
+	}).Log()
+}
+
+func (l *logger) Errorf(msg string, args ...interface{}) {
+	l.errorLogger([]interface{}{
+		LogKeyMessage, fmt.Sprintf(msg, args...),
+	}).Log()
+}
+
+func (l *logger) Debug(msg string, keyvals... interface{}) {
+	l.debugLogger(keyvals).Log(LogKeyMessage, msg)
+}
+
+func (l *logger) Info(msg string, keyvals... interface{}) {
+	l.infoLogger(keyvals).Log(LogKeyMessage, msg)
+}
+
+func (l *logger) Warn(msg string, keyvals... interface{}) {
+	l.warnLogger(keyvals).Log(LogKeyMessage, msg)
+}
+
+func (l *logger) Error(msg string, keyvals... interface{}) {
+	l.errorLogger(keyvals).Log(LogKeyMessage, msg)
+}
+
+func (l *logger) withKV(keyvals []interface{}) Logger {
+	return &logger{
+		Logger: log.WithPrefix(l.Logger, keyvals...),
+	}
+}
+
+func (l *logger) debugLogger(keyvals []interface{}) log.Logger {
+	return log.WithPrefix(level.Debug(l.Logger), keyvals...)
+}
+
+func (l *logger) infoLogger(keyvals []interface{}) log.Logger {
+	return log.WithPrefix(level.Info(l.Logger), keyvals...)
+}
+
+func (l *logger) warnLogger(keyvals []interface{}) log.Logger {
+	return log.WithPrefix(level.Warn(l.Logger), keyvals...)
+}
+
+func (l *logger) errorLogger(keyvals []interface{}) log.Logger {
+	return log.WithPrefix(level.Error(l.Logger), keyvals...)
 }

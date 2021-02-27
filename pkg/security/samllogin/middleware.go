@@ -100,7 +100,7 @@ func (sp *ServiceProviderMiddleware) MetadataHandlerFunc(c *gin.Context) {
 	
 	w := c.Writer
 	buf, _ := xml.MarshalIndent(descriptor, "", "  ")
-	w.Header().Set("Content-Type", "application/samlmetadata+xml")
+	w.Header().Set("Content-LoggerType", "application/samlmetadata+xml")
 	w.Header().Set("Content-Disposition", "attachment; filename=metadata.xml")
 	_, _ = w.Write(buf)
 }

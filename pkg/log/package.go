@@ -1,7 +1,6 @@
 package log
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/ghodss/yaml"
 	"github.com/imdario/mergo"
@@ -11,51 +10,18 @@ import (
 )
 
 // factory is created by init, and used to create new loggers.
-var factory LoggerFactory
+var factory loggerFactory
 var defaultConfig *Properties
 
-type LoggingLevel string
-
-const (
-	LevelDebug LoggingLevel = "debug"
-	LevelInfo LoggingLevel = "info"
-	LevelWarn LoggingLevel = "warn"
-	LevelError LoggingLevel = "error"
-)
-
-type FieldsExtractor func (ctx context.Context) map[string]interface{}
-
-type ContextualLogger interface {
-	Logger
-	Contextual
-}
-
-type Contextual interface {
-	WithContext(ctx context.Context) Logger
-}
-
-type Logger interface {
-	Debug(msg string, args... interface{})
-	Info(msg string, args... interface{})
-	Warn(msg string, args... interface{})
-	Error(msg string, args... interface{})
-}
-
-type LoggerFactory interface {
-	 createLogger (name string) ContextualLogger
-	 addExtractors (extractors...FieldsExtractor)
-	 setLevel (name string, logLevel LoggingLevel)
-	 refresh (properties *Properties)
-}
-
-func RegisterContextLogFields(extractors...FieldsExtractor) {
-	factory.addExtractors(extractors...)
-}
-
-//Will create a new logger if a logger with this name doesn't exist yet
-func GetNamedLogger(name string) ContextualLogger {
+// New is the intuitive starting point for any packages to use log package
+// it will create a new logger if a logger with this name doesn't exist yet
+func New(name string) ContextualLogger {
 	logger := factory.createLogger(name)
 	return logger
+}
+
+func RegisterContextLogFields(extractors...ContextValuers) {
+	factory.addContextValuers(extractors...)
 }
 
 func SetLevel(name string, logLevel LoggingLevel) {
@@ -79,13 +45,11 @@ func UpdateLoggingConfiguration(properties *Properties) error {
 	return err
 }
 
-//Since log package cannot depend on other packages in case those package want to use log,
-//we have to duplicate the code for reading profile here.
+// Since log package cannot depend on other packages in case those package want to use log,
+// we have to duplicate the code for reading profile here.
 
 func init() {
-	defaultConfig = &Properties{
-		Levels: map[string]LoggingLevel{"default": LevelInfo},
-	}
+	defaultConfig = newProperties()
 
 	fullPath := path.Join("configs", "log.yml")
 	info, err := os.Stat(fullPath)

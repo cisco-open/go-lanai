@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 )
 
-var logger = log.GetNamedLogger("OAuth2AuthServer")
+var logger = log.New("OAuth2AuthServer")
 
 func init() {
 	gob.Register((*AuthorizeRequest)(nil))

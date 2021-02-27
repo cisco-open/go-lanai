@@ -8,7 +8,7 @@ import (
 )
 
 var applicationContext = NewContext()
-var logger = log.GetNamedLogger("bootstrap")
+var logger = log.New("bootstrap")
 
 var DefaultModule = &Module{
 	Precedence: HighestPrecedence,
