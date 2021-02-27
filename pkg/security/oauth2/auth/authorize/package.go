@@ -7,6 +7,8 @@ import (
 	"go.uber.org/fx"
 )
 
+var logger = log.New("OAuth2.Auth")
+
 //goland:noinspection GoNameStartsWithPackageName
 var Module = &bootstrap.Module{
 	Name: "oauth2 auth - authorize",
@@ -15,8 +17,6 @@ var Module = &bootstrap.Module{
 		fx.Invoke(register),
 	},
 }
-
-var logger = log.New("AuthorizeEndpoint")
 
 func init() {
 	bootstrap.Register(Module)

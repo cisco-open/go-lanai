@@ -2,6 +2,7 @@ package session
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
@@ -9,6 +10,8 @@ import (
 	"encoding/gob"
 	"go.uber.org/fx"
 )
+
+var logger = log.New("SEC.Session")
 
 var Module = &bootstrap.Module{
 	Name: "session",

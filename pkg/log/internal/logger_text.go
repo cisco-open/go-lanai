@@ -26,9 +26,9 @@ func (l *KitTextLoggerAdapter) Log(keyvals ...interface{}) error {
 	values := Fields{}
 	for i := 0; i < len(keyvals); i += 2 {
 		if i+1 < len(keyvals) {
-			values[sprint(keyvals[i])] = keyvals[i+1]
+			values[Sprint(keyvals[i])] = keyvals[i+1]
 		} else {
-			values[sprint(keyvals[i])] = errMissingValue
+			values[Sprint(keyvals[i])] = errMissingValue
 		}
 	}
 	return l.Formatter.Format(values, l.Writer)

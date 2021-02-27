@@ -1,11 +1,11 @@
 package access
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"fmt"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"sort"
 )
 
@@ -51,7 +51,7 @@ func (acc *AccessControlConfigurer) Apply(feature security.Feature, ws security.
 
 func (acc *AccessControlConfigurer) validate(f *AccessControlFeature, ws security.WebSecurity) error {
 	if len(f.acl) == 0 {
-		fmt.Printf("access control for routes match [%v] is not set. Default to DenyAll", ws)
+		logger.Infof("access control is not set, default to DenyAll - [%v]", log.Capped(ws, 80))
 		f.Request(matcher.AnyRequest()).DenyAll()
 	}
 	return nil

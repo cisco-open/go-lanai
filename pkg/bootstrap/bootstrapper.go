@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"context"
-	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"os"
@@ -79,8 +78,7 @@ func (app *App) Run() {
 	defer cancel()
 
 	if err := app.Start(startCtx); err != nil {
-		//app.logger.Fatalf("ERROR\t\tFailed to start: %v", err)
-		fmt.Printf("ERROR\t\tFailed to start up: %v\n", err)
+		logger.WithContext(startCtx).Errorf("Failed to start up: %v", err)
 		exit(1)
 	}
 
@@ -92,15 +90,14 @@ func (app *App) Run() {
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {
-		//app.logger.Fatalf("ERROR\t\tFailed to stop cleanly: %v", err)
-		fmt.Printf("ERROR\t\tFailed to gracefully shutdown: %v\n", err)
+		logger.WithContext(stopCtx).Errorf("Failed to gracefully shutdown: %v", err)
 		exit(1)
 	}
 }
 
 
 func printSignal(signal os.Signal) {
-	fmt.Println(strings.ToUpper(signal.String()))
+	logger.Infof(strings.ToUpper(signal.String()))
 }
 
 func exit(code int) {

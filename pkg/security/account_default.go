@@ -1,7 +1,6 @@
 package security
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -152,15 +151,11 @@ func (a *DefaultAccount) Lock() {
 		a.AcctDetails.LockoutTime = time.Now()
 	}
 	a.AcctDetails.Locked = true
-	// TODO proper logging
-	fmt.Printf("Account[%s] Locked\n", a.AcctDetails.Username)
 }
 
 func (a *DefaultAccount) Unlock() {
 	// we don't clear lockout time for record keeping purpose
 	a.AcctDetails.Locked = false
-	// TODO proper logging
-	fmt.Printf("Account[%s] Unlocked\n", a.AcctDetails.Username)
 }
 
 func (a *DefaultAccount) RecordFailure(failureTime time.Time, limit int) {
@@ -179,14 +174,10 @@ func (a *DefaultAccount) RecordSuccess(loginTime time.Time) {
 func (a *DefaultAccount) ResetFailedAttempts() {
 	a.AcctDetails.SerialFailedAttempts = 0
 	a.AcctDetails.LoginFailures = []time.Time{}
-	// TODO proper logging
-	fmt.Printf("Account[%s] Failure reset\n", a.AcctDetails.Username)
 }
 
 func (a *DefaultAccount) ResetGracefulAuthCount() {
 	a.AcctDetails.GracefulAuthCount = 0
-	// TODO proper logging
-	fmt.Printf("Account[%s] Graceful Auth Reset\n", a.AcctDetails.Username)
 }
 
 /***********************************

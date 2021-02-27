@@ -63,8 +63,11 @@ func (r *Registrar) initialize() (err error) {
 	if r.initialized {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
-	// load templates
-	r.engine.LoadHTMLGlob("web/template/*")
+
+	// apply customizers before install mappings
+	if err = r.applyCustomizers(); err != nil {
+		return
+	}
 
 	// we disable auto-validation. We will invoke our own validation manually.
 	// Also we need to make the validator available globally for any request decoder to access.
@@ -72,16 +75,14 @@ func (r *Registrar) initialize() (err error) {
 	binding.Validator = nil
 	bindingValidator = r.validator
 
+	// load templates
+	r.engine.LoadHTMLGlob("web/template/*")
+
 	// add some common middlewares
 	mappings := []interface{}{
 		NewMiddlewareMapping("pre-process", HighestMiddlewareOrder, Any(), r.preProcessMiddleware),
 	}
 	if err = r.Register(mappings...); err != nil {
-		return
-	}
-
-	// apply customizers before install mappings
-	if err = r.applyCustomizers(); err != nil {
 		return
 	}
 

@@ -2,11 +2,14 @@ package consul
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 	"github.com/hashicorp/consul/api"
 	"errors"
 	"strings"
 )
+
+var logger = log.New("Consul")
 
 const (
 	ConfigRootConsulConnection = "cloud.consul"
@@ -51,9 +54,9 @@ func (c *Connection) ListKeyValuePairs(path string) (results map[string]interfac
 	if err != nil {
 		return nil, err
 	} else if entries == nil {
-		fmt.Printf("No appconfig retrieved from consul (%s): %s\n", c.Host(), path)
+		logger.Warnf("No appconfig retrieved from consul (%s): %s", c.Host(), path)
 	} else {
-		fmt.Printf("Retrieved %d configs from consul (%s): %s", len(entries), c.Host(), path)
+		logger.Infof("Retrieved %d configs from consul (%s): %s", len(entries), c.Host(), path)
 	}
 
 	prefix := path + "/"
@@ -83,10 +86,10 @@ func (c *Connection) GetKeyValue(ctx context.Context, path string) (value []byte
 	if err != nil {
 		return nil, err
 	} else if data == nil {
-		fmt.Printf("No kv pair retrieved from consul %q: %s", c.Host(), path)
+		logger.WithContext(ctx).Warnf("No kv pair retrieved from consul %q: %s", c.Host(), path)
 		value = nil
 	} else {
-		fmt.Printf("Retrieved kv pair from consul %q: %s", c.Host(), path)
+		logger.WithContext(ctx).Infof("Retrieved kv pair from consul %q: %s", c.Host(), path)
 		value = data.Value
 	}
 
@@ -109,7 +112,7 @@ func (c *Connection) SetKeyValue(ctx context.Context, path string, value []byte)
 		return err
 	}
 
-	fmt.Printf("Stored kv pair to consul %q: %s", c.Host(), path)
+	logger.WithContext(ctx).Infof("Stored kv pair to consul %q: %s", c.Host(), path)
 	return nil
 }
 

@@ -3,7 +3,6 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"net/http"
@@ -16,7 +15,7 @@ func SessionDebugHandlerFunc() gin.HandlerFunc {
 
 		auth := security.Get(ctx)
 		if auth.State() > security.StateAnonymous {
-			fmt.Printf("Already authenticated as %T\n", auth)
+			logger.Debugf("Already authenticated as %T", auth)
 		}
 
 		session := Get(ctx)
@@ -24,7 +23,7 @@ func SessionDebugHandlerFunc() gin.HandlerFunc {
 
 			session.Set("TEST", RandomString(10240))
 		} else {
-			fmt.Printf("Have Session Token %s\n", "TEST")
+			logger.Debugf("Have Session Token %s", "TEST")
 		}
 
 		ctx.Next()
@@ -48,11 +47,11 @@ type DebugAuthSuccessHandler struct {}
 
 func (h *DebugAuthSuccessHandler) HandleAuthenticationSuccess(
 	_ context.Context, _ *http.Request, _ http.ResponseWriter, from, to security.Authentication) {
-	fmt.Printf("[DEBUG] session knows auth succeeded: from [%v] to [%v] \n", from, to)
+	logger.Debugf("session knows auth succeeded: from [%v] to [%v]", from, to)
 }
 
 type DebugAuthErrorHandler struct {}
 
 func (h *DebugAuthErrorHandler) HandleAuthenticationError(_ context.Context, _ *http.Request, _ http.ResponseWriter, err error) {
-	fmt.Printf("[DEBUG] session knows auth failed with %v \n", err.Error())
+	logger.Debugf("session knows auth failed with %v", err.Error())
 }

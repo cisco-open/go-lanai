@@ -7,14 +7,13 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"fmt"
 	"time"
 )
 
@@ -65,6 +64,6 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 func debugPrintOTP(event passwd.MFAEvent, otp passwd.OTP, principal interface{}) {
 	switch event {
 	case passwd.MFAEventOtpCreate, passwd.MFAEventOtpRefresh:
-		fmt.Printf("[DEBUG] OTP: %s \n", otp.Passcode())
+		logger.Debugf("OTP: %s", otp.Passcode())
 	}
 }

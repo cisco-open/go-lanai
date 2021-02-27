@@ -10,7 +10,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var logger = log.New("samllogin")
+var logger = log.New("SAMLLogin")
 
 var SamlAuthModule = &bootstrap.Module{
 	Name: "saml authenticator",

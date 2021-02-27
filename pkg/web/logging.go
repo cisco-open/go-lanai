@@ -2,6 +2,7 @@ package web
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
@@ -43,7 +44,7 @@ func (c LoggingCustomizer) Customize(r *Registrar) error {
 }
 
 type logFormatter struct {
-	logger log.Logger
+	logger log.ContextualLogger
 }
 
 // intercept uses logger directly and return empty string.
@@ -70,9 +71,9 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 	)
 
 	// prepare kv
-	kvs := make([]interface{}, 0, len(params.Keys) * 2 + 20)
+	ctx := utils.MakeMutableContext(params.Request.Context())
 	for k, v := range params.Keys {
-		kvs = append(kvs, k, fmt.Sprintf("%v", v))
+		ctx.Set(k, v)
 	}
 	http := map[string]interface{} {
 		LogKeyHttpStatus:   params.StatusCode,
@@ -82,10 +83,9 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 		LogKeyHttpBodySize: params.BodySize,
 		LogKeyHttpErrorMsg: params.ErrorMessage,
 	}
-	kvs = append(kvs, LogKeyHttp, http)
 
 	// do log
-	f.logger.Debug(msg, kvs...)
+	f.logger.WithContext(ctx).Debug(msg, LogKeyHttp, http)
 	return
 }
 

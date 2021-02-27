@@ -2,6 +2,7 @@ package example
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
@@ -14,6 +15,8 @@ import (
 	"go.uber.org/fx"
 	"net/url"
 )
+
+var logger = log.New("SEC.Example")
 
 func init() {
 	bootstrap.AddOptions(

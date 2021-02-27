@@ -106,6 +106,7 @@ func (p *AccountStatusPostProcessor) Process(ctx context.Context, acct security.
 		// fully authenticated
 		updater.RecordSuccess(time.Now())
 		updater.ResetFailedAttempts()
+		logger.WithContext(ctx).Infof("Account[%s] Failure reset", acct.Username())
 	case errors.Is(result.Error, errorBadCredentials) && isPasswordAuth(result):
 		// Password auth failed with incorrect password
 		limit := 5
@@ -163,6 +164,7 @@ func (p *AccountLockingPostProcessor) Process(ctx context.Context, acct security
 	// lock the account if over the limit
 	if count >= rules.LockoutFailuresLimit() {
 		updater.Lock()
+		logger.WithContext(ctx).Infof("Account[%s] Locked", acct.Username())
 		// Optional, change error message
 		result.Error = security.NewAccountStatusError(MessageLockedDueToBadCredential, result.Error)
 	}

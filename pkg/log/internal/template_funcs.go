@@ -5,6 +5,7 @@ import (
 	"encoding"
 	"fmt"
 	"github.com/go-kit/kit/log/level"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -72,7 +73,7 @@ func MakeKVFunc(ignored utils.StringSet) func(Fields) string {
 	return func(kvs Fields) string {
 		kvStrs := make([]string, 0, len(kvs))
 		for k, v := range kvs {
-			if ignored.Has(k) {
+			if v == nil || ignored.Has(k) || reflect.ValueOf(v).IsZero() {
 				continue
 			}
 			kvStrs = append(kvStrs, fmt.Sprintf(`%s="%v"`, k, v))
@@ -97,7 +98,7 @@ func Level(kvs Fields, padding int) string {
 		return ""
 	}
 
-	f, ok := levelFuncs[sprint(lv)]
+	f, ok := levelFuncs[Sprint(lv)]
 	if !ok {
 		return ""
 	}
@@ -106,34 +107,34 @@ func Level(kvs Fields, padding int) string {
 
 func Red(s interface{}) string {
 
-	return red + sprint(s) + noop
+	return red + Sprint(s) + noop
 }
 
 func Green(s interface{}) string {
-	return green + sprint(s) + noop
+	return green + Sprint(s) + noop
 }
 
 func Gray(s interface{}) string {
-	return gray + sprint(s) + noop
+	return gray + Sprint(s) + noop
 }
 
 func Cyan(s interface{}) string {
-	return cyan + sprint(s) + noop
+	return cyan + Sprint(s) + noop
 }
 
 func Yellow(s interface{}) string {
-	return yellow + sprint(s) + noop
+	return yellow + Sprint(s) + noop
 }
 
 func White(s interface{}) string {
-	return white + sprint(s) + noop
+	return white + Sprint(s) + noop
 }
 
 func Blue(s interface{}) string {
-	return blue + sprint(s) + noop
+	return blue + Sprint(s) + noop
 }
 
-func sprint(v interface{}) string {
+func Sprint(v interface{}) string {
 	switch v.(type) {
 	case string:
 		return v.(string)

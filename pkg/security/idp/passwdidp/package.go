@@ -2,10 +2,13 @@ package passwdidp
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"go.uber.org/fx"
 )
+
+var logger = log.New("SEC.Passwd")
 
 func init() {
 	bootstrap.AddOptions(

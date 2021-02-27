@@ -1,6 +1,7 @@
 package security
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
@@ -94,16 +95,8 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 			if err := registrar.Register(mapping); err != nil {
 				return err
 			}
-			switch mapping.(type) {
-			case web.MiddlewareMapping:
-				mw := mapping.(web.MiddlewareMapping)
-				// TODO logger
-				fmt.Printf("registered security middleware [%d][%s] %v -> %v \n",
-					mw.Order(), mw.Name(), mw.Matcher(), reflect.ValueOf(mw.HandlerFunc()).String())
-			default:
-				// TODO logger
-				fmt.Printf("registered security misc [%s]: %v\n", mapping.Name(), mapping)
-			}
+			// Do some logging
+			logMapping(mapping)
 		}
 	}
 
@@ -238,8 +231,24 @@ func featureOrderLess(l Feature, r Feature) bool {
 	return order.OrderedFirstCompare(l.Identifier(), r.Identifier())
 }
 
-
-
+func logMapping(mapping web.Mapping) {
+	switch mapping.(type) {
+	case web.MiddlewareMapping:
+		mw := mapping.(web.MiddlewareMapping)
+		logger.Infof("registered security middleware [%d] [%s] %s -> %v",
+			mw.Order(), mw.Name(), log.Capped(mw.Matcher(), 80), reflect.ValueOf(mw.HandlerFunc()).String())
+	case web.MvcMapping:
+		m := mapping.(web.MvcMapping)
+		logger.Infof("registered security MVC mapping [%s %s] [%s] %s -> endpoint",
+			m.Method(), m.Path(), m.Name(), log.Capped(m.Condition(), 80))
+	case web.SimpleMapping:
+		m := mapping.(web.SimpleMapping)
+		logger.Infof("registered security simple mapping [%s %s] [%s] %s -> %v",
+			m.Method(), m.Path(), m.Name(), log.Capped(m.Condition(), 80), reflect.ValueOf(m.HandlerFunc()).String())
+	default:
+		logger.Infof("registered security mapping [%s]: %v", mapping.Name(), mapping)
+	}
+}
 
 
 
