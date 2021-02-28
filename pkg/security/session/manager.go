@@ -68,7 +68,6 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 // AuthenticationPersistenceHandlerFunc provide middleware to load security from session and save it at end
 func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO better error handling
 		// defer is FILO
 		defer m.persistAuthentication(c)
 		defer c.Next()

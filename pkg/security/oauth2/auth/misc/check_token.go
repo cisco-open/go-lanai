@@ -115,8 +115,8 @@ func (ep *CheckTokenEndpoint) activeTokenResponseWithDetails(ctx context.Context
 	return &c
 }
 
+// Old impl. without claims factory, for reference only
 //func (ep *CheckTokenEndpoint) activeTokenResponseWithDetails(auth oauth2.Authentication) *CheckTokenClaims {
-//	// TODO proper claims generation
 //	claims := CheckTokenClaims{
 //		Active: &utils.TRUE,
 //		BasicClaims: oauth2.BasicClaims{

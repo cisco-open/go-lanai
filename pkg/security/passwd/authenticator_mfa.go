@@ -108,7 +108,6 @@ func (a *MfaVerifyAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpVe
 		Perms:      permissions,
 		DetailsMap: details,
 	}
-	// TODO chance for other components to add details
 	return &auth, nil
 }
 

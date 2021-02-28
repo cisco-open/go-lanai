@@ -29,7 +29,6 @@ func NewPasswordIdpSecurityConfigurer(authFlowManager idp.AuthFlowManager) *Pass
 }
 
 func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
-	// TODO
 	// For Authorize endpoint
 	handler := redirect.NewRedirectWithRelativePath("/error")
 	condition := idp.RequestWithAuthenticationMethod(idp.InternalIdpForm, c.authFlowManager)

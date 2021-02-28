@@ -32,16 +32,16 @@ func newSecurity(globalAuth Authenticator) *initializer {
 	}
 }
 
+// Register is not threadsafe, usually called in "fx.Invoke" or "fx.Provide"
 func (init *initializer) Register(configurers ...Configurer) {
-	// TODO proper lock
 	if err := init.validateState("register security.Configurer"); err != nil {
 		panic(err)
 	}
 	init.configurers = append(init.configurers, configurers...)
 }
 
+// RegisterFeature is not threadsafe, usually called in "fx.Invoke" or "fx.Provide"
 func (init *initializer) RegisterFeature(featureId FeatureIdentifier, featureConfigurer FeatureConfigurer) {
-	// TODO proper lock
 	if err := init.validateState("register security.FeatureConfigurer"); err != nil {
 		panic(err)
 	}

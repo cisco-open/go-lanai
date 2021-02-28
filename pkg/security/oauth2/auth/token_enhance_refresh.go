@@ -13,7 +13,7 @@ var (
 		oauth2.GrantTypeAuthCode,
 		oauth2.GrantTypeImplicit,
 		oauth2.GrantTypeRefresh,
-		oauth2.GrantTypePassword, // TODO this is for dev purpose, shouldn't be allowed
+		//oauth2.GrantTypePassword, // this is for dev purpose, shouldn't be allowed
 	)
 )
 

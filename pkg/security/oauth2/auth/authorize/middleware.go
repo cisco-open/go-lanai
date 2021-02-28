@@ -26,7 +26,6 @@ type AuthorizeEndpointMiddleware struct {
 	requestProcessor auth.AuthorizeRequestProcessor
 	authorizeHanlder auth.AuthorizeHandler
 	approveMatcher   web.RequestMatcher
-	//TODO
 }
 
 type AuthorizeMWOptions func(*AuthorizeMWOption)
@@ -35,13 +34,11 @@ type AuthorizeMWOption struct {
 	RequestProcessor auth.AuthorizeRequestProcessor
 	AuthorizeHanlder auth.AuthorizeHandler
 	ApprovalMatcher  web.RequestMatcher
-	//TODO
 }
 
 func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpointMiddleware {
 	opt := AuthorizeMWOption{
 		RequestProcessor: auth.NewCompositeAuthorizeRequestProcessor(),
-		//TODO
 	}
 	for _, optFunc := range opts {
 		if optFunc != nil {
@@ -52,7 +49,6 @@ func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpoin
 		requestProcessor: opt.RequestProcessor,
 		authorizeHanlder: opt.AuthorizeHanlder,
 		approveMatcher:   opt.ApprovalMatcher,
-		// TODO
 	}
 }
 

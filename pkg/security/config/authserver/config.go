@@ -95,7 +95,6 @@ type Configuration struct {
 	sharedAuthHanlder         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	sharedTokenAuthenticator  security.Authenticator
-	// TODO
 }
 
 func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {

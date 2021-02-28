@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
 	"errors"
@@ -417,7 +418,8 @@ func (r *Registrar) preProcessMiddleware(c *gin.Context) {
 ***************************/
 func MakeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
-		reqCtx := context.WithValue(c.Request.Context(), kGinContextKey, c)
+		reqCtx := utils.MakeMutableContext(c.Request.Context())
+		reqCtx.Set(kGinContextKey, c)
 		c.Request = c.Request.WithContext(reqCtx)
 		s.ServeHTTP(c.Writer, c.Request)
 	}

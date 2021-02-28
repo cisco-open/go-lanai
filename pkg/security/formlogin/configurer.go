@@ -65,8 +65,6 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 		return err
 	}
 
-	//TODO
-
 	return nil
 }
 

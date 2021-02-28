@@ -39,7 +39,7 @@ type setupComponents struct {
 	fx.In
 	Registrar      *web.Registrar
 	CorsCustomizer *cors.Customizer
-	// TODO we could include security configurations, customizations here
+	// we could include security configurations, customizations here
 }
 
 func setup(lc fx.Lifecycle, dep setupComponents) {

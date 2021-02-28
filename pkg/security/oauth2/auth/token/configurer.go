@@ -30,7 +30,7 @@ func (c *TokenEndpointConfigurer) Apply(feature security.Feature, ws security.We
 		return err
 	}
 
-	//TODO prepare middlewares
+	// prepare middlewares
 	tokenMw := NewTokenEndpointMiddleware(func(opts *TokenEndpointOptions) {
 		opts.Granter = auth.NewCompositeTokenGranter(f.granters...)
 	})

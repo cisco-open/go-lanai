@@ -36,7 +36,6 @@ type DASOption struct {
 	HierarchyStore security.TenantHierarchyStore
 	TokenStore     TokenStore
 	TokenEnhancer  TokenEnhancer
-	// TODO...
 }
 
 // DefaultAuthorizationService implements AuthorizationService
@@ -49,7 +48,6 @@ type DefaultAuthorizationService struct {
 	hierarchyStore security.TenantHierarchyStore
 	tokenStore     TokenStore
 	tokenEnhancer  TokenEnhancer
-	// TODO...
 }
 
 func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationService {
@@ -76,7 +74,6 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 		hierarchyStore: conf.HierarchyStore,
 		tokenStore:     conf.TokenStore,
 		tokenEnhancer:  conf.TokenEnhancer,
-		// TODO...
 	}
 }
 

@@ -69,9 +69,9 @@ func newApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx
 }
 
 func (app *App) Run() {
-	// TODO to be revised:
+	// to be revised:
 	//  1. (Solved)	Support Timeout in bootstrap.Context and make cancellable context as startParent (swap startParent and child)
-	//  2. Restore logging
+	//  2. (Solved) Restore logging
 	done := app.Done()
 	startParent, cancel := context.WithTimeout(context.Background(), app.StartTimeout())
 	startCtx := applicationContext.updateParent(startParent) //This is so that we know that the context in the life cycle hook is the bootstrap context

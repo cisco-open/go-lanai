@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -72,7 +73,7 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 		formatSize(params.BodySize),
 		method,
 		params.Path,
-		params.ErrorMessage)
+		strings.TrimSpace(params.ErrorMessage))
 
 	// prepare kv
 	ctx := utils.MakeMutableContext(params.Request.Context())
