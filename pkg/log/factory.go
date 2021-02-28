@@ -107,7 +107,7 @@ func buildContextValuerFromConfig(properties *Properties) ContextValuers {
 }
 
 func buildTemplateLoggerFromConfig(properties *Properties) log.Logger {
-	composite := &CompositeKitLogger{}
+	composite := &compositeKitLogger{}
 	for _, loggerProps := range properties.Loggers {
 		logger, e := newKitLogger(&loggerProps)
 		if e != nil {
@@ -129,7 +129,7 @@ func buildTemplateLoggerFromConfig(properties *Properties) log.Logger {
 	case 1:
 		logger = composite.delegates[0]
 	}
-	return log.With(logger, LogKeyTimestamp, log.DefaultTimestampUTC, LogKeyCaller, log.Caller(7))
+	return logger
 }
 
 func newKitLogger(props *LoggerProperties) (log.Logger, error) {
@@ -153,7 +153,7 @@ func newKitLoggerWithWriter(w io.Writer, props *LoggerProperties) (log.Logger, e
 	switch props.Format {
 	case FormatText:
 		fixedFields := defaultFixedFields.Copy().Add(props.FixedKeys...)
-		formatter := internal.NewTemplatedFormatter(props.Template, fixedFields)
+		formatter := internal.NewTemplatedFormatter(props.Template, fixedFields, internal.IsTerminal(w))
 		return internal.NewKitTextLoggerAdapter(w, formatter), nil
 	case FormatJson:
 		return log.NewJSONLogger(w), nil

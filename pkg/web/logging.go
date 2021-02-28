@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
+	"strconv"
 	"time"
 )
 
@@ -51,24 +52,27 @@ type logFormatter struct {
 // doing so would allow us to set key-value pairs
 func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 	var statusColor, methodColor, resetColor string
-	// TODO we force color for now, log framework should let us know whether color is supported
-	statusColor = params.StatusCodeColor()
-	methodColor = params.MethodColor()
-	resetColor = params.ResetColor()
+	methodLen := 7
+	if log.IsTerminal(f.logger) {
+		statusColor = params.StatusCodeColor()
+		methodColor = params.MethodColor()
+		resetColor = params.ResetColor()
+		methodLen = methodLen + len(methodColor) + len(resetColor)
+	}
 
 	if params.Latency > time.Minute {
 		params.Latency = params.Latency.Truncate(time.Minute)
 	}
 
 	// prepare message
-	msg := fmt.Sprintf("%s %3d %s| %10v | %8s | %s%-5s%s %#v %s",
+	method := fmt.Sprintf("%-" + strconv.Itoa(methodLen) + "s", methodColor + " "+ params.Method + " " + resetColor)
+	msg := fmt.Sprintf("[HTTP] %s %3d %s | %10v | %8s | %s %#v %s",
 		statusColor, params.StatusCode, resetColor,
 		params.Latency.Truncate(time.Microsecond),
 		formatSize(params.BodySize),
-		methodColor, params.Method, resetColor,
+		method,
 		params.Path,
-		params.ErrorMessage,
-	)
+		params.ErrorMessage)
 
 	// prepare kv
 	ctx := utils.MakeMutableContext(params.Request.Context())

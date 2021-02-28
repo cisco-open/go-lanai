@@ -20,15 +20,17 @@ type TextFormatter interface {
 }
 
 type TemplatedFormatter struct {
-	text string
-	tmpl *template.Template
+	text        string
+	tmpl        *template.Template
 	fixedFields utils.StringSet
+	isTerm      bool
 }
 
-func NewTemplatedFormatter(tmpl string, fixedFields utils.StringSet) *TemplatedFormatter {
+func NewTemplatedFormatter(tmpl string, fixedFields utils.StringSet, isTerm bool) *TemplatedFormatter {
 	formatter := &TemplatedFormatter{
-		text: tmpl,
+		text:        tmpl,
 		fixedFields: fixedFields,
+		isTerm:      isTerm,
 	}
 	formatter.init()
 	return formatter
@@ -39,9 +41,17 @@ func (f *TemplatedFormatter) init() {
 		f.text = f.text + "\n"
 	}
 
+	funcMap := TmplFuncMapNonTerm
+	colorFuncMap := TmplColorFuncMapNonTerm
+	if f.isTerm {
+		colorFuncMap = TmplFuncMap
+		funcMap = TmplColorFuncMap
+	}
+
 	t, e := template.New(logTemplate).
 		Option("missingkey=zero").
-		Funcs(TmplFuncMap).
+		Funcs(funcMap).
+		Funcs(colorFuncMap).
 		Funcs(template.FuncMap{
 			"kv": MakeKVFunc(f.fixedFields),
 		}).

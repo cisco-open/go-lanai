@@ -6,27 +6,27 @@ import (
 	"github.com/go-kit/kit/log/level"
 )
 
-// to avoid copy as possible, we reuse underlying array
-// note, kv pairs's order should not matter
-func buildLogEntry(name string, msg string, args []interface{}) []interface{} {
-	return append(args, LogKeyName, name, LogKeyMessage, msg)
-}
-
-type CompositeKitLogger struct {
+/************************
+	compositeKitLogger
+ ************************/
+type compositeKitLogger struct {
 	delegates []log.Logger
 }
 
-func (c *CompositeKitLogger) addLogger(l log.Logger) {
+func (c *compositeKitLogger) addLogger(l log.Logger) {
 	c.delegates = append(c.delegates, l)
 }
 
-func (c *CompositeKitLogger) Log(keyvals ...interface{}) error {
+func (c *compositeKitLogger) Log(keyvals ...interface{}) error {
 	for _, d := range c.delegates {
 		_ = d.Log(keyvals...)
 	}
 	return nil
 }
 
+/************************
+	logger
+ ************************/
 // logger implements Logger
 type logger struct {
 	log.Logger

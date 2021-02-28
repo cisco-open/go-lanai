@@ -11,14 +11,16 @@ type Fields map[string]interface{}
 
 // KitTextLoggerAdapter implmenets go-kit's log.Logger with custom Formatter
 type KitTextLoggerAdapter struct {
-	Formatter TextFormatter
-	Writer    io.Writer
+	Formatter  TextFormatter
+	Writer     io.Writer
+	IsTerminal bool
 }
 
 func NewKitTextLoggerAdapter(writer io.Writer, formatter TextFormatter) *KitTextLoggerAdapter {
 	return &KitTextLoggerAdapter{
 		Formatter: formatter,
 		Writer: writer,
+		IsTerminal: IsTerminal(writer),
 	}
 }
 

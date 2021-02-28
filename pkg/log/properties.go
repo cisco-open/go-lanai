@@ -3,7 +3,7 @@ package log
 import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 
 const (
-	defaultTemplate = `{{padding .time -28}} {{level . 5}} [{{padding .caller 15 | blue}}] {{padding .logger -15}}: {{.msg}} {{kv .}}`
+	defaultTemplate = `{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: {{.msg}} {{kv .}}`
 )
 
 var defaultFixedFields = utils.NewStringSet(

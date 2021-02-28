@@ -1,6 +1,7 @@
 package log
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
 	"encoding/json"
 	"github.com/ghodss/yaml"
 	"github.com/imdario/mergo"
@@ -10,14 +11,15 @@ import (
 )
 
 // factory is created by init, and used to create new loggers.
-var factory loggerFactory
-var defaultConfig *Properties
+var (
+	factory       loggerFactory
+	defaultConfig *Properties
+)
 
 // New is the intuitive starting point for any packages to use log package
-// it will create a new logger if a logger with this name doesn't exist yet
+// it will create a named logger if a logger with this name doesn't exist yet
 func New(name string) ContextualLogger {
-	logger := factory.createLogger(name)
-	return logger
+	return factory.createLogger(name)
 }
 
 func RegisterContextLogFields(extractors...ContextValuers) {
@@ -66,4 +68,7 @@ func init() {
 		}
 	}
 	factory = newKitLoggerFactory(defaultConfig)
+
+	// a test run for dev
+	internal.DebugShowcase()
 }
