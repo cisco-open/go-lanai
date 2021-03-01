@@ -13,10 +13,13 @@ type ListableContext interface {
 	Values() map[interface{}]interface{}
 }
 
+type ContextValuer func(key interface{}) interface{}
+
 // mutableContext implements MutableContext and ListableContext
 type mutableContext struct {
 	context.Context
-	values map[interface{}]interface{}
+	values  map[interface{}]interface{}
+	valuers []ContextValuer
 }
 
 func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
@@ -25,6 +28,16 @@ func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
 	if !ok || ret == nil {
 		ret = ctx.Context.Value(key)
 	}
+
+	if ret == nil && ctx.valuers != nil {
+		// user valuers to get
+		for _, valuer := range ctx.valuers {
+			if ret = valuer(key); ret != nil {
+				return
+			}
+		}
+	}
+
 	return
 }
 
@@ -47,13 +60,14 @@ func (ctx *mutableContext) Values() map[interface{}]interface{} {
 	return ctx.values
 }
 
-func MakeMutableContext(parent context.Context) MutableContext {
+func MakeMutableContext(parent context.Context, valuers ...ContextValuer) MutableContext {
 	if mutable, ok := parent.(MutableContext); ok {
 		return mutable
 	}
 
 	return &mutableContext{
 		Context: parent,
-		values: make(map[interface{}]interface{}),
+		values:  make(map[interface{}]interface{}),
+		valuers: valuers,
 	}
 }

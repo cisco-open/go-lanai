@@ -6,7 +6,6 @@ import (
 	web "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 )
@@ -183,11 +182,13 @@ func RequestHasHeader(name string) web.RequestMatcher {
 
 func RequestHasPostParameter(name string) web.RequestMatcher {
 	matchable := func(ctx context.Context, r *http.Request) (interface{}, error) {
-		if g, ok := ctx.(*gin.Context); ok {
+		if g := web.GinContext(ctx); g != nil {
 			p, _ := g.GetPostForm(name)
 			return p, nil
+		} else if _ = r.ParseForm(); len(r.PostForm[name]) != 0 {
+			return r.PostForm[name][0], nil
 		}
-		return nil, errors.New("can't get post param from context. Context is not *gin.Context")
+		return nil, errors.New("can't get post param from context. *gin.Context is not available")
 	}
 
 	return &requestMatcher{

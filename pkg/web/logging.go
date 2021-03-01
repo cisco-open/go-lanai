@@ -65,6 +65,8 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 		params.Latency = params.Latency.Truncate(time.Minute)
 	}
 
+	params.ErrorMessage = strings.Trim(params.ErrorMessage, "\n")
+
 	// prepare message
 	method := fmt.Sprintf("%-" + strconv.Itoa(methodLen) + "s", methodColor + " "+ params.Method + " " + resetColor)
 	msg := fmt.Sprintf("[HTTP] %s %3d %s | %10v | %8s | %s %#v %s",
@@ -73,7 +75,7 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 		formatSize(params.BodySize),
 		method,
 		params.Path,
-		strings.TrimSpace(params.ErrorMessage))
+		params.ErrorMessage)
 
 	// prepare kv
 	ctx := utils.MakeMutableContext(params.Request.Context())

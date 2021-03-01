@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
 	"errors"
 	"fmt"
@@ -20,7 +21,7 @@ import (
 )
 
 const (
-	kGinContextKey = "GinContext"
+	kGinContextKey = "GinCtx"
 	DefaultGroup = "/"
 )
 
@@ -28,11 +29,23 @@ var (
 	bindingValidator binding.StructValidator
 )
 
+func GinContext(ctx context.Context) *gin.Context {
+	if ginCtx, ok := ctx.(*gin.Context); ok {
+		return ginCtx
+	}
+
+	if ginCtx, ok := ctx.Value(kGinContextKey).(*gin.Context); ok {
+		return ginCtx
+	}
+
+	return nil
+}
+
 type Registrar struct {
 	engine         *Engine
 	router         gin.IRouter
 	properties     ServerProperties
-	options        []httptransport.ServerOption // options go-kit middleware options
+	options        []*orderedServerOption // options go-kit server options
 	validator      binding.StructValidator
 	middlewares    []MiddlewareMapping                   // middlewares gin-gonic middleware providers
 	routedMappings map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
@@ -48,8 +61,8 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		engine:     g,
 		router:     g.Group(contextPath),
 		properties: properties,
-		options: []httptransport.ServerOption{
-			httptransport.ServerBefore(ginContextExtractor),
+		options: []*orderedServerOption{
+			newOrderedServerOption(httptransport.ServerBefore(integrateGinContext), order.Lowest),
 		},
 		validator:      binding.Validator,
 		routedMappings: map[string]map[string][]RoutedMapping{},
@@ -103,6 +116,23 @@ func (r *Registrar) initialize() (err error) {
 // AddGlobalMiddleware add middleware to all mapping
 func (r *Registrar) AddGlobalMiddlewares(handlerFuncs ...gin.HandlerFunc) error {
 	r.engine.Use(handlerFuncs...)
+	return nil
+}
+
+// AddOption calls AddOptionWithOrder with 0 order value
+func (r *Registrar) AddOption(opt httptransport.ServerOption) error {
+	return r.AddOptionWithOrder(opt, 0)
+}
+
+// AddOptionWithOrder add go-kit ServerOption with order.
+// httptransport.ServerOption are ordered using order.OrderedFirstCompare
+func (r *Registrar) AddOptionWithOrder(opt httptransport.ServerOption, o int) error {
+	if r.initialized {
+		return fmt.Errorf("cannot register options after web engine have initialized")
+	}
+
+	r.options = append(r.options, newOrderedServerOption(opt, o))
+	order.SortStable(r.options, order.OrderedFirstCompare)
 	return nil
 }
 
@@ -319,6 +349,7 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 
 	handlerFuncs := make([]gin.HandlerFunc, len(mappings))
 	path := mappings[0].Path()
+	options := r.kitServerOptions()
 	unconditionalFound := false
 	for i, m := range mappings {
 		// validate method and path with best efforts
@@ -335,7 +366,7 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 		// create hander funcs
 		switch m.(type) {
 		case MvcMapping:
-			handlerFuncs[i] = r.makeHandlerFuncFromMvcMapping(m.(MvcMapping))
+			handlerFuncs[i] = r.makeHandlerFuncFromMvcMapping(m.(MvcMapping), options)
 		case SimpleMapping:
 			handlerFuncs[i] = MakeConditionalHandlerFunc(m.(SimpleMapping).HandlerFunc(), m.Condition())
 		}
@@ -355,10 +386,9 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 	return err
 }
 
-func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping) gin.HandlerFunc {
-	options := r.options
+func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, options []httptransport.ServerOption) gin.HandlerFunc {
 	if m.ErrorEncoder() != nil {
-		options = append(r.options, httptransport.ServerErrorEncoder(m.ErrorEncoder()))
+		options = append(options, httptransport.ServerErrorEncoder(m.ErrorEncoder()))
 	}
 
 	s := httptransport.NewServer(
@@ -406,6 +436,14 @@ func (r *Registrar) routeMatches(matcher RouteMatcher, group, relativePath strin
 	return false, nil
 }
 
+func (r *Registrar) kitServerOptions() []httptransport.ServerOption {
+	opts := make([]httptransport.ServerOption, len(r.options))
+	for i, opt := range r.options {
+		opts[i] = opt.ServerOption
+	}
+	return opts
+}
+
 /*******************************
 	some global middlewares
 ********************************/
@@ -437,10 +475,15 @@ func MakeConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.
 	}
 }
 
-func ginContextExtractor(ctx context.Context, r *http.Request) (ret context.Context) {
-	if ret = r.Context().Value(kGinContextKey).(context.Context); ret == nil {
-		return ctx
+func integrateGinContext(ctx context.Context, r *http.Request) (ret context.Context) {
+	if ginCtx := GinContext(ctx); ginCtx != nil {
+		ret = utils.MakeMutableContext(ctx, func(key interface{}) interface{} {
+			return ginCtx.Value(key)
+		})
+	} else {
+		ret = utils.MakeMutableContext(ctx)
 	}
+
 	return
 }
 

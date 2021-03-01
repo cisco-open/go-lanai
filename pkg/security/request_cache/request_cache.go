@@ -23,25 +23,30 @@ type CachedRequest struct {
 	Host     string
 }
 
-func SaveRequest(ctx *gin.Context) {
+func SaveRequest(ctx context.Context) {
+	gc := web.GinContext(ctx)
+	if gc == nil {
+		return
+	}
+
 	s := session.Get(ctx)
 	// we don't know if other components have already parsed the form.
 	// if other components have already parsed the form, then the body is already read, so if we read it again we'll just get ""
 	// therefore we call parseForm to make sure it's read into the form field, and we serialize the form field ourselves.
-	_ = ctx.Request.ParseForm()
+	_ = gc.Request.ParseForm()
 
 	cached := &CachedRequest{
-		Method:   ctx.Request.Method,
-		URL:      ctx.Request.URL,
-		Host:     ctx.Request.Host,
-		PostForm: ctx.Request.PostForm,
-		Form: 	  ctx.Request.Form,
-		Header:   ctx.Request.Header,
+		Method:   gc.Request.Method,
+		URL:      gc.Request.URL,
+		Host:     gc.Request.Host,
+		PostForm: gc.Request.PostForm,
+		Form:     gc.Request.Form,
+		Header:   gc.Request.Header,
 	}
 	s.Set(SessionKeyCachedRequest, cached)
 }
 
-func GetCachedRequest(ctx *gin.Context) *CachedRequest {
+func GetCachedRequest(ctx context.Context) *CachedRequest {
 	s := session.Get(ctx)
 	cached, _ := s.Get(SessionKeyCachedRequest).(*CachedRequest)
 	return cached
@@ -125,14 +130,12 @@ func (h *SavedRequestAuthenticationSuccessHandler) HandleAuthenticationSuccess(c
 		return
 	}
 
-	if g, ok := c.(*gin.Context); ok {
-		cached := GetCachedRequest(g)
+	cached := GetCachedRequest(c)
 
-		if cached != nil {
-			http.Redirect(rw, r, cached.URL.RequestURI(), 302)
-			_,_ = rw.Write([]byte{})
-			return
-		}
+	if cached != nil {
+		http.Redirect(rw, r, cached.URL.RequestURI(), 302)
+		_,_ = rw.Write([]byte{})
+		return
 	}
 
 	h.fallback.HandleAuthenticationSuccess(c, r, rw, from, to)
@@ -161,7 +164,7 @@ func NewSaveRequestEntryPoint(delegate security.AuthenticationEntryPoint) *SaveR
 func (s *SaveRequestEntryPoint) Commence(c context.Context, r *http.Request, w http.ResponseWriter, e error) {
 	match, err := s.saveRequestMatcher.MatchesWithContext(c, r)
 	if match && err == nil{
-		SaveRequest(c.(*gin.Context))
+		SaveRequest(c)
 	}
 	s.delegate.Commence(c, r, w, e)
 }

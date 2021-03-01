@@ -21,6 +21,7 @@ type Customizer interface {
 	Customize(r *Registrar) error
 }
 
+
 /*********************************
 	Mappings
  *********************************/
@@ -154,3 +155,22 @@ func (g simpleMapping) Path() string {
 func (g simpleMapping) Name() string {
 	return g.name
 }
+
+/*********************************
+	orderedServerOption
+ *********************************/
+// orderedServerOption wraps go-kit's httptransport.ServerOption and provide ordering
+type orderedServerOption struct {
+	httptransport.ServerOption
+	order int
+}
+
+func (o orderedServerOption) Order() int {
+	return o.order
+}
+
+func newOrderedServerOption(opt httptransport.ServerOption, order int) *orderedServerOption {
+	return &orderedServerOption{ServerOption: opt, order: order}
+}
+
+
