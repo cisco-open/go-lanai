@@ -79,6 +79,7 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 
 	// prepare kv
 	ctx := utils.MakeMutableContext(params.Request.Context())
+
 	for k, v := range params.Keys {
 		ctx.Set(k, v)
 	}

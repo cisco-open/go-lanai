@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
@@ -22,24 +21,13 @@ import (
 
 const (
 	kGinContextKey = "GinCtx"
+	kKitContextKey = "KitCtx"
 	DefaultGroup = "/"
 )
 
 var (
 	bindingValidator binding.StructValidator
 )
-
-func GinContext(ctx context.Context) *gin.Context {
-	if ginCtx, ok := ctx.(*gin.Context); ok {
-		return ginCtx
-	}
-
-	if ginCtx, ok := ctx.Value(kGinContextKey).(*gin.Context); ok {
-		return ginCtx
-	}
-
-	return nil
-}
 
 type Registrar struct {
 	engine         *Engine
@@ -62,7 +50,8 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		router:     g.Group(contextPath),
 		properties: properties,
 		options: []*orderedServerOption{
-			newOrderedServerOption(httptransport.ServerBefore(integrateGinContext), order.Lowest),
+			newOrderedServerOption(httptransport.ServerBefore(integrateGinContextBefore), order.Lowest),
+			newOrderedServerOption(httptransport.ServerFinalizer(integrateGinContextFinalizer), order.Lowest),
 		},
 		validator:      binding.Validator,
 		routedMappings: map[string]map[string][]RoutedMapping{},
@@ -454,41 +443,3 @@ func (r *Registrar) preProcessMiddleware(c *gin.Context) {
 /**************************
 	Helpers
 ***************************/
-func MakeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerFunc {
-	handler := func(c *gin.Context) {
-		reqCtx := utils.MakeMutableContext(c.Request.Context())
-		reqCtx.Set(kGinContextKey, c)
-		c.Request = c.Request.WithContext(reqCtx)
-		s.ServeHTTP(c.Writer, c.Request)
-	}
-	return MakeConditionalHandlerFunc(handler, rm)
-}
-
-func MakeConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
-	if rm == nil {
-		return handler
-	}
-	return func(c *gin.Context) {
-		if matches, e := rm.MatchesWithContext(c, c.Request); e == nil && matches {
-			handler(c)
-		}
-	}
-}
-
-func integrateGinContext(ctx context.Context, r *http.Request) (ret context.Context) {
-	if ginCtx := GinContext(ctx); ginCtx != nil {
-		ret = utils.MakeMutableContext(ctx, func(key interface{}) interface{} {
-			return ginCtx.Value(key)
-		})
-	} else {
-		ret = utils.MakeMutableContext(ctx)
-	}
-
-	return
-}
-
-
-
-
-
-

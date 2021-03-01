@@ -16,11 +16,13 @@ var (
 		"cap": Capped,
 		"pad": Padding,
 		"lvl": MakeLevelFunc(true),
+		"join":  Join,
 	}
 	TmplFuncMapNonTerm = template.FuncMap{
 		"cap": Capped,
 		"pad": Padding,
 		"lvl": MakeLevelFunc(false),
+		"join":  Join,
 	}
 )
 
@@ -110,9 +112,22 @@ func Capped(v interface{}, cap int) string {
 	return fmt.Sprintf("%." + strconv.Itoa(cap - 3) + "s...", s)
 }
 
+func Join(sep string, values ...interface{}) string {
+	strs := []string{}
+	for _, v := range values {
+		s := Sprint(v)
+		if s != "" {
+			strs = append(strs, s)
+		}
+	}
+	str := strings.Join(strs, sep)
+	return str
+}
 
 func Sprint(v interface{}) string {
 	switch v.(type) {
+	case nil:
+		return ""
 	case string:
 		return v.(string)
 	case []byte:
