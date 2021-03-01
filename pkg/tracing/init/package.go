@@ -3,6 +3,7 @@ package tracing
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
@@ -10,6 +11,8 @@ import (
 )
 
 var logger = log.New("Tracing")
+// for now, appTracer is used for application startup/shutdown tracing
+var appTracer opentracing.Tracer
 
 var Module = &bootstrap.Module{
 	Name: "Tracing",
@@ -22,6 +25,10 @@ var Module = &bootstrap.Module{
 
 func init() {
 	bootstrap.Register(Module)
+	// bootstrap tracing
+	appTracer, _ = jaeger.NewTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
+	bootstrap.AddStartContextOptions(tracing.MakeBootstrapTracingOption(appTracer, "startup"))
+	bootstrap.AddStopContextOptions(tracing.MakeBootstrapTracingOption(appTracer, "shutdown"))
 }
 
 // Maker func, does nothing. Allow service to include this module in main()

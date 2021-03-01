@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
@@ -33,7 +34,7 @@ type Initializer interface {
 	// Initialize is the entry point for all security configuration.
 	// Microservice or other library packages typically call this in Provide or Invoke functions
 	// Note: use this function inside fx.Lifecycle takes no effect
-	Initialize(lc fx.Lifecycle, registrar *web.Registrar) error
+	Initialize(ctx context.Context, lc fx.Lifecycle, registrar *web.Registrar) error
 }
 
 /****************************************

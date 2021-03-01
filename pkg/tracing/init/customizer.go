@@ -1,6 +1,7 @@
 package tracing
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	kitopentracing "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -17,7 +18,7 @@ func newTracingWebCustomizer(tracer opentracing.Tracer) *TracingWebCustomizer{
 	}
 }
 
-func (c *TracingWebCustomizer) Customize(r *web.Registrar) error {
+func (c *TracingWebCustomizer) Customize(ctx context.Context, r *web.Registrar) error {
 	t := kithttp.ServerBefore(kitopentracing.HTTPToContext(c.tracer,"http", logger))
 	r.AddOption(t)
 	return nil

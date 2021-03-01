@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
@@ -23,6 +24,8 @@ const (
 	LogKeyHttpBodySize = "bodySize"
 )
 
+
+// LoggingCustomizer implements Customizer and PostInitCustomizer
 type LoggingCustomizer struct {
 	
 }
@@ -31,10 +34,10 @@ func NewLoggingCustomizer() *LoggingCustomizer {
 	return &LoggingCustomizer{}
 }
 
-func (c LoggingCustomizer) Customize(r *Registrar) error {
+func (c LoggingCustomizer) Customize(ctx context.Context, r *Registrar) error {
 	// override gin debug
-	gin.DefaultWriter = log.NewWriterAdapter(logger, log.LevelDebug)
-	gin.DefaultErrorWriter = log.NewWriterAdapter(logger, log.LevelDebug)
+	gin.DefaultWriter = log.NewWriterAdapter(logger.WithContext(ctx), log.LevelDebug)
+	gin.DefaultErrorWriter = log.NewWriterAdapter(logger.WithContext(ctx), log.LevelDebug)
 
 	// setup logger middleware
 	mw := gin.LoggerWithConfig(gin.LoggerConfig{
@@ -42,6 +45,13 @@ func (c LoggingCustomizer) Customize(r *Registrar) error {
 		Output:    ioutil.Discard, // our logFormatter calls logger directly
 	})
 	r.AddGlobalMiddlewares(mw)
+	return nil
+}
+
+func (c LoggingCustomizer) PostInit(ctx context.Context, r *Registrar) error {
+	// release initializing context
+	gin.DefaultWriter = log.NewWriterAdapter(logger, log.LevelDebug)
+	gin.DefaultErrorWriter = log.NewWriterAdapter(logger, log.LevelDebug)
 	return nil
 }
 

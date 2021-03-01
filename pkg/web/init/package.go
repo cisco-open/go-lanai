@@ -52,6 +52,6 @@ func setup(lc fx.Lifecycle, dep setupComponents) {
 
 func makeMappingRegistrationOnStartHandler(dep *setupComponents) bootstrap.LifecycleHandler {
 	return func(ctx context.Context) (err error) {
-		return dep.Registrar.Run()
+		return dep.Registrar.Run(ctx)
 	}
 }

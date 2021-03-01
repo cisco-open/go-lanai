@@ -12,6 +12,10 @@ import (
 
 var once sync.Once
 var bootstrapperInstance *Bootstrapper
+var (
+	startContextOptions = []ContextOption{}
+	stopContextOptions  = []ContextOption{}
+)
 
 type Bootstrapper struct {
 	modules []*Module
@@ -19,6 +23,8 @@ type Bootstrapper struct {
 
 type App struct {
 	*fx.App
+	startCtxOptions []ContextOption
+	stopCtxOptions  []ContextOption
 }
 
 // singleton pattern
@@ -39,6 +45,16 @@ func Register(m *Module) {
 func AddOptions(options...fx.Option) {
 	m := anonymousModule()
 	m.PriorityOptions = append(m.PriorityOptions, options...)
+}
+
+type ContextOption func(ctx context.Context) context.Context
+
+func AddStartContextOptions(options...ContextOption) {
+	startContextOptions = append(startContextOptions, options...)
+}
+
+func AddStopContextOptions(options...ContextOption) {
+	stopContextOptions = append(stopContextOptions, options...)
 }
 
 func newApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
@@ -65,7 +81,11 @@ func newApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx
 		options = append(options, m.Options...)
 	}
 
-	return &App{App: fx.New(options...)}
+	return &App{
+		App: fx.New(options...),
+		startCtxOptions: startContextOptions,
+		stopCtxOptions: stopContextOptions,
+	}
 }
 
 func (app *App) Run() {
@@ -74,6 +94,9 @@ func (app *App) Run() {
 	//  2. (Solved) Restore logging
 	done := app.Done()
 	startParent, cancel := context.WithTimeout(context.Background(), app.StartTimeout())
+	for _, opt := range app.startCtxOptions {
+		startParent = opt(startParent)
+	}
 	startCtx := applicationContext.updateParent(startParent) //This is so that we know that the context in the life cycle hook is the bootstrap context
 	defer cancel()
 
@@ -82,10 +105,14 @@ func (app *App) Run() {
 		exit(1)
 	}
 
+	// this line blocks until application shutting down
 	printSignal(<-done)
-	//app.logger.PrintSignal(<-done)
 
+	// shutdown sequence
 	stopParent, cancel := context.WithTimeout(context.Background(), app.StopTimeout())
+	for _, opt := range app.stopCtxOptions {
+		stopParent = opt(stopParent)
+	}
 	stopCtx := applicationContext.updateParent(stopParent)
 	defer cancel()
 

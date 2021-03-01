@@ -25,7 +25,11 @@ func init() {
 
 func provideApplicationContext(config *appconfig.ApplicationConfig) *ApplicationContext {
 	applicationContext.updateConfig(config)
-	return applicationContext
+	parent := applicationContext.Context
+	for _, opt := range startContextOptions {
+		parent = opt(parent)
+	}
+	return applicationContext.updateParent(parent)
 }
 
 func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {

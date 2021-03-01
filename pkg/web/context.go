@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
@@ -17,10 +18,19 @@ var (
 /*********************************
 	Customization
  *********************************/
+// Customizer is invoked by Registrar at the beginning of initialization,
+// customizers can register anything except for additional customizers
+// If a customizer retains the given context in anyway, it should also implement PostInitCustomizer to release it
 type Customizer interface {
-	Customize(r *Registrar) error
+	Customize(ctx context.Context, r *Registrar) error
 }
 
+// PostInitCustomizer is invoked by Registrar after initialization, register anything in PostInitCustomizer.PostInit
+// would cause error or takes no effect
+type PostInitCustomizer interface {
+	Customizer
+	PostInit(ctx context.Context, r *Registrar) error
+}
 
 /*********************************
 	Mappings

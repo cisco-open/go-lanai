@@ -32,7 +32,13 @@ func (_ *ApplicationContext) String() string {
 }
 
 func (c *ApplicationContext) Value(key interface{}) interface{} {
-	return c.config.Value(key.(string))
+	switch key.(type) {
+	case string:
+		if ret := c.config.Value(key.(string)); ret != nil {
+			return ret
+		}
+	}
+	return c.Context.Value(key)
 }
 
 /*************

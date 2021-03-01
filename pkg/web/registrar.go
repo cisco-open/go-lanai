@@ -62,13 +62,13 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 }
 
 // initialize should be called during application startup, last change to change configurations, load templates, etc
-func (r *Registrar) initialize() (err error) {
+func (r *Registrar) initialize(ctx context.Context) (err error) {
 	if r.initialized {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
 
 	// apply customizers before install mappings
-	if err = r.applyCustomizers(); err != nil {
+	if err = r.applyCustomizers(ctx); err != nil {
 		return
 	}
 
@@ -102,6 +102,14 @@ func (r *Registrar) initialize() (err error) {
 	return
 }
 
+// cleanup post initilaize cleanups
+func (r *Registrar) cleanup(ctx context.Context) (err error) {
+	if e := r.applyPostInitCustomizers(ctx); e != nil {
+		return e
+	}
+	return nil
+}
+
 // AddGlobalMiddleware add middleware to all mapping
 func (r *Registrar) AddGlobalMiddlewares(handlerFuncs ...gin.HandlerFunc) error {
 	r.engine.Use(handlerFuncs...)
@@ -126,10 +134,11 @@ func (r *Registrar) AddOptionWithOrder(opt httptransport.ServerOption, o int) er
 }
 
 // Run configure and start gin engine
-func (r *Registrar) Run() (err error) {
-	if err = r.initialize(); err != nil {
+func (r *Registrar) Run(ctx context.Context) (err error) {
+	if err = r.initialize(ctx); err != nil {
 		return
 	}
+	defer r.cleanup(ctx)
 
 	var addr = fmt.Sprintf(":%v", r.properties.Port)
 	s := &http.Server{
@@ -286,13 +295,27 @@ func (r *Registrar) registerWebCustomizer(c Customizer) error {
 	return nil
 }
 
-func (r *Registrar) applyCustomizers() error {
+func (r *Registrar) applyCustomizers(ctx context.Context) error {
 	if r.customizers == nil {
 		return nil
 	}
 	for _, c := range r.customizers {
-		if e := c.Customize(r); e != nil {
+		if e := c.Customize(ctx, r); e != nil {
 			return e
+		}
+	}
+	return nil
+}
+
+func (r *Registrar) applyPostInitCustomizers(ctx context.Context) error {
+	if r.customizers == nil {
+		return nil
+	}
+	for _, c := range r.customizers {
+		if pi, ok := c.(PostInitCustomizer); ok {
+			if e := pi.PostInit(ctx, r); e != nil {
+				return e
+			}
 		}
 	}
 	return nil
