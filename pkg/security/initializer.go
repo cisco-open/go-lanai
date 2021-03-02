@@ -79,7 +79,7 @@ func (init *initializer) Initialize(ctx context.Context, lc fx.Lifecycle, regist
 
 	// go through each configurer
 	for _,configurer := range init.configurers {
-		builder, requestPreProcessors, err := init.build(configurer)
+		builder, requestPreProcessors, err := init.build(ctx, configurer)
 		if err != nil {
 			return err
 		}
@@ -110,9 +110,9 @@ func (init *initializer) Initialize(ctx context.Context, lc fx.Lifecycle, regist
 	return nil
 }
 
-func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, map[web.RequestPreProcessorName]web.RequestPreProcessor, error) {
+func (init *initializer) build(ctx context.Context, configurer Configurer) (WebSecurityMappingBuilder, map[web.RequestPreProcessorName]web.RequestPreProcessor, error) {
 	// collect security configs
-	ws := newWebSecurity(NewAuthenticator(), map[string]interface{}{
+	ws := newWebSecurity(ctx, NewAuthenticator(), map[string]interface{}{
 		WSSharedKeyCompositeAuthSuccessHandler: NewAuthenticationSuccessHandler(),
 		WSSharedKeyCompositeAuthErrorHandler: NewAuthenticationErrorHandler(),
 		WSSharedKeyCompositeAccessDeniedHandler: NewAccessDeniedHandler(),

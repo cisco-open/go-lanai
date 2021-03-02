@@ -2,6 +2,7 @@ package consulprovider
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"fmt"
 )
@@ -42,7 +43,9 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	// load keys from default context
 	var defaultSettings map[string]interface{}
 
-	defaultSettings, loadError = configProvider.connection.ListKeyValuePairs(configProvider.contextPath)
+	defaultSettings, loadError = configProvider.connection.ListKeyValuePairs(
+		bootstrap.EagerGetApplicationContext(),
+		configProvider.contextPath)
 	if loadError != nil {
 		return loadError
 	}

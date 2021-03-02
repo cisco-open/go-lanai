@@ -2,25 +2,29 @@ package bootstrap
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 )
 
 type LifecycleHandler func(context.Context) error
+
+type ApplicationConfig interface {
+	Value(key string) interface{}
+	Bind(target interface{}, prefix string) error
+}
 
 // A Context carries addition data for application.
 // delegates all other context calls to the embedded Context.
 type ApplicationContext struct {
 	context.Context
-	config *appconfig.ApplicationConfig
+	config ApplicationConfig
 }
 
-func NewContext() *ApplicationContext {
+func NewApplicationContext() *ApplicationContext {
 	return &ApplicationContext{
 		Context: context.Background(),
 	}
 }
 
-func (c *ApplicationContext) Config() appconfig.ConfigAccessor {
+func (c *ApplicationContext) Config() ApplicationConfig {
 	return c.config
 }
 
@@ -32,6 +36,10 @@ func (_ *ApplicationContext) String() string {
 }
 
 func (c *ApplicationContext) Value(key interface{}) interface{} {
+	if c.config == nil {
+		return c.Context.Value(key)
+	}
+
 	switch key.(type) {
 	case string:
 		if ret := c.config.Value(key.(string)); ret != nil {
@@ -41,14 +49,10 @@ func (c *ApplicationContext) Value(key interface{}) interface{} {
 	return c.Context.Value(key)
 }
 
-/*************
+/**********************
 * unexported methods
-**************/
-func (c *ApplicationContext) updateConfig(config *appconfig.ApplicationConfig) {
-	c.config = config
-}
-
-func (c *ApplicationContext) updateParent(parent context.Context) *ApplicationContext {
+***********************/
+func (c *ApplicationContext) withContext(parent context.Context) *ApplicationContext {
 	c.Context = parent
 	return c
 }

@@ -199,6 +199,10 @@ type TestWebSecurity struct {
 
 }
 
+func (t TestWebSecurity) Context() context.Context {
+	return context.TODO()
+}
+
 func (t TestWebSecurity) AndCondition(mwcm web.RequestMatcher) security.WebSecurity {
 	panic("implement me")
 }

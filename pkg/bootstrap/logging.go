@@ -8,6 +8,6 @@ type fxPrinter struct {
 }
 
 func (p fxPrinter) Printf(s string, v ...interface{}) {
-	logger.Infof(s, v...)
+	logger.WithContext(applicationContext).Infof(s, v...)
 }
 

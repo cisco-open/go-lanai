@@ -25,10 +25,14 @@ var Module = &bootstrap.Module{
 
 func init() {
 	bootstrap.Register(Module)
+	// logger extractor
+	log.RegisterContextLogFields(tracingLogValuers)
+
 	// bootstrap tracing
 	appTracer, _ = jaeger.NewTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
-	bootstrap.AddStartContextOptions(tracing.MakeBootstrapTracingOption(appTracer, "startup"))
-	bootstrap.AddStopContextOptions(tracing.MakeBootstrapTracingOption(appTracer, "shutdown"))
+	bootstrap.AddInitialAppContextOptions(tracing.MakeLifecycleTracingOption(appTracer, "bootstrap"))
+	bootstrap.AddStartContextOptions(tracing.MakeLifecycleTracingOption(appTracer, "startup"))
+	bootstrap.AddStopContextOptions(tracing.MakeLifecycleTracingOption(appTracer, "shutdown"))
 }
 
 // Maker func, does nothing. Allow service to include this module in main()
@@ -62,8 +66,5 @@ func initialize(di regDI) {
 	if e := di.Registrar.Register(customizer); e != nil {
 		panic(e)
 	}
-
-	// logger extractor
-	log.RegisterContextLogFields(tracingLogValuers)
 }
 

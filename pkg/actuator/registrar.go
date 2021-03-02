@@ -1,6 +1,7 @@
 package actuator
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
@@ -14,8 +15,9 @@ type constructDI struct {
 
 type initDI struct {
 	fx.In
-	WebRegistrar      *web.Registrar `optional:"true"`
-	SecurityRegistrar security.Registrar `optional:"true"`
+	ApplicationContext *bootstrap.ApplicationContext
+	WebRegistrar       *web.Registrar     `optional:"true"`
+	SecurityRegistrar  security.Registrar `optional:"true"`
 }
 
 type Registrar struct {
@@ -47,7 +49,8 @@ func (r *Registrar) initialize(di initDI) error {
 	if e != nil {
 		return e
 	}
-	logger.Info(fmt.Sprintf("registered web endponts %v", webEndpoints.EndpointIDs()))
+	logger.WithContext(di.ApplicationContext).
+		Info(fmt.Sprintf("registered web endponts %v", webEndpoints.EndpointIDs()))
 
 	// install security
 	if e := r.installWebSecurity(di.SecurityRegistrar, webEndpoints); e != nil {

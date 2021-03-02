@@ -26,7 +26,7 @@ type InfoEndpoint struct {
 
 func new(di regDI) *InfoEndpoint {
 	ep := InfoEndpoint{
-		appConfig: di.AppContext.Config(),
+		appConfig: di.AppContext.Config().(appconfig.ConfigAccessor),
 	}
 	ep.WebEndpointBase = actuator.MakeWebEndpointBase(func(opt *actuator.EndpointOption) {
 		opt.Id = ID

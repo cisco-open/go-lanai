@@ -7,7 +7,7 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-func MakeBootstrapTracingOption(tracer opentracing.Tracer, opName string) bootstrap.ContextOption {
+func MakeLifecycleTracingOption(tracer opentracing.Tracer, opName string) bootstrap.ContextOption {
 	return func(ctx context.Context) context.Context {
 		return onAppLifecycle(ctx, tracer, opName)
 	}

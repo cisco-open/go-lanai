@@ -47,16 +47,16 @@ func (c *Connection) Host() string {
 	return c.config.Host
 }
 
-func (c *Connection) ListKeyValuePairs(path string) (results map[string]interface{}, err error) {
+func (c *Connection) ListKeyValuePairs(ctx context.Context, path string) (results map[string]interface{}, err error) {
 
 	queryOptions := &api.QueryOptions{}
 	entries, _, err := c.client.KV().List(path, queryOptions.WithContext(context.Background()))
 	if err != nil {
 		return nil, err
 	} else if entries == nil {
-		logger.Warnf("No appconfig retrieved from consul (%s): %s", c.Host(), path)
+		logger.WithContext(ctx).Warnf("No appconfig retrieved from consul (%s): %s", c.Host(), path)
 	} else {
-		logger.Infof("Retrieved %d configs from consul (%s): %s", len(entries), c.Host(), path)
+		logger.WithContext(ctx).Infof("Retrieved %d configs from consul (%s): %s", len(entries), c.Host(), path)
 	}
 
 	prefix := path + "/"
