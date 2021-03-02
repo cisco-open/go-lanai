@@ -3,8 +3,8 @@ package instrument
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"github.com/gin-gonic/gin"
-	"github.com/opentracing/opentracing-go"
 	kitopentracing "github.com/go-kit/kit/tracing/opentracing"
+	"github.com/opentracing/opentracing-go"
 )
 
 func GinTracing(tracer opentracing.Tracer, opName string) gin.HandlerFunc {
@@ -17,8 +17,10 @@ func GinTracing(tracer opentracing.Tracer, opName string) gin.HandlerFunc {
 		gc.Next()
 
 		// finish the span
-		tracing.WithTracer(tracer).
-			WithOptions(tracing.SpanHttpStatusCode(gc.Writer.Status())).
-			FinishCurrentSpan(ctx)
+		gc.Request = gc.Request.WithContext(
+			tracing.WithTracer(tracer).
+				WithOptions(tracing.SpanHttpStatusCode(gc.Writer.Status())).
+				FinishAndRewind(ctx),
+		)
 	}
 }

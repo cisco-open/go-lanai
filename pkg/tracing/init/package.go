@@ -15,7 +15,7 @@ var logger = log.New("Tracing")
 
 var Module = &bootstrap.Module{
 	Name: "Tracing",
-	Precedence: web.MinWebPrecedence + 1,
+	Precedence: bootstrap.TracingPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(tracing.BindTracingProperties),
 		fx.Provide(newTracer),
@@ -25,16 +25,30 @@ var Module = &bootstrap.Module{
 
 type TracerClosingHook *fx.Hook
 
+var defaultTracerCloser fx.Hook
+
 func init() {
 	bootstrap.Register(Module)
 	// logger extractor
 	log.RegisterContextLogFields(tracing.TracingLogValuers)
 
 	// bootstrap tracing
-	appTracer, _ := tracing.NewDefaultJaegerTracer()
-	bootstrap.AddInitialAppContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameBootstrap))
-	bootstrap.AddStartContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameStart))
-	bootstrap.AddStopContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameStop))
+	appTracer, closer := tracing.NewDefaultTracer()
+	bootstrap.AddInitialAppContextOptions(instrument.MakeBootstrapTracingOption(appTracer, tracing.OpNameBootstrap))
+	bootstrap.AddStartContextOptions(instrument.MakeStartTracingOption(appTracer, tracing.OpNameStart))
+	bootstrap.AddStopContextOptions(instrument.MakeStopTracingOption(appTracer, tracing.OpNameStop))
+	defaultTracerCloser = fx.Hook{
+		OnStop: func(ctx context.Context) error {
+			logger.WithContext(ctx).Infof("closing default Tracer...")
+			e := closer.Close()
+			if e != nil {
+				logger.WithContext(ctx).Errorf("failed to close default Tracer: %v", e)
+			}
+			logger.WithContext(ctx).Infof("default Tracer closed")
+			return e
+
+		},
+	}
 }
 
 // Maker func, does nothing. Allow service to include this module in main()
@@ -62,12 +76,12 @@ func newTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingPropertie
 		ret.FxHook = TracerClosingHook(&fx.Hook{
 			OnStop: func(ctx context.Context) error {
 				logger.WithContext(ctx).Infof("closing Jaeger Tracer...")
-				if e := closer.Close(); e != nil {
+				e := closer.Close()
+				if e != nil {
 					logger.WithContext(ctx).Errorf("failed to close Jaeger Tracer: %v", e)
-					return e
 				}
 				logger.WithContext(ctx).Infof("Jaeger Tracer closed")
-				return nil
+				return e
 			},
 		})
 	}
@@ -112,6 +126,7 @@ func initialize(lc fx.Lifecycle, di regDI) {
 	// graceful closer
 	if di.FxHook != nil {
 		lc.Append(fx.Hook(*di.FxHook))
+		lc.Append(fx.Hook(defaultTracerCloser))
 	}
 }
 

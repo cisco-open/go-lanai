@@ -9,7 +9,7 @@ import (
 	"io"
 )
 
-func NewDefaultJaegerTracer() (opentracing.Tracer, io.Closer) {
+func NewDefaultTracer() (opentracing.Tracer, io.Closer) {
 	return jaeger.NewTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
 }
 

@@ -5,8 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	kitopentracing "github.com/go-kit/kit/tracing/opentracing"
-	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -29,8 +27,9 @@ func (c *TracingWebCustomizer) Customize(ctx context.Context, r *web.Registrar) 
 	// for gin
 	r.AddGlobalMiddlewares(GinTracing(c.tracer, tracing.OpNameHttp))
 
-	// for go-kit endpoints
-	t := kithttp.ServerBefore(kitopentracing.HTTPToContext(c.tracer, tracing.OpNameHttp, logger))
-	r.AddOption(t)
+	// for go-kit endpoints, because we are unable to finish the created span,
+	// so we rely on Gin middleware to create/finish span
+	//t := kithttp.ServerBefore(kitopentracing.HTTPToContext(c.tracer, tracing.OpNameHttp, logger))
+	//r.AddOption(t)
 	return nil
 }

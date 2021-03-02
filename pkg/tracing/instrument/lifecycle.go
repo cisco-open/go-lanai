@@ -8,15 +8,31 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-func MakeLifecycleTracingOption(tracer opentracing.Tracer, opName string) bootstrap.ContextOption {
+func MakeBootstrapTracingOption(tracer opentracing.Tracer, opName string) bootstrap.ContextOption {
 	return func(ctx context.Context) context.Context {
-		return onAppLifecycle(ctx, tracer, opName)
+		return tracing.WithTracer(tracer).
+			WithOpName(opName).
+			WithOptions(tracing.SpanKind(ext.SpanKindRPCServerEnum)).
+			NewSpanOrDescendant(ctx)
 	}
 }
 
-func onAppLifecycle(ctx context.Context, tracer opentracing.Tracer, opName string) context.Context {
-	return tracing.WithTracer(tracer).
-		WithOpName(opName).
-		WithOptions(tracing.SpanKind(ext.SpanKindRPCServerEnum)).
-		NewSpanOrDescendant(ctx)
+func MakeStartTracingOption(tracer opentracing.Tracer, opName string) bootstrap.ContextOption {
+	return func(ctx context.Context) context.Context {
+		return tracing.WithTracer(tracer).
+			WithOpName(opName).
+			WithOptions(tracing.SpanKind(ext.SpanKindRPCServerEnum)).
+			NewSpanOrDescendant(ctx)
+	}
 }
+
+func MakeStopTracingOption(tracer opentracing.Tracer, opName string) bootstrap.ContextOption {
+	return func(ctx context.Context) context.Context {
+		// finish current if not root span and start a new child
+		return tracing.WithTracer(tracer).
+			WithOpName(opName).
+			WithOptions(tracing.SpanKind(ext.SpanKindRPCServerEnum)).
+			NewSpanOrDescendant(ctx)
+	}
+}
+

@@ -106,7 +106,8 @@ func (app *App) Run() {
 	//  1. (Solved)	Support Timeout in bootstrap.Context and make cancellable context as startParent (swap startParent and child)
 	//  2. (Solved) Restore logging
 	done := app.Done()
-	startParent, cancel := context.WithTimeout(applicationContext.Context, app.StartTimeout())
+	rootCtx := applicationContext.Context
+	startParent, cancel := context.WithTimeout(rootCtx, app.StartTimeout())
 	for _, opt := range app.startCtxOptions {
 		startParent = opt(startParent)
 	}
@@ -123,7 +124,7 @@ func (app *App) Run() {
 	printSignal(<-done)
 
 	// shutdown sequence
-	stopParent, cancel := context.WithTimeout(applicationContext.Context, app.StopTimeout())
+	stopParent, cancel := context.WithTimeout(rootCtx, app.StopTimeout())
 	for _, opt := range app.stopCtxOptions {
 		stopParent = opt(stopParent)
 	}
