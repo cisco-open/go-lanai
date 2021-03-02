@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
@@ -17,8 +18,18 @@ var (
 /*********************************
 	Customization
  *********************************/
+// Customizer is invoked by Registrar at the beginning of initialization,
+// customizers can register anything except for additional customizers
+// If a customizer retains the given context in anyway, it should also implement PostInitCustomizer to release it
 type Customizer interface {
-	Customize(r *Registrar) error
+	Customize(ctx context.Context, r *Registrar) error
+}
+
+// PostInitCustomizer is invoked by Registrar after initialization, register anything in PostInitCustomizer.PostInit
+// would cause error or takes no effect
+type PostInitCustomizer interface {
+	Customizer
+	PostInit(ctx context.Context, r *Registrar) error
 }
 
 /*********************************
@@ -154,3 +165,22 @@ func (g simpleMapping) Path() string {
 func (g simpleMapping) Name() string {
 	return g.name
 }
+
+/*********************************
+	orderedServerOption
+ *********************************/
+// orderedServerOption wraps go-kit's httptransport.ServerOption and provide ordering
+type orderedServerOption struct {
+	httptransport.ServerOption
+	order int
+}
+
+func (o orderedServerOption) Order() int {
+	return o.order
+}
+
+func newOrderedServerOption(opt httptransport.ServerOption, order int) *orderedServerOption {
+	return &orderedServerOption{ServerOption: opt, order: order}
+}
+
+

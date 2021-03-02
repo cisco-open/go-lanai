@@ -1,6 +1,7 @@
 package cors
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	cors "github.com/rs/cors/wrapper/gin"
 	"time"
@@ -17,7 +18,7 @@ func newCustomizer(properties CorsProperties) *Customizer {
 	}
 }
 
-func (c *Customizer) Customize(r *web.Registrar) (err error) {
+func (c *Customizer) Customize(ctx context.Context, r *web.Registrar) (err error) {
 	if !c.properties.Enabled {
 		return
 	}

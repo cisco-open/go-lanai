@@ -13,14 +13,18 @@ import (
 
 var (
 	TmplFuncMap = template.FuncMap{
-		"cap": Capped,
-		"pad": Padding,
-		"lvl": MakeLevelFunc(true),
+		"cap":   Capped,
+		"pad":   Padding,
+		"lvl":   MakeLevelFunc(true),
+		"join":  Join,
+		"trace": Trace,
 	}
 	TmplFuncMapNonTerm = template.FuncMap{
-		"cap": Capped,
-		"pad": Padding,
-		"lvl": MakeLevelFunc(false),
+		"cap":   Capped,
+		"pad":   Padding,
+		"lvl":   MakeLevelFunc(false),
+		"join":  Join,
+		"trace": Trace,
 	}
 )
 
@@ -110,9 +114,40 @@ func Capped(v interface{}, cap int) string {
 	return fmt.Sprintf("%." + strconv.Itoa(cap - 3) + "s...", s)
 }
 
+func Join(sep string, values ...interface{}) string {
+	strs := []string{}
+	for _, v := range values {
+		s := Sprint(v)
+		if s != "" {
+			strs = append(strs, s)
+		}
+	}
+	str := strings.Join(strs, sep)
+	return str
+}
+
+// Trace generate shortest possible tracing info string:
+// 	- if trace ID is not available, return empty string
+//  - if span ID is same as trace ID, we assume parent ID is 0 and only returns traceID
+//  - if span ID is different from trace ID and parent ID is same as trace ID, we only returns trace ID and span ID
+func Trace(tid, sid, pid interface{}) string {
+	tidStr, sidStr, pidStr := Sprint(tid), Sprint(sid), Sprint(pid)
+	switch {
+	case tidStr == "":
+		return ""
+	case sidStr == tidStr:
+		return tidStr
+	case pidStr == tidStr:
+		return tidStr + " " + sidStr
+	default:
+		return tidStr + " " + sidStr + " " + pidStr
+	}
+}
 
 func Sprint(v interface{}) string {
 	switch v.(type) {
+	case nil:
+		return ""
 	case string:
 		return v.(string)
 	case []byte:

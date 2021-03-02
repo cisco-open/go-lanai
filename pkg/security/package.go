@@ -56,12 +56,13 @@ func provideSecurityInitialization(di dependencies) global {
 ***************************/
 type initDI struct {
 	fx.In
+	AppContext  *bootstrap.ApplicationContext
 	Registerer  *web.Registrar
 	Initializer Initializer
 }
 
 func initialize(lc fx.Lifecycle, di initDI) {
-	if err := di.Initializer.Initialize(lc, di.Registerer); err != nil {
+	if err := di.Initializer.Initialize(di.AppContext, lc, di.Registerer); err != nil {
 		panic(err)
 	}
 }

@@ -15,14 +15,7 @@ const (
 )
 
 func Get(c context.Context) *Session {
-	var session *Session
-	switch c.(type) {
-	case *gin.Context:
-		i,_ := c.(*gin.Context).Get(contextKeySession)
-		session,_ = i.(*Session)
-	default:
-		session,_ = c.Value(contextKeySession).(*Session)
-	}
+	session,_ := c.Value(contextKeySession).(*Session)
 	return session
 }
 

@@ -6,7 +6,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
-	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -97,8 +96,8 @@ func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequ
 		}
 	}
 
-	if c, ok := ctx.(*gin.Context); ok {
-		if remembered, e := c.Cookie(CookieKeyRememberedUsername); e == nil && remembered != "" {
+	if gc := web.GinContext(ctx); gc != nil {
+		if remembered, e := gc.Cookie(CookieKeyRememberedUsername); e == nil && remembered != "" {
 			model[LoginModelKeyRememberedUsername] = remembered
 		}
 	}

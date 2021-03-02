@@ -12,6 +12,13 @@ import (
 
 var once sync.Once
 var bootstrapperInstance *Bootstrapper
+var (
+	initialContextOptions = []ContextOption{}
+	startContextOptions   = []ContextOption{}
+	stopContextOptions    = []ContextOption{}
+)
+
+type ContextOption func(ctx context.Context) context.Context
 
 type Bootstrapper struct {
 	modules []*Module
@@ -19,6 +26,8 @@ type Bootstrapper struct {
 
 type App struct {
 	*fx.App
+	startCtxOptions []ContextOption
+	stopCtxOptions  []ContextOption
 }
 
 // singleton pattern
@@ -39,6 +48,18 @@ func Register(m *Module) {
 func AddOptions(options...fx.Option) {
 	m := anonymousModule()
 	m.PriorityOptions = append(m.PriorityOptions, options...)
+}
+
+func AddInitialAppContextOptions(options...ContextOption) {
+	initialContextOptions = append(initialContextOptions, options...)
+}
+
+func AddStartContextOptions(options...ContextOption) {
+	startContextOptions = append(startContextOptions, options...)
+}
+
+func AddStopContextOptions(options...ContextOption) {
+	stopContextOptions = append(stopContextOptions, options...)
 }
 
 func newApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
@@ -65,7 +86,19 @@ func newApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx
 		options = append(options, m.Options...)
 	}
 
-	return &App{App: fx.New(options...)}
+	// update application context before creating the app
+	ctx := applicationContext.Context
+	for _, opt := range initialContextOptions {
+		ctx = opt(ctx)
+	}
+	applicationContext = applicationContext.withContext(ctx)
+
+	// create App, which will kick off all fx options
+	return &App{
+		App: fx.New(options...),
+		startCtxOptions: startContextOptions,
+		stopCtxOptions: stopContextOptions,
+	}
 }
 
 func (app *App) Run() {
@@ -73,8 +106,13 @@ func (app *App) Run() {
 	//  1. (Solved)	Support Timeout in bootstrap.Context and make cancellable context as startParent (swap startParent and child)
 	//  2. (Solved) Restore logging
 	done := app.Done()
-	startParent, cancel := context.WithTimeout(context.Background(), app.StartTimeout())
-	startCtx := applicationContext.updateParent(startParent) //This is so that we know that the context in the life cycle hook is the bootstrap context
+	rootCtx := applicationContext.Context
+	startParent, cancel := context.WithTimeout(rootCtx, app.StartTimeout())
+	for _, opt := range app.startCtxOptions {
+		startParent = opt(startParent)
+	}
+	// This is so that we know that the context in the life cycle hook is the bootstrap context
+	startCtx := applicationContext.withContext(startParent)
 	defer cancel()
 
 	if err := app.Start(startCtx); err != nil {
@@ -82,11 +120,15 @@ func (app *App) Run() {
 		exit(1)
 	}
 
+	// this line blocks until application shutting down
 	printSignal(<-done)
-	//app.logger.PrintSignal(<-done)
 
-	stopParent, cancel := context.WithTimeout(context.Background(), app.StopTimeout())
-	stopCtx := applicationContext.updateParent(stopParent)
+	// shutdown sequence
+	stopParent, cancel := context.WithTimeout(rootCtx, app.StopTimeout())
+	for _, opt := range app.stopCtxOptions {
+		stopParent = opt(stopParent)
+	}
+	stopCtx := applicationContext.withContext(stopParent)
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {

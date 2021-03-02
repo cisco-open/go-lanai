@@ -2,12 +2,11 @@ package bootstrap
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"go.uber.org/fx"
 )
 
-var applicationContext = NewContext()
+var applicationContext = NewApplicationContext()
 var logger = log.New("Bootstrap")
 
 var DefaultModule = &Module{
@@ -23,8 +22,18 @@ func init() {
 	Register(DefaultModule)
 }
 
-func provideApplicationContext(config *appconfig.ApplicationConfig) *ApplicationContext {
-	applicationContext.updateConfig(config)
+// EagerGetApplicationContext returns the global ApplicationContext before it becomes available for dependency injection
+// Important: packages should typlically get ApplicationContext via fx's dependency injection,
+//			  which internal application config are garanteed.
+//			  Only packages involved in priority bootstrap (appconfig, consul, vault, etc)
+//			  should use this function for logging purpose
+func EagerGetApplicationContext() *ApplicationContext {
+	return applicationContext
+}
+
+
+func provideApplicationContext(config ApplicationConfig) *ApplicationContext {
+	applicationContext.config = config
 	return applicationContext
 }
 
@@ -40,7 +49,7 @@ func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			logger.Info("On Application Start")
+			logger.WithContext(ac).Info("On Application Start")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

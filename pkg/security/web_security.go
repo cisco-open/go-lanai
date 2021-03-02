@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -12,6 +13,7 @@ import (
 	webSecurity Impl
 ******************************/
 type webSecurity struct {
+	context          context.Context
 	routeMatcher     web.RouteMatcher
 	conditionMatcher web.RequestMatcher
 	handlers         []interface{}
@@ -22,8 +24,9 @@ type webSecurity struct {
 	featuresChanged  bool
 }
 
-func newWebSecurity(authenticator Authenticator, shared map[string]interface{}) *webSecurity {
+func newWebSecurity(ctx context.Context, authenticator Authenticator, shared map[string]interface{}) *webSecurity {
 	return &webSecurity{
+		context:       ctx,
 		handlers:      []interface{}{},
 		features:      []Feature{},
 		applied:       map[FeatureIdentifier]struct{}{},
@@ -33,6 +36,13 @@ func newWebSecurity(authenticator Authenticator, shared map[string]interface{}) 
 }
 
 /* WebSecurity interface */
+func (t webSecurity) Context() context.Context {
+	if t.context == nil {
+		return context.TODO()
+	}
+	return t.context
+}
+
 func (ws *webSecurity) Features() []Feature {
 	return ws.features
 }

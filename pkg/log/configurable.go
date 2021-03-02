@@ -50,11 +50,9 @@ func (l *configurableLogger) WithContext(ctx context.Context) Logger {
 		return l
 	}
 
-	fields := []interface{}{LogKeyContext, ctx}
+	fields := []interface{}{}
 	for k, ctxValuer := range l.valuers {
-		var valuer log.Valuer = func() interface{} {
-			return ctxValuer(ctx)
-		}
+		valuer := makeValuer(ctx, ctxValuer)
 		fields = append(fields, k, valuer)
 	}
 	return l.withKV(fields)
@@ -94,5 +92,11 @@ func isTerminal(l log.Logger) bool {
 		return l.(*configurableLogger).isTerm
 	default:
 		return false
+	}
+}
+
+func makeValuer(ctx context.Context, ctxValuer ContextValuer) log.Valuer {
+	return func() interface{} {
+		return ctxValuer(ctx)
 	}
 }

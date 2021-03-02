@@ -1,10 +1,10 @@
 package csrf
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"encoding/gob"
 	"errors"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -33,11 +33,11 @@ type Token struct {
 	would write (save) the token as a cookie header.
  */
 type TokenStore interface {
-	Generate(c *gin.Context, parameterName string, headerName string) *Token
+	Generate(c context.Context, parameterName string, headerName string) *Token
 
-	SaveToken(c *gin.Context, token *Token) error
+	SaveToken(c context.Context, token *Token) error
 
-	LoadToken(c *gin.Context) (*Token, error)
+	LoadToken(c context.Context) (*Token, error)
 }
 
 type SessionBackedStore struct {
@@ -48,7 +48,7 @@ func newSessionBackedStore() *SessionBackedStore{
 	return &SessionBackedStore{}
 }
 
-func (store *SessionBackedStore) Generate(_ *gin.Context, parameterName string, headerName string) *Token {
+func (store *SessionBackedStore) Generate(c context.Context, parameterName string, headerName string) *Token {
 	t := &Token{
 		Value: uuid.New().String(),
 		ParameterName: parameterName,
@@ -57,7 +57,7 @@ func (store *SessionBackedStore) Generate(_ *gin.Context, parameterName string, 
 	return t
 }
 
-func (store *SessionBackedStore) SaveToken(c *gin.Context, token *Token) error {
+func (store *SessionBackedStore) SaveToken(c context.Context, token *Token) error {
 	s := session.Get(c)
 
 	if s == nil {
@@ -68,7 +68,7 @@ func (store *SessionBackedStore) SaveToken(c *gin.Context, token *Token) error {
 	return s.Save()
 }
 
-func (store *SessionBackedStore) LoadToken(c *gin.Context) (*Token, error) {
+func (store *SessionBackedStore) LoadToken(c context.Context) (*Token, error) {
 	s := session.Get(c)
 
 	if s == nil {

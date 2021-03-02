@@ -104,16 +104,16 @@ func (ehc *ErrorHandlingConfigurer) Apply(feature security.Feature, ws security.
 
 func (ehc *ErrorHandlingConfigurer) validate(f *ErrorHandlingFeature, ws security.WebSecurity) error {
 	if f.authEntryPoint == nil {
-		logger.Infof("authentication entry point is not set, fallback to access denied handler - [%v], ", log.Capped(ws, 80))
+		logger.WithContext(ws.Context()).Infof("authentication entry point is not set, fallback to access denied handler - [%v], ", log.Capped(ws, 80))
 	}
 
 	if f.authErrorHandler == nil {
-		logger.Infof("using default authentication error handler - [%v]", log.Capped(ws, 80))
+		logger.WithContext(ws.Context()).Infof("using default authentication error handler - [%v]", log.Capped(ws, 80))
 		f.authErrorHandler = &security.DefaultAuthenticationErrorHandler{}
 	}
 
 	if f.accessDeniedHandler == nil {
-		logger.Infof("using default access denied handler - [%v]", log.Capped(ws, 80))
+		logger.WithContext(ws.Context()).Infof("using default access denied handler - [%v]", log.Capped(ws, 80))
 		f.accessDeniedHandler = &security.DefaultAccessDeniedHandler{}
 	}
 

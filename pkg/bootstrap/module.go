@@ -9,15 +9,16 @@ const (
 	LowestPrecedence  = int(^uint(0) >> 1)    // max int
 	HighestPrecedence = -LowestPrecedence - 1 // min int
 
-	FrameworkModulePrecedenceBandwith = 800
-	FrameworkModulePrecedence         = LowestPrecedence - 200 * FrameworkModulePrecedenceBandwith
+	FrameworkModulePrecedenceBandwith = 799
+	FrameworkModulePrecedence         = LowestPrecedence - 200 * (FrameworkModulePrecedenceBandwith + 1)
 	AnonymousModulePrecedence         = FrameworkModulePrecedence - 1
 	PriorityModulePrecedence          = HighestPrecedence + 1
 )
 
 const (
-	_ = FrameworkModulePrecedence + iota * FrameworkModulePrecedenceBandwith
+	_ = FrameworkModulePrecedence + iota * (FrameworkModulePrecedenceBandwith + 1)
 	AppConfigPrecedence
+	TracingPrecedence
 	ActuatorPrecedence
 	ConsulPrecedence
 	RedisPrecedence

@@ -34,8 +34,8 @@ type ModelView struct {
 	Response Encoder
 ***********************************/
 func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, response interface{}) error {
-	ctx, ok := c.(*gin.Context)
-	if !ok {
+	ctx := web.GinContext(c)
+	if ctx == nil {
 		return errors.New("unable to use template: context is not available")
 	}
 
@@ -64,8 +64,8 @@ func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, respon
 ******************************/
 //goland:noinspection GoNameStartsWithPackageName
 func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
-	ctx, ok := c.(*gin.Context)
-	if !ok {
+	ctx := web.GinContext(c)
+	if ctx == nil {
 		httptransport.DefaultErrorEncoder(c, err, w)
 		return
 	}

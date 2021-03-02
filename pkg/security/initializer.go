@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -59,7 +60,7 @@ func (init *initializer) validateState(action string) error {
 	}
 }
 
-func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) error {
+func (init *initializer) Initialize(ctx context.Context, lc fx.Lifecycle, registrar *web.Registrar) error {
 	initializeMutex.Lock()
 	defer initializeMutex.Unlock()
 
@@ -78,7 +79,7 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 
 	// go through each configurer
 	for _,configurer := range init.configurers {
-		builder, requestPreProcessors, err := init.build(configurer)
+		builder, requestPreProcessors, err := init.build(ctx, configurer)
 		if err != nil {
 			return err
 		}
@@ -96,7 +97,7 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 				return err
 			}
 			// Do some logging
-			logMapping(mapping)
+			logMapping(ctx, mapping)
 		}
 	}
 
@@ -109,9 +110,9 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 	return nil
 }
 
-func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, map[web.RequestPreProcessorName]web.RequestPreProcessor, error) {
+func (init *initializer) build(ctx context.Context, configurer Configurer) (WebSecurityMappingBuilder, map[web.RequestPreProcessorName]web.RequestPreProcessor, error) {
 	// collect security configs
-	ws := newWebSecurity(NewAuthenticator(), map[string]interface{}{
+	ws := newWebSecurity(ctx, NewAuthenticator(), map[string]interface{}{
 		WSSharedKeyCompositeAuthSuccessHandler: NewAuthenticationSuccessHandler(),
 		WSSharedKeyCompositeAuthErrorHandler: NewAuthenticationErrorHandler(),
 		WSSharedKeyCompositeAccessDeniedHandler: NewAccessDeniedHandler(),
@@ -231,22 +232,22 @@ func featureOrderLess(l Feature, r Feature) bool {
 	return order.OrderedFirstCompare(l.Identifier(), r.Identifier())
 }
 
-func logMapping(mapping web.Mapping) {
+func logMapping(ctx context.Context, mapping web.Mapping) {
 	switch mapping.(type) {
 	case web.MiddlewareMapping:
 		mw := mapping.(web.MiddlewareMapping)
-		logger.Infof("registered security middleware [%d] [%s] %s -> %v",
+		logger.WithContext(ctx).Infof("registered security middleware [%d] [%s] %s -> %v",
 			mw.Order(), mw.Name(), log.Capped(mw.Matcher(), 80), reflect.ValueOf(mw.HandlerFunc()).String())
 	case web.MvcMapping:
 		m := mapping.(web.MvcMapping)
-		logger.Infof("registered security MVC mapping [%s %s] [%s] %s -> endpoint",
+		logger.WithContext(ctx).Infof("registered security MVC mapping [%s %s] [%s] %s -> endpoint",
 			m.Method(), m.Path(), m.Name(), log.Capped(m.Condition(), 80))
 	case web.SimpleMapping:
 		m := mapping.(web.SimpleMapping)
-		logger.Infof("registered security simple mapping [%s %s] [%s] %s -> %v",
+		logger.WithContext(ctx).Infof("registered security simple mapping [%s %s] [%s] %s -> %v",
 			m.Method(), m.Path(), m.Name(), log.Capped(m.Condition(), 80), reflect.ValueOf(m.HandlerFunc()).String())
 	default:
-		logger.Infof("registered security mapping [%s]: %v", mapping.Name(), mapping)
+		logger.WithContext(ctx).Infof("registered security mapping [%s]: %v", mapping.Name(), mapping)
 	}
 }
 

@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/consul/api v1.3.0
 	github.com/imdario/mergo v0.3.11
+	github.com/jaegertracing/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.0.0-20201213122252-bcd7e1b9601e
 	github.com/onsi/gomega v1.10.3
 	github.com/pkg/errors v0.8.1
@@ -25,6 +26,8 @@ require (
 	github.com/russellhaering/goxmldsig v1.1.0
 	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5
+	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
+	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	go.uber.org/fx v1.13.1
 	golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0
 )
