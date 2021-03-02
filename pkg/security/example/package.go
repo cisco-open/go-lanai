@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	sdcustomizer "cto-github.cisco.com/NFV-BU/go-lanai/pkg/servicedisc/customizer"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"go.uber.org/fx"
 	"net/url"
@@ -32,6 +33,7 @@ func init() {
 		fx.Provide(newResServerConfigurer),
 		fx.Invoke(configureSecurity),
 	)
+	sdcustomizer.Customizers = append(sdcustomizer.Customizers, &RegistrationCusomizer{})
 }
 
 // Maker func, does nothing. Allow service to include this module in main()
