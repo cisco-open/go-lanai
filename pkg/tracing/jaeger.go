@@ -14,14 +14,10 @@ func NewDefaultTracer() (opentracing.Tracer, io.Closer) {
 }
 
 func NewJaegerTracer(ctx *bootstrap.ApplicationContext, jp *JaegerProperties, sp *SamplerProperties) (opentracing.Tracer, io.Closer) {
-	name := ctx.Value("application.name")
-	if name == nil {
-		name = "lanai"
-	}
-
+	name := ctx.Name()
 	sampler := newSampler(ctx, sp)
 	reporter := newReporter(ctx, jp, sp)
-	return jaeger.NewTracer(name.(string), sampler, reporter)
+	return jaeger.NewTracer(name, sampler, reporter)
 }
 
 func newSampler(ctx context.Context, sp *SamplerProperties) jaeger.Sampler {

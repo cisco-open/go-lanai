@@ -16,7 +16,7 @@ var ColorNames  = map[string]Color{
 	"black":   Black,
 	"red":     Red,
 	"green":   Green,
-	"yellow":   Yellow,
+	"yellow":  Yellow,
 	"blue":    Blue,
 	"magenta": Magenta,
 	"cyan":    Cyan,
@@ -115,7 +115,7 @@ func IsTerminal(w io.Writer) bool {
 	return err == 0
 }
 
-	func ColoredWithCode(s interface{}, fg, bg Color) string {
+func ColoredWithCode(s interface{}, fg, bg Color) string {
 	var fgStr, bgStr string
 	if fg < numColors {
 		fgStr = FgColors[fg]

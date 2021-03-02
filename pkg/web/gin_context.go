@@ -63,7 +63,7 @@ func integrateGinContextBefore(ctx context.Context, r *http.Request) (ret contex
 
 // integrateGinContextFinalizer Makes sure the context processed by go-kit is set back to request,
 // whose value would becomes accessible outside the go-kit realm
-func integrateGinContextFinalizer(ctx context.Context, code int, r *http.Request) {
+func integrateGinContextFinalizer(ctx context.Context, _ int, r *http.Request) {
 	gc := GinContext(ctx)
 	if gc == nil {
 		return

@@ -56,7 +56,7 @@ func provideSecurityInitialization(di dependencies) global {
 ***************************/
 type initDI struct {
 	fx.In
-	AppContext *bootstrap.ApplicationContext
+	AppContext  *bootstrap.ApplicationContext
 	Registerer  *web.Registrar
 	Initializer Initializer
 }

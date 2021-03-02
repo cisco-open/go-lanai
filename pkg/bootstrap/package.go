@@ -27,7 +27,6 @@ func init() {
 //			  which internal application config are garanteed.
 //			  Only packages involved in priority bootstrap (appconfig, consul, vault, etc)
 //			  should use this function for logging purpose
-// Note: ApplicationContext is made
 func EagerGetApplicationContext() *ApplicationContext {
 	return applicationContext
 }

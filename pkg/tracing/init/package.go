@@ -18,7 +18,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.TracingPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(tracing.BindTracingProperties),
-		fx.Provide(newTracer),
+		fx.Provide(provideTracer),
 		fx.Invoke(initialize),
 	},
 }
@@ -64,7 +64,7 @@ type tracerOut struct {
 	Tracer opentracing.Tracer
 	FxHook TracerClosingHook
 }
-func newTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingProperties) (ret tracerOut) {
+func provideTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingProperties) (ret tracerOut) {
 	if !props.Enabled {
 		return
 	}

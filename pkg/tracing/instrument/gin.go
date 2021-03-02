@@ -11,16 +11,16 @@ func GinTracing(tracer opentracing.Tracer, opName string) gin.HandlerFunc {
 	reqFunc := kitopentracing.HTTPToContext(tracer, opName, logger)
 	return func(gc *gin.Context) {
 		// start or join span
-		ctx := reqFunc(gc.Request.Context(), gc.Request)
+		orig := gc.Request.Context()
+		ctx := reqFunc(orig, gc.Request)
 		gc.Request = gc.Request.WithContext(ctx)
 
 		gc.Next()
 
 		// finish the span
-		gc.Request = gc.Request.WithContext(
-			tracing.WithTracer(tracer).
-				WithOptions(tracing.SpanHttpStatusCode(gc.Writer.Status())).
-				FinishAndRewind(ctx),
-		)
+		tracing.WithTracer(tracer).
+			WithOptions(tracing.SpanHttpStatusCode(gc.Writer.Status())).
+			Finish(ctx)
+		gc.Request = gc.Request.WithContext(orig)
 	}
 }

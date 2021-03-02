@@ -50,7 +50,7 @@ func (l *configurableLogger) WithContext(ctx context.Context) Logger {
 		return l
 	}
 
-	fields := []interface{}{LogKeyContext, ctx}
+	fields := []interface{}{}
 	for k, ctxValuer := range l.valuers {
 		valuer := makeValuer(ctx, ctxValuer)
 		fields = append(fields, k, valuer)

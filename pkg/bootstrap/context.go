@@ -4,6 +4,9 @@ import (
 	"context"
 )
 
+const (
+	propertyKeyApplicationName = "application.name"
+)
 type LifecycleHandler func(context.Context) error
 
 type ApplicationConfig interface {
@@ -26,6 +29,17 @@ func NewApplicationContext() *ApplicationContext {
 
 func (c *ApplicationContext) Config() ApplicationConfig {
 	return c.config
+}
+
+func (c *ApplicationContext) Name() string {
+	name := c.Value("application.name")
+	if name == nil {
+		return "lanai"
+	}
+	if n, ok := name.(string); ok {
+		return n
+	}
+	return "lanai"
 }
 
 /**************************
