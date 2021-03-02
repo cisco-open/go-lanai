@@ -1,13 +1,13 @@
 package tracing
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go"
 	"go.uber.org/fx"
 )
 
@@ -17,10 +17,13 @@ var Module = &bootstrap.Module{
 	Name: "Tracing",
 	Precedence: web.MinWebPrecedence + 1,
 	PriorityOptions: []fx.Option{
+		fx.Provide(tracing.BindTracingProperties),
 		fx.Provide(newTracer),
 		fx.Invoke(initialize),
 	},
 }
+
+type TracerClosingHook *fx.Hook
 
 func init() {
 	bootstrap.Register(Module)
@@ -28,7 +31,7 @@ func init() {
 	log.RegisterContextLogFields(tracing.TracingLogValuers)
 
 	// bootstrap tracing
-	appTracer, _ := jaeger.NewTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
+	appTracer, _ := tracing.NewDefaultJaegerTracer()
 	bootstrap.AddInitialAppContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameBootstrap))
 	bootstrap.AddStartContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameStart))
 	bootstrap.AddStopContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameStop))
@@ -42,11 +45,46 @@ func Use() {
 /**************************
 	Provide dependencies
 ***************************/
-func newTracer() opentracing.Tracer {
-	// TODO use Jaeger or Zipkin tracer based on properties
-	// TODO properly store returned Closer and hook it up with application lifecycle
-	tracer, _ := jaeger.NewTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
-	return tracer
+type tracerOut struct {
+	fx.Out
+	Tracer opentracing.Tracer
+	FxHook TracerClosingHook
+}
+func newTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingProperties) (ret tracerOut) {
+	if !props.Enabled {
+		return
+	}
+
+	tracers := []opentracing.Tracer{}
+	if props.Jaeger.Enabled {
+		tracer, closer := tracing.NewJaegerTracer(ctx, &props.Jaeger, &props.Sampler)
+		tracers = append(tracers, tracer)
+		ret.FxHook = TracerClosingHook(&fx.Hook{
+			OnStop: func(ctx context.Context) error {
+				logger.WithContext(ctx).Infof("closing Jaeger Tracer...")
+				if e := closer.Close(); e != nil {
+					logger.WithContext(ctx).Errorf("failed to close Jaeger Tracer: %v", e)
+					return e
+				}
+				logger.WithContext(ctx).Infof("Jaeger Tracer closed")
+				return nil
+			},
+		})
+	}
+
+	if props.Zipkin.Enabled {
+		panic("zipkin is currently unsupported")
+	}
+
+	switch len(tracers) {
+	case 0:
+		return
+	case 1:
+		ret.Tracer = tracers[0]
+		return
+	default:
+		panic("multiple opentracing.Tracer detected. we currely only support single tracer")
+	}
 }
 
 /**************************
@@ -54,16 +92,26 @@ func newTracer() opentracing.Tracer {
 ***************************/
 type regDI struct {
 	fx.In
-	Registrar *web.Registrar
-	Tracer    opentracing.Tracer
+	Registrar *web.Registrar     `optional:true`
+	Tracer    opentracing.Tracer `optional:true`
+	FxHook    TracerClosingHook  `optional:true`
 	// we could include security configurations, customizations here
 }
 
-func initialize(di regDI) {
+func initialize(lc fx.Lifecycle, di regDI) {
+	if di.Tracer == nil {
+		return
+	}
+
 	// web instrumentation
 	customizer := instrument.NewTracingWebCustomizer(di.Tracer)
 	if e := di.Registrar.Register(customizer); e != nil {
 		panic(e)
+	}
+
+	// graceful closer
+	if di.FxHook != nil {
+		lc.Append(fx.Hook(*di.FxHook))
 	}
 }
 

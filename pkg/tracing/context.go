@@ -2,10 +2,13 @@ package tracing
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	"time"
 )
+
+var logger = log.New("Tracing")
 
 const (
 	OpNameBootstrap = "bootstrap"
