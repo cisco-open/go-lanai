@@ -36,7 +36,7 @@ func (e *Engine) addRequestPreProcessor(p RequestPreProcessor) {
 
 func NewEngine() *Engine {
 	e := &Engine{
-		Engine: gin.Default(),
+		Engine: gin.New(),
 	}
 	return e
 }

@@ -165,6 +165,7 @@ func (adm *AccountStatusChecker) decideAutoUnlock(ctx context.Context, acct secu
 
 	if time.Now().After(history.LockoutTime().Add(rules.LockoutDuration()) ) {
 		updater.Unlock()
+		logger.WithContext(ctx).Infof("Account[%s] Unlocked", acct.Username())
 	}
 
 	if !acct.Locked() {

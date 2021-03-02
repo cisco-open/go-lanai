@@ -16,7 +16,7 @@ var Module = &bootstrap.Module{
 	},
 }
 
-var logger = log.GetNamedLogger("SamlAuthEndpoint")
+var logger = log.New("SamlAuthEndpoint")
 
 func init() {
 	bootstrap.Register(Module)

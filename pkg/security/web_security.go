@@ -179,7 +179,6 @@ func (ws *webSecurity) Build() []web.Mapping {
 
 // Other interfaces
 func (ws *webSecurity) String() string {
-	// TODO
 	return fmt.Sprintf("matcher=%v, condition=%v, features=%v", ws.routeMatcher, ws.conditionMatcher, ws.features)
 }
 

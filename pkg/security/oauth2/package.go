@@ -1,6 +1,11 @@
 package oauth2
 
-import "encoding/gob"
+import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"encoding/gob"
+)
+
+var logger = log.New("OAuth2")
 
 func init() {
 	gob.Register((*authentication)(nil))

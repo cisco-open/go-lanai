@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -199,8 +200,7 @@ func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
 func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequestFunc {
 	return func(c context.Context, r *http.Request) (response interface{}, err error) {
 		if _,ok := c.(*gin.Context); !ok {
-			// TODO return proper error
-			return nil, nil
+			return nil, NewHttpError(http.StatusInternalServerError, errors.New("context issue"))
 		}
 
 		toBind, toRet := instantiateByType(s.request)

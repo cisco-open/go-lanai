@@ -53,10 +53,10 @@ type mvcMetadata struct {
 // this function panic if given function have incorrect signature
 // Caller can provide an optional validator to further validate function signature on top of default validation
 func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValidator) *mvcMetadata {
-	//TODO better fatal error handling
 	f := reflect.ValueOf(endpointFunc)
 	err := validateFunc(&f, validator)
 	if err != nil {
+		//fatal error
 		panic(err)
 	}
 

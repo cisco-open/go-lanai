@@ -46,7 +46,7 @@ func (c *ClientAuthConfigurer) Apply(feature security.Feature, ws security.WebSe
 	errorhandling.Configure(ws).
 		AdditionalErrorHandler(f.errorHandler)
 
-	// TODO add middleware to translate authentication error to oauth2 error
+	// add middleware to translate authentication error to oauth2 error
 	mw := NewClientAuthMiddleware()
 	ws.Add(middleware.NewBuilder("client auth error translator").
 		Order(security.MWOrderPreAuth).

@@ -142,7 +142,7 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 
 func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) (*internal.SimpleContextDetails, error) {
 	// creds
-	ad, e := f.createAuthDetails(ctx, facts) // TODO
+	ad, e := f.createAuthDetails(ctx, facts)
 	if e != nil {
 		return nil, e
 	}

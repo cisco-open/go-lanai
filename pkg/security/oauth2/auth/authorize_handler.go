@@ -52,7 +52,6 @@ type DefaultAuthorizeHandler struct {
 	approvalUrl      string
 	authService      AuthorizationService
 	authCodeStore    AuthorizationCodeStore
-	//TODO
 }
 
 func NewAuthorizeHandler(opts ...AuthHandlerOptions) *DefaultAuthorizeHandler {
@@ -136,7 +135,7 @@ func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *A
 }
 
 func (h *DefaultAuthorizeHandler) MakeImplicitResponse(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (ResponseHandlerFunc, error) {
-	//TODO
+	//TODO implement Implict grant
 	panic("implicit response is not implemented")
 }
 

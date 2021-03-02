@@ -1,6 +1,7 @@
 package errorhandling
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
@@ -102,18 +103,17 @@ func (ehc *ErrorHandlingConfigurer) Apply(feature security.Feature, ws security.
 
 
 func (ehc *ErrorHandlingConfigurer) validate(f *ErrorHandlingFeature, ws security.WebSecurity) error {
-	// TODO proper logging
 	if f.authEntryPoint == nil {
-		fmt.Printf("for route matches [%v], authentication entry point is not set. fallback to access denied handler\n", ws)
+		logger.Infof("authentication entry point is not set, fallback to access denied handler - [%v], ", log.Capped(ws, 80))
 	}
 
 	if f.authErrorHandler == nil {
-		fmt.Printf("for route matches [%v], using default authentication error handler\n", ws)
+		logger.Infof("using default authentication error handler - [%v]", log.Capped(ws, 80))
 		f.authErrorHandler = &security.DefaultAuthenticationErrorHandler{}
 	}
 
 	if f.accessDeniedHandler == nil {
-		fmt.Printf("for route matches [%v], using default access denied handler\n", ws)
+		logger.Infof("using default access denied handler - [%v]", log.Capped(ws, 80))
 		f.accessDeniedHandler = &security.DefaultAccessDeniedHandler{}
 	}
 

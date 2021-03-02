@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
 	"errors"
@@ -54,6 +55,7 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		routedMappings: map[string]map[string][]RoutedMapping{},
 	}
 
+	registrar.AddGlobalMiddlewares(gin.Recovery())
 	return registrar
 }
 
@@ -62,8 +64,11 @@ func (r *Registrar) initialize() (err error) {
 	if r.initialized {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
-	// load templates
-	r.engine.LoadHTMLGlob("web/template/*")
+
+	// apply customizers before install mappings
+	if err = r.applyCustomizers(); err != nil {
+		return
+	}
 
 	// we disable auto-validation. We will invoke our own validation manually.
 	// Also we need to make the validator available globally for any request decoder to access.
@@ -71,16 +76,14 @@ func (r *Registrar) initialize() (err error) {
 	binding.Validator = nil
 	bindingValidator = r.validator
 
+	// load templates
+	r.engine.LoadHTMLGlob("web/template/*")
+
 	// add some common middlewares
 	mappings := []interface{}{
 		NewMiddlewareMapping("pre-process", HighestMiddlewareOrder, Any(), r.preProcessMiddleware),
 	}
 	if err = r.Register(mappings...); err != nil {
-		return
-	}
-
-	// apply customizers before install mappings
-	if err = r.applyCustomizers(); err != nil {
 		return
 	}
 
@@ -415,7 +418,8 @@ func (r *Registrar) preProcessMiddleware(c *gin.Context) {
 ***************************/
 func MakeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
-		reqCtx := context.WithValue(c.Request.Context(), kGinContextKey, c)
+		reqCtx := utils.MakeMutableContext(c.Request.Context())
+		reqCtx.Set(kGinContextKey, c)
 		c.Request = c.Request.WithContext(reqCtx)
 		s.ServeHTTP(c.Writer, c.Request)
 	}

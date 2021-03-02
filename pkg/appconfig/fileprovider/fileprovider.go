@@ -3,6 +3,7 @@ package fileprovider
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/parser"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"strings"
 )
 
+var logger = log.New("Config.File")
 const (
 	configsDirectory = "configs"
 )
@@ -44,7 +46,7 @@ func NewProvider(precedence int, filePath string, reader io.Reader) *ConfigProvi
 		return NewCachedLoader(NewPropertiesFile(name, fileName, reader))
 	 */
 	default:
-		fmt.Printf("Unknown appconfig file extension: %s", fileExt)
+		logger.Warnf("Unknown appconfig file extension: %s", fileExt)
 		return nil
 	}
 }

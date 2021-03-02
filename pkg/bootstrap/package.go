@@ -8,11 +8,12 @@ import (
 )
 
 var applicationContext = NewContext()
-var logger = log.GetNamedLogger("bootstrap")
+var logger = log.New("Bootstrap")
 
 var DefaultModule = &Module{
 	Precedence: HighestPrecedence,
 	PriorityOptions: []fx.Option{
+		fx.Logger(&fxPrinter{logger: logger}),
 		fx.Provide(provideApplicationContext),
 		fx.Invoke(bootstrap),
 	},

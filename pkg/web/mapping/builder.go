@@ -148,11 +148,10 @@ func (b *MappingBuilder) GetName() string {
 /*****************************
 	Private
 ******************************/
-// TODO more validation and better error handling
 func (b *MappingBuilder) validate() (err error) {
 	switch {
 	case b.path == "":
-		err = errors.New("empty SsoPath")
+		err = errors.New("empty path")
 	case b.handlerFunc == nil:
 		err = errors.New("handler func not specified")
 	}

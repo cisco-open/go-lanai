@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -57,9 +56,8 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 			return
 		}
 
-		// TODO logger
 		if session != nil && session.isNew {
-			fmt.Printf("New Session %v\n", session.id)
+			logger.WithContext(c).Debugf("New Session %s", session.id)
 			http.SetCookie(c.Writer, NewCookie(session.Name(), session.id, session.options, c.Request))
 		}
 
@@ -70,7 +68,6 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 // AuthenticationPersistenceHandlerFunc provide middleware to load security from session and save it at end
 func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO better error handling
 		// defer is FILO
 		defer m.persistAuthentication(c)
 		defer c.Next()

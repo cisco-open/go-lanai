@@ -14,7 +14,7 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{},
 }
 
-var logger = log.GetNamedLogger("OAuth2Resource")
+var logger = log.New("OAuth2Resource")
 
 func init() {
 	bootstrap.Register(Module)
