@@ -46,6 +46,8 @@ func (ep *InfoEndpoint) Read(ctx context.Context, input *Input) (interface{}, er
 		return Info{}, nil
 	}
 
+	logger.WithContext(ctx).Debugf("info %v", info)
+
 	if input.Name == "" {
 		return info, nil
 	}

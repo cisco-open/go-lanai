@@ -56,8 +56,6 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		validator:      binding.Validator,
 		routedMappings: map[string]map[string][]RoutedMapping{},
 	}
-
-	registrar.AddGlobalMiddlewares(gin.Recovery())
 	return registrar
 }
 
@@ -292,6 +290,7 @@ func (r *Registrar) registerWebCustomizer(c Customizer) error {
 		return fmt.Errorf("cannot register web configurer after web engine have initialized")
 	}
 	r.customizers = append(r.customizers, c)
+	order.SortStable(r.customizers, order.OrderedFirstCompare)
 	return nil
 }
 

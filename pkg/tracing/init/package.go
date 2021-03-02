@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
@@ -11,8 +12,6 @@ import (
 )
 
 var logger = log.New("Tracing")
-// for now, appTracer is used for application startup/shutdown tracing
-var appTracer opentracing.Tracer
 
 var Module = &bootstrap.Module{
 	Name: "Tracing",
@@ -26,13 +25,13 @@ var Module = &bootstrap.Module{
 func init() {
 	bootstrap.Register(Module)
 	// logger extractor
-	log.RegisterContextLogFields(tracingLogValuers)
+	log.RegisterContextLogFields(tracing.TracingLogValuers)
 
 	// bootstrap tracing
-	appTracer, _ = jaeger.NewTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
-	bootstrap.AddInitialAppContextOptions(tracing.MakeLifecycleTracingOption(appTracer, "bootstrap"))
-	bootstrap.AddStartContextOptions(tracing.MakeLifecycleTracingOption(appTracer, "startup"))
-	bootstrap.AddStopContextOptions(tracing.MakeLifecycleTracingOption(appTracer, "shutdown"))
+	appTracer, _ := jaeger.NewTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
+	bootstrap.AddInitialAppContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameBootstrap))
+	bootstrap.AddStartContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameStart))
+	bootstrap.AddStopContextOptions(instrument.MakeLifecycleTracingOption(appTracer, tracing.OpNameStop))
 }
 
 // Maker func, does nothing. Allow service to include this module in main()
@@ -62,7 +61,7 @@ type regDI struct {
 
 func initialize(di regDI) {
 	// web instrumentation
-	customizer := newTracingWebCustomizer(di.Tracer)
+	customizer := instrument.NewTracingWebCustomizer(di.Tracer)
 	if e := di.Registrar.Register(customizer); e != nil {
 		panic(e)
 	}

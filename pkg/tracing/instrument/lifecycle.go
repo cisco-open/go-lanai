@@ -1,8 +1,9 @@
-package tracing
+package instrument
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
@@ -14,12 +15,8 @@ func MakeLifecycleTracingOption(tracer opentracing.Tracer, opName string) bootst
 }
 
 func onAppLifecycle(ctx context.Context, tracer opentracing.Tracer, opName string) context.Context {
-	span := opentracing.SpanFromContext(ctx)
-	if span == nil {
-		span = tracer.StartSpan(opName)
-	} else {
-		span = tracer.StartSpan(opName, opentracing.ChildOf(span.Context()))
-	}
-	ext.SpanKind.Set(span, ext.SpanKindRPCServerEnum)
-	return opentracing.ContextWithSpan(ctx, span)
+	return tracing.WithTracer(tracer).
+		WithOpName(opName).
+		WithOptions(tracing.SpanKind(ext.SpanKindRPCServerEnum)).
+		NewSpanOrDescendant(ctx)
 }

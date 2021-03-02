@@ -3,19 +3,18 @@ package tracing
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"fmt"
 	"github.com/uber/jaeger-client-go"
 )
 
-var tracingLogValuers = log.ContextValuers{
-	"traceId": traceIdContextValuer,
-	"spanId": spanIdContextValuer,
+var TracingLogValuers = log.ContextValuers{
+	"traceId":  traceIdContextValuer,
+	"spanId":   spanIdContextValuer,
 	"parentId": parentIdContextValuer,
 }
 
 func traceIdContextValuer(ctx context.Context) (ret interface{}) {
-	span := tracing.SpanFromContext(ctx)
+	span := SpanFromContext(ctx)
 	if span == nil {
 		return
 	}
@@ -30,7 +29,7 @@ func traceIdContextValuer(ctx context.Context) (ret interface{}) {
 }
 
 func spanIdContextValuer(ctx context.Context) (ret interface{}) {
-	span := tracing.SpanFromContext(ctx)
+	span := SpanFromContext(ctx)
 	if span == nil {
 		return
 	}
@@ -43,7 +42,7 @@ func spanIdContextValuer(ctx context.Context) (ret interface{}) {
 }
 
 func parentIdContextValuer(ctx context.Context) (ret interface{}) {
-	span := tracing.SpanFromContext(ctx)
+	span := SpanFromContext(ctx)
 	if span == nil {
 		return
 	}
