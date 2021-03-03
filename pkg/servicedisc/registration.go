@@ -3,6 +3,7 @@ package servicedisc
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
+	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"github.com/google/uuid"
@@ -11,6 +12,14 @@ import (
 )
 
 func newRegistration(appContext *bootstrap.ApplicationContext, discoveryProperties DiscoveryProperties, serverProperties web.ServerProperties) *api.AgentServiceRegistration {
+	var ipAddress string
+
+	if discoveryProperties.IpAddress != "" {
+		ipAddress = discoveryProperties.IpAddress
+	} else {
+		ipAddress, _ = netutil.GetIp(discoveryProperties.Interface)
+	}
+
 	appName := appContext.Name()
 	registration := &api.AgentServiceRegistration{
 		Kind: api.ServiceKindTypical,
@@ -18,7 +27,7 @@ func newRegistration(appContext *bootstrap.ApplicationContext, discoveryProperti
 		Name: appName,
 		Tags: createTags(discoveryProperties, serverProperties),
 		Port: discoveryProperties.Port,
-		Address: discoveryProperties.IpAddress,
+		Address: ipAddress,
 		Check: &api.AgentServiceCheck{
 			HTTP: fmt.Sprintf("%s://%s:%d%s", discoveryProperties.Scheme, discoveryProperties.IpAddress, discoveryProperties.Port, discoveryProperties.HealthCheckPath),
 			Interval: discoveryProperties.HealthCheckInterval,

@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-//TODO: review - code borrowed from go-msx
 func GetIp(iface string) (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {

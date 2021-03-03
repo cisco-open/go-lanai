@@ -7,7 +7,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	sdcustomizer "cto-github.cisco.com/NFV-BU/go-lanai/pkg/servicedisc/customizer"
-	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	kitconsul "github.com/go-kit/kit/sd/consul"
@@ -36,15 +35,13 @@ func Use() {
 }
 
 func newDiscoveryProperties(appConfig *appconfig.ApplicationConfig, serverProps web.ServerProperties) DiscoveryProperties {
-	ipAddress, _ := netutil.GetIp("")
 	p := DiscoveryProperties{
-		IpAddress: ipAddress,
 		Port: serverProps.Port,
 		Scheme: "http",
 		HealthCheckInterval: "15s",
 		HealthCheckPath: fmt.Sprintf("%s%s", serverProps.ContextPath, "/admin/health"),
 	}
-	appConfig.Bind(p, discoveryPropertiesPrefix)
+	appConfig.Bind(&p, discoveryPropertiesPrefix)
 	return p
 }
 
