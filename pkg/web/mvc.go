@@ -2,7 +2,7 @@ package web
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
+	"errors"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
@@ -198,13 +198,12 @@ func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
 // bindable requestType can only be struct or pointer of struct
 func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequestFunc {
 	return func(c context.Context, r *http.Request) (response interface{}, err error) {
-		if _,ok := c.(*gin.Context); !ok {
-			// TODO return proper error
-			return nil, nil
+		ginCtx := GinContext(c)
+		if ginCtx == nil {
+			return nil, NewHttpError(http.StatusInternalServerError, errors.New("context issue"))
 		}
 
 		toBind, toRet := instantiateByType(s.request)
-		ginCtx := c.(*gin.Context)
 
 		// We always try to bind H, Uri and Query. other bindings are determined by Content-Type (in ShouldBind)
 		err = bind(toBind,

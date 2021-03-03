@@ -1,6 +1,8 @@
 package security
 
 import (
+	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
@@ -31,16 +33,16 @@ func newSecurity(globalAuth Authenticator) *initializer {
 	}
 }
 
+// Register is not threadsafe, usually called in "fx.Invoke" or "fx.Provide"
 func (init *initializer) Register(configurers ...Configurer) {
-	// TODO proper lock
 	if err := init.validateState("register security.Configurer"); err != nil {
 		panic(err)
 	}
 	init.configurers = append(init.configurers, configurers...)
 }
 
+// RegisterFeature is not threadsafe, usually called in "fx.Invoke" or "fx.Provide"
 func (init *initializer) RegisterFeature(featureId FeatureIdentifier, featureConfigurer FeatureConfigurer) {
-	// TODO proper lock
 	if err := init.validateState("register security.FeatureConfigurer"); err != nil {
 		panic(err)
 	}
@@ -58,7 +60,7 @@ func (init *initializer) validateState(action string) error {
 	}
 }
 
-func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) error {
+func (init *initializer) Initialize(ctx context.Context, lc fx.Lifecycle, registrar *web.Registrar) error {
 	initializeMutex.Lock()
 	defer initializeMutex.Unlock()
 
@@ -77,7 +79,7 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 
 	// go through each configurer
 	for _,configurer := range init.configurers {
-		builder, requestPreProcessors, err := init.build(configurer)
+		builder, requestPreProcessors, err := init.build(ctx, configurer)
 		if err != nil {
 			return err
 		}
@@ -94,16 +96,8 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 			if err := registrar.Register(mapping); err != nil {
 				return err
 			}
-			switch mapping.(type) {
-			case web.MiddlewareMapping:
-				mw := mapping.(web.MiddlewareMapping)
-				// TODO logger
-				fmt.Printf("registered security middleware [%d][%s] %v -> %v \n",
-					mw.Order(), mw.Name(), mw.Matcher(), reflect.ValueOf(mw.HandlerFunc()).String())
-			default:
-				// TODO logger
-				fmt.Printf("registered security misc [%s]: %v\n", mapping.Name(), mapping)
-			}
+			// Do some logging
+			logMapping(ctx, mapping)
 		}
 	}
 
@@ -116,9 +110,9 @@ func (init *initializer) Initialize(lc fx.Lifecycle, registrar *web.Registrar) e
 	return nil
 }
 
-func (init *initializer) build(configurer Configurer) (WebSecurityMappingBuilder, map[web.RequestPreProcessorName]web.RequestPreProcessor, error) {
+func (init *initializer) build(ctx context.Context, configurer Configurer) (WebSecurityMappingBuilder, map[web.RequestPreProcessorName]web.RequestPreProcessor, error) {
 	// collect security configs
-	ws := newWebSecurity(NewAuthenticator(), map[string]interface{}{
+	ws := newWebSecurity(ctx, NewAuthenticator(), map[string]interface{}{
 		WSSharedKeyCompositeAuthSuccessHandler: NewAuthenticationSuccessHandler(),
 		WSSharedKeyCompositeAuthErrorHandler: NewAuthenticationErrorHandler(),
 		WSSharedKeyCompositeAccessDeniedHandler: NewAccessDeniedHandler(),
@@ -238,8 +232,24 @@ func featureOrderLess(l Feature, r Feature) bool {
 	return order.OrderedFirstCompare(l.Identifier(), r.Identifier())
 }
 
-
-
+func logMapping(ctx context.Context, mapping web.Mapping) {
+	switch mapping.(type) {
+	case web.MiddlewareMapping:
+		mw := mapping.(web.MiddlewareMapping)
+		logger.WithContext(ctx).Infof("registered security middleware [%d] [%s] %s -> %v",
+			mw.Order(), mw.Name(), log.Capped(mw.Matcher(), 80), reflect.ValueOf(mw.HandlerFunc()).String())
+	case web.MvcMapping:
+		m := mapping.(web.MvcMapping)
+		logger.WithContext(ctx).Infof("registered security MVC mapping [%s %s] [%s] %s -> endpoint",
+			m.Method(), m.Path(), m.Name(), log.Capped(m.Condition(), 80))
+	case web.SimpleMapping:
+		m := mapping.(web.SimpleMapping)
+		logger.WithContext(ctx).Infof("registered security simple mapping [%s %s] [%s] %s -> %v",
+			m.Method(), m.Path(), m.Name(), log.Capped(m.Condition(), 80), reflect.ValueOf(m.HandlerFunc()).String())
+	default:
+		logger.WithContext(ctx).Infof("registered security mapping [%s]: %v", mapping.Name(), mapping)
+	}
+}
 
 
 

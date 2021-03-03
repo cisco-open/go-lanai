@@ -91,7 +91,7 @@ func (r *RedisContextDetailsStore) SaveContextDetails(c context.Context, key int
 func (r *RedisContextDetailsStore) RemoveContextDetails(c context.Context, key interface{}) error {
 	switch key.(type) {
 	case oauth2.AccessToken:
-		// TODO
+		// TODO implement me
 		panic("implement me")
 	default:
 		return fmt.Errorf("unsupported key type %T", key)

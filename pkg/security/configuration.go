@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
@@ -33,7 +34,7 @@ type Initializer interface {
 	// Initialize is the entry point for all security configuration.
 	// Microservice or other library packages typically call this in Provide or Invoke functions
 	// Note: use this function inside fx.Lifecycle takes no effect
-	Initialize(lc fx.Lifecycle, registrar *web.Registrar) error
+	Initialize(ctx context.Context, lc fx.Lifecycle, registrar *web.Registrar) error
 }
 
 /****************************************
@@ -66,6 +67,11 @@ type Feature interface {
 
 // WebSecurity holds information on security configuration
 type WebSecurity interface {
+
+	// Context returns the context associated with the WebSecurity.
+	// It's typlically holds bootstrap.ApplicationContext or its derived context
+	// this should not returns nil
+	Context() context.Context
 
 	// Route configure the path and method pattern which this WebSecurity applies to
 	// Calling this method multiple times concatenate all given matchers with OR operator

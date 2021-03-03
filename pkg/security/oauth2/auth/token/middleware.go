@@ -12,7 +12,6 @@ import (
  ***********************/
 type TokenEndpointMiddleware struct {
 	granter     auth.TokenGranter
-	//TODO
 }
 
 type TokenEndpointOptionsFunc func(*TokenEndpointOptions)
@@ -79,13 +78,11 @@ func (mw *TokenEndpointMiddleware) TokenHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-// TODO
 func (mw *TokenEndpointMiddleware) handleSuccess(c *gin.Context, v interface{}) {
 	c.JSON(200, v)
 	c.Abort()
 }
 
-// TODO
 func (mw *TokenEndpointMiddleware) handleError(c *gin.Context, err error) {
 	if errors.Is(err, oauth2.ErrorTypeOAuth2) {
 		err = oauth2.NewInvalidGrantError(err.Error(), err)

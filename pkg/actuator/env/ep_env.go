@@ -42,7 +42,7 @@ type EnvEndpoint struct {
 
 func new(di regDI) *EnvEndpoint {
 	ep := EnvEndpoint{
-		appConfig: di.AppContext.Config(),
+		appConfig: di.AppContext.Config().(appconfig.ConfigAccessor),
 		sanitizer: NewSanitizer(di.Properties.KeysToSanitize.Values()),
 	}
 	ep.WebEndpointBase = actuator.MakeWebEndpointBase(func(opt *actuator.EndpointOption) {

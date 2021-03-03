@@ -12,7 +12,6 @@ import (
  *********************************/
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutHandler interface {
-	//TODO
 	HandleLogout(context.Context, *http.Request, http.ResponseWriter, security.Authentication)
 }
 

@@ -71,7 +71,7 @@ func Get(ctx context.Context) Authentication {
 	return secCtx
 }
 
-func Clear(ctx *gin.Context) {
+func Clear(ctx utils.MutableContext) {
 	ctx.Set(gin.AuthUserKey, nil)
 	ctx.Set(ContextKeySecurity, nil)
 }
@@ -79,8 +79,8 @@ func Clear(ctx *gin.Context) {
 // TryClear attempt to clear security context. Return true if succeeded
 func TryClear(ctx context.Context) bool {
 	switch ctx.(type) {
-	case *gin.Context:
-		Clear(ctx.(*gin.Context))
+	case utils.MutableContext:
+		Clear(ctx.(utils.MutableContext))
 	default:
 		return false
 	}

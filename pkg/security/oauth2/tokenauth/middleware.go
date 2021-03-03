@@ -37,7 +37,6 @@ func NewTokenAuthMiddleware(opts...TokenAuthMWOptions) *TokenAuthMiddleware {
 	return &TokenAuthMiddleware{
 		authenticator: opt.Authenticator,
 		successHandler: opt.SuccessHandler,
-		// TODO
 	}
 }
 

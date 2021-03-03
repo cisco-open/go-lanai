@@ -15,7 +15,6 @@ var (
 //goland:noinspection GoNameStartsWithPackageName
 type BasicAuthFeature struct {
 	entryPoint security.AuthenticationEntryPoint
-	// TODO we may want to override authenticator and other stuff
 }
 
 // Standard security.Feature entrypoint

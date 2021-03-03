@@ -11,7 +11,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var logger = log.GetNamedLogger("Actuator")
+var logger = log.New("Actuator")
 
 var Module = &bootstrap.Module{
 	Name: "actuate-config",

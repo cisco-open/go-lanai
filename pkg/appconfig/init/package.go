@@ -197,7 +197,14 @@ type newApplicationConfigParam struct {
 	BootstrapConfig    *appconfig.BootstrapConfig
 }
 
-func newApplicationConfig(p newApplicationConfigParam) *appconfig.ApplicationConfig {
+type appConfigDIOut struct {
+	fx.Out
+	ACPtr *appconfig.ApplicationConfig
+	ACI   bootstrap.ApplicationConfig
+}
+
+// expose *appconfig.ApplicationConfig as both pointer and interface
+func newApplicationConfig(p newApplicationConfigParam) appConfigDIOut {
 	var mergedProvider []appconfig.Provider
 
 	for _, provider := range p.FileProvider {
@@ -216,7 +223,10 @@ func newApplicationConfig(p newApplicationConfigParam) *appconfig.ApplicationCon
 		panic(error)
 	}
 
-	return applicationConfig
+	return appConfigDIOut{
+		ACPtr: applicationConfig,
+		ACI: applicationConfig,
+	}
 }
 
 // Maker func, does nothing. Allow service to include this module in main()

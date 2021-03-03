@@ -36,7 +36,7 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 	errorhandling.Configure(ws).
 		AdditionalErrorHandler(f.errorHandler)
 
-	//TODO prepare middlewares
+	//prepare middlewares
 	authRouteMatcher := matcher.RouteWithPattern(f.path, http.MethodGet, http.MethodPost)
 	approveRouteMatcher := matcher.RouteWithPattern(f.approvalPath, http.MethodPost)
 	approveRequestMatcher := matcher.RequestWithPattern(f.approvalPath, http.MethodPost).

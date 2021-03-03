@@ -1,6 +1,8 @@
 package appconfig
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"encoding/json"
 	"fmt"
 	"github.com/imdario/mergo"
@@ -10,6 +12,7 @@ import (
 	"strings"
 )
 
+var logger = log.New("AppConfig")
 var ErrNotLoaded = errors.New("Configuration not loaded")
 
 type config struct {
@@ -27,8 +30,7 @@ type ApplicationConfig struct {
 }
 
 type ConfigAccessor interface {
-	Value(key string) interface{}
-	Bind(target interface{}, prefix string) error
+	bootstrap.ApplicationConfig
 	Each(apply func(string, interface{}) error) error
 	Providers() []Provider
 }
@@ -245,7 +247,7 @@ func resolveValue(source map[string]interface{}, key string, originKey string) (
 		return value, nil
 	}
 
-	fmt.Println("resolving key: " + key)
+	logger.WithContext(bootstrap.EagerGetApplicationContext()).Debugf("resolving key: " + key)
 	for _, placeHolderKey := range placeHolderKeys {
 		if strings.Compare(originKey, placeHolderKey) == 0 {
 			return "", errors.New("key: " + originKey + " can't be resolved due to circular reference")

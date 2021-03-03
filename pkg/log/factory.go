@@ -1,10 +1,10 @@
 package log
 
 import (
+	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
 	"fmt"
 	"github.com/go-kit/kit/log"
-	kit_logurs "github.com/go-kit/kit/log/logrus"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 )
@@ -13,31 +13,13 @@ const levelDefault = "default"
 const formatJson = "json"
 const outputConsole = "console"
 
-//common fields added by us
-const messageKey = "msg"
-const nameKey = "logger"
-const timestampKey = "ts"
-const callerKey = "caller"
-const levelKey = "level"
-
-//field added by logrus
-const timeKey = "time"
-
-// Used for sorting logrus text fields
-var textFieldOrders = map[string]int{
-	timeKey: 0,
-	nameKey: 1,
-	levelKey: 2,
-	callerKey: 3,
-	messageKey: 4,
-}
-
 type kitLoggerFactory struct {
-	rootLogLevel   LoggingLevel
-	logLevels      map[string]LoggingLevel
-	templateLogger log.Logger
-	extractors     []FieldsExtractor
-	registry       map[string]*kitLogger
+	rootLogLevel     LoggingLevel
+	logLevels        map[string]LoggingLevel
+	templateLogger   log.Logger
+	effectiveValuers ContextValuers
+	extraValuers     ContextValuers
+	registry         map[string]*configurableLogger
 }
 
 func newKitLoggerFactory(properties *Properties) *kitLoggerFactory {
@@ -45,17 +27,18 @@ func newKitLoggerFactory(properties *Properties) *kitLoggerFactory {
 	if !ok {
 		rootLogLevel = LevelInfo
 	}
-	template := buildTemplateLoggerFromConfig(properties)
 
 	return &kitLoggerFactory{
-		rootLogLevel: rootLogLevel,
-		logLevels: properties.Levels,
-		templateLogger: template,
-		registry: make(map[string]*kitLogger),
+		rootLogLevel:     rootLogLevel,
+		logLevels:        properties.Levels,
+		templateLogger:   buildTemplateLoggerFromConfig(properties),
+		registry:         map[string]*configurableLogger{},
+		extraValuers:     ContextValuers{},
+		effectiveValuers: buildContextValuerFromConfig(properties),
 	}
 }
 
-func (f *kitLoggerFactory) createLogger (name string) ContextualLogger{
+func (f *kitLoggerFactory) createLogger(name string) ContextualLogger {
 	if l, ok := f.registry[name]; ok {
 		return l
 	}
@@ -65,13 +48,18 @@ func (f *kitLoggerFactory) createLogger (name string) ContextualLogger{
 		ll = f.rootLogLevel
 	}
 
-	l := newKitLogger(name, f.templateLogger, ll, f.extractors)
+	l := newConfigurableLogger(name, f.templateLogger, ll, f.effectiveValuers)
 	f.registry[name] = l
 	return l
 }
 
-func (f *kitLoggerFactory) addExtractors (extractors... FieldsExtractor) {
-	f.extractors = append(f.extractors, extractors...)
+func (f *kitLoggerFactory) addContextValuers(valuers...ContextValuers) {
+	for _, item := range valuers {
+		for k, v := range item {
+			f.effectiveValuers[k] = v
+			f.extraValuers[k] = v
+		}
+	}
 }
 
 func (f *kitLoggerFactory) setLevel (name string, logLevel LoggingLevel) {
@@ -80,86 +68,103 @@ func (f *kitLoggerFactory) setLevel (name string, logLevel LoggingLevel) {
 	}
 }
 
-func (f *kitLoggerFactory) refresh (properties *Properties) {
+func (f *kitLoggerFactory) refresh(properties *Properties) {
 	rootLogLevel, ok := properties.Levels[levelDefault]
 	if !ok {
 		rootLogLevel = LevelInfo
 	}
-	template := buildTemplateLoggerFromConfig(properties)
 
-	f.templateLogger = template
+	f.templateLogger = buildTemplateLoggerFromConfig(properties)
 	f.rootLogLevel = rootLogLevel
 	f.logLevels = properties.Levels
+	f.effectiveValuers = buildContextValuerFromConfig(properties)
+
+	// merge valuers, note: we don't delete extra valuers during refresh
+	for k, v := range f.extraValuers {
+		f.effectiveValuers[k] = v
+	}
 
 	for name, logger := range f.registry {
 		ll, ok := f.logLevels[name]
 		if !ok {
 			ll = rootLogLevel
 		}
-		logger.templateLogger = f.templateLogger
+		logger.template = f.templateLogger
+		logger.valuers = f.effectiveValuers
 		logger.setLevel(ll)
 	}
 }
 
+func buildContextValuerFromConfig(properties *Properties) ContextValuers {
+	valuers := ContextValuers{}
+	// k is context-key, v is log-key
+	for k, v := range properties.Mappings {
+		valuers[v] = func(ctx context.Context) interface{} {
+			return ctx.Value(k)
+		}
+	}
+	return valuers
+}
+
 func buildTemplateLoggerFromConfig(properties *Properties) log.Logger {
-	composite := &CompositeKitLogger{}
-	for output, format := range properties.Logger {
-		switch output {
-		case outputConsole:
-			if format == formatJson {
-				composite.addLogger(log.NewJSONLogger(log.NewSyncWriter(os.Stdout)))
-			} else {
-				composite.addLogger(makeTextLogger(log.NewSyncWriter(os.Stdout)))
-			}
-		default:
-			composite.addLogger(makeTextLogger(log.NewSyncWriter(os.Stdout)))
+	composite := &compositeKitLogger{}
+	for _, loggerProps := range properties.Loggers {
+		logger, e := newKitLogger(&loggerProps)
+		if e != nil {
+			panic(e)
 		}
+		composite.addLogger(logger)
 	}
 
-	if len(composite.delegates) == 0 {
-		composite.addLogger(makeTextLogger(log.NewSyncWriter(os.Stdout)))
-	}
-	return log.With(composite, timestampKey, log.DefaultTimestampUTC, callerKey, log.Caller(7))
-}
-
-type CustomFormatter struct {
-	*logrus.TextFormatter
-}
-
-//Because logrus logger provides its own time, level and message fields,
-//we need to remove the fields that we added when using logrus
-func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	entry.Level, _ = logrus.ParseLevel(entry.Data["level"].(fmt.Stringer).String())
-	entry.Message = entry.Data[messageKey].(string)
-	delete(entry.Data, timestampKey)
-	delete(entry.Data, levelKey)
-	delete(entry.Data, messageKey)
-	return f.TextFormatter.Format(entry)
-}
-
-func makeTextLogger(w io.Writer) log.Logger{
-	logrusLogger := logrus.New()
-	logrusLogger.Out = w
-	formatter := &CustomFormatter{
-		&logrus.TextFormatter{},
-	}
-	formatter.SortingFunc = func(input []string) {
-		var priority = make([]string, len(textFieldOrders))
-		var others = make([]string, len(input) - len(textFieldOrders))
-
-		index := 0
-		for _, v := range input {
-			if i, ok := textFieldOrders[v]; ok {
-				priority[i] = v
-			} else {
-				others[index] = v
-				index++
-			}
+	logger := log.Logger(composite)
+	switch len(composite.delegates) {
+	case 0:
+		defaultProps := &LoggerProperties{
+			Type:     TypeConsole,
+			Format:   FormatText,
+			Template: defaultTemplate,
+			FixedKeys: defaultFixedFields.Values(),
 		}
-		copy(input[:len(priority)], priority)
-		copy(input[len(priority):], others)
+		logger, _ = newKitLogger(defaultProps)
+	case 1:
+		logger = composite.delegates[0]
 	}
-	logrusLogger.SetFormatter(formatter)
-	logger := kit_logurs.NewLogrusLogger(logrusLogger)
 	return logger
 }
+
+func newKitLogger(props *LoggerProperties) (log.Logger, error) {
+	switch props.Type {
+	case TypeConsole:
+		return newKitLoggerWithWriter(log.NewSyncWriter(os.Stdout), props)
+	case TypeFile:
+		f, e := openOrCreateFile(props.Location)
+		if e != nil {
+			return nil, e
+		}
+		return newKitLoggerWithWriter(log.NewSyncWriter(f), props)
+	case TypeHttp:
+	case TypeMQ:
+	default:
+	}
+	return nil, fmt.Errorf("unsupported logger type: %v", props.Type)
+}
+
+func newKitLoggerWithWriter(w io.Writer, props *LoggerProperties) (log.Logger, error) {
+	switch props.Format {
+	case FormatText:
+		fixedFields := defaultFixedFields.Copy().Add(props.FixedKeys...)
+		formatter := internal.NewTemplatedFormatter(props.Template, fixedFields, internal.IsTerminal(w))
+		return internal.NewKitTextLoggerAdapter(w, formatter), nil
+	case FormatJson:
+		return log.NewJSONLogger(w), nil
+	}
+	return nil, fmt.Errorf("unsupported logger format: %v", props.Format)
+}
+
+func openOrCreateFile(location string) (*os.File, error) {
+	if location == "" {
+		return nil, fmt.Errorf("location is missing for file logger")
+	}
+	return os.OpenFile(location, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0666)
+}
+

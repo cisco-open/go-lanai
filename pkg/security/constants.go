@@ -65,7 +65,7 @@ const (
 	MWOrderFormAuth
 	MWOrderOAuth2TokenAuth
 	MWOrderSAMLMetadataRefresh
-	// ... TODO more MW goes here
+	// ... more MW goes here
 	MWOrderAccessControl = LowestMiddlewareOrder - 200
 	MWOrderOAuth2Endpoints = MWOrderAccessControl + 100
 	MWOrderSamlAuthEndpoints = MWOrderAccessControl + 100
@@ -88,7 +88,7 @@ const (
 	FeatureOrderAccess
 	FeatureOrderSession
 	FeatureOrderRequestCache
-	// ... TODO more Feature goes here
+	// ... more Feature goes here
 	FeatureOrderErrorHandling = order.Lowest - 200
 )
 

@@ -17,7 +17,6 @@ package bootstrap
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/profile"
-	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"os"
@@ -34,7 +33,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		logger.Errorf("%v", err)
 		os.Exit(1)
 	}
 	fmt.Println("finished execute")

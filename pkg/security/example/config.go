@@ -13,7 +13,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"fmt"
 	"time"
 )
 
@@ -88,6 +87,6 @@ func (c *ErrorPageSecurityConfigurer) Configure(ws security.WebSecurity) {
 func debugPrintOTP(event passwd.MFAEvent, otp passwd.OTP, principal interface{}) {
 	switch event {
 	case passwd.MFAEventOtpCreate, passwd.MFAEventOtpRefresh:
-		fmt.Printf("[DEBUG] OTP: %s \n", otp.Passcode())
+		logger.Debugf("OTP: %s", otp.Passcode())
 	}
 }

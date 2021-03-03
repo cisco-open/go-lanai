@@ -26,7 +26,7 @@ type InfoEndpoint struct {
 
 func new(di regDI) *InfoEndpoint {
 	ep := InfoEndpoint{
-		appConfig: di.AppContext.Config(),
+		appConfig: di.AppContext.Config().(appconfig.ConfigAccessor),
 	}
 	ep.WebEndpointBase = actuator.MakeWebEndpointBase(func(opt *actuator.EndpointOption) {
 		opt.Id = ID
@@ -45,6 +45,8 @@ func (ep *InfoEndpoint) Read(ctx context.Context, input *Input) (interface{}, er
 	if e := ep.appConfig.Bind(&info, infoPropertiesPrefix); e != nil {
 		return Info{}, nil
 	}
+
+	logger.WithContext(ctx).Debugf("info %v", info)
 
 	if input.Name == "" {
 		return info, nil
