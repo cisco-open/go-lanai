@@ -7,23 +7,21 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	sdcustomizer "cto-github.cisco.com/NFV-BU/go-lanai/pkg/servicedisc/customizer"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
-	kitlog "github.com/go-kit/kit/log"
 	kitconsul "github.com/go-kit/kit/sd/consul"
 	"github.com/hashicorp/consul/api"
 	"go.uber.org/fx"
 )
 
-var logger = log.GetNamedLogger("service discovery")
+var logger = log.New("service discovery")
 
 var Module = &bootstrap.Module {
 	Name: "service discovery",
 	Precedence: bootstrap.ServiceDiscoveryPrecedence,
 	Options: []fx.Option{
-		fx.Provide(newApplicationProperties, newDiscoveryProperties, newRegistration, sdcustomizer.NewRegistrar),
+		fx.Provide(newDiscoveryProperties, newRegistration, newCustomizerRegistrar),
 		fx.Invoke(setupServiceRegistration),
 	},
 }
@@ -37,16 +35,9 @@ func Use() {
 
 }
 
-//TODO: move to app config or bootstrap
-func newApplicationProperties(appConfig *appconfig.ApplicationConfig) *ApplicationProperties {
-	p := &ApplicationProperties{}
-	appConfig.Bind(p, applicationPropertiesPrefix)
-	return p
-}
-
-func newDiscoveryProperties(appConfig *appconfig.ApplicationConfig, serverProps web.ServerProperties) *DiscoveryProperties {
+func newDiscoveryProperties(appConfig *appconfig.ApplicationConfig, serverProps web.ServerProperties) DiscoveryProperties {
 	ipAddress, _ := netutil.GetIp("")
-	p := &DiscoveryProperties{
+	p := DiscoveryProperties{
 		IpAddress: ipAddress,
 		Port: serverProps.Port,
 		Scheme: "http",
@@ -57,21 +48,10 @@ func newDiscoveryProperties(appConfig *appconfig.ApplicationConfig, serverProps 
 	return p
 }
 
-//TODO: compare tags
-func newRegistration(appProps *ApplicationProperties, discoveryProperties *DiscoveryProperties) *api.AgentServiceRegistration {
-	registration := &api.AgentServiceRegistration{
-		Kind: api.ServiceKindTypical,
-		ID:   fmt.Sprintf("%s-%d-%x", appProps.Name, discoveryProperties.Port, cryptoutils.RandomBytes(5)),
-		Name: appProps.Name,
-		Tags: discoveryProperties.Tags,
-		Port: discoveryProperties.Port,
-		Address: discoveryProperties.IpAddress,
-		Check: &api.AgentServiceCheck{
-			HTTP: fmt.Sprintf("%s://%s:%d%s", discoveryProperties.Scheme, discoveryProperties.IpAddress, discoveryProperties.Port, discoveryProperties.HealthCheckPath),
-			Interval: discoveryProperties.HealthCheckInterval,
-			DeregisterCriticalServiceAfter: discoveryProperties.HealthCheckCriticalTimeout},
-		}
-	return registration
+func newCustomizerRegistrar(appContext *bootstrap.ApplicationContext) *sdcustomizer.Registrar{
+	r := sdcustomizer.NewRegistrar()
+	r.Add(NewDefaultCustomizer(appContext))
+	return r
 }
 
 func setupServiceRegistration(lc fx.Lifecycle,
@@ -80,18 +60,15 @@ func setupServiceRegistration(lc fx.Lifecycle,
 		c.Customize(registration)
 	}
 
-	//TODO: provide our own logger
 	//because we are the lowest precendence, we execute when every thing is ready
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			//TODO: logger with context
-			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration ,kitlog.NewNopLogger())
+			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration , logger.WithContext(ctx))
 			registrar.Register()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			//TODO: logger with context
-			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration ,kitlog.NewNopLogger())
+			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration , logger.WithContext(ctx))
 			registrar.Deregister()
 			return nil
 		},

@@ -6,10 +6,6 @@ const (
 	discoveryPropertiesPrefix = "cloud.consul.discovery"
 )
 
-type ApplicationProperties struct {
-	Name string `json:"name"`
-}
-
 type DiscoveryProperties struct {
 	HealthCheckPath string `json:"health-check-path"`
 	HealthCheckInterval string `json:"health-check-interval"`

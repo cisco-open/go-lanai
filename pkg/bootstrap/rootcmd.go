@@ -36,7 +36,6 @@ func Execute() {
 		logger.Errorf("%v", err)
 		os.Exit(1)
 	}
-	fmt.Println("finished execute")
 }
 
 func NewAppCmd(appName string, priorityOptions []fx.Option, regularOptions []fx.Option) {
