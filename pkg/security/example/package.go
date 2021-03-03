@@ -11,6 +11,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	sdcustomizer "cto-github.cisco.com/NFV-BU/go-lanai/pkg/servicedisc/customizer"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"go.uber.org/fx"
 	"net/url"
@@ -33,7 +34,7 @@ func init() {
 		fx.Provide(NewInMemSpManager),
 		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(newResServerConfigurer),
-		fx.Invoke(configureSecurity),
+		fx.Invoke(configureSecurity, configureConsulRegistration),
 	)
 }
 
@@ -98,4 +99,8 @@ func newResServerConfigurer(deps dependencies) resserver.ResourceServerConfigure
 			JwkSet: "http://localhost:8080/europa/v2/jwks",
 		}
 	}
+}
+
+func configureConsulRegistration(r *sdcustomizer.Registrar) {
+	r.Add(&RegistrationCusomizer{})
 }
