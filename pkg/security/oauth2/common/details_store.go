@@ -45,8 +45,8 @@ type RedisContextDetailsStore struct {
 	client redis.Client
 }
 
-func NewRedisContextDetailsStore(cf redis.ClientFactory) *RedisContextDetailsStore {
-	client, e := cf.New(func(opt *redis.ClientOption) {
+func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory) *RedisContextDetailsStore {
+	client, e := cf.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = redisDB
 	})
 	if e != nil {

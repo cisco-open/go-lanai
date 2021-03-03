@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -106,9 +107,11 @@ func provideTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingPrope
 ***************************/
 type regDI struct {
 	fx.In
-	Registrar *web.Registrar     `optional:true`
-	Tracer    opentracing.Tracer `optional:true`
-	FxHook    TracerClosingHook  `optional:true`
+	AppContext   *bootstrap.ApplicationContext
+	Tracer       opentracing.Tracer  `optional:true`
+	FxHook       TracerClosingHook   `optional:true`
+	Registrar    *web.Registrar      `optional:true`
+	RedisFactory redis.ClientFactory `optional:true`
 	// we could include security configurations, customizations here
 }
 
@@ -118,9 +121,17 @@ func initialize(lc fx.Lifecycle, di regDI) {
 	}
 
 	// web instrumentation
-	customizer := instrument.NewTracingWebCustomizer(di.Tracer)
-	if e := di.Registrar.Register(customizer); e != nil {
-		panic(e)
+	if di.Registrar != nil {
+		customizer := instrument.NewTracingWebCustomizer(di.Tracer)
+		if e := di.Registrar.Register(customizer); e != nil {
+			panic(e)
+		}
+	}
+
+	// redis instrumentation
+	if di.RedisFactory != nil {
+		hook := instrument.NewRedisTrackingHook(di.Tracer)
+		di.RedisFactory.AddHooks(di.AppContext, hook)
 	}
 
 	// graceful closer

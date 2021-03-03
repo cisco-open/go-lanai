@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
+	"net/http"
 )
 
 type TracingWebCustomizer struct {
@@ -32,4 +33,12 @@ func (c *TracingWebCustomizer) Customize(ctx context.Context, r *web.Registrar) 
 	//t := kithttp.ServerBefore(kitopentracing.HTTPToContext(c.tracer, tracing.OpNameHttp, logger))
 	//r.AddOption(t)
 	return nil
+}
+
+
+/*********************
+	common funcs
+ *********************/
+func opNameWithRequest(opName string, r *http.Request) string {
+	return opName + " " + r.URL.Path
 }

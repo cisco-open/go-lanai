@@ -66,8 +66,8 @@ type CachedRequestPreProcessor struct {
 
 func newCachedRequestPreProcessor(store session.Store) *CachedRequestPreProcessor {
 	return &CachedRequestPreProcessor{
-		store:store,
-		name: "CachedRequestPreProcessor",
+		store: store,
+		name:  "CachedRequestPreProcessor",
 	}
 }
 
@@ -78,11 +78,11 @@ func (p *CachedRequestPreProcessor) Name() web.RequestPreProcessorName {
 func (p *CachedRequestPreProcessor) Process(r *http.Request) error {
 	if cookie, err := r.Cookie(session.DefaultName); err == nil {
 		id := cookie.Value
-		if s, err := p.store.Get(id, session.DefaultName); err == nil {
+		if s, err := p.store.WithContext(r.Context()).Get(id, session.DefaultName); err == nil {
 			cached, ok := s.Get(SessionKeyCachedRequest).(*CachedRequest)
 			if ok && cached != nil && requestMatches(r, cached) {
 				s.Delete(SessionKeyCachedRequest)
-				err := p.store.Save(s)
+				err := p.store.WithContext(r.Context()).Save(s)
 				if err != nil {
 					return err
 				}

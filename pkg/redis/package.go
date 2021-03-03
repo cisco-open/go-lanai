@@ -2,8 +2,11 @@ package redis
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"go.uber.org/fx"
 )
+
+var logger = log.New("Redis")
 
 var Module = &bootstrap.Module{
 	Precedence: bootstrap.RedisPrecedence,
@@ -24,8 +27,8 @@ func Use() {
 
 }
 
-func newDefaultClient(f ClientFactory, p ConnectionProperties) Client {
-	c, e := f.New(func(opt *ClientOption) {
+func newDefaultClient(ctx *bootstrap.ApplicationContext, f ClientFactory, p ConnectionProperties) Client {
+	c, e := f.New(ctx, func(opt *ClientOption) {
 		opt.DbIndex = p.DB
 	})
 

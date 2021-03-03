@@ -69,7 +69,7 @@ func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context
 	//If done other way around, concurrent logins may be doing the check before the other request added to the index
 	//thus making it possible to exceed the limit
 	//By doing the check at the end, we can end up with the right number of sessions when all requests finishes.
-	err = h.sessionStore.AddToPrincipalIndex(p, s)
+	err = h.sessionStore.WithContext(c).AddToPrincipalIndex(p, s)
 	if err != nil {
 		panic(security.NewInternalError(err.Error()))
 	}
@@ -77,7 +77,7 @@ func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context
 	sessionName := s.Name()
 
 	//This will also clean the expired sessions from the index, so we do it regardless if max sessions is set or not
-	existing, err := h.sessionStore.FindByPrincipalName(p, sessionName)
+	existing, err := h.sessionStore.WithContext(c).FindByPrincipalName(p, sessionName)
 
 	if err != nil {
 		panic(security.NewInternalError(err.Error()))
@@ -94,13 +94,13 @@ func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context
 	})
 
 	for i := 0; i < len(existing) - max; i++ {
-		err = h.sessionStore.Delete(existing[i])
+		err = h.sessionStore.WithContext(c).Delete(existing[i])
 
 		if err != nil {
 			panic(security.NewInternalError("Cannot delete session that exceeded max concurrent session limit"))
 		}
 
-		err = h.sessionStore.RemoveFromPrincipalIndex(p, existing[i])
+		err = h.sessionStore.WithContext(c).RemoveFromPrincipalIndex(p, existing[i])
 	}
 }
 
@@ -129,7 +129,7 @@ func (h *DeleteSessionOnLogoutHandler) HandleAuthenticationSuccess(c context.Con
 		return
 	}
 	s := Get(c)
-	err := h.sessionStore.Delete(s)
+	err := h.sessionStore.WithContext(c).Delete(s)
 	if err != nil {
 		panic(security.NewInternalAuthenticationError(err.Error()))
 	}
@@ -138,6 +138,6 @@ func (h *DeleteSessionOnLogoutHandler) HandleAuthenticationSuccess(c context.Con
 	if err == nil {
 		//ignore error here since even if it can't be deleted from this index, it'll be cleaned up
 		// on read since the session itself is already deleted successfully
-		_ = h.sessionStore.RemoveFromPrincipalIndex(p , s)
+		_ = h.sessionStore.WithContext(c).RemoveFromPrincipalIndex(p , s)
 	}
 }

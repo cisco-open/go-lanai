@@ -1,6 +1,7 @@
 package resserver
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
@@ -14,6 +15,7 @@ type ResourceServerConfigurer func(*Configuration)
 
 type dependencies struct {
 	fx.In
+	AppContext         *bootstrap.ApplicationContext
 	Configurer         ResourceServerConfigurer
 	SecurityRegistrar  security.Registrar
 	RedisClientFactory redis.ClientFactory
@@ -23,8 +25,9 @@ type dependencies struct {
 // Configuration entry point
 func ConfigureResourceServer(deps dependencies) {
 	config := &Configuration{
+		appContext:         deps.AppContext,
+		cryptoProperties:   deps.CryptoProperties,
 		redisClientFactory: deps.RedisClientFactory,
-		cryptoProperties: deps.CryptoProperties,
 	}
 	deps.Configurer(config)
 
@@ -52,6 +55,7 @@ type Configuration struct {
 	JwkStore         jwt.JwkStore
 
 	// not directly configurable items
+	appContext                *bootstrap.ApplicationContext
 	redisClientFactory        redis.ClientFactory
 	cryptoProperties          jwt.CryptoProperties
 	sharedErrorHandler        *tokenauth.OAuth2ErrorHandler
@@ -69,7 +73,7 @@ func (c *Configuration) errorHandler() *tokenauth.OAuth2ErrorHandler {
 
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
-		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.redisClientFactory)
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
 	}
 	return c.sharedContextDetailsStore
 }

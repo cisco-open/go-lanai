@@ -5,6 +5,7 @@
 package mock_session
 
 import (
+	"context"
 	session "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
@@ -31,6 +32,11 @@ func NewMockStore(ctrl *gomock.Controller) *MockStore {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
+}
+
+// WithContext returns self
+func (s *MockStore) WithContext(ctx context.Context) session.Store {
+	return s
 }
 
 // Get mocks base method

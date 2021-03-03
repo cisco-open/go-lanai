@@ -5,6 +5,18 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+func SpanTag(key string, v interface{}) SpanOption {
+	return func(span opentracing.Span) {
+		span.SetTag(key, v)
+	}
+}
+
+func SpanBaggageItem(restrictedKey string, s string) SpanOption {
+	return func(span opentracing.Span) {
+		span.SetBaggageItem(restrictedKey, s)
+	}
+}
+
 func SpanKind(v ext.SpanKindEnum) SpanOption {
 	return func(span opentracing.Span) {
 		ext.SpanKind.Set(span, v)
