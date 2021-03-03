@@ -31,9 +31,8 @@ func init() {
 		fx.Provide(NewInMemSpManager),
 		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(newResServerConfigurer),
-		fx.Invoke(configureSecurity),
+		fx.Invoke(configureSecurity, configureConsulRegistration),
 	)
-	sdcustomizer.Customizers = append(sdcustomizer.Customizers, &RegistrationCusomizer{})
 }
 
 // Maker func, does nothing. Allow service to include this module in main()
@@ -97,4 +96,8 @@ func newResServerConfigurer(deps dependencies) resserver.ResourceServerConfigure
 			JwkSet: "http://localhost:8080/europa/v2/jwks",
 		}
 	}
+}
+
+func configureConsulRegistration(r *sdcustomizer.Registrar) {
+	r.Add(&RegistrationCusomizer{})
 }

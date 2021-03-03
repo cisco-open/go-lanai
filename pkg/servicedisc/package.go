@@ -23,7 +23,7 @@ var Module = &bootstrap.Module {
 	Name: "service discovery",
 	Precedence: bootstrap.ServiceDiscoveryPrecedence,
 	Options: []fx.Option{
-		fx.Provide(newApplicationProperties, newDiscoveryProperties, newRegistration),
+		fx.Provide(newApplicationProperties, newDiscoveryProperties, newRegistration, sdcustomizer.NewRegistrar),
 		fx.Invoke(setupServiceRegistration),
 	},
 }
@@ -37,6 +37,7 @@ func Use() {
 
 }
 
+//TODO: move to app config or bootstrap
 func newApplicationProperties(appConfig *appconfig.ApplicationConfig) *ApplicationProperties {
 	p := &ApplicationProperties{}
 	appConfig.Bind(p, applicationPropertiesPrefix)
@@ -56,6 +57,7 @@ func newDiscoveryProperties(appConfig *appconfig.ApplicationConfig, serverProps 
 	return p
 }
 
+//TODO: compare tags
 func newRegistration(appProps *ApplicationProperties, discoveryProperties *DiscoveryProperties) *api.AgentServiceRegistration {
 	registration := &api.AgentServiceRegistration{
 		Kind: api.ServiceKindTypical,
@@ -72,19 +74,24 @@ func newRegistration(appProps *ApplicationProperties, discoveryProperties *Disco
 	return registration
 }
 
-func setupServiceRegistration(lc fx.Lifecycle, connection *consul.Connection, registration *api.AgentServiceRegistration) {
-	for _, c := range sdcustomizer.Customizers {
+func setupServiceRegistration(lc fx.Lifecycle,
+	connection *consul.Connection, registration *api.AgentServiceRegistration, customizers *sdcustomizer.Registrar) {
+	for _, c := range customizers.Customizers {
 		c.Customize(registration)
 	}
 
-	registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration ,kitlog.NewNopLogger())
+	//TODO: provide our own logger
 	//because we are the lowest precendence, we execute when every thing is ready
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+			//TODO: logger with context
+			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration ,kitlog.NewNopLogger())
 			registrar.Register()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
+			//TODO: logger with context
+			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration ,kitlog.NewNopLogger())
 			registrar.Deregister()
 			return nil
 		},
