@@ -32,7 +32,7 @@ func (c *ApplicationContext) Config() ApplicationConfig {
 }
 
 func (c *ApplicationContext) Name() string {
-	name := c.Value("application.name")
+	name := c.Value(propertyKeyApplicationName)
 	if name == nil {
 		return "lanai"
 	}

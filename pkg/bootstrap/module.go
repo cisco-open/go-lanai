@@ -24,6 +24,7 @@ const (
 	RedisPrecedence
 	WebPrecedence
 	SecurityPrecedence
+	ServiceDiscoveryPrecedence
 )
 
 var anonymousOnce sync.Once
