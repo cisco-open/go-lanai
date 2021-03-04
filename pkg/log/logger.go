@@ -36,6 +36,26 @@ func (l *logger) WithKV(keyvals...interface{}) Logger {
 	return l.withKV(keyvals)
 }
 
+func (l *logger) WithLevel(lvl LoggingLevel) Logger {
+	var leveled log.Logger
+	switch lvl {
+	case LevelDebug:
+		leveled = level.Debug(l.Logger)
+	case LevelInfo:
+		leveled = level.Info(l.Logger)
+	case LevelWarn:
+		leveled = level.Warn(l.Logger)
+	case LevelError:
+		leveled = level.Error(l.Logger)
+	default:
+		return l
+	}
+
+	return &logger{
+		Logger: leveled,
+	}
+}
+
 func (l *logger) Debugf(msg string, args ...interface{}) {
 
 	l.debugLogger([]interface{}{
