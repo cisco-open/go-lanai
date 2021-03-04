@@ -23,6 +23,7 @@ type Logger interface {
 	FmtLogger
 	KVLogger
 	KeyValuer
+	Leveler
 }
 
 type ContextualLogger interface {
@@ -50,6 +51,10 @@ type FmtLogger interface {
 	Infof(msg string, args... interface{})
 	Warnf(msg string, args... interface{})
 	Errorf(msg string, args... interface{})
+}
+
+type Leveler interface {
+	WithLevel(lvl LoggingLevel) Logger
 }
 
 type loggerFactory interface {

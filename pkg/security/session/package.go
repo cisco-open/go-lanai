@@ -37,14 +37,15 @@ func GobRegister() {
 
 type registerParams struct {
 	fx.In
-	Init security.Registrar
-	SessionProps security.SessionProperties
-	ServerProps web.ServerProperties
-	ClientFactory redis.ClientFactory
+	Init            security.Registrar
+	AppContext      *bootstrap.ApplicationContext
+	SessionProps    security.SessionProperties
+	ServerProps     web.ServerProperties
+	ClientFactory   redis.ClientFactory
 	MaxSessionsFunc GetMaximumSessions `optional:"true"`
 }
 
 func register(di registerParams) {
-	configurer := newSessionConfigurer(di.SessionProps, di.ServerProps, di.ClientFactory, di.MaxSessionsFunc)
+	configurer := newSessionConfigurer(di.AppContext, di.SessionProps, di.ServerProps, di.ClientFactory, di.MaxSessionsFunc)
 	di.Init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 }

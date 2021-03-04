@@ -14,7 +14,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var logger = log.New("service discovery")
+var logger = log.New("Discovery")
 
 var Module = &bootstrap.Module {
 	Name: "service discovery",
@@ -60,12 +60,16 @@ func setupServiceRegistration(lc fx.Lifecycle,
 	//because we are the lowest precendence, we execute when every thing is ready
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration , logger.WithContext(ctx))
+			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()),
+				registration,
+				logger.WithContext(ctx).WithLevel(log.LevelInfo).WithKV(log.LogKeyMessage, "Register"))
 			registrar.Register()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()), registration , logger.WithContext(ctx))
+			registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()),
+				registration,
+				logger.WithContext(ctx).WithLevel(log.LevelInfo).WithKV(log.LogKeyMessage, "Deregister"))
 			registrar.Deregister()
 			return nil
 		},

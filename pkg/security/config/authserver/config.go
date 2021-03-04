@@ -2,6 +2,7 @@ package authserver
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
@@ -12,14 +13,15 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"net/url"
 	"go.uber.org/fx"
+	"net/url"
 )
 
 type AuthorizationServerConfigurer func(*Configuration)
 
 type dependencies struct {
 	fx.In
+	AppContext         *bootstrap.ApplicationContext
 	WebRegistrar       *web.Registrar
 	SecurityRegistrar  security.Registrar
 	Configurer         AuthorizationServerConfigurer
@@ -31,6 +33,7 @@ type dependencies struct {
 // Configuration entry point
 func ConfigureAuthorizationServer(deps dependencies) {
 	config := Configuration{
+		appContext:         deps.AppContext,
 		redisClientFactory: deps.RedisClientFactory,
 		sessionProperties:  deps.SessionProperties,
 		cryptoProperties:   deps.CryptoProperties,
@@ -79,6 +82,7 @@ type Configuration struct {
 	JwkStore            jwt.JwkStore
 
 	// not directly configurable items
+	appContext                *bootstrap.ApplicationContext
 	redisClientFactory        redis.ClientFactory
 	sessionProperties         security.SessionProperties
 	cryptoProperties          jwt.CryptoProperties
@@ -161,7 +165,7 @@ func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
-		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.redisClientFactory)
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
 	}
 	return c.sharedContextDetailsStore
 }
@@ -255,7 +259,7 @@ func (c *Configuration) authorizeHanlder() auth.AuthorizeHandler {
 
 func (c *Configuration) authorizeCodeStore() auth.AuthorizationCodeStore {
 	if c.sharedAuthCodeStore == nil {
-		c.sharedAuthCodeStore = auth.NewRedisAuthorizationCodeStore(c.redisClientFactory, c.sessionProperties.DbIndex)
+		c.sharedAuthCodeStore = auth.NewRedisAuthorizationCodeStore(c.appContext, c.redisClientFactory, c.sessionProperties.DbIndex)
 	}
 	return c.sharedAuthCodeStore
 }

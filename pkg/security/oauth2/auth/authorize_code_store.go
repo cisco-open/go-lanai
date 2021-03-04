@@ -37,8 +37,8 @@ type RedisAuthorizationCodeStore struct {
 	redisClient redis.Client
 }
 
-func NewRedisAuthorizationCodeStore(cf redis.ClientFactory, dbIndex int) *RedisAuthorizationCodeStore {
-	client, e := cf.New(func(opt *redis.ClientOption) {
+func NewRedisAuthorizationCodeStore(ctx context.Context, cf redis.ClientFactory, dbIndex int) *RedisAuthorizationCodeStore {
+	client, e := cf.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = dbIndex
 	})
 	if e != nil {

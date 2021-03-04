@@ -38,8 +38,13 @@ type Store interface {
 	ChangeId(s *Session) error
 
 	AddToPrincipalIndex(principal string, session *Session) error
+
 	RemoveFromPrincipalIndex(principal string, sessions *Session) error
+
 	FindByPrincipalName(principal string, sessionName string) ([]*Session, error)
+
+	// WithContext make a shallow copy of the store with given ctx
+	WithContext(ctx context.Context) Store
 }
 
 /**
@@ -81,9 +86,11 @@ type Store interface {
 	The application can use redis SCAN family of commands to make sure that redis is not blocked by a single user's request.
 */
 type RedisStore struct {
+	ctx        context.Context
 	options    *Options
 	connection redis.Client
 }
+
 
 func NewRedisStore(connection redis.Client, options ...func(*Options)) *RedisStore {
 	gob.Register(time.Time{})
@@ -100,12 +107,20 @@ func NewRedisStore(connection redis.Client, options ...func(*Options)) *RedisSto
 	for _, opt := range options {
 		opt(o)
 	}
+	return newRedisStore(context.TODO(), connection, o)
+}
 
+func newRedisStore(ctx context.Context, connection redis.Client, opt *Options) *RedisStore {
 	s := &RedisStore{
-		options: o,
+		ctx:        ctx,
+		options:    opt,
 		connection: connection,
 	}
 	return s
+}
+
+func (s *RedisStore) WithContext(ctx context.Context) Store {
+	return newRedisStore(ctx, s.connection, s.options)
 }
 
 func (s *RedisStore) Options() *Options {
@@ -153,7 +168,7 @@ func (s *RedisStore) Save(session *Session) error {
 }
 
 func (s *RedisStore) Delete(session *Session) error {
-	cmd := s.connection.Del(context.Background(), getRedisSessionKey(session.Name(), session.GetID()))
+	cmd := s.connection.Del(s.ctx, getRedisSessionKey(session.Name(), session.GetID()))
 	return cmd.Err()
 }
 
@@ -162,7 +177,7 @@ func (s *RedisStore) FindByPrincipalName(principal string, sessionName string) (
 	cursor:= uint64(0)
 	var ids []string
 	for ok := true; ok ; ok = cursor!= 0 {
-		cmd := s.connection.SScan(context.Background(), getRedisPrincipalIndexKey(principal, sessionName), cursor, "", 0)
+		cmd := s.connection.SScan(s.ctx, getRedisPrincipalIndexKey(principal, sessionName), cursor, "", 0)
 		keys, next, err := cmd.Result()
 		cursor = next
 		if err != nil {
@@ -189,26 +204,26 @@ func (s *RedisStore) FindByPrincipalName(principal string, sessionName string) (
 
 	//clean up the expired entries from the index
 	if len(expired) > 0 {
-		s.connection.SRem(context.Background(), getRedisPrincipalIndexKey(principal, sessionName), expired...)
+		s.connection.SRem(s.ctx, getRedisPrincipalIndexKey(principal, sessionName), expired...)
 	}
 
 	return found, nil
 }
 
 func (s *RedisStore) AddToPrincipalIndex(principal string, session *Session) error {
-	cmd := s.connection.SAdd(context.Background(), getRedisPrincipalIndexKey(principal, session.Name()), session.GetID())
+	cmd := s.connection.SAdd(s.ctx, getRedisPrincipalIndexKey(principal, session.Name()), session.GetID())
 	return cmd.Err()
 }
 
 func (s *RedisStore) RemoveFromPrincipalIndex(principal string, session *Session) error {
-	cmd := s.connection.SRem(context.Background(), getRedisPrincipalIndexKey(principal, session.Name()), session.GetID())
+	cmd := s.connection.SRem(s.ctx, getRedisPrincipalIndexKey(principal, session.Name()), session.GetID())
 	return cmd.Err()
 }
 
 
 func (s *RedisStore) ChangeId(session *Session) error {
 	newId := uuid.New().String()
-	cmd := s.connection.Rename(context.Background(), getRedisSessionKey(session.Name(), session.GetID()), getRedisSessionKey(session.Name(), newId))
+	cmd := s.connection.Rename(s.ctx, getRedisSessionKey(session.Name(), session.GetID()), getRedisSessionKey(session.Name(), newId))
 	err := cmd.Err()
 	if err != nil {
 		return err
@@ -220,7 +235,7 @@ func (s *RedisStore) ChangeId(session *Session) error {
 func (s *RedisStore) load(id string, name string) (*Session, error) {
 	key := getRedisSessionKey(name, id)
 
-	cmd := s.connection.HGetAll(context.Background(), key)
+	cmd := s.connection.HGetAll(s.ctx, key)
 
 	result, err := cmd.Result()
 
@@ -280,13 +295,13 @@ func (s *RedisStore) save(session *Session) error {
 	}
 
 	args = append(args, sessionLastAccessedField, session.lastAccessed.Unix())
-	hsetCmd := s.connection.HSet(context.Background(), key, args...)
+	hsetCmd := s.connection.HSet(s.ctx, key, args...)
 	if hsetCmd.Err() != nil {
 		return hsetCmd.Err()
 	}
 
 	exp := session.expiration()
-	expCmd := s.connection.ExpireAt(context.Background(), key, exp)
+	expCmd := s.connection.ExpireAt(s.ctx, key, exp)
 	return expCmd.Err()
 }
 

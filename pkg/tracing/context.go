@@ -103,13 +103,12 @@ func (op SpanOperator) UpdateCurrentSpan(ctx context.Context)  {
 // Finish finish current span if exist.
 // Note: The finished span is still counted as "current span".
 //		 If caller want to rewind to previous span, use FinishAndRewind instead
-func (op SpanOperator) Finish(ctx context.Context) context.Context {
+func (op SpanOperator) Finish(ctx context.Context) {
 	if span := SpanFromContext(ctx); span != nil {
 		op.applyUpdateOptions(span)
 		op.finishOptions.FinishTime = time.Now().UTC()
 		span.FinishWithOptions(op.finishOptions)
 	}
-	return ctx
 }
 
 // FinishAndRewind finish current span if exist and restore context with parent span if possible (no garantees)
@@ -129,7 +128,7 @@ func (op SpanOperator) FinishAndRewind(ctx context.Context) context.Context {
 func (op SpanOperator) NewSpanOrDescendant(ctx context.Context) context.Context {
 	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {
 		return opentracing.ChildOf(span.Context())
-	})
+	}, true)
 }
 
 // NewSpanOrDescendant create new span if not currently have one,
@@ -137,7 +136,23 @@ func (op SpanOperator) NewSpanOrDescendant(ctx context.Context) context.Context 
 func (op SpanOperator) NewSpanOrFollows(ctx context.Context) context.Context {
 	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {
 		return opentracing.FollowsFrom(span.Context())
-	})
+	}, true)
+}
+
+// DescendantOrNoSpan spawn a child span using opentracing.ChildOf(span.Context()) if there is a span exists
+// otherwise do nothing
+func (op SpanOperator) DescendantOrNoSpan(ctx context.Context) context.Context {
+	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {
+		return opentracing.ChildOf(span.Context())
+	}, false)
+}
+
+// NewSpanOrDescendant spawn a child span using opentracing.FollowsFrom(span.Context()) if there is a span exists
+// otherwise do nothing
+func (op SpanOperator) FollowsOrNoSpan(ctx context.Context) context.Context {
+	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {
+		return opentracing.FollowsFrom(span.Context())
+	}, false)
 }
 
 func (op SpanOperator) createSpanRewinder(ctx context.Context) SpanRewinder {
@@ -148,15 +163,19 @@ func (op SpanOperator) createSpanRewinder(ctx context.Context) SpanRewinder {
 
 type spanReferencer func(opentracing.Span) opentracing.SpanReference
 
-func (op *SpanOperator) newSpan(ctx context.Context, referencer spanReferencer) context.Context {
+func (op *SpanOperator) newSpan(ctx context.Context, referencer spanReferencer, must bool) context.Context {
 	span := SpanFromContext(ctx)
 	rewinder := op.createSpanRewinder(ctx)
-	if span == nil {
-		span = op.tracer.StartSpan(op.name, op.startOptions...)
-	} else {
+	switch {
+	case span != nil:
 		options := append([]opentracing.StartSpanOption{referencer(span)}, op.startOptions...)
 		span = op.tracer.StartSpan(op.name, options...)
+	case must:
+		span = op.tracer.StartSpan(op.name, op.startOptions...)
+	default:
+		return ctx
 	}
+
 	op.applyUpdateOptions(span)
 	return opentracing.ContextWithSpan(ContextWithSpanRewinder(ctx, rewinder), span)
 }

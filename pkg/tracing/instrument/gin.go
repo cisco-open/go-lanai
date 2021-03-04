@@ -8,10 +8,11 @@ import (
 )
 
 func GinTracing(tracer opentracing.Tracer, opName string) gin.HandlerFunc {
-	reqFunc := kitopentracing.HTTPToContext(tracer, opName, logger)
 	return func(gc *gin.Context) {
-		// start or join span
 		orig := gc.Request.Context()
+
+		// start or join span
+		reqFunc := kitopentracing.HTTPToContext(tracer, opNameWithRequest(opName, gc.Request), logger)
 		ctx := reqFunc(orig, gc.Request)
 		gc.Request = gc.Request.WithContext(ctx)
 

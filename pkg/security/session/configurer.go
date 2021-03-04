@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -46,10 +47,10 @@ type Configurer struct {
 	store Store
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, serverProps web.ServerProperties,
+func newSessionConfigurer(ctx context.Context, sessionProps security.SessionProperties, serverProps web.ServerProperties,
 	redisClientFactory redis.ClientFactory, maxSessionsFunc GetMaximumSessions) *Configurer {
 
-	redisClient, e := redisClientFactory.New(func(opt *redis.ClientOption) {
+	redisClient, e := redisClientFactory.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = sessionProps.DbIndex
 	})
 	if e != nil {

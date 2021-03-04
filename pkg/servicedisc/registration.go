@@ -29,7 +29,7 @@ func newRegistration(appContext *bootstrap.ApplicationContext, discoveryProperti
 		Port: discoveryProperties.Port,
 		Address: ipAddress,
 		Check: &api.AgentServiceCheck{
-			HTTP: fmt.Sprintf("%s://%s:%d%s", discoveryProperties.Scheme, discoveryProperties.IpAddress, discoveryProperties.Port, discoveryProperties.HealthCheckPath),
+			HTTP: fmt.Sprintf("%s://%s:%d%s", discoveryProperties.Scheme, ipAddress, discoveryProperties.Port, discoveryProperties.HealthCheckPath),
 			Interval: discoveryProperties.HealthCheckInterval,
 			DeregisterCriticalServiceAfter: discoveryProperties.HealthCheckCriticalTimeout},
 	}
