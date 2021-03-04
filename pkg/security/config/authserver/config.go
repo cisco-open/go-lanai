@@ -3,6 +3,7 @@ package authserver
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
@@ -19,33 +20,39 @@ import (
 
 type AuthorizationServerConfigurer func(*Configuration)
 
-type dependencies struct {
+type authServerDI struct {
 	fx.In
-	AppContext         *bootstrap.ApplicationContext
-	WebRegistrar       *web.Registrar
-	SecurityRegistrar  security.Registrar
-	Configurer         AuthorizationServerConfigurer
-	RedisClientFactory redis.ClientFactory
-	SessionProperties  security.SessionProperties
-	CryptoProperties   jwt.CryptoProperties
+	AppContext           *bootstrap.ApplicationContext
+	WebRegistrar         *web.Registrar
+	SecurityRegistrar    security.Registrar
+	Configurer           AuthorizationServerConfigurer
+	RedisClientFactory   redis.ClientFactory
+	SessionProperties    security.SessionProperties
+	CryptoProperties     jwt.CryptoProperties
+	DiscoveryCustomizers *discovery.Customizers
 }
 
 // Configuration entry point
-func ConfigureAuthorizationServer(deps dependencies) {
+func ConfigureAuthorizationServer(di authServerDI) {
 	config := Configuration{
-		appContext:         deps.AppContext,
-		redisClientFactory: deps.RedisClientFactory,
-		sessionProperties:  deps.SessionProperties,
-		cryptoProperties:   deps.CryptoProperties,
+		appContext:         di.AppContext,
+		redisClientFactory: di.RedisClientFactory,
+		sessionProperties:  di.SessionProperties,
+		cryptoProperties:   di.CryptoProperties,
 	}
-	deps.Configurer(&config)
+	di.Configurer(&config)
 
-	deps.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: &config})
+	// SMCR
+	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
+
+	// Securities
+	di.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: &config})
 	for _, configuer := range config.idpConfigurers {
-		deps.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: &config, delegate: configuer})
+		di.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: &config, delegate: configuer})
 	}
 
-	registerEndpoints(deps.WebRegistrar, &config)
+	// Additional endpoints
+	registerEndpoints(di.WebRegistrar, &config)
 }
 
 /****************************

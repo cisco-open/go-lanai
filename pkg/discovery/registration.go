@@ -1,17 +1,37 @@
-package servicedisc
+package discovery
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
+	kitconsul "github.com/go-kit/kit/sd/consul"
 	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 	"strings"
 )
 
-func newRegistration(appContext *bootstrap.ApplicationContext, discoveryProperties DiscoveryProperties, serverProperties web.ServerProperties) *api.AgentServiceRegistration {
+var logger = log.New("Discovery")
+
+func Register(ctx context.Context, connection *consul.Connection, registration *api.AgentServiceRegistration) {
+	registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()),
+		registration,
+		logger.WithContext(ctx).WithLevel(log.LevelInfo).WithKV(log.LogKeyMessage, "Register"))
+	registrar.Register()
+}
+
+func Deregister(ctx context.Context, connection *consul.Connection, registration *api.AgentServiceRegistration) {
+	registrar := kitconsul.NewRegistrar(kitconsul.NewClient(connection.Client()),
+		registration,
+		logger.WithContext(ctx).WithLevel(log.LevelInfo).WithKV(log.LogKeyMessage, "Deregister"))
+	registrar.Deregister()
+}
+
+func NewRegistration(appContext *bootstrap.ApplicationContext, discoveryProperties DiscoveryProperties, serverProperties web.ServerProperties) *api.AgentServiceRegistration {
 	var ipAddress string
 
 	if discoveryProperties.IpAddress != "" {
@@ -65,7 +85,7 @@ func NewDefaultCustomizer(appContext *bootstrap.ApplicationContext) *DefaultCust
 	}
 }
 
-func (d *DefaultCustomizer) Customize(registration *api.AgentServiceRegistration) {
+func (d *DefaultCustomizer) Customize(ctx context.Context, registration *api.AgentServiceRegistration) {
 	//The tag was extracted by admin services and injected into DB for UI to list all components
 	registration.Tags = append(registration.Tags, kvTag(TAG_INSTANCE_ID, d.instanceUuid.String()), TAG_MANAGED_SERVICE)
 
