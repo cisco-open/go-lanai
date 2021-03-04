@@ -2,6 +2,7 @@ package example
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
@@ -11,7 +12,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	sdcustomizer "cto-github.cisco.com/NFV-BU/go-lanai/pkg/servicedisc/customizer"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"go.uber.org/fx"
 	"net/url"
@@ -20,6 +20,12 @@ import (
 var logger = log.New("SEC.Example")
 
 func init() {
+	authserver.Use()
+	resserver.Use()
+}
+
+// Maker func, does nothing. Allow service to include this module in main()
+func Use() {
 	bootstrap.AddOptions(
 		fx.Provide(BindAccountsProperties),
 		fx.Provide(BindAccountPoliciesProperties),
@@ -36,11 +42,6 @@ func init() {
 		fx.Provide(newResServerConfigurer),
 		fx.Invoke(configureSecurity, configureConsulRegistration),
 	)
-}
-
-// Maker func, does nothing. Allow service to include this module in main()
-func Use() {
-
 }
 
 func configureSecurity(init security.Registrar, store security.AccountStore) {
@@ -101,6 +102,6 @@ func newResServerConfigurer(deps dependencies) resserver.ResourceServerConfigure
 	}
 }
 
-func configureConsulRegistration(r *sdcustomizer.Registrar) {
-	r.Add(&RegistrationCusomizer{})
+func configureConsulRegistration(r *discovery.Customizers) {
+	r.Add(&RegistrationCustomizer{})
 }

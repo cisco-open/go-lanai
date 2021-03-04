@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -18,7 +19,7 @@ var (
 )
 
 type SamlAuthorizeEndpointConfigurer struct {
-	properties         security.SamlProperties
+	properties         samlctx.SamlProperties
 	serverProperties   web.ServerProperties
 	samlClientStore    SamlClientStore
 	accountStore       security.AccountStore
@@ -26,7 +27,7 @@ type SamlAuthorizeEndpointConfigurer struct {
 
 }
 
-func newSamlAuthorizeEndpointConfigurer(properties security.SamlProperties, serverProperties web.ServerProperties,
+func newSamlAuthorizeEndpointConfigurer(properties samlctx.SamlProperties, serverProperties web.ServerProperties,
 	samlClientStore SamlClientStore,
 	accountStore security.AccountStore,
 	attributeGenerator AttributeGenerator) *SamlAuthorizeEndpointConfigurer {

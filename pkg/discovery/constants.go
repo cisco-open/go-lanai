@@ -1,4 +1,4 @@
-package servicedisc
+package discovery
 
 const (
 	TAG_INSTANCE_ID = "instanceUuid"

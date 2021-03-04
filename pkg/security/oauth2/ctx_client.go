@@ -21,9 +21,8 @@ type OAuth2Client interface {
 	RereshTokenValidity() time.Duration
 	UseSessionTimeout() bool
 	TenantRestrictions() utils.StringSet
+	ResourceIDs() utils.StringSet
 	//MaxTokensPerUser() int // TODO if this still needed?
-
-	// TODO if resource id still needed?
 }
 
 /***********************************

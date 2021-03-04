@@ -13,7 +13,7 @@ var (
 		oauth2.GrantTypeAuthCode,
 		oauth2.GrantTypeImplicit,
 		oauth2.GrantTypeRefresh,
-		//oauth2.GrantTypePassword, // this is for dev purpose, shouldn't be allowed
+		oauth2.GrantTypePassword, // this is for dev purpose, shouldn't be allowed
 	)
 )
 
@@ -58,8 +58,8 @@ func (te *RefreshTokenEnhancer) Enhance(ctx context.Context, token oauth2.Access
 	// step 4 create claims,
 	request := oauth.OAuth2Request()
 	claims := oauth2.BasicClaims{
-		Id: id,
-		Audience: client.ClientId(),
+		Id:       id,
+		Audience: utils.NewStringSet(client.ClientId()),
 		//Issuer: ..., // TODO If we want to include this claim, the value need to be get from configuration
 		Scopes: request.Scopes(),
 	}

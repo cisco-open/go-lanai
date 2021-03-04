@@ -18,13 +18,9 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func init() {
-	bootstrap.Register(Module)
-}
-
 // Maker func, does nothing. Allow service to include this module in main()
 func Use() {
-
+	bootstrap.Register(Module)
 }
 
 /**************************
@@ -56,9 +52,9 @@ func provideSecurityInitialization(di dependencies) global {
 ***************************/
 type initDI struct {
 	fx.In
-	AppContext  *bootstrap.ApplicationContext
-	Registerer  *web.Registrar
-	Initializer Initializer
+	AppContext           *bootstrap.ApplicationContext
+	Registerer           *web.Registrar
+	Initializer          Initializer
 }
 
 func initialize(lc fx.Lifecycle, di initDI) {

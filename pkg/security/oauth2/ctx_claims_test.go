@@ -20,7 +20,7 @@ var valueStruct = ValueStruct{
 }
 
 var refBasic = map[string]interface{}{
-	ClaimAudience:  "test-audience",
+	ClaimAudience:  utils.NewStringSet("res-id"),
 	ClaimExpire:    now,
 	ClaimJwtId:     "test-id",
 	ClaimIssueAt:   now,
@@ -32,7 +32,7 @@ var refBasic = map[string]interface{}{
 }
 
 var refMore = map[string]interface{}{
-	ClaimAudience:  "test-audience",
+	ClaimAudience:  utils.NewStringSet("res-id"),
 	ClaimExpire:    now,
 	ClaimJwtId:     "test-id",
 	ClaimIssueAt:   now,
@@ -50,7 +50,7 @@ var refMore = map[string]interface{}{
 }
 
 var refExtra = map[string]interface{}{
-	ClaimAudience:  "test-audience",
+	ClaimAudience:  utils.NewStringSet("res-id"),
 	ClaimExpire:    now,
 	ClaimJwtId:     "test-id",
 	ClaimIssueAt:   now,
@@ -219,7 +219,7 @@ func assertAlternativeInterfaceEmbeddingClaims(t *testing.T, ref map[string]inte
 
 func newRefBasicClaims() *BasicClaims {
 	return &BasicClaims{
-		Audience:  refBasic[ClaimAudience].(string),
+		Audience:  refBasic[ClaimAudience].(utils.StringSet),
 		ExpiresAt: refBasic[ClaimExpire].(time.Time),
 		Id:        refBasic[ClaimJwtId].(string),
 		IssuedAt:  refBasic[ClaimIssueAt].(time.Time),

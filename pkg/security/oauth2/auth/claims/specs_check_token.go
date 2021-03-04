@@ -7,7 +7,7 @@ import (
 var (
 	CheckTokenClaimSpecs = map[string]ClaimSpec {
 		// Basic
-		oauth2.ClaimAudience:  {Func: ClientId, Req: true},
+		oauth2.ClaimAudience:  {Func: Audience, Req: true},
 		oauth2.ClaimExpire:    {Func: ExpiresAt, Req: false},
 		oauth2.ClaimJwtId:     {Func: JwtId, Req: false},
 		oauth2.ClaimIssueAt:   {Func: IssuedAt, Req: false},
