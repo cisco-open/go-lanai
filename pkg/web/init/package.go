@@ -39,11 +39,12 @@ type setupComponents struct {
 	fx.In
 	Registrar      *web.Registrar
 	CorsCustomizer *cors.Customizer
+	Properties     web.ServerProperties
 	// we could include security configurations, customizations here
 }
 
 func setup(lc fx.Lifecycle, dep setupComponents) {
-	dep.Registrar.Register(web.NewLoggingCustomizer())
+	dep.Registrar.Register(web.NewLoggingCustomizer(dep.Properties))
 	dep.Registrar.Register(web.NewRecoveryCustomizer())
 	dep.Registrar.Register(dep.CorsCustomizer)
 	lc.Append(fx.Hook{

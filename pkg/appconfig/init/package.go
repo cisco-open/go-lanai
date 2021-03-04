@@ -1,4 +1,4 @@
-package init
+package appconfig
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
