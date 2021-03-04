@@ -161,8 +161,12 @@ const (
 	/**
 	 * NFV Additions - Legacy
 	 */
-	ClaimLegacyTenantId  = "tenantId"
-	ClaimLegacyFirstName = "firstName"
-	ClaimLegacyLastName  = "lastName"
-	ClaimLegacyUsername  = "user_name"
+	ClaimLegacyTenantId   = "tenantId"
+	ClaimLegacyFirstName  = "firstName"
+	ClaimLegacyLastName   = "lastName"
+	ClaimLegacyUsername   = "user_name"
+)
+
+const (
+	LegacyResourceId = "nfv-api"
 )

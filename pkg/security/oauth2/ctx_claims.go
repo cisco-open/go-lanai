@@ -93,7 +93,7 @@ func (c MapClaims) fromMap(src map[string]interface{}) error {
 // BasicClaims imlements Claims
 type BasicClaims struct {
 	FieldClaimsMapper
-	Audience  string          `claim:"aud"`
+	Audience  utils.StringSet `claim:"aud"`
 	ExpiresAt time.Time       `claim:"exp"`
 	Id        string          `claim:"jti"`
 	IssuedAt  time.Time       `claim:"iat"`
