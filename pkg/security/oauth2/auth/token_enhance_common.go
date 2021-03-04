@@ -4,7 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/claims"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/google/uuid"
 	"time"
@@ -59,7 +59,7 @@ func (te *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.Acce
 	request := oauth.OAuth2Request()
 	basic := &oauth2.BasicClaims {
 		Id:       uuid.New().String(),
-		Audience: claims.LegacyAudiance(c, oauth),
+		Audience: utils.NewStringSet(request.ClientId()),
 		Issuer:   "localhost:8080", // TODO Issuer should be extracted for configuration
 		ClientId: request.ClientId(),
 		Scopes:   request.Scopes().Copy(),
