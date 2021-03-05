@@ -12,7 +12,7 @@ import (
 var logger = log.New("Consul")
 
 const (
-	ConfigRootConsulConnection = "cloud.consul"
+	PropertyPrefix = "cloud.consul"
 )
 
 var (

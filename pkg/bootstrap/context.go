@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	propertyKeyApplicationName = "application.name"
+	PropertyKeyApplicationName = "application.name"
 )
 type LifecycleHandler func(context.Context) error
 
@@ -32,7 +32,7 @@ func (c *ApplicationContext) Config() ApplicationConfig {
 }
 
 func (c *ApplicationContext) Name() string {
-	name := c.Value(propertyKeyApplicationName)
+	name := c.Value(PropertyKeyApplicationName)
 	if name == nil {
 		return "lanai"
 	}

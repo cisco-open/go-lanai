@@ -1,32 +1,32 @@
-package consulprovider
+package vaultprovider
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"fmt"
 )
 
 const (
-	ConfigKeyConsulEndpoint = "cloud.consul.endpoint"
-	ConfigKeyAppName        = "application.name"
+	KvConfigPrefix = "cloud.vault.kv"
 )
 
-type ConsulConfigProperties struct {
-	Enabled        bool   `json:"enabled"`
-	Prefix         string `json:"prefix"`
-	DefaultContext string `json:"default-context"`
+type KvConfigProperties struct {
+	Enabled     string `json:"enabled"`
+	Backend          string `json:"backend"`
+	DefaultContext   string `json:"default-context"`
 	ProfileSeparator string `json:"profile-separator"`
+	ApplicationName  string `json:"application-name"`
 }
 
 type ConfigProvider struct {
 	appconfig.ProviderMeta
-	contextPath  string
-	connection   *consul.Connection
+	connection *vault.Connection
+	contextPath string
 }
 
 func (configProvider *ConfigProvider) Name() string {
-	return fmt.Sprintf("consul:%s", configProvider.contextPath)
+	return fmt.Sprintf("vault:%s", configProvider.contextPath)
 }
 
 func (configProvider *ConfigProvider) Load() (loadError error) {
@@ -43,9 +43,7 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	// load keys from default context
 	var defaultSettings map[string]interface{}
 
-	defaultSettings, loadError = configProvider.connection.ListKeyValuePairs(
-		bootstrap.EagerGetApplicationContext(),
-		configProvider.contextPath)
+	defaultSettings, loadError = configProvider.connection.ListSecrets(bootstrap.EagerGetApplicationContext(), configProvider.contextPath)
 	if loadError != nil {
 		return loadError
 	}
@@ -60,10 +58,10 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	return nil
 }
 
-func NewConsulProvider(precedence int, contextPath string, conn *consul.Connection) *ConfigProvider {
+func NewVaultProvider(precedence int, contextPath string, conn *vault.Connection) *ConfigProvider {
 	return &ConfigProvider{
-			ProviderMeta: appconfig.ProviderMeta{Precedence: precedence},
-			contextPath:  contextPath, //fmt.Sprintf("%s/%s", f.sourceConfig.Prefix, f.contextPath)
-			connection:   conn,
-		}
+		ProviderMeta: appconfig.ProviderMeta{Precedence: precedence},
+		contextPath:  contextPath,
+		connection:   conn,
+	}
 }
