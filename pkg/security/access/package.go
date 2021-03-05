@@ -22,7 +22,14 @@ func init() {
 	bootstrap.Register(AccessControlModule)
 }
 
-func register(init security.Registrar) {
-	configurer := newAccessControlConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+type initDI struct {
+	fx.In
+	SecRegistrar security.Registrar `optonal:true`
+}
+
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newAccessControlConfigurer()
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

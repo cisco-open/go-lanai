@@ -280,7 +280,7 @@ func (f *DefaultAuthorizationService) loadAccount(ctx context.Context, request o
 		return nil, newUnauthenticatedUserError()
 	}
 
-	username, err := security.GetUserName(userAuth)
+	username, err := security.GetUsername(userAuth)
 	if err != nil {
 		return nil, newInvalidUserError(err)
 	}

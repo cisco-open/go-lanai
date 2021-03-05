@@ -377,9 +377,9 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 		// create hander funcs
 		switch m.(type) {
 		case MvcMapping:
-			handlerFuncs[i] = r.makeHandlerFuncFromMvcMapping(m.(MvcMapping), options)
+			handlerFuncs[i] = makeHandlerFuncFromMvcMapping(m.(MvcMapping), options)
 		case SimpleMapping:
-			handlerFuncs[i] = MakeConditionalHandlerFunc(m.(SimpleMapping).HandlerFunc(), m.Condition())
+			handlerFuncs[i] = makeConditionalHandlerFunc(m.(SimpleMapping).HandlerFunc(), m.Condition())
 		}
 	}
 
@@ -395,21 +395,6 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 	}
 
 	return err
-}
-
-func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, options []httptransport.ServerOption) gin.HandlerFunc {
-	if m.ErrorEncoder() != nil {
-		options = append(options, httptransport.ServerErrorEncoder(m.ErrorEncoder()))
-	}
-
-	s := httptransport.NewServer(
-		m.Endpoint(),
-		m.DecodeRequestFunc(),
-		m.EncodeResponseFunc(),
-		options...,
-	)
-
-	return MakeGinHandlerFunc(s, m.Condition())
 }
 
 func (r *Registrar) findMiddlewares(group, relativePath string, methods...string) (gin.HandlersChain, error) {
@@ -465,3 +450,17 @@ func (r *Registrar) preProcessMiddleware(c *gin.Context) {
 /**************************
 	Helpers
 ***************************/
+func makeHandlerFuncFromMvcMapping(m MvcMapping, options []httptransport.ServerOption) gin.HandlerFunc {
+	if m.ErrorEncoder() != nil {
+		options = append(options, httptransport.ServerErrorEncoder(m.ErrorEncoder()))
+	}
+
+	s := httptransport.NewServer(
+		m.Endpoint(),
+		m.DecodeRequestFunc(),
+		m.EncodeResponseFunc(),
+		options...,
+	)
+
+	return makeGinHandlerFunc(s, m.Condition())
+}

@@ -203,7 +203,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context
 		return nil
 	}
 
-	username, err := security.GetUserName(auth)
+	username, err := security.GetUsername(auth)
 
 	if err != nil {
 		return NewSamlInternalError("cannot validate tenancy restriction due to unknown username", err)

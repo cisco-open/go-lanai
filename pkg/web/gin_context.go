@@ -24,25 +24,28 @@ func GinContext(ctx context.Context) *gin.Context {
 	return nil
 }
 
-// MakeGinHandlerFunc Integrate go-kit Server with GIN handler
-func MakeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerFunc {
+// makeGinHandlerFunc Integrate go-kit Server with GIN handler
+func makeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
 		c.Request = c.Request.WithContext(
 			context.WithValue(c.Request.Context(), kGinContextKey, c),
 		)
 		s.ServeHTTP(c.Writer, c.Request)
 	}
-	return MakeConditionalHandlerFunc(handler, rm)
+	return makeConditionalHandlerFunc(handler, rm)
 }
 
-// MakeConditionalHandlerFunc wraps given handler with a request matcher
-func MakeConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
+// makeConditionalHandlerFunc wraps given handler with a request matcher
+func makeConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
 	if rm == nil {
 		return handler
 	}
 	return func(c *gin.Context) {
 		if matches, e := rm.MatchesWithContext(c, c.Request); e == nil && matches {
 			handler(c)
+		} else if e != nil {
+			c.Error(e)
+			c.Abort()
 		}
 	}
 }

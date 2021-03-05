@@ -19,6 +19,11 @@ func init() {
 	bootstrap.Register(BasicAuthModule)
 }
 
+type initDI struct {
+	fx.In
+	SecRegistrar security.Registrar `optonal:true`
+}
+
 func register(init security.Registrar) {
 	configurer := newBasicAuthConfigurer()
 	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)

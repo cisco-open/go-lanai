@@ -137,7 +137,7 @@ func DetermineAuthenticationTime(ctx context.Context, userAuth Authentication) (
 	return
 }
 
-func GetUserName(userAuth Authentication) (string, error){
+func GetUsername(userAuth Authentication) (string, error){
 	principal := userAuth.Principal()
 	var username string
 	switch principal.(type) {
