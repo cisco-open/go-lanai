@@ -25,7 +25,14 @@ func GobRegister() {
 	gob.Register((*CachedRequest)(nil))
 }
 
-func register(init security.Registrar) {
-	configurer := newConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+type initDI struct {
+	fx.In
+	SecRegistrar security.Registrar `optional:"true"`
+}
+
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newConfigurer()
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

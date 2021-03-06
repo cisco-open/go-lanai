@@ -6,12 +6,5 @@ import (
 
 var logger = log.New("SEC.Passwd")
 
-func init() {
 
-}
-
-// Maker func, does nothing. Allow service to include this module in main()
-//func Use() {
-//
-//}
 

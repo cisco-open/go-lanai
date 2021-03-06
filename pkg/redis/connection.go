@@ -15,7 +15,7 @@ import (
 //    rdb.Set(ctx, key, value, redis.KeepTTL)
 const KeepTTL = redis.KeepTTL
 
-func GetUniversalOptions(p *ConnectionProperties) (*redis.UniversalOptions, error) {
+func GetUniversalOptions(p *RedisProperties) (*redis.UniversalOptions, error) {
 	universal := &redis.UniversalOptions{
 		Addrs:              p.Addrs,
 		DB:                 p.DB,

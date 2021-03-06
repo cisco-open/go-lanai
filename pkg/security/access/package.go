@@ -24,7 +24,7 @@ func init() {
 
 type initDI struct {
 	fx.In
-	SecRegistrar security.Registrar `optonal:true`
+	SecRegistrar security.Registrar `optional:"true"`
 }
 
 func register(di initDI) {

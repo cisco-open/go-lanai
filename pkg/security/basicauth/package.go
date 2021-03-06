@@ -21,10 +21,12 @@ func init() {
 
 type initDI struct {
 	fx.In
-	SecRegistrar security.Registrar `optonal:true`
+	SecRegistrar security.Registrar `optional:"true"`
 }
 
-func register(init security.Registrar) {
-	configurer := newBasicAuthConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newBasicAuthConfigurer()
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

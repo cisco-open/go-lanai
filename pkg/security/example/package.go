@@ -40,7 +40,8 @@ func Use() {
 		fx.Provide(NewInMemSpManager),
 		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(newResServerConfigurer),
-		fx.Invoke(configureSecurity, configureConsulRegistration),
+		fx.Invoke(configureSecurity),
+		fx.Invoke(configureConsulRegistration),
 	)
 }
 
