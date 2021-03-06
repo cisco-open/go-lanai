@@ -23,9 +23,16 @@ const (
 	StateAuthenticated
 )
 
+type Permissions map[string]interface{}
+
+func (p Permissions) Has(permission string) bool {
+	_, ok := p[permission]
+	return ok
+}
+
 type Authentication interface {
 	Principal() interface{}
-	Permissions() map[string]interface{}
+	Permissions() Permissions
 	State() AuthenticationState
 	Details() interface{}
 }
@@ -46,7 +53,7 @@ func (EmptyAuthentication) State() AuthenticationState {
 	return StateAnonymous
 }
 
-func (EmptyAuthentication) Permissions() map[string]interface{} {
+func (EmptyAuthentication) Permissions() Permissions {
 	return map[string]interface{}{}
 }
 
@@ -89,8 +96,7 @@ func TryClear(ctx context.Context) bool {
 
 func HasPermissions(auth Authentication, permissions ...string) bool {
 	for _, p := range permissions {
-		_, ok := auth.Permissions()[p]
-		if !ok {
+		if !auth.Permissions().Has(p) {
 			return false
 		}
 	}

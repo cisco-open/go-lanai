@@ -1,7 +1,6 @@
 package log
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
 	"encoding/json"
 	"github.com/ghodss/yaml"
 	"github.com/imdario/mergo"
@@ -70,5 +69,5 @@ func init() {
 	factory = newKitLoggerFactory(defaultConfig)
 
 	// a test run for dev
-	internal.DebugShowcase()
+	//DebugShowcase()
 }

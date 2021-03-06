@@ -37,7 +37,7 @@ func (sa *samlAssertionAuthentication) Principal() interface{} {
 	return sa.Acct
 }
 
-func (sa *samlAssertionAuthentication)  Permissions() map[string]interface{} {
+func (sa *samlAssertionAuthentication)  Permissions() security.Permissions {
 	return sa.Perms
 }
 

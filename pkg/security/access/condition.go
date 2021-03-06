@@ -55,10 +55,13 @@ func (m controlCondition) String() string {
 /**************************
 	Constructors
 ***************************/
+// RequirePermissions returns ControlCondition using HasPermissionsWithExpr
+// e.g. RequirePermissions("P1 && P2 && !(P3 || P4)"), means security.Permissions contains both P1 and P2 but not contains neither P3 nor P4
+// see HasPermissionsWithExpr for expression syntax
 func RequirePermissions(expr string) ControlCondition {
 	return &controlCondition{
 		description:   fmt.Sprintf("user's permissions match [%s]", expr),
-		controlFunc:   HasPermissions(expr),
+		controlFunc:   HasPermissionsWithExpr(expr),
 	}
 }
 

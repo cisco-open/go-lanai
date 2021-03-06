@@ -71,7 +71,7 @@ func (auth *testAuthentication) Principal() interface{} {
 	return auth.Account
 }
 
-func (auth *testAuthentication) Permissions() map[string]interface{} {
+func (auth *testAuthentication) Permissions() security.Permissions {
 	return auth.PermissionList
 }
 

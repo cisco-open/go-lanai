@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -99,7 +100,7 @@ func makeAuthnRequest(sp saml.ServiceProvider) string {
 }
 
 func setupServerForTest(testClientStore SamlClientStore, testAccountStore security.AccountStore) *gin.Engine {
-	prop := security.NewSamlProperties()
+	prop := samlctx.NewSamlProperties()
 	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
@@ -291,7 +292,7 @@ func (a *userAuthentication) Principal() interface{} {
 	return a.Subject
 }
 
-func (a *userAuthentication) Permissions() map[string]interface{} {
+func (a *userAuthentication) Permissions() security.Permissions {
 	return a.PermissionMap
 }
 

@@ -147,7 +147,7 @@ func (auth *usernamePasswordAuthentication) Principal() interface{} {
 	return auth.Acct
 }
 
-func (auth *usernamePasswordAuthentication) Permissions() map[string]interface{} {
+func (auth *usernamePasswordAuthentication) Permissions() security.Permissions {
 	return auth.Perms
 }
 
