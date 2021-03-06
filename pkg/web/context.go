@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"net/http"
 	"regexp"
 )
 
@@ -30,6 +31,29 @@ type Customizer interface {
 type PostInitCustomizer interface {
 	Customizer
 	PostInit(ctx context.Context, r *Registrar) error
+}
+
+/*********************************
+	Response
+ *********************************/
+// StatusCoder is same interface defined in "github.com/go-kit/kit/transport/http"
+// this interface is majorly used internally with error handling
+type StatusCoder interface {
+	StatusCode() int
+}
+
+// Headerer is same interface defined in "github.com/go-kit/kit/transport/http"
+// this interface is majorly used internally with error handling
+// If an error value implements Headerer, the provided headers will be applied to the response writer, after
+// the Content-Type is set.
+type Headerer interface {
+	Headers() http.Header
+}
+
+// BodyContainer is a reponse body wrapping interface.
+// this interface is majorly used internally for mapping
+type BodyContainer interface {
+	Body() interface{}
 }
 
 /*********************************

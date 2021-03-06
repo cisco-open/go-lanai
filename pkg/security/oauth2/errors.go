@@ -117,8 +117,8 @@ type OAuth2ErrorTranslator interface {
 //	- OAuth2ErrorTranslator
 //  - json.Marshaler
 // 	- json.Unmarshaler
-// 	- http.Headerer
-// 	- http.StatusCoder
+// 	- web.Headerer
+// 	- web.StatusCoder
 type OAuth2Error struct {
 	security.CodedError
 	EC string // oauth error code

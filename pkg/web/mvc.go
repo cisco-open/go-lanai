@@ -90,10 +90,6 @@ func (m *mvcMapping) ErrorEncoder() httptransport.ErrorEncoder {
 /*********************
 	Response
 **********************/
-type BodyContainer interface {
-	Body() interface{}
-}
-
 type Response struct {
 	SC int
 	H  http.Header
