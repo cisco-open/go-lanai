@@ -19,19 +19,19 @@ import (
 
 // PasswordIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
 type PasswordIdpSecurityConfigurer struct {
-	authFlowManager idp.AuthFlowManager
+	idpManager idp.IdentityProviderManager
 }
 
-func NewPasswordIdpSecurityConfigurer(authFlowManager idp.AuthFlowManager) *PasswordIdpSecurityConfigurer {
+func NewPasswordIdpSecurityConfigurer(idpManager idp.IdentityProviderManager) *PasswordIdpSecurityConfigurer {
 	return &PasswordIdpSecurityConfigurer{
-		authFlowManager: authFlowManager,
+		idpManager: idpManager,
 	}
 }
 
 func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
 	// For Authorize endpoint
 	handler := redirect.NewRedirectWithRelativePath("/error")
-	condition := idp.RequestWithAuthenticationMethod(idp.InternalIdpForm, c.authFlowManager)
+	condition := idp.RequestWithAuthenticationFlow(idp.InternalIdpForm, c.idpManager)
 
 	ws.AndCondition(condition).
 		With(session.New()).

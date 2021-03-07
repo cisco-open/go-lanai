@@ -3,10 +3,10 @@ package samllogin
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -23,10 +23,11 @@ import (
 )
 
 type SamlAuthConfigurer struct {
-	properties   samlctx.SamlProperties
-	idpManager   idp.IdentityProviderManager
-	serverProps  web.ServerProperties
-	accountStore security.FederatedAccountStore
+	properties     samlctx.SamlProperties
+	idpManager     idp.IdentityProviderManager
+	samlIdpManager SamlIdentityProviderManager
+	serverProps    web.ServerProperties
+	accountStore   security.FederatedAccountStore
 }
 
 func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
@@ -160,7 +161,7 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 
 	authenticator := &Authenticator{
 		accountStore: s.accountStore,
-		idpManager: s.idpManager,
+		idpManager: s.samlIdpManager,
 	}
 
 	clientManager := NewCacheableIdpClientManager(sp)
@@ -171,9 +172,10 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 func newSamlAuthConfigurer(properties samlctx.SamlProperties, serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
 	accountStore security.FederatedAccountStore) *SamlAuthConfigurer {
 	return &SamlAuthConfigurer{
-		properties: properties,
-		idpManager: idpManager,
-		serverProps: serverProps,
-		accountStore: accountStore,
+		properties:     properties,
+		idpManager:     idpManager,
+		samlIdpManager: idpManager.(SamlIdentityProviderManager),
+		serverProps:    serverProps,
+		accountStore:   accountStore,
 	}
 }

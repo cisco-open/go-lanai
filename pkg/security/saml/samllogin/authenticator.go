@@ -3,7 +3,6 @@ package samllogin
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"github.com/crewjam/saml"
 )
 
@@ -53,7 +52,7 @@ func (sa *samlAssertionAuthentication)  Details() interface{} {
 
 type Authenticator struct {
 	accountStore security.FederatedAccountStore
-	idpManager   idp.IdentityProviderManager
+	idpManager   SamlIdentityProviderManager
 }
 
 func (a *Authenticator) Authenticate(_ context.Context, candidate security.Candidate) (security.Authentication, error) {
@@ -66,12 +65,12 @@ func (a *Authenticator) Authenticate(_ context.Context, candidate security.Candi
 	if err != nil {
 		return nil, security.NewInternalAuthenticationError("Couldn't find idp matching the assertion")
 	}
-	samlIdp, ok := idp.(SamlIdpDetails)
+	samlIdp, ok := idp.(SamlIdentityProvider)
 	if !ok {
 		return nil, security.NewInternalAuthenticationError("Couldn't find idp metadata matching the assertion")
 	}
 
-	user, err := a.accountStore.LoadAccountByExternalId(samlIdp.ExternalIdName, assertionCandidate.Principal().(string), samlIdp.ExternalIdpName)
+	user, err := a.accountStore.LoadAccountByExternalId(samlIdp.ExternalIdName(), assertionCandidate.Principal().(string), samlIdp.ExternalIdpName())
 
 	if err != nil {
 		return nil, security.NewInternalAuthenticationError("Couldn't load federated account", err)
