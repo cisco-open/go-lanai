@@ -57,12 +57,12 @@ func (c *SamlAuthorizeEndpointConfigurer) Apply(feature security.Feature, ws sec
 			Order(security.MWOrderSamlAuthEndpoints).
 			Use(mw.AuthorizeHandlerFunc(f.ssoCondition)))
 
-	ws.Add(mapping.Get(f.ssoLocation.Path).HandlerFunc(security.NoopHandlerFunc))
-	ws.Add(mapping.Post(f.ssoLocation.Path).HandlerFunc(security.NoopHandlerFunc))
+	ws.Add(mapping.Get(f.ssoLocation.Path).HandlerFunc(security.NoopHandlerFunc()))
+	ws.Add(mapping.Post(f.ssoLocation.Path).HandlerFunc(security.NoopHandlerFunc()))
 
 	//metadata is an actual endpoint
 	ws.Add(mapping.Get(f.metadataPath).
-		HandlerFunc(mw.MetadataHandlerFunc).
+		HandlerFunc(mw.MetadataHandlerFunc()).
 		Name("saml metadata"))
 
 	// configure error handling

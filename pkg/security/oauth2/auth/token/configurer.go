@@ -44,7 +44,7 @@ func (c *TokenEndpointConfigurer) Apply(feature security.Feature, ws security.We
 	ws.Add(tokenMapping)
 
 	// add dummy handler
-	ws.Add(mapping.Post(f.path).HandlerFunc(security.NoopHandlerFunc))
+	ws.Add(mapping.Post(f.path).HandlerFunc(security.NoopHandlerFunc()))
 
 	return nil
 }

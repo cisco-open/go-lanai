@@ -12,7 +12,6 @@ import (
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/common/log"
 	"net"
 	"net/http"
 	"net/url"
@@ -76,33 +75,35 @@ func NewMiddleware(sp saml.ServiceProvider, tracker samlsp.RequestTracker,
 	}
 }
 
-func (sp *ServiceProviderMiddleware) MetadataHandlerFunc(c *gin.Context) {
-	index := 0
-	descriptor := sp.internal.Metadata()
-	acs := descriptor.SPSSODescriptors[0].AssertionConsumerServices[0]
-	t := true
-	acs.IsDefault = &t
-	acs.Index = index
-	mergedAcs := []saml.IndexedEndpoint{acs}
+func (sp *ServiceProviderMiddleware) MetadataHandlerFunc() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		index := 0
+		descriptor := sp.internal.Metadata()
+		acs := descriptor.SPSSODescriptors[0].AssertionConsumerServices[0]
+		t := true
+		acs.IsDefault = &t
+		acs.Index = index
+		mergedAcs := []saml.IndexedEndpoint{acs}
 
-	//we don't support single logout yet, so don't include this in metadata
-	descriptor.SPSSODescriptors[0].SingleLogoutServices = nil
+		//we don't support single logout yet, so don't include this in metadata
+		descriptor.SPSSODescriptors[0].SingleLogoutServices = nil
 
-	for _, delegate := range sp.clientManager.GetAllClients() {
-		index++
-		delegateDescriptor := delegate.Metadata().SPSSODescriptors[0]
-		delegateAcs := delegateDescriptor.AssertionConsumerServices[0]
-		delegateAcs.Index = index
-		mergedAcs = append(mergedAcs, delegateAcs)
+		for _, delegate := range sp.clientManager.GetAllClients() {
+			index++
+			delegateDescriptor := delegate.Metadata().SPSSODescriptors[0]
+			delegateAcs := delegateDescriptor.AssertionConsumerServices[0]
+			delegateAcs.Index = index
+			mergedAcs = append(mergedAcs, delegateAcs)
+		}
+
+		descriptor.SPSSODescriptors[0].AssertionConsumerServices = mergedAcs
+
+		w := c.Writer
+		buf, _ := xml.MarshalIndent(descriptor, "", "  ")
+		w.Header().Set("Content-LoggerType", "application/samlmetadata+xml")
+		w.Header().Set("Content-Disposition", "attachment; filename=metadata.xml")
+		_, _ = w.Write(buf)
 	}
-
-	descriptor.SPSSODescriptors[0].AssertionConsumerServices = mergedAcs
-	
-	w := c.Writer
-	buf, _ := xml.MarshalIndent(descriptor, "", "  ")
-	w.Header().Set("Content-LoggerType", "application/samlmetadata+xml")
-	w.Header().Set("Content-Disposition", "attachment; filename=metadata.xml")
-	_, _ = w.Write(buf)
 }
 
 func (sp *ServiceProviderMiddleware) MakeAuthenticationRequest(r *http.Request, w http.ResponseWriter) error {
@@ -165,64 +166,65 @@ func (sp *ServiceProviderMiddleware) MakeAuthenticationRequest(r *http.Request, 
 	return nil
 }
 
-func (sp *ServiceProviderMiddleware) ACSHandlerFunc(c *gin.Context) {
-	r := c.Request
-	err := r.ParseForm()
-	if err != nil {
-		sp.handleError(c, security.NewExternalSamlAuthenticationError("Can't parse request body", err))
-		return
+func (sp *ServiceProviderMiddleware) ACSHandlerFunc() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		r := c.Request
+		err := r.ParseForm()
+		if err != nil {
+			sp.handleError(c, security.NewExternalSamlAuthenticationError("Can't parse request body", err))
+			return
+		}
+
+		//Parse the response and get entityId
+		rawResponseBuf, err := base64.StdEncoding.DecodeString(r.PostForm.Get("SAMLResponse"))
+		if err != nil {
+			sp.handleError(c, security.NewExternalSamlAuthenticationError("Error decoding (base64) SAMLResponse", err))
+			return
+		}
+
+		// do some validation first before we decrypt
+		resp := saml.Response{}
+		if err := xml.Unmarshal(rawResponseBuf, &resp); err != nil {
+			sp.handleError(c, security.NewExternalSamlAuthenticationError("Error unmarshalling SAMLResponse as xml", err))
+			return
+		}
+
+		client, ok := sp.clientManager.GetClientByEntityId(resp.Issuer.Value)
+		if !ok {
+			sp.handleError(c, security.NewExternalSamlAuthenticationError("cannot find idp metadata corresponding for assertion"))
+			return
+		}
+
+		var possibleRequestIDs []string
+		if sp.internal.AllowIDPInitiated {
+			possibleRequestIDs = append(possibleRequestIDs, "")
+		}
+
+		trackedRequests := sp.requestTracker.GetTrackedRequests(r)
+		for _, tr := range trackedRequests {
+			possibleRequestIDs = append(possibleRequestIDs, tr.SAMLRequestID)
+		}
+
+		assertion, err := client.ParseResponse(r, possibleRequestIDs)
+		if err != nil {
+			logger.Error("error processing assertion", "err", err)
+			sp.handleError(c, security.NewExternalSamlAuthenticationError("error processing assertion", err))
+			return
+		}
+
+		candidate := &AssertionCandidate{
+			Assertion: assertion,
+		}
+		auth, err := sp.authenticator.Authenticate(c, candidate)
+
+		if err != nil {
+			sp.handleError(c, security.NewExternalSamlAuthenticationError("error authenticating user associated with the assertion",err))
+			return
+		}
+
+		before := security.Get(c)
+		sp.handleSuccess(c, before, auth)
 	}
-
-	//Parse the response and get entityId
-	rawResponseBuf, err := base64.StdEncoding.DecodeString(r.PostForm.Get("SAMLResponse"))
-	if err != nil {
-		sp.handleError(c, security.NewExternalSamlAuthenticationError("Error decoding (base64) SAMLResponse", err))
-		return
-	}
-
-	// do some validation first before we decrypt
-	resp := saml.Response{}
-	if err := xml.Unmarshal(rawResponseBuf, &resp); err != nil {
-		sp.handleError(c, security.NewExternalSamlAuthenticationError("Error unmarshalling SAMLResponse as xml", err))
-		return
-	}
-
-	client, ok := sp.clientManager.GetClientByEntityId(resp.Issuer.Value)
-	if !ok {
-		sp.handleError(c, security.NewExternalSamlAuthenticationError("cannot find idp metadata corresponding for assertion"))
-		return
-	}
-
-	var possibleRequestIDs []string
-	if sp.internal.AllowIDPInitiated {
-		possibleRequestIDs = append(possibleRequestIDs, "")
-	}
-
-	trackedRequests := sp.requestTracker.GetTrackedRequests(r)
-	for _, tr := range trackedRequests {
-		possibleRequestIDs = append(possibleRequestIDs, tr.SAMLRequestID)
-	}
-
-	assertion, err := client.ParseResponse(r, possibleRequestIDs)
-	if err != nil {
-		log.Error("error processing assertion", "err", err)
-		sp.handleError(c, security.NewExternalSamlAuthenticationError("error processing assertion", err))
-		return
-	}
-
-	candidate := &AssertionCandidate{
-		Assertion: assertion,
-	}
-	auth, err := sp.authenticator.Authenticate(c, candidate)
-
-	if err != nil {
-		sp.handleError(c, security.NewExternalSamlAuthenticationError("error authenticating user associated with the assertion",err))
-		return
-	}
-
-	before := security.Get(c)
-	sp.handleSuccess(c, before, auth)
-
 }
 
 //cache that are populated by the refresh metadata middleware instead of populated dynamically on commence

@@ -81,7 +81,7 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 
 	// add some common middlewares
 	mappings := []interface{}{
-		NewMiddlewareMapping("pre-process", HighestMiddlewareOrder, Any(), r.preProcessMiddleware),
+		NewMiddlewareGinMapping("pre-process", HighestMiddlewareOrder, Any(), nil, r.preProcessMiddleware),
 	}
 	if err = r.Register(mappings...); err != nil {
 		return
@@ -378,8 +378,11 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 		switch m.(type) {
 		case MvcMapping:
 			handlerFuncs[i] = makeHandlerFuncFromMvcMapping(m.(MvcMapping), options)
+		case SimpleGinMapping:
+			handlerFuncs[i] = makeGinConditionalHandlerFunc(m.(SimpleGinMapping).GinHandlerFunc(), m.Condition())
 		case SimpleMapping:
-			handlerFuncs[i] = makeConditionalHandlerFunc(m.(SimpleMapping).HandlerFunc(), m.Condition())
+			f := NewHttpGinHandlerFunc(http.HandlerFunc(m.(SimpleMapping).HandlerFunc()))
+			handlerFuncs[i] = makeGinConditionalHandlerFunc(f, m.Condition())
 		}
 	}
 
@@ -407,7 +410,14 @@ func (r *Registrar) findMiddlewares(group, relativePath string, methods...string
 		case err != nil:
 			return []gin.HandlerFunc{}, err
 		case match:
-			handlers[i] = mw.HandlerFunc()
+			var f gin.HandlerFunc
+			switch mw.(type) {
+			case MiddlewareGinMapping:
+				f = mw.(MiddlewareGinMapping).GinHandlerFunc()
+			default:
+				f = NewHttpGinHandlerFunc(http.HandlerFunc(mw.HandlerFunc()))
+			}
+			handlers[i] = makeGinConditionalHandlerFunc(f, mw.Condition())
 			i++
 		}
 	}
@@ -462,5 +472,5 @@ func makeHandlerFuncFromMvcMapping(m MvcMapping, options []httptransport.ServerO
 		options...,
 	)
 
-	return makeGinHandlerFunc(s, m.Condition())
+	return makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition())
 }

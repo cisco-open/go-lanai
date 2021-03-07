@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
@@ -63,6 +62,8 @@ type Controller interface {
 	Mappings() []Mapping
 }
 
+type HandlerFunc http.HandlerFunc
+
 // MvcHandlerFunc is a function with following signature
 // 	- two input parameters with 1st as context.Context and 2nd as <request>
 // 	- two output parameters with 1st as <response> and 2nd as error
@@ -92,7 +93,7 @@ type RoutedMapping interface {
 // SimpleMapping
 type SimpleMapping interface {
 	RoutedMapping
-	HandlerFunc() gin.HandlerFunc
+	HandlerFunc() HandlerFunc
 }
 
 // MvcMapping defines HTTP handling that follows MVC pattern
@@ -119,7 +120,8 @@ type MiddlewareMapping interface {
 	Mapping
 	Matcher() RouteMatcher
 	Order() int
-	HandlerFunc() gin.HandlerFunc
+	Condition() RequestMatcher
+	HandlerFunc() HandlerFunc
 }
 
 /*********************************
@@ -157,10 +159,10 @@ type simpleMapping struct {
 	path        string
 	method      string
 	condition   RequestMatcher
-	handlerFunc gin.HandlerFunc
+	handlerFunc HandlerFunc
 }
 
-func NewSimpleMapping(name, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) SimpleMapping {
+func NewSimpleMapping(name, path, method string, condition RequestMatcher, handlerFunc HandlerFunc) SimpleMapping {
 	return &simpleMapping{
 		name: name,
 		path: path,
@@ -170,7 +172,7 @@ func NewSimpleMapping(name, path, method string, condition RequestMatcher, handl
 	}
 }
 
-func (g simpleMapping) HandlerFunc() gin.HandlerFunc {
+func (g simpleMapping) HandlerFunc() HandlerFunc {
 	return g.handlerFunc
 }
 

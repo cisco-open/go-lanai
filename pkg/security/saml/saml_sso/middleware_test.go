@@ -122,7 +122,7 @@ func setupServerForTest(testClientStore SamlClientStore, testAccountStore securi
 	r.Use(MockAuthHandler)
 	r.Use(mw.RefreshMetadataHandler(f.ssoCondition))
 	r.Use(mw.AuthorizeHandlerFunc(f.ssoCondition))
-	r.POST(serverProp.ContextPath + f.ssoLocation.Path, security.NoopHandlerFunc)
+	r.POST(serverProp.ContextPath + f.ssoLocation.Path, security.NoopHandlerFunc())
 
 	return r
 }

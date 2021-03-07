@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
@@ -10,6 +11,17 @@ import (
 
 // Functions, HandlerFuncs and go-kit ServerOptions that make sure *gin.Context is availalble in endpoints and
 // context is properly propagated in Request
+
+// SimpleGinMapping
+type SimpleGinMapping interface {
+	SimpleMapping
+	GinHandlerFunc() gin.HandlerFunc
+}
+
+type MiddlewareGinMapping interface {
+	MiddlewareMapping
+	GinHandlerFunc() gin.HandlerFunc
+}
 
 // GinContext returns *gin.Context which either contained in the context or is the given context itself
 func GinContext(ctx context.Context) *gin.Context {
@@ -24,19 +36,38 @@ func GinContext(ctx context.Context) *gin.Context {
 	return nil
 }
 
-// makeGinHandlerFunc Integrate go-kit Server with GIN handler
-func makeGinHandlerFunc(s *httptransport.Server, rm RequestMatcher) gin.HandlerFunc {
+// HttpGinHandlerFunc Integrate http.HandlerFunc with GIN handler
+func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
+	if handlerFunc == nil {
+		panic(fmt.Errorf("cannot wrap a nil hanlder"))
+	}
+
+	handler := func(c *gin.Context) {
+		c.Request = c.Request.WithContext(
+			context.WithValue(c.Request.Context(), kGinContextKey, c),
+		)
+		handlerFunc(c.Writer, c.Request)
+	}
+	return handler
+}
+
+// NewKitGinHandlerFunc Integrate go-kit Server with GIN handler
+func NewKitGinHandlerFunc(s *httptransport.Server) gin.HandlerFunc {
+	if s == nil {
+		panic(fmt.Errorf("cannot wrap a nil hanlder"))
+	}
+
 	handler := func(c *gin.Context) {
 		c.Request = c.Request.WithContext(
 			context.WithValue(c.Request.Context(), kGinContextKey, c),
 		)
 		s.ServeHTTP(c.Writer, c.Request)
 	}
-	return makeConditionalHandlerFunc(handler, rm)
+	return handler
 }
 
-// makeConditionalHandlerFunc wraps given handler with a request matcher
-func makeConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
+// makeGinConditionalHandlerFunc wraps given handler with a request matcher
+func makeGinConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
 	if rm == nil {
 		return handler
 	}
@@ -76,4 +107,58 @@ func integrateGinContextFinalizer(ctx context.Context, _ int, r *http.Request) {
 	// 	this update is important, because when the execution flow exit go-kit realm, all information stored in ctx
 	//	would be lost if we don't set it to Request
 	gc.Request = r.WithContext(ctx)
+}
+
+/*********************************
+	SimpleGinMapping
+ *********************************/
+// implmenets SimpleGinMapping
+type simpleGinMapping struct {
+	simpleMapping
+	handlerFunc gin.HandlerFunc
+}
+
+func NewSimpleGinMapping(name, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) *simpleGinMapping {
+	return &simpleGinMapping{
+		simpleMapping: *NewSimpleMapping(name, path, method, condition, nil).(*simpleMapping),
+		handlerFunc: handlerFunc,
+	}
+}
+
+func (m simpleGinMapping) GinHandlerFunc() gin.HandlerFunc {
+	if m.handlerFunc != nil {
+		return m.handlerFunc
+	}
+
+	if m.simpleMapping.handlerFunc != nil {
+		return NewHttpGinHandlerFunc(http.HandlerFunc(m.simpleMapping.handlerFunc))
+	}
+	return nil
+}
+
+/*********************************
+	MiddlewareGinMapping
+ *********************************/
+// implmenets MiddlewareGinMapping
+type middlewareGinMapping struct {
+	middlewareMapping
+	handlerFunc        gin.HandlerFunc
+}
+
+func NewMiddlewareGinMapping(name string, order int, matcher RouteMatcher, cond RequestMatcher, handlerFunc gin.HandlerFunc) *middlewareGinMapping {
+	return &middlewareGinMapping{
+		middlewareMapping: *NewMiddlewareMapping(name, order, matcher, cond, nil).(*middlewareMapping),
+		handlerFunc: handlerFunc,
+	}
+}
+
+func (m middlewareGinMapping) GinHandlerFunc() gin.HandlerFunc {
+	if m.handlerFunc != nil {
+		return m.handlerFunc
+	}
+
+	if m.middlewareMapping.handlerFunc != nil {
+		return NewHttpGinHandlerFunc(http.HandlerFunc(m.middlewareMapping.handlerFunc))
+	}
+	return nil
 }

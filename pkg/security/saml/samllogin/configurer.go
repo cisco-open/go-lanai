@@ -37,11 +37,11 @@ func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	ws.Route(matcher.RouteWithPattern(f.acsPath)).
 		Route(matcher.RouteWithPattern(f.metadataPath)).
 		Add(mapping.Get(f.metadataPath).
-			HandlerFunc(m.MetadataHandlerFunc).
+			HandlerFunc(m.MetadataHandlerFunc()).
 			//metadata is an endpoint that is available without conditions, therefore call Build() to not inherit the ws condition
 			Name("saml metadata").Build()).
 		Add(mapping.Post(f.acsPath).
-			HandlerFunc(m.ACSHandlerFunc).
+			HandlerFunc(m.ACSHandlerFunc()).
 			Name("saml assertion consumer m")).
 		Add(middleware.NewBuilder("saml idp metadata refresh").
 			Order(security.MWOrderSAMLMetadataRefresh).

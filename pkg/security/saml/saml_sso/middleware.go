@@ -171,17 +171,19 @@ func (mw *SamlAuthorizeEndpointMiddleware) RefreshMetadataHandler(condition web.
 	}
 }
 
-func (mw *SamlAuthorizeEndpointMiddleware) MetadataHandlerFunc(c *gin.Context) {
-	metadata := mw.idp.Metadata()
-	var t = true
-	//We always want the authentication request to be signed
-	//But because this is not supported by the saml package, we set it here explicitly
-	metadata.IDPSSODescriptors[0].WantAuthnRequestsSigned = &t
-	w := c.Writer
-	buf, _ := xml.MarshalIndent(metadata, "", "  ")
-	w.Header().Set("Content-Type", "application/samlmetadata+xml")
-	w.Header().Set("Content-Disposition", "attachment; filename=metadata.xml")
-	_, _ = w.Write(buf)
+func (mw *SamlAuthorizeEndpointMiddleware) MetadataHandlerFunc() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		metadata := mw.idp.Metadata()
+		var t = true
+		//We always want the authentication request to be signed
+		//But because this is not supported by the saml package, we set it here explicitly
+		metadata.IDPSSODescriptors[0].WantAuthnRequestsSigned = &t
+		w := c.Writer
+		buf, _ := xml.MarshalIndent(metadata, "", "  ")
+		w.Header().Set("Content-Type", "application/samlmetadata+xml")
+		w.Header().Set("Content-Disposition", "attachment; filename=metadata.xml")
+		_, _ = w.Write(buf)
+	}
 }
 
 func (mw *SamlAuthorizeEndpointMiddleware) handleError(c *gin.Context, authRequest *saml.IdpAuthnRequest, err error) {

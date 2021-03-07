@@ -44,6 +44,8 @@ type FeatureRegistrar interface {
 	RegisterFeature(featureId FeatureIdentifier, featureConfigurer FeatureConfigurer)
 }
 
-func NoopHandlerFunc(c *gin.Context) {
-	_ = c.AbortWithError(http.StatusNotFound, fmt.Errorf("page not found"))
+func NoopHandlerFunc() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		_ = c.AbortWithError(http.StatusNotFound, fmt.Errorf("page not found"))
+	}
 }
