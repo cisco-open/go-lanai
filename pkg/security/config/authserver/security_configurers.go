@@ -63,6 +63,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
 		With(saml_auth.NewEndpoint().
+			Issuer(c.config.Issuer).
 			SsoCondition(c.config.Endpoints.SamlSso.Condition).
 			SsoLocation(c.config.Endpoints.SamlSso.Location).
 			MetadataPath(c.config.Endpoints.SamlMetadata))

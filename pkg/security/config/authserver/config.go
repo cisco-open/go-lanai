@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
@@ -25,8 +26,10 @@ type authServerDI struct {
 	AppContext           *bootstrap.ApplicationContext
 	WebRegistrar         *web.Registrar
 	SecurityRegistrar    security.Registrar
+	Properties           AuthServerProperties
 	Configurer           AuthorizationServerConfigurer
 	RedisClientFactory   redis.ClientFactory
+	ServerProperties     web.ServerProperties
 	SessionProperties    security.SessionProperties
 	CryptoProperties     jwt.CryptoProperties
 	DiscoveryCustomizers *discovery.Customizers
@@ -37,8 +40,11 @@ func ConfigureAuthorizationServer(di authServerDI) {
 	config := Configuration{
 		appContext:         di.AppContext,
 		redisClientFactory: di.RedisClientFactory,
+		properties:         di.Properties,
+		serverProperties:   di.ServerProperties,
 		sessionProperties:  di.SessionProperties,
 		cryptoProperties:   di.CryptoProperties,
+		Issuer: newIssuer(&di.Properties.Issuer, &di.ServerProperties),
 	}
 	di.Configurer(&config)
 
@@ -87,10 +93,14 @@ type Configuration struct {
 	UserPasswordEncoder passwd.PasswordEncoder
 	TokenStore          auth.TokenStore
 	JwkStore            jwt.JwkStore
+	IdpManager          idp.IdentityProviderManager
+	Issuer              security.Issuer
 
 	// not directly configurable items
 	appContext                *bootstrap.ApplicationContext
 	redisClientFactory        redis.ClientFactory
+	properties                AuthServerProperties
+	serverProperties          web.ServerProperties
 	sessionProperties         security.SessionProperties
 	cryptoProperties          jwt.CryptoProperties
 	idpConfigurers            []IdpSecurityConfigurer
@@ -106,10 +116,27 @@ type Configuration struct {
 	sharedAuthHanlder         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	sharedTokenAuthenticator  security.Authenticator
+	sharedIssuer              security.Issuer
 }
 
 func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {
 	c.idpConfigurers = append(c.idpConfigurers, configurer)
+}
+
+func newIssuer(props *IssuerProperties, serverProps *web.ServerProperties) security.Issuer {
+	contextPath := props.ContextPath
+	if contextPath == "" {
+		contextPath = serverProps.ContextPath
+	}
+	return security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
+		*opt = security.DefaultIssuerDetails{
+			Protocol:    props.Protocol,
+			Domain:      props.Domain,
+			Port:        props.Port,
+			ContextPath: contextPath,
+			IncludePort: props.IncludePort,
+		}
+	})
 }
 
 func (c *Configuration) clientSecretEncoder() passwd.PasswordEncoder {
@@ -188,7 +215,6 @@ func (c *Configuration) tokenStore() auth.TokenStore {
 			opt.Encoder = c.jwtEncoder()
 			opt.Decoder = c.jwtDecoder()
 			opt.AuthRegistry = c.authorizationRegistry()
-			// TODO enhancers
 		})
 	}
 	return c.TokenStore
@@ -199,10 +225,12 @@ func (c *Configuration) authorizationService() auth.AuthorizationService {
 		c.sharedAuthService = auth.NewDefaultAuthorizationService(func(conf *auth.DASOption) {
 			conf.TokenStore = c.tokenStore()
 			conf.DetailsFactory = c.contextDetailsFactory()
+			conf.Issuer = c.Issuer
 			conf.ClientStore = c.ClientStore
 			conf.AccountStore = c.UserAccountStore
 			conf.TenantStore = c.TenantStore
 			conf.ProviderStore = c.ProviderStore
+			// TODO OIDC enhancers
 		})
 	}
 
@@ -225,7 +253,6 @@ func (c *Configuration) jwtEncoder() jwt.JwtEncoder {
 
 func (c *Configuration) jwtDecoder() jwt.JwtDecoder {
 	if c.sharedJwtDecoder == nil {
-		// TODO
 		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
 	}
 	return c.sharedJwtDecoder

@@ -38,7 +38,7 @@ type initDI struct {
 
 func register(di initDI) {
 	if di.SecRegistrar != nil {
-		configurer := newSamlAuthConfigurer(di.SamlProperties, di.ServerProps, di.IdpManager, di.AccountStore)
+		configurer := newSamlAuthConfigurer(di.SamlProperties, di.IdpManager, di.AccountStore)
 		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 	}
 }

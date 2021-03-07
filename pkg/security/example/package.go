@@ -62,9 +62,10 @@ type authDI struct {
 
 func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer {
 	return func(config *authserver.Configuration) {
-		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer(di.IdpManager))
-		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer(di.IdpManager))
+		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer())
+		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer())
 
+		config.IdpManager = di.IdpManager
 		config.ClientStore = di.ClientStore
 		config.ClientSecretEncoder = passwd.NewNoopPasswordEncoder()
 		config.UserAccountStore = di.AccountStore

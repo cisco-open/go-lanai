@@ -13,7 +13,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"fmt"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/dgrijalva/jwt-go"
@@ -75,17 +74,17 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 	if err != nil {
 		panic(security.NewInternalError("cannot load private key from file", err))
 	}
-	rootURL, err := url.Parse(s.properties.RootUrl)
+	rootURL, err := f.issuer.BuildUrl()
 	if err != nil {
-		panic(security.NewInternalError("cannot parse security.auth.saml.root-url", err))
+		panic(security.NewInternalError("cannot get issuer's base URL", err))
 	}
 	opts := Options{
 		URL:            *rootURL,
 		Key:            key,
 		Certificate:    cert,
-		ACSPath: 		fmt.Sprintf("%s%s", s.serverProps.ContextPath, f.acsPath),
-		MetadataPath:   fmt.Sprintf("%s%s", s.serverProps.ContextPath, f.metadataPath),
-		SLOPath: 		fmt.Sprintf("%s%s", s.serverProps.ContextPath, f.sloPath),
+		ACSPath: 		f.acsPath,
+		MetadataPath:   f.metadataPath,
+		SLOPath: 		f.sloPath,
 		SignRequest: true,
 	}
 	return opts
@@ -169,13 +168,12 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 	return NewMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
 }
 
-func newSamlAuthConfigurer(properties samlctx.SamlProperties, serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
+func newSamlAuthConfigurer(properties samlctx.SamlProperties, idpManager idp.IdentityProviderManager,
 	accountStore security.FederatedAccountStore) *SamlAuthConfigurer {
 	return &SamlAuthConfigurer{
 		properties:     properties,
 		idpManager:     idpManager,
 		samlIdpManager: idpManager.(SamlIdentityProviderManager),
-		serverProps:    serverProps,
 		accountStore:   accountStore,
 	}
 }

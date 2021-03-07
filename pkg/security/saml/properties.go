@@ -8,7 +8,8 @@ import (
 const SamlPropertiesPrefix = "security.auth.saml"
 
 type SamlProperties struct {
-	RootUrl string `json:"root-url"`
+	// we use security.Issuer interface to get root-url. It will be configured via "security.auth.issuer"
+	//RootUrl string `json:"root-url"`
 	CertificateFile string `json:"certificate-file"`
 	KeyFile string  `json:"key-file"`
 	KeyPassword string `json:"key-password"`

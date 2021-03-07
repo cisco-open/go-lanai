@@ -43,7 +43,7 @@ func (e *ExpiryTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
  *****************************/
 // BasicClaimsTokenEnhancer impelments order.Ordered and TokenEnhancer
 type BasicClaimsTokenEnhancer struct {
-
+	issuer security.Issuer
 }
 
 func (te *BasicClaimsTokenEnhancer) Order() int {
@@ -60,7 +60,7 @@ func (te *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.Acce
 	basic := &oauth2.BasicClaims {
 		Id:       uuid.New().String(),
 		Audience: utils.NewStringSet(request.ClientId()),
-		Issuer:   "localhost:8080", // TODO Issuer should be extracted for configuration
+		Issuer:   te.issuer.Identifier(),
 		ClientId: request.ClientId(),
 		Scopes:   request.Scopes().Copy(),
 	}
