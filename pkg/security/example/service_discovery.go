@@ -1,13 +1,14 @@
 package example
 
 import (
+	"context"
 	"github.com/hashicorp/consul/api"
 )
 
-type RegistrationCusomizer struct {
+type RegistrationCustomizer struct {
 
 }
 
-func (r *RegistrationCusomizer) Customize(registration *api.AgentServiceRegistration) {
+func (r *RegistrationCustomizer) Customize(ctx context.Context, registration *api.AgentServiceRegistration) {
 	registration.Tags = append(registration.Tags, "a=b")
 }

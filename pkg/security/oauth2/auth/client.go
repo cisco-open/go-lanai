@@ -20,6 +20,7 @@ type ClientDetails struct {
 	RefreshTokenValidity time.Duration
 	UseSessionTimeout    bool
 	TenantRestrictions   utils.StringSet
+	ResourceIds          utils.StringSet
 }
 
 // DefaultAouth2Client implements security.Account & OAuth2Client
@@ -81,6 +82,10 @@ func (c *DefaultOAuth2Client) UseSessionTimeout() bool {
 
 func (c *DefaultOAuth2Client) TenantRestrictions() utils.StringSet {
 	return c.ClientDetails.TenantRestrictions
+}
+
+func (c *DefaultOAuth2Client) ResourceIDs() utils.StringSet {
+	return c.ClientDetails.ResourceIds
 }
 
 func (c *DefaultOAuth2Client) MaxTokensPerUser() int {

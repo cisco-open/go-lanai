@@ -2,7 +2,7 @@ package example
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/samllogin"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
 )
 
 type InMemoryIdpManager struct {}

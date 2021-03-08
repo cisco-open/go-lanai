@@ -7,6 +7,7 @@ const (
 	TokenEnhancerOrderExpiry
 	TokenEnhancerOrderBasicClaims
 	TokenEnhancerOrderDetailsClaims
+	TokenEnhancerOrderResourceIdClaims
 	TokenEnhancerOrderRefreshToken
 	//TokenEnhancerOrder
 )

@@ -3,6 +3,7 @@ package samllogin
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
@@ -22,7 +23,7 @@ import (
 )
 
 type SamlAuthConfigurer struct {
-	properties   security.SamlProperties
+	properties   samlctx.SamlProperties
 	idpManager   idp.IdentityProviderManager
 	serverProps  web.ServerProperties
 	accountStore security.FederatedAccountStore
@@ -167,7 +168,7 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 	return NewMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
 }
 
-func newSamlAuthConfigurer(properties security.SamlProperties, serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
+func newSamlAuthConfigurer(properties samlctx.SamlProperties, serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
 	accountStore security.FederatedAccountStore) *SamlAuthConfigurer {
 	return &SamlAuthConfigurer{
 		properties: properties,

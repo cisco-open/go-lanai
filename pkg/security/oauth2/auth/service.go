@@ -57,6 +57,7 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 			&ExpiryTokenEnhancer{},
 			&BasicClaimsTokenEnhancer{},
 			&LegacyTokenEnhancer{},
+			&ResourceIdTokenEnhancer{},
 			&rtEnhancer,
 		),
 	}

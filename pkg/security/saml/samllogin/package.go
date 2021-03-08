@@ -5,12 +5,13 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/gob"
 	"go.uber.org/fx"
 )
 
-var logger = log.New("SAMLLogin")
+var logger = log.New("SAML.Auth")
 
 var SamlAuthModule = &bootstrap.Module{
 	Name: "saml authenticator",
@@ -26,7 +27,7 @@ func init() {
 	gob.Register((*samlAssertionAuthentication)(nil))
 }
 
-func register(init security.Registrar, properties security.SamlProperties,
+func register(init security.Registrar, properties saml.SamlProperties,
 	serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
 	accountStore security.FederatedAccountStore) {
 

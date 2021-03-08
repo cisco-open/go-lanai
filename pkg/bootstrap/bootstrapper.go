@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"os"
@@ -21,7 +22,7 @@ var (
 type ContextOption func(ctx context.Context) context.Context
 
 type Bootstrapper struct {
-	modules []*Module
+	modules utils.Set
 }
 
 type App struct {
@@ -34,7 +35,7 @@ type App struct {
 func bootstrapper() *Bootstrapper {
 	once.Do(func() {
 		bootstrapperInstance = &Bootstrapper{
-			modules: []*Module{applicationMainModule(), anonymousModule()},
+			modules: utils.NewSet(applicationMainModule(), anonymousModule()),
 		}
 	})
 	return bootstrapperInstance
@@ -42,7 +43,7 @@ func bootstrapper() *Bootstrapper {
 
 func Register(m *Module) {
 	b := bootstrapper()
-	b.modules = append(b.modules, m)
+	b.modules.Add(m)
 }
 
 func AddOptions(options...fx.Option) {
@@ -73,17 +74,18 @@ func newApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx
 	}
 
 	b := bootstrapper()
-	sort.SliceStable(b.modules, func(i, j int) bool { return b.modules[i].Precedence < b.modules[j].Precedence })
+	modules := b.modules.Values()
+	sort.SliceStable(modules, func(i, j int) bool { return modules[i].(*Module).Precedence < modules[j].(*Module).Precedence })
 
 	// add priority options first
 	var options []fx.Option
-	for _,m := range b.modules {
-		options = append(options, m.PriorityOptions...)
+	for _,m := range modules {
+		options = append(options, m.(*Module).PriorityOptions...)
 	}
 
 	// add other options later
-	for _,m := range b.modules {
-		options = append(options, m.Options...)
+	for _,m := range modules {
+		options = append(options, m.(*Module).Options...)
 	}
 
 	// update application context before creating the app

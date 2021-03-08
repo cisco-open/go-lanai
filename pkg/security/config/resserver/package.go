@@ -18,10 +18,11 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(OAuth2AuthorizeModule)
+	security.Use()
 }
 
 func Use() {
-
+	security.Use()
+	bootstrap.Register(OAuth2AuthorizeModule)
 }
 

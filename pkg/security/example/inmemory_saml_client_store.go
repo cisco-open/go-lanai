@@ -1,7 +1,7 @@
 package example
 
 import (
-	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml_sso"
+	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
 	"errors"
 )
 
@@ -13,7 +13,7 @@ func NewInMemSpManager() saml_auth.SamlClientStore {
 	return &InMemorySamlClientStore{
 		details: []saml_auth.DefaultSamlClient{
 			saml_auth.DefaultSamlClient{
-				SamlSpDetails: saml_auth.SamlSpDetails {
+				SamlSpDetails: saml_auth.SamlSpDetails{
 					EntityId: "18.205.202.124",
 					MetadataSource: "http://localhost:9090/metadata",
 					SkipAssertionEncryption: true,

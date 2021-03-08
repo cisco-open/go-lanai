@@ -1,7 +1,7 @@
 package samllogin
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml_util"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
 	"github.com/crewjam/saml"
 	"net"
 	"net/http"

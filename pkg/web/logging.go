@@ -4,9 +4,11 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -27,11 +29,40 @@ const (
 
 // LoggingCustomizer implements Customizer and PostInitCustomizer
 type LoggingCustomizer struct {
-	
+	enabled    bool
+	defaultLvl log.LoggingLevel
+	levels     map[RequestMatcher]log.LoggingLevel
 }
 
-func NewLoggingCustomizer() *LoggingCustomizer {
-	return &LoggingCustomizer{}
+func NewLoggingCustomizer(props ServerProperties) *LoggingCustomizer {
+	return &LoggingCustomizer{
+		enabled:    props.Logging.Enabled,
+		defaultLvl: props.Logging.DefaultLevel,
+		levels:     initLevelMap(&props),
+	}
+}
+
+func initLevelMap(props *ServerProperties) map[RequestMatcher]log.LoggingLevel {
+	levels := map[RequestMatcher]log.LoggingLevel{}
+	for _, v := range props.Logging.Levels {
+		pattern := props.ContextPath + v.Pattern
+		var m RequestMatcher
+		if v.Method == "" || v.Method == "*" {
+			m = withLoggingRequestPattern(pattern)
+		} else {
+			split := strings.Split(v.Method, " ")
+			methods := []string{}
+			for _, s := range split {
+				s := strings.TrimSpace(s)
+				if s != "" {
+					methods = append(methods, s)
+				}
+			}
+			m = withLoggingRequestPattern(pattern, methods...)
+		}
+		levels[m] = v.Level
+	}
+	return levels
 }
 
 func (c LoggingCustomizer) Customize(ctx context.Context, r *Registrar) error {
@@ -39,9 +70,18 @@ func (c LoggingCustomizer) Customize(ctx context.Context, r *Registrar) error {
 	gin.DefaultWriter = log.NewWriterAdapter(logger.WithContext(ctx), log.LevelDebug)
 	gin.DefaultErrorWriter = log.NewWriterAdapter(logger.WithContext(ctx), log.LevelDebug)
 
+	if !c.enabled {
+		return nil
+	}
+
 	// setup logger middleware
+	formatter := logFormatter{
+		defaultLvl: c.defaultLvl,
+		logger:     logger,
+		levels:     c.levels,
+	}
 	mw := gin.LoggerWithConfig(gin.LoggerConfig{
-		Formatter: logFormatter{logger: logger}.intercept,
+		Formatter: formatter.intercept,
 		Output:    ioutil.Discard, // our logFormatter calls logger directly
 	})
 	r.AddGlobalMiddlewares(mw)
@@ -56,12 +96,20 @@ func (c LoggingCustomizer) PostInit(ctx context.Context, r *Registrar) error {
 }
 
 type logFormatter struct {
-	logger log.ContextualLogger
+	logger     log.ContextualLogger
+	defaultLvl log.LoggingLevel
+	levels     map[RequestMatcher]log.LoggingLevel
 }
 
 // intercept uses logger directly and return empty string.
 // doing so would allow us to set key-value pairs
 func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
+
+	logLevel := f.logLevel(params.Request)
+	if logLevel == log.LevelOff {
+		return
+	}
+
 	var statusColor, methodColor, resetColor string
 	methodLen := 7
 	if log.IsTerminal(f.logger) {
@@ -103,8 +151,17 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 	}
 
 	// do log
-	f.logger.WithContext(ctx).Debug(msg, LogKeyHttp, http)
+	f.logger.WithContext(ctx).WithLevel(logLevel).Log(log.LogKeyMessage, msg, LogKeyHttp, http)
 	return
+}
+
+func (f logFormatter) logLevel(r *http.Request) log.LoggingLevel {
+	for k, v := range f.levels {
+		if match, e := k.Matches(r); e == nil && match {
+			return v
+		}
+	}
+	return f.defaultLvl
 }
 
 const (
@@ -126,5 +183,68 @@ func formatSize(n int) string {
 	}
 }
 
+// loggingRequestMatcher implement RequestMatcher
+// loggingRequestMatcher is exclusively used by logFormatter.
+// The purpose of this matcher is
+// 1. break cyclic package dependency
+// 2. provide simple and faster matching
+type loggingRequestMatcher struct {
+	pathMatcher matcher.StringMatcher
+	methods     []string
+	description string
+}
 
+func withLoggingRequestPattern(pattern string, methods...string) *loggingRequestMatcher {
+	return &loggingRequestMatcher{
+		pathMatcher: matcher.WithPathPattern(pattern),
+		methods: methods,
+		description: fmt.Sprintf("request matches %v %s", methods, pattern),
+	}
+}
 
+func (m *loggingRequestMatcher) RequestMatches(c context.Context, r *http.Request) (bool, error) {
+	path := r.URL.Path
+	match, e := m.pathMatcher.Matches(path)
+	if e != nil || !match {
+		return false, e
+	}
+
+	if len(m.methods) == 0 {
+		return true, nil
+	}
+
+	for _, method := range m.methods {
+		if r.Method == method {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (m *loggingRequestMatcher) Matches(i interface{}) (bool, error) {
+	value, ok := i.(*http.Request)
+	if !ok {
+		return false, fmt.Errorf("unsupported type %T", i)
+	}
+	return m.RequestMatches(context.TODO(), value)
+}
+
+func (m *loggingRequestMatcher) MatchesWithContext(c context.Context, i interface{}) (bool, error) {
+	value, ok := i.(*http.Request)
+	if !ok {
+		return false, fmt.Errorf("unsupported type %T", i)
+	}
+	return m.RequestMatches(c, value)
+}
+
+func (m *loggingRequestMatcher) Or(matchers ...matcher.Matcher) matcher.ChainableMatcher {
+	return matcher.Or(m, matchers...)
+}
+
+func (m *loggingRequestMatcher) And(matchers ...matcher.Matcher) matcher.ChainableMatcher {
+	return matcher.And(m, matchers...)
+}
+
+func (m *loggingRequestMatcher) String() string {
+	return m.description
+}

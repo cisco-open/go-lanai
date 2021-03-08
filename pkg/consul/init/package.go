@@ -1,4 +1,4 @@
-package init
+package consul
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"

@@ -17,6 +17,16 @@ func ClientId(ctx context.Context, src oauth2.Authentication) (v interface{}, er
 	return nonZeroOrError(src.OAuth2Request().ClientId(), errorMissingDetails)
 }
 
+func Audience(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
+	if src.OAuth2Request() == nil {
+		return nil, errorMissingRequest
+	}
+	if src.OAuth2Request().ClientId() == "" {
+		return nil, errorMissingDetails
+	}
+	return utils.NewStringSet(src.OAuth2Request().ClientId()), nil
+}
+
 func JwtId(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
 	container, ok := src.AccessToken().(oauth2.ClaimsContainer)
 	if !ok || container.Claims() == nil {

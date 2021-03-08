@@ -18,13 +18,9 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func init() {
-	bootstrap.Register(Module)
-}
-
 // Maker func, does nothing. Allow service to include this module in main()
 func Use() {
-
+	bootstrap.Register(Module)
 }
 
 func newDefaultClient(ctx *bootstrap.ApplicationContext, f ClientFactory, p ConnectionProperties) Client {

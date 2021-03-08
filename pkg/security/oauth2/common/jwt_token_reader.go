@@ -140,8 +140,8 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
  *****************/
 func (r *jwtTokenStoreReader) createOAuth2Request(claims *internal.ExtendedClaims) oauth2.OAuth2Request {
 	clientId := claims.ClientId
-	if clientId == "" {
-		clientId = claims.Audience
+	if clientId == "" && claims.Audience != nil && len(claims.Audience) != 0 {
+		clientId = claims.Audience.Values()[0]
 	}
 	return oauth2.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
 		opt.Parameters = map[string]string{}

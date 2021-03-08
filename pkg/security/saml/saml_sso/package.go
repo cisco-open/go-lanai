@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 )
@@ -16,7 +17,7 @@ var Module = &bootstrap.Module{
 	},
 }
 
-var logger = log.New("SamlAuthEndpoint")
+var logger = log.New("SAML.SSO")
 
 func init() {
 	bootstrap.Register(Module)
@@ -24,10 +25,10 @@ func init() {
 
 type dependencies struct {
 	fx.In
-	Properties             security.SamlProperties
+	Properties             saml.SamlProperties
 	ServerProperties       web.ServerProperties
 	ServiceProviderManager SamlClientStore
-	AccountStore security.AccountStore
+	AccountStore           security.AccountStore
 	AttributeGenerator     AttributeGenerator `optional:"true"`
 }
 

@@ -2,6 +2,7 @@ package resserver
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
@@ -13,29 +14,33 @@ import (
 
 type ResourceServerConfigurer func(*Configuration)
 
-type dependencies struct {
+type resServerDI struct {
 	fx.In
-	AppContext         *bootstrap.ApplicationContext
-	Configurer         ResourceServerConfigurer
-	SecurityRegistrar  security.Registrar
-	RedisClientFactory redis.ClientFactory
-	CryptoProperties   jwt.CryptoProperties
+	AppContext           *bootstrap.ApplicationContext
+	Configurer           ResourceServerConfigurer
+	SecurityRegistrar    security.Registrar
+	RedisClientFactory   redis.ClientFactory
+	CryptoProperties     jwt.CryptoProperties
+	DiscoveryCustomizers *discovery.Customizers
 }
 
 // Configuration entry point
-func ConfigureResourceServer(deps dependencies) {
+func ConfigureResourceServer(di resServerDI) {
 	config := &Configuration{
-		appContext:         deps.AppContext,
-		cryptoProperties:   deps.CryptoProperties,
-		redisClientFactory: deps.RedisClientFactory,
+		appContext:         di.AppContext,
+		cryptoProperties:   di.CryptoProperties,
+		redisClientFactory: di.RedisClientFactory,
 	}
-	deps.Configurer(config)
+	di.Configurer(config)
+
+	// SMCR
+	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
 
 	// reigester token auth feature
 	configurer := tokenauth.NewTokenAuthConfigurer(func(opt *tokenauth.TokenAuthOption) {
 		opt.TokenStoreReader = config.tokenStoreReader()
 	})
-	deps.SecurityRegistrar.(security.FeatureRegistrar).RegisterFeature(tokenauth.FeatureId, configurer)
+	di.SecurityRegistrar.(security.FeatureRegistrar).RegisterFeature(tokenauth.FeatureId, configurer)
 }
 
 /****************************

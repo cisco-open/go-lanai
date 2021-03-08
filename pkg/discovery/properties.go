@@ -1,8 +1,15 @@
-package servicedisc
+package discovery
+
+import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"fmt"
+	"github.com/pkg/errors"
+)
 
 const (
 	applicationPropertiesPrefix = "application"
-	discoveryPropertiesPrefix   = "cloud.consul.discovery"
+	DiscoveryPropertiesPrefix   = "cloud.consul.discovery"
 )
 
 type DiscoveryProperties struct {
@@ -16,4 +23,21 @@ type DiscoveryProperties struct {
 	Scheme                     string   `json:"scheme"`
 	HealthCheckCriticalTimeout string   `json:"health-check-critical-timeout"` //See api.AgentServiceCheck's DeregisterCriticalServiceAfter field
 	//TODO: add other values if needed
+}
+
+func NewDiscoveryProperties(serverProps *web.ServerProperties) *DiscoveryProperties {
+	return &DiscoveryProperties{
+		Port: serverProps.Port,
+		Scheme: "http",
+		HealthCheckInterval: "15s",
+		HealthCheckPath: fmt.Sprintf("%s%s", serverProps.ContextPath, "/admin/health"),
+	}
+}
+
+func BindDiscoveryProperties(ctx *bootstrap.ApplicationContext, serverProps web.ServerProperties) DiscoveryProperties {
+	props := NewDiscoveryProperties(&serverProps)
+	if err := ctx.Config().Bind(props, DiscoveryPropertiesPrefix); err != nil {
+		panic(errors.Wrap(err, "failed to bind DiscoveryProperties"))
+	}
+	return *props
 }

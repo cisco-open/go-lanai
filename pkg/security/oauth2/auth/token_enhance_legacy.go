@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/claims"
 )
 
 /*****************************
@@ -88,5 +89,27 @@ func (te *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessTok
 }
 
 
+// ResourceIdTokenEnhancer impelments order.Ordered and TokenEnhancer
+// spring-security-oauth2 based java implementation expecting "aud" claims to be the resource ID
+type ResourceIdTokenEnhancer struct {
 
+}
+
+func (te *ResourceIdTokenEnhancer) Order() int {
+	return TokenEnhancerOrderDetailsClaims
+}
+
+func (te *ResourceIdTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+	t, ok := token.(*oauth2.DefaultAccessToken)
+	if !ok {
+		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
+	}
+
+	if t.Claims() == nil || !t.Claims().Has(oauth2.ClaimAudience){
+		return nil, oauth2.NewInternalError("ResourceIdTokenEnhancer need to be placed after BasicClaimsEnhancer")
+	}
+
+	t.Claims().Set(oauth2.ClaimAudience, claims.LegacyAudiance(c, oauth))
+	return t, nil
+}
 
