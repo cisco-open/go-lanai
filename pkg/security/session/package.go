@@ -35,17 +35,19 @@ func GobRegister() {
 	gob.Register([]interface{}{})
 }
 
-type registerParams struct {
+type initDI struct {
 	fx.In
-	Init            security.Registrar
 	AppContext      *bootstrap.ApplicationContext
+	SecRegistrar    security.Registrar `optional:"true"`
 	SessionProps    security.SessionProperties
 	ServerProps     web.ServerProperties
 	ClientFactory   redis.ClientFactory
 	MaxSessionsFunc GetMaximumSessions `optional:"true"`
 }
 
-func register(di registerParams) {
-	configurer := newSessionConfigurer(di.AppContext, di.SessionProps, di.ServerProps, di.ClientFactory, di.MaxSessionsFunc)
-	di.Init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newSessionConfigurer(di.AppContext, di.SessionProps, di.ServerProps, di.ClientFactory, di.MaxSessionsFunc)
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

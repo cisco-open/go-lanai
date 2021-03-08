@@ -3,17 +3,16 @@ package samllogin
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"fmt"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/dgrijalva/jwt-go"
@@ -23,10 +22,11 @@ import (
 )
 
 type SamlAuthConfigurer struct {
-	properties   samlctx.SamlProperties
-	idpManager   idp.IdentityProviderManager
-	serverProps  web.ServerProperties
-	accountStore security.FederatedAccountStore
+	properties     samlctx.SamlProperties
+	idpManager     idp.IdentityProviderManager
+	samlIdpManager SamlIdentityProviderManager
+	serverProps    web.ServerProperties
+	accountStore   security.FederatedAccountStore
 }
 
 func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
@@ -37,11 +37,11 @@ func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	ws.Route(matcher.RouteWithPattern(f.acsPath)).
 		Route(matcher.RouteWithPattern(f.metadataPath)).
 		Add(mapping.Get(f.metadataPath).
-			HandlerFunc(m.MetadataHandlerFunc).
+			HandlerFunc(m.MetadataHandlerFunc()).
 			//metadata is an endpoint that is available without conditions, therefore call Build() to not inherit the ws condition
 			Name("saml metadata").Build()).
 		Add(mapping.Post(f.acsPath).
-			HandlerFunc(m.ACSHandlerFunc).
+			HandlerFunc(m.ACSHandlerFunc()).
 			Name("saml assertion consumer m")).
 		Add(middleware.NewBuilder("saml idp metadata refresh").
 			Order(security.MWOrderSAMLMetadataRefresh).
@@ -74,17 +74,17 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 	if err != nil {
 		panic(security.NewInternalError("cannot load private key from file", err))
 	}
-	rootURL, err := url.Parse(s.properties.RootUrl)
+	rootURL, err := f.issuer.BuildUrl()
 	if err != nil {
-		panic(security.NewInternalError("cannot parse security.auth.saml.root-url", err))
+		panic(security.NewInternalError("cannot get issuer's base URL", err))
 	}
 	opts := Options{
 		URL:            *rootURL,
 		Key:            key,
 		Certificate:    cert,
-		ACSPath: 		fmt.Sprintf("%s%s", s.serverProps.ContextPath, f.acsPath),
-		MetadataPath:   fmt.Sprintf("%s%s", s.serverProps.ContextPath, f.metadataPath),
-		SLOPath: 		fmt.Sprintf("%s%s", s.serverProps.ContextPath, f.sloPath),
+		ACSPath: 		f.acsPath,
+		MetadataPath:   f.metadataPath,
+		SLOPath: 		f.sloPath,
 		SignRequest: true,
 	}
 	return opts
@@ -160,7 +160,7 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 
 	authenticator := &Authenticator{
 		accountStore: s.accountStore,
-		idpManager: s.idpManager,
+		idpManager: s.samlIdpManager,
 	}
 
 	clientManager := NewCacheableIdpClientManager(sp)
@@ -168,12 +168,12 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 	return NewMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
 }
 
-func newSamlAuthConfigurer(properties samlctx.SamlProperties, serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
+func newSamlAuthConfigurer(properties samlctx.SamlProperties, idpManager idp.IdentityProviderManager,
 	accountStore security.FederatedAccountStore) *SamlAuthConfigurer {
 	return &SamlAuthConfigurer{
-		properties: properties,
-		idpManager: idpManager,
-		serverProps: serverProps,
-		accountStore: accountStore,
+		properties:     properties,
+		idpManager:     idpManager,
+		samlIdpManager: idpManager.(SamlIdentityProviderManager),
+		accountStore:   accountStore,
 	}
 }

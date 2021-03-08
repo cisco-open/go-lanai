@@ -108,10 +108,10 @@ func provideTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingPrope
 type regDI struct {
 	fx.In
 	AppContext   *bootstrap.ApplicationContext
-	Tracer       opentracing.Tracer  `optional:true`
-	FxHook       TracerClosingHook   `optional:true`
-	Registrar    *web.Registrar      `optional:true`
-	RedisFactory redis.ClientFactory `optional:true`
+	Tracer       opentracing.Tracer  `optional:"true"`
+	FxHook       TracerClosingHook   `optional:"true"`
+	Registrar    *web.Registrar      `optional:"true"`
+	RedisFactory redis.ClientFactory `optional:"true"`
 	// we could include security configurations, customizations here
 }
 

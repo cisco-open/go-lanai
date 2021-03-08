@@ -20,7 +20,16 @@ func init() {
 	bootstrap.Register(Module)
 }
 
-func register(init security.Registrar, sessionProps security.SessionProperties, serverProps web.ServerProperties) {
-	configurer := newFormLoginConfigurer(sessionProps.Cookie, serverProps)
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+type initDI struct {
+	fx.In
+	SecRegistrar security.Registrar `optional:"true"`
+	SessionProps security.SessionProperties
+	ServerProps  web.ServerProperties
+}
+
+func register(di initDI, ) {
+	if di.SecRegistrar != nil {
+		configurer := newFormLoginConfigurer(di.SessionProps.Cookie, di.ServerProps)
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

@@ -54,7 +54,7 @@ func (a *authentication) Principal() interface{} {
 	return a.UserAuth.Principal()
 }
 
-func (a *authentication) Permissions() map[string]interface{} {
+func (a *authentication) Permissions() security.Permissions {
 	if a.UserAuth == nil {
 		return map[string]interface{}{}
 	}
@@ -131,7 +131,7 @@ func (a *userAuthentication) Principal() interface{} {
 	return a.Subject
 }
 
-func (a *userAuthentication) Permissions() map[string]interface{} {
+func (a *userAuthentication) Permissions() security.Permissions {
 	return a.PermissionMap
 }
 

@@ -11,7 +11,7 @@ var logger = log.New("Redis")
 var Module = &bootstrap.Module{
 	Precedence: bootstrap.RedisPrecedence,
 	Options: []fx.Option{
-		fx.Provide(BindSessionProperties),
+		fx.Provide(BindRedisProperties),
 		fx.Provide(NewClientFactory),
 		fx.Provide(newDefaultClient),
 		fx.Invoke(registerHealth),
@@ -23,7 +23,7 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func newDefaultClient(ctx *bootstrap.ApplicationContext, f ClientFactory, p ConnectionProperties) Client {
+func newDefaultClient(ctx *bootstrap.ApplicationContext, f ClientFactory, p RedisProperties) Client {
 	c, e := f.New(ctx, func(opt *ClientOption) {
 		opt.DbIndex = p.DB
 	})

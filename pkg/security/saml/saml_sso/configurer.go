@@ -3,13 +3,12 @@ package saml_auth
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -24,17 +23,15 @@ type SamlAuthorizeEndpointConfigurer struct {
 	samlClientStore    SamlClientStore
 	accountStore       security.AccountStore
 	attributeGenerator AttributeGenerator
-
 }
 
-func newSamlAuthorizeEndpointConfigurer(properties samlctx.SamlProperties, serverProperties web.ServerProperties,
+func newSamlAuthorizeEndpointConfigurer(properties samlctx.SamlProperties,
 	samlClientStore SamlClientStore,
 	accountStore security.AccountStore,
 	attributeGenerator AttributeGenerator) *SamlAuthorizeEndpointConfigurer {
 
 	return &SamlAuthorizeEndpointConfigurer{
 		properties:         properties,
-		serverProperties:   serverProperties,
 		samlClientStore:    samlClientStore,
 		accountStore:       accountStore,
 		attributeGenerator: attributeGenerator,
@@ -57,12 +54,12 @@ func (c *SamlAuthorizeEndpointConfigurer) Apply(feature security.Feature, ws sec
 			Order(security.MWOrderSamlAuthEndpoints).
 			Use(mw.AuthorizeHandlerFunc(f.ssoCondition)))
 
-	ws.Add(mapping.Get(f.ssoLocation.Path).HandlerFunc(security.NoopHandlerFunc))
-	ws.Add(mapping.Post(f.ssoLocation.Path).HandlerFunc(security.NoopHandlerFunc))
+	ws.Add(mapping.Get(f.ssoLocation.Path).HandlerFunc(security.NoopHandlerFunc()))
+	ws.Add(mapping.Post(f.ssoLocation.Path).HandlerFunc(security.NoopHandlerFunc()))
 
 	//metadata is an actual endpoint
 	ws.Add(mapping.Get(f.metadataPath).
-		HandlerFunc(mw.MetadataHandlerFunc).
+		HandlerFunc(mw.MetadataHandlerFunc()).
 		Name("saml metadata"))
 
 	// configure error handling
@@ -80,18 +77,18 @@ func (c *SamlAuthorizeEndpointConfigurer) getIdentityProviderConfiguration(f *Fe
 	if err != nil {
 		panic(security.NewInternalError("cannot load private key from file", err))
 	}
-	rootURL, err := url.Parse(c.properties.RootUrl)
+	rootURL, err := f.issuer.BuildUrl()
 	if err != nil {
-		panic(security.NewInternalError("cannot parse security.auth.saml.root-url", err))
+		panic(security.NewInternalError("cannot get issuer's base URL", err))
 	}
 
 	return Options{
 		Key:         key,
 		Cert:        cert,
 		//usually this is the metadata url, but to keep consistent with existing implementation, we just use the context path
-		EntityIdUrl: *rootURL.ResolveReference(&url.URL{Path: c.serverProperties.ContextPath}),
+		EntityIdUrl: *rootURL,
 		SsoUrl: *rootURL.ResolveReference(&url.URL{
-			Path: fmt.Sprintf("%s%s", c.serverProperties.ContextPath, f.ssoLocation.Path),
+			Path: f.ssoLocation.Path,
 			RawQuery: f.ssoLocation.RawQuery,
 		}),
 		serviceProviderManager: c.samlClientStore,

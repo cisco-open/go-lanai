@@ -18,3 +18,7 @@ func Capped(v interface{}, cap int) string {
 func Padding(v interface{}, padding int) string {
 	return internal.Padding(v, padding)
 }
+
+func DebugShowcase() {
+	internal.DebugShowcase()
+}

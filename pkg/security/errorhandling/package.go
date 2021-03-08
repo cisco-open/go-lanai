@@ -11,7 +11,7 @@ var logger = log.New("SEC.Err")
 
 //goland:noinspection GoNameStartsWithPackageName
 var ErrorHandlingModule = &bootstrap.Module{
-	Name: "basic auth",
+	Name: "error handling",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
 		fx.Invoke(register),
@@ -22,7 +22,14 @@ func init() {
 	bootstrap.Register(ErrorHandlingModule)
 }
 
-func register(init security.Registrar) {
-	configurer := newErrorHandlingConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+type initDI struct {
+	fx.In
+	SecRegistrar security.Registrar `optional:"true"`
+}
+
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newErrorHandlingConfigurer()
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

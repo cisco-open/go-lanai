@@ -19,7 +19,14 @@ func init() {
 	bootstrap.Register(BasicAuthModule)
 }
 
-func register(init security.Registrar) {
-	configurer := newBasicAuthConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+type initDI struct {
+	fx.In
+	SecRegistrar security.Registrar `optional:"true"`
+}
+
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newBasicAuthConfigurer()
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

@@ -27,10 +27,18 @@ func init() {
 	gob.Register((*samlAssertionAuthentication)(nil))
 }
 
-func register(init security.Registrar, properties saml.SamlProperties,
-	serverProps web.ServerProperties, idpManager idp.IdentityProviderManager,
-	accountStore security.FederatedAccountStore) {
+type initDI struct {
+	fx.In
+	SecRegistrar   security.Registrar `optional:"true"`
+	SamlProperties saml.SamlProperties
+	ServerProps    web.ServerProperties
+	IdpManager     idp.IdentityProviderManager
+	AccountStore   security.FederatedAccountStore
+}
 
-	configurer := newSamlAuthConfigurer(properties, serverProps, idpManager, accountStore)
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newSamlAuthConfigurer(di.SamlProperties, di.IdpManager, di.AccountStore)
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

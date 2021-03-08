@@ -15,21 +15,20 @@ import (
 
 // SamlIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
 type SamlIdpSecurityConfigurer struct {
-	authFlowManager idp.AuthFlowManager
 }
 
-func NewSamlIdpSecurityConfigurer(authFlowManager idp.AuthFlowManager) *SamlIdpSecurityConfigurer {
-	return &SamlIdpSecurityConfigurer{
-		authFlowManager: authFlowManager,
-	}
+func NewSamlIdpSecurityConfigurer() *SamlIdpSecurityConfigurer {
+	return &SamlIdpSecurityConfigurer{}
 }
 
 func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
 	handler := redirect.NewRedirectWithRelativePath("/error")
-	condition := idp.RequestWithAuthenticationMethod(idp.ExternalIdpSAML, c.authFlowManager)
+	condition := idp.RequestWithAuthenticationFlow(idp.ExternalIdpSAML, config.IdpManager)
 
 	ws.AndCondition(condition).
-		With(samllogin.New()).
+		With(samllogin.New().
+			Issuer(config.Issuer),
+		).
 		With(session.New()).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),

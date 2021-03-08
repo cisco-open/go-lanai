@@ -1,15 +1,16 @@
 package samllogin
 
-type SamlIdpDetails struct {
-	EntityId         string
-	Domain           string
-	MetadataLocation string
-	ExternalIdName   string
-	ExternalIdpName  string
-	//TODO: option to require metadata to have signature, option to verify metadata signature
-	// this is optional because both Spring and Okta's metadata are not signed
+import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+
+type SamlIdentityProvider interface {
+	idp.IdentityProvider
+	EntityId() string
+	MetadataLocation() string
+	ExternalIdName() string
+	ExternalIdpName() string
 }
 
-func (s SamlIdpDetails) GetDomain() string {
-	return s.Domain
+type SamlIdentityProviderManager interface {
+	GetIdentityProviderByEntityId(entityId string) (idp.IdentityProvider, error)
 }
+

@@ -22,7 +22,14 @@ func init() {
 	bootstrap.Register(Module)
 }
 
-func register(init security.Registrar) {
-	configurer := newOAuth2AuhtorizeEndpointConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+type initDI struct {
+	fx.In
+	SecRegistrar security.Registrar `optional:"true"`
+}
+
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newOAuth2AuhtorizeEndpointConfigurer()
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

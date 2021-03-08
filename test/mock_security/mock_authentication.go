@@ -48,7 +48,7 @@ func (mr *MockAuthenticationMockRecorder) Principal() *gomock.Call {
 }
 
 // Permissions mocks base method
-func (m *MockAuthentication) Permissions() map[string]interface{} {
+func (m *MockAuthentication) Permissions() security.Permissions {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Permissions")
 	ret0, _ := ret[0].(map[string]interface{})

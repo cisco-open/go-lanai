@@ -3,9 +3,9 @@ package web
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"net/http"
 	"regexp"
 )
 
@@ -33,11 +33,38 @@ type PostInitCustomizer interface {
 }
 
 /*********************************
+	Response
+ *********************************/
+// StatusCoder is same interface defined in "github.com/go-kit/kit/transport/http"
+// this interface is majorly used internally with error handling
+type StatusCoder interface {
+	StatusCode() int
+}
+
+// Headerer is same interface defined in "github.com/go-kit/kit/transport/http"
+// this interface is majorly used internally with error handling
+// If an error value implements Headerer, the provided headers will be applied to the response writer, after
+// the Content-Type is set.
+type Headerer interface {
+	Headers() http.Header
+}
+
+// BodyContainer is a reponse body wrapping interface.
+// this interface is majorly used internally for mapping
+type BodyContainer interface {
+	Body() interface{}
+}
+
+/*********************************
 	Mappings
  *********************************/
 type Controller interface {
 	Mappings() []Mapping
 }
+
+// HandlerFunc have same signature as http.HandlerFunc with additional assurance:
+// - the http.Request used on this HandlerFunc version contains a mutable context utils.MutableContext
+type HandlerFunc http.HandlerFunc
 
 // MvcHandlerFunc is a function with following signature
 // 	- two input parameters with 1st as context.Context and 2nd as <request>
@@ -68,7 +95,7 @@ type RoutedMapping interface {
 // SimpleMapping
 type SimpleMapping interface {
 	RoutedMapping
-	HandlerFunc() gin.HandlerFunc
+	HandlerFunc() HandlerFunc
 }
 
 // MvcMapping defines HTTP handling that follows MVC pattern
@@ -95,7 +122,8 @@ type MiddlewareMapping interface {
 	Mapping
 	Matcher() RouteMatcher
 	Order() int
-	HandlerFunc() gin.HandlerFunc
+	Condition() RequestMatcher
+	HandlerFunc() HandlerFunc
 }
 
 /*********************************
@@ -133,10 +161,10 @@ type simpleMapping struct {
 	path        string
 	method      string
 	condition   RequestMatcher
-	handlerFunc gin.HandlerFunc
+	handlerFunc HandlerFunc
 }
 
-func NewSimpleMapping(name, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) SimpleMapping {
+func NewSimpleMapping(name, path, method string, condition RequestMatcher, handlerFunc HandlerFunc) SimpleMapping {
 	return &simpleMapping{
 		name: name,
 		path: path,
@@ -146,7 +174,7 @@ func NewSimpleMapping(name, path, method string, condition RequestMatcher, handl
 	}
 }
 
-func (g simpleMapping) HandlerFunc() gin.HandlerFunc {
+func (g simpleMapping) HandlerFunc() HandlerFunc {
 	return g.handlerFunc
 }
 

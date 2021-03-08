@@ -2,9 +2,12 @@ package security
 
 import (
 	"bytes"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 )
 
 const (
@@ -104,7 +107,8 @@ type NestedError interface {
 	Cause() error
 }
 
-// CodedError implements Code, CodeMask, NestedError
+// CodedError implements Code, CodeMask, NestedError, web.StatusCoder,
+// encoding.TextMarshaler, json.Marshaler, encoding.BinaryMarshaler, encoding.BinaryUnmarshaler
 type CodedError struct {
 	code int
 	error
@@ -112,16 +116,30 @@ type CodedError struct {
 	cause error
 }
 
-func (e *CodedError) Code() int {
+func (e CodedError) Code() int {
 	return e.code
 }
 
-func (e *CodedError) CodeMask() int {
+func (e CodedError) CodeMask() int {
 	return e.mask
 }
 
-func (e *CodedError) Cause() error {
+func (e CodedError) Cause() error {
 	return e.cause
+}
+
+func (e CodedError) StatusCode() int {
+	return http.StatusUnauthorized
+}
+
+// encoding.TextMarshaler
+func (e CodedError) MarshalText() ([]byte, error) {
+	return []byte(e.Error()), nil
+}
+
+// json.Marshaler
+func (e CodedError) MarshalJSON() ([]byte, error) {
+	return web.NewHttpError(e.StatusCode(), e.error).(json.Marshaler).MarshalJSON()
 }
 
 // Is return true if

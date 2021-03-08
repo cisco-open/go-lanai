@@ -26,15 +26,20 @@ type ClientAuthEndpointsConfigurer struct {
 }
 
 func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
-	// TODO Complete this
 	// For Token endpoint
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.Token)).
 		Route(matcher.RouteWithPattern(c.config.Endpoints.CheckToken)).
 		With(clientauth.New().
 			ClientStore(c.config.ClientStore).
 			ClientSecretEncoder(c.config.clientSecretEncoder()).
-			ErrorHandler(c.config.errorHandler()),
+			ErrorHandler(c.config.errorHandler()).
+			AllowForm(true), // AllowForm also implicitly enables Public Client
 		).
+		// uncomment following if we want CheckToken to not allow public client
+		//With(access.Configure(ws).
+		//	Request(matcher.RequestWithPattern(c.config.Endpoints.CheckToken)).
+		//	AllowIf(access.HasPermissionsWithExpr("!public_client")),
+		//).
 		With(token.NewEndpoint().
 			Path(c.config.Endpoints.Token).
 			AddGranter(c.config.tokenGranter()),
@@ -63,6 +68,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
 		With(saml_auth.NewEndpoint().
+			Issuer(c.config.Issuer).
 			SsoCondition(c.config.Endpoints.SamlSso.Condition).
 			SsoLocation(c.config.Endpoints.SamlSso.Location).
 			MetadataPath(c.config.Endpoints.SamlMetadata))

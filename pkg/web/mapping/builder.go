@@ -16,7 +16,7 @@ type MappingBuilder struct {
 	path        string
 	method      string
 	condition   web.RequestMatcher
-	handlerFunc gin.HandlerFunc
+	handlerFunc interface{}
 }
 
 func New(names ...string) *MappingBuilder {
@@ -85,7 +85,17 @@ func (b *MappingBuilder) Condition(condition web.RequestMatcher) *MappingBuilder
 	return b
 }
 
-func (b *MappingBuilder) HandlerFunc(handlerFunc gin.HandlerFunc) *MappingBuilder {
+// support
+// - gin.HandlerFunc
+// - http.HandlerFunc
+// - web.HandlerFunc
+func (b *MappingBuilder) HandlerFunc(handlerFunc interface{}) *MappingBuilder {
+	switch handlerFunc.(type) {
+	case gin.HandlerFunc, http.HandlerFunc, web.HandlerFunc:
+		b.handlerFunc = handlerFunc
+	default:
+		panic(fmt.Errorf("unsupported HandlerFunc type: %T", handlerFunc))
+	}
 	b.handlerFunc = handlerFunc
 	return b
 }
@@ -166,6 +176,16 @@ func (b *MappingBuilder) buildMapping() web.SimpleMapping {
 	if b.name == "" {
 		b.name = fmt.Sprintf("%s %s", b.method, b.path)
 	}
-	return web.NewSimpleMapping(b.name, b.path, b.method, b.condition, b.handlerFunc)
+
+	switch b.handlerFunc.(type) {
+	case gin.HandlerFunc:
+		return web.NewSimpleGinMapping(b.name, b.path, b.method, b.condition, b.handlerFunc.(gin.HandlerFunc))
+	case http.HandlerFunc, web.HandlerFunc:
+		return web.NewSimpleMapping(b.name, b.path, b.method, b.condition, b.handlerFunc.(web.HandlerFunc))
+	default:
+		panic(fmt.Errorf("unsupported HandlerFunc type: %T", b.handlerFunc))
+	}
+
+	return nil
 }
 

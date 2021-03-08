@@ -55,7 +55,7 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	for _,method := range supportedMethods {
 		endpoint := mapping.New("logout dummy " + method).
 			Method(method).Path(f.logoutUrl).
-			HandlerFunc(security.NoopHandlerFunc)
+			HandlerFunc(security.NoopHandlerFunc())
 		ws.Add(endpoint)
 	}
 	return nil
