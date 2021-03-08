@@ -62,6 +62,8 @@ type Controller interface {
 	Mappings() []Mapping
 }
 
+// HandlerFunc have same signature as http.HandlerFunc with additional assurance:
+// - the http.Request used on this HandlerFunc version contains a mutable context utils.MutableContext
 type HandlerFunc http.HandlerFunc
 
 // MvcHandlerFunc is a function with following signature

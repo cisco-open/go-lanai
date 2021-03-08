@@ -24,6 +24,12 @@ func NewClientAuthMiddleware(opts...ClientAuthMWOptions) *ClientAuthMiddleware {
 	return &ClientAuthMiddleware{}
 }
 
+//func (mw *ClientAuthMiddleware) ClientAuthFormHandlerFunc() http.HandlerFunc {
+//	return func(rw http.ResponseWriter, r *http.Request) {
+//
+//	}
+//}
+
 func (mw *ClientAuthMiddleware) ErrorTranslationHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()

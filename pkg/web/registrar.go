@@ -65,6 +65,9 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
 
+	// first, we add some manditory customizers
+	r.Register(NewGinContextCustomizer())
+
 	// apply customizers before install mappings
 	if err = r.applyCustomizers(ctx); err != nil {
 		return
@@ -473,4 +476,19 @@ func makeHandlerFuncFromMvcMapping(m MvcMapping, options []httptransport.ServerO
 	)
 
 	return makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition())
+}
+
+// makeGinConditionalHandlerFunc wraps given handler with a request matcher
+func makeGinConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
+	if rm == nil {
+		return handler
+	}
+	return func(c *gin.Context) {
+		if matches, e := rm.MatchesWithContext(c, c.Request); e == nil && matches {
+			handler(c)
+		} else if e != nil {
+			c.Error(e)
+			c.Abort()
+		}
+	}
 }

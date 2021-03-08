@@ -23,6 +23,9 @@ type MiddlewareGinMapping interface {
 	GinHandlerFunc() gin.HandlerFunc
 }
 
+/**************************
+	Public
+ **************************/
 // GinContext returns *gin.Context which either contained in the context or is the given context itself
 func GinContext(ctx context.Context) *gin.Context {
 	if ginCtx, ok := ctx.(*gin.Context); ok {
@@ -36,6 +39,37 @@ func GinContext(ctx context.Context) *gin.Context {
 	return nil
 }
 
+/**************************
+	Customizer
+ **************************/
+// RecoveryCustomizer implements Customizer and order.Ordered
+type GinContextCustomizer struct {}
+
+func NewGinContextCustomizer() *GinContextCustomizer {
+	return &GinContextCustomizer{}
+}
+
+func (c GinContextCustomizer) Order() int {
+	// medium precedence, makes this customizer before any non-ordered customizers
+	return 0
+}
+
+func (c GinContextCustomizer) Customize(ctx context.Context, r *Registrar) error {
+	r.AddGlobalMiddlewares(GinContextMerger())
+	return nil
+}
+
+/**************************
+	Handler Funcs
+ **************************/
+func GinContextMerger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := utils.MakeMutableContext(c.Request.Context(), ginContextValuer(c))
+		ctx.Set(kGinContextKey, c)
+		c.Request = c.Request.WithContext(ctx)
+	}
+}
+
 // HttpGinHandlerFunc Integrate http.HandlerFunc with GIN handler
 func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
 	if handlerFunc == nil {
@@ -43,9 +77,7 @@ func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
 	}
 
 	handler := func(c *gin.Context) {
-		c.Request = c.Request.WithContext(
-			context.WithValue(c.Request.Context(), kGinContextKey, c),
-		)
+		c = preProcessContext(c)
 		handlerFunc(c.Writer, c.Request)
 	}
 	return handler
@@ -58,40 +90,31 @@ func NewKitGinHandlerFunc(s *httptransport.Server) gin.HandlerFunc {
 	}
 
 	handler := func(c *gin.Context) {
-		c.Request = c.Request.WithContext(
-			context.WithValue(c.Request.Context(), kGinContextKey, c),
-		)
+		c = preProcessContext(c)
 		s.ServeHTTP(c.Writer, c.Request)
 	}
 	return handler
 }
 
-// makeGinConditionalHandlerFunc wraps given handler with a request matcher
-func makeGinConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
-	if rm == nil {
-		return handler
+func preProcessContext(c *gin.Context) *gin.Context{
+	// because of GinContextMerger is manditory middleware for all mappings, we are sure c.Request.Context() contains gin.Context.
+	// So we only need to make sure it's also mutable
+	ctx := utils.MakeMutableContext(c.Request.Context())
+	if ctx != c.Request.Context() {
+		c.Request = c.Request.WithContext(ctx)
 	}
-	return func(c *gin.Context) {
-		if matches, e := rm.MatchesWithContext(c, c.Request); e == nil && matches {
-			handler(c)
-		} else if e != nil {
-			c.Error(e)
-			c.Abort()
-		}
-	}
+	// note, we could aslo make a copy of gin context in case we want to use it out of reqeust scope
+	// but currently, we don't have such requirement
+	return c
 }
 
+/**************************
+	go-kit options
+ **************************/
 // integrateGinContextBefore Makes sure the context sent to go-kit's encoders/decoders/endpoints/errorHandlers
 // contains values stored in gin.Context
 func integrateGinContextBefore(ctx context.Context, r *http.Request) (ret context.Context) {
-	if ginCtx := GinContext(ctx); ginCtx != nil {
-		ret = utils.MakeMutableContext(ctx, func(key interface{}) interface{} {
-			return ginCtx.Value(key)
-		})
-	} else {
-		ret = utils.MakeMutableContext(ctx)
-	}
-
+	ret = utils.MakeMutableContext(ctx)
 	return
 }
 
@@ -107,6 +130,15 @@ func integrateGinContextFinalizer(ctx context.Context, _ int, r *http.Request) {
 	// 	this update is important, because when the execution flow exit go-kit realm, all information stored in ctx
 	//	would be lost if we don't set it to Request
 	gc.Request = r.WithContext(ctx)
+}
+
+/**************************
+	helpers
+ **************************/
+func ginContextValuer(ginCtx *gin.Context) func(key interface{}) interface{} {
+	return func(key interface{}) interface{} {
+		return ginCtx.Value(key)
+	}
 }
 
 /*********************************

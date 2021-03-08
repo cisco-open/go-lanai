@@ -18,6 +18,10 @@ var (
 	})
 
 	globalPasswdIdp = passwdidp.NewIdentityProvider(func(opt *passwdidp.PasswdIdpDetails) {
+		opt.Domain = "internal.vms.com"
+	})
+
+	globalLocalhostIdp = passwdidp.NewIdentityProvider(func(opt *passwdidp.PasswdIdpDetails) {
 		opt.Domain = "localhost"
 	})
 )
@@ -34,7 +38,7 @@ func (i *InMemoryIdpManager) GetIdentityProvidersWithFlow(flow idp.Authenticatio
 		}
 	case idp.InternalIdpForm:
 		return []idp.IdentityProvider{
-			globalPasswdIdp,
+			globalPasswdIdp, globalLocalhostIdp,
 		}
 	}
 	return []idp.IdentityProvider{}
@@ -47,6 +51,8 @@ func (i *InMemoryIdpManager) GetIdentityProviderByDomain(domain string) (idp.Ide
 		return globalSamlIdp, nil
 	case strings.HasSuffix(domain, globalPasswdIdp.Domain()) && !strings.HasPrefix(domain, "."):
 		return globalPasswdIdp, nil
+	case domain == globalLocalhostIdp.Domain():
+		return globalLocalhostIdp, nil
 	}
 	return nil, fmt.Errorf("cannot find IDP with domain %s", domain)
 }
