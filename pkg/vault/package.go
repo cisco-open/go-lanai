@@ -8,7 +8,6 @@ import (
 	"go.uber.org/fx"
 )
 
-//TODO: register health
 //TODO: tracing instrumentation?
 
 var logger = log.New("vault")
@@ -17,10 +16,10 @@ var Module = &bootstrap.Module {
 	Name: "vault",
 	Precedence: bootstrap.VaultPrecedence,
 	PriorityOptions: []fx.Option{
-		fx.Provide(newConnectionProperties, newClientAuthentication, NewConnection),
+		fx.Provide(newConnectionProperties, newClientAuthentication, NewClient),
 	},
 	Options: []fx.Option{
-		fx.Invoke(setupRenewal),
+		fx.Invoke(setupRenewal, registerHealth),
 	},
 }
 
@@ -52,7 +51,7 @@ func newClientAuthentication(p *ConnectionProperties) ClientAuthentication {
 	return clientAuthentication
 }
 
-func setupRenewal(lc fx.Lifecycle, conn *Connection) {
+func setupRenewal(lc fx.Lifecycle, conn *Client) {
 	renewer, err := conn.GetClientTokenRenewer()
 
 	if err != nil {

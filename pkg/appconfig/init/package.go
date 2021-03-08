@@ -182,7 +182,7 @@ func newVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault
 	return p
 }
 
-func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigProperties *vaultprovider.KvConfigProperties, vaultConnection *vault.Connection) []*vaultprovider.GenericConfigProvider {
+func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigProperties *vaultprovider.KvConfigProperties, vaultClient *vault.Client) []*vaultprovider.GenericConfigProvider {
 	appName := bootstrapConfig.Value(bootstrap.PropertyKeyApplicationName)
 
 	providers := make([]*vaultprovider.GenericConfigProvider, 0, len(profile.Profiles)*2 + 2)
@@ -192,7 +192,7 @@ func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigPro
 	defaultContextConsulProvider := vaultprovider.NewVaultGenericProvider(
 		precedence,
 		fmt.Sprintf("%s%s%s", vaultConfigProperties.Backend, vaultConfigProperties.ProfileSeparator, vaultConfigProperties.DefaultContext),
-		vaultConnection,
+		vaultClient,
 	)
 
 	providers = append(providers, defaultContextConsulProvider)
@@ -202,7 +202,7 @@ func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigPro
 		p := vaultprovider.NewVaultGenericProvider(
 			precedence,
 			fmt.Sprintf("%s%s%s%s%s", vaultConfigProperties.Backend, vaultConfigProperties.ProfileSeparator, vaultConfigProperties.DefaultContext, vaultConfigProperties.ProfileSeparator, profile),
-			vaultConnection,
+			vaultClient,
 		)
 		providers = append(providers, p)
 	}
@@ -213,7 +213,7 @@ func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigPro
 	applicationContextConsulProvider := vaultprovider.NewVaultGenericProvider(
 		precedence,
 		fmt.Sprintf("%s%s%s", vaultConfigProperties.Backend, vaultConfigProperties.ProfileSeparator, appName),
-		vaultConnection,
+		vaultClient,
 	)
 
 	for _, profile := range profile.Profiles {
@@ -221,7 +221,7 @@ func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigPro
 		p := vaultprovider.NewVaultGenericProvider(
 			precedence,
 			fmt.Sprintf("%s%s%s%s%s", vaultConfigProperties.Backend, vaultConfigProperties.ProfileSeparator, appName, vaultConfigProperties.ProfileSeparator, profile),
-			vaultConnection,
+			vaultClient,
 		)
 		providers = append(providers, p)
 	}

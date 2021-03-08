@@ -9,21 +9,21 @@ import "context"
 	This KV secrets engine does not enforce TTLs for expiration, therefore this implementation does not attempt to renew the secret's lease
  */
 type GenericSecretEngine struct {
-	conn *Connection
+	client *Client
 }
 
 func (e *GenericSecretEngine) ListSecrets(ctx context.Context, path string) (results map[string]interface{}, err error) {
 	results = make(map[string]interface{})
 
-	if secrets, err := e.conn.client.Logical().Read(path); err != nil {
+	if secrets, err := e.client.Logical().Read(path); err != nil {
 		return nil, err
 	} else if secrets != nil {
-		logger.WithContext(ctx).Infof("Retrieved %d configs from vault (%s): %s", len(secrets.Data), e.conn.config.Host, path)
+		logger.WithContext(ctx).Infof("Retrieved %d configs from vault (%s): %s", len(secrets.Data), e.client.config.Host, path)
 		for key, val := range secrets.Data {
 			results[key] = val.(string)
 		}
 	} else {
-		logger.WithContext(ctx).Warnf("No secrets retrieved from vault (%s): %s", e.conn.config.Host, path)
+		logger.WithContext(ctx).Warnf("No secrets retrieved from vault (%s): %s", e.client.config.Host, path)
 	}
 	return results, nil
 }

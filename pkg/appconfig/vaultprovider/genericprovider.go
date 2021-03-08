@@ -46,10 +46,10 @@ func (configProvider *GenericConfigProvider) Load() (loadError error) {
 	return nil
 }
 
-func NewVaultGenericProvider(precedence int, contextPath string, conn *vault.Connection) *GenericConfigProvider {
+func NewVaultGenericProvider(precedence int, contextPath string, client *vault.Client) *GenericConfigProvider {
 	return &GenericConfigProvider{
 		ProviderMeta: appconfig.ProviderMeta{Precedence: precedence},
 		contextPath:  contextPath,
-		secretEngine: conn.GenericSecretEngine(),
+		secretEngine: client.GenericSecretEngine(),
 	}
 }

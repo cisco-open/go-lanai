@@ -6,13 +6,13 @@ import (
 )
 
 
-type Connection struct {
+type Client struct {
+	*api.Client
 	config               *ConnectionProperties
-	client               *api.Client
 	clientAuthentication ClientAuthentication
 }
 
-func NewConnection(p *ConnectionProperties, clientAuthentication ClientAuthentication) (*Connection, error) {
+func NewClient(p *ConnectionProperties, clientAuthentication ClientAuthentication) (*Client, error) {
 	clientConfig := api.DefaultConfig()
 	clientConfig.Address = p.Address()
 	if p.Scheme == "https" {
@@ -36,15 +36,15 @@ func NewConnection(p *ConnectionProperties, clientAuthentication ClientAuthentic
 	token, err := clientAuthentication.Login()
 	client.SetToken(token)
 
-	return &Connection{
+	return &Client{
+		Client: client,
 		config:               p,
-		client:               client,
 		clientAuthentication: clientAuthentication,
 	}, nil
 }
 
-func (c *Connection) GetClientTokenRenewer() (*api.Renewer,  error) {
-	secret, err := c.client.Auth().Token().LookupSelf()
+func (c *Client) GetClientTokenRenewer() (*api.Renewer,  error) {
+	secret, err := c.Auth().Token().LookupSelf()
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +58,10 @@ func (c *Connection) GetClientTokenRenewer() (*api.Renewer,  error) {
 			increment, _ = n.Int64()
 		}
 	}
-	r, err := c.client.NewRenewer(&api.RenewerInput{
+	r, err := c.NewRenewer(&api.RenewerInput{
 		Secret: &api.Secret{
 			Auth: &api.SecretAuth{
-				ClientToken: c.client.Token(),
+				ClientToken: c.Token(),
 				Renewable:   renewable,
 			},
 		},
@@ -70,7 +70,7 @@ func (c *Connection) GetClientTokenRenewer() (*api.Renewer,  error) {
 	return r, nil
 }
 
-func (c *Connection) monitorRenew(r *api.Renewer, renewerDescription string) {
+func (c *Client) monitorRenew(r *api.Renewer, renewerDescription string) {
 	for {
 		select {
 		case err := <-r.DoneCh():
@@ -85,8 +85,8 @@ func (c *Connection) monitorRenew(r *api.Renewer, renewerDescription string) {
 	}
 }
 
-func (c *Connection) GenericSecretEngine() *GenericSecretEngine {
+func (c *Client) GenericSecretEngine() *GenericSecretEngine {
 	return &GenericSecretEngine{
-		conn: c,
+		client: c,
 	}
 }
