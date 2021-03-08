@@ -1,18 +1,18 @@
 package vault
 
 import (
-	"context"
+	"encoding/json"
 	"github.com/hashicorp/vault/api"
 )
 
 
 type Connection struct {
-	config      *ConnectionProperties
-	client      *api.Client
-	tokenSource ClientAuthentication
+	config               *ConnectionProperties
+	client               *api.Client
+	clientAuthentication ClientAuthentication
 }
 
-func NewConnection(p *ConnectionProperties, tokenSource ClientAuthentication) (*Connection, error) {
+func NewConnection(p *ConnectionProperties, clientAuthentication ClientAuthentication) (*Connection, error) {
 	clientConfig := api.DefaultConfig()
 	clientConfig.Address = p.Address()
 	if p.Scheme == "https" {
@@ -33,29 +33,60 @@ func NewConnection(p *ConnectionProperties, tokenSource ClientAuthentication) (*
 		return nil, err
 	}
 
-	token, err := tokenSource.Login()
+	token, err := clientAuthentication.Login()
 	client.SetToken(token)
 
 	return &Connection{
-		config:      p,
-		client:      client,
-		tokenSource: tokenSource,
+		config:               p,
+		client:               client,
+		clientAuthentication: clientAuthentication,
 	}, nil
 }
 
-//TODO: secrets should be lease aware
-func (c *Connection) ListSecrets(ctx context.Context, path string) (results map[string]interface{}, err error) {
-	results = make(map[string]interface{})
-
-	if secrets, err := c.client.Logical().Read(path); err != nil {
+func (c *Connection) GetClientTokenRenewer() (*api.Renewer,  error) {
+	secret, err := c.client.Auth().Token().LookupSelf()
+	if err != nil {
 		return nil, err
-	} else if secrets != nil {
-		logger.WithContext(ctx).Infof("Retrieved %d configs from vault (%s): %s", len(secrets.Data), c.config.Host, path)
-		for key, val := range secrets.Data {
-			results[key] = val.(string)
-		}
-	} else {
-		logger.WithContext(ctx).Warnf("No secrets retrieved from vault (%s): %s", c.config.Host, path)
 	}
-	return results, nil
+	var renewable bool
+	if v, ok := secret.Data["renewable"]; ok {
+		renewable, _ = v.(bool)
+	}
+	var increment int64
+	if v, ok := secret.Data["ttl"]; ok {
+		if n, ok := v.(json.Number); ok {
+			increment, _ = n.Int64()
+		}
+	}
+	r, err := c.client.NewRenewer(&api.RenewerInput{
+		Secret: &api.Secret{
+			Auth: &api.SecretAuth{
+				ClientToken: c.client.Token(),
+				Renewable:   renewable,
+			},
+		},
+		Increment: int(increment),
+	})
+	return r, nil
+}
+
+func (c *Connection) monitorRenew(r *api.Renewer, renewerDescription string) {
+	for {
+		select {
+		case err := <-r.DoneCh():
+			if err != nil {
+				logger.Errorf("%s renewer failed %v", renewerDescription, err)
+			}
+			logger.Infof("%s renewer stopped", renewerDescription)
+			break
+		case renewal := <-r.RenewCh():
+			logger.Infof("%s successfully renewed at %v", renewerDescription, renewal.RenewedAt)
+		}
+	}
+}
+
+func (c *Connection) GenericSecretEngine() *GenericSecretEngine {
+	return &GenericSecretEngine{
+		conn: c,
+	}
 }

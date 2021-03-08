@@ -7,29 +7,17 @@ import (
 	"fmt"
 )
 
-const (
-	KvConfigPrefix = "cloud.vault.kv"
-)
-
-type KvConfigProperties struct {
-	Enabled     string `json:"enabled"`
-	Backend          string `json:"backend"`
-	DefaultContext   string `json:"default-context"`
-	ProfileSeparator string `json:"profile-separator"`
-	ApplicationName  string `json:"application-name"`
-}
-
-type ConfigProvider struct {
+type GenericConfigProvider struct {
 	appconfig.ProviderMeta
-	connection *vault.Connection
-	contextPath string
+	secretEngine *vault.GenericSecretEngine
+	contextPath  string
 }
 
-func (configProvider *ConfigProvider) Name() string {
+func (configProvider *GenericConfigProvider) Name() string {
 	return fmt.Sprintf("vault:%s", configProvider.contextPath)
 }
 
-func (configProvider *ConfigProvider) Load() (loadError error) {
+func (configProvider *GenericConfigProvider) Load() (loadError error) {
 	defer func(){
 		if loadError != nil {
 			configProvider.Loaded = false
@@ -43,7 +31,7 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	// load keys from default context
 	var defaultSettings map[string]interface{}
 
-	defaultSettings, loadError = configProvider.connection.ListSecrets(bootstrap.EagerGetApplicationContext(), configProvider.contextPath)
+	defaultSettings, loadError = configProvider.secretEngine.ListSecrets(bootstrap.EagerGetApplicationContext(), configProvider.contextPath)
 	if loadError != nil {
 		return loadError
 	}
@@ -58,10 +46,10 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	return nil
 }
 
-func NewVaultProvider(precedence int, contextPath string, conn *vault.Connection) *ConfigProvider {
-	return &ConfigProvider{
+func NewVaultGenericProvider(precedence int, contextPath string, conn *vault.Connection) *GenericConfigProvider {
+	return &GenericConfigProvider{
 		ProviderMeta: appconfig.ProviderMeta{Precedence: precedence},
 		contextPath:  contextPath,
-		connection:   conn,
+		secretEngine: conn.GenericSecretEngine(),
 	}
 }

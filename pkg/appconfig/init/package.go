@@ -182,14 +182,14 @@ func newVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault
 	return p
 }
 
-func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigProperties *vaultprovider.KvConfigProperties, vaultConnection *vault.Connection) []*vaultprovider.ConfigProvider {
+func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigProperties *vaultprovider.KvConfigProperties, vaultConnection *vault.Connection) []*vaultprovider.GenericConfigProvider {
 	appName := bootstrapConfig.Value(bootstrap.PropertyKeyApplicationName)
 
-	providers := make([]*vaultprovider.ConfigProvider, 0, len(profile.Profiles)*2 + 2)
+	providers := make([]*vaultprovider.GenericConfigProvider, 0, len(profile.Profiles)*2 + 2)
 	precedence := consulPrecedence
 
 	//default contexts
-	defaultContextConsulProvider := vaultprovider.NewVaultProvider(
+	defaultContextConsulProvider := vaultprovider.NewVaultGenericProvider(
 		precedence,
 		fmt.Sprintf("%s%s%s", vaultConfigProperties.Backend, vaultConfigProperties.ProfileSeparator, vaultConfigProperties.DefaultContext),
 		vaultConnection,
@@ -199,7 +199,7 @@ func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigPro
 
 	for _, profile := range profile.Profiles {
 		precedence--
-		p := vaultprovider.NewVaultProvider(
+		p := vaultprovider.NewVaultGenericProvider(
 			precedence,
 			fmt.Sprintf("%s%s%s%s%s", vaultConfigProperties.Backend, vaultConfigProperties.ProfileSeparator, vaultConfigProperties.DefaultContext, vaultConfigProperties.ProfileSeparator, profile),
 			vaultConnection,
@@ -210,7 +210,7 @@ func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigPro
 	precedence--
 
 	//profile specific app context
-	applicationContextConsulProvider := vaultprovider.NewVaultProvider(
+	applicationContextConsulProvider := vaultprovider.NewVaultGenericProvider(
 		precedence,
 		fmt.Sprintf("%s%s%s", vaultConfigProperties.Backend, vaultConfigProperties.ProfileSeparator, appName),
 		vaultConnection,
@@ -218,7 +218,7 @@ func newVaultProvider(bootstrapConfig *appconfig.BootstrapConfig, vaultConfigPro
 
 	for _, profile := range profile.Profiles {
 		precedence--
-		p := vaultprovider.NewVaultProvider(
+		p := vaultprovider.NewVaultGenericProvider(
 			precedence,
 			fmt.Sprintf("%s%s%s%s%s", vaultConfigProperties.Backend, vaultConfigProperties.ProfileSeparator, appName, vaultConfigProperties.ProfileSeparator, profile),
 			vaultConnection,
@@ -258,7 +258,7 @@ type newApplicationConfigParam struct {
 	fx.In
 	FileProvider       []*fileprovider.ConfigProvider `name:"application_file_provider"`
 	ConsulProviders	   []*consulprovider.ConfigProvider
-	VaultProviders     []*vaultprovider.ConfigProvider
+	VaultProviders     []*vaultprovider.GenericConfigProvider
 	BootstrapConfig    *appconfig.BootstrapConfig
 }
 

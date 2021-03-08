@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -18,11 +19,9 @@ var Module = &bootstrap.Module {
 	PriorityOptions: []fx.Option{
 		fx.Provide(newConnectionProperties, newClientAuthentication, NewConnection),
 	},
-	/*
 	Options: []fx.Option{
-		fx.Invoke(),
+		fx.Invoke(setupRenewal),
 	},
-	 */
 }
 
 func init() {
@@ -51,4 +50,24 @@ func newClientAuthentication(p *ConnectionProperties) ClientAuthentication {
 		clientAuthentication = TokenClientAuthentication(p.Token)
 	}
 	return clientAuthentication
+}
+
+func setupRenewal(lc fx.Lifecycle, conn *Connection) {
+	renewer, err := conn.GetClientTokenRenewer()
+
+	if err != nil {
+		panic("cannot create renewer for vault token")
+	}
+
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			go renewer.Renew() //r.Renew() starts a blocking process to periodically renew the token. Therefore we run it as a go routine
+			go conn.monitorRenew(renewer, "vault client token") //this starts a background process to log the renewal events. These two go routine exits when the renewer is stopped
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			renewer.Stop()
+			return nil
+		},
+	})
 }

@@ -9,7 +9,6 @@ type ClientAuthentication interface {
 	Login() (token string, err error)
 }
 
-//TODO: token should be lease aware
 type TokenClientAuthentication string
 
 func (d TokenClientAuthentication) Login() (token string, err error){
