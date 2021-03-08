@@ -9,8 +9,8 @@ import (
 type UrlBuilderOptions func(opt *UrlBuilderOption)
 
 type UrlBuilderOption struct {
-	Subdomain string
-	Path      string
+	FQDN string
+	Path string
 }
 
 type Issuer interface {
@@ -32,8 +32,8 @@ type Issuer interface {
 
 	// BuildUrl build a URL with given url builder options
 	// Implementation specs:
-	// 	1. if UrlBuilderOption.Subdomain is not specified, Issuer.Domain() should be used
-	//  2. if UrlBuilderOption.Subdomain is not a subdomain of Issuer.Domain(), an error should be returned
+	// 	1. if UrlBuilderOption.FQDN is not specified, Issuer.Domain() should be used
+	//  2. if UrlBuilderOption.FQDN is not a subdomain of Issuer.Domain(), an error should be returned
 	//  3. should assume UrlBuilderOption.Path doesn't includes Issuer.ContextPath and the generated URL always
 	//	   include Issuer.ContextPath
 	//  4. if UrlBuilderOption.Path is not specified, the generated URL could be used as a base URL
@@ -106,17 +106,17 @@ func (i DefaultIssuer) BuildUrl(options ...UrlBuilderOptions) (*url.URL, error) 
 	for _, f := range options {
 		f(&opt)
 	}
-	if opt.Subdomain == "" {
-		opt.Subdomain = i.DefaultIssuerDetails.Domain
+	if opt.FQDN == "" {
+		opt.FQDN = i.DefaultIssuerDetails.Domain
 	}
 
-	if strings.HasSuffix(opt.Subdomain, i.DefaultIssuerDetails.Domain) && strings.HasPrefix(opt.Subdomain, ".") {
-		return nil, fmt.Errorf("invalid subdomain %s", opt.Subdomain)
+	if strings.HasSuffix(opt.FQDN, i.DefaultIssuerDetails.Domain) && strings.HasPrefix(opt.FQDN, ".") {
+		return nil, fmt.Errorf("invalid subdomain %s", opt.FQDN)
 	}
 
 	ret := &url.URL{}
 	ret.Scheme = i.DefaultIssuerDetails.Protocol
-	ret.Host = opt.Subdomain
+	ret.Host = opt.FQDN
 	if i.DefaultIssuerDetails.IncludePort {
 		ret.Host = fmt.Sprintf("%s:%d", ret.Host, i.DefaultIssuerDetails.Port)
 	}

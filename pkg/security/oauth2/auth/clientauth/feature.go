@@ -14,6 +14,7 @@ type ClientAuthFeature struct {
 	clientStore         oauth2.OAuth2ClientStore
 	clientSecretEncoder passwd.PasswordEncoder
 	errorHandler        *auth.OAuth2ErrorHandler
+	allowForm           bool
 }
 
 // Standard security.Feature entrypoint
@@ -48,5 +49,11 @@ func (f *ClientAuthFeature) ClientSecretEncoder(clientSecretEncoder passwd.Passw
 
 func (f *ClientAuthFeature) ErrorHandler(errorHandler *auth.OAuth2ErrorHandler) *ClientAuthFeature {
 	f.errorHandler = errorHandler
+	return f
+}
+
+// AllowForm with "true" also implicitly enables Public Client (client that with empty secret)
+func (f *ClientAuthFeature) AllowForm(allowForm bool) *ClientAuthFeature {
+	f.allowForm = allowForm
 	return f
 }
