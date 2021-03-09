@@ -25,15 +25,17 @@ type CheckTokenRequest struct {
 }
 
 type CheckTokenEndpoint struct {
+	issuer           security.Issuer
 	authenticator    security.Authenticator
 	tokenStoreReader oauth2.TokenStoreReader
 }
 
-func NewCheckTokenEndpoint(tokenStoreReader oauth2.TokenStoreReader) *CheckTokenEndpoint {
+func NewCheckTokenEndpoint(issuer security.Issuer, tokenStoreReader oauth2.TokenStoreReader) *CheckTokenEndpoint {
 	authenticator := tokenauth.NewAuthenticator(func(opt *tokenauth.AuthenticatorOption) {
 		opt.TokenStoreReader = tokenStoreReader
 	})
 	return &CheckTokenEndpoint{
+		issuer:           issuer,
 		authenticator:    authenticator,
 		tokenStoreReader: tokenStoreReader,
 	}
@@ -108,7 +110,7 @@ func (ep *CheckTokenEndpoint) activeTokenResponseWithDetails(ctx context.Context
 		Active: &utils.TRUE,
 	}
 
-	if e := claims.Populate(ctx, &c, claims.CheckTokenClaimSpecs, auth); e != nil {
+	if e := claims.Populate(ctx, &c, claims.CheckTokenClaimSpecs, claims.WithSource(auth), claims.WithIssuer(ep.issuer)); e != nil {
 		return ep.activeTokenResponseWithoutDetails()
 	}
 

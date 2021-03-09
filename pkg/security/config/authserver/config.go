@@ -53,6 +53,7 @@ func ConfigureAuthorizationServer(di authServerDI) {
 
 	// Securities
 	di.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: &config})
+	di.SecurityRegistrar.Register(&TokenAuthEndpointsConfigurer{config: &config})
 	for _, configuer := range config.idpConfigurers {
 		di.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: &config, delegate: configuer})
 	}

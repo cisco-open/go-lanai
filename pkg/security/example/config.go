@@ -25,7 +25,7 @@ func (c *TestSecurityConfigurer) Configure(ws security.WebSecurity) {
 	// DSL style example
 	// for REST API
 	ws.Route(matcher.RouteWithPattern("/api/**")).
-		Condition(matcher.RequestWithHost("localhost:8080")).
+		//Condition(matcher.RequestWithHost("localhost:8080")).
 		With(tokenauth.New()).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
