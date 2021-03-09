@@ -16,6 +16,7 @@ const (
 	OpNameStop = "shutdown"
 	OpNameHttp = "http"
 	OpNameRedis = "redis"
+	OpNameVault = "vault"
 	//OpName = ""
 )
 

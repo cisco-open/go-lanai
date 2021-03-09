@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	securitysaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"errors"
 	"fmt"
 	"github.com/crewjam/saml/samlsp"
@@ -17,7 +18,7 @@ import (
 )
 
 func TestMetadataEndpoint(t *testing.T) {
-	prop := security.NewSamlProperties()
+	prop := securitysaml.NewSamlProperties()
 	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
@@ -49,7 +50,7 @@ func TestAcsEndpoint(t *testing.T) {
 }
 
 func TestSamlEntryPoint(t *testing.T) {
-	prop := security.NewSamlProperties()
+	prop := securitysaml.NewSamlProperties()
 	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"

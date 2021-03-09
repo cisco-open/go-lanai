@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	 securitysaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -99,7 +100,7 @@ func makeAuthnRequest(sp saml.ServiceProvider) string {
 }
 
 func setupServerForTest(testClientStore SamlClientStore, testAccountStore security.AccountStore) *gin.Engine {
-	prop := security.NewSamlProperties()
+	prop := securitysaml.NewSamlProperties()
 	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"

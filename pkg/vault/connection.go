@@ -1,18 +1,22 @@
 package vault
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/hashicorp/vault/api"
 )
 
 
 type Client struct {
-	*api.Client
+	apiClient            *api.Client
 	config               *ConnectionProperties
 	clientAuthentication ClientAuthentication
+	hooks                []Hook
 }
 
-func NewClient(p *ConnectionProperties, clientAuthentication ClientAuthentication) (*Client, error) {
+func NewClient(p *ConnectionProperties) (*Client, error) {
+	clientAuth := newClientAuthentication(p)
+
 	clientConfig := api.DefaultConfig()
 	clientConfig.Address = p.Address()
 	if p.Scheme == "https" {
@@ -33,18 +37,41 @@ func NewClient(p *ConnectionProperties, clientAuthentication ClientAuthenticatio
 		return nil, err
 	}
 
-	token, err := clientAuthentication.Login()
+	token, err := clientAuth.Login()
+	if err != nil {
+		logger.Warnf("vault apiClient cannot get token %v", err)
+	}
 	client.SetToken(token)
 
 	return &Client{
-		Client: client,
+		apiClient:            client,
 		config:               p,
-		clientAuthentication: clientAuthentication,
+		clientAuthentication: clientAuth,
 	}, nil
 }
 
+func (c *Client) AddHooks(_ context.Context, hooks ...Hook) {
+	c.hooks = append(c.hooks, hooks...)
+}
+
+func (c *Client) Logical(ctx context.Context) *Logical {
+	return &Logical{
+		Logical: c.apiClient.Logical(),
+		ctx: ctx,
+		hooks: c.hooks,
+	}
+}
+
+func (c *Client) Sys(ctx context.Context) *Sys {
+	return &Sys{
+		Sys: c.apiClient.Sys(),
+		ctx: ctx,
+		hooks: c.hooks,
+	}
+}
+
 func (c *Client) GetClientTokenRenewer() (*api.Renewer,  error) {
-	secret, err := c.Auth().Token().LookupSelf()
+	secret, err := c.apiClient.Auth().Token().LookupSelf()
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +85,10 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer,  error) {
 			increment, _ = n.Int64()
 		}
 	}
-	r, err := c.NewRenewer(&api.RenewerInput{
+	r, err := c.apiClient.NewRenewer(&api.RenewerInput{
 		Secret: &api.Secret{
 			Auth: &api.SecretAuth{
-				ClientToken: c.Token(),
+				ClientToken: c.apiClient.Token(),
 				Renewable:   renewable,
 			},
 		},
@@ -70,23 +97,17 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer,  error) {
 	return r, nil
 }
 
-func (c *Client) monitorRenew(r *api.Renewer, renewerDescription string) {
+func (c *Client) MonitorRenew(ctx context.Context, r *api.Renewer, renewerDescription string) {
 	for {
 		select {
 		case err := <-r.DoneCh():
 			if err != nil {
-				logger.Errorf("%s renewer failed %v", renewerDescription, err)
+				logger.WithContext(ctx).Errorf("%s renewer failed %v", renewerDescription, err)
 			}
-			logger.Infof("%s renewer stopped", renewerDescription)
+			logger.WithContext(ctx).Infof("%s renewer stopped", renewerDescription)
 			break
 		case renewal := <-r.RenewCh():
-			logger.Infof("%s successfully renewed at %v", renewerDescription, renewal.RenewedAt)
+			logger.WithContext(ctx).Infof("%s successfully renewed at %v", renewerDescription, renewal.RenewedAt)
 		}
-	}
-}
-
-func (c *Client) GenericSecretEngine() *GenericSecretEngine {
-	return &GenericSecretEngine{
-		client: c,
 	}
 }

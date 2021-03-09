@@ -7,11 +7,10 @@ const (
 )
 
 type ConnectionProperties struct {
-	Enabled     string `json:"enabled"` //TODO
 	Host        string `json:"host"`
 	Port        int    `json:"port"`
 	Scheme      string `json:"scheme"`
-	Authentication string `json:"authentication"`
+	Authentication AuthMethod `json:"authentication"`
 	Ssl			SslProperties `json:"ssl"`
 	Token 		string `json:"token"`
 }
@@ -22,7 +21,7 @@ func (p *ConnectionProperties) Address() string {
 
 type SslProperties struct {
 	Cacert     string `json:"ca-cert"`
-	ClientCert string `json:"client-cert"`
-	ClientKey  string `json:"client-key"`
+	ClientCert string `json:"apiClient-cert"`
+	ClientKey  string `json:"apiClient-key"`
 	Insecure   bool   `json:"insecure"`
 }
