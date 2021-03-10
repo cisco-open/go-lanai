@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	configKeyAppName = "spring.application.name"
+	configKeyAppName = "application.name"
 )
 
 type ConfigProvider struct {

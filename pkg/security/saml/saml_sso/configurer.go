@@ -9,6 +9,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -88,7 +89,7 @@ func (c *SamlAuthorizeEndpointConfigurer) getIdentityProviderConfiguration(f *Fe
 		//usually this is the metadata url, but to keep consistent with existing implementation, we just use the context path
 		EntityIdUrl: *rootURL,
 		SsoUrl: *rootURL.ResolveReference(&url.URL{
-			Path: f.ssoLocation.Path,
+			Path: fmt.Sprintf("%s%s", rootURL.Path, f.ssoLocation.Path),
 			RawQuery: f.ssoLocation.RawQuery,
 		}),
 		serviceProviderManager: c.samlClientStore,

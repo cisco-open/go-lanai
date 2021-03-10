@@ -101,24 +101,31 @@ func makeAuthnRequest(sp saml.ServiceProvider) string {
 
 func setupServerForTest(testClientStore SamlClientStore, testAccountStore security.AccountStore) *gin.Engine {
 	prop := samlctx.NewSamlProperties()
-	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
 
 	serverProp := web.NewServerProperties()
 	serverProp.ContextPath = "europa"
-	c := newSamlAuthorizeEndpointConfigurer(*prop, *serverProp, testClientStore, testAccountStore, nil)
+	c := newSamlAuthorizeEndpointConfigurer(*prop, testClientStore, testAccountStore, nil)
 
 	f := NewEndpoint().
 		SsoLocation(&url.URL{Path: "/v2/authorize", RawQuery: "grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"}).
 		SsoCondition(matcher.NotRequest(matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"))).
-		MetadataPath("/metadata")
+		MetadataPath("/metadata").
+		Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
+		*opt =security.DefaultIssuerDetails{
+			Protocol:    "http",
+			Domain:      "vms.com",
+			Port:        8080,
+			ContextPath: serverProp.ContextPath,
+			IncludePort: true,
+		}}))
 
 	opts := c.getIdentityProviderConfiguration(f)
 	mw := NewSamlAuthorizeEndpointMiddleware(opts, c.samlClientStore, c.accountStore, c.attributeGenerator)
 
 	r := gin.Default()
-	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc)
+	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc())
 	r.Use(MockAuthHandler)
 	r.Use(mw.RefreshMetadataHandler(f.ssoCondition))
 	r.Use(mw.AuthorizeHandlerFunc(f.ssoCondition))

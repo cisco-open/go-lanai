@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/fx"
@@ -112,6 +113,7 @@ type regDI struct {
 	FxHook       TracerClosingHook   `optional:"true"`
 	Registrar    *web.Registrar      `optional:"true"`
 	RedisFactory redis.ClientFactory `optional:"true"`
+	VaultClient  *vault.Client		 `optional:"true"`
 	// we could include security configurations, customizations here
 }
 
@@ -132,6 +134,12 @@ func initialize(lc fx.Lifecycle, di regDI) {
 	if di.RedisFactory != nil {
 		hook := instrument.NewRedisTrackingHook(di.Tracer)
 		di.RedisFactory.AddHooks(di.AppContext, hook)
+	}
+
+	// vault instrumentation
+	if di.VaultClient != nil {
+		hook := instrument.NewVaultTracingHook(di.Tracer)
+		di.VaultClient.AddHooks(di.AppContext, hook)
 	}
 
 	// graceful closer

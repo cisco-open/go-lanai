@@ -21,6 +21,7 @@ const (
 	TracingPrecedence
 	ActuatorPrecedence
 	ConsulPrecedence
+	VaultPrecedence
 	RedisPrecedence
 	WebPrecedence
 	SecurityPrecedence

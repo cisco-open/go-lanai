@@ -6,9 +6,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/consulprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/envprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/fileprovider"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/vaultprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/profile"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -26,6 +28,8 @@ var ConfigModule = &bootstrap.Module{
 			newApplicationFileProvider,
 			newConsulProvider,
 			newConsulConfigProperties,
+			newVaultProvider,
+			newVaultConfigProperties,
 			newApplicationConfig),
 	},
 }
@@ -111,53 +115,145 @@ func newConsulConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *cons
 		Prefix: "userviceconfiguration",
 		DefaultContext: "defaultapplication",
 		ProfileSeparator: ",",
+		Enabled: true,
 	}
-	bootstrapConfig.Bind(p, consulprovider.ConfigRootConsulConfigProvider)
+	bootstrapConfig.Bind(p, consulprovider.ConfigKeyConsulEndpoint)
 	return p
 }
 
-func newConsulProvider(	bootstrapConfig *appconfig.BootstrapConfig, consulConfigProperties *consulprovider.ConsulConfigProperties, consulConnection *consul.Connection) []*consulprovider.ConfigProvider {
-	appName := bootstrapConfig.Value(consulprovider.ConfigKeyAppName)
+type consulDi struct {
+	fx.In
+	BootstrapConfig *appconfig.BootstrapConfig
+	ConsulConfigProperties *consulprovider.ConsulConfigProperties
+	ConsulConnection *consul.Connection `optional:"true"`
+}
 
+func newConsulProvider(di consulDi) []*consulprovider.ConfigProvider {
 	providers := make([]*consulprovider.ConfigProvider, 0, len(profile.Profiles)*2 + 2)
+	if !di.ConsulConfigProperties.Enabled || di.ConsulConnection == nil {
+		return providers
+	}
+
+	appName := di.BootstrapConfig.Value(bootstrap.PropertyKeyApplicationName)
+
 	precedence := consulPrecedence
 
-	//1. default contexts
+	//default contexts
 	defaultContextConsulProvider := consulprovider.NewConsulProvider(
 		precedence,
-		fmt.Sprintf("%s/%s", consulConfigProperties.Prefix, consulConfigProperties.DefaultContext),
-		consulConnection,
+		fmt.Sprintf("%s/%s", di.ConsulConfigProperties.Prefix, di.ConsulConfigProperties.DefaultContext),
+		di.ConsulConnection,
+	)
+
+	providers = append(providers, defaultContextConsulProvider)
+
+	//profile specific default context
+	for _, profile := range profile.Profiles {
+		precedence--
+		p := consulprovider.NewConsulProvider(
+			precedence,
+			fmt.Sprintf("%s/%s%s%s",
+				di.ConsulConfigProperties.Prefix, di.ConsulConfigProperties.DefaultContext, di.ConsulConfigProperties.ProfileSeparator, profile),
+			di.ConsulConnection,
+		)
+		providers = append(providers, p)
+	}
+
+	precedence--
+	//app context
+	applicationContextConsulProvider := consulprovider.NewConsulProvider(
+		precedence,
+		fmt.Sprintf("%s/%s", di.ConsulConfigProperties.Prefix, appName),
+		di.ConsulConnection,
+	)
+
+	//profile specific app context
+	for _, profile := range profile.Profiles {
+		precedence--
+		p := consulprovider.NewConsulProvider(
+			precedence,
+			fmt.Sprintf("%s/%s%s%s",
+				di.ConsulConfigProperties.Prefix, appName, di.ConsulConfigProperties.ProfileSeparator, profile),
+			di.ConsulConnection,
+		)
+		providers = append(providers, p)
+	}
+
+	providers = append(providers, applicationContextConsulProvider)
+
+	return providers
+}
+
+func newVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *vaultprovider.KvConfigProperties {
+	p := &vaultprovider.KvConfigProperties{
+		Backend: "secret",
+		DefaultContext: "defaultapplication",
+		ProfileSeparator: "/",
+		Enabled: true,
+		BackendVersion: 1,
+	}
+	bootstrapConfig.Bind(p, consulprovider.ConfigKeyConsulEndpoint)
+	return p
+}
+
+type vaultDi struct {
+	fx.In
+	BootstrapConfig       *appconfig.BootstrapConfig
+	VaultConfigProperties *vaultprovider.KvConfigProperties
+	VaultClient           *vault.Client `optional:"true"`
+}
+
+func newVaultProvider(di vaultDi) []*vaultprovider.KeyValueConfigProvider {
+	providers := make([]*vaultprovider.KeyValueConfigProvider, 0, len(profile.Profiles)*2 + 2)
+	if !di.VaultConfigProperties.Enabled || di.VaultClient == nil{
+		return providers
+	}
+
+	kvSecretEngine, err := vaultprovider.NewKvSecretEngine(
+		di.VaultConfigProperties.BackendVersion, di.VaultConfigProperties.Backend, di.VaultClient)
+
+	if err != nil {
+		panic(err)
+	}
+
+	appName := di.BootstrapConfig.Value(bootstrap.PropertyKeyApplicationName)
+	precedence := consulPrecedence
+
+	//default contexts
+	defaultContextConsulProvider := vaultprovider.NewVaultKvProvider(
+		precedence,
+		di.VaultConfigProperties.DefaultContext,
+		kvSecretEngine,
 	)
 
 	providers = append(providers, defaultContextConsulProvider)
 
 	for _, profile := range profile.Profiles {
 		precedence--
-		p := consulprovider.NewConsulProvider(
+		p := vaultprovider.NewVaultKvProvider(
 			precedence,
-			fmt.Sprintf("%s/%s%s%s",
-				consulConfigProperties.Prefix, consulConfigProperties.DefaultContext, consulConfigProperties.ProfileSeparator, profile),
-			consulConnection,
+			fmt.Sprintf("%s%s%s", di.VaultConfigProperties.DefaultContext, di.VaultConfigProperties.ProfileSeparator, profile),
+			kvSecretEngine,
 		)
 		providers = append(providers, p)
 	}
 
 	precedence--
 
-	//profile specific default context
-	applicationContextConsulProvider := consulprovider.NewConsulProvider(
+	//app context
+	applicationContextConsulProvider := vaultprovider.NewVaultKvProvider(
 		precedence,
-		fmt.Sprintf("%s/%s", consulConfigProperties.Prefix, appName),
-		consulConnection,
+		fmt.Sprintf("%s", appName),
+		kvSecretEngine,
 	)
 
+	//profile specific app context
 	for _, profile := range profile.Profiles {
 		precedence--
-		p := consulprovider.NewConsulProvider(
+		p := vaultprovider.NewVaultKvProvider(
 			precedence,
-			fmt.Sprintf("%s/%s%s%s",
-				consulConfigProperties.Prefix, appName, consulConfigProperties.ProfileSeparator, profile),
-			consulConnection,
+			fmt.Sprintf("%s%s%s", appName, di.VaultConfigProperties.ProfileSeparator, profile),
+			kvSecretEngine,
 		)
 		providers = append(providers, p)
 	}
@@ -194,6 +290,7 @@ type newApplicationConfigParam struct {
 	fx.In
 	FileProvider       []*fileprovider.ConfigProvider `name:"application_file_provider"`
 	ConsulProviders	   []*consulprovider.ConfigProvider
+	VaultProviders     []*vaultprovider.KeyValueConfigProvider
 	BootstrapConfig    *appconfig.BootstrapConfig
 }
 
@@ -211,6 +308,9 @@ func newApplicationConfig(p newApplicationConfigParam) appConfigDIOut {
 		mergedProvider = append(mergedProvider, provider)
 	}
 	for _, provider := range p.ConsulProviders {
+		mergedProvider = append(mergedProvider, provider)
+	}
+	for _, provider := range p.VaultProviders {
 		mergedProvider = append(mergedProvider, provider)
 	}
 	mergedProvider = append(mergedProvider, p.BootstrapConfig.Providers()...)
