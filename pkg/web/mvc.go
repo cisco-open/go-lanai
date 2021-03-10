@@ -247,9 +247,4 @@ func instantiateByType(t reflect.Type) (ptr interface{}, value *reflect.Value) {
 	}
 }
 
-/**********************************
-	Generic Response Decoder
-***********************************/
-
-// TODO Response Decode function, used for client
 
