@@ -47,11 +47,22 @@ func (c *ClientAuthConfigurer) Apply(feature security.Feature, ws security.WebSe
 		AdditionalErrorHandler(f.errorHandler)
 
 	// add middleware to translate authentication error to oauth2 error
-	mw := NewClientAuthMiddleware()
+	mw := NewClientAuthMiddleware(func(opt *ClientAuthMWOption) {
+		opt.Authenticator = ws.Authenticator()
+		opt.SuccessHandler = ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler)
+	})
 	ws.Add(middleware.NewBuilder("client auth error translator").
 		Order(security.MWOrderPreAuth).
 		Use(mw.ErrorTranslationHandlerFunc()),
 	)
+
+	// add middleware to support form based client auth
+	if f.allowForm {
+		ws.Add(middleware.NewBuilder("form client auth").
+			Order(security.MWOrderFormAuth).
+			Use(mw.ClientAuthFormHandlerFunc()),
+		)
+	}
 
 	// TODO add middleware to handle form client auth
 

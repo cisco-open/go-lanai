@@ -17,10 +17,6 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 	},
 }
 
-func init() {
-	security.Use()
-}
-
 func Use() {
 	security.Use()
 	bootstrap.Register(OAuth2AuthorizeModule)

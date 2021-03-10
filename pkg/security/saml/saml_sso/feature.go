@@ -11,6 +11,7 @@ type Feature struct {
 	ssoCondition web.RequestMatcher
 	ssoLocation  *url.URL
 	metadataPath string
+	issuer       security.Issuer
 }
 
 // Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
@@ -34,6 +35,11 @@ func (f *Feature) SsoLocation(location *url.URL) *Feature {
 
 func (f *Feature) MetadataPath(path string) *Feature {
 	f.metadataPath = path
+	return f
+}
+
+func (f *Feature) Issuer(issuer security.Issuer) *Feature {
+	f.issuer = issuer
 	return f
 }
 

@@ -22,14 +22,17 @@ func init() {
 	bootstrap.Register(PasswordAuthModule)
 }
 
-type dependencies struct {
+type initDI struct {
 	fx.In
+	SecRegistrar    security.Registrar    `optional:"true"`
 	AccountStore    security.AccountStore `optional:"true"`
 	PasswordEncoder PasswordEncoder       `optional:"true"`
-	Redis           redis.Client         `optional:"true"`
+	Redis           redis.Client          `optional:"true"`
 }
 
-func register(init security.Registrar, di dependencies) {
-	configurer := newPasswordAuthConfigurer(di.AccountStore, di.PasswordEncoder, di.Redis)
-	init.(security.FeatureRegistrar).RegisterFeature(PasswordAuthenticatorFeatureId, configurer)
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newPasswordAuthConfigurer(di.AccountStore, di.PasswordEncoder, di.Redis)
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(PasswordAuthenticatorFeatureId, configurer)
+	}
 }

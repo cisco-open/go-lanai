@@ -36,11 +36,11 @@ func Use() {
 		fx.Provide(NewTenantStore),
 		fx.Provide(NewProviderStore),
 		fx.Provide(NewInMemoryIdpManager),
-		fx.Provide(NewInMemAuthFlowManager),
 		fx.Provide(NewInMemSpManager),
 		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(newResServerConfigurer),
-		fx.Invoke(configureSecurity, configureConsulRegistration),
+		fx.Invoke(configureSecurity),
+		fx.Invoke(configureConsulRegistration),
 	)
 }
 
@@ -50,26 +50,27 @@ func configureSecurity(init security.Registrar, store security.AccountStore) {
 	init.Register(&ErrorPageSecurityConfigurer{})
 }
 
-type dependencies struct {
+type authDI struct {
 	fx.In
-	ClientStore      oauth2.OAuth2ClientStore
-	AccountStore     security.AccountStore
-	TenantStore      security.TenantStore
-	ProviderStore    security.ProviderStore
-	AuthFlowManager  idp.AuthFlowManager
+	ClientStore   oauth2.OAuth2ClientStore
+	AccountStore  security.AccountStore
+	TenantStore   security.TenantStore
+	ProviderStore security.ProviderStore
+	IdpManager    idp.IdentityProviderManager
 	// TODO properties
 }
 
-func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerConfigurer {
+func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer {
 	return func(config *authserver.Configuration) {
-		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer(deps.AuthFlowManager))
-		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer(deps.AuthFlowManager))
+		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer())
+		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer())
 
-		config.ClientStore = deps.ClientStore
+		config.IdpManager = di.IdpManager
+		config.ClientStore = di.ClientStore
 		config.ClientSecretEncoder = passwd.NewNoopPasswordEncoder()
-		config.UserAccountStore = deps.AccountStore
-		config.TenantStore = deps.TenantStore
-		config.ProviderStore = deps.ProviderStore
+		config.UserAccountStore = di.AccountStore
+		config.TenantStore = di.TenantStore
+		config.ProviderStore = di.ProviderStore
 		config.UserPasswordEncoder = passwd.NewNoopPasswordEncoder()
 		config.Endpoints = authserver.Endpoints{
 			Authorize: authserver.ConditionalEndpoint{
@@ -91,7 +92,7 @@ func newAuthServerConfigurer(deps dependencies) authserver.AuthorizationServerCo
 	}
 }
 
-func newResServerConfigurer(deps dependencies) resserver.ResourceServerConfigurer {
+func newResServerConfigurer(deps authDI) resserver.ResourceServerConfigurer {
 	return func(config *resserver.Configuration) {
 		config.RemoteEndpoints = resserver.RemoteEndpoints{
 			Token: "http://localhost:8080/europa/v2/token",

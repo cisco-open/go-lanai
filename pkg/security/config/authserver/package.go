@@ -11,15 +11,13 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 	Name: "oauth2 authserver",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
+		fx.Provide(BindAuthServerProperties),
 		fx.Invoke(ConfigureAuthorizationServer),
 	},
 }
 
-func init() {
-	security.Use()
-}
-
 func Use() {
+	security.Use()
 	bootstrap.Register(OAuth2AuthorizeModule)
 }
 

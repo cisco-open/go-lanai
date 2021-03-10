@@ -1,46 +1,48 @@
 package web
 
-import (
-	"github.com/gin-gonic/gin"
-)
-
 type ConditionalMiddleware interface {
 	Condition() RequestMatcher
 }
 
 type Middleware interface {
-	HandlerFunc() gin.HandlerFunc
+	HandlerFunc() HandlerFunc
 }
 
 type middlewareMapping struct {
-	name               string
-	order              int
-	matcher            RouteMatcher
-	handlerFunc        gin.HandlerFunc
+	name        string
+	order       int
+	matcher     RouteMatcher
+	condition   RequestMatcher
+	handlerFunc HandlerFunc
 }
 
-func NewMiddlewareMapping(name string, order int, matcher RouteMatcher, handlerFunc gin.HandlerFunc) MiddlewareMapping {
+func NewMiddlewareMapping(name string, order int, matcher RouteMatcher, cond RequestMatcher, handlerFunc HandlerFunc) MiddlewareMapping {
 	return &middlewareMapping {
 		name: name,
 		matcher: matcher,
 		order: order,
+		condition: cond,
 		handlerFunc: handlerFunc,
 	}
 }
 
-func (mm *middlewareMapping) Name() string {
+func (mm middlewareMapping) Name() string {
 	return mm.name
 }
 
-func (mm *middlewareMapping) Matcher() RouteMatcher {
+func (mm middlewareMapping) Matcher() RouteMatcher {
 	return mm.matcher
 }
 
-func (mm *middlewareMapping) Order() int {
+func (mm middlewareMapping) Order() int {
 	return mm.order
 }
 
-func (mm *middlewareMapping) HandlerFunc() gin.HandlerFunc {
+func (mm middlewareMapping) Condition() RequestMatcher {
+	return mm.condition
+}
+
+func (mm middlewareMapping) HandlerFunc() HandlerFunc {
 	return mm.handlerFunc
 }
 

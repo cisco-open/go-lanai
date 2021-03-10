@@ -99,17 +99,4 @@ func Authenticated(auth security.Authentication) (bool, error) {
 	return false, security.NewInsufficientAuthError("not fully authenticated")
 }
 
-func HasPermissions(permissions...string) ControlFunc {
-	return func(auth security.Authentication) (bool, error) {
-		switch {
-		case auth.State() > security.StateAnonymous && security.HasPermissions(auth, permissions...):
-			return true, nil
-		case auth.State() < security.StatePrincipalKnown:
-			return false, security.NewInsufficientAuthError("not authenticated")
-		case auth.State() < security.StateAuthenticated:
-			return false, security.NewInsufficientAuthError("not fully authenticated")
-		default:
-			return false, security.NewAccessDeniedError("access denied")
-		}
-	}
-}
+// Note: More ControlFunc can be found in permissions.go

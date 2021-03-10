@@ -4,8 +4,8 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	securitysaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"errors"
 	"fmt"
 	"github.com/crewjam/saml/samlsp"
@@ -18,23 +18,30 @@ import (
 )
 
 func TestMetadataEndpoint(t *testing.T) {
-	prop := securitysaml.NewSamlProperties()
-	prop.RootUrl = "http://vms.com:8080"
+	prop := saml.NewSamlProperties()
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
 
 	serverProp := web.NewServerProperties()
 	serverProp.ContextPath = "europa"
 
-	c := newSamlAuthConfigurer(*prop, *serverProp, newTestIdpManager(), newTestFedAccountStore())
+	c := newSamlAuthConfigurer(*prop, newTestIdpManager(), newTestFedAccountStore())
 	feature := New()
+	feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
+		*opt =security.DefaultIssuerDetails{
+		Protocol:    "http",
+		Domain:      "vms.com",
+		Port:        8080,
+		ContextPath: serverProp.ContextPath,
+		IncludePort: true,
+	}}))
 	ws := TestWebSecurity{}
 
 	m := c.makeMiddleware(feature, ws)
 
 	r := gin.Default()
 	r.Use(m.RefreshMetadataHandler())
-	r.GET(serverProp.ContextPath + feature.metadataPath, m.MetadataHandlerFunc)
+	r.GET(serverProp.ContextPath + feature.metadataPath, m.MetadataHandlerFunc())
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/europa/saml/metadata", nil)
@@ -50,16 +57,23 @@ func TestAcsEndpoint(t *testing.T) {
 }
 
 func TestSamlEntryPoint(t *testing.T) {
-	prop := securitysaml.NewSamlProperties()
-	prop.RootUrl = "http://vms.com:8080"
+	prop := saml.NewSamlProperties()
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
 
 	serverProp := web.NewServerProperties()
 	serverProp.ContextPath = "europa"
 
-	c := newSamlAuthConfigurer(*prop, *serverProp, newTestIdpManager(), newTestFedAccountStore())
+	c := newSamlAuthConfigurer(*prop, newTestIdpManager(), newTestFedAccountStore())
 	feature := New()
+	feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
+		*opt =security.DefaultIssuerDetails{
+			Protocol:    "http",
+			Domain:      "vms.com",
+			Port:        8080,
+			ContextPath: serverProp.ContextPath,
+			IncludePort: true,
+		}}))
 	ws := TestWebSecurity{}
 
 	m := c.makeMiddleware(feature, ws)
@@ -150,31 +164,66 @@ func (a AuthRequestMatcher) NegatedFailureMessage(actual interface{}) (message s
 	return fmt.Sprintf("Expected html with form posting auth request. Actual: " + body)
 }
 
+type TestIdpProvider struct {
+	domain string
+	metadataLocation string
+	externalIdpName string
+	externalIdName string
+	entityId string
+}
+
+func (i TestIdpProvider) Domain() string {
+	return i.domain
+}
+
+func (i TestIdpProvider) EntityId() string {
+	return i.entityId
+}
+
+func (i TestIdpProvider) MetadataLocation() string {
+	return i.metadataLocation
+}
+
+func (i TestIdpProvider) ExternalIdName() string {
+	return i.externalIdName
+}
+
+func (i TestIdpProvider) ExternalIdpName() string {
+	return i.externalIdpName
+}
+
 type TestIdpManager struct {
-	idpDetails SamlIdpDetails
+	idpDetails TestIdpProvider
 }
 
 func newTestIdpManager() *TestIdpManager {
 	return &TestIdpManager{
-		idpDetails: SamlIdpDetails{
-			Domain:           "saml.vms.com",
-			MetadataLocation: "testdata/okta_metadata.xml",
-			ExternalIdpName: "okta",
-			ExternalIdName: "email",
-			EntityId: "http://www.okta.com/exkwj65c2kC1vwtYi0h7",
+		idpDetails: TestIdpProvider{
+			domain:           "saml.vms.com",
+			metadataLocation: "testdata/okta_metadata.xml",
+			externalIdpName: "okta",
+			externalIdName: "email",
+			entityId: "http://www.okta.com/exkwj65c2kC1vwtYi0h7",
 		},
 	}
 }
 
-func (t *TestIdpManager) GetAllIdentityProvider() []idp.IdentityProviderDetails {
-	return []idp.IdentityProviderDetails{t.idpDetails}
+func (t *TestIdpManager) GetIdentityProvidersWithFlow(idp.AuthenticationFlow) []idp.IdentityProvider {
+	return []idp.IdentityProvider{t.idpDetails}
 }
 
-func (t TestIdpManager) GetIdentityProviderByEntityId(entityId string) (idp.IdentityProviderDetails, error) {
-	if entityId == t.idpDetails.EntityId {
+func (t TestIdpManager) GetIdentityProviderByEntityId(entityId string) (idp.IdentityProvider, error) {
+	if entityId == t.idpDetails.entityId {
 		return t.idpDetails, nil
 	}
-	return SamlIdpDetails{}, errors.New("not found")
+	return nil, errors.New("not found")
+}
+
+func (t TestIdpManager) GetIdentityProviderByDomain(domain string) (idp.IdentityProvider, error) {
+	if domain == t.idpDetails.domain {
+		return t.idpDetails, nil
+	}
+	return nil, errors.New("not found")
 }
 
 type TestFedAccountStore struct {

@@ -19,7 +19,7 @@ type AttributeGenerator func(account security.Account) []saml.Attribute
 //This is similar to the method in saml.IdpAuthnRequest
 //but we have our own logic for generating attributes.
 func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authentication security.Authentication, generator AttributeGenerator) error {
-	username, err := security.GetUserName(authentication)
+	username, err := security.GetUsername(authentication)
 
 	if err != nil {
 		return NewSamlInternalError("can't get username from authentication", err)

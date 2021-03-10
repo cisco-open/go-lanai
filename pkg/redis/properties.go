@@ -11,7 +11,7 @@ const (
 	DefaultDbIndex            = 0
 )
 
-type ConnectionProperties struct {
+type RedisProperties struct {
 	// Either a single address or a seed list of host:port addresses
 	// of cluster/sentinel nodes.
 	Addrs []string `json:"addrs"`
@@ -55,10 +55,14 @@ type ConnectionProperties struct {
 	SentinelPassword string `json:"sentinel-password"`
 }
 
-func BindSessionProperties(ctx *bootstrap.ApplicationContext) ConnectionProperties {
-	props := ConnectionProperties{}
+func NewRedisProperties(ctx *bootstrap.ApplicationContext) *RedisProperties {
+	return &RedisProperties{}
+}
+
+func BindRedisProperties(ctx *bootstrap.ApplicationContext) RedisProperties {
+	props := RedisProperties{}
 	if err := ctx.Config().Bind(&props, ConfigRootRedisConnection); err != nil {
-		panic(errors.Wrap(err, "failed to bind redis.ConnectionProperties"))
+		panic(errors.Wrap(err, "failed to bind redis.RedisProperties"))
 	}
 	return props
 }

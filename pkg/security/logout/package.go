@@ -19,7 +19,14 @@ func init() {
 	bootstrap.Register(Module)
 }
 
-func register(init security.Registrar) {
-	configurer := newLogoutConfigurer()
-	init.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+type initDI struct {
+	fx.In
+	SecRegistrar security.Registrar `optional:"true"`
+}
+
+func register(di initDI) {
+	if di.SecRegistrar != nil {
+		configurer := newLogoutConfigurer()
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+	}
 }

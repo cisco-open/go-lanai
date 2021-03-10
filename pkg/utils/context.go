@@ -22,7 +22,7 @@ type mutableContext struct {
 	valuers []ContextValuer
 }
 
-func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
+func (ctx mutableContext) Value(key interface{}) (ret interface{}) {
 	// get value from value map first, in case the key-value pair is overwritten
 	ret, ok := ctx.values[key]
 	if !ok || ret == nil {
@@ -30,7 +30,7 @@ func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
 	}
 
 	if ret == nil && ctx.valuers != nil {
-		// user valuers to get
+		// use valuers to get
 		for _, valuer := range ctx.valuers {
 			if ret = valuer(key); ret != nil {
 				return
@@ -56,12 +56,12 @@ func NewMutableContext() MutableContext {
 	}
 }
 
-func (ctx *mutableContext) Values() map[interface{}]interface{} {
+func (ctx mutableContext) Values() map[interface{}]interface{} {
 	return ctx.values
 }
 
 func MakeMutableContext(parent context.Context, valuers ...ContextValuer) MutableContext {
-	if mutable, ok := parent.(MutableContext); ok {
+	if mutable, ok := parent.(MutableContext); ok && len(valuers) == 0 {
 		return mutable
 	}
 

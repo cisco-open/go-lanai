@@ -34,6 +34,7 @@ type DASOption struct {
 	TenantStore    security.TenantStore
 	ProviderStore  security.ProviderStore
 	HierarchyStore security.TenantHierarchyStore
+	Issuer         security.Issuer
 	TokenStore     TokenStore
 	TokenEnhancer  TokenEnhancer
 }
@@ -51,21 +52,23 @@ type DefaultAuthorizationService struct {
 }
 
 func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationService {
-	rtEnhancer := RefreshTokenEnhancer{}
+	basicEnhancer := BasicClaimsTokenEnhancer{}
+	refreshTokenEnhancer := RefreshTokenEnhancer{}
 	conf := DASOption{
 		TokenEnhancer: NewCompositeTokenEnhancer(
 			&ExpiryTokenEnhancer{},
-			&BasicClaimsTokenEnhancer{},
+			&basicEnhancer,
 			&LegacyTokenEnhancer{},
 			&ResourceIdTokenEnhancer{},
-			&rtEnhancer,
+			&refreshTokenEnhancer,
 		),
 	}
 	for _, opt := range opts {
 		opt(&conf)
 	}
 
-	rtEnhancer.tokenStore = conf.TokenStore
+	basicEnhancer.issuer = conf.Issuer
+	refreshTokenEnhancer.tokenStore = conf.TokenStore
 	return &DefaultAuthorizationService{
 		detailsFactory: conf.DetailsFactory,
 		clientStore:    conf.ClientStore,
@@ -280,7 +283,7 @@ func (f *DefaultAuthorizationService) loadAccount(ctx context.Context, request o
 		return nil, newUnauthenticatedUserError()
 	}
 
-	username, err := security.GetUserName(userAuth)
+	username, err := security.GetUsername(userAuth)
 	if err != nil {
 		return nil, newInvalidUserError(err)
 	}

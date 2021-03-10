@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	 securitysaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -100,29 +100,36 @@ func makeAuthnRequest(sp saml.ServiceProvider) string {
 }
 
 func setupServerForTest(testClientStore SamlClientStore, testAccountStore security.AccountStore) *gin.Engine {
-	prop := securitysaml.NewSamlProperties()
-	prop.RootUrl = "http://vms.com:8080"
+	prop := samlctx.NewSamlProperties()
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
 
 	serverProp := web.NewServerProperties()
 	serverProp.ContextPath = "europa"
-	c := newSamlAuthorizeEndpointConfigurer(*prop, *serverProp, testClientStore, testAccountStore, nil)
+	c := newSamlAuthorizeEndpointConfigurer(*prop, testClientStore, testAccountStore, nil)
 
 	f := NewEndpoint().
 		SsoLocation(&url.URL{Path: "/v2/authorize", RawQuery: "grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"}).
 		SsoCondition(matcher.NotRequest(matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"))).
-		MetadataPath("/metadata")
+		MetadataPath("/metadata").
+		Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
+		*opt =security.DefaultIssuerDetails{
+			Protocol:    "http",
+			Domain:      "vms.com",
+			Port:        8080,
+			ContextPath: serverProp.ContextPath,
+			IncludePort: true,
+		}}))
 
 	opts := c.getIdentityProviderConfiguration(f)
 	mw := NewSamlAuthorizeEndpointMiddleware(opts, c.samlClientStore, c.accountStore, c.attributeGenerator)
 
 	r := gin.Default()
-	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc)
+	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc())
 	r.Use(MockAuthHandler)
 	r.Use(mw.RefreshMetadataHandler(f.ssoCondition))
 	r.Use(mw.AuthorizeHandlerFunc(f.ssoCondition))
-	r.POST(serverProp.ContextPath + f.ssoLocation.Path, security.NoopHandlerFunc)
+	r.POST(serverProp.ContextPath + f.ssoLocation.Path, security.NoopHandlerFunc())
 
 	return r
 }
@@ -292,7 +299,7 @@ func (a *userAuthentication) Principal() interface{} {
 	return a.Subject
 }
 
-func (a *userAuthentication) Permissions() map[string]interface{} {
+func (a *userAuthentication) Permissions() security.Permissions {
 	return a.PermissionMap
 }
 

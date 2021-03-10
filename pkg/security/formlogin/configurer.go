@@ -185,7 +185,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(mapping.Post(f.loginProcessUrl).
-		HandlerFunc(security.NoopHandlerFunc).
+		HandlerFunc(security.NoopHandlerFunc()).
 		Name("login process dummy") )
 
 	return nil
@@ -222,10 +222,10 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(mapping.Post(f.mfaVerifyUrl).
-		HandlerFunc(security.NoopHandlerFunc).
+		HandlerFunc(security.NoopHandlerFunc()).
 		Name("otp verify dummy") )
 	ws.Add(mapping.Post(f.mfaRefreshUrl).
-		HandlerFunc(security.NoopHandlerFunc).
+		HandlerFunc(security.NoopHandlerFunc()).
 		Name("otp refresh dummy") )
 
 	// configure access

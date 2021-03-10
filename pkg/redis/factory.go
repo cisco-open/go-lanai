@@ -35,12 +35,12 @@ type clientRecord struct {
 }
 
 type clientFactory struct {
-	properties ConnectionProperties
+	properties RedisProperties
 	hooks      []redis.Hook
 	clients    map[ClientOption]clientRecord
 }
 
-func NewClientFactory(p ConnectionProperties) ClientFactory {
+func NewClientFactory(p RedisProperties) ClientFactory {
 	return &clientFactory{
 		properties: p,
 		hooks: []redis.Hook{},

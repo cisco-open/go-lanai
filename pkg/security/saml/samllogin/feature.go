@@ -7,12 +7,13 @@ var (
 )
 
 type Feature struct {
-	metadataPath   string
-	acsPath        string
-	sloPath        string
+	metadataPath string
+	acsPath      string
+	sloPath      string
 	//The path to send the user to when authentication error is encountered
 	errorPath      string
 	successHandler security.AuthenticationSuccessHandler
+	issuer         security.Issuer
 }
 
 func New() *Feature {
@@ -26,4 +27,9 @@ func New() *Feature {
 
 func (f *Feature) Identifier() security.FeatureIdentifier {
 	return FeatureId
+}
+
+func (f *Feature) Issuer(issuer security.Issuer) *Feature {
+	f.issuer = issuer
+	return f
 }
