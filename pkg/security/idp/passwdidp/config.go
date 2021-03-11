@@ -8,7 +8,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
@@ -42,11 +41,6 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 		).
 		With(formlogin.New().
 			EnableMFA(),
-		).
-		With(logout.New().
-			LogoutUrl(config.Endpoints.Logout),
-			// TODO SSO logout success handler
-			//SuccessHandler()
 		).
 		With(errorhandling.New().
 			AccessDeniedHandler(handler),

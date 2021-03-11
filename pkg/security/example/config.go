@@ -41,7 +41,7 @@ func (c *AnotherSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 	// For Page
 	handler := redirect.NewRedirectWithRelativePath("/error")
-	condition := matcher.RequestWithHost("localhost:8080")
+	condition := matcher.RequestWithHost("internal.vms.com:8080")
 
 	ws.Route(matcher.RouteWithPattern("/page/**")).
 		Condition(condition).

@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/unknownIdp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -64,6 +65,7 @@ func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 	return func(config *authserver.Configuration) {
 		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer())
 		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer())
+		config.AddIdp(unknownIdp.NewNoIdpSecurityConfigurer())
 
 		config.IdpManager = di.IdpManager
 		config.ClientStore = di.ClientStore
