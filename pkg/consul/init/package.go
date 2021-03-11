@@ -33,7 +33,7 @@ func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *consul
 	c := &consul.ConnectionProperties{
 		//TODO: defaults can be specified here
 	}
-	bootstrapConfig.Bind(c, consul.ConfigRootConsulConnection)
+	bootstrapConfig.Bind(c, consul.PropertyPrefix)
 	return c
 }
 

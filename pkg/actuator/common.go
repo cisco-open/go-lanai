@@ -212,7 +212,7 @@ func (b EndpointBase) ReadOperation(ctx context.Context, input interface{}) (int
 			return op.Execute(ctx, input)
 		}
 	}
-	return nil, fmt.Errorf("unsupported read operation [%s] with input [%v]", b.Id, input)
+	return nil, fmt.Errorf("unsupported read operation [%s] with input [%v]", b.Id(), input)
 }
 
 func (b EndpointBase) WriteOperation(ctx context.Context, input interface{}) (interface{}, error) {
@@ -221,7 +221,7 @@ func (b EndpointBase) WriteOperation(ctx context.Context, input interface{}) (in
 			return op.Execute(ctx, input)
 		}
 	}
-	return nil, fmt.Errorf("unsupported write operation [%s] with input [%v]", b.Id, input)
+	return nil, fmt.Errorf("unsupported write operation [%s] with input [%v]", b.Id(), input)
 }
 
 /*******************************

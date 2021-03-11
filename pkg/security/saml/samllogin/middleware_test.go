@@ -19,15 +19,22 @@ import (
 
 func TestMetadataEndpoint(t *testing.T) {
 	prop := saml.NewSamlProperties()
-	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
 
 	serverProp := web.NewServerProperties()
 	serverProp.ContextPath = "europa"
 
-	c := newSamlAuthConfigurer(*prop, *serverProp, newTestIdpManager(), newTestFedAccountStore())
+	c := newSamlAuthConfigurer(*prop, newTestIdpManager(), newTestFedAccountStore())
 	feature := New()
+	feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
+		*opt =security.DefaultIssuerDetails{
+		Protocol:    "http",
+		Domain:      "vms.com",
+		Port:        8080,
+		ContextPath: serverProp.ContextPath,
+		IncludePort: true,
+	}}))
 	ws := TestWebSecurity{}
 
 	m := c.makeMiddleware(feature, ws)
@@ -51,15 +58,22 @@ func TestAcsEndpoint(t *testing.T) {
 
 func TestSamlEntryPoint(t *testing.T) {
 	prop := saml.NewSamlProperties()
-	prop.RootUrl = "http://vms.com:8080"
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"
 
 	serverProp := web.NewServerProperties()
 	serverProp.ContextPath = "europa"
 
-	c := newSamlAuthConfigurer(*prop, *serverProp, newTestIdpManager(), newTestFedAccountStore())
+	c := newSamlAuthConfigurer(*prop, newTestIdpManager(), newTestFedAccountStore())
 	feature := New()
+	feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
+		*opt =security.DefaultIssuerDetails{
+			Protocol:    "http",
+			Domain:      "vms.com",
+			Port:        8080,
+			ContextPath: serverProp.ContextPath,
+			IncludePort: true,
+		}}))
 	ws := TestWebSecurity{}
 
 	m := c.makeMiddleware(feature, ws)

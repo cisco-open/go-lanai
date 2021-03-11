@@ -16,6 +16,7 @@ require (
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/consul/api v1.3.0
+	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.11
 	github.com/mattermost/xml-roundtrip-validator v0.0.0-20201213122252-bcd7e1b9601e
 	github.com/onsi/gomega v1.10.3

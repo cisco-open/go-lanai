@@ -13,6 +13,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"fmt"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/dgrijalva/jwt-go"
@@ -82,9 +83,9 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 		URL:            *rootURL,
 		Key:            key,
 		Certificate:    cert,
-		ACSPath: 		f.acsPath,
-		MetadataPath:   f.metadataPath,
-		SLOPath: 		f.sloPath,
+		ACSPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.acsPath),
+		MetadataPath:   fmt.Sprintf("%s%s", rootURL.Path, f.metadataPath),
+		SLOPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.sloPath),
 		SignRequest: true,
 	}
 	return opts

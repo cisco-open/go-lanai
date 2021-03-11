@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	ConfigRootConsulConfigProvider = "spring.cloud.consul.endpoint"
-	ConfigKeyAppName               = "spring.application.name"
+	ConfigKeyConsulEndpoint = "cloud.consul.endpoint"
+	ConfigKeyAppName        = "application.name"
 )
 
 type ConsulConfigProperties struct {

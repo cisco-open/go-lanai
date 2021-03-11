@@ -12,16 +12,14 @@ import (
 var logger = log.New("Consul")
 
 const (
-	ConfigRootConsulConnection = "cloud.consul"
+	PropertyPrefix = "cloud.consul"
 )
 
 var (
-	ErrDisabled    = errors.New("Consul connection disabled")
 	ErrNoInstances = errors.New("No matching service instances found")
 )
 
 type ConnectionProperties struct {
-	Enabled bool   `json:"enabled"`
 	Host    string `json:"host"`
 	Port    int    `json:"port"`
 	Scheme  string `json:"scheme"`
@@ -117,10 +115,6 @@ func (c *Connection) SetKeyValue(ctx context.Context, path string, value []byte)
 }
 
 func NewConnection(connectionConfig *ConnectionProperties) (*Connection, error) {
-	if !connectionConfig.Enabled {
-		return nil, ErrDisabled
-	}
-
 	clientConfig := api.DefaultConfig()
 	clientConfig.Address = connectionConfig.Address()
 	clientConfig.Scheme = connectionConfig.Scheme
