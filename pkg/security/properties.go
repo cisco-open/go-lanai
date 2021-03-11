@@ -24,7 +24,7 @@ type SessionProperties struct {
 	IdleTimeout          string `json:"idle-timeout"`
 	AbsoluteTimeout      string `json:"absolute-timeout"`
 	MaxConcurrentSession int    `json:"max-concurrent-sessions"`
-	DbIndex              int    `json:"db-index"`
+	DbIndex              int    `json:"data-index"`
 }
 
 type CookieProperties struct {

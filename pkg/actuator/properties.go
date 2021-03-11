@@ -50,7 +50,7 @@ type EndpointSecurityProperties struct {
 	Permissions utils.CommaSeparatedSlice `json:"permissions"`
 }
 
-//NewSessionProperties create a SessionProperties with default values
+//NewManagementProperties create a ManagementProperties with default values
 func NewManagementProperties() *ManagementProperties {
 	return &ManagementProperties{
 		Enabled: true,

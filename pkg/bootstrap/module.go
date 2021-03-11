@@ -23,6 +23,7 @@ const (
 	ConsulPrecedence
 	VaultPrecedence
 	RedisPrecedence
+	DatabasePrecedence
 	WebPrecedence
 	SecurityPrecedence
 	ServiceDiscoveryPrecedence

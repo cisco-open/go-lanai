@@ -70,7 +70,7 @@ func (h redisTracingHook) BeforeProcessPipeline(ctx context.Context, cmds []gore
 		tracing.SpanTag("cmd", cmdNames),
 	}
 	if h.db >= 0 {
-		opts = append(opts, tracing.SpanTag("db", h.db))
+		opts = append(opts, tracing.SpanTag("data", h.db))
 	}
 	return tracing.WithTracer(h.tracer).
 		WithOpName(name).

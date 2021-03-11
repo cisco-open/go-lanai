@@ -23,7 +23,6 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.8.1
 	github.com/pquerna/otp v1.3.0
-	github.com/prometheus/common v0.7.0
 	github.com/rs/cors v1.7.0
 	github.com/russellhaering/goxmldsig v1.1.0
 	github.com/spf13/cobra v1.1.0
@@ -32,4 +31,6 @@ require (
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	go.uber.org/fx v1.13.1
 	golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0
+	gorm.io/driver/postgres v1.0.8
+	gorm.io/gorm v1.21.3
 )
