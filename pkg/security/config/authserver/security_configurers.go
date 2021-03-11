@@ -2,6 +2,7 @@ package authserver
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/clientauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
@@ -64,9 +65,8 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			RequestProcessors(c.config.authorizeRequestProcessor()).
 			ErrorHandler(c.config.errorHandler()).
 			AuthorizeHanlder(c.config.authorizeHanlder()),
-		)
-
-	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
+		).
+		Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
 		With(saml_auth.NewEndpoint().
 			Issuer(c.config.Issuer).
 			SsoCondition(c.config.Endpoints.SamlSso.Condition).
@@ -74,4 +74,6 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			MetadataPath(c.config.Endpoints.SamlMetadata))
 
 	c.delegate.Configure(ws, c.config)
+
+	logout.Configure(ws).LogoutUrl(c.config.Endpoints.Logout)
 }
