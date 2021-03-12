@@ -2,49 +2,54 @@ package cockroach
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"github.com/jackc/pgx/v4"
+	"fmt"
 	"go.uber.org/fx"
-	"gorm.io/gorm"
 	"gorm.io/driver/postgres"
-	"net/url"
+	"gorm.io/gorm"
+	"strings"
 )
 
 const (
-
+	dsKeyHost     = "host"
+	dsKeyPort     = "port"
+	dsKeyDB       = "dbname"
+	dsKeySslMode  = "sslmode"
+	dsKeyUsername = "user"
+	dsKeyPassword = "password"
 )
 
-type gormInitDI struct {
+type initDI struct {
 	fx.In
 	AppContext *bootstrap.ApplicationContext
 	Properties CockroachProperties
 }
 
-func NewGorm(di gormInitDI) *gorm.DB {
-	var user *url.Userinfo
-	if di.Properties.Username != "" {
-		user = url.UserPassword(di.Properties.Username, di.Properties.Password)
-	}
-	uri := &url.URL{
-		Scheme:      "postgres",
-		User:        user,
-		Host:        di.Properties.Host,
-		Path:        di.Properties.Host,
+func NewGormDialetor(di initDI) gorm.Dialector {
+	//"host=localhost user=root password=root dbname=idm port=26257 sslmode=disable"
+	options := map[string]interface{}{
+		dsKeyHost: di.Properties.Host,
+		dsKeyPort: di.Properties.Port,
+		dsKeyDB: di.Properties.Database,
+		dsKeySslMode: "disable",
 	}
 
-	cfg, e := pgx.ParseConfig(uri.String())
-	logger.WithContext(di.AppContext).Infof("pgx config: %v, %v", cfg, e)
-	//postgres.Config{
-	//	DriverName:           "",
-	//	DSN:                  "",
-	//	PreferSimpleProtocol: false,
-	//	WithoutReturning:     false,
-	//	Conn:                 nil,
-	//}
-	//dsn := "host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=Asia/Shanghai"
-	dsn := "host=localhost user=root password=root dbname=idm port=26257 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err)
+	if di.Properties.Username != "" {
+		options[dsKeyUsername] = di.Properties.Username
+		options[dsKeyPassword] = di.Properties.Password
 	}
-	return db
+
+	config := postgres.Config{
+		//DriverName:           "postgres",
+		DSN:                  toDSN(options),
+	}
+	return postgres.New(config)
+}
+
+func toDSN(options map[string]interface{}) string {
+	opts := []string{}
+	for k, v := range options {
+		opt := fmt.Sprintf("%s=%v", k, v)
+		opts = append(opts, opt)
+	}
+	return strings.Join(opts, " ")
 }

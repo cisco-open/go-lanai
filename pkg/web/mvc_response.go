@@ -10,20 +10,6 @@ import (
 	"net/http"
 )
 
-/*****************************
-	Error Encoder
-******************************/
-func JsonErrorEncoder() httptransport.ErrorEncoder {
-	return jsonErrorEncoder
-}
-
-func jsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
-	if _,ok := err.(json.Marshaler); !ok {
-		err = ToHttpError(err)
-	}
-	httptransport.DefaultErrorEncoder(c, err, w)
-}
-
 /**********************************
 	Various Response Encoders
 ***********************************/
@@ -109,7 +95,7 @@ func textEncodeResponseFunc(c context.Context, rw http.ResponseWriter, response 
 }
 
 /**********************************
-	Text Response Encoder
+	Bytes Response Encoder
 ***********************************/
 func BytesWriteFunc(rw http.ResponseWriter, v interface{}) error {
 	var data []byte

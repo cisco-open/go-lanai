@@ -1,19 +1,19 @@
-package cockroach
+package data
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"go.uber.org/fx"
 )
 
-var logger = log.New("CockroachDB")
+var logger = log.New("Data")
 
 var Module = &bootstrap.Module{
 	Name: "cockroach",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
-		fx.Provide(NewGormDialetor, BindCockroachProperties),
-		fx.Invoke(initialize),
+		fx.Provide(data.NewGorm),
 	},
 }
 
@@ -32,16 +32,16 @@ func Use() {
 /**************************
 	Initialize
 ***************************/
-func initialize(lc fx.Lifecycle) {
-	//lc.Append(fx.Hook{
-	//	OnStart: func(ctx context.Context) error {
-	//
-	//	},
-	//	OnStop:  func(ctx context.Context) error {
-	//
-	//	},
-	//})
-}
+//func initialize(lc fx.Lifecycle) {
+//	lc.Append(fx.Hook{
+//		OnStart: func(ctx context.Context) error {
+//
+//		},
+//		OnStop:  func(ctx context.Context) error {
+//
+//		},
+//	})
+//}
 
 
 

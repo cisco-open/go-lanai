@@ -3,7 +3,6 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-playground/validator/v10"
 	"net/http"
 	"reflect"
@@ -58,7 +57,7 @@ func (e HttpError) MarshalJSON() ([]byte, error) {
 
 // httptransport.StatusCoder
 func (e HttpError) StatusCode() int {
-	if original,ok := e.error.(httptransport.StatusCoder); ok {
+	if original,ok := e.error.(StatusCoder); ok {
 		return original.StatusCode()
 	} else if e.SC == 0 {
 		return http.StatusInternalServerError
@@ -69,7 +68,7 @@ func (e HttpError) StatusCode() int {
 
 // httptransport.Headerer
 func (e HttpError) Headers() http.Header {
-	if original,ok := e.error.(httptransport.Headerer); ok {
+	if original,ok := e.error.(Headerer); ok {
 		return original.Headers()
 	}
 	return e.H
@@ -126,27 +125,7 @@ func NewHttpError(sc int, err error, headers ...http.Header) error {
 	return HttpError{error: err, SC: sc, H: h}
 }
 
-func ToHttpError(err error) error {
-	switch err.(type) {
-	case nil:
-		return nil
-	case HttpError:
-		return err
-	case validator.ValidationErrors:
-		return ValidationErrors{err.(validator.ValidationErrors)}
-	}
-	return HttpError{error: err, SC: http.StatusInternalServerError}
-}
-
-func toBadRequestError(err error) error {
-	switch err.(type) {
-	case nil:
-		return nil
-	case BadRequestError:
-		return err
-	case validator.ValidationErrors:
-		return ValidationErrors{err.(validator.ValidationErrors)}
-	}
+func NewBadRequestError(err error) error {
 	return BadRequestError{error: err}
 }
 

@@ -177,6 +177,8 @@ func isSupportedResponseType(t reflect.Type) bool {
 		fallthrough
 	case reflect.String:
 		return true
+	case reflect.Slice:
+		fallthrough
 	case reflect.Array:
 		return t.Elem().Kind() == reflect.Uint8
 	}
