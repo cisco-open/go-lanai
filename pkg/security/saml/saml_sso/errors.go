@@ -2,6 +2,7 @@ package saml_auth
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"github.com/crewjam/saml"
 	"net/http"
@@ -13,7 +14,7 @@ const (
 	_                              = iota
 	// non-programming error that can occur during SAML web sso flow. These errors will be returned to the requester
 	// as a status code when possible
-	ErrorSubTypeCodeSamlSso = security.ErrorTypeCodeSaml + iota<<security.ErrorSubTypeOffset
+	ErrorSubTypeCodeSamlSso = security.ErrorTypeCodeSaml + iota<<errorutils.ErrorSubTypeOffset
 	//programming error, these will be displayed on an error page
 	// so that we can fix the error on our end.
 	ErrorSubTypeCodeSamlInternal
@@ -51,7 +52,7 @@ type SamlError struct {
 	SC int    // status code
 }
 
-func NewSamlError(code int, e interface{}, samlErrorCode string, httpStatusCode int, causes...interface{}) *SamlError {
+func NewSamlError(code int64, e interface{}, samlErrorCode string, httpStatusCode int, causes...interface{}) *SamlError {
 	embedded := security.NewCodedError(code, e, causes...)
 	return &SamlError{
 		CodedError:  *embedded,

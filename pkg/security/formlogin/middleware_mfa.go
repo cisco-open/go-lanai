@@ -3,6 +3,7 @@ package formlogin
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"github.com/gin-gonic/gin"
 )
 
@@ -118,7 +119,7 @@ func (mw *MfaAuthenticationMiddleware) handleError(c *gin.Context, err error, ca
 }
 
 func (mw *MfaAuthenticationMiddleware) shouldClear(err error) bool {
-	switch coder, ok := err.(security.ErrorCoder); ok {
+	switch coder, ok := err.(errorutils.ErrorCoder); ok {
 	case coder.Code() == security.ErrorCodeCredentialsExpired:
 		return true
 	case coder.Code() == security.ErrorCodeMaxAttemptsReached:

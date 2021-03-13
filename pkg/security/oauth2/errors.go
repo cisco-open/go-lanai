@@ -2,6 +2,7 @@ package oauth2
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 // sub types of security.ErrorTypeCodeOAuth2
 const (
 	_                              = iota
-	ErrorSubTypeCodeOAuth2Internal = security.ErrorTypeCodeOAuth2 + iota<<security.ErrorSubTypeOffset
+	ErrorSubTypeCodeOAuth2Internal = security.ErrorTypeCodeOAuth2 + iota<< errorutils.ErrorSubTypeOffset
 	ErrorSubTypeCodeOAuth2ClientAuth
 	ErrorSubTypeCodeOAuth2Authorize
 	ErrorSubTypeCodeOAuth2Grant
@@ -172,7 +173,7 @@ func (e *OAuth2Error) UnmarshalJSON(data []byte) error {
 /************************
 	Constructors
 *************************/
-func NewOAuth2Error(code int, e interface{}, oauth2Code string, sc int, causes...interface{}) *OAuth2Error {
+func NewOAuth2Error(code int64, e interface{}, oauth2Code string, sc int, causes...interface{}) *OAuth2Error {
 	embedded := security.NewCodedError(code, e, causes...)
 	return &OAuth2Error{
 		CodedError: *embedded,
