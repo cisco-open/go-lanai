@@ -8,3 +8,7 @@ import (
 func provideGormErrorTranslator() web.ErrorTranslator {
 	return data.NewGormErrorTranslator()
 }
+
+func provideDataErrorTranslator() web.ErrorTranslator {
+	return data.NewDataErrorTranslator()
+}

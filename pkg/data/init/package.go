@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 )
 
@@ -14,6 +15,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
 		fx.Provide(data.NewGorm),
+		web.FxErrorTranslatorProviders(provideDataErrorTranslator, provideGormErrorTranslator),
 	},
 }
 
@@ -32,16 +34,7 @@ func Use() {
 /**************************
 	Initialize
 ***************************/
-//func initialize(lc fx.Lifecycle) {
-//	lc.Append(fx.Hook{
-//		OnStart: func(ctx context.Context) error {
-//
-//		},
-//		OnStop:  func(ctx context.Context) error {
-//
-//		},
-//	})
-//}
+
 
 
 
