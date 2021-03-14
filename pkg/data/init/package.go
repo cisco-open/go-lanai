@@ -15,7 +15,10 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
 		fx.Provide(data.NewGorm),
-		web.FxErrorTranslatorProviders(provideDataErrorTranslator, provideGormErrorTranslator),
+		web.FxErrorTranslatorProviders(
+			provideDataErrorTranslator,
+			provideGormErrorTranslator,
+			providePqErrorTranslator),
 	},
 }
 

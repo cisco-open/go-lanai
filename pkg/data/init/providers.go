@@ -12,3 +12,7 @@ func provideGormErrorTranslator() web.ErrorTranslator {
 func provideDataErrorTranslator() web.ErrorTranslator {
 	return data.NewDataErrorTranslator()
 }
+
+func providePqErrorTranslator() web.ErrorTranslator {
+	return data.NewPqErrorTranslator()
+}
