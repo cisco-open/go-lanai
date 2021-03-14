@@ -3,6 +3,7 @@ package data
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
@@ -18,7 +19,10 @@ var Module = &bootstrap.Module{
 		web.FxErrorTranslatorProviders(
 			provideDataErrorTranslator,
 			provideGormErrorTranslator,
-			providePqErrorTranslator),
+			providePqErrorTranslator,
+		),
+		fx.Provide(tx.NewGormTxManager),
+		fx.Invoke(tx.SetTxManager),
 	},
 }
 
