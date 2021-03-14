@@ -10,6 +10,7 @@ import (
 const (
 	logKeyDb = "db"
 )
+
 type dbLogEntry struct {
 	Type        string        `json:"duration"`
 	TimeElapsed time.Duration `json:"duration"`
@@ -42,7 +43,7 @@ func (l GormLogger) LogMode(level gormlogger.LogLevel) gormlogger.Interface {
 
 func (l GormLogger) Info(ctx context.Context, s string, i ...interface{}) {
 	if l.level >= gormlogger.Info {
-	logger.WithContext(ctx).Infof(s, i...)
+		logger.WithContext(ctx).Infof(s, i...)
 	}
 }
 
@@ -106,4 +107,3 @@ func (l GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	logger.WithContext(ctx).WithKV(logKeyDb, kvs).
 		Debugf("[%s] %10v | %d Rows | %s | %s", title, kvs.TimeElapsed, kvs.Rows, kvs.Error, kvs.Query)
 }
-

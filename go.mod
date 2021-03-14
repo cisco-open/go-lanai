@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
+	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/beevik/etree v1.1.0
 	github.com/bmatcuk/doublestar v1.3.2
 	github.com/crewjam/saml v0.4.5

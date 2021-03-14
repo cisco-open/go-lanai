@@ -20,12 +20,13 @@ import (
 var logger = log.New("SEC.Example")
 
 func init() {
-	authserver.Use()
-	resserver.Use()
+
 }
 
 // Maker func, does nothing. Allow service to include this module in main()
 func Use() {
+	authserver.Use()
+	resserver.Use()
 	bootstrap.AddOptions(
 		fx.Provide(BindAccountsProperties),
 		fx.Provide(BindAccountPoliciesProperties),

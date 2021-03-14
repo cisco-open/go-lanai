@@ -40,13 +40,13 @@ type initDI struct {
 	AppContext      *bootstrap.ApplicationContext
 	SecRegistrar    security.Registrar `optional:"true"`
 	SessionProps    security.SessionProperties
-	ServerProps     web.ServerProperties
-	ClientFactory   redis.ClientFactory
-	MaxSessionsFunc GetMaximumSessions `optional:"true"`
+	ServerProps     web.ServerProperties `optional:"true"`
+	ClientFactory   redis.ClientFactory  `optional:"true"`
+	MaxSessionsFunc GetMaximumSessions   `optional:"true"`
 }
 
 func register(di initDI) {
-	if di.SecRegistrar != nil {
+	if di.SecRegistrar != nil && di.ClientFactory != nil {
 		configurer := newSessionConfigurer(di.AppContext, di.SessionProps, di.ServerProps, di.ClientFactory, di.MaxSessionsFunc)
 		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 	}
