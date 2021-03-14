@@ -12,7 +12,7 @@ import (
 var logger = log.New("Data")
 
 var Module = &bootstrap.Module{
-	Name: "cockroach",
+	Name: "DB",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
 		fx.Provide(data.NewGorm),
@@ -21,13 +21,12 @@ var Module = &bootstrap.Module{
 			provideGormErrorTranslator,
 			providePqErrorTranslator,
 		),
-		fx.Provide(tx.NewGormTxManager),
-		fx.Invoke(tx.SetTxManager),
 	},
 }
 
 func init() {
 	bootstrap.Register(Module)
+	bootstrap.Register(tx.Module)
 }
 
 func Use() {

@@ -13,16 +13,12 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
 		fx.Provide(NewGormDialetor, BindCockroachProperties),
-		fx.Invoke(initialize),
+		//fx.Invoke(initialize),
 	},
 }
 
-func init() {
-	bootstrap.Register(Module)
-}
-
 func Use() {
-
+	bootstrap.Register(Module)
 }
 
 /**************************

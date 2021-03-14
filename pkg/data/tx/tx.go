@@ -8,7 +8,7 @@ import (
 
 var txManager TxManager
 
-func SetTxManager(m TxManager) {
+func setGlobalTxManager(m TxManager) {
 	txManager = m
 }
 

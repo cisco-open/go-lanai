@@ -7,6 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type GormTxManager interface {
+	TxManager
+	WithDB(*gorm.DB) GormTxManager
+}
+
 var (
 	ctxKeyGorm = gormCtxKey{}
 )
@@ -25,7 +30,7 @@ func (c gormTxContext) Value(key interface{}) interface{} {
 	return c.Context.Value(key)
 }
 
-func GormTxFromContext(ctx context.Context) *gorm.DB {
+func GormTxWithContext(ctx context.Context) (tx *gorm.DB) {
 	if db, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
 		return db.WithContext(ctx)
 	}
@@ -37,7 +42,13 @@ type gormTxManager struct {
 	db *gorm.DB
 }
 
-func NewGormTxManager(db *gorm.DB) TxManager {
+func newGormTxManager(db *gorm.DB) TxManager {
+	return &gormTxManager{
+		db: db,
+	}
+}
+
+func (m gormTxManager) WithDB(db *gorm.DB) GormTxManager {
 	return &gormTxManager{
 		db: db,
 	}
@@ -104,4 +115,5 @@ func (m gormTxManager) RollbackTo(ctx context.Context, name string) context.Cont
 	}
 	panic(data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?"))
 }
+
 
