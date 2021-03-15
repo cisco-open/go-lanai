@@ -3,6 +3,7 @@ package data
 import (
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
+	"fmt"
 )
 
 const (
@@ -62,6 +63,9 @@ const (
 const (
 	_                = iota
 	ErrorCodeInvalidApiUsage = ErrorSubTypeCodeApi + iota
+	ErrorCodeUnsupportedCondition
+	ErrorCodeUnsupportedOptions
+	ErrorCodeInvalidCrudModel
 )
 
 // ErrorSubTypeCodeDataRetrieval
@@ -157,7 +161,9 @@ func (e *DataError) WithStatusCode(sc int) *DataError {
 	return &DataError{CodedError: e.CodedError, SC: sc}
 }
 
-
+func (e DataError) WithMessage(msg string, args...interface{}) *DataError {
+	return newDataError(NewCodedError(e.CodedError.Code(), fmt.Errorf(msg, args...)))
+}
 
 /**********************
 	Constructors
@@ -174,4 +180,16 @@ func NewDataError(code int64, e interface{}, causes ...interface{}) *DataError {
 
 func NewInternalError(text string, causes...interface{}) *DataError {
 	return NewDataError(ErrorSubTypeCodeInternal, text, causes...)
+}
+
+func NewRecordNotFoundError(text string, causes...interface{}) *DataError {
+	return NewDataError(ErrorCodeRecordNotFound, text, causes...)
+}
+
+func NewConstraintViolationError(text string, causes...interface{}) *DataError {
+	return NewDataError(ErrorCodeConstraintViolation, text, causes...)
+}
+
+func NewDuplicateKeyError(text string, causes...interface{}) *DataError {
+	return NewDataError(ErrorCodeDuplicateKey, text, causes...)
 }

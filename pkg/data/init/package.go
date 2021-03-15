@@ -3,6 +3,7 @@ package data
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -27,6 +28,7 @@ var Module = &bootstrap.Module{
 func init() {
 	bootstrap.Register(Module)
 	bootstrap.Register(tx.Module)
+	bootstrap.Register(repo.Module)
 }
 
 func Use() {

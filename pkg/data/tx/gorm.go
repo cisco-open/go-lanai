@@ -37,12 +37,12 @@ func GormTxWithContext(ctx context.Context) (tx *gorm.DB) {
 	return nil
 }
 
-// gormTxManager implements TxManager & ManualTxManager
+// gormTxManager implements TxManager, ManualTxManager and GormTxManager
 type gormTxManager struct {
 	db *gorm.DB
 }
 
-func newGormTxManager(db *gorm.DB) TxManager {
+func newGormTxManager(db *gorm.DB) *gormTxManager {
 	return &gormTxManager{
 		db: db,
 	}
