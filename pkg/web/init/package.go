@@ -21,6 +21,7 @@ var Module = &bootstrap.Module{
 
 func init() {
 	bootstrap.Register(Module)
+	bootstrap.Register(cors.Module)
 }
 
 // Maker func, does nothing. Allow service to include this module in main()
@@ -35,25 +36,30 @@ func Use() {
 /**************************
 	Setup
 ***************************/
-type setupComponents struct {
+type initDI struct {
 	fx.In
-	Registrar      *web.Registrar
-	CorsCustomizer *cors.Customizer
-	Properties     web.ServerProperties
-	// we could include security configurations, customizations here
+	Registrar        *web.Registrar
+	Properties       web.ServerProperties
+	Controllers      []web.Controller      `group:"controllers"`
+	Customizers      []web.Customizer      `group:"customizers"`
+	ErrorTranslators []web.ErrorTranslator `group:"error_translators"`
 }
 
-func setup(lc fx.Lifecycle, dep setupComponents) {
-	dep.Registrar.Register(web.NewLoggingCustomizer(dep.Properties))
-	dep.Registrar.Register(web.NewRecoveryCustomizer())
-	dep.Registrar.Register(web.NewErrorHandlingCustomizer())
-	dep.Registrar.Register(dep.CorsCustomizer)
+func setup(lc fx.Lifecycle, di initDI) {
+	di.Registrar.Register(web.NewLoggingCustomizer(di.Properties))
+	di.Registrar.Register(web.NewRecoveryCustomizer())
+	di.Registrar.Register(web.NewGinErrorHandlingCustomizer())
+
+	di.Registrar.Register(di.Controllers)
+	di.Registrar.Register(di.Customizers)
+	di.Registrar.Register(di.ErrorTranslators)
+
 	lc.Append(fx.Hook{
-		OnStart: makeMappingRegistrationOnStartHandler(&dep),
+		OnStart: makeMappingRegistrationOnStartHandler(&di),
 	})
 }
 
-func makeMappingRegistrationOnStartHandler(dep *setupComponents) bootstrap.LifecycleHandler {
+func makeMappingRegistrationOnStartHandler(dep *initDI) bootstrap.LifecycleHandler {
 	return func(ctx context.Context) (err error) {
 		return dep.Registrar.Run(ctx)
 	}

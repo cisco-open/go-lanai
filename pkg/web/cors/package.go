@@ -10,10 +10,12 @@ var Module = &bootstrap.Module{
 	Name: "CORS",
 	Precedence: web.MinWebPrecedence + 1,
 	PriorityOptions: []fx.Option{
-		fx.Provide(newCustomizer, BindCorsProperties),
+		fx.Provide(BindCorsProperties),
+		web.FxCustomizerProviders(newCustomizer),
 	},
 }
 
-func init() {
-	bootstrap.Register(Module)
-}
+//func init() {
+//	bootstrap.Register(Module)
+//}
+

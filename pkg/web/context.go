@@ -56,6 +56,22 @@ type BodyContainer interface {
 }
 
 /*********************************
+	Error Translater
+ *********************************/
+// ErrorTranslator can be registered via web.Registrar
+// it will contribute our MvcMapping's error handling process.
+// Note: it won't contriubte Middleware's error handling
+//
+// Implementing Notes:
+// 	1. if it doesn't handle the error, return same error
+//  2. if custom StatusCode is required, make the returned error implement StatusCoder
+//  3. if custom Header is required, make the returned error implement Headerer
+//  4. we have HttpError to help with custom Headerer and StatusCoder implementation
+type ErrorTranslator interface {
+	Translate(ctx context.Context, err error) error
+}
+
+/*********************************
 	Mappings
  *********************************/
 type Controller interface {

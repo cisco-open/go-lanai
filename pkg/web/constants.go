@@ -11,6 +11,10 @@ const (
 	LowestMiddlewareOrder  = int(^uint(0) >> 1)         // max int
 	HighestMiddlewareOrder = -LowestMiddlewareOrder - 1 // min int
 
+	FxGroupControllers     = "controllers"
+	FxGroupCustomizers     = "customizers"
+	FxGroupErrorTranslator = "error_translators"
+
 	ErrorTemplate = "error.tmpl"
 
 	ContextKeySecurity    = "Security"
