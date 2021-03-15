@@ -2,7 +2,6 @@ package idp
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	util_matcher "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -14,6 +13,7 @@ import (
 const (
 	InternalIdpForm = AuthenticationFlow("InternalIdpForm")
 	ExternalIdpSAML = AuthenticationFlow("ExternalIdpSAML")
+	UnknownIdp      = AuthenticationFlow("UnKnown")
 )
 
 type AuthenticationFlow string
@@ -52,12 +52,7 @@ type IdentityProviderManager interface {
 
 func RequestWithAuthenticationFlow(flow AuthenticationFlow, idpManager IdentityProviderManager) web.RequestMatcher {
 	matchableError := func() (interface{}, error) {
-		// We have two choices:
-		// 1. default to InternalIdpForm
-		// 2. return security error, which will be captured by security error handler.
-		//	  This is also the behavior of java version
-		//return string(InternalIdpForm), nil // option 1
-		return nil, security.NewInternalError("no IDP configured for this domain") // option 2
+		return string(UnknownIdp), nil
 	}
 
 	matchable := func(_ context.Context, request *http.Request) (interface{}, error) {

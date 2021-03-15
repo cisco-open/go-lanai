@@ -188,7 +188,8 @@ func (i *InMemoryFederatedAccountStore) LoadAccountByExternalId(externalIdName s
 	return security.NewUsernamePasswordAccount(&security.AcctDetails{
 		ID:              "user-tishi",
 		Type:            security.AccountTypeFederated,
-		Username:        "tishi"}), nil
+		Username:        "tishi",
+		Permissions: []string{"welcomed"}}), nil
 }
 
 func NewInMemoryFederatedAccountStore() security.FederatedAccountStore{

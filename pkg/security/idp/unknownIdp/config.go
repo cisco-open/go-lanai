@@ -1,4 +1,4 @@
-package samlidp
+package unknownIdp
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
@@ -7,27 +7,23 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 )
 
-// SamlIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
-type SamlIdpSecurityConfigurer struct {
+type NoIdpSecurityConfigurer struct {
 }
 
-func NewSamlIdpSecurityConfigurer() *SamlIdpSecurityConfigurer {
-	return &SamlIdpSecurityConfigurer{}
+func NewNoIdpSecurityConfigurer() *NoIdpSecurityConfigurer {
+	return &NoIdpSecurityConfigurer{}
 }
 
-func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
+func (c *NoIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
+	// For Authorize endpoint
 	handler := redirect.NewRedirectWithRelativePath("/error")
-	condition := idp.RequestWithAuthenticationFlow(idp.ExternalIdpSAML, config.IdpManager)
+	condition := idp.RequestWithAuthenticationFlow(idp.UnknownIdp, config.IdpManager)
 
 	ws.AndCondition(condition).
-		With(samllogin.New().
-			Issuer(config.Issuer),
-		).
 		With(session.New()).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
