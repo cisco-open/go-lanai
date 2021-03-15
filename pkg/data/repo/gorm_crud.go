@@ -75,9 +75,10 @@ func (g GormCrud) Create(ctx context.Context, v interface{}, options...CrudOptio
 	})
 }
 
-func (g GormCrud) Update(ctx context.Context, v interface{}, options...CrudOption) error {
+func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, options...CrudOption) error {
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
-		return db.Model(g.model).Updates(v)
+		// note we use the actual model instead of template g.model
+		return db.Model(model).Updates(v)
 	})
 }
 

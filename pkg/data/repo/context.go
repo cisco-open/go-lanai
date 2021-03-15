@@ -79,9 +79,10 @@ type CrudRepository interface {
 	Create(ctx context.Context, v interface{}, options...CrudOption) error
 
 	// Update update model, only non-zero fields of "v" are updated
+	// "model" is the model to be updated, loaded from DB
 	// "v" can be struct or map[string]interface{},
 	// could support SelectOption and OmitOption depends on implementation
-	Update(ctx context.Context, v interface{}, options...CrudOption) error
+	Update(ctx context.Context, model interface{}, v interface{}, options...CrudOption) error
 
 	// Delete delete given model or model array
 	// returns error if such deletion violate any existing foreign key constraints

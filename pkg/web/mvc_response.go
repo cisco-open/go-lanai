@@ -154,8 +154,14 @@ func encodeResponse(_ context.Context, opts ...EncodeOptions) error {
 	if entity, ok := opt.Response.(BodyContainer); ok {
 		opt.Response = entity.Body()
 	}
-	//return json.NewEncoder(rw).Encode(response)
-	return opt.WriteFunc(opt.Writer, opt.Response)
+	// we just ignore nil pointer
+	switch resp := opt.Response.(type) {
+	case nil:
+		_, e := opt.Writer.Write([]byte{})
+		return e
+	default:
+		return opt.WriteFunc(opt.Writer, resp)
+	}
 }
 
 func overwriteHeaders(w http.ResponseWriter, h httptransport.Headerer) {
