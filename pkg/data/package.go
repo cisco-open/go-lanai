@@ -9,19 +9,19 @@ import (
 var logger = log.New("Data")
 
 var Module = &bootstrap.Module{
-	Name: "cockroach",
+	Name: "DB",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
+		fx.Provide(BindDataProperties),
+		fx.Invoke(registerHealth),
 	},
 }
 
-func init() {
-	bootstrap.Register(Module)
-}
 
 /**************************
 	Provider
 ***************************/
+
 
 /**************************
 	Initialize

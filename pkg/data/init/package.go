@@ -27,6 +27,7 @@ var Module = &bootstrap.Module{
 
 func init() {
 	bootstrap.Register(Module)
+	bootstrap.Register(data.Module)
 	bootstrap.Register(tx.Module)
 	bootstrap.Register(repo.Module)
 }
