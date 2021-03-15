@@ -10,25 +10,25 @@ import (
 	"time"
 )
 
-func ClientId(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	if src.OAuth2Request() == nil {
+func ClientId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Source.OAuth2Request() == nil {
 		return nil, errorMissingRequest
 	}
-	return nonZeroOrError(src.OAuth2Request().ClientId(), errorMissingDetails)
+	return nonZeroOrError(opt.Source.OAuth2Request().ClientId(), errorMissingDetails)
 }
 
-func Audience(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	if src.OAuth2Request() == nil {
+func Audience(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Source.OAuth2Request() == nil {
 		return nil, errorMissingRequest
 	}
-	if src.OAuth2Request().ClientId() == "" {
+	if opt.Source.OAuth2Request().ClientId() == "" {
 		return nil, errorMissingDetails
 	}
-	return utils.NewStringSet(src.OAuth2Request().ClientId()), nil
+	return utils.NewStringSet(opt.Source.OAuth2Request().ClientId()), nil
 }
 
-func JwtId(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	container, ok := src.AccessToken().(oauth2.ClaimsContainer)
+func JwtId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	container, ok := opt.Source.AccessToken().(oauth2.ClaimsContainer)
 	if !ok || container.Claims() == nil {
 		return nil, errorMissingToken
 	}
@@ -36,30 +36,37 @@ func JwtId(ctx context.Context, src oauth2.Authentication) (v interface{}, err e
 	return getClaim(container.Claims(), oauth2.ClaimJwtId)
 }
 
-func ExpiresAt(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	if src.AccessToken() != nil {
-		v = src.AccessToken().ExpiryTime()
+func ExpiresAt(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Source.AccessToken() != nil {
+		v = opt.Source.AccessToken().ExpiryTime()
 	}
 
-	if details, ok := src.Details().(security.ContextDetails); ok {
+	if details, ok := opt.Source.Details().(security.ContextDetails); ok {
 		v = details.ExpiryTime()
 	}
 	return nonZeroOrError(v, errorMissingDetails)
 }
 
-func IssuedAt(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	if src.AccessToken() != nil {
-		v = src.AccessToken().IssueTime()
+func IssuedAt(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Source.AccessToken() != nil {
+		v = opt.Source.AccessToken().IssueTime()
 	}
 
-	if details, ok := src.Details().(security.ContextDetails); ok {
+	if details, ok := opt.Source.Details().(security.ContextDetails); ok {
 		v = details.IssueTime()
 	}
 	return nonZeroOrError(v, errorMissingDetails)
 }
 
-func Issuer(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	container, ok := src.AccessToken().(oauth2.ClaimsContainer)
+func Issuer(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Issuer != nil {
+		if id := opt.Issuer.Identifier(); id != "" {
+			return id, nil
+		}
+	}
+
+	// fall back to extract from access token
+	container, ok := opt.Source.AccessToken().(oauth2.ClaimsContainer)
 	if !ok || container.Claims() == nil {
 		return nil, errorMissingToken
 	}
@@ -67,8 +74,8 @@ func Issuer(ctx context.Context, src oauth2.Authentication) (v interface{}, err 
 	return getClaim(container.Claims(), oauth2.ClaimIssuer)
 }
 
-func NotBefore(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	container, ok := src.AccessToken().(oauth2.ClaimsContainer)
+func NotBefore(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	container, ok := opt.Source.AccessToken().(oauth2.ClaimsContainer)
 	if !ok || container.Claims() == nil {
 		return nil, errorMissingToken
 	}
@@ -76,22 +83,22 @@ func NotBefore(ctx context.Context, src oauth2.Authentication) (v interface{}, e
 	return getClaim(container.Claims(), oauth2.ClaimNotBefore)
 }
 
-func Subject(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	return Username(ctx, src)
+func Subject(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	return Username(ctx, opt)
 }
 
-func Scopes(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	if src.OAuth2Request() == nil {
+func Scopes(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Source.OAuth2Request() == nil {
 		return nil, errorMissingRequest
 	}
-	return nonZeroOrError(src.OAuth2Request().Scopes(), errorMissingDetails)
+	return nonZeroOrError(opt.Source.OAuth2Request().Scopes(), errorMissingDetails)
 }
 
-func Username(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	if src.UserAuthentication() == nil || src.UserAuthentication().Principal() == nil {
+func Username(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Source.UserAuthentication() == nil || opt.Source.UserAuthentication().Principal() == nil {
 		return nil, errorMissingUser
 	}
-	principal := src.UserAuthentication().Principal()
+	principal := opt.Source.UserAuthentication().Principal()
 	switch principal.(type) {
 	case string:
 		v = principal.(string)

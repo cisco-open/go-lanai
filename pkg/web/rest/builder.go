@@ -196,7 +196,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 		decodeRequestFunc:  httptransport.NopRequestDecoder,
 		encodeRequestFunc:  jsonEncodeRequestFunc,
 		decodeResponseFunc: nil, // TODO
-		encodeResponseFunc: JsonEncodeResponseFunc,
+		encodeResponseFunc: web.JsonResponseEncoder(),
 	}
 
 	if b.endpointFunc != nil {
@@ -209,7 +209,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	return web.NewMvcMapping(b.name, b.path, b.method, b.condition,
 		m.endpoint, m.decodeRequestFunc, m.encodeRequestFunc,
 		m.decodeResponseFunc, m.encodeResponseFunc,
-		JsonErrorEncoder)
+		web.JsonErrorEncoder())
 }
 
 func (b *MappingBuilder) customize(m *mapping) {

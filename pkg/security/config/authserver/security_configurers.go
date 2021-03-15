@@ -2,10 +2,13 @@ package authserver
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/clientauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 )
@@ -47,8 +50,24 @@ func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 		)
 }
 
+// TokenAuthEndpointsConfigurer implements security.Configurer
+// responsible to configure misc using token auth
+type TokenAuthEndpointsConfigurer struct {
+	config *Configuration
+}
+
+func (c *TokenAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
+	// For Token endpoint
+	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.UserInfo)).
+		With(tokenauth.New()).
+		With(access.New().
+			Request(matcher.AnyRequest()).Authenticated(),
+		).
+		With(errorhandling.New())
+}
+
 // AuthorizeEndpointConfigurer implements security.Configurer
-// responsible to configure //todo
+// responsible to configure "authorize" endpoint
 type AuthorizeEndpointConfigurer struct {
 	config *Configuration
 	delegate IdpSecurityConfigurer

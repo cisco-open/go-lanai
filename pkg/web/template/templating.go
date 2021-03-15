@@ -54,7 +54,7 @@ func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, respon
 		return errors.New("unable to use template: response is not *template.ModelView")
 	}
 
-	AddGlobalModelData(ctx, mv.Model)
+	AddGlobalModelData(c, mv.Model, ctx.Request)
 	ctx.HTML(status, mv.View, mv.Model)
 	return nil
 }
@@ -82,12 +82,12 @@ func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 		ModelKeyStatusText: http.StatusText(code),
 	}
 
-	AddGlobalModelData(ctx, model)
+	AddGlobalModelData(c, model, ctx.Request)
 	ctx.HTML(code, web.ErrorTemplate, model)
 }
 
-func AddGlobalModelData(ctx *gin.Context, model Model) {
-	model[ModelKeyRequestContext] = MakeRequestContext(ctx, ctx.Request, web.ContextKeyContextPath)
+func AddGlobalModelData(ctx context.Context, model Model, r *http.Request) {
+	model[ModelKeyRequestContext] = MakeRequestContext(ctx, r, web.ContextKeyContextPath)
 	model[ModelKeySession] = ctx.Value(web.ContextKeySession)
 	model[ModelKeySecurity] = ctx.Value(web.ContextKeySecurity)
 	model[ModelKeyCsrf] = ctx.Value(web.ContextKeyCsrf)
