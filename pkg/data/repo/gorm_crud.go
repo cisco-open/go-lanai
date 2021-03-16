@@ -7,35 +7,102 @@ import (
 	"reflect"
 )
 
+const(
+	// e.g. *Model
+	typeModelPtr typeKey = iota
+	// e.g. Model
+	typeModel
+	// e.g. *[]Model
+	typeModelSlicePtr
+	// e.g. *[]*Model{}
+	typeModelPtrSlicePtr
+	// e.g. []Model
+	typeModelSlice
+	// e.g. []*Model
+	typeModelPtrSlice
+	// map[string]interface{}
+	typeGenericMap
+)
+
+type typeKey int
+
+var (
+	singleModelRead = []typeKey{typeModelPtr}
+	multiModelRead = []typeKey{typeModelPtrSlicePtr, typeModelSlicePtr}
+	singleModelWrite = []typeKey{typeModelPtr, typeModel}
+	multiModelWrite = []typeKey{typeModelPtrSlice, typeModelSlice, typeModelPtrSlicePtr, typeModelSlicePtr}
+	genericModelWrite = []typeKey{
+		typeModelPtr,
+		typeModelPtrSlice,
+		typeGenericMap,
+		typeModelPtrSlicePtr,
+		typeModelSlice,
+		typeModelSlicePtr,
+		typeModel,
+	}
+)
+
+type metadata struct {
+	model interface{}
+	types map[typeKey]reflect.Type
+}
+
 // GormCrud implements CrudRepository and can be embedded into any repositories using gorm as ORM
 type GormCrud struct {
 	GormApi
-	model interface{}
+	metadata
 }
 
 func newGormCrud(api GormApi, model interface{}) (*GormCrud, error) {
-	if e := validateGormModel(model); e != nil {
+	meta, e := generateModelMetadata(model)
+	if e != nil {
 		return nil, e
 	}
 	return &GormCrud{
 		GormApi: api,
-		model: model,
+		metadata: meta,
 	}, nil
 }
 
-func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}, options ...CrudOption) error {
+func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}, options ...Option) error {
+	if !g.isSupportedValue(dest, singleModelRead) {
+		return ErrorInvalidCrudParam.
+			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindById", "*Struct")
+	}
+
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Find(dest, id)
 	})
 }
 
-func (g GormCrud) FindAll(ctx context.Context, dest interface{}, options ...CrudOption) error {
+func (g GormCrud) FindAll(ctx context.Context, dest interface{}, options ...Option) error {
+	if !g.isSupportedValue(dest, multiModelRead) {
+		return ErrorInvalidCrudParam.
+			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindAll", "*[]Struct or *[]*Struct")
+	}
+
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Find(dest)
 	})
 }
 
-func (g GormCrud) FindBy(ctx context.Context, dest interface{}, condition CrudCondition, options ...CrudOption) error {
+func (g GormCrud) FindOneBy(ctx context.Context, dest interface{}, condition Condition, options...Option) error {
+	if !g.isSupportedValue(dest, singleModelRead) {
+		return ErrorInvalidCrudParam.
+			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindOneBy", "*Struct")
+	}
+
+	return g.execute(ctx, condition, options, func(db *gorm.DB) *gorm.DB {
+		return db.Model(g.model).Take(dest)
+	})
+}
+
+func (g GormCrud) FindAllBy(ctx context.Context, dest interface{}, condition Condition, options ...Option) error {
+	if !g.isSupportedValue(dest, multiModelRead) {
+		return ErrorInvalidCrudParam.
+			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindAllBy", "*[]Struct or *[]*Struct")
+	}
+
 	return g.execute(ctx, condition, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Find(dest)
 	})
@@ -52,7 +119,7 @@ func (g GormCrud) CountAll(ctx context.Context) (int, error) {
 	return int(ret), nil
 }
 
-func (g GormCrud) CountBy(ctx context.Context, condition CrudCondition) (int, error) {
+func (g GormCrud) CountBy(ctx context.Context, condition Condition) (int, error) {
 	var ret int64
 	e := g.execute(ctx, condition, nil, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Count(&ret)
@@ -63,19 +130,34 @@ func (g GormCrud) CountBy(ctx context.Context, condition CrudCondition) (int, er
 	return int(ret), nil
 }
 
-func (g GormCrud) Save(ctx context.Context, v interface{}, options...CrudOption) error {
+func (g GormCrud) Save(ctx context.Context, v interface{}, options...Option) error {
+	if !g.isSupportedValue(v, genericModelWrite) {
+		return ErrorInvalidCrudParam.
+			WithMessage("%T is not a valid value for %s, requires %s", v, "Save", "*Struct, []*Struct or []Struct")
+	}
+
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Save(v)
 	})
 }
 
-func (g GormCrud) Create(ctx context.Context, v interface{}, options...CrudOption) error {
+func (g GormCrud) Create(ctx context.Context, v interface{}, options...Option) error {
+	if !g.isSupportedValue(v, genericModelWrite) {
+		return ErrorInvalidCrudParam.
+			WithMessage("%T is not a valid value for %s, requires %s", v, "Create", "*Struct, []*Struct or []Struct")
+	}
+
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Create(v)
 	})
 }
 
-func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, options...CrudOption) error {
+func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, options...Option) error {
+	if !g.isSupportedValue(model, singleModelWrite) {
+		return ErrorInvalidCrudParam.
+			WithMessage("%T is not a valid model for %s, requires %s", v, "Update", "*Struct or Struct")
+	}
+
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
 		// note we use the actual model instead of template g.model
 		return db.Model(model).Updates(v)
@@ -83,12 +165,17 @@ func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, 
 }
 
 func (g GormCrud) Delete(ctx context.Context, v interface{}) error {
+	if !g.isSupportedValue(v, genericModelWrite) {
+		return ErrorInvalidCrudParam.
+			WithMessage("%T is not a valid value for %s, requires %s", v, "Delete", "*Struct, []*Struct or []Struct")
+	}
+
 	return g.execute(ctx, nil, nil, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Delete(v)
 	})
 }
 
-func (g GormCrud) DeleteBy(ctx context.Context, condition CrudCondition) error {
+func (g GormCrud) DeleteBy(ctx context.Context, condition Condition) error {
 	return g.execute(ctx, condition, nil, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Delete(g.model)
 	})
@@ -101,7 +188,7 @@ func (g GormCrud) Truncate(ctx context.Context) error {
 	})
 }
 
-func (g GormCrud) execute(ctx context.Context, condition CrudCondition, options []CrudOption, f func(*gorm.DB) *gorm.DB) error {
+func (g GormCrud) execute(ctx context.Context, condition Condition, options []Option, f func(*gorm.DB) *gorm.DB) error {
 	var e error
 	db := g.GormApi.DB(ctx)
 	if db, e = g.applyOptions(db, options); e != nil {
@@ -118,7 +205,7 @@ func (g GormCrud) execute(ctx context.Context, condition CrudCondition, options 
 	return nil
 }
 
-func (g GormCrud) applyOptions(db *gorm.DB, opts []CrudOption) (*gorm.DB, error) {
+func (g GormCrud) applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
 	if opts == nil {
 		return db, nil
 	}
@@ -127,13 +214,13 @@ func (g GormCrud) applyOptions(db *gorm.DB, opts []CrudOption) (*gorm.DB, error)
 		case gormOptions:
 			db = opt(db)
 		default:
-			return nil, ErrorUnsupportedOptions.WithMessage("unsupported CrudOption %T", v)
+			return nil, ErrorUnsupportedOptions.WithMessage("unsupported Option %T", v)
 		}
 	}
 	return db, nil
 }
 
-func (g GormCrud) applyCondition(db *gorm.DB, condition CrudCondition) (*gorm.DB, error) {
+func (g GormCrud) applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, error) {
 	if condition == nil {
 		return db, nil
 	}
@@ -149,14 +236,48 @@ func (g GormCrud) applyCondition(db *gorm.DB, condition CrudCondition) (*gorm.DB
 	return db, nil
 }
 
-func validateGormModel(model interface{}) error {
+func (g GormCrud) isSupportedValue(value interface{}, types []typeKey) bool {
+	t := reflect.TypeOf(value)
+	for _, typ := range types {
+		if expected, ok := g.types[typ]; ok && expected == t {
+			return true
+		}
+	}
+	return false
+}
+
+func generateModelMetadata(model interface{}) (metadata, error) {
 	if model == nil {
-		return ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
+		return metadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
 	}
 
+
+	var sType reflect.Type
 	t := reflect.TypeOf(model)
-	if t.Kind() == reflect.Struct || t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct {
-		return nil
+	switch {
+	case t.Kind() == reflect.Struct:
+		sType = t
+	case t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct:
+		sType = t.Elem()
 	}
-	return ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
+
+	if sType == nil {
+		return metadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
+	}
+
+	pType := reflect.PtrTo(sType)
+	types := map[typeKey]reflect.Type{
+		typeModelPtr:         pType,
+		typeModel:            sType,
+		typeModelSlicePtr:    reflect.PtrTo(reflect.SliceOf(sType)),
+		typeModelPtrSlicePtr: reflect.PtrTo(reflect.SliceOf(pType)),
+		typeModelSlice:       reflect.SliceOf(sType),
+		typeModelPtrSlice:    reflect.SliceOf(pType),
+		typeGenericMap:       reflect.TypeOf(map[string]interface{}{}),
+	}
+	return metadata{
+		model: reflect.New(sType).Interface(),
+		types: types,
+	}, nil
+
 }

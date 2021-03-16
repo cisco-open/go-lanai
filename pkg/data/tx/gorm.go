@@ -64,56 +64,71 @@ func (m gormTxManager) Transaction(ctx context.Context, tx TxFunc, opts ...*sql.
 	}, opts...)
 }
 
-func (m gormTxManager) Begin(ctx context.Context, opts ...*sql.TxOptions) context.Context {
+func (m gormTxManager) Begin(ctx context.Context, opts ...*sql.TxOptions) (context.Context, error) {
 	tx := m.db.Begin(opts...)
+	if tx.Error != nil {
+		return ctx, tx.Error
+	}
 	return gormTxContext{
 		txContext: txContext{Context: ctx},
 		db: tx,
-	}
+	}, nil
 }
 
-func (m gormTxManager) Rollback(ctx context.Context) context.Context {
-	if db, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
-		db.Rollback()
+func (m gormTxManager) Rollback(ctx context.Context) (context.Context, error) {
+	if tx, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
+		tx.Rollback()
+		if tx.Error != nil {
+			return ctx, tx.Error
+		}
 	}
 
 	if orig, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
-		return orig
+		return orig, nil
 	}
-	panic(data.NewDataError(data.ErrorCodeInvalidTransaction, "rollback failed. did you pass along the context provided by Begin(...)?"))
+	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
 }
 
-func (m gormTxManager) Commit(ctx context.Context) context.Context {
-	if db, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
-		db.Commit()
+func (m gormTxManager) Commit(ctx context.Context) (context.Context, error) {
+	if tx, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
+		tx.Commit()
+		if tx.Error != nil {
+			return ctx, tx.Error
+		}
 	}
 
 	if orig, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
-		return orig
+		return orig, nil
 	}
-	panic(data.NewDataError(data.ErrorCodeInvalidTransaction, "commit failed. did you pass along the context provided by Begin(...)?"))
+	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
 }
 
-func (m gormTxManager) SavePoint(ctx context.Context, name string) context.Context {
-	if db, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
-		db.SavePoint(name)
+func (m gormTxManager) SavePoint(ctx context.Context, name string) (context.Context, error) {
+	if tx, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
+		tx.SavePoint(name)
+		if tx.Error != nil {
+			return ctx, tx.Error
+		}
 	}
 
-	if orig, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
-		return orig
+	if _, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
+		return ctx, nil
 	}
-	panic(data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?"))
+	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
 }
 
-func (m gormTxManager) RollbackTo(ctx context.Context, name string) context.Context {
-	if db, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
-		db.RollbackTo(name)
+func (m gormTxManager) RollbackTo(ctx context.Context, name string) (context.Context, error) {
+	if tx, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
+		tx.RollbackTo(name)
+		if tx.Error != nil {
+			return ctx, tx.Error
+		}
 	}
 
-	if orig, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
-		return orig
+	if _, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
+		return ctx, nil
 	}
-	panic(data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?"))
+	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
 }
 
 

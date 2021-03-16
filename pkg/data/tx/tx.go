@@ -12,27 +12,40 @@ func setGlobalTxManager(m TxManager) {
 	txManager = m
 }
 
+// Transaction start a transaction as a block, return error will rollback, otherwise to commit.
 func Transaction(ctx context.Context, tx TxFunc, opts ...*sql.TxOptions) error {
 	return mustGetTxManager().Transaction(ctx, tx, opts...)
 }
 
-func Begin(ctx context.Context, opts ...*sql.TxOptions) context.Context {
+// Begin start a transaction. the returned context.Context should be used for any transactioanl operations
+// if returns an error, the returned context.Context should be disgarded
+func Begin(ctx context.Context, opts ...*sql.TxOptions) (context.Context, error) {
 	return mustGetTxManager().(ManualTxManager).Begin(ctx, opts...)
 }
 
-func Rollback(ctx context.Context) context.Context {
+// Rollback rollback a transaction. the returned context.Context is the original provided context when Begin is called
+// if returns an error, the returned context.Context should be disgarded
+func Rollback(ctx context.Context) (context.Context, error) {
 	return mustGetTxManager().(ManualTxManager).Rollback(ctx)
 }
 
-func Commit(ctx context.Context) context.Context {
+// Commit commit a transaction. the returned context.Context is the original provided context when Begin is called
+// if returns an error, the returned context.Context should be disgarded
+func Commit(ctx context.Context) (context.Context, error) {
 	return mustGetTxManager().(ManualTxManager).Commit(ctx)
 }
 
-func SavePoint(ctx context.Context, name string) context.Context {
+// SavePoint works with RollbackTo and have to be within an transaction.
+// the returned context.Context should be used for any transactioanl operations between corresponding SavePoint and RollbackTo
+// if returns an error, the returned context.Context should be disgarded
+func SavePoint(ctx context.Context, name string) (context.Context, error) {
 	return mustGetTxManager().(ManualTxManager).SavePoint(ctx, name)
 }
 
-func RollbackTo(ctx context.Context, name string) context.Context {
+// RollbackTo works with SavePoint and have to be within an transaction.
+// the returned context.Context should be used for any transactioanl operations between corresponding SavePoint and RollbackTo
+// if returns an error, the returned context.Context should be disgarded
+func RollbackTo(ctx context.Context, name string) (context.Context, error) {
 	return mustGetTxManager().(ManualTxManager).RollbackTo(ctx, name)
 }
 
