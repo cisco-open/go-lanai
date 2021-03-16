@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -301,7 +300,7 @@ func WriteErrorAsHtml(ctx context.Context, rw http.ResponseWriter, code int, err
 
 func WriteErrorAsJson(ctx context.Context, rw http.ResponseWriter, code int, err error) {
 	httpError := web.NewHttpError(code, err)
-	rest.JsonErrorEncoder(ctx, httpError, rw)
+	web.JsonErrorEncoder()(ctx, httpError, rw)
 }
 
 /**************************

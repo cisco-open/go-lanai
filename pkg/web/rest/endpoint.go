@@ -3,9 +3,7 @@ package rest
 import (
 	"bytes"
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/json"
-	httptransport "github.com/go-kit/kit/transport/http"
 	"io/ioutil"
 	"net/http"
 )
@@ -25,52 +23,5 @@ func jsonEncodeRequestFunc(_ context.Context, r *http.Request, request interface
 	return nil
 }
 
-/**********************************
-	JSON Response Encoder
-***********************************/
-func JsonEncodeResponseFunc(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	// overwrite headers
-	if headerer, ok := response.(httptransport.Headerer); ok {
-		w = web.NewLazyHeaderWriter(w)
-		overwriteHeaders(w, headerer)
-	}
-
-	// additional headers
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
-	// write header and status code
-	if coder, ok := response.(httptransport.StatusCoder); ok {
-		w.WriteHeader(coder.StatusCode())
-	}
-
-	if entity, ok := response.(web.BodyContainer); ok {
-		response = entity.Body()
-		// For Debug
-		//return web.NewHttpError(405, error.New(fmt.Sprintf("Cannot serialize response %T", entity.BodyData())) )
-	}
-	return json.NewEncoder(w).Encode(response)
-}
-
-func overwriteHeaders(w http.ResponseWriter, h httptransport.Headerer) {
-	for key, values := range h.Headers() {
-		for i, val := range values {
-			if i == 0 {
-				w.Header().Set(key, val)
-			} else {
-				w.Header().Add(key, val)
-			}
-		}
-	}
-}
-
-/*****************************
-	JSON Error Encoder
-******************************/
-func JsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
-	if _,ok := err.(json.Marshaler); !ok {
-		err = web.ToHttpError(err)
-	}
-	httptransport.DefaultErrorEncoder(c, err, w)
-}
 
 

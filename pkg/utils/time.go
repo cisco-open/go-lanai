@@ -2,8 +2,6 @@ package utils
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 	"time"
 )
 
@@ -38,23 +36,18 @@ func ParseDuration(v string) time.Duration {
 
 type Duration time.Duration
 
-// json.MarshalJSON
-func (d *Duration) MarshalJSON() ([]byte, error) {
-	if d == nil {
-		return []byte(`"0s"`), nil
-	}
-	str := fmt.Sprintf(`"%s"`, time.Duration(*d).String())
-	return []byte(str), nil
+// encoding.TextMarshaler
+func (d Duration) MarshalText() (text []byte, err error) {
+	return []byte(time.Duration(d).String()), nil
 }
 
-// json.UnmarshalJSON
-func (d *Duration) UnmarshalJSON(data []byte) error {
+// encoding.TextUnmarshaler
+func (d *Duration) UnmarshalText(text []byte) error {
 	if d == nil {
 		return errors.New("duration poiter is nil")
 	}
 
-	str := strings.Trim(string(data), `"`)
-	parsed, e := time.ParseDuration(str)
+	parsed, e := time.ParseDuration(string(text))
 	if e != nil {
 		return e
 	}

@@ -2,80 +2,51 @@ package web
 
 import (
 	"context"
-	"encoding"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
+	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 )
 
-// RecoveryCustomizer implements Customizer
-type ErrorHandlingCustomizer struct {
-
-}
-
-func NewErrorHandlingCustomizer() *ErrorHandlingCustomizer {
-	return &ErrorHandlingCustomizer{}
-}
-
-func (c ErrorHandlingCustomizer) Customize(ctx context.Context, r *Registrar) error {
-	r.AddGlobalMiddlewares(DefaultErrorHandling())
-	return nil
-}
-
-// DefaultErrorHandling implement error handling logics at last resort, in case errors are not properly handled downstream
-func DefaultErrorHandling() gin.HandlerFunc {
-	return func(gc *gin.Context) {
-		gc.Next()
-
-		if gc.Writer.Written() || len(gc.Errors) == 0 {
-			return
+/*************************
+	error translation
+ *************************/
+func newErrorEncoder(encoder httptransport.ErrorEncoder, translators ...ErrorTranslator) httptransport.ErrorEncoder {
+	return func(ctx context.Context, err error, rw http.ResponseWriter) {
+		for _, t := range translators {
+			err = t.Translate(ctx, err)
 		}
-
-		// find first error that implements StatusCoder
-		// if not found, use the first one
-		err := gc.Errors[0].Err
-		for _, e := range gc.Errors {
-			if _,ok := e.Err.(StatusCoder); !ok {
-				err = e.Err
-				break
-			}
-		}
-		handleError(gc.Request.Context(), err, gc.Writer)
+		encoder(ctx, err, rw)
 	}
 }
 
-func handleError(_ context.Context, err error, rw http.ResponseWriter) {
-	// body
-	contentType, body := "text/plain; charset=utf-8", []byte(err.Error())
-	if marshaler, ok := err.(encoding.TextMarshaler); ok {
-		if textBody, e := marshaler.MarshalText(); e == nil {
-			body = textBody
-		}
-	}
+type defaultErrorTranslator struct {}
 
-	// prefer JSON if available
-	if marshaler, ok := err.(json.Marshaler); ok {
-		if jsonBody, e := marshaler.MarshalJSON(); e == nil {
-			contentType, body = "application/json; charset=utf-8", jsonBody
-		}
+func (i defaultErrorTranslator) Translate(_ context.Context, err error) error {
+	switch err.(type) {
+	case validator.ValidationErrors:
+		return ValidationErrors{err.(validator.ValidationErrors)}
+	case StatusCoder, HttpError:
+		return err
+	default:
+		return HttpError{error: err, SC: http.StatusInternalServerError}
 	}
+}
 
-	// header
-	rw.Header().Set("Content-Type", contentType)
-	if headerer, ok := err.(Headerer); ok {
-		for k, values := range headerer.Headers() {
-			for _, v := range values {
-				rw.Header().Add(k, v)
-			}
-		}
+func newDefaultErrorTranslator() defaultErrorTranslator {
+	return defaultErrorTranslator{}
+}
+
+/*****************************
+	Error Encoder
+******************************/
+func JsonErrorEncoder() httptransport.ErrorEncoder {
+	return jsonErrorEncoder
+}
+
+func jsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
+	if _,ok := err.(json.Marshaler); !ok {
+		err = NewHttpError(0, err)
 	}
-
-	// status code
-	code := http.StatusInternalServerError
-	if sc, ok := err.(StatusCoder); ok {
-		code = sc.StatusCode()
-	}
-	rw.WriteHeader(code)
-	rw.Write(body)
-
+	httptransport.DefaultErrorEncoder(c, err, w)
 }

@@ -39,6 +39,7 @@ type Registrar struct {
 	routedMappings map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
 	staticMappings []StaticMapping                       // staticMappings all static mappings
 	customizers    []Customizer
+	errTranslators []ErrorTranslator
 	initialized    bool
 }
 
@@ -161,6 +162,7 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 //  - StaticMapping
 //  - TemplateMapping
 //  - MiddlewareMapping
+//  - ErrorTranslator
 //  - struct that contains exported Controller fields
 func (r *Registrar) Register(items...interface{}) (err error) {
 	for _, i := range items {
@@ -200,6 +202,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 		err = r.registerRequestPreProcessor(i.(RequestPreProcessor))
 	case Customizer:
 		err = r.registerWebCustomizer(i.(Customizer))
+	case ErrorTranslator:
+		err = r.registerErrorTranslator(i.(ErrorTranslator))
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -208,30 +212,36 @@ func (r *Registrar) register(i interface{}) (err error) {
 
 func (r *Registrar) registerUnknownType(i interface{}) (err error) {
 	v := reflect.ValueOf(i)
-
-	// get struct value
-	if v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct {
+	switch {
+	case v.Kind() == reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			if e := r.register(v.Index(i).Interface()); e != nil {
+				return e
+			}
+		}
+	case v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct :
 		v = v.Elem()
-	} else if v.Kind() != reflect.Struct {
+		fallthrough
+	case v.Kind() == reflect.Struct:
+		// go through fields and register
+		for idx := 0; idx < v.NumField(); idx++ {
+			// only care controller fields
+			if f := v.Type().Field(idx); !reflectutils.IsExportedField(f) {
+				// unexported field
+				continue
+			}
+			c := v.Field(idx).Interface()
+			if _,ok := c.(Controller); !ok {
+				continue
+			}
+
+			err = r.register(c)
+			if err != nil {
+				return err
+			}
+		}
+	default:
 		return errors.New(fmt.Sprintf("unsupported type [%T]", i))
-	}
-
-	// go through fields and register
-	for idx := 0; idx < v.NumField(); idx++ {
-		// only care controller fields
-		if f := v.Type().Field(idx); !reflectutils.IsExportedField(f) {
-			// unexported field
-			continue
-		}
-		c := v.Field(idx).Interface()
-		if _,ok := c.(Controller); !ok {
-			continue
-		}
-
-		err = r.register(c)
-		if err != nil {
-			return err
-		}
 	}
 	return
 }
@@ -297,6 +307,14 @@ func (r *Registrar) registerWebCustomizer(c Customizer) error {
 	return nil
 }
 
+func (r *Registrar) registerErrorTranslator(t ErrorTranslator) error {
+	if r.initialized {
+		return fmt.Errorf("cannot register error translator after web engine have initialized")
+	}
+	r.errTranslators = append(r.errTranslators, t)
+	return nil
+}
+
 func (r *Registrar) applyCustomizers(ctx context.Context) error {
 	if r.customizers == nil {
 		return nil
@@ -324,6 +342,10 @@ func (r *Registrar) applyPostInitCustomizers(ctx context.Context) error {
 }
 
 func (r *Registrar) installMappings() error {
+	// before registering, we need to add default error translators
+	order.SortStable(r.errTranslators, order.OrderedFirstCompare)
+	r.errTranslators = append(r.errTranslators, newDefaultErrorTranslator())
+
 	// register routedMappings
 	for method, paths := range r.routedMappings {
 		for _, mappings := range paths {
@@ -380,12 +402,12 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 		// create hander funcs
 		switch m.(type) {
 		case MvcMapping:
-			handlerFuncs[i] = makeHandlerFuncFromMvcMapping(m.(MvcMapping), options)
+			handlerFuncs[i] = r.makeHandlerFuncFromMvcMapping(m.(MvcMapping), options)
 		case SimpleGinMapping:
-			handlerFuncs[i] = makeGinConditionalHandlerFunc(m.(SimpleGinMapping).GinHandlerFunc(), m.Condition())
+			handlerFuncs[i] = r.makeGinConditionalHandlerFunc(m.(SimpleGinMapping).GinHandlerFunc(), m.Condition())
 		case SimpleMapping:
 			f := NewHttpGinHandlerFunc(http.HandlerFunc(m.(SimpleMapping).HandlerFunc()))
-			handlerFuncs[i] = makeGinConditionalHandlerFunc(f, m.Condition())
+			handlerFuncs[i] = r.makeGinConditionalHandlerFunc(f, m.Condition())
 		}
 	}
 
@@ -420,7 +442,7 @@ func (r *Registrar) findMiddlewares(group, relativePath string, methods...string
 			default:
 				f = NewHttpGinHandlerFunc(http.HandlerFunc(mw.HandlerFunc()))
 			}
-			handlers[i] = makeGinConditionalHandlerFunc(f, mw.Condition())
+			handlers[i] = r.makeGinConditionalHandlerFunc(f, mw.Condition())
 			i++
 		}
 	}
@@ -463,10 +485,16 @@ func (r *Registrar) preProcessMiddleware(c *gin.Context) {
 /**************************
 	Helpers
 ***************************/
-func makeHandlerFuncFromMvcMapping(m MvcMapping, options []httptransport.ServerOption) gin.HandlerFunc {
-	if m.ErrorEncoder() != nil {
-		options = append(options, httptransport.ServerErrorEncoder(m.ErrorEncoder()))
+func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, options []httptransport.ServerOption) gin.HandlerFunc {
+	// create error encoder
+	errenc := m.ErrorEncoder()
+	if errenc == nil {
+		errenc = JsonErrorEncoder()
 	}
+
+	options = append(options, httptransport.ServerErrorEncoder(
+		newErrorEncoder(errenc, r.errTranslators...),
+		))
 
 	s := httptransport.NewServer(
 		m.Endpoint(),
@@ -475,11 +503,11 @@ func makeHandlerFuncFromMvcMapping(m MvcMapping, options []httptransport.ServerO
 		options...,
 	)
 
-	return makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition())
+	return r.makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition())
 }
 
 // makeGinConditionalHandlerFunc wraps given handler with a request matcher
-func makeGinConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
+func (r *Registrar) makeGinConditionalHandlerFunc(handler gin.HandlerFunc, rm RequestMatcher) gin.HandlerFunc {
 	if rm == nil {
 		return handler
 	}

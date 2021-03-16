@@ -3,45 +3,82 @@ package claims
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"strings"
 )
 
-func AuthenticationTime(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	details, ok := src.Details().(security.AuthenticationDetails)
+type AddressClaim struct {
+	// TODO
+}
+
+func AuthenticationTime(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.AuthenticationDetails)
 	if !ok {
 		return nil, errorMissingDetails
 	}
 	return nonZeroOrError(details.AuthenticationTime(), errorMissingDetails)
 }
 
-func FirstName(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	details, ok := src.Details().(security.UserDetails)
+func FullName(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.UserDetails)
+	if !ok {
+		return nil, errorMissingDetails
+	}
+	name := strings.TrimSpace(strings.Join([]string{details.FirstName(), details.LastName()}, " "))
+	return nonZeroOrError(name, errorMissingDetails)
+}
+
+func FirstName(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
 	}
 	return nonZeroOrError(details.FirstName(), errorMissingDetails)
 }
 
-func LastName(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	details, ok := src.Details().(security.UserDetails)
+func LastName(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
 	}
 	return nonZeroOrError(details.LastName(), errorMissingDetails)
 }
 
-func Email(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	details, ok := src.Details().(security.UserDetails)
+func Email(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
 	}
 	return nonZeroOrError(details.Email(), errorMissingDetails)
 }
 
-func Locale(ctx context.Context, src oauth2.Authentication) (v interface{}, err error) {
-	details, ok := src.Details().(security.UserDetails)
+func EmailVerified(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.UserDetails)
+	if !ok {
+		return nil, errorMissingDetails
+	}
+	return utils.BoolPtr(strings.TrimSpace(details.Email()) != ""), nil
+}
+
+func ZoneInfo(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	// TODO maybe impelment this if possibile to extract it from locale
+	return nil, errorMissingDetails
+}
+
+func Locale(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
 	}
 	return nonZeroOrError(details.LocaleCode(), errorMissingDetails)
 }
+
+func Address(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.UserDetails)
+	if !ok {
+		return nil, errorMissingDetails
+	}
+	return nonZeroOrError(details.LocaleCode(), errorMissingDetails)
+}
+
+

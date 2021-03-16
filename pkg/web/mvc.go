@@ -97,17 +97,26 @@ type Response struct {
 }
 
 // httptransport.StatusCoder
-func (r *Response) StatusCode() int {
+func (r Response) StatusCode() int {
+	if i, ok := r.B.(StatusCoder); ok {
+		return i.StatusCode()
+	}
 	return r.SC
 }
 
 // httptransport.Headerer
-func (r *Response) Headers() http.Header {
+func (r Response) Headers() http.Header {
+	if i, ok := r.B.(Headerer); ok {
+		return i.Headers()
+	}
 	return r.H
 }
 
 // BodyContainer
-func (r *Response) Body() interface{} {
+func (r Response) Body() interface{} {
+	if i, ok := r.B.(BodyContainer); ok {
+		return i.Body()
+	}
 	return r.B
 }
 
@@ -209,7 +218,7 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 			ginCtx.ShouldBind,
 			validateBinding)
 
-		return toRet.Interface(), toBadRequestError(err)
+		return toRet.Interface(), err
 	}
 }
 
@@ -247,9 +256,4 @@ func instantiateByType(t reflect.Type) (ptr interface{}, value *reflect.Value) {
 	}
 }
 
-/**********************************
-	Generic Response Decoder
-***********************************/
-
-// TODO Response Decode function, used for client
 

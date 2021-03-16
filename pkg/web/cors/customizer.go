@@ -12,7 +12,7 @@ type Customizer struct {
 	properties CorsProperties
 }
 
-func newCustomizer(properties CorsProperties) *Customizer {
+func newCustomizer(properties CorsProperties) web.Customizer {
 	return &Customizer{
 		properties: properties,
 	}

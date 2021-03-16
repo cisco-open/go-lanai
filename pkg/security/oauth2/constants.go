@@ -120,10 +120,10 @@ const (
 	ClaimEmail             = "email"
 	ClaimEmailVerified     = "email_verified"
 	ClaimGender            = "gender"
-	ClaimBirthday          = "birthdate"
-	ClaimZoneInfo          = "zoneinfo"
-	ClaimLocale            = "locale"
-	ClaimPhoneNumber       = "phone_number"
+	ClaimBirthday          = "birthdate"	// ISO 8601:2004 [ISO8601‑2004] YYYY-MM-DD format
+	ClaimZoneInfo          = "zoneinfo"		// Europe/Paris or America/Los_Angeles
+	ClaimLocale            = "locale"		// Typically ISO 639-1 Alpha-2 [ISO639‑1] language code in lowercase and an ISO 3166-1
+	ClaimPhoneNumber       = "phone_number"	// RFC 3966 [RFC3966] e.g. +1 (604) 555-1234;ext=5678
 	ClaimPhoneNumVerified  = "phone_number_verified"
 	ClaimAddress           = "address"
 	ClaimUpdatedAt         = "updated_at"

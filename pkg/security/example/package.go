@@ -21,12 +21,13 @@ import (
 var logger = log.New("SEC.Example")
 
 func init() {
-	authserver.Use()
-	resserver.Use()
+
 }
 
 // Maker func, does nothing. Allow service to include this module in main()
 func Use() {
+	authserver.Use()
+	resserver.Use()
 	bootstrap.AddOptions(
 		fx.Provide(BindAccountsProperties),
 		fx.Provide(BindAccountPoliciesProperties),
@@ -39,15 +40,12 @@ func Use() {
 		fx.Provide(NewInMemoryIdpManager),
 		fx.Provide(NewInMemSpManager),
 		fx.Provide(newAuthServerConfigurer),
-		fx.Provide(newResServerConfigurer),
 		fx.Invoke(configureSecurity),
 		fx.Invoke(configureConsulRegistration),
 	)
 }
 
-func configureSecurity(init security.Registrar, store security.AccountStore) {
-	init.Register(&TestSecurityConfigurer { accountStore: store })
-	init.Register(&AnotherSecurityConfigurer { })
+func configureSecurity(init security.Registrar) {
 	init.Register(&ErrorPageSecurityConfigurer{})
 }
 
@@ -90,17 +88,6 @@ func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 				Condition: matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"),
 			},
 			SamlMetadata: "/metadata",
-		}
-	}
-}
-
-func newResServerConfigurer(deps authDI) resserver.ResourceServerConfigurer {
-	return func(config *resserver.Configuration) {
-		config.RemoteEndpoints = resserver.RemoteEndpoints{
-			Token: "http://localhost:8080/europa/v2/token",
-			CheckToken: "http://localhost:8080/europa/v2/check_token",
-			UserInfo: "http://localhost:8080/europa/v2/userinfo",
-			JwkSet: "http://localhost:8080/europa/v2/jwks",
 		}
 	}
 }
