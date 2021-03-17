@@ -51,28 +51,25 @@ type Option interface {}
 type CrudRepository interface {
 
 	// FindById fetch model by primary key and scan it into provided interface.
-	// "dest" is usually a pointer of model
+	// Accepted "dest" types:
+	//		*ModelStruct
 	FindById(ctx context.Context, dest interface{}, id interface{}, options...Option) error
 
 	// FindAll fetch all model scan it into provided slice.
-	// "dest" is usually a pointer of model slice
+	// Accepted "dest" types:
+	//		*[]*ModelStruct
+	//		*[]ModelStruct
 	FindAll(ctx context.Context, dest interface{}, options...Option) error
 
 	// FindOneBy fetch single model with given condition and scan result into provided value.
-	// "dest" can be
-	// 	- a pointer of model
-	//	- any other result type supported
-	// if the "query" result doesn't agree with the provided interface, error will return.
-	// e.g. dest is *User instead of []*User, but query found multiple users
+	// Accepted "dest" types:
+	//		*ModelStruct
 	FindOneBy(ctx context.Context, dest interface{}, condition Condition, options...Option) error
 
 	// FindAllBy fetch all model with given condition and scan result into provided value.
-	// "dest" can be
-	// 	- a pointer of model
-	// 	- a pointer of model slice
-	//	- any other result type supported
-	// if the "query" result doesn't agree with the provided interface, error will return.
-	// e.g. dest is *User instead of []*User, but query found multiple users
+	// Accepted "dest" types:
+	//		*[]*ModelStruct
+	//		*[]ModelStruct
 	FindAllBy(ctx context.Context, dest interface{}, condition Condition, options...Option) error
 
 	// CountAll counts all
@@ -82,18 +79,47 @@ type CrudRepository interface {
 	CountBy(ctx context.Context, condition Condition) (int, error)
 
 	// Save create or update model or model array.
+	// Accepted "v" types:
+	//		*ModelStruct
+	//		[]*ModelStruct
+	//		[]ModelStruct
+	//		ModelStruct
+	//  	map[string]interface{}
+	// Note:
+	//		1. map[string]interface{} might not be supported by underlying implementation
+	//		2. ModelStruct is not recommended because auto-generated field default will be lost
 	Save(ctx context.Context, v interface{}, options...Option) error
 
 	// Create create model or model array. returns error if model already exists
+	// Accepted "v" types:
+	//		*ModelStruct
+	//		[]*ModelStruct
+	//		[]ModelStruct
+	//		ModelStruct
+	//  	map[string]interface{}
+	// Note:
+	//		1. map[string]interface{} might not be supported by underlying implementation
+	//		2. ModelStruct is not recommended because auto-generated field default will be lost
 	Create(ctx context.Context, v interface{}, options...Option) error
 
-	// Update update model, only non-zero fields of "v" are updated
+	// Update update model, only non-zero fields of "v" are updated.
 	// "model" is the model to be updated, loaded from DB
-	// "v" can be struct or map[string]interface{},
-	// could support SelectOption and OmitOption depends on implementation
+	// Accepted "dest" types:
+	//		*ModelStruct
+	//		ModelStruct
+	// Accepted "v" types:
+	//		ModelStruct
+	//		*ModelStruct
+	//		map[string]interface{}
+	// Update might support SelectOption and OmitOption depends on implementation
 	Update(ctx context.Context, model interface{}, v interface{}, options...Option) error
 
 	// Delete delete given model or model array
+	// Accepted "v" types:
+	//		*ModelStruct
+	//		[]*ModelStruct
+	//		[]ModelStruct
+	//		ModelStruct
 	// returns error if such deletion violate any existing foreign key constraints
 	Delete(ctx context.Context, v interface{}) error
 
@@ -103,6 +129,7 @@ type CrudRepository interface {
 
 	// Truncate attempt to truncate the table associated the repository
 	// returns error if such truncattion violate any existing foreign key constraints
+	// Warning: User with Caution: interface is not finalized
 	Truncate(ctx context.Context) error
 }
 

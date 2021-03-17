@@ -2,8 +2,10 @@ package repo
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 	"reflect"
 )
 
@@ -27,11 +29,11 @@ const(
 type typeKey int
 
 var (
-	singleModelRead = []typeKey{typeModelPtr}
-	multiModelRead = []typeKey{typeModelPtrSlicePtr, typeModelSlicePtr}
-	singleModelWrite = []typeKey{typeModelPtr, typeModel}
-	multiModelWrite = []typeKey{typeModelPtrSlice, typeModelSlice, typeModelPtrSlicePtr, typeModelSlicePtr}
-	genericModelWrite = []typeKey{
+	singleModelRead   = utils.NewSet(typeModelPtr)
+	multiModelRead    = utils.NewSet(typeModelPtrSlicePtr, typeModelSlicePtr)
+	singleModelWrite  = utils.NewSet(typeModelPtr, typeModel)
+	multiModelWrite   = utils.NewSet(typeModelPtrSlice, typeModelSlice, typeModelPtrSlicePtr, typeModelSlicePtr)
+	genericModelWrite = utils.NewSet(
 		typeModelPtr,
 		typeModelPtrSlice,
 		typeGenericMap,
@@ -39,18 +41,19 @@ var (
 		typeModelSlice,
 		typeModelSlicePtr,
 		typeModel,
-	}
+	)
 )
 
-type metadata struct {
+type gormMetadata struct {
 	model interface{}
-	types map[typeKey]reflect.Type
+	types map[reflect.Type]typeKey
+	schema *schema.Schema
 }
 
 // GormCrud implements CrudRepository and can be embedded into any repositories using gorm as ORM
 type GormCrud struct {
 	GormApi
-	metadata
+	gormMetadata
 }
 
 func newGormCrud(api GormApi, model interface{}) (*GormCrud, error) {
@@ -59,8 +62,8 @@ func newGormCrud(api GormApi, model interface{}) (*GormCrud, error) {
 		return nil, e
 	}
 	return &GormCrud{
-		GormApi: api,
-		metadata: meta,
+		GormApi:      api,
+		gormMetadata: meta,
 	}, nil
 }
 
@@ -71,7 +74,8 @@ func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}
 	}
 
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
-		return db.Model(g.model).Find(dest, id)
+		// TODO verify this using UUID string and composite key
+		return db.Model(g.model).Take(dest, id)
 	})
 }
 
@@ -183,8 +187,16 @@ func (g GormCrud) DeleteBy(ctx context.Context, condition Condition) error {
 
 func (g GormCrud) Truncate(ctx context.Context) error {
 	return g.execute(ctx, nil, nil, func(db *gorm.DB) *gorm.DB {
-		// FIXME this is not proper implementation, we need to know table name in this case
-		return db.Model(g.model).Exec("TRUNCATE TABLE ? RESTRICT", reflect.TypeOf(g.model).Name())
+		db = db.Model(g.model)
+		if e := db.Statement.Parse(g.model); e != nil {
+			db.AddError(ErrorInvalidCrudModel.WithMessage("unable to parse table name for model %T", g.model))
+			return db
+		}
+		table := interface{}(db.Statement.TableExpr)
+		if db.Statement.TableExpr == nil {
+			table = db.Statement.Table
+		}
+		return db.Exec("TRUNCATE TABLE ? RESTRICT", table)
 	})
 }
 
@@ -236,22 +248,18 @@ func (g GormCrud) applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, er
 	return db, nil
 }
 
-func (g GormCrud) isSupportedValue(value interface{}, types []typeKey) bool {
+func (g GormCrud) isSupportedValue(value interface{}, types utils.Set) bool {
 	t := reflect.TypeOf(value)
-	for _, typ := range types {
-		if expected, ok := g.types[typ]; ok && expected == t {
-			return true
-		}
-	}
-	return false
+	typ, ok := g.types[t]
+	return ok && types.Has(typ)
 }
 
-func generateModelMetadata(model interface{}) (metadata, error) {
+func generateModelMetadata(model interface{}) (gormMetadata, error) {
 	if model == nil {
-		return metadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
+		return gormMetadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
 	}
 
-
+	// cache some types
 	var sType reflect.Type
 	t := reflect.TypeOf(model)
 	switch {
@@ -262,20 +270,21 @@ func generateModelMetadata(model interface{}) (metadata, error) {
 	}
 
 	if sType == nil {
-		return metadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
+		return gormMetadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
 	}
 
 	pType := reflect.PtrTo(sType)
-	types := map[typeKey]reflect.Type{
-		typeModelPtr:         pType,
-		typeModel:            sType,
-		typeModelSlicePtr:    reflect.PtrTo(reflect.SliceOf(sType)),
-		typeModelPtrSlicePtr: reflect.PtrTo(reflect.SliceOf(pType)),
-		typeModelSlice:       reflect.SliceOf(sType),
-		typeModelPtrSlice:    reflect.SliceOf(pType),
-		typeGenericMap:       reflect.TypeOf(map[string]interface{}{}),
+	types := map[reflect.Type]typeKey{
+		pType:                                    typeModelPtr,
+		sType:                                    typeModel,
+		reflect.PtrTo(reflect.SliceOf(sType)):    typeModelSlicePtr,
+		reflect.PtrTo(reflect.SliceOf(pType)):    typeModelPtrSlicePtr,
+		reflect.SliceOf(sType):                   typeModelSlice,
+		reflect.SliceOf(pType):                   typeModelPtrSlice,
+		reflect.TypeOf(map[string]interface{}{}): typeGenericMap,
 	}
-	return metadata{
+
+	return gormMetadata{
 		model: reflect.New(sType).Interface(),
 		types: types,
 	}, nil
