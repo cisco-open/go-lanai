@@ -41,6 +41,16 @@ const (
 )
 
 const (
+	GrantTypeClientCredentials = "client_credentials"
+	GrantTypePassword          = "password"
+	GrantTypeAuthCode          = "authorization_code"
+	GrantTypeImplicit          = "implicit"
+	GrantTypeRefresh           = "refresh_token"
+	GrantTypeSwitchUser        = "urn:cisco:nfv:oauth:grant-type:switch-user"
+	GrantTypeSwitchTenant      = "urn:cisco:nfv:oauth:grant-type:switch-tenant"
+)
+
+const (
 	ScopeRead            = "read"
 	ScopeWrite           = "write"
 	ScopeTokenDetails    = "token_details"
@@ -66,16 +76,6 @@ const (
 	CtxKeyResolvedAuthorizeState    = "kResolvedState"
 	CtxKeyRefreshToken              = "kRefreshToken"
 	CtxKeySourceAuthentication      = "kSourceAuthentication"
-)
-
-const (
-	GrantTypeClientCredentials = "client_credentials"
-	GrantTypePassword          = "password"
-	GrantTypeAuthCode          = "authorization_code"
-	GrantTypeImplicit          = "implicit"
-	GrantTypeRefresh           = "refresh_token"
-	GrantTypeSwitchUser        = "urn:cisco:nfv:oauth:grant-type:switch-user"
-	GrantTypeSwitchTenant      = "urn:cisco:nfv:oauth:grant-type:switch-tenant"
 )
 
 const (
