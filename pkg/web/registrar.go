@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
 	"errors"
@@ -66,8 +65,9 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
 
-	// first, we add some manditory customizers
-	r.Register(NewGinContextCustomizer())
+	// first, we add some manditory customizers and middleware
+	r.Register(NewPriorityGinContextCustomizer(&r.properties))
+	r.Register(NewGinContextCustomizer(&r.properties))
 
 	// apply customizers before install mappings
 	if err = r.applyCustomizers(ctx); err != nil {
@@ -84,9 +84,7 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	r.engine.LoadHTMLGlob("web/template/*")
 
 	// add some common middlewares
-	mappings := []interface{}{
-		NewMiddlewareGinMapping("pre-process", HighestMiddlewareOrder, Any(), nil, r.preProcessMiddleware),
-	}
+	mappings := []interface{}{}
 	if err = r.Register(mappings...); err != nil {
 		return
 	}
@@ -473,13 +471,6 @@ func (r *Registrar) kitServerOptions() []httptransport.ServerOption {
 		opts[i] = opt.ServerOption
 	}
 	return opts
-}
-
-/*******************************
-	some global middlewares
-********************************/
-func (r *Registrar) preProcessMiddleware(c *gin.Context) {
-	c.Set(ContextKeyContextPath, r.properties.ContextPath)
 }
 
 /**************************
