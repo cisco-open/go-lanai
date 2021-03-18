@@ -12,6 +12,11 @@ type gormInitDI struct {
 	fx.In
 	Dialector gorm.Dialector
 	Properties DataProperties
+	Configurers [] GormConfigurer `group:"gorm_config"`
+}
+
+type GormConfigurer interface {
+	Configure(config *gorm.Config)
 }
 
 func NewGorm(di gormInitDI) *gorm.DB {
@@ -32,9 +37,15 @@ func NewGorm(di gormInitDI) *gorm.DB {
 		slow = 15 * time.Second
 	}
 
-	db, e := gorm.Open(di.Dialector, &gorm.Config{
+	// gave configurer an chance
+	config := gorm.Config{
 		Logger: newGormLogger(level, slow),
-	})
+	}
+	for _, c := range di.Configurers {
+		c.Configure(&config)
+	}
+
+	db, e := gorm.Open(di.Dialector, &config)
 	if e != nil {
 		panic(e)
 	}

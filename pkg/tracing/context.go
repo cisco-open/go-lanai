@@ -12,11 +12,12 @@ var logger = log.New("Tracing")
 
 const (
 	OpNameBootstrap = "bootstrap"
-	OpNameStart = "startup"
-	OpNameStop = "shutdown"
-	OpNameHttp = "http"
-	OpNameRedis = "redis"
-	OpNameVault = "vault"
+	OpNameStart     = "startup"
+	OpNameStop      = "shutdown"
+	OpNameHttp      = "http"
+	OpNameRedis     = "redis"
+	OpNameVault     = "vault"
+	OpNameDB        = "db"
 	//OpName = ""
 )
 
