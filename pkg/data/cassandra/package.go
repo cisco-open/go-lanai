@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"go.uber.org/fx"
 	"github.com/gocql/gocql"
+	"time"
 )
 
 var Module = &bootstrap.Module{
@@ -21,6 +22,8 @@ func Use() {
 func NewSession(p CassandraProperties) *gocql.Session {
 	cluster := gocql.NewCluster(p.Hosts()...)
 	cluster.Keyspace = p.KeySpaceName
+	cluster.Consistency = gocql.ParseConsistency(p.Consistency)
+	cluster.Timeout = time.Duration(p.Timeout)
 	cluster.Authenticator = gocql.PasswordAuthenticator{
 		Username: p.Username,
 		Password: p.Password,

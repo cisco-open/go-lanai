@@ -1,8 +1,10 @@
 package cassandra
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"strings"
+	"time"
 )
 
 const (
@@ -15,6 +17,8 @@ type CassandraProperties struct {
 	KeySpaceName	   string `json:"keyspace-name"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Timeout  utils.Duration `json:"timeout"`
+	Consistency string `json:"consistency"`
 }
 
 func (p CassandraProperties) Hosts() []string {
@@ -32,5 +36,7 @@ func NewCassandraProperties() *CassandraProperties{
 	return &CassandraProperties{
 		ContactPoints: "127.0.0.1",
 		Port: 9042,
+		Timeout: utils.Duration(15*time.Second),
+		Consistency: "Quorum",
 	}
 }
