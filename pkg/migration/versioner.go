@@ -1,31 +1,24 @@
 package migration
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
-type AppliedMigration struct {
-	Version     Version
-	Description string
-	Success bool
-	InstalledOn time.Time
+type AppliedMigration interface {
+	GetVersion()     Version
+	GetDescription() string
+	IsSuccess() bool
+	GetInstalledOn() time.Time //TODO: other information
 }
 
 type Versioner interface {
-	CreateVersionTableIfNotExist()
-	GetAppliedMigrations() []AppliedMigration
-	RecordAppliedMigration(migration AppliedMigration)
+	CreateVersionTableIfNotExist(ctx context.Context) error
+	GetAppliedMigrations(ctx context.Context) ([]AppliedMigration, error)
+	RecordAppliedMigration(ctx context.Context, version Version, description string, success bool, installedOn time.Time, executionTime time.Duration) error
 }
 
-type CockroachDbVersioner struct {}
 
-func (c *CockroachDbVersioner) CreateVersionTableIfNotExist() {
-}
-
-func (c *CockroachDbVersioner) GetAppliedMigrations() []AppliedMigration {
-	return nil
-}
-
-func (c *CockroachDbVersioner) RecordAppliedMigration(migration AppliedMigration) {
-}
 
 
 

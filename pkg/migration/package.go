@@ -5,10 +5,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
-	"github.com/pkg/errors"
 	"go.uber.org/fx"
-	"sort"
-	"time"
+	"gorm.io/gorm"
 )
 
 const (
@@ -19,6 +17,7 @@ const (
 var logger = log.New("migration")
 
 var filterFlag string
+var allowOutOfOrderFlag bool
 
 var Module = &bootstrap.Module{
 	Name: "migration",
@@ -32,6 +31,7 @@ var Module = &bootstrap.Module{
 
 func init() {
 	bootstrap.AddStringFlag(&filterFlag, "filter", "", fmt.Sprintf("filter the migration steps by tag value. supports %s or %s", TagPreUpgrade, TagPostUpgrade))
+	bootstrap.AddBoolFlag(&allowOutOfOrderFlag, "allow_out_of_order", false, fmt.Sprintf("allow migration steps to execute out of order"))
 	bootstrap.Register(Module)
 }
 
@@ -45,58 +45,21 @@ func newRegistrar() *Registrar {
 	}
 }
 
-func newVersioner() Versioner {
-	return &CockroachDbVersioner{}
+func newVersioner(db *gorm.DB) Versioner {
+	return &GormVersioner{
+		db: db,
+	}
 }
 
-func applyMigrations(lc fx.Lifecycle, c *bootstrap.ApplicationContext, r *Registrar, v Versioner, shutdowner fx.Shutdowner) {
+func applyMigrations(lc fx.Lifecycle, r *Registrar, v Versioner, shutdowner fx.Shutdowner) {
+	var err error
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			logger.Infof("filter %s", filterFlag)
-
-			v.CreateVersionTableIfNotExist()
-			appliedMigrations := v.GetAppliedMigrations()
-			var lastAppliedMigration AppliedMigration
-
-			if len(appliedMigrations) > 0 {
-				lastAppliedMigration = appliedMigrations[len(appliedMigrations)-1]
-			}
-
-			logger.Infof("applying migrations")
-			if len(r.errs) != 0 {
-				logger.Errorf("encountered error when registering migration steps")
-				for _, e := range r.errs {
-					logger.Errorf("error: %v", e)
-				}
-				return errors.New("migrations not applied because there were error with migration steps.")
-			}
-
-			sort.Slice(r.migrationSteps, func(i, j int) bool {return r.migrationSteps[i].Version.Lt(r.migrationSteps[j].Version)})
-
-			for _, s := range r.migrationSteps {
-				if filterFlag != "" && !s.Tags.Has(filterFlag) {
-					continue
-				}
-
-				if lastAppliedMigration.Version.Lt(s.Version) {
-					err := s.Func(c)
-					applied := AppliedMigration{
-						Version: s.Version,
-						Description: s.Description,
-						InstalledOn: time.Now(),
-					}
-					if err != nil {
-						applied.Success = false
-						v.RecordAppliedMigration(applied)
-						return errors.New(fmt.Sprintf("migration stoped because error at step %v", s.Version))
-					} else {
-						applied.Success = true
-						v.RecordAppliedMigration(applied)
-					}
-				}
-			}
+			err = migrate(ctx, r, v)
 			return shutdowner.Shutdown()
 		},
-		OnStop: nil,
+		OnStop:  func(ctx context.Context) error {
+			return err
+		},
 	})
 }

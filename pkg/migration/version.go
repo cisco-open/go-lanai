@@ -1,6 +1,8 @@
 package migration
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"
@@ -51,7 +53,37 @@ func (v Version) Equals(o Version) bool {
 	return true
 }
 
-func NewVersion(source string) (Version, error) {
+func (v *Version) Scan(src interface{}) error {
+	switch src := src.(type) {
+	case []byte:
+		return v.scanString(string(src))
+	case string:
+		return v.scanString(src)
+	case nil:
+		*v = nil
+		return nil
+	}
+	return fmt.Errorf("pq: cannot convert %T to StringArray", src)
+}
+
+func (v Version) Value() (driver.Value, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return v.String(), nil
+}
+
+func (v Version) GormDataType() string {
+	return "string"
+}
+
+func (v *Version) scanString(src string) error {
+	result, err := fromString(src)
+	*v = result
+	return err
+}
+
+func fromString(source string) (Version, error) {
 	parts := strings.Split(source, ".")
 	var numbers []int
 

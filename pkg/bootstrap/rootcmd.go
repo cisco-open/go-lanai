@@ -34,6 +34,10 @@ func AddStringFlag(flagVar *string, name string, defaultValue string, usage stri
 	rootCmd.PersistentFlags().StringVar(flagVar, name, defaultValue, usage)
 }
 
+func AddBoolFlag(flagVar *bool, name string, defaultValue bool, usage string)  {
+	rootCmd.PersistentFlags().BoolVar(flagVar, name, defaultValue, usage)
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
