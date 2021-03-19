@@ -74,7 +74,7 @@ func (engine *KvSecretEngineV1) ListSecrets(ctx context.Context, secretPath stri
 			results[key] = val.(string)
 		}
 	} else {
-		logger.WithContext(ctx).Warnf("No secrets retrieved from vault (%s): %s", path)
+		logger.WithContext(ctx).Warnf("No secrets retrieved from vault (%s)", path)
 	}
 	return results, nil
 }
