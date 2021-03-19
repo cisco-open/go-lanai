@@ -66,6 +66,7 @@ const (
 	ErrorCodeUnsupportedCondition
 	ErrorCodeUnsupportedOptions
 	ErrorCodeInvalidCrudModel
+	ErrorCodeInvalidCrudParam
 )
 
 // ErrorSubTypeCodeDataRetrieval
