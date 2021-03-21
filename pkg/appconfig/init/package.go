@@ -9,12 +9,15 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/vaultprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/profile"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
+
+var logger = log.New("appconfig")
 
 var ConfigModule = &bootstrap.Module{
 	Name: "bootstrap endpoint",
@@ -73,12 +76,18 @@ func newBootstrapFileProvider() bootstrapFileProviderResult {
 
 	providers := make([]*fileprovider.ConfigProvider, 0, len(profile.Profiles) + 1)
 	p := fileprovider.NewFileProvidersFromBaseName(precedence, name, ext)
-	providers = append(providers, p)
+	if p != nil {
+		providers = append(providers, p)
+	}
 
 	for _, profile := range profile.Profiles {
 		precedence--
 		p = fileprovider.NewFileProvidersFromBaseName(precedence, fmt.Sprintf("%s-%s", name, profile), ext)
 		if p != nil {providers = append(providers, p)}
+	}
+
+	if len(providers) == 0 {
+		logger.Warnf("no bootstrap configuration file found. are you running from the project root directory?")
 	}
 
 	return bootstrapFileProviderResult{FileProvider: providers}
@@ -274,7 +283,9 @@ func newApplicationFileProvider() applicationFileProviderResult {
 	providers := make([]*fileprovider.ConfigProvider, 0, len(profile.Profiles) + 1)
 	precedence := applicationLocalFilePrecedence
 	p := fileprovider.NewFileProvidersFromBaseName(precedence, name, ext)
-	providers = append(providers, p)
+	if p != nil {
+		providers = append(providers, p)
+	}
 
 	for _, profile := range profile.Profiles {
 		precedence--
@@ -282,6 +293,10 @@ func newApplicationFileProvider() applicationFileProviderResult {
 		if provider != nil {
 			providers = append(providers, provider)
 		}
+	}
+
+	if len(providers) == 0 {
+		logger.Warnf("no application configuration file found. are you running from the project root directory?")
 	}
 	return applicationFileProviderResult{FileProvider: providers}
 }
