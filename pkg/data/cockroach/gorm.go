@@ -42,7 +42,7 @@ func NewGormDialetor(di initDI) gorm.Dialector {
 		//DriverName:           "postgres",
 		DSN:                  toDSN(options),
 	}
-	return postgres.New(config)
+	return NewGormDialectorWithConfig(config)
 }
 
 func toDSN(options map[string]interface{}) string {
@@ -53,3 +53,4 @@ func toDSN(options map[string]interface{}) string {
 	}
 	return strings.Join(opts, " ")
 }
+
