@@ -29,14 +29,10 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func init() {
+func Use() {
 	bootstrap.AddStringFlag(&filterFlag, "filter", "", fmt.Sprintf("filter the migration steps by tag value. supports %s or %s", TagPreUpgrade, TagPostUpgrade))
 	bootstrap.AddBoolFlag(&allowOutOfOrderFlag, "allow_out_of_order", false, fmt.Sprintf("allow migration steps to execute out of order"))
 	bootstrap.Register(Module)
-}
-
-func Use() {
-
 }
 
 func newRegistrar() *Registrar {

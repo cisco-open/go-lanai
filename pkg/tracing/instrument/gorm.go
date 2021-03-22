@@ -3,6 +3,7 @@ package instrument
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"go.uber.org/fx"
@@ -44,6 +45,10 @@ func newGormTracingConfigurer(tracer opentracing.Tracer) data.GormConfigurer {
 	return &gormConfigurer{
 		tracer: tracer,
 	}
+}
+
+func (c gormConfigurer) Order() int {
+	return order.Highest + 1
 }
 
 func (c gormConfigurer) Configure(config *gorm.Config) {

@@ -2,6 +2,7 @@ package data
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -37,10 +38,12 @@ func NewGorm(di gormInitDI) *gorm.DB {
 		slow = 15 * time.Second
 	}
 
-	// gave configurer an chance
 	config := gorm.Config{
 		Logger: newGormLogger(level, slow),
 	}
+
+	// gave configurer an chance
+	order.SortStable(di.Configurers, order.OrderedFirstCompare)
 	for _, c := range di.Configurers {
 		c.Configure(&config)
 	}
