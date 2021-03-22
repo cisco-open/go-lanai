@@ -22,6 +22,7 @@ var Module = &bootstrap.Module{
 		fx.Provide(tracing.BindTracingProperties),
 		fx.Provide(provideTracer),
 		fx.Provide(instrument.GormTracingProvider()),
+		fx.Provide(instrument.CliRunnerTracingProvider()),
 		fx.Invoke(initialize),
 	},
 }
