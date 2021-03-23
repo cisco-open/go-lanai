@@ -22,7 +22,7 @@ var allowOutOfOrderFlag bool
 var Module = &bootstrap.Module{
 	Name: "migration",
 	Precedence: bootstrap.MigrationPrecedence,
-	PriorityOptions: []fx.Option{
+	Options: []fx.Option{
 		fx.Provide(newRegistrar),
 		fx.Provide(newVersioner),
 		fx.Invoke(applyMigrations),

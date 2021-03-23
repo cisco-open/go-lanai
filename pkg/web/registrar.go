@@ -24,16 +24,12 @@ const (
 	DefaultGroup = "/"
 )
 
-var (
-	bindingValidator binding.StructValidator
-)
-
 type Registrar struct {
 	engine         *Engine
 	router         gin.IRouter
 	properties     ServerProperties
 	options        []*orderedServerOption // options go-kit server options
-	validator      binding.StructValidator
+	validator      *Validate
 	middlewares    []MiddlewareMapping                   // middlewares gin-gonic middleware providers
 	routedMappings map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
 	staticMappings []StaticMapping                       // staticMappings all static mappings
@@ -53,7 +49,7 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 			newOrderedServerOption(httptransport.ServerBefore(integrateGinContextBefore), order.Lowest),
 			newOrderedServerOption(httptransport.ServerFinalizer(integrateGinContextFinalizer), order.Lowest),
 		},
-		validator:      binding.Validator,
+		validator:      bindingValidator,
 		routedMappings: map[string]map[string][]RoutedMapping{},
 	}
 	return registrar
@@ -78,7 +74,6 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	// Also we need to make the validator available globally for any request decoder to access.
 	// The alternative approach is to put the validator into each gin.Context
 	binding.Validator = nil
-	bindingValidator = r.validator
 
 	// load templates
 	r.engine.LoadHTMLGlob("web/template/*")

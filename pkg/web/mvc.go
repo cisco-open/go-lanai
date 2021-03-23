@@ -215,10 +215,13 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 			ginCtx.ShouldBindHeader,
 			ginCtx.ShouldBindUri,
 			ginCtx.ShouldBindQuery,
-			ginCtx.ShouldBind,
-			validateBinding)
+			ginCtx.ShouldBind)
 
-		return toRet.Interface(), err
+		if err != nil {
+			return
+		}
+
+		return toRet.Interface(), validateBinding(c, toBind)
 	}
 }
 
@@ -233,9 +236,18 @@ func bind(obj interface{}, bindings ...bindingFunc) (err error) {
 	return
 }
 
-func validateBinding(obj interface{}) error {
-	if bindingValidator != nil {
-		return bindingValidator.ValidateStruct(obj)
+func validateBinding(ctx context.Context, obj interface{}) error {
+	if bindingValidator == nil {
+		return nil
+	}
+
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	switch v.Kind() {
+	case reflect.Struct:
+		return bindingValidator.StructCtx(ctx, obj)
 	}
 	return nil
 }
