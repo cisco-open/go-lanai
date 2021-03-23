@@ -27,6 +27,8 @@ const (
 	WebPrecedence
 	SecurityPrecedence
 	ServiceDiscoveryPrecedence
+	SwaggerPrecedence
+	MigrationPrecedence //migration's invocation should happen after everything else, in case it needs functionality from any other modules
 )
 
 var anonymousOnce sync.Once
