@@ -12,11 +12,13 @@ var logger = log.New("Tracing")
 
 const (
 	OpNameBootstrap = "bootstrap"
-	OpNameStart = "startup"
-	OpNameStop = "shutdown"
-	OpNameHttp = "http"
-	OpNameRedis = "redis"
-	OpNameVault = "vault"
+	OpNameStart     = "startup"
+	OpNameStop      = "shutdown"
+	OpNameHttp      = "http"
+	OpNameRedis     = "redis"
+	OpNameVault     = "vault"
+	OpNameDB        = "db"
+	OpNameCli        = "cli"
 	//OpName = ""
 )
 
@@ -156,6 +158,12 @@ func (op SpanOperator) FollowsOrNoSpan(ctx context.Context) context.Context {
 	}, false)
 }
 
+// ForceNewSpan force to create a new span and discard any existing span
+// Warning: Internal usage, use with caution
+func (op SpanOperator) ForceNewSpan(ctx context.Context) context.Context {
+	return op.newSpan(ctx, nil, true)
+}
+
 func (op SpanOperator) createSpanRewinder(ctx context.Context) SpanRewinder {
 	return func() context.Context {
 		return ctx
@@ -169,7 +177,10 @@ func (op *SpanOperator) newSpan(ctx context.Context, referencer spanReferencer, 
 	rewinder := op.createSpanRewinder(ctx)
 	switch {
 	case span != nil:
-		options := append([]opentracing.StartSpanOption{referencer(span)}, op.startOptions...)
+		options := op.startOptions
+		if referencer != nil {
+			options = append([]opentracing.StartSpanOption{referencer(span)}, options...)
+		}
 		span = op.tracer.StartSpan(op.name, options...)
 	case must:
 		span = op.tracer.StartSpan(op.name, op.startOptions...)

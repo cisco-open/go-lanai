@@ -40,13 +40,38 @@ func GinContext(ctx context.Context) *gin.Context {
 }
 
 /**************************
-	Customizer
+	Customizers
  **************************/
-// RecoveryCustomizer implements Customizer and order.Ordered
-type GinContextCustomizer struct {}
+// GinContextCustomizer implements Customizer and order.PriorityOrdered
+type PriorityGinContextCustomizer struct {
+	properties *ServerProperties
+}
 
-func NewGinContextCustomizer() *GinContextCustomizer {
-	return &GinContextCustomizer{}
+func NewPriorityGinContextCustomizer(properties *ServerProperties) *PriorityGinContextCustomizer {
+	return &PriorityGinContextCustomizer{
+		properties: properties,
+	}
+}
+
+func (c PriorityGinContextCustomizer) PriorityOrder() int {
+	// medium precedence, makes this customizer before any non-priority-ordered customizers
+	return 0
+}
+
+func (c PriorityGinContextCustomizer) Customize(ctx context.Context, r *Registrar) error {
+	r.AddGlobalMiddlewares(GinContextPathAware(c.properties))
+	return nil
+}
+
+// GinContextCustomizer implements Customizer and order.Ordered
+type GinContextCustomizer struct {
+	properties *ServerProperties
+}
+
+func NewGinContextCustomizer(properties *ServerProperties) *GinContextCustomizer {
+	return &GinContextCustomizer{
+		properties: properties,
+	}
 }
 
 func (c GinContextCustomizer) Order() int {
@@ -62,6 +87,12 @@ func (c GinContextCustomizer) Customize(ctx context.Context, r *Registrar) error
 /**************************
 	Handler Funcs
  **************************/
+func GinContextPathAware(props *ServerProperties) gin.HandlerFunc {
+	return func(gc *gin.Context) {
+		gc.Set(ContextKeyContextPath, props.ContextPath)
+	}
+}
+
 func GinContextMerger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := utils.MakeMutableContext(c.Request.Context(), ginContextValuer(c))

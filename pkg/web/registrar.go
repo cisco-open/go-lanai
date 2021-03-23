@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
 	"errors"
@@ -25,16 +24,12 @@ const (
 	DefaultGroup = "/"
 )
 
-var (
-	bindingValidator binding.StructValidator
-)
-
 type Registrar struct {
 	engine         *Engine
 	router         gin.IRouter
 	properties     ServerProperties
 	options        []*orderedServerOption // options go-kit server options
-	validator      binding.StructValidator
+	validator      *Validate
 	middlewares    []MiddlewareMapping                   // middlewares gin-gonic middleware providers
 	routedMappings map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
 	staticMappings []StaticMapping                       // staticMappings all static mappings
@@ -54,7 +49,7 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 			newOrderedServerOption(httptransport.ServerBefore(integrateGinContextBefore), order.Lowest),
 			newOrderedServerOption(httptransport.ServerFinalizer(integrateGinContextFinalizer), order.Lowest),
 		},
-		validator:      binding.Validator,
+		validator:      bindingValidator,
 		routedMappings: map[string]map[string][]RoutedMapping{},
 	}
 	return registrar
@@ -66,8 +61,9 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
 
-	// first, we add some manditory customizers
-	r.Register(NewGinContextCustomizer())
+	// first, we add some manditory customizers and middleware
+	r.Register(NewPriorityGinContextCustomizer(&r.properties))
+	r.Register(NewGinContextCustomizer(&r.properties))
 
 	// apply customizers before install mappings
 	if err = r.applyCustomizers(ctx); err != nil {
@@ -78,15 +74,12 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	// Also we need to make the validator available globally for any request decoder to access.
 	// The alternative approach is to put the validator into each gin.Context
 	binding.Validator = nil
-	bindingValidator = r.validator
 
 	// load templates
 	r.engine.LoadHTMLGlob("web/template/*")
 
 	// add some common middlewares
-	mappings := []interface{}{
-		NewMiddlewareGinMapping("pre-process", HighestMiddlewareOrder, Any(), nil, r.preProcessMiddleware),
-	}
+	mappings := []interface{}{}
 	if err = r.Register(mappings...); err != nil {
 		return
 	}
@@ -473,13 +466,6 @@ func (r *Registrar) kitServerOptions() []httptransport.ServerOption {
 		opts[i] = opt.ServerOption
 	}
 	return opts
-}
-
-/*******************************
-	some global middlewares
-********************************/
-func (r *Registrar) preProcessMiddleware(c *gin.Context) {
-	c.Set(ContextKeyContextPath, r.properties.ContextPath)
 }
 
 /**************************

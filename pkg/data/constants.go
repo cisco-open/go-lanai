@@ -6,3 +6,7 @@ const (
 	ErrorTranslatorOrderPq
 	ErrorTranslatorOrderData
 )
+
+const (
+	GormConfigurerGroup = "gorm_config"
+)

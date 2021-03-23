@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 var once sync.Once
@@ -107,6 +108,7 @@ func (app *App) Run() {
 	// to be revised:
 	//  1. (Solved)	Support Timeout in bootstrap.Context and make cancellable context as startParent (swap startParent and child)
 	//  2. (Solved) Restore logging
+	start := time.Now()
 	done := app.Done()
 	rootCtx := applicationContext.Context
 	startParent, cancel := context.WithTimeout(rootCtx, app.StartTimeout())
@@ -117,15 +119,21 @@ func (app *App) Run() {
 	startCtx := applicationContext.withContext(startParent)
 	defer cancel()
 
+	// log error and exit
 	if err := app.Start(startCtx); err != nil {
 		logger.WithContext(startCtx).Errorf("Failed to start up: %v", err)
 		exit(1)
 	}
 
+	// log startup time
+	elapsed := time.Now().Sub(start).Truncate(time.Millisecond)
+	logger.WithContext(rootCtx).Infof("Started %s after %v", applicationContext.Name(), elapsed)
+
 	// this line blocks until application shutting down
 	printSignal(<-done)
 
 	// shutdown sequence
+	start = time.Now()
 	stopParent, cancel := context.WithTimeout(rootCtx, app.StopTimeout())
 	for _, opt := range app.stopCtxOptions {
 		stopParent = opt(stopParent)
@@ -134,9 +142,13 @@ func (app *App) Run() {
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {
-		logger.WithContext(stopCtx).Errorf("Failed to gracefully shutdown: %v", err)
+		logger.WithContext(stopCtx).Errorf("Shutdown with Error: %v", err)
 		exit(1)
 	}
+
+	// log startup time
+	elapsed = time.Now().Sub(start).Truncate(time.Millisecond)
+	logger.WithContext(rootCtx).Infof("Stopped %s in %v", applicationContext.Name(), elapsed)
 }
 
 
