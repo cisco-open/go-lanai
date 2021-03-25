@@ -188,7 +188,8 @@ func (c *config) Bind(target interface{}, prefix string) error {
 		if _, ok := source.(map[string] interface{}); ok {
 			source = source.(map[string] interface{})[keys[i]]
 		} else {
-			return errors.New("prefix doesn't exist")
+			//prefix doesn't exist, we just don't bind it
+			return nil
 		}
 	}
 
