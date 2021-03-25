@@ -33,8 +33,8 @@ func regex(compiled *regexp.Regexp ) validator.FuncCtx {
 			bytes, _ := v.MarshalText()
 			str = string(bytes)
 		default:
-			// we don't validate non string
-			return true
+			// we don't validate non string, just fail it
+			return false
 		}
 		return compiled.MatchString(str)
 	}
