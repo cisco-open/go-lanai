@@ -1,6 +1,6 @@
 module cto-github.cisco.com/NFV-BU/go-lanai
 
-go 1.13
+go 1.16
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect

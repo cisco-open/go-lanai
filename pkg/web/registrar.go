@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
+	"embed"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -35,6 +36,7 @@ type Registrar struct {
 	staticMappings []StaticMapping                       // staticMappings all static mappings
 	customizers    []Customizer
 	errTranslators []ErrorTranslator
+	embedFs        []embed.FS
 	initialized    bool
 }
 
@@ -157,6 +159,7 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 //  - MiddlewareMapping
 //  - ErrorTranslator
 //  - struct that contains exported Controller fields
+//  - embed.FS
 func (r *Registrar) Register(items...interface{}) (err error) {
 	for _, i := range items {
 		if err = r.register(i); err != nil {
@@ -197,6 +200,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 		err = r.registerWebCustomizer(i.(Customizer))
 	case ErrorTranslator:
 		err = r.registerErrorTranslator(i.(ErrorTranslator))
+	case embed.FS:
+		r.embedFs = append(r.embedFs, i.(embed.FS))
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -364,10 +369,12 @@ func (r *Registrar) installMappings() error {
 
 func (r *Registrar) installStaticMapping(m StaticMapping) error {
 	// TODO handle suffix rewrite, e.g. /path/to/swagger -> /path/to/swagger.html
+	mFs := NewMergedFs(m.StaticRoot(), r.embedFs...)
+
 	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), http.MethodGet, http.MethodHead)
 	r.router.Group(DefaultGroup).
 		Use(middlewares...).
-		Static(m.Path(), m.StaticRoot())
+		StaticFS(m.Path(), http.FS(mFs))
 	return err
 }
 
