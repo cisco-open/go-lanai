@@ -29,6 +29,15 @@ var rootCmd = &cobra.Command{
 	FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 }
 
+// Should be called before Execute() to register flags that are supported
+func AddStringFlag(flagVar *string, name string, defaultValue string, usage string) {
+	rootCmd.PersistentFlags().StringVar(flagVar, name, defaultValue, usage)
+}
+
+func AddBoolFlag(flagVar *bool, name string, defaultValue bool, usage string)  {
+	rootCmd.PersistentFlags().BoolVar(flagVar, name, defaultValue, usage)
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {

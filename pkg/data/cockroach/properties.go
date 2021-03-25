@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	ManagementPropertiesPrefix = "data.cockroach"
+	CockroachPropertiesPrefix = "data.cockroach"
 )
 
 type CockroachProperties struct {
@@ -31,7 +31,7 @@ func NewCockroachProperties() *CockroachProperties {
 //BindCockroachProperties create and bind SessionProperties, with a optional prefix
 func BindCockroachProperties(ctx *bootstrap.ApplicationContext) CockroachProperties {
 	props := NewCockroachProperties()
-	if err := ctx.Config().Bind(props, ManagementPropertiesPrefix); err != nil {
+	if err := ctx.Config().Bind(props, CockroachPropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind CockroachProperties"))
 	}
 	return *props

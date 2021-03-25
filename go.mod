@@ -8,12 +8,12 @@ require (
 	github.com/bmatcuk/doublestar v1.3.2
 	github.com/crewjam/saml v0.4.5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/getkin/kin-openapi v0.53.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-kit/kit v0.10.0
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/go-redis/redis/v8 v8.3.3
+	github.com/gocql/gocql v0.0.0-20210313142353-65899a66288b
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/consul/api v1.3.0

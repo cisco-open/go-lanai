@@ -21,6 +21,8 @@ var Module = &bootstrap.Module{
 	PriorityOptions: []fx.Option{
 		fx.Provide(tracing.BindTracingProperties),
 		fx.Provide(provideTracer),
+		fx.Provide(instrument.GormTracingProvider()),
+		fx.Provide(instrument.CliRunnerTracingProvider()),
 		fx.Invoke(initialize),
 	},
 }
@@ -113,7 +115,7 @@ type regDI struct {
 	FxHook       TracerClosingHook   `optional:"true"`
 	Registrar    *web.Registrar      `optional:"true"`
 	RedisFactory redis.ClientFactory `optional:"true"`
-	VaultClient  *vault.Client		 `optional:"true"`
+	VaultClient  *vault.Client       `optional:"true"`
 	// we could include security configurations, customizations here
 }
 
