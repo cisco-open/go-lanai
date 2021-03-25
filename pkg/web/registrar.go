@@ -156,10 +156,6 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 	return
 }
 
-func (r *Registrar) AddEmbeddedFs(f...embed.FS) {
-	r.embedFs = append(r.embedFs, f...)
-}
-
 // Register is the entry point to register Controller, Mapping and other web related objects
 // supported items type are:
 // 	- Customizer
@@ -170,6 +166,7 @@ func (r *Registrar) AddEmbeddedFs(f...embed.FS) {
 //  - MiddlewareMapping
 //  - ErrorTranslator
 //  - struct that contains exported Controller fields
+//  - embed.FS
 func (r *Registrar) Register(items...interface{}) (err error) {
 	for _, i := range items {
 		if err = r.register(i); err != nil {
@@ -210,6 +207,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 		err = r.registerWebCustomizer(i.(Customizer))
 	case ErrorTranslator:
 		err = r.registerErrorTranslator(i.(ErrorTranslator))
+	case embed.FS:
+		r.embedFs = append(r.embedFs, i.(embed.FS))
 	default:
 		err = r.registerUnknownType(i)
 	}

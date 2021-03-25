@@ -6,8 +6,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/assets"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
+	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 type UiConfiguration struct {
@@ -56,13 +57,13 @@ func NewSwaggerController(prop SwaggerProperties) *SwaggerController {
 func (s *SwaggerController) Mappings() []web.Mapping {
 	return []web.Mapping{
 		assets.New("swagger/static", "frontend"),
-		web.NewSimpleMapping("swagger-ui", "/swagger", "GET", nil, s.swagger),
+		web.NewSimpleMapping("swagger-ui", "/swagger", http.MethodGet, nil, s.swagger),
 		rest.New("swagger-configuration-ui").Get("/swagger-resources/configuration/ui").EndpointFunc(s.configurationUi).Build(),
 		rest.New("swagger-configuration-security").Get("/swagger-resources/configuration/security").EndpointFunc(s.configurationSecurity).Build(),
 		rest.New("swagger-configuration-sso").Get("/swagger-resources/configuration/security/sso").EndpointFunc(s.configurationSso).Build(),
 		rest.New("swagger-resources").Get("/swagger-resources").EndpointFunc(s.resources).Build(),
-		web.NewSimpleMapping("swagger-sso-redirect", "swagger-sso-redirect.html", "GET", nil, s.swaggerRedirect),
-		web.NewSimpleMapping("swagger-spec", "v2/api-docs", "GET", nil, s.swaggerSpec),
+		web.NewSimpleMapping("swagger-sso-redirect", "swagger-sso-redirect.html", http.MethodGet, nil, s.swaggerRedirect),
+		web.NewSimpleMapping("swagger-spec", "v2/api-docs", http.MethodGet, nil, s.swaggerSpec),
 	}
 }
 
@@ -144,13 +145,19 @@ func (s *SwaggerController) swaggerRedirect(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *SwaggerController) swaggerSpec(w http.ResponseWriter, r *http.Request) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile(s.properties.Spec)
-	resp, err := swagger.MarshalJSON()
-
-	if err == nil {
-		w.Header().Set("content-type", "application/json")
-		fmt.Fprintf(w, string(resp))
-	} else {
+	file, err := os.Open(s.properties.Spec)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	resp, err := ioutil.ReadAll(file)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	fmt.Fprintf(w, string(resp))
 }
