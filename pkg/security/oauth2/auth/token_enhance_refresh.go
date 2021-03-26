@@ -23,7 +23,8 @@ var (
 // RefreshTokenEnhancer impelments order.Ordered and TokenEnhancer
 // RefreshTokenEnhancer is responsible to create refresh token and associate it with the given access token
 type RefreshTokenEnhancer struct {
-	tokenStore     TokenStore
+	tokenStore TokenStore
+	issuer     security.Issuer
 }
 
 func (te *RefreshTokenEnhancer) Order() int {
@@ -60,7 +61,7 @@ func (te *RefreshTokenEnhancer) Enhance(ctx context.Context, token oauth2.Access
 	claims := oauth2.BasicClaims{
 		Id:       id,
 		Audience: utils.NewStringSet(client.ClientId()),
-		//Issuer: ..., // TODO If we want to include this claim, the value need to be get from configuration
+		Issuer: te.issuer.Identifier(),
 		Scopes: request.Scopes(),
 	}
 

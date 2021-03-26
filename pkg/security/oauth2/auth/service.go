@@ -68,6 +68,7 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 	}
 
 	basicEnhancer.issuer = conf.Issuer
+	refreshTokenEnhancer.issuer = conf.Issuer
 	refreshTokenEnhancer.tokenStore = conf.TokenStore
 	return &DefaultAuthorizationService{
 		detailsFactory: conf.DetailsFactory,
