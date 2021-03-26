@@ -48,7 +48,7 @@ func (g gormApi) DB(ctx context.Context) *gorm.DB {
 func (g gormApi) Transaction(ctx context.Context, txFunc TxWithGormFunc, opts ...*sql.TxOptions) error {
 	return g.txManager.Transaction(ctx, func(c context.Context) error {
 		tx := tx.GormTxWithContext(c)
-		if tx != nil {
+		if tx == nil {
 			return data.NewDataError(data.ErrorCodeInvalidTransaction, "gorm Tx is not found in context")
 		}
 		return txFunc(c, tx)
