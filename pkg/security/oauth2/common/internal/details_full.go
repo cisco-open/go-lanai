@@ -187,15 +187,13 @@ func (d *FullContextDetails) Value(key string) (v interface{}, ok bool) {
 }
 
 // security.KeyValueDetails
-func (d *FullContextDetails) SetValue(key string, value interface{}) {
-	if value == nil {
-		delete(d.KV, key)
-	} else {
-		d.KV[key] = value
+func (d *FullContextDetails) Values() (ret map[string]interface{}) {
+	ret = map[string]interface{}{}
+	for k, v := range d.KV {
+		ret[k] = v
 	}
+	return
 }
 
-// security.KeyValueDetails
-func (d *FullContextDetails) SetValues(values map[string]interface{}) {
-	d.KV = values
-}
+
+

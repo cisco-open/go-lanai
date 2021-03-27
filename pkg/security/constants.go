@@ -41,6 +41,7 @@ const (
 const (
 	DetailsKeyAuthWarning = "AuthWarning"
 	DetailsKeyAuthTime    = "AuthTime"
+	DetailsKeySessionId    = "SessionId"
 )
 
 const (

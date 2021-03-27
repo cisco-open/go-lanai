@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 	"fmt"
@@ -73,23 +74,29 @@ func NewAuthorizeHandler(opts ...AuthHandlerOptions) *DefaultAuthorizeHandler {
 	}
 }
 
-func (h *DefaultAuthorizeHandler) Extend(makers ...AuthorizeHandler) {
+func (h *DefaultAuthorizeHandler) Extend(makers ...AuthorizeHandler) *DefaultAuthorizeHandler {
 	h.extensions = append(h.extensions, makers...)
 	order.SortStable(h.extensions, order.OrderedFirstCompare)
+	return h
 }
 
 func (h *DefaultAuthorizeHandler) HandleApproved(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (ResponseHandlerFunc, error) {
+	userAuth := ConvertToOAuthUserAuthentication(user)
+
+	// common handling, those common handling could also added as extensions
+	h.recordSessionId(ctx, userAuth)
+
 	for _, delegate := range h.extensions {
-		if f, e := delegate.HandleApproved(ctx, r, user); f != nil || e != nil {
+		if f, e := delegate.HandleApproved(ctx, r, userAuth); f != nil || e != nil {
 			return f, e
 		}
 	}
 
 	switch {
 	case r.ResponseTypes.Has("token"):
-		return h.MakeImplicitResponse(ctx, r, user)
+		return h.MakeImplicitResponse(ctx, r, userAuth)
 	case r.ResponseTypes.Has("code"):
-		return h.MakeAuthCodeResponse(ctx, r, user)
+		return h.MakeAuthCodeResponse(ctx, r, userAuth)
 	default:
 		return nil, oauth2.NewInvalidResponseTypeError(fmt.Sprintf("response_type [%v] is not supported", r.ResponseTypes.Values()))
 	}
@@ -114,7 +121,7 @@ func (h *DefaultAuthorizeHandler) HandleApprovalPage(ctx context.Context, r *Aut
 	}, nil
 }
 
-func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (ResponseHandlerFunc, error) {
+func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *AuthorizeRequest, user oauth2.UserAuthentication) (ResponseHandlerFunc, error) {
 	code, e := h.authCodeStore.GenerateAuhtorizationCode(ctx, r, user)
 	if e != nil {
 		return nil, e
@@ -134,7 +141,7 @@ func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *A
 	}, nil
 }
 
-func (h *DefaultAuthorizeHandler) MakeImplicitResponse(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (ResponseHandlerFunc, error) {
+func (h *DefaultAuthorizeHandler) MakeImplicitResponse(ctx context.Context, r *AuthorizeRequest, user oauth2.UserAuthentication) (ResponseHandlerFunc, error) {
 	//TODO implement Implict grant
 	panic("implicit response is not implemented")
 }
@@ -142,5 +149,12 @@ func (h *DefaultAuthorizeHandler) MakeImplicitResponse(ctx context.Context, r *A
 /*************************
 	Helpers
  *************************/
+func (h *DefaultAuthorizeHandler) recordSessionId(ctx context.Context, user oauth2.UserAuthentication) {
+	s := session.Get(ctx)
+	if s == nil {
+		return
+	}
+	user.DetailsMap()[security.DetailsKeySessionId] = s.GetID()
+}
 
 

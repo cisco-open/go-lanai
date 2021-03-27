@@ -55,15 +55,10 @@ func (d *SimpleContextDetails) Value(key string) (v interface{}, ok bool) {
 }
 
 // security.KeyValueDetails
-func (d *SimpleContextDetails) SetValue(key string, value interface{}) {
-	if value == nil {
-		delete(d.KV, key)
-	} else {
-		d.KV[key] = value
+func (d *SimpleContextDetails) Values() (ret map[string]interface{}) {
+	ret = map[string]interface{}{}
+	for k, v := range d.KV {
+		ret[k] = v
 	}
-}
-
-// security.KeyValueDetails
-func (d *SimpleContextDetails) SetValues(values map[string]interface{}) {
-	d.KV = values
+	return
 }

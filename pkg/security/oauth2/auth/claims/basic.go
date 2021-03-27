@@ -5,7 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
 	"reflect"
 	"time"
 )
@@ -98,18 +97,11 @@ func Username(ctx context.Context, opt *FactoryOption) (v interface{}, err error
 	if opt.Source.UserAuthentication() == nil || opt.Source.UserAuthentication().Principal() == nil {
 		return nil, errorMissingUser
 	}
-	principal := opt.Source.UserAuthentication().Principal()
-	switch principal.(type) {
-	case string:
-		v = principal.(string)
-	case fmt.Stringer:
-		v = principal.(fmt.Stringer).String()
-	case security.Account:
-		v = principal.(security.Account).Username()
-	default:
+	username, e := security.GetUsername(opt.Source.UserAuthentication())
+	if e != nil {
 		return nil, errorMissingUser
 	}
-	return nonZeroOrError(v, errorMissingDetails)
+	return nonZeroOrError(username, errorMissingDetails)
 }
 
 func nonZeroOrError(v interface{}, candidateError error) (interface{}, error) {

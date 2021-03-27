@@ -69,6 +69,9 @@ func GobRegister() {
 	gob.Register((*AccountMetadata)(nil))
 }
 
+/**********************************
+	Common Functions
+ **********************************/
 func Get(ctx context.Context) Authentication {
 	secCtx, ok := ctx.Value(ContextKeySecurity).(Authentication)
 	if !ok {
@@ -142,7 +145,11 @@ func DetermineAuthenticationTime(ctx context.Context, userAuth Authentication) (
 	return
 }
 
-func GetUsername(userAuth Authentication) (string, error){
+func GetUsername(userAuth Authentication) (string, error) {
+	if userAuth == nil {
+		return "", fmt.Errorf("unsupported authentication is nil")
+	}
+
 	principal := userAuth.Principal()
 	var username string
 	switch principal.(type) {
@@ -153,7 +160,7 @@ func GetUsername(userAuth Authentication) (string, error){
 	case fmt.Stringer:
 		username = principal.(fmt.Stringer).String()
 	default:
-		return "", errors.New(fmt.Sprintf("unsupported principal type %T", principal))
+		return "", fmt.Errorf("unsupported principal type %T", principal)
 	}
 	return username, nil
 }

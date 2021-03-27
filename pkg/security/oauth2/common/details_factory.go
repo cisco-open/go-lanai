@@ -36,6 +36,7 @@ type facts struct {
 	account    security.Account
 	tenant     *security.Tenant
 	provider   *security.Provider
+	userAuth   oauth2.UserAuthentication
 	issueTime  time.Time
 	expriyTime time.Time
 	authTime   time.Time
@@ -69,6 +70,10 @@ func (f *ContextDetailsFactory) loadFacts(ctx context.Context, request oauth2.OA
 
 	if ctx.Value(oauth2.CtxKeyAuthorizedProvider) != nil {
 		facts.provider = ctx.Value(oauth2.CtxKeyAuthorizedProvider).(*security.Provider)
+	}
+
+	if ctx.Value(oauth2.CtxKeyUserAuthentication) != nil {
+		facts.userAuth = ctx.Value(oauth2.CtxKeyUserAuthentication).(oauth2.UserAuthentication)
 	}
 
 	if ctx.Value(oauth2.CtxKeyAuthorizationIssueTime) != nil {
@@ -136,7 +141,7 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 		Tenant: td,
 		User: ud,
 		Authentication: *ad,
-		KV: map[string]interface{}{},
+		KV: f.createKVDetails(ctx, facts),
 	},  nil
 }
 
@@ -149,7 +154,7 @@ func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) 
 
 	return &internal.SimpleContextDetails{
 		Authentication: *ad,
-		KV: map[string]interface{}{},
+		KV: f.createKVDetails(ctx, facts),
 	},  nil
 }
 
@@ -193,4 +198,24 @@ func (f *ContextDetailsFactory) populateProxyDetails(ctx context.Context, d *int
 		d.Proxied = true
 		d.OriginalUsername = strings.TrimSpace(src.Username())
 	}
+}
+
+func (f *ContextDetailsFactory) createKVDetails(ctx context.Context, facts *facts) (ret map[string]interface{}) {
+	ret = map[string]interface{}{}
+
+	if facts.userAuth != nil {
+		if sid, ok := facts.userAuth.DetailsMap()[security.DetailsKeySessionId]; ok {
+			ret[security.DetailsKeySessionId] = sid
+		}
+	}
+
+	if facts.source == nil {
+		return
+	}
+	if srcKV, ok := facts.source.Details().(security.KeyValueDetails); ok {
+		for k, v := range srcKV.Values() {
+			ret[k] = v
+		}
+	}
+	return
 }

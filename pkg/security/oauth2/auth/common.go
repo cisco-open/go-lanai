@@ -96,3 +96,32 @@ func ValidateApproval(c context.Context, approval map[string]bool, client oauth2
 	}
 	return nil
 }
+
+// ConvertToOAuthUserAuthentication takes any type of authentication and convert it into oauth2.Authentication
+func ConvertToOAuthUserAuthentication(userAuth security.Authentication) oauth2.UserAuthentication {
+	switch ua := userAuth.(type) {
+	case nil:
+		return nil
+	case oauth2.UserAuthentication:
+		return ua
+	}
+
+	principal, e := security.GetUsername(userAuth)
+	if e != nil {
+		principal = fmt.Sprintf("%v", userAuth)
+	}
+
+	details, ok := userAuth.Details().(map[string]interface{})
+	if !ok {
+		details = map[string]interface{}{
+			"Literal": userAuth.Details(),
+		}
+	}
+
+	return oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
+		opt.Principal = principal
+		opt.Permissions = userAuth.Permissions()
+		opt.State = userAuth.State()
+		opt.Details = details
+	})
+}
