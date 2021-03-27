@@ -2,11 +2,11 @@ package common
 
 import (
 	"context"
+	"crypto/sha256"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common/internal"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -220,8 +220,7 @@ func (r *RedisContextDetailsStore) saveAccessTokenToDetails(c context.Context, t
 func (r *RedisContextDetailsStore) saveAccessTokenFromUserClient(c context.Context, t oauth2.AccessToken, oauth oauth2.Authentication) error {
 	clientId := oauth.OAuth2Request().ClientId()
 	username, _ := security.GetUsername(oauth.UserAuthentication())
-	seed := fmt.Sprintf("%x", cryptoutils.RandomBytes(6))
-	return r.doSave(c, keyFuncAccessTokenFromUserAndClient(t, username, clientId, seed), t.Value(), t.ExpiryTime())
+	return r.doSave(c, keyFuncAccessTokenFromUserAndClient(t, username, clientId), t.Value(), t.ExpiryTime())
 }
 
 func (r *RedisContextDetailsStore) saveAccessTokenToSession(c context.Context, t oauth2.AccessToken, oauth oauth2.Authentication) error {
@@ -273,8 +272,7 @@ func (r *RedisContextDetailsStore) saveRefreshTokenToAuth(c context.Context, t o
 func (r *RedisContextDetailsStore) saveRefreshTokenFromUserClient(c context.Context, t oauth2.RefreshToken, oauth oauth2.Authentication) error {
 	clientId := oauth.OAuth2Request().ClientId()
 	username, _ := security.GetUsername(oauth.UserAuthentication())
-	seed := fmt.Sprintf("%x", cryptoutils.RandomBytes(6))
-	return r.doSave(c, keyFuncRefreshTokenFromUserAndClient(t, username, clientId, seed), t.Value(), t.ExpiryTime())
+	return r.doSave(c, keyFuncRefreshTokenFromUserAndClient(t, username, clientId), t.Value(), t.ExpiryTime())
 }
 
 func (r *RedisContextDetailsStore) saveRefreshTokenToSession(c context.Context, t oauth2.RefreshToken, oauth oauth2.Authentication) error {
@@ -325,49 +323,70 @@ func (r *RedisContextDetailsStore) findSessionId(c context.Context, oauth oauth2
 type keyFunc func(tag string) string
 
 func keyFuncAccessTokenToDetails(t oauth2.AccessToken) keyFunc {
+	tk := uniqueTokenKey(t)
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixAccessTokenToDetails, tag, t.Value())
+		return fmt.Sprintf("%s:%s:%s", prefixAccessTokenToDetails, tag, tk)
 	}
 }
 
-func keyFuncAccessTokenFromUserAndClient(t oauth2.AccessToken, username, clientId, seed string) keyFunc {
+func keyFuncAccessTokenFromUserAndClient(t oauth2.AccessToken, username, clientId string) keyFunc {
+	tk := uniqueTokenKey(t)
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s:%s:%s", prefixAccessTokenFromUserAndClient, tag, username, clientId, seed)
+		return fmt.Sprintf("%s:%s:%s:%s:%s", prefixAccessTokenFromUserAndClient, tag, username, clientId, tk)
 	}
 }
 
 func keyFuncAccessTokenToSession(t oauth2.AccessToken) keyFunc {
+	tk := uniqueTokenKey(t)
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixAccessTokenToSessionId, tag, t.Value())
+		return fmt.Sprintf("%s:%s:%s", prefixAccessTokenToSessionId, tag, tk)
 	}
 }
 
 func keyFuncAccessToRefresh(t oauth2.AccessToken) keyFunc {
+	tk := uniqueTokenKey(t)
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixAccessToRefreshToken, tag, t.Value())
+		return fmt.Sprintf("%s:%s:%s", prefixAccessToRefreshToken, tag, tk)
 	}
 }
 
 func keyFuncRefreshToAccess(t oauth2.RefreshToken) keyFunc {
+	tk := uniqueTokenKey(t)
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixRefreshToAccessToken, tag, t.Value())
+		return fmt.Sprintf("%s:%s:%s", prefixRefreshToAccessToken, tag, tk)
 	}
 }
 
 func keyFuncRefreshTokenToAuth(t oauth2.RefreshToken) keyFunc {
+	tk := uniqueTokenKey(t)
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToAuthentication, tag, t.Value())
+		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToAuthentication, tag, tk)
 	}
 }
 
-func keyFuncRefreshTokenFromUserAndClient(t oauth2.RefreshToken, username, clientId, seed string) keyFunc {
+func keyFuncRefreshTokenFromUserAndClient(t oauth2.RefreshToken, username, clientId string) keyFunc {
+	tk := uniqueTokenKey(t)
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s:%s:%s", prefixRefreshTokenFromUserAndClient, tag, username, clientId, seed)
+		return fmt.Sprintf("%s:%s:%s:%s:%s", prefixRefreshTokenFromUserAndClient, tag, username, clientId, tk)
 	}
 }
 
 func keyFuncRefreshTokenToSession(t oauth2.RefreshToken) keyFunc {
+	tk := uniqueTokenKey(t)
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToSessionId, tag, t.Value())
+		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToSessionId, tag, tk)
 	}
+}
+
+func uniqueTokenKey(token oauth2.Token) string {
+	// use JTI if possible
+	if t, ok := token.(oauth2.ClaimsContainer); ok && t.Claims() != nil {
+		if jti, ok := t.Claims().Get(oauth2.ClaimJwtId).(string); ok && jti != "" {
+			return jti
+		}
+	}
+
+	// use a hash of value
+	hash := sha256.Sum224([]byte(token.Value()))
+	return fmt.Sprintf("%x", hash)
 }
