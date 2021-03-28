@@ -159,6 +159,17 @@ func (r *RedisContextDetailsStore) RefreshTokenExists(c context.Context, token o
 	return r.exists(c, keyFuncRefreshTokenToAuth(uniqueTokenKey(token)))
 }
 
+func (r *RedisContextDetailsStore) FindSessionId(ctx context.Context, token oauth2.Token) (string, error) {
+	switch t := token.(type) {
+	case oauth2.AccessToken:
+		return r.loadSessionId(ctx, keyFuncAccessTokenToSession(uniqueTokenKey(t)))
+	case oauth2.RefreshToken:
+		return r.loadSessionId(ctx, keyFuncRefreshTokenToSession(uniqueTokenKey(t)))
+	default:
+		return "", fmt.Errorf("unsupported key type %T", token)
+	}
+}
+
 // RevokeRefreshToken remove redis records:
 // 		- RefreshToken -> Authentication 	"ART"
 //		- RefreshToken <- User & Client 	"RUC"
@@ -306,6 +317,14 @@ func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context,
 	}
 
 	return fullDetails, nil
+}
+
+func (r *RedisContextDetailsStore) loadSessionId(ctx context.Context, keyfunc keyFunc) (string, error) {
+	sid := ""
+	if e := r.doLoad(ctx, keyfunc, &sid); e != nil {
+		return "", e
+	}
+	return sid, nil
 }
 
 func (r *RedisContextDetailsStore) doRemoveDetials(ctx context.Context, token oauth2.AccessToken, atk string) error {

@@ -14,6 +14,7 @@ type AuthorizationRegistry interface {
 	// Read
 	ReadStoredAuthorization(ctx context.Context, token oauth2.RefreshToken) (oauth2.Authentication, error)
 	RefreshTokenExists(ctx context.Context, token oauth2.RefreshToken) bool
+	FindSessionId(ctx context.Context, token oauth2.Token) (string, error)
 
 	// Revoke
 	RevokeRefreshToken(ctx context.Context, token oauth2.RefreshToken) error
