@@ -16,6 +16,9 @@ type AuthorizationRegistry interface {
 	RefreshTokenExists(ctx context.Context, token oauth2.RefreshToken) bool
 
 	// Revoke
-	// TODO revoke user, revoke client, revoke refresh token, etc
 	RevokeRefreshToken(ctx context.Context, token oauth2.RefreshToken) error
+	RevokeAccessToken(ctx context.Context, token oauth2.AccessToken) error
+	RevokeAllAccessTokens(ctx context.Context, token oauth2.RefreshToken) error
+	RevokeUserAccess(ctx context.Context, username string) error
+	RevokeClientAccess(ctx context.Context, clientId string) error
 }
