@@ -141,7 +141,7 @@ func (g GormCrud) Save(ctx context.Context, v interface{}, options...Option) err
 	}
 
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
-		return db.Model(g.model).Save(v)
+		return db.Save(v)
 	})
 }
 
