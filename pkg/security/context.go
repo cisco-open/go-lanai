@@ -3,6 +3,7 @@ package security
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -80,9 +81,16 @@ func Get(ctx context.Context) Authentication {
 	return secCtx
 }
 
-func Clear(ctx utils.MutableContext) {
-	ctx.Set(gin.AuthUserKey, nil)
-	ctx.Set(ContextKeySecurity, nil)
+func Clear(ctx context.Context) {
+	if mc, ok := ctx.(utils.MutableContext); ok {
+		mc.Set(gin.AuthUserKey, nil)
+		mc.Set(ContextKeySecurity, nil)
+	}
+
+	if gc := web.GinContext(ctx); gc != nil {
+		gc.Set(gin.AuthUserKey, nil)
+		gc.Set(ContextKeySecurity, nil)
+	}
 }
 
 // TryClear attempt to clear security context. Return true if succeeded

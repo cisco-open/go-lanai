@@ -96,10 +96,11 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 	c.delegate.Configure(ws, c.config)
 
 	// Logout Handler
+	// Note: we disable default logout handler here because we don't want to unauthenticate user when PUT or DELETE is used
 	logoutHandler := revoke.NewTokenRevokingLogoutHanlder(func(opt *revoke.HanlderOption) {
 		opt.Revoker = c.config.accessRevoker()
 	})
 	logout.Configure(ws).
 		LogoutUrl(c.config.Endpoints.Logout).
-		AddLogoutHandler(logoutHandler)
+		LogoutHandlers(logoutHandler)
 }

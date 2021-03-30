@@ -28,6 +28,12 @@ func (f *LogoutFeature) Identifier() security.FeatureIdentifier {
 	return FeatureId
 }
 
+// LogoutHandlers override default handler
+func (f *LogoutFeature) LogoutHandlers(logoutHandlers ...LogoutHandler) *LogoutFeature {
+	f.logoutHandlers = logoutHandlers
+	return f
+}
+
 func (f *LogoutFeature) AddLogoutHandler(logoutHandler LogoutHandler) *LogoutFeature {
 	f.logoutHandlers = append(f.logoutHandlers, logoutHandler)
 	return f
@@ -65,6 +71,14 @@ func New() *LogoutFeature {
 	return &LogoutFeature{
 		successUrl:     "/login",
 		logoutUrl:      "/logout",
-		logoutHandlers: []LogoutHandler{},
+		logoutHandlers: []LogoutHandler{
+			DefaultLogoutHanlder{},
+		},
 	}
+}
+
+type DefaultLogoutHanlder struct {}
+
+func (h DefaultLogoutHanlder) HandleLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, _ security.Authentication) {
+	security.Clear(ctx)
 }

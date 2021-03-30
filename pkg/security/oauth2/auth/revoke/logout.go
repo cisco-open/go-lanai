@@ -2,11 +2,23 @@ package revoke
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"net/http"
+	"strings"
 )
+
+const (
+	bearerTokenPrefix = "Bearer "
+)
+
+type HanlderOptions func(opt *HanlderOption)
+
+type HanlderOption struct {
+	Revoker auth.AccessRevoker
+}
 
 /**
  * TokenRevokingLogoutHanlder
@@ -24,13 +36,6 @@ import (
  * @author Livan Du
  * Created on 2018-05-04
  */
-
-type HanlderOptions func(opt *HanlderOption)
-
-type HanlderOption struct {
-	Revoker auth.AccessRevoker
-}
-
 type TokenRevokingLogoutHanlder struct {
 	revoker auth.AccessRevoker
 }
@@ -56,30 +61,48 @@ func (h TokenRevokingLogoutHanlder) HandleLogout(ctx context.Context, r *http.Re
 	case http.MethodDelete:
 		fallthrough
 	default:
-		h.handleDefault(ctx, auth)
+		h.handleDefault(ctx, r)
 	}
 }
 
 func (h TokenRevokingLogoutHanlder) handleGet(ctx context.Context, auth security.Authentication) {
 	s := session.Get(ctx)
 	if s == nil {
+		logger.WithContext(ctx).Debugf("invalid use of GET /logout endpoint. session is not found")
 		return
 	}
 
-	_ = h.revoker.RevokeWithSessionId(ctx, s.GetID(), s.Name())
+	if e := h.revoker.RevokeWithSessionId(ctx, s.GetID(), s.Name()); e != nil {
+		logger.WithContext(ctx).Warnf("unable to revoke tokens with session %s: %v", s.GetID(), e)
+	}
+	security.Clear(ctx)
 }
 
 func (h TokenRevokingLogoutHanlder) handlePost(ctx context.Context, auth security.Authentication) {
 	username, e := security.GetUsername(auth)
 	if e != nil || username == "" {
+		logger.WithContext(ctx).Debugf("invalid use of GET /logout endpoint. session is not found")
 		return
 	}
 
-	_ = h.revoker.RevokeWithUsername(ctx, username, true)
+	if e := h.revoker.RevokeWithUsername(ctx, username, true); e != nil {
+		logger.WithContext(ctx).Warnf("unable to revoke tokens with username %s: %v", username, e)
+	}
+	security.Clear(ctx)
 }
 
-func (h TokenRevokingLogoutHanlder) handleDefault(ctx context.Context, auth security.Authentication) {
-	// TODO implement me
+// In case of PUT, DELETE, PATCH etc, we don't clean authentication. Instead, we invalidate access token carried by header
+func (h TokenRevokingLogoutHanlder) handleDefault(ctx context.Context, r *http.Request) {
+	// grab bearer token
+	header := r.Header.Get("Authorization")
+	if !strings.HasPrefix(header, bearerTokenPrefix) {
+		return
+	}
+
+	tokenValue := strings.TrimPrefix(header, bearerTokenPrefix)
+	if e := h.revoker.RevokeWithTokenValue(ctx, tokenValue, auth.RevokerHintAccessToken); e != nil {
+		logger.WithContext(ctx).Warnf("unable to revoke token with value %s: %v", log.Capped(tokenValue, 20), e)
+	}
 }
 
 

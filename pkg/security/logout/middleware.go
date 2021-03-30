@@ -29,8 +29,7 @@ func (mw *LogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 }
 
 func (mw *LogoutMiddleware) handleSuccess(c *gin.Context, before security.Authentication) {
-	security.Clear(c)
-	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, nil)
+	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, security.Get(c))
 	if c.Writer.Written() {
 		c.Abort()
 	}

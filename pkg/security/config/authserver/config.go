@@ -10,10 +10,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 	"net/url"
@@ -21,52 +23,55 @@ import (
 
 type AuthorizationServerConfigurer func(*Configuration)
 
-type authServerDI struct {
+type configDI struct {
 	fx.In
-	AppContext           *bootstrap.ApplicationContext
-	WebRegistrar         *web.Registrar
-	SecurityRegistrar    security.Registrar
-	Properties           AuthServerProperties
-	Configurer           AuthorizationServerConfigurer
-	RedisClientFactory   redis.ClientFactory
-	ServerProperties     web.ServerProperties
-	SessionProperties    security.SessionProperties
-	CryptoProperties     jwt.CryptoProperties
-	DiscoveryCustomizers *discovery.Customizers
-	ContextDetailsStore  security.ContextDetailsStore
-	AuthRegistry         auth.AuthorizationRegistry
-	AccessRevoker        auth.AccessRevoker
-
+	AppContext         *bootstrap.ApplicationContext
+	Properties         AuthServerProperties
+	Configurer         AuthorizationServerConfigurer
+	RedisClientFactory redis.ClientFactory
+	ServerProperties   web.ServerProperties
+	SessionProperties  security.SessionProperties
+	CryptoProperties   jwt.CryptoProperties
+	SessionStore       session.Store
 }
 
-// Configuration entry point
-func ConfigureAuthorizationServer(di authServerDI) {
+func NewConfiguration(di configDI) *Configuration {
 	config := Configuration{
 		appContext:         di.AppContext,
 		redisClientFactory: di.RedisClientFactory,
+		sessionStore:       di.SessionStore,
 		properties:         di.Properties,
 		serverProperties:   di.ServerProperties,
 		sessionProperties:  di.SessionProperties,
 		cryptoProperties:   di.CryptoProperties,
 		Issuer:             newIssuer(&di.Properties.Issuer, &di.ServerProperties),
-		detailsStore:       di.ContextDetailsStore,
-		authRegistry:       di.AuthRegistry,
-		revoker:            di.AccessRevoker,
 	}
 	di.Configurer(&config)
+	return &config
+}
 
+type initDI struct {
+	fx.In
+	Config               *Configuration
+	WebRegistrar         *web.Registrar
+	SecurityRegistrar    security.Registrar
+	DiscoveryCustomizers *discovery.Customizers
+}
+
+// Configuration entry point
+func ConfigureAuthorizationServer(di initDI) {
 	// SMCR
 	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
 
 	// Securities
-	di.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: &config})
-	di.SecurityRegistrar.Register(&TokenAuthEndpointsConfigurer{config: &config})
-	for _, configuer := range config.idpConfigurers {
-		di.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: &config, delegate: configuer})
+	di.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: di.Config})
+	di.SecurityRegistrar.Register(&TokenAuthEndpointsConfigurer{config: di.Config})
+	for _, configuer := range di.Config.idpConfigurers {
+		di.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: di.Config, delegate: configuer})
 	}
 
 	// Additional endpoints
-	registerEndpoints(di.WebRegistrar, &config)
+	registerEndpoints(di.WebRegistrar, di.Config)
 }
 
 /****************************
@@ -107,14 +112,15 @@ type Configuration struct {
 	// not directly configurable items
 	appContext                *bootstrap.ApplicationContext
 	redisClientFactory        redis.ClientFactory
+	sessionStore              session.Store
 	properties                AuthServerProperties
 	serverProperties          web.ServerProperties
 	sessionProperties         security.SessionProperties
 	cryptoProperties          jwt.CryptoProperties
-	detailsStore              security.ContextDetailsStore
-	authRegistry              auth.AuthorizationRegistry
-	revoker                   auth.AccessRevoker
 	idpConfigurers            []IdpSecurityConfigurer
+	sharedContextDetailsStore security.ContextDetailsStore
+	sharedAuthRegistry        auth.AuthorizationRegistry
+	sharedAccessRevoker       auth.AccessRevoker
 	sharedErrorHandler        *auth.OAuth2ErrorHandler
 	sharedTokenGranter        auth.TokenGranter
 	sharedAuthService         auth.AuthorizationService
@@ -207,11 +213,17 @@ func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 }
 
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
-	return c.detailsStore
+	if c.sharedContextDetailsStore == nil {
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
+	}
+	return c.sharedContextDetailsStore
 }
 
 func (c *Configuration) authorizationRegistry() auth.AuthorizationRegistry {
-	return c.authRegistry
+	if c.sharedAuthRegistry == nil {
+		c.sharedAuthRegistry = c.contextDetailsStore().(auth.AuthorizationRegistry)
+	}
+	return c.sharedAuthRegistry
 }
 
 func (c *Configuration) tokenStore() auth.TokenStore {
@@ -314,5 +326,12 @@ func (c *Configuration) tokenAuthenticator() security.Authenticator {
 }
 
 func (c *Configuration) accessRevoker() auth.AccessRevoker {
-	return c.revoker
+	if c.sharedAccessRevoker == nil {
+		c.sharedAccessRevoker = revoke.NewDefaultAccessRevoker(func(opt *revoke.RevokerOption) {
+			opt.AuthRegistry = c.authorizationRegistry()
+			opt.SessionStore = c.sessionStore
+			opt.TokenStoreReader = c.tokenStore()
+		})
+	}
+	return c.sharedAccessRevoker
 }

@@ -268,6 +268,9 @@ func (r *RedisContextDetailsStore) doDelete(c context.Context, keyFunc keyFunc) 
 }
 
 func (r *RedisContextDetailsStore) doDeleteWithKeys(c context.Context, keys []string) (int, error) {
+	if len(keys) == 0 {
+		return 0, nil
+	}
 	cmd := r.client.Del(c, keys...)
 	return int(cmd.Val()), cmd.Err()
 }
@@ -276,6 +279,8 @@ func (r *RedisContextDetailsStore) doDeleteWithWildcard(c context.Context, keyFu
 	keys, e := r.doList(c, keyFunc)
 	if e != nil {
 		return 0, e
+	} else if len(keys) == 0 {
+		return 0, nil
 	}
 	cmd := r.client.Del(c, keys...)
 	return int(cmd.Val()), cmd.Err()
