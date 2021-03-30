@@ -10,13 +10,6 @@ import (
 /***********************
 	Session
 ************************/
-const (
-	SessionStoreTypeMemory = iota
-	SessionStoreTypeRedis
-)
-
-type SessionStoreType int
-
 const SessionPropertiesPrefix = "security.session"
 
 type SessionProperties struct {

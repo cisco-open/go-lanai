@@ -88,6 +88,7 @@ func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 				Condition: matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"),
 			},
 			SamlMetadata: "/metadata",
+			TenantHierarchy: "/v2/tenant_hierarchy",
 		}
 	}
 }

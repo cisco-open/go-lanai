@@ -65,7 +65,6 @@ func ConfigureAuthorizationServer(di authServerDI) {
 /****************************
 	configuration
  ****************************/
-//TODO: constructor
 type ConditionalEndpoint struct {
 	Location *url.URL
 	Condition web.RequestMatcher
@@ -81,6 +80,7 @@ type Endpoints struct {
 	Logout     string
 	SamlSso    ConditionalEndpoint
 	SamlMetadata string
+	TenantHierarchy string
 }
 
 type Configuration struct {
