@@ -1,14 +1,9 @@
 package session
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
-	"path"
-	"time"
 )
 
 var (
@@ -38,61 +33,20 @@ func New() *Feature {
 }
 
 type Configurer struct {
-	sessionProps security.SessionProperties
-	serverProps web.ServerProperties
+	store           Store
+	sessionProps    security.SessionProperties
 	maxSessionsFunc GetMaximumSessions
-
-	//cached instances
-	redisClient redis.Client
-	store Store
 }
 
-func newSessionConfigurer(ctx context.Context, sessionProps security.SessionProperties, serverProps web.ServerProperties,
-	redisClientFactory redis.ClientFactory, maxSessionsFunc GetMaximumSessions) *Configurer {
-
-	redisClient, e := redisClientFactory.New(ctx, func(opt *redis.ClientOption) {
-		opt.DbIndex = sessionProps.DbIndex
-	})
-	if e != nil {
-		panic(e)
-	}
-
+func newSessionConfigurer(sessionProps security.SessionProperties, sessionStore Store, maxSessionsFunc GetMaximumSessions) *Configurer {
 	return &Configurer{
+		store:           sessionStore,
 		sessionProps:    sessionProps,
-		serverProps:     serverProps,
-		redisClient:     redisClient,
 		maxSessionsFunc: maxSessionsFunc,
 	}
 }
 
 func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
-	// configure session store
-	idleTimeout, err := time.ParseDuration(sc.sessionProps.IdleTimeout)
-	if err != nil {
-		return err
-	}
-	absTimeout, err := time.ParseDuration(sc.sessionProps.AbsoluteTimeout)
-	if err != nil {
-		return err
-	}
-
-	configureOptions := func(options *Options) {
-		options.Path = path.Clean("/" + sc.serverProps.ContextPath)
-		options.Domain = sc.sessionProps.Cookie.Domain
-		options.MaxAge = sc.sessionProps.Cookie.MaxAge
-		options.Secure = sc.sessionProps.Cookie.Secure
-		options.HttpOnly = sc.sessionProps.Cookie.HttpOnly
-		options.SameSite = sc.sessionProps.Cookie.SameSite()
-		options.IdleTimeout = idleTimeout
-		options.AbsoluteTimeout = absTimeout
-	}
-
-	// the store cached in configurer is to make sure that each session configurer
-	// use the same store
-	if sc.store == nil {
-		sc.store = NewRedisStore(sc.redisClient, configureOptions)
-	}
-
 	// the ws shared store is to share this store with other feature configurer can have access to store.
 	if ws.Shared(security.WSSharedKeySessionStore) == nil {
 		_ = ws.AddShared(security.WSSharedKeySessionStore, sc.store)

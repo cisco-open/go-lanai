@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/clientauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
@@ -94,5 +95,11 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 
 	c.delegate.Configure(ws, c.config)
 
-	logout.Configure(ws).LogoutUrl(c.config.Endpoints.Logout)
+	// Logout Handler
+	logoutHandler := revoke.NewTokenRevokingLogoutHanlder(func(opt *revoke.HanlderOption) {
+		opt.Revoker = c.config.accessRevoker()
+	})
+	logout.Configure(ws).
+		LogoutUrl(c.config.Endpoints.Logout).
+		AddLogoutHandler(logoutHandler)
 }

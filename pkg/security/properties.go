@@ -2,9 +2,11 @@ package security
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
 	"net/http"
 	"strings"
+	"time"
 )
 
 /***********************
@@ -21,10 +23,10 @@ const SessionPropertiesPrefix = "security.session"
 
 type SessionProperties struct {
 	Cookie               CookieProperties
-	IdleTimeout          string `json:"idle-timeout"`
-	AbsoluteTimeout      string `json:"absolute-timeout"`
-	MaxConcurrentSession int    `json:"max-concurrent-sessions"`
-	DbIndex              int    `json:"data-index"`
+	IdleTimeout          utils.Duration `json:"idle-timeout"`
+	AbsoluteTimeout      utils.Duration `json:"absolute-timeout"`
+	MaxConcurrentSession int            `json:"max-concurrent-sessions"`
+	DbIndex              int            `json:"data-index"`
 }
 
 type CookieProperties struct {
@@ -54,8 +56,8 @@ func NewSessionProperties() *SessionProperties {
 		Cookie: CookieProperties{
 			HttpOnly: true,
 		},
-		IdleTimeout: "900s",
-		AbsoluteTimeout: "1800s",
+		IdleTimeout: utils.Duration(900 * time.Second),
+		AbsoluteTimeout: utils.Duration(1800 * time.Second),
 		MaxConcurrentSession: 0, //unlimited
 	}
 }

@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"github.com/google/uuid"
 	"net/http"
@@ -215,6 +216,10 @@ func (s *Session) IsDirty() bool {
 
 func (s *Session) SetDirty()  {
 	s.dirty = true
+}
+
+func (s *Session) ExpireNow(ctx context.Context) error {
+	return s.store.WithContext(ctx).Delete(s)
 }
 
 func (s *Session) isExpired() bool {

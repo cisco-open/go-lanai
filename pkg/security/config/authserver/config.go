@@ -33,6 +33,10 @@ type authServerDI struct {
 	SessionProperties    security.SessionProperties
 	CryptoProperties     jwt.CryptoProperties
 	DiscoveryCustomizers *discovery.Customizers
+	ContextDetailsStore  security.ContextDetailsStore
+	AuthRegistry         auth.AuthorizationRegistry
+	AccessRevoker        auth.AccessRevoker
+
 }
 
 // Configuration entry point
@@ -44,7 +48,10 @@ func ConfigureAuthorizationServer(di authServerDI) {
 		serverProperties:   di.ServerProperties,
 		sessionProperties:  di.SessionProperties,
 		cryptoProperties:   di.CryptoProperties,
-		Issuer: newIssuer(&di.Properties.Issuer, &di.ServerProperties),
+		Issuer:             newIssuer(&di.Properties.Issuer, &di.ServerProperties),
+		detailsStore:       di.ContextDetailsStore,
+		authRegistry:       di.AuthRegistry,
+		revoker:            di.AccessRevoker,
 	}
 	di.Configurer(&config)
 
@@ -104,12 +111,14 @@ type Configuration struct {
 	serverProperties          web.ServerProperties
 	sessionProperties         security.SessionProperties
 	cryptoProperties          jwt.CryptoProperties
+	detailsStore              security.ContextDetailsStore
+	authRegistry              auth.AuthorizationRegistry
+	revoker                   auth.AccessRevoker
 	idpConfigurers            []IdpSecurityConfigurer
 	sharedErrorHandler        *auth.OAuth2ErrorHandler
 	sharedTokenGranter        auth.TokenGranter
 	sharedAuthService         auth.AuthorizationService
 	sharedPasswdAuthenticator security.Authenticator
-	sharedContextDetailsStore security.ContextDetailsStore
 	sharedJwtEncoder          jwt.JwtEncoder
 	sharedJwtDecoder          jwt.JwtDecoder
 	sharedDetailsFactory      *common.ContextDetailsFactory
@@ -117,7 +126,6 @@ type Configuration struct {
 	sharedAuthHanlder         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	sharedTokenAuthenticator  security.Authenticator
-	sharedIssuer              security.Issuer
 }
 
 func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {
@@ -199,14 +207,11 @@ func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 }
 
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
-	if c.sharedContextDetailsStore == nil {
-		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
-	}
-	return c.sharedContextDetailsStore
+	return c.detailsStore
 }
 
 func (c *Configuration) authorizationRegistry() auth.AuthorizationRegistry {
-	return c.contextDetailsStore().(auth.AuthorizationRegistry)
+	return c.authRegistry
 }
 
 func (c *Configuration) tokenStore() auth.TokenStore {
@@ -306,4 +311,8 @@ func (c *Configuration) tokenAuthenticator() security.Authenticator {
 		})
 	}
 	return c.sharedTokenAuthenticator
+}
+
+func (c *Configuration) accessRevoker() auth.AccessRevoker {
+	return c.revoker
 }

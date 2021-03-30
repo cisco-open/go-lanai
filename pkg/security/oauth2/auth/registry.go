@@ -13,13 +13,13 @@ type AuthorizationRegistry interface {
 
 	// Read
 	ReadStoredAuthorization(ctx context.Context, token oauth2.RefreshToken) (oauth2.Authentication, error)
-	RefreshTokenExists(ctx context.Context, token oauth2.RefreshToken) bool
 	FindSessionId(ctx context.Context, token oauth2.Token) (string, error)
 
 	// Revoke
 	RevokeRefreshToken(ctx context.Context, token oauth2.RefreshToken) error
 	RevokeAccessToken(ctx context.Context, token oauth2.AccessToken) error
 	RevokeAllAccessTokens(ctx context.Context, token oauth2.RefreshToken) error
-	RevokeUserAccess(ctx context.Context, username string) error
-	RevokeClientAccess(ctx context.Context, clientId string) error
+	RevokeUserAccess(ctx context.Context, username string, revokeRefreshToken bool) error
+	RevokeClientAccess(ctx context.Context, clientId string, revokeRefreshToken bool) error
+	RevokeSessionAccess(ctx context.Context, sessionId string, revokeRefreshToken bool) error
 }

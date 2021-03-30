@@ -19,15 +19,20 @@ const (
 	prefixRefreshTokenToAuthentication  = "ART"
 	prefixAccessTokenFromUserAndClient  = "AUC"
 	prefixRefreshTokenFromUserAndClient = "RUC"
-	prefixAccessRefreshTokenRelation    = "ARR"
+	prefixAccessFromRefreshToken        = "AR"
+	prefixRefreshTokenFromSessionId     = "RS"
+	prefixAccessTokenFromSessionId      = "AS"
 
 	/*
-	  	When specific token of a client is used (nfv-client), we look up the session and update
+		Original comment form Java implementation:
+		When specific token of a client is used (nfv-client), we look up the session and update
 		its last requested time
 		These records should have an expiry time equal to the token's expiry time
 	 */
-	prefixRefreshTokenToSessionId = "R_TO_S"
-	prefixAccessTokenToSessionId = "A_TO_S"
+	// those relationships are not needed anymore, because session ID is stored in UserAuthentication and context details
+	// which are mapped from refresh and access token
+	//prefixRefreshTokenToSessionId = "R_TO_S"
+	//prefixAccessTokenToSessionId = "A_TO_S"
 
 	/*
 	 * Original comment form Java implementation:
@@ -115,7 +120,7 @@ func (r *RedisContextDetailsStore) ContextDetailsExists(c context.Context, key i
 // RegisterRefreshToken save relationships :
 // 		- RefreshToken -> Authentication 	"ART"
 //		- RefreshToken <- User & Client 	"RUC"
-// 		- RefreshToken -> SessionId			"R_TO_S"
+// 		- RefreshToken -> SessionId			"RS"
 func (r *RedisContextDetailsStore) RegisterRefreshToken(c context.Context, token oauth2.RefreshToken, oauth oauth2.Authentication) error {
 	if e := r.saveRefreshTokenToAuth(c, token, oauth); e != nil {
 		return e
@@ -133,8 +138,8 @@ func (r *RedisContextDetailsStore) RegisterRefreshToken(c context.Context, token
 
 // RegisterAccessToken save relationships :
 //		- AccessToken <- User & Client 	"AUC"
-//  	- AccessToken -> SessionId 		"A_TO_S"
-//		- RefreshToken <-> AccessToken 	"ARR"
+//  	- AccessToken -> SessionId 		"AS"
+//		- RefreshToken <-> AccessToken 	"AR"
 func (r *RedisContextDetailsStore) RegisterAccessToken(ctx context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) error {
 	if e := r.saveAccessTokenFromUserClient(ctx, token, oauth); e != nil {
 		return e
@@ -155,16 +160,12 @@ func (r *RedisContextDetailsStore) ReadStoredAuthorization(c context.Context, to
 	return r.loadAuthFromRefreshToken(c, token)
 }
 
-func (r *RedisContextDetailsStore) RefreshTokenExists(c context.Context, token oauth2.RefreshToken) bool {
-	return r.exists(c, keyFuncRefreshTokenToAuth(uniqueTokenKey(token)))
-}
-
 func (r *RedisContextDetailsStore) FindSessionId(ctx context.Context, token oauth2.Token) (string, error) {
 	switch t := token.(type) {
 	case oauth2.AccessToken:
-		return r.loadSessionId(ctx, keyFuncAccessTokenToSession(uniqueTokenKey(t)))
+		return r.loadSessionId(ctx, keyFuncAccessTokenFromSession(uniqueTokenKey(t), "*"))
 	case oauth2.RefreshToken:
-		return r.loadSessionId(ctx, keyFuncRefreshTokenToSession(uniqueTokenKey(t)))
+		return r.loadSessionId(ctx, keyFuncRefreshTokenFromSession(uniqueTokenKey(t), "*"))
 	default:
 		return "", fmt.Errorf("unsupported key type %T", token)
 	}
@@ -173,8 +174,8 @@ func (r *RedisContextDetailsStore) FindSessionId(ctx context.Context, token oaut
 // RevokeRefreshToken remove redis records:
 // 		- RefreshToken -> Authentication 	"ART"
 //		- RefreshToken <- User & Client 	"RUC"
-// 		- RefreshToken -> SessionId			"R_TO_S"
-// 		- All Access Tokens (Each implicitly remove AccessToken <-> RefreshToken "ARR")
+// 		- RefreshToken -> SessionId			"RS"
+// 		- All Access Tokens (Each implicitly remove AccessToken <-> RefreshToken "AR")
 func (r *RedisContextDetailsStore) RevokeRefreshToken(ctx context.Context, token oauth2.RefreshToken) error {
 	return r.doRemoveRefreshToken(ctx, token, "")
 }
@@ -182,24 +183,26 @@ func (r *RedisContextDetailsStore) RevokeRefreshToken(ctx context.Context, token
 // RevokeAccessToken remove redis records:
 //		- AccessToken -> ContextDetails	"AAT"
 //		- AccessToken <- User & Client 	"AUC"
-//  	- AccessToken -> SessionId 		"A_TO_S"
-//		- AccessToken <-> RefreshToken 	"ARR"
+//  	- AccessToken -> SessionId 		"AS"
+//		- AccessToken <-> RefreshToken 	"AR"
 func (r *RedisContextDetailsStore) RevokeAccessToken(ctx context.Context, token oauth2.AccessToken) error {
 	return r.doRemoveAccessToken(ctx, token, "")
 }
 
 // RevokeAllAccessTokens remove all access tokens associated with given refresh token,
-// with help of AccessToken <-> RefreshToken "ARR" records
+// with help of AccessToken <-> RefreshToken "AR" records
 func (r *RedisContextDetailsStore) RevokeAllAccessTokens(ctx context.Context, token oauth2.RefreshToken) error {
 	rtk := uniqueTokenKey(token)
-	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessAndRefreshRelation("*", rtk))
+	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessFromRefresh("*", rtk))
 }
 
 // RevokeUserAccess remove all access/refresh tokens issued to the given user,
 // with help of AccessToken <- User & Client "AUC" & RefreshToken <- User & Client "RUC" records
-func (r *RedisContextDetailsStore) RevokeUserAccess(ctx context.Context, username string) error {
-	if e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromUserAndClient("*", username, "*")); e != nil {
-		return e
+func (r *RedisContextDetailsStore) RevokeUserAccess(ctx context.Context, username string, revokeRefreshToken bool) error {
+	if revokeRefreshToken {
+		if e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromUserAndClient("*", username, "*")); e != nil {
+			return e
+		}
 	}
 
 	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromUserAndClient("*", username, "*"))
@@ -207,12 +210,26 @@ func (r *RedisContextDetailsStore) RevokeUserAccess(ctx context.Context, usernam
 
 // RevokeClientAccess remove all access/refresh tokens issued to the given client,
 // with help of AccessToken <- User & Client "AUC" & RefreshToken <- User & Client "RUC" records
-func (r *RedisContextDetailsStore) RevokeClientAccess(ctx context.Context, clientId string) error {
-	if e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromUserAndClient("*", "*", clientId)); e != nil {
-		return e
+func (r *RedisContextDetailsStore) RevokeClientAccess(ctx context.Context, clientId string, revokeRefreshToken bool) error {
+	if revokeRefreshToken {
+		if e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromUserAndClient("*", "*", clientId)); e != nil {
+			return e
+		}
 	}
 
 	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromUserAndClient("*", "*", clientId))
+}
+
+// RevokeSessionAccess remove all access/refresh tokens issued under given session,
+// with help of AccessToken <- SessionId "RS" & RefreshToken <- SessionId "RS"
+func (r *RedisContextDetailsStore) RevokeSessionAccess(ctx context.Context, sessionId string, revokeRefreshToken bool) error {
+	if revokeRefreshToken {
+		if e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromSession("*", sessionId)); e != nil {
+			return e
+		}
+	}
+
+	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromSession("*", sessionId))
 }
 
 /*********************
@@ -250,6 +267,20 @@ func (r *RedisContextDetailsStore) doDelete(c context.Context, keyFunc keyFunc) 
 	return int(cmd.Val()), cmd.Err()
 }
 
+func (r *RedisContextDetailsStore) doDeleteWithKeys(c context.Context, keys []string) (int, error) {
+	cmd := r.client.Del(c, keys...)
+	return int(cmd.Val()), cmd.Err()
+}
+
+func (r *RedisContextDetailsStore) doDeleteWithWildcard(c context.Context, keyFunc keyFunc) (int, error) {
+	keys, e := r.doList(c, keyFunc)
+	if e != nil {
+		return 0, e
+	}
+	cmd := r.client.Del(c, keys...)
+	return int(cmd.Val()), cmd.Err()
+}
+
 func (r *RedisContextDetailsStore) doList(c context.Context, keyFunc keyFunc) ([]string, error) {
 	k := keyFunc(r.vTag)
 	cmd := r.client.Keys(c, k)
@@ -280,16 +311,25 @@ func (r *RedisContextDetailsStore) saveAccessTokenFromUserClient(c context.Conte
 	clientId := oauth.OAuth2Request().ClientId()
 	username, _ := security.GetUsername(oauth.UserAuthentication())
 	atk := uniqueTokenKey(t)
-	return r.doSave(c, keyFuncAccessTokenFromUserAndClient(atk, username, clientId), atk, t.ExpiryTime())
+	rl := internal.RelationTokenUserClient{
+		Username: username,
+		ClientId: clientId,
+		RelationToken: 	internal.RelationToken{TokenKey:  atk},
+	}
+	return r.doSave(c, keyFuncAccessTokenFromUserAndClient(atk, username, clientId), &rl, t.ExpiryTime())
 }
 
 func (r *RedisContextDetailsStore) saveAccessTokenToSession(c context.Context, t oauth2.AccessToken, oauth oauth2.Authentication) error {
 	sid := r.findSessionId(c, oauth)
-	if sid == nil || sid == "" {
+	if sid == "" {
 		return nil
 	}
 	atk := uniqueTokenKey(t)
-	return r.doSave(c, keyFuncAccessTokenToSession(atk), sid, t.ExpiryTime())
+	rl := internal.RelationTokenSession{
+		SessionId: sid,
+		RelationToken: 	internal.RelationToken{TokenKey:  atk},
+	}
+	return r.doSave(c, keyFuncAccessTokenFromSession(atk, sid), &rl, t.ExpiryTime())
 }
 
 func (r *RedisContextDetailsStore) saveAccessRefreshTokenRelation(c context.Context, t oauth2.AccessToken) error {
@@ -299,7 +339,11 @@ func (r *RedisContextDetailsStore) saveAccessRefreshTokenRelation(c context.Cont
 
 	atk := uniqueTokenKey(t)
 	rtk := uniqueTokenKey(t.RefreshToken())
-	return r.doSave(c, keyFuncAccessAndRefreshRelation(atk, rtk), atk, t.ExpiryTime())
+	rl := internal.RelationAccessRefresh{
+		RelationToken: 	internal.RelationToken{TokenKey:  atk},
+		RefreshTokenKey: rtk,
+	}
+	return r.doSave(c, keyFuncAccessFromRefresh(atk, rtk), &rl, t.ExpiryTime())
 }
 
 func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context, t oauth2.AccessToken) (security.ContextDetails, error) {
@@ -320,11 +364,18 @@ func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context,
 }
 
 func (r *RedisContextDetailsStore) loadSessionId(ctx context.Context, keyfunc keyFunc) (string, error) {
-	sid := ""
-	if e := r.doLoad(ctx, keyfunc, &sid); e != nil {
+	keys, e := r.doList(ctx, keyfunc)
+	if e != nil{
+		return "", e
+	} else if len(keys) == 0 {
+		return "", fmt.Errorf("session ID not found for token")
+	}
+
+	rl := internal.RelationTokenSession{}
+	if e := r.doLoad(ctx, keyFuncLiteral(keys[0]), &rl); e != nil {
 		return "", e
 	}
-	return sid, nil
+	return rl.SessionId, nil
 }
 
 func (r *RedisContextDetailsStore) doRemoveDetials(ctx context.Context, token oauth2.AccessToken, atk string) error {
@@ -339,16 +390,16 @@ func (r *RedisContextDetailsStore) doRemoveDetials(ctx context.Context, token oa
 
 //		- AccessToken -> ContextDetails	"AAT"
 //		- AccessToken <- User & Client 	"AUC"
-//  	- AccessToken -> SessionId 		"A_TO_S"
-//		- AccessToken <-> RefreshToken 	"ARR"
+//  	- AccessToken -> SessionId 		"AS"
+//		- AccessToken <-> RefreshToken 	"AR"
 func (r *RedisContextDetailsStore) doRemoveAccessToken(ctx context.Context, token oauth2.AccessToken, atk string) error {
 	if token != nil {
 		atk = uniqueTokenKey(token)
 	}
 	r.doRemoveDetials(ctx, token, atk)
-	r.doDelete(ctx, keyFuncAccessTokenFromUserAndClient(atk, "*", "*"))
-	r.doDelete(ctx, keyFuncAccessTokenToSession(atk))
-	r.doDelete(ctx, keyFuncAccessAndRefreshRelation(atk, "*"))
+	r.doDeleteWithWildcard(ctx, keyFuncAccessTokenFromUserAndClient(atk, "*", "*"))
+	r.doDeleteWithWildcard(ctx, keyFuncAccessTokenFromSession(atk, "*"))
+	r.doDeleteWithWildcard(ctx, keyFuncAccessFromRefresh(atk, "*"))
 	return nil
 }
 
@@ -358,11 +409,15 @@ func (r *RedisContextDetailsStore) doRemoveAllAccessTokens(ctx context.Context, 
 		return e
 	}
 
-	for _, atk := range keys {
-		r.doRemoveAccessToken(ctx, nil, atk)
+	for _, key := range keys {
+		rl := internal.RelationToken{}
+		if e := r.doLoad(ctx, keyFuncLiteral(key), &rl); e != nil {
+			continue
+		}
+		r.doRemoveAccessToken(ctx, nil, rl.TokenKey)
 	}
 
-	_, e = r.doDelete(ctx, keyfunc)
+	_, e = r.doDeleteWithKeys(ctx, keys)
 	return e
 }
 
@@ -377,16 +432,25 @@ func (r *RedisContextDetailsStore) saveRefreshTokenFromUserClient(c context.Cont
 	clientId := oauth.OAuth2Request().ClientId()
 	username, _ := security.GetUsername(oauth.UserAuthentication())
 	rtk := uniqueTokenKey(t)
-	return r.doSave(c, keyFuncRefreshTokenFromUserAndClient(rtk, username, clientId), rtk, t.ExpiryTime())
+	rl := internal.RelationTokenUserClient{
+		Username: username,
+		ClientId: clientId,
+		RelationToken: 	internal.RelationToken{TokenKey:  rtk},
+	}
+	return r.doSave(c, keyFuncRefreshTokenFromUserAndClient(rtk, username, clientId), &rl, t.ExpiryTime())
 }
 
 func (r *RedisContextDetailsStore) saveRefreshTokenToSession(c context.Context, t oauth2.RefreshToken, oauth oauth2.Authentication) error {
 	sid := r.findSessionId(c, oauth)
-	if sid == nil || sid == "" {
+	if sid == "" {
 		return nil
 	}
 	rtk := uniqueTokenKey(t)
-	return r.doSave(c, keyFuncRefreshTokenToSession(rtk), sid, t.ExpiryTime())
+	rl := internal.RelationTokenSession{
+		SessionId: sid,
+		RelationToken: 	internal.RelationToken{TokenKey:  rtk},
+	}
+	return r.doSave(c, keyFuncRefreshTokenFromSession(rtk, sid), &rl, t.ExpiryTime())
 }
 
 func (r *RedisContextDetailsStore) loadAuthFromRefreshToken(c context.Context, t oauth2.RefreshToken) (oauth2.Authentication, error) {
@@ -403,16 +467,16 @@ func (r *RedisContextDetailsStore) loadAuthFromRefreshToken(c context.Context, t
 
 // 		- RefreshToken -> Authentication 	"ART"
 //		- RefreshToken <- User & Client 	"RUC"
-// 		- RefreshToken -> SessionId			"R_TO_S"
-// 		- All Access Tokens (Each implicitly remove AccessToken <-> RefreshToken "ARR")
+// 		- RefreshToken -> SessionId			"RS"
+// 		- All Access Tokens (Each implicitly remove AccessToken <-> RefreshToken "AR")
 func (r *RedisContextDetailsStore) doRemoveRefreshToken(ctx context.Context, token oauth2.RefreshToken, rtk string) error {
 	if token != nil {
 		rtk = uniqueTokenKey(token)
 	}
 	r.doDelete(ctx, keyFuncRefreshTokenToAuth(rtk))
-	r.doDelete(ctx, keyFuncRefreshTokenFromUserAndClient(rtk, "*", "*"))
-	r.doDelete(ctx, keyFuncRefreshTokenToSession(rtk))
-	r.doRemoveAllAccessTokens(ctx, keyFuncAccessAndRefreshRelation("*", rtk))
+	r.doDeleteWithWildcard(ctx, keyFuncRefreshTokenFromUserAndClient(rtk, "*", "*"))
+	r.doDeleteWithWildcard(ctx, keyFuncRefreshTokenFromSession(rtk, "*"))
+	r.doRemoveAllAccessTokens(ctx, keyFuncAccessFromRefresh("*", rtk))
 	return nil
 }
 
@@ -422,33 +486,44 @@ func (r *RedisContextDetailsStore) doRemoveAllRefreshTokens(ctx context.Context,
 		return e
 	}
 
-	for _, rtk := range keys {
-		r.doRemoveRefreshToken(ctx, nil, rtk)
+	for _, key := range keys {
+		rl := internal.RelationToken{}
+		if e := r.doLoad(ctx, keyFuncLiteral(key), &rl); e != nil {
+			continue
+		}
+		r.doRemoveRefreshToken(ctx, nil, rl.TokenKey)
 	}
 
-	_, e = r.doDelete(ctx, keyfunc)
+	_, e = r.doDeleteWithKeys(ctx, keys)
 	return e
 }
 
 /*********************
 	Other Helpers
  *********************/
-func (r *RedisContextDetailsStore) findSessionId(c context.Context, oauth oauth2.Authentication) interface{} {
+func (r *RedisContextDetailsStore) findSessionId(c context.Context, oauth oauth2.Authentication) (ret string) {
 	// try get it from UserAuthentaction first.
 	// this should works on non-proxied authentications
+	var sid interface{}
+	defer func() {
+		if s, ok := sid.(string); ok {
+			ret = s
+		}
+	}()
+
 	if userAuth, ok := oauth.UserAuthentication().(oauth2.UserAuthentication); ok && userAuth.DetailsMap() != nil {
-		if sid, ok := userAuth.DetailsMap()[security.DetailsKeySessionId]; ok && sid != "" {
-			return sid
+		if sid, ok = userAuth.DetailsMap()[security.DetailsKeySessionId]; ok && sid != "" {
+			return
 		}
 	}
 
 	// in case of proxied authentications, this value should be carried from KeyValueDetails
 	if kvs, ok := oauth.Details().(security.KeyValueDetails); ok {
-		if sid, ok := kvs.Value(security.DetailsKeySessionId); ok && sid != "" {
-			return sid
+		if sid, ok = kvs.Value(security.DetailsKeySessionId); ok && sid != "" {
+			return
 		}
 	}
-	return nil
+	return
 }
 
 
@@ -475,15 +550,15 @@ func keyFuncAccessTokenFromUserAndClient(atk, username, clientId string) keyFunc
 	}
 }
 
-func keyFuncAccessTokenToSession(atk string) keyFunc {
+func keyFuncAccessTokenFromSession(atk, sid string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixAccessTokenToSessionId, tag, atk)
+		return fmt.Sprintf("%s:%s:%s:%s", prefixAccessTokenFromSessionId, tag, sid, atk)
 	}
 }
 
-func keyFuncAccessAndRefreshRelation(atk, rtk string) keyFunc {
+func keyFuncAccessFromRefresh(atk, rtk string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s:%s", prefixAccessRefreshTokenRelation, tag, atk, rtk)
+		return fmt.Sprintf("%s:%s:%s:%s", prefixAccessFromRefreshToken, tag, atk, rtk)
 	}
 }
 
@@ -499,9 +574,9 @@ func keyFuncRefreshTokenFromUserAndClient(rtk, username, clientId string) keyFun
 	}
 }
 
-func keyFuncRefreshTokenToSession(rtk string) keyFunc {
+func keyFuncRefreshTokenFromSession(rtk, sid string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToSessionId, tag, rtk)
+		return fmt.Sprintf("%s:%s:%s:%s", prefixRefreshTokenFromSessionId, tag, sid, rtk)
 	}
 }
 
