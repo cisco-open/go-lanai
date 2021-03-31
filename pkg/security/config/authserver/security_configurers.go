@@ -103,6 +103,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 	logoutSuccessHandler := revoke.NewTokenRevokeSuccessHandler(func(opt *revoke.SuccessOption) {
 		opt.ClientStore = c.config.ClientStore
 		opt.WhitelabelErrorPath = "/error"
+		opt.RedirectWhitelist = c.config.properties.RedirectWhitelist
 	})
 	logout.Configure(ws).
 		LogoutUrl(c.config.Endpoints.Logout).

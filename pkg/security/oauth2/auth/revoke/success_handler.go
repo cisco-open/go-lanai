@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"net/http"
 )
@@ -14,12 +15,14 @@ type SuccessOptions func(opt *SuccessOption)
 
 type SuccessOption struct {
 	ClientStore         oauth2.OAuth2ClientStore
+	RedirectWhitelist   utils.StringSet
 	WhitelabelErrorPath string
 }
 
 // TokenRevokeSuccessHandler implements security.AuthenticationSuccessHandler
 type TokenRevokeSuccessHandler struct {
 	clientStore oauth2.OAuth2ClientStore
+	whitelist   utils.StringSet
 	fallback    security.AuthenticationErrorHandler
 }
 
@@ -30,7 +33,8 @@ func NewTokenRevokeSuccessHandler(opts...SuccessOptions) *TokenRevokeSuccessHand
 	}
 	return &TokenRevokeSuccessHandler{
 		clientStore: opt.ClientStore,
-		fallback: redirect.NewRedirectWithURL(opt.WhitelabelErrorPath),
+		fallback:    redirect.NewRedirectWithURL(opt.WhitelabelErrorPath),
+		whitelist:   opt.RedirectWhitelist,
 	}
 }
 
@@ -66,9 +70,12 @@ func (h TokenRevokeSuccessHandler) redirect(ctx context.Context, r *http.Request
 
 	resolved, e := auth.ResolveRedirectUri(ctx, redirectUri, client)
 	if e != nil {
-		// TODO should we still respect global whitelist?
-		h.fallback.HandleAuthenticationError(ctx, r, rw, e)
-		return
+		// try resolve from whitelist
+		if !h.isWhitelisted(ctx, redirectUri) {
+			h.fallback.HandleAuthenticationError(ctx, r, rw, e)
+			return
+		}
+		resolved = redirectUri
 	}
 
 	// redirect
@@ -82,6 +89,18 @@ func (h TokenRevokeSuccessHandler) status(ctx context.Context, rw http.ResponseW
 	_, _ = rw.Write([]byte{})
 }
 
+func (h TokenRevokeSuccessHandler) isWhitelisted(ctx context.Context, redirect string) bool {
+	for pattern, _ := range h.whitelist {
+		matcher, e := auth.NewWildcardUrlMatcher(pattern)
+		if e != nil {
+			continue
+		}
+		if matches, e := matcher.Matches(redirect); e == nil && matches {
+			return true
+		}
+	}
+	return false
+}
 
 
 

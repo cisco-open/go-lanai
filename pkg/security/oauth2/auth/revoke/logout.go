@@ -4,8 +4,10 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -93,17 +95,31 @@ func (h TokenRevokingLogoutHanlder) handlePost(ctx context.Context, auth securit
 
 // In case of PUT, DELETE, PATCH etc, we don't clean authentication. Instead, we invalidate access token carried by header
 func (h TokenRevokingLogoutHanlder) handleDefault(ctx context.Context, r *http.Request) {
-	// grab bearer token // TODO also extract token from parameter
-	header := r.Header.Get("Authorization")
-	if !strings.HasPrefix(header, bearerTokenPrefix) {
+	// grab token
+	tokenValue, e := h.extractAccessToken(ctx, r)
+	if e != nil {
+		logger.WithContext(ctx).Warnf("unable to revoke token: %v", e)
 		return
 	}
 
-	tokenValue := strings.TrimPrefix(header, bearerTokenPrefix)
 	if e := h.revoker.RevokeWithTokenValue(ctx, tokenValue, auth.RevokerHintAccessToken); e != nil {
 		logger.WithContext(ctx).Warnf("unable to revoke token with value %s: %v", log.Capped(tokenValue, 20), e)
 	}
 }
 
+func (h TokenRevokingLogoutHanlder) extractAccessToken(ctx context.Context, r *http.Request) (string, error) {
+	// try header first
+	header := r.Header.Get("Authorization")
+	if strings.HasPrefix(header, bearerTokenPrefix) {
+		return strings.TrimPrefix(header, bearerTokenPrefix), nil
+	}
+
+	// then try param
+	value := r.FormValue(oauth2.ParameterAccessToken)
+	if strings.TrimSpace(value) == "" {
+		return "", fmt.Errorf(`access token is required either from "Authorization" header or parameter "%s"`, oauth2.ParameterAccessToken)
+	}
+	return value, nil
+}
 
 
