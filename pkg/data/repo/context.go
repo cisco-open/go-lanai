@@ -112,6 +112,10 @@ type CrudRepository interface {
 	//		*ModelStruct
 	//		map[string]interface{}
 	// Update might support SelectOption and OmitOption depends on implementation
+	// Note: when ModelStruct or *ModelStruct is used, GORM limitation applys:
+	// 		 https://gorm.io/docs/update.html#Updates-multiple-columns
+	// The workaround is to use SelectOption as described here:
+	//		 https://gorm.io/docs/update.html#Update-Selected-Fields
 	Update(ctx context.Context, model interface{}, v interface{}, options...Option) error
 
 	// Delete delete given model or model array

@@ -93,7 +93,7 @@ func (h TokenRevokingLogoutHanlder) handlePost(ctx context.Context, auth securit
 
 // In case of PUT, DELETE, PATCH etc, we don't clean authentication. Instead, we invalidate access token carried by header
 func (h TokenRevokingLogoutHanlder) handleDefault(ctx context.Context, r *http.Request) {
-	// grab bearer token
+	// grab bearer token // TODO also extract token from parameter
 	header := r.Header.Get("Authorization")
 	if !strings.HasPrefix(header, bearerTokenPrefix) {
 		return

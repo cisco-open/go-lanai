@@ -97,6 +97,46 @@ func ValidateApproval(c context.Context, approval map[string]bool, client oauth2
 	return nil
 }
 
+func LoadAndValidateClientId(c context.Context, clientId string, clientStore oauth2.OAuth2ClientStore) (oauth2.OAuth2Client, error) {
+	if clientId == "" {
+		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Sprintf("A client id must be provided"))
+	}
+
+	client, e := clientStore.LoadClientByClientId(c, clientId)
+	if e != nil {
+		return nil, oauth2.NewClientNotFoundError("invalid client")
+	}
+	return client, nil
+}
+
+func ResolveRedirectUri(c context.Context, redirectUri string, client oauth2.OAuth2Client) (string, error) {
+	if client.RedirectUris() == nil || len(client.RedirectUris()) == 0 {
+		return "", oauth2.NewInvalidAuthorizeRequestError(
+			"at least one redirectUri must be registered in the client")
+	}
+
+	// The resolved redirect URI is either the redirect_uri from the parameters or the one from
+	// clientDetails.
+	if redirectUri == "" && len(client.RedirectUris()) == 1 {
+		// single registered redirect URI
+		return client.RedirectUris().Values()[0], nil
+	} else if redirectUri == "" {
+		return "", oauth2.NewInvalidRedirectUriError("the redirect_uri must be proveded because the client have multiple registered redirect URI")
+	}
+
+	for registered, _ := range client.RedirectUris() {
+		matcher, e := NewWildcardUrlMatcher(registered)
+		if e != nil {
+			continue
+		}
+		if matches, e := matcher.Matches(redirectUri); e == nil && matches {
+			return redirectUri, nil
+		}
+	}
+
+	return "", oauth2.NewInvalidRedirectUriError("the redirect_uri must be registered with the client")
+}
+
 // ConvertToOAuthUserAuthentication takes any type of authentication and convert it into oauth2.Authentication
 func ConvertToOAuthUserAuthentication(userAuth security.Authentication) oauth2.UserAuthentication {
 	switch ua := userAuth.(type) {

@@ -1,8 +1,10 @@
 package oauth2
 
 import (
+	"bytes"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
+	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -120,6 +122,8 @@ type OAuth2ErrorTranslator interface {
 // 	- json.Unmarshaler
 // 	- web.Headerer
 // 	- web.StatusCoder
+//  - encoding.BinaryMarshaler
+//  - encoding.BinaryUnmarshaler
 type OAuth2Error struct {
 	security.CodedError
 	EC string // oauth error code
@@ -167,6 +171,43 @@ func (e *OAuth2Error) UnmarshalJSON(data []byte) error {
 
 	desc := values[ParameterErrorDescription]
 	e.CodedError = *security.NewCodedError(ErrorCodeResourceServerGeneral, desc)
+	return nil
+}
+
+type oauth2ErrorCarrier struct {
+	CodedError security.CodedError
+	EC         string // oauth error code
+	SC         int    // status code
+}
+
+// encoding.BinaryMarshaler interface
+func (e OAuth2Error) MarshalBinary() ([]byte, error) {
+	buffer := bytes.NewBuffer([]byte{})
+	encoder := gob.NewEncoder(buffer)
+	carrier := oauth2ErrorCarrier{
+		CodedError: e.CodedError,
+		EC:         e.EC,
+		SC:         e.SC,
+	}
+	if e := encoder.Encode(&carrier); e != nil {
+		return nil, e
+	}
+	return buffer.Bytes(), nil
+}
+
+// encoding.BinaryUnmarshaler interface
+func (e *OAuth2Error) UnmarshalBinary(data []byte) error {
+	buffer := bytes.NewBuffer(data)
+	decoder := gob.NewDecoder(buffer)
+	carrier := oauth2ErrorCarrier{}
+	if e := decoder.Decode(&carrier); e != nil {
+		return e
+	}
+	*e = OAuth2Error{
+		CodedError: carrier.CodedError,
+		EC:         carrier.EC,
+		SC:         carrier.SC,
+	}
 	return nil
 }
 
