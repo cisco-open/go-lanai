@@ -52,59 +52,68 @@ func NewTokenRevokingLogoutHanlder(opts...HanlderOptions) *TokenRevokingLogoutHa
 	}
 }
 
-func (h TokenRevokingLogoutHanlder) HandleLogout(ctx context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) {
+func (h TokenRevokingLogoutHanlder) HandleLogout(ctx context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) error  {
 	switch r.Method {
 	case http.MethodGet:
-		h.handleGet(ctx, auth)
+		return h.handleGet(ctx, auth)
 	case http.MethodPost:
-		h.handlePost(ctx, auth)
+		return h.handlePost(ctx, auth)
 	case http.MethodPut:
 		fallthrough
 	case http.MethodDelete:
-		fallthrough
-	default:
-		h.handleDefault(ctx, r)
+		return h.handleDefault(ctx, r)
 	}
+	return nil
 }
 
-func (h TokenRevokingLogoutHanlder) handleGet(ctx context.Context, auth security.Authentication) {
+func (h TokenRevokingLogoutHanlder) handleGet(ctx context.Context, auth security.Authentication) error {
+	defer func() {
+		security.Clear(ctx)
+	}()
 	s := session.Get(ctx)
 	if s == nil {
 		logger.WithContext(ctx).Debugf("invalid use of GET /logout endpoint. session is not found")
-		return
+		return nil
 	}
 
 	if e := h.revoker.RevokeWithSessionId(ctx, s.GetID(), s.Name()); e != nil {
 		logger.WithContext(ctx).Warnf("unable to revoke tokens with session %s: %v", s.GetID(), e)
+		return e
 	}
-	security.Clear(ctx)
+	return nil
 }
 
-func (h TokenRevokingLogoutHanlder) handlePost(ctx context.Context, auth security.Authentication) {
+func (h TokenRevokingLogoutHanlder) handlePost(ctx context.Context, auth security.Authentication) error  {
+	defer func() {
+		security.Clear(ctx)
+	}()
 	username, e := security.GetUsername(auth)
 	if e != nil || username == "" {
 		logger.WithContext(ctx).Debugf("invalid use of GET /logout endpoint. session is not found")
-		return
+		return nil
 	}
 
 	if e := h.revoker.RevokeWithUsername(ctx, username, true); e != nil {
 		logger.WithContext(ctx).Warnf("unable to revoke tokens with username %s: %v", username, e)
+		return e
 	}
-	security.Clear(ctx)
+	return nil
 }
 
 // In case of PUT, DELETE, PATCH etc, we don't clean authentication. Instead, we invalidate access token carried by header
-func (h TokenRevokingLogoutHanlder) handleDefault(ctx context.Context, r *http.Request) {
+func (h TokenRevokingLogoutHanlder) handleDefault(ctx context.Context, r *http.Request) error  {
 	// grab token
 	tokenValue, e := h.extractAccessToken(ctx, r)
 	if e != nil {
 		logger.WithContext(ctx).Warnf("unable to revoke token: %v", e)
-		return
+		return nil
 	}
 
 	if e := h.revoker.RevokeWithTokenValue(ctx, tokenValue, auth.RevokerHintAccessToken); e != nil {
 		logger.WithContext(ctx).Warnf("unable to revoke token with value %s: %v", log.Capped(tokenValue, 20), e)
+		return e
 	}
+	return nil
 }
 
 func (h TokenRevokingLogoutHanlder) extractAccessToken(ctx context.Context, r *http.Request) (string, error) {

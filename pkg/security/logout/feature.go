@@ -12,15 +12,17 @@ import (
  *********************************/
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutHandler interface {
-	HandleLogout(context.Context, *http.Request, http.ResponseWriter, security.Authentication)
+	HandleLogout(context.Context, *http.Request, http.ResponseWriter, security.Authentication) error
 }
 
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutFeature struct {
-	successHandler   security.AuthenticationSuccessHandler
-	successUrl 	     string
-	logoutHandlers   []LogoutHandler
-	logoutUrl        string
+	successHandler security.AuthenticationSuccessHandler
+	errorHandler   security.AuthenticationErrorHandler
+	successUrl     string
+	errorUrl       string
+	logoutHandlers []LogoutHandler
+	logoutUrl      string
 }
 
 // Standard security.Feature entrypoint
@@ -35,7 +37,7 @@ func (f *LogoutFeature) LogoutHandlers(logoutHandlers ...LogoutHandler) *LogoutF
 }
 
 func (f *LogoutFeature) AddLogoutHandler(logoutHandler LogoutHandler) *LogoutFeature {
-	f.logoutHandlers = append(f.logoutHandlers, logoutHandler)
+	f.logoutHandlers = append([]LogoutHandler{logoutHandler}, f.logoutHandlers...)
 	return f
 }
 
@@ -49,9 +51,20 @@ func (f *LogoutFeature) SuccessUrl(successUrl string) *LogoutFeature {
 	return f
 }
 
+func (f *LogoutFeature) ErrorUrl(errorUrl string) *LogoutFeature {
+	f.errorUrl = errorUrl
+	return f
+}
+
 // SuccessHandler overrides SuccessUrl
 func (f *LogoutFeature) SuccessHandler(successHandler security.AuthenticationSuccessHandler) *LogoutFeature {
 	f.successHandler = successHandler
+	return f
+}
+
+// ErrorHandler overrides ErrorUrl
+func (f *LogoutFeature) ErrorHandler(errorHandler security.AuthenticationErrorHandler) *LogoutFeature {
+	f.errorHandler = errorHandler
 	return f
 }
 
@@ -61,7 +74,7 @@ func (f *LogoutFeature) SuccessHandler(successHandler security.AuthenticationSuc
 func Configure(ws security.WebSecurity) *LogoutFeature {
 	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		return  fc.Enable(feature).(*LogoutFeature)
+		return fc.Enable(feature).(*LogoutFeature)
 	}
 	panic(fmt.Errorf("unable to configure form login: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
@@ -69,16 +82,17 @@ func Configure(ws security.WebSecurity) *LogoutFeature {
 // Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func New() *LogoutFeature {
 	return &LogoutFeature{
-		successUrl:     "/login",
-		logoutUrl:      "/logout",
+		successUrl: "/login",
+		logoutUrl:  "/logout",
 		logoutHandlers: []LogoutHandler{
 			DefaultLogoutHanlder{},
 		},
 	}
 }
 
-type DefaultLogoutHanlder struct {}
+type DefaultLogoutHanlder struct{}
 
-func (h DefaultLogoutHanlder) HandleLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, _ security.Authentication) {
+func (h DefaultLogoutHanlder) HandleLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, _ security.Authentication) error {
 	security.Clear(ctx)
+	return nil
 }

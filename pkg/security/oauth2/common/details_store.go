@@ -99,7 +99,8 @@ func (r *RedisContextDetailsStore) SaveContextDetails(c context.Context, key int
 func (r *RedisContextDetailsStore) RemoveContextDetails(c context.Context, key interface{}) error {
 	switch t := key.(type) {
 	case oauth2.AccessToken:
-		return r.doRemoveDetials(c, t, "")
+		_, e := r.doRemoveDetials(c, t, "")
+		return e
 	default:
 		return fmt.Errorf("unsupported key type %T", key)
 	}
@@ -193,43 +194,47 @@ func (r *RedisContextDetailsStore) RevokeAccessToken(ctx context.Context, token 
 // with help of AccessToken <-> RefreshToken "AR" records
 func (r *RedisContextDetailsStore) RevokeAllAccessTokens(ctx context.Context, token oauth2.RefreshToken) error {
 	rtk := uniqueTokenKey(token)
-	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessFromRefresh("*", rtk))
+	_, e := r.doRemoveAllAccessTokens(ctx, keyFuncAccessFromRefresh("*", rtk))
+	return e
 }
 
 // RevokeUserAccess remove all access/refresh tokens issued to the given user,
 // with help of AccessToken <- User & Client "AUC" & RefreshToken <- User & Client "RUC" records
 func (r *RedisContextDetailsStore) RevokeUserAccess(ctx context.Context, username string, revokeRefreshToken bool) error {
 	if revokeRefreshToken {
-		if e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromUserAndClient("*", username, "*")); e != nil {
+		if _, e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromUserAndClient("*", username, "*")); e != nil {
 			return e
 		}
 	}
 
-	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromUserAndClient("*", username, "*"))
+	_, e := r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromUserAndClient("*", username, "*"))
+	return e
 }
 
 // RevokeClientAccess remove all access/refresh tokens issued to the given client,
 // with help of AccessToken <- User & Client "AUC" & RefreshToken <- User & Client "RUC" records
 func (r *RedisContextDetailsStore) RevokeClientAccess(ctx context.Context, clientId string, revokeRefreshToken bool) error {
 	if revokeRefreshToken {
-		if e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromUserAndClient("*", "*", clientId)); e != nil {
+		if _, e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromUserAndClient("*", "*", clientId)); e != nil {
 			return e
 		}
 	}
 
-	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromUserAndClient("*", "*", clientId))
+	_, e := r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromUserAndClient("*", "*", clientId))
+	return e
 }
 
 // RevokeSessionAccess remove all access/refresh tokens issued under given session,
 // with help of AccessToken <- SessionId "RS" & RefreshToken <- SessionId "RS"
 func (r *RedisContextDetailsStore) RevokeSessionAccess(ctx context.Context, sessionId string, revokeRefreshToken bool) error {
 	if revokeRefreshToken {
-		if e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromSession("*", sessionId)); e != nil {
+		if _, e := r.doRemoveAllRefreshTokens(ctx, keyFuncRefreshTokenFromSession("*", sessionId)); e != nil {
 			return e
 		}
 	}
 
-	return r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromSession("*", sessionId))
+	_, e := r.doRemoveAllAccessTokens(ctx, keyFuncAccessTokenFromSession("*", sessionId))
+	return e
 }
 
 /*********************
@@ -299,6 +304,15 @@ func (r *RedisContextDetailsStore) exists(c context.Context, keyFunc keyFunc) bo
 	k := keyFunc(r.vTag)
 	cmd := r.client.Exists(c, k)
 	return cmd.Err() == nil && cmd.Val() != 0
+}
+
+func (r *RedisContextDetailsStore) doMultiDelete(actions ...func() (int, error) ) (err error) {
+	for _, f := range actions {
+		if _, e := f(); e != nil {
+			err = e
+		}
+	}
+	return
 }
 
 /*********************
@@ -383,14 +397,15 @@ func (r *RedisContextDetailsStore) loadSessionId(ctx context.Context, keyfunc ke
 	return rl.SessionId, nil
 }
 
-func (r *RedisContextDetailsStore) doRemoveDetials(ctx context.Context, token oauth2.AccessToken, atk string) error {
+func (r *RedisContextDetailsStore) doRemoveDetials(ctx context.Context, token oauth2.AccessToken, atk string) (int, error) {
 	if token != nil {
 		atk = uniqueTokenKey(token)
 	}
-	if _, e := r.doDelete(ctx, keyFuncAccessTokenToDetails(atk)); e != nil {
-		return e
+	i, e := r.doDelete(ctx, keyFuncAccessTokenToDetails(atk))
+	if e != nil {
+		return 0, e
 	}
-	return nil
+	return i, nil
 }
 
 //		- AccessToken -> ContextDetails	"AAT"
@@ -401,29 +416,35 @@ func (r *RedisContextDetailsStore) doRemoveAccessToken(ctx context.Context, toke
 	if token != nil {
 		atk = uniqueTokenKey(token)
 	}
-	r.doRemoveDetials(ctx, token, atk)
-	r.doDeleteWithWildcard(ctx, keyFuncAccessTokenFromUserAndClient(atk, "*", "*"))
-	r.doDeleteWithWildcard(ctx, keyFuncAccessTokenFromSession(atk, "*"))
-	r.doDeleteWithWildcard(ctx, keyFuncAccessFromRefresh(atk, "*"))
-	return nil
+	return r.doMultiDelete([](func() (int, error)) {
+		func() (int, error) { return r.doRemoveDetials(ctx, token, atk) },
+		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncAccessTokenFromUserAndClient(atk, "*", "*")) },
+		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncAccessTokenFromSession(atk, "*")) },
+		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncAccessFromRefresh(atk, "*")) },
+	}...)
 }
 
-func (r *RedisContextDetailsStore) doRemoveAllAccessTokens(ctx context.Context, keyfunc keyFunc) error {
+func (r *RedisContextDetailsStore) doRemoveAllAccessTokens(ctx context.Context, keyfunc keyFunc) (count int, err error) {
 	keys, e := r.doList(ctx, keyfunc)
 	if e != nil {
-		return e
+		return 0, e
 	}
 
+	count = len(keys)
 	for _, key := range keys {
 		rl := internal.RelationToken{}
 		if e := r.doLoad(ctx, keyFuncLiteral(key), &rl); e != nil {
 			continue
 		}
-		r.doRemoveAccessToken(ctx, nil, rl.TokenKey)
+		if e := r.doRemoveAccessToken(ctx, nil, rl.TokenKey); e != nil {
+			err = e
+		}
 	}
 
-	_, e = r.doDeleteWithKeys(ctx, keys)
-	return e
+	if _, e := r.doDeleteWithKeys(ctx, keys); e != nil {
+		err = e
+	}
+	return
 }
 
 /*********************
@@ -478,29 +499,35 @@ func (r *RedisContextDetailsStore) doRemoveRefreshToken(ctx context.Context, tok
 	if token != nil {
 		rtk = uniqueTokenKey(token)
 	}
-	r.doDelete(ctx, keyFuncRefreshTokenToAuth(rtk))
-	r.doDeleteWithWildcard(ctx, keyFuncRefreshTokenFromUserAndClient(rtk, "*", "*"))
-	r.doDeleteWithWildcard(ctx, keyFuncRefreshTokenFromSession(rtk, "*"))
-	r.doRemoveAllAccessTokens(ctx, keyFuncAccessFromRefresh("*", rtk))
-	return nil
+	return r.doMultiDelete([](func() (int, error)) {
+		func() (int, error) { return r.doDelete(ctx, keyFuncRefreshTokenToAuth(rtk)) },
+		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncRefreshTokenFromUserAndClient(rtk, "*", "*")) },
+		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncRefreshTokenFromSession(rtk, "*")) },
+		func() (int, error) { return r.doRemoveAllAccessTokens(ctx, keyFuncAccessFromRefresh("*", rtk)) },
+	}...)
 }
 
-func (r *RedisContextDetailsStore) doRemoveAllRefreshTokens(ctx context.Context, keyfunc keyFunc) error {
+func (r *RedisContextDetailsStore) doRemoveAllRefreshTokens(ctx context.Context, keyfunc keyFunc) (count int, err error) {
 	keys, e := r.doList(ctx, keyfunc)
 	if e != nil {
-		return e
+		return 0, e
 	}
 
+	count = len(keys)
 	for _, key := range keys {
 		rl := internal.RelationToken{}
 		if e := r.doLoad(ctx, keyFuncLiteral(key), &rl); e != nil {
 			continue
 		}
-		r.doRemoveRefreshToken(ctx, nil, rl.TokenKey)
+		if e := r.doRemoveRefreshToken(ctx, nil, rl.TokenKey); e != nil {
+			err = e
+		}
 	}
 
-	_, e = r.doDeleteWithKeys(ctx, keys)
-	return e
+	if _, e = r.doDeleteWithKeys(ctx, keys); e != nil {
+		err = e
+	}
+	return
 }
 
 /*********************

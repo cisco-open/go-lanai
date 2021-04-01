@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"net/http"
 	"sort"
 )
@@ -128,16 +129,16 @@ func (h *DeleteSessionOnLogoutHandler) HandleAuthenticationSuccess(c context.Con
 	if !security.IsBeingUnAuthenticated(from, to) {
 		return
 	}
-	s := Get(c)
-	err := h.sessionStore.WithContext(c).Delete(s)
-	if err != nil {
-		panic(security.NewInternalAuthenticationError(err.Error()))
-	}
 
-	p, err := getPrincipalName(from)
-	if err == nil {
-		//ignore error here since even if it can't be deleted from this index, it'll be cleaned up
-		// on read since the session itself is already deleted successfully
-		_ = h.sessionStore.WithContext(c).RemoveFromPrincipalIndex(p , s)
+	s := Get(c)
+	pName, e := getPrincipalName(from)
+	if e != nil {
+		pName = ""
+	}
+	if e := RemoveSession(c, h.sessionStore, s, pName); e != nil {
+		panic(e)
+	}
+	if gc := web.GinContext(c); gc != nil {
+		gc.Set(contextKeySession, nil)
 	}
 }

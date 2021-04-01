@@ -45,7 +45,6 @@ type storeDI struct {
 	SessionProps    security.SessionProperties
 	ServerProps     web.ServerProperties `optional:"true"`
 	ClientFactory   redis.ClientFactory  `optional:"true"`
-	MaxSessionsFunc GetMaximumSessions   `optional:"true"`
 }
 
 func provideSessionStore(di storeDI) Store {
