@@ -11,6 +11,21 @@ import (
 /*****************************
 	Func Metadata
 ******************************/
+const (
+	errorMsgExpectFunc = "expecting a function"
+	errorMsgInputParams = "function should have one or two input parameters, where the first is context.Context and the second is a struct or pointer to struct"
+	errorMsgOutputParams = "function should have at least two output parameters, where the the last is error"
+	errorMsgInvalidSignature = "unable to find request or response type"
+)
+
+var(
+	specialTypeContext = reflect.TypeOf((*context.Context)(nil)).Elem()
+	specialTypeHttpRequestPtr = reflect.TypeOf(&http.Request{})
+	specialTypeInt = reflect.TypeOf(int(0))
+	specialTypeHttpHeader = reflect.TypeOf((*http.Header)(nil)).Elem()
+	specialTypeError = reflect.TypeOf((*error)(nil)).Elem()
+)
+
 // MvcHandlerFuncValidator validate MvcHandlerFunc signature
 type MvcHandlerFuncValidator func(f *reflect.Value) error
 
@@ -76,9 +91,9 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 	// parse input params
 	for i := t.NumIn() - 1; i >=0; i-- {
 		switch it := t.In(i); {
-		case it.ConvertibleTo(reflect.TypeOf((*context.Context)(nil)).Elem()):
+		case it.ConvertibleTo(specialTypeContext):
 			meta.in.context = param{i, it}
-		case !meta.in.request.isValid() && isStructOrPtrToStruct(it):
+		case !meta.in.request.isValid() && isSupportedRequestType(it):
 			meta.in.request = param{i, it}
 			meta.request = it
 		default:
@@ -93,11 +108,11 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 	// parse output params
 	for i := t.NumOut() -1; i >=0; i-- {
 		switch ot := t.Out(i); {
-		case ot.ConvertibleTo(reflect.TypeOf(0)):
+		case ot.ConvertibleTo(specialTypeInt):
 			meta.out.sc = param {i, ot}
-		case ot.ConvertibleTo(reflect.TypeOf((*http.Header)(nil)).Elem()):
+		case ot.ConvertibleTo(specialTypeHttpHeader):
 			meta.out.header = param {i, ot}
-		case ot.ConvertibleTo(reflect.TypeOf((*error)(nil)).Elem()):
+		case ot.ConvertibleTo(specialTypeError):
 			meta.out.error = param {i, ot}
 		case !meta.out.response.isValid() && isSupportedResponseType(ot):
 			// we allow interface and map as response
@@ -112,9 +127,9 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 		meta.out.count ++
 	}
 
-	if meta.request == nil || meta.response == nil || meta.in.count < 2 || meta.out.count < 2 {
+	if meta.response == nil || meta.in.count < 1 || meta.out.count < 2 || meta.in.count > 1 && meta.request == nil {
 		panic(&errorInvalidMvcHandlerFunc{
-			reason: errors.New("unable to find request or response type"),
+			reason: errors.New(errorMsgInvalidSignature),
 			target: &f,
 		})
 	}
@@ -126,30 +141,29 @@ func validateFunc(f *reflect.Value, validator MvcHandlerFuncValidator) (err erro
 	// For now, we check function signature at runtime.
 	// I wish there is a way to check it at compile-time that I didn't know of
 	t := f.Type()
-	ctxType := reflect.TypeOf((*context.Context)(nil)).Elem()
-	errorType := reflect.TypeOf((*error)(nil)).Elem()
 	switch {
 	case f.Kind() != reflect.Func:
 		return &errorInvalidMvcHandlerFunc{
-			reason: errors.New("expecting a function"),
+			reason: errors.New(errorMsgExpectFunc),
 			target: f,
 		}
 	// In params validation
-	case t.NumIn() < 2:
+	case t.NumIn() < 1 || t.NumIn() > 2:
 		fallthrough
-	case !t.In(0).ConvertibleTo(ctxType):
+	case !t.In(0).ConvertibleTo(specialTypeContext):
 		fallthrough
-	case !isStructOrPtrToStruct(t.In(t.NumIn() - 1)):
+	case t.NumIn() == 2 && !isSupportedRequestType(t.In(t.NumIn() - 1)):
 		return &errorInvalidMvcHandlerFunc{
-			reason: errors.New("function should have at least two input parameters, where the first is context.Context and the last is a struct or pointer to struct"),
+			reason: errors.New(errorMsgInputParams),
 			target: f,
 		}
+
 	// Out params validation
 	case t.NumOut() < 2:
 		fallthrough
-	case !t.Out(t.NumOut() - 1).ConvertibleTo(errorType):
+	case !t.Out(t.NumOut() - 1).ConvertibleTo(specialTypeError):
 		return &errorInvalidMvcHandlerFunc{
-			reason: errors.New("function should have at least two output parameters, where the the last is error"),
+			reason: errors.New(errorMsgOutputParams),
 			target: f,
 		}
 	}
@@ -164,6 +178,21 @@ func isStructOrPtrToStruct(t reflect.Type) (ret bool) {
 	ret = t.Kind() == reflect.Struct
 	ret = ret || t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct
 	return
+}
+
+// isHttpRequestPtr returns true if given type is *http.Request
+func isHttpRequestPtr(t reflect.Type) bool {
+	return t == specialTypeHttpRequestPtr
+}
+
+func isSupportedRequestType(t reflect.Type) bool {
+	if isStructOrPtrToStruct(t) {
+		return true
+	}
+	switch t.Kind() {
+		// placeholder for more types
+	}
+	return false
 }
 
 func isSupportedResponseType(t reflect.Type) bool {

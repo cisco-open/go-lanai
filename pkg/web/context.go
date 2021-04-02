@@ -83,8 +83,8 @@ type Controller interface {
 type HandlerFunc http.HandlerFunc
 
 // MvcHandlerFunc is a function with following signature
-// 	- two input parameters with 1st as context.Context and 2nd as <request>
-// 	- two output parameters with 1st as <response> and 2nd as error
+// 	- one or two input parameters with 1st as context.Context and 2nd as <request>
+// 	- at least two output parameters with 2nd last as <response> and last as error
 // See rest.EndpointFunc, template.ModelViewHandlerFunc
 type MvcHandlerFunc interface{}
 
