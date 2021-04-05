@@ -10,9 +10,12 @@ import (
 type Audit struct {
 	CreatedAt time.Time      `json:"createdAt,omitempty"`
 	UpdatedAt time.Time      `json:"updatedAt,omitempty"`
-	DeletedAt gorm.DeletedAt `json:"deleteAt,omitempty"`
-	CreatedBy uuid.UUID      `type:"UUID;"  json:"createdBy,omitempty"`
+	CreatedBy uuid.UUID      `type:"UUID;" json:"createdBy,omitempty"`
 	UpdatedBy uuid.UUID      `type:"UUID;" json:"updatedBy,omitempty"`
+}
+
+type SoftDelete struct {
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleteAt,omitempty"`
 }
 
 type Tenancy struct {
