@@ -64,8 +64,6 @@ func (c *ClientAuthConfigurer) Apply(feature security.Feature, ws security.WebSe
 		)
 	}
 
-	// TODO add middleware to handle form client auth
-
 	return nil
 }
 

@@ -1,51 +1,50 @@
-package tests
+package security
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"errors"
 	"testing"
 )
 
 func TestTypeComparison(t *testing.T) {
 	switch {
-	case !errors.Is(security.ErrorSubTypeInternalError, security.ErrorTypeSecurity):
+	case !errors.Is(ErrorSubTypeInternalError, ErrorTypeSecurity):
 		t.Errorf("ErrorType should match ErrorTypeSecurity")
 
-	case !errors.Is(security.ErrorSubTypeInternalError, security.ErrorSubTypeInternalError):
+	case !errors.Is(ErrorSubTypeInternalError, ErrorSubTypeInternalError):
 		t.Errorf("ErrorType should match itself")
 
-	case !errors.Is(security.ErrorSubTypeInternalError, security.ErrorTypeAuthentication):
+	case !errors.Is(ErrorSubTypeInternalError, ErrorTypeAuthentication):
 		t.Errorf("ErrorSubType should match its own ErrorType")
 
-	case errors.Is(security.ErrorTypeAuthentication, security.ErrorSubTypeInternalError):
+	case errors.Is(ErrorTypeAuthentication, ErrorSubTypeInternalError):
 		t.Errorf("ErrorType should not match its own ErrorSubType")
 
-	case errors.Is(security.ErrorTypeAuthentication, security.ErrorTypeAccessControl):
+	case errors.Is(ErrorTypeAuthentication, ErrorTypeAccessControl):
 		t.Errorf("Different ErrorType should not match each other")
 
-	case errors.Is(security.ErrorSubTypeInternalError, security.ErrorSubTypeUsernamePasswordAuth):
+	case errors.Is(ErrorSubTypeInternalError, ErrorSubTypeUsernamePasswordAuth):
 		t.Errorf("Different ErrorSubType should not match each other")
 
-	case !errors.Is(security.ErrorSubTypeCsrf, security.ErrorTypeAccessControl):
+	case !errors.Is(ErrorSubTypeCsrf, ErrorTypeAccessControl):
 		t.Errorf("ErrorSubTypeCsrf should be ErrorTypeAccessControl error")
 
-	case !errors.Is(security.ErrorTypeInternal, security.ErrorTypeSecurity):
+	case !errors.Is(ErrorTypeInternal, ErrorTypeSecurity):
 		t.Errorf("ErrorTypeInternal should be ErrorTypeSecurity")
 	}
 }
 
 func TestAuthenticatorNotAvailableError(t *testing.T) {
-	ana := security.NewAuthenticatorNotAvailableError("not available")
-	another := security.NewAuthenticatorNotAvailableError("different message")
+	ana := NewAuthenticatorNotAvailableError("not available")
+	another := NewAuthenticatorNotAvailableError("different message")
 	nonCoded := errors.New("non-coded error")
 	switch {
-	case !errors.Is(ana, security.ErrorTypeSecurity):
+	case !errors.Is(ana, ErrorTypeSecurity):
 		t.Errorf("NewAuthenticatorNotAvailableError should match ErrorTypeSecurity")
 
-	case !errors.Is(ana, security.ErrorTypeAuthentication):
+	case !errors.Is(ana, ErrorTypeAuthentication):
 		t.Errorf("NewAuthenticatorNotAvailableError should match ErrorTypeAuthentication")
 
-	case !errors.Is(ana, security.ErrorSubTypeInternalError):
+	case !errors.Is(ana, ErrorSubTypeInternalError):
 		t.Errorf("NewAuthenticatorNotAvailableError should match ErrorSubTypeInternalError")
 
 	case !errors.Is(ana, another):
@@ -54,26 +53,26 @@ func TestAuthenticatorNotAvailableError(t *testing.T) {
 	case errors.Is(ana, nonCoded):
 		t.Errorf("NewAuthenticatorNotAvailableError should not match non-coded error")
 
-	case errors.Is(ana, security.ErrorTypeAccessControl):
+	case errors.Is(ana, ErrorTypeAccessControl):
 		t.Errorf("NewAuthenticatorNotAvailableError should not match ErrorTypeAccessControl")
 
-	case errors.Is(ana, security.ErrorSubTypeUsernamePasswordAuth):
+	case errors.Is(ana, ErrorSubTypeUsernamePasswordAuth):
 		t.Errorf("NewAuthenticatorNotAvailableError should not match ErrorSubTypeUsernamePasswordAuth")
 	}
 }
 
 func TestBadCredentialsError(t *testing.T) {
-	coded := security.NewBadCredentialsError("wrong password")
-	another := security.NewBadCredentialsError("different message")
+	coded := NewBadCredentialsError("wrong password")
+	another := NewBadCredentialsError("different message")
 	nonCoded := errors.New("non-coded error")
 	switch {
-	case !errors.Is(coded, security.ErrorTypeSecurity):
+	case !errors.Is(coded, ErrorTypeSecurity):
 		t.Errorf("NewAuthenticatorNotAvailableError should match ErrorTypeSecurity")
 
-	case !errors.Is(coded, security.ErrorTypeAuthentication):
+	case !errors.Is(coded, ErrorTypeAuthentication):
 		t.Errorf("NewBadCredentialsError should match ErrorTypeAuthentication")
 
-	case !errors.Is(coded, security.ErrorSubTypeUsernamePasswordAuth):
+	case !errors.Is(coded, ErrorSubTypeUsernamePasswordAuth):
 		t.Errorf("NewBadCredentialsError should match ErrorSubTypeUsernamePasswordAuth")
 
 	case !errors.Is(coded, another):
@@ -82,26 +81,26 @@ func TestBadCredentialsError(t *testing.T) {
 	case errors.Is(coded, nonCoded):
 		t.Errorf("NewBadCredentialsError should not match non-coded error")
 
-	case errors.Is(coded, security.ErrorTypeAccessControl):
+	case errors.Is(coded, ErrorTypeAccessControl):
 		t.Errorf("NewBadCredentialsError should not match ErrorTypeAccessControl")
 
-	case errors.Is(coded, security.ErrorSubTypeInternalError):
+	case errors.Is(coded, ErrorSubTypeInternalError):
 		t.Errorf("NewBadCredentialsError should not match ErrorSubTypeInternalError")
 	}
 }
 
 func TestMissingCsrfTokenError(t *testing.T) {
-	coded := security.NewMissingCsrfTokenError("missing csrf token")
-	another := security.NewMissingCsrfTokenError("different message")
+	coded := NewMissingCsrfTokenError("missing csrf token")
+	another := NewMissingCsrfTokenError("different message")
 	nonCoded := errors.New("non-coded error")
 	switch {
-	case !errors.Is(coded, security.ErrorTypeSecurity):
+	case !errors.Is(coded, ErrorTypeSecurity):
 		t.Errorf("NewMissingCsrfTokenError should match ErrorTypeSecurity")
 
-	case !errors.Is(coded, security.ErrorTypeAccessControl):
+	case !errors.Is(coded, ErrorTypeAccessControl):
 		t.Errorf("NewMissingCsrfTokenError should match ErrorTypeAccessControl")
 
-	case !errors.Is(coded, security.ErrorSubTypeCsrf):
+	case !errors.Is(coded, ErrorSubTypeCsrf):
 		t.Errorf("NewMissingCsrfTokenError should match ErrorSubTypeCsrf")
 
 	case !errors.Is(coded, another):
@@ -110,23 +109,23 @@ func TestMissingCsrfTokenError(t *testing.T) {
 	case errors.Is(coded, nonCoded):
 		t.Errorf("NewMissingCsrfTokenError should not match non-coded error")
 
-	case errors.Is(coded, security.ErrorTypeAuthentication):
+	case errors.Is(coded, ErrorTypeAuthentication):
 		t.Errorf("NewMissingCsrfTokenError should not match ErrorTypeAuthentication")
 	}
 }
 
 func TestInvalidCsrfTokenError(t *testing.T) {
-	coded := security.NewInvalidCsrfTokenError("invalid csrf token")
-	another := security.NewInvalidCsrfTokenError("different message")
+	coded := NewInvalidCsrfTokenError("invalid csrf token")
+	another := NewInvalidCsrfTokenError("different message")
 	nonCoded := errors.New("non-coded error")
 	switch {
-	case !errors.Is(coded, security.ErrorTypeSecurity):
+	case !errors.Is(coded, ErrorTypeSecurity):
 		t.Errorf("NewInvalidCsrfTokenError should match ErrorTypeSecurity")
 
-	case !errors.Is(coded, security.ErrorTypeAccessControl):
+	case !errors.Is(coded, ErrorTypeAccessControl):
 		t.Errorf("NewInvalidCsrfTokenError should match ErrorTypeAccessControl")
 
-	case !errors.Is(coded, security.ErrorSubTypeCsrf):
+	case !errors.Is(coded, ErrorSubTypeCsrf):
 		t.Errorf("NewInvalidCsrfTokenError should match ErrorSubTypeCsrf")
 
 	case !errors.Is(coded, another):
@@ -135,19 +134,19 @@ func TestInvalidCsrfTokenError(t *testing.T) {
 	case errors.Is(coded, nonCoded):
 		t.Errorf("NewInvalidCsrfTokenError should not match non-coded error")
 
-	case errors.Is(coded, security.ErrorTypeAuthentication):
+	case errors.Is(coded, ErrorTypeAuthentication):
 		t.Errorf("NewInvalidCsrfTokenError should not match ErrorTypeAuthentication")
 	}
 }
 
 func TestInternalError(t *testing.T) {
-	coded := security.NewInternalError("some internal error")
+	coded := NewInternalError("some internal error")
 	switch {
-	case !errors.Is(coded, security.ErrorTypeInternal):
+	case !errors.Is(coded, ErrorTypeInternal):
 		t.Errorf("NewInternalError should be ErrorTypeInternal")
-	case !errors.Is(coded, security.ErrorTypeSecurity):
+	case !errors.Is(coded, ErrorTypeSecurity):
 		t.Errorf("NewInternalError should be ErrorTypeSecurity")
-	case errors.Is(coded, security.ErrorTypeAuthentication):
+	case errors.Is(coded, ErrorTypeAuthentication):
 		t.Errorf("NewInternalError should not be ErrorTypeAuthentication")
 	}
 }

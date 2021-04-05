@@ -28,5 +28,5 @@ func ErrorWithStatus(ctx context.Context, _ web.EmptyRequest) (int, *template.Mo
 		err = errors.New("unknown error")
 	}
 
-	return 0, nil, web.NewHttpError(code, err)
+	return code, nil, web.NewHttpError(code, err)
 }

@@ -82,7 +82,9 @@ func (s *jwtTokenStore) SaveAccessToken(c context.Context, token oauth2.AccessTo
 		}
 	}
 
-	// TODO save other stuff if needed. e.g. register access token with session, user, client, refresh token
+	if e := s.registry.RegisterAccessToken(c, t, oauth); e != nil {
+		return nil, oauth2.NewInternalError("cannot register access token", e)
+	}
 	return t, nil
 }
 
@@ -100,11 +102,9 @@ func (s *jwtTokenStore) SaveRefreshToken(c context.Context, token oauth2.Refresh
 	}
 	t.SetValue(encoded)
 
-	s.registry.RegisterRefreshToken(c, t, oauth)
 	if e := s.registry.RegisterRefreshToken(c, t, oauth); e != nil {
 		return nil, oauth2.NewInternalError("cannot register refresh token", e)
 	}
-	// TODO save other stuff if needed, e.g. relationships between refresh, client, user, session, etc
 	return t, nil
 }
 
@@ -126,8 +126,6 @@ func (s *jwtTokenStore) RemoveRefreshToken(c context.Context, token oauth2.Refre
 /********************
 	Helpers
  ********************/
-
-
 func (r *jwtTokenStore) readAuthenticationFromRefreshToken(c context.Context, tokenValue string) (oauth2.Authentication, error) {
 	// parse JWT token
 	token, e := r.ReadRefreshToken(c, tokenValue)

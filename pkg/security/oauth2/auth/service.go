@@ -68,6 +68,7 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 	}
 
 	basicEnhancer.issuer = conf.Issuer
+	refreshTokenEnhancer.issuer = conf.Issuer
 	refreshTokenEnhancer.tokenStore = conf.TokenStore
 	return &DefaultAuthorizationService{
 		detailsFactory: conf.DetailsFactory,
@@ -82,8 +83,9 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 }
 
 func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context,
-	request oauth2.OAuth2Request, userAuth security.Authentication) (oauth oauth2.Authentication, err error) {
+	request oauth2.OAuth2Request, user security.Authentication) (oauth oauth2.Authentication, err error) {
 
+	userAuth := ConvertToOAuthUserAuthentication(user)
 	details, err := s.createContextDetails(ctx, request, userAuth, nil)
 	if err != nil {
 		return
@@ -104,9 +106,10 @@ func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context,
 }
 
 func (s *DefaultAuthorizationService) SwitchAuthentication(ctx context.Context,
-	request oauth2.OAuth2Request, userAuth security.Authentication,
+	request oauth2.OAuth2Request, user security.Authentication,
 	src oauth2.Authentication) (oauth oauth2.Authentication, err error) {
 
+	userAuth := ConvertToOAuthUserAuthentication(user)
 	details, err := s.createContextDetails(ctx, request, userAuth, src)
 	if err != nil {
 		return
@@ -120,7 +123,7 @@ func (s *DefaultAuthorizationService) SwitchAuthentication(ctx context.Context,
 	// create the result
 	oauth = oauth2.NewAuthentication(func(conf *oauth2.AuthOption) {
 		conf.Request = request
-		conf.UserAuth = userAuth
+		conf.UserAuth = user
 		conf.Details = details
 	})
 	return
@@ -169,7 +172,7 @@ type authFacts struct {
 }
 
 func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
-	request oauth2.OAuth2Request, userAuth security.Authentication,
+	request oauth2.OAuth2Request, userAuth oauth2.UserAuthentication,
 	src oauth2.Authentication) (security.ContextDetails, error) {
 	now := time.Now().UTC()
 
@@ -187,6 +190,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	mutableCtx.Set(oauth2.CtxKeyAuthenticatedAccount, facts.account)
 	mutableCtx.Set(oauth2.CtxKeyAuthorizedTenant, facts.tenant)
 	mutableCtx.Set(oauth2.CtxKeyAuthorizedProvider, facts.provider)
+	mutableCtx.Set(oauth2.CtxKeyUserAuthentication, userAuth)
 	mutableCtx.Set(oauth2.CtxKeyAuthorizationIssueTime, now)
 	if src != nil {
 		facts.source = src
@@ -209,7 +213,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	return s.detailsFactory.New(mutableCtx, request)
 }
 
-func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.Authentication, error) {
+func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth oauth2.UserAuthentication) (oauth2.UserAuthentication, error) {
 	if userAuth == nil {
 		return nil, nil
 	}

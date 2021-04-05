@@ -3,6 +3,8 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"net/http"
 	"sort"
 )
@@ -59,7 +61,7 @@ func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context
 		return
 	}
 
-	p, err := getPrincipalName(to)
+	p, err := security.GetUsername(to)
 	if err != nil {
 		//Auth is something we don't recognize, this indicates a program error
 		panic(security.NewInternalError(err.Error()))
@@ -93,31 +95,13 @@ func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context
 		return existing[i].createdOn().Before(existing[j].createdOn())
 	})
 
-	for i := 0; i < len(existing) - max; i++ {
-		err = h.sessionStore.WithContext(c).Delete(existing[i])
-
-		if err != nil {
-			panic(security.NewInternalError("Cannot delete session that exceeded max concurrent session limit"))
-		}
-
-		err = h.sessionStore.WithContext(c).RemoveFromPrincipalIndex(p, existing[i])
+	if e := h.sessionStore.WithContext(c).Invalidate(existing[:len(existing) - max]...); e != nil {
+		panic(security.NewInternalError("Cannot delete session that exceeded max concurrent session limit"))
 	}
 }
 
 func (h *ConcurrentSessionHandler) PriorityOrder() int {
 	return security.HandlerOrderConcurrentSession
-}
-
-func getPrincipalName(auth security.Authentication) (string, error) {
-	if auth == nil {
-		return "", nil
-	} else if account, ok := auth.Principal().(security.Account); ok {
-		return account.Username(), nil
-	} else if principal, ok := auth.Principal().(string); ok {
-		return principal, nil
-	} else {
-		return "", security.NewInternalError("unrecognized principal type")
-	}
 }
 
 type DeleteSessionOnLogoutHandler struct {
@@ -128,16 +112,25 @@ func (h *DeleteSessionOnLogoutHandler) HandleAuthenticationSuccess(c context.Con
 	if !security.IsBeingUnAuthenticated(from, to) {
 		return
 	}
+
 	s := Get(c)
-	err := h.sessionStore.WithContext(c).Delete(s)
-	if err != nil {
-		panic(security.NewInternalAuthenticationError(err.Error()))
+
+	defer func() {
+		// clean context
+		if mc, ok := c.(utils.MutableContext); ok {
+			mc.Set(contextKeySession, nil)
+		}
+		if gc := web.GinContext(c); gc != nil {
+			gc.Set(contextKeySession, nil)
+		}
+	}()
+
+	if s == nil {
+		return
+	}
+	if e := h.sessionStore.Invalidate(s); e != nil {
+		panic(e)
 	}
 
-	p, err := getPrincipalName(from)
-	if err == nil {
-		//ignore error here since even if it can't be deleted from this index, it'll be cleaned up
-		// on read since the session itself is already deleted successfully
-		_ = h.sessionStore.WithContext(c).RemoveFromPrincipalIndex(p , s)
-	}
+
 }

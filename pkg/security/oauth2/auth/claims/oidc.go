@@ -8,7 +8,7 @@ import (
 )
 
 type AddressClaim struct {
-	// TODO
+	// TODO OIDC Address claim
 }
 
 func AuthenticationTime(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {

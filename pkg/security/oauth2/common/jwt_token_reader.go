@@ -165,7 +165,9 @@ func (r *jwtTokenStoreReader) createUserAuthentication(claims *internal.Extended
 		opt.Principal = claims.Subject
 		opt.Permissions = permissions
 		opt.State = security.StateAuthenticated
-		// TODO maybe support extra fields from claims
 		opt.Details = map[string]interface{}{}
+		if claims.Claims != nil {
+			opt.Details = claims.Claims.Values()
+		}
 	})
 }
