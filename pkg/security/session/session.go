@@ -219,7 +219,7 @@ func (s *Session) SetDirty()  {
 }
 
 func (s *Session) ExpireNow(ctx context.Context) error {
-	return s.store.WithContext(ctx).Delete(s)
+	return s.store.WithContext(ctx).Invalidate(s)
 }
 
 func (s *Session) isExpired() bool {

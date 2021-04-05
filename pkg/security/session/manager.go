@@ -19,30 +19,6 @@ func Get(c context.Context) *Session {
 	return session
 }
 
-func RemoveSession(c context.Context, store Store, s *Session, principalName string) error {
-	if s == nil {
-		return nil
-	}
-
-	err := store.WithContext(c).Delete(s)
-	if err != nil {
-		return security.NewInternalAuthenticationError(err.Error())
-	}
-
-	if principalName == "" {
-		if auth, ok := s.Get(sessionKeySecurity).(security.Authentication); ok {
-			principalName, _ = getPrincipalName(auth)
-		}
-	}
-
-	if principalName != "" {
-		//ignore error here since even if it can't be deleted from this index, it'll be cleaned up
-		// on read since the session itself is already deleted successfully
-		_ = store.WithContext(c).RemoveFromPrincipalIndex(principalName , s)
-	}
-	return err
-}
-
 type Manager struct {
 	store Store
 }

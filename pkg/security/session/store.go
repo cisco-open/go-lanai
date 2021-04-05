@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"encoding/gob"
 	"fmt"
 	"github.com/google/uuid"
@@ -30,8 +31,9 @@ type Store interface {
 	// Save should persist session to the underlying store implementation.
 	Save(s *Session) error
 
-	//Delete the session from store. It will also update the http response header to clear the corresponding cookie
-	Delete(s *Session) error
+	// Invalidate sessions from store.
+	// It will also remove associations between sessions and its stored principal via RemoveFromPrincipalIndex
+	Invalidate(sessions ...*Session) error
 
 	Options() *Options
 
@@ -42,6 +44,9 @@ type Store interface {
 	RemoveFromPrincipalIndex(principal string, sessions *Session) error
 
 	FindByPrincipalName(principal string, sessionName string) ([]*Session, error)
+
+	// InvalidateByPrincipalName invalidate all sessions associated with given principal name
+	InvalidateByPrincipalName(principal, sessionName string) error
 
 	// WithContext make a shallow copy of the store with given ctx
 	WithContext(ctx context.Context) Store
@@ -167,9 +172,28 @@ func (s *RedisStore) Save(session *Session) error {
 	return err
 }
 
-func (s *RedisStore) Delete(session *Session) error {
-	cmd := s.connection.Del(s.ctx, getRedisSessionKey(session.Name(), session.GetID()))
-	return cmd.Err()
+func (s *RedisStore) Invalidate(sessions ...*Session) error {
+	for _, session := range sessions {
+		if cmd := s.connection.Del(s.ctx, getRedisSessionKey(session.Name(), session.GetID())); cmd.Err() != nil {
+			return cmd.Err()
+		}
+
+		// remove principal index is an optional step
+		if pName, e := getPrincipalName(session); e == nil && pName != "" {
+			//ignore error here since even if it can't be deleted from this index, it'll be cleaned up
+			// on read since the session itself is already deleted successfully
+			_ = s.RemoveFromPrincipalIndex(pName , session)
+		}
+	}
+	return nil
+}
+
+func (s *RedisStore) InvalidateByPrincipalName(principal, sessionName string) error {
+	sessions, e := s.FindByPrincipalName(principal, sessionName)
+	if e != nil {
+		return e
+	}
+	return s.Invalidate(sessions...)
 }
 
 func (s *RedisStore) FindByPrincipalName(principal string, sessionName string) ([]*Session, error) {
@@ -330,3 +354,11 @@ func Deserialize(src io.Reader, dst interface{}) error {
 	return nil
 }
 
+func getPrincipalName(session *Session) (string, error) {
+	auth, ok := session.Get(sessionKeySecurity).(security.Authentication)
+	if !ok {
+		return "", nil
+	}
+
+	return security.GetUsername(auth)
+}

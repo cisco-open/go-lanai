@@ -84,12 +84,12 @@ func (h TokenRevokeSuccessHandler) redirect(ctx context.Context, r *http.Request
 }
 
 // In case of PUT, DELETE, PATCH etc, we don't clean authentication. Instead, we invalidate access token carried by header
-func (h TokenRevokeSuccessHandler) status(ctx context.Context, rw http.ResponseWriter) {
+func (h TokenRevokeSuccessHandler) status(_ context.Context, rw http.ResponseWriter) {
 	rw.WriteHeader(http.StatusOK)
 	_, _ = rw.Write([]byte{})
 }
 
-func (h TokenRevokeSuccessHandler) isWhitelisted(ctx context.Context, redirect string) bool {
+func (h TokenRevokeSuccessHandler) isWhitelisted(_ context.Context, redirect string) bool {
 	for pattern, _ := range h.whitelist {
 		matcher, e := auth.NewWildcardUrlMatcher(pattern)
 		if e != nil {

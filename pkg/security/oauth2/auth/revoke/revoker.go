@@ -38,7 +38,7 @@ func NewDefaultAccessRevoker(opts ...RevokerOptions) *DefaultAccessRevoker {
 func (r DefaultAccessRevoker) RevokeWithSessionId(ctx context.Context, sessionId string, sessionName string) (err error) {
 	// expire session
 	if s, e := r.sessionStore.Get(sessionId, sessionName); e == nil && s != nil {
-		if e := session.RemoveSession(ctx, r.sessionStore, s, ""); e != nil {
+		if e := s.ExpireNow(ctx); e != nil {
 			logger.WithContext(ctx).Warnf("Unable to expire session for session ID [%s]: %v", s.GetID(), e)
 			err = e
 		}
@@ -53,19 +53,13 @@ func (r DefaultAccessRevoker) RevokeWithSessionId(ctx context.Context, sessionId
 
 func (r DefaultAccessRevoker) RevokeWithUsername(ctx context.Context, username string, revokeRefreshToken bool) (err error) {
 	// expire all sessions
-	if sessions, e := r.sessionStore.FindByPrincipalName(username, session.DefaultName); e == nil {
-		for _, s := range sessions {
-			if e := session.RemoveSession(ctx, r.sessionStore, s, username); e != nil {
-				logger.WithContext(ctx).Warnf("Unable to expire session for session ID [%s]: %v", s.GetID(), e)
-				err = e
-			}
-		}
-	} else {
+	if e := r.sessionStore.WithContext(ctx).InvalidateByPrincipalName(username, session.DefaultName); e != nil {
+		logger.WithContext(ctx).Warnf("Unable to expire session for username [%s]: %v", username, e)
 		err = e
 	}
 
 	// revoke all tokens
-	if e := r.authRegistry.RevokeUserAccess(ctx, username, true); e != nil {
+	if e := r.authRegistry.RevokeUserAccess(ctx, username, revokeRefreshToken); e != nil {
 		return e
 	}
 	return
