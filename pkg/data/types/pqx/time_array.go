@@ -49,7 +49,7 @@ func (a *TimeArray) Scan(src interface{}) error {
 		return nil
 	}
 
-	return fmt.Errorf("pq: cannot convert %T to StringArray", src)
+	return fmt.Errorf("pqx: cannot convert %T to TimeArray", src)
 }
 
 func (a *TimeArray) scanBytes(src []byte) error {

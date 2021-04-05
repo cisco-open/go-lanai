@@ -89,7 +89,7 @@ func (h TokenRevokingLogoutHanlder) handlePost(ctx context.Context, auth securit
 	}()
 	username, e := security.GetUsername(auth)
 	if e != nil || username == "" {
-		logger.WithContext(ctx).Debugf("invalid use of GET /logout endpoint. session is not found")
+		logger.WithContext(ctx).Debugf("invalid use of POST /logout endpoint. session is not found")
 		return nil
 	}
 

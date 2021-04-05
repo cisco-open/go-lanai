@@ -172,7 +172,9 @@ func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
 		// prepare input params
 		in := make([]reflect.Value, m.in.count)
 		in[m.in.context.i] = reflect.ValueOf(c)
-		in[m.in.request.i] = reflect.ValueOf(request)
+		if m.in.request.isValid() {
+			in[m.in.request.i] = reflect.ValueOf(request)
+		}
 
 		out := m.function.Call(in)
 
@@ -202,7 +204,14 @@ func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
 ***********************************/
 // bindable requestType can only be struct or pointer of struct
 func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequestFunc {
-	return func(c context.Context, r *http.Request) (response interface{}, err error) {
+	// No need to decode
+	if s.request == nil || isHttpRequestPtr(s.request) {
+		return func(c context.Context, r *http.Request) (request interface{}, err error) {
+			return r, nil
+		}
+	}
+	// decode request using GinBinding
+	return func(c context.Context, r *http.Request) (request interface{}, err error) {
 		ginCtx := GinContext(c)
 		if ginCtx == nil {
 			return nil, NewHttpError(http.StatusInternalServerError, errors.New("context issue"))
@@ -267,5 +276,6 @@ func instantiateByType(t reflect.Type) (ptr interface{}, value *reflect.Value) {
 		return p.Interface(), &v
 	}
 }
+
 
 
