@@ -38,9 +38,12 @@ func provideLoader(ctx *bootstrap.ApplicationContext, store TenantHierarchyStore
 
 func initializeTenantHierarchy (ctx *bootstrap.ApplicationContext, loader Loader) error {
 	internalLoader = loader
+	logger.Infof("started loading tenant hierarchy")
 	err := internalLoader.LoadTenantHierarchy(ctx)
 	if err != nil {
 		logger.Errorf("tenant hierarchy not loaded due to %v", err)
+	} else {
+		logger.Infof("finished loading tenant hierarchy")
 	}
 	return err
 }
