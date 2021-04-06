@@ -54,7 +54,7 @@ func (s *RedisAuthorizationCodeStore) GenerateAuhtorizationCode(ctx context.Cont
 	// TODO check code_challenge_method
 
 	request := r.OAuth2Request()
-	userAuth := s.userAuthToSave(user)
+	userAuth := ConvertToOAuthUserAuthentication(user)
 	toSave := oauth2.NewAuthentication(func(conf *oauth2.AuthOption) {
 		conf.Request = request
 		conf.UserAuth = userAuth
@@ -110,34 +110,6 @@ func (s *RedisAuthorizationCodeStore) save(ctx context.Context, code string, oau
 
 func (s *RedisAuthorizationCodeStore) authCodeRedisKey(code string) string {
 	return fmt.Sprintf("%s:%s", authCodePrefix, code)
-}
-
-func (s *RedisAuthorizationCodeStore) userAuthToSave(user security.Authentication) security.Authentication {
-	principal := ""
-	switch user.Principal().(type) {
-	case string:
-		principal = user.Principal().(string)
-	case security.Account:
-		principal = user.Principal().(security.Account).Username()
-	case fmt.Stringer:
-		principal = user.Principal().(fmt.Stringer).String()
-	default:
-		principal = fmt.Sprintf("%v", user)
-	}
-
-	details, ok := user.Details().(map[string]interface{})
-	if !ok {
-		details = map[string]interface{}{
-			"Literal": user.Details(),
-		}
-	}
-
-	return oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
-		opt.Principal = principal
-		opt.Permissions = user.Permissions()
-		opt.State = user.State()
-		opt.Details = details
-	})
 }
 
 func randomString(length int) string {

@@ -21,7 +21,8 @@ type AuthorizeRequest struct {
 	Approved      bool
 	context		  utils.MutableContext
 
-	// TODO should we still support resource IDs ?
+	// resource IDs is removed from OAuth2 Specs.
+	// For backward compatibility, we use client's registered values or hard code it to "nfv-api"
 }
 
 func (r *AuthorizeRequest) Context() utils.MutableContext {

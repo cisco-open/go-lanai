@@ -22,7 +22,6 @@ type OAuth2Client interface {
 	UseSessionTimeout() bool
 	TenantRestrictions() utils.StringSet
 	ResourceIDs() utils.StringSet
-	//MaxTokensPerUser() int // TODO if this still needed?
 }
 
 /***********************************

@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/clientauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
@@ -96,5 +97,18 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 
 	c.delegate.Configure(ws, c.config)
 
-	logout.Configure(ws).LogoutUrl(c.config.Endpoints.Logout)
+	// Logout Handler
+	// Note: we disable default logout handler here because we don't want to unauthenticate user when PUT or DELETE is used
+	logoutHandler := revoke.NewTokenRevokingLogoutHanlder(func(opt *revoke.HanlderOption) {
+		opt.Revoker = c.config.accessRevoker()
+	})
+	logoutSuccessHandler := revoke.NewTokenRevokeSuccessHandler(func(opt *revoke.SuccessOption) {
+		opt.ClientStore = c.config.ClientStore
+		opt.WhitelabelErrorPath = "/error"
+		opt.RedirectWhitelist = c.config.properties.RedirectWhitelist
+	})
+	logout.Configure(ws).
+		LogoutUrl(c.config.Endpoints.Logout).
+		LogoutHandlers(logoutHandler).
+		SuccessHandler(logoutSuccessHandler)
 }

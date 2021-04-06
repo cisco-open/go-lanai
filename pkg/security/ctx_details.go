@@ -57,6 +57,5 @@ type ProxiedUserDetails interface {
 
 type KeyValueDetails interface {
 	Value(string) (interface{}, bool)
-	SetValue(string, interface{})
-	SetValues(map[string]interface{})
+	Values() map[string]interface{}
 }

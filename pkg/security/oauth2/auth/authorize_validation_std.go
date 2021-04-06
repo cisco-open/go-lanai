@@ -83,15 +83,7 @@ func (p *StandardAuthorizeRequestProcessor) validateResponseTypes(c context.Cont
 }
 
 func (p *StandardAuthorizeRequestProcessor) validateClientId(c context.Context, request *AuthorizeRequest) (oauth2.OAuth2Client, error) {
-	if request.ClientId == "" {
-		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Sprintf("A client id must be provided"))
-	}
-
-	client, e := p.clientStore.LoadClientByClientId(c, request.ClientId)
-	if e != nil {
-		return nil, oauth2.NewClientNotFoundError("invalid client")
-	}
-	return client, nil
+	return LoadAndValidateClientId(c, request.ClientId, p.clientStore)
 }
 
 func (p *StandardAuthorizeRequestProcessor) validateRedirectUri(c context.Context, request *AuthorizeRequest, client oauth2.OAuth2Client) error {
@@ -109,38 +101,14 @@ func (p *StandardAuthorizeRequestProcessor) validateRedirectUri(c context.Contex
 			"redirect_uri can only be used by implicit or authorization_code grant types")
 	}
 
-	// then we check if client have registerd uri
-	if client.RedirectUris() == nil || len(client.RedirectUris()) == 0 {
-		return oauth2.NewInvalidAuthorizeRequestError(
-			"at least one redirectUri must be registered in the client")
-	}
-
+	// Resolve redirect URI
 	// The resolved redirect URI is either the redirect_uri from the parameters or the one from
 	// clientDetails. Either way we need to store it on the AuthorizationRequest.
-	redirect := request.RedirectUri
-	if redirect == "" && len(client.RedirectUris()) == 1 {
-		// single registered redirect URI
-		request.RedirectUri = client.RedirectUris().Values()[0]
-		return nil
-	} else if redirect == "" {
-		return oauth2.NewInvalidRedirectUriError("the redirect_uri must be proveded because the client have multiple registered redirect URI")
+	redirect, e := ResolveRedirectUri(c, request.RedirectUri, client)
+	if e != nil {
+		return e
 	}
-
-	found = false
-	for registered, _ := range client.RedirectUris() {
-		matcher, e := NewWildcardUrlMatcher(registered)
-		if e != nil {
-			continue
-		}
-		if matches, e := matcher.Matches(redirect); e == nil && matches {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		return oauth2.NewInvalidRedirectUriError("the redirect_uri must be registered with the client")
-	}
+	request.RedirectUri = redirect
 	return nil
 }
 

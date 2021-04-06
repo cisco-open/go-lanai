@@ -8,12 +8,14 @@ import (
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutMiddleware struct {
 	successHandler security.AuthenticationSuccessHandler
+	errorHandler   security.AuthenticationErrorHandler
 	logoutHandlers []LogoutHandler
 }
 
-func NewLogoutMiddleware(successHandler security.AuthenticationSuccessHandler, logoutHandlers ...LogoutHandler) *LogoutMiddleware {
+func NewLogoutMiddleware(successHandler security.AuthenticationSuccessHandler, errorHandler security.AuthenticationErrorHandler, logoutHandlers ...LogoutHandler) *LogoutMiddleware {
 	return &LogoutMiddleware{
 		successHandler: successHandler,
+		errorHandler:   errorHandler,
 		logoutHandlers: logoutHandlers,
 	}
 }
@@ -21,22 +23,32 @@ func NewLogoutMiddleware(successHandler security.AuthenticationSuccessHandler, l
 func (mw *LogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		before := security.Get(ctx)
-		if before == nil || before.State() == security.StateAnonymous {
-			mw.handleSuccess(ctx, before)
-			return
+		var err error
+		for _, handler := range mw.logoutHandlers {
+			if e := handler.HandleLogout(ctx, ctx.Request, ctx.Writer, before); e != nil {
+				err = e
+			}
 		}
 
-		for _, handler := range mw.logoutHandlers {
-			handler.HandleLogout(ctx, ctx.Request, ctx.Writer, before)
+		if err != nil {
+			mw.handleError(ctx, err)
+		} else {
+			mw.handleSuccess(ctx, before)
 		}
-		mw.handleSuccess(ctx, before)
 	}
 }
 
 func (mw *LogoutMiddleware) handleSuccess(c *gin.Context, before security.Authentication) {
-	security.Clear(c)
-	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, nil)
+	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, security.Get(c))
 	if c.Writer.Written() {
 		c.Abort()
+	}
+}
+
+func (mw *LogoutMiddleware) handleError(ctx *gin.Context, err error) {
+	mw.errorHandler.HandleAuthenticationError(ctx, ctx.Request, ctx.Writer,
+		security.NewInternalAuthenticationError(err.Error(), err))
+	if ctx.Writer.Written() {
+		ctx.Abort()
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -70,6 +71,9 @@ func GobRegister() {
 	gob.Register((*AccountMetadata)(nil))
 }
 
+/**********************************
+	Common Functions
+ **********************************/
 func Get(ctx context.Context) Authentication {
 	secCtx, ok := ctx.Value(ContextKeySecurity).(Authentication)
 	if !ok {
@@ -78,9 +82,16 @@ func Get(ctx context.Context) Authentication {
 	return secCtx
 }
 
-func Clear(ctx utils.MutableContext) {
-	ctx.Set(gin.AuthUserKey, nil)
-	ctx.Set(ContextKeySecurity, nil)
+func Clear(ctx context.Context) {
+	if mc, ok := ctx.(utils.MutableContext); ok {
+		mc.Set(gin.AuthUserKey, nil)
+		mc.Set(ContextKeySecurity, nil)
+	}
+
+	if gc := web.GinContext(ctx); gc != nil {
+		gc.Set(gin.AuthUserKey, nil)
+		gc.Set(ContextKeySecurity, nil)
+	}
 }
 
 // TryClear attempt to clear security context. Return true if succeeded
@@ -171,7 +182,11 @@ func DetermineAuthenticationTime(ctx context.Context, userAuth Authentication) (
 	return
 }
 
-func GetUsername(userAuth Authentication) (string, error){
+func GetUsername(userAuth Authentication) (string, error) {
+	if userAuth == nil {
+		return "", fmt.Errorf("unsupported authentication is nil")
+	}
+
 	principal := userAuth.Principal()
 	var username string
 	switch principal.(type) {
@@ -182,7 +197,7 @@ func GetUsername(userAuth Authentication) (string, error){
 	case fmt.Stringer:
 		username = principal.(fmt.Stringer).String()
 	default:
-		return "", errors.New(fmt.Sprintf("unsupported principal type %T", principal))
+		return "", fmt.Errorf("unsupported principal type %T", principal)
 	}
 	return username, nil
 }

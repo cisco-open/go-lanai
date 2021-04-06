@@ -67,6 +67,7 @@ const (
 	CtxKeyAuthenticatedAccount      = "kAuthenticatedAccount"
 	CtxKeyAuthorizedTenant          = "kAuthorizedTenant"
 	CtxKeyAuthorizedProvider        = "kAuthorizedProvider"
+	CtxKeyUserAuthentication        = "kUserAuthentication"
 	CtxKeyAuthorizationExpiryTime   = "kAuthorizationExpiryTime"
 	CtxKeyAuthorizationIssueTime    = "kAuthorizationIssueTime"
 	CtxKeyAuthenticationTime        = "kAuthenticationTime"

@@ -96,6 +96,12 @@ func calculateState(req OAuth2Request, userAuth security.Authentication) securit
 /******************************
 	UserAuthentication
 ******************************/
+type UserAuthentication interface {
+	security.Authentication
+	Subject() string
+	DetailsMap() map[string]interface{}
+}
+
 type UserAuthOptions func(opt *UserAuthOption)
 
 type UserAuthOption struct {
@@ -105,42 +111,54 @@ type UserAuthOption struct {
 	Details     map[string]interface{}
 }
 
-// userAuthentication implments security.Authentication.
+// userAuthentication implements security.Authentication and UserAuthentication.
 // it represents basic information that could be typically extracted from JWT claims
+// userAuthentication is also used for serializing/deserializing
 type userAuthentication struct {
-	Subject       string                       `json:"principal"`
-	PermissionMap map[string]interface{}       `json:"permissions"`
-	StateValue    security.AuthenticationState `json:"state"`
-	DetailsMap    map[string]interface{}       `json:"details"`
+	SubjectVal    string                       `json:"principal"`
+	PermissionVal map[string]interface{}       `json:"permissions"`
+	StateVal      security.AuthenticationState `json:"state"`
+	DetailsVal    map[string]interface{}       `json:"details"`
 }
 
 func NewUserAuthentication(opts...UserAuthOptions) *userAuthentication {
-	opt := UserAuthOption{}
+	opt := UserAuthOption{
+		Permissions: map[string]interface{}{},
+		Details: map[string]interface{}{},
+	}
 	for _, f := range opts {
 		f(&opt)
 	}
 	return &userAuthentication{
-		Subject:       opt.Principal,
-		PermissionMap: opt.Permissions,
-		StateValue:    opt.State,
-		DetailsMap:    opt.Details,
+		SubjectVal:    opt.Principal,
+		PermissionVal: opt.Permissions,
+		StateVal:      opt.State,
+		DetailsVal:    opt.Details,
 	}
 }
 
 func (a *userAuthentication) Principal() interface{} {
-	return a.Subject
+	return a.SubjectVal
 }
 
 func (a *userAuthentication) Permissions() security.Permissions {
-	return a.PermissionMap
+	return a.PermissionVal
 }
 
 func (a *userAuthentication) State() security.AuthenticationState {
-	return a.StateValue
+	return a.StateVal
 }
 
 func (a *userAuthentication) Details() interface{} {
-	return a.DetailsMap
+	return a.DetailsVal
+}
+
+func (a *userAuthentication) Subject() string {
+	return a.SubjectVal
+}
+
+func (a *userAuthentication) DetailsMap() map[string]interface{} {
+	return a.DetailsVal
 }
 
 

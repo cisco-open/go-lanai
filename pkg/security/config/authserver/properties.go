@@ -2,6 +2,7 @@ package authserver
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
 )
 
@@ -10,7 +11,8 @@ const (
 )
 
 type AuthServerProperties struct {
-	Issuer IssuerProperties `json:"Issuer"`
+	Issuer            IssuerProperties `json:"issuer"`
+	RedirectWhitelist utils.StringSet  `json:"redirect-whitelist"`
 }
 
 type IssuerProperties struct {
@@ -36,6 +38,7 @@ func NewAuthServerProperties() *AuthServerProperties {
 			ContextPath: "",
 			IncludePort: true,
 		},
+		RedirectWhitelist: utils.NewStringSet(),
 	}
 }
 

@@ -10,12 +10,16 @@ import (
 )
 
 // EndpointFunc is a function with following signature
-// 	- two input parameters with 1st as context.Context and 2nd as <request>
-// 	- two output parameters with 1st as <response> and 2nd as error
+// 	- one or two input parameters with the 1st as context.Context and the 2nd as <request>
+// 	- at least two output parameters with the 2nd last as <response> and the last as error
 // where
 // <request>:   a struct or a pointer to a struct whose fields are properly tagged
-// <response>:  a struct or a pointer to a struct whose fields are properly tagged.
-// 				if decoding is not supported (rest not used by any go client), it can be an interface{}
+// <response>:  supported types are (will support more in the future):
+//				- a struct or a pointer to a struct whose fields are properly tagged.
+//				- interface{}, if decoding is not supported (rest not used by any go client)
+//				- map[string]interface{}
+//				- string
+//				- []byte
 // e.g.: func(context.Context, request *AnyStructWithTag) (response *AnyStructWithTag, error) {...}
 type EndpointFunc web.MvcHandlerFunc
 
