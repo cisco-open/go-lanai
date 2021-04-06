@@ -12,6 +12,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"fmt"
 )
 
 /***************************
@@ -34,6 +35,7 @@ func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 	// For Token endpoint
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.Token)).
 		Route(matcher.RouteWithPattern(c.config.Endpoints.CheckToken)).
+		Route(matcher.RouteWithPattern(fmt.Sprintf("%s/*", c.config.Endpoints.TenantHierarchy))).
 		With(clientauth.New().
 			ClientStore(c.config.ClientStore).
 			ClientSecretEncoder(c.config.clientSecretEncoder()).

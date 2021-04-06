@@ -38,7 +38,3 @@ type TenantStore interface {
 	LoadTenantById(ctx context.Context, id string) (*Tenant, error);
 	LoadTenantByName(ctx context.Context, name string) (*Tenant, error);
 }
-
-type TenantHierarchyStore interface {
-	// TODO
-}

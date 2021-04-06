@@ -2,6 +2,7 @@ package security
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/gob"
@@ -111,6 +112,34 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 		}
 	}
 	return true
+}
+
+
+func HasAccessToTenant(ctx context.Context, tenantId string) bool {
+	auth := Get(ctx)
+
+	if ud, ok := auth.Details().(UserDetails); ok {
+		if ud.AssignedTenantIds().Has(tenantId) {
+			return true
+		}
+
+		if !tenancy.IsLoaded(ctx) {
+			logger.Warnf("Tenant hierarchy is not loaded by the auth server, hasAccessToTenant will not consider child tenants in the tenant hierarchy")
+			return false
+		}
+
+		ancestors, err := tenancy.GetAnceostors(ctx, tenantId)
+		if err != nil {
+			return false
+		}
+
+		for _, ancestor := range ancestors {
+			if ud.AssignedTenantIds().Has(ancestor) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func IsFullyAuthenticated(auth Authentication) bool {
