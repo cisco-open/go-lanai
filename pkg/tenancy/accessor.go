@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	r "github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"strings"
 )
 
@@ -157,4 +158,26 @@ func (a *TenancyAccessor) IsLoaded(ctx context.Context) bool{
 		return false
 	}
 	return	strings.HasPrefix(cmd.Val(), STATUS_LOADED)
+}
+
+func (a *TenancyAccessor) GetTenancyPath(ctx context.Context, tenantId string) ([]uuid.UUID, error) {
+	current, err := uuid.Parse(tenantId)
+	if err != nil {
+		return nil, err
+	}
+	path := []uuid.UUID{current}
+
+	ancestors, err := a.GetAnceostors(ctx, tenantId)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, str := range ancestors {
+		id, err := uuid.Parse(str)
+		if err != nil {
+			return nil, err
+		}
+		path = append(path, id)
+	}
+	return path, nil
 }

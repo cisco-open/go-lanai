@@ -15,7 +15,7 @@ type TenantIterator interface {
 
 type Tenant interface {
 	GetId() string
-	GetParentId() *string //use pointer for nil
+	GetParentId() string //use pointer for nil
 }
 
 type Loader interface {

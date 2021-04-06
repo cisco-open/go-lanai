@@ -1,6 +1,9 @@
 package tenancy
 
-import "context"
+import (
+	"context"
+	"github.com/google/uuid"
+)
 
 const ZsetKey = "tenant-hierarchy"
 const IsParentOfPredict = "is-parent-of"
@@ -19,6 +22,7 @@ type Accessor interface {
 	GetDescendants(ctx context.Context, tenantId string) ([]string, error)
 	GetRoot(ctx context.Context) (string, error)
 	IsLoaded(ctx context.Context) bool
+	GetTenancyPath(ctx context.Context, tenantId string) ([]uuid.UUID, error)
 }
 
 func GetParent(ctx context.Context, tenantId string) (string, error) {
@@ -38,4 +42,8 @@ func GetRoot(ctx context.Context) (string, error) {
 }
 func IsLoaded(ctx context.Context) bool {
 	return internalAccessor.IsLoaded(ctx)
+}
+
+func GetTenancyPath(ctx context.Context, tenantId string) ([]uuid.UUID, error) {
+	return internalAccessor.GetTenancyPath(ctx, tenantId)
 }

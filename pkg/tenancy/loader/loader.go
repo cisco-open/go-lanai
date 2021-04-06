@@ -64,13 +64,11 @@ func (l *TenancyLoader) LoadTenantHierarchy(ctx context.Context) (err error) {
 				return err
 			}
 
-			if t.GetParentId() != nil {
+			if t.GetParentId() != "" {
 				relations = append(relations,
-					&r.Z{0, tenancy.BuildSpsString(t.GetId(), tenancy.IsChildrenOfPredict, *t.GetParentId())},
-					&r.Z{0, tenancy.BuildSpsString(*t.GetParentId(), tenancy.IsParentOfPredict, t.GetId())})
-			}
-
-			if t.GetParentId() == nil {
+					&r.Z{0, tenancy.BuildSpsString(t.GetId(), tenancy.IsChildrenOfPredict, t.GetParentId())},
+					&r.Z{0, tenancy.BuildSpsString(t.GetParentId(), tenancy.IsParentOfPredict, t.GetId())})
+			} else {
 				statusCmd := tx.Set(ctx, tenancy.RootTenantKey, t.GetId(), 0)
 				if statusCmd.Err() != nil {
 					return statusCmd.Err()
