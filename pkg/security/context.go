@@ -104,8 +104,9 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 }
 
 
-//TODO: add request validator
-func HasAccessToTenant(ctx context.Context, auth Authentication, tenantId string) bool {
+func HasAccessToTenant(ctx context.Context, tenantId string) bool {
+	auth := Get(ctx)
+
 	if ud, ok := auth.Details().(UserDetails); ok {
 		if ud.AssignedTenantIds().Has(tenantId) {
 			return true
