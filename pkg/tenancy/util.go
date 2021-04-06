@@ -1,4 +1,4 @@
-package tenant_hierarchy_accessor
+package tenancy
 
 import (
 	"errors"

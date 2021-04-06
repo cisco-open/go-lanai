@@ -1,53 +1,62 @@
-package tenant_hierarchy_accessor
+package tenancy
 
 import (
 	"container/list"
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"errors"
 	"fmt"
 	r "github.com/go-redis/redis/v8"
+	"strings"
 )
 
-const ZsetKey = "tenant-hierarchy"
-const IsParentOfPredict = "is-parent-of"
-const IsChildrenOfPredict = "is-children-of"
-const RedisZsetMaxByte = "\uffff"
-const RootTenantKey = "root-tenant-id"
-const StatusKey = "tenant-hierarchy-status"
+type TenancyAccessor struct {
+	rc redis.Client
+}
 
-const STATUS_IN_PROGRESS = "IN_PROGRESS"
-const STATUS_LOADED = "LOADED"
-const STATUS_ERROR = "ERROR"
+func newAccessor(rc redis.Client) *TenancyAccessor {
+	return &TenancyAccessor{
+		rc: rc,
+	}
+}
 
-func GetParent(ctx context.Context, tenantId string) (*string, error) {
+func (a *TenancyAccessor) GetParent(ctx context.Context, tenantId string) (string, error) {
+	if !a.IsLoaded(ctx) {
+		return "", errors.New("tenancy is not loaded")
+	}
+
 	gteValue := BuildSpsString(tenantId, IsChildrenOfPredict);
 	lteValue := BuildSpsString(tenantId, IsChildrenOfPredict, RedisZsetMaxByte);
 
 	zrange := &r.ZRangeBy{Min: ZInclusive(gteValue), Max: ZInclusive(lteValue)}
 
-	cmd := RedisClient.ZRangeByLex(ctx, ZsetKey, zrange)
+	cmd := a.rc.ZRangeByLex(ctx, ZsetKey, zrange)
 
 	relations := cmd.Val()
 
 	if len(relations) == 0 {
-		return nil, nil;
+		return "", nil;
 	} else if len(relations) > 1 {
-		return nil, errors.New(fmt.Sprintf("Tenant should only have one parent, but tenant with Id %s has %d ", tenantId, len(relations)))
+		return "", errors.New(fmt.Sprintf("Tenant should only have one parent, but tenant with Id %s has %d ", tenantId, len(relations)))
 	} else {
 		p, err := GetObjectOfSpo(relations[0])
-		return &p, err
+		return p, err
 	}
 }
 
-func GetChildren(ctx context.Context, tenantId string) ([]string, error) {
+func (a *TenancyAccessor) GetChildren(ctx context.Context, tenantId string) ([]string, error) {
+	if !a.IsLoaded(ctx) {
+		return nil, errors.New("tenancy is not loaded")
+	}
+
 	gteValue := BuildSpsString(tenantId, IsParentOfPredict);
 	lteValue := BuildSpsString(tenantId, IsParentOfPredict, RedisZsetMaxByte);
 
 	zrange := &r.ZRangeBy{Min: ZInclusive(gteValue), Max: ZInclusive(lteValue)}
 
-	cmd := RedisClient.ZRangeByLex(ctx, ZsetKey, zrange)
+	cmd := a.rc.ZRangeByLex(ctx, ZsetKey, zrange)
 
-	var children []string
+	var children = []string{}
 	for _, relation := range cmd.Val() {
 		child, err := GetObjectOfSpo(relation)
 		if err != nil {
@@ -58,13 +67,17 @@ func GetChildren(ctx context.Context, tenantId string) ([]string, error) {
 	return children, nil
 }
 
-func GetAnceostors(ctx context.Context, tenantId string) ([]string, error) {
-	var ancestors []string
+func (a *TenancyAccessor) GetAnceostors(ctx context.Context, tenantId string) ([]string, error) {
+	if !a.IsLoaded(ctx) {
+		return nil, errors.New("tenancy is not loaded")
+	}
 
-	p, err := GetParent(ctx, tenantId)
-	for ; p != nil && err == nil; {
-		ancestors = append(ancestors, *p)
-		p, err = GetParent(ctx, *p)
+	var ancestors = []string{}
+
+	p, err := a.GetParent(ctx, tenantId)
+	for ; p != "" && err == nil; {
+		ancestors = append(ancestors, p)
+		p, err = a.GetParent(ctx, p)
 	}
 
 	if err != nil {
@@ -74,15 +87,19 @@ func GetAnceostors(ctx context.Context, tenantId string) ([]string, error) {
 	return ancestors, nil
 }
 
-func GetDescendants(ctx context.Context, tenantId string) ([]string, error) {
-	var descendants []string
+func (a *TenancyAccessor) GetDescendants(ctx context.Context, tenantId string) ([]string, error) {
+	if !a.IsLoaded(ctx) {
+		return nil, errors.New("tenancy is not loaded")
+	}
+
+	var descendants = []string{}
 	idsToVisit := list.New()
 
 	idsToVisit.PushBack(tenantId)
 
 	for idsToVisit.Len()>0 {
 
-		cmds, err := RedisClient.Pipelined(ctx, func(pipeliner r.Pipeliner) error {
+		cmds, err := a.rc.Pipelined(ctx, func(pipeliner r.Pipeliner) error {
 			for idsToVisit.Len() > 0 {
 				id := idsToVisit.Front()
 
@@ -125,12 +142,19 @@ func GetDescendants(ctx context.Context, tenantId string) ([]string, error) {
 	return descendants, nil
 }
 
-func GetRoot(ctx context.Context) (string, error) {
-	cmd := RedisClient.Get(ctx, RootTenantKey)
+func (a *TenancyAccessor) GetRoot(ctx context.Context) (string, error) {
+	if !a.IsLoaded(ctx) {
+		return "", errors.New("tenancy is not loaded")
+	}
+
+	cmd := a.rc.Get(ctx, RootTenantKey)
 	return cmd.Val(), cmd.Err()
 }
 
-func IsLoaded(ctx context.Context) bool {
-	cmd := RedisClient.Get(ctx, StatusKey)
-	return cmd.Val() == STATUS_LOADED
+func (a *TenancyAccessor) IsLoaded(ctx context.Context) bool{
+	cmd := a.rc.Get(ctx, StatusKey)
+	if cmd.Err() != nil {
+		return false
+	}
+	return	strings.HasPrefix(cmd.Val(), STATUS_LOADED)
 }

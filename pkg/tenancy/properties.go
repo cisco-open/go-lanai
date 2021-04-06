@@ -1,4 +1,4 @@
-package tenant_hierarchy_accessor
+package tenancy
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -14,12 +14,12 @@ type CacheProperties struct {
 	DbIndex int `json:"db-index"`
 }
 
-func NewCacheProperties() *CacheProperties {
+func newCacheProperties() *CacheProperties {
 	return &CacheProperties{}
 }
 
-func BindCacheProperties(ctx *bootstrap.ApplicationContext) CacheProperties {
-	props := NewCacheProperties()
+func bindCacheProperties(ctx *bootstrap.ApplicationContext) CacheProperties {
+	props := newCacheProperties()
 	if err := ctx.Config().Bind(props, CachePropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind CacheProperties"))
 	}

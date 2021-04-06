@@ -4,8 +4,10 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
-	tenant_hierarchy_accessor "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenant_hierarchy/accessor"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	httptransport "github.com/go-kit/kit/transport/http"
 )
 
 type TenantHierarchyEndpoint struct {
@@ -25,13 +27,11 @@ func (endpoint *TenantHierarchyEndpoint) GetParent(ctx context.Context, req *Hie
 		return "", err
 	}
 
-	p, err := tenant_hierarchy_accessor.GetParent(ctx, req.TenantId)
+	p, err := tenancy.GetParent(ctx, req.TenantId)
 	if err != nil {
 		return "", err
-	} else if p == nil {
-		return "", nil
 	} else {
-		return *p, err
+		return p, err
 	}
 }
 
@@ -40,7 +40,7 @@ func (endpoint *TenantHierarchyEndpoint) GetChildren(ctx context.Context, req *H
 		return nil, err
 	}
 
-	children, err := tenant_hierarchy_accessor.GetChildren(ctx, req.TenantId)
+	children, err := tenancy.GetChildren(ctx, req.TenantId)
 	if err == nil {
 		ret := utils.NewStringSet(children...)
 		return ret, nil
@@ -54,7 +54,7 @@ func (endpoint *TenantHierarchyEndpoint) GetAncestors(ctx context.Context, req *
 		return nil, err
 	}
 
-	ancestor, err := tenant_hierarchy_accessor.GetAnceostors(ctx, req.TenantId)
+	ancestor, err := tenancy.GetAnceostors(ctx, req.TenantId)
 	if err == nil {
 		ret := utils.NewStringSet(ancestor...)
 		return ret, nil
@@ -68,12 +68,26 @@ func (endpoint *TenantHierarchyEndpoint) GetDescendants(ctx context.Context, req
 		return nil, err
 	}
 
-	descendants, err := tenant_hierarchy_accessor.GetDescendants(ctx, req.TenantId)
+	descendants, err := tenancy.GetDescendants(ctx, req.TenantId)
 	if err == nil {
 		ret := utils.NewStringSet(descendants...)
 		return ret, nil
 	} else {
 		return nil, err
+	}
+}
+
+func (endpoint *TenantHierarchyEndpoint) GetRoot(ctx context.Context, _ *web.EmptyRequest) (string, error) {
+	if allow, err := allowAccess(ctx); !allow {
+		return "", err
+	}
+
+	root, err := tenancy.GetRoot(ctx)
+
+	if err != nil {
+		return "", err
+	} else {
+		return root, nil
 	}
 }
 
@@ -86,4 +100,11 @@ func allowAccess(ctx context.Context) (bool, error) {
 		return false, oauth2.NewInsufficientScopeError("tenant hierarchy endpoint requires tenant_hierarchy scope")
 	}
 	return true, nil
+}
+
+func StringResponseEncoder() httptransport.EncodeResponseFunc {
+	return web.CustomResponseEncoder(func(opt *web.EncodeOption) {
+		opt.ContentType = "application/json; charset=utf-8"
+		opt.WriteFunc = web.TextWriteFunc
+	})
 }

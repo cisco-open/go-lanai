@@ -33,13 +33,15 @@ func registerEndpoints(registrar *web.Registrar, config *Configuration) {
 			EndpointFunc(ui.PlainUserInfo).Build(),
 
 		rest.New("tenant hierarchy parent").Get(fmt.Sprintf("%s/%s", config.Endpoints.TenantHierarchy, "parent")).
-			EndpointFunc(th.GetParent).Build(),
+			EndpointFunc(th.GetParent).EncodeResponseFunc(misc.StringResponseEncoder()).Build(),
 		rest.New("tenant hierarchy children").Get(fmt.Sprintf("%s/%s", config.Endpoints.TenantHierarchy, "children")).
 			EndpointFunc(th.GetChildren).Build(),
 		rest.New("tenant hierarchy ancestors").Get(fmt.Sprintf("%s/%s", config.Endpoints.TenantHierarchy, "ancestors")).
 			EndpointFunc(th.GetAncestors).Build(),
 		rest.New("tenant hierarchy descendants").Get(fmt.Sprintf("%s/%s", config.Endpoints.TenantHierarchy, "descendants")).
 			EndpointFunc(th.GetDescendants).Build(),
+		rest.New("tenant hierarchy root").Get(fmt.Sprintf("%s/%s", config.Endpoints.TenantHierarchy, "root")).
+			EndpointFunc(th.GetRoot).EncodeResponseFunc(misc.StringResponseEncoder()).Build(),
 	}
 	registrar.Register(mappings...)
 }

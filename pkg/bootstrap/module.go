@@ -29,6 +29,7 @@ const (
 	ServiceDiscoveryPrecedence
 	TenantHierarchyAccessorPrecedence
 	TenantHierarchyLoaderPrecedence
+	TenantHierarchyModifierPrecedence
 	SwaggerPrecedence
 	CommandLineRunnerPrecedence
 	MigrationPrecedence //migration's invocation should happen after everything else, in case it needs functionality from any other modules

@@ -3,6 +3,7 @@ package authserver
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	th_loader "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy/loader"
 	"go.uber.org/fx"
 )
 
@@ -18,6 +19,7 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 
 func Use() {
 	security.Use()
+	th_loader.Use()
 	bootstrap.Register(OAuth2AuthorizeModule)
 }
 
