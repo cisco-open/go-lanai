@@ -29,9 +29,9 @@ func provideAccessor(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, 
 	if e != nil {
 		panic(e)
 	}
-	return newAccessor(rc)
+	internalAccessor = newAccessor(rc)
+	return internalAccessor
 }
 
-func setup(a Accessor) {
-	internalAccessor = a
+func setup(_ Accessor) {
 }

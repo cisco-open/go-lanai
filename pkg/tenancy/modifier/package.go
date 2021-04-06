@@ -33,9 +33,9 @@ func provideModifier(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, 
 	if e != nil {
 		panic(e)
 	}
-	return newModifier(rc)
+	internaModifier = newModifier(rc)
+	return internaModifier
 }
 
-func setup(ctx *bootstrap.ApplicationContext, modifier Modifier) {
-	internaModifier = modifier
+func setup(_ Modifier) {
 }

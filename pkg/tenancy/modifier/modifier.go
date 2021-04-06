@@ -11,11 +11,13 @@ import (
 
 type TenancyModifer struct {
 	rc redis.Client
+	accessor tenancy.Accessor
 }
 
-func newModifier(rc redis.Client) *TenancyModifer {
+func newModifier(rc redis.Client, accessor tenancy.Accessor) *TenancyModifer {
 	return &TenancyModifer{
 		rc: rc,
+		accessor: accessor,
 	}
 }
 
@@ -26,7 +28,7 @@ func (m *TenancyModifer) RemoveTenant(ctx context.Context, tenantId string) erro
 
 	logger.Debugf("remove tenantId %s", tenantId)
 
-	children, err := tenancy.GetChildren(ctx, tenantId)
+	children, err := m.accessor.GetChildren(ctx, tenantId)
 
 	if err != nil {
 		return err
@@ -36,7 +38,7 @@ func (m *TenancyModifer) RemoveTenant(ctx context.Context, tenantId string) erro
 		return errors.New("can't remove tenant that still have children")
 	}
 
-	parentId, err := tenancy.GetParent(ctx, tenantId)
+	parentId, err := m.accessor.GetParent(ctx, tenantId)
 
 	if err != nil {
 		return err
@@ -61,7 +63,7 @@ func (m *TenancyModifer) AddTenant(ctx context.Context, tenantId string, parentI
 
 	logger.Debugf("add tenantId %s parentId %s", tenantId, parentId)
 
-	ancestors, err := tenancy.GetAnceostors(ctx, parentId)
+	ancestors, err := m.accessor.GetAnceostors(ctx, parentId)
 	if err != nil {
 		return err
 	}
