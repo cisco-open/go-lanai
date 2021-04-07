@@ -10,7 +10,9 @@ import (
 	"go.uber.org/fx"
 )
 
-//go:embed frontend/*
+//go:generate npm install --prefix nodejs
+//go:generate npm run --prefix nodejs build --output_dir=../generated
+//go:embed generated/*
 var Content embed.FS
 
 var logger = log.New("Swagger")
