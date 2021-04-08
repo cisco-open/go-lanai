@@ -26,14 +26,14 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func provideModifier(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, prop tenancy.CacheProperties) Modifier {
+func provideModifier(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, prop tenancy.CacheProperties, accessor tenancy.Accessor) Modifier {
 	rc, e := cf.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = prop.DbIndex
 	})
 	if e != nil {
 		panic(e)
 	}
-	internaModifier = newModifier(rc)
+	internaModifier = newModifier(rc, accessor)
 	return internaModifier
 }
 
