@@ -147,7 +147,7 @@ export default class SsoTopBar extends React.Component {
                 <div className="wrapper">
                     <div className="topbar-wrapper">
                         <Link>
-                            <Logo height={40} width={40}/>
+                            <Logo height={40} width={40} viewBox="0 0 1024 1024"/>
                         </Link>
                         <form className="download-url-wrapper" style={{visibility: 'hidden'}}>
                             {control.map((el, i) => cloneElement(el, { key: i }))}

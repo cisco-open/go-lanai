@@ -1,6 +1,6 @@
 {
   "name": "nfv-swagger-ui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Swagger UI with SSO extension for NFV. Forked from springfox-swagger-ui: https://github.com/springfox/springfox/tree/master/springfox-swagger-ui ",
   "scripts": {
     "test": "jest",
@@ -29,7 +29,7 @@
     "node-fetch": "^2.6.1",
     "prop-types": "^15.5.10",
     "react": "^15.6.2",
-    "react-svg-loader": "^2.1.0",
+    "react-svg-loader": "^3.0.3",
     "swagger-ui": "^3.46.0",
     "url-parse": "^1.4.3",
     "webpack": "^5.31.0",
