@@ -179,5 +179,13 @@ func (a *TenancyAccessor) GetTenancyPath(ctx context.Context, tenantId string) (
 		}
 		path = append(path, id)
 	}
+
+	//reverse the order to that the result is curent tenant id -> root tenant id
+	//fi is index going forward starting from 0,
+	//ri is index going backward starting from last element
+	//swap the element at ri and ri
+	for fi, ri := 0, len(path)-1; fi < ri; fi, ri = fi+1, ri-1 {
+		path[fi], path[ri] = path[ri], path[fi]
+	}
 	return path, nil
 }
