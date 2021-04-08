@@ -1,5 +1,7 @@
 package utils
 
+import "github.com/google/uuid"
+
 var (
 	TRUE  = true
 	FALSE = false
@@ -22,5 +24,13 @@ func UIntPtr(v uint) *uint {
 }
 
 func Float64Ptr(v float64) *float64 {
+	return &v
+}
+
+func StringPtr(v string) *string {
+	return &v
+}
+
+func UuidPtr(v uuid.UUID) *uuid.UUID {
 	return &v
 }
