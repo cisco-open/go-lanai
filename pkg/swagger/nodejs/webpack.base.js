@@ -1,14 +1,11 @@
-const webpack = require('webpack');
 const path = require('path');
+const { ProvidePlugin } = require('webpack');
 const CopyPlugin = require("copy-webpack-plugin");
-const CompressionPlugin = require("compression-webpack-plugin");
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = env => {
   return {
     entry: {
-      // "nfv-swagger-ui": ['./js/nfv-swagger-ui.js'],
-
       "swagger-ui-bundle": {
         import: ['swagger-ui', 'swagger-ui/dist/swagger-ui-standalone-preset']
       },
@@ -18,8 +15,11 @@ module.exports = env => {
       },
     },
     output: {
-      path: path.resolve(env.OUTPUT_DIR),
       filename: 'js/[name].js',
+    },
+    performance: {
+      maxAssetSize: 512000,
+      maxEntrypointSize: 512000,
     },
     resolveLoader: {
       modules: [path.join(__dirname, "node_modules")],
@@ -35,8 +35,7 @@ module.exports = env => {
       },
     },
     plugins: [
-      new webpack.ProvidePlugin({
-        process: 'process/browser.js',
+      new ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
       }),
       new CopyPlugin({
@@ -49,15 +48,16 @@ module.exports = env => {
           { from: "*.html"},
         ],
       }),
-      new CompressionPlugin({
-        include: /.+\.js/,
-        deleteOriginalAssets: true,
-      }),
-      new BundleAnalyzerPlugin({
-        analyzerMode: "static",
-        openAnalyzer: false
-      })
     ],
+    optimization: {
+      minimize: true,
+      minimizer: [
+        new TerserPlugin({
+          include: [/nfv-swagger-ui\.js/],
+          extractComments: false,
+        }),
+      ],
+    },
     module: {
       rules: [
         {
