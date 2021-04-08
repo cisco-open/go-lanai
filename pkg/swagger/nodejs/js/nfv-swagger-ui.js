@@ -5,6 +5,7 @@ import {
   NfvOAuth2SsoPlugin
 } from './plugins/sso-plugin'
 
+
 window.onload = () => {
 
   const getBaseURL = () => {

@@ -372,6 +372,7 @@ func (r *Registrar) installStaticMapping(m StaticMapping) error {
 	mFs := NewMergedFs(m.StaticRoot(), r.embedFs...)
 
 	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), http.MethodGet, http.MethodHead)
+	middlewares = append(middlewares, GzipAsset())
 	r.router.Group(DefaultGroup).
 		Use(middlewares...).
 		StaticFS(m.Path(), http.FS(mFs))
