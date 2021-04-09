@@ -14,6 +14,11 @@ var (
 	predefinedExtensions = []string{
 		".gz",
 	}
+	gzipContentTypeMapping = map[string]string {
+		".js.gz": "text/javascript",
+		".css.gz": "text/css",
+		".html.gz": "text/html",
+	}
 )
 
 type ginStaticAssetsHandler struct {
@@ -51,6 +56,15 @@ func (h ginStaticAssetsHandler) PreCompressedGzipAsset() gin.HandlerFunc {
 		}
 		gc.Header("Content-Encoding", "gzip")
 		gc.Header("Vary", "Accept-Encoding")
+
+		// write specific content-type if extension is recognized.
+		// this is required for some browsers, e.g. Firefox
+		for k, v := range gzipContentTypeMapping {
+			if strings.HasSuffix(gc.Request.URL.Path, k) {
+				gc.Header("Content-Type", v)
+				break
+			}
+		}
 	}
 }
 
