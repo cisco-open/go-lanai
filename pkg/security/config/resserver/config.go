@@ -76,6 +76,7 @@ func (c *Configuration) errorHandler() *tokenauth.OAuth2ErrorHandler {
 	return c.sharedErrorHandler
 }
 
+//TODO: here we need c to have some additional properties in order to create the timeoutApplier
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
 		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)

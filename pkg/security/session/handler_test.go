@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_security"
@@ -116,7 +117,7 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	}
 	var hset = make(map[string]string)
 	hset[sessionValueField] = string(valueBytes)
-	hset[sessionLastAccessedField] = strconv.FormatInt(time.Now().Unix(), 10)
+	hset[common.SessionLastAccessedField] = strconv.FormatInt(time.Now().Unix(), 10)
 	hset[sessionOptionField] = string(optionBytes)
 
 	mockRedis.EXPECT().
@@ -132,7 +133,7 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	}
 	hset = make(map[string]string)
 	hset[sessionValueField] = string(valueBytes)
-	hset[sessionLastAccessedField] = strconv.FormatInt(time.Now().Unix(), 10)
+	hset[common.SessionLastAccessedField] = strconv.FormatInt(time.Now().Unix(), 10)
 	hset[sessionOptionField] = string(optionBytes)
 
 	mockRedis.EXPECT().

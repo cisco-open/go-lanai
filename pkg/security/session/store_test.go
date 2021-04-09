@@ -5,6 +5,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
 	"encoding/gob"
 	"fmt"
@@ -227,7 +228,7 @@ func Test_Get_Exist_Session_Should_Return_Existing(t *testing.T) {
 
 	var hset = make(map[string]string)
 	hset[sessionValueField] = string(valueBytes)
-	hset[sessionLastAccessedField] = strconv.FormatInt(time.Now().Unix(), 10)
+	hset[common.SessionLastAccessedField] = strconv.FormatInt(time.Now().Unix(), 10)
 	hset[sessionOptionField] = string(optionBytes)
 
 	mock.EXPECT().
@@ -280,7 +281,7 @@ func TestSaveNewSession(t *testing.T) {
 		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionValueField, gomock.Any(),
 		sessionOptionField, gomock.Any(),
-		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
+		common.SessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time
@@ -331,7 +332,7 @@ func TestSaveDirtySession(t *testing.T) {
 	mock.EXPECT().HSet(gomock.Any(),
 		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionValueField, gomock.Any(),
-		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
+		common.SessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time
@@ -380,7 +381,7 @@ func TestSaveAccessedSession(t *testing.T) {
 	//since it's not new and not dirty, we only expect one field to be serialized and saved
 	mock.EXPECT().HSet(gomock.Any(),
 		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
-		sessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
+		common.SessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
 	originalLastAccessed := session.lastAccessed
 	var expiresAt time.Time

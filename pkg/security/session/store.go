@@ -5,6 +5,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"encoding/gob"
 	"fmt"
 	"github.com/google/uuid"
@@ -16,10 +17,8 @@ import (
 	"time"
 )
 
-const redisNameSpace = "LANAI:SESSION" //This is to avoid confusion with records from other frameworks.
 const sessionValueField = "values"
 const sessionOptionField = "options"
-const sessionLastAccessedField = "lastAccessed"
 
 type Store interface {
 	// Get should return a cached session.
@@ -174,7 +173,7 @@ func (s *RedisStore) Save(session *Session) error {
 
 func (s *RedisStore) Invalidate(sessions ...*Session) error {
 	for _, session := range sessions {
-		if cmd := s.connection.Del(s.ctx, getRedisSessionKey(session.Name(), session.GetID())); cmd.Err() != nil {
+		if cmd := s.connection.Del(s.ctx, common.GetRedisSessionKey(session.Name(), session.GetID())); cmd.Err() != nil {
 			return cmd.Err()
 		}
 
@@ -247,7 +246,7 @@ func (s *RedisStore) RemoveFromPrincipalIndex(principal string, session *Session
 
 func (s *RedisStore) ChangeId(session *Session) error {
 	newId := uuid.New().String()
-	cmd := s.connection.Rename(s.ctx, getRedisSessionKey(session.Name(), session.GetID()), getRedisSessionKey(session.Name(), newId))
+	cmd := s.connection.Rename(s.ctx, common.GetRedisSessionKey(session.Name(), session.GetID()), common.GetRedisSessionKey(session.Name(), newId))
 	err := cmd.Err()
 	if err != nil {
 		return err
@@ -257,7 +256,7 @@ func (s *RedisStore) ChangeId(session *Session) error {
 }
 
 func (s *RedisStore) load(id string, name string) (*Session, error) {
-	key := getRedisSessionKey(name, id)
+	key := common.GetRedisSessionKey(name, id)
 
 	cmd := s.connection.HGetAll(s.ctx, key)
 
@@ -279,7 +278,7 @@ func (s *RedisStore) load(id string, name string) (*Session, error) {
 			err = Deserialize(strings.NewReader(v), &session.values)
 		} else if k == sessionOptionField {
 			err = Deserialize(strings.NewReader(v), &session.options)
-		} else if k == sessionLastAccessedField {
+		} else if k == common.SessionLastAccessedField {
 			timeStamp, e := strconv.ParseInt(v, 10, 0)
 			session.lastAccessed = time.Unix(timeStamp, 0)
 			err = e
@@ -299,7 +298,7 @@ func (s *RedisStore) load(id string, name string) (*Session, error) {
 }
 
 func (s *RedisStore) save(session *Session) error {
-	key := getRedisSessionKey(session.Name(), session.GetID())
+	key := common.GetRedisSessionKey(session.Name(), session.GetID())
 	var args []interface{}
 
 	if session.IsDirty() || session.isNew {
@@ -318,7 +317,7 @@ func (s *RedisStore) save(session *Session) error {
 		}
 	}
 
-	args = append(args, sessionLastAccessedField, session.lastAccessed.Unix())
+	args = append(args, common.SessionLastAccessedField, session.lastAccessed.Unix())
 	hsetCmd := s.connection.HSet(s.ctx, key, args...)
 	if hsetCmd.Err() != nil {
 		return hsetCmd.Err()
@@ -329,12 +328,8 @@ func (s *RedisStore) save(session *Session) error {
 	return expCmd.Err()
 }
 
-func getRedisSessionKey(name string, id string) string {
-	return fmt.Sprintf("%s:%s:%s", redisNameSpace, name, id)
-}
-
 func getRedisPrincipalIndexKey(principal string, sessionName string) string {
-	return fmt.Sprintf("%s:INDEX:%s:%s", redisNameSpace, sessionName, principal)
+	return fmt.Sprintf("%s:INDEX:%s:%s", common.RedisNameSpace, sessionName, principal)
 }
 
 func Serialize(src interface{}) ([]byte, error) {

@@ -366,6 +366,12 @@ func (r *RedisContextDetailsStore) saveAccessRefreshTokenRelation(c context.Cont
 }
 
 func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context, t oauth2.AccessToken) (security.ContextDetails, error) {
+	sId, err := r.FindSessionId(c, t)
+
+	if err != nil && sId != "" {
+		//TODO: if session is associated, update session last used time
+	}
+
 	fullDetails := internal.NewFullContextDetails()
 	if e := r.doLoad(c, keyFuncAccessTokenToDetails(uniqueTokenKey(t)), &fullDetails); e != nil {
 		return nil, e
@@ -480,6 +486,8 @@ func (r *RedisContextDetailsStore) saveRefreshTokenToSession(c context.Context, 
 }
 
 func (r *RedisContextDetailsStore) loadAuthFromRefreshToken(c context.Context, t oauth2.RefreshToken) (oauth2.Authentication, error) {
+	//TODO: apply session timeout for refresh token
+
 	oauth := oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {
 		opt.Request = oauth2.NewOAuth2Request()
 		opt.UserAuth = oauth2.NewUserAuthentication()

@@ -212,6 +212,8 @@ func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 	return c.sharedPasswdAuthenticator
 }
 
+//TODO: add properties configuration for session timeout so that can create a timeoutApplier
+// here the properties is already available on the configuration struct
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
 		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
