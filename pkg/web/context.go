@@ -33,6 +33,17 @@ type PostInitCustomizer interface {
 }
 
 /*********************************
+	Request
+ *********************************/
+// RequestRewriter handles request rewrite. e.g. rewrite http.Request.URL.Path
+type RequestRewriter interface {
+	// HandleRewrite take the rewritten request and put it through the entire handling cycle.
+	// The http.Request.Context() is carried over
+	// Note: if no error is returned, caller should stop processing the original request and discard the original request
+	HandleRewrite(rewritten *http.Request) error
+}
+
+/*********************************
 	Response
  *********************************/
 // StatusCoder is same interface defined in "github.com/go-kit/kit/transport/http"
@@ -56,7 +67,7 @@ type BodyContainer interface {
 }
 
 /*********************************
-	Error Translater
+	Error Translator
  *********************************/
 // ErrorTranslator can be registered via web.Registrar
 // it will contribute our MvcMapping's error handling process.
@@ -98,6 +109,8 @@ type StaticMapping interface {
 	Mapping
 	Path() string
 	StaticRoot() string
+	Aliases() map[string]string
+	AddAlias(path, filePath string) StaticMapping
 }
 
 // RoutedMapping

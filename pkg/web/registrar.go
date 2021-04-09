@@ -12,7 +12,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"go.uber.org/fx"
 	"net/http"
-	"path"
+	pathutils "path"
 	"reflect"
 	"sort"
 	"strings"
@@ -26,23 +26,24 @@ const (
 )
 
 type Registrar struct {
-	engine         *Engine
-	router         gin.IRouter
-	properties     ServerProperties
-	options        []*orderedServerOption // options go-kit server options
-	validator      *Validate
-	middlewares    []MiddlewareMapping                   // middlewares gin-gonic middleware providers
-	routedMappings map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
-	staticMappings []StaticMapping                       // staticMappings all static mappings
-	customizers    []Customizer
-	errTranslators []ErrorTranslator
-	embedFs        []embed.FS
-	initialized    bool
+	engine          *Engine
+	router          gin.IRouter
+	properties      ServerProperties
+	options         []*orderedServerOption // options go-kit server options
+	validator       *Validate
+	requestRewriter RequestRewriter
+	middlewares     []MiddlewareMapping                   // middlewares gin-gonic middleware providers
+	routedMappings  map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
+	staticMappings  []StaticMapping                       // staticMappings all static mappings
+	customizers     []Customizer
+	errTranslators  []ErrorTranslator
+	embedFs         []embed.FS
+	initialized     bool
 }
 
 func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 
-	var contextPath = path.Clean("/" + properties.ContextPath)
+	var contextPath = pathutils.Clean("/" + properties.ContextPath)
 	registrar := &Registrar{
 		engine:     g,
 		router:     g.Group(contextPath),
@@ -52,6 +53,7 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 			newOrderedServerOption(httptransport.ServerFinalizer(integrateGinContextFinalizer), order.Lowest),
 		},
 		validator:      bindingValidator,
+		requestRewriter: newGinRequestRewriter(g.Engine),
 		routedMappings: map[string]map[string][]RoutedMapping{},
 	}
 	return registrar
@@ -64,8 +66,8 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	}
 
 	// first, we add some manditory customizers and middleware
-	r.Register(NewPriorityGinContextCustomizer(&r.properties))
-	r.Register(NewGinContextCustomizer(&r.properties))
+	r.MustRegister(NewPriorityGinContextCustomizer(&r.properties))
+	r.MustRegister(NewGinContextCustomizer(&r.properties))
 
 	// apply customizers before install mappings
 	if err = r.applyCustomizers(ctx); err != nil {
@@ -87,7 +89,7 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	}
 
 	// before starting to register mappings, we want global MW to take effect on our main group
-	var contextPath = path.Clean("/" + r.properties.ContextPath)
+	var contextPath = pathutils.Clean("/" + r.properties.ContextPath)
 	r.router = r.engine.Group(contextPath)
 
 	// register routedMappings to gin engine
@@ -135,7 +137,9 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 	if err = r.initialize(ctx); err != nil {
 		return
 	}
-	defer r.cleanup(ctx)
+	defer func(ctx context.Context) {
+		_ = r.cleanup(ctx)
+	}(ctx)
 
 	var addr = fmt.Sprintf(":%v", r.properties.Port)
 	s := &http.Server{
@@ -167,6 +171,12 @@ func (r *Registrar) Register(items...interface{}) (err error) {
 		}
 	}
 	return
+}
+
+func (r *Registrar) MustRegister(items...interface{}) {
+	if e := r.Register(items...); e != nil {
+		panic(e)
+	}
 }
 
 // RegisterWithLifecycle is a convenient function to schedule item registration in FX lifecycle
@@ -368,10 +378,16 @@ func (r *Registrar) installMappings() error {
 }
 
 func (r *Registrar) installStaticMapping(m StaticMapping) error {
-	// TODO handle suffix rewrite, e.g. /path/to/swagger -> /path/to/swagger.html
 	mFs := NewMergedFs(m.StaticRoot(), r.embedFs...)
+	mw := ginStaticAssetsHandler{
+		rewriter: r.requestRewriter,
+		fsys:     mFs,
+		aliases:  m.Aliases(),
+	}
 
 	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), http.MethodGet, http.MethodHead)
+	middlewares = append(gin.HandlersChain{mw.FilenameRewriteHandlerFunc()}, middlewares...)
+	middlewares = append(middlewares, mw.PreCompressedGzipAsset())
 	r.router.Group(DefaultGroup).
 		Use(middlewares...).
 		StaticFS(m.Path(), http.FS(mFs))
@@ -508,7 +524,7 @@ func (r *Registrar) makeGinConditionalHandlerFunc(handler gin.HandlerFunc, rm Re
 		if matches, e := rm.MatchesWithContext(c, c.Request); e == nil && matches {
 			handler(c)
 		} else if e != nil {
-			c.Error(e)
+			_ = c.Error(e)
 			c.Abort()
 		}
 	}
