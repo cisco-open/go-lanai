@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0     http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>Go Build Webjars</name>
+    <description>Go Build Webjars</description>
+
+    <groupId>com.cisco.nfv</groupId>
+    <artifactId>webjars</artifactId>
+    <version>0.0.1</version>
+    <packaging>jar</packaging>
+
+    <properties>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.cisco.vms.ui</groupId>
+            <artifactId>login-app</artifactId>
+            <version>[3.11.0,)</version>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>virtual_repo</id>
+            <url>https://engci-maven-master.cisco.com/artifactory/symphony-group/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>virtual_repo</id>
+            <url>https://engci-maven-master.cisco.com/artifactory/symphony-group/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+</project>
