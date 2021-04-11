@@ -1,8 +1,10 @@
 package webjars
 
 import (
-	"fmt"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/build/cmdutils"
+	"encoding/json"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var (
@@ -16,19 +18,16 @@ var (
 )
 
 type Arguments struct {
-	Value     string  `flag:"str,s,default str" desc:"string value"`
-	StrPtr  *string `flag:"" desc:"stringPtr"`
-	Int     int     `flag:"" desc:""`
-	IntPtr  *int    `flag:"" desc:""`
-	Bool    bool    `flag:"" desc:""`
-	BoolPtr *bool   `flag:"" desc:""`
+	GroupId   string  `flag:"group,g,required" desc:"Webjar's Group ID"`
+	ArtifactId   string  `flag:"artifact,a,required" desc:"Webjar's Artifact ID"`
+	Version   string  `flag:"version,v,required" desc:"Webjar's Version"`
 }
 
 func init() {
-	Cmd.PersistentFlags().StringVarP(&Args.Value, "value", "v", "default", "Test value")
+	cmdutils.PersistentFlags(Cmd, &Args)
 }
 
 func Run(cmd *cobra.Command, args []string) error {
-	fmt.Printf("Arg: %s\n", Args.Value)
+	_ = json.NewEncoder(os.Stdout).Encode(Args)
 	return nil
 }

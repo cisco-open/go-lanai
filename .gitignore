@@ -1,6 +1,10 @@
 # Mac OS X files
 .DS_Store
 
+# Build folders
+**/.tmp
+dist
+
 # Binaries for programs and plugins
 *.exe
 *.exe~

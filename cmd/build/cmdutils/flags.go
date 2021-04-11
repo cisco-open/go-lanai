@@ -16,6 +16,8 @@ const (
 	//TagKeyEnv = "env"
 )
 
+type flagOptions func(*flagMeta) error
+
 type flagMeta struct {
 	fullName    string
 	shortName   string
@@ -32,7 +34,17 @@ type flagMeta struct {
 func PersistentFlags(cmd *cobra.Command, value interface{}) {
 	flags := parseForFlags(value)
 	for _, meta := range flags {
-		if e := registerFlags(cmd.PersistentFlags(), meta); e != nil {
+		if e := registerFlags(cmd.PersistentFlags(), meta, requirePersistentFlag(cmd)); e != nil {
+			panic(e)
+		}
+	}
+}
+
+// LocalFlags is similar to PersistentFlags
+func LocalFlags(cmd *cobra.Command, value interface{}) {
+	flags := parseForFlags(value)
+	for _, meta := range flags {
+		if e := registerFlags(cmd.PersistentFlags(), meta, requireLocalFlag(cmd)); e != nil {
 			panic(e)
 		}
 	}
@@ -144,7 +156,7 @@ func isStructOrPtr(t reflect.Type) bool {
 	return t.Kind() == reflect.Struct || t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct
 }
 
-func registerFlags(flags *pflag.FlagSet, meta *flagMeta) error {
+func registerFlags(flags *pflag.FlagSet, meta *flagMeta, options...flagOptions) error {
 	switch p := meta.ptr.(type) {
 	case *string:
 		flags.StringVarP(p, meta.fullName, meta.shortName, meta.defaultVal.(string), meta.description)
@@ -163,6 +175,32 @@ func registerFlags(flags *pflag.FlagSet, meta *flagMeta) error {
 	default:
 		return fmt.Errorf(`unsupported type [%T] as flag`, meta.ptr)
 	}
+
+	for _, f := range options {
+		if f == nil {
+			continue
+		}
+		if e := f(meta); e != nil {
+			return e
+		}
+	}
 	return nil
 }
 
+func requirePersistentFlag(cmd *cobra.Command) flagOptions {
+	return func(meta *flagMeta) error {
+		if !meta.required {
+			return nil
+		}
+		return cmd.MarkPersistentFlagRequired(meta.fullName)
+	}
+}
+
+func requireLocalFlag(cmd *cobra.Command) flagOptions {
+	return func(meta *flagMeta) error {
+		if !meta.required {
+			return nil
+		}
+		return cmd.MarkFlagRequired(meta.fullName)
+	}
+}

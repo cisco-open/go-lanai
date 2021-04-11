@@ -3,8 +3,10 @@ package noop
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/build/cmdutils"
 	"encoding/json"
+	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"strings"
 )
 
 var (
@@ -40,7 +42,13 @@ func init() {
 	cmdutils.PersistentFlags(Cmd, &Args)
 }
 
-func Run(cmd *cobra.Command, args []string) error {
+func Run(_ *cobra.Command, _ []string) error {
+	fmt.Println()
 	_ = json.NewEncoder(os.Stdout).Encode(Args)
+	for _, env := range os.Environ() {
+		if strings.Contains(strings.ToUpper(env), "GO") {
+			fmt.Println(env)
+		}
+	}
 	return nil
 }
