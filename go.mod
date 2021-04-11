@@ -35,4 +35,5 @@ require (
 	golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0
 	gorm.io/driver/postgres v1.0.8
 	gorm.io/gorm v1.21.3
+	mvdan.cc/sh/v3 v3.2.4
 )

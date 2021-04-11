@@ -38,13 +38,12 @@ func EnsureDir(dirPath *string, base string, cleanIfExist bool, desc string) Run
 
 func EnsureGlobalDirectories() RunE {
 	return func(_ *cobra.Command, _ []string) error {
-		if e := ensureDir(&GlobalArgs.WorkingDir, currentDir(), false); e != nil {
+		if e := ensureDir(&GlobalArgs.WorkingDir, goModDir(), false); e != nil {
 			return fmt.Errorf("working directory: %v", e)
 		}
 		if e := ensureDir(&GlobalArgs.TmpDir, GlobalArgs.WorkingDir, true); e != nil {
 			return fmt.Errorf("tmp directory: %v", e)
 		}
-
 		if e := ensureDir(&GlobalArgs.OutputDir, GlobalArgs.WorkingDir, false); e != nil {
 			return fmt.Errorf("output directory: %v", e)
 		}
@@ -90,7 +89,7 @@ func mkdirIfNotExists(path string) error {
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if e := os.Mkdir(path, 0744); e != nil {
+		if e := os.MkdirAll(path, 0744); e != nil {
 			return e
 		}
 	}

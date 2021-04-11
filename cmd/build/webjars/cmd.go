@@ -2,9 +2,12 @@ package webjars
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/build/cmdutils"
-	"encoding/json"
+	"embed"
 	"github.com/spf13/cobra"
-	"os"
+)
+
+const (
+	defaultWebjarContentPath = "META-INF/resources/webjars"
 )
 
 var (
@@ -14,20 +17,32 @@ var (
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               Run,
 	}
-	Args = Arguments{}
+	Args = Arguments{
+		Resources: []string{},
+	}
 )
 
 type Arguments struct {
-	GroupId   string  `flag:"group,g,required" desc:"Webjar's Group ID"`
-	ArtifactId   string  `flag:"artifact,a,required" desc:"Webjar's Artifact ID"`
-	Version   string  `flag:"version,v,required" desc:"Webjar's Version"`
+	GroupId    string   `flag:"group,g,required" desc:"Webjar's Group ID"`
+	ArtifactId string   `flag:"artifact,a,required" desc:"Webjar's Artifact ID"`
+	Version    string   `flag:"version,v,required" desc:"Webjar's Version"`
+	Resources  []string `flag:"resources,r" desc:"Comma delimited list of additional resources from unpacked webjar. META-INF/resources/webjars is implicit"`
 }
+
+//go:embed pom.xml.tmpl
+var TmplFS embed.FS
 
 func init() {
 	cmdutils.PersistentFlags(Cmd, &Args)
 }
 
-func Run(cmd *cobra.Command, args []string) error {
-	_ = json.NewEncoder(os.Stdout).Encode(Args)
+func Run(cmd *cobra.Command, _ []string) error {
+	if e := generatePom(cmd.Context()); e != nil {
+		return e
+	}
+
+	if e := executeMaven(cmd.Context()); e != nil {
+		return e
+	}
 	return nil
 }

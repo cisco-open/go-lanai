@@ -15,7 +15,7 @@ var (
 )
 
 type Global struct {
-	WorkingDir string `flag:"workspace,w" desc:"Working directory. All non-absolute paths are relative to this directory"`
+	WorkingDir string `flag:"workspace,w" desc:"Working directory containing 'go.mod'. All non-absolute paths are relative to this directory"`
 	TmpDir     string `flag:"tmp-dir" desc:"Temporary directory."`
 	OutputDir  string `flag:"output,o" desc:"Output directory. All non-absolute paths for output are relative to this directory"`
 }
@@ -28,11 +28,7 @@ func (g Global) AbsPath(base, path string) string {
 }
 
 func DefaultWorkingDir() string {
-	currDir, e := os.Getwd()
-	if e != nil {
-		panic(e)
-	}
-	return currDir
+	return goModDir()
 }
 
 func DefaultTemporaryDir() string {
@@ -71,11 +67,11 @@ func goModDir() string {
 		panic(e)
 	}
 
-	for path := currDir; path != "" && path != "."; path = filepath.Dir(path) {
-		gomodPath := path + "/go.mod"
+	for dir := currDir; dir != "" && dir != "."; dir = filepath.Dir(dir) {
+		gomodPath := dir + "/go.mod"
 		if _, e := os.Stat(gomodPath); e == nil {
-			return path
+			return dir
 		}
 	}
-	return ""
+	return currentDir()
 }
