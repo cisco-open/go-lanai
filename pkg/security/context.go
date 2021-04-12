@@ -118,6 +118,10 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 func HasAccessToTenant(ctx context.Context, tenantId string) bool {
 	auth := Get(ctx)
 
+	if HasPermissions(auth, SpecialPermissionAccessAllTenant) {
+		return true
+	}
+
 	if ud, ok := auth.Details().(UserDetails); ok {
 		if ud.AssignedTenantIds().Has(tenantId) {
 			return true
