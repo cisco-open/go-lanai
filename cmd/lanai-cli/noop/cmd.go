@@ -1,7 +1,7 @@
 package noop
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/build/cmdutils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"

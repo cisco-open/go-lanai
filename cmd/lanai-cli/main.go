@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/build/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/build/noop"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/build/webjars"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/noop"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/webjars"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+
 	"github.com/spf13/cobra"
 	"os"
 )

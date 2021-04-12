@@ -2,7 +2,7 @@ package webjars
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/build/cmdutils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -20,7 +20,7 @@ type pomTmplData struct {
 }
 
 func generatePom(_ context.Context) error {
-	t, e := template.New("pom.xml").ParseFS(TmplFS, "*.tmpl")
+	t, e := template.New("templates").ParseFS(TmplFS, "*.tmpl")
 	if e != nil {
 		return e
 	}
