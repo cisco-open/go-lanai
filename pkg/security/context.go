@@ -114,7 +114,16 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 	return true
 }
 
+/**
+	If the user has ACCESS_ALL_TENANT permission, this method will always return true
 
+	If the user's designated tenants include the give tenant, this method will return true
+
+	if the tenant hierarchy is loaded, this method will also check if any of the given tenant's ancestor
+	is in the user's designated tenant. If yes, this method will return true.
+
+	otherwise, this method return false.
+ */
 func HasAccessToTenant(ctx context.Context, tenantId string) bool {
 	auth := Get(ctx)
 
