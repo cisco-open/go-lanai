@@ -12,25 +12,16 @@ RUN mkdir -p -m 0600 ~/.ssh && \
     ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 RUN --mount=type=ssh make init-once; \
-#    mkdir ~/.ssh/; \
-#    echo "StrictHostKeyChecking no " > /root/.ssh/config; \
-#    cp /go/src/.tmp/id_rsa ~/.ssh/; \
-#    chmod 400 ~/.ssh/id_rsa; \
-#    ssh-add -K ~/.ssh/id_rsa; \
-#    ssh-add --help; \
-#    ssh -i;\
-#    ssh -T git@cto-github.cisco.com; \
     go mod edit -dropreplace cto-github.cisco.com/NFV-BU/go-lanai; \
     go get cto-github.cisco.com/NFV-BU/go-lanai@build; \
-#    go mod download; \
-    make init build
+    make clean init build
 
-FROM alpine:3.13.4
+FROM buildpack-deps:buster-curl
 EXPOSE {{- range $_, $elem := .Executables }} {{ if gt $elem.Port 0 }}{{ $elem.Port }} {{ end }} {{- end }}
 WORKDIR /service/
-COPY --from=builder /app/src/dist/** /service/
+COPY --from=builder /go/src/dist /service
 {{- range $name, $elem := .Executables }}
-    {{ if gt $elem.Port 0 }}
-CMD ["/service/{{ $name }}"]
-    {{ end }}
+    {{- if gt $elem.Port 0 }}
+ENTRYPOINT ["/service/{{ $name }}"]
+    {{- end }}
 {{- end }}

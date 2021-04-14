@@ -43,7 +43,7 @@ func NewApplicationConfig(providers ...Provider) *ApplicationConfig {
 	return &ApplicationConfig{config{providers: providers}}
 }
 
-//load will fail if place holder cannot be resolved due to circular dependency
+//Load will fail if place holder cannot be resolved due to circular dependency
 func (c *config) Load(force bool) (loadError error) {
 	defer func() {
 		if loadError != nil {

@@ -28,9 +28,9 @@ generate: init $(GEN_LIST)
 test: generate
 	$(GO) test -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/...
 
-build: generate $(EXECS) copy-resources
+build: $(EXECS) copy-resources
 
-copy-resources: generate $(RES_LIST)
+copy-resources: $(RES_LIST)
 
 # Docker
 init-docker: init-once
@@ -38,9 +38,7 @@ init-docker: init-once
 	$(SSHADD) -K ~/.ssh/id_rsa
 
 build-docker:
-	#sudo cp ~/.ssh/id_rsa* .tmp/
-	#sudo chmod 664 .tmp/id_rsa*
-	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain .
+	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain . -t europa:latest
 
 clean:
 	rm -rf $(DESTDIR)/*
