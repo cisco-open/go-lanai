@@ -1,10 +1,10 @@
+DOCKER = docker
+SSHADD = ssh-add
+
 DESTDIR = dist
 MODULE = {{ .Module.Path }}
+
 EXECS = {{- range $key, $_ := .Executables }} {{ $key }} {{- end }}
-MAIN_LIST = \
-	{{- range .Executables }}
-	{{ .Main }} \
-	{{- end }}
 
 GEN_LIST = \
 	{{- range .Generates }}
@@ -32,6 +32,16 @@ build: generate $(EXECS) copy-resources
 
 copy-resources: generate $(RES_LIST)
 
+# Docker
+init-docker: init-once
+	# ssh-add is necessary for build-docker
+	$(SSHADD) -K ~/.ssh/id_rsa
+
+build-docker:
+	#sudo cp ~/.ssh/id_rsa* .tmp/
+	#sudo chmod 664 .tmp/id_rsa*
+	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain .
+
 clean:
 	rm -rf $(DESTDIR)/*
 
@@ -50,3 +60,4 @@ $(GEN_LIST):
 resource@{{ .Output }}:
 	cp -rf {{ .Pattern }} $(DESTDIR)/{{ .Output }}
 	{{ end }}
+

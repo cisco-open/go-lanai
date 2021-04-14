@@ -23,3 +23,14 @@ func generateMakefile(ctx context.Context) error {
 		Model:      &Module,
 	})
 }
+
+func generateDockerfile(ctx context.Context) error {
+	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
+		FS:         TmplFS,
+		TmplName:   "Dockerfile.tmpl",
+		Output:     filepath.Join(cmdutils.GlobalArgs.OutputDir, "build/package/Dockerfile"),
+		OutputPerm: 0644,
+		Overwrite:  Args.Force,
+		Model:      &Module,
+	})
+}
