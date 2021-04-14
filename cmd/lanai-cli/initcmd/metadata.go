@@ -63,27 +63,28 @@ func validateModuleMetadata(ctx context.Context) error {
 }
 
 // fixPkgPath attempts to fix given pkg path if it's relative to go.mod folder
-func fixPkgPath(ctx context.Context, path string, module string) (string, error) {
+func fixPkgPath(ctx context.Context, path string, module string) (pkgPath string, err error) {
+	pkgPath = path
 	switch {
-	case strings.ToLower(filepath.Ext(path)) == ".go":
+	case strings.ToLower(filepath.Ext(pkgPath)) == ".go":
 		// go file should not prepend with module name
-		return path, nil
-	case strings.HasPrefix(strings.ToLower(path), strings.ToLower(module)):
+		return
+	case strings.HasPrefix(strings.ToLower(pkgPath), strings.ToLower(module)):
 		// already prepended with module name
-		return path, nil
+		return
 	}
 
-	if ok, e := cmdutils.IsLocalPackageExists(ctx, path); e == nil && ok {
-		return path, nil
+	if ok, e := cmdutils.IsLocalPackageExists(ctx, pkgPath); e == nil && ok {
+		return
 	}
 
 	// try add module string and check again
-	pkgPath := module + "/" + path
+	pkgPath = module + "/" + path
 	if ok, e := cmdutils.IsLocalPackageExists(ctx, pkgPath); e != nil {
 		return "", e
 	} else if !ok {
 		return "", fmt.Errorf("unable to fix package path value [%s]. package [%s] doesn't exists", path, pkgPath)
 	} else {
-		return path, nil
+		return
 	}
 }
