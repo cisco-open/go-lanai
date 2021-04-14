@@ -3,9 +3,7 @@ package webjars
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"os"
 	"path/filepath"
-	"text/template"
 )
 
 type resource struct {
@@ -19,20 +17,8 @@ type pomTmplData struct {
 	Resources []resource
 }
 
-func generatePom(_ context.Context) error {
-	t, e := template.New("templates").ParseFS(TmplFS, "*.tmpl")
-	if e != nil {
-		return e
-	}
 
-	// prepare temp pom.xml to write
-	out := filepath.Join(cmdutils.GlobalArgs.TmpDir, "pom.xml")
-	f, e := os.OpenFile(out, os.O_CREATE|os.O_WRONLY, 0644)
-	if e != nil {
-		return e
-	}
-	defer func() {_ = f.Close()}()
-
+func generatePom(ctx context.Context) error {
 	resources := []resource{
 		{
 			Directory: defaultWebjarContentPath,
@@ -49,7 +35,15 @@ func generatePom(_ context.Context) error {
 		Arguments: &Args,
 		Resources: resources,
 	}
-	return t.ExecuteTemplate(f, "pom.xml.tmpl", data)
+
+	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
+		FS:         TmplFS,
+		TmplName:   "pom.xml.tmpl",
+		Output:     filepath.Join(cmdutils.GlobalArgs.TmpDir, "pom.xml"),
+		OutputPerm: 0644,
+		Overwrite:  true,
+		Model:      data,
+	})
 }
 
 func executeMaven(ctx context.Context) error {

@@ -1,0 +1,16 @@
+execs:
+  europa:
+    main: cmd/europa/main.go
+    port: 8080
+  migrate:
+    main: cmd/europa/migrate.go
+  seeder:
+    main: cmd/europa/seeder.go
+
+generates:
+  - path: "cmd/europa/main.go"
+  - path: "cmd/sandbox"
+
+resources:
+  - pattern: "configs"
+    output: "configs"

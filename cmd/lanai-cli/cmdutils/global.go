@@ -1,12 +1,14 @@
 package cmdutils
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"os"
 	"path"
 	"path/filepath"
 )
 
 var (
+	logger = log.New("Build")
 	GlobalArgs = Global{
 		WorkingDir: DefaultWorkingDir(),
 		TmpDir:     DefaultTemporaryDir(),
@@ -15,9 +17,10 @@ var (
 )
 
 type Global struct {
-	WorkingDir string `flag:"workspace,w" desc:"Working directory containing 'go.mod'. All non-absolute paths are relative to this directory"`
-	TmpDir     string `flag:"tmp-dir" desc:"Temporary directory."`
-	OutputDir  string `flag:"output,o" desc:"Output directory. All non-absolute paths for output are relative to this directory"`
+	WorkingDir string `flag:"workspace,w" desc:"working directory containing 'go.mod'. All non-absolute paths are relative to this directory"`
+	TmpDir     string `flag:"tmp-dir" desc:"temporary directory."`
+	OutputDir  string `flag:"output,o" desc:"output directory. All non-absolute paths for output are relative to this directory"`
+	Verbose      bool   `flag:"debug" desc:"show debug information"`
 }
 
 func (g Global) AbsPath(base, path string) string {

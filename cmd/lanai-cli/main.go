@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/initcmd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/noop"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/webjars"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -52,6 +53,8 @@ func init() {
 func main() {
 	rootCmd.AddCommand(noop.Cmd)
 	rootCmd.AddCommand(webjars.Cmd)
+	rootCmd.AddCommand(initcmd.Cmd)
+
 	cmdutils.PersistentFlags(rootCmd, &cmdutils.GlobalArgs)
 	if e := rootCmd.ExecuteContext(context.Background()); e != nil {
 		os.Exit(1)

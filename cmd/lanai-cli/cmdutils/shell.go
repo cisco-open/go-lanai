@@ -18,6 +18,9 @@ type ShCmdOption struct {
 	Dir     string
 	Env     []string
 	ShowCmd bool
+	Stdin io.Reader
+	Stdout io.Writer
+	Stderr io.Writer
 }
 
 // ShellCmd add shell commends
@@ -63,12 +66,36 @@ func ShellShowCmd(show bool) ShCmdOptions {
 	}
 }
 
+// ShellStdIn toggle display command in log
+func ShellStdIn(r io.Reader) ShCmdOptions {
+	return func(opt *ShCmdOption) {
+		opt.Stdin = r
+	}
+}
+
+// ShellStdOut toggle display command in log
+func ShellStdOut(w io.Writer) ShCmdOptions {
+	return func(opt *ShCmdOption) {
+		opt.Stdout = w
+	}
+}
+
+// ShellStdErr toggle display command in log
+func ShellStdErr(w io.Writer) ShCmdOptions {
+	return func(opt *ShCmdOption) {
+		opt.Stderr = w
+	}
+}
+
 // RunShellCommands runs a shell command, returns exit status and an error
 func RunShellCommands(ctx context.Context, opts ...ShCmdOptions) (uint8, error) {
 	opt := ShCmdOption{
 		Cmds: []string{},
 		Dir: GlobalArgs.TmpDir,
 		Env: os.Environ(),
+		Stdin: os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
 	}
 	for _, f := range opts {
 		f(&opt)
@@ -93,7 +120,7 @@ func runSingleCommand(ctx context.Context, cmd string, opt *ShCmdOption) (uint8,
 		interp.Dir(opt.Dir),
 		interp.Env(expand.ListEnviron(opt.Env...)),
 		interp.OpenHandler(openHandler),
-		interp.StdIO(os.Stdin, os.Stdout, os.Stderr),
+		interp.StdIO(opt.Stdin, opt.Stdout, opt.Stderr),
 	)
 	if err != nil {
 		return 1, err

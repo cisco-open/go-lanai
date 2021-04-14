@@ -1,14 +1,10 @@
 package cmdutils
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 	"github.com/spf13/cobra"
-	"os"
 	"path/filepath"
 )
-
-var logger = log.New("Build")
 
 type RunE func(cmd *cobra.Command, args []string) error
 
@@ -53,6 +49,10 @@ func EnsureGlobalDirectories() RunE {
 
 func PrintEnvironment() RunE {
 	return func(cmd *cobra.Command, _ []string) error {
+		if !GlobalArgs.Verbose {
+			return nil
+		}
+
 		logger := logger.WithContext(cmd.Context())
 		logger.Debugf("%18s: %s", "Working Directory", GlobalArgs.WorkingDir)
 		logger.Debugf("%18s: %s", "Tmp Directory", GlobalArgs.TmpDir)
@@ -83,35 +83,3 @@ func ensureDir(path *string, base string, cleanIfExist bool) (err error) {
 	return
 }
 
-func mkdirIfNotExists(path string) error {
-	if !filepath.IsAbs(path) {
-		return fmt.Errorf("%s is not absolute path", path)
-	}
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if e := os.MkdirAll(path, 0744); e != nil {
-			return e
-		}
-	}
-	return nil
-}
-
-func removeContents(dir string) error {
-	d, err := os.Open(dir)
-	if err != nil {
-		return err
-	}
-	defer func() {_ = d.Close()}()
-
-	names, err := d.Readdirnames(-1)
-	if err != nil {
-		return err
-	}
-	for _, name := range names {
-		err = os.RemoveAll(filepath.Join(dir, name))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
