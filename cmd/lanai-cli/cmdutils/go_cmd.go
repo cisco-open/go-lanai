@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -127,4 +128,56 @@ func IsLocalPackageExists(ctx context.Context, pkgPath string) (bool, error) {
 	}
 	_, ok := cache[pkgPath]
 	return ok, nil
+}
+
+func DropReplace(ctx context.Context, module string, version string) error {
+
+	var cmd ShCmdOptions
+	if version == "" {
+		cmd = ShellCmd(fmt.Sprintf("go mod edit -dropreplace %s", module))
+	} else {
+		cmd = ShellCmd(fmt.Sprintf("go mod edit -dropreplace %s@%s", module, version))
+	}
+
+	logger.Infof("dropping replace directive %s, %s", module, version)
+
+	_, err := RunShellCommands(ctx,
+		ShellShowCmd(true),
+		ShellUseWorkingDir(),
+		cmd,
+		ShellStdOut(os.Stdout))
+
+	return err
+}
+
+func GoGet(ctx context.Context, module string, versionQuery string) error {
+	_, e := RunShellCommands(ctx,
+		ShellShowCmd(true),
+		ShellUseWorkingDir(),
+		ShellCmd(fmt.Sprintf("go get %s@%s", module, versionQuery)),
+		ShellStdOut(os.Stdout))
+	return e
+}
+
+func GoModTidy(ctx context.Context) error {
+	_, e := RunShellCommands(ctx,
+		ShellShowCmd(true),
+		ShellUseWorkingDir(),
+		ShellCmd(fmt.Sprintf("go mod tidy")),
+		ShellStdOut(os.Stdout))
+	return e
+}
+
+func GetGoMod(ctx context.Context) (*GoMod, error){
+	result, e := GoCommandDecodeJson(ctx, &GoMod{},
+		ShellShowCmd(true),
+		ShellUseWorkingDir(),
+		ShellCmd("go mod edit -json"),
+	)
+	if e != nil {
+		return nil, e
+	}
+
+	m := result[0].(*GoMod)
+	return m, nil
 }
