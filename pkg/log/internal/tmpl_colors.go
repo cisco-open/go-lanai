@@ -2,10 +2,9 @@ package internal
 
 import (
 	"fmt"
+	"github.com/go-kit/kit/log/term"
 	"io"
-	"syscall"
 	"text/template"
-	"unsafe"
 )
 
 // color code generation and terminal check is adopted from github.com/go-kit/kit/log/term
@@ -98,21 +97,10 @@ func init() {
 	}
 }
 
-type fdAware interface {
-	Fd() uintptr
-}
-
 // IsTerminal returns true if w writes to a terminal.
 // Implementations adopted from github.com/go-kit/kit/log/term
 func IsTerminal(w io.Writer) bool {
-	fw, ok := w.(fdAware)
-	if !ok {
-		return false
-	}
-
-	var termios syscall.Termios
-	_, _, err := syscall.Syscall6(syscall.SYS_IOCTL, fw.Fd(), syscall.TIOCGETA, uintptr(unsafe.Pointer(&termios)), 0, 0, 0)
-	return err == 0
+	return term.IsTerminal(w)
 }
 
 func ColoredWithCode(s interface{}, fg, bg Color) string {
@@ -151,7 +139,7 @@ func MakeQuickColorFunc(fg Color) func(s interface{}) string {
 	}
 }
 
-func NoopColored(v interface{}, colorNames...string) interface{} {
+func NoopColored(v interface{}, _...string) interface{} {
 	return v
 }
 

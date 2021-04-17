@@ -1,10 +1,10 @@
+DOCKER = docker
+SSHADD = ssh-add
+
 DESTDIR = dist
 MODULE = {{ .Module.Path }}
+
 EXECS = {{- range $key, $_ := .Executables }} {{ $key }} {{- end }}
-MAIN_LIST = \
-	{{- range .Executables }}
-	{{ .Main }} \
-	{{- end }}
 
 GEN_LIST = \
 	{{- range .Generates }}
@@ -28,9 +28,17 @@ generate: init $(GEN_LIST)
 test: generate
 	$(GO) test -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/...
 
-build: generate $(EXECS) copy-resources
+build: $(EXECS) copy-resources
 
-copy-resources: generate $(RES_LIST)
+copy-resources: $(RES_LIST)
+
+# Docker
+init-docker: init-once
+	# ssh-add is necessary for build-docker
+	$(SSHADD) -K ~/.ssh/id_rsa
+
+build-docker:
+	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain . -t europa:latest
 
 clean:
 	rm -rf $(DESTDIR)/*
@@ -50,3 +58,4 @@ $(GEN_LIST):
 resource@{{ .Output }}:
 	cp -rf {{ .Pattern }} $(DESTDIR)/{{ .Output }}
 	{{ end }}
+

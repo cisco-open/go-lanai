@@ -1,0 +1,27 @@
+
+###
+### Build container
+###
+
+FROM golang:1.16.3 AS builder
+ARG BUILD_FLAGS
+WORKDIR /go/src/
+ADD . /go/src/
+RUN mkdir -p -m 0600 ~/.ssh && \
+    echo "StrictHostKeyChecking no " > /root/.ssh/config && \
+    ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+RUN --mount=type=ssh make init-once; \
+    go mod edit -dropreplace cto-github.cisco.com/NFV-BU/go-lanai; \
+    go get cto-github.cisco.com/NFV-BU/go-lanai@build; \
+    make clean init build
+
+FROM buildpack-deps:buster-curl
+EXPOSE {{- range $_, $elem := .Executables }} {{ if gt $elem.Port 0 }}{{ $elem.Port }} {{ end }} {{- end }}
+WORKDIR /service/
+COPY --from=builder /go/src/dist /service
+{{- range $name, $elem := .Executables }}
+    {{- if gt $elem.Port 0 }}
+ENTRYPOINT ["/service/{{ $name }}"]
+    {{- end }}
+{{- end }}
