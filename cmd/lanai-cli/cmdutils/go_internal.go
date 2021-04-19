@@ -3,6 +3,7 @@ package cmdutils
 import "time"
 
 // this file contains structs defined in cmd/go/internal for parsing go command result
+// see https://golang.org/cmd/go/
 
 type GoPackage struct {
 	Dir           string    // directory containing package sources
@@ -97,4 +98,35 @@ type GoModule struct {
 
 type GoModuleError struct {
 	Err string // the error itself
+}
+
+type Module struct {
+	Path string
+	Version string
+}
+
+type GoMod struct {
+	Module  Module
+	Go      string
+	Require []Require
+	Exclude []Module
+	Replace []Replace
+	Retract []Retract
+}
+
+type Require struct {
+	Path string
+	Version string
+	Indirect bool
+}
+
+type Replace struct {
+	Old Module
+	New Module
+}
+
+type Retract struct {
+	Low       string
+	High      string
+	Rationale string
 }
