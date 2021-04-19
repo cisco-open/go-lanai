@@ -79,6 +79,7 @@ func (c *config) Load(force bool) (err error) {
 
 	// reset all groups if force == true
 	if force {
+		c.profiles = nil
 		for _, g := range c.groups {
 			g.Reset()
 		}
@@ -146,12 +147,20 @@ func (c *config) Load(force bool) (err error) {
 		final = merged
 	}
 
-	// resolve placeholder and return
+	// resolve placeholder
 	if e := resolve(final); e != nil {
 		err = e
 		return
 	}
 	c.properties = final
+
+	// resolve profiles
+	c.profiles = utils.NewStringSet()
+	for _, v := range resolveProfiles(final) {
+		if v != "" {
+			c.profiles.Add(v)
+		}
+	}
 
 	// providers are stored in highest precedence first
 	l := len(providers)
@@ -162,57 +171,6 @@ func (c *config) Load(force bool) (err error) {
 
 	return
 }
-
-////Load will fail if place holder cannot be resolved due to circular dependency
-//func (c *config) singlePassLoad(force bool) (loadError error) {
-//	defer func() {
-//		if loadError != nil {
-//			c.isLoaded = false
-//		} else {
-//			c.isLoaded = true
-//		}
-//	}()
-//
-//	//sort based on precedence
-//	sort.SliceStable(c.providers, func(i, j int) bool { return c.providers[i].Order() > c.providers[j].Order() })
-//
-//	// Load appconfig from each auth if it's not loaded yet, or if force reload.
-//	for _, provider := range c.providers {
-//		if !provider.IsLoaded() || force {
-//			if e := provider.Load(); e != nil {
-//				return errors.Wrap(e, "Failed to load properties")
-//			}
-//		}
-//	}
-//
-//	merged := make(map[string]interface{})
-//	// merge data
-//	mergeOption := func(mergoConfig *mergo.Config) {
-//		mergoConfig.Overwrite = true
-//	}
-//
-//	for _, provider := range c.providers {
-//		if provider.GetSettings() != nil {
-//			formatted, error := ProcessKeyFormat(provider.GetSettings(), NormalizeKey)
-//			if error != nil {
-//				return errors.Wrap(error, "Failed to format keys before merge")
-//			}
-//			mergeError := mergo.Merge(&merged, formatted, mergeOption)
-//			if mergeError != nil {
-//				return errors.Wrap(error, "Failed to merge properties from property sources")
-//			}
-//		}
-//	}
-//
-//	error := resolve(merged)
-//
-//	if error != nil {
-//		return error
-//	}
-//
-//	c.properties = merged
-//	return nil
-//}
 
 func (c *config) Value(key string) interface{} {
 	if !c.isLoaded {
@@ -458,39 +416,6 @@ func resolveValue(source map[string]interface{}, key string, originKey string) (
 	}
 	return resolvedValue, nil
 }
-
-//func updateMapUsingFlatKey(source map[string]interface{}, flatKey string, value interface{}) {
-//	nestedKeys := UnFlattenKey(flatKey)
-//
-//	var tmp interface{} = source
-//	for i, nestedKey := range nestedKeys {
-//		//TODO: depulicate this index logic
-//		indexStart := strings.Index(nestedKey, "[")
-//		indexEnd := strings.Index(nestedKey, "]")
-//
-//		var index int = -1
-//		if indexStart > -1 && indexEnd > -1 {
-//			indexStr := nestedKey[indexStart+1 : indexEnd]
-//			index, _ = strconv.Atoi(indexStr)
-//			nestedKey = nestedKey[0:indexStart]
-//		}
-//
-//		//if we are not at the leaf yet
-//		//we move tmp to the next level
-//		if i < len(nestedKeys)-1 {
-//			tmp = (tmp.(map[string]interface{}))[nestedKey]
-//			if index > -1 {
-//				tmp = tmp.([]interface{})[index]
-//			}
-//		} else {
-//			if index > -1 {
-//				((tmp.(map[string]interface{}))[nestedKey].([]interface{}))[index] = value
-//			} else {
-//				(tmp.(map[string]interface{}))[nestedKey] = value
-//			}
-//		}
-//	}
-//}
 
 const placeHolderPrefix = "${"
 const placeHolderSuffix = "}"

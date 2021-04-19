@@ -107,7 +107,7 @@ func NewProfileBasedProviderGroup(order int) *ProfileBasedProviderGroup {
 
 func (g *ProfileBasedProviderGroup) Providers(ctx context.Context, conf bootstrap.ApplicationConfig) (providers []Provider) {
 
-	profiles := g.resolveProfiles(conf)
+	profiles := resolveProfiles(conf)
 
 	// resolve names, create new providers if necessary
 	g.ProviderKeys = []string{}
@@ -140,7 +140,7 @@ func (g *ProfileBasedProviderGroup) Providers(ctx context.Context, conf bootstra
 	return g.DynamicProviderGroup.Providers(ctx, conf)
 }
 
-func (g *ProfileBasedProviderGroup) resolveProfiles(conf bootstrap.ApplicationConfig) (profiles []string) {
+func resolveProfiles(conf bootstrap.ApplicationConfig) (profiles []string) {
 	// active profiles
 	active, _ := conf.Value(PropertyKeyActiveProfiles).([]string)
 	for _, p := range active {
