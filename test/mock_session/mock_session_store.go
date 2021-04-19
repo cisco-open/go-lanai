@@ -167,3 +167,38 @@ func (mr *MockStoreMockRecorder) FindByPrincipalName(principal, sessionName inte
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByPrincipalName", reflect.TypeOf((*MockStore)(nil).FindByPrincipalName), principal, sessionName)
 }
+
+func (m *MockStore) Invalidate(sessions ...*session.Session) error {
+	m.ctrl.T.Helper()
+	args := make([]interface{}, len(sessions))
+	for i, v := range sessions {
+		args[i] = v
+	}
+	ret := m.ctrl.Call(m, "Invalidate", args...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Invalidate indicates an expected call of MockStore.Invalidate
+func (mr *MockStoreMockRecorder) Invalidate(sessions ...*session.Session) *gomock.Call {
+	args := make([]interface{}, len(sessions))
+	for i, v := range sessions {
+		args[i] = v
+	}
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockStore)(nil).Invalidate), args...)
+}
+
+func (m *MockStore) InvalidateByPrincipalName(principal, sessionName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InvalidateByPrincipalName", principal, sessionName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InvalidateByPrincipalName indicates an expected call of MockStore.InvalidateByPrincipalName
+func (mr *MockStoreMockRecorder) InvalidateByPrincipalName(principal, sessionName string) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvalidateByPrincipalName",
+		reflect.TypeOf((*MockStore)(nil).InvalidateByPrincipalName), principal, sessionName)
+}

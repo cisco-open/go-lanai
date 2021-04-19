@@ -72,7 +72,7 @@ func (ep *EnvEndpoint) Read(ctx context.Context, input *Input) (*EnvDescriptor, 
 		psrc := PSourceDescriptor{
 			Name: provider.Name(),
 			Properties: map[string]PValueDescriptor{},
-			order: provider.GetPrecedence(),
+			order: provider.Order(),
 		}
 
 		values := provider.GetSettings()

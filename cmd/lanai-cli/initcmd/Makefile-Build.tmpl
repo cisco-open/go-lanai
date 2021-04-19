@@ -37,7 +37,7 @@ init-docker: init-once
 	# ssh-add is necessary for build-docker
 	$(SSHADD) -K ~/.ssh/id_rsa
 
-build-docker:
+build-docker: init-docker generate
 	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain . -t europa:latest
 
 clean:

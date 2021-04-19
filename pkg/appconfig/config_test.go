@@ -1,10 +1,18 @@
 package appconfig
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	. "github.com/onsi/gomega"
 	"strings"
 	"testing"
 )
+
+func init() {
+	gob.Register(map[string]interface{}{})
+	gob.Register([]interface{}{})
+}
 
 func TestParsePlaceHolders(t *testing.T) {
 	v := "${my.place.holder}"
@@ -135,4 +143,102 @@ func TestGettingArrayValue(t *testing.T) {
 	if v != "c1" {
 		t.Errorf("expected %s, actual %s", "c1", v)
 	}
+}
+
+func TestSettingValue(t *testing.T) {
+	var values map[string]interface{}
+
+	values = map[string]interface{}{}
+	t.Run("EmptyMapTestNoIntermediateNodes", SetValueTest(values, "a.b.c", false, true))
+	t.Run("EmptyMapTest", SetValueTest(values, "a.b.c", true, false))
+
+	values = map[string]interface{}{
+		"a": map[string]interface{}{},
+	}
+	t.Run("PartialMapTestNoIntermediateNodes", SetValueTest(values, "a.b.c", false, true))
+	t.Run("PartialMapTest", SetValueTest(values, "a.b.c", true, false))
+
+	values = map[string]interface{}{
+		"a": map[string]interface{}{
+			"b": map[string]interface{}{
+				"c": "another value",
+			},
+		},
+	}
+	t.Run("FullMapTestNoIntermediateNodes", SetValueTest(values, "a.b.c", false, false))
+	t.Run("FullMapTest", SetValueTest(values, "a.b.c", true, false))
+}
+
+func TestSettingValueWithSlicePath(t *testing.T) {
+	var values map[string]interface{}
+
+	values = map[string]interface{}{}
+	t.Run("EmptyMapTestNoIntermediateNodes", SetValueTest(values, "a.b[0].c[0]", false, true))
+	t.Run("EmptyMapTest", SetValueTest(values, "a.b[0].c[0]", true, false))
+	t.Run("EmptyMapTestNonFirstIntermediateNodes", SetValueTest(values, "a.b[1].c[1]", true, false))
+
+	values = map[string]interface{}{
+		"a": map[string]interface{}{
+			"b": []interface{}{
+				map[string]interface{}{},
+			},
+		},
+	}
+	t.Run("PartialMapTestNoIntermediateNodes", SetValueTest(values, "a.b[0].c[0]", false, true))
+	t.Run("PartialMapTest", SetValueTest(values, "a.b[0].c[0]", true, false))
+	t.Run("PartialMapTestNonFirstIntermediateNodes1", SetValueTest(values, "a.b[1].c[0]", true, true))
+	t.Run("PartialMapTestNonFirstIntermediateNodes2", SetValueTest(values, "a.b[0].c[1]", true, false))
+
+	values = map[string]interface{}{
+		"a" : map[string]interface{}{
+			"b":[]interface{}{
+				map[string]interface{}{
+					"c":[]interface{}{
+						"c1",
+					},
+				},
+			},
+		},
+	}
+	t.Run("FullMapTestNoIntermediateNodes", SetValueTest(values, "a.b[0].c[0]", false, false))
+	t.Run("FullMapTest", SetValueTest(values, "a.b[0].c[0]", true, false))
+	t.Run("FullMapTestOutOfIndex1", SetValueTest(values, "a.b[1].c[0]", true, true))
+	t.Run("FullMapTestOutOfIndex2", SetValueTest(values, "a.b[0].c[1]", true, true))
+}
+
+/*********************
+	SubTests
+ *********************/
+func SetValueTest(values map[string]interface{}, key string, createIntermediateNodes bool, expectedFail bool) func(*testing.T) {
+	return func(t *testing.T) {
+		g := NewWithT(t)
+		const testVal = "test value"
+		values, _ = deepCopy(values)
+		e := setValue(values, key, testVal, createIntermediateNodes)
+		if expectedFail {
+			g.Expect(e).To(HaveOccurred(), `setValue at "%s" should return error`, key)
+		} else {
+			g.Expect(e).To(Succeed(), `setValue at "%s" shouldn't return error`, key)
+			g.Expect(value(values, key)).To(Equal(testVal), `value at "%s" should be correct`, key)
+		}
+	}
+}
+
+/*********************
+	Helper
+ *********************/
+// Map performs a deep copy of the given map m.
+func deepCopy(m map[string]interface{}) (map[string]interface{}, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	dec := gob.NewDecoder(&buf)
+	if e := enc.Encode(m); e != nil {
+		panic(e)
+	}
+
+	var cp map[string]interface{}
+	if e := dec.Decode(&cp); e != nil {
+		panic(e)
+	}
+	return cp, nil
 }

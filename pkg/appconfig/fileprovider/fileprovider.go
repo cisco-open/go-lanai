@@ -3,6 +3,7 @@ package fileprovider
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/parser"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 	"io"
@@ -13,9 +14,6 @@ import (
 )
 
 var logger = log.New("Config.File")
-const (
-	configsDirectory = "configs"
-)
 
 type ConfigProvider struct {
 	appconfig.ProviderMeta
@@ -78,12 +76,32 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	return nil
 }
 
-func NewFileProvidersFromBaseName(precedence int, baseName string, ext string) *ConfigProvider {
-	fullPath := path.Join(configsDirectory, baseName + "." + ext)
-	info, err := os.Stat(fullPath)
-	if !os.IsNotExist(err) && !info.IsDir() {
-		file, _ := os.Open(fullPath);
-		return NewProvider(precedence, fullPath, file)
+func NewFileProvidersFromBaseName(precedence int, baseName string, ext string, conf bootstrap.ApplicationConfig) (provider *ConfigProvider, exists bool) {
+
+	raw := conf.Value(appconfig.PropertyKeyConfigFileSearchPath)
+	var searchPaths []string
+	switch v := raw.(type) {
+	case string:
+		searchPaths = []string{v}
+	case []string:
+		searchPaths = v
+	case []interface{}:
+		searchPaths = make([]string, len(v))
+		for i, elem := range v {
+			if s, ok := elem.(string); ok {
+				searchPaths[i] = s
+			}
+		}
 	}
-	return nil
+
+	for _, dir := range searchPaths {
+		fullPath := path.Join(dir, baseName + "." + ext)
+		info, err := os.Stat(fullPath)
+		if !os.IsNotExist(err) && !info.IsDir() {
+			file, _ := os.Open(fullPath)
+			return NewProvider(precedence, fullPath, file), true
+		}
+	}
+
+	return nil, false
 }
