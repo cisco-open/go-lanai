@@ -94,7 +94,7 @@ func (e CodedError) StatusCode() int {
 	return http.StatusUnauthorized
 }
 
-// json.Marshaler
+// MarshalJSON json.Marshaler
 func (e CodedError) MarshalJSON() ([]byte, error) {
 	return web.NewHttpError(e.StatusCode(), e.Err).(json.Marshaler).MarshalJSON()
 }
@@ -102,6 +102,7 @@ func (e CodedError) MarshalJSON() ([]byte, error) {
 /************************
 	Constructors
 *************************/
+
 // NewCodedError creates concrete error. it cannot be used as ErrorType or ErrorSubType comparison
 // supported item are string, error, fmt.Stringer
 func NewCodedError(code int64, e interface{}, causes...interface{}) *CodedError {
@@ -125,11 +126,13 @@ func NewErrorSubType(code int64, e error) error {
 }
 
 /* InternalError family */
+
 func NewInternalError(text string, causes...interface{}) error {
 	return NewCodedError(ErrorTypeCodeInternal, errors.New(text), causes...)
 }
 
 /* AuthenticationError family */
+
 func NewAuthenticationError(value interface{}, causes...interface{}) error {
 	return NewCodedError(ErrorTypeCodeAuthentication, value, causes...)
 }
@@ -167,6 +170,7 @@ func NewAccountStatusError(value interface{}, causes...interface{}) error {
 }
 
 /* AccessControlError family */
+
 func NewAccessControlError(value interface{}, causes...interface{}) error {
 	return NewCodedError(ErrorTypeCodeAccessControl, value, causes...)
 }

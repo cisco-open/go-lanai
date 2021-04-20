@@ -43,6 +43,7 @@ build-docker: init-docker generate
 	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain . -t europa:latest
 
 clean:
+	$(GO) clean
 	rm -rf $(DESTDIR)/*
 
 # Generate
