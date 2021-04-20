@@ -56,7 +56,7 @@ func (a *TimeArray) scanBytes(src []byte) error {
 	var strs pq.StringArray
 	sPtr := &strs
 	if e := sPtr.Scan(src); e != nil {
-		return data.NewDataError(data.ErrorCodeOrmMapping, e.Error(), e)
+		return data.NewDataError(data.ErrorCodeOrmMapping, e)
 	}
 
 	elems := make(TimeArray, len(strs))

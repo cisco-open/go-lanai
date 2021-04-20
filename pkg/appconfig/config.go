@@ -213,7 +213,7 @@ func (c *config) ProviderGroups() []ProviderGroup {
 	Helpers
  *********************/
 func value(nested map[string]interface{}, flatKey string) (ret interface{}) {
-	e := visit(nested, flatKey, func(_ string, v interface{}, isLeaf bool, expectedSliceLen int) interface{} {
+	e := visit(nested, flatKey, func(_ string, v interface{}, isLeaf bool, _ int) interface{} {
 		if isLeaf {
 			ret = v
 		}

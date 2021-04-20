@@ -47,7 +47,7 @@ func (mw *LogoutMiddleware) handleSuccess(c *gin.Context, before security.Authen
 
 func (mw *LogoutMiddleware) handleError(ctx *gin.Context, err error) {
 	mw.errorHandler.HandleAuthenticationError(ctx, ctx.Request, ctx.Writer,
-		security.NewInternalAuthenticationError(err.Error(), err))
+		security.NewInternalAuthenticationError(err))
 	if ctx.Writer.Written() {
 		ctx.Abort()
 	}

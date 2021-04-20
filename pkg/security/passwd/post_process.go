@@ -105,7 +105,7 @@ func (p *AccountStatusPostProcessor) Process(ctx context.Context, acct security.
 	case result.Error == nil && result.Auth != nil && result.Auth.State() >= security.StateAuthenticated:
 		// fully authenticated
 		if history, ok := acct.(security.AccountHistory); ok && history.SerialFailedAttempts() != 0 {
-			logger.WithContext(ctx).Infof("Account[%s] Failure reset", acct.Username())
+			logger.WithContext(ctx).Infof("Account [%s] failed to reset", acct.Username())
 		}
 		updater.RecordSuccess(time.Now())
 		updater.ResetFailedAttempts()

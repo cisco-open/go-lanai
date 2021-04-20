@@ -63,6 +63,7 @@ resource@{{ .Output }}:
 	{{ end }}
 
 
+# TODO module = cto-github.cisco.com/NFV-BU/go-lanai@develop
 #The following example is useful for CI CD scenarios such as nightly build, PR review and stable release.
 #For example:
 # 1. Nightly build can use pre-build and post-build-tag-only with the actual build in the middle.
@@ -72,11 +73,13 @@ resource@{{ .Output }}:
 # 3. PR verification can use pre-verify. This will not create any tag or commits.
 # For more details, see the build.md file in the docs directory.
 
+# TODO probably pre-build
 #useful for PR review - get mod file ready but no commit
 #need to provide module to be updated
 # e.g. make pre-verify module=cto-github.cisco.com/NFV-BU/go-lanai:develop
 pre-verify: update-dependency drop-replace tidy
 
+# TODO pre-dist
 #useful for any build - creates two commits. the first commit can be used to merge back to main branch. the second commit can be used for tagging
 #need to provide temporary branch name, and module to be updated
 # e.g. make pre-build module=cto-github.cisco.com/NFV-BU/go-lanai:develop branch-name=tmp
@@ -88,6 +91,7 @@ pre-build: git-branch update-dependency git-commit-dep-update drop-replace tidy 
 # e.g. make post-build-tag-only tag-version=0.0.1 original-branch=develop remove-branch=tmp
 post-build-tag-only: git-tag git-publish-tag git-clean-up
 
+# TODO post-dist
 #useful for release build - tag the build, and also merge back to main branch with the updated dependencies
 #publish tag after merge so both push and push tags is at the very end.
 #need to provide tag value, and original branch to merge back to

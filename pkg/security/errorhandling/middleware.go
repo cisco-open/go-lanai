@@ -81,14 +81,12 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 }
 
 func (eh *ErrorHandlingMiddleware) logError(c *gin.Context, err error) {
-	errMsgs := []string{err.Error()}
+	var errMsgs []string
 	for cause, isNested := err, true; isNested && cause != nil; {
+		errMsgs = append(errMsgs, cause.Error())
 		var nested errorutils.NestedError
 		if nested, isNested = cause.(errorutils.NestedError); isNested {
 			cause = nested.Cause()
-			if cause != nil {
-				errMsgs = append(errMsgs, cause.Error())
-			}
 		}
 	}
 	msg := strings.Join(errMsgs, " - [Caused By]: ")

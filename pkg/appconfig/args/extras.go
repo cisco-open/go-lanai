@@ -43,7 +43,7 @@ func ExtraFlags(skip func(name string) bool) (extras map[string]string) {
 	return extras
 }
 
-// ExtraKVArgs parse original CLI arguments (after standalone "--") and accepts both --flag=value
+// ExtraKVArgs parse original CLI arguments (after standalone "--") and accepts flag=value
 func ExtraKVArgs(args []string) (extras map[string]string) {
 	extras = make(map[string]string)
 	for _, v := range args {

@@ -173,10 +173,10 @@ func (mw *AuthorizeEndpointMiddleware) handleSuccess(c *gin.Context, v interface
 
 func (mw *AuthorizeEndpointMiddleware) handleError(c *gin.Context, err error) {
 	if !errors.Is(err, oauth2.ErrorTypeOAuth2) {
-		err = oauth2.NewInvalidAuthorizeRequestError(err.Error(), err)
+		err = oauth2.NewInvalidAuthorizeRequestError(err)
 	}
 
-	mw.clearAuthrozieRequest(c)
+	_ = mw.clearAuthrozieRequest(c)
 	_ = c.Error(err)
 	c.Abort()
 }
