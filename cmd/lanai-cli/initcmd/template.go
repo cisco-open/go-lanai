@@ -13,7 +13,18 @@ type TemplateData struct {
 	Resources   []Resource
 }
 
-func generateMakefile(ctx context.Context) error {
+func generatePredefinedMakefile(ctx context.Context) error {
+	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
+		FS:         TmplFS,
+		TmplName:   "Makefile.tmpl",
+		Output:     filepath.Join(cmdutils.GlobalArgs.OutputDir, "Makefile-Generated"),
+		OutputPerm: 0644,
+		Overwrite:  true,
+		Model:      &Module,
+	})
+}
+
+func generateBuildMakefile(ctx context.Context) error {
 	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
 		FS:         TmplFS,
 		TmplName:   "Makefile-Build.tmpl",

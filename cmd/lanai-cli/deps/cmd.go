@@ -1,13 +1,21 @@
 package deps
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"github.com/spf13/cobra"
 )
 
 var logger = log.New("deps")
 
+var (
+	Cmd = &cobra.Command{
+		Use:                "deps",
+		Short:              "dependency/go.mod related tasks",
+		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
+	}
+)
+
 func init() {
-	cmdutils.PersistentFlags(UpdateDepCmd, &UpdateDepArgs)
-	cmdutils.PersistentFlags(DropReplaceCmd, &DropReplaceArgs)
+	Cmd.AddCommand(UpdateDepCmd)
+	Cmd.AddCommand(DropReplaceCmd)
 }

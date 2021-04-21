@@ -9,8 +9,8 @@ import (
 
 var (
 	UpdateDepCmd = &cobra.Command{
-		Use:                "update-dep",
-		Short:              "Update module dependency from given branch",
+		Use:                "update",
+		Short:              "Update module dependencies with given branches and update go.sum",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               RunUpdateDep,
 	}
@@ -20,7 +20,11 @@ var (
 )
 
 type UpdateDepArguments struct {
-	ModuleBranches  []string `flag:"dep-branch,b" desc:"Comma delimited list of module:branch mapping"`
+	ModuleBranches  []string `flag:"modules,m" desc:"Comma delimited list of module@branch"`
+}
+
+func init() {
+	cmdutils.PersistentFlags(UpdateDepCmd, &UpdateDepArgs)
 }
 
 func RunUpdateDep(cmd *cobra.Command, _ []string) error {
@@ -28,14 +32,14 @@ func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 	moduleToBranch := make(map[string]string)
 	modules := []string{}
 	for _, arg := range UpdateDepArgs.ModuleBranches {
-		mbr := strings.Split(arg, ":")
+		mbr := strings.Split(arg, "@")
 		if len(mbr) != 2 {
 			logger.Errorf("%s doesn't follow the module:path format", mbr)
 			return errors.New("can't parse module path")
 		}
 		m := mbr[0]
 		br := mbr[1]
-		logger.Infof("processing %s:%s", m, br)
+		logger.Infof("processing %s@%s", m, br)
 
 		moduleToBranch[m] = br
 		modules = append(modules, m)
@@ -47,6 +51,11 @@ func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return nil
 		}
+	}
+
+	// go mod tidy to update implicit dependencies changes
+	if e := cmdutils.GoModTidy(cmd.Context()); e != nil {
+		return e
 	}
 	return nil
 }

@@ -11,10 +11,11 @@ RUN mkdir -p -m 0600 ~/.ssh && \
     echo "StrictHostKeyChecking no " > /root/.ssh/config && \
     ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-RUN --mount=type=ssh make init-once; \
+# TODO fix this part with proper make targets and variables
+RUN --mount=type=ssh \
+    make init-once init; \
     go mod edit -dropreplace cto-github.cisco.com/NFV-BU/go-lanai; \
-    go get cto-github.cisco.com/NFV-BU/go-lanai@build; \
-    make clean init build
+    make clean build
 
 FROM buildpack-deps:buster-curl
 EXPOSE {{- range $_, $elem := .Executables }} {{ if gt $elem.Port 0 }}{{ $elem.Port }} {{ end }} {{- end }}

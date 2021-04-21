@@ -27,7 +27,7 @@ type Arguments struct {
 	Force    bool   `flag:"force,f" desc:"force overwrite generated file when they already exists"`
 }
 
-//go:embed Makefile-Build.tmpl Dockerfile.tmpl
+//go:embed Makefile-Build.tmpl Dockerfile.tmpl Makefile.tmpl
 var TmplFS embed.FS
 
 func init() {
@@ -43,11 +43,15 @@ func Run(cmd *cobra.Command, _ []string) error {
 		return e
 	}
 
-	if e := generateMakefile(cmd.Context()); e != nil {
+	if e := generateBuildMakefile(cmd.Context()); e != nil {
 		return e
 	}
 
 	if e := generateDockerfile(cmd.Context()); e != nil {
+		return e
+	}
+
+	if e := generatePredefinedMakefile(cmd.Context()); e != nil {
 		return e
 	}
 	return nil

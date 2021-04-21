@@ -4,7 +4,7 @@ During development cycle, service depends on go-lanai project using branch name.
 For example, service is being developed in develop (or feature) branch, and go-lanai is being developed in develop (or feature) branch as well.
 Service may have a "replace" directive that points to a local checked out version of Go-Lanai to help facilitate develop.
 
-When Service is being built, the general CICD process is below:
+When Service is being distributed/built, the general CICD process is below:
 
 1. Create a local temporary branch for build. 
 

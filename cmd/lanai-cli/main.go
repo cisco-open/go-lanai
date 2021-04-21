@@ -9,14 +9,21 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/webjars"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-
 	"github.com/spf13/cobra"
 	"os"
 )
 
+const(
+	CliName = "lanai-cli"
+)
+
+var (
+	BuildVersion = "unknown"
+)
+
 var (
 	rootCmd = &cobra.Command{
-		Use:                "go-lanai-build",
+		Use:                CliName,
 		Short:              "A go-lanai CLI building tool.",
 		Long:               "This is a go-lanai CLI building tool.",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
@@ -52,15 +59,14 @@ func init() {
 }
 
 func main() {
+	rootCmd.Version = BuildVersion
 	rootCmd.AddCommand(noop.Cmd)
 	rootCmd.AddCommand(webjars.Cmd)
 	rootCmd.AddCommand(initcmd.Cmd)
-	rootCmd.AddCommand(deps.UpdateDepCmd)
-	rootCmd.AddCommand(deps.DropReplaceCmd)
+	rootCmd.AddCommand(deps.Cmd)
 
 	cmdutils.PersistentFlags(rootCmd, &cmdutils.GlobalArgs)
 	if e := rootCmd.ExecuteContext(context.Background()); e != nil {
 		os.Exit(1)
 	}
 }
-

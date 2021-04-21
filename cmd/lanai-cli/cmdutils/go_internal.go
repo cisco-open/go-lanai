@@ -5,6 +5,10 @@ import "time"
 // this file contains structs defined in cmd/go/internal for parsing go command result
 // see https://golang.org/cmd/go/
 
+/************************
+	DTOs for go list
+ ************************/
+
 type GoPackage struct {
 	Dir           string    // directory containing package sources
 	ImportPath    string    // import path of package in dir
@@ -99,6 +103,10 @@ type GoModule struct {
 type GoModuleError struct {
 	Err string // the error itself
 }
+
+/************************
+	DTOs for go mod
+ ************************/
 
 type Module struct {
 	Path string
