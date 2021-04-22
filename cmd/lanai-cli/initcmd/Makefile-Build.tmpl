@@ -1,6 +1,5 @@
+### Global Variables
 .SECONDEXPANSION:
-DOCKER = docker
-SSHADD = ssh-add
 
 DESTDIR = dist
 MODULE = {{ .Module.Path }}
@@ -17,15 +16,20 @@ RES_LIST = \
 	resource@{{ .Output }} \
 	{{- end }}
 
+### Main
+.PHONY: $(GEN_LIST) $(EXECS) $(RES_LIST)
+
+## Required Variables by Local Targets
+DOCKER ?= docker
+SSHADD ?= ssh-add
+
 # target patterns
 pGenerate = generate@%
 pResource = resource@%
 
-# Main
-.PHONY: $(GEN_LIST) $(EXECS) $(RES_LIST)
-
+## Local Targets
 # Generate
-$(GEN_LIST): init
+$(GEN_LIST):
 	$(GO) generate $(@:$(pGenerate)=%)
 
 # Build

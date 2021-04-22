@@ -27,7 +27,7 @@ type Arguments struct {
 	Force    bool   `flag:"force,f" desc:"force overwrite generated file when they already exists"`
 }
 
-//go:embed Makefile-Build.tmpl Dockerfile.tmpl Makefile.tmpl
+//go:embed Makefile-Build.tmpl Dockerfile.tmpl Makefile-Auto.tmpl
 var TmplFS embed.FS
 
 func init() {

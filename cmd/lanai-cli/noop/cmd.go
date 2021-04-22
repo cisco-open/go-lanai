@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
@@ -30,7 +31,7 @@ var (
 )
 
 type Arguments struct {
-	Str     string  `flag:"str,s,required" desc:"string"`
+	Str     string  `flag:"str,s" desc:"string"`
 	StrPtr  *string `flag:"strptr,p" desc:"*string"`
 	Int     int     `flag:"int" desc:"int"`
 	IntPtr  *int    `flag:"intptr" desc:"*int"`
@@ -49,6 +50,23 @@ func Run(_ *cobra.Command, _ []string) error {
 		if strings.Contains(strings.ToUpper(env), "GO") {
 			fmt.Println(env)
 		}
+	}
+
+	fmt.Println()
+	gitutils, e := cmdutils.NewGitUtilsWithWorkingDir()
+	if e != nil {
+		return e
+	}
+
+	const tmpTag = "test-tag"
+	const finalTag = "test-tag-final"
+	msg := fmt.Sprintf("test commit @ %v", time.Now().Truncate(time.Millisecond))
+	if e := gitutils.MarkWorktree(tmpTag, msg, cmdutils.GitFilePattern("./web/**", "./web/../test.*")); e != nil {
+		return e
+	}
+
+	if e := gitutils.TagMarkedCommit(tmpTag, finalTag, nil); e != nil {
+		return e
 	}
 	return nil
 }
