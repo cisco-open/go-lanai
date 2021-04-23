@@ -5,7 +5,9 @@
 .SECONDEXPANSION:
 
 ### Main
-.PHONY: generate clean test build copy-resources init-docker build-docker
+.PHONY: generate clean test build copy-resources init-docker build-docker \
+	pre post dist verify pre-verify post-verify pre-dist post-dist \
+	update-dependency drop-replace git-publish-tag git-merge-back git-verify-current-branch
 
 ## Required Variables from make command-line
 # PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules
