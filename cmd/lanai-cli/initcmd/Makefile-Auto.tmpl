@@ -20,7 +20,7 @@ SRC_BRANCH ?=
 
 ## Required Variables by Local Targets
 CLI_PKG_PATH ?= $(filter {{.CliModPath}}%,$(PRIVATE_MODS))
-CLI_TAG ?= $(patsubst {{.CliModPath}}@%,%,$(CLI_PKG_PATH))
+CLI_TAG ?= $(patsubst {{.CliModPath}}%,%,$(CLI_PKG_PATH))
 
 DOCKER ?= docker
 SSHADD ?= ssh-add
