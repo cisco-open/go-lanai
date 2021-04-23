@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var logger = log.New("deps")
+var logger = log.New("Build.Deps")
 
 var (
 	Cmd = &cobra.Command{
@@ -44,5 +44,7 @@ func markChangesIfRequired(ctx context.Context, msg string, matchers...cmdutils.
 	if e != nil {
 		return "", e
 	}
+	gitutils = gitutils.WithContext(ctx)
+
 	return tag, gitutils.MarkWorktree(tag, msg, matchers...)
 }

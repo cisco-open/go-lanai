@@ -12,7 +12,7 @@ const (
 )
 
 var (
-	logger = log.New("Build")
+	logger = log.New("Build.Init")
 	Cmd    = &cobra.Command{
 		Use:                InitRootName,
 		Short:              "Initialize service, generating additional Makefile rules, Dockerfile, etc.",

@@ -70,7 +70,16 @@ func (g *GitUtils) MarkWorktree(tag string, msg string, matchers...GitFileMatche
 	}
 
 	logger.WithContext(g.ctx).Debugf(`Git: Marked current worktree as [mark_tag = %s] [commit = %v]`, tag, hash)
-	return e
+	return nil
+}
+
+// MarkCommit create a lightweight tag of given commit hash
+func (g *GitUtils) MarkCommit(tag string, commitHash plumbing.Hash, ) error {
+	if e := g.TagCommit(tag, commitHash, nil, true); e != nil {
+		return e
+	}
+	logger.WithContext(g.ctx).Debugf(`Git: Marked current commit [%v] as lightweight tag [%s]`, commitHash, tag)
+	return nil
 }
 
 // MarkedCommit returns commit hash that previously marked with given TAG
@@ -114,6 +123,25 @@ func (g *GitUtils) TagMarkedCommit(markedTag string, newTag string, opts *git.Cr
 	}
 	logger.WithContext(g.ctx).Debugf(`Git: Tagged mark [%s] as %s tag [%s]`, markedTag, tagType, newTag)
 	return e
+}
+
+// ResetToMarkedCommit find previously marked commit using "markedTag" and reset current branch to the marked commit
+// if current branch doesn't include the marked commit, error would return
+func (g *GitUtils) ResetToMarkedCommit(markedTag string, discardChanges bool) error {
+	hash, e := g.MarkedCommit(markedTag)
+	if e != nil {
+		return fmt.Errorf("unable to find commit with given tag %s: %v", markedTag, e)
+	}
+
+	mode := git.SoftReset
+	if discardChanges {
+		mode = git.HardReset
+	}
+	worktree := g.mustWorktree()
+	return worktree.Reset(&git.ResetOptions{
+		Commit: hash,
+		Mode: mode,
+	})
 }
 
 // CommitIfModified perform commit on matched files (all files if matchers not specified).
@@ -165,6 +193,16 @@ func (g *GitUtils) TagCommit(tag string, commitHash plumbing.Hash, opts *git.Cre
 		return e
 	}
 	return nil
+}
+
+// HeadCommitHash get current Head commit
+// it returns the commit hash if commit was performed or the current HEAD if commit is not performed (no files committed)
+func (g *GitUtils) HeadCommitHash() (plumbing.Hash, error) {
+	head, e := g.repo.Head()
+	if e != nil {
+		return plumbing.ZeroHash, e
+	}
+	return head.Hash(), nil
 }
 
 func (g *GitUtils) mustWorktree() *git.Worktree {
