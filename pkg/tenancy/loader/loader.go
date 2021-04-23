@@ -76,9 +76,11 @@ func (l *TenancyLoader) LoadTenantHierarchy(ctx context.Context) (err error) {
 			}
 		}
 
-		cmd = tx.ZAdd(ctx, tenancy.ZsetKey, relations...)
-		if cmd.Err() != nil {
-			return cmd.Err()
+		if len(relations) != 0 {
+			cmd = tx.ZAdd(ctx, tenancy.ZsetKey, relations...)
+			if cmd.Err() != nil {
+				return cmd.Err()
+			}
 		}
 
 		statusCmd := tx.Set(ctx, tenancy.StatusKey, fmt.Sprintf("%s_%s", tenancy.STATUS_LOADED, uuid.New().String()), 0)
