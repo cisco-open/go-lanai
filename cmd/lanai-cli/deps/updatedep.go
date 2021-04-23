@@ -3,6 +3,7 @@ package deps
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 	"strings"
 )
@@ -14,24 +15,13 @@ var (
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               RunUpdateDep,
 	}
-	UpdateDepArgs = UpdateDepArguments{
-		ModuleBranches: []string{},
-	}
 )
-
-type UpdateDepArguments struct {
-	ModuleBranches  []string `flag:"modules,m" desc:"Comma delimited list of module@branch"`
-}
-
-func init() {
-	cmdutils.PersistentFlags(UpdateDepCmd, &UpdateDepArgs)
-}
 
 func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 	//process input args to see which module's dependency needs to be updated
 	moduleToBranch := make(map[string]string)
 	modules := []string{}
-	for _, arg := range UpdateDepArgs.ModuleBranches {
+	for _, arg := range Args.Modules {
 		mbr := strings.Split(arg, "@")
 		if len(mbr) != 2 {
 			logger.Errorf("%s doesn't follow the module:path format", mbr)
@@ -57,5 +47,12 @@ func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 	if e := cmdutils.GoModTidy(cmd.Context()); e != nil {
 		return e
 	}
-	return nil
+
+	// mark changes if requested
+	msg := fmt.Sprintf("updated versions of private modules")
+	tag, e := markChangesIfRequired(cmd.Context(), msg, cmdutils.GitFilePattern("go.mod", "go.sum"))
+	if e == nil && tag != "" {
+		logger.WithContext(cmd.Context()).Infof(`Modified go.mod/go.sum are tagged with Git Tag [%s]`, tag)
+	}
+	return e
 }

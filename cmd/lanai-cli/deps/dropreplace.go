@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 	"strings"
 )
@@ -15,23 +16,12 @@ var (
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               RunDropReplace,
 	}
-	DropReplaceArgs = DropReplaceArguments{
-		Modules: []string{},
-	}
 )
-
-type DropReplaceArguments struct {
-	Modules  []string `flag:"modules,m" desc:"Comma delimited list of modules"`
-}
-
-func init() {
-	cmdutils.PersistentFlags(DropReplaceCmd, &DropReplaceArgs)
-}
 
 func RunDropReplace(cmd *cobra.Command, _ []string) error {
 	toBeReplaced := utils.NewStringSet()
 
-	for _, arg := range DropReplaceArgs.Modules {
+	for _, arg := range Args.Modules {
 		m := strings.Split(arg, "@") //because arg can be module or module:version. if it's the latter, we take the part before :
 		if len(m) != 1 && len(m) != 2 {
 			return errors.New("input should be a comma separated list of module or module@version strings")
@@ -64,5 +54,12 @@ func RunDropReplace(cmd *cobra.Command, _ []string) error {
 			return e
 		}
 	}
-	return err
+
+	// mark changes if requested
+	msg := fmt.Sprintf("dropped replaces in go.mod for CI/CD process")
+	tag, e := markChangesIfRequired(cmd.Context(), msg, cmdutils.GitFilePattern("go.mod", "go.sum"))
+	if e == nil && tag != "" {
+		logger.WithContext(cmd.Context()).Infof(`Modified go.mod/go.sum are tagged with Git Tag [%s]`, tag)
+	}
+	return e
 }

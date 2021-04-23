@@ -7,10 +7,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	InitRootName = "init"
+)
+
 var (
 	logger = log.New("Build")
 	Cmd    = &cobra.Command{
-		Use:                "init",
+		Use:                InitRootName,
 		Short:              "Initialize service, generating additional Makefile rules, Dockerfile, etc.",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               Run,
@@ -19,7 +23,9 @@ var (
 		Metadata: "Module.yml",
 		Force:    false,
 	}
-	Module = ModuleMetadata{}
+	Module = ModuleMetadata{
+		CliModPath: "cto-github.cisco.com/NFV-BU/go-lanai",
+	}
 )
 
 type Arguments struct {

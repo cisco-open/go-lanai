@@ -7,7 +7,21 @@
 ### Main
 .PHONY: generate clean test build copy-resources init-docker build-docker
 
+## Required Variables from make command-line
+# PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules
+# 				e.g. PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v0.1.0,cto-github.cisco.com/NFV-BU/swagger-go@0.2.1
+PRIVATE_MODS ?= {{.CliModPath}}@build
+# VERSION:	application version to be distributed/build (without leading "v").
+# 			e.g. VERSION=4.0.0-50
+VERSION ?= v0.0.0-SNAPSHOT
+# SRC_BRANCH:	(Optional) source branch this distribution originated from.
+#				This value is required only if CI/CD want to merge go.mod and go.sum back to source branch
+SRC_BRANCH ?=
+
 ## Required Variables by Local Targets
+CLI_PKG_PATH ?= $(filter {{.CliModPath}}%,$(PRIVATE_MODS))
+CLI_TAG ?= $(patsubst {{.CliModPath}}@%,%,$(CLI_PKG_PATH))
+
 DOCKER ?= docker
 SSHADD ?= ssh-add
 GO ?= go
@@ -21,11 +35,7 @@ EXECS ?= {{- range $key, $_ := .Executables }} {{ $key }} {{- end }}
 GEN_LIST ?= {{- range .Generates }} generate@{{ .Path }} {{- end }}
 RES_LIST ?= {{- range .Resources }} resource@{{ .Output }} {{- end }}
 
-## Required Variables from make command-line
-# TODO Required Vars: MODULES, DIST_VERSION, MERGE_BACK_BRANCH
-# MODUES -> LANAI TAG, LANAI CLI TAG
-# DIST_VERSION -> TMP Branch, Post-Update-Deps tag/commit, Post-Drop-Replace tag/commit
-#                             ^^^ used for merge back      ^^^ used for final version tag
+
 
 ## General Build Targets
 # generate:
@@ -72,51 +82,70 @@ init-docker: init
 	$(SSHADD) -K ~/.ssh/id_rsa
 
 # build-docker:
-# 	Initialize for building docker image. Typically run on CI/CD worker machine
-build-docker:
-build-docker: init-docker test
-	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain . -t europa:latest
-
+# 	Build docker image. Typically run on CI/CD worker machine
+# 	Optional Vars:
+#		- VERSION application version also used as Docker's image tag. Default to "latest" if not specified
+build-docker: DOCKER_TAG = $(if $(VERSION),$(VERSION),latest)
+build-docker: init-docker
+	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t europa:$(DOCKER_TAG) .
 
 ## CI/CD
 
-## Distribution
+# dist:
+#	Make a distribution build with provided PRIVATE_MODS and VERSION,
+#	tag the source code that could be used to re-build the distribution,
+#	and optionally merge updated go.mod/go.sum back to SRC_BRANCH if provided
+# 	Required Vars:
+#		- PRIVATE_MODS
+# 		- VERSION
+# 	Optional Vars:
+#		- SRC_BRANCH source branch this distribution originated from.
+# 		  If set, post-dist would behave differently
+dist: clean pre-dist test build-docker post-dist
 
+# verify:
+#	Test and build application against specified PRIVATE_MODS.
+# 	Required Vars:
+#		- PRIVATE_MODS
+verify: clean pre-build test build
 
+## CI/CD AdHoc Targets
+## The following targets are useful for CI/CD scenarios such as nightly build, PR review and stable release.
+## For example:
+## 1.	Nightly build: use pre-dist and post-dist without specifying SRC_BRANCH.
+## 		This will result in a tag off of the current branch.
+## 2.	Promoting of certain build from a tag or branch: use pre-dist and post-dist without specifying SRC_BRANCH.
+## 		This will result in a tag off of the current branch.
+## 3.	Making end-of-cycle release: use pre-dist and post-dist with a SRC_BRANCH.
+## 		This will result in a tag off of the current branch. The updated go.mod will also be merged back into the source branch.
+## 3.	PR verification: use pre-build. This will not create any tag or commits.
+## 		For more details, see the build.md file in the docs directory.
 
-#The following example is useful for CI CD scenarios such as nightly build, PR review and stable release.
-#For example:
-# 1. Nightly build can use pre-build and post-build-tag-only with the actual build in the middle.
-#    This will result in a tag off of the main branch.
-# 2. Promoting of certain build from a tag or branch can use pre-build and post-build with the actual build in the middle.
-# 	 This will result in a tag off of the main branch. The updated go.mod will also be merged back into the main branch.
-# 3. PR verification can use pre-verify. This will not create any tag or commits.
-# For more details, see the build.md file in the docs directory.
-
-# TODO probably pre-build
-#useful for PR review - get mod file ready but no commit
-#need to provide module to be updated
-# e.g. make pre-build module=cto-github.cisco.com/NFV-BU/go-lanai:develop
+# pre-build:
+#	useful for PR review - get mod file ready but no commit.
+# 	Required Vars:
+#		- PRIVATE_MODS e.g. make pre-build PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai:develop
 pre-build: update-dependency drop-replace
 
-# TODO pre-dist
-#useful for any build - creates two commits. the first commit can be used to merge back to main branch. the second commit can be used for tagging
-#need to provide temporary branch name, and module to be updated
+# pre-dist:
+# TODO
+#	useful for any distribution build
+# 	creates two commits. the first commit can be used to merge back to main branch. the second commit can be used for tagging
+#	need to provide temporary branch name, and module to be updated
 # e.g. make pre-build module=cto-github.cisco.com/NFV-BU/go-lanai:develop branch-name=tmp
-pre-dist: git-branch update-dependency git-commit-dep-update drop-replace git-commit-drop-replace
+pre-dist: UPDATE_DEPS_MARK = tmp/$(VERSION)/update-deps
+pre-dist: DROP_REPLACE_MARK = tmp/$(VERSION)/drop-replace
+pre-dist: update-dependency drop-replace
 
-#useful for nightly build - tag the build, but do not merge back to main branch
-#need to provide tag value, and the original branch. The original branch value is needed to clean up the temporary branch created.
-#(switch to original branch and delete the temporary branch)
-# e.g. make post-build-tag-only tag-version=0.0.1 original-branch=develop remove-branch=tmp
-post-dist-tag-only: git-tag git-publish-tag git-clean-up
-
-# TODO post-dist
+# post-dist:
+# TODO
 #useful for release build - tag the build, and also merge back to main branch with the updated dependencies
 #publish tag after merge so both push and push tags is at the very end.
 #need to provide tag value, and original branch to merge back to
 # e.g. make post-build tag-version=0.0.1 original-branch=develop remove-branch=tmp
-post-dist: git-tag git-pop-commit-from-back git-merge-back git-publish-tag git-clean-up
+post-dist:
+#post-dist: git-tag git-merge-back git-publish-tag git-clean-up
+	echo TODO
 
 
 #Used to update the module dependency versions
@@ -126,7 +155,7 @@ post-dist: git-tag git-pop-commit-from-back git-merge-back git-publish-tag git-c
 # Or it can be a version query - useful for builds that are tagged (nightly or release)
 # e.g make update-dependency module=cto-github.cisco.com/NFV-BU/go-lanai@develop
 update-dependency:
-	$(CLI) deps update --modules=$(module)
+	$(CLI) deps update --modules=$(PRIVATE_MODS) --mark=$(UPDATE_DEPS_MARK)
 
 # e.g. make drop-replace module=cto-github.cisco.com/NFV-BU/go-lanai:develop
 # or make drop-replace module=cto-github.cisco.com/NFV-BU/go-lanai
@@ -134,7 +163,16 @@ update-dependency:
 #Because if there is a replace directive but the module that's replaced is not being used,
 #go mod tidy will remove the dependency but not the replace directive. That would leave the go.mod in an error state
 drop-replace:
-	$(CLI) deps drop-replace --modules=$(module)
+	$(CLI) deps drop-replace --modules=$(PRIVATE_MODS) --mark=$(DROP_REPLACE_MARK)
+
+
+
+#TODO
+#useful for nightly build - tag the build, but do not merge back to main branch
+#need to provide tag value, and the original branch. The original branch value is needed to clean up the temporary branch created.
+#(switch to original branch and delete the temporary branch)
+# e.g. make post-build-tag-only tag-version=0.0.1 original-branch=develop remove-branch=tmp
+post-dist-tag-only: git-tag git-publish-tag git-clean-up
 
 git-branch:
 	$(GIT) checkout -b $(branch-name)

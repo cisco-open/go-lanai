@@ -9,10 +9,11 @@ import (
 )
 
 type ModuleMetadata struct {
+	CliModPath  string                 `json:"-"`
 	Module      *cmdutils.GoModule     `json:"-"`
 	Executables map[string]*Executable `json:"execs"`
-	Generates   []*Generate            `json:"generates"`
 	Resources   []*Resource            `json:"resources"`
+	Generates   []*Generate            `json:"generates"`
 }
 
 type Executable struct {

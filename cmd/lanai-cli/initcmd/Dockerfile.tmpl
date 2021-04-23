@@ -1,8 +1,5 @@
 
-###
-### Build container
-###
-
+## Build Container ##
 FROM golang:1.16.3 AS builder
 ARG BUILD_FLAGS
 WORKDIR /go/src/
@@ -13,14 +10,15 @@ RUN mkdir -p -m 0600 ~/.ssh && \
 
 # TODO fix this part with proper make targets and variables
 RUN --mount=type=ssh \
-    make init-once init; \
-    make clean build
+    make init-once; \
+    make clean build $BUILD_FLAGS
 
 #RUN --mount=type=ssh make init-once; \
 #    go mod edit -dropreplace cto-github.cisco.com/NFV-BU/go-lanai; \
 #    go get cto-github.cisco.com/NFV-BU/go-lanai@build; \
 #    make clean init build
 
+## Distribution Container ##
 FROM buildpack-deps:buster-curl
 EXPOSE {{- range $_, $elem := .Executables }} {{ if gt $elem.Port 0 }}{{ $elem.Port }} {{ end }} {{- end }}
 WORKDIR /service/
