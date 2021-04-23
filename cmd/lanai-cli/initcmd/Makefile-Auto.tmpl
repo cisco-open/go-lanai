@@ -10,7 +10,7 @@
 ## Required Variables from make command-line
 # PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules
 # 				e.g. PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v0.1.0,cto-github.cisco.com/NFV-BU/swagger-go@0.2.1
-PRIVATE_MODS ?= {{.CliModPath}}@build
+PRIVATE_MODS ?= {{.CliModPath}}@develop
 # VERSION:	application version to be distributed/build (without leading "v").
 # 			e.g. VERSION=4.0.0-50
 VERSION ?= v0.0.0-SNAPSHOT
