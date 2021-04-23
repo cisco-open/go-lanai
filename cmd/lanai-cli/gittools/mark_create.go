@@ -44,7 +44,7 @@ func RunCreateMark(cmd *cobra.Command, _ []string) error {
 	// commit and mark
 	if MarkCreateArgs.Commit {
 		logger.WithContext(cmd.Context()).Infof(`All changes are committed and as tag [%s]`, tag)
-		return gitutils.MarkWorktree(tag, MarkCreateArgs.CommitMsg)
+		return gitutils.MarkWorktree(tag, MarkCreateArgs.CommitMsg, false)
 	}
 
 	// mark head

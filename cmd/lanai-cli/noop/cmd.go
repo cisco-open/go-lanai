@@ -61,7 +61,7 @@ func Run(_ *cobra.Command, _ []string) error {
 	const tmpTag = "test-tag"
 	const finalTag = "test-tag-final"
 	msg := fmt.Sprintf("test commit @ %v", time.Now().Truncate(time.Millisecond))
-	if e := gitutils.MarkWorktree(tmpTag, msg, cmdutils.GitFilePattern("./web/**", "./web/../test.*")); e != nil {
+	if e := gitutils.MarkWorktree(tmpTag, msg, true, cmdutils.GitFilePattern("./web/**", "./web/../test.*")); e != nil {
 		return e
 	}
 

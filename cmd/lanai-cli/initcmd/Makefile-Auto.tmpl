@@ -77,7 +77,7 @@ clean:
 
 # init-docker:
 # 	Initialize for building docker image. Typically run on CI/CD worker machine
-init-docker: init
+init-docker:
 	# ssh-add is necessary for build-docker
 	$(SSHADD) -K ~/.ssh/id_rsa
 
@@ -101,13 +101,13 @@ build-docker: init-docker
 # 	Optional Vars:
 #		- SRC_BRANCH source branch this distribution originated from.
 # 		  If set, post-dist would behave differently
-dist: clean pre-dist test build-docker post-dist
+dist: init clean pre-dist test build-docker post-dist
 
 # verify:
 #	Test and build application against specified PRIVATE_MODS.
 # 	Required Vars:
 #		- PRIVATE_MODS
-verify: clean pre-verify test build post-verify
+verify: init clean pre-verify test build post-verify
 
 ## CI/CD AdHoc Targets
 ## The following targets are useful for CI/CD scenarios such as nightly build, PR review and stable release.
@@ -178,7 +178,7 @@ drop-replace:
 
 git-publish-tag: GIT_TAG = v$(VERSION)
 git-publish-tag:
-	$(CLI) git retag -t $(DROP_REPLACE_MARK) --retag $(GIT_TAG)
+	$(CLI) git mark retag -t $(DROP_REPLACE_MARK) --retag $(GIT_TAG)
 	$(GIT) push origin $(GIT_TAG)
 
 git-merge-back:

@@ -46,5 +46,5 @@ func markChangesIfRequired(ctx context.Context, msg string, matchers...cmdutils.
 	}
 	gitutils = gitutils.WithContext(ctx)
 
-	return tag, gitutils.MarkWorktree(tag, msg, matchers...)
+	return tag, gitutils.MarkWorktree(tag, msg, true, matchers...)
 }

@@ -58,8 +58,14 @@ func (g *GitUtils) WithContext(ctx context.Context) *GitUtils {
 	}
 }
 
-// MarkWorktree create a local commit with given msg and tag it with given tag
-func (g *GitUtils) MarkWorktree(tag string, msg string, matchers...GitFileMatcher) error {
+// MarkWorktree create a local commit with given msg and tag it with given tag.
+// if detach == true, soft reset to initial head after done
+func (g *GitUtils) MarkWorktree(tag string, msg string, detach bool,  matchers...GitFileMatcher) error {
+	headHash, e := g.HeadCommitHash()
+	if e != nil {
+		return fmt.Errorf(`cannot get HEAD commit hash`)
+	}
+
 	hash, e := g.CommitIfModified(msg, matchers...)
 	if e != nil {
 		return e
@@ -70,6 +76,16 @@ func (g *GitUtils) MarkWorktree(tag string, msg string, matchers...GitFileMatche
 	}
 
 	logger.WithContext(g.ctx).Debugf(`Git: Marked current worktree as [mark_tag = %s] [commit = %v]`, tag, hash)
+
+	if !detach {
+		return nil
+	}
+	if e := g.ResetToCommit(headHash, false); e != nil {
+		msg := fmt.Sprintf("unable to reset current branch after marking: %v. Worktree need manual clean up", e)
+		logger.WithContext(g.ctx).Errorf(`Git: %s`, msg)
+		return fmt.Errorf(msg)
+	}
+
 	return nil
 }
 
@@ -133,15 +149,7 @@ func (g *GitUtils) ResetToMarkedCommit(markedTag string, discardChanges bool) er
 		return fmt.Errorf("unable to find commit with given tag %s: %v", markedTag, e)
 	}
 
-	mode := git.SoftReset
-	if discardChanges {
-		mode = git.HardReset
-	}
-	worktree := g.mustWorktree()
-	return worktree.Reset(&git.ResetOptions{
-		Commit: hash,
-		Mode: mode,
-	})
+	return g.ResetToCommit(hash, discardChanges)
 }
 
 // CommitIfModified perform commit on matched files (all files if matchers not specified).
@@ -193,6 +201,19 @@ func (g *GitUtils) TagCommit(tag string, commitHash plumbing.Hash, opts *git.Cre
 		return e
 	}
 	return nil
+}
+
+// ResetToCommit Reset current branch to given commit hash
+func (g *GitUtils) ResetToCommit(commitHash plumbing.Hash, discardChanges bool) error {
+	mode := git.SoftReset
+	if discardChanges {
+		mode = git.HardReset
+	}
+	worktree := g.mustWorktree()
+	return worktree.Reset(&git.ResetOptions{
+		Commit: commitHash,
+		Mode: mode,
+	})
 }
 
 // HeadCommitHash get current Head commit
