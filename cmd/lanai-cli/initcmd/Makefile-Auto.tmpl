@@ -15,15 +15,16 @@
 PRIVATE_MODS ?= {{.CliModPath}}@develop
 # VERSION:	application version to be distributed/build (without leading "v").
 # 			e.g. VERSION=4.0.0-50
-VERSION ?= v0.0.0-SNAPSHOT
+VERSION ?= 0.0.0-SNAPSHOT
 # SRC_BRANCH:	(Optional) source branch this distribution originated from.
 #				This value is required only if CI/CD want to merge go.mod and go.sum back to source branch
 SRC_BRANCH ?=
 
-## Required Variables by Local Targets
+## Derived Variables
 CLI_PKG_PATH ?= $(filter {{.CliModPath}}%,$(PRIVATE_MODS))
 CLI_TAG ?= $(patsubst {{.CliModPath}}%,%,$(CLI_PKG_PATH))
 
+## Required Variables by Local Targets
 DOCKER ?= docker
 SSHADD ?= ssh-add
 GO ?= go
@@ -36,8 +37,6 @@ MODULE ?= {{ .Module.Path }}
 EXECS ?= {{- range $key, $_ := .Executables }} {{ $key }} {{- end }}
 GEN_LIST ?= {{- range .Generates }} generate@{{ .Path }} {{- end }}
 RES_LIST ?= {{- range .Resources }} resource@{{ .Output }} {{- end }}
-
-
 
 ## Build AdHoc Targets
 # generate:
@@ -55,6 +54,11 @@ test: generate
 # 	Generate executable binary and copy resources to $(DESTDIR)
 # 	this target should be run on targeted OS.
 #	e.g. build is executed inside Docker container when building Docker image
+build: BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+build: BUILD_HASH ?= $(shell $(GIT) rev-list -1 HEAD)
+build: LDFLAGS ?= -X {{ .CliModPath -}}/pkg/bootstrap.BuildVersion=$(VERSION) \
+	-X {{ .CliModPath -}}/pkg/bootstrap.BuildTime=$(BUILD_TIME) \
+	-X {{ .CliModPath -}}/pkg/bootstrap.BuildHash=$(BUILD_HASH)
 build: $(EXECS) copy-resources
 
 # copy-resources:
@@ -89,7 +93,11 @@ init-docker:
 #		- VERSION application version also used as Docker's image tag. Default to "latest" if not specified
 build-docker: DOCKER_TAG = $(if $(VERSION),$(VERSION),latest)
 build-docker: init-docker
-	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t europa:$(DOCKER_TAG) .
+	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t europa:$(DOCKER_TAG) . \
+	--build-arg PRIVATE_MODS="$(PRIVATE_MODS)" \
+	--build-arg VERSION="$(VERSION)" \
+	--build-arg BUILD_TIME="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+	--build-arg BUILD_HASH="$(shell $(GIT) rev-list -1 HEAD)"
 
 ## CI/CD
 
@@ -103,13 +111,13 @@ build-docker: init-docker
 # 	Optional Vars:
 #		- SRC_BRANCH source branch this distribution originated from.
 # 		  If set, post-dist would behave differently
-dist: init clean pre-dist test build-docker post-dist
+dist: clean pre-dist test build-docker post-dist
 
 # verify:
 #	Test and build application against specified PRIVATE_MODS.
 # 	Required Vars:
 #		- PRIVATE_MODS
-verify: init clean pre-verify test build post-verify
+verify: clean pre-verify test build post-verify
 
 ## CI/CD AdHoc Targets
 ## The following targets are useful for CI/CD scenarios such as nightly build, PR review and stable release.
@@ -127,7 +135,7 @@ pre:
 	$(CLI) git mark create -t tmp/pre-make
 
 post:
-	$(CLI) git mark revert -t tmp/pre-make -f
+	$(CLI) git mark revert -t tmp/pre-make
 
 # pre-verify:
 #	useful for PR review - get mod file ready but no commit.

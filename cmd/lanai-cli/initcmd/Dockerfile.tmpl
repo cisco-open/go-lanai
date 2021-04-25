@@ -1,7 +1,10 @@
 
 ## Build Container ##
 FROM golang:1.16.3 AS builder
-ARG BUILD_FLAGS
+ARG PRIVATE_MODS
+ARG VERSION
+ARG BUILD_TIME
+ARG BUILD_HASH
 WORKDIR /go/src/
 ADD . /go/src/
 RUN mkdir -p -m 0600 ~/.ssh && \
@@ -11,7 +14,7 @@ RUN mkdir -p -m 0600 ~/.ssh && \
 # TODO fix this part with proper make targets and variables
 RUN --mount=type=ssh \
     make init-once; \
-    make clean build $BUILD_FLAGS
+    make clean build PRIVATE_MODS="$PRIVATE_MODS" VERSION="$VERSION" BUILD_TIME="$BUILD_TIME" BUILD_HASH="$BUILD_HASH"
 
 #RUN --mount=type=ssh make init-once; \
 #    go mod edit -dropreplace cto-github.cisco.com/NFV-BU/go-lanai; \

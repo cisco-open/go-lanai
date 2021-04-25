@@ -35,7 +35,9 @@ $(GEN_LIST):
 # Build
 	{{- range $name, $elem := .Executables }}
 {{ $name }}:
-	$(GO) build -o $(DESTDIR)/$@ {{ $elem.Main }}
+	$(GO) build -o $(DESTDIR)/$@ \
+	-ldflags "$(LDFLAGS)" \
+	{{ $elem.Main }}
 	{{ end }}
 
 # Copy Resources

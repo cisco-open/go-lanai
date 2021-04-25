@@ -37,12 +37,14 @@ func (p *StaticConfigProvider) Load() (err error) {
 	// Apply application name, profiles, etc
 	settings[appconfig.PropertyKeyApplicationName] = p.appName
 	settings[appconfig.PropertyKeyConfigFileSearchPath] = []string{defaultConfigSearchPath}
+	settings[appconfig.PropertyKeyBuildInfo] = bootstrap.BuildInfoMap
 
 	// un-flatten
 	unFlattened, err := appconfig.UnFlatten(settings)
 	if err == nil {
 		p.Settings = unFlattened
 	}
+
 	return
 }
 

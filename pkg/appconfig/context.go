@@ -7,6 +7,7 @@ const (
 	PropertyKeyAdditionalProfiles   = "application.profiles.additional"
 	PropertyKeyConfigFileSearchPath = "config.file.search-path"
 	PropertyKeyApplicationName      = bootstrap.PropertyKeyApplicationName
+	PropertyKeyBuildInfo            = "application.build"
 	//PropertyKey = ""
 )
 
