@@ -7,6 +7,10 @@ import (
 	"path/filepath"
 )
 
+const (
+	ModulePath = "cto-github.cisco.com/NFV-BU/go-lanai"
+)
+
 var (
 	logger = log.New("Build")
 	GlobalArgs = Global{

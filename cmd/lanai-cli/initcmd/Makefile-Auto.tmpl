@@ -5,11 +5,11 @@
 .SECONDEXPANSION:
 
 ### Main
-.PHONY: generate clean test build copy-resources init-docker build-docker \
+.PHONY: init-docker build-docker \
 	pre post dist verify pre-verify post-verify pre-dist post-dist \
 	update-dependency drop-replace git-publish-tag git-merge-back git-verify-current-branch
 
-## Required Variables from make command-line
+## Variables from make command-line
 # PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules
 # 				e.g. PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v0.1.0,cto-github.cisco.com/NFV-BU/swagger-go@0.2.1
 PRIVATE_MODS ?= {{.CliModPath}}@develop
@@ -22,7 +22,7 @@ SRC_BRANCH ?=
 
 ## Derived Variables
 CLI_PKG_PATH ?= $(filter {{.CliModPath}}%,$(PRIVATE_MODS))
-CLI_TAG ?= $(patsubst {{.CliModPath}}%,%,$(CLI_PKG_PATH))
+CLI_TAG ?= $(patsubst {{.CliModPath}}@%,%,$(CLI_PKG_PATH))
 
 ## Required Variables by Local Targets
 DOCKER ?= docker
@@ -30,50 +30,6 @@ SSHADD ?= ssh-add
 GO ?= go
 GIT ?= git
 CLI ?= lanai-cli
-
-DESTDIR ?= dist
-MODULE ?= {{ .Module.Path }}
-
-EXECS ?= {{- range $key, $_ := .Executables }} {{ $key }} {{- end }}
-GEN_LIST ?= {{- range .Generates }} generate@{{ .Path }} {{- end }}
-RES_LIST ?= {{- range .Resources }} resource@{{ .Output }} {{- end }}
-
-## Build AdHoc Targets
-# generate:
-# 	Invoke "go generate" on defined targets
-# 	This target typically run on CI/CD working machine
-generate: $(GEN_LIST)
-
-# test:
-# 	Invoke "go test" on defined modules.
-# 	This target typically run on CI/CD working machine
-test: generate
-	$(GO) test -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/...
-
-# build:
-# 	Generate executable binary and copy resources to $(DESTDIR)
-# 	this target should be run on targeted OS.
-#	e.g. build is executed inside Docker container when building Docker image
-build: BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-build: BUILD_HASH ?= $(shell $(GIT) rev-list -1 HEAD)
-build: LDFLAGS ?= -X {{ .CliModPath -}}/pkg/bootstrap.BuildVersion=$(VERSION) \
-	-X {{ .CliModPath -}}/pkg/bootstrap.BuildTime=$(BUILD_TIME) \
-	-X {{ .CliModPath -}}/pkg/bootstrap.BuildHash=$(BUILD_HASH)
-build: $(EXECS) copy-resources
-
-# copy-resources:
-#	Copy resources to $(DESTDIR) based on $(RES_LIST)
-# 	This target should be run on targeted OS.
-#	e.g. build is executed inside Docker container when building Docker image
-copy-resources: $(RES_LIST)
-
-# clean:
-# 	Undo previous "build".  clean $(DESTDIR) and build cache
-# 	This target should be run on targeted OS.
-clean:
-	$(GO) clean
-	rm -rf $(DESTDIR)/*
-
 
 ## Docker
 ## Prerequisites for building docker image:
@@ -90,14 +46,15 @@ init-docker:
 # build-docker:
 # 	Build docker image. Typically run on CI/CD worker machine
 # 	Optional Vars:
+#		- CLI_TAG tag/branch of CLI tool, used for init inside the Docker builder container
+#		- PRIVATE_MODS used for populating build info
 #		- VERSION application version also used as Docker's image tag. Default to "latest" if not specified
 build-docker: DOCKER_TAG = $(if $(VERSION),$(VERSION),latest)
 build-docker: init-docker
 	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t europa:$(DOCKER_TAG) . \
+	--build-arg CLI_TAG="$(CLI_TAG)" \
 	--build-arg PRIVATE_MODS="$(PRIVATE_MODS)" \
-	--build-arg VERSION="$(VERSION)" \
-	--build-arg BUILD_TIME="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-	--build-arg BUILD_HASH="$(shell $(GIT) rev-list -1 HEAD)"
+	--build-arg VERSION="$(VERSION)"
 
 ## CI/CD
 

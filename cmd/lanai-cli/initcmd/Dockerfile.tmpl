@@ -1,25 +1,19 @@
 
 ## Build Container ##
 FROM golang:1.16.3 AS builder
+ARG CLI_TAG
 ARG PRIVATE_MODS
 ARG VERSION
-ARG BUILD_TIME
-ARG BUILD_HASH
 WORKDIR /go/src/
 ADD . /go/src/
 RUN mkdir -p -m 0600 ~/.ssh && \
     echo "StrictHostKeyChecking no " > /root/.ssh/config && \
     ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-# TODO fix this part with proper make targets and variables
 RUN --mount=type=ssh \
-    make init-once; \
-    make clean build PRIVATE_MODS="$PRIVATE_MODS" VERSION="$VERSION" BUILD_TIME="$BUILD_TIME" BUILD_HASH="$BUILD_HASH"
-
-#RUN --mount=type=ssh make init-once; \
-#    go mod edit -dropreplace cto-github.cisco.com/NFV-BU/go-lanai; \
-#    go get cto-github.cisco.com/NFV-BU/go-lanai@build; \
-#    make clean init build
+    make init-once init CLI_TAG="$CLI_TAG"; \
+    lanai-cli deps drop-replace --modules="$PRIVATE_MODS"; \
+    make clean build PRIVATE_MODS="$PRIVATE_MODS" VERSION="$VERSION"
 
 ## Distribution Container ##
 FROM buildpack-deps:buster-curl

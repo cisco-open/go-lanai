@@ -205,7 +205,7 @@ func (g *GitUtils) TagCommit(tag string, commitHash plumbing.Hash, opts *git.Cre
 
 // ResetToCommit Reset current branch to given commit hash
 func (g *GitUtils) ResetToCommit(commitHash plumbing.Hash, discardChanges bool) error {
-	mode := git.SoftReset
+	var mode git.ResetMode
 	if discardChanges {
 		mode = git.HardReset
 	}

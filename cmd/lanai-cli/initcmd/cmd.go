@@ -24,7 +24,7 @@ var (
 		Force:    false,
 	}
 	Module = ModuleMetadata{
-		CliModPath: "cto-github.cisco.com/NFV-BU/go-lanai",
+		CliModPath: cmdutils.ModulePath,
 	}
 )
 

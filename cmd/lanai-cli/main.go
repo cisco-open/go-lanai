@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/build"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/deps"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/gittools"
@@ -66,6 +67,7 @@ func main() {
 	rootCmd.AddCommand(initcmd.Cmd)
 	rootCmd.AddCommand(deps.Cmd)
 	rootCmd.AddCommand(gittools.Cmd)
+	rootCmd.AddCommand(build.Cmd)
 
 	cmdutils.PersistentFlags(rootCmd, &cmdutils.GlobalArgs)
 	if e := rootCmd.ExecuteContext(context.Background()); e != nil {
