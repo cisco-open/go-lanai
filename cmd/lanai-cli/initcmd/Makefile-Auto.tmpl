@@ -5,9 +5,9 @@
 .SECONDEXPANSION:
 
 ### Main
-.PHONY: init-docker build-docker \
-	pre post dist verify pre-verify post-verify pre-dist post-dist \
-	update-dependency drop-replace git-publish-tag git-merge-back git-verify-current-branch
+.PHONY: init-docker build-docker push-docker \
+	pre post dist verify publish redist pre-verify post-verify pre-dist post-dist \
+	update-dependency drop-replace git-tag-version git-push-tag git-merge-back git-verify-current-branch
 
 ## Variables from make command-line
 # PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules
@@ -137,10 +137,12 @@ post:
 #	useful for PR review - get mod file ready but no commit.
 # 	Required Vars:
 #		- PRIVATE_MODS
+pre-verify: SAVEPOINT_MARK ?= tmp/pre-verify
 pre-verify: pre update-dependency drop-replace
 
 # post-verify:
 #	useful for PR review - revert to initial state
+post-verify: SAVEPOINT_MARK ?= tmp/pre-verify
 post-verify: post
 
 
@@ -155,17 +157,20 @@ post-verify: post
 # 	Required Vars:
 #		- PRIVATE_MODS e.g. make pre-dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
 #		- VERSION
-pre-dist: UPDATE_DEPS_MARK = tmp/$(VERSION)/update-deps
-pre-dist: DROP_REPLACE_MARK = tmp/$(VERSION)/drop-replace
+pre-dist: UPDATE_DEPS_MARK ?= tmp/$(VERSION)/update-deps
+pre-dist: DROP_REPLACE_MARK ?= tmp/$(VERSION)/drop-replace
+pre-dist: SAVEPOINT_MARK ?= tmp/pre-dist
 pre-dist: pre update-dependency drop-replace
 
 # post-dist:
-# TODO
-#useful for release build - tag the build, and also merge back to main branch with the updated dependencies
-#publish tag after merge so both push and push tags is at the very end.
+# 	useful for any distribution build - finalize the build and revert to initial state
+# 	Required Vars:
+#		- VERSION
 #need to provide tag value, and original branch to merge back to
 # e.g. make post-build tag-version=0.0.1 original-branch=develop remove-branch=tmp
-
+post-dist: UPDATE_DEPS_MARK ?= tmp/$(VERSION)/update-deps
+post-dist: DROP_REPLACE_MARK ?= tmp/$(VERSION)/drop-replace
+post-dist: SAVEPOINT_MARK ?= tmp/pre-dist
 post-dist: git-tag-version git-merge-back post
 
 
@@ -210,10 +215,10 @@ git-push-tag:
 # 	Required Vars:
 #		- SRC_BRANCH
 # 		- GIT_TAG: Tag to be merged back, default to $(UPDATE_DEPS_MARK)
-git-merge-back: GIT_SRC_TAG ?= $(UPDATE_DEPS_MARK)
+git-merge-back: GIT_TAG ?= $(UPDATE_DEPS_MARK)
 git-merge-back:
 ifneq ($(SRC_BRANCH),)
-	$(GIT) push . $(GIT_SRC_TAG):$(SRC_BRANCH)
+	$(GIT) push . $(GIT_TAG):$(SRC_BRANCH)
 endif
 
 # may be useful to check if current branch is the expected branch
