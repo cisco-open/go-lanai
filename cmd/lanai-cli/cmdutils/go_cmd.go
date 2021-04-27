@@ -166,6 +166,23 @@ func DropReplace(ctx context.Context, module string, version string, modFile ...
 	return err
 }
 
+func DropRequire(ctx context.Context, module string, modFile ...string) error {
+	var modFileArg string
+	if len(modFile) != 0 {
+		modFileArg = fmt.Sprintf(" -modfile %s", modFile[0])
+	}
+
+	logger.Infof("dropping require directive %s", module)
+
+	_, err := RunShellCommands(ctx,
+		ShellShowCmd(true),
+		ShellUseWorkingDir(),
+		ShellCmd(fmt.Sprintf("go mod edit%s -droprequire %s", modFileArg, module)),
+		ShellStdOut(os.Stdout))
+
+	return err
+}
+
 func GoGet(ctx context.Context, module string, versionQuery string) error {
 	_, e := RunShellCommands(ctx,
 		ShellShowCmd(true),
@@ -240,7 +257,10 @@ func prepareTargetGoModFile(ctx context.Context) (string, error) {
 		}
 		if !isFileExists(replaced) {
 			if e := DropReplace(ctx, v.Old.Path, v.Old.Version, tmpModFile); e != nil {
-				return "", fmt.Errorf("error when droppinbg replace %s: %v", v.Old.Path, e)
+				return "", fmt.Errorf("error when dropping replace %s: %v", v.Old.Path, e)
+			}
+			if e := DropRequire(ctx, v.Old.Path, tmpModFile); e != nil {
+				return "", fmt.Errorf("error when dropping require %s: %v", v.Old.Path, e)
 			}
 		}
 	}
