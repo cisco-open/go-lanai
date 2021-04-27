@@ -42,7 +42,7 @@ CLI ?= lanai-cli
 #	Example:
 # 		make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
 verify: SAVEPOINT_MARK = tmp/pre-verify
-verify: clean pre-verify test build post-verify
+verify: pre-verify clean test build post-verify
 
 # dist:
 #	Make a distribution build with provided PRIVATE_MODS and VERSION,
@@ -59,7 +59,7 @@ verify: clean pre-verify test build post-verify
 dist: UPDATE_DEPS_MARK = tmp/$(VERSION)/update-deps
 dist: DROP_REPLACE_MARK = tmp/$(VERSION)/drop-replace
 dist: SAVEPOINT_MARK = tmp/pre-dist
-dist: clean pre-dist test build-docker post-dist
+dist: pre-dist clean test build-docker post-dist
 
 # publish:
 #	Publish a distribution build. Push Docker image, push Git release tag, etc
@@ -80,7 +80,7 @@ publish: push-docker git-push-tag
 # 		make dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop VERSION=4.0.0-20 SRC_BRANCH=develop
 redist: GIT_SRC_TAG = $(shell $(GIT) branch --show-current)
 redist: SAVEPOINT_MARK = tmp/pre-redist
-redist: clean pre build-docker git-tag-version post
+redist: pre clean build-docker git-tag-version post
 
 ## Docker
 ## Prerequisites for building docker image:
