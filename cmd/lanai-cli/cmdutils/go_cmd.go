@@ -28,7 +28,7 @@ func GoCmdModFile(modFile string) GoCmdOptions {
 		if modFile == "" {
 			return
 		}
-		*goCmd = fmt.Sprintf("%s -modfile %s", goCmd, modFile)
+		*goCmd = fmt.Sprintf("%s -modfile %s", *goCmd, modFile)
 	}
 }
 
