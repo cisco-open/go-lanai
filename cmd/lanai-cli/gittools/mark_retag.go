@@ -18,7 +18,7 @@ var (
 )
 
 type MarkReTagArguments struct {
-	ReTag    string   `flag:"retag,,required" desc:"tag name to re-tag"`
+	SourceTag    string   `flag:"src-tag,s,required" desc:"the source tag name the re-tagging is based off"`
 	// TODO annotated tag
 }
 
@@ -28,9 +28,9 @@ func init() {
 
 func RunReTagMark(cmd *cobra.Command, _ []string) error {
 	tag := strings.TrimSpace(MarkArgs.MarkTag)
-	retag := strings.TrimSpace(MarkReTagArgs.ReTag)
-	if tag == "" || retag == "" {
-		return fmt.Errorf("tag and retag are required flags and cannot be empty")
+	src := strings.TrimSpace(MarkReTagArgs.SourceTag)
+	if tag == "" || src == "" {
+		return fmt.Errorf("tag and src-tag are required flags and cannot be empty")
 	}
 
 	gitutils, e := cmdutils.NewGitUtilsWithWorkingDir()
@@ -39,9 +39,9 @@ func RunReTagMark(cmd *cobra.Command, _ []string) error {
 	}
 	gitutils = gitutils.WithContext(cmd.Context())
 
-	if e := gitutils.TagMarkedCommit(tag, retag, nil); e != nil {
+	if e := gitutils.TagMarkedCommit(src, tag, nil); e != nil {
 		return e
 	}
-	logger.WithContext(cmd.Context()).Infof(`Marked tag [%s] is re-tagged as [%s]`, tag, retag)
+	logger.WithContext(cmd.Context()).Infof(`Marked tag [%s] is re-tagged as [%s]`, src, tag)
 	return nil
 }

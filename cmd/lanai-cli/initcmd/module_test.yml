@@ -1,3 +1,5 @@
+name: europa
+
 execs:
   europa:
     main: cmd/europa/main.go

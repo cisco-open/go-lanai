@@ -31,6 +31,57 @@ GO ?= go
 GIT ?= git
 CLI ?= lanai-cli
 
+
+## CI/CD
+## Predefined common CI/CD tasks. Such as PR verification, nightly build/release, etc
+
+# verify:
+#	Test and build application against specified PRIVATE_MODS.
+# 	Required Vars:
+#		- PRIVATE_MODS
+#	Example:
+# 		make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+verify: SAVEPOINT_MARK = tmp/pre-verify
+verify: clean pre-verify test build post-verify
+
+# dist:
+#	Make a distribution build with provided PRIVATE_MODS and VERSION,
+#	tag the source code that could be used to re-build the distribution,
+#	and optionally merge updated go.mod/go.sum back to SRC_BRANCH if provided
+# 	Required Vars:
+#		- PRIVATE_MODS
+# 		- VERSION
+# 	Optional Vars:
+#		- SRC_BRANCH source branch this distribution originated from.
+# 		  If set, post-dist would behave differently
+#	Example:
+# 		make dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop VERSION=4.0.0-20 SRC_BRANCH=develop
+dist: UPDATE_DEPS_MARK = tmp/$(VERSION)/update-deps
+dist: DROP_REPLACE_MARK = tmp/$(VERSION)/drop-replace
+dist: SAVEPOINT_MARK = tmp/pre-dist
+dist: clean pre-dist test build-docker post-dist
+
+# publish:
+#	Publish a distribution build. Push Docker image, push Git release tag, etc
+# 	Required Vars:
+# 		- VERSION
+#	Example:
+#		(after make dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop VERSION=4.0.0-20 SRC_BRANCH=develop)
+# 		make publish VERSION=4.0.0-20
+publish: push-docker git-push-tag
+
+# redist:
+#	Make redistribution build from previously released Git Tag (aka, promote)
+#	re-build current Git worktree with updated $(VERSION) as-is.
+# 	Note: this should be performed on a released git tag. No modification of go.mod or test is performed
+# 	Required Vars:
+# 		- VERSION
+#	Example:
+# 		make dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop VERSION=4.0.0-20 SRC_BRANCH=develop
+redist: GIT_SRC_TAG = $(shell $(GIT) branch --show-current)
+redist: SAVEPOINT_MARK = tmp/pre-redist
+redist: clean pre build-docker git-tag-version post
+
 ## Docker
 ## Prerequisites for building docker image:
 ## 		- Working machine should have access to relative private Git repositories. (setup by "init-once")
@@ -50,29 +101,19 @@ init-docker:
 #		- VERSION application version also used as Docker's image tag. Default to "latest" if not specified
 build-docker: DOCKER_TAG = $(if $(VERSION),$(VERSION),latest)
 build-docker: init-docker
-	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t europa:$(DOCKER_TAG) . \
+	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t {{.Name}}:$(DOCKER_TAG) . \
 	--build-arg PRIVATE_MODS="$(PRIVATE_MODS)" \
 	--build-arg VERSION="$(VERSION)"
 
-## CI/CD
-
-# dist:
-#	Make a distribution build with provided PRIVATE_MODS and VERSION,
-#	tag the source code that could be used to re-build the distribution,
-#	and optionally merge updated go.mod/go.sum back to SRC_BRANCH if provided
+# push-docker:
+#	Re-tag and push given docker image to remote
 # 	Required Vars:
-#		- PRIVATE_MODS
-# 		- VERSION
-# 	Optional Vars:
-#		- SRC_BRANCH source branch this distribution originated from.
-# 		  If set, post-dist would behave differently
-dist: clean pre-dist test build-docker post-dist
-
-# verify:
-#	Test and build application against specified PRIVATE_MODS.
-# 	Required Vars:
-#		- PRIVATE_MODS
-verify: clean pre-verify test build post-verify
+#		- DOCKER_TAG: default to $(VERSION)
+#		- DOCKER_REPO: Docker repository path/url without tailing "/"
+push-docker: DOCKER_TAG ?= $(VERSION)
+push-docker:
+	$(DOCKER) tag {{.Name}}:$(DOCKER_TAG) $(DOCKER_REPO)/{{.Name}}:$(DOCKER_TAG)
+	$(DOCKER) push $(DOCKER_REPO)/{{.Name}}:$(DOCKER_TAG)
 
 ## CI/CD AdHoc Targets
 ## The following targets are useful for CI/CD scenarios such as nightly build, PR review and stable release.
@@ -87,15 +128,15 @@ verify: clean pre-verify test build post-verify
 ## 		For more details, see the build.md file in the docs directory.
 
 pre:
-	$(CLI) git mark create -t tmp/pre-make
+	$(CLI) git mark create -t $(SAVEPOINT_MARK)
 
 post:
-	$(CLI) git mark revert -t tmp/pre-make
+	$(CLI) git mark revert -t $(SAVEPOINT_MARK)
 
 # pre-verify:
 #	useful for PR review - get mod file ready but no commit.
 # 	Required Vars:
-#		- PRIVATE_MODS e.g. make pre-build PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+#		- PRIVATE_MODS
 pre-verify: pre update-dependency drop-replace
 
 # post-verify:
@@ -104,11 +145,16 @@ post-verify: post
 
 
 # pre-dist:
-# TODO
-#	useful for any distribution build
-# 	creates two commits. the first commit can be used to merge back to main branch. the second commit can be used for tagging
-#	need to provide temporary branch name, and module to be updated
-# e.g. make pre-build module=cto-github.cisco.com/NFV-BU/go-lanai:develop branch-name=tmp
+#	useful for any distribution build - get mod file ready
+# 	Prepare workspace for distribution build against released dependencies:
+# 	 1. create a local git tag to record initial state of worktree
+# 	 2. update go.mod for dependencies listed in PRIVATE_MODS, and create a local git commit to record the result.
+#		the commit is tagged as $(UPDATE_DEPS_MARK), and can be used to merge back to main branch
+#	 3. update go.mod to drop "replace" directives for modules listed in PRIVATE_MODS, and create a local git commit to record the result.
+# 		the commit is tagged as $(DROP_REPLACE_MARK), and can be used for make release git tag
+# 	Required Vars:
+#		- PRIVATE_MODS e.g. make pre-dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+#		- VERSION
 pre-dist: UPDATE_DEPS_MARK = tmp/$(VERSION)/update-deps
 pre-dist: DROP_REPLACE_MARK = tmp/$(VERSION)/drop-replace
 pre-dist: pre update-dependency drop-replace
@@ -119,9 +165,8 @@ pre-dist: pre update-dependency drop-replace
 #publish tag after merge so both push and push tags is at the very end.
 #need to provide tag value, and original branch to merge back to
 # e.g. make post-build tag-version=0.0.1 original-branch=develop remove-branch=tmp
-post-dist: UPDATE_DEPS_MARK = tmp/$(VERSION)/update-deps
-post-dist: DROP_REPLACE_MARK = tmp/$(VERSION)/drop-replace
-post-dist: git-publish-tag git-merge-back post
+
+post-dist: git-tag-version git-merge-back post
 
 
 #Used to update the module dependency versions
@@ -141,14 +186,34 @@ update-dependency:
 drop-replace:
 	$(CLI) deps drop-replace --modules=$(PRIVATE_MODS) --mark=$(DROP_REPLACE_MARK)
 
-git-publish-tag: GIT_TAG = v$(VERSION)
-git-publish-tag:
-	$(CLI) git mark retag -t $(DROP_REPLACE_MARK) --retag $(GIT_TAG)
+# git-tag-version:
+#	Create a release Git Tag from given Git Tag, which is useful when "dist" or "promote"
+# 	Required Vars:
+#		- GIT_TAG: Tag to be created, default to v$(VERSION)
+# 		- GIT_SRC_TAG: Source Tag, default to $(DROP_REPLACE_MARK)
+git-tag-version: GIT_SRC_TAG ?= $(DROP_REPLACE_MARK)
+git-tag-version: GIT_TAG ?= v$(VERSION)
+git-tag-version:
+	$(CLI) git mark retag -t $(GIT_TAG) --src-tag $(GIT_SRC_TAG)
+
+# git-push-tag:
+#	Push given to remote
+# 	Required Vars:
+#		- GIT_TAG: Tag to push, default to v$(VERSION)
+git-push-tag: GIT_TAG ?= v$(VERSION)
+git-push-tag:
 	$(GIT) push origin $(GIT_TAG)
 
+# git-merge-back:
+#	Merge commit marked by given Git Tag (GIT_SRC_TAG) back to SRC_BRANCH.
+#	Useful on particular scenario when changes during build/dist/release process is necessary to be merged by to dev source
+# 	Required Vars:
+#		- SRC_BRANCH
+# 		- GIT_TAG: Tag to be merged back, default to $(UPDATE_DEPS_MARK)
+git-merge-back: GIT_SRC_TAG ?= $(UPDATE_DEPS_MARK)
 git-merge-back:
 ifneq ($(SRC_BRANCH),)
-	$(GIT) push . $(UPDATE_DEPS_MARK):$(SRC_BRANCH)
+	$(GIT) push . $(GIT_SRC_TAG):$(SRC_BRANCH)
 endif
 
 # may be useful to check if current branch is the expected branch

@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -11,6 +12,7 @@ import (
 type ModuleMetadata struct {
 	CliModPath  string                 `json:"-"`
 	Module      *cmdutils.GoModule     `json:"-"`
+	Name        string                 `json:"name"`
 	Executables map[string]*Executable `json:"execs"`
 	Resources   []*Resource            `json:"resources"`
 	Generates   []*Generate            `json:"generates"`
@@ -57,6 +59,11 @@ func validateModuleMetadata(ctx context.Context) error {
 			logger.WithContext(ctx).Debugf("Rewrite Generate Path: %s => %s", v.Path, fixed)
 		}
 		v.Path = fixed
+	}
+
+	// Name default
+	if Module.Name == "" {
+		Module.Name = path.Base(Module.Module.Path)
 	}
 
 	// TODO more validation
