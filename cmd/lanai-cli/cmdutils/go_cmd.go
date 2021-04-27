@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	targetModule     *GoModule
-	targetModuleOnce = sync.Once{}
+	targetTmpGoModFile string
+	targetModule       *GoModule
+	targetModuleOnce   = sync.Once{}
 
 	packageImportPathCache     map[string]*GoPackage
 	packageImportPathCacheOnce = sync.Once{}
@@ -27,6 +28,7 @@ func ResolveTargetModule(ctx context.Context) *GoModule {
 		if e != nil {
 			logger.WithContext(ctx).Errorf("unable to prepare temporary go.mod file to resolve target module: %v", e)
 		}
+		targetTmpGoModFile = modFile
 
 		// find module
 		mods, e := FindModule(ctx, modFile)
@@ -48,23 +50,23 @@ func PackageImportPathCache(ctx context.Context) map[string]*GoPackage {
 			return
 		}
 		var err error
-		packageImportPathCache, err = FindPackages(ctx, module.Path)
+		packageImportPathCache, err = FindPackages(ctx, targetTmpGoModFile, module.Path)
 		if err != nil {
-			logger.WithContext(ctx).Errorf("unable to resolve local packages in module", module.Path)
+			logger.WithContext(ctx).Errorf("unable to resolve local packages in module %s", module.Path)
 		}
 	})
 	return packageImportPathCache
 }
 
 func FindModule(ctx context.Context, modFile string, modules ...string) ([]*GoModule, error) {
-	var modfileArg string
+	var modFileArg string
 	if modFile != "" {
-		modfileArg = fmt.Sprintf(" -modfile %s", modFile)
+		modFileArg = fmt.Sprintf(" -modfile %s", modFile)
 	}
 	result, e := GoCommandDecodeJson(ctx, &GoModule{},
 		ShellShowCmd(true),
 		ShellUseWorkingDir(),
-		ShellCmd(fmt.Sprintf("go list -m -json%s %s", modfileArg, strings.Join(modules, " "))),
+		ShellCmd(fmt.Sprintf("go list -m -json%s %s", modFileArg, strings.Join(modules, " "))),
 	)
 	if e != nil {
 		return nil, e
@@ -78,11 +80,15 @@ func FindModule(ctx context.Context, modFile string, modules ...string) ([]*GoMo
 	return ret, nil
 }
 
-func FindPackages(ctx context.Context, modules ...string) (map[string]*GoPackage, error) {
+func FindPackages(ctx context.Context, modFile string, modules ...string) (map[string]*GoPackage, error) {
+	var modFileArg string
+	if modFile != "" {
+		modFileArg = fmt.Sprintf(" -modfile %s", modFile)
+	}
 	result, e := GoCommandDecodeJson(ctx, &GoPackage{},
 		ShellShowCmd(true),
 		ShellUseWorkingDir(),
-		ShellCmd(fmt.Sprintf("go list -json %s/...", strings.Join(modules, " "))),
+		ShellCmd(fmt.Sprintf("go list -json%s %s/...", modFileArg, strings.Join(modules, " "))),
 	)
 	if e != nil {
 		return nil, e
