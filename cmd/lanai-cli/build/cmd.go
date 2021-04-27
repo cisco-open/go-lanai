@@ -86,7 +86,7 @@ func gitHeadHash(ctx context.Context) string {
 
 func moduleDeps(ctx context.Context) string {
 	var modules []string
-	mods, e := cmdutils.FindModule(ctx, "", Args.Modules...)
+	mods, e := cmdutils.FindModule(ctx, nil, Args.Modules...)
 	if e != nil {
 		return ""
 	}

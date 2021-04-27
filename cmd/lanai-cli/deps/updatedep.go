@@ -20,25 +20,28 @@ var (
 func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 	//process input args to see which module's dependency needs to be updated
 	moduleToBranch := make(map[string]string)
-	modules := []string{}
 	for _, arg := range Args.Modules {
 		mbr := strings.Split(arg, "@")
 		if len(mbr) != 2 {
-			logger.Errorf("%s doesn't follow the module:path format", mbr)
+			logger.Errorf("%s doesn't follow the module@branch format", mbr)
 			return errors.New("can't parse module path")
 		}
 		m := mbr[0]
 		br := mbr[1]
-		logger.Infof("processing %s@%s", m, br)
 
 		moduleToBranch[m] = br
-		modules = append(modules, m)
+	}
+
+	dropped, e := cmdutils.DropInvalidReplace(cmd.Context())
+	if e != nil {
+		return fmt.Errorf("unable to temporarily drop invalid 'replace' in go.mod: %v", e)
 	}
 
 	// update their dependencies
 	for module, branch := range moduleToBranch {
-		err := cmdutils.GoGet(cmd.Context(), module, branch)
-		if err != nil {
+		logger.Infof("processing %s@%s", module, branch)
+		e := cmdutils.GoGet(cmd.Context(), module, branch)
+		if e != nil {
 			return nil
 		}
 	}
@@ -46,6 +49,10 @@ func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 	// go mod tidy to update implicit dependencies changes
 	if e := cmdutils.GoModTidy(cmd.Context()); e != nil {
 		return e
+	}
+
+	if e := cmdutils.RestoreInvalidReplace(cmd.Context(), dropped); e != nil {
+		return fmt.Errorf("unable to restore temporarily dropped 'replace' in go.mod: %v", e)
 	}
 
 	// mark changes if requested
