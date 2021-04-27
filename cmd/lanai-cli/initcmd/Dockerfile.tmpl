@@ -1,7 +1,6 @@
 
 ## Build Container ##
 FROM golang:1.16.3 AS builder
-ARG CLI_TAG
 ARG PRIVATE_MODS
 ARG VERSION
 WORKDIR /go/src/
@@ -11,8 +10,7 @@ RUN mkdir -p -m 0600 ~/.ssh && \
     ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 RUN --mount=type=ssh \
-    make init-once init CLI_TAG="$CLI_TAG"; \
-    lanai-cli deps drop-replace --modules="$PRIVATE_MODS"; \
+    make init-once init-cli drop-replace PRIVATE_MODS="$PRIVATE_MODS"; \
     make clean build PRIVATE_MODS="$PRIVATE_MODS" VERSION="$VERSION"
 
 ## Distribution Container ##

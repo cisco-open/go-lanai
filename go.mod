@@ -10,7 +10,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/gin-gonic/gin v1.6.3
-	github.com/go-git/go-git/v5 v5.3.0 // indirect
+	github.com/go-git/go-git/v5 v5.3.0
 	github.com/go-kit/kit v0.10.0
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/go-redis/redis/v8 v8.3.3
