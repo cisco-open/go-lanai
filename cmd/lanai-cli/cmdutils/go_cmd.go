@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
 )
 
 var (
-	targetModule               *GoModule
-	targetModuleOnce           = sync.Once{}
+	targetModule     *GoModule
+	targetModuleOnce = sync.Once{}
 
 	packageImportPathCache     map[string]*GoPackage
 	packageImportPathCacheOnce = sync.Once{}
@@ -21,11 +22,18 @@ var (
 
 func ResolveTargetModule(ctx context.Context) *GoModule {
 	targetModuleOnce.Do(func() {
-		mods, e := FindModule(ctx)
+		// first, prepare a mod file to read
+		modFile, e := prepareTargetGoModFile(ctx)
+		if e != nil {
+			logger.WithContext(ctx).Errorf("unable to prepare temporary go.mod file to resolve target module: %v", e)
+		}
+
+		// find module
+		mods, e := FindModule(ctx, modFile)
 		if e == nil && len(mods) == 1 {
 			targetModule = mods[0]
 		} else if e != nil {
-			logger.WithContext(ctx).Errorf("unable to resolve target module name")
+			logger.WithContext(ctx).Errorf("unable to resolve target module name: %v", e)
 		} else {
 			logger.WithContext(ctx).Errorf("resolved multiple modules in working directory")
 		}
@@ -48,11 +56,15 @@ func PackageImportPathCache(ctx context.Context) map[string]*GoPackage {
 	return packageImportPathCache
 }
 
-func FindModule(ctx context.Context, modules ...string) ([]*GoModule, error) {
+func FindModule(ctx context.Context, modFile string, modules ...string) ([]*GoModule, error) {
+	var modfileArg string
+	if modFile != "" {
+		modfileArg = fmt.Sprintf(" -modfile %s", modFile)
+	}
 	result, e := GoCommandDecodeJson(ctx, &GoModule{},
 		ShellShowCmd(true),
 		ShellUseWorkingDir(),
-		ShellCmd(fmt.Sprintf("go list -m -json %s", strings.Join(modules, " "))),
+		ShellCmd(fmt.Sprintf("go list -m -json%s %s", modfileArg, strings.Join(modules, " "))),
 	)
 	if e != nil {
 		return nil, e
@@ -130,13 +142,17 @@ func IsLocalPackageExists(ctx context.Context, pkgPath string) (bool, error) {
 	return ok, nil
 }
 
-func DropReplace(ctx context.Context, module string, version string) error {
+func DropReplace(ctx context.Context, module string, version string, modFile ...string) error {
+	var modFileArg string
+	if len(modFile) != 0 {
+		modFileArg = fmt.Sprintf(" -modfile %s", modFile[0])
+	}
 
 	var cmd ShCmdOptions
 	if version == "" {
-		cmd = ShellCmd(fmt.Sprintf("go mod edit -dropreplace %s", module))
+		cmd = ShellCmd(fmt.Sprintf("go mod edit%s -dropreplace %s", modFileArg, module))
 	} else {
-		cmd = ShellCmd(fmt.Sprintf("go mod edit -dropreplace %s@%s", module, version))
+		cmd = ShellCmd(fmt.Sprintf("go mod edit%s -dropreplace %s@%s", modFileArg, module, version))
 	}
 
 	logger.Infof("dropping replace directive %s, %s", module, version)
@@ -159,20 +175,28 @@ func GoGet(ctx context.Context, module string, versionQuery string) error {
 	return e
 }
 
-func GoModTidy(ctx context.Context) error {
+func GoModTidy(ctx context.Context, modFile ...string) error {
+	var modFileArg string
+	if len(modFile) != 0 {
+		modFileArg = fmt.Sprintf(" -modfile %s", modFile[0])
+	}
 	_, e := RunShellCommands(ctx,
 		ShellShowCmd(true),
 		ShellUseWorkingDir(),
-		ShellCmd(fmt.Sprintf("go mod tidy")),
+		ShellCmd(fmt.Sprintf("go mod tidy%s", modFileArg)),
 		ShellStdOut(os.Stdout))
 	return e
 }
 
-func GetGoMod(ctx context.Context) (*GoMod, error){
+func GetGoMod(ctx context.Context, modFile ...string) (*GoMod, error){
+	var modFileArg string
+	if len(modFile) != 0 {
+		modFileArg = fmt.Sprintf(" -modfile %s", modFile[0])
+	}
 	result, e := GoCommandDecodeJson(ctx, &GoMod{},
 		ShellShowCmd(true),
 		ShellUseWorkingDir(),
-		ShellCmd("go mod edit -json"),
+		ShellCmd(fmt.Sprintf("go mod edit -json%s", modFileArg)),
 	)
 	if e != nil {
 		return nil, e
@@ -180,4 +204,45 @@ func GetGoMod(ctx context.Context) (*GoMod, error){
 
 	m := result[0].(*GoMod)
 	return m, nil
+}
+
+func tmpGoModFile() string {
+	return GlobalArgs.AbsPath(GlobalArgs.TmpDir, "go.tmp.mod")
+}
+func prepareTargetGoModFile(ctx context.Context) (string, error) {
+	tmpModFile := tmpGoModFile()
+	// make a copy of go.mod and go.sum in tmp folder
+	files := map[string]string{
+		"go.mod": tmpModFile,
+		"go.sum": GlobalArgs.AbsPath(GlobalArgs.TmpDir, "go.tmp.sum"),
+	}
+	if e := copyFiles(ctx, files); e != nil {
+		return "", fmt.Errorf("error when copying go.mod: %v", e)
+	}
+
+	// read mod file
+	mod, e := GetGoMod(ctx, tmpModFile)
+	if e != nil {
+		return "", fmt.Errorf("error when read go.mod: %v", e)
+	}
+
+	// try drop replace for non-exiting local reference in tmp folder
+	for _, v := range mod.Replace {
+		replaced := v.New.Path
+		// we only care if the replaced path start with "/" or ".",
+		// i.e. we will ignore url path such as "cto-github.cisco.com/NFV-BU/go-lanai"
+		if replaced == "" || !filepath.IsAbs(replaced) && !strings.HasPrefix(replaced, ".") {
+			continue
+		}
+
+		if !filepath.IsAbs(replaced) {
+			replaced = filepath.Clean(GlobalArgs.WorkingDir + "/" + replaced)
+		}
+		if !isFileExists(replaced) {
+			if e := DropReplace(ctx, v.Old.Path, v.Old.Version, tmpModFile); e != nil {
+				return "", fmt.Errorf("error when droppinbg replace %s: %v", v.Old.Path, e)
+			}
+		}
+	}
+	return tmpModFile, nil
 }

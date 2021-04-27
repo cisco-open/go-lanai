@@ -1,6 +1,7 @@
 package cmdutils
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -42,5 +43,18 @@ func removeContents(dir string) error {
 		}
 	}
 	return nil
+}
+
+func copyFiles(ctx context.Context, files map[string]string) error {
+	opts := []ShCmdOptions{
+		ShellShowCmd(true),
+		ShellUseWorkingDir(),
+	}
+	for src, dst := range files {
+		opts = append(opts, ShellCmd(fmt.Sprintf("cp -r %s %s", src, dst)) )
+	}
+	opts = append(opts, ShellStdOut(os.Stdout))
+	_, e := RunShellCommands(ctx, opts...)
+	return e
 }
 
