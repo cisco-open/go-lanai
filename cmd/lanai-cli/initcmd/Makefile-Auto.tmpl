@@ -126,6 +126,7 @@ push-docker:
 ## 		For more details, see the build.md file in the docs directory.
 
 pre:
+	$(GIT) tag -l | xargs git tag -d
 	$(CLI) git mark create -t $(SAVEPOINT_MARK)
 
 post:
@@ -208,7 +209,7 @@ drop-replace:
 git-tag-version: GIT_SRC_TAG ?= $(DROP_REPLACE_MARK)
 git-tag-version: GIT_TAG ?= v$(VERSION)
 git-tag-version:
-	$(CLI) git mark retag -t $(GIT_TAG) --src-tag $(GIT_SRC_TAG)
+	$(CLI) git mark retag -t $(GIT_TAG) $(if $(GIT_SRC_TAG),--src-tag $(GIT_SRC_TAG))
 
 # git-push-tag:
 #	Push given to remote
