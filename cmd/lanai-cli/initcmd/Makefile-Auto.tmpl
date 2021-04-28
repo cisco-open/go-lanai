@@ -21,8 +21,6 @@ VERSION ?= 0.0.0-SNAPSHOT
 SRC_BRANCH ?=
 
 ## Derived Variables
-CLI_PKG_PATH ?= $(filter {{.CliModPath}}%,$(PRIVATE_MODS))
-CLI_TAG ?= $(patsubst {{.CliModPath}}@%,%,$(CLI_PKG_PATH))
 
 ## Required Variables by Local Targets
 DOCKER ?= docker
@@ -173,21 +171,32 @@ post-dist: DROP_REPLACE_MARK ?= tmp/$(VERSION)/drop-replace
 post-dist: SAVEPOINT_MARK ?= tmp/pre-dist
 post-dist: git-tag-version git-merge-back post
 
-
-#Used to update the module dependency versions
-#Will update go.mod's dependency to given branch's latest commit
-#This target requires a command line input to specify from which branch to update the dependency
-# The dependency version can either be a branch - useful for PR verification
-# Or it can be a version query - useful for builds that are tagged (nightly or release)
-# e.g make update-dependency module=cto-github.cisco.com/NFV-BU/go-lanai@develop
+# update-dependency:
+# 	Used to update the module dependency versions - update go.mod's dependency to given branch's latest commit
+#	This target requires a command line input to specify from which branch to update the dependency
+# 	The dependency version can either be a branch - useful for PR verification
+# 	or it can be a version query - useful for builds that are tagged (nightly or release)
+# 	Required Vars:
+#		- PRIVATE_MODS
+# 	Optional Vars:
+#		- UPDATE_DEPS_MARK: when set, the target will create a git commit for result go.mod/go.sum file and tag it as UPDATE_DEPS_MARK
+# 		  Note: the create commit is not tracked by current branch HEAD
+#	Example:
+# 		make update-dependency PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
 update-dependency:
 	$(CLI) deps update --modules=$(PRIVATE_MODS) --mark=$(UPDATE_DEPS_MARK)
 
-# e.g. make drop-replace module=cto-github.cisco.com/NFV-BU/go-lanai:develop
-# or make drop-replace module=cto-github.cisco.com/NFV-BU/go-lanai
-#use this after dependency is updated and replace directive is dropped.
-#Because if there is a replace directive but the module that's replaced is not being used,
-#go mod tidy will remove the dependency but not the replace directive. That would leave the go.mod in an error state
+# drop-replace:
+# 	Used to prepare go.mod/go.sum for relasing - drop replace specified by PRIVATE_MODS
+#	use this after dependency is updated, because if there is a replace directive but the module that's replaced is not being used,
+#	go mod tidy will remove the dependency but not the replace directive. That would leave the go.mod in an error state
+# 	Required Vars:
+#		- PRIVATE_MODS
+# 	Optional Vars:
+#		- DROP_REPLACE_MARK: when set, the target will create a git commit for result go.mod/go.sum file and tag it as UPDATE_DEPS_MARK
+# 		  Note: the create commit is not tracked by current branch HEAD
+#	Example:
+# 		make drop-replace PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
 drop-replace:
 	$(CLI) deps drop-replace --modules=$(PRIVATE_MODS) --mark=$(DROP_REPLACE_MARK)
 
