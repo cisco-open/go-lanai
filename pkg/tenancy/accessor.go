@@ -68,7 +68,7 @@ func (a *TenancyAccessor) GetChildren(ctx context.Context, tenantId string) ([]s
 	return children, nil
 }
 
-func (a *TenancyAccessor) GetAnceostors(ctx context.Context, tenantId string) ([]string, error) {
+func (a *TenancyAccessor) GetAncestors(ctx context.Context, tenantId string) ([]string, error) {
 	if !a.IsLoaded(ctx) {
 		return nil, errors.New("tenancy is not loaded")
 	}
@@ -167,7 +167,7 @@ func (a *TenancyAccessor) GetTenancyPath(ctx context.Context, tenantId string) (
 	}
 	path := []uuid.UUID{current}
 
-	ancestors, err := a.GetAnceostors(ctx, tenantId)
+	ancestors, err := a.GetAncestors(ctx, tenantId)
 	if err != nil {
 		return nil, err
 	}

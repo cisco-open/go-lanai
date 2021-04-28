@@ -114,6 +114,7 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 	return true
 }
 
+//In most cases, the HasAccessToTenant should be used instead. It checks both the tenant's validity and whether the user has access to it
 func IsTenantValid(ctx context.Context, tenantId string) bool {
 	parentId, err := tenancy.GetParent(ctx, tenantId)
 	//if we find a parent, that means we have this tenantId in tenant hierarchy, so it's valid
@@ -163,7 +164,7 @@ func HasAccessToTenant(ctx context.Context, tenantId string) bool {
 			return false
 		}
 
-		ancestors, err := tenancy.GetAnceostors(ctx, tenantId)
+		ancestors, err := tenancy.GetAncestors(ctx, tenantId)
 		if err != nil {
 			return false
 		}

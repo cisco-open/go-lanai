@@ -54,7 +54,7 @@ func (endpoint *TenantHierarchyEndpoint) GetAncestors(ctx context.Context, req *
 		return nil, err
 	}
 
-	ancestor, err := tenancy.GetAnceostors(ctx, req.TenantId)
+	ancestor, err := tenancy.GetAncestors(ctx, req.TenantId)
 	if err == nil {
 		ret := utils.NewStringSet(ancestor...)
 		return ret, nil
