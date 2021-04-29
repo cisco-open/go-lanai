@@ -75,7 +75,7 @@ publish: push-docker git-push-tag
 # 	Required Vars:
 # 		- VERSION
 #	Example:
-# 		make dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop VERSION=4.0.0-20 SRC_BRANCH=develop
+# 		make redist VERSION=4.0.0-20
 redist: GIT_SRC_TAG = $(shell $(GIT) branch --show-current)
 redist: SAVEPOINT_MARK = tmp/pre-redist
 redist: pre clean build-docker git-tag-version post
@@ -122,7 +122,7 @@ push-docker:
 ## 		This will result in a tag off of the current branch.
 ## 3.	Making end-of-cycle release: use pre-dist and post-dist with a SRC_BRANCH.
 ## 		This will result in a tag off of the current branch. The updated go.mod will also be merged back into the source branch.
-## 3.	PR verification: use pre-build. This will not create any tag or commits.
+## 4.	PR verification: use pre-build. This will not create any tag or commits.
 ## 		For more details, see the build.md file in the docs directory.
 
 pre:

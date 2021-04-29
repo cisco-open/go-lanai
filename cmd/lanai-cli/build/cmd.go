@@ -25,7 +25,7 @@ var (
 
 type GeneralArguments struct {
 	Version string   `flag:"version,v" desc:"Version value to be included as 'version' in build info"`
-	Modules []string `flag:"deps,d" desc:"Comma delimited list of <module_path>[@branch] to be included as 'dependencies'' in build info"`
+	Modules []string `flag:"deps,d" desc:"Comma delimited list of <module_path> to be included as 'dependencies'' in build info. Note: if <module_path> is followed by [@branch], the branch value is ignored"`
 	LdFlags string   `flag:"ldflags" desc:"Additional ldflags passed to \"go build\""`
 }
 
@@ -85,16 +85,23 @@ func gitHeadHash(ctx context.Context) string {
 }
 
 func moduleDeps(ctx context.Context) string {
-	var modules []string
-	mods, e := cmdutils.FindModule(ctx, nil, Args.Modules...)
+	var modPaths []string
+	for _, m := range Args.Modules {
+		path := strings.TrimSpace(strings.SplitN(m, "@", 2)[0])
+		if path != "" {
+			modPaths = append(modPaths, path)
+		}
+	}
+	mods, e := cmdutils.FindModule(ctx, nil, modPaths...)
 	if e != nil {
 		return ""
 	}
 
+	var modules []string
 	for _, m := range mods {
 		ver := m.Version
 		switch {
-		case m.Replace != nil && m.Replace.Version == "":
+		case m.Replace != nil && m.Replace.Version != "":
 			ver = m.Replace.Version
 		case m.Replace != nil:
 			ver = "0.0.0-SNAPSHOT"

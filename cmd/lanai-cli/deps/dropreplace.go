@@ -49,6 +49,13 @@ func RunDropReplace(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
+	// just in case, drop invalid replace
+	dropped, e := cmdutils.DropInvalidReplace(cmd.Context())
+	if e != nil {
+		return fmt.Errorf("failed to drop invalid replace: %v", e)
+	}
+	changed = len(dropped) != 0
+
 	if changed {
 		if e := cmdutils.GoModTidy(cmd.Context()); e != nil {
 			return e
