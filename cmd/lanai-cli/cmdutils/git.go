@@ -58,6 +58,10 @@ func (g *GitUtils) WithContext(ctx context.Context) *GitUtils {
 	}
 }
 
+func (g *GitUtils) Repository() *git.Repository {
+	return g.repo
+}
+
 // MarkWorktree create a local commit with given msg and tag it with given tag.
 // if detach == true, soft reset to initial head after done
 func (g *GitUtils) MarkWorktree(tag string, msg string, detach bool,  matchers...GitFileMatcher) error {
@@ -90,7 +94,7 @@ func (g *GitUtils) MarkWorktree(tag string, msg string, detach bool,  matchers..
 }
 
 // MarkCommit create a lightweight tag of given commit hash
-func (g *GitUtils) MarkCommit(tag string, commitHash plumbing.Hash, ) error {
+func (g *GitUtils) MarkCommit(tag string, commitHash plumbing.Hash) error {
 	if e := g.TagCommit(tag, commitHash, nil, true); e != nil {
 		return e
 	}

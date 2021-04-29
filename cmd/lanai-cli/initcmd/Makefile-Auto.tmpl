@@ -76,7 +76,7 @@ publish: push-docker git-push-tag
 # 		- VERSION
 #	Example:
 # 		make redist VERSION=4.0.0-20
-redist: GIT_SRC_TAG = $(shell $(GIT) branch --show-current)
+redist: GIT_SRC_TAG =
 redist: SAVEPOINT_MARK = tmp/pre-redist
 redist: pre clean build-docker git-tag-version post
 
@@ -126,7 +126,7 @@ push-docker:
 ## 		For more details, see the build.md file in the docs directory.
 
 pre:
-	$(GIT) tag -l | xargs git tag -d
+	$(GIT) tag -l tmp/* | xargs git tag -d
 	$(CLI) git mark create -t $(SAVEPOINT_MARK)
 
 post:
@@ -170,7 +170,7 @@ pre-dist: pre update-dependency drop-replace
 post-dist: UPDATE_DEPS_MARK ?= tmp/$(VERSION)/update-deps
 post-dist: DROP_REPLACE_MARK ?= tmp/$(VERSION)/drop-replace
 post-dist: SAVEPOINT_MARK ?= tmp/pre-dist
-post-dist: git-tag-version git-merge-back post
+post-dist: post git-tag-version git-merge-back
 
 # update-dependency:
 # 	Used to update the module dependency versions - update go.mod's dependency to given branch's latest commit
@@ -228,7 +228,8 @@ git-push-tag:
 git-merge-back: GIT_TAG ?= $(UPDATE_DEPS_MARK)
 git-merge-back:
 ifneq ($(SRC_BRANCH),)
-	$(GIT) push . $(GIT_TAG):$(SRC_BRANCH)
+	$(GIT) push . $(GIT_TAG):origin/$(SRC_BRANCH) || \
+	echo "ERROR: Unable to merge $(GIT_TAG) to $(SRC_BRANCH). Manual operations are required"
 endif
 
 # may be useful to check if current branch is the expected branch

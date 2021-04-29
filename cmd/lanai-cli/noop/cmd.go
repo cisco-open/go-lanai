@@ -2,15 +2,16 @@ package noop
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
 	"strings"
-	"time"
 )
 
 var (
+	logger = log.New("CLI")
 	Cmd = &cobra.Command{
 		Use:                "noop",
 		Short:              "Does nothing",
@@ -58,15 +59,18 @@ func Run(_ *cobra.Command, _ []string) error {
 		return e
 	}
 
-	const tmpTag = "test-tag"
-	const finalTag = "test-tag-final"
-	msg := fmt.Sprintf("test commit @ %v", time.Now().Truncate(time.Millisecond))
-	if e := gitutils.MarkWorktree(tmpTag, msg, true, cmdutils.GitFilePattern("./web/**", "./web/../test.*")); e != nil {
-		return e
-	}
+	h, _ := gitutils.Repository().Head()
+	logger.Infof("Head: %v", h)
 
-	if e := gitutils.TagMarkedCommit(tmpTag, finalTag, nil); e != nil {
-		return e
-	}
+	//const tmpTag = "test-tag"
+	//const finalTag = "test-tag-final"
+	//msg := fmt.Sprintf("test commit @ %v", time.Now().Truncate(time.Millisecond))
+	//if e := gitutils.MarkWorktree(tmpTag, msg, true, cmdutils.GitFilePattern("./web/**", "./web/../test.*")); e != nil {
+	//	return e
+	//}
+	//
+	//if e := gitutils.TagMarkedCommit(tmpTag, finalTag, nil); e != nil {
+	//	return e
+	//}
 	return nil
 }
