@@ -228,7 +228,8 @@ git-push-tag:
 git-merge-back: GIT_TAG ?= $(UPDATE_DEPS_MARK)
 git-merge-back:
 ifneq ($(SRC_BRANCH),)
-	$(GIT) push . $(GIT_TAG):origin/$(SRC_BRANCH) || \
+	@echo "$(GIT) push . $(GIT_TAG):origin/$(SRC_BRANCH)"
+	@$(GIT) push . $(GIT_TAG):origin/$(SRC_BRANCH) || \
 	echo "ERROR: Unable to merge $(GIT_TAG) to $(SRC_BRANCH). Manual operations are required"
 endif
 

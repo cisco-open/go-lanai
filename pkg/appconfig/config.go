@@ -79,6 +79,7 @@ func (c *config) Load(force bool) (err error) {
 
 	// reset all groups if force == true
 	if force {
+		c.isLoaded = false
 		c.profiles = nil
 		for _, g := range c.groups {
 			g.Reset()
@@ -88,9 +89,14 @@ func (c *config) Load(force bool) (err error) {
 	// repeatedly process provider groups until list of provider become stable and all loaded
 	var providers []Provider
 	final := makeInitialProperties()
-	for hasNew := true; hasNew; {
+	// Note about hasNew check: when transiting from bootstrap config to application config,
+	// and all initial providers are from bootstrap config, all providers are loaded initially.
+	// However, we still need to re-collect/merge all properties.
+	// In this case, we need to set hasNew to true in the first iteration.
+	for hasNew, isFirstIter := true, true; hasNew; {
 		providers = make([]Provider, 0)
-		hasNew = false
+		hasNew = isFirstIter
+		isFirstIter = false
 		for _, g := range c.groups {
 			// sort providers based on precedence, lower to higher
 			group := g.Providers(bootstrap.EagerGetApplicationContext(), final)
