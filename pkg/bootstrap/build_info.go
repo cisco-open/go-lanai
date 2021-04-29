@@ -14,7 +14,7 @@ var (
 	BuildVersion = "Unknown"
 	BuildTime    = time.Now().Format(utils.ISO8601Seconds)
 	BuildHash    = "Unknown"
-	BuildDeps    = "cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli@develop"
+	BuildDeps    = "cto-github.cisco.com/NFV-BU/go-lanai@develop"
 )
 
 var (

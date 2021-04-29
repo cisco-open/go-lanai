@@ -85,14 +85,15 @@ func gitHeadHash(ctx context.Context) string {
 }
 
 func moduleDeps(ctx context.Context) string {
-	var modPaths []string
+	modPaths := utils.NewStringSet(cmdutils.ModulePath)
 	for _, m := range Args.Modules {
 		path := strings.TrimSpace(strings.SplitN(m, "@", 2)[0])
 		if path != "" {
-			modPaths = append(modPaths, path)
+			modPaths.Add(path)
 		}
 	}
-	mods, e := cmdutils.FindModule(ctx, nil, modPaths...)
+
+	mods, e := cmdutils.FindModule(ctx, nil, modPaths.Values()...)
 	if e != nil {
 		return ""
 	}
@@ -105,6 +106,8 @@ func moduleDeps(ctx context.Context) string {
 			ver = m.Replace.Version
 		case m.Replace != nil:
 			ver = "0.0.0-SNAPSHOT"
+		case ver == "":
+			ver = "0.0.0-UNKNOWN"
 		}
 		modules = append(modules, fmt.Sprintf("%s@%s", m.Path, ver))
 	}
