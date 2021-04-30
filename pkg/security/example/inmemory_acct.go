@@ -27,8 +27,8 @@ func NewInMemoryAccountStore(acctProps AccountsProperties, acctPolicyProps Accou
 		accountLookupById:       map[interface{}]*security.DefaultAccount{},
 		policiesLookupByName:    map[string]*PropertiesBasedAccountPolicy{},
 	}
-	for k, props := range acctProps.Accounts {
-		props.ID = k
+	for _, props := range acctProps.Accounts {
+		//props.ID = k
 		acct := createAccount(&props)
 		store.accountLookupByUsername[props.Username] = acct
 		store.accountLookupById[props.ID] = acct
