@@ -55,7 +55,7 @@ clean:
 ## Local Targets
 # Generate
 $(GEN_LIST):
-	$(GO) generate $(MODULE)/$(@:generate@%=%)
+	$(GO) generate $(@:generate@%=%)
 
 ## CI/CD
 ## Predefined common CI/CD tasks. Such as PR verification, nightly build/release, etc
