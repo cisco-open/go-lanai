@@ -13,10 +13,10 @@ type TemplateData struct {
 	Resources   []Resource
 }
 
-func generatePredefinedMakefile(ctx context.Context) error {
+func generateServiceCICDMakefile(ctx context.Context) error {
 	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
 		FS:         TmplFS,
-		TmplName:   "Makefile-Auto.tmpl",
+		TmplName:   "Makefile-CICD.tmpl",
 		Output:     filepath.Join(cmdutils.GlobalArgs.OutputDir, "Makefile-Generated"),
 		OutputPerm: 0644,
 		Overwrite:  true,
@@ -24,7 +24,7 @@ func generatePredefinedMakefile(ctx context.Context) error {
 	})
 }
 
-func generateBuildMakefile(ctx context.Context) error {
+func generateServiceBuildMakefile(ctx context.Context) error {
 	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
 		FS:         TmplFS,
 		TmplName:   "Makefile-Build.tmpl",
@@ -42,6 +42,17 @@ func generateDockerfile(ctx context.Context) error {
 		Output:     filepath.Join(cmdutils.GlobalArgs.OutputDir, "build/package/Dockerfile"),
 		OutputPerm: 0644,
 		Overwrite:  Args.Force,
+		Model:      &Module,
+	})
+}
+
+func generateLibsCICDMakefile(ctx context.Context) error {
+	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
+		FS:         TmplFS,
+		TmplName:   "Makefile-Libs.tmpl",
+		Output:     filepath.Join(cmdutils.GlobalArgs.OutputDir, "Makefile-Generated"),
+		OutputPerm: 0644,
+		Overwrite:  true,
 		Model:      &Module,
 	})
 }

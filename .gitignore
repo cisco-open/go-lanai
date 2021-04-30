@@ -4,6 +4,7 @@
 # Build folders
 **/.tmp
 dist
+Makefile-Generated
 
 # Binaries for programs and plugins
 *.exe

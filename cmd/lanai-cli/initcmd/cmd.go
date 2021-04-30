@@ -9,6 +9,7 @@ import (
 
 const (
 	InitRootName = "init"
+	InitLibsName = "libs"
 )
 
 var (
@@ -33,10 +34,11 @@ type Arguments struct {
 	Force    bool   `flag:"force,f" desc:"force overwrite generated file when they already exists"`
 }
 
-//go:embed Makefile-Build.tmpl Dockerfile.tmpl Makefile-Auto.tmpl
+//go:embed Makefile-Build.tmpl Dockerfile.tmpl Makefile-CICD.tmpl Makefile-Libs.tmpl
 var TmplFS embed.FS
 
 func init() {
+	Cmd.AddCommand(LibInitCmd)
 	cmdutils.PersistentFlags(Cmd, &Args)
 }
 
@@ -49,7 +51,7 @@ func Run(cmd *cobra.Command, _ []string) error {
 		return e
 	}
 
-	if e := generateBuildMakefile(cmd.Context()); e != nil {
+	if e := generateServiceBuildMakefile(cmd.Context()); e != nil {
 		return e
 	}
 
@@ -57,7 +59,7 @@ func Run(cmd *cobra.Command, _ []string) error {
 		return e
 	}
 
-	if e := generatePredefinedMakefile(cmd.Context()); e != nil {
+	if e := generateServiceCICDMakefile(cmd.Context()); e != nil {
 		return e
 	}
 	return nil

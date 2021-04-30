@@ -1,0 +1,3 @@
+generates:
+  - path: "pkg/swagger"
+  - path: "pkg/security/formlogin"
