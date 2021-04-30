@@ -63,7 +63,7 @@ func (m *TenancyModifer) AddTenant(ctx context.Context, tenantId string, parentI
 
 	logger.Debugf("add tenantId %s parentId %s", tenantId, parentId)
 
-	ancestors, err := m.accessor.GetAnceostors(ctx, parentId)
+	ancestors, err := m.accessor.GetAncestors(ctx, parentId)
 	if err != nil {
 		return err
 	}
