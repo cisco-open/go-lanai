@@ -28,10 +28,9 @@ func NewRedirectWithRelativePath(path string) *RedirectHandler {
 		panic(err)
 	}
 
-	url.ForceQuery = true
 	return &RedirectHandler{
 		sc:       302,
-		location: path,
+		location: url.String(),
 	}
 }
 
@@ -41,10 +40,9 @@ func NewRedirectWithURL(urlStr string) *RedirectHandler {
 		panic(err)
 	}
 
-	url.ForceQuery = true
 	return &RedirectHandler{
 		sc:       302,
-		location: urlStr,
+		location: url.String(),
 	}
 }
 
@@ -88,7 +86,7 @@ func (ep *RedirectHandler) doRedirect(c context.Context, r *http.Request, rw htt
 		}
 	}
 
-	location,_ := urlutils.ParseRequestURI(ep.location)
+	location,_ := urlutils.Parse(ep.location)
 	if !location.IsAbs() {
 		// relative path was used, try to add context path
 		contextPath, ok := c.Value(web.ContextKeyContextPath).(string)
@@ -98,7 +96,7 @@ func (ep *RedirectHandler) doRedirect(c context.Context, r *http.Request, rw htt
 	}
 
 	// redirect
-	http.Redirect(rw, r, location.RequestURI(), ep.sc)
+	http.Redirect(rw, r, location.String(), ep.sc)
 	_,_ = rw.Write([]byte{})
 }
 

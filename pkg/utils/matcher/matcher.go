@@ -13,33 +13,33 @@ type Matcher interface {
 
 type ChainableMatcher interface {
 	Matcher
-	// ChainableMatcher.Or(...Matcher) concat given matchers with OR operator
+	// Or concat given matchers with OR operator
 	Or(matcher ...Matcher) ChainableMatcher
-	// ChainableMatcher.And(...Matcher) concat given matchers with AND operator
+	// And concat given matchers with AND operator
 	And(matcher ...Matcher) ChainableMatcher
 }
 
-// Any() returns a matcher that matches everything
+// Any returns a matcher that matches everything
 func Any() ChainableMatcher {
 	return NoopMatcher(true)
 }
 
-// None() returns a matcher that matches nothing
+// None returns a matcher that matches nothing
 func None() ChainableMatcher {
 	return NoopMatcher(false)
 }
 
-// Or(...) concat given matchers with OR operator
+// Or concat given matchers with OR operator
 func Or(left Matcher, right...Matcher) ChainableMatcher {
 	return OrMatcher(append([]Matcher{left}, right...))
 }
 
-// And(...) concat given matchers with AND operator
+// And concat given matchers with AND operator
 func And(left Matcher, right...Matcher) ChainableMatcher {
 	return AndMatcher(append([]Matcher{left}, right...))
 }
 
-// Not(Matcher) returns a negated matcher
+// Not returns a negated matcher
 func Not(matcher Matcher) ChainableMatcher {
 	return &NegateMatcher{matcher}
 }
@@ -173,8 +173,8 @@ func (m NegateMatcher) String() string {
 	return fmt.Sprintf("Not(%v)", m.Matcher)
 }
 
-// TODO review use cases to determine if this class is necessary
 // GenericMatcher implements ChainableMatcher
+// TODO review use cases to determine if this class is necessary
 type GenericMatcher struct {
 	matchFunc func(context.Context, interface{}) (bool, error)
 }

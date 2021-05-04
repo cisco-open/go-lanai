@@ -40,7 +40,11 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 			Request(matcher.AnyRequest()).Authenticated(),
 		).
 		With(formlogin.New().
-			EnableMFA(),
+			EnableMFA().
+			LoginUrl("/login#/login").
+			LoginErrorUrl("/login?error=true#/login").
+			MfaUrl("/login/mfa#/otpverify").
+			MfaErrorUrl("/login/mfa?error=true#/otpverify"),
 		).
 		With(errorhandling.New().
 			AccessDeniedHandler(handler),

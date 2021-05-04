@@ -57,7 +57,7 @@ func NewSwaggerController(prop SwaggerProperties) *SwaggerController {
 
 func (s *SwaggerController) Mappings() []web.Mapping {
 	return []web.Mapping{
-		assets.New("swagger/static", "generated"),
+		assets.New("/swagger/static", "generated/"),
 		web.NewSimpleMapping("swagger-ui", "/swagger", http.MethodGet, nil, s.swagger),
 		rest.New("swagger-configuration-ui").Get("/swagger-resources/configuration/ui").EndpointFunc(s.configurationUi).Build(),
 		rest.New("swagger-configuration-security").Get("/swagger-resources/configuration/security").EndpointFunc(s.configurationSecurity).Build(),

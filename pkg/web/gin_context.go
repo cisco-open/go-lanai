@@ -42,7 +42,8 @@ func GinContext(ctx context.Context) *gin.Context {
 /**************************
 	Customizers
  **************************/
-// GinContextCustomizer implements Customizer and order.PriorityOrdered
+
+// PriorityGinContextCustomizer implements Customizer and order.PriorityOrdered
 type PriorityGinContextCustomizer struct {
 	properties *ServerProperties
 }

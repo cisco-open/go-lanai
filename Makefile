@@ -16,7 +16,6 @@ default: init-cli
 -include Makefile-Generated
 
 ## Required Variables from command-line
-#FORCE ?=
 
 ## Required Variables by Local Targets
 GO ?= go

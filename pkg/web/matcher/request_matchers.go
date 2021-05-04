@@ -68,6 +68,7 @@ func (m *requestMatcher) String() string {
 /**************************
 	Constructors
 ***************************/
+
 func AnyRequest() web.RequestMatcher {
 	return wrapAsRequestMatcher(matcher.Any())
 }
@@ -112,7 +113,7 @@ func RequestWithMethods(methods...string) web.RequestMatcher {
 // RequestWithPattern create a web.RequestMatcher with path pattern.
 // if context is available when performing the match, the context path is striped
 func RequestWithPattern(pattern string, methods...string) web.RequestMatcher {
-	pDelegate := matcher.WithPathPattern(pattern)
+	pDelegate := matcher.WithPathPattern(fixPathPattern(pattern))
 	pMatcher := &requestMatcher{
 		description:   fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
 		matchableFunc: path,

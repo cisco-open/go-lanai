@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	pathutils "path"
+	"strings"
 )
 // routeMatcher implement web.RouteMatcher
 type routeMatcher struct {
@@ -59,6 +60,7 @@ func (m *routeMatcher) String() string {
 /**************************
 	Constructors
 ***************************/
+
 func AnyRoute() web.RouteMatcher {
 	return wrapAsRouteMatcher(matcher.Any())
 }
@@ -81,7 +83,7 @@ func RouteWithMethods(methods...string) web.RouteMatcher {
 	}
 }
 
-// PatternMatcher checks web.Route's path with prefix
+// RouteWithPattern checks web.Route's path with prefix
 // The prefix syntax is:
 //
 //  prefix:
@@ -102,7 +104,8 @@ func RouteWithMethods(methods...string) web.RouteMatcher {
 //    '\\' c      matches character c
 //    lo '-' hi   matches character c for lo <= c <= hi
 func RouteWithPattern(pattern string, methods...string) web.RouteMatcher {
-	pDelegate := matcher.WithPathPattern(pattern)
+	// todo
+	pDelegate := matcher.WithPathPattern(fixPathPattern(pattern))
 	pMatcher := &routeMatcher{
 		description: fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
 		matchableFunc: routeAbsPath,
@@ -147,12 +150,11 @@ func RouteWithGroup(group string) web.RouteMatcher {
 	helpers
 ***************************/
 func interfaceToRoute(i interface{}) (*web.Route, error) {
-	switch i.(type) {
+	switch v := i.(type) {
 	case web.Route:
-		r := i.(web.Route)
-		return &r, nil
+		return &v, nil
 	case *web.Route:
-		return i.(*web.Route), nil
+		return v, nil
 	default:
 		return nil, fmt.Errorf("RouteMatcher doesn't support %T", i)
 	}
@@ -183,4 +185,10 @@ func wrapAsRouteMatcher(m matcher.Matcher) web.RouteMatcher {
 		description: desc,
 		delegate: m,
 	}
+}
+
+// fixPathPattern fix pattern by processing it such as remove #fragment portion
+func fixPathPattern(p string) string {
+	split := strings.SplitN(p, "#", 2)
+	return split[0]
 }

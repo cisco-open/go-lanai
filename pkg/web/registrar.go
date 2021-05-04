@@ -4,13 +4,14 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
-	"embed"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"go.uber.org/fx"
+	"html/template"
+	"io/fs"
 	"net/http"
 	pathutils "path"
 	"reflect"
@@ -37,7 +38,7 @@ type Registrar struct {
 	staticMappings  []StaticMapping                       // staticMappings all static mappings
 	customizers     []Customizer
 	errTranslators  []ErrorTranslator
-	embedFs         []embed.FS
+	embedFs         []fs.FS
 	initialized     bool
 }
 
@@ -80,7 +81,7 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	binding.Validator = nil
 
 	// load templates
-	r.engine.LoadHTMLGlob("web/template/*")
+	r.loadHtmlTemplates()
 
 	// add some common middlewares
 	mappings := []interface{}{}
@@ -163,7 +164,7 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 //  - MiddlewareMapping
 //  - ErrorTranslator
 //  - struct that contains exported Controller fields
-//  - embed.FS
+//  - fs.FS
 func (r *Registrar) Register(items...interface{}) (err error) {
 	for _, i := range items {
 		if err = r.register(i); err != nil {
@@ -193,25 +194,25 @@ func (r *Registrar) register(i interface{}) (err error) {
 		return errors.New("attempting to register mappings/middlewares/pre-processors after web engine initialization")
 	}
 
-	switch i.(type) {
+	switch v := i.(type) {
 	case Controller:
-		err = r.registerController(i.(Controller))
+		err = r.registerController(v)
 	case MvcMapping:
-		err = r.registerMvcMapping(i.(MvcMapping))
+		err = r.registerMvcMapping(v)
 	case StaticMapping:
-		err = r.registerStaticMapping(i.(StaticMapping))
+		err = r.registerStaticMapping(v)
 	case MiddlewareMapping:
-		err = r.registerMiddlewareMapping(i.(MiddlewareMapping))
+		err = r.registerMiddlewareMapping(v)
 	case SimpleMapping:
-		err = r.registerSimpleMapping(i.(SimpleMapping))
+		err = r.registerSimpleMapping(v)
 	case RequestPreProcessor:
-		err = r.registerRequestPreProcessor(i.(RequestPreProcessor))
+		err = r.registerRequestPreProcessor(v)
 	case Customizer:
-		err = r.registerWebCustomizer(i.(Customizer))
+		err = r.registerWebCustomizer(v)
 	case ErrorTranslator:
-		err = r.registerErrorTranslator(i.(ErrorTranslator))
-	case embed.FS:
-		r.embedFs = append(r.embedFs, i.(embed.FS))
+		err = r.registerErrorTranslator(v)
+	case fs.FS:
+		r.embedFs = append(r.embedFs, v)
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -378,7 +379,12 @@ func (r *Registrar) installMappings() error {
 }
 
 func (r *Registrar) installStaticMapping(m StaticMapping) error {
-	mFs := NewMergedFs(m.StaticRoot(), r.embedFs...)
+	embedded := make([]fs.FS, len(r.embedFs))
+	for i, fsys := range r.embedFs {
+		embedded[i] = OrderedFS(NewDirFS(m.StaticRoot(), fsys), i)
+	}
+
+	mFs := NewMergedFS(OrderedFS(NewOSDirFS(m.StaticRoot()), order.Highest), embedded...)
 	mw := ginStaticAssetsHandler{
 		rewriter: r.requestRewriter,
 		fsys:     mFs,
@@ -489,6 +495,17 @@ func (r *Registrar) kitServerOptions() []httptransport.ServerOption {
 		opts[i] = opt.ServerOption
 	}
 	return opts
+}
+
+func (r *Registrar) loadHtmlTemplates() {
+	osFS := NewOSDirFS("web/", DirFSAllowListDirectory)
+	mFs := NewMergedFS(osFS, r.embedFs...)
+	//r.engine.LoadHTMLGlob("web/template/*")
+	t, e := template.ParseFS(mFs, "**/*.tmpl")
+	if e != nil {
+		panic(e)
+	}
+	r.engine.SetHTMLTemplate(t)
 }
 
 /**************************

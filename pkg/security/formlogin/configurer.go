@@ -196,7 +196,7 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 	// let ws know to intercept additional url
 	routeVerify := matcher.RouteWithPattern(f.mfaVerifyUrl, http.MethodPost)
 	routeRefresh :=	matcher.RouteWithPattern(f.mfaRefreshUrl, http.MethodPost)
-	requestMatcher := matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost).
+	requestMatcher := matcher.RequestWithPattern(f.mfaVerifyUrl, http.MethodPost).
 		Or(matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost))
 	ws.Route(routeVerify).Route(routeRefresh)
 

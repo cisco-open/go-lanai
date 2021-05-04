@@ -33,6 +33,8 @@ type ModelView struct {
 /**********************************
 	Response Encoder
 ***********************************/
+
+//goland:noinspection GoNameStartsWithPackageName
 func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, response interface{}) error {
 	ctx := web.GinContext(c)
 	if ctx == nil {
@@ -62,6 +64,7 @@ func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, respon
 /*****************************
 	JSON Error Encoder
 ******************************/
+
 //goland:noinspection GoNameStartsWithPackageName
 func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 	ctx := web.GinContext(c)
