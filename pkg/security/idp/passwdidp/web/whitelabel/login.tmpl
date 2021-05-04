@@ -1,0 +1,61 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <div class="row mt-5 no-gutters">
+        <div class="col"></div>
+        <div class="col-12 col-sm-8 col-md-6 col-lg-5 col-xl-4">
+            {{if .error}}
+                <div class="row">
+                    <div class="col">
+                        <div class="alert alert-danger">{{.error.Error}}</div>
+                    </div>
+                </div>
+            {{end}}
+            <div class="row">
+                <div class="col">
+                    <form role="form" action="{{.rc.ContextPath}}{{.loginProcessUrl}}" method="post">
+                        <div class="form-group">
+                            <label for="username">Username:</label>
+                            <input type="text" class="form-control" id="username" name="{{.usernameParam}}"
+                            {{- if .rememberedUsername -}}
+                                value="{{.rememberedUsername}}"
+                            {{- else if index . .usernameParam -}}
+                                value="{{index . .usernameParam}}"
+                            {{- end -}}
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password:</label>
+                            <input type="password" class="form-control" id="password" name="{{.passwordParam}}"/>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" class="form-control" id="remember-me" name="remember-me"
+                                {{- if .rememberedUsername -}}
+                                        checked
+                                {{- end -}}
+                            />
+                            <label for="remember-me">Remember Me</label>
+                        </div>
+                        {{- if .csrf -}}
+                            <input type="hidden" id="csrf_token" name="{{.csrf.ParameterName}}" value="{{.csrf.Value}}"/>
+                        {{- end -}}
+                        <div class="form-row align-items-center">
+                            <div class="col">
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </div>
+                            <div class="col-auto">
+                                <a href="{{- if .resetPasswordUrl -}}{{.resetPasswordUrl}}{{- end -}}">Forgot Password</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col"></div>
+    </div>
+</div>
+</body>
+</html>

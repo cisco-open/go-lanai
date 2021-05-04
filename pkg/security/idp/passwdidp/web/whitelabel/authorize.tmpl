@@ -1,0 +1,68 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <div class="row mt-5 no-gutters">
+        <div class="col"></div>
+        <div class="col-12 col-sm-8 col-md-6 col-lg-5 col-xl-4">
+            {{if .AuthRequest}}
+            <div class="row">
+                <div class="col">
+                    <h3>Please Confirm</h3>
+                    <p>Do you authorize "{{- .AuthRequest.ClientId -}}" at
+                        "{{- .AuthRequest.RedirectUri -}}"
+                        to access your protected resources
+                        with following scope:
+                    </p>
+                </div>
+                <div class="w-100"></div>
+                <div class="col">
+                    <ul class="list-group col">
+                        {{range .AuthRequest.Scopes.Values -}}
+                        <li class="list-group-item">{{ . }}</li>
+                        {{- end }}
+                    </ul>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-auto">
+                    <form id="confirmationForm" name="confirmationForm"
+                          action="{{.rc.ContextPath}}{{.ApprovalUrl}}"
+                          method="post">
+                        <input name="user_oauth_approval" value="true" type="hidden"/>
+                        {{ range .AuthRequest.Scopes.Values -}}
+                        <input name="scope.{{- . -}}" value="true" type="hidden"/>
+                        {{- end -}}
+                        {{- if .csrf -}}
+                        <input type="hidden" id="approve_csrf_token" name="{{.csrf.ParameterName}}" value="{{.csrf.Value}}"/>
+                        {{- end }}
+                        <button class="btn btn-success" type="submit">Approve</button>
+                    </form>
+                </div>
+                <div class="col-auto">
+                    <form id="denyForm" name="confirmationForm" action="{{.rc.ContextPath}}{{.ApprovalUrl}}"
+                          method="post">
+                        <input name="user_oauth_approval" value="false" type="hidden"/>
+                        {{- if .csrf -}}
+                        <input type="hidden" id="deny_csrf_token" name="{{.csrf.ParameterName}}" value="{{.csrf.Value}}"/>
+                        {{- end -}}
+                        <button class="btn btn-danger" type="submit">Deny</button>
+                    </form>
+                </div>
+            </div>
+            {{else}}
+            <div class="row">
+                <div class="col">
+                    <p>It seems you tried to access this page directly.
+                        Please use login page instead.</p>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        <div class="col"></div>
+    </div>
+</div>
+</body>
+</html>
