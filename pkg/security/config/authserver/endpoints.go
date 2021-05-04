@@ -1,11 +1,13 @@
 package authserver
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/misc"
 	utils_matcher "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 	"fmt"
 )
 
@@ -16,6 +18,8 @@ func registerEndpoints(registrar *web.Registrar, config *Configuration) {
 	th := misc.NewEndpoint()
 
 	mappings := []interface{} {
+		template.New().Get("/error").HandlerFunc(errorhandling.ErrorWithStatus).Build(),
+
 		rest.New("jwks").Get(config.Endpoints.JwkSet).EndpointFunc(jwks.JwkSet).Build(),
 		rest.New("check_token").Post(config.Endpoints.CheckToken).EndpointFunc(ct.CheckToken).Build(),
 		rest.New("userinfo GET").Get(config.Endpoints.UserInfo).
