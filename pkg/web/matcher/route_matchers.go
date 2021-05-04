@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
+	"net/url"
 	pathutils "path"
 	"strings"
 )
@@ -104,8 +105,7 @@ func RouteWithMethods(methods...string) web.RouteMatcher {
 //    '\\' c      matches character c
 //    lo '-' hi   matches character c for lo <= c <= hi
 func RouteWithPattern(pattern string, methods...string) web.RouteMatcher {
-	// todo
-	pDelegate := matcher.WithPathPattern(fixPathPattern(pattern))
+	pDelegate := matcher.WithPathPattern(pattern)
 	pMatcher := &routeMatcher{
 		description: fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
 		matchableFunc: routeAbsPath,
@@ -113,6 +113,12 @@ func RouteWithPattern(pattern string, methods...string) web.RouteMatcher {
 	}
 	mMatcher := RouteWithMethods(methods...)
 	return wrapAsRouteMatcher(pMatcher.And(mMatcher))
+}
+
+// RouteWithURL is similar with RouteWithPattern, but instead it takes a relative URL path and convert it to pattern
+// by extracting "path" part (remove #fragment, ?query and more)
+func RouteWithURL(url string, methods...string) web.RouteMatcher {
+	return RouteWithPattern(PatternFromURL(url), methods...)
 }
 
 func RouteWithPrefix(prefix string, methods...string) web.RouteMatcher {
@@ -144,6 +150,16 @@ func RouteWithGroup(group string) web.RouteMatcher {
 		matchableFunc: routeGroup,
 		delegate: delegate,
 	}
+}
+
+// PatternFromURL convert relative URL to pattern by necessary operations, such as remove #fragment portion
+func PatternFromURL(relativeUrl string) string {
+	u, e := url.Parse(relativeUrl)
+	if e != nil {
+		split := strings.SplitN(relativeUrl, "#", 2)
+		return split[0]
+	}
+	return u.Path
 }
 
 /**************************
@@ -185,10 +201,4 @@ func wrapAsRouteMatcher(m matcher.Matcher) web.RouteMatcher {
 		description: desc,
 		delegate: m,
 	}
-}
-
-// fixPathPattern fix pattern by processing it such as remove #fragment portion
-func fixPathPattern(p string) string {
-	split := strings.SplitN(p, "#", 2)
-	return split[0]
 }

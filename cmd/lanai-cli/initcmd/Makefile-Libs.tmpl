@@ -84,7 +84,9 @@ verify: pre-verify clean test post-verify
 dist: UPDATE_DEPS_MARK = tmp/$(VERSION)/update-deps
 dist: DROP_REPLACE_MARK = tmp/$(VERSION)/drop-replace
 dist: SAVEPOINT_MARK = tmp/pre-dist
-dist: pre-dist clean generate test post-dist
+# TODO re-enable "generate" after upstream login-app-ui is fixed
+#dist: pre-dist clean generate test post-dist
+dist: pre-dist clean test post-dist
 
 # publish:
 #	Publish a distribution build. Push Git release tag, etc

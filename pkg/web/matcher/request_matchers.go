@@ -113,7 +113,7 @@ func RequestWithMethods(methods...string) web.RequestMatcher {
 // RequestWithPattern create a web.RequestMatcher with path pattern.
 // if context is available when performing the match, the context path is striped
 func RequestWithPattern(pattern string, methods...string) web.RequestMatcher {
-	pDelegate := matcher.WithPathPattern(fixPathPattern(pattern))
+	pDelegate := matcher.WithPathPattern(pattern)
 	pMatcher := &requestMatcher{
 		description:   fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
 		matchableFunc: path,
@@ -121,6 +121,12 @@ func RequestWithPattern(pattern string, methods...string) web.RequestMatcher {
 	}
 	mMatcher := RequestWithMethods(methods...)
 	return wrapAsRequestMatcher(pMatcher.And(mMatcher))
+}
+
+// RequestWithURL is similar with RequestWithPattern, but instead it takes a relative URL path and convert it to pattern
+// by extracting "path" part (remove #fragment, ?query and more)
+func RequestWithURL(url string, methods...string) web.RouteMatcher {
+	return RequestWithPattern(PatternFromURL(url), methods...)
 }
 
 // RequestWithPrefix create a web.RequestMatcher with prefix

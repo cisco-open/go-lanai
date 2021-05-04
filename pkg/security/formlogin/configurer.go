@@ -136,8 +136,8 @@ func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws s
 
 func (flc *FormLoginConfigurer) configureLoginPage(f *FormLoginFeature, ws security.WebSecurity) error {
 	// let ws know to intercept additional url
-	routeMatcher := matcher.RouteWithPattern(f.loginUrl, http.MethodGet)
-	requestMatcher := matcher.RequestWithPattern(f.loginUrl, http.MethodGet)
+	routeMatcher := matcher.RouteWithURL(f.loginUrl, http.MethodGet)
+	requestMatcher := matcher.RequestWithURL(f.loginUrl, http.MethodGet)
 	ws.Route(routeMatcher)
 
 	// configure access
@@ -149,8 +149,8 @@ func (flc *FormLoginConfigurer) configureLoginPage(f *FormLoginFeature, ws secur
 
 func (flc *FormLoginConfigurer) configureMfaPage(f *FormLoginFeature, ws security.WebSecurity) error {
 	// let ws know to intercept additional url
-	routeMatcher := matcher.RouteWithPattern(f.mfaUrl, http.MethodGet)
-	requestMatcher := matcher.RequestWithPattern(f.mfaUrl, http.MethodGet)
+	routeMatcher := matcher.RouteWithURL(f.mfaUrl, http.MethodGet)
+	requestMatcher := matcher.RequestWithURL(f.mfaUrl, http.MethodGet)
 	ws.Route(routeMatcher)
 
 	// configure access
@@ -164,7 +164,7 @@ func (flc *FormLoginConfigurer) configureMfaPage(f *FormLoginFeature, ws securit
 func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
 
 	// let ws know to intercept additional url
-	route := matcher.RouteWithPattern(f.loginProcessUrl, http.MethodPost)
+	route := matcher.RouteWithURL(f.loginProcessUrl, http.MethodPost)
 	ws.Route(route)
 
 	// configure middlewares
@@ -194,10 +194,10 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
 
 	// let ws know to intercept additional url
-	routeVerify := matcher.RouteWithPattern(f.mfaVerifyUrl, http.MethodPost)
-	routeRefresh :=	matcher.RouteWithPattern(f.mfaRefreshUrl, http.MethodPost)
-	requestMatcher := matcher.RequestWithPattern(f.mfaVerifyUrl, http.MethodPost).
-		Or(matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost))
+	routeVerify := matcher.RouteWithURL(f.mfaVerifyUrl, http.MethodPost)
+	routeRefresh :=	matcher.RouteWithURL(f.mfaRefreshUrl, http.MethodPost)
+	requestMatcher := matcher.RequestWithURL(f.mfaVerifyUrl, http.MethodPost).
+		Or(matcher.RequestWithURL(f.mfaRefreshUrl, http.MethodPost))
 	ws.Route(routeVerify).Route(routeRefresh)
 
 	// configure middlewares
@@ -237,9 +237,9 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 }
 
 func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.WebSecurity) error {
-	csrfMatcher := matcher.RequestWithPattern(f.loginProcessUrl, http.MethodPost).
-		Or(matcher.RequestWithPattern(f.mfaVerifyUrl, http.MethodPost)).
-		Or(matcher.RequestWithPattern(f.mfaRefreshUrl, http.MethodPost))
+	csrfMatcher := matcher.RequestWithURL(f.loginProcessUrl, http.MethodPost).
+		Or(matcher.RequestWithURL(f.mfaVerifyUrl, http.MethodPost)).
+		Or(matcher.RequestWithURL(f.mfaRefreshUrl, http.MethodPost))
 	csrf.Configure(ws).AddCsrfProtectionMatcher(csrfMatcher)
 	return nil
 }
