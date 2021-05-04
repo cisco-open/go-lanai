@@ -18,15 +18,15 @@
 		<!-- Main View -->
 		<script>
 			// Create a globalised dynamic csrf token for this login flow.
-			var csrfToken = "{{.csrf.Value}}";
-			var csrfParameterName = "{{.csrf.ParameterName}}";
-			var contextPath = "{{.rc.ContextPath}}"
-			var authErrors = {{- if .error -}}"{{.error.Error}}"{{- else - }}""{{- end -}};
-			var authEndpoint = "{{.rc.ContextPath}}{{.loginProcessUrl}}";
-			var optVerifyEndpoint = "{{.rc.ContextPath}}{{.mfaVerifyUrl}}";
-			var optResendEndpoint = "{{.rc.ContextPath}}{{.mfaRefreshUrl}}";
-			var optParam = {{- if .otpParam -}}"{{.otpParam}}"{{- else - }}""{{- end -}};
-			var MSX_VERSION = {{- if .MSXVersion -}}"{{.MSXVersion}}"{{- else -}}"4.0.0"{{- end -}};
+			var csrfToken = "{{- if .csrf -}}{{.csrf.Value}}{{- end -}}";
+			var csrfParameterName = "{{- if .csrf -}}{{.csrf.ParameterName}}{{- end -}}";
+			var contextPath = "{{.rc.ContextPath}}";
+			var authErrors = "{{- if .error -}}{{.error.Error}}{{- end -}}";
+			var authEndpoint = "{{.loginProcessUrl}}";
+			var optVerifyEndpoint = "{{.mfaVerifyUrl}}";
+			var optResendEndpoint = "{{.mfaRefreshUrl}}";
+			var optParam = "{{- if .otpParam -}}{{.otpParam}}{{- end -}}";
+			var MSX_VERSION = "{{- if .MSXVersion -}}{{.MSXVersion}}{{- else -}}4.0.0{{- end -}}";
 			var MSX_LOGIN_VERSION="4.0.0";
 			var dojoConfig = {
 				baseUrl: "{{.rc.ContextPath}}/app/vendor",
