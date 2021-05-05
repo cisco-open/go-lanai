@@ -1,4 +1,23 @@
-# Building a Go-Lanai Service
+# Tooling
+
+`go-lanai/cmd/lanai-cli` is a command line tool to help with common build/code generation/git tasks.
+
+### Prerequisites for GO Lanai Service
+
+- `Makefile` available 
+
+### To install via GNU Make:
+
+```shell
+make init-cli [CLI_TAG=git_brand_or_tag]
+```
+
+Where the `CLI_TAG` is optional and supported at Service using 
+
+# CI/CD Operations for Go-Lanai
+
+
+# CI/CD Operations for Go-Lanai Service
 
 During development cycle, service depends on go-lanai project using branch name.
 For example, service is being developed in develop (or feature) branch, and go-lanai is being developed in develop (or feature) branch as well.

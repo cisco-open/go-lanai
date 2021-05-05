@@ -16,6 +16,7 @@ type TemplateOption struct {
 	OutputPerm os.FileMode // output file permission when create
 	Overwrite  bool        // should overwrite if output file already exists
 	Model      interface{}
+	Customizer func(*template.Template)
 }
 
 // GenerateFileWithOption generate file using given FS and template name
@@ -43,7 +44,12 @@ func GenerateFileWithOption(ctx context.Context, opt *TemplateOption) error {
 	defer func() {_ = f.Close()}()
 
 	// load template and generate
-	t, e := template.New("templates").ParseFS(opt.FS, "*")
+	t := template.New(opt.TmplName)
+	if opt.Customizer != nil {
+		opt.Customizer(t)
+	}
+
+	t, e = t.ParseFS(opt.FS, opt.TmplName)
 	if e != nil {
 		return e
 	}

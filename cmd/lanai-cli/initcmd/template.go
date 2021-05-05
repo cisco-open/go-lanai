@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"path/filepath"
+	"text/template"
 )
 
 type TemplateData struct {
@@ -12,6 +13,22 @@ type TemplateData struct {
 	Generates   []Generate
 	Resources   []Resource
 }
+
+func forceUpdateServiceMakefile(ctx context.Context) error {
+	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
+		FS:         TmplFS,
+		TmplName:   "Makefile.tmpl",
+		Output:     filepath.Join(cmdutils.GlobalArgs.OutputDir, "Makefile"),
+		OutputPerm: 0644,
+		Overwrite:  Args.Force,
+		Model:      &Module,
+		Customizer: func(t *template.Template) {
+			// custom delimiter, we want this file's templates shows as-is
+			t.Delims("{{{", "}}}")
+		},
+	})
+}
+
 
 func generateServiceCICDMakefile(ctx context.Context) error {
 	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
