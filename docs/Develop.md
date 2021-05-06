@@ -26,13 +26,13 @@ require (
 ```
 
 It's optional, but recommended for platform developers, to clone `cto-github.cisco.com/NFV-BU/go-lanai` 
-alongside with service projects, and add `replace` in `go.mod`. 
+alongside service projects, and add `replace` using relative path in `go.mod`. 
 
 See `go.mod` [Example](res/Example-Go-Mod.mod)
 
 ### Module Descriptor `Module.yml`
 
-In additional to `go.mod`, a descriptor file `Module.yml` is required to provide additional information 
+In addition to `go.mod`, a descriptor file `Module.yml` is required to provide additional information 
 about the service.
 
 `Module.yml` is used by `lanai-cli` (See [Tooling](#Tooling)) to generate proper `Makefile` for the service
@@ -94,8 +94,8 @@ The target will:
 - Create `Makefile-Build` and `Makefile-Generated`
 - Create `build/package/Dockerfile`
 
-> Note 1: `Makefile-Build` and `Dockerfile` is supposed to be committed into GitHub and the command won't overwrite 
-> if those files are already exists. If overwriting is desired, add `FORCE=true`
+> Note 1: `Makefile-Build` and `Dockerfile` are supposed to be committed into GitHub and the command won't overwrite 
+> if those files already exist. If overwriting is desired, add `FORCE=true`
 
 > Note 2: `Makefile-Generated` is typically used by CI/CD, and always get overwrite. It should be ignored from version control.
 
@@ -110,7 +110,7 @@ go install cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli@develop
 
 > Note: `@develop` can be changed to the latest stable version
 
-After successfully install the CLI, it can be used to generate default Makefiles:
+After successfully install the CLI, it can be used to generate bootstrapping Makefiles:
 
 ```
 lanai-cli init --force --upgrade
@@ -150,7 +150,7 @@ However, the generated `Makefile-Build` provide some basic targets:
   Build executable and copy resources registered in `Module.yml` to `dist` folder, where:
     
     - `VERSION` is set to executable's build-info and can be viewed via `admin/info` endpoint
-    - `PRIVATE_MODS` is set to executable's build-info as a reference of dependent private module's version
+    - `PRIVATE_MODS` is set to executable's build-info as a reference of upstream private modules.
       Also viewable via `admin/info` endpoint
       
 - `make clean` 
@@ -162,12 +162,12 @@ However, the generated `Makefile-Build` provide some basic targets:
 ## Keep Upstream Dependencies Up-To-Date
 
 As mentioned before, it's recommended to check out GO Lanai alongside the project during development and use `replace` in 
-`go.mod` to use relative path.
+`go.mod` with relative path.
 
 In addition, it is recommended to keep `require` section up-to-date pointing to the correct GO Lanai version, at least before creating PR.
 This can be easily done by following step
 
-- Edit `go.mod` and change the "version" part of `require` section to the desired branch or version e.g.
+- Edit `go.mod` and change the "version" part of `require` section to the desired branch or version. e.g.
 
   ```
   require (
