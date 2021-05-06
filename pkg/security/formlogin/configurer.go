@@ -42,6 +42,10 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 	}
 	f := feature.(*FormLoginFeature)
 
+	if err := flc.configureErrorHandling(f, ws); err != nil {
+		return err
+	}
+
 	if flc.configured {
 		logger.WithContext(ws.Context()).Warnf(`attempting to reconfigure login forms for WebSecurity [%v]. ` +
 			`Changes will not be applied. If this is expected, please ignore this warning`, ws)
@@ -49,9 +53,6 @@ func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebS
 	}
 
 	flc.configured = true
-	if err := flc.configureErrorHandling(f, ws); err != nil {
-		return err
-	}
 
 	if err := flc.configureLoginPage(f, ws); err != nil {
 		return err

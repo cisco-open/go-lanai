@@ -1,6 +1,6 @@
 // +build tools
 
-package passwdidp
+package example
 
 import (
 	_ "github.com/mholt/archiver/cmd/arc"
