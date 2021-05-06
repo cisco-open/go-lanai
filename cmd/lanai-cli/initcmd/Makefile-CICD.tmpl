@@ -114,6 +114,7 @@ build-docker: init-docker
 #		- DOCKER_TAG: default to $(VERSION)
 #		- DOCKER_REPO: Docker repository path/url without tailing "/"
 push-docker: DOCKER_TAG ?= $(VERSION)
+push-docker: DOCKER_REPO ?= dockerhub.cisco.com/vms-platform-dev-docker
 push-docker:
 	$(DOCKER) tag {{.Name}}:$(DOCKER_TAG) $(DOCKER_REPO)/{{.Name}}:$(DOCKER_TAG)
 	$(DOCKER) push $(DOCKER_REPO)/{{.Name}}:$(DOCKER_TAG)

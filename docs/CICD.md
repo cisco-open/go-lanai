@@ -196,13 +196,14 @@ Command:
 
 ```shell
 make init CLI_TAG=4.0.0-90
-make dist VERSION=4.0.0-20 PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@4.0.0-90 #SRC_BRANCH=any_branch
-make publish VERSION=4.0.0-20 
+make dist VERSION=4.0.0-20 PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v4.0.0-90 #SRC_BRANCH=any_branch
+make publish VERSION=4.0.0-20 DOCKER_REPO=dockerhub.cisco.com/vms-platform-dev-docker
 ```
 
 Variables:
 
 - `CLI_TAG` required and should match the `PRIVATE_MODS`
+- `DOCKER_REPO` required for publish
 - `SRC_BRANCH` specify if merging changes back to branch is required. Typically, not required for Nightly Build
 
 Do:
@@ -228,10 +229,12 @@ Command:
 ```shell
 make init
 make redist VERSION=4.0.0
-make publish VERSION=4.0.0
+make publish VERSION=4.0.0 DOCKER_REPO=dockerhub.cisco.com/vms-platform-dev-docker
 ```
 
-Variables: `PRIVATE_MODS` not required
+Variables: 
+- `PRIVATE_MODS` not required
+- `DOCKER_REPO` required for publish
 
 Do:
 
