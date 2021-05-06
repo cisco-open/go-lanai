@@ -86,7 +86,7 @@ func (mw *TokenAuthMiddleware) handleSuccess(c *gin.Context, before, new securit
 
 func (mw *TokenAuthMiddleware) handleError(c *gin.Context, err error) {
 	if !errors.Is(err, oauth2.ErrorTypeOAuth2) {
-		err = oauth2.NewInvalidAccessTokenError(err.Error(), err)
+		err = oauth2.NewInvalidAccessTokenError(err)
 	}
 
 	security.Clear(c)

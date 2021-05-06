@@ -85,7 +85,7 @@ func (mw *TokenEndpointMiddleware) handleSuccess(c *gin.Context, v interface{}) 
 
 func (mw *TokenEndpointMiddleware) handleError(c *gin.Context, err error) {
 	if errors.Is(err, oauth2.ErrorTypeOAuth2) {
-		err = oauth2.NewInvalidGrantError(err.Error(), err)
+		err = oauth2.NewInvalidGrantError(err)
 	}
 
 	_ = c.Error(err)

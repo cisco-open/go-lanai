@@ -1,0 +1,122 @@
+// UX Specified Color Palette names
+$nfv--CiscoBlue: #049fd9;
+$nfv--MedBlue: #34adde;
+$nfv--StatusBlue: #64bbe3;
+$nfv--AzureBlue: #1679b5;
+$nfv--IcyBlue: #c4d6ed;
+$nfv--SkyBlue: #e8f5fb;
+$nfv--DkBlue: #2b5592;
+$nfv--SageGreen: #abc233;
+$nfv--Black: #000000;
+$nfv--DkGray1: #39393b;
+$nfv--DkGray2: #58585b;
+$nfv--DkGray3: #626469;
+$nfv--MedGray1: #858688;
+$nfv--MedGray2: #9e9ea2;
+$nfv--LtGray1: #a7a9ab;
+$nfv--LtGray2: #c6c7ca;
+$nfv--LtGray3: #dfdfdf;
+$nfv--LtGray4: #e9e9e9;
+$nfv--LtGray5: #f2f2f2;
+$nfv--SmokeyBlue: #f3f6f9;
+$nfv--PaleGray1: #e8ebf1;
+$nfv--White: #ffffff;
+$nfv--StatusTurq: #14a792;
+$nfv--MedGreen: #42a942;
+$nfv--StatusGreen: #6cc04a;
+$nfv--DeepGreen: #005c21;
+$nfv--PaleYellow: #fff8c4;
+$nfv--StatusYellow: #ffcd00;
+$nfv--Orange: #ffa000;
+$nfv--StatusOrange: #ff7300;
+$nfv--StatusPurple: #a0509e;
+$nfv--StatusRed: #cf2030;
+$nfv--DeepRed: #8b1001;
+$nfv--ErrorRed: #cf1a2d;
+
+$vms--CiscoBlue: $nfv--CiscoBlue;
+$vms--MedBlue: $nfv--MedBlue;
+$vms--StatusBlue: $nfv--StatusBlue;
+$vms--AzureBlue: $nfv--AzureBlue;
+$vms--IcyBlue: $nfv--IcyBlue;
+$vms--SkyBlue: $nfv--SkyBlue;
+$vms--DkBlue: $nfv--DkBlue;
+$vms--SageGreen: $nfv--SageGreen;
+$vms--Black: $nfv--Black;
+$vms--DkGray1: $nfv--DkGray1;
+$vms--DkGray2: $nfv--DkGray2;
+$vms--DkGray3: $nfv--DkGray3;
+$vms--MedGray1: $nfv--MedGray1;
+$vms--MedGray2: $nfv--MedGray2;
+$vms--LtGray1: $nfv--LtGray1;
+$vms--LtGray2: $nfv--LtGray2;
+$vms--LtGray3: $nfv--LtGray3;
+$vms--LtGray4: $nfv--LtGray4;
+$vms--LtGray5: $nfv--LtGray5;
+$vms--SmokeyBlue: $nfv--SmokeyBlue;
+$vms--PaleGray1: $nfv--PaleGray1;
+$vms--White: $nfv--White;
+$vms--StatusTurq: $nfv--StatusTurq;
+$vms--MedGreen: $nfv--MedGreen;
+$vms--StatusGreen: $nfv--StatusGreen;
+$vms--DeepGreen: $nfv--DeepGreen;
+$vms--PaleYellow: $nfv--PaleYellow;
+$vms--StatusYellow: $nfv--StatusYellow;
+$vms--Orange: $nfv--Orange;
+$vms--StatusOrange: $nfv--StatusOrange;
+$vms--StatusRed: $nfv--StatusRed;
+$vms--StatusPurple: $nfv--StatusPurple;
+$vms--DeepRed: $nfv--DeepRed;
+$vms--ErrorRed: $nfv--ErrorRed;
+
+// Generic abstraction of the palette - names make no reference to actual color.
+// These are the definitions that the CSS code should reference. To create a new palette, modify the above $nfv--*
+// color set, and point these generic entries the appropriate new $nfv--* palette entry.
+
+$global-defaults_defined-colors_primary-1_color: $nfv--CiscoBlue;
+$global-defaults_defined-colors_primary-2_color: $nfv--MedBlue;
+$global-defaults_defined-colors_primary-3_color: $nfv--DkBlue;
+$global-defaults_defined-colors_primary-4_color: $nfv--AzureBlue;
+$global-defaults_defined-colors_primary-5_color: $nfv--IcyBlue;
+$global-defaults_defined-colors_primary-6_color: $nfv--SkyBlue;
+
+$global-defaults_defined-colors_secondary-1_color: $nfv--DeepGreen;
+$global-defaults_defined-colors_secondary-2_color: $nfv--MedGreen;
+$global-defaults_defined-colors_secondary-3_color: $nfv--SageGreen;
+$global-defaults_defined-colors_secondary-4_color: $nfv--Orange;
+$global-defaults_defined-colors_secondary-5_color: $nfv--DeepRed;
+$global-defaults_defined-colors_secondary-6_color: $nfv--PaleYellow;
+
+$global-defaults_defined-colors_black_color: $nfv--Black;
+$global-defaults_defined-colors_gradient-1_color: $nfv--DkGray1;
+$global-defaults_defined-colors_gradient-2_color: $nfv--DkGray2;
+$global-defaults_defined-colors_gradient-3_color: $nfv--DkGray3;
+$global-defaults_defined-colors_gradient-4_color: $nfv--MedGray1;
+$global-defaults_defined-colors_gradient-5_color: $nfv--MedGray2;
+$global-defaults_defined-colors_gradient-6_color: $nfv--LtGray1;
+$global-defaults_defined-colors_gradient-7_color: $nfv--LtGray2;
+$global-defaults_defined-colors_gradient-8_color: $nfv--LtGray3;
+$global-defaults_defined-colors_gradient-9_color: $nfv--LtGray4;
+$global-defaults_defined-colors_gradient-10_color: $nfv--LtGray5;
+$global-defaults_defined-colors_gradient-11_color: $nfv--PaleGray1;
+$global-defaults_defined-colors_gradient-12_color: $nfv--SmokeyBlue;
+$global-defaults_defined-colors_white_color: $nfv--White;
+$global-defaults_defined-colors_error_color: $nfv--ErrorRed;
+
+$global-defaults_defined-colors_status-normal_color: $nfv--StatusGreen;
+$global-defaults_defined-colors_status-minor_color: $nfv--StatusYellow;
+$global-defaults_defined-colors_status-major_color: $nfv--StatusOrange;
+$global-defaults_defined-colors_status-critical_color: $nfv--StatusRed;
+$global-defaults_defined-colors_status-neutral_color: $nfv--StatusBlue;
+$global-defaults_defined-colors_status-transitional_color: $nfv--StatusPurple;
+$global-defaults_defined-colors_status-unknown_color: $nfv--DkGray2;
+$global-defaults_defined-colors_status-needsinput_color: $nfv--LtGray1;
+$global-defaults_defined-colors_status-informational_color: $nfv--StatusBlue;
+
+// **********************************
+// High Level Theme Globals
+// (used for automatic branding)
+// **********************************
+$global-defaults_colors_primary-color_color: $global-defaults_defined-colors_primary-1_color;
+$global-defaults_colors_secondary-color_color: $global-defaults_defined-colors_primary-4_color;
+$global-defaults_colors_tertiary-color_color: $global-defaults_defined-colors_gradient-1_color;

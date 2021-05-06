@@ -68,6 +68,7 @@ func (m *requestMatcher) String() string {
 /**************************
 	Constructors
 ***************************/
+
 func AnyRequest() web.RequestMatcher {
 	return wrapAsRequestMatcher(matcher.Any())
 }
@@ -120,6 +121,12 @@ func RequestWithPattern(pattern string, methods...string) web.RequestMatcher {
 	}
 	mMatcher := RequestWithMethods(methods...)
 	return wrapAsRequestMatcher(pMatcher.And(mMatcher))
+}
+
+// RequestWithURL is similar with RequestWithPattern, but instead it takes a relative URL path and convert it to pattern
+// by extracting "path" part (remove #fragment, ?query and more)
+func RequestWithURL(url string, methods...string) web.RouteMatcher {
+	return RequestWithPattern(PatternFromURL(url), methods...)
 }
 
 // RequestWithPrefix create a web.RequestMatcher with prefix

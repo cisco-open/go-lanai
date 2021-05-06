@@ -224,8 +224,8 @@ func NewOAuth2Error(code int64, e interface{}, oauth2Code string, sc int, causes
 }
 
 /* OAuth2Internal family */
-func NewInternalError(text string, causes...interface{}) error {
-	return NewOAuth2Error(ErrorCodeOAuth2InternalGeneral, errors.New(text),
+func NewInternalError(value interface{}, causes...interface{}) error {
+	return NewOAuth2Error(ErrorCodeOAuth2InternalGeneral, value,
 		ErrorTranslationInternal, http.StatusBadRequest,
 		causes...)
 }

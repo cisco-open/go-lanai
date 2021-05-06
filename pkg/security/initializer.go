@@ -60,7 +60,7 @@ func (init *initializer) validateState(action string) error {
 	}
 }
 
-func (init *initializer) Initialize(ctx context.Context, lc fx.Lifecycle, registrar *web.Registrar) error {
+func (init *initializer) Initialize(ctx context.Context, _ fx.Lifecycle, registrar *web.Registrar) error {
 	initializeMutex.Lock()
 	defer initializeMutex.Unlock()
 
@@ -102,7 +102,7 @@ func (init *initializer) Initialize(ctx context.Context, lc fx.Lifecycle, regist
 	}
 
 	for _, v := range mergedRequestPreProcessors {
-		registrar.Register(v)
+		registrar.MustRegister(v)
 	}
 
 	init.initialized = true

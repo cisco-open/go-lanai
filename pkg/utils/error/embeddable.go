@@ -177,7 +177,11 @@ func construct(e interface{}) error {
 func NewCodedError(code int64, e interface{}, causes...interface{}) *CodedError {
 	err := construct(e)
 	if len(causes) == 0 {
-		return newCodedError(code, err, DefaultErrorCodeMask, nil)
+		nested, ok := e.(NestedError)
+		if !ok || nested.Cause() == nil {
+			return newCodedError(code, err, DefaultErrorCodeMask, nil)
+		}
+		causes = []interface{}{nested.Cause()}
 	}
 
 	// chain causes

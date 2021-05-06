@@ -5,7 +5,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
+	"net/url"
 	pathutils "path"
+	"strings"
 )
 // routeMatcher implement web.RouteMatcher
 type routeMatcher struct {
@@ -59,6 +61,7 @@ func (m *routeMatcher) String() string {
 /**************************
 	Constructors
 ***************************/
+
 func AnyRoute() web.RouteMatcher {
 	return wrapAsRouteMatcher(matcher.Any())
 }
@@ -81,7 +84,7 @@ func RouteWithMethods(methods...string) web.RouteMatcher {
 	}
 }
 
-// PatternMatcher checks web.Route's path with prefix
+// RouteWithPattern checks web.Route's path with prefix
 // The prefix syntax is:
 //
 //  prefix:
@@ -110,6 +113,12 @@ func RouteWithPattern(pattern string, methods...string) web.RouteMatcher {
 	}
 	mMatcher := RouteWithMethods(methods...)
 	return wrapAsRouteMatcher(pMatcher.And(mMatcher))
+}
+
+// RouteWithURL is similar with RouteWithPattern, but instead it takes a relative URL path and convert it to pattern
+// by extracting "path" part (remove #fragment, ?query and more)
+func RouteWithURL(url string, methods...string) web.RouteMatcher {
+	return RouteWithPattern(PatternFromURL(url), methods...)
 }
 
 func RouteWithPrefix(prefix string, methods...string) web.RouteMatcher {
@@ -143,16 +152,25 @@ func RouteWithGroup(group string) web.RouteMatcher {
 	}
 }
 
+// PatternFromURL convert relative URL to pattern by necessary operations, such as remove #fragment portion
+func PatternFromURL(relativeUrl string) string {
+	u, e := url.Parse(relativeUrl)
+	if e != nil {
+		split := strings.SplitN(relativeUrl, "#", 2)
+		return split[0]
+	}
+	return u.Path
+}
+
 /**************************
 	helpers
 ***************************/
 func interfaceToRoute(i interface{}) (*web.Route, error) {
-	switch i.(type) {
+	switch v := i.(type) {
 	case web.Route:
-		r := i.(web.Route)
-		return &r, nil
+		return &v, nil
 	case *web.Route:
-		return i.(*web.Route), nil
+		return v, nil
 	default:
 		return nil, fmt.Errorf("RouteMatcher doesn't support %T", i)
 	}

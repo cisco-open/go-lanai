@@ -189,7 +189,15 @@ func (ws *webSecurity) Build() []web.Mapping {
 
 // Other interfaces
 func (ws *webSecurity) String() string {
-	return fmt.Sprintf("matcher=%v, condition=%v, features=%v", ws.routeMatcher, ws.conditionMatcher, ws.features)
+	fids := make([]FeatureIdentifier, len(ws.features))
+	for i, f := range ws.features {
+		fids[i] = f.Identifier()
+	}
+	return fmt.Sprintf("matcher=%v, condition=%v, features=%v", ws.routeMatcher, ws.conditionMatcher, fids)
+}
+
+func (ws *webSecurity) GoString() string {
+	return ws.String()
 }
 
 // unexported

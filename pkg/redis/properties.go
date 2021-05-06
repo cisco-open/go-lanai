@@ -2,6 +2,7 @@ package redis
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -14,7 +15,7 @@ const (
 type RedisProperties struct {
 	// Either a single address or a seed list of host:port addresses
 	// of cluster/sentinel nodes.
-	Addrs []string `json:"addrs"`
+	Addresses utils.CommaSeparatedSlice `json:"addrs"`
 
 	// Database to be selected after connecting to the server.
 	// Only single-node and failover clients.

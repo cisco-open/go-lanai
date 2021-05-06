@@ -1,0 +1,233 @@
+// **********************************
+// Theme Builder Font Definitions
+// **********************************
+$global-defaults_fonts_page-base-font_font-family: CiscoSansRegular, Helvetica,
+    Arial;
+$global-defaults_fonts_default-font_font-family: CiscoSansRegular, Helvetica,
+    Arial;
+$global-defaults_fonts_default-font-bold_font-family: CiscoSansBold, Helvetica,
+    Arial;
+$global-defaults_fonts_default-font-light_font-family: CiscoSansLight, Helvetica,
+    Arial;
+$global-defaults_fonts_default-font-thin_font-family: CiscoSansThin, Helvetica,
+    Arial;
+$global-defaults_fonts_default-font-extra-light_font-family: CiscoSansExtraLight,
+    Helvetica, Arial;
+$global-defaults_fonts_default-font-icon_font-family: vms-icon-font;
+
+$global-defaults_fonts_standard-font-size_font-size: 1.2rem;
+
+// **********************************
+// Default color applications
+// **********************************
+$global-defaults_body_text-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$global-defaults_body_background-color_color: $global-defaults_defined-colors_white_color;
+$global-defaults_link_text-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$global-defaults_icon_color_font-color: $global-defaults_defined-colors_gradient-3_color;
+
+// End Theme Builder Font Defs
+
+// **********************************
+// Standard Font Definitions
+// **********************************
+$nfv-font-default: $global-defaults_fonts_default-font_font-family;
+$nfv-font-bold: $global-defaults_fonts_default-font-bold_font-family;
+$nfv-font-extra-light: $global-defaults_fonts_default-font-extra-light_font-family;
+$nfv-font-thin: $global-defaults_fonts_default-font-thin_font-family;
+$nfv-font-light: $global-defaults_fonts_default-font-light_font-family;
+$nfv-font-icon: vms_fi_master;
+
+$vms-font-default: $nfv-font-default;
+$vms-font-bold: $nfv-font-bold;
+$vms-font-extra-light: $nfv-font-extra-light;
+$vms-font-thin: $nfv-font-thin;
+$vms-font-light: $nfv-font-light;
+$vms-font-icon: $nfv-font-icon;
+
+// **********************************
+// Standard Font Styling Variables
+// **********************************
+$fonts_page-title_page-title-font-family_font-family: $global-defaults_fonts_default-font-thin_font-family;
+$fonts_page-title_page-title-font-size_font-size: 2.8rem;
+$fonts_page-title_page-title-font-color_font-color: $global-defaults_defined-colors_gradient-2_color;
+
+$fonts_panel-fonts_panel-header-font-family_font-family: $global-defaults_fonts_default-font-light_font-family;
+$fonts_panel-fonts_panel-header-font-size_font-size: 1.8rem;
+$fonts_panel-fonts_panel-header-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+
+$fonts_panel-fonts_panel-subheader-font-family_font-family: $global-defaults_fonts_default-font-light_font-family;
+$fonts_panel-fonts_panel-subheader-font-size_font-size: 1.6rem;
+$fonts_panel-fonts_panel-subheader-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+
+$fonts_standard_standard-error-font-family_font-family: $global-defaults_fonts_default-font-light_font-family;
+$fonts_standard_standard-error-font-size_font-size: 1.3rem;
+$fonts_standard_standard-error-font-color_font-color: $global-defaults_defined-colors_error_color;
+
+$fonts_standard_standard-text-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_standard_standard-text-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_standard_standard-text-font-line-height_size: 2rem;
+$fonts_standard_standard-text-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+
+$fonts_standard_standard-link-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_standard_standard-link-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_standard_standard-link-font-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_standard_standard-link-font-active-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_standard_standard-link-font-visited-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_standard_standard-link-font-hover-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_standard_standard-link-font-no-hover-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_standard_standard-link-font-disabled-color_font-color: $global-defaults_defined-colors_gradient-7_color;
+$fonts_standard_standard-link-line-height_size: 2rem;
+
+$fonts_dark-link_dark-link-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_dark-link_dark-link-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_dark-link_dark-link-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_dark-link_dark-link-font-active-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_dark-link_dark-link-font-visited-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_dark-link_dark-link-font-hover-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_dark-link_dark-link-font-no-hover-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_dark-link_dark-link-font-disabled-color_font-color: $global-defaults_defined-colors_gradient-7_color;
+
+$fonts_light-link_light-link-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_light-link_light-link-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_light-link_light-link-font-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+$fonts_light-link_light-link-font-active-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_light-link_light-link-font-visited-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+$fonts_light-link_light-link-font-hover-color_font-color: $global-defaults_defined-colors_primary-1_color;
+$fonts_light-link_light-link-font-no-hover-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+$fonts_light-link_light-link-font-disabled-color_font-color: $global-defaults_defined-colors_gradient-7_color;
+
+$fonts_list-items_list-item-link-font-family_font-family: $global-defaults_fonts_default-font-light_font-family;
+$fonts_list-items_list-item-link-font-size_font-size: 1.4rem;
+$fonts_list-items_list-item-link-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+
+$fonts_list-items_list-item-large-font-family_font-family: $global-defaults_fonts_default-font-extra-light_font-family;
+$fonts_list-items_list-item-large-font-size_font-size: 2.4rem;
+$fonts_list-items_list-item-large-line-height_size: 2.8rem;
+$fonts_list-items_list-item-large-font-color_font-color: $global-defaults_defined-colors_gradient-2_color;
+
+$fonts_list-items_list-item-medium-font-family_font-family: $global-defaults_fonts_default-font-light_font-family;
+$fonts_list-items_list-item-medium-font-size_font-size: 1.4rem;
+$fonts_list-items_list-item-medium-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_list-items_list-item-medium-line-height_size: 2rem;
+
+$fonts_fonts_nav-font-size_font-size: 1.6rem;
+$fonts_fonts_nav-font-family_font-family: $global-defaults_fonts_default-font-light_font-family;
+
+$fonts_tables_table-header-font-family_font-family: $global-defaults_fonts_default-font-bold_font-family;
+$fonts_tables_table-header-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_tables_table-header-font-color_font-color: $global-defaults_defined-colors_gradient-2_color;
+$fonts_tables_table-header-line-height_size: 2rem;
+
+$fonts_tables_table-primary-row-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_tables_table-primary-row-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_tables_table-primary-row-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_tables_table-primary-row-line-height_size: 1.5rem;
+$fonts_tables_table-primary-row-hover-font-color_font-color: $global-defaults_defined-colors_primary-1_color;
+
+$fonts_tables_table-secondary-row-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_tables_table-secondary-row-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_tables_table-secondary-row-font-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+$fonts_tables_table-secondary-row-line-height_size: 1.5rem;
+$fonts_tables_table-secondary-row-hover-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_tables_table-secondary-row-no-data-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+
+$fonts_panel-fonts_metadata-small-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_panel-fonts_metadata-small-font-size_font-size: 1rem;
+$fonts_panel-fonts_metadata-small-font-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+
+$fonts_tooltip-fonts_tooltip-font-family_font-family: $global-defaults_fonts_default-font-light_font-family;
+$fonts_tooltip-fonts_tooltip-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_tooltip-fonts_tooltip-font-color_font-color: $global-defaults_defined-colors_white_color;
+$fonts_tooltip-fonts_tooltip-font-line-height_size: 1.5rem;
+
+$fonts_tooltip-fonts_tooltip-header-font-family_font-family: $global-defaults_fonts_default-font-bold_font-family;
+$fonts_tooltip-fonts_tooltip-header-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_tooltip-fonts_tooltip-header-font-color_font-color: $global-defaults_defined-colors_white_color;
+$fonts_tooltip-fonts_tooltip-header-line-height_size: 1.5rem;
+
+$fonts_panel-fonts_metadata-medium-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_panel-fonts_metadata-medium-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_panel-fonts_metadata-medium-font-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+$fonts_panel-fonts_metadata-medium-line-height_size: 2rem;
+
+$fonts_help_help-text-small-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_help_help-text-small-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_help_help-text-small-font-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+$fonts_help_help-text-small-line-height_size: 2rem;
+
+$fonts_help_help-text-large-font-family_font-family: $global-defaults_fonts_default-font-light_font-family;
+$fonts_help_help-text-large-font-size_font-size: 1.6rem;
+$fonts_help_help-text-large-line-height_size: 2.8rem;
+$fonts_help_help-text-large-font-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+
+$fonts_counter_counter-map-font-family_font-family: $global-defaults_fonts_default-font-bold_font-family;
+$fonts_counter_counter-map-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_counter_counter-map-font-color_font-color: $global-defaults_defined-colors_white_color;
+
+$fonts_counter_counter-gauge-font-family_font-family: $global-defaults_fonts_default-font-thin_font-family;
+$fonts_counter_counter-gauge-font-size_font-size: 3.2rem;
+$fonts_counter_counter-gauge-font-color_font-color: $global-defaults_defined-colors_gradient-2_color;
+
+$fonts_counter_counter-alarm-font-family_font-family: $global-defaults_fonts_default-font-thin_font-family;
+$fonts_counter_counter-alarm-font-size_font-size: 5.5rem;
+$fonts_counter_counter-alarm-font-color_font-color: $global-defaults_defined-colors_white_color;
+
+$fonts_fonts_checkbox-label-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_fonts_checkbox-label-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_fonts_checkbox-label-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_fonts_checkbox-label-font-hover-color_font-color: $global-defaults_defined-colors_primary-1_color;
+
+$fonts_fonts_checkbox-disabled-label-font-hover-color_font-color: $global-defaults_defined-colors_gradient-7_color;
+
+$fonts_tight_tight-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_tight_tight-font-size_font-size: $global-defaults_fonts_standard-font-size_font-size;
+$fonts_tight_tight-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_tight_tight-font-line-height_size: 1.6rem;
+
+$fonts_dialog-fonts_modal-title-font-family_font-family: $global-defaults_fonts_default-font-thin_font-family;
+$fonts_dialog-fonts_modal-title-font-size_font-size: 3.8rem;
+$fonts_dialog-fonts_modal-title-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_dialog-fonts_modal-title-font-line-height_size: 4.2rem;
+
+$fonts_dialog-fonts_modal-caption-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_dialog-fonts_modal-caption-font-size_font-size: 1.2rem;
+$fonts_dialog-fonts_modal-caption-font-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+$fonts_dialog-fonts_modal-caption-font-line-height_size: 1.6rem;
+
+$fonts_panel-fonts_section-header-font-family_font-family: $global-defaults_fonts_default-font-thin_font-family;
+$fonts_panel-fonts_section-header-font-size_font-size: 2.4rem;
+$fonts_panel-fonts_section-header-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+
+$fonts_step-number_step-number-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_step-number_step-number-font-size_font-size: 1.4rem;
+$fonts_step-number_step-number-font-color_font-color: $global-defaults_defined-colors_gradient-2_color;
+$fonts_step-number_step-number-font-active-color_font-color: $global-defaults_defined-colors_white_color;
+
+$fonts_tabs_left-tab-title-font-family_font-family: $global-defaults_fonts_default-font-extra-light_font-family;
+$fonts_tabs_left-tab-title-font-size_font-size: 1.8rem;
+$fonts_tabs_left-tab-title-line-height_size: 2.4rem;
+$fonts_tabs_left-tab-title-font-color_font-color: $global-defaults_defined-colors_gradient-1_color;
+$fonts_tabs_left-tab-title-font-active-color_font-color: $global-defaults_defined-colors_primary-1_color;
+
+$fonts_banner-fonts_banner-text-font-family_font-family: $global-defaults_fonts_default-font_font-family;
+$fonts_banner-fonts_banner-text-font-size_font-size: 1.4rem;
+$fonts_banner-fonts_banner-text-font-color_font-color: $global-defaults_defined-colors_gradient-2_color;
+
+$fonts_standard_light-on-dark-color_font-color: $global-defaults_defined-colors_white_color;
+
+$fonts_tabs_tab-label-font-family_font-family: $global-defaults_fonts_default-font-bold_font-family;
+$fonts_tabs_tab-label-font-size_size: 1.4rem;
+$fonts_tabs_tab-label-font-color_font-color: $global-defaults_defined-colors_gradient-2_color;
+$fonts_tabs_tab-label-font-active-color_font-color: $global-defaults_defined-colors_primary-1_color;
+
+$fonts_fonts_kpi-title-font-size_font-size: 2.4rem;
+$fonts_fonts_kpi-title-font-family_font-family: $global-defaults_fonts_default-font-extra-light_font-family;
+
+$fonts_fonts_kpi-counter-large-font-size_font-size: 6.4rem;
+$fonts_fonts_kpi-counter-large-font-family_font-family: $global-defaults_fonts_default-font-thin_font-family;
+
+$fonts_fonts_kpi-counter-small-font-font-color_font-color: $global-defaults_defined-colors_gradient-4_color;
+$fonts_fonts_kpi-counter-small-font-size_font-size: 1.2rem;
+$fonts_fonts_kpi-counter-small-font-family_font-family: $global-defaults_fonts_default-font-bold_font-family;
+
+$fonts_fonts_kpi-counter-superscript-font-size_font-size: 2.2rem;

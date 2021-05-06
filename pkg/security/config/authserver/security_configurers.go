@@ -25,10 +25,15 @@ type IdpSecurityConfigurer interface {
 /***************************
 	security configurers
  ***************************/
-// ClientAuthEndpointsConfigurer implements security.Configurer
+
+// ClientAuthEndpointsConfigurer implements security.Configurer and order.Ordered
 // responsible to configure misc using client auth
 type ClientAuthEndpointsConfigurer struct {
 	config *Configuration
+}
+
+func (c *ClientAuthEndpointsConfigurer) Order() int {
+	return OrderClientAuthSecurityConfigurer
 }
 
 func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
@@ -53,10 +58,14 @@ func (c *ClientAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 		)
 }
 
-// TokenAuthEndpointsConfigurer implements security.Configurer
+// TokenAuthEndpointsConfigurer implements security.Configurer and order.Ordered
 // responsible to configure misc using token auth
 type TokenAuthEndpointsConfigurer struct {
 	config *Configuration
+}
+
+func (c *TokenAuthEndpointsConfigurer) Order() int {
+	return OrderTokenAuthSecurityConfigurer
 }
 
 func (c *TokenAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
@@ -69,11 +78,15 @@ func (c *TokenAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 		With(errorhandling.New())
 }
 
-// AuthorizeEndpointConfigurer implements security.Configurer
+// AuthorizeEndpointConfigurer implements security.Configurer and order.Ordered
 // responsible to configure "authorize" endpoint
 type AuthorizeEndpointConfigurer struct {
 	config *Configuration
 	delegate IdpSecurityConfigurer
+}
+
+func (c *AuthorizeEndpointConfigurer) Order() int {
+	return OrderAuthorizeSecurityConfigurer
 }
 
 func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {

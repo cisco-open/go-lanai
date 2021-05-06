@@ -56,16 +56,16 @@ func (g *RefreshGranter) Grant(ctx context.Context, request *auth.TokenRequest) 
 
 	refreshToken, e := g.tokenStore.ReadRefreshToken(ctx, refresh)
 	if e != nil  {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	} else if refreshToken.WillExpire() && refreshToken.Expired() {
-		g.tokenStore.RemoveRefreshToken(ctx, refreshToken)
+		_ = g.tokenStore.RemoveRefreshToken(ctx, refreshToken)
 		return nil, oauth2.NewInvalidGrantError("refresh token expired")
 	}
 
 	// load stored authentication
 	stored, e := g.tokenStore.ReadAuthentication(ctx, refresh, oauth2.TokenHintRefreshToken)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 
 	// validate stored authentication
@@ -84,13 +84,13 @@ func (g *RefreshGranter) Grant(ctx context.Context, request *auth.TokenRequest) 
 	// Note: user's authentication/details should be reloaded and re-verified in this process.
 	oauth, e := g.authService.CreateAuthentication(ctx, oauthRequest, stored.UserAuthentication())
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 
 	// create token
 	token, e := g.authService.RefreshAccessToken(ctx, oauth, refreshToken)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 	return token, nil
 }

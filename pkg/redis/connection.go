@@ -17,7 +17,7 @@ const KeepTTL = redis.KeepTTL
 
 func GetUniversalOptions(p *RedisProperties) (*redis.UniversalOptions, error) {
 	universal := &redis.UniversalOptions{
-		Addrs:              p.Addrs,
+		Addrs:              p.Addresses,
 		DB:                 p.DB,
 		Username:           p.Username,
 		Password:           p.Password,

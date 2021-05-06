@@ -1,6 +1,11 @@
-# jupiter
+# go-lanai
 
-POC Microservice Library
+Microservice Library
+
+Readings:
+
+- [Get Started for Developers](docs/Develop.md)
+- [Get Started for DevOps](docs/CICD.md)
 
 ## Framework and Library Evaluation
 

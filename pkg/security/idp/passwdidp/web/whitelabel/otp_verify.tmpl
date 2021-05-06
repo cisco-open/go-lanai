@@ -1,0 +1,44 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <div class="row mt-5 no-gutters">
+        <div class="col"></div>
+        <div class="col-12 col-sm-8 col-md-6 col-lg-5 col-xl-4">
+            {{if .error}}
+            <div class="row">
+                <div class="col">
+                    <div class="alert alert-danger">{{.error.Error}}</div>
+                </div>
+            </div>
+            {{end}}
+            <div class="row">
+                <div class="col">
+                    <form role="form" action="{{.rc.ContextPath}}{{.mfaVerifyUrl}}" method="post">
+                        <div class="form-group">
+                            <label for="otp">Verification code:</label>
+                            <input type="text" class="form-control" id="otp" name="{{.otpParam}}"/>
+                        </div>
+                        {{- if .csrf -}}
+                        <input type="hidden" id="verify_csrf_token" name="{{.csrf.ParameterName}}" value="{{.csrf.Value}}"/>
+                        {{- end -}}
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <form role="form" action="{{.rc.ContextPath}}{{.mfaRefreshUrl}}" method="post">
+                        <input type="hidden" id="resend_csrf_token" name="{{.csrf.ParameterName}}" value="{{.csrf.Value}}"/>
+                        <button type="submit" class="btn btn-secondary">Resend OTP Token</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col"></div>
+    </div>
+</div>
+</body>
+</html>

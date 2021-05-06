@@ -19,7 +19,7 @@ func (t PqErrorTranslator) Translate(_ context.Context, err error) error {
 	// TODO more detailed error translation based on pq.ErrorCode
 	switch err.(type) {
 	case pq.Error, *pq.Error:
-		return NewDataError(ErrorCodeOrmMapping, err.Error(), err)
+		return NewDataError(ErrorCodeOrmMapping, err)
 	default:
 		return err
 	}

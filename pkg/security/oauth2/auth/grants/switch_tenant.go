@@ -81,13 +81,13 @@ func (g *SwitchTenantGranter) Grant(ctx context.Context, request *auth.TokenRequ
 	// create authentication
 	oauth, e := g.authService.SwitchAuthentication(ctx, req, stored.UserAuthentication(), stored)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 
 	// create token
 	token, e := g.authService.CreateAccessToken(ctx, oauth)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 	return token, nil
 }

@@ -179,18 +179,18 @@ func NewDataError(code int64, e interface{}, causes ...interface{}) *DataError {
 	return newDataError(NewCodedError(code, e, causes...))
 }
 
-func NewInternalError(text string, causes...interface{}) *DataError {
-	return NewDataError(ErrorSubTypeCodeInternal, text, causes...)
+func NewInternalError(value interface{}, causes...interface{}) *DataError {
+	return NewDataError(ErrorSubTypeCodeInternal, value, causes...)
 }
 
-func NewRecordNotFoundError(text string, causes...interface{}) *DataError {
-	return NewDataError(ErrorCodeRecordNotFound, text, causes...)
+func NewRecordNotFoundError(value interface{}, causes...interface{}) *DataError {
+	return NewDataError(ErrorCodeRecordNotFound, value, causes...)
 }
 
-func NewConstraintViolationError(text string, causes...interface{}) *DataError {
-	return NewDataError(ErrorCodeConstraintViolation, text, causes...)
+func NewConstraintViolationError(value interface{}, causes...interface{}) *DataError {
+	return NewDataError(ErrorCodeConstraintViolation, value, causes...)
 }
 
-func NewDuplicateKeyError(text string, causes...interface{}) *DataError {
-	return NewDataError(ErrorCodeDuplicateKey, text, causes...)
+func NewDuplicateKeyError(value interface{}, causes...interface{}) *DataError {
+	return NewDataError(ErrorCodeDuplicateKey, value, causes...)
 }

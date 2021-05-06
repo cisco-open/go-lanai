@@ -1,0 +1,20 @@
+name: europa
+
+execs:
+  europa:
+    main: cmd/europa/main.go
+    port: 8080
+  migrate:
+    main: cmd/europa/migrate.go
+  seeder:
+    main: cmd/europa/seeder.go
+
+generates:
+  - path: "pkg/swagger"
+  - path: "pkg/security/example"
+
+resources:
+  - pattern: "configs"
+    output: "configs"
+  - pattern: "web"
+    output: "web"

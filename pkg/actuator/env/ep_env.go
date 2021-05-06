@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/profile"
 	"sort"
 )
 
@@ -60,7 +59,7 @@ func new(di regDI) *EnvEndpoint {
 func (ep *EnvEndpoint) Read(ctx context.Context, input *Input) (*EnvDescriptor, error) {
 	// TODO maybe support match pattern
 	env := EnvDescriptor{
-		ActiveProfiles: profile.Profiles,
+		ActiveProfiles: ep.appConfig.Profiles(),
 		PropertySources: []PSourceDescriptor{},
 	}
 
@@ -72,7 +71,7 @@ func (ep *EnvEndpoint) Read(ctx context.Context, input *Input) (*EnvDescriptor, 
 		psrc := PSourceDescriptor{
 			Name: provider.Name(),
 			Properties: map[string]PValueDescriptor{},
-			order: provider.GetPrecedence(),
+			order: provider.Order(),
 		}
 
 		values := provider.GetSettings()

@@ -62,7 +62,7 @@ func (s *RedisAuthorizationCodeStore) GenerateAuhtorizationCode(ctx context.Cont
 	code := randomString(defaultAuthCodeLength)
 
 	if e := s.save(ctx, code, toSave); e != nil {
-		return "", oauth2.NewInternalError(e.Error(), e)
+		return "", oauth2.NewInternalError(e)
 	}
 	return code, nil
 }
