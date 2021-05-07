@@ -8,10 +8,10 @@
 		<meta http-equiv='pragma' content='no-cache'>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title></title>
-		<link rel="stylesheet" href="{{.rc.ContextPath}}/app/css/vendor.css?1619857593316">
+		<link rel="stylesheet" href="{{.rc.ContextPath}}/app/css/vendor.css?1620376004246">
 		<link rel="icon" type="image/png" href="{{.rc.ContextPath}}/app/images/favicon.png">
-		<link rel="stylesheet" id="msx-root-css" href="{{.rc.ContextPath}}/app/css/boot.css?1619857593316">
-		<link rel="stylesheet" id="msx-extension-css" href="/css/app-custom.css?1619857593316">
+		<link rel="stylesheet" id="msx-root-css" href="{{.rc.ContextPath}}/app/css/boot.css?1620376004246">
+		<link rel="stylesheet" id="msx-extension-css" href="/css/app-custom.css?1620376004246">
 	</head>
 	<body ng-app="skPlatformBoot" style="overflow-y: auto;" class="layout-fixed vms-body sk-font-standard-text">
 		<div ui-view="content"></div>
@@ -28,14 +28,15 @@
 			var optParam = "{{- if .otpParam -}}{{.otpParam}}{{- end -}}";
 			var MSX_VERSION = "{{- if .MSXVersion -}}{{.MSXVersion}}{{- else -}}4.0.0{{- end -}}";
 			var MSX_LOGIN_VERSION="4.0.0";
+			var subPath = "/app/";
 			var dojoConfig = {
 				baseUrl: "{{.rc.ContextPath}}/app/vendor",
 				async: true,
 				extraLocale: []
 			};
 		</script>
-		<script src="{{.rc.ContextPath}}/app/js/dojo-min.js?1619857593316"></script>
-		<script src="{{.rc.ContextPath}}/app/js/vendor.js?1619857593316"></script>
-		<script src="{{.rc.ContextPath}}/app/js/boot.js?1619857593316"></script>
+		<script src="{{.rc.ContextPath}}/app/js/dojo-min.js?1620376004246"></script>
+		<script src="{{.rc.ContextPath}}/app/js/vendor.js?1620376004246"></script>
+		<script src="{{.rc.ContextPath}}/app/js/boot.js?1620376004246"></script>
 	</body>
 </html>
