@@ -36,10 +36,10 @@ func NewLoop() *Loop{
 	}
 }
 
-func (l *Loop) Run(ctx context.Context) context.CancelFunc {
+func (l *Loop) Run(ctx context.Context) (context.Context, context.CancelFunc) {
 	ctxWithCancel, cFunc := context.WithCancel(ctx)
 	go l.loop(ctxWithCancel)
-	return cFunc
+	return ctxWithCancel, cFunc
 }
 
 func (l *Loop) Repeat(tf TaskFunc, opts ...TaskOptions) {

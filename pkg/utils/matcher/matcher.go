@@ -183,7 +183,7 @@ func (m *GenericMatcher) Matches(i interface{}) (bool, error) {
 	return m.matchFunc(context.TODO(), i)
 }
 
-func (m GenericMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) {
+func (m *GenericMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) {
 	return m.matchFunc(c, i)
 }
 
