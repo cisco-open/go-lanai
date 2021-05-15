@@ -7,7 +7,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common/internal"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/timeoutsupport"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -52,9 +54,11 @@ const (
 type RedisContextDetailsStore struct {
 	vTag   string
 	client redis.Client
+
+	timeoutApplier *timeoutsupport.RedisTimeoutApplier
 }
 
-func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory) *RedisContextDetailsStore {
+func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory, timeoutApplier *timeoutsupport.RedisTimeoutApplier) *RedisContextDetailsStore {
 	client, e := cf.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = redisDB
 	})
@@ -65,6 +69,7 @@ func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory) *R
 	return &RedisContextDetailsStore{
 		vTag:   security.CompatibilityReference,
 		client: client,
+		timeoutApplier: timeoutApplier,
 	}
 }
 
@@ -109,7 +114,13 @@ func (r *RedisContextDetailsStore) RemoveContextDetails(c context.Context, key i
 func (r *RedisContextDetailsStore) ContextDetailsExists(c context.Context, key interface{}) bool {
 	switch t := key.(type) {
 	case oauth2.AccessToken:
-		return r.exists(c, keyFuncAccessTokenToDetails(uniqueTokenKey(t)) )
+		sId, err := r.FindSessionId(c, t)
+		if err == nil && sId != "" {
+			valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
+			return valid
+		} else {
+			return r.exists(c, keyFuncAccessTokenToDetails(uniqueTokenKey(t)) )
+		}
 	default:
 		return false
 	}
@@ -171,6 +182,8 @@ func (r *RedisContextDetailsStore) FindSessionId(ctx context.Context, token oaut
 		return "", fmt.Errorf("unsupported key type %T", token)
 	}
 }
+
+
 
 // RevokeRefreshToken remove redis records:
 // 		- RefreshToken -> Authentication 	"ART"
@@ -368,8 +381,11 @@ func (r *RedisContextDetailsStore) saveAccessRefreshTokenRelation(c context.Cont
 func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context, t oauth2.AccessToken) (security.ContextDetails, error) {
 	sId, err := r.FindSessionId(c, t)
 
-	if err != nil && sId != "" {
-		//TODO: if session is associated, update session last used time
+	if err == nil && sId != "" {
+		valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
+		if !valid {
+			return nil, errors.New("token is invalid because it's expired by its associate session")
+		}
 	}
 
 	fullDetails := internal.NewFullContextDetails()
@@ -486,7 +502,14 @@ func (r *RedisContextDetailsStore) saveRefreshTokenToSession(c context.Context, 
 }
 
 func (r *RedisContextDetailsStore) loadAuthFromRefreshToken(c context.Context, t oauth2.RefreshToken) (oauth2.Authentication, error) {
-	//TODO: apply session timeout for refresh token
+	sId, err := r.FindSessionId(c, t)
+
+	if err == nil && sId != "" {
+		valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
+		if !valid {
+			return nil, errors.New("token is invalid because it's expired by its associate session")
+		}
+	}
 
 	oauth := oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {
 		opt.Request = oauth2.NewOAuth2Request()

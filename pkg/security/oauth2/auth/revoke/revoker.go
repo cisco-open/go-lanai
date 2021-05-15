@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"fmt"
 )
 
@@ -53,7 +54,7 @@ func (r DefaultAccessRevoker) RevokeWithSessionId(ctx context.Context, sessionId
 
 func (r DefaultAccessRevoker) RevokeWithUsername(ctx context.Context, username string, revokeRefreshToken bool) (err error) {
 	// expire all sessions
-	if e := r.sessionStore.WithContext(ctx).InvalidateByPrincipalName(username, session.DefaultName); e != nil {
+	if e := r.sessionStore.WithContext(ctx).InvalidateByPrincipalName(username, common.DefaultName); e != nil {
 		logger.WithContext(ctx).Warnf("Unable to expire session for username [%s]: %v", username, e)
 		err = e
 	}

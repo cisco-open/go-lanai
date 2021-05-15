@@ -9,6 +9,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/timeoutsupport"
 	"go.uber.org/fx"
 )
 
@@ -22,6 +23,7 @@ type resServerDI struct {
 	RedisClientFactory   redis.ClientFactory
 	CryptoProperties     jwt.CryptoProperties
 	DiscoveryCustomizers *discovery.Customizers
+	TimeoutSupport 	 	 *timeoutsupport.RedisTimeoutApplier
 }
 
 // Configuration entry point
@@ -30,6 +32,7 @@ func ConfigureResourceServer(di resServerDI) {
 		appContext:         di.AppContext,
 		cryptoProperties:   di.CryptoProperties,
 		redisClientFactory: di.RedisClientFactory,
+		timeoutSupport:     di.TimeoutSupport,
 	}
 	di.Configurer(config)
 
@@ -66,7 +69,7 @@ type Configuration struct {
 	sharedErrorHandler        *tokenauth.OAuth2ErrorHandler
 	sharedContextDetailsStore security.ContextDetailsStore
 	sharedJwtDecoder          jwt.JwtDecoder
-	// TODO
+	timeoutSupport 			  *timeoutsupport.RedisTimeoutApplier
 }
 
 func (c *Configuration) errorHandler() *tokenauth.OAuth2ErrorHandler {
@@ -76,10 +79,9 @@ func (c *Configuration) errorHandler() *tokenauth.OAuth2ErrorHandler {
 	return c.sharedErrorHandler
 }
 
-//TODO: here we need c to have some additional properties in order to create the timeoutApplier
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
-		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory, c.timeoutSupport)
 	}
 	return c.sharedContextDetailsStore
 }

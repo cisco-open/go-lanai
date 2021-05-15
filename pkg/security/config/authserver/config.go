@@ -16,6 +16,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/timeoutsupport"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 	"net/url"
@@ -33,6 +34,7 @@ type configDI struct {
 	SessionProperties  security.SessionProperties
 	CryptoProperties   jwt.CryptoProperties
 	SessionStore       session.Store
+	TimeoutSupport     *timeoutsupport.RedisTimeoutApplier
 }
 
 func NewConfiguration(di configDI) *Configuration {
@@ -45,6 +47,7 @@ func NewConfiguration(di configDI) *Configuration {
 		sessionProperties:  di.SessionProperties,
 		cryptoProperties:   di.CryptoProperties,
 		Issuer:             newIssuer(&di.Properties.Issuer, &di.ServerProperties),
+		timeoutSupport:     di.TimeoutSupport,
 	}
 	di.Configurer(&config)
 	return &config
@@ -132,6 +135,7 @@ type Configuration struct {
 	sharedAuthHanlder         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	sharedTokenAuthenticator  security.Authenticator
+	timeoutSupport            *timeoutsupport.RedisTimeoutApplier
 }
 
 func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {
@@ -212,11 +216,9 @@ func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 	return c.sharedPasswdAuthenticator
 }
 
-//TODO: add properties configuration for session timeout so that can create a timeoutApplier
-// here the properties is already available on the configuration struct
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
-		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory, c.timeoutSupport)
 	}
 	return c.sharedContextDetailsStore
 }

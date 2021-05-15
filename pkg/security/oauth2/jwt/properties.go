@@ -44,7 +44,7 @@ func NewCryptoProperties() *CryptoProperties {
 	}
 }
 
-//BindSessionProperties create and bind SessionProperties, with a optional prefix
+//BindCryptoProperties create and bind CryptoProperties, with a optional prefix
 func BindCryptoProperties(ctx *bootstrap.ApplicationContext) CryptoProperties {
 	props := NewCryptoProperties()
 	if err := ctx.Config().Bind(props, CryptoKeysPropertiesPrefix); err != nil {

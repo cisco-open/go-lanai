@@ -312,6 +312,10 @@ func (s *RedisStore) save(session *Session) error {
 	if session.isNew {
 		if options, err := Serialize(session.options); err == nil {
 			args = append(args, sessionOptionField, options)
+
+			//stored separate for easy retrieval
+			args = append(args, common.SessionIdleTimeoutMilli, session.options.IdleTimeout.Milliseconds())
+			args = append(args, common.SessionAbsTimeoutTime, session.createdOn().Add(session.options.AbsoluteTimeout).Unix())
 		} else {
 			return err
 		}
