@@ -314,7 +314,7 @@ func (s *RedisStore) save(session *Session) error {
 			args = append(args, sessionOptionField, options)
 
 			//stored separate for easy retrieval
-			args = append(args, common.SessionIdleTimeoutMilli, session.options.IdleTimeout.Milliseconds())
+			args = append(args, common.SessionIdleTimeoutDuration, session.options.IdleTimeout.String())
 			args = append(args, common.SessionAbsTimeoutTime, session.createdOn().Add(session.options.AbsoluteTimeout).Unix())
 		} else {
 			return err

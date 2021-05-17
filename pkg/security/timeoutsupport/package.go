@@ -20,7 +20,15 @@ var Module = &bootstrap.Module{
 }
 
 func provideTimeoutSupport(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, prop security.TimeoutSupportProperties) *RedisTimeoutApplier {
-	support := NewRedisTimeoutApplier(ctx, cf, prop.DbIndex)
+	client, err := cf.New(ctx, func(opt *redis.ClientOption) {
+		opt.DbIndex = prop.DbIndex
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	support := NewRedisTimeoutApplier(client)
 	return support
 }
 

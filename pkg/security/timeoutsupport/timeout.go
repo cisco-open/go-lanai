@@ -8,27 +8,16 @@ import (
 	"time"
 )
 
-//TODO: double check if token-session connection is only saved for certain clients or all clients
-
 type RedisTimeoutApplier struct {
 	client redis.Client
 }
 
-func NewRedisTimeoutApplier(ctx context.Context, cf redis.ClientFactory, dbIndex int) *RedisTimeoutApplier {
-	client, err := cf.New(ctx, func(opt *redis.ClientOption) {
-		opt.DbIndex = dbIndex
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
+func NewRedisTimeoutApplier(client redis.Client) *RedisTimeoutApplier {
 	return &RedisTimeoutApplier{
 		client: client,
 	}
 }
 
-//TODO: double check all token and context have expiration, so we don't need to manually expire them here, as long as they are not usable, it's good enough
 func(r *RedisTimeoutApplier) ApplyTimeout(ctx context.Context, sessionId string) (valid bool, err error) {
 	key := common.GetRedisSessionKey(common.DefaultName, sessionId)
 
@@ -46,17 +35,21 @@ func(r *RedisTimeoutApplier) ApplyTimeout(ctx context.Context, sessionId string)
 		return
 	}
 
-	hmGetCmd := r.client.HMGet(ctx, key, common.SessionIdleTimeoutMilli, common.SessionAbsTimeoutTime)
+	hmGetCmd := r.client.HMGet(ctx, key, common.SessionIdleTimeoutDuration, common.SessionAbsTimeoutTime)
 	if hmGetCmd.Err() != nil {
 		err = hmGetCmd.Err()
 		return
 	}
 	result, _ := hmGetCmd.Result()
 
-	//TODO: error handling of these conversions
-	idleTimeoutMilli, _ := strconv.ParseInt(result[0].(string), 10, 0)
-	idleTimeout := time.Duration(idleTimeoutMilli) * time.Millisecond
-	absTimeoutUnixTime, _ := strconv.ParseInt(result[1].(string), 10, 0)
+	idleTimeout, err := time.ParseDuration(result[0].(string))
+	if err != nil {
+		return
+	}
+	absTimeoutUnixTime, err := strconv.ParseInt(result[1].(string), 10, 0)
+	if err != nil {
+		return
+	}
 	absExpiration := time.Unix(absTimeoutUnixTime, 0)
 
 	now := time.Now()
@@ -71,9 +64,7 @@ func(r *RedisTimeoutApplier) ApplyTimeout(ctx context.Context, sessionId string)
 	}
 
 	//update session last accessed time
-	var args []interface{}
-	args = append(args, common.SessionLastAccessedField, now.Unix())
-	hsetCmd := r.client.HSet(ctx, key, args...)
+	hsetCmd := r.client.HSet(ctx, key, common.SessionLastAccessedField, now.Unix())
 	if hsetCmd.Err() != nil {
 		err = hsetCmd.Err()
 		return

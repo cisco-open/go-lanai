@@ -4,7 +4,7 @@ import "fmt"
 
 const RedisNameSpace = "LANAI:SESSION" //This is to avoid confusion with records from other frameworks.
 const SessionLastAccessedField = "lastAccessed"
-const SessionIdleTimeoutMilli = "idleTimeout"
+const SessionIdleTimeoutDuration = "idleTimeout"
 const SessionAbsTimeoutTime = "absTimeout"
 const DefaultName = "SESSION"
 

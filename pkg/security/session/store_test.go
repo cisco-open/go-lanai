@@ -281,7 +281,7 @@ func TestSaveNewSession(t *testing.T) {
 		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionValueField, gomock.Any(),
 		sessionOptionField, gomock.Any(),
-		common.SessionIdleTimeoutMilli, gomock.Any(),
+		common.SessionIdleTimeoutDuration, gomock.Any(),
 		common.SessionAbsTimeoutTime, gomock.Any(),
 		common.SessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
