@@ -7,6 +7,7 @@ import (
 const (
 	PropertyKeyApplicationName = "application.name"
 )
+
 type LifecycleHandler func(context.Context) error
 
 type ApplicationConfig interface {
@@ -14,7 +15,7 @@ type ApplicationConfig interface {
 	Bind(target interface{}, prefix string) error
 }
 
-// A Context carries addition data for application.
+// ApplicationContext is a Context carries addition data for application.
 // delegates all other context calls to the embedded Context.
 type ApplicationContext struct {
 	context.Context

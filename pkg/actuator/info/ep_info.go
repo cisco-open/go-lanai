@@ -46,6 +46,11 @@ func (ep *InfoEndpoint) Read(ctx context.Context, input *Input) (interface{}, er
 		return Info{}, nil
 	}
 
+	buildInfo := map[string]interface{}{}
+	if e := ep.appConfig.Bind(&buildInfo, appconfig.PropertyKeyBuildInfo); e == nil {
+		info["build-info"] = buildInfo
+	}
+
 	logger.WithContext(ctx).Debugf("info %v", info)
 
 	if input.Name == "" {

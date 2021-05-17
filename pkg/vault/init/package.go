@@ -36,7 +36,9 @@ func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault.
 	c := &vault.ConnectionProperties{
 		Authentication: vault.Token,
 	}
-	bootstrapConfig.Bind(c, vault.PropertyPrefix)
+	if e := bootstrapConfig.Bind(c, vault.PropertyPrefix); e != nil {
+		panic(e)
+	}
 	return c
 }
 

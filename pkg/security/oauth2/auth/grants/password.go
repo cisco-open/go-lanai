@@ -58,7 +58,7 @@ func (g *PasswordGranter) Grant(ctx context.Context, request *auth.TokenRequest)
 
 	userAuth, err := g.authenticator.Authenticate(ctx, &candidate)
 	if err != nil || userAuth.State() < security.StateAuthenticated {
-		return nil, oauth2.NewInvalidGrantError(err.Error(), err)
+		return nil, oauth2.NewInvalidGrantError(err)
 	}
 
 	// additional check
@@ -74,13 +74,13 @@ func (g *PasswordGranter) Grant(ctx context.Context, request *auth.TokenRequest)
 	req := request.OAuth2Request(client)
 	oauth, e := g.authService.CreateAuthentication(ctx, req, userAuth)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 
 	// create token
 	token, e := g.authService.CreateAccessToken(ctx, oauth)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 	return token, nil
 }

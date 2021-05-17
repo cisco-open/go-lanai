@@ -2,17 +2,19 @@ package web
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
-	"embed"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"go.uber.org/fx"
+	"html/template"
+	"io/fs"
 	"net/http"
-	"path"
+	pathutils "path"
 	"reflect"
 	"sort"
 	"strings"
@@ -26,23 +28,26 @@ const (
 )
 
 type Registrar struct {
-	engine         *Engine
-	router         gin.IRouter
-	properties     ServerProperties
-	options        []*orderedServerOption // options go-kit server options
-	validator      *Validate
-	middlewares    []MiddlewareMapping                   // middlewares gin-gonic middleware providers
-	routedMappings map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
-	staticMappings []StaticMapping                       // staticMappings all static mappings
-	customizers    []Customizer
-	errTranslators []ErrorTranslator
-	embedFs        []embed.FS
-	initialized    bool
+	engine           *Engine
+	router           gin.IRouter
+	properties       ServerProperties
+	options          []*orderedServerOption // options go-kit server options
+	validator        *Validate
+	requestRewriter  RequestRewriter
+	middlewares      []MiddlewareMapping                   // middlewares gin-gonic middleware providers
+	routedMappings   map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
+	staticMappings   []StaticMapping                       // staticMappings all static mappings
+	customizers      []Customizer
+	errTranslators   []ErrorTranslator
+	embedFs          []fs.FS
+	initialized      bool
+	warnDuplicateMWs bool
+	warnExclusion 	utils.StringSet
 }
 
 func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 
-	var contextPath = path.Clean("/" + properties.ContextPath)
+	var contextPath = pathutils.Clean("/" + properties.ContextPath)
 	registrar := &Registrar{
 		engine:     g,
 		router:     g.Group(contextPath),
@@ -51,8 +56,11 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 			newOrderedServerOption(httptransport.ServerBefore(integrateGinContextBefore), order.Lowest),
 			newOrderedServerOption(httptransport.ServerFinalizer(integrateGinContextFinalizer), order.Lowest),
 		},
-		validator:      bindingValidator,
-		routedMappings: map[string]map[string][]RoutedMapping{},
+		validator:        bindingValidator,
+		requestRewriter:  newGinRequestRewriter(g.Engine),
+		routedMappings:   map[string]map[string][]RoutedMapping{},
+		warnDuplicateMWs: true,
+		warnExclusion:    utils.NewStringSet(),
 	}
 	return registrar
 }
@@ -64,8 +72,8 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	}
 
 	// first, we add some manditory customizers and middleware
-	r.Register(NewPriorityGinContextCustomizer(&r.properties))
-	r.Register(NewGinContextCustomizer(&r.properties))
+	r.MustRegister(NewPriorityGinContextCustomizer(&r.properties))
+	r.MustRegister(NewGinContextCustomizer(&r.properties))
 
 	// apply customizers before install mappings
 	if err = r.applyCustomizers(ctx); err != nil {
@@ -78,7 +86,7 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	binding.Validator = nil
 
 	// load templates
-	r.engine.LoadHTMLGlob("web/template/*")
+	r.loadHtmlTemplates()
 
 	// add some common middlewares
 	mappings := []interface{}{}
@@ -87,11 +95,11 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	}
 
 	// before starting to register mappings, we want global MW to take effect on our main group
-	var contextPath = path.Clean("/" + r.properties.ContextPath)
+	var contextPath = pathutils.Clean("/" + r.properties.ContextPath)
 	r.router = r.engine.Group(contextPath)
 
 	// register routedMappings to gin engine
-	if err = r.installMappings(); err != nil {
+	if err = r.installMappings(ctx); err != nil {
 		return
 	}
 
@@ -107,7 +115,7 @@ func (r *Registrar) cleanup(ctx context.Context) (err error) {
 	return nil
 }
 
-// AddGlobalMiddleware add middleware to all mapping
+// AddGlobalMiddlewares add middleware to all mapping
 func (r *Registrar) AddGlobalMiddlewares(handlerFuncs ...gin.HandlerFunc) error {
 	r.engine.Use(handlerFuncs...)
 	return nil
@@ -130,12 +138,19 @@ func (r *Registrar) AddOptionWithOrder(opt httptransport.ServerOption, o int) er
 	return nil
 }
 
+func (r *Registrar) WarnDuplicateMiddlewares(ifWarn bool, excludedPath...string) {
+	r.warnDuplicateMWs = ifWarn
+	r.warnExclusion.Add(excludedPath...)
+}
+
 // Run configure and start gin engine
 func (r *Registrar) Run(ctx context.Context) (err error) {
 	if err = r.initialize(ctx); err != nil {
 		return
 	}
-	defer r.cleanup(ctx)
+	defer func(ctx context.Context) {
+		_ = r.cleanup(ctx)
+	}(ctx)
 
 	var addr = fmt.Sprintf(":%v", r.properties.Port)
 	s := &http.Server{
@@ -159,7 +174,7 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 //  - MiddlewareMapping
 //  - ErrorTranslator
 //  - struct that contains exported Controller fields
-//  - embed.FS
+//  - fs.FS
 func (r *Registrar) Register(items...interface{}) (err error) {
 	for _, i := range items {
 		if err = r.register(i); err != nil {
@@ -167,6 +182,12 @@ func (r *Registrar) Register(items...interface{}) (err error) {
 		}
 	}
 	return
+}
+
+func (r *Registrar) MustRegister(items...interface{}) {
+	if e := r.Register(items...); e != nil {
+		panic(e)
+	}
 }
 
 // RegisterWithLifecycle is a convenient function to schedule item registration in FX lifecycle
@@ -183,25 +204,25 @@ func (r *Registrar) register(i interface{}) (err error) {
 		return errors.New("attempting to register mappings/middlewares/pre-processors after web engine initialization")
 	}
 
-	switch i.(type) {
+	switch v := i.(type) {
 	case Controller:
-		err = r.registerController(i.(Controller))
+		err = r.registerController(v)
 	case MvcMapping:
-		err = r.registerMvcMapping(i.(MvcMapping))
+		err = r.registerMvcMapping(v)
 	case StaticMapping:
-		err = r.registerStaticMapping(i.(StaticMapping))
+		err = r.registerStaticMapping(v)
 	case MiddlewareMapping:
-		err = r.registerMiddlewareMapping(i.(MiddlewareMapping))
+		err = r.registerMiddlewareMapping(v)
 	case SimpleMapping:
-		err = r.registerSimpleMapping(i.(SimpleMapping))
+		err = r.registerSimpleMapping(v)
 	case RequestPreProcessor:
-		err = r.registerRequestPreProcessor(i.(RequestPreProcessor))
+		err = r.registerRequestPreProcessor(v)
 	case Customizer:
-		err = r.registerWebCustomizer(i.(Customizer))
+		err = r.registerWebCustomizer(v)
 	case ErrorTranslator:
-		err = r.registerErrorTranslator(i.(ErrorTranslator))
-	case embed.FS:
-		r.embedFs = append(r.embedFs, i.(embed.FS))
+		err = r.registerErrorTranslator(v)
+	case fs.FS:
+		r.embedFs = append(r.embedFs, v)
 	default:
 		err = r.registerUnknownType(i)
 	}
@@ -339,7 +360,7 @@ func (r *Registrar) applyPostInitCustomizers(ctx context.Context) error {
 	return nil
 }
 
-func (r *Registrar) installMappings() error {
+func (r *Registrar) installMappings(ctx context.Context) error {
 	// before registering, we need to add default error translators
 	order.SortStable(r.errTranslators, order.OrderedFirstCompare)
 	r.errTranslators = append(r.errTranslators, newDefaultErrorTranslator())
@@ -352,7 +373,7 @@ func (r *Registrar) installMappings() error {
 				return mappings[i].Condition() != nil && mappings[j].Condition() == nil
 			})
 
-			if e := r.installRoutedMappings(method, mappings); e != nil {
+			if e := r.installRoutedMappings(ctx, method, mappings); e != nil {
 				return e
 			}
 		}
@@ -360,25 +381,36 @@ func (r *Registrar) installMappings() error {
 
 	// register static mappings
 	for _,m := range r.staticMappings {
-		if e := r.installStaticMapping(m); e != nil {
+		if e := r.installStaticMapping(ctx, m); e != nil {
 			return e
 		}
 	}
 	return nil
 }
 
-func (r *Registrar) installStaticMapping(m StaticMapping) error {
-	// TODO handle suffix rewrite, e.g. /path/to/swagger -> /path/to/swagger.html
-	mFs := NewMergedFs(m.StaticRoot(), r.embedFs...)
+func (r *Registrar) installStaticMapping(ctx context.Context, m StaticMapping) error {
+	embedded := make([]fs.FS, len(r.embedFs))
+	for i, fsys := range r.embedFs {
+		embedded[i] = OrderedFS(NewDirFS(m.StaticRoot(), fsys), i)
+	}
 
-	middlewares, err := r.findMiddlewares(DefaultGroup, m.Path(), http.MethodGet, http.MethodHead)
+	mFs := NewMergedFS(OrderedFS(NewOSDirFS(m.StaticRoot()), order.Highest), embedded...)
+	mw := ginStaticAssetsHandler{
+		rewriter: r.requestRewriter,
+		fsys:     mFs,
+		aliases:  m.Aliases(),
+	}
+
+	middlewares, err := r.findMiddlewares(ctx, DefaultGroup, m.Path(), http.MethodGet, http.MethodHead)
+	middlewares = append(gin.HandlersChain{mw.FilenameRewriteHandlerFunc()}, middlewares...)
+	middlewares = append(middlewares, mw.PreCompressedGzipAsset())
 	r.router.Group(DefaultGroup).
 		Use(middlewares...).
 		StaticFS(m.Path(), http.FS(mFs))
 	return err
 }
 
-func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMapping) error {
+func (r *Registrar) installRoutedMappings(ctx context.Context, method string, mappings []RoutedMapping) error {
 	if len(mappings) == 0 {
 		return nil
 	}
@@ -411,7 +443,7 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 		}
 	}
 
-	middlewares, err := r.findMiddlewares(DefaultGroup, path, method)
+	middlewares, err := r.findMiddlewares(ctx, DefaultGroup, path, method)
 	if method == MethodAny {
 		r.router.Group(DefaultGroup).
 			Use(middlewares...).
@@ -425,8 +457,9 @@ func (r *Registrar) installRoutedMappings(method string, mappings []RoutedMappin
 	return err
 }
 
-func (r *Registrar) findMiddlewares(group, relativePath string, methods...string) (gin.HandlersChain, error) {
+func (r *Registrar) findMiddlewares(ctx context.Context, group, relativePath string, methods...string) (gin.HandlersChain, error) {
 	var handlers = make([]gin.HandlerFunc, len(r.middlewares))
+	var matchedMW = make([]MiddlewareMapping, len(r.middlewares))
 	sort.SliceStable(r.middlewares, func(i,j int) bool { return r.middlewares[i].Order() < r.middlewares[j].Order()})
 	var i = 0
 	path := NormalizedPath(relativePath)
@@ -443,8 +476,13 @@ func (r *Registrar) findMiddlewares(group, relativePath string, methods...string
 				f = NewHttpGinHandlerFunc(http.HandlerFunc(mw.HandlerFunc()))
 			}
 			handlers[i] = r.makeGinConditionalHandlerFunc(f, mw.Condition())
+			matchedMW[i] = mw
 			i++
 		}
+	}
+	// warn duplicate MWs
+	if r.warnDuplicateMWs {
+		r.logMatchedMiddlewares(ctx, matchedMW[:i], group, relativePath, methods)
 	}
 	return handlers[:i], nil
 }
@@ -473,6 +511,17 @@ func (r *Registrar) kitServerOptions() []httptransport.ServerOption {
 		opts[i] = opt.ServerOption
 	}
 	return opts
+}
+
+func (r *Registrar) loadHtmlTemplates() {
+	osFS := NewOSDirFS("web/", DirFSAllowListDirectory)
+	mFs := NewMergedFS(osFS, r.embedFs...)
+	//r.engine.LoadHTMLGlob("web/template/*")
+	t, e := template.ParseFS(mFs, "**/*.tmpl")
+	if e != nil {
+		panic(e)
+	}
+	r.engine.SetHTMLTemplate(t)
 }
 
 /**************************
@@ -508,8 +557,38 @@ func (r *Registrar) makeGinConditionalHandlerFunc(handler gin.HandlerFunc, rm Re
 		if matches, e := rm.MatchesWithContext(c, c.Request); e == nil && matches {
 			handler(c)
 		} else if e != nil {
-			c.Error(e)
+			_ = c.Error(e)
 			c.Abort()
 		}
 	}
+}
+
+// logMatchedMiddlewares logs important information about middlewares, majorly for debug and early error detecting purpose
+func (r *Registrar) logMatchedMiddlewares(ctx context.Context, matched []MiddlewareMapping, group, path string, methods []string) {
+	// for now, we only warn about duplicates
+	seen := map[string][]MiddlewareMapping{}
+	for _, mw := range matched {
+		if mw.Name() == "" {
+			continue
+		}
+		v := seen[mw.Name()]
+		v = append(v, mw)
+		seen[mw.Name()] = v
+	}
+
+	var dups []string
+	for k, v := range seen {
+		if len(v) <= 1 || r.warnExclusion.Has(path) {
+			continue
+		}
+		dups = append(dups, fmt.Sprintf(`"%s"x%d`, k, len(v)))
+	}
+	if len(dups) > 0 {
+		if group == "/" {
+			group = ""
+		}
+		logger.WithContext(ctx).Warnf("multiple Middlewares with same name detected at %s%s %v: %v", group, path, methods, dups)
+	}
+
+	return
 }

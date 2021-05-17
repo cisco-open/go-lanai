@@ -48,7 +48,7 @@ func (ep *UserInfoEndpoint) PlainUserInfo(ctx context.Context, r UserInfoRequest
 	if e := claims.Populate(ctx, &c, claims.UserInfoClaimSpecs,
 		claims.WithSource(auth), claims.WithIssuer(ep.issuer), claims.WithAccountStore(ep.accountStore),
 	); e != nil {
-		return nil, oauth2.NewInternalError(err.Error(), err)
+		return nil, oauth2.NewInternalError(err)
 	}
 
 	return &UserInfoPlainResponse{
@@ -67,7 +67,7 @@ func (ep *UserInfoEndpoint) JwtUserInfo(ctx context.Context, r UserInfoRequest) 
 	if e := claims.Populate(ctx, &c, claims.UserInfoClaimSpecs,
 		claims.WithSource(auth), claims.WithIssuer(ep.issuer), claims.WithAccountStore(ep.accountStore),
 	); e != nil {
-		return "", oauth2.NewInternalError(err.Error(), err)
+		return "", oauth2.NewInternalError(err)
 	}
 
 	jwt, e := ep.jwtEncoder.Encode(ctx, c)

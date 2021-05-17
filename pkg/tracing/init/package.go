@@ -69,6 +69,10 @@ type tracerOut struct {
 	FxHook TracerClosingHook
 }
 func provideTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingProperties) (ret tracerOut) {
+	ret = tracerOut{
+		Tracer: opentracing.NoopTracer{},
+	}
+
 	if !props.Enabled {
 		return
 	}

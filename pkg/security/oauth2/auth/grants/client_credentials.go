@@ -50,13 +50,13 @@ func (g *ClientCredentialsGranter) Grant(ctx context.Context, request *auth.Toke
 	req := request.OAuth2Request(client)
 	oauth, e := g.authService.CreateAuthentication(ctx, req, nil)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 
 	// create token
 	token, e := g.authService.CreateAccessToken(ctx, oauth)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 	return token, nil
 }

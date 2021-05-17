@@ -104,11 +104,11 @@ func (p *AccountStatusPostProcessor) Process(ctx context.Context, acct security.
 	switch {
 	case result.Error == nil && result.Auth != nil && result.Auth.State() >= security.StateAuthenticated:
 		// fully authenticated
-		if history, ok := acct.(security.AccountHistory); ok && history.SerialFailedAttempts() != 0 {
-			logger.WithContext(ctx).Infof("Account[%s] Failure reset", acct.Username())
-		}
 		updater.RecordSuccess(time.Now())
 		updater.ResetFailedAttempts()
+		if history, ok := acct.(security.AccountHistory); ok && history.SerialFailedAttempts() != 0 {
+			logger.WithContext(ctx).Warnf("Account [%s] failed to reset", acct.Username())
+		}
 	case errors.Is(result.Error, errorBadCredentials) && isPasswordAuth(result):
 		// Password auth failed with incorrect password
 		limit := 5

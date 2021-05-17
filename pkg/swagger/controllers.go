@@ -31,6 +31,7 @@ type UiConfiguration struct {
 }
 
 type SsoConfiguration struct {
+	Enabled      bool   `json:"enabled"`
 	AuthorizeUrl string `json:"authorizeUrl"`
 	ClientId     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
@@ -56,14 +57,14 @@ func NewSwaggerController(prop SwaggerProperties) *SwaggerController {
 
 func (s *SwaggerController) Mappings() []web.Mapping {
 	return []web.Mapping{
-		assets.New("swagger/static", "frontend"),
+		assets.New("/swagger/static", "generated/"),
 		web.NewSimpleMapping("swagger-ui", "/swagger", http.MethodGet, nil, s.swagger),
 		rest.New("swagger-configuration-ui").Get("/swagger-resources/configuration/ui").EndpointFunc(s.configurationUi).Build(),
 		rest.New("swagger-configuration-security").Get("/swagger-resources/configuration/security").EndpointFunc(s.configurationSecurity).Build(),
 		rest.New("swagger-configuration-sso").Get("/swagger-resources/configuration/security/sso").EndpointFunc(s.configurationSso).Build(),
 		rest.New("swagger-resources").Get("/swagger-resources").EndpointFunc(s.resources).Build(),
 		web.NewSimpleMapping("swagger-sso-redirect", "swagger-sso-redirect.html", http.MethodGet, nil, s.swaggerRedirect),
-		web.NewSimpleMapping("swagger-spec", "v2/api-docs", http.MethodGet, nil, s.swaggerSpec),
+		web.NewSimpleMapping("swagger-spec", "/v2/api-docs", http.MethodGet, nil, s.swaggerSpec),
 	}
 }
 
@@ -88,7 +89,7 @@ func (s *SwaggerController) configurationUi(ctx context.Context, _ web.EmptyRequ
 
 func (s *SwaggerController) swagger(w http.ResponseWriter, r *http.Request) {
 	fs := http.FS(Content)
-	file, err := fs.Open("frontend/swagger-ui.html")
+	file, err := fs.Open("generated/swagger-ui.html")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -108,6 +109,7 @@ func (s *SwaggerController) configurationSecurity(ctx context.Context, _ web.Emp
 
 func (s *SwaggerController) configurationSso(ctx context.Context, _ web.EmptyRequest) (response interface{}, err error) {
 	response = SsoConfiguration{
+		Enabled: s.properties.Security.Sso.ClientId != "",
 		TokenUrl: fmt.Sprintf("%s%s", s.properties.Security.Sso.BaseUrl, s.properties.Security.Sso.TokenPath),
 		AuthorizeUrl: fmt.Sprintf("%s%s", s.properties.Security.Sso.BaseUrl, s.properties.Security.Sso.AuthorizePath),
 		ClientId: s.properties.Security.Sso.ClientId,
@@ -131,7 +133,7 @@ func (s *SwaggerController) resources(ctx context.Context, _ web.EmptyRequest) (
 
 func (s *SwaggerController) swaggerRedirect(w http.ResponseWriter, r *http.Request) {
 	fs := http.FS(Content)
-	file, err := fs.Open("frontend/swagger-sso-redirect.html")
+	file, err := fs.Open("generated/swagger-sso-redirect.html")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

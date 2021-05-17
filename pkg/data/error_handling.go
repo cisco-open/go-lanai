@@ -40,7 +40,7 @@ func (t DataErrorTranslator) Translate(ctx context.Context, err error) error {
 
 func (t DataErrorTranslator) errorWithStatusCode(ctx context.Context, err error, sc int) error {
 	if _, ok := err.(*DataError); !ok {
-		return NewDataError(err.(errorutils.ErrorCoder).Code(), err.Error(), err).WithStatusCode(sc)
+		return NewDataError(err.(errorutils.ErrorCoder).Code(), err).WithStatusCode(sc)
 	}
 
 	return err.(*DataError).WithStatusCode(sc)

@@ -13,16 +13,20 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/unknownIdp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/assets"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"embed"
 	"go.uber.org/fx"
 	"net/url"
 )
 
 var logger = log.New("SEC.Example")
 
-func init() {
-
-}
+//go:generate npm install --prefix web/nodejs
+//go:generate go run github.com/mholt/archiver/cmd/arc -overwrite -folder-safe=false unarchive web/nodejs/node_modules/@msx/login-app/login-app-ui.zip web/login-ui/
+//go:embed web/login-ui/*
+var GeneratedContent embed.FS
 
 // Maker func, does nothing. Allow service to include this module in main()
 func Use() {
@@ -40,6 +44,7 @@ func Use() {
 		fx.Provide(NewInMemoryIdpManager),
 		fx.Provide(NewInMemSpManager),
 		fx.Provide(newAuthServerConfigurer),
+		fx.Invoke(configureWeb),
 		fx.Invoke(configureSecurity),
 		fx.Invoke(configureConsulRegistration),
 	)
@@ -91,6 +96,12 @@ func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 			TenantHierarchy: "/v2/tenant_hierarchy",
 		}
 	}
+}
+
+func configureWeb(r *web.Registrar) {
+	r.MustRegister(web.OrderedFS(GeneratedContent, passwdidp.OrderTemplateFSOverwrite))
+	r.MustRegister(assets.New("app", "web/login-ui"))
+	r.MustRegister(NewLoginFormController())
 }
 
 func configureConsulRegistration(r *discovery.Customizers) {

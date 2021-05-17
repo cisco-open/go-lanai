@@ -2,8 +2,10 @@ package errorhandling
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -53,6 +55,8 @@ func (eh *ErrorHandlingMiddleware) tryHandleErrors(c *gin.Context) {
 }
 
 func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
+	eh.logError(c, err)
+
 	if c.Writer.Written() {
 		return
 	}
@@ -74,6 +78,19 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 	default:
 		eh.errorHandler.HandleError(c, c.Request, c.Writer, err)
 	}
+}
+
+func (eh *ErrorHandlingMiddleware) logError(c *gin.Context, err error) {
+	var errMsgs []string
+	for cause, isNested := err, true; isNested && cause != nil; {
+		errMsgs = append(errMsgs, cause.Error())
+		var nested errorutils.NestedError
+		if nested, isNested = cause.(errorutils.NestedError); isNested {
+			cause = nested.Cause()
+		}
+	}
+	msg := strings.Join(errMsgs, " - [Caused By]: ")
+	logger.WithContext(c.Request.Context()).Debugf("[Error]: %s", msg)
 }
 
 /**************************

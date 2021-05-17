@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"os"
 	"sort"
@@ -64,8 +63,8 @@ func AddStopContextOptions(options...ContextOption) {
 	stopContextOptions = append(stopContextOptions, options...)
 }
 
-func newApp(cmd *cobra.Command, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
-	DefaultModule.PriorityOptions = append(DefaultModule.PriorityOptions, fx.Supply(cmd))
+func newApp(cliCtx *CliExecContext, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
+	DefaultModule.PriorityOptions = append(DefaultModule.PriorityOptions, fx.Supply(cliCtx))
 	for _,o := range priorityOptions {
 		applicationMainModule().PriorityOptions = append(applicationMainModule().PriorityOptions, o)
 	}

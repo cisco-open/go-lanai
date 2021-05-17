@@ -3,7 +3,7 @@ package matcher
 import (
 	"context"
 	"fmt"
-	"github.com/bmatcuk/doublestar"
+	"github.com/bmatcuk/doublestar/v4"
 	"regexp"
 	"strings"
 )
@@ -54,6 +54,7 @@ func (m *stringMatcher) String() string {
 /**************************
 	Constructors
 ***************************/
+
 func WithString(expected string, caseInsensitive bool) StringMatcher {
 	desc := fmt.Sprintf("matches [%s]", expected)
 	if caseInsensitive {
@@ -146,6 +147,7 @@ func WithRegexPattern(regex *regexp.Regexp) StringMatcher {
 /**************************
 	helpers
 ***************************/
+
 func MatchString(expected, actual string, caseInsensitive bool) bool {
 	if caseInsensitive {
 		expected = strings.ToLower(expected)

@@ -36,7 +36,7 @@ func (g *PermissionBasedGranter) authenticateToken(ctx context.Context, request 
 	// Authenticate
 	auth, e := g.authenticator.Authenticate(ctx, &candidate)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 	oauth, ok := auth.(oauth2.Authentication)
 	switch {

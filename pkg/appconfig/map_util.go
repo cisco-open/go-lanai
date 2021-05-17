@@ -11,11 +11,12 @@ import (
 )
 
 // Options the flatten options.
-// By default: Demiliter = "."
+// By default: Delimiter = "."
 type Options struct {
 	Delimiter string
 }
 
+// ProcessKeyFormat traverse given map in DFS fashion and apply given processor to each KV pair
 func ProcessKeyFormat(nested map[string]interface{}, processor func(string, ...func(*Options)) string) (map[string]interface{}, error) {
 	result, err := processKeyFormat(nested, processor)
 
@@ -118,8 +119,8 @@ type UfOptions struct {
 	AppendSlice bool
 }
 
-// This method supports un-flattening keys with index like the following
-//  my-example.url[0]=https://example.com
+// UnFlatten supports un-flattening keys with index like the following
+//  	my-example.url[0]=https://example.com
 // The indexed entries are treated like an unsorted list. The result will be a list but the order is not
 // guaranteed to reflect the index order.
 // A key with multiple index (a.b[0].c[0) is not supported
@@ -136,9 +137,9 @@ func UnFlatten(flat map[string]interface{}, configures...func(*UfOptions)) (nest
 	nested = make(map[string]interface{})
 
 	for k, v := range flat {
-		temp, error := uf(k, v, opts)
-		if error != nil {
-			return nil, errors.Wrap(error, "cannot un-flatten due to error in key: " + k)
+		temp, e := uf(k, v, opts)
+		if e != nil {
+			return nil, errors.Wrap(e, "cannot un-flatten due to error in key: " + k)
 		}
 		err = mergo.Merge(&nested, temp, func(c *mergo.Config) {
 			c.AppendSlice = opts.AppendSlice
@@ -167,9 +168,9 @@ func uf(k string, v interface{}, opts *UfOptions) (n interface{}, err error) {
 		bracketRight := strings.Index(currKey, "]")
 
 		if bracketLeft > 0 && bracketRight == len(currKey) -1 {
-			index, error := strconv.Atoi(currKey[bracketLeft+1 : bracketRight])
-			if error != nil || index < 0 {
-				return nil, errors.Wrap(error, "key:"+" has index marker [], but the index is not valid integer.")
+			index, e := strconv.Atoi(currKey[bracketLeft+1 : bracketRight])
+			if e != nil || index < 0 {
+				return nil, errors.Wrap(e, "key:"+" has index marker [], but the index is not valid integer.")
 			} else if indexOccurance > 0 {
 				return nil, errors.New("key:"+" has multiple index marker []. This is not supported")
 			} else {
@@ -200,6 +201,7 @@ func UnFlattenKey(k string, configures...func(*Options)) []string {
 
 const dash = rune('-')
 
+// NormalizeKey convert camelCase key to snake-case
 func NormalizeKey(key string, configures...func(*Options)) string {
 	keys := UnFlattenKey(key, configures...)
 

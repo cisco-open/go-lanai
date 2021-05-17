@@ -1,0 +1,79 @@
+### Global Variables
+.SECONDEXPANSION:
+
+DESTDIR = dist
+MODULE = {{ .Module.Path }}
+
+EXECS = {{- range $key, $_ := .Executables }} {{ $key }} {{- end }}
+
+GEN_LIST = \
+	{{- range .Generates }}
+	generate@{{ .Path }} \
+	{{- end }}
+
+RES_LIST = \
+	{{- range .Resources }}
+	resource@{{ .Output }} \
+	{{- end }}
+
+### Main
+.PHONY: generate clean test build copy-resources $(GEN_LIST) $(EXECS) $(RES_LIST)
+
+## Required Variables by Local Targets
+GO ?= go
+CLI ?= lanai-cli
+
+# target patterns
+pGenerate = generate@%
+pResource = resource@%
+
+## Build AdHoc Targets
+# generate:
+# 	Invoke "go generate" on defined targets
+# 	This target typically run on CI/CD working machine
+generate: $(GEN_LIST)
+
+# test:
+# 	Invoke "go test" on defined modules.
+# 	This target typically run on CI/CD working machine
+test: generate
+	$(GO) test -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/...
+
+# build:
+# 	Generate executable binary and copy resources to $(DESTDIR)
+# 	this target should be run on targeted OS.
+#	e.g. build is executed inside Docker container when building Docker image
+# 	Optional Vars:
+#		- VERSION version value without leading "v". Used for build info ldflags
+#		- PRIVATE_MODS comma delimited <module[@branch]>. Used for build info ldflags
+build: $(EXECS) copy-resources
+
+# copy-resources:
+#	Copy resources to $(DESTDIR) based on $(RES_LIST)
+# 	This target should be run on targeted OS.
+#	e.g. build is executed inside Docker container when building Docker image
+copy-resources: $(RES_LIST)
+
+# clean:
+# 	Undo previous "build".  clean $(DESTDIR) and build cache
+# 	This target should be run on targeted OS.
+clean:
+	$(GO) clean
+	rm -rf $(DESTDIR)/*
+
+## Local Targets
+# Generate
+$(GEN_LIST):
+	$(GO) generate $(@:$(pGenerate)=%)
+
+# Build
+	{{- range $name, $elem := .Executables }}
+{{ $name }}:
+	$(CLI) build -v "$(VERSION)" --deps "$(PRIVATE_MODS)" -- -o $(DESTDIR)/$@ {{ $elem.Main }}
+	{{ end }}
+
+# Copy Resources
+	{{- range .Resources }}
+resource@{{ .Output }}:
+	cp -rf {{ .Pattern }} $(DESTDIR)/{{ .Output }}
+	{{ end }}

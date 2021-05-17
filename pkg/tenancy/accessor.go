@@ -68,7 +68,7 @@ func (a *TenancyAccessor) GetChildren(ctx context.Context, tenantId string) ([]s
 	return children, nil
 }
 
-func (a *TenancyAccessor) GetAnceostors(ctx context.Context, tenantId string) ([]string, error) {
+func (a *TenancyAccessor) GetAncestors(ctx context.Context, tenantId string) ([]string, error) {
 	if !a.IsLoaded(ctx) {
 		return nil, errors.New("tenancy is not loaded")
 	}
@@ -167,7 +167,7 @@ func (a *TenancyAccessor) GetTenancyPath(ctx context.Context, tenantId string) (
 	}
 	path := []uuid.UUID{current}
 
-	ancestors, err := a.GetAnceostors(ctx, tenantId)
+	ancestors, err := a.GetAncestors(ctx, tenantId)
 	if err != nil {
 		return nil, err
 	}
@@ -178,6 +178,14 @@ func (a *TenancyAccessor) GetTenancyPath(ctx context.Context, tenantId string) (
 			return nil, err
 		}
 		path = append(path, id)
+	}
+
+	//reverse the order to that the result is curent tenant id -> root tenant id
+	//fi is index going forward starting from 0,
+	//ri is index going backward starting from last element
+	//swap the element at ri and ri
+	for fi, ri := 0, len(path)-1; fi < ri; fi, ri = fi+1, ri-1 {
+		path[fi], path[ri] = path[ri], path[fi]
 	}
 	return path, nil
 }

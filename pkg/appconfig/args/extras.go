@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-//The logic below accepts both --flag=value and --flag value format.
-//This method is used to parse the flags not pre-defined by our application. (i.e. flags like --help, --profile)
-func Extras(skip func(name string) bool) (extras map[string]string) {
+// ExtraFlags parse original CLI flags (before standalone "--") and accepts both --flag=value and --flag value format.
+// This method is used to parse the flags not pre-defined by our application. (i.e. flags like --help, --profile)
+func ExtraFlags(skip func(name string) bool) (extras map[string]string) {
 	extras = make(map[string]string)
 	args := os.Args[1:]
 	for n := 0; n < len(args); n++ {
@@ -41,5 +41,20 @@ func Extras(skip func(name string) bool) (extras map[string]string) {
 	}
 
 	return extras
+}
+
+// ExtraKVArgs parse original CLI arguments (after standalone "--") and accepts flag=value
+func ExtraKVArgs(args []string) (extras map[string]string) {
+	extras = make(map[string]string)
+	for _, v := range args {
+		split := strings.SplitN(v, "=", 2)
+		switch {
+		case len(split) == 2:
+			extras[split[0]] = split[1]
+		case len(split) == 1:
+			extras[split[0]] = ""
+		}
+	}
+	return
 }
 

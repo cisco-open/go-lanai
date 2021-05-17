@@ -93,13 +93,13 @@ func (g *SwitchUserGranter) Grant(ctx context.Context, request *auth.TokenReques
 	// create authentication
 	oauth, e := g.authService.SwitchAuthentication(ctx, req, userAuth, stored)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 
 	// create token
 	token, e := g.authService.CreateAccessToken(ctx, oauth)
 	if e != nil {
-		return nil, oauth2.NewInvalidGrantError(e.Error(), e)
+		return nil, oauth2.NewInvalidGrantError(e)
 	}
 	return token, nil
 }

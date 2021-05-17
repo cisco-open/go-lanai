@@ -18,7 +18,7 @@ const STATUS_LOADED = "LOADED"
 type Accessor interface {
 	GetParent(ctx context.Context, tenantId string) (string, error)
 	GetChildren(ctx context.Context, tenantId string) ([]string, error)
-	GetAnceostors(ctx context.Context, tenantId string) ([]string, error)
+	GetAncestors(ctx context.Context, tenantId string) ([]string, error)
 	GetDescendants(ctx context.Context, tenantId string) ([]string, error)
 	GetRoot(ctx context.Context) (string, error)
 	IsLoaded(ctx context.Context) bool
@@ -31,8 +31,8 @@ func GetParent(ctx context.Context, tenantId string) (string, error) {
 func GetChildren(ctx context.Context, tenantId string) ([]string, error) {
 	return internalAccessor.GetChildren(ctx, tenantId)
 }
-func GetAnceostors(ctx context.Context, tenantId string) ([]string, error) {
-	return internalAccessor.GetAnceostors(ctx, tenantId)
+func GetAncestors(ctx context.Context, tenantId string) ([]string, error) {
+	return internalAccessor.GetAncestors(ctx, tenantId)
 }
 func GetDescendants(ctx context.Context, tenantId string) ([]string, error) {
 	return internalAccessor.GetDescendants(ctx, tenantId)

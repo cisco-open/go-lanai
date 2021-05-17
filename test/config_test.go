@@ -20,11 +20,14 @@ func TestResolvePlaceHolders(t *testing.T) {
 	}
 
 	p := fileprovider.NewProvider(0, fullPath, file)
-	c := appconfig.NewApplicationConfig(p)
+	c := appconfig.NewApplicationConfig(appconfig.NewStaticProviderGroup(0, p))
 
-	c.Load(true)
+	if e := c.Load(true); e != nil {
+		t.Errorf("Load() returns error %v", e)
+	}
 
 	expectedKVs := map[string]interface{} {
+		"application.profiles.additional": []string{},
 		"a.b.c": "1_my_value",
 		"d.e.f": "my_value",
 		"g.h.i": "my_value",
@@ -41,7 +44,9 @@ func TestResolvePlaceHolders(t *testing.T) {
 		return nil
 	}
 
-	c.Each(gatherKvs)
+	if e := c.Each(gatherKvs); e != nil {
+		t.Errorf("Each() returns error %v", e)
+	}
 
 	if !reflect.DeepEqual(expectedKVs, actualKVs) {
 		t.Errorf("resolved map not expected")
@@ -57,7 +62,7 @@ func TestResolvePlaceHoldersWithCircularReference(t *testing.T) {
 	}
 
 	p := fileprovider.NewProvider(0, fullPath, file)
-	c := appconfig.NewApplicationConfig(p)
+	c := appconfig.NewApplicationConfig(appconfig.NewStaticProviderGroup(0, p))
 
 	error = c.Load(true)
 

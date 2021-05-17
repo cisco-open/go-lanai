@@ -13,28 +13,58 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package bootstrap
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/profile"
+	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"os"
+	"regexp"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Short: "A go-lanai based application.",
-	Long: "This is a go-lanai based application.",
-	FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
+const (
+	CliFlagActiveProfile     = "active-profiles"
+	CliFlagAdditionalProfile = "additional-profiles"
+	CliFlagConfigSearchPath  = "config-search-path"
+)
+
+var (
+	argsPattern = regexp.MustCompile(`[a-zA-Z][a-zA-Z0-9\-._]+=.*`)
+	// rootCmd represents the base command when called without any subcommands
+	// Note: when running app as `./app --flag1 value1 --flag2 value2 -- any-thing...`
+	// 		 the values after bare `--` are passed in as args. we could use it as CLI properties assignment
+	rootCmd = &cobra.Command{
+		Short:              "A go-lanai based application.",
+		Long:               "This is a go-lanai based application.",
+		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
+		Args: func(cmd *cobra.Command, args []string) error {
+			for _, arg := range args {
+				if !argsPattern.MatchString(arg) {
+					return fmt.Errorf(`CLI properties should be in format of "property-path=value", but got "%s"`, arg)
+				}
+			}
+			return nil
+		},
+	}
+	cliCtx = CliExecContext{}
+)
+
+type CliExecContext struct {
+	Cmd                *cobra.Command
+	ActiveProfiles     []string
+	AdditionalProfiles []string
+	ConfigSearchPaths  []string
+	Args               []string
 }
 
-// Should be called before Execute() to register flags that are supported
+// AddStringFlag should be called before Execute() to register flags that are supported
 func AddStringFlag(flagVar *string, name string, defaultValue string, usage string) {
 	rootCmd.PersistentFlags().StringVar(flagVar, name, defaultValue, usage)
 }
 
-func AddBoolFlag(flagVar *bool, name string, defaultValue bool, usage string)  {
+func AddBoolFlag(flagVar *bool, name string, defaultValue bool, usage string) {
 	rootCmd.PersistentFlags().BoolVar(flagVar, name, defaultValue, usage)
 }
 
@@ -47,14 +77,32 @@ func Execute() {
 	}
 }
 
-func NewAppCmd(appName string, priorityOptions []fx.Option, regularOptions []fx.Option) {
-	rootCmd.Use = appName
-	rootCmd.PersistentFlags().StringSliceVar(&profile.Profiles, "profiles", []string{}, "List of comma separated profiles.")
+type CliOptions func(cmd *cobra.Command)
 
-	rootCmd.Run = func(cmd *cobra.Command, args []string) {
-		app := newApp(rootCmd, priorityOptions, regularOptions)
-		app.Run()
+func NewAppCmd(appName string, priorityOptions []fx.Option, regularOptions []fx.Option, cliOptions ...CliOptions) {
+	rootCmd.Use = appName
+
+	// config flags
+	rootCmd.PersistentFlags().StringSliceVarP(&cliCtx.ActiveProfiles, CliFlagActiveProfile, "P", []string{},
+		`Comma separated active profiles. Override property "application.profiles.active"`)
+	rootCmd.PersistentFlags().StringSliceVarP(&cliCtx.AdditionalProfiles, CliFlagAdditionalProfile, "p", []string{},
+		`Comma separated additional profiles. Set property "application.profiles.additional". Additional profiles is added to active profiles`)
+	rootCmd.PersistentFlags().StringSliceVarP(&cliCtx.ConfigSearchPaths, CliFlagConfigSearchPath, "c", []string{},
+		`Comma separated paths. Override property "config.file.search-path"`)
+
+	// To add more cmd. Declare the cmd as a variable similar to rootCmd. And add it to rootCmd here.
+	for _, f := range cliOptions {
+		f(rootCmd)
 	}
 
-	//To add more cmd. Declare the cmd as a variable similar to rootCmd. And add it to rootCmd here.
+	// Configure Run function
+	rootCmd.Run = func(cmd *cobra.Command, args []string) {
+		// make a copy of cli exec context
+		execCtx := cliCtx
+		execCtx.Cmd = cmd
+		execCtx.Args = args
+
+		app := newApp(&execCtx, priorityOptions, regularOptions)
+		app.Run()
+	}
 }

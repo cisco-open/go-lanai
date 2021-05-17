@@ -114,9 +114,45 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 	return true
 }
 
+//In most cases, the HasAccessToTenant should be used instead. It checks both the tenant's validity and whether the user has access to it
+func IsTenantValid(ctx context.Context, tenantId string) bool {
+	parentId, err := tenancy.GetParent(ctx, tenantId)
+	//if we find a parent, that means we have this tenantId in tenant hierarchy, so it's valid
+	if err == nil && parentId != ""  {
+		return true
+	}
 
+	//it's also possible that the tenantId is the root tenant (root tenant doesn't have a parent so it won't appear in the call above)
+	rootId, err := tenancy.GetRoot(ctx)
+	if err == nil && rootId != "" && rootId == tenantId {
+		return true
+	}
+
+	return false
+}
+
+/*
+	if the tenantId is not valid, this method will return false, otherwise the following checks are applied in order
+
+	1. If the user has ACCESS_ALL_TENANT permission, this method will return true
+
+	2. If the user's designated tenants include the give tenant, this method will return true
+
+	3. If the tenant hierarchy is loaded, this method will also check if any of the given tenant's ancestor
+	is in the user's designated tenant. If yes, this method will return true.
+
+	otherwise, this method return false.
+ */
 func HasAccessToTenant(ctx context.Context, tenantId string) bool {
+	if !IsTenantValid(ctx, tenantId) {
+		return false
+	}
+
 	auth := Get(ctx)
+
+	if HasPermissions(auth, SpecialPermissionAccessAllTenant) {
+		return true
+	}
 
 	if ud, ok := auth.Details().(UserDetails); ok {
 		if ud.AssignedTenantIds().Has(tenantId) {
@@ -128,7 +164,7 @@ func HasAccessToTenant(ctx context.Context, tenantId string) bool {
 			return false
 		}
 
-		ancestors, err := tenancy.GetAnceostors(ctx, tenantId)
+		ancestors, err := tenancy.GetAncestors(ctx, tenantId)
 		if err != nil {
 			return false
 		}

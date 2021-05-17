@@ -22,6 +22,12 @@ import (
 	"net/url"
 )
 
+const (
+	OrderAuthorizeSecurityConfigurer  = 0
+	OrderClientAuthSecurityConfigurer = 100
+	OrderTokenAuthSecurityConfigurer  = 200
+)
+
 type AuthorizationServerConfigurer func(*Configuration)
 
 type configDI struct {
@@ -73,7 +79,13 @@ func ConfigureAuthorizationServer(di initDI) {
 		di.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: di.Config, delegate: configuer})
 	}
 
-	// Additional endpoints
+	// Additional endpoints and other web configurations
+	di.WebRegistrar.WarnDuplicateMiddlewares(true,
+		di.Config.Endpoints.Authorize.Location.Path,
+		di.Config.Endpoints.SamlSso.Location.Path,
+		di.Config.Endpoints.Approval,
+		di.Config.Endpoints.Logout,
+	)
 	registerEndpoints(di.WebRegistrar, di.Config)
 }
 
