@@ -104,7 +104,7 @@ func TestSerialization(t *testing.T) {
 	connection := mock
 
 	store := NewRedisStore(connection)
-	s := NewSession(store, DefaultName)
+	s := NewSession(store, common.DefaultName)
 
 	auth := testAuthentication{
 		Account: &testUser{
@@ -125,7 +125,7 @@ func TestSerialization(t *testing.T) {
 		t.Errorf("Cannot serialize %v", err)
 	}
 
-	s = NewSession(store, DefaultName)
+	s = NewSession(store, common.DefaultName)
 	err = Deserialize(bytes.NewReader(serialized), &s.values)
 
 	if err != nil {
@@ -281,6 +281,8 @@ func TestSaveNewSession(t *testing.T) {
 		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
 		sessionValueField, gomock.Any(),
 		sessionOptionField, gomock.Any(),
+		common.SessionIdleTimeoutMilli, gomock.Any(),
+		common.SessionAbsTimeoutTime, gomock.Any(),
 		common.SessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
 
 	originalLastAccessed := session.lastAccessed

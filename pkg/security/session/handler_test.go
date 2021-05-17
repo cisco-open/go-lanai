@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_security"
+	"encoding/gob"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
@@ -25,7 +26,7 @@ func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
 
 	sessionStore := NewRedisStore(mockRedis)
-	s, _ := sessionStore.New(DefaultName)
+	s, _ := sessionStore.New(common.DefaultName)
 	s.isNew = false //if session is new it won't get changed
 
 	recorder := httptest.NewRecorder()
@@ -43,11 +44,11 @@ func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	originalId := s.id
 
 	mockRedis.EXPECT().Rename(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, key, newkey string) *redis.StatusCmd {
-		if key != "LANAI:SESSION"+":"+DefaultName+":"+originalId {
+		if key != "LANAI:SESSION"+":"+common.DefaultName+":"+originalId {
 			t.Errorf("expected original key")
 		}
 
-		if newkey == "LANAI:SESSION"+":"+DefaultName+":"+originalId {
+		if newkey == "LANAI:SESSION"+":"+common.DefaultName+":"+originalId {
 			t.Errorf("expected changed key")
 		}
 
@@ -78,7 +79,7 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 		},
 	}
 
-	s, _ := sessionStore.New(DefaultName)
+	s, _ := sessionStore.New(common.DefaultName)
 
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)
@@ -94,10 +95,10 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	mockTo.EXPECT().State().Return(security.StateAuthenticated)
 	mockTo.EXPECT().Principal().Return(principalName).AnyTimes()
 
-	mockRedis.EXPECT().SAdd(gomock.Any(), "LANAI:SESSION:INDEX:"+DefaultName+":"+principalName, s.id).Return(redis.NewIntCmd(context.Background()))
+	mockRedis.EXPECT().SAdd(gomock.Any(), "LANAI:SESSION:INDEX:"+common.DefaultName+":"+principalName, s.id).Return(redis.NewIntCmd(context.Background()))
 
 	existingId := "1"
-	mockRedis.EXPECT().SScan(gomock.Any(), "LANAI:SESSION:INDEX:"+DefaultName+":"+principalName, uint64(0), "", int64(0)).
+	mockRedis.EXPECT().SScan(gomock.Any(), "LANAI:SESSION:INDEX:"+common.DefaultName+":"+principalName, uint64(0), "", int64(0)).
 		Return(redis.NewScanCmdResult([]string{s.id, existingId}, 0, nil))
 
 	//Mock current session
@@ -121,12 +122,26 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	hset[sessionOptionField] = string(optionBytes)
 
 	mockRedis.EXPECT().
-		HGetAll(gomock.Any(), gomock.Eq("LANAI:SESSION:" + DefaultName + ":" + s.id)).
+		HGetAll(gomock.Any(), gomock.Eq("LANAI:SESSION:" + common.DefaultName + ":" + s.id)).
 		Return(redis.NewStringStringMapResult(hset, nil))
 
 	//Mock existing session
 	sessionValues = make(map[interface{}]interface{})
 	sessionValues[createdTimeKey] = time.Now().Add(-time.Second * 30)
+
+	//need to register these two type so that they can be serialized.
+	//can't use mock_security.NewMockAuthentication here because it can't be serialized - no exported fields
+	gob.Register((*testAuthentication)(nil))
+	gob.Register((*testUser)(nil))
+	existingSessionAuth := &testAuthentication{
+		Account: &testUser{
+			User: principalName,
+			Pass: "test_pass",
+		},
+		PermissionList: map[string]interface{}{},
+	}
+	sessionValues[sessionKeySecurity] = existingSessionAuth
+
 	valueBytes, err = Serialize(sessionValues)
 	if err != nil {
 		t.Errorf("not able to serialize session values %v", err)
@@ -137,12 +152,11 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	hset[sessionOptionField] = string(optionBytes)
 
 	mockRedis.EXPECT().
-		HGetAll(gomock.Any(), gomock.Eq("LANAI:SESSION:" + DefaultName + ":" + existingId)).
+		HGetAll(gomock.Any(), gomock.Eq("LANAI:SESSION:" + common.DefaultName + ":" + existingId)).
 		Return(redis.NewStringStringMapResult(hset, nil))
 
-	mockRedis.EXPECT().Del(gomock.Any(), "LANAI:SESSION:" + DefaultName + ":" + existingId).Return(redis.NewIntCmd(context.Background()))
-	// FIXME this caused issue after recent session update
-	//mockRedis.EXPECT().SRem(gomock.Any(), "LANAI:SESSION:INDEX:"+DefaultName+":"+principalName, existingId).Return(redis.NewIntCmd(context.Background()))
+	mockRedis.EXPECT().Del(gomock.Any(), "LANAI:SESSION:" + common.DefaultName + ":" + existingId).Return(redis.NewIntCmd(context.Background()))
+	mockRedis.EXPECT().SRem(gomock.Any(), "LANAI:SESSION:INDEX:"+ common.DefaultName +":"+principalName, existingId).Return(redis.NewIntCmd(context.Background()))
 
 	handler.HandleAuthenticationSuccess(c, c.Request, c.Writer, mockFrom, mockTo)
 }
@@ -154,7 +168,7 @@ func TestDeleteSessionOnLogoutHandler_HandleAuthenticationSuccess(t *testing.T) 
 	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
 	sessionStore := NewRedisStore(mockRedis)
 
-	s, _ := sessionStore.New(DefaultName)
+	s, _ := sessionStore.New(common.DefaultName)
 
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)
@@ -170,13 +184,21 @@ func TestDeleteSessionOnLogoutHandler_HandleAuthenticationSuccess(t *testing.T) 
 	mockTo := mock_security.NewMockAuthentication(ctrl)
 	mockTo.EXPECT().State().Return(security.StateAnonymous)
 
+	existingSessionAuth := &testAuthentication{
+		Account: &testUser{
+			User: principalName,
+			Pass: "test_pass",
+		},
+		PermissionList: map[string]interface{}{},
+	}
+	s.values[sessionKeySecurity] = existingSessionAuth
+
 	handler := DeleteSessionOnLogoutHandler{
 		sessionStore: sessionStore,
 	}
 
-	mockRedis.EXPECT().Del(gomock.Any(), "LANAI:SESSION:" + DefaultName + ":" + s.id).Return(redis.NewIntCmd(context.Background()))
-	// FIXME this caused issue after recent session update
-	//mockRedis.EXPECT().SRem(gomock.Any(), "LANAI:SESSION:INDEX:"+DefaultName+":"+principalName, s.id).Return(redis.NewIntCmd(context.Background()))
+	mockRedis.EXPECT().Del(gomock.Any(), "LANAI:SESSION:" + common.DefaultName + ":" + s.id).Return(redis.NewIntCmd(context.Background()))
+	mockRedis.EXPECT().SRem(gomock.Any(), "LANAI:SESSION:INDEX:"+ common.DefaultName+":"+principalName, s.id).Return(redis.NewIntCmd(context.Background()))
 
 	handler.HandleAuthenticationSuccess(c, c.Request, c.Writer, mockFrom, mockTo)
 }
