@@ -71,6 +71,10 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 	if err != nil {
 		panic(security.NewInternalError("cannot load certificate from file", err))
 	}
+	if len(cert) > 1 {
+		logger.Warnf("multiple certificate found, using first one")
+	}
+
 	key, err := cryptoutils.LoadPrivateKey(s.properties.KeyFile, s.properties.KeyPassword)
 	if err != nil {
 		panic(security.NewInternalError("cannot load private key from file", err))
@@ -82,7 +86,7 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 	opts := Options{
 		URL:            *rootURL,
 		Key:            key,
-		Certificate:    cert,
+		Certificate:    cert[0],
 		ACSPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.acsPath),
 		MetadataPath:   fmt.Sprintf("%s%s", rootURL.Path, f.metadataPath),
 		SLOPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.sloPath),

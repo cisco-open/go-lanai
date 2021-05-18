@@ -74,6 +74,9 @@ func (c *SamlAuthorizeEndpointConfigurer) getIdentityProviderConfiguration(f *Fe
 	if err != nil {
 		panic(security.NewInternalError("cannot load certificate from file", err))
 	}
+	if len(cert) > 1 {
+		logger.Warnf("multiple certificate found, using first one")
+	}
 	key, err := cryptoutils.LoadPrivateKey(c.properties.KeyFile, c.properties.KeyPassword)
 	if err != nil {
 		panic(security.NewInternalError("cannot load private key from file", err))
@@ -85,7 +88,7 @@ func (c *SamlAuthorizeEndpointConfigurer) getIdentityProviderConfiguration(f *Fe
 
 	return Options{
 		Key:         key,
-		Cert:        cert,
+		Cert:        cert[0],
 		//usually this is the metadata url, but to keep consistent with existing implementation, we just use the context path
 		EntityIdUrl: *rootURL,
 		SsoUrl: *rootURL.ResolveReference(&url.URL{

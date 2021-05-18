@@ -12,7 +12,9 @@ import (
 	"strings"
 )
 
-func LoadCert(file string) (*x509.Certificate, error) {
+func LoadCert(file string) ([]*x509.Certificate, error) {
+	var result []*x509.Certificate
+
 	certFile, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -21,9 +23,20 @@ func LoadCert(file string) (*x509.Certificate, error) {
 	if err != nil {
 		return nil, err
 	}
-	certBlock, _ := pem.Decode(certBytes)
-	cert, err := x509.ParseCertificate(certBlock.Bytes)
-	return cert, err
+	for block, r := pem.Decode(certBytes); block != nil; block, r = pem.Decode(r) {
+		var cert *x509.Certificate
+		switch {
+		case block.Type == "CERTIFICATE":
+			cert, err = x509.ParseCertificate(block.Bytes)
+		default:
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, cert)
+	}
+	return result, err
 }
 
 func LoadPrivateKey(file string, keyPassword string) (*rsa.PrivateKey, error){

@@ -8,8 +8,9 @@ type SamlIdpDetails struct {
 	MetadataLocation string
 	ExternalIdName   string
 	ExternalIdpName  string
-	//TODO: option to require metadata to have signature, option to verify metadata signature
-	// this is optional because both Spring and Okta's metadata are not signed
+	MetadataRequireSignature bool
+	MetadataTrustCheck bool
+	MetadataTrustedKeys []string
 }
 
 
@@ -18,6 +19,18 @@ type SamlIdpOptions func(opt *SamlIdpDetails)
 // SamlIdentityProvider implements idp.IdentityProvider, idp.AuthenticationFlowAware and samllogin.SamlIdentityProvider
 type SamlIdentityProvider struct {
 	SamlIdpDetails
+}
+
+func (s SamlIdentityProvider) ShouldMetadataRequireSignature() bool {
+	return s.MetadataRequireSignature
+}
+
+func (s SamlIdentityProvider) ShouldMetadataTrustCheck() bool {
+	return s.MetadataTrustCheck
+}
+
+func (s SamlIdentityProvider) GetMetadataTrustedKeys() []string {
+	return s.MetadataTrustedKeys
 }
 
 func NewIdentityProvider(opts ...SamlIdpOptions) *SamlIdentityProvider {

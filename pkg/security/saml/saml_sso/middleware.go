@@ -43,7 +43,8 @@ func NewSamlAuthorizeEndpointMiddleware(opts Options,
 	attributeGenerator AttributeGenerator) *SamlAuthorizeEndpointMiddleware {
 
 	spDescriptorManager := &SpMetadataManager{
-		cache: make(map[SamlSpDetails]*saml.EntityDescriptor),
+		cache: make(map[string]*saml.EntityDescriptor),
+		processed: make(map[string]SamlSpDetails),
 		httpClient: http.DefaultClient,
 	}
 
