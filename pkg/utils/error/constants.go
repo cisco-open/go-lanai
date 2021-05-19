@@ -1,7 +1,7 @@
 package errorutils
 
 const (
-	// security reserved
+	// reserved
 	ReservedOffset			= 32
 	ReservedMask			= ^int64(0) << ReservedOffset
 

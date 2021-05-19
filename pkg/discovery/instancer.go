@@ -94,24 +94,16 @@ func (i *ConsulInstancer) Instances(matcher InstanceMatcher) (ret []*Instance, e
 	i.cacheMtx.RLock()
 	defer i.cacheMtx.RUnlock()
 
-	service := i.cache.Get(i.serviceName)
+	svc := i.cache.Get(i.serviceName)
 	if i.loopCtx.Err() == context.Canceled {
 		// looper is stopped, we can't trust our cached result anymore
 		return []*Instance{}, ErrInstancerStopped
-	} else if service == nil {
+	} else if svc == nil {
 		return []*Instance{}, fmt.Errorf("cannot find service [%s]", i.serviceName)
-	} else if service.Err != nil {
-		err = service.Err
+	} else if svc.Err != nil {
+		err = svc.Err
 	}
-
-	for _, inst := range service.Instances {
-		if matcher != nil {
-			if matched, e := matcher.Matches(inst); e != nil || !matched {
-				continue
-			}
-		}
-		ret = append(ret, inst)
-	}
+	ret = svc.Instances(matcher)
 	return
 }
 
@@ -210,13 +202,11 @@ func (i *ConsulInstancer) resolveInstancesTask() loop.TaskFunc {
 
 func (i *ConsulInstancer) processResolvedServiceEntries(_ context.Context, entries []*api.ServiceEntry, err error) {
 	insts := makeInstances(entries, i.selector)
-
-	// record result
 	service := &Service{
-		Name:      i.serviceName,
-		Instances: insts,
-		Time:      time.Now(),
-		Err:       err,
+		Name:  i.serviceName,
+		Insts: insts,
+		Time:  time.Now(),
+		Err:   err,
 	}
 
 	i.cacheMtx.Lock()
@@ -229,7 +219,10 @@ func (i *ConsulInstancer) processResolvedServiceEntries(_ context.Context, entri
 		}
 	}()
 
+	// record result
 	existing := i.cache.Set(service.Name, service)
+	service.FirstErrAt = i.determineFirstErrTime(err, existing)
+
 	notify = i.shouldNotify(service, existing)
 	if notify {
 		i.logUpdate(service, existing)
@@ -245,6 +238,20 @@ func (i *ConsulInstancer) invokeCallbacks() {
 	defer i.stateMtx.RUnlock()
 	for _, cb := range i.callbacks {
 		cb(i)
+	}
+}
+
+func (i *ConsulInstancer) determineFirstErrTime(err error, old *Service) time.Time {
+	switch {
+	case err == nil:
+		// happy path, there is no new error, zero time
+		return time.Time{}
+	case old == nil || old.Err == nil:
+		// old record had no error, the err is the first err
+		return time.Now()
+	default:
+		// old record had error, carry over the old error time
+		return old.FirstErrAt
 	}
 }
 
@@ -340,8 +347,8 @@ func makeInstances(entries []*api.ServiceEntry, selector InstanceMatcher) []*Ins
 }
 
 func makeEvent(svc *Service) sd.Event {
-	instances := make([]string, len(svc.Instances))
-	for i, inst := range svc.Instances {
+	instances := make([]string, len(svc.Insts))
+	for i, inst := range svc.Insts {
 		instances[i] = fmt.Sprintf("%s:%d", inst.Address, inst.Port)
 	}
 	return sd.Event{
@@ -391,10 +398,10 @@ func diff(new, old *Service) (ret *svcDiff) {
 	ret = &svcDiff{}
 	switch {
 	case new == nil && old != nil:
-		ret.deleted = old.Instances
+		ret.deleted = old.Insts
 		return
 	case new != nil && old == nil:
-		ret.added = new.Instances
+		ret.added = new.Insts
 		for _, inst := range ret.added {
 			if inst.Health == HealthPassing {
 				ret.healthy = append(ret.healthy, inst)
@@ -406,9 +413,9 @@ func diff(new, old *Service) (ret *svcDiff) {
 	}
 
 	// find differences, Note that we know instances are sorted by ID
-	newN, oldN := len(new.Instances), len(old.Instances)
+	newN, oldN := len(new.Insts), len(old.Insts)
 	for newI, oldI := 0, 0; newI < newN && oldI < oldN; {
-		newInst, oldInst := new.Instances[newI], old.Instances[oldI]
+		newInst, oldInst := new.Insts[newI], old.Insts[oldI]
 		switch {
 		case newInst.ID > oldInst.ID:
 			oldI++
@@ -427,7 +434,7 @@ func diff(new, old *Service) (ret *svcDiff) {
 		}
 	}
 
-	for _, inst := range new.Instances {
+	for _, inst := range new.Insts {
 		if inst.Health == HealthPassing {
 			ret.healthy = append(ret.healthy, inst)
 		}

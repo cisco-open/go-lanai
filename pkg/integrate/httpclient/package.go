@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"go.uber.org/fx"
 )
@@ -9,10 +10,11 @@ import (
 var logger = log.New("HttpClient")
 
 var Module = &bootstrap.Module{
-	Name: "swagger",
-	Precedence: bootstrap.SwaggerPrecedence,
+	Name: "http-client",
+	Precedence: bootstrap.HttpClientPrecedence,
 	Options: []fx.Option{
 		//fx.Provide(bindSecurityProperties),
+		fx.Provide(provideHttpClient),
 		fx.Provide(NewTestHttpClient),
 		//fx.Invoke(Test),
 	},
@@ -20,4 +22,15 @@ var Module = &bootstrap.Module{
 
 func Use() {
 	bootstrap.Register(Module)
+}
+
+type clientDI struct {
+	fx.In
+	DiscClient discovery.Client
+}
+func provideHttpClient(di clientDI) Client {
+	// TODO use properties
+	return NewClient(di.DiscClient, func(opt *ClientOption) {
+		opt.Verbose = true
+	})
 }

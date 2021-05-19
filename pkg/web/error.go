@@ -42,8 +42,8 @@ type HttpError struct {
 	H  http.Header
 }
 
+// MarshalJSON implements json.Marshaler
 // TODO consider implement Unwrap
-// json.Marshaler
 func (e HttpError) MarshalJSON() ([]byte, error) {
 	if original,ok := e.error.(json.Marshaler); ok {
 		return original.MarshalJSON()

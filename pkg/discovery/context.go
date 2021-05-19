@@ -35,10 +35,23 @@ type Client interface {
 type HealthStatus int
 
 type Service struct {
-	Name      string
-	Instances []*Instance
-	Time      time.Time
-	Err       error
+	Name       string
+	Insts      []*Instance
+	Time       time.Time
+	Err        error
+	FirstErrAt time.Time
+}
+
+func (s *Service) Instances(selector InstanceMatcher) (ret []*Instance) {
+	for _, inst := range s.Insts {
+		if selector != nil {
+			if matched, e := selector.Matches(inst); e != nil || !matched {
+				continue
+			}
+		}
+		ret = append(ret, inst)
+	}
+	return
 }
 
 type Instance struct {
@@ -84,14 +97,18 @@ type ServiceCache interface {
 	Common Impl
  *************************/
 
-// InstanceIsHealthy returns an InstanceMatcher that matches healthy instances
-func InstanceIsHealthy() InstanceMatcher {
-	return &instanceMatcher{
+var (
+	healthyInstanceMatcher = &instanceMatcher{
 		desc:      "is healthy",
 		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
 			return instance.Health == HealthPassing, nil
 		},
 	}
+)
+
+// InstanceIsHealthy returns an InstanceMatcher that matches healthy instances
+func InstanceIsHealthy() InstanceMatcher {
+	return healthyInstanceMatcher
 }
 
 func InstanceWithVersion(verPattern string) InstanceMatcher {

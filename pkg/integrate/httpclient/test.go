@@ -33,7 +33,7 @@ func kitFactory(instance string) (endpoint.Endpoint, io.Closer, error) {
 	return cl.Endpoint(), nil, nil
 }
 
-func factory(inst *discovery.Instance) (endpoint.Endpoint, io.Closer, error) {
+func factory(inst *discovery.Instance) (endpoint.Endpoint, error) {
 	ctxPath := ""
 	if inst.Meta != nil {
 		ctxPath = inst.Meta[discovery.InstanceMetaKeyContextPath]
@@ -53,7 +53,7 @@ func factory(inst *discovery.Instance) (endpoint.Endpoint, io.Closer, error) {
 		testRespDecodeFunc,
 	)
 
-	return cl.Endpoint(), nil, nil
+	return cl.Endpoint(), nil
 }
 
 
@@ -75,12 +75,17 @@ func (c *TestHttpClient) DoTest(ctx context.Context) error {
 	//instancer := kitconsul.NewInstancer(c.consulClient, logger, "europa", []string{}, false)
 	//endpointer := sd.NewEndpointer(instancer, kitFactory, logger, sd.InvalidateOnError(10 * time.Second))
 
-	endpointer, e := NewKitEndpointer(c.discClient, func(opts *EndpointerOption) {
+	instancer, e := c.discClient.Instancer("europa")
+	if e != nil {
+		return e
+	}
+
+	endpointer, e := NewKitEndpointer(instancer, func(opts *EndpointerOption) {
 		opts.ServiceName = c.serviceName
 		opts.EndpointFactory = factory
 		opts.Selector = discovery.InstanceIsHealthy()
 		opts.InvalidateOnError = true
-		opts.Logger = logger.WithContext(ctx)
+		opts.Logger = logger
 	})
 	if e != nil {
 		return e
