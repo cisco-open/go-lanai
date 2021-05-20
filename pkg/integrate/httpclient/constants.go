@@ -8,3 +8,7 @@ const (
 const (
 	MediaTypeJson = "application/json"
 )
+
+const (
+	FxGroup = "http-client"
+)

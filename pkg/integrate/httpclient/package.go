@@ -15,7 +15,6 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		//fx.Provide(bindSecurityProperties),
 		fx.Provide(provideHttpClient),
-		//fx.Invoke(Test),
 	},
 }
 
@@ -23,13 +22,32 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
+// FxClientCustomizers takes providers of ClientCustomizer and wrap them with FxGroup
+func FxClientCustomizers(providers ...interface{}) []fx.Annotated {
+	annotated := make([]fx.Annotated, len(providers))
+	for i, t := range providers {
+		annotated[i] = fx.Annotated{
+			Group:  FxGroup,
+			Target: t,
+		}
+	}
+	return annotated
+}
+
 type clientDI struct {
 	fx.In
 	DiscClient discovery.Client
+	Customizers []ClientCustomizer `group:"http-client"`
 }
+
 func provideHttpClient(di clientDI) Client {
 	// TODO use properties
-	return NewClient(di.DiscClient, func(opt *ClientOption) {
+	options := []ClientOptions{func(opt *ClientOption) {
 		opt.Verbose = true
-	})
+	}}
+	for _, customizer := range di.Customizers {
+		options = append(options, customizer.Customize)
+	}
+
+	return NewClient(di.DiscClient, options...)
 }

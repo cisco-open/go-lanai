@@ -57,6 +57,10 @@ type ClientConfig struct {
 	Verbose     bool
 }
 
+type ClientCustomizer interface {
+	Customize(opt *ClientOption)
+}
+
 // BeforeHook is used for ClientConfig and ClientOptions, the RequestFunc is invoked before request is sent
 // implementing class could also implement order.Ordered interface. Highest order is invoked first
 type BeforeHook interface {
@@ -64,9 +68,19 @@ type BeforeHook interface {
 }
 
 // AfterHook is used for ClientConfig and ClientOptions, the ResponseFunc is invoked after response is returned
-// implementing class could also implement order.Ordered interface. Highest order is invoked last
+// implementing class could also implement order.Ordered interface. Highest order is invoked first
 type AfterHook interface {
 	ResponseFunc() httptransport.ClientResponseFunc
+}
+
+// ConfigurableBeforeHook is an additional interface that BeforeHook can implement
+type ConfigurableBeforeHook interface {
+	WithConfig(cfg *ClientConfig) BeforeHook
+}
+
+// ConfigurableAfterHook is an additional interface that AfterHook can implement
+type ConfigurableAfterHook interface {
+	WithConfig(cfg *ClientConfig) AfterHook
 }
 
 // EndpointFactory takes a instance descriptor and create endpoint.Endpoint
@@ -98,7 +112,7 @@ func DefaultConfig() *ClientConfig {
 // defaultServiceConfig add necessary configs/hooks for internal load balanced service
 func defaultServiceConfig() *ClientConfig {
 	return &ClientConfig{
-		BeforeHooks: []BeforeHook{TokenPassthrough()},
+		BeforeHooks: []BeforeHook{HookTokenPassthrough()},
 	}
 }
 

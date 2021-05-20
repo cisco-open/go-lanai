@@ -34,8 +34,10 @@ type client struct {
 
 func NewClient(discClient discovery.Client, opts ...ClientOptions) Client {
 	opt := ClientOption{
-		ClientConfig: *DefaultConfig(),
-		DefaultSelector: discovery.InstanceIsHealthy(),
+		ClientConfig:       *DefaultConfig(),
+		DefaultSelector:    discovery.InstanceIsHealthy(),
+		DefaultBeforeHooks: []BeforeHook{HookRequestLogger(logger, false)},
+		DefaultAfterHooks:  []AfterHook{HookResponseLogger(logger, false)},
 	}
 	for _, f := range opts {
 		f(&opt)
@@ -136,7 +138,6 @@ func (c *client) Execute(ctx context.Context, request *Request, opts ...Response
 	fallbackResponseOptions(&opt)
 
 	// create endpoint
-
 	epConfig := EndpointerConfig{
 		EndpointFactory: c.makeEndpointFactory(ctx, request, &opt),
 	}
@@ -147,11 +148,6 @@ func (c *client) Execute(ctx context.Context, request *Request, opts ...Response
 	resp, e := ep(ctx, request.Body)
 	if e != nil {
 		err = c.translateError(request, e)
-	}
-
-	// verbose log
-	if c.config.Verbose {
-		// TODO verbose log
 	}
 
 	// return result
@@ -254,12 +250,18 @@ func (c *client) updateConfig(config *ClientConfig) {
 	before := append(c.defaults.before, config.BeforeHooks...)
 	order.SortStable(before, order.OrderedFirstCompare)
 	for _, h := range before {
+		if configurable, ok := h.(ConfigurableBeforeHook); ok {
+			h = configurable.WithConfig(config)
+		}
 		c.options = append(c.options, httptransport.ClientBefore(h.RequestFunc()))
 	}
 
 	after := append(c.defaults.after, config.AfterHooks...)
 	order.SortStable(after, order.OrderedFirstCompare)
 	for _, h := range after {
+		if configurable, ok := h.(ConfigurableAfterHook); ok {
+			h = configurable.WithConfig(config)
+		}
 		c.options = append(c.options, httptransport.ClientAfter(h.ResponseFunc()))
 	}
 }
