@@ -3,8 +3,11 @@ package httpclient
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/sd"
+	httptransport "github.com/go-kit/kit/transport/http"
+	"time"
 )
 
 type Client interface {
@@ -27,9 +30,43 @@ type Client interface {
 	WithBaseUrl(baseUrl string) (Client, error)
 
 	// WithConfig create a shallow copy of the client with specified config.
-	// Service (with LB) or BaseURL cannot be changed with this method
+	// Service (with LB) or BaseURL cannot be changed with this method.
+	// If non-primitive field of provided config is zero value, this value is not applied.
 	// The returned client is goroutine-safe and can be reused
 	WithConfig(config *ClientConfig) Client
+}
+
+// ClientOptions is used for creating Client and its customizers
+type ClientOptions func(opt *ClientOption)
+
+// ClientOption carries initial configurations of Clients
+type ClientOption struct {
+	ClientConfig
+	DefaultSelector    discovery.InstanceMatcher
+	DefaultBeforeHooks []BeforeHook
+	DefaultAfterHooks  []AfterHook
+}
+
+// ClientConfig is used to change Client's config
+type ClientConfig struct {
+	BeforeHooks []BeforeHook
+	AfterHooks  []AfterHook
+	MaxRetries  int // negative value means no retry
+	Timeout     time.Duration
+	Logger      log.ContextualLogger
+	Verbose     bool
+}
+
+// BeforeHook is used for ClientConfig and ClientOptions, the RequestFunc is invoked before request is sent
+// implementing class could also implement order.Ordered interface. Highest order is invoked first
+type BeforeHook interface {
+	RequestFunc() httptransport.RequestFunc
+}
+
+// AfterHook is used for ClientConfig and ClientOptions, the ResponseFunc is invoked after response is returned
+// implementing class could also implement order.Ordered interface. Highest order is invoked last
+type AfterHook interface {
+	ResponseFunc() httptransport.ClientResponseFunc
 }
 
 type EndpointFactory func(inst *discovery.Instance) (endpoint.Endpoint, error)
@@ -39,4 +76,29 @@ type Endpointer interface {
 	WithConfig(config *EndpointerConfig) Endpointer
 }
 
+/************************
+	Common Impl.
+ ************************/
 
+func DefaultConfig() *ClientConfig {
+	return &ClientConfig{
+		BeforeHooks: []BeforeHook{},
+		AfterHooks:  []AfterHook{},
+		MaxRetries:  3,
+		Timeout:     1 * time.Minute,
+		Logger:      logger,
+		Verbose:     false,
+	}
+}
+
+// defaultServiceConfig add necessary configs/hooks for internal load balanced service
+func defaultServiceConfig() *ClientConfig {
+	return &ClientConfig{
+		BeforeHooks: []BeforeHook{TokenPassthrough()},
+	}
+}
+
+// defaultExtHostConfig add necessary configs/hooks for external hosts
+func defaultExtHostConfig() *ClientConfig {
+	return &ClientConfig{}
+}

@@ -17,7 +17,7 @@ const (
 	_                     = iota
 	ErrorTypeCodeInternal = Reserved + iota<<ErrorTypeOffset
 	ErrorTypeCodeTransport
-	ErrorTypeCodeStatusCode
+	ErrorTypeCodeResponse
 )
 
 // All "SubType" values are used as mask
@@ -31,17 +31,17 @@ const (
 // All "SubType" values are used as mask
 // sub types of ErrorTypeCodeTransport
 const (
-	_                     = iota
+	_                       = iota
 	ErrorSubTypeCodeTimeout = ErrorTypeCodeTransport + iota<<ErrorSubTypeOffset
-	ErrorSubTypeCodeMedia
 )
 
 // All "SubType" values are used as mask
-// sub types of ErrorTypeCodeStatusCode
+// sub types of ErrorTypeCodeResponse
 const (
-	_                           = iota
-	ErrorSubTypeCodeServerSide = ErrorTypeCodeStatusCode + iota<<ErrorSubTypeOffset
+	_                          = iota
+	ErrorSubTypeCodeServerSide = ErrorTypeCodeResponse + iota<<ErrorSubTypeOffset
 	ErrorSubTypeCodeClientSide
+	ErrorSubTypeCodeMedia
 )
 
 // ErrorSubTypeCodeInternal
@@ -52,14 +52,14 @@ const (
 
 // ErrorSubTypeCodeDiscovery
 const (
-	_                 = iota
+	_                      = iota
 	ErrorCodeDiscoveryDown = ErrorSubTypeCodeDiscovery + iota
 	ErrorCodeNoEndpointFound
 )
 
 // ErrorSubTypeCodeTimeout
 const (
-	_                   = iota
+	_                      = iota
 	ErrorCodeServerTimeout = ErrorSubTypeCodeTimeout + iota
 )
 
@@ -72,7 +72,7 @@ const (
 
 // ErrorSubTypeCodeClientSide
 const (
-	_                = iota
+	_                          = iota
 	ErrorCodeGenericClientSide = ErrorSubTypeCodeClientSide + iota
 	ErrorCodeUnauthorized
 	ErrorCodeForbidden
@@ -80,24 +80,23 @@ const (
 
 // ErrorSubTypeCodeServerSide
 const (
-	_                       = iota
+	_                          = iota
 	ErrorCodeGenericServerSide = ErrorSubTypeCodeServerSide + iota
 )
-
 
 // ErrorTypes, can be used in errors.Is
 var (
 	ErrorCategoryHttpClient = NewErrorCategory(Reserved, errors.New("error type: http client"))
 	ErrorTypeInternal       = NewErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
-	ErrorTypeTransport       = NewErrorType(ErrorTypeCodeTransport, errors.New("error type: http transport"))
-	ErrorTypeStatusCode     = NewErrorType(ErrorTypeCodeStatusCode, errors.New("error type: error status code"))
+	ErrorTypeTransport      = NewErrorType(ErrorTypeCodeTransport, errors.New("error type: http transport"))
+	ErrorTypeResponse       = NewErrorType(ErrorTypeCodeResponse, errors.New("error type: error status code"))
 
 	ErrorSubTypeInternalError = NewErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeDiscovery     = NewErrorSubType(ErrorSubTypeCodeDiscovery, errors.New("error sub-type: discover"))
-	ErrorSubTypeTimeout      = NewErrorSubType(ErrorSubTypeCodeTimeout, errors.New("error sub-type: server timeout"))
-	ErrorSubTypeMedia      = NewErrorSubType(ErrorSubTypeCodeMedia, errors.New("error sub-type: server timeout"))
-	ErrorSubTypeServerSide   = NewErrorSubType(ErrorSubTypeCodeServerSide, errors.New("error sub-type: server side"))
-	ErrorSubTypeClientSide   = NewErrorSubType(ErrorSubTypeCodeClientSide, errors.New("error sub-type: client side"))
+	ErrorSubTypeTimeout       = NewErrorSubType(ErrorSubTypeCodeTimeout, errors.New("error sub-type: server timeout"))
+	ErrorSubTypeServerSide    = NewErrorSubType(ErrorSubTypeCodeServerSide, errors.New("error sub-type: server side"))
+	ErrorSubTypeClientSide    = NewErrorSubType(ErrorSubTypeCodeClientSide, errors.New("error sub-type: client side"))
+	ErrorSubTypeMedia         = NewErrorSubType(ErrorSubTypeCodeMedia, errors.New("error sub-type: server timeout"))
 )
 
 // Concrete error, can be used in errors.Is for exact match
@@ -118,8 +117,8 @@ type ErrorResponseBody interface {
 
 type ErrorResponse struct {
 	http.Response
-	RawBody    []byte
-	Body       ErrorResponseBody
+	RawBody []byte
+	Body    ErrorResponseBody
 }
 
 func (er ErrorResponse) Error() string {
@@ -135,7 +134,6 @@ func (er ErrorResponse) Message() string {
 	}
 	return er.Body.Message()
 }
-
 
 // Error can optionally store *http.Response's status code, headers and body
 type Error struct {
@@ -158,7 +156,7 @@ func (e Error) String() string {
 	}
 }
 
-func (e Error) WithMessage(msg string, args...interface{}) *Error {
+func (e Error) WithMessage(msg string, args ...interface{}) *Error {
 	return newError(NewCodedError(e.CodedError.Code(), fmt.Errorf(msg, args...)), e.Response)
 }
 
@@ -166,9 +164,9 @@ func (e Error) WithMessage(msg string, args...interface{}) *Error {
 	Constructors
  **********************/
 func newError(codedErr *CodedError, errResp *ErrorResponse) *Error {
-	err :=  &Error{
+	err := &Error{
 		CodedError: *codedErr,
-		Response: errResp,
+		Response:   errResp,
 	}
 	return err
 }
@@ -199,9 +197,9 @@ func NewErrorWithStatusCode(e interface{}, resp *http.Response, rawBody []byte, 
 		code = ErrorCodeUnauthorized
 	case resp.StatusCode == http.StatusForbidden:
 		code = ErrorCodeForbidden
-	case resp.StatusCode >=400 && resp.StatusCode <= 499:
+	case resp.StatusCode >= 400 && resp.StatusCode <= 499:
 		code = ErrorCodeGenericClientSide
-	case resp.StatusCode >=500 && resp.StatusCode <= 599:
+	case resp.StatusCode >= 500 && resp.StatusCode <= 599:
 		code = ErrorCodeGenericServerSide
 	default:
 		return NewError(ErrorCodeInternal, "attempt to create response error with non error status code %d", resp.StatusCode)
@@ -209,26 +207,26 @@ func NewErrorWithStatusCode(e interface{}, resp *http.Response, rawBody []byte, 
 	return NewErrorWithResponse(code, e, resp, rawBody, causes...)
 }
 
-func NewInternalError(value interface{}, causes...interface{}) *Error {
+func NewInternalError(value interface{}, causes ...interface{}) *Error {
 	return NewError(ErrorSubTypeCodeInternal, value, causes...)
 }
 
-func NewDiscoveryDownError(value interface{}, causes...interface{}) *Error {
+func NewDiscoveryDownError(value interface{}, causes ...interface{}) *Error {
 	return NewError(ErrorCodeDiscoveryDown, value, causes...)
 }
 
-func NewNoEndpointFoundError(value interface{}, causes...interface{}) *Error {
+func NewNoEndpointFoundError(value interface{}, causes ...interface{}) *Error {
 	return NewError(ErrorCodeNoEndpointFound, value, causes...)
 }
 
-func NewServerTimeoutError(value interface{}, causes...interface{}) *Error {
+func NewServerTimeoutError(value interface{}, causes ...interface{}) *Error {
 	return NewError(ErrorCodeServerTimeout, value, causes...)
 }
 
-func NewMediaTypeError(value interface{}, resp *http.Response, rawBody []byte, causes...interface{}) *Error {
+func NewMediaTypeError(value interface{}, resp *http.Response, rawBody []byte, causes ...interface{}) *Error {
 	return NewErrorWithResponse(ErrorCodeMediaType, value, resp, rawBody, causes...)
 }
 
-func NewSerializationError(value interface{}, resp *http.Response, rawBody []byte, causes...interface{}) *Error {
+func NewSerializationError(value interface{}, resp *http.Response, rawBody []byte, causes ...interface{}) *Error {
 	return NewErrorWithResponse(ErrorCodeSerialization, value, resp, rawBody, causes...)
 }

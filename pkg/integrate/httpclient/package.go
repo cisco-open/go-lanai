@@ -15,7 +15,6 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		//fx.Provide(bindSecurityProperties),
 		fx.Provide(provideHttpClient),
-		fx.Provide(NewTestHttpClient),
 		//fx.Invoke(Test),
 	},
 }

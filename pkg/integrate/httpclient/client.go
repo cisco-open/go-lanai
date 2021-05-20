@@ -3,8 +3,8 @@ package httpclient
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"errors"
 	"fmt"
 	"github.com/go-kit/kit/endpoint"
@@ -12,46 +12,42 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/url"
 	"path"
-	"time"
 )
 
-type ClientOptions func(opt *ClientOption)
-
-type ClientOption struct {
-	ClientConfig
-}
-
-type ClientConfig struct {
-	MaxRetries int
-	Timeout    time.Duration
-	Logger     log.ContextualLogger
-	Verbose    bool
+type clientDefaults struct {
+	selector discovery.InstanceMatcher
+	before   []BeforeHook
+	after    []AfterHook
 }
 
 type client struct {
-	config *ClientConfig
+	defaults   *clientDefaults
+	config     *ClientConfig
 	discClient discovery.Client
 	endpointer Endpointer
-	//request *Request
-	//response *Response
+	options    []httptransport.ClientOption
 }
 
 func NewClient(discClient discovery.Client, opts ...ClientOptions) Client {
 	opt := ClientOption{
-		ClientConfig: ClientConfig{
-			MaxRetries: 3,
-			Timeout: 2 * time.Minute,
-			Logger: logger,
-		},
+		ClientConfig: *DefaultConfig(),
+		DefaultSelector: discovery.InstanceIsHealthy(),
 	}
 	for _, f := range opts {
 		f(&opt)
 	}
 
-	return &client {
+	ret := &client {
 		config: &opt.ClientConfig,
 		discClient: discClient,
+		defaults: &clientDefaults{
+			selector: opt.DefaultSelector,
+			before: opt.DefaultBeforeHooks,
+			after: opt.DefaultAfterHooks,
+		},
 	}
+	ret.updateConfig(&opt.ClientConfig)
+	return ret
 }
 
 func (c *client) WithService(service string, selectors ...discovery.InstanceMatcher) (Client, error) {
@@ -61,7 +57,7 @@ func (c *client) WithService(service string, selectors ...discovery.InstanceMatc
 	}
 
 	// determine selector
-	effectiveSelector := discovery.InstanceIsHealthy()
+	effectiveSelector := c.defaults.selector
 	if len(selectors) != 0 {
 		matchers := make([]matcher.Matcher, len(selectors))
 		for i, m := range selectors {
@@ -82,7 +78,7 @@ func (c *client) WithService(service string, selectors ...discovery.InstanceMatc
 
 	cp := c.shallowCopy()
 	cp.endpointer = endpointer
-	return cp, nil
+	return cp.WithConfig(defaultServiceConfig()), nil
 }
 
 func (c *client) WithBaseUrl(baseUrl string) (Client, error) {
@@ -99,8 +95,23 @@ func (c *client) WithConfig(config *ClientConfig) Client {
 		config.Timeout = c.config.Timeout
 	}
 
+	if config.BeforeHooks == nil {
+		config.BeforeHooks = c.config.BeforeHooks
+	}
+
+	if config.AfterHooks == nil {
+		config.AfterHooks = c.config.AfterHooks
+	}
+
+	switch {
+	case config.MaxRetries < 0:
+		config.MaxRetries = 0
+	case config.MaxRetries == 0:
+		config.MaxRetries = c.config.MaxRetries
+	}
+
 	cp := c.shallowCopy()
-	cp.config = config
+	cp.updateConfig(config)
 	return cp
 }
 
@@ -119,7 +130,7 @@ func (c *client) Execute(ctx context.Context, request *Request, opts ...Response
 		EndpointFactory: c.makeEndpointFactory(ctx, request, &opt),
 	}
 	b := lb.NewRoundRobin(c.endpointer.WithConfig(&epConfig))
-	ep := lb.Retry(c.config.MaxRetries, c.config.Timeout, b)
+	ep := lb.RetryWithCallback(c.config.Timeout, b, c.retryCallback(c.config.MaxRetries))
 
 	// execute endpoint and handle error
 	resp, e := ep(ctx, request.Body)
@@ -146,6 +157,14 @@ func (c *client) Execute(ctx context.Context, request *Request, opts ...Response
 	return
 }
 
+// retryCallback is a retry control func.
+// It keep trying in case that error is not ErrorTypeResponse and not reached max value
+func (c *client) retryCallback(max int) lb.Callback {
+	return func(n int, received error) (keepTrying bool, replacement error) {
+		return n < max && !errors.Is(received, ErrorTypeResponse), nil
+	}
+}
+
 func (c *client) translateError(req *Request, err error) *Error {
 	switch retry := err.(type) {
 	case lb.RetryError:
@@ -169,7 +188,7 @@ func (c *client) translateError(req *Request, err error) *Error {
 	}
 }
 
-func (c *client) makeEndpointFactory(ctx context.Context, req *Request, opt *responseOption) EndpointFactory {
+func (c *client) makeEndpointFactory(_ context.Context, req *Request, opt *responseOption) EndpointFactory {
 	return func(inst *discovery.Instance) (endpoint.Endpoint, error) {
 		ctxPath := ""
 		if inst.Meta != nil {
@@ -183,10 +202,26 @@ func (c *client) makeEndpointFactory(ctx context.Context, req *Request, opt *res
 			Path: path.Clean(fmt.Sprintf("%s%s", ctxPath, req.Path)),
 		}
 
-		// TODO install before/after hooks
-		cl := httptransport.NewClient(req.Method, uri, req.EncodeFunc, opt.decodeFunc, )
+		cl := httptransport.NewClient(req.Method, uri, req.EncodeFunc, opt.decodeFunc, c.options...)
 
 		return cl.Endpoint(), nil
+	}
+}
+
+func (c *client) updateConfig(config *ClientConfig) {
+	c.config = config
+	c.options = make([]httptransport.ClientOption, 0)
+
+	before := append(c.defaults.before, config.BeforeHooks...)
+	order.SortStable(before, order.OrderedFirstCompare)
+	for _, h := range before {
+		c.options = append(c.options, httptransport.ClientBefore(h.RequestFunc()))
+	}
+
+	after := append(c.defaults.after, config.AfterHooks...)
+	order.SortStable(after, order.OrderedFirstCompare)
+	for _, h := range after {
+		c.options = append(c.options, httptransport.ClientAfter(h.ResponseFunc()))
 	}
 }
 
@@ -195,5 +230,7 @@ func (c *client) shallowCopy() *client {
 		config: c.config,
 		discClient: c.discClient,
 		endpointer: c.endpointer,
+		options: c.options,
+		defaults: c.defaults,
 	}
 }
