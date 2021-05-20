@@ -69,7 +69,11 @@ type AfterHook interface {
 	ResponseFunc() httptransport.ClientResponseFunc
 }
 
-type EndpointFactory func(inst *discovery.Instance) (endpoint.Endpoint, error)
+// EndpointFactory takes a instance descriptor and create endpoint.Endpoint
+// Supported instance type could be :
+//		- *discovery.Instance
+//		- *url.URL as base url
+type EndpointFactory func(instDesp interface{}) (endpoint.Endpoint, error)
 
 type Endpointer interface {
 	sd.Endpointer

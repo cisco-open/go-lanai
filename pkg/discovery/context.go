@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -120,6 +121,32 @@ func InstanceWithVersion(verPattern string) InstanceMatcher {
 			}
 			ver, ok := instance.Meta[InstanceMetaKeyVersion]
 			return ok && ver == verPattern, nil
+		},
+	}
+}
+
+func InstanceWithTagKV(key, value string, caseInsensitive bool) InstanceMatcher {
+	if caseInsensitive {
+		key = strings.ToLower(key)
+		value = strings.ToLower(value)
+	}
+
+	return &instanceMatcher{
+		desc:      fmt.Sprintf("with tag %s=%s", key, value),
+		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
+			if instance.Tags == nil {
+				return false, nil
+			}
+			for _, tag := range instance.Tags {
+				if caseInsensitive {
+					tag = strings.ToLower(tag)
+				}
+				kv := strings.SplitN(strings.TrimSpace(tag), "=", 2)
+				if len(kv) == 2 && kv[0] == key && kv[1] == value {
+					return true, nil
+				}
+			}
+			return false, nil
 		},
 	}
 }

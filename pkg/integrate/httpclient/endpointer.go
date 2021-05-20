@@ -7,8 +7,13 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"fmt"
 	"github.com/go-kit/kit/endpoint"
+	"net/url"
 	"time"
 )
+
+/***********************
+	Dynamic Endpointer
+ ***********************/
 
 // EndpointerOptions allows control of endpointCache behavior.
 type EndpointerOptions func(*EndpointerOption)
@@ -150,3 +155,53 @@ func (ke *KitEndpointer) shallowCopy() *KitEndpointer {
 		factory:   ke.factory,
 	}
 }
+
+/***********************
+	Simple Endpointer
+ ***********************/
+
+type SimpleEndpointer struct {
+	baseUrls []*url.URL
+	factory  EndpointFactory
+}
+
+func NewSimpleEndpointer(baseUrls ...string) (*SimpleEndpointer, error) {
+	urls := make([]*url.URL, len(baseUrls))
+	for i, base := range baseUrls {
+		uri, e := url.Parse(base)
+		if e != nil {
+			return nil, e
+		} else if !uri.IsAbs() {
+			return nil, fmt.Errorf(`expect abslolute base URL, but got "%s"`, base)
+		}
+		urls[i] = uri
+	}
+	return &SimpleEndpointer{
+		baseUrls: urls,
+	}, nil
+}
+
+func (se *SimpleEndpointer) Endpoints() (ret []endpoint.Endpoint, err error) {
+	if se.factory == nil {
+		return nil, NewInternalError("endpoint is not properly configured: endpoint factory not set")
+	}
+
+	ret = make([]endpoint.Endpoint, len(se.baseUrls))
+	for i, base := range se.baseUrls {
+		ep, e := se.factory(base)
+		if e != nil {
+			return nil, NewNoEndpointFoundError(fmt.Errorf("cannot create endpoint for base URL [%s]", base))
+		}
+		ret[i] = ep
+	}
+	return
+}
+
+func (se *SimpleEndpointer) WithConfig(cfg *EndpointerConfig) Endpointer {
+	return &SimpleEndpointer{
+		baseUrls: se.baseUrls,
+		factory: cfg.EndpointFactory,
+	}
+}
+
+

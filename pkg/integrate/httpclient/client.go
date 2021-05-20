@@ -14,6 +14,10 @@ import (
 	"path"
 )
 
+var (
+	insecureInstanceMatcher = discovery.InstanceWithTagKV("secure", "false", true)
+)
+
 type clientDefaults struct {
 	selector discovery.InstanceMatcher
 	before   []BeforeHook
@@ -53,7 +57,7 @@ func NewClient(discClient discovery.Client, opts ...ClientOptions) Client {
 func (c *client) WithService(service string, selectors ...discovery.InstanceMatcher) (Client, error) {
 	instancer, e := c.discClient.Instancer(service)
 	if e != nil {
-		return nil, e
+		return nil, NewNoEndpointFoundError("cannot create client with service name: %v", e)
 	}
 
 	// determine selector
@@ -73,7 +77,7 @@ func (c *client) WithService(service string, selectors ...discovery.InstanceMatc
 		opts.Logger = c.config.Logger
 	})
 	if e != nil {
-		return nil, e
+		return nil, NewNoEndpointFoundError("cannot create client with service name: %v", e)
 	}
 
 	cp := c.shallowCopy()
@@ -82,8 +86,14 @@ func (c *client) WithService(service string, selectors ...discovery.InstanceMatc
 }
 
 func (c *client) WithBaseUrl(baseUrl string) (Client, error) {
-	// TODO implement this
-	return nil, fmt.Errorf("not implemented yet")
+	endpointer, e := NewSimpleEndpointer(baseUrl)
+	if e != nil {
+		return nil, NewNoEndpointFoundError("cannot create client with base URL: %v", e)
+	}
+
+	cp := c.shallowCopy()
+	cp.endpointer = endpointer
+	return cp.WithConfig(defaultExtHostConfig()), nil
 }
 
 func (c *client) WithConfig(config *ClientConfig) Client {
@@ -126,6 +136,7 @@ func (c *client) Execute(ctx context.Context, request *Request, opts ...Response
 	fallbackResponseOptions(&opt)
 
 	// create endpoint
+
 	epConfig := EndpointerConfig{
 		EndpointFactory: c.makeEndpointFactory(ctx, request, &opt),
 	}
@@ -189,23 +200,51 @@ func (c *client) translateError(req *Request, err error) *Error {
 }
 
 func (c *client) makeEndpointFactory(_ context.Context, req *Request, opt *responseOption) EndpointFactory {
-	return func(inst *discovery.Instance) (endpoint.Endpoint, error) {
-		ctxPath := ""
-		if inst.Meta != nil {
-			ctxPath = inst.Meta[discovery.InstanceMetaKeyContextPath]
+	return func(instDesp interface{}) (endpoint.Endpoint, error) {
+		switch inst := instDesp.(type) {
+		case *discovery.Instance:
+			return c.endpoint(inst, req, opt)
+		case discovery.Instance:
+			return c.endpoint(&inst, req, opt)
+		case *url.URL:
+			return c.simpleEndpoint(inst, req, opt)
+		case url.URL:
+			return c.simpleEndpoint(&inst, req, opt)
+		default:
+			return nil, NewInternalError("endpoint is not properly configured: endpoint factory doesn't support instance descriptor %T", instDesp)
 		}
-
-		// TODO choose http or https based on tag "secure"
-		uri := &url.URL{
-			Scheme: "http",
-			Host: fmt.Sprintf("%s:%d", inst.Address, inst.Port),
-			Path: path.Clean(fmt.Sprintf("%s%s", ctxPath, req.Path)),
-		}
-
-		cl := httptransport.NewClient(req.Method, uri, req.EncodeFunc, opt.decodeFunc, c.options...)
-
-		return cl.Endpoint(), nil
 	}
+}
+
+func (c *client) endpoint(inst *discovery.Instance, req *Request, opt *responseOption) (endpoint.Endpoint, error) {
+	ctxPath := ""
+	if inst.Meta != nil {
+		ctxPath = inst.Meta[discovery.InstanceMetaKeyContextPath]
+	}
+
+	scheme := "https"
+	if m, e := insecureInstanceMatcher.Matches(inst); m && e == nil {
+		scheme = "http"
+	}
+	uri := &url.URL{
+		Scheme: scheme,
+		Host: fmt.Sprintf("%s:%d", inst.Address, inst.Port),
+		Path: path.Clean(fmt.Sprintf("%s%s", ctxPath, req.Path)),
+	}
+
+	cl := httptransport.NewClient(req.Method, uri, req.EncodeFunc, opt.decodeFunc, c.options...)
+
+	return cl.Endpoint(), nil
+}
+
+func (c *client) simpleEndpoint(baseUrl *url.URL, req *Request, opt *responseOption) (endpoint.Endpoint, error) {
+	// make a copy first
+	uri := *baseUrl
+	// join path
+	uri.Path = path.Clean(path.Join(baseUrl.Path, req.Path))
+	cl := httptransport.NewClient(req.Method, &uri, req.EncodeFunc, opt.decodeFunc, c.options...)
+
+	return cl.Endpoint(), nil
 }
 
 func (c *client) updateConfig(config *ClientConfig) {
