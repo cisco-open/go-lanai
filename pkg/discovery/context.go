@@ -55,6 +55,18 @@ func (s *Service) Instances(selector InstanceMatcher) (ret []*Instance) {
 	return
 }
 
+func (s *Service) InstanceCount(selector InstanceMatcher) (ret int) {
+	for _, inst := range s.Insts {
+		if selector != nil {
+			if matched, e := selector.Matches(inst); e != nil || !matched {
+				continue
+			}
+		}
+		ret ++
+	}
+	return
+}
+
 type Instance struct {
 	ID       string
 	Service  string

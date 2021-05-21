@@ -272,10 +272,27 @@ func (i *ConsulInstancer) shouldNotify(new, old *Service) bool {
 }
 
 func (i *ConsulInstancer) logUpdate(new, old *Service) {
-	if !i.verbose {
-		return
+	if i.verbose {
+		i.verboseLog(new, old)
 	}
 
+	// for regular log, we only log if healthy service changes between 0 and non-zero
+	var before, now int
+	if old != nil {
+		before = old.InstanceCount(InstanceIsHealthy())
+	}
+	if new != nil {
+		now = new.InstanceCount(InstanceIsHealthy())
+	}
+	if before == 0 && now > 0 {
+		i.logger.Infof("service [%s] became available", i.serviceName)
+	} else if before > 0 && now == 0 {
+		i.logger.Warnf("service [%s] healthy instances dropped to 0", i.serviceName)
+	}
+}
+
+func (i *ConsulInstancer) verboseLog(new, old *Service) {
+	// verbose
 	if new.Err != nil && old.Err == nil {
 		i.logger.Infof("error when finding instances for service %s: %v", i.serviceName, new.Err)
 	} else {
