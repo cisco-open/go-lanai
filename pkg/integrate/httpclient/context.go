@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/sd"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -54,7 +55,14 @@ type ClientConfig struct {
 	MaxRetries  int // negative value means no retry
 	Timeout     time.Duration
 	Logger      log.ContextualLogger
-	Verbose     bool
+	Logging     LoggingConfig
+}
+
+type LoggingConfig struct {
+	Level           log.LoggingLevel
+	DetailsLevel    LogDetailsLevel
+	SanitizeHeaders utils.StringSet
+	ExcludeHeaders  utils.StringSet
 }
 
 type ClientCustomizer interface {
@@ -105,7 +113,11 @@ func DefaultConfig() *ClientConfig {
 		MaxRetries:  3,
 		Timeout:     1 * time.Minute,
 		Logger:      logger,
-		Verbose:     false,
+		Logging: LoggingConfig{
+			DetailsLevel:    LogDetailsLevelHeaders,
+			SanitizeHeaders: utils.NewStringSet(HeaderAuthorization),
+			ExcludeHeaders:  utils.NewStringSet(),
+		},
 	}
 }
 
@@ -119,4 +131,45 @@ func defaultServiceConfig() *ClientConfig {
 // defaultExtHostConfig add necessary configs/hooks for external hosts
 func defaultExtHostConfig() *ClientConfig {
 	return &ClientConfig{}
+}
+
+func mergeConfig(dst *ClientConfig, src *ClientConfig) {
+	if dst.Logger == nil {
+		dst.Logger = src.Logger
+	}
+
+	if dst.Timeout <= 0 {
+		dst.Timeout = src.Timeout
+	}
+
+	if dst.BeforeHooks == nil {
+		dst.BeforeHooks = src.BeforeHooks
+	}
+
+	if dst.AfterHooks == nil {
+		dst.AfterHooks = src.AfterHooks
+	}
+
+	switch {
+	case dst.MaxRetries < 0:
+		dst.MaxRetries = 0
+	case dst.MaxRetries == 0:
+		dst.MaxRetries = src.MaxRetries
+	}
+
+	if dst.Logging.SanitizeHeaders == nil {
+		dst.Logging.SanitizeHeaders = src.Logging.SanitizeHeaders
+	}
+
+	if dst.Logging.ExcludeHeaders == nil {
+		dst.Logging.ExcludeHeaders = src.Logging.ExcludeHeaders
+	}
+
+	if dst.Logging.DetailsLevel == LogDetailsLevelUnknown {
+		dst.Logging.DetailsLevel = src.Logging.DetailsLevel
+	}
+
+	if dst.Logging.Level == log.LevelOff {
+		dst.Logging.Level = src.Logging.Level
+	}
 }

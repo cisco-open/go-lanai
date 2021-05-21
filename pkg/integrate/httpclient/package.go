@@ -4,7 +4,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"go.uber.org/fx"
+	"time"
 )
 
 var logger = log.New("HttpClient")
@@ -13,7 +15,7 @@ var Module = &bootstrap.Module{
 	Name: "http-client",
 	Precedence: bootstrap.HttpClientPrecedence,
 	Options: []fx.Option{
-		//fx.Provide(bindSecurityProperties),
+		fx.Provide(bindHttpClientProperties),
 		fx.Provide(provideHttpClient),
 	},
 }
@@ -36,18 +38,23 @@ func FxClientCustomizers(providers ...interface{}) []fx.Annotated {
 
 type clientDI struct {
 	fx.In
-	DiscClient discovery.Client
+	Properties  HttpClientProperties
+	DiscClient  discovery.Client
 	Customizers []ClientCustomizer `group:"http-client"`
 }
 
 func provideHttpClient(di clientDI) Client {
-	// TODO use properties
 	options := []ClientOptions{func(opt *ClientOption) {
-		opt.Verbose = true
+		opt.MaxRetries = di.Properties.MaxRetries
+		opt.Timeout = time.Duration(di.Properties.Timeout)
+		opt.Logging.Level = di.Properties.Logger.Level
+		opt.Logging.DetailsLevel = di.Properties.Logger.DetailsLevel
+		opt.Logging.SanitizeHeaders = utils.NewStringSet(di.Properties.Logger.SanitizeHeaders...)
+		opt.Logging.ExcludeHeaders = utils.NewStringSet(di.Properties.Logger.ExcludeHeaders...)
 	}}
 	for _, customizer := range di.Customizers {
 		options = append(options, customizer.Customize)
 	}
 
-	return NewClient(di.DiscClient, options...)
+	return newClient(di.DiscClient, options...)
 }

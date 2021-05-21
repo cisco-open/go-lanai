@@ -121,25 +121,11 @@ func HookTokenPassthrough() BeforeHook {
 	return Before(HookOrderTokenPassthrough, fn)
 }
 
-type httpLog struct {
-	Method     string        `json:"method,omitempty"`
-	URL        string        `json:"url,omitempty"`
-	SC         int           `json:"statusCode,omitempty"`
-	RespType   string        `json:"response_type,omitempty"`
-	RespLength int           `json:"response_length,omitempty"`
-	Duration   time.Duration `json:"duration,omitempty"`
-}
-
-func hookRequestLogger(logger log.ContextualLogger, verbose bool) beforeHook {
+func hookRequestLogger(logger log.ContextualLogger, logging *LoggingConfig) beforeHook {
 	fn := func(ctx context.Context, request *http.Request) context.Context {
-		kv := httpLog{
-			Method: request.Method,
-			URL: request.URL.RequestURI(),
-		}
-		logger.WithContext(ctx).
-			WithKV(logKey, &kv).
-			Debugf("[HTTP Request] %s %#v", request.Method, request.URL.RequestURI())
-		return context.WithValue(ctx, ctxKeyStartTime, time.Now().UTC())
+		now := time.Now().UTC()
+		logRequest(ctx, request, logger, logging)
+		return context.WithValue(ctx, ctxKeyStartTime, now)
 	}
 	return beforeHook{
 		order: HookOrderRequestLogger,
@@ -147,11 +133,11 @@ func hookRequestLogger(logger log.ContextualLogger, verbose bool) beforeHook {
 	}
 }
 
-func HookRequestLogger(logger log.ContextualLogger, verbose bool) BeforeHook {
+func HookRequestLogger(logger log.ContextualLogger, logging *LoggingConfig) BeforeHook {
 	return &configurableBeforeHook{
-		beforeHook: hookRequestLogger(logger, verbose),
+		beforeHook: hookRequestLogger(logger, logging),
 		factory: func(cfg *ClientConfig) beforeHook {
-			return hookRequestLogger(cfg.Logger, cfg.Verbose)
+			return hookRequestLogger(cfg.Logger, &cfg.Logging)
 		},
 	}
 }
@@ -160,25 +146,9 @@ func HookRequestLogger(logger log.ContextualLogger, verbose bool) BeforeHook {
 	AfterHook
  *************************/
 
-func hookResponseLogger(logger log.ContextualLogger, verbose bool) afterHook {
+func hookResponseLogger(logger log.ContextualLogger, logging *LoggingConfig) afterHook {
 	fn := func(ctx context.Context, response *http.Response) context.Context {
-		var duration time.Duration
-		start, ok := ctx.Value(ctxKeyStartTime).(time.Time)
-		if ok {
-			duration = time.Since(start).Truncate(time.Microsecond)
-		}
-		kv := httpLog{
-			Method:     response.Request.Method,
-			URL:        response.Request.RequestURI,
-			SC:         response.StatusCode,
-			RespType:   response.Header.Get(HeaderContentType),
-			RespLength: int(response.ContentLength),
-			Duration:   duration,
-		}
-		logger.WithContext(ctx).
-			WithKV(logKey, &kv).
-			Debugf("[HTTP Response] %3d | %10v | %6s | %s ",
-				response.StatusCode, duration, formatSize(kv.RespLength), kv.RespType)
+		logResponse(ctx, response, logger, logging)
 		return ctx
 	}
 	return afterHook{
@@ -187,24 +157,11 @@ func hookResponseLogger(logger log.ContextualLogger, verbose bool) afterHook {
 	}
 }
 
-func HookResponseLogger(logger log.ContextualLogger, verbose bool) AfterHook {
+func HookResponseLogger(logger log.ContextualLogger, logging *LoggingConfig) AfterHook {
 	return &configurableAfterHook{
-		afterHook: hookResponseLogger(logger, verbose),
+		afterHook: hookResponseLogger(logger, logging),
 		factory: func(cfg *ClientConfig) afterHook {
-			return hookResponseLogger(cfg.Logger, cfg.Verbose)
+			return hookResponseLogger(cfg.Logger, &cfg.Logging)
 		},
-	}
-}
-
-func formatSize(n int) string {
-	switch {
-	case n < kb:
-		return fmt.Sprintf("%dB", n)
-	case n < mb:
-		return fmt.Sprintf("%.2fKB", float64(n) / kb)
-	case n < gb:
-		return fmt.Sprintf("%.2fMB", float64(n) / mb)
-	default:
-		return fmt.Sprintf("%.2fGB", float64(n) / gb)
 	}
 }

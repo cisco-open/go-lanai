@@ -54,7 +54,6 @@ func httpClientStartSpanHook(tracer opentracing.Tracer) httpclient.BeforeHook {
 }
 
 func httpClientTracePropagationHook(tracer opentracing.Tracer) httpclient.BeforeHook {
-	// similar to github.com/go-kit/kit/tracing/opentracing HTTPToContext()
 	fn := func(ctx context.Context, request *http.Request) context.Context {
 		reqFunc := kitopentracing.ContextToHTTP(tracer, logger.WithContext(ctx))
 		return reqFunc(ctx, request)

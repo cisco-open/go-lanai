@@ -32,12 +32,13 @@ type client struct {
 	options    []httptransport.ClientOption
 }
 
-func NewClient(discClient discovery.Client, opts ...ClientOptions) Client {
+func newClient(discClient discovery.Client, opts ...ClientOptions) Client {
+	config := DefaultConfig()
 	opt := ClientOption{
-		ClientConfig:       *DefaultConfig(),
+		ClientConfig:       *config,
 		DefaultSelector:    discovery.InstanceIsHealthy(),
-		DefaultBeforeHooks: []BeforeHook{HookRequestLogger(logger, false)},
-		DefaultAfterHooks:  []AfterHook{HookResponseLogger(logger, false)},
+		DefaultBeforeHooks: []BeforeHook{HookRequestLogger(config.Logger, &config.Logging)},
+		DefaultAfterHooks:  []AfterHook{HookResponseLogger(config.Logger, &config.Logging)},
 	}
 	for _, f := range opts {
 		f(&opt)
@@ -99,29 +100,7 @@ func (c *client) WithBaseUrl(baseUrl string) (Client, error) {
 }
 
 func (c *client) WithConfig(config *ClientConfig) Client {
-	if config.Logger == nil {
-		config.Logger = c.config.Logger
-	}
-
-	if config.Timeout <= 0 {
-		config.Timeout = c.config.Timeout
-	}
-
-	if config.BeforeHooks == nil {
-		config.BeforeHooks = c.config.BeforeHooks
-	}
-
-	if config.AfterHooks == nil {
-		config.AfterHooks = c.config.AfterHooks
-	}
-
-	switch {
-	case config.MaxRetries < 0:
-		config.MaxRetries = 0
-	case config.MaxRetries == 0:
-		config.MaxRetries = c.config.MaxRetries
-	}
-
+	mergeConfig(config, c.config)
 	cp := c.shallowCopy()
 	cp.updateConfig(config)
 	return cp
