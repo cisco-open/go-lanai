@@ -41,7 +41,7 @@ func (c *consulDiscoveryClient) Instancer(serviceName string) (Instancer, error)
 		opt.ConsulConnection = c.conn
 		opt.ServiceName = serviceName
 		opt.Logger = logger.WithContext(c.ctx)
-		opt.Verbose = true
+		//opt.Verbose = true
 	})
 	c.instancers[serviceName] = instancer
 

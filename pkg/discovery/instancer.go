@@ -34,6 +34,7 @@ type ConsulInstancerOption struct {
 // Note: implementing sd.Instancer is for compatibility reason, using it involves addtional Mutex locking.
 // 		 Try use Instancer's callback capability instead
 type ConsulInstancer struct {
+	readyCond 	*sync.Cond
 	cacheMtx    sync.RWMutex // RW Mutex for cache
 	stateMtx    sync.RWMutex // RW Mutext for state, such as start/stop, callback/subscription update
 	client      kitconsul.Client
@@ -81,11 +82,11 @@ func (i *ConsulInstancer) ServiceName() string {
 }
 
 // Service implements Instancer
-func (i *ConsulInstancer) Service() *Service {
+func (i *ConsulInstancer) Service() (svc *Service) {
 	// read lock only
 	i.cacheMtx.RLock()
 	defer i.cacheMtx.RUnlock()
-	return i.cache.Get(i.serviceName)
+	return i.service()
 }
 
 // Instances implements Instancer
@@ -94,12 +95,10 @@ func (i *ConsulInstancer) Instances(matcher InstanceMatcher) (ret []*Instance, e
 	i.cacheMtx.RLock()
 	defer i.cacheMtx.RUnlock()
 
-	svc := i.cache.Get(i.serviceName)
+	svc := i.service()
 	if i.loopCtx.Err() == context.Canceled {
 		// looper is stopped, we can't trust our cached result anymore
 		return []*Instance{}, ErrInstancerStopped
-	} else if svc == nil {
-		return []*Instance{}, fmt.Errorf("cannot find service [%s]", i.serviceName)
 	} else if svc.Err != nil {
 		err = svc.Err
 	}
@@ -114,6 +113,7 @@ func (i *ConsulInstancer) Start(ctx context.Context) {
 	if i.loopCtx != nil {
 		return
 	}
+	i.readyCond = sync.NewCond(i.cacheMtx.RLocker())
 	i.loopCtx, i.cancelFunc = i.looper.Run(ctx)
 	i.looper.Repeat(
 		i.resolveInstancesTask(),
@@ -174,6 +174,15 @@ func (i *ConsulInstancer) Deregister(ch chan<- sd.Event) {
 	i.broadcaster.deregister(ch)
 }
 
+// service is not goroutine-safe and returns non-nil *Service.
+// It would wait until first resolveInstancesTask finished and *Service become available
+func (i *ConsulInstancer) service() (svc *Service) {
+	for ; !i.cache.Has(i.serviceName);  {
+		i.readyCond.Wait()
+	}
+	return i.cache.Get(i.serviceName)
+}
+
 func (i *ConsulInstancer) resolveInstancesTask() loop.TaskFunc {
 	// Note:
 	// 		Consul doesn't support more than one tag in its serviceName query method.
@@ -181,7 +190,7 @@ func (i *ConsulInstancer) resolveInstancesTask() loop.TaskFunc {
 	// 		Hashi suggest prepared queries, but they don't support blocking.
 	// 		https://www.consul.io/docs/agent/http/query.html#execute
 	// 		If we want blocking for efficiency, we can use single tag
-	return func(ctx context.Context, _ *loop.Loop) (ret interface{}, err error) {
+	return func(ctx context.Context, _ *loop.Loop) (interface{}, error) {
 		// Note: i.lastMeta is only updated in this function, and this function is executed via loop.Loop.
 		// 		 because loop.Loop guarantees that all tasks are executed one-by-one,
 		// 		 there is no need to use Mutex or locking
@@ -214,6 +223,7 @@ func (i *ConsulInstancer) processResolvedServiceEntries(_ context.Context, entri
 	defer func() {
 		// we need to release the write lock before invoking callbacks
 		i.cacheMtx.Unlock()
+		i.readyCond.Broadcast()
 		if notify {
 			i.invokeCallbacks()
 		}
