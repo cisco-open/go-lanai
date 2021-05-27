@@ -13,6 +13,7 @@ import (
 /*****************************
 	Expiry Time Enhancer
  *****************************/
+
 // ExpiryTokenEnhancer impelments order.Ordered and TokenEnhancer
 type ExpiryTokenEnhancer struct {
 
@@ -37,10 +38,34 @@ func (e *ExpiryTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
 	return t, nil
 }
 
+/*****************************
+	Details Enhancer
+ *****************************/
+
+// DetailsTokenEnhancer impelments order.Ordered and TokenEnhancer
+// it populate token's additional metadata other than claims, issue/expiry time
+type DetailsTokenEnhancer struct {
+
+}
+
+func (e *DetailsTokenEnhancer) Order() int {
+	return TokenEnhancerOrderTokenDetails
+}
+
+func (e *DetailsTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+	t, ok := token.(*oauth2.DefaultAccessToken)
+	if !ok {
+		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
+	}
+
+	t.SetScopes(oauth.OAuth2Request().Scopes())
+	return t, nil
+}
 
 /*****************************
 	BasicClaims Enhancer
  *****************************/
+
 // BasicClaimsTokenEnhancer impelments order.Ordered and TokenEnhancer
 type BasicClaimsTokenEnhancer struct {
 	issuer security.Issuer
