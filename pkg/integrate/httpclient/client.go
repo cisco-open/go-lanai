@@ -124,7 +124,7 @@ func (c *client) Execute(ctx context.Context, request *Request, opts ...Response
 	ep := lb.RetryWithCallback(c.config.Timeout, b, c.retryCallback(c.config.MaxRetries))
 
 	// execute endpoint and handle error
-	resp, e := ep(ctx, request.Body)
+	resp, e := ep(ctx, request)
 	if e != nil {
 		err = c.translateError(request, e)
 	}
@@ -207,7 +207,7 @@ func (c *client) endpoint(inst *discovery.Instance, req *Request, opt *responseO
 		Path: path.Clean(fmt.Sprintf("%s%s", ctxPath, req.Path)),
 	}
 
-	cl := httptransport.NewClient(req.Method, uri, req.EncodeFunc, opt.decodeFunc, c.options...)
+	cl := httptransport.NewClient(req.Method, uri, effectiveEncodeFunc, opt.decodeFunc, c.options...)
 
 	return cl.Endpoint(), nil
 }
@@ -217,7 +217,7 @@ func (c *client) simpleEndpoint(baseUrl *url.URL, req *Request, opt *responseOpt
 	uri := *baseUrl
 	// join path
 	uri.Path = path.Clean(path.Join(baseUrl.Path, req.Path))
-	cl := httptransport.NewClient(req.Method, &uri, req.EncodeFunc, opt.decodeFunc, c.options...)
+	cl := httptransport.NewClient(req.Method, &uri, effectiveEncodeFunc, opt.decodeFunc, c.options...)
 
 	return cl.Endpoint(), nil
 }

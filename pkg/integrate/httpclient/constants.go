@@ -6,7 +6,8 @@ const (
 )
 
 const (
-	MediaTypeJson = "application/json"
+	MediaTypeJson           = "application/json"
+	MediaTypeFormUrlEncoded = "application/x-www-form-urlencoded"
 )
 
 const (

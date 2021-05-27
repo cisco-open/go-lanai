@@ -230,3 +230,7 @@ func NewMediaTypeError(value interface{}, resp *http.Response, rawBody []byte, c
 func NewSerializationError(value interface{}, resp *http.Response, rawBody []byte, causes ...interface{}) *Error {
 	return NewErrorWithResponse(ErrorCodeSerialization, value, resp, rawBody, causes...)
 }
+
+func NewRequestSerializationError(value interface{}, causes ...interface{}) *Error {
+	return NewError(ErrorCodeSerialization, value, causes...)
+}
