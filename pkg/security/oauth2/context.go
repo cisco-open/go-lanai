@@ -7,6 +7,7 @@ import (
 /******************************
 	security.Authentication
 ******************************/
+
 // Authentication implements security.Authentication
 type Authentication interface {
 	security.Authentication
