@@ -8,6 +8,7 @@ const (
 	TokenEnhancerOrderBasicClaims
 	TokenEnhancerOrderDetailsClaims
 	TokenEnhancerOrderResourceIdClaims
+	TokenEnhancerOrderTokenDetails
 	TokenEnhancerOrderRefreshToken
 	//TokenEnhancerOrder
 )

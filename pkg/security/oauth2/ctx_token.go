@@ -182,6 +182,11 @@ func (t *DefaultAccessToken) SetRefreshToken(v RefreshToken) *DefaultAccessToken
 	return t
 }
 
+func (t *DefaultAccessToken) SetScopes(scopes utils.StringSet) *DefaultAccessToken {
+	t.scopes = scopes.Copy()
+	return t
+}
+
 func (t *DefaultAccessToken) AddScopes(scopes...string) *DefaultAccessToken {
 	t.scopes.Add(scopes...)
 	return t
