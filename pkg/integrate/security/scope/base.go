@@ -2,10 +2,12 @@ package scope
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -121,7 +123,7 @@ func (b *managerBase) cacheLoadFunc(rTime time.Time, authFunc authenticateFunc) 
 		// calculate exp time based on backoff time
 		errExp := rTime.UTC().Add(b.failureBackOff)
 		if e != nil {
-			return nil, errExp, e
+			return nil, b.calculateBackOffExp(e, errExp), e
 		}
 
 		if auth == nil {
@@ -134,9 +136,14 @@ func (b *managerBase) cacheLoadFunc(rTime time.Time, authFunc authenticateFunc) 
 		tokenExp := oauth.AccessToken().ExpiryTime().UTC()
 		exp := tokenExp.Add(-1 * b.guaranteedValidity)
 		if exp.Before(rTime) {
-			// we cannot guarantee token's validity, such error would insists until this token expires
-			// so we set back off period to the expire time of the token
-			return nil, tokenExp, fmt.Errorf("cannot guarantee token's validity. token will expire in %v", tokenExp.Sub(rTime))
+			// edge case, we cannot guarantee token's validity, such error would insists until this token expires
+			// we'd still return the token since it at least valid now,
+			// but we set expire time to back-off time or token expiry, which ever is earlier
+			if tokenExp.Before(errExp) {
+				exp = tokenExp
+			} else {
+				exp = errExp
+			}
 		}
 
 		return oauth, exp, nil
@@ -154,4 +161,13 @@ func (b *managerBase) convertToAuthentication(ctx context.Context, result *secli
 		return nil, e
 	}
 	return auth.(oauth2.Authentication), nil
+}
+
+func (b *managerBase) calculateBackOffExp(err error, defaultValue time.Time) time.Time {
+	switch {
+	case errors.Is(err, httpclient.ErrorSubTypeDiscovery):
+		return time.Now().UTC().Add(10 * time.Second)
+	default:
+		return defaultValue
+	}
 }

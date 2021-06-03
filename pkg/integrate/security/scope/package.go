@@ -2,6 +2,7 @@ package scope
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	securityint "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
@@ -19,7 +20,6 @@ var Module = &bootstrap.Module{
 	Name:       "security-Scope",
 	Precedence: bootstrap.SecurityIntegrationPrecedence,
 	Options: []fx.Option{
-		//fx.Provide(bindHttpClientProperties),
 		fx.Invoke(configureSecurityScopeManagers),
 	},
 }
@@ -32,6 +32,7 @@ func Use() {
 type secScopeDI struct {
 	fx.In
 	AuthClient       seclient.AuthenticationClient
+	Properties       securityint.SecurityIntegrationProperties
 	AuthServerConfig *authserver.Configuration `optional:"true"`
 	ResServerConfig  *resserver.Configuration  `optional:"true"`
 }
@@ -50,16 +51,29 @@ func configureSecurityScopeManagers(di secScopeDI) {
 	}
 
 	scopeManager = newDefaultScopeManager(func(opt *managerOption) {
-		// TODO user properties
 		opt.Client = di.AuthClient
 		opt.Authenticator = authenticator
-		opt.BackOffPeriod = 5 * time.Second
-		opt.GuaranteedValidity = 30 * time.Second
-		opt.KnownCredentials = map[string]string{
-			"livan": "password",
-			"tim": "password",
+		opt.BackOffPeriod = time.Duration(di.Properties.FailureBackOff)
+		opt.GuaranteedValidity = time.Duration(di.Properties.GuaranteedValidity)
+
+		// parse accounts
+		credentials := map[string]string{}
+		sysAccts := utils.NewStringSet()
+		if di.Properties.Accounts.Default.Username != "" {
+			opt.DefaultSystemAccount = di.Properties.Accounts.Default.Username
+			credentials[di.Properties.Accounts.Default.Username] = di.Properties.Accounts.Default.Password
+			sysAccts.Add(di.Properties.Accounts.Default.Username)
 		}
-		opt.SystemAccounts = utils.NewStringSet("livan")
-		opt.DefaultSystemAccount = "livan"
+		for _, acct := range di.Properties.Accounts.Additional {
+			if acct.Username == "" || acct.Password == "" {
+				continue
+			}
+			credentials[acct.Username] = acct.Password
+			if acct.SystemAccount {
+				sysAccts.Add(acct.Username)
+			}
+		}
+		opt.KnownCredentials = credentials
+		opt.SystemAccounts = sysAccts
 	})
 }

@@ -48,7 +48,30 @@ func (s *Scope) Start(ctx context.Context) (context.Context, error) {
 	return  scopeManager.StartScope(ctx, s)
 }
 
-func (s *Scope) validate(ctx context.Context) error {
+func (s *Scope) Do(ctx context.Context, fn func(ctx context.Context)) (err error) {
+	if scopeManager == nil {
+		return ErrNotInitialized
+	}
+	c, e := scopeManager.StartScope(ctx, s)
+	if e != nil {
+		return e
+	}
+
+	defer func() {
+		switch e := recover().(type) {
+		case nil:
+		case error:
+			err = e
+		default:
+			err = fmt.Errorf("%v", e)
+		}
+	}()
+
+	fn(c)
+	return nil
+}
+
+func (s *Scope) validate(_ context.Context) error {
 	if s.username != "" && s.userId != "" {
 		return ErrUserIdAndUsernameExclusive
 	}
@@ -57,6 +80,12 @@ func (s *Scope) validate(ctx context.Context) error {
 	}
 	return nil
 }
+
+/**************************
+	Convenient Functions
+ **************************/
+
+
 
 /**************************
 	Context

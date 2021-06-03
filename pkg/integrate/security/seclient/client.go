@@ -20,6 +20,7 @@ type AuthClientOptions func(opt *AuthClientOption)
 type AuthClientOption struct {
 	Client            httpclient.Client
 	ServiceName       string
+	BaseUrl           string
 	PwdLoginPath      string
 	SwitchContextPath string
 	ClientId          string
@@ -43,9 +44,17 @@ func NewRemoteAuthClient(opts ...AuthClientOptions) *remoteAuthClient {
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	client, e := opt.Client.WithService(opt.ServiceName)
-	if e != nil {
-		panic(e)
+
+	// prepare httpclient
+	var client httpclient.Client
+	var err error
+	if opt.BaseUrl != "" {
+		client, err = opt.Client.WithBaseUrl(opt.BaseUrl)
+	} else {
+		client, err = opt.Client.WithService(opt.ServiceName)
+	}
+	if err != nil {
+		panic(err)
 	}
 
 	return &remoteAuthClient{
