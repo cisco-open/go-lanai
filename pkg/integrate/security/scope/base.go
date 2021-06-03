@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-
 type authenticateFunc func(ctx context.Context, pKey *cKey) (security.Authentication, error)
 
 type managerBase struct {
@@ -20,9 +19,15 @@ type managerBase struct {
 	authenticator      security.Authenticator
 	failureBackOff     time.Duration
 	guaranteedValidity time.Duration
+	beforeStartHooks   []ScopeOperationHook
+	afterEndHooks      []ScopeOperationHook
 }
 
 func (b *managerBase) DoStartScope(ctx context.Context, scope *Scope, authFunc authenticateFunc) (context.Context, error) {
+	for _, hook := range b.beforeStartHooks {
+		ctx = hook(ctx, scope)
+	}
+
 	auth, e := b.GetOrAuthenticate(ctx, scope.cacheKey, scope.time, authFunc)
 	if e != nil {
 		return nil, e
@@ -37,14 +42,19 @@ func (b *managerBase) DoStartScope(ctx context.Context, scope *Scope, authFunc a
 	return scoped, nil
 }
 
-func (b *managerBase) EndScope(ctx context.Context) context.Context {
+func (b *managerBase) EndScope(ctx context.Context) (ret context.Context) {
 	rollback := ctx.Value(ctxKeyRollback)
-	switch ret := rollback.(type) {
+	scope, _ := ctx.Value(ctxKeyScope).(*Scope)
+	switch c := rollback.(type) {
 	case context.Context:
-		return ret
+		ret = c
 	default:
-		return ctx
+		ret = ctx
 	}
+	for _, hook := range b.afterEndHooks {
+		ret = hook(ret, scope)
+	}
+	return
 }
 
 func (b *managerBase) GetOrAuthenticate(ctx context.Context, pKey *cKey, rTime time.Time, authFunc authenticateFunc) (ret security.Authentication, err error) {

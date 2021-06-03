@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+const (
+	FxGroup = "security-scope"
+)
+
 var (
 	scopeManager *defaultScopeManager
 )
@@ -42,11 +46,19 @@ func New(opts ...Options) *Scope {
 	return &scope
 }
 
-func (s *Scope) Start(ctx context.Context) (context.Context, error) {
-	if scopeManager == nil {
-		return nil, ErrNotInitialized
+func (s Scope) String() string {
+	user := s.userId
+	if s.username != "" {
+		user = s.username
 	}
-	return  scopeManager.StartScope(ctx, s)
+	tenant := s.tenantName
+	if s.tenantId != "" {
+		tenant = s.tenantId
+	}
+	if tenant == "" {
+		return user
+	}
+	return fmt.Sprintf("%s@%s", user, tenant)
 }
 
 func (s *Scope) Do(ctx context.Context, fn func(ctx context.Context)) (err error) {
@@ -69,7 +81,15 @@ func (s *Scope) Do(ctx context.Context, fn func(ctx context.Context)) (err error
 	}()
 
 	fn(c)
+	scopeManager.EndScope(c)
 	return nil
+}
+
+func (s *Scope) start(ctx context.Context) (context.Context, error) {
+	if scopeManager == nil {
+		return nil, ErrNotInitialized
+	}
+	return  scopeManager.StartScope(ctx, s)
 }
 
 func (s *Scope) validate(_ context.Context) error {
@@ -95,6 +115,37 @@ func Do(ctx context.Context, fn func(ctx context.Context), opts ...Options) erro
 	return New(opts...).Do(ctx, fn)
 }
 
+func Describe(ctx context.Context) string {
+	scope, ok := ctx.Value(ctxKeyScope).(*Scope)
+	if !ok {
+		return "no scope"
+	}
+	return scope.String()
+}
+
+/**************************
+	Hooks
+ **************************/
+
+//goland:noinspection GoNameStartsWithPackageName
+type ScopeOperationHook func(ctx context.Context, scope *Scope) context.Context
+
+type ManagerCustomizer interface {
+	Customize() []ManagerOptions
+}
+
+func BeforeStartHook(hook ScopeOperationHook) ManagerOptions {
+	return func(opt *managerOption) {
+		opt.BeforeStartHooks = append(opt.BeforeStartHooks, hook)
+	}
+}
+
+
+func AfterEndHook(hook ScopeOperationHook) ManagerOptions {
+	return func(opt *managerOption) {
+		opt.AfterEndHooks = append(opt.AfterEndHooks, hook)
+	}
+}
 
 /**************************
 	Context
@@ -104,6 +155,7 @@ type rollbackCtxKey struct{}
 type scopeCtxKey struct{}
 
 var ctxKeyRollback = rollbackCtxKey{}
+var ctxKeyScope = scopeCtxKey{}
 
 // scopedContext helps managerBase to backtrace context used for managerBase.DoStartScope and keep track of Scope
 type scopedContext struct {

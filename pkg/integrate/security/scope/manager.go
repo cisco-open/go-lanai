@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type managerOptions func(opt *managerOption)
+type ManagerOptions func(opt *managerOption)
 
 type managerOption struct {
 	Client               seclient.AuthenticationClient
@@ -19,6 +19,8 @@ type managerOption struct {
 	KnownCredentials     map[string]string
 	SystemAccounts       utils.StringSet
 	DefaultSystemAccount string
+	BeforeStartHooks     []ScopeOperationHook
+	AfterEndHooks        []ScopeOperationHook
 }
 
 // defaultScopeManager always first attempt to login as system account and then switch to destination security context
@@ -31,7 +33,7 @@ type defaultScopeManager struct {
 	defaultSysAcctKey cKey
 }
 
-func newDefaultScopeManager(opts ...managerOptions) *defaultScopeManager {
+func newDefaultScopeManager(opts ...ManagerOptions) *defaultScopeManager {
 	opt := managerOption{}
 	for _, fn := range opts {
 		fn(&opt)
@@ -42,6 +44,8 @@ func newDefaultScopeManager(opts ...managerOptions) *defaultScopeManager {
 			authenticator:      opt.Authenticator,
 			failureBackOff:     opt.BackOffPeriod,
 			guaranteedValidity: opt.GuaranteedValidity,
+			beforeStartHooks:   opt.BeforeStartHooks,
+			afterEndHooks:      opt.AfterEndHooks,
 		},
 		client:           opt.Client,
 		knownCredentials: opt.KnownCredentials,

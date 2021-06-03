@@ -29,12 +29,25 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
+// FxManagerCustomizers takes providers of ManagerCustomizer and wrap them with FxGroup
+func FxManagerCustomizers(providers ...interface{}) []fx.Annotated {
+	annotated := make([]fx.Annotated, len(providers))
+	for i, t := range providers {
+		annotated[i] = fx.Annotated{
+			Group:  FxGroup,
+			Target: t,
+		}
+	}
+	return annotated
+}
+
 type secScopeDI struct {
 	fx.In
 	AuthClient       seclient.AuthenticationClient
 	Properties       securityint.SecurityIntegrationProperties
 	AuthServerConfig *authserver.Configuration `optional:"true"`
 	ResServerConfig  *resserver.Configuration  `optional:"true"`
+	Customizers      []ManagerCustomizer       `group:"security-scope"`
 }
 
 func configureSecurityScopeManagers(di secScopeDI) {
@@ -50,30 +63,40 @@ func configureSecurityScopeManagers(di secScopeDI) {
 		panic(msg)
 	}
 
-	scopeManager = newDefaultScopeManager(func(opt *managerOption) {
-		opt.Client = di.AuthClient
-		opt.Authenticator = authenticator
-		opt.BackOffPeriod = time.Duration(di.Properties.FailureBackOff)
-		opt.GuaranteedValidity = time.Duration(di.Properties.GuaranteedValidity)
+	// default options
+	opts := []ManagerOptions{
+		func(opt *managerOption) {
+			opt.Client = di.AuthClient
+			opt.Authenticator = authenticator
+			opt.BackOffPeriod = time.Duration(di.Properties.FailureBackOff)
+			opt.GuaranteedValidity = time.Duration(di.Properties.GuaranteedValidity)
 
-		// parse accounts
-		credentials := map[string]string{}
-		sysAccts := utils.NewStringSet()
-		if di.Properties.Accounts.Default.Username != "" {
-			opt.DefaultSystemAccount = di.Properties.Accounts.Default.Username
-			credentials[di.Properties.Accounts.Default.Username] = di.Properties.Accounts.Default.Password
-			sysAccts.Add(di.Properties.Accounts.Default.Username)
-		}
-		for _, acct := range di.Properties.Accounts.Additional {
-			if acct.Username == "" || acct.Password == "" {
-				continue
+			// parse accounts
+			credentials := map[string]string{}
+			sysAccts := utils.NewStringSet()
+			if di.Properties.Accounts.Default.Username != "" {
+				opt.DefaultSystemAccount = di.Properties.Accounts.Default.Username
+				credentials[di.Properties.Accounts.Default.Username] = di.Properties.Accounts.Default.Password
+				sysAccts.Add(di.Properties.Accounts.Default.Username)
 			}
-			credentials[acct.Username] = acct.Password
-			if acct.SystemAccount {
-				sysAccts.Add(acct.Username)
+			for _, acct := range di.Properties.Accounts.Additional {
+				if acct.Username == "" || acct.Password == "" {
+					continue
+				}
+				credentials[acct.Username] = acct.Password
+				if acct.SystemAccount {
+					sysAccts.Add(acct.Username)
+				}
 			}
-		}
-		opt.KnownCredentials = credentials
-		opt.SystemAccounts = sysAccts
-	})
+			opt.KnownCredentials = credentials
+			opt.SystemAccounts = sysAccts
+		},
+	}
+
+	// customizers
+	for _, c := range di.Customizers {
+		opts = append(opts, c.Customize()...)
+	}
+
+	scopeManager = newDefaultScopeManager(opts...)
 }
