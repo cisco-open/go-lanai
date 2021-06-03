@@ -105,6 +105,9 @@ func (m *defaultScopeManager) prepareScopeWithSysAcct(ctx context.Context, scope
 // prepareScopeWithoutSysAcct prepare scope with proper cache key and fill other default attributes.
 // This mode requires given context bears fully authenticated user, and the target username/userId is mandatory
 func (m *defaultScopeManager) prepareScopeWithoutSysAcct(ctx context.Context, scope *Scope) error {
+	if scope.username == "" && scope.userId == "" {
+		return ErrMissingUser
+	}
 	currAuth := security.Get(ctx)
 	currUsername, _, e := m.resolveUser(currAuth)
 	if e != nil {

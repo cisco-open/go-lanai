@@ -14,6 +14,7 @@ var (
 var (
 	ErrNotInitialized             = fmt.Errorf("security scope manager is not initialied yet")
 	ErrMissingDefaultSysAccount   = fmt.Errorf("unable to switch security scope: default system account is not configured")
+	ErrMissingUser                = fmt.Errorf("unable to switch security scope: either username or user ID is required when not using default system account")
 	ErrNotCurrentlyAuthenticated  = fmt.Errorf("unable to switch security scope without system account: current context is not authenticated")
 	ErrUserIdAndUsernameExclusive = fmt.Errorf("invalid security scope option: username and user ID are exclusive")
 	ErrTenantIdAndNameExclusive   = fmt.Errorf("invalid security scope option: tenant name and tenant ID are exclusive")
@@ -85,6 +86,14 @@ func (s *Scope) validate(_ context.Context) error {
 	Convenient Functions
  **************************/
 
+// Do invoke given function in a security scope specified by Options
+// e.g.:
+// 	scope.Do(ctx, func(ctx context.Context) {
+// 		// do something with ctx
+// 	}, scope.WithUsername("a-user"), scope.UseSystemAccount())
+func Do(ctx context.Context, fn func(ctx context.Context), opts ...Options) error {
+	return New(opts...).Do(ctx, fn)
+}
 
 
 /**************************
@@ -116,18 +125,4 @@ func (c scopedContext) Value(key interface{}) interface{} {
 	default:
 		return c.Context.Value(key)
 	}
-}
-
-func Test(ctx context.Context) context.Context {
-
-	//ret, e := New(WithUsername("livan"), WithTenantName("test-tenant-z"), UseSystemAccount()).Start(ctx)
-	//ret, e := New(WithUsername("test"), UseSystemAccount()).Start(ctx)
-	//ret, e := New(WithUsername("tim"), UseSystemAccount()).Start(ctx)
-	//ret, e := New(WithUsername("test"), WithTenantId("id-for-test-tenant-z"), UseSystemAccount()).Start(ctx)
-	//ret, e := New(WithUsername("tim"), WithTenantName("test-tenant-z")).Start(ctx)
-	ret, e := New(WithUsername("test")).Start(ctx)
-	if e != nil {
-		panic(e)
-	}
-	return ret
 }
