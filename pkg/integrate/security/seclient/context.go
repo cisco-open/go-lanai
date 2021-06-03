@@ -41,16 +41,30 @@ func WithCredentials(username, password string) AuthOptions {
 }
 
 func WithCurrentSecurity(ctx context.Context) AuthOptions {
-	auth, ok := security.Get(ctx).(oauth2.Authentication)
+	return WithAuthentication(security.Get(ctx))
+}
+
+func WithAuthentication(auth security.Authentication) AuthOptions {
+	oauth, ok := auth.(oauth2.Authentication)
 	if !ok {
 		return func(opt *AuthOption) {}
 	}
-	return WithAccessToken(auth.AccessToken().Value())
+	return WithAccessToken(oauth.AccessToken().Value())
 }
 
 func WithAccessToken(accessToken string) AuthOptions {
 	return func(opt *AuthOption) {
 		opt.AccessToken = accessToken
+	}
+}
+
+// WithTenant create an options that specify tenant by either tenantId or tenantName
+// username and userId are exclusive, cannot be both empty
+func WithTenant(tenantId string, tenantName string) AuthOptions {
+	if tenantId != "" {
+		return WithTenantId(tenantId)
+	} else {
+		return WithTenantName(tenantName)
 	}
 }
 
@@ -65,6 +79,16 @@ func WithTenantName(tenantName string) AuthOptions {
 	return func(opt *AuthOption) {
 		opt.TenantId = ""
 		opt.TenantName = tenantName
+	}
+}
+
+// WithUser create an options that specify user by either username or userId
+// username and userId are exclusive, cannot be both empty
+func WithUser(userId string, username string) AuthOptions {
+	if username != "" {
+		return WithUsername(username)
+	} else {
+		return WithUserId(userId)
 	}
 }
 

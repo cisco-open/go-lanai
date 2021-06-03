@@ -49,7 +49,7 @@ func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			logger.WithContext(ac).Info("On Application Start")
+			logger.WithContext(ac).Info("On Application startScope")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

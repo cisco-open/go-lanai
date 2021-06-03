@@ -11,7 +11,7 @@ var logger = log.New("SEC.Client")
 
 var Module = &bootstrap.Module{
 	Name: "auth-client",
-	Precedence: bootstrap.HttpClientPrecedence,
+	Precedence: bootstrap.SecurityIntegrationPrecedence,
 	Options: []fx.Option{
 		//fx.Provide(bindHttpClientProperties),
 		fx.Provide(provideAuthClient),

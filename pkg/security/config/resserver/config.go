@@ -14,31 +14,39 @@ import (
 
 type ResourceServerConfigurer func(*Configuration)
 
-type resServerDI struct {
+type resServerConfigDI struct {
 	fx.In
 	AppContext           *bootstrap.ApplicationContext
-	Configurer           ResourceServerConfigurer
-	SecurityRegistrar    security.Registrar
 	RedisClientFactory   redis.ClientFactory
 	CryptoProperties     jwt.CryptoProperties
-	DiscoveryCustomizers *discovery.Customizers
+	Configurer           ResourceServerConfigurer
 }
 
-// Configuration entry point
-func ConfigureResourceServer(di resServerDI) {
+func NewConfiguration(di resServerConfigDI) *Configuration {
 	config := &Configuration{
 		appContext:         di.AppContext,
 		cryptoProperties:   di.CryptoProperties,
 		redisClientFactory: di.RedisClientFactory,
 	}
 	di.Configurer(config)
+	return config
+}
 
+type resServerDI struct {
+	fx.In
+	Config               *Configuration
+	SecurityRegistrar    security.Registrar
+	DiscoveryCustomizers *discovery.Customizers
+}
+
+// Configuration entry point
+func ConfigureResourceServer(di resServerDI) {
 	// SMCR
 	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
 
 	// reigester token auth feature
 	configurer := tokenauth.NewTokenAuthConfigurer(func(opt *tokenauth.TokenAuthOption) {
-		opt.TokenStoreReader = config.tokenStoreReader()
+		opt.TokenStoreReader = di.Config.tokenStoreReader()
 	})
 	di.SecurityRegistrar.(security.FeatureRegistrar).RegisterFeature(tokenauth.FeatureId, configurer)
 }
@@ -63,10 +71,15 @@ type Configuration struct {
 	appContext                *bootstrap.ApplicationContext
 	redisClientFactory        redis.ClientFactory
 	cryptoProperties          jwt.CryptoProperties
+	sharedTokenAuthenticator  security.Authenticator
 	sharedErrorHandler        *tokenauth.OAuth2ErrorHandler
 	sharedContextDetailsStore security.ContextDetailsStore
 	sharedJwtDecoder          jwt.JwtDecoder
 	// TODO
+}
+
+func (c *Configuration) SharedTokenAuthenticator() security.Authenticator {
+	return c.sharedTokenAuthenticator
 }
 
 func (c *Configuration) errorHandler() *tokenauth.OAuth2ErrorHandler {
@@ -105,4 +118,13 @@ func (c *Configuration) jwtDecoder() jwt.JwtDecoder {
 		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
 	}
 	return c.sharedJwtDecoder
+}
+
+func (c *Configuration) tokenAuthenticator() security.Authenticator {
+	if c.sharedTokenAuthenticator == nil {
+		c.sharedTokenAuthenticator = tokenauth.NewAuthenticator(func(opt *tokenauth.AuthenticatorOption) {
+			opt.TokenStoreReader = c.tokenStoreReader()
+		})
+	}
+	return c.sharedTokenAuthenticator
 }

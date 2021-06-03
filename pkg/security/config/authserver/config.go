@@ -141,13 +141,17 @@ type Configuration struct {
 	sharedJwtDecoder          jwt.JwtDecoder
 	sharedDetailsFactory      *common.ContextDetailsFactory
 	sharedARProcessor         auth.AuthorizeRequestProcessor
-	sharedAuthHanlder         auth.AuthorizeHandler
+	sharedAuthHandler         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	sharedTokenAuthenticator  security.Authenticator
 }
 
 func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {
 	c.idpConfigurers = append(c.idpConfigurers, configurer)
+}
+
+func (c *Configuration) SharedTokenAuthenticator() security.Authenticator {
+	return c.tokenAuthenticator()
 }
 
 func newIssuer(props *IssuerProperties, serverProps *web.ServerProperties) security.Issuer {
@@ -307,10 +311,10 @@ func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcess
 	return c.sharedARProcessor
 }
 
-func (c *Configuration) authorizeHanlder() auth.AuthorizeHandler {
-	if c.sharedAuthHanlder == nil {
+func (c *Configuration) authorizeHandler() auth.AuthorizeHandler {
+	if c.sharedAuthHandler == nil {
 		//TODO OIDC extension
-		c.sharedAuthHanlder = auth.NewAuthorizeHandler(func(opt *auth.AuthHandlerOption) {
+		c.sharedAuthHandler = auth.NewAuthorizeHandler(func(opt *auth.AuthHandlerOption) {
 			//opt.Extensions = OIDC extensions
 			opt.ApprovalPageTmpl = "authorize.tmpl"
 			opt.ApprovalUrl = c.Endpoints.Approval
@@ -318,7 +322,7 @@ func (c *Configuration) authorizeHanlder() auth.AuthorizeHandler {
 			opt.AuthCodeStore = c.authorizeCodeStore()
 		})
 	}
-	return c.sharedAuthHanlder
+	return c.sharedAuthHandler
 }
 
 func (c *Configuration) authorizeCodeStore() auth.AuthorizationCodeStore {
