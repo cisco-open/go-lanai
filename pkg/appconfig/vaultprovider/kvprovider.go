@@ -1,8 +1,8 @@
 package vaultprovider
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 )
@@ -23,7 +23,7 @@ func (p *KeyValueConfigProvider) Name() string {
 	return fmt.Sprintf("vault:%s", p.secretEngine.ContextPath(p.secretPath))
 }
 
-func (p *KeyValueConfigProvider) Load() (loadError error) {
+func (p *KeyValueConfigProvider) Load(ctx context.Context) (loadError error) {
 	defer func(){
 		if loadError != nil {
 			p.Loaded = false
@@ -37,7 +37,7 @@ func (p *KeyValueConfigProvider) Load() (loadError error) {
 	// load keys from default context
 	var defaultSettings map[string]interface{}
 
-	defaultSettings, loadError = p.secretEngine.ListSecrets(bootstrap.EagerGetApplicationContext(), p.secretPath)
+	defaultSettings, loadError = p.secretEngine.ListSecrets(ctx, p.secretPath)
 	if loadError != nil {
 		return loadError
 	}

@@ -63,6 +63,7 @@ func Use() {
 
 type bootstrapConfigDI struct {
 	fx.In
+	App *bootstrap.App
 	ProviderGroups []appconfig.ProviderGroup `group:"bootstrap-config"`
 }
 
@@ -75,7 +76,7 @@ func newBootstrapConfig(di bootstrapConfigDI) *appconfig.BootstrapConfig {
 	}
 
 	bootstrapConfig := appconfig.NewBootstrapConfig(groups...)
-	if e := bootstrapConfig.Load(false); e != nil {
+	if e := bootstrapConfig.Load(di.App.EagerGetApplicationContext(), false); e != nil {
 		panic(e)
 	}
 
@@ -90,6 +91,7 @@ type appConfigDIOut struct {
 
 type appConfigDI struct {
 	fx.In
+	App *bootstrap.App
 	ProviderGroups []appconfig.ProviderGroup `group:"application-config"`
 	BootstrapConfig    *appconfig.BootstrapConfig
 }
@@ -107,7 +109,7 @@ func newApplicationConfig(di appConfigDI) appConfigDIOut {
 	}
 
 	applicationConfig := appconfig.NewApplicationConfig(groups...)
-	if e := applicationConfig.Load(false); e != nil {
+	if e := applicationConfig.Load(di.App.EagerGetApplicationContext(), false); e != nil {
 		panic(e)
 	}
 

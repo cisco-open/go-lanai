@@ -11,31 +11,32 @@ import (
 	"time"
 )
 
+/**************************
+	Bootstrapper
+ **************************/
+
 var once sync.Once
 var bootstrapperInstance *Bootstrapper
-var (
-	initialContextOptions = []ContextOption{}
-	startContextOptions   = []ContextOption{}
-	stopContextOptions    = []ContextOption{}
-)
 
 type ContextOption func(ctx context.Context) context.Context
 
 type Bootstrapper struct {
-	modules utils.Set
-}
-
-type App struct {
-	*fx.App
-	startCtxOptions []ContextOption
-	stopCtxOptions  []ContextOption
+	modules      utils.Set
+	adhocModule  *Module
+	initCtxOpts  []ContextOption
+	startCtxOpts []ContextOption
+	stopCtxOpts  []ContextOption
 }
 
 // singleton pattern
 func bootstrapper() *Bootstrapper {
 	once.Do(func() {
 		bootstrapperInstance = &Bootstrapper{
-			modules: utils.NewSet(applicationMainModule(), anonymousModule()),
+			modules:      utils.NewSet(),
+			adhocModule:  newAnonymousModule(),
+			initCtxOpts:  []ContextOption{},
+			startCtxOpts: []ContextOption{},
+			stopCtxOpts:  []ContextOption{},
 		}
 	})
 	return bootstrapperInstance
@@ -46,61 +47,92 @@ func Register(m *Module) {
 	b.modules.Add(m)
 }
 
-func AddOptions(options...fx.Option) {
-	m := anonymousModule()
-	m.PriorityOptions = append(m.PriorityOptions, options...)
-}
-
-func AddInitialAppContextOptions(options...ContextOption) {
-	initialContextOptions = append(initialContextOptions, options...)
-}
-
-func AddStartContextOptions(options...ContextOption) {
-	startContextOptions = append(startContextOptions, options...)
-}
-
-func AddStopContextOptions(options...ContextOption) {
-	stopContextOptions = append(stopContextOptions, options...)
-}
-
-func newApp(cliCtx *CliExecContext, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
-	DefaultModule.PriorityOptions = append(DefaultModule.PriorityOptions, fx.Supply(cliCtx))
-	for _,o := range priorityOptions {
-		applicationMainModule().PriorityOptions = append(applicationMainModule().PriorityOptions, o)
-	}
-
-	for _,o := range regularOptions {
-		applicationMainModule().Options = append(applicationMainModule().Options, o)
-	}
-
+func AddOptions(options ...fx.Option) {
 	b := bootstrapper()
-	modules := b.modules.Values()
+	b.adhocModule.PriorityOptions = append(b.adhocModule.PriorityOptions, options...)
+}
+
+func AddInitialAppContextOptions(options ...ContextOption) {
+	b := bootstrapper()
+	b.initCtxOpts = append(b.initCtxOpts, options...)
+}
+
+func AddStartContextOptions(options ...ContextOption) {
+	b := bootstrapper()
+	b.startCtxOpts = append(b.startCtxOpts, options...)
+}
+
+func AddStopContextOptions(options ...ContextOption) {
+	b := bootstrapper()
+	b.stopCtxOpts = append(b.stopCtxOpts, options...)
+}
+
+func (b *Bootstrapper) NewApp(cliCtx *CliExecContext, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
+	// create App
+	app := &App{
+		ctx:          NewApplicationContext(),
+		startCtxOpts: b.startCtxOpts,
+		stopCtxOpts:  b.stopCtxOpts,
+	}
+
+	// update application context before creating the app
+	ctx := app.ctx.Context
+	for _, opt := range b.initCtxOpts {
+		ctx = opt(ctx)
+	}
+	app.ctx = app.ctx.withContext(ctx)
+
+	// Decide default module
+	defaultModule := DefaultModule(cliCtx, app)
+
+	// Decide ad-hoc fx options
+	mainModule := newApplicationMainModule()
+	for _, o := range priorityOptions {
+		mainModule.PriorityOptions = append(mainModule.PriorityOptions, o)
+	}
+
+	for _, o := range regularOptions {
+		mainModule.Options = append(mainModule.Options, o)
+	}
+
+	// Decide modules' fx options
+	modules := append(b.modules.Values(), defaultModule, mainModule, b.adhocModule)
 	sort.SliceStable(modules, func(i, j int) bool { return modules[i].(*Module).Precedence < modules[j].(*Module).Precedence })
 
 	// add priority options first
 	var options []fx.Option
-	for _,m := range modules {
+	for _, m := range modules {
 		options = append(options, m.(*Module).PriorityOptions...)
 	}
 
 	// add other options later
-	for _,m := range modules {
+	for _, m := range modules {
 		options = append(options, m.(*Module).Options...)
 	}
 
-	// update application context before creating the app
-	ctx := applicationContext.Context
-	for _, opt := range initialContextOptions {
-		ctx = opt(ctx)
-	}
-	applicationContext = applicationContext.withContext(ctx)
+	// create fx.App, which will kick off all fx options
+	app.App = fx.New(options...)
+	return app
+}
 
-	// create App, which will kick off all fx options
-	return &App{
-		App: fx.New(options...),
-		startCtxOptions: startContextOptions,
-		stopCtxOptions: stopContextOptions,
-	}
+/**************************
+	Application
+ **************************/
+
+type App struct {
+	*fx.App
+	ctx          *ApplicationContext
+	startCtxOpts []ContextOption
+	stopCtxOpts  []ContextOption
+}
+
+// EagerGetApplicationContext returns the global ApplicationContext before it becomes available for dependency injection
+// Important: packages should typically get ApplicationContext via fx's dependency injection,
+//			  which internal application config are guaranteed.
+//			  Only packages involved in priority bootstrap (appconfig, consul, vault, etc)
+//			  should use this function for logging purpose
+func (app *App) EagerGetApplicationContext() *ApplicationContext {
+	return app.ctx
 }
 
 func (app *App) Run() {
@@ -109,13 +141,13 @@ func (app *App) Run() {
 	//  2. (Solved) Restore logging
 	start := time.Now()
 	done := app.Done()
-	rootCtx := applicationContext.Context
+	rootCtx := app.ctx.Context
 	startParent, cancel := context.WithTimeout(rootCtx, app.StartTimeout())
-	for _, opt := range app.startCtxOptions {
+	for _, opt := range app.startCtxOpts {
 		startParent = opt(startParent)
 	}
 	// This is so that we know that the context in the life cycle hook is the bootstrap context
-	startCtx := applicationContext.withContext(startParent)
+	startCtx := app.ctx.withContext(startParent)
 	defer cancel()
 
 	// log error and exit
@@ -126,7 +158,7 @@ func (app *App) Run() {
 
 	// log startup time
 	elapsed := time.Now().Sub(start).Truncate(time.Millisecond)
-	logger.WithContext(rootCtx).Infof("Started %s after %v", applicationContext.Name(), elapsed)
+	logger.WithContext(rootCtx).Infof("Started %s after %v", app.ctx.Name(), elapsed)
 
 	// this line blocks until application shutting down
 	printSignal(<-done)
@@ -134,10 +166,10 @@ func (app *App) Run() {
 	// shutdown sequence
 	start = time.Now()
 	stopParent, cancel := context.WithTimeout(rootCtx, app.StopTimeout())
-	for _, opt := range app.stopCtxOptions {
+	for _, opt := range app.stopCtxOpts {
 		stopParent = opt(stopParent)
 	}
-	stopCtx := applicationContext.withContext(stopParent)
+	stopCtx := app.ctx.withContext(stopParent)
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {
@@ -147,9 +179,8 @@ func (app *App) Run() {
 
 	// log startup time
 	elapsed = time.Now().Sub(start).Truncate(time.Millisecond)
-	logger.WithContext(rootCtx).Infof("Stopped %s in %v", applicationContext.Name(), elapsed)
+	logger.WithContext(rootCtx).Infof("Stopped %s in %v", app.ctx.Name(), elapsed)
 }
-
 
 func printSignal(signal os.Signal) {
 	logger.Infof(strings.ToUpper(signal.String()))

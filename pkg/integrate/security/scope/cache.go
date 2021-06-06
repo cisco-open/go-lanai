@@ -47,17 +47,29 @@ func (ce *cEntry) isValid() bool {
 type loadFunc func(ctx context.Context, k cKey) (v entryValue, exp time.Time, err error)
 type newFunc func(context.Context, *cKey) *cEntry
 
+type cacheOptions func(opt *cacheOption)
+type cacheOption struct {
+	Heartbeat time.Duration
+}
+
 type cache struct {
 	mtx    sync.RWMutex
 	store  map[cKey]*cEntry
 	reaper *time.Ticker
 }
 
-func newCache() (ret *cache) {
+func newCache(opts ...cacheOptions) (ret *cache) {
+	opt := cacheOption{
+		Heartbeat: 10 * time.Minute,
+	}
+	for _, fn := range opts {
+		fn(&opt)
+	}
+
 	ret = &cache{
 		store: map[cKey]*cEntry{},
 	}
-	ret.startReaper(1 * time.Second)
+	ret.startReaper(opt.Heartbeat)
 	return
 }
 
@@ -175,33 +187,3 @@ func (c *cache) tryEvict() {
 		}
 	}
 }
-
-//func (c *cache) loadFunc() loadFunc {
-//	return func(ctx context.Context, k cKey) (v entryValue, exp time.Time, err error) {
-//		fmt.Printf("loading key-%v...\n", k)
-//		time.Sleep(1 * time.Second)
-//		if k % 2 == 0 {
-//			// happy path valid 5 seconds
-//			valid := 5 * time.Second
-//			exp = time.Now().Add(valid)
-//			v = oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {
-//				opt.Token = oauth2.NewDefaultAccessToken("My test token")
-//			})
-//			fmt.Printf("loaded key-%v=%v with exp in %v\n", k, v.AccessToken().Value(), valid)
-//		} else {
-//			// unhappy path valid 2 seconds
-//			valid := 2 * time.Second
-//			exp = time.Now().Add(valid)
-//			err = fmt.Errorf("oops")
-//			fmt.Printf("loaded key-%v=%v with exp in %v\n", k, err, valid)
-//		}
-//		return
-//	}
-//}
-
-//func (c *cache) evictFunc() gcache.EvictedFunc {
-//	return func(k interface{}, v interface{}) {
-//		fmt.Printf("evicted %v=%v\n", k, v)
-//	}
-//}
-

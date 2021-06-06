@@ -8,6 +8,7 @@ const (
 	PropertyKeyApplicationName = "application.name"
 )
 
+// TODO this is not widely used pattern, consider to remove it
 type LifecycleHandler func(context.Context) error
 
 type ApplicationConfig interface {

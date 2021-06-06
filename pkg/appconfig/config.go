@@ -1,7 +1,7 @@
 package appconfig
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
@@ -65,7 +65,7 @@ type config struct {
 }
 
 //Load will fail if place holder cannot be resolved due to circular dependency
-func (c *config) Load(force bool) (err error) {
+func (c *config) Load(ctx context.Context, force bool) (err error) {
 	defer func() {
 		if err != nil {
 			c.isLoaded = false
@@ -99,14 +99,14 @@ func (c *config) Load(force bool) (err error) {
 		isFirstIter = false
 		for _, g := range c.groups {
 			// sort providers based on precedence, lower to higher
-			group := g.Providers(bootstrap.EagerGetApplicationContext(), final)
+			group := g.Providers(ctx, final)
 			order.SortStable(group, order.OrderedFirstCompareReverse)
 			providers = append(providers, group...)
 
 			// Load config from each source if it's not loaded yet
 			for _, provider := range group {
 				if !provider.IsLoaded() {
-					if e := provider.Load(); e != nil {
+					if e := provider.Load(ctx); e != nil {
 						err = errors.Wrap(e, "Failed to load properties")
 						return
 					}
@@ -154,7 +154,7 @@ func (c *config) Load(force bool) (err error) {
 	}
 
 	// resolve placeholder
-	if e := resolve(final); e != nil {
+	if e := resolve(ctx, final); e != nil {
 		err = e
 		return
 	}
@@ -353,9 +353,9 @@ func mergeAdditionalProfiles(profiles []string, src map[string]interface{}) ([]s
 /*********************
 	Placeholder
  *********************/
-func resolve(nested map[string]interface{}) error {
+func resolve(ctx context.Context, nested map[string]interface{}) error {
 	doResolve := func(key string, value interface{}) error {
-		_, e := resolveValue(nested, key, key)
+		_, e := resolveValue(ctx, nested, key, key)
 		return e
 	}
 
@@ -366,7 +366,7 @@ func resolve(nested map[string]interface{}) error {
 }
 
 //here the key is the flattened key
-func resolveValue(source map[string]interface{}, key string, originKey string) (interface{}, error) {
+func resolveValue(ctx context.Context, source map[string]interface{}, key string, originKey string) (interface{}, error) {
 	value := value(source, key)
 
 	//if value is not string, no need to resolve it further
@@ -385,7 +385,7 @@ func resolveValue(source map[string]interface{}, key string, originKey string) (
 		return value, nil
 	}
 
-	logger.WithContext(bootstrap.EagerGetApplicationContext()).Debugf("resolving key: " + key)
+	logger.WithContext(ctx).Debugf("resolving key: " + key)
 	for _, placeHolderKey := range placeHolderKeys {
 		if strings.Compare(originKey, placeHolderKey) == 0 {
 			return "", errors.New("key: " + originKey + " can't be resolved due to circular reference")
@@ -394,7 +394,7 @@ func resolveValue(source map[string]interface{}, key string, originKey string) (
 
 	resolvedKV := make(map[string]interface{})
 	for _, placeHolderKey := range placeHolderKeys {
-		resolvedPlaceHolder, e := resolveValue(source, placeHolderKey, originKey)
+		resolvedPlaceHolder, e := resolveValue(ctx, source, placeHolderKey, originKey)
 		if e != nil {
 			return "", e
 		}

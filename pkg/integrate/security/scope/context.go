@@ -12,7 +12,7 @@ const (
 )
 
 var (
-	scopeManager *defaultScopeManager
+	scopeManager ScopeManager
 )
 
 var (
@@ -81,7 +81,7 @@ func (s *Scope) Do(ctx context.Context, fn func(ctx context.Context)) (err error
 	}()
 
 	fn(c)
-	scopeManager.EndScope(c)
+	scopeManager.End(c)
 	return nil
 }
 
@@ -100,6 +100,12 @@ func (s *Scope) validate(_ context.Context) error {
 		return ErrTenantIdAndNameExclusive
 	}
 	return nil
+}
+
+type ScopeManager interface {
+	StartScope(ctx context.Context, scope *Scope) (context.Context, error)
+	Start(ctx context.Context, opts...Options) (context.Context, error)
+	End(ctx context.Context) context.Context
 }
 
 /**************************

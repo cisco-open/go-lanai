@@ -57,8 +57,8 @@ func newBootstrapFileProviderGroup() bootstrapProvidersOut {
 		return ptr
 	}
 	group.ProcessFunc = func(ctx context.Context, providers []appconfig.Provider) []appconfig.Provider {
-		if len(providers) == 0 {
-			logger.Warnf("no bootstrap configuration file found. are you running from the project root directory?")
+		if len(providers) != 0 {
+			logger.WithContext(ctx).Infof("found %d bootstrap configuration files", len(providers))
 		}
 		return providers
 	}

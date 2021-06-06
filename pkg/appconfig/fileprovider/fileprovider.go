@@ -1,6 +1,7 @@
 package fileprovider
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/parser"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -53,7 +54,7 @@ func (configProvider *ConfigProvider) Name() string {
 	return fmt.Sprintf("file:%s", configProvider.filepath)
 }
 
-func (configProvider *ConfigProvider) Load() (loadError error) {
+func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) {
 	defer func(){
 		if loadError != nil {
 			configProvider.Loaded = false

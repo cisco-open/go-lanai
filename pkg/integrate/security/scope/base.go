@@ -42,7 +42,7 @@ func (b *managerBase) DoStartScope(ctx context.Context, scope *Scope, authFunc a
 	return scoped, nil
 }
 
-func (b *managerBase) EndScope(ctx context.Context) (ret context.Context) {
+func (b *managerBase) End(ctx context.Context) (ret context.Context) {
 	rollback := ctx.Value(ctxKeyRollback)
 	scope, _ := ctx.Value(ctxKeyScope).(*Scope)
 	switch c := rollback.(type) {

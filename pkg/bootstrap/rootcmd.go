@@ -102,7 +102,7 @@ func NewAppCmd(appName string, priorityOptions []fx.Option, regularOptions []fx.
 		execCtx.Cmd = cmd
 		execCtx.Args = args
 
-		app := newApp(&execCtx, priorityOptions, regularOptions)
+		app := bootstrapper().NewApp(&execCtx, priorityOptions, regularOptions)
 		app.Run()
 	}
 }

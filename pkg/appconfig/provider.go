@@ -12,7 +12,7 @@ type Provider interface {
 	// Name is unique name of given provider, it also used as primary key in any mapping
 	Name() string
 	// Load load settings and should be idempotent. e.g. calling it multiple times should not affect loaded settings
-	Load() error
+	Load(ctx context.Context) error
 	// GetSettings returns loaded settings. might be nil if not IsLoaded returns true
 	// The returned map should be un-flattened. i.e. flat.key=value should be stored as {"flat":{"key":"value"}}
 	GetSettings() map[string]interface{}

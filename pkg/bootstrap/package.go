@@ -6,35 +6,24 @@ import (
 	"go.uber.org/fx"
 )
 
-var applicationContext = NewApplicationContext()
 var logger = log.New("Bootstrap")
 
-var DefaultModule = &Module{
-	Precedence: HighestPrecedence,
-	PriorityOptions: []fx.Option{
-		fx.Logger(&fxPrinter{logger: logger}),
-		fx.Provide(provideApplicationContext),
-		fx.Invoke(bootstrap),
-	},
+func DefaultModule(cliCtx *CliExecContext, app *App) *Module {
+	return &Module{
+		Precedence: HighestPrecedence,
+		PriorityOptions: []fx.Option{
+			fx.Logger(newFxPrinter(logger, app)),
+			fx.Supply(cliCtx),
+			fx.Supply(app),
+			fx.Provide(provideApplicationContext),
+			fx.Invoke(bootstrap),
+		},
+	}
 }
 
-func init() {
-	Register(DefaultModule)
-}
-
-// EagerGetApplicationContext returns the global ApplicationContext before it becomes available for dependency injection
-// Important: packages should typlically get ApplicationContext via fx's dependency injection,
-//			  which internal application config are garanteed.
-//			  Only packages involved in priority bootstrap (appconfig, consul, vault, etc)
-//			  should use this function for logging purpose
-func EagerGetApplicationContext() *ApplicationContext {
-	return applicationContext
-}
-
-
-func provideApplicationContext(config ApplicationConfig) *ApplicationContext {
-	applicationContext.config = config
-	return applicationContext
+func provideApplicationContext(app *App, config ApplicationConfig) *ApplicationContext {
+	app.ctx.config = config
+	return app.ctx
 }
 
 func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
@@ -49,7 +38,7 @@ func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			logger.WithContext(ac).Info("On Application startScope")
+			logger.WithContext(ac).Info("On Application Start")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
