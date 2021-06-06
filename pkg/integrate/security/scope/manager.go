@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"time"
@@ -13,7 +14,7 @@ type ManagerOptions func(opt *managerOption)
 
 type managerOption struct {
 	Client               seclient.AuthenticationClient
-	Authenticator        security.Authenticator
+	TokenStoreReader     oauth2.TokenStoreReader
 	BackOffPeriod        time.Duration
 	GuaranteedValidity   time.Duration
 	KnownCredentials     map[string]string
@@ -41,7 +42,7 @@ func newDefaultScopeManager(opts ...ManagerOptions) *defaultScopeManager {
 	return &defaultScopeManager{
 		managerBase:          managerBase{
 			cache:              newCache(),
-			authenticator:      opt.Authenticator,
+			tokenStoreReader:   opt.TokenStoreReader,
 			failureBackOff:     opt.BackOffPeriod,
 			guaranteedValidity: opt.GuaranteedValidity,
 			beforeStartHooks:   opt.BeforeStartHooks,

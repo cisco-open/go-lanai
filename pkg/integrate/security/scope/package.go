@@ -5,9 +5,7 @@ import (
 	securityint "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"go.uber.org/fx"
@@ -45,20 +43,13 @@ type secScopeDI struct {
 	fx.In
 	AuthClient       seclient.AuthenticationClient
 	Properties       securityint.SecurityIntegrationProperties
-	AuthServerConfig *authserver.Configuration `optional:"true"`
-	ResServerConfig  *resserver.Configuration  `optional:"true"`
-	Customizers      []ManagerCustomizer       `group:"security-scope"`
+	TokenStoreReader oauth2.TokenStoreReader `optional:"true"`
+	Customizers      []ManagerCustomizer `group:"security-scope"`
 }
 
 func configureSecurityScopeManagers(di secScopeDI) {
-	var authenticator security.Authenticator
-	switch {
-	case di.AuthServerConfig != nil:
-		authenticator = di.AuthServerConfig.SharedTokenAuthenticator()
-	case di.ResServerConfig != nil:
-		authenticator = di.ResServerConfig.SharedTokenAuthenticator()
-	default:
-		msg := fmt.Sprintf(`Security Scope managers requires "resserver" or "authserver", but none is configured`)
+	if di.TokenStoreReader == nil {
+		msg := fmt.Sprintf(`Security Scope managers requires "resserver", but not configured`)
 		logger.Warnf(msg)
 		panic(msg)
 	}
@@ -67,7 +58,7 @@ func configureSecurityScopeManagers(di secScopeDI) {
 	opts := []ManagerOptions{
 		func(opt *managerOption) {
 			opt.Client = di.AuthClient
-			opt.Authenticator = authenticator
+			opt.TokenStoreReader = di.TokenStoreReader
 			opt.BackOffPeriod = time.Duration(di.Properties.FailureBackOff)
 			opt.GuaranteedValidity = time.Duration(di.Properties.GuaranteedValidity)
 

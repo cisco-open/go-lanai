@@ -6,9 +6,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -16,7 +16,7 @@ type authenticateFunc func(ctx context.Context, pKey *cKey) (security.Authentica
 
 type managerBase struct {
 	cache              *cache
-	authenticator      security.Authenticator
+	tokenStoreReader   oauth2.TokenStoreReader
 	failureBackOff     time.Duration
 	guaranteedValidity time.Duration
 	beforeStartHooks   []ScopeOperationHook
@@ -161,16 +161,22 @@ func (b *managerBase) cacheLoadFunc(rTime time.Time, authFunc authenticateFunc) 
 }
 
 func (b *managerBase) convertToAuthentication(ctx context.Context, result *seclient.Result) (oauth2.Authentication, error) {
-	// TODO we could leverage IDToken
-	candidate := tokenauth.BearerToken{
-		Token:      result.Token.Value(),
-		DetailsMap: map[string]interface{}{},
-	}
-	auth, e := b.authenticator.Authenticate(ctx, &candidate)
+	// TODO we could leverage IDToken and probably Remote token API
+	auth, e := b.tokenStoreReader.ReadAuthentication(ctx, result.Token.Value(), oauth2.TokenHintAccessToken)
 	if e != nil {
 		return nil, e
 	}
-	return auth.(oauth2.Authentication), nil
+
+	// perform some checks
+	switch {
+	case auth.State() < security.StateAuthenticated:
+		return nil, fmt.Errorf("token is not associated with an authenticated session")
+	case auth.OAuth2Request().ClientId() == "":
+		return nil, fmt.Errorf("token is not issued to a valid client")
+	case auth.UserAuthentication() != nil && reflect.ValueOf(auth.UserAuthentication().Principal()).IsZero():
+		return nil, fmt.Errorf("token is not authorized by a valid user")
+	}
+	return auth, nil
 }
 
 func (b *managerBase) calculateBackOffExp(err error, defaultValue time.Time) time.Time {

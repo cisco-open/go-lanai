@@ -22,14 +22,23 @@ type resServerConfigDI struct {
 	Configurer           ResourceServerConfigurer
 }
 
-func NewConfiguration(di resServerConfigDI) *Configuration {
-	config := &Configuration{
+type resServerOut struct {
+	fx.Out
+	Config *Configuration
+	TokenStore oauth2.TokenStoreReader
+}
+
+func ProvideResServerDI(di resServerConfigDI) resServerOut {
+	config := Configuration{
 		appContext:         di.AppContext,
 		cryptoProperties:   di.CryptoProperties,
 		redisClientFactory: di.RedisClientFactory,
 	}
-	di.Configurer(config)
-	return config
+	di.Configurer(&config)
+	return resServerOut{
+		Config: &config,
+		TokenStore: config.SharedTokenStoreReader(),
+	}
 }
 
 type resServerDI struct {
@@ -39,7 +48,7 @@ type resServerDI struct {
 	DiscoveryCustomizers *discovery.Customizers
 }
 
-// Configuration entry point
+// ConfigureResourceServer configuration entry point
 func ConfigureResourceServer(di resServerDI) {
 	// SMCR
 	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
@@ -78,8 +87,8 @@ type Configuration struct {
 	// TODO
 }
 
-func (c *Configuration) SharedTokenAuthenticator() security.Authenticator {
-	return c.sharedTokenAuthenticator
+func (c *Configuration) SharedTokenStoreReader() oauth2.TokenStoreReader {
+	return c.tokenStoreReader()
 }
 
 func (c *Configuration) errorHandler() *tokenauth.OAuth2ErrorHandler {

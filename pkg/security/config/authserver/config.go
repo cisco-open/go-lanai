@@ -41,7 +41,12 @@ type configDI struct {
 	SessionStore       session.Store
 }
 
-func NewConfiguration(di configDI) *Configuration {
+type authServerOut struct {
+	fx.Out
+	Config *Configuration
+}
+
+func ProvideAuthServerDI(di configDI) authServerOut {
 	config := Configuration{
 		appContext:         di.AppContext,
 		redisClientFactory: di.RedisClientFactory,
@@ -53,7 +58,9 @@ func NewConfiguration(di configDI) *Configuration {
 		Issuer:             newIssuer(&di.Properties.Issuer, &di.ServerProperties),
 	}
 	di.Configurer(&config)
-	return &config
+	return authServerOut {
+		Config: &config,
+	}
 }
 
 type initDI struct {
