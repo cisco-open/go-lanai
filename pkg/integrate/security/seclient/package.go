@@ -1,6 +1,7 @@
 package seclient
 
 import (
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
 	securityint "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security"
@@ -14,6 +15,7 @@ var Module = &bootstrap.Module{
 	Name: "auth-client",
 	Precedence: bootstrap.SecurityIntegrationPrecedence,
 	Options: []fx.Option{
+		appconfig.FxEmbeddedDefaults(securityint.DefaultConfigFS),
 		fx.Provide(securityint.BindSecurityIntegrationProperties),
 		fx.Provide(provideAuthClient),
 	},

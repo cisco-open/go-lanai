@@ -3,6 +3,7 @@ package security
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"embed"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -10,6 +11,9 @@ import (
 const (
 	PropertiesPrefix = "integrate.security"
 )
+
+//go:embed defaults-integrate-security.yml
+var DefaultConfigFS embed.FS
 
 //goland:noinspection GoNameStartsWithPackageName
 type SecurityIntegrationProperties struct {

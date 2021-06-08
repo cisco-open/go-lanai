@@ -68,9 +68,25 @@ func newBootstrapFileProviderGroup() bootstrapProvidersOut {
 	}
 }
 
-func newDefaultProviderGroup(execCtx *bootstrap.CliExecContext) bootstrapProvidersOut {
-	p := cliprovider.NewStaticConfigProvider(defaultPrecedence, execCtx)
+type defaultProviderGroupDI struct {
+	fx.In
+	ExecCtx   *bootstrap.CliExecContext
+	Providers []appconfig.Provider `group:"default-config"`
+}
+
+func newDefaultProviderGroup(di defaultProviderGroupDI) bootstrapProvidersOut {
+	p := cliprovider.NewStaticConfigProvider(defaultPrecedence, di.ExecCtx)
+	providers := []appconfig.Provider{p}
+	for _, p := range di.Providers {
+		if p == nil {
+			continue
+		}
+		if reorder, ok := p.(appconfig.ProviderReorderer); ok {
+			reorder.Reorder(defaultPrecedence)
+		}
+		providers =  append(providers, p)
+	}
 	return bootstrapProvidersOut {
-		ProviderGroup: appconfig.NewStaticProviderGroup(defaultPrecedence, p),
+		ProviderGroup: appconfig.NewStaticProviderGroup(defaultPrecedence, providers...),
 	}
 }

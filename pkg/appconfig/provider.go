@@ -23,7 +23,7 @@ type Provider interface {
 }
 
 type ProviderReorderer interface {
-	// Reorder set receivers
+	// Reorder set order
 	Reorder(int)
 }
 

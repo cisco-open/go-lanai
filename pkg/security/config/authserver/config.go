@@ -157,10 +157,6 @@ func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {
 	c.idpConfigurers = append(c.idpConfigurers, configurer)
 }
 
-func (c *Configuration) SharedTokenAuthenticator() security.Authenticator {
-	return c.tokenAuthenticator()
-}
-
 func newIssuer(props *IssuerProperties, serverProps *web.ServerProperties) security.Issuer {
 	contextPath := props.ContextPath
 	if contextPath == "" {

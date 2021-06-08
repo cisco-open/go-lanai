@@ -117,7 +117,7 @@ func (c *remoteAuthClient) SwitchUser(ctx context.Context, opts ...AuthOptions) 
 	reqOpts = append(reqOpts, c.reqOptionsForTenancy(opt)...)
 
 	// prepare request
-	req := httpclient.NewRequest(c.pwdLoginPath, http.MethodPost, reqOpts...)
+	req := httpclient.NewRequest(c.switchCtxPath, http.MethodPost, reqOpts...)
 	// send request and parse response
 	body := oauth2.NewDefaultAccessToken("")
 	resp, e := c.client.Execute(ctx, req, httpclient.JsonBody(body))
@@ -139,7 +139,7 @@ func (c *remoteAuthClient) SwitchTenant(ctx context.Context, opts ...AuthOptions
 	reqOpts = append(reqOpts, c.reqOptionsForTenancy(opt)...)
 
 	// prepare request
-	req := httpclient.NewRequest(c.pwdLoginPath, http.MethodPost, reqOpts...)
+	req := httpclient.NewRequest(c.switchCtxPath, http.MethodPost, reqOpts...)
 	// send request and parse response
 	body := oauth2.NewDefaultAccessToken("")
 	resp, e := c.client.Execute(ctx, req, httpclient.JsonBody(body))

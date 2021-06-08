@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/parser"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,8 +19,7 @@ var logger = log.New("Config.File")
 
 type ConfigProvider struct {
 	appconfig.ProviderMeta
-	reader io.Reader
-	propertyParser parser.PropertyParser
+	reader   io.Reader
 	filepath string
 }
 
@@ -28,10 +28,9 @@ func NewProvider(precedence int, filePath string, reader io.Reader) *ConfigProvi
 	switch fileExt {
 	case ".yml", ".yaml":
 		return &ConfigProvider{
-			ProviderMeta:   appconfig.ProviderMeta{Precedence: precedence},
-			reader:         reader,
-			propertyParser: parser.NewYamlPropertyParser(),
-			filepath: filePath,
+			ProviderMeta: appconfig.ProviderMeta{Precedence: precedence},
+			reader:       reader,
+			filepath:     filePath,
 		}
 	//TODO: impl the following
 	/*
@@ -68,7 +67,7 @@ func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) 
 		return loadError
 	}
 
-	settings, loadError := configProvider.propertyParser(encoded)
+	settings, loadError := parser.NewYamlPropertyParser()(encoded)
 	if loadError != nil {
 		return loadError
 	}
@@ -105,4 +104,12 @@ func NewFileProvidersFromBaseName(precedence int, baseName string, ext string, c
 	}
 
 	return nil, false
+}
+
+func NewEmbeddedFSProvider(precedence int, path string, fs embed.FS) (provider *ConfigProvider, exists bool) {
+	file, e := fs.Open(path)
+	if e != nil {
+		return nil, false
+	}
+	return NewProvider(precedence, path, file), true
 }

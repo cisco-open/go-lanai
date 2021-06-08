@@ -17,6 +17,8 @@ const (
 	_ = iota * precedenceGap
 	externalAppContextPrecedence
 	externalDefaultContextPrecedence
+	applicationAdHocPrecedence
+	bootstrapAdHocPrecedence
 	commandlinePrecedence
 	osEnvPrecedence
 	applicationLocalFilePrecedence
@@ -36,9 +38,11 @@ var ConfigModule = &bootstrap.Module{
 			newOsEnvProviderGroup,
 			newBootstrapFileProviderGroup,
 			newDefaultProviderGroup,
+			newBootstrapAdHocProviderGroup,
 			newBootstrapConfig,
-			// Application file
+			// Application file & adhoc
 			newApplicationFileProviderGroup,
+			newApplicationAdHocProviderGroup,
 			// Consul
 			newConsulDefaultContextProviderGroup,
 			newConsulAppContextProviderGroup,
@@ -53,12 +57,12 @@ var ConfigModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(ConfigModule)
+
 }
 
-// Use Maker func, does nothing. Allow service to include this module in main()
+// Use Entrypoint of appconfig package
 func Use() {
-
+	bootstrap.Register(ConfigModule)
 }
 
 type bootstrapConfigDI struct {

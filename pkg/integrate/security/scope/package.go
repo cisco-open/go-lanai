@@ -70,15 +70,18 @@ func configureSecurityScopeManagers(di secScopeDI) {
 				credentials[di.Properties.Accounts.Default.Username] = di.Properties.Accounts.Default.Password
 				sysAccts.Add(di.Properties.Accounts.Default.Username)
 			}
-			for _, acct := range di.Properties.Accounts.Additional {
-				if acct.Username == "" || acct.Password == "" {
-					continue
-				}
-				credentials[acct.Username] = acct.Password
-				if acct.SystemAccount {
-					sysAccts.Add(acct.Username)
-				}
-			}
+			// TBD, this is consistent behavior from java impl. Such configuration allows dev-ops to give
+			// special treatment on certain accounts. Since we don't know any use case of this feature at
+			// the time of writing this code, we temporarily disabled it, but keep the code for reference.
+			//for _, acct := range di.Properties.Accounts.Additional {
+			//	if acct.Username == "" || acct.Password == "" {
+			//		continue
+			//	}
+			//	credentials[acct.Username] = acct.Password
+			//	if acct.SystemAccount {
+			//		sysAccts.Add(acct.Username)
+			//	}
+			//}
 			opt.KnownCredentials = credentials
 			opt.SystemAccounts = sysAccts
 		},
