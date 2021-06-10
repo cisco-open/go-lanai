@@ -2,14 +2,19 @@ package bootstrap
 
 import (
 	"context"
+	"time"
 )
 
 const (
 	PropertyKeyApplicationName = "application.name"
 )
 
-// TODO this is not widely used pattern, consider to remove it
-type LifecycleHandler func(context.Context) error
+type startTimeCtxKey struct{}
+type stopTimeCtxKey struct{}
+var (
+	ctxKeyStartTime = startTimeCtxKey{}
+	ctxKeyStopTime = stopTimeCtxKey{}
+)
 
 type ApplicationConfig interface {
 	Value(key string) interface{}
@@ -25,7 +30,7 @@ type ApplicationContext struct {
 
 func NewApplicationContext() *ApplicationContext {
 	return &ApplicationContext{
-		Context: context.Background(),
+		Context: context.WithValue(context.Background(), ctxKeyStartTime, time.Now().UTC()),
 	}
 }
 
@@ -71,4 +76,8 @@ func (c *ApplicationContext) Value(key interface{}) interface{} {
 func (c *ApplicationContext) withContext(parent context.Context) *ApplicationContext {
 	c.Context = parent
 	return c
+}
+
+func (c *ApplicationContext) withValue(k, v interface{}) *ApplicationContext {
+	return c.withContext(context.WithValue(c.Context, k, v))
 }

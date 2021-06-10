@@ -41,11 +41,13 @@ type cEntry struct {
 type entryValue oauth2.Authentication
 
 func (ce *cEntry) isValid() bool {
+	// FIXME consider token revocation
 	return ce.expire.IsZero() || time.Now().Before(ce.expire)
 }
 
 type loadFunc func(ctx context.Context, k cKey) (v entryValue, exp time.Time, err error)
 type newFunc func(context.Context, *cKey) *cEntry
+type validateFunc func(context.Context, entryValue) bool
 
 type cacheOptions func(opt *cacheOption)
 type cacheOption struct {
@@ -74,9 +76,9 @@ func newCache(opts ...cacheOptions) (ret *cache) {
 }
 
 
-func (c *cache) GetOrLoad(ctx context.Context, k *cKey, loader loadFunc) (entryValue, error) {
+func (c *cache) GetOrLoad(ctx context.Context, k *cKey, loader loadFunc, validator validateFunc) (entryValue, error) {
 	fmt.Printf("getting key-%v...\n", k)
-	entry := c.getOrNew(ctx, k, c.newEntryFunc(loader))
+	entry := c.getOrNew(ctx, k, c.newEntryFunc(loader), validator)
 	if entry == nil {
 		return nil, fmt.Errorf("[Internal Error] security Scope cache returns nil entry")
 	}
@@ -120,10 +122,8 @@ func (c *cache) load(ctx context.Context, key *cKey, entry *cEntry, loader loadF
 
 // getOrNew return existing entry or create and set using newIfAbsent
 // this method is goroutine-safe
-func (c *cache) getOrNew(ctx context.Context, pKey *cKey, newIfAbsent newFunc) *cEntry {
-	c.mtx.RLock()
-	v, ok := c.getValue(pKey)
-	c.mtx.RUnlock()
+func (c *cache) getOrNew(ctx context.Context, pKey *cKey, newIfAbsent newFunc, validator validateFunc) *cEntry {
+	v, ok := c.get(pKey, validator)
 	if ok {
 		return v
 	}
@@ -133,7 +133,7 @@ func (c *cache) getOrNew(ctx context.Context, pKey *cKey, newIfAbsent newFunc) *
 
 // setIfAbsent set entry using given "creator" if the key doesn't exist. otherwise returns existing entry
 // this method is goroutine-safe
-func (c *cache) setIfAbsent(ctx context.Context, pKey *cKey, creator func(context.Context, *cKey) *cEntry) *cEntry {
+func (c *cache) setIfAbsent(ctx context.Context, pKey *cKey, creator newFunc) *cEntry {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -144,6 +144,13 @@ func (c *cache) setIfAbsent(ctx context.Context, pKey *cKey, creator func(contex
 	v := creator(ctx, pKey)
 	c.setValue(pKey, v)
 	return v
+}
+
+// get is goroutine-safe
+func (c *cache) get(pKey *cKey, validator validateFunc) (*cEntry, bool) {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
+	return c.getValue(pKey)
 }
 
 // getValue not goroutine-safe
@@ -183,7 +190,7 @@ func (c *cache) tryEvict() {
 	for k, v := range c.store {
 		if !v.isValid() || !v.expire.IsZero() && !now.Before(v.expire) {
 			fmt.Printf("evicting key-%v...\n", k)
-			delete(c.store, k)
+			c.setValue(&k, nil)
 		}
 	}
 }

@@ -58,7 +58,7 @@ func (b *managerBase) End(ctx context.Context) (ret context.Context) {
 }
 
 func (b *managerBase) GetOrAuthenticate(ctx context.Context, pKey *cKey, rTime time.Time, authFunc authenticateFunc) (ret security.Authentication, err error) {
-	return b.cache.GetOrLoad(ctx, pKey , b.cacheLoadFunc(rTime, authFunc))
+	return b.cache.GetOrLoad(ctx, pKey , b.cacheLoadFunc(rTime, authFunc), b.cacheValidateFunc())
 }
 
 func (b *managerBase) resolveUser(auth security.Authentication) (username, userId string, err error) {
@@ -123,6 +123,17 @@ func (b *managerBase) isSameTenant(tenantName, tenantId string, auth security.Au
 		return tenantId != "" && tenantId == details.TenantId() || tenantName != "" && tenantName == details.TenantName()
 	default:
 		return false
+	}
+}
+
+func (b *managerBase) cacheValidateFunc() validateFunc {
+	return func(ctx context.Context, auth entryValue) bool {
+		if auth == nil || auth.AccessToken() == nil {
+			return false
+		}
+
+		_, e := b.tokenStoreReader.ReadAccessToken(ctx, auth.AccessToken().Value())
+		return e == nil
 	}
 }
 

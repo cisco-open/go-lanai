@@ -62,10 +62,7 @@ func (s Scope) String() string {
 }
 
 func (s *Scope) Do(ctx context.Context, fn func(ctx context.Context)) (err error) {
-	if scopeManager == nil {
-		return ErrNotInitialized
-	}
-	c, e := scopeManager.StartScope(ctx, s)
+	c, e := s.start(ctx)
 	if e != nil {
 		return e
 	}
@@ -130,7 +127,7 @@ func Describe(ctx context.Context) string {
 }
 
 /**************************
-	Hooks
+	TestHooks
  **************************/
 
 //goland:noinspection GoNameStartsWithPackageName

@@ -4,7 +4,8 @@ const (
 	KvConfigPrefix = "cloud.vault.kv"
 )
 
-//currently only supports v1 kv secret engine
+// KvConfigProperties currently only supports v1 kv secret engine
+// TODO review property path and prefix
 type KvConfigProperties struct {
 	Enabled     bool `json:"enabled"`
 	Backend          string `json:"backend"`

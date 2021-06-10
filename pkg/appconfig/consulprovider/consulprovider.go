@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	ConfigKeyConsulEndpoint = "cloud.consul.endpoint"
-	ConfigKeyAppName        = "application.name"
+	ConsulConfigPrefix = "cloud.consul.config"
+	ConfigKeyAppName   = "application.name"
 )
 
 type ConsulConfigProperties struct {

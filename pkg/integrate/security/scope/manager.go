@@ -159,18 +159,12 @@ func (m *defaultScopeManager) authWithSysAcct(ctx context.Context, pKey *cKey) (
 
 // authWithoutSysAcct is an authenticateFunc which is invoked by loadFunc in a separate goroutine
 // therefore it's safe to call managerBase.GetOrAuthenticate again without deadlocking
-// This auth method would try direct password login (if password is known),
-// then fallback to context switching by calling switch user/tenant API with current access token
+// context switching by calling switch user/tenant API with current access token
 func (m *defaultScopeManager) authWithoutSysAcct(ctx context.Context, pKey *cKey) (security.Authentication, error) {
 	if pKey == nil {
 		return nil, fmt.Errorf("[Internal Error] cache key is nil")
-	}
-
-	// first, attempt password login
-	if r, e := m.passwordLogin(ctx, pKey); e != nil {
-		return nil, e
-	} else if r != nil && r.Token != nil {
-		return m.convertToAuthentication(ctx, r)
+	} else if m.systemAccounts.Has(pKey.username) {
+		return nil, fmt.Errorf("[Internal Error] cannot switch to system account without UseSystemAccount() option")
 	}
 
 	// attempt to use switch context with current auth
@@ -181,6 +175,7 @@ func (m *defaultScopeManager) authWithoutSysAcct(ctx context.Context, pKey *cKey
 	} else if r != nil && r.Token != nil {
 		return m.convertToAuthentication(ctx, r)
 	}
+	//
 	return auth, nil
 }
 

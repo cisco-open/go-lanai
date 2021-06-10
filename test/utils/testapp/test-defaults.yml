@@ -1,0 +1,7 @@
+config:
+  file:
+    search-path: []
+
+server:
+  port: 0
+  context-path: /test

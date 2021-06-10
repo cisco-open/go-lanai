@@ -1,6 +1,7 @@
 package envprovider
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -11,7 +12,7 @@ func TestLoadEnvironmentProperties(t *testing.T) {
 	os.Setenv("MY_PROJECT_AUTHOR", "test_author")
 
 	p := NewEnvProvider(0)
-	p.Load()
+	p.Load(context.Background())
 
 	actual := p.GetSettings()
 

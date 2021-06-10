@@ -15,8 +15,10 @@ import (
 	Bootstrapper
  **************************/
 
-var once sync.Once
-var bootstrapperInstance *Bootstrapper
+var (
+	once                 sync.Once
+	bootstrapperInstance *Bootstrapper
+)
 
 type ContextOption func(ctx context.Context) context.Context
 
@@ -83,7 +85,8 @@ func (b *Bootstrapper) NewApp(cliCtx *CliExecContext, priorityOptions []fx.Optio
 	app.ctx = app.ctx.withContext(ctx)
 
 	// Decide default module
-	defaultModule := DefaultModule(cliCtx, app)
+	initModule := InitModule(cliCtx, app)
+	miscModules := MiscModules()
 
 	// Decide ad-hoc fx options
 	mainModule := newApplicationMainModule()
@@ -96,7 +99,10 @@ func (b *Bootstrapper) NewApp(cliCtx *CliExecContext, priorityOptions []fx.Optio
 	}
 
 	// Decide modules' fx options
-	modules := append(b.modules.Values(), defaultModule, mainModule, b.adhocModule)
+	modules := append(b.modules.Values(), initModule, mainModule, b.adhocModule)
+	for _, misc := range miscModules {
+		modules = append(modules, misc)
+	}
 	sort.SliceStable(modules, func(i, j int) bool { return modules[i].(*Module).Precedence < modules[j].(*Module).Precedence })
 
 	// add priority options first
@@ -139,7 +145,6 @@ func (app *App) Run() {
 	// to be revised:
 	//  1. (Solved)	Support Timeout in bootstrap.Context and make cancellable context as startParent (swap startParent and child)
 	//  2. (Solved) Restore logging
-	start := time.Now()
 	done := app.Done()
 	rootCtx := app.ctx.Context
 	startParent, cancel := context.WithTimeout(rootCtx, app.StartTimeout())
@@ -156,30 +161,21 @@ func (app *App) Run() {
 		exit(1)
 	}
 
-	// log startup time
-	elapsed := time.Now().Sub(start).Truncate(time.Millisecond)
-	logger.WithContext(rootCtx).Infof("Started %s after %v", app.ctx.Name(), elapsed)
-
 	// this line blocks until application shutting down
 	printSignal(<-done)
 
 	// shutdown sequence
-	start = time.Now()
 	stopParent, cancel := context.WithTimeout(rootCtx, app.StopTimeout())
 	for _, opt := range app.stopCtxOpts {
 		stopParent = opt(stopParent)
 	}
-	stopCtx := app.ctx.withContext(stopParent)
+	stopCtx := app.ctx.withContext(stopParent).withValue(ctxKeyStopTime, time.Now().UTC())
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {
 		logger.WithContext(stopCtx).Errorf("Shutdown with Error: %v", err)
 		exit(1)
 	}
-
-	// log startup time
-	elapsed = time.Now().Sub(start).Truncate(time.Millisecond)
-	logger.WithContext(rootCtx).Infof("Stopped %s in %v", app.ctx.Name(), elapsed)
 }
 
 func printSignal(signal os.Signal) {

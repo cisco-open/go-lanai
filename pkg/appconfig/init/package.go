@@ -130,7 +130,7 @@ func newConsulConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *cons
 		ProfileSeparator: ",",
 		Enabled: true,
 	}
-	if e := bootstrapConfig.Bind(p, consulprovider.ConfigKeyConsulEndpoint); e != nil {
+	if e := bootstrapConfig.Bind(p, consulprovider.ConsulConfigPrefix); e != nil {
 		panic(e)
 	}
 	return p
@@ -144,7 +144,7 @@ func newVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault
 		Enabled: true,
 		BackendVersion: 1,
 	}
-	if e := bootstrapConfig.Bind(p, consulprovider.ConfigKeyConsulEndpoint); e != nil {
+	if e := bootstrapConfig.Bind(p, vaultprovider.KvConfigPrefix); e != nil {
 		panic(e)
 	}
 	return p
