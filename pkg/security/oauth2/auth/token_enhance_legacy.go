@@ -96,7 +96,7 @@ type ResourceIdTokenEnhancer struct {
 }
 
 func (te *ResourceIdTokenEnhancer) Order() int {
-	return TokenEnhancerOrderDetailsClaims
+	return TokenEnhancerOrderResourceIdClaims
 }
 
 func (te *ResourceIdTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
