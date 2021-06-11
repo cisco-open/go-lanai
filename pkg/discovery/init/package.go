@@ -13,7 +13,10 @@ var Module = &bootstrap.Module {
 	Name: "service discovery",
 	Precedence: bootstrap.ServiceDiscoveryPrecedence,
 	Options: []fx.Option{
-		fx.Provide(discovery.BindDiscoveryProperties, discovery.NewRegistration, discovery.NewCustomizers),
+		fx.Provide(discovery.BindDiscoveryProperties,
+			discovery.NewRegistration,
+			discovery.NewCustomizers,
+			provideDiscoveryClient),
 		fx.Invoke(setupServiceRegistration),
 	},
 }
@@ -25,6 +28,10 @@ func init() {
 // Maker func, does nothing. Allow service to include this module in main()
 func Use() {
 
+}
+
+func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, conn *consul.Connection) discovery.Client {
+	return discovery.NewConsulDiscoveryClient(ctx, conn)
 }
 
 func setupServiceRegistration(lc fx.Lifecycle,

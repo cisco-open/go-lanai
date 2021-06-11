@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	// security reserved
+	// Reserved data reserved reserved error range
 	Reserved = 0xdb << ReservedOffset
 )
 

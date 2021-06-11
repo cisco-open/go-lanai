@@ -10,6 +10,10 @@ const (
 	ISO8601Milliseconds = "2006-01-02T15:04:05.000Z07:00"
 )
 
+var (
+	MaxTime = time.Unix(1<<63-1, 0).UTC()
+)
+
 func ParseTimeISO8601(v string) time.Time {
 	parsed, err := time.Parse(ISO8601Seconds, v)
 	if err != nil {
