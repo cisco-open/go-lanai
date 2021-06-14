@@ -3,6 +3,7 @@ package authserver
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/timeoutsupport"
 	th_loader "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy/loader"
 	"go.uber.org/fx"
 )
@@ -23,5 +24,6 @@ func Use() {
 	security.Use()
 	th_loader.Use()
 	bootstrap.Register(OAuth2AuthorizeModule)
+	timeoutsupport.Use()
 }
 

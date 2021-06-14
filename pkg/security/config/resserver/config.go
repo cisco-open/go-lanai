@@ -9,7 +9,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/timeoutsupport"
 	"go.uber.org/fx"
 )
 
@@ -23,7 +22,7 @@ type resServerDI struct {
 	RedisClientFactory   redis.ClientFactory
 	CryptoProperties     jwt.CryptoProperties
 	DiscoveryCustomizers *discovery.Customizers
-	TimeoutSupport 	 	 *timeoutsupport.RedisTimeoutApplier
+	TimeoutSupport 	 	 oauth2.TimeoutApplier `optional:"true"`
 }
 
 // Configuration entry point
@@ -69,7 +68,7 @@ type Configuration struct {
 	sharedErrorHandler        *tokenauth.OAuth2ErrorHandler
 	sharedContextDetailsStore security.ContextDetailsStore
 	sharedJwtDecoder          jwt.JwtDecoder
-	timeoutSupport 			  *timeoutsupport.RedisTimeoutApplier
+	timeoutSupport 			  oauth2.TimeoutApplier
 }
 
 func (c *Configuration) errorHandler() *tokenauth.OAuth2ErrorHandler {

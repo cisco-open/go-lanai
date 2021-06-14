@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"go.uber.org/fx"
 )
 
@@ -19,7 +20,7 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func provideTimeoutSupport(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, prop security.TimeoutSupportProperties) *RedisTimeoutApplier {
+func provideTimeoutSupport(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, prop security.TimeoutSupportProperties) oauth2.TimeoutApplier {
 	client, err := cf.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = prop.DbIndex
 	})
@@ -32,6 +33,6 @@ func provideTimeoutSupport(ctx *bootstrap.ApplicationContext, cf redis.ClientFac
 	return support
 }
 
-func init() {
+func Use() {
 	bootstrap.Register(Module)
 }

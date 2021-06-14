@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/timeoutsupport"
 	"go.uber.org/fx"
 )
 
@@ -20,5 +21,6 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 func Use() {
 	security.Use()
 	bootstrap.Register(OAuth2AuthorizeModule)
+	timeoutsupport.Use()
 }
 

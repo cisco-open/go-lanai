@@ -7,7 +7,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common/internal"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/timeoutsupport"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -55,10 +54,10 @@ type RedisContextDetailsStore struct {
 	vTag   string
 	client redis.Client
 
-	timeoutApplier *timeoutsupport.RedisTimeoutApplier
+	timeoutApplier oauth2.TimeoutApplier
 }
 
-func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory, timeoutApplier *timeoutsupport.RedisTimeoutApplier) *RedisContextDetailsStore {
+func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory, timeoutApplier oauth2.TimeoutApplier) *RedisContextDetailsStore {
 	client, e := cf.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = redisDB
 	})
@@ -115,7 +114,7 @@ func (r *RedisContextDetailsStore) ContextDetailsExists(c context.Context, key i
 	switch t := key.(type) {
 	case oauth2.AccessToken:
 		sId, err := r.FindSessionId(c, t)
-		if err == nil && sId != "" {
+		if err == nil && sId != "" && r.timeoutApplier != nil {
 			valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
 			return valid
 		} else {
@@ -142,8 +141,14 @@ func (r *RedisContextDetailsStore) RegisterRefreshToken(c context.Context, token
 		return e
 	}
 
-	if e := r.saveRefreshTokenToSession(c, token, oauth); e != nil {
-		return e
+	ext := oauth.OAuth2Request().Extensions()
+	if ext != nil {
+		saveToSession, ok := ext[oauth2.ExtensionUseSessionTimeout].(bool)
+		if ok && saveToSession {
+			if e := r.saveRefreshTokenToSession(c, token, oauth); e != nil {
+				return e
+			}
+		}
 	}
 	return nil
 }
@@ -157,8 +162,14 @@ func (r *RedisContextDetailsStore) RegisterAccessToken(ctx context.Context, toke
 		return e
 	}
 
-	if e := r.saveAccessTokenToSession(ctx, token, oauth); e != nil {
-		return e
+	ext := oauth.OAuth2Request().Extensions()
+	if ext != nil {
+		saveToSession, ok := ext[oauth2.ExtensionUseSessionTimeout].(bool)
+		if ok && saveToSession {
+			if e := r.saveAccessTokenToSession(ctx, token, oauth); e != nil {
+				return e
+			}
+		}
 	}
 
 	if e := r.saveAccessRefreshTokenRelation(ctx, token); e != nil {
@@ -381,7 +392,7 @@ func (r *RedisContextDetailsStore) saveAccessRefreshTokenRelation(c context.Cont
 func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context, t oauth2.AccessToken) (security.ContextDetails, error) {
 	sId, err := r.FindSessionId(c, t)
 
-	if err == nil && sId != "" {
+	if err == nil && sId != "" && r.timeoutApplier != nil {
 		valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
 		if !valid {
 			return nil, errors.New("token is invalid because it's expired by its associate session")
@@ -504,7 +515,7 @@ func (r *RedisContextDetailsStore) saveRefreshTokenToSession(c context.Context, 
 func (r *RedisContextDetailsStore) loadAuthFromRefreshToken(c context.Context, t oauth2.RefreshToken) (oauth2.Authentication, error) {
 	sId, err := r.FindSessionId(c, t)
 
-	if err == nil && sId != "" {
+	if err == nil && sId != "" && r.timeoutApplier != nil{
 		valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
 		if !valid {
 			return nil, errors.New("token is invalid because it's expired by its associate session")

@@ -16,7 +16,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/timeoutsupport"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 	"net/url"
@@ -40,7 +39,7 @@ type configDI struct {
 	SessionProperties  security.SessionProperties
 	CryptoProperties   jwt.CryptoProperties
 	SessionStore       session.Store
-	TimeoutSupport     *timeoutsupport.RedisTimeoutApplier
+	TimeoutSupport     oauth2.TimeoutApplier `optional:"true"`
 }
 
 func NewConfiguration(di configDI) *Configuration {
@@ -147,7 +146,7 @@ type Configuration struct {
 	sharedAuthHanlder         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	sharedTokenAuthenticator  security.Authenticator
-	timeoutSupport            *timeoutsupport.RedisTimeoutApplier
+	timeoutSupport            oauth2.TimeoutApplier
 }
 
 func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {
