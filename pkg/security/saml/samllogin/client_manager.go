@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"sync"
 )
 
 type CacheableIdpClientManager struct {
@@ -17,6 +18,7 @@ type CacheableIdpClientManager struct {
 
 	cache map[string]*saml.ServiceProvider
 	processed map[string]SamlIdentityProvider
+	cacheMutex sync.RWMutex
 }
 
 func NewCacheableIdpClientManager(template saml.ServiceProvider) *CacheableIdpClientManager {
@@ -29,13 +31,37 @@ func NewCacheableIdpClientManager(template saml.ServiceProvider) *CacheableIdpCl
 }
 
 func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdentityProvider) {
-	keep := make(map[string]bool)
-	var refresh []SamlIdentityProvider
+	//this method read locks the cache
+	keep, refresh := m.compareWithCache(identityProviders)
 
+	resolved := m.resolveMetadata(refresh)
+
+	m.cacheMutex.Lock()
+	defer m.cacheMutex.Unlock()
+
+	for entityId := range m.cache {
+		if _, ok := keep[entityId]; !ok {
+			delete(m.cache, entityId)
+			delete(m.processed, entityId)
+		}
+	}
+
+	for _, details := range refresh {
+		if client, ok := resolved[details.EntityId()]; ok {
+			m.cache[details.EntityId()] = client
+			m.processed[details.EntityId()] = details
+		}
+	}
+}
+
+func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIdentityProvider) (keep map[string]bool, refresh []SamlIdentityProvider) {
+	m.cacheMutex.RLock()
+	defer m.cacheMutex.RUnlock()
+
+	keep = make(map[string]bool)
 	for _, details := range identityProviders {
 		if _, ok := m.cache[details.EntityId()]; !ok {
 			refresh = append(refresh, details)
-			m.processed[details.EntityId()] = details
 		} else {
 			processed := m.processed[details.EntityId()]
 			if !reflect.DeepEqual(processed, details) {
@@ -45,14 +71,11 @@ func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdentit
 			}
 		}
 	}
+	return keep, refresh
+}
 
-	for entityId := range m.cache {
-		if _, ok := keep[entityId]; !ok {
-			delete(m.cache, entityId)
-			delete(m.processed, entityId)
-		}
-	}
-
+func (m *CacheableIdpClientManager) resolveMetadata(refresh []SamlIdentityProvider) (resolved map[string]*saml.ServiceProvider){
+	resolved = make(map[string]*saml.ServiceProvider)
 	for _, details := range refresh {
 		idpDescriptor, data, err := saml_util.ResolveMetadata(details.MetadataLocation(), m.httpClient)
 		if err == nil {
@@ -94,11 +117,10 @@ func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdentit
 			} else {
 				client.SloURL.Host = details.Domain()
 			}
-			m.cache[details.EntityId()] = &client
-		} else {
-			logger.Error("could not resolve idp metadata", "details", details)
+			resolved[details.EntityId()] = &client
 		}
 	}
+	return resolved
 }
 
 func (m *CacheableIdpClientManager) GetAllClients() []*saml.ServiceProvider {

@@ -9,6 +9,7 @@ import (
 	"github.com/crewjam/saml"
 	"net/http"
 	"reflect"
+	"sync"
 )
 
 type SpMetadataManager struct {
@@ -17,6 +18,7 @@ type SpMetadataManager struct {
 	//entityId to descriptor
 	cache map[string]*saml.EntityDescriptor
 	processed map[string]SamlSpDetails
+	cacheMutex sync.RWMutex
 }
 
 func (m *SpMetadataManager) GetServiceProvider(serviceProviderID string) (SamlSpDetails, *saml.EntityDescriptor, error) {
@@ -29,9 +31,33 @@ func (m *SpMetadataManager) GetServiceProvider(serviceProviderID string) (SamlSp
 }
 
 func (m *SpMetadataManager) RefreshCache(clients []SamlClient) {
-	keep := make(map[string]bool)
-	var refresh []SamlSpDetails
+	//this method read locks the cache
+	keep, refresh := m.compareWithCache(clients)
 
+	resolved := m.resolveMetadata(refresh)
+
+	m.cacheMutex.Lock()
+	defer m.cacheMutex.Unlock()
+	for entityId := range m.cache {
+		if _, ok := keep[entityId]; !ok {
+			delete(m.cache, entityId)
+			delete(m.processed, entityId)
+		}
+	}
+
+	for _, details := range refresh {
+		if spDescriptor, ok := resolved[details.EntityId]; ok {
+			m.cache[details.EntityId] = spDescriptor
+			m.processed[details.EntityId] = details
+		}
+	}
+}
+
+func (m *SpMetadataManager) compareWithCache(clients []SamlClient) (keep map[string]bool, refresh []SamlSpDetails) {
+	m.cacheMutex.RLock()
+	defer m.cacheMutex.RUnlock()
+
+	keep = make(map[string]bool)
 	for _, c := range clients {
 		var details SamlSpDetails
 		if defaultClient, ok := c.(DefaultSamlClient); ok {
@@ -50,7 +76,6 @@ func (m *SpMetadataManager) RefreshCache(clients []SamlClient) {
 
 		if _, ok := m.cache[details.EntityId]; !ok {
 			refresh = append(refresh, details)
-			m.processed[details.EntityId] = details
 		} else {
 			processed := m.processed[details.EntityId]
 			if !reflect.DeepEqual(processed, details) {
@@ -60,14 +85,11 @@ func (m *SpMetadataManager) RefreshCache(clients []SamlClient) {
 			}
 		}
 	}
+	return keep, refresh
+}
 
-	for entityId := range m.cache {
-		if _, ok := keep[entityId]; !ok {
-			delete(m.cache, entityId)
-			delete(m.processed, entityId)
-		}
-	}
-
+func (m *SpMetadataManager) resolveMetadata(refresh []SamlSpDetails) (resolved map[string]*saml.EntityDescriptor) {
+	resolved = make(map[string]*saml.EntityDescriptor)
 	for _, details := range refresh {
 		spDescriptor, data, err := saml_util.ResolveMetadata(details.MetadataSource, m.httpClient)
 		if err == nil {
@@ -91,9 +113,10 @@ func (m *SpMetadataManager) RefreshCache(clients []SamlClient) {
 					continue
 				}
 			}
-			m.cache[details.EntityId] = spDescriptor
+			resolved[details.EntityId] = spDescriptor
 		} else {
 			logger.Error("could not resolve idp metadata", "details", details)
 		}
 	}
+	return resolved
 }

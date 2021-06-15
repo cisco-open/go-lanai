@@ -85,10 +85,6 @@ func VerifySignature(data []byte, trustedCerts...*x509.Certificate) error {
 		return errors.New("metadata is not signed")
 	}
 
-	if err != nil {
-		return errors.New("request signature cannot be verified, because metadata does not include certificate")
-	}
-
 	certificateStore := dsig.MemoryX509CertificateStore{
 		Roots: trustedCerts,
 	}
