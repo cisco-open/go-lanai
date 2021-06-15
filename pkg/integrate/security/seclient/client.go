@@ -5,7 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"math/rand"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"net/http"
 	"net/url"
 	"time"
@@ -33,7 +33,6 @@ type remoteAuthClient struct {
 	clientSecret  string
 	pwdLoginPath  string
 	switchCtxPath string
-	nonceSeed     *rand.Rand
 }
 
 func NewRemoteAuthClient(opts ...AuthClientOptions) *remoteAuthClient {
@@ -74,7 +73,6 @@ func NewRemoteAuthClient(opts ...AuthClientOptions) *remoteAuthClient {
 		clientSecret:  opt.ClientSecret,
 		pwdLoginPath:  opt.PwdLoginPath,
 		switchCtxPath: opt.SwitchContextPath,
-		nonceSeed:     rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -189,9 +187,5 @@ func (c *remoteAuthClient) handleResponse(resp *httpclient.Response, e error) (*
 }
 
 func (c *remoteAuthClient) generateNonce(length int) string {
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = nonceCharset[c.nonceSeed.Intn(len(nonceCharset))]
-	}
-	return string(b)
+	return utils.RandomString(length)
 }

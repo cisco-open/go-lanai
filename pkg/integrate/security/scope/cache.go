@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -28,21 +29,52 @@ func (k cKey) String() string {
 	return fmt.Sprintf("%s->%s@%s", k.src, user, tenant)
 }
 
+type entryValue oauth2.Authentication
+
 // cEntry carries cache entry.
-// All methods are NOT goroutine-safe
-// All fields should be immutable after the sync.WaitGroup's Wait() func
+// after the sync.WaitGroup's Wait() func, value, expire and lastErr should be immutable
+// and isLoaded() should return true
 type cEntry struct {
 	wg      sync.WaitGroup
 	value   entryValue
 	expire  time.Time
 	lastErr error
+	// invalid indicates whether "get" function should return it as existing entry.
+	// once an entry become "invalid", it's equivalent to "not exist"
+	// invalid can only be set from False to True atomically.
+	// when invalid flag == 1, it's guaranteed that the entry is not valid and such status is immutable
+	// when invalid flag == 0, it's NOT guaranteed the entry is "valid", goroutines should also check other fields after sync.WaitGroup's Wait()
+	invalid uint64
+	// loaded is used for evicting function to decide if expire is available without waiting on loader
+	// because evicting func is executed periodically to act on "loaded" entries, and loaded can only be set from False to True,
+	// it's not necessary to use lock to coordinate, atomic op is sufficient
+	// other threads/goroutines should use sync.WaitGroup's Wait()
+	loaded  uint64
 }
 
-type entryValue oauth2.Authentication
+// isExpired is NOT goroutine-safe
+func (ce *cEntry) isExpired() bool {
+	return !ce.expire.IsZero() && !time.Now().Before(ce.expire)
+}
 
-func (ce *cEntry) isValid() bool {
-	// FIXME consider token revocation
-	return ce.expire.IsZero() || time.Now().Before(ce.expire)
+// isInvalidated is atomic operation
+func (ce *cEntry) isInvalidated() bool {
+	return atomic.LoadUint64(&ce.invalid) != 0
+}
+
+// invalidate is atomic operation
+func (ce *cEntry) invalidate() {
+	atomic.StoreUint64(&ce.invalid, 1)
+}
+
+// isLoaded is atomic operation
+func (ce *cEntry) isLoaded() bool {
+	return atomic.LoadUint64(&ce.loaded) != 0
+}
+
+// markLoaded is atomic operation
+func (ce *cEntry) markLoaded() {
+	atomic.StoreUint64(&ce.loaded, 1)
 }
 
 type loadFunc func(ctx context.Context, k cKey) (v entryValue, exp time.Time, err error)
@@ -75,27 +107,37 @@ func newCache(opts ...cacheOptions) (ret *cache) {
 	return
 }
 
-
 func (c *cache) GetOrLoad(ctx context.Context, k *cKey, loader loadFunc, validator validateFunc) (entryValue, error) {
-	fmt.Printf("getting key-%v...\n", k)
-	entry := c.getOrNew(ctx, k, c.newEntryFunc(loader), validator)
-	if entry == nil {
-		return nil, fmt.Errorf("[Internal Error] security Scope cache returns nil entry")
+	// maxRetry should be > 0, no upper limit
+	// 1. when entry exists and not expired/invalidated, no retry
+	// 2. when entry is newly created, no retry
+	// 3. when entry exists but expired/invalidated, mark it invalidated and retry
+	const maxRetry = 2
+	for i := 0; i <= maxRetry; i++ {
+		// getOrNew guarantee that only one goroutine create new entry (if needed)
+		// aka, getOrNew uses cache-wise RW lock to ensure such behavior
+		entry, isNew := c.getOrNew(ctx, k, c.newEntryFunc(loader))
+		if entry == nil {
+			return nil, fmt.Errorf("[Internal Error] security Scope cache returns nil entry")
+		}
+
+		// wait for entry to load
+		entry.wg.Wait()
+
+		// from now on, entry content become immutable
+		// check entry validity
+		// note that we skip validation if the entry is freshly created
+		if isNew || !entry.isExpired() && (entry.lastErr != nil || validator(ctx, entry.value)) {
+			// valid entry
+			if entry.lastErr != nil {
+				return nil, entry.lastErr
+			}
+			return entry.value, nil
+		}
+		entry.invalidate()
 	}
 
-	// wait for entry to load
-	entry.wg.Wait()
-	fmt.Printf("got key-%v=%v, err=%v\n", k, entry.value, entry.lastErr)
-
-	// from now on, entry become immutable
-	if !entry.isValid() {
-		return nil, fmt.Errorf("[Internal Error] security Scope cache returns invalid entry")
-	}
-
-	if entry.lastErr != nil {
-		return nil, entry.lastErr
-	}
-	return entry.value, nil
+	return nil, fmt.Errorf("unable to load valid entry")
 }
 
 // newEntryFunc returns a newFunc that create an entry and kick off "loader" in separate goroutine
@@ -117,45 +159,56 @@ func (c *cache) load(ctx context.Context, key *cKey, entry *cEntry, loader loadF
 	entry.value = v
 	entry.expire = exp
 	entry.lastErr = e
+	entry.markLoaded()
 	entry.wg.Done()
 }
 
 // getOrNew return existing entry or create and set using newIfAbsent
 // this method is goroutine-safe
-func (c *cache) getOrNew(ctx context.Context, pKey *cKey, newIfAbsent newFunc, validator validateFunc) *cEntry {
-	v, ok := c.get(pKey, validator)
+func (c *cache) getOrNew(ctx context.Context, pKey *cKey, newIfAbsent newFunc) (entry *cEntry, isNew bool) {
+	v, ok := c.get(pKey)
 	if ok {
-		return v
+		return v, false
 	}
-
-	return c.setIfAbsent(ctx, pKey, newIfAbsent)
+	return c.newIfAbsent(ctx, pKey, newIfAbsent)
 }
 
-// setIfAbsent set entry using given "creator" if the key doesn't exist. otherwise returns existing entry
+// newIfAbsent create entry using given "creator" if the key doesn't exist. otherwise returns existing entry
 // this method is goroutine-safe
-func (c *cache) setIfAbsent(ctx context.Context, pKey *cKey, creator newFunc) *cEntry {
+func (c *cache) newIfAbsent(ctx context.Context, pKey *cKey, creator newFunc) (entry *cEntry, isNew bool) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if v, ok := c.getValue(pKey); ok || creator == nil {
-		return v
+	if v, ok := c.getValue(pKey); ok && !v.isInvalidated() || creator == nil {
+		return v, false
 	}
 
 	v := creator(ctx, pKey)
 	c.setValue(pKey, v)
-	return v
+	return v, true
+}
+
+// set is goroutine-safe
+func (c *cache) set(pKey *cKey, v *cEntry) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.setValue(pKey, v)
+	//c.cleanup(nil)
 }
 
 // get is goroutine-safe
-func (c *cache) get(pKey *cKey, validator validateFunc) (*cEntry, bool) {
+func (c *cache) get(pKey *cKey) (*cEntry, bool) {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
-	return c.getValue(pKey)
+	if v, ok := c.getValue(pKey); ok && !v.isInvalidated() {
+		return v, ok
+	}
+	return nil, false
 }
 
 // getValue not goroutine-safe
 func (c *cache) getValue(pKey *cKey) (*cEntry, bool) {
-	if v, ok := c.store[*pKey]; ok && v != nil && v.isValid() {
+	if v, ok := c.store[*pKey]; ok && v != nil {
 		return v, true
 	}
 	return nil, false
@@ -167,7 +220,17 @@ func (c *cache) setValue(pKey *cKey, v *cEntry) {
 		delete(c.store, *pKey)
 	} else {
 		c.store[*pKey] = v
-		c.tryEvict()
+		c.deleteInvalidatedValues()
+	}
+}
+
+// deleteInvalidatedValues remove given keys
+// this method is not goroutine-safe
+func (c *cache) deleteInvalidatedValues() {
+	for k, v := range c.store {
+		if v.isInvalidated() {
+			delete(c.store, k)
+		}
 	}
 }
 
@@ -177,20 +240,26 @@ func (c *cache) startReaper(interval time.Duration) {
 		for {
 			select {
 			case <-c.reaper.C:
-				c.tryEvict()
+				c.evict()
 			}
 		}
 	}()
 }
 
-// tryEvict remove invalid and expired entries
-// this method is not goroutine-safe
-func (c *cache) tryEvict() {
-	now := time.Now()
-	for k, v := range c.store {
-		if !v.isValid() || !v.expire.IsZero() && !now.Before(v.expire) {
-			fmt.Printf("evicting key-%v...\n", k)
-			c.setValue(&k, nil)
+func (c *cache) evict() {
+	// step 1, go through the store, find loaded entries (using atomic flag) and mark them invalidated if expired (with R lock)
+	func() {
+		c.mtx.RLock()
+		defer c.mtx.RUnlock()
+		for _, v := range c.store {
+			if !v.isInvalidated() && v.isLoaded() && v.isExpired() {
+				v.invalidate()
+			}
 		}
-	}
+	}()
+
+	// step 2, remove invalidated entries (with W lock)
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.deleteInvalidatedValues()
 }
