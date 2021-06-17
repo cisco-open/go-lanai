@@ -33,21 +33,26 @@ func NewFxTestRunner() test.InternalRunner {
 		// default modules
 		appconfig.Use()
 
-		// register test module
+		// prepare bootstrap fx options
+		priority := []fx.Option{
+			fx.Supply(t),
+			appconfig.FxEmbeddedDefaults(TestDefaultConfigFS),
+			appconfig.FxEmbeddedBootstrapAdHoc(TestBootstrapConfigFS),
+			appconfig.FxEmbeddedApplicationAdHoc(TestApplicationConfigFS),
+		}
+		regular := make([]fx.Option, 0)
+
+		// register test module's options without register the module directly
+		// Note: we want to support repeated bootstrap but the bootstrap package doesn't support
+		// module refresh (caused by singleton pattern).
+		// To avoid re-declaring same fx.Option, we don't register test module directly
 		if m, ok := ctx.Value(ctxKeyTestModule).(*bootstrap.Module); ok && m != nil {
-			bootstrap.Register(m)
+			priority = append(priority, m.PriorityOptions...)
+			regular = append(regular, m.Options...)
 		}
 
 		// bootstrapping
-		bootstrap.NewAppCmd(
-			"testapp",
-			[]fx.Option{
-				fx.Supply(t),
-				appconfig.FxEmbeddedDefaults(TestDefaultConfigFS),
-				appconfig.FxEmbeddedBootstrapAdHoc(TestBootstrapConfigFS),
-				appconfig.FxEmbeddedApplicationAdHoc(TestApplicationConfigFS),
-			},
-			[]fx.Option{},
+		bootstrap.NewAppCmd("testapp", priority, regular,
 			func(cmd *cobra.Command) {
 				cmd.Use = "testapp"
 				cmd.Args = nil

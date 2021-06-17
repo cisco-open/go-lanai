@@ -147,7 +147,7 @@ func SubTestCacheOnDifferentKeys() test.GomegaSubTestFunc {
 			counters[i] = &cacheCounter{}
 			loader, expected := staticLoadFunc(100 * time.Millisecond, 60 * time.Second)
 			results[i], _ = testRepeatedGetOrLoad(ctx, g, c, &k, counters[i].countLoad(loader), counters[i].countValidate(validator),
-				repeat, true, BeIdenticalTo(expected), "for " + k.username)
+				repeat, true, BeIdenticalTo(expected), "for " + k.String())
 
 		}
 

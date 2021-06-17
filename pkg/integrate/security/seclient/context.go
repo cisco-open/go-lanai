@@ -15,7 +15,6 @@ type AuthOption struct {
 	UserId      string	// UserId is used by switch user
 	TenantId    string	// TenantId is used by password login and switch user/tenant
 	TenantName  string	// TenantName is used by password login and switch user/tenant
-
 }
 
 type AuthenticationClient interface {

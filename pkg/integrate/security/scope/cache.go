@@ -193,7 +193,6 @@ func (c *cache) set(pKey *cKey, v *cEntry) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	c.setValue(pKey, v)
-	//c.cleanup(nil)
 }
 
 // get is goroutine-safe
@@ -229,7 +228,7 @@ func (c *cache) setValue(pKey *cKey, v *cEntry) {
 func (c *cache) deleteInvalidatedValues() {
 	for k, v := range c.store {
 		if v.isInvalidated() {
-			delete(c.store, k)
+			c.setValue(&k, nil)
 		}
 	}
 }

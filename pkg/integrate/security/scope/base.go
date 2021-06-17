@@ -82,7 +82,7 @@ func (b *managerBase) resolveUser(auth security.Authentication) (username, userI
 // 		currently logged in as "user1" with userId="user1-id" and scope indicate target scope.userId="user1-id"
 //		normalize result: scope.userId = "", scope.username="user1"
 func (b *managerBase) normalizeTargetUser(auth security.Authentication, scope *Scope) {
-	if scope.username == "" && scope.userId == "" || !b.isSameUser(scope.username, scope.userId, auth){
+	if scope.username == "" && scope.userId == "" || !b.isSameUser(scope.username, scope.userId, auth) {
 		return
 	}
 

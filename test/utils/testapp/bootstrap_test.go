@@ -66,6 +66,12 @@ type webDI struct {
 	Register *web.Registrar
 }
 
+type dummyService struct{}
+
+func newDummyService() *dummyService {
+	return &dummyService{}
+}
+
 type controller struct{}
 
 func newController() web.Controller {
@@ -134,6 +140,33 @@ func TestBootstrapWithCustomSettings(t *testing.T) {
 		),
 		WithFxOptions(
 			web.FxControllerProviders(newController),
+			fx.Provide(newDummyService),
+			fx.Invoke(counter.fxInvoke),
+		),
+		WithDI(bDI, acDI, wDI),
+		test.GomegaSubTest(SubTestDefaultDI(bDI, acDI)),
+		test.GomegaSubTest(SubTestAdditionalDI(wDI)),
+		test.GomegaSubTest(SubTestWebController(wDI)),
+	)
+
+	g := gomega.NewWithT(t)
+	g.Expect(counter.fxInvokeCount).To(gomega.Equal(2), "fx invoke func should be invoked twice, 1 for regular order, 1 for priority order")
+}
+
+func TestRepeatedBootstrapWithCustomSettings(t *testing.T) {
+	counter := &testHookCounter{}
+	bDI := &bootstrapDI{}
+	acDI := &appconfigDI{}
+	wDI := &webDI{}
+	test.RunTest(context.Background(), t,
+		Bootstrap(),
+		WithTimeout(30*time.Second),
+		WithFxPriorityOptions(
+			fx.Invoke(counter.fxInvoke),
+		),
+		WithFxOptions(
+			web.FxControllerProviders(newController),
+			fx.Provide(newDummyService),
 			fx.Invoke(counter.fxInvoke),
 		),
 		WithDI(bDI, acDI, wDI),

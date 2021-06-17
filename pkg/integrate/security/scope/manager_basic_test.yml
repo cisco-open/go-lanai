@@ -1,0 +1,14 @@
+integrate:
+  security:
+    failure-back-off: 100ms
+    guaranteed-validity: 10s
+    client:
+      client-id: "test-client"
+      secret: "test-secret"
+    accounts:
+      default:
+        username: ${mocking.accounts.system.username}
+        password: ${mocking.accounts.system.password}
+
+mocking:
+  token-validity: 130s

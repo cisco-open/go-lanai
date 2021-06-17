@@ -74,12 +74,12 @@ func configureSecurityScopeManagers(di secScopeDI) {
 			// special treatment on certain accounts. Since we don't know any use case of this feature at
 			// the time of writing this code, we temporarily disabled it, but keep the code for reference.
 			//for _, acct := range di.Properties.Accounts.Additional {
-			//	if acct.Username == "" || acct.Password == "" {
+			//	if acct.UName == "" || acct.Password == "" {
 			//		continue
 			//	}
-			//	credentials[acct.Username] = acct.Password
+			//	credentials[acct.UName] = acct.Password
 			//	if acct.SystemAccount {
-			//		sysAccts.Add(acct.Username)
+			//		sysAccts.Add(acct.UName)
 			//	}
 			//}
 			opt.KnownCredentials = credentials
