@@ -1,0 +1,7 @@
+cloud:
+  consul:
+    config:
+      enabled: false
+  vault:
+    kv:
+      enabled: false

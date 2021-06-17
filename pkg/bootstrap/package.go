@@ -4,37 +4,48 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"go.uber.org/fx"
+	"time"
 )
 
-var applicationContext = NewApplicationContext()
 var logger = log.New("Bootstrap")
 
-var DefaultModule = &Module{
-	Precedence: HighestPrecedence,
-	PriorityOptions: []fx.Option{
-		fx.Logger(&fxPrinter{logger: logger}),
-		fx.Provide(provideApplicationContext),
-		fx.Invoke(bootstrap),
-	},
+// InitModule returns the module that would run with highest priority
+func InitModule(cliCtx *CliExecContext, app *App) *Module {
+	return &Module{
+		Precedence: HighestPrecedence,
+		PriorityOptions: []fx.Option{
+			fx.Logger(newFxPrinter(logger, app)),
+			fx.Supply(cliCtx),
+			fx.Supply(app),
+			fx.Provide(provideApplicationContext),
+			fx.Invoke(bootstrap),
+		},
+	}
 }
 
-func init() {
-	Register(DefaultModule)
+// MiscModules returns the module that would run with various precedence
+func MiscModules() []*Module {
+	return []*Module{
+		{
+			Precedence: StartupSummaryPrecedence,
+			Options: []fx.Option{
+				fx.Invoke(startupTiming), // startup need to be run at last
+			},
+		},
+		{
+			Precedence: HighestPrecedence,
+			PriorityOptions: []fx.Option{
+				// shutdown timing need to be run at last
+				// note that fx.Hook.OnStop is run in reversed order
+				fx.Invoke(shutdownTiming),
+			},
+		},
+	}
 }
 
-// EagerGetApplicationContext returns the global ApplicationContext before it becomes available for dependency injection
-// Important: packages should typlically get ApplicationContext via fx's dependency injection,
-//			  which internal application config are garanteed.
-//			  Only packages involved in priority bootstrap (appconfig, consul, vault, etc)
-//			  should use this function for logging purpose
-func EagerGetApplicationContext() *ApplicationContext {
-	return applicationContext
-}
-
-
-func provideApplicationContext(config ApplicationConfig) *ApplicationContext {
-	applicationContext.config = config
-	return applicationContext
+func provideApplicationContext(app *App, config ApplicationConfig) *ApplicationContext {
+	app.ctx.config = config
+	return app.ctx
 }
 
 func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
@@ -52,7 +63,28 @@ func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
 			logger.WithContext(ac).Info("On Application Start")
 			return nil
 		},
+	})
+}
+
+func startupTiming(lc fx.Lifecycle, appCtx *ApplicationContext) {
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			if t, ok := ctx.Value(ctxKeyStartTime).(time.Time); ok {
+				elapsed := time.Now().Sub(t).Truncate(time.Millisecond)
+				logger.WithContext(ctx).Infof("Started %s in %v", appCtx.Name(), elapsed)
+			}
+			return nil
+		},
+	})
+}
+
+func shutdownTiming(lc fx.Lifecycle, appCtx *ApplicationContext) {
+	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
+			if t, ok := ctx.Value(ctxKeyStopTime).(time.Time); ok {
+				elapsed := time.Now().Sub(t).Truncate(time.Millisecond)
+				logger.WithContext(ctx).Infof("Stopped %s in %v", appCtx.Name(), elapsed)
+			}
 			return nil
 		},
 	})

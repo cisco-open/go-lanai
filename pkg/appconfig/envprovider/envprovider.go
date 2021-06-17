@@ -1,6 +1,7 @@
 package envprovider
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"os"
 	"strings"
@@ -16,7 +17,7 @@ func (configProvider *ConfigProvider) Name() string {
 	return "environment-variable"
 }
 
-func (configProvider *ConfigProvider) Load() (loadError error) {
+func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) {
 	defer func() {
 		if loadError != nil {
 			configProvider.Loaded = false

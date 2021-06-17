@@ -1,6 +1,7 @@
 package cliprovider
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/args"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -31,7 +32,7 @@ func (configProvider *ConfigProvider) Name() string {
 	return "command-line"
 }
 
-func (configProvider *ConfigProvider) Load() (loadError error) {
+func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) {
 	defer func() {
 		configProvider.Loaded = loadError == nil
 	}()

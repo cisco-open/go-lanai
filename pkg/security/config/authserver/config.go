@@ -41,7 +41,12 @@ type configDI struct {
 	SessionStore       session.Store
 }
 
-func NewConfiguration(di configDI) *Configuration {
+type authServerOut struct {
+	fx.Out
+	Config *Configuration
+}
+
+func ProvideAuthServerDI(di configDI) authServerOut {
 	config := Configuration{
 		appContext:         di.AppContext,
 		redisClientFactory: di.RedisClientFactory,
@@ -53,7 +58,9 @@ func NewConfiguration(di configDI) *Configuration {
 		Issuer:             newIssuer(&di.Properties.Issuer, &di.ServerProperties),
 	}
 	di.Configurer(&config)
-	return &config
+	return authServerOut {
+		Config: &config,
+	}
 }
 
 type initDI struct {
@@ -141,7 +148,7 @@ type Configuration struct {
 	sharedJwtDecoder          jwt.JwtDecoder
 	sharedDetailsFactory      *common.ContextDetailsFactory
 	sharedARProcessor         auth.AuthorizeRequestProcessor
-	sharedAuthHanlder         auth.AuthorizeHandler
+	sharedAuthHandler         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	sharedTokenAuthenticator  security.Authenticator
 }
@@ -307,10 +314,10 @@ func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcess
 	return c.sharedARProcessor
 }
 
-func (c *Configuration) authorizeHanlder() auth.AuthorizeHandler {
-	if c.sharedAuthHanlder == nil {
+func (c *Configuration) authorizeHandler() auth.AuthorizeHandler {
+	if c.sharedAuthHandler == nil {
 		//TODO OIDC extension
-		c.sharedAuthHanlder = auth.NewAuthorizeHandler(func(opt *auth.AuthHandlerOption) {
+		c.sharedAuthHandler = auth.NewAuthorizeHandler(func(opt *auth.AuthHandlerOption) {
 			//opt.Extensions = OIDC extensions
 			opt.ApprovalPageTmpl = "authorize.tmpl"
 			opt.ApprovalUrl = c.Endpoints.Approval
@@ -318,7 +325,7 @@ func (c *Configuration) authorizeHanlder() auth.AuthorizeHandler {
 			opt.AuthCodeStore = c.authorizeCodeStore()
 		})
 	}
-	return c.sharedAuthHanlder
+	return c.sharedAuthHandler
 }
 
 func (c *Configuration) authorizeCodeStore() auth.AuthorizationCodeStore {

@@ -13,6 +13,8 @@ import (
 	"go.uber.org/fx"
 	"html/template"
 	"io/fs"
+	"math/rand"
+	"net"
 	"net/http"
 	pathutils "path"
 	"reflect"
@@ -30,6 +32,8 @@ const (
 type Registrar struct {
 	engine           *Engine
 	router           gin.IRouter
+	server           *http.Server
+	port             int
 	properties       ServerProperties
 	options          []*orderedServerOption // options go-kit server options
 	validator        *Validate
@@ -42,7 +46,7 @@ type Registrar struct {
 	embedFs          []fs.FS
 	initialized      bool
 	warnDuplicateMWs bool
-	warnExclusion 	utils.StringSet
+	warnExclusion    utils.StringSet
 }
 
 func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
@@ -86,7 +90,7 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	binding.Validator = nil
 
 	// load templates
-	r.loadHtmlTemplates()
+	r.loadHtmlTemplates(ctx)
 
 	// add some common middlewares
 	mappings := []interface{}{}
@@ -152,16 +156,40 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 		_ = r.cleanup(ctx)
 	}(ctx)
 
-	var addr = fmt.Sprintf(":%v", r.properties.Port)
-	s := &http.Server{
+	// random port if not set
+	r.port = r.properties.Port
+	if r.port <= 0 {
+		r.port = 32768 + rand.New(rand.NewSource(time.Now().UnixNano())).Intn(32767)
+	}
+
+	var addr = fmt.Sprintf(":%v", r.port)
+	r.server = &http.Server{
 		Addr:           addr,
 		Handler:        r.engine,
 		ReadTimeout:    60 * time.Second,
 		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	go s.ListenAndServe()
+	return r.listenAndServe()
+}
+
+// Stop closes http server
+func (r *Registrar) Stop(ctx context.Context) (err error) {
+	if r.server == nil {
+		return fmt.Errorf("attempt to stop server before initialization")
+	}
+	err = r.server.Close()
+	if err != nil {
+		logger.WithContext(ctx).Warnf("error when stop http server: %v", err)
+	} else {
+		logger.WithContext(ctx).Infof("http server stopped")
+	}
 	return
+}
+
+// ServerPort returns the port of started server, returns 0 if server is not initialized
+func (r *Registrar) ServerPort() int {
+	return r.port
 }
 
 // Register is the entry point to register Controller, Mapping and other web related objects
@@ -197,6 +225,18 @@ func (r *Registrar) RegisterWithLifecycle(lc fx.Lifecycle, items...interface{}) 
 			return r.Register(items...)
 		},
 	})
+}
+
+func (r *Registrar) listenAndServe() error {
+	ln, err := net.Listen("tcp", r.server.Addr)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		_ = r.server.Serve(ln)
+	}()
+	return nil
 }
 
 func (r *Registrar) register(i interface{}) (err error) {
@@ -513,13 +553,13 @@ func (r *Registrar) kitServerOptions() []httptransport.ServerOption {
 	return opts
 }
 
-func (r *Registrar) loadHtmlTemplates() {
+func (r *Registrar) loadHtmlTemplates(ctx context.Context) {
 	osFS := NewOSDirFS("web/", DirFSAllowListDirectory)
 	mFs := NewMergedFS(osFS, r.embedFs...)
-	//r.engine.LoadHTMLGlob("web/template/*")
 	t, e := template.ParseFS(mFs, "**/*.tmpl")
 	if e != nil {
-		panic(e)
+		logger.WithContext(ctx).Infof("no templates loaded: %v", e)
+		return
 	}
 	r.engine.SetHTMLTemplate(t)
 }

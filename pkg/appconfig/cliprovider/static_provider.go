@@ -1,6 +1,7 @@
 package cliprovider
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 )
@@ -27,7 +28,7 @@ func (p *StaticConfigProvider) Name() string {
 	return "default"
 }
 
-func (p *StaticConfigProvider) Load() (err error) {
+func (p *StaticConfigProvider) Load(_ context.Context) (err error) {
 	defer func(){
 		p.Loaded = err == nil
 	}()
