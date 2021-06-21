@@ -1,0 +1,11 @@
+server:
+  port: 0   # random port
+  context-path: "/lanai"
+  logging:
+    default-level: "info"
+    levels:
+      cors:
+        method: "OPTIONS"
+        pattern: "/**"
+        level: "off"
+
