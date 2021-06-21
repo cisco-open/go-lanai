@@ -22,9 +22,11 @@ var SamlAuthModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(SamlAuthModule)
-
 	gob.Register((*samlAssertionAuthentication)(nil))
+}
+
+func Use() {
+	bootstrap.Register(SamlAuthModule)
 }
 
 type initDI struct {

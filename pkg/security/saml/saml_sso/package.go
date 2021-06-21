@@ -19,17 +19,17 @@ var Module = &bootstrap.Module{
 
 var logger = log.New("SAML.SSO")
 
-func init() {
+func Use() {
 	bootstrap.Register(Module)
 }
 
 type initDI struct {
 	fx.In
-	SecRegistrar security.Registrar `optional:"true"`
+	SecRegistrar           security.Registrar `optional:"true"`
 	Properties             saml.SamlProperties
 	ServerProperties       web.ServerProperties
-	ServiceProviderManager SamlClientStore
-	AccountStore           security.AccountStore
+	ServiceProviderManager SamlClientStore `optional:"true"`
+	AccountStore           security.AccountStore `optional:"true"`
 	AttributeGenerator     AttributeGenerator `optional:"true"`
 }
 
