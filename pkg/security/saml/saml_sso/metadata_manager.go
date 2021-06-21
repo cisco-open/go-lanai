@@ -22,6 +22,9 @@ type SpMetadataManager struct {
 }
 
 func (m *SpMetadataManager) GetServiceProvider(serviceProviderID string) (SamlSpDetails, *saml.EntityDescriptor, error) {
+	m.cacheMutex.RLock()
+	defer m.cacheMutex.RUnlock()
+
 	for k, v := range m.cache {
 		if k == serviceProviderID {
 			return m.processed[k], v, nil
@@ -31,15 +34,29 @@ func (m *SpMetadataManager) GetServiceProvider(serviceProviderID string) (SamlSp
 }
 
 func (m *SpMetadataManager) RefreshCache(clients []SamlClient) {
-	//this method read locks the cache
-	keep, refresh := m.compareWithCache(clients)
+	m.cacheMutex.RLock()
+	remove, refresh := m.compareWithCache(clients)
+	m.cacheMutex.RUnlock()
 
-	resolved := m.resolveMetadata(refresh)
+	//nothing changed, just return
+	if len(refresh) == 0 && len(remove) == 0{
+		return
+	}
 
 	m.cacheMutex.Lock()
 	defer m.cacheMutex.Unlock()
-	for entityId := range m.cache {
-		if _, ok := keep[entityId]; !ok {
+
+	//check again because another process may have got into the write lock first and updated cache
+	remove, refresh = m.compareWithCache(clients)
+	//if the cache was updated by another process, then just return
+	if len(refresh) == 0 && len(remove) == 0 {
+		return
+	}
+
+	resolved := m.resolveMetadata(refresh)
+
+	for entityId, doRemove := range remove {
+		if doRemove {
 			delete(m.cache, entityId)
 			delete(m.processed, entityId)
 		}
@@ -53,11 +70,10 @@ func (m *SpMetadataManager) RefreshCache(clients []SamlClient) {
 	}
 }
 
-func (m *SpMetadataManager) compareWithCache(clients []SamlClient) (keep map[string]bool, refresh []SamlSpDetails) {
-	m.cacheMutex.RLock()
-	defer m.cacheMutex.RUnlock()
+func (m *SpMetadataManager) compareWithCache(clients []SamlClient) (remove map[string]bool, refresh []SamlSpDetails) {
+	keep := make(map[string]bool)
+	remove = make(map[string]bool)
 
-	keep = make(map[string]bool)
 	for _, c := range clients {
 		var details SamlSpDetails
 		if defaultClient, ok := c.(DefaultSamlClient); ok {
@@ -85,7 +101,13 @@ func (m *SpMetadataManager) compareWithCache(clients []SamlClient) (keep map[str
 			}
 		}
 	}
-	return keep, refresh
+
+	for entityId := range m.cache {
+		if _, ok := keep[entityId]; !ok {
+			remove[entityId] = true
+		}
+	}
+	return remove, refresh
 }
 
 func (m *SpMetadataManager) resolveMetadata(refresh []SamlSpDetails) (resolved map[string]*saml.EntityDescriptor) {

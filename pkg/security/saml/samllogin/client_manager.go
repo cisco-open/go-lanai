@@ -31,16 +31,28 @@ func NewCacheableIdpClientManager(template saml.ServiceProvider) *CacheableIdpCl
 }
 
 func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdentityProvider) {
-	//this method read locks the cache
-	keep, refresh := m.compareWithCache(identityProviders)
+	m.cacheMutex.RLock()
+	remove, refresh := m.compareWithCache(identityProviders)
+	m.cacheMutex.RUnlock()
 
-	resolved := m.resolveMetadata(refresh)
+	//nothing changed, just return
+	if len(refresh) == 0 && len(remove) == 0{
+		return
+	}
 
 	m.cacheMutex.Lock()
 	defer m.cacheMutex.Unlock()
 
-	for entityId := range m.cache {
-		if _, ok := keep[entityId]; !ok {
+	//check again in case another process has already made the update
+	remove, refresh = m.compareWithCache(identityProviders)
+	if len(refresh) == 0 && len(remove) == 0{
+		return
+	}
+
+	resolved := m.resolveMetadata(refresh)
+
+	for entityId, doRemove := range remove {
+		if doRemove {
 			delete(m.cache, entityId)
 			delete(m.processed, entityId)
 		}
@@ -54,11 +66,10 @@ func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdentit
 	}
 }
 
-func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIdentityProvider) (keep map[string]bool, refresh []SamlIdentityProvider) {
-	m.cacheMutex.RLock()
-	defer m.cacheMutex.RUnlock()
+func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIdentityProvider) (remove map[string]bool, refresh []SamlIdentityProvider) {
+	keep := make(map[string]bool)
+	remove = make(map[string]bool)
 
-	keep = make(map[string]bool)
 	for _, details := range identityProviders {
 		if _, ok := m.cache[details.EntityId()]; !ok {
 			refresh = append(refresh, details)
@@ -71,7 +82,13 @@ func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIde
 			}
 		}
 	}
-	return keep, refresh
+
+	for entityId := range m.cache {
+		if _, ok := keep[entityId]; !ok {
+			remove[entityId] = ok
+		}
+	}
+	return remove, refresh
 }
 
 func (m *CacheableIdpClientManager) resolveMetadata(refresh []SamlIdentityProvider) (resolved map[string]*saml.ServiceProvider){
@@ -124,6 +141,9 @@ func (m *CacheableIdpClientManager) resolveMetadata(refresh []SamlIdentityProvid
 }
 
 func (m *CacheableIdpClientManager) GetAllClients() []*saml.ServiceProvider {
+	m.cacheMutex.RLock()
+	defer m.cacheMutex.RUnlock()
+
 	clients := make([]*saml.ServiceProvider, len(m.cache))
 	idx := 0
 	for  _, client := range m.cache {
@@ -134,6 +154,9 @@ func (m *CacheableIdpClientManager) GetAllClients() []*saml.ServiceProvider {
 }
 
 func (m *CacheableIdpClientManager) GetClientByComparator(comparator func(details SamlIdentityProvider) bool) (client *saml.ServiceProvider, ok bool) {
+	m.cacheMutex.RLock()
+	defer m.cacheMutex.RUnlock()
+
 	for entityId, details := range m.processed {
 		if comparator(details) {
 			return m.cache[entityId], true
