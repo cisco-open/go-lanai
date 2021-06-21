@@ -1,6 +1,7 @@
 package swagger
 
 import (
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
@@ -15,6 +16,9 @@ import (
 //go:embed generated/*
 var Content embed.FS
 
+//go:embed defaults-swagger.yml
+var defaultConfigFS embed.FS
+
 var logger = log.New("Swagger")
 
 var Module = &bootstrap.Module{
@@ -24,6 +28,7 @@ var Module = &bootstrap.Module{
 		fx.Invoke(configureSecurity),
 	},
 	Options: []fx.Option{
+		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(bindSecurityProperties),
 		fx.Invoke(initialize),
 	},

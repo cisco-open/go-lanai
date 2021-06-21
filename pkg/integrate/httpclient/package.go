@@ -16,7 +16,7 @@ var Module = &bootstrap.Module{
 	Name: "http-client",
 	Precedence: bootstrap.HttpClientPrecedence,
 	Options: []fx.Option{
-		appconfig.FxEmbeddedDefaults(DefaultConfigFS),
+		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(bindHttpClientProperties),
 		fx.Provide(provideHttpClient),
 	},

@@ -6,17 +6,20 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/env"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health/endpoint"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/info"
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"embed"
 	"go.uber.org/fx"
 )
 
-var logger = log.New("Actuator")
+//go:embed defaults-actuator.yml
+var defaultConfigFS embed.FS
 
 var Module = &bootstrap.Module{
 	Name: "actuate-config",
 	Precedence: actuator.MinActuatorPrecedence,
 	Options: []fx.Option{
+		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Invoke(info.Register),
 		fx.Invoke(health.Register),
 		fx.Invoke(env.Register),
@@ -24,13 +27,9 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func init() {
-	bootstrap.Register(Module)
-}
-
-// Maker func, does nothing. Allow service to include this module in main()
 func Use() {
-
+	actuator.Use()
+	bootstrap.Register(Module)
 }
 
 /**************************

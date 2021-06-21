@@ -1,0 +1,37 @@
+levels:
+  default: debug
+  Bootstrap: debug
+  Web: info
+  Security: debug
+  SEC.Err: debug
+  OAuth2: debug
+  OAuth2.Auth: info
+  ACTR.Info: info
+  ACTR.Health: info
+  Data: info
+
+loggers:
+  console:
+    type: console
+    format: text
+    template: '{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+    fixed-keys: "spanId, traceId, parentId, http, db, remote-http"
+
+#  text-file:
+#    type: file
+#    format: text
+#    location: "logs/text.log"
+#    template: '{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+#    fixed-keys: "spanId, traceId, parentId, http"
+
+#  json-file:
+#    type: file
+#    format: json
+#    location: "logs/json.log"
+
+# Context Mapping indicate which key-value should be extracted from given context.Context when logger is used
+#context-mappings:
+#  Ctx-1: "ctx1"
+#  Ctx-2: "ctx2"
+#  Ctx-3: "ctx3"
+

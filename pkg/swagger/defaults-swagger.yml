@@ -1,0 +1,9 @@
+swagger:
+  spec: configs/api-doc.json
+  security:
+    sso:
+      base-url: http://localhost:8900/auth
+      token-path: /v2/token
+      authorize-path: /v2/authorize
+      client-id: nfv-client
+      #client-secret: nfv-secret

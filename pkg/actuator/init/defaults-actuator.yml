@@ -1,0 +1,39 @@
+management:
+  enabled: true
+  endpoints:
+    enabled-by-default: false
+    web:
+      base-path: /admin
+      exposure:
+        include: ["*"]
+  endpoint:
+    alive:
+      enabled: true
+    info:
+      enabled: true
+    health:
+      enabled: true
+      status:
+        order: down, out_of_service, unknown, up
+        http-mapping:
+          down: 503
+          up: 200
+          unknown: 200
+      show-components: authorized
+      show-details: authorized
+      permissions: IS_API_ADMIN
+    env:
+      enabled: true
+  security:
+    enabled-by-default: true
+    permissions: IS_API_ADMIN
+
+server:
+  logging:
+    levels:
+      health:
+        pattern: "${management.endpoints.web.base-path}/health"
+        level: "off"
+      alive:
+        pattern: "${management.endpoints.web.base-path}/alive"
+        level: "off"

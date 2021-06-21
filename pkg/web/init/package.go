@@ -2,25 +2,28 @@ package init
 
 import (
 	"context"
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/cors"
+	"embed"
 	"go.uber.org/fx"
 )
+
+//go:embed defaults-web.yml
+var defaultConfigFS embed.FS
 
 var Module = &bootstrap.Module{
 	Name: "web",
 	Precedence: web.MinWebPrecedence,
 	PriorityOptions: []fx.Option{
-		fx.Provide(web.BindServerProperties,
+		appconfig.FxEmbeddedDefaults(defaultConfigFS),
+		fx.Provide(
+			web.BindServerProperties,
 			web.NewEngine,
 			web.NewRegistrar),
 		fx.Invoke(setup),
 	},
-}
-
-func init() {
-
 }
 
 // Use Allow service to include this module in main()

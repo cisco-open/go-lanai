@@ -70,7 +70,7 @@ func (l *LogDetailsLevel) UnmarshalText(data []byte) error {
 }
 
 //go:embed defaults-integrate-http.yml
-var DefaultConfigFS embed.FS
+var defaultConfigFS embed.FS
 
 type HttpClientProperties struct {
 	MaxRetries int              `json:"max-retries"` // negative value means no retry
