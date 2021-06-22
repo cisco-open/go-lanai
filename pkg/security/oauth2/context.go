@@ -8,6 +8,7 @@ import (
 /******************************
 	security.Authentication
 ******************************/
+
 // Authentication implements security.Authentication
 type Authentication interface {
 	security.Authentication
@@ -83,7 +84,7 @@ func (a *authentication) AccessToken() AccessToken {
 }
 
 func calculateState(req OAuth2Request, userAuth security.Authentication) security.AuthenticationState {
-	if req.Approved() {
+	if req != nil && req.Approved() {
 		if userAuth != nil {
 			return userAuth.State()
 		}

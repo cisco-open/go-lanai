@@ -1,9 +1,11 @@
 package log
 
 import (
+	"embed"
 	"encoding/json"
 	"github.com/ghodss/yaml"
 	"github.com/imdario/mergo"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -46,28 +48,53 @@ func UpdateLoggingConfiguration(properties *Properties) error {
 	return err
 }
 
+//go:embed defaults-log.yml
+var defaultConfigFS embed.FS
+
 // Since log package cannot depend on other packages in case those package want to use log,
 // we have to duplicate the code for reading profile here.
-
 func init() {
-	defaultConfig = newProperties()
-
 	fullPath := path.Join("configs", "log.yml")
-	info, err := os.Stat(fullPath)
-	if !os.IsNotExist(err) && !info.IsDir() {
-		file, err := os.Open(fullPath)
-		if err == nil {
-			encoded, err := ioutil.ReadAll(file)
-			if err == nil {
-				encodedJson, err := yaml.YAMLToJSON(encoded)
-				if err == nil {
-					err = json.Unmarshal(encodedJson, defaultConfig)
-				}
-			}
-		}
+	var err error
+	if stat, e := os.Stat(fullPath); e == nil && !stat.IsDir() {
+		// log.yml is available, try use it
+		defaultConfig, err = loadConfig(os.DirFS("."), fullPath)
 	}
+
+	if err != nil || defaultConfig == nil {
+		// log.yml is not available, uses embedded defaults
+		defaultConfig, err = loadConfig(defaultConfigFS, "defaults-log.yml")
+	}
+
+	if err != nil || defaultConfig == nil {
+		defaultConfig = newProperties()
+	}
+
 	factory = newKitLoggerFactory(defaultConfig)
 
 	// a test run for dev
 	//DebugShowcase()
+}
+
+func loadConfig(fs fs.FS, path string) (*Properties, error) {
+	file, e := fs.Open(path)
+	if e != nil {
+		return nil, e
+	}
+
+	encoded, e := ioutil.ReadAll(file)
+	if e != nil {
+		return nil, e
+	}
+
+	encodedJson, e := yaml.YAMLToJSON(encoded)
+	if e != nil {
+		return nil, e
+	}
+
+	props := newProperties()
+	if e := json.Unmarshal(encodedJson, props); e != nil {
+		return nil, e
+	}
+	return props, nil
 }

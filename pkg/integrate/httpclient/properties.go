@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"embed"
 	"github.com/pkg/errors"
 	"strings"
 	"time"
@@ -67,6 +68,9 @@ func (l *LogDetailsLevel) UnmarshalText(data []byte) error {
 	}
 	return nil
 }
+
+//go:embed defaults-integrate-http.yml
+var defaultConfigFS embed.FS
 
 type HttpClientProperties struct {
 	MaxRetries int              `json:"max-retries"` // negative value means no retry

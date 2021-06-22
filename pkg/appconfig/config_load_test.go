@@ -90,7 +90,7 @@ func TestMultiPassLoad(t *testing.T) {
 		groups: Groups,
 	}
 	g := NewWithT(t)
-	e := conf.Load(false)
+	e := conf.Load(context.Background(), false)
 	g.Expect(e).To(Succeed(), "Load shouldn't return error")
 	g.Expect(len(conf.Providers())).To(Equal(5), "All providers should be loaded")
 	first := conf.Providers()[0]
@@ -145,7 +145,7 @@ func (p TestProvider) Name() string {
 	return p.name
 }
 
-func (p *TestProvider) Load() error {
+func (p *TestProvider) Load(_ context.Context) error {
 	p.settings = p.mocked
 	return nil
 }

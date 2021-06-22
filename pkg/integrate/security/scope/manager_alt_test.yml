@@ -1,0 +1,14 @@
+integrate:
+  security:
+    failure-back-off: 200ms
+    guaranteed-validity: 10s
+    client:
+      client-id: "test-client"
+      secret: "test-secret"
+    accounts:
+      default:
+        username: ""
+        password: ""
+
+mocking:
+  token-validity: 5s

@@ -20,6 +20,7 @@ const (
 	OpNameDB         = "db"
 	OpNameCli        = "cli"
 	OpNameHttpClient = "remote-http"
+	OpNameSecScope   = "security"
 	//OpName = ""
 )
 

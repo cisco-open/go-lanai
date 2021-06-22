@@ -74,7 +74,7 @@ func (g *PermissionBasedGranter) validateStoredPermissions(ctx context.Context, 
 func (g *PermissionBasedGranter) validateStoredClient(ctx context.Context, client oauth2.OAuth2Client, src oauth2.OAuth2Request) error {
 	original := src.ClientId()
 	requested := client.ClientId()
-	logger.WithContext(ctx).Debug(fmt.Sprintf("Security context switch as original VaultClient ID [%s] and requesting VaultClient ID [%s]", original, requested))
+	logger.WithContext(ctx).Debug(fmt.Sprintf("security context switch as original Client ID [%s] and requesting Client ID [%s]", original, requested))
 
 	return nil
 }

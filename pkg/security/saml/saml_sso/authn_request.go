@@ -2,14 +2,11 @@ package saml_auth
 
 import (
 	"bytes"
-	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
 	"encoding/xml"
 	"fmt"
-	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
 	xrv "github.com/mattermost/xml-roundtrip-validator"
-	dsig "github.com/russellhaering/goxmldsig"
-	"github.com/russellhaering/goxmldsig/etreeutils"
 	"strconv"
 )
 
@@ -50,68 +47,12 @@ func ValidateAuthnRequest(req *saml.IdpAuthnRequest, spDetails SamlSpDetails, sp
 }
 
 func verifySignature(req *saml.IdpAuthnRequest) error {
-	doc := etree.NewDocument()
-	// this shouldn't occur because we have already parsed the request buffer into the auth request structure
-	// so this is just a sanity check
-	if err := doc.ReadFromBytes(req.RequestBuffer); err != nil {
-		return NewSamlInternalError("error parsing request for signature verification", err)
-	}
-
-	el := doc.Root()
-
-	sigEl, err := findChild(el, "http://www.w3.org/2000/09/xmldsig#", "Signature")
-
-	if err != nil || sigEl == nil {
-		return NewSamlRequesterError("auth request is not signed")
-	}
-
+	data := req.RequestBuffer;
 	cert, err := getServiceProviderCert(req,"signing")
-
 	if err != nil {
 		return NewSamlRequesterError("request signature cannot be verified, because metadata does not include certificate", err)
 	}
-
-	certificateStore := dsig.MemoryX509CertificateStore{
-		Roots: []*x509.Certificate{cert},
-	}
-
-	validationContext := dsig.NewDefaultValidationContext(&certificateStore)
-	validationContext.IdAttribute = "ID"
-	if saml.Clock != nil {
-		validationContext.Clock = saml.Clock
-	}
-
-	//if there's signature but keyInfo is not X509, then we remove the key info element, and just use the
-	//default public key to verify.
-	//if keyinfo is x509, it'll be verified that it's a trusted key before being used to verify the signature
-	//See the logic in validationContext.ValidateAuthnRequest
-	if el.FindElement("./Signature/KeyInfo/X509Data/X509Certificate") == nil {
-		if keyInfo := sigEl.FindElement("KeyInfo"); keyInfo != nil {
-			sigEl.RemoveChild(keyInfo)
-		}
-	}
-
-	ctx, err := etreeutils.NSBuildParentContext(el)
-	if err != nil {
-		return NewSamlInternalError("error getting document context for signature check", err)
-	}
-	ctx, err = ctx.SubContext(el)
-	if err != nil {
-		return NewSamlInternalError("error getting document sub context for signature check", err)
-	}
-	//makes a copy of the element
-	el, err = etreeutils.NSDetatch(ctx, el)
-	if err != nil {
-		return NewSamlInternalError("error getting document for signature check", err)
-	}
-
-	_, err = validationContext.Validate(el)
-
-	if err!= nil {
-		return NewSamlRequesterError("Invalid signature", err)
-	}
-
-	return nil
+	return saml_util.VerifySignature(data, cert)
 }
 
 func DetermineACSEndpoint(req *saml.IdpAuthnRequest) error {
@@ -160,32 +101,4 @@ func DetermineACSEndpoint(req *saml.IdpAuthnRequest) error {
 	}
 
 	return NewSamlRequesterError("assertion consumer service not found")
-}
-
-func findChild(parentEl *etree.Element, childNS string, childTag string) (*etree.Element, error) {
-	for _, childEl := range parentEl.ChildElements() {
-		if childEl.Tag != childTag {
-			continue
-		}
-
-		ctx, err := etreeutils.NSBuildParentContext(childEl)
-		if err != nil {
-			return nil, err
-		}
-		ctx, err = ctx.SubContext(childEl)
-		if err != nil {
-			return nil, err
-		}
-
-		ns, err := ctx.LookupPrefix(childEl.Space)
-		if err != nil {
-			return nil, fmt.Errorf("[%s]:%s cannot find prefix %s: %v", childNS, childTag, childEl.Space, err)
-		}
-		if ns != childNS {
-			continue
-		}
-
-		return childEl, nil
-	}
-	return nil, nil
 }

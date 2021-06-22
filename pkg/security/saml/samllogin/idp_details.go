@@ -8,6 +8,9 @@ type SamlIdentityProvider interface {
 	MetadataLocation() string
 	ExternalIdName() string
 	ExternalIdpName() string
+	ShouldMetadataRequireSignature() bool
+	ShouldMetadataTrustCheck() bool
+	GetMetadataTrustedKeys() []string
 }
 
 type SamlIdentityProviderManager interface {

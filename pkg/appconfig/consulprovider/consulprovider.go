@@ -1,15 +1,15 @@
 package consulprovider
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"fmt"
 )
 
 const (
-	ConfigKeyConsulEndpoint = "cloud.consul.endpoint"
-	ConfigKeyAppName        = "application.name"
+	ConsulConfigPrefix = "cloud.consul.config"
+	ConfigKeyAppName   = "application.name"
 )
 
 type ConsulConfigProperties struct {
@@ -29,7 +29,7 @@ func (configProvider *ConfigProvider) Name() string {
 	return fmt.Sprintf("consul:%s", configProvider.contextPath)
 }
 
-func (configProvider *ConfigProvider) Load() (loadError error) {
+func (configProvider *ConfigProvider) Load(ctx context.Context) (loadError error) {
 	defer func(){
 		if loadError != nil {
 			configProvider.Loaded = false
@@ -44,7 +44,7 @@ func (configProvider *ConfigProvider) Load() (loadError error) {
 	var defaultSettings map[string]interface{}
 
 	defaultSettings, loadError = configProvider.connection.ListKeyValuePairs(
-		bootstrap.EagerGetApplicationContext(),
+		ctx,
 		configProvider.contextPath)
 	if loadError != nil {
 		return loadError

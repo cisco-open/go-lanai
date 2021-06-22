@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/fileprovider"
 	"fmt"
@@ -22,7 +23,7 @@ func TestResolvePlaceHolders(t *testing.T) {
 	p := fileprovider.NewProvider(0, fullPath, file)
 	c := appconfig.NewApplicationConfig(appconfig.NewStaticProviderGroup(0, p))
 
-	if e := c.Load(true); e != nil {
+	if e := c.Load(context.Background(), true); e != nil {
 		t.Errorf("Load() returns error %v", e)
 	}
 
@@ -64,7 +65,7 @@ func TestResolvePlaceHoldersWithCircularReference(t *testing.T) {
 	p := fileprovider.NewProvider(0, fullPath, file)
 	c := appconfig.NewApplicationConfig(appconfig.NewStaticProviderGroup(0, p))
 
-	error = c.Load(true)
+	error = c.Load(context.Background(), true)
 
 	if error == nil {
 		t.Errorf("expected error")

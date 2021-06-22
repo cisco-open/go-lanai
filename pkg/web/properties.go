@@ -25,7 +25,7 @@ type LoggingProperties struct {
 	Levels       map[string]LoggingLevelProperties `json:"levels"`
 }
 
-// LoggingProperties is used to override logging level on particular set of paths
+// LoggingLevelProperties is used to override logging level on particular set of paths
 // the LoggingProperties.Pattern support wildcard and should not include "context-path"
 // the LoggingProperties.Method is space separated values. If left blank or contains "*", it matches all methods
 type LoggingLevelProperties struct {

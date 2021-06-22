@@ -15,6 +15,7 @@ var Module = &bootstrap.Module{
 }
 
 func init() {
+	health.Use()
 	bootstrap.Register(Module)
 }
 

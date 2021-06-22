@@ -24,6 +24,7 @@ var Module = &bootstrap.Module{
 		fx.Provide(instrument.GormTracingProvider()),
 		fx.Provide(instrument.CliRunnerTracingProvider()),
 		fx.Provide(instrument.HttpClientTracingProvider()),
+		fx.Provide(instrument.SecurityScopeTracingProvider()),
 		fx.Invoke(initialize),
 	},
 }

@@ -17,7 +17,7 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func init() {
+func Use() {
 	bootstrap.Register(Module)
 }
 
