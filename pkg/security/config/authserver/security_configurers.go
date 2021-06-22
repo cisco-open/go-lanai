@@ -99,7 +99,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			ApprovalPath(c.config.Endpoints.Approval).
 			RequestProcessors(c.config.authorizeRequestProcessor()).
 			ErrorHandler(c.config.errorHandler()).
-			AuthorizeHanlder(c.config.authorizeHanlder()),
+			AuthorizeHanlder(c.config.authorizeHandler()),
 		).
 		Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
 		With(saml_auth.NewEndpoint().

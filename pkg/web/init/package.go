@@ -20,13 +20,13 @@ var Module = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(Module)
-	bootstrap.Register(cors.Module)
+
 }
 
-// Maker func, does nothing. Allow service to include this module in main()
+// Use Allow service to include this module in main()
 func Use() {
-
+	bootstrap.Register(Module)
+	bootstrap.Register(cors.Module)
 }
 
 /**************************
@@ -46,21 +46,20 @@ type initDI struct {
 }
 
 func setup(lc fx.Lifecycle, di initDI) {
-	di.Registrar.Register(web.NewLoggingCustomizer(di.Properties))
-	di.Registrar.Register(web.NewRecoveryCustomizer())
-	di.Registrar.Register(web.NewGinErrorHandlingCustomizer())
+	_ = di.Registrar.Register(web.NewLoggingCustomizer(di.Properties))
+	_ = di.Registrar.Register(web.NewRecoveryCustomizer())
+	_ = di.Registrar.Register(web.NewGinErrorHandlingCustomizer())
 
-	di.Registrar.Register(di.Controllers)
-	di.Registrar.Register(di.Customizers)
-	di.Registrar.Register(di.ErrorTranslators)
+	_ = di.Registrar.Register(di.Controllers)
+	_ = di.Registrar.Register(di.Customizers)
+	_ = di.Registrar.Register(di.ErrorTranslators)
 
 	lc.Append(fx.Hook{
-		OnStart: makeMappingRegistrationOnStartHandler(&di),
+		OnStart: func(ctx context.Context) (err error) {
+			return di.Registrar.Run(ctx)
+		},
+		OnStop: func(ctx context.Context) error {
+			return di.Registrar.Stop(ctx)
+		},
 	})
-}
-
-func makeMappingRegistrationOnStartHandler(dep *initDI) bootstrap.LifecycleHandler {
-	return func(ctx context.Context) (err error) {
-		return dep.Registrar.Run(ctx)
-	}
 }

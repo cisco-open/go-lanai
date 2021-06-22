@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -15,6 +16,7 @@ var Module = &bootstrap.Module{
 	Name: "http-client",
 	Precedence: bootstrap.HttpClientPrecedence,
 	Options: []fx.Option{
+		appconfig.FxEmbeddedDefaults(DefaultConfigFS),
 		fx.Provide(bindHttpClientProperties),
 		fx.Provide(provideHttpClient),
 	},

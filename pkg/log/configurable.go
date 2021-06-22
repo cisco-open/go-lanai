@@ -31,7 +31,7 @@ func newConfigurableLogger(name string, templateLogger log.Logger, logLevel Logg
 		logger: logger{
 			Logger: log.With(&swap,
 				LogKeyTimestamp, timestampUTC,
-				LogKeyCaller, log.Caller(7),
+				LogKeyCaller, log.Caller(4),
 				LogKeyName, name,
 			),
 		},

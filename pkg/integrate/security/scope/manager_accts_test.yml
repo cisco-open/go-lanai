@@ -1,0 +1,30 @@
+mocking:
+  accounts:
+    system:
+      username: "system"
+      password: "system"
+      default-tenant: "id-tenant-1"
+      tenants: ["id-tenant-1", "id-tenant-2", "id-tenant-3"]
+      permissions: ["ACCESS_ALL_TENANTS", "VIEW_OPERATOR_LOGIN_AS_CUSTOMER", "SWITCH_TENANT"]
+    admin:
+      username: "admin"
+      user-id: "id-admin"
+      default-tenant: "id-tenant-1"
+      tenants: [ "id-tenant-1", "id-tenant-2" ]
+      permissions: [ "VIEW_OPERATOR_LOGIN_AS_CUSTOMER", "SWITCH_TENANT" ]
+    regular:
+      username: "regular"
+      user-id: "id-regular"
+      default-tenant: "id-tenant-1"
+      tenants: ["id-tenant-1", "id-tenant-2"]
+      permissions: ["SWITCH_TENANT"]
+  tenants:
+    t1:
+      id: "id-tenant-1"
+      name: "tenant-1"
+    t2:
+      id: "id-tenant-2"
+      name: "tenant-2"
+    t3:
+      id: "id-tenant-3"
+      name: "tenant-3"

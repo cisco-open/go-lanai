@@ -1,0 +1,9 @@
+integrate:
+  http:
+    max-retries: 2
+    timeout: 1m
+    logger:
+      level: debug
+      details-level: headers
+      sanitize-headers: "Authorization"
+      exclude-headers: "Date, Content-Length"

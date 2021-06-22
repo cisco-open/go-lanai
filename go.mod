@@ -4,7 +4,6 @@ go 1.16
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
-	github.com/allegro/bigcache/v3 v3.0.0 // indirect
 	github.com/beevik/etree v1.1.0
 	github.com/bmatcuk/doublestar/v4 v4.0.1
 	github.com/crewjam/httperr v0.0.0-20190612203328-a946449404da

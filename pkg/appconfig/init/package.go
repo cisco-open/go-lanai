@@ -17,6 +17,8 @@ const (
 	_ = iota * precedenceGap
 	externalAppContextPrecedence
 	externalDefaultContextPrecedence
+	applicationAdHocPrecedence
+	bootstrapAdHocPrecedence
 	commandlinePrecedence
 	osEnvPrecedence
 	applicationLocalFilePrecedence
@@ -36,9 +38,11 @@ var ConfigModule = &bootstrap.Module{
 			newOsEnvProviderGroup,
 			newBootstrapFileProviderGroup,
 			newDefaultProviderGroup,
+			newBootstrapAdHocProviderGroup,
 			newBootstrapConfig,
-			// Application file
+			// Application file & adhoc
 			newApplicationFileProviderGroup,
+			newApplicationAdHocProviderGroup,
 			// Consul
 			newConsulDefaultContextProviderGroup,
 			newConsulAppContextProviderGroup,
@@ -53,16 +57,17 @@ var ConfigModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(ConfigModule)
+
 }
 
-// Use Maker func, does nothing. Allow service to include this module in main()
+// Use Entrypoint of appconfig package
 func Use() {
-
+	bootstrap.Register(ConfigModule)
 }
 
 type bootstrapConfigDI struct {
 	fx.In
+	App *bootstrap.App
 	ProviderGroups []appconfig.ProviderGroup `group:"bootstrap-config"`
 }
 
@@ -75,7 +80,7 @@ func newBootstrapConfig(di bootstrapConfigDI) *appconfig.BootstrapConfig {
 	}
 
 	bootstrapConfig := appconfig.NewBootstrapConfig(groups...)
-	if e := bootstrapConfig.Load(false); e != nil {
+	if e := bootstrapConfig.Load(di.App.EagerGetApplicationContext(), false); e != nil {
 		panic(e)
 	}
 
@@ -90,6 +95,7 @@ type appConfigDIOut struct {
 
 type appConfigDI struct {
 	fx.In
+	App *bootstrap.App
 	ProviderGroups []appconfig.ProviderGroup `group:"application-config"`
 	BootstrapConfig    *appconfig.BootstrapConfig
 }
@@ -107,7 +113,7 @@ func newApplicationConfig(di appConfigDI) appConfigDIOut {
 	}
 
 	applicationConfig := appconfig.NewApplicationConfig(groups...)
-	if e := applicationConfig.Load(false); e != nil {
+	if e := applicationConfig.Load(di.App.EagerGetApplicationContext(), false); e != nil {
 		panic(e)
 	}
 
@@ -124,7 +130,7 @@ func newConsulConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *cons
 		ProfileSeparator: ",",
 		Enabled: true,
 	}
-	if e := bootstrapConfig.Bind(p, consulprovider.ConfigKeyConsulEndpoint); e != nil {
+	if e := bootstrapConfig.Bind(p, consulprovider.ConsulConfigPrefix); e != nil {
 		panic(e)
 	}
 	return p
@@ -138,7 +144,7 @@ func newVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault
 		Enabled: true,
 		BackendVersion: 1,
 	}
-	if e := bootstrapConfig.Bind(p, consulprovider.ConfigKeyConsulEndpoint); e != nil {
+	if e := bootstrapConfig.Bind(p, vaultprovider.KvConfigPrefix); e != nil {
 		panic(e)
 	}
 	return p

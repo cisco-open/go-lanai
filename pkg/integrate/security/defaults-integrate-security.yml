@@ -1,0 +1,15 @@
+integrate:
+  security:
+    service-name: "authserver"
+    failure-back-off: 5m
+    guaranteed-validity: 30s
+    endpoints:
+      password-login: "/v2/token"
+      switch-context: "/v2/token"
+    client:
+      client-id: "nfv-service"
+      secret: "nfv-service-secret"
+    accounts:
+      default:
+        username: "system"
+        password: "system"
