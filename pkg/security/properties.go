@@ -63,3 +63,23 @@ func BindSessionProperties(ctx *bootstrap.ApplicationContext) SessionProperties 
 	}
 	return *props
 }
+
+
+const TimeoutPropertiesPrefix = "security.timeout-support"
+
+type TimeoutSupportProperties struct {
+	DbIndex              int            `json:"db-index"`
+}
+
+func NewTimeoutSupportProperties() *TimeoutSupportProperties {
+	return &TimeoutSupportProperties{
+	}
+}
+
+func BindTimeoutSupportProperties(ctx *bootstrap.ApplicationContext) TimeoutSupportProperties {
+	props := NewTimeoutSupportProperties()
+	if err := ctx.Config().Bind(props, TimeoutPropertiesPrefix); err != nil {
+		panic(errors.Wrap(err, "failed to bind TimeoutSupportProperties"))
+	}
+	return *props
+}

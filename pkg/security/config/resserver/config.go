@@ -19,6 +19,7 @@ type resServerConfigDI struct {
 	AppContext           *bootstrap.ApplicationContext
 	RedisClientFactory   redis.ClientFactory
 	CryptoProperties     jwt.CryptoProperties
+	TimeoutSupport 	 	 oauth2.TimeoutApplier `optional:"true"`
 	Configurer           ResourceServerConfigurer
 }
 
@@ -33,6 +34,7 @@ func ProvideResServerDI(di resServerConfigDI) resServerOut {
 		appContext:         di.AppContext,
 		cryptoProperties:   di.CryptoProperties,
 		redisClientFactory: di.RedisClientFactory,
+		timeoutSupport:     di.TimeoutSupport,
 	}
 	di.Configurer(&config)
 	return resServerOut{
@@ -84,7 +86,7 @@ type Configuration struct {
 	sharedErrorHandler        *tokenauth.OAuth2ErrorHandler
 	sharedContextDetailsStore security.ContextDetailsStore
 	sharedJwtDecoder          jwt.JwtDecoder
-	// TODO
+	timeoutSupport 			  oauth2.TimeoutApplier
 }
 
 func (c *Configuration) SharedTokenStoreReader() oauth2.TokenStoreReader {
@@ -100,7 +102,7 @@ func (c *Configuration) errorHandler() *tokenauth.OAuth2ErrorHandler {
 
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
-		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory, c.timeoutSupport)
 	}
 	return c.sharedContextDetailsStore
 }

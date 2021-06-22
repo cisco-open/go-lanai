@@ -3,13 +3,13 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 const (
-	DefaultName = "SESSION"
 	sessionKeySecurity = "Security"
 	contextKeySession = web.ContextKeySession
 )
@@ -38,11 +38,11 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 
 		var id string
 
-		if cookie, err := c.Request.Cookie(DefaultName); err == nil {
+		if cookie, err := c.Request.Cookie(common.DefaultName); err == nil {
 			id = cookie.Value
 		}
 
-		session, err := m.store.WithContext(c).Get(id, DefaultName)
+		session, err := m.store.WithContext(c).Get(id, common.DefaultName)
 		// If session store is not operating properly, we cannot continue for misc that needs session
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)

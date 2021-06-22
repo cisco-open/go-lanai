@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common/internal"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -52,9 +53,11 @@ const (
 type RedisContextDetailsStore struct {
 	vTag   string
 	client redis.Client
+
+	timeoutApplier oauth2.TimeoutApplier
 }
 
-func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory) *RedisContextDetailsStore {
+func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory, timeoutApplier oauth2.TimeoutApplier) *RedisContextDetailsStore {
 	client, e := cf.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = redisDB
 	})
@@ -65,6 +68,7 @@ func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory) *R
 	return &RedisContextDetailsStore{
 		vTag:   security.CompatibilityReference,
 		client: client,
+		timeoutApplier: timeoutApplier,
 	}
 }
 
@@ -109,7 +113,13 @@ func (r *RedisContextDetailsStore) RemoveContextDetails(c context.Context, key i
 func (r *RedisContextDetailsStore) ContextDetailsExists(c context.Context, key interface{}) bool {
 	switch t := key.(type) {
 	case oauth2.AccessToken:
-		return r.exists(c, keyFuncAccessTokenToDetails(uniqueTokenKey(t)) )
+		sId, err := r.FindSessionId(c, t)
+		if err == nil && sId != "" && r.timeoutApplier != nil {
+			valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
+			return valid
+		} else {
+			return r.exists(c, keyFuncAccessTokenToDetails(uniqueTokenKey(t)) )
+		}
 	default:
 		return false
 	}
@@ -131,8 +141,14 @@ func (r *RedisContextDetailsStore) RegisterRefreshToken(c context.Context, token
 		return e
 	}
 
-	if e := r.saveRefreshTokenToSession(c, token, oauth); e != nil {
-		return e
+	ext := oauth.OAuth2Request().Extensions()
+	if ext != nil {
+		saveToSession, ok := ext[oauth2.ExtensionUseSessionTimeout].(bool)
+		if ok && saveToSession {
+			if e := r.saveRefreshTokenToSession(c, token, oauth); e != nil {
+				return e
+			}
+		}
 	}
 	return nil
 }
@@ -146,8 +162,14 @@ func (r *RedisContextDetailsStore) RegisterAccessToken(ctx context.Context, toke
 		return e
 	}
 
-	if e := r.saveAccessTokenToSession(ctx, token, oauth); e != nil {
-		return e
+	ext := oauth.OAuth2Request().Extensions()
+	if ext != nil {
+		saveToSession, ok := ext[oauth2.ExtensionUseSessionTimeout].(bool)
+		if ok && saveToSession {
+			if e := r.saveAccessTokenToSession(ctx, token, oauth); e != nil {
+				return e
+			}
+		}
 	}
 
 	if e := r.saveAccessRefreshTokenRelation(ctx, token); e != nil {
@@ -171,6 +193,8 @@ func (r *RedisContextDetailsStore) FindSessionId(ctx context.Context, token oaut
 		return "", fmt.Errorf("unsupported key type %T", token)
 	}
 }
+
+
 
 // RevokeRefreshToken remove redis records:
 // 		- RefreshToken -> Authentication 	"ART"
@@ -366,6 +390,15 @@ func (r *RedisContextDetailsStore) saveAccessRefreshTokenRelation(c context.Cont
 }
 
 func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context, t oauth2.AccessToken) (security.ContextDetails, error) {
+	sId, err := r.FindSessionId(c, t)
+
+	if err == nil && sId != "" && r.timeoutApplier != nil {
+		valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
+		if !valid {
+			return nil, errors.New("token is invalid because it's expired by its associate session")
+		}
+	}
+
 	fullDetails := internal.NewFullContextDetails()
 	if e := r.doLoad(c, keyFuncAccessTokenToDetails(uniqueTokenKey(t)), &fullDetails); e != nil {
 		return nil, e
@@ -480,6 +513,15 @@ func (r *RedisContextDetailsStore) saveRefreshTokenToSession(c context.Context, 
 }
 
 func (r *RedisContextDetailsStore) loadAuthFromRefreshToken(c context.Context, t oauth2.RefreshToken) (oauth2.Authentication, error) {
+	sId, err := r.FindSessionId(c, t)
+
+	if err == nil && sId != "" && r.timeoutApplier != nil{
+		valid, _ := r.timeoutApplier.ApplyTimeout(c, sId)
+		if !valid {
+			return nil, errors.New("token is invalid because it's expired by its associate session")
+		}
+	}
+
 	oauth := oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {
 		opt.Request = oauth2.NewOAuth2Request()
 		opt.UserAuth = oauth2.NewUserAuthentication()

@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 )
 
@@ -162,5 +163,9 @@ func (a *userAuthentication) DetailsMap() map[string]interface{} {
 	return a.DetailsVal
 }
 
-
-
+/***************
+ Timeout Support
+ ***************/
+type TimeoutApplier interface {
+	ApplyTimeout(ctx context.Context, sessionId string) (valid bool, err error)
+}

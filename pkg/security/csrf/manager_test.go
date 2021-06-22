@@ -3,6 +3,7 @@ package csrf
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_session"
@@ -24,7 +25,7 @@ func TestCsrfMiddlewareShouldGenerateToken(t *testing.T) {
 	mockSessionStore := mock_session.NewMockStore(ctrl)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
-	s := session.NewSession(mockSessionStore, session.DefaultName)
+	s := session.NewSession(mockSessionStore, common.DefaultName)
 
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Set(web.ContextKeySession, s)
@@ -65,7 +66,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	mockSessionStore := mock_session.NewMockStore(ctrl)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
-	s := session.NewSession(mockSessionStore, session.DefaultName)
+	s := session.NewSession(mockSessionStore, common.DefaultName)
 
 	//RequestDetails with a invalid csrf token
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
@@ -164,7 +165,7 @@ func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
 	mockSessionStore := mock_session.NewMockStore(ctrl)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
-	s := session.NewSession(mockSessionStore, session.DefaultName)
+	s := session.NewSession(mockSessionStore, common.DefaultName)
 
 	//RequestDetails with a invalid csrf token against the protected path
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())

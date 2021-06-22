@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_security"
@@ -24,7 +25,7 @@ func TestSaveAndGetCachedRequest(t *testing.T) {
 	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
 
 	sessionStore := session.NewRedisStore(mockRedis)
-	s, _ := sessionStore.New(session.DefaultName)
+	s, _ := sessionStore.New(common.DefaultName)
 
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)
@@ -55,7 +56,7 @@ func TestCachedRequestPreProcessor_Process(t *testing.T) {
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 
-	s := session.CreateSession(mockSessionStore, session.DefaultName)
+	s := session.CreateSession(mockSessionStore, common.DefaultName)
 
 	cached := &CachedRequest{
 		Host: "example.com",
@@ -65,6 +66,7 @@ func TestCachedRequestPreProcessor_Process(t *testing.T) {
 	}
 
 	s.Set(SessionKeyCachedRequest, cached)
+	mockSessionStore.EXPECT().WithContext(gomock.Any()).Return(mockSessionStore).AnyTimes()
 	mockSessionStore.EXPECT().Get(s.GetID(), s.Name()).Return(s, nil)
 	mockSessionStore.EXPECT().Save(s).Do(func(session *session.Session) {
 		if session.Get(SessionKeyCachedRequest) != nil {
@@ -74,7 +76,7 @@ func TestCachedRequestPreProcessor_Process(t *testing.T) {
 
 	//GET request to the same path
 	req := httptest.NewRequest("GET", "/something", nil)
-	req.Header.Set("Cookie", session.DefaultName+"="+s.GetID())
+	req.Header.Set("Cookie", common.DefaultName+"="+s.GetID())
 
 	_ = processor.Process(req)
 
@@ -94,7 +96,7 @@ func TestSavedRequestAuthenticationSuccessHandler_HandleAuthenticationSuccess(t 
 	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
 
 	sessionStore := session.NewRedisStore(mockRedis)
-	s, _ := sessionStore.New(session.DefaultName)
+	s, _ := sessionStore.New(common.DefaultName)
 
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)
@@ -132,7 +134,7 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
 
 	sessionStore := session.NewRedisStore(mockRedis)
-	s, _ := sessionStore.New(session.DefaultName)
+	s, _ := sessionStore.New(common.DefaultName)
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)
 	c.Set(web.ContextKeySession, s)
@@ -146,7 +148,7 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		t.Errorf("request for favicon should not be cached")
 	}
 
-	s, _ = sessionStore.New(session.DefaultName)
+	s, _ = sessionStore.New(common.DefaultName)
 	recorder = httptest.NewRecorder()
 	c, _ = gin.CreateTestContext(recorder)
 	c.Set(web.ContextKeySession, s)
@@ -158,7 +160,7 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		t.Errorf("request with  XMLHttpRequest should not be cached")
 	}
 
-	s, _ = sessionStore.New(session.DefaultName)
+	s, _ = sessionStore.New(common.DefaultName)
 	recorder = httptest.NewRecorder()
 	c, _ = gin.CreateTestContext(recorder)
 	c.Set(web.ContextKeySession, s)
@@ -170,7 +172,7 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		t.Errorf("request with  XMLHttpRequest should not be cached")
 	}
 
-	s, _ = sessionStore.New(session.DefaultName)
+	s, _ = sessionStore.New(common.DefaultName)
 	recorder = httptest.NewRecorder()
 	c, _ = gin.CreateTestContext(recorder)
 	c.Set(web.ContextKeySession, s)
@@ -182,7 +184,7 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		t.Errorf("request with multipart/form-data should not be cached")
 	}
 
-	s, _ = sessionStore.New(session.DefaultName)
+	s, _ = sessionStore.New(common.DefaultName)
 	recorder = httptest.NewRecorder()
 	c, _ = gin.CreateTestContext(recorder)
 	c.Set(web.ContextKeySession, s)
@@ -195,7 +197,7 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		t.Errorf("request with csrf header should not be cached")
 	}
 
-	s, _ = sessionStore.New(session.DefaultName)
+	s, _ = sessionStore.New(common.DefaultName)
 	recorder = httptest.NewRecorder()
 	c, _ = gin.CreateTestContext(recorder)
 	c.Set(web.ContextKeySession, s)
@@ -207,7 +209,7 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		t.Errorf("request with csrf param should not be cached")
 	}
 
-	s, _ = sessionStore.New(session.DefaultName)
+	s, _ = sessionStore.New(common.DefaultName)
 	recorder = httptest.NewRecorder()
 	c, _ = gin.CreateTestContext(recorder)
 	c.Set(web.ContextKeySession, s)

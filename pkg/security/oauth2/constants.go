@@ -37,6 +37,7 @@ const (
 )
 
 const (
+	ExtensionUseSessionTimeout = "use_session_timeout"
 //Extension     = ""
 )
 

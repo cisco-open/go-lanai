@@ -47,7 +47,6 @@ func NewJwtTokenStore(opts...JTSOptions) *jwtTokenStore {
 	}
 }
 
-// overwrite oauth2.TokenStoreReader
 func (r *jwtTokenStore) ReadAuthentication(ctx context.Context, tokenValue string, hint oauth2.TokenHint) (oauth2.Authentication, error) {
 	switch hint {
 	case oauth2.TokenHintRefreshToken:

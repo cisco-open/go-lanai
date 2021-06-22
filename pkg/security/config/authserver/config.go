@@ -39,6 +39,7 @@ type configDI struct {
 	SessionProperties  security.SessionProperties
 	CryptoProperties   jwt.CryptoProperties
 	SessionStore       session.Store
+	TimeoutSupport     oauth2.TimeoutApplier `optional:"true"`
 }
 
 type authServerOut struct {
@@ -56,6 +57,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 		sessionProperties:  di.SessionProperties,
 		cryptoProperties:   di.CryptoProperties,
 		Issuer:             newIssuer(&di.Properties.Issuer, &di.ServerProperties),
+		timeoutSupport:     di.TimeoutSupport,
 	}
 	di.Configurer(&config)
 	return authServerOut {
@@ -151,6 +153,7 @@ type Configuration struct {
 	sharedAuthHandler         auth.AuthorizeHandler
 	sharedAuthCodeStore       auth.AuthorizationCodeStore
 	sharedTokenAuthenticator  security.Authenticator
+	timeoutSupport            oauth2.TimeoutApplier
 }
 
 func (c *Configuration) AddIdp(configurer IdpSecurityConfigurer) {
@@ -233,7 +236,7 @@ func (c *Configuration) passwordGrantAuthenticator() security.Authenticator {
 
 func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 	if c.sharedContextDetailsStore == nil {
-		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory)
+		c.sharedContextDetailsStore = common.NewRedisContextDetailsStore(c.appContext, c.redisClientFactory, c.timeoutSupport)
 	}
 	return c.sharedContextDetailsStore
 }
