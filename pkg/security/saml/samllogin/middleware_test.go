@@ -170,6 +170,21 @@ type TestIdpProvider struct {
 	externalIdpName string
 	externalIdName string
 	entityId string
+	metadataRequireSignature bool
+	metadataTrustCheck bool
+	metadataTrustedKeys []string
+}
+
+func (i TestIdpProvider) ShouldMetadataRequireSignature() bool {
+	return i.metadataRequireSignature
+}
+
+func (i TestIdpProvider) ShouldMetadataTrustCheck() bool {
+	return i.metadataTrustCheck
+}
+
+func (i TestIdpProvider) GetMetadataTrustedKeys() []string {
+	return i.metadataTrustedKeys
 }
 
 func (i TestIdpProvider) Domain() string {

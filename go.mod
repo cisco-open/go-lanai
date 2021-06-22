@@ -6,6 +6,7 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
 	github.com/beevik/etree v1.1.0
 	github.com/bmatcuk/doublestar/v4 v4.0.1
+	github.com/crewjam/httperr v0.0.0-20190612203328-a946449404da
 	github.com/crewjam/saml v0.4.5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dsnet/compress v0.0.1 // indirect

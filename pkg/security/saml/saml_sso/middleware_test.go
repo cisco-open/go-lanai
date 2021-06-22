@@ -43,7 +43,7 @@ func TestSsoEndpoint(t *testing.T) {
 	sp := samlsp.DefaultServiceProvider(samlsp.Options{
 		URL:            *rootURL,
 		Key:            key,
-		Certificate:    cert,
+		Certificate:    cert[0],
 		SignRequest: true,
 	})
 
