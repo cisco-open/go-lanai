@@ -207,7 +207,7 @@ func newTestSamlClientStore(d []DefaultSamlClient) *TestSamlClientStore {
 	}
 }
 
-func (t *TestSamlClientStore) GetAllSamlClient() []SamlClient {
+func (t *TestSamlClientStore) GetAllSamlClient(interface{}) []SamlClient {
 	var result []SamlClient
 	for _, v := range t.details {
 		result = append(result, v)

@@ -40,3 +40,13 @@ func JsonbValue(v interface{}) (driver.Value, error) {
 
 	return string(d), nil
 }
+
+type JsonbMap map[string]interface{}
+
+func (m JsonbMap) Value() (driver.Value, error) {
+	return JsonbValue(m)
+}
+
+func (m JsonbMap) Scan(src interface{}) error {
+	return JsonbScan(src, m)
+}

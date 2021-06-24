@@ -184,7 +184,7 @@ type InMemoryFederatedAccountStore struct {
 	
 }
 
-func (i *InMemoryFederatedAccountStore) LoadAccountByExternalId(externalIdName string, externalIdValue string, externalIdpName string) (security.Account, error) {
+func (i *InMemoryFederatedAccountStore) LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string) (security.Account, error) {
 	return security.NewUsernamePasswordAccount(&security.AcctDetails{
 		ID:              "user-tishi",
 		Type:            security.AccountTypeFederated,

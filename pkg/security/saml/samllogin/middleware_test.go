@@ -223,18 +223,18 @@ func newTestIdpManager() *TestIdpManager {
 	}
 }
 
-func (t *TestIdpManager) GetIdentityProvidersWithFlow(idp.AuthenticationFlow) []idp.IdentityProvider {
+func (t *TestIdpManager) GetIdentityProvidersWithFlow(context.Context, idp.AuthenticationFlow) []idp.IdentityProvider {
 	return []idp.IdentityProvider{t.idpDetails}
 }
 
-func (t TestIdpManager) GetIdentityProviderByEntityId(entityId string) (idp.IdentityProvider, error) {
+func (t TestIdpManager) GetIdentityProviderByEntityId(ctx interface{}, entityId string) (idp.IdentityProvider, error) {
 	if entityId == t.idpDetails.entityId {
 		return t.idpDetails, nil
 	}
 	return nil, errors.New("not found")
 }
 
-func (t TestIdpManager) GetIdentityProviderByDomain(domain string) (idp.IdentityProvider, error) {
+func (t TestIdpManager) GetIdentityProviderByDomain(ctx context.Context, domain string) (idp.IdentityProvider, error) {
 	if domain == t.idpDetails.domain {
 		return t.idpDetails, nil
 	}
@@ -250,7 +250,7 @@ func newTestFedAccountStore() *TestFedAccountStore {
 
 //The externalIdName and value matches the test assertion
 //The externalIdp matches that from the TestIdpManager
-func (t *TestFedAccountStore) LoadAccountByExternalId(externalIdName string, externalIdValue string, externalIdpName string) (security.Account, error) {
+func (t *TestFedAccountStore) LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string) (security.Account, error) {
 	if externalIdName == "email" && externalIdValue == "test@example.com" && externalIdpName == "okta" {
 		return security.NewUsernamePasswordAccount(&security.AcctDetails{
 			ID:              "test@example.com",

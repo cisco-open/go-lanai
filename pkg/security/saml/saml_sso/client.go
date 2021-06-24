@@ -1,6 +1,7 @@
 package saml_auth
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
@@ -67,6 +68,6 @@ type SamlSpDetails struct {
 }
 
 type SamlClientStore interface {
-	GetAllSamlClient() []SamlClient
-	GetSamlClientById(id string) (SamlClient, error)
+	GetAllSamlClient(ctx context.Context) ([]SamlClient, error)
+	GetSamlClientByEntityId(ctx context.Context, entityId string) (SamlClient, error)
 }

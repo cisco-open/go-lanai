@@ -9,6 +9,8 @@ import (
 /***********************************
 	DTO
  ***********************************/
+
+//goland:noinspection GoNameStartsWithPackageName
 type OAuth2Client interface {
 	ClientId() string
 	SecretRequired() bool

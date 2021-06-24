@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -74,7 +75,17 @@ func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}
 	}
 
 	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
-		// TODO verify this using UUID string and composite key
+		// TODO verify this using composite key
+		switch v := id.(type) {
+		case string:
+			if uid, e := uuid.Parse(v); e == nil {
+				id = uid
+			}
+		case *string:
+			if uid, e := uuid.Parse(*v); e == nil {
+				id = uid
+			}
+		}
 		return db.Model(g.model).Take(dest, id)
 	})
 }

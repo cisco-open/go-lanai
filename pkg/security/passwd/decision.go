@@ -10,6 +10,7 @@ import (
 /******************************
 	abstracts
  ******************************/
+
 // AuthenticationDecisionMaker is invoked at various stages of authentication decision making process.
 // If AuthenticationDecisionMaker implement order.Ordered interface, its order is respected using order.OrderedFirstCompare.
 // This means highest priority is executed first and non-ordered decision makers run at last.
@@ -30,6 +31,7 @@ type AuthenticationDecisionMaker interface {
 /******************************
 	Common Implementation
  ******************************/
+
 type DecisionMakerConditionFunc func(context.Context, security.Candidate, security.Account, security.Authentication) bool
 
 // ConditionalDecisionMaker implements AuthenticationDecisionMaker with ability to skip based on condiitons
@@ -119,6 +121,7 @@ func isFinalStage(_ context.Context, can security.Candidate, _ security.Account,
 /******************************
 	Common Checks
  ******************************/
+
 // AccountStatusChecker check account status and also auto unlock account if locking rules allows
 type AccountStatusChecker struct {
 	store security.AccountStore
@@ -136,7 +139,7 @@ func (adm *AccountStatusChecker) Decide(ctx context.Context, _ security.Candidat
 	switch {
 	case acct.Disabled():
 		return security.NewAccountStatusError(MessageAccountDisabled)
-	case acct.Type() != security.AccountTypeDefault:
+	case acct.Type() == security.AccountTypeFederated:
 		return security.NewAccountStatusError(MessagePasswordLoginNotAllowed)
 	case acct.Locked():
 		return adm.decideAutoUnlock(ctx, acct)
@@ -164,7 +167,7 @@ func (adm *AccountStatusChecker) decideAutoUnlock(ctx context.Context, acct secu
 	}
 
 	if time.Now().After(history.LockoutTime().Add(rules.LockoutDuration()) ) {
-		updater.Unlock()
+		updater.UnlockAccount()
 		logger.WithContext(ctx).Infof("Account[%s] Unlocked", acct.Username())
 	}
 
