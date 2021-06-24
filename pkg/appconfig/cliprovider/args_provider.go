@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/args"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/spf13/pflag"
 	"sync"
@@ -18,6 +19,11 @@ var (
 	}
 )
 
+// note for a command like ./app --active-profiles develop --dynamic.flag.example=1 -- kvarg-example=b
+// --active-profiles develop is the decalred flag, because we declared active-profiles as a known command line flag.
+//   i.e. --help will display a description about this flag's usage
+// --dynamic.flag.example=1 is the dynamic flag, we did not declare this flag at development time.
+// kvarg-example=b is the command's argument. Since it's in kv format, we will extract them into kvArgs, and process them as properties
 type ConfigProvider struct {
 	appconfig.ProviderMeta
 	prefix        string
@@ -49,7 +55,7 @@ func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) 
 
 	// dynamic flags
 	for k, v := range configProvider.dynamicFlags {
-		settings[k] = v
+		settings[k] = utils.ParseString(v)
 	}
 
 	// declared flags
@@ -63,7 +69,7 @@ func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) 
 
 	// arguments
 	for k, v := range configProvider.kvArgs {
-		settings[k] = v
+		settings[k] = utils.ParseString(v)
 	}
 
 	// un-flatten
@@ -81,11 +87,16 @@ func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) 
 func (configProvider *ConfigProvider) convertDeclaredFlag(value interface{}) interface{} {
 	switch v := value.(type) {
 	case pflag.SliceValue:
-		return v.GetSlice()
+		strSlice := v.GetSlice()
+		retSlice := make([]interface{}, len(strSlice))
+		for i, s := range strSlice {
+			retSlice[i] = utils.ParseString(s)
+		}
+		return retSlice
 	case pflag.Value:
-		return v.String()
+		return utils.ParseString(v.String())
 	case fmt.Stringer:
-		return v.String()
+		return utils.ParseString(v.String())
 	default:
 		return fmt.Sprintf("%v", value)
 	}

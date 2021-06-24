@@ -11,7 +11,6 @@ type MigrationFunc func(ctx context.Context) error
 type Registrar struct {
 	migrationSteps []*Migration
 	versions 	   utils.StringSet
-	errs 		   []error
 }
 
 func (r *Registrar) AddMigrations(m... *Migration) {
@@ -24,26 +23,6 @@ type Migration struct {
 	Func		MigrationFunc
 	Tags        utils.StringSet
 }
-
-/*	v, err := fromString(version)
-
-	if err != nil {
-		r.errs = append(r.errs, err)
-		return
-	}
-
-	if r.versions.Has(version) {
-		r.errs = append(r.errs, errors.New(fmt.Sprintf("a migration step with version %s already exist", version)))
-		return
-	}
-
-	m := &Migration{
-		Version:     v,
-		Description: description,
-		Func:        migrationFunc,
-		Tags: utils.NewStringSet(tags...),
-	}
- */
 
 func WithVersion(version string) *Migration {
 	v, err := fromString(version)
