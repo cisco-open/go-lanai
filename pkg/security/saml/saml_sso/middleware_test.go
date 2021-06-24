@@ -207,15 +207,15 @@ func newTestSamlClientStore(d []DefaultSamlClient) *TestSamlClientStore {
 	}
 }
 
-func (t *TestSamlClientStore) GetAllSamlClient(interface{}) []SamlClient {
+func (t *TestSamlClientStore) GetAllSamlClient(_ context.Context) ([]SamlClient, error) {
 	var result []SamlClient
 	for _, v := range t.details {
 		result = append(result, v)
 	}
-	return result
+	return result, nil
 }
 
-func (t *TestSamlClientStore) GetSamlClientById(id string) (SamlClient, error) {
+func (t *TestSamlClientStore) GetSamlClientByEntityId(_ context.Context, id string) (SamlClient, error) {
 	for _, detail := range t.details {
 		if detail.EntityId == id {
 			return detail, nil

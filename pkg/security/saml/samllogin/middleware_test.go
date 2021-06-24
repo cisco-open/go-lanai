@@ -79,7 +79,7 @@ func TestSamlEntryPoint(t *testing.T) {
 	m := c.makeMiddleware(feature, ws)
 	refreshHandler := m.RefreshMetadataHandler()
 	//trigger the refresh manually to simulate the middleware being called.
-	refreshHandler(nil)
+	refreshHandler(mockGinContext())
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://saml.vms.com:8080/europa/v2/authorize", nil)
@@ -227,14 +227,14 @@ func (t *TestIdpManager) GetIdentityProvidersWithFlow(context.Context, idp.Authe
 	return []idp.IdentityProvider{t.idpDetails}
 }
 
-func (t TestIdpManager) GetIdentityProviderByEntityId(ctx interface{}, entityId string) (idp.IdentityProvider, error) {
+func (t TestIdpManager) GetIdentityProviderByEntityId(_ context.Context, entityId string) (idp.IdentityProvider, error) {
 	if entityId == t.idpDetails.entityId {
 		return t.idpDetails, nil
 	}
 	return nil, errors.New("not found")
 }
 
-func (t TestIdpManager) GetIdentityProviderByDomain(ctx context.Context, domain string) (idp.IdentityProvider, error) {
+func (t TestIdpManager) GetIdentityProviderByDomain(_ context.Context, domain string) (idp.IdentityProvider, error) {
 	if domain == t.idpDetails.domain {
 		return t.idpDetails, nil
 	}
@@ -306,4 +306,17 @@ func (t TestWebSecurity) Authenticator() security.Authenticator {
 
 func (t TestWebSecurity) Features() []security.Feature {
 	panic("implement me")
+}
+
+func mockGinContext() *gin.Context {
+	req, _ := http.NewRequest("GET", "/unit-test", strings.NewReader(""))
+	gc := gin.Context{
+		Request:  req,
+		Writer:   nil,
+		Params:   gin.Params{},
+		Keys:     map[string]interface{}{},
+		Errors:   nil,
+		Accepted: []string{},
+	}
+	return &gc
 }
