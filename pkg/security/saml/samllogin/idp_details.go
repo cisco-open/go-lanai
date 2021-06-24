@@ -1,6 +1,9 @@
 package samllogin
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+import (
+	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+)
 
 type SamlIdentityProvider interface {
 	idp.IdentityProvider
@@ -14,6 +17,6 @@ type SamlIdentityProvider interface {
 }
 
 type SamlIdentityProviderManager interface {
-	GetIdentityProviderByEntityId(entityId string) (idp.IdentityProvider, error)
+	GetIdentityProviderByEntityId(ctx context.Context, entityId string) (idp.IdentityProvider, error)
 }
 

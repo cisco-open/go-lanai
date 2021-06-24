@@ -132,7 +132,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 		}
 
 		//check tenancy
-		client, err := mw.samlClientStore.GetSamlClientById(serviceProviderID)
+		client, err := mw.samlClientStore.GetSamlClientByEntityId(ctx.Request.Context(), serviceProviderID)
 		if err != nil { //we shouldn't get an error here because we already have the SP's metadata.
 			//if an error does occur, it means there's a programming error
 			mw.handleError(ctx, nil, NewSamlInternalError("saml client not found", err))
@@ -163,12 +163,13 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 
 func (mw *SamlAuthorizeEndpointMiddleware) RefreshMetadataHandler(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if matches, err :=condition.MatchesWithContext(c, c.Request); !matches || err != nil {
+		if matches, err :=condition.MatchesWithContext(c.Request.Context(), c.Request); !matches || err != nil {
 			return
 		}
 
-		clients := mw.samlClientStore.GetAllSamlClient()
-		mw.spMetadataManager.RefreshCache(clients)
+		if clients, e := mw.samlClientStore.GetAllSamlClient(c.Request.Context()); e == nil {
+			mw.spMetadataManager.RefreshCache(clients)
+		}
 	}
 }
 

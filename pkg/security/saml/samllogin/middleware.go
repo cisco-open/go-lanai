@@ -232,7 +232,7 @@ func (sp *ServiceProviderMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 // different instance
 func (sp *ServiceProviderMiddleware) RefreshMetadataHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		idpDetails := sp.idpManager.GetIdentityProvidersWithFlow(idp.ExternalIdpSAML)
+		idpDetails := sp.idpManager.GetIdentityProvidersWithFlow(c.Request.Context(), idp.ExternalIdpSAML)
 		var samlIdpDetails []SamlIdentityProvider
 		for _, i := range idpDetails {
 			if s, ok := i.(SamlIdentityProvider); ok {

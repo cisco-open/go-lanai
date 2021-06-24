@@ -46,8 +46,8 @@ type AuthenticationFlowAware interface {
 }
 
 type IdentityProviderManager interface {
-	GetIdentityProvidersWithFlow(flow AuthenticationFlow) []IdentityProvider
-	GetIdentityProviderByDomain(domain string) (IdentityProvider, error)
+	GetIdentityProvidersWithFlow(ctx context.Context, flow AuthenticationFlow) []IdentityProvider
+	GetIdentityProviderByDomain(ctx context.Context, domain string) (IdentityProvider, error)
 }
 
 func RequestWithAuthenticationFlow(flow AuthenticationFlow, idpManager IdentityProviderManager) web.RequestMatcher {
@@ -55,13 +55,13 @@ func RequestWithAuthenticationFlow(flow AuthenticationFlow, idpManager IdentityP
 		return string(UnknownIdp), nil
 	}
 
-	matchable := func(_ context.Context, request *http.Request) (interface{}, error) {
+	matchable := func(ctx context.Context, request *http.Request) (interface{}, error) {
 		host, _, err := net.SplitHostPort(request.Host)
 		if err != nil {
 			host = request.Host
 		}
 
-		idp, err := idpManager.GetIdentityProviderByDomain(host)
+		idp, err := idpManager.GetIdentityProviderByDomain(ctx, host)
 		if err != nil {
 			return matchableError()
 		}

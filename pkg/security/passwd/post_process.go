@@ -54,6 +54,7 @@ func applyPostAuthenticationProcessors(processors []PostAuthenticationProcessor,
 /******************************
 	Common Implementation
  ******************************/
+
 // PersistAccountPostProcessor saves Account. It's implement order.Ordered with highest priority
 // Note: post-processors executed in reversed order
 type PersistAccountPostProcessor struct {
@@ -76,7 +77,10 @@ func (p *PersistAccountPostProcessor) Process(ctx context.Context, acct security
 
 	// regardless decision, account need to be persisted in case of any status changes.
 	// Note: we ignore save error since it's too late to do anything
-	_ = p.store.Save(ctx, acct)
+	e := p.store.Save(ctx, acct)
+	if e != nil && !errors.Is(e, security.ErrorSubTypeInternalError) {
+		logger.WithContext(ctx).Warnf("account status was not persisted due to error: %v", e)
+	}
 	return result
 }
 
@@ -165,7 +169,7 @@ func (p *AccountLockingPostProcessor) Process(ctx context.Context, acct security
 
 	// lock the account if over the limit
 	if count >= rules.LockoutFailuresLimit() {
-		updater.Lock()
+		updater.LockAccount()
 		logger.WithContext(ctx).Infof("Account[%s] Locked", acct.Username())
 		// Optional, change error message
 		result.Error = security.NewAccountStatusError(MessageLockedDueToBadCredential, result.Error)

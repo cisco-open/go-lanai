@@ -55,13 +55,13 @@ type Authenticator struct {
 	idpManager   SamlIdentityProviderManager
 }
 
-func (a *Authenticator) Authenticate(_ context.Context, candidate security.Candidate) (security.Authentication, error) {
+func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Candidate) (security.Authentication, error) {
 	assertionCandidate, ok := candidate.(*AssertionCandidate)
 	if !ok {
 		return nil, nil
 	}
 
-	idp, err := a.idpManager.GetIdentityProviderByEntityId(assertionCandidate.Assertion.Issuer.Value)
+	idp, err := a.idpManager.GetIdentityProviderByEntityId(ctx, assertionCandidate.Assertion.Issuer.Value)
 	if err != nil {
 		return nil, security.NewInternalAuthenticationError("Couldn't find idp matching the assertion")
 	}
@@ -70,7 +70,7 @@ func (a *Authenticator) Authenticate(_ context.Context, candidate security.Candi
 		return nil, security.NewInternalAuthenticationError("Couldn't find idp metadata matching the assertion")
 	}
 
-	user, err := a.accountStore.LoadAccountByExternalId(samlIdp.ExternalIdName(), assertionCandidate.Principal().(string), samlIdp.ExternalIdpName())
+	user, err := a.accountStore.LoadAccountByExternalId(ctx, samlIdp.ExternalIdName(), assertionCandidate.Principal().(string), samlIdp.ExternalIdpName())
 
 	if err != nil {
 		return nil, security.NewInternalAuthenticationError("Couldn't load federated account", err)

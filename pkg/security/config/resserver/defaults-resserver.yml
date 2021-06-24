@@ -1,0 +1,18 @@
+security:
+  cors:
+    enabled: true
+    allowed-origins: "*"
+    allowed-methods: "*"
+    allowed-headers: "*"
+    exposed-headers: ""
+    allow-credentials: false
+    max-age: 12h
+  cache: # security related cache - currently just for tenant hierarchy data
+    db-index: 2
+  session:
+    idle-timeout: 1.5h
+    absolute-timeout: 3h
+    max-concurrent-sessions: 2
+    db-index: 8
+  timeout-support:
+    db-index: ${security.session.db-index}

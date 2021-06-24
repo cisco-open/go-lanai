@@ -9,6 +9,7 @@ import (
 /******************************
 	Abstraction - Basics
  ******************************/
+
 type AccountType int
 const (
 	AccountTypeUnknown AccountType = iota
@@ -80,12 +81,13 @@ type AccountStore interface {
 }
 
 type FederatedAccountStore interface {
-	LoadAccountByExternalId(externalIdName string, externalIdValue string, externalIdpName string) (Account, error)
+	LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string) (Account, error)
 }
 
 /*********************************
 	Abstraction - Auth History
  *********************************/
+
 type AccountHistory interface {
 	LastLoginTime() time.Time
 	LoginFailures() []time.Time
@@ -98,6 +100,7 @@ type AccountHistory interface {
 /*********************************
 	Abstraction - Multi Tenancy
  *********************************/
+
 type AccountTenancy interface {
 	DefaultTenantId() string
 	TenantIds() []string
@@ -106,11 +109,12 @@ type AccountTenancy interface {
 /*********************************
 	Abstraction - Mutator
  *********************************/
+
 type AccountUpdater interface {
 	IncrementGracefulAuthCount()
 	ResetGracefulAuthCount()
-	Lock()
-	Unlock()
+	LockAccount()
+	UnlockAccount()
 	RecordFailure(failureTime time.Time, limit int)
 	RecordSuccess(loginTime time.Time)
 	ResetFailedAttempts()
@@ -119,6 +123,7 @@ type AccountUpdater interface {
 /*********************************
 	Abstraction - Locking Rules
  *********************************/
+
 type AccountLockingRule interface {
 	// LockoutPolicyName the name of locking rule
 	LockoutPolicyName() string
@@ -135,10 +140,11 @@ type AccountLockingRule interface {
 /*********************************
 	Abstraction - Aging Rules
  *********************************/
+
 type AccountPwdAgingRule interface {
-	// PwdPolicyName the name of password polcy
+	// PwdAgingPolicyName the name of password polcy
 	PwdAgingPolicyName() string
-	// PwdPolicyEnforced indicate whether password policy is enabled
+	// PwdAgingRuleEnforced indicate whether password policy is enabled
 	PwdAgingRuleEnforced() bool
 	// PwdMaxAge specify how long a password is valid before expiry
 	PwdMaxAge() time.Duration
@@ -151,6 +157,7 @@ type AccountPwdAgingRule interface {
 /*********************************
 	Abstraction - Metadata
  *********************************/
+
 type AccountMetadata interface {
 	RoleNames() []string
 	FirstName() string

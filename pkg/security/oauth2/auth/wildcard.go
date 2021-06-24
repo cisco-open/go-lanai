@@ -24,7 +24,7 @@ const (
 var (
 	// Warning: if pattern with custom scheme is provided, it's required to add "/" after ":".
 	// 			e.g. "custom-scheme:/some_path" is a valid pattern, but "custom-scheme:some_path" is not
-	pUrl = fmt.Sprintf(`^(%s:[/]{1,2})?(%s@)?%s(:%s)?%s(\?%s)?(#%s)?`,
+	pUrl = fmt.Sprintf(`^(%s:[/]{1,2})?(%s@)?(%s(:%s)?)?%s(\?%s)?(#%s)?`,
 		pScheme, pUserInfo, pDomain, pPort, pPath, pParams, pFragment)
 
 	regexWildcardPattern    = regexp.MustCompile(pUrl)
@@ -112,7 +112,7 @@ func (m *wildcardUrlMatcher) urlMatches(urlStr string) (bool, error) {
 
 	// wildcard matches
 	mHost := hostMatches(url.Hostname(), m.domain)
-	mPort := portMatches(url.Scheme, url.Port(), m.scheme, m.port)
+	mPort := portMatches(url.Scheme, url.Port(), m.scheme, m.port, m.domain)
 	mPath := pathMatches(url.Path, m.path)
 
 	return mScheme && mUserInfo && mQuery && mHost && mPort && mPath, nil
@@ -198,9 +198,10 @@ func queryParamsMatches(query url.Values, pattern map[string][]string) (ret bool
 }
 
 // hostMatches host matches allows sub domain to match as well.
+// the function returns true if pattern is not set (empty string)
 func hostMatches(value, pattern string) bool {
 	if !hasWildcard(pattern) {
-		return pattern == value || strings.HasSuffix(value, "." + pattern)
+		return pattern == "" || pattern == value || strings.HasSuffix(value, "." + pattern)
 	}
 	return wildcardMatches(value, pattern, true)
 }
@@ -209,17 +210,25 @@ func hostMatches(value, pattern string) bool {
 // Special handling is required since the scheme of a expected values is optional in this implementation.
 //
 // When the patterns for the expected url does not specify a port value, the port value is
-// inferred from the scheme of the registered redirect.  If that is not specified (which should match
-// any scheme), the port is inferred based on the scheme of the <EM>requested</EM> URL (which
-// will match unless the requested URL is using a non-standard port)
+// inferred from the scheme of the registered redirect. If that is not specified (which should match
+// any scheme):
+// 1. 	if domain pattern is specified, the port is inferred based on the scheme of the <EM>requested</EM> URL (which
+// 		will match unless the requested URL is using a non-standard port)
+// 2. 	if domain pattern is also not set, the port matches any value
 //
 // The expected patterns may contain a wildcard for the port value.
-func portMatches(scheme, port, schemePattern, portPattern string) bool {
+func portMatches(scheme, port, schemePattern, portPattern, domainPattern string) bool {
 	expectedPort := portPattern
 	if portPattern == "" {
-		if schemePattern == "" {
+		switch {
+		case schemePattern == "" && domainPattern == "":
+			// path-only pattern, match any value
+			return true
+		case schemePattern == "":
+			// domain pattern is specified, port should match scheme
 			expectedPort = schemeToPort(scheme)
-		} else {
+		default:
+			// scheme pattern is specified, use it
 			expectedPort = schemeToPort(schemePattern)
 		}
 	}

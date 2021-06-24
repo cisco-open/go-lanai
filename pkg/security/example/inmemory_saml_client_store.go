@@ -1,6 +1,7 @@
 package example
 
 import (
+	"context"
 	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
 	"errors"
 )
@@ -32,17 +33,17 @@ func NewInMemSpManager() saml_auth.SamlClientStore {
 	}
 }
 
-func (i *InMemorySamlClientStore) GetAllSamlClient() []saml_auth.SamlClient {
+func (i *InMemorySamlClientStore) GetAllSamlClient(context.Context) ([]saml_auth.SamlClient, error) {
 	var result []saml_auth.SamlClient
 	for _, v := range i.details {
 		result = append(result, v)
 	}
-	return result
+	return result, nil
 }
 
-func (i *InMemorySamlClientStore) GetSamlClientById(id string) (saml_auth.SamlClient, error) {
+func (i *InMemorySamlClientStore) GetSamlClientByEntityId(ctx context.Context, entityId string) (saml_auth.SamlClient, error) {
 	for _, detail := range i.details {
-		if detail.EntityId == id {
+		if detail.EntityId == entityId {
 			return detail, nil
 		}
 	}

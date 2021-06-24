@@ -21,7 +21,7 @@ var (
 		gorm.ErrInvalidField:          NewDataError(ErrorCodeInvalidSQL, gorm.ErrInvalidField.Error(), gorm.ErrInvalidField),
 		gorm.ErrEmptySlice:            NewDataError(ErrorCodeIncorrectRecordCount, gorm.ErrEmptySlice.Error(), gorm.ErrEmptySlice),
 		gorm.ErrDryRunModeUnsupported: NewDataError(ErrorCodeInvalidApiUsage, gorm.ErrDryRunModeUnsupported.Error(), gorm.ErrDryRunModeUnsupported),
-		gorm.ErrInvaildDB:             NewDataError(ErrorCodeInvalidApiUsage, gorm.ErrInvaildDB.Error(), gorm.ErrInvaildDB),
+		gorm.ErrInvalidDB:             NewDataError(ErrorCodeInvalidApiUsage, gorm.ErrInvalidDB.Error(), gorm.ErrInvalidDB),
 		gorm.ErrInvalidValue:          NewDataError(ErrorCodeInvalidSQL, gorm.ErrInvalidValue.Error(), gorm.ErrInvalidValue),
 		gorm.ErrInvalidValueOfLength:  NewDataError(ErrorCodeInvalidSQL, gorm.ErrInvalidValueOfLength.Error(), gorm.ErrInvalidValueOfLength),
 	}

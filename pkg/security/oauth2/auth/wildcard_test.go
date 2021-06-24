@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 	"fmt"
-	"testing"
 	. "github.com/onsi/gomega"
+	"testing"
 )
 
 /*************************
@@ -38,6 +38,13 @@ func TestPositiveMatch(t *testing.T) {
 		"http://user:password@wildcard.test.com/path/to/redirect.html?param1=val1&param2=val2",
 		"*.test.com/path/to/redirect.html") )
 
+	// wildcard with path only match
+	t.Run("Path Only With Wildcard", PositiveTest(
+		"http://user:password@wildcard.test.com:4321/path/to/redirect.html?param1=val1&param2=val2",
+		"/**/redirect.html") )
+	t.Run("Path Only", PositiveTest(
+		"http://user:password@wildcard.test.com/path/to/redirect.html?param1=val1&param2=val2",
+		"/path/to/redirect.html") )
 
 	// ? test
 	t.Run("Single Char", PositiveTest(
@@ -187,6 +194,18 @@ func TestInvalidPattern(t *testing.T) {
 	t.Run("Query Wildcard", NegativeTest(
 		"http://user@wildcard.test.com:*?param=abc",
 		"http://*@*.test.com:*/?param=*"))
+	t.Run("Port without Domain", NegativeTest(
+		"http://user@wildcard.test.com:*?param=abc",
+		"http://:1234/?param=*"))
+	t.Run("Port Wildcard without Domain", NegativeTest(
+		"http://user@wildcard.test.com:*?param=abc",
+		"http://:*/?param=*"))
+	t.Run("Port without Domain and Scheme", NegativeTest(
+		"http://user@wildcard.test.com:*?param=abc",
+		":1234/?param=*"))
+	t.Run("Port Wildcard without Domain and Scheme", NegativeTest(
+		"http://user@wildcard.test.com:*?param=abc",
+		":*/?param=*"))
 	//t.Run("", InvalidPatternTest(""))
 }
 

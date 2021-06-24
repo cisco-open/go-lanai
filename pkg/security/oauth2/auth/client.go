@@ -9,6 +9,7 @@ import (
 /***********************************
 	Default implementation
  ***********************************/
+
 type ClientDetails struct {
 	ClientId             string
 	Secret               string
@@ -23,7 +24,7 @@ type ClientDetails struct {
 	ResourceIds          utils.StringSet
 }
 
-// DefaultAouth2Client implements security.Account & OAuth2Client
+// DefaultOAuth2Client implements security.Account & OAuth2Client
 type DefaultOAuth2Client struct {
 	ClientDetails
 }

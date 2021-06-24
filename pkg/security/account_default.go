@@ -64,6 +64,7 @@ func NewUsernamePasswordAccount(details *AcctDetails) *DefaultAccount {
 /***********************************
 	implements security.Account
  ***********************************/
+
 func (a *DefaultAccount) ID() interface{} {
 	return a.AcctDetails.ID
 }
@@ -97,17 +98,18 @@ func (a *DefaultAccount) UseMFA() bool {
 }
 
 func (a *DefaultAccount) CacheableCopy() Account {
-	copy := DefaultAccount{
+	cp := DefaultAccount{
 		AcctDetails:  a.AcctDetails,
 		AcctMetadata: a.AcctMetadata,
 	}
-	copy.AcctDetails.Credentials = nil
-	return &copy
+	cp.AcctDetails.Credentials = nil
+	return &cp
 }
 
 /***********************************
 	implements security.AccountTenancy
  ***********************************/
+
 func (a *DefaultAccount) DefaultTenantId() string {
 	return a.AcctDetails.DefaultTenantId
 }
@@ -119,6 +121,7 @@ func (a *DefaultAccount) TenantIds() []string {
 /***********************************
 	implements security.AccountHistory
  ***********************************/
+
 func (a *DefaultAccount) LastLoginTime() time.Time {
 	return a.AcctDetails.LastLoginTime
 }
@@ -142,18 +145,19 @@ func (a *DefaultAccount) GracefulAuthCount() int {
 /***********************************
 	security.AccountUpdater
  ***********************************/
+
 func (a *DefaultAccount) IncrementGracefulAuthCount() {
 	a.AcctDetails.GracefulAuthCount ++
 }
 
-func (a *DefaultAccount) Lock() {
+func (a *DefaultAccount) LockAccount() {
 	if !a.AcctDetails.Locked {
 		a.AcctDetails.LockoutTime = time.Now()
 	}
 	a.AcctDetails.Locked = true
 }
 
-func (a *DefaultAccount) Unlock() {
+func (a *DefaultAccount) UnlockAccount() {
 	// we don't clear lockout time for record keeping purpose
 	a.AcctDetails.Locked = false
 }
@@ -183,6 +187,7 @@ func (a *DefaultAccount) ResetGracefulAuthCount() {
 /***********************************
 	security.AccountLockingRule
  ***********************************/
+
 func (a *DefaultAccount) LockoutPolicyName() string {
 	return a.AcctLockingRule.Name
 }
@@ -210,6 +215,7 @@ func (a *DefaultAccount) LockoutFailuresInterval() time.Duration {
 /***********************************
 	security.AccountPwdAgingRule
  ***********************************/
+
 func (a *DefaultAccount) PwdAgingPolicyName() string {
 	return a.AcctPasswordPolicy.Name
 }
@@ -233,6 +239,7 @@ func (a *DefaultAccount) GracefulAuthLimit() int {
 /***********************************
 	security.AcctMetadata
  ***********************************/
+
 func (a *DefaultAccount) RoleNames() []string {
 	if a.AcctMetadata.RoleNames == nil {
 		return []string{}
