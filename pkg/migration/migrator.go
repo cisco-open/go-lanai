@@ -10,14 +10,6 @@ import (
 )
 
 func migrate(ctx context.Context, r *Registrar, v Versioner) error {
-	if len(r.errs) != 0 {
-		logger.Errorf("encountered error when registering migration steps")
-		for _, e := range r.errs {
-			logger.Errorf("error: %v", e)
-		}
-		return errors.New("migrations not applied because there were error with migration steps.")
-	}
-
 	err := v.CreateVersionTableIfNotExist(ctx)
 	if err != nil {
 		return err
@@ -33,6 +25,12 @@ func migrate(ctx context.Context, r *Registrar, v Versioner) error {
 
 	//sort applied migration steps
 	sort.SliceStable(appliedMigrations, func (i, j int) bool {return appliedMigrations[i].GetVersion().Lt(appliedMigrations[i].GetVersion())})
+
+	for _, a := range appliedMigrations {
+		if !a.IsSuccess() {
+			return errors.New(fmt.Sprintf("stopping migration because there is a failed migration step: %s", a.GetVersion().String()))
+		}
+	}
 
 	var shouldExecuteMigration func(*Migration) bool
 

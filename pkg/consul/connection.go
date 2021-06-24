@@ -3,9 +3,10 @@ package consul
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/consul/api"
-	"errors"
 	"strings"
 )
 
@@ -67,7 +68,8 @@ func (c *Connection) ListKeyValuePairs(ctx context.Context, path string) (result
 		propName := strings.TrimPrefix(entry.Key, prefix)
 
 		if len(propName) > 0 {
-			results[propName] = string(entry.Value)
+			strVal := string(entry.Value)
+			results[propName] = utils.ParseString(strVal)
 		}
 	}
 

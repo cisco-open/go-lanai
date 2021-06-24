@@ -2,6 +2,7 @@ package vaultprovider
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"errors"
 	"fmt"
@@ -71,7 +72,7 @@ func (engine *KvSecretEngineV1) ListSecrets(ctx context.Context, secretPath stri
 	} else if secrets != nil {
 		logger.WithContext(ctx).Infof("Retrieved %d configs from vault path: %s", len(secrets.Data), path)
 		for key, val := range secrets.Data {
-			results[key] = val.(string)
+			results[key] = utils.ParseString(val.(string))
 		}
 	} else {
 		logger.WithContext(ctx).Warnf("No secrets retrieved from vault (%s)", path)

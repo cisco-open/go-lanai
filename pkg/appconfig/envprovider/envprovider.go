@@ -3,6 +3,7 @@ package envprovider
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"os"
 	"strings"
 )
@@ -46,7 +47,7 @@ func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) 
 			}
 		}
 
-		flatSettings[string(runes)] = v
+		flatSettings[string(runes)] = utils.ParseString(v)
 	}
 
 	unFlattenedSettings, loadError := appconfig.UnFlatten(flatSettings)

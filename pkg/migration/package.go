@@ -36,9 +36,7 @@ func Use() {
 }
 
 func newRegistrar() *Registrar {
-	return &Registrar{
-		errs: make([]error, 0),
-	}
+	return &Registrar{}
 }
 
 func newVersioner(db *gorm.DB) Versioner {
