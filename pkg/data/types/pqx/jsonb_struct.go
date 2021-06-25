@@ -48,5 +48,15 @@ func (m JsonbMap) Value() (driver.Value, error) {
 }
 
 func (m JsonbMap) Scan(src interface{}) error {
-	return JsonbScan(src, m)
+	return JsonbScan(src, &m)
+}
+
+type JsonbStringMap map[string]string
+
+func (m JsonbStringMap) Value() (driver.Value, error) {
+	return JsonbValue(m)
+}
+
+func (m JsonbStringMap) Scan(src interface{}) error {
+	return JsonbScan(src, &m)
 }
