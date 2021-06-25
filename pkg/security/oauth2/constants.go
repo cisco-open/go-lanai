@@ -49,6 +49,7 @@ const (
 	GrantTypeRefresh           = "refresh_token"
 	GrantTypeSwitchUser        = "urn:cisco:nfv:oauth:grant-type:switch-user"
 	GrantTypeSwitchTenant      = "urn:cisco:nfv:oauth:grant-type:switch-tenant"
+	GrantTypeSaml              = "urn:ietf:params:oauth:grant-type:saml2-bearer"
 )
 
 const (
