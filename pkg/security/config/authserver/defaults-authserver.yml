@@ -1,4 +1,7 @@
 security:
+  idp:
+    internal:
+      enabled: true
   cors:
     enabled: true
     allowed-origins: "*"

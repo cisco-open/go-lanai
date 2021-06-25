@@ -3,21 +3,26 @@ package formlogin
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"fmt"
+	"time"
 )
 
 /*********************************
 	Feature Impl
  *********************************/
+
 //goland:noinspection GoNameStartsWithPackageName
 type FormLoginFeature struct {
-	successHandler       security.AuthenticationSuccessHandler
-	failureHandler       security.AuthenticationErrorHandler
-	loginUrl             string
-	loginProcessUrl      string
-	loginErrorUrl        string
-	usernameParam        string
-	passwordParam        string
-	rememberParam        string
+	successHandler         security.AuthenticationSuccessHandler
+	failureHandler         security.AuthenticationErrorHandler
+	loginUrl               string
+	loginProcessUrl        string
+	loginErrorUrl          string
+	usernameParam          string
+	passwordParam          string
+	rememberCookieDomain   string
+	rememberCookieSecured  bool
+	rememberCookieValidity time.Duration
+	rememberParam          string
 
 	mfaEnabled    bool
 	mfaUrl        string
@@ -27,7 +32,6 @@ type FormLoginFeature struct {
 	otpParam      string
 }
 
-// Standard security.Feature entrypoint
 func (f *FormLoginFeature) Identifier() security.FeatureIdentifier {
 	return FeatureId
 }
@@ -59,6 +63,21 @@ func (f *FormLoginFeature) PasswordParameter(passwordParam string) *FormLoginFea
 
 func (f *FormLoginFeature) RememberParameter(rememberParam string) *FormLoginFeature {
 	f.rememberParam = rememberParam
+	return f
+}
+
+func (f *FormLoginFeature) RememberCookieDomain(v string) *FormLoginFeature {
+	f.rememberCookieDomain = v
+	return f
+}
+
+func (f *FormLoginFeature) RememberCookieSecured(v bool) *FormLoginFeature {
+	f.rememberCookieSecured = v
+	return f
+}
+
+func (f *FormLoginFeature) RememberCookieValidity(v time.Duration) *FormLoginFeature {
+	f.rememberCookieValidity = v
 	return f
 }
 
@@ -107,23 +126,25 @@ func (f *FormLoginFeature) OtpParameter(otpParam string) *FormLoginFeature {
 /*********************************
 	Constructors and Configure
  *********************************/
+
 func Configure(ws security.WebSecurity) *FormLoginFeature {
 	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		return  fc.Enable(feature).(*FormLoginFeature)
+		return fc.Enable(feature).(*FormLoginFeature)
 	}
 	panic(fmt.Errorf("unable to configure form login: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
-// Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+// New is Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func New() *FormLoginFeature {
 	return &FormLoginFeature{
-		loginUrl:        "/login",
-		loginProcessUrl: "/login",
-		loginErrorUrl:   "/login?error=true",
-		usernameParam:   "username",
-		passwordParam:   "password",
-		rememberParam:   "remember-me",
+		loginUrl:         "/login",
+		loginProcessUrl:  "/login",
+		loginErrorUrl:    "/login?error=true",
+		usernameParam:    "username",
+		passwordParam:    "password",
+		rememberParam:    "remember-me",
+		rememberCookieValidity: time.Hour,
 
 		mfaUrl:        "/login/mfa",
 		mfaVerifyUrl:  "/login/mfa",

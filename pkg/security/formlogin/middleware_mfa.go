@@ -47,7 +47,7 @@ func (mw *MfaAuthenticationMiddleware) OtpVerifyHandlerFunc() gin.HandlerFunc {
 			otp = []string{""}
 		}
 
-		before, err := mw.currentAuth(ctx);
+		before, err := mw.currentAuth(ctx)
 		if err != nil {
 			mw.handleError(ctx, err, nil)
 			return
@@ -71,7 +71,7 @@ func (mw *MfaAuthenticationMiddleware) OtpVerifyHandlerFunc() gin.HandlerFunc {
 
 func (mw *MfaAuthenticationMiddleware) OtpRefreshHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		before, err := mw.currentAuth(ctx);
+		before, err := mw.currentAuth(ctx)
 		if err != nil {
 			mw.handleError(ctx, err, nil)
 			return

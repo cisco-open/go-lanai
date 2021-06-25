@@ -1,0 +1,26 @@
+security:
+  idp:
+    internal:
+      domain: "${security.auth.issuer.domain:localhost}"
+      session-expired-redirect-url: ""
+      endpoints:
+        form-login: "/login#/login"
+        form-login-process: "/login"
+        form-login-error: "/login?error=true#/login"
+        otp-verify: "/login/mfa#/otpverify"
+        otp-verify-process: "/login/mfa"
+        otp-verify-resend: "/login/mfa/refresh"
+        otp-verify-error: "/login/mfa?error=true#/otpverify"
+        reset-password-page-url: "/v2/todo"
+      mfa:
+        enabled: true
+        otp-length: 6
+        otp-secret-size: 20
+        otp-ttl: 5m
+        otp-max-attempts: 3
+        otp-resend-limit: 3
+      remember-me:
+        cookie-domain: ${security.idp.internal.domain}
+        use-secure-cookie: false
+        cookie-validity: 336h # 2 weeks
+

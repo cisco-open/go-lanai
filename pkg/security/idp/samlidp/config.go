@@ -12,16 +12,37 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 )
 
-// SamlIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
-type SamlIdpSecurityConfigurer struct {
+type Options func(opt *option)
+type option struct {
+	ErrorPath string
 }
 
-func NewSamlIdpSecurityConfigurer() *SamlIdpSecurityConfigurer {
-	return &SamlIdpSecurityConfigurer{}
+func WithErrorPath(path string) Options {
+	return func(opt *option) {
+		opt.ErrorPath = path
+	}
+}
+
+// SamlIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
+//goland:noinspection GoNameStartsWithPackageName
+type SamlIdpSecurityConfigurer struct {
+	errorPath string
+}
+
+func NewSamlIdpSecurityConfigurer(opts ...Options) *SamlIdpSecurityConfigurer {
+	opt := option {
+		ErrorPath: "/error",
+	}
+	for _, fn := range opts {
+		fn(&opt)
+	}
+	return &SamlIdpSecurityConfigurer{
+		errorPath: opt.ErrorPath,
+	}
 }
 
 func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
-	handler := redirect.NewRedirectWithRelativePath("/error")
+	handler := redirect.NewRedirectWithRelativePath(c.errorPath)
 	condition := idp.RequestWithAuthenticationFlow(idp.ExternalIdpSAML, config.IdpManager)
 
 	ws.AndCondition(condition).

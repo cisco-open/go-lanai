@@ -3,7 +3,7 @@ package formlogin
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"math"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,18 +13,25 @@ const (
 	detailsKeyShouldRememberUsername = "RememberUsername"
 )
 
+type rememberMeOptions func(h *RememberUsernameSuccessHandler)
+
 type RememberUsernameSuccessHandler struct {
-	cookieProps   security.CookieProperties
-	serverProps   web.ServerProperties
-	rememberParam string
+	contextPath    string
+	rememberParam  string
+	cookieDomain   string
+	cookieSecured  bool
+	cookieHttpOnly bool
+	cookieMaxAge   time.Duration
 }
 
-func NewRememberUsernameSuccessHandler(cookieProps security.CookieProperties, serverProps web.ServerProperties, rememberParam string) *RememberUsernameSuccessHandler {
-	return &RememberUsernameSuccessHandler{
-		cookieProps: cookieProps,
-		serverProps: serverProps,
-		rememberParam: rememberParam,
+func newRememberUsernameSuccessHandler(opts ...rememberMeOptions) *RememberUsernameSuccessHandler {
+	h := RememberUsernameSuccessHandler{
+		contextPath: "/",
 	}
+	for _, fn := range opts {
+		fn(&h)
+	}
+	return &h
 }
 
 func (h *RememberUsernameSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, _, to security.Authentication) {
@@ -61,7 +68,7 @@ func (h *RememberUsernameSuccessHandler) HandleAuthenticationSuccess(c context.C
 }
 
 func (h *RememberUsernameSuccessHandler) save(username string, _ context.Context, rw http.ResponseWriter) {
-	cookie := h.newCookie(CookieKeyRememberedUsername, username, 0)
+	cookie := h.newCookie(CookieKeyRememberedUsername, username, h.cookieMaxAge)
 	http.SetCookie(rw, cookie)
 }
 
@@ -70,28 +77,27 @@ func (h *RememberUsernameSuccessHandler) clear(_ context.Context, rw http.Respon
 	http.SetCookie(rw, cookie)
 }
 
-func (h *RememberUsernameSuccessHandler) newCookie(name, value string, maxAge int) *http.Cookie {
+func (h *RememberUsernameSuccessHandler) newCookie(name, value string, maxAge time.Duration) *http.Cookie {
 
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    url.QueryEscape(value),
-		Path:     h.serverProps.ContextPath,
-		Domain:   h.cookieProps.Domain,
-		MaxAge:   maxAge,
+		Path:     h.contextPath,
+		Domain:   h.cookieDomain,
+		MaxAge:   int(math.Round(maxAge.Seconds())),
 		Expires:  calculateCookieExpires(maxAge),
-		Secure:   h.cookieProps.Secure,
-		HttpOnly: h.cookieProps.HttpOnly,
+		Secure:   h.cookieSecured,
+		HttpOnly: h.cookieHttpOnly,
 		SameSite: http.SameSiteStrictMode, //The remember me cookie should not be used cross site (unlike the session cookie which need to work cross site for sso)
 	}
 
 	return cookie
 }
 
-func calculateCookieExpires(maxAge int) time.Time {
+func calculateCookieExpires(maxAge time.Duration) time.Time {
 	if maxAge == 0 {
 		return time.Time{}
 	}
 
-	d := time.Duration(maxAge) * time.Second
-	return time.Now().Add(d)
+	return time.Now().Add(maxAge)
 }

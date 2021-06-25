@@ -42,7 +42,7 @@ func NewAuthServerProperties() *AuthServerProperties {
 	}
 }
 
-//BindAuthServerProperties create and bind SessionProperties, with a optional prefix
+//BindAuthServerProperties create and bind AuthServerProperties, with a optional prefix
 func BindAuthServerProperties(ctx *bootstrap.ApplicationContext) AuthServerProperties {
 	props := NewAuthServerProperties()
 	if err := ctx.Config().Bind(props, AuthServerPropertiesPrefix); err != nil {

@@ -23,61 +23,59 @@ var (
 
 //goland:noinspection GoNameStartsWithPackageName
 type FormLoginConfigurer struct {
-	cookieProps security.CookieProperties
 	serverProps web.ServerProperties
 	configured  bool
 }
 
-func newFormLoginConfigurer(cookieProps security.CookieProperties, serverProps web.ServerProperties) *FormLoginConfigurer {
+func newFormLoginConfigurer(serverProps web.ServerProperties) *FormLoginConfigurer {
 	return &FormLoginConfigurer{
-		cookieProps: cookieProps,
 		serverProps: serverProps,
 	}
 }
 
-func (flc *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
+func (c *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
 	// Verify
-	if err := flc.validate(feature.(*FormLoginFeature), ws); err != nil {
+	if err := c.validate(feature.(*FormLoginFeature), ws); err != nil {
 		return err
 	}
 	f := feature.(*FormLoginFeature)
 
-	if err := flc.configureErrorHandling(f, ws); err != nil {
+	if err := c.configureErrorHandling(f, ws); err != nil {
 		return err
 	}
 
-	if flc.configured {
+	if c.configured {
 		logger.WithContext(ws.Context()).Warnf(`attempting to reconfigure login forms for WebSecurity [%v]. ` +
 			`Changes will not be applied. If this is expected, please ignore this warning`, ws)
 		return nil
 	}
 
-	flc.configured = true
+	c.configured = true
 
-	if err := flc.configureLoginPage(f, ws); err != nil {
+	if err := c.configureLoginPage(f, ws); err != nil {
 		return err
 	}
 
-	if err := flc.configureMfaPage(f, ws); err != nil {
+	if err := c.configureMfaPage(f, ws); err != nil {
 		return err
 	}
 
-	if err := flc.configureLoginProcessing(f, ws); err != nil {
+	if err := c.configureLoginProcessing(f, ws); err != nil {
 		return err
 	}
 
-	if err := flc.configureMfaProcessing(f, ws); err != nil {
+	if err := c.configureMfaProcessing(f, ws); err != nil {
 		return err
 	}
 
-	if err := flc.configureCSRF(f, ws); err != nil {
+	if err := c.configureCSRF(f, ws); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSecurity) error {
+func (c *FormLoginConfigurer) validate(f *FormLoginFeature, _ security.WebSecurity) error {
 	if f.loginUrl == "" {
 		return fmt.Errorf("loginUrl is missing for form login")
 	}
@@ -109,7 +107,7 @@ func (flc *FormLoginConfigurer) validate(f *FormLoginFeature, ws security.WebSec
 	return nil
 }
 
-func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws security.WebSecurity) error {
+func (c *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws security.WebSecurity) error {
 	errorRedirect := redirect.NewRedirectWithURL(f.loginErrorUrl)
 	mfaErrorRedirect := redirect.NewRedirectWithURL(f.mfaErrorUrl)
 
@@ -143,7 +141,7 @@ func (flc *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws s
 	return nil
 }
 
-func (flc *FormLoginConfigurer) configureLoginPage(f *FormLoginFeature, ws security.WebSecurity) error {
+func (c *FormLoginConfigurer) configureLoginPage(f *FormLoginFeature, ws security.WebSecurity) error {
 	// let ws know to intercept additional url
 	routeMatcher := matcher.RouteWithURL(f.loginUrl, http.MethodGet)
 	requestMatcher := matcher.RequestWithURL(f.loginUrl, http.MethodGet)
@@ -156,7 +154,7 @@ func (flc *FormLoginConfigurer) configureLoginPage(f *FormLoginFeature, ws secur
 	return nil
 }
 
-func (flc *FormLoginConfigurer) configureMfaPage(f *FormLoginFeature, ws security.WebSecurity) error {
+func (c *FormLoginConfigurer) configureMfaPage(f *FormLoginFeature, ws security.WebSecurity) error {
 	// let ws know to intercept additional url
 	routeMatcher := matcher.RouteWithURL(f.mfaUrl, http.MethodGet)
 	requestMatcher := matcher.RequestWithURL(f.mfaUrl, http.MethodGet)
@@ -170,7 +168,7 @@ func (flc *FormLoginConfigurer) configureMfaPage(f *FormLoginFeature, ws securit
 	return nil
 }
 
-func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
+func (c *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
 
 	// let ws know to intercept additional url
 	route := matcher.RouteWithURL(f.loginProcessUrl, http.MethodPost)
@@ -181,7 +179,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 
 	login := NewFormAuthenticationMiddleware(func(opts *FormAuthMWOptions) {
 		opts.Authenticator = ws.Authenticator()
-		opts.SuccessHandler = flc.effectiveSuccessHandler(f, ws)
+		opts.SuccessHandler = c.effectiveSuccessHandler(f, ws)
 		opts.UsernameParam =  f.usernameParam
 		opts.PasswordParam = f.passwordParam
 	})
@@ -200,7 +198,7 @@ func (flc *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws
 	return nil
 }
 
-func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
+func (c *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws security.WebSecurity) error {
 
 	// let ws know to intercept additional url
 	routeVerify := matcher.RouteWithURL(f.mfaVerifyUrl, http.MethodPost)
@@ -213,7 +211,7 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
 	login := NewMfaAuthenticationMiddleware(func(opts *MfaMWOptions) {
 		opts.Authenticator = ws.Authenticator()
-		opts.SuccessHandler = flc.effectiveSuccessHandler(f, ws)
+		opts.SuccessHandler = c.effectiveSuccessHandler(f, ws)
 		opts.OtpParam =  f.otpParam
 	})
 
@@ -245,7 +243,7 @@ func (flc *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws s
 	return nil
 }
 
-func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.WebSecurity) error {
+func (c *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.WebSecurity) error {
 	csrfMatcher := matcher.RequestWithURL(f.loginProcessUrl, http.MethodPost).
 		Or(matcher.RequestWithURL(f.mfaVerifyUrl, http.MethodPost)).
 		Or(matcher.RequestWithURL(f.mfaRefreshUrl, http.MethodPost))
@@ -253,7 +251,7 @@ func (flc *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.W
 	return nil
 }
 
-func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
+func (c *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
 	if _, ok := f.successHandler.(*MfaAwareSuccessHandler); f.mfaEnabled && !ok {
 		f.successHandler = &MfaAwareSuccessHandler{
 			delegate: f.successHandler,
@@ -261,7 +259,14 @@ func (flc *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws 
 		}
 	}
 
-	rememberUsernameHandler := NewRememberUsernameSuccessHandler(flc.cookieProps, flc.serverProps, f.rememberParam)
+	rememberUsernameHandler := newRememberUsernameSuccessHandler(func(h *RememberUsernameSuccessHandler) {
+		h.contextPath = c.serverProps.ContextPath
+		h.rememberParam = f.rememberParam
+		h.cookieDomain = f.rememberCookieDomain
+		h.cookieSecured = f.rememberCookieSecured
+		h.cookieHttpOnly = !f.rememberCookieSecured
+		h.cookieMaxAge = f.rememberCookieValidity
+	})
 
 	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
 		return security.NewAuthenticationSuccessHandler(globalHandler, rememberUsernameHandler, f.successHandler)

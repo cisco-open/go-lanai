@@ -16,35 +16,91 @@ import (
 	"time"
 )
 
-// PasswordIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
-type PasswordIdpSecurityConfigurer struct {
+type Options func(opt *option)
+type option struct {
+	Properties *PwdAuthProperties
+	ErrorPath  string
+	MFAListeners []passwd.MFAEventListenerFunc
 }
 
-func NewPasswordIdpSecurityConfigurer() *PasswordIdpSecurityConfigurer {
-	return &PasswordIdpSecurityConfigurer{}
+func WithProperties(props *PwdAuthProperties) Options {
+	return func(opt *option) {
+		opt.Properties = props
+	}
+}
+
+func WithErrorPath(path string) Options {
+	return func(opt *option) {
+		opt.ErrorPath = path
+	}
+}
+
+func WithMFAListeners(listeners ...passwd.MFAEventListenerFunc) Options {
+	return func(opt *option) {
+		opt.MFAListeners = append(opt.MFAListeners, listeners...)
+	}
+}
+
+// PasswordIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
+type PasswordIdpSecurityConfigurer struct {
+	props     *PwdAuthProperties
+	errorPath string
+	mfaListeners []passwd.MFAEventListenerFunc
+}
+
+func NewPasswordIdpSecurityConfigurer(opts ...Options) *PasswordIdpSecurityConfigurer {
+	opt := option{
+		Properties: NewPwdAuthProperties(),
+		ErrorPath:  "/error",
+		MFAListeners: []passwd.MFAEventListenerFunc{},
+	}
+	for _, fn := range opts {
+		fn(&opt)
+	}
+	return &PasswordIdpSecurityConfigurer{
+		props:     opt.Properties,
+		errorPath: opt.ErrorPath,
+		mfaListeners: opt.MFAListeners,
+	}
 }
 
 func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
 	// For Authorize endpoint
-	handler := redirect.NewRedirectWithRelativePath("/error")
 	condition := idp.RequestWithAuthenticationFlow(idp.InternalIdpForm, config.IdpManager)
+	if !c.props.Enabled {
+		ws.AndCondition(condition)
+		return
+	}
 
+	// TODO Support reset password url
+	handler := redirect.NewRedirectWithRelativePath(c.errorPath)
 	ws.AndCondition(condition).
 		With(session.New()).
-		With(passwd.New().
-			MFA(true).
-			OtpTTL(5 * time.Minute).
-			MFAEventListeners(debugPrintOTP),
-		).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
 		).
+		With(passwd.New().
+			MFA(c.props.MFA.Enabled).
+			OtpTTL(time.Duration(c.props.MFA.OtpTTL)).
+			PasswordEncoder(config.UserPasswordEncoder).
+			OtpVerifyLimit(c.props.MFA.OtpMaxAttempts).
+			OtpRefreshLimit(c.props.MFA.OtpResendLimit).
+			OtpLength(c.props.MFA.OtpLength).
+			OtpSecretSize(c.props.MFA.OtpSecretSize).
+			MFAEventListeners(c.mfaListeners...),
+		).
 		With(formlogin.New().
 			EnableMFA().
-			LoginUrl("/login#/login").
-			LoginErrorUrl("/login?error=true#/login").
-			MfaUrl("/login/mfa#/otpverify").
-			MfaErrorUrl("/login/mfa?error=true#/otpverify"),
+			LoginUrl(c.props.Endpoints.FormLogin).
+			LoginProcessUrl(c.props.Endpoints.FormLoginProcess).
+			LoginErrorUrl(c.props.Endpoints.FormLoginError).
+			MfaUrl(c.props.Endpoints.OtpVerify).
+			MfaVerifyUrl(c.props.Endpoints.OtpVerifyProcess).
+			MfaRefreshUrl(c.props.Endpoints.OtpVerifyResend).
+			MfaErrorUrl(c.props.Endpoints.OtpVerifyError).
+			RememberCookieSecured(c.props.RememberMe.UseSecureCookie).
+			RememberCookieDomain(c.props.RememberMe.CookieDomain).
+			RememberCookieValidity(time.Duration(c.props.RememberMe.CookieValidity)),
 		).
 		With(errorhandling.New().
 			AccessDeniedHandler(handler),
@@ -56,9 +112,3 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 		With(request_cache.New())
 }
 
-func debugPrintOTP(event passwd.MFAEvent, otp passwd.OTP, principal interface{}) {
-	switch event {
-	case passwd.MFAEventOtpCreate, passwd.MFAEventOtpRefresh:
-		logger.Debugf("OTP: %s", otp.Passcode())
-	}
-}

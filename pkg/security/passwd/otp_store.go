@@ -100,11 +100,11 @@ func (v *timeBasedOtp) Refreshes() uint {
 }
 
 func (v *timeBasedOtp) IncrementAttempts() {
-	v.AttemptCount ++
+	v.AttemptCount++
 }
 
 func (v *timeBasedOtp) IncrementRefreshes() {
-	v.RefreshCount ++
+	v.RefreshCount++
 }
 
 // totpManager implements OTPManager
@@ -118,16 +118,15 @@ type totpManager struct {
 
 type totpManagerOptionsFunc func(*totpManager)
 
-func newTotpManager(options...totpManagerOptionsFunc) *totpManager {
+func newTotpManager(options ...totpManagerOptionsFunc) *totpManager {
 	manager := &totpManager{
-		factory: newTotpFactory(),
-		store: inmemOtpStore(make(map[string]OTP)),
-		ttl: time.Minute * 10,
-		maxVerifyLimit: 3,
+		store:           inmemOtpStore(make(map[string]OTP)),
+		ttl:             time.Minute * 10,
+		maxVerifyLimit:  3,
 		maxRefreshLimit: 3,
 	}
 
-	for _,opt := range options {
+	for _, opt := range options {
 		opt(manager)
 	}
 	return manager
@@ -146,7 +145,7 @@ func (m *totpManager) New() (OTP, error) {
 
 	otp := &timeBasedOtp{
 		Identifier: id.String(),
-		Value: value,
+		Value:      value,
 	}
 
 	// save
@@ -157,7 +156,7 @@ func (m *totpManager) New() (OTP, error) {
 }
 
 func (m *totpManager) Get(id string) (OTP, error) {
-	otp, err := m.store.Load(id);
+	otp, err := m.store.Load(id)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +165,7 @@ func (m *totpManager) Get(id string) (OTP, error) {
 
 func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error) {
 	// load OTP by Domain
-	otp, e := m.store.Load(id);
+	otp, e := m.store.Load(id)
 	if otp == nil || e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode already expired", e)
 	}
@@ -196,7 +195,7 @@ func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bo
 
 func (m *totpManager) Refresh(id string) (loaded OTP, hasMoreChances bool, err error) {
 	// load OTP by Domain
-	loaded, e := m.store.Load(id);
+	loaded, e := m.store.Load(id)
 	if e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode expired", e)
 	}
