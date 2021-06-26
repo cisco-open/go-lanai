@@ -14,38 +14,44 @@ import (
 
 type Options func(opt *option)
 type option struct {
-	ErrorPath string
+	Properties *SamlAuthProperties
 }
 
-func WithErrorPath(path string) Options {
+func WithProperties(props *SamlAuthProperties) Options {
 	return func(opt *option) {
-		opt.ErrorPath = path
+		opt.Properties = props
 	}
 }
 
 // SamlIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
 //goland:noinspection GoNameStartsWithPackageName
 type SamlIdpSecurityConfigurer struct {
-	errorPath string
+	props *SamlAuthProperties
 }
 
 func NewSamlIdpSecurityConfigurer(opts ...Options) *SamlIdpSecurityConfigurer {
-	opt := option {
-		ErrorPath: "/error",
+	opt := option{
+		Properties: NewSamlAuthProperties(),
 	}
 	for _, fn := range opts {
 		fn(&opt)
 	}
 	return &SamlIdpSecurityConfigurer{
-		errorPath: opt.ErrorPath,
+		props: opt.Properties,
 	}
 }
 
 func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
-	handler := redirect.NewRedirectWithRelativePath(c.errorPath)
+	// For Authorize endpoint
 	condition := idp.RequestWithAuthenticationFlow(idp.ExternalIdpSAML, config.IdpManager)
+	ws = ws.AndCondition(condition)
+	
+	if !c.props.Enabled {
+		return
+	}
 
-	ws.AndCondition(condition).
+	handler := redirect.NewRedirectWithRelativePath(config.Endpoints.Error)
+	ws.
 		With(samllogin.New().
 			Issuer(config.Issuer),
 		).

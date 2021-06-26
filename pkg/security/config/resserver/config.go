@@ -65,6 +65,7 @@ func ConfigureResourceServer(di resServerDI) {
 /****************************
 	configuration
  ****************************/
+
 type RemoteEndpoints struct {
 	Token      string
 	CheckToken string

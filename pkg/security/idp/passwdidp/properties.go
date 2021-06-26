@@ -57,7 +57,7 @@ func NewPwdAuthProperties() *PwdAuthProperties {
 			OtpVerifyProcess:     "/login/mfa",
 			OtpVerifyResend:      "/login/mfa/refresh",
 			OtpVerifyError:       "/login/mfa?error=true",
-			ResetPasswordPageUrl: "/v2/todo",
+			ResetPasswordPageUrl: "http://localhost:9003/#/forgotpassword",
 		},
 		MFA: PwdAuthMfaProperties{
 			Enabled:        true,

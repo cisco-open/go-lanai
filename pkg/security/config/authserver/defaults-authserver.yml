@@ -20,6 +20,17 @@ security:
     redirect-whitelist:
       - "internal.vms.com:*/**"
       - "localhost:*/**"
+    endpoints:
+      authorize: "/v2/authorize"
+      token: "/v2/token"
+      approval: "/v2/approve"
+      check-token: "/v2/check_token"
+      tenant-hierarchy: "/v2/tenant_hierarchy"
+      error: "/error"
+      logout: "/v2/logout"
+      user-info: "/v2/userinfo"
+      jwk-set: "/v2/jwks"
+      saml-metadata: "/metadata"
   cache: #security related cache - currently just for tenant hierarchy data
     db-index: 2
   session:

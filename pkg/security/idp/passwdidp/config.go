@@ -18,20 +18,13 @@ import (
 
 type Options func(opt *option)
 type option struct {
-	Properties *PwdAuthProperties
-	ErrorPath  string
+	Properties   *PwdAuthProperties
 	MFAListeners []passwd.MFAEventListenerFunc
 }
 
 func WithProperties(props *PwdAuthProperties) Options {
 	return func(opt *option) {
 		opt.Properties = props
-	}
-}
-
-func WithErrorPath(path string) Options {
-	return func(opt *option) {
-		opt.ErrorPath = path
 	}
 }
 
@@ -43,23 +36,20 @@ func WithMFAListeners(listeners ...passwd.MFAEventListenerFunc) Options {
 
 // PasswordIdpSecurityConfigurer implements authserver.IdpSecurityConfigurer
 type PasswordIdpSecurityConfigurer struct {
-	props     *PwdAuthProperties
-	errorPath string
+	props        *PwdAuthProperties
 	mfaListeners []passwd.MFAEventListenerFunc
 }
 
 func NewPasswordIdpSecurityConfigurer(opts ...Options) *PasswordIdpSecurityConfigurer {
 	opt := option{
-		Properties: NewPwdAuthProperties(),
-		ErrorPath:  "/error",
+		Properties:   NewPwdAuthProperties(),
 		MFAListeners: []passwd.MFAEventListenerFunc{},
 	}
 	for _, fn := range opts {
 		fn(&opt)
 	}
 	return &PasswordIdpSecurityConfigurer{
-		props:     opt.Properties,
-		errorPath: opt.ErrorPath,
+		props:        opt.Properties,
 		mfaListeners: opt.MFAListeners,
 	}
 }
@@ -67,14 +57,15 @@ func NewPasswordIdpSecurityConfigurer(opts ...Options) *PasswordIdpSecurityConfi
 func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
 	// For Authorize endpoint
 	condition := idp.RequestWithAuthenticationFlow(idp.InternalIdpForm, config.IdpManager)
+	ws = ws.AndCondition(condition)
+
 	if !c.props.Enabled {
-		ws.AndCondition(condition)
 		return
 	}
 
 	// TODO Support reset password url
-	handler := redirect.NewRedirectWithRelativePath(c.errorPath)
-	ws.AndCondition(condition).
+	handler := redirect.NewRedirectWithRelativePath(config.Endpoints.Error)
+	ws.
 		With(session.New()).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
@@ -111,4 +102,3 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 		).
 		With(request_cache.New())
 }
-

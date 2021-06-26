@@ -10,7 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
-	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
 )
@@ -18,6 +18,7 @@ import (
 /***************************
 	addtional abstractions
  ***************************/
+
 type IdpSecurityConfigurer interface {
 	Configure(ws security.WebSecurity, config *Configuration)
 }
@@ -90,12 +91,12 @@ func (c *AuthorizeEndpointConfigurer) Order() int {
 }
 
 func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
-	oauth2_path := c.config.Endpoints.Authorize.Location.Path
-	oauth2_condition := c.config.Endpoints.Authorize.Condition
-	ws.Route(matcher.RouteWithPattern(oauth2_path)).
+	path := c.config.Endpoints.Authorize.Location.Path
+	condition := c.config.Endpoints.Authorize.Condition
+	ws.Route(matcher.RouteWithPattern(path)).
 		With(authorize.NewEndpoint().
-			Path(oauth2_path).
-			Condition(oauth2_condition).
+			Path(path).
+			Condition(condition).
 			ApprovalPath(c.config.Endpoints.Approval).
 			RequestProcessors(c.config.authorizeRequestProcessor()).
 			ErrorHandler(c.config.errorHandler()).
@@ -117,7 +118,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 	})
 	logoutSuccessHandler := revoke.NewTokenRevokeSuccessHandler(func(opt *revoke.SuccessOption) {
 		opt.ClientStore = c.config.ClientStore
-		opt.WhitelabelErrorPath = "/error"
+		opt.WhitelabelErrorPath = c.config.Endpoints.Error
 		opt.RedirectWhitelist = c.config.properties.RedirectWhitelist
 	})
 	logout.Configure(ws).

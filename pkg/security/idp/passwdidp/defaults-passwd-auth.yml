@@ -4,6 +4,7 @@ security:
       domain: "${security.auth.issuer.domain:localhost}"
       session-expired-redirect-url: ""
       endpoints:
+        error: "/error"
         form-login: "/login#/login"
         form-login-process: "/login"
         form-login-error: "/login?error=true#/login"
@@ -11,7 +12,7 @@ security:
         otp-verify-process: "/login/mfa"
         otp-verify-resend: "/login/mfa/refresh"
         otp-verify-error: "/login/mfa?error=true#/otpverify"
-        reset-password-page-url: "/v2/todo"
+        reset-password-page-url: "http://localhost:9003/#/forgotpassword"
       mfa:
         enabled: true
         otp-length: 6

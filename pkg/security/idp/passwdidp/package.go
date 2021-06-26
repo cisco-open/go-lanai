@@ -22,9 +22,8 @@ var whiteLabelContent embed.FS
 //go:embed defaults-passwd-auth.yml
 var defaultConfigFS embed.FS
 
-//goland:noinspection GoNameStartsWithPackageName
-var PasswdIdpModule = &bootstrap.Module{
-	Name: "error handling",
+var Module = &bootstrap.Module{
+	Name: "password IDP",
 	Precedence: security.MaxSecurityPrecedence - 100,
 	Options: []fx.Option {
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
@@ -34,7 +33,7 @@ var PasswdIdpModule = &bootstrap.Module{
 }
 
 func Use() {
-	bootstrap.Register(PasswdIdpModule)
+	bootstrap.Register(Module)
 }
 
 func register(r *web.Registrar) {
