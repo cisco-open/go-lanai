@@ -63,7 +63,7 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 		return
 	}
 
-	// TODO Support reset password url
+	// Note: reset password url is not supported by whitelabel login form, and is hardcoded in MSX UI
 	handler := redirect.NewRedirectWithRelativePath(config.Endpoints.Error)
 	ws.
 		With(session.New()).

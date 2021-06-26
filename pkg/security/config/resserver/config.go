@@ -29,12 +29,19 @@ type resServerOut struct {
 	TokenStore oauth2.TokenStoreReader
 }
 
+//goland:noinspection GoExportedFuncWithUnexportedType,HttpUrlsUsage
 func ProvideResServerDI(di resServerConfigDI) resServerOut {
 	config := Configuration{
 		appContext:         di.AppContext,
 		cryptoProperties:   di.CryptoProperties,
 		redisClientFactory: di.RedisClientFactory,
 		timeoutSupport:     di.TimeoutSupport,
+		RemoteEndpoints: RemoteEndpoints{
+			Token:      "http://authserver/v2/token",
+			CheckToken: "http://authserver/v2/check_token",
+			UserInfo:   "http://authserver/v2/userinfo",
+			JwkSet:     "http://authserver/v2/jwks",
+		},
 	}
 	di.Configurer(&config)
 	return resServerOut{

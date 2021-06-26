@@ -45,7 +45,7 @@ func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *a
 	// For Authorize endpoint
 	condition := idp.RequestWithAuthenticationFlow(idp.ExternalIdpSAML, config.IdpManager)
 	ws = ws.AndCondition(condition)
-	
+
 	if !c.props.Enabled {
 		return
 	}
