@@ -211,7 +211,7 @@ func (c *PasswordPolicyChecker) decideNonExpiredPassword(
 	_ context.Context, acct security.Account, policy security.AccountPwdAgingRule, auth security.Authentication) (err error) {
 
 	// reset graceful auth
-	acct.(security.AccountUpdater).IncrementGracefulAuthCount()
+	acct.(security.AccountUpdater).ResetGracefulAuthCount()
 
 	// check if expiring soon
 	toExpire := policy.PwdMaxAge() - time.Now().Sub(acct.(security.AccountHistory).PwdChangedTime())

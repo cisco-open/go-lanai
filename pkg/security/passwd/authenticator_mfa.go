@@ -11,6 +11,7 @@ import (
 /********************************
 	MfaVerifyAuthenticator
 *********************************/
+
 type MfaVerifyAuthenticator struct {
 	accountStore      security.AccountStore
 	otpStore          OTPManager
@@ -86,7 +87,7 @@ func (a *MfaVerifyAuthenticator) Authenticate(ctx context.Context, candidate sec
 	return
 }
 
-// exported for override posibility
+// CreateSuccessAuthentication exported for override posibility
 func (a *MfaVerifyAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpVerification, account security.Account) (security.Authentication, error) {
 
 	permissions := map[string]interface{}{}
@@ -129,6 +130,7 @@ func (a *MfaVerifyAuthenticator) translate(err error, more bool) error {
 /********************************
 	MfaVerifyAuthenticator
 *********************************/
+
 type MfaRefreshAuthenticator struct {
 	accountStore      security.AccountStore
 	otpStore          OTPManager
@@ -204,8 +206,8 @@ func (a *MfaRefreshAuthenticator) Authenticate(ctx context.Context, candidate se
 	return
 }
 
-// exported for override posibility
-func (a *MfaRefreshAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpRefresh, account security.Account) (security.Authentication, error) {
+// CreateSuccessAuthentication exported for override possibility
+func (a *MfaRefreshAuthenticator) CreateSuccessAuthentication(candidate *MFAOtpRefresh, _ security.Account) (security.Authentication, error) {
 	return candidate.CurrentAuth, nil
 }
 
