@@ -17,9 +17,9 @@ security:
         enabled: true
         otp-length: 6
         otp-secret-size: 20
-        otp-ttl: 5m
-        otp-max-attempts: 3
-        otp-resend-limit: 3
+        otp-ttl: 10m
+        otp-max-attempts: 5
+        otp-resend-limit: 5
       remember-me:
         cookie-domain: ${security.idp.internal.domain}
         use-secure-cookie: false
