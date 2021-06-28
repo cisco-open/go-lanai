@@ -4,7 +4,6 @@ security:
       domain: "${security.auth.issuer.domain:localhost}"
       session-expired-redirect-url: ""
       endpoints:
-        error: "/error"
         form-login: "/login#/login"
         form-login-process: "/login"
         form-login-error: "/login?error=true#/login"
