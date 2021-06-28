@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
+	"github.com/pquerna/otp"
 	"sort"
 	"time"
 )
@@ -104,6 +105,14 @@ func (b *AuthenticatorBuilder) mfaOptions(f *PasswordAuthFeature) (Authenticator
 		f.otpRefreshLimit = 3
 	}
 
+	if f.otpLength <= 3 {
+		f.otpLength = 3
+	}
+
+	if f.otpSecretSize <= 5 {
+		f.otpSecretSize = 5
+	}
+
 	otpManager := newTotpManager(func(s *totpManager) {
 		s.ttl = f.otpTTL
 		s.maxVerifyLimit = f.otpVerifyLimit
@@ -111,6 +120,10 @@ func (b *AuthenticatorBuilder) mfaOptions(f *PasswordAuthFeature) (Authenticator
 		if b.defaults.redisClient != nil {
 			s.store = newRedisOtpStore(b.defaults.redisClient)
 		}
+		s.factory = newTotpFactory(func(factory *totpFactory) {
+			factory.digits = otp.Digits(f.otpLength)
+			factory.secretSize = int(f.otpSecretSize)
+		})
 	})
 
 	decisionMakers := b.prepareDecisionMakers(f)

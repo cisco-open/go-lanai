@@ -100,11 +100,11 @@ func (v *timeBasedOtp) Refreshes() uint {
 }
 
 func (v *timeBasedOtp) IncrementAttempts() {
-	v.AttemptCount ++
+	v.AttemptCount++
 }
 
 func (v *timeBasedOtp) IncrementRefreshes() {
-	v.RefreshCount ++
+	v.RefreshCount++
 }
 
 // totpManager implements OTPManager
@@ -118,16 +118,15 @@ type totpManager struct {
 
 type totpManagerOptionsFunc func(*totpManager)
 
-func newTotpManager(options...totpManagerOptionsFunc) *totpManager {
+func newTotpManager(options ...totpManagerOptionsFunc) *totpManager {
 	manager := &totpManager{
-		factory: newTotpFactory(),
-		store: inmemOtpStore(make(map[string]OTP)),
-		ttl: time.Minute * 10,
-		maxVerifyLimit: 3,
+		store:           inmemOtpStore(make(map[string]OTP)),
+		ttl:             time.Minute * 10,
+		maxVerifyLimit:  3,
 		maxRefreshLimit: 3,
 	}
 
-	for _,opt := range options {
+	for _, opt := range options {
 		opt(manager)
 	}
 	return manager
@@ -146,7 +145,7 @@ func (m *totpManager) New() (OTP, error) {
 
 	otp := &timeBasedOtp{
 		Identifier: id.String(),
-		Value: value,
+		Value:      value,
 	}
 
 	// save
@@ -157,7 +156,7 @@ func (m *totpManager) New() (OTP, error) {
 }
 
 func (m *totpManager) Get(id string) (OTP, error) {
-	otp, err := m.store.Load(id);
+	otp, err := m.store.Load(id)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +165,7 @@ func (m *totpManager) Get(id string) (OTP, error) {
 
 func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bool, err error) {
 	// load OTP by Domain
-	otp, e := m.store.Load(id);
+	otp, e := m.store.Load(id)
 	if otp == nil || e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode already expired", e)
 	}
@@ -175,7 +174,7 @@ func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bo
 	defer m.cleanup(otp)
 
 	// check verification attempts
-	if otp.IncrementAttempts(); otp.Attempts() >= m.maxVerifyLimit {
+	if otp.IncrementAttempts(); otp.Attempts() > m.maxVerifyLimit {
 		return nil, false, security.NewMaxAttemptsReachedError("Max verification attempts exceeded")
 	}
 
@@ -189,14 +188,18 @@ func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bo
 	loaded = otp
 	hasMoreChances = otp.Attempts() < m.maxVerifyLimit
 	if valid, e := m.factory.Validate(toValidate); e != nil || !valid {
-		err = security.NewBadCredentialsError("Passcode doesn't match", e)
+		if hasMoreChances {
+			err = security.NewBadCredentialsError("Passcode doesn't match", e)
+		} else {
+			err = security.NewMaxAttemptsReachedError("Passcode doesn't match and max verification attempts exceeded")
+		}
 	}
 	return
 }
 
 func (m *totpManager) Refresh(id string) (loaded OTP, hasMoreChances bool, err error) {
 	// load OTP by Domain
-	loaded, e := m.store.Load(id);
+	loaded, e := m.store.Load(id)
 	if e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode expired", e)
 	}
@@ -210,7 +213,7 @@ func (m *totpManager) Refresh(id string) (loaded OTP, hasMoreChances bool, err e
 	defer m.cleanup(otp)
 
 	// check refresh attempts
-	if otp.IncrementRefreshes(); otp.Refreshes() >= m.maxRefreshLimit {
+	if otp.IncrementRefreshes(); otp.Refreshes() > m.maxRefreshLimit {
 		return loaded, false, security.NewMaxAttemptsReachedError("Max refresh/resend attempts exceeded")
 	}
 
@@ -224,7 +227,11 @@ func (m *totpManager) Refresh(id string) (loaded OTP, hasMoreChances bool, err e
 	hasMoreChances = otp.Refreshes() < m.maxRefreshLimit
 	refreshed, e := m.factory.Refresh(otp.secret(), ttl)
 	if e != nil {
-		return loaded, hasMoreChances, security.NewAuthenticationError("Unabled to refresh/resend passcode", e)
+		if hasMoreChances {
+			return loaded, hasMoreChances, security.NewAuthenticationError("Unable to refresh/resend passcode", e)
+		} else {
+			return loaded, hasMoreChances, security.NewMaxAttemptsReachedError("Unable to refresh/resend passcode and max refresh/resend attempts exceeded", e)
+		}
 	}
 	otp.Value = refreshed
 	return

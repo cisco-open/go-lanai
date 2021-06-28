@@ -7,12 +7,14 @@ import (
 )
 
 const (
-	AuthServerPropertiesPrefix = "security.auth"
+	PropertiesPrefix = "security.auth"
 )
 
+//goland:noinspection GoNameStartsWithPackageName
 type AuthServerProperties struct {
-	Issuer            IssuerProperties `json:"issuer"`
-	RedirectWhitelist utils.StringSet  `json:"redirect-whitelist"`
+	Issuer            IssuerProperties    `json:"issuer"`
+	RedirectWhitelist utils.StringSet     `json:"redirect-whitelist"`
+	Endpoints         EndpointsProperties `json:"endpoints"`
 }
 
 type IssuerProperties struct {
@@ -28,9 +30,23 @@ type IssuerProperties struct {
 	IncludePort bool   `json:"include-port"`
 }
 
+type EndpointsProperties struct {
+	// TODO check_session and /oauth/error, do we still need them?
+	Authorize       string `json:"authorize"`
+	Token           string `json:"token"`
+	Approval        string `json:"approval"`
+	CheckToken      string `json:"check-token"`
+	TenantHierarchy string `json:"tenant-hierarchy"`
+	Error           string `json:"error"`
+	Logout          string `json:"logout"`
+	UserInfo        string `json:"user-info"`
+	JwkSet          string `json:"jwk-set"`
+	SamlMetadata    string `json:"saml-metadata"`
+}
+
 //NewAuthServerProperties create a SessionProperties with default values
 func NewAuthServerProperties() *AuthServerProperties {
-	return &AuthServerProperties {
+	return &AuthServerProperties{
 		Issuer: IssuerProperties{
 			Protocol:    "http",
 			Domain:      "locahost",
@@ -39,13 +55,25 @@ func NewAuthServerProperties() *AuthServerProperties {
 			IncludePort: true,
 		},
 		RedirectWhitelist: utils.NewStringSet(),
+		Endpoints: EndpointsProperties{
+			Authorize:       "/v2/authorize",
+			Token:           "/v2/token",
+			Approval:        "/v2/approve",
+			CheckToken:      "/v2/check_token",
+			TenantHierarchy: "/v2/tenant_hierarchy",
+			Error:           "/error",
+			Logout:          "/v2/logout",
+			UserInfo:        "/v2/userinfo",
+			JwkSet:          "/v2/jwks",
+			SamlMetadata:    "/metadata",
+		},
 	}
 }
 
-//BindAuthServerProperties create and bind SessionProperties, with a optional prefix
+//BindAuthServerProperties create and bind AuthServerProperties, with a optional prefix
 func BindAuthServerProperties(ctx *bootstrap.ApplicationContext) AuthServerProperties {
 	props := NewAuthServerProperties()
-	if err := ctx.Config().Bind(props, AuthServerPropertiesPrefix); err != nil {
+	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind AuthServerProperties"))
 	}
 	return *props

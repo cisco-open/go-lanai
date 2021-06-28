@@ -26,13 +26,12 @@ func init() {
 type initDI struct {
 	fx.In
 	SecRegistrar security.Registrar `optional:"true"`
-	SessionProps security.SessionProperties
 	ServerProps  web.ServerProperties
 }
 
 func register(di initDI, ) {
 	if di.SecRegistrar != nil {
-		configurer := newFormLoginConfigurer(di.SessionProps.Cookie, di.ServerProps)
+		configurer := newFormLoginConfigurer(di.ServerProps)
 		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 	}
 }

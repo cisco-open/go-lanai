@@ -15,8 +15,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"fmt"
 	"go.uber.org/fx"
 	"net/url"
 )
@@ -47,6 +50,7 @@ type authServerOut struct {
 	Config *Configuration
 }
 
+//goland:noinspection GoExportedFuncWithUnexportedType
 func ProvideAuthServerDI(di configDI) authServerOut {
 	config := Configuration{
 		appContext:         di.AppContext,
@@ -58,9 +62,27 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 		cryptoProperties:   di.CryptoProperties,
 		Issuer:             newIssuer(&di.Properties.Issuer, &di.ServerProperties),
 		timeoutSupport:     di.TimeoutSupport,
+		Endpoints: Endpoints{
+			Authorize: ConditionalEndpoint{
+				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize},
+				Condition: matcher.NotRequest(matcher.RequestWithParam(oauth2.ParameterGrantType, saml.GrantTypeSamlSSO)),
+			},
+			Approval:   di.Properties.Endpoints.Approval,
+			Token:      di.Properties.Endpoints.Token,
+			CheckToken: di.Properties.Endpoints.CheckToken,
+			UserInfo:   di.Properties.Endpoints.UserInfo,
+			JwkSet:     di.Properties.Endpoints.JwkSet,
+			Logout:     di.Properties.Endpoints.Logout,
+			SamlSso: ConditionalEndpoint{
+				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize, RawQuery: fmt.Sprintf("%s=%s", oauth2.ParameterGrantType, saml.GrantTypeSamlSSO)},
+				Condition: matcher.RequestWithParam(oauth2.ParameterGrantType, saml.GrantTypeSamlSSO),
+			},
+			SamlMetadata:    di.Properties.Endpoints.SamlMetadata,
+			TenantHierarchy: di.Properties.Endpoints.TenantHierarchy,
+		},
 	}
 	di.Configurer(&config)
-	return authServerOut {
+	return authServerOut{
 		Config: &config,
 	}
 }
@@ -73,7 +95,7 @@ type initDI struct {
 	DiscoveryCustomizers *discovery.Customizers
 }
 
-// Configuration entry point
+// ConfigureAuthorizationServer is the Configuration entry point
 func ConfigureAuthorizationServer(di initDI) {
 	// SMCR
 	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
@@ -98,21 +120,23 @@ func ConfigureAuthorizationServer(di initDI) {
 /****************************
 	configuration
  ****************************/
+
 type ConditionalEndpoint struct {
-	Location *url.URL
+	Location  *url.URL
 	Condition web.RequestMatcher
 }
 
 type Endpoints struct {
-	Authorize  ConditionalEndpoint
-	Approval   string
-	Token      string
-	CheckToken string
-	UserInfo   string
-	JwkSet     string
-	Logout     string
-	SamlSso    ConditionalEndpoint
-	SamlMetadata string
+	Authorize       ConditionalEndpoint
+	Approval        string
+	Token           string
+	CheckToken      string
+	UserInfo        string
+	JwkSet          string
+	Logout          string
+	Error           string
+	SamlSso         ConditionalEndpoint
+	SamlMetadata    string
 	TenantHierarchy string
 }
 
@@ -199,7 +223,7 @@ func (c *Configuration) errorHandler() *auth.OAuth2ErrorHandler {
 
 func (c *Configuration) tokenGranter() auth.TokenGranter {
 	if c.sharedTokenGranter == nil {
-		granters := []auth.TokenGranter {
+		granters := []auth.TokenGranter{
 			grants.NewAuthorizationCodeGranter(c.authorizationService(), c.authorizeCodeStore()),
 			grants.NewClientCredentialsGranter(c.authorizationService()),
 			grants.NewRefreshGranter(c.authorizationService(), c.tokenStore()),
