@@ -1,4 +1,4 @@
-package internal_test
+package sectest
 
 import (
 	"context"
@@ -8,6 +8,12 @@ import (
 
 type mockedTokenStoreReader struct {
 	*mockedBase
+}
+
+func newMockedTokenStoreReader(base *mockedBase) oauth2.TokenStoreReader {
+	return &mockedTokenStoreReader{
+		mockedBase: base,
+	}
 }
 
 func (r *mockedTokenStoreReader) ReadAuthentication(_ context.Context, tokenValue string, hint oauth2.TokenHint) (oauth2.Authentication, error) {

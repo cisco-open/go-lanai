@@ -2,7 +2,7 @@
 // Source: ../../pkg/security/session/store.go
 
 // Package mock_session is a generated GoMock package.
-package mock_session
+package sessionmock
 
 import (
 	context "context"

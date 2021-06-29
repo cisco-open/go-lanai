@@ -1,8 +1,8 @@
-package testsuite
+package suitetest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	test "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"fmt"
 	"os"
 	"sort"

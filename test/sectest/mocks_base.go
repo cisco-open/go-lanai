@@ -1,20 +1,12 @@
-package internal_test
+package sectest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/utils/testscope"
 	"fmt"
 	"sync"
 	"time"
-)
-
-const (
-	idPrefix       = "id-"
-	permSwitchUser = security.SpecialPermissionSwitchUser
-	permSwitchTenant  = security.SpecialPermissionSwitchTenant
-	permAccessAll  = security.SpecialPermissionAccessAllTenant
 )
 
 /*************************
@@ -51,15 +43,15 @@ func (b *mockedBase) RevokeAll() {
 	b.notBefore = time.Now().UTC()
 }
 
-func (b *mockedBase) isTokenRevoked(token *testscope.MockedToken, value string) bool {
+func (b *mockedBase) isTokenRevoked(token *MockedToken, value string) bool {
 	b.RLock()
 	defer b.RUnlock()
 	return token.IssTime.Before(b.notBefore) || b.revoked.Has(value)
 }
 
-func (b *mockedBase) newMockedToken(acct *mockedAccount, tenant *mockedTenant, exp time.Time, origUser string) *testscope.MockedToken {
-	return &testscope.MockedToken{
-		MockedTokenInfo: testscope.MockedTokenInfo{
+func (b *mockedBase) newMockedToken(acct *mockedAccount, tenant *mockedTenant, exp time.Time, origUser string) *MockedToken {
+	return &MockedToken{
+		MockedTokenInfo: MockedTokenInfo{
 			UName: acct.Username,
 			UID:   acct.UserId,
 			TID:   tenant.ID,
@@ -71,8 +63,8 @@ func (b *mockedBase) newMockedToken(acct *mockedAccount, tenant *mockedTenant, e
 	}
 }
 
-func (b *mockedBase) parseMockedToken(value string) (*testscope.MockedToken, error) {
-	mt := &testscope.MockedToken{}
+func (b *mockedBase) parseMockedToken(value string) (*MockedToken, error) {
+	mt := &MockedToken{}
 	if e := mt.UnmarshalText([]byte(value)); e != nil {
 		return nil, e
 	}
@@ -82,7 +74,7 @@ func (b *mockedBase) parseMockedToken(value string) (*testscope.MockedToken, err
 	return mt, nil
 }
 
-func (b *mockedBase) newMockedAuth(mt *testscope.MockedToken, acct *mockedAccount) oauth2.Authentication {
+func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *mockedAccount) oauth2.Authentication {
 	user := oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
 		opt.Principal = mt.UName
 		opt.State = security.StateAuthenticated
@@ -91,8 +83,8 @@ func (b *mockedBase) newMockedAuth(mt *testscope.MockedToken, acct *mockedAccoun
 			opt.Permissions[perm] = true
 		}
 	})
-	details := testscope.NewMockedSecurityDetails(func(d *testscope.SecurityDetailsMock) {
-		*d = testscope.SecurityDetailsMock{
+	details := NewMockedSecurityDetails(func(d *SecurityDetailsMock) {
+		*d = SecurityDetailsMock{
 			Username:     mt.UName,
 			UserId:       mt.UID,
 			TenantName:   mt.TName,

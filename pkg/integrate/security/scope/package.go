@@ -15,7 +15,7 @@ import (
 var logger = log.New("SEC.Scope")
 
 var Module = &bootstrap.Module{
-	Name:       "security-Scope",
+	Name:       "security scope",
 	Precedence: bootstrap.SecurityIntegrationPrecedence,
 	Options: []fx.Option{
 		fx.Invoke(configureSecurityScopeManagers),

@@ -1,9 +1,9 @@
-package testapp
+package apptest
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	test "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"go.uber.org/fx"
 	"testing"
 	"time"

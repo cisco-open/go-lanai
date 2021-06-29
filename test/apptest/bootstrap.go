@@ -1,10 +1,10 @@
-package testapp
+package apptest
 
 import (
 	"context"
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	test "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"embed"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"

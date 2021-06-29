@@ -1,8 +1,12 @@
-package internal_test
+package sectest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"strings"
+)
+
+const (
+	idPrefix       = "id-"
 )
 
 /*************************

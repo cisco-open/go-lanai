@@ -1,4 +1,4 @@
-package testscope
+package sectest
 
 import (
 	"context"

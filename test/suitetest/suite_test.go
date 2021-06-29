@@ -1,8 +1,8 @@
-package testsuite
+package suitetest
 
 import (
 	"context"
-	test "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"github.com/onsi/gomega"
 	"testing"
 )

@@ -1,8 +1,9 @@
-package internal_test
+package sectest
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"fmt"
 	"time"
 )
@@ -14,6 +15,13 @@ import (
 type mockedAuthClient struct {
 	*mockedBase
 	tokenExp time.Duration
+}
+
+func newMockedAuthClient(props *mockingProperties, base *mockedBase) seclient.AuthenticationClient {
+	return &mockedAuthClient{
+		mockedBase: base,
+		tokenExp:   time.Duration(props.TokenValidity),
+	}
 }
 
 func (c *mockedAuthClient) PasswordLogin(_ context.Context, opts ...seclient.AuthOptions) (*seclient.Result, error) {
@@ -52,7 +60,7 @@ func (c *mockedAuthClient) SwitchUser(_ context.Context, opts ...seclient.AuthOp
 		return nil, fmt.Errorf("[Mocked Error] invalid access token")
 	}
 
-	if acct := c.accounts.find(mt.UName, mt.UID); acct == nil || !acct.Permissions.Has(permSwitchUser) {
+	if acct := c.accounts.find(mt.UName, mt.UID); acct == nil || !acct.Permissions.Has(security.SpecialPermissionSwitchUser) {
 		return nil, fmt.Errorf("[Mocked Error] switch user not allowed")
 	}
 
@@ -88,7 +96,7 @@ func (c *mockedAuthClient) SwitchTenant(_ context.Context, opts ...seclient.Auth
 	}
 
 	acct := c.accounts.find(mt.UName, mt.UID)
-	if acct == nil {
+	if acct == nil || !acct.Permissions.Has(security.SpecialPermissionSwitchTenant) {
 		return nil, fmt.Errorf("[Mocked Error] switch tenant not allowed or deleted user")
 	}
 
@@ -128,7 +136,7 @@ func (c *mockedAuthClient) resolveTenant(opt *seclient.AuthOption, acct *mockedA
 		return nil, fmt.Errorf("[Mocked Error] tenant not specified and default tenant not configured")
 	}
 
-	if !acct.AssignedTenants.Has(ret.ID) && !acct.Permissions.Has(permAccessAll) {
+	if !acct.AssignedTenants.Has(ret.ID) && !acct.Permissions.Has(security.SpecialPermissionAccessAllTenant) {
 		return nil, fmt.Errorf("[Mocked Error] user does not have access to tenant [%s]", ret.ID)
 	}
 	return

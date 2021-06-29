@@ -1,18 +1,18 @@
-package scope
+package manager_test
 
 import (
 	"context"
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	securityint "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope/internal_test"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	oauth22 "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	test "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/utils/testapp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/utils/testscope"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/utils/testsuite"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"embed"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -55,14 +55,14 @@ var testAltFS embed.FS
 
 type ManagerTestDI struct {
 	fx.In
-	Revoker internal_test.MockedTokenRevoker
-	Counter internal_test.InvocationCounter `optional:"true"`
+	Revoker sectest.MockedTokenRevoker
+	Counter InvocationCounter `optional:"true"`
 }
 
 func TestMain(m *testing.M) {
-	testsuite.RunTests(m,
-		testsuite.TestOptions(
-			testapp.WithModules(Module),
+	suitetest.RunTests(m,
+		suitetest.TestOptions(
+			apptest.WithModules(scope.Module),
 		),
 	)
 }
@@ -74,14 +74,9 @@ func TestMain(m *testing.M) {
 func TestScopeManagerBasicBehavior(t *testing.T) {
 	di := ManagerTestDI{}
 	test.RunTest(context.Background(), t,
-		testapp.Bootstrap(),
-		testapp.WithFxOptions(
-			appconfig.FxEmbeddedApplicationAdHoc(testAcctsFS),
-			appconfig.FxEmbeddedApplicationAdHoc(testBasicFS),
-			fx.Provide(securityint.BindSecurityIntegrationProperties),
-			fx.Provide(internal_test.ProvideScopeMocks),
-		),
-		testapp.WithDI(&di),
+		apptest.Bootstrap(),
+		apptest.WithDI(&di),
+		sectest.WithMockedScopes(testAcctsFS, testBasicFS),
 		test.GomegaSubTest(SubTestSysAcctLogin(), "SystemAccountLogin"),
 		test.GomegaSubTest(SubTestSysAcctWithTenant(), "SystemAccountWithTenant"),
 		test.GomegaSubTest(SubTestSwitchUserUsingSysAcct(), "SwitchUserUsingSysAcct"),
@@ -95,14 +90,14 @@ func TestScopeManagerBasicBehavior(t *testing.T) {
 func TestScopeManagerWithAltSettings(t *testing.T) {
 	di := ManagerTestDI{}
 	test.RunTest(context.Background(), t,
-		testapp.Bootstrap(),
-		testapp.WithFxOptions(
+		apptest.Bootstrap(),
+		apptest.WithFxOptions(
 			appconfig.FxEmbeddedApplicationAdHoc(testAcctsFS),
 			appconfig.FxEmbeddedApplicationAdHoc(testAltFS),
 			fx.Provide(securityint.BindSecurityIntegrationProperties),
-			fx.Provide(internal_test.ProvideScopeMocksWithCounter),
+			fx.Provide(provideScopeMocksWithCounter),
 		),
-		testapp.WithDI(&di),
+		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestBackoffOnError(&di), "BackoffOnError"),
 		test.GomegaSubTest(SubTestValidityNotGuaranteed(&di), "ValidityNotGuaranteed"),
 		test.GomegaSubTest(SubTestWithoutSysAcctConfig(), "WithoutSysAcctConfig"),
@@ -122,8 +117,8 @@ func TestScopeManagerWithAltSettings(t *testing.T) {
 
 func SubTestSysAcctLogin() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
-		e := Do(ctx, func(ctx context.Context) {
+		ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
+		e := scope.Do(ctx, func(ctx context.Context) {
 			doAssertCurrentScope(ctx, g, "SysAcctLogin",
 				assertAuthenticated(),
 				assertWithUser(systemUsername, systemUserId),
@@ -131,7 +126,7 @@ func SubTestSysAcctLogin() test.GomegaSubTestFunc {
 				assertNotProxyAuth(),
 				assertValidityGreaterThan(validity),
 			)
-		}, UseSystemAccount())
+		}, scope.UseSystemAccount())
 		g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 	}
 }
@@ -140,7 +135,7 @@ func SubTestSysAcctWithTenant() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		{
 			// use tenantId
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "SysAcct+TenantId",
 					assertAuthenticated(),
 					assertWithUser(systemUsername, systemUserId),
@@ -148,13 +143,13 @@ func SubTestSysAcctWithTenant() test.GomegaSubTestFunc {
 					assertNotProxyAuth(),
 					assertValidityGreaterThan(validity),
 				)
-			}, UseSystemAccount(), WithTenantId(tenantId))
+			}, scope.UseSystemAccount(), scope.WithTenantId(tenantId))
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 		{
 			// use tenantName and existing auth
-			ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
-			e := Do(ctx, func(ctx context.Context) {
+			ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "SysAcct+TenantName",
 					assertAuthenticated(),
 					assertWithUser(systemUsername, systemUserId),
@@ -162,7 +157,7 @@ func SubTestSysAcctWithTenant() test.GomegaSubTestFunc {
 					assertNotProxyAuth(),
 					assertValidityGreaterThan(validity),
 				)
-			}, UseSystemAccount(), WithTenantName(tenantName))
+			}, scope.UseSystemAccount(), scope.WithTenantName(tenantName))
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 	}
@@ -174,7 +169,7 @@ func SubTestSwitchUserUsingSysAcct() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		{
 			// use username
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+SysAcct+Username",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -182,13 +177,13 @@ func SubTestSwitchUserUsingSysAcct() test.GomegaSubTestFunc {
 					assertProxyAuth(systemUsername),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithUsername(username), UseSystemAccount())
+			}, scope.WithUsername(username), scope.UseSystemAccount())
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 		{
 			// use user ID and existing auth
-			ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
-			e := Do(ctx, func(ctx context.Context) {
+			ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+SysAcct+UserId",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -196,7 +191,7 @@ func SubTestSwitchUserUsingSysAcct() test.GomegaSubTestFunc {
 					assertProxyAuth(systemUsername),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithUserId(userId), UseSystemAccount())
+			}, scope.WithUserId(userId), scope.UseSystemAccount())
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 	}
@@ -206,7 +201,7 @@ func SubTestSwitchUserWithTenantUsingSysAcct() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		{
 			// use tenant ID
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+SysAcct+Username+TenantId",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -214,13 +209,13 @@ func SubTestSwitchUserWithTenantUsingSysAcct() test.GomegaSubTestFunc {
 					assertProxyAuth(systemUsername),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithUsername(username), WithTenantId(tenantId), UseSystemAccount())
+			}, scope.WithUsername(username), scope.WithTenantId(tenantId), scope.UseSystemAccount())
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 		{
 			// use tenent Name and existing auth
-			ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
-			e := Do(ctx, func(ctx context.Context) {
+			ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+SysAcct+Username+TenantName",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -228,7 +223,7 @@ func SubTestSwitchUserWithTenantUsingSysAcct() test.GomegaSubTestFunc {
 					assertProxyAuth(systemUsername),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithUserId(userId), WithTenantName(tenantName), UseSystemAccount())
+			}, scope.WithUserId(userId), scope.WithTenantName(tenantName), scope.UseSystemAccount())
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 	}
@@ -238,10 +233,10 @@ func SubTestSwitchUserWithTenantUsingSysAcct() test.GomegaSubTestFunc {
 
 func SubTestSwitchUser() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		ctx = testscope.WithMockedSecurity(ctx, securityMockAdmin())
+		ctx = sectest.WithMockedSecurity(ctx, securityMockAdmin())
 		{
 			// use username
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+Username",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -249,12 +244,12 @@ func SubTestSwitchUser() test.GomegaSubTestFunc {
 					assertProxyAuth(adminUsername),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithUsername(username))
+			}, scope.WithUsername(username))
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 		{
 			// use userId
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+UserId",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -262,7 +257,7 @@ func SubTestSwitchUser() test.GomegaSubTestFunc {
 					assertProxyAuth(adminUsername),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithUserId(userId))
+			}, scope.WithUserId(userId))
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 	}
@@ -270,10 +265,10 @@ func SubTestSwitchUser() test.GomegaSubTestFunc {
 
 func SubTestSwitchUserWithTenant() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		ctx = testscope.WithMockedSecurity(ctx, securityMockAdmin())
+		ctx = sectest.WithMockedSecurity(ctx, securityMockAdmin())
 		{
 			// use tenantId
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+Username+TenantId",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -281,12 +276,12 @@ func SubTestSwitchUserWithTenant() test.GomegaSubTestFunc {
 					assertProxyAuth(adminUsername),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithUsername(username), WithTenantId(tenantId))
+			}, scope.WithUsername(username), scope.WithTenantId(tenantId))
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 		{
 			// use tenantName
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+Username+TenantName",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -294,7 +289,7 @@ func SubTestSwitchUserWithTenant() test.GomegaSubTestFunc {
 					assertProxyAuth(adminUsername),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithUsername(username), WithTenantName(tenantName))
+			}, scope.WithUsername(username), scope.WithTenantName(tenantName))
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 
@@ -305,10 +300,10 @@ func SubTestSwitchUserWithTenant() test.GomegaSubTestFunc {
 
 func SubTestSwitchTenant() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
+		ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
 		{
 			// use tenantId
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+TenantId",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -316,12 +311,12 @@ func SubTestSwitchTenant() test.GomegaSubTestFunc {
 					assertNotProxyAuth(),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithTenantId(tenantId))
+			}, scope.WithTenantId(tenantId))
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 		{
 			// use tenantName
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+TenantName",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -329,7 +324,7 @@ func SubTestSwitchTenant() test.GomegaSubTestFunc {
 					assertNotProxyAuth(),
 					assertValidityGreaterThan(validity),
 				)
-			}, WithTenantName(tenantName))
+			}, scope.WithTenantName(tenantName))
 			g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
 		}
 
@@ -341,12 +336,12 @@ func SubTestSwitchTenant() test.GomegaSubTestFunc {
 func SubTestBackoffOnError(di *ManagerTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		di.Counter.ResetAll()
-		ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
+		ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
 		{
 			// first invocation
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				t.Errorf("scoped function should be be invoked in case of error")
-			}, WithTenantId(badTenantId))
+			}, scope.WithTenantId(badTenantId))
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
@@ -355,9 +350,9 @@ func SubTestBackoffOnError(di *ManagerTestDI) test.GomegaSubTestFunc {
 
 		{
 			// immediate replay
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				t.Errorf("scoped function should be be invoked in case of error")
-			}, WithTenantId(badTenantId))
+			}, scope.WithTenantId(badTenantId))
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
@@ -366,9 +361,9 @@ func SubTestBackoffOnError(di *ManagerTestDI) test.GomegaSubTestFunc {
 		{
 			// wait and replay
 			time.Sleep(200 * time.Millisecond)
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				t.Errorf("scoped function should be be invoked in case of error")
-			}, WithTenantId(badTenantId))
+			}, scope.WithTenantId(badTenantId))
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
@@ -380,10 +375,10 @@ func SubTestBackoffOnError(di *ManagerTestDI) test.GomegaSubTestFunc {
 func SubTestValidityNotGuaranteed(di *ManagerTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		di.Counter.ResetAll()
-		ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
+		ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
 		{
 			// invocation
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+TenantName",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -391,7 +386,7 @@ func SubTestValidityNotGuaranteed(di *ManagerTestDI) test.GomegaSubTestFunc {
 					assertNotProxyAuth(),
 					assertValidityLessThan(validity),
 				)
-			}, WithTenantId(tenantId))
+			}, scope.WithTenantId(tenantId))
 
 			g.Expect(e).To(Succeed(), "scope manager should not returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
@@ -399,7 +394,7 @@ func SubTestValidityNotGuaranteed(di *ManagerTestDI) test.GomegaSubTestFunc {
 		}
 		{
 			// immediate replay
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Replay Switch+TenantName",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
@@ -407,7 +402,7 @@ func SubTestValidityNotGuaranteed(di *ManagerTestDI) test.GomegaSubTestFunc {
 					assertNotProxyAuth(),
 					assertValidityLessThan(validity),
 				)
-			}, WithTenantId(tenantId))
+			}, scope.WithTenantId(tenantId))
 
 			g.Expect(e).To(Succeed(), "scope manager should not returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
@@ -424,10 +419,10 @@ func SubTestWithoutSysAcctConfig() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		{
 			// first invocation
-			ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
-			e := Do(ctx, func(ctx context.Context) {
+			ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
+			e := scope.Do(ctx, func(ctx context.Context) {
 				t.Errorf("scoped function should be be invoked in case of error")
-			}, WithTenantId(tenantId), UseSystemAccount())
+			}, scope.WithTenantId(tenantId), scope.UseSystemAccount())
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
 		}
@@ -438,9 +433,9 @@ func SubTestWithoutCurrentAuth() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		{
 			// first invocation
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				t.Errorf("scoped function should be be invoked in case of error")
-			}, WithTenantId(tenantId))
+			}, scope.WithTenantId(tenantId))
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
 		}
@@ -449,20 +444,20 @@ func SubTestWithoutCurrentAuth() test.GomegaSubTestFunc {
 
 func SubTestInsufficientAccess() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
+		ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
 		{
 			// cannot switch tenant
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				t.Errorf("scoped function should be be invoked in case of error")
-			}, WithTenantId(badTenantName))
+			}, scope.WithTenantId(badTenantName))
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
 		}
 		{
 			// cannot switch tenant
-			e := Do(ctx, func(ctx context.Context) {
+			e := scope.Do(ctx, func(ctx context.Context) {
 				t.Errorf("scoped function should be be invoked in case of error")
-			}, WithUsername(adminUsername))
+			}, scope.WithUsername(adminUsername))
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
 		}
@@ -474,15 +469,15 @@ func SubTestSwitchToSameUser(di *ManagerTestDI) test.GomegaSubTestFunc {
 		di.Counter.ResetAll()
 		{
 			// first invocation
-			ctx = testscope.WithMockedSecurity(ctx, securityMockAdmin())
-			e := Do(ctx, func(ctx context.Context) {
+			ctx = sectest.WithMockedSecurity(ctx, securityMockAdmin())
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+SameUsername",
 					assertAuthenticated(),
 					assertWithUser(adminUsername, adminUserId),
 					assertWithTenant(defaultTenantId, defaultTenantName),
 					assertNotProxyAuth(),
 				)
-			}, WithUsername(adminUsername))
+			}, scope.WithUsername(adminUsername))
 
 			g.Expect(e).To(Succeed(), "scope manager should not returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchUser)).
@@ -498,15 +493,15 @@ func SubTestSwitchToSameTenant(di *ManagerTestDI) test.GomegaSubTestFunc {
 		di.Counter.ResetAll()
 		{
 			// first invocation
-			ctx = testscope.WithMockedSecurity(ctx, securityMockRegular())
-			e := Do(ctx, func(ctx context.Context) {
+			ctx = sectest.WithMockedSecurity(ctx, securityMockRegular())
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+SameTenantId",
 					assertAuthenticated(),
 					assertWithUser(username, userId),
 					assertWithTenant(defaultTenantId, defaultTenantName),
 					assertNotProxyAuth(),
 				)
-			}, WithTenantId(defaultTenantId))
+			}, scope.WithTenantId(defaultTenantId))
 
 			g.Expect(e).To(Succeed(), "scope manager should returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
@@ -522,16 +517,16 @@ func SubTestRevokedToken(di *ManagerTestDI) test.GomegaSubTestFunc {
 		var toBeRevoked string
 		{
 			// first invocation
-			ctx = testscope.WithMockedSecurity(ctx, securityMockAdmin())
-			e := Do(ctx, func(ctx context.Context) {
+			ctx = sectest.WithMockedSecurity(ctx, securityMockAdmin())
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+TenantId",
 					assertAuthenticated(),
 					assertWithUser(adminUsername, adminUserId),
 					assertWithTenant(tenantId, tenantName),
 					assertNotProxyAuth(),
 				)
-				toBeRevoked = security.Get(ctx).(oauth22.Authentication).AccessToken().Value()
-			}, WithTenantId(tenantId))
+				toBeRevoked = security.Get(ctx).(oauth2.Authentication).AccessToken().Value()
+			}, scope.WithTenantId(tenantId))
 
 			g.Expect(e).To(Succeed(), "scope manager should not returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
@@ -540,15 +535,15 @@ func SubTestRevokedToken(di *ManagerTestDI) test.GomegaSubTestFunc {
 		{
 			// revoke and try again
 			di.Revoker.Revoke(toBeRevoked)
-			ctx = testscope.WithMockedSecurity(ctx, securityMockAdmin())
-			e := Do(ctx, func(ctx context.Context) {
+			ctx = sectest.WithMockedSecurity(ctx, securityMockAdmin())
+			e := scope.Do(ctx, func(ctx context.Context) {
 				doAssertCurrentScope(ctx, g, "Switch+TenantId",
 					assertAuthenticated(),
 					assertWithUser(adminUsername, adminUserId),
 					assertWithTenant(tenantId, tenantName),
 					assertNotProxyAuth(),
 				)
-			}, WithTenantId(tenantId))
+			}, scope.WithTenantId(tenantId))
 
 			g.Expect(e).To(Succeed(), "scope manager should not returns error")
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
@@ -627,7 +622,7 @@ func assertProxyAuth(origName string) assertion {
 
 func assertValidityLessThan(validity time.Duration) assertion {
 	return func(g *WithT, auth security.Authentication, msg string) {
-		oauth2, ok := auth.(oauth22.Authentication)
+		oauth2, ok := auth.(oauth2.Authentication)
 		g.Expect(ok).To(BeTrue(), "[%s] should oauth2.Authentication", msg)
 		g.Expect(oauth2.AccessToken()).To(Not(BeNil()), "[%s] should contains access token", msg)
 		expected := time.Now().Add(validity)
@@ -637,7 +632,7 @@ func assertValidityLessThan(validity time.Duration) assertion {
 
 func assertValidityGreaterThan(validity time.Duration) assertion {
 	return func(g *WithT, auth security.Authentication, msg string) {
-		oauth2, ok := auth.(oauth22.Authentication)
+		oauth2, ok := auth.(oauth2.Authentication)
 		g.Expect(ok).To(BeTrue(), "[%s] should oauth2.Authentication", msg)
 		g.Expect(oauth2.AccessToken()).To(Not(BeNil()), "[%s] should contains access token", msg)
 		expected := time.Now().Add(validity)
@@ -658,8 +653,8 @@ func assertValidityGreaterThan(validity time.Duration) assertion {
 //	}
 //}
 
-func securityMockAdmin() testscope.SecurityMockOptions {
-	return func(d *testscope.SecurityDetailsMock) {
+func securityMockAdmin() sectest.SecurityMockOptions {
+	return func(d *sectest.SecurityDetailsMock) {
 		d.Username = adminUsername
 		d.UserId = adminUserId
 		d.TenantId = defaultTenantId
@@ -670,8 +665,8 @@ func securityMockAdmin() testscope.SecurityMockOptions {
 	}
 }
 
-func securityMockRegular() testscope.SecurityMockOptions {
-	return func(d *testscope.SecurityDetailsMock) {
+func securityMockRegular() sectest.SecurityMockOptions {
+	return func(d *sectest.SecurityDetailsMock) {
 		d.Username = username
 		d.UserId = userId
 		d.TenantId = defaultTenantId
@@ -680,31 +675,3 @@ func securityMockRegular() testscope.SecurityMockOptions {
 	}
 }
 
-//func (c *cache) loadFunc() loadFunc {
-//	return func(ctx context.Context, k cKey) (v entryValue, exp time.Time, err error) {
-//		fmt.Printf("loading key-%v...\n", k)
-//		time.Sleep(1 * time.Second)
-//		if k % 2 == 0 {
-//			// happy path valid 5 seconds
-//			valid := 5 * time.Second
-//			exp = time.Now().Add(valid)
-//			v = oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {
-//				opt.Token = oauth2.NewDefaultAccessToken("My test token")
-//			})
-//			fmt.Printf("loaded key-%v=%v with exp in %v\n", k, v.AccessToken().Value(), valid)
-//		} else {
-//			// unhappy path valid 2 seconds
-//			valid := 2 * time.Second
-//			exp = time.Now().Add(valid)
-//			err = fmt.Errorf("oops")
-//			fmt.Printf("loaded key-%v=%v with exp in %v\n", k, err, valid)
-//		}
-//		return
-//	}
-//}
-
-//func (c *cache) evictFunc() gcache.EvictedFunc {
-//	return func(k interface{}, v interface{}) {
-//		fmt.Printf("evicted %v=%v\n", k, v)
-//	}
-//}

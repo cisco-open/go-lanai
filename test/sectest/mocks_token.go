@@ -1,4 +1,4 @@
-package testscope
+package sectest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
@@ -10,10 +10,7 @@ import (
 )
 
 const (
-	idPrefix       = "id-"
 	tokenDelimiter = "~"
-	permSwitchUser = "switch_user"
-	permAccessAll  = "access_all"
 )
 
 /*************************

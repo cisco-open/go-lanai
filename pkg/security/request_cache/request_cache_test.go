@@ -6,9 +6,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"net/http"
@@ -22,7 +22,7 @@ func TestSaveAndGetCachedRequest(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
 
 	sessionStore := session.NewRedisStore(mockRedis)
 	s, _ := sessionStore.New(common.DefaultName)
@@ -50,7 +50,7 @@ func TestCachedRequestPreProcessor_Process(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionStore := mock_session.NewMockStore(ctrl)
+	mockSessionStore := sessionmock.NewMockStore(ctrl)
 
 	processor := newCachedRequestPreProcessor(mockSessionStore)
 
@@ -93,7 +93,7 @@ func TestSavedRequestAuthenticationSuccessHandler_HandleAuthenticationSuccess(t 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
 
 	sessionStore := session.NewRedisStore(mockRedis)
 	s, _ := sessionStore.New(common.DefaultName)
@@ -106,10 +106,10 @@ func TestSavedRequestAuthenticationSuccessHandler_HandleAuthenticationSuccess(t 
 
 	SaveRequest(c)
 
-	mockFrom := mock_security.NewMockAuthentication(ctrl)
+	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
 
-	mockTo := mock_security.NewMockAuthentication(ctrl)
+	mockTo := authmock.NewMockAuthentication(ctrl)
 	mockTo.EXPECT().State().Return(security.StateAuthenticated)
 
 	handler := NewSavedRequestAuthenticationSuccessHandler(nil)
@@ -131,7 +131,7 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
 
 	sessionStore := session.NewRedisStore(mockRedis)
 	s, _ := sessionStore.New(common.DefaultName)

@@ -1,4 +1,4 @@
-package testapp
+package apptest
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	test "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/utils/testsuite"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"fmt"
 	"github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -95,8 +95,8 @@ func (c *controller) Test(_ context.Context, _ *http.Request) (response interfac
  *************************/
 
 func TestMain(m *testing.M) {
-	testsuite.RunTests(m,
-		testsuite.TestOptions(WithModules(webinit.Module)),
+	suitetest.RunTests(m,
+		suitetest.TestOptions(WithModules(webinit.Module)),
 	)
 }
 

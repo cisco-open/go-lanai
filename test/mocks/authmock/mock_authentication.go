@@ -2,7 +2,7 @@
 // Source: ../pkg/security/ctx.go
 
 // Package mock_security is a generated GoMock package.
-package mock_security
+package authmock
 
 import (
 	security "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"

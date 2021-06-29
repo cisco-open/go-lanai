@@ -1,4 +1,4 @@
-package test
+package appconfig_test
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 
 
 func TestResolvePlaceHolders(t *testing.T) {
-	fullPath := "test_placeholders.yml"
-	file, e := os.Open(fullPath);
+	fullPath := "placeholders_test.yml"
+	file, e := os.Open(fullPath)
 
 	if e != nil {
 		t.Errorf("can't open test file")
@@ -55,25 +55,21 @@ func TestResolvePlaceHolders(t *testing.T) {
 }
 
 func TestResolvePlaceHoldersWithCircularReference(t *testing.T) {
-	fullPath := "test_placeholders_circular.yml"
-	file, error := os.Open(fullPath);
+	fullPath := "placeholders_circular_test.yml"
+	file, e := os.Open(fullPath)
 
-	if error != nil {
+	if e != nil {
 		t.Errorf("can't open test file")
 	}
 
 	p := fileprovider.NewProvider(0, fullPath, file)
 	c := appconfig.NewApplicationConfig(appconfig.NewStaticProviderGroup(0, p))
 
-	error = c.Load(context.Background(), true)
+	e = c.Load(context.Background(), true)
 
-	if error == nil {
+	if e == nil {
 		t.Errorf("expected error")
 	}
 
-	fmt.Println(error)
-}
-
-func TestBindRedisProperties(t *testing.T) {
-
+	fmt.Println(e)
 }

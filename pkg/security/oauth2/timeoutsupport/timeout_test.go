@@ -3,7 +3,7 @@ package timeoutsupport
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
@@ -20,7 +20,7 @@ func TestApplyTimeout_WhenSessionExpired(t *testing.T) {
 
 	sessionId := "my_session_id"
 
-	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
 	//mock that the session doesn't exist (i.e. expired)
 	mockRedis.EXPECT().Exists(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId)).Return(redis.NewIntResult(0, nil))
 
@@ -46,7 +46,7 @@ func TestApplyTimeout_whenSessionNotExpired(t *testing.T) {
 	origAbsTimeoutTime := sessionLastAccessedTime.Add(120 * time.Second)
 	origIdleTimeoutTime := sessionLastAccessedTime.Add(idleTimeout)
 
-	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
 	//mock that the session exists
 	mockRedis.EXPECT().Exists(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId)).
 		Return(redis.NewIntResult(1, nil))
