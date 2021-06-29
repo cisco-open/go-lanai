@@ -42,7 +42,7 @@ require (
 	go.uber.org/fx v1.13.1
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/net v0.0.0-20210326060303-6b1517762897
-	gorm.io/driver/postgres v1.0.8
+	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.11
 	mvdan.cc/sh/v3 v3.2.4
 )

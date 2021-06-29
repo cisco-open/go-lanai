@@ -1,6 +1,6 @@
 
 ## Build Container ##
-FROM golang:1.16.3 AS builder
+FROM dockerhub.cisco.com/vms-platform-dev-docker/golang:1.16.3 AS builder
 ARG PRIVATE_MODS
 ARG VERSION
 WORKDIR /go/src/
