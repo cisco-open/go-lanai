@@ -109,6 +109,17 @@ func TestScopeManagerWithAltSettings(t *testing.T) {
 	)
 }
 
+func TestOverridingDefaultScopeManager(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithFxOptions(
+			fx.Provide(securityint.BindSecurityIntegrationProperties),
+			fx.Provide(provideNoopScopeManager),
+		),
+		test.GomegaSubTest(SubTestNoopScopeManager(), "VerifyNoopScopeManager"),
+	)
+}
+
 /*************************
 	Sub-Test Cases
  *************************/
@@ -549,6 +560,15 @@ func SubTestRevokedToken(di *ManagerTestDI) test.GomegaSubTestFunc {
 			g.Expect(di.Counter.Get(seclient.AuthenticationClient.SwitchTenant)).
 				To(Equal(2), "AuthenticationClient.SwitchTenant should be invoked again after token revoke")
 		}
+	}
+}
+
+func SubTestNoopScopeManager() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		e := scope.Do(ctx, func(scoped context.Context) {
+			g.Expect(scoped).To(BeIdenticalTo(ctx), "noop scope manager shouldn't do anything")
+		})
+		g.Expect(e).To(Succeed(), "noop scope manager shouldn't returns error")
 	}
 }
 

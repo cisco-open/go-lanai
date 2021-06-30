@@ -2,6 +2,7 @@ package examples
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
@@ -28,19 +29,9 @@ func NewRealService() DummyService {
 	return &realService{}
 }
 
-func NewMockedService() DummyService {
-	return &mockedService{}
-}
-
 type realService struct {}
 
 func (t *realService) DummyMethod(_ context.Context) error {
-	return nil
-}
-
-type mockedService struct {}
-
-func (t *mockedService) DummyMethod(_ context.Context) error {
 	return nil
 }
 
@@ -138,6 +129,23 @@ func TestBootstrapWithRealWebServer(t *testing.T) {
 	)
 }
 
+// TestBootstrapWithRealWebServer
+// Without specifying server port when webinit.Module is enabled, the web package would create a real
+// server with random port. The port can be retrieved via *web.Registrar
+// Note: due to current bootstrapping limitation, all modules added via apptest.WithModules would affect other tests,
+//		 so no conflicting modules is allowed between all tests of same package.
+func TestBootstrapWithTxManagerMock(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithModules(tx.Module),
+		apptest.WithFxOptions(
+			// provide tx.TxManager override. can be mocked or noop
+			fx.Provide(provideNoopTxManager),
+		),
+		test.GomegaSubTest(SubTestExampleWithOverriddenTxManager(), "SubTestWithOverriddenTxManager"),
+	)
+}
+
 /*************************
 	Sub Tests
  *************************/
@@ -164,5 +172,14 @@ func SubTestExampleWithRealWebController(di *webDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(gomega.Succeed(), "http client should be succeeded")
 		g.Expect(resp).To(gomega.Not(gomega.BeNil()), "http response should not be nil ")
 		g.Expect(resp.StatusCode).To(gomega.Equal(200), "http response status should be 200")
+	}
+}
+
+func SubTestExampleWithOverriddenTxManager() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		e := tx.Transaction(context.Background(), func(ctx context.Context) error {
+			return nil
+		})
+		g.Expect(e).To(gomega.Succeed(), "TxManager shouldn't return error")
 	}
 }

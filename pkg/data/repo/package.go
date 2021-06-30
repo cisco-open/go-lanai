@@ -2,11 +2,10 @@ package repo
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"go.uber.org/fx"
 )
 
-var logger = log.New("DB.Repo")
+//var logger = log.New("DB.Repo")
 
 var Module = &bootstrap.Module{
 	Name: "DB Repo",
