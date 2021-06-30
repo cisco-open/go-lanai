@@ -32,4 +32,23 @@ func (m noopTxManager) WithDB(_ *gorm.DB) tx.GormTxManager {
 	return m
 }
 
+func (m noopTxManager) Begin(ctx context.Context, _ ...*sql.TxOptions) (context.Context, error) {
+	return ctx, nil
+}
+
+func (m noopTxManager) Rollback(ctx context.Context) (context.Context, error) {
+	return ctx, nil
+}
+
+func (m noopTxManager) Commit(ctx context.Context) (context.Context, error) {
+	return ctx, nil
+}
+
+func (m noopTxManager) SavePoint(ctx context.Context, _ string) (context.Context, error) {
+	return ctx, nil
+}
+
+func (m noopTxManager) RollbackTo(ctx context.Context, _ string) (context.Context, error) {
+	return ctx, nil
+}
 

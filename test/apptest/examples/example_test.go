@@ -177,9 +177,20 @@ func SubTestExampleWithRealWebController(di *webDI) test.GomegaSubTestFunc {
 
 func SubTestExampleWithOverriddenTxManager() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		e := tx.Transaction(context.Background(), func(ctx context.Context) error {
+		// Regular usage
+		e := tx.Transaction(ctx, func(txCtx context.Context) error {
+			g.Expect(txCtx).To(gomega.BeIdenticalTo(ctx), "Overridden TxManager shouldn't do anything")
 			return nil
 		})
-		g.Expect(e).To(gomega.Succeed(), "TxManager shouldn't return error")
+		g.Expect(e).To(gomega.Succeed(), "Overridden TxManager shouldn't return error")
+
+		// Manual usage
+		txCtx, e := tx.Begin(ctx)
+		g.Expect(e).To(gomega.Succeed(), "Overridden ManualTxManager shouldn't return error")
+		g.Expect(txCtx).To(gomega.BeIdenticalTo(ctx), "Overridden ManualTxManager shouldn't do anything")
+
+		txCtx, e = tx.Commit(txCtx)
+		g.Expect(e).To(gomega.Succeed(), "Overridden ManualTxManager shouldn't return error")
+		g.Expect(txCtx).To(gomega.BeIdenticalTo(ctx), "Overridden ManualTxManager shouldn't do anything")
 	}
 }

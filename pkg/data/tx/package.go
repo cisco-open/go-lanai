@@ -26,7 +26,7 @@ type txDI struct {
 type txManagerOut struct {
 	fx.Out
 	Tx     TxManager     `name:"tx/TxManager"`
-	GormTx GormTxManager `name:"tx/TxManager"`
+	GormTx GormTxManager
 }
 
 func provideGormTxManager(di txDI) txManagerOut {
@@ -37,7 +37,8 @@ func provideGormTxManager(di txDI) txManagerOut {
 		if override, ok := di.UnnamedTx.(GormTxManager); ok {
 			return txManagerOut{Tx: override, GormTx: override}
 		} else {
-			return txManagerOut{Tx: override}
+			// we should avoid this path
+			return txManagerOut{Tx: di.UnnamedTx, GormTx: gormTxManagerAdapter{TxManager: di.UnnamedTx} }
 		}
 	}
 
