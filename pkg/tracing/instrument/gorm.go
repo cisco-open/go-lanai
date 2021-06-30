@@ -70,35 +70,35 @@ func (p gormPlugin) Name() string {
 	return "tracing"
 }
 
-func (p gormPlugin) Initialize(db *gorm.DB) error {
-	db.Callback().Create().Before(gormCbBeforeCreate).
+func (p gormPlugin) Initialize(db *gorm.DB) (err error) {
+	err = db.Callback().Create().Before(gormCbBeforeCreate).
 		Register(p.cbBeforeName("create"), p.makeBeforeCallback("create"))
-	db.Callback().Create().After(gormCbAfterCreate).
+	err = db.Callback().Create().After(gormCbAfterCreate).
 		Register(p.cbAfterName("create"), p.makeAfterCallback("create"))
 
-	db.Callback().Query().Before(gormCbBeforeQuery).
+	err = db.Callback().Query().Before(gormCbBeforeQuery).
 		Register(p.cbBeforeName("query"), p.makeBeforeCallback("select"))
-	db.Callback().Query().After(gormCbAfterQuery).
+	err = db.Callback().Query().After(gormCbAfterQuery).
 		Register(p.cbAfterName("query"), p.makeAfterCallback("select"))
 
-	db.Callback().Update().Before(gormCbBeforeUpdate).
+	err = db.Callback().Update().Before(gormCbBeforeUpdate).
 		Register(p.cbBeforeName("update"), p.makeBeforeCallback("update"))
-	db.Callback().Update().After(gormCbAfterUpdate).
+	err = db.Callback().Update().After(gormCbAfterUpdate).
 		Register(p.cbAfterName("update"), p.makeAfterCallback("update"))
 
-	db.Callback().Delete().Before(gormCbBeforeDelete).
+	err = db.Callback().Delete().Before(gormCbBeforeDelete).
 		Register(p.cbBeforeName("delete"), p.makeBeforeCallback("delete"))
-	db.Callback().Delete().After(gormCbAfterDelete).
+	err = db.Callback().Delete().After(gormCbAfterDelete).
 		Register(p.cbAfterName("delete"), p.makeAfterCallback("delete"))
 
-	db.Callback().Row().Before(gormCbBeforeRow).
+	err = db.Callback().Row().Before(gormCbBeforeRow).
 		Register(p.cbBeforeName("row"), p.makeBeforeCallback("row"))
-	db.Callback().Row().After(gormCbAfterRow).
+	err = db.Callback().Row().After(gormCbAfterRow).
 		Register(p.cbAfterName("row"), p.makeAfterCallback("row"))
 
-	db.Callback().Raw().Before(gormCbBeforeRaw).
+	err = db.Callback().Raw().Before(gormCbBeforeRaw).
 		Register(p.cbBeforeName("raw"), p.makeBeforeCallback("sql"))
-	db.Callback().Raw().After(gormCbAfterRaw).
+	err = db.Callback().Raw().After(gormCbAfterRaw).
 		Register(p.cbAfterName("raw"), p.makeAfterCallback("sql"))
 
 	return nil
@@ -125,7 +125,7 @@ func (p gormPlugin) makeBeforeCallback(opName string) gormCallbackFunc {
 	}
 }
 
-func (p gormPlugin) makeAfterCallback(opName string) gormCallbackFunc {
+func (p gormPlugin) makeAfterCallback(_ string) gormCallbackFunc {
 	return func(db *gorm.DB) {
 		ctx := db.Statement.Context
 		op := tracing.WithTracer(p.tracer)

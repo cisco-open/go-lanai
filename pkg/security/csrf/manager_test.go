@@ -6,7 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
@@ -22,7 +22,7 @@ func TestCsrfMiddlewareShouldGenerateToken(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockSessionStore := mock_session.NewMockStore(ctrl)
+	mockSessionStore := sessionmock.NewMockStore(ctrl)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, common.DefaultName)
@@ -63,7 +63,7 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockSessionStore := mock_session.NewMockStore(ctrl)
+	mockSessionStore := sessionmock.NewMockStore(ctrl)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, common.DefaultName)
@@ -162,7 +162,7 @@ func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockSessionStore := mock_session.NewMockStore(ctrl)
+	mockSessionStore := sessionmock.NewMockStore(ctrl)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, common.DefaultName)

@@ -132,3 +132,15 @@ func (m gormTxManager) RollbackTo(ctx context.Context, name string) (context.Con
 }
 
 
+// gormTxManagerAdapter bridge a TxManager to GormTxManager with noop operation. Useful for testing
+type gormTxManagerAdapter struct {
+	TxManager
+}
+
+func (a gormTxManagerAdapter) WithDB(_ *gorm.DB) GormTxManager {
+	return a
+}
+
+
+
+

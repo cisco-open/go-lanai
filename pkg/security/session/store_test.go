@@ -6,7 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
 	"encoding/gob"
 	"fmt"
 	goRedis "github.com/go-redis/redis/v8"
@@ -100,7 +100,7 @@ func TestSerialization(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock_redis.NewMockUniversalClient(ctrl)
+	mock := redismock.NewMockUniversalClient(ctrl)
 	connection := mock
 
 	store := NewRedisStore(connection)
@@ -165,7 +165,7 @@ func Test_Get_Not_Exist_Session_Should_Create_New(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock_redis.NewMockUniversalClient(ctrl)
+	mock := redismock.NewMockUniversalClient(ctrl)
 	connection := mock
 
 	mock.EXPECT().
@@ -206,7 +206,7 @@ func Test_Get_Exist_Session_Should_Return_Existing(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock_redis.NewMockUniversalClient(ctrl)
+	mock := redismock.NewMockUniversalClient(ctrl)
 	connection := mock
 	store := NewRedisStore(connection)
 
@@ -267,7 +267,7 @@ func TestSaveNewSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock_redis.NewMockUniversalClient(ctrl)
+	mock := redismock.NewMockUniversalClient(ctrl)
 	connection := mock
 
 	store := NewRedisStore(connection)
@@ -315,7 +315,7 @@ func TestSaveDirtySession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock_redis.NewMockUniversalClient(ctrl)
+	mock := redismock.NewMockUniversalClient(ctrl)
 	connection := mock
 
 	store := NewRedisStore(connection)
@@ -367,7 +367,7 @@ func TestSaveAccessedSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock_redis.NewMockUniversalClient(ctrl)
+	mock := redismock.NewMockUniversalClient(ctrl)
 	connection := mock
 
 	store := NewRedisStore(connection)
