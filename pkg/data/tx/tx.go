@@ -18,6 +18,10 @@ func setGlobalTxManager(di globalDI) {
 	txManager = di.Tx
 }
 
+func NewTxManager(m TxManager){
+	setGlobalTxManager(m)
+}
+
 // Transaction start a transaction as a block, return error will rollback, otherwise to commit.
 func Transaction(ctx context.Context, tx TxFunc, opts ...*sql.TxOptions) error {
 	return mustGetTxManager().Transaction(ctx, tx, opts...)
