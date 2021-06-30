@@ -4,12 +4,18 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"database/sql"
+	"go.uber.org/fx"
 )
 
 var txManager TxManager
 
-func setGlobalTxManager(m TxManager) {
-	txManager = m
+type globalDI struct {
+	fx.In
+	Tx TxManager `name:"tx/TxManager"`
+}
+
+func setGlobalTxManager(di globalDI) {
+	txManager = di.Tx
 }
 
 // Transaction start a transaction as a block, return error will rollback, otherwise to commit.

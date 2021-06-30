@@ -5,8 +5,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
 	"encoding/gob"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -23,7 +23,7 @@ func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
 
 	sessionStore := NewRedisStore(mockRedis)
 	s, _ := sessionStore.New(common.DefaultName)
@@ -35,10 +35,10 @@ func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	//The actual request is not important
 	c.Request = httptest.NewRequest("POST", "/something", nil)
 
-	mockFrom := mock_security.NewMockAuthentication(ctrl)
+	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
 
-	mockTo := mock_security.NewMockAuthentication(ctrl)
+	mockTo := authmock.NewMockAuthentication(ctrl)
 	mockTo.EXPECT().State().Return(security.StateAuthenticated)
 
 	originalId := s.id
@@ -67,7 +67,7 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
 
 	sessionStore := NewRedisStore(mockRedis)
 
@@ -87,11 +87,11 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	//The actual request is not important
 	c.Request = httptest.NewRequest("POST", "/something", nil)
 
-	mockFrom := mock_security.NewMockAuthentication(ctrl)
+	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
 
 	principalName := "principal1"
-	mockTo := mock_security.NewMockAuthentication(ctrl)
+	mockTo := authmock.NewMockAuthentication(ctrl)
 	mockTo.EXPECT().State().Return(security.StateAuthenticated)
 	mockTo.EXPECT().Principal().Return(principalName).AnyTimes()
 
@@ -165,7 +165,7 @@ func TestDeleteSessionOnLogoutHandler_HandleAuthenticationSuccess(t *testing.T) 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRedis := mock_redis.NewMockUniversalClient(ctrl)
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
 	sessionStore := NewRedisStore(mockRedis)
 
 	s, _ := sessionStore.New(common.DefaultName)
@@ -177,11 +177,11 @@ func TestDeleteSessionOnLogoutHandler_HandleAuthenticationSuccess(t *testing.T) 
 	c.Request = httptest.NewRequest("POST", "/something", nil)
 
 	principalName := "principal1"
-	mockFrom := mock_security.NewMockAuthentication(ctrl)
+	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAuthenticated)
 	mockFrom.EXPECT().Principal().Return(principalName).AnyTimes()
 
-	mockTo := mock_security.NewMockAuthentication(ctrl)
+	mockTo := authmock.NewMockAuthentication(ctrl)
 	mockTo.EXPECT().State().Return(security.StateAnonymous)
 
 	existingSessionAuth := &testAuthentication{

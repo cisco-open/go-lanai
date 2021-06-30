@@ -4,7 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	test "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"fmt"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"

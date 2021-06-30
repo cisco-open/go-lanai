@@ -5,8 +5,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mock_session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -22,7 +22,7 @@ func TestChangeCsrfHanlderShouldChangeCSRFTokenWhenAuthenticated(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockSessionStore := mock_session.NewMockStore(ctrl)
+	mockSessionStore := sessionmock.NewMockStore(ctrl)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, common.DefaultName)
@@ -38,10 +38,10 @@ func TestChangeCsrfHanlderShouldChangeCSRFTokenWhenAuthenticated(t *testing.T) {
 	//The request itself is not important
 	c.Request = httptest.NewRequest("GET", "/something", nil)
 
-	mockFrom := mock_security.NewMockAuthentication(ctrl)
+	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
 
-	mockTo := mock_security.NewMockAuthentication(ctrl)
+	mockTo := authmock.NewMockAuthentication(ctrl)
 	mockTo.EXPECT().State().Return(security.StateAuthenticated)
 
 	mockSessionStore.EXPECT().Save(gomock.Any()).Do(func(s *session.Session) {
@@ -74,7 +74,7 @@ func TestChangeCsrfHanlderShouldNotChangeCSRFTokenIfNotAuthenticated(t *testing.
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockSessionStore := mock_session.NewMockStore(ctrl)
+	mockSessionStore := sessionmock.NewMockStore(ctrl)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, common.DefaultName)
@@ -90,10 +90,10 @@ func TestChangeCsrfHanlderShouldNotChangeCSRFTokenIfNotAuthenticated(t *testing.
 	//The request itself is not important
 	c.Request = httptest.NewRequest("GET", "/something", nil)
 
-	mockFrom := mock_security.NewMockAuthentication(ctrl)
+	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAuthenticated)
 
-	mockTo := mock_security.NewMockAuthentication(ctrl)
+	mockTo := authmock.NewMockAuthentication(ctrl)
 	mockTo.EXPECT().State().Return(security.StateAnonymous)
 
 	handler.HandleAuthenticationSuccess(c, c.Request, c.Writer, mockFrom, mockTo)
