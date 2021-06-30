@@ -2,29 +2,14 @@ package apptest
 
 import (
 	"context"
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"embed"
 	"go.uber.org/fx"
 	"testing"
 	"time"
 )
-
-type testModuleCtxKey struct{}
-
-var ctxKeyTestModule = testModuleCtxKey{}
-
-type testFxContext struct {
-	context.Context
-	module *bootstrap.Module
-}
-
-func (c *testFxContext) Value(key interface{}) interface{} {
-	switch {
-	case key == ctxKeyTestModule:
-		return c.module
-	}
-	return c.Context.Value(key)
-}
 
 // WithDI populate given di targets by using fx.Populate
 // all targets need to be pointer to struct, otherwise the test fails
@@ -65,6 +50,10 @@ func WithFxPriorityOptions(opts ...fx.Option) test.Options {
 	})
 }
 
+func WithConfigFS(fs embed.FS) test.Options {
+	return WithFxOptions(appconfig.FxEmbeddedApplicationAdHoc(fs))
+}
+
 func withTestModule(ctx context.Context) (context.Context, *bootstrap.Module) {
 	ret := ctx
 	m, ok := ctx.Value(ctxKeyTestModule).(*bootstrap.Module)
@@ -81,4 +70,24 @@ func withTestModule(ctx context.Context) (context.Context, *bootstrap.Module) {
 		}
 	}
 	return ret, m
+}
+
+/*********************
+	Test FX Context
+ *********************/
+type testModuleCtxKey struct{}
+
+var ctxKeyTestModule = testModuleCtxKey{}
+
+type testFxContext struct {
+	context.Context
+	module *bootstrap.Module
+}
+
+func (c *testFxContext) Value(key interface{}) interface{} {
+	switch {
+	case key == ctxKeyTestModule:
+		return c.module
+	}
+	return c.Context.Value(key)
 }

@@ -135,6 +135,7 @@ func TestBootstrapWithCustomSettings(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		Bootstrap(),
 		WithTimeout(30*time.Second),
+		WithConfigFS(TestApplicationConfigFS),
 		WithFxPriorityOptions(
 			fx.Invoke(counter.fxInvoke),
 		),
