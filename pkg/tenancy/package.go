@@ -13,18 +13,42 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.TenantHierarchyAccessorPrecedence,
 	Options: []fx.Option{
 		fx.Provide(bindCacheProperties),
-		fx.Provide(provideAccessor),
+		fx.Provide(defaultTenancyAccessorProvider()),
 		fx.Invoke(setup),
 	},
 }
+
+const (
+	fxNameAccessor = "tenancy/tenancyAccessor"
+)
 
 func Use() {
 	bootstrap.Register(Module)
 }
 
-func provideAccessor(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, prop CacheProperties) Accessor {
-	rc, e := cf.New(ctx, func(opt *redis.ClientOption) {
-		opt.DbIndex = prop.DbIndex
+type defaultDI struct {
+	fx.In
+	Ctx                    *bootstrap.ApplicationContext `optional:"true"`
+	Cf                     redis.ClientFactory           `optional:"true"`
+	Prop                   CacheProperties               `optional:"true"`
+	UnnamedTenancyAccessor Accessor                      `optional:"true"`
+}
+
+func defaultTenancyAccessorProvider() fx.Annotated {
+	return fx.Annotated{
+		Name:   fxNameAccessor,
+		Target: provideAccessor,
+	}
+}
+
+func provideAccessor(di defaultDI) Accessor {
+	if di.UnnamedTenancyAccessor != nil {
+		internalAccessor = di.UnnamedTenancyAccessor
+		return di.UnnamedTenancyAccessor
+	}
+
+	rc, e := di.Cf.New(di.Ctx, func(opt *redis.ClientOption) {
+		opt.DbIndex = di.Prop.DbIndex
 	})
 	if e != nil {
 		panic(e)
@@ -33,5 +57,10 @@ func provideAccessor(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, 
 	return internalAccessor
 }
 
-func setup(_ Accessor) {
+type setupDI struct {
+	fx.In
+	EffectiveAccessor Accessor `name:"tenancy/tenancyAccessor"`
+}
+
+func setup(_ setupDI) {
 }
