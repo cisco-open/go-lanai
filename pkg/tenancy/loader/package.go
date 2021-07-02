@@ -26,14 +26,23 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func provideLoader(ctx *bootstrap.ApplicationContext, store TenantHierarchyStore, cf redis.ClientFactory, prop tenancy.CacheProperties, accessor tenancy.Accessor) Loader {
-	rc, e := cf.New(ctx, func(opt *redis.ClientOption) {
-		opt.DbIndex = prop.DbIndex
+type loaderDI struct {
+	fx.In
+	Ctx *bootstrap.ApplicationContext
+	Store TenantHierarchyStore
+	Cf redis.ClientFactory
+	Prop tenancy.CacheProperties
+	Accessor tenancy.Accessor `name:"tenancy/accessor"`
+}
+
+func provideLoader(di loaderDI) Loader {
+	rc, e := di.Cf.New(di.Ctx, func(opt *redis.ClientOption) {
+		opt.DbIndex = di.Prop.DbIndex
 	})
 	if e != nil {
 		panic(e)
 	}
-	internalLoader = NewLoader(rc, store, accessor)
+	internalLoader = NewLoader(rc, di.Store, di.Accessor)
 	return internalLoader
 }
 
