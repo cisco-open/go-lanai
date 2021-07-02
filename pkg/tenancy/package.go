@@ -3,6 +3,7 @@ package tenancy
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
+	"errors"
 	"go.uber.org/fx"
 )
 
@@ -19,7 +20,7 @@ var Module = &bootstrap.Module{
 }
 
 const (
-	fxNameAccessor = "tenancy/tenancyAccessor"
+	fxNameAccessor = "tenancy/accessor"
 )
 
 func Use() {
@@ -28,7 +29,7 @@ func Use() {
 
 type defaultDI struct {
 	fx.In
-	Ctx                    *bootstrap.ApplicationContext `optional:"true"`
+	Ctx                    *bootstrap.ApplicationContext
 	Cf                     redis.ClientFactory           `optional:"true"`
 	Prop                   CacheProperties               `optional:"true"`
 	UnnamedTenancyAccessor Accessor                      `optional:"true"`
@@ -47,6 +48,10 @@ func provideAccessor(di defaultDI) Accessor {
 		return di.UnnamedTenancyAccessor
 	}
 
+	if di.Cf == nil {
+		panic(errors.New("redis client factory is required"))
+	}
+
 	rc, e := di.Cf.New(di.Ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = di.Prop.DbIndex
 	})
@@ -59,7 +64,7 @@ func provideAccessor(di defaultDI) Accessor {
 
 type setupDI struct {
 	fx.In
-	EffectiveAccessor Accessor `name:"tenancy/tenancyAccessor"`
+	EffectiveAccessor Accessor `name:"tenancy/accessor"`
 }
 
 func setup(_ setupDI) {

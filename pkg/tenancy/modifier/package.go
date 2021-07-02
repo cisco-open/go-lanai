@@ -31,7 +31,7 @@ type modifierDI struct {
 	Ctx *bootstrap.ApplicationContext
 	Cf redis.ClientFactory
 	Prop tenancy.CacheProperties
-	Accessor tenancy.Accessor `name:"tenancy/tenancyAccessor"`
+	Accessor tenancy.Accessor `name:"tenancy/accessor"`
 }
 
 func provideModifier(di modifierDI) Modifier {

@@ -32,7 +32,7 @@ type loaderDI struct {
 	Store TenantHierarchyStore
 	Cf redis.ClientFactory
 	Prop tenancy.CacheProperties
-	Accessor tenancy.Accessor `name:"tenancy/tenancyAccessor"`
+	Accessor tenancy.Accessor `name:"tenancy/accessor"`
 }
 
 func provideLoader(di loaderDI) Loader {
