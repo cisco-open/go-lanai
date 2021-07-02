@@ -5,10 +5,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/assets"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type UiConfiguration struct {
@@ -154,7 +156,29 @@ func (s *SwaggerController) swaggerSpec(w http.ResponseWriter, r *http.Request) 
 	}
 
 	resp, err := ioutil.ReadAll(file)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	m := make(map[string]interface{})
+	err = json.Unmarshal(resp, &m)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var host string
+	fwdAddress := r.Header.Get("X-Forwarded-For") // capitalisation doesn't matter
+	if fwdAddress != "" {
+		ips := strings.Split(fwdAddress, ",")
+		 host = strings.TrimSpace(ips[0])
+	} else {
+		host = r.Host
+	}
+	m["host"] = host
+
+	resp, err = json.Marshal(m)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
