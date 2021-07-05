@@ -20,10 +20,13 @@ var TestBootstrapConfigFS embed.FS
 //go:embed test-application.yml
 var TestApplicationConfigFS embed.FS
 
+// Bootstrap is an entrypoint test.Options that indicates all sub tests should be run within the scope of
+// an slim version of bootstrap.App
 func Bootstrap() test.Options {
 	return test.WithInternalRunner(NewFxTestRunner())
 }
 
+// NewFxTestRunner is internal use only, exported for cross-package reference
 func NewFxTestRunner() test.InternalRunner {
 	return func(ctx context.Context, t *test.T) {
 		// run setup hooks

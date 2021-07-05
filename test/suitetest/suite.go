@@ -63,14 +63,16 @@ func RunTests(m *testing.M, opts ...PackageOptions) {
 	Suite Options
  ****************************/
 
-type setupFunc func() error
-type teardownFunc func() error
+// SetupFunc is package level setup function that run once per package
+type SetupFunc func() error
+// TeardownFunc is package level teardown function that run once per package
+type TeardownFunc func() error
 
 // orderedSuiteHook implements PackageHook and order.Ordered
 type orderedSuiteHook struct {
 	order        int
-	setupFunc    setupFunc
-	teardownFunc teardownFunc
+	setupFunc    SetupFunc
+	teardownFunc TeardownFunc
 }
 
 func (h *orderedSuiteHook) Order() int {
@@ -91,11 +93,26 @@ func (h *orderedSuiteHook) Teardown() error {
 	return h.teardownFunc()
 }
 
-func Setup(fn setupFunc) PackageOptions {
+// Group group multiple PackageOptions into one, typically used for other test utilities to provide
+// single entry point of certain feature.
+// Not recommended for test implementers to use directly
+func Group(opts ...PackageOptions) PackageOptions {
+	return func(opt *pkg) {
+		for _, fn := range opts {
+			fn(opt)
+		}
+	}
+}
+
+// Setup register the given setup function to run at order 0, higher(smaller) order runs first
+// package setup runs once per test package, and should only be registered in TestMain(m *testing.M)
+func Setup(fn SetupFunc) PackageOptions {
 	return SetupWithOrder(0, fn)
 }
 
-func SetupWithOrder(order int, fn setupFunc) PackageOptions {
+// SetupWithOrder register the given setup function to run at given order, higher(smaller) order runs first
+// package setup runs once per test package, and should only be registered in TestMain(m *testing.M)
+func SetupWithOrder(order int, fn SetupFunc) PackageOptions {
 	return func(opt *pkg) {
 		opt.PackageHooks = append(opt.PackageHooks, &orderedSuiteHook{
 			order:     order,
@@ -104,11 +121,15 @@ func SetupWithOrder(order int, fn setupFunc) PackageOptions {
 	}
 }
 
-func Teardown(fn teardownFunc) PackageOptions {
+// Teardown register the given teardown function to run at order 0, higher(smaller) order runs LAST
+// package teardown runs once per test package, and should only be registered in TestMain(m *testing.M)
+func Teardown(fn TeardownFunc) PackageOptions {
 	return TeardownWithOrder(0, fn)
 }
 
-func TeardownWithOrder(order int, fn teardownFunc) PackageOptions {
+// TeardownWithOrder register the given teardown function to run at given order, higher(smaller) order runs LAST
+// package teardown runs once per test package, and should only be registered in TestMain(m *testing.M)
+func TeardownWithOrder(order int, fn TeardownFunc) PackageOptions {
 	return func(opt *pkg) {
 		opt.PackageHooks = append(opt.PackageHooks, &orderedSuiteHook{
 			order:        order,
@@ -117,24 +138,30 @@ func TeardownWithOrder(order int, fn teardownFunc) PackageOptions {
 	}
 }
 
+// TestOptions register per-test options at package level: only declared once in TestMain(m *testing.M)
+// All test.Options are applied once per Test*()
 func TestOptions(opts ...test.Options) PackageOptions {
 	return func(opt *pkg) {
 		opt.TestOptions = append(opt.TestOptions, opts...)
 	}
 }
 
+// TestSetup is a convenient function equivalent to TestOptions(test.Setup(fn))
 func TestSetup(fn test.SetupFunc) PackageOptions {
 	return TestSetupWithOrder(HookOrderPackage, fn)
 }
 
+// TestSetupWithOrder is a convenient function equivalent to TestOptions(test.Hooks(test.NewSetupHook(order, fn)))
 func TestSetupWithOrder(order int, fn test.SetupFunc) PackageOptions {
 	return TestOptions(test.Hooks(test.NewSetupHook(order, fn)))
 }
 
+// TestTeardown is a convenient function equivalent to TestOptions(test.Teardown(fn))
 func TestTeardown(fn test.TeardownFunc) PackageOptions {
 	return TestTeardownWithOrder(HookOrderPackage, fn)
 }
 
+// TestTeardownWithOrder is a convenient function equivalent to TestOptions(test.Hooks(test.NewTeardownHook(order, fn)))
 func TestTeardownWithOrder(order int, fn test.TeardownFunc) PackageOptions {
 	return TestOptions(test.Hooks(test.NewTeardownHook(order, fn)))
 }

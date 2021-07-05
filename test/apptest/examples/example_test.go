@@ -11,6 +11,7 @@ import (
 	"embed"
 	"fmt"
 	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"net/http"
 	"testing"
@@ -102,6 +103,7 @@ func TestBootstrapWithCustomConfigAndMocks(t *testing.T) {
 		apptest.WithDI(&di), 	// tell test framework to do dependencies injection
 		apptest.WithTimeout(30*time.Second),
 		apptest.WithConfigFS(customConfigFS),
+		apptest.WithProperties("info.inline: value", "info.inline-alt=value"),
 		apptest.WithFxOptions(
 			fx.Provide(NewMockedService), // provide real service
 		),
@@ -152,15 +154,15 @@ func TestBootstrapWithTxManagerMock(t *testing.T) {
 
 func SubTestExampleWithRealService(di *serviceDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		g.Expect(di.Service).To(gomega.Not(gomega.BeNil()), "Service should be injected")
-		g.Expect(di.Service).To(gomega.BeAssignableToTypeOf(&realService{}), "Injected service should be the real service")
+		g.Expect(di.Service).To(Not(BeNil()), "Service should be injected")
+		g.Expect(di.Service).To(BeAssignableToTypeOf(&realService{}), "Injected service should be the real service")
 	}
 }
 
 func SubTestExampleWithMockedService(di *serviceDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		g.Expect(di.Service).To(gomega.Not(gomega.BeNil()), "Service should be injected")
-		g.Expect(di.Service).To(gomega.BeAssignableToTypeOf(&mockedService{}), "Injected service should be the real service")
+		g.Expect(di.Service).To(Not(BeNil()), "Service should be injected")
+		g.Expect(di.Service).To(BeAssignableToTypeOf(&mockedService{}), "Injected service should be the real service")
 	}
 }
 
@@ -169,9 +171,9 @@ func SubTestExampleWithRealWebController(di *webDI) test.GomegaSubTestFunc {
 		port := di.Register.ServerPort()
 		url := fmt.Sprintf("http://localhost:%d/test/api", port)
 		resp, e := http.DefaultClient.Get(url)
-		g.Expect(e).To(gomega.Succeed(), "http client should be succeeded")
-		g.Expect(resp).To(gomega.Not(gomega.BeNil()), "http response should not be nil ")
-		g.Expect(resp.StatusCode).To(gomega.Equal(200), "http response status should be 200")
+		g.Expect(e).To(Succeed(), "http client should be succeeded")
+		g.Expect(resp).To(Not(BeNil()), "http response should not be nil ")
+		g.Expect(resp.StatusCode).To(Equal(200), "http response status should be 200")
 	}
 }
 
@@ -179,18 +181,18 @@ func SubTestExampleWithOverriddenTxManager() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// Regular usage
 		e := tx.Transaction(ctx, func(txCtx context.Context) error {
-			g.Expect(txCtx).To(gomega.BeIdenticalTo(ctx), "Overridden TxManager shouldn't do anything")
+			g.Expect(txCtx).To(BeIdenticalTo(ctx), "Overridden TxManager shouldn't do anything")
 			return nil
 		})
-		g.Expect(e).To(gomega.Succeed(), "Overridden TxManager shouldn't return error")
+		g.Expect(e).To(Succeed(), "Overridden TxManager shouldn't return error")
 
 		// Manual usage
 		txCtx, e := tx.Begin(ctx)
-		g.Expect(e).To(gomega.Succeed(), "Overridden ManualTxManager shouldn't return error")
-		g.Expect(txCtx).To(gomega.BeIdenticalTo(ctx), "Overridden ManualTxManager shouldn't do anything")
+		g.Expect(e).To(Succeed(), "Overridden ManualTxManager shouldn't return error")
+		g.Expect(txCtx).To(BeIdenticalTo(ctx), "Overridden ManualTxManager shouldn't do anything")
 
 		txCtx, e = tx.Commit(txCtx)
-		g.Expect(e).To(gomega.Succeed(), "Overridden ManualTxManager shouldn't return error")
-		g.Expect(txCtx).To(gomega.BeIdenticalTo(ctx), "Overridden ManualTxManager shouldn't do anything")
+		g.Expect(e).To(Succeed(), "Overridden ManualTxManager shouldn't return error")
+		g.Expect(txCtx).To(BeIdenticalTo(ctx), "Overridden ManualTxManager shouldn't do anything")
 	}
 }

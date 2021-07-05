@@ -17,9 +17,15 @@ import (
 	Sub Tests
  ****************************/
 
+// SubTestFunc is the function signature for sub-test that taking a context
+// and can be registered as SubTest Options
 type SubTestFunc func(ctx context.Context, t *testing.T)
+
+// GomegaSubTestFunc is the function signature for sub-test that taking a context and gomega.WithT,
+// and can be registered as SubTest Options
 type GomegaSubTestFunc func(ctx context.Context, t *testing.T, g *gomega.WithT)
 
+// SubTestFuncWithGomega convert a GomegaSubTestFunc to SubTestFunc
 func SubTestFuncWithGomega(st GomegaSubTestFunc) SubTestFunc {
 	return func(ctx context.Context, t *testing.T) {
 		st(ctx, t, NewWithT(t))
@@ -51,16 +57,21 @@ func FuncName(fn interface{}, suffixed bool) string {
 	Test Options
  ****************************/
 
-func SubTest(name string, subtest SubTestFunc) Options {
+// SubTest is an Options that run a SubTestFunc as given name
+func SubTest(subtest SubTestFunc, name string) Options {
 	return func(opt *T) {
 		opt.SubTests[name] = subtest
 	}
 }
 
+// AnonymousSubTest is an Options that run a SubTestFunc as generated name
 func AnonymousSubTest(st SubTestFunc) Options {
-	return SubTest(FuncName(st, true), st)
+	return SubTest(st, FuncName(st, true))
 }
 
+// GomegaSubTest is an Options that run a GomegaSubTestFunc as given name. If name is not given, a generated name is used
+// Note: when name is given as multiple arguments, the first element is used as format and the rest is used as args:
+// 		 fmt.Sprintf(name[0], name[1:])
 func GomegaSubTest(st GomegaSubTestFunc, name ...string) Options {
 	var n string
 	if len(name) > 0 {
@@ -72,9 +83,10 @@ func GomegaSubTest(st GomegaSubTestFunc, name ...string) Options {
 	} else {
 		n = FuncName(st, true)
 	}
-	return SubTest(n, SubTestFuncWithGomega(st))
+	return SubTest(SubTestFuncWithGomega(st), n)
 }
 
+// SubTestSetup is an Options that register a SetupFunc to run before each sub test
 func SubTestSetup(fn SetupFunc) Options {
 	return func(opt *T) {
 		opt.SubTestHooks = append(opt.SubTestHooks, &orderedHook{
@@ -83,6 +95,7 @@ func SubTestSetup(fn SetupFunc) Options {
 	}
 }
 
+// SubTestTeardown is an Options that register a TeardownFunc to run after each sub test
 func SubTestTeardown(fn TeardownFunc) Options {
 	return func(opt *T) {
 		opt.SubTestHooks = append(opt.SubTestHooks, &orderedHook{
