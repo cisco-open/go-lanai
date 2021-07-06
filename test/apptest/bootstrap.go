@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"embed"
+	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"testing"
@@ -31,7 +32,7 @@ func NewFxTestRunner() test.InternalRunner {
 	return func(ctx context.Context, t *test.T) {
 		// run setup hooks
 		ctx = testSetup(ctx, t.T, t.TestHooks)
-		defer testTeardown(t.T, t.TestHooks)
+		defer testTeardown(ctx, t.T, t.TestHooks)
 
 		// default modules
 		appconfig.Use()
@@ -70,6 +71,9 @@ func newTestCliRunner(t *test.T) bootstrap.CliRunner {
 	return func(ctx context.Context) error {
 		// run test
 		test.InternalRunSubTests(ctx, t)
+		if t.Failed() {
+			return fmt.Errorf("test failed")
+		}
 		return nil
 	}
 }
@@ -86,10 +90,10 @@ func testSetup(ctx context.Context, t *testing.T, hooks []test.Hook) context.Con
 	return ctx
 }
 
-func testTeardown(t *testing.T, hooks []test.Hook) {
+func testTeardown(ctx context.Context, t *testing.T, hooks []test.Hook) {
 	// register cleanup
 	for i := len(hooks) - 1; i >= 0; i-- {
-		if e := hooks[i].Teardown(t); e != nil {
+		if e := hooks[i].Teardown(ctx, t); e != nil {
 			t.Fatalf("error when setup test: %v", e)
 		}
 	}

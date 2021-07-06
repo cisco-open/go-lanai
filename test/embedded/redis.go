@@ -1,4 +1,4 @@
-package infratest
+package embedded
 
 import (
 	"context"
@@ -12,23 +12,23 @@ import (
 
 var embeddedRedis *miniredis.Miniredis
 
-// EmbeddedRedis start redis at random port (32768-65535) on test package level.
-// The actual port get be get using CurrentEmbeddedRedisPort
-// See EmbeddedRedisWithPort for more details
-func EmbeddedRedis() suitetest.PackageOptions {
+// Redis start redis at random port (32768-65535) on test package level.
+// The actual port get be get using CurrentRedisPort
+// See RedisWithPort for more details
+func Redis() suitetest.PackageOptions {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	port := 0x7fff + r.Intn(0x7fff) + 1
-	return EmbeddedRedisWithPort(port)
+	return RedisWithPort(port)
 }
 
-// EmbeddedRedisWithPort start redis at given port (must between 32768 and 65535) on test package level.
-func EmbeddedRedisWithPort(port int) suitetest.PackageOptions {
-	return suitetest.Group(
+// RedisWithPort start redis at given port (must between 32768 and 65535) on test package level.
+func RedisWithPort(port int) suitetest.PackageOptions {
+	return suitetest.WithOptions(
 		suitetest.SetupWithOrder(orderEmbeddedRedis, startEmbeddedRedisFunc(port, &embeddedRedis)),
 		suitetest.TestOptions(
 			apptest.WithDynamicProperties(map[string]apptest.PropertyValuerFunc{
 				"redis.addrs": func(ctx context.Context) interface{} {
-					return fmt.Sprintf("127.0.0.1:%d", CurrentEmbeddedRedisPort())
+					return fmt.Sprintf("127.0.0.1:%d", CurrentRedisPort())
 				},
 			}),
 		),
@@ -36,8 +36,8 @@ func EmbeddedRedisWithPort(port int) suitetest.PackageOptions {
 	)
 }
 
-// CurrentEmbeddedRedisPort getter to return embedded redis port. returns -1 if it's not initialized or started
-func CurrentEmbeddedRedisPort() int {
+// CurrentRedisPort getter to return embedded redis port. returns -1 if it's not initialized or started
+func CurrentRedisPort() int {
 	ret := doWithEmbeddedRedis(func(srv *miniredis.Miniredis) interface{} {
 		return srv.Server().Addr().Port
 	})

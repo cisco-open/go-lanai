@@ -1,0 +1,4 @@
+data:
+  logging:
+    level: debug
+    slow-threshold: 5s

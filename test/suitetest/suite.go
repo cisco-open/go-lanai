@@ -93,10 +93,10 @@ func (h *orderedSuiteHook) Teardown() error {
 	return h.teardownFunc()
 }
 
-// Group group multiple PackageOptions into one, typically used for other test utilities to provide
+// WithOptions group multiple PackageOptions into one, typically used for other test utilities to provide
 // single entry point of certain feature.
 // Not recommended for test implementers to use directly
-func Group(opts ...PackageOptions) PackageOptions {
+func WithOptions(opts ...PackageOptions) PackageOptions {
 	return func(opt *pkg) {
 		for _, fn := range opts {
 			fn(opt)

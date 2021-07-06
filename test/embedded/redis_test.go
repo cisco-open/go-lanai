@@ -1,11 +1,10 @@
-package redis_examples
+package embedded
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/infratest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"fmt"
 	goredis "github.com/go-redis/redis/v8"
@@ -16,19 +15,19 @@ import (
 )
 
 /*************************
-	Examples
+	Test
  *************************/
 
 // TestMain is the only place we should kick off embedded redis
 func TestMain(m *testing.M) {
 	suitetest.RunTests(m,
-		infratest.EmbeddedRedis(),
+		Redis(),
 	)
 }
 
 func TestRedisWithoutApp(t *testing.T) {
 	test.RunTest(context.Background(), t,
-		test.GomegaSubTest(SubTestExampleWithoutApp(), "SubTestWithoutApp"),
+		test.GomegaSubTest(SubTestWithoutApp(), "WithoutApp"),
 	)
 }
 
@@ -44,7 +43,7 @@ func TestRedisWithApp(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithModules(redis.Module),
 		apptest.WithDI(di),
-		test.GomegaSubTest(SubTestExampleWithApp(di), "SubTestWithoutApp"),
+		test.GomegaSubTest(SubTestWithApp(di), "WithApp"),
 	)
 }
 
@@ -52,12 +51,12 @@ func TestRedisWithApp(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestExampleWithoutApp() test.GomegaSubTestFunc {
+func SubTestWithoutApp() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// create an simple client
 		universal := &goredis.UniversalOptions{}
 		opts := universal.Simple()
-		opts.Addr = fmt.Sprintf("127.0.0.1:%d", infratest.CurrentEmbeddedRedisPort())
+		opts.Addr = fmt.Sprintf("127.0.0.1:%d", CurrentRedisPort())
 		client := goredis.NewClient(opts)
 		defer func() { _ = client.Close() }()
 
@@ -68,7 +67,7 @@ func SubTestExampleWithoutApp() test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestExampleWithApp(di *redisDI) test.GomegaSubTestFunc {
+func SubTestWithApp(di *redisDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.DefaultClient).To(Not(BeNil()), "injected default redis.Client should not be nil")
 		g.Expect(di.ClientFactory).To(Not(BeNil()), "injected redis.ClientFactory should not be nil")

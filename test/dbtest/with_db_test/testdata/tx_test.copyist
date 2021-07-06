@@ -1,0 +1,8 @@
+1=DriverOpen	1:nil
+2=ConnBegin	1:nil
+3=TxRollback	1:nil
+4=TxCommit	1:nil
+5=ConnExec	2:"SAVEPOINT my-savepoint"	7:pq: at or near "-": syntax error
+6=ConnExec	2:"ROLLBACK TO SAVEPOINT my-savepoint"	7:pq: at or near "-": syntax error
+
+"TestTxManagerWithMockedDB"=1,2,3,2,3,2,4,2,3,2,5,6

@@ -1,11 +1,11 @@
-package redis_test
+package redis_examples
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/infratest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"fmt"
 	goredis "github.com/go-redis/redis/v8"
@@ -22,7 +22,7 @@ import (
 // TestMain is the only place we should kick off embedded redis
 func TestMain(m *testing.M) {
 	suitetest.RunTests(m,
-		infratest.EmbeddedRedis(),
+		embedded.Redis(),
 	)
 }
 
@@ -44,7 +44,7 @@ func TestRedisWithApp(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithModules(redis.Module),
 		apptest.WithDI(di),
-		test.GomegaSubTest(SubTestExampleWithApp(di), "SubTestWithoutApp"),
+		test.GomegaSubTest(SubTestExampleWithApp(di), "SubTestWithApp"),
 	)
 }
 
@@ -57,7 +57,7 @@ func SubTestExampleWithoutApp() test.GomegaSubTestFunc {
 		// create an simple client
 		universal := &goredis.UniversalOptions{}
 		opts := universal.Simple()
-		opts.Addr = fmt.Sprintf("127.0.0.1:%d", infratest.CurrentEmbeddedRedisPort())
+		opts.Addr = fmt.Sprintf("127.0.0.1:%d", embedded.CurrentRedisPort())
 		client := goredis.NewClient(opts)
 		defer func() { _ = client.Close() }()
 
