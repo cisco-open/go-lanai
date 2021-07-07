@@ -100,6 +100,8 @@ pre-build-docker:
 
 # build-docker:
 # 	Build docker image. Typically run on CI/CD worker machine
+#       Required Vars: for non-buildkit build
+#               - GITKEY ssh key for cto-github.cisco.com
 # 	Optional Vars:
 #		- PRIVATE_MODS used for populating build info
 #		- VERSION application version also used as Docker's image tag. Default to "latest" if not specified
@@ -107,7 +109,8 @@ build-docker: DOCKER_TAG = $(if $(VERSION),$(VERSION),latest)
 build-docker: init-docker
 	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t {{.Name}}:$(DOCKER_TAG) . \
 	--build-arg PRIVATE_MODS="$(PRIVATE_MODS)" \
-	--build-arg VERSION="$(VERSION)"
+	--build-arg VERSION="$(VERSION)" \
+	--build-arg GITKEY="$(GITKEY)"
 
 # push-docker:
 #	Re-tag and push given docker image to remote
