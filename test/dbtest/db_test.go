@@ -2,9 +2,9 @@ package dbtest
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -30,36 +30,25 @@ func (Client) TableName() string {
 	Test
  *************************/
 
-// TestMain is the only place we should kick off mocked CockroachDB
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		//CockroachDB(ModeRecord, "usermanagement"),
-		CockroachDB(ModePlayback, "usermanagement"),
-	)
-}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		EnableDBRecordMode(),
+//	)
+//}
 
 type testDI struct {
 	fx.In
 	DB *gorm.DB        `optional:"true"`
 }
 
-func TestDBRecord(t *testing.T) {
+func TestDBPlayback(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		Initialize(),
+		WithDBPlayback("testdb"),
 		apptest.WithDI(di),
-		test.GomegaSubTest(SubTestExampleTestSQL(di), "TestSQL"),
-	)
-}
-
-func TestPlayback(t *testing.T) {
-	di := &testDI{}
-	test.RunTest(context.Background(), t,
-		apptest.Bootstrap(),
-		Initialize(),
-		apptest.WithDI(di),
-		test.GomegaSubTest(SubTestExampleTestSQL(di), "TestSQL"),
+		test.GomegaSubTest(SubTestExampleSelect(di), "Select"),
+		test.GomegaSubTest(SubTestExampleTxSave(di), "TransactionalSave"),
 	)
 }
 
@@ -67,7 +56,7 @@ func TestPlayback(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestExampleTestSQL(di *testDI) test.GomegaSubTestFunc {
+func SubTestExampleSelect(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.DB).To(Not(BeNil()), "injected gorm.DB should not be nil")
 
@@ -77,10 +66,6 @@ func SubTestExampleTestSQL(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(r.Error).To(Succeed(), "recorded SQL shouldn't introduce error")
 		g.Expect(v.ID).To(Not(Equal(uuid.Invalid)), "model should be loaded by First()")
 
-		// save one
-		r = di.DB.WithContext(ctx).Save(&v)
-		g.Expect(r.Error).To(Succeed(), "recorded SQL shouldn't introduce error")
-
 		// select all
 		s := make([]*Client, 0)
 		r = di.DB.WithContext(ctx).Model(&Client{}).Find(&s)
@@ -89,3 +74,22 @@ func SubTestExampleTestSQL(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestExampleTxSave(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.DB).To(Not(BeNil()), "injected gorm.DB should not be nil")
+
+		e := tx.Transaction(ctx, func(ctx context.Context) error {
+			// select one
+			v := Client{}
+			r := di.DB.WithContext(ctx).Model(&Client{}).First(&v)
+			g.Expect(r.Error).To(Succeed(), "select SQL shouldn't introduce error")
+			g.Expect(v.ID).To(Not(Equal(uuid.Invalid)), "model should be loaded by First()")
+
+			// save one
+			r = di.DB.WithContext(ctx).Save(&v)
+			g.Expect(r.Error).To(Succeed(), "save operation shouldn't introduce error")
+			return r.Error
+		})
+		g.Expect(e).To(Succeed(), "tx.Transaction should return no error")
+	}
+}

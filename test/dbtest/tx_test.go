@@ -1,4 +1,4 @@
-package with_db_test
+package dbtest
 
 import (
 	"context"
@@ -6,8 +6,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"fmt"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -15,14 +13,6 @@ import (
 	"gorm.io/gorm"
 	"testing"
 )
-
-// TestMain is the only place we should kick off mocked CockroachDB
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		//dbtest.CockroachDB(dbtest.ModeRecord, "usermanagement"),
-		dbtest.CockroachDB(dbtest.ModePlayback, "usermanagement"),
-	)
-}
 
 /*************************
 	Tests
@@ -33,16 +23,29 @@ type txDI struct {
 	GormAPI repo.GormApi
 }
 
-func TestTxManagerWithMockedDB(t *testing.T) {
+func TestTxManagerWithDBPlayback(t *testing.T) {
 	di := txDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		dbtest.Initialize(),
+		WithDBPlayback("testdb"),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestTxManagerInterface(), "TxManagerInterface"),
 		test.GomegaSubTest(SubTestGormTxManagerInterface(&di), "GormTxManagerInterface"),
 		test.GomegaSubTest(SubTestManualTxManagerInterface(), "ManualTxManagerInterface"),
 		)
+}
+
+func TestNoopTxManager(t *testing.T) {
+	di := txDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		WithNoopMocks(),
+		apptest.WithModules(repo.Module),
+		apptest.WithDI(&di),
+		test.GomegaSubTest(SubTestTxManagerInterface(), "TxManagerInterface"),
+		test.GomegaSubTest(SubTestGormTxManagerInterface(&di), "GormTxManagerInterface"),
+		test.GomegaSubTest(SubTestManualTxManagerInterface(), "ManualTxManagerInterface"),
+	)
 }
 
 /*************************
