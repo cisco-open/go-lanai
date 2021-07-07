@@ -89,8 +89,8 @@ redist: pre clean build-docker git-tag-version post
 # init-docker:
 # 	Initialize for building docker image. Typically run on CI/CD worker machine
 init-docker:
-	# ssh-add is necessary for build-docker
-	$(SSHADD) -K ~/.ssh/id_rsa
+	# ssh-add is necessary for build-docker, loads default keys.
+	$(SSHADD) -k
 
 # pre-build-docker:
 # 	Before build docker image, set current head commit to proper marked commit
