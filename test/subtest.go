@@ -1,6 +1,7 @@
 package test
 
 import (
+	"container/list"
 	"context"
 	"fmt"
 	"github.com/onsi/gomega"
@@ -60,7 +61,7 @@ func FuncName(fn interface{}, suffixed bool) string {
 // SubTest is an Options that run a SubTestFunc as given name
 func SubTest(subtest SubTestFunc, name string) Options {
 	return func(opt *T) {
-		opt.SubTests[name] = subtest
+		opt.SubTests.Set(name, subtest)
 	}
 }
 
@@ -105,7 +106,76 @@ func SubTestTeardown(fn TeardownFunc) Options {
 }
 
 /****************************
-	Test Options
+	SubTest List
+ ****************************/
+
+type subTestEntry struct {
+	name string
+	fn   SubTestFunc
+}
+
+// SubTestOrderedMap adopted from https://github.com/elliotchance/orderedmap/blob/master/orderedmap.go
+// with reduced functionality
+type SubTestOrderedMap struct {
+	kv map[string]*list.Element
+	ll *list.List
+}
+
+func NewSubTestOrderedMap() *SubTestOrderedMap {
+	return &SubTestOrderedMap{
+		kv: make(map[string]*list.Element),
+		ll: list.New(),
+	}
+}
+
+func (m *SubTestOrderedMap) Len() int {
+	return len(m.kv)
+}
+
+func (m *SubTestOrderedMap) Get(key string) (SubTestFunc, bool) {
+	if v, ok := m.kv[key]; ok {
+		return v.Value.(*subTestEntry).fn, true
+	}
+
+	return nil, false
+}
+
+func (m *SubTestOrderedMap) Set(name string, fn SubTestFunc) bool {
+	_, didExist := m.kv[name]
+	if !didExist {
+		element := m.ll.PushBack(&subTestEntry{name, fn})
+		m.kv[name] = element
+	} else {
+		m.kv[name].Value.(*subTestEntry).fn = fn
+	}
+
+	return !didExist
+}
+
+func (m *SubTestOrderedMap) Keys() (keys []string) {
+	keys = make([]string, m.Len())
+	element := m.ll.Front()
+	for i := 0; element != nil; i++ {
+		keys[i] = element.Value.(*subTestEntry).name
+		element = element.Next()
+	}
+	return keys
+}
+
+// Delete will remove a name from the map. It will return true if the name was
+// removed (the name did exist).
+func (m *SubTestOrderedMap) Delete(key string) (didDelete bool) {
+	element, ok := m.kv[key]
+	if ok {
+		m.ll.Remove(element)
+		delete(m.kv, key)
+	}
+
+	return ok
+}
+
+/****************************
+	Helpers
  ****************************/
 
 func randString(length int) string {

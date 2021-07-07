@@ -38,7 +38,7 @@ type T struct {
 	runner       InternalRunner
 	TestHooks    []Hook
 	SubTestHooks []Hook
-	SubTests     map[string]SubTestFunc
+	SubTests     *SubTestOrderedMap
 }
 
 // RunTest is the entry point of any Test...().
@@ -49,7 +49,7 @@ func RunTest(ctx context.Context, t *testing.T, opts ...Options) {
 		runner:       unitTestRunner,
 		TestHooks:    []Hook{},
 		SubTestHooks: []Hook{},
-		SubTests:     map[string]SubTestFunc{},
+		SubTests:     NewSubTestOrderedMap(),
 	}
 	for _, fn := range InternalOptions {
 		fn(&test)
@@ -76,12 +76,15 @@ func unitTestRunner(ctx context.Context, t *T) {
 
 // InternalRunSubTests is an internal function. exported for cross-package reference
 func InternalRunSubTests(ctx context.Context, t *T) {
-	for n, fn := range t.SubTests {
-		t.Run(n, func(goT *testing.T) {
-			ctx = runTestSetupHooks(ctx, goT, t.SubTestHooks, "error when setup sub test")
-			defer runTestTeardownHooks(goT, t.SubTestHooks, "error when cleanup sub test")
-			fn(ctx, goT)
-		})
+	names := t.SubTests.Keys()
+	for _, n := range names {
+		if fn, ok := t.SubTests.Get(n); ok {
+			t.Run(n, func(goT *testing.T) {
+				ctx = runTestSetupHooks(ctx, goT, t.SubTestHooks, "error when setup sub test")
+				defer runTestTeardownHooks(goT, t.SubTestHooks, "error when cleanup sub test")
+				fn(ctx, goT)
+			})
+		}
 	}
 }
 
