@@ -2,6 +2,7 @@ package samllogin
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 )
 
@@ -14,6 +15,7 @@ type SamlIdentityProvider interface {
 	ShouldMetadataRequireSignature() bool
 	ShouldMetadataTrustCheck() bool
 	GetMetadataTrustedKeys() []string
+	GetAutoCreateUserDetails() security.AutoCreateUserDetails
 }
 
 type SamlIdentityProviderManager interface {

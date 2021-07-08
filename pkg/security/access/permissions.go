@@ -58,6 +58,11 @@ func HasPermissionsWithExpr(expr string) ControlFunc {
 
 	return func(auth security.Authentication) (bool, error) {
 		if auth.State() > security.StateAnonymous {
+			//user with API admin permission is allowed to short cut the permission check
+			if security.HasPermissions(auth, security.SpecialPermissionAPIAdmin) {
+				return true, nil
+			}
+
 			if match, e := matcher.Matches(auth.Permissions()); match && e == nil {
 				return true, nil
 			}

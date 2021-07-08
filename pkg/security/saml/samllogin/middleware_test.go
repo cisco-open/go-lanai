@@ -250,7 +250,7 @@ func newTestFedAccountStore() *TestFedAccountStore {
 
 //The externalIdName and value matches the test assertion
 //The externalIdp matches that from the TestIdpManager
-func (t *TestFedAccountStore) LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string) (security.Account, error) {
+func (t *TestFedAccountStore) LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string, _ security.AutoCreateUserDetails, _ interface{}) (security.Account, error) {
 	if externalIdName == "email" && externalIdValue == "test@example.com" && externalIdpName == "okta" {
 		return security.NewUsernamePasswordAccount(&security.AcctDetails{
 			ID:              "test@example.com",
