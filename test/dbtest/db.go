@@ -54,7 +54,7 @@ func withDB(mode mode, dbName string, opts []DBOptions) []test.Options {
 		test.Teardown(closeCopyistConn()),
 		apptest.WithFxOptions(
 			fx.Provide(cockroach.BindCockroachProperties),
-			fx.Provide(testGormDialetorProvider(&opt)),
+			fx.Provide(testGormDialectorProvider(&opt)),
 		),
 		apptest.WithProperties(
 			fmt.Sprintf("data.cockroach.host: %s", opt.Host),
