@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
 	"embed"
 	"fmt"
 	"github.com/onsi/gomega"
@@ -136,14 +137,10 @@ func TestBootstrapWithRealWebServer(t *testing.T) {
 // server with random port. The port can be retrieved via *web.Registrar
 // Note: due to current bootstrapping limitation, all modules added via apptest.WithModules would affect other tests,
 //		 so no conflicting modules is allowed between all tests of same package.
-func TestBootstrapWithTxManagerMock(t *testing.T) {
+func TestBootstrapWithDataMocks(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithModules(tx.Module),
-		apptest.WithFxOptions(
-			// provide tx.TxManager override. can be mocked or noop
-			fx.Provide(provideNoopTxManager),
-		),
+		dbtest.WithNoopMocks(),
 		test.GomegaSubTest(SubTestExampleWithOverriddenTxManager(), "SubTestWithOverriddenTxManager"),
 	)
 }
@@ -181,7 +178,10 @@ func SubTestExampleWithOverriddenTxManager() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// Regular usage
 		e := tx.Transaction(ctx, func(txCtx context.Context) error {
-			g.Expect(txCtx).To(BeIdenticalTo(ctx), "Overridden TxManager shouldn't do anything")
+			_, ok := txCtx.(tx.TxContext)
+			g.Expect(ok).To(BeTrue(), "Overridden TxManager should create tx.TxContext")
+			_, ok = txCtx.(tx.GormContext)
+			g.Expect(ok).To(BeTrue(), "Overridden TxManager should create tx.GormContext")
 			return nil
 		})
 		g.Expect(e).To(Succeed(), "Overridden TxManager shouldn't return error")
@@ -189,7 +189,10 @@ func SubTestExampleWithOverriddenTxManager() test.GomegaSubTestFunc {
 		// Manual usage
 		txCtx, e := tx.Begin(ctx)
 		g.Expect(e).To(Succeed(), "Overridden ManualTxManager shouldn't return error")
-		g.Expect(txCtx).To(BeIdenticalTo(ctx), "Overridden ManualTxManager shouldn't do anything")
+		_, ok := txCtx.(tx.TxContext)
+		g.Expect(ok).To(BeTrue(), "Overridden TxManager should create tx.TxContext")
+		_, ok = txCtx.(tx.GormContext)
+		g.Expect(ok).To(BeTrue(), "Overridden TxManager should create tx.GormContext")
 
 		txCtx, e = tx.Commit(txCtx)
 		g.Expect(e).To(Succeed(), "Overridden ManualTxManager shouldn't return error")

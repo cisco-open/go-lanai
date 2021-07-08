@@ -33,7 +33,7 @@ func EnableDBRecordMode() suitetest.PackageOptions {
 // WithDBPlayback enables DB SQL playback capabilities supported by `copyist`
 // This mode requires apptest.Bootstrap to work, and should not be used together with WithNoopMocks
 // Each top-level test should have corresponding recorded SQL responses in `testdata` folder, or the test will fail.
-// Use EnableDBRecordMode for programmatically enable record mode.
+// To enable record mode, use `go test ... -record` at CLI, or do it programmatically with EnableDBRecordMode
 // See https://github.com/cockroachdb/copyist for more details
 func WithDBPlayback(dbName string, opts ...DBOptions) test.Options {
 	testOpts := withDB(modeAuto, dbName, opts)
