@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-// utils.Duration is also an alias of time.Duration
+// Duration is also an alias of time.Duration
 type Duration utils.Duration
 
-// driver.Valuer
+// Value implements driver.Valuer
 func (d Duration) Value() (driver.Value, error) {
 	return time.Duration(d).String(), nil
 }
 
-// sql.Scanner
+// Scan implements sql.Scanner
 func (d *Duration) Scan(src interface{}) error {
 	switch src := src.(type) {
 	case []byte:
@@ -35,12 +35,12 @@ func (d *Duration) Scan(src interface{}) error {
 	return nil
 }
 
-// encoding.TextMarshaler
+// MarshalText implements encoding.TextMarshaler
 func (d Duration) MarshalText() (text []byte, err error) {
 	return utils.Duration(d).MarshalText()
 }
 
-// encoding.TextUnmarshaler
+// UnmarshalText implements encoding.TextUnmarshaler
 func (d *Duration) UnmarshalText(text []byte) error {
 	return (*utils.Duration)(d).UnmarshalText(text)
 }

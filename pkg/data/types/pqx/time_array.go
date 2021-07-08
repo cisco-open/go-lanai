@@ -12,7 +12,7 @@ import (
 // TimeArray register driver.Valuer & sql.Scanner
 type TimeArray []time.Time
 
-// driver.Valuer
+// Value implements driver.Valuer
 func (a TimeArray) Value() (driver.Value, error) {
 	if a == nil {
 		return nil, nil
@@ -28,16 +28,16 @@ func (a TimeArray) Value() (driver.Value, error) {
 	b := make([]byte, 1, 1+3*n)
 	b[0] = '{'
 
-	b = appendArrayQuotedBytes(b, []byte(pq.FormatTimestamp(a[0])))
+	b = appendArrayQuotedBytes(b, pq.FormatTimestamp(a[0]))
 	for i := 1; i < n; i++ {
 		b = append(b, ',')
-		b = appendArrayQuotedBytes(b, []byte(pq.FormatTimestamp(a[i])))
+		b = appendArrayQuotedBytes(b, pq.FormatTimestamp(a[i]))
 	}
 
 	return string(append(b, '}')), nil
 }
 
-// sql.Scanner
+// Scan implements sql.Scanner
 func (a *TimeArray) Scan(src interface{}) error {
 	switch src := src.(type) {
 	case []byte:
