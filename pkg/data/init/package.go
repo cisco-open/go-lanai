@@ -25,15 +25,11 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func init() {
+func Use() {
 	bootstrap.Register(Module)
 	bootstrap.Register(data.Module)
 	bootstrap.Register(tx.Module)
 	bootstrap.Register(repo.Module)
-}
-
-func Use() {
-
 }
 
 /**************************

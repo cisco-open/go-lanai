@@ -1,0 +1,3 @@
+info:
+  source: 200
+  placeholder: ${info.source}

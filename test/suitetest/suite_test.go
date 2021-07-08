@@ -33,7 +33,7 @@ func (c *testHookCounter) setup(ctx context.Context, _ *testing.T) (context.Cont
 	return ctx, nil
 }
 
-func (c *testHookCounter) teardown(_ *testing.T) error {
+func (c *testHookCounter) teardown(_ context.Context, _ *testing.T) error {
 	c.teardownCount ++
 	return nil
 }
@@ -43,7 +43,7 @@ func (c *testHookCounter) subSetup(ctx context.Context, _ *testing.T) (context.C
 	return ctx, nil
 }
 
-func (c *testHookCounter) subTeardown(_ *testing.T) error {
+func (c *testHookCounter) subTeardown(_ context.Context, _ *testing.T) error {
 	c.subTeardownCount ++
 	return nil
 }

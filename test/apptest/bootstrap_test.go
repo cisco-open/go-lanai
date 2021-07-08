@@ -9,6 +9,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
+	"embed"
 	"fmt"
 	"github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -30,7 +31,7 @@ func (c *testHookCounter) setup(ctx context.Context, _ *testing.T) (context.Cont
 	return ctx, nil
 }
 
-func (c *testHookCounter) teardown(_ *testing.T) error {
+func (c *testHookCounter) teardown(_ context.Context, _ *testing.T) error {
 	c.teardownCount++
 	return nil
 }
@@ -40,7 +41,7 @@ func (c *testHookCounter) subSetup(ctx context.Context, _ *testing.T) (context.C
 	return ctx, nil
 }
 
-func (c *testHookCounter) subTeardown(_ *testing.T) error {
+func (c *testHookCounter) subTeardown(_ context.Context, _ *testing.T) error {
 	c.subTeardownCount++
 	return nil
 }
@@ -103,6 +104,7 @@ func TestMain(m *testing.M) {
 /*************************
 	Test Cases
  *************************/
+
 func TestBootstrapWithDefaults(t *testing.T) {
 	counter := &testHookCounter{}
 	bDI := &bootstrapDI{}
@@ -127,6 +129,9 @@ func TestBootstrapWithDefaults(t *testing.T) {
 	g.Expect(counter.fxInvokeCount).To(gomega.Equal(0), "fx invoke func should be be triggerred")
 }
 
+//go:embed bootstrap_test.yml
+var testConfigFS embed.FS
+
 func TestBootstrapWithCustomSettings(t *testing.T) {
 	counter := &testHookCounter{}
 	bDI := &bootstrapDI{}
@@ -135,6 +140,7 @@ func TestBootstrapWithCustomSettings(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		Bootstrap(),
 		WithTimeout(30*time.Second),
+		WithConfigFS(testConfigFS),
 		WithConfigFS(TestApplicationConfigFS),
 		WithFxPriorityOptions(
 			fx.Invoke(counter.fxInvoke),
@@ -147,6 +153,7 @@ func TestBootstrapWithCustomSettings(t *testing.T) {
 		WithDI(bDI, acDI, wDI),
 		test.GomegaSubTest(SubTestDefaultDI(bDI, acDI)),
 		test.GomegaSubTest(SubTestAdditionalDI(wDI)),
+		test.GomegaSubTest(SubTestCustomConfig(acDI)),
 		test.GomegaSubTest(SubTestWebController(wDI)),
 	)
 
@@ -162,6 +169,13 @@ func TestRepeatedBootstrapWithCustomSettings(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		Bootstrap(),
 		WithTimeout(30*time.Second),
+		WithProperties(
+			"info.source: 200",
+			"info.placeholder=${info.source}",
+		),
+		WithDynamicProperties(map[string]PropertyValuerFunc{
+			"info.source": func(_ context.Context) interface{} {return 200.0},
+		}),
 		WithFxPriorityOptions(
 			fx.Invoke(counter.fxInvoke),
 		),
@@ -173,6 +187,7 @@ func TestRepeatedBootstrapWithCustomSettings(t *testing.T) {
 		WithDI(bDI, acDI, wDI),
 		test.GomegaSubTest(SubTestDefaultDI(bDI, acDI)),
 		test.GomegaSubTest(SubTestAdditionalDI(wDI)),
+		test.GomegaSubTest(SubTestCustomConfig(acDI)),
 		test.GomegaSubTest(SubTestWebController(wDI)),
 	)
 
@@ -188,6 +203,13 @@ func SubTestDefaultDI(bDI *bootstrapDI, acDI *appconfigDI) test.GomegaSubTestFun
 		g.Expect(bDI.App).To(gomega.Not(gomega.BeNil()), "bootstrap DI should be populated with App")
 		g.Expect(acDI.ACPtr).To(gomega.Not(gomega.BeNil()), "appconfig DI should be populated with *appconfig.ApplicationConfig")
 		g.Expect(acDI.ACI).To(gomega.Not(gomega.BeNil()), "appconfig DI should be populated with bootstrap.ApplicationConfig")
+	}
+}
+
+func SubTestCustomConfig(acDI *appconfigDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		v := acDI.ACPtr.Value("info.placeholder")
+		g.Expect(v).To(gomega.Equal(200.0), "web DI should be populated with Registrar")
 	}
 }
 
@@ -211,5 +233,3 @@ func SubTestWebController(di *webDI) test.GomegaSubTestFunc {
 /*************************
 	Helpers
  *************************/
-
-
