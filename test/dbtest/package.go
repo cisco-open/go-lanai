@@ -4,7 +4,6 @@ import (
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	datainit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -47,14 +46,14 @@ func WithNoopMocks() test.Options {
 	testOpts := withData()
 	testOpts = append(testOpts, apptest.WithFxOptions(
 		fx.Provide(provideNoopTxManager),
-		fx.Provide(provideNoopGormDialetor),
+		fx.Provide(provideNoopGormDialector),
 	))
 	return test.WithOptions(testOpts...)
 }
 
 func withData() []test.Options {
 	return []test.Options{
-		apptest.WithModules(datainit.Module, tx.Module, repo.Module),
+		apptest.WithModules(datainit.Module, tx.Module),
 		apptest.WithFxOptions(
 			appconfig.FxEmbeddedDefaults(defaultConfigFS),
 			fx.Provide(data.BindDataProperties),

@@ -28,6 +28,7 @@ func TestTxManagerWithDBPlayback(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		WithDBPlayback("testdb"),
+		apptest.WithModules(repo.Module),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestTxManagerInterface(), "TxManagerInterface"),
 		test.GomegaSubTest(SubTestGormTxManagerInterface(&di), "GormTxManagerInterface"),

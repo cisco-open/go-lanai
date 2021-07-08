@@ -18,7 +18,7 @@ type dialectorDI struct {
 	fx.In
 }
 
-func testGormDialetorProvider(opt *DBOption) func(di dialectorDI) gorm.Dialector {
+func testGormDialectorProvider(opt *DBOption) func(di dialectorDI) gorm.Dialector {
 	return func(di dialectorDI) gorm.Dialector {
 		//"host=localhost user=root password=root dbname=idm port=26257 ssl=disable"
 		ssl := "disable"
@@ -62,7 +62,7 @@ type noopGormDialector struct {
 	gormtest.DummyDialector
 }
 
-func provideNoopGormDialetor() gorm.Dialector {
+func provideNoopGormDialector() gorm.Dialector {
 	return noopGormDialector{gormtest.DummyDialector{}}
 }
 
