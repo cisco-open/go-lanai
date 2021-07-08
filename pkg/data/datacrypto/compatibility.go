@@ -25,13 +25,6 @@ var (
 	Data Carrier
  *************************/
 
-type EncryptedData struct {
-	Ver  Version     `json:"v"`
-	UUID uuid.UUID   `json:"kid"`
-	Alg  Algorithm   `json:"alg"`
-	Raw  interface{} `json:"d"`
-}
-
 // UnmarshalTextV1 deserialize V1 format of text
 func (d *EncryptedData) UnmarshalTextV1(text []byte) error {
 	str := string(text)
@@ -115,6 +108,14 @@ func (d *rawPlainDataV1) UnmarshalJSON(data []byte) (err error) {
 /*************************
 	Data Types Ext
  *************************/
+
+func ParseEncryptedMap(text string) (*EncryptedMap, error) {
+	v := &EncryptedMap{}
+	if e := v.UnmarshalText([]byte(text)); e != nil {
+		return nil, e
+	}
+	return v, nil
+}
 
 // UnmarshalText implements encoding.TextUnmarshaler with V1 support
 func (d *EncryptedMap) UnmarshalText(data []byte) error {

@@ -2,7 +2,9 @@ package datacrypto
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
 )
 
@@ -65,9 +67,21 @@ func (a *Algorithm) UnmarshalText(text []byte) error {
 	Types
  *************************/
 
+type EncryptedData struct {
+	Ver  Version     `json:"v"`
+	UUID uuid.UUID   `json:"kid"`
+	Alg  Algorithm   `json:"alg"`
+	Raw  interface{} `json:"d"`
+}
+
 type EncryptedMap struct {
 	EncryptedData
 	Data map[string]interface{} `json:"-"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler, only V2+ support JSON unmarshal
+func (d *EncryptedMap) UnmarshalJSON(data []byte) (err error) {
+	return json.Unmarshal(data, &d.EncryptedData)
 }
 
 //TODO

@@ -3,6 +3,7 @@ package datacrypto
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -13,12 +14,13 @@ const (
 	v1Plain     = `1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:["java.util.HashMap",{"key":"value"}]`
 	v1Encrypted = `1:965a64ac-42aa-4ec1-b30b-c3894b190691:e:vault:v1:P+CVPjwLBftDBMv1v1DnuRI2Smz7HQ0OTaGrk7yVz0U/tt183H5w5Jc98Xa77IN2FowbbqALUnGSAG5IKFrlUmaKE1rqUzMj4xCpKqBvtxWGUdK5`
 	v2Plain     = `{"v":"2","kid":"d034a284-172f-46c3-aead-e7cfb2f78ddc","alg":"p","d":{"key":"value"}}`
-	v2Encrypted = ``
+	v2Encrypted = `{"v":"2","kid":"d034a284-172f-46c3-aead-e7cfb2f78ddc","alg":"e","d":"vault:v1:P+CVPjwLBftDBMv1v1DnuRI2Smz7HQ0OTaGrk7yVz0U/tt183H5w5Jc98Xa77IN2FowbbqALUnGSAG5IKFrlUmaKE1rqUzMj4xCpKqBvtxWGUdK5"}`
 )
 
 var (
 	supportedV1Variants = []string{
 		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:{"key":"value"}`,
+		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:[{"key":"value"}]`,
 	}
 	invalidV1 = []string{
 		`invalid_ver:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:["java.util.HashMap",{"key":"value"}]`,
@@ -29,8 +31,13 @@ var (
 		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:pure_string"`,
 	}
 	supportedV2Variants = []string{
-		`{"v":"2","kid":"d034a284-172f-46c3-aead-e7cfb2f78ddc","alg":"p","d":["value"]}`,
+		`{"v":"2","kid":"d034a284-172f-46c3-aead-e7cfb2f78ddc","alg":"p","d":["array value"]}`,
 		`{"v":"2","kid":"d034a284-172f-46c3-aead-e7cfb2f78ddc","alg":"p","d":"json string"}`,
+	}
+	invalidV2 = []string{
+		`[{"v":"2","kid":"d034a284-172f-46c3-aead-e7cfb2f78ddc","alg":"p","d":{"key":"value"}}]`,
+		`"json string"`,
+		`json string`,
 	}
 )
 
@@ -38,13 +45,26 @@ var (
 	Test Cases
  *************************/
 
-func TestUnmarshal(t *testing.T) {
+func TestParse(t *testing.T) {
 	test.RunTest(context.Background(), t,
-		test.GomegaSubTest(SubTestUnmarshalValidV1Plain(v1Plain), "V1PlainStandard"),
-		test.GomegaSubTest(SubTestUnmarshalValidV1Plain(supportedV1Variants...), "V1PlainVariants"),
-		test.GomegaSubTest(SubTestUnmarshalInvalidPlain(invalidV1...), "V1PlainInvalid"),
-		test.GomegaSubTest(SubTestUnmarshalValidV2Plain(v2Plain), "V2PlainStandard"),
-		test.GomegaSubTest(SubTestUnmarshalValidV2Plain(supportedV2Variants...), "V2PlainVariants"),
+		test.GomegaSubTest(SubTestParseValidV1Plain(v1Plain), "V1PlainStandard"),
+		test.GomegaSubTest(SubTestParseValidV1Plain(supportedV1Variants...), "V1PlainVariants"),
+		test.GomegaSubTest(SubTestParseValidV1Encrypted(v1Encrypted), "V1Encrypted"),
+		test.GomegaSubTest(SubTestParseInvalid(invalidV1...), "V1PlainInvalid"),
+
+		test.GomegaSubTest(SubTestParseValidV2Plain(v2Plain), "V2PlainStandard"),
+		test.GomegaSubTest(SubTestParseValidV2Plain(supportedV2Variants...), "V2PlainVariants"),
+		test.GomegaSubTest(SubTestParseValidV2Encrypted(v2Encrypted), "V2Encrypted"),
+		test.GomegaSubTest(SubTestParseInvalid(invalidV2...), "V2PlainInvalid"),
+	)
+}
+
+func TestJsonUnmarshal(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		test.GomegaSubTest(SubTestJsonUnmarshalValidV2Plain(v2Plain), "V2JsonPlainStandard"),
+		test.GomegaSubTest(SubTestJsonUnmarshalValidV2Plain(supportedV2Variants...), "V2JsonPlainVariants"),
+		test.GomegaSubTest(SubTestJsonUnmarshalValidV2Encrypted(v2Encrypted), "V2JsonEncrypted"),
+		test.GomegaSubTest(SubTestJsonUnmarshalInvalidV2(invalidV2...), "V2JsonPlainInvalid"),
 	)
 }
 
@@ -52,46 +72,113 @@ func TestUnmarshal(t *testing.T) {
 	Sub-Test Cases
  *************************/
 
-func SubTestUnmarshalValidV1Plain(texts ...string) test.GomegaSubTestFunc {
+func SubTestParseValidV1Plain(texts ...string) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		for _, text := range texts {
-			v := EncryptedMap{}
-			e := unmarshalText(text, &v)
+			v, e := ParseEncryptedMap(text)
 			g.Expect(e).To(Succeed(), "unmarshaller should be able to parse non JSON V1 format: %s", text)
-			g.Expect(v.Ver).To(BeIdenticalTo(V1), "parsed plain data should be V1: %s", text)
-			g.Expect(v.UUID).To(Not(Equal(uuid.Invalid)), "parsed plain data should have valid UUID : %s", text)
-			g.Expect(v.Alg).To(BeIdenticalTo(AlgPlain), "parsed plain data should have alg = Plain: %s", text)
-			g.Expect(v.Raw).To(BeAssignableToTypeOf(map[string]interface{}{}), "raw data of plain data should be a map[string]interface{}: %s", text)
-
-			d := v.Raw.(map[string]interface{})
-			g.Expect(d).To(HaveKeyWithValue("key", "value"), "raw data of plain data should contains correct fields: %s", text)
+			assertPlainMap(g, v, V1, text)
 		}
 	}
 }
 
-func SubTestUnmarshalValidV2Plain(texts ...string) test.GomegaSubTestFunc {
+func SubTestParseValidV2Plain(texts ...string) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		for _, text := range texts {
-			v := EncryptedMap{}
-			e := unmarshalText(text, &v)
+			v, e := ParseEncryptedMap(text)
 			g.Expect(e).To(Succeed(), "unmarshaller should be able to parse JSON V2 format: %s", text)
-			g.Expect(v.Ver).To(BeIdenticalTo(V2), "parsed plain data should be V2: %s", text)
-			g.Expect(v.UUID).To(Not(Equal(uuid.Invalid)), "parsed plain data should have valid UUID : %s", text)
-			g.Expect(v.Alg).To(BeIdenticalTo(AlgPlain), "parsed plain data should have alg = Plain: %s", text)
-			//g.Expect(v.Raw).To(BeAssignableToTypeOf(map[string]interface{}{}), "raw data of plain data should be a map[string]interface{}: %s", text)
-
-			//d := v.Raw.(map[string]interface{})
-			//g.Expect(d).To(HaveKeyWithValue("key", "value"), "raw data of plain data should contains correct fields: %s", text)
+			assertPlainMap(g, v, V2, text)
 		}
 	}
 }
 
-func SubTestUnmarshalInvalidPlain(texts ...string) test.GomegaSubTestFunc {
+func SubTestParseInvalid(texts ...string) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		for _, text := range texts {
-			v := EncryptedMap{}
-			e := unmarshalText(text, &v)
+			_, e := ParseEncryptedMap(text)
 			g.Expect(e).To(Not(Succeed()), "unmarshaller should return error on parsing non JSON invalid V1 format: %s", text)
 		}
+	}
+}
+
+func SubTestJsonUnmarshalValidV2Plain(texts ...string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		for _, text := range texts {
+			v := EncryptedMap{}
+			e := json.Unmarshal([]byte(text), &v)
+			g.Expect(e).To(Succeed(), "JSON unmarshaller should be able to parse JSON V2 format: %s", text)
+			assertPlainMap(g, &v, V2, text)
+		}
+	}
+}
+
+func SubTestJsonUnmarshalInvalidV2(texts ...string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		for _, text := range texts {
+			v := EncryptedMap{}
+			e := json.Unmarshal([]byte(text), &v)
+			g.Expect(e).To(Not(Succeed()), "JSON unmarshaller should return error on JSON V2 format: %s", text)
+		}
+	}
+}
+
+func SubTestParseValidV1Encrypted(texts ...string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		for _, text := range texts {
+			v, e := ParseEncryptedMap(text)
+			g.Expect(e).To(Succeed(), "unmarshaller should be able to parse non JSON V1 format: %s", text)
+			assertEncryptedMap(g, v, V1, text)
+		}
+	}
+}
+
+func SubTestParseValidV2Encrypted(texts ...string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		for _, text := range texts {
+			v, e := ParseEncryptedMap(text)
+			g.Expect(e).To(Succeed(), "unmarshaller should be able to parse JSON V2 format: %s", text)
+			assertEncryptedMap(g, v, V2, text)
+		}
+	}
+}
+
+func SubTestJsonUnmarshalValidV2Encrypted(texts ...string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		for _, text := range texts {
+			v := EncryptedMap{}
+			e := json.Unmarshal([]byte(text), &v)
+			g.Expect(e).To(Succeed(), "JSON unmarshaller should be able to parse JSON V2 format: %s", text)
+			assertEncryptedMap(g, &v, V2, text)
+		}
+	}
+}
+
+/*************************
+	Helper
+ *************************/
+
+func assertEncryptedMap(g *gomega.WithT, v *EncryptedMap, expectedVer Version, text string) {
+	g.Expect(v.Ver).To(BeIdenticalTo(expectedVer), "parsed encrypted data should have version %s: %s", expectedVer, text)
+	g.Expect(v.UUID).To(Not(Equal(uuid.Invalid)), "parsed encrypted data should have valid UUID : %s", text)
+	g.Expect(v.Alg).To(BeIdenticalTo(AlgVault), "parsed encrypted data should have alg = Vault: %s", text)
+	g.Expect(v.Raw).To(BeAssignableToTypeOf(""), "raw data of encrypted data should be a string: %s", text)
+
+	d := v.Raw.(string)
+	g.Expect(d).To(HavePrefix("vault:v1:"), "raw data of encrypted data should have proper header: %s", text)
+}
+
+func assertPlainMap(g *gomega.WithT, v *EncryptedMap, expectedVer Version, text string) {
+	g.Expect(v.Ver).To(BeIdenticalTo(expectedVer), "parsed plain data should have version %s: %s", expectedVer, text)
+	g.Expect(v.UUID).To(Not(Equal(uuid.Invalid)), "parsed plain data should have valid UUID : %s", text)
+	g.Expect(v.Alg).To(BeIdenticalTo(AlgPlain), "parsed plain data should have alg = Plain: %s", text)
+
+	switch d := v.Raw.(type) {
+	case map[string]interface{}:
+		g.Expect(d).To(HaveKeyWithValue("key", "value"), "raw data of plain data should contains correct fields: %s", text)
+	case []interface{}:
+		g.Expect(d).To(ContainElement("array value"), "raw data of plain data should contains correct fields: %s", text)
+	case string:
+		g.Expect(d).To(Equal("json string"), "raw data of plain data should contains correct fields: %s", text)
+
 	}
 }
