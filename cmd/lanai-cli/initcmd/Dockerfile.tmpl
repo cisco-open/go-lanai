@@ -4,14 +4,19 @@
 FROM dockerhub.cisco.com/vms-platform-dev-docker/golang:1.16.3 AS builder
 ARG PRIVATE_MODS
 ARG VERSION
+ARG GITKEY
 WORKDIR /go/src/
 ADD . /go/src/
 RUN mkdir -p -m 0600 ~/.ssh && \
     echo "StrictHostKeyChecking no " > /root/.ssh/config && \
-    ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-RUN --mount=type=ssh \
-    make init-once init-cli drop-replace; \
+    ssh-keyscan github.com >> ~/.ssh/known_hosts && \
+    echo "Host cto-github.cisco.com" >> ~/.ssh/config  && \
+    echo "              HostName cto-github.cisco.com" >> ~/.ssh/config  && \
+    echo "              User git" >> ~/.ssh/config  && \
+    echo "             IdentityFile /root/github.key" >> ~/.ssh/config
+COPY ${GITKEY} /root/github.key
+RUN chmod 600 /root/github.key
+RUN make init-once init-cli drop-replace; \
     make clean build PRIVATE_MODS="$PRIVATE_MODS" VERSION="$VERSION"
 
 ## Distribution Container ##
