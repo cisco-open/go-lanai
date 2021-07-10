@@ -73,7 +73,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 	user, err := a.accountStore.LoadAccountByExternalId(ctx, samlIdp.ExternalIdName(), assertionCandidate.Principal().(string), samlIdp.ExternalIdpName(), samlIdp.GetAutoCreateUserDetails(), assertionCandidate.Assertion)
 
 	if err != nil {
-		return nil, security.NewInternalAuthenticationError("Couldn't load federated account", err)
+		return nil, security.NewInternalAuthenticationError(err)
 	}
 
 	permissions := map[string]interface{}{}
