@@ -14,8 +14,8 @@ import (
 type Audit struct {
 	CreatedAt time.Time      `json:"createdAt,omitempty"`
 	UpdatedAt time.Time      `json:"updatedAt,omitempty"`
-	CreatedBy uuid.UUID      `type:"UUID;" json:"createdBy,omitempty"`
-	UpdatedBy uuid.UUID      `type:"UUID;" json:"updatedBy,omitempty"`
+	CreatedBy uuid.UUID      `type:"KeyID;" json:"createdBy,omitempty"`
+	UpdatedBy uuid.UUID      `type:"KeyID;" json:"updatedBy,omitempty"`
 }
 
 type SoftDelete struct {
@@ -23,7 +23,7 @@ type SoftDelete struct {
 }
 
 type Tenancy struct {
-	TenantID   uuid.UUID     `gorm:"type:UUID;not null"`
+	TenantID   uuid.UUID     `gorm:"type:KeyID;not null"`
 	TenantPath pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
 }
 

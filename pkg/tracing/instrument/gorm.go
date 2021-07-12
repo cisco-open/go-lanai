@@ -66,10 +66,13 @@ type gormPlugin struct {
 	tracer opentracing.Tracer
 }
 
+// Name implements gorm.Plugin
 func (p gormPlugin) Name() string {
 	return "tracing"
 }
 
+// Initialize implements gorm.Plugin. This function register tracing related callbacks
+// Default callbacks can be found at github.com/go-gorm/gorm/callbacks/callbacks.go
 func (p gormPlugin) Initialize(db *gorm.DB) (err error) {
 	err = db.Callback().Create().Before(gormCbBeforeCreate).
 		Register(p.cbBeforeName("create"), p.makeBeforeCallback("create"))

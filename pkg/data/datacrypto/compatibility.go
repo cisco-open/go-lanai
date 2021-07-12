@@ -14,19 +14,38 @@ const (
 )
 
 var (
-	ErrUnsupportedVersion = fmt.Errorf("unsupported version of encrypted data format")
-	ErrInvalidFormat = fmt.Errorf("encrypted data is invalid")
-
-	v1TextPrefix = fmt.Sprintf("%s%s", V1, v1Separator)
+	v1TextPrefix = fmt.Sprintf("%d%s", V1, v1Separator)
 	javaTypePattern, _ = regexp.Compile(`^[[:alpha:]][[:alnum:]]*(\.[[:alpha:]][[:alnum:]]*)+`)
 )
+
+/*************************
+	Parsing
+ *************************/
+
+func ParseEncryptedRaw(text string) (*EncryptedRaw, error) {
+	v := &EncryptedRaw{}
+
+	// first try V1
+	switch e := v.UnmarshalTextV1([]byte(text)); {
+	case e == nil:
+		return v, nil
+	case e != ErrUnsupportedVersion:
+		return nil, e
+	}
+
+	// try JSON format
+	if e := json.Unmarshal([]byte(text), v); e != nil {
+		return nil, newInvalidFormatError("invalid V2 format - %v", e)
+	}
+	return v, nil
+}
 
 /*************************
 	Data Carrier
  *************************/
 
 // UnmarshalTextV1 deserialize V1 format of text
-func (d *EncryptedData) UnmarshalTextV1(text []byte) error {
+func (d *EncryptedRaw) UnmarshalTextV1(text []byte) error {
 	str := string(text)
 	if !isV1Format(str) {
 		return ErrUnsupportedVersion
@@ -34,22 +53,22 @@ func (d *EncryptedData) UnmarshalTextV1(text []byte) error {
 
 	split := strings.SplitN(str, v1Separator, 4)
 	if len(split) < 4 {
-		return ErrInvalidFormat
+		return newInvalidFormatError("not V1 format")
 	}
 
 	var ver Version
 	if e := unmarshalText(split[0], &ver); e != nil {
-		return fmt.Errorf("%v: %v", ErrInvalidFormat, e)
+		return newInvalidFormatError("unsupported version")
 	}
 
 	kid, e := uuid.Parse(split[1])
 	if e != nil {
-		return fmt.Errorf("%v: %v", ErrInvalidFormat, e)
+		return newInvalidFormatError("invalid Key ID")
 	}
 
 	var alg Algorithm
 	if e := unmarshalText(split[2], &alg); e != nil {
-		return fmt.Errorf("%v: %v", ErrInvalidFormat, e)
+		return newInvalidFormatError("unsupported algorithm")
 	}
 
 	raw, e := unmarshalV1RawPayload(alg, split[3])
@@ -57,11 +76,11 @@ func (d *EncryptedData) UnmarshalTextV1(text []byte) error {
 		return e
 	}
 
-	*d = EncryptedData{
-		Ver:  ver,
-		UUID: kid,
-		Alg:  alg,
-		Raw:  raw,
+	*d = EncryptedRaw{
+		Ver:   ver,
+		KeyID: kid,
+		Alg:   alg,
+		Raw:   raw,
 	}
 	return nil
 }
@@ -80,14 +99,14 @@ func (d *rawPlainDataV1) UnmarshalJSON(data []byte) (err error) {
 	case '[':
 		var s []interface{}
 		if e := json.Unmarshal(data, &s); e != nil {
-			return fmt.Errorf("%s: %s", ErrInvalidFormat, e)
+			return e
 		}
 		// find first non-string, also check if string element is a Java type expr
 		for i, elem := range s {
 			switch v := elem.(type) {
 			case string:
 				if i % 2 == 0 && !javaTypePattern.Match([]byte(v)) {
-					return fmt.Errorf("%s: invalid Java type", ErrInvalidFormat)
+					return fmt.Errorf("malformed legacy Java type")
 				}
 			default:
 				d.value = elem
@@ -96,39 +115,13 @@ func (d *rawPlainDataV1) UnmarshalJSON(data []byte) (err error) {
 	case '{':
 		var v map[string]interface{}
 		if e := json.Unmarshal(data, &v); e != nil {
-			return fmt.Errorf("%s: %s", ErrInvalidFormat, e)
+			return e
 		}
 		d.value = v
 	default:
-		return ErrInvalidFormat
+		return fmt.Errorf("only JSON array or object are supported")
 	}
 	return nil
-}
-
-/*************************
-	Data Types Ext
- *************************/
-
-func ParseEncryptedMap(text string) (*EncryptedMap, error) {
-	v := &EncryptedMap{}
-	if e := v.UnmarshalText([]byte(text)); e != nil {
-		return nil, e
-	}
-	return v, nil
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler with V1 support
-func (d *EncryptedMap) UnmarshalText(data []byte) error {
-	// first try V1
-	switch e := (&d.EncryptedData).UnmarshalTextV1(data); {
-	case e == nil:
-		return nil
-	case e != ErrUnsupportedVersion:
-		return e
-	}
-
-	// try JSON format
-	return json.Unmarshal(data, &d.EncryptedData)
 }
 
 /*************************
@@ -146,13 +139,13 @@ func unmarshalText(data string, v encoding.TextUnmarshaler) error {
 // unmarshalV1RawPayload V1 (Java) format of raw payload and convert it to object or string
 // V1 format could be
 // 	- Plain: a (T extends Map<String, String>) serialized by Jackson with `As.WRAPPER_ARRAY` option
-//	- Encrypted: a string
+//	- EncryptedRaw: a string
 func unmarshalV1RawPayload(alg Algorithm, text string) (interface{}, error) {
 	switch alg {
 	case AlgPlain:
 		raw := rawPlainDataV1{}
 		if e := json.Unmarshal([]byte(text), &raw); e != nil {
-			return nil, e
+			return nil, newInvalidFormatError("raw data JSON parsing error - %v", e)
 		}
 		return raw.value, nil
 	case AlgVault:
