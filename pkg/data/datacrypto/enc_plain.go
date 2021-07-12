@@ -10,7 +10,7 @@ func (enc plainTextEncryptor) Encrypt(_ context.Context, v interface{}, raw *Enc
 	if raw == nil {
 		return newEncryptionError("raw data is nil")
 	} else if raw.Alg != AlgPlain {
-		return newEncryptionError("unsupported algorithm: %v, expect %v", raw.Alg, AlgPlain)
+		return ErrUnsupportedAlgorithm
 	}
 
 	dataVersionCorrection(raw)
@@ -31,7 +31,7 @@ func (enc plainTextEncryptor) Decrypt(_ context.Context, raw *EncryptedRaw, dest
 	switch raw.Ver {
 	case V1, V2:
 		if raw.Alg != AlgPlain {
-			return newDecryptionError("unsupported algorithm: %v, expect %v", raw.Alg, AlgPlain)
+			return ErrUnsupportedAlgorithm
 		}
 		if e := tryAssign(raw.Raw, dest); e != nil {
 			return e

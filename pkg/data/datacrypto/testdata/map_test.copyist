@@ -1,0 +1,20 @@
+1=DriverOpen	1:nil
+2=ConnQuery	2:"SELECT * FROM \"data_encryption_test\" WHERE Name = $1 LIMIT 1"	1:nil
+3=RowsColumns	9:["id","name","value"]
+4=RowsNext	11:[4:675153534251466753,2:"v1_plain_map",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAxfQ]	1:nil
+5=RowsNext	11:[4:675153534266441729,2:"v2_plain_map",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAyfQ]	1:nil
+6=ConnBegin	1:nil
+7=ConnQuery	2:"INSERT INTO \"data_encryption_test\" (\"name\",\"value\") VALUES ($1,$2) RETURNING \"id\""	1:nil
+8=RowsColumns	9:["id"]
+9=RowsNext	11:[4:675171849866575873]	1:nil
+10=TxCommit	1:nil
+11=ConnQuery	2:"SELECT * FROM \"data_encryption_test\" WHERE \"data_encryption_test\".\"id\" = $1 LIMIT 1"	1:nil
+12=RowsNext	11:[4:675171849866575873,2:"temp_p_pm3tmoI0",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYmJlMjVhZTItOGYwZC00MWMzLTkxNTYtZDQ3YmY1MTE1NzAyIiwgInYiOiAyfQ]	1:nil
+13=ConnExec	2:"DELETE FROM \"data_encryption_test\" WHERE \"data_encryption_test\".\"id\" = $1"	1:nil
+14=ResultRowsAffected	4:1	1:nil
+15=RowsNext	11:[4:675171850003316737]	1:nil
+16=RowsNext	11:[4:675171850003316737,2:"temp_p_28tZAWgX",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiMzNhODhiYzItMDk5Mi00NTEwLWI4ZGYtMzEzZGZkODkzMmJkIiwgInYiOiAyfQ]	1:nil
+17=RowsNext	11:[4:675171350734307329,2:"v2_invalid_mock_map",10:eyJhbGciOiAiZSIsICJkIjogImludmFsaWQiLCAia2lkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYyIsICJ2IjogMX0]	1:nil
+18=TxRollback	1:nil
+
+"TestEncryptedMap"=1,2,3,3,4,2,3,3,5,6,7,8,9,10,11,3,3,12,6,13,14,10,6,7,8,15,10,11,3,3,16,6,13,14,10,2,3,3,17,3,6,18

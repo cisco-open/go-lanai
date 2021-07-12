@@ -15,6 +15,7 @@ import (
  *************************/
 
 func TestPlainTextEncryptor(t *testing.T) {
+	enc := plainTextEncryptor{}
 	mapValue := map[string]interface{}{
 		"key1": "value1",
 		"key2": 2.0,
@@ -22,34 +23,36 @@ func TestPlainTextEncryptor(t *testing.T) {
 	strValue := "this is a string"
 	arrValue := []interface{}{"value1", 2.0}
 	test.RunTest(context.Background(), t,
-		test.GomegaSubTest(SubTestPlainTextEncryptor(V1, mapValue), "PlainTextMapV1"),
-		test.GomegaSubTest(SubTestPlainTextEncryptor(V2, mapValue), "PlainTextMapV2"),
-		test.GomegaSubTest(SubTestPlainTextEncryptor(V1, strValue), "PlainTextStringV1"),
-		test.GomegaSubTest(SubTestPlainTextEncryptor(V2, strValue), "PlainTextStringV2"),
-		test.GomegaSubTest(SubTestPlainTextEncryptor(V1, arrValue), "PlainTextSliceV1"),
-		test.GomegaSubTest(SubTestPlainTextEncryptor(V2, arrValue), "PlainTextSliceV2"),
-		test.GomegaSubTest(SubTestPlainTextEncryptor(V1, nil), "PlainTextNilV1"),
-		test.GomegaSubTest(SubTestPlainTextEncryptor(V2, nil), "PlainTextNilV2"),
+		test.GomegaSubTest(SubTestPlainTextEncryptor(enc, V1, mapValue), "PlainTextMapV1"),
+		test.GomegaSubTest(SubTestPlainTextEncryptor(enc, V2, mapValue), "PlainTextMapV2"),
+		test.GomegaSubTest(SubTestPlainTextEncryptor(enc, V1, strValue), "PlainTextStringV1"),
+		test.GomegaSubTest(SubTestPlainTextEncryptor(enc, V2, strValue), "PlainTextStringV2"),
+		test.GomegaSubTest(SubTestPlainTextEncryptor(enc, V1, arrValue), "PlainTextSliceV1"),
+		test.GomegaSubTest(SubTestPlainTextEncryptor(enc, V2, arrValue), "PlainTextSliceV2"),
+		test.GomegaSubTest(SubTestPlainTextEncryptor(enc, V1, nil), "PlainTextNilV1"),
+		test.GomegaSubTest(SubTestPlainTextEncryptor(enc, V2, nil), "PlainTextNilV2"),
 	)
 }
 
 func TestPlainTextFailedEncrypt(t *testing.T) {
+	enc := plainTextEncryptor{}
 	test.RunTest(context.Background(), t,
-		test.GomegaSubTest(SubTestPlainTextFailedEncryption(Version(-1), AlgPlain), "InvalidVersion"),
-		test.GomegaSubTest(SubTestPlainTextFailedEncryption(V1, AlgVault), "V1UnsupportedAlg"),
-		test.GomegaSubTest(SubTestPlainTextFailedEncryption(V2, AlgVault), "V2UnsupportedAlg"),
+		test.GomegaSubTest(SubTestPlainTextFailedEncryption(enc, Version(-1), AlgPlain, ErrUnsupportedVersion), "InvalidVersion"),
+		test.GomegaSubTest(SubTestPlainTextFailedEncryption(enc, V1, AlgVault, ErrUnsupportedAlgorithm), "V1UnsupportedAlg"),
+		test.GomegaSubTest(SubTestPlainTextFailedEncryption(enc, V2, AlgVault, ErrUnsupportedAlgorithm), "V2UnsupportedAlg"),
 	)
 }
 
 func TestPlainTextFailedDecrypt(t *testing.T) {
+	enc := plainTextEncryptor{}
 	m := map[string]interface{}{}
 	s := ""
 	test.RunTest(context.Background(), t,
-		test.GomegaSubTest(SubTestPlainTextFailedDecryption(Version(-1), AlgPlain), "InvalidVersion"),
-		test.GomegaSubTest(SubTestPlainTextFailedDecryption(V1, AlgVault), "V1UnsupportedAlg"),
-		test.GomegaSubTest(SubTestPlainTextFailedDecryption(V2, AlgVault), "V2UnsupportedAlg"),
-		test.GomegaSubTest(SubTestPlainTextTypeMismatch(m), "AssignmentNonPointer"),
-		test.GomegaSubTest(SubTestPlainTextTypeMismatch(&s), "AssignmentTypeMismatch"),
+		test.GomegaSubTest(SubTestPlainTextFailedDecryption(enc, Version(-1), AlgPlain, ErrUnsupportedVersion), "InvalidVersion"),
+		test.GomegaSubTest(SubTestPlainTextFailedDecryption(enc, V1, AlgVault, ErrUnsupportedAlgorithm), "V1UnsupportedAlg"),
+		test.GomegaSubTest(SubTestPlainTextFailedDecryption(enc, V2, AlgVault, ErrUnsupportedAlgorithm), "V2UnsupportedAlg"),
+		test.GomegaSubTest(SubTestPlainTextTypeMismatch(enc, m), "AssignmentNonPointer"),
+		test.GomegaSubTest(SubTestPlainTextTypeMismatch(enc, &s), "AssignmentTypeMismatch"),
 	)
 }
 
@@ -57,9 +60,8 @@ func TestPlainTextFailedDecrypt(t *testing.T) {
 	Sub-Test Cases
  *************************/
 
-func SubTestPlainTextEncryptor(ver Version, v interface{}) test.GomegaSubTestFunc {
+func SubTestPlainTextEncryptor(enc Encryptor, ver Version, v interface{}) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		encryptor = plainTextEncryptor{}
 		kid := uuid.New()
 		raw := EncryptedRaw{
 			Ver:   ver,
@@ -68,7 +70,7 @@ func SubTestPlainTextEncryptor(ver Version, v interface{}) test.GomegaSubTestFun
 		}
 
 		// encrypt
-		e := encryptor.Encrypt(ctx, v, &raw)
+		e := enc.Encrypt(ctx, v, &raw)
 		g.Expect(e).To(Succeed(), "Encrypt shouldn't return error")
 		g.Expect(raw.Ver).To(BeIdenticalTo(V2), "encrypted data should be V2")
 		if v != nil {
@@ -96,7 +98,7 @@ func SubTestPlainTextEncryptor(ver Version, v interface{}) test.GomegaSubTestFun
 
 		// decrypt
 		decrypted := interface{}(nil)
-		e = encryptor.Decrypt(ctx, &parsed, &decrypted)
+		e = enc.Decrypt(ctx, &parsed, &decrypted)
 		g.Expect(e).To(Succeed(), "decrypted of raw data shouldn't return error")
 		if v != nil {
 			g.Expect(decrypted).To(BeEquivalentTo(v), "decrypted value should be correct")
@@ -106,12 +108,10 @@ func SubTestPlainTextEncryptor(ver Version, v interface{}) test.GomegaSubTestFun
 	}
 }
 
-func SubTestPlainTextFailedEncryption(ver Version, alg Algorithm) test.GomegaSubTestFunc {
+func SubTestPlainTextFailedEncryption(enc Encryptor, ver Version, alg Algorithm, expectedErr error) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		encryptor = plainTextEncryptor{}
-
 		// encrypt with nil values
-		e := encryptor.Encrypt(ctx, nil, nil)
+		e := enc.Encrypt(ctx, nil, nil)
 		g.Expect(e).To(Not(Succeed()), "Encrypt should return error")
 
 		kid := uuid.New()
@@ -123,14 +123,18 @@ func SubTestPlainTextFailedEncryption(ver Version, alg Algorithm) test.GomegaSub
 
 		// encrypt
 		any := map[string]string{}
-		e = encryptor.Encrypt(ctx, any, &raw)
+		e = enc.Encrypt(ctx, any, &raw)
 		g.Expect(e).To(Not(Succeed()), "Encrypt should return error")
+		g.Expect(e).To(BeIdenticalTo(expectedErr), "Encrypt should return correct error")
 	}
 }
 
-func SubTestPlainTextFailedDecryption(ver Version, alg Algorithm) test.GomegaSubTestFunc {
+func SubTestPlainTextFailedDecryption(enc Encryptor, ver Version, alg Algorithm, expectedErr error) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		encryptor = plainTextEncryptor{}
+		// decrypt with nil value
+		e := enc.Decrypt(ctx, nil, nil)
+		g.Expect(e).To(Not(Succeed()), "Decrypt of raw data should return error")
+
 		kid := uuid.New()
 		raw := EncryptedRaw{
 			Ver:   ver,
@@ -141,12 +145,13 @@ func SubTestPlainTextFailedDecryption(ver Version, alg Algorithm) test.GomegaSub
 
 		// decrypt
 		decrypted := interface{}(nil)
-		e := encryptor.Decrypt(ctx, &raw, &decrypted)
+		e = enc.Decrypt(ctx, &raw, &decrypted)
 		g.Expect(e).To(Not(Succeed()), "Decrypt of raw data should return error")
+		g.Expect(e).To(BeIdenticalTo(expectedErr), "Encrypt should return correct error")
 	}
 }
 
-func SubTestPlainTextTypeMismatch(v interface{}) test.GomegaSubTestFunc {
+func SubTestPlainTextTypeMismatch(enc Encryptor, v interface{}) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		encryptor = plainTextEncryptor{}
 		kid := uuid.New()
@@ -158,7 +163,7 @@ func SubTestPlainTextTypeMismatch(v interface{}) test.GomegaSubTestFunc {
 		}
 
 		// decrypt
-		e := encryptor.Decrypt(ctx, &raw, v)
+		e := enc.Decrypt(ctx, &raw, v)
 		g.Expect(e).To(Not(Succeed()), "Decrypt of raw data should return error")
 	}
 }

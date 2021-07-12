@@ -40,10 +40,6 @@ func ParseEncryptedRaw(text string) (*EncryptedRaw, error) {
 	return v, nil
 }
 
-/*************************
-	Data Carrier
- *************************/
-
 // UnmarshalTextV1 deserialize V1 format of text
 func (d *EncryptedRaw) UnmarshalTextV1(text []byte) error {
 	str := string(text)
@@ -84,6 +80,10 @@ func (d *EncryptedRaw) UnmarshalTextV1(text []byte) error {
 	}
 	return nil
 }
+
+/*************************
+	Data Carrier
+ *************************/
 
 type rawPlainDataV1 struct {
 	value interface{}

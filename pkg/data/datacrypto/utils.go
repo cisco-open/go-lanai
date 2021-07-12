@@ -28,7 +28,7 @@ func dataVersionCorrection(raw *EncryptedRaw) {
 func tryAssign(v interface{}, dest interface{}) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			err = fmt.Errorf("recovered: %v", e)
+			err = newDecryptionError("recovered: %v", e)
 		}
 	}()
 

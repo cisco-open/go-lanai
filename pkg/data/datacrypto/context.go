@@ -3,6 +3,8 @@ package datacrypto
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -11,6 +13,7 @@ import (
 
 var (
 	ErrUnsupportedVersion = data.NewDataError(data.ErrorCodeOrmMapping, "unsupported version of encrypted data format")
+	ErrUnsupportedAlgorithm = data.NewDataError(data.ErrorCodeOrmMapping, "unsupported encryption algorithm of data")
 	ErrInvalidFormat = data.NewDataError(data.ErrorCodeOrmMapping, "invalid encrypted data")
 )
 
@@ -107,10 +110,18 @@ func (EncryptedRaw) GormDataType() string {
 	return "jsonb"
 }
 
-//// GormValue implements  gorm.Valuer
-//func (d EncryptedRaw) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
-//	return clause.Expr{SQL: "?", Vars: []interface{}{d}}
-//}
+// Value implements driver.Valuer
+func (d *EncryptedRaw) Value() (driver.Value, error) {
+	if d.Ver < V2 {
+		d.Ver = V2
+	}
+	return pqx.JsonbValue(d)
+}
+
+// Scan implements sql.Scanner
+func (d *EncryptedRaw) Scan(src interface{}) error {
+	return pqx.JsonbScan(src, d)
+}
 
 /*************************
 	Interface
@@ -125,3 +136,40 @@ type Encryptor interface {
 	// if v is not pointer type, this method may return error
 	Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error
 }
+
+/*************************
+	Common
+ *************************/
+
+type compositeEncryptor []Encryptor
+
+func (enc compositeEncryptor) Encrypt(ctx context.Context, v interface{}, raw *EncryptedRaw) error {
+	for _, delegate := range enc {
+		e := delegate.Encrypt(ctx, v, raw)
+		switch e {
+		case nil:
+			return nil
+		case ErrUnsupportedAlgorithm, ErrUnsupportedVersion:
+			continue
+		default:
+			return e
+		}
+	}
+	return newEncryptionError("encryptor is not available for ver=%d and alg=%v", raw.Ver, raw.Alg)
+}
+
+func (enc compositeEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error {
+	for _, delegate := range enc {
+		e := delegate.Decrypt(ctx, raw, dest)
+		switch e {
+		case nil:
+			return nil
+		case ErrUnsupportedAlgorithm, ErrUnsupportedVersion:
+			continue
+		default:
+			return e
+		}
+	}
+	return newDecryptionError("encryptor is not available for ver=%d and alg=%v", raw.Ver, raw.Alg)
+}
+

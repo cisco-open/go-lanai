@@ -163,7 +163,7 @@ func SubTestJsonUnmarshalValidV2Encrypted(texts ...string) test.GomegaSubTestFun
 
 func assertEncryptedMap(g *gomega.WithT, v *EncryptedRaw, expectedVer Version, text string) {
 	g.Expect(v.Ver).To(BeIdenticalTo(expectedVer), "parsed encrypted data should have version %s: %s", expectedVer, text)
-	g.Expect(v.KeyID).To(Not(Equal(uuid.Invalid)), "parsed encrypted data should have valid KeyID : %s", text)
+	g.Expect(v.KeyID).To(Not(Equal(uuid.UUID{})), "parsed encrypted data should have valid KeyID : %s", text)
 	g.Expect(v.Alg).To(BeIdenticalTo(AlgVault), "parsed encrypted data should have alg = Vault: %s", text)
 	g.Expect(v.Raw).To(BeAssignableToTypeOf(""), "raw data of encrypted data should be a string: %s", text)
 
@@ -173,7 +173,7 @@ func assertEncryptedMap(g *gomega.WithT, v *EncryptedRaw, expectedVer Version, t
 
 func assertPlainMap(g *gomega.WithT, v *EncryptedRaw, expectedVer Version, text string) {
 	g.Expect(v.Ver).To(BeIdenticalTo(expectedVer), "parsed plain data should have version %s: %s", expectedVer, text)
-	g.Expect(v.KeyID).To(Not(Equal(uuid.Invalid)), "parsed plain data should have valid KeyID : %s", text)
+	g.Expect(v.KeyID).To(Not(Equal(uuid.UUID{})), "parsed plain data should have valid KeyID : %s", text)
 	g.Expect(v.Alg).To(BeIdenticalTo(AlgPlain), "parsed plain data should have alg = Plain: %s", text)
 
 	switch d := v.Raw.(type) {
