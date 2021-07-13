@@ -169,7 +169,7 @@ func (s *SwaggerController) swaggerSpec(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var host string
-	fwdAddress := r.Header.Get("X-Forwarded-For") // capitalisation doesn't matter
+	fwdAddress := r.Header.Get("X-Forwarded-Host") // capitalisation doesn't matter
 	if fwdAddress != "" {
 		ips := strings.Split(fwdAddress, ",")
 		 host = strings.TrimSpace(ips[0])
