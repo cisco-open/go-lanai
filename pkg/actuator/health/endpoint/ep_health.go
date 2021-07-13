@@ -51,7 +51,7 @@ type HealthEndpoint struct {
 	scMapper       health.StatusCodeMapper
 	showDetails    health.ShowMode
 	showComponents health.ShowMode
-	permisions     utils.StringSet
+	permissions    utils.StringSet
 }
 
 func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
@@ -77,7 +77,7 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 		scMapper:       opt.StatusCodeMapper,
 		showDetails:    opt.Properties.ShowDetails,
 		showComponents: showComponents,
-		permisions:     utils.NewStringSet(opt.Properties.Permissions...),
+		permissions:    utils.NewStringSet(opt.Properties.Permissions...),
 	}
 
 	properties := opt.MgtProperties
@@ -113,7 +113,7 @@ func (ep *HealthEndpoint) isAuthorized(ctx context.Context) bool {
 	if auth.State() < security.StateAuthenticated || auth.Permissions() == nil {
 		return false
 	}
-	for p, _ := range ep.permisions {
+	for p, _ := range ep.permissions {
 		if _, ok := auth.Permissions()[p]; !ok {
 			return false
 		}

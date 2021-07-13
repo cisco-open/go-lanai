@@ -8,7 +8,7 @@ import (
 
 
 type Client struct {
-	apiClient            *api.Client
+	*api.Client
 	config               *ConnectionProperties
 	clientAuthentication ClientAuthentication
 	hooks                []Hook
@@ -44,7 +44,7 @@ func NewClient(p *ConnectionProperties) (*Client, error) {
 	client.SetToken(token)
 
 	return &Client{
-		apiClient:            client,
+		Client:            client,
 		config:               p,
 		clientAuthentication: clientAuth,
 	}, nil
@@ -56,22 +56,22 @@ func (c *Client) AddHooks(_ context.Context, hooks ...Hook) {
 
 func (c *Client) Logical(ctx context.Context) *Logical {
 	return &Logical{
-		Logical: c.apiClient.Logical(),
+		Logical: c.Client.Logical(),
 		ctx: ctx,
-		hooks: c.hooks,
+		client: c,
 	}
 }
 
 func (c *Client) Sys(ctx context.Context) *Sys {
 	return &Sys{
-		Sys: c.apiClient.Sys(),
+		Sys: c.Client.Sys(),
 		ctx: ctx,
-		hooks: c.hooks,
+		client: c,
 	}
 }
 
 func (c *Client) GetClientTokenRenewer() (*api.Renewer,  error) {
-	secret, err := c.apiClient.Auth().Token().LookupSelf()
+	secret, err := c.Client.Auth().Token().LookupSelf()
 	if err != nil {
 		return nil, err
 	}
@@ -85,10 +85,10 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer,  error) {
 			increment, _ = n.Int64()
 		}
 	}
-	r, err := c.apiClient.NewRenewer(&api.RenewerInput{
+	r, err := c.Client.NewRenewer(&api.RenewerInput{
 		Secret: &api.Secret{
 			Auth: &api.SecretAuth{
-				ClientToken: c.apiClient.Token(),
+				ClientToken: c.Client.Token(),
 				Renewable:   renewable,
 			},
 		},

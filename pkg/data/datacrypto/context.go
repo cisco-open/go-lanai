@@ -123,6 +123,10 @@ func (d *EncryptedRaw) Scan(src interface{}) error {
 	return pqx.JsonbScan(src, d)
 }
 
+func (d *EncryptedRaw) NormalizedKeyID() string {
+	return strings.ToLower(d.KeyID.String())
+}
+
 /*************************
 	Interface
  *************************/

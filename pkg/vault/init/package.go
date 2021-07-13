@@ -34,7 +34,11 @@ func Use() {
 
 func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault.ConnectionProperties {
 	c := &vault.ConnectionProperties{
+		Host:           "localhost",
+		Port:           8200,
+		Scheme:         "http",
 		Authentication: vault.Token,
+		Token:          "replace_with_token_value",
 	}
 	if e := bootstrapConfig.Bind(c, vault.PropertyPrefix); e != nil {
 		panic(e)
