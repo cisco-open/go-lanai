@@ -19,6 +19,8 @@ import (
 const (
 	testModelNameV1PlainMap        = "v1_plain_map"
 	testModelNameV2PlainMap        = "v2_plain_map"
+	testModelNameV1MockedMap       = "v1_mock_map"
+	testModelNameV2MockedMap       = "v2_mock_map"
 	testModelNameV2InvalidPlainMap = "v2_invalid_plain_map"
 	testModelNameV2InvalidVaultMap = "v2_invalid_mock_map"
 )
@@ -61,16 +63,24 @@ func TestEncryptedMap(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		dbtest.WithDBPlayback("testdb"),
+		apptest.WithModules(Module),
+		apptest.WithFxOptions(
+			fx.Provide(newMockedEncryptor),
+		),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV1PlainMap, expectMap(V1, AlgPlain, v)), "SuccessfulSqlScanWithV1PlainText"),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV2PlainMap, expectMap(V2, AlgPlain, v)), "SuccessfulSqlScanWithV2PlainText"),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlValue(&di, V1, AlgPlain, v), "SuccessfulSqlValueWithV1PlainText"),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlValue(&di, V2, AlgPlain, v), "SuccessfulSqlValueWithV2PlainText"),
+
+		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV1MockedMap, expectMap(V1, AlgVault, v)), "SuccessfulSqlScanWithV1MockedVault"),
+		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV2MockedMap, expectMap(V2, AlgVault, v)), "SuccessfulSqlScanWithV2MockedVault"),
+		test.GomegaSubTest(SubTestMapSuccessfulSqlValue(&di, V1, AlgVault, v), "SuccessfulSqlValueWithV1MockedVault"),
+		test.GomegaSubTest(SubTestMapSuccessfulSqlValue(&di, V2, AlgVault, v), "SuccessfulSqlValueWithV2MockedVault"),
+
 		test.GomegaSubTest(SubTestMapFailedSqlScan(&di, testModelNameV2InvalidPlainMap), "FailedSqlScanWithV2PlainText"),
-		test.GomegaSubTest(SubTestMapFailedSqlScan(&di, testModelNameV2InvalidVaultMap), "FailedSqlScanWithV2PlainText"),
+		test.GomegaSubTest(SubTestMapFailedSqlScan(&di, testModelNameV2InvalidVaultMap), "FailedSqlScanWithV2MockedVault"),
 		test.GomegaSubTest(SubTestMapFailedSqlValue(&di), "FailedSqlValueWithInvalidKeyIDAndAlg"),
-		// TODO, failed cases
-		// TODO, AlgVault cases
 	)
 }
 
@@ -88,7 +98,7 @@ func SubTestMapSuccessfulSqlScan(di *dbDI, name string, expected *testSpecs) tes
 		g.Expect(m.Value).To(Not(BeNil()), "encrypted field shouldn't be nil")
 		g.Expect(m.Value.Ver).To(BeIdenticalTo(expected.ver), "encrypted field's data should have correct Ver")
 		g.Expect(m.Value.KeyID).To(Not(Equal(uuid.UUID{})), "encrypted field's data should have valid KeyID")
-		g.Expect(m.Value.Alg).To(Equal(AlgPlain), "encrypted field's data should have correct Alg")
+		g.Expect(m.Value.Alg).To(Equal(expected.alg), "encrypted field's data should have correct Alg")
 		if expected.data != nil {
 			g.Expect(m.Value.Data).To(Equal(expected.data), "encrypted field's data should have correct Data")
 		} else {
@@ -165,5 +175,12 @@ func expectMap(ver Version, alg Algorithm, data map[string]interface{}) *testSpe
 		ver:  ver,
 		alg:  alg,
 		data: data,
+	}
+}
+
+func newMockedEncryptor() Encryptor {
+	return compositeEncryptor{
+		plainTextEncryptor{},
+		newMockedVaultEncryptor(),
 	}
 }

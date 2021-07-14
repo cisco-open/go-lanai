@@ -23,13 +23,9 @@ var Module = &bootstrap.Module {
 	},
 }
 
-func init() {
-	bootstrap.Register(Module)
-}
-
-// Maker func, does nothing. Allow service to include this module in main()
+// Use func, does nothing. Allow service to include this module in main()
 func Use() {
-
+	bootstrap.Register(Module)
 }
 
 func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault.ConnectionProperties {

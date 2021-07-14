@@ -47,6 +47,9 @@ func NewTransitEngine(client *Client, opts ...KeyOptions) TransitEngine {
 	for _, fn := range opts {
 		fn(&opt)
 	}
+	if opt.KeyType == "" {
+		opt.KeyType = defaultTransitKeyType
+	}
 	return &transit{
 		c:                client,
 		keyType:          opt.KeyType,

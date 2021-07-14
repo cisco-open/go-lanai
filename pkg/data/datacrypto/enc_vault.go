@@ -5,24 +5,18 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"encoding/json"
 	"github.com/google/uuid"
-	"go.uber.org/fx"
 )
-
-type veDI struct {
-	fx.In
-	Client *vault.Client
-}
 
 type vaultEncryptor struct {
 	transit vault.TransitEngine
 }
 
-func newVaultEncryptor(di veDI) Encryptor {
+func newVaultEncryptor(client *vault.Client, props *KeyProperties) Encryptor {
 	return &vaultEncryptor{
-		transit: vault.NewTransitEngine(di.Client, func(opt *vault.KeyOption) {
-			// TODO respect properties
-			opt.Exportable = true
-			opt.AllowPlaintextBackup = true
+		transit: vault.NewTransitEngine(client, func(opt *vault.KeyOption) {
+			opt.KeyType = props.Type
+			opt.Exportable = props.Exportable
+			opt.AllowPlaintextBackup = props.AllowPlaintextBackup
 		}),
 	}
 }
