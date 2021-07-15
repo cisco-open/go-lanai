@@ -1,4 +1,4 @@
-package datacrypto
+package pqcrypt
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"

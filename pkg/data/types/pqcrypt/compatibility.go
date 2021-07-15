@@ -1,4 +1,4 @@
-package datacrypto
+package pqcrypt
 
 import (
 	"encoding"
