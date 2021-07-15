@@ -3,7 +3,6 @@ package dbtest
 import (
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	datainit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -53,10 +52,11 @@ func WithNoopMocks() test.Options {
 
 func withData() []test.Options {
 	return []test.Options{
-		apptest.WithModules(datainit.Module, tx.Module),
+		apptest.WithModules(tx.Module),
 		apptest.WithFxOptions(
 			appconfig.FxEmbeddedDefaults(defaultConfigFS),
 			fx.Provide(data.BindDataProperties),
+			fx.Provide(data.NewGorm),
 		),
 	}
 }

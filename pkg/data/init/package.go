@@ -3,6 +3,7 @@ package data
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/datacrypto"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -30,6 +31,7 @@ func Use() {
 	bootstrap.Register(data.Module)
 	bootstrap.Register(tx.Module)
 	bootstrap.Register(repo.Module)
+	bootstrap.Register(datacrypto.Module)
 }
 
 /**************************

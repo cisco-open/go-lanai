@@ -6,7 +6,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
@@ -43,11 +42,11 @@ func (EncryptedModel) TableName() string {
 	Test Cases
  *************************/
 
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		dbtest.EnableDBRecordMode(),
-	)
-}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
 
 type dbDI struct {
 	fx.In
@@ -119,8 +118,9 @@ func SubTestMapFailedSqlScan(di *dbDI, name string) test.GomegaSubTestFunc {
 
 func SubTestMapSuccessfulSqlValue(di *dbDI, ver Version, alg Algorithm, v map[string]interface{}) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		kid := uuid.New()
+		kid := uuid.MustParse("aa74a96c-c0f4-4a29-9c76-e643ff29dee8")
 		m := EncryptedModel{
+			ID: 12345678,
 			Name:  fmt.Sprintf("temp_%s_%s", alg, utils.RandomString(8)),
 			Value: newEncryptedMap(ver, kid, alg, v),
 		}
