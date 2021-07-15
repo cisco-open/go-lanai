@@ -139,6 +139,23 @@ type Encryptor interface {
 	// Decrypt reads EncryptedRaw and populate the decrypted data into given "v"
 	// if v is not pointer type, this method may return error
 	Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error
+
+	// KeyOperations returns an object that operates on keys.
+	// depending on configurations, this method may returns no-op impl, but never nil
+	KeyOperations() KeyOperations
+}
+
+type KeyOptions func(opt *keyOption)
+type keyOption struct {
+	ktype            string
+	exportable       bool
+	allowPlaintextBk bool
+}
+
+type KeyOperations interface {
+	// Create create keys with given key ID.
+	// Note: KeyOptions is for future support, it's currently ignored
+	Create(ctx context.Context, kid uuid.UUID, opts ...KeyOptions) error
 }
 
 /*************************
@@ -176,4 +193,38 @@ func (enc compositeEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, de
 	}
 	return newDecryptionError("encryptor is not available for ver=%d and alg=%v", raw.Ver, raw.Alg)
 }
+
+func (enc compositeEncryptor) KeyOperations() KeyOperations {
+	ret := make(compositeKeyOperations, 0, len(enc))
+	for _, delegate := range enc {
+		ops := delegate.KeyOperations()
+		if ops == noopKeyOps {
+			continue
+		}
+		ret = append(ret, ops)
+	}
+	return ret
+}
+
+type compositeKeyOperations []KeyOperations
+
+func (o compositeKeyOperations) Create(ctx context.Context, kid uuid.UUID, opts ...KeyOptions) error {
+	for _, ops := range o {
+		if e := ops.Create(ctx, kid, opts...); e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+type noopKeyOperations struct{}
+
+var noopKeyOps = noopKeyOperations{}
+
+func (o noopKeyOperations) Create(_ context.Context, _ uuid.UUID, _ ...KeyOptions) error {
+	return nil
+}
+
+
+
 

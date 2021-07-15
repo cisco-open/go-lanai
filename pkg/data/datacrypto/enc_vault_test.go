@@ -19,6 +19,7 @@ import (
 var (
 	testKid    = "d3803a9e-f2f2-4960-bdb1-aeec92d88ca4"
 	incorrectTestKid = "3100e6b7-eb62-4676-9bf4-391aba1f2fae"
+	newTestKid = "480d3866-40f5-4a3f-ab9a-c52249fca519"
 )
 
 /*************************
@@ -58,6 +59,8 @@ func TestVaultEncryptorWithRealVault(t *testing.T) {
 		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, arrValue), "VaultSliceV2"),
 		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, nil), "VaultNilV1"),
 		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, nil), "VaultNilV2"),
+		test.GomegaSubTest(SubTestVaultCreateKey(&di, &props, newTestKid), "VaultCreateKeySuccess"),
+		test.GomegaSubTest(SubTestVaultCreateKey(&di, &props, ""), "VaultCreateKeyFail"),
 	)
 }
 
@@ -88,6 +91,8 @@ func TestVaultEncryptorWithMockedTransitEngine(t *testing.T) {
 		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, arrValue), "VaultSliceV2"),
 		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, nil), "VaultNilV1"),
 		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, nil), "VaultNilV2"),
+		test.GomegaSubTest(SubTestVaultCreateKey(&di, &props, newTestKid), "VaultCreateKeySuccess"),
+		test.GomegaSubTest(SubTestVaultCreateKey(&di, &props, ""), "VaultCreateKeyFail"),
 	)
 }
 
@@ -284,6 +289,31 @@ func SubTestVaultDecryptWithBadKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 		decrypted := interface{}(nil)
 		e := enc.Decrypt(ctx, &raw, &decrypted)
 		g.Expect(e).To(Not(Succeed()), "Encrypt without KeyID should return error")
+	}
+}
+
+func SubTestVaultCreateKey(di *transitDI, props *KeyProperties, uuidStr string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var enc Encryptor
+		if di.Client == nil {
+			enc = newMockedVaultEncryptor()
+		} else {
+			enc = newVaultEncryptor(di.Client, props)
+		}
+		keyOps := enc.KeyOperations()
+		g.Expect(keyOps).To(Not(BeNil()), "KeyOperations shouldn't return nil")
+
+		var expectErr bool
+		kid, e := uuid.Parse(uuidStr)
+		if e != nil {
+			expectErr = true
+		}
+
+		if e := keyOps.Create(ctx, kid); expectErr {
+			g.Expect(e).To(Not(Succeed()), "Key creation should fail on invalid kid")
+		} else {
+			g.Expect(e).To(Succeed(), "Key creation should succeed on valid kid")
+		}
 	}
 }
 

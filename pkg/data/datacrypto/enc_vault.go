@@ -4,11 +4,15 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
+	"strings"
 )
 
+// vaultEncryptor implements Encryptor and KeyOperations
 type vaultEncryptor struct {
 	transit vault.TransitEngine
+	props   *KeyProperties
 }
 
 func newVaultEncryptor(client *vault.Client, props *KeyProperties) Encryptor {
@@ -18,6 +22,7 @@ func newVaultEncryptor(client *vault.Client, props *KeyProperties) Encryptor {
 			opt.Exportable = props.Exportable
 			opt.AllowPlaintextBackup = props.AllowPlaintextBackup
 		}),
+		props: props,
 	}
 }
 
@@ -93,4 +98,19 @@ func (enc *vaultEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest 
 		return ErrUnsupportedVersion
 	}
 	return nil
+}
+
+func (enc *vaultEncryptor) KeyOperations() KeyOperations {
+	return enc
+}
+
+/* KeyOperations */
+
+var zeroUUID = uuid.UUID{}
+
+func (enc *vaultEncryptor) Create(ctx context.Context, kid uuid.UUID, opts ...KeyOptions) error {
+	if kid == zeroUUID {
+		return fmt.Errorf("invalid key ID")
+	}
+	return enc.transit.PrepareKey(ctx, strings.ToLower(kid.String()))
 }

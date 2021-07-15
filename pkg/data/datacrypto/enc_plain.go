@@ -42,5 +42,8 @@ func (enc plainTextEncryptor) Decrypt(_ context.Context, raw *EncryptedRaw, dest
 	return nil
 }
 
+func (enc plainTextEncryptor) KeyOperations() KeyOperations {
+	return noopKeyOps
+}
 
 
