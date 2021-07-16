@@ -1,0 +1,7 @@
+data:
+  encryption:
+    enabled: false
+    key:
+      type: aes128-gcm96
+      exportable: true
+      allow-plaintext-backup: true

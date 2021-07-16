@@ -1,18 +1,24 @@
 package pqcrypt
 
 import (
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
+	"embed"
 	"fmt"
 	"go.uber.org/fx"
 )
 
-//var logger = log.New("CockroachDB")
+//var logger = log.New("Data.Enc")
+
+//go:embed defaults-data-enc.yml
+var defaultConfigFS embed.FS
 
 var Module = &bootstrap.Module{
 	Name:       "data-encryption",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
+		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(BindDataEncryptionProperties, provideEncryptor),
 		fx.Invoke(initialize),
 	},
