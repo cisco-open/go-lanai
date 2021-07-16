@@ -98,7 +98,7 @@ func SubTestParseValidV1Plain(texts ...string) test.GomegaSubTestFunc {
 		for _, text := range texts {
 			v, e := ParseEncryptedRaw(text)
 			g.Expect(e).To(Succeed(), "parsing should be able to parse non JSON V1 format: %s", text)
-			assertPlainRaw(g, v, V1, text)
+			assertPlainRaw(g, v, V2, text)
 		}
 	}
 }
@@ -149,7 +149,7 @@ func SubTestParseValidV1Encrypted(texts ...string) test.GomegaSubTestFunc {
 		for _, text := range texts {
 			v, e := ParseEncryptedRaw(text)
 			g.Expect(e).To(Succeed(), "unmarshaller should be able to parse non JSON V1 format: %s", text)
-			assertEncryptedRaw(g, v, V1, text)
+			assertEncryptedRaw(g, v, V2, text)
 		}
 	}
 }

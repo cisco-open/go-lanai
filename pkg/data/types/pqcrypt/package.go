@@ -58,7 +58,7 @@ func provideEncryptor(di encDI) encOut {
 			panic(fmt.Errorf("data encryption enabled but vault client is not initialized"))
 		}
 		venc := newVaultEncryptor(di.Client, &di.Properties.Key)
-		enc = compositeEncryptor{plainTextEncryptor{}, venc}
+		enc = compositeEncryptor{venc, plainTextEncryptor{}}
 	default:
 		enc = plainTextEncryptor{}
 	}

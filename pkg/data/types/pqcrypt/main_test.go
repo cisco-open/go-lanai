@@ -22,7 +22,7 @@ func TestCreateKey(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithModules(Module),
 		apptest.WithFxOptions(
-			fx.Provide(newMockedEncryptor),
+			fx.Provide(newMockedEncryptor(true)),
 		),
 		test.GomegaSubTest(SubTestCreateKey(uuid.New(), true), "CreateKeySuccess"),
 		test.GomegaSubTest(SubTestCreateKey(uuid.UUID{}, false), "CreateKeyFail"),
@@ -33,6 +33,9 @@ func TestNoopCreateKey(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		apptest.WithModules(Module),
+		apptest.WithFxOptions(
+			fx.Provide(newMockedEncryptor(false)),
+		),
 		test.GomegaSubTest(SubTestCreateKey(uuid.New(), true), "CreateKeyWithValidKey"),
 		test.GomegaSubTest(SubTestCreateKey(uuid.UUID{}, true), "CreateKeyWithInvalidKey"),
 	)
@@ -44,7 +47,7 @@ func TestNoopCreateKey(t *testing.T) {
 
 func SubTestCreateKey(uuid uuid.UUID, expectSuccess bool) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		e := CreateKey(ctx, uuid)
+		e := CreateKeyWithUUID(ctx, uuid)
 		if expectSuccess {
 			g.Expect(e).To(Succeed(), "CreateKey should success")
 		} else {

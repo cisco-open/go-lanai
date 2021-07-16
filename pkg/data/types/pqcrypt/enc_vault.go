@@ -5,8 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"strings"
 )
 
 // vaultEncryptor implements Encryptor and KeyOperations
@@ -26,37 +24,32 @@ func newVaultEncryptor(client *vault.Client, props *KeyProperties) Encryptor {
 	}
 }
 
-func (enc *vaultEncryptor) Encrypt(ctx context.Context, v interface{}, raw *EncryptedRaw) error {
+func (enc *vaultEncryptor) Encrypt(ctx context.Context, kid string, v interface{}) (raw *EncryptedRaw, err error) {
+	raw = &EncryptedRaw{
+		Ver:   V2,
+		KeyID: normalizeKeyID(kid),
+		Alg:   AlgVault,
+	}
 	switch {
-	case raw == nil:
-		return newEncryptionError("raw data is nil")
-	case raw.Alg != AlgVault:
-		return ErrUnsupportedAlgorithm
-	case raw.KeyID == uuid.UUID{}:
-		return newEncryptionError("KeyID is required for algorithm %v", raw.Alg)
+	case raw.KeyID == "":
+		return nil, newEncryptionError("KeyID is required for algorithm %v", raw.Alg)
 	}
 
-	dataVersionCorrection(raw)
-	switch raw.Ver {
-	case V2:
-		if v == nil {
-			raw.Raw = "" // special rule encrypted "" <-> nil
-			return nil
-		}
-
-		jsonVal, e := json.Marshal(v)
-		if e != nil {
-			return newEncryptionError("failed to marshal data - %v", e)
-		}
-		cipher, e := enc.transit.Encrypt(ctx, raw.NormalizedKeyID(), jsonVal)
-		if e != nil {
-			return newEncryptionError("encryption engine - %v", e)
-		}
-		raw.Raw = string(cipher)
-	default:
-		return ErrUnsupportedVersion
+	if v == nil {
+		raw.Raw = "" // special rule encrypted "" <-> nil
+		return raw, nil
 	}
-	return nil
+
+	jsonVal, e := json.Marshal(v)
+	if e != nil {
+		return nil, newEncryptionError("failed to marshal data - %v", e)
+	}
+	cipher, e := enc.transit.Encrypt(ctx, raw.KeyID, jsonVal)
+	if e != nil {
+		return nil, newEncryptionError("encryption engine - %v", e)
+	}
+	raw.Raw = string(cipher)
+	return
 }
 
 func (enc *vaultEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error {
@@ -65,7 +58,7 @@ func (enc *vaultEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest 
 		return newDecryptionError("raw data is nil")
 	case raw.Alg != AlgVault:
 		return ErrUnsupportedAlgorithm
-	case raw.KeyID == uuid.UUID{}:
+	case raw.KeyID == "":
 		return newDecryptionError("KeyID is required for algorithm %v", raw.Alg)
 	}
 
@@ -86,7 +79,7 @@ func (enc *vaultEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest 
 			return tryAssign(nil, dest)
 		}
 
-		plain, e := enc.transit.Decrypt(ctx, raw.NormalizedKeyID(), cipher)
+		plain, e := enc.transit.Decrypt(ctx, normalizeKeyID(raw.KeyID), cipher)
 		if e != nil {
 			return newDecryptionError("encryption engine - %v", e)
 		}
@@ -106,11 +99,10 @@ func (enc *vaultEncryptor) KeyOperations() KeyOperations {
 
 /* KeyOperations */
 
-var zeroUUID = uuid.UUID{}
-
-func (enc *vaultEncryptor) Create(ctx context.Context, kid uuid.UUID, opts ...KeyOptions) error {
-	if kid == zeroUUID {
+func (enc *vaultEncryptor) Create(ctx context.Context, kid string, _ ...KeyOptions) error {
+	kid = normalizeKeyID(kid)
+	if kid == "" {
 		return fmt.Errorf("invalid key ID")
 	}
-	return enc.transit.PrepareKey(ctx, strings.ToLower(kid.String()))
+	return enc.transit.PrepareKey(ctx, kid)
 }

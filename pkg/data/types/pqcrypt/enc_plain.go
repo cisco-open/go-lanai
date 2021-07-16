@@ -6,21 +6,19 @@ import (
 
 type plainTextEncryptor struct{}
 
-func (enc plainTextEncryptor) Encrypt(_ context.Context, v interface{}, raw *EncryptedRaw) error {
-	if raw == nil {
-		return newEncryptionError("raw data is nil")
-	} else if raw.Alg != AlgPlain {
-		return ErrUnsupportedAlgorithm
+func (enc plainTextEncryptor) Encrypt(ctx context.Context, kid string, v interface{}) (raw *EncryptedRaw, err error) {
+	raw = &EncryptedRaw{
+		Ver:   V2,
+		KeyID: kid,
+		Alg:   AlgPlain,
+	}
+	switch {
+	case raw.KeyID == "":
+		return nil, newEncryptionError("KeyID is required for algorithm %v", raw.Alg)
 	}
 
-	dataVersionCorrection(raw)
-	switch raw.Ver {
-	case V2:
-		raw.Raw = v
-	default:
-		return ErrUnsupportedVersion
-	}
-	return nil
+	raw.Raw = v
+	return
 }
 
 func (enc plainTextEncryptor) Decrypt(_ context.Context, raw *EncryptedRaw, dest interface{}) error {

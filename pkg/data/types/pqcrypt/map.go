@@ -8,29 +8,32 @@ import (
 
 type EncryptedMap struct {
 	EncryptedRaw
-	Data map[string]interface{} `json:"-"`
+	Data  map[string]interface{} `json:"-"`
 }
 
-func NewEncryptedMap(kid uuid.UUID, alg Algorithm, v map[string]interface{}) *EncryptedMap {
-	return newEncryptedMap(V2, kid, alg, v)
+func NewEncryptedMap(kid uuid.UUID, v map[string]interface{}) *EncryptedMap {
+	if kid == zeroUUID {
+		return newEncryptedMap("", v)
+	}
+	return newEncryptedMap(kid.String(), v)
 }
 
-func newEncryptedMap(ver Version, kid uuid.UUID, alg Algorithm, v map[string]interface{}) *EncryptedMap {
+func newEncryptedMap(kid string, v map[string]interface{}) *EncryptedMap {
 	return &EncryptedMap{
 		EncryptedRaw: EncryptedRaw{
-			Ver:   ver,
 			KeyID: kid,
-			Alg:   alg,
 		},
-		Data: v,
+		Data:  v,
 	}
 }
 
 // Value implements driver.Valuer
 func (d *EncryptedMap) Value() (driver.Value, error) {
-	if e := Encrypt(context.Background(), d.Data, &d.EncryptedRaw); e != nil {
+	raw, e := Encrypt(context.Background(), d.KeyID, d.Data)
+	if e != nil {
 		return nil, e
 	}
+	d.EncryptedRaw = *raw
 	return d.EncryptedRaw.Value()
 }
 

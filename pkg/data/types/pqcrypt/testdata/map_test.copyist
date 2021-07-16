@@ -3,26 +3,30 @@
 3=RowsColumns	9:["id","name","value"]
 4=RowsNext	11:[4:675153534251466753,2:"v1_plain_map",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAxfQ]	1:nil
 5=RowsNext	11:[4:675153534266441729,2:"v2_plain_map",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAyfQ]	1:nil
-6=ConnBegin	1:nil
-7=ConnExec	2:"UPDATE \"data_encryption_test\" SET \"name\"=$1,\"value\"=$2 WHERE \"id\" = $3"	1:nil
-8=ResultRowsAffected	4:0	1:nil
-9=TxCommit	1:nil
-10=ConnQuery	2:"SELECT * FROM \"data_encryption_test\" WHERE \"id\" = $1 ORDER BY \"data_encryption_test\".\"id\" LIMIT 1"	1:nil
-11=RowsNext	11:[]	7:EOF
-12=ConnQuery	2:"INSERT INTO \"data_encryption_test\" (\"name\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	1:nil
-13=RowsColumns	9:["id"]
-14=RowsNext	11:[4:12345678]	1:nil
-15=ConnQuery	2:"SELECT * FROM \"data_encryption_test\" WHERE \"data_encryption_test\".\"id\" = $1 LIMIT 1"	1:nil
-16=RowsNext	11:[4:12345678,2:"temp_p_jPghpGDR",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
-17=ConnExec	2:"DELETE FROM \"data_encryption_test\" WHERE \"data_encryption_test\".\"id\" = $1"	1:nil
-18=ResultRowsAffected	4:1	1:nil
-19=RowsNext	11:[4:12345678,2:"temp_p_pDKUQBz8",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
-20=RowsNext	11:[4:675154428705505281,2:"v1_mock_map",10:eyJhbGciOiAiZSIsICJkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYzp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAxfQ]	1:nil
-21=RowsNext	11:[4:675154428730507265,2:"v2_mock_map",10:eyJhbGciOiAiZSIsICJkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYzp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAyfQ]	1:nil
-22=RowsNext	11:[4:12345678,2:"temp_e_taq3Zxva",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
-23=RowsNext	11:[4:12345678,2:"temp_e_kUFbHUuO",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
-24=RowsNext	11:[4:675171350698229761,2:"v2_invalid_plain_map",10:eyJhbGciOiAicCIsICJkIjogImludmFsaWQiLCAia2lkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYyIsICJ2IjogMn0]	1:nil
-25=RowsNext	11:[4:675171350734307329,2:"v2_invalid_mock_map",10:eyJhbGciOiAiZSIsICJkIjogImludmFsaWQiLCAia2lkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYyIsICJ2IjogMn0]	1:nil
-26=TxRollback	1:nil
+6=RowsNext	11:[4:675154428705505281,2:"v1_mock_map",10:eyJhbGciOiAiZSIsICJkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYzp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAxfQ]	1:nil
+7=RowsNext	11:[4:675154428730507265,2:"v2_mock_map",10:eyJhbGciOiAiZSIsICJkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYzp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAyfQ]	1:nil
+8=ConnBegin	1:nil
+9=ConnExec	2:"UPDATE \"data_encryption_test\" SET \"name\"=$1,\"value\"=$2 WHERE \"id\" = $3"	1:nil
+10=ResultRowsAffected	4:0	1:nil
+11=TxCommit	1:nil
+12=ConnQuery	2:"SELECT * FROM \"data_encryption_test\" WHERE \"id\" = $1 ORDER BY \"data_encryption_test\".\"id\" LIMIT 1"	1:nil
+13=RowsNext	11:[]	7:EOF
+14=ConnQuery	2:"INSERT INTO \"data_encryption_test\" (\"name\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	1:nil
+15=RowsColumns	9:["id"]
+16=RowsNext	11:[4:12345678]	1:nil
+17=ConnQuery	2:"SELECT * FROM \"data_encryption_test\" WHERE \"data_encryption_test\".\"id\" = $1 LIMIT 1"	1:nil
+18=RowsNext	11:[4:12345678,2:"temp_e_bgr3UTMx",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
+19=ConnExec	2:"DELETE FROM \"data_encryption_test\" WHERE \"data_encryption_test\".\"id\" = $1"	1:nil
+20=ResultRowsAffected	4:1	1:nil
+21=RowsNext	11:[4:675171350698229761,2:"v2_invalid_plain_map",10:eyJhbGciOiAicCIsICJkIjogImludmFsaWQiLCAia2lkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYyIsICJ2IjogMn0]	1:nil
+22=RowsNext	11:[4:675171350734307329,2:"v2_invalid_mock_map",10:eyJhbGciOiAiZSIsICJkIjogImludmFsaWQiLCAia2lkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYyIsICJ2IjogMn0]	1:nil
+23=TxRollback	1:nil
+24=RowsNext	11:[4:12345678,2:"temp_p_jPghpGDR",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
+25=RowsNext	11:[4:12345678,2:"temp_p_pDKUQBz8",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
+26=RowsNext	11:[4:12345678,2:"temp_e_taq3Zxva",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
+27=RowsNext	11:[4:12345678,2:"temp_e_kUFbHUuO",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
+28=RowsNext	11:[4:12345678,2:"temp_p_Kk1pPKdW",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
 
-"TestEncryptedMap"=1,2,3,3,4,2,3,3,5,6,7,8,9,10,3,3,11,6,12,13,14,9,15,3,3,16,6,17,18,9,6,7,8,9,10,3,3,11,6,12,13,14,9,15,3,3,19,6,17,18,9,2,3,3,20,2,3,3,21,6,7,8,9,10,3,3,11,6,12,13,14,9,15,3,3,22,6,17,18,9,6,7,8,9,10,3,3,11,6,12,13,14,9,15,3,3,23,6,17,18,9,2,3,3,24,3,2,3,3,25,3,6,26
+"TestEncryptedMapWithEncryptionEnabled"=1,2,3,3,4,2,3,3,5,2,3,3,6,2,3,3,7,8,9,10,11,12,3,3,13,8,14,15,16,11,17,3,3,18,8,19,20,11,2,3,3,21,3,2,3,3,22,3,8,23
+"TestEncryptedMap"=1,2,3,3,4,2,3,3,5,8,9,10,11,12,3,3,13,8,14,15,16,11,17,3,3,24,8,19,20,11,8,9,10,11,12,3,3,13,8,14,15,16,11,17,3,3,25,8,19,20,11,2,3,3,6,2,3,3,7,8,9,10,11,12,3,3,13,8,14,15,16,11,17,3,3,26,8,19,20,11,8,9,10,11,12,3,3,13,8,14,15,16,11,17,3,3,27,8,19,20,11,2,3,3,21,3,2,3,3,22,3,8,23
+"TestEncryptedMapWithEncryptionDisabled"=1,2,3,3,4,2,3,3,5,8,9,10,11,12,3,3,13,8,14,15,16,11,17,3,3,28,8,19,20,11,2,3,3,6,3,2,3,3,22,3,2,3,3,21,3,8,23

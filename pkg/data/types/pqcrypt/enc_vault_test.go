@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	testKid    = "d3803a9e-f2f2-4960-bdb1-aeec92d88ca4"
+	testKid          = "d3803a9e-f2f2-4960-bdb1-aeec92d88ca4"
 	incorrectTestKid = "3100e6b7-eb62-4676-9bf4-391aba1f2fae"
-	newTestKid = "480d3866-40f5-4a3f-ab9a-c52249fca519"
+	newTestKid       = "480d3866-40f5-4a3f-ab9a-c52249fca519"
 )
 
 /*************************
@@ -51,14 +51,10 @@ func TestVaultEncryptorWithRealVault(t *testing.T) {
 		apptest.WithModules(vaultinit.Module),
 		apptest.WithDI(&di),
 		test.SubTestSetup(SubTestSetupCreateKey(&di)),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, mapValue), "VaultMapV1"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, mapValue), "VaultMapV2"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, strValue), "VaultStringV1"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, strValue), "VaultStringV2"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, arrValue), "VaultSliceV1"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, arrValue), "VaultSliceV2"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, nil), "VaultNilV1"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, nil), "VaultNilV2"),
+		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, mapValue), "VaultMap"),
+		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, strValue), "VaultString"),
+		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, arrValue), "VaultSlice"),
+		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, nil), "VaultNil"),
 		test.GomegaSubTest(SubTestVaultCreateKey(&di, &props, newTestKid), "VaultCreateKeySuccess"),
 		test.GomegaSubTest(SubTestVaultCreateKey(&di, &props, ""), "VaultCreateKeyFail"),
 	)
@@ -80,17 +76,11 @@ func TestVaultEncryptorWithMockedTransitEngine(t *testing.T) {
 	}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithModules(vaultinit.Module),
 		apptest.WithDI(&di),
-		test.SubTestSetup(SubTestSetupCreateKey(&di)),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, mapValue), "VaultMapV1"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, mapValue), "VaultMapV2"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, strValue), "VaultStringV1"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, strValue), "VaultStringV2"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, arrValue), "VaultSliceV1"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, arrValue), "VaultSliceV2"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V1, testKid, nil), "VaultNilV1"),
-		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, V2, testKid, nil), "VaultNilV2"),
+		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, mapValue), "VaultMap"),
+		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, strValue), "VaultString"),
+		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, arrValue), "VaultSlice"),
+		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, nil), "VaultNil"),
 		test.GomegaSubTest(SubTestVaultCreateKey(&di, &props, newTestKid), "VaultCreateKeySuccess"),
 		test.GomegaSubTest(SubTestVaultCreateKey(&di, &props, ""), "VaultCreateKeyFail"),
 	)
@@ -99,9 +89,6 @@ func TestVaultEncryptorWithMockedTransitEngine(t *testing.T) {
 func TestVaultFailedEncrypt(t *testing.T) {
 	enc := newMockedVaultEncryptor().(*vaultEncryptor)
 	test.RunTest(context.Background(), t,
-		test.GomegaSubTest(SubTestVaultFailedEncryption(enc, Version(-1), AlgVault, ErrUnsupportedVersion), "InvalidVersion"),
-		test.GomegaSubTest(SubTestVaultFailedEncryption(enc, V1, AlgPlain, ErrUnsupportedAlgorithm), "V1UnsupportedAlg"),
-		test.GomegaSubTest(SubTestVaultFailedEncryption(enc, V2, AlgPlain, ErrUnsupportedAlgorithm), "V2UnsupportedAlg"),
 		test.GomegaSubTest(SubTestVaultEncryptWithoutKid(enc), "EncryptWithoutKeyID"),
 		test.GomegaSubTest(SubTestVaultEncryptWithBadKid(enc), "EncryptWithBadKeyID"),
 	)
@@ -134,7 +121,7 @@ func SubTestSetupCreateKey(di *transitDI) test.SetupFunc {
 	}
 }
 
-func SubTestVaultEncryptor(di *transitDI, props *KeyProperties, ver Version, uuidStr string, v interface{}) test.GomegaSubTestFunc {
+func SubTestVaultEncryptor(di *transitDI, props *KeyProperties, uuidStr string, v interface{}) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var enc Encryptor
 		if di.Client == nil {
@@ -142,17 +129,14 @@ func SubTestVaultEncryptor(di *transitDI, props *KeyProperties, ver Version, uui
 		} else {
 			enc = newVaultEncryptor(di.Client, props)
 		}
-		kid := uuid.Must(uuid.Parse(uuidStr))
-		raw := EncryptedRaw{
-			Ver:   ver,
-			KeyID: kid,
-			Alg:   AlgVault,
-		}
+		kid := uuidStr
 
 		// encrypt
-		e := enc.Encrypt(ctx, v, &raw)
+		raw, e := enc.Encrypt(ctx, kid, v)
 		g.Expect(e).To(Succeed(), "Encrypt shouldn't return error")
 		g.Expect(raw.Ver).To(BeIdenticalTo(V2), "encrypted data should be V2")
+		g.Expect(raw.Alg).To(BeIdenticalTo(AlgVault), "encrypted data should have correct alg")
+		g.Expect(raw.KeyID).To(BeIdenticalTo(kid), "encrypted data should have correct KeyID")
 		g.Expect(raw.Raw).To(BeAssignableToTypeOf(""), "encrypted raw should be a string")
 
 		// serialize
@@ -175,39 +159,21 @@ func SubTestVaultEncryptor(di *transitDI, props *KeyProperties, ver Version, uui
 		if v != nil {
 			g.Expect(decrypted).To(BeEquivalentTo(v), "decrypted value should be correct")
 		} else {
+			// Note nil value always get decoded, no need to test incorrect KeyID
 			g.Expect(decrypted).To(BeNil(), "decrypted value should be correct")
+			return
 		}
 
 		// decrypt with incorrect key
 		incorrectRaw := EncryptedRaw{
-			Ver:   ver,
-			KeyID: uuid.Must(uuid.Parse(incorrectTestKid)),
-			Alg:   AlgVault,
+			Ver:   parsed.Ver,
+			KeyID: incorrectTestKid,
+			Alg:   parsed.Alg,
+			Raw:   parsed.Raw,
 		}
 		any := interface{}(nil)
 		e = enc.Decrypt(ctx, &incorrectRaw, &any)
 		g.Expect(e).To(Not(Succeed()), "decrypt with incorrect kid should return error")
-	}
-}
-
-func SubTestVaultFailedEncryption(enc *vaultEncryptor, ver Version, alg Algorithm, expectedErr error) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *WithT) {
-		// encrypt with nil values
-		e := enc.Encrypt(ctx, nil, nil)
-		g.Expect(e).To(Not(Succeed()), "Encrypt should return error")
-
-		kid := uuid.New()
-		raw := EncryptedRaw{
-			Ver:   ver,
-			KeyID: kid,
-			Alg:   alg,
-		}
-
-		// encrypt
-		any := map[string]string{}
-		e = enc.Encrypt(ctx, any, &raw)
-		g.Expect(e).To(Not(Succeed()), "Encrypt should return error")
-		g.Expect(e).To(BeIdenticalTo(expectedErr), "Encrypt should return correct error")
 	}
 }
 
@@ -217,7 +183,7 @@ func SubTestVaultFailedDecryption(enc *vaultEncryptor, ver Version, alg Algorith
 		e := enc.Decrypt(ctx, nil, nil)
 		g.Expect(e).To(Not(Succeed()), "Decrypt of raw data should return error")
 
-		kid := uuid.New()
+		kid := uuid.New().String()
 		raw := EncryptedRaw{
 			Ver:   ver,
 			KeyID: kid,
@@ -235,29 +201,18 @@ func SubTestVaultFailedDecryption(enc *vaultEncryptor, ver Version, alg Algorith
 
 func SubTestVaultEncryptWithoutKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		raw := EncryptedRaw{
-			Ver:   V2,
-			Alg:   AlgVault,
-		}
-
 		// encrypt
 		any := map[string]string{}
-		e := enc.Encrypt(ctx, any, &raw)
+		_, e := enc.Encrypt(ctx, "", any)
 		g.Expect(e).To(Not(Succeed()), "Encrypt without KeyID should return error")
 	}
 }
 
 func SubTestVaultEncryptWithBadKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		raw := EncryptedRaw{
-			Ver:   V2,
-			Alg:   AlgVault,
-			KeyID: uuid.Must(uuid.Parse(incorrectTestKid)),
-		}
-
 		// encrypt
 		any := map[string]string{}
-		e := enc.Encrypt(ctx, any, &raw)
+		_, e := enc.Encrypt(ctx, incorrectTestKid, any)
 		g.Expect(e).To(Not(Succeed()), "Encrypt without KeyID should return error")
 	}
 }
@@ -265,8 +220,8 @@ func SubTestVaultEncryptWithBadKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 func SubTestVaultDecryptWithoutKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		raw := EncryptedRaw{
-			Ver:   V2,
-			Alg:   AlgVault,
+			Ver: V2,
+			Alg: AlgVault,
 			Raw: fmt.Sprintf("%s:%s", testKid, "{}"),
 		}
 
@@ -280,8 +235,8 @@ func SubTestVaultDecryptWithoutKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 func SubTestVaultDecryptWithBadKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		raw := EncryptedRaw{
-			Ver:   V2,
-			Alg:   AlgVault,
+			Ver: V2,
+			Alg: AlgVault,
 			Raw: fmt.Sprintf("%s:%s", incorrectTestKid, "{}"),
 		}
 
@@ -303,13 +258,9 @@ func SubTestVaultCreateKey(di *transitDI, props *KeyProperties, uuidStr string) 
 		keyOps := enc.KeyOperations()
 		g.Expect(keyOps).To(Not(BeNil()), "KeyOperations shouldn't return nil")
 
-		var expectErr bool
-		kid, e := uuid.Parse(uuidStr)
-		if e != nil {
-			expectErr = true
-		}
+		expectErr := uuidStr == ""
 
-		if e := keyOps.Create(ctx, kid); expectErr {
+		if e := keyOps.Create(ctx, uuidStr); expectErr {
 			g.Expect(e).To(Not(Succeed()), "Key creation should fail on invalid kid")
 		} else {
 			g.Expect(e).To(Succeed(), "Key creation should succeed on valid kid")
@@ -328,7 +279,7 @@ func newTestEngine(di *transitDI) vault.TransitEngine {
 	Mocked
  *************************/
 
-type mockedTransitEngine struct {}
+type mockedTransitEngine struct{}
 
 func newMockedVaultEncryptor() Encryptor {
 	return &vaultEncryptor{transit: mockedTransitEngine{}}

@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 func newInvalidFormatError(text string, args...interface{}) error {
@@ -18,11 +19,8 @@ func newDecryptionError(text string, args...interface{}) error {
 	return data.NewDataError(data.ErrorCodeOrmMapping, "failed to decrypt data: " + fmt.Sprintf(text, args...))
 }
 
-func dataVersionCorrection(raw *EncryptedRaw) {
-	switch raw.Ver {
-	case V1, Version(0):
-		raw.Ver = defaultVersion
-	}
+func normalizeKeyID(kid string) string {
+	return strings.ToLower(kid)
 }
 
 func tryAssign(v interface{}, dest interface{}) (err error) {

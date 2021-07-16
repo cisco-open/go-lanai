@@ -22,22 +22,27 @@ var (
 	Parsing
  *************************/
 
-func ParseEncryptedRaw(text string) (*EncryptedRaw, error) {
-	v := &EncryptedRaw{}
+func ParseEncryptedRaw(text string) (ret *EncryptedRaw, err error) {
+	ret = &EncryptedRaw{}
+	defer func() {
+		if ret != nil && ret.Ver < minVersion {
+			ret.Ver = minVersion
+		}
+	}()
 
 	// first try V1
-	switch e := v.UnmarshalTextV1([]byte(text)); {
+	switch e := ret.UnmarshalTextV1([]byte(text)); {
 	case e == nil:
-		return v, nil
+		return
 	case e != ErrUnsupportedVersion:
 		return nil, e
 	}
 
 	// try JSON format
-	if e := json.Unmarshal([]byte(text), v); e != nil {
+	if e := json.Unmarshal([]byte(text), ret); e != nil {
 		return nil, newInvalidFormatError("invalid V2 format - %v", e)
 	}
-	return v, nil
+	return
 }
 
 // UnmarshalTextV1 deserialize V1 format of text
@@ -57,8 +62,8 @@ func (d *EncryptedRaw) UnmarshalTextV1(text []byte) error {
 		return newInvalidFormatError("unsupported version")
 	}
 
-	kid, e := uuid.Parse(split[1])
-	if e != nil {
+	kid:= split[1]
+	if _, e := uuid.Parse(kid); e != nil {
 		return newInvalidFormatError("invalid Key ID")
 	}
 

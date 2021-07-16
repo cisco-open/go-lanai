@@ -7,14 +7,13 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"strings"
 )
 
 var (
-	ErrUnsupportedVersion = data.NewDataError(data.ErrorCodeOrmMapping, "unsupported version of encrypted data format")
+	ErrUnsupportedVersion   = data.NewDataError(data.ErrorCodeOrmMapping, "unsupported version of encrypted data format")
 	ErrUnsupportedAlgorithm = data.NewDataError(data.ErrorCodeOrmMapping, "unsupported encryption algorithm of data")
-	ErrInvalidFormat = data.NewDataError(data.ErrorCodeOrmMapping, "invalid encrypted data")
+	ErrInvalidFormat        = data.NewDataError(data.ErrorCodeOrmMapping, "invalid encrypted data")
 )
 
 /*************************
@@ -28,6 +27,7 @@ const (
 	V2 Version = 2
 
 	defaultVersion = V2
+	minVersion     = V2
 	v1Text         = "1"
 	v2Text         = "2"
 )
@@ -100,7 +100,7 @@ func (a *Algorithm) UnmarshalText(text []byte) error {
 // this data type implements gorm.Valuer, schema.GormDataTypeInterface
 type EncryptedRaw struct {
 	Ver   Version     `json:"v"`
-	KeyID uuid.UUID   `json:"kid,omitempty"`
+	KeyID string      `json:"kid,omitempty"`
 	Alg   Algorithm   `json:"alg,omitempty"`
 	Raw   interface{} `json:"d,omitempty"`
 }
@@ -112,19 +112,12 @@ func (EncryptedRaw) GormDataType() string {
 
 // Value implements driver.Valuer
 func (d *EncryptedRaw) Value() (driver.Value, error) {
-	if d.Ver < V2 {
-		d.Ver = V2
-	}
 	return pqx.JsonbValue(d)
 }
 
 // Scan implements sql.Scanner
 func (d *EncryptedRaw) Scan(src interface{}) error {
 	return pqx.JsonbScan(src, d)
-}
-
-func (d *EncryptedRaw) NormalizedKeyID() string {
-	return strings.ToLower(d.KeyID.String())
 }
 
 /*************************
@@ -134,7 +127,7 @@ func (d *EncryptedRaw) NormalizedKeyID() string {
 type Encryptor interface {
 	// Encrypt encrypt given "v" and populate EncryptedRaw.Raw
 	// The process may read EncryptedRaw.Alg and EncryptedRaw.KeyID and update EncryptedRaw.Ver
-	Encrypt(ctx context.Context, v interface{}, raw *EncryptedRaw) error
+	Encrypt(ctx context.Context, kid string, v interface{}) (*EncryptedRaw, error)
 
 	// Decrypt reads EncryptedRaw and populate the decrypted data into given "v"
 	// if v is not pointer type, this method may return error
@@ -155,7 +148,7 @@ type keyOption struct {
 type KeyOperations interface {
 	// Create create keys with given key ID.
 	// Note: KeyOptions is for future support, it's currently ignored
-	Create(ctx context.Context, kid uuid.UUID, opts ...KeyOptions) error
+	Create(ctx context.Context, kid string, opts ...KeyOptions) error
 }
 
 /*************************
@@ -164,19 +157,12 @@ type KeyOperations interface {
 
 type compositeEncryptor []Encryptor
 
-func (enc compositeEncryptor) Encrypt(ctx context.Context, v interface{}, raw *EncryptedRaw) error {
-	for _, delegate := range enc {
-		e := delegate.Encrypt(ctx, v, raw)
-		switch e {
-		case nil:
-			return nil
-		case ErrUnsupportedAlgorithm, ErrUnsupportedVersion:
-			continue
-		default:
-			return e
-		}
+// Encrypt always uses first Encryptor
+func (enc compositeEncryptor) Encrypt(ctx context.Context, kid string, v interface{}) (*EncryptedRaw, error) {
+	if len(enc) != 0 {
+		return enc[0].Encrypt(ctx, kid, v)
 	}
-	return newEncryptionError("encryptor is not available for ver=%d and alg=%v", raw.Ver, raw.Alg)
+	return nil, newEncryptionError("encryptor is not properly configured")
 }
 
 func (enc compositeEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error {
@@ -208,7 +194,7 @@ func (enc compositeEncryptor) KeyOperations() KeyOperations {
 
 type compositeKeyOperations []KeyOperations
 
-func (o compositeKeyOperations) Create(ctx context.Context, kid uuid.UUID, opts ...KeyOptions) error {
+func (o compositeKeyOperations) Create(ctx context.Context, kid string, opts ...KeyOptions) error {
 	for _, ops := range o {
 		if e := ops.Create(ctx, kid, opts...); e != nil {
 			return e
@@ -221,10 +207,6 @@ type noopKeyOperations struct{}
 
 var noopKeyOps = noopKeyOperations{}
 
-func (o noopKeyOperations) Create(_ context.Context, _ uuid.UUID, _ ...KeyOptions) error {
+func (o noopKeyOperations) Create(_ context.Context, _ string, _ ...KeyOptions) error {
 	return nil
 }
-
-
-
-
