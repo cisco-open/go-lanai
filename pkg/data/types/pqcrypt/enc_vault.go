@@ -84,6 +84,8 @@ func (enc *vaultEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest 
 			return newDecryptionError("encryption engine - %v", e)
 		}
 
+		// TODO the plain maybe in V1 format. We may need to use unmarshalV1RawPayload() to parse
+		// 		alternative way is to decrypt and encrypt while migrate from Cassandra
 		if e := json.Unmarshal(plain, dest); e != nil {
 			return newDecryptionError("failed to unmarshal decrypted data - %v", e)
 		}
