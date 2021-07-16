@@ -64,7 +64,7 @@ func SubTestExampleSelect(di *testDI) test.GomegaSubTestFunc {
 		v := Client{}
 		r := di.DB.WithContext(ctx).Model(&Client{}).First(&v)
 		g.Expect(r.Error).To(Succeed(), "recorded SQL shouldn't introduce error")
-		g.Expect(v.ID).To(Not(Equal(uuid.Invalid)), "model should be loaded by First()")
+		g.Expect(v.ID).To(Not(Equal(uuid.UUID{})), "model should be loaded by First()")
 
 		// select all
 		s := make([]*Client, 0)
@@ -83,7 +83,7 @@ func SubTestExampleTxSave(di *testDI) test.GomegaSubTestFunc {
 			v := Client{}
 			r := di.DB.WithContext(ctx).Model(&Client{}).First(&v)
 			g.Expect(r.Error).To(Succeed(), "select SQL shouldn't introduce error")
-			g.Expect(v.ID).To(Not(Equal(uuid.Invalid)), "model should be loaded by First()")
+			g.Expect(v.ID).To(Not(Equal(uuid.UUID{})), "model should be loaded by First()")
 
 			// save one
 			r = di.DB.WithContext(ctx).Save(&v)

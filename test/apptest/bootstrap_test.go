@@ -198,6 +198,7 @@ func TestRepeatedBootstrapWithCustomSettings(t *testing.T) {
 /*************************
 	Sub-Test Cases
  *************************/
+
 func SubTestDefaultDI(bDI *bootstrapDI, acDI *appconfigDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(bDI.App).To(gomega.Not(gomega.BeNil()), "bootstrap DI should be populated with App")
