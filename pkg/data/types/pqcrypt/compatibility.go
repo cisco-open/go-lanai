@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -16,6 +17,7 @@ const (
 var (
 	v1TextPrefix = fmt.Sprintf("%d%s", V1, v1Separator)
 	javaTypePattern, _ = regexp.Compile(`^[[:alpha:]][[:alnum:]]*(\.[[:alpha:]][[:alnum:]]*)+`)
+	jsonNull = `null`
 )
 
 /*************************
@@ -24,11 +26,6 @@ var (
 
 func ParseEncryptedRaw(text string) (ret *EncryptedRaw, err error) {
 	ret = &EncryptedRaw{}
-	defer func() {
-		if ret != nil && ret.Ver < minVersion {
-			ret.Ver = minVersion
-		}
-	}()
 
 	// first try V1
 	switch e := ret.UnmarshalTextV1([]byte(text)); {
@@ -72,9 +69,15 @@ func (d *EncryptedRaw) UnmarshalTextV1(text []byte) error {
 		return newInvalidFormatError("unsupported algorithm")
 	}
 
-	raw, e := unmarshalV1RawPayload(alg, split[3])
-	if e != nil {
-		return e
+	var raw json.RawMessage
+	switch alg {
+	case AlgPlain:
+		raw = json.RawMessage(split[3])
+	case AlgVault:
+		raw = json.RawMessage(strconv.Quote(split[3]))
+	}
+	if !json.Valid(raw) {
+		return newInvalidFormatError("unsupported raw data")
 	}
 
 	*d = EncryptedRaw{
@@ -87,44 +90,45 @@ func (d *EncryptedRaw) UnmarshalTextV1(text []byte) error {
 }
 
 /*************************
-	Data Carrier
+	V1 Plain Data
  *************************/
 
-type rawPlainDataV1 struct {
-	value interface{}
-}
+type v1DecryptedData json.RawMessage
 
 // UnmarshalJSON implements json.Unmarshaler with V1 support
-func (d *rawPlainDataV1) UnmarshalJSON(data []byte) (err error) {
+// V1 (Java) format of unencrypted payload could be
+// 	- a (T extends Map<String, String>) serialized by Jackson with `As.WRAPPER_ARRAY` option (JSON Array)
+//  - a (T extends Map>String, String>) serialized by Jackson without `As.WRAPPER_ARRAY` option (JSON Object
+func (d *v1DecryptedData) UnmarshalJSON(data []byte) (err error) {
 	if len(data) == 0 {
-		d.value = map[string]interface{}{}
+		*d = nil
 		return nil
 	}
 	switch data[0] {
 	case '[':
-		var s []interface{}
+		var s []json.RawMessage
 		if e := json.Unmarshal(data, &s); e != nil {
 			return e
 		}
 		// find first non-string, also check if string element is a Java type expr
-		for i, elem := range s {
-			switch v := elem.(type) {
-			case string:
-				if i % 2 == 0 && !javaTypePattern.Match([]byte(v)) {
-					return fmt.Errorf("malformed legacy Java type")
-				}
-			default:
-				d.value = elem
+		var v json.RawMessage
+		switch len(s) {
+		case 1:
+			v = s[0]
+		case 2:
+			str := ""
+			if e := json.Unmarshal(s[0], &str); e != nil || !javaTypePattern.Match([]byte(str)) {
+				return ErrInvalidV1Format
 			}
+			v = s[1]
+		default:
+			return ErrInvalidV1Format
 		}
+		*d = v1DecryptedData(v)
 	case '{':
-		var v map[string]interface{}
-		if e := json.Unmarshal(data, &v); e != nil {
-			return e
-		}
-		d.value = v
+		*d = data
 	default:
-		return fmt.Errorf("only JSON array or object are supported")
+		return ErrInvalidV1Format
 	}
 	return nil
 }
@@ -141,21 +145,21 @@ func unmarshalText(data string, v encoding.TextUnmarshaler) error {
 	return v.UnmarshalText([]byte(data))
 }
 
-// unmarshalV1RawPayload V1 (Java) format of raw payload and convert it to object or string
+// extractV1DecryptedPayload decode V1 (Java) format of unencrypted payload and convert it to object
 // V1 format could be
-// 	- Plain: a (T extends Map<String, String>) serialized by Jackson with `As.WRAPPER_ARRAY` option
-//	- EncryptedRaw: a string
-func unmarshalV1RawPayload(alg Algorithm, text string) (interface{}, error) {
-	switch alg {
-	case AlgPlain:
-		raw := rawPlainDataV1{}
-		if e := json.Unmarshal([]byte(text), &raw); e != nil {
-			return nil, newInvalidFormatError("raw data JSON parsing error - %v", e)
-		}
-		return raw.value, nil
-	case AlgVault:
-		fallthrough
-	default:
-		return text, nil
+// 	- a (T extends Map<String, String>) serialized by Jackson with `As.WRAPPER_ARRAY` option (JSON Array)
+//  - a (T extends Map>String, String>) serialized by Jackson without `As.WRAPPER_ARRAY` option (JSON Object
+//  - a JSON "null"
+//  - empty data
+func extractV1DecryptedPayload(data []byte) (json.RawMessage, error) {
+	if len(data) == 0 || len(data) == 4 && string(data) == jsonNull {
+		// json null or nil/empty is considered nil
+		return json.RawMessage(jsonNull), nil
 	}
+
+	raw := v1DecryptedData{}
+	if e := json.Unmarshal(data, &raw); e != nil {
+		return nil, newInvalidFormatError("unencrypted data JSON parsing error - %v", e)
+	}
+	return json.RawMessage(raw), nil
 }

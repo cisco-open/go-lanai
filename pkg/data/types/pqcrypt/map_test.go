@@ -41,7 +41,7 @@ func (EncryptedModel) TableName() string {
 /*************************
 	Test Cases
  *************************/
-
+//
 //func TestMain(m *testing.M) {
 //	suitetest.RunTests(m,
 //		dbtest.EnableDBRecordMode(),
