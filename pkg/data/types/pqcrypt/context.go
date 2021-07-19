@@ -14,6 +14,7 @@ var (
 	ErrUnsupportedVersion   = data.NewDataError(data.ErrorCodeOrmMapping, "unsupported version of encrypted data format")
 	ErrUnsupportedAlgorithm = data.NewDataError(data.ErrorCodeOrmMapping, "unsupported encryption algorithm of data")
 	ErrInvalidFormat        = data.NewDataError(data.ErrorCodeOrmMapping, "invalid encrypted data")
+	ErrInvalidV1Format        = data.NewDataError(data.ErrorCodeOrmMapping, "invalid V1 data payload format")
 )
 
 /*************************
@@ -102,7 +103,7 @@ type EncryptedRaw struct {
 	Ver   Version     `json:"v"`
 	KeyID string      `json:"kid,omitempty"`
 	Alg   Algorithm   `json:"alg,omitempty"`
-	Raw   interface{} `json:"d,omitempty"`
+	Raw   json.RawMessage `json:"d,omitempty"`
 }
 
 // GormDataType implements schema.GormDataTypeInterface

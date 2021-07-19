@@ -30,6 +30,29 @@ func TestPlainTextEncryptor(t *testing.T) {
 	)
 }
 
+func TestPlainTextV1Decryption(t *testing.T) {
+	enc := plainTextEncryptor{}
+	const kid = `e0622fd0-d2ca-11eb-9c82-bd03f2eed750`
+	const mapData     = `{"v":1,"kid":"e0622fd0-d2ca-11eb-9c82-bd03f2eed750","alg":"p","d":["java.util.HashMap",{"key1":"value1","key2":2}]}`
+	mapValue := map[string]interface{}{
+		"key1": "value1",
+		"key2": 2.0,
+	}
+	const strData     = `{"v":1,"kid":"e0622fd0-d2ca-11eb-9c82-bd03f2eed750","alg":"p","d":["java.lang.String","this is a string"]}`
+	strValue := "this is a string"
+	const arrData     = `{"v":1,"kid":"e0622fd0-d2ca-11eb-9c82-bd03f2eed750","alg":"p","d":["java.util.ArrayList",["value1",2]]}`
+	arrValue := []interface{}{"value1", 2.0}
+	const jsonNullData     = `{"v":1,"kid":"e0622fd0-d2ca-11eb-9c82-bd03f2eed750","alg":"p","d":null}`
+	const nilData     = `{"v":1,"kid":"e0622fd0-d2ca-11eb-9c82-bd03f2eed750","alg":"p"}`
+	test.RunTest(context.Background(), t,
+		test.GomegaSubTest(SubTestPlainTextV1Decryption(enc, mapData, kid, mapValue), "PlainTextMap"),
+		test.GomegaSubTest(SubTestPlainTextV1Decryption(enc, strData, kid, strValue), "PlainTextString"),
+		test.GomegaSubTest(SubTestPlainTextV1Decryption(enc, arrData, kid, arrValue), "PlainTextSlice"),
+		test.GomegaSubTest(SubTestPlainTextV1Decryption(enc, jsonNullData, kid, nil), "PlainTextJsonNull"),
+		test.GomegaSubTest(SubTestPlainTextV1Decryption(enc, nilData, kid, nil), "PlainTextNil"),
+	)
+}
+
 func TestPlainTextFailedEncrypt(t *testing.T) {
 	enc := plainTextEncryptor{}
 	test.RunTest(context.Background(), t,
@@ -41,6 +64,7 @@ func TestPlainTextFailedDecrypt(t *testing.T) {
 	enc := plainTextEncryptor{}
 	m := map[string]interface{}{}
 	s := ""
+
 	test.RunTest(context.Background(), t,
 		test.GomegaSubTest(SubTestPlainTextFailedDecryption(enc, Version(-1), AlgPlain, ErrUnsupportedVersion), "InvalidVersion"),
 		test.GomegaSubTest(SubTestPlainTextFailedDecryption(enc, V1, AlgVault, ErrUnsupportedAlgorithm), "V1UnsupportedAlg"),
@@ -64,38 +88,20 @@ func SubTestPlainTextEncryptor(enc Encryptor, v interface{}) test.GomegaSubTestF
 		g.Expect(raw.Ver).To(BeIdenticalTo(V2), "encrypted data should be V2")
 		g.Expect(raw.Alg).To(BeIdenticalTo(AlgPlain), "encrypted data should have correct alg")
 		g.Expect(raw.KeyID).To(BeIdenticalTo(kid), "encrypted data should have correct KeyID")
-		if v != nil {
-			g.Expect(raw.Raw).To(Equal(v), "encrypted raw should be correct")
-		} else {
-			g.Expect(raw.Raw).To(BeNil(), "encrypted raw should be correct")
-		}
+		expected, _ := json.Marshal(v)
+		g.Expect(raw.Raw).To(MatchJSON(expected), "encrypted raw should be correct")
 
 		// serialize
 		bytes, e := json.Marshal(raw)
 		g.Expect(e).To(Succeed(), "JSON marshal of raw data shouldn't return error")
 
-		// deserialize
-		parsed := EncryptedRaw{}
-		e = json.Unmarshal(bytes, &parsed)
-		g.Expect(e).To(Succeed(), "JSON unmarshal of raw data shouldn't return error")
-		g.Expect(parsed.Ver).To(BeIdenticalTo(V2), "unmarshalled data should be V2")
-		g.Expect(parsed.KeyID).To(Equal(kid), "unmarshalled KeyID should be correct")
-		g.Expect(parsed.Alg).To(BeIdenticalTo(AlgPlain), "unmarshalled Alg should be correct")
-		if v != nil {
-			g.Expect(parsed.Raw).To(BeEquivalentTo(v), "unmarshalled Raw should be correct")
-		} else {
-			g.Expect(parsed.Raw).To(BeNil(), "unmarshalled Raw should be correct")
-		}
+		testPlainTextDecryption(g, enc, bytes, V2, kid, v)
+	}
+}
 
-		// decrypt
-		decrypted := interface{}(nil)
-		e = enc.Decrypt(ctx, &parsed, &decrypted)
-		g.Expect(e).To(Succeed(), "decrypted of raw data shouldn't return error")
-		if v != nil {
-			g.Expect(decrypted).To(BeEquivalentTo(v), "decrypted value should be correct")
-		} else {
-			g.Expect(decrypted).To(BeNil(), "decrypted value should be correct")
-		}
+func SubTestPlainTextV1Decryption(enc Encryptor, text string, expectedKid string, expectedVal interface{}) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		testPlainTextDecryption(g, enc, []byte(text), V1, expectedKid, expectedVal)
 	}
 }
 
@@ -118,7 +124,7 @@ func SubTestPlainTextFailedDecryption(enc Encryptor, ver Version, alg Algorithm,
 			Ver:   ver,
 			KeyID: kid,
 			Alg:   alg,
-			Raw:   map[string]interface{}{},
+			Raw:   json.RawMessage(`{}`),
 		}
 
 		// decrypt
@@ -137,11 +143,33 @@ func SubTestPlainTextTypeMismatch(enc Encryptor, v interface{}) test.GomegaSubTe
 			Ver:   V2,
 			KeyID: kid,
 			Alg:   AlgPlain,
-			Raw:   map[string]interface{}{},
+			Raw:   json.RawMessage(`{}`),
 		}
 
 		// decrypt
 		e := enc.Decrypt(ctx, &raw, v)
 		g.Expect(e).To(Not(Succeed()), "Decrypt of raw data should return error")
+	}
+}
+
+/* Helpers */
+
+func testPlainTextDecryption(g *gomega.WithT, enc Encryptor, bytes []byte, expectedVer Version, expectedKid string, expectedVal interface{}) {
+	// deserialize
+	parsed := EncryptedRaw{}
+	e := json.Unmarshal(bytes, &parsed)
+	g.Expect(e).To(Succeed(), "JSON unmarshal of raw data shouldn't return error")
+	g.Expect(parsed.Ver).To(BeIdenticalTo(expectedVer), "unmarshalled data should be V2")
+	g.Expect(parsed.KeyID).To(Equal(expectedKid), "unmarshalled KeyID should be correct")
+	g.Expect(parsed.Alg).To(BeIdenticalTo(AlgPlain), "unmarshalled Alg should be correct")
+
+	// decrypt
+	decrypted := interface{}(nil)
+	e = enc.Decrypt(context.Background(), &parsed, &decrypted)
+	g.Expect(e).To(Succeed(), "decrypted of raw data shouldn't return error")
+	if expectedVal != nil {
+		g.Expect(decrypted).To(BeEquivalentTo(expectedVal), "decrypted value should be correct")
+	} else {
+		g.Expect(decrypted).To(BeNil(), "decrypted value should be correct")
 	}
 }

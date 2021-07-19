@@ -86,6 +86,28 @@ func TestVaultEncryptorWithMockedTransitEngine(t *testing.T) {
 	)
 }
 
+func TestV1DecryptionWithMockedTransitEngine(t *testing.T) {
+	enc := newMockedVaultEncryptor()
+	const kid = `d3803a9e-f2f2-4960-bdb1-aeec92d88ca4`
+	const mapData     = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.util.HashMap\",{\"key1\":\"value1\",\"key2\":2}]"}`
+	mapValue := map[string]interface{}{
+		"key1": "value1",
+		"key2": 2.0,
+	}
+	const strData     = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.lang.String\",\"this is a string\"]"}`
+	strValue := "this is a string"
+	const arrData     = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.util.ArrayList\",[\"value1\",2]]"}`
+	arrValue := []interface{}{"value1", 2.0}
+	const nilData     = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e"}`
+
+	test.RunTest(context.Background(), t,
+		test.GomegaSubTest(SubTestV1VaultDecryption(enc, mapData, kid, mapValue), "PlainTextMap"),
+		test.GomegaSubTest(SubTestV1VaultDecryption(enc, strData, kid, strValue), "PlainTextString"),
+		test.GomegaSubTest(SubTestV1VaultDecryption(enc, arrData, kid, arrValue), "PlainTextSlice"),
+		test.GomegaSubTest(SubTestV1VaultDecryption(enc, nilData, kid, nil), "PlainTextNil"),
+	)
+}
+
 func TestVaultFailedEncrypt(t *testing.T) {
 	enc := newMockedVaultEncryptor().(*vaultEncryptor)
 	test.RunTest(context.Background(), t,
@@ -137,43 +159,26 @@ func SubTestVaultEncryptor(di *transitDI, props *KeyProperties, uuidStr string, 
 		g.Expect(raw.Ver).To(BeIdenticalTo(V2), "encrypted data should be V2")
 		g.Expect(raw.Alg).To(BeIdenticalTo(AlgVault), "encrypted data should have correct alg")
 		g.Expect(raw.KeyID).To(BeIdenticalTo(kid), "encrypted data should have correct KeyID")
-		g.Expect(raw.Raw).To(BeAssignableToTypeOf(""), "encrypted raw should be a string")
+		if v != nil {
+			g.Expect(string(raw.Raw)).To(HavePrefix(`"`), "encrypted raw should be a JSON string")
+			g.Expect(string(raw.Raw)).To(HaveSuffix(`"`), "encrypted raw should be a JSON string")
+		} else {
+			g.Expect(raw.Raw).To(BeEmpty(), "encrypted raw should be a empty")
+		}
+
 
 		// serialize
 		bytes, e := json.Marshal(raw)
 		g.Expect(e).To(Succeed(), "JSON marshal of raw data shouldn't return error")
 
-		// deserialize
-		parsed := EncryptedRaw{}
-		e = json.Unmarshal(bytes, &parsed)
-		g.Expect(e).To(Succeed(), "JSON unmarshal of raw data shouldn't return error")
-		g.Expect(parsed.Ver).To(BeIdenticalTo(V2), "unmarshalled data should be V2")
-		g.Expect(parsed.KeyID).To(Equal(kid), "unmarshalled KeyID should be correct")
-		g.Expect(parsed.Alg).To(BeIdenticalTo(AlgVault), "unmarshalled Alg should be correct")
-		g.Expect(parsed.Raw).To(BeAssignableToTypeOf(""), "unmarshalled raw should be a string")
+		// test decrypt
+		testVaultDecryption(g, enc, bytes, V2, kid, v)
+	}
+}
 
-		// decrypt with correct key
-		decrypted := interface{}(nil)
-		e = enc.Decrypt(ctx, &parsed, &decrypted)
-		g.Expect(e).To(Succeed(), "decrypted of raw data shouldn't return error")
-		if v != nil {
-			g.Expect(decrypted).To(BeEquivalentTo(v), "decrypted value should be correct")
-		} else {
-			// Note nil value always get decoded, no need to test incorrect KeyID
-			g.Expect(decrypted).To(BeNil(), "decrypted value should be correct")
-			return
-		}
-
-		// decrypt with incorrect key
-		incorrectRaw := EncryptedRaw{
-			Ver:   parsed.Ver,
-			KeyID: incorrectTestKid,
-			Alg:   parsed.Alg,
-			Raw:   parsed.Raw,
-		}
-		any := interface{}(nil)
-		e = enc.Decrypt(ctx, &incorrectRaw, &any)
-		g.Expect(e).To(Not(Succeed()), "decrypt with incorrect kid should return error")
+func SubTestV1VaultDecryption(enc Encryptor, text string, expectedKid string, expectedVal interface{}) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		testVaultDecryption(g, enc, []byte(text), V1, expectedKid, expectedVal)
 	}
 }
 
@@ -188,7 +193,7 @@ func SubTestVaultFailedDecryption(enc *vaultEncryptor, ver Version, alg Algorith
 			Ver:   ver,
 			KeyID: kid,
 			Alg:   alg,
-			Raw:   map[string]interface{}{},
+			Raw:   json.RawMessage(`{}`),
 		}
 
 		// decrypt
@@ -222,7 +227,7 @@ func SubTestVaultDecryptWithoutKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 		raw := EncryptedRaw{
 			Ver: V2,
 			Alg: AlgVault,
-			Raw: fmt.Sprintf("%s:%s", testKid, "{}"),
+			Raw: json.RawMessage(fmt.Sprintf(`"%s:%s"`, testKid, "{}")),
 		}
 
 		// encrypt
@@ -237,7 +242,7 @@ func SubTestVaultDecryptWithBadKid(enc *vaultEncryptor) test.GomegaSubTestFunc {
 		raw := EncryptedRaw{
 			Ver: V2,
 			Alg: AlgVault,
-			Raw: fmt.Sprintf("%s:%s", incorrectTestKid, "{}"),
+			Raw: json.RawMessage(fmt.Sprintf(`"%s:%s"`, incorrectTestKid, "{}")),
 		}
 
 		// encrypt
@@ -268,11 +273,46 @@ func SubTestVaultCreateKey(di *transitDI, props *KeyProperties, uuidStr string) 
 	}
 }
 
+/* Helpers */
+
 func newTestEngine(di *transitDI) vault.TransitEngine {
 	return vault.NewTransitEngine(di.Client, func(opt *vault.KeyOption) {
 		opt.Exportable = true
 		opt.AllowPlaintextBackup = true
 	})
+}
+
+func testVaultDecryption(g *gomega.WithT, enc Encryptor, bytes []byte, expectedVer Version, expectedKid string, expectedVal interface{}) {
+	// deserialize
+	parsed := EncryptedRaw{}
+	e := json.Unmarshal(bytes, &parsed)
+	g.Expect(e).To(Succeed(), "JSON unmarshal of raw data shouldn't return error")
+	g.Expect(parsed.Ver).To(BeIdenticalTo(expectedVer), "unmarshalled data should be V2")
+	g.Expect(parsed.KeyID).To(Equal(expectedKid), "unmarshalled KeyID should be correct")
+	g.Expect(parsed.Alg).To(BeIdenticalTo(AlgVault), "unmarshalled Alg should be correct")
+
+	// decrypt with correct key
+	decrypted := interface{}(nil)
+	e = enc.Decrypt(context.Background(), &parsed, &decrypted)
+	g.Expect(e).To(Succeed(), "decrypted of raw data shouldn't return error")
+	if expectedVal != nil {
+		g.Expect(decrypted).To(BeEquivalentTo(expectedVal), "decrypted value should be correct")
+	} else {
+		// Note nil value always get decoded, no need to test incorrect KeyID
+		g.Expect(decrypted).To(BeNil(), "decrypted value should be correct")
+		return
+	}
+
+	// decrypt with incorrect key
+	incorrectRaw := EncryptedRaw{
+		Ver:   parsed.Ver,
+		KeyID: incorrectTestKid,
+		Alg:   parsed.Alg,
+		Raw:   parsed.Raw,
+	}
+	any := interface{}(nil)
+	e = enc.Decrypt(context.Background(), &incorrectRaw, &any)
+	g.Expect(e).To(Not(Succeed()), "decrypt with incorrect kid should return error")
 }
 
 /*************************
@@ -296,7 +336,8 @@ func (t mockedTransitEngine) Encrypt(_ context.Context, kid string, plaintext []
 	case incorrectTestKid:
 		return nil, fmt.Errorf("failed to encrypt")
 	}
-	cipher := fmt.Sprintf("%s:%s", kid, string(plaintext))
+
+	cipher := fmt.Sprintf("%s:%s", kid, plaintext)
 	return []byte(cipher), nil
 }
 

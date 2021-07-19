@@ -16,20 +16,29 @@ const (
 	v1Encrypted = `1:965a64ac-42aa-4ec1-b30b-c3894b190691:e:vault:v1:P+CVPjwLBftDBMv1v1DnuRI2Smz7HQ0OTaGrk7yVz0U/tt183H5w5Jc98Xa77IN2FowbbqALUnGSAG5IKFrlUmaKE1rqUzMj4xCpKqBvtxWGUdK5`
 	v2Plain     = `{"v":2,"kid":"e0622fd0-d2ca-11eb-9c82-bd03f2eed750","alg":"p","d":{"key":"value"}}`
 	v2Encrypted = `{"v":2,"kid":"965a64ac-42aa-4ec1-b30b-c3894b190691","alg":"e","d":"vault:v1:P+CVPjwLBftDBMv1v1DnuRI2Smz7HQ0OTaGrk7yVz0U/tt183H5w5Jc98Xa77IN2FowbbqALUnGSAG5IKFrlUmaKE1rqUzMj4xCpKqBvtxWGUdK5"}`
+
+	v1PlainJson     = `{"v":1,"kid":"e0622fd0-d2ca-11eb-9c82-bd03f2eed750","alg":"p","d":["java.util.HashMap",{"key":"value"}]}`
+	v1EncryptedJson = `{"v":1,"kid":"965a64ac-42aa-4ec1-b30b-c3894b190691","alg":"e","d":"vault:v1:P+CVPjwLBftDBMv1v1DnuRI2Smz7HQ0OTaGrk7yVz0U/tt183H5w5Jc98Xa77IN2FowbbqALUnGSAG5IKFrlUmaKE1rqUzMj4xCpKqBvtxWGUdK5"}`
 )
 
 var (
 	supportedV1Variants = []string{
 		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:{"key":"value"}`,
 		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:[{"key":"value"}]`,
+		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:["java.lang.String","json string"]`,
+		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:["java.util.ArrayList",["array value",2]]`,
+		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:null`,
+
 	}
 	invalidV1 = []string{
 		`invalid_ver:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:["java.util.HashMap",{"key":"value"}]`,
 		`1:invalid_uuid:p:["java.util.HashMap",{"key":"value"}]`,
 		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:invalid_alg:["java.util.HashMap",{"key":"value"}]`,
+		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:pure_string`,
+		// note: following test case doesn't generate error at time of parsing
+		// 		 the error is deferred to decrypting phase
 		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:["invalid_type",{"key":"value"}]`,
 		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:"json string"`,
-		`1:e0622fd0-d2ca-11eb-9c82-bd03f2eed750:p:pure_string`,
 	}
 	supportedV2Variants = []string{
 		`{"v":2,"kid":"d034a284-172f-46c3-aead-e7cfb2f78ddc","alg":"p","d":["array value"]}`,
@@ -53,12 +62,12 @@ func TestParseEncryptedData(t *testing.T) {
 		test.GomegaSubTest(SubTestParseValidV1Plain(v1Plain), "V1PlainStandard"),
 		test.GomegaSubTest(SubTestParseValidV1Plain(supportedV1Variants...), "V1PlainVariants"),
 		test.GomegaSubTest(SubTestParseValidV1Encrypted(v1Encrypted), "V1Encrypted"),
-		test.GomegaSubTest(SubTestParseInvalid(invalidV1...), "V1PlainInvalid"),
+		test.GomegaSubTest(SubTestParseInvalid(V1, invalidV1...), "V1PlainInvalid"),
 
 		test.GomegaSubTest(SubTestParseValidV2Plain(v2Plain), "V2PlainStandard"),
 		test.GomegaSubTest(SubTestParseValidV2Plain(supportedV2Variants...), "V2PlainVariants"),
 		test.GomegaSubTest(SubTestParseValidV2Encrypted(v2Encrypted), "V2Encrypted"),
-		test.GomegaSubTest(SubTestParseInvalid(invalidV2...), "V2PlainInvalid"),
+		test.GomegaSubTest(SubTestParseInvalid(V2, invalidV2...), "V2PlainInvalid"),
 	)
 }
 
@@ -73,8 +82,8 @@ func TestJsonUnmarshal(t *testing.T) {
 
 func TestJsonbValuer(t *testing.T) {
 	test.RunTest(context.Background(), t,
-		test.GomegaSubTest(SubTestJsonbValuer(v1Plain, v2Plain), "ConvertPlain"),
-		test.GomegaSubTest(SubTestJsonbValuer(v1Encrypted, v2Encrypted), "ConvertEncrypted"),
+		test.GomegaSubTest(SubTestJsonbValuer(v1Plain, v1PlainJson), "ConvertPlain"),
+		test.GomegaSubTest(SubTestJsonbValuer(v1Encrypted, v1EncryptedJson), "ConvertEncrypted"),
 	)
 }
 
@@ -98,7 +107,7 @@ func SubTestParseValidV1Plain(texts ...string) test.GomegaSubTestFunc {
 		for _, text := range texts {
 			v, e := ParseEncryptedRaw(text)
 			g.Expect(e).To(Succeed(), "parsing should be able to parse non JSON V1 format: %s", text)
-			assertPlainRaw(g, v, V2, text)
+			assertPlainRaw(g, v, V1, text)
 		}
 	}
 }
@@ -113,12 +122,15 @@ func SubTestParseValidV2Plain(texts ...string) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestParseInvalid(texts ...string) test.GomegaSubTestFunc {
+func SubTestParseInvalid(expectedVer Version, texts ...string) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		for _, text := range texts {
-			_, e := ParseEncryptedRaw(text)
-			g.Expect(e).To(Not(Succeed()), "parsing should return error on parsing non JSON invalid V1 format: %s", text)
-			g.Expect(errors.Is(e, ErrInvalidFormat)).To(BeTrue(), "parsing should returns ErrInvalidFormat: %s", text)
+			raw, e := ParseEncryptedRaw(text)
+			if e != nil {
+				g.Expect(errors.Is(e, ErrInvalidFormat)).To(BeTrue(), "parsing should returns ErrInvalidFormat: %s", text)
+			} else {
+				assertInvalidPlainRaw(g, raw, expectedVer, text)
+			}
 		}
 	}
 }
@@ -149,7 +161,7 @@ func SubTestParseValidV1Encrypted(texts ...string) test.GomegaSubTestFunc {
 		for _, text := range texts {
 			v, e := ParseEncryptedRaw(text)
 			g.Expect(e).To(Succeed(), "unmarshaller should be able to parse non JSON V1 format: %s", text)
-			assertEncryptedRaw(g, v, V2, text)
+			assertEncryptedRaw(g, v, V1, text)
 		}
 	}
 }
@@ -184,7 +196,7 @@ func SubTestJsonbValuer(text, expected string) test.GomegaSubTestFunc {
 		g.Expect(jsonb).To(BeAssignableToTypeOf(""), "Value() should returns []byte: %s", text)
 		jsonStr := jsonb.(string)
 		g.Expect(jsonStr).To(MatchJSON(expected), "Value() should returns correct result: %s", text)
-		g.Expect(v.Ver).To(BeNumerically(">", 1), "Value() also correct version: %s", text)
+		g.Expect(v.Ver).To(Equal(V1), "Value() also correct version: %s", text)
 	}
 }
 
@@ -221,9 +233,12 @@ func assertEncryptedRaw(g *gomega.WithT, v *EncryptedRaw, expectedVer Version, t
 	g.Expect(v.Ver).To(BeIdenticalTo(expectedVer), "parsed encrypted data should have version %s: %s", expectedVer, text)
 	g.Expect(v.KeyID).To(Not(Equal(uuid.UUID{})), "parsed encrypted data should have valid KeyID : %s", text)
 	g.Expect(v.Alg).To(BeIdenticalTo(AlgVault), "parsed encrypted data should have alg = Vault: %s", text)
-	g.Expect(v.Raw).To(BeAssignableToTypeOf(""), "raw data of encrypted data should be a string: %s", text)
 
-	d := v.Raw.(string)
+	var payload interface{}
+	e := json.Unmarshal(v.Raw, &payload)
+	g.Expect(e).To(Succeed(), "raw data should be a json")
+	g.Expect(payload).To(BeAssignableToTypeOf(""), "raw data of encrypted data should be a string: %s", text)
+	d := payload.(string)
 	g.Expect(d).To(HavePrefix("vault:v1:"), "raw data of encrypted data should have proper header: %s", text)
 }
 
@@ -232,13 +247,42 @@ func assertPlainRaw(g *gomega.WithT, v *EncryptedRaw, expectedVer Version, text 
 	g.Expect(v.KeyID).To(Not(Equal(uuid.UUID{})), "parsed plain data should have valid KeyID : %s", text)
 	g.Expect(v.Alg).To(BeIdenticalTo(AlgPlain), "parsed plain data should have alg = Plain: %s", text)
 
-	switch d := v.Raw.(type) {
-	case map[string]interface{}:
-		g.Expect(d).To(HaveKeyWithValue("key", "value"), "raw data of plain data should contains correct fields: %s", text)
-	case []interface{}:
-		g.Expect(d).To(ContainElement("array value"), "raw data of plain data should contains correct fields: %s", text)
-	case string:
-		g.Expect(d).To(Equal("json string"), "raw data of plain data should contains correct fields: %s", text)
+	var payload interface{}
+	if expectedVer == V1 {
+		data, e := extractV1DecryptedPayload(v.Raw)
+		g.Expect(e).To(Succeed(), "V1 plain raw data should be extractable")
+		e = json.Unmarshal(data, &payload)
+		g.Expect(e).To(Succeed(), "raw data should be a json")
+	} else {
+		e := json.Unmarshal(v.Raw, &payload)
+		g.Expect(e).To(Succeed(), "raw data should be a json")
+	}
 
+	switch d := payload.(type) {
+	case map[string]interface{}:
+		g.Expect(d).To(HaveKeyWithValue("key", "value"), "raw data of plain data should be map contains correct fields: %s", text)
+	case []interface{}:
+		g.Expect(d).To(ContainElement("array value"), "raw data of plain data should be array with correct elements: %s", text)
+	case string:
+		g.Expect(d).To(Equal("json string"), "raw data of plain data should be string with correct value: %s", text)
+	case nil:
+		g.Expect(d).To(BeNil(), "raw data of plain data should be nil: %s", text)
+	default:
+		g.Expect(true).To(BeFalse(), "unexpeded raw data of plain data")
+	}
+}
+
+func assertInvalidPlainRaw(g *gomega.WithT, v *EncryptedRaw, expectedVer Version, text string) {
+	g.Expect(v.Ver).To(BeIdenticalTo(expectedVer), "parsed plain data should have version %s: %s", expectedVer, text)
+	g.Expect(v.KeyID).To(Not(Equal(uuid.UUID{})), "parsed plain data should have valid KeyID : %s", text)
+	g.Expect(v.Alg).To(BeIdenticalTo(AlgPlain), "parsed plain data should have alg = Plain: %s", text)
+
+	var payload interface{}
+	if expectedVer == V1 {
+		_, e := extractV1DecryptedPayload(v.Raw)
+		g.Expect(e).To(Not(Succeed()), "V1 plain raw data should not be extractable")
+	} else {
+		e := json.Unmarshal(v.Raw, &payload)
+		g.Expect(e).To(Not(Succeed()), "raw data should not be a json")
 	}
 }

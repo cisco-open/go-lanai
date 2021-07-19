@@ -2,11 +2,12 @@ package pqcrypt
 
 import (
 	"context"
+	"encoding/json"
 )
 
 type plainTextEncryptor struct{}
 
-func (enc plainTextEncryptor) Encrypt(ctx context.Context, kid string, v interface{}) (raw *EncryptedRaw, err error) {
+func (enc plainTextEncryptor) Encrypt(_ context.Context, kid string, v interface{}) (raw *EncryptedRaw, err error) {
 	raw = &EncryptedRaw{
 		Ver:   V2,
 		KeyID: kid,
@@ -17,31 +18,50 @@ func (enc plainTextEncryptor) Encrypt(ctx context.Context, kid string, v interfa
 		return nil, newEncryptionError("KeyID is required for algorithm %v", raw.Alg)
 	}
 
-	raw.Raw = v
+	data, e := json.Marshal(v)
+	if e != nil {
+		return nil, newEncryptionError("cannot marshal data to JSON - %v", e)
+	}
+	raw.Raw = data
 	return
 }
 
-func (enc plainTextEncryptor) Decrypt(_ context.Context, raw *EncryptedRaw, dest interface{}) error {
+func (enc plainTextEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error {
 	if raw == nil {
 		return newDecryptionError("raw data is nil")
 	}
 
 	switch raw.Ver {
 	case V1, V2:
-		if raw.Alg != AlgPlain {
-			return ErrUnsupportedAlgorithm
-		}
-		if e := tryAssign(raw.Raw, dest); e != nil {
-			return e
-		}
+		return enc.decrypt(ctx, raw, dest)
 	default:
 		return ErrUnsupportedVersion
 	}
-	return nil
 }
 
 func (enc plainTextEncryptor) KeyOperations() KeyOperations {
 	return noopKeyOps
+}
+
+func (enc plainTextEncryptor) decrypt(_ context.Context, raw *EncryptedRaw, dest interface{}) error {
+	if raw.Alg != AlgPlain {
+		return ErrUnsupportedAlgorithm
+	}
+	switch raw.Ver {
+	case V1:
+		v, e := extractV1DecryptedPayload(raw.Raw)
+		if e != nil {
+			return newDecryptionError("malformed V1 data - %v", e)
+		}
+		if e := json.Unmarshal(v, dest); e != nil {
+			return newDecryptionError("failed to unmarshal decrypted data - %v", e)
+		}
+	case V2:
+		if e := json.Unmarshal(raw.Raw, dest); e != nil {
+			return newDecryptionError("failed to unmarshal decrypted data - %v", e)
+		}
+	}
+	return nil
 }
 
 

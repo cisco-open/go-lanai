@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 // vaultEncryptor implements Encryptor and KeyOperations
@@ -36,7 +37,7 @@ func (enc *vaultEncryptor) Encrypt(ctx context.Context, kid string, v interface{
 	}
 
 	if v == nil {
-		raw.Raw = "" // special rule encrypted "" <-> nil
+		// special rule encrypted []byte(nil) <-> nil
 		return raw, nil
 	}
 
@@ -48,7 +49,7 @@ func (enc *vaultEncryptor) Encrypt(ctx context.Context, kid string, v interface{
 	if e != nil {
 		return nil, newEncryptionError("encryption engine - %v", e)
 	}
-	raw.Raw = string(cipher)
+	raw.Raw = json.RawMessage(strconv.Quote(string(cipher)))
 	return
 }
 
@@ -64,35 +65,10 @@ func (enc *vaultEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest 
 
 	switch raw.Ver {
 	case V1, V2:
-		var cipher []byte
-		switch v := raw.Raw.(type) {
-		case []byte:
-			cipher = v
-		case string:
-			cipher = []byte(v)
-		default:
-			return newDecryptionError("invalid ciphertext, expected string, but got %T", raw.Raw)
-		}
-
-		if len(cipher) == 0 {
-			// special rule encrypted "" <-> nil
-			return tryAssign(nil, dest)
-		}
-
-		plain, e := enc.transit.Decrypt(ctx, normalizeKeyID(raw.KeyID), cipher)
-		if e != nil {
-			return newDecryptionError("encryption engine - %v", e)
-		}
-
-		// TODO the plain maybe in V1 format. We may need to use unmarshalV1RawPayload() to parse
-		// 		alternative way is to decrypt and encrypt while migrate from Cassandra
-		if e := json.Unmarshal(plain, dest); e != nil {
-			return newDecryptionError("failed to unmarshal decrypted data - %v", e)
-		}
+		return enc.decrypt(ctx, raw, dest)
 	default:
 		return ErrUnsupportedVersion
 	}
-	return nil
 }
 
 func (enc *vaultEncryptor) KeyOperations() KeyOperations {
@@ -107,4 +83,39 @@ func (enc *vaultEncryptor) Create(ctx context.Context, kid string, _ ...KeyOptio
 		return fmt.Errorf("invalid key ID")
 	}
 	return enc.transit.PrepareKey(ctx, kid)
+}
+
+/* Helpers */
+
+func (enc *vaultEncryptor) decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error {
+	if len(raw.Raw) == 0 {
+		// special rule encrypted []byte(nil) <-> nil
+		return tryAssign(nil, dest)
+	}
+
+	var cipher string
+	if e := json.Unmarshal(raw.Raw, &cipher); e != nil {
+		return newDecryptionError("invalid ciphertext - %v", e)
+	}
+
+	plain, e := enc.transit.Decrypt(ctx, normalizeKeyID(raw.KeyID), []byte(cipher))
+	if e != nil {
+		return newDecryptionError("encryption engine - %v", e)
+	}
+
+	switch raw.Ver {
+	case V1:
+		v, e := extractV1DecryptedPayload(plain)
+		if e != nil {
+			return newDecryptionError("malformed V1 data - %v", e)
+		}
+		if e := json.Unmarshal(v, dest); e != nil {
+			return newDecryptionError("failed to unmarshal decrypted data - %v", e)
+		}
+	case V2:
+		if e := json.Unmarshal(plain, dest); e != nil {
+			return newDecryptionError("failed to unmarshal decrypted data - %v", e)
+		}
+	}
+	return nil
 }
