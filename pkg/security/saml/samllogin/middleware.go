@@ -208,7 +208,7 @@ func (sp *ServiceProviderMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 		assertion, err := client.ParseResponse(r, possibleRequestIDs)
 		if err != nil {
 			logger.Error("error processing assertion", "err", err)
-			sp.handleError(c, security.NewExternalSamlAuthenticationError("error processing assertion", err))
+			sp.handleError(c, security.NewExternalSamlAuthenticationError(err.Error(), err))
 			return
 		}
 
@@ -218,7 +218,7 @@ func (sp *ServiceProviderMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 		auth, err := sp.authenticator.Authenticate(c, candidate)
 
 		if err != nil {
-			sp.handleError(c, security.NewExternalSamlAuthenticationError("error authenticating user associated with the assertion",err))
+			sp.handleError(c, security.NewExternalSamlAuthenticationError(err))
 			return
 		}
 

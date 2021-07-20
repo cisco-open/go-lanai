@@ -70,10 +70,14 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 		return nil, security.NewInternalAuthenticationError("Couldn't find idp metadata matching the assertion")
 	}
 
-	user, err := a.accountStore.LoadAccountByExternalId(ctx, samlIdp.ExternalIdName(), assertionCandidate.Principal().(string), samlIdp.ExternalIdpName())
+	user, err := a.accountStore.LoadAccountByExternalId(ctx, samlIdp.ExternalIdName(), assertionCandidate.Principal().(string), samlIdp.ExternalIdpName(), samlIdp.GetAutoCreateUserDetails(), assertionCandidate.Assertion)
 
 	if err != nil {
-		return nil, security.NewInternalAuthenticationError("Couldn't load federated account", err)
+		return nil, security.NewInternalAuthenticationError(err)
+	}
+
+	if user.Disabled() {
+		return nil, security.NewAccountStatusError("Account Disabled")
 	}
 
 	permissions := map[string]interface{}{}

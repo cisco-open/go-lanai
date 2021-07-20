@@ -80,8 +80,16 @@ type AccountStore interface {
 	Save(ctx context.Context, acct Account) error
 }
 
+type AutoCreateUserDetails interface {
+	IsEnabled() bool
+	GetEmailWhiteList() []string
+	GetAttributeMapping() map[string]string
+	GetElevatedUserRoleNames() []string
+	GetRegularUserRoleNames() []string
+}
+
 type FederatedAccountStore interface {
-	LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string) (Account, error)
+	LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string, autoCreateUserDetails AutoCreateUserDetails, rawAssertion interface{}) (Account, error)
 }
 
 /*********************************

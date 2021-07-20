@@ -1,16 +1,48 @@
 package samlidp
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+)
+
+type SamlIdpAutoCreateUserDetails struct {
+	Enabled bool
+	EmailWhiteList []string
+	AttributeMapping map[string]string
+	ElevatedUserRoleNames []string
+	RegularUserRoleNames []string
+}
+
+func (a SamlIdpAutoCreateUserDetails) GetElevatedUserRoleNames() []string {
+	return a.ElevatedUserRoleNames
+}
+
+func (a SamlIdpAutoCreateUserDetails) GetRegularUserRoleNames() []string {
+	return a.RegularUserRoleNames
+}
+
+func (a SamlIdpAutoCreateUserDetails) IsEnabled() bool {
+	return a.Enabled
+}
+
+func (a SamlIdpAutoCreateUserDetails) GetEmailWhiteList() []string {
+	return a.EmailWhiteList
+}
+
+func (a SamlIdpAutoCreateUserDetails) GetAttributeMapping() map[string]string {
+	return a.AttributeMapping
+}
 
 type SamlIdpDetails struct {
-	EntityId         string
-	Domain           string
-	MetadataLocation string
-	ExternalIdName   string
-	ExternalIdpName  string
+	EntityId                 string
+	Domain                   string
+	MetadataLocation         string
+	ExternalIdName           string
+	ExternalIdpName          string
 	MetadataRequireSignature bool
-	MetadataTrustCheck bool
-	MetadataTrustedKeys []string
+	MetadataTrustCheck       bool
+	MetadataTrustedKeys      []string
+	AutoCreateUserDetails    SamlIdpAutoCreateUserDetails
 }
 
 
@@ -65,4 +97,8 @@ func (s SamlIdentityProvider) ExternalIdName() string {
 
 func (s SamlIdentityProvider) ExternalIdpName() string {
 	return s.SamlIdpDetails.ExternalIdpName
+}
+
+func (s SamlIdentityProvider) GetAutoCreateUserDetails() security.AutoCreateUserDetails {
+	return s.SamlIdpDetails.AutoCreateUserDetails
 }
