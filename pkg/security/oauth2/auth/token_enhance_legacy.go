@@ -10,15 +10,17 @@ import (
 /*****************************
 	legacyClaims Enhancer
  *****************************/
-// legacyClaims imlements Claims and includes BasicClaims
+
+// legacyClaims implements Claims and includes BasicClaims
 type legacyClaims struct {
 	oauth2.FieldClaimsMapper
 	*oauth2.BasicClaims
-	FirstName string `claim:"firstName"`
-	LastName  string `claim:"lastName"`
-	Email     string `claim:"email"`
-	TenantId  string `claim:"tenantId"`
-	Username  string `claim:"user_name"`
+	FirstName string   `claim:"firstName"`
+	LastName  string   `claim:"lastName"`
+	Email     string   `claim:"email"`
+	TenantId  string   `claim:"tenantId"`
+	Username  string   `claim:"user_name"`
+	Roles     []string `claim:"roles"`
 }
 
 func (c *legacyClaims) MarshalJSON() ([]byte, error) {
@@ -45,16 +47,16 @@ func (c *legacyClaims) Values() map[string]interface{} {
 	return c.FieldClaimsMapper.Values(c)
 }
 
-// LegacyTokenEnhancer impelments order.Ordered and TokenEnhancer
-type LegacyTokenEnhancer struct {
-
-}
+// LegacyTokenEnhancer implements order.Ordered and TokenEnhancer
+// LegacyTokenEnhancer add legacy claims and response fields that was supported by Java version of IDM
+// but deprecated in Go version
+type LegacyTokenEnhancer struct {}
 
 func (te *LegacyTokenEnhancer) Order() int {
 	return TokenEnhancerOrderDetailsClaims
 }
 
-func (te *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (te *LegacyTokenEnhancer) Enhance(_ context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
@@ -71,8 +73,9 @@ func (te *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessTok
 
 	legacy := &legacyClaims{
 		BasicClaims: basic,
-		Username: basic.Subject,
+		Username:    basic.Subject,
 	}
+	t.PutDetails(oauth2.ClaimUsername, legacy.Username)
 
 	if ud, ok := oauth.Details().(security.UserDetails); ok {
 		legacy.FirstName = ud.FirstName()
@@ -84,15 +87,18 @@ func (te *LegacyTokenEnhancer) Enhance(c context.Context, token oauth2.AccessTok
 		legacy.TenantId = td.TenantId()
 	}
 
+	if ad, ok := oauth.Details().(security.AuthenticationDetails); ok {
+		legacy.Roles = ad.Roles().Values()
+		t.PutDetails(oauth2.ClaimRoles, legacy.Roles)
+	}
+
 	t.SetClaims(legacy)
 	return t, nil
 }
 
-
 // ResourceIdTokenEnhancer impelments order.Ordered and TokenEnhancer
 // spring-security-oauth2 based java implementation expecting "aud" claims to be the resource ID
 type ResourceIdTokenEnhancer struct {
-
 }
 
 func (te *ResourceIdTokenEnhancer) Order() int {
@@ -105,7 +111,7 @@ func (te *ResourceIdTokenEnhancer) Enhance(c context.Context, token oauth2.Acces
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
 	}
 
-	if t.Claims() == nil || !t.Claims().Has(oauth2.ClaimAudience){
+	if t.Claims() == nil || !t.Claims().Has(oauth2.ClaimAudience) {
 		return nil, oauth2.NewInternalError("ResourceIdTokenEnhancer need to be placed after BasicClaimsEnhancer")
 	}
 
@@ -115,4 +121,3 @@ func (te *ResourceIdTokenEnhancer) Enhance(c context.Context, token oauth2.Acces
 	t.Claims().Set(oauth2.ClaimAudience, aud)
 	return t, nil
 }
-

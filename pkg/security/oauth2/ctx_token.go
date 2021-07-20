@@ -9,6 +9,7 @@ import (
 /*****************************
 	Abstractions
  *****************************/
+
 type TokenType string
 const(
 	TokenTypeBearer = "bearer"
@@ -55,6 +56,7 @@ type RefreshToken interface {
 /*******************************
 	Common Impl. AccessToken
  *******************************/
+
 // DefaultAccessToken implements AccessToken and ClaimsContainer
 type DefaultAccessToken struct {
 	claims       Claims
@@ -92,7 +94,7 @@ func FromAccessToken(token AccessToken) *DefaultAccessToken {
 		}
 	}
 
-	copy := &DefaultAccessToken{
+	cp := &DefaultAccessToken{
 		value:      token.Value(),
 		tokenType:  token.Type(),
 		expiryTime: token.ExpiryTime(),
@@ -100,46 +102,46 @@ func FromAccessToken(token AccessToken) *DefaultAccessToken {
 		scopes:     token.Scopes().Copy(),
 		details:    copyMap(token.Details()),
 	}
-	copy.SetRefreshToken(token.RefreshToken())
-	return copy
+	cp.SetRefreshToken(token.RefreshToken())
+	return cp
 }
 
-// AccessToken
+// Value implements AccessToken
 func (t *DefaultAccessToken) Value() string {
 	return t.value
 }
 
-// AccessToken
+// Details implements AccessToken
 func (t *DefaultAccessToken) Details() map[string]interface{} {
 	return t.details
 }
 
-// AccessToken
+// Type implements AccessToken
 func (t *DefaultAccessToken) Type() TokenType {
 	return t.tokenType
 }
 
-// AccessToken
+// IssueTime implements AccessToken
 func (t *DefaultAccessToken) IssueTime() time.Time {
 	return t.issueTime
 }
 
-// AccessToken
+// ExpiryTime implements AccessToken
 func (t *DefaultAccessToken) ExpiryTime() time.Time {
 	return t.expiryTime
 }
 
-// AccessToken
+// Expired implements AccessToken
 func (t *DefaultAccessToken) Expired() bool {
 	return !t.expiryTime.IsZero() && t.expiryTime.Before(time.Now())
 }
 
-// AccessToken
+// Scopes implements AccessToken
 func (t *DefaultAccessToken) Scopes() utils.StringSet {
 	return t.scopes
 }
 
-// AccessToken
+// RefreshToken implements AccessToken
 func (t *DefaultAccessToken) RefreshToken() RefreshToken {
 	if t.refreshToken == nil {
 		return nil
@@ -147,17 +149,18 @@ func (t *DefaultAccessToken) RefreshToken() RefreshToken {
 	return t.refreshToken
 }
 
-// ClaimsContainer
+// Claims implements ClaimsContainer
 func (t *DefaultAccessToken) Claims() Claims {
 	return t.claims
 }
 
-// ClaimsContainer
+// SetClaims implements ClaimsContainer
 func (t *DefaultAccessToken) SetClaims(claims Claims) {
 	t.claims = claims
 }
 
-// Setters
+/* Setters */
+
 func (t *DefaultAccessToken) SetValue(v string) *DefaultAccessToken {
 	t.value = v
 	return t
@@ -209,6 +212,7 @@ func (t *DefaultAccessToken) PutDetails(key string, value interface{}) *DefaultA
 /********************************
 	Common Impl. RefreshToken
  ********************************/
+
 // DefaultRefreshToken implements RefreshToken and ClaimsContainer
 type DefaultRefreshToken struct {
 	claims       Claims
@@ -240,42 +244,43 @@ func FromRefreshToken(token RefreshToken) *DefaultRefreshToken {
 	}
 }
 
-// RefreshToken
+// Value implements RefreshToken
 func (t *DefaultRefreshToken) Value() string {
 	return t.value
 }
 
-// RefreshToken
+// Details implements RefreshToken
 func (t *DefaultRefreshToken) Details() map[string]interface{} {
 	return t.details
 }
 
-// RefreshToken
+// ExpiryTime implements RefreshToken
 func (t *DefaultRefreshToken) ExpiryTime() time.Time {
 	return t.expiryTime
 }
 
-// RefreshToken
+// Expired implements RefreshToken
 func (t *DefaultRefreshToken) Expired() bool {
 	return !t.expiryTime.IsZero() && t.expiryTime.Before(time.Now())
 }
 
-// RefreshToken
+// WillExpire implements RefreshToken
 func (t *DefaultRefreshToken) WillExpire() bool {
 	return !t.expiryTime.IsZero()
 }
 
-// ClaimsContainer
+// Claims implements ClaimsContainer
 func (t *DefaultRefreshToken) Claims() Claims {
 	return t.claims
 }
 
-// ClaimsContainer
+// SetClaims implements ClaimsContainer
 func (t *DefaultRefreshToken) SetClaims(claims Claims) {
 	t.claims = claims
 }
 
-// Setters
+/* Setters */
+
 func (t *DefaultRefreshToken) SetValue(v string) *DefaultRefreshToken {
 	t.value = v
 	return t
