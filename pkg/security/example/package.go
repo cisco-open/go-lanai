@@ -36,6 +36,8 @@ func Use() {
 		fx.Provide(BindAccountsProperties),
 		fx.Provide(BindAccountPoliciesProperties),
 		fx.Provide(BindClientsProperties),
+		fx.Provide(NewInMemoryAccountStore),
+		fx.Provide(NewInMemoryFederatedAccountStore),
 		fx.Provide(NewInMemoryClientStore),
 		fx.Provide(NewTenantStore),
 		fx.Provide(NewProviderStore),

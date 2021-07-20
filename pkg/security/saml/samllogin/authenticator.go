@@ -76,6 +76,10 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 		return nil, security.NewInternalAuthenticationError(err)
 	}
 
+	if user.Disabled() {
+		return nil, security.NewAccountStatusError("Account Disabled")
+	}
+
 	permissions := map[string]interface{}{}
 	for _,p := range user.Permissions() {
 		permissions[p] = true
