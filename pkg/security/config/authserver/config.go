@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/openid"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
@@ -294,7 +295,11 @@ func (c *Configuration) authorizationService() auth.AuthorizationService {
 			conf.AccountStore = c.UserAccountStore
 			conf.TenantStore = c.TenantStore
 			conf.ProviderStore = c.ProviderStore
-			// TODO OIDC enhancers
+			openidEnhancer := openid.NewOpenIDTokenEnhancer(func(opt *openid.EnhancerOption) {
+				opt.Issuer = c.Issuer
+				opt.JwtEncoder = c.jwtEncoder()
+			})
+			conf.TokenEnhancers = append(conf.TokenEnhancers, openidEnhancer)
 		})
 	}
 

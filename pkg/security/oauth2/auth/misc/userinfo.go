@@ -18,7 +18,7 @@ type UserInfoPlainResponse struct {
 
 type UserInfoJwtResponse string
 
-// encoding.TextMarshaler
+// MarshalText implements encoding.TextMarshaler
 func (r UserInfoJwtResponse) MarshalText() (text []byte, err error) {
 	return []byte(r), nil
 }
@@ -37,7 +37,7 @@ func NewUserInfoEndpoint(issuer security.Issuer, accountStore security.AccountSt
 	}
 }
 
-func (ep *UserInfoEndpoint) PlainUserInfo(ctx context.Context, r UserInfoRequest) (resp *UserInfoPlainResponse, err error) {
+func (ep *UserInfoEndpoint) PlainUserInfo(ctx context.Context, _ UserInfoRequest) (resp *UserInfoPlainResponse, err error) {
 	auth, ok := security.Get(ctx).(oauth2.Authentication)
 	if !ok || auth.UserAuthentication() == nil {
 		return nil, oauth2.NewAccessRejectedError("missing user authentication")
@@ -48,7 +48,7 @@ func (ep *UserInfoEndpoint) PlainUserInfo(ctx context.Context, r UserInfoRequest
 	if e := claims.Populate(ctx, &c, claims.UserInfoClaimSpecs,
 		claims.WithSource(auth), claims.WithIssuer(ep.issuer), claims.WithAccountStore(ep.accountStore),
 	); e != nil {
-		return nil, oauth2.NewInternalError(err)
+		return nil, oauth2.NewInternalError(e)
 	}
 
 	return &UserInfoPlainResponse{
@@ -56,7 +56,7 @@ func (ep *UserInfoEndpoint) PlainUserInfo(ctx context.Context, r UserInfoRequest
 	}, nil
 }
 
-func (ep *UserInfoEndpoint) JwtUserInfo(ctx context.Context, r UserInfoRequest) (resp UserInfoJwtResponse, err error) {
+func (ep *UserInfoEndpoint) JwtUserInfo(ctx context.Context, _ UserInfoRequest) (resp UserInfoJwtResponse, err error) {
 	auth, ok := security.Get(ctx).(oauth2.Authentication)
 	if !ok || auth.UserAuthentication() == nil {
 		return "", oauth2.NewAccessRejectedError("missing user authentication")
@@ -70,11 +70,11 @@ func (ep *UserInfoEndpoint) JwtUserInfo(ctx context.Context, r UserInfoRequest) 
 		return "", oauth2.NewInternalError(err)
 	}
 
-	jwt, e := ep.jwtEncoder.Encode(ctx, c)
+	token, e := ep.jwtEncoder.Encode(ctx, &c)
 	if e != nil {
-		return "", e
+		return "", oauth2.NewInternalError(e)
 	}
-	return UserInfoJwtResponse(jwt), nil
+	return UserInfoJwtResponse(token), nil
 }
 
 func JwtResponseEncoder() httptransport.EncodeResponseFunc {

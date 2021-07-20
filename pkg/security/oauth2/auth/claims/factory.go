@@ -10,18 +10,18 @@ import (
 )
 
 var (
-	errorMissingToken = errors.New("source authentication is missing token")
+	errorMissingToken   = errors.New("source authentication is missing token")
 	errorMissingRequest = errors.New("source authentication is missing OAuth2 request")
-	errorMissingUser = errors.New("source authentication is missing user")
+	errorMissingUser    = errors.New("source authentication is missing user")
 	errorMissingDetails = errors.New("source authentication is missing required details")
-	errorMissingClaims = errors.New("source authentication is missing required token claims")
+	errorMissingClaims  = errors.New("source authentication is missing required token claims")
 )
 
 type ClaimFactoryFunc func(ctx context.Context, opt *FactoryOption) (v interface{}, err error)
 
 type ClaimSpec struct {
 	Func ClaimFactoryFunc
-	Req bool
+	Req  bool
 }
 
 type FactoryOptions func(opt *FactoryOption)
@@ -30,9 +30,10 @@ type FactoryOption struct {
 	Source       oauth2.Authentication
 	Issuer       security.Issuer
 	AccountStore security.AccountStore
+	AccessToken  oauth2.AccessToken
 }
 
-// options
+// WithSource is a FactoryOptions
 func WithSource(oauth oauth2.Authentication) FactoryOptions {
 	return func(opt *FactoryOption) {
 		opt.Source = oauth
@@ -48,6 +49,12 @@ func WithIssuer(issuer security.Issuer) FactoryOptions {
 func WithAccountStore(accountStore security.AccountStore) FactoryOptions {
 	return func(opt *FactoryOption) {
 		opt.AccountStore = accountStore
+	}
+}
+
+func WithAccessToken(token oauth2.AccessToken) FactoryOptions {
+	return func(opt *FactoryOption) {
+		opt.AccessToken = token
 	}
 }
 
@@ -121,5 +128,3 @@ func tryReloadAccount(ctx context.Context, opt *FactoryOption) security.Account 
 	}
 	return user
 }
-
-

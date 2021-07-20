@@ -9,6 +9,7 @@ import (
 /*********************
 	Abstract
  *********************/
+
 type JwtEncoder interface {
 	Encode(ctx context.Context, claims interface{}) (string, error)
 }

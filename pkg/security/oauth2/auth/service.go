@@ -25,6 +25,7 @@ type AuthorizationService interface {
 /****************************
 	Default implementation
  ****************************/
+
 type DASOptions func(*DASOption)
 
 type DASOption struct {
@@ -35,7 +36,7 @@ type DASOption struct {
 	ProviderStore  security.ProviderStore
 	Issuer         security.Issuer
 	TokenStore     TokenStore
-	TokenEnhancer  TokenEnhancer
+	TokenEnhancers []TokenEnhancer
 }
 
 // DefaultAuthorizationService implements AuthorizationService
@@ -49,18 +50,18 @@ type DefaultAuthorizationService struct {
 	tokenEnhancer  TokenEnhancer
 }
 
-func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationService {
+func NewDefaultAuthorizationService(opts ...DASOptions) *DefaultAuthorizationService {
 	basicEnhancer := BasicClaimsTokenEnhancer{}
 	refreshTokenEnhancer := RefreshTokenEnhancer{}
 	conf := DASOption{
-		TokenEnhancer: NewCompositeTokenEnhancer(
+		TokenEnhancers: []TokenEnhancer{
 			&ExpiryTokenEnhancer{},
 			&basicEnhancer,
 			&LegacyTokenEnhancer{},
 			&ResourceIdTokenEnhancer{},
 			&DetailsTokenEnhancer{},
 			&refreshTokenEnhancer,
-		),
+		},
 	}
 	for _, opt := range opts {
 		opt(&conf)
@@ -76,7 +77,7 @@ func NewDefaultAuthorizationService(opts...DASOptions) *DefaultAuthorizationServ
 		tenantStore:    conf.TenantStore,
 		providerStore:  conf.ProviderStore,
 		tokenStore:     conf.TokenStore,
-		tokenEnhancer:  conf.TokenEnhancer,
+		tokenEnhancer:  NewCompositeTokenEnhancer(conf.TokenEnhancers...),
 	}
 }
 
@@ -143,7 +144,7 @@ func (s *DefaultAuthorizationService) RefreshAccessToken(c context.Context, oaut
 
 	// we first remove existing access token associated with this refresh token
 	// this functionality is necessary so refresh tokens can't be used to create an unlimited number of access tokens.
-	s.tokenStore.RemoveAccessToken(c, refreshToken)
+	_ = s.tokenStore.RemoveAccessToken(c, refreshToken)
 
 	token := s.reuseOrNewAccessToken(c, oauth)
 	token.SetRefreshToken(refreshToken)
@@ -179,7 +180,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 		return nil, e
 	}
 
-	mutableCtx, ok := ctx.(utils.MutableContext);
+	mutableCtx, ok := ctx.(utils.MutableContext)
 	if !ok {
 		return nil, newImmutableContextError()
 	}
@@ -211,7 +212,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	return s.detailsFactory.New(mutableCtx, request)
 }
 
-func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, request oauth2.OAuth2Request, userAuth oauth2.UserAuthentication) (oauth2.UserAuthentication, error) {
+func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, _ oauth2.OAuth2Request, userAuth oauth2.UserAuthentication) (oauth2.UserAuthentication, error) {
 	if userAuth == nil {
 		return nil, nil
 	}
@@ -239,47 +240,47 @@ func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Conte
 	}), nil
 }
 
-func (f *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (*authFacts, error) {
+func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (*authFacts, error) {
 	client := RetrieveAuthenticatedClient(ctx)
 	if client == nil {
 		return nil, newInvalidClientError()
 	}
 
 	if userAuth == nil {
-		return &authFacts{ client: client }, nil
+		return &authFacts{client: client}, nil
 	}
 
-	account, e := f.loadAccount(ctx, request, userAuth)
+	account, e := s.loadAccount(ctx, request, userAuth)
 	if e != nil {
 		return nil, e
 	} else if account.Locked() || account.Disabled() {
 		return nil, newInvalidUserError("unsupported user's account locked or disabled")
 	}
 
-	tenant, e := f.loadTenant(ctx, request, account)
+	tenant, e := s.loadTenant(ctx, request, account)
 	if e != nil {
 		return nil, e
 	}
 
-	if e := f.verifyTenantAccess(ctx, tenant, account, client); e != nil {
+	if e := s.verifyTenantAccess(ctx, tenant, account, client); e != nil {
 		return nil, e
 	}
 
-	provider, e := f.loadProvider(ctx, request, tenant)
+	provider, e := s.loadProvider(ctx, request, tenant)
 	if e != nil {
 		return nil, e
 	}
 
 	return &authFacts{
-		request: request,
-		client: client,
-		account: account,
-		tenant: tenant,
+		request:  request,
+		client:   client,
+		account:  account,
+		tenant:   tenant,
 		provider: provider,
 	}, nil
 }
 
-func (f *DefaultAuthorizationService) loadAccount(ctx context.Context, request oauth2.OAuth2Request, userAuth security.Authentication) (security.Account, error) {
+func (s *DefaultAuthorizationService) loadAccount(ctx context.Context, _ oauth2.OAuth2Request, userAuth security.Authentication) (security.Account, error) {
 	// sanity check, this should not happen
 	if userAuth.State() < security.StateAuthenticated || userAuth.Principal() == nil {
 		return nil, newUnauthenticatedUserError()
@@ -290,14 +291,14 @@ func (f *DefaultAuthorizationService) loadAccount(ctx context.Context, request o
 		return nil, newInvalidUserError(err)
 	}
 
-	acct, e := f.accountStore.LoadAccountByUsername(ctx, username)
+	acct, e := s.accountStore.LoadAccountByUsername(ctx, username)
 	if e != nil {
 		return nil, newInvalidUserError(e)
 	}
 	return acct, nil
 }
 
-func (f *DefaultAuthorizationService) loadTenant(ctx context.Context, request oauth2.OAuth2Request, account security.Account) (*security.Tenant, error) {
+func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oauth2.OAuth2Request, account security.Account) (*security.Tenant, error) {
 	tenancy, ok := account.(security.AccountTenancy)
 	if !ok {
 		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
@@ -313,12 +314,12 @@ func (f *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 	var tenant *security.Tenant
 	var e error
 	if tenantId != "" {
-		tenant, e = f.tenantStore.LoadTenantById(ctx, tenantId)
+		tenant, e = s.tenantStore.LoadTenantById(ctx, tenantId)
 		if e != nil {
 			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with id [%s]", account.Username(), tenantId))
 		}
 	} else {
-		tenant, e = f.tenantStore.LoadTenantByName(ctx, tenantName)
+		tenant, e = s.tenantStore.LoadTenantByName(ctx, tenantName)
 		if e != nil {
 			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with name [%s]", account.Username(), tenantName))
 		}
@@ -360,20 +361,20 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(c context.Context, tena
 	return nil
 }
 
-func (f *DefaultAuthorizationService) loadProvider(ctx context.Context, request oauth2.OAuth2Request, tenant *security.Tenant) (*security.Provider, error) {
+func (s *DefaultAuthorizationService) loadProvider(ctx context.Context, _ oauth2.OAuth2Request, tenant *security.Tenant) (*security.Provider, error) {
 	providerId := tenant.ProviderId
 	if providerId == "" {
 		return nil, newInvalidProviderError("provider ID is not avalilable")
 	}
 
-	provider, e := f.providerStore.LoadProviderById(ctx, providerId)
+	provider, e := s.providerStore.LoadProviderById(ctx, providerId)
 	if e != nil {
 		return nil, newInvalidProviderError(fmt.Sprintf("tenant [%s]'s provider is invalid", tenant.Name))
 	}
 	return provider, nil
 }
 
-func (f *DefaultAuthorizationService) determineExpiryTime(ctx context.Context, request oauth2.OAuth2Request, facts *authFacts) (expiry time.Time) {
+func (s *DefaultAuthorizationService) determineExpiryTime(ctx context.Context, _ oauth2.OAuth2Request, facts *authFacts) (expiry time.Time) {
 
 	max := endOfWorld
 	// When switching context, expiry should no later than original expiry time
@@ -396,7 +397,7 @@ func (f *DefaultAuthorizationService) determineExpiryTime(ctx context.Context, r
 	return minTime(expiry, max)
 }
 
-func (f *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Context, userAuth security.Authentication, facts *authFacts) (authTime time.Time) {
+func (s *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Context, userAuth security.Authentication, facts *authFacts) (authTime time.Time) {
 	if facts.source != nil {
 		if srcAuth, ok := facts.source.Details().(security.AuthenticationDetails); ok {
 			return srcAuth.AuthenticationTime()
@@ -424,11 +425,10 @@ func (s *DefaultAuthorizationService) reuseOrNewAccessToken(c context.Context, o
 func minTime(t1, t2 time.Time) time.Time {
 	if t1.IsZero() || t1.Before(t2) {
 		return t1
- 	} else {
- 		return t2
+	} else {
+		return t2
 	}
 }
-
 
 /****************************
 	Errors

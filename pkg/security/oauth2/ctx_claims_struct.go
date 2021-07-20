@@ -131,6 +131,8 @@ func (m *FieldClaimsMapper) set(fv reflect.Value, setTo interface{}) error {
 	ft := fv.Type()
 
 	switch {
+	case v.IsZero():
+		fv.Set(reflect.Zero(ft))
 	case t.AssignableTo(ft):
 		fv.Set(v)
 	case v.Type().ConvertibleTo(ft):

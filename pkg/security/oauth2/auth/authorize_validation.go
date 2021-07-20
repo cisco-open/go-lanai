@@ -8,6 +8,7 @@ import (
 /*****************************
 	Abstraction
  *****************************/
+
 // AuthorizeRequestProcessor validate and process incoming request.
 type AuthorizeRequestProcessor interface {
 	Process(ctx context.Context, request *AuthorizeRequest) (validated *AuthorizeRequest, err error)
@@ -16,6 +17,7 @@ type AuthorizeRequestProcessor interface {
 /*****************************
 	Common Implementations
  *****************************/
+
 type CompositeAuthorizeRequestProcessor struct {
 	delegates []AuthorizeRequestProcessor
 }

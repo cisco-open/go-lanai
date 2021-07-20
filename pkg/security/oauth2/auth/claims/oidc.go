@@ -7,11 +7,17 @@ import (
 	"strings"
 )
 
+// AddressClaim is defined at https://openid.net/specs/openid-connect-core-1_0.html#AddressClaim
 type AddressClaim struct {
-	// TODO OIDC Address claim
+	Formatted  string `json:"formatted,omitempty"`
+	StreetAddr string `json:"street_address,omitempty"`
+	City       string `json:"locality,omitempty"`
+	Region     string `json:"region,omitempty"`
+	PostalCode string `json:"postal_code,omitempty"`
+	Country    string `json:"country,omitempty"`
 }
 
-func AuthenticationTime(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func AuthenticationTime(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.AuthenticationDetails)
 	if !ok {
 		return nil, errorMissingDetails
@@ -19,7 +25,7 @@ func AuthenticationTime(ctx context.Context, opt *FactoryOption) (v interface{},
 	return nonZeroOrError(details.AuthenticationTime(), errorMissingDetails)
 }
 
-func FullName(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func FullName(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
@@ -28,7 +34,7 @@ func FullName(ctx context.Context, opt *FactoryOption) (v interface{}, err error
 	return nonZeroOrError(name, errorMissingDetails)
 }
 
-func FirstName(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func FirstName(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
@@ -36,7 +42,7 @@ func FirstName(ctx context.Context, opt *FactoryOption) (v interface{}, err erro
 	return nonZeroOrError(details.FirstName(), errorMissingDetails)
 }
 
-func LastName(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func LastName(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
@@ -44,7 +50,7 @@ func LastName(ctx context.Context, opt *FactoryOption) (v interface{}, err error
 	return nonZeroOrError(details.LastName(), errorMissingDetails)
 }
 
-func Email(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func Email(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
@@ -52,7 +58,7 @@ func Email(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
 	return nonZeroOrError(details.Email(), errorMissingDetails)
 }
 
-func EmailVerified(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func EmailVerified(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
@@ -60,12 +66,12 @@ func EmailVerified(ctx context.Context, opt *FactoryOption) (v interface{}, err 
 	return utils.BoolPtr(strings.TrimSpace(details.Email()) != ""), nil
 }
 
-func ZoneInfo(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func ZoneInfo(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	// TODO maybe impelment this if possibile to extract it from locale
 	return nil, errorMissingDetails
 }
 
-func Locale(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func Locale(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
@@ -74,11 +80,21 @@ func Locale(ctx context.Context, opt *FactoryOption) (v interface{}, err error) 
 }
 
 func Address(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
-	details, ok := opt.Source.Details().(security.UserDetails)
-	if !ok {
+	acct, ok := tryReloadAccount(ctx, opt).(security.AccountMetadata)
+	if !ok || acct == nil {
 		return nil, errorMissingDetails
 	}
-	return nonZeroOrError(details.LocaleCode(), errorMissingDetails)
+	addr := AddressClaim{
+		Formatted:  acct.LocaleCode(),
+		//StreetAddr: "",
+		//City:       "",
+		//Region:     "",
+		//PostalCode: "",
+		//Country:    "",
+	}
+	return &addr, nil
 }
 
-
+func Unsupported(_ context.Context, _ *FactoryOption) (v interface{}, err error) {
+	return nil, errorMissingDetails
+}
