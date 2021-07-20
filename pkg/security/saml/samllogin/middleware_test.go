@@ -175,6 +175,10 @@ type TestIdpProvider struct {
 	metadataTrustedKeys []string
 }
 
+func (i TestIdpProvider) GetAutoCreateUserDetails() security.AutoCreateUserDetails {
+	panic("implement me")
+}
+
 func (i TestIdpProvider) ShouldMetadataRequireSignature() bool {
 	return i.metadataRequireSignature
 }
