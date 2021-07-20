@@ -9,7 +9,7 @@ import (
 
 type UUIDArray []uuid.UUID
 
-// driver.Valuer
+// Value implements driver.Valuer
 func (a UUIDArray) Value() (driver.Value, error) {
 	if a == nil {
 		return nil, nil
@@ -17,7 +17,7 @@ func (a UUIDArray) Value() (driver.Value, error) {
 	return pq.StringArray(a.Strings()).Value()
 }
 
-// sql.Scanner
+// Scan implements sql.Scanner
 func (a *UUIDArray) Scan(src interface{}) error {
 	if a == nil {
 		return nil

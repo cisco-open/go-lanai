@@ -165,6 +165,7 @@ func NewLazyHeaderWriter(w http.ResponseWriter) *LazyHeaderWriter {
 /*********************
 	go-kit Endpoint
 **********************/
+
 // MakeEndpoint convert given mvcMetadata to kit/endpoint.Endpoint
 func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
 	// Note: we assume given metadata is valid, so we don't do out-of-index or type check

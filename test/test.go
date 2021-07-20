@@ -19,29 +19,37 @@ var (
 type InternalRunner func(context.Context, *T)
 
 type SetupFunc func(ctx context.Context, t *testing.T) (context.Context, error)
-type TeardownFunc func(t *testing.T) error
+type TeardownFunc func(ctx context.Context, t *testing.T) error
 
+// Hook is registered for tests and sub tests, should provide SetupFunc or TeardownFunc (or both)
+// This interface is mostly internal usage.
+// Test implementers typically use Options to create instance of this interface
 type Hook interface {
 	Setup(ctx context.Context, t *testing.T) (context.Context, error)
-	Teardown(t *testing.T) error
+	Teardown(ctx context.Context, t *testing.T) error
 }
 
+// Options are test config functions to pass into RunTest
 type Options func(opt *T)
+
+// T embed *testing.T and holds additional information of test config
 type T struct {
 	*testing.T
 	runner       InternalRunner
 	TestHooks    []Hook
 	SubTestHooks []Hook
-	SubTests     map[string]SubTestFunc
+	SubTests     *SubTestOrderedMap
 }
 
+// RunTest is the entry point of any Test...().
+// It takes any context, and run sub tests according to provided Options
 func RunTest(ctx context.Context, t *testing.T, opts ...Options) {
 	test := T{
 		T:            t,
 		runner:       unitTestRunner,
 		TestHooks:    []Hook{},
 		SubTestHooks: []Hook{},
-		SubTests:     map[string]SubTestFunc{},
+		SubTests:     NewSubTestOrderedMap(),
 	}
 	for _, fn := range InternalOptions {
 		fn(&test)
@@ -68,12 +76,15 @@ func unitTestRunner(ctx context.Context, t *T) {
 
 // InternalRunSubTests is an internal function. exported for cross-package reference
 func InternalRunSubTests(ctx context.Context, t *T) {
-	for n, fn := range t.SubTests {
-		t.Run(n, func(goT *testing.T) {
-			ctx = runTestSetupHooks(ctx, goT, t.SubTestHooks, "error when setup sub test")
-			defer runTestTeardownHooks(goT, t.SubTestHooks, "error when cleanup sub test")
-			fn(ctx, goT)
-		})
+	names := t.SubTests.Keys()
+	for _, n := range names {
+		if fn, ok := t.SubTests.Get(n); ok {
+			t.Run(n, func(goT *testing.T) {
+				ctx = runTestSetupHooks(ctx, goT, t.SubTestHooks, "error when setup sub test")
+				defer runTestTeardownHooks(goT, t.SubTestHooks, "error when cleanup sub test")
+				fn(ctx, goT)
+			})
+		}
 	}
 }
 
@@ -91,7 +102,7 @@ func runTestSetupHooks(ctx context.Context, t *testing.T, hooks []Hook, errMsg s
 
 func runTestTeardownHooks(t *testing.T, hooks []Hook, errMsg string) {
 	for _, h := range hooks {
-		if e := h.Teardown(t); e != nil {
+		if e := h.Teardown(nil, t); e != nil {
 			t.Fatalf("%s: %v", errMsg, e)
 		}
 	}
@@ -143,11 +154,11 @@ func (h *orderedHook) Setup(ctx context.Context, t *testing.T) (context.Context,
 	return h.setupFunc(ctx, t)
 }
 
-func (h *orderedHook) Teardown(t *testing.T) error {
+func (h *orderedHook) Teardown(ctx context.Context, t *testing.T) error {
 	if h.teardownFunc == nil {
 		return nil
 	}
-	return h.teardownFunc(t)
+	return h.teardownFunc(ctx, t)
 }
 
 /****************************
@@ -161,18 +172,32 @@ func WithInternalRunner(runner InternalRunner) Options {
 	}
 }
 
+// WithOptions group multiple options into one.
+// This is mostly used by other testing utilities to provide grouped test configs
+func WithOptions(opts ...Options) Options {
+	return func(opt *T) {
+		for _, fn := range opts {
+			fn(opt)
+		}
+	}
+}
+
+// Setup is an Options that register the SetupFunc to run before ANY sub tests starts
 func Setup(fn SetupFunc) Options {
 	return func(opt *T) {
 		opt.TestHooks = append(opt.TestHooks, NewSetupHook(0, fn))
 	}
 }
 
+// Teardown is an Options that register the TeardownFunc to run after ALL sub tests finishs
 func Teardown(fn TeardownFunc) Options {
 	return func(opt *T) {
 		opt.TestHooks = append(opt.TestHooks, NewTeardownHook(0, fn))
 	}
 }
 
+// Hooks is an Options that register multiple Hook.
+// Test implementers are recommended to use Setup or Teardown instead
 func Hooks(hooks ...Hook) Options {
 	return func(opt *T) {
 		opt.TestHooks = append(opt.TestHooks, hooks...)

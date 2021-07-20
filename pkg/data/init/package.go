@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqcrypt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
@@ -25,15 +26,12 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func init() {
+func Use() {
 	bootstrap.Register(Module)
 	bootstrap.Register(data.Module)
 	bootstrap.Register(tx.Module)
 	bootstrap.Register(repo.Module)
-}
-
-func Use() {
-
+	bootstrap.Register(pqcrypt.Module)
 }
 
 /**************************

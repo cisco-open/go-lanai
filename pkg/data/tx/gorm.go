@@ -12,6 +12,10 @@ type GormTxManager interface {
 	WithDB(*gorm.DB) GormTxManager
 }
 
+type GormContext interface {
+	DB() *gorm.DB
+}
+
 var (
 	ctxKeyGorm = gormCtxKey{}
 )
@@ -27,10 +31,18 @@ func (c gormTxContext) Value(key interface{}) interface{} {
 	if k, ok := key.(gormCtxKey); ok && k == ctxKeyGorm {
 		return c.db
 	}
-	return c.Context.Value(key)
+	return c.txContext.Value(key)
+}
+
+func (c gormTxContext) DB() *gorm.DB {
+	return c.db
 }
 
 func GormTxWithContext(ctx context.Context) (tx *gorm.DB) {
+	if c, ok := ctx.(GormContext); ok && c.DB() != nil {
+		return c.DB().WithContext(ctx)
+	}
+
 	if db, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
 		return db.WithContext(ctx)
 	}
@@ -58,7 +70,7 @@ func (m gormTxManager) Transaction(ctx context.Context, tx TxFunc, opts ...*sql.
 	return m.db.Transaction(func(txDb *gorm.DB) error {
 		c := gormTxContext{
 			txContext: txContext{Context: ctx},
-			db: txDb,
+			db:        txDb,
 		}
 		return tx(c)
 	}, opts...)
@@ -71,66 +83,65 @@ func (m gormTxManager) Begin(ctx context.Context, opts ...*sql.TxOptions) (conte
 	}
 	return gormTxContext{
 		txContext: txContext{Context: ctx},
-		db: tx,
+		db:        tx,
 	}, nil
 }
 
 func (m gormTxManager) Rollback(ctx context.Context) (context.Context, error) {
-	if tx, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
-		tx.Rollback()
-		if tx.Error != nil {
-			return ctx, tx.Error
-		}
+	e := doWithDB(ctx, func(db *gorm.DB) *gorm.DB {
+		return db.Rollback()
+	})
+	if e != nil {
+		return ctx, e
 	}
 
-	if orig, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
-		return orig, nil
+	if tc, ok := ctx.(TxContext); ok && tc.Parent() != nil {
+		return tc.Parent(), nil
 	}
 	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
 }
 
 func (m gormTxManager) Commit(ctx context.Context) (context.Context, error) {
-	if tx, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
-		tx.Commit()
-		if tx.Error != nil {
-			return ctx, tx.Error
-		}
+	e := doWithDB(ctx, func(db *gorm.DB) *gorm.DB {
+		return db.Commit()
+	})
+	if e != nil {
+		return ctx, e
 	}
 
-	if orig, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
-		return orig, nil
+	if tc, ok := ctx.(TxContext); ok && tc.Parent() != nil {
+		return tc.Parent(), nil
 	}
 	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
 }
 
 func (m gormTxManager) SavePoint(ctx context.Context, name string) (context.Context, error) {
-	if tx, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
-		tx.SavePoint(name)
-		if tx.Error != nil {
-			return ctx, tx.Error
-		}
+	e := doWithDB(ctx, func(db *gorm.DB) *gorm.DB {
+		return db.SavePoint(name)
+	})
+	if e != nil {
+		return ctx, e
 	}
 
-	if _, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
+	if tc, ok := ctx.(TxContext); ok && tc.Parent() != nil {
 		return ctx, nil
 	}
 	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
 }
 
 func (m gormTxManager) RollbackTo(ctx context.Context, name string) (context.Context, error) {
-	if tx, ok := ctx.Value(ctxKeyGorm).(*gorm.DB); ok {
-		tx.RollbackTo(name)
-		if tx.Error != nil {
-			return ctx, tx.Error
-		}
+	e := doWithDB(ctx, func(db *gorm.DB) *gorm.DB {
+		return db.RollbackTo(name)
+	})
+	if e != nil {
+		return ctx, e
 	}
 
-	if _, ok := ctx.Value(ctxKeyBeginCtx).(context.Context); ok {
+	if tc, ok := ctx.(TxContext); ok && tc.Parent() != nil {
 		return ctx, nil
 	}
 	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
 }
-
 
 // gormTxManagerAdapter bridge a TxManager to GormTxManager with noop operation. Useful for testing
 type gormTxManagerAdapter struct {
@@ -141,6 +152,12 @@ func (a gormTxManagerAdapter) WithDB(_ *gorm.DB) GormTxManager {
 	return a
 }
 
-
-
-
+func doWithDB(ctx context.Context, fn func(*gorm.DB) *gorm.DB) error {
+	if gc, ok := ctx.(GormContext); ok {
+		if t := gc.DB(); t != nil {
+			r := fn(t)
+			return r.Error
+		}
+	}
+	return nil
+}

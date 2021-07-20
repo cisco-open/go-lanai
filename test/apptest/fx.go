@@ -2,10 +2,8 @@ package apptest
 
 import (
 	"context"
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"embed"
 	"go.uber.org/fx"
 	"testing"
 	"time"
@@ -28,6 +26,7 @@ func WithModules(modules ...*bootstrap.Module) test.Options {
 	})
 }
 
+// WithTimeout specify expected test timeout to prevent blocking test process permanently
 func WithTimeout(timeout time.Duration) test.Options {
 	return WithFxOptions(fx.StartTimeout(timeout))
 }
@@ -42,16 +41,14 @@ func WithFxOptions(opts ...fx.Option) test.Options {
 	})
 }
 
+// WithFxPriorityOptions register given fx.Option to test app as priority steps
+// see bootstrap.Module
 func WithFxPriorityOptions(opts ...fx.Option) test.Options {
 	return test.Setup(func(ctx context.Context, t *testing.T) (context.Context, error) {
 		ret, fxOpts := withTestModule(ctx)
 		fxOpts.PriorityOptions = append(fxOpts.PriorityOptions, opts...)
 		return ret, nil
 	})
-}
-
-func WithConfigFS(fs embed.FS) test.Options {
-	return WithFxOptions(appconfig.FxEmbeddedApplicationAdHoc(fs))
 }
 
 func withTestModule(ctx context.Context) (context.Context, *bootstrap.Module) {

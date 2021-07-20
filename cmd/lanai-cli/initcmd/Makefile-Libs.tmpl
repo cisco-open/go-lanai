@@ -43,7 +43,7 @@ generate: $(GEN_LIST)
 # 	Invoke "go test" on defined modules.
 # 	This target typically run on CI/CD working machine
 test:
-	$(GO) test -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/... $(MODULE)/cmd/...
+	$(GO) test -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/...
 
 # clean:
 # 	Undo previous "build".  clean $(DESTDIR) and build cache

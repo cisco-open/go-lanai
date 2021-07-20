@@ -8,6 +8,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"reflect"
 )
 
 type Response struct {
@@ -28,7 +29,7 @@ type responseOption struct {
 func fallbackResponseOptions(opt *responseOption) {
 	if opt.decodeFunc == nil {
 		if opt.body == nil {
-			opt.body = map[string]interface{}{}
+			opt.body = &map[string]interface{}{}
 		}
 		if opt.errBody == nil {
 			opt.errBody = &defaultErrorBody{}
@@ -78,6 +79,16 @@ func makeJsonDecodeResponseFunc(opt *responseOption) httptransport.DecodeRespons
 			return nil, e
 		}
 
+		// dereference if needed
+		rv := reflect.ValueOf(body)
+		if rv.Kind() == reflect.Ptr {
+			ev := rv.Elem()
+			switch ev.Kind() {
+			case reflect.Map, reflect.Slice, reflect.Interface:
+				body = ev.Interface()
+			}
+		}
+
 		return &Response{
 			StatusCode: resp.StatusCode,
 			Headers:    resp.Header,
@@ -90,14 +101,18 @@ func makeJsonDecodeResponseFunc(opt *responseOption) httptransport.DecodeRespons
 func handleStatusCodeError(resp *http.Response, errBody interface{}) error {
 	raw, e := decodeJsonBody(resp, errBody)
 	if e != nil {
-		return e.WithMessage("unable to parse error response: %v", e)
+		if httpE, ok := e.(*Error); ok {
+			return httpE.WithMessage("unable to parse error response: %v", e)
+		} else {
+			return e
+		}
 	}
 	return NewErrorWithStatusCode(errBody, resp, raw)
 }
 
 // decodeJsonBody read body from http.Response and decode into given "body"
 // function panic if "body" is nil
-func decodeJsonBody(resp *http.Response, body interface{}) ([]byte, *Error) {
+func decodeJsonBody(resp *http.Response, body interface{}) ([]byte, error) {
 	defer resp.Body.Close()
 
 	// check media type
@@ -111,6 +126,7 @@ func decodeJsonBody(resp *http.Response, body interface{}) ([]byte, *Error) {
 	if e != nil {
 		return nil, NewSerializationError(fmt.Errorf("response IO error: %s", e), resp, data)
 	}
+
 	if e := json.Unmarshal(data, body); e != nil {
 		return data, NewSerializationError(fmt.Errorf("response unmarshal error: %s", e), resp, data)
 	}

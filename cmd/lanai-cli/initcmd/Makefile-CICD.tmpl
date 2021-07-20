@@ -89,8 +89,9 @@ redist: pre clean build-docker git-tag-version post
 # init-docker:
 # 	Initialize for building docker image. Typically run on CI/CD worker machine
 init-docker:
-	# ssh-add is necessary for build-docker
-	$(SSHADD) -K ~/.ssh/id_rsa
+	# ssh-add is necessary for build-docker, loads default keys.
+	# for CI/CD it's managed by jenkins
+	$(SSHADD) -K || true 
 
 # pre-build-docker:
 # 	Before build docker image, set current head commit to proper marked commit
@@ -99,6 +100,8 @@ pre-build-docker:
 
 # build-docker:
 # 	Build docker image. Typically run on CI/CD worker machine
+#       Required Vars: for non-buildkit build
+#               - GITKEY ssh key for cto-github.cisco.com
 # 	Optional Vars:
 #		- PRIVATE_MODS used for populating build info
 #		- VERSION application version also used as Docker's image tag. Default to "latest" if not specified
@@ -106,7 +109,8 @@ build-docker: DOCKER_TAG = $(if $(VERSION),$(VERSION),latest)
 build-docker: init-docker
 	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t {{.Name}}:$(DOCKER_TAG) . \
 	--build-arg PRIVATE_MODS="$(PRIVATE_MODS)" \
-	--build-arg VERSION="$(VERSION)"
+	--build-arg VERSION="$(VERSION)" \
+	--build-arg GITKEY="$(GITKEY)"
 
 # push-docker:
 #	Re-tag and push given docker image to remote
