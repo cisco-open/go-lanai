@@ -23,6 +23,7 @@ const (
 	VaultPrecedence
 	RedisPrecedence
 	DatabasePrecedence
+	KafkaPrecedence
 	WebPrecedence
 	SecurityPrecedence
 	ServiceDiscoveryPrecedence
