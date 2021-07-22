@@ -9,6 +9,8 @@ import (
 /*********************
 	Abstract
  *********************/
+
+//goland:noinspection GoNameStartsWithPackageName
 type JwtDecoder interface {
 	Decode(ctx context.Context, token string) (oauth2.Claims, error)
 	DecodeWithClaims(ctx context.Context, token string, claims interface{}) error
@@ -17,7 +19,8 @@ type JwtDecoder interface {
 /*********************
 	Implements
  *********************/
-// RSJwtEncoder implements JwtEncoder
+
+// RSJwtDecoder implements JwtEncoder
 type RSJwtDecoder struct {
 	jwkName  string
 	jwkStore JwkStore

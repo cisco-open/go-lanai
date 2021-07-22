@@ -10,6 +10,7 @@ import (
 	Abstract
  *********************/
 
+//goland:noinspection GoNameStartsWithPackageName
 type JwtEncoder interface {
 	Encode(ctx context.Context, claims interface{}) (string, error)
 }

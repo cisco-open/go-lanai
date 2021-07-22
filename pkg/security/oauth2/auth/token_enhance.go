@@ -9,6 +9,7 @@ import (
 /*****************************
 	Abstraction
  *****************************/
+
 // TokenEnhancer modify given oauth2.AccessToken or return a new token based on given context and auth
 // Most TokenEnhancer responsible to add/modify claims of given access token
 // But it's not limited to do so. e.g. TokenEnhancer could be responsible to  install refresh token
@@ -20,6 +21,7 @@ type TokenEnhancer interface {
 /*****************************
 	Common Implementations
  *****************************/
+
 type CompositeTokenEnhancer struct {
 	delegates []TokenEnhancer
 }

@@ -10,7 +10,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 )
 
-type UserInfoRequest struct {}
+type UserInfoRequest struct{}
 
 type UserInfoPlainResponse struct {
 	UserInfoClaims
@@ -45,9 +45,20 @@ func (ep *UserInfoEndpoint) PlainUserInfo(ctx context.Context, _ UserInfoRequest
 
 	c := UserInfoClaims{}
 
-	if e := claims.Populate(ctx, &c, claims.UserInfoClaimSpecs,
-		claims.WithSource(auth), claims.WithIssuer(ep.issuer), claims.WithAccountStore(ep.accountStore),
-	); e != nil {
+	e := claims.Populate(ctx, &c,
+		claims.WithSpecs(
+			claims.UserInfoBasicSpecs,
+			claims.ProfileScopeSpecs,
+			claims.EmailScopeSpecs,
+			claims.PhoneScopeSpecs,
+			claims.AddressScopeSpecs,
+		),
+		claims.WithSource(auth),
+		claims.WithIssuer(ep.issuer),
+		claims.WithAccountStore(ep.accountStore),
+	)
+
+	if e != nil {
 		return nil, oauth2.NewInternalError(e)
 	}
 
@@ -64,9 +75,19 @@ func (ep *UserInfoEndpoint) JwtUserInfo(ctx context.Context, _ UserInfoRequest) 
 
 	c := UserInfoClaims{}
 
-	if e := claims.Populate(ctx, &c, claims.UserInfoClaimSpecs,
-		claims.WithSource(auth), claims.WithIssuer(ep.issuer), claims.WithAccountStore(ep.accountStore),
-	); e != nil {
+	e := claims.Populate(ctx, &c,
+		claims.WithSpecs(
+			claims.UserInfoBasicSpecs,
+			claims.ProfileScopeSpecs,
+			claims.EmailScopeSpecs,
+			claims.PhoneScopeSpecs,
+			claims.AddressScopeSpecs,
+		),
+		claims.WithSource(auth),
+		claims.WithIssuer(ep.issuer),
+		claims.WithAccountStore(ep.accountStore),
+	)
+	if e != nil {
 		return "", oauth2.NewInternalError(err)
 	}
 

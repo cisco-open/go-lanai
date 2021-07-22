@@ -24,6 +24,7 @@ const (
 	ParameterTenantId            = "tenant_id"
 	ParameterTenantName          = "tenant_name"
 	ParameterNonce               = "nonce"
+	ParameterMaxAge               = "max_age"
 	ParameterError               = "error"
 	ParameterErrorDescription    = "error_description"
 	ParameterCodeChallenge       = "code_challenge"

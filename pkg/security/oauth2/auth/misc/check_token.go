@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	msgInvalidTokenType = "tnsupported token type"
+	msgInvalidTokenType = "unsupported token type"
 	msgInvalidToken = "token is invalid or expired"
 	hintAccessToken = "access_token"
 	hintRefreshToken = "refresh_token"
@@ -63,7 +63,7 @@ func (ep *CheckTokenEndpoint) CheckToken(c context.Context, request *CheckTokenR
 	}
 }
 
-func (ep *CheckTokenEndpoint) allowDetails(c context.Context, client oauth2.OAuth2Client) bool {
+func (ep *CheckTokenEndpoint) allowDetails(_ context.Context, client oauth2.OAuth2Client) bool {
 	return client.Scopes() != nil && client.Scopes().Has(oauth2.ScopeTokenDetails)
 }
 
@@ -80,15 +80,15 @@ func (ep *CheckTokenEndpoint) checkAccessTokenWithDetails(c context.Context, req
 		Token: request.Token,
 		DetailsMap: map[string]interface{}{},
 	}
-	auth, e := ep.authenticator.Authenticate(c, &candidate)
-	if e != nil || auth.State() < security.StateAuthenticated {
+	oauth, e := ep.authenticator.Authenticate(c, &candidate)
+	if e != nil || oauth.State() < security.StateAuthenticated {
 		return ep.inactiveTokenResponse(), nil
 	}
 
-	return ep.activeTokenResponseWithDetails(c, auth.(oauth2.Authentication)), nil
+	return ep.activeTokenResponseWithDetails(c, oauth.(oauth2.Authentication)), nil
 }
 
-func (ep *CheckTokenEndpoint) checkRefreshToken(c context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
+func (ep *CheckTokenEndpoint) checkRefreshToken(_ context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
 	// We don't support refresh token check for now
 	return nil, oauth2.NewUnsupportedTokenTypeError(fmt.Sprintf("token_type_hint '%s' is not supported", request.Hint))
 }
@@ -110,7 +110,12 @@ func (ep *CheckTokenEndpoint) activeTokenResponseWithDetails(ctx context.Context
 		Active: &utils.TRUE,
 	}
 
-	if e := claims.Populate(ctx, &c, claims.CheckTokenClaimSpecs, claims.WithSource(auth), claims.WithIssuer(ep.issuer)); e != nil {
+	e := claims.Populate(ctx, &c,
+		claims.WithSpecs(claims.CheckTokenClaimSpecs),
+		claims.WithSource(auth),
+		claims.WithIssuer(ep.issuer))
+
+	if e != nil {
 		return ep.activeTokenResponseWithoutDetails()
 	}
 

@@ -13,6 +13,29 @@ import (
 	ID Token Enhancer
  *****************************/
 
+var (
+	scopedSpecs = map[string]map[string]claims.ClaimSpec{
+		oauth2.ScopeOidcProfile: claims.ProfileScopeSpecs,
+		oauth2.ScopeOidcEmail: claims.EmailScopeSpecs,
+		oauth2.ScopeOidcPhone: claims.PhoneScopeSpecs,
+		oauth2.ScopeOidcAddress: claims.AddressScopeSpecs,
+	}
+	defaultSpecs = []map[string]claims.ClaimSpec{
+		claims.IdTokenBasicSpecs,
+	}
+	fullSpecs = make([]map[string]claims.ClaimSpec, len(defaultSpecs), len(scopedSpecs) + len(defaultSpecs))
+
+)
+
+func init() {
+	for i, specs := range defaultSpecs {
+		fullSpecs[i] = specs
+	}
+	for _, specs := range scopedSpecs {
+		fullSpecs = append(fullSpecs, specs)
+	}
+}
+
 type EnhancerOptions func(opt *EnhancerOption)
 type EnhancerOption struct {
 	Issuer       security.Issuer
@@ -52,12 +75,16 @@ func (oe *OpenIDTokenEnhancer) Enhance(ctx context.Context, token oauth2.AccessT
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
 	}
 
-	// TODO create id_token
+	specs := oe.determineClaimSpecs(oauth.OAuth2Request())
 	c := IdTokenClaims{}
+	e := claims.Populate(ctx, &c,
+		claims.WithSpecs(specs...),
+		claims.WithSource(oauth),
+		claims.WithIssuer(oe.issuer),
+		claims.WithAccessToken(token),
+	)
 
-	if e := claims.Populate(ctx, &c, claims.IdTokenClaimSpecs,
-		claims.WithSource(oauth), claims.WithIssuer(oe.issuer), claims.WithAccessToken(token),
-	); e != nil {
+	if e != nil {
 		return nil, oauth2.NewInternalError(e)
 	}
 
@@ -82,8 +109,25 @@ func (oe *OpenIDTokenEnhancer) shouldSkip(oauth oauth2.Authentication) bool {
 		oauth.UserAuthentication() == nil
 }
 
-func copyClaim(dest oauth2.Claims, src oauth2.Claims, claim string) {
-	if src != nil && src.Has(claim) {
-		dest.Set(claim, src.Get(claim))
+func (oe *OpenIDTokenEnhancer) determineClaimSpecs(request oauth2.OAuth2Request) []map[string]claims.ClaimSpec {
+	if request == nil || request.Scopes() == nil || !request.Approved() {
+		return defaultSpecs
 	}
+
+	specs := make([]map[string]claims.ClaimSpec, len(defaultSpecs), len(defaultSpecs) + len(request.Scopes()))
+
+	scopes := request.Scopes()
+	includeAll := true
+	for scope, spec := range scopedSpecs {
+		if scopes.Has(scope) {
+			specs = append(specs, spec)
+			includeAll = false
+		}
+	}
+
+	if includeAll {
+		return fullSpecs
+	}
+	return specs
 }
+

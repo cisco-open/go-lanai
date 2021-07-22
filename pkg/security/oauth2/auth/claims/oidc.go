@@ -2,8 +2,13 @@ package claims
 
 import (
 	"context"
+	"crypto"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"encoding/base64"
+	"fmt"
 	"strings"
 )
 
@@ -23,6 +28,33 @@ func AuthenticationTime(_ context.Context, opt *FactoryOption) (v interface{}, e
 		return nil, errorMissingDetails
 	}
 	return nonZeroOrError(details.AuthenticationTime(), errorMissingDetails)
+}
+
+func Nonce(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Source.OAuth2Request() == nil || opt.Source.OAuth2Request().Parameters() == nil {
+		return nil, errorMissingRequest
+	}
+
+	nonce, _ := opt.Source.OAuth2Request().Parameters()[oauth2.ParameterNonce]
+	return nonZeroOrError(nonce, errorMissingRequestParams)
+}
+
+func AuthContextClassRef(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
+	if opt.Source.OAuth2Request() == nil || opt.Source.OAuth2Request().Parameters() == nil {
+		return nil, errorMissingRequest
+	}
+
+	nonce, _ := opt.Source.OAuth2Request().Parameters()[oauth2.ParameterNonce]
+	return nonZeroOrError(nonce, errorMissingRequestParams)
+}
+
+func AccessTokenHash(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
+	token := extractAccessToken(opt)
+	if token == nil || token.Value() == "" {
+		return nil, errorMissingToken
+	}
+
+	return calculateAccessTokenHash(token.Value())
 }
 
 func FullName(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
@@ -95,6 +127,42 @@ func Address(ctx context.Context, opt *FactoryOption) (v interface{}, err error)
 	return &addr, nil
 }
 
-func Unsupported(_ context.Context, _ *FactoryOption) (v interface{}, err error) {
-	return nil, errorMissingDetails
+/********************
+	Helpers
+ ********************/
+
+var (
+	jwtHashAlgorithms = map[string]crypto.Hash {
+		"RS256": crypto.SHA256,
+		"ES256": crypto.SHA256,
+		"HS256": crypto.SHA256,
+		"PS256": crypto.SHA256,
+		"RS384": crypto.SHA384,
+		"HS384": crypto.SHA384,
+		"RS512": crypto.SHA512,
+		"HS512": crypto.SHA512,
+	}
+
+)
+
+func calculateAccessTokenHash(token string) (string, error) {
+	// find out hashing algorithm
+	headers, e := jwt.ParseJwtHeaders(token)
+	if e != nil {
+		return "", e
+	}
+	tokenAlg, _ := headers["alg"].(string)
+	alg, ok := jwtHashAlgorithms[tokenAlg]
+	if !ok || !alg.Available() {
+		return "", fmt.Errorf(`hash is unsupported for access token with alg="%s"`, tokenAlg)
+	}
+
+	// do hash and take the left half
+	hash := alg.New()
+	if _, e := hash.Write([]byte(token)); e != nil {
+		return "", e
+	}
+
+	leftHalf := hash.Sum(nil)[hash.Size() / 2:]
+	return base64.RawStdEncoding.EncodeToString(leftHalf), nil
 }

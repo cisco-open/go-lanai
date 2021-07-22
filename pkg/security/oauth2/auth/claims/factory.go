@@ -10,27 +10,32 @@ import (
 )
 
 var (
-	errorMissingToken   = errors.New("source authentication is missing token")
-	errorMissingRequest = errors.New("source authentication is missing OAuth2 request")
-	errorMissingUser    = errors.New("source authentication is missing user")
-	errorMissingDetails = errors.New("source authentication is missing required details")
-	errorMissingClaims  = errors.New("source authentication is missing required token claims")
+	errorInvalidSpec          = errors.New("invalid claim spec")
+	errorMissingToken         = errors.New("source authentication is missing valid token")
+	errorMissingRequest       = errors.New("source authentication is missing OAuth2 request")
+	errorMissingUser          = errors.New("source authentication is missing user")
+	errorMissingDetails       = errors.New("source authentication is missing required details")
+	errorMissingClaims        = errors.New("source authentication is missing required token claims")
+	errorMissingRequestParams = errors.New("source authentication's OAuth2 request is missing parameters")
 )
 
 type ClaimFactoryFunc func(ctx context.Context, opt *FactoryOption) (v interface{}, err error)
-
-type ClaimSpec struct {
-	Func ClaimFactoryFunc
-	Req  bool
-}
+type ClaimRequirementFunc func(ctx context.Context, opt *FactoryOption) bool
 
 type FactoryOptions func(opt *FactoryOption)
 
 type FactoryOption struct {
+	Specs        []map[string]ClaimSpec
 	Source       oauth2.Authentication
 	Issuer       security.Issuer
 	AccountStore security.AccountStore
 	AccessToken  oauth2.AccessToken
+}
+
+func WithSpecs(specs ...map[string]ClaimSpec) FactoryOptions {
+	return func(opt *FactoryOption) {
+		opt.Specs = append(opt.Specs, specs...)
+	}
 }
 
 // WithSource is a FactoryOptions
@@ -58,27 +63,30 @@ func WithAccessToken(token oauth2.AccessToken) FactoryOptions {
 	}
 }
 
-func Populate(ctx context.Context, claims oauth2.Claims, specs map[string]ClaimSpec, opts ...FactoryOptions) error {
+func Populate(ctx context.Context, claims oauth2.Claims, opts ...FactoryOptions) error {
 	opt := FactoryOption{}
-	for _, f := range opts {
-		f(&opt)
+	for _, fn := range opts {
+		fn(&opt)
 	}
-	for c, spec := range specs {
-		if c == "" || spec.Func == nil {
-			continue
-		}
-		v, e := spec.Func(ctx, &opt)
-		if e != nil && spec.Req {
-			return fmt.Errorf("unable to create claim [%s]: %v", c, e)
-		} else if e != nil {
-			continue
-		}
+	for _, specs := range opt.Specs {
+		for c, spec := range specs {
+			if c == "" {
+				continue
+			}
+			v, e := spec.Calculate(ctx, &opt)
+			if e != nil && spec.Required(ctx, &opt) {
+				return fmt.Errorf("unable to create claim [%s]: %v", c, e)
+			} else if e != nil {
+				continue
+			}
 
-		// check type and assign
-		if e := safeSet(claims, c, v); e != nil {
-			return e
+			// check type and assign
+			if e := safeSet(claims, c, v); e != nil {
+				return e
+			}
 		}
 	}
+
 	return nil
 }
 

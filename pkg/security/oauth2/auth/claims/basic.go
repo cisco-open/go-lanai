@@ -108,13 +108,16 @@ func nonZeroOrError(v interface{}, candidateError error) (interface{}, error) {
 	return v, nil
 }
 
-func extractAccessTokenClaim(opt *FactoryOption, claim string) (v interface{}, err error) {
+func extractAccessToken(opt *FactoryOption) oauth2.AccessToken {
 	token := opt.AccessToken
 	if token == nil {
 		token = opt.Source.AccessToken()
 	}
+	return token
+}
 
-	container, ok := token.(oauth2.ClaimsContainer)
+func extractAccessTokenClaim(opt *FactoryOption, claim string) (v interface{}, err error) {
+	container, ok := extractAccessToken(opt).(oauth2.ClaimsContainer)
 	if !ok || container.Claims() == nil {
 		return nil, errorMissingToken
 	}

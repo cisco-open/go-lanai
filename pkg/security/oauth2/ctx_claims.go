@@ -21,6 +21,7 @@ type Claims interface {
 /*********************
 	Implements
  *********************/
+
 // MapClaims imlements Claims & claimsMapper
 type MapClaims map[string]interface{}
 

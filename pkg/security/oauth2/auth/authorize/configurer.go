@@ -44,7 +44,7 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 
 	authorizeMW := NewAuthorizeEndpointMiddleware(func(opts *AuthorizeMWOption) {
 		opts.RequestProcessor = f.requestProcessor
-		opts.AuthorizeHanlder = f.authorizeHanlder
+		opts.AuthorizeHandler = f.authorizeHanlder
 		opts.ApprovalMatcher = approveRequestMatcher
 	})
 
@@ -58,9 +58,9 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 
 	// install authorize endpoint
 	epGet := mapping.Get(f.path).Name("authorize GET").
-		HandlerFunc(authorizeMW.AuthroizeHandlerFunc(f.condition))
+		HandlerFunc(authorizeMW.AuthorizeHandlerFunc(f.condition))
 	epPost := mapping.Post(f.path).Name("authorize Post").
-		HandlerFunc(authorizeMW.AuthroizeHandlerFunc(f.condition))
+		HandlerFunc(authorizeMW.AuthorizeHandlerFunc(f.condition))
 
 	ws.Route(authRouteMatcher).Add(epGet, epPost)
 

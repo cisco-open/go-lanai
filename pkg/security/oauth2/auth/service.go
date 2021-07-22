@@ -29,25 +29,27 @@ type AuthorizationService interface {
 type DASOptions func(*DASOption)
 
 type DASOption struct {
-	DetailsFactory *common.ContextDetailsFactory
-	ClientStore    oauth2.OAuth2ClientStore
-	AccountStore   security.AccountStore
-	TenantStore    security.TenantStore
-	ProviderStore  security.ProviderStore
-	Issuer         security.Issuer
-	TokenStore     TokenStore
-	TokenEnhancers []TokenEnhancer
+	DetailsFactory     *common.ContextDetailsFactory
+	ClientStore        oauth2.OAuth2ClientStore
+	AccountStore       security.AccountStore
+	TenantStore        security.TenantStore
+	ProviderStore      security.ProviderStore
+	Issuer             security.Issuer
+	TokenStore         TokenStore
+	TokenEnhancers     []TokenEnhancer
+	PostTokenEnhancers []TokenEnhancer
 }
 
 // DefaultAuthorizationService implements AuthorizationService
 type DefaultAuthorizationService struct {
-	detailsFactory *common.ContextDetailsFactory
-	clientStore    oauth2.OAuth2ClientStore
-	accountStore   security.AccountStore
-	tenantStore    security.TenantStore
-	providerStore  security.ProviderStore
-	tokenStore     TokenStore
-	tokenEnhancer  TokenEnhancer
+	detailsFactory    *common.ContextDetailsFactory
+	clientStore       oauth2.OAuth2ClientStore
+	accountStore      security.AccountStore
+	tenantStore       security.TenantStore
+	providerStore     security.ProviderStore
+	tokenStore        TokenStore
+	tokenEnhancer     TokenEnhancer
+	postTokenEnhancer TokenEnhancer
 }
 
 func NewDefaultAuthorizationService(opts ...DASOptions) *DefaultAuthorizationService {
@@ -62,6 +64,7 @@ func NewDefaultAuthorizationService(opts ...DASOptions) *DefaultAuthorizationSer
 			&DetailsTokenEnhancer{},
 			&refreshTokenEnhancer,
 		},
+		PostTokenEnhancers: []TokenEnhancer{},
 	}
 	for _, opt := range opts {
 		opt(&conf)
@@ -71,13 +74,14 @@ func NewDefaultAuthorizationService(opts ...DASOptions) *DefaultAuthorizationSer
 	refreshTokenEnhancer.issuer = conf.Issuer
 	refreshTokenEnhancer.tokenStore = conf.TokenStore
 	return &DefaultAuthorizationService{
-		detailsFactory: conf.DetailsFactory,
-		clientStore:    conf.ClientStore,
-		accountStore:   conf.AccountStore,
-		tenantStore:    conf.TenantStore,
-		providerStore:  conf.ProviderStore,
-		tokenStore:     conf.TokenStore,
-		tokenEnhancer:  NewCompositeTokenEnhancer(conf.TokenEnhancers...),
+		detailsFactory:    conf.DetailsFactory,
+		clientStore:       conf.ClientStore,
+		accountStore:      conf.AccountStore,
+		tenantStore:       conf.TenantStore,
+		providerStore:     conf.ProviderStore,
+		tokenStore:        conf.TokenStore,
+		tokenEnhancer:     NewCompositeTokenEnhancer(conf.TokenEnhancers...),
+		postTokenEnhancer: NewCompositeTokenEnhancer(conf.PostTokenEnhancers...),
 	}
 }
 
@@ -137,7 +141,11 @@ func (s *DefaultAuthorizationService) CreateAccessToken(c context.Context, oauth
 	}
 
 	// save token
-	return s.tokenStore.SaveAccessToken(c, enhanced, oauth)
+	saved, e := s.tokenStore.SaveAccessToken(c, enhanced, oauth)
+	if e != nil {
+		return nil, e
+	}
+	return s.postTokenEnhancer.Enhance(c, saved, oauth)
 }
 
 func (s *DefaultAuthorizationService) RefreshAccessToken(c context.Context, oauth oauth2.Authentication, refreshToken oauth2.RefreshToken) (oauth2.AccessToken, error) {
@@ -155,7 +163,12 @@ func (s *DefaultAuthorizationService) RefreshAccessToken(c context.Context, oaut
 	}
 
 	// save token
-	return s.tokenStore.SaveAccessToken(c, enhanced, oauth)
+	saved, e := s.tokenStore.SaveAccessToken(c, enhanced, oauth)
+	if e != nil {
+		return nil, e
+	}
+
+	return s.postTokenEnhancer.Enhance(c, saved, oauth)
 }
 
 /****************************

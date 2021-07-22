@@ -22,17 +22,21 @@ const (
 /***********************
 	Authorize Endpoint
  ***********************/
+
+//goland:noinspection GoNameStartsWithPackageName
 type AuthorizeEndpointMiddleware struct {
 	requestProcessor auth.AuthorizeRequestProcessor
-	authorizeHanlder auth.AuthorizeHandler
+	authorizeHandler auth.AuthorizeHandler
 	approveMatcher   web.RequestMatcher
 }
 
+//goland:noinspection GoNameStartsWithPackageName
 type AuthorizeMWOptions func(*AuthorizeMWOption)
 
+//goland:noinspection GoNameStartsWithPackageName
 type AuthorizeMWOption struct {
 	RequestProcessor auth.AuthorizeRequestProcessor
-	AuthorizeHanlder auth.AuthorizeHandler
+	AuthorizeHandler auth.AuthorizeHandler
 	ApprovalMatcher  web.RequestMatcher
 }
 
@@ -47,7 +51,7 @@ func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpoin
 	}
 	return &AuthorizeEndpointMiddleware{
 		requestProcessor: opt.RequestProcessor,
-		authorizeHanlder: opt.AuthorizeHanlder,
+		authorizeHandler: opt.AuthorizeHandler,
 		approveMatcher:   opt.ApprovalMatcher,
 	}
 }
@@ -64,7 +68,7 @@ func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.
 		switch approve, e := mw.approveMatcher.MatchesWithContext(ctx, ctx.Request); {
 		case e == nil && approve:
 			// approve or deny request
-			if request, err = mw.loadAuthrozieRequest(ctx); err != nil {
+			if request, err = mw.loadAuthorizeRequest(ctx); err != nil {
 				err = oauth2.NewInvalidAuthorizeRequestError("approval endpoint should be accessed via POST form", e)
 			}
 		default:
@@ -93,7 +97,7 @@ func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.
 	}
 }
 
-func (mw *AuthorizeEndpointMiddleware) AuthroizeHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
+func (mw *AuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
 			return
@@ -112,13 +116,13 @@ func (mw *AuthorizeEndpointMiddleware) AuthroizeHandlerFunc(condition web.Reques
 		e = auth.ValidateAllAutoApprovalScopes(ctx, client, request.Scopes)
 		if e != nil {
 			// save request
-			if e := mw.saveAuthrozieRequest(ctx, request); e != nil {
+			if e := mw.saveAuthorizeRequest(ctx, request); e != nil {
 				mw.handleError(ctx, e)
 				return
 			}
-			respFunc, e = mw.authorizeHanlder.HandleApprovalPage(ctx, request, user)
+			respFunc, e = mw.authorizeHandler.HandleApprovalPage(ctx, request, user)
 		} else {
-			respFunc, e = mw.authorizeHanlder.HandleApproved(ctx, request, user)
+			respFunc, e = mw.authorizeHandler.HandleApproved(ctx, request, user)
 		}
 
 		if e != nil {
@@ -132,7 +136,7 @@ func (mw *AuthorizeEndpointMiddleware) AuthroizeHandlerFunc(condition web.Reques
 func (mw *AuthorizeEndpointMiddleware) ApproveOrDenyHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// no matter what happen, this is the last step. so clear saved request after done
-		defer mw.clearAuthrozieRequest(ctx)
+		defer func() {_ = mw.clearAuthorizeRequest(ctx)}()
 
 		// sanity checks
 		request, client, user, e := mw.endpointSanityCheck(ctx)
@@ -151,7 +155,7 @@ func (mw *AuthorizeEndpointMiddleware) ApproveOrDenyHandlerFunc() gin.HandlerFun
 		request.Approved = true
 
 		// write response
-		respFunc, e := mw.authorizeHanlder.HandleApproved(ctx, request, user)
+		respFunc, e := mw.authorizeHandler.HandleApproved(ctx, request, user)
 		if e != nil {
 			mw.handleError(ctx, e)
 			return
@@ -176,12 +180,12 @@ func (mw *AuthorizeEndpointMiddleware) handleError(c *gin.Context, err error) {
 		err = oauth2.NewInvalidAuthorizeRequestError(err)
 	}
 
-	_ = mw.clearAuthrozieRequest(c)
+	_ = mw.clearAuthorizeRequest(c)
 	_ = c.Error(err)
 	c.Abort()
 }
 
-func (mw *AuthorizeEndpointMiddleware) saveAuthrozieRequest(ctx *gin.Context, request *auth.AuthorizeRequest) (error) {
+func (mw *AuthorizeEndpointMiddleware) saveAuthorizeRequest(ctx *gin.Context, request *auth.AuthorizeRequest) error {
 	s := session.Get(ctx)
 	if s == nil {
 		return oauth2.NewInternalError("failed to save authorize request for approval")
@@ -194,7 +198,7 @@ func (mw *AuthorizeEndpointMiddleware) saveAuthrozieRequest(ctx *gin.Context, re
 	return nil
 }
 
-func (mw *AuthorizeEndpointMiddleware) loadAuthrozieRequest(ctx *gin.Context) (*auth.AuthorizeRequest, error) {
+func (mw *AuthorizeEndpointMiddleware) loadAuthorizeRequest(ctx *gin.Context) (*auth.AuthorizeRequest, error) {
 	s := session.Get(ctx)
 	if s == nil {
 		return nil, oauth2.NewInternalError("failed to load authorize request for approval (no session)")
@@ -206,7 +210,7 @@ func (mw *AuthorizeEndpointMiddleware) loadAuthrozieRequest(ctx *gin.Context) (*
 	return nil, oauth2.NewInternalError("failed to load authorize request for approval")
 }
 
-func (mw *AuthorizeEndpointMiddleware) clearAuthrozieRequest(ctx *gin.Context) error {
+func (mw *AuthorizeEndpointMiddleware) clearAuthorizeRequest(ctx *gin.Context) error {
 	s := session.Get(ctx)
 	if s == nil {
 		return oauth2.NewInternalError("failed to clear authorize request for approval (no session)")

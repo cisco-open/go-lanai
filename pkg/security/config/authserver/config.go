@@ -299,7 +299,7 @@ func (c *Configuration) authorizationService() auth.AuthorizationService {
 				opt.Issuer = c.Issuer
 				opt.JwtEncoder = c.jwtEncoder()
 			})
-			conf.TokenEnhancers = append(conf.TokenEnhancers, openidEnhancer)
+			conf.PostTokenEnhancers = append(conf.PostTokenEnhancers, openidEnhancer)
 		})
 	}
 
