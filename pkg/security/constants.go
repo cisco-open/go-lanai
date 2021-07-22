@@ -16,6 +16,7 @@ const (
 )
 
 const (
+	// CompatibilityReference
 	/**
 	 * Note about compatibility reference:
 	 *
@@ -41,7 +42,15 @@ const (
 const (
 	DetailsKeyAuthWarning = "AuthWarning"
 	DetailsKeyAuthTime    = "AuthTime"
-	DetailsKeySessionId    = "SessionId"
+	DetailsKeyAuthMethod  = "AuthMethod"
+	DetailsKeyMFAApplied  = "MFAApplied"
+	DetailsKeySessionId   = "SessionId"
+)
+
+const (
+	AuthMethodPassword       = "Password"
+	AuthMethodExternalSaml   = "ExtSAML"
+	AuthMethodExternalOpenID = "ExtOpenID"
 )
 
 const (

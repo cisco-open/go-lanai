@@ -34,12 +34,13 @@ var (
 	errorBadCredentials     = security.NewBadCredentialsError("bad creds")
 	errorCredentialsExpired = security.NewCredentialsExpiredError("cred exp")
 	errorMaxAttemptsReached = security.NewMaxAttemptsReachedError("max attempts")
-	errorAccountStatus      = security.NewAccountStatusError("acct status")
+	//errorAccountStatus      = security.NewAccountStatusError("acct status")
 )
 
 /******************************
 	Serialization
 ******************************/
+
 func GobRegister() {
 	gob.Register((*usernamePasswordAuthentication)(nil))
 	gob.Register((*timeBasedOtp)(nil))
@@ -51,6 +52,7 @@ func GobRegister() {
 /************************
 	security.Candidate
 ************************/
+
 type MFAMode int
 const(
 	MFAModeSkip = iota
@@ -66,17 +68,17 @@ type UsernamePasswordPair struct {
 	EnforceMFA MFAMode
 }
 
-// security.Candidate
+// Principal implements security.Candidate
 func (upp *UsernamePasswordPair) Principal() interface{} {
 	return upp.Username
 }
 
-// security.Candidate
+// Credentials implements security.Candidate
 func (upp *UsernamePasswordPair) Credentials() interface{} {
 	return upp.Password
 }
 
-// security.Candidate
+// Details implements security.Candidate
 func (upp *UsernamePasswordPair) Details() interface{} {
 	return upp.DetailsMap
 }
@@ -88,17 +90,17 @@ type MFAOtpVerification struct {
 	DetailsMap map[string]interface{}
 }
 
-// security.Candidate
+// Principal implements security.Candidate
 func (uop *MFAOtpVerification) Principal() interface{} {
 	return uop.CurrentAuth.Principal()
 }
 
-// security.Candidate
+// Credentials implements security.Candidate
 func (uop *MFAOtpVerification) Credentials() interface{} {
 	return uop.OTP
 }
 
-// security.Candidate
+// Details implements security.Candidate
 func (uop *MFAOtpVerification) Details() interface{} {
 	return uop.DetailsMap
 }
@@ -109,17 +111,17 @@ type MFAOtpRefresh struct {
 	DetailsMap map[string]interface{}
 }
 
-// security.Candidate
+// Principal implements security.Candidate
 func (uop *MFAOtpRefresh) Principal() interface{} {
 	return uop.CurrentAuth.Principal()
 }
 
-// security.Candidate
+// Credentials implements security.Candidate
 func (uop *MFAOtpRefresh) Credentials() interface{} {
 	return uop.CurrentAuth.OTPIdentifier()
 }
 
-// security.Candidate
+// Details implements security.Candidate
 func (uop *MFAOtpRefresh) Details() interface{} {
 	return uop.DetailsMap
 }
@@ -127,6 +129,7 @@ func (uop *MFAOtpRefresh) Details() interface{} {
 /******************************
 	security.Authentication
 ******************************/
+
 // UsernamePasswordAuthentication implements security.Authentication
 type UsernamePasswordAuthentication interface {
 	security.Authentication

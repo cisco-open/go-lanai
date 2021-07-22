@@ -29,7 +29,7 @@ type IdTokenClaims struct {
 	AuthTime        time.Time `claim:"auth_time"`
 	Nonce           string    `claim:"nonce"`
 	AuthCtxClassRef string    `claim:"acr"`
-	AuthMethodRef   string    `claim:"amr"`
+	AuthMethodRef   []string  `claim:"amr"`
 	AuthorizedParty string    `claim:"azp"`
 	AccessTokenHash string    `claim:"at_hash"`
 

@@ -40,12 +40,37 @@ func Nonce(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 }
 
 func AuthContextClassRef(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
-	if opt.Source.OAuth2Request() == nil || opt.Source.OAuth2Request().Parameters() == nil {
-		return nil, errorMissingRequest
+	if opt.Issuer == nil {
+		return nil, errorMissingDetails
 	}
 
-	nonce, _ := opt.Source.OAuth2Request().Parameters()[oauth2.ParameterNonce]
-	return nonZeroOrError(nonce, errorMissingRequestParams)
+	method := extractAuthMethod(opt)
+	if method == "" {
+		return nil, errorMissingDetails
+	}
+	mfaApplied := extractMFAApplied(opt)
+
+	if mfaApplied {
+		return opt.Issuer.LevelOfAssurance(3), nil
+	} else {
+		return opt.Issuer.LevelOfAssurance(2), nil
+	}
+}
+
+func AuthMethodRef(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
+	methods := make([]string, 0, 2)
+	if m := authMethodString(extractAuthMethod(opt)); m != "" {
+		methods = append(methods, m)
+	}
+
+	if extractMFAApplied(opt) {
+		methods = append(methods, "otp")
+	}
+
+	if len(methods) == 0 {
+		return nil, errorMissingDetails
+	}
+	return methods, nil
 }
 
 func AccessTokenHash(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
@@ -99,7 +124,7 @@ func EmailVerified(_ context.Context, opt *FactoryOption) (v interface{}, err er
 }
 
 func ZoneInfo(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
-	// TODO maybe impelment this if possibile to extract it from locale
+	// TODO maybe implement this if possibile to extract it from locale
 	return nil, errorMissingDetails
 }
 
@@ -165,4 +190,47 @@ func calculateAccessTokenHash(token string) (string, error) {
 
 	leftHalf := hash.Sum(nil)[hash.Size() / 2:]
 	return base64.RawStdEncoding.EncodeToString(leftHalf), nil
+}
+
+
+func extractAuthMethod(opt *FactoryOption) (ret string) {
+	if opt.Source.UserAuthentication() == nil {
+		return
+	}
+
+	userAuth := opt.Source.UserAuthentication()
+	details, ok := userAuth.Details().(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	ret, _ = details[security.DetailsKeyAuthMethod].(string)
+	return
+}
+
+func extractMFAApplied(opt *FactoryOption) (ret bool) {
+	if opt.Source.UserAuthentication() == nil {
+		return
+	}
+
+	userAuth := opt.Source.UserAuthentication()
+	details, ok := userAuth.Details().(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	ret, _ = details[security.DetailsKeyMFAApplied].(bool)
+	return
+}
+
+func authMethodString(authMethod string) (ret string) {
+	switch authMethod {
+	case security.AuthMethodPassword:
+		return "password"
+	case security.AuthMethodExternalSaml:
+		return "saml"
+	case security.AuthMethodExternalOpenID:
+		return "openid"
+	}
+	return
 }

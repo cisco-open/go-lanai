@@ -14,7 +14,6 @@ type UrlBuilderOption struct {
 }
 
 type Issuer interface {
-	// Basic informations
 	Protocol() string
 	Domain() string
 	Port() int

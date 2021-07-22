@@ -115,6 +115,9 @@ func (oe *OpenIDTokenEnhancer) determineClaimSpecs(request oauth2.OAuth2Request)
 	}
 
 	specs := make([]map[string]claims.ClaimSpec, len(defaultSpecs), len(defaultSpecs) + len(request.Scopes()))
+	for i, spec := range defaultSpecs {
+		specs[i] = spec
+	}
 
 	scopes := request.Scopes()
 	includeAll := true

@@ -194,7 +194,7 @@ func IsBeingUnAuthenticated(from, to Authentication) bool {
 	return fromAuthenticated && toUnAuthenticatedState
 }
 
-func DetermineAuthenticationTime(ctx context.Context, userAuth Authentication) (authTime time.Time) {
+func DetermineAuthenticationTime(_ context.Context, userAuth Authentication) (authTime time.Time) {
 	if userAuth == nil {
 		return
 	}

@@ -86,6 +86,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 		details = make(map[string]interface{})
 	}
 	details[security.DetailsKeyAuthTime] = assertionCandidate.Assertion.IssueInstant
+	details[security.DetailsKeyAuthMethod] = security.AuthMethodExternalSaml
 
 	auth := &samlAssertionAuthentication{
 		Acct: user,

@@ -110,7 +110,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 	return
 }
 
-// exported for override posibility
+// CreateSuccessAuthentication exported for override posibility
 func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordPair, account security.Account) (security.Authentication, error) {
 
 	details := candidate.DetailsMap
@@ -143,9 +143,9 @@ func (a *Authenticator) CreateSuccessAuthentication(candidate *UsernamePasswordP
 		}
 	}
 
-	copy := account.CacheableCopy()
+	cp := account.CacheableCopy()
 	auth := usernamePasswordAuthentication{
-		Acct:       copy,
+		Acct:       cp,
 		Perms:      permissions,
 		DetailsMap: details,
 	}

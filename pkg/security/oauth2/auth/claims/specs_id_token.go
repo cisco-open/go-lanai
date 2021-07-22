@@ -14,9 +14,9 @@ var (
 		oauth2.ClaimIssueAt:         Required(IssuedAt),
 		oauth2.ClaimAuthTime:        RequiredIfParamsExists(AuthenticationTime, oauth2.ParameterMaxAge),
 		oauth2.ClaimNonce:           RequiredIfParamsExists(Nonce, oauth2.ParameterNonce),
-		oauth2.ClaimAuthCtxClassRef: Unsupported(),                // TODO acr
-		oauth2.ClaimAuthMethodRef:   Unsupported(),                // TODO amr
-		oauth2.ClaimAuthorizedParty: Optional(ClientId),                // TODO azp
+		oauth2.ClaimAuthCtxClassRef: Optional(AuthContextClassRef),
+		oauth2.ClaimAuthMethodRef:   Optional(AuthMethodRef),
+		oauth2.ClaimAuthorizedParty: Optional(ClientId),
 		oauth2.ClaimAccessTokenHash: RequiredIfImplicitFlow(AccessTokenHash),
 
 		// Custom Profile

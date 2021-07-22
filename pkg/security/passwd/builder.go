@@ -152,9 +152,10 @@ func (b *AuthenticatorBuilder) prepareDecisionMakers(f *PasswordAuthFeature) []A
 }
 
 func (b *AuthenticatorBuilder) preparePostProcessors(f *PasswordAuthFeature) []PostAuthenticationProcessor {
-	// TODO maybe customizeble via Feature
+	// TODO maybe customizable via Feature
 	return []PostAuthenticationProcessor{
 		NewPersistAccountPostProcessor(f.accountStore),
+		NewAdditionalDetailsPostProcessor(),
 		NewAccountStatusPostProcessor(f.accountStore),
 		NewAccountLockingPostProcessor(f.accountStore),
 	}

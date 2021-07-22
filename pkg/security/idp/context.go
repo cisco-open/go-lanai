@@ -18,12 +18,12 @@ const (
 
 type AuthenticationFlow string
 
-// encoding.TextMarshaler
+// MarshalText implements encoding.TextMarshaler
 func (f AuthenticationFlow) MarshalText() ([]byte, error) {
 	return []byte(f), nil
 }
 
-// encoding.TextUnmarshaler
+// UnmarshalText implements encoding.TextUnmarshaler
 func (f *AuthenticationFlow) UnmarshalText(data []byte) error {
 	value := string(data)
 	switch value {
