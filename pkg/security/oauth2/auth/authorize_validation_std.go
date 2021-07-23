@@ -42,7 +42,7 @@ func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request
 		return nil, e
 	}
 
-	client, e := p.validateClientId(ctx, request);
+	client, e := p.validateClientId(ctx, request)
 	if  e != nil {
 		return nil, e
 	}
@@ -68,7 +68,7 @@ func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request
 	return request, nil
 }
 
-func (p *StandardAuthorizeRequestProcessor) validateResponseTypes(c context.Context, request *AuthorizeRequest) error {
+func (p *StandardAuthorizeRequestProcessor) validateResponseTypes(_ context.Context, request *AuthorizeRequest) error {
 	if request.ResponseTypes == nil {
 		return oauth2.NewInvalidAuthorizeRequestError("response_type is required")
 	}

@@ -123,8 +123,8 @@ func EmailVerified(_ context.Context, opt *FactoryOption) (v interface{}, err er
 	return utils.BoolPtr(strings.TrimSpace(details.Email()) != ""), nil
 }
 
-func ZoneInfo(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
-	// TODO maybe implement this if possibile to extract it from locale
+func ZoneInfo(_ context.Context, _ *FactoryOption) (v interface{}, err error) {
+	// TODO maybe implement this if possible to extract it from locale
 	return nil, errorMissingDetails
 }
 

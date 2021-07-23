@@ -79,7 +79,7 @@ func (c *AuthorizeEndpointConfigurer) validate(f *AuthorizeFeature, ws security.
 	}
 
 	if f.errorHandler == nil {
-		f.errorHandler = auth.NewOAuth2ErrorHanlder()
+		f.errorHandler = auth.NewOAuth2ErrorHandler()
 	}
 
 	if f.authorizeHanlder == nil {

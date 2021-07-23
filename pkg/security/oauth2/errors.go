@@ -14,7 +14,7 @@ import (
 // sub types of security.ErrorTypeCodeOAuth2
 const (
 	_                              = iota
-	ErrorSubTypeCodeOAuth2Internal = security.ErrorTypeCodeOAuth2 + iota<< errorutils.ErrorSubTypeOffset
+	ErrorSubTypeCodeOAuth2Internal = security.ErrorTypeCodeOAuth2 + iota<<errorutils.ErrorSubTypeOffset
 	ErrorSubTypeCodeOAuth2ClientAuth
 	ErrorSubTypeCodeOAuth2Authorize
 	ErrorSubTypeCodeOAuth2Grant
@@ -41,12 +41,13 @@ const (
 	ErrorCodeInvalidResponseType
 	ErrorCodeInvalidRedirectUri
 	ErrorCodeAccessRejected
+	ErrorCodeOpenIDExt
 )
 
 // ErrorSubTypeCodeOAuth2Grant
 const (
 	_ = ErrorSubTypeCodeOAuth2Grant + iota
-	ErrorCodeGranterNotAvalable
+	ErrorCodeGranterNotAvailable
 	ErrorCodeUnauthorizedClient // grant type is not allowed for client
 	ErrorCodeInvalidTokenRequest
 	ErrorCodeInvalidGrant
@@ -78,6 +79,7 @@ var (
 /************************
 	Error EC
 *************************/
+
 const (
 	// https://tools.ietf.org/html/rfc6749#section-4.1.2.1
 	ErrorTranslationInvalidRequest      = "invalid_request"
@@ -99,17 +101,26 @@ const (
 	ErrorTranslationRedirectMismatch  = "redirect_uri_mismatch"
 
 	// https://tools.ietf.org/html/rfc7009#section-4.1.1
-	ErrorTranslationUnsupportedTokenType  = "unsupported_token_type"
-
+	ErrorTranslationUnsupportedTokenType = "unsupported_token_type"
 
 	// https://openid.net/specs/openid-connect-core-1_0.html#AuthError
-	// TODO OIDC additional translation
+	ErrorTranslationInteractionRequired     = "interaction_required"
+	ErrorTranslationLoginRequired           = "login_required"
+	ErrorTranslationAcctSelectRequired      = "account_selection_required"
+	ErrorTranslationConsentRequired         = "consent_required"
+	ErrorTranslationInvalidRequestURI       = "invalid_request_uri"
+	ErrorTranslationInvalidRequestObj       = "invalid_request_object"
+	ErrorTranslationRequestUnsupported      = "request_not_supported"
+	ErrorTranslationRequestURIUnsupported   = "request_uri_not_supported"
+	ErrorTranslationRegistrationUnsupported = "registration_not_supported"
 	//ErrorTranslation = ""
 )
 
 /************************
 	Extensions
 *************************/
+
+//goland:noinspection GoNameStartsWithPackageName
 type OAuth2ErrorTranslator interface {
 	error
 	TranslateErrorCode() string
@@ -124,6 +135,7 @@ type OAuth2ErrorTranslator interface {
 // 	- web.StatusCoder
 //  - encoding.BinaryMarshaler
 //  - encoding.BinaryUnmarshaler
+//goland:noinspection GoNameStartsWithPackageName
 type OAuth2Error struct {
 	security.CodedError
 	EC string // oauth error code
@@ -137,7 +149,7 @@ func (e *OAuth2Error) StatusCode() int {
 func (e *OAuth2Error) Headers() http.Header {
 	header := http.Header{}
 	header.Add("Cache-Control", "no-store")
-	header.Add("Pragma", "no-cache");
+	header.Add("Pragma", "no-cache")
 	return header
 }
 
@@ -149,16 +161,16 @@ func (e *OAuth2Error) TranslateStatusCode() int {
 	return e.SC
 }
 
-// json.Marshaler
-func (e *OAuth2Error) MarshalJSON() ([]byte, error)  {
-	data := map[string]string {
-		ParameterError: e.EC,
+// MarshalJSON implements json.Marshaler
+func (e *OAuth2Error) MarshalJSON() ([]byte, error) {
+	data := map[string]string{
+		ParameterError:            e.EC,
 		ParameterErrorDescription: e.Error(),
 	}
 	return json.Marshal(data)
 }
 
-// json.Unmarshaler
+// UnmarshalJSON implements json.Unmarshaler
 // Note: JSON doesn't include internal code error. So reconstruct error from JSON is not possible.
 //       Unmarshaler can only be used for opaque token checking HTTP call
 func (e *OAuth2Error) UnmarshalJSON(data []byte) error {
@@ -180,7 +192,7 @@ type oauth2ErrorCarrier struct {
 	SC         int    // status code
 }
 
-// encoding.BinaryMarshaler interface
+// MarshalBinary implements encoding.BinaryMarshaler interface
 func (e OAuth2Error) MarshalBinary() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
 	encoder := gob.NewEncoder(buffer)
@@ -195,7 +207,7 @@ func (e OAuth2Error) MarshalBinary() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// encoding.BinaryUnmarshaler interface
+// UnmarshalBinary implements encoding.BinaryUnmarshaler interface
 func (e *OAuth2Error) UnmarshalBinary(data []byte) error {
 	buffer := bytes.NewBuffer(data)
 	decoder := gob.NewDecoder(buffer)
@@ -214,7 +226,8 @@ func (e *OAuth2Error) UnmarshalBinary(data []byte) error {
 /************************
 	Constructors
 *************************/
-func NewOAuth2Error(code int64, e interface{}, oauth2Code string, sc int, causes...interface{}) *OAuth2Error {
+
+func NewOAuth2Error(code int64, e interface{}, oauth2Code string, sc int, causes ...interface{}) *OAuth2Error {
 	embedded := security.NewCodedError(code, e, causes...)
 	return &OAuth2Error{
 		CodedError: *embedded,
@@ -224,99 +237,102 @@ func NewOAuth2Error(code int64, e interface{}, oauth2Code string, sc int, causes
 }
 
 /* OAuth2Internal family */
-func NewInternalError(value interface{}, causes...interface{}) error {
+
+func NewInternalError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeOAuth2InternalGeneral, value,
 		ErrorTranslationInternal, http.StatusBadRequest,
 		causes...)
 }
 
 /* OAuth2Auth family */
-func NewGranterNotAvailableError(value interface{}, causes...interface{}) error {
-	return NewOAuth2Error(ErrorCodeGranterNotAvalable, value,
+
+func NewGranterNotAvailableError(value interface{}, causes ...interface{}) error {
+	return NewOAuth2Error(ErrorCodeGranterNotAvailable, value,
 		ErrorTranslationGrantNotSupported, http.StatusBadRequest,
 		causes...)
 }
 
-func NewInvalidTokenRequestError(value interface{}, causes...interface{}) error {
+func NewInvalidTokenRequestError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidTokenRequest, value,
 		ErrorTranslationInvalidRequest, http.StatusBadRequest,
 		causes...)
 }
 
-func NewInvalidClientError(value interface{}, causes...interface{}) error {
+func NewInvalidClientError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidClient, value,
 		ErrorTranslationInvalidClient, http.StatusUnauthorized,
 		causes...)
 }
 
-func NewClientNotFoundError(value interface{}, causes...interface{}) error {
+func NewClientNotFoundError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeClientNotFound, value,
 		ErrorTranslationInvalidClient, http.StatusUnauthorized,
 		causes...)
 }
 
-func NewUnauthorizedClientError(value interface{}, causes...interface{}) error {
+func NewUnauthorizedClientError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeUnauthorizedClient, value,
 		ErrorTranslationUnauthorizedClient, http.StatusBadRequest,
 		causes...)
 }
 
-func NewInvalidGrantError(value interface{}, causes...interface{}) error {
+func NewInvalidGrantError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidGrant, value,
 		ErrorTranslationInvalidGrant, http.StatusBadRequest,
 		causes...)
 }
 
-func NewInvalidScopeError(value interface{}, causes...interface{}) error {
+func NewInvalidScopeError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidScope, value,
 		ErrorTranslationInvalidScope, http.StatusBadRequest,
 		causes...)
 }
 
-func NewUnsupportedTokenTypeError(value interface{}, causes...interface{}) error {
+func NewUnsupportedTokenTypeError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeUnsupportedTokenType, value,
 		ErrorTranslationUnsupportedTokenType, http.StatusBadRequest,
 		causes...)
 }
 
-func NewGenericError(value interface{}, causes...interface{}) error {
+func NewGenericError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeGeneric, value,
 		ErrorTranslationInvalidRequest, http.StatusBadRequest,
 		causes...)
 }
 
-func NewInvalidAuthorizeRequestError(value interface{}, causes...interface{}) error {
+func NewInvalidAuthorizeRequestError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidAuthorizeRequest, value,
 		ErrorTranslationInvalidRequest, http.StatusBadRequest,
 		causes...)
 }
 
-func NewInvalidRedirectUriError(value interface{}, causes...interface{}) error {
+func NewInvalidRedirectUriError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidRedirectUri, value,
 		ErrorTranslationRedirectMismatch, http.StatusBadRequest,
 		causes...)
 }
 
-func NewInvalidResponseTypeError(value interface{}, causes...interface{}) error {
+func NewInvalidResponseTypeError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidResponseType, value,
 		ErrorTranslationInvalidResponseType, http.StatusBadRequest,
 		causes...)
 }
 
-func NewAccessRejectedError(value interface{}, causes...interface{}) error {
+func NewAccessRejectedError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeAccessRejected, value,
 		ErrorTranslationAccessDenied, http.StatusBadRequest,
 		causes...)
 }
 
 /* OAuth2Res family */
-func NewInvalidAccessTokenError(value interface{}, causes...interface{}) error {
+
+func NewInvalidAccessTokenError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInvalidAccessToken, value,
 		ErrorTranslationInvalidToken, http.StatusUnauthorized,
 		causes...)
 }
 
-func NewInsufficientScopeError(value interface{}, causes...interface{}) error {
+func NewInsufficientScopeError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeInsufficientScope, value,
 		ErrorTranslationInsufficientScope, http.StatusForbidden,
 		causes...)

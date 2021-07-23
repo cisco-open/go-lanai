@@ -143,7 +143,7 @@ func (r *RedisContextDetailsStore) RegisterRefreshToken(c context.Context, token
 
 	ext := oauth.OAuth2Request().Extensions()
 	if ext != nil {
-		saveToSession, ok := ext[oauth2.ExtensionUseSessionTimeout].(bool)
+		saveToSession, ok := ext[oauth2.ExtUseSessionTimeout].(bool)
 		if ok && saveToSession {
 			if e := r.saveRefreshTokenToSession(c, token, oauth); e != nil {
 				return e
@@ -164,7 +164,7 @@ func (r *RedisContextDetailsStore) RegisterAccessToken(ctx context.Context, toke
 
 	ext := oauth.OAuth2Request().Extensions()
 	if ext != nil {
-		saveToSession, ok := ext[oauth2.ExtensionUseSessionTimeout].(bool)
+		saveToSession, ok := ext[oauth2.ExtUseSessionTimeout].(bool)
 		if ok && saveToSession {
 			if e := r.saveAccessTokenToSession(ctx, token, oauth); e != nil {
 				return e

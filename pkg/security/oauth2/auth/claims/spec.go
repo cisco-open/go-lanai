@@ -2,6 +2,16 @@ package claims
 
 import "context"
 
+type RequestedClaims interface {
+	Get(claim string) (RequestedClaim, bool)
+}
+
+type RequestedClaim interface {
+	Essential() bool
+	Values() []string
+	IsDefault() bool
+}
+
 type ClaimSpec interface {
 	Calculate(ctx context.Context, opt *FactoryOption) (v interface{}, err error)
 	Required(ctx context.Context, opt *FactoryOption) bool

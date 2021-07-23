@@ -22,9 +22,8 @@ type HanlderOption struct {
 	Revoker auth.AccessRevoker
 }
 
+// TokenRevokingLogoutHandler
 /**
- * TokenRevokingLogoutHanlder
- *
  * GET method: used for logout by the session controlled clients. The client send user to this endpoint and the session
  * is invalidated. As a result, the tokens controlled by this session is invalidated (See the NfvClientDetails.useSessionTimeout
  * properties). In addition, if an access token is passed in the request, the access token will be invalidated explicitly.
@@ -38,21 +37,21 @@ type HanlderOption struct {
  * @author Livan Du
  * Created on 2018-05-04
  */
-type TokenRevokingLogoutHanlder struct {
+type TokenRevokingLogoutHandler struct {
 	revoker auth.AccessRevoker
 }
 
-func NewTokenRevokingLogoutHanlder(opts...HanlderOptions) *TokenRevokingLogoutHanlder {
+func NewTokenRevokingLogoutHandler(opts...HanlderOptions) *TokenRevokingLogoutHandler {
 	opt := HanlderOption{}
 	for _, f := range opts {
 		f(&opt)
 	}
-	return &TokenRevokingLogoutHanlder{
+	return &TokenRevokingLogoutHandler{
 		revoker: opt.Revoker,
 	}
 }
 
-func (h TokenRevokingLogoutHanlder) HandleLogout(ctx context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) error  {
+func (h TokenRevokingLogoutHandler) HandleLogout(ctx context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) error  {
 	switch r.Method {
 	case http.MethodGet:
 		return h.handleGet(ctx, auth)
@@ -66,7 +65,7 @@ func (h TokenRevokingLogoutHanlder) HandleLogout(ctx context.Context, r *http.Re
 	return nil
 }
 
-func (h TokenRevokingLogoutHanlder) handleGet(ctx context.Context, auth security.Authentication) error {
+func (h TokenRevokingLogoutHandler) handleGet(ctx context.Context, auth security.Authentication) error {
 	defer func() {
 		security.Clear(ctx)
 	}()
@@ -83,7 +82,7 @@ func (h TokenRevokingLogoutHanlder) handleGet(ctx context.Context, auth security
 	return nil
 }
 
-func (h TokenRevokingLogoutHanlder) handlePost(ctx context.Context, auth security.Authentication) error  {
+func (h TokenRevokingLogoutHandler) handlePost(ctx context.Context, auth security.Authentication) error  {
 	defer func() {
 		security.Clear(ctx)
 	}()
@@ -101,7 +100,7 @@ func (h TokenRevokingLogoutHanlder) handlePost(ctx context.Context, auth securit
 }
 
 // In case of PUT, DELETE, PATCH etc, we don't clean authentication. Instead, we invalidate access token carried by header
-func (h TokenRevokingLogoutHanlder) handleDefault(ctx context.Context, r *http.Request) error  {
+func (h TokenRevokingLogoutHandler) handleDefault(ctx context.Context, r *http.Request) error  {
 	// grab token
 	tokenValue, e := h.extractAccessToken(ctx, r)
 	if e != nil {
@@ -116,7 +115,7 @@ func (h TokenRevokingLogoutHanlder) handleDefault(ctx context.Context, r *http.R
 	return nil
 }
 
-func (h TokenRevokingLogoutHanlder) extractAccessToken(ctx context.Context, r *http.Request) (string, error) {
+func (h TokenRevokingLogoutHandler) extractAccessToken(ctx context.Context, r *http.Request) (string, error) {
 	// try header first
 	header := r.Header.Get("Authorization")
 	if strings.HasPrefix(header, bearerTokenPrefix) {

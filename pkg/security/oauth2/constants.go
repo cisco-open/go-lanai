@@ -24,7 +24,7 @@ const (
 	ParameterTenantId            = "tenant_id"
 	ParameterTenantName          = "tenant_name"
 	ParameterNonce               = "nonce"
-	ParameterMaxAge               = "max_age"
+	ParameterMaxAge              = "max_age"
 	ParameterError               = "error"
 	ParameterErrorDescription    = "error_description"
 	ParameterCodeChallenge       = "code_challenge"
@@ -35,12 +35,18 @@ const (
 	ParameterAccessToken         = "access_token"
 	ParameterSwitchUsername      = "switch_username"
 	ParameterSwitchUserId        = "switch_user_id"
+	ParameterDisplay             = "display"
+	ParameterACR                 = "acr_values"
+	ParameterPrompt              = "prompt"
+	ParameterClaims              = "claims"
 	//Parameter = ""
 )
 
 const (
-	ExtensionUseSessionTimeout = "use_session_timeout"
-	//Extension     = ""
+	ExtUseSessionTimeout = "use_session_timeout"
+	ExtRequestedUserInfoClaims = "rc_userinfo"
+	ExtRequestedIdTokenClaims = "rc_id_token"
+	//Ext     = ""
 )
 
 const (

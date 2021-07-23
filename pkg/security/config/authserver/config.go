@@ -81,6 +81,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 			SamlMetadata:    di.Properties.Endpoints.SamlMetadata,
 			TenantHierarchy: di.Properties.Endpoints.TenantHierarchy,
 		},
+		OpenIDSSOEnabled: true,
 	}
 	di.Configurer(&config)
 	return authServerOut{
@@ -154,6 +155,7 @@ type Configuration struct {
 	JwkStore            jwt.JwkStore
 	IdpManager          idp.IdentityProviderManager
 	Issuer              security.Issuer
+	OpenIDSSOEnabled    bool
 
 	// not directly configurable items
 	appContext                *bootstrap.ApplicationContext
@@ -217,7 +219,7 @@ func (c *Configuration) userPasswordEncoder() passwd.PasswordEncoder {
 
 func (c *Configuration) errorHandler() *auth.OAuth2ErrorHandler {
 	if c.sharedErrorHandler == nil {
-		c.sharedErrorHandler = auth.NewOAuth2ErrorHanlder()
+		c.sharedErrorHandler = auth.NewOAuth2ErrorHandler()
 	}
 	return c.sharedErrorHandler
 }
@@ -295,11 +297,13 @@ func (c *Configuration) authorizationService() auth.AuthorizationService {
 			conf.AccountStore = c.UserAccountStore
 			conf.TenantStore = c.TenantStore
 			conf.ProviderStore = c.ProviderStore
-			openidEnhancer := openid.NewOpenIDTokenEnhancer(func(opt *openid.EnhancerOption) {
-				opt.Issuer = c.Issuer
-				opt.JwtEncoder = c.jwtEncoder()
-			})
-			conf.PostTokenEnhancers = append(conf.PostTokenEnhancers, openidEnhancer)
+			if c.OpenIDSSOEnabled {
+				openidEnhancer := openid.NewOpenIDTokenEnhancer(func(opt *openid.EnhancerOption) {
+					opt.Issuer = c.Issuer
+					opt.JwtEncoder = c.jwtEncoder()
+				})
+				conf.PostTokenEnhancers = append(conf.PostTokenEnhancers, openidEnhancer)
+			}
 		})
 	}
 
@@ -336,12 +340,19 @@ func (c *Configuration) contextDetailsFactory() *common.ContextDetailsFactory {
 
 func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcessor {
 	if c.sharedARProcessor == nil {
-		//TODO OIDC extension
-		std := auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
-			opt.ClientStore = c.ClientStore
-			opt.ResponseTypes = auth.StandardResponseTypes
-		})
-		c.sharedARProcessor = auth.NewCompositeAuthorizeRequestProcessor(std)
+		processors := []auth.AuthorizeRequestProcessor {
+			auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
+				opt.ClientStore = c.ClientStore
+				opt.ResponseTypes = auth.StandardResponseTypes
+				if c.OpenIDSSOEnabled {
+					opt.ResponseTypes = openid.ResponseTypes
+				}
+			}),
+		}
+		if c.OpenIDSSOEnabled {
+			processors = append(processors, openid.NewOpenIDAuthorizeRequestProcessor())
+		}
+		c.sharedARProcessor = auth.NewCompositeAuthorizeRequestProcessor(processors...)
 	}
 	return c.sharedARProcessor
 }

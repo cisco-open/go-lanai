@@ -77,7 +77,7 @@ func (c *ClientAuthConfigurer) validate(f *ClientAuthFeature, ws security.WebSec
 	}
 
 	if f.errorHandler == nil {
-		f.errorHandler = auth.NewOAuth2ErrorHanlder()
+		f.errorHandler = auth.NewOAuth2ErrorHandler()
 	}
 	return nil
 }

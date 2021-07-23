@@ -55,7 +55,7 @@ func (mw *TokenEndpointMiddleware) TokenHandlerFunc() gin.HandlerFunc {
 			mw.handleError(ctx, oauth2.NewInvalidTokenRequestError("given client Domain does not match authenticated client"))
 			return
 		}
-		tokenReuqest.Extensions[oauth2.ExtensionUseSessionTimeout] = client.UseSessionTimeout()
+		tokenReuqest.Extensions[oauth2.ExtUseSessionTimeout] = client.UseSessionTimeout()
 
 		// check grant
 		if e := auth.ValidateGrant(ctx, client, tokenReuqest.GrantType); e != nil {
