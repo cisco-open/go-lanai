@@ -20,7 +20,7 @@ type OpenIDAuthorizeRequestProcessor struct {
 	issuer security.Issuer
 }
 
-type ARPOptions func(*ARPOption)
+type ARPOptions func(opt *ARPOption)
 
 type ARPOption struct {
 	Issuer security.Issuer
@@ -134,7 +134,7 @@ func (p *OpenIDAuthorizeRequestProcessor) validateAcrValues(_ context.Context, r
 	required := utils.NewStringSet()
 	optional := utils.NewStringSet(strings.Split(acrVals, " ")...)
 	optional.Remove("")
-	if rc, ok := request.Extensions[oauth2.ExtRequestedIdTokenClaims].(claims.RequestedClaims); !ok {
+	if rc, ok := request.Extensions[oauth2.ExtRequestedIdTokenClaims].(claims.RequestedClaims); ok {
 		if acr, ok := rc.Get(oauth2.ClaimAuthCtxClassRef); ok && !acr.IsDefault() {
 			if acr.Essential() {
 				required.Add(acr.Values()...)

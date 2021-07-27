@@ -188,8 +188,8 @@ func calculateAccessTokenHash(token string) (string, error) {
 		return "", e
 	}
 
-	leftHalf := hash.Sum(nil)[hash.Size() / 2:]
-	return base64.RawStdEncoding.EncodeToString(leftHalf), nil
+	leftHalf := hash.Sum(nil)[:hash.Size() / 2]
+	return base64.RawURLEncoding.EncodeToString(leftHalf), nil
 }
 
 

@@ -122,7 +122,7 @@ func (h *DefaultAuthorizeHandler) HandleApprovalPage(ctx context.Context, r *Aut
 }
 
 func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *AuthorizeRequest, user oauth2.UserAuthentication) (ResponseHandlerFunc, error) {
-	code, e := h.authCodeStore.GenerateAuhtorizationCode(ctx, r, user)
+	code, e := h.authCodeStore.GenerateAuthorizationCode(ctx, r, user)
 	if e != nil {
 		return nil, e
 	}

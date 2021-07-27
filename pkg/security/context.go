@@ -209,11 +209,11 @@ func DetermineAuthenticationTime(_ context.Context, userAuth Authentication) (au
 		return
 	}
 
-	switch v.(type) {
+	switch t := v.(type) {
 	case time.Time:
-		authTime = v.(time.Time)
+		authTime = t
 	case string:
-		authTime = utils.ParseTime(utils.ISO8601Milliseconds, v.(string))
+		authTime = utils.ParseTime(time.RFC3339, t)
 	}
 	return
 }

@@ -417,7 +417,7 @@ func (s *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Co
 		}
 	}
 
-	security.DetermineAuthenticationTime(ctx, userAuth)
+	authTime = security.DetermineAuthenticationTime(ctx, userAuth)
 	return
 }
 

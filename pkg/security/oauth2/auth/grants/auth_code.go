@@ -54,7 +54,7 @@ func (g *AuthorizationCodeGranter) Grant(ctx context.Context, request *auth.Toke
 		return nil, oauth2.NewInvalidTokenRequestError(fmt.Sprintf("missing required parameter %s", oauth2.ParameterAuthCode))
 	}
 
-	stored, e := g.authCodeStore.ConsumeAuhtorizationCode(ctx, code, true)
+	stored, e := g.authCodeStore.ConsumeAuthorizationCode(ctx, code, true)
 	if e != nil {
 		return nil, e
 	} else if !stored.OAuth2Request().Approved() || stored.UserAuthentication() == nil {

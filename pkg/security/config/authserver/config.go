@@ -350,7 +350,10 @@ func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcess
 			}),
 		}
 		if c.OpenIDSSOEnabled {
-			processors = append(processors, openid.NewOpenIDAuthorizeRequestProcessor())
+			p := openid.NewOpenIDAuthorizeRequestProcessor(func(opt *openid.ARPOption) {
+				opt.Issuer = c.Issuer
+			})
+			processors = append(processors, p)
 		}
 		c.sharedARProcessor = auth.NewCompositeAuthorizeRequestProcessor(processors...)
 	}
