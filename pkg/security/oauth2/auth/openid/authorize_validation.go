@@ -7,10 +7,16 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/claims"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
+)
+
+const (
+	keyPromptProcessed = "X-OIDC-PROMPT-PROCESSED"
 )
 
 // OpenIDAuthorizeRequestProcessor implements AuthorizeRequestProcessor and order.Ordered
@@ -162,7 +168,7 @@ func (p *OpenIDAuthorizeRequestProcessor) validateAcrValues(_ context.Context, r
 			break
 		}
 	}
-	if !possible {
+	if len(required) != 0 && !possible {
 		return oauth2.NewGranterNotAvailableError("requested acr level is not possible")
 	}
 	return nil
@@ -204,9 +210,12 @@ func (p *OpenIDAuthorizeRequestProcessor) processPrompt(ctx context.Context, req
 	}
 
 	// handle "login"
-	if prompts.Has(PromptLogin) && isCurrentlyAuthenticated(ctx) {
+	// to break the login loop, we put a special header to current http request and it will be saved by request cache
+	if prompts.Has(PromptLogin) && !isPromptLoginProcessed(ctx) && isCurrentlyAuthenticated(ctx) {
 		security.Clear(ctx)
-		// TODO break the "login loop"
+		if e := setPromptLoginProcessed(ctx); e != nil {
+			return NewLoginRequiredError("unable to initiate login")
+		}
 	}
 	// We don't support "select_account" and "consent" is checked when we have decided to show user approval
 	return nil
@@ -223,4 +232,28 @@ func isCurrentlyAuthenticated(ctx context.Context) bool {
 
 func isMFAPossible() bool {
 	return true
+}
+
+func isPromptLoginProcessed(ctx context.Context) bool {
+	req := getHttpRequest(ctx)
+	if req == nil {
+		return false
+	}
+	return PromptLogin == req.Header.Get(keyPromptProcessed)
+}
+
+func setPromptLoginProcessed(ctx context.Context) error {
+	req := getHttpRequest(ctx)
+	if req == nil {
+		return fmt.Errorf("unable to extract http request")
+	}
+	req.Header.Set(keyPromptProcessed, PromptLogin)
+	return nil
+}
+
+func getHttpRequest(ctx context.Context) *http.Request {
+	if gc := web.GinContext(ctx); gc != nil {
+		return gc.Request
+	}
+	return nil
 }
