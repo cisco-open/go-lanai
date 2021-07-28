@@ -36,7 +36,7 @@ func DefaultTenantId(ctx context.Context, opt *FactoryOption) (v interface{}, er
 	if !ok {
 		return nil, errorMissingDetails
 	}
-	return nonZeroOrError(tenancy.DefaultTenantId(), errorMissingDetails)
+	return nonZeroOrError(tenancy.DefaultDesignatedTenantId(), errorMissingDetails)
 }
 
 func AssignedTenants(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {

@@ -5,23 +5,24 @@ import (
 )
 
 type AcctDetails struct {
-	ID              string
-	Type            AccountType
-	Username        string
-	Credentials     interface{}
-	Permissions     []string
-	Disabled        bool
-	Locked          bool
-	UseMFA          bool
-	DefaultTenantId string
-	Tenants         []string
-	LastLoginTime   time.Time
-	LoginFailures   []time.Time
-	SerialFailedAttempts int
-	LockoutTime          time.Time
-	PwdChangedTime       time.Time
-	GracefulAuthCount    int
-	PolicyName           string
+	ID                        string
+	Type                      AccountType
+	Username                  string
+	Credentials               interface{}
+	Permissions               []string
+	Disabled                  bool
+	Locked                    bool
+	UseMFA                    bool
+	DefaultDesignatedTenantId string
+	DesignatedTenantIds       []string
+	TenantId				  string
+	LastLoginTime             time.Time
+	LoginFailures             []time.Time
+	SerialFailedAttempts      int
+	LockoutTime               time.Time
+	PwdChangedTime            time.Time
+	GracefulAuthCount         int
+	PolicyName                string
 }
 
 type AcctLockingRule struct {
@@ -110,12 +111,16 @@ func (a *DefaultAccount) CacheableCopy() Account {
 	implements security.AccountTenancy
  ***********************************/
 
-func (a *DefaultAccount) DefaultTenantId() string {
-	return a.AcctDetails.DefaultTenantId
+func (a *DefaultAccount) DefaultDesignatedTenantId() string {
+	return a.AcctDetails.DefaultDesignatedTenantId
 }
 
-func (a *DefaultAccount) TenantIds() []string {
-	return a.AcctDetails.Tenants
+func (a *DefaultAccount) DesignatedTenantIds() []string {
+	return a.AcctDetails.DesignatedTenantIds
+}
+
+func (a *DefaultAccount) TenantId() string {
+	return a.AcctDetails.TenantId
 }
 
 /***********************************
