@@ -340,22 +340,18 @@ func (c *Configuration) contextDetailsFactory() *common.ContextDetailsFactory {
 
 func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcessor {
 	if c.sharedARProcessor == nil {
-		processors := []auth.AuthorizeRequestProcessor {
+		processors := []auth.ChainedAuthorizeRequestProcessor{
 			auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
 				opt.ClientStore = c.ClientStore
-				opt.ResponseTypes = auth.StandardResponseTypes
-				if c.OpenIDSSOEnabled {
-					opt.ResponseTypes = openid.ResponseTypes
-				}
 			}),
 		}
 		if c.OpenIDSSOEnabled {
 			p := openid.NewOpenIDAuthorizeRequestProcessor(func(opt *openid.ARPOption) {
 				opt.Issuer = c.Issuer
 			})
-			processors = append(processors, p)
+			processors = append([]auth.ChainedAuthorizeRequestProcessor{p}, processors...)
 		}
-		c.sharedARProcessor = auth.NewCompositeAuthorizeRequestProcessor(processors...)
+		c.sharedARProcessor = auth.NewAuthorizeRequestProcessor(processors...)
 	}
 	return c.sharedARProcessor
 }

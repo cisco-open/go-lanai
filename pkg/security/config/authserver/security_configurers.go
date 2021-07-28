@@ -98,7 +98,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			Path(path).
 			Condition(condition).
 			ApprovalPath(c.config.Endpoints.Approval).
-			RequestProcessors(c.config.authorizeRequestProcessor()).
+			RequestProcessor(c.config.authorizeRequestProcessor()).
 			ErrorHandler(c.config.errorHandler()).
 			AuthorizeHanlder(c.config.authorizeHandler()),
 		).

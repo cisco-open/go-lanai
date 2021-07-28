@@ -7,22 +7,22 @@ import (
 	"fmt"
 )
 
-// We currently don't have any stuff to configure
+// AuthorizeFeature configures authorization endpoints
 //goland:noinspection GoNameStartsWithPackageName
 type AuthorizeFeature struct {
 	path             string
-	condition 		 web.RequestMatcher
+	condition        web.RequestMatcher
 	approvalPath     string
-	requestProcessor *auth.CompositeAuthorizeRequestProcessor
-	authorizeHanlder auth.AuthorizeHandler
+	requestProcessor auth.AuthorizeRequestProcessor
+	authorizeHandler auth.AuthorizeHandler
 	errorHandler     *auth.OAuth2ErrorHandler
 }
 
-// Standard security.Feature entrypoint
 func (f *AuthorizeFeature) Identifier() security.FeatureIdentifier {
 	return FeatureId
 }
 
+// Configure is standard security.Feature entrypoint
 func Configure(ws security.WebSecurity) *AuthorizeFeature {
 	feature := NewEndpoint()
 	if fc, ok := ws.(security.FeatureModifier); ok {
@@ -31,13 +31,14 @@ func Configure(ws security.WebSecurity) *AuthorizeFeature {
 	panic(fmt.Errorf("unable to configure oauth2 authserver: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
-// Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+// NewEndpoint is standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func NewEndpoint() *AuthorizeFeature {
 	return &AuthorizeFeature{
 	}
 }
 
 /** Setters **/
+
 func (f *AuthorizeFeature) Path(path string) *AuthorizeFeature {
 	f.path = path
 	return f
@@ -53,8 +54,13 @@ func (f *AuthorizeFeature) ApprovalPath(approvalPath string) *AuthorizeFeature {
 	return f
 }
 
-func (f *AuthorizeFeature) RequestProcessors(processors ...auth.AuthorizeRequestProcessor) *AuthorizeFeature {
-	f.requestProcessor = auth.NewCompositeAuthorizeRequestProcessor(processors...)
+func (f *AuthorizeFeature) RequestProcessors(processors ...auth.ChainedAuthorizeRequestProcessor) *AuthorizeFeature {
+	f.requestProcessor = auth.NewAuthorizeRequestProcessor(processors...)
+	return f
+}
+
+func (f *AuthorizeFeature) RequestProcessor(processor auth.AuthorizeRequestProcessor) *AuthorizeFeature {
+	f.requestProcessor = processor
 	return f
 }
 
@@ -64,6 +70,6 @@ func (f *AuthorizeFeature) ErrorHandler(errorHandler *auth.OAuth2ErrorHandler) *
 }
 
 func (f *AuthorizeFeature) AuthorizeHanlder(authHanlder auth.AuthorizeHandler) *AuthorizeFeature {
-	f.authorizeHanlder = authHanlder
+	f.authorizeHandler = authHanlder
 	return f
 }

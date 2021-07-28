@@ -11,6 +11,7 @@ import (
 /***********************
 	Common Functions
  ***********************/
+
 func RetrieveAuthenticatedClient(c context.Context) oauth2.OAuth2Client {
 	if client, ok := c.Value(oauth2.CtxKeyAuthenticatedClient).(oauth2.OAuth2Client); ok {
 		return client
@@ -39,7 +40,26 @@ func RetrieveFullyAuthenticatedClient(c context.Context) (oauth2.OAuth2Client, e
 	return nil, oauth2.NewInvalidGrantError("client is not fully authenticated")
 }
 
-func ValidateGrant(c context.Context, client oauth2.OAuth2Client, grantType string) error {
+func ValidateResponseTypes(ctx context.Context, request *AuthorizeRequest, supported utils.StringSet) error {
+	if request.ResponseTypes == nil {
+		return oauth2.NewInvalidAuthorizeRequestError("response_type is required")
+	}
+
+	// shortcut if already validated
+	if v := request.Context().Value(ctxKeyValidResponseType); v != nil {
+		return nil
+	}
+
+	if ok, invalid := IsSubSet(ctx, supported, request.ResponseTypes); !ok {
+		return oauth2.NewInvalidResponseTypeError(fmt.Sprintf("unsupported response type: %s", invalid))
+	}
+
+	// mark validated
+	request.Context().Set(ctxKeyValidResponseType, true)
+	return nil
+}
+
+func ValidateGrant(_ context.Context, client oauth2.OAuth2Client, grantType string) error {
 	if grantType == "" {
 		return oauth2.NewInvalidTokenRequestError("missing grant_type")
 	}
@@ -74,7 +94,7 @@ func ValidateAllAutoApprovalScopes(c context.Context, client oauth2.OAuth2Client
 	return nil
 }
 
-func IsSubSet(c context.Context, superset utils.StringSet, subset utils.StringSet) (ok bool, invalid string) {
+func IsSubSet(_ context.Context, superset utils.StringSet, subset utils.StringSet) (ok bool, invalid string) {
 	for scope, _ := range subset {
 		if !superset.Has(scope) {
 			return false, scope
@@ -83,7 +103,7 @@ func IsSubSet(c context.Context, superset utils.StringSet, subset utils.StringSe
 	return true, ""
 }
 
-// approval param is a map with scope as keys and approval status as values
+// ValidateApproval approval param is a map with scope as keys and approval status as values
 func ValidateApproval(c context.Context, approval map[string]bool, client oauth2.OAuth2Client, scopes utils.StringSet) error {
 	if e := ValidateAllScopes(c, client, scopes); e != nil {
 		return e
@@ -109,7 +129,7 @@ func LoadAndValidateClientId(c context.Context, clientId string, clientStore oau
 	return client, nil
 }
 
-func ResolveRedirectUri(c context.Context, redirectUri string, client oauth2.OAuth2Client) (string, error) {
+func ResolveRedirectUri(_ context.Context, redirectUri string, client oauth2.OAuth2Client) (string, error) {
 	if client.RedirectUris() == nil || len(client.RedirectUris()) == 0 {
 		return "", oauth2.NewInvalidAuthorizeRequestError(
 			"at least one redirectUri must be registered in the client")

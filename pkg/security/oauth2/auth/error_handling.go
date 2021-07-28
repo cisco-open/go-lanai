@@ -29,6 +29,8 @@ func (h *OAuth2ErrorHandler) HandleError(c context.Context, r *http.Request, rw 
 func (h *OAuth2ErrorHandler) handleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 
 	switch oe, ok := err.(oauth2.OAuth2ErrorTranslator); {
+	case ok && errors.Is(err, errorInvalidRedirectUri):
+		writeOAuth2Error(c, r, rw, oe)
 	case ok && errors.Is(err, oauth2.ErrorSubTypeOAuth2Internal):
 		fallthrough
 	case ok && errors.Is(err, oauth2.ErrorTypeOAuth2):
@@ -85,7 +87,7 @@ func tryWriteErrorAsRedirect(c context.Context, r *http.Request, rw http.Respons
 		return
 	}
 	http.Redirect(rw, r, redirectUrl, http.StatusFound)
-	rw.Write([]byte{})
+	_, _ = rw.Write([]byte{})
 }
 
 func findAuthorizeRequest(c context.Context, _ *http.Request) *AuthorizeRequest {

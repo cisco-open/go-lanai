@@ -4,25 +4,22 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"strings"
 )
 
 var (
 	redirectGrantTypes = []string{oauth2.GrantTypeAuthCode, oauth2.GrantTypeImplicit}
+	supportedResponseTypes = utils.NewStringSet("token", "code")
 )
 
-// StandardAuthorizeRequestProcessor implements AuthorizeRequestProcessor and order.Ordered
+// StandardAuthorizeRequestProcessor implements ChainedAuthorizeRequestProcessor and order.Ordered
 // it validate auth request against standard oauth2 specs
 type StandardAuthorizeRequestProcessor struct {
-	responseTypes   utils.StringSet
 	clientStore     oauth2.OAuth2ClientStore
 }
 
 type StdARPOptions func(*StdARPOption)
 
 type StdARPOption struct {
-	ResponseTypes   utils.StringSet
 	ClientStore     oauth2.OAuth2ClientStore
 }
 
@@ -32,12 +29,11 @@ func NewStandardAuthorizeRequestProcessor(opts...StdARPOptions) *StandardAuthori
 		f(&opt)
 	}
 	return &StandardAuthorizeRequestProcessor{
-		responseTypes: opt.ResponseTypes,
 		clientStore: opt.ClientStore,
 	}
 }
 
-func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request *AuthorizeRequest) (validated *AuthorizeRequest, err error) {
+func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request *AuthorizeRequest, chain AuthorizeRequestProcessChain) (validated *AuthorizeRequest, err error) {
 	if e := p.validateResponseTypes(ctx, request); e != nil {
 		return nil, e
 	}
@@ -65,21 +61,11 @@ func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request
 	// TODO check client tenant restrictions
 	_ = client.TenantRestrictions()
 
-	return request, nil
+	return chain.Next(ctx, request)
 }
 
-func (p *StandardAuthorizeRequestProcessor) validateResponseTypes(_ context.Context, request *AuthorizeRequest) error {
-	if request.ResponseTypes == nil {
-		return oauth2.NewInvalidAuthorizeRequestError("response_type is required")
-	}
-
-	for k, _ := range request.ResponseTypes {
-		if !p.responseTypes.Has(strings.ToLower(k)) {
-			return oauth2.NewInvalidResponseTypeError(fmt.Sprintf("unsupported response type: %s", k))
-		}
-	}
-
-	return nil
+func (p *StandardAuthorizeRequestProcessor) validateResponseTypes(ctx context.Context, request *AuthorizeRequest) error {
+	return ValidateResponseTypes(ctx, request, supportedResponseTypes)
 }
 
 func (p *StandardAuthorizeRequestProcessor) validateClientId(c context.Context, request *AuthorizeRequest) (oauth2.OAuth2Client, error) {

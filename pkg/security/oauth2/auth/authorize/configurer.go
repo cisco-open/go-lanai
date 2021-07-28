@@ -44,7 +44,7 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 
 	authorizeMW := NewAuthorizeEndpointMiddleware(func(opts *AuthorizeMWOption) {
 		opts.RequestProcessor = f.requestProcessor
-		opts.AuthorizeHandler = f.authorizeHanlder
+		opts.AuthorizeHandler = f.authorizeHandler
 		opts.ApprovalMatcher = approveRequestMatcher
 	})
 
@@ -82,7 +82,7 @@ func (c *AuthorizeEndpointConfigurer) validate(f *AuthorizeFeature, ws security.
 		f.errorHandler = auth.NewOAuth2ErrorHandler()
 	}
 
-	if f.authorizeHanlder == nil {
+	if f.authorizeHandler == nil {
 		return fmt.Errorf("auhtorize handler is not set")
 	}
 

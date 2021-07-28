@@ -19,7 +19,11 @@ const (
 	keyPromptProcessed = "X-OIDC-PROMPT-PROCESSED"
 )
 
-// OpenIDAuthorizeRequestProcessor implements AuthorizeRequestProcessor and order.Ordered
+var (
+	supportedResponseTypes = utils.NewStringSet("id_token", "token", "code")
+)
+
+// OpenIDAuthorizeRequestProcessor implements ChainedAuthorizeRequestProcessor and order.Ordered
 // it validate auth request against standard oauth2 specs
 //goland:noinspection GoNameStartsWithPackageName
 type OpenIDAuthorizeRequestProcessor struct {
@@ -42,11 +46,17 @@ func NewOpenIDAuthorizeRequestProcessor(opts...ARPOptions) *OpenIDAuthorizeReque
 	}
 }
 
-func (p *OpenIDAuthorizeRequestProcessor) Process(ctx context.Context, request *auth.AuthorizeRequest) (validated *auth.AuthorizeRequest, err error) {
+func (p *OpenIDAuthorizeRequestProcessor) Process(ctx context.Context, request *auth.AuthorizeRequest, chain auth.AuthorizeRequestProcessChain) (validated *auth.AuthorizeRequest, err error) {
 	if e := p.validateResponseTypes(ctx, request); e != nil {
 		return nil, e
 	}
 
+	// continue with the chain
+	if request, err = chain.Next(ctx, request); err != nil {
+		return
+	}
+
+	// additional checks
 	if e := p.validateImplicitFlow(ctx, request); e != nil {
 		return nil, e
 	}
@@ -73,17 +83,8 @@ func (p *OpenIDAuthorizeRequestProcessor) Process(ctx context.Context, request *
 	return request, nil
 }
 
-func (p *OpenIDAuthorizeRequestProcessor) validateResponseTypes(_ context.Context, request *auth.AuthorizeRequest) error {
-	if request.ResponseTypes == nil {
-		return oauth2.NewInvalidAuthorizeRequestError("response_type is required")
-	}
-
-	for k := range request.ResponseTypes {
-		if !ResponseTypes.Has(strings.ToLower(k)) {
-			return oauth2.NewInvalidResponseTypeError(fmt.Sprintf("unsupported response type: %s", k))
-		}
-	}
-	return nil
+func (p *OpenIDAuthorizeRequestProcessor) validateResponseTypes(ctx context.Context, request *auth.AuthorizeRequest) error {
+	return auth.ValidateResponseTypes(ctx, request, supportedResponseTypes)
 }
 
 func (p *OpenIDAuthorizeRequestProcessor) validateImplicitFlow(_ context.Context, request *auth.AuthorizeRequest) error {

@@ -42,7 +42,7 @@ type AuthorizeMWOption struct {
 
 func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpointMiddleware {
 	opt := AuthorizeMWOption{
-		RequestProcessor: auth.NewCompositeAuthorizeRequestProcessor(),
+		RequestProcessor: auth.NewAuthorizeRequestProcessor(),
 	}
 	for _, optFunc := range opts {
 		if optFunc != nil {

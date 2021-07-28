@@ -2,74 +2,96 @@ package auth
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 )
 
 /*****************************
 	Abstraction
  *****************************/
 
-// AuthorizeRequestProcessor validate and process incoming request.
+// AuthorizeRequestProcessor validate and process incoming request
+// AuthorizeRequestProcessor is the entry point interface for other components to use
 type AuthorizeRequestProcessor interface {
-	Process(ctx context.Context, request *AuthorizeRequest) (validated *AuthorizeRequest, err error)
+	Process(ctx context.Context, request *AuthorizeRequest) (processed *AuthorizeRequest, err error)
+}
+
+// AuthorizeRequestProcessChain invoke index processor in the processing chain
+type AuthorizeRequestProcessChain interface {
+	Next(ctx context.Context, request *AuthorizeRequest) (processed *AuthorizeRequest, err error)
+}
+
+// ChainedAuthorizeRequestProcessor validate and process incoming request and manually invoke index processor in the chain.
+type ChainedAuthorizeRequestProcessor interface {
+	Process(ctx context.Context, request *AuthorizeRequest, chain AuthorizeRequestProcessChain) (validated *AuthorizeRequest, err error)
 }
 
 /*****************************
 	Common Implementations
  *****************************/
 
-type CompositeAuthorizeRequestProcessor struct {
-	delegates []AuthorizeRequestProcessor
+// authorizeRequestProcessor implements AuthorizeRequestProcessor
+type authorizeRequestProcessor struct {
+	delegates []ChainedAuthorizeRequestProcessor
 }
 
-func NewCompositeAuthorizeRequestProcessor(delegates ...AuthorizeRequestProcessor) *CompositeAuthorizeRequestProcessor {
-	return &CompositeAuthorizeRequestProcessor{delegates: delegates}
+func NewAuthorizeRequestProcessor(delegates ...ChainedAuthorizeRequestProcessor) AuthorizeRequestProcessor {
+	return &authorizeRequestProcessor{delegates: delegates}
 }
 
-func (e *CompositeAuthorizeRequestProcessor) Process(ctx context.Context, request *AuthorizeRequest) (validated *AuthorizeRequest, err error) {
-	for _, processor := range e.delegates {
-		current, err := processor.Process(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-		request = current
+func (p *authorizeRequestProcessor) Process(ctx context.Context, request *AuthorizeRequest) (processed *AuthorizeRequest, err error) {
+	chain := arProcessChain{delegates: p.delegates}
+	return chain.Next(ctx, request)
+}
+
+// arProcessChain implements AuthorizeRequestProcessChain
+type arProcessChain struct {
+	index     int
+	delegates []ChainedAuthorizeRequestProcessor
+}
+
+func (c arProcessChain) Next(ctx context.Context, request *AuthorizeRequest) (processed *AuthorizeRequest, err error) {
+	if c.index >= len(c.delegates) {
+		return request, nil
 	}
-	return request, nil
+
+	next := c.delegates[c.index]
+	c.index++
+	return next.Process(ctx, request, c)
 }
 
-func (e *CompositeAuthorizeRequestProcessor) Add(processors ... AuthorizeRequestProcessor) {
-	e.delegates = append(e.delegates, flattenProcessors(processors)...)
-	// resort the extensions
-	order.SortStable(e.delegates, order.OrderedFirstCompare)
-}
 
-func (e *CompositeAuthorizeRequestProcessor) Remove(processor AuthorizeRequestProcessor) {
-	for i, item := range e.delegates {
-		if item != processor {
-			continue
-		}
 
-		// remove but keep order
-		if i + 1 <= len(e.delegates) {
-			copy(e.delegates[i:], e.delegates[i+1:])
-		}
-		e.delegates = e.delegates[:len(e.delegates) - 1]
-		return
-	}
-}
-
-// flattenProcessors recursively flatten any nested CompositeAuthorizeRequestProcessor
-func flattenProcessors(processors []AuthorizeRequestProcessor) (ret []AuthorizeRequestProcessor) {
-	ret = make([]AuthorizeRequestProcessor, 0, len(processors))
-	for _, e := range processors {
-		switch e.(type) {
-		case *CompositeAuthorizeRequestProcessor:
-			flattened := flattenProcessors(e.(*CompositeAuthorizeRequestProcessor).delegates)
-			ret = append(ret, flattened...)
-		default:
-			ret = append(ret, e)
-		}
-	}
-	return
-}
-
+//func (c *authorizeRequestProcessor) Add(processors ...ChainedAuthorizeRequestProcessor) {
+//	c.delegates = append(c.delegates, flattenProcessors(processors)...)
+//	// resort the extensions
+//	order.SortStable(c.delegates, order.OrderedFirstCompare)
+//}
+//
+//func (c *authorizeRequestProcessor) Remove(processor ChainedAuthorizeRequestProcessor) {
+//	for i, item := range c.delegates {
+//		if item != processor {
+//			continue
+//		}
+//
+//		// remove but keep order
+//		if i+1 <= len(c.delegates) {
+//			copy(c.delegates[i:], c.delegates[i+1:])
+//		}
+//		c.delegates = c.delegates[:len(c.delegates)-1]
+//		return
+//	}
+//}
+//
+//// flattenProcessors recursively flatten any nested NestedAuthorizeRequestProcessor
+//func flattenProcessors(processors []ChainedAuthorizeRequestProcessor) (ret []ChainedAuthorizeRequestProcessor) {
+//	ret = make([]ChainedAuthorizeRequestProcessor, 0, len(processors))
+//	for _, e := range processors {
+//		switch e.(type) {
+//		case *authorizeRequestProcessor:
+//			flattened := flattenProcessors(e.(*authorizeRequestProcessor).delegates)
+//			ret = append(ret, flattened...)
+//		default:
+//			ret = append(ret, e)
+//		}
+//	}
+//	return
+//}
