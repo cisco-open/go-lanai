@@ -120,17 +120,17 @@ func (store *InMemoryAccountStore) tryLoadPolicy(ctx context.Context, account *s
 
 func createAccount(props *PropertiesBasedAccount) *security.DefaultAccount {
 	acct := security.NewUsernamePasswordAccount(&security.AcctDetails{
-		ID:              props.ID,
-		Type:            security.ParseAccountType(props.Type),
-		Username:        props.Username,
-		Credentials:     props.Password,
-		Permissions:     props.Permissions,
-		Disabled:        props.Disabled,
-		Locked:          props.Locked,
-		UseMFA:          props.UseMFA,
-		DefaultTenantId: props.DefaultTenantId,
-		Tenants:         props.Tenants,
-		PolicyName:      props.AccountPolicyName,
+		ID:                        props.ID,
+		Type:                      security.ParseAccountType(props.Type),
+		Username:                  props.Username,
+		Credentials:               props.Password,
+		Permissions:               props.Permissions,
+		Disabled:                  props.Disabled,
+		Locked:                    props.Locked,
+		UseMFA:                    props.UseMFA,
+		DefaultDesignatedTenantId: props.DefaultTenantId,
+		DesignatedTenantIds:                   props.Tenants,
+		PolicyName:                props.AccountPolicyName,
 
 		LastLoginTime: startupTime.Add(-2 * time.Hour),
 		LoginFailures: []time.Time {

@@ -307,7 +307,7 @@ func (f *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 	tenantId, idOk := request.Parameters()[oauth2.ParameterTenantId]
 	tenantName, nOk := request.Parameters()[oauth2.ParameterTenantName]
 	if (!idOk || tenantId == "") && (!nOk || tenantName == "") {
-		tenantId = tenancy.DefaultTenantId()
+		tenantId = tenancy.DefaultDesignatedTenantId()
 	}
 
 	var tenant *security.Tenant
@@ -338,7 +338,7 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(c context.Context, tena
 
 	tenantIds := utils.NewStringSet()
 	if tenancy, ok := account.(security.AccountTenancy); ok {
-		tenantIds = utils.NewStringSet(tenancy.TenantIds()...)
+		tenantIds = utils.NewStringSet(tenancy.DesignatedTenantIds()...)
 	}
 
 	// TODO consider tenant hierachy
