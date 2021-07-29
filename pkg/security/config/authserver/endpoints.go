@@ -3,6 +3,7 @@ package authserver
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/misc"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/openid"
 	utils_matcher "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -15,9 +16,9 @@ func registerEndpoints(registrar *web.Registrar, config *Configuration) {
 	jwks := misc.NewJwkSetEndpoint(config.jwkStore())
 	ct := misc.NewCheckTokenEndpoint(config.Issuer, config.tokenStore())
 	ui := misc.NewUserInfoEndpoint(config.Issuer, config.UserAccountStore, config.jwtEncoder())
-	th := misc.NewEndpoint()
+	th := misc.NewTenantHierarchyEndpoint()
 
-	mappings := []interface{} {
+	mappings := []interface{}{
 		template.New().Get("/error").HandlerFunc(errorhandling.ErrorWithStatus).Build(),
 
 		rest.New("jwks").Get(config.Endpoints.JwkSet).EndpointFunc(jwks.JwkSet).Build(),
@@ -47,7 +48,16 @@ func registerEndpoints(registrar *web.Registrar, config *Configuration) {
 		rest.New("tenant hierarchy root").Get(fmt.Sprintf("%s/%s", config.Endpoints.TenantHierarchy, "root")).
 			EndpointFunc(th.GetRoot).EncodeResponseFunc(misc.StringResponseEncoder()).Build(),
 	}
-	registrar.Register(mappings...)
+
+	// openid additional
+	if config.OpenIDSSOEnabled {
+		opConf := prepareWellKnownEndpoint(config)
+		mappings = append(mappings,
+			rest.New("openid-config").Get(openid.WellKnownEndpointOPConfig).
+				EndpointFunc(opConf.OpenIDConfig).Build(),
+		)
+	}
+	_ = registrar.Register(mappings...)
 }
 
 func acceptJwtMatcher() web.RequestMatcher {
@@ -58,3 +68,12 @@ func notAcceptJwtMatcher() web.RequestMatcher {
 	return utils_matcher.Not(matcher.RequestWithHeader("Accept", "application/jwt", true))
 }
 
+func prepareWellKnownEndpoint(config *Configuration) *misc.WellKnownEndpoint {
+	extra := map[string]interface{}{
+		openid.OPMetadataAuthEndpoint: config.Endpoints.Authorize.Location.Path,
+		openid.OPMetadataTokenEndpoint: config.Endpoints.Token,
+		openid.OPMetadataUserInfoEndpoint: config.Endpoints.UserInfo,
+		openid.OPMetadataJwkSetURI: config.Endpoints.JwkSet,
+	}
+	return misc.NewWellKnownEndpoint(config.Issuer, config.IdpManager, extra)
+}

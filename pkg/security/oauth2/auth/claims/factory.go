@@ -32,6 +32,7 @@ type FactoryOption struct {
 	AccessToken     oauth2.AccessToken
 	RequestedClaims RequestedClaims
 	ClaimsFormula   []map[string]ClaimSpec
+	ExtraSource     map[string]interface{}
 }
 
 func WithSpecs(specs ...map[string]ClaimSpec) FactoryOptions {
@@ -69,6 +70,12 @@ func WithAccountStore(accountStore security.AccountStore) FactoryOptions {
 func WithAccessToken(token oauth2.AccessToken) FactoryOptions {
 	return func(opt *FactoryOption) {
 		opt.AccessToken = token
+	}
+}
+
+func WithExtraSource(extra map[string]interface{}) FactoryOptions {
+	return func(opt *FactoryOption) {
+		opt.ExtraSource = extra
 	}
 }
 
