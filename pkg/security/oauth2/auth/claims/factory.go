@@ -25,16 +25,25 @@ type ClaimRequirementFunc func(ctx context.Context, opt *FactoryOption) bool
 type FactoryOptions func(opt *FactoryOption)
 
 type FactoryOption struct {
-	Specs        []map[string]ClaimSpec
-	Source       oauth2.Authentication
-	Issuer       security.Issuer
-	AccountStore security.AccountStore
-	AccessToken  oauth2.AccessToken
+	Specs           []map[string]ClaimSpec
+	Source          oauth2.Authentication
+	Issuer          security.Issuer
+	AccountStore    security.AccountStore
+	AccessToken     oauth2.AccessToken
+	RequestedClaims RequestedClaims
+	ClaimsFormula   []map[string]ClaimSpec
 }
 
 func WithSpecs(specs ...map[string]ClaimSpec) FactoryOptions {
 	return func(opt *FactoryOption) {
 		opt.Specs = append(opt.Specs, specs...)
+	}
+}
+
+func WithRequestedClaims(requested RequestedClaims, formula ...map[string]ClaimSpec) FactoryOptions {
+	return func(opt *FactoryOption) {
+		opt.RequestedClaims = requested
+		opt.ClaimsFormula = formula
 	}
 }
 
@@ -68,25 +77,52 @@ func Populate(ctx context.Context, claims oauth2.Claims, opts ...FactoryOptions)
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	for _, specs := range opt.Specs {
-		for c, spec := range specs {
-			if c == "" {
-				continue
-			}
-			v, e := spec.Calculate(ctx, &opt)
-			if e != nil && spec.Required(ctx, &opt) {
-				return fmt.Errorf("unable to create claim [%s]: %v", c, e)
-			} else if e != nil {
-				continue
-			}
 
-			// check type and assign
-			if e := safeSet(claims, c, v); e != nil {
-				return e
-			}
+	// populate based on specs
+	for _, specs := range opt.Specs {
+		if e := populateWithSpecs(ctx, claims, specs, &opt, nil); e != nil {
+			return e
 		}
 	}
 
+	// populate based on requested claims.
+	if opt.RequestedClaims == nil {
+		return nil
+	}
+
+	for _, specs := range opt.ClaimsFormula {
+		filter := func(name string, spec ClaimSpec) bool {
+			requested, ok := opt.RequestedClaims.Get(name)
+			return !ok || !requested.Essential()
+		}
+		if e := populateWithSpecs(ctx, claims, specs, &opt, filter); e != nil {
+			return e
+		}
+	}
+
+	return nil
+}
+
+type claimSpecFilter func(name string, spec ClaimSpec) (exclude bool)
+
+func populateWithSpecs(ctx context.Context, claims oauth2.Claims, specs map[string]ClaimSpec, opt *FactoryOption, filter claimSpecFilter) error {
+	for c, spec := range specs {
+		if c == "" || filter != nil && filter(c, spec) {
+			continue
+		}
+
+		v, e := spec.Calculate(ctx, opt)
+		if e != nil && spec.Required(ctx, opt) {
+			return fmt.Errorf("unable to create claim [%s]: %v", c, e)
+		} else if e != nil {
+			continue
+		}
+
+		// check type and assign
+		if e := safeSet(claims, c, v); e != nil {
+			return e
+		}
+	}
 	return nil
 }
 

@@ -58,9 +58,6 @@ func (r *jwtTokenStoreReader) ReadAccessToken(c context.Context, value string) (
 
 func (r *jwtTokenStoreReader) ReadRefreshToken(c context.Context, value string) (oauth2.RefreshToken, error) {
 	token, e := r.parseRefreshToken(c, value)
-	if e != nil {
-		return nil, e
-	}
 	switch {
 	case e != nil:
 		return nil, oauth2.NewInvalidGrantError("refresh token is invalid", e)
@@ -119,7 +116,7 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
 	}
 
 	// reconstruct request
-	request := r.createOAuth2Request(claims)
+	request := r.createOAuth2Request(claims, details)
 
 	// reconstruct user auth if available
 	var userAuth security.Authentication
@@ -138,17 +135,37 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
 /*****************
 	Helpers
  *****************/
-func (r *jwtTokenStoreReader) createOAuth2Request(claims *internal.ExtendedClaims) oauth2.OAuth2Request {
+func (r *jwtTokenStoreReader) createOAuth2Request(claims *internal.ExtendedClaims, details security.ContextDetails) oauth2.OAuth2Request {
 	clientId := claims.ClientId
 	if clientId == "" && claims.Audience != nil && len(claims.Audience) != 0 {
 		clientId = claims.Audience.Values()[0]
 	}
+
+	params := map[string]string{}
+	reqParams, _ := details.Value(oauth2.DetailsKeyRequestExt)
+	if m, ok := reqParams.(map[string]interface{}); ok {
+		for k, v := range m {
+			switch s := v.(type) {
+			case string:
+				params[k] = s
+			}
+		}
+	}
+
+	ext := claims.Values()
+	reqExt, _ := details.Value(oauth2.DetailsKeyRequestExt)
+	if m, ok := reqExt.(map[string]interface{}); ok {
+		for k, v := range m {
+			ext[k] = v
+		}
+	}
+
 	return oauth2.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
-		opt.Parameters = map[string]string{}
+		opt.Parameters = params
 		opt.ClientId = clientId
 		opt.Scopes = claims.Scopes
 		opt.Approved = true
-		opt.Extensions = claims.Values()
+		opt.Extensions = ext
 		//opt.GrantType =
 		//opt.RedirectUri =
 		//opt.ResponseTypes =
@@ -157,7 +174,7 @@ func (r *jwtTokenStoreReader) createOAuth2Request(claims *internal.ExtendedClaim
 
 func (r *jwtTokenStoreReader) createUserAuthentication(claims *internal.ExtendedClaims, details security.ContextDetails) security.Authentication {
 	permissions := map[string]interface{}{}
-	for k, _ := range details.Permissions() {
+	for k := range details.Permissions() {
 		permissions[k] = true
 	}
 

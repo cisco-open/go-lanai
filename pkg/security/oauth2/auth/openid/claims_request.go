@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-type claimsRequest struct {
+type ClaimsRequest struct {
 	UserInfo requestedClaims `json:"userinfo"`
 	IdToken  requestedClaims `json:"id_token"`
 }

@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/claims"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
+	"encoding/json"
 )
 
 /*****************************
@@ -23,18 +24,14 @@ var (
 	defaultSpecs = []map[string]claims.ClaimSpec{
 		claims.IdTokenBasicSpecs,
 	}
-	fullSpecs = make([]map[string]claims.ClaimSpec, len(defaultSpecs), len(scopedSpecs) + len(defaultSpecs))
-
+	fullSpecs = []map[string]claims.ClaimSpec{
+		claims.IdTokenBasicSpecs,
+		claims.ProfileScopeSpecs,
+		claims.EmailScopeSpecs,
+		claims.PhoneScopeSpecs,
+		claims.AddressScopeSpecs,
+	}
 )
-
-func init() {
-	for i, specs := range defaultSpecs {
-		fullSpecs[i] = specs
-	}
-	for _, specs := range scopedSpecs {
-		fullSpecs = append(fullSpecs, specs)
-	}
-}
 
 type EnhancerOptions func(opt *EnhancerOption)
 type EnhancerOption struct {
@@ -76,12 +73,14 @@ func (oe *OpenIDTokenEnhancer) Enhance(ctx context.Context, token oauth2.AccessT
 	}
 
 	specs := oe.determineClaimSpecs(oauth.OAuth2Request())
+	requested := oe.determineRequestedClaims(oauth.OAuth2Request())
 	c := IdTokenClaims{}
 	e := claims.Populate(ctx, &c,
 		claims.WithSpecs(specs...),
 		claims.WithSource(oauth),
 		claims.WithIssuer(oe.issuer),
 		claims.WithAccessToken(token),
+		claims.WithRequestedClaims(requested, fullSpecs...),
 	)
 
 	if e != nil {
@@ -109,8 +108,15 @@ func (oe *OpenIDTokenEnhancer) shouldSkip(oauth oauth2.Authentication) bool {
 		oauth.UserAuthentication() == nil
 }
 
+// determine id_token claims based on scopes defined by Core Spec 5.4: https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+// Note: per spec, if response_type is token/code, access token will be issued,
+//		 therefore profile, email, phone and address is returned in user info, not in id_token
 func (oe *OpenIDTokenEnhancer) determineClaimSpecs(request oauth2.OAuth2Request) []map[string]claims.ClaimSpec {
 	if request == nil || request.Scopes() == nil || !request.Approved() {
+		return defaultSpecs
+	}
+
+	if request.Scopes().Has("code") || request.Scopes().Has("token") || !request.Scopes().Has("id_token") {
 		return defaultSpecs
 	}
 
@@ -120,17 +126,23 @@ func (oe *OpenIDTokenEnhancer) determineClaimSpecs(request oauth2.OAuth2Request)
 	}
 
 	scopes := request.Scopes()
-	includeAll := true
 	for scope, spec := range scopedSpecs {
 		if scopes.Has(scope) {
 			specs = append(specs, spec)
-			includeAll = false
 		}
-	}
-
-	if includeAll {
-		return fullSpecs
 	}
 	return specs
 }
 
+func (oe *OpenIDTokenEnhancer) determineRequestedClaims(request oauth2.OAuth2Request) claims.RequestedClaims {
+	raw, ok := request.Extensions()[oauth2.ParameterClaims].(string)
+	if !ok {
+		return nil
+	}
+
+	cr := ClaimsRequest{}
+	if e := json.Unmarshal([]byte(raw), &cr); e != nil {
+		return nil
+	}
+	return cr.IdToken
+}

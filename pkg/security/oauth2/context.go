@@ -9,7 +9,7 @@ import (
 	security.Authentication
 ******************************/
 
-// Authentication implements security.Authentication
+// Authentication extends security.Authentication
 type Authentication interface {
 	security.Authentication
 	UserAuthentication() security.Authentication

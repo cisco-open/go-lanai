@@ -5,7 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/claims"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/json"
@@ -65,11 +64,12 @@ func (p *OpenIDAuthorizeRequestProcessor) Process(ctx context.Context, request *
 		return nil, e
 	}
 
-	if e := p.validateClaims(ctx, request); e != nil {
+	cr, e := p.validateClaims(ctx, request)
+	if e != nil {
 		return nil, e
 	}
 
-	if e := p.validateAcrValues(ctx, request); e != nil {
+	if e := p.validateAcrValues(ctx, request, cr); e != nil {
 		return nil, e
 	}
 
@@ -109,30 +109,22 @@ func (p *OpenIDAuthorizeRequestProcessor) validateDisplay(ctx context.Context, r
 }
 
 // https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter
-func (p *OpenIDAuthorizeRequestProcessor) validateClaims(_ context.Context, request *auth.AuthorizeRequest) error {
+func (p *OpenIDAuthorizeRequestProcessor) validateClaims(_ context.Context, request *auth.AuthorizeRequest) (*ClaimsRequest, error) {
 	raw, ok := request.Parameters[oauth2.ParameterClaims]
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
-	cr := claimsRequest{}
+	cr := ClaimsRequest{}
 	if e := json.Unmarshal([]byte(raw), &cr); e != nil {
 		// maybe we should ignore this error
-		return oauth2.NewInvalidAuthorizeRequestError(`invalid "claims" parameter`)
+		return nil, oauth2.NewInvalidAuthorizeRequestError(`invalid "claims" parameter`)
 	}
 
-	// set as extension
-	if len(cr.UserInfo) != 0 {
-		request.Extensions[oauth2.ExtRequestedUserInfoClaims] = cr.UserInfo
-	}
-
-	if len(cr.IdToken) != 0 {
-		request.Extensions[oauth2.ExtRequestedIdTokenClaims] = cr.IdToken
-	}
-	return nil
+	return &cr, nil
 }
 
-func (p *OpenIDAuthorizeRequestProcessor) validateAcrValues(_ context.Context, request *auth.AuthorizeRequest) error {
+func (p *OpenIDAuthorizeRequestProcessor) validateAcrValues(_ context.Context, request *auth.AuthorizeRequest, claimsReq *ClaimsRequest) error {
 	acrVals, ok := request.Parameters[oauth2.ParameterACR]
 	if !ok {
 		return nil
@@ -141,8 +133,8 @@ func (p *OpenIDAuthorizeRequestProcessor) validateAcrValues(_ context.Context, r
 	required := utils.NewStringSet()
 	optional := utils.NewStringSet(strings.Split(acrVals, " ")...)
 	optional.Remove("")
-	if rc, ok := request.Extensions[oauth2.ExtRequestedIdTokenClaims].(claims.RequestedClaims); ok {
-		if acr, ok := rc.Get(oauth2.ClaimAuthCtxClassRef); ok && !acr.IsDefault() {
+	if claimsReq != nil && len(claimsReq.IdToken) != 0 {
+		if acr, ok := claimsReq.IdToken.Get(oauth2.ClaimAuthCtxClassRef); ok && !acr.IsDefault() {
 			if acr.Essential() {
 				required.Add(acr.Values()...)
 			} else {

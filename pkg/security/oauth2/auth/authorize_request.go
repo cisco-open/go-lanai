@@ -70,7 +70,7 @@ func ParseAuthorizeRequest(req *http.Request) (*AuthorizeRequest, error) {
 		return nil, err
 	}
 
-	values := flattenValuesToMap(req.Form);
+	values := flattenValuesToMap(req.Form)
 	return &AuthorizeRequest{
 		Parameters:    toStringMap(values),
 		ClientId:      extractStringParam(oauth2.ParameterClientId, values),

@@ -44,8 +44,6 @@ const (
 
 const (
 	ExtUseSessionTimeout = "use_session_timeout"
-	ExtRequestedUserInfoClaims = "rc_userinfo"
-	ExtRequestedIdTokenClaims = "rc_id_token"
 	//Ext     = ""
 )
 
@@ -85,8 +83,13 @@ const (
 	CtxKeyValidatedAuthorizeRequest = "kValidatedAuthRequest"
 	CtxKeyResolvedAuthorizeRedirect = "kResolvedRedirect"
 	CtxKeyResolvedAuthorizeState    = "kResolvedState"
-	CtxKeyRefreshToken              = "kRefreshToken"
 	CtxKeySourceAuthentication      = "kSourceAuthentication"
+	//CtxKeyRefreshToken              = "kRefreshToken"
+)
+
+const (
+	DetailsKeyRequestExt    = "kOAuth2Ext"
+	DetailsKeyRequestParams = "kOAuth2Params"
 )
 
 const (
