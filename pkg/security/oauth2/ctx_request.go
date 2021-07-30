@@ -10,6 +10,7 @@ import (
 ******************************/
 var excludedParameters = utils.NewStringSet(ParameterPassword, ParameterClientSecret)
 
+//goland:noinspection GoNameStartsWithPackageName
 type OAuth2Request interface {
 	Parameters() map[string]string
 	ClientId() string
@@ -25,6 +26,7 @@ type OAuth2Request interface {
 /******************************
 	Implementation
 ******************************/
+
 type RequestDetails struct {
 	Parameters    map[string]string      `json:"parameters"`
 	ClientId      string                 `json:"clientId"`
@@ -54,7 +56,7 @@ func NewOAuth2Request(optFuncs ...RequestOptionsFunc) OAuth2Request {
 		optFunc(&request.RequestDetails)
 	}
 
-	for param, _ := range excludedParameters {
+	for param := range excludedParameters {
 		delete(request.RequestDetails.Parameters, param)
 	}
 	return &request
@@ -114,12 +116,12 @@ func (r *oauth2Request) copyFunc() RequestOptionsFunc {
 	}
 }
 
-// json.Marshaler
+// MarshalJSON json.Marshaler
 func (r *oauth2Request) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.RequestDetails)
 }
 
-// json.Unmarshaler
+// UnmarshalJSON json.Unmarshaler
 func (r *oauth2Request) UnmarshalJSON(data []byte) error {
 	if e := json.Unmarshal(data, &r.RequestDetails); e != nil {
 		return e

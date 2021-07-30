@@ -29,6 +29,7 @@ const (
 	ParameterErrorDescription    = "error_description"
 	ParameterCodeChallenge       = "code_challenge"
 	ParameterCodeChallengeMethod = "code_challenge_method"
+	ParameterCodeVerifier        = "code_verifier"
 	ParameterAuthCode            = "code"
 	ParameterUserApproval        = "user_oauth_approval"
 	ParameterRefreshToken        = "refresh_token"

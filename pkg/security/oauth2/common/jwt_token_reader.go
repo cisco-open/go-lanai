@@ -142,7 +142,7 @@ func (r *jwtTokenStoreReader) createOAuth2Request(claims *internal.ExtendedClaim
 	}
 
 	params := map[string]string{}
-	reqParams, _ := details.Value(oauth2.DetailsKeyRequestExt)
+	reqParams, _ := details.Value(oauth2.DetailsKeyRequestParams)
 	if m, ok := reqParams.(map[string]interface{}); ok {
 		for k, v := range m {
 			switch s := v.(type) {
