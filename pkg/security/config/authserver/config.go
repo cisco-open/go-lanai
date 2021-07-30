@@ -348,6 +348,7 @@ func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcess
 		if c.OpenIDSSOEnabled {
 			p := openid.NewOpenIDAuthorizeRequestProcessor(func(opt *openid.ARPOption) {
 				opt.Issuer = c.Issuer
+				opt.JwtDecoder = c.jwtDecoder()
 			})
 			processors = append([]auth.ChainedAuthorizeRequestProcessor{p}, processors...)
 		}

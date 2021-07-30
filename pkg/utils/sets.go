@@ -8,6 +8,7 @@ import (
 type void struct{}
 
 /** StringSet **/
+
 type StringSet map[string]void
 
 func NewStringSet(values...string) StringSet {
@@ -64,6 +65,29 @@ func (s StringSet) Has(value string) bool {
 	return ok
 }
 
+func (s StringSet) HasAll(values []string) bool {
+	for _, v := range values {
+		if !s.Has(v) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s StringSet) Equals(another StringSet) bool {
+	if len(s) != len(another){
+		return false
+	} else if len(s) == 0 && len(another) == 0 {
+		return true
+	}
+	for k := range another {
+		if !s.Has(k) {
+			return false
+		}
+	}
+	return true
+}
+
 func (s StringSet) Values() []string {
 	values := make([]string, len(s))
 	var i int
@@ -75,25 +99,25 @@ func (s StringSet) Values() []string {
 }
 
 func (s StringSet) Copy() StringSet {
-	copy := NewStringSet()
+	cp := NewStringSet()
 	for k,_ := range s {
-		copy[k] = void{}
+		cp[k] = void{}
 	}
-	return copy
+	return cp
 }
 
 func (s StringSet) ToSet() Set {
 	return NewSetFromStringSet(s)
 }
 
-// json.Marshaler
+// MarshalJSON json.Marshaler
 func (s StringSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Values())
 }
 
-// json.Unmarshaler
+// UnmarshalJSON json.Unmarshaler
 func (s StringSet) UnmarshalJSON(data []byte) error {
-	values := []string{}
+	values := make([]string, 0)
 	if err := json.Unmarshal(data, &values); err != nil {
 		return err
 	}
@@ -103,6 +127,7 @@ func (s StringSet) UnmarshalJSON(data []byte) error {
 }
 
 /** Generic Set **/
+
 type Set map[interface{}]void
 
 func NewSet(values...interface{}) Set {
@@ -111,7 +136,7 @@ func NewSet(values...interface{}) Set {
 
 func NewSetFromStringSet(stringSet StringSet) Set {
 	set := NewSet()
-	for k, _ := range stringSet {
+	for k := range stringSet {
 		set[k] = void{}
 	}
 	return set
@@ -124,7 +149,7 @@ func NewSetFrom(i interface{}) Set {
 	case Set:
 		return i.(Set).Copy()
 	case []string:
-		slice := []interface{}{}
+		slice := make([]interface{}, 0)
 		for _,v := range i.([]string) {
 			slice = append(slice, v)
 		}
@@ -155,6 +180,29 @@ func (s Set) Has(value interface{}) bool {
 	return ok
 }
 
+func (s Set) HasAll(values []string) bool {
+	for _, v := range values {
+		if !s.Has(v) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s Set) Equals(another Set) bool {
+	if len(s) != len(another){
+		return false
+	} else if len(s) == 0 && len(another) == 0 {
+		return true
+	}
+	for k := range another {
+		if !s.Has(k) {
+			return false
+		}
+	}
+	return true
+}
+
 func (s Set) Values() []interface{} {
 	values := make([]interface{}, len(s))
 	var i int
@@ -166,21 +214,21 @@ func (s Set) Values() []interface{} {
 }
 
 func (s Set) Copy() Set {
-	copy := NewSet()
-	for k,_ := range s {
-		copy[k] = void{}
+	cp := NewSet()
+	for k := range s {
+		cp[k] = void{}
 	}
-	return copy
+	return cp
 }
 
-// json.Marshaler
+// MarshalJSON json.Marshaler
 func (s Set) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Values())
 }
 
-// json.Unmarshaler
+// UnmarshalJSON json.Unmarshaler
 func (s Set) UnmarshalJSON(data []byte) error {
-	values := []interface{}{}
+	values := make([]interface{}, 0)
 	if err := json.Unmarshal(data, &values); err != nil {
 		return err
 	}

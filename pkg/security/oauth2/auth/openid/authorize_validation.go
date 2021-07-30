@@ -5,10 +5,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -26,28 +28,43 @@ var (
 // it validate auth request against standard oauth2 specs
 //goland:noinspection GoNameStartsWithPackageName
 type OpenIDAuthorizeRequestProcessor struct {
-	issuer security.Issuer
+	issuer             security.Issuer
+	jwtDecoder         jwt.JwtDecoder
+	fallbackJwtDecoder jwt.JwtDecoder
 }
 
 type ARPOptions func(opt *ARPOption)
 
 type ARPOption struct {
-	Issuer security.Issuer
+	Issuer     security.Issuer
+	JwtDecoder jwt.JwtDecoder
 }
 
-func NewOpenIDAuthorizeRequestProcessor(opts...ARPOptions) *OpenIDAuthorizeRequestProcessor {
+func NewOpenIDAuthorizeRequestProcessor(opts ...ARPOptions) *OpenIDAuthorizeRequestProcessor {
 	opt := ARPOption{}
 	for _, f := range opts {
 		f(&opt)
 	}
 	return &OpenIDAuthorizeRequestProcessor{
-		issuer: opt.Issuer,
+		issuer:             opt.Issuer,
+		jwtDecoder:         opt.JwtDecoder,
+		fallbackJwtDecoder: jwt.NewPlaintextJwtDecoder(),
 	}
 }
 
 func (p *OpenIDAuthorizeRequestProcessor) Process(ctx context.Context, request *auth.AuthorizeRequest, chain auth.AuthorizeRequestProcessChain) (validated *auth.AuthorizeRequest, err error) {
+	// first thing first, is "openid" scope requested?
+	if !request.Scopes.Has(oauth2.ScopeOidc) {
+		return chain.Next(ctx, request)
+	}
+
 	if e := p.validateResponseTypes(ctx, request); e != nil {
 		return nil, e
+	}
+
+	// attempt to decode from request object
+	if request, err = p.decodeRequestObject(ctx, request); err != nil {
+		return
 	}
 
 	// continue with the chain
@@ -81,6 +98,47 @@ func (p *OpenIDAuthorizeRequestProcessor) Process(ctx context.Context, request *
 		return nil, e
 	}
 	return request, nil
+}
+
+func (p *OpenIDAuthorizeRequestProcessor) decodeRequestObject(ctx context.Context, request *auth.AuthorizeRequest) (*auth.AuthorizeRequest, error) {
+	reqUri, uriOk := request.Parameters[oauth2.ParameterRequestUri]
+	reqObj, objOk := request.Parameters[oauth2.ParameterRequestObj]
+	switch {
+	case !uriOk && !objOk:
+		return request, nil
+	case uriOk && objOk:
+		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("%s and %s are exclusive", oauth2.ParameterRequestUri, oauth2.ParameterRequestObj))
+	case uriOk:
+		if strings.HasPrefix(strings.ToLower(reqUri), "https:") {
+			return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("%s must use https", oauth2.ParameterRequestUri))
+		}
+		bytes, e := httpGet(reqUri)
+		if e != nil {
+			return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("unable to fetch request object from %s: %v", oauth2.ParameterRequestUri, e))
+		}
+		reqObj = string(bytes)
+	}
+
+	// decode JWT using configured decoder, fallback to plaintext decoder
+	claims, e := p.jwtDecoder.Decode(ctx, reqObj)
+	if e != nil {
+		if claims, e = p.fallbackJwtDecoder.Decode(ctx, reqObj); e != nil {
+			return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("invalid request object: %v", e))
+		}
+	}
+
+	decoded, e := claimsToAuthRequest(request.Context(), claims)
+	if e != nil {
+		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("invalid request object: %v", e))
+	}
+
+	switch {
+	case !request.ResponseTypes.Equals(decoded.ResponseTypes):
+		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("invalid request object - inconsistant response type"))
+	case !decoded.Scopes.Has(oauth2.ScopeOidc):
+		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("invalid request object - missing 'openid' scope"))
+	}
+	return decoded, nil
 }
 
 func (p *OpenIDAuthorizeRequestProcessor) validateResponseTypes(ctx context.Context, request *auth.AuthorizeRequest) error {
@@ -214,7 +272,6 @@ func (p *OpenIDAuthorizeRequestProcessor) processPrompt(ctx context.Context, req
 	return nil
 }
 
-
 /*********************
 	Helpers
  *********************/
@@ -249,4 +306,20 @@ func getHttpRequest(ctx context.Context) *http.Request {
 		return gc.Request
 	}
 	return nil
+}
+
+func httpGet(url string) ([]byte, error) {
+	resp, e := http.Get(url)
+	if e != nil {
+		return nil, e
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("non-2XX status code")
+	}
+
+	return ioutil.ReadAll(resp.Body)
+}
+
+func claimsToAuthRequest(ctx context.Context, claims oauth2.Claims) (*auth.AuthorizeRequest, error) {
+	return auth.ParseAuthorizeRequestWithKVs(ctx, claims.Values())
 }

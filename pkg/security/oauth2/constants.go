@@ -30,6 +30,8 @@ const (
 	ParameterCodeChallenge       = "code_challenge"
 	ParameterCodeChallengeMethod = "code_challenge_method"
 	ParameterCodeVerifier        = "code_verifier"
+	ParameterRequestObj          = "request"
+	ParameterRequestUri          = "request_uri"
 	ParameterAuthCode            = "code"
 	ParameterUserApproval        = "user_oauth_approval"
 	ParameterRefreshToken        = "refresh_token"
