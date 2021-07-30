@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"io"
 	"net/http"
 	"reflect"
 )
@@ -226,13 +227,17 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 		err = bind(toBind,
 			ginCtx.ShouldBindHeader,
 			ginCtx.ShouldBindUri,
-			ginCtx.ShouldBindQuery,
-			ginCtx.ShouldBind)
+			ginCtx.ShouldBindQuery)
 
 		if err != nil {
 			return
 		}
 
+		err = ginCtx.ShouldBind(toBind)
+
+		if err != nil && !(errors.Is(err, io.EOF) && r.ContentLength <= 0) {
+			return
+		}
 		return toRet.Interface(), validateBinding(c, toBind)
 	}
 }
