@@ -113,6 +113,9 @@ func (EncryptedRaw) GormDataType() string {
 
 // Value implements driver.Valuer
 func (d *EncryptedRaw) Value() (driver.Value, error) {
+	//we need to check nil here instead of in the JsonbValue method
+	//because the input to JsonbValue is interface{}. Since d has a type
+	// the v==nil check in JsonbValue won't return true
 	if d == nil {
 		return nil, nil
 	}
