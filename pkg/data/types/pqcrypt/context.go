@@ -113,6 +113,9 @@ func (EncryptedRaw) GormDataType() string {
 
 // Value implements driver.Valuer
 func (d *EncryptedRaw) Value() (driver.Value, error) {
+	if d == nil {
+		return nil, nil
+	}
 	return pqx.JsonbValue(d)
 }
 
