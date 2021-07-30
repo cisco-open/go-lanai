@@ -72,7 +72,9 @@ func (c *TokenAuthEndpointsConfigurer) Order() int {
 func (c *TokenAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 	// For Token endpoint
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.UserInfo)).
-		With(tokenauth.New()).
+		With(tokenauth.New().
+			EnablePostBody(),
+		).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
 		).

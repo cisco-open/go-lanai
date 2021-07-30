@@ -17,8 +17,10 @@ type TokenAuthConfigurer struct {
 	tokenStoreReader oauth2.TokenStoreReader
 }
 
+//goland:noinspection GoNameStartsWithPackageName
 type TokenAuthOptions func(opt *TokenAuthOption)
 
+//goland:noinspection GoNameStartsWithPackageName
 type TokenAuthOption struct {
 	TokenStoreReader oauth2.TokenStoreReader
 }
@@ -59,6 +61,7 @@ func (c *TokenAuthConfigurer) Apply(feature security.Feature, ws security.WebSec
 	mw := NewTokenAuthMiddleware(func(opt *TokenAuthMWOption) {
 		opt.Authenticator = ws.Authenticator()
 		opt.SuccessHandler = successHanlder
+		opt.PostBodyEnabled = f.postBodyEnabled
 	})
 
 	// install middlewares
@@ -70,7 +73,7 @@ func (c *TokenAuthConfigurer) Apply(feature security.Feature, ws security.WebSec
 	return nil
 }
 
-func (c *TokenAuthConfigurer) validate(f *TokenAuthFeature, ws security.WebSecurity) error {
+func (c *TokenAuthConfigurer) validate(f *TokenAuthFeature, _ security.WebSecurity) error {
 	if c.tokenStoreReader == nil {
 		return fmt.Errorf("token store reader is not pre-configured")
 	}

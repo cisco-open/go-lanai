@@ -45,7 +45,7 @@ var (
 		OPMetadataRequestJwsAlg:         claims.Unsupported(),
 		OPMetadataRequestJweAlg:         claims.Unsupported(),
 		OPMetadataRequestJweEnc:         claims.Unsupported(),
-		OPMetadataClientAuthMethod:      opMetaFixedSet("client_secret_basic"),
+		OPMetadataClientAuthMethod:      opMetaFixedSet("client_secret_basic", "client_secret_post"),
 		OPMetadataAuthJwsAlg:            claims.Unsupported(),
 		OPMetadataDisplayValues:         opMetaFixedSet("page", "touch"),
 		OPMetadataClaimTypes:            opMetaFixedSet("normal"),

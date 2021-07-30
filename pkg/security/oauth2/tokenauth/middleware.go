@@ -15,19 +15,25 @@ const (
 /****************************
 	Token Authentication
  ****************************/
+
+//goland:noinspection GoNameStartsWithPackageName
 type TokenAuthMiddleware struct {
-	authenticator  security.Authenticator
-	successHandler security.AuthenticationSuccessHandler
+	authenticator   security.Authenticator
+	successHandler  security.AuthenticationSuccessHandler
+	postBodyEnabled bool
 }
 
+//goland:noinspection GoNameStartsWithPackageName
 type TokenAuthMWOptions func(opt *TokenAuthMWOption)
 
+//goland:noinspection GoNameStartsWithPackageName
 type TokenAuthMWOption struct {
-	Authenticator  security.Authenticator
-	SuccessHandler security.AuthenticationSuccessHandler
+	Authenticator   security.Authenticator
+	SuccessHandler  security.AuthenticationSuccessHandler
+	PostBodyEnabled bool
 }
 
-func NewTokenAuthMiddleware(opts...TokenAuthMWOptions) *TokenAuthMiddleware {
+func NewTokenAuthMiddleware(opts ...TokenAuthMWOptions) *TokenAuthMiddleware {
 	opt := TokenAuthMWOption{}
 	for _, optFunc := range opts {
 		if optFunc != nil {
@@ -35,8 +41,9 @@ func NewTokenAuthMiddleware(opts...TokenAuthMWOptions) *TokenAuthMiddleware {
 		}
 	}
 	return &TokenAuthMiddleware{
-		authenticator: opt.Authenticator,
-		successHandler: opt.SuccessHandler,
+		authenticator:   opt.Authenticator,
+		successHandler:  opt.SuccessHandler,
+		postBodyEnabled: opt.PostBodyEnabled,
 	}
 }
 
@@ -48,17 +55,14 @@ func (mw *TokenAuthMiddleware) AuthenticateHandlerFunc() gin.HandlerFunc {
 		security.Clear(ctx)
 
 		// grab bearer token and create candidate
-		header := ctx.GetHeader("Authorization")
-		if header == "" {
-			// header is not present, we continue the MW chain
+		tokenValue, e := mw.extractAccessToken(ctx)
+		if e != nil {
+			mw.handleError(ctx, e)
+			return
+		} else if tokenValue == "" {
+			// token is not present, we continue the MW chain
 			return
 		}
-		if !strings.HasPrefix(header, bearerTokenPrefix) {
-			mw.handleError(ctx, oauth2.NewInvalidAccessTokenError("missing bearer token"))
-			return
-		}
-
-		tokenValue := strings.TrimPrefix(header, bearerTokenPrefix)
 		candidate := BearerToken{
 			Token:      tokenValue,
 			DetailsMap: map[string]interface{}{},
@@ -84,6 +88,21 @@ func (mw *TokenAuthMiddleware) handleSuccess(c *gin.Context, before, new securit
 	// we don't explicitly write any thig on success
 }
 
+func (mw *TokenAuthMiddleware) extractAccessToken(ctx *gin.Context) (ret string, err error) {
+	header := ctx.GetHeader("Authorization")
+	if header == "" {
+		if mw.postBodyEnabled {
+			ret = ctx.PostForm(oauth2.ParameterAccessToken)
+		}
+		return
+	}
+	if !strings.HasPrefix(header, bearerTokenPrefix) {
+		return "", oauth2.NewInvalidAccessTokenError("missing bearer token")
+	}
+
+	return strings.TrimPrefix(header, bearerTokenPrefix), nil
+}
+
 func (mw *TokenAuthMiddleware) handleError(c *gin.Context, err error) {
 	if !errors.Is(err, oauth2.ErrorTypeOAuth2) {
 		err = oauth2.NewInvalidAccessTokenError(err)
@@ -93,4 +112,3 @@ func (mw *TokenAuthMiddleware) handleError(c *gin.Context, err error) {
 	_ = c.Error(err)
 	c.Abort()
 }
-
