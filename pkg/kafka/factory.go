@@ -27,7 +27,7 @@ func NewSaramaProducerFactory(lc fx.Lifecycle, p KafkaProperties) ProducerFactor
 				err := p.Close()
 				//since application is shutting down, we just log the error
 				if err != nil {
-					log.Error("error while closing kafka producer %s", err)
+					log.Errorf("error while closing kafka producer %s", err)
 				}
 			}
 			return nil
