@@ -40,8 +40,6 @@ func newManager(tokenStore TokenStore, csrfProtectionMatcher web.RequestMatcher,
 	}
 }
 
-//TODO CsrfAuthenticationStrategy - check if template rendering is done before or after middleware code.
-
 func (m *manager) CsrfHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		expectedToken, err := m.tokenStore.LoadToken(c)

@@ -17,8 +17,8 @@ import (
 var (
 	scopedSpecs = map[string]map[string]claims.ClaimSpec{
 		oauth2.ScopeOidcProfile: claims.ProfileScopeSpecs,
-		oauth2.ScopeOidcEmail: claims.EmailScopeSpecs,
-		oauth2.ScopeOidcPhone: claims.PhoneScopeSpecs,
+		oauth2.ScopeOidcEmail:   claims.EmailScopeSpecs,
+		oauth2.ScopeOidcPhone:   claims.PhoneScopeSpecs,
 		oauth2.ScopeOidcAddress: claims.AddressScopeSpecs,
 	}
 	defaultSpecs = []map[string]claims.ClaimSpec{
@@ -35,16 +35,16 @@ var (
 
 type EnhancerOptions func(opt *EnhancerOption)
 type EnhancerOption struct {
-	Issuer       security.Issuer
-	JwtEncoder   jwt.JwtEncoder
+	Issuer     security.Issuer
+	JwtEncoder jwt.JwtEncoder
 }
 
 // OpenIDTokenEnhancer implements order.Ordered and TokenEnhancer
 // OpenIDTokenEnhancer generate OpenID ID Token and set it to token details
 //goland:noinspection GoNameStartsWithPackageName
 type OpenIDTokenEnhancer struct {
-	issuer       security.Issuer
-	jwtEncoder   jwt.JwtEncoder
+	issuer     security.Issuer
+	jwtEncoder jwt.JwtEncoder
 }
 
 func NewOpenIDTokenEnhancer(opts ...EnhancerOptions) *OpenIDTokenEnhancer {
@@ -120,7 +120,7 @@ func (oe *OpenIDTokenEnhancer) determineClaimSpecs(request oauth2.OAuth2Request)
 		return defaultSpecs
 	}
 
-	specs := make([]map[string]claims.ClaimSpec, len(defaultSpecs), len(defaultSpecs) + len(request.Scopes()))
+	specs := make([]map[string]claims.ClaimSpec, len(defaultSpecs), len(defaultSpecs)+len(request.Scopes()))
 	for i, spec := range defaultSpecs {
 		specs[i] = spec
 	}

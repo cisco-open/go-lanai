@@ -359,7 +359,7 @@ func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcess
 
 func (c *Configuration) authorizeHandler() auth.AuthorizeHandler {
 	if c.sharedAuthHandler == nil {
-		//TODO OIDC extension
+		//TODO OIDC Implicit flow extension
 		c.sharedAuthHandler = auth.NewAuthorizeHandler(func(opt *auth.AuthHandlerOption) {
 			//opt.Extensions = OIDC extensions
 			opt.ApprovalPageTmpl = "authorize.tmpl"

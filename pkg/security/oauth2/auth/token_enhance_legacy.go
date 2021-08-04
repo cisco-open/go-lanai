@@ -115,7 +115,7 @@ func (te *ResourceIdTokenEnhancer) Enhance(c context.Context, token oauth2.Acces
 		return nil, oauth2.NewInternalError("ResourceIdTokenEnhancer need to be placed after BasicClaimsEnhancer")
 	}
 
-	aud := claims.LegacyAudiance(c, &claims.FactoryOption{
+	aud := claims.LegacyAudience(c, &claims.FactoryOption{
 		Source: oauth,
 	})
 	t.Claims().Set(oauth2.ClaimAudience, aud)

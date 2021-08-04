@@ -13,6 +13,7 @@ import (
 /******************************
 	security.Authenticator
 ******************************/
+
 type Authenticator struct {
 	accountStore      security.AccountStore
 	passwdEncoder     PasswordEncoder

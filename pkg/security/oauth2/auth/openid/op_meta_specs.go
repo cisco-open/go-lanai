@@ -21,7 +21,9 @@ var (
 			oauth2.ScopeRead, oauth2.ScopeWrite, oauth2.ScopeTokenDetails, oauth2.ScopeTenantHierarchy,
 			oauth2.ScopeOidc, oauth2.ScopeOidcProfile, oauth2.ScopeOidcEmail, oauth2.ScopeOidcAddress, oauth2.ScopeOidcPhone,
 		),
-		OPMetadataResponseTypes: opMetaFixedSet("code", "id_token", "token id_token"),
+		// TODO Add implicit flow support
+		//OPMetadataResponseTypes: opMetaFixedSet("code", "id_token", "token id_token"),
+		OPMetadataResponseTypes: opMetaFixedSet("code"),
 		OPMetadataACRValues:     opMetaAcrValues(1, 2, 3),
 		OPMetadataSubjectTypes:  opMetaFixedSet("public"),
 		OPMetadataIdTokenJwsAlg: opMetaFixedSet("RS256"),

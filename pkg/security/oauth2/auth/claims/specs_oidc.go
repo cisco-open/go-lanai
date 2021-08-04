@@ -18,7 +18,7 @@ var (
 		oauth2.ClaimBirthday:          Unsupported(),
 		oauth2.ClaimZoneInfo:          Optional(ZoneInfo),
 		oauth2.ClaimLocale:            Optional(Locale),
-		oauth2.ClaimUpdatedAt:         Unsupported(), // TODO
+		oauth2.ClaimUpdatedAt:         Unsupported(),
 		oauth2.ClaimDefaultTenantId:   Optional(DefaultTenantId),
 		oauth2.ClaimAssignedTenants:   Optional(AssignedTenants),
 		oauth2.ClaimRoles:             Optional(Roles),
@@ -36,7 +36,7 @@ var (
 	}
 
 	AddressScopeSpecs = map[string]ClaimSpec{
-		oauth2.ClaimAddress: Optional(Address),                // TODO hash
+		oauth2.ClaimAddress: Optional(Address),
 	}
 )
 
