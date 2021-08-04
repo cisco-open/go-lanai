@@ -47,12 +47,12 @@ func NewJwtTokenStore(opts...JTSOptions) *jwtTokenStore {
 	}
 }
 
-func (r *jwtTokenStore) ReadAuthentication(ctx context.Context, tokenValue string, hint oauth2.TokenHint) (oauth2.Authentication, error) {
+func (s *jwtTokenStore) ReadAuthentication(ctx context.Context, tokenValue string, hint oauth2.TokenHint) (oauth2.Authentication, error) {
 	switch hint {
 	case oauth2.TokenHintRefreshToken:
-		return r.readAuthenticationFromRefreshToken(ctx, tokenValue)
+		return s.readAuthenticationFromRefreshToken(ctx, tokenValue)
 	default:
-		return r.TokenStoreReader.ReadAuthentication(ctx, tokenValue, hint)
+		return s.TokenStoreReader.ReadAuthentication(ctx, tokenValue, hint)
 	}
 }
 
@@ -125,9 +125,9 @@ func (s *jwtTokenStore) RemoveRefreshToken(c context.Context, token oauth2.Refre
 /********************
 	Helpers
  ********************/
-func (r *jwtTokenStore) readAuthenticationFromRefreshToken(c context.Context, tokenValue string) (oauth2.Authentication, error) {
+func (s *jwtTokenStore) readAuthenticationFromRefreshToken(c context.Context, tokenValue string) (oauth2.Authentication, error) {
 	// parse JWT token
-	token, e := r.ReadRefreshToken(c, tokenValue)
+	token, e := s.ReadRefreshToken(c, tokenValue)
 	if e != nil {
 		return nil, e
 	}
@@ -136,7 +136,7 @@ func (r *jwtTokenStore) readAuthenticationFromRefreshToken(c context.Context, to
 		return nil, oauth2.NewInvalidGrantError("refresh token contains no claims")
 	}
 
-	stored, e := r.registry.ReadStoredAuthorization(c, token)
+	stored, e := s.registry.ReadStoredAuthorization(c, token)
 	if e != nil {
 		return nil, oauth2.NewInvalidGrantError("refresh token unknown", e)
 	}

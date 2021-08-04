@@ -141,7 +141,7 @@ func (b *AuthenticatorBuilder) mfaOptions(f *PasswordAuthFeature) (Authenticator
 }
 
 func (b *AuthenticatorBuilder) prepareDecisionMakers(f *PasswordAuthFeature) []AuthenticationDecisionMaker {
-	// TODO maybe customizeble via Feature
+	// maybe customizable via Feature
 	acctStatusChecker := NewAccountStatusChecker(f.accountStore)
 	passwordChecker := NewPasswordPolicyChecker(f.accountStore)
 
@@ -152,9 +152,10 @@ func (b *AuthenticatorBuilder) prepareDecisionMakers(f *PasswordAuthFeature) []A
 }
 
 func (b *AuthenticatorBuilder) preparePostProcessors(f *PasswordAuthFeature) []PostAuthenticationProcessor {
-	// TODO maybe customizeble via Feature
+	// maybe customizable via Feature
 	return []PostAuthenticationProcessor{
 		NewPersistAccountPostProcessor(f.accountStore),
+		NewAdditionalDetailsPostProcessor(),
 		NewAccountStatusPostProcessor(f.accountStore),
 		NewAccountLockingPostProcessor(f.accountStore),
 	}

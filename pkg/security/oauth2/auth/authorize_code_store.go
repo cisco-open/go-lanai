@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultAuthCodeLength = 16
+	defaultAuthCodeLength = 32
 	authCodePrefix = "AC"
 )
 
@@ -25,9 +25,10 @@ var (
 /**********************
 	Abstraction
  **********************/
+
 type AuthorizationCodeStore interface {
-	GenerateAuhtorizationCode(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (string, error)
-	ConsumeAuhtorizationCode(ctx context.Context, authCode string, onetime bool) (oauth2.Authentication, error)
+	GenerateAuthorizationCode(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (string, error)
+	ConsumeAuthorizationCode(ctx context.Context, authCode string, onetime bool) (oauth2.Authentication, error)
 }
 
 /**********************
@@ -50,7 +51,7 @@ func NewRedisAuthorizationCodeStore(ctx context.Context, cf redis.ClientFactory,
 	}
 }
 
-func (s *RedisAuthorizationCodeStore) GenerateAuhtorizationCode(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (string, error) {
+func (s *RedisAuthorizationCodeStore) GenerateAuthorizationCode(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (string, error) {
 	// TODO check code_challenge_method
 
 	request := r.OAuth2Request()
@@ -67,7 +68,7 @@ func (s *RedisAuthorizationCodeStore) GenerateAuhtorizationCode(ctx context.Cont
 	return code, nil
 }
 
-func (s *RedisAuthorizationCodeStore) ConsumeAuhtorizationCode(ctx context.Context, authCode string, onetime bool) (oauth2.Authentication, error) {
+func (s *RedisAuthorizationCodeStore) ConsumeAuthorizationCode(ctx context.Context, authCode string, onetime bool) (oauth2.Authentication, error) {
 	key := s.authCodeRedisKey(authCode)
 	cmd := s.redisClient.Get(ctx, key)
 	if cmd.Err() != nil {

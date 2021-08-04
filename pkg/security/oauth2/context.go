@@ -9,7 +9,7 @@ import (
 	security.Authentication
 ******************************/
 
-// Authentication implements security.Authentication
+// Authentication extends security.Authentication
 type Authentication interface {
 	security.Authentication
 	UserAuthentication() security.Authentication
@@ -98,6 +98,7 @@ func calculateState(req OAuth2Request, userAuth security.Authentication) securit
 /******************************
 	UserAuthentication
 ******************************/
+
 type UserAuthentication interface {
 	security.Authentication
 	Subject() string
@@ -163,9 +164,10 @@ func (a *userAuthentication) DetailsMap() map[string]interface{} {
 	return a.DetailsVal
 }
 
-/***************
- Timeout Support
- ***************/
+/*********************
+ 	Timeout Support
+ *********************/
+
 type TimeoutApplier interface {
 	ApplyTimeout(ctx context.Context, sessionId string) (valid bool, err error)
 }

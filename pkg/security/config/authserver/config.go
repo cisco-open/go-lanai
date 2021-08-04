@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/grants"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/openid"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
@@ -80,6 +81,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 			SamlMetadata:    di.Properties.Endpoints.SamlMetadata,
 			TenantHierarchy: di.Properties.Endpoints.TenantHierarchy,
 		},
+		OpenIDSSOEnabled: true,
 	}
 	di.Configurer(&config)
 	return authServerOut{
@@ -153,6 +155,7 @@ type Configuration struct {
 	JwkStore            jwt.JwkStore
 	IdpManager          idp.IdentityProviderManager
 	Issuer              security.Issuer
+	OpenIDSSOEnabled    bool
 
 	// not directly configurable items
 	appContext                *bootstrap.ApplicationContext
@@ -216,7 +219,7 @@ func (c *Configuration) userPasswordEncoder() passwd.PasswordEncoder {
 
 func (c *Configuration) errorHandler() *auth.OAuth2ErrorHandler {
 	if c.sharedErrorHandler == nil {
-		c.sharedErrorHandler = auth.NewOAuth2ErrorHanlder()
+		c.sharedErrorHandler = auth.NewOAuth2ErrorHandler()
 	}
 	return c.sharedErrorHandler
 }
@@ -294,7 +297,13 @@ func (c *Configuration) authorizationService() auth.AuthorizationService {
 			conf.AccountStore = c.UserAccountStore
 			conf.TenantStore = c.TenantStore
 			conf.ProviderStore = c.ProviderStore
-			// TODO OIDC enhancers
+			if c.OpenIDSSOEnabled {
+				openidEnhancer := openid.NewOpenIDTokenEnhancer(func(opt *openid.EnhancerOption) {
+					opt.Issuer = c.Issuer
+					opt.JwtEncoder = c.jwtEncoder()
+				})
+				conf.PostTokenEnhancers = append(conf.PostTokenEnhancers, openidEnhancer)
+			}
 		})
 	}
 
@@ -331,19 +340,26 @@ func (c *Configuration) contextDetailsFactory() *common.ContextDetailsFactory {
 
 func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcessor {
 	if c.sharedARProcessor == nil {
-		//TODO OIDC extension
-		std := auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
-			opt.ClientStore = c.ClientStore
-			opt.ResponseTypes = auth.StandardResponseTypes
-		})
-		c.sharedARProcessor = auth.NewCompositeAuthorizeRequestProcessor(std)
+		processors := []auth.ChainedAuthorizeRequestProcessor{
+			auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
+				opt.ClientStore = c.ClientStore
+			}),
+		}
+		if c.OpenIDSSOEnabled {
+			p := openid.NewOpenIDAuthorizeRequestProcessor(func(opt *openid.ARPOption) {
+				opt.Issuer = c.Issuer
+				opt.JwtDecoder = c.jwtDecoder()
+			})
+			processors = append([]auth.ChainedAuthorizeRequestProcessor{p}, processors...)
+		}
+		c.sharedARProcessor = auth.NewAuthorizeRequestProcessor(processors...)
 	}
 	return c.sharedARProcessor
 }
 
 func (c *Configuration) authorizeHandler() auth.AuthorizeHandler {
 	if c.sharedAuthHandler == nil {
-		//TODO OIDC extension
+		//TODO OIDC Implicit flow extension
 		c.sharedAuthHandler = auth.NewAuthorizeHandler(func(opt *auth.AuthHandlerOption) {
 			//opt.Extensions = OIDC extensions
 			opt.ApprovalPageTmpl = "authorize.tmpl"

@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-func ClientId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func ClientId(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	if opt.Source.OAuth2Request() == nil {
 		return nil, errorMissingRequest
 	}
 	return nonZeroOrError(opt.Source.OAuth2Request().ClientId(), errorMissingDetails)
 }
 
-func Audience(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func Audience(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	if opt.Source.OAuth2Request() == nil {
 		return nil, errorMissingRequest
 	}
@@ -26,16 +26,11 @@ func Audience(ctx context.Context, opt *FactoryOption) (v interface{}, err error
 	return utils.NewStringSet(opt.Source.OAuth2Request().ClientId()), nil
 }
 
-func JwtId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
-	container, ok := opt.Source.AccessToken().(oauth2.ClaimsContainer)
-	if !ok || container.Claims() == nil {
-		return nil, errorMissingToken
-	}
-
-	return getClaim(container.Claims(), oauth2.ClaimJwtId)
+func JwtId(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
+	return extractAccessTokenClaim(opt, oauth2.ClaimJwtId)
 }
 
-func ExpiresAt(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func ExpiresAt(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	if opt.Source.AccessToken() != nil {
 		v = opt.Source.AccessToken().ExpiryTime()
 	}
@@ -46,7 +41,7 @@ func ExpiresAt(ctx context.Context, opt *FactoryOption) (v interface{}, err erro
 	return nonZeroOrError(v, errorMissingDetails)
 }
 
-func IssuedAt(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func IssuedAt(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	if opt.Source.AccessToken() != nil {
 		v = opt.Source.AccessToken().IssueTime()
 	}
@@ -57,7 +52,7 @@ func IssuedAt(ctx context.Context, opt *FactoryOption) (v interface{}, err error
 	return nonZeroOrError(v, errorMissingDetails)
 }
 
-func Issuer(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func Issuer(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	if opt.Issuer != nil {
 		if id := opt.Issuer.Identifier(); id != "" {
 			return id, nil
@@ -65,35 +60,25 @@ func Issuer(ctx context.Context, opt *FactoryOption) (v interface{}, err error) 
 	}
 
 	// fall back to extract from access token
-	container, ok := opt.Source.AccessToken().(oauth2.ClaimsContainer)
-	if !ok || container.Claims() == nil {
-		return nil, errorMissingToken
-	}
-
-	return getClaim(container.Claims(), oauth2.ClaimIssuer)
+	return extractAccessTokenClaim(opt, oauth2.ClaimIssuer)
 }
 
-func NotBefore(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
-	container, ok := opt.Source.AccessToken().(oauth2.ClaimsContainer)
-	if !ok || container.Claims() == nil {
-		return nil, errorMissingToken
-	}
-
-	return getClaim(container.Claims(), oauth2.ClaimNotBefore)
+func NotBefore(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
+	return extractAccessTokenClaim(opt, oauth2.ClaimNotBefore)
 }
 
 func Subject(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
 	return Username(ctx, opt)
 }
 
-func Scopes(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func Scopes(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	if opt.Source.OAuth2Request() == nil {
 		return nil, errorMissingRequest
 	}
 	return nonZeroOrError(opt.Source.OAuth2Request().Scopes(), errorMissingDetails)
 }
 
-func Username(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func Username(_ context.Context, opt *FactoryOption) (v interface{}, err error) {
 	if opt.Source.UserAuthentication() == nil || opt.Source.UserAuthentication().Principal() == nil {
 		return nil, errorMissingUser
 	}
@@ -123,7 +108,21 @@ func nonZeroOrError(v interface{}, candidateError error) (interface{}, error) {
 	return v, nil
 }
 
-func getClaim(claims oauth2.Claims, claim string) (v interface{}, err error) {
+func extractAccessToken(opt *FactoryOption) oauth2.AccessToken {
+	token := opt.AccessToken
+	if token == nil {
+		token = opt.Source.AccessToken()
+	}
+	return token
+}
+
+func extractAccessTokenClaim(opt *FactoryOption, claim string) (v interface{}, err error) {
+	container, ok := extractAccessToken(opt).(oauth2.ClaimsContainer)
+	if !ok || container.Claims() == nil {
+		return nil, errorMissingToken
+	}
+
+	claims := container.Claims()
 	if !claims.Has(claim) {
 		return nil, errorMissingClaims
 	}

@@ -10,6 +10,7 @@ import (
 /*********************************
 	Feature Impl
  *********************************/
+
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutHandler interface {
 	HandleLogout(context.Context, *http.Request, http.ResponseWriter, security.Authentication) error
@@ -85,14 +86,14 @@ func New() *LogoutFeature {
 		successUrl: "/login",
 		logoutUrl:  "/logout",
 		logoutHandlers: []LogoutHandler{
-			DefaultLogoutHanlder{},
+			DefaultLogoutHandler{},
 		},
 	}
 }
 
-type DefaultLogoutHanlder struct{}
+type DefaultLogoutHandler struct{}
 
-func (h DefaultLogoutHanlder) HandleLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, _ security.Authentication) error {
+func (h DefaultLogoutHandler) HandleLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, _ security.Authentication) error {
 	security.Clear(ctx)
 	return nil
 }

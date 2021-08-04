@@ -58,7 +58,7 @@ func RemoveCachedRequest(ctx *gin.Context) {
 	s.Delete(SessionKeyCachedRequest)
 }
 
-// Designed to be used by code outside of the security package.
+// CachedRequestPreProcessor is designed to be used by code outside of the security package.
 // Implements the web.RequestCacheAccessor interface
 type CachedRequestPreProcessor struct {
 	store session.Store

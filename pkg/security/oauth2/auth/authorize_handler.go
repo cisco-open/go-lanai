@@ -35,6 +35,7 @@ type AuthorizeHandler interface {
 /*************************
 	Default
  *************************/
+
 type AuthHandlerOptions func(opt *AuthHandlerOption)
 
 type AuthHandlerOption struct {
@@ -117,12 +118,12 @@ func (h *DefaultAuthorizeHandler) HandleApprovalPage(ctx context.Context, r *Aut
 				ApprovalModelKeyApprovalUrl: h.approvalUrl,
 			},
 		}
-		template.TemplateEncodeResponseFunc(ctx, ctx.Writer, &mv)
+		_ = template.TemplateEncodeResponseFunc(ctx, ctx.Writer, &mv)
 	}, nil
 }
 
 func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *AuthorizeRequest, user oauth2.UserAuthentication) (ResponseHandlerFunc, error) {
-	code, e := h.authCodeStore.GenerateAuhtorizationCode(ctx, r, user)
+	code, e := h.authCodeStore.GenerateAuthorizationCode(ctx, r, user)
 	if e != nil {
 		return nil, e
 	}

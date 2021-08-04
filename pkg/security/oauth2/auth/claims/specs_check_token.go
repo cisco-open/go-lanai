@@ -5,38 +5,38 @@ import (
 )
 
 var (
-	CheckTokenClaimSpecs = map[string]ClaimSpec {
+	CheckTokenClaimSpecs = map[string]ClaimSpec{
 		// Basic
-		oauth2.ClaimAudience:  {Func: Audience, Req: true},
-		oauth2.ClaimExpire:    {Func: ExpiresAt, Req: false},
-		oauth2.ClaimJwtId:     {Func: JwtId, Req: false},
-		oauth2.ClaimIssueAt:   {Func: IssuedAt, Req: false},
-		oauth2.ClaimIssuer:    {Func: Issuer, Req: true},
-		oauth2.ClaimNotBefore: {Func: NotBefore, Req: false},
-		oauth2.ClaimSubject:   {Func: Subject, Req: false},
-		oauth2.ClaimScope:     {Func: Scopes, Req: false},
-		oauth2.ClaimClientId:  {Func: ClientId, Req: true},
-		oauth2.ClaimUsername:  {Func: Username, Req: false},
+		oauth2.ClaimAudience:  Required(Audience),
+		oauth2.ClaimExpire:    Optional(ExpiresAt),
+		oauth2.ClaimJwtId:     Optional(JwtId),
+		oauth2.ClaimIssueAt:   Optional(IssuedAt),
+		oauth2.ClaimIssuer:    Required(Issuer),
+		oauth2.ClaimNotBefore: Optional(NotBefore),
+		oauth2.ClaimSubject:   Optional(Subject),
+		oauth2.ClaimScope:     Optional(Scopes),
+		oauth2.ClaimClientId:  Required(ClientId),
+		oauth2.ClaimUsername:  Optional(Username),
 
 		// OIDC
-		oauth2.ClaimAuthTime:  {Func: AuthenticationTime, Req: false},
-		oauth2.ClaimFirstName: {Func: FirstName, Req: false},
-		oauth2.ClaimLastName:  {Func: LastName, Req: false},
-		oauth2.ClaimEmail:     {Func: Email, Req: false},
-		oauth2.ClaimLocale:    {Func: Locale, Req: false},
+		oauth2.ClaimAuthTime:  Optional(AuthenticationTime),
+		oauth2.ClaimFirstName: Optional(FirstName),
+		oauth2.ClaimLastName:  Optional(LastName),
+		oauth2.ClaimEmail:     Optional(Email),
+		oauth2.ClaimLocale:    Optional(Locale),
 
 		// Custom
-		oauth2.ClaimUserId:          {Func: UserId, Req: false},
-		oauth2.ClaimAccountType:     {Func: AccountType, Req: false},
-		oauth2.ClaimCurrency:        {Func: Currency, Req: false},
-		oauth2.ClaimAssignedTenants: {Func: AssignedTenants, Req: false},
-		oauth2.ClaimTenantId:        {Func: TenantId, Req: false},
-		oauth2.ClaimTenantName:      {Func: TenantName, Req: false},
-		oauth2.ClaimTenantSuspended: {Func: TenantSuspended, Req: false},
-		oauth2.ClaimProviderId:      {Func: ProviderId, Req: false},
-		oauth2.ClaimProviderName:    {Func: ProviderName, Req: false},
-		oauth2.ClaimRoles:           {Func: Roles, Req: false},
-		oauth2.ClaimPermissions:     {Func: Permissions, Req: false},
-		oauth2.ClaimOrigUsername:    {Func: OriginalUsername, Req: false},
+		oauth2.ClaimUserId:          Optional(UserId),
+		oauth2.ClaimAccountType:     Optional(AccountType),
+		oauth2.ClaimCurrency:        Optional(Currency),
+		oauth2.ClaimAssignedTenants: Optional(AssignedTenants),
+		oauth2.ClaimTenantId:        Optional(TenantId),
+		oauth2.ClaimTenantName:      Optional(TenantName),
+		oauth2.ClaimTenantSuspended: Optional(TenantSuspended),
+		oauth2.ClaimProviderId:      Optional(ProviderId),
+		oauth2.ClaimProviderName:    Optional(ProviderName),
+		oauth2.ClaimRoles:           Optional(Roles),
+		oauth2.ClaimPermissions:     Optional(Permissions),
+		oauth2.ClaimOrigUsername:    Optional(OriginalUsername),
 	}
 )

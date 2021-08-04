@@ -3,6 +3,7 @@ package security
 import (
 	"fmt"
 	"net/url"
+	pathutils "path"
 	"strings"
 )
 
@@ -14,7 +15,6 @@ type UrlBuilderOption struct {
 }
 
 type Issuer interface {
-	// Basic informations
 	Protocol() string
 	Domain() string
 	Port() int
@@ -27,7 +27,7 @@ type Issuer interface {
 
 	// LevelOfAssurance construct level-of-assurance string with given string
 	// level-of-assurance represent how confident the auth issuer is about user's identity
-	// ref: https://it.wisc.edu/about/user-authentication-and-levels-of-assurance/
+	// ref: https://developer.mobileconnect.io/level-of-assurance
 	LevelOfAssurance(level int) string
 
 	// BuildUrl build a URL with given url builder options
@@ -123,7 +123,8 @@ func (i DefaultIssuer) BuildUrl(options ...UrlBuilderOptions) (*url.URL, error) 
 
 	ret.Path = i.DefaultIssuerDetails.ContextPath
 	if opt.Path != "" {
-		ret = ret.ResolveReference(&url.URL{Path: opt.Path})
+		path := pathutils.Join(ret.Path, opt.Path)
+		ret = ret.ResolveReference(&url.URL{Path: path})
 	}
 
 	return ret, nil

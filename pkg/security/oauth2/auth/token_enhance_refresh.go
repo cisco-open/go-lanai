@@ -20,7 +20,8 @@ var (
 /*****************************
 	RefreshToken Enhancer
  *****************************/
-// RefreshTokenEnhancer impelments order.Ordered and TokenEnhancer
+
+// RefreshTokenEnhancer implements order.Ordered and TokenEnhancer
 // RefreshTokenEnhancer is responsible to create refresh token and associate it with the given access token
 type RefreshTokenEnhancer struct {
 	tokenStore TokenStore
@@ -103,8 +104,3 @@ func (te *RefreshTokenEnhancer) isRefreshTokenNeeded(ctx context.Context, token 
 	return token.RefreshToken() == nil || token.RefreshToken().WillExpire() && token.RefreshToken().Expired()
 }
 
-func copyClaim(dest oauth2.Claims, src oauth2.Claims, claim string) {
-	if src != nil && src.Has(claim) {
-		dest.Set(claim, src.Get(claim))
-	}
-}

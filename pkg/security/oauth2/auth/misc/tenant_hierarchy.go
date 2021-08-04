@@ -14,7 +14,7 @@ type TenantHierarchyEndpoint struct {
 
 }
 
-func NewEndpoint() *TenantHierarchyEndpoint {
+func NewTenantHierarchyEndpoint() *TenantHierarchyEndpoint {
 	return &TenantHierarchyEndpoint{}
 }
 

@@ -72,7 +72,9 @@ func (c *TokenAuthEndpointsConfigurer) Order() int {
 func (c *TokenAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 	// For Token endpoint
 	ws.Route(matcher.RouteWithPattern(c.config.Endpoints.UserInfo)).
-		With(tokenauth.New()).
+		With(tokenauth.New().
+			EnablePostBody(),
+		).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
 		).
@@ -98,7 +100,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			Path(path).
 			Condition(condition).
 			ApprovalPath(c.config.Endpoints.Approval).
-			RequestProcessors(c.config.authorizeRequestProcessor()).
+			RequestProcessor(c.config.authorizeRequestProcessor()).
 			ErrorHandler(c.config.errorHandler()).
 			AuthorizeHanlder(c.config.authorizeHandler()),
 		).
@@ -113,7 +115,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 
 	// Logout Handler
 	// Note: we disable default logout handler here because we don't want to unauthenticate user when PUT or DELETE is used
-	logoutHandler := revoke.NewTokenRevokingLogoutHanlder(func(opt *revoke.HanlderOption) {
+	logoutHandler := revoke.NewTokenRevokingLogoutHandler(func(opt *revoke.HanlderOption) {
 		opt.Revoker = c.config.accessRevoker()
 	})
 	logoutSuccessHandler := revoke.NewTokenRevokeSuccessHandler(func(opt *revoke.SuccessOption) {

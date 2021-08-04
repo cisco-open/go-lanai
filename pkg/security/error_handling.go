@@ -34,7 +34,8 @@ type ErrorHandler interface {
 /*****************************
 	Common Impl.
  *****************************/
-// *CompositeAuthenticationErrorHandler implement AuthenticationErrorHandler interface
+
+// CompositeAuthenticationErrorHandler implement AuthenticationErrorHandler interface
 type CompositeAuthenticationErrorHandler struct {
 	handlers []AuthenticationErrorHandler
 }

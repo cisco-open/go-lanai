@@ -18,7 +18,7 @@ func (f *Feature) Identifier() security.FeatureIdentifier {
 	return FeatureId
 }
 
-// Standard security.Feature entrypoint
+// Configure Standard security.Feature entrypoint
 func Configure(ws security.WebSecurity) *Feature {
 	feature := &Feature{}
 	if fc, ok := ws.(security.FeatureModifier); ok {
@@ -27,7 +27,7 @@ func Configure(ws security.WebSecurity) *Feature {
 	panic(fmt.Errorf("unable to configure session: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
-// Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+// New Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func New() *Feature {
 	return &Feature{}
 }

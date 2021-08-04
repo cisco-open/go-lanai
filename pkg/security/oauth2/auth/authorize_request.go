@@ -70,7 +70,11 @@ func ParseAuthorizeRequest(req *http.Request) (*AuthorizeRequest, error) {
 		return nil, err
 	}
 
-	values := flattenValuesToMap(req.Form);
+	values := flattenValuesToMap(req.Form)
+	return ParseAuthorizeRequestWithKVs(req.Context(), values)
+}
+
+func ParseAuthorizeRequestWithKVs(ctx context.Context, values map[string]interface{}) (*AuthorizeRequest, error) {
 	return &AuthorizeRequest{
 		Parameters:    toStringMap(values),
 		ClientId:      extractStringParam(oauth2.ParameterClientId, values),
@@ -79,10 +83,9 @@ func ParseAuthorizeRequest(req *http.Request) (*AuthorizeRequest, error) {
 		RedirectUri:   extractStringParam(oauth2.ParameterRedirectUri, values),
 		State:         extractStringParam(oauth2.ParameterState, values),
 		Extensions:    values,
-		context:       utils.MakeMutableContext(req.Context()),
+		context:       utils.MakeMutableContext(ctx),
 	}, nil
 }
-
 
 /************************
 	Helpers

@@ -17,11 +17,11 @@ var (
 // It's responsible to handle all oauth2 errors
 type OAuth2ErrorHandler struct {}
 
-func NewOAuth2ErrorHanlder() *OAuth2ErrorHandler {
+func NewOAuth2ErrorHandler() *OAuth2ErrorHandler {
 	return &OAuth2ErrorHandler{}
 }
 
-// security.ErrorHandler
+// HandleError implements security.ErrorHandler
 func (h *OAuth2ErrorHandler) HandleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 	h.handleError(c, r, rw, err)
 }
@@ -29,6 +29,8 @@ func (h *OAuth2ErrorHandler) HandleError(c context.Context, r *http.Request, rw 
 func (h *OAuth2ErrorHandler) handleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 
 	switch oe, ok := err.(oauth2.OAuth2ErrorTranslator); {
+	case ok && errors.Is(err, errorInvalidRedirectUri):
+		writeOAuth2Error(c, r, rw, oe)
 	case ok && errors.Is(err, oauth2.ErrorSubTypeOAuth2Internal):
 		fallthrough
 	case ok && errors.Is(err, oauth2.ErrorTypeOAuth2):
@@ -53,16 +55,16 @@ func writeOAuth2Error(c context.Context, r *http.Request, rw http.ResponseWriter
 	}
 }
 
-func writeAdditionalHeader(c context.Context, r *http.Request, rw http.ResponseWriter, challenge string) {
+func writeAdditionalHeader(_ context.Context, _ *http.Request, rw http.ResponseWriter, challenge string) {
 	if security.IsResponseWritten(rw) {
 		return
 	}
 
 	rw.Header().Add("Cache-Control", "no-store")
-	rw.Header().Add("Pragma", "no-cache");
+	rw.Header().Add("Pragma", "no-cache")
 
 	if challenge != "" {
-		rw.Header().Set("WWW-Authenticate", challenge);
+		rw.Header().Set("WWW-Authenticate", challenge)
 	}
 }
 
@@ -85,10 +87,10 @@ func tryWriteErrorAsRedirect(c context.Context, r *http.Request, rw http.Respons
 		return
 	}
 	http.Redirect(rw, r, redirectUrl, http.StatusFound)
-	rw.Write([]byte{})
+	_, _ = rw.Write([]byte{})
 }
 
-func findAuthorizeRequest(c context.Context, r *http.Request) *AuthorizeRequest {
+func findAuthorizeRequest(c context.Context, _ *http.Request) *AuthorizeRequest {
 	if ar, ok := c.Value(oauth2.CtxKeyValidatedAuthorizeRequest).(*AuthorizeRequest); ok {
 		return ar
 	}

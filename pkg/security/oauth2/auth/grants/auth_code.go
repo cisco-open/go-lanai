@@ -12,6 +12,9 @@ var (
 	authCodeIgnoreParams = utils.NewStringSet(
 		oauth2.ParameterScope,
 		oauth2.ParameterClientSecret,
+		oauth2.ParameterCodeVerifier,
+		oauth2.ParameterCodeChallenge,
+		oauth2.ParameterCodeChallengeMethod,
 	)
 )
 
@@ -23,11 +26,11 @@ type AuthorizationCodeGranter struct {
 
 func NewAuthorizationCodeGranter(authService auth.AuthorizationService, authCodeStore auth.AuthorizationCodeStore) *AuthorizationCodeGranter {
 	if authService == nil {
-		panic(fmt.Errorf("cannot create AuthorizationCodeGranter without auth service."))
+		panic(fmt.Errorf("cannot create AuthorizationCodeGranter without auth service"))
 	}
 
 	if authCodeStore == nil {
-		panic(fmt.Errorf("cannot create AuthorizationCodeGranter without auth code service."))
+		panic(fmt.Errorf("cannot create AuthorizationCodeGranter without auth code service"))
 	}
 
 	return &AuthorizationCodeGranter{
@@ -54,11 +57,16 @@ func (g *AuthorizationCodeGranter) Grant(ctx context.Context, request *auth.Toke
 		return nil, oauth2.NewInvalidTokenRequestError(fmt.Sprintf("missing required parameter %s", oauth2.ParameterAuthCode))
 	}
 
-	stored, e := g.authCodeStore.ConsumeAuhtorizationCode(ctx, code, true)
+	stored, e := g.authCodeStore.ConsumeAuthorizationCode(ctx, code, true)
 	if e != nil {
 		return nil, e
 	} else if !stored.OAuth2Request().Approved() || stored.UserAuthentication() == nil {
 		return nil, oauth2.NewInvalidGrantError("original authorize request is invalid")
+	}
+
+	// PKCE
+	if e := validatePKCE(stored.OAuth2Request(), request); e != nil {
+		return nil, e
 	}
 
 	// check redirect uri
@@ -89,6 +97,35 @@ func (g *AuthorizationCodeGranter) Grant(ctx context.Context, request *auth.Toke
 	}
 	return token, nil
 }
+
+// https://datatracker.ietf.org/doc/html/rfc7636
+func validatePKCE(stored oauth2.OAuth2Request, request *auth.TokenRequest) error {
+	challenge, cOk := stored.Parameters()[oauth2.ParameterCodeChallenge]
+	verifier, vOk := request.Parameters[oauth2.ParameterCodeVerifier]
+	if !cOk && !vOk {
+		return nil
+	}
+
+	switch {
+	case challenge == "":
+		return oauth2.NewInvalidTokenRequestError(fmt.Errorf(`unexpected "%s"`, oauth2.ParameterCodeVerifier))
+	case verifier == "":
+		return oauth2.NewInvalidTokenRequestError(fmt.Errorf(`"%s" required`, oauth2.ParameterCodeVerifier))
+	}
+
+	str := stored.Parameters()[oauth2.ParameterCodeChallengeMethod]
+	method, e := parseCodeChallengeMethod(str)
+	if e != nil {
+		return oauth2.NewInvalidTokenRequestError(fmt.Errorf(`unsupported code challenge method "%s:"`, str))
+	}
+
+	if !verifyPKCE(verifier, challenge, method) {
+		return oauth2.NewInvalidTokenRequestError(fmt.Errorf(`invalid "%s"`, oauth2.ParameterCodeVerifier))
+	}
+
+	return nil
+}
+
 
 // https://tools.ietf.org/html/rfc6749#section-4.1.3
 // if redirect_uri was provided in original request (not implied from client registrition).

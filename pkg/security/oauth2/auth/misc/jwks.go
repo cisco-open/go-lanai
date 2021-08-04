@@ -39,7 +39,7 @@ func NewJwkSetEndpoint(jwkStore jwt.JwkStore) *JwkSetEndpoint {
 	}
 }
 
-func (ep *JwkSetEndpoint) JwkSet(c context.Context, request *JwkSetRequest) (response *JwkSetResponse, err error) {
+func (ep *JwkSetEndpoint) JwkSet(c context.Context, _ *JwkSetRequest) (response *JwkSetResponse, err error) {
 	jwks, e := ep.jwkStore.LoadAll(c)
 	if e != nil {
 		return nil, oauth2.NewGenericError(e.Error())
@@ -63,14 +63,14 @@ func (ep *JwkSetEndpoint) JwkSet(c context.Context, request *JwkSetRequest) (res
 func convertRSA(jwk jwt.Jwk) *JwkResponse {
 	pubkey := jwk.Public().(*rsa.PublicKey)
 
-	N := base64.StdEncoding.EncodeToString(pubkey.N.Bytes())
+	N := base64.RawURLEncoding.EncodeToString(pubkey.N.Bytes())
 
 	// Exponent convert to two's-complement in big-endian byte-order
 	buf := bytes.NewBuffer([]byte{})
 	if e := binary.Write(buf, binary.BigEndian, int64(pubkey.E)); e != nil {
 		return nil
 	}
-	E := base64.StdEncoding.EncodeToString(buf.Bytes())
+	E := base64.RawURLEncoding.EncodeToString(buf.Bytes())
 
 	return &JwkResponse{
 		Id:       jwk.Id(),

@@ -14,16 +14,14 @@ import (
 	Expiry Time Enhancer
  *****************************/
 
-// ExpiryTokenEnhancer impelments order.Ordered and TokenEnhancer
-type ExpiryTokenEnhancer struct {
-
-}
+// ExpiryTokenEnhancer implements order.Ordered and TokenEnhancer
+type ExpiryTokenEnhancer struct {}
 
 func (e *ExpiryTokenEnhancer) Order() int {
 	return TokenEnhancerOrderExpiry
 }
 
-func (e *ExpiryTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (e *ExpiryTokenEnhancer) Enhance(_ context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
@@ -42,17 +40,15 @@ func (e *ExpiryTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToke
 	Details Enhancer
  *****************************/
 
-// DetailsTokenEnhancer impelments order.Ordered and TokenEnhancer
+// DetailsTokenEnhancer implements order.Ordered and TokenEnhancer
 // it populate token's additional metadata other than claims, issue/expiry time
-type DetailsTokenEnhancer struct {
-
-}
+type DetailsTokenEnhancer struct {}
 
 func (e *DetailsTokenEnhancer) Order() int {
 	return TokenEnhancerOrderTokenDetails
 }
 
-func (e *DetailsTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (e *DetailsTokenEnhancer) Enhance(_ context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
@@ -75,7 +71,7 @@ func (te *BasicClaimsTokenEnhancer) Order() int {
 	return TokenEnhancerOrderBasicClaims
 }
 
-func (te *BasicClaimsTokenEnhancer) Enhance(c context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (te *BasicClaimsTokenEnhancer) Enhance(_ context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
 		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)

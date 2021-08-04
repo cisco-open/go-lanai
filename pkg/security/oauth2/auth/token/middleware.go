@@ -10,12 +10,16 @@ import (
 /***********************
 	Token Endpoint
  ***********************/
+
+//goland:noinspection GoNameStartsWithPackageName
 type TokenEndpointMiddleware struct {
 	granter     auth.TokenGranter
 }
 
+//goland:noinspection GoNameStartsWithPackageName
 type TokenEndpointOptionsFunc func(*TokenEndpointOptions)
 
+//goland:noinspection GoNameStartsWithPackageName
 type TokenEndpointOptions struct {
 	Granter     *auth.CompositeTokenGranter
 }
@@ -44,32 +48,32 @@ func (mw *TokenEndpointMiddleware) TokenHandlerFunc() gin.HandlerFunc {
 		}
 
 		// parse request
-		tokenReuqest, e := auth.ParseTokenRequest(ctx.Request)
+		tokenRequest, e := auth.ParseTokenRequest(ctx.Request)
 		if e != nil {
 			mw.handleError(ctx, oauth2.NewInvalidTokenRequestError("invalid token request", e))
 			return
 		}
 
 		// see if client id matches
-		if tokenReuqest.ClientId != "" && tokenReuqest.ClientId != client.ClientId() {
+		if tokenRequest.ClientId != "" && tokenRequest.ClientId != client.ClientId() {
 			mw.handleError(ctx, oauth2.NewInvalidTokenRequestError("given client Domain does not match authenticated client"))
 			return
 		}
-		tokenReuqest.Extensions[oauth2.ExtensionUseSessionTimeout] = client.UseSessionTimeout()
+		tokenRequest.Extensions[oauth2.ExtUseSessionTimeout] = client.UseSessionTimeout()
 
 		// check grant
-		if e := auth.ValidateGrant(ctx, client, tokenReuqest.GrantType); e != nil {
+		if e := auth.ValidateGrant(ctx, client, tokenRequest.GrantType); e != nil {
 			mw.handleError(ctx, e)
 			return
 		}
 
 		// check if supported
-		if tokenReuqest.GrantType == oauth2.GrantTypeImplicit {
+		if tokenRequest.GrantType == oauth2.GrantTypeImplicit {
 			mw.handleError(ctx, oauth2.NewInvalidGrantError("implicit grant type not supported from token endpoint"))
 			return
 		}
 
-		token, e := mw.granter.Grant(ctx, tokenReuqest)
+		token, e := mw.granter.Grant(ctx, tokenRequest)
 		if e != nil {
 			mw.handleError(ctx, e)
 			return
@@ -80,6 +84,8 @@ func (mw *TokenEndpointMiddleware) TokenHandlerFunc() gin.HandlerFunc {
 }
 
 func (mw *TokenEndpointMiddleware) handleSuccess(c *gin.Context, v interface{}) {
+	c.Header("Cache-Control", "no-store")
+	c.Header("Pragma", "no-cache")
 	c.JSON(200, v)
 	c.Abort()
 }

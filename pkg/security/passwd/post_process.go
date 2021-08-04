@@ -8,9 +8,17 @@ import (
 	"time"
 )
 
+const (
+	postProcessorOrderAccountStatus     = order.Lowest
+	postProcessorOrderAccountLocking    = 0
+	postProcessorOrderAdditionalDetails = order.Highest + 1
+	postProcessorOrderPersistAccount    = order.Highest
+)
+
 /******************************
 	abstracts
  ******************************/
+
 // AuthenticationResult is a values carrier for PostAuthenticationProcessor
 type AuthenticationResult struct {
 	Candidate security.Candidate
@@ -27,7 +35,7 @@ type PostAuthenticationProcessor interface {
 	// 	- If the authentication is granted, the AuthenticationResult.Auth is non-nil and AuthenticationResult.Error is nil
 	//	- If the authentication is rejected, the AuthenticationResult.Error is non-nil and AuthenticationResult.Auth should be ignored
 	//
-	// If the context.Context and security.Account paramters are mutable, PostAuthenticationProcessor is allowed to change it
+	// If the context.Context and security.Account parameters are mutable, PostAuthenticationProcessor is allowed to change it
 	// Note: PostAuthenticationProcessor typically shouldn't overwrite authentication decision (rejected or approved)
 	// 		 However, it is allowed to modify result by returning different AuthenticationResult.
 	//       This is useful when PostAuthenticationProcessor want to returns different error or add more details to authentication
@@ -42,10 +50,10 @@ func applyPostAuthenticationProcessors(processors []PostAuthenticationProcessor,
 
 	result := AuthenticationResult{
 		Candidate: can,
-		Auth: auth,
-		Error: err,
+		Auth:      auth,
+		Error:     err,
 	}
-	for _,processor := range processors {
+	for _, processor := range processors {
 		result = processor.Process(ctx, acct, result)
 	}
 	return result.Auth, result.Error
@@ -65,9 +73,9 @@ func NewPersistAccountPostProcessor(store security.AccountStore) *PersistAccount
 	return &PersistAccountPostProcessor{store: store}
 }
 
-// run last
+// Order the processor run last
 func (p *PersistAccountPostProcessor) Order() int {
-	return order.Highest
+	return postProcessorOrderPersistAccount
 }
 
 func (p *PersistAccountPostProcessor) Process(ctx context.Context, acct security.Account, result AuthenticationResult) AuthenticationResult {
@@ -94,9 +102,9 @@ func NewAccountStatusPostProcessor(store security.AccountStore) *AccountStatusPo
 	return &AccountStatusPostProcessor{store: store}
 }
 
-// run first
+// Order the processor run first (reversed ordering)
 func (p *AccountStatusPostProcessor) Order() int {
-	return order.Lowest
+	return postProcessorOrderAccountStatus
 }
 
 func (p *AccountStatusPostProcessor) Process(ctx context.Context, acct security.Account, result AuthenticationResult) AuthenticationResult {
@@ -135,9 +143,9 @@ func NewAccountLockingPostProcessor(store security.AccountStore) *AccountLocking
 	return &AccountLockingPostProcessor{store: store}
 }
 
-// run between AccountStatusPostProcessor and AccountStatusPostProcessor
+// Order the processor run between AccountStatusPostProcessor and PersistAccountPostProcessor
 func (p *AccountLockingPostProcessor) Order() int {
-	return 0
+	return postProcessorOrderAccountLocking
 }
 
 func (p *AccountLockingPostProcessor) Process(ctx context.Context, acct security.Account, result AuthenticationResult) AuthenticationResult {
@@ -161,9 +169,9 @@ func (p *AccountLockingPostProcessor) Process(ctx context.Context, acct security
 	// find first login failure within FailureInterval
 	now := time.Now()
 	count := 0
-	for _,t := range history.LoginFailures() {
+	for _, t := range history.LoginFailures() {
 		if interval := now.Sub(t); interval <= rules.LockoutFailuresInterval() && t.After(history.LockoutTime()) {
-			count ++
+			count++
 		}
 	}
 
@@ -177,15 +185,48 @@ func (p *AccountLockingPostProcessor) Process(ctx context.Context, acct security
 	return result
 }
 
+// AdditionalDetailsPostProcessor populate additional authentication details if the authentication is granted.
+// It's implement order.Ordered
+// Note: post-processors executed in reversed order
+type AdditionalDetailsPostProcessor struct {}
+
+func NewAdditionalDetailsPostProcessor() *AdditionalDetailsPostProcessor {
+	return &AdditionalDetailsPostProcessor{}
+}
+
+// Order the processor run last
+func (p *AdditionalDetailsPostProcessor) Order() int {
+	return postProcessorOrderAdditionalDetails
+}
+
+func (p *AdditionalDetailsPostProcessor) Process(_ context.Context, _ security.Account, result AuthenticationResult) AuthenticationResult {
+	if result.Error != nil || result.Auth == nil {
+		return result
+	}
+	details, ok := result.Auth.Details().(map[string]interface{})
+	if !ok {
+		return result
+	}
+
+	// auth method
+	details[security.DetailsKeyAuthMethod] = security.AuthMethodPassword
+
+	// MFA
+	if isMfaVerify(result) {
+		details[security.DetailsKeyMFAApplied] = true
+	}
+	return result
+}
+
 /******************************
 	Helper
  ******************************/
 func isPasswordAuth(result AuthenticationResult) bool {
-	_, ok := result.Candidate.(*UsernamePasswordPair);
+	_, ok := result.Candidate.(*UsernamePasswordPair)
 	return ok
 }
 
 func isMfaVerify(result AuthenticationResult) bool {
-	_, ok := result.Candidate.(*MFAOtpVerification);
+	_, ok := result.Candidate.(*MFAOtpVerification)
 	return ok
 }

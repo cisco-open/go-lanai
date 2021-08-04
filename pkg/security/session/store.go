@@ -128,7 +128,7 @@ func (s *RedisStore) WithContext(ctx context.Context) Store {
 }
 
 func (s *RedisStore) Options() *Options {
-	//TODO: the timeout values should be dynamically read every time to allow change
+	//TODO: the timeout values should be dynamically read every time to allow change. (via global settings service)
 	return s.options
 }
 

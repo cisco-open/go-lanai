@@ -74,6 +74,7 @@ func GobRegister() {
 /**********************************
 	Common Functions
  **********************************/
+
 func Get(ctx context.Context) Authentication {
 	secCtx, ok := ctx.Value(ContextKeySecurity).(Authentication)
 	if !ok {
@@ -83,26 +84,22 @@ func Get(ctx context.Context) Authentication {
 }
 
 func Clear(ctx context.Context) {
-	if mc, ok := ctx.(utils.MutableContext); ok {
-		mc.Set(gin.AuthUserKey, nil)
-		mc.Set(ContextKeySecurity, nil)
-	}
-
-	if gc := web.GinContext(ctx); gc != nil {
-		gc.Set(gin.AuthUserKey, nil)
-		gc.Set(ContextKeySecurity, nil)
-	}
+	_ = TryClear(ctx)
 }
 
 // TryClear attempt to clear security context. Return true if succeeded
-func TryClear(ctx context.Context) bool {
-	switch ctx.(type) {
-	case utils.MutableContext:
-		Clear(ctx.(utils.MutableContext))
-	default:
-		return false
+func TryClear(ctx context.Context) (ret bool) {
+	if mc, ok := ctx.(utils.MutableContext); ok {
+		mc.Set(gin.AuthUserKey, nil)
+		mc.Set(ContextKeySecurity, nil)
+		ret = true
 	}
-	return true
+	if gc := web.GinContext(ctx); gc != nil {
+		gc.Set(gin.AuthUserKey, nil)
+		gc.Set(ContextKeySecurity, nil)
+		ret = true
+	}
+	return
 }
 
 func HasPermissions(auth Authentication, permissions ...string) bool {
@@ -114,7 +111,7 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 	return true
 }
 
-//In most cases, the HasAccessToTenant should be used instead. It checks both the tenant's validity and whether the user has access to it
+//IsTenantValid In most cases, the HasAccessToTenant should be used instead. It checks both the tenant's validity and whether the user has access to it
 func IsTenantValid(ctx context.Context, tenantId string) bool {
 	parentId, err := tenancy.GetParent(ctx, tenantId)
 	//if we find a parent, that means we have this tenantId in tenant hierarchy, so it's valid
@@ -131,6 +128,7 @@ func IsTenantValid(ctx context.Context, tenantId string) bool {
 	return false
 }
 
+//HasAccessToTenant
 /*
 	if the tenantId is not valid, this method will return false, otherwise the following checks are applied in order
 
@@ -194,7 +192,7 @@ func IsBeingUnAuthenticated(from, to Authentication) bool {
 	return fromAuthenticated && toUnAuthenticatedState
 }
 
-func DetermineAuthenticationTime(ctx context.Context, userAuth Authentication) (authTime time.Time) {
+func DetermineAuthenticationTime(_ context.Context, userAuth Authentication) (authTime time.Time) {
 	if userAuth == nil {
 		return
 	}
@@ -209,11 +207,11 @@ func DetermineAuthenticationTime(ctx context.Context, userAuth Authentication) (
 		return
 	}
 
-	switch v.(type) {
+	switch t := v.(type) {
 	case time.Time:
-		authTime = v.(time.Time)
+		authTime = t
 	case string:
-		authTime = utils.ParseTime(utils.ISO8601Milliseconds, v.(string))
+		authTime = utils.ParseTime(time.RFC3339, t)
 	}
 	return
 }

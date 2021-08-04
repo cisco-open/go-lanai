@@ -79,6 +79,7 @@ func (c *DefaultFormLoginController) Mappings() []web.Mapping {
 }
 
 func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequest) (*template.ModelView, error) {
+	// TODO add MSXVersion
 	model := template.Model{
 		LoginModelKeyUsernameParam: c.usernameParam,
 		LoginModelKeyPasswordParam: c.passwordParam,
@@ -109,6 +110,7 @@ func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequ
 }
 
 func (c *DefaultFormLoginController) OtpVerificationForm(ctx context.Context, r *OTPVerificationRequest) (*template.ModelView, error) {
+	// TODO add MSXVersion
 	model := template.Model{
 		LoginModelKeyOtpParam:      c.otpParam,
 		LoginModelKeyMfaVerifyUrl:  c.mfaVerifyUrl,

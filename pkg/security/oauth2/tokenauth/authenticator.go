@@ -10,6 +10,7 @@ import (
 /******************************
 	security.Authenticator
 ******************************/
+
 type Authenticator struct {
 	tokenStoreReader oauth2.TokenStoreReader
 }

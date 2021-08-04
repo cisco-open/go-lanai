@@ -130,7 +130,7 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 		ud.CurrencyCode = meta.CurrencyCode()
 	}
 
-	// creds
+	// auth details
 	ad, e := f.createAuthDetails(ctx, facts)
 	if e != nil {
 		return nil, e
@@ -177,7 +177,7 @@ func (f *ContextDetailsFactory) createAuthDetails(ctx context.Context, facts *fa
 	return &d, nil
 }
 
-func (f *ContextDetailsFactory) populateProxyDetails(ctx context.Context, d *internal.AuthenticationDetails, facts *facts) {
+func (f *ContextDetailsFactory) populateProxyDetails(_ context.Context, d *internal.AuthenticationDetails, facts *facts) {
 	if facts.source == nil {
 		return
 	}
@@ -200,13 +200,18 @@ func (f *ContextDetailsFactory) populateProxyDetails(ctx context.Context, d *int
 	}
 }
 
-func (f *ContextDetailsFactory) createKVDetails(ctx context.Context, facts *facts) (ret map[string]interface{}) {
+func (f *ContextDetailsFactory) createKVDetails(_ context.Context, facts *facts) (ret map[string]interface{}) {
 	ret = map[string]interface{}{}
 
 	if facts.userAuth != nil {
 		if sid, ok := facts.userAuth.DetailsMap()[security.DetailsKeySessionId]; ok {
 			ret[security.DetailsKeySessionId] = sid
 		}
+	}
+
+	if facts.request != nil {
+		ret[oauth2.DetailsKeyRequestExt] = facts.request.Extensions()
+		//ret[oauth2.DetailsKeyRequestParams] = facts.request.Parameters()
 	}
 
 	if facts.source == nil {
