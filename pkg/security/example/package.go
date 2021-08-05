@@ -61,7 +61,6 @@ type authDI struct {
 	TenantStore   security.TenantStore
 	ProviderStore security.ProviderStore
 	IdpManager    idp.IdentityProviderManager
-	// TODO properties
 }
 
 func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer {

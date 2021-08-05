@@ -20,7 +20,7 @@ type OAuth2Client interface {
 	Scopes() utils.StringSet
 	AutoApproveScopes() utils.StringSet
 	AccessTokenValidity() time.Duration
-	RereshTokenValidity() time.Duration
+	RefreshTokenValidity() time.Duration
 	UseSessionTimeout() bool
 	TenantRestrictions() utils.StringSet
 	ResourceIDs() utils.StringSet
@@ -29,6 +29,8 @@ type OAuth2Client interface {
 /***********************************
 	Store
  ***********************************/
+
+//goland:noinspection GoNameStartsWithPackageName
 type OAuth2ClientStore interface {
 	LoadClientByClientId(ctx context.Context, clientId string) (OAuth2Client, error)
 }

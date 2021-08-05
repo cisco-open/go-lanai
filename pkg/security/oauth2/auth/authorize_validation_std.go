@@ -2,34 +2,39 @@ package auth
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
 var (
-	redirectGrantTypes = []string{oauth2.GrantTypeAuthCode, oauth2.GrantTypeImplicit}
+	redirectGrantTypes     = []string{oauth2.GrantTypeAuthCode, oauth2.GrantTypeImplicit}
 	supportedResponseTypes = utils.NewStringSet("token", "code")
 )
 
 // StandardAuthorizeRequestProcessor implements ChainedAuthorizeRequestProcessor and order.Ordered
 // it validate auth request against standard oauth2 specs
 type StandardAuthorizeRequestProcessor struct {
-	clientStore     oauth2.OAuth2ClientStore
+	clientStore  oauth2.OAuth2ClientStore
+	accountStore security.AccountStore
 }
 
 type StdARPOptions func(*StdARPOption)
 
 type StdARPOption struct {
-	ClientStore     oauth2.OAuth2ClientStore
+	ClientStore  oauth2.OAuth2ClientStore
+	AccountStore security.AccountStore
 }
 
-func NewStandardAuthorizeRequestProcessor(opts...StdARPOptions) *StandardAuthorizeRequestProcessor {
+func NewStandardAuthorizeRequestProcessor(opts ...StdARPOptions) *StandardAuthorizeRequestProcessor {
 	opt := StdARPOption{}
 	for _, f := range opts {
 		f(&opt)
 	}
 	return &StandardAuthorizeRequestProcessor{
-		clientStore: opt.ClientStore,
+		clientStore:  opt.ClientStore,
+		accountStore: opt.AccountStore,
 	}
 }
 
@@ -39,7 +44,7 @@ func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request
 	}
 
 	client, e := p.validateClientId(ctx, request)
-	if  e != nil {
+	if e != nil {
 		return nil, e
 	}
 	request.Context().Set(oauth2.CtxKeyAuthenticatedClient, client)
@@ -58,8 +63,9 @@ func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request
 		return nil, e
 	}
 
-	// TODO check client tenant restrictions
-	_ = client.TenantRestrictions()
+	if e := p.validateClientTenancy(ctx, client); e != nil {
+		return nil, e
+	}
 
 	return chain.Next(ctx, request)
 }
@@ -68,11 +74,11 @@ func (p *StandardAuthorizeRequestProcessor) validateResponseTypes(ctx context.Co
 	return ValidateResponseTypes(ctx, request, supportedResponseTypes)
 }
 
-func (p *StandardAuthorizeRequestProcessor) validateClientId(c context.Context, request *AuthorizeRequest) (oauth2.OAuth2Client, error) {
-	return LoadAndValidateClientId(c, request.ClientId, p.clientStore)
+func (p *StandardAuthorizeRequestProcessor) validateClientId(ctx context.Context, request *AuthorizeRequest) (oauth2.OAuth2Client, error) {
+	return LoadAndValidateClientId(ctx, request.ClientId, p.clientStore)
 }
 
-func (p *StandardAuthorizeRequestProcessor) validateRedirectUri(c context.Context, request *AuthorizeRequest, client oauth2.OAuth2Client) error {
+func (p *StandardAuthorizeRequestProcessor) validateRedirectUri(ctx context.Context, request *AuthorizeRequest, client oauth2.OAuth2Client) error {
 	// first, we check for client's grant type to see if redirect URI is allowed
 	if client.GrantTypes() == nil || len(client.GrantTypes()) == 0 {
 		return oauth2.NewInvalidAuthorizeRequestError("client must have at least one authorized grant type")
@@ -90,7 +96,7 @@ func (p *StandardAuthorizeRequestProcessor) validateRedirectUri(c context.Contex
 	// Resolve redirect URI
 	// The resolved redirect URI is either the redirect_uri from the parameters or the one from
 	// clientDetails. Either way we need to store it on the AuthorizationRequest.
-	redirect, e := ResolveRedirectUri(c, request.RedirectUri, client)
+	redirect, e := ResolveRedirectUri(ctx, request.RedirectUri, client)
 	if e != nil {
 		return e
 	}
@@ -98,11 +104,43 @@ func (p *StandardAuthorizeRequestProcessor) validateRedirectUri(c context.Contex
 	return nil
 }
 
-func (p *StandardAuthorizeRequestProcessor) validateScope(c context.Context, request *AuthorizeRequest, client oauth2.OAuth2Client) error {
+func (p *StandardAuthorizeRequestProcessor) validateScope(ctx context.Context, request *AuthorizeRequest, client oauth2.OAuth2Client) error {
 	if request.Scopes == nil || len(request.Scopes) == 0 {
 		request.Scopes = client.Scopes().Copy()
-	} else if e := ValidateAllScopes(c, client, request.Scopes); e != nil {
+	} else if e := ValidateAllScopes(ctx, client, request.Scopes); e != nil {
 		return e
+	}
+	return nil
+}
+
+func (p *StandardAuthorizeRequestProcessor) validateClientTenancy(ctx context.Context, client oauth2.OAuth2Client) error {
+	clientTenancy := client.TenantRestrictions()
+	if len(clientTenancy) == 0 {
+		return nil
+	}
+
+	userAuth := security.Get(ctx)
+	if security.HasPermissions(userAuth, security.SpecialPermissionAccessAllTenant) {
+		return nil
+	}
+
+	// Note if current security doesn't have valid username, we don't return error here. We let access handler to deal with it
+	username, e := security.GetUsername(userAuth)
+	if !security.IsFullyAuthenticated(userAuth) || e != nil {
+		return nil
+	}
+
+	acct, e := p.accountStore.LoadAccountByUsername(ctx, username)
+	if e != nil {
+		security.Clear(ctx)
+		return security.NewUsernameNotFoundError("cannot retrieve account from current session")
+	}
+
+	userAccessibleTenants := utils.NewStringSet(acct.(security.AccountTenancy).DesignatedTenantIds()...)
+	for t := range clientTenancy {
+		if !tenancy.AnyHasDescendant(ctx, userAccessibleTenants, t) {
+			return oauth2.NewUnauthorizedClientError("client is restricted to tenants which the authenticated user does not have access to")
+		}
 	}
 	return nil
 }

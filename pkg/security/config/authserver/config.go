@@ -343,6 +343,7 @@ func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcess
 		processors := []auth.ChainedAuthorizeRequestProcessor{
 			auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
 				opt.ClientStore = c.ClientStore
+				opt.AccountStore = c.UserAccountStore
 			}),
 		}
 		if c.OpenIDSSOEnabled {

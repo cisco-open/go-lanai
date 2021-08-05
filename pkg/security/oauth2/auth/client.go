@@ -73,7 +73,7 @@ func (c *DefaultOAuth2Client) AccessTokenValidity() time.Duration {
 	return c.ClientDetails.AccessTokenValidity
 }
 
-func (c *DefaultOAuth2Client) RereshTokenValidity() time.Duration {
+func (c *DefaultOAuth2Client) RefreshTokenValidity() time.Duration {
 	return c.ClientDetails.RefreshTokenValidity
 }
 
@@ -94,6 +94,7 @@ func (c *DefaultOAuth2Client) MaxTokensPerUser() int {
 }
 
 /** security.Account **/
+
 func (c *DefaultOAuth2Client) ID() interface{} {
 	return c.ClientDetails.ClientId
 }

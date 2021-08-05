@@ -2,10 +2,12 @@ package formlogin
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
+	"strings"
 )
 
 const (
@@ -16,6 +18,7 @@ const (
 	LoginModelKeyOtpParam           = "otpParam"
 	LoginModelKeyMfaVerifyUrl       = "mfaVerifyUrl"
 	LoginModelKeyMfaRefreshUrl      = "mfaRefreshUrl"
+	LoginModelKeyMsxVersion	        = "MSXVersion"
 )
 
 type DefaultFormLoginController struct {
@@ -79,11 +82,11 @@ func (c *DefaultFormLoginController) Mappings() []web.Mapping {
 }
 
 func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequest) (*template.ModelView, error) {
-	// TODO add MSXVersion
 	model := template.Model{
 		LoginModelKeyUsernameParam: c.usernameParam,
 		LoginModelKeyPasswordParam: c.passwordParam,
 		LoginModelKeyLoginProcessUrl: c.loginProcessUrl,
+		LoginModelKeyMsxVersion: c.msxVersion(),
 	}
 
 	s := session.Get(ctx)
@@ -110,11 +113,11 @@ func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequ
 }
 
 func (c *DefaultFormLoginController) OtpVerificationForm(ctx context.Context, r *OTPVerificationRequest) (*template.ModelView, error) {
-	// TODO add MSXVersion
 	model := template.Model{
 		LoginModelKeyOtpParam:      c.otpParam,
 		LoginModelKeyMfaVerifyUrl:  c.mfaVerifyUrl,
 		LoginModelKeyMfaRefreshUrl: c.mfaRefreshUrl,
+		LoginModelKeyMsxVersion: c.msxVersion(),
 	}
 
 	s := session.Get(ctx)
@@ -128,4 +131,11 @@ func (c *DefaultFormLoginController) OtpVerificationForm(ctx context.Context, r 
 		View: c.mfaTemplate,
 		Model: model,
 	}, nil
+}
+
+func (c *DefaultFormLoginController) msxVersion() string {
+	if strings.ToLower(bootstrap.BuildVersion) == "unknown" {
+		return ""
+	}
+	return bootstrap.BuildVersion
 }

@@ -8,6 +8,7 @@ import (
 /***********************
 	Cache
 ************************/
+
 const CachePropertiesPrefix = "security.cache"
 
 type CacheProperties struct {
