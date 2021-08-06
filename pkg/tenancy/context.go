@@ -57,16 +57,16 @@ func GetTenancyPath(ctx context.Context, tenantId string) ([]uuid.UUID, error) {
 }
 
 // AnyHasDescendant returns true if any of "tenantIDs" in utils.StringSet contains "targetTenantId" or its ancestors
-func AnyHasDescendant(ctx context.Context, tenantIDs utils.StringSet, targetTenantId string) bool {
-	if tenantIDs == nil || targetTenantId == "" {
+func AnyHasDescendant(ctx context.Context, tenantIDs utils.StringSet, descendant string) bool {
+	if tenantIDs == nil || descendant == "" {
 		return false
 	}
 
-	if tenantIDs.Has(targetTenantId) {
+	if tenantIDs.Has(descendant) {
 		return true
 	}
 
-	ancestors, err := GetAncestors(ctx, targetTenantId)
+	ancestors, err := GetAncestors(ctx, descendant)
 	if err != nil {
 		return false
 	}

@@ -136,7 +136,11 @@ func (p *StandardAuthorizeRequestProcessor) validateClientTenancy(ctx context.Co
 		return security.NewUsernameNotFoundError("cannot retrieve account from current session")
 	}
 
-	userAccessibleTenants := utils.NewStringSet(acct.(security.AccountTenancy).DesignatedTenantIds()...)
+	userAccessibleTenants := utils.NewStringSet()
+	if acctTenancy, ok := acct.(security.AccountTenancy); ok {
+		userAccessibleTenants.Add(acctTenancy.DesignatedTenantIds()...)
+	}
+
 	for t := range clientTenancy {
 		if !tenancy.AnyHasDescendant(ctx, userAccessibleTenants, t) {
 			return oauth2.NewUnauthorizedClientError("client is restricted to tenants which the authenticated user does not have access to")

@@ -22,9 +22,9 @@ func UnmarshalRequest(req *saml.IdpAuthnRequest) error {
 	return nil
 }
 
-//This method is similar to the method in saml.IdpAuthnRequest,
-//Because the original implementation doesn't support signature check and destination check,
-//we reimplement it here to add support for them
+// ValidateAuthnRequest This method is similar to the method in saml.IdpAuthnRequest,
+// Because the original implementation doesn't support signature check and destination check,
+// we reimplement it here to add support for them
 func ValidateAuthnRequest(req *saml.IdpAuthnRequest, spDetails SamlSpDetails, spMetadata *saml.EntityDescriptor) error {
 	if !spDetails.SkipAuthRequestSignatureVerification {
 		if err := verifySignature(req); err != nil {
