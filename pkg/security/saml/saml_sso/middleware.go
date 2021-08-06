@@ -10,7 +10,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"github.com/crewjam/saml"
-	saml_logger "github.com/crewjam/saml/logger"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
@@ -50,7 +49,7 @@ func NewSamlAuthorizeEndpointMiddleware(opts Options,
 
 	idp := &saml.IdentityProvider{
 		Key:                     opts.Key,
-		Logger:                  saml_logger.DefaultLogger, //TODO replace with our own logger
+		Logger:                  newLoggerAdaptor(logger),
 		Certificate:             opts.Cert,
 		//since we have our own middleware implementation, this value here only serves the purpose of defining the entity id.
 		MetadataURL:             opts.EntityIdUrl,
