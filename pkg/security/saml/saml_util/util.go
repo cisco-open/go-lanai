@@ -15,7 +15,14 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 )
+
+func ParseMetadataFromXml(xml string) (*saml.EntityDescriptor, []byte, error) {
+	data := []byte(xml)
+	metadata, err := samlsp.ParseMetadata(data)
+	return metadata, data, err
+}
 
 func ParseMetadataFromFile(fileLocation string) (*saml.EntityDescriptor, []byte, error){
 	file, err := os.Open(fileLocation)
@@ -56,8 +63,9 @@ func FetchMetadata(ctx context.Context, httpClient *http.Client, metadataURL url
 }
 
 func ResolveMetadata(metadataSource string, httpClient *http.Client) (*saml.EntityDescriptor, []byte, error) {
-	//TODO: support the case where the literal metadata source is pasted?
-
+	if strings.HasPrefix(metadataSource, "<") {
+		return ParseMetadataFromXml(metadataSource)
+	}
 	metadataUrl, err := url.Parse(metadataSource)
 
 	if err != nil {
