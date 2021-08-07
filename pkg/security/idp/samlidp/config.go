@@ -53,7 +53,8 @@ func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *a
 	handler := redirect.NewRedirectWithRelativePath(config.Endpoints.Error)
 	ws.
 		With(samllogin.New().
-			Issuer(config.Issuer),
+			Issuer(config.Issuer).
+			ErrorPath(config.Endpoints.Error),
 		).
 		With(session.New()).
 		With(access.New().

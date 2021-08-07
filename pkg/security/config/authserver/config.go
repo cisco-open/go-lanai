@@ -73,6 +73,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 			CheckToken: di.Properties.Endpoints.CheckToken,
 			UserInfo:   di.Properties.Endpoints.UserInfo,
 			JwkSet:     di.Properties.Endpoints.JwkSet,
+			Error:      di.Properties.Endpoints.Error,
 			Logout:     di.Properties.Endpoints.Logout,
 			SamlSso: ConditionalEndpoint{
 				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize, RawQuery: fmt.Sprintf("%s=%s", oauth2.ParameterGrantType, saml.GrantTypeSamlSSO)},

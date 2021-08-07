@@ -40,7 +40,7 @@ func TestJwtWithKid(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
 	g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
-	//TODO more cases
+	//TODO more test cases
 
 	t.Logf("JWT: %s", value)
 
@@ -69,7 +69,7 @@ func TestJwtWithoutKid(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
 	g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
-	//TODO more cases
+	//TODO more test cases
 
 	t.Logf("JWT: %s", value)
 

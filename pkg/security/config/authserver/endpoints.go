@@ -19,7 +19,7 @@ func registerEndpoints(registrar *web.Registrar, config *Configuration) {
 	th := misc.NewTenantHierarchyEndpoint()
 
 	mappings := []interface{}{
-		template.New().Get("/error").HandlerFunc(errorhandling.ErrorWithStatus).Build(),
+		template.New().Get(config.Endpoints.Error).HandlerFunc(errorhandling.ErrorWithStatus).Build(),
 
 		rest.New("jwks").Get(config.Endpoints.JwkSet).EndpointFunc(jwks.JwkSet).Build(),
 		rest.New("check_token").Post(config.Endpoints.CheckToken).EndpointFunc(ct.CheckToken).Build(),

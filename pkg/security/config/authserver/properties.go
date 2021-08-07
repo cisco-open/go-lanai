@@ -31,7 +31,6 @@ type IssuerProperties struct {
 }
 
 type EndpointsProperties struct {
-	// TODO /oauth/error, do we still need them?
 	// TODO check_session is necessary and should be implemented. Java: SessionInfoEndpoint
 	Authorize       string `json:"authorize"`
 	Token           string `json:"token"`

@@ -33,3 +33,8 @@ func (f *Feature) Issuer(issuer security.Issuer) *Feature {
 	f.issuer = issuer
 	return f
 }
+
+func (f *Feature) ErrorPath(path string) *Feature {
+	f.errorPath = path
+	return f
+}
