@@ -17,7 +17,7 @@ type RevokerOption struct {
 	TokenStoreReader oauth2.TokenStoreReader
 }
 
-// DefaultAccessRevoker impelments auth.AccessRevoker
+// DefaultAccessRevoker implements auth.AccessRevoker
 type DefaultAccessRevoker struct {
 	authRegistry     auth.AuthorizationRegistry
 	sessionStore     session.Store
