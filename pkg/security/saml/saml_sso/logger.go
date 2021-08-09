@@ -17,7 +17,7 @@ func newLoggerAdaptor(l log.Logger) *loggerAdapter{
 }
 
 func (s *loggerAdapter) Printf(format string, v ...interface{}) {
-	s.delegate.Info(format, v...)
+	s.delegate.Infof(format, v...)
 }
 
 func (s *loggerAdapter) Print(v ...interface{}) {
@@ -34,7 +34,7 @@ func (s *loggerAdapter) Fatal(v ...interface{}) {
 }
 
 func (s *loggerAdapter) Fatalf(format string, v ...interface{}) {
-	s.delegate.Errorf("", v...)
+	s.delegate.Errorf(format, v...)
 	os.Exit(1)
 }
 
