@@ -16,6 +16,7 @@ func (f *TokenAuthFeature) Identifier() security.FeatureIdentifier {
 }
 
 // Configure Standard security.Feature entrypoint
+// use (*access.AccessControl).AllowIf(ScopesApproved(...)) for scope based access decision maker
 func Configure(ws security.WebSecurity) *TokenAuthFeature {
 	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
@@ -25,6 +26,7 @@ func Configure(ws security.WebSecurity) *TokenAuthFeature {
 }
 
 // New Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+// use (*access.AccessControl).AllowIf(ScopesApproved(...)) for scope based access decision maker
 func New() *TokenAuthFeature {
 	return &TokenAuthFeature{}
 }

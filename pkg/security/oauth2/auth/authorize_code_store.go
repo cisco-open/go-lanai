@@ -52,8 +52,8 @@ func NewRedisAuthorizationCodeStore(ctx context.Context, cf redis.ClientFactory,
 }
 
 func (s *RedisAuthorizationCodeStore) GenerateAuthorizationCode(ctx context.Context, r *AuthorizeRequest, user security.Authentication) (string, error) {
-	// TODO check code_challenge_method
-
+	// code_challenge_method and code_challenge is stored in both parameters and extensions.
+	// so no need to save them separately
 	request := r.OAuth2Request()
 	userAuth := ConvertToOAuthUserAuthentication(user)
 	toSave := oauth2.NewAuthentication(func(conf *oauth2.AuthOption) {

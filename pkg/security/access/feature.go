@@ -13,7 +13,7 @@ type AccessControl struct {
 	control ControlFunc
 }
 
-// order.Ordered
+// Order implements order.Ordered
 func (ac *AccessControl) Order() int {
 	return ac.order
 }
@@ -53,12 +53,12 @@ type AccessControlFeature struct {
 	acl []*AccessControl
 }
 
-// Standard security.Feature entrypoint
+// Identifier implements security.Feature
 func (f *AccessControlFeature) Identifier() security.FeatureIdentifier {
 	return FeatureId
 }
 
-// AccessControlFeature specifics
+// Request configure access control of requests matching given AcrMatcher
 func (f *AccessControlFeature) Request(matcher AcrMatcher) *AccessControl {
 	ac := &AccessControl{
 		owner: f,
@@ -76,7 +76,7 @@ func Configure(ws security.WebSecurity) *AccessControlFeature {
 	panic(fmt.Errorf("unable to configure access control: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
-// Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+// New Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func New() *AccessControlFeature {
 	return &AccessControlFeature{}
 }
@@ -84,6 +84,7 @@ func New() *AccessControlFeature {
 /**************************
 	Common ControlFunc
 ***************************/
+
 func PermitAll(_ security.Authentication) (bool, error) {
 	return true, nil
 }

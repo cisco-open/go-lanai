@@ -65,7 +65,7 @@ func (s StringSet) Has(value string) bool {
 	return ok
 }
 
-func (s StringSet) HasAll(values []string) bool {
+func (s StringSet) HasAll(values ...string) bool {
 	for _, v := range values {
 		if !s.Has(v) {
 			return false
@@ -180,7 +180,7 @@ func (s Set) Has(value interface{}) bool {
 	return ok
 }
 
-func (s Set) HasAll(values []string) bool {
+func (s Set) HasAll(values ...interface{}) bool {
 	for _, v := range values {
 		if !s.Has(v) {
 			return false

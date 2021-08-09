@@ -5,10 +5,12 @@ import (
 	"crypto"
 	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"github.com/crewjam/saml"
 	saml_logger "github.com/crewjam/saml/logger"
 	"github.com/gin-gonic/gin"
@@ -207,20 +209,30 @@ func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context
 		return nil
 	}
 
-	username, err := security.GetUsername(auth)
-
-	if err != nil {
-		return NewSamlInternalError("cannot validate tenancy restriction due to unknown username", err)
+	username, e := security.GetUsername(auth)
+	if e != nil {
+		return NewSamlInternalError("cannot validate tenancy restriction due to unknown username", e)
 	}
 
-	acct, err := mw.accountStore.LoadAccountByUsername(ctx, username)
+	if security.HasPermissions(auth, security.SpecialPermissionAccessAllTenant) {
+		return nil
+	}
 
-	defaultAcct, ok := acct.(*security.DefaultAccount)
+	acct, e := mw.accountStore.LoadAccountByUsername(ctx, username)
+	if e != nil {
+		return NewSamlInternalError("cannot validate tenancy restriction due to error fetching account", e)
+	}
 
+	acctTenancy, ok := acct.(security.AccountTenancy)
 	if !ok {
-		return NewSamlInternalError("cannot validate tenancy restriction due to unspported account implementation", defaultAcct)
+		return NewSamlInternalError(fmt.Sprintf("cannot validate tenancy restriction due to unsupported account implementation: %T", acct))
 	}
 
-	//TODO: we need tenant hierarchy to be able to properly check tenant restriction here
+	userAccessibleTenants := utils.NewStringSet(acctTenancy.DesignatedTenantIds()...)
+	for t := range tenantRestriction {
+		if !tenancy.AnyHasDescendant(ctx, userAccessibleTenants, t) {
+			return NewSamlInternalError("client is restricted to tenants which the authenticated user does not have access to")
+		}
+	}
 	return nil
 }

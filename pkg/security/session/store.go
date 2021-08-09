@@ -128,7 +128,6 @@ func (s *RedisStore) WithContext(ctx context.Context) Store {
 }
 
 func (s *RedisStore) Options() *Options {
-	//TODO: the timeout values should be dynamically read every time to allow change. (via global settings service)
 	return s.options
 }
 
@@ -153,6 +152,7 @@ func (s *RedisStore) Get(id string, name string) (*Session, error) {
 // New will create a new session.
 func (s *RedisStore) New(name string) (*Session, error) {
 	session := CreateSession(s, name)
+	// TODO set idle timeout and absolute timeout of the current session to values read from global settings (DB)
 	return session, nil
 }
 

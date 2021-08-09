@@ -153,25 +153,7 @@ func HasAccessToTenant(ctx context.Context, tenantId string) bool {
 	}
 
 	if ud, ok := auth.Details().(UserDetails); ok {
-		if ud.AssignedTenantIds().Has(tenantId) {
-			return true
-		}
-
-		if !tenancy.IsLoaded(ctx) {
-			logger.Warnf("Tenant hierarchy is not loaded by the auth server, hasAccessToTenant will not consider child tenants in the tenant hierarchy")
-			return false
-		}
-
-		ancestors, err := tenancy.GetAncestors(ctx, tenantId)
-		if err != nil {
-			return false
-		}
-
-		for _, ancestor := range ancestors {
-			if ud.AssignedTenantIds().Has(ancestor) {
-				return true
-			}
-		}
+		return tenancy.AnyHasDescendant(ctx, ud.AssignedTenantIds(), tenantId)
 	}
 	return false
 }

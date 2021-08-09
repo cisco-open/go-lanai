@@ -124,7 +124,7 @@ func EmailVerified(_ context.Context, opt *FactoryOption) (v interface{}, err er
 }
 
 func ZoneInfo(_ context.Context, _ *FactoryOption) (v interface{}, err error) {
-	// TODO maybe implement this if possible to extract it from locale
+	// maybe implement this if possible to extract it from locale
 	return nil, errorMissingDetails
 }
 

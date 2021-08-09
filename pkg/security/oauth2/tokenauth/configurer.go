@@ -45,7 +45,7 @@ func (c *TokenAuthConfigurer) Apply(feature security.Feature, ws security.WebSec
 	// configure other features
 	errorhandling.Configure(ws).
 		AdditionalErrorHandler(f.errorHandler)
-	// TODO scope based access decesion maker
+	// use ScopesApproved(...) for scope based access decision maker
 
 	// setup authenticator
 	authenticator := NewAuthenticator(func(opt *AuthenticatorOption) {
@@ -54,13 +54,13 @@ func (c *TokenAuthConfigurer) Apply(feature security.Feature, ws security.WebSec
 	ws.Authenticator().(*security.CompositeAuthenticator).Add(authenticator)
 
 	// prepare middlewares
-	successHanlder, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler)
+	successHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler)
 	if !ok {
-		successHanlder = security.NewAuthenticationSuccessHandler()
+		successHandler = security.NewAuthenticationSuccessHandler()
 	}
 	mw := NewTokenAuthMiddleware(func(opt *TokenAuthMWOption) {
 		opt.Authenticator = ws.Authenticator()
-		opt.SuccessHandler = successHanlder
+		opt.SuccessHandler = successHandler
 		opt.PostBodyEnabled = f.postBodyEnabled
 	})
 

@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/google/uuid"
@@ -312,7 +313,7 @@ func (s *DefaultAuthorizationService) loadAccount(ctx context.Context, _ oauth2.
 }
 
 func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oauth2.OAuth2Request, account security.Account) (*security.Tenant, error) {
-	tenancy, ok := account.(security.AccountTenancy)
+	acctT, ok := account.(security.AccountTenancy)
 	if !ok {
 		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
 	}
@@ -321,7 +322,7 @@ func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 	tenantId, idOk := request.Parameters()[oauth2.ParameterTenantId]
 	tenantName, nOk := request.Parameters()[oauth2.ParameterTenantName]
 	if (!idOk || tenantId == "") && (!nOk || tenantName == "") {
-		tenantId = tenancy.DefaultDesignatedTenantId()
+		tenantId = acctT.DefaultDesignatedTenantId()
 	}
 
 	var tenant *security.Tenant
@@ -341,7 +342,7 @@ func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 	return tenant, nil
 }
 
-func (s *DefaultAuthorizationService) verifyTenantAccess(c context.Context, tenant *security.Tenant, account security.Account, client oauth2.OAuth2Client) error {
+func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, client oauth2.OAuth2Client) error {
 
 	// special permission ACCESS_ALL_TENANTS
 	for _, p := range account.Permissions() {
@@ -351,24 +352,22 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(c context.Context, tena
 	}
 
 	tenantIds := utils.NewStringSet()
-	if tenancy, ok := account.(security.AccountTenancy); ok {
-		tenantIds = utils.NewStringSet(tenancy.DesignatedTenantIds()...)
+	if acctT, ok := account.(security.AccountTenancy); ok {
+		tenantIds = utils.NewStringSet(acctT.DesignatedTenantIds()...)
 	}
 
-	// TODO consider tenant hierachy
 	// check account
-	if !tenantIds.Has(tenant.Id) {
+	if tenancy.AnyHasDescendant(ctx, tenantIds, tenant.Id) {
 		return oauth2.NewInvalidGrantError("user does not have access to specified tenant")
 	}
 
-	// check client
-	clientTenants := client.TenantRestrictions()
-	if clientTenants == nil {
-		clientTenants = utils.NewStringSet()
-	}
-
-	if ok, _ := IsSubSet(c, tenantIds, clientTenants); !ok {
-		return oauth2.NewInvalidGrantError("client is restricted to tenants that the user doesn't have access to")
+	// check client's tenant restrictions
+	if len(client.TenantRestrictions()) != 0 {
+		for t := range client.TenantRestrictions() {
+			if !tenancy.AnyHasDescendant(ctx, tenantIds, t) {
+				return oauth2.NewInvalidGrantError("client is restricted to tenants that the user doesn't have access to")
+			}
+		}
 	}
 
 	return nil

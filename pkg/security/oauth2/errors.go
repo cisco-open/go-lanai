@@ -56,16 +56,16 @@ const (
 	ErrorCodeGeneric
 )
 
-// TODO this category should be split into security.ErrorSubTypeCodeAuthentication, secuirty.ErrorSubTypeCodeAccessControl
 // ErrorSubTypeCodeOAuth2Res
 const (
 	_ = ErrorSubTypeCodeOAuth2Res + iota
 	ErrorCodeInvalidAccessToken
 	ErrorCodeInsufficientScope
-	ErrorCodeResourceServerGeneral // this should only be used for deserialization
+	ErrorCodeResourceServerGeneral // this should only be used for error deserialization
 )
 
 // ErrorTypes, can be used in errors.Is
+//goland:noinspection GoUnusedGlobalVariable
 var (
 	ErrorTypeOAuth2 = security.NewErrorType(security.ErrorTypeCodeOAuth2, errors.New("error type: oauth2"))
 
@@ -80,6 +80,7 @@ var (
 	Error EC
 *************************/
 
+//goland:noinspection GoCommentStart
 const (
 	// https://tools.ietf.org/html/rfc6749#section-4.1.2.1
 	ErrorTranslationInvalidRequest      = "invalid_request"
@@ -241,6 +242,12 @@ func NewOAuth2Error(code int64, e interface{}, oauth2Code string, sc int, causes
 func NewInternalError(value interface{}, causes ...interface{}) error {
 	return NewOAuth2Error(ErrorCodeOAuth2InternalGeneral, value,
 		ErrorTranslationInternal, http.StatusBadRequest,
+		causes...)
+}
+
+func NewInternalUnavailableError(value interface{}, causes ...interface{}) error {
+	return NewOAuth2Error(ErrorCodeOAuth2InternalGeneral, value,
+		ErrorTranslationInternalNA, http.StatusBadRequest,
 		causes...)
 }
 

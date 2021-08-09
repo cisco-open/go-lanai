@@ -9,9 +9,10 @@ import (
 	"sort"
 )
 
+// ChangeSessionHandler
 /**
 	This is a high priority handler because it writes to the header.
-	Therefore it must be before any other success handler that may write the response status (e.g. redirect handler)
+	Therefore, it must be before any other success handler that may write the response status (e.g. redirect handler)
  */
 type ChangeSessionHandler struct{}
 
@@ -45,7 +46,7 @@ func (h *ChangeSessionHandler) PriorityOrder() int {
 
 type GetMaximumSessions func() int
 
-//This handler runs after ChangeSessionHandler so that the updated session id is indexed to the principal
+// ConcurrentSessionHandler This handler runs after ChangeSessionHandler so that the updated session id is indexed to the principal
 type ConcurrentSessionHandler struct{
 	sessionStore Store
 	getMaxSessions GetMaximumSessions

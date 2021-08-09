@@ -52,8 +52,8 @@ func (te *RefreshTokenEnhancer) Enhance(ctx context.Context, token oauth2.Access
 	// step 3, set expriy time
 	// Note: refresh token's validity is counted since authentication time
 	details, ok := oauth.Details().(security.AuthenticationDetails)
-	if ok && client.RereshTokenValidity() > 0 && !details.AuthenticationTime().IsZero() {
-		expiry := details.AuthenticationTime().Add(client.RereshTokenValidity())
+	if ok && client.RefreshTokenValidity() > 0 && !details.AuthenticationTime().IsZero() {
+		expiry := details.AuthenticationTime().Add(client.RefreshTokenValidity())
 		refresh.SetExpireTime(expiry)
 	}
 

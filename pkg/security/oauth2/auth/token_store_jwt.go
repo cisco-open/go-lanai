@@ -56,7 +56,7 @@ func (s *jwtTokenStore) ReadAuthentication(ctx context.Context, tokenValue strin
 	}
 }
 
-func (s *jwtTokenStore) ReusableAccessToken(c context.Context, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
+func (s *jwtTokenStore) ReusableAccessToken(_ context.Context, _ oauth2.Authentication) (oauth2.AccessToken, error) {
 	// JWT don't reuse access token
 	return nil, nil
 }
@@ -108,18 +108,20 @@ func (s *jwtTokenStore) SaveRefreshToken(c context.Context, token oauth2.Refresh
 }
 
 func (s *jwtTokenStore) RemoveAccessToken(c context.Context, token oauth2.Token) error {
-	switch token.(type) {
+	switch t := token.(type) {
 	case oauth2.AccessToken:
-		// TODO just remove access token
+		// just remove access token
+		return s.registry.RevokeAccessToken(c, t)
 	case oauth2.RefreshToken:
-		// TODO remove all access token associated with this refresh token
+		// remove all access token associated with this refresh token
+		return s.registry.RevokeAllAccessTokens(c, t)
 	}
 	return nil
 }
 
 func (s *jwtTokenStore) RemoveRefreshToken(c context.Context, token oauth2.RefreshToken) error {
-	// TODO remove all access token associated with this refresh token and refresh token itself
-	return nil
+	// remove all access token associated with this refresh token and refresh token itself
+	return s.registry.RevokeRefreshToken(c, token)
 }
 
 /********************

@@ -449,7 +449,7 @@ func (r *RedisContextDetailsStore) doRemoveAccessToken(ctx context.Context, toke
 	if token != nil {
 		atk = uniqueTokenKey(token)
 	}
-	return r.doMultiDelete([](func() (int, error)) {
+	return r.doMultiDelete([]func() (int, error){
 		func() (int, error) { return r.doRemoveDetials(ctx, token, atk) },
 		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncAccessTokenFromUserAndClient(atk, "*", "*")) },
 		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncAccessTokenFromSession(atk, "*")) },

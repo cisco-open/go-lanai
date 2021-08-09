@@ -17,6 +17,7 @@ import (
 	"net/url"
 )
 
+// ServiceProviderMiddleware
 /**
 	A SAML service provider should be able to work with multiple identity providers.
 	Because the saml package assumes a service provider is configured with one idp only,
