@@ -143,7 +143,7 @@ func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *A
 }
 
 func (h *DefaultAuthorizeHandler) MakeImplicitResponse(ctx context.Context, r *AuthorizeRequest, user oauth2.UserAuthentication) (ResponseHandlerFunc, error) {
-	//TODO implement Implict grant
+	//TODO implement Implicit grant
 	panic("implicit response is not implemented")
 }
 

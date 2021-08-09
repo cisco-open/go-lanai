@@ -277,6 +277,7 @@ func (h *DefaultErrorHandler) HandleError(ctx context.Context, r *http.Request, 
 /**************************
 	Common Functions
 ***************************/
+
 func WriteError(ctx context.Context, r *http.Request, rw http.ResponseWriter, code int, err error) {
 	if IsResponseWritten(rw) {
 		return
