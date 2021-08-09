@@ -56,7 +56,7 @@ func GetTenancyPath(ctx context.Context, tenantId string) ([]uuid.UUID, error) {
 	return internalAccessor.GetTenancyPath(ctx, tenantId)
 }
 
-// AnyHasDescendant returns true if any of "tenantIDs" in utils.StringSet contains "targetTenantId" or its ancestors
+// AnyHasDescendant returns true if any of "tenantIDs" in utils.StringSet contains "descendant" or its ancestors
 func AnyHasDescendant(ctx context.Context, tenantIDs utils.StringSet, descendant string) bool {
 	if tenantIDs == nil || descendant == "" {
 		return false

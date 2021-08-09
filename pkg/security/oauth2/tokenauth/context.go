@@ -48,7 +48,7 @@ func ScopesApproved(scopes...string) access.ControlFunc {
 			}
 
 			approved := oauth.OAuth2Request().Scopes()
-			if approved == nil || approved.HasAll(scopes...) {
+			if approved == nil || !approved.HasAll(scopes...) {
 				return false, err
 			}
 		default:
