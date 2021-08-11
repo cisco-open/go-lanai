@@ -5,18 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"io/fs"
 	"io/ioutil"
-	"os"
 	"strings"
 )
 
-func migrationFuncFromTextFile(filePath string, db *gorm.DB) (MigrationFunc){
-	info, err := os.Stat(filePath)
-	if os.IsNotExist(err) || info.IsDir() {
+func migrationFuncFromTextFile(fs fs.FS, filePath string, db *gorm.DB) (MigrationFunc){
+	file, err := fs.Open(filePath)
+	if err != nil {
 		panic(errors.New(fmt.Sprintf("%s does not exist or is not a file", filePath)))
 	}
 
-	file, _ := os.Open(filePath);
 	sql, err := ioutil.ReadAll(file)
 
 	if err != nil {
