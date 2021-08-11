@@ -10,12 +10,15 @@ import (
 )
 
 const (
-	dsKeyHost     = "host"
-	dsKeyPort     = "port"
-	dsKeyDB       = "dbname"
-	dsKeySslMode  = "sslmode"
-	dsKeyUsername = "user"
-	dsKeyPassword = "password"
+	dsKeyHost        = "host"
+	dsKeyPort        = "port"
+	dsKeyDB          = "dbname"
+	dsKeySslMode     = "sslmode"
+	dsKeyUsername    = "user"
+	dsKeyPassword    = "password"
+	dsKeySslRootCert = "sslrootcert"
+	dsKeySslCert     = "sslcert"
+	dsKeySslKey      = "sslkey"
 )
 
 type initDI struct {
@@ -27,10 +30,13 @@ type initDI struct {
 func NewGormDialetor(di initDI) gorm.Dialector {
 	//"host=localhost user=root password=root dbname=idm port=26257 sslmode=disable"
 	options := map[string]interface{}{
-		dsKeyHost: di.Properties.Host,
-		dsKeyPort: di.Properties.Port,
-		dsKeyDB: di.Properties.Database,
-		dsKeySslMode: "disable",
+		dsKeyHost:        di.Properties.Host,
+		dsKeyPort:        di.Properties.Port,
+		dsKeyDB:          di.Properties.Database,
+		dsKeySslMode:     di.Properties.SslMode,
+		dsKeySslRootCert: di.Properties.SslRootCert,
+		dsKeySslCert: di.Properties.SslCert,
+		dsKeySslKey: di.Properties.SslKey,
 	}
 
 	if di.Properties.Username != "" {
