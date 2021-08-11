@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"gorm.io/gorm"
+	"io/fs"
 )
 
 type MigrationFunc func(ctx context.Context) error
@@ -48,8 +49,8 @@ func (m *Migration) WithTag(tags...string) *Migration {
 	return m
 }
 
-func (m *Migration) WithFile(filePath string, db *gorm.DB) *Migration {
-	m.Func = migrationFuncFromTextFile(filePath, db)
+func (m *Migration) WithFile(fs fs.FS, filePath string, db *gorm.DB) *Migration {
+	m.Func = migrationFuncFromTextFile(fs, filePath, db)
 	return m
 }
 
