@@ -16,6 +16,10 @@ type CockroachProperties struct {
 	Database string `json:"database"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+	SslMode  string `json:"sslmode"`
+	SslRootCert string `json:"sslrootcert"`
+	SslCert string `json:"sslcert"`
+	SslKey string `json:"sslkey"`
 }
 
 //NewCockroachProperties create a CockroachProperties with default values
@@ -25,6 +29,7 @@ func NewCockroachProperties() *CockroachProperties {
 		Port:     26257,
 		Username: "root",
 		Password: "root",
+		SslMode: "disable",
 	}
 }
 
