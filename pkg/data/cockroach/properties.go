@@ -16,10 +16,10 @@ type CockroachProperties struct {
 	Database string `json:"database"`
 	Username string `json:"username"`
 	Password string `json:"password"`
-	SslMode  string `json:"ssl-mode"`
-	SslRootCert string `json:"ssl-root-cert"`
-	SslCert string `json:"ssl-cert"`
-	SslKey string `json:"ssl-key"`
+	SslMode  string `json:"sslmode"`
+	SslRootCert string `json:"sslrootcert"`
+	SslCert string `json:"sslcert"`
+	SslKey string `json:"sslkey"`
 }
 
 //NewCockroachProperties create a CockroachProperties with default values
