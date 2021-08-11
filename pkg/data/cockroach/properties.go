@@ -29,6 +29,7 @@ func NewCockroachProperties() *CockroachProperties {
 		Port:     26257,
 		Username: "root",
 		Password: "root",
+		SslMode: "disable",
 	}
 }
 

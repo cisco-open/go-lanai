@@ -34,9 +34,18 @@ func NewGormDialetor(di initDI) gorm.Dialector {
 		dsKeyPort:        di.Properties.Port,
 		dsKeyDB:          di.Properties.Database,
 		dsKeySslMode:     di.Properties.SslMode,
-		dsKeySslRootCert: di.Properties.SslRootCert,
-		dsKeySslCert: di.Properties.SslCert,
-		dsKeySslKey: di.Properties.SslKey,
+	}
+
+	if di.Properties.SslRootCert != "" {
+		options[dsKeySslRootCert] = di.Properties.SslRootCert
+	}
+
+	if di.Properties.SslCert != "" {
+		options[dsKeySslCert] = di.Properties.SslCert
+	}
+
+	if di.Properties.SslKey != "" {
+		options[dsKeySslKey] = di.Properties.SslKey
 	}
 
 	if di.Properties.Username != "" {
