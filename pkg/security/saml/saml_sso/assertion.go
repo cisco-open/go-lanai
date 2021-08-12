@@ -62,6 +62,22 @@ func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authenticatio
 		notOnOrAfterAfter = notBefore.Add(saml.MaxIssueDelay)
 	}
 
+
+	authCtxClassRef := "urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified"
+	details, ok := authentication.Details().(map[string]interface{})
+	if ok {
+		if authMethod, exist := details[security.DetailsKeyAuthMethod]; exist {
+			switch authMethod {
+			case security.AuthMethodPassword:
+				authCtxClassRef = "urn:oasis:names:tc:SAML:2.0:ac:classes:Password"
+			case security.AuthMethodExternalSaml:
+				authCtxClassRef = "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol"
+			case security.AuthMethodExternalOpenID:
+				authCtxClassRef = "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol"
+			}
+		}
+	}
+
 	req.Assertion = &saml.Assertion{
 		ID:           fmt.Sprintf("id-%x", cryptoutils.RandomBytes(20)),
 		IssueInstant: saml.TimeNow(),
@@ -100,7 +116,7 @@ func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authenticatio
 				AuthnInstant: security.DetermineAuthenticationTime(ctx, authentication),
 				AuthnContext: saml.AuthnContext{
 					AuthnContextClassRef: &saml.AuthnContextClassRef{
-						Value: "urn:oasis:names:tc:SAML:2.0:ac:classes:Password", //TODO: should vary this value based on what auth it is
+						Value: authCtxClassRef,
 					},
 				},
 			},
