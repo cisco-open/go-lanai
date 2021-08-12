@@ -487,14 +487,7 @@ func parsePlaceHolder(strValue string) (placeholders []placeholder, isEmbedded b
 					key:        split[0],
 				}
 				if len(split) > 1 {
-					defaultStr := split[1]
-					if bv, e := strconv.ParseBool(defaultStr); e == nil {
-						ph.defaultVal = bv
-					} else if nv, e := strconv.ParseFloat(defaultStr, 64); e == nil {
-						ph.defaultVal = nv
-					} else {
-						ph.defaultVal = defaultStr
-					}
+					ph.defaultVal = utils.ParseString(split[1])
 				}
 				placeholders = append(placeholders, ph)
 
