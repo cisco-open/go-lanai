@@ -23,8 +23,8 @@ const (
 )
 
 const (
-	globalSettingKeyIdleTimeout = "security.auth.session-timeout.idle-timeout-seconds"
-	globalSettingKeyAbsTimeout  = "security.auth.session-timeout.absolute-timeout-seconds"
+	globalSettingIdleTimeout = "IDLE_SESSION_TIMEOUT_SECS"
+	globalSettingAbsTimeout  = "ABSOLUTE_SESSION_TIMEOUT_SECS"
 )
 
 type Store interface {
@@ -167,10 +167,10 @@ func (s *RedisStore) Get(id string, name string) (*Session, error) {
 // New will create a new session.
 func (s *RedisStore) New(name string) (*Session, error) {
 	session := CreateSession(s, name)
-	if idle, ok := s.readTimeoutSetting(s.ctx, globalSettingKeyIdleTimeout); ok {
+	if idle, ok := s.readTimeoutSetting(s.ctx, globalSettingIdleTimeout); ok {
 		session.options.IdleTimeout = idle
 	}
-	if abs, ok := s.readTimeoutSetting(s.ctx, globalSettingKeyAbsTimeout); ok {
+	if abs, ok := s.readTimeoutSetting(s.ctx, globalSettingAbsTimeout); ok {
 		session.options.AbsoluteTimeout = abs
 	}
 	return session, nil

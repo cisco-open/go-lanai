@@ -251,7 +251,8 @@ func (h *CompositeErrorHandler) removeDuplicates(items []ErrorHandler) []ErrorHa
 /**************************
 	Default Impls
 ***************************/
-// *DefaultAccessDeniedHandler implements AccessDeniedHandler
+
+// DefaultAccessDeniedHandler implements AccessDeniedHandler
 type DefaultAccessDeniedHandler struct {
 }
 
@@ -259,7 +260,7 @@ func (h *DefaultAccessDeniedHandler) HandleAccessDenied(ctx context.Context, r *
 	WriteError(ctx, r, rw, http.StatusForbidden, err)
 }
 
-// *DefaultAuthenticationErrorHandler implements AuthenticationErrorHandler
+// DefaultAuthenticationErrorHandler implements AuthenticationErrorHandler
 type DefaultAuthenticationErrorHandler struct {
 }
 
@@ -267,7 +268,7 @@ func (h *DefaultAuthenticationErrorHandler) HandleAuthenticationError(ctx contex
 	WriteError(ctx, r, rw, http.StatusUnauthorized, err)
 }
 
-// *DefaultErrorHandler implements ErrorHandler
+// DefaultErrorHandler implements ErrorHandler
 type DefaultErrorHandler struct {}
 
 func (h *DefaultErrorHandler) HandleError(ctx context.Context, r *http.Request, rw http.ResponseWriter, err error) {

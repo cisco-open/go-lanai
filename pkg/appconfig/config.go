@@ -154,8 +154,7 @@ func (c *config) Load(ctx context.Context, force bool) (err error) {
 	}
 
 	// resolve placeholder
-	if e := resolve(ctx, final); e != nil {
-		err = e
+	if err = resolve(ctx, final); err != nil {
 		return
 	}
 	c.properties = final
@@ -353,9 +352,10 @@ func mergeAdditionalProfiles(profiles []string, src map[string]interface{}) ([]s
 /*********************
 	Placeholder
  *********************/
+
 func resolve(ctx context.Context, nested map[string]interface{}) error {
 	doResolve := func(key string, value interface{}) error {
-		_, e := resolveValue(ctx, nested, key, key)
+		_, e := resolveValue(ctx, key, value, nested, nil)
 		return e
 	}
 
@@ -365,74 +365,104 @@ func resolve(ctx context.Context, nested map[string]interface{}) error {
 	return nil
 }
 
-//here the key is the flattened key
-func resolveValue(ctx context.Context, source map[string]interface{}, key string, originKey string) (interface{}, error) {
-	value := value(source, key)
-
+// resolveValue recursively resolve the value of key by replacing placeholders with actual value
+// Note: here the key is the flattened key
+func resolveValue(ctx context.Context, key string, val interface{}, source map[string]interface{}, visited []string) (resolvedVal interface{}, err error) {
 	//if value is not string, no need to resolve it further
-	if _, ok := value.(string); !ok {
-		return value, nil
+	if _, ok := val.(string); !ok {
+		return val, nil
 	}
 
-	placeHolderKeys, isEmbedded, e := parsePlaceHolder(value.(string))
+	placeholders, isEmbedded, e := parsePlaceHolder(val.(string))
 	if e != nil {
 		return "", e
+	} else if len(placeholders) == 0 {
+		return val, nil
 	}
 
-	//There's no place holder in the value
-	//return the value
-	if len(placeHolderKeys) == 0 {
-		return value, nil
-	}
-
+	// check for circular reference
+	visited = append(visited, key)
 	logger.WithContext(ctx).Debugf("resolving key: " + key)
-	for _, placeHolderKey := range placeHolderKeys {
-		if strings.Compare(originKey, placeHolderKey) == 0 {
-			return "", errors.New("key: " + originKey + " can't be resolved due to circular reference")
+	for _, ph := range placeholders {
+		for i, k := range visited {
+			if strings.Compare(k, ph.key) == 0 {
+				circular := strings.Join(visited[i:], "->") + "->" + ph.key
+				return "", fmt.Errorf("placeholder ${%s} can't be resolved due to circular reference: %s", ph.key, circular)
+			}
 		}
 	}
 
-	resolvedKV := make(map[string]interface{})
-	for _, placeHolderKey := range placeHolderKeys {
-		resolvedPlaceHolder, e := resolveValue(ctx, source, placeHolderKey, originKey)
-		if e != nil {
-			return "", e
+	resolvedKV := make(map[placeholder]interface{})
+	for _, ph := range placeholders {
+		v := value(source, ph.key)
+		switch resolved, e := resolveValue(ctx, ph.key, v, source, visited); {
+		case e == nil && resolved == nil:
+			// cannot resolve value
+			if ph.defaultVal != nil {
+				resolvedKV[ph] = ph.defaultVal
+			}
+		case e == nil:
+			resolvedKV[ph] = resolved
+		case e != nil && ph.defaultVal != nil:
+			logger.WithContext(ctx).Warnf(e.Error())
+			resolvedKV[ph] = ph.defaultVal
+		default:
+			return nil, e
 		}
-		resolvedKV[placeHolderKey] = resolvedPlaceHolder
 	}
 
-	//embedded means the place holder is embedded in the value string, either with the format of
-	// somestring${a}
-	// or
-	// ${a}${b}
-	//therefore the resolved place holders must be all strings as well, otherwise we can't concatenate them together.
+	// embedded means the placeholder is embedded in the value string, either with the format of
+	// "somestring${a}" or "${a}${b}"
+	// therefore the resolvedVal placeholders must be all strings as well, otherwise we can't concatenate them together.
 	var resolvedValue interface{}
 	if isEmbedded {
-		str := value.(string)
-		for placeHolderKey, resolvedPlaceHolder := range resolvedKV {
-			str = strings.Replace(str, placeHolderPrefix+placeHolderKey+placeHolderSuffix, fmt.Sprint(resolvedPlaceHolder), -1)
+		str := val.(string)
+		for ph, resolved := range resolvedKV {
+			str = strings.Replace(str, ph.String(), fmt.Sprint(resolved), -1)
 		}
 		resolvedValue = str
-	} else { //if not embedded, the entire value must have just been a single place holder.
-		resolvedValue = resolvedKV[placeHolderKeys[0]]
+	} else { //if not embedded, the entire value must have just been a single placeholder.
+		resolvedValue = resolvedKV[placeholders[0]]
 	}
 
 	if e := setValue(source, key, resolvedValue, false); e != nil {
 		return nil, e
 	}
+
 	return resolvedValue, nil
 }
 
 const placeHolderPrefix = "${"
 const placeHolderSuffix = "}"
+const placeHolderDefaultDelimiter = ":"
 
 type bracket struct {
 	value string
 	index int
 }
 
-func parsePlaceHolder(strValue string) (placeHolderKeys []string, isEmbedded bool, error error) {
-	//use this as a stack to check for nested place holder brackets
+type placeholder struct {
+	key        string
+	defaultVal interface{}
+}
+
+func (ph placeholder) String() string {
+	if ph.defaultVal == nil {
+		return fmt.Sprintf("%s%s%s", placeHolderPrefix, ph.key, placeHolderSuffix)
+	}
+	return fmt.Sprintf("%s%s%s%v%s", placeHolderPrefix, ph.key, placeHolderDefaultDelimiter, ph.defaultVal, placeHolderSuffix)
+}
+
+// embedded means the placeholder is embedded in the value string, either with the format of "somestring${a}" or "${a}${b}"
+// Note: when default value is present e.g. "${non-exist.key:default_value}", the type of default value is unknown
+//		 (information about whether the value was quoted is lost during YAML parsing).
+//		 We guess the type based on the default value using strconv package:
+// 			- 100 -> json.Number
+// 			- 100.0 -> float
+// 			- true/false -> bool
+// 			- other values -> string
+func parsePlaceHolder(strValue string) (placeholders []placeholder, isEmbedded bool, error error) {
+	//use this as a stack to check for nested placeholder brackets
 	//the algorithm is to put left bracket on the stack, and pop it off when we see a right bracket
 	//this way if the stack is at length greater than 1 when we encounter another left bracket, we have a nested situation
 	var bracketStack []bracket
@@ -452,7 +482,21 @@ func parsePlaceHolder(strValue string) (placeHolderKeys []string, isEmbedded boo
 			if bracketStack != nil && stackLen >= 1 {
 				leftBracket := bracketStack[stackLen-1]  //gets the top of the stack
 				bracketStack = bracketStack[:stackLen-1] //pop the top of the stack
-				placeHolderKeys = append(placeHolderKeys, strValue[leftBracket.index+1:i])
+				split := strings.SplitN(strValue[leftBracket.index+1 : i], placeHolderDefaultDelimiter, 2)
+				ph := placeholder{
+					key:        split[0],
+				}
+				if len(split) > 1 {
+					defaultStr := split[1]
+					if bv, e := strconv.ParseBool(defaultStr); e == nil {
+						ph.defaultVal = bv
+					} else if nv, e := strconv.ParseFloat(defaultStr, 64); e == nil {
+						ph.defaultVal = nv
+					} else {
+						ph.defaultVal = defaultStr
+					}
+				}
+				placeholders = append(placeholders, ph)
 
 				if leftBracket.index > len(placeHolderPrefix)-1 || i < len(strValue)-1 {
 					isEmbedded = true
@@ -460,5 +504,5 @@ func parsePlaceHolder(strValue string) (placeHolderKeys []string, isEmbedded boo
 			} //else there's no matching ${, so we skip it
 		}
 	}
-	return placeHolderKeys, isEmbedded, nil
+	return placeholders, isEmbedded, nil
 }

@@ -37,8 +37,8 @@ security:
     cookie:
       domain: ${security.auth.issuer.domain}
     max-concurrent-sessions: 2
-    idle-timeout: 1.5h
-    absolute-timeout: 3h
+    idle-timeout: "2h"
+    absolute-timeout: "4h"
     db-index: 8
   timeout-support:
     db-index: ${security.session.db-index}

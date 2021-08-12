@@ -1,18 +1,64 @@
+# use of scalar placeholders
 a:
-  b:
-    c: 1_${d.e.f}
+  a-1:
+    a-1-1: 1_${b.b-1.b-1-1}
+    a-1-2: ${b.b-1.b-1-2}s
+    a-1-3: ${b.b-1.b-1-2}
+
+# intermediate placeholder sources
+b:
+  b-1:
+    b-1-1: ${c.c-1.c-1-1}
+    b-1-2: ${c.c-1.c-1-2}
+    b-1-3: ${x.y.z:default_value}
+    b-1-4: ${x.y.z:1000}
+    b-1-5: ${x.y.z}
+
+# root placeholder sources
+c:
+  c-1:
+    c-1-1: my_value
+    c-1-2: 200
+
+# collection source, with scalar placeholders
 d:
-  e:
-    f: ${g.h.i}
+  d-1:
+    - ${a.a-1.a-1-1}
+    - ${a.a-1.a-1-2}
+    - ${a.a-1.a-1-3}
+    - ${c.c-1.c-1-1}
+    - ${c.c-1.c-1-2}
+  d-2: ${a.a-1.a-1-1}${b.b-1.b-1-1}
+
+# use of collection source
+e:
+  e-1: ${d.d-1}
+
+# immediate default value is not used
+f:
+  f-1: 1_${b.b-1.b-1-1:default_value}
+  f-2: ${b.b-1.b-1-2:2000}s
+  f-3: ${b.b-1.b-1-2:2000}
+  f-4: 1_${b.b-1.b-1-3:default_value}
+  f-5: ${b.b-1.b-1-4:2000}s
+  f-6: ${b.b-1.b-1-4:2000}
+
+# immediate default value is used
 g:
-  h:
-    i: my_value
+  g-1: ${b.b-1.b-1-5:default_value}
+  g-2: ${b.b-1.b-1-5:1000}s
+  g-3: ${b.b-1.b-1-5:1000}
+  g-4: ${x.y.z:default_value}${b.b-1.b-1-5:1000}${b.b-1.b-1-1:default_value}
 
-j:
-  k:
-    - ${a.b.c}
-    - ${g.h.i}
 
-l: ${a.b.c}${d.e.f}
+# no default value
+h:
+  h-1: ${x.y.z:default_value}${b.b-1.b-1-5:1000}${b.b-1.b-1-1:default_value}${x.y.z}
+  h-2: ${x.y.z:default_value}${b.b-1.b-1-5:1000}${b.b-1.b-1-1:default_value}${b.b-1.b-1-5}
 
-m: ${j.k}
+# circular with default
+# Note, in case of circular reference, which default value is used depends on parsing order.
+i:
+  i-1: ${i.i-2:default_value}
+  i-2: ${i.i-3:default_value}
+  i-3: ${i.i-1:default_value}
