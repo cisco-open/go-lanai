@@ -16,7 +16,7 @@ import (
 var logger = log.New("SEC.Session")
 
 var Module = &bootstrap.Module{
-	Name: "session",
+	Name:       "session",
 	Precedence: security.MinSecurityPrecedence + 10,
 	Options: []fx.Option{
 		fx.Provide(security.BindSessionProperties),
@@ -24,7 +24,6 @@ var Module = &bootstrap.Module{
 		fx.Invoke(register),
 	},
 }
-
 
 func init() {
 	bootstrap.Register(Module)
@@ -40,11 +39,12 @@ func GobRegister() {
 
 type storeDI struct {
 	fx.In
-	AppContext      *bootstrap.ApplicationContext
-	SecRegistrar    security.Registrar `optional:"true"`
-	SessionProps    security.SessionProperties
-	ServerProps     web.ServerProperties `optional:"true"`
-	ClientFactory   redis.ClientFactory  `optional:"true"`
+	AppContext    *bootstrap.ApplicationContext
+	SecRegistrar  security.Registrar `optional:"true"`
+	SessionProps  security.SessionProperties
+	ServerProps   web.ServerProperties         `optional:"true"`
+	ClientFactory redis.ClientFactory          `optional:"true"`
+	SettingReader security.GlobalSettingReader `optional:"true"`
 }
 
 func provideSessionStore(di storeDI) Store {
@@ -58,18 +58,18 @@ func provideSessionStore(di storeDI) Store {
 		panic(e)
 	}
 
-	configureOptions := func(options *Options) {
-		options.Path = path.Clean("/" + di.ServerProps.ContextPath)
-		options.Domain = di.SessionProps.Cookie.Domain
-		options.MaxAge = di.SessionProps.Cookie.MaxAge
-		options.Secure = di.SessionProps.Cookie.Secure
-		options.HttpOnly = di.SessionProps.Cookie.HttpOnly
-		options.SameSite = di.SessionProps.Cookie.SameSite()
-		options.IdleTimeout = time.Duration(di.SessionProps.IdleTimeout)
-		options.AbsoluteTimeout = time.Duration(di.SessionProps.AbsoluteTimeout)
-	}
+	return NewRedisStore(redisClient, func(opt *StoreOption) {
+		opt.SettingReader = di.SettingReader
 
-	return NewRedisStore(redisClient, configureOptions)
+		opt.Options.Path = path.Clean("/" + di.ServerProps.ContextPath)
+		opt.Options.Domain = di.SessionProps.Cookie.Domain
+		opt.Options.MaxAge = di.SessionProps.Cookie.MaxAge
+		opt.Options.Secure = di.SessionProps.Cookie.Secure
+		opt.Options.HttpOnly = di.SessionProps.Cookie.HttpOnly
+		opt.Options.SameSite = di.SessionProps.Cookie.SameSite()
+		opt.Options.IdleTimeout = time.Duration(di.SessionProps.IdleTimeout)
+		opt.Options.AbsoluteTimeout = time.Duration(di.SessionProps.AbsoluteTimeout)
+	})
 }
 
 type initDI struct {

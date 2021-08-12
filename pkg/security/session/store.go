@@ -17,8 +17,15 @@ import (
 	"time"
 )
 
-const sessionValueField = "values"
-const sessionOptionField = "options"
+const (
+	sessionValueField  = "values"
+	sessionOptionField = "options"
+)
+
+const (
+	globalSettingIdleTimeout = "IDLE_SESSION_TIMEOUT_SECS"
+	globalSettingAbsTimeout  = "ABSOLUTE_SESSION_TIMEOUT_SECS"
+)
 
 type Store interface {
 	// Get should return a cached session.
@@ -51,6 +58,7 @@ type Store interface {
 	WithContext(ctx context.Context) Store
 }
 
+// RedisStore
 /**
 	Session is implemented as a HSET in redis.
 	Session is expired using Redis TTL. The TTL is slightly longer than the expiration time so that when the session is
@@ -90,41 +98,48 @@ type Store interface {
 	The application can use redis SCAN family of commands to make sure that redis is not blocked by a single user's request.
 */
 type RedisStore struct {
-	ctx        context.Context
-	options    *Options
-	connection redis.Client
+	ctx           context.Context
+	options       *Options
+	connection    redis.Client
+	settingReader security.GlobalSettingReader
 }
 
+type StoreOptions func(opt *StoreOption)
 
-func NewRedisStore(connection redis.Client, options ...func(*Options)) *RedisStore {
+type StoreOption struct {
+	Options
+	SettingReader security.GlobalSettingReader
+}
+
+func NewRedisStore(redisClient redis.Client, options ...StoreOptions) *RedisStore {
 	gob.Register(time.Time{})
 
 	//defaults
-	o := &Options{
-		Path:   "/",
-		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
-		IdleTimeout: 900*time.Second,
-		AbsoluteTimeout: 1800*time.Second,
+	opt := StoreOption{
+		Options: Options{
+			Path:            "/",
+			HttpOnly:        true,
+			SameSite:        http.SameSiteNoneMode,
+			IdleTimeout:     900 * time.Second,
+			AbsoluteTimeout: 1800 * time.Second,
+		},
 	}
 
-	for _, opt := range options {
-		opt(o)
+	for _, fn := range options {
+		fn(&opt)
 	}
-	return newRedisStore(context.TODO(), connection, o)
-}
-
-func newRedisStore(ctx context.Context, connection redis.Client, opt *Options) *RedisStore {
-	s := &RedisStore{
-		ctx:        ctx,
-		options:    opt,
-		connection: connection,
+	return &RedisStore{
+		ctx:           context.Background(),
+		options:       &opt.Options,
+		connection:    redisClient,
+		settingReader: opt.SettingReader,
 	}
-	return s
 }
 
 func (s *RedisStore) WithContext(ctx context.Context) Store {
-	return newRedisStore(ctx, s.connection, s.options)
+	cp := *s
+	cp.ctx = ctx
+	return &cp
 }
 
 func (s *RedisStore) Options() *Options {
@@ -152,7 +167,12 @@ func (s *RedisStore) Get(id string, name string) (*Session, error) {
 // New will create a new session.
 func (s *RedisStore) New(name string) (*Session, error) {
 	session := CreateSession(s, name)
-	// TODO set idle timeout and absolute timeout of the current session to values read from global settings (DB)
+	if idle, ok := s.readTimeoutSetting(s.ctx, globalSettingIdleTimeout); ok {
+		session.options.IdleTimeout = idle
+	}
+	if abs, ok := s.readTimeoutSetting(s.ctx, globalSettingAbsTimeout); ok {
+		session.options.AbsoluteTimeout = abs
+	}
 	return session, nil
 }
 
@@ -181,7 +201,7 @@ func (s *RedisStore) Invalidate(sessions ...*Session) error {
 		if pName, e := getPrincipalName(session); e == nil && pName != "" {
 			//ignore error here since even if it can't be deleted from this index, it'll be cleaned up
 			// on read since the session itself is already deleted successfully
-			_ = s.RemoveFromPrincipalIndex(pName , session)
+			_ = s.RemoveFromPrincipalIndex(pName, session)
 		}
 	}
 	return nil
@@ -197,9 +217,9 @@ func (s *RedisStore) InvalidateByPrincipalName(principal, sessionName string) er
 
 func (s *RedisStore) FindByPrincipalName(principal string, sessionName string) ([]*Session, error) {
 	//iterate through the set members using default count
-	cursor:= uint64(0)
+	cursor := uint64(0)
 	var ids []string
-	for ok := true; ok ; ok = cursor!= 0 {
+	for ok := true; ok; ok = cursor != 0 {
 		cmd := s.connection.SScan(s.ctx, getRedisPrincipalIndexKey(principal, sessionName), cursor, "", 0)
 		keys, next, err := cmd.Result()
 		cursor = next
@@ -242,7 +262,6 @@ func (s *RedisStore) RemoveFromPrincipalIndex(principal string, session *Session
 	cmd := s.connection.SRem(s.ctx, getRedisPrincipalIndexKey(principal, session.Name()), session.GetID())
 	return cmd.Err()
 }
-
 
 func (s *RedisStore) ChangeId(session *Session) error {
 	newId := uuid.New().String()
@@ -330,6 +349,17 @@ func (s *RedisStore) save(session *Session) error {
 	exp := session.expiration()
 	expCmd := s.connection.ExpireAt(s.ctx, key, exp)
 	return expCmd.Err()
+}
+
+func (s *RedisStore) readTimeoutSetting(ctx context.Context, key string) (time.Duration, bool) {
+	if s.settingReader == nil {
+		return  0, false
+	}
+	var secs int
+	if e := s.settingReader.Read(ctx, key, &secs); e != nil {
+		return 0, false
+	}
+	return time.Second * time.Duration(secs), true
 }
 
 func getRedisPrincipalIndexKey(principal string, sessionName string) string {

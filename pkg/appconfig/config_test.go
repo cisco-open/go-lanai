@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	. "github.com/onsi/gomega"
-	"strings"
 	"testing"
 )
 
@@ -15,49 +14,64 @@ func init() {
 }
 
 func TestParsePlaceHolders(t *testing.T) {
+	// Without Default Values
 	v := "${my.place.holder}"
-	placeHolderKeys, isEmbedded, error := parsePlaceHolder(v)
-
-	if len(placeHolderKeys) != 1 || strings.Compare(placeHolderKeys[0], "my.place.holder") != 0 || isEmbedded != false || error != nil {
-		t.Errorf("%s not parsed correctly", v)
+	expected := map[string]interface{} {
+		"my.place.holder": nil,
 	}
+	t.Run("PlaceholderPattern1", PlaceholderParsingTest(v, expected, false))
 
 	v = "1${my.place.holder}"
-	placeHolderKeys, isEmbedded, error = parsePlaceHolder(v)
-
-	if len(placeHolderKeys) != 1 || strings.Compare(placeHolderKeys[0], "my.place.holder") != 0 || isEmbedded != true || error != nil {
-		t.Errorf("%s not parsed correctly", v)
+	expected = map[string]interface{} {
+		"my.place.holder": nil,
 	}
+	t.Run("PlaceholderPattern2", PlaceholderParsingTest(v, expected, true))
 
 	v = "${my.place.holder}1"
-	placeHolderKeys, isEmbedded, error = parsePlaceHolder(v)
-
-	if len(placeHolderKeys) != 1 || strings.Compare(placeHolderKeys[0], "my.place.holder") != 0 || isEmbedded != true || error != nil {
-		t.Errorf("%s not parsed correctly", v)
+	expected = map[string]interface{} {
+		"my.place.holder": nil,
 	}
-
+	t.Run("PlaceholderPattern3", PlaceholderParsingTest(v, expected, true))
 
 	v = "${my.place.holder}${my.second.holder}"
-	placeHolderKeys, isEmbedded, error = parsePlaceHolder(v)
-
-	if len(placeHolderKeys) != 2 || isEmbedded != true || error != nil {
-		t.Errorf("%s not parsed correctly", v)
+	expected = map[string]interface{} {
+		"my.place.holder": nil,
+		"my.second.holder": nil,
 	}
+	t.Run("PlaceholderPattern4", PlaceholderParsingTest(v, expected, true))
 
-	if strings.Compare(placeHolderKeys[0], "my.place.holder") != 0 {
-		t.Errorf("%s not parsed correctly", v)
+	// With Default Values
+	v = "${my.place.holder:200}"
+	expected = map[string]interface{} {
+		"my.place.holder": 200.0,
 	}
+	t.Run("PlaceholderPattern5", PlaceholderParsingTest(v, expected, false))
 
-	if strings.Compare(placeHolderKeys[1], "my.second.holder") != 0 {
-		t.Errorf("%s not parsed correctly", v)
+	v = "1${my.place.holder:true}"
+	expected = map[string]interface{} {
+		"my.place.holder": true,
 	}
+	t.Run("PlaceholderPattern6", PlaceholderParsingTest(v, expected, true))
 
+	v = "${my.place.holder:default_value}1"
+	expected = map[string]interface{} {
+		"my.place.holder": "default_value",
+	}
+	t.Run("PlaceholderPattern7", PlaceholderParsingTest(v, expected, true))
+
+	v = "${my.place.holder:mixed}${my.second.holder:value}"
+	expected = map[string]interface{} {
+		"my.place.holder": "mixed",
+		"my.second.holder": "value",
+	}
+	t.Run("PlaceholderPattern8", PlaceholderParsingTest(v, expected, true))
+
+	// Invalid patterns
 	v = "${${my.second.holder}}"
-	placeHolderKeys, isEmbedded, error = parsePlaceHolder(v)
-	if error == nil {
-		t.Errorf("%s not parsed correctly. Expected error", v)
+	expected = map[string]interface{} {
+		"my.place.holder": nil,
 	}
-	fmt.Println(error)
+	t.Run("PlaceholderInvalidPattern1", PlaceholderFailedParsingTest(v))
 }
 
 func TestUnFlatten(t *testing.T) {
@@ -209,6 +223,33 @@ func TestSettingValueWithSlicePath(t *testing.T) {
 /*********************
 	SubTests
  *********************/
+func PlaceholderParsingTest(v string, expectedPlaceholders map[string]interface{}, expectEmbedded bool) func(*testing.T) {
+	return func(t *testing.T) {
+		g := NewWithT(t)
+		placeholders, isEmbedded, e := parsePlaceHolder(v)
+		g.Expect(e).To(Succeed(), "parsing should not returns error")
+		g.Expect(placeholders).To(HaveLen(len(expectedPlaceholders)), "number of placeholders should be correct")
+		g.Expect(isEmbedded).To(Equal(expectEmbedded), "isEmbedded should be correct")
+		for _, ph := range placeholders {
+			g.Expect(expectedPlaceholders).To(HaveKey(ph.key), "placeholder [%s] should have correct key", ph.key)
+			dv, _ := expectedPlaceholders[ph.key]
+			if dv != nil {
+				g.Expect(ph.defaultVal).To(Equal(dv), "placeholder [%s] should have correct default value [%v]", ph.key, dv)
+			} else {
+				g.Expect(ph.defaultVal).To(BeNil(), "placeholder [%s] should have nil default value [%v]", ph.key, dv)
+			}
+		}
+	}
+}
+
+func PlaceholderFailedParsingTest(v string) func(*testing.T) {
+	return func(t *testing.T) {
+		g := NewWithT(t)
+		_, _, e := parsePlaceHolder(v)
+		g.Expect(e).To(Not(Succeed()), "parsing should returns error")
+	}
+}
+
 func SetValueTest(values map[string]interface{}, key string, createIntermediateNodes bool, expectedFail bool) func(*testing.T) {
 	return func(t *testing.T) {
 		g := NewWithT(t)

@@ -59,6 +59,15 @@ func (EmptyAuthentication) Permissions() Permissions {
 	return map[string]interface{}{}
 }
 
+type GlobalSettingReader interface {
+	// Read setting of given key into "dest". Should support types:
+	// 	- *[]byte
+	// 	- *string
+	// 	- *bool
+	//	- *int
+	Read(ctx context.Context, key string, dest interface{}) error
+}
+
 func GobRegister() {
 	gob.Register(EmptyAuthentication(""))
 	gob.Register((*AnonymousAuthentication)(nil))
