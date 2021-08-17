@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"fmt"
 	"github.com/pkg/errors"
@@ -15,7 +16,7 @@ const (
 type DiscoveryProperties struct {
 	HealthCheckPath            string   `json:"health-check-path"`
 	HealthCheckInterval        string   `json:"health-check-interval"`
-	Tags                       []string `json:"tags"`
+	Tags                       utils.CommaSeparatedSlice `json:"tags"`
 	AclToken                   string   `json:"acl-token"`
 	IpAddress                  string   `json:"ip-address"` //A pre-defined IP address
 	Interface                  string   `json:"interface"`    //The network interface from where to get the ip address. If IpAddress is defined, this field is ignored
