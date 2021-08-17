@@ -34,15 +34,16 @@ func NewFileJwkStore(props CryptoProperties) *FileJwkStore {
 	// load files
 	for k, v := range props.Keys {
 		jwks, e := loadJwks(k, v)
-		if e != nil {
-			panic(e)
-		}
-		for _, jwk := range jwks {
-			s.cacheById[jwk.Id()] = jwk
+		// ignore unsupported keys
+		if e == nil {
+			for _, jwk := range jwks {
+				s.cacheById[jwk.Id()] = jwk
 
+			}
+			s.cacheByName[k] = jwks
+			s.indexes[k] = 0
 		}
-		s.cacheByName[k] = jwks
-		s.indexes[k] = 0
+		
 	}
 
 	return &s
