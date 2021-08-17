@@ -357,7 +357,7 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, te
 	}
 
 	// check account
-	if tenancy.AnyHasDescendant(ctx, tenantIds, tenant.Id) {
+	if !tenancy.AnyHasDescendant(ctx, tenantIds, tenant.Id) {
 		return oauth2.NewInvalidGrantError("user does not have access to specified tenant")
 	}
 
