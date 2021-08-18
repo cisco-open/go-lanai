@@ -24,7 +24,7 @@ func migrate(ctx context.Context, r *Registrar, v Versioner) error {
 	}
 
 	//sort applied migration steps
-	sort.SliceStable(appliedMigrations, func (i, j int) bool {return appliedMigrations[i].GetVersion().Lt(appliedMigrations[i].GetVersion())})
+	sort.SliceStable(appliedMigrations, func (i, j int) bool {return appliedMigrations[i].GetVersion().Lt(appliedMigrations[j].GetVersion())})
 
 	for _, a := range appliedMigrations {
 		if !a.IsSuccess() {
