@@ -1,6 +1,10 @@
 package utils
 
-import "strconv"
+import (
+	"encoding/json"
+	"strconv"
+	"strings"
+)
 
 func UnQuote(s string) string {
 	if len(s) >= 2 {
@@ -12,12 +16,28 @@ func UnQuote(s string) string {
 }
 
 func ParseString(s string) interface{} {
-	//try number before boolean because 1/0 can be parsed to boolean true/false
+	// try number before boolean because 1/0 can be parsed to boolean true/false
 	if numVal, err := strconv.ParseFloat(s, 64); err == nil {
 		return numVal
 	} else if boolVal, err := strconv.ParseBool(s); err == nil {
 		return boolVal
-	} else {
-		return s
 	}
+
+	// we also support []interface{} and map[string]interface{}
+	trimmed := strings.TrimSpace(s)
+	if strings.HasPrefix(trimmed, "{") {
+		var v map[string]interface{}
+		if e := json.Unmarshal([]byte(trimmed), &v); e == nil {
+			return v
+		}
+	}
+
+	if strings.HasPrefix(trimmed, "[") {
+		var v []interface{}
+		if e := json.Unmarshal([]byte(trimmed), &v); e == nil {
+			return v
+		}
+	}
+
+	return s
 }

@@ -13,12 +13,13 @@ const (
 )
 
 type Input struct {
-	Name string `uri:name`
+	Name string `uri:"name"`
 }
 
 type Info map[string]interface{}
 
 // InfoEndpoint implements actuator.Endpoint, actuator.WebEndpoint
+//goland:noinspection GoNameStartsWithPackageName
 type InfoEndpoint struct {
 	actuator.WebEndpointBase
 	appConfig appconfig.ConfigAccessor
