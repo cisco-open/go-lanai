@@ -9,6 +9,7 @@ const (
 	ConfigKafkaPrefix = "kafka"
 )
 
+//goland:noinspection GoNameStartsWithPackageName
 type KafkaProperties struct {
 	Brokers string `json:"brokers"`
 	Net Net `json:"net"`

@@ -17,6 +17,10 @@ var Module = &bootstrap.Module{
 	},
 }
 
+const (
+	FxGroup = "kafka"
+)
+
 // Use Allow service to include this module in main()
 func Use() {
 	bootstrap.Register(Module)

@@ -1,21 +1,26 @@
 package kafka
 
 import (
-	"encoding/json"
 	"github.com/Shopify/sarama"
+	"github.com/google/uuid"
 	"time"
 )
 
 /********************
- Options for producer
- ********************/
+Options for producer
+********************/
+
 type producerConfig struct {
 	*sarama.Config
+	keyEncoder   Encoder
+	interceptors []ProducerInterceptor
 }
 
-func defaultProducerConfig(properties KafkaProperties) *producerConfig {
+func defaultProducerConfig(properties *KafkaProperties) *producerConfig {
 	c := &producerConfig{
-		Config: sarama.NewConfig(),
+		Config:     sarama.NewConfig(),
+		keyEncoder: binaryEncoder{},
+		interceptors: []ProducerInterceptor{},
 	}
 
 	if properties.Net.Sasl.Enable {
@@ -30,9 +35,16 @@ func defaultProducerConfig(properties KafkaProperties) *producerConfig {
 
 type ProducerOptions func(*producerConfig)
 
+// WithKeyEncoder configures Producer with given encoder for serializing message key
+func WithKeyEncoder(enc Encoder) ProducerOptions {
+	return func(config *producerConfig) {
+		config.keyEncoder = enc
+	}
+}
+
 // RequireAllAck waits for all in-sync replicas to commit before responding.
 // The minimum number of in-sync replicas is configured on the broker via
-// the `min.insync.replicas` configuration key.
+// the `min.insync.replicas` configuration Key.
 func RequireAllAck() ProducerOptions {
 	return func(config *producerConfig) {
 		config.Producer.RequiredAcks = sarama.WaitForAll
@@ -62,6 +74,7 @@ func AckTimeout(timeout time.Duration) ProducerOptions {
 /********************
  Options for message
 ********************/
+
 type deliveryMode int
 
 const (
@@ -69,24 +82,38 @@ const (
 )
 
 type messageConfig struct {
-	valueEncoder func(v interface{})([]byte, error)
-	key          interface{}
-	keyEncoder   func(v interface{})([]byte, error)
-	mode         deliveryMode
+	ValueEncoder Encoder
+	Key          interface{}
+	Mode         deliveryMode
 }
 
-func defaultMessageConfig() *messageConfig{
-	return &messageConfig{
-		valueEncoder: json.Marshal,
-		keyEncoder: json.Marshal,
-		mode: sync,
+func defaultMessageConfig() messageConfig {
+	return messageConfig{
+		ValueEncoder: jsonEncoder{},
+		Key:          uuid.New(),
+		Mode:         sync,
 	}
 }
 
-type MessageOptions func(*messageConfig)
+type MessageOptions func(config *messageConfig)
 
+// WithKey specify key used for the message. The key is typically used for partitioning.
+// Supported values depends on the WithKeyEncoder option on the Producer.
+// Default encoder support following types:
+// 	- uuid.UUID
+// 	- string
+// 	- []byte
+// 	- encoding.BinaryMarshaler
 func WithKey(key interface{}) MessageOptions {
 	return func(config *messageConfig) {
-		config.key = key
+		config.Key = key
+	}
+}
+
+// WithEncoder specify how message payload is encoded.
+// Default is "application/json;application/json;charset=utf-8"
+func WithEncoder(valueEncoder Encoder) MessageOptions {
+	return func(config *messageConfig) {
+		config.ValueEncoder = valueEncoder
 	}
 }

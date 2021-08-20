@@ -21,7 +21,7 @@ func registerHealth(di regDI) {
 	}
 
 	brokerList := strings.Split(di.Properties.Brokers, ",")
-	config := defaultProducerConfig(di.Properties)
+	config := defaultProducerConfig(&di.Properties)
 	client, err := sarama.NewClient(brokerList, config.Config)
 
 	if err != nil {

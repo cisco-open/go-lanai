@@ -11,17 +11,28 @@ import (
 )
 
 type SaramaProducerFactory struct {
-	properties KafkaProperties
-	registry map[string]io.Closer
+	properties   *KafkaProperties
+	registry     map[string]io.Closer
+	interceptors []ProducerInterceptor
 }
 
-func NewSaramaProducerFactory(lc fx.Lifecycle, p KafkaProperties) ProducerFactory {
+type factoryDI struct {
+	fx.In
+	Lifecycle    fx.Lifecycle
+	Properties   KafkaProperties
+	Interceptors []ProducerInterceptor `group:"kafka"`
+}
+
+func NewSaramaProducerFactory(di factoryDI) ProducerFactory {
 	s := &SaramaProducerFactory{
-		properties: p,
-		registry: make(map[string]io.Closer),
+		properties: &di.Properties,
+		registry:   make(map[string]io.Closer),
+		interceptors: append(di.Interceptors,
+			mimeTypeProducerInterceptor{},
+		),
 	}
 
-	lc.Append(fx.Hook{
+	di.Lifecycle.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
 			for _, p := range s.registry {
 				err := p.Close()
@@ -42,14 +53,15 @@ func (s *SaramaProducerFactory) NewProducerWithTopic(topic string, options ...Pr
 		return nil, errors.New(fmt.Sprintf("producer for topic %s already exist", topic))
 	}
 
-	producerConfig := defaultProducerConfig(s.properties)
+	cfg := defaultProducerConfig(s.properties)
+	cfg.interceptors = append(cfg.interceptors, s.interceptors...)
 	for _, optionFunc := range options {
-		optionFunc(producerConfig)
+		optionFunc(cfg)
 	}
 
 	brokerList := strings.Split(s.properties.Brokers, ",")
 
-	p, err := NewSaramaProducer(topic, brokerList, producerConfig.Config)
+	p, err := newSaramaProducer(topic, brokerList, cfg)
 
 	if err != nil {
 		return nil, err
@@ -60,7 +72,8 @@ func (s *SaramaProducerFactory) NewProducerWithTopic(topic string, options ...Pr
 }
 
 func (s *SaramaProducerFactory) ListTopics() (topics []string) {
-	for t, _ := range s.registry {
+	topics = make([]string, 0, len(s.registry))
+	for t := range s.registry {
 		topics = append(topics, t)
 	}
 	return topics
