@@ -49,9 +49,6 @@ func (i kafkaProducerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafk
 	return msgCtx, nil
 }
 
-// spanPropagation inject span context into message headers
-// we use B3 single header compatible format, this is compatible with Spring-Sleuth powered services
-// See https://github.com/openzipkin/b3-propagation#single-header
 func (i kafkaProducerInterceptor) spanPropagation(msgCtx *kafka.MessageContext) tracing.SpanOption {
 	return func(span opentracing.Span) {
 		// we ignore error, since we can't do anything about it
