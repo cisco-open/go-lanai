@@ -21,6 +21,7 @@ const (
 	OpNameCli        = "cli"
 	OpNameHttpClient = "remote-http"
 	OpNameSecScope   = "security"
+	OpNameKafka      = "kafka"
 	//OpName = ""
 )
 
@@ -152,7 +153,7 @@ func (op SpanOperator) DescendantOrNoSpan(ctx context.Context) context.Context {
 	}, false)
 }
 
-// NewSpanOrDescendant spawn a child span using opentracing.FollowsFrom(span.Context()) if there is a span exists
+// FollowsOrNoSpan spawn a child span using opentracing.FollowsFrom(span.Context()) if there is a span exists
 // otherwise do nothing
 func (op SpanOperator) FollowsOrNoSpan(ctx context.Context) context.Context {
 	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {

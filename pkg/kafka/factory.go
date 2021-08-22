@@ -4,46 +4,43 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Shopify/sarama"
 	"github.com/prometheus/common/log"
 	"go.uber.org/fx"
 	"io"
-	"strings"
+	"sync"
 )
 
+type configDefaults struct {
+	producerConfig
+}
+
 type SaramaProducerFactory struct {
-	properties   *KafkaProperties
-	registry     map[string]io.Closer
-	interceptors []ProducerInterceptor
+	properties      *KafkaProperties
+	brokers         []string
+	initOnce        sync.Once
+	defaults        configDefaults
+	globalClient    sarama.Client
+	registry        map[string]io.Closer
+	interceptors    []ProducerInterceptor
 }
 
 type factoryDI struct {
 	fx.In
-	Lifecycle    fx.Lifecycle
-	Properties   KafkaProperties
-	Interceptors []ProducerInterceptor `group:"kafka"`
+	Lifecycle       fx.Lifecycle
+	Properties      KafkaProperties
+	Interceptors    []ProducerInterceptor `group:"kafka"`
 }
 
-func NewSaramaProducerFactory(di factoryDI) ProducerFactory {
+func NewSaramaProducerFactory(di factoryDI) Binder {
 	s := &SaramaProducerFactory{
 		properties: &di.Properties,
+		brokers:    di.Properties.Brokers,
 		registry:   make(map[string]io.Closer),
 		interceptors: append(di.Interceptors,
 			mimeTypeProducerInterceptor{},
 		),
 	}
-
-	di.Lifecycle.Append(fx.Hook{
-		OnStop: func(ctx context.Context) error {
-			for _, p := range s.registry {
-				err := p.Close()
-				//since application is shutting down, we just log the error
-				if err != nil {
-					log.Errorf("error while closing kafka producer %s", err)
-				}
-			}
-			return nil
-		},
-	})
 	return s
 }
 
@@ -53,15 +50,16 @@ func (s *SaramaProducerFactory) NewProducerWithTopic(topic string, options ...Pr
 		return nil, errors.New(fmt.Sprintf("producer for topic %s already exist", topic))
 	}
 
-	cfg := defaultProducerConfig(s.properties)
-	cfg.interceptors = append(cfg.interceptors, s.interceptors...)
-	for _, optionFunc := range options {
-		optionFunc(cfg)
+	if e := s.Initialize(context.Background()); e != nil {
+		return nil, e
 	}
 
-	brokerList := strings.Split(s.properties.Brokers, ",")
+	cfg := s.defaults.producerConfig
+	for _, optionFunc := range options {
+		optionFunc(&cfg)
+	}
 
-	p, err := newSaramaProducer(topic, brokerList, cfg)
+	p, err := newSaramaProducer(topic, s.brokers, &cfg)
 
 	if err != nil {
 		return nil, err
@@ -77,4 +75,49 @@ func (s *SaramaProducerFactory) ListTopics() (topics []string) {
 		topics = append(topics, t)
 	}
 	return topics
+}
+
+func (s *SaramaProducerFactory) Client() sarama.Client {
+	return s.globalClient
+}
+
+// Initialize implements BinderLifecycle, prepare for use, negotiate default configs, etc.
+func (s *SaramaProducerFactory) Initialize(_ context.Context) (err error) {
+	s.initOnce.Do(func() {
+		cfg := defaultSaramaConfig(s.properties)
+
+		// prepare defaults
+		prodCfg := defaultProducerConfig(cfg)
+		prodCfg.interceptors = append(prodCfg.interceptors, s.interceptors...)
+
+		// TODO consumer
+
+		s.defaults = configDefaults{
+			producerConfig: *prodCfg,
+		}
+
+		// create a global client
+		s.globalClient, err = sarama.NewClient(s.brokers, cfg)
+		if err != nil {
+			err = fmt.Errorf("unable to connect to Kafka brokers %v: %v", s.brokers, err)
+			return
+		}
+	})
+
+	return
+}
+
+// Shutdown implements BinderLifecycle, close resources
+func (s *SaramaProducerFactory) Shutdown(_ context.Context) error {
+	for _, p := range s.registry {
+		if e := p.Close(); e != nil {
+			// since application is shutting down, we just log the error
+			log.Errorf("error while closing kafka producer %s", e)
+		}
+	}
+
+	if e := s.globalClient.Close(); e != nil {
+		log.Errorf("error while closing kafka producer %s", e)
+	}
+	return nil
 }

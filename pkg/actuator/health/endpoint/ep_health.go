@@ -95,8 +95,8 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 // Read never returns error
 func (ep *HealthEndpoint) Read(ctx context.Context, input *Input) (*Output, error) {
 	opts := health.Options{
-		ShowDetails:     ep.shouldShowDetails(ctx),
-		ShowCompoenents: ep.shouldShowComponents(ctx),
+		ShowDetails:    ep.shouldShowDetails(ctx),
+		ShowComponents: ep.shouldShowComponents(ctx),
 	}
 	health := ep.contributor.Health(ctx, opts)
 

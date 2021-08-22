@@ -1,15 +1,18 @@
 package kafka
 
-import "context"
-
-const (
-	HeaderContentType = "Content-Type"
+import (
+	"context"
+	"github.com/Shopify/sarama"
 )
 
 const (
-	MIMETypeJson = "application/json;charset=utf-8"
+	HeaderContentType = "contentType"
+)
+
+const (
+	MIMETypeJson   = "application/json;charset=utf-8"
 	MIMETypeBinary = "application/octet-stream"
-	MIMETypeText = "text/plain"
+	MIMETypeText   = "text/plain"
 )
 
 type Headers map[string]string
@@ -30,10 +33,22 @@ type MessageContext struct {
 	context.Context
 	Message
 	messageConfig
+	Topic string
 }
 
-type ProducerFactory interface {
-	NewProducerWithTopic(topic string, options...ProducerOptions) (Producer, error)
+type Binder interface {
+	NewProducerWithTopic(topic string, options ...ProducerOptions) (Producer, error)
+	ListTopics() []string
+}
+
+type BinderLifecycle interface {
+	Initialize(ctx context.Context) error
+	Shutdown(ctx context.Context) error
+}
+
+type SaramaBinder interface {
+	Binder
+	Client() sarama.Client
 }
 
 type Producer interface {
@@ -42,7 +57,7 @@ type Producer interface {
 	// 	- *Message
 	// 	- Message
 	//  - any type of body, the body will be serialized using value encoder from options
-	SendMessage(ctx context.Context, message interface{}, options...MessageOptions) error
+	SendMessage(ctx context.Context, message interface{}, options ...MessageOptions) error
 }
 
 type ProducerInterceptor interface {
@@ -51,6 +66,3 @@ type ProducerInterceptor interface {
 	// When error is returned, Producer would cancel operation. Otherwise, a non-nil MessageContext must be returned
 	Intercept(msgCtx *MessageContext) (*MessageContext, error)
 }
-
-
-

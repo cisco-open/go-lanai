@@ -49,7 +49,7 @@ func (c *CompositeIndicator) Health(ctx context.Context, options Options) Health
 		h := d.Health(ctx, options)
 		// although delegates should respect options, we don't want to leave any changes
 		h = trySanitize(h, options, false)
-		if options.ShowCompoenents {
+		if options.ShowComponents {
 			components[d.Name()] = h
 		}
 		statuses = append(statuses, h.Status())
@@ -63,7 +63,7 @@ func (c *CompositeIndicator) Health(ctx context.Context, options Options) Health
 ********************************/
 func trySanitize(health Health, opts Options, deep bool) Health {
 	// sanitize components
-	if !opts.ShowCompoenents {
+	if !opts.ShowComponents {
 		health = sanitizeComponents(health)
 	}
 

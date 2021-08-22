@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
 )
 
@@ -11,8 +12,8 @@ const (
 
 //goland:noinspection GoNameStartsWithPackageName
 type KafkaProperties struct {
-	Brokers string `json:"brokers"`
-	Net Net `json:"net"`
+	Brokers utils.CommaSeparatedSlice `json:"brokers"`
+	Net     Net                       `json:"net"`
 }
 
 type Net struct {
@@ -34,9 +35,9 @@ type SASL struct {
 
 func BindKafkaProperties(ctx *bootstrap.ApplicationContext) KafkaProperties {
 	props := KafkaProperties{
-		Net : Net{
+		Net: Net{
 			Sasl: SASL{
-				Enable: false,
+				Enable:    false,
 				Handshake: true,
 			},
 		},

@@ -6,22 +6,9 @@ import (
 	"time"
 )
 
-/********************
-Options for producer
-********************/
-
-type producerConfig struct {
-	*sarama.Config
-	keyEncoder   Encoder
-	interceptors []ProducerInterceptor
-}
-
-func defaultProducerConfig(properties *KafkaProperties) *producerConfig {
-	c := &producerConfig{
-		Config:     sarama.NewConfig(),
-		keyEncoder: binaryEncoder{},
-		interceptors: []ProducerInterceptor{},
-	}
+func defaultSaramaConfig(properties *KafkaProperties) (c *sarama.Config) {
+	c = sarama.NewConfig()
+	c.Version = sarama.V2_0_0_0
 
 	if properties.Net.Sasl.Enable {
 		c.Net.SASL.Enable = properties.Net.Sasl.Enable
@@ -29,8 +16,25 @@ func defaultProducerConfig(properties *KafkaProperties) *producerConfig {
 		c.Net.SASL.User = properties.Net.Sasl.User
 		c.Net.SASL.Password = properties.Net.Sasl.Password
 	}
+	return
+}
 
-	return c
+/***********************
+  Options for producer
+************************/
+
+type producerConfig struct {
+	*sarama.Config
+	keyEncoder   Encoder
+	interceptors []ProducerInterceptor
+}
+
+func defaultProducerConfig(saramaCfg *sarama.Config) *producerConfig {
+	return &producerConfig{
+		Config:       saramaCfg,
+		keyEncoder:   binaryEncoder{},
+		interceptors: []ProducerInterceptor{},
+	}
 }
 
 type ProducerOptions func(*producerConfig)
@@ -71,14 +75,14 @@ func AckTimeout(timeout time.Duration) ProducerOptions {
 	}
 }
 
-/********************
- Options for message
-********************/
+/**********************
+  Options for message
+***********************/
 
 type deliveryMode int
 
 const (
-	sync deliveryMode = iota
+	modeSync deliveryMode = iota
 )
 
 type messageConfig struct {
@@ -91,7 +95,7 @@ func defaultMessageConfig() messageConfig {
 	return messageConfig{
 		ValueEncoder: jsonEncoder{},
 		Key:          uuid.New(),
-		Mode:         sync,
+		Mode:         modeSync,
 	}
 }
 

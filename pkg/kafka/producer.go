@@ -54,7 +54,7 @@ func (p *SaramaProducer) SendMessage(ctx context.Context, message interface{}, o
 		}
 	}
 
-	// prepare sarama message
+	// initialize sarama message
 	saramaMessage := &sarama.ProducerMessage{
 		Topic:   p.topic,
 		Headers: p.convertHeaders(msgCtx.Headers),
@@ -64,7 +64,7 @@ func (p *SaramaProducer) SendMessage(ctx context.Context, message interface{}, o
 
 	// do send
 	switch msgCtx.Mode {
-	case sync:
+	case modeSync:
 		_, _, err = p.syncProducer.SendMessage(saramaMessage)
 	default:
 		err = errors.New(fmt.Sprintf("%v Mode is not supported", msgCtx.Mode))
@@ -79,6 +79,7 @@ func (p *SaramaProducer) Close() error {
 func (p *SaramaProducer) prepare(ctx context.Context, v interface{}) *MessageContext {
 	msgCtx := MessageContext{
 		Context:       ctx,
+		Topic:         p.topic,
 		messageConfig: defaultMessageConfig(),
 	}
 	switch m := v.(type) {

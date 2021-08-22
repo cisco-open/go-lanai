@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"go.uber.org/fx"
@@ -13,7 +14,7 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		fx.Provide(BindKafkaProperties),
 		fx.Provide(NewSaramaProducerFactory),
-		fx.Invoke(registerHealth),
+		fx.Invoke(initialize),
 	},
 }
 
@@ -24,4 +25,30 @@ const (
 // Use Allow service to include this module in main()
 func Use() {
 	bootstrap.Register(Module)
+}
+
+type initDI struct {
+	fx.In
+	Lifecycle       fx.Lifecycle
+	Properties      KafkaProperties
+	Binder          Binder
+	HealthRegistrar health.Registrar `optional:"true"`
+}
+
+func initialize(di initDI) {
+
+	// register lifecycle functions
+	di.Lifecycle.Append(fx.Hook{
+		OnStart: di.Binder.(BinderLifecycle).Initialize,
+		OnStop:  di.Binder.(BinderLifecycle).Shutdown,
+	})
+
+	// register health endpoints if applicable
+	if di.HealthRegistrar == nil {
+		return
+	}
+
+	_ = di.HealthRegistrar.Register(&HealthIndicator{
+		binder: di.Binder.(SaramaBinder),
+	})
 }
