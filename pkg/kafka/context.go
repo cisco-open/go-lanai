@@ -66,3 +66,22 @@ type ProducerInterceptor interface {
 	// When error is returned, Producer would cancel operation. Otherwise, a non-nil MessageContext must be returned
 	Intercept(msgCtx *MessageContext) (*MessageContext, error)
 }
+
+// ProducerMessageFinalizer is the interface for other package to finalize message sending process.
+// When any ProducerInterceptor also implements ProducerMessageFinalizer, the Finalize function will be invoked
+// after message delivery is confirmed
+type ProducerMessageFinalizer interface {
+	// Finalize is called after message delivery is confirmed.
+	// "confirmed" status depends on Ack mode of the message.
+	// e.g.
+	// 	- if the message uses RequireNoAck, Finalize is called right after sending the message
+	// 	- if the message uses RequireAllAck, Finalize is called when Ack is received from all replicas
+	//
+	// Finalize may also be invoked in different goroutine if delivery mode is "sync"
+	//
+	// Note: the *MessageContext will be discarded after all finalizers finished processing.
+	// 		 So modifying given message context would only affect subsequent ProducerMessageFinalizer.Finalize on same message
+	// Note 2: Finalize may also choose to handle given err and returns nil error.
+	//		   In such case, subsequent ProducerMessageFinalizer.Finalize on same message would be invoked as if there was no error
+	Finalize(msgCtx *MessageContext, partition int32, offset int64, err error) (*MessageContext, error)
+}

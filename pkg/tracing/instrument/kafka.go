@@ -9,6 +9,7 @@ import (
 	"go.uber.org/fx"
 )
 
+// kafkaProducerInterceptor implements kafka.ProducerInterceptor and kafka.ProducerMessageFinalizer
 type kafkaProducerInterceptor struct {
 	tracer opentracing.Tracer
 }
@@ -36,7 +37,7 @@ func (i kafkaProducerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafk
 		i.spanPropagation(msgCtx),
 	}
 	if msgCtx.Key != nil {
-		opts = append(opts, tracing.SpanTag("key", fmt.Sprint(msgCtx)))
+		opts = append(opts, tracing.SpanTag("key", fmt.Sprint(msgCtx.Key)))
 	}
 
 	ctx := tracing.WithTracer(i.tracer).
@@ -47,6 +48,19 @@ func (i kafkaProducerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafk
 	logger.WithContext(ctx).Debugf("Traced kafka message [->%s]: %v", msgCtx.Topic, msgCtx.Payload)
 	msgCtx.Context = ctx
 	return msgCtx, nil
+}
+
+func (i kafkaProducerInterceptor) Finalize(msgCtx *kafka.MessageContext, p int32, offset int64, err error) (*kafka.MessageContext, error) {
+	op := tracing.WithTracer(i.tracer)
+	if err != nil {
+		op = op.WithOptions(tracing.SpanTag("err", err))
+	} else {
+		op = op.
+			WithOptions(tracing.SpanTag("partition", p)).
+			WithOptions(tracing.SpanTag("offset", offset))
+	}
+	msgCtx.Context = op.FinishAndRewind(msgCtx.Context)
+	return msgCtx, err
 }
 
 func (i kafkaProducerInterceptor) spanPropagation(msgCtx *kafka.MessageContext) tracing.SpanOption {

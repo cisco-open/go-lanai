@@ -60,12 +60,15 @@ func (p *SaramaProducer) SendMessage(ctx context.Context, message interface{}, o
 		Headers: p.convertHeaders(msgCtx.Headers),
 		Value:   msgCtx.Payload.(sarama.Encoder),
 		Key:     newSaramaEncoder(msgCtx.Key, p.keyEncoder),
+		Metadata: msgCtx,
 	}
 
 	// do send
 	switch msgCtx.Mode {
 	case modeSync:
-		_, _, err = p.syncProducer.SendMessage(saramaMessage)
+		partition, offset, e := p.syncProducer.SendMessage(saramaMessage)
+		// apply finalizers
+		msgCtx, err = p.finalizeMessage(msgCtx, partition, offset, e)
 	default:
 		err = errors.New(fmt.Sprintf("%v Mode is not supported", msgCtx.Mode))
 	}
@@ -97,6 +100,16 @@ func (p *SaramaProducer) prepare(ctx context.Context, v interface{}) *MessageCon
 		msgCtx.Message.Headers = Headers{}
 	}
 	return &msgCtx
+}
+
+func (p *SaramaProducer) finalizeMessage(msgCtx *MessageContext, partition int32, offset int64, err error) (*MessageContext, error) {
+	for _, interceptor := range p.interceptors {
+		switch finalizer := interceptor.(type) {
+		case ProducerMessageFinalizer:
+			msgCtx, err = finalizer.Finalize(msgCtx, partition, offset, err)
+		}
+	}
+	return msgCtx, err
 }
 
 func (p *SaramaProducer) convertHeaders(headers Headers) (ret []sarama.RecordHeader) {
