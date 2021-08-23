@@ -20,6 +20,8 @@ type SecurityDetailsMock struct {
 	Permissions  utils.StringSet
 	Tenants      utils.StringSet
 	OrigUsername string
+	UserFirstName    string
+	UserLastName     string
 }
 
 // mockedSecurityDetails implements
@@ -123,11 +125,11 @@ func (d *mockedSecurityDetails) CurrencyCode() string {
 }
 
 func (d *mockedSecurityDetails) FirstName() string {
-	panic("implement me")
+	return d.UserFirstName
 }
 
 func (d *mockedSecurityDetails) LastName() string {
-	panic("implement me")
+	return d.UserLastName
 }
 
 func (d *mockedSecurityDetails) Email() string {
