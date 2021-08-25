@@ -42,8 +42,9 @@ func NewFileJwkStore(props CryptoProperties) *FileJwkStore {
 			}
 			s.cacheByName[k] = jwks
 			s.indexes[k] = 0
+		} else {
+			logger.Warnf("ignored key %s due to error %v", k, e)
 		}
-		
 	}
 
 	return &s

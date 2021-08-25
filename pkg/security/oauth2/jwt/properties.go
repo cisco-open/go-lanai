@@ -2,9 +2,12 @@ package jwt
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"github.com/pkg/errors"
 	"strings"
 )
+
+var logger = log.New("jwt")
 
 /***********************
 	Crypto

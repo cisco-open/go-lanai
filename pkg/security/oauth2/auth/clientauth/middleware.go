@@ -43,12 +43,12 @@ func (mw *ClientAuthMiddleware) ClientAuthFormHandlerFunc() web.HandlerFunc {
 			return
 		}
 
-		_, hasClientId := r.PostForm[oauth2.ParameterClientId]
+		_, hasClientId := r.Form[oauth2.ParameterClientId]
 		if !hasClientId {
 			return
 		}
 
-		clientId := r.PostForm.Get(oauth2.ParameterClientId)
+		clientId := r.Form.Get(oauth2.ParameterClientId)
 
 		// form client auth should be placed after basic auth.
 		// if already authenticated by basic auth and pricipal matches, we don't need to do anything here
