@@ -53,7 +53,7 @@ func provideSecurityInitialization(di dependencies) global {
 type initDI struct {
 	fx.In
 	AppContext           *bootstrap.ApplicationContext
-	Registerer           *web.Registrar
+	Registerer           *web.Registrar `optional:"true"`
 	Initializer          Initializer
 }
 

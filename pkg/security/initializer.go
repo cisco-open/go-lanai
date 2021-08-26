@@ -91,7 +91,10 @@ func (init *initializer) Initialize(ctx context.Context, _ fx.Lifecycle, registr
 		}
 
 		mappings := builder.Build()
-		// register web.Mapping
+		// register web.Mapping if possible
+		if registrar == nil {
+			continue
+		}
 		for _,mapping := range mappings {
 			if err := registrar.Register(mapping); err != nil {
 				return err
@@ -101,8 +104,10 @@ func (init *initializer) Initialize(ctx context.Context, _ fx.Lifecycle, registr
 		}
 	}
 
-	for _, v := range mergedRequestPreProcessors {
-		registrar.MustRegister(v)
+	if registrar != nil {
+		for _, v := range mergedRequestPreProcessors {
+			registrar.MustRegister(v)
+		}
 	}
 
 	init.initialized = true

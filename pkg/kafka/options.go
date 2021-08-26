@@ -25,15 +25,19 @@ func defaultSaramaConfig(properties *KafkaProperties) (c *sarama.Config) {
 
 type producerConfig struct {
 	*sarama.Config
-	keyEncoder   Encoder
-	interceptors []ProducerInterceptor
+	keyEncoder     Encoder
+	partitionCount int32
+	replicationFactor int16
+	interceptors   []ProducerInterceptor
 }
 
 func defaultProducerConfig(saramaCfg *sarama.Config) *producerConfig {
 	return &producerConfig{
-		Config:       saramaCfg,
-		keyEncoder:   binaryEncoder{},
-		interceptors: []ProducerInterceptor{},
+		Config:         saramaCfg,
+		keyEncoder:     binaryEncoder{},
+		partitionCount: 1,
+		replicationFactor: 0,
+		interceptors:   []ProducerInterceptor{},
 	}
 }
 
@@ -43,6 +47,14 @@ type ProducerOptions func(*producerConfig)
 func WithKeyEncoder(enc Encoder) ProducerOptions {
 	return func(config *producerConfig) {
 		config.keyEncoder = enc
+	}
+}
+
+// WithPartitions TODO
+func WithPartitions(partitionCount int, replicationFactor int) ProducerOptions {
+	return func(config *producerConfig) {
+		config.partitionCount = int32(partitionCount)
+		config.replicationFactor = int16(replicationFactor)
 	}
 }
 
@@ -72,6 +84,22 @@ func RequireNoAck() ProducerOptions {
 func AckTimeout(timeout time.Duration) ProducerOptions {
 	return func(config *producerConfig) {
 		config.Producer.Timeout = timeout
+	}
+}
+
+/***********************
+  Options for consumer
+************************/
+
+type consumerConfig struct {
+	*sarama.Config
+}
+
+type ConsumerOptions func(*consumerConfig)
+
+func defaultConsumerConfig(saramaCfg *sarama.Config) *consumerConfig {
+	return &consumerConfig{
+		Config: saramaCfg,
 	}
 }
 
@@ -121,3 +149,16 @@ func WithEncoder(valueEncoder Encoder) MessageOptions {
 		config.ValueEncoder = valueEncoder
 	}
 }
+
+/*************************
+  Options for dispatcher
+**************************/
+
+type DispatchOptions func(h *handler)
+
+//// WithTypeOf specify message payload type of MessageHandlerFunc
+//func WithTypeOf(i interface{}) DispatchOptions {
+//	return func(h *handler) {
+//		h.typ = reflect.TypeOf(i)
+//	}
+//}

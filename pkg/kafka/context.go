@@ -85,3 +85,7 @@ type ProducerMessageFinalizer interface {
 	//		   In such case, subsequent ProducerMessageFinalizer.Finalize on same message would be invoked as if there was no error
 	Finalize(msgCtx *MessageContext, partition int32, offset int64, err error) (*MessageContext, error)
 }
+
+type Subscriber interface {
+	Start(ctx context.Context) error
+}

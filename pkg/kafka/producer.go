@@ -4,30 +4,32 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"errors"
-	"fmt"
 	"github.com/Shopify/sarama"
 )
 
-type SaramaProducer struct {
+type saramaProducer struct {
 	topic        string
 	keyEncoder   Encoder
 	interceptors []ProducerInterceptor
 	syncProducer sarama.SyncProducer
 }
 
-func newSaramaProducer(topic string, addrs []string, config *producerConfig) (*SaramaProducer, error) {
+func newSaramaProducer(topic string, addrs []string, config *producerConfig) (*saramaProducer, error) {
 	c := *config //make a copy so that we don't change the original config
 	//sync producer must have these two properties set to true
 	c.Producer.Return.Successes = true
 	c.Producer.Return.Errors = true
+	c.Producer.Partitioner = func(topic string) sarama.Partitioner {
+		return sarama.NewRandomPartitioner(topic)
+	}
 
 	internal, err := sarama.NewSyncProducer(addrs, c.Config)
 	if err != nil {
-		return nil, err
+		return nil, translateSaramaBindingError(err,"unable to create producer: %v", err)
 	}
 
 	order.SortStable(config.interceptors, order.OrderedFirstCompare)
-	p := &SaramaProducer{
+	p := &saramaProducer{
 		topic:        topic,
 		keyEncoder:   config.keyEncoder,
 		interceptors: config.interceptors,
@@ -36,7 +38,7 @@ func newSaramaProducer(topic string, addrs []string, config *producerConfig) (*S
 	return p, nil
 }
 
-func (p *SaramaProducer) SendMessage(ctx context.Context, message interface{}, options ...MessageOptions) (err error) {
+func (p *saramaProducer) SendMessage(ctx context.Context, message interface{}, options ...MessageOptions) (err error) {
 	msgCtx := p.prepare(ctx, message)
 	if msgCtx.Payload == nil {
 		return nil
@@ -50,7 +52,7 @@ func (p *SaramaProducer) SendMessage(ctx context.Context, message interface{}, o
 	// apply interceptors
 	for _, interceptor := range p.interceptors {
 		if msgCtx, err = interceptor.Intercept(msgCtx); err != nil {
-			return
+			return ErrorSubTypeProducerGeneral.WithMessage("producer interceptor error: %v", err)
 		}
 	}
 
@@ -70,16 +72,19 @@ func (p *SaramaProducer) SendMessage(ctx context.Context, message interface{}, o
 		// apply finalizers
 		msgCtx, err = p.finalizeMessage(msgCtx, partition, offset, e)
 	default:
-		err = errors.New(fmt.Sprintf("%v Mode is not supported", msgCtx.Mode))
+		err = ErrorSubTypeIllegalProducerUsage.WithMessage("%v Mode is not supported", msgCtx.Mode)
 	}
 	return
 }
 
-func (p *SaramaProducer) Close() error {
-	return p.syncProducer.Close()
+func (p *saramaProducer) Close() error {
+	if e := p.syncProducer.Close(); e != nil {
+		return NewKafkaError(ErrorCodeIllegalState, "error when closing producer: %v", e)
+	}
+	return nil
 }
 
-func (p *SaramaProducer) prepare(ctx context.Context, v interface{}) *MessageContext {
+func (p *saramaProducer) prepare(ctx context.Context, v interface{}) *MessageContext {
 	msgCtx := MessageContext{
 		Context:       ctx,
 		Topic:         p.topic,
@@ -102,17 +107,26 @@ func (p *SaramaProducer) prepare(ctx context.Context, v interface{}) *MessageCon
 	return &msgCtx
 }
 
-func (p *SaramaProducer) finalizeMessage(msgCtx *MessageContext, partition int32, offset int64, err error) (*MessageContext, error) {
+func (p *saramaProducer) finalizeMessage(msgCtx *MessageContext, partition int32, offset int64, err error) (*MessageContext, error) {
 	for _, interceptor := range p.interceptors {
 		switch finalizer := interceptor.(type) {
 		case ProducerMessageFinalizer:
 			msgCtx, err = finalizer.Finalize(msgCtx, partition, offset, err)
 		}
 	}
-	return msgCtx, err
+	if err == nil {
+		return msgCtx, nil
+	}
+
+	switch {
+	case errors.Is(err, ErrorCategoryKafka):
+		return msgCtx, err
+	default:
+		return msgCtx, NewKafkaError(ErrorSubTypeCodeProducerGeneral, err.Error(), err)
+	}
 }
 
-func (p *SaramaProducer) convertHeaders(headers Headers) (ret []sarama.RecordHeader) {
+func (p *saramaProducer) convertHeaders(headers Headers) (ret []sarama.RecordHeader) {
 	if headers == nil {
 		return
 	}

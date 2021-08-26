@@ -3,7 +3,6 @@ package kafka
 import (
 	"encoding"
 	"encoding/json"
-	"fmt"
 	"github.com/Shopify/sarama"
 )
 
@@ -13,8 +12,11 @@ func (enc jsonEncoder) MIMEType() string {
 	return MIMETypeJson
 }
 
-func (enc jsonEncoder) Encode(v interface{}) ([]byte, error) {
-	return json.Marshal(v)
+func (enc jsonEncoder) Encode(v interface{}) (bytes []byte, err error) {
+	if bytes, err = json.Marshal(v); err != nil {
+		return bytes, ErrorSubTypeEncoding.WithCause(err, err.Error())
+	}
+	return
 }
 
 type binaryEncoder struct{}
@@ -23,16 +25,19 @@ func (enc binaryEncoder) MIMEType() string {
 	return MIMETypeBinary
 }
 
-func (enc binaryEncoder) Encode(v interface{}) ([]byte, error) {
-	switch key := v.(type) {
+func (enc binaryEncoder) Encode(v interface{}) (bytes []byte, err error) {
+	switch val := v.(type) {
 	case string:
-		return []byte(key), nil
+		return []byte(val), nil
 	case []byte:
-		return key, nil
+		return val, nil
 	case encoding.BinaryMarshaler:
-		return key.MarshalBinary()
+		if bytes, err = val.MarshalBinary(); err != nil {
+			return bytes, ErrorSubTypeEncoding.WithCause(err, err.Error())
+		}
+		return
 	default:
-		return nil, fmt.Errorf("unsupported value for binary encoding: %T", v)
+		return nil, ErrorSubTypeEncoding.WithMessage("unsupported value for binary encoding: %T", v)
 	}
 }
 
