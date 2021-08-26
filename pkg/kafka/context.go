@@ -15,6 +15,10 @@ const (
 	MIMETypeText   = "text/plain"
 )
 
+/************************
+	General
+ ************************/
+
 type Headers map[string]string
 
 type Message struct {
@@ -36,8 +40,13 @@ type MessageContext struct {
 	Topic string
 }
 
+/************************
+	Binding
+ ************************/
+
 type Binder interface {
 	NewProducerWithTopic(topic string, options ...ProducerOptions) (Producer, error)
+	Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error)
 	ListTopics() []string
 }
 
@@ -51,13 +60,20 @@ type SaramaBinder interface {
 	Client() sarama.Client
 }
 
+/************************
+	Producing
+ ************************/
+
 type Producer interface {
-	// SendMessage send given message to the TOPIC with pre-configured producer settings
+	// Send publish given message to the TOPIC with pre-configured producer settings
 	// supported message types are:
 	// 	- *Message
 	// 	- Message
 	//  - any type of body, the body will be serialized using value encoder from options
-	SendMessage(ctx context.Context, message interface{}, options ...MessageOptions) error
+	Send(ctx context.Context, message interface{}, options ...MessageOptions) error
+
+	// Close must be called to release any resource
+	Close() error
 }
 
 type ProducerInterceptor interface {
@@ -86,6 +102,46 @@ type ProducerMessageFinalizer interface {
 	Finalize(msgCtx *MessageContext, partition int32, offset int64, err error) (*MessageContext, error)
 }
 
+/************************
+	Consuming
+ ************************/
+
+// Subscriber provides Pub-Sub workflow
 type Subscriber interface {
+	// Topic returns the Topic name
+	Topic() string
+
+	// Partitions returns subscribed partitions
+	Partitions() []int32
+
+	// Start kick off subscription and start to monitor pre-configured topic
 	Start(ctx context.Context) error
+
+	// AddHandler register a message handler function that would process received messages.
+	// Note: A Subscriber without a registered handler simply ignore all received messages.
+	// 		 If AddHandler is called after Start, it may miss some messages
+	AddHandler(handlerFunc MessageHandlerFunc, opts...DispatchOptions) error
+
+	// Close must be called to release any resource
+	Close() error
+}
+
+// GroupConsumer provides consumer group workflow
+type GroupConsumer interface {
+	// Topic returns the Topic name
+	Topic() string
+
+	// Group returns the group name
+	Group() string
+
+	// Start kick off subscription and start to monitor pre-configured topic
+	Start(ctx context.Context) error
+
+	// AddHandler register a message handler function that would process received messages.
+	// Note: A GroupConsumer without a registered handler simply ignore all received messages.
+	// 		 If AddHandler is called after Start, it may miss some messages
+	AddHandler(handlerFunc MessageHandlerFunc, opts...DispatchOptions) error
+
+	// Close must be called to release any resource
+	Close() error
 }

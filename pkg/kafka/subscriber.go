@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/Shopify/sarama"
 	"reflect"
+	"sync"
 )
 
 type saramaSubscriber struct {
@@ -12,43 +13,57 @@ type saramaSubscriber struct {
 	brokers    []string
 	config     *consumerConfig
 	dispatcher *saramaDispatcher
+	msgLogger  MessageLogger
+	startOnce  sync.Once
 	consumer   sarama.Consumer
-	partitions []sarama.PartitionConsumer
+	partitions []int32
 	cancelFunc context.CancelFunc
 }
 
 func newSaramaSubscriber(topic string, addrs []string, config *consumerConfig) (*saramaSubscriber, error) {
 	return &saramaSubscriber{
-		topic:   topic,
-		brokers: addrs,
-		config:  config,
+		topic:      topic,
+		brokers:    addrs,
+		config:     config,
 		dispatcher: newSaramaDispatcher(),
+		msgLogger:  config.msgLogger,
 	}, nil
 }
 
-func (s *saramaSubscriber) Start(ctx context.Context) error {
-	consumer, e := sarama.NewConsumer(s.brokers, s.config.Config)
-	if e != nil {
-		return translateSaramaBindingError(e, e.Error())
-	}
+func (s *saramaSubscriber) Topic() string {
+	return s.topic
+}
 
-	parts, e := consumer.Partitions(s.topic)
-	if e != nil {
-		return translateSaramaBindingError(e, e.Error())
-	}
+func (s *saramaSubscriber) Partitions() []int32 {
+	return s.partitions
+}
 
-	s.partitions = make([]sarama.PartitionConsumer, len(parts))
-	for i, p := range parts {
-		s.partitions[i], e = consumer.ConsumePartition(s.topic, p, sarama.OffsetNewest)
-		if e != nil {
-			return translateSaramaBindingError(e, e.Error())
+func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
+	s.startOnce.Do(func() {
+		var e error
+		if s.consumer, e = sarama.NewConsumer(s.brokers, s.config.Config); e != nil {
+			err = translateSaramaBindingError(e, e.Error())
+			return
 		}
-	}
 
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	go s.handlePartitions(cancelCtx, s.partitions)
-	s.cancelFunc = cancelFunc
-	return nil
+		if s.partitions, e = s.consumer.Partitions(s.topic); e != nil {
+			err = translateSaramaBindingError(e, e.Error())
+			return
+		}
+
+		partitionConsumers := make([]sarama.PartitionConsumer, len(s.partitions))
+		for i, p := range s.partitions {
+			if partitionConsumers[i], e = s.consumer.ConsumePartition(s.topic, p, sarama.OffsetNewest); e != nil {
+				err = translateSaramaBindingError(e, e.Error())
+				return
+			}
+		}
+
+		cancelCtx, cancelFunc := context.WithCancel(ctx)
+		go s.handlePartitions(cancelCtx, partitionConsumers)
+		s.cancelFunc = cancelFunc
+	})
+	return
 }
 
 func (s *saramaSubscriber) Close() error {
@@ -68,7 +83,7 @@ func (s *saramaSubscriber) Close() error {
 	return nil
 }
 
-func (s *saramaSubscriber) AddHandler(handlerFunc MessageHandlerFunc, opts...DispatchOptions) error {
+func (s *saramaSubscriber) AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error {
 	return s.dispatcher.addHandler(handlerFunc, opts)
 }
 
@@ -93,12 +108,12 @@ func (s *saramaSubscriber) handlePartitions(ctx context.Context, partitions []sa
 			break
 		}
 		msg, ok := val.Interface().(*sarama.ConsumerMessage)
-		if !ok {
+		if !ok || msg == nil {
 			logger.WithContext(ctx).Warnf("unrecognized object received from subscriber of partition [%d]: %T", chosen-1, val.Interface())
 			continue
 		}
 		childCtx := utils.MakeMutableContext(ctx)
-		s.logMessage(childCtx, msg)
+		s.msgLogger.LogReceivedMessage(childCtx, msg)
 		go s.handleMessage(childCtx, msg)
 	}
 }
@@ -108,8 +123,4 @@ func (s *saramaSubscriber) handleMessage(ctx context.Context, raw *sarama.Consum
 	if e := s.dispatcher.dispatch(ctx, raw); e != nil {
 		logger.WithContext(ctx).Warnf("failed to handle message: %v", e)
 	}
-}
-
-func (s *saramaSubscriber) logMessage(ctx context.Context, msg *sarama.ConsumerMessage) {
-	logger.WithContext(ctx).Debugf("[RECV] [%s] Partition[%d] Offset[%d]: Length=%dB Key=%x", msg.Topic, msg.Partition, msg.Offset, len(msg.Value), msg.Key)
 }

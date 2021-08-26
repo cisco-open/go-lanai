@@ -1,6 +1,6 @@
 integrate:
   security:
-    service-name: "authserver"
+    service-name: "authservice"
     failure-back-off: 5m
     guaranteed-validity: 30s
     endpoints:

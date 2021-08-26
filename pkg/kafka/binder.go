@@ -16,15 +16,16 @@ type configDefaults struct {
 }
 
 type SaramaKafkaBinder struct {
-	properties   *KafkaProperties
-	brokers      []string
-	initOnce     sync.Once
-	defaults     configDefaults
-	globalClient sarama.Client
-	adminClient  sarama.ClusterAdmin
-	registry     map[string]io.Closer
-	subscribers  map[string]io.Closer
-	interceptors []ProducerInterceptor
+	properties     *KafkaProperties
+	brokers        []string
+	initOnce       sync.Once
+	defaults       configDefaults
+	globalClient   sarama.Client
+	adminClient    sarama.ClusterAdmin
+	producers      map[string]io.Closer
+	subscribers    map[string]io.Closer
+	consumerGroups map[string]io.Closer
+	interceptors   []ProducerInterceptor
 }
 
 type factoryDI struct {
@@ -36,10 +37,11 @@ type factoryDI struct {
 
 func NewSaramaProducerFactory(di factoryDI) Binder {
 	s := &SaramaKafkaBinder{
-		properties:  &di.Properties,
-		brokers:     di.Properties.Brokers,
-		registry:    make(map[string]io.Closer),
-		subscribers: make(map[string]io.Closer),
+		properties:     &di.Properties,
+		brokers:        di.Properties.Brokers,
+		producers:      make(map[string]io.Closer),
+		subscribers:    make(map[string]io.Closer),
+		consumerGroups: make(map[string]io.Closer),
 		interceptors: append(di.Interceptors,
 			mimeTypeProducerInterceptor{},
 		),
@@ -48,7 +50,7 @@ func NewSaramaProducerFactory(di factoryDI) Binder {
 }
 
 func (s *SaramaKafkaBinder) NewProducerWithTopic(topic string, options ...ProducerOptions) (Producer, error) {
-	if _, ok := s.registry[topic]; ok {
+	if _, ok := s.producers[topic]; ok {
 		logger.Warnf("producer for topic %s already exist. please use the existing instance", topic)
 		return nil, NewKafkaError(ErrorCodeProducerExists, "producer for topic %s already exist", topic)
 	}
@@ -71,13 +73,13 @@ func (s *SaramaKafkaBinder) NewProducerWithTopic(topic string, options ...Produc
 	if err != nil {
 		return nil, err
 	} else {
-		s.registry[topic] = p
+		s.producers[topic] = p
 		return p, nil
 	}
 }
 
 // TODO review this
-func (s *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) (*saramaSubscriber, error) {
+func (s *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error) {
 	if _, ok := s.subscribers[topic]; ok {
 		logger.Warnf("subscriber for topic %s already exist. please use the existing instance", topic)
 		return nil, NewKafkaError(ErrorCodeConsumerExists, "producer for topic %s already exist", topic)
@@ -101,9 +103,33 @@ func (s *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) 
 	return sub, nil
 }
 
+func (s *SaramaKafkaBinder) Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error) {
+	if _, ok := s.consumerGroups[topic]; ok {
+		logger.Warnf("consumer group for topic %s already exist. please use the existing instance", topic)
+		return nil, NewKafkaError(ErrorCodeConsumerExists, "producer for topic %s already exist", topic)
+	}
+
+	if e := s.Initialize(context.Background()); e != nil {
+		return nil, e
+	}
+
+	cfg := s.defaults.consumerConfig
+	for _, optionFunc := range options {
+		optionFunc(&cfg)
+	}
+
+	cg, err := newSaramaGroupConsumer(topic, group, s.brokers, &cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	s.consumerGroups[topic] = cg
+	return cg, nil
+}
+
 func (s *SaramaKafkaBinder) ListTopics() (topics []string) {
-	topics = make([]string, 0, len(s.registry))
-	for t := range s.registry {
+	topics = make([]string, 0, len(s.producers))
+	for t := range s.producers {
 		topics = append(topics, t)
 	}
 	return topics
@@ -149,10 +175,24 @@ func (s *SaramaKafkaBinder) Initialize(_ context.Context) (err error) {
 
 // Shutdown implements BinderLifecycle, close resources
 func (s *SaramaKafkaBinder) Shutdown(_ context.Context) error {
-	for _, p := range s.registry {
+	for _, p := range s.producers {
 		if e := p.Close(); e != nil {
 			// since application is shutting down, we just log the error
 			log.Errorf("error while closing kafka producer: %v", e)
+		}
+	}
+
+	for _, p := range s.subscribers {
+		if e := p.Close(); e != nil {
+			// since application is shutting down, we just log the error
+			log.Errorf("error while closing kafka subscriber: %v", e)
+		}
+	}
+
+	for _, p := range s.consumerGroups {
+		if e := p.Close(); e != nil {
+			// since application is shutting down, we just log the error
+			log.Errorf("error while closing kafka consumer: %v", e)
 		}
 	}
 
@@ -181,7 +221,5 @@ func (s *SaramaKafkaBinder) provisionTopic(topic string, cfg *producerConfig) er
 	if e := s.adminClient.CreateTopic(topic, topicDetails, false); e != nil {
 		return nil
 	}
-
-
 	return nil
 }

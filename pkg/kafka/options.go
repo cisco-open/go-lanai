@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"github.com/Shopify/sarama"
 	"github.com/google/uuid"
 	"time"
@@ -25,19 +26,21 @@ func defaultSaramaConfig(properties *KafkaProperties) (c *sarama.Config) {
 
 type producerConfig struct {
 	*sarama.Config
-	keyEncoder     Encoder
-	partitionCount int32
+	keyEncoder        Encoder
+	partitionCount    int32
 	replicationFactor int16
-	interceptors   []ProducerInterceptor
+	interceptors      []ProducerInterceptor
+	msgLogger         MessageLogger
 }
 
 func defaultProducerConfig(saramaCfg *sarama.Config) *producerConfig {
 	return &producerConfig{
-		Config:         saramaCfg,
-		keyEncoder:     binaryEncoder{},
-		partitionCount: 1,
+		Config:            saramaCfg,
+		keyEncoder:        binaryEncoder{},
+		partitionCount:    1,
 		replicationFactor: 0,
-		interceptors:   []ProducerInterceptor{},
+		interceptors:      []ProducerInterceptor{},
+		msgLogger:         newSaramaMessageLogger(),
 	}
 }
 
@@ -55,6 +58,13 @@ func WithPartitions(partitionCount int, replicationFactor int) ProducerOptions {
 	return func(config *producerConfig) {
 		config.partitionCount = int32(partitionCount)
 		config.replicationFactor = int16(replicationFactor)
+	}
+}
+
+// WithProducerLogLevel specify log level of internal message logger
+func WithProducerLogLevel(level log.LoggingLevel) ProducerOptions {
+	return func(config *producerConfig) {
+		config.msgLogger = config.msgLogger.WithLevel(level)
 	}
 }
 
@@ -93,13 +103,22 @@ func AckTimeout(timeout time.Duration) ProducerOptions {
 
 type consumerConfig struct {
 	*sarama.Config
+	msgLogger MessageLogger
 }
 
 type ConsumerOptions func(*consumerConfig)
 
 func defaultConsumerConfig(saramaCfg *sarama.Config) *consumerConfig {
 	return &consumerConfig{
-		Config: saramaCfg,
+		Config:    saramaCfg,
+		msgLogger: newSaramaMessageLogger(),
+	}
+}
+
+// WithConsumerLogLevel specify log level of internal message logger
+func WithConsumerLogLevel(level log.LoggingLevel) ConsumerOptions {
+	return func(config *consumerConfig) {
+		config.msgLogger = config.msgLogger.WithLevel(level)
 	}
 }
 

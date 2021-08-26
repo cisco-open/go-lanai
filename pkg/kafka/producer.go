@@ -10,6 +10,7 @@ import (
 type saramaProducer struct {
 	topic        string
 	keyEncoder   Encoder
+	msgLogger    MessageLogger
 	interceptors []ProducerInterceptor
 	syncProducer sarama.SyncProducer
 }
@@ -25,20 +26,21 @@ func newSaramaProducer(topic string, addrs []string, config *producerConfig) (*s
 
 	internal, err := sarama.NewSyncProducer(addrs, c.Config)
 	if err != nil {
-		return nil, translateSaramaBindingError(err,"unable to create producer: %v", err)
+		return nil, translateSaramaBindingError(err, "unable to create producer: %v", err)
 	}
 
 	order.SortStable(config.interceptors, order.OrderedFirstCompare)
 	p := &saramaProducer{
 		topic:        topic,
 		keyEncoder:   config.keyEncoder,
+		msgLogger:    config.msgLogger,
 		interceptors: config.interceptors,
 		syncProducer: internal,
 	}
 	return p, nil
 }
 
-func (p *saramaProducer) SendMessage(ctx context.Context, message interface{}, options ...MessageOptions) (err error) {
+func (p *saramaProducer) Send(ctx context.Context, message interface{}, options ...MessageOptions) (err error) {
 	msgCtx := p.prepare(ctx, message)
 	if msgCtx.Payload == nil {
 		return nil
@@ -58,10 +60,10 @@ func (p *saramaProducer) SendMessage(ctx context.Context, message interface{}, o
 
 	// initialize sarama message
 	saramaMessage := &sarama.ProducerMessage{
-		Topic:   p.topic,
-		Headers: p.convertHeaders(msgCtx.Headers),
-		Value:   msgCtx.Payload.(sarama.Encoder),
-		Key:     newSaramaEncoder(msgCtx.Key, p.keyEncoder),
+		Topic:    p.topic,
+		Headers:  p.convertHeaders(msgCtx.Headers),
+		Value:    msgCtx.Payload.(sarama.Encoder),
+		Key:      newSaramaEncoder(msgCtx.Key, p.keyEncoder),
 		Metadata: msgCtx,
 	}
 
