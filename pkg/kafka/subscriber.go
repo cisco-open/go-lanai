@@ -3,28 +3,32 @@ package kafka
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"fmt"
 	"github.com/Shopify/sarama"
 	"reflect"
 	"sync"
 )
 
 type saramaSubscriber struct {
+	sync.Mutex
 	topic      string
 	brokers    []string
 	config     *consumerConfig
 	dispatcher *saramaDispatcher
-	startOnce  sync.Once
+	provisioner *saramaTopicProvisioner
+	started    bool
 	consumer   sarama.Consumer
 	partitions []int32
 	cancelFunc context.CancelFunc
 }
 
-func newSaramaSubscriber(topic string, addrs []string, config *consumerConfig) (*saramaSubscriber, error) {
+func newSaramaSubscriber(topic string, addrs []string, config *consumerConfig, provisioner *saramaTopicProvisioner) (*saramaSubscriber, error) {
 	return &saramaSubscriber{
 		topic:      topic,
 		brokers:    addrs,
 		config:     config,
 		dispatcher: newSaramaDispatcher(config),
+		provisioner: provisioner,
 	}, nil
 }
 
@@ -37,40 +41,57 @@ func (s *saramaSubscriber) Partitions() []int32 {
 }
 
 func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
-	s.startOnce.Do(func() {
-		var e error
-		if s.consumer, e = sarama.NewConsumer(s.brokers, s.config.Config); e != nil {
+	s.Lock()
+	defer s.Unlock()
+	defer func() {
+		if err == nil {
+			s.started = true
+		}
+	}()
+
+	if s.started {
+		return nil
+	}
+
+	if ok, e := s.provisioner.topicExists(s.topic); e != nil || !ok {
+		return NewKafkaError(ErrorCodeIllegalState, fmt.Sprintf(`topic "%s" does not exists`, s.topic))
+	}
+
+	var e error
+	if s.consumer, e = sarama.NewConsumer(s.brokers, s.config.Config); e != nil {
+		err = translateSaramaBindingError(e, e.Error())
+		return
+	}
+
+	if s.partitions, e = s.consumer.Partitions(s.topic); e != nil {
+		err = translateSaramaBindingError(e, e.Error())
+		return
+	}
+
+	partitionConsumers := make([]sarama.PartitionConsumer, len(s.partitions))
+	for i, p := range s.partitions {
+		if partitionConsumers[i], e = s.consumer.ConsumePartition(s.topic, p, sarama.OffsetNewest); e != nil {
 			err = translateSaramaBindingError(e, e.Error())
 			return
 		}
+	}
 
-		if s.partitions, e = s.consumer.Partitions(s.topic); e != nil {
-			err = translateSaramaBindingError(e, e.Error())
-			return
-		}
-
-		partitionConsumers := make([]sarama.PartitionConsumer, len(s.partitions))
-		for i, p := range s.partitions {
-			if partitionConsumers[i], e = s.consumer.ConsumePartition(s.topic, p, sarama.OffsetNewest); e != nil {
-				err = translateSaramaBindingError(e, e.Error())
-				return
-			}
-		}
-
-		cancelCtx, cancelFunc := context.WithCancel(ctx)
-		go s.handlePartitions(cancelCtx, partitionConsumers)
-		s.cancelFunc = cancelFunc
-	})
+	cancelCtx, cancelFunc := context.WithCancel(ctx)
+	go s.handlePartitions(cancelCtx, partitionConsumers)
+	s.cancelFunc = cancelFunc
 	return
 }
 
 func (s *saramaSubscriber) Close() error {
-	//defer func() {
-	//	if s.cancelFunc != nil {
-	//		s.cancelFunc()
-	//		s.cancelFunc = nil
-	//	}
-	//}()
+	s.Lock()
+	defer s.Unlock()
+	defer func() {s.started = false}()
+
+	if s.cancelFunc != nil {
+		s.cancelFunc()
+		s.cancelFunc = nil
+	}
+
 	if s.consumer == nil {
 		return nil
 	}
@@ -79,9 +100,6 @@ func (s *saramaSubscriber) Close() error {
 		return NewKafkaError(ErrorCodeIllegalState, "error when closing subscriber: %v", e)
 	}
 
-	// cleanup
-	s.consumer = nil
-	s.partitions = nil
 	return nil
 }
 

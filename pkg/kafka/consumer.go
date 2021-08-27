@@ -2,33 +2,37 @@ package kafka
 
 import (
 	"context"
+	"fmt"
 	"github.com/Shopify/sarama"
 	"sync"
 )
 
 type saramaGroupConsumer struct {
-	topic      string
-	group      string
-	brokers    []string
-	config     *consumerConfig
-	dispatcher *saramaDispatcher
-	startOnce  sync.Once
-	consumer   sarama.ConsumerGroup
-	cancelFunc context.CancelFunc
+	sync.Mutex
+	topic       string
+	group       string
+	brokers     []string
+	config      *consumerConfig
+	dispatcher  *saramaDispatcher
+	provisioner *saramaTopicProvisioner
+	started     bool
+	consumer    sarama.ConsumerGroup
+	cancelFunc  context.CancelFunc
 }
 
-func newSaramaGroupConsumer(topic string, group string, addrs []string, config *consumerConfig) (*saramaGroupConsumer, error) {
+func newSaramaGroupConsumer(topic string, group string, addrs []string, config *consumerConfig, provisioner *saramaTopicProvisioner) (*saramaGroupConsumer, error) {
 	if group == "" {
 		return nil, ErrorSubTypeBindingInternal.WithMessage("group is required and cannot be empty")
 	}
 
-	config.Config.Consumer.Return.Errors = true
+	//config.Consumer.Return.Errors = true
 	return &saramaGroupConsumer{
 		topic:      topic,
 		group:      group,
 		brokers:    addrs,
 		config:     config,
 		dispatcher: newSaramaDispatcher(config),
+		provisioner: provisioner,
 	}, nil
 }
 
@@ -41,23 +45,42 @@ func (g *saramaGroupConsumer) Group() string {
 }
 
 func (g *saramaGroupConsumer) Start(ctx context.Context) (err error) {
-	g.startOnce.Do(func() {
-		group, e := sarama.NewConsumerGroup(g.brokers, g.group, g.config.Config)
-		if e != nil {
-			err = translateSaramaBindingError(e, e.Error())
-			return
+	g.Lock()
+	defer g.Unlock()
+	defer func() {
+		if err == nil {
+			g.started = true
 		}
-		g.consumer = group
+	}()
+	if g.started {
+		return nil
+	}
 
-		cancelCtx, cancelFunc := context.WithCancel(ctx)
+	if ok, e := g.provisioner.topicExists(g.topic); e != nil || !ok {
+		return NewKafkaError(ErrorCodeIllegalState, fmt.Sprintf(`topic "%s" does not exists`, g.topic))
+	}
+
+	var e error
+	g.consumer, e = sarama.NewConsumerGroup(g.brokers, g.group, g.config.Config)
+	if e != nil {
+		err = translateSaramaBindingError(e, e.Error())
+		return
+	}
+
+	cancelCtx, cancelFunc := context.WithCancel(ctx)
+	if g.config.Consumer.Return.Errors {
 		go g.monitorGroupErrors(cancelCtx, g.consumer)
-		go g.handleGroup(cancelCtx, g.consumer)
-		g.cancelFunc = cancelFunc
-	})
+	}
+	go g.handleGroup(cancelCtx, g.consumer)
+	g.cancelFunc = cancelFunc
 	return
 }
 
 func (g *saramaGroupConsumer) Close() error {
+	g.Lock()
+	defer g.Unlock()
+	defer func() { g.started = false }()
+
 	if g.cancelFunc != nil {
 		g.cancelFunc()
 		g.cancelFunc = nil
@@ -71,8 +94,6 @@ func (g *saramaGroupConsumer) Close() error {
 		return NewKafkaError(ErrorCodeIllegalState, "error when closing group consumer: %v", e)
 	}
 
-	// cleanup
-	g.consumer = nil
 	return nil
 }
 
@@ -84,11 +105,14 @@ func (g *saramaGroupConsumer) AddHandler(handlerFunc MessageHandlerFunc, opts ..
 func (g *saramaGroupConsumer) monitorGroupErrors(ctx context.Context, group sarama.ConsumerGroup) {
 	for {
 		select {
-		case err, ok := <-group.Errors():
+		case e, ok := <-group.Errors():
 			if !ok {
 				return
 			}
-			logger.WithContext(ctx).Warnf("Consumer Group Error: %v", err)
+			if e == sarama.ErrClosedConsumerGroup {
+				return
+			}
+			logger.WithContext(ctx).Warnf("Consumer Group Error: %v", e)
 		case <-ctx.Done():
 			return
 		}
@@ -104,7 +128,10 @@ func (g *saramaGroupConsumer) handleGroup(ctx context.Context, group sarama.Cons
 	for {
 		// `Consume` should be called inside an infinite loop, when a server-side re-balance happens, the consumer session will need to be recreated to get the new claims
 		if e := group.Consume(ctx, []string{g.topic}, gh); e != nil {
-			logger.WithContext(ctx).Warnf("Consumer Group Error: %v", e)
+			if e == sarama.ErrClosedConsumerGroup {
+				return
+			}
+			logger.WithContext(ctx).Warnf("Consumer Error: %v", e)
 		}
 	}
 }

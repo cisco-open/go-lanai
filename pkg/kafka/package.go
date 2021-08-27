@@ -39,7 +39,7 @@ func initialize(di initDI) {
 
 	// register lifecycle functions
 	di.Lifecycle.Append(fx.Hook{
-		OnStart: di.Binder.(BinderLifecycle).Initialize,
+		OnStart: di.Binder.(BinderLifecycle).Start,
 		OnStop:  di.Binder.(BinderLifecycle).Shutdown,
 	})
 

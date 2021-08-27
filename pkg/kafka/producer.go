@@ -4,11 +4,16 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"errors"
+	"fmt"
 	"github.com/Shopify/sarama"
+	"sync"
 )
 
 type saramaProducer struct {
+	sync.Mutex
 	topic        string
+	brokers      []string
+	config       *producerConfig
 	keyEncoder   Encoder
 	msgLogger    MessageLogger
 	interceptors []ProducerMessageInterceptor
@@ -24,23 +29,28 @@ func newSaramaProducer(topic string, addrs []string, config *producerConfig) (*s
 		return sarama.NewRandomPartitioner(topic)
 	}
 
-	internal, err := sarama.NewSyncProducer(addrs, c.Config)
-	if err != nil {
-		return nil, translateSaramaBindingError(err, "unable to create producer: %v", err)
-	}
-
 	order.SortStable(config.interceptors, order.OrderedFirstCompare)
 	p := &saramaProducer{
 		topic:        topic,
+		brokers:      addrs,
+		config:       config,
 		keyEncoder:   config.keyEncoder,
 		msgLogger:    config.msgLogger,
 		interceptors: config.interceptors,
-		syncProducer: internal,
 	}
 	return p, nil
 }
 
+func (p *saramaProducer) Topic() string {
+	return p.topic
+}
+
 func (p *saramaProducer) Send(ctx context.Context, message interface{}, options ...MessageOptions) (err error) {
+	// note: if necessary, we would consider use RWLock
+	if p.syncProducer == nil {
+		return NewKafkaError(ErrorSubTypeCodeIllegalProducerUsage, fmt.Sprintf(`producer for topic "%s" is not started yet`, p.topic))
+	}
+
 	msgCtx := p.prepare(ctx, message)
 	if msgCtx.Payload == nil {
 		return nil
@@ -79,7 +89,23 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 	return
 }
 
+func (p *saramaProducer) Start(_ context.Context) error {
+	p.Lock()
+	defer p.Unlock()
+	internal, e := sarama.NewSyncProducer(p.brokers, p.config.Config)
+	if e != nil {
+		return translateSaramaBindingError(e, "unable to start producer: %v", e)
+	}
+	p.syncProducer = internal
+	return nil
+}
+
 func (p *saramaProducer) Close() error {
+	p.Lock()
+	defer p.Unlock()
+	if p.syncProducer == nil {
+		return nil
+	}
 	if e := p.syncProducer.Close(); e != nil {
 		return NewKafkaError(ErrorCodeIllegalState, "error when closing producer: %v", e)
 	}

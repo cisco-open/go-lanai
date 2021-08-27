@@ -45,13 +45,15 @@ type MessageContext struct {
  ************************/
 
 type Binder interface {
-	NewProducerWithTopic(topic string, options ...ProducerOptions) (Producer, error)
+	Produce(topic string, options ...ProducerOptions) (Producer, error)
 	Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error)
+	Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error)
 	ListTopics() []string
 }
 
 type BinderLifecycle interface {
 	Initialize(ctx context.Context) error
+	Start(ctx context.Context) error
 	Shutdown(ctx context.Context) error
 }
 
@@ -60,20 +62,30 @@ type SaramaBinder interface {
 	Client() sarama.Client
 }
 
+// BindingLifecycle is the interface that controlling lifecycles of any Producer, Subscriber and GroupConsumer
+type BindingLifecycle interface {
+	// Start initialize any connection and internal run loops.
+	// Must be called after any configuration and before Producer, Subscriber or GroupConsumer is used
+	Start(ctx context.Context) error
+
+	// Close must be called to release any resource
+	Close() error
+}
+
 /************************
 	Producing
  ************************/
 
 type Producer interface {
+	// Topic returns the Topic name
+	Topic() string
+
 	// Send publish given message to the TOPIC with pre-configured producer settings
 	// supported message types are:
 	// 	- *Message
 	// 	- Message
 	//  - any type of body, the body will be serialized using value encoder from options
 	Send(ctx context.Context, message interface{}, options ...MessageOptions) error
-
-	// Close must be called to release any resource
-	Close() error
 }
 
 type ProducerMessageInterceptor interface {
@@ -120,7 +132,7 @@ type Subscriber interface {
 	// AddHandler register a message handler function that would process received messages.
 	// Note: A Subscriber without a registered handler simply ignore all received messages.
 	// 		 If AddHandler is called after Start, it may miss some messages
-	AddHandler(handlerFunc MessageHandlerFunc, opts...DispatchOptions) error
+	AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error
 
 	// Close must be called to release any resource
 	Close() error
@@ -140,7 +152,7 @@ type GroupConsumer interface {
 	// AddHandler register a message handler function that would process received messages.
 	// Note: A GroupConsumer without a registered handler simply ignore all received messages.
 	// 		 If AddHandler is called after Start, it may miss some messages
-	AddHandler(handlerFunc MessageHandlerFunc, opts...DispatchOptions) error
+	AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error
 
 	// Close must be called to release any resource
 	Close() error

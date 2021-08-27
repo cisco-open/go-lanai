@@ -11,6 +11,10 @@ type saramaTopicProvisioner struct {
 }
 
 func (p *saramaTopicProvisioner) topicExists(topic string) (bool, error) {
+	if e := p.globalClient.RefreshMetadata(); e != nil {
+		return false, translateSaramaBindingError(e, "unable to refresh metadata: %v", e)
+	}
+
 	topics, e := p.globalClient.Topics()
 	if e != nil {
 		return false, translateSaramaBindingError(e, "unable to read topics: %v", e)
