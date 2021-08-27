@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"io"
 	"strings"
@@ -9,10 +10,6 @@ import (
 
 const (
 	logTemplate = "lanai-log-template"
-)
-
-var (
-
 )
 
 type TextFormatter interface {
@@ -62,8 +59,17 @@ func (f *TemplatedFormatter) init() {
 	f.tmpl = t
 }
 
-func (f TemplatedFormatter) Format(kvs Fields, w io.Writer) error {
-	return f.tmpl.Execute(w, kvs)
+func (f *TemplatedFormatter) Format(kvs Fields, w io.Writer) error {
+	// from documents of template.Template.Execute:
+	// 		A template may be executed safely in parallel, although if parallel
+	// 		executions share a Writer the output may be interleaved.
+	// to prevent this from happening, we use an in-memory buffer. Hopefully this is faster than mutex locking
+	var buf bytes.Buffer
+	if e := f.tmpl.Execute(&buf, kvs); e != nil {
+		return e
+	}
+	if _, e := w.Write(buf.Bytes()); e != nil {
+		return e
+	}
+	return nil
 }
-
-
