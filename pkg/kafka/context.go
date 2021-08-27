@@ -35,9 +35,11 @@ type Encoder interface {
 // MessageContext internal use only, used by interceptors and processors
 type MessageContext struct {
 	context.Context
-	Message
 	messageConfig
-	Topic string
+	Source     interface{}
+	Topic      string
+	Message    Message
+	RawMessage interface{}
 }
 
 /************************

@@ -78,16 +78,16 @@ func (w saramaEncoderWrapper) Length() int {
 type mimeTypeProducerInterceptor struct{}
 
 func (i mimeTypeProducerInterceptor) Intercept(msgCtx *MessageContext) (*MessageContext, error) {
-	if msgCtx.Headers == nil {
-		msgCtx.Headers = Headers{}
+	if msgCtx.Message.Headers == nil {
+		msgCtx.Message.Headers = Headers{}
 	}
 
 	if msgCtx.ValueEncoder == nil {
 		msgCtx.ValueEncoder = jsonEncoder{}
 	}
 
-	msgCtx.Headers[HeaderContentType] = msgCtx.ValueEncoder.MIMEType()
-	msgCtx.Payload = newSaramaEncoder(msgCtx.Payload, msgCtx.ValueEncoder)
+	msgCtx.Message.Headers[HeaderContentType] = msgCtx.ValueEncoder.MIMEType()
+	msgCtx.Message.Payload = newSaramaEncoder(msgCtx.Message.Payload, msgCtx.ValueEncoder)
 	return msgCtx, nil
 }
 

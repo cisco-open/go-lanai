@@ -27,11 +27,11 @@ func newSaramaGroupConsumer(topic string, group string, addrs []string, config *
 
 	//config.Consumer.Return.Errors = true
 	return &saramaGroupConsumer{
-		topic:      topic,
-		group:      group,
-		brokers:    addrs,
-		config:     config,
-		dispatcher: newSaramaDispatcher(config),
+		topic:       topic,
+		group:       group,
+		brokers:     addrs,
+		config:      config,
+		dispatcher:  newSaramaDispatcher(config),
 		provisioner: provisioner,
 	}, nil
 }
@@ -122,6 +122,7 @@ func (g *saramaGroupConsumer) monitorGroupErrors(ctx context.Context, group sara
 // handleGroup should be run in separate goroutine
 func (g *saramaGroupConsumer) handleGroup(ctx context.Context, group sarama.ConsumerGroup) {
 	gh := saramaGroupHandler{
+		owner:      g,
 		dispatcher: g.dispatcher,
 	}
 
@@ -137,10 +138,11 @@ func (g *saramaGroupConsumer) handleGroup(ctx context.Context, group sarama.Cons
 }
 
 type saramaGroupHandler struct {
+	owner      *saramaGroupConsumer
 	dispatcher *saramaDispatcher
 }
 
-func (s saramaGroupHandler) Setup(session sarama.ConsumerGroupSession) error {
+func (h saramaGroupHandler) Setup(session sarama.ConsumerGroupSession) error {
 	for group, parts := range session.Claims() {
 		logger.WithContext(session.Context()).
 			Debugf("Consumer [%s] joined group [%s] with partitions %v", session.MemberID(), group, parts)
@@ -148,7 +150,7 @@ func (s saramaGroupHandler) Setup(session sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (s saramaGroupHandler) Cleanup(session sarama.ConsumerGroupSession) error {
+func (h saramaGroupHandler) Cleanup(session sarama.ConsumerGroupSession) error {
 	for group, parts := range session.Claims() {
 		logger.WithContext(session.Context()).
 			Debugf("Consumer [%s] left group [%s] releasing partitions %v", session.MemberID(), group, parts)
@@ -157,14 +159,14 @@ func (s saramaGroupHandler) Cleanup(session sarama.ConsumerGroupSession) error {
 }
 
 // ConsumeClaim is run in separate goroutine
-func (s saramaGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+func (h saramaGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for {
 		select {
 		case msg, ok := <-claim.Messages():
 			if !ok {
 				return nil
 			}
-			go s.handleMessage(session.Context(), session, msg)
+			go h.handleMessage(session.Context(), session, msg)
 		case <-session.Context().Done():
 			return nil
 		}
@@ -172,8 +174,8 @@ func (s saramaGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 }
 
 // handleMessage intended to run in separate goroutine
-func (s saramaGroupHandler) handleMessage(ctx context.Context, session sarama.ConsumerGroupSession, raw *sarama.ConsumerMessage) {
-	if e := s.dispatcher.dispatch(ctx, raw); e != nil {
+func (h saramaGroupHandler) handleMessage(ctx context.Context, session sarama.ConsumerGroupSession, raw *sarama.ConsumerMessage) {
+	if e := h.dispatcher.dispatch(ctx, raw, h.owner); e != nil {
 		logger.WithContext(ctx).Warnf("failed to handle message: %v", e)
 		session.ResetOffset(raw.Topic, raw.Partition, raw.Offset, e.Error())
 		return

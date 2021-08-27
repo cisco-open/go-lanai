@@ -52,7 +52,7 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 	}
 
 	msgCtx := p.prepare(ctx, message)
-	if msgCtx.Payload == nil {
+	if msgCtx.Message.Payload == nil {
 		return nil
 	}
 
@@ -71,11 +71,12 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 	// initialize sarama message
 	saramaMessage := &sarama.ProducerMessage{
 		Topic:    p.topic,
-		Headers:  p.convertHeaders(msgCtx.Headers),
-		Value:    msgCtx.Payload.(sarama.Encoder),
+		Headers:  p.convertHeaders(msgCtx.Message.Headers),
+		Value:    msgCtx.Message.Payload.(sarama.Encoder),
 		Key:      newSaramaEncoder(msgCtx.Key, p.keyEncoder),
 		Metadata: msgCtx,
 	}
+	msgCtx.RawMessage = saramaMessage
 
 	// do send
 	switch msgCtx.Mode {
@@ -117,6 +118,7 @@ func (p *saramaProducer) prepare(ctx context.Context, v interface{}) *MessageCon
 		Context:       ctx,
 		Topic:         p.topic,
 		messageConfig: defaultMessageConfig(),
+		Source:        p,
 	}
 	switch m := v.(type) {
 	case *Message:
@@ -136,6 +138,9 @@ func (p *saramaProducer) prepare(ctx context.Context, v interface{}) *MessageCon
 }
 
 func (p *saramaProducer) finalizeSend(msgCtx *MessageContext, partition int32, offset int64, err error) error {
+
+	p.msgLogger.LogSentMessage(msgCtx.Context, msgCtx.RawMessage)
+
 	for _, interceptor := range p.interceptors {
 		switch finalizer := interceptor.(type) {
 		case ProducerMessageFinalizer:

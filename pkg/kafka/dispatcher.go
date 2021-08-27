@@ -132,7 +132,7 @@ func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, cfg *consumerConfig
 	return nil
 }
 
-func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMessage) (err error) {
+func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMessage, source interface{}) (err error) {
 	defer func() {
 		switch e := recover().(type) {
 		case error:
@@ -158,7 +158,9 @@ func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMess
 			Headers: headers,
 			Payload: raw.Value,
 		},
+		Source: source,
 		Topic: raw.Topic,
+		RawMessage: raw,
 	}
 
 	// invoke interceptors

@@ -268,12 +268,12 @@ func (s *SaramaKafkaBinder) tryStartRepeatIntervalFunc() loop.RepeatIntervalFunc
 		switch allStarted := result.(type) {
 		case bool:
 			if allStarted {
-				return 30 * time.Second
+				return 120 * time.Second
 			} else {
-				return 3 * time.Second
+				return 5 * time.Second
 			}
 		default:
-			return 3 * time.Second
+			return 5 * time.Second
 		}
 	}
 }

@@ -70,7 +70,7 @@ func (i kafkaProducerInterceptor) Finalize(msgCtx *kafka.MessageContext, p int32
 func (i kafkaProducerInterceptor) spanPropagation(msgCtx *kafka.MessageContext) tracing.SpanOption {
 	return func(span opentracing.Span) {
 		// we ignore error, since we can't do anything about it
-		_ = i.tracer.Inject(span.Context(), opentracing.TextMap, opentracing.TextMapCarrier(msgCtx.Headers))
+		_ = i.tracer.Inject(span.Context(), opentracing.TextMap, opentracing.TextMapCarrier(msgCtx.Message.Headers))
 	}
 }
 
@@ -88,6 +88,12 @@ func (i kafkaConsumerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafk
 
 	// second, start a follower span
 	cmdStr := "recv"
+	switch msgCtx.Source.(type) {
+	case kafka.Subscriber:
+		cmdStr = "subscribe"
+	case kafka.GroupConsumer:
+		cmdStr = "consume"
+	}
 	name := tracing.OpNameKafka + " " + cmdStr
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCServerEnum),
@@ -118,7 +124,7 @@ func (i kafkaConsumerInterceptor) Finalize(msgCtx *kafka.MessageContext, err err
 
 func (i kafkaConsumerInterceptor) spanPropagation(msgCtx *kafka.MessageContext) opentracing.StartSpanOption {
 	// we ignore error because there is nothing we could do
-	spanCtx, _ := i.tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(msgCtx.Headers))
+	spanCtx, _ := i.tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(msgCtx.Message.Headers))
 	return ext.RPCServerOption(spanCtx)
 }
 
