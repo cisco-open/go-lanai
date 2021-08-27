@@ -24,23 +24,45 @@ func defaultSaramaConfig(properties *KafkaProperties) (c *sarama.Config) {
   Options for producer
 ************************/
 
+type topicConfig struct {
+	// autoCreateTopic when topic doesn't exist, whether attempt to create one
+	autoCreateTopic bool
+
+	// autoAddPartitions when actual partition counts is less than partitionCount, whether attempt to add more partitions
+	autoAddPartitions bool
+
+	// allowLowerPartitions when actual partition counts is less than partitionCount but autoAddPartitions is false,
+	// whether return an error
+	allowLowerPartitions bool
+
+	// partitionCount number of partitions of given topic
+	partitionCount int32
+
+	// replicationFactor number of replicas per partition when creating topic
+	replicationFactor int16
+}
+
 type producerConfig struct {
 	*sarama.Config
-	keyEncoder        Encoder
-	partitionCount    int32
-	replicationFactor int16
-	interceptors      []ProducerMessageInterceptor
-	msgLogger         MessageLogger
+	keyEncoder   Encoder
+	interceptors []ProducerMessageInterceptor
+	msgLogger    MessageLogger
+	provisioning topicConfig
 }
 
 func defaultProducerConfig(saramaCfg *sarama.Config) *producerConfig {
 	return &producerConfig{
-		Config:            saramaCfg,
-		keyEncoder:        binaryEncoder{},
-		partitionCount:    1,
-		replicationFactor: 0,
-		interceptors:      []ProducerMessageInterceptor{},
-		msgLogger:         newSaramaMessageLogger(),
+		Config:       saramaCfg,
+		keyEncoder:   binaryEncoder{},
+		interceptors: []ProducerMessageInterceptor{},
+		msgLogger:    newSaramaMessageLogger(),
+		provisioning: topicConfig{
+			autoCreateTopic:      true,
+			autoAddPartitions:    true,
+			allowLowerPartitions: true,
+			partitionCount:       1,
+			replicationFactor:    1,
+		},
 	}
 }
 
@@ -56,8 +78,14 @@ func WithKeyEncoder(enc Encoder) ProducerOptions {
 // WithPartitions TODO
 func WithPartitions(partitionCount int, replicationFactor int) ProducerOptions {
 	return func(config *producerConfig) {
-		config.partitionCount = int32(partitionCount)
-		config.replicationFactor = int16(replicationFactor)
+		if partitionCount < 1 {
+			partitionCount = 1
+		}
+		if replicationFactor < 1 {
+			replicationFactor = 1
+		}
+		config.provisioning.partitionCount = int32(partitionCount)
+		config.provisioning.replicationFactor = int16(replicationFactor)
 	}
 }
 

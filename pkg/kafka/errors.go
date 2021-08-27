@@ -49,6 +49,7 @@ const (
 	ErrorCodeProducerExists
 	ErrorCodeConsumerExists
 	ErrorCodeAutoCreateTopicFailed
+	ErrorCodeAutoAddPartitionsFailed
 )
 
 // All "SubType" values are used as mask

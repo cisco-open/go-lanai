@@ -26,6 +26,7 @@ type SaramaKafkaBinder struct {
 
 	globalClient   sarama.Client
 	adminClient    sarama.ClusterAdmin
+	provisioner    *saramaTopicProvisioner
 	producers      map[string]io.Closer
 	subscribers    map[string]io.Closer
 	consumerGroups map[string]io.Closer
@@ -71,7 +72,7 @@ func (s *SaramaKafkaBinder) NewProducerWithTopic(topic string, options ...Produc
 		optionFunc(&cfg)
 	}
 
-	if e := s.provisionTopic(topic, &cfg); e != nil {
+	if e := s.provisioner.provisionTopic(topic, &cfg); e != nil {
 		return nil, e
 	}
 
@@ -176,6 +177,11 @@ func (s *SaramaKafkaBinder) Initialize(_ context.Context) (err error) {
 			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", s.brokers, err), err)
 			return
 		}
+
+		s.provisioner = &saramaTopicProvisioner{
+			globalClient: s.globalClient,
+			adminClient:  s.adminClient,
+		}
 	})
 
 	return
@@ -210,24 +216,6 @@ func (s *SaramaKafkaBinder) Shutdown(_ context.Context) error {
 
 	if e := s.globalClient.Close(); e != nil {
 		log.Errorf("error while closing kafka global client: %v", e)
-	}
-	return nil
-}
-
-func (s *SaramaKafkaBinder) provisionTopic(topic string, cfg *producerConfig) error {
-
-	// TODO, this won't work
-	//parts, e := s.globalClient.Partitions(topic)
-	//fmt.Printf("%v, %v\n", parts, e)
-
-	topicDetails := &sarama.TopicDetail{
-		NumPartitions:     2,
-		ReplicationFactor: 1,
-		ReplicaAssignment: nil,
-		ConfigEntries:     nil,
-	}
-	if e := s.adminClient.CreateTopic(topic, topicDetails, false); e != nil {
-		return nil
 	}
 	return nil
 }
