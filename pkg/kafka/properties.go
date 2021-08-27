@@ -14,6 +14,7 @@ const (
 type KafkaProperties struct {
 	Brokers utils.CommaSeparatedSlice `json:"brokers"`
 	Net     Net                       `json:"net"`
+	Binder BinderProperties `json:"binder"`
 }
 
 type Net struct {
@@ -31,6 +32,18 @@ type SASL struct {
 	//username and password for SASL/PLAIN authentication
 	User     string `json:"user"`
 	Password string `josn:"password"`
+}
+
+type BinderProperties struct {
+	
+}
+
+type ProducerProperties struct {
+
+}
+
+type ConsumerProperties struct {
+
 }
 
 func BindKafkaProperties(ctx *bootstrap.ApplicationContext) KafkaProperties {

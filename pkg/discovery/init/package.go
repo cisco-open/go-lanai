@@ -2,17 +2,23 @@ package discovery
 
 import (
 	"context"
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
+	"embed"
 	"github.com/hashicorp/consul/api"
 	"go.uber.org/fx"
 )
+
+//go:embed defaults-discovery.yml
+var defaultConfigFS embed.FS
 
 var Module = &bootstrap.Module {
 	Name: "service discovery",
 	Precedence: bootstrap.ServiceDiscoveryPrecedence,
 	Options: []fx.Option{
+		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(discovery.BindDiscoveryProperties,
 			discovery.NewRegistration,
 			discovery.NewCustomizers,

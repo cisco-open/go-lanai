@@ -51,6 +51,9 @@ func (l saramaMessageLogger) LogSentMessage(ctx context.Context, msg interface{}
 	case *sarama.ProducerMessage:
 		logMsg := fmt.Sprintf("[SENT] [%s] Partition[%d] Offset[%d]: Length=%dB",
 			m.Topic, m.Partition, m.Offset, m.Value.Length())
+		if m.Key != nil && m.Key.Length() != 0 {
+			logMsg = logMsg + fmt.Sprintf(" KeyLength=%dB", m.Key.Length())
+		}
 		_ = logger.WithContext(ctx).WithLevel(l.level).Log(log.LogKeyMessage, logMsg)
 	}
 }
@@ -58,8 +61,11 @@ func (l saramaMessageLogger) LogSentMessage(ctx context.Context, msg interface{}
 func (l saramaMessageLogger) LogReceivedMessage(ctx context.Context, msg interface{}) {
 	switch m := msg.(type) {
 	case *sarama.ConsumerMessage:
-		logMsg := fmt.Sprintf("[RECV] [%s] Partition[%d] Offset[%d]: Length=%dB Key=%x",
-			m.Topic, m.Partition, m.Offset, len(m.Value), m.Key)
+		logMsg := fmt.Sprintf("[RECV] [%s] Partition[%d] Offset[%d]: Length=%dB",
+			m.Topic, m.Partition, m.Offset, len(m.Value))
+		if len(m.Key) != 0 {
+			logMsg = logMsg + fmt.Sprintf(" Key=%x", m.Key)
+		}
 		_ = logger.WithContext(ctx).WithLevel(l.level).Log(log.LogKeyMessage, logMsg)
 	}
 }

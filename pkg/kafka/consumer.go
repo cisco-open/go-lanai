@@ -143,17 +143,17 @@ type saramaGroupHandler struct {
 }
 
 func (h saramaGroupHandler) Setup(session sarama.ConsumerGroupSession) error {
-	for group, parts := range session.Claims() {
+	for topic, parts := range session.Claims() {
 		logger.WithContext(session.Context()).
-			Debugf("Consumer [%s] joined group [%s] with partitions %v", session.MemberID(), group, parts)
+			Debugf("Consumer joined group [%s] Topic=[%s] Partitions=%v MemberID=[%s]", h.owner.group, topic, parts, session.MemberID())
 	}
 	return nil
 }
 
 func (h saramaGroupHandler) Cleanup(session sarama.ConsumerGroupSession) error {
-	for group, parts := range session.Claims() {
+	for topic, parts := range session.Claims() {
 		logger.WithContext(session.Context()).
-			Debugf("Consumer [%s] left group [%s] releasing partitions %v", session.MemberID(), group, parts)
+			Debugf("Consumer left group [%s] Topic=[%s] Partitions=%v MemberID=[%s]", h.owner.group, topic, parts, session.MemberID())
 	}
 	return nil
 }

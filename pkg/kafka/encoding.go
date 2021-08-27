@@ -48,6 +48,12 @@ type saramaEncoderWrapper struct {
 }
 
 func newSaramaEncoder(v interface{}, enc Encoder) sarama.Encoder {
+	if v == nil {
+		return nil
+	}
+	if enc == nil {
+		enc = binaryEncoder{}
+	}
 	return &saramaEncoderWrapper{
 		v:     v,
 		enc:   enc,

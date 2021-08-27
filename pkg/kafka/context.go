@@ -128,16 +128,10 @@ type Subscriber interface {
 	// Partitions returns subscribed partitions
 	Partitions() []int32
 
-	// Start kick off subscription and start to monitor pre-configured topic
-	Start(ctx context.Context) error
-
 	// AddHandler register a message handler function that would process received messages.
 	// Note: A Subscriber without a registered handler simply ignore all received messages.
 	// 		 If AddHandler is called after Start, it may miss some messages
 	AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error
-
-	// Close must be called to release any resource
-	Close() error
 }
 
 // GroupConsumer provides consumer group workflow
@@ -148,16 +142,10 @@ type GroupConsumer interface {
 	// Group returns the group name
 	Group() string
 
-	// Start kick off subscription and start to monitor pre-configured topic
-	Start(ctx context.Context) error
-
 	// AddHandler register a message handler function that would process received messages.
 	// Note: A GroupConsumer without a registered handler simply ignore all received messages.
 	// 		 If AddHandler is called after Start, it may miss some messages
 	AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error
-
-	// Close must be called to release any resource
-	Close() error
 }
 
 type ConsumerDispatchInterceptor interface {

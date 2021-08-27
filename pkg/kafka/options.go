@@ -1,9 +1,10 @@
 package kafka
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"github.com/Shopify/sarama"
-	"github.com/google/uuid"
 	"time"
 )
 
@@ -75,7 +76,8 @@ func WithKeyEncoder(enc Encoder) ProducerOptions {
 	}
 }
 
-// WithPartitions TODO
+// WithPartitions configure Producer's topic provisioning, by specifying min partition required
+// and their replica number (min.insync.replicas) in case topics are auto-created
 func WithPartitions(partitionCount int, replicationFactor int) ProducerOptions {
 	return func(config *producerConfig) {
 		if partitionCount < 1 {
@@ -171,7 +173,7 @@ type messageConfig struct {
 func defaultMessageConfig() messageConfig {
 	return messageConfig{
 		ValueEncoder: jsonEncoder{},
-		Key:          uuid.New(),
+		//Key:          uuid.New(),
 		Mode:         modeSync,
 	}
 }
@@ -204,3 +206,27 @@ func WithEncoder(valueEncoder Encoder) MessageOptions {
 **************************/
 
 type DispatchOptions func(h *handler)
+
+// FilterOnHeader returns a DispatchOptions specifying that
+// the handler should be invoked when certain message header exists and matches the provided matcher
+func FilterOnHeader(header string, matcher matcher.StringMatcher) DispatchOptions {
+	if matcher == nil {
+		return func(h *handler) {}
+	}
+
+	return func(h *handler) {
+		h.filterFunc = func(ctx context.Context, msg *Message) (shouldHandle bool) {
+			if msg.Headers == nil {
+				return false
+			}
+			v, ok := msg.Headers[header]
+			if !ok {
+				return false
+			}
+			if matched, e := matcher.MatchesWithContext(ctx, v); e != nil || !matched {
+				return false
+			}
+			return true
+		}
+	}
+}
