@@ -73,7 +73,7 @@ func (w saramaEncoderWrapper) Length() int {
 	return len(data)
 }
 
-// mimeTypeProducerInterceptor implement ProducerInterceptor.
+// mimeTypeProducerInterceptor implement ProducerMessageInterceptor.
 // This interceptor applies value encoder and set Content-Type to message headers
 type mimeTypeProducerInterceptor struct{}
 

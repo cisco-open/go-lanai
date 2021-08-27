@@ -29,7 +29,7 @@ type producerConfig struct {
 	keyEncoder        Encoder
 	partitionCount    int32
 	replicationFactor int16
-	interceptors      []ProducerInterceptor
+	interceptors      []ProducerMessageInterceptor
 	msgLogger         MessageLogger
 }
 
@@ -39,7 +39,7 @@ func defaultProducerConfig(saramaCfg *sarama.Config) *producerConfig {
 		keyEncoder:        binaryEncoder{},
 		partitionCount:    1,
 		replicationFactor: 0,
-		interceptors:      []ProducerInterceptor{},
+		interceptors:      []ProducerMessageInterceptor{},
 		msgLogger:         newSaramaMessageLogger(),
 	}
 }
@@ -103,7 +103,9 @@ func AckTimeout(timeout time.Duration) ProducerOptions {
 
 type consumerConfig struct {
 	*sarama.Config
-	msgLogger MessageLogger
+	dispatchInterceptors []ConsumerDispatchInterceptor
+	handlerInterceptors  []ConsumerHandlerInterceptor
+	msgLogger            MessageLogger
 }
 
 type ConsumerOptions func(*consumerConfig)
@@ -174,10 +176,3 @@ func WithEncoder(valueEncoder Encoder) MessageOptions {
 **************************/
 
 type DispatchOptions func(h *handler)
-
-//// WithTypeOf specify message payload type of MessageHandlerFunc
-//func WithTypeOf(i interface{}) DispatchOptions {
-//	return func(h *handler) {
-//		h.typ = reflect.TypeOf(i)
-//	}
-//}

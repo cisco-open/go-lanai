@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"github.com/Shopify/sarama"
 	"reflect"
 	"strings"
@@ -35,7 +35,7 @@ var (
 	reflectTypeContext = reflect.TypeOf((*context.Context)(nil)).Elem()
 	reflectTypeHeaders = reflect.TypeOf(Headers{})
 	reflectTypeMessage = reflect.TypeOf(&Message{})
-	reflectTypeError = reflect.TypeOf((*error)(nil)).Elem()
+	reflectTypeError   = reflect.TypeOf((*error)(nil)).Elem()
 )
 
 type param struct {
@@ -62,22 +62,27 @@ type params struct {
 }
 
 type handler struct {
-	fn          reflect.Value
-	params      params
-	filterFunc  MessageFilterFunc
+	fn           reflect.Value
+	params       params
+	filterFunc   MessageFilterFunc
+	interceptors []ConsumerHandlerInterceptor
 }
 
 type saramaDispatcher struct {
-	handlers []*handler
+	handlers     []*handler
+	interceptors []ConsumerDispatchInterceptor
+	msgLogger    MessageLogger
 }
 
-func newSaramaDispatcher() *saramaDispatcher {
+func newSaramaDispatcher(cfg *consumerConfig) *saramaDispatcher {
 	return &saramaDispatcher{
-		handlers: []*handler{},
+		handlers:     []*handler{},
+		interceptors: cfg.dispatchInterceptors,
+		msgLogger:    cfg.msgLogger,
 	}
 }
 
-func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, opts []DispatchOptions) error {
+func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, cfg *consumerConfig, opts []DispatchOptions) error {
 	if fn == nil {
 		return nil
 	}
@@ -85,7 +90,8 @@ func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, opts []DispatchOpti
 	// apply options
 	f := reflect.ValueOf(fn)
 	h := handler{
-		fn: f,
+		fn:           f,
+		interceptors: cfg.handlerInterceptors,
 	}
 	for _, optFn := range opts {
 		optFn(&h)
@@ -115,7 +121,7 @@ func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, opts []DispatchOpti
 	for i := t.NumOut() - 1; i >= 0; i-- {
 		switch ot := t.Out(i); {
 		case ot.ConvertibleTo(reflectTypeError):
-			if i != t.NumOut() - 1 {
+			if i != t.NumOut()-1 {
 				return ErrorSubTypeIllegalConsumerUsage.WithMessage("invalid MessageHandlerFunc signature %v, last output param must be error")
 			}
 		default:
@@ -145,31 +151,93 @@ func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMess
 		headers[string(rh.Key)] = string(rh.Value)
 	}
 
-	for _, h := range d.handlers {
-		// create message
-		msg := Message{
+	// create message context
+	msgCtx := &MessageContext{
+		Context: ctx,
+		Message: Message{
 			Headers: headers,
 			Payload: raw.Value,
+		},
+		Topic: raw.Topic,
+	}
+
+	// invoke interceptors
+	for _, interceptor := range d.interceptors {
+		msgCtx, err = interceptor.Intercept(msgCtx)
+		if err != nil {
+			return ErrorSubTypeConsumerGeneral.WithMessage("consumer dispatch interceptor error: %v", err)
 		}
+	}
+
+	defer func() {
+		err = d.finalizeDispatch(msgCtx, err)
+	}()
+
+	// log message
+	if d.msgLogger != nil {
+		d.msgLogger.LogReceivedMessage(msgCtx.Context, raw)
+	}
+
+	for _, h := range d.handlers {
+		// reset message payload
+		msgCtx.Message.Payload = raw.Value
 
 		// filter
 		if h.filterFunc != nil {
-			if ok := h.filterFunc(ctx, &msg); !ok {
+			if ok := h.filterFunc(msgCtx.Context, &msgCtx.Message); !ok {
 				continue
 			}
 		}
 
-		// decode payload
-		if e := d.decodePayload(ctx, h.params.payload.t, &msg); e != nil {
-			return e
-		}
-
-		// TODO intercept
-		if e := d.invokeHandler(ctx, h, &msg); e != nil {
-			return e
+		if err = d.doDispatch(h, msgCtx); err != nil {
+			return
 		}
 	}
 	return nil
+}
+
+func (d saramaDispatcher) doDispatch(h *handler, msgCtx *MessageContext) (err error) {
+	// invoke handler interceptors
+	ctx, msg := msgCtx.Context, &msgCtx.Message
+	for _, interceptor := range h.interceptors {
+		ctx, err = interceptor.BeforeHandling(ctx, msg)
+		if err != nil {
+			return ErrorSubTypeConsumerGeneral.WithMessage("consumer handler interceptor error: %v", err)
+		}
+	}
+
+	defer func() {
+		for _, interceptor := range h.interceptors {
+			ctx, err = interceptor.AfterHandling(ctx, msg, err)
+		}
+	}()
+
+	// decode payload
+	if err = d.decodePayload(ctx, h.params.payload.t, msg); err != nil {
+		return
+	}
+
+	err = d.invokeHandler(ctx, h, msg)
+	return
+}
+
+func (d saramaDispatcher) finalizeDispatch(msgCtx *MessageContext, err error) error {
+	for _, interceptor := range d.interceptors {
+		switch finalizer := interceptor.(type) {
+		case ConsumerDispatchFinalizer:
+			msgCtx, err = finalizer.Finalize(msgCtx, err)
+		}
+	}
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, ErrorCategoryKafka):
+		return err
+	default:
+		return NewKafkaError(ErrorSubTypeCodeConsumerGeneral, err.Error(), err)
+	}
 }
 
 /********************
@@ -185,7 +253,7 @@ func (d saramaDispatcher) decodePayload(_ context.Context, typ reflect.Type, msg
 	case strings.HasPrefix(contentType, "application/json"):
 		ptr, v := d.instantiateByType(typ)
 		if e := json.Unmarshal(msg.Payload.([]byte), ptr.Interface()); e != nil {
-			return e
+			return ErrorSubTypeDecoding.WithCause(e, "unable to decode as JSON: %v", e)
 		}
 		msg.Payload = v.Interface()
 	case contentType == MIMETypeText:
@@ -193,7 +261,7 @@ func (d saramaDispatcher) decodePayload(_ context.Context, typ reflect.Type, msg
 	case contentType == MIMETypeBinary:
 		//  do nothing
 	default:
-		return fmt.Errorf("unsupported MIME type %s", contentType)
+		return ErrorSubTypeDecoding.WithMessage("unsupported MIME type %s", contentType)
 	}
 	return nil
 }

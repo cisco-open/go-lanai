@@ -13,7 +13,6 @@ type saramaSubscriber struct {
 	brokers    []string
 	config     *consumerConfig
 	dispatcher *saramaDispatcher
-	msgLogger  MessageLogger
 	startOnce  sync.Once
 	consumer   sarama.Consumer
 	partitions []int32
@@ -25,8 +24,7 @@ func newSaramaSubscriber(topic string, addrs []string, config *consumerConfig) (
 		topic:      topic,
 		brokers:    addrs,
 		config:     config,
-		dispatcher: newSaramaDispatcher(),
-		msgLogger:  config.msgLogger,
+		dispatcher: newSaramaDispatcher(config),
 	}, nil
 }
 
@@ -67,12 +65,16 @@ func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
 }
 
 func (s *saramaSubscriber) Close() error {
-	defer func() {
-		if s.cancelFunc != nil {
-			s.cancelFunc()
-			s.cancelFunc = nil
-		}
-	}()
+	//defer func() {
+	//	if s.cancelFunc != nil {
+	//		s.cancelFunc()
+	//		s.cancelFunc = nil
+	//	}
+	//}()
+	if s.consumer == nil {
+		return nil
+	}
+
 	if e := s.consumer.Close(); e != nil {
 		return NewKafkaError(ErrorCodeIllegalState, "error when closing subscriber: %v", e)
 	}
@@ -84,7 +86,7 @@ func (s *saramaSubscriber) Close() error {
 }
 
 func (s *saramaSubscriber) AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error {
-	return s.dispatcher.addHandler(handlerFunc, opts)
+	return s.dispatcher.addHandler(handlerFunc, s.config, opts)
 }
 
 // handlePartitions intended to run in separate goroutine
@@ -113,7 +115,6 @@ func (s *saramaSubscriber) handlePartitions(ctx context.Context, partitions []sa
 			continue
 		}
 		childCtx := utils.MakeMutableContext(ctx)
-		s.msgLogger.LogReceivedMessage(childCtx, msg)
 		go s.handleMessage(childCtx, msg)
 	}
 }

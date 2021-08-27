@@ -76,7 +76,7 @@ type Producer interface {
 	Close() error
 }
 
-type ProducerInterceptor interface {
+type ProducerMessageInterceptor interface {
 	// Intercept is called before raw message is prepared and send.
 	// Implementations can modify fields of MessageContext to manipulate sending behaviour.
 	// When error is returned, Producer would cancel operation. Otherwise, a non-nil MessageContext must be returned
@@ -84,7 +84,7 @@ type ProducerInterceptor interface {
 }
 
 // ProducerMessageFinalizer is the interface for other package to finalize message sending process.
-// When any ProducerInterceptor also implements ProducerMessageFinalizer, the Finalize function will be invoked
+// When any ProducerMessageInterceptor also implements ProducerMessageFinalizer, the Finalize function will be invoked
 // after message delivery is confirmed
 type ProducerMessageFinalizer interface {
 	// Finalize is called after message delivery is confirmed.
@@ -144,4 +144,33 @@ type GroupConsumer interface {
 
 	// Close must be called to release any resource
 	Close() error
+}
+
+type ConsumerDispatchInterceptor interface {
+	// Intercept is called before message is decoded and consumed by registered handlers.
+	// Implementations can modify fields of MessageContext to manipulate behaviour.
+	// When error is returned, dispatcher would cancel operation. Otherwise, a non-nil MessageContext must be returned
+	Intercept(msgCtx *MessageContext) (*MessageContext, error)
+}
+
+// ConsumerDispatchFinalizer is the interface for other package to finalize message processing.
+// When any ConsumerDispatchInterceptor also implements ConsumerDispatchFinalizer, the Finalize function will be invoked
+// after message processing finished
+type ConsumerDispatchFinalizer interface {
+	// Finalize is called after message processing is finished by handlers.
+	// Note: the *MessageContext will be discarded after all finalizers finished processing.
+	// 		 So modifying given message context would only affect subsequent ConsumerDispatchFinalizer.Finalize on same message
+	// Note 2: Finalize may also choose to handle given err and returns nil error.
+	//		   In such case, subsequent ConsumerDispatchFinalizer.Finalize on same message would be invoked as if there was no error
+	Finalize(msgCtx *MessageContext, err error) (*MessageContext, error)
+}
+
+type ConsumerHandlerInterceptor interface {
+	// BeforeHandling is called after message is decoded and before handled by each registered handlers.
+	// Implementations can modify fields of MessageContext to manipulate behaviour.
+	// When error is returned, dispatcher would cancel operation. Otherwise, a non-nil MessageContext must be returned
+	BeforeHandling(ctx context.Context, msg *Message) (context.Context, error)
+
+	// AfterHandling is called after each registered handlers handles the message
+	AfterHandling(ctx context.Context, msg *Message, err error) (context.Context, error)
 }

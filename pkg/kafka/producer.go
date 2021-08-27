@@ -11,7 +11,7 @@ type saramaProducer struct {
 	topic        string
 	keyEncoder   Encoder
 	msgLogger    MessageLogger
-	interceptors []ProducerInterceptor
+	interceptors []ProducerMessageInterceptor
 	syncProducer sarama.SyncProducer
 }
 
@@ -72,7 +72,7 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 	case modeSync:
 		partition, offset, e := p.syncProducer.SendMessage(saramaMessage)
 		// apply finalizers
-		msgCtx, err = p.finalizeMessage(msgCtx, partition, offset, e)
+		err = p.finalizeSend(msgCtx, partition, offset, e)
 	default:
 		err = ErrorSubTypeIllegalProducerUsage.WithMessage("%v Mode is not supported", msgCtx.Mode)
 	}
@@ -109,7 +109,7 @@ func (p *saramaProducer) prepare(ctx context.Context, v interface{}) *MessageCon
 	return &msgCtx
 }
 
-func (p *saramaProducer) finalizeMessage(msgCtx *MessageContext, partition int32, offset int64, err error) (*MessageContext, error) {
+func (p *saramaProducer) finalizeSend(msgCtx *MessageContext, partition int32, offset int64, err error) error {
 	for _, interceptor := range p.interceptors {
 		switch finalizer := interceptor.(type) {
 		case ProducerMessageFinalizer:
@@ -117,14 +117,14 @@ func (p *saramaProducer) finalizeMessage(msgCtx *MessageContext, partition int32
 		}
 	}
 	if err == nil {
-		return msgCtx, nil
+		return nil
 	}
 
 	switch {
 	case errors.Is(err, ErrorCategoryKafka):
-		return msgCtx, err
+		return err
 	default:
-		return msgCtx, NewKafkaError(ErrorSubTypeCodeProducerGeneral, err.Error(), err)
+		return NewKafkaError(ErrorSubTypeCodeProducerGeneral, err.Error(), err)
 	}
 }
 

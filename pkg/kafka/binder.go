@@ -16,23 +16,28 @@ type configDefaults struct {
 }
 
 type SaramaKafkaBinder struct {
-	properties     *KafkaProperties
-	brokers        []string
-	initOnce       sync.Once
-	defaults       configDefaults
+	properties           *KafkaProperties
+	brokers              []string
+	initOnce             sync.Once
+	defaults             configDefaults
+	producerInterceptors []ProducerMessageInterceptor
+	consumerInterceptors []ConsumerDispatchInterceptor
+	handlerInterceptors  []ConsumerHandlerInterceptor
+
 	globalClient   sarama.Client
 	adminClient    sarama.ClusterAdmin
 	producers      map[string]io.Closer
 	subscribers    map[string]io.Closer
 	consumerGroups map[string]io.Closer
-	interceptors   []ProducerInterceptor
 }
 
 type factoryDI struct {
 	fx.In
-	Lifecycle    fx.Lifecycle
-	Properties   KafkaProperties
-	Interceptors []ProducerInterceptor `group:"kafka"`
+	Lifecycle            fx.Lifecycle
+	Properties           KafkaProperties
+	ProducerInterceptors []ProducerMessageInterceptor  `group:"kafka"`
+	ConsumerInterceptors []ConsumerDispatchInterceptor `group:"kafka"`
+	HandlerInterceptors  []ConsumerHandlerInterceptor  `group:"kafka"`
 }
 
 func NewSaramaProducerFactory(di factoryDI) Binder {
@@ -42,9 +47,11 @@ func NewSaramaProducerFactory(di factoryDI) Binder {
 		producers:      make(map[string]io.Closer),
 		subscribers:    make(map[string]io.Closer),
 		consumerGroups: make(map[string]io.Closer),
-		interceptors: append(di.Interceptors,
+		producerInterceptors: append(di.ProducerInterceptors,
 			mimeTypeProducerInterceptor{},
 		),
+		consumerInterceptors: di.ConsumerInterceptors,
+		handlerInterceptors:  di.HandlerInterceptors,
 	}
 	return s
 }
@@ -145,15 +152,16 @@ func (s *SaramaKafkaBinder) Initialize(_ context.Context) (err error) {
 		cfg := defaultSaramaConfig(s.properties)
 
 		// prepare defaults
-		prodCfg := defaultProducerConfig(cfg)
-		prodCfg.interceptors = append(prodCfg.interceptors, s.interceptors...)
+		producerCfg := defaultProducerConfig(cfg)
+		producerCfg.interceptors = append(producerCfg.interceptors, s.producerInterceptors...)
 
-		// TODO consumer
-		consConfig := defaultConsumerConfig(cfg)
+		consumerCfg := defaultConsumerConfig(cfg)
+		consumerCfg.dispatchInterceptors = append(consumerCfg.dispatchInterceptors, s.consumerInterceptors...)
+		consumerCfg.handlerInterceptors = append(consumerCfg.handlerInterceptors, s.handlerInterceptors...)
 
 		s.defaults = configDefaults{
-			producerConfig: *prodCfg,
-			consumerConfig: *consConfig,
+			producerConfig: *producerCfg,
+			consumerConfig: *consumerCfg,
 		}
 
 		// create a global client
