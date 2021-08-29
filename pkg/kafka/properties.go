@@ -2,19 +2,23 @@ package kafka
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
+	"strings"
+	"time"
 )
 
 const (
-	ConfigKafkaPrefix = "kafka"
+	ConfigKafkaPrefix        = "kafka"
+	ConfigKafkaBindingPrefix = "kafka.bindings"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
 type KafkaProperties struct {
 	Brokers utils.CommaSeparatedSlice `json:"brokers"`
 	Net     Net                       `json:"net"`
-	Binder BinderProperties `json:"binder"`
+	Binder  BinderProperties          `json:"binder"`
 }
 
 type Net struct {
@@ -35,15 +39,75 @@ type SASL struct {
 }
 
 type BinderProperties struct {
-	
+	InitInterval    utils.Duration    `json:"init-interval"`
+	DefaultBinding  BindingProperties `json:"default-binding"`
+	MonitorInterval utils.Duration    `json:"monitor-interval"`
+}
+
+const (
+	AckModeModeAll   AckMode = "all"
+	AckModeModeLocal AckMode = "local"
+	AckModeModeNone  AckMode = "none"
+)
+
+type AckMode string
+
+func (m *AckMode) UnmarshalText(data []byte) error {
+	switch strings.ToLower(string(data)) {
+	case string(AckModeModeAll):
+		*m = AckModeModeAll
+	case string(AckModeModeLocal):
+		*m = AckModeModeLocal
+	case string(AckModeModeNone):
+		*m = AckModeModeNone
+	default:
+		*m = AckModeModeNone
+	}
+	return nil
+}
+
+type BindingProperties struct {
+	Producer ProducerProperties `json:"producer"`
+	Consumer ConsumerProperties `json:"consumer"`
 }
 
 type ProducerProperties struct {
-
+	LogLevel     *log.LoggingLevel      `json:"log-level"`
+	AckMode      *AckMode               `json:"ack-mode"`
+	AckTimeout   *utils.Duration        `json:"ack-timeout"`
+	MaxRetry     *int                   `json:"max-retry"`
+	Backoff      *utils.Duration        `json:"backoff-interval"`
+	Provisioning ProvisioningProperties `json:"provisioning"`
 }
 
 type ConsumerProperties struct {
+	LogLevel *log.LoggingLevel       `json:"log-level"`
+	Backoff  *utils.Duration         `json:"backoff-interval"`
+	Group    ConsumerGroupProperties `json:"group"`
+}
 
+type ProvisioningProperties struct {
+	// AutoCreateTopic when topic doesn't exist, whether attempt to create one
+	AutoCreateTopic *bool `json:"auto-create-topic"`
+
+	// AutoAddPartitions when actual partition counts is less than partitionCount, whether attempt to add more partitions
+	AutoAddPartitions *bool `json:"auto-add-partitions"`
+
+	// allowLowerPartitions when actual partition counts is less than partitionCount but autoAddPartitions is false,
+	// whether return an error
+	AllowLowerPartitions *bool `json:"allow-lower-partitions"`
+
+	// PartitionCount number of partitions of given topic
+	PartitionCount *int32 `json:"partition-count"`
+
+	// ReplicationFactor number of replicas per partition when creating topic
+	ReplicationFactor *int16 `json:"replication-factor"`
+}
+
+type ConsumerGroupProperties struct {
+	JoinTimeout *utils.Duration `json:"join-timeout"`
+	MaxRetry    *int            `json:"max-retry"`
+	Backoff     *utils.Duration `json:"backoff-interval"`
 }
 
 func BindKafkaProperties(ctx *bootstrap.ApplicationContext) KafkaProperties {
@@ -53,6 +117,11 @@ func BindKafkaProperties(ctx *bootstrap.ApplicationContext) KafkaProperties {
 				Enable:    false,
 				Handshake: true,
 			},
+		},
+		Binder: BinderProperties{
+			InitInterval:    utils.Duration(5 * time.Second),
+			MonitorInterval: utils.Duration(120 * time.Second),
+			DefaultBinding:  BindingProperties{},
 		},
 	}
 	if err := ctx.Config().Bind(&props, ConfigKafkaPrefix); err != nil {

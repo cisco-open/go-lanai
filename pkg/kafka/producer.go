@@ -21,11 +21,10 @@ type saramaProducer struct {
 }
 
 func newSaramaProducer(topic string, addrs []string, config *producerConfig) (*saramaProducer, error) {
-	c := *config //make a copy so that we don't change the original config
 	//sync producer must have these two properties set to true
-	c.Producer.Return.Successes = true
-	c.Producer.Return.Errors = true
-	c.Producer.Partitioner = func(topic string) sarama.Partitioner {
+	config.Producer.Return.Successes = true
+	config.Producer.Return.Errors = true
+	config.Producer.Partitioner = func(topic string) sarama.Partitioner {
 		return sarama.NewRandomPartitioner(topic)
 	}
 
@@ -93,7 +92,7 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 func (p *saramaProducer) Start(_ context.Context) error {
 	p.Lock()
 	defer p.Unlock()
-	internal, e := sarama.NewSyncProducer(p.brokers, p.config.Config)
+	internal, e := sarama.NewSyncProducer(p.brokers, &p.config.Config)
 	if e != nil {
 		return translateSaramaBindingError(e, "unable to start producer: %v", e)
 	}

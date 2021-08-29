@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"github.com/Shopify/sarama"
 	"time"
@@ -44,30 +45,42 @@ type topicConfig struct {
 }
 
 type producerConfig struct {
-	*sarama.Config
+	sarama.Config
 	keyEncoder   Encoder
 	interceptors []ProducerMessageInterceptor
 	msgLogger    MessageLogger
 	provisioning topicConfig
 }
 
-func defaultProducerConfig(saramaCfg *sarama.Config) *producerConfig {
-	return &producerConfig{
-		Config:       saramaCfg,
-		keyEncoder:   binaryEncoder{},
-		interceptors: []ProducerMessageInterceptor{},
-		msgLogger:    newSaramaMessageLogger(),
-		provisioning: topicConfig{
-			autoCreateTopic:      true,
-			autoAddPartitions:    true,
-			allowLowerPartitions: true,
-			partitionCount:       1,
-			replicationFactor:    1,
-		},
+type ProducerOptions func(*producerConfig)
+
+// WithProducerProperties apply options configured via ProducerProperties
+func WithProducerProperties(p *ProducerProperties) ProducerOptions {
+	return func(cfg *producerConfig) {
+		if p.AckMode != nil {
+			switch *p.AckMode {
+			case AckModeModeAll:
+				RequireAllAck()(cfg)
+			case AckModeModeLocal:
+				RequireLocalAck()(cfg)
+			case AckModeModeNone:
+				RequireNoAck()(cfg)
+			}
+		}
+
+		if p.LogLevel != nil {
+			WithProducerLogLevel(*p.LogLevel)(cfg)
+		}
+		utils.MustSetIfNotNil(&cfg.Config.Producer.Timeout, p.AckTimeout)
+		utils.MustSetIfNotNil(&cfg.Config.Producer.Retry.Max, p.MaxRetry)
+		utils.MustSetIfNotNil(&cfg.Config.Producer.Retry.Backoff, p.Backoff)
+		utils.MustSetIfNotNil(&cfg.provisioning.autoCreateTopic, p.Provisioning.AutoCreateTopic)
+		utils.MustSetIfNotNil(&cfg.provisioning.autoAddPartitions, p.Provisioning.AutoAddPartitions)
+		utils.MustSetIfNotNil(&cfg.provisioning.allowLowerPartitions, p.Provisioning.AllowLowerPartitions)
+		utils.MustSetIfNotNil(&cfg.provisioning.partitionCount, p.Provisioning.PartitionCount)
+		utils.MustSetIfNotNil(&cfg.provisioning.replicationFactor, p.Provisioning.ReplicationFactor)
 	}
 }
-
-type ProducerOptions func(*producerConfig)
 
 // WithKeyEncoder configures Producer with given encoder for serializing message key
 func WithKeyEncoder(enc Encoder) ProducerOptions {
@@ -132,7 +145,7 @@ func AckTimeout(timeout time.Duration) ProducerOptions {
 ************************/
 
 type consumerConfig struct {
-	*sarama.Config
+	sarama.Config
 	dispatchInterceptors []ConsumerDispatchInterceptor
 	handlerInterceptors  []ConsumerHandlerInterceptor
 	msgLogger            MessageLogger
@@ -140,10 +153,16 @@ type consumerConfig struct {
 
 type ConsumerOptions func(*consumerConfig)
 
-func defaultConsumerConfig(saramaCfg *sarama.Config) *consumerConfig {
-	return &consumerConfig{
-		Config:    saramaCfg,
-		msgLogger: newSaramaMessageLogger(),
+// WithConsumerProperties apply options configured via ConsumerProperties
+func WithConsumerProperties(p *ConsumerProperties) ConsumerOptions {
+	return func(cfg *consumerConfig) {
+		if p.LogLevel != nil {
+			WithConsumerLogLevel(*p.LogLevel)(cfg)
+		}
+		utils.MustSetIfNotNil(&cfg.Consumer.Retry.Backoff, p.Backoff)
+		utils.MustSetIfNotNil(&cfg.Consumer.Group.Rebalance.Timeout, p.Group.JoinTimeout)
+		utils.MustSetIfNotNil(&cfg.Consumer.Group.Rebalance.Retry.Max, p.Group.MaxRetry)
+		utils.MustSetIfNotNil(&cfg.Consumer.Group.Rebalance.Retry.Backoff, p.Group.Backoff)
 	}
 }
 
@@ -174,7 +193,7 @@ func defaultMessageConfig() messageConfig {
 	return messageConfig{
 		ValueEncoder: jsonEncoder{},
 		//Key:          uuid.New(),
-		Mode:         modeSync,
+		Mode: modeSync,
 	}
 }
 

@@ -58,7 +58,7 @@ func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
 	}
 
 	var e error
-	if s.consumer, e = sarama.NewConsumer(s.brokers, s.config.Config); e != nil {
+	if s.consumer, e = sarama.NewConsumer(s.brokers, &s.config.Config); e != nil {
 		err = translateSaramaBindingError(e, e.Error())
 		return
 	}

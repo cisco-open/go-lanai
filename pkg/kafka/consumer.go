@@ -61,7 +61,7 @@ func (g *saramaGroupConsumer) Start(ctx context.Context) (err error) {
 	}
 
 	var e error
-	g.consumer, e = sarama.NewConsumerGroup(g.brokers, g.group, g.config.Config)
+	g.consumer, e = sarama.NewConsumerGroup(g.brokers, g.group, &g.config.Config)
 	if e != nil {
 		err = translateSaramaBindingError(e, e.Error())
 		return
