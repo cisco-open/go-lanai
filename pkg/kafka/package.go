@@ -13,7 +13,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.KafkaPrecedence,
 	Options: []fx.Option{
 		fx.Provide(BindKafkaProperties),
-		fx.Provide(NewSaramaProducerFactory),
+		fx.Provide(NewKafkaBinder),
 		fx.Invoke(initialize),
 	},
 }

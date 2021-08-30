@@ -43,7 +43,7 @@ type factoryDI struct {
 	HandlerInterceptors  []ConsumerHandlerInterceptor  `group:"kafka"`
 }
 
-func NewSaramaProducerFactory(di factoryDI) Binder {
+func NewKafkaBinder(di factoryDI) Binder {
 	s := &SaramaKafkaBinder{
 		appConfig:  di.AppContext.Config(),
 		properties: &di.Properties,
