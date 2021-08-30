@@ -106,8 +106,8 @@ type Health interface {
 }
 
 type Options struct {
-	ShowDetails     bool
-	ShowCompoenents bool
+	ShowDetails    bool
+	ShowComponents bool
 }
 
 type Indicator interface {

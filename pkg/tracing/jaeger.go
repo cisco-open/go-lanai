@@ -10,14 +10,31 @@ import (
 )
 
 func NewDefaultTracer() (opentracing.Tracer, io.Closer) {
-	return jaeger.NewTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
+	return newJaegerTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
 }
 
 func NewJaegerTracer(ctx *bootstrap.ApplicationContext, jp *JaegerProperties, sp *SamplerProperties) (opentracing.Tracer, io.Closer) {
 	name := ctx.Name()
 	sampler := newSampler(ctx, sp)
 	reporter := newReporter(ctx, jp, sp)
-	return jaeger.NewTracer(name, sampler, reporter)
+	return newJaegerTracer(name, sampler, reporter)
+}
+
+// newJaegerTracer we use B3 single header compatible format, this is compatible with Spring-Sleuth powered services
+// See https://github.com/openzipkin/b3-propagation#single-header
+// See https://github.com/jaegertracing/jaeger-client-go/blob/master/zipkin/README.md#NewZipkinB3HTTPHeaderPropagator
+func newJaegerTracer(serviceName string, sampler jaeger.Sampler, reporter jaeger.Reporter,) (opentracing.Tracer, io.Closer) {
+	b3HttpPropagator := NewZipkinB3Propagator()
+	b3SingleHeaderPropagator := NewZipkinB3Propagator(SingleHeader())
+	zipkinOpts := []jaeger.TracerOption {
+		jaeger.TracerOptions.Injector(opentracing.HTTPHeaders, b3HttpPropagator),
+		jaeger.TracerOptions.Injector(opentracing.TextMap, b3SingleHeaderPropagator),
+		jaeger.TracerOptions.Extractor(opentracing.HTTPHeaders, b3HttpPropagator),
+		jaeger.TracerOptions.Extractor(opentracing.TextMap, b3SingleHeaderPropagator),
+		// Zipkin shares span ID between client and server spans; it must be enabled via the following option.
+		jaeger.TracerOptions.ZipkinSharedRPCSpan(true),
+	}
+	return jaeger.NewTracer(serviceName, sampler, reporter, zipkinOpts...)
 }
 
 func newSampler(ctx context.Context, sp *SamplerProperties) jaeger.Sampler {

@@ -12,6 +12,7 @@ import (
 	kitconsul "github.com/go-kit/kit/sd/consul"
 	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
+	"go.uber.org/fx"
 	"strings"
 )
 
@@ -31,27 +32,34 @@ func Deregister(ctx context.Context, connection *consul.Connection, registration
 	registrar.Deregister()
 }
 
-func NewRegistration(appContext *bootstrap.ApplicationContext, discoveryProperties DiscoveryProperties, serverProperties web.ServerProperties) *api.AgentServiceRegistration {
+type regDI struct {
+	fx.In
+	AppContext          *bootstrap.ApplicationContext
+	DiscoveryProperties DiscoveryProperties
+	ServerProperties    web.ServerProperties `optional:"true"`
+}
+
+func NewRegistration(di regDI) *api.AgentServiceRegistration {
 	var ipAddress string
 
-	if discoveryProperties.IpAddress != "" {
-		ipAddress = discoveryProperties.IpAddress
+	if di.DiscoveryProperties.IpAddress != "" {
+		ipAddress = di.DiscoveryProperties.IpAddress
 	} else {
-		ipAddress, _ = netutil.GetIp(discoveryProperties.Interface)
+		ipAddress, _ = netutil.GetIp(di.DiscoveryProperties.Interface)
 	}
 
-	appName := appContext.Name()
+	appName := di.AppContext.Name()
 	registration := &api.AgentServiceRegistration{
-		Kind: api.ServiceKindTypical,
-		ID:   fmt.Sprintf("%s-%d-%x", appName, discoveryProperties.Port, cryptoutils.RandomBytes(5)),
-		Name: appName,
-		Tags: createTags(discoveryProperties, serverProperties),
-		Port: discoveryProperties.Port,
+		Kind:    api.ServiceKindTypical,
+		ID:      fmt.Sprintf("%s-%d-%x", appName, di.DiscoveryProperties.Port, cryptoutils.RandomBytes(5)),
+		Name:    appName,
+		Tags:    createTags(di.DiscoveryProperties, di.ServerProperties),
+		Port:    di.DiscoveryProperties.Port,
 		Address: ipAddress,
 		Check: &api.AgentServiceCheck{
-			HTTP: fmt.Sprintf("%s://%s:%d%s", discoveryProperties.Scheme, ipAddress, discoveryProperties.Port, discoveryProperties.HealthCheckPath),
-			Interval: discoveryProperties.HealthCheckInterval,
-			DeregisterCriticalServiceAfter: discoveryProperties.HealthCheckCriticalTimeout},
+			HTTP:                           fmt.Sprintf("%s://%s:%d%s", di.DiscoveryProperties.Scheme, ipAddress, di.DiscoveryProperties.Port, di.DiscoveryProperties.HealthCheckPath),
+			Interval:                       di.DiscoveryProperties.HealthCheckInterval,
+			DeregisterCriticalServiceAfter: di.DiscoveryProperties.HealthCheckCriticalTimeout},
 	}
 	return registration
 }
@@ -66,21 +74,21 @@ func createTags(discoveryProperties DiscoveryProperties, serverProperties web.Se
 
 var COMPONENT_ATTRIBUTES_MAPPING = map[string]string{
 	"serviceName": "application.name",
-	"context": "server.context-path",
-	"name": "info.app.attributes.displayName",
+	"context":     "server.context-path",
+	"name":        "info.app.attributes.displayName",
 	"description": "info.app.description",
-	"parent": "info.app.attributes.parent",
-	"type": "info.app.attributes.type",
+	"parent":      "info.app.attributes.parent",
+	"type":        "info.app.attributes.type",
 }
 
 type DefaultCustomizer struct {
-	instanceUuid uuid.UUID
+	instanceUuid        uuid.UUID
 	componentAttributes map[string]string
 }
 
-func NewDefaultCustomizer(appContext *bootstrap.ApplicationContext) *DefaultCustomizer{
+func NewDefaultCustomizer(appContext *bootstrap.ApplicationContext) *DefaultCustomizer {
 	return &DefaultCustomizer{
-		instanceUuid: uuid.New(),
+		instanceUuid:        uuid.New(),
 		componentAttributes: getComponentAttributes(appContext),
 	}
 }

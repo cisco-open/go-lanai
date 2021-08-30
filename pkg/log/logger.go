@@ -47,6 +47,8 @@ func (l *logger) WithLevel(lvl LoggingLevel) Logger {
 		leveled = level.Warn(l.Logger)
 	case LevelError:
 		leveled = level.Error(l.Logger)
+	case LevelOff:
+		leveled = log.NewNopLogger()
 	default:
 		return l
 	}

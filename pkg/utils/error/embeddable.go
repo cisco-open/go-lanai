@@ -30,21 +30,31 @@ func (e CodedError) Cause() error {
 	return e.Nested
 }
 
-// encoding.TextMarshaler
+// WithMessage make a concrete error with given error message
+func (e CodedError) WithMessage(msg string, args...interface{}) *CodedError {
+	return NewCodedError(e.ErrCode, fmt.Errorf(msg, args...))
+}
+
+// WithCause make a concrete error with given cause and error message
+func (e CodedError) WithCause(cause error, msg string, args...interface{}) *CodedError {
+	return NewCodedError(e.ErrCode, fmt.Errorf(msg, args...), cause)
+}
+
+// MarshalText implements encoding.TextMarshaler
 func (e CodedError) MarshalText() ([]byte, error) {
 	return []byte(e.Error()), nil
 }
 
-// encoding.BinaryMarshaler interface
+// MarshalBinary implements encoding.BinaryMarshaler interface
 // ErrCode, ErrMask, error.Error() are written into byte array in the mentioned order
 // ErrCode and ErrMask are written as 64 bits with binary.BigEndian
 // Note: currently we don't serialize Cause() to avoid cyclic reference
 func (e *CodedError) MarshalBinary() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
-	if err := binary.Write(buffer, binary.BigEndian, int64(e.ErrCode)); err != nil {
+	if err := binary.Write(buffer, binary.BigEndian, e.ErrCode); err != nil {
 		return nil, err
 	}
-	if err := binary.Write(buffer, binary.BigEndian, int64(e.ErrMask)); err != nil {
+	if err := binary.Write(buffer, binary.BigEndian, e.ErrMask); err != nil {
 		return nil, err
 	}
 	if _, err := buffer.WriteString(e.Error()); err != nil {
@@ -57,7 +67,7 @@ func (e *CodedError) MarshalBinary() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// encoding.BinaryUnmarshaler interface
+// UnmarshalBinary implements encoding.BinaryUnmarshaler interface
 func (e *CodedError) UnmarshalBinary(data []byte) error {
 	buffer := bytes.NewBuffer(data)
 	var code, mask int64
@@ -102,7 +112,7 @@ func (e *nestedError) Cause() error {
 	return e.cause
 }
 
-// encoding.BinaryMarshaler interface
+// MarshalBinary implements encoding.BinaryMarshaler interface
 // error.Error(), is written into byte array in the mentioned order
 // Note: currently we don't serialize Cause() to avoid cyclic reference
 func (e *nestedError) MarshalBinary() ([]byte, error) {
@@ -118,14 +128,14 @@ func (e *nestedError) MarshalBinary() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// encoding.BinaryUnmarshaler interface
+// UnmarshalBinary implements encoding.BinaryUnmarshaler interface
 func (e *nestedError) UnmarshalBinary(data []byte) (err error) {
 	buffer := bytes.NewBuffer(data)
 	errBytes, err := buffer.ReadString(byte(0))
 	if err != nil {
 		return err
 	}
-	e.error = errors.New(string(errBytes[:len(errBytes) - 1]))
+	e.error = errors.New(errBytes[:len(errBytes) - 1])
 	return
 }
 
@@ -146,12 +156,12 @@ func NewErrorCategory(code int64, e error) *CodedError {
 	return newCodedError(code, e, ReservedMask, nil)
 }
 
-func NewErrorType(code int64, e error) error {
+func NewErrorType(code int64, e error) *CodedError {
 	code = code & ErrorTypeMask
 	return newCodedError(code, e, ErrorTypeMask, nil)
 }
 
-func NewErrorSubType(code int64, e error) error {
+func NewErrorSubType(code int64, e error) *CodedError {
 	code = code & ErrorSubTypeMask
 	return newCodedError(code, e, ErrorSubTypeMask, nil)
 }
