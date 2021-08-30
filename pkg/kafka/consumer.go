@@ -12,7 +12,7 @@ type saramaGroupConsumer struct {
 	topic       string
 	group       string
 	brokers     []string
-	config      *consumerConfig
+	config       *bindingConfig
 	dispatcher  *saramaDispatcher
 	provisioner *saramaTopicProvisioner
 	started     bool
@@ -20,7 +20,7 @@ type saramaGroupConsumer struct {
 	cancelFunc  context.CancelFunc
 }
 
-func newSaramaGroupConsumer(topic string, group string, addrs []string, config *consumerConfig, provisioner *saramaTopicProvisioner) (*saramaGroupConsumer, error) {
+func newSaramaGroupConsumer(topic string, group string, addrs []string, config *bindingConfig, provisioner *saramaTopicProvisioner) (*saramaGroupConsumer, error) {
 	if group == "" {
 		return nil, ErrorSubTypeBindingInternal.WithMessage("group is required and cannot be empty")
 	}
@@ -61,14 +61,14 @@ func (g *saramaGroupConsumer) Start(ctx context.Context) (err error) {
 	}
 
 	var e error
-	g.consumer, e = sarama.NewConsumerGroup(g.brokers, g.group, &g.config.Config)
+	g.consumer, e = sarama.NewConsumerGroup(g.brokers, g.group, &g.config.sarama)
 	if e != nil {
 		err = translateSaramaBindingError(e, e.Error())
 		return
 	}
 
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	if g.config.Consumer.Return.Errors {
+	if g.config.sarama.Consumer.Return.Errors {
 		go g.monitorGroupErrors(cancelCtx, g.consumer)
 	}
 	go g.handleGroup(cancelCtx, g.consumer)
@@ -98,7 +98,7 @@ func (g *saramaGroupConsumer) Close() error {
 }
 
 func (g *saramaGroupConsumer) AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error {
-	return g.dispatcher.addHandler(handlerFunc, g.config, opts)
+	return g.dispatcher.addHandler(handlerFunc, &g.config.consumer, opts)
 }
 
 // monitorGroupErrors should be run in separate goroutine

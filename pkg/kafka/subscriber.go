@@ -11,23 +11,23 @@ import (
 
 type saramaSubscriber struct {
 	sync.Mutex
-	topic      string
-	brokers    []string
-	config     *consumerConfig
-	dispatcher *saramaDispatcher
+	topic       string
+	brokers     []string
+	config       *bindingConfig
+	dispatcher  *saramaDispatcher
 	provisioner *saramaTopicProvisioner
-	started    bool
-	consumer   sarama.Consumer
-	partitions []int32
-	cancelFunc context.CancelFunc
+	started     bool
+	consumer    sarama.Consumer
+	partitions  []int32
+	cancelFunc  context.CancelFunc
 }
 
-func newSaramaSubscriber(topic string, addrs []string, config *consumerConfig, provisioner *saramaTopicProvisioner) (*saramaSubscriber, error) {
+func newSaramaSubscriber(topic string, addrs []string, config *bindingConfig, provisioner *saramaTopicProvisioner) (*saramaSubscriber, error) {
 	return &saramaSubscriber{
-		topic:      topic,
-		brokers:    addrs,
-		config:     config,
-		dispatcher: newSaramaDispatcher(config),
+		topic:       topic,
+		brokers:     addrs,
+		config:      config,
+		dispatcher:  newSaramaDispatcher(config),
 		provisioner: provisioner,
 	}, nil
 }
@@ -58,7 +58,7 @@ func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
 	}
 
 	var e error
-	if s.consumer, e = sarama.NewConsumer(s.brokers, &s.config.Config); e != nil {
+	if s.consumer, e = sarama.NewConsumer(s.brokers, &s.config.sarama); e != nil {
 		err = translateSaramaBindingError(e, e.Error())
 		return
 	}
@@ -85,7 +85,7 @@ func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
 func (s *saramaSubscriber) Close() error {
 	s.Lock()
 	defer s.Unlock()
-	defer func() {s.started = false}()
+	defer func() { s.started = false }()
 
 	if s.cancelFunc != nil {
 		s.cancelFunc()
@@ -104,7 +104,7 @@ func (s *saramaSubscriber) Close() error {
 }
 
 func (s *saramaSubscriber) AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error {
-	return s.dispatcher.addHandler(handlerFunc, s.config, opts)
+	return s.dispatcher.addHandler(handlerFunc, &s.config.consumer, opts)
 }
 
 // handlePartitions intended to run in separate goroutine

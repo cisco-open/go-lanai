@@ -22,41 +22,45 @@ func defaultSaramaConfig(properties *KafkaProperties) (c *sarama.Config) {
 	return
 }
 
+/*************************************
+  Options for Producer and Consumer
+**************************************/
+
+// Note: the return type here have to be unnamed func for compiler to accept as both ProducerOptions and ConsumerOptions
+// 		 See https://golang.org/ref/spec#Type_identity
+
+// BindingName is a ProducerOptions or ConsumerOptions that specify the name of the binding.
+// This name is used to read BindingProperties from bootstrap.ApplicationConfig
+// If not specified, lower case of topic name is used.
+// Regardless if name is specified or if corresponding BindingProperties is found,
+// any ProducerOptions or ConsumerOptions used at compile time still apply.
+// The overriding order is as follows:
+// 		BindingProperties with matching name >
+//		BindingProperties with name "default" >
+//		ProducerOptions or ConsumerOptions >
+// 		prepared defaults during initialization
+func BindingName(name string) func(cfg *bindingConfig) {
+	return func(config *bindingConfig) {
+		if name != "" {
+			config.name = name
+		}
+	}
+}
+
+// LogLevel is a ProducerOptions or ConsumerOptions that specify log level of Producer, Subscriber or Consumer
+func LogLevel(level log.LoggingLevel) func(cfg *bindingConfig) {
+	return func(config *bindingConfig) {
+		config.msgLogger = config.msgLogger.WithLevel(level)
+	}
+}
+
 /***********************
   Options for producer
 ************************/
 
-type topicConfig struct {
-	// autoCreateTopic when topic doesn't exist, whether attempt to create one
-	autoCreateTopic bool
-
-	// autoAddPartitions when actual partition counts is less than partitionCount, whether attempt to add more partitions
-	autoAddPartitions bool
-
-	// allowLowerPartitions when actual partition counts is less than partitionCount but autoAddPartitions is false,
-	// whether return an error
-	allowLowerPartitions bool
-
-	// partitionCount number of partitions of given topic
-	partitionCount int32
-
-	// replicationFactor number of replicas per partition when creating topic
-	replicationFactor int16
-}
-
-type producerConfig struct {
-	sarama.Config
-	keyEncoder   Encoder
-	interceptors []ProducerMessageInterceptor
-	msgLogger    MessageLogger
-	provisioning topicConfig
-}
-
-type ProducerOptions func(*producerConfig)
-
 // WithProducerProperties apply options configured via ProducerProperties
 func WithProducerProperties(p *ProducerProperties) ProducerOptions {
-	return func(cfg *producerConfig) {
+	return func(cfg *bindingConfig) {
 		if p.AckMode != nil {
 			switch *p.AckMode {
 			case AckModeModeAll:
@@ -69,45 +73,38 @@ func WithProducerProperties(p *ProducerProperties) ProducerOptions {
 		}
 
 		if p.LogLevel != nil {
-			WithProducerLogLevel(*p.LogLevel)(cfg)
+			LogLevel(*p.LogLevel)(cfg)
 		}
-		utils.MustSetIfNotNil(&cfg.Config.Producer.Timeout, p.AckTimeout)
-		utils.MustSetIfNotNil(&cfg.Config.Producer.Retry.Max, p.MaxRetry)
-		utils.MustSetIfNotNil(&cfg.Config.Producer.Retry.Backoff, p.Backoff)
-		utils.MustSetIfNotNil(&cfg.provisioning.autoCreateTopic, p.Provisioning.AutoCreateTopic)
-		utils.MustSetIfNotNil(&cfg.provisioning.autoAddPartitions, p.Provisioning.AutoAddPartitions)
-		utils.MustSetIfNotNil(&cfg.provisioning.allowLowerPartitions, p.Provisioning.AllowLowerPartitions)
-		utils.MustSetIfNotNil(&cfg.provisioning.partitionCount, p.Provisioning.PartitionCount)
-		utils.MustSetIfNotNil(&cfg.provisioning.replicationFactor, p.Provisioning.ReplicationFactor)
+		utils.MustSetIfNotNil(&cfg.sarama.Producer.Timeout, p.AckTimeout)
+		utils.MustSetIfNotNil(&cfg.sarama.Producer.Retry.Max, p.MaxRetry)
+		utils.MustSetIfNotNil(&cfg.sarama.Producer.Retry.Backoff, p.Backoff)
+		utils.MustSetIfNotNil(&cfg.producer.provisioning.autoCreateTopic, p.Provisioning.AutoCreateTopic)
+		utils.MustSetIfNotNil(&cfg.producer.provisioning.autoAddPartitions, p.Provisioning.AutoAddPartitions)
+		utils.MustSetIfNotNil(&cfg.producer.provisioning.allowLowerPartitions, p.Provisioning.AllowLowerPartitions)
+		utils.MustSetIfNotNil(&cfg.producer.provisioning.partitionCount, p.Provisioning.PartitionCount)
+		utils.MustSetIfNotNil(&cfg.producer.provisioning.replicationFactor, p.Provisioning.ReplicationFactor)
 	}
 }
 
-// WithKeyEncoder configures Producer with given encoder for serializing message key
-func WithKeyEncoder(enc Encoder) ProducerOptions {
-	return func(config *producerConfig) {
-		config.keyEncoder = enc
+// KeyEncoder configures Producer with given encoder for serializing message key
+func KeyEncoder(enc Encoder) ProducerOptions {
+	return func(config *bindingConfig) {
+		config.producer.keyEncoder = enc
 	}
 }
 
-// WithPartitions configure Producer's topic provisioning, by specifying min partition required
+// Partitions configure Producer's topic provisioning, by specifying min partition required
 // and their replica number (min.insync.replicas) in case topics are auto-created
-func WithPartitions(partitionCount int, replicationFactor int) ProducerOptions {
-	return func(config *producerConfig) {
+func Partitions(partitionCount int, replicationFactor int) ProducerOptions {
+	return func(config *bindingConfig) {
 		if partitionCount < 1 {
 			partitionCount = 1
 		}
 		if replicationFactor < 1 {
 			replicationFactor = 1
 		}
-		config.provisioning.partitionCount = int32(partitionCount)
-		config.provisioning.replicationFactor = int16(replicationFactor)
-	}
-}
-
-// WithProducerLogLevel specify log level of internal message logger
-func WithProducerLogLevel(level log.LoggingLevel) ProducerOptions {
-	return func(config *producerConfig) {
-		config.msgLogger = config.msgLogger.WithLevel(level)
+		config.producer.provisioning.partitionCount = int32(partitionCount)
+		config.producer.provisioning.replicationFactor = int16(replicationFactor)
 	}
 }
 
@@ -115,28 +112,28 @@ func WithProducerLogLevel(level log.LoggingLevel) ProducerOptions {
 // The minimum number of in-sync replicas is configured on the broker via
 // the `min.insync.replicas` configuration Key.
 func RequireAllAck() ProducerOptions {
-	return func(config *producerConfig) {
-		config.Producer.RequiredAcks = sarama.WaitForAll
+	return func(config *bindingConfig) {
+		config.sarama.Producer.RequiredAcks = sarama.WaitForAll
 	}
 }
 
 // RequireLocalAck waits for only the local commit to succeed before responding.
 func RequireLocalAck() ProducerOptions {
-	return func(config *producerConfig) {
-		config.Producer.RequiredAcks = sarama.WaitForLocal
+	return func(config *bindingConfig) {
+		config.sarama.Producer.RequiredAcks = sarama.WaitForLocal
 	}
 }
 
 // RequireNoAck doesn't send any response, the TCP ACK is all you get.
 func RequireNoAck() ProducerOptions {
-	return func(config *producerConfig) {
-		config.Producer.RequiredAcks = sarama.NoResponse
+	return func(config *bindingConfig) {
+		config.sarama.Producer.RequiredAcks = sarama.NoResponse
 	}
 }
 
 func AckTimeout(timeout time.Duration) ProducerOptions {
-	return func(config *producerConfig) {
-		config.Producer.Timeout = timeout
+	return func(config *bindingConfig) {
+		config.sarama.Producer.Timeout = timeout
 	}
 }
 
@@ -144,32 +141,16 @@ func AckTimeout(timeout time.Duration) ProducerOptions {
   Options for consumer
 ************************/
 
-type consumerConfig struct {
-	sarama.Config
-	dispatchInterceptors []ConsumerDispatchInterceptor
-	handlerInterceptors  []ConsumerHandlerInterceptor
-	msgLogger            MessageLogger
-}
-
-type ConsumerOptions func(*consumerConfig)
-
 // WithConsumerProperties apply options configured via ConsumerProperties
 func WithConsumerProperties(p *ConsumerProperties) ConsumerOptions {
-	return func(cfg *consumerConfig) {
+	return func(cfg *bindingConfig) {
 		if p.LogLevel != nil {
-			WithConsumerLogLevel(*p.LogLevel)(cfg)
+			LogLevel(*p.LogLevel)(cfg)
 		}
-		utils.MustSetIfNotNil(&cfg.Consumer.Retry.Backoff, p.Backoff)
-		utils.MustSetIfNotNil(&cfg.Consumer.Group.Rebalance.Timeout, p.Group.JoinTimeout)
-		utils.MustSetIfNotNil(&cfg.Consumer.Group.Rebalance.Retry.Max, p.Group.MaxRetry)
-		utils.MustSetIfNotNil(&cfg.Consumer.Group.Rebalance.Retry.Backoff, p.Group.Backoff)
-	}
-}
-
-// WithConsumerLogLevel specify log level of internal message logger
-func WithConsumerLogLevel(level log.LoggingLevel) ConsumerOptions {
-	return func(config *consumerConfig) {
-		config.msgLogger = config.msgLogger.WithLevel(level)
+		utils.MustSetIfNotNil(&cfg.sarama.Consumer.Retry.Backoff, p.Backoff)
+		utils.MustSetIfNotNil(&cfg.sarama.Consumer.Group.Rebalance.Timeout, p.Group.JoinTimeout)
+		utils.MustSetIfNotNil(&cfg.sarama.Consumer.Group.Rebalance.Retry.Max, p.Group.MaxRetry)
+		utils.MustSetIfNotNil(&cfg.sarama.Consumer.Group.Rebalance.Retry.Backoff, p.Group.Backoff)
 	}
 }
 
@@ -200,7 +181,7 @@ func defaultMessageConfig() messageConfig {
 type MessageOptions func(config *messageConfig)
 
 // WithKey specify key used for the message. The key is typically used for partitioning.
-// Supported values depends on the WithKeyEncoder option on the Producer.
+// Supported values depends on the KeyEncoder option on the Producer.
 // Default encoder support following types:
 // 	- uuid.UUID
 // 	- string

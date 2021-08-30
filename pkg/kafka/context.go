@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"github.com/Shopify/sarama"
+	"time"
 )
 
 const (
@@ -26,6 +27,13 @@ type Message struct {
 	Payload interface{}
 }
 
+type MessageMetadata struct {
+	Key       []byte
+	Partition int
+	Offset    int
+	Timestamp time.Time
+}
+
 type Encoder interface {
 	// MIMEType returns the MIME type value when using the Encoder
 	MIMEType() string
@@ -45,6 +53,10 @@ type MessageContext struct {
 /************************
 	Binding
  ************************/
+
+type ProducerOptions func(cfg *bindingConfig)
+
+type ConsumerOptions func(cfg *bindingConfig)
 
 type Binder interface {
 	Produce(topic string, options ...ProducerOptions) (Producer, error)
@@ -175,4 +187,47 @@ type ConsumerHandlerInterceptor interface {
 
 	// AfterHandling is called after each registered handlers handles the message
 	AfterHandling(ctx context.Context, msg *Message, err error) (context.Context, error)
+}
+
+/************************
+	Internals
+ ************************/
+
+type bindingConfig struct {
+	name       string
+	properties BindingProperties
+	sarama     sarama.Config
+	producer   producerConfig
+	consumer   consumerConfig
+	msgLogger  MessageLogger
+}
+
+type producerConfig struct {
+	keyEncoder   Encoder
+	interceptors []ProducerMessageInterceptor
+	provisioning topicConfig
+}
+
+type consumerConfig struct {
+	dispatchInterceptors []ConsumerDispatchInterceptor
+	handlerInterceptors  []ConsumerHandlerInterceptor
+	msgLogger            MessageLogger
+}
+
+type topicConfig struct {
+	// autoCreateTopic when topic doesn't exist, whether attempt to create one
+	autoCreateTopic bool
+
+	// autoAddPartitions when actual partition counts is less than partitionCount, whether attempt to add more partitions
+	autoAddPartitions bool
+
+	// allowLowerPartitions when actual partition counts is less than partitionCount but autoAddPartitions is false,
+	// whether return an error
+	allowLowerPartitions bool
+
+	// partitionCount number of partitions of given topic
+	partitionCount int32
+
+	// replicationFactor number of replicas per partition when creating topic
+	replicationFactor int16
 }

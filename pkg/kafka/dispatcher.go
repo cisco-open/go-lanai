@@ -14,14 +14,16 @@ import (
 // 	func (ctx context.Context, [OPTIONAL_INPUT_PARAMS...]) error
 //
 //  Where OPTIONAL_INPUT_PARAMS could contain following components (of which order is not important):
-// 		- PAYLOAD_PARAM <payload PayloadType>: message payload, where PayloadType could be any type other than interface, function or chan.
-//		                         If PayloadType is interface{}, raw []byte will be used
-// 		- HEADERS_PARAM <headers Headers>: message headers
-// 		- RAW_MSG_PARAM <msg *Message>: raw message, where Message.Payload would be PayloadType if PAYLOAD_PARAM is also present, or []byte
+// 	- PAYLOAD_PARAM 	< AnyPayloadType >: 	message payload, where PayloadType could be any type other than interface, function or chan.
+//		                         				If PayloadType is interface{}, raw []byte will be used
+// 	- HEADERS_PARAM 	< Headers >: 			message headers
+// 	- METADATA_PARAM 	< *MessageMetadata >: 	message metadata, includes timestamp, keys, partition, etc.
+// 	- MESSAGE_PARAM 	< *Message >: 			raw message, where Message.Payload would be PayloadType if PAYLOAD_PARAM is also present, or []byte
 //
 // For Example:
 //
 // 	func Handle(ctx context.Context, payload *MyStruct) error
+// 	func Handle(ctx context.Context, payload *MyStruct, meta *MessageMetadata) error
 // 	func Handle(ctx context.Context, payload map[string]interface{}) error
 // 	func Handle(ctx context.Context, headers Headers, payload *MyStruct) error
 // 	func Handle(ctx context.Context, payload *MyStruct, raw *Message) error
@@ -32,10 +34,11 @@ type MessageHandlerFunc interface{}
 type MessageFilterFunc func(ctx context.Context, msg *Message) (shouldHandle bool)
 
 var (
-	reflectTypeContext = reflect.TypeOf((*context.Context)(nil)).Elem()
-	reflectTypeHeaders = reflect.TypeOf(Headers{})
-	reflectTypeMessage = reflect.TypeOf(&Message{})
-	reflectTypeError   = reflect.TypeOf((*error)(nil)).Elem()
+	reflectTypeContext  = reflect.TypeOf((*context.Context)(nil)).Elem()
+	reflectTypeHeaders  = reflect.TypeOf(Headers{})
+	reflectTypeMetadata = reflect.TypeOf(&MessageMetadata{})
+	reflectTypeMessage  = reflect.TypeOf(&Message{})
+	reflectTypeError    = reflect.TypeOf((*error)(nil)).Elem()
 )
 
 type param struct {
@@ -55,10 +58,11 @@ func (p param) assign(params []reflect.Value, v reflect.Value) error {
 }
 
 type params struct {
-	count   int
-	payload param
-	headers param
-	message param
+	count    int
+	payload  param
+	headers  param
+	metadata param
+	message  param
 }
 
 type handler struct {
@@ -74,10 +78,10 @@ type saramaDispatcher struct {
 	msgLogger    MessageLogger
 }
 
-func newSaramaDispatcher(cfg *consumerConfig) *saramaDispatcher {
+func newSaramaDispatcher(cfg *bindingConfig) *saramaDispatcher {
 	return &saramaDispatcher{
 		handlers:     []*handler{},
-		interceptors: cfg.dispatchInterceptors,
+		interceptors: cfg.consumer.dispatchInterceptors,
 		msgLogger:    cfg.msgLogger,
 	}
 }
@@ -107,6 +111,8 @@ func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, cfg *consumerConfig
 			}
 		case it.ConvertibleTo(reflectTypeHeaders):
 			h.params.headers = param{i, it}
+		case it.ConvertibleTo(reflectTypeMetadata):
+			h.params.metadata = param{i, it}
 		case it.ConvertibleTo(reflectTypeMessage):
 			h.params.message = param{i, it}
 		case h.params.payload.t == nil && d.isSupportedMessagePayloadType(it):
@@ -158,8 +164,8 @@ func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMess
 			Headers: headers,
 			Payload: raw.Value,
 		},
-		Source: source,
-		Topic: raw.Topic,
+		Source:     source,
+		Topic:      raw.Topic,
 		RawMessage: raw,
 	}
 
@@ -219,7 +225,7 @@ func (d saramaDispatcher) doDispatch(h *handler, msgCtx *MessageContext) (err er
 		return
 	}
 
-	err = d.invokeHandler(ctx, h, msg)
+	err = d.invokeHandler(ctx, h, msg, msgCtx)
 	return
 }
 
@@ -268,7 +274,7 @@ func (d saramaDispatcher) decodePayload(_ context.Context, typ reflect.Type, msg
 	return nil
 }
 
-func (d saramaDispatcher) invokeHandler(ctx context.Context, handler *handler, msg *Message) (err error) {
+func (d saramaDispatcher) invokeHandler(ctx context.Context, handler *handler, msg *Message, msgCtx *MessageContext) (err error) {
 	// prepare input params
 	in := make([]reflect.Value, handler.params.count)
 	in[0] = reflect.ValueOf(ctx)
@@ -280,6 +286,26 @@ func (d saramaDispatcher) invokeHandler(ctx context.Context, handler *handler, m
 	}
 	if e := handler.params.message.assign(in, reflect.ValueOf(msg)); e != nil {
 		return e
+	}
+
+	// message metadata
+	if handler.params.metadata.i != 0 {
+		var meta *MessageMetadata
+		switch raw := msgCtx.RawMessage.(type) {
+		case *sarama.ConsumerMessage:
+			meta = &MessageMetadata{
+				Key:       raw.Key,
+				Partition: int(raw.Partition),
+				Offset:    int(raw.Offset),
+				Timestamp: raw.Timestamp,
+			}
+		default:
+			meta = &MessageMetadata{}
+		}
+
+		if e := handler.params.metadata.assign(in, reflect.ValueOf(meta)); e != nil {
+			return e
+		}
 	}
 
 	// invoke

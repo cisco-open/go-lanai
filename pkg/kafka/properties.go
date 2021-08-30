@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	ConfigKafkaPrefix        = "kafka"
-	ConfigKafkaBindingPrefix = "kafka.bindings"
+	ConfigKafkaPrefix               = "kafka"
+	ConfigKafkaBindingPrefix        = "kafka.bindings"
+	ConfigKafkaDefaultBindingPrefix = "kafka.bindings.default"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -39,9 +40,10 @@ type SASL struct {
 }
 
 type BinderProperties struct {
-	InitInterval    utils.Duration    `json:"init-interval"`
-	DefaultBinding  BindingProperties `json:"default-binding"`
-	MonitorInterval utils.Duration    `json:"monitor-interval"`
+	InitialHeartbeat       utils.Duration `json:"init-heartbeat"`
+	HeartbeatCurveFactor   float64        `json:"heartbeat-curve-factor"`
+	HeartbeatCurveMidpoint float64        `json:"heartbeat-curve-midpoint"`
+	WatchdogHeartbeat      utils.Duration `json:"watchdog-heartbeat"`
 }
 
 const (
@@ -119,9 +121,10 @@ func BindKafkaProperties(ctx *bootstrap.ApplicationContext) KafkaProperties {
 			},
 		},
 		Binder: BinderProperties{
-			InitInterval:    utils.Duration(5 * time.Second),
-			MonitorInterval: utils.Duration(120 * time.Second),
-			DefaultBinding:  BindingProperties{},
+			InitialHeartbeat:       utils.Duration(5 * time.Second),
+			WatchdogHeartbeat:      utils.Duration(120 * time.Second),
+			HeartbeatCurveFactor:   0.5,
+			HeartbeatCurveMidpoint: 10, // recommend > 5
 		},
 	}
 	if err := ctx.Config().Bind(&props, ConfigKafkaPrefix); err != nil {

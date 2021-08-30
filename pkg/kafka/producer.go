@@ -13,29 +13,29 @@ type saramaProducer struct {
 	sync.Mutex
 	topic        string
 	brokers      []string
-	config       *producerConfig
+	config       *bindingConfig
 	keyEncoder   Encoder
 	msgLogger    MessageLogger
 	interceptors []ProducerMessageInterceptor
 	syncProducer sarama.SyncProducer
 }
 
-func newSaramaProducer(topic string, addrs []string, config *producerConfig) (*saramaProducer, error) {
+func newSaramaProducer(topic string, addrs []string, config *bindingConfig) (*saramaProducer, error) {
 	//sync producer must have these two properties set to true
-	config.Producer.Return.Successes = true
-	config.Producer.Return.Errors = true
-	config.Producer.Partitioner = func(topic string) sarama.Partitioner {
+	config.sarama.Producer.Return.Successes = true
+	config.sarama.Producer.Return.Errors = true
+	config.sarama.Producer.Partitioner = func(topic string) sarama.Partitioner {
 		return sarama.NewRandomPartitioner(topic)
 	}
 
-	order.SortStable(config.interceptors, order.OrderedFirstCompare)
+	order.SortStable(config.producer.interceptors, order.OrderedFirstCompare)
 	p := &saramaProducer{
 		topic:        topic,
 		brokers:      addrs,
 		config:       config,
-		keyEncoder:   config.keyEncoder,
+		keyEncoder:   config.producer.keyEncoder,
 		msgLogger:    config.msgLogger,
-		interceptors: config.interceptors,
+		interceptors: config.producer.interceptors,
 	}
 	return p, nil
 }
@@ -92,7 +92,7 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 func (p *saramaProducer) Start(_ context.Context) error {
 	p.Lock()
 	defer p.Unlock()
-	internal, e := sarama.NewSyncProducer(p.brokers, &p.config.Config)
+	internal, e := sarama.NewSyncProducer(p.brokers, &p.config.sarama)
 	if e != nil {
 		return translateSaramaBindingError(e, "unable to start producer: %v", e)
 	}

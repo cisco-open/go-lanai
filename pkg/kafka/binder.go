@@ -7,16 +7,11 @@ import (
 	"fmt"
 	"github.com/Shopify/sarama"
 	"go.uber.org/fx"
+	"math"
 	"strings"
 	"sync"
 	"time"
 )
-
-type defaults struct {
-	binding     BindingProperties
-	producerCfg producerConfig
-	consumerCfg consumerConfig
-}
 
 type SaramaKafkaBinder struct {
 	appConfig            bootstrap.ApplicationConfig
@@ -24,7 +19,7 @@ type SaramaKafkaBinder struct {
 	brokers              []string
 	initOnce             sync.Once
 	startOnce            sync.Once
-	defaults             defaults
+	defaults             bindingConfig
 	producerInterceptors []ProducerMessageInterceptor
 	consumerInterceptors []ConsumerDispatchInterceptor
 	handlerInterceptors  []ConsumerHandlerInterceptor
@@ -70,13 +65,15 @@ func NewSaramaProducerFactory(di factoryDI) Binder {
 	return s
 }
 
-func (s *SaramaKafkaBinder) prepareDefaults(saramaDefaults *sarama.Config) {
-	s.defaults = defaults{
-		producerCfg: producerConfig{
-			Config:       *saramaDefaults,
+func (b *SaramaKafkaBinder) prepareDefaults(ctx context.Context, saramaDefaults *sarama.Config) {
+	b.defaults = bindingConfig{
+		name:       "default",
+		properties: BindingProperties{},
+		sarama:     *saramaDefaults,
+		msgLogger:  newSaramaMessageLogger(),
+		producer: producerConfig{
 			keyEncoder:   binaryEncoder{},
-			interceptors: s.producerInterceptors,
-			msgLogger:    newSaramaMessageLogger(),
+			interceptors: b.producerInterceptors,
 			provisioning: topicConfig{
 				autoCreateTopic:      true,
 				autoAddPartitions:    true,
@@ -85,129 +82,144 @@ func (s *SaramaKafkaBinder) prepareDefaults(saramaDefaults *sarama.Config) {
 				replicationFactor:    1,
 			},
 		},
-		consumerCfg: consumerConfig{
-			Config:               *saramaDefaults,
-			dispatchInterceptors: s.consumerInterceptors,
-			handlerInterceptors:  s.handlerInterceptors,
+		consumer: consumerConfig{
+			dispatchInterceptors: b.consumerInterceptors,
+			handlerInterceptors:  b.handlerInterceptors,
 			msgLogger:            newSaramaMessageLogger(),
 		},
-		binding: s.properties.Binder.DefaultBinding,
+	}
+
+	// try load default properties
+	if e := b.appConfig.Bind(&b.defaults.properties, ConfigKafkaDefaultBindingPrefix); e != nil {
+		logger.WithContext(ctx).Infof("default kafka binding properties [%s.*] is not configured")
 	}
 }
 
-func (s *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (Producer, error) {
-	if _, ok := s.producers[topic]; ok {
+func (b *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (Producer, error) {
+	if _, ok := b.producers[topic]; ok {
 		logger.Warnf("producer for topic %s already exist. please use the existing instance", topic)
 		return nil, NewKafkaError(ErrorCodeProducerExists, "producer for topic %s already exist", topic)
 	}
 
-	cfg := s.defaults.producerCfg
+	// apply defaults and options
+	cfg := b.defaults // make a copy
+	cfg.name = strings.ToLower(topic)
 	for _, optionFunc := range options {
 		optionFunc(&cfg)
 	}
 
 	// load and apply properties
-	props := s.loadProperties(topic)
+	props := b.loadProperties(cfg.name)
 	WithProducerProperties(&props.Producer)(&cfg)
 
-	if e := s.provisioner.provisionTopic(topic, &cfg); e != nil {
+	if e := b.provisioner.provisionTopic(topic, &cfg); e != nil {
 		return nil, e
 	}
 
-	p, err := newSaramaProducer(topic, s.brokers, &cfg)
+	p, err := newSaramaProducer(topic, b.brokers, &cfg)
 
 	if err != nil {
 		return nil, err
 	} else {
-		s.producers[topic] = p
+		b.producers[topic] = p
 		return p, nil
 	}
 }
 
-func (s *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error) {
-	if _, ok := s.subscribers[topic]; ok {
+func (b *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error) {
+	if _, ok := b.subscribers[topic]; ok {
 		logger.Warnf("subscriber for topic %s already exist. please use the existing instance", topic)
 		return nil, NewKafkaError(ErrorCodeConsumerExists, "producer for topic %s already exist", topic)
 	}
 
-	cfg := s.defaults.consumerCfg
+	// apply defaults and options
+	cfg := b.defaults // make a copy
+	cfg.name = strings.ToLower(topic)
 	for _, optionFunc := range options {
 		optionFunc(&cfg)
 	}
 
 	// load and apply properties
-	props := s.loadProperties(topic)
+	props := b.loadProperties(cfg.name)
 	WithConsumerProperties(&props.Consumer)(&cfg)
 
-	sub, err := newSaramaSubscriber(topic, s.brokers, &cfg, s.provisioner)
+	sub, err := newSaramaSubscriber(topic, b.brokers, &cfg, b.provisioner)
 	if err != nil {
 		return nil, err
 	}
 
-	s.subscribers[topic] = sub
+	b.subscribers[topic] = sub
 	return sub, nil
 }
 
-func (s *SaramaKafkaBinder) Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error) {
-	if _, ok := s.consumerGroups[topic]; ok {
+func (b *SaramaKafkaBinder) Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error) {
+	if _, ok := b.consumerGroups[topic]; ok {
 		logger.Warnf("consumer group for topic %s already exist. please use the existing instance", topic)
 		return nil, NewKafkaError(ErrorCodeConsumerExists, "producer for topic %s already exist", topic)
 	}
 
-	cfg := s.defaults.consumerCfg
+	// apply defaults and options
+	cfg := b.defaults // make a copy
+	cfg.name = strings.ToLower(topic)
 	for _, optionFunc := range options {
 		optionFunc(&cfg)
 	}
 
 	// load and apply properties
-	props := s.loadProperties(topic)
+	props := b.loadProperties(cfg.name)
 	WithConsumerProperties(&props.Consumer)(&cfg)
 
-	cg, err := newSaramaGroupConsumer(topic, group, s.brokers, &cfg, s.provisioner)
+	cg, err := newSaramaGroupConsumer(topic, group, b.brokers, &cfg, b.provisioner)
 	if err != nil {
 		return nil, err
 	}
 
-	s.consumerGroups[topic] = cg
+	b.consumerGroups[topic] = cg
 	return cg, nil
 }
 
-func (s *SaramaKafkaBinder) ListTopics() (topics []string) {
-	topics = make([]string, 0, len(s.producers))
-	for t := range s.producers {
+func (b *SaramaKafkaBinder) ListTopics() (topics []string) {
+	topics = make([]string, 0, len(b.producers)+len(b.subscribers)+len(b.consumerGroups))
+	for t := range b.producers {
+		topics = append(topics, t)
+	}
+	for t := range b.subscribers {
+		topics = append(topics, t)
+	}
+	for t := range b.consumerGroups {
 		topics = append(topics, t)
 	}
 	return topics
 }
 
-func (s *SaramaKafkaBinder) Client() sarama.Client {
-	return s.globalClient
+func (b *SaramaKafkaBinder) Client() sarama.Client {
+	return b.globalClient
 }
 
 // Initialize implements BinderLifecycle, prepare for use, negotiate default configs, etc.
-func (s *SaramaKafkaBinder) Initialize(_ context.Context) (err error) {
-	s.initOnce.Do(func() {
-		cfg := defaultSaramaConfig(s.properties)
+func (b *SaramaKafkaBinder) Initialize(ctx context.Context) (err error) {
+	b.initOnce.Do(func() {
+		cfg := defaultSaramaConfig(b.properties)
 
 		// prepare defaults
-		s.prepareDefaults(cfg)
+		b.prepareDefaults(ctx, cfg)
 
 		// create a global client
-		s.globalClient, err = sarama.NewClient(s.brokers, cfg)
+		b.globalClient, err = sarama.NewClient(b.brokers, cfg)
 		if err != nil {
-			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", s.brokers, err), err)
+			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
 			return
 		}
 
-		s.adminClient, err = sarama.NewClusterAdmin(s.brokers, cfg)
+		b.adminClient, err = sarama.NewClusterAdmin(b.brokers, cfg)
 		if err != nil {
-			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", s.brokers, err), err)
+			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
 			return
 		}
 
-		s.provisioner = &saramaTopicProvisioner{
-			globalClient: s.globalClient,
-			adminClient:  s.adminClient,
+		b.provisioner = &saramaTopicProvisioner{
+			globalClient: b.globalClient,
+			adminClient:  b.adminClient,
 		}
 	})
 
@@ -215,83 +227,92 @@ func (s *SaramaKafkaBinder) Initialize(_ context.Context) (err error) {
 }
 
 // Start implements BinderLifecycle, start all bindings if not started yet (Producer, Subscriber, GroupConsumer, etc).
-func (s *SaramaKafkaBinder) Start(_ context.Context) (err error) {
-	s.startOnce.Do(func() {
+func (b *SaramaKafkaBinder) Start(_ context.Context) (err error) {
+	b.startOnce.Do(func() {
 		var loopCtx context.Context
-		loopCtx, s.monitorCancelFunc = s.monitor.Run(context.Background())
-		s.monitor.Repeat(s.tryStartTaskFunc(loopCtx), func(opt *loop.TaskOption) {
-			opt.RepeatIntervalFunc = s.tryStartRepeatIntervalFunc()
+		loopCtx, b.monitorCancelFunc = b.monitor.Run(context.Background())
+		b.monitor.Repeat(b.tryStartTaskFunc(loopCtx), func(opt *loop.TaskOption) {
+			opt.RepeatIntervalFunc = b.tryStartRepeatIntervalFunc()
 		})
 	})
 	return nil
 }
 
 // Shutdown implements BinderLifecycle, close resources
-func (s *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
-	if s.monitorCancelFunc != nil {
-		s.monitorCancelFunc()
+func (b *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
+	logger.WithContext(ctx).Infof("Kafka shutting down")
+
+	logger.WithContext(ctx).Debugf("stopping binding watchdog...")
+	if b.monitorCancelFunc != nil {
+		b.monitorCancelFunc()
 	}
 
-	for _, p := range s.producers {
+	logger.WithContext(ctx).Debugf("closing producers...")
+	for _, p := range b.producers {
 		if e := p.Close(); e != nil {
 			// since application is shutting down, we just log the error
 			logger.WithContext(ctx).Errorf("error while closing kafka producer: %v", e)
 		}
 	}
 
-	for _, p := range s.subscribers {
+	logger.WithContext(ctx).Debugf("closing subscribers...")
+	for _, p := range b.subscribers {
 		if e := p.Close(); e != nil {
 			// since application is shutting down, we just log the error
 			logger.WithContext(ctx).Errorf("error while closing kafka subscriber: %v", e)
 		}
 	}
 
-	for _, p := range s.consumerGroups {
+	logger.WithContext(ctx).Debugf("closing group consumers...")
+	for _, p := range b.consumerGroups {
 		if e := p.Close(); e != nil {
 			// since application is shutting down, we just log the error
 			logger.WithContext(ctx).Errorf("error while closing kafka consumer: %v", e)
 		}
 	}
 
-	if e := s.adminClient.Close(); e != nil {
+	logger.WithContext(ctx).Debugf("closing connections...")
+	if e := b.adminClient.Close(); e != nil {
 		logger.WithContext(ctx).Errorf("error while closing kafka admin client: %v", e)
 	}
 
-	if e := s.globalClient.Close(); e != nil {
+	if e := b.globalClient.Close(); e != nil {
 		logger.WithContext(ctx).Errorf("error while closing kafka global client: %v", e)
 	}
+
+	logger.WithContext(ctx).Infof("Kafka connections closed")
 	return nil
 }
 
 // loadProperties load properties for particular topic
-func (s *SaramaKafkaBinder) loadProperties(topic string) *BindingProperties {
-	prefix := ConfigKafkaBindingPrefix + "." + strings.ToLower(topic)
-	props := s.defaults.binding // make a copy
-	if e := s.appConfig.Bind(&props, prefix); e != nil {
-		props = s.defaults.binding // make a fresh copy
+func (b *SaramaKafkaBinder) loadProperties(name string) *BindingProperties {
+	prefix := ConfigKafkaBindingPrefix + "." + strings.ToLower(name)
+	props := b.defaults.properties // make a copy
+	if e := b.appConfig.Bind(&props, prefix); e != nil {
+		props = b.defaults.properties // make a fresh copy
 	}
 	return &props
 }
 
 // tryStartTaskFunc try to start any registered bindings if it's not started yet
 // this task should be run periodically to perform delayed start of any Subscriber or GroupConsumer
-func (s *SaramaKafkaBinder) tryStartTaskFunc(loopCtx context.Context) loop.TaskFunc {
+func (b *SaramaKafkaBinder) tryStartTaskFunc(loopCtx context.Context) loop.TaskFunc {
 	return func(_ context.Context, l *loop.Loop) (ret interface{}, err error) {
 		// we cannot use passed-in context, because this context will be cancelled as soon as this function finishes
 		allStarted := true
-		for _, lc := range s.producers {
+		for _, lc := range b.producers {
 			if e := lc.Start(loopCtx); e != nil {
 				allStarted = false
 			}
 		}
 
-		for _, lc := range s.subscribers {
+		for _, lc := range b.subscribers {
 			if e := lc.Start(loopCtx); e != nil {
 				allStarted = false
 			}
 		}
 
-		for _, lc := range s.consumerGroups {
+		for _, lc := range b.consumerGroups {
 			if e := lc.Start(loopCtx); e != nil {
 				allStarted = false
 			}
@@ -302,19 +323,62 @@ func (s *SaramaKafkaBinder) tryStartTaskFunc(loopCtx context.Context) loop.TaskF
 }
 
 // tryStartRepeatIntervalFunc decide repeat rate of tryStartTaskFunc
-// we try start bindings more frequently at beginning.
+// we repeat fast at beginning
 // when all bindings are successfully started, we reduce the repeating rate
-func (s *SaramaKafkaBinder) tryStartRepeatIntervalFunc() loop.RepeatIntervalFunc {
+// S-shaped curve.
+// Logistic Function 	https://en.wikipedia.org/wiki/Logistic_function
+//						https://en.wikipedia.org/wiki/Generalised_logistic_function
+func (b *SaramaKafkaBinder) tryStartRepeatIntervalFunc() loop.RepeatIntervalFunc {
+
+	var fn func(int) time.Duration
+	n := -1
+
+	min := float64(b.properties.Binder.InitialHeartbeat)
+	max := math.Max(min, float64(b.properties.Binder.WatchdogHeartbeat))
+	mid := math.Max(1, b.properties.Binder.HeartbeatCurveMidpoint)
+	k := math.Max(0.2, b.properties.Binder.HeartbeatCurveFactor)
+
+	if float64(time.Minute) < max-min && mid >= 5 {
+		fn = b.logisticModel(min, max, k, mid, time.Second)
+	} else {
+		fn = b.linearModel(min, max, mid)
+	}
+
 	return func(result interface{}, err error) time.Duration {
 		switch allStarted := result.(type) {
 		case bool:
 			if allStarted {
-				return time.Duration(s.properties.Binder.MonitorInterval)
+				return time.Duration(b.properties.Binder.WatchdogHeartbeat)
 			} else {
-				return time.Duration(s.properties.Binder.InitInterval)
+				ret := fn(n)
+				n = n + 1
+				//logger.Debugf("retry bindings in %dms", ret.Milliseconds())
+				return ret
 			}
 		default:
-			return time.Duration(s.properties.Binder.MonitorInterval)
+			return time.Duration(b.properties.Binder.WatchdogHeartbeat)
 		}
+	}
+}
+
+// logisticModel returns delay function f(n) using logistic model
+// Logistic Function 	https://en.wikipedia.org/wiki/Logistic_function
+//						https://en.wikipedia.org/wiki/Generalised_logistic_function
+func (b *SaramaKafkaBinder) logisticModel(min, max, k, n0 float64, y0 time.Duration) func(n int) time.Duration {
+	// minK is calculated to make sure f(0) < min + y0 (first value is within y0 seconds of min value)
+	minK := math.Log((max-min)/float64(y0)-1) / n0
+	k = math.Max(k, minK)
+	return func(n int) time.Duration {
+		if n < 0 {
+			return time.Duration(min)
+		}
+		return time.Duration((max-min)/(1+math.Exp(-k*(float64(n)-n0))) + min)
+	}
+}
+
+// logisticModel returns delay function f(n) using linear model
+func (b *SaramaKafkaBinder) linearModel(min, max, n0 float64) func(n int) time.Duration {
+	return func(n int) time.Duration {
+		return time.Duration((max-min)/n0/2*float64(n) + min)
 	}
 }
