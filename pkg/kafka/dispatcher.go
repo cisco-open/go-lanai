@@ -128,7 +128,7 @@ func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, cfg *consumerConfig
 		switch ot := t.Out(i); {
 		case ot.ConvertibleTo(reflectTypeError):
 			if i != t.NumOut()-1 {
-				return ErrorSubTypeIllegalConsumerUsage.WithMessage("invalid MessageHandlerFunc signature %v, last output param must be error")
+				return ErrorSubTypeIllegalConsumerUsage.WithMessage("invalid MessageHandlerFunc signature %v, last output param must be error", fn)
 			}
 		default:
 			return ErrorSubTypeIllegalConsumerUsage.WithMessage("invalid MessageHandlerFunc signature %v, unknown output parameters at index %v", fn, i)
