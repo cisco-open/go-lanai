@@ -392,20 +392,24 @@ func resolveValue(ctx context.Context, key string, val interface{}, source map[s
 		}
 	}
 
-	resolvedKV := make(map[placeholder]interface{})
+	resolvedKV := make(map[string]interface{})
+	resolvedPlaceholder := make(map[string]placeholder)
 	for _, ph := range placeholders {
 		v := value(source, ph.key)
 		switch resolved, e := resolveValue(ctx, ph.key, v, source, visited); {
 		case e == nil && resolved == nil:
 			// cannot resolve value
 			if ph.defaultVal != nil {
-				resolvedKV[ph] = ph.defaultVal
+				resolvedKV[ph.key] = ph.defaultVal
+				resolvedPlaceholder[ph.key] = ph
 			}
 		case e == nil:
-			resolvedKV[ph] = resolved
+			resolvedKV[ph.key] = resolved
+			resolvedPlaceholder[ph.key] = ph
 		case e != nil && ph.defaultVal != nil:
 			logger.WithContext(ctx).Warnf(e.Error())
-			resolvedKV[ph] = ph.defaultVal
+			resolvedKV[ph.key] = ph.defaultVal
+			resolvedPlaceholder[ph.key] = ph
 		default:
 			return nil, e
 		}
@@ -417,12 +421,12 @@ func resolveValue(ctx context.Context, key string, val interface{}, source map[s
 	var resolvedValue interface{}
 	if isEmbedded {
 		str := val.(string)
-		for ph, resolved := range resolvedKV {
-			str = strings.Replace(str, ph.String(), fmt.Sprint(resolved), -1)
+		for phKey, resolved := range resolvedKV {
+			str = strings.Replace(str, resolvedPlaceholder[phKey].String(), fmt.Sprint(resolved), -1)
 		}
 		resolvedValue = str
 	} else { //if not embedded, the entire value must have just been a single placeholder.
-		resolvedValue = resolvedKV[placeholders[0]]
+		resolvedValue = resolvedKV[placeholders[0].key]
 	}
 
 	if e := setValue(source, key, resolvedValue, false); e != nil {

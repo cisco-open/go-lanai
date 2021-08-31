@@ -11,6 +11,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
 )
@@ -121,7 +122,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 	logoutSuccessHandler := revoke.NewTokenRevokeSuccessHandler(func(opt *revoke.SuccessOption) {
 		opt.ClientStore = c.config.ClientStore
 		opt.WhitelabelErrorPath = c.config.Endpoints.Error
-		opt.RedirectWhitelist = c.config.properties.RedirectWhitelist
+		opt.RedirectWhitelist = utils.NewStringSet(c.config.properties.RedirectWhitelist...)
 	})
 	logout.Configure(ws).
 		LogoutUrl(c.config.Endpoints.Logout).
