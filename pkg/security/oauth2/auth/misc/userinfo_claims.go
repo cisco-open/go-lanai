@@ -13,9 +13,9 @@ type UserInfoClaims struct {
 	/*******************************
 	 * Standard JWT claims
 	 *******************************/
-	Issuer   string          `claim:"iss"`
-	Audience utils.StringSet `claim:"aud"`
-	Subject  string          `claim:"sub"`
+	Issuer   string                `claim:"iss"`
+	Audience oauth2.StringSetClaim `claim:"aud"`
+	Subject  string                `claim:"sub"`
 
 	/*******************************
 	* Standard OIDC claims
