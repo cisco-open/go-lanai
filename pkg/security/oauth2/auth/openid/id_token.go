@@ -15,11 +15,11 @@ type IdTokenClaims struct {
 	 * Standard Jwt claims
 	 *******************************/
 
-	Issuer   string          `claim:"iss"`
-	Subject  string          `claim:"sub"`
-	Audience utils.StringSet `claim:"aud"`
-	Expire   time.Time       `claim:"exp"`
-	IssueAt  time.Time       `claim:"iat"`
+	Issuer   string                `claim:"iss"`
+	Subject  string                `claim:"sub"`
+	Audience oauth2.StringSetClaim `claim:"aud"`
+	Expire   time.Time             `claim:"exp"`
+	IssueAt  time.Time             `claim:"iat"`
 
 	/*******************************
 	 * Standard ID Token claims

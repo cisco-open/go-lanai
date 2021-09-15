@@ -30,6 +30,7 @@ var (
 		oauth2.ClaimAccountType:     Optional(AccountType),
 		oauth2.ClaimCurrency:        Optional(Currency),
 		oauth2.ClaimAssignedTenants: Optional(AssignedTenants),
+		oauth2.ClaimDefaultTenantId: Optional(DefaultTenantId),
 		oauth2.ClaimTenantId:        Optional(TenantId),
 		oauth2.ClaimTenantName:      Optional(TenantName),
 		oauth2.ClaimTenantSuspended: Optional(TenantSuspended),

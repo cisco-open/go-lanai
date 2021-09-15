@@ -36,6 +36,11 @@ var (
 		oauth2.GrantTypeSwitchTenant,
 	)
 	SupportedDisplayMode = utils.NewStringSet(DisplayPage, PromptTouch)
+	FullIdTokenGrantTypes = utils.NewStringSet(
+		oauth2.GrantTypePassword,
+		oauth2.GrantTypeSwitchUser,
+		oauth2.GrantTypeSwitchTenant,
+	)
 )
 
 // See https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata

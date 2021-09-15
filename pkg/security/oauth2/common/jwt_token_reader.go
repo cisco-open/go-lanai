@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common/internal"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 )
 
@@ -138,7 +139,7 @@ func (r *jwtTokenStoreReader) readAuthenticationFromAccessToken(c context.Contex
 func (r *jwtTokenStoreReader) createOAuth2Request(claims *internal.ExtendedClaims, details security.ContextDetails) oauth2.OAuth2Request {
 	clientId := claims.ClientId
 	if clientId == "" && claims.Audience != nil && len(claims.Audience) != 0 {
-		clientId = claims.Audience.Values()[0]
+		clientId = utils.StringSet(claims.Audience).Values()[0]
 	}
 
 	params := map[string]string{}

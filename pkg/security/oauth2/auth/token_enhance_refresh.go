@@ -61,7 +61,7 @@ func (te *RefreshTokenEnhancer) Enhance(ctx context.Context, token oauth2.Access
 	request := oauth.OAuth2Request()
 	claims := oauth2.BasicClaims{
 		Id:       id,
-		Audience: utils.NewStringSet(client.ClientId()),
+		Audience: oauth2.StringSetClaim(utils.NewStringSet(client.ClientId())),
 		Issuer: te.issuer.Identifier(),
 		Scopes: request.Scopes(),
 	}

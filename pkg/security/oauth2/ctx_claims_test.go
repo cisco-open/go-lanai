@@ -20,7 +20,7 @@ var valueStruct = ValueStruct{
 }
 
 var refBasic = map[string]interface{}{
-	ClaimAudience:  utils.NewStringSet("res-id"),
+	ClaimAudience:  StringSetClaim(utils.NewStringSet("res-id")),
 	ClaimExpire:    now,
 	ClaimJwtId:     "test-id",
 	ClaimIssueAt:   now,
@@ -32,7 +32,7 @@ var refBasic = map[string]interface{}{
 }
 
 var refMore = map[string]interface{}{
-	ClaimAudience:  utils.NewStringSet("res-id"),
+	ClaimAudience:  StringSetClaim(utils.NewStringSet("res-id")),
 	ClaimExpire:    now,
 	ClaimJwtId:     "test-id",
 	ClaimIssueAt:   now,
@@ -50,7 +50,7 @@ var refMore = map[string]interface{}{
 }
 
 var refExtra = map[string]interface{}{
-	ClaimAudience:  utils.NewStringSet("res-id"),
+	ClaimAudience:  StringSetClaim(utils.NewStringSet("res-id")),
 	ClaimExpire:    now,
 	ClaimJwtId:     "test-id",
 	ClaimIssueAt:   now,
@@ -123,16 +123,16 @@ func SettersTest(claims Claims, values map[string]interface{}, assertFunc claims
 func JsonTest(claims Claims, empty Claims, expected map[string]interface{}, assertFunc claimsAssertion) func(*testing.T) {
 	return func(t *testing.T) {
 		// marshal
-		str, err := json.Marshal(claims)
+		data, err := json.Marshal(claims)
 		g := NewWithT(t)
 		g.Expect(err).NotTo(HaveOccurred(), "JSON marshal should not return error")
-		g.Expect(str).NotTo(BeZero(), "JSON marshal should not return empty string")
+		g.Expect(data).NotTo(BeZero(), "JSON marshal should not return empty string")
 
-		t.Logf("JSON: %s", str)
+		t.Logf("JSON: %s", data)
 
 		// unmarshal
 		parsed := empty
-		err = json.Unmarshal([]byte(str), &parsed)
+		err = json.Unmarshal(data, &parsed)
 		g.Expect(err).NotTo(HaveOccurred(), "JSON unmarshal should not return error")
 
 		assertFunc(t, expected, parsed)
@@ -207,11 +207,19 @@ func assertAlternativeInterfaceEmbeddingClaims(t *testing.T, ref map[string]inte
 	g := NewWithT(t)
 	actual := claims.(*interfaceEmbeddingClaims)
 	for k, v := range ref {
-		if t, ok := v.(time.Time); ok {
-			g.Expect(actual.Get(k)).To(BeEquivalentTo(t.Unix()))
-		} else if s, ok := v.(utils.StringSet); ok {
-			g.Expect(actual.Get(k)).To(ConsistOf(s.ToSet().Values()...))
-		} else {
+		switch val := v.(type) {
+		case time.Time:
+			g.Expect(actual.Get(k)).To(BeEquivalentTo(val.Unix()))
+		case utils.StringSet:
+			g.Expect(actual.Get(k)).To(ConsistOf(val.ToSet().Values()...))
+		case StringSetClaim:
+			switch claimVal := actual.Get(k).(type) {
+			case string:
+				g.Expect(val).To(HaveKey(claimVal))
+			default:
+				g.Expect(claimVal).To(ConsistOf(utils.StringSet(val).ToSet().Values()...))
+			}
+		default:
 			g.Expect(actual.Get(k)).To(Equal(v))
 		}
 	}
@@ -219,7 +227,7 @@ func assertAlternativeInterfaceEmbeddingClaims(t *testing.T, ref map[string]inte
 
 func newRefBasicClaims() *BasicClaims {
 	return &BasicClaims{
-		Audience:  refBasic[ClaimAudience].(utils.StringSet),
+		Audience:  refBasic[ClaimAudience].(StringSetClaim),
 		ExpiresAt: refBasic[ClaimExpire].(time.Time),
 		Id:        refBasic[ClaimJwtId].(string),
 		IssuedAt:  refBasic[ClaimIssueAt].(time.Time),

@@ -80,7 +80,7 @@ func (te *BasicClaimsTokenEnhancer) Enhance(_ context.Context, token oauth2.Acce
 	request := oauth.OAuth2Request()
 	basic := &oauth2.BasicClaims {
 		Id:       uuid.New().String(),
-		Audience: utils.NewStringSet(request.ClientId()),
+		Audience: oauth2.StringSetClaim(utils.NewStringSet(request.ClientId())),
 		Issuer:   te.issuer.Identifier(),
 		ClientId: request.ClientId(),
 		Scopes:   request.Scopes().Copy(),
