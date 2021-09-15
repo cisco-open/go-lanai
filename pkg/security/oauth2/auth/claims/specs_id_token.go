@@ -28,6 +28,5 @@ var (
 		oauth2.ClaimProviderId:      Optional(ProviderId),
 		oauth2.ClaimProviderName:    Optional(ProviderName),
 		oauth2.ClaimOrigUsername:    Optional(OriginalUsername),
-		oauth2.ClaimCurrency:        Optional(Currency),
 	}
 )
