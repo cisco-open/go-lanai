@@ -461,10 +461,6 @@ func newInvalidUserError(reasons ...interface{}) error {
 	return oauth2.NewInvalidGrantError("invalid authorizing user", reasons...)
 }
 
-func newInvalidTenantForClientError(reasons ...interface{}) error {
-	return oauth2.NewInvalidGrantError("authenticated client does not have access to the requested tenant", reasons...)
-}
-
 func newInvalidTenantForUserError(reasons ...interface{}) error {
 	return oauth2.NewInvalidGrantError("authenticated user does not have access to the requested tenant", reasons...)
 }

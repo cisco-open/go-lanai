@@ -9,27 +9,29 @@ import (
 )
 
 var (
-	timeType    = reflect.TypeOf(time.Time{})
-	int64Type   = reflect.TypeOf(int64(0))
-	float64Type = reflect.TypeOf(float64(0))
-	float32Type = reflect.TypeOf(float32(0))
-	sSliceType  = reflect.TypeOf([]string{})
-	iSliceType  = reflect.TypeOf([]interface{}{})
-	sSetType    = reflect.TypeOf(utils.NewStringSet())
-	iSetType    = reflect.TypeOf(utils.NewSet())
-	mapType     = reflect.TypeOf(map[string]interface{}{})
-	anyType     = reflect.TypeOf(interface{}(0))
+	stringType    = reflect.TypeOf("")
+	timeType      = reflect.TypeOf(time.Time{})
+	int64Type     = reflect.TypeOf(int64(0))
+	float64Type   = reflect.TypeOf(float64(0))
+	float32Type   = reflect.TypeOf(float32(0))
+	sSliceType    = reflect.TypeOf([]string{})
+	iSliceType    = reflect.TypeOf([]interface{}{})
+	sSetType      = reflect.TypeOf(utils.NewStringSet())
+	sSetClaimType = reflect.TypeOf(StringSetClaim(utils.NewStringSet()))
+	iSetType      = reflect.TypeOf(utils.NewSet())
+	mapType       = reflect.TypeOf(map[string]interface{}{})
+	anyType       = reflect.TypeOf(interface{}(0))
 )
 
 // some conversions
 func claimMarshalConvert(v reflect.Value) (reflect.Value, error) {
 	t := v.Type()
 	switch {
-	case  timeType.AssignableTo(t):
+	case timeType.AssignableTo(t):
 		return timeToTimestamp(v)
-	case  float64Type.AssignableTo(t):
+	case float64Type.AssignableTo(t):
 		fallthrough
-	case  float32Type.AssignableTo(t):
+	case float32Type.AssignableTo(t):
 		return v.Convert(int64Type), nil
 	default:
 		return v, nil
@@ -39,11 +41,13 @@ func claimMarshalConvert(v reflect.Value) (reflect.Value, error) {
 func claimUnmarshalConvert(v reflect.Value, fieldType reflect.Type) (reflect.Value, error) {
 	switch {
 	// special target types
-	case  timeType.AssignableTo(fieldType):
+	case timeType.AssignableTo(fieldType):
 		return timestampToTime(v)
-	case  sSetType.AssignableTo(fieldType):
+	case sSetClaimType.AssignableTo(fieldType):
+		return toStringSetClaim(v)
+	case sSetType.AssignableTo(fieldType):
 		return toStringSet(v)
-	case  iSetType.AssignableTo(fieldType):
+	case iSetType.AssignableTo(fieldType):
 		return toSet(v)
 	case fieldType.Kind() == reflect.Ptr && fieldType.Elem().Kind() != reflect.Struct:
 		return toAddr(v)
@@ -104,8 +108,26 @@ func toStringSet(v reflect.Value) (reflect.Value, error) {
 		set := utils.NewStringSetFromSet(utils.NewSet(slice...))
 		return reflect.ValueOf(set), nil
 	default:
-		return reflect.Value{}, fmt.Errorf("type %T cannot be converted to timestamp", v.Interface())
+		return reflect.Value{}, fmt.Errorf("type %T cannot be converted to string set", v.Interface())
 	}
+}
+
+func toStringSetClaim(v reflect.Value) (reflect.Value, error) {
+	var set utils.StringSet
+	switch {
+	case v.Type().ConvertibleTo(stringType):
+		str := v.Convert(stringType).Interface().(string)
+		set = utils.NewStringSet(str)
+	case v.Type().ConvertibleTo(sSliceType):
+		slice := v.Convert(sSliceType).Interface().([]string)
+		set = utils.NewStringSet(slice...)
+	case v.Type().ConvertibleTo(iSliceType):
+		slice := v.Convert(iSliceType).Interface().([]interface{})
+		set = utils.NewStringSetFromSet(utils.NewSet(slice...))
+	default:
+		return reflect.Value{}, fmt.Errorf("type %T cannot be converted to string set", v.Interface())
+	}
+	return reflect.ValueOf(StringSetClaim(set)), nil
 }
 
 func toSet(v reflect.Value) (reflect.Value, error) {
@@ -117,7 +139,7 @@ func toSet(v reflect.Value) (reflect.Value, error) {
 		slice := v.Convert(iSliceType).Interface().([]interface{})
 		return reflect.ValueOf(utils.NewSet(slice...)), nil
 	default:
-		return reflect.Value{}, fmt.Errorf("type %T cannot be converted to timestamp", v.Interface())
+		return reflect.Value{}, fmt.Errorf("type %T cannot be converted to set", v.Interface())
 	}
 }
 

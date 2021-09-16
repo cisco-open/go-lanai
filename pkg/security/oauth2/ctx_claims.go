@@ -18,6 +18,42 @@ type Claims interface {
 	Values() map[string]interface{}
 }
 
+// StringSetClaim is an alias of utils.StringSet with different JSON serialization specialized for some Claims
+// StringSetClaim serialize as JSON string if there is single element in the set, otherwise as JSON array
+type StringSetClaim utils.StringSet
+
+// MarshalJSON json.Marshaler
+func (s StringSetClaim) MarshalJSON() ([]byte, error) {
+	switch len(s) {
+	case 1:
+		var v string
+		for v = range s {
+		}
+		return json.Marshal(v)
+	default:
+		return utils.StringSet(s).MarshalJSON()
+	}
+}
+
+// UnmarshalJSON json.Unmarshaler
+func (s StringSetClaim) UnmarshalJSON(data []byte) error {
+	values := make([]string, 0)
+	if e := json.Unmarshal(data, &values); e == nil {
+		utils.StringSet(s).Add(values...)
+		return nil
+	}
+
+	// fallback to string
+	value := ""
+	if e := json.Unmarshal(data, &value); e != nil {
+		return e
+	}
+	if value != "" {
+		utils.StringSet(s).Add(value)
+	}
+	return nil
+}
+
 /*********************
 	Implements
  *********************/
@@ -38,8 +74,7 @@ func (c MapClaims) UnmarshalJSON(bytes []byte) error {
 	if e := json.Unmarshal(bytes, &m); e != nil {
 		return e
 	}
-	c.fromMap(m)
-	return nil
+	return c.fromMap(m)
 }
 
 func (c MapClaims) Get(claim string) interface{} {
@@ -47,7 +82,7 @@ func (c MapClaims) Get(claim string) interface{} {
 }
 
 func (c MapClaims) Has(claim string) bool {
-	_,ok := c[claim]
+	_, ok := c[claim]
 	return ok
 }
 
@@ -58,7 +93,7 @@ func (c MapClaims) Set(claim string, value interface{}) {
 func (c MapClaims) Values() map[string]interface{} {
 	ret, e := c.toMap(false)
 	if e != nil {
-		return map[string]interface{}{};
+		return map[string]interface{}{}
 	}
 	return ret
 }
@@ -67,7 +102,7 @@ func (c MapClaims) toMap(convert bool) (map[string]interface{}, error) {
 	ret := map[string]interface{}{}
 	for k, v := range c {
 		if convert {
-			value, e := claimMarshalConvert(reflect.ValueOf(v));
+			value, e := claimMarshalConvert(reflect.ValueOf(v))
 			if e != nil {
 				return nil, e
 			}
@@ -94,7 +129,7 @@ func (c MapClaims) fromMap(src map[string]interface{}) error {
 // BasicClaims imlements Claims
 type BasicClaims struct {
 	FieldClaimsMapper
-	Audience  utils.StringSet `claim:"aud"`
+	Audience  StringSetClaim  `claim:"aud"`
 	ExpiresAt time.Time       `claim:"exp"`
 	Id        string          `claim:"jti"`
 	IssuedAt  time.Time       `claim:"iat"`

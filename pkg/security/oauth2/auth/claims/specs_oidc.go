@@ -18,6 +18,7 @@ var (
 		oauth2.ClaimBirthday:          Unsupported(),
 		oauth2.ClaimZoneInfo:          Optional(ZoneInfo),
 		oauth2.ClaimLocale:            Optional(Locale),
+		oauth2.ClaimCurrency:          Optional(Currency),
 		oauth2.ClaimUpdatedAt:         Unsupported(),
 		oauth2.ClaimDefaultTenantId:   Optional(DefaultTenantId),
 		oauth2.ClaimAssignedTenants:   Optional(AssignedTenants),
@@ -39,4 +40,3 @@ var (
 		oauth2.ClaimAddress: Optional(Address),
 	}
 )
-
