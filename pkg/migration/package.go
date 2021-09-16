@@ -3,6 +3,7 @@ package migration
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 	"go.uber.org/fx"
@@ -45,10 +46,14 @@ func newVersioner(db *gorm.DB) Versioner {
 	}
 }
 
-func applyMigrations(lc fx.Lifecycle, r *Registrar, v Versioner, shutdowner fx.Shutdowner) {
+func applyMigrations(lc fx.Lifecycle, r *Registrar, v Versioner, dbCreator data.DbCreator, shutdowner fx.Shutdowner) {
 	var err error
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+			err = dbCreator.CreateDatabaseIfNotExist(ctx)
+			if err != nil {
+				return shutdowner.Shutdown()
+			}
 			err = migrate(ctx, r, v)
 			return shutdowner.Shutdown()
 		},
