@@ -128,7 +128,7 @@ func BindKafkaProperties(ctx *bootstrap.ApplicationContext) KafkaProperties {
 		},
 	}
 	if err := ctx.Config().Bind(&props, ConfigKafkaPrefix); err != nil {
-		panic(errors.Wrap(err, "failed to bind redis.RedisProperties"))
+		panic(errors.Wrap(err, "failed to bind kafka properties"))
 	}
 	return props
 }

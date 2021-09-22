@@ -8,18 +8,16 @@ import (
 )
 
 type GormDbCreator struct {
-	properties CockroachProperties
-	db *gorm.DB
+	dbName string
 }
 
-func NewGormDbCreator(properties CockroachProperties, db *gorm.DB) data.DbCreator {
+func NewGormDbCreator(properties CockroachProperties) data.DbCreator {
 	return &GormDbCreator{
-		properties: properties,
-		db: db,
+		dbName: properties.Database,
 	}
 }
 
-func (g *GormDbCreator) CreateDatabaseIfNotExist(ctx context.Context) error {
-	result := g.db.WithContext(ctx).Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", g.properties.Database))
+func (g *GormDbCreator) CreateDatabaseIfNotExist(ctx context.Context, db *gorm.DB) error {
+	result := db.WithContext(ctx).Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", g.dbName))
 	return result.Error
 }

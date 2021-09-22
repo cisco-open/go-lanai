@@ -46,11 +46,11 @@ func newVersioner(db *gorm.DB) Versioner {
 	}
 }
 
-func applyMigrations(lc fx.Lifecycle, r *Registrar, v Versioner, dbCreator data.DbCreator, shutdowner fx.Shutdowner) {
+func applyMigrations(lc fx.Lifecycle, r *Registrar, v Versioner, db *gorm.DB, dbCreator data.DbCreator, shutdowner fx.Shutdowner) {
 	var err error
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			err = dbCreator.CreateDatabaseIfNotExist(ctx)
+			err = dbCreator.CreateDatabaseIfNotExist(ctx, db)
 			if err != nil {
 				return shutdowner.Shutdown()
 			}
