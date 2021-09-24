@@ -48,6 +48,7 @@ func NewMvcMapping(name, path, method string, condition RequestMatcher,
 /*****************************
 	MvcMapping Interface
 ******************************/
+
 func (m *mvcMapping) Name() string {
 	return m.name
 }
@@ -124,6 +125,7 @@ func (r Response) Body() interface{} {
 /**********************************
 	LazyHeaderWriter
 ***********************************/
+
 // LazyHeaderWriter makes sure that status code and headers is overwritten at last second (when invoke Write([]byte) (int, error).
 // Calling WriteHeader(int) would not actually send the header. Calling it multiple times to update status code
 // Doing so allows response encoder and error handling to send different header and status code
