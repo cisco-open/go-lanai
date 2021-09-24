@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=dockerhub.cisco.com/vms-platform-dev-docker/msx-base-buster:4.0.0-86
+ARG BASE_IMAGE=dockerhub.cisco.com/vms-platform-dev-docker/msx-base-buster:4.1.0-92
 
 ## Build Container ##
 FROM dockerhub.cisco.com/vms-platform-dev-docker/golang:1.16.3 AS builder
@@ -21,11 +21,13 @@ RUN make init-once init-cli drop-replace; \
 
 ## Distribution Container ##
 FROM ${BASE_IMAGE}
-EXPOSE {{- range $_, $elem := .Executables }} {{ if gt $elem.Port 0 }}{{ $elem.Port }} {{ end }} {{- end }}
-WORKDIR /service/
-COPY --from=builder /go/src/dist /service
-{{- range $name, $elem := .Executables }}
-    {{- if gt $elem.Port 0 }}
-ENTRYPOINT ["/service/{{ $name }}"]
-    {{- end }}
+{{- range $_, $elem := .Executables }}
+{{- if gt $elem.Port 0 }}
+EXPOSE {{ $elem.Port }}
 {{- end }}
+{{- end }}
+WORKDIR /service/
+COPY build/package/dockerlaunch.sh /service/dockerlaunch.sh
+RUN chmod 755 /service/dockerlaunch.sh
+COPY --from=builder /go/src/dist /service
+ENTRYPOINT ["/service/dockerlaunch.sh"]

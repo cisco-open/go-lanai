@@ -16,7 +16,7 @@ var (
 	logger = log.New("Build.Init")
 	Cmd    = &cobra.Command{
 		Use:                InitRootName,
-		Short:              "Initialize service, generating additional Makefile rules, Dockerfile, etc.",
+		Short:              "Initialize service, generating additional Makefile rules, Dockerfile, Docker launch script etc.",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               Run,
 	}
@@ -35,7 +35,7 @@ type Arguments struct {
 	Upgrade  bool   `flag:"upgrade" desc:"force update Makefile. Normally used together with --force"`
 }
 
-//go:embed Makefile-Build.tmpl Dockerfile.tmpl Makefile-CICD.tmpl Makefile-Libs.tmpl Makefile.tmpl
+//go:embed Makefile-Build.tmpl Dockerfile.tmpl Makefile-CICD.tmpl Makefile-Libs.tmpl Makefile.tmpl dockerlaunch.tmpl
 var TmplFS embed.FS
 
 func init() {
@@ -57,6 +57,10 @@ func Run(cmd *cobra.Command, _ []string) error {
 	}
 
 	if e := generateDockerfile(cmd.Context()); e != nil {
+		return e
+	}
+
+	if e := generateDockerLaunchScript(cmd.Context()); e != nil {
 		return e
 	}
 

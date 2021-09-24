@@ -21,6 +21,7 @@ type ModuleMetadata struct {
 type Executable struct {
 	Main string `json:"main"`
 	Port int    `json:"port"`
+	Type string `json:"type"`
 }
 
 type Resource struct {
