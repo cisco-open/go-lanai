@@ -34,24 +34,24 @@ func (l *fxPrinter) Printf(s string, v ...interface{}) {
 func (l *fxPrinter) LogEvent(event fxevent.Event) {
 	switch e := event.(type) {
 	case *fxevent.OnStartExecuting:
-		logger.WithContext(l.appCtx).Infof("HOOK OnStart\t\t%s executing (caller: %s)", e.FunctionName, e.CallerName)
+		//logger.WithContext(l.appCtx).Debugf("HOOK OnStart\t\t%s executing (caller: %s)", e.FunctionName, e.CallerName)
 	case *fxevent.OnStartExecuted:
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("HOOK OnStart\t\t%s called by %s failed in %s: %v", e.FunctionName, e.CallerName, e.Runtime, e.Err)
+			logger.WithContext(l.appCtx).Warnf("HOOK OnStart\t\t%s called by %s failed in %s: %v", e.FunctionName, e.CallerName, e.Runtime, e.Err)
 		} else {
-			logger.WithContext(l.appCtx).Infof("HOOK OnStart\t\t%s called by %s ran successfully in %s", e.FunctionName, e.CallerName, e.Runtime)
+			//logger.WithContext(l.appCtx).Debugf("HOOK OnStart\t\t%s called by %s ran successfully in %s", e.FunctionName, e.CallerName, e.Runtime)
 		}
 	case *fxevent.OnStopExecuting:
-		logger.WithContext(l.appCtx).Infof("HOOK OnStop\t\t%s executing (caller: %s)", e.FunctionName, e.CallerName)
+		logger.WithContext(l.appCtx).Debugf("HOOK OnStop\t\t%s executing (caller: %s)", e.FunctionName, e.CallerName)
 	case *fxevent.OnStopExecuted:
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("HOOK OnStop\t\t%s called by %s failed in %s: %v", e.FunctionName, e.CallerName, e.Runtime, e.Err)
+			logger.WithContext(l.appCtx).Warnf("HOOK OnStop\t\t%s called by %s failed in %s: %v", e.FunctionName, e.CallerName, e.Runtime, e.Err)
 		} else {
-			logger.WithContext(l.appCtx).Infof("HOOK OnStop\t\t%s called by %s ran successfully in %s", e.FunctionName, e.CallerName, e.Runtime)
+			//logger.WithContext(l.appCtx).Debugf("HOOK OnStop\t\t%s called by %s ran successfully in %s", e.FunctionName, e.CallerName, e.Runtime)
 		}
 	case *fxevent.Supplied:
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("ERROR\tFailed to supply %v: %v", e.TypeName, e.Err)
+			logger.WithContext(l.appCtx).Warnf("ERROR\tFailed to supply %v: %v", e.TypeName, e.Err)
 		} else {
 			logger.WithContext(l.appCtx).Infof("SUPPLY\t%v", e.TypeName)
 		}
@@ -60,35 +60,35 @@ func (l *fxPrinter) LogEvent(event fxevent.Event) {
 			logger.WithContext(l.appCtx).Infof("PROVIDE\t%v <= %v", rtype, e.ConstructorName)
 		}
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("Error after options were applied: %v", e.Err)
+			logger.WithContext(l.appCtx).Warnf("Error after options were applied: %v", e.Err)
 		}
 	case *fxevent.Invoking:
-		logger.WithContext(l.appCtx).Infof("INVOKE\t\t%s", e.FunctionName)
+		logger.WithContext(l.appCtx).Debugf("INVOKE\t\t%s", e.FunctionName)
 	case *fxevent.Invoked:
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("ERROR\t\tfx.Invoke(%v) called from:\n%+vFailed: %v", e.FunctionName, e.Trace, e.Err)
+			logger.WithContext(l.appCtx).Warnf("ERROR\t\tfx.Invoke(%v) called from:\n%+vFailed: %v", e.FunctionName, e.Trace, e.Err)
 		}
 	case *fxevent.Stopping:
 		logger.WithContext(l.appCtx).Infof("%v", strings.ToUpper(e.Signal.String()))
 	case *fxevent.Stopped:
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("ERROR\t\tFailed to stop cleanly: %v", e.Err)
+			logger.WithContext(l.appCtx).Warnf("ERROR\t\tFailed to stop cleanly: %v", e.Err)
 		}
 	case *fxevent.RollingBack:
-		logger.WithContext(l.appCtx).Infof("ERROR\t\tStart failed, rolling back: %v", e.StartErr)
+		logger.WithContext(l.appCtx).Warnf("ERROR\t\tStart failed, rolling back: %v", e.StartErr)
 	case *fxevent.RolledBack:
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("ERROR\t\tCouldn't roll back cleanly: %v", e.Err)
+			logger.WithContext(l.appCtx).Warnf("ERROR\t\tCouldn't roll back cleanly: %v", e.Err)
 		}
 	case *fxevent.Started:
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("ERROR\t\tFailed to start: %v", e.Err)
+			logger.WithContext(l.appCtx).Warnf("ERROR\t\tFailed to start: %v", e.Err)
 		} else {
 			logger.WithContext(l.appCtx).Infof("RUNNING")
 		}
 	case *fxevent.LoggerInitialized:
 		if e.Err != nil {
-			logger.WithContext(l.appCtx).Infof("ERROR\t\tFailed to initialize custom logger: %+v", e.Err)
+			logger.WithContext(l.appCtx).Warnf("ERROR\t\tFailed to initialize custom logger: %+v", e.Err)
 		} else {
 			logger.WithContext(l.appCtx).Infof("LOGGER\tInitialized custom logger from %v", e.ConstructorName)
 		}
