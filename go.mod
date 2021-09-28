@@ -8,6 +8,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.15.0
 	github.com/beevik/etree v1.1.0
 	github.com/bmatcuk/doublestar/v4 v4.0.1
+	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/cockroachdb/copyist v1.2.2
 	github.com/crewjam/httperr v0.0.0-20190612203328-a946449404da
 	github.com/crewjam/saml v0.4.5
@@ -33,7 +34,6 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.3.0
-	github.com/prometheus/common v0.7.0
 	github.com/rs/cors v1.7.0
 	github.com/russellhaering/goxmldsig v1.1.0
 	github.com/spf13/cobra v1.1.0
