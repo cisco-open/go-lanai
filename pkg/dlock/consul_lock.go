@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	ErrCancelled       = fmt.Errorf("cancelled or timed out")
 	ErrFailedToAcquire = fmt.Errorf("cannot aquire lock")
+	ErrSessionUnavailable = fmt.Errorf("session is not available")
 )
 
 type ConsulLockOptions func(opt *ConsulLockOption)
@@ -25,11 +25,8 @@ type ConsulLockOption struct {
 	SessionFunc      func(context.Context) (string, error)
 	Key              string // Must be set and have write permissions
 	Value            []byte // Optional, value to associate with the lock
-	SessionTTL       time.Duration
-	LockDelay        time.Duration
-	MonitorRetries   int           // Optional, defaults to 0 which means no retries
-	MonitorRetryTime time.Duration // Optional, defaults to 2 seconds
-	QueryWaitTime    time.Duration // how long we block for at a time to check if lock acquisition is possible. This affects the minimum time it takes to cancel
+	QueryWaitTime    time.Duration // how long we block for at a time to check if lock acquisition is possible
+	RetryDelay       time.Duration // how long we wait after a retryable error (usually network error)
 }
 
 type consulLockState int
@@ -64,9 +61,8 @@ func newConsulLock(client *api.Client, opts ...ConsulLockOptions) *ConsulLock {
 	ret := ConsulLock{
 		client: client,
 		option: ConsulLockOption{
-			MonitorRetries:   0,
-			MonitorRetryTime: 2 * time.Second,
 			QueryWaitTime:    15 * time.Second,
+			RetryDelay:       2 * time.Second,
 		},
 	}
 	ret.stateCond = xsync.NewCond(&ret.mtx)
@@ -92,8 +88,7 @@ func (l *ConsulLock) Key() string {
 // prefer liveness over safety and an application must be able to handle
 // the lock being lost.
 func (l *ConsulLock) Lock(ctx context.Context) error {
-	// TODO
-	l.start()
+	l.lazyStart()
 	if e := l.waitForAcquisition(ctx); e != nil {
 		return e
 	}
@@ -102,11 +97,14 @@ func (l *ConsulLock) Lock(ctx context.Context) error {
 
 func (l *ConsulLock) TryLock(ctx context.Context) error {
 	// TODO
+	l.lazyStart()
+	if e := l.waitForAcquisition(ctx); e != nil {
+		return e
+	}
 	return nil
 }
 
 func (l *ConsulLock) Release() error {
-	// TODO
 	return l.release()
 }
 
@@ -116,11 +114,11 @@ func (l *ConsulLock) Lost() <-chan struct{} {
 	return l.lockLostCh
 }
 
-func (l *ConsulLock) start() {
+func (l *ConsulLock) lazyStart() {
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 
-	// Check if we're already maintaining the lock
+	// Check if we're already maintaining the lock loop
 	if l.loopContext == nil {
 		l.startLoop()
 	}
@@ -134,8 +132,8 @@ func (l *ConsulLock) waitForAcquisition(ctx context.Context) error {
 		switch l.state {
 		case stateAcquired:
 			return nil
-		case stateError:
-			return l.lastErr
+		//case stateError:
+		//	return l.lastErr
 		default:
 			switch e := l.stateCond.Wait(ctx); e {
 			case context.Canceled, context.DeadlineExceeded:
@@ -149,19 +147,15 @@ func (l *ConsulLock) updateState(s consulLockState, setters ...func()) {
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	defer func(from, to consulLockState) {
-		l.stateCond.Broadcast()
+		if to == stateError || from != to {
+			l.stateCond.Broadcast()
+		}
 	}(l.state, s)
 
 	for _, fn := range setters {
 		fn()
 	}
 	l.state = s
-}
-
-func (l *ConsulLock) lastError() error {
-	l.mtx.Lock()
-	defer l.mtx.Unlock()
-	return l.lastErr
 }
 
 // startLoop kickoff lock loop. mutex lock is required when call this function
@@ -209,23 +203,23 @@ LOOP:
 		default:
 		}
 
-		// update current state
+		// update refresh func, but keep the current state
 		refreshCtx, fn := context.WithCancel(ctx)
-		l.updateState(stateAcquiring, func() {
-			l.refreshFunc = fn
-		})
+		l.mtx.Lock()
+		l.refreshFunc = fn
+		l.mtx.Unlock()
 
 		// grab current session.
 		// Note: in case of error, we don't reset previously used session,
 		// 		 the release function will try to release lock using previously used session
-		session, e := l.option.SessionFunc(ctx)
+		session, e := l.option.SessionFunc(refreshCtx)
 		switch {
 		case e == context.Canceled || e == context.DeadlineExceeded:
 			// current acquisition is cancelled
 			continue
 		case e != nil:
-			l.updateState(stateAcquiring, func() {
-				l.lastErr = fmt.Errorf("session is not available: %v", e)
+			l.updateState(stateError, func() {
+				l.lastErr = ErrSessionUnavailable
 			})
 			continue
 		default:
@@ -241,8 +235,10 @@ LOOP:
 			continue
 		case nil:
 			// lock acquired, continue
-			l.updateState(stateAcquired)
 			logger.WithContext(refreshCtx).Debugf("acquired lock [%s]", l.option.Key)
+			l.updateState(stateAcquired, func() {
+				l.lastErr = nil
+			})
 		default:
 			l.updateState(stateError, func() {
 				l.lastErr = e
@@ -251,8 +247,7 @@ LOOP:
 		}
 
 		// up to this point, we have acquired the lock. enter monitor state
-		// TODO use real TTL
-		switch e := l.monitorLock(refreshCtx, session, 10*time.Second); e {
+		switch e := l.monitorLock(refreshCtx, session); e {
 		case context.Canceled, context.DeadlineExceeded:
 			// current acquisition is cancelled
 			continue
@@ -274,7 +269,6 @@ LOOP:
 }
 
 func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait time.Duration) error {
-	// Try to acquire lock
 	kv := l.client.KV()
 	pair := &api.KVPair{
 		Key:     l.option.Key,
@@ -295,7 +289,7 @@ func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait ti
 
 LOOP:
 	for {
-		// try acquire
+		// try to acquire lock
 		switch acquired, _, e := kv.Acquire(pair, nil); {
 		case e != nil:
 			return fmt.Errorf("failed to acquire lock: %v", e)
@@ -314,11 +308,10 @@ LOOP:
 		}
 
 		// pause and retry
-		// TODO use option
 		select {
-		case <-time.After(1 * time.Second):
+		case <-time.After(l.option.RetryDelay):
 		case <-waitCtx.Done():
-			return ErrCancelled
+			return context.Canceled
 		}
 	}
 
@@ -332,24 +325,27 @@ LOOP:
 // 1. the provided context is cancelled or timed out
 // 2. When waitUntilAvailable == true:
 //    2.1 the lock becomes available (lock is not held any session)
-//    2.2 the lock is held by its own session (this normally shouldn't happen)
+//    2.2 the lock is held by its own session
+//   	  (this normally shouldn't happen, unless we attempt to recover previously held lock from network error)
 // 3. When waitUntilAvailable == false:
 //    3.1 current state of the lock become available (regardless if lock is available)
+// 4. consul become unavailable
 //
-// Note 1: this function will block if consul is not available, unless context is cancelled
-// Note 2: when this function returns, the lock might be in lock-delay period, meaning no session can acquire lock.
+// Note: when this function returns, the lock might be in lock-delay period, meaning no session can acquire lock.
 func (l *ConsulLock) handleAcquisitionFailure(ctx context.Context, session string, waitUntilAvailable bool) (currentOwner string, err error) {
 	kv := l.client.KV()
-	qOpts := &api.QueryOptions{}
+	qOpts := &api.QueryOptions{
+		WaitTime: l.option.QueryWaitTime,
+	}
 	qOpts = qOpts.WithContext(ctx)
 
 	for i := 0; true; i++ {
-		logger.WithContext(ctx).Infof("wait attempt %d, WaitIndex=%d", i, qOpts.WaitIndex)
+		logger.WithContext(ctx).Infof("wait attempt %d, WaitIndex=%d, WaitTime=%v", i, qOpts.WaitIndex, qOpts.WaitTime)
 		// Look for an existing lock, blocking until not taken
 		pair, meta, e := kv.Get(l.option.Key, qOpts)
 		var owner string
 		switch {
-		case e != nil && !api.IsRetryableError(e):
+		case e != nil:
 			return "", fmt.Errorf("failed to read lock: %v", e)
 		case pair != nil && pair.Flags != lockFlagValue:
 			return "", api.ErrLockConflict
@@ -359,23 +355,17 @@ func (l *ConsulLock) handleAcquisitionFailure(ctx context.Context, session strin
 
 		// potentially retryable situations
 		switch {
-		case e != nil:
-			// when error is retryable, we let loop continue
-			logger.WithContext(ctx).Debugf("retryable error: %v", e)
 		case !waitUntilAvailable:
 			return owner, nil
-		default:
-			switch owner {
-			case session, "":
-				// the lock is held by current session OR the lock is not held by any session
-				return owner, nil
-			}
+		case owner == "" || owner == session:
+			// the lock is held by current session OR the lock is not held by any session
+			return owner, nil
 		}
 
 		// see if cancelled
 		select {
 		case <-ctx.Done():
-			return owner, ErrCancelled
+			return owner, context.Canceled
 		default:
 		}
 
@@ -386,42 +376,49 @@ func (l *ConsulLock) handleAcquisitionFailure(ctx context.Context, session strin
 }
 
 // monitorLock is a long running routine to monitor a lock ownership
-// the function returns when given session lost ownership, or given session might not be valid
-func (l *ConsulLock) monitorLock(ctx context.Context, session string, sessionTTL time.Duration) error {
+// the function returns when given session lost ownership or cancelled (by refreshFunc)
+func (l *ConsulLock) monitorLock(ctx context.Context, session string) error {
 	// TODO
 	kv := l.client.KV()
 	opts := &api.QueryOptions{
 		RequireConsistent: true,
-		WaitTime:          sessionTTL / 2,
 	}
 	opts = opts.WithContext(ctx)
 
 	var err error
 LOOP:
-	for lastCheck := time.Now(); time.Since(lastCheck) < sessionTTL; {
+	for {
+		select {
+		case <-ctx.Done():
+			break LOOP
+		default:
+		}
+
 		pair, meta, e := kv.Get(l.option.Key, opts)
-		switch {
+		switch err = e; {
 		case e != nil && api.IsRetryableError(e):
-			opts.WaitIndex = 0
-			err = e
+			// network error or something we can retry later
+			select {
+			case <-time.After(l.option.RetryDelay):
+				opts.WaitIndex = 0
+			case <-ctx.Done():
+			}
 		case e == nil && pair != nil && pair.Session == session:
+			// everything is fine, we enter long wait monitoring
 			opts.WaitIndex = meta.LastIndex
-			lastCheck = time.Now()
-			err = nil
 		case e == nil:
+			// lock is lost, quit
 			err = fmt.Errorf("lock revoked by server")
 			break LOOP
 		default:
-			err = e
+			// other non-recoverable error, quit
 			break LOOP
 		}
 	}
-	select {
-	case <-ctx.Done():
+	if err == nil {
 		return context.Canceled
-	default:
-		return err
 	}
+	return err
 }
 
 func (l *ConsulLock) release() error {

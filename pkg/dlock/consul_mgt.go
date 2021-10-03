@@ -28,9 +28,10 @@ type ConsulSyncManager struct {
 
 type ConsulSessionOptions func(opt *ConsulSessionOption)
 type ConsulSessionOption struct {
-	Name      string
-	TTL       time.Duration
-	LockDelay time.Duration
+	Name       string
+	TTL        time.Duration
+	LockDelay  time.Duration
+	RetryDelay time.Duration
 }
 
 func newConsulLockManager(ctx *bootstrap.ApplicationContext, conn *consul.Connection, opts ...ConsulSessionOptions) (ret *ConsulSyncManager) {
@@ -38,9 +39,10 @@ func newConsulLockManager(ctx *bootstrap.ApplicationContext, conn *consul.Connec
 		appCtx: ctx,
 		client: conn.Client(),
 		option: ConsulSessionOption{
-			Name:      fmt.Sprintf("%s", ctx.Name()),
-			TTL:       10 * time.Second,
-			LockDelay: 2 * time.Second,
+			Name:       fmt.Sprintf("%s", ctx.Name()),
+			TTL:        10 * time.Second,
+			LockDelay:  2 * time.Second,
+			RetryDelay: 2 * time.Second,
 		},
 		locks: make(map[string]*ConsulLock),
 	}
@@ -78,7 +80,7 @@ func (m *ConsulSyncManager) start() {
 	if m.cancelFunc == nil {
 		ctx, cf := context.WithCancel(m.appCtx)
 		m.cancelFunc = cf
-		go m.maintainSession(ctx)
+		go m.sessionLoop(ctx)
 	}
 	return
 }
@@ -126,7 +128,8 @@ func (m *ConsulSyncManager) updateSession(sid string) {
 	m.session = sid
 }
 
-func (m *ConsulSyncManager) maintainSession(ctx context.Context) {
+// sessionLoop is the main loop to manage session
+func (m *ConsulSyncManager) sessionLoop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -152,7 +155,7 @@ func (m *ConsulSyncManager) maintainSession(ctx context.Context) {
 		default:
 			if api.IsRetryableError(e) {
 				select {
-				case <-time.After(2 * time.Second):
+				case <-time.After(m.option.RetryDelay):
 					continue
 				case <-ctx.Done():
 					continue
@@ -193,7 +196,8 @@ func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) err
 			logger.Warnf("session expired")
 			return e
 		default:
-			logger.Warnf("session renew error: %v", e)
+			logger.Debugf("session renew error: %v", e)
+			return e
 		}
 	}
 }
