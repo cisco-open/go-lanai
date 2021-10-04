@@ -1,6 +1,6 @@
 // Package dlock provides distributed acquireLock support of microservices and provide common usage patterns
 // around distributed acquireLock, such as acquireLock-based service leader election and Once implementation similar to sync package.
-package dlock
+package dsync
 
 import "context"
 

@@ -1,4 +1,4 @@
-package dlock
+package dsync
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -7,7 +7,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var logger = log.New("DLock")
+var logger = log.New("DSync")
 
 var Module = &bootstrap.Module{
 	Name:       "distributed",

@@ -1,4 +1,4 @@
-package dlock
+package dsync
 
 import (
 	"context"
@@ -67,14 +67,14 @@ func (m *ConsulSyncManager) Lock(key string) (Lock, error) {
 	}
 
 	m.locks[key] = newConsulLock(m.client, func(opt *ConsulLockOption) {
-		opt.SessionFunc = m.managedSessionFunc()
+		opt.SessionFunc = m.waitForSession
 		opt.Key = key
 		opt.Value = []byte("reserved value")
 	})
 	return m.locks[key], nil
 }
 
-func (m *ConsulSyncManager) start() {
+func (m *ConsulSyncManager) lazyStart() {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 	if m.cancelFunc == nil {
@@ -95,21 +95,19 @@ func (m *ConsulSyncManager) stop() {
 	return
 }
 
-// managedSessionFunc returns current session if a TODO
-func (m *ConsulSyncManager) managedSessionFunc() func(context.Context) (string, error) {
-	return func(ctx context.Context) (string, error) {
-		m.start()
-		m.mtx.Lock()
-		defer m.mtx.Unlock()
-		for {
-			switch m.session {
-			case "":
-				if e := m.sessionCond.Wait(ctx); e != nil {
-					return "", e
-				}
-			default:
-				return m.session, nil
+// waitForSession returns current managed session. It blocks until session is available or given context is cancelled
+func (m *ConsulSyncManager) waitForSession(ctx context.Context) (string, error) {
+	m.lazyStart()
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	for {
+		switch m.session {
+		case "":
+			if e := m.sessionCond.Wait(ctx); e != nil {
+				return "", e
 			}
+		default:
+			return m.session, nil
 		}
 	}
 }
@@ -177,6 +175,7 @@ func (m *ConsulSyncManager) sessionLoop(ctx context.Context) {
 }
 
 func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) error {
+	var lastErrTime time.Time
 	for {
 		select {
 		case <-ctx.Done():
@@ -185,7 +184,7 @@ func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) err
 		}
 
 		// RenewPeriodic is used to periodically invoke Session.Renew on a
-		// session until a doneChan is closed. This is meant to be used in a long running
+		// session until a doneChan is closed. This is meant to be used in a long-running
 		// goroutine to ensure a session stays valid.
 		wOpts := (*api.WriteOptions)(nil).WithContext(ctx)
 		e := m.client.Session().RenewPeriodic(m.option.TTL.String(), session, wOpts, ctx.Done())
@@ -196,8 +195,12 @@ func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) err
 			logger.Warnf("session expired")
 			return e
 		default:
+			if !lastErrTime.IsZero() && time.Since(lastErrTime) > m.option.TTL {
+				logger.Warnf("session lost: %v", e)
+				return e
+			}
 			logger.Debugf("session renew error: %v", e)
-			return e
+			lastErrTime = time.Now()
 		}
 	}
 }
