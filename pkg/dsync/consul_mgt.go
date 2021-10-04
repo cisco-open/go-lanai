@@ -20,6 +20,7 @@ type ConsulSyncManager struct {
 	appCtx      *bootstrap.ApplicationContext
 	client      *api.Client
 	option      ConsulSessionOption
+	shutdown    bool
 	session     string
 	sessionCond *xsync.Cond
 	cancelFunc  context.CancelFunc
@@ -54,40 +55,74 @@ func newConsulLockManager(ctx *bootstrap.ApplicationContext, conn *consul.Connec
 	return
 }
 
-func (m *ConsulSyncManager) Lock(key string) (Lock, error) {
+func (m *ConsulSyncManager) Start(_ context.Context) error {
+	// do nothing, we support lazy start
+	return nil
+}
+
+func (m *ConsulSyncManager) Stop(ctx context.Context) error {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	// enter shutdown mode
+	m.shutdown = true
+	// stopLoop session loop
+	m.stopLoop()
+	// release all existing locks
+	for k, l := range m.locks {
+		if e := l.Release(); e != nil {
+			logger.WithContext(ctx).Warnf("Failed to release lock [%s]: %v", k, e)
+		}
+	}
+	return nil
+}
+
+func (m *ConsulSyncManager) Lock(key string, opts ...LockOptions) (Lock, error) {
 	if key == "" {
-		return nil, fmt.Errorf(`cannot create distributed mutext: key is required but missing`)
+		return nil, fmt.Errorf(`cannot create distributed lock: key is required but missing`)
+	}
+
+	option := LockOption{
+		Valuer: NewJsonLockValuer(map[string]string{
+			"name": "go-lanai distributed lock",
+		}),
+	}
+	for _, fn := range opts {
+		fn(&option)
 	}
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	if lock, ok := m.locks[key]; ok {
+	if m.shutdown {
+		return nil, ErrSyncManagerStopped
+	} else if lock, ok := m.locks[key]; ok {
 		return lock, nil
 	}
 
 	m.locks[key] = newConsulLock(m.client, func(opt *ConsulLockOption) {
+		opt.Context = m.appCtx
 		opt.SessionFunc = m.waitForSession
 		opt.Key = key
-		opt.Value = []byte("reserved value")
+		opt.Valuer = option.Valuer
 	})
 	return m.locks[key], nil
 }
 
-func (m *ConsulSyncManager) lazyStart() {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+// startLoop requires mutex lock
+func (m *ConsulSyncManager) startLoop() error {
+	if m.shutdown {
+		return ErrSyncManagerStopped
+	}
 	if m.cancelFunc == nil {
 		ctx, cf := context.WithCancel(m.appCtx)
 		m.cancelFunc = cf
 		go m.sessionLoop(ctx)
 	}
-	return
+	return nil
 }
 
-func (m *ConsulSyncManager) stop() {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+// stopLoop requires mutex lock
+func (m *ConsulSyncManager) stopLoop() {
 	if m.cancelFunc != nil {
 		m.cancelFunc()
 		m.cancelFunc = nil
@@ -97,9 +132,12 @@ func (m *ConsulSyncManager) stop() {
 
 // waitForSession returns current managed session. It blocks until session is available or given context is cancelled
 func (m *ConsulSyncManager) waitForSession(ctx context.Context) (string, error) {
-	m.lazyStart()
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
+
+	if e := m.startLoop(); e != nil {
+		return "", e
+	}
 	for {
 		switch m.session {
 		case "":
@@ -131,14 +169,13 @@ func (m *ConsulSyncManager) sessionLoop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Infof("sync manager stopped")
+			logger.WithContext(ctx).Infof("sync manager stopped")
 			return
 		default:
 		}
 
 		// reset session
 		m.updateSession("")
-		// TODO use configuration
 		wOpts := (*api.WriteOptions)(nil).WithContext(ctx)
 		session, _, e := m.client.Session().Create(&api.SessionEntry{
 			Name:      m.option.Name,
@@ -192,14 +229,14 @@ func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) err
 		case nil:
 			// just continue
 		case api.ErrSessionExpired:
-			logger.Warnf("session expired")
+			logger.WithContext(ctx).Warnf("session expired")
 			return e
 		default:
 			if !lastErrTime.IsZero() && time.Since(lastErrTime) > m.option.TTL {
-				logger.Warnf("session lost: %v", e)
+				logger.WithContext(ctx).Warnf("session lost: %v", e)
 				return e
 			}
-			logger.Debugf("session renew error: %v", e)
+			logger.WithContext(ctx).Debugf("session renew error: %v", e)
 			lastErrTime = time.Now()
 		}
 	}

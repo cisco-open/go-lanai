@@ -1,6 +1,7 @@
 package dsync
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -14,7 +15,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.DistributedLockPrecedence,
 	Options: []fx.Option{
 		fx.Provide(provideSyncManager),
-		//fx.Invoke(initialize),
+		fx.Invoke(setup),
 	},
 }
 
@@ -39,3 +40,20 @@ func provideSyncManager(di syncDI) SyncManager {
 /**************************
 	Initialize
 ***************************/
+
+func setup(lc fx.Lifecycle, manager SyncManager) {
+	syncLc, ok := manager.(SyncManagerLifecycle)
+	if !ok {
+		return
+	}
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			if e := syncLc.Start(ctx); e != nil {
+				return e
+			}
+			// TODO start leader election lock
+			return nil
+		},
+		OnStop:  syncLc.Stop,
+	})
+}

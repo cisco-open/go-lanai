@@ -15,17 +15,13 @@ const (
 	lockFlagValue = 0x275f2b610e0c3019
 )
 
-var (
-	ErrLockUnavailable    = fmt.Errorf("lock is held by another session")
-	ErrSessionUnavailable = fmt.Errorf("session is not available")
-)
-
 type ConsulLockOptions func(opt *ConsulLockOption)
 type ConsulLockOption struct {
+	Context       context.Context
 	SessionFunc   func(context.Context) (string, error)
 	Key           string        // Must be set and have write permissions
-	Value         []byte        // Optional, value to associate with the lock
-	QueryWaitTime time.Duration // how long we block for at a time to check if lock acquisition is possible
+	Valuer        LockValuer    // cannot be nil, valuer to associate with the lock. Default to static json marshaller
+	QueryWaitTime time.Duration // how long we block per GET to check if lock acquisition is possible
 	RetryDelay    time.Duration // how long we wait after a retryable error (usually network error)
 }
 
@@ -60,8 +56,12 @@ func newConsulLock(client *api.Client, opts ...ConsulLockOptions) *ConsulLock {
 	ret := ConsulLock{
 		client: client,
 		option: ConsulLockOption{
+			Context: context.Background(),
 			QueryWaitTime: 10 * time.Minute,
 			RetryDelay:    2 * time.Second,
+			Valuer: NewJsonLockValuer(map[string]string{
+				"name": "consul distributed lock",
+			}),
 		},
 	}
 	ret.stateCond = xsync.NewCond(&ret.mtx)
@@ -171,7 +171,7 @@ func (l *ConsulLock) updateState(s consulLockState, setters ...func()) {
 
 // startLoop kickoff lock loop. mutex lock is required when call this function
 func (l *ConsulLock) startLoop() {
-	l.loopContext, l.loopCancelFunc = context.WithCancel(context.Background())
+	l.loopContext, l.loopCancelFunc = context.WithCancel(l.option.Context)
 	if l.lockLostCh != nil {
 		close(l.lockLostCh)
 	}
@@ -283,7 +283,7 @@ func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait ti
 	kv := l.client.KV()
 	pair := &api.KVPair{
 		Key:     l.option.Key,
-		Value:   l.option.Value,
+		Value:   l.option.Valuer(),
 		Session: session,
 		Flags:   lockFlagValue,
 	}
