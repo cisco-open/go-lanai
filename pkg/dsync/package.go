@@ -2,20 +2,28 @@ package dsync
 
 import (
 	"context"
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"embed"
 	"go.uber.org/fx"
 )
 
+//go:embed defaults-dsync.yml
+var defaultConfigFS embed.FS
+
 var logger = log.New("DSync")
+
+var syncManager SyncManager
 
 var Module = &bootstrap.Module{
 	Name:       "distributed",
 	Precedence: bootstrap.DistributedLockPrecedence,
 	Options: []fx.Option{
+		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(provideSyncManager),
-		fx.Invoke(setup),
+		fx.Invoke(initialize),
 	},
 }
 
@@ -41,19 +49,32 @@ func provideSyncManager(di syncDI) SyncManager {
 	Initialize
 ***************************/
 
-func setup(lc fx.Lifecycle, manager SyncManager) {
-	syncLc, ok := manager.(SyncManagerLifecycle)
-	if !ok {
-		return
-	}
-	lc.Append(fx.Hook{
+type initDI struct {
+	fx.In
+	Lifecycle fx.Lifecycle
+	AppCtx    *bootstrap.ApplicationContext
+	Manager   SyncManager
+}
+
+func initialize(di initDI) {
+	// set global variable
+	syncManager = di.Manager
+	syncLc, ok := di.Manager.(SyncManagerLifecycle)
+	di.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			if e := syncLc.Start(ctx); e != nil {
-				return e
+			if ok {
+				if e := syncLc.Start(ctx); e != nil {
+					return e
+				}
 			}
-			// TODO start leader election lock
+			// start leader election lock
+			return startLeadershipLock(ctx, di)
+		},
+		OnStop: func(ctx context.Context) error {
+			if ok {
+				return syncLc.Stop(ctx)
+			}
 			return nil
 		},
-		OnStop:  syncLc.Stop,
 	})
 }

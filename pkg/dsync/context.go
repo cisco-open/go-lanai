@@ -74,6 +74,20 @@ type Lock interface {
 	Common Impl
  *********************/
 
+// LockWithKey returns a distributed Lock with given key
+// this function panic if internal SyncManager is not initialized yet or key is not provided
+func LockWithKey(key string, opts...LockOptions) Lock {
+	if syncManager == nil {
+		panic("SyncManager is not initialized")
+	}
+	l, e := syncManager.Lock(key, opts...)
+	if e != nil {
+		panic(e)
+	}
+	return l
+}
+
+// NewJsonLockValuer is the default implementation of LockValuer.
 func NewJsonLockValuer(v interface{}) LockValuer {
 	return func() []byte {
 		data, e := json.Marshal(v)

@@ -83,7 +83,7 @@ func (m *ConsulSyncManager) Lock(key string, opts ...LockOptions) (Lock, error) 
 
 	option := LockOption{
 		Valuer: NewJsonLockValuer(map[string]string{
-			"name": "go-lanai distributed lock",
+			"name": fmt.Sprintf("distributed lock - %s", m.appCtx.Name()),
 		}),
 	}
 	for _, fn := range opts {
