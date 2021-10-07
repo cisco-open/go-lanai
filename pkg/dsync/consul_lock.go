@@ -64,6 +64,9 @@ func newConsulLock(client *api.Client, opts ...ConsulLockOptions) *ConsulLock {
 			}),
 		},
 	}
+	// we start with a closed lost channel
+	ret.lockLostCh = make(chan struct{}, 1)
+	close(ret.lockLostCh)
 	ret.stateCond = xsync.NewCond(&ret.mtx)
 
 	for _, fn := range opts {
@@ -163,6 +166,12 @@ func (l *ConsulLock) updateState(s consulLockState, setters ...func()) {
 	if s < 0 {
 		return
 	}
+	if s == stateAcquired && l.state != s {
+		l.lockLostCh = make(chan struct{}, 1)
+	} else if l.state == stateAcquired && l.state != s {
+		close(l.lockLostCh)
+	}
+
 	if s == stateError || l.state != s {
 		defer l.stateCond.Broadcast()
 	}
@@ -172,30 +181,14 @@ func (l *ConsulLock) updateState(s consulLockState, setters ...func()) {
 // startLoop kickoff lock loop. mutex lock is required when call this function
 func (l *ConsulLock) startLoop() {
 	l.loopContext, l.loopCancelFunc = context.WithCancel(l.option.Context)
-	if l.lockLostCh != nil {
-		close(l.lockLostCh)
-	}
-	l.lockLostCh = make(chan struct{}, 1)
 	go l.lockLoop(l.loopContext, l.loopCancelFunc)
 }
 
 // stopLoop stop lock loop. mutex lock is required when call this function
 func (l *ConsulLock) stopLoop() {
 	l.loopCancelFunc()
-	if l.lockLostCh != nil {
-		close(l.lockLostCh)
-	}
-	l.lockLostCh = nil
 	l.loopContext = nil
 	l.loopCancelFunc = nil
-}
-
-// notifyLockLost closes lock lost channel and create a new one. mutex lock is required when call this function
-func (l *ConsulLock) notifyLockLost() {
-	if l.lockLostCh != nil {
-		close(l.lockLostCh)
-	}
-	l.lockLostCh = make(chan struct{}, 1)
 }
 
 // refresh is called by session manager to notify potential change of session ID
@@ -262,21 +255,12 @@ LOOP:
 		default:
 			// we lost the lock
 			logger.WithContext(refreshCtx).Debugf("lost lock [%s] - %v", l.option.Key, e)
-			l.updateState(stateError, func() {
-				l.lastErr = e
-				l.notifyLockLost()
-			})
+			l.updateState(stateError, func() { l.lastErr = e })
 		}
 	}
 
-	// we lost lock, try to restart loop to compete for re-acquiring
-	l.updateState(stateUnknown, func() {
-		// the lock might be manually released before we lock the mutex, check if we still need to restart loop
-		if l.loopContext == nil {
-			return
-		}
-		l.startLoop()
-	})
+	// we lost lock
+	l.updateState(stateUnknown)
 }
 
 func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait time.Duration) error {
@@ -318,7 +302,7 @@ LOOP:
 			return ErrLockUnavailable
 		}
 
-		// pause and retry
+		// at this point, lock is not held by any session, but it may be in LockDelay period. pause and retry
 		select {
 		case <-time.After(l.option.RetryDelay):
 		case <-waitCtx.Done():
@@ -391,12 +375,10 @@ func (l *ConsulLock) handleAcquisitionFailure(ctx context.Context, session strin
 // monitorLock is a long-running routine to monitor a lock ownership
 // the function returns when given session lost ownership or cancelled (by refreshFunc)
 func (l *ConsulLock) monitorLock(ctx context.Context, session string) error {
-	// TODO
 	kv := l.client.KV()
-	opts := &api.QueryOptions{
+	opts := (&api.QueryOptions{
 		RequireConsistent: true,
-	}
-	opts = opts.WithContext(ctx)
+	}).WithContext(ctx)
 
 	var err error
 LOOP:

@@ -151,9 +151,6 @@ func (m *ConsulSyncManager) waitForSession(ctx context.Context) (string, error) 
 }
 
 func (m *ConsulSyncManager) updateSession(sid string) {
-	if sid == "" {
-		return
-	}
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 	defer func(from, to string) {
@@ -188,13 +185,11 @@ func (m *ConsulSyncManager) sessionLoop(ctx context.Context) {
 		case nil:
 			m.updateSession(session)
 		default:
-			if api.IsRetryableError(e) {
-				select {
-				case <-time.After(m.option.RetryDelay):
-					continue
-				case <-ctx.Done():
-					continue
-				}
+			select {
+			case <-time.After(m.option.RetryDelay):
+				continue
+			case <-ctx.Done():
+				continue
 			}
 		}
 
@@ -212,7 +207,6 @@ func (m *ConsulSyncManager) sessionLoop(ctx context.Context) {
 }
 
 func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) error {
-	var lastErrTime time.Time
 	for {
 		select {
 		case <-ctx.Done():
@@ -232,12 +226,8 @@ func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) err
 			logger.WithContext(ctx).Warnf("session expired")
 			return e
 		default:
-			if !lastErrTime.IsZero() && time.Since(lastErrTime) > m.option.TTL {
-				logger.WithContext(ctx).Warnf("session lost: %v", e)
-				return e
-			}
-			logger.WithContext(ctx).Debugf("session renew error: %v", e)
-			lastErrTime = time.Now()
+			logger.WithContext(ctx).Warnf("session lost: %v", e)
+			return e
 		}
 	}
 }

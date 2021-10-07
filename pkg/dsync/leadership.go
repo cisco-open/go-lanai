@@ -62,9 +62,7 @@ func startLeadershipLock(ctx context.Context, di initDI) (err error) {
 				default:
 				}
 			}
-
 		}()
-
 	})
 	return
 }

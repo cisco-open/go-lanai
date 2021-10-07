@@ -53,8 +53,8 @@ type Lock interface {
 	Lock(ctx context.Context) error
 
 	// TryLock differs from Lock in following ways:
-	// - TryLock stopLoop blocking when lock is held by other instance/session
-	// - TryLock stopLoop blocking when unrecoverable error happens during lock acquisition
+	// - TryLock stop loop blocking when lock is held by other instance/session
+	// - TryLock stop loop blocking when unrecoverable error happens during lock acquisition
 	// Note: TryLock may temporarily block when connectivity to external infra service is not available
 	TryLock(ctx context.Context) error
 
