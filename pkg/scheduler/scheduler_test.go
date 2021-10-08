@@ -11,6 +11,7 @@ import (
 )
 
 var TestTimeUnit time.Duration
+var TestHook = &TestTaskHook{}
 
 func TestMain(m *testing.M) {
 	// This package's tests are time-sensitive. We first need to know the executing host's base performance
@@ -26,6 +27,7 @@ func TestMain(m *testing.M) {
 		TestTimeUnit = 5 * time.Millisecond
 	}
 	fmt.Printf("Use base TimeUnit [%v] for testing\n", TestTimeUnit)
+	AddDefaultHook(TestHook)
 	m.Run()
 }
 
@@ -34,7 +36,7 @@ func TestMain(m *testing.M) {
  ************************/
 
 func TestTaskTiming(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1000 * TestTimeUnit)
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*TestTimeUnit)
 	defer cancel()
 	test.RunTest(ctx, t,
 		test.GomegaSubTest(SubTestFixedRateTiming(), "TestFixedRate"),
@@ -47,7 +49,7 @@ func TestTaskTiming(t *testing.T) {
 }
 
 func TestTaskCancellation(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1000 * TestTimeUnit)
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*TestTimeUnit)
 	defer cancel()
 	test.RunTest(ctx, t,
 		test.GomegaSubTest(SubTestCancelOnError(), "TestCancelOnError"),
@@ -57,7 +59,7 @@ func TestTaskCancellation(t *testing.T) {
 }
 
 func TestTaskSchedulingError(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1000 * TestTimeUnit)
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*TestTimeUnit)
 	defer cancel()
 	test.RunTest(ctx, t,
 		test.GomegaSubTest(SubTestSchedulingErrors(), "TestSchedulingError"),
@@ -93,6 +95,8 @@ func SubTestFixedRateTiming() test.GomegaSubTestFunc {
 		i, e := WaitTask(ctx, canceller, count, execCh, check)
 		g.Expect(i).To(Equal(count), "task should be triggered at least %d times", count)
 		g.Expect(e).To(BeNil(), "task shouldn't finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -115,13 +119,15 @@ func SubTestFixedDelayTiming() test.GomegaSubTestFunc {
 		// wait and verify
 		expected := canceller.(*task).option.initialTime
 		check := func(_ TaskCanceller, i int, triggerTime time.Time) {
-			g.Expect(triggerTime).To(gomega.BeTemporally("~", expected, 2 * TestTimeUnit),
+			g.Expect(triggerTime).To(gomega.BeTemporally("~", expected, 2*TestTimeUnit),
 				"task triggered time [i=%d] should be correct", i)
 			expected = expected.Add(taskDur).Add(delay)
 		}
 		i, e := WaitTask(ctx, canceller, count, execCh, check)
 		g.Expect(i).To(Equal(count), "task should be triggered at least %d times", count)
 		g.Expect(e).To(BeNil(), "task shouldn't finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -147,6 +153,8 @@ func SubTestRunOnceTiming() test.GomegaSubTestFunc {
 		i, e := WaitTask(ctx, canceller, 3, execCh, check)
 		g.Expect(i).To(Equal(1), "task should be triggered only once")
 		g.Expect(e).To(BeNil(), "task shouldn't finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -171,6 +179,8 @@ func SubTestStartNowTiming() test.GomegaSubTestFunc {
 		i, e := WaitTask(ctx, canceller, 3, execCh, check)
 		g.Expect(i).To(Equal(1), "task should be triggered only once")
 		g.Expect(e).To(BeNil(), "task shouldn't finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -193,7 +203,8 @@ func SubTestFixedRateWithPastStartTiming() test.GomegaSubTestFunc {
 		defer canceller.Cancel()
 
 		// wait and verify
-		for ; !start.After(now); start = start.Add(rate) {}
+		for ; !start.After(now); start = start.Add(rate) {
+		}
 		check := func(_ TaskCanceller, i int, triggerTime time.Time) {
 			expected := start.Add(time.Duration(i * int(rate)))
 			g.Expect(triggerTime).To(gomega.BeTemporally("~", expected, TestTimeUnit),
@@ -202,6 +213,8 @@ func SubTestFixedRateWithPastStartTiming() test.GomegaSubTestFunc {
 		i, e := WaitTask(ctx, canceller, count, execCh, check)
 		g.Expect(i).To(Equal(count), "task should be triggered at least %d times", count)
 		g.Expect(e).To(BeNil(), "task shouldn't finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -234,6 +247,8 @@ func SubTestFixedDelayWithPastStartTiming() test.GomegaSubTestFunc {
 		i, e := WaitTask(ctx, canceller, count, execCh, check)
 		g.Expect(i).To(Equal(count), "task should be triggered at least %d times", count)
 		g.Expect(e).To(BeNil(), "task shouldn't finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -256,8 +271,10 @@ func SubTestCancelOnError() test.GomegaSubTestFunc {
 
 		// wait and verify
 		i, e := WaitTask(ctx, canceller, count, execCh, nil)
-		g.Expect(i).To(Equal(errAfter + 1), "task should be triggered %d times", errAfter + 1)
+		g.Expect(i).To(Equal(errAfter+1), "task should be triggered %d times", errAfter+1)
 		g.Expect(e).To(Equal(MockedErr), "task should finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -280,8 +297,10 @@ func SubTestCancelOnPanic() test.GomegaSubTestFunc {
 
 		// wait and verify
 		i, e := WaitTask(ctx, canceller, count, execCh, nil)
-		g.Expect(i).To(Equal(errAfter + 1), "task should be triggered %d times", errAfter + 1)
+		g.Expect(i).To(Equal(errAfter+1), "task should be triggered %d times", errAfter+1)
 		g.Expect(e).To(Equal(MockedErr), "task should finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -309,8 +328,10 @@ func SubTestManualCancel() test.GomegaSubTestFunc {
 			}
 		}
 		i, e := WaitTask(ctx, canceller, count, execCh, check)
-		g.Expect(i).To(Equal(cancelAfter + 1), "task should be triggered %d times", cancelAfter + 1)
+		g.Expect(i).To(Equal(cancelAfter+1), "task should be triggered %d times", cancelAfter+1)
 		g.Expect(e).To(Equal(context.Canceled), "task should finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
 	}
 }
 
@@ -405,4 +426,19 @@ func TaskPanicAfterN(n int) TaskErrorFunc {
 		}
 		return nil
 	}
+}
+
+type TestTaskHook struct {
+	beforeCount int
+	afterCount  int
+}
+
+func (h *TestTaskHook) BeforeTrigger(ctx context.Context, _ string) context.Context {
+	h.beforeCount++
+	return ctx
+}
+
+func (h *TestTaskHook) AfterTrigger(_ context.Context, _ string, _ error) {
+	h.afterCount++
+	return
 }

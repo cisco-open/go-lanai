@@ -32,7 +32,7 @@ func LeadershipLock() Lock {
 	return leadershipLock
 }
 
-func startLeadershipLock(ctx context.Context, di initDI) (err error) {
+func startLeadershipLock(_ context.Context, di initDI) (err error) {
 	leadershipOnce.Do(func() {
 		leadershipLock, err = syncManager.Lock(
 			fmt.Sprintf(leadershipLockKeyFormat, di.AppCtx.Name()),
@@ -49,10 +49,10 @@ func startLeadershipLock(ctx context.Context, di initDI) (err error) {
 		LOOP:
 			for {
 				if e := leadershipLock.Lock(di.AppCtx); e == nil {
-					logger.WithContext(ctx).Infof("Leadership - become leader [%s]", leadershipLock.Key())
+					logger.WithContext(di.AppCtx).Infof("Leadership - become leader [%s]", leadershipLock.Key())
 					select {
 					case <-leadershipLock.Lost():
-						logger.WithContext(ctx).Infof("Leadership - lost [%s]", leadershipLock.Key())
+						logger.WithContext(di.AppCtx).Infof("Leadership - lost [%s]", leadershipLock.Key())
 					case <-di.AppCtx.Done():
 					}
 				}

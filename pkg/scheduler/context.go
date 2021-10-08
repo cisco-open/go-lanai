@@ -27,5 +27,13 @@ type TaskOption struct {
 	interval      time.Duration
 	mode          Mode
 	cancelOnError bool
+	hooks         []TaskHook
 }
 
+type TaskHook interface {
+	// BeforeTrigger is invoked before each time the task is triggered. TaskHook can modify execution context
+	BeforeTrigger(ctx context.Context, id string) context.Context
+
+	// AfterTrigger is invoked after the task is triggered and executed
+	AfterTrigger(ctx context.Context, id string, err error)
+}

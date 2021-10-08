@@ -136,25 +136,36 @@ func (t *task) fixedDelayLoop(ctx context.Context) {
 func (t *task) execTask(ctx context.Context, wait bool) {
 	errCh := make(chan error, 1)
 	go func() {
+		execCtx := ctx
 		var err error
 		defer func() {
 			// try recover
 			if e := recover(); e != nil {
 				err = fmt.Errorf("%v", e)
-				t.handleError(ctx, err)
 			}
+
+			// post-hook
+			for _, hook := range t.option.hooks {
+				hook.AfterTrigger(execCtx, t.id, err)
+			}
+
+			// handle error
+			if err != nil {
+				t.handleError(execCtx, err)
+			}
+
 			// notify and cleanup
 			errCh <- err
 			close(errCh)
 		}()
 
-		// TODO pre-hook
+		// pre-hook
+		for _, hook := range t.option.hooks {
+			execCtx = hook.BeforeTrigger(execCtx, t.id)
+		}
 
 		// run task
-		if err = t.task(ctx); err != nil {
-			t.handleError(ctx, err)
-		}
-		// TODO post-hook
+		err = t.task(execCtx)
 	}()
 
 	if !wait {

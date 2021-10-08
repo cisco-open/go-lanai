@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/scheduler"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
@@ -58,7 +59,7 @@ func init() {
 	}
 }
 
-// Maker func, does nothing. Allow service to include this module in main()
+// Use does nothing. Allow service to include this module in main()
 func Use() {
 
 }
@@ -150,6 +151,9 @@ func initialize(lc fx.Lifecycle, di regDI) {
 		hook := instrument.NewVaultTracingHook(di.Tracer)
 		di.VaultClient.AddHooks(di.AppContext, hook)
 	}
+
+	// scheduler instrumentation
+	scheduler.AddDefaultHook(instrument.NewTracingTaskHook(di.Tracer))
 
 	// graceful closer
 	if di.FxHook != nil {

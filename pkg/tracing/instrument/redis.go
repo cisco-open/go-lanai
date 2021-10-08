@@ -21,16 +21,16 @@ func NewRedisTrackingHook(tracer opentracing.Tracer) *redisTracingHook{
 func newRedisTrackingHook(tracer opentracing.Tracer, db int) *redisTracingHook{
 	return &redisTracingHook{
 		tracer: tracer,
-		db: -1,
+		db: db,
 	}
 }
 
-// redis.OptionsAwareHook
+// WithClientOption implements redis.OptionsAwareHook
 func (h redisTracingHook) WithClientOption(opts *goredis.UniversalOptions) goredis.Hook {
 	return newRedisTrackingHook(h.tracer, opts.DB)
 }
 
-// redis.Hook
+// BeforeProcess implements redis.Hook
 func (h redisTracingHook) BeforeProcess(ctx context.Context, cmd goredis.Cmder) (context.Context, error) {
 	name := tracing.OpNameRedis + " " + cmd.Name()
 	cmdStr := cmd.Name()
@@ -48,7 +48,7 @@ func (h redisTracingHook) BeforeProcess(ctx context.Context, cmd goredis.Cmder) 
 		DescendantOrNoSpan(ctx), nil
 }
 
-// redis.Hook
+// AfterProcess implements redis.Hook
 func (h redisTracingHook) AfterProcess(ctx context.Context, cmd goredis.Cmder) error {
 	op := tracing.WithTracer(h.tracer)
 	if cmd.Err() != nil {
@@ -58,7 +58,7 @@ func (h redisTracingHook) AfterProcess(ctx context.Context, cmd goredis.Cmder) e
 	return nil
 }
 
-// redis.Hook
+// AfterProcessPipeline implements redis.Hook
 func (h redisTracingHook) BeforeProcessPipeline(ctx context.Context, cmds []goredis.Cmder) (context.Context, error) {
 	name := tracing.OpNameRedis + "-batch"
 	cmdNames := make([]string, len(cmds))
@@ -78,7 +78,7 @@ func (h redisTracingHook) BeforeProcessPipeline(ctx context.Context, cmds []gore
 		DescendantOrNoSpan(ctx), nil
 }
 
-// redis.Hook
+// AfterProcessPipeline implements redis.Hook
 func (h redisTracingHook) AfterProcessPipeline(ctx context.Context, cmds []goredis.Cmder) error {
 	op := tracing.WithTracer(h.tracer)
 	errs := map[string]error{}

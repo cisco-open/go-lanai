@@ -22,6 +22,7 @@ const (
 	OpNameHttpClient = "remote-http"
 	OpNameSecScope   = "security"
 	OpNameKafka      = "kafka"
+	OpNameScheduler  = "scheduler"
 	//OpName = ""
 )
 
@@ -97,7 +98,7 @@ func (op *SpanOperator) WithOptions(exts ...SpanOption) *SpanOperator {
 }
 
 // Operations
-func (op SpanOperator) UpdateCurrentSpan(ctx context.Context)  {
+func (op SpanOperator) UpdateCurrentSpan(ctx context.Context) {
 	span := SpanFromContext(ctx)
 	if span == nil {
 		return
@@ -200,5 +201,3 @@ func (op SpanOperator) applyUpdateOptions(span opentracing.Span) {
 		ext(span)
 	}
 }
-
-

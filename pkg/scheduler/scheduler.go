@@ -2,11 +2,14 @@ package scheduler
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
 	"time"
 )
 
 var logger = log.New("Scheduler")
+
+var defaultTaskHooks []TaskHook
 
 /**************************
 	Scheduling Functions
@@ -14,12 +17,14 @@ var logger = log.New("Scheduler")
 
 // Repeat schedules a takes that repeat at specified time
 func Repeat(taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, error) {
+	opts = append([]TaskOptions{TaskHooks(defaultTaskHooks...)}, opts...)
 	return newTask(taskFunc, opts...)
 }
 
 // RunOnce schedules a task that run only once at specified time
 // Note: any options affecting repeat rate (AtRate, WithDelay, etc.) would take no effect
 func RunOnce(taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, error) {
+	opts = append([]TaskOptions{TaskHooks(defaultTaskHooks...)}, opts...)
 	opts = append(opts, runOnceOption())
 	return newTask(taskFunc, opts...)
 }
@@ -28,7 +33,13 @@ func RunOnce(taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, error) {
 // Note: any options affecting start time and repeat rate (StartAt, AtRate, etc.) would take no effect
 func Cron(expr string, taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, error) {
 	// TODO
+	opts = append([]TaskOptions{TaskHooks(defaultTaskHooks...)}, opts...)
 	return newTask(taskFunc, opts...)
+}
+
+func AddDefaultHook(hooks ...TaskHook) {
+	defaultTaskHooks = append(defaultTaskHooks, hooks...)
+	order.SortStable(defaultTaskHooks, order.OrderedFirstCompare)
 }
 
 /**************************
@@ -39,6 +50,14 @@ func Cron(expr string, taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, e
 func Name(name string) TaskOptions {
 	return func(opt *TaskOption) error {
 		opt.name = name
+		return nil
+	}
+}
+
+// TaskHooks option to add TaskHook
+func TaskHooks(hooks ...TaskHook) TaskOptions {
+	return func(opt *TaskOption) error {
+		opt.hooks = append(opt.hooks, hooks...)
 		return nil
 	}
 }
