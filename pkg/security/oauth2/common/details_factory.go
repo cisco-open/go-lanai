@@ -110,7 +110,7 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 	// tenant
 	td := internal.TenantDetails{
 		Id: facts.tenant.Id,
-		Name: facts.tenant.Name,
+		ExternalId: facts.tenant.ExternalId,
 		Suspended: facts.tenant.Suspended,
 	}
 

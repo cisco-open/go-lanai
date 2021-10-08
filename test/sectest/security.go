@@ -25,7 +25,7 @@ func WithMockedSecurity(ctx context.Context, opts...SecurityMockOptions) context
 			UName: details.Username(),
 			UID:   details.UserId(),
 			TID:   details.TenantId(),
-			TName: details.TenantName(),
+			TExternalId: details.TenantExternalId(),
 			OrigU: details.OrigUsername,
 		},
 		ExpTime:         details.Exp,

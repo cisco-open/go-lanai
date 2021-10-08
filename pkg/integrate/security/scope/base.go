@@ -100,7 +100,7 @@ func (b *managerBase) prepareCacheKey(scope *Scope, srcUsername string) {
 		src:        srcUsername,
 		username:   scope.username,
 		userId:     scope.userId,
-		tenantName: scope.tenantName,
+		tenantExternalId: scope.tenantExternalId,
 		tenantId:   scope.tenantId,
 	}
 }
@@ -113,14 +113,14 @@ func (b *managerBase) isSameUser(username, userId string, auth security.Authenti
 	return username != "" && username == un || userId != "" && userId == id
 }
 
-func (b *managerBase) isSameTenant(tenantName, tenantId string, auth security.Authentication) bool {
-	if tenantName == "" && tenantId == "" {
+func (b *managerBase) isSameTenant(tenantExternalId, tenantId string, auth security.Authentication) bool {
+	if tenantExternalId == "" && tenantId == "" {
 		return true
 	}
 
 	switch details := auth.Details().(type) {
 	case security.TenantDetails:
-		return tenantId != "" && tenantId == details.TenantId() || tenantName != "" && tenantName == details.TenantName()
+		return tenantId != "" && tenantId == details.TenantId() || tenantExternalId != "" && tenantExternalId == details.TenantExternalId()
 	default:
 		return false
 	}

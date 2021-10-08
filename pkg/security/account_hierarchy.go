@@ -20,7 +20,7 @@ type Provider struct {
 
 type Tenant struct {
 	Id           string
-	Name         string
+	ExternalId   string
 	DisplayName  string
 	Description  string
 	ProviderId   string
@@ -39,5 +39,5 @@ type ProviderStore interface {
 
 type TenantStore interface {
 	LoadTenantById(ctx context.Context, id string) (*Tenant, error)
-	LoadTenantByName(ctx context.Context, name string) (*Tenant, error)
+	LoadTenantByExternalId(ctx context.Context, name string) (*Tenant, error)
 }

@@ -320,8 +320,8 @@ func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 
 	// extract tenant id or name
 	tenantId, idOk := request.Parameters()[oauth2.ParameterTenantId]
-	tenantName, nOk := request.Parameters()[oauth2.ParameterTenantName]
-	if (!idOk || tenantId == "") && (!nOk || tenantName == "") {
+	tenantExternalId, nOk := request.Parameters()[oauth2.ParameterTenantExternalId]
+	if (!idOk || tenantId == "") && (!nOk || tenantExternalId == "") {
 		tenantId = acctT.DefaultDesignatedTenantId()
 	}
 
@@ -333,9 +333,9 @@ func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with id [%s]", account.Username(), tenantId))
 		}
 	} else {
-		tenant, e = s.tenantStore.LoadTenantByName(ctx, tenantName)
+		tenant, e = s.tenantStore.LoadTenantByExternalId(ctx, tenantExternalId)
 		if e != nil {
-			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with name [%s]", account.Username(), tenantName))
+			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with externalId [%s]", account.Username(), tenantExternalId))
 		}
 	}
 
@@ -381,7 +381,7 @@ func (s *DefaultAuthorizationService) loadProvider(ctx context.Context, _ oauth2
 
 	provider, e := s.providerStore.LoadProviderById(ctx, providerId)
 	if e != nil {
-		return nil, newInvalidProviderError(fmt.Sprintf("tenant [%s]'s provider is invalid", tenant.Name))
+		return nil, newInvalidProviderError(fmt.Sprintf("tenant [%s]'s provider is invalid", tenant.DisplayName))
 	}
 	return provider, nil
 }

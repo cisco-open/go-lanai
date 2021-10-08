@@ -200,8 +200,8 @@ func (m *defaultScopeManager) passwordLogin(ctx context.Context, pKey *cKey) (*s
 	authOpts := []seclient.AuthOptions{
 		seclient.WithCredentials(pKey.username, p),
 	}
-	if pKey.tenantName != "" || pKey.tenantId != "" {
-		authOpts = append(authOpts, seclient.WithTenant(pKey.tenantId, pKey.tenantName))
+	if pKey.tenantExternalId != "" || pKey.tenantId != "" {
+		authOpts = append(authOpts, seclient.WithTenant(pKey.tenantId, pKey.tenantExternalId))
 	}
 	return m.client.PasswordLogin(ctx, authOpts...)
 }
@@ -216,13 +216,13 @@ func (m *defaultScopeManager) switchContext(ctx context.Context, pKey *cKey, aut
 	authOpts := []seclient.AuthOptions{
 		seclient.WithAuthentication(auth),
 	}
-	if pKey.tenantName != "" || pKey.tenantId != ""{
-		authOpts = append(authOpts, seclient.WithTenant(pKey.tenantId, pKey.tenantName))
+	if pKey.tenantExternalId != "" || pKey.tenantId != ""{
+		authOpts = append(authOpts, seclient.WithTenant(pKey.tenantId, pKey.tenantExternalId))
 	}
 
 	if m.isSameUser(pKey.username, pKey.userId, auth) {
 		// switch tenant
-		if m.isSameTenant(pKey.tenantName, pKey.tenantId, auth) {
+		if m.isSameTenant(pKey.tenantExternalId, pKey.tenantId, auth) {
 			return nil, nil
 		} else {
 			return m.client.SwitchTenant(ctx, authOpts...)
