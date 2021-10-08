@@ -33,7 +33,7 @@ type CheckTokenClaims struct {
 	AccountType     string          `claim:"account_type"`
 	Currency        string          `claim:"currency"`
 	TenantId        string          `claim:"tenant_id"`
-	TenantName      string          `claim:"tenant_name"`
+	TenantExternalId string          `claim:"tenant_name"` //This maps to Tenant's ExternalId for backward compatibility
 	TenantSuspended *bool           `claim:"tenant_suspended"`
 	ProviderId      string          `claim:"provider_id"`
 	ProviderName    string          `claim:"provider_name"`

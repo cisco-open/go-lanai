@@ -33,28 +33,28 @@ func newMockedAccount(props *mockedAccountProperties) *mockedAccount {
 	}
 	switch {
 	case ret.UserId == "":
-		ret.UserId = nameToId(ret.Username)
+		ret.UserId = extIdToId(ret.Username)
 	case ret.Username == "":
-		ret.Username = idToName(ret.UserId)
+		ret.Username = idToExtId(ret.UserId)
 	}
 	return ret
 }
 
 type mockedTenant struct {
-	Name string
+	ExternalId string
 	ID   string
 }
 
 func newMockedTenant(props *mockedTenantProperties) *mockedTenant {
 	ret := &mockedTenant{
-		Name: props.Name,
+		ExternalId: props.ExternalId,
 		ID:   props.ID,
 	}
 	switch {
 	case ret.ID == "":
-		ret.ID = nameToId(ret.Name)
-	case ret.Name == "":
-		ret.Name = idToName(ret.ID)
+		ret.ID = extIdToId(ret.ExternalId)
+	case ret.ExternalId == "":
+		ret.ExternalId = idToExtId(ret.ID)
 	}
 	return ret
 }
@@ -96,30 +96,30 @@ func (m mockedAccounts) idToName(id string) string {
 	if u, ok := m.idLookup[id]; ok {
 		return u.Username
 	}
-	return idToName(id)
+	return idToExtId(id)
 }
 
 func (m mockedAccounts) nameToId(name string) string {
 	if u, ok := m.lookup[name]; ok {
 		return u.UserId
 	}
-	return nameToId(name)
+	return extIdToId(name)
 }
 
 type mockedTenants struct {
 	idLookup map[string]*mockedTenant
-	nameLookup map[string]*mockedTenant
+	extIdLookup map[string]*mockedTenant
 }
 
 func newMockedTenants(props *mockingProperties) *mockedTenants {
 	tenants := mockedTenants{
 		idLookup: map[string]*mockedTenant{},
-		nameLookup:   map[string]*mockedTenant{},
+		extIdLookup:   map[string]*mockedTenant{},
 	}
 	for _, v := range props.Tenants {
 		t := newMockedTenant(v)
-		if t.Name != "" {
-			tenants.nameLookup[t.Name] = t
+		if t.ExternalId != "" {
+			tenants.extIdLookup[t.ExternalId] = t
 		}
 		if t.ID != "" {
 			tenants.idLookup[t.ID] = t
@@ -128,39 +128,39 @@ func newMockedTenants(props *mockingProperties) *mockedTenants {
 	return &tenants
 }
 
-func (m mockedTenants) find(tenantId, tenantName string) *mockedTenant {
-	if v, ok := m.idLookup[tenantId]; ok && (tenantName == "" || v.Name == tenantName) {
+func (m mockedTenants) find(tenantId, tenantExternalId string) *mockedTenant {
+	if v, ok := m.idLookup[tenantId]; ok && (tenantExternalId == "" || v.ExternalId == tenantExternalId) {
 		return v
 	}
 
-	if v, ok := m.nameLookup[tenantName]; ok && (tenantId == "" || v.ID == tenantId) {
+	if v, ok := m.extIdLookup[tenantExternalId]; ok && (tenantId == "" || v.ID == tenantId) {
 		return v
 	}
 	return nil
 }
 
-func (m mockedTenants) idToName(id string) string {
+func (m mockedTenants) idToExtId(id string) string {
 	if t, ok := m.idLookup[id]; ok {
-		return t.Name
+		return t.ExternalId
 	}
-	return idToName(id)
+	return idToExtId(id)
 }
 
-func (m mockedTenants) nameToId(name string) string {
-	if t, ok := m.nameLookup[name]; ok {
+func (m mockedTenants) extIdToId(name string) string {
+	if t, ok := m.extIdLookup[name]; ok {
 		return t.ID
 	}
-	return nameToId(name)
+	return extIdToId(name)
 }
 
 /*************************
 	Helpers
  *************************/
 
-func idToName(id string) string {
+func idToExtId(id string) string {
 	return strings.TrimPrefix(id, idPrefix)
 }
 
-func nameToId(name string) string {
-	return idPrefix + name
+func extIdToId(extId string) string {
+	return idPrefix + extId
 }

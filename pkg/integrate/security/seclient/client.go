@@ -157,8 +157,8 @@ func (c *remoteAuthClient) reqOptionsForTenancy(opt *AuthOption) []httpclient.Re
 	if opt.TenantId != "" {
 		ret = append(ret, httpclient.WithParam(oauth2.ParameterTenantId, opt.TenantId))
 	}
-	if opt.TenantName != "" {
-		ret = append(ret, httpclient.WithParam(oauth2.ParameterTenantName, opt.TenantName))
+	if opt.TenantExternalId != "" {
+		ret = append(ret, httpclient.WithParam(oauth2.ParameterTenantExternalId, opt.TenantExternalId))
 	}
 	return ret
 }

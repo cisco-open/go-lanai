@@ -28,7 +28,7 @@ type mockedAccountProperties struct {
 
 type mockedTenantProperties struct {
 	ID   string `json:"id"` // optional field
-	Name string `json:"name"`
+	ExternalId string `json:"external-id"`
 }
 
 func bindMockingProperties(ctx *bootstrap.ApplicationContext) *mockingProperties {

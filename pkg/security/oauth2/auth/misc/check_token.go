@@ -149,7 +149,7 @@ func (ep *CheckTokenEndpoint) activeTokenResponseWithDetails(ctx context.Context
 //		Currency:        auth.Details().(security.UserDetails).CurrencyCode(),
 //		AssignedTenants: auth.Details().(security.UserDetails).AssignedTenantIds(),
 //		TenantId:        auth.Details().(security.TenantDetails).TenantId(),
-//		TenantName:      auth.Details().(security.TenantDetails).TenantName(),
+//		TenantExternalId:      auth.Details().(security.TenantDetails).TenantExternalId(),
 //		TenantSuspended: utils.BoolPtr(auth.Details().(security.TenantDetails).TenantSuspended()),
 //		ProviderId:      auth.Details().(security.ProviderDetails).ProviderId(),
 //		ProviderName:    auth.Details().(security.ProviderDetails).ProviderName(),

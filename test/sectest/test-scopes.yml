@@ -34,10 +34,10 @@ mocking:
   tenants:
     t1:
       id: "id-tenant-1"
-      name: "tenant-1"
+      external-id: "tenant-1"
     t2:
       id: "id-tenant-2"
-      name: "tenant-2"
+      external-id: "tenant-2"
     t3:
       id: "id-tenant-3"
-      name: "tenant-3"
+      external-id: "tenant-3"

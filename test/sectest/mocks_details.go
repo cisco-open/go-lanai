@@ -11,7 +11,7 @@ type SecurityMockOptions func(d *SecurityDetailsMock)
 type SecurityDetailsMock struct {
 	Username     string
 	UserId       string
-	TenantName   string
+	TenantExternalId   string
 	TenantId     string
 	ProviderName string
 	ProviderId   string
@@ -89,8 +89,8 @@ func (d *mockedSecurityDetails) TenantId() string {
 	return d.SecurityDetailsMock.TenantId
 }
 
-func (d *mockedSecurityDetails) TenantName() string {
-	return d.SecurityDetailsMock.TenantName
+func (d *mockedSecurityDetails) TenantExternalId() string {
+	return d.SecurityDetailsMock.TenantExternalId
 }
 
 func (d *mockedSecurityDetails) TenantSuspended() bool {
