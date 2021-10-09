@@ -9,6 +9,7 @@ const (
 	ModeFixedRate = iota
 	ModeFixedDelay
 	ModeRunOnce
+	ModeDynamic
 )
 
 type Mode int
@@ -23,10 +24,11 @@ type TaskCanceller interface {
 type TaskOptions func(opt *TaskOption) error
 type TaskOption struct {
 	name          string
+	mode          Mode
 	initialTime   time.Time
 	interval      time.Duration
-	mode          Mode
 	cancelOnError bool
+	nextFunc      nextFunc
 	hooks         []TaskHook
 }
 
@@ -37,3 +39,6 @@ type TaskHook interface {
 	// AfterTrigger is invoked after the task is triggered and executed
 	AfterTrigger(ctx context.Context, id string, err error)
 }
+
+// nextFunc is used for ModeDynamic. It's currently unexported and only used for cron impl
+type nextFunc func(time.Time) time.Time

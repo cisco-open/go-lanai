@@ -45,6 +45,7 @@ func TestTaskTiming(t *testing.T) {
 		test.GomegaSubTest(SubTestStartNowTiming(), "TestStartNow"),
 		test.GomegaSubTest(SubTestFixedRateWithPastStartTiming(), "TestFixedRateWithPastStart"),
 		test.GomegaSubTest(SubTestFixedDelayWithPastStartTiming(), "TestFixedDelayWithPastStart"),
+		test.GomegaSubTest(SubTestDynamicTiming(), "TestDynamicNext"),
 	)
 }
 
@@ -252,6 +253,37 @@ func SubTestFixedDelayWithPastStartTiming() test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestDynamicTiming() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const count = 3
+
+		// prepare task
+		timing := []time.Duration{15 * TestTimeUnit, 25 * TestTimeUnit,}
+		taskDur := 25 * TestTimeUnit
+
+		tf, execCh := TimingNotifyingTask(taskDur, nil)
+		defer close(execCh)
+
+		// run task and verify
+		canceller, e := Repeat(tf, dynamicNext(dynamicNextFunc(timing)), Name("test-dynamic"))
+		g.Expect(e).To(Succeed(), "new task shouldn't return error")
+		defer canceller.Cancel()
+
+		// wait and verify
+		expected := time.Now()
+		check := func(_ TaskCanceller, i int, triggerTime time.Time) {
+			expected = expected.Add(timing[i % len(timing)])
+			g.Expect(triggerTime).To(gomega.BeTemporally("~", expected, TestTimeUnit),
+				"task triggered time [i=%d] should be correct", i)
+		}
+		i, e := WaitTask(ctx, canceller, count, execCh, check)
+		g.Expect(i).To(Equal(count), "task should be triggered at least %d times", count)
+		g.Expect(e).To(BeNil(), "task shouldn't finished with error")
+		g.Expect(TestHook.beforeCount).To(BeNumerically(">", 0), "task before hook should be called")
+		g.Expect(TestHook.afterCount).To(BeNumerically(">", 0), "task after hook should be called")
+	}
+}
+
 func SubTestCancelOnError() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const count = 5
@@ -406,6 +438,16 @@ func TimingNotifyingTask(taskLength time.Duration, errorFn TaskErrorFunc) (TaskF
 		}
 		return
 	}, ch
+}
+
+func dynamicNextFunc(delays []time.Duration) nextFunc {
+	var i int
+	return func(t time.Time) (next time.Time) {
+		d := delays[i % len(delays)]
+		next = t.Add(d)
+		i++
+		return
+	}
 }
 
 var MockedErr = fmt.Errorf("oops")

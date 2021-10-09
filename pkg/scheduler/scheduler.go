@@ -29,14 +29,6 @@ func RunOnce(taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, error) {
 	return newTask(taskFunc, opts...)
 }
 
-// Cron schedules a task using CRON expression
-// Note: any options affecting start time and repeat rate (StartAt, AtRate, etc.) would take no effect
-func Cron(expr string, taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, error) {
-	// TODO
-	opts = append([]TaskOptions{TaskHooks(defaultTaskHooks...)}, opts...)
-	return newTask(taskFunc, opts...)
-}
-
 func AddDefaultHook(hooks ...TaskHook) {
 	defaultTaskHooks = append(defaultTaskHooks, hooks...)
 	order.SortStable(defaultTaskHooks, order.OrderedFirstCompare)
@@ -122,3 +114,12 @@ func runOnceOption() TaskOptions {
 		return nil
 	}
 }
+
+func dynamicNext(nextFn nextFunc) TaskOptions {
+	return func(opt *TaskOption) error {
+		opt.mode = ModeDynamic
+		opt.nextFunc = nextFn
+		return nil
+	}
+}
+

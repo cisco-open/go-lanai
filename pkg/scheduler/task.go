@@ -41,7 +41,7 @@ func newTask(taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, error) {
 	}
 
 	switch {
-	case t.option.mode != ModeRunOnce && t.option.interval <= 0:
+	case t.option.mode != ModeRunOnce && t.option.mode != ModeDynamic && t.option.interval <= 0:
 		return nil, fmt.Errorf("repeated task should have positive repeat interval")
 	}
 
@@ -81,7 +81,10 @@ func (t *task) loop(ctx context.Context) {
 
 	// first, figure out first fire time if set
 	var delay time.Duration
-	if !t.option.initialTime.IsZero() {
+	switch {
+	case t.option.mode == ModeDynamic:
+		delay = time.Until(t.option.nextFunc(time.Now()))
+	case !t.option.initialTime.IsZero():
 		delay = time.Until(t.option.initialTime)
 		if delay < 0 {
 			if t.option.mode == ModeFixedRate {
@@ -92,9 +95,10 @@ func (t *task) loop(ctx context.Context) {
 			}
 		}
 	}
+
 	select {
 	case <-time.After(delay):
-		t.execTask(ctx, t.option.mode != ModeFixedRate)
+		t.execTask(ctx, t.option.mode != ModeFixedRate && t.option.mode != ModeDynamic)
 	case <-ctx.Done():
 		return
 	}
@@ -105,6 +109,8 @@ func (t *task) loop(ctx context.Context) {
 		t.fixedIntervalLoop(ctx)
 	case ModeFixedDelay:
 		t.fixedDelayLoop(ctx)
+	case ModeDynamic:
+		t.dynamicTriggerLoop(ctx)
 	case ModeRunOnce:
 	}
 }
@@ -123,11 +129,30 @@ func (t *task) fixedIntervalLoop(ctx context.Context) {
 }
 
 func (t *task) fixedDelayLoop(ctx context.Context) {
+	timer := time.NewTimer(t.option.interval)
 	for {
 		select {
-		case <-time.After(t.option.interval):
+		case <-timer.C:
 			t.execTask(ctx, true)
+			timer.Reset(t.option.interval)
 		case <-ctx.Done():
+			timer.Stop()
+			return
+		}
+	}
+}
+
+func (t *task) dynamicTriggerLoop(ctx context.Context) {
+	next := t.option.nextFunc(time.Now())
+	timer := time.NewTimer(time.Until(next))
+	for {
+		select {
+		case now := <-timer.C:
+			t.execTask(ctx, false)
+			next = t.option.nextFunc(now)
+			timer.Reset(time.Until(next))
+		case <-ctx.Done():
+			timer.Stop()
 			return
 		}
 	}
