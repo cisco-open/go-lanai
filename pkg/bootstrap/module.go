@@ -27,6 +27,7 @@ const (
 	WebPrecedence
 	SecurityPrecedence
 	ServiceDiscoveryPrecedence
+	DistributedLockPrecedence
 	TenantHierarchyAccessorPrecedence
 	TenantHierarchyLoaderPrecedence
 	TenantHierarchyModifierPrecedence

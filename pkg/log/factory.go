@@ -7,6 +7,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"io"
 	"os"
+	"strings"
 )
 
 const levelDefault = "default"
@@ -38,18 +39,23 @@ func newKitLoggerFactory(properties *Properties) *kitLoggerFactory {
 	}
 }
 
+func (f *kitLoggerFactory) loggerKey(name string) string {
+	return strings.ToLower(name)
+}
+
 func (f *kitLoggerFactory) createLogger(name string) ContextualLogger {
-	if l, ok := f.registry[name]; ok {
+	key := f.loggerKey(name)
+	if l, ok := f.registry[key]; ok {
 		return l
 	}
 
-	ll, ok := f.logLevels[name]
+	ll, ok := f.logLevels[key]
 	if !ok {
 		ll = f.rootLogLevel
 	}
 
 	l := newConfigurableLogger(name, f.templateLogger, ll, f.effectiveValuers)
-	f.registry[name] = l
+	f.registry[key] = l
 	return l
 }
 
@@ -63,8 +69,9 @@ func (f *kitLoggerFactory) addContextValuers(valuers...ContextValuers) {
 }
 
 func (f *kitLoggerFactory) setLevel (name string, logLevel LoggingLevel) {
-	if logger, ok := f.registry[name]; ok {
-		logger.setLevel(logLevel)
+	key := f.loggerKey(name)
+	if l, ok := f.registry[key]; ok {
+		l.setLevel(logLevel)
 	}
 }
 
@@ -84,14 +91,14 @@ func (f *kitLoggerFactory) refresh(properties *Properties) {
 		f.effectiveValuers[k] = v
 	}
 
-	for name, logger := range f.registry {
-		ll, ok := f.logLevels[name]
+	for key, l := range f.registry {
+		ll, ok := f.logLevels[key]
 		if !ok {
 			ll = rootLogLevel
 		}
-		logger.template = f.templateLogger
-		logger.valuers = f.effectiveValuers
-		logger.setLevel(ll)
+		l.template = f.templateLogger
+		l.valuers = f.effectiveValuers
+		l.setLevel(ll)
 	}
 }
 

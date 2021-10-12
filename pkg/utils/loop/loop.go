@@ -2,6 +2,7 @@ package loop
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -17,11 +18,15 @@ type TaskOption struct {
 	RepeatIntervalFunc RepeatIntervalFunc
 }
 
+type taskResult struct {
+	ret interface{}
+	err error
+}
+
 type task struct {
-	f     TaskFunc
-	errCh chan error
-	retCh chan interface{}
-	opt   TaskOption
+	f        TaskFunc
+	resultCh chan taskResult
+	opt      TaskOption
 }
 
 type Loop struct {
@@ -29,8 +34,8 @@ type Loop struct {
 	taskCh chan *task
 }
 
-func NewLoop() *Loop{
-	return &Loop {
+func NewLoop() *Loop {
+	return &Loop{
 		stopCh: make(chan struct{}),
 		taskCh: make(chan *task),
 	}
@@ -50,7 +55,7 @@ func (l *Loop) Repeat(tf TaskFunc, opts ...TaskOptions) {
 		f(&opt)
 	}
 	l.taskCh <- &task{
-		f: l.makeTaskFuncWithRepeat(tf, opt.RepeatIntervalFunc),
+		f:   l.makeTaskFuncWithRepeat(tf, opt.RepeatIntervalFunc),
 		opt: opt,
 	}
 }
@@ -61,7 +66,7 @@ func (l *Loop) Do(tf TaskFunc, opts ...TaskOptions) {
 		f(&opt)
 	}
 	l.taskCh <- &task{
-		f: tf,
+		f:   tf,
 		opt: opt,
 	}
 }
@@ -71,19 +76,16 @@ func (l *Loop) DoAndWait(tf TaskFunc, opts ...TaskOptions) (interface{}, error) 
 	for _, f := range opts {
 		f(&opt)
 	}
-	errCh := make(chan error)
-	retCh := make(chan interface{})
+	resultCh := make(chan taskResult)
+	defer close(resultCh)
 	l.taskCh <- &task{
-		f: tf,
-		errCh: errCh,
-		retCh: retCh,
-		opt: opt,
+		f:        tf,
+		resultCh: resultCh,
+		opt:      opt,
 	}
 	select {
-	case e := <-errCh:
-		return nil, e
-	case r := <-retCh:
-		return r, nil
+	case result := <-resultCh:
+		return result.ret, result.err
 	}
 }
 
@@ -100,31 +102,36 @@ func (l *Loop) loop(ctx context.Context) {
 
 func (l *Loop) do(ctx context.Context, t *task) {
 	// we assume the cancel signal is propagated from parent
-	done := make(chan struct{})
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	// we guarantee that either errCh or retCh is pushed with value, so we don't need to explicitly close those channels
-	defer cancelFunc()
+	execCtx, doneFn := context.WithCancel(ctx)
+	// we guarantee that either resultCh is pushed with value, so we don't need to explicitly close those channels here
 
 	go func() {
-		defer func(){
-			done <- struct{}{}
+		defer func() {
+			if e := recover(); e != nil && t.resultCh != nil {
+				t.resultCh <- taskResult{err: fmt.Errorf("%v", e)}
+			}
+			doneFn()
 		}()
 
-		if r, e := t.f(cancelCtx, l); t.errCh != nil && e != nil {
-			t.errCh <- e
-		} else if t.retCh != nil {
-			t.retCh <- r
+		r, e := t.f(execCtx, l)
+		if t.resultCh != nil {
+			// check if parent ctx is cancelled
+			select {
+			case <-ctx.Done():
+				t.resultCh <- taskResult{err: ctx.Err()}
+			default:
+				t.resultCh <- taskResult{
+					ret: r,
+					err: e,
+				}
+			}
 		}
 	}()
 
+	// wait for finish or cancelled
 	select {
-	case <-done:
-	case <-cancelCtx.Done():
-		if t.errCh != nil {
-			t.errCh <- cancelCtx.Err()
-		}
+	case <-execCtx.Done():
 	}
-	return
 }
 
 // makeTaskFuncWithRepeat make a func that execute given TaskFunc and reschedule itself after given "interval"
@@ -142,7 +149,9 @@ func (l *Loop) makeTaskFuncWithRepeat(tf TaskFunc, intervalFunc RepeatIntervalFu
 
 func (l *Loop) repeatAfter(tf TaskFunc, interval time.Duration) {
 	go func() {
-		time.Sleep(interval)
-		l.Do(tf)
+		select {
+		case <-time.After(interval):
+			l.Do(tf)
+		}
 	}()
 }

@@ -40,6 +40,7 @@ func newDefaultErrorTranslator() defaultErrorTranslator {
 /*****************************
 	Error Encoder
 ******************************/
+
 func JsonErrorEncoder() httptransport.ErrorEncoder {
 	return jsonErrorEncoder
 }

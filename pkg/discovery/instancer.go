@@ -31,11 +31,11 @@ type ConsulInstancerOption struct {
 
 // ConsulInstancer implements sd.Instancer and Instancer.
 // It yields service for a serviceName in Consul.
-// Note: implementing sd.Instancer is for compatibility reason, using it involves addtional Mutex locking.
+// Note: implementing sd.Instancer is for compatibility reason, using it involves addtional Lock locking.
 // 		 Try use Instancer's callback capability instead
 type ConsulInstancer struct {
 	readyCond 	*sync.Cond
-	cacheMtx    sync.RWMutex // RW Mutex for cache
+	cacheMtx    sync.RWMutex // RW Lock for cache
 	stateMtx    sync.RWMutex // RW Mutext for state, such as start/stop, callback/subscription update
 	client      kitconsul.Client
 	serviceName string
@@ -193,7 +193,7 @@ func (i *ConsulInstancer) resolveInstancesTask() loop.TaskFunc {
 	return func(ctx context.Context, _ *loop.Loop) (interface{}, error) {
 		// Note: i.lastMeta is only updated in this function, and this function is executed via loop.Loop.
 		// 		 because loop.Loop guarantees that all tasks are executed one-by-one,
-		// 		 there is no need to use Mutex or locking
+		// 		 there is no need to use Lock or locking
 		lastIndex := defaultIndex
 		if i.lastMeta != nil {
 			lastIndex = i.lastMeta.LastIndex
