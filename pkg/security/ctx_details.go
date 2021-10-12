@@ -26,7 +26,7 @@ type ProviderDetails interface {
 
 type TenantDetails interface {
 	TenantId() string
-	TenantName() string
+	TenantExternalId() string
 	TenantSuspended() bool
 }
 

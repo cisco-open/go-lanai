@@ -32,7 +32,7 @@ var (
 		oauth2.ClaimAssignedTenants: Optional(AssignedTenants),
 		oauth2.ClaimDefaultTenantId: Optional(DefaultTenantId),
 		oauth2.ClaimTenantId:        Optional(TenantId),
-		oauth2.ClaimTenantName:      Optional(TenantName),
+		oauth2.ClaimTenantExternalId:      Optional(TenantExternalId),
 		oauth2.ClaimTenantSuspended: Optional(TenantSuspended),
 		oauth2.ClaimProviderId:      Optional(ProviderId),
 		oauth2.ClaimProviderName:    Optional(ProviderName),

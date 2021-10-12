@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -z "$POPULATE" ]; then
+{{- range $name, $elem := .Executables }}
+    {{- if gt $elem.Port 0 }}
+    exec ./{{ $name }} "$@"
+    {{- end }}
+{{- end }}
+{{- range $name, $elem := .Executables }}
+    {{- if eq $elem.Type "migrator"  }}
+elif [ "$POPULATE" = "database" ]; then
+    exec ./{{ $name }} "$@"
+    {{- end }}
+{{- end }}
+fi

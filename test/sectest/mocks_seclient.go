@@ -119,15 +119,15 @@ func (c *mockedAuthClient) option(opts []seclient.AuthOptions) (*seclient.AuthOp
 	if opt.UserId != "" && opt.Username != "" {
 		return nil, fmt.Errorf("[Mocked Error] username and userId are exclusive")
 	}
-	if opt.TenantId != "" && opt.TenantName != "" {
+	if opt.TenantId != "" && opt.TenantExternalId != "" {
 		return nil, fmt.Errorf("[Mocked Error] username and userId are exclusive")
 	}
 	return &opt, nil
 }
 
 func (c *mockedAuthClient) resolveTenant(opt *seclient.AuthOption, acct *mockedAccount) (ret *mockedTenant, err error) {
-	if opt.TenantId != "" || opt.TenantName != "" {
-		ret = c.tenants.find(opt.TenantId, opt.TenantName)
+	if opt.TenantId != "" || opt.TenantExternalId != "" {
+		ret = c.tenants.find(opt.TenantId, opt.TenantExternalId)
 	} else if acct.DefaultTenant != "" {
 		ret = c.tenants.find(acct.DefaultTenant, "")
 	}

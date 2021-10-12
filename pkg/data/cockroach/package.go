@@ -12,7 +12,7 @@ var Module = &bootstrap.Module{
 	Name: "cockroach",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
-		fx.Provide(NewGormDialetor, BindCockroachProperties),
+		fx.Provide(NewGormDialetor, BindCockroachProperties, NewGormDbCreator),
 		//fx.Invoke(initialize),
 	},
 }

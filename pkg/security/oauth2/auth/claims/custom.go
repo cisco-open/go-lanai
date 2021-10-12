@@ -55,12 +55,12 @@ func TenantId(ctx context.Context, opt *FactoryOption) (v interface{}, err error
 	return nonZeroOrError(details.TenantId(), errorMissingDetails)
 }
 
-func TenantName(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+func TenantExternalId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.TenantDetails)
 	if !ok {
 		return nil, errorMissingDetails
 	}
-	return nonZeroOrError(details.TenantName(), errorMissingDetails)
+	return nonZeroOrError(details.TenantExternalId(), errorMissingDetails)
 }
 
 func TenantSuspended(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {

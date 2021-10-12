@@ -51,7 +51,7 @@ func SubTestExampleUseScope(di *tenancyAccessorDI) test.GomegaSubTestFunc {
 			d.UserId = "any-user-id"
 			d.TenantId = tenantId.String()
 			d.Tenants = utils.NewStringSet(tenantId.String())
-			d.TenantName = "any-tenant-name"
+			d.TenantExternalId = "any-tenant-ext-id"
 			d.Permissions = utils.NewStringSet(security.SpecialPermissionSwitchTenant)
 		})
 

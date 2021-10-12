@@ -14,13 +14,13 @@ const (
 // security.TenantStore
 type MockedTenantStore struct {
 	ids map[string]*security.Tenant
-	names map[string]*security.Tenant
+	externalIds map[string]*security.Tenant
 }
 
 func NewTenantStore() security.TenantStore {
 	return &MockedTenantStore{
 		ids: map[string]*security.Tenant{},
-		names: map[string]*security.Tenant{},
+		externalIds: map[string]*security.Tenant{},
 	}
 }
 
@@ -30,28 +30,28 @@ func (s *MockedTenantStore) LoadTenantById(ctx context.Context, id string) (*sec
 		return tenant, nil
 	}
 	name := fmt.Sprintf("name-for-%s", id)
-	return s.new(id, name), nil
+	return s.new(id, name, name), nil
 }
 
-func (s *MockedTenantStore) LoadTenantByName(ctx context.Context, name string) (*security.Tenant, error) {
-	if tenant,ok := s.names[name]; ok {
+func (s *MockedTenantStore) LoadTenantByExternalId(ctx context.Context, externalId string) (*security.Tenant, error) {
+	if tenant,ok := s.externalIds[externalId]; ok {
 		return tenant, nil
 	}
-	id := fmt.Sprintf("id-for-%s", name)
-	return s.new(id, name), nil
+	id := fmt.Sprintf("id-for-%s", externalId)
+	return s.new(id, externalId, externalId), nil
 }
 
-func (s *MockedTenantStore) new(id, name string) *security.Tenant {
+func (s *MockedTenantStore) new(id, name string, externalId string) *security.Tenant {
 	tenant := security.Tenant{
 		Id:          id,
-		Name:        name,
+		ExternalId:  externalId,
 		DisplayName: name,
 		Description: fmt.Sprintf("This is a mocked tenant id=%s, name=%s", id, name),
 		ProviderId:  fmt.Sprintf("provider-%s", id),
 		Suspended:   false,
 	}
 	s.ids[id] = &tenant
-	s.names[name] = &tenant
+	s.externalIds[externalId] = &tenant
 	return &tenant
 }
 

@@ -63,6 +63,17 @@ func generateDockerfile(ctx context.Context) error {
 	})
 }
 
+func generateDockerLaunchScript(ctx context.Context) error {
+	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
+		FS:         TmplFS,
+		TmplName:   "dockerlaunch.tmpl",
+		Output:     filepath.Join(cmdutils.GlobalArgs.OutputDir, "build/package/dockerlaunch.sh"),
+		OutputPerm: 0755,
+		Overwrite:  Args.Force,
+		Model:      &Module,
+	})
+}
+
 func generateLibsCICDMakefile(ctx context.Context) error {
 	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
 		FS:         TmplFS,

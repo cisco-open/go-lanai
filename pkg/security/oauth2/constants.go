@@ -22,7 +22,7 @@ const (
 	ParameterUsername            = "username"
 	ParameterPassword            = "password"
 	ParameterTenantId            = "tenant_id"
-	ParameterTenantName          = "tenant_name"
+	ParameterTenantExternalId          = "tenant_name" //for backward compatibility we map it to tenant_name
 	ParameterNonce               = "nonce"
 	ParameterMaxAge              = "max_age"
 	ParameterError               = "error"
@@ -164,7 +164,7 @@ const (
 	ClaimAccountType     = "account_type"
 	ClaimCurrency        = "currency"
 	ClaimTenantId        = "tenant_id"
-	ClaimTenantName      = "tenant_name"
+	ClaimTenantExternalId      = "tenant_name" //for backward compatibility we map it to tenant_name
 	ClaimTenantSuspended = "tenant_suspended"
 	ClaimProviderId      = "provider_id"
 	ClaimProviderName    = "provider_name"
