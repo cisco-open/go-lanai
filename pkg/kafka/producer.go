@@ -10,7 +10,7 @@ import (
 )
 
 type saramaProducer struct {
-	sync.Mutex
+	sync.RWMutex
 	topic        string
 	brokers      []string
 	config       *bindingConfig
@@ -45,8 +45,12 @@ func (p *saramaProducer) Topic() string {
 }
 
 func (p *saramaProducer) Send(ctx context.Context, message interface{}, options ...MessageOptions) (err error) {
-	// note: if necessary, we would consider use RWLock
-	if p.syncProducer == nil {
+	var syncProducer sarama.SyncProducer
+	p.RLock()
+	syncProducer = p.syncProducer
+	p.RUnlock()
+
+	if syncProducer == nil {
 		return NewKafkaError(ErrorSubTypeCodeIllegalProducerUsage, fmt.Sprintf(`producer for topic "%s" is not started yet`, p.topic))
 	}
 
@@ -80,7 +84,7 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 	// do send
 	switch msgCtx.Mode {
 	case modeSync:
-		partition, offset, e := p.syncProducer.SendMessage(saramaMessage)
+		partition, offset, e := syncProducer.SendMessage(saramaMessage)
 		// apply finalizers
 		err = p.finalizeSend(msgCtx, partition, offset, e)
 	default:
@@ -92,6 +96,9 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 func (p *saramaProducer) Start(_ context.Context) error {
 	p.Lock()
 	defer p.Unlock()
+	if p.syncProducer != nil {
+		return nil
+	}
 	internal, e := sarama.NewSyncProducer(p.brokers, &p.config.sarama)
 	if e != nil {
 		return translateSaramaBindingError(e, "unable to start producer: %v", e)
