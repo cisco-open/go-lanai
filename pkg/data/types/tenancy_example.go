@@ -64,7 +64,7 @@ func SubTestExampleUseScope(di *tenancyAccessorDI) test.GomegaSubTestFunc {
 		tenancy := Tenancy{
 			TenantID: tenantId,
 		}
-		err := tenancy.BeforeSave(db)
+		err := tenancy.BeforeCreate(db)
 
 		g.Expect(err).To(gomega.BeNil(), "tenancy hook shouldn't returns error")
 		g.Expect(len(tenancy.TenantPath)).To(gomega.Equal(2))
@@ -75,7 +75,7 @@ func SubTestExampleUseScope(di *tenancyAccessorDI) test.GomegaSubTestFunc {
 		invalidTenancy := Tenancy{
 			TenantID: invalidTenantId,
 		}
-		err = invalidTenancy.BeforeSave(db)
+		err = invalidTenancy.BeforeCreate(db)
 		g.Expect(err).To(gomega.Not(gomega.BeNil()), "tenancy hook should returns error because of invalid tenant id")
 	}
 }
