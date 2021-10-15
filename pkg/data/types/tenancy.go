@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
@@ -26,14 +25,17 @@ const (
 
 var (
 	typeUUID          = reflect.TypeOf(uuid.Nil)
-	typeUUIDArr       = reflect.TypeOf(pqx.UUIDArray{})
+	typeTenantPath    = reflect.TypeOf(TenantPath{})
 	mapKeysTenantID   = utils.NewStringSet(fieldTenantID, colTenantID)
 	mapKeysTenantPath = utils.NewStringSet(fieldTenantPath, colTenantPath)
 )
 
+// Tenancy implements
+// - callbacks.BeforeCreateInterface
+// - callbacks.BeforeUpdateInterface
 type Tenancy struct {
-	TenantID   uuid.UUID     `gorm:"type:KeyID;not null"`
-	TenantPath pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
+	TenantID   uuid.UUID  `gorm:"type:KeyID;not null"`
+	TenantPath TenantPath `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
 }
 
 func (t *Tenancy) BeforeCreate(tx *gorm.DB) error {
@@ -68,9 +70,8 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 		return e
 	}
 
-	logger.WithContext(tx.Statement.Context).Debugf("target tenancy is %v", tenantId)
 	if !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
-		return errors.New(fmt.Sprintf("user does not have access to tenant %s", t.TenantID.String()))
+		return errors.New(fmt.Sprintf("user does not have access to tenant %s", tenantId.String()))
 	}
 
 	path, e := tenancy.GetTenancyPath(tx.Statement.Context, tenantId.String())
@@ -79,14 +80,6 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 	}
 
 	return t.updateTenantPath(tx.Statement.Context, dest, path)
-}
-
-func (t *Tenancy) BeforeDelete(tx *gorm.DB) error {
-	//TODO: possible to add where clause to query?
-
-	//TODO: if tenantId changed, check if user has access to target tenantId
-
-	return nil
 }
 
 func (t *Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID, error) {
@@ -113,7 +106,7 @@ func (t *Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUI
 	return uuid.Nil, nil
 }
 
-func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyPath pqx.UUIDArray) error {
+func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyPath TenantPath) error {
 	v := reflect.ValueOf(dest)
 	if v.Kind() == reflect.Struct {
 		return fmt.Errorf("cannot update tenancy automatically to %T, please use struct ptr or map", dest)
@@ -126,7 +119,7 @@ func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyP
 		if v.Type().Key().Kind() != reflect.String {
 			return fmt.Errorf("cannot update tenancy automatically with gorm update target type [%T], please use struct ptr or map", dest)
 		}
-		ek, ev, ok := t.findMapValue(v, mapKeysTenantPath, typeUUIDArr)
+		ek, ev, ok := t.findMapValue(v, mapKeysTenantPath, typeTenantPath)
 		switch {
 		case ok && !reflect.DeepEqual(ev.Interface(), tenancyPath):
 			return fmt.Errorf("incorrect %s was set to gorm update target map", ek)
@@ -136,7 +129,7 @@ func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyP
 			// tenant path is explicitly set, we don't change it
 		}
 	case reflect.Struct:
-		_, fv, ok := t.findStructField(v, fieldTenantPath, typeUUIDArr)
+		_, fv, ok := t.findStructField(v, fieldTenantPath, typeTenantPath)
 		switch {
 		case ok:
 			fv.Set(reflect.ValueOf(tenancyPath))
