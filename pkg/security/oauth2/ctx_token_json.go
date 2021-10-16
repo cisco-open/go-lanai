@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -17,6 +18,7 @@ var accessTokenIgnoredDetails = utils.NewStringSet(
 	JsonFieldAccessTokenValue, JsonFieldTokenType, JsonFieldScope,
 	JsonFieldExpiryTime, JsonFieldIssueTime, JsonFieldExpiresIn, JsonFieldRefreshTokenValue)
 
+var scopeSeparator = " "
 // json.Marshaler
 func (t *DefaultAccessToken) MarshalJSON() ([]byte, error) {
 	data := map[string]interface{}{}
@@ -25,7 +27,7 @@ func (t *DefaultAccessToken) MarshalJSON() ([]byte, error) {
 	}
 	data[JsonFieldAccessTokenValue] = t.value
 	data[JsonFieldTokenType] = t.tokenType
-	data[JsonFieldScope] = t.scopes
+	data[JsonFieldScope] = strings.Join(t.scopes.Values(), scopeSeparator)
 	data[JsonFieldIssueTime] = t.issueTime.Format(utils.ISO8601Seconds)
 	if !t.expiryTime.IsZero() {
 		data[JsonFieldExpiryTime] = t.expiryTime.Format(utils.ISO8601Seconds)
@@ -55,7 +57,7 @@ func (t *DefaultAccessToken) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if err := extractField(parsed, JsonFieldScope, true, &t.scopes, sliceToStringSet); err != nil {
+	if err := extractField(parsed, JsonFieldScope, true, &t.scopes, stringSliceToStringSet); err != nil {
 		return err
 	}
 
@@ -139,19 +141,16 @@ func stringToTokenType(v interface{}) (reflect.Value, error) {
 	return reflect.ValueOf(TokenType(s)), nil
 }
 
-func sliceToStringSet(v interface{}) (reflect.Value, error) {
-	slice, ok := v.([]interface{})
+func stringSliceToStringSet(v interface{}) (reflect.Value, error) {
+	stringSlice, ok := v.(string)
 	if !ok {
-		return reflect.Value{}, fmt.Errorf("invalid field type. expected array")
+		return reflect.Value{}, fmt.Errorf("invalid field type. expected string")
 	}
 
+	slice := strings.Split(stringSlice, scopeSeparator)
 	scopes := utils.NewStringSet()
 	for _, s := range slice {
-		if str, ok := s.(string); !ok {
-			return reflect.Value{}, fmt.Errorf("invalid field type. expected array")
-		} else {
-			scopes.Add(str)
-		}
+		scopes.Add(s)
 	}
 	return reflect.ValueOf(scopes), nil
 }
