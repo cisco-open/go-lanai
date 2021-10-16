@@ -30,7 +30,8 @@ var (
 	mapKeysTenantPath = utils.NewStringSet(fieldTenantPath, colTenantPath)
 )
 
-// Tenancy implements
+// Tenancy is an embedded type for data model. It's responsible for populating TenantPath and check for Tenancy related data
+// when crating/updating. Tenancy implements
 // - callbacks.BeforeCreateInterface
 // - callbacks.BeforeUpdateInterface
 type Tenancy struct {
@@ -49,14 +50,10 @@ func (t *Tenancy) BeforeCreate(tx *gorm.DB) error {
 	}
 
 	path, err := tenancy.GetTenancyPath(tx.Statement.Context, t.TenantID.String())
-
-	if err != nil {
-		return err
+	if err == nil {
+		t.TenantPath = path
 	}
-
-	t.TenantPath = path
-
-	return nil
+	return err
 }
 
 // BeforeUpdate Check if user is allowed to update this item's tenancy to the target tenant.
@@ -74,12 +71,11 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", tenantId.String()))
 	}
 
-	path, e := tenancy.GetTenancyPath(tx.Statement.Context, tenantId.String())
-	if e != nil {
-		return e
+	path, err := tenancy.GetTenancyPath(tx.Statement.Context, tenantId.String())
+	if err == nil {
+		err = t.updateTenantPath(tx.Statement.Context, dest, path)
 	}
-
-	return t.updateTenantPath(tx.Statement.Context, dest, path)
+	return err
 }
 
 func (t *Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID, error) {

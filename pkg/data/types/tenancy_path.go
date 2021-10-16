@@ -80,7 +80,9 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 		return
 	}
 
-	// group existing WHERE expression (if more than one) with AND
+	// special fix for db.Model(&model{}).Where(&model{f1:v1}).Or(&model{f2:v2})...
+	// Ref:	https://github.com/go-gorm/gorm/issues/3627
+	//		https://github.com/go-gorm/gorm/commit/9b2181199d88ed6f74650d73fa9d20264dd134c0#diff-e3e9193af67f3a706b3fe042a9f121d3609721da110f6a585cdb1d1660fd5a3c
 	cl, _ := stmt.Clauses["WHERE"]
 	if where, ok := cl.Expression.(clause.Where); ok && len(where.Exprs) > 1 {
 		for _, expr := range where.Exprs {
@@ -130,11 +132,9 @@ func requiredTenancyFiltering(stmt *gorm.Statement) []uuid.UUID {
 	idsStr := ud.AssignedTenantIds()
 	tenantIDs := make([]uuid.UUID, 0, len(idsStr))
 	for tenant := range idsStr {
-		tenantId, e := uuid.Parse(tenant)
-		if e != nil {
-			continue
+		if tenantId, e := uuid.Parse(tenant); e == nil {
+			tenantIDs = append(tenantIDs, tenantId)
 		}
-		tenantIDs = append(tenantIDs, tenantId)
 	}
 	return tenantIDs
 }
