@@ -11,11 +11,6 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-const (
-	ckTenancyFilteringApplied = "tenancy_filtering_applied"
-	ckSkipTenancyFiltering = "skip_tenancy_filtering"
-)
-
 // TenantPath implements
 // - schema.GormDataTypeInterface
 // - schema.QueryClausesInterface
@@ -71,7 +66,7 @@ func (c tenancyFilterClause) MergeClause(*clause.Clause) {
 }
 
 func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
-	if _, ok := stmt.Clauses[ckTenancyFilteringApplied]; ok {
+	if shouldSkipTenancyCheck(stmt.Context) {
 		return
 	}
 
@@ -110,7 +105,6 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	} else {
 		stmt.AddClause(clause.Where{Exprs: []clause.Expression{clause.Or(conditions...)}})
 	}
-	stmt.Clauses[ckTenancyFilteringApplied] = clause.Clause{}
 }
 
 /***********************

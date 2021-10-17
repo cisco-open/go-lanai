@@ -16,6 +16,8 @@ import (
 
 var logger = log.New("DB.Tenancy")
 
+type ckSkipTenancyCheck struct{}
+
 const (
 	fieldTenantID   = "TenantID"
 	fieldTenantPath = "TenantPath"
@@ -39,13 +41,23 @@ type Tenancy struct {
 	TenantPath TenantPath `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
 }
 
+// SkipTenancyCheck is used for embedding models to override tenancy check behavior.
+// It should be called within model's hooks. this function would panic if context is not set yet
+func (Tenancy) SkipTenancyCheck(tx *gorm.DB) {
+	if tx.Statement.Context == nil {
+		panic("SkipTenancyCheck used without context")
+	}
+	ctx := context.WithValue(tx.Statement.Context, ckSkipTenancyCheck{}, struct{}{})
+	tx.Statement.Context = ctx
+}
+
 func (t *Tenancy) BeforeCreate(tx *gorm.DB) error {
 	//if tenantId is not available
 	if t.TenantID == uuid.Nil {
 		return errors.New("tenantId is required")
 	}
 
-	if !security.HasAccessToTenant(tx.Statement.Context, t.TenantID.String()) {
+	if !shouldSkipTenancyCheck(tx.Statement.Context) && !security.HasAccessToTenant(tx.Statement.Context, t.TenantID.String()) {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", t.TenantID.String()))
 	}
 
@@ -67,7 +79,7 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 		return e
 	}
 
-	if !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
+	if !shouldSkipTenancyCheck(tx.Statement.Context) && !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", tenantId.String()))
 	}
 
@@ -78,7 +90,7 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 	return err
 }
 
-func (t *Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID, error) {
+func (t Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID, error) {
 	v := reflect.ValueOf(dest)
 	for ; v.Kind() == reflect.Ptr; v = v.Elem() {
 	}
@@ -116,21 +128,16 @@ func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyP
 			return fmt.Errorf("cannot update tenancy automatically with gorm update target type [%T], please use struct ptr or map", dest)
 		}
 		ek, ev, ok := t.findMapValue(v, mapKeysTenantPath, typeTenantPath)
+		// Note: if tenant path is explicitly set and correct, we don't change it
 		switch {
 		case ok && !reflect.DeepEqual(ev.Interface(), tenancyPath):
 			return fmt.Errorf("incorrect %s was set to gorm update target map", ek)
 		case !ok:
 			v.SetMapIndex(reflect.ValueOf(fieldTenantPath), reflect.ValueOf(tenancyPath))
-		default:
-			// tenant path is explicitly set, we don't change it
 		}
 	case reflect.Struct:
-		_, fv, ok := t.findStructField(v, fieldTenantPath, typeTenantPath)
-		switch {
-		case ok:
+		if _, fv, ok := t.findStructField(v, fieldTenantPath, typeTenantPath); ok {
 			fv.Set(reflect.ValueOf(tenancyPath))
-		default:
-			// tenant path is explicitly set, we don't change it
 		}
 	default:
 		return errors.New("cannot update tenancy automatically, please use struct ptr or map as gorm update target value")
@@ -138,7 +145,7 @@ func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyP
 	return nil
 }
 
-func (t *Tenancy) findStructField(sv reflect.Value, name string, ft reflect.Type) (f reflect.StructField, fv reflect.Value, ok bool) {
+func (Tenancy) findStructField(sv reflect.Value, name string, ft reflect.Type) (f reflect.StructField, fv reflect.Value, ok bool) {
 	f, ok = reflectutils.FindStructField(sv.Type(), func(t reflect.StructField) bool {
 		return t.Name == name && ft.AssignableTo(t.Type)
 	})
@@ -148,7 +155,7 @@ func (t *Tenancy) findStructField(sv reflect.Value, name string, ft reflect.Type
 	return
 }
 
-func (t *Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflect.Type) (string, reflect.Value, bool) {
+func (Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflect.Type) (string, reflect.Value, bool) {
 	for iter := mv.MapRange(); iter.Next(); {
 		k := iter.Key().String()
 		if !keys.Has(k) {
@@ -160,4 +167,8 @@ func (t *Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflec
 		}
 	}
 	return "", reflect.Value{}, false
+}
+
+func shouldSkipTenancyCheck(ctx context.Context) bool {
+	return ctx == nil || ctx.Value(ckSkipTenancyCheck{}) != nil
 }
