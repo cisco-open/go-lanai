@@ -87,6 +87,7 @@ func TestTenancyEnforcement(t *testing.T) {
 		test.GomegaSubTest(SubTestTenancyDelete(di, synthesizeModelForTenantId), "TestDeleteSynthesizedModel"),
 		test.GomegaSubTest(SubTestTenancyDeleteNoAccess(di, loadModelForTenantId), "TestDeleteLoadedModelNoAccess"),
 		test.GomegaSubTest(SubTestTenancyDeleteNoAccess(di, synthesizeModelForTenantId), "TestDeleteSynthesizedModelNoAccess"),
+		test.GomegaSubTest(SubTestTenancyWithoutSecurity(di), "TestWithoutSecurity"),
 	)
 }
 
@@ -439,6 +440,41 @@ func SubTestSkipTenancyCheck(di *testDI) test.GomegaSubTestFunc {
 			Updates(map[string]interface{}{"Value": "Updated"})
 		g.Expect(r.Error).To(Succeed(), "update model with WHERE clause should return no error")
 		g.Expect(r.RowsAffected).To(BeEquivalentTo(2), "update model with WHERE clause should update 2 rows")
+	}
+}
+
+func SubTestTenancyWithoutSecurity(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// create
+		var r *gorm.DB
+		m := newModelWithTenantId(MockedTenantIdA, "Test Tenant")
+		r = di.DB.WithContext(ctx).Save(m)
+		g.Expect(r.Error).To(Succeed(), "create model without security context should succeed")
+		g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "create model without security context affect 1 rows")
+		g.Expect(m.TenantPath).To(HaveLen(2), "create model without security context should populate tenant path")
+
+		// save
+		m.TenantID = MockedTenantIdA1
+		r = di.DB.WithContext(ctx).Save(m)
+		g.Expect(r.Error).To(Succeed(), "save model without security context should succeed")
+		g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "save model without security context affect 1 rows")
+		g.Expect(m.TenantPath).To(HaveLen(3), "save model without security context should populate tenant path")
+
+		// update
+		r = di.DB.WithContext(ctx).Model(m).
+			Updates(&TenancyModel{Tenancy: Tenancy{TenantID: MockedTenantIdB}, Value: "Updated"})
+		g.Expect(r.Error).To(Succeed(), "updates model without security context should succeed")
+		g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "updates model without security context affect 1 rows")
+		m = loadModelWithId(ctx, di.DB, m.ID, g)
+		g.Expect(m.TenantPath).To(HaveLen(2), "updates model without security context should populate tenant path")
+		g.Expect(m.Value).To(Equal("Updated"), "updates model without security context should update Value")
+
+		// delete
+		r = di.DB.WithContext(ctx).Model(&TenancyModel{}).Delete(m)
+		g.Expect(r.Error).To(Succeed(), "delete model without security context should succeed")
+		g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "delete model without security context affect 1 rows")
+		r = di.DB.WithContext(ctx).Model(&TenancyModel{}).Take(&TenancyModel{}, m.ID)
+		g.Expect(r.Error).To(BeEquivalentTo(gorm.ErrRecordNotFound), "delete model without security context should actually delete the record")
 	}
 }
 

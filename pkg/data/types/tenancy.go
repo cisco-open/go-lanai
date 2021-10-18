@@ -170,5 +170,5 @@ func (Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflect.T
 }
 
 func shouldSkipTenancyCheck(ctx context.Context) bool {
-	return ctx == nil || ctx.Value(ckSkipTenancyCheck{}) != nil
+	return ctx == nil || ctx.Value(ckSkipTenancyCheck{}) != nil || !security.IsFullyAuthenticated(security.Get(ctx))
 }
