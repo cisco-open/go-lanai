@@ -111,24 +111,21 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	Helpers
  ***********************/
 
-func requiredTenancyFiltering(stmt *gorm.Statement) []uuid.UUID {
+func requiredTenancyFiltering(stmt *gorm.Statement) (tenantIDs []uuid.UUID) {
 	auth := security.Get(stmt.Context)
 	if security.HasPermissions(auth, security.SpecialPermissionAccessAllTenant) {
 		return nil
 	}
 
 	ud, _ := auth.Details().(security.UserDetails)
-	if ud == nil {
-		logger.WithContext(stmt.Context).Warnf("DB operations to tenancy-enforced models [%T] without authenticated context", stmt.Model)
-		return nil
-	}
-
-	idsStr := ud.AssignedTenantIds()
-	tenantIDs := make([]uuid.UUID, 0, len(idsStr))
-	for tenant := range idsStr {
-		if tenantId, e := uuid.Parse(tenant); e == nil {
-			tenantIDs = append(tenantIDs, tenantId)
+	if ud != nil {
+		idsStr := ud.AssignedTenantIds()
+		tenantIDs = make([]uuid.UUID, 0, len(idsStr))
+		for tenant := range idsStr {
+			if tenantId, e := uuid.Parse(tenant); e == nil {
+				tenantIDs = append(tenantIDs, tenantId)
+			}
 		}
 	}
-	return tenantIDs
+	return
 }
