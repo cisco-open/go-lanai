@@ -145,26 +145,30 @@ func SetupTestCreateTenancyModels(di *testDI) test.SetupFunc {
 
 func SubTestTenancySave(di *testDI, loadFn loadModelFunc) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		cases := map[context.Context]uuid.UUID{
-			mockedSecurityWithTenantAccess(ctx, MockedTenantIdA): MockedTenantIdA,
-			mockedSecurityWithAllTenantAccess(ctx): MockedTenantIdB,
+		type testCase struct{
+			ctx context.Context
+			tid uuid.UUID
 		}
-		for secCtx, tid := range cases {
+		cases := []testCase{
+			{ctx: mockedSecurityWithTenantAccess(ctx, MockedTenantIdA), tid: MockedTenantIdA},
+			{ctx: mockedSecurityWithAllTenantAccess(ctx), tid: MockedTenantIdB},
+		}
+		for _, c := range cases {
 			// Save without changing TenantID
-			m := loadFn(ctx, di.DB, tid, g)
+			m := loadFn(ctx, di.DB, c.tid, g)
 			cpy := *m
 			cpy.Value = "Updated"
-			r := di.DB.WithContext(secCtx).Save(&cpy)
+			r := di.DB.WithContext(c.ctx).Save(&cpy)
 			g.Expect(r.Error).To(Succeed(), "save model belonging to %s should return no error", m.TenantName)
 			g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "save model belonging to %s should change 1 row", m.TenantName)
 			g.Expect(cpy.TenantPath).To(HaveLen(2), "save model belonging to %s should have correct tenant path", m.TenantName)
 
 			// Save with changed TenantID
-			m = loadFn(ctx, di.DB, tid, g)
+			m = loadFn(ctx, di.DB, c.tid, g)
 			cpy = *m
 			cpy.Value = "Updated"
 			cpy.TenantID = MockedTenantIdA1 // move to sub tenant
-			r = di.DB.WithContext(secCtx).Save(&cpy)
+			r = di.DB.WithContext(c.ctx).Save(&cpy)
 			g.Expect(r.Error).To(Succeed(), "save model belonging to %s should return no error", m.TenantName)
 			g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "save model belonging to %s should change 1 row", m.TenantName)
 			g.Expect(cpy.TenantPath).To(HaveLen(3), "save model belonging to %s should have correct tenant path", m.TenantName)
@@ -241,13 +245,13 @@ func SubTestTenancyUpdates(di *testDI) test.GomegaSubTestFunc {
 		secCtx = mockedSecurityWithTenantAccess(ctx, MockedTenantIdA, MockedTenantIdB)
 		r = di.DB.WithContext(secCtx).Model(&TenancyModel{}).
 			Where(&TenancyModel{TenantName: "Tenant A"}).Or(&TenancyModel{TenantName: "Tenant B"}).
-			Updates(&TenancyModel{Tenancy: Tenancy{TenantID: MockedTenantIdA}, Value: "Updated"})
+			Updates(&TenancyModel{Tenancy: Tenancy{TenantID: MockedTenantIdA1}, Value: "Updated"})
 		g.Expect(r.Error).To(Succeed(), "update model belonging to %s should return no error", m.TenantName)
 		g.Expect(r.RowsAffected).To(BeEquivalentTo(2), "update model with WHERE clause should changed 2 rows", m.TenantName)
 		for _, id := range []uuid.UUID{MockedModelIDs[MockedTenantIdA], MockedModelIDs[MockedTenantIdB]} {
 			m = loadModelWithId(ctx, di.DB, id, g)
 			g.Expect(m.Value).To(Equal("Updated"), "updated model belonging to %s should have correct Value", m.TenantName)
-			g.Expect(m.TenantPath).To(HaveLen(2), "updated model belonging to %s should have correct tenant path", m.TenantName)
+			g.Expect(m.TenantPath).To(HaveLen(3), "updated model belonging to %s should have correct tenant path", m.TenantName)
 		}
 
 		// Updates with changed TenantID using AccessAllTenants permission
@@ -270,7 +274,8 @@ func SubTestTenancyUpdates(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(r.Error).To(Succeed(), "update model belonging to %s should return no error", m.TenantName)
 		g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "update model belonging to %s should change 1 row", m.TenantName)
 		g.Expect(m.Value).To(Equal("Updated Again"), "updated model belonging to %s should have correct Value", m.TenantName)
-		g.Expect(m.TenantPath).To(HaveLen(2), "updated model belonging to %s should have correct tenant path", m.TenantName)
+		// note this was changed from previous test cases
+		g.Expect(m.TenantPath).To(HaveLen(3), "updated model belonging to %s should have correct tenant path", m.TenantName)
 	}
 }
 
@@ -314,11 +319,12 @@ func SubTestTenancyUpdatesNoAccess(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(r.RowsAffected).To(BeEquivalentTo(0), "update model belonging to %s should update 0 rows due to insufficient access", MockedTenantIdB1)
 
 		// Updates using Map with WHERE clause (matched rows should have 1 updated and 1 unchanged)
+		secCtx = mockedSecurityWithTenantAccess(ctx, MockedTenantIdA)
 		r = di.DB.WithContext(secCtx).Model(&TenancyModel{}).
 			Where(&TenancyModel{TenantName: "Tenant A"}).Or(&TenancyModel{TenantName: "Tenant B"}).
 			Updates(map[string]interface{}{"Value": "Updated"})
 		g.Expect(r.Error).To(Succeed(), "update model with WHERE clause should return no error")
-		g.Expect(r.RowsAffected).To(BeEquivalentTo(0), "update model with WHERE clause should update 0 rows due to insufficient access")
+		g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "update model with WHERE clause should update 0 rows due to insufficient access")
 	}
 }
 
@@ -359,24 +365,28 @@ func SubTestTenancyUpdatesInvalidTarget(di *testDI) test.GomegaSubTestFunc {
 
 func SubTestTenancyDelete(di *testDI, loadFn loadModelFunc) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		cases := map[context.Context][]uuid.UUID{
-			mockedSecurityWithTenantAccess(ctx, MockedTenantIdA): {MockedTenantIdA1, MockedTenantIdA2},
-			mockedSecurityWithAllTenantAccess(ctx): {MockedTenantIdB1, MockedTenantIdB2},
+		type testCase struct{
+			ctx context.Context
+			tid []uuid.UUID
 		}
-		for secCtx, tids := range cases {
+		cases := []testCase{
+			{ctx: mockedSecurityWithTenantAccess(ctx, MockedTenantIdA), tid: []uuid.UUID{MockedTenantIdA1, MockedTenantIdA2}},
+			{ctx: mockedSecurityWithAllTenantAccess(ctx), tid: []uuid.UUID{MockedTenantIdB1, MockedTenantIdB2}},
+		}
+		for _, c := range cases {
 			// Hard Delete with access
-			tid := tids[0]
+			tid := c.tid[0]
 			m := loadFn(ctx, di.DB, tid, g)
-			r := di.DB.WithContext(secCtx).Model(&TenancyModel{}).Delete(m)
+			r := di.DB.WithContext(c.ctx).Model(&TenancyModel{}).Delete(m)
 			g.Expect(r.Error).To(Succeed(), "delete model belonging to %s should return no error", m.TenantID)
 			g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "delete model belonging to %s should affect 1 rows", m.TenantID)
 			reFetch := di.DB.WithContext(ctx).Take(&TenancyModel{}, MockedModelIDs[tid])
 			g.Expect(reFetch.Error).To(BeEquivalentTo(gorm.ErrRecordNotFound), "fetch deleted model belonging to %s should return not found error", m.TenantID)
 
 			// Soft Delete with access (use special variation TenancySoftDeleteModel)
-			tid = tids[1]
+			tid = c.tid[1]
 			m = loadFn(ctx, di.DB, tid, g)
-			r = di.DB.WithContext(secCtx).Model(&TenancySoftDeleteModel{}).Delete(toSoftDeleteVariation(m))
+			r = di.DB.WithContext(c.ctx).Model(&TenancySoftDeleteModel{}).Delete(toSoftDeleteVariation(m))
 			g.Expect(r.Error).To(Succeed(), "delete model belonging to %s should return no error", m.TenantID)
 			g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "delete model belonging to %s should affect 1 rows", m.TenantID)
 			reFetch = di.DB.WithContext(ctx).Take(&TenancySoftDeleteModel{}, MockedModelIDs[tid])
