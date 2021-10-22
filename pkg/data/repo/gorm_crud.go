@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
 	"reflect"
 )
 
@@ -33,7 +32,7 @@ var (
 	singleModelRead   = utils.NewSet(typeModelPtr)
 	multiModelRead    = utils.NewSet(typeModelPtrSlicePtr, typeModelSlicePtr)
 	singleModelWrite  = utils.NewSet(typeModelPtr, typeModel)
-	multiModelWrite   = utils.NewSet(typeModelPtrSlice, typeModelSlice, typeModelPtrSlicePtr, typeModelSlicePtr)
+	//multiModelWrite   = utils.NewSet(typeModelPtrSlice, typeModelSlice, typeModelPtrSlicePtr, typeModelSlicePtr)
 	genericModelWrite = utils.NewSet(
 		typeModelPtr,
 		typeModelPtrSlice,
@@ -45,26 +44,21 @@ var (
 	)
 )
 
-type gormMetadata struct {
-	model interface{}
-	types map[reflect.Type]typeKey
-	schema *schema.Schema
-}
-
 // GormCrud implements CrudRepository and can be embedded into any repositories using gorm as ORM
 type GormCrud struct {
 	GormApi
-	gormMetadata
+	GormMetadata
 }
 
 func newGormCrud(api GormApi, model interface{}) (*GormCrud, error) {
-	meta, e := generateModelMetadata(model)
+	// Note we uses raw db here to leverage internal schema cache
+	meta, e := newModelMetadata(api.DB(context.Background()), model)
 	if e != nil {
 		return nil, e
 	}
 	return &GormCrud{
 		GormApi:      api,
-		gormMetadata: meta,
+		GormMetadata: meta,
 	}, nil
 }
 
@@ -200,7 +194,7 @@ func (g GormCrud) Truncate(ctx context.Context) error {
 	return g.execute(ctx, nil, nil, func(db *gorm.DB) *gorm.DB {
 		db = db.Model(g.model)
 		if e := db.Statement.Parse(g.model); e != nil {
-			db.AddError(ErrorInvalidCrudModel.WithMessage("unable to parse table name for model %T", g.model))
+			_ = db.AddError(ErrorInvalidCrudModel.WithMessage("unable to parse table name for model %T", g.model))
 			return db
 		}
 		table := interface{}(db.Statement.TableExpr)
@@ -236,6 +230,8 @@ func (g GormCrud) applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
 		switch opt := v.(type) {
 		case gormOptions:
 			db = opt(db)
+		case func(*gorm.DB) *gorm.DB:
+			db = opt(db)
 		default:
 			return nil, ErrorUnsupportedOptions.WithMessage("unsupported Option %T", v)
 		}
@@ -247,15 +243,28 @@ func (g GormCrud) applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, er
 	if condition == nil {
 		return db, nil
 	}
-
-	switch where := condition.(type) {
-	case gormOptions:
-		db = where(db)
-	case clause.Where:
-		db = db.Clauses(where)
+	var e error
+	switch cv := reflect.ValueOf(condition); cv.Kind() {
+	case reflect.Slice, reflect.Array:
+		size := cv.Len()
+		for i := 0; i < size; i++ {
+			if db, e = g.applyCondition(db, cv.Index(i).Interface()); e != nil {
+				return nil, e
+			}
+		}
 	default:
-		db = db.Where(where)
+		switch where := condition.(type) {
+		case gormOptions:
+			db = where(db)
+		case func(*gorm.DB) *gorm.DB:
+			db = where(db)
+		case clause.Where:
+			db = db.Clauses(where)
+		default:
+			db = db.Where(where)
+		}
 	}
+
 	return db, nil
 }
 
@@ -263,41 +272,4 @@ func (g GormCrud) isSupportedValue(value interface{}, types utils.Set) bool {
 	t := reflect.TypeOf(value)
 	typ, ok := g.types[t]
 	return ok && types.Has(typ)
-}
-
-func generateModelMetadata(model interface{}) (gormMetadata, error) {
-	if model == nil {
-		return gormMetadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
-	}
-
-	// cache some types
-	var sType reflect.Type
-	t := reflect.TypeOf(model)
-	switch {
-	case t.Kind() == reflect.Struct:
-		sType = t
-	case t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Struct:
-		sType = t.Elem()
-	}
-
-	if sType == nil {
-		return gormMetadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
-	}
-
-	pType := reflect.PtrTo(sType)
-	types := map[reflect.Type]typeKey{
-		pType:                                    typeModelPtr,
-		sType:                                    typeModel,
-		reflect.PtrTo(reflect.SliceOf(sType)):    typeModelSlicePtr,
-		reflect.PtrTo(reflect.SliceOf(pType)):    typeModelPtrSlicePtr,
-		reflect.SliceOf(sType):                   typeModelSlice,
-		reflect.SliceOf(pType):                   typeModelPtrSlice,
-		reflect.TypeOf(map[string]interface{}{}): typeGenericMap,
-	}
-
-	return gormMetadata{
-		model: reflect.New(sType).Interface(),
-		types: types,
-	}, nil
-
 }
