@@ -29,15 +29,15 @@ var (
 
 type GormErrorTranslator struct{}
 
-func NewGormErrorTranslator() *GormErrorTranslator {
-	return &GormErrorTranslator{}
+func NewGormErrorTranslator() ErrorTranslator {
+	return GormErrorTranslator{}
 }
 
-func (t GormErrorTranslator) Order() int {
+func (GormErrorTranslator) Order() int {
 	return ErrorTranslatorOrderGorm
 }
 
-func (t GormErrorTranslator) Translate(ctx context.Context, err error) error {
+func (GormErrorTranslator) Translate(ctx context.Context, err error) error {
 	ret := convertGormError(ctx, err)
 	if ret == nil {
 		return err

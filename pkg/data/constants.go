@@ -2,8 +2,8 @@ package data
 
 const (
 	_ = iota
+	ErrorTranslatorOrderDriver
 	ErrorTranslatorOrderGorm
-	ErrorTranslatorOrderPq
 	ErrorTranslatorOrderData
 )
 

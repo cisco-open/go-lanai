@@ -17,6 +17,7 @@ const (
 	ErrorTypeCodeInternal = Reserved + iota<<ErrorTypeOffset
 	ErrorTypeCodeNonTransient
 	ErrorTypeCodeTransient
+	ErrorTypeCodeUncategorizedServerSide
 )
 
 // All "SubType" values are used as mask
@@ -61,7 +62,7 @@ const (
 
 // ErrorSubTypeCodeApi
 const (
-	_                = iota
+	_                        = iota
 	ErrorCodeInvalidApiUsage = ErrorSubTypeCodeApi + iota
 	ErrorCodeUnsupportedCondition
 	ErrorCodeUnsupportedOptions
@@ -119,10 +120,11 @@ const (
 
 // ErrorTypes, can be used in errors.Is
 var (
-	ErrorCategoryData     = NewErrorCategory(Reserved, errors.New("error type: data"))
-	ErrorTypeInternal     = NewErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
-	ErrorTypeNonTransient = NewErrorType(ErrorTypeCodeNonTransient, errors.New("error type: non-transient"))
-	ErrorTypeTransient    = NewErrorType(ErrorTypeCodeTransient, errors.New("error type: transient"))
+	ErrorCategoryData                = NewErrorCategory(Reserved, errors.New("error type: data"))
+	ErrorTypeInternal                = NewErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
+	ErrorTypeNonTransient            = NewErrorType(ErrorTypeCodeNonTransient, errors.New("error type: non-transient"))
+	ErrorTypeTransient               = NewErrorType(ErrorTypeCodeTransient, errors.New("error type: transient"))
+	ErrorTypeUnCategorizedServerSide = NewErrorType(ErrorTypeCodeUncategorizedServerSide, errors.New("error type: uncategorized server-side"))
 
 	ErrorSubTypeInternalError = NewErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 
@@ -140,7 +142,7 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
-	ErrorRecordNotFound = NewDataError(ErrorCodeRecordNotFound, "record not found")
+	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, "record not found")
 	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
 )
 
@@ -162,7 +164,7 @@ func (e *DataError) WithStatusCode(sc int) *DataError {
 	return &DataError{CodedError: e.CodedError, SC: sc}
 }
 
-func (e DataError) WithMessage(msg string, args...interface{}) *DataError {
+func (e DataError) WithMessage(msg string, args ...interface{}) *DataError {
 	return newDataError(NewCodedError(e.CodedError.Code(), fmt.Errorf(msg, args...)))
 }
 
@@ -179,18 +181,18 @@ func NewDataError(code int64, e interface{}, causes ...interface{}) *DataError {
 	return newDataError(NewCodedError(code, e, causes...))
 }
 
-func NewInternalError(value interface{}, causes...interface{}) *DataError {
+func NewInternalError(value interface{}, causes ...interface{}) *DataError {
 	return NewDataError(ErrorSubTypeCodeInternal, value, causes...)
 }
 
-func NewRecordNotFoundError(value interface{}, causes...interface{}) *DataError {
+func NewRecordNotFoundError(value interface{}, causes ...interface{}) *DataError {
 	return NewDataError(ErrorCodeRecordNotFound, value, causes...)
 }
 
-func NewConstraintViolationError(value interface{}, causes...interface{}) *DataError {
+func NewConstraintViolationError(value interface{}, causes ...interface{}) *DataError {
 	return NewDataError(ErrorCodeConstraintViolation, value, causes...)
 }
 
-func NewDuplicateKeyError(value interface{}, causes...interface{}) *DataError {
+func NewDuplicateKeyError(value interface{}, causes ...interface{}) *DataError {
 	return NewDataError(ErrorCodeDuplicateKey, value, causes...)
 }

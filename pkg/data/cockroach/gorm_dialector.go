@@ -8,6 +8,7 @@ import (
 /*************************
 	Custom GormDialector
  *************************/
+
 type GormDialector struct {
 	postgres.Dialector
 }
