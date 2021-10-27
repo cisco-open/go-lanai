@@ -18,7 +18,7 @@ func JoinsOption(query string, args ...interface{}) Option {
 	})
 }
 
-// JoinsOption used for Read
+// PreloadOption used for Read
 func PreloadOption(query string, args ...interface{}) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Preload(query, args...)
@@ -35,7 +35,7 @@ func OmitOption(fields ...string) Option {
 
 // SelectOption specify fields that you want when querying, creating, updating
 // used for Read and Write
-func SelectOption(query string, args ...interface{}) Option {
+func SelectOption(query interface{}, args ...interface{}) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Select(query, args...)
 	})

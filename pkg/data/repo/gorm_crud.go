@@ -223,17 +223,30 @@ func (g GormCrud) execute(ctx context.Context, condition Condition, options []Op
 }
 
 func (g GormCrud) applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
-	if opts == nil {
+	if len(opts) == 0 {
 		return db, nil
 	}
 	for _, v := range opts {
-		switch opt := v.(type) {
-		case gormOptions:
-			db = opt(db)
-		case func(*gorm.DB) *gorm.DB:
-			db = opt(db)
+		switch rv := reflect.ValueOf(v); rv.Kind() {
+		case reflect.Slice, reflect.Array:
+			var e error
+			size := rv.Len()
+			slice := make([]Option, size)
+			for i := 0; i < size; i++ {
+				slice[i] = rv.Index(i).Interface()
+			}
+			if db, e = g.applyOptions(db, slice); e != nil {
+				return nil, e
+			}
 		default:
-			return nil, ErrorUnsupportedOptions.WithMessage("unsupported Option %T", v)
+			switch opt := v.(type) {
+			case gormOptions:
+				db = opt(db)
+			case func(*gorm.DB) *gorm.DB:
+				db = opt(db)
+			default:
+				return nil, ErrorUnsupportedOptions.WithMessage("unsupported Option %T", v)
+			}
 		}
 	}
 	return db, nil

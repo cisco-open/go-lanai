@@ -46,6 +46,7 @@ type Condition interface {}
 //  - SelectOption for read/write
 // 	- SortOption for read
 //  - PageOption for read
+//  - func(*gorm.DB) *gormDB
 // 	- ...
 // If given condition is not supported, an error with code data.ErrorCodeUnsupportedOptions will be return
 // TODO Provide more supporting features
