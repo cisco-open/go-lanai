@@ -85,6 +85,7 @@ func (te *LegacyTokenEnhancer) Enhance(_ context.Context, token oauth2.AccessTok
 
 	if td, ok := oauth.Details().(security.TenantDetails); ok {
 		legacy.TenantId = td.TenantId()
+		t.PutDetails(oauth2.ClaimLegacyTenantId, td.TenantId())
 	}
 
 	if ad, ok := oauth.Details().(security.AuthenticationDetails); ok {
