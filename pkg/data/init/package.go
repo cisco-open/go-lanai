@@ -6,22 +6,22 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqcrypt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
+	"reflect"
 )
 
-var logger = log.New("Data")
+//var logger = log.New("Data")
 
 var Module = &bootstrap.Module{
-	Name: "DB",
+	Name:       "DB",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
 		fx.Provide(data.NewGorm),
 		web.FxErrorTranslatorProviders(
-			provideDataErrorTranslator,
-			provideGormErrorTranslator,
-			providePqErrorTranslator,
+			provideDriverErrorTranslator,
+			webErrTranslatorProvider(data.NewDataErrorTranslator),
+			webErrTranslatorProvider(data.NewGormErrorTranslator),
 		),
 	},
 }
@@ -38,10 +38,23 @@ func Use() {
 	Provider
 ***************************/
 
+func webErrTranslatorProvider(provider interface{}) func() web.ErrorTranslator {
+	return func() web.ErrorTranslator {
+		fnv := reflect.ValueOf(provider)
+		ret := fnv.Call(nil)
+		return ret[0].Interface().(web.ErrorTranslator)
+	}
+}
+
+type detDI struct {
+	fx.In
+	Translators []data.ErrorTranslator `group:"data-driver"`
+}
+
+func provideDriverErrorTranslator(di detDI) web.ErrorTranslator {
+	return data.NewDriverErrorTranslator(di.Translators...)
+}
+
 /**************************
 	Initialize
 ***************************/
-
-
-
-

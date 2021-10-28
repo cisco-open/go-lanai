@@ -3,17 +3,47 @@ package data
 import (
 	"context"
 	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"errors"
 	"net/http"
 )
 
-type DataErrorTranslator struct {}
-
-func NewDataErrorTranslator() *DataErrorTranslator {
-	return &DataErrorTranslator{}
+// ErrorTranslator redefines web.ErrorTranslator and order.Ordered
+// having this redefinition is to break dependency between data and web package
+type ErrorTranslator interface {
+	order.Ordered
+	Translate(ctx context.Context, err error) error
 }
 
-func (t DataErrorTranslator) Order() int {
+// DriverErrorTranslator is a composite error translator that invoke driver specific translators provided in other packages
+// e.g. cockroach.ErrorTranslator
+type DriverErrorTranslator []ErrorTranslator
+
+func NewDriverErrorTranslator(translators ...ErrorTranslator) ErrorTranslator {
+	order.SortStable(translators, order.OrderedFirstCompare)
+	return DriverErrorTranslator(translators)
+}
+
+func (DriverErrorTranslator) Order() int {
+	return ErrorTranslatorOrderDriver
+}
+
+func (t DriverErrorTranslator) Translate(ctx context.Context, err error) error {
+	for _, translator := range t {
+		err = translator.Translate(ctx, err)
+	}
+	return err
+}
+
+//goland:noinspection GoNameStartsWithPackageName
+type DataErrorTranslator struct{}
+
+//goland:noinspection GoNameStartsWithPackageName
+func NewDataErrorTranslator() ErrorTranslator {
+	return DataErrorTranslator{}
+}
+
+func (DataErrorTranslator) Order() int {
 	return ErrorTranslatorOrderData
 }
 
@@ -38,7 +68,7 @@ func (t DataErrorTranslator) Translate(ctx context.Context, err error) error {
 	}
 }
 
-func (t DataErrorTranslator) errorWithStatusCode(ctx context.Context, err error, sc int) error {
+func (t DataErrorTranslator) errorWithStatusCode(_ context.Context, err error, sc int) error {
 	if _, ok := err.(*DataError); !ok {
 		return NewDataError(err.(errorutils.ErrorCoder).Code(), err).WithStatusCode(sc)
 	}
