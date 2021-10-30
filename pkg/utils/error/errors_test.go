@@ -118,7 +118,7 @@ func tryReserve(v interface{}) (err error){
 }
 
 /************************
-	Test Err Hierarchy
+	Test Error Hierarchy
  ************************/
 const (
 	// security reserved

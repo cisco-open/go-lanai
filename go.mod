@@ -25,6 +25,7 @@ require (
 	github.com/hashicorp/consul/api v1.3.0
 	github.com/hashicorp/vault/api v1.1.0
 	github.com/imdario/mergo v0.3.12
+	github.com/jackc/pgconn v1.10.0 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mattermost/xml-roundtrip-validator v0.0.0-20201213122252-bcd7e1b9601e
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -44,7 +45,7 @@ require (
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/fx v1.14.2
-	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210326060303-6b1517762897
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.11

@@ -1,0 +1,17 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"\nCREATE TABLE IF NOT EXISTS public.test_errors (\n\tid UUID NOT NULL DEFAULT gen_random_uuid(),\n\t\"uk\" STRING NOT NULL,\n\t\"value\" STRING NOT NULL,\n\tCONSTRAINT \"primary\" PRIMARY KEY (id ASC),\n\tUNIQUE INDEX idx_unique_key (uk ASC),\n\tFAMILY \"primary\" (id, uk, value)\n);"	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnBegin	1:nil
+5=ConnQuery	2:"INSERT INTO \"test_errors\" (\"uk\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	1:nil
+6=RowsColumns	9:["id"]
+7=RowsNext	11:[10:OTJkMjIzNTktNmU2MS00NDA3LWFkZjEtY2VlMmFlOGI4MjYy]	1:nil
+8=TxCommit	1:nil
+9=ConnExec	2:"UPDATE \"test_errors\" SET \"uk\"=$1,\"value\"=$2 WHERE \"id\" = $3"	1:nil
+10=ConnQuery	2:"SELECT * FROM \"test_errors\" WHERE \"id\" = $1 ORDER BY \"test_errors\".\"id\" LIMIT 1"	1:nil
+11=RowsColumns	9:["id","uk","value"]
+12=RowsNext	11:[]	7:EOF
+13=ConnQuery	2:"INSERT INTO \"test_errors\" (\"uk\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	7:pq: duplicate key value (uk)=('Model-1') violates unique constraint "idx_unique_key"
+14=TxRollback	1:nil
+15=ConnExec	2:"TRUNCATE TABLE \"test_errors\" RESTRICT"	1:nil
+
+"TestGormModel"=1,2,3,4,5,6,7,8,4,9,3,8,10,11,11,12,4,13,14,15,3

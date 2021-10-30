@@ -56,4 +56,5 @@ type ComparableErrorCoder interface {
 
 type NestedError interface {
 	Cause() error
+	RootCause() error
 }

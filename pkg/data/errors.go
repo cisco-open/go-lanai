@@ -150,49 +150,84 @@ func init() {
 	Reserve(ErrorCategoryData)
 }
 
-// DataError also implements web.StatusCoder
-type DataError struct {
+//goland:noinspection GoNameStartsWithPackageName
+type DataError interface {
+	error
+	NestedError
+	WithMessage(msg string, args ...interface{}) DataError
+}
+
+// dataError implements DataError
+//goland:noinspection GoNameStartsWithPackageName
+type dataError struct {
 	CodedError
+}
+
+func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
+	return dataError{
+		CodedError: CodedError{
+			Err:     fmt.Errorf(msg, args...),
+			ErrCode: e.ErrCode,
+			ErrMask: e.ErrMask,
+			Nested:  e.Nested,
+		},
+	}
+}
+
+// webDataError also implements web.StatusCoder
+//goland:noinspection GoNameStartsWithPackageName
+type webDataError struct {
+	DataError
 	SC int
 }
 
-func (e DataError) StatusCode() int {
+func (e webDataError) StatusCode() int {
 	return e.SC
 }
 
-func (e *DataError) WithStatusCode(sc int) *DataError {
-	return &DataError{CodedError: e.CodedError, SC: sc}
+func (e webDataError) WithStatusCode(sc int) DataError {
+	return webDataError{DataError: e.DataError, SC: sc}
 }
 
-func (e DataError) WithMessage(msg string, args ...interface{}) *DataError {
-	return newDataError(NewCodedError(e.CodedError.Code(), fmt.Errorf(msg, args...)))
+func (e webDataError) WithMessage(msg string, args ...interface{}) DataError {
+	return webDataError{DataError: e.DataError.WithMessage(msg, args...), SC: e.SC}
 }
 
 /**********************
 	Constructors
  **********************/
-func newDataError(codedErr *CodedError) *DataError {
-	return &DataError{
-		CodedError: *codedErr,
+
+func NewDataError(code int64, e interface{}, causes ...interface{}) DataError {
+	return &dataError{
+		CodedError: *NewCodedError(code, e, causes...),
 	}
 }
 
-func NewDataError(code int64, e interface{}, causes ...interface{}) *DataError {
-	return newDataError(NewCodedError(code, e, causes...))
+func NewErrorWithStatusCode(err error, sc int) DataError {
+	switch e := err.(type) {
+	case DataError:
+		return &webDataError{DataError: e, SC: sc}
+	case CodedError:
+		return &webDataError{DataError: dataError{CodedError: e}, SC: sc}
+	case ErrorCoder:
+		return &webDataError{DataError: NewDataError(e.Code(), e), SC: sc}
+	default:
+		return &webDataError{DataError: NewDataError(ErrorSubTypeCodeInternal, e), SC: sc}
+	}
 }
 
-func NewInternalError(value interface{}, causes ...interface{}) *DataError {
+func NewInternalError(value interface{}, causes ...interface{}) DataError {
 	return NewDataError(ErrorSubTypeCodeInternal, value, causes...)
 }
 
-func NewRecordNotFoundError(value interface{}, causes ...interface{}) *DataError {
+func NewRecordNotFoundError(value interface{}, causes ...interface{}) DataError {
 	return NewDataError(ErrorCodeRecordNotFound, value, causes...)
 }
 
-func NewConstraintViolationError(value interface{}, causes ...interface{}) *DataError {
+func NewConstraintViolationError(value interface{}, causes ...interface{}) DataError {
 	return NewDataError(ErrorCodeConstraintViolation, value, causes...)
 }
 
-func NewDuplicateKeyError(value interface{}, causes ...interface{}) *DataError {
+func NewDuplicateKeyError(value interface{}, causes ...interface{}) DataError {
 	return NewDataError(ErrorCodeDuplicateKey, value, causes...)
 }

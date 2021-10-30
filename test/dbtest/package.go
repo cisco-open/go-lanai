@@ -57,6 +57,8 @@ func withData() []test.Options {
 			appconfig.FxEmbeddedDefaults(defaultConfigFS),
 			fx.Provide(data.BindDataProperties),
 			fx.Provide(data.NewGorm),
+			fx.Provide(data.ErrorHandlingGormConfigurer()),
+			fx.Provide(pqErrorTranslatorProvider()),
 		),
 	}
 }

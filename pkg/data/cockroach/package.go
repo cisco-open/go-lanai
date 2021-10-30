@@ -11,10 +11,14 @@ import (
 var logger = log.New("CockroachDB")
 
 var Module = &bootstrap.Module{
-	Name: "cockroach",
+	Name:       "cockroach",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
-		fx.Provide(NewGormDialetor, BindCockroachProperties, NewGormDbCreator, pqErrorTranslatorProvider()),
+		fx.Provide(NewGormDialetor,
+			BindCockroachProperties,
+			NewGormDbCreator,
+			pqErrorTranslatorProvider(),
+		),
 		//fx.Invoke(initialize),
 	},
 }
@@ -29,13 +33,12 @@ func Use() {
 
 func pqErrorTranslatorProvider() fx.Annotated {
 	return fx.Annotated{
-		Group: "data-driver",
+		Group: data.GormConfigurerGroup,
 		Target: func() data.ErrorTranslator {
-			return NewPqErrorTranslator()
+			return PqErrorTranslator{}
 		},
 	}
 }
-
 
 /**************************
 	Initialize
@@ -50,6 +53,3 @@ func initialize(lc fx.Lifecycle) {
 	//	},
 	//})
 }
-
-
-

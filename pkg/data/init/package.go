@@ -17,10 +17,9 @@ var Module = &bootstrap.Module{
 	Name:       "DB",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
-		fx.Provide(data.NewGorm),
+		fx.Provide(data.NewGorm, data.ErrorHandlingGormConfigurer()),
 		web.FxErrorTranslatorProviders(
-			provideDriverErrorTranslator,
-			webErrTranslatorProvider(data.NewDataErrorTranslator),
+			webErrTranslatorProvider(data.NewWebDataErrorTranslator),
 			webErrTranslatorProvider(data.NewGormErrorTranslator),
 		),
 	},
@@ -44,15 +43,6 @@ func webErrTranslatorProvider(provider interface{}) func() web.ErrorTranslator {
 		ret := fnv.Call(nil)
 		return ret[0].Interface().(web.ErrorTranslator)
 	}
-}
-
-type detDI struct {
-	fx.In
-	Translators []data.ErrorTranslator `group:"data-driver"`
-}
-
-func provideDriverErrorTranslator(di detDI) web.ErrorTranslator {
-	return data.NewDriverErrorTranslator(di.Translators...)
 }
 
 /**************************

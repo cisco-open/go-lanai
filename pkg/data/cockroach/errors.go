@@ -7,16 +7,13 @@ import (
 	"github.com/lib/pq"
 )
 
-// PqErrorTranslator translate pq.Error and pgconn.PgError to data.DataError
+// PqErrorTranslator implements data.ErrorTranslator
+// it translates pq.Error and pgconn.PgError to data.DataError
 // Note: cockroach uses gorm.io/driver/postgres, which internally uses github.com/jackc/pgx
 // Ref:
 // - Postgres Error: https://www.postgresql.org/docs/11/protocol-error-fields.html
 // - Postgres Error Code: https://www.postgresql.org/docs/11/errcodes-appendix.html
 type PqErrorTranslator struct{}
-
-func NewPqErrorTranslator() PqErrorTranslator {
-	return PqErrorTranslator{}
-}
 
 func (t PqErrorTranslator) Order() int {
 	return 0
