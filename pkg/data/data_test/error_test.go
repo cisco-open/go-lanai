@@ -15,6 +15,7 @@ import (
 	"go.uber.org/fx"
 	"gorm.io/gorm"
 	"testing"
+	"time"
 )
 
 var (
@@ -41,14 +42,12 @@ type errTestDI struct {
 	DB           *gorm.DB
 }
 
-func TestGormModel(t *testing.T) {
+func TestErrorTranslation(t *testing.T) {
 	di := &errTestDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		dbtest.WithDBPlayback("testdb"),
-		apptest.WithFxOptions(
-			//fx.Provide(provideMockedTenancyAccessor),
-		),
+		apptest.WithTimeout(60 * time.Minute),
 		apptest.WithDI(di),
 		test.SubTestSetup(SetupWithTable(di)),
 		test.SubTestTeardown(TeardownWithTruncateTable(di)),
@@ -64,6 +63,8 @@ func SetupWithTable(di *errTestDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		g := gomega.NewWithT(t)
 		r := di.DB.Exec(tableSQL)
+		g.Expect(r.Error).To(Succeed(), "create table shouldn't fail")
+		r = di.DB.Exec(fmt.Sprintf(`TRUNCATE TABLE "%s" RESTRICT`, ErrorTestModel{}.TableName()))
 		g.Expect(r.Error).To(Succeed(), "truncate table shouldn't fail")
 		for k, v := range PreparedModels {
 			m := ErrorTestModel{
@@ -80,7 +81,7 @@ func SetupWithTable(di *errTestDI) test.SetupFunc {
 
 func TeardownWithTruncateTable(di *errTestDI) test.TeardownFunc {
 	return func(ctx context.Context, t *testing.T) error {
-		return di.DB.Exec(fmt.Sprintf(`TRUNCATE TABLE "%s" RESTRICT`, ErrorTestModel{}.TableName())).Error
+		return nil
 	}
 }
 
@@ -93,7 +94,7 @@ func SubTestServerSideErrorTranslation(di *errTestDI) test.GomegaSubTestFunc {
 			Value:     "what ever",
 		}
 		expected := data.NewDuplicateKeyError("mocked error")
-		r := di.DB.Save(&m)
+		r := di.DB.Create(&m)
 		g.Expect(r.Error).To(HaveOccurred(), "create model [%s] should fail", m.UniqueKey)
 		g.Expect(r.Error).To(BeAssignableToTypeOf(expected), "error should be data.DataError type")
 		g.Expect(errors.Is(r.Error, expected)).To(BeTrue(), "error should match DuplicateKeyError")
