@@ -99,14 +99,19 @@ func (e *CodedError) UnmarshalBinary(data []byte) error {
 // Is return true if
 //	1. target has same ErrCode, OR
 //  2. target is a type/sub-type error and the receiver error is in same type/sub-type
+//  3. RootCause() is same as target
 func (e CodedError) Is(target error) bool {
 	compare := e.ErrCode
 	if masker, ok := target.(ComparableErrorCoder); ok {
 		compare = e.ErrCode & masker.CodeMask()
 	}
 
-	coder, ok := target.(ErrorCoder)
-	return  ok && compare == coder.Code()
+	if coder, ok := target.(ErrorCoder); ok && compare == coder.Code() {
+		return true
+	}
+
+	cause := e.RootCause()
+	return cause != nil  && errors.Is(cause, target)
 }
 
 // nestedError implements NestedError, and error

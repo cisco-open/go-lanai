@@ -11,6 +11,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
@@ -381,7 +382,7 @@ func SubTestTenancyDelete(di *testDI, loadFn loadModelFunc) test.GomegaSubTestFu
 			g.Expect(r.Error).To(Succeed(), "delete model belonging to %s should return no error", m.TenantID)
 			g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "delete model belonging to %s should affect 1 rows", m.TenantID)
 			reFetch := di.DB.WithContext(ctx).Take(&TenancyModel{}, MockedModelIDs[tid])
-			g.Expect(reFetch.Error).To(BeEquivalentTo(gorm.ErrRecordNotFound), "fetch deleted model belonging to %s should return not found error", m.TenantID)
+			g.Expect(errors.Is(reFetch.Error, gorm.ErrRecordNotFound)).To(BeTrue(), "fetch deleted model belonging to %s should return not found error", m.TenantID)
 
 			// Soft Delete with access (use special variation TenancySoftDeleteModel)
 			tid = c.tid[1]
@@ -390,7 +391,7 @@ func SubTestTenancyDelete(di *testDI, loadFn loadModelFunc) test.GomegaSubTestFu
 			g.Expect(r.Error).To(Succeed(), "delete model belonging to %s should return no error", m.TenantID)
 			g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "delete model belonging to %s should affect 1 rows", m.TenantID)
 			reFetch = di.DB.WithContext(ctx).Take(&TenancySoftDeleteModel{}, MockedModelIDs[tid])
-			g.Expect(reFetch.Error).To(BeEquivalentTo(gorm.ErrRecordNotFound), "fetch deleted model belonging to %s should return not found error", m.TenantID)
+			g.Expect(errors.Is(reFetch.Error, gorm.ErrRecordNotFound)).To(BeTrue(), "fetch deleted model belonging to %s should return not found error", m.TenantID)
 		}
 	}
 }
@@ -484,7 +485,7 @@ func SubTestTenancyWithoutSecurity(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(r.Error).To(Succeed(), "delete model without security context should succeed")
 		g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "delete model without security context affect 1 rows")
 		r = di.DB.WithContext(ctx).Model(&TenancyModel{}).Take(&TenancyModel{}, m.ID)
-		g.Expect(r.Error).To(BeEquivalentTo(gorm.ErrRecordNotFound), "delete model without security context should actually delete the record")
+		g.Expect(errors.Is(r.Error, gorm.ErrRecordNotFound)).To(BeTrue(), "delete model without security context should actually delete the record")
 	}
 }
 

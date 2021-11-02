@@ -11,6 +11,7 @@ import (
 /*********************************
 	SimpleMappingBuilder
  *********************************/
+
 type MappingBuilder struct {
 	name        string
 	path        string
@@ -31,6 +32,7 @@ func New(names ...string) *MappingBuilder {
 }
 
 // Convenient Constructors
+
 func Any(path string) *MappingBuilder {
 	return New().Path(path).Method(web.MethodAny)
 }
@@ -66,6 +68,7 @@ func Head(path string) *MappingBuilder {
 /*****************************
 	Public
 ******************************/
+
 func (b *MappingBuilder) Name(name string) *MappingBuilder {
 	b.name = name
 	return b
@@ -85,7 +88,7 @@ func (b *MappingBuilder) Condition(condition web.RequestMatcher) *MappingBuilder
 	return b
 }
 
-// support
+// HandlerFunc support
 // - gin.HandlerFunc
 // - http.HandlerFunc
 // - web.HandlerFunc
@@ -139,6 +142,7 @@ func (b *MappingBuilder) Build() web.SimpleMapping {
 /*****************************
 	Getters
 ******************************/
+
 func (b *MappingBuilder) GetPath() string {
 	return b.path
 }

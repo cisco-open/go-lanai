@@ -87,4 +87,13 @@ func pqErrorTranslatorProvider() fx.Annotated {
 	}
 }
 
+func gormErrTranslatorProvider() fx.Annotated {
+	return fx.Annotated{
+		Group:  data.GormConfigurerGroup,
+		Target: func() data.ErrorTranslator {
+			return data.NewGormErrorTranslator()
+		},
+	}
+}
+
 
