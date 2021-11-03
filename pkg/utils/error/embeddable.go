@@ -26,7 +26,7 @@ func (e CodedError) CodeMask() int64 {
 	return e.ErrMask
 }
 
-func (e CodedError) Cause() error {
+func (e CodedError) Unwrap() error {
 	return e.Nested
 }
 
@@ -110,7 +110,7 @@ func (e CodedError) Is(target error) bool {
 		return true
 	}
 
-	cause := e.RootCause()
+	cause := e.Unwrap()
 	return cause != nil  && errors.Is(cause, target)
 }
 
@@ -120,14 +120,18 @@ type nestedError struct {
 	nested error
 }
 
-func (e nestedError) Cause() error {
+func (e nestedError) Is(target error) bool {
+	return errors.Is(e.error, target) || e.nested != nil && errors.Is(e.nested, target)
+}
+
+func (e nestedError) Unwrap() error {
 	return e.nested
 }
 
 func (e nestedError) RootCause() error {
 	for root := e.nested; root != nil; {
 		if nested, ok := root.(NestedError); ok {
-			root = nested.Cause()
+			root = nested.Unwrap()
 		} else {
 			return root
 		}

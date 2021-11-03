@@ -55,6 +55,9 @@ type ComparableErrorCoder interface {
 }
 
 type NestedError interface {
-	Cause() error
+	// Unwrap supports errors.As() and errors.Unwrap(). returns directly nested error
+	Unwrap() error
+
+	// RootCause returns the root cause of error, equivalent to calling Unwrap repeatedly
 	RootCause() error
 }

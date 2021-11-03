@@ -17,9 +17,9 @@ func TestTypeComparison(t *testing.T) {
 	g.Expect(errors.Is(ErrorSubTypeA1, ErrorSubTypeA2)).To(BeFalse(), "Different ErrorSubType should not match each other")
 	g.Expect(errors.Is(ErrorSubTypeB2, ErrorTypeB)).To(BeTrue(), "ErrorSubTypeB1 should be ErrorTypeB error")
 
-	g.Expect(ErrorTypeA.Cause()).To(BeNil(), "ErrorType shouldn't have cause")
+	g.Expect(ErrorTypeA.Unwrap()).To(BeNil(), "ErrorType shouldn't have cause")
 	g.Expect(ErrorTypeA.RootCause()).To(BeNil(), "ErrorType shouldn't have root cause")
-	g.Expect(ErrorTypeA.Cause()).To(BeNil(), "ErrorSubType shouldn't have root cause")
+	g.Expect(ErrorTypeA.Unwrap()).To(BeNil(), "ErrorSubType shouldn't have root cause")
 	g.Expect(ErrorTypeA.RootCause()).To(BeNil(), "ErrorSubType shouldn't have root cause")
 }
 
