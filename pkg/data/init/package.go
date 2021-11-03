@@ -17,7 +17,11 @@ var Module = &bootstrap.Module{
 	Name:       "DB",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
-		fx.Provide(data.NewGorm, data.ErrorHandlingGormConfigurer()),
+		fx.Provide(
+			data.NewGorm,
+			data.ErrorHandlingGormConfigurer(),
+			//gormErrTranslatorProvider(),
+		),
 		web.FxErrorTranslatorProviders(
 			webErrTranslatorProvider(data.NewWebDataErrorTranslator),
 			webErrTranslatorProvider(data.NewGormErrorTranslator),
@@ -42,6 +46,15 @@ func webErrTranslatorProvider(provider interface{}) func() web.ErrorTranslator {
 		fnv := reflect.ValueOf(provider)
 		ret := fnv.Call(nil)
 		return ret[0].Interface().(web.ErrorTranslator)
+	}
+}
+
+func gormErrTranslatorProvider() fx.Annotated {
+	return fx.Annotated{
+		Group:  data.GormConfigurerGroup,
+		Target: func() data.ErrorTranslator {
+			return data.NewGormErrorTranslator()
+		},
 	}
 }
 

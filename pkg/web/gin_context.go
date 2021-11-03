@@ -12,7 +12,7 @@ import (
 // Functions, HandlerFuncs and go-kit ServerOptions that make sure *gin.Context is availalble in endpoints and
 // context is properly propagated in Request
 
-// SimpleGinMapping
+// SimpleGinMapping simple mapping of gin.HandlerFunc
 type SimpleGinMapping interface {
 	SimpleMapping
 	GinHandlerFunc() gin.HandlerFunc
@@ -26,6 +26,7 @@ type MiddlewareGinMapping interface {
 /**************************
 	Public
  **************************/
+
 // GinContext returns *gin.Context which either contained in the context or is the given context itself
 func GinContext(ctx context.Context) *gin.Context {
 	if ginCtx, ok := ctx.(*gin.Context); ok {
@@ -59,9 +60,8 @@ func (c PriorityGinContextCustomizer) PriorityOrder() int {
 	return 0
 }
 
-func (c PriorityGinContextCustomizer) Customize(ctx context.Context, r *Registrar) error {
-	r.AddGlobalMiddlewares(GinContextPathAware(c.properties))
-	return nil
+func (c PriorityGinContextCustomizer) Customize(_ context.Context, r *Registrar) error {
+	return r.AddGlobalMiddlewares(GinContextPathAware(c.properties))
 }
 
 // GinContextCustomizer implements Customizer and order.Ordered
@@ -80,14 +80,14 @@ func (c GinContextCustomizer) Order() int {
 	return 0
 }
 
-func (c GinContextCustomizer) Customize(ctx context.Context, r *Registrar) error {
-	r.AddGlobalMiddlewares(GinContextMerger())
-	return nil
+func (c GinContextCustomizer) Customize(_ context.Context, r *Registrar) error {
+	return r.AddGlobalMiddlewares(GinContextMerger())
 }
 
 /**************************
 	Handler Funcs
  **************************/
+
 func GinContextPathAware(props *ServerProperties) gin.HandlerFunc {
 	return func(gc *gin.Context) {
 		gc.Set(ContextKeyContextPath, props.ContextPath)
@@ -102,7 +102,7 @@ func GinContextMerger() gin.HandlerFunc {
 	}
 }
 
-// HttpGinHandlerFunc Integrate http.HandlerFunc with GIN handler
+// NewHttpGinHandlerFunc Integrate http.HandlerFunc with GIN handler
 func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
 	if handlerFunc == nil {
 		panic(fmt.Errorf("cannot wrap a nil hanlder"))
@@ -145,7 +145,7 @@ func preProcessContext(c *gin.Context) *gin.Context{
  **************************/
 // integrateGinContextBefore Makes sure the context sent to go-kit's encoders/decoders/endpoints/errorHandlers
 // contains values stored in gin.Context
-func integrateGinContextBefore(ctx context.Context, r *http.Request) (ret context.Context) {
+func integrateGinContextBefore(ctx context.Context, _ *http.Request) (ret context.Context) {
 	ret = utils.MakeMutableContext(ctx)
 	return
 }
@@ -176,7 +176,8 @@ func ginContextValuer(ginCtx *gin.Context) func(key interface{}) interface{} {
 /*********************************
 	SimpleGinMapping
  *********************************/
-// implmenets SimpleGinMapping
+
+// simpleGinMapping implements SimpleGinMapping
 type simpleGinMapping struct {
 	simpleMapping
 	handlerFunc gin.HandlerFunc
@@ -203,7 +204,8 @@ func (m simpleGinMapping) GinHandlerFunc() gin.HandlerFunc {
 /*********************************
 	MiddlewareGinMapping
  *********************************/
-// implmenets MiddlewareGinMapping
+
+// middlewareGinMapping implements MiddlewareGinMapping
 type middlewareGinMapping struct {
 	middlewareMapping
 	handlerFunc        gin.HandlerFunc

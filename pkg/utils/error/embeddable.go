@@ -26,7 +26,7 @@ func (e CodedError) CodeMask() int64 {
 	return e.ErrMask
 }
 
-func (e CodedError) Cause() error {
+func (e CodedError) Unwrap() error {
 	return e.Nested
 }
 
@@ -99,14 +99,19 @@ func (e *CodedError) UnmarshalBinary(data []byte) error {
 // Is return true if
 //	1. target has same ErrCode, OR
 //  2. target is a type/sub-type error and the receiver error is in same type/sub-type
+//  3. RootCause() is same as target
 func (e CodedError) Is(target error) bool {
 	compare := e.ErrCode
 	if masker, ok := target.(ComparableErrorCoder); ok {
 		compare = e.ErrCode & masker.CodeMask()
 	}
 
-	coder, ok := target.(ErrorCoder)
-	return  ok && compare == coder.Code()
+	if coder, ok := target.(ErrorCoder); ok && compare == coder.Code() {
+		return true
+	}
+
+	cause := e.Unwrap()
+	return cause != nil  && errors.Is(cause, target)
 }
 
 // nestedError implements NestedError, and error
@@ -115,14 +120,18 @@ type nestedError struct {
 	nested error
 }
 
-func (e nestedError) Cause() error {
+func (e nestedError) Is(target error) bool {
+	return errors.Is(e.error, target) || e.nested != nil && errors.Is(e.nested, target)
+}
+
+func (e nestedError) Unwrap() error {
 	return e.nested
 }
 
 func (e nestedError) RootCause() error {
 	for root := e.nested; root != nil; {
 		if nested, ok := root.(NestedError); ok {
-			root = nested.Cause()
+			root = nested.Unwrap()
 		} else {
 			return root
 		}

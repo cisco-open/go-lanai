@@ -59,6 +59,7 @@ func withData() []test.Options {
 			fx.Provide(data.NewGorm),
 			fx.Provide(data.ErrorHandlingGormConfigurer()),
 			fx.Provide(pqErrorTranslatorProvider()),
+			fx.Provide(gormErrTranslatorProvider()),
 		),
 	}
 }
