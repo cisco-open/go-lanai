@@ -61,3 +61,7 @@ type NestedError interface {
 	// RootCause returns the root cause of error, equivalent to calling Unwrap repeatedly
 	RootCause() error
 }
+
+type ComparableError interface {
+	Is(target error) bool
+}
