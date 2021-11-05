@@ -40,6 +40,39 @@ func GinContext(ctx context.Context) *gin.Context {
 	return nil
 }
 
+// MustGinContext returns *gin.Context like GinContext but panic if not found
+func MustGinContext(ctx context.Context) *gin.Context {
+	if gc := GinContext(ctx); gc != nil {
+		return gc
+	}
+	panic(fmt.Sprintf("gin.Context is not found in given context %v", ctx))
+}
+
+// HttpRequest returns *http.Request associated with given context
+func HttpRequest(ctx context.Context) *http.Request {
+	if gc := GinContext(ctx); gc != nil {
+		return gc.Request
+	}
+	return nil
+}
+
+// MustHttpRequest returns *http.Request associated with given context, panic if not found
+func MustHttpRequest(ctx context.Context) *http.Request {
+	return MustGinContext(ctx).Request
+}
+
+// SetKV set a kv pair to given context. The value can be obtained via context.Context.Value(key)
+func SetKV(ctx context.Context, key string, value interface{}) {
+	switch c := ctx.(type) {
+	case utils.MutableContext:
+		c.Set(key, value)
+	default:
+		if gc := GinContext(ctx); gc != nil {
+			gc.Set(key, value)
+		}
+	}
+}
+
 /**************************
 	Customizers
  **************************/
