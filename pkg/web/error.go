@@ -30,12 +30,15 @@ func (e *errorInvalidMvcHandlerFunc) Error() string {
 /**************************
 	Generic Http Error
 ***************************/
+
 type HttpErrorResponse struct {
 	StatusText string `json:"error,omitempty"`
 	Message string `json:"message,omitempty"`
 	Details map[string]string`json:"details,omitempty"`
 }
 
+// HttpError implements error, json.Marshaler, StatusCoder, Headerer
+// Note: Do not use HttpError as a map key, because is is not hashable (it contains http.Header which is a map)
 type HttpError struct {
 	error
 	SC int
@@ -43,7 +46,6 @@ type HttpError struct {
 }
 
 // MarshalJSON implements json.Marshaler
-// TODO consider implement Unwrap
 func (e HttpError) MarshalJSON() ([]byte, error) {
 	if original,ok := e.error.(json.Marshaler); ok {
 		return original.MarshalJSON()
@@ -55,7 +57,7 @@ func (e HttpError) MarshalJSON() ([]byte, error) {
 	return json.Marshal(err)
 }
 
-// httptransport.StatusCoder
+// StatusCode implements StatusCoder
 func (e HttpError) StatusCode() int {
 	if original,ok := e.error.(StatusCoder); ok {
 		return original.StatusCode()
@@ -66,7 +68,7 @@ func (e HttpError) StatusCode() int {
 	}
 }
 
-// httptransport.Headerer
+// Headers implements Headerer
 func (e HttpError) Headers() http.Header {
 	if original,ok := e.error.(Headerer); ok {
 		return original.Headers()
@@ -74,14 +76,16 @@ func (e HttpError) Headers() http.Header {
 	return e.H
 }
 
+
 /**************************
 	BadRequest Errors
 ***************************/
+
 type BadRequestError struct {
 	error
 }
 
-// httptransport.StatusCoder
+// StatusCode implements StatusCoder
 func (_ BadRequestError) StatusCode() int {
 	return http.StatusBadRequest
 }
@@ -90,7 +94,7 @@ type ValidationErrors struct {
 	validator.ValidationErrors
 }
 
-// json.Marshaler
+// MarshalJSON implements json.Marshaler
 func (e ValidationErrors) MarshalJSON() ([]byte, error) {
 	err := &HttpErrorResponse{
 		StatusText: http.StatusText(e.StatusCode()),
@@ -106,7 +110,7 @@ func (e ValidationErrors) MarshalJSON() ([]byte, error) {
 	return json.Marshal(err)
 }
 
-// httptransport.StatusCoder
+// StatusCode implements StatusCoder
 func (_ ValidationErrors) StatusCode() int {
 	return http.StatusBadRequest
 }
@@ -114,6 +118,7 @@ func (_ ValidationErrors) StatusCode() int {
 /*****************************
 	Constructor Functions
 ******************************/
+
 func NewHttpError(sc int, err error, headers ...http.Header) error {
 	var h http.Header
 	if len(headers) != 0 {

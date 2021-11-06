@@ -18,6 +18,10 @@ type CodedError struct {
 	Nested  error
 }
 
+func (e CodedError) Error() string {
+	return e.Err.Error()
+}
+
 func (e CodedError) Code() int64 {
 	return e.ErrCode
 }
@@ -114,7 +118,7 @@ func (e CodedError) Is(target error) bool {
 	return cause != nil  && errors.Is(cause, target)
 }
 
-// nestedError implements NestedError, and error
+// nestedError implements error, NestedError, encoding.BinaryMarshaler, encoding.BinaryUnmarshaler
 type nestedError struct {
 	error
 	nested error
