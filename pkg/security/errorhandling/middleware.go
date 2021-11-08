@@ -86,7 +86,7 @@ func (eh *ErrorHandlingMiddleware) logError(c *gin.Context, err error) {
 		errMsgs = append(errMsgs, cause.Error())
 		var nested errorutils.NestedError
 		if nested, isNested = cause.(errorutils.NestedError); isNested {
-			cause = nested.Unwrap()
+			cause = nested.Cause()
 		}
 	}
 	msg := strings.Join(errMsgs, " - [Caused By]: ")

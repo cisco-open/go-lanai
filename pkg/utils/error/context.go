@@ -55,15 +55,19 @@ type ComparableErrorCoder interface {
 }
 
 type NestedError interface {
-	// Unwrap supports errors.As() and errors.Unwrap(). returns directly nested error
-	Unwrap() error
+	// Cause returns directly nested error
+	Cause() error
 
-	// RootCause returns the root cause of error, equivalent to calling Unwrap repeatedly
+	// RootCause returns the root cause of error, equivalent to calling Cause repeatedly
 	RootCause() error
 }
 
 type ComparableError interface {
 	Is(target error) bool
+}
+
+type Unwrapper interface {
+	Unwrap() error
 }
 
 // Hasher is an interface for error implementations that not naturally hashable to be used as a map key
