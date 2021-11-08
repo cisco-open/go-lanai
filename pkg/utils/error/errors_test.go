@@ -17,9 +17,9 @@ func TestTypeComparison(t *testing.T) {
 	g.Expect(errors.Is(ErrorSubTypeA1, ErrorSubTypeA2)).To(BeFalse(), "Different ErrorSubType should not match each other")
 	g.Expect(errors.Is(ErrorSubTypeB2, ErrorTypeB)).To(BeTrue(), "ErrorSubTypeB1 should be ErrorTypeB error")
 
-	g.Expect(ErrorTypeA.Unwrap()).To(BeNil(), "ErrorType shouldn't have cause")
+	g.Expect(ErrorTypeA.Cause()).To(BeNil(), "ErrorType shouldn't have cause")
 	g.Expect(ErrorTypeA.RootCause()).To(BeNil(), "ErrorType shouldn't have root cause")
-	g.Expect(ErrorTypeA.Unwrap()).To(BeNil(), "ErrorSubType shouldn't have root cause")
+	g.Expect(ErrorTypeA.Cause()).To(BeNil(), "ErrorSubType shouldn't have root cause")
 	g.Expect(ErrorTypeA.RootCause()).To(BeNil(), "ErrorSubType shouldn't have root cause")
 }
 
@@ -61,6 +61,26 @@ func TestConcreteTypeError(t *testing.T) {
 
 	g.Expect(errors.Is(actual, nonCoded)).To(BeFalse(), "actual error should not match non-coded error")
 	g.Expect(errors.Is(actual, ErrorTypeB)).To(BeFalse(), "actual error should not match ErrorTypeB")
+	g.Expect(errors.Is(actual, ErrorSubTypeA1)).To(BeFalse(), "actual error should not match ErrorSubTypeA1")
+	g.Expect(errors.Is(actual, ErrorSubTypeB1)).To(BeFalse(), "actual error should not match ErrorSubTypeB1")
+}
+
+func TestNestedError(t *testing.T) {
+	g := gomega.NewWithT(t)
+	cause := ErrorB1_1
+	actual := NewCodedError(ErrorSubTypeCodeA2, cause)
+	ref := ErrorA2
+	nonCoded := errors.New("non-coded error")
+
+	g.Expect(errors.Is(actual, ErrorCategoryTest)).To(BeTrue(), "actual error should match ErrorCategoryTest")
+	g.Expect(errors.Is(actual, ErrorTypeA)).To(BeTrue(), "actual error should match ErrorTypeA")
+	g.Expect(errors.Is(actual, ErrorSubTypeA2)).To(BeTrue(), "actual error should match ErrorSubTypeA2")
+	g.Expect(errors.Is(actual, ref)).To(BeTrue(), "two ErrorA2 should match each other regardless of actual message")
+	g.Expect(errors.Is(ref, actual)).To(BeTrue(), "two ErrorA2 should match each other regardless of actual message and comparison order")
+
+	g.Expect(errors.Is(actual, nonCoded)).To(BeFalse(), "actual error should not match non-coded error")
+	g.Expect(errors.Is(actual, cause)).To(BeFalse(), "actual error should not match error's cause")
+	g.Expect(errors.Is(actual, ErrorTypeB)).To(BeFalse(), "actual error should not match coded cause's type (ErrorTypeB)")
 	g.Expect(errors.Is(actual, ErrorSubTypeA1)).To(BeFalse(), "actual error should not match ErrorSubTypeA1")
 	g.Expect(errors.Is(actual, ErrorSubTypeB1)).To(BeFalse(), "actual error should not match ErrorSubTypeB1")
 }
@@ -165,10 +185,24 @@ var (
 	CauseB2 = errors.New("error: B2")
 
 	// concrete errors
-	ErrorA1_1 = NewCodedError(ErrorCodeA1_1, CauseA1_1)
-	ErrorA1_2 = NewCodedError(ErrorCodeA1_2, CauseA1_2)
-	ErrorA2   = NewCodedError(ErrorSubTypeCodeA2, CauseA2)
-	ErrorB1_1 = NewCodedError(ErrorCodeB1_1, CauseB1_1)
-	ErrorB1_2 = NewCodedError(ErrorCodeB1_2, CauseB1_2)
-	ErrorB2   = NewCodedError(ErrorSubTypeCodeB2, CauseB2)
+	ErrorA1_1 = NewTestError(ErrorCodeA1_1, CauseA1_1)
+	ErrorA1_2 = NewTestError(ErrorCodeA1_2, CauseA1_2)
+	ErrorA2   = NewTestError(ErrorSubTypeCodeA2, CauseA2)
+	ErrorB1_1 = NewTestError(ErrorCodeB1_1, CauseB1_1)
+	ErrorB1_2 = NewTestError(ErrorCodeB1_2, CauseB1_2)
+	ErrorB2   = NewTestError(ErrorSubTypeCodeB2, CauseB2)
 )
+
+func NewTestError(code int64, e interface{}) *TestError {
+	return &TestError{
+		CodedError: *NewCodedError(code, e),
+	}
+}
+
+type TestError struct {
+	CodedError
+}
+
+func (e TestError) Unwrap() error {
+	return e.CodedError.Nested
+}

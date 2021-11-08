@@ -7,15 +7,17 @@ import (
 	"fmt"
 )
 
-type Err error
-
-// CodedError implements error, Code, CodeMask, NestedError
+// CodedError implements error, Code, CodeMask, NestedError, ComparableError, Unwrapper
 // encoding.TextMarshaler, json.Marshaler, encoding.BinaryMarshaler, encoding.BinaryUnmarshaler
 type CodedError struct {
-	Err
+	ErrMsg  string
 	ErrCode int64
 	ErrMask int64
 	Nested  error
+}
+
+func (e CodedError) Error() string {
+	return e.ErrMsg
 }
 
 func (e CodedError) Code() int64 {
@@ -26,7 +28,7 @@ func (e CodedError) CodeMask() int64 {
 	return e.ErrMask
 }
 
-func (e CodedError) Unwrap() error {
+func (e CodedError) Cause() error {
 	return e.Nested
 }
 
@@ -38,12 +40,12 @@ func (e CodedError) RootCause() error {
 }
 
 // WithMessage make a concrete error with given error message
-func (e CodedError) WithMessage(msg string, args...interface{}) *CodedError {
+func (e CodedError) WithMessage(msg string, args ...interface{}) *CodedError {
 	return NewCodedError(e.ErrCode, fmt.Errorf(msg, args...))
 }
 
 // WithCause make a concrete error with given cause and error message
-func (e CodedError) WithCause(cause error, msg string, args...interface{}) *CodedError {
+func (e CodedError) WithCause(cause error, msg string, args ...interface{}) *CodedError {
 	return NewCodedError(e.ErrCode, fmt.Errorf(msg, args...), cause)
 }
 
@@ -92,14 +94,13 @@ func (e *CodedError) UnmarshalBinary(data []byte) error {
 
 	e.ErrCode = code
 	e.ErrMask = mask
-	e.Err = errors.New(string(errBytes[:len(errBytes) - 1]))
+	e.ErrMsg = string(errBytes[:len(errBytes)-1])
 	return nil
 }
 
 // Is return true if
 //	1. target has same ErrCode, OR
 //  2. target is a type/sub-type error and the receiver error is in same type/sub-type
-//  3. RootCause() is same as target
 func (e CodedError) Is(target error) bool {
 	compare := e.ErrCode
 	if masker, ok := target.(ComparableErrorCoder); ok {
@@ -110,11 +111,10 @@ func (e CodedError) Is(target error) bool {
 		return true
 	}
 
-	cause := e.Unwrap()
-	return cause != nil  && errors.Is(cause, target)
+	return false
 }
 
-// nestedError implements NestedError, and error
+// nestedError implements error, NestedError, encoding.BinaryMarshaler, encoding.BinaryUnmarshaler
 type nestedError struct {
 	error
 	nested error
@@ -124,14 +124,14 @@ func (e nestedError) Is(target error) bool {
 	return errors.Is(e.error, target) || e.nested != nil && errors.Is(e.nested, target)
 }
 
-func (e nestedError) Unwrap() error {
+func (e nestedError) Cause() error {
 	return e.nested
 }
 
 func (e nestedError) RootCause() error {
 	for root := e.nested; root != nil; {
 		if nested, ok := root.(NestedError); ok {
-			root = nested.Unwrap()
+			root = nested.Cause()
 		} else {
 			return root
 		}
@@ -162,35 +162,35 @@ func (e *nestedError) UnmarshalBinary(data []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	e.error = errors.New(errBytes[:len(errBytes) - 1])
+	e.error = errors.New(errBytes[:len(errBytes)-1])
 	return
 }
 
 /************************
 	Constructors
 *************************/
-func newCodedError(code int64, e error, mask int64, cause error) *CodedError {
+func newCodedError(code int64, msg string, mask int64, cause error) *CodedError {
 	return &CodedError{
-		Err:     e,
+		ErrMsg:  msg,
 		ErrCode: code,
 		ErrMask: mask,
 		Nested:  cause,
 	}
 }
 
-func NewErrorCategory(code int64, e error) *CodedError {
+func NewErrorCategory(code int64, e interface{}) *CodedError {
 	code = code & ReservedMask
-	return newCodedError(code, e, ReservedMask, nil)
+	return newCodedError(code, fmt.Sprintf("%v", e), ReservedMask, nil)
 }
 
-func NewErrorType(code int64, e error) *CodedError {
+func NewErrorType(code int64, e interface{}) *CodedError {
 	code = code & ErrorTypeMask
-	return newCodedError(code, e, ErrorTypeMask, nil)
+	return newCodedError(code, fmt.Sprintf("%v", e), ErrorTypeMask, nil)
 }
 
-func NewErrorSubType(code int64, e error) *CodedError {
+func NewErrorSubType(code int64, e interface{}) *CodedError {
 	code = code & ErrorSubTypeMask
-	return newCodedError(code, e, ErrorSubTypeMask, nil)
+	return newCodedError(code, fmt.Sprintf("%v", e), ErrorSubTypeMask, nil)
 }
 
 // construct error from supported item: string, error, fmt.Stringer
@@ -211,7 +211,7 @@ func construct(e interface{}) error {
 
 // NewCodedError creates concrete error. it cannot be used as ErrorType or ErrorSubType comparison
 // supported item are string, error, fmt.Stringer
-func NewCodedError(code int64, e interface{}, causes...interface{}) *CodedError {
+func NewCodedError(code int64, e interface{}, causes ...interface{}) *CodedError {
 	// special case, cause is not specified, use "e" as cause
 	if len(causes) == 0 {
 		causes = []interface{}{e}
@@ -231,6 +231,5 @@ func NewCodedError(code int64, e interface{}, causes...interface{}) *CodedError 
 		}
 	}
 
-	err := construct(e)
-	return newCodedError(code, err, DefaultErrorCodeMask, cause)
+	return newCodedError(code, fmt.Sprintf("%v", e), DefaultErrorCodeMask, cause)
 }

@@ -3,7 +3,6 @@ package data
 import (
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
-	"fmt"
 )
 
 const (
@@ -157,20 +156,26 @@ type DataError interface {
 	WithMessage(msg string, args ...interface{}) DataError
 }
 
-// dataError implements DataError
+// dataError implements DataError and errorutils.Unwrapper
 //goland:noinspection GoNameStartsWithPackageName
 type dataError struct {
-	CodedError
+	*CodedError
 }
 
 func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
+
 	return dataError{
-		CodedError: CodedError{
-			Err:     fmt.Errorf(msg, args...),
-			ErrCode: e.ErrCode,
-			ErrMask: e.ErrMask,
-			Nested:  e.Nested,
-		},
+		CodedError: e.CodedError.WithMessage(msg, args...),
+	}
+}
+
+func (e dataError) Unwrap() error {
+	cause := e.Cause()
+	switch cause.(type) {
+	case NestedError:
+		return e.RootCause()
+	default:
+		return cause
 	}
 }
 
@@ -199,7 +204,7 @@ func (e webDataError) WithMessage(msg string, args ...interface{}) DataError {
 
 func NewDataError(code int64, e interface{}, causes ...interface{}) DataError {
 	return &dataError{
-		CodedError: *NewCodedError(code, e, causes...),
+		CodedError: NewCodedError(code, e, causes...),
 	}
 }
 
@@ -208,6 +213,8 @@ func NewErrorWithStatusCode(err error, sc int) DataError {
 	case DataError:
 		return &webDataError{DataError: e, SC: sc}
 	case CodedError:
+		return &webDataError{DataError: dataError{CodedError: &e}, SC: sc}
+	case *CodedError:
 		return &webDataError{DataError: dataError{CodedError: e}, SC: sc}
 	case ErrorCoder:
 		return &webDataError{DataError: NewDataError(e.Code(), e), SC: sc}
