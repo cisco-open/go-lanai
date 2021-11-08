@@ -96,7 +96,7 @@ func (e CodedError) StatusCode() int {
 
 // MarshalJSON json.Marshaler
 func (e CodedError) MarshalJSON() ([]byte, error) {
-	return web.NewHttpError(e.StatusCode(), e).(json.Marshaler).MarshalJSON()
+	return web.NewHttpError(e.StatusCode(), e.CodedError).(json.Marshaler).MarshalJSON()
 }
 
 /************************
