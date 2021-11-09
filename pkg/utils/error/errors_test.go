@@ -63,6 +63,9 @@ func TestConcreteTypeError(t *testing.T) {
 	g.Expect(errors.Is(actual, ErrorTypeB)).To(BeFalse(), "actual error should not match ErrorTypeB")
 	g.Expect(errors.Is(actual, ErrorSubTypeA1)).To(BeFalse(), "actual error should not match ErrorSubTypeA1")
 	g.Expect(errors.Is(actual, ErrorSubTypeB1)).To(BeFalse(), "actual error should not match ErrorSubTypeB1")
+
+	// Note: compare subtype's concrete error as target is undefined behavior, we don't check following
+	//g.Expect(errors.Is(ErrorSubTypeA2, actual)).To(BeFalse(), "concrete sub type error should not match its own type as a target")
 }
 
 func TestNestedError(t *testing.T) {
@@ -85,6 +88,34 @@ func TestNestedError(t *testing.T) {
 	g.Expect(errors.Is(actual, ErrorSubTypeB1)).To(BeFalse(), "actual error should not match ErrorSubTypeB1")
 }
 
+func TestWrappedError(t *testing.T) {
+	g := gomega.NewWithT(t)
+	actual := ErrorA1X1.WithMessage("this is another instance")
+	ref := ErrorA1X1
+	another := NewWrappedTestError(actual.ErrIs, ErrorSubTypeB2)
+	randErr := errors.New("some error")
+	coded := ErrorA1_1
+
+	g.Expect(errors.Is(actual, ErrorCategoryTest)).To(BeTrue(), "actual error should match ErrorCategoryTest")
+	g.Expect(errors.Is(actual, ErrorTypeA)).To(BeTrue(), "actual error should match ErrorTypeA")
+	g.Expect(errors.Is(actual, ErrorSubTypeA1)).To(BeTrue(), "actual error should match ErrorSubTypeA1")
+	g.Expect(errors.Is(actual, ref)).To(BeTrue(), "two ErrorA2 should match each other regardless of actual message")
+	g.Expect(errors.Is(ref, actual)).To(BeTrue(), "two ErrorA2 should match each other regardless of actual message and comparison order")
+
+	g.Expect(errors.Is(actual, randErr)).To(BeFalse(), "actual error should not match random error")
+	g.Expect(errors.Is(actual, coded)).To(BeFalse(), "actual error should not match coded error within same hierarchy")
+	g.Expect(errors.Is(actual, actual.ErrIs)).To(BeFalse(), "actual error should not match error's internal")
+	g.Expect(errors.Is(actual, another)).To(BeFalse(), "actual error should not match another error with different type")
+
+	g.Expect(errors.Is(actual, ErrorTypeB)).To(BeFalse(), "actual error should not match coded cause's type (ErrorTypeB)")
+	g.Expect(errors.Is(actual, ErrorSubTypeA2)).To(BeFalse(), "actual error should not match ErrorSubTypeA2")
+	g.Expect(errors.Is(actual, ErrorSubTypeB1)).To(BeFalse(), "actual error should not match ErrorSubTypeB1")
+
+	// Note: compare subtype's concrete error as target is undefined behavior, we don't check following
+	//concrete := actual.Type.WithMessage("concrete subtype")
+	//g.Expect(errors.Is(actual, concrete)).To(BeFalse(), "actual error should not match concrete version of its own type")
+}
+
 func TestCodeReserve(t *testing.T) {
 	g := gomega.NewWithT(t)
 	g.Expect(tryReserve(ErrorTypeA)).To(HaveOccurred(), "reserve non-category error should panic")
@@ -95,7 +126,7 @@ func TestCodeReserve(t *testing.T) {
 /************************
 	Helpers
  ************************/
-func tryReserve(v interface{}) (err error){
+func tryReserve(v interface{}) (err error) {
 	defer func() {
 		err, _ = recover().(error)
 	}()
@@ -108,8 +139,7 @@ func tryReserve(v interface{}) (err error){
  ************************/
 const (
 	// security reserved
-	Reserved        		= 998 << ReservedOffset
-
+	Reserved = 998 << ReservedOffset
 )
 
 // Hierarchy:
@@ -126,23 +156,23 @@ const (
 //     |-- B2
 // All "Type" values are used as mask
 const (
-	_ = iota
-	ErrorTypeCodeA = Reserved + iota << ErrorTypeOffset
+	_              = iota
+	ErrorTypeCodeA = Reserved + iota<<ErrorTypeOffset
 	ErrorTypeCodeB
 )
 
 // All "SubType" values are used as mask
 // sub types of ErrorTypeCodeA
 const (
-	_ = iota
-	ErrorSubTypeCodeA1             = ErrorTypeCodeA + iota << ErrorSubTypeOffset
+	_                  = iota
+	ErrorSubTypeCodeA1 = ErrorTypeCodeA + iota<<ErrorSubTypeOffset
 	ErrorSubTypeCodeA2
 )
 
 // ErrorSubTypeCodeA1
 //goland:noinspection GoSnakeCaseUsage
 const (
-	_ = iota
+	_             = iota
 	ErrorCodeA1_1 = ErrorSubTypeCodeA1 + iota
 	ErrorCodeA1_2
 )
@@ -150,15 +180,15 @@ const (
 // All "SubType" values are used as mask
 // sub types of ErrorTypeCodeB
 const (
-	_ = iota
-	ErrorSubTypeCodeB1 = ErrorTypeCodeB + iota << ErrorSubTypeOffset
+	_                  = iota
+	ErrorSubTypeCodeB1 = ErrorTypeCodeB + iota<<ErrorSubTypeOffset
 	ErrorSubTypeCodeB2
 )
 
 // ErrorSubTypeCodeB1
 //goland:noinspection GoSnakeCaseUsage
 const (
-	_ = iota
+	_             = iota
 	ErrorCodeB1_1 = ErrorSubTypeCodeB1 + iota
 	ErrorCodeB1_2
 )
@@ -179,10 +209,14 @@ var (
 	// causes
 	CauseA1_1 = errors.New("error: A1-1")
 	CauseA1_2 = errors.New("error: A1-2")
-	CauseA2 = errors.New("error: A2")
+	CauseA2   = errors.New("error: A2")
 	CauseB1_1 = errors.New("error: B1-1")
 	CauseB1_2 = errors.New("error: B1-2")
-	CauseB2 = errors.New("error: B2")
+	CauseB2   = errors.New("error: B2")
+	CauseA1X1 = errors.New("error: A1X1")
+	CauseA1X2 = errors.New("error: A1X1")
+	CauseB1X1 = errors.New("error: B1X1")
+	CauseB1X2 = errors.New("error: B1X2")
 
 	// concrete errors
 	ErrorA1_1 = NewTestError(ErrorCodeA1_1, CauseA1_1)
@@ -191,18 +225,37 @@ var (
 	ErrorB1_1 = NewTestError(ErrorCodeB1_1, CauseB1_1)
 	ErrorB1_2 = NewTestError(ErrorCodeB1_2, CauseB1_2)
 	ErrorB2   = NewTestError(ErrorSubTypeCodeB2, CauseB2)
+
+	ErrorA1X1 = NewWrappedTestError(CauseA1X1, ErrorSubTypeA1)
+	ErrorA1X2 = NewWrappedTestError(CauseA1X2, ErrorSubTypeA1)
+	ErrorB1X1 = NewWrappedTestError(CauseB1X1, ErrorSubTypeB1)
+	ErrorB1X2 = NewWrappedTestError(CauseB1X2, ErrorSubTypeB1)
 )
 
-func NewTestError(code int64, e interface{}) *TestError {
-	return &TestError{
+func NewTestError(code int64, e interface{}) *CodedTestError {
+	return &CodedTestError{
 		CodedError: *NewCodedError(code, e),
 	}
 }
 
-type TestError struct {
+type CodedTestError struct {
 	CodedError
 }
 
-func (e TestError) Unwrap() error {
+func (e CodedTestError) Unwrap() error {
 	return e.CodedError.Nested
+}
+
+type WrappedTestError struct {
+	WrappedError
+}
+
+func NewWrappedTestError(is error, typ error) WrappedTestError {
+	return WrappedTestError{
+		WrappedError{
+			ErrIs:  is,
+			Type:   typ.(*CodedError),
+			ErrMsg: is.Error(),
+		},
+	}
 }
