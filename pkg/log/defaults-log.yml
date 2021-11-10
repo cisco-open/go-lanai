@@ -14,14 +14,14 @@ loggers:
   console:
     type: console
     format: text
-    template: '{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -20 .caller | pad 20 | blue}}] {{cap -12 .logger | pad 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
     fixed-keys: "spanId, traceId, parentId, http, db, remote-http"
 
 #  text-file:
 #    type: file
 #    format: text
 #    location: "logs/text.log"
-#    template: '{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+#    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -20 .caller | pad 20 | blue}}] {{cap -12 .logger | pad 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
 #    fixed-keys: "spanId, traceId, parentId, http"
 
 #  json-file:

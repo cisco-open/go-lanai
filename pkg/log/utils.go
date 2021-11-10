@@ -11,12 +11,12 @@ func IsTerminal(l Logger) bool {
 
 // Capped truncate given value to specified length, with tailing "..." if truncated
 func Capped(v interface{}, cap int) string {
-	return internal.Capped(v, cap)
+	return internal.Capped(cap, v)
 }
 
 // Padding example: `Padding("some string", -20)`
 func Padding(v interface{}, padding int) string {
-	return internal.Padding(v, padding)
+	return internal.Padding(padding, v)
 }
 
 func DebugShowcase() {
