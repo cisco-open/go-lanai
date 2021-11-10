@@ -22,7 +22,7 @@ import (
 	"testing"
 )
 
-func TestSsoEndpoint(t *testing.T) {
+func TestSPInitiatedSso(t *testing.T) {
 	testClientStore := newTestSamlClientStore([]DefaultSamlClient{
 		DefaultSamlClient{
 			SamlSpDetails: SamlSpDetails{
@@ -50,7 +50,41 @@ func TestSsoEndpoint(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/europa/v2/authorize", bytes.NewBufferString(makeAuthnRequest(sp)))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.URL.Query().Add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
+	q := req.URL.Query()
+	q.Add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
+	req.URL.RawQuery = q.Encode()
+	r.ServeHTTP(w, req)
+
+	g := gomega.NewWithT(t)
+	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
+	//TODO: the response is html page with a form post. We need to be able to parse the html page if we want to further
+	// examine the content of the post.
+}
+
+func TestIDPInitiatedSso(t *testing.T) {
+	spEntityId := "http://localhost:8000/saml/metadata"
+
+	testClientStore := newTestSamlClientStore([]DefaultSamlClient{
+		DefaultSamlClient{
+			SamlSpDetails: SamlSpDetails{
+				EntityId:                             spEntityId,
+				MetadataSource:                       "testdata/saml_test_sp_metadata.xml",
+				SkipAssertionEncryption:              false,
+				SkipAuthRequestSignatureVerification: false,
+			},
+		},
+	})
+	testAccountStore := newTestAccountStore()
+
+	r := setupServerForTest(testClientStore, testAccountStore)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/europa/v2/authorize", nil)
+	q := req.URL.Query()
+	q.Add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
+	q.Add("idp_init", "true")
+	q.Add("entity_id", spEntityId)
+	req.URL.RawQuery = q.Encode()
 
 	r.ServeHTTP(w, req)
 
@@ -110,7 +144,7 @@ func setupServerForTest(testClientStore SamlClientStore, testAccountStore securi
 
 	f := NewEndpoint().
 		SsoLocation(&url.URL{Path: "/v2/authorize", RawQuery: "grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"}).
-		SsoCondition(matcher.NotRequest(matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"))).
+		SsoCondition(matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")).
 		MetadataPath("/metadata").
 		Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 		*opt =security.DefaultIssuerDetails{
@@ -130,6 +164,7 @@ func setupServerForTest(testClientStore SamlClientStore, testAccountStore securi
 	r.Use(mw.RefreshMetadataHandler(f.ssoCondition))
 	r.Use(mw.AuthorizeHandlerFunc(f.ssoCondition))
 	r.POST(serverProp.ContextPath + f.ssoLocation.Path, security.NoopHandlerFunc())
+	r.GET(serverProp.ContextPath + f.ssoLocation.Path, security.NoopHandlerFunc())
 
 	return r
 }
