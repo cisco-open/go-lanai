@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type Options struct {
@@ -93,6 +94,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 					Issuer: &saml.Issuer{
 						Value: entityId,
 					},
+					IssueInstant: time.Now(),
 				},
 				IDP: mw.idp,
 			}
