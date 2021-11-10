@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -75,15 +76,38 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 			return
 		}
 
-		req, err := saml.NewIdpAuthnRequest(mw.idp, ctx.Request)
-		if err != nil {
-			mw.handleError(ctx, nil, NewSamlInternalError("error decoding authentication request", err))
-			return
-		}
+		var req *saml.IdpAuthnRequest
+		var err error
 
-		if err = UnmarshalRequest(req); err != nil {
-			mw.handleError(ctx, nil, err)
-			return
+		idpInitiatedMatcher := matcher.RequestWithParam("idp_init", "true")
+		isIdpInit, _ := idpInitiatedMatcher.Matches(ctx.Request)
+		if isIdpInit {
+			entityId := ctx.Request.Form.Get("entity_id")
+			if entityId == "" {
+				mw.handleError(ctx, nil, NewSamlInternalError("error start idp initiated sso, no SP entity id provided"))
+				return
+			}
+
+			req = &saml.IdpAuthnRequest{
+				Request: saml.AuthnRequest{
+					Issuer: &saml.Issuer{
+						Value: entityId,
+					},
+					IssueInstant: saml.TimeNow(),
+				},
+				IDP: mw.idp,
+				Now: saml.TimeNow(),
+			}
+		} else {
+			req, err = saml.NewIdpAuthnRequest(mw.idp, ctx.Request)
+			if err != nil {
+				mw.handleError(ctx, nil, NewSamlInternalError("error decoding authentication request", err))
+				return
+			}
+			if err = UnmarshalRequest(req); err != nil {
+				mw.handleError(ctx, nil, err)
+				return
+			}
 		}
 
 		auth, exist := ctx.Get(security.ContextKeySecurity)
@@ -127,10 +151,13 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 			return
 		}
 
-		if err = ValidateAuthnRequest(req, spDetails, spMetadata); err != nil {
-			mw.handleError(ctx, req, err)
-			return
+		if !isIdpInit {
+			if err = ValidateAuthnRequest(req, spDetails, spMetadata); err != nil {
+				mw.handleError(ctx, req, err)
+				return
+			}
 		}
+
 
 		//check tenancy
 		client, err := mw.samlClientStore.GetSamlClientByEntityId(ctx.Request.Context(), serviceProviderID)
