@@ -5,12 +5,14 @@ import (
 	"encoding"
 	"fmt"
 	"github.com/go-kit/kit/log/level"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
 )
 
+// Note: https://pkg.go.dev/text/template#hdr-Pipelines chainable argument should be the last parameter of any function
 var (
 	TmplFuncMap = template.FuncMap{
 		"cap":   Capped,
@@ -71,9 +73,9 @@ func MakeKVFunc(ignored utils.StringSet) func(Fields) string {
 	}
 }
 
-func MakeLevelFunc(term bool) func(kvs Fields, padding int) string {
+func MakeLevelFunc(term bool) func(padding int, kvs Fields) string {
 	if term {
-		return func(kvs Fields, padding int) string {
+		return func(padding int, kvs Fields) string {
 			lv, _ := kvs[level.Key().(string)]
 			lvStr := Sprint(lv)
 			if funcs, ok := levelFuncsMap[lvStr]; ok {
@@ -82,7 +84,7 @@ func MakeLevelFunc(term bool) func(kvs Fields, padding int) string {
 			return lvStr
 		}
 	} else {
-		return func(kvs Fields, padding int) string {
+		return func(padding int, kvs Fields) string {
 			lv, _ := kvs[level.Key().(string)]
 			lvStr := Sprint(lv)
 			if funcs, ok := levelFuncsMap[lvStr]; ok {
@@ -95,27 +97,36 @@ func MakeLevelFunc(term bool) func(kvs Fields, padding int) string {
 
 func MakeLevelPaddingFunc(v interface{}) func(int) string {
 	return func(p int) string {
-		return Padding(v, p)
+		return Padding(p, v)
 	}
 }
 
-// Padding example: `{{padding value -6}}` "{{padding value 10}}"
-func Padding(v interface{}, padding int) string {
+// Padding example: `{{padding -6 value}}` "{{padding 10 value}}"
+func Padding(padding int, v interface{}) string {
 	tag := "%" + strconv.Itoa(padding) + "v"
 	return fmt.Sprintf(tag, v)
 }
 
-// Capped truncate given value to specified length, with tailing "..." if truncated
-func Capped(v interface{}, cap int) string {
+// Capped truncate given value to specified length
+// if cap > 0: with tailing "..." if truncated
+// if cap < 0: with middle "..." if truncated
+func Capped(cap int, v interface{}) string {
+	c := int(math.Abs(float64(cap)))
 	s := Sprint(v)
-	if len(s) <= cap {
+	if len(s) <= c {
 		return s
 	}
-	return fmt.Sprintf("%." + strconv.Itoa(cap - 3) + "s...", s)
+	if cap > 0 {
+		return fmt.Sprintf("%." + strconv.Itoa(c - 3) + "s...", s)
+	} else {
+		lead := (c - 3) / 2
+		tail := c - lead - 3
+		return fmt.Sprintf("%." + strconv.Itoa(lead) + "s...%s", s, s[len(s)-tail:])
+	}
 }
 
 func Join(sep string, values ...interface{}) string {
-	strs := []string{}
+	strs := make([]string, 0, len(values))
 	for _, v := range values {
 		s := Sprint(v)
 		if s != "" {
