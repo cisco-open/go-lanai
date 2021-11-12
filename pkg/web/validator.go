@@ -19,13 +19,13 @@ func Validator() *Validate {
 func newValidator(ginValidator binding.StructValidator) *Validate {
 	validate := ginValidator.Engine().(*validator.Validate)
 	return &Validate{
-		Validate: *validate,
+		Validate: validate,
 	}
 }
 
 // Validate is a thin wrapper around validator/v10, which prevent modifying TagName
 type Validate struct {
-	validator.Validate
+	*validator.Validate
 }
 
 // WithTagName create a shallow copy of internal validator.Validate with different tag name
