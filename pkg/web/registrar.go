@@ -23,6 +23,7 @@ import (
 	"time"
 )
 
+//goland:noinspection GoUnusedConst
 const (
 	kGinContextKey = "GinCtx"
 	kKitContextKey = "KitCtx"
@@ -38,9 +39,9 @@ type Registrar struct {
 	options          []*orderedServerOption // options go-kit server options
 	validator        *Validate
 	requestRewriter  RequestRewriter
-	middlewares      []MiddlewareMapping                   // middlewares gin-gonic middleware providers
-	routedMappings   map[string]map[string][]RoutedMapping // routedMappings MvcMappings + SimpleMappings
-	staticMappings   []StaticMapping                       // staticMappings all static mappings
+	middlewares      []MiddlewareMapping // middlewares gin-gonic middleware providers
+	routedMappings   routedMappings      // routedMappings MvcMappings + SimpleMappings
+	staticMappings   []StaticMapping     // staticMappings all static mappings
 	customizers      []Customizer
 	errMappings      []ErrorTranslateMapping
 	errTranslators   []ErrorTranslator
@@ -63,7 +64,7 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		},
 		validator:        bindingValidator,
 		requestRewriter:  newGinRequestRewriter(g.Engine),
-		routedMappings:   map[string]map[string][]RoutedMapping{},
+		routedMappings:   routedMappings{},
 		warnDuplicateMWs: true,
 		warnExclusion:    utils.NewStringSet(),
 	}
@@ -94,7 +95,7 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	r.loadHtmlTemplates(ctx)
 
 	// add some common middlewares
-	mappings := []interface{}{}
+	var mappings []interface{}
 	if err = r.Register(mappings...); err != nil {
 		return
 	}
@@ -140,6 +141,14 @@ func (r *Registrar) AddOptionWithOrder(opt httptransport.ServerOption, o int) er
 
 	r.options = append(r.options, newOrderedServerOption(opt, o))
 	order.SortStable(r.options, order.OrderedFirstCompare)
+	return nil
+}
+
+// AddEngineOptions customize Engine
+func (r *Registrar) AddEngineOptions(opts ...EngineOptions) error {
+	for _, fn := range opts {
+		fn(r.engine)
+	}
 	return nil
 }
 
@@ -275,7 +284,8 @@ func (r *Registrar) register(i interface{}) (err error) {
 
 func (r *Registrar) registerUnknownType(i interface{}) (err error) {
 	v := reflect.ValueOf(i)
-	for ; v.Kind() == reflect.Ptr; v = v.Elem() {}
+	for ; v.Kind() == reflect.Ptr; v = v.Elem() {
+	}
 
 	var valid bool
 	switch {
@@ -327,18 +337,15 @@ func (r *Registrar) registerController(c Controller) (err error) {
 func (r *Registrar) registerRoutedMapping(m RoutedMapping) error {
 	method := strings.ToUpper(m.Method())
 	path := NormalizedPath(m.Path())
-
-	paths, ok := r.routedMappings[method]
-	if !ok {
-		paths = map[string][]RoutedMapping{}
-		r.routedMappings[method] = paths
+	group := DefaultGroup
+	if m.Group() != "" {
+		group = m.Group()
 	}
 
-	if mappings, ok := paths[path]; !ok {
-		paths[path] = []RoutedMapping{m}
-	} else {
-		paths[path] = append(mappings, m)
-	}
+	paths := r.routedMappings.GetOrNew(method).GetOrNew(group)
+	mappings := paths.GetOrNew(path)
+	mappings = append(mappings, m)
+	paths[path] = mappings
 	return nil
 }
 
@@ -422,17 +429,20 @@ func (r *Registrar) installMappings(ctx context.Context) error {
 	r.errTranslators = append(r.errTranslators, newDefaultErrorTranslator())
 
 	// register routedMappings
-	for method, paths := range r.routedMappings {
-		for _, mappings := range paths {
-			// all routedMappings with condition registered first
-			sort.SliceStable(mappings, func(i, j int) bool {
-				return mappings[i].Condition() != nil && mappings[j].Condition() == nil
-			})
+	for method, groups := range r.routedMappings {
+		for group, paths := range groups {
+			for _, mappings := range paths {
+				// all routedMappings with condition registered first
+				sort.SliceStable(mappings, func(i, j int) bool {
+					return mappings[i].Condition() != nil && mappings[j].Condition() == nil
+				})
 
-			if e := r.installRoutedMappings(ctx, method, mappings); e != nil {
-				return e
+				if e := r.installRoutedMappings(ctx, method, group, mappings); e != nil {
+					return e
+				}
 			}
 		}
+
 	}
 
 	// register static mappings
@@ -466,14 +476,17 @@ func (r *Registrar) installStaticMapping(ctx context.Context, m StaticMapping) e
 	return err
 }
 
-func (r *Registrar) installRoutedMappings(ctx context.Context, method string, mappings []RoutedMapping) error {
+func (r *Registrar) installRoutedMappings(ctx context.Context, method, group string, mappings []RoutedMapping) error {
 	if len(mappings) == 0 {
 		return nil
+	}
+	if group == "" {
+		group = DefaultGroup
 	}
 
 	path := mappings[0].Path()
 	// resolve error translators first
-	errTranslators, e :=  r.findErrorTranslators(ctx, DefaultGroup, path, method)
+	errTranslators, e := r.findErrorTranslators(ctx, group, path, method)
 	if e != nil {
 		return fmt.Errorf("unable to resolve error translation for [%s %s]", method, path)
 	}
@@ -488,7 +501,7 @@ func (r *Registrar) installRoutedMappings(ctx context.Context, method string, ma
 		switch {
 		case path != m.Path():
 			return fmt.Errorf("attempt to register multiple RoutedMappings with inconsist path parameters: "+
-				"expected [%s %s] but got [%s %s]", method, path, m.Method(), m.Path())
+				"expected [%s (%s)%s] but got [%s (%s)%s]", method, group, path, m.Method(), m.Group(), m.Path())
 		case m.Condition() == nil && unconditionalFound:
 			return fmt.Errorf("attempt to register multiple unconditional RoutedMappings on same path and method: [%s %s]", m.Method(), m.Path())
 		case m.Condition() == nil:
@@ -508,13 +521,13 @@ func (r *Registrar) installRoutedMappings(ctx context.Context, method string, ma
 	}
 
 	// find middleware and register with router
-	middlewares, err := r.findMiddlewares(ctx, DefaultGroup, path, method)
+	middlewares, err := r.findMiddlewares(ctx, group, path, method)
 	if method == MethodAny {
-		r.router.Group(DefaultGroup).
+		r.router.Group(group).
 			Use(middlewares...).
 			Any(path, handlerFuncs...)
 	} else {
-		r.router.Group(DefaultGroup).
+		r.router.Group(group).
 			Use(middlewares...).
 			Handle(method, path, handlerFuncs...)
 	}
@@ -553,7 +566,7 @@ func (r *Registrar) findMiddlewares(ctx context.Context, group, relativePath str
 }
 
 func (r *Registrar) findErrorTranslators(_ context.Context, group, relativePath string, methods ...string) ([]ErrorTranslator, error) {
-	var translators = make([]ErrorTranslator, len(r.errTranslators), len(r.errTranslators) + len(r.errMappings))
+	var translators = make([]ErrorTranslator, len(r.errTranslators), len(r.errTranslators)+len(r.errMappings))
 	for i, t := range r.errTranslators {
 		translators[i] = t
 	}
@@ -676,4 +689,44 @@ func (r *Registrar) logMatchedMiddlewares(ctx context.Context, matched []Middlew
 	}
 
 	return
+}
+
+/***************************
+	helper types
+ ***************************/
+
+type routedMappings map[string]groupsMap
+
+func (m routedMappings) GetOrNew(key string) groupsMap {
+	if v, ok := m[key]; ok {
+		return v
+	}
+
+	v := groupsMap{}
+	m[key] = v
+	return v
+}
+
+type groupsMap map[string]pathsMap
+
+func (m groupsMap) GetOrNew(key string) pathsMap {
+	if v, ok := m[key]; ok {
+		return v
+	}
+
+	v := pathsMap{}
+	m[key] = v
+	return v
+}
+
+type pathsMap map[string][]RoutedMapping
+
+func (m pathsMap) GetOrNew(key string) []RoutedMapping {
+	if v, ok := m[key]; ok {
+		return v
+	}
+
+	v := make([]RoutedMapping, 0)
+	m[key] = v
+	return v
 }

@@ -14,6 +14,7 @@ import (
 
 type MappingBuilder struct {
 	name        string
+	group       string
 	path        string
 	method      string
 	condition   web.RequestMatcher
@@ -26,7 +27,7 @@ func New(names ...string) *MappingBuilder {
 		name = names[0]
 	}
 	return &MappingBuilder{
-		name: name,
+		name:   name,
 		method: web.MethodAny,
 	}
 }
@@ -73,6 +74,12 @@ func (b *MappingBuilder) Name(name string) *MappingBuilder {
 	b.name = name
 	return b
 }
+
+func (b *MappingBuilder) Group(group string) *MappingBuilder {
+	b.group = group
+	return b
+}
+
 func (b *MappingBuilder) Path(path string) *MappingBuilder {
 	b.path = path
 	return b
@@ -104,6 +111,7 @@ func (b *MappingBuilder) HandlerFunc(handlerFunc interface{}) *MappingBuilder {
 }
 
 // Convenient setters
+
 func (b *MappingBuilder) Get(path string) *MappingBuilder {
 	return b.Path(path).Method(http.MethodGet)
 }
@@ -164,7 +172,7 @@ func (b *MappingBuilder) GetName() string {
 ******************************/
 func (b *MappingBuilder) validate() (err error) {
 	switch {
-	case b.path == "":
+	case b.path == "" && (b.group == "" || b.group == "/"):
 		err = errors.New("empty path")
 	case b.handlerFunc == nil:
 		err = errors.New("handler func not specified")
@@ -178,18 +186,17 @@ func (b *MappingBuilder) buildMapping() web.SimpleMapping {
 	}
 
 	if b.name == "" {
-		b.name = fmt.Sprintf("%s %s", b.method, b.path)
+		b.name = fmt.Sprintf("%s %s%s", b.method, b.group, b.path)
 	}
 
 	switch b.handlerFunc.(type) {
 	case gin.HandlerFunc:
-		return web.NewSimpleGinMapping(b.name, b.path, b.method, b.condition, b.handlerFunc.(gin.HandlerFunc))
+		return web.NewSimpleGinMapping(b.name, b.group, b.path, b.method, b.condition, b.handlerFunc.(gin.HandlerFunc))
 	case http.HandlerFunc, web.HandlerFunc:
-		return web.NewSimpleMapping(b.name, b.path, b.method, b.condition, b.handlerFunc.(web.HandlerFunc))
+		return web.NewSimpleMapping(b.name, b.group, b.path, b.method, b.condition, b.handlerFunc.(web.HandlerFunc))
 	default:
 		panic(fmt.Errorf("unsupported HandlerFunc type: %T", b.handlerFunc))
 	}
 
 	return nil
 }
-

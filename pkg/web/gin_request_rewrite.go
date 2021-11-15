@@ -16,7 +16,7 @@ func newGinRequestRewriter(engine *gin.Engine) RequestRewriter {
 	}
 }
 
-// Caution, you could loop yourself to death
+// HandleRewrite Caution, you could loop yourself to death
 func (rw ginRequestRewriter) HandleRewrite(r *http.Request) error {
 	gc := GinContext(r.Context())
 	if gc == nil {

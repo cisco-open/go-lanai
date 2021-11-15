@@ -21,6 +21,7 @@ type ModelViewHandlerFunc web.MvcHandlerFunc
 
 type MappingBuilder struct {
 	name        string
+	group       string
 	path        string
 	method      string
 	condition   web.RequestMatcher
@@ -33,12 +34,13 @@ func New(names ...string) *MappingBuilder {
 		name = names[0]
 	}
 	return &MappingBuilder{
-		name: name,
+		name:   name,
 		method: web.MethodAny,
 	}
 }
 
 // Convenient Constructors
+
 func Any(path string) *MappingBuilder {
 	return New().Path(path).Method(web.MethodAny)
 }
@@ -54,10 +56,17 @@ func Post(path string) *MappingBuilder {
 /*****************************
 	Public
 ******************************/
+
 func (b *MappingBuilder) Name(name string) *MappingBuilder {
 	b.name = name
 	return b
 }
+
+func (b *MappingBuilder) Group(group string) *MappingBuilder {
+	b.group = group
+	return b
+}
+
 func (b *MappingBuilder) Path(path string) *MappingBuilder {
 	b.path = path
 	return b
@@ -79,6 +88,7 @@ func (b *MappingBuilder) HandlerFunc(endpointFunc ModelViewHandlerFunc) *Mapping
 }
 
 // Convenient setters
+
 func (b *MappingBuilder) Get(path string) *MappingBuilder {
 	return b.Path(path).Method(http.MethodGet)
 }
@@ -98,7 +108,7 @@ func (b *MappingBuilder) Build() web.TemplateMapping {
 	Private
 ******************************/
 func (b *MappingBuilder) validate() (err error) {
-	if b.path == "" {
+	if b.path == "" && (b.group == "" || b.group == "/") {
 		err = errors.New("empty path")
 	}
 
@@ -120,7 +130,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	// For templated HTMLs, it's usually browser-to-service communication
 	// Since we don't usually need to do service-to-service communication,
 	//we don't need to apply endpoint request encoder and response decoder
-	var e           endpoint.Endpoint
+	var e endpoint.Endpoint
 	var decodeRequestFunc = httptransport.NopRequestDecoder
 	var encodeResponseFunc = TemplateEncodeResponseFunc
 
@@ -130,7 +140,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 		decodeRequestFunc = web.MakeGinBindingDecodeRequestFunc(metadata)
 	}
 
-	return web.NewMvcMapping(b.name, b.path, b.method, b.condition,
+	return web.NewMvcMapping(b.name, b.group, b.path, b.method, b.condition,
 		e, decodeRequestFunc, nil,
 		nil, encodeResponseFunc,
 		TemplateErrorEncoder)
@@ -151,7 +161,7 @@ func validateHandlerFunc(f *reflect.Value) error {
 	switch {
 	case !foundMV:
 		return errors.New("ModelViewHandlerFunc need return ModelView or *ModelView")
-	//more checks if needed
+		//more checks if needed
 	}
 
 	return nil

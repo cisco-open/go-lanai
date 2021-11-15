@@ -33,6 +33,8 @@ type PostInitCustomizer interface {
 	PostInit(ctx context.Context, r *Registrar) error
 }
 
+type EngineOptions func(*Engine)
+
 /*********************************
 	Request
  *********************************/
@@ -125,6 +127,7 @@ type StaticMapping interface {
 // RoutedMapping for endpoints that matches specific path, method and optionally a RequestMatcher as condition
 type RoutedMapping interface {
 	Mapping
+	Group() string
 	Path() string
 	Method() string
 	Condition() RequestMatcher
@@ -206,15 +209,17 @@ func NormalizedPath(path string) string {
 // simpleMapping implements SimpleMapping
 type simpleMapping struct {
 	name        string
+	group       string
 	path        string
 	method      string
 	condition   RequestMatcher
 	handlerFunc HandlerFunc
 }
 
-func NewSimpleMapping(name, path, method string, condition RequestMatcher, handlerFunc HandlerFunc) SimpleMapping {
+func NewSimpleMapping(name, group, path, method string, condition RequestMatcher, handlerFunc HandlerFunc) SimpleMapping {
 	return &simpleMapping{
 		name:        name,
+		group:       group,
 		path:        path,
 		method:      method,
 		condition:   condition,
@@ -232,6 +237,10 @@ func (g simpleMapping) Condition() RequestMatcher {
 
 func (g simpleMapping) Method() string {
 	return g.method
+}
+
+func (g *simpleMapping) Group() string {
+	return g.group
 }
 
 func (g simpleMapping) Path() string {
