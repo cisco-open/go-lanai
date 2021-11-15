@@ -216,9 +216,9 @@ type simpleGinMapping struct {
 	handlerFunc gin.HandlerFunc
 }
 
-func NewSimpleGinMapping(name, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) *simpleGinMapping {
+func NewSimpleGinMapping(name, group, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) *simpleGinMapping {
 	return &simpleGinMapping{
-		simpleMapping: *NewSimpleMapping(name, path, method, condition, nil).(*simpleMapping),
+		simpleMapping: *NewSimpleMapping(name, group, path, method, condition, nil).(*simpleMapping),
 		handlerFunc: handlerFunc,
 	}
 }
