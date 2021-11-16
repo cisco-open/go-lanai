@@ -2,10 +2,7 @@ package security
 
 import (
 	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"encoding/json"
 	"errors"
-	"net/http"
 )
 
 const (
@@ -84,19 +81,9 @@ func init() {
 	errorutils.Reserve(ErrorTypeSecurity)
 }
 
-// CodedError implements errorutils.ErrorCoder, errorutils.ComparableErrorCoder, errorutils.NestedError, web.StatusCoder,
-// encoding.TextMarshaler, json.Marshaler, encoding.BinaryMarshaler, encoding.BinaryUnmarshaler
+// CodedError implements errorutils.ErrorCoder, errorutils.ComparableErrorCoder, errorutils.NestedError
 type CodedError struct {
 	errorutils.CodedError
-}
-
-func (e CodedError) StatusCode() int {
-	return http.StatusUnauthorized
-}
-
-// MarshalJSON json.Marshaler
-func (e CodedError) MarshalJSON() ([]byte, error) {
-	return web.NewHttpError(e.StatusCode(), e.CodedError).(json.Marshaler).MarshalJSON()
 }
 
 /************************
