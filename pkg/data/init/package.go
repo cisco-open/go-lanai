@@ -20,11 +20,10 @@ var Module = &bootstrap.Module{
 		fx.Provide(
 			data.NewGorm,
 			data.ErrorHandlingGormConfigurer(),
-			//gormErrTranslatorProvider(),
+			gormErrTranslatorProvider(),
 		),
 		web.FxErrorTranslatorProviders(
 			webErrTranslatorProvider(data.NewWebDataErrorTranslator),
-			webErrTranslatorProvider(data.NewGormErrorTranslator),
 		),
 	},
 }

@@ -3,6 +3,7 @@ package data
 import (
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
+	"gorm.io/gorm"
 )
 
 const (
@@ -141,7 +142,7 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
-	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, "record not found")
+	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
 	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
 )
 
