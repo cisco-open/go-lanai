@@ -61,7 +61,7 @@ func provideSessionStore(di storeDI) Store {
 	return NewRedisStore(redisClient, func(opt *StoreOption) {
 		opt.SettingReader = di.SettingReader
 
-		opt.Options.Path = path.Clean("/" + di.ServerProps.ContextPath)
+		opt.Options.Path = path.Clean(di.SessionProps.Cookie.Path)
 		opt.Options.Domain = di.SessionProps.Cookie.Domain
 		opt.Options.MaxAge = di.SessionProps.Cookie.MaxAge
 		opt.Options.Secure = di.SessionProps.Cookie.Secure
