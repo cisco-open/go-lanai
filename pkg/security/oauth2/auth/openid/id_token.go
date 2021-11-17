@@ -74,7 +74,7 @@ type IdTokenClaims struct {
 	UserId          string `claim:"user_id"`
 	AccountType     string `claim:"account_type"`
 	TenantId        string `claim:"tenant_id"`
-	TenantName      string `claim:"tenant_name"`
+	TenantExternalId      string `claim:"tenant_name"` //for backward compatibility, map to tenant_name
 	TenantSuspended *bool  `claim:"tenant_suspended"`
 	ProviderId      string `claim:"provider_id"`
 	ProviderName    string `claim:"provider_name"`

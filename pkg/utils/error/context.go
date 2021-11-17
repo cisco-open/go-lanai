@@ -55,5 +55,25 @@ type ComparableErrorCoder interface {
 }
 
 type NestedError interface {
+	// Cause returns directly nested error
 	Cause() error
+
+	// RootCause returns the root cause of error, equivalent to calling Cause repeatedly
+	RootCause() error
+}
+
+type ComparableError interface {
+	Is(target error) bool
+}
+
+type Unwrapper interface {
+	Unwrap() error
+}
+
+// Hasher is an interface for error implementations that not naturally hashable to be used as a map key
+// e.g. if a struct containing Slice, Map, Array are not hashable. Therefore, use those errors as map key would panic
+// For implementations that need use error as map key (e.g. map[error]interface{}) should use Hasher.Hash as key
+// Note: CodedError doesn't implement this interface because itself is hashable
+type Hasher interface {
+	Hash() error
 }

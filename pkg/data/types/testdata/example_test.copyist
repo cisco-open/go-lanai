@@ -1,0 +1,27 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"\nCREATE TABLE IF NOT EXISTS public.model_example (\n\tid UUID NOT NULL DEFAULT gen_random_uuid(),\n\t\"tenant_name\" STRING NOT NULL,\n\t\"value\" STRING NOT NULL,\n\ttenant_id UUID NULL,\n\ttenant_path UUID[] NULL,\n\tcreated_at TIMESTAMPTZ NULL,\n\tupdated_at TIMESTAMPTZ NULL,\n\tcreated_by UUID NULL,\n\tupdated_by UUID NULL,\n\tdeleted_at TIMESTAMPTZ NULL,\n\tCONSTRAINT \"primary\" PRIMARY KEY (id ASC),\n\tINVERTED INDEX idx_tenant_path (tenant_path),\n\tINDEX idx_tenant_name (tenant_name ASC),\n\tFAMILY \"primary\" (id, tenant_name, value, tenant_id, tenant_path, created_at, updated_at, created_by, updated_by, deleted_at)\n);"	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnBegin	1:nil
+5=ConnQuery	2:"INSERT INTO \"model_example\" (\"tenant_name\",\"value\",\"tenant_id\",\"tenant_path\",\"created_at\",\"updated_at\",\"created_by\",\"updated_by\",\"deleted_at\",\"id\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING \"id\""	1:nil
+6=RowsColumns	9:["id"]
+7=RowsNext	11:[10:NTI4NTA4NDAtN2RmOC00YjAwLTk0NDktMjFkYjgxNGNhZWZk]	1:nil
+8=TxCommit	1:nil
+9=TxRollback	1:nil
+10=ConnExec	2:"TRUNCATE TABLE \"model_example\" RESTRICT"	1:nil
+11=RowsNext	11:[10:Yjk4MDUzNTgtNWRhMi00MGNkLWEwMDItOGE1NDI0ODRkM2Rj]	1:nil
+12=RowsNext	11:[10:ZmQ1ZGY0MDgtMzdkYy00MDZmLWFkYmUtYjY2MmVhYmQ5ZWI5]	1:nil
+13=ConnExec	2:"UPDATE \"model_example\" SET \"tenant_name\"=$1,\"value\"=$2,\"tenant_id\"=$3,\"tenant_path\"=$4,\"created_at\"=$5,\"updated_at\"=$6,\"created_by\"=$7,\"updated_by\"=$8,\"deleted_at\"=$9 WHERE \"model_example\".\"tenant_path\" @> $10 AND \"model_example\".\"deleted_at\" IS NULL AND \"id\" = $11"	1:nil
+14=ResultRowsAffected	4:1	1:nil
+15=ConnExec	2:"UPDATE \"model_example\" SET \"tenant_id\"=$1,\"tenant_path\"=$2,\"updated_at\"=$3 WHERE \"model_example\".\"tenant_path\" @> $4 AND \"model_example\".\"deleted_at\" IS NULL AND \"id\" = $5"	1:nil
+16=ConnExec	2:"UPDATE \"model_example\" SET \"tenant_id\"=$1,\"tenant_path\"=$2,\"updated_at\"=$3 WHERE (\"model_example\".\"id\" = $4 OR \"model_example\".\"id\" = $5) AND \"model_example\".\"tenant_path\" @> $6 AND \"model_example\".\"deleted_at\" IS NULL"	1:nil
+17=RowsNext	11:[10:NjA5MjQ0NzYtMWEwZC00OWRiLWFhZDUtNWRkMGQ2MTBmMTM4]	1:nil
+18=RowsNext	11:[10:YWYzYWZlYTYtODdmMi00ZTg0LTgxZDEtYTgzYjYwYjZmNjQ2]	1:nil
+19=RowsNext	11:[10:YWM3OTVlODQtYWE0NS00MzY4LWI5ZTYtZjdmZDQ4YjBlOWQx]	1:nil
+20=RowsNext	11:[10:YTRkZGU4YmYtYzZhZi00OTVlLTlmNjktOTY2NWZhYjk3NDc4]	1:nil
+21=RowsNext	11:[10:MWU4MDNjYjctOTI4Yi00YmViLWJjMTctYTNlMjFiNzMzNDEy]	1:nil
+22=RowsNext	11:[10:ODJmMjhiZWYtODA1ZS00YzczLTg2NDctMGM2MzczYjIxYzA3]	1:nil
+23=ConnExec	2:"UPDATE \"model_example\" SET \"deleted_at\"=$1 WHERE \"model_example\".\"tenant_path\" @> $2 AND \"model_example\".\"id\" = $3 AND \"model_example\".\"deleted_at\" IS NULL"	1:nil
+24=ConnExec	2:"UPDATE \"model_example\" SET \"deleted_at\"=$1 WHERE \"model_example\".\"value\" = $2 AND \"model_example\".\"tenant_path\" @> $3 AND \"model_example\".\"deleted_at\" IS NULL"	1:nil
+25=ResultRowsAffected	4:2	1:nil
+
+"TestGormModel"=1,2,3,4,5,6,7,8,4,9,10,3,2,3,4,5,6,11,8,4,5,6,12,8,4,13,14,8,4,9,4,15,14,8,4,15,3,8,4,9,4,15,14,8,4,16,14,8,10,3,2,3,4,5,6,17,8,4,5,6,18,8,4,5,6,19,8,4,5,6,20,8,4,5,6,21,8,4,5,6,22,8,4,23,14,8,4,23,3,8,4,24,25,8,10,3

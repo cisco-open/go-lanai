@@ -1,6 +1,7 @@
 package dbtest
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/cockroach"
 	"fmt"
 	"go.uber.org/fx"
@@ -72,6 +73,27 @@ func (d noopGormDialector) SavePoint(_ *gorm.DB, _ string) error {
 
 func (d noopGormDialector) RollbackTo(_ *gorm.DB, _ string) error {
 	return nil
+}
+
+/*****************************
+	gorm cockroach error
+ *****************************/
+func pqErrorTranslatorProvider() fx.Annotated {
+	return fx.Annotated{
+		Group: data.GormConfigurerGroup,
+		Target: func() data.ErrorTranslator {
+			return cockroach.PqErrorTranslator{}
+		},
+	}
+}
+
+func gormErrTranslatorProvider() fx.Annotated {
+	return fx.Annotated{
+		Group:  data.GormConfigurerGroup,
+		Target: func() data.ErrorTranslator {
+			return data.NewGormErrorTranslator()
+		},
+	}
 }
 
 

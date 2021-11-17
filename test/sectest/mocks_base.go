@@ -55,7 +55,7 @@ func (b *mockedBase) newMockedToken(acct *mockedAccount, tenant *mockedTenant, e
 			UName: acct.Username,
 			UID:   acct.UserId,
 			TID:   tenant.ID,
-			TName: tenant.Name,
+			TExternalId: tenant.ExternalId,
 			OrigU: origUser,
 		},
 		ExpTime: exp,
@@ -87,7 +87,7 @@ func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *mockedAccount) oauth2.
 		*d = SecurityDetailsMock{
 			Username:     mt.UName,
 			UserId:       mt.UID,
-			TenantName:   mt.TName,
+			TenantExternalId:   mt.TExternalId,
 			TenantId:     mt.TID,
 			Exp:          mt.ExpTime,
 			Iss:          mt.IssTime,

@@ -29,7 +29,7 @@ type Options func(*Scope)
 type Scope struct {
 	username   string // target username
 	userId     string // target userId
-	tenantName string // target tenantName
+	tenantExternalId string // target tenantExternalId
 	tenantId   string // target tenantId
 	time       time.Time
 	useSysAcct bool
@@ -51,7 +51,7 @@ func (s Scope) String() string {
 	if s.username != "" {
 		user = s.username
 	}
-	tenant := s.tenantName
+	tenant := s.tenantExternalId
 	if s.tenantId != "" {
 		tenant = s.tenantId
 	}
@@ -93,7 +93,7 @@ func (s *Scope) validate(_ context.Context) error {
 	if s.username != "" && s.userId != "" {
 		return ErrUserIdAndUsernameExclusive
 	}
-	if s.tenantName != "" && s.tenantId != "" {
+	if s.tenantExternalId != "" && s.tenantId != "" {
 		return ErrTenantIdAndNameExclusive
 	}
 	return nil

@@ -6,22 +6,25 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqcrypt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
+	"reflect"
 )
 
-var logger = log.New("Data")
+//var logger = log.New("Data")
 
 var Module = &bootstrap.Module{
-	Name: "DB",
+	Name:       "DB",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
-		fx.Provide(data.NewGorm),
+		fx.Provide(
+			data.NewGorm,
+			data.ErrorHandlingGormConfigurer(),
+			//gormErrTranslatorProvider(),
+		),
 		web.FxErrorTranslatorProviders(
-			provideDataErrorTranslator,
-			provideGormErrorTranslator,
-			providePqErrorTranslator,
+			webErrTranslatorProvider(data.NewWebDataErrorTranslator),
+			webErrTranslatorProvider(data.NewGormErrorTranslator),
 		),
 	},
 }
@@ -38,10 +41,23 @@ func Use() {
 	Provider
 ***************************/
 
+func webErrTranslatorProvider(provider interface{}) func() web.ErrorTranslator {
+	return func() web.ErrorTranslator {
+		fnv := reflect.ValueOf(provider)
+		ret := fnv.Call(nil)
+		return ret[0].Interface().(web.ErrorTranslator)
+	}
+}
+
+func gormErrTranslatorProvider() fx.Annotated {
+	return fx.Annotated{
+		Group:  data.GormConfigurerGroup,
+		Target: func() data.ErrorTranslator {
+			return data.NewGormErrorTranslator()
+		},
+	}
+}
+
 /**************************
 	Initialize
 ***************************/
-
-
-
-

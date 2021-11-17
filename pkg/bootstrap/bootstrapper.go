@@ -143,16 +143,17 @@ func (app *App) EagerGetApplicationContext() *ApplicationContext {
 
 func (app *App) Run() {
 	// to be revised:
-	//  1. (Solved)	Support Timeout in bootstrap.Context and make cancellable context as startParent (swap startParent and child)
+	//  1. (Solved)	Support Timeout in bootstrap.Context
 	//  2. (Solved) Restore logging
+	var cancel context.CancelFunc
 	done := app.Done()
-	rootCtx := app.ctx.Context
-	startParent, cancel := context.WithTimeout(rootCtx, app.StartTimeout())
+	startCtx := app.ctx.Context
 	for _, opt := range app.startCtxOpts {
-		startParent = opt(startParent)
+		startCtx = opt(startCtx)
 	}
-	// This is so that we know that the context in the life cycle hook is the bootstrap context
-	startCtx := app.ctx.withContext(startParent)
+
+	// This is so that we know that the context in the life cycle hook is the child of bootstrap context
+	startCtx, cancel = context.WithTimeout(startCtx, app.StartTimeout())
 	defer cancel()
 
 	// log error and exit
@@ -165,11 +166,12 @@ func (app *App) Run() {
 	printSignal(<-done)
 
 	// shutdown sequence
-	stopParent, cancel := context.WithTimeout(rootCtx, app.StopTimeout())
+	stopCtx := context.WithValue(app.ctx.Context, ctxKeyStopTime, time.Now().UTC())
 	for _, opt := range app.stopCtxOpts {
-		stopParent = opt(stopParent)
+		stopCtx = opt(stopCtx)
 	}
-	stopCtx := app.ctx.withContext(stopParent).withValue(ctxKeyStopTime, time.Now().UTC())
+
+	stopCtx, cancel = context.WithTimeout(stopCtx, app.StopTimeout())
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {

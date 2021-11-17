@@ -25,6 +25,7 @@ type EndpointFunc web.MvcHandlerFunc
 
 type MappingBuilder struct {
 	name               string
+	group              string
 	path               string
 	method             string
 	condition          web.RequestMatcher
@@ -42,12 +43,13 @@ func New(names ...string) *MappingBuilder {
 		name = names[0]
 	}
 	return &MappingBuilder{
-		name: name,
+		name:   name,
 		method: web.MethodAny,
 	}
 }
 
 // Convenient Constructors
+
 func Any(path string) *MappingBuilder {
 	return New().Path(path).Method(web.MethodAny)
 }
@@ -87,6 +89,12 @@ func (b *MappingBuilder) Name(name string) *MappingBuilder {
 	b.name = name
 	return b
 }
+
+func (b *MappingBuilder) Group(group string) *MappingBuilder {
+	b.group = group
+	return b
+}
+
 func (b *MappingBuilder) Path(path string) *MappingBuilder {
 	b.path = path
 	return b
@@ -181,7 +189,7 @@ type mapping struct {
 }
 
 func (b *MappingBuilder) validate() (err error) {
-	if b.path == "" {
+	if b.path == "" && (b.group == "" || b.group == "/") {
 		err = errors.New("empty path")
 	}
 	return
@@ -193,7 +201,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	}
 
 	if b.name == "" {
-		b.name = fmt.Sprintf("%s %s", b.method, b.path)
+		b.name = fmt.Sprintf("%s %s%s", b.method, b.group, b.path)
 	}
 
 	m := &mapping{
@@ -210,7 +218,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 	}
 
 	b.customize(m)
-	return web.NewMvcMapping(b.name, b.path, b.method, b.condition,
+	return web.NewMvcMapping(b.name, b.group, b.path, b.method, b.condition,
 		m.endpoint, m.decodeRequestFunc, m.encodeRequestFunc,
 		m.decodeResponseFunc, m.encodeResponseFunc,
 		web.JsonErrorEncoder())

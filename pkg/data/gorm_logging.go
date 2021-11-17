@@ -12,7 +12,7 @@ const (
 )
 
 type dbLogEntry struct {
-	Type        string        `json:"duration"`
+	Type        string        `json:"type"`
 	TimeElapsed time.Duration `json:"duration"`
 	Error       string        `json:"error"`
 	Rows        int           `json:"rows"`

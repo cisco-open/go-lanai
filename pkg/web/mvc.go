@@ -12,6 +12,7 @@ import (
 
 type mvcMapping struct {
 	name               string
+	group              string
 	path               string
 	method             string
 	condition          RequestMatcher
@@ -23,7 +24,7 @@ type mvcMapping struct {
 	errorEncoder       httptransport.ErrorEncoder
 }
 
-func NewMvcMapping(name, path, method string, condition RequestMatcher,
+func NewMvcMapping(name, group, path, method string, condition RequestMatcher,
 	endpoint endpoint.Endpoint,
 	decodeRequestFunc httptransport.DecodeRequestFunc,
 	encodeRequestFunc httptransport.EncodeRequestFunc,
@@ -32,24 +33,30 @@ func NewMvcMapping(name, path, method string, condition RequestMatcher,
 	errorEncoder httptransport.ErrorEncoder) MvcMapping {
 
 	return &mvcMapping{
-		name: name,
-		path: path,
-		method: method,
-		condition: condition,
-		endpoint: endpoint,
-		decodeRequestFunc: decodeRequestFunc,
-		encodeRequestFunc: encodeRequestFunc,
+		name:               name,
+		group:              group,
+		path:               path,
+		method:             method,
+		condition:          condition,
+		endpoint:           endpoint,
+		decodeRequestFunc:  decodeRequestFunc,
+		encodeRequestFunc:  encodeRequestFunc,
 		decodeResponseFunc: decodeResponseFunc,
 		encodeResponseFunc: encodeResponseFunc,
-		errorEncoder: errorEncoder,
+		errorEncoder:       errorEncoder,
 	}
 }
 
 /*****************************
 	MvcMapping Interface
 ******************************/
+
 func (m *mvcMapping) Name() string {
 	return m.name
+}
+
+func (m *mvcMapping) Group() string {
+	return m.group
 }
 
 func (m *mvcMapping) Path() string {
@@ -91,13 +98,14 @@ func (m *mvcMapping) ErrorEncoder() httptransport.ErrorEncoder {
 /*********************
 	Response
 **********************/
+
 type Response struct {
 	SC int
 	H  http.Header
 	B  interface{}
 }
 
-// httptransport.StatusCoder
+// StatusCode implements httptransport.StatusCoder and StatusCoder
 func (r Response) StatusCode() int {
 	if i, ok := r.B.(StatusCoder); ok {
 		return i.StatusCode()
@@ -105,7 +113,7 @@ func (r Response) StatusCode() int {
 	return r.SC
 }
 
-// httptransport.Headerer
+// Headers implements httptransport.Headerer and Headerer
 func (r Response) Headers() http.Header {
 	if i, ok := r.B.(Headerer); ok {
 		return i.Headers()
@@ -113,7 +121,7 @@ func (r Response) Headers() http.Header {
 	return r.H
 }
 
-// BodyContainer
+// Body implements BodyContainer
 func (r Response) Body() interface{} {
 	if i, ok := r.B.(BodyContainer); ok {
 		return i.Body()
@@ -124,6 +132,7 @@ func (r Response) Body() interface{} {
 /**********************************
 	LazyHeaderWriter
 ***********************************/
+
 // LazyHeaderWriter makes sure that status code and headers is overwritten at last second (when invoke Write([]byte) (int, error).
 // Calling WriteHeader(int) would not actually send the header. Calling it multiple times to update status code
 // Doing so allows response encoder and error handling to send different header and status code
@@ -284,6 +293,3 @@ func instantiateByType(t reflect.Type) (ptr interface{}, value *reflect.Value) {
 		return p.Interface(), &v
 	}
 }
-
-
-

@@ -97,7 +97,7 @@ func SubTestExampleMockCurrentSecurity() test.GomegaSubTestFunc {
 			d.Username = "any-username"
 			d.UserId = "any-user-id"
 			d.TenantId = "any-tenant-id"
-			d.TenantName = "any-tenant-name"
+			d.TenantExternalId = "any-tenant-external-id"
 			d.Permissions = utils.NewStringSet(security.SpecialPermissionSwitchTenant)
 			// see sectest.SecurityDetailsMock for more options
 		})
@@ -115,7 +115,7 @@ func SubTestExampleMockBoth() test.GomegaSubTestFunc {
 			d.Username = "any-username"
 			d.UserId = "any-user-id"
 			d.TenantId = "any-tenant-id"
-			d.TenantName = "any-tenant-name"
+			d.TenantExternalId = "any-tenant-external-id"
 			d.Permissions = utils.NewStringSet(security.SpecialPermissionSwitchTenant)
 			// see sectest.SecurityDetailsMock for more options
 		})

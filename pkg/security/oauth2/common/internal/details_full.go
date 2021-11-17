@@ -14,7 +14,7 @@ type ProviderDetails struct {
 
 type TenantDetails struct {
 	Id        string
-	Name      string
+	ExternalId string
 	Suspended bool
 }
 
@@ -91,8 +91,8 @@ func (d *FullContextDetails) TenantId() string {
 }
 
 // security.TenantDetails
-func (d *FullContextDetails) TenantName() string {
-	return d.Tenant.Name
+func (d *FullContextDetails) TenantExternalId() string {
+	return d.Tenant.ExternalId
 }
 
 // security.TenantDetails

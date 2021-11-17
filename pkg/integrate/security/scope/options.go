@@ -16,14 +16,14 @@ func WithUserId(userId string) Options {
 
 func WithTenantId(tenantId string) Options {
 	return func(s *Scope) {
-		s.tenantName = ""
+		s.tenantExternalId = ""
 		s.tenantId = tenantId
 	}
 }
 
-func WithTenantName(tenantName string) Options {
+func WithTenantExternalId(tenantExternalId string) Options {
 	return func(s *Scope) {
-		s.tenantName = tenantName
+		s.tenantExternalId = tenantExternalId
 		s.tenantId = ""
 	}
 }

@@ -14,7 +14,7 @@ func InitModule(cliCtx *CliExecContext, app *App) *Module {
 	return &Module{
 		Precedence: HighestPrecedence,
 		PriorityOptions: []fx.Option{
-			fx.Logger(newFxPrinter(logger, app)),
+			fx.WithLogger(provideFxLogger),
 			fx.Supply(cliCtx),
 			fx.Supply(app),
 			fx.Provide(provideApplicationContext),

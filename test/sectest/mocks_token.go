@@ -21,7 +21,7 @@ type MockedTokenInfo struct {
 	UName string
 	UID   string
 	TID   string
-	TName string
+	TExternalId string
 	OrigU string
 	Exp   int64
 	Iss   int64
@@ -58,7 +58,7 @@ func (mt *MockedToken) UnmarshalText(text []byte) error {
 }
 
 func (mt MockedToken) String() string {
-	vals := []string{mt.UName, mt.UID, mt.TID, mt.TName, mt.OrigU, mt.ExpTime.Format(utils.ISO8601Milliseconds)}
+	vals := []string{mt.UName, mt.UID, mt.TID, mt.TExternalId, mt.OrigU, mt.ExpTime.Format(utils.ISO8601Milliseconds)}
 	return strings.Join(vals, tokenDelimiter)
 }
 

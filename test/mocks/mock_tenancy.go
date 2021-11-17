@@ -98,6 +98,9 @@ func (m *MockTenancyAccessor) GetChildren(ctx context.Context, tenantId string) 
 }
 
 func (m *MockTenancyAccessor) GetAncestors(ctx context.Context, tenantId string) ([]string, error) {
+	if tenantId == m.Root {
+		return make([]string, 0), nil
+	}
 	if ancestors, ok := m.AncestorsLookup[tenantId]; ok {
 		return ancestors, nil
 	} else {

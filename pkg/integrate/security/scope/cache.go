@@ -13,7 +13,7 @@ type cKey struct {
 	src        string // source username
 	username   string // target username
 	userId     string // target userId
-	tenantName string // target tenantName
+	tenantExternalId string // target tenantExternalId
 	tenantId   string // target tenantId
 }
 
@@ -24,7 +24,7 @@ func (k cKey) String() string {
 	}
 	tenant := k.tenantId
 	if tenant == "" {
-		tenant = k.tenantName
+		tenant = k.tenantExternalId
 	}
 	return fmt.Sprintf("%s->%s@%s", k.src, user, tenant)
 }

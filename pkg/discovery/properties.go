@@ -31,6 +31,7 @@ func NewDiscoveryProperties() *DiscoveryProperties {
 		Port:                0,
 		Scheme:              "http",
 		HealthCheckInterval: "15s",
+		HealthCheckCriticalTimeout: "15s",
 		HealthCheckPath:     fmt.Sprintf("%s", "/admin/health"),
 	}
 }

@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
+	"strings"
 )
 
 // factory is created by init, and used to create new loggers.
@@ -96,5 +98,34 @@ func loadConfig(fs fs.FS, path string) (*Properties, error) {
 	if e := json.Unmarshal(encodedJson, props); e != nil {
 		return nil, e
 	}
+
+	normalizeProperties(props)
 	return props, nil
+}
+
+// normalizeProperties updates all KVs to lower case, which is consistent with appconfig binding
+func normalizeProperties(props *Properties) {
+	val := reflect.ValueOf(props).Elem()
+	for i := val.Type().NumField() - 1; i >= 0; i-- {
+		fv := val.Field(i)
+		fv.Set(normalizeMapKeys(fv))
+	}
+}
+
+// normalizeMapKeys updates all keys to lower case, which is consistent with appconfig binding
+func normalizeMapKeys(mapValue reflect.Value) reflect.Value {
+	typ := mapValue.Type()
+	if typ.Kind() != reflect.Map || typ.Key().Kind() != reflect.String {
+		return mapValue
+	}
+
+	ret := reflect.MakeMap(typ)
+	iter := mapValue.MapRange()
+	for iter.Next() {
+		k := iter.Key()
+		str := strings.ToLower(k.String())
+		v := normalizeMapKeys(iter.Value())
+		ret.SetMapIndex(reflect.ValueOf(str), v)
+	}
+	return ret
 }

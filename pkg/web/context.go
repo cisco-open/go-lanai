@@ -18,6 +18,7 @@ var (
 /*********************************
 	Customization
  *********************************/
+
 // Customizer is invoked by Registrar at the beginning of initialization,
 // customizers can register anything except for additional customizers
 // If a customizer retains the given context in anyway, it should also implement PostInitCustomizer to release it
@@ -32,9 +33,12 @@ type PostInitCustomizer interface {
 	PostInit(ctx context.Context, r *Registrar) error
 }
 
+type EngineOptions func(*Engine)
+
 /*********************************
 	Request
  *********************************/
+
 // RequestRewriter handles request rewrite. e.g. rewrite http.Request.URL.Path
 type RequestRewriter interface {
 	// HandleRewrite take the rewritten request and put it through the entire handling cycle.
@@ -46,6 +50,7 @@ type RequestRewriter interface {
 /*********************************
 	Response
  *********************************/
+
 // StatusCoder is same interface defined in "github.com/go-kit/kit/transport/http"
 // this interface is majorly used internally with error handling
 type StatusCoder interface {
@@ -69,9 +74,10 @@ type BodyContainer interface {
 /*********************************
 	Error Translator
  *********************************/
+
 // ErrorTranslator can be registered via web.Registrar
 // it will contribute our MvcMapping's error handling process.
-// Note: it won't contriubte Middleware's error handling
+// Note: it won't contribute Middleware's error handling
 //
 // Implementing Notes:
 // 	1. if it doesn't handle the error, return same error
@@ -82,9 +88,14 @@ type ErrorTranslator interface {
 	Translate(ctx context.Context, err error) error
 }
 
+// ErrorTranslateFunc is similar to ErrorTranslator in function format. Mostly used for selective error translation
+// registration (ErrorHandlerMapping). Same implementing rules applies
+type ErrorTranslateFunc func(ctx context.Context, err error) error
+
 /*********************************
 	Mappings
  *********************************/
+
 type Controller interface {
 	Mappings() []Mapping
 }
@@ -99,7 +110,7 @@ type HandlerFunc http.HandlerFunc
 // See rest.EndpointFunc, template.ModelViewHandlerFunc
 type MvcHandlerFunc interface{}
 
-// Mapping
+// Mapping generic interface for all kind of endpoint mappings
 type Mapping interface {
 	Name() string
 }
@@ -113,15 +124,16 @@ type StaticMapping interface {
 	AddAlias(path, filePath string) StaticMapping
 }
 
-// RoutedMapping
+// RoutedMapping for endpoints that matches specific path, method and optionally a RequestMatcher as condition
 type RoutedMapping interface {
 	Mapping
+	Group() string
 	Path() string
 	Method() string
 	Condition() RequestMatcher
 }
 
-// SimpleMapping
+// SimpleMapping endpoints that are directly implemented as HandlerFunc
 type SimpleMapping interface {
 	RoutedMapping
 	HandlerFunc() HandlerFunc
@@ -155,14 +167,23 @@ type MiddlewareMapping interface {
 	HandlerFunc() HandlerFunc
 }
 
+type ErrorTranslateMapping interface {
+	Mapping
+	Matcher() RouteMatcher
+	Order() int
+	Condition() RequestMatcher
+	TranslateFunc() ErrorTranslateFunc
+}
+
 /*********************************
 	Routing Matchers
  *********************************/
+
 // Route contains information needed for registering handler func in gin.Engine
 type Route struct {
 	Method string
-	Path string
-	Group string
+	Path   string
+	Group  string
 }
 
 // RouteMatcher is a typed ChainableMatcher that accept *Route or Route
@@ -184,21 +205,24 @@ func NormalizedPath(path string) string {
 /*********************************
 	SimpleMapping
  *********************************/
-// implmenets SimpleMapping
+
+// simpleMapping implements SimpleMapping
 type simpleMapping struct {
 	name        string
+	group       string
 	path        string
 	method      string
 	condition   RequestMatcher
 	handlerFunc HandlerFunc
 }
 
-func NewSimpleMapping(name, path, method string, condition RequestMatcher, handlerFunc HandlerFunc) SimpleMapping {
+func NewSimpleMapping(name, group, path, method string, condition RequestMatcher, handlerFunc HandlerFunc) SimpleMapping {
 	return &simpleMapping{
-		name: name,
-		path: path,
-		method: method,
-		condition: condition,
+		name:        name,
+		group:       group,
+		path:        path,
+		method:      method,
+		condition:   condition,
 		handlerFunc: handlerFunc,
 	}
 }
@@ -213,6 +237,10 @@ func (g simpleMapping) Condition() RequestMatcher {
 
 func (g simpleMapping) Method() string {
 	return g.method
+}
+
+func (g *simpleMapping) Group() string {
+	return g.group
 }
 
 func (g simpleMapping) Path() string {
@@ -239,5 +267,3 @@ func (o orderedServerOption) Order() int {
 func newOrderedServerOption(opt httptransport.ServerOption, order int) *orderedServerOption {
 	return &orderedServerOption{ServerOption: opt, order: order}
 }
-
-

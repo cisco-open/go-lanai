@@ -14,7 +14,7 @@ type AuthOption struct {
 	Username    string	// Username is used by password login and switch user
 	UserId      string	// UserId is used by switch user
 	TenantId    string	// TenantId is used by password login and switch user/tenant
-	TenantName  string	// TenantName is used by password login and switch user/tenant
+	TenantExternalId  string	// TenantExternalId is used by password login and switch user/tenant
 }
 
 type AuthenticationClient interface {
@@ -57,27 +57,27 @@ func WithAccessToken(accessToken string) AuthOptions {
 	}
 }
 
-// WithTenant create an options that specify tenant by either tenantId or tenantName
+// WithTenant create an options that specify tenant by either tenantId or tenantExternalId
 // username and userId are exclusive, cannot be both empty
-func WithTenant(tenantId string, tenantName string) AuthOptions {
+func WithTenant(tenantId string, tenantExternalId string) AuthOptions {
 	if tenantId != "" {
 		return WithTenantId(tenantId)
 	} else {
-		return WithTenantName(tenantName)
+		return WithTenantExternalId(tenantExternalId)
 	}
 }
 
 func WithTenantId(tenantId string) AuthOptions {
 	return func(opt *AuthOption) {
 		opt.TenantId = tenantId
-		opt.TenantName = ""
+		opt.TenantExternalId = ""
 	}
 }
 
-func WithTenantName(tenantName string) AuthOptions {
+func WithTenantExternalId(tenantExternalId string) AuthOptions {
 	return func(opt *AuthOption) {
 		opt.TenantId = ""
-		opt.TenantName = tenantName
+		opt.TenantExternalId = tenantExternalId
 	}
 }
 

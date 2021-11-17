@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
@@ -257,6 +258,10 @@ type DefaultAccessDeniedHandler struct {
 }
 
 func (h *DefaultAccessDeniedHandler) HandleAccessDenied(ctx context.Context, r *http.Request, rw http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, ErrorSubTypeInsufficientAuth):
+		WriteError(ctx, r, rw, http.StatusUnauthorized, err)
+	}
 	WriteError(ctx, r, rw, http.StatusForbidden, err)
 }
 

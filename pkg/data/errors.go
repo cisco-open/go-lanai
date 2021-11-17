@@ -3,7 +3,6 @@ package data
 import (
 	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
-	"fmt"
 )
 
 const (
@@ -17,6 +16,7 @@ const (
 	ErrorTypeCodeInternal = Reserved + iota<<ErrorTypeOffset
 	ErrorTypeCodeNonTransient
 	ErrorTypeCodeTransient
+	ErrorTypeCodeUncategorizedServerSide
 )
 
 // All "SubType" values are used as mask
@@ -61,7 +61,7 @@ const (
 
 // ErrorSubTypeCodeApi
 const (
-	_                = iota
+	_                        = iota
 	ErrorCodeInvalidApiUsage = ErrorSubTypeCodeApi + iota
 	ErrorCodeUnsupportedCondition
 	ErrorCodeUnsupportedOptions
@@ -119,10 +119,11 @@ const (
 
 // ErrorTypes, can be used in errors.Is
 var (
-	ErrorCategoryData     = NewErrorCategory(Reserved, errors.New("error type: data"))
-	ErrorTypeInternal     = NewErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
-	ErrorTypeNonTransient = NewErrorType(ErrorTypeCodeNonTransient, errors.New("error type: non-transient"))
-	ErrorTypeTransient    = NewErrorType(ErrorTypeCodeTransient, errors.New("error type: transient"))
+	ErrorCategoryData                = NewErrorCategory(Reserved, errors.New("error type: data"))
+	ErrorTypeInternal                = NewErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
+	ErrorTypeNonTransient            = NewErrorType(ErrorTypeCodeNonTransient, errors.New("error type: non-transient"))
+	ErrorTypeTransient               = NewErrorType(ErrorTypeCodeTransient, errors.New("error type: transient"))
+	ErrorTypeUnCategorizedServerSide = NewErrorType(ErrorTypeCodeUncategorizedServerSide, errors.New("error type: uncategorized server-side"))
 
 	ErrorSubTypeInternalError = NewErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 
@@ -140,7 +141,7 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
-	ErrorRecordNotFound = NewDataError(ErrorCodeRecordNotFound, "record not found")
+	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, "record not found")
 	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
 )
 
@@ -148,49 +149,92 @@ func init() {
 	Reserve(ErrorCategoryData)
 }
 
-// DataError also implements web.StatusCoder
-type DataError struct {
-	CodedError
+//goland:noinspection GoNameStartsWithPackageName
+type DataError interface {
+	error
+	NestedError
+	WithMessage(msg string, args ...interface{}) DataError
+}
+
+// dataError implements DataError and errorutils.Unwrapper
+//goland:noinspection GoNameStartsWithPackageName
+type dataError struct {
+	*CodedError
+}
+
+func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
+
+	return dataError{
+		CodedError: e.CodedError.WithMessage(msg, args...),
+	}
+}
+
+func (e dataError) Unwrap() error {
+	cause := e.Cause()
+	switch cause.(type) {
+	case NestedError:
+		return e.RootCause()
+	default:
+		return cause
+	}
+}
+
+// webDataError also implements web.StatusCoder
+//goland:noinspection GoNameStartsWithPackageName
+type webDataError struct {
+	DataError
 	SC int
 }
 
-func (e DataError) StatusCode() int {
+func (e webDataError) StatusCode() int {
 	return e.SC
 }
 
-func (e *DataError) WithStatusCode(sc int) *DataError {
-	return &DataError{CodedError: e.CodedError, SC: sc}
+func (e webDataError) WithStatusCode(sc int) DataError {
+	return webDataError{DataError: e.DataError, SC: sc}
 }
 
-func (e DataError) WithMessage(msg string, args...interface{}) *DataError {
-	return newDataError(NewCodedError(e.CodedError.Code(), fmt.Errorf(msg, args...)))
+func (e webDataError) WithMessage(msg string, args ...interface{}) DataError {
+	return webDataError{DataError: e.DataError.WithMessage(msg, args...), SC: e.SC}
 }
 
 /**********************
 	Constructors
  **********************/
-func newDataError(codedErr *CodedError) *DataError {
-	return &DataError{
-		CodedError: *codedErr,
+
+func NewDataError(code int64, e interface{}, causes ...interface{}) DataError {
+	return &dataError{
+		CodedError: NewCodedError(code, e, causes...),
 	}
 }
 
-func NewDataError(code int64, e interface{}, causes ...interface{}) *DataError {
-	return newDataError(NewCodedError(code, e, causes...))
+func NewErrorWithStatusCode(err error, sc int) DataError {
+	switch e := err.(type) {
+	case DataError:
+		return &webDataError{DataError: e, SC: sc}
+	case CodedError:
+		return &webDataError{DataError: dataError{CodedError: &e}, SC: sc}
+	case *CodedError:
+		return &webDataError{DataError: dataError{CodedError: e}, SC: sc}
+	case ErrorCoder:
+		return &webDataError{DataError: NewDataError(e.Code(), e), SC: sc}
+	default:
+		return &webDataError{DataError: NewDataError(ErrorSubTypeCodeInternal, e), SC: sc}
+	}
 }
 
-func NewInternalError(value interface{}, causes...interface{}) *DataError {
+func NewInternalError(value interface{}, causes ...interface{}) DataError {
 	return NewDataError(ErrorSubTypeCodeInternal, value, causes...)
 }
 
-func NewRecordNotFoundError(value interface{}, causes...interface{}) *DataError {
+func NewRecordNotFoundError(value interface{}, causes ...interface{}) DataError {
 	return NewDataError(ErrorCodeRecordNotFound, value, causes...)
 }
 
-func NewConstraintViolationError(value interface{}, causes...interface{}) *DataError {
+func NewConstraintViolationError(value interface{}, causes ...interface{}) DataError {
 	return NewDataError(ErrorCodeConstraintViolation, value, causes...)
 }
 
-func NewDuplicateKeyError(value interface{}, causes...interface{}) *DataError {
+func NewDuplicateKeyError(value interface{}, causes ...interface{}) DataError {
 	return NewDataError(ErrorCodeDuplicateKey, value, causes...)
 }

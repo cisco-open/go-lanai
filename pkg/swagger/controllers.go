@@ -60,13 +60,13 @@ func NewSwaggerController(prop SwaggerProperties) *SwaggerController {
 func (s *SwaggerController) Mappings() []web.Mapping {
 	return []web.Mapping{
 		assets.New("/swagger/static", "generated/"),
-		web.NewSimpleMapping("swagger-ui", "/swagger", http.MethodGet, nil, s.swagger),
+		web.NewSimpleMapping("swagger-ui", "", "/swagger", http.MethodGet, nil, s.swagger),
 		rest.New("swagger-configuration-ui").Get("/swagger-resources/configuration/ui").EndpointFunc(s.configurationUi).Build(),
 		rest.New("swagger-configuration-security").Get("/swagger-resources/configuration/security").EndpointFunc(s.configurationSecurity).Build(),
 		rest.New("swagger-configuration-sso").Get("/swagger-resources/configuration/security/sso").EndpointFunc(s.configurationSso).Build(),
 		rest.New("swagger-resources").Get("/swagger-resources").EndpointFunc(s.resources).Build(),
-		web.NewSimpleMapping("swagger-sso-redirect", "swagger-sso-redirect.html", http.MethodGet, nil, s.swaggerRedirect),
-		web.NewSimpleMapping("swagger-spec", "/v2/api-docs", http.MethodGet, nil, s.swaggerSpec),
+		web.NewSimpleMapping("swagger-sso-redirect", "","swagger-sso-redirect.html", http.MethodGet, nil, s.swaggerRedirect),
+		web.NewSimpleMapping("swagger-spec", "","/v2/api-docs", http.MethodGet, nil, s.swaggerSpec),
 	}
 }
 

@@ -1,0 +1,13 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"\nCREATE TABLE IF NOT EXISTS public.test_errors (\n\tid UUID NOT NULL DEFAULT gen_random_uuid(),\n\t\"uk\" STRING NOT NULL,\n\t\"value\" STRING NOT NULL,\n\tCONSTRAINT \"primary\" PRIMARY KEY (id ASC),\n\tUNIQUE INDEX idx_unique_key (uk ASC),\n\tFAMILY \"primary\" (id, uk, value)\n);"	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnExec	2:"TRUNCATE TABLE \"test_errors\" RESTRICT"	1:nil
+5=ConnBegin	1:nil
+6=ConnQuery	2:"INSERT INTO \"test_errors\" (\"uk\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	1:nil
+7=RowsColumns	9:["id"]
+8=RowsNext	11:[10:OTJkMjIzNTktNmU2MS00NDA3LWFkZjEtY2VlMmFlOGI4MjYy]	1:nil
+9=TxCommit	1:nil
+10=ConnQuery	2:"INSERT INTO \"test_errors\" (\"uk\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	100:"SERROR\x00C23505\x00Mduplicate key value (uk)=('Model-1') violates unique constraint \"idx_unique_key\"\x00Ferrors.go\x00L98\x00RNewUniquenessConstraintViolationError\x00\x00"
+11=TxRollback	1:nil
+
+"TestErrorTranslation"=1,2,3,4,3,5,6,7,8,9,5,10,11

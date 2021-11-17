@@ -94,13 +94,13 @@ func (g *SwitchTenantGranter) Grant(ctx context.Context, request *auth.TokenRequ
 
 func (g *SwitchTenantGranter) validateRequest(ctx context.Context, request *auth.TokenRequest) error {
 	tenantId, idOk := request.Extensions[oauth2.ParameterTenantId].(string)
-	tenantName, nameOk := request.Extensions[oauth2.ParameterTenantName].(string)
+	tenantExternalid, nameOk := request.Extensions[oauth2.ParameterTenantExternalId].(string)
 	if !nameOk && !idOk {
-		return oauth2.NewInvalidTokenRequestError(fmt.Sprintf("both [%s] and [%s] are missing", oauth2.ParameterTenantId, oauth2.ParameterTenantName))
+		return oauth2.NewInvalidTokenRequestError(fmt.Sprintf("both [%s] and [%s] are missing", oauth2.ParameterTenantId, oauth2.ParameterTenantExternalId))
 	}
 
-	if strings.TrimSpace(tenantId) == "" && strings.TrimSpace(tenantName) == "" {
-		return oauth2.NewInvalidTokenRequestError(fmt.Sprintf("both [%s] and [%s] are empty", oauth2.ParameterTenantId, oauth2.ParameterTenantName))
+	if strings.TrimSpace(tenantId) == "" && strings.TrimSpace(tenantExternalid) == "" {
+		return oauth2.NewInvalidTokenRequestError(fmt.Sprintf("both [%s] and [%s] are empty", oauth2.ParameterTenantId, oauth2.ParameterTenantExternalId))
 	}
 	return nil
 }
@@ -125,8 +125,8 @@ func (g *SwitchTenantGranter) validate(ctx context.Context, request *auth.TokenR
 		return oauth2.NewInvalidGrantError("cannot switch to same tenant")
 	}
 
-	tenantName, _ := request.Extensions[oauth2.ParameterTenantName].(string)
-	if strings.TrimSpace(tenantName) == srcTenant.TenantName() {
+	tenantExternalId, _ := request.Extensions[oauth2.ParameterTenantExternalId].(string)
+	if strings.TrimSpace(tenantExternalId) == srcTenant.TenantExternalId() {
 		return oauth2.NewInvalidGrantError("cannot switch to same tenant")
 	}
 	return nil
