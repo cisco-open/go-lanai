@@ -28,6 +28,7 @@ type CookieProperties struct {
 	Secure         bool   `json:"secure"`
 	HttpOnly       bool   `json:"http-only"`
 	SameSiteString string `json:"same-site"`
+	Path           string `json:"path"`
 }
 
 func (cp CookieProperties) SameSite() http.SameSite {
@@ -48,6 +49,7 @@ func NewSessionProperties() *SessionProperties {
 	return &SessionProperties {
 		Cookie: CookieProperties{
 			HttpOnly: true,
+			Path: "/",
 		},
 		IdleTimeout: utils.Duration(900 * time.Second),
 		AbsoluteTimeout: utils.Duration(1800 * time.Second),
