@@ -30,7 +30,7 @@ type testDI struct {
 	Repo TestRepository
 }
 
-func TestTenancyEnforcement(t *testing.T) {
+func TestGormCRUDRepository(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -183,7 +183,7 @@ func (TestModel) TableName() string {
 }
 
 type TestOTOModel struct {
-	RefKey         uuid.UUID `gorm:"primary_key;column:ref_username;type:TEXT;"`
+	RefKey         uuid.UUID `gorm:"primary_key;column:ref_key;type:TEXT;"`
 	RelationValue  string    `gorm:"column:value;"`
 	RelationSearch string    `gorm:"column:search;"`
 }
