@@ -118,8 +118,8 @@ func (h TokenRevokingLogoutHandler) handleDefault(ctx context.Context, r *http.R
 func (h TokenRevokingLogoutHandler) extractAccessToken(ctx context.Context, r *http.Request) (string, error) {
 	// try header first
 	header := r.Header.Get("Authorization")
-	if strings.HasPrefix(header, bearerTokenPrefix) {
-		return strings.TrimPrefix(header, bearerTokenPrefix), nil
+	if strings.HasPrefix(strings.ToUpper(header), strings.ToUpper(bearerTokenPrefix)) {
+		return header[len(bearerTokenPrefix):], nil
 	}
 
 	// then try param

@@ -96,11 +96,11 @@ func (mw *TokenAuthMiddleware) extractAccessToken(ctx *gin.Context) (ret string,
 		}
 		return
 	}
-	if !strings.HasPrefix(header, bearerTokenPrefix) {
+	if !strings.HasPrefix(strings.ToUpper(header), strings.ToUpper(bearerTokenPrefix)) {
 		return "", oauth2.NewInvalidAccessTokenError("missing bearer token")
 	}
 
-	return strings.TrimPrefix(header, bearerTokenPrefix), nil
+	return header[len(bearerTokenPrefix):], nil
 }
 
 func (mw *TokenAuthMiddleware) handleError(c *gin.Context, err error) {
