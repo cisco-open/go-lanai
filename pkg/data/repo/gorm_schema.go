@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"reflect"
+	"strings"
 )
 
 // GormSchemaResolver extends SchemaResolver to expose more schema related functions
@@ -15,9 +16,9 @@ type GormSchemaResolver interface{
 
 // GormMetadata implements GormSchemaResolver
 type GormMetadata struct {
+	gormSchemaResolver
 	model interface{}
 	types map[reflect.Type]typeKey
-	schema *schema.Schema
 }
 
 func newModelMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
@@ -57,47 +58,91 @@ func newModelMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
 	}
 
 	return GormMetadata{
+		gormSchemaResolver: gormSchemaResolver {
+			schema: db.Statement.Schema,
+		},
 		model: reflect.New(sType).Interface(),
 		types: types,
-		schema: db.Statement.Schema,
 	}, nil
 }
 
-func (g GormMetadata) ModelType() reflect.Type {
-	return reflect.Indirect(reflect.ValueOf(g.model)).Type()
+// GormMetadata implements GormSchemaResolver
+type gormSchemaResolver struct {
+	schema *schema.Schema
 }
 
-func (g GormMetadata) Table() string {
+func (g gormSchemaResolver) ModelType() reflect.Type {
+	return g.schema.ModelType
+}
+
+func (g gormSchemaResolver) Table() string {
 	return g.schema.Table
 }
 
-func (g GormMetadata) ColumnName(fieldName string) string {
+func (g gormSchemaResolver) ColumnName(fieldName string) string {
 	if f := g.lookupField(fieldName); f != nil {
 		return f.DBName
 	}
 	return ""
 }
 
-func (g GormMetadata) ColumnDataType(fieldName string) string {
+func (g gormSchemaResolver) ColumnDataType(fieldName string) string {
 	if f := g.lookupField(fieldName); f != nil {
 		return string(f.DataType)
 	}
 	return ""
 }
 
-func (g GormMetadata) Schema() *schema.Schema {
-	return g.schema
-}
-
-// lookupField similar to schema.Schema.LookUpField, but priority to field name
-func (g GormMetadata) lookupField(name string) *schema.Field {
-	if field, ok := g.schema.FieldsByName[name]; ok {
-		return field
-	}
-
-	if field, ok := g.schema.FieldsByDBName[name]; ok {
-		return field
+func (g gormSchemaResolver) RelationshipSchema(fieldName string) SchemaResolver {
+	split := strings.Split(fieldName, ".")
+	if s := g.followRelationships(split); s != nil {
+		return gormSchemaResolver{
+			schema: s,
+		}
 	}
 	return nil
 }
 
+func (g gormSchemaResolver) Schema() *schema.Schema {
+	return g.schema
+}
+
+// followRelationships find schema following relationship field path, returns nil if it cannot follow
+func (g gormSchemaResolver) followRelationships(fieldPaths []string) *schema.Schema {
+	ret := g.schema
+	for _, fieldName := range fieldPaths {
+		relation, ok := ret.Relationships.Relations[fieldName]
+		if !ok || relation == nil || relation.Schema == nil {
+			return nil
+		}
+		ret = relation.FieldSchema
+	}
+	return ret
+}
+
+// lookupField similar to schema.Schema.LookUpField, but priority to field name,
+// this function also follow relationships, e.g. "OneToOneFieldName.FieldName"
+func (g gormSchemaResolver) lookupField(name string) *schema.Field {
+	var s *schema.Schema
+	split := strings.Split(name, ".")
+	switch len(split) {
+	case 0:
+		return nil
+	case 1:
+		s = g.schema
+	default:
+		if s = g.followRelationships(split[0:len(split) - 1]); s == nil {
+			return nil
+		}
+		name = split[len(split)-1]
+	}
+
+	if field, ok := s.FieldsByName[name]; ok {
+		return field
+	}
+
+	if field, ok := s.FieldsByDBName[name]; ok {
+		return field
+	}
+	return nil
+}

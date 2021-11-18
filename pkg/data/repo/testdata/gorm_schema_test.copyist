@@ -1,0 +1,7 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"\nCREATE TABLE IF NOT EXISTS public.test_schema_two (\n\tid UUID NOT NULL DEFAULT gen_random_uuid(),\n\t\"value\" STRING,\n\tsearch STRING NOT NULL,\n\tCONSTRAINT \"primary\" PRIMARY KEY (id ASC),\n\tINDEX idx_search (search ASC),\n\tFAMILY \"primary\" (id, \"value\")\n);"	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnExec	2:"\nCREATE TABLE IF NOT EXISTS public.test_schema_one (\n\tref_key STRING NOT NULL,\n\t\"value\" STRING,\n\tsearch STRING NOT NULL,\n\tCONSTRAINT \"primary\" PRIMARY KEY (ref_key ASC),\n\tINDEX idx_search (search ASC),\n\tFAMILY \"primary\" (ref_key, \"value\")\n);"	1:nil
+5=ConnExec	2:"\nCREATE TABLE IF NOT EXISTS public.test_schema_models (\n\tid UUID NOT NULL DEFAULT gen_random_uuid(),\n\t\"value\" STRING,\n\tsearch STRING NOT NULL,\n\tone_to_one_key STRING NOT NULL,\n\tmany_to_one_id UUID NULL,\n\tCONSTRAINT \"primary\" PRIMARY KEY (id ASC),\n\tCONSTRAINT fk_ont_to_one FOREIGN KEY (one_to_one_key) REFERENCES public.test_schema_one(ref_key),\n\tCONSTRAINT fk_many_to_one FOREIGN KEY (many_to_one_id) REFERENCES public.test_schema_two(id) ON DELETE SET NULL,\n\tUNIQUE INDEX idx_ont_to_one (one_to_one_key ASC),\n\tINDEX idx_many_to_one (many_to_one_id ASC),\n\tINDEX idx_search (search ASC),\n\tFAMILY \"primary\" (id, \"value\", one_to_one_key, many_to_one_id)\n);"	1:nil
+
+"TestTenancyEnforcement"=1,2,3,4,3,5,3
