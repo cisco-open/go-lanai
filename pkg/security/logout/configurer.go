@@ -35,7 +35,7 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 		http.MethodGet,
 		http.MethodPost,
 		http.MethodPut,
-		http.MethodPatch,
+		http.MethodDelete,
 	}
 	// let ws know to intercept additional url
 	route := matcher.RouteWithPattern(f.logoutUrl, supportedMethods...)
