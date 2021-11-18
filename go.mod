@@ -8,7 +8,6 @@ require (
 	github.com/alicebob/miniredis/v2 v2.15.0
 	github.com/beevik/etree v1.1.0
 	github.com/bmatcuk/doublestar/v4 v4.0.1
-	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/cockroachdb/copyist v1.4.0
 	github.com/crewjam/httperr v0.0.0-20190612203328-a946449404da
 	github.com/crewjam/saml v0.4.5

@@ -5,14 +5,16 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/scheduler"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/fx"
+	"time"
 )
 
 var logger = log.New("tenancy-loader")
 
 var internalLoader Loader
+var retryInterval = 10 * time.Second
 
 var Module = &bootstrap.Module{
 	Name: "tenancy-loader",
@@ -48,27 +50,27 @@ func provideLoader(di loaderDI) Loader {
 	return internalLoader
 }
 
-func initializeTenantHierarchy (ctx *bootstrap.ApplicationContext, lc fx.Lifecycle, loader Loader) error {
-	go loadTenantHierarchyWithRetry(ctx, loader)
-	return nil
-}
+func initializeTenantHierarchy (appCtx *bootstrap.ApplicationContext, lc fx.Lifecycle, loader Loader) {
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			var canceller scheduler.TaskCanceller
+			var e error
 
-func loadTenantHierarchyWithRetry(ctx context.Context, loader Loader) {
-	f := func() error {
-		err := loader.LoadTenantHierarchy(ctx)
-		if err != nil {
-			logger.WithContext(ctx).Errorf("tenant hierarchy not loaded due to %v", err)
-		} else {
-			logger.WithContext(ctx).Infof("finished loading tenant hierarchy")
-		}
-		return err
-	}
-	logger.WithContext(ctx).Infof("started loading tenant hierarchy")
-	expBackoff := backoff.NewExponentialBackOff()
-	//continue trying until succeeds
-	expBackoff.MaxElapsedTime = 0
-	err := backoff.Retry(f, backoff.WithContext(expBackoff, ctx))
-	if err != nil { // technically shouldn't enter this state because we don't return a backoff.PermanentError error
-		logger.WithContext(ctx).Errorf("tenant hierarchy loading failed and won't be retried %s", err)
-	}
+			fn := func(ctx context.Context) error {
+				err := loader.LoadTenantHierarchy(ctx)
+				if err != nil {
+					logger.WithContext(ctx).Errorf("tenant hierarchy loaded failed due to %v. will be retried in %v", err, 10 * time.Second)
+				} else {
+					logger.WithContext(ctx).Infof("finished loading tenant hierarchy")
+					canceller.Cancel()
+					<-canceller.Cancelled()
+					logger.WithContext(ctx).Infof("stopped tenant hierarchy load task")
+				}
+				return err
+			}
+
+			canceller, e = scheduler.Repeat(fn, scheduler.AtRate(retryInterval))
+			return e
+		},
+	})
 }
