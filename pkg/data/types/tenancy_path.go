@@ -52,17 +52,8 @@ func (t TenantPath) DeleteClauses(f *schema.Field) []clause.Interface {
 // tenancyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type tenancyFilterClause struct {
+	stmtModifier
 	Field *schema.Field
-}
-
-func (c tenancyFilterClause) Name() string {
-	return ""
-}
-
-func (c tenancyFilterClause) Build(clause.Builder) {
-}
-
-func (c tenancyFilterClause) MergeClause(*clause.Clause) {
 }
 
 func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
@@ -78,17 +69,7 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	// special fix for db.Model(&model{}).Where(&model{f1:v1}).Or(&model{f2:v2})...
 	// Ref:	https://github.com/go-gorm/gorm/issues/3627
 	//		https://github.com/go-gorm/gorm/commit/9b2181199d88ed6f74650d73fa9d20264dd134c0#diff-e3e9193af67f3a706b3fe042a9f121d3609721da110f6a585cdb1d1660fd5a3c
-	cl, _ := stmt.Clauses["WHERE"]
-	if where, ok := cl.Expression.(clause.Where); ok && len(where.Exprs) > 1 {
-		for _, expr := range where.Exprs {
-			if orCond, ok := expr.(clause.OrConditions); ok && len(orCond.Exprs) == 1 {
-				where.Exprs = []clause.Expression{clause.And(where.Exprs...)}
-				cl.Expression = where
-				stmt.Clauses["WHERE"] = cl
-				break
-			}
-		}
-	}
+	fixWhereClausesForStatementModifier(stmt)
 
 	// add tenancy filter condition
 	colExpr := stmt.Quote(clause.Column{ Table: clause.CurrentTable, Name:  c.Field.DBName })

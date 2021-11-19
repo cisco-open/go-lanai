@@ -58,10 +58,15 @@ type SchemaResolver interface{
 	ModelType() reflect.Type
 	// Table resolve table name of the model
 	Table() string
-	// ColumnName resolves the column name by given field name of the Model
+	// ColumnName resolves the column name by given field name of the Model.
+	// field path is supported, e.g. "AssociationField.FieldName"
 	ColumnName(fieldName string) string
 	// ColumnDataType resolves the column data type string by given field name of the Model
+	// field path is supported, e.g. "AssociationField.FieldName"
 	ColumnDataType(fieldName string) string
+	// RelationshipSchema returns SchemaResolver of the relationship fields with given name.
+	// This function returns nil if given field name is not a relationship field.
+	RelationshipSchema(fieldName string) SchemaResolver
 }
 
 type CrudRepository interface {
