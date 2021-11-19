@@ -105,7 +105,7 @@ func (t NegFilterBool) QueryClauses(f *schema.Field) []clause.Interface {
 	Helpers
  ****************************/
 
-// tenancyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
+// boolFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type boolFilterClause struct {
 	stmtModifier
