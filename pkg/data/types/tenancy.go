@@ -32,6 +32,20 @@ var (
 	mapKeysTenantPath = utils.NewStringSet(fieldTenantPath, colTenantPath)
 )
 
+// SkipTenancyCheck is used as a scope for gorm.DB to skip tenancy check
+// e.g. db.WithContext(ctx).Scopes(SkipTenancyCheck()).Find(...)
+// Note using this scope without context would panic
+func SkipTenancyCheck() func(*gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if tx.Statement.Context == nil {
+			panic("SkipTenancyCheck used without context")
+		}
+		ctx := context.WithValue(tx.Statement.Context, ckSkipTenancyCheck{}, struct{}{})
+		tx.Statement.Context = ctx
+		return tx
+	}
+}
+
 // Tenancy is an embedded type for data model. It's responsible for populating TenantPath and check for Tenancy related data
 // when crating/updating. Tenancy implements
 // - callbacks.BeforeCreateInterface
@@ -44,11 +58,7 @@ type Tenancy struct {
 // SkipTenancyCheck is used for embedding models to override tenancy check behavior.
 // It should be called within model's hooks. this function would panic if context is not set yet
 func (Tenancy) SkipTenancyCheck(tx *gorm.DB) {
-	if tx.Statement.Context == nil {
-		panic("SkipTenancyCheck used without context")
-	}
-	ctx := context.WithValue(tx.Statement.Context, ckSkipTenancyCheck{}, struct{}{})
-	tx.Statement.Context = ctx
+	SkipTenancyCheck()(tx)
 }
 
 func (t *Tenancy) BeforeCreate(tx *gorm.DB) error {

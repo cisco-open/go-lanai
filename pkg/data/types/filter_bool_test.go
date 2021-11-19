@@ -79,6 +79,7 @@ func TestBoolFilter(t *testing.T) {
 		test.SubTestSetup(SetupBoolFilterTestPrepareData(di)),
 		test.GomegaSubTest(SubTestFilterWithoutJoin(di), "FilterWithoutJoin"),
 		test.GomegaSubTest(SubTestNegFilterWithoutJoin(di), "NegFilterWithoutJoin"),
+		test.GomegaSubTest(SubTestFilterWithScope(di), "FilterWithScope"),
 		// Skipped, see sub-test's comment for reason
 		//test.GomegaSubTest(SubTestFilterWithOneToOneJoin(di), "FilterWithOneToOneJoin"),
 	)
@@ -133,11 +134,12 @@ func SubTestFilterWithoutJoin(di *testBoolDI) test.GomegaSubTestFunc {
 			g.Expect(m).To(WithTransform(fieldExtractor, Equal(false)), "SELECT * without join should filter correctly")
 		}
 
-		// TODO with disabled filter
-		//models = nil
-		//tx = di.DB.Find(&models)
-		//g.Expect(tx.Error).To(Succeed(), "SELECT * without join shouldn't return error")
-		//g.Expect(len(models)).To(Equal(6), "SELECT * without join shouldn't filter by relations")
+		// with disabled filter
+		models = nil
+		tx = di.DB.Scopes(SkipBoolFilter()).Where("many_to_one_id IS NOT NULL").Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT with WHERE without join shouldn't return error when filter is disabled")
+		g.Expect(models).To(HaveLen(8), "SELECT with WHERE without join shouldn't filter by relations when filter is disabled")
+
 	}
 }
 
@@ -166,11 +168,50 @@ func SubTestNegFilterWithoutJoin(di *testBoolDI) test.GomegaSubTestFunc {
 			g.Expect(m).To(WithTransform(fieldExtractor, Equal(true)), "SELECT * without join should filter correctly")
 		}
 
-		// TODO with disabled filter
-		//models = nil
-		//tx = di.DB.Find(&models)
-		//g.Expect(tx.Error).To(Succeed(), "SELECT * without join shouldn't return error")
-		//g.Expect(len(models)).To(Equal(6), "SELECT * without join shouldn't filter by relations")
+		// with disabled filter
+		models = nil
+		tx = di.DB.Scopes(SkipBoolFilter()).Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT * without join shouldn't return error")
+		g.Expect(models).To(HaveLen(12), "SELECT * without join shouldn't filter by relations")
+	}
+}
+
+func SubTestFilterWithScope(di *testBoolDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var tx *gorm.DB
+		var model TestModel
+		var models []*TestModel
+		fieldExtractor := func(m *TestModel) interface{} {
+			return bool(m.Filtered)
+		}
+		noopScope := func(db *gorm.DB) *gorm.DB { return db }
+		// get by ID
+		var id uuid.UUID
+		id, _ = TestModelIDs[[3]bool{false, false, false}]
+		tx = di.DB.Scopes(noopScope).Take(&model, id)
+		g.Expect(tx.Error).To(Succeed(), "SELECT by ID without join shouldn't filter by relations")
+
+		id, _ = TestModelIDs[[3]bool{true, true, true}]
+		tx = di.DB.Scopes(noopScope).Take(&model, id)
+		g.Expect(tx.Error).To(HaveOccurred(), "SELECT by ID without join should filter by its own field")
+
+		// find all
+		models = nil
+		tx = di.DB.Scopes(noopScope).Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT * without join shouldn't return error")
+		g.Expect(models).To(HaveLen(6), "SELECT * without join shouldn't filter by relations")
+		for _, m := range models {
+			g.Expect(m).To(WithTransform(fieldExtractor, Equal(false)), "SELECT * without join should filter correctly")
+		}
+
+		// find with WHERE
+		models = nil
+		tx = di.DB.Scopes(noopScope).Where("many_to_one_id IS NOT NULL").Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT with WHERE without join shouldn't return error")
+		g.Expect(models).To(HaveLen(4), "SELECT with WHERE without join shouldn't filter by relations")
+		for _, m := range models {
+			g.Expect(m).To(WithTransform(fieldExtractor, Equal(false)), "SELECT * without join should filter correctly")
+		}
 	}
 }
 

@@ -12,8 +12,28 @@ import (
 )
 
 /****************************
+	Func
+ ****************************/
+
+// SkipBoolFilter is a gorm scope that can be used to skip filtering of FilterBool and NegFilterBool
+// e.g. db.WithContext(ctx).Scopes(SkipBoolFilter()).Find(...)
+// Note using this scope without context would panic
+func SkipBoolFilter() func(*gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if tx.Statement.Context == nil {
+			panic("SkipBoolFilter used without context")
+		}
+		ctx := context.WithValue(tx.Statement.Context, ckSkipBoolFilter{}, struct{}{})
+		tx.Statement.Context = ctx
+		return tx
+	}
+}
+
+/****************************
 	Types
  ****************************/
+
+type ckSkipBoolFilter struct{}
 
 // FilterBool implements
 // - schema.GormDataTypeInterface
@@ -124,6 +144,5 @@ func (c boolFilterClause) ModifyStatement(stmt *gorm.Statement) {
  ***********************/
 
 func shouldSkipBoolFilter(ctx context.Context) bool {
-	//return ctx == nil || ctx.Value(ckSkipTenancyCheck{}) != nil || !security.IsFullyAuthenticated(security.Get(ctx))
-	return false
+	return ctx != nil && ctx.Value(ckSkipBoolFilter{}) != nil
 }
