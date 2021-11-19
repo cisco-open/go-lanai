@@ -4,19 +4,25 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
+	"strconv"
 )
 
-// BoolFilter implements
+/****************************
+	Types
+ ****************************/
+
+// FilterBool implements
 // - schema.GormDataTypeInterface
 // - schema.QueryClausesInterface
-// this data type adds "WHERE" clause in SELECT statements for filtering models with this field == true
-type BoolFilter bool
+// this data type adds "WHERE" clause in SELECT statements for filtering out models if this field == true
+type FilterBool bool
 
 // Value implements driver.Valuer
-func (t BoolFilter) Value() (driver.Value, error) {
+func (t FilterBool) Value() (driver.Value, error) {
 	return sql.NullBool{
 		Bool:  bool(t),
 		Valid: true,
@@ -24,29 +30,67 @@ func (t BoolFilter) Value() (driver.Value, error) {
 }
 
 // Scan implements sql.Scanner
-func (t *BoolFilter) Scan(src interface{}) error {
+func (t *FilterBool) Scan(src interface{}) error {
 	nullBool := &sql.NullBool{}
 	if e := nullBool.Scan(src); e != nil {
 		return e
 	}
-	*t = BoolFilter(nullBool.Valid && nullBool.Bool)
+	*t = FilterBool(nullBool.Valid && nullBool.Bool)
 	return nil
 }
 
-func (t BoolFilter) GormDataType() string {
+func (t FilterBool) GormDataType() string {
 	return "bool"
 }
 
 // QueryClauses implements schema.QueryClausesInterface,
-func (t BoolFilter) QueryClauses(f *schema.Field) []clause.Interface {
+func (t FilterBool) QueryClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newBoolFilterClause(f, true)}
 }
+
+// NegFilterBool implements
+// - schema.GormDataTypeInterface
+// - schema.QueryClausesInterface
+// this data type adds "WHERE" clause in SELECT statements for filtering out models if this field == false
+type NegFilterBool bool
+
+// Value implements driver.Valuer
+func (t NegFilterBool) Value() (driver.Value, error) {
+	return sql.NullBool{
+		Bool:  bool(t),
+		Valid: true,
+	}.Value()
+}
+
+// Scan implements sql.Scanner
+func (t *NegFilterBool) Scan(src interface{}) error {
+	nullBool := &sql.NullBool{}
+	if e := nullBool.Scan(src); e != nil {
+		return e
+	}
+	*t = NegFilterBool(nullBool.Valid && nullBool.Bool)
+	return nil
+}
+
+func (t NegFilterBool) GormDataType() string {
+	return "bool"
+}
+
+// QueryClauses implements schema.QueryClausesInterface,
+func (t NegFilterBool) QueryClauses(f *schema.Field) []clause.Interface {
+	return []clause.Interface{newBoolFilterClause(f, false)}
+}
+
+/****************************
+	Helpers
+ ****************************/
 
 // tenancyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type boolFilterClause struct {
+	stmtModifier
 	FilteredValue bool
-	Field *schema.Field
+	Field         *schema.Field
 }
 
 func newBoolFilterClause(f *schema.Field, filterValue bool) clause.Interface {
@@ -54,16 +98,6 @@ func newBoolFilterClause(f *schema.Field, filterValue bool) clause.Interface {
 		FilteredValue: filterValue,
 		Field:         f,
 	}
-}
-
-func (c boolFilterClause) Name() string {
-	return ""
-}
-
-func (c boolFilterClause) Build(clause.Builder) {
-}
-
-func (c boolFilterClause) MergeClause(*clause.Clause) {
 }
 
 func (c boolFilterClause) ModifyStatement(stmt *gorm.Statement) {
@@ -77,10 +111,10 @@ func (c boolFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	fixWhereClausesForStatementModifier(stmt)
 
 	// add bool filtering
+	colExpr := stmt.Quote(clause.Column{Table: clause.CurrentTable, Name: c.Field.DBName})
 	stmt.AddClause(clause.Where{Exprs: []clause.Expression{
-		clause.Neq{
-			Column: clause.Column{ Table: clause.CurrentTable, Name:  c.Field.DBName },
-			Value:  c.FilteredValue,
+		clause.Expr{
+			SQL: fmt.Sprintf("%s IS %s", colExpr, strconv.FormatBool(!c.FilteredValue)),
 		},
 	}})
 }
@@ -93,5 +127,3 @@ func shouldSkipBoolFilter(ctx context.Context) bool {
 	//return ctx == nil || ctx.Value(ckSkipTenancyCheck{}) != nil || !security.IsFullyAuthenticated(security.Get(ctx))
 	return false
 }
-
-

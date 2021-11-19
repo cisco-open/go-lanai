@@ -52,17 +52,8 @@ func (t TenantPath) DeleteClauses(f *schema.Field) []clause.Interface {
 // tenancyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type tenancyFilterClause struct {
+	stmtModifier
 	Field *schema.Field
-}
-
-func (c tenancyFilterClause) Name() string {
-	return ""
-}
-
-func (c tenancyFilterClause) Build(clause.Builder) {
-}
-
-func (c tenancyFilterClause) MergeClause(*clause.Clause) {
 }
 
 func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {

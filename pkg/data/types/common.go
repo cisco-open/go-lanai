@@ -22,3 +22,17 @@ func fixWhereClausesForStatementModifier(stmt *gorm.Statement) {
 		}
 	}
 }
+
+// stmtModifier used to be embedded of any StatementModifier implementation.
+// This type implement dummy clause.Interface methods
+type stmtModifier struct {}
+
+func (sm stmtModifier) Name() string {
+	return ""
+}
+
+func (sm stmtModifier) Build(clause.Builder) {
+}
+
+func (sm stmtModifier) MergeClause(*clause.Clause) {
+}
