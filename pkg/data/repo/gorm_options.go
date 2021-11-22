@@ -11,8 +11,8 @@ type gormOptions func(*gorm.DB) *gorm.DB
 // MustApplyOptions takes a slice of Option and apply it to the given gorm.DB.
 // This function is intended for custom repository implementations.
 // The function panic if any Option is not supported type
-func MustApplyOptions(db *gorm.DB, opts []Option) *gorm.DB {
-	for _, fn := range GormScopes(opts) {
+func MustApplyOptions(db *gorm.DB, opts ...Option) *gorm.DB {
+	for _, fn := range GormScopes(opts...) {
 		db = fn(db)
 	}
 	return db
@@ -22,7 +22,7 @@ func MustApplyOptions(db *gorm.DB, opts []Option) *gorm.DB {
 // The result can be used as "db.Scopes(result...)"
 // This function is intended for custom repository implementations.
 // The function panic if any Option is not supported type
-func GormScopes(opts []Option) (scopes []func(*gorm.DB)*gorm.DB) {
+func GormScopes(opts ...Option) (scopes []func(*gorm.DB)*gorm.DB) {
 	var e error
 	if scopes, e = toScopes(opts); e != nil {
 		panic(e)
