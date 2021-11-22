@@ -77,9 +77,11 @@ func TestBoolFilter(t *testing.T) {
 		),
 		apptest.WithDI(di),
 		test.SubTestSetup(SetupBoolFilterTestPrepareData(di)),
-		test.GomegaSubTest(SubTestFilterWithoutJoin(di), "FilterWithoutJoin"),
+		test.GomegaSubTest(SubTestFilterWithoutJoin(di), "DefaultFilterWithoutJoin"),
 		test.GomegaSubTest(SubTestNegFilterWithoutJoin(di), "NegFilterWithoutJoin"),
-		test.GomegaSubTest(SubTestFilterWithScope(di), "FilterWithScope"),
+		test.GomegaSubTest(SubTestOptInFilterWithoutJoin(di), "OptInFilterWithoutJoin"),
+		test.GomegaSubTest(SubTestFilterWithOverride(di), "FilterWithOverride"),
+		test.GomegaSubTest(SubTestFilterWithScope(di), "FilterWithAdditionalScope"),
 		// Skipped, see sub-test's comment for reason
 		//test.GomegaSubTest(SubTestFilterWithOneToOneJoin(di), "FilterWithOneToOneJoin"),
 	)
@@ -133,13 +135,6 @@ func SubTestFilterWithoutJoin(di *testBoolDI) test.GomegaSubTestFunc {
 		for _, m := range models {
 			g.Expect(m).To(WithTransform(fieldExtractor, Equal(false)), "SELECT * without join should filter correctly")
 		}
-
-		// with disabled filter
-		models = nil
-		tx = di.DB.Scopes(SkipBoolFilter()).Where("many_to_one_id IS NOT NULL").Find(&models)
-		g.Expect(tx.Error).To(Succeed(), "SELECT with WHERE without join shouldn't return error when filter is disabled")
-		g.Expect(models).To(HaveLen(8), "SELECT with WHERE without join shouldn't filter by relations when filter is disabled")
-
 	}
 }
 
@@ -167,12 +162,76 @@ func SubTestNegFilterWithoutJoin(di *testBoolDI) test.GomegaSubTestFunc {
 		for _, m := range models {
 			g.Expect(m).To(WithTransform(fieldExtractor, Equal(true)), "SELECT * without join should filter correctly")
 		}
+	}
+}
 
-		// with disabled filter
+func SubTestOptInFilterWithoutJoin(di *testBoolDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var tx *gorm.DB
+		var models []*TestMTOModel
+
+		// find all
 		models = nil
-		tx = di.DB.Scopes(SkipBoolFilter()).Find(&models)
-		g.Expect(tx.Error).To(Succeed(), "SELECT * without join shouldn't return error")
-		g.Expect(models).To(HaveLen(12), "SELECT * without join shouldn't filter by relations")
+		tx = di.DB.Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT * with skipped filter without join shouldn't return error")
+		g.Expect(models).To(HaveLen(2), "SELECT * with skipped filter without join shouldn't filter")
+
+		// find with WHERE
+		models = nil
+		tx = di.DB.Where("value IS NOT NULL").Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT with WHERE with skipped filter without join shouldn't return error")
+		g.Expect(models).To(HaveLen(2), "SELECT with WHERE with skipped filter without join shouldn't filter by relations")
+
+		// find all opt-in filter
+		models = nil
+		tx = di.DB.Scopes(BoolFiltering(true)).Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT * with opt-in filter without join shouldn't return error")
+		g.Expect(models).To(HaveLen(1), "SELECT * with opt-in filter without join shouldn't filter")
+
+
+	}
+}
+
+func SubTestFilterWithOverride(di *testBoolDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var tx *gorm.DB
+		var models []*TestModel
+		fieldExtractor := func(m *TestModel) interface{} {
+			return bool(m.Filtered)
+		}
+
+		// with field disabler
+		models = nil
+		tx = di.DB.Scopes(SkipBoolFilter("Filtered")).Where("many_to_one_id IS NOT NULL").Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT with WHERE without join shouldn't return error when filter is disabled on one field")
+		g.Expect(models).To(HaveLen(8), "SELECT with WHERE without join shouldn't filter by relations when filter is disabled on one field")
+
+		// with * disabler
+		models = nil
+		tx = di.DB.Scopes(SkipBoolFilter()).Where("many_to_one_id IS NOT NULL").Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT with WHERE without join shouldn't return error when filter is disabled on all fields")
+		g.Expect(models).To(HaveLen(8), "SELECT with WHERE without join shouldn't filter by relations when filter is disabled on all fields")
+
+		// with overridden behavior on one field
+		models = nil
+		tx = di.DB.Scopes(BoolFiltering(false, "Filtered")).Where("many_to_one_id IS NOT NULL").Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT with WHERE without join shouldn't return error when filter behavior is altered")
+		g.Expect(models).To(HaveLen(4), "SELECT with WHERE without join should filter based on alternative behavior on specified field")
+		for _, m := range models {
+			g.Expect(m).To(WithTransform(fieldExtractor, Equal(true)),
+				"SELECT * without join should filter correctly based on alternative behavior on specified field")
+		}
+
+		// with overridden behavior on all field
+		models = nil
+		tx = di.DB.Scopes(BoolFiltering(false)).Where("many_to_one_id IS NOT NULL").Find(&models)
+		g.Expect(tx.Error).To(Succeed(), "SELECT with WHERE without join shouldn't return error when filter behavior is altered")
+		g.Expect(models).To(HaveLen(4), "SELECT with WHERE without join should filter based on alternative behavior on all fields")
+		for _, m := range models {
+			g.Expect(m).To(WithTransform(fieldExtractor, Equal(true)),
+				"SELECT * without join should filter correctly based on alternative behavior on all fields")
+		}
+
 	}
 }
 
@@ -301,7 +360,7 @@ func createMTOModelRecord(id uuid.UUID, filtered bool, db *gorm.DB, g *gomega.Wi
 		ID:             id,
 		RelationValue:  FilterValue[filtered],
 		RelationSearch: FilterSearch[filtered],
-		MTOEnabled:    NegFilterBool(filtered),
+		MTOEnabled:     FilterBool(filtered),
 	}
 	tx := db.Create(&m)
 	g.Expect(tx.Error).To(Succeed(), "create %s of value %s shouldn't fail", m.TableName(), m.RelationValue)
@@ -312,7 +371,7 @@ func createOTOModelRecord(key string, filtered bool, db *gorm.DB, g *gomega.With
 		RefKey:         key,
 		RelationValue:  FilterValue[filtered],
 		RelationSearch: FilterSearch[filtered],
-		OTOEnabled:    NegFilterBool(filtered),
+		OTOEnabled:     FilterBool(filtered),
 	}
 	tx := db.Create(&m)
 	g.Expect(tx.Error).To(Succeed(), "create %s of value %s shouldn't fail", m.TableName(), m.RelationValue)
@@ -412,10 +471,10 @@ func (TestModel) TableName() string {
 }
 
 type TestOTOModel struct {
-	RefKey         string        `gorm:"primary_key;column:ref_key;type:TEXT;"`
-	RelationValue  string        `gorm:"column:value;"`
-	RelationSearch string        `gorm:"column:search;"`
-	OTOEnabled     NegFilterBool `gorm:"column:enabled;"`
+	RefKey         string     `gorm:"primary_key;column:ref_key;type:TEXT;"`
+	RelationValue  string     `gorm:"column:value;"`
+	RelationSearch string     `gorm:"column:search;"`
+	OTOEnabled     FilterBool `gorm:"column:enabled;" filter:"false"`
 }
 
 func (TestOTOModel) TableName() string {
@@ -423,10 +482,10 @@ func (TestOTOModel) TableName() string {
 }
 
 type TestMTOModel struct {
-	ID             uuid.UUID     `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-	RelationValue  string        `gorm:"column:value;"`
-	RelationSearch string        `gorm:"column:search;"`
-	MTOEnabled     NegFilterBool `gorm:"column:enabled;"`
+	ID             uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	RelationValue  string     `gorm:"column:value;"`
+	RelationSearch string     `gorm:"column:search;"`
+	MTOEnabled     FilterBool `gorm:"column:enabled;" filter:"-"`
 }
 
 func (TestMTOModel) TableName() string {
