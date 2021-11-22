@@ -205,14 +205,18 @@ func (g GormCrud) Truncate(ctx context.Context) error {
 	})
 }
 
+/*******************
+	Helpers
+ *******************/
+
 func (g GormCrud) execute(ctx context.Context, condition Condition, options []Option, f func(*gorm.DB) *gorm.DB) error {
 	var e error
 	db := g.GormApi.DB(ctx)
-	if db, e = g.applyOptions(db, options); e != nil {
+	if db, e = applyOptions(db, options); e != nil {
 		return e
 	}
 
-	if db, e = g.applyCondition(db, condition); e != nil {
+	if db, e = applyCondition(db, condition); e != nil {
 		return e
 	}
 
@@ -222,37 +226,53 @@ func (g GormCrud) execute(ctx context.Context, condition Condition, options []Op
 	return nil
 }
 
-func (g GormCrud) applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
-	if len(opts) == 0 {
-		return db, nil
-	}
+func toScopes(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
+	scopes := make([]func(*gorm.DB)*gorm.DB, 0, len(opts))
 	for _, v := range opts {
 		switch rv := reflect.ValueOf(v); rv.Kind() {
 		case reflect.Slice, reflect.Array:
-			var e error
 			size := rv.Len()
 			slice := make([]Option, size)
 			for i := 0; i < size; i++ {
 				slice[i] = rv.Index(i).Interface()
 			}
-			if db, e = g.applyOptions(db, slice); e != nil {
+			sub, e := toScopes(slice)
+			if e != nil {
 				return nil, e
 			}
+			scopes = append(scopes, sub...)
 		default:
 			switch opt := v.(type) {
 			case gormOptions:
-				db = opt(db)
+				scopes = append(scopes, opt)
 			case func(*gorm.DB) *gorm.DB:
-				db = opt(db)
+				scopes = append(scopes, opt)
 			default:
 				return nil, ErrorUnsupportedOptions.WithMessage("unsupported Option %T", v)
 			}
 		}
 	}
+	return scopes, nil
+}
+
+func applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
+	if len(opts) == 0 {
+		return db, nil
+	}
+
+	scopes, e := toScopes(opts)
+	if e != nil {
+		return nil, e
+	}
+	// Note, we choose to apply scopes by our self instead of using db.Scopes(...),
+	// because we don't want to confuse GORM with other scopes added else where
+	for _, fn := range scopes {
+		db = fn(db)
+	}
 	return db, nil
 }
 
-func (g GormCrud) applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, error) {
+func applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, error) {
 	if condition == nil {
 		return db, nil
 	}
@@ -261,7 +281,7 @@ func (g GormCrud) applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, er
 	case reflect.Slice, reflect.Array:
 		size := cv.Len()
 		for i := 0; i < size; i++ {
-			if db, e = g.applyCondition(db, cv.Index(i).Interface()); e != nil {
+			if db, e = applyCondition(db, cv.Index(i).Interface()); e != nil {
 				return nil, e
 			}
 		}
