@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
@@ -14,10 +13,6 @@ import (
 	"reflect"
 )
 
-var logger = log.New("DB.Tenancy")
-
-type ckSkipTenancyCheck struct{}
-
 const (
 	fieldTenantID   = "TenantID"
 	fieldTenantPath = "TenantPath"
@@ -28,19 +23,59 @@ const (
 var (
 	typeUUID          = reflect.TypeOf(uuid.Nil)
 	typeTenantPath    = reflect.TypeOf(TenantPath{})
+	typeTenancy    = reflect.TypeOf(Tenancy{})
+	typeTenancyPtr    = reflect.TypeOf(&Tenancy{})
 	mapKeysTenantID   = utils.NewStringSet(fieldTenantID, colTenantID)
 	mapKeysTenantPath = utils.NewStringSet(fieldTenantPath, colTenantPath)
 )
+
+type ckTenancyCheckMode struct{}
+
+const (
+	TenancyCheckFlagWriteValueCheck TenancyCheckFlag = 1 << iota
+	TenancyCheckFlagWriteFiltering
+	TenancyCheckFlagReadFiltering
+)
+
+// TenancyCheckFlag bitwise Flag of tenancy flag mode
+type TenancyCheckFlag uint
+
+const (
+	tcModeDefault = tcMode(TenancyCheckFlagWriteFiltering | TenancyCheckFlagWriteValueCheck)
+)
+
+// tcMode enum of tenancyCheckMode
+type tcMode uint
+
+func (m tcMode) hasFlags(flags ...TenancyCheckFlag) bool {
+	for _, flag := range flags {
+		if m & tcMode(flag) == 0 {
+			return false
+		}
+	}
+	return true
+}
 
 // SkipTenancyCheck is used as a scope for gorm.DB to skip tenancy check
 // e.g. db.WithContext(ctx).Scopes(SkipTenancyCheck()).Find(...)
 // Note using this scope without context would panic
 func SkipTenancyCheck() func(*gorm.DB) *gorm.DB {
+	return TenancyCheck(0)
+}
+
+// TenancyCheck is used as a scope for gorm.DB to override tenancy check
+// e.g. db.WithContext(ctx).Scopes(TenancyCheck()).Find(...)
+// Note using this scope without context would panic
+func TenancyCheck(flags ...TenancyCheckFlag) func(*gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		if tx.Statement.Context == nil {
 			panic("SkipTenancyCheck used without context")
 		}
-		ctx := context.WithValue(tx.Statement.Context, ckSkipTenancyCheck{}, struct{}{})
+		var mode tcMode
+		for _, flag := range flags {
+			mode = mode | tcMode(flag)
+		}
+		ctx := context.WithValue(tx.Statement.Context, ckTenancyCheckMode{}, mode)
 		tx.Statement.Context = ctx
 		return tx
 	}
@@ -67,7 +102,7 @@ func (t *Tenancy) BeforeCreate(tx *gorm.DB) error {
 		return errors.New("tenantId is required")
 	}
 
-	if !shouldSkipTenancyCheck(tx.Statement.Context) && !security.HasAccessToTenant(tx.Statement.Context, t.TenantID.String()) {
+	if !shouldSkip(tx.Statement.Context, TenancyCheckFlagWriteValueCheck, tcModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, t.TenantID.String()) {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", t.TenantID.String()))
 	}
 
@@ -89,7 +124,7 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 		return e
 	}
 
-	if !shouldSkipTenancyCheck(tx.Statement.Context) && !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
+	if !shouldSkip(tx.Statement.Context, TenancyCheckFlagWriteValueCheck, tcModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", tenantId.String()))
 	}
 
@@ -179,6 +214,14 @@ func (Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflect.T
 	return "", reflect.Value{}, false
 }
 
-func shouldSkipTenancyCheck(ctx context.Context) bool {
-	return ctx == nil || ctx.Value(ckSkipTenancyCheck{}) != nil || !security.IsFullyAuthenticated(security.Get(ctx))
+func shouldSkip(ctx context.Context, flag TenancyCheckFlag, fallback tcMode) bool {
+	if ctx == nil || !security.IsFullyAuthenticated(security.Get(ctx)) {
+		return true
+	}
+	switch v := ctx.Value(ckTenancyCheckMode{}).(type) {
+	case tcMode:
+		return !v.hasFlags(flag)
+	default:
+		return !fallback.hasFlags(flag)
+	}
 }

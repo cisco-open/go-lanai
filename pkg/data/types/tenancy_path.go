@@ -3,13 +3,24 @@ package types
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
 	"database/sql/driver"
 	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
+	"reflect"
+	"strings"
 )
+
+/****************************
+	Func
+ ****************************/
+
+/****************************
+	Types
+ ****************************/
 
 // TenantPath implements
 // - schema.GormDataTypeInterface
@@ -34,30 +45,71 @@ func (t TenantPath) GormDataType() string {
 }
 
 // QueryClauses implements schema.QueryClausesInterface,
-func (t TenantPath) QueryClauses(_ *schema.Field) []clause.Interface {
-	// TODO return tenancyFilterClause if we want this for SELECT statement
-	return []clause.Interface{}
+func (t TenantPath) QueryClauses(f *schema.Field) []clause.Interface {
+	return []clause.Interface{newTenancyFilterClause(f, true)}
 }
 
 // UpdateClauses implements schema.UpdateClausesInterface,
 func (t TenantPath) UpdateClauses(f *schema.Field) []clause.Interface {
-	return []clause.Interface{&tenancyFilterClause{Field: f}}
+	return []clause.Interface{newTenancyFilterClause(f, false)}
 }
 
 // DeleteClauses implements schema.DeleteClausesInterface,
 func (t TenantPath) DeleteClauses(f *schema.Field) []clause.Interface {
-	return []clause.Interface{&tenancyFilterClause{Field: f}}
+	return []clause.Interface{newTenancyFilterClause(f, false)}
 }
 
 // tenancyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type tenancyFilterClause struct {
 	stmtModifier
+	Flag TenancyCheckFlag
+	Mode tcMode
 	Field *schema.Field
 }
 
+func newTenancyFilterClause(f *schema.Field, isRead bool) *tenancyFilterClause {
+	mode := tcMode(TenancyCheckFlagWriteValueCheck)
+	tag := extractTenancyFilterTag(f)
+	switch tag {
+	case "":
+		mode = tcModeDefault
+	case "-":
+	default:
+		if strings.ContainsRune(tag, 'r') {
+			mode = mode | tcMode(TenancyCheckFlagReadFiltering)
+		}
+		if strings.ContainsRune(tag, 'w') {
+			mode = mode | tcMode(TenancyCheckFlagWriteFiltering)
+		}
+	}
+	flag := TenancyCheckFlagWriteFiltering
+	if isRead {
+		flag = TenancyCheckFlagReadFiltering
+	}
+	return &tenancyFilterClause{
+		Flag:         flag,
+		Mode:         mode,
+		Field:        f,
+	}
+}
+
+func extractTenancyFilterTag(f *schema.Field) string {
+	if tag, ok := f.Tag.Lookup(TagFilter); ok {
+		return strings.ToLower(strings.TrimSpace(tag))
+	}
+	// check if tag is available on embedded Tenancy
+	sf, ok := reflectutils.FindStructField(f.Schema.ModelType, func(t reflect.StructField) bool {
+		return t.Anonymous && (t.Type.AssignableTo(typeTenancy) || t.Type.AssignableTo(typeTenancyPtr))
+	})
+	if ok {
+		return sf.Tag.Get(TagFilter)
+	}
+	return ""
+}
+
 func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
-	if shouldSkipTenancyCheck(stmt.Context) {
+	if shouldSkip(stmt.Context, c.Flag, c.Mode) {
 		return
 	}
 
@@ -72,7 +124,7 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	fixWhereClausesForStatementModifier(stmt)
 
 	// add tenancy filter condition
-	colExpr := stmt.Quote(clause.Column{ Table: clause.CurrentTable, Name:  c.Field.DBName })
+	colExpr := stmt.Quote(clause.Column{Table: clause.CurrentTable, Name: c.Field.DBName})
 	sql := fmt.Sprintf("%s @> ?", colExpr)
 	var conditions []clause.Expression
 	for _, id := range tenantIDs {

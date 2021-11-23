@@ -36,7 +36,7 @@ type Factory interface {
 // If given condition is not supported, an error with code data.ErrorCodeUnsupportedCondition will be return
 //  - TODO 1: more features leveraging "gorm" lib. Ref: https://gorm.io/docs/query.html#Conditions
 //  - TODO 2: more detailed documentation of already supported types
-type Condition interface {}
+type Condition interface{}
 
 // Option is typically used for generic CRUD repository
 // supported options depends on operation and underlying implementation
@@ -95,10 +95,10 @@ type CrudRepository interface {
 	FindAllBy(ctx context.Context, dest interface{}, condition Condition, options...Option) error
 
 	// CountAll counts all
-	CountAll(ctx context.Context) (int, error)
+	CountAll(ctx context.Context, options...Option) (int, error)
 
 	// CountBy counts based on conditions.
-	CountBy(ctx context.Context, condition Condition) (int, error)
+	CountBy(ctx context.Context, condition Condition, options...Option) (int, error)
 
 	// Save create or update model or model array.
 	// Accepted "v" types:
@@ -147,11 +147,11 @@ type CrudRepository interface {
 	//		[]ModelStruct
 	//		ModelStruct
 	// returns error if such deletion violate any existing foreign key constraints
-	Delete(ctx context.Context, v interface{}) error
+	Delete(ctx context.Context, v interface{}, options...Option) error
 
 	// DeleteBy delete models matching given condition.
 	// returns error if such deletion violate any existing foreign key constraints
-	DeleteBy(ctx context.Context, condition Condition) error
+	DeleteBy(ctx context.Context, condition Condition, options...Option) error
 
 	// Truncate attempt to truncate the table associated the repository
 	// returns error if such truncattion violate any existing foreign key constraints

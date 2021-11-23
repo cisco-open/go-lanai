@@ -1,6 +1,9 @@
 package repo
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	"gorm.io/gorm"
+)
 
 type gormOptions func(*gorm.DB) *gorm.DB
 
@@ -12,22 +15,60 @@ type gormOptions func(*gorm.DB) *gorm.DB
 // This function is intended for custom repository implementations.
 // The function panic if any Option is not supported type
 func MustApplyOptions(db *gorm.DB, opts ...Option) *gorm.DB {
-	for _, fn := range GormScopes(opts...) {
-		db = fn(db)
-	}
-	return db
+	return AsGormScope(opts)(db)
 }
 
-// GormScopes takes a slice of Option and convert them to GORM scopes (func(*gorm.DB)*gorm.DB)
-// The result can be used as "db.Scopes(result...)"
+// MustApplyConditions takes a slice of Condition and apply it to the given gorm.DB.
 // This function is intended for custom repository implementations.
-// The function panic if any Option is not supported type
-func GormScopes(opts ...Option) (scopes []func(*gorm.DB)*gorm.DB) {
+// The function panic if any Condition is not supported type
+func MustApplyConditions(db *gorm.DB, conds ...Condition) *gorm.DB {
+	return AsGormScope(conds)(db)
+}
+
+// AsGormScope convert following types to a func(*gorm.DB)*gorm.DB:
+// - Option or slice of Option
+// - Condition or slice of Condition
+// - func(*gorm.DB)*gorm.DB (noop)
+// - slice of func(*gorm.DB)*gorm.DB
+//
+// This function is intended for custom repository implementations. The result can be used as "db.Scopes(result...)"
+// The function panic on any type not listed above
+func AsGormScope(i interface{}) func(*gorm.DB)*gorm.DB {
+	var funcs []func(*gorm.DB)*gorm.DB
 	var e error
-	if scopes, e = toScopes(opts); e != nil {
-		panic(e)
+	switch v := i.(type) {
+	case func(*gorm.DB)*gorm.DB:
+		return v
+	case []func(*gorm.DB)*gorm.DB:
+		funcs = v
+	case []Option:
+		funcs, e = optsToDBFuncs(v)
+	case Option:
+		funcs, e = optsToDBFuncs([]Option{v})
+	case Condition:
+		funcs, e = conditionToDBFuncs(v)
+	case []Condition:
+		funcs, e = conditionToDBFuncs(Condition(v))
+	default:
+		e = fmt.Errorf("unsupported interface [%T] to be converted to GORM scope", i)
 	}
-	return
+
+	// wrap up
+	switch {
+	case e != nil:
+		panic(e)
+	case len(funcs) == 0:
+		return func(db *gorm.DB)*gorm.DB {return db}
+	case len(funcs) == 1:
+		return funcs[0]
+	default:
+		return func(db *gorm.DB)*gorm.DB {
+			for _, fn := range funcs {
+				db = fn(db)
+			}
+			return db
+		}
+	}
 }
 
 /**************************

@@ -101,7 +101,7 @@ type filterMode int
 //						Can be overridden on per query basis using scopes or repo options (if applicable)
 // - `filter:"false"`: 	filter out "false" values
 //						Can be overridden on per query basis using scopes or repo options (if applicable)
-// See SkipBoolFilter TODO
+// See SkipBoolFilter and BoolFiltering for filtering behaviour overriding
 type FilterBool bool
 
 // Value implements driver.Valuer

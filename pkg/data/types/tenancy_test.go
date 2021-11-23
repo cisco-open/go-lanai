@@ -59,6 +59,7 @@ type loadModelFunc func(ctx context.Context, db *gorm.DB, tenantId uuid.UUID, g 
 type testDI struct {
 	fx.In
 	DB *gorm.DB
+	TA tenancy.Accessor
 }
 
 func TestTenancyEnforcement(t *testing.T) {
@@ -88,6 +89,7 @@ func TestTenancyEnforcement(t *testing.T) {
 		test.GomegaSubTest(SubTestTenancyDelete(di, synthesizeModelForTenantId), "TestDeleteSynthesizedModel"),
 		test.GomegaSubTest(SubTestTenancyDeleteNoAccess(di, loadModelForTenantId), "TestDeleteLoadedModelNoAccess"),
 		test.GomegaSubTest(SubTestTenancyDeleteNoAccess(di, synthesizeModelForTenantId), "TestDeleteSynthesizedModelNoAccess"),
+		test.GomegaSubTest(SubTestRWModeFiltering(di), "TestRWModeFiltering"),
 		test.GomegaSubTest(SubTestTenancyWithoutSecurity(di), "TestWithoutSecurity"),
 	)
 }
@@ -146,7 +148,7 @@ func SetupTestCreateTenancyModels(di *testDI) test.SetupFunc {
 
 func SubTestTenancySave(di *testDI, loadFn loadModelFunc) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		type testCase struct{
+		type testCase struct {
 			ctx context.Context
 			tid uuid.UUID
 		}
@@ -357,7 +359,7 @@ func SubTestTenancyUpdatesInvalidTarget(di *testDI) test.GomegaSubTestFunc {
 		id = MockedModelIDs[MockedTenantIdB1]
 		r = di.DB.WithContext(secCtx).Model(&TenancyModel{ID: id}).
 			Updates(map[string]interface{}{
-				"tenant_id": MockedTenantIdA,
+				"tenant_id":  MockedTenantIdA,
 				"TenantPath": []uuid.UUID{uuid.New(), uuid.New()},
 			})
 		g.Expect(r.Error).To(Not(Succeed()), "update model should return error due to wrong tenant path is explicitly set")
@@ -366,7 +368,7 @@ func SubTestTenancyUpdatesInvalidTarget(di *testDI) test.GomegaSubTestFunc {
 
 func SubTestTenancyDelete(di *testDI, loadFn loadModelFunc) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		type testCase struct{
+		type testCase struct {
 			ctx context.Context
 			tid []uuid.UUID
 		}
@@ -486,6 +488,67 @@ func SubTestTenancyWithoutSecurity(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(r.RowsAffected).To(BeEquivalentTo(1), "delete model without security context affect 1 rows")
 		r = di.DB.WithContext(ctx).Model(&TenancyModel{}).Take(&TenancyModel{}, m.ID)
 		g.Expect(errors.Is(r.Error, gorm.ErrRecordNotFound)).To(BeTrue(), "delete model without security context should actually delete the record")
+	}
+}
+
+func SubTestRWModeFiltering(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var rs *gorm.DB
+		var models []*TenancyRWModel
+
+		secCtx := mockedSecurityWithSkipTenancyCheck(ctx, MockedTenantIdB)
+
+		tids, _ := di.TA.GetDescendants(ctx, MockedTenantIdB.String())
+		tids = append(tids, MockedTenantIdB.String())
+		acceptable := utils.NewStringSet(tids...)
+		// Select *
+		models = nil
+		rs = di.DB.WithContext(secCtx).Find(&models)
+		g.Expect(rs.Error).To(Succeed(), "SELECT *  belonging to %s in RW mode should return no error", MockedTenantIdB)
+		g.Expect(models).To(HaveLen(3), "SELECT * belonging to %s in RW mode should filter by tenant access", MockedTenantIdB)
+		for _, m := range models {
+			g.Expect(acceptable).To(HaveKey(m.TenantID.String()), "SELECT * belonging to %s in RW mode should filter correctly", MockedTenantIdB)
+		}
+
+		// Select * Where...
+		models = nil
+		rs = di.DB.WithContext(secCtx).
+			Where(&TenancyRWModel{TenantName: "Tenant A"}).Or(&TenancyRWModel{TenantName: "Tenant B"}).
+			Find(&models)
+		g.Expect(rs.Error).To(Succeed(), "SELECT * Where... belonging to %s in RW mode should return no error", MockedTenantIdB)
+		g.Expect(models).To(HaveLen(1), "SELECT * Where... belonging to %s in RW mode should filter by tenant access", MockedTenantIdB)
+		for _, m := range models {
+			g.Expect(acceptable).To(HaveKey(m.TenantID.String()), "SELECT * Where... belonging to %s in RW mode should filter correctly", MockedTenantIdB)
+		}
+
+		// Updates using Map without changing tenant ID
+		id := MockedModelIDs[MockedTenantIdA1]
+		rs = di.DB.WithContext(secCtx).Model(&TenancyRWModel{ID: id}).
+			Updates(map[string]interface{}{"Value": "Updated"})
+		g.Expect(rs.Error).To(Succeed(), "update model belonging to %s should return no error", MockedTenantIdA1)
+		g.Expect(rs.RowsAffected).To(BeEquivalentTo(0), "update model belonging to %s should update 0 rows due to insufficient access", MockedTenantIdA1)
+
+		// Move to tenant using Struct, target tenant is not accessible
+		id = MockedModelIDs[MockedTenantIdB2]
+		rs = di.DB.WithContext(secCtx).Model(&TenancyRWModel{ID: id}).
+			Updates(&TenancyRWModel{Tenancy: Tenancy{TenantID: MockedTenantIdA}, Value: "Updated"})
+		g.Expect(rs.Error).To(Not(Succeed()), "update model belonging to %s should return error due to target tenant is inaccessible", MockedTenantIdB1)
+
+		// Move to tenant using Map, source tenant is not accessible
+		secCtx = mockedSecurityWithTenantAccess(ctx, MockedTenantIdB1, MockedTenantIdB2)
+		id = MockedModelIDs[MockedTenantIdA1]
+		rs = di.DB.WithContext(secCtx).Model(&TenancyRWModel{ID: id}).
+			Updates(map[string]interface{}{"TenantID": MockedTenantIdB1, "Value": "Updated"})
+		g.Expect(rs.Error).To(Succeed(), "update model belonging to %s should return no error", MockedTenantIdA1)
+		g.Expect(rs.RowsAffected).To(BeEquivalentTo(0), "update model belonging to %s should update 0 rows due to insufficient access", MockedTenantIdB1)
+
+		// Updates using Map with WHERE clause (matched rows should have 1 updated and 1 unchanged)
+		secCtx = mockedSecurityWithTenantAccess(ctx, MockedTenantIdA)
+		rs = di.DB.WithContext(secCtx).Model(&TenancyRWModel{}).
+			Where(&TenancyRWModel{TenantName: "Tenant A"}).Or(&TenancyRWModel{TenantName: "Tenant B"}).
+			Updates(map[string]interface{}{"Value": "Updated"})
+		g.Expect(rs.Error).To(Succeed(), "update model with WHERE clause should return no error")
+		g.Expect(rs.RowsAffected).To(BeEquivalentTo(1), "update model with WHERE clause should update 0 rows due to insufficient access")
 	}
 }
 
@@ -642,5 +705,17 @@ type TenancySoftDeleteModel struct {
 }
 
 func (TenancySoftDeleteModel) TableName() string {
+	return "test_tenancy"
+}
+
+type TenancyRWModel struct {
+	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	TenantName string
+	Value      string
+	Tenancy    `filter:"rw"`
+	Audit
+}
+
+func (TenancyRWModel) TableName() string {
 	return "test_tenancy"
 }
