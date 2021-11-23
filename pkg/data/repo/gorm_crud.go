@@ -117,9 +117,9 @@ func (g GormCrud) FindAllBy(ctx context.Context, dest interface{}, condition Con
 	})
 }
 
-func (g GormCrud) CountAll(ctx context.Context) (int, error) {
+func (g GormCrud) CountAll(ctx context.Context, options...Option) (int, error) {
 	var ret int64
-	e := g.execute(ctx, nil, nil, func(db *gorm.DB) *gorm.DB {
+	e := g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Count(&ret)
 	})
 	if e != nil {
@@ -128,9 +128,9 @@ func (g GormCrud) CountAll(ctx context.Context) (int, error) {
 	return int(ret), nil
 }
 
-func (g GormCrud) CountBy(ctx context.Context, condition Condition) (int, error) {
+func (g GormCrud) CountBy(ctx context.Context, condition Condition, options...Option) (int, error) {
 	var ret int64
-	e := g.execute(ctx, condition, nil, func(db *gorm.DB) *gorm.DB {
+	e := g.execute(ctx, condition, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Count(&ret)
 	})
 	if e != nil {
@@ -173,19 +173,19 @@ func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, 
 	})
 }
 
-func (g GormCrud) Delete(ctx context.Context, v interface{}) error {
+func (g GormCrud) Delete(ctx context.Context, v interface{}, options...Option) error {
 	if !g.isSupportedValue(v, genericModelWrite) {
 		return ErrorInvalidCrudParam.
 			WithMessage("%T is not a valid value for %s, requires %s", v, "Delete", "*Struct, []*Struct or []Struct")
 	}
 
-	return g.execute(ctx, nil, nil, func(db *gorm.DB) *gorm.DB {
+	return g.execute(ctx, nil, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Delete(v)
 	})
 }
 
-func (g GormCrud) DeleteBy(ctx context.Context, condition Condition) error {
-	return g.execute(ctx, condition, nil, func(db *gorm.DB) *gorm.DB {
+func (g GormCrud) DeleteBy(ctx context.Context, condition Condition, options...Option) error {
+	return g.execute(ctx, condition, options, func(db *gorm.DB) *gorm.DB {
 		return db.Model(g.model).Delete(g.model)
 	})
 }
@@ -226,7 +226,7 @@ func (g GormCrud) execute(ctx context.Context, condition Condition, options []Op
 	return nil
 }
 
-func toScopes(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
+func optsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
 	scopes := make([]func(*gorm.DB)*gorm.DB, 0, len(opts))
 	for _, v := range opts {
 		switch rv := reflect.ValueOf(v); rv.Kind() {
@@ -236,7 +236,7 @@ func toScopes(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
 			for i := 0; i < size; i++ {
 				slice[i] = rv.Index(i).Interface()
 			}
-			sub, e := toScopes(slice)
+			sub, e := optsToDBFuncs(slice)
 			if e != nil {
 				return nil, e
 			}
@@ -260,44 +260,67 @@ func applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
 		return db, nil
 	}
 
-	scopes, e := toScopes(opts)
+	funcs, e := optsToDBFuncs(opts)
 	if e != nil {
 		return nil, e
 	}
-	// Note, we choose to apply scopes by our self instead of using db.Scopes(...),
+	// Note, we choose to apply funcs by our self instead of using db.Scopes(...),
 	// because we don't want to confuse GORM with other scopes added else where
-	for _, fn := range scopes {
+	for _, fn := range funcs {
 		db = fn(db)
 	}
 	return db, nil
+}
+
+func conditionToDBFuncs(condition Condition) ([]func(*gorm.DB)*gorm.DB, error) {
+	var scopes []func(*gorm.DB)*gorm.DB
+	switch cv := reflect.ValueOf(condition); cv.Kind() {
+	case reflect.Slice, reflect.Array:
+		size := cv.Len()
+		scopes = make([]func(*gorm.DB)*gorm.DB, 0, size)
+		for i := 0; i < size; i++ {
+			sub, e := conditionToDBFuncs(cv.Index(i).Interface())
+			if e != nil {
+				return nil, e
+			}
+			scopes = append(scopes, sub...)
+		}
+	default:
+		var scope func(*gorm.DB)*gorm.DB
+		switch where := condition.(type) {
+		case gormOptions:
+			scope = where
+		case func(*gorm.DB) *gorm.DB:
+			scope = where
+		case clause.Where:
+			scope = func(db *gorm.DB) *gorm.DB {
+				return db.Clauses(where)
+			}
+		default:
+			scope = func(db *gorm.DB) *gorm.DB {
+				return db.Where(where)
+			}
+		}
+		scopes = []func(*gorm.DB)*gorm.DB{scope}
+	}
+
+	return scopes, nil
 }
 
 func applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, error) {
 	if condition == nil {
 		return db, nil
 	}
-	var e error
-	switch cv := reflect.ValueOf(condition); cv.Kind() {
-	case reflect.Slice, reflect.Array:
-		size := cv.Len()
-		for i := 0; i < size; i++ {
-			if db, e = applyCondition(db, cv.Index(i).Interface()); e != nil {
-				return nil, e
-			}
-		}
-	default:
-		switch where := condition.(type) {
-		case gormOptions:
-			db = where(db)
-		case func(*gorm.DB) *gorm.DB:
-			db = where(db)
-		case clause.Where:
-			db = db.Clauses(where)
-		default:
-			db = db.Where(where)
-		}
-	}
 
+	funcs, e := conditionToDBFuncs(condition)
+	if e != nil {
+		return nil, e
+	}
+	// Note, we choose to apply funcs by our self instead of using db.Scopes(...),
+	// because we don't want to confuse GORM with other scopes added else where
+	for _, fn := range funcs {
+		db = fn(db)
+	}
 	return db, nil
 }
 

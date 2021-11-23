@@ -25,14 +25,15 @@ func FindStructField(sType reflect.Type, matcher func(t reflect.StructField) boo
 	// go through fields
 	for i := t.NumField() - 1; i >=0; i-- {
 		f := t.Field(i)
+		if ok := matcher(f); ok {
+			return f, true
+		}
 		if f.Anonymous {
 			// inspect embedded fields
 			if sub, ok := FindStructField(f.Type, matcher); ok {
 				sub.Index = append(f.Index, sub.Index...)
 				return sub, true
 			}
-		} else if ok := matcher(f); ok {
-			return f, true
 		}
 	}
 	return
@@ -50,6 +51,9 @@ func ListStructField(sType reflect.Type, matcher func(t reflect.StructField) boo
 	// go through fields
 	for i := t.NumField() - 1; i >=0; i-- {
 		f := t.Field(i)
+		if ok := matcher(f); ok {
+			ret = append(ret, f)
+		}
 		if f.Anonymous {
 			// inspect embedded fields
 			if sub := ListStructField(f.Type, matcher); len(sub) != 0 {
@@ -59,8 +63,6 @@ func ListStructField(sType reflect.Type, matcher func(t reflect.StructField) boo
 				}
 				return sub
 			}
-		} else if ok := matcher(f); ok {
-			ret = append(ret, f)
 		}
 	}
 	return
