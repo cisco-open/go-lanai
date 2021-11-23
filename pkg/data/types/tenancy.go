@@ -85,6 +85,19 @@ func TenancyCheck(flags ...TenancyCheckFlag) func(*gorm.DB) *gorm.DB {
 // when crating/updating. Tenancy implements
 // - callbacks.BeforeCreateInterface
 // - callbacks.BeforeUpdateInterface
+// When used as an embedded type, tag `filter` can be used to override default tenancy check behavior:
+// - `filter:"w"`: 	create/update/delete are enforced (Default mode)
+// - `filter:"rw"`: CRUD operations are all enforced,
+//					this mode filters result of any Select/Update/Delete query based on current security context
+// - `filter:"-"`: 	filtering is disabled. Note: setting TenantID to in-accessible tenant is still enforced.
+//					to disable TenantID value check, use SkipTenancyCheck
+// e.g.
+// <code>
+// type TenancyModel struct {
+//		ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+//		Tenancy    `filter:"rw"`
+// }
+// </code>
 type Tenancy struct {
 	TenantID   uuid.UUID  `gorm:"type:KeyID;not null"`
 	TenantPath TenantPath `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
