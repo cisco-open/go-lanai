@@ -3,6 +3,7 @@ package repo
 import (
 	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type gormOptions func(*gorm.DB) *gorm.DB
@@ -112,15 +113,6 @@ func SelectOption(query interface{}, args ...interface{}) Option {
 	})
 }
 
-// SortOption specify order when retrieve records from database
-// e.g. SortOption("name DESC")
-//      SortOption(clause.OrderByColumn{Column: clause.Column{Name: "name"}, Desc: true})
-func SortOption(value interface{}) Option {
-	return gormOptions(func(db *gorm.DB) *gorm.DB {
-		return db.Order(value)
-	})
-}
-
 // PageOption specify order when retrieve records from database
 // page = page number started with 0
 // size = page size (# of records per page)
@@ -131,3 +123,49 @@ func PageOption(page, size int) Option {
 	})
 }
 
+// SortOption specify order when retrieve records from database
+// e.g. SortOption("name DESC")
+//      SortOption(clause.OrderByColumn{Column: clause.Column{Name: "name"}, Desc: true})
+func SortOption(value interface{}) Option {
+	return gormOptions(func(db *gorm.DB) *gorm.DB {
+		return db.Order(value)
+	})
+}
+
+// SortByField an Option to sort by given model field
+// e.g. SortOption("name DESC")
+//      SortOption(clause.OrderByColumn{Column: clause.Column{Name: "name"}, Desc: true})
+func SortByField(fieldName string, desc bool) Option {
+	return gormOptions(func(db *gorm.DB) *gorm.DB {
+		if e := requireSchema(db); e != nil {
+			db.Error = ErrorUnsupportedOptions.WithMessage("SortByField not supported in this usage: %v", e)
+			return db
+		}
+		col, e := toColumn(db.Statement.Schema, fieldName)
+		if e != nil {
+			db.Error = ErrorUnsupportedOptions.
+				WithMessage("SortByField error: %v", e)
+			return db
+		}
+		return db.Order(clause.OrderByColumn{
+			Column: *col,
+			Desc: desc,
+		})
+	})
+}
+
+/***********************
+	Helpers
+ ***********************/
+
+func requireSchema(db *gorm.DB) error {
+	switch {
+	case db.Statement.Schema == nil && db.Statement.Model == nil:
+		return fmt.Errorf("schema/model is not available")
+	case db.Statement.Schema == nil:
+		if e := db.Statement.Parse(db.Statement.Model); e != nil {
+			return fmt.Errorf("failed to parse schema - %v", e)
+		}
+	}
+	return nil
+}
