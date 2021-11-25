@@ -37,10 +37,7 @@ func (f GormFactory) NewGormApi(options...interface{}) GormApi {
 			api = api.WithSession(&opt)
 		case *gorm.Session:
 			api = api.WithSession(opt)
-		default:
-			continue
 		}
-		break
 	}
 	return api
 }

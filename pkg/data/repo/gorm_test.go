@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -86,7 +87,9 @@ func TestGormCRUDRepository(t *testing.T) {
 		test.GomegaSubTest(SubTestUpdates(di), "TestUpdates"),
 		test.GomegaSubTest(SubTestDelete(di), "TestDelete"),
 		test.GomegaSubTest(SubTestRepoSyntax(di), "TestRepoSyntax"),
-		test.GomegaSubTest(SubTestSortByField(di), "TestSortByField"),
+		test.GomegaSubTest(SubTestPageAndSort(di), "TestPageAndSort"),
+		test.GomegaSubTest(SubTestTransaction(di), "TestTransaction"),
+		test.GomegaSubTest(SubTestUtilFunctions(di), "TestUtilFunctions"),
 	)
 }
 
@@ -118,7 +121,7 @@ func SubTestSchemaResolverDirect(di *testDI) test.GomegaSubTestFunc {
 			To(Equal(""), "ColumnName of unknown field should be empty")
 		g.Expect(di.Repo.ColumnDataType("Unknown")).
 			To(Equal(""), "ColumnDataType of unknown field should be empty")
-		
+
 		g.Expect(di.Repo.(GormSchemaResolver).Schema()).
 			To(Not(BeNil()), "Schema() should be correct")
 	}
@@ -190,7 +193,7 @@ func SubTestFindOne(di *testDI) test.GomegaSubTestFunc {
 		var conditions []Condition
 		// find by id
 		e = di.Repo.FindById(ctx, &model, modelIDs[0],
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
 		)
 		g.Expect(e).To(Succeed(), "FindById shouldn't return error")
 		assertFullyFetchedTestModel(&model, g, "FindById")
@@ -198,14 +201,14 @@ func SubTestFindOne(di *testDI) test.GomegaSubTestFunc {
 		// find one
 		model = TestModel{}
 		conditions = []Condition{
-			WhereCondition("test_repo_models.search > 0"),
+			Where("test_repo_models.search > 0"),
 			clause.Where{Exprs: []clause.Expression{clause.Lt{
 				Column: clause.Column{Table: clause.CurrentTable, Name: di.Repo.ColumnName("SearchIdx")},
 				Value:  2,
 			}}},
 		}
 		e = di.Repo.FindOneBy(ctx, &model, conditions,
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
 		)
 		g.Expect(e).To(Succeed(), "FindOneBy shouldn't return error")
 		g.Expect(model.ID).To(BeEquivalentTo(modelIDs[1]), "FindOneBy return correct result")
@@ -216,7 +219,7 @@ func SubTestFindOne(di *testDI) test.GomegaSubTestFunc {
 			`"ManyToOne"."search" = 9999`,
 		}
 		e = di.Repo.FindOneBy(ctx, &model, conditions,
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
 		)
 		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "FindOneBy should return RecordNotFound error")
 	}
@@ -230,7 +233,7 @@ func SubTestFindAll(di *testDI) test.GomegaSubTestFunc {
 		// find all
 		models = nil
 		e = di.Repo.FindAll(ctx, &models,
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
 		)
 		g.Expect(e).To(Succeed(), "FindAll shouldn't return error")
 		g.Expect(models).To(HaveLen(len(modelIDs)), "FindAll should returns correct number of records")
@@ -240,7 +243,7 @@ func SubTestFindAll(di *testDI) test.GomegaSubTestFunc {
 
 		models = nil
 		e = di.Repo.FindAll(ctx, &models,
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
 		)
 		g.Expect(e).To(Succeed(), "FindAll shouldn't return error")
 		g.Expect(models).To(HaveLen(len(modelIDs)), "FindAll should returns correct number of records")
@@ -251,8 +254,8 @@ func SubTestFindAll(di *testDI) test.GomegaSubTestFunc {
 		// find all paginated
 		models = nil
 		e = di.Repo.FindAll(ctx, &models,
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
-			PageOption(1, 5),
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
+			Page(1, 5),
 		)
 		g.Expect(e).To(Succeed(), "paginated FindAll shouldn't return error")
 		g.Expect(models).To(HaveLen(4), "paginated FindAll should returns correct number of records")
@@ -266,7 +269,7 @@ func SubTestFindAll(di *testDI) test.GomegaSubTestFunc {
 			`test_repo_models.search > 0 AND "OneToOne".search > 0`,
 		}
 		e = di.Repo.FindAllBy(ctx, &models, conditions,
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
 		)
 		g.Expect(e).To(Succeed(), "paginated FindAllBy shouldn't return error")
 		g.Expect(models).To(HaveLen(7), "paginated FindAllBy should returns correct number of records")
@@ -277,8 +280,8 @@ func SubTestFindAll(di *testDI) test.GomegaSubTestFunc {
 		// find all by, paginated
 		models = nil
 		e = di.Repo.FindAllBy(ctx, &models, conditions,
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
-			PageOption(1, 5),
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
+			Page(1, 5),
 		)
 		g.Expect(e).To(Succeed(), "FindAllBy shouldn't return error")
 		g.Expect(models).To(HaveLen(2), "FindAllBy should returns correct number of records")
@@ -299,7 +302,7 @@ func SubTestCount(di *testDI) test.GomegaSubTestFunc {
 		conditions := []Condition{
 			`"ManyToOne".search > 0`,
 		}
-		count, e = di.Repo.CountBy(ctx, conditions, JoinsOption("ManyToOne"))
+		count, e = di.Repo.CountBy(ctx, conditions, Joins("ManyToOne"))
 		g.Expect(e).To(Succeed(), "CountBy shouldn't return error")
 		g.Expect(count).To(BeEquivalentTo(6), "CountBy should return correct result")
 	}
@@ -318,7 +321,7 @@ func SubTestCreate(di *testDI) test.GomegaSubTestFunc {
 		rs := di.DB.WithContext(ctx).Create(otoModels)
 		g.Expect(rs.Error).To(Succeed(), "Create OTO models shouldn't return error")
 
-		e = di.Repo.Create(ctx, models, OmitOption("OneToOne"), OmitOption("ManyToOne"))
+		e = di.Repo.Create(ctx, models, Omit("OneToOne"), Omit("ManyToOne"))
 		g.Expect(e).To(Succeed(), "Create shouldn't return error")
 	}
 }
@@ -376,7 +379,7 @@ func SubTestDelete(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "re-fetch after Delete should yield RecordNotFound")
 
 		// delete by
-		e = di.Repo.DeleteBy(ctx, WhereCondition(`"test_repo_models"."search" < ?`, len(modelIDs) - 1))
+		e = di.Repo.DeleteBy(ctx, Where(`"test_repo_models"."search" < ?`, len(modelIDs) - 1))
 		g.Expect(e).To(Succeed(), "DeleteBy shouldn't return error")
 
 		// fetch again and validate
@@ -384,6 +387,55 @@ func SubTestDelete(di *testDI) test.GomegaSubTestFunc {
 		count, e = di.Repo.CountAll(ctx)
 		g.Expect(e).To(Succeed(), "CountAll after Delete shouldn't return error")
 		g.Expect(count).To(BeEquivalentTo(1), "Delete should result in 1 record left")
+	}
+}
+
+func SubTestPageAndSort(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		var models []*TestModel
+		// by direct field
+		e = di.Repo.FindAll(ctx, &models, SortBy("SearchIdx", true))
+		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
+		g.Expect(models).To(HaveLen(len(modelIDs)), "sort by field shouldn't change model count")
+		g.Expect(models[0].SearchIdx).To(BeEquivalentTo(len(modelIDs)-1), "sorted result's first item should be correct")
+
+		// by to-one relation field
+		models = nil
+		e = di.Repo.FindAll(ctx, &models, Joins("ManyToOne"), SortBy("ManyToOne.RelationSearch", true))
+		g.Expect(e).To(Succeed(), "sort by relation's field shouldn't return error")
+		g.Expect(models).To(HaveLen(len(modelIDs)), "sort by relation's field shouldn't change model count")
+		g.Expect(models[0].ManyToOne.RelationSearch).To(BeEquivalentTo(len(mtoModelIDs)-1), "sorted result's first item should be correct")
+
+		// by column
+		e = di.Repo.FindAll(ctx, &models, Sort("search DESC"))
+		g.Expect(e).To(Succeed(), "sort by column shouldn't return error")
+		g.Expect(models).To(HaveLen(len(modelIDs)), "sort by column shouldn't change model count")
+		g.Expect(models[0].SearchIdx).To(BeEquivalentTo(len(modelIDs)-1), "sorted result's first item should be correct")
+
+		// page + sort
+		models = nil
+		e = di.Repo.FindAll(ctx, &models, Page(1, 2), SortBy("SearchIdx", false))
+		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
+		g.Expect(models).To(HaveLen(2), "paged result should have correct count")
+		g.Expect(models[0].SearchIdx).To(BeEquivalentTo(2), "sorted page result should have correct order")
+
+		// by unselected field
+		e = di.Repo.FindAll(ctx, &models, Select("Value"), SortBy("SearchIdx", true))
+		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
+		g.Expect(models).To(HaveLen(len(modelIDs)), "sort by field shouldn't change model count")
+		expected := fmt.Sprintf("Test %d", len(modelIDs)-1)
+		g.Expect(models[0].Value).To(Equal(expected), "sorted result's first item should be correct even when sorted by field is not selected")
+
+		// no model
+		// note: we know that Save doesn't support SortBy
+		e = di.Repo.Save(ctx, models[0], SortBy("Whatever", false))
+		g.Expect(e).To(HaveOccurred(), "SortBy should return error when no model/schema is provided")
+
+		// bad field
+		models = nil
+		e = di.Repo.FindAll(ctx, &models, SortBy("BadField.WhatEver", false))
+		g.Expect(e).To(HaveOccurred(), "SortBy with invalid field name should return error")
 	}
 }
 
@@ -400,8 +452,8 @@ func SubTestRepoSyntax(di *testDI) test.GomegaSubTestFunc {
 		// slice of options
 		model = TestModel{}
 		opts = []Option{
-			JoinsOption("OneToOne"), JoinsOption("ManyToOne"),
-			PreloadOption("ManyToOne.RelatedMTMModels"),
+			Joins("OneToOne"), Joins("ManyToOne"),
+			Preload("ManyToOne.RelatedMTMModels"),
 			noop,
 		}
 		e = di.Repo.FindById(ctx, &model, modelIDs[0].String(), opts)
@@ -443,26 +495,75 @@ func SubTestRepoSyntax(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestSortByField(di *testDI) test.GomegaSubTestFunc {
+func SubTestTransaction(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(BeTrue(), "repository should also GormApi")
+
+		const newValue = "Updated"
 		var e error
-		var models []*TestModel
-		// by direct field
-		e = di.Repo.FindAll(ctx, &models, SortByField("SearchIdx", false))
-		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
-		g.Expect(models).To(HaveLen(9), "sort by field shouldn't change model count")
+		mockedError := errors.New("just an error")
+		// nested transaction
+		e = tx.Transaction(ctx, func(ctx context.Context) error {
+			db := gormRepo.DB(ctx)
+			g.Expect(db).To(Not(BeNil()), "DB(ctx) in transaction shouldn't be nil")
+			// try update
+			rs := db.Model(&TestModel{ID: modelIDs[0]}).Updates(&TestModel{Value: newValue})
+			g.Expect(rs.Error).To(Succeed(), "update within top transaction shouldn't faile")
+			return gormRepo.Transaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
+				g.Expect(tx).To(Not(BeNil()), "gorm.DB in transaction shouldn't be nil")
+				// try update
+				rs := db.Model(&TestModel{ID: modelIDs[1]}).Updates(&TestModel{Value: newValue})
+				g.Expect(rs.Error).To(Succeed(), "update within nested transaction shouldn't faile")
+				return mockedError
+			})
+		})
+		g.Expect(e).To(BeIdenticalTo(mockedError))
 
-		// by to-one relation field
-		models = nil
-		e = di.Repo.FindAll(ctx, &models, JoinsOption("ManyToOne"), SortByField("ManyToOne.RelationSearch", false))
-		g.Expect(e).To(Succeed(), "sort by relation's field shouldn't return error")
-		g.Expect(models).To(HaveLen(9), "sort by relation's field shouldn't change model count")
+		// verify everything rolled back
+		var model TestModel
+		e = di.Repo.FindById(ctx, &model, modelIDs[0])
+		g.Expect(e).To(Succeed(), "finding first model shouldn't fail")
+		g.Expect(model.Value).ToNot(Equal(newValue), "first model shouldn't get updated")
 
-		// no model
-		// note: we know that Save doesn't set model to options
-		e = di.Repo.Save(ctx, models[0], SortByField("Whatever", false))
-		g.Expect(e).To(HaveOccurred(), "SortByField should return error when no model/schema is provided")
+		model = TestModel{}
+		e = di.Repo.FindById(ctx, &model, modelIDs[1])
+		g.Expect(e).To(Succeed(), "finding second model shouldn't fail")
+		g.Expect(model.Value).ToNot(Equal(newValue), "second model shouldn't get updated")
+	}
+}
 
+func SubTestUtilFunctions(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// MustApply...
+		var db, rs *gorm.DB
+		var model TestModel
+		cond1 := Where("test_repo_models.search > 0")
+		cond2 := clause.Where{Exprs: []clause.Expression{clause.Lt{
+			Column: clause.Column{Table: clause.CurrentTable, Name: di.Repo.ColumnName("SearchIdx")},
+			Value:  2,
+		}}}
+		opts :=[]Option{
+			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
+		}
+		db = di.Repo.(GormApi).DB(ctx)
+		db = MustApplyConditions(db, cond1, cond2)
+		db = MustApplyOptions(db, opts)
+		rs = db.Take(&model)
+		g.Expect(rs.Error).To(Succeed(), "DB.Take() shouldn't return error")
+		g.Expect(model.ID).To(BeEquivalentTo(modelIDs[1]), "DB.Take() return correct result")
+		assertFullyFetchedTestModel(&model, g, "DB.Take()")
+
+		// AsGormScope
+		model = TestModel{}
+		rs = di.Repo.(GormApi).DB(ctx).
+			Scopes(AsGormScope(opts)).
+			Scopes(AsGormScope(cond1)).
+			Scopes(AsGormScope(cond2)).
+			Take(&model)
+		g.Expect(rs.Error).To(Succeed(), "DB.Take() shouldn't return error")
+		g.Expect(model.ID).To(BeEquivalentTo(modelIDs[1]), "DB.Take() return correct result")
+		assertFullyFetchedTestModel(&model, g, "DB.Take()")
 	}
 }
 
@@ -574,7 +675,10 @@ func createMainModel(id uuid.UUID, i int) (*TestModel, *TestOTOModel) {
 type TestRepository CrudRepository
 
 func NewTestRepository(factory Factory) TestRepository {
-	return factory.NewCRUD(&TestModel{})
+	return factory.NewCRUD(&TestModel{},
+		&gorm.Session{CreateBatchSize: 20},
+		gorm.Session{NewDB: true},
+	)
 }
 
 /*************************

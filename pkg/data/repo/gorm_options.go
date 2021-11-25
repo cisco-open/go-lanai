@@ -1,5 +1,6 @@
 package repo
 
+import "C"
 import (
 	"fmt"
 	"gorm.io/gorm"
@@ -44,14 +45,12 @@ func AsGormScope(i interface{}) func(*gorm.DB)*gorm.DB {
 		funcs = v
 	case []Option:
 		funcs, e = optsToDBFuncs(v)
-	case Option:
+	case []Condition, clause.Where:
+		funcs, e = conditionToDBFuncs(Condition(i))
+	case gormOptions:
 		funcs, e = optsToDBFuncs([]Option{v})
-	case Condition:
-		funcs, e = conditionToDBFuncs(v)
-	case []Condition:
-		funcs, e = conditionToDBFuncs(Condition(v))
 	default:
-		e = fmt.Errorf("unsupported interface [%T] to be converted to GORM scope", i)
+		funcs, e = conditionToDBFuncs(Condition(i))
 	}
 
 	// wrap up
@@ -76,75 +75,93 @@ func AsGormScope(i interface{}) func(*gorm.DB)*gorm.DB {
 	Options & Conditions
  **************************/
 
-// WhereCondition generic condition using gorm.DB.Where()
-func WhereCondition(query interface{}, args ...interface{}) Condition {
+// Where is a Condition that directly bridge parameters to (*gorm.DB).Where()
+func Where(query interface{}, args ...interface{}) Condition {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Where(query, args...)
 	})
 }
 
-// JoinsOption used for Read
-func JoinsOption(query string, args ...interface{}) Option {
+// Joins is an Option for Find* operations, typically used to populate "ToOne" relationship using JOIN clause
+// e.g. CrudRepository.FindById(ctx, &user, Joins("Status"))
+//
+// When used on "ToMany", JOIN query is usually used instead of field
+// e.g.	CrudRepository.FindById(ctx, &user, Joins("JOIN address ON address.user_id = users.id AND address.country = ?", "Canada"))
+func Joins(query string, args ...interface{}) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Joins(query, args...)
 	})
 }
 
-// PreloadOption used for Read
-func PreloadOption(query string, args ...interface{}) Option {
+// Preload is an Option for Find* operations, typically used to populate relationship fields using separate queries
+// e.g.
+//		CrudRepository.FindAll(ctx, &user, Preload("Roles.Permissions"))
+// 		CrudRepository.FindAll(ctx, &user, Preload("Roles", "role_name NOT IN (?)", "excluded"))
+func Preload(query string, args ...interface{}) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Preload(query, args...)
 	})
 }
 
-// OmitOption specify fields that you want to ignore when creating, updating and querying
-// mostly used for Write
-func OmitOption(fields ...string) Option {
+// Omit is an Option specifying fields that you want to ignore when creating, updating and querying.
+// When supported by gorm.io, this Option is a direct bridge to (*gorm.DB).Omit().
+// Please see https://gorm.io/docs/ for detailed usage
+func Omit(fields ...string) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Omit(fields...)
 	})
 }
 
-// SelectOption specify fields that you want when querying, creating, updating
-// used for Read and Write
-func SelectOption(query interface{}, args ...interface{}) Option {
+// Select is an Option specify fields that you want when querying, creating, updating.
+// This Option has different meaning when used for different operations (query vs create vs update vs save vs delete)
+// When supported by gorm.io, this Option is a direct bridge to (*gorm.DB).Select().
+// // Please see https://gorm.io/docs/ for detailed usage
+func Select(query interface{}, args ...interface{}) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Select(query, args...)
 	})
 }
 
-// PageOption specify order when retrieve records from database
-// page = page number started with 0
-// size = page size (# of records per page)
-func PageOption(page, size int) Option {
+// Page is an Option specifying pagination when retrieve records from database
+// page: page number started with 0
+// size: page size (# of records per page)
+// e.g.
+//		CrudRepository.FindAll(ctx, &user, Page(2, 10))
+//		CrudRepository.FindAllBy(ctx, &user, Where(...), Page(2, 10))
+func Page(page, size int) Option {
 	offset := page * size
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Offset(offset).Limit(size)
 	})
 }
 
-// SortOption specify order when retrieve records from database
-// e.g. SortOption("name DESC")
-//      SortOption(clause.OrderByColumn{Column: clause.Column{Name: "name"}, Desc: true})
-func SortOption(value interface{}) Option {
+// Sort is an Option specifying order when retrieve records from database by using column.
+// This Option is typically used together with Page option
+// When supported by gorm.io, this Option is a direct bridge to (*gorm.DB).Order()
+// e.g.
+//		CrudRepository.FindAll(ctx, &user, Page(2, 10), Sort("name DESC"))
+//		CrudRepository.FindAllBy(ctx, &user, Where(...), Page(2, 10), Sort(clause.OrderByColumn{Column: clause.Column{Name: "name"}, Desc: true}))
+func Sort(value interface{}) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		return db.Order(value)
 	})
 }
 
-// SortByField an Option to sort by given model field
-// e.g. SortByField("FieldName", false)
-// 		SortByField("OneToOne.FieldName", false)
-func SortByField(fieldName string, desc bool) Option {
+// SortBy an Option similar to Sort, but specifying model's field name
+// This Option also support order by direct "ToOne" relation's field when used together with Joins.
+// e.g.
+//		CrudRepository.FindAll(ctx, &user, Joins("Profile"), Page(2, 10), SortBy("Profile.FirstName", false))
+//		CrudRepository.FindAllBy(ctx, &user, Where(...), Page(2, 10), SortBy("Username", true))
+func SortBy(fieldName string, desc bool) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		if e := requireSchema(db); e != nil {
-			_ = db.AddError(ErrorUnsupportedOptions.WithMessage("SortByField not supported in this usage: %v", e))
+			_ = db.AddError(ErrorUnsupportedOptions.WithMessage("SortBy not supported in this usage: %v", e))
 			return db
 		}
 		col, e := toColumn(db.Statement.Schema, fieldName)
 		if e != nil {
 			_ = db.AddError(ErrorUnsupportedOptions.
-				WithMessage("SortByField error: %v", e))
+				WithMessage("SortBy error: %v", e))
 			return db
 		}
 		return db.Order(clause.OrderByColumn{
