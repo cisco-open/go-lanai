@@ -133,18 +133,18 @@ func SortOption(value interface{}) Option {
 }
 
 // SortByField an Option to sort by given model field
-// e.g. SortOption("name DESC")
-//      SortOption(clause.OrderByColumn{Column: clause.Column{Name: "name"}, Desc: true})
+// e.g. SortByField("FieldName", false)
+// 		SortByField("OneToOne.FieldName", false)
 func SortByField(fieldName string, desc bool) Option {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
 		if e := requireSchema(db); e != nil {
-			db.Error = ErrorUnsupportedOptions.WithMessage("SortByField not supported in this usage: %v", e)
+			_ = db.AddError(ErrorUnsupportedOptions.WithMessage("SortByField not supported in this usage: %v", e))
 			return db
 		}
 		col, e := toColumn(db.Statement.Schema, fieldName)
 		if e != nil {
-			db.Error = ErrorUnsupportedOptions.
-				WithMessage("SortByField error: %v", e)
+			_ = db.AddError(ErrorUnsupportedOptions.
+				WithMessage("SortByField error: %v", e))
 			return db
 		}
 		return db.Order(clause.OrderByColumn{

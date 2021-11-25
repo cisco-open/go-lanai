@@ -16,6 +16,7 @@ import (
 	"gorm.io/gorm/clause"
 	"reflect"
 	"testing"
+	"time"
 )
 
 var (
@@ -64,6 +65,7 @@ func TestGormCRUDRepository(t *testing.T) {
 		apptest.Bootstrap(),
 		dbtest.WithDBPlayback("testdb"),
 		apptest.WithModules(Module),
+		apptest.WithTimeout(time.Minute),
 		apptest.WithFxOptions(
 			fx.Provide(NewTestRepository),
 		),
@@ -76,7 +78,14 @@ func TestGormCRUDRepository(t *testing.T) {
 		test.GomegaSubTest(SubTestSchemaResolverDirect(di), "TestSchemaResolverDirect"),
 		test.GomegaSubTest(SubTestSchemaResolverIndirect(di), "TestSchemaResolverIndirect"),
 		test.GomegaSubTest(SubTestSchemaResolverMultiLvl(di), "TestSchemaResolverMultiLvl"),
-		test.GomegaSubTest(SubTestFind(di), "TestFind"),
+		test.GomegaSubTest(SubTestFindOne(di), "TestFindOne"),
+		test.GomegaSubTest(SubTestFindAll(di), "TestFindAll"),
+		test.GomegaSubTest(SubTestCount(di), "TestFindCount"),
+		test.GomegaSubTest(SubTestCreate(di), "TestCreate"),
+		test.GomegaSubTest(SubTestSave(di), "TestSave"),
+		test.GomegaSubTest(SubTestUpdates(di), "TestUpdates"),
+		test.GomegaSubTest(SubTestDelete(di), "TestDelete"),
+		test.GomegaSubTest(SubTestRepoSyntax(di), "TestRepoSyntax"),
 		test.GomegaSubTest(SubTestSortByField(di), "TestSortByField"),
 	)
 }
@@ -104,6 +113,14 @@ func SubTestSchemaResolverDirect(di *testDI) test.GomegaSubTestFunc {
 			To(Equal("value"), "ColumnName of direct field should be correct")
 		g.Expect(di.Repo.ColumnDataType("Value")).
 			To(Equal("string"), "ColumnDataType of direct field should be correct")
+
+		g.Expect(di.Repo.ColumnName("Unknown")).
+			To(Equal(""), "ColumnName of unknown field should be empty")
+		g.Expect(di.Repo.ColumnDataType("Unknown")).
+			To(Equal(""), "ColumnDataType of unknown field should be empty")
+		
+		g.Expect(di.Repo.(GormSchemaResolver).Schema()).
+			To(Not(BeNil()), "Schema() should be correct")
 	}
 }
 
@@ -166,10 +183,9 @@ func SubTestSchemaResolverMultiLvl(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestFind(di *testDI) test.GomegaSubTestFunc {
+func SubTestFindOne(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
-		var models []*TestModel
 		var model TestModel
 		var conditions []Condition
 		// find by id
@@ -203,7 +219,14 @@ func SubTestFind(di *testDI) test.GomegaSubTestFunc {
 			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
 		)
 		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "FindOneBy should return RecordNotFound error")
+	}
+}
 
+func SubTestFindAll(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		var models []*TestModel
+		var conditions []Condition
 		// find all
 		models = nil
 		e = di.Repo.FindAll(ctx, &models,
@@ -215,6 +238,28 @@ func SubTestFind(di *testDI) test.GomegaSubTestFunc {
 			assertFullyFetchedTestModel(m, g, "for each model of FindAll")
 		}
 
+		models = nil
+		e = di.Repo.FindAll(ctx, &models,
+			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+		)
+		g.Expect(e).To(Succeed(), "FindAll shouldn't return error")
+		g.Expect(models).To(HaveLen(len(modelIDs)), "FindAll should returns correct number of records")
+		for _, m := range models {
+			assertFullyFetchedTestModel(m, g, "for each model of FindAll")
+		}
+
+		// find all paginated
+		models = nil
+		e = di.Repo.FindAll(ctx, &models,
+			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+			PageOption(1, 5),
+		)
+		g.Expect(e).To(Succeed(), "paginated FindAll shouldn't return error")
+		g.Expect(models).To(HaveLen(4), "paginated FindAll should returns correct number of records")
+		for _, m := range models {
+			assertFullyFetchedTestModel(m, g, "for each model of paginated FindAll")
+		}
+
 		// find all by
 		models = nil
 		conditions = []Condition{
@@ -223,48 +268,180 @@ func SubTestFind(di *testDI) test.GomegaSubTestFunc {
 		e = di.Repo.FindAllBy(ctx, &models, conditions,
 			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
 		)
+		g.Expect(e).To(Succeed(), "paginated FindAllBy shouldn't return error")
+		g.Expect(models).To(HaveLen(7), "paginated FindAllBy should returns correct number of records")
+		for _, m := range models {
+			assertFullyFetchedTestModel(m, g, "for each model of paginated FindAllBy")
+		}
+
+		// find all by, paginated
+		models = nil
+		e = di.Repo.FindAllBy(ctx, &models, conditions,
+			JoinsOption("OneToOne"), JoinsOption("ManyToOne"), PreloadOption("ManyToOne.RelatedMTMModels"),
+			PageOption(1, 5),
+		)
 		g.Expect(e).To(Succeed(), "FindAllBy shouldn't return error")
-		g.Expect(models).To(HaveLen(7), "FindAllBy should returns correct number of records")
+		g.Expect(models).To(HaveLen(2), "FindAllBy should returns correct number of records")
 		for _, m := range models {
 			assertFullyFetchedTestModel(m, g, "for each model of FindAllBy")
 		}
 	}
 }
 
-//func SubTestCount(di *testDI) test.GomegaSubTestFunc {
-//	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-//		var e error
-//		var models []*TestModel
-//	}
-//}
+func SubTestCount(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		var count int
+		count, e = di.Repo.CountAll(ctx)
+		g.Expect(e).To(Succeed(), "CountAll shouldn't return error")
+		g.Expect(count).To(BeEquivalentTo(len(modelIDs)), "CountAll should return correct result")
 
-//func SubTestCreate(di *testDI) test.GomegaSubTestFunc {
-//	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-//		var e error
-//		var models []*TestModel
-//	}
-//}
+		conditions := []Condition{
+			`"ManyToOne".search > 0`,
+		}
+		count, e = di.Repo.CountBy(ctx, conditions, JoinsOption("ManyToOne"))
+		g.Expect(e).To(Succeed(), "CountBy shouldn't return error")
+		g.Expect(count).To(BeEquivalentTo(6), "CountBy should return correct result")
+	}
+}
 
-//func SubTestSave(di *testDI) test.GomegaSubTestFunc {
-//	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-//		var e error
-//		var models []*TestModel
-//	}
-//}
+func SubTestCreate(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		var models []*TestModel
+		var otoModels []*TestOTOModel
+		for i := 0; i < 9; i++ {
+			m, oto := createMainModel(uuid.New(), i)
+			models = append(models, m)
+			otoModels = append(otoModels, oto)
+		}
+		rs := di.DB.WithContext(ctx).Create(otoModels)
+		g.Expect(rs.Error).To(Succeed(), "Create OTO models shouldn't return error")
 
-//func SubTestUpdates(di *testDI) test.GomegaSubTestFunc {
-//	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-//		var e error
-//		var models []*TestModel
-//	}
-//}
+		e = di.Repo.Create(ctx, models, OmitOption("OneToOne"), OmitOption("ManyToOne"))
+		g.Expect(e).To(Succeed(), "Create shouldn't return error")
+	}
+}
 
-//func SubTestDelete(di *testDI) test.GomegaSubTestFunc {
-//	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-//		var e error
-//		var models []*TestModel
-//	}
-//}
+func SubTestSave(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		var models []*TestModel
+		e = di.Repo.FindAll(ctx, &models)
+		g.Expect(e).To(Succeed(), "FindAll shouldn't return error")
+		g.Expect(models).To(Not(BeEmpty()), "FindAll should return some records")
+
+		// do save
+		for _, m := range models {
+			m.Value = "Updated Value"
+		}
+		e = di.Repo.Save(ctx, models)
+		g.Expect(e).To(Succeed(), "Save shouldn't return error")
+
+		// fetch again and validate
+		models = nil
+		e = di.Repo.FindAll(ctx, &models)
+		g.Expect(e).To(Succeed(), "FindAll shouldn't return error")
+		for _, m := range models {
+			g.Expect(m.Value).To(BeEquivalentTo("Updated Value"), "saved values should be correct when re-fetch")
+		}
+	}
+}
+
+func SubTestUpdates(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		id := modelIDs[0]
+		e = di.Repo.Update(ctx, &TestModel{ID: id}, &TestModel{Value: "Just Updated"})
+		g.Expect(e).To(Succeed(), "Update shouldn't return error")
+
+		var model TestModel
+		e = di.Repo.FindById(ctx, &model, id)
+		g.Expect(e).To(Succeed(), "FindById shouldn't return error")
+		g.Expect(model.Value).To(BeEquivalentTo("Just Updated"), "re-fetched value after Update should be correct")
+	}
+}
+
+func SubTestDelete(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+
+		// delete by id
+		id := modelIDs[0]
+		e = di.Repo.Delete(ctx, &TestModel{ID: id})
+		g.Expect(e).To(Succeed(), "Delete shouldn't return error")
+
+		var model TestModel
+		e = di.Repo.FindById(ctx, &model, id)
+		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "re-fetch after Delete should yield RecordNotFound")
+
+		// delete by
+		e = di.Repo.DeleteBy(ctx, WhereCondition(`"test_repo_models"."search" < ?`, len(modelIDs) - 1))
+		g.Expect(e).To(Succeed(), "DeleteBy shouldn't return error")
+
+		// fetch again and validate
+		var count int
+		count, e = di.Repo.CountAll(ctx)
+		g.Expect(e).To(Succeed(), "CountAll after Delete shouldn't return error")
+		g.Expect(count).To(BeEquivalentTo(1), "Delete should result in 1 record left")
+	}
+}
+
+func SubTestRepoSyntax(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		noop := func(db *gorm.DB) *gorm.DB{
+			return db
+		}
+		var e error
+		var model TestModel
+		var opts []Option
+		conditions := []Condition{noop}
+
+		// slice of options
+		model = TestModel{}
+		opts = []Option{
+			JoinsOption("OneToOne"), JoinsOption("ManyToOne"),
+			PreloadOption("ManyToOne.RelatedMTMModels"),
+			noop,
+		}
+		e = di.Repo.FindById(ctx, &model, modelIDs[0].String(), opts)
+		g.Expect(e).To(Succeed(), "FindById shouldn't return error")
+		g.Expect(model.ID).To(BeEquivalentTo(modelIDs[0]), "FindById return correct result")
+		assertFullyFetchedTestModel(&model, g, "FindById")
+
+		// invalid options
+		e = di.Repo.Create(ctx, &model, "unsupported option")
+		g.Expect(e).To(HaveOccurred(), "CrudRepository should return error when option type is unsupported")
+
+		// wrong model
+		var wrong TestOTOModel
+		var wrongSlice []*TestOTOModel
+		e = di.Repo.FindById(ctx, &wrong, uuid.New())
+		g.Expect(e).To(HaveOccurred(), "FindById should return error when wrong model is used")
+		e = di.Repo.FindOneBy(ctx, &wrong, conditions)
+		g.Expect(e).To(HaveOccurred(), "FindOneBy should return error when wrong model is used")
+		e = di.Repo.FindAll(ctx, &wrongSlice)
+		g.Expect(e).To(HaveOccurred(), "FindAll should return error when wrong model is used")
+		e = di.Repo.FindAllBy(ctx, &wrongSlice, conditions)
+		g.Expect(e).To(HaveOccurred(), "FindAllBy should return error when wrong model is used")
+		e = di.Repo.Create(ctx, &wrong)
+		g.Expect(e).To(HaveOccurred(), "Create should return error when wrong model is used")
+		e = di.Repo.Save(ctx, &wrong)
+		g.Expect(e).To(HaveOccurred(), "Save should return error when wrong model is used")
+		e = di.Repo.Update(ctx, &wrong, map[string]interface{}{})
+		g.Expect(e).To(HaveOccurred(), "Update should return error when wrong model is used")
+		e = di.Repo.Delete(ctx, &wrong, conditions)
+		g.Expect(e).To(HaveOccurred(), "Delete should return error when wrong model is used")
+
+		// nil model
+		e = di.Repo.FindById(ctx, nil, uuid.New())
+		g.Expect(e).To(HaveOccurred(), "CrudRepository should return error when nil model is used")
+
+		// truncate table
+		e = di.Repo.Truncate(ctx)
+		g.Expect(e).To(Succeed(), "Truncate shouldn't return error")
+	}
+}
 
 func SubTestSortByField(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
@@ -280,6 +457,12 @@ func SubTestSortByField(di *testDI) test.GomegaSubTestFunc {
 		e = di.Repo.FindAll(ctx, &models, JoinsOption("ManyToOne"), SortByField("ManyToOne.RelationSearch", false))
 		g.Expect(e).To(Succeed(), "sort by relation's field shouldn't return error")
 		g.Expect(models).To(HaveLen(9), "sort by relation's field shouldn't change model count")
+
+		// no model
+		// note: we know that Save doesn't set model to options
+		e = di.Repo.Save(ctx, models[0], SortByField("Whatever", false))
+		g.Expect(e).To(HaveOccurred(), "SortByField should return error when no model/schema is provided")
+
 	}
 }
 
@@ -315,8 +498,8 @@ func prepareRepoTestData(db *gorm.DB, g *gomega.WithT) {
 
 	// prepare models
 	mtoModels := prepareMTOModels()
-	mtmModels, relations := prepareMTMModels(mtoModels)
-	models, otoModels := prepareMainModels(mtoModels)
+	mtmModels, relations := prepareMTMModels()
+	models, otoModels := prepareMainModels()
 	for _, list := range []interface{}{mtoModels, mtmModels, relations, otoModels, models} {
 		rs = db.Create(list)
 		g.Expect(rs.Error).To(Succeed(), "create models shouldn't fail")
@@ -336,14 +519,14 @@ func prepareMTOModels() []*TestMTOModel {
 	return mtoModels
 }
 
-func prepareMTMModels(mtoModels []*TestMTOModel) ([]*TestMTMModel, []*TestMTMRelation) {
+func prepareMTMModels() ([]*TestMTMModel, []*TestMTMRelation) {
 	mtmModels := make([]*TestMTMModel, len(mtmModelIDs))
 	var relations []*TestMTMRelation
 	for i, id := range mtmModelIDs {
-		for j, m := range mtoModels {
+		for j, mtoId := range mtoModelIDs {
 			if j != i {
 				relations = append(relations, &TestMTMRelation{
-					MTOIModelD: m.ID,
+					MTOIModelD: mtoId,
 					MTMModelID: id,
 				})
 			}
@@ -357,26 +540,31 @@ func prepareMTMModels(mtoModels []*TestMTOModel) ([]*TestMTMModel, []*TestMTMRel
 	return mtmModels, relations
 }
 
-func prepareMainModels(mtoModels []*TestMTOModel) ([]*TestModel, []*TestOTOModel) {
+func prepareMainModels() ([]*TestModel, []*TestOTOModel) {
 	models := make([]*TestModel, len(modelIDs))
 	otoModels := make([]*TestOTOModel, len(modelIDs))
 	for i, id := range modelIDs {
-		refkey := utils.RandomString(8)
-		otoModels[i] = &TestOTOModel{
-			RefKey:         refkey,
-			RelationValue:  fmt.Sprintf("OTO %d", i),
-			RelationSearch: len(modelIDs) - i - 1,
-		}
-		mto := mtoModels[i%len(mtoModelIDs)]
-		models[i] = &TestModel{
-			ID:          id,
-			Value:       fmt.Sprintf("Test %d", i),
-			SearchIdx:   i,
-			OneToOneKey: refkey,
-			ManyToOneID: mto.ID,
-		}
+		models[i], otoModels[i] = createMainModel(id, i)
 	}
 	return models, otoModels
+}
+
+func createMainModel(id uuid.UUID, i int) (*TestModel, *TestOTOModel) {
+	refkey := utils.RandomString(8)
+	oto := &TestOTOModel{
+		RefKey:         refkey,
+		RelationValue:  fmt.Sprintf("OTO %d", i),
+		RelationSearch: len(modelIDs) - i - 1,
+	}
+	mtoId := mtoModelIDs[i%len(mtoModelIDs)]
+	main := &TestModel{
+		ID:          id,
+		Value:       fmt.Sprintf("Test %d", i),
+		SearchIdx:   i,
+		OneToOneKey: refkey,
+		ManyToOneID: mtoId,
+	}
+	return main, oto
 }
 
 /*************************
