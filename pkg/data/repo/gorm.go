@@ -38,8 +38,8 @@ func (g gormApi) WithSession(config *gorm.Session) GormApi {
 
 func (g gormApi) DB(ctx context.Context) *gorm.DB {
 	// tx support
-	if tx := tx.GormTxWithContext(ctx); tx != nil {
-		return tx
+	if t := tx.GormTxWithContext(ctx); t != nil {
+		return t
 	}
 
 	return g.db.WithContext(ctx)
@@ -47,10 +47,10 @@ func (g gormApi) DB(ctx context.Context) *gorm.DB {
 
 func (g gormApi) Transaction(ctx context.Context, txFunc TxWithGormFunc, opts ...*sql.TxOptions) error {
 	return g.txManager.Transaction(ctx, func(c context.Context) error {
-		tx := tx.GormTxWithContext(c)
-		if tx == nil {
+		t := tx.GormTxWithContext(c)
+		if t == nil {
 			return data.NewDataError(data.ErrorCodeInvalidTransaction, "gorm Tx is not found in context")
 		}
-		return txFunc(c, tx)
+		return txFunc(c, t)
 	}, opts...)
 }

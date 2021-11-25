@@ -1,7 +1,9 @@
 package repo
 
 import (
+	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 	"reflect"
 	"strings"
@@ -80,22 +82,34 @@ func (g gormSchemaResolver) Table() string {
 }
 
 func (g gormSchemaResolver) ColumnName(fieldName string) string {
-	if f := g.lookupField(fieldName); f != nil {
+	if f, _ := lookupField(g.schema, fieldName); f != nil {
 		return f.DBName
 	}
 	return ""
 }
 
 func (g gormSchemaResolver) ColumnDataType(fieldName string) string {
-	if f := g.lookupField(fieldName); f != nil {
+	if f, _ := lookupField(g.schema, fieldName); f != nil {
 		return string(f.DataType)
 	}
 	return ""
 }
 
 func (g gormSchemaResolver) RelationshipSchema(fieldName string) SchemaResolver {
+	return relationshipSchema(g.schema, fieldName)
+}
+
+func (g gormSchemaResolver) Schema() *schema.Schema {
+	return g.schema
+}
+
+/*************************
+	Helpers
+ *************************/
+
+func relationshipSchema(s *schema.Schema, fieldName string) SchemaResolver {
 	split := strings.Split(fieldName, ".")
-	if s := g.followRelationships(split); s != nil {
+	if s = followRelationships(s, split); s != nil {
 		return gormSchemaResolver{
 			schema: s,
 		}
@@ -103,13 +117,9 @@ func (g gormSchemaResolver) RelationshipSchema(fieldName string) SchemaResolver 
 	return nil
 }
 
-func (g gormSchemaResolver) Schema() *schema.Schema {
-	return g.schema
-}
-
 // followRelationships find schema following relationship field path, returns nil if it cannot follow
-func (g gormSchemaResolver) followRelationships(fieldPaths []string) *schema.Schema {
-	ret := g.schema
+func followRelationships(s *schema.Schema, fieldPaths []string) *schema.Schema {
+	ret := s
 	for _, fieldName := range fieldPaths {
 		relation, ok := ret.Relationships.Relations[fieldName]
 		if !ok || relation == nil || relation.Schema == nil {
@@ -122,27 +132,39 @@ func (g gormSchemaResolver) followRelationships(fieldPaths []string) *schema.Sch
 
 // lookupField similar to schema.Schema.LookUpField, but priority to field name,
 // this function also follow relationships, e.g. "OneToOneFieldName.FieldName"
-func (g gormSchemaResolver) lookupField(name string) *schema.Field {
-	var s *schema.Schema
+func lookupField(s *schema.Schema, name string) (f *schema.Field, paths []string) {
 	split := strings.Split(name, ".")
 	switch len(split) {
 	case 0:
-		return nil
+		return nil, nil
 	case 1:
-		s = g.schema
 	default:
-		if s = g.followRelationships(split[0:len(split) - 1]); s == nil {
-			return nil
+		paths = split[0:len(split) - 1]
+		if s = followRelationships(s, paths); s == nil {
+			return nil, nil
 		}
 		name = split[len(split)-1]
 	}
 
 	if field, ok := s.FieldsByName[name]; ok {
-		return field
+		return field, paths
 	}
 
 	if field, ok := s.FieldsByDBName[name]; ok {
-		return field
+		return field, paths
 	}
-	return nil
+	return nil, nil
+}
+
+func toColumn(s *schema.Schema, name string) (*clause.Column, error) {
+	f, paths := lookupField(s, name)
+	if f == nil {
+		return nil, fmt.Errorf("field with name [%s] is not found on model %s", name, s.Name)
+	}
+
+	table := clause.CurrentTable
+	if len(paths) != 0 {
+		table = strings.Join(paths, ".")
+	}
+	return &clause.Column{Table: table, Name: f.DBName}, nil
 }
