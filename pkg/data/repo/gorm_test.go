@@ -436,6 +436,15 @@ func SubTestPageAndSort(di *testDI) test.GomegaSubTestFunc {
 		models = nil
 		e = di.Repo.FindAll(ctx, &models, SortBy("BadField.WhatEver", false))
 		g.Expect(e).To(HaveOccurred(), "SortBy with invalid field name should return error")
+
+		// bad pagination
+		models = nil
+		e = di.Repo.FindAll(ctx, &models, Page(0, 0))
+		g.Expect(e).To(HaveOccurred(), "Page with 0 size should return error")
+		e = di.Repo.FindAll(ctx, &models, Page(-1, 10))
+		g.Expect(e).To(HaveOccurred(), "Page with negative page should return error")
+		e = di.Repo.FindAll(ctx, &models, Page(int(^uint32(0)) - 20, 20))
+		g.Expect(e).To(HaveOccurred(), "Page with too large offset should return error")
 	}
 }
 

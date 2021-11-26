@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+const (
+	maxUInt32 = int(^uint32(0))
+)
+
 type gormOptions func(*gorm.DB) *gorm.DB
 
 /********************
@@ -129,8 +133,12 @@ func Select(query interface{}, args ...interface{}) Option {
 //		CrudRepository.FindAll(ctx, &user, Page(2, 10))
 //		CrudRepository.FindAllBy(ctx, &user, Where(...), Page(2, 10))
 func Page(page, size int) Option {
-	offset := page * size
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
+		offset := page * size
+		if offset < 0 || size <= 0 || offset + size >= maxUInt32 {
+			_ = db.AddError(ErrorInvalidPagination)
+			return db
+		}
 		return db.Offset(offset).Limit(size)
 	})
 }

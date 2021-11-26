@@ -11,6 +11,7 @@ var (
 	ErrorUnsupportedOptions = data.NewDataError(data.ErrorCodeUnsupportedOptions, "unsupported Option")
 	ErrorUnsupportedCondition = data.NewDataError(data.ErrorCodeUnsupportedCondition, "unsupported Condition")
 	ErrorInvalidCrudParam = data.NewDataError(data.ErrorCodeInvalidCrudParam, "invalid CRUD param")
+	ErrorInvalidPagination = data.NewDataError(data.ErrorCodeInvalidPagination, "invalid pagination")
 )
 
 // Factory usually used in repository creation.

@@ -58,6 +58,7 @@ const (
 const (
 	_                   = iota
 	ErrorCodeInvalidSQL = ErrorSubTypeCodeQuery + iota
+	ErrorCodeInvalidPagination
 )
 
 // ErrorSubTypeCodeApi
