@@ -4,7 +4,13 @@ import (
 	"context"
 	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
+	"fmt"
 	"net/http"
+	"regexp"
+)
+
+var (
+	dataIntegrityRegexp = regexp.MustCompile(`\((?P<col>[^()]+)\) *= *\((?P<value>[^()]*)\)`)
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -29,7 +35,7 @@ func (t WebDataErrorTranslator) Translate(ctx context.Context, err error) error 
 	case errors.Is(err, ErrorRecordNotFound), errors.Is(err, ErrorIncorrectRecordCount):
 		return t.errorWithStatusCode(ctx, err, http.StatusNotFound)
 	case errors.Is(err, ErrorSubTypeDataIntegrity):
-		return t.errorWithStatusCode(ctx, err, http.StatusConflict)
+		return t.dataIntegrityErrorWithStatusCode(ctx, err, http.StatusConflict)
 	case errors.Is(err, ErrorSubTypeQuery):
 		return t.errorWithStatusCode(ctx, err, http.StatusBadRequest)
 	case errors.Is(err, ErrorSubTypeTimeout):
@@ -43,4 +49,21 @@ func (t WebDataErrorTranslator) Translate(ctx context.Context, err error) error 
 
 func (t WebDataErrorTranslator) errorWithStatusCode(_ context.Context, err error, sc int) error {
 	return NewErrorWithStatusCode(err.(DataError), sc)
+}
+
+func (t WebDataErrorTranslator) dataIntegrityErrorWithStatusCode(_ context.Context, err error, sc int) error {
+	msg := "duplicate keys"
+	matches := dataIntegrityRegexp.FindStringSubmatch(err.Error())
+	for i, name := range dataIntegrityRegexp.SubexpNames() {
+		if i >= len(matches) {
+			break
+		}
+		if name == "value" {
+			if matches[i] != "" {
+				msg = fmt.Sprintf("duplicate value: %s", matches[i])
+			}
+			break
+		}
+	}
+	return NewErrorWithStatusCode(err.(DataError), sc).WithMessage(msg)
 }
