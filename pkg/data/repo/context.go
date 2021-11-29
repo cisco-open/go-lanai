@@ -12,6 +12,7 @@ var (
 	ErrorUnsupportedCondition = data.NewDataError(data.ErrorCodeUnsupportedCondition, "unsupported Condition")
 	ErrorInvalidCrudParam = data.NewDataError(data.ErrorCodeInvalidCrudParam, "invalid CRUD param")
 	ErrorInvalidPagination = data.NewDataError(data.ErrorCodeInvalidPagination, "invalid pagination")
+	ErrorInvalidUtilityUsage = data.NewDataError(data.ErrorCodeInvalidApiUsage, "invalid utility usage")
 )
 
 // Factory usually used in repository creation.
@@ -70,8 +71,26 @@ type SchemaResolver interface{
 	RelationshipSchema(fieldName string) SchemaResolver
 }
 
+// Utility is a collection of repository related patterns that are useful for common service layer implementation
+type Utility interface{
+	// CheckUniqueness check if any non-zero unique field of given model ("v") violate unique key constraints in DB
+	// returns data.ErrorSubTypeDataIntegrity uniqueness check fails
+	// Accepted "v" types:
+	// 		*ModelStruct
+	//		[]*ModelStruct
+	// 		map[string]interface{} where key is model's field name or col name
+	// By default, this function would use models' schema to figure out unique keys.
+	// However, if "keys" is provided, it would override schema definition
+	// Supported "keys types:
+	// 		string: single field/column
+	// 		[]string: composite key
+	// Note: primary key is not included by default
+	CheckUniqueness(ctx context.Context, v interface{}, keys...interface{}) error
+}
+
 type CrudRepository interface {
 	SchemaResolver
+	Utility
 
 	// FindById fetch model by primary key and scan it into provided interface.
 	// Accepted "dest" types:

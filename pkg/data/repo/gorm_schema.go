@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -68,7 +69,14 @@ func newModelMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
 	}, nil
 }
 
-// GormMetadata implements GormSchemaResolver
+
+func (g GormMetadata) isSupportedValue(value interface{}, types utils.Set) bool {
+	t := reflect.TypeOf(value)
+	typ, ok := g.types[t]
+	return ok && types.Has(typ)
+}
+
+// gormSchemaResolver implements GormSchemaResolver
 type gormSchemaResolver struct {
 	schema *schema.Schema
 }
