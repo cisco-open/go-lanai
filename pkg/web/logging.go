@@ -68,7 +68,7 @@ func initLevelMap(props *ServerProperties) map[RequestMatcher]log.LoggingLevel {
 func (c LoggingCustomizer) Customize(ctx context.Context, r *Registrar) error {
 	// override gin debug
 	gin.DefaultWriter = log.NewWriterAdapter(logger.WithContext(ctx), log.LevelDebug)
-	gin.DefaultErrorWriter = log.NewWriterAdapter(logger.WithContext(ctx), log.LevelDebug)
+	gin.DefaultErrorWriter = log.NewWriterAdapter(logger.WithContext(ctx), log.LevelWarn)
 
 	if !c.enabled {
 		return nil
