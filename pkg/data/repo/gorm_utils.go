@@ -88,9 +88,9 @@ func (g GormUtils) CheckUniqueness(ctx context.Context, v interface{}, keys ...i
 	}
 	pairs := make([]string, 0, len(dups))
 	for k, v := range dups {
-		pairs = append(pairs, fmt.Sprintf("(%s)=(%v)", k, v))
+		pairs = append(pairs, fmt.Sprintf("%s=[%v]", k, v))
 	}
-	return dups, data.NewDataError(data.ErrorCodeDuplicateKey, fmt.Errorf("duplicated values: %s", strings.Join(pairs, ", ")))
+	return dups, data.ErrorDuplicateKey.WithMessage("entity with following properties already exists: %s", strings.Join(pairs, ", "))
 }
 
 /************************

@@ -145,6 +145,7 @@ var (
 var (
 	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
 	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
+	ErrorDuplicateKey = NewDataError(ErrorCodeDuplicateKey, "duplicate key")
 )
 
 func init() {

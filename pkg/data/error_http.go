@@ -5,6 +5,8 @@ import (
 	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"fmt"
+	"github.com/jackc/pgconn"
+	"github.com/lib/pq"
 	"net/http"
 	"regexp"
 )
@@ -52,6 +54,11 @@ func (t WebDataErrorTranslator) errorWithStatusCode(_ context.Context, err error
 }
 
 func (t WebDataErrorTranslator) dataIntegrityErrorWithStatusCode(_ context.Context, err error, sc int) error {
+	switch err.(DataError).RootCause().(type) {
+	case *pgconn.PgError, pq.Error, *pq.Error:
+	default:
+		return NewErrorWithStatusCode(err.(DataError), sc)
+	}
 	msg := "duplicate keys"
 	matches := dataIntegrityRegexp.FindStringSubmatch(err.Error())
 	for i, name := range dataIntegrityRegexp.SubexpNames() {
