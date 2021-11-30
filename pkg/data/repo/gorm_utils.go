@@ -3,34 +3,38 @@ package repo
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
+	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 	"reflect"
+	"strings"
 )
 
-// compositeKey is used for Utility to specify composite key.
-// If compositeKey.Fields is set, compositeKey.Cols are ignored
-type compositeKey []*clause.Column
+// index is used for Utility to specify index key.
+// If index.Fields is set, index.Cols are ignored
+type index []*schema.IndexOption
 
 // GormUtils implements Utility interface
 type GormUtils struct {
 	api        GormApi
 	meta       *GormMetadata
-	uniqueness []compositeKey
+	uniqueness []index
 }
 
 func newGormUtils(api GormApi, meta *GormMetadata) GormUtils {
 	indexes := meta.schema.ParseIndexes()
-	uniqueness := make([]compositeKey, 0, len(indexes))
+	uniqueness := make([]index, 0, len(indexes))
 	for _, idx := range indexes {
 		switch idx.Class {
 		case "UNIQUE":
-			cols := make([]*clause.Column, len(idx.Fields))
-			for i, f := range idx.Fields {
-				cols[i] = &clause.Column{ Name:  f.DBName }
+			fields := make([]*schema.IndexOption, len(idx.Fields))
+			for i := range idx.Fields {
+				fields[i] = &idx.Fields[i]
 			}
-			if len(cols) != 0 {
-				uniqueness = append(uniqueness, cols)
+			if len(fields) != 0 {
+				uniqueness = append(uniqueness, fields)
 			}
 		}
 	}
@@ -41,112 +45,106 @@ func newGormUtils(api GormApi, meta *GormMetadata) GormUtils {
 	}
 }
 
-func (g GormUtils) CheckUniqueness(ctx context.Context, v interface{}, keys ...interface{}) (err error) {
+func (g GormUtils) CheckUniqueness(ctx context.Context, v interface{}, keys ...interface{}) (dups map[string]interface{}, err error) {
 	if !g.meta.isSupportedValue(v, genericModelWrite) {
-		return ErrorInvalidUtilityUsage.
+		return nil, ErrorInvalidUtilityUsage.
 			WithMessage("%T is not a valid value for %s, requires %s", v, "CheckUniqueness", "*Struct, []*Struct, []Struct, or map[string]interface{}")
 	}
-	var uniqueKeys []compositeKey
+	// index keys override
+	var uniqueKeys []index
 	if len(keys) == 0 {
 		uniqueKeys = g.uniqueness
-	} else if uniqueKeys, err = g.prepareKeys(keys); err != nil {
-		return err
+	} else if uniqueKeys, err = g.resolveIndexes(keys); err != nil {
+		return nil, err
 	}
 
+	// where clause
+	models := toInterfaces(v)
 	var where clause.Where
-	exprs, e := g.uniquenessWhere(reflect.ValueOf(v), uniqueKeys)
-	switch {
-	case e != nil:
-		return e
+	switch exprs := g.uniquenessWhere(models, uniqueKeys); {
 	case len(exprs) == 0:
-		return ErrorInvalidUtilityUsage.WithMessage("%s is not possible. No non-zero unique fields found in given model [%v]", "CheckUniqueness", v)
+		return nil, ErrorInvalidUtilityUsage.WithMessage("%s is not possible. No non-zero unique fields found in given model [%v]", "CheckUniqueness", v)
 	case len(exprs) == 1:
 		where = clause.Where{Exprs: []clause.Expression{exprs[0]}}
 	default:
 		where = clause.Where{Exprs: []clause.Expression{clause.Or(exprs...)}}
 	}
-	var count int64
 
-	switch e := execute(ctx, g.api.DB(ctx), nil, nil, modelFunc(g.meta.model), func(db *gorm.DB) *gorm.DB {
-		return db.Where(where).Count(&count)
-	}); {
-	case e != nil:
-		return e
-	case count > 0:
-		return data.NewDataError(data.ErrorCodeDuplicateKey, "duplicated key")
-	default:
-		return nil
+	// fetch and parse result
+	existing := reflect.New(g.meta.schema.ModelType).Interface()
+	switch rs := g.api.DB(ctx).Model(g.meta.model).Where(where).Limit(1).Take(existing); {
+	case errors.Is(rs.Error, gorm.ErrRecordNotFound):
+		return nil, nil
+	case rs.Error != nil:
+		return nil, rs.Error
 	}
+
+	// find duplicates
+	for _, m := range models {
+		dups = g.findDuplicateFields(m, existing, uniqueKeys)
+		if len(dups) != 0 {
+			break
+		}
+	}
+	pairs := make([]string, 0, len(dups))
+	for k, v := range dups {
+		pairs = append(pairs, fmt.Sprintf("(%s)=(%v)", k, v))
+	}
+	return dups, data.NewDataError(data.ErrorCodeDuplicateKey, fmt.Errorf("duplicated values: %s", strings.Join(pairs, ", ")))
 }
 
 /************************
 	Helpers
  ************************/
 
-func (g GormUtils) prepareKeys(keys []interface{}) ([]compositeKey, error) {
-	ret := make([]compositeKey, 0, len(keys))
+func (g GormUtils) resolveIndexes(keys []interface{}) ([]index, error) {
+	ret := make([]index, 0, len(keys))
 	for _, k := range keys {
+		var idx index
+		var e error
 		switch v := k.(type) {
 		case string:
-			if col, e := toColumn(g.meta.schema, v); e == nil {
-				ret = append(ret, compositeKey{col})
-			}
+			idx, e = g.asIndex([]string{v})
 		case []string:
-			ck := make(compositeKey, 0, len(v))
-			for _, f := range v {
-				col, e := toColumn(g.meta.schema, f)
-				if e != nil {
-					return nil, ErrorInvalidUtilityUsage.WithMessage("Invalid key %v", f)
-				}
-				ck = append(ck, col)
-			}
-			if len(ck) != 0 {
-				ret = append(ret, ck)
-			}
+			idx, e = g.asIndex(v)
 		default:
 			return nil, ErrorInvalidUtilityUsage.WithMessage("Invalid key type %T", k)
 		}
+		if e != nil {
+			return nil, e
+		}
+		ret = append(ret, idx)
 	}
 	return ret, nil
 }
 
-func (g GormUtils) uniquenessWhere(v reflect.Value, keys []compositeKey) (exprs []clause.Expression, err error) {
-	rv := reflect.Indirect(v)
-	switch rv.Kind() {
-	case reflect.Slice:
-		for i := 0; i < rv.Len(); i++ {
-			mv := rv.Index(i)
-			sub, e := g.uniquenessWhere(mv, keys)
-			if e != nil {
-				return nil, e
-			}
-			exprs = append(exprs, sub...)
+func (g GormUtils) asIndex(names []string) (index, error) {
+	ret := make(index, len(names))
+	for i, n := range names {
+		f, paths := lookupField(g.meta.schema, n)
+		switch {
+		case f == nil:
+			return nil, fmt.Errorf("field with name [%s] is not found on model %s", n, g.meta.schema)
+		case len(paths) > 0:
+			return nil, fmt.Errorf("associations are not supported in this utils")
 		}
-	case reflect.Struct:
-		return g.structUniquenessExprs(rv, keys), nil
-	case reflect.Map:
-		return g.mapUniquenessExprs(rv, keys), nil
-	default:
-		return nil, ErrorInvalidUtilityUsage
+		ret[i] = &schema.IndexOption{ Field: f }
+	}
+	return ret, nil
+}
+
+func (g GormUtils) uniquenessWhere(models []interface{}, keys []index) (exprs []clause.Expression) {
+	for _, m := range models {
+		exprs = append(exprs, g.uniquenessExprs(reflect.ValueOf(m), keys)...)
 	}
 	return
 }
 
-func (g GormUtils) structUniquenessExprs(modelV reflect.Value, keys []compositeKey) []clause.Expression {
+func (g GormUtils) uniquenessExprs(modelV reflect.Value, keys []index) []clause.Expression {
 	exprs := make([]clause.Expression, 0, len(keys))
 	modelV = reflect.Indirect(modelV)
-	for _, ck := range keys {
-		if expr, ok := g.compositeEqExpr(modelV, ck); ok {
-			exprs = append(exprs, expr)
-		}
-	}
-	return exprs
-}
-
-func (g GormUtils) mapUniquenessExprs(m reflect.Value, keys []compositeKey) []clause.Expression {
-	exprs := make([]clause.Expression, 0, len(keys))
-	for _, ck := range keys {
-		if expr, ok := g.compositeEqExpr(m, ck); ok {
+	for _, idx := range keys {
+		if expr, ok := g.compositeEqExpr(modelV, idx); ok {
 			exprs = append(exprs, expr)
 		}
 	}
@@ -154,20 +152,20 @@ func (g GormUtils) mapUniquenessExprs(m reflect.Value, keys []compositeKey) []cl
 }
 
 // compositeEqExpr returns false if
-// 1. all composite values are zero values
+// 1. all index values are zero values
 // 2. any column value is not found
 // 3. len(cols) == 0
-func (g GormUtils) compositeEqExpr(modelV reflect.Value, cols compositeKey) (clause.Expression, bool) {
+func (g GormUtils) compositeEqExpr(modelV reflect.Value, idx index) (clause.Expression, bool) {
 	allZero := true
-	andExprs := make([]clause.Expression, len(cols))
-	for i, col := range cols {
-		v, ok := g.extractValue(modelV, col.Name)
+	andExprs := make([]clause.Expression, len(idx))
+	for i, f := range idx {
+		v, ok := g.extractValue(modelV, f.Field)
 		if !ok || !v.IsValid() {
 			return nil, false
 		}
 		allZero = allZero && v.IsZero()
 		andExprs[i] = clause.Eq{
-			Column: clause.Column{Name: col.Name},
+			Column: clause.Column{Name: f.DBName},
 			Value:  v.Interface(),
 		}
 	}
@@ -181,21 +179,55 @@ func (g GormUtils) compositeEqExpr(modelV reflect.Value, cols compositeKey) (cla
 	}
 }
 
-func (g GormUtils) extractValue(modelV reflect.Value, col string) (reflect.Value, bool) {
+// findDuplicateFields compare fields and returns fields that left and right are same
+func (g GormUtils) findDuplicateFields(left interface{}, right interface{}, keys []index) map[string]interface{} {
+	dups := map[string]interface{}{}
+	leftV := reflect.Indirect(reflect.ValueOf(left))
+	rightV := reflect.Indirect(reflect.ValueOf(right))
+	for _, idx := range keys {
+		for _, f := range idx {
+			lVal, lok := g.extractValue(leftV, f.Field)
+			if !lok {
+				continue
+			}
+			rVal, rok := g.extractValue(rightV, f.Field)
+			if !rok {
+				continue
+			}
+			if reflect.DeepEqual(lVal.Interface(), rVal.Interface()) {
+				dups[f.Name] = lVal.Interface()
+			}
+		}
+	}
+	return dups
+}
+
+func (g GormUtils) extractValue(modelV reflect.Value, f *schema.Field) (reflect.Value, bool) {
 	switch modelV.Kind() {
 	case reflect.Map:
 		for i := modelV.MapRange(); i.Next(); {
 			k, ok := i.Key().Interface().(string)
-			if ok && (k == col || g.meta.ColumnName(k) == col) {
+			if ok && (k == f.Name || k == f.DBName) {
 				return i.Value(), true
 			}
 		}
 	case reflect.Struct:
-		f, ok := g.meta.schema.FieldsByDBName[col]
-		if !ok {
-			return reflect.Value{}, false
-		}
 		return modelV.FieldByIndex(f.StructField.Index), true
 	}
 	return reflect.Value{}, false
+}
+
+func toInterfaces(v interface{}) (ret []interface{}) {
+	rv := reflect.Indirect(reflect.ValueOf(v))
+	switch rv.Kind() {
+	case reflect.Slice:
+		ret = make([]interface{}, rv.Len())
+		for i := 0; i < rv.Len(); i++ {
+			ret[i] = rv.Index(i).Interface()
+		}
+		return ret
+	case reflect.Struct, reflect.Map:
+		return []interface{}{v}
+	}
+	return nil
 }

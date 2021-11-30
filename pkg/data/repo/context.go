@@ -74,7 +74,8 @@ type SchemaResolver interface{
 // Utility is a collection of repository related patterns that are useful for common service layer implementation
 type Utility interface{
 	// CheckUniqueness check if any non-zero unique field of given model ("v") violate unique key constraints in DB
-	// returns data.ErrorSubTypeDataIntegrity uniqueness check fails
+	// When uniqueness check fails, the returned map contains field names and values that violate the constraints
+	// and a data.ErrorSubTypeDataIntegrity error
 	// Accepted "v" types:
 	// 		*ModelStruct
 	//		[]*ModelStruct
@@ -83,9 +84,9 @@ type Utility interface{
 	// However, if "keys" is provided, it would override schema definition
 	// Supported "keys types:
 	// 		string: single field/column
-	// 		[]string: composite key
+	// 		[]string: index key
 	// Note: primary key is not included by default
-	CheckUniqueness(ctx context.Context, v interface{}, keys...interface{}) error
+	CheckUniqueness(ctx context.Context, v interface{}, keys...interface{}) (map[string]interface{}, error)
 }
 
 type CrudRepository interface {

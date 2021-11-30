@@ -582,6 +582,7 @@ func SubTestCheckUniqueness(di *testDI) test.GomegaSubTestFunc {
 		var model, toCheck TestModel
 		var toChecks []*TestModel
 		var toCheckMap map[string]interface{}
+		var dups map[string]interface{}
 		var e error
 		// first, get an existing record
 		e = di.Repo.FindById(ctx, &model, modelIDs[0])
@@ -589,63 +590,68 @@ func SubTestCheckUniqueness(di *testDI) test.GomegaSubTestFunc {
 
 		// single check for no duplication
 		toCheck = TestModel{ OneToOneKey: "whatever", UniqueA: model.UniqueA, UniqueB: "whatever" }
-		e = di.Repo.CheckUniqueness(ctx, &toCheck)
+		dups, e = di.Repo.CheckUniqueness(ctx, &toCheck)
 		g.Expect(e).To(Succeed(), "should not return error on single model check without duplicates")
 
 		// single check for single key
 		toCheck = TestModel{ OneToOneKey: model.OneToOneKey }
-		e = di.Repo.CheckUniqueness(ctx, &toCheck)
+		dups, e = di.Repo.CheckUniqueness(ctx, &toCheck)
 		g.Expect(e).To(HaveOccurred(), "should return error on single model check with duplicate simple keys")
+		g.Expect(dups).To(HaveLen(1), "duplicates shouldn't be empty when uniqueness check fails")
 
-		// single check for composite key
+		// single check for index key
 		toCheck = TestModel{ UniqueA: model.UniqueA, UniqueB: model.UniqueB }
-		e = di.Repo.CheckUniqueness(ctx, &toCheck)
+		dups, e = di.Repo.CheckUniqueness(ctx, &toCheck)
 		g.Expect(e).To(HaveOccurred(), "should return error on single model check with duplicate composite keys")
+		g.Expect(dups).To(HaveLen(2), "duplicates shouldn't be empty when uniqueness check fails")
 
 		// single check with field override fail
 		toCheck = TestModel{ UniqueA: model.UniqueA, UniqueB: model.UniqueB, OneToOneKey: model.OneToOneKey}
-		e = di.Repo.CheckUniqueness(ctx, &toCheck, []string{"UniqueA", "unique_b"})
+		dups, e = di.Repo.CheckUniqueness(ctx, &toCheck, []string{"UniqueA", "unique_b"})
 		g.Expect(e).To(HaveOccurred(), "should return error on single model check with duplicate composite keys and fields overrides")
+		g.Expect(dups).To(HaveLen(2), "duplicates shouldn't be empty when uniqueness check fails")
 
 		// single check with field override succeed
 		toCheck = TestModel{ UniqueA: model.UniqueA, UniqueB: model.UniqueB, OneToOneKey: "don't care"}
-		e = di.Repo.CheckUniqueness(ctx, &toCheck, "OneToOneKey")
+		dups, e = di.Repo.CheckUniqueness(ctx, &toCheck, "OneToOneKey")
 		g.Expect(e).To(Succeed(), "should not return error on single model check with duplicate single keys and fields overrides")
 
 		// multi check failed
 		toChecks = []*TestModel{
-			{UniqueA: model.UniqueA, UniqueB: model.UniqueB},{ UniqueA: "Not a issue", UniqueB: "shouldn't matter"},
+			{ UniqueA: "Not a issue", UniqueB: "shouldn't matter"},{UniqueA: model.UniqueA, UniqueB: model.UniqueB},
 		}
-		e = di.Repo.CheckUniqueness(ctx, toChecks)
+		dups, e = di.Repo.CheckUniqueness(ctx, toChecks)
 		g.Expect(e).To(HaveOccurred(), "should return error on multi models check with any model containing duplicate keys")
+		g.Expect(dups).To(HaveLen(2), "duplicates shouldn't be empty when uniqueness check fails")
 
 		// multi check succeed
 		toChecks = []*TestModel{
 			{UniqueA: model.UniqueA, UniqueB: "not same"},{ UniqueA: "Not a issue", UniqueB: "shouldn't matter"},
 		}
-		e = di.Repo.CheckUniqueness(ctx, toChecks)
+		dups, e = di.Repo.CheckUniqueness(ctx, toChecks)
 		g.Expect(e).To(Succeed(), "should not return error on multi models check without any model containing duplicate keys")
 
 		// map check failed
 		toCheckMap = map[string]interface{}{"UniqueA": model.UniqueA, "unique_b": model.UniqueB}
-		e = di.Repo.CheckUniqueness(ctx, toCheckMap)
+		dups, e = di.Repo.CheckUniqueness(ctx, toCheckMap)
 		g.Expect(e).To(HaveOccurred(), "should return error on map check with duplicate keys")
+		g.Expect(dups).To(HaveLen(2), "duplicates shouldn't be empty when uniqueness check fails")
 
 		// map check succeed
 		toCheckMap = map[string]interface{}{"UniqueA": "doesn't matter", "unique_b": model.UniqueB}
-		e = di.Repo.CheckUniqueness(ctx, toChecks)
+		dups, e = di.Repo.CheckUniqueness(ctx, toChecks)
 		g.Expect(e).To(Succeed(), "should not return error on map check without duplicate keys")
 
 		// invalid checks
-		e = di.Repo.CheckUniqueness(ctx, []*TestOTOModel{})
+		dups, e = di.Repo.CheckUniqueness(ctx, []*TestOTOModel{})
 		g.Expect(e).To(HaveOccurred(), "should return error of unsupported values")
 
 		toCheck = TestModel{ OneToOneKey: "whatever", UniqueA: model.UniqueA, UniqueB: "whatever" }
-		e = di.Repo.CheckUniqueness(ctx, &toCheck, []string{"Invalid", "UniqueB"})
+		dups, e = di.Repo.CheckUniqueness(ctx, &toCheck, []string{"Invalid", "UniqueB"})
 		g.Expect(e).To(HaveOccurred(), "should return error of invalid field/column name values")
 
 		// all zero value
-		e = di.Repo.CheckUniqueness(ctx, &TestModel{})
+		dups, e = di.Repo.CheckUniqueness(ctx, &TestModel{})
 		g.Expect(e).To(HaveOccurred(), "should return error of all zero values")
 	}
 }

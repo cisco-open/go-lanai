@@ -72,7 +72,7 @@ func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}
 			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindById", "*Struct")
 	}
 
-	// TODO verify this using composite key
+	// TODO verify this using index key
 	switch v := id.(type) {
 	case string:
 		if uid, e := uuid.Parse(v); e == nil {
