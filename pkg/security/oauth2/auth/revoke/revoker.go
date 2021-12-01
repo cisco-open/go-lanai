@@ -58,7 +58,6 @@ func (r DefaultAccessRevoker) RevokeWithUsername(ctx context.Context, username s
 		logger.WithContext(ctx).Warnf("Unable to expire session for username [%s]: %v", username, e)
 		err = e
 	}
-
 	// revoke all tokens
 	if e := r.authRegistry.RevokeUserAccess(ctx, username, revokeRefreshToken); e != nil {
 		return e
