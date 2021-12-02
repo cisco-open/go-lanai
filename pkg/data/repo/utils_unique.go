@@ -39,7 +39,7 @@ func gormCheckUniqueness(ctx context.Context, g GormApi, resolver GormSchemaReso
 
 	// fetch and parse result
 	existing := reflect.New(resolver.ModelType()).Interface()
-	switch rs := g.DB(ctx).Where(where).Limit(1).Take(existing); {
+	switch rs := g.DB(ctx).Where(where).Take(existing); {
 	case errors.Is(rs.Error, gorm.ErrRecordNotFound):
 		return nil, nil
 	case rs.Error != nil:
@@ -137,25 +137,23 @@ func uniquenessExprs(modelV reflect.Value, keys []index) []clause.Expression {
 }
 
 // compositeEqExpr returns false if
-// 1. all index values are zero values
+// 1. any index values are zero values
 // 2. any column value is not found
 // 3. len(cols) == 0
 func compositeEqExpr(modelV reflect.Value, idx index) (clause.Expression, bool) {
-	allZero := true
 	andExprs := make([]clause.Expression, len(idx))
 	for i, f := range idx {
 		v, ok := extractValue(modelV, f.Field)
-		if !ok || !v.IsValid() {
+		if !ok || !v.IsValid() || v.IsZero() {
 			return nil, false
 		}
-		allZero = allZero && v.IsZero()
 		andExprs[i] = clause.Eq{
 			Column: clause.Column{Name: f.DBName},
 			Value:  v.Interface(),
 		}
 	}
 	switch {
-	case allZero || len(andExprs) == 0:
+	case len(andExprs) == 0:
 		return nil, false
 	case len(andExprs) == 1:
 		return andExprs[0], true
