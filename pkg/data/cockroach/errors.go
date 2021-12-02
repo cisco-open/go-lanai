@@ -7,19 +7,25 @@ import (
 	"github.com/lib/pq"
 )
 
-// PqErrorTranslator implements data.ErrorTranslator
+// PostgresErrorTranslator implements data.ErrorTranslator
 // it translates pq.Error and pgconn.PgError to data.DataError
 // Note: cockroach uses gorm.io/driver/postgres, which internally uses github.com/jackc/pgx
 // Ref:
 // - Postgres Error: https://www.postgresql.org/docs/11/protocol-error-fields.html
 // - Postgres Error Code: https://www.postgresql.org/docs/11/errcodes-appendix.html
-type PqErrorTranslator struct{}
+type PostgresErrorTranslator struct{}
 
-func (t PqErrorTranslator) Order() int {
+func NewPqErrorTranslator() data.ErrorTranslator {
+	return data.DefaultGormErrorTranslator{
+		ErrorTranslator: PostgresErrorTranslator{},
+	}
+}
+
+func (t PostgresErrorTranslator) Order() int {
 	return 0
 }
 
-func (t PqErrorTranslator) Translate(_ context.Context, err error) error {
+func (t PostgresErrorTranslator) Translate(_ context.Context, err error) error {
 	var ec int64
 	switch e := err.(type) {
 	case *pgconn.PgError:
@@ -36,7 +42,7 @@ func (t PqErrorTranslator) Translate(_ context.Context, err error) error {
 
 // translateErrorCode translate postgres error code to data.DataError code
 // ref https://www.postgresql.org/docs/11/errcodes-appendix.html
-func (t PqErrorTranslator) translateErrorCode(code string) int64 {
+func (t PostgresErrorTranslator) translateErrorCode(code string) int64 {
 	// currently we handle selected error classes
 	// TODO more detailed error translation
 	var errCls string

@@ -16,6 +16,10 @@ type gormInitDI struct {
 	Configurers [] GormConfigurer `group:"gorm_config"`
 }
 
+type GormErrorTranslator interface {
+	TranslateWithDB(db *gorm.DB) error
+}
+
 type GormConfigurer interface {
 	Configure(config *gorm.Config)
 }

@@ -34,22 +34,11 @@ func Use() {
 func pqErrorTranslatorProvider() fx.Annotated {
 	return fx.Annotated{
 		Group: data.GormConfigurerGroup,
-		Target: func() data.ErrorTranslator {
-			return PqErrorTranslator{}
-		},
+		Target: NewPqErrorTranslator,
 	}
 }
 
 /**************************
 	Initialize
 ***************************/
-func initialize(lc fx.Lifecycle) {
-	//lc.Append(fx.Hook{
-	//	OnStart: func(ctx context.Context) error {
-	//
-	//	},
-	//	OnStop:  func(ctx context.Context) error {
-	//
-	//	},
-	//})
-}
+

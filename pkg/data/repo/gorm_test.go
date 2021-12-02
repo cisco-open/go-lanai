@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
@@ -60,6 +61,27 @@ type testDI struct {
 	Repo TestRepository
 }
 
+func TestGormSchemaResolver(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		dbtest.WithDBPlayback("testdb"),
+		apptest.WithModules(Module),
+		apptest.WithTimeout(time.Minute),
+		apptest.WithFxOptions(
+			fx.Provide(NewTestRepository),
+		),
+		apptest.WithProperties(
+			"data.logging.level: debug",
+			"log.levels.data: debug",
+		),
+		apptest.WithDI(di),
+		test.GomegaSubTest(SubTestSchemaResolverDirect(di), "TestSchemaResolverDirect"),
+		test.GomegaSubTest(SubTestSchemaResolverIndirect(di), "TestSchemaResolverIndirect"),
+		test.GomegaSubTest(SubTestSchemaResolverMultiLvl(di), "TestSchemaResolverMultiLvl"),
+	)
+}
+
 func TestGormCRUDRepository(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
@@ -76,9 +98,6 @@ func TestGormCRUDRepository(t *testing.T) {
 		),
 		apptest.WithDI(di),
 		test.SubTestSetup(SetupTestPrepareTables(di)),
-		test.GomegaSubTest(SubTestSchemaResolverDirect(di), "TestSchemaResolverDirect"),
-		test.GomegaSubTest(SubTestSchemaResolverIndirect(di), "TestSchemaResolverIndirect"),
-		test.GomegaSubTest(SubTestSchemaResolverMultiLvl(di), "TestSchemaResolverMultiLvl"),
 		test.GomegaSubTest(SubTestFindOne(di), "TestFindOne"),
 		test.GomegaSubTest(SubTestFindAll(di), "TestFindAll"),
 		test.GomegaSubTest(SubTestCount(di), "TestFindCount"),
@@ -90,6 +109,27 @@ func TestGormCRUDRepository(t *testing.T) {
 		test.GomegaSubTest(SubTestPageAndSort(di), "TestPageAndSort"),
 		test.GomegaSubTest(SubTestTransaction(di), "TestTransaction"),
 		test.GomegaSubTest(SubTestUtilFunctions(di), "TestUtilFunctions"),
+	)
+}
+
+func TestGormUtils(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		dbtest.WithDBPlayback("testdb"),
+		apptest.WithModules(Module),
+		apptest.WithTimeout(time.Minute),
+		apptest.WithFxOptions(
+			fx.Provide(NewTestRepository),
+		),
+		apptest.WithProperties(
+			"data.logging.level: debug",
+			"log.levels.data: debug",
+		),
+		apptest.WithDI(di),
+		test.SubTestSetup(SetupTestPrepareTables(di)),
+		test.GomegaSubTest(SubTestResolveSchema(di), "TestResolveSchema"),
+		test.GomegaSubTest(SubTestCheckUniqueness(di), "TestCheckUniqueness"),
 	)
 }
 
@@ -379,7 +419,7 @@ func SubTestDelete(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "re-fetch after Delete should yield RecordNotFound")
 
 		// delete by
-		e = di.Repo.DeleteBy(ctx, Where(`"test_repo_models"."search" < ?`, len(modelIDs) - 1))
+		e = di.Repo.DeleteBy(ctx, Where(`"test_repo_models"."search" < ?`, len(modelIDs)-1))
 		g.Expect(e).To(Succeed(), "DeleteBy shouldn't return error")
 
 		// fetch again and validate
@@ -443,14 +483,14 @@ func SubTestPageAndSort(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(HaveOccurred(), "Page with 0 size should return error")
 		e = di.Repo.FindAll(ctx, &models, Page(-1, 10))
 		g.Expect(e).To(HaveOccurred(), "Page with negative page should return error")
-		e = di.Repo.FindAll(ctx, &models, Page(int(^uint32(0)) - 20, 20))
+		e = di.Repo.FindAll(ctx, &models, Page(int(^uint32(0))-20, 20))
 		g.Expect(e).To(HaveOccurred(), "Page with too large offset should return error")
 	}
 }
 
 func SubTestRepoSyntax(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		noop := func(db *gorm.DB) *gorm.DB{
+		noop := func(db *gorm.DB) *gorm.DB {
 			return db
 		}
 		var e error
@@ -509,28 +549,52 @@ func SubTestTransaction(di *testDI) test.GomegaSubTestFunc {
 		gormRepo, ok := di.Repo.(GormApi)
 		g.Expect(ok).To(BeTrue(), "repository should also GormApi")
 
+		var model TestModel
 		const newValue = "Updated"
 		var e error
+		// try single transaction with save/create
+		id1 := uuid.New()
+		id2 := uuid.New()
+		e = tx.Transaction(ctx, func(ctx context.Context) (err error) {
+			var e error
+			// try create one
+			model, _ := createMainModel(id1, 10)
+			e = di.Repo.Save(ctx, model)
+			g.Expect(e).To(Succeed(), "save in transaction shouldn't return error")
+			// try create another with duplicate keys (will fail)
+			another, _ := createMainModel(id2, 10)
+			another.UniqueA = model.UniqueA
+			another.UniqueB = model.UniqueB
+			e = di.Repo.Create(ctx, another)
+			g.Expect(e).To(HaveOccurred(), "save with duplicate key in transaction should return error")
+			return e
+		})
+
+		e = di.Repo.FindById(ctx, &model, id1)
+		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "success save in transaction should be rolled back")
+
+		// try multiple transaction
 		mockedError := errors.New("just an error")
 		// nested transaction
 		e = tx.Transaction(ctx, func(ctx context.Context) error {
+			var e error
 			db := gormRepo.DB(ctx)
 			g.Expect(db).To(Not(BeNil()), "DB(ctx) in transaction shouldn't be nil")
+
 			// try update
-			rs := db.Model(&TestModel{ID: modelIDs[0]}).Updates(&TestModel{Value: newValue})
-			g.Expect(rs.Error).To(Succeed(), "update within top transaction shouldn't faile")
+			e = di.Repo.Update(ctx, &TestModel{ID: modelIDs[0]}, &TestModel{Value: newValue})
+			g.Expect(e).To(Succeed(), "update within top transaction shouldn't fail")
 			return gormRepo.Transaction(ctx, func(ctx context.Context, tx *gorm.DB) error {
 				g.Expect(tx).To(Not(BeNil()), "gorm.DB in transaction shouldn't be nil")
 				// try update
-				rs := db.Model(&TestModel{ID: modelIDs[1]}).Updates(&TestModel{Value: newValue})
-				g.Expect(rs.Error).To(Succeed(), "update within nested transaction shouldn't faile")
+				e = di.Repo.Update(ctx, &TestModel{ID: modelIDs[1]}, &TestModel{Value: newValue})
+				g.Expect(e).To(Succeed(), "update within nested transaction shouldn't faile")
 				return mockedError
 			})
 		})
 		g.Expect(e).To(BeIdenticalTo(mockedError))
 
 		// verify everything rolled back
-		var model TestModel
 		e = di.Repo.FindById(ctx, &model, modelIDs[0])
 		g.Expect(e).To(Succeed(), "finding first model shouldn't fail")
 		g.Expect(model.Value).ToNot(Equal(newValue), "first model shouldn't get updated")
@@ -552,7 +616,7 @@ func SubTestUtilFunctions(di *testDI) test.GomegaSubTestFunc {
 			Column: clause.Column{Table: clause.CurrentTable, Name: di.Repo.ColumnName("SearchIdx")},
 			Value:  2,
 		}}}
-		opts :=[]Option{
+		opts := []Option{
 			Joins("OneToOne"), Joins("ManyToOne"), Preload("ManyToOne.RelatedMTMModels"),
 		}
 		db = di.Repo.(GormApi).DB(ctx)
@@ -573,6 +637,107 @@ func SubTestUtilFunctions(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(rs.Error).To(Succeed(), "DB.Take() shouldn't return error")
 		g.Expect(model.ID).To(BeEquivalentTo(modelIDs[1]), "DB.Take() return correct result")
 		assertFullyFetchedTestModel(&model, g, "DB.Take()")
+	}
+}
+
+func SubTestResolveSchema(_ *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		var r SchemaResolver
+		r, e = Utils().ResolveSchema(ctx, &TestOTOModel{})
+		g.Expect(e).To(Succeed(), "ResolveSchema shouldn't return error")
+		g.Expect(r.ModelName()).To(Equal("TestOTOModel"), "ResolveSchema have correct model name")
+
+		r, e = Utils().ResolveSchema(ctx, map[string]interface{}{})
+		g.Expect(e).To(HaveOccurred(), "ResolveSchema should return error on map value")
+	}
+}
+
+func SubTestCheckUniqueness(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var model, toCheck TestModel
+		var toChecks []*TestModel
+		var toCheckMap map[string]interface{}
+		var dups map[string]interface{}
+		var e error
+		// first, get an existing record
+		e = di.Repo.FindById(ctx, &model, modelIDs[0])
+		g.Expect(e).To(Succeed(), "database should have some data")
+
+		// single check for no duplication
+		toCheck = TestModel{ OneToOneKey: "whatever", UniqueA: model.UniqueA, UniqueB: "whatever" }
+		dups, e = Utils().CheckUniqueness(ctx, &toCheck)
+		g.Expect(e).To(Succeed(), "should not return error on single model check without duplicates")
+
+		// single check for single key
+		toCheck = TestModel{ OneToOneKey: model.OneToOneKey }
+		dups, e = Utils().CheckUniqueness(ctx, &toCheck)
+		g.Expect(errors.Is(e, data.ErrorDuplicateKey)).To(BeTrue(), "should return error on single model check with duplicate simple keys")
+		g.Expect(dups).To(HaveLen(1), "duplicates shouldn't be empty when uniqueness check fails")
+
+		// single check for index key
+		toCheck = TestModel{ UniqueA: model.UniqueA, UniqueB: model.UniqueB }
+		dups, e = Utils().CheckUniqueness(ctx, &toCheck)
+		g.Expect(errors.Is(e, data.ErrorDuplicateKey)).To(BeTrue(), "should return error on single model check with duplicate composite keys")
+		g.Expect(dups).To(HaveLen(2), "duplicates shouldn't be empty when uniqueness check fails")
+
+		// single check with field override fail
+		toCheck = TestModel{ UniqueA: model.UniqueA, UniqueB: model.UniqueB, OneToOneKey: model.OneToOneKey}
+		dups, e = Utils().CheckUniqueness(ctx, &toCheck, []string{"UniqueA", "unique_b"})
+		g.Expect(errors.Is(e, data.ErrorDuplicateKey)).To(BeTrue(), "should return error on single model check with duplicate composite keys and fields overrides")
+		g.Expect(dups).To(HaveLen(2), "duplicates shouldn't be empty when uniqueness check fails")
+
+		// single check with field override succeed
+		toCheck = TestModel{ UniqueA: model.UniqueA, UniqueB: model.UniqueB, OneToOneKey: "don't care"}
+		dups, e = Utils().CheckUniqueness(ctx, &toCheck, "OneToOneKey")
+		g.Expect(e).To(Succeed(), "should not return error on single model check with duplicate single keys and fields overrides")
+
+		// multi check failed
+		toChecks = []*TestModel{
+			{ UniqueA: "Not a issue", UniqueB: "shouldn't matter"},{UniqueA: model.UniqueA, UniqueB: model.UniqueB},
+		}
+		dups, e = Utils().CheckUniqueness(ctx, toChecks)
+		g.Expect(errors.Is(e, data.ErrorDuplicateKey)).To(BeTrue(), "should return error on multi models check with any model containing duplicate keys")
+		g.Expect(dups).To(HaveLen(2), "duplicates shouldn't be empty when uniqueness check fails")
+
+		// multi check succeed
+		toChecks = []*TestModel{
+			{UniqueA: model.UniqueA, UniqueB: "not same"},{ UniqueA: "Not a issue", UniqueB: "shouldn't matter"},
+		}
+		dups, e = Utils().CheckUniqueness(ctx, toChecks)
+		g.Expect(e).To(Succeed(), "should not return error on multi models check without any model containing duplicate keys")
+
+		// map check failed
+		toCheckMap = map[string]interface{}{"UniqueA": model.UniqueA, "unique_b": model.UniqueB}
+		dups, e = Utils().Model(&TestModel{}).CheckUniqueness(ctx, toCheckMap)
+		g.Expect(errors.Is(e, data.ErrorDuplicateKey)).To(BeTrue(), "should return error on map check with duplicate keys")
+		g.Expect(dups).To(HaveLen(2), "duplicates shouldn't be empty when uniqueness check fails")
+
+		// map check succeed
+		toCheckMap = map[string]interface{}{"UniqueA": "doesn't matter", "unique_b": model.UniqueB}
+		dups, e = Utils().Model(&TestModel{}).CheckUniqueness(ctx, toChecks)
+		g.Expect(e).To(Succeed(), "should not return error on map check without duplicate keys")
+
+		// invalid checks
+		dups, e = Utils().CheckUniqueness(ctx, map[string]interface{}{})
+		g.Expect(e).To(HaveOccurred(), "should return error of unsupported values")
+
+		toCheck = TestModel{ OneToOneKey: "whatever", UniqueA: model.UniqueA, UniqueB: "whatever" }
+		dups, e = Utils().CheckUniqueness(ctx, &toCheck, []string{"Invalid", "UniqueB"})
+		g.Expect(e).To(HaveOccurred(), "should return error of invalid field/column name values")
+
+		// all zero value
+		dups, e = Utils().CheckUniqueness(ctx, &TestModel{})
+		g.Expect(e).To(HaveOccurred(), "should return error of all zero values")
+
+		// nil value
+		dups, e = Utils().CheckUniqueness(ctx, nil)
+		g.Expect(e).To(HaveOccurred(), "should return error of all zero values")
+
+		// different options
+		toCheck = TestModel{ OneToOneKey: "whatever", UniqueA: model.UniqueA, UniqueB: "whatever" }
+		dups, e = Utils(&gorm.Session{NewDB: true}).CheckUniqueness(ctx, &toCheck)
+		g.Expect(e).To(Succeed(), "should return error of all zero values")
 	}
 }
 
@@ -671,6 +836,8 @@ func createMainModel(id uuid.UUID, i int) (*TestModel, *TestOTOModel) {
 		ID:          id,
 		Value:       fmt.Sprintf("Test %d", i),
 		SearchIdx:   i,
+		UniqueA:     utils.RandomString(8),
+		UniqueB:     utils.RandomString(8),
 		OneToOneKey: refkey,
 		ManyToOneID: mtoId,
 	}
@@ -744,12 +911,15 @@ CREATE TABLE IF NOT EXISTS public.test_repo_models (
 	id UUID NOT NULL DEFAULT gen_random_uuid(),
 	"value" STRING,
 	search INT NOT NULL,
+	unique_a STRING,
+	unique_b STRING,
 	one_to_one_key STRING NOT NULL,
 	many_to_one_id UUID NULL,
 	CONSTRAINT "primary" PRIMARY KEY (id ASC),
 	CONSTRAINT fk_one_to_one FOREIGN KEY (one_to_one_key) REFERENCES public.test_repo_model1(ref_key),
 	CONSTRAINT fk_many_to_one FOREIGN KEY (many_to_one_id) REFERENCES public.test_repo_model2(id) ON DELETE SET NULL,
-	UNIQUE INDEX idx_ont_to_one (one_to_one_key ASC),
+	UNIQUE INDEX idx_one_to_one (one_to_one_key ASC),
+	UNIQUE INDEX idx_unique_composite (unique_a ASC, unique_b ASC),
 	INDEX idx_many_to_one (many_to_one_id ASC),
 	INDEX idx_search (search ASC),
 	FAMILY "primary" (id, "value", one_to_one_key, many_to_one_id)
@@ -768,8 +938,10 @@ func prepareTable(db *gorm.DB, g *gomega.WithT) {
 type TestModel struct {
 	ID          uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 	Value       string
-	SearchIdx   int `gorm:"column:search;"`
-	OneToOneKey string
+	SearchIdx   int    `gorm:"column:search;"`
+	UniqueA     string `gorm:"column:unique_a;uniqueIndex:idx_unique_composite;"`
+	UniqueB     string `gorm:"column:unique_b;uniqueIndex:idx_unique_composite;"`
+	OneToOneKey string `gorm:"uniqueIndex"`
 	ManyToOneID uuid.UUID
 	OneToOne    *TestOTOModel `gorm:"foreignKey:RefKey;references:OneToOneKey;not null"`
 	ManyToOne   *TestMTOModel `gorm:"foreignKey:ManyToOneID;"`

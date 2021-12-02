@@ -83,7 +83,12 @@ func (p errorTranslatorGormPlugin) translateErrorCallback() func(*gorm.DB) {
 			return
 		}
 		for _, translator := range p {
-			db.Error = translator.Translate(db.Statement.Context, db.Error)
+			switch t := translator.(type) {
+			case GormErrorTranslator:
+				db.Error = t.TranslateWithDB(db)
+			default:
+				db.Error = translator.Translate(db.Statement.Context, db.Error)
+			}
 			if db.Error == nil {
 				return
 			}

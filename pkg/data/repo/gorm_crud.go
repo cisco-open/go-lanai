@@ -53,14 +53,15 @@ type GormCrud struct {
 
 func newGormCrud(api GormApi, model interface{}) (*GormCrud, error) {
 	// Note we uses raw db here to leverage internal schema cache
-	meta, e := newModelMetadata(api.DB(context.Background()), model)
+	meta, e := newGormMetadata(api.DB(context.Background()), model)
 	if e != nil {
 		return nil, e
 	}
-	return &GormCrud{
+	ret := &GormCrud{
 		GormApi:      api,
 		GormMetadata: meta,
-	}, nil
+	}
+	return ret, nil
 }
 
 func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}, options ...Option) error {
@@ -69,7 +70,7 @@ func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}
 			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindById", "*Struct")
 	}
 
-	// TODO verify this using composite key
+	// TODO verify this using index key
 	switch v := id.(type) {
 	case string:
 		if uid, e := uuid.Parse(v); e == nil {
@@ -81,7 +82,7 @@ func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}
 		}
 	}
 
-	return g.execute(ctx, nil, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Take(dest, id)
 	})
 }
@@ -92,7 +93,7 @@ func (g GormCrud) FindAll(ctx context.Context, dest interface{}, options ...Opti
 			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindAll", "*[]Struct or *[]*Struct")
 	}
 
-	return g.execute(ctx, nil, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Find(dest)
 	})
 }
@@ -103,7 +104,7 @@ func (g GormCrud) FindOneBy(ctx context.Context, dest interface{}, condition Con
 			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindOneBy", "*Struct")
 	}
 
-	return g.execute(ctx, condition, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Take(dest)
 	})
 }
@@ -114,14 +115,14 @@ func (g GormCrud) FindAllBy(ctx context.Context, dest interface{}, condition Con
 			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindAllBy", "*[]Struct or *[]*Struct")
 	}
 
-	return g.execute(ctx, condition, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Find(dest)
 	})
 }
 
 func (g GormCrud) CountAll(ctx context.Context, options...Option) (int, error) {
 	var ret int64
-	e := g.execute(ctx, nil, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	e := execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Count(&ret)
 	})
 	if e != nil {
@@ -132,7 +133,7 @@ func (g GormCrud) CountAll(ctx context.Context, options...Option) (int, error) {
 
 func (g GormCrud) CountBy(ctx context.Context, condition Condition, options...Option) (int, error) {
 	var ret int64
-	e := g.execute(ctx, condition, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	e := execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Count(&ret)
 	})
 	if e != nil {
@@ -147,7 +148,7 @@ func (g GormCrud) Save(ctx context.Context, v interface{}, options...Option) err
 			WithMessage("%T is not a valid value for %s, requires %s", v, "Save", "*Struct, []*Struct or []Struct")
 	}
 
-	return g.execute(ctx, nil, options, nil, func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), nil, options, nil, func(db *gorm.DB) *gorm.DB {
 		return db.Save(v)
 	})
 }
@@ -158,7 +159,7 @@ func (g GormCrud) Create(ctx context.Context, v interface{}, options...Option) e
 			WithMessage("%T is not a valid value for %s, requires %s", v, "Create", "*Struct, []*Struct or []Struct")
 	}
 
-	return g.execute(ctx, nil, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Create(v)
 	})
 }
@@ -169,7 +170,7 @@ func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, 
 			WithMessage("%T is not a valid model for %s, requires %s", v, "Update", "*Struct or Struct")
 	}
 
-	return g.execute(ctx, nil, options, g.modelFunc(model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(model), func(db *gorm.DB) *gorm.DB {
 		// note we use the actual model instead of template g.model
 		return db.Updates(v)
 	})
@@ -181,19 +182,19 @@ func (g GormCrud) Delete(ctx context.Context, v interface{}, options...Option) e
 			WithMessage("%T is not a valid value for %s, requires %s", v, "Delete", "*Struct, []*Struct or []Struct")
 	}
 
-	return g.execute(ctx, nil, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Delete(v)
 	})
 }
 
 func (g GormCrud) DeleteBy(ctx context.Context, condition Condition, options...Option) error {
-	return g.execute(ctx, condition, options, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Delete(g.model)
 	})
 }
 
 func (g GormCrud) Truncate(ctx context.Context) error {
-	return g.execute(ctx, nil, nil, g.modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
+	return execute(ctx, g.GormApi.DB(ctx), nil, nil, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		if e := db.Statement.Parse(g.model); e != nil {
 			_ = db.AddError(ErrorInvalidCrudModel.WithMessage("unable to parse table name for model %T", g.model))
 			return db
@@ -210,15 +211,14 @@ func (g GormCrud) Truncate(ctx context.Context) error {
 	Helpers
  *******************/
 
-func (g GormCrud) modelFunc(m interface{}) func(*gorm.DB) *gorm.DB {
+func modelFunc(m interface{}) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Model(m)
 	}
 }
 
-func (g GormCrud) execute(ctx context.Context, condition Condition, options []Option, preOptsFn, fn func(*gorm.DB) *gorm.DB) error {
+func execute(ctx context.Context, db *gorm.DB, condition Condition, options []Option, preOptsFn, fn func(*gorm.DB) *gorm.DB) error {
 	var e error
-	db := g.GormApi.DB(ctx)
 	if preOptsFn != nil {
 		db = preOptsFn(db)
 	}
@@ -333,10 +333,4 @@ func applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, error) {
 		db = fn(db)
 	}
 	return db, db.Error
-}
-
-func (g GormCrud) isSupportedValue(value interface{}, types utils.Set) bool {
-	t := reflect.TypeOf(value)
-	typ, ok := g.types[t]
-	return ok && types.Has(typ)
 }

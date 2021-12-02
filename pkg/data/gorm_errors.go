@@ -27,17 +27,39 @@ var (
 	}
 )
 
-type GormErrorTranslator struct{}
-
-func NewGormErrorTranslator() ErrorTranslator {
-	return GormErrorTranslator{}
+type DefaultGormErrorTranslator struct {
+	ErrorTranslator
 }
 
-func (GormErrorTranslator) Order() int {
+func (t DefaultGormErrorTranslator) TranslateWithDB(db *gorm.DB) error {
+	if db.Error == nil {
+		return nil
+	}
+	err := t.Translate(db.Statement.Context, db.Error)
+	switch e := err.(type) {
+	case DataError:
+		switch {
+		case db.Statement != nil:
+			return e.WithDetails(db.Statement)
+		}
+	}
+	return err
+}
+
+// gormErrorTranslator implements GormErrorTranslator and ErrorTranslator
+type gormErrorTranslator struct{}
+
+func NewGormErrorTranslator() ErrorTranslator {
+	return DefaultGormErrorTranslator{
+		ErrorTranslator: gormErrorTranslator{},
+	}
+}
+
+func (gormErrorTranslator) Order() int {
 	return ErrorTranslatorOrderGorm
 }
 
-func (GormErrorTranslator) Translate(_ context.Context, err error) error {
+func (gormErrorTranslator) Translate(_ context.Context, err error) error {
 	for k, v := range GormErrorMapping {
 		if errors.Is(err, k) {
 			return v
@@ -45,4 +67,5 @@ func (GormErrorTranslator) Translate(_ context.Context, err error) error {
 	}
 	return err
 }
+
 
