@@ -11,7 +11,6 @@ type GormUtils struct {
 	api        GormApi
 	model      interface{}
 	resolver   GormSchemaResolver
-	uniqueness []index
 }
 
 func Utils(options ...interface{}) Utility {

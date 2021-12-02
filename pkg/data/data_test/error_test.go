@@ -96,7 +96,8 @@ func SubTestServerSideErrorTranslation(di *errTestDI) test.GomegaSubTestFunc {
 		expected := data.NewDuplicateKeyError("mocked error")
 		r := di.DB.Create(&m)
 		g.Expect(r.Error).To(HaveOccurred(), "create model [%s] should fail", m.UniqueKey)
-		g.Expect(r.Error).To(BeAssignableToTypeOf(expected), "error should be data.DataError type")
+		_ ,ok := r.Error.(data.DataError)
+		g.Expect(ok).To(BeTrue(), "error should be data.DataError type")
 		g.Expect(errors.Is(r.Error, expected)).To(BeTrue(), "error should match DuplicateKeyError")
 		g.Expect(r.Error.(data.DataError).RootCause()).To(BeAssignableToTypeOf(&pq.Error{}), "error should have cause with pq.Error type")
 	}
