@@ -17,7 +17,7 @@ var (
 
 // Factory usually used in repository creation.
 type Factory interface {
-	// NewCRUD create a implementation specific CrudRepository.
+	// NewCRUD create an implementation specific CrudRepository.
 	// "model" represent the model this repository works on. It could be Struct or *Struct
 	// It panic if model is not a valid model definition
 	// accepted options depends on implementation. for gorm, *gorm.Session can be supplied
@@ -71,27 +71,8 @@ type SchemaResolver interface{
 	RelationshipSchema(fieldName string) SchemaResolver
 }
 
-// Utility is a collection of repository related patterns that are useful for common service layer implementation
-type Utility interface{
-	// CheckUniqueness check if any non-zero unique field of given model ("v") violate unique key constraints in DB
-	// When uniqueness check fails, the returned map contains field names and values that violate the constraints
-	// and a data.ErrorSubTypeDataIntegrity error
-	// Accepted "v" types:
-	// 		*ModelStruct
-	//		[]*ModelStruct
-	// 		map[string]interface{} where key is model's field name or col name
-	// By default, this function would use models' schema to figure out unique keys.
-	// However, if "keys" is provided, it would override schema definition
-	// Supported "keys types:
-	// 		string: single field/column
-	// 		[]string: index key
-	// Note: primary key is not included by default
-	CheckUniqueness(ctx context.Context, v interface{}, keys...interface{}) (map[string]interface{}, error)
-}
-
 type CrudRepository interface {
 	SchemaResolver
-	Utility
 
 	// FindById fetch model by primary key and scan it into provided interface.
 	// Accepted "dest" types:
@@ -180,4 +161,36 @@ type CrudRepository interface {
 	Truncate(ctx context.Context) error
 }
 
+// Utility is a collection of repository related patterns that are useful for common service layer implementation
+type Utility interface{
 
+	// Model returns a model-specific implementation of Utility.
+	// It is useful when model type cannot be deduced from provided parameters
+	// e.g.
+	// <code>
+	//	// this is ok, because value &SomeModel{} also imply the model type
+	// 	Utility.CheckUniqueness(ctx, &SomeModel{})
+	//
+	//	// this is ok, because the model type is specified via Model()
+	// 	Utility.Model(&SomeModel{}).CheckUniqueness(ctx, map[string]interface{}{"Field1":"Value1"})
+	//
+	//  // this is NOT ok, because there is no way to tell what model it is
+	// 	Utility.CheckUniqueness(ctx, map[string]interface{}{"Field1":"Value1"})
+	// </code>
+	Model(model interface{}) Utility
+
+	// CheckUniqueness check if any non-zero unique field of given model ("v") violate unique key constraints in DB
+	// When uniqueness check fails, the returned map contains field names and values that violate the constraints
+	// and a data.ErrorSubTypeDataIntegrity error
+	// Accepted "v" types:
+	// 		*ModelStruct
+	//		[]*ModelStruct
+	// 		map[string]interface{} where key is model's field name or col name
+	// By default, this function would use models' schema to figure out unique keys.
+	// However, if "keys" is provided, it would override schema definition
+	// Supported "keys types:
+	// 		string: single field/column
+	// 		[]string: index key
+	// Note: primary key is not included by default
+	CheckUniqueness(ctx context.Context, v interface{}, keys...interface{}) (map[string]interface{}, error)
+}

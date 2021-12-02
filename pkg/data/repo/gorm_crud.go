@@ -49,12 +49,11 @@ var (
 type GormCrud struct {
 	GormApi
 	GormMetadata
-	GormUtils
 }
 
 func newGormCrud(api GormApi, model interface{}) (*GormCrud, error) {
 	// Note we uses raw db here to leverage internal schema cache
-	meta, e := newModelMetadata(api.DB(context.Background()), model)
+	meta, e := newGormMetadata(api.DB(context.Background()), model)
 	if e != nil {
 		return nil, e
 	}
@@ -62,7 +61,6 @@ func newGormCrud(api GormApi, model interface{}) (*GormCrud, error) {
 		GormApi:      api,
 		GormMetadata: meta,
 	}
-	ret.GormUtils = newGormUtils(api, &ret.GormMetadata)
 	return ret, nil
 }
 

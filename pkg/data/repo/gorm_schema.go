@@ -24,7 +24,7 @@ type GormMetadata struct {
 	types map[reflect.Type]typeKey
 }
 
-func newModelMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
+func newGormMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
 	if model == nil {
 		return GormMetadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
 	}
@@ -55,15 +55,13 @@ func newModelMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
 		reflect.TypeOf(map[string]interface{}{}): typeGenericMap,
 	}
 
-	// pre-parse schema
-	if e := db.Statement.Parse(model); e != nil {
-		return GormMetadata{}, ErrorInvalidCrudModel.WithMessage("failed to parse schema of [%T] - %v", model, e)
+	resolver, e := newGormSchemaResolver(db, model)
+	if e != nil {
+		return GormMetadata{}, e
 	}
 
 	return GormMetadata{
-		gormSchemaResolver: gormSchemaResolver {
-			schema: db.Statement.Schema,
-		},
+		gormSchemaResolver: resolver,
 		model: reflect.New(sType).Interface(),
 		types: types,
 	}, nil
@@ -80,6 +78,17 @@ func (g GormMetadata) isSupportedValue(value interface{}, types utils.Set) bool 
 type gormSchemaResolver struct {
 	schema *schema.Schema
 }
+
+func newGormSchemaResolver(db *gorm.DB, model interface{}) (gormSchemaResolver, error) {
+	// pre-parse schema
+	if e := db.Statement.Parse(model); e != nil {
+		return gormSchemaResolver{}, ErrorInvalidCrudModel.WithMessage("failed to parse schema of [%T] - %v", model, e)
+	}
+	return gormSchemaResolver {
+		schema: db.Statement.Schema,
+	}, nil
+}
+
 
 func (g gormSchemaResolver) ModelType() reflect.Type {
 	return g.schema.ModelType

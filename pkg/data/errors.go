@@ -145,7 +145,7 @@ var (
 var (
 	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
 	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
-	ErrorDuplicateKey = NewDataError(ErrorCodeDuplicateKey, "duplicate key")
+	ErrorDuplicateKey         = NewDataError(ErrorCodeDuplicateKey, "duplicate key")
 )
 
 func init() {
@@ -156,6 +156,8 @@ func init() {
 type DataError interface {
 	error
 	NestedError
+	Details() interface{}
+	WithDetails(interface{}) DataError
 	WithMessage(msg string, args ...interface{}) DataError
 }
 
@@ -163,10 +165,21 @@ type DataError interface {
 //goland:noinspection GoNameStartsWithPackageName
 type dataError struct {
 	*CodedError
+	details interface{}
+}
+
+func (e dataError) Details() interface{} {
+	return e.details
+}
+
+func (e dataError) WithDetails(details interface{}) DataError {
+	return dataError{
+		CodedError: e.CodedError,
+		details: details,
+	}
 }
 
 func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
-
 	return dataError{
 		CodedError: e.CodedError.WithMessage(msg, args...),
 	}
