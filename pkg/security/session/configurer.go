@@ -33,16 +33,16 @@ func New() *Feature {
 }
 
 type Configurer struct {
-	store           Store
-	sessionProps    security.SessionProperties
-	maxSessionsFunc GetMaximumSessions
+	store                 Store
+	sessionProps          security.SessionProperties
+	sessionSettingService SettingService
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, sessionStore Store, maxSessionsFunc GetMaximumSessions) *Configurer {
+func newSessionConfigurer(sessionProps security.SessionProperties, sessionStore Store, sessionSettingService SettingService) *Configurer {
 	return &Configurer{
 		store:           sessionStore,
 		sessionProps:    sessionProps,
-		maxSessionsFunc: maxSessionsFunc,
+		sessionSettingService: sessionSettingService,
 	}
 }
 
@@ -77,17 +77,16 @@ func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 	ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
 		Add(&DebugAuthErrorHandler{})
 
-	maxSessionsFunc := sc.maxSessionsFunc
-	if maxSessionsFunc == nil {
-		maxSessions := sc.sessionProps.MaxConcurrentSession
-		maxSessionsFunc = func() int {
-			return maxSessions
-		}
+	var settingService SettingService
+	if sc.sessionSettingService == nil {
+		settingService = NewDefaultSettingService(sc.sessionProps)
+	} else {
+		settingService = sc.sessionSettingService
 	}
 
 	concurrentSessionHandler := &ConcurrentSessionHandler{
 		sessionStore:   sc.store,
-		getMaxSessions: maxSessionsFunc,
+		sessionSettingService: settingService,
 	}
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(concurrentSessionHandler)

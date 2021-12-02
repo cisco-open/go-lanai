@@ -44,12 +44,10 @@ func (h *ChangeSessionHandler) PriorityOrder() int {
 	return security.HandlerOrderChangeSession
 }
 
-type GetMaximumSessions func() int
-
 // ConcurrentSessionHandler This handler runs after ChangeSessionHandler so that the updated session id is indexed to the principal
 type ConcurrentSessionHandler struct{
-	sessionStore Store
-	getMaxSessions GetMaximumSessions
+	sessionStore          Store
+	sessionSettingService SettingService
 }
 
 func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, _ http.ResponseWriter, from, to security.Authentication) {
@@ -86,7 +84,7 @@ func (h *ConcurrentSessionHandler) HandleAuthenticationSuccess(c context.Context
 		panic(security.NewInternalError(err.Error()))
 	}
 
-	max := h.getMaxSessions()
+	max := h.sessionSettingService.GetMaximumSessions(c)
 
 	if len(existing) <= max || max <= 0 {
 		return
