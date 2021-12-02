@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -126,6 +127,9 @@ func uniquenessWhere(models []interface{}, keys []index) (exprs []clause.Express
 }
 
 func uniquenessExprs(modelV reflect.Value, keys []index) []clause.Expression {
+	sort.SliceStable(keys, func(i, j int) bool {
+		return len(keys[i]) < len(keys[j])
+	})
 	exprs := make([]clause.Expression, 0, len(keys))
 	modelV = reflect.Indirect(modelV)
 	for _, idx := range keys {
