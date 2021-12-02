@@ -21,7 +21,12 @@ func Get(c context.Context) *Session {
 }
 
 func Clear(c context.Context) {
-	c.(utils.MutableContext).Set(contextKeySession, nil)
+	if mc, ok := c.(utils.MutableContext); ok {
+		mc.Set(contextKeySession, nil)
+	}
+	if gc := web.GinContext(c); gc != nil {
+		gc.Set(contextKeySession, nil)
+	}
 }
 
 type Manager struct {
