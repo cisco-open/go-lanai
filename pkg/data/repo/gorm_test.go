@@ -128,6 +128,7 @@ func TestGormUtils(t *testing.T) {
 		),
 		apptest.WithDI(di),
 		test.SubTestSetup(SetupTestPrepareTables(di)),
+		test.GomegaSubTest(SubTestResolveSchema(di), "TestResolveSchema"),
 		test.GomegaSubTest(SubTestCheckUniqueness(di), "TestCheckUniqueness"),
 	)
 }
@@ -639,6 +640,19 @@ func SubTestUtilFunctions(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestResolveSchema(_ *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		var r SchemaResolver
+		r, e = Utils().ResolveSchema(ctx, &TestOTOModel{})
+		g.Expect(e).To(Succeed(), "ResolveSchema shouldn't return error")
+		g.Expect(r.ModelName()).To(Equal("TestOTOModel"), "ResolveSchema have correct model name")
+
+		r, e = Utils().ResolveSchema(ctx, map[string]interface{}{})
+		g.Expect(e).To(HaveOccurred(), "ResolveSchema should return error on map value")
+	}
+}
+
 func SubTestCheckUniqueness(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var model, toCheck TestModel
@@ -714,6 +728,10 @@ func SubTestCheckUniqueness(di *testDI) test.GomegaSubTestFunc {
 
 		// all zero value
 		dups, e = Utils().CheckUniqueness(ctx, &TestModel{})
+		g.Expect(e).To(HaveOccurred(), "should return error of all zero values")
+
+		// nil value
+		dups, e = Utils().CheckUniqueness(ctx, nil)
 		g.Expect(e).To(HaveOccurred(), "should return error of all zero values")
 
 		// different options

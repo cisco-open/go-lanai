@@ -58,6 +58,8 @@ type Option interface {}
 type SchemaResolver interface{
 	// ModelType returns reflect type of the model
 	ModelType() reflect.Type
+	// ModelName returns the name of the model
+	ModelName() string
 	// Table resolve table name of the model
 	Table() string
 	// ColumnName resolves the column name by given field name of the Model.
@@ -178,6 +180,10 @@ type Utility interface{
 	// 	Utility.CheckUniqueness(ctx, map[string]interface{}{"Field1":"Value1"})
 	// </code>
 	Model(model interface{}) Utility
+
+	// ResolveSchema parse given model and returns its SchemaResolver
+	// It's highly recommended to use CrudRepository instead of this one.
+	ResolveSchema(ctx context.Context, model interface{}) (SchemaResolver, error)
 
 	// CheckUniqueness check if any non-zero unique field of given model ("v") violate unique key constraints in DB
 	// When uniqueness check fails, the returned map contains field names and values that violate the constraints

@@ -182,6 +182,7 @@ func (e dataError) WithDetails(details interface{}) DataError {
 func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
 	return dataError{
 		CodedError: e.CodedError.WithMessage(msg, args...),
+		details: e.details,
 	}
 }
 
@@ -198,7 +199,7 @@ func (e dataError) Unwrap() error {
 // webDataError also implements web.StatusCoder
 //goland:noinspection GoNameStartsWithPackageName
 type webDataError struct {
-	DataError
+	dataError
 	SC int
 }
 
@@ -207,11 +208,11 @@ func (e webDataError) StatusCode() int {
 }
 
 func (e webDataError) WithStatusCode(sc int) DataError {
-	return webDataError{DataError: e.DataError, SC: sc}
+	return webDataError{dataError: e.dataError, SC: sc}
 }
 
 func (e webDataError) WithMessage(msg string, args ...interface{}) DataError {
-	return webDataError{DataError: e.DataError.WithMessage(msg, args...), SC: e.SC}
+	return webDataError{dataError: e.dataError.WithMessage(msg, args...).(dataError), SC: e.SC}
 }
 
 /**********************
@@ -226,16 +227,16 @@ func NewDataError(code int64, e interface{}, causes ...interface{}) DataError {
 
 func NewErrorWithStatusCode(err error, sc int) DataError {
 	switch e := err.(type) {
-	case DataError:
-		return &webDataError{DataError: e, SC: sc}
+	case dataError:
+		return &webDataError{dataError: e, SC: sc}
 	case CodedError:
-		return &webDataError{DataError: dataError{CodedError: &e}, SC: sc}
+		return &webDataError{dataError: dataError{CodedError: &e}, SC: sc}
 	case *CodedError:
-		return &webDataError{DataError: dataError{CodedError: e}, SC: sc}
+		return &webDataError{dataError: dataError{CodedError: e}, SC: sc}
 	case ErrorCoder:
-		return &webDataError{DataError: NewDataError(e.Code(), e), SC: sc}
+		return &webDataError{dataError: *NewDataError(e.Code(), e).(*dataError), SC: sc}
 	default:
-		return &webDataError{DataError: NewDataError(ErrorSubTypeCodeInternal, e), SC: sc}
+		return &webDataError{dataError: *NewDataError(ErrorSubTypeCodeInternal, e).(*dataError), SC: sc}
 	}
 }
 

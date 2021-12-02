@@ -94,6 +94,10 @@ func (g gormSchemaResolver) ModelType() reflect.Type {
 	return g.schema.ModelType
 }
 
+func (g gormSchemaResolver) ModelName() string {
+	return g.schema.Name
+}
+
 func (g gormSchemaResolver) Table() string {
 	return g.schema.Table
 }

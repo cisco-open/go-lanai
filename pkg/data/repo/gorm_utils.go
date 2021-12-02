@@ -42,6 +42,10 @@ func (g GormUtils) Model(model interface{}) Utility {
 	}
 }
 
+func (g GormUtils) ResolveSchema(ctx context.Context, model interface{}) (SchemaResolver, error) {
+	return newGormSchemaResolver(g.api.DB(ctx), model)
+}
+
 func (g GormUtils) CheckUniqueness(ctx context.Context, v interface{}, keys ...interface{}) (dups map[string]interface{}, err error) {
 	resolver, e := g.getSchemaResolver(ctx, v)
 	if e != nil {
