@@ -25,7 +25,7 @@ require (
 	github.com/hashicorp/consul/api v1.3.0
 	github.com/hashicorp/vault/api v1.1.0
 	github.com/imdario/mergo v0.3.12
-	github.com/jackc/pgconn v1.10.0 // indirect
+	github.com/jackc/pgconn v1.10.0
 	github.com/lib/pq v1.10.2
 	github.com/mattermost/xml-roundtrip-validator v0.0.0-20201213122252-bcd7e1b9601e
 	github.com/mholt/archiver v3.1.1+incompatible
