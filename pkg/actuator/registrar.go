@@ -59,6 +59,12 @@ func (r *Registrar) initialize(di initDI) error {
 	return nil
 }
 
+func (r *Registrar) MustRegister(items...interface{}) {
+	if e := r.Register(items...); e != nil {
+		panic(e)
+	}
+}
+
 func (r *Registrar) Register(items...interface{}) error {
 	for _, item := range items {
 		if e := r.register(item); e != nil {
