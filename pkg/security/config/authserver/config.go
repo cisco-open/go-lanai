@@ -145,6 +145,7 @@ type Endpoints struct {
 
 type Configuration struct {
 	// configurable items
+	SessionSettingService session.SettingService
 	ClientStore         oauth2.OAuth2ClientStore
 	ClientSecretEncoder passwd.PasswordEncoder
 	Endpoints           Endpoints

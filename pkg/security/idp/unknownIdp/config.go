@@ -25,7 +25,7 @@ func (c *NoIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *aut
 	condition := idp.RequestWithAuthenticationFlow(idp.UnknownIdp, config.IdpManager)
 
 	ws.AndCondition(condition).
-		With(session.New()).
+		With(session.New().SettingService(config.SessionSettingService)).
 		With(access.New().
 			Request(matcher.AnyRequest()).
 			AllowIf(alwaysDenyWithMessage("Identity provider is not configured for this sub-domain")),

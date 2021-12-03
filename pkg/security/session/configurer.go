@@ -12,10 +12,16 @@ var (
 
 // We currently don't have any stuff to configure
 type Feature struct {
+	settingService SettingService
 }
 
 func (f *Feature) Identifier() security.FeatureIdentifier {
 	return FeatureId
+}
+
+func (f *Feature) SettingService(settingService SettingService) *Feature {
+	f.settingService = settingService
+	return f
 }
 
 // Standard security.Feature entrypoint
@@ -35,18 +41,18 @@ func New() *Feature {
 type Configurer struct {
 	store                 Store
 	sessionProps          security.SessionProperties
-	sessionSettingService SettingService
 }
 
-func newSessionConfigurer(sessionProps security.SessionProperties, sessionStore Store, sessionSettingService SettingService) *Configurer {
+func newSessionConfigurer(sessionProps security.SessionProperties, sessionStore Store) *Configurer {
 	return &Configurer{
 		store:           sessionStore,
 		sessionProps:    sessionProps,
-		sessionSettingService: sessionSettingService,
 	}
 }
 
-func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
+func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) error {
+	f := feature.(*Feature)
+
 	// the ws shared store is to share this store with other feature configurer can have access to store.
 	if ws.Shared(security.WSSharedKeySessionStore) == nil {
 		_ = ws.AddShared(security.WSSharedKeySessionStore, sc.store)
@@ -78,10 +84,10 @@ func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 		Add(&DebugAuthErrorHandler{})
 
 	var settingService SettingService
-	if sc.sessionSettingService == nil {
+	if f.settingService == nil {
 		settingService = NewDefaultSettingService(sc.sessionProps)
 	} else {
-		settingService = sc.sessionSettingService
+		settingService = f.settingService
 	}
 
 	concurrentSessionHandler := &ConcurrentSessionHandler{

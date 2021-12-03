@@ -83,7 +83,7 @@ type initDI struct {
 
 func register(di initDI) {
 	if di.SecRegistrar != nil && di.SessionStore != nil {
-		configurer := newSessionConfigurer(di.SessionProps, di.SessionStore, di.SessionSettingService)
+		configurer := newSessionConfigurer(di.SessionProps, di.SessionStore)
 		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 	}
 }
