@@ -25,7 +25,7 @@ type InfoEndpoint struct {
 	appConfig appconfig.ConfigAccessor
 }
 
-func new(di regDI) *InfoEndpoint {
+func newEndpoint(di regDI) *InfoEndpoint {
 	ep := InfoEndpoint{
 		appConfig: di.AppContext.Config().(appconfig.ConfigAccessor),
 	}

@@ -24,6 +24,9 @@ management:
       permissions: IS_API_ADMIN
     env:
       enabled: true
+    apilist:
+      enabled: false
+      static-fs: "configs/api-list.json"
   security:
     enabled-by-default: true
     permissions: IS_API_ADMIN

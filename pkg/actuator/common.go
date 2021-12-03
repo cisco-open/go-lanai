@@ -163,6 +163,7 @@ func invalidOpFuncSignatureError(f interface{}) error {
 /*******************************
 	EndpointBase
 ********************************/
+
 // EndpointBase implements EndpointExecutor and partially Endpoint,  and can be embedded into any Endpoint implementation
 // it calls Operations using reflect
 type EndpointBase struct {
@@ -227,6 +228,7 @@ func (b EndpointBase) WriteOperation(ctx context.Context, input interface{}) (in
 /*******************************
 	WebEndpointBase
 ********************************/
+
 type MappingPathFunc func(op Operation, props *WebEndpointsProperties) string
 type MappingNameFunc func(op Operation) string
 
@@ -244,7 +246,7 @@ func MakeWebEndpointBase(opts...EndpointOptions) WebEndpointBase {
 	}
 }
 
-// WebEndpoint
+// Mapping implements WebEndpoint
 func (b WebEndpointBase) Mapping(op Operation, group string) (web.Mapping, error) {
 	builder, e := b.RestMappingBuilder(op, group, b.MappingPath, b.MappingName)
 	if e != nil {
@@ -253,9 +255,9 @@ func (b WebEndpointBase) Mapping(op Operation, group string) (web.Mapping, error
 	return builder.Build(), nil
 }
 
-func (b WebEndpointBase) MappingPath(op Operation, props *WebEndpointsProperties) string {
+func (b WebEndpointBase) MappingPath(_ Operation, props *WebEndpointsProperties) string {
 	base := strings.Trim(props.BasePath, "/")
-	path, ok := props.Mappings[b.id];
+	path, ok := props.Mappings[b.id]
 	if !ok {
 		path = strings.ToLower(b.id)
 	}

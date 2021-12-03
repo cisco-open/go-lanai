@@ -3,6 +3,7 @@ package actuator
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/alive"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/apilist"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/env"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health/endpoint"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/info"
@@ -24,6 +25,7 @@ var Module = &bootstrap.Module{
 		fx.Invoke(health.Register),
 		fx.Invoke(env.Register),
 		fx.Invoke(alive.Register),
+		fx.Invoke(apilist.Register),
 	},
 }
 
