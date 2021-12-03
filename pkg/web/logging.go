@@ -84,7 +84,9 @@ func (c LoggingCustomizer) Customize(ctx context.Context, r *Registrar) error {
 		Formatter: formatter.intercept,
 		Output:    ioutil.Discard, // our logFormatter calls logger directly
 	})
-	r.AddGlobalMiddlewares(mw)
+	if e := r.AddGlobalMiddlewares(mw); e != nil {
+		panic(e)
+	}
 	return nil
 }
 
@@ -113,8 +115,8 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 	var statusColor, methodColor, resetColor string
 	methodLen := 7
 	if log.IsTerminal(f.logger) {
-		statusColor = params.StatusCodeColor()
-		methodColor = params.MethodColor()
+		statusColor = fixColor(params.StatusCodeColor())
+		methodColor = fixColor(params.MethodColor())
 		resetColor = params.ResetColor()
 		methodLen = methodLen + len(methodColor) + len(resetColor)
 	}
@@ -181,6 +183,13 @@ func formatSize(n int) string {
 	default:
 		return fmt.Sprintf("%.2fGB", float64(n) / gb)
 	}
+}
+
+func fixColor(color string) string {
+	if strings.Contains(color, "43") {
+		color = strings.Replace(color, "90;", "97;", 1)
+	}
+	return color
 }
 
 // loggingRequestMatcher implement RequestMatcher
