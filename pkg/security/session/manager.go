@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -17,6 +18,15 @@ const (
 func Get(c context.Context) *Session {
 	session,_ := c.Value(contextKeySession).(*Session)
 	return session
+}
+
+func Clear(c context.Context) {
+	if mc, ok := c.(utils.MutableContext); ok {
+		mc.Set(contextKeySession, nil)
+	}
+	if gc := web.GinContext(c); gc != nil {
+		gc.Set(contextKeySession, nil)
+	}
 }
 
 type Manager struct {

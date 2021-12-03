@@ -68,6 +68,7 @@ func (h TokenRevokingLogoutHandler) HandleLogout(ctx context.Context, r *http.Re
 func (h TokenRevokingLogoutHandler) handleGet(ctx context.Context, auth security.Authentication) error {
 	defer func() {
 		security.Clear(ctx)
+		session.Clear(ctx)
 	}()
 	s := session.Get(ctx)
 	if s == nil {
@@ -85,6 +86,7 @@ func (h TokenRevokingLogoutHandler) handleGet(ctx context.Context, auth security
 func (h TokenRevokingLogoutHandler) handlePost(ctx context.Context, auth security.Authentication) error  {
 	defer func() {
 		security.Clear(ctx)
+		session.Clear(ctx)
 	}()
 	username, e := security.GetUsername(auth)
 	if e != nil || username == "" {

@@ -82,7 +82,7 @@ func pqErrorTranslatorProvider() fx.Annotated {
 	return fx.Annotated{
 		Group: data.GormConfigurerGroup,
 		Target: func() data.ErrorTranslator {
-			return cockroach.PqErrorTranslator{}
+			return cockroach.PostgresErrorTranslator{}
 		},
 	}
 }

@@ -57,7 +57,7 @@ func (h TokenRevokeSuccessHandler) redirect(ctx context.Context, r *http.Request
 	// Note: we don't have error handling alternatives (except for panic)
 	redirectUri := r.FormValue(oauth2.ParameterRedirectUri)
 	if redirectUri == "" {
-		h.fallback.HandleAuthenticationError(ctx, r, rw, fmt.Errorf("missing %s", oauth2.ParameterRedirectUri))
+		h.fallback.HandleAuthenticationError(ctx, r, rw, security.NewInternalError(fmt.Sprintf("missing %s", oauth2.ParameterRedirectUri)))
 		return
 	}
 
