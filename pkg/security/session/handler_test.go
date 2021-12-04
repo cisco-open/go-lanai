@@ -74,9 +74,9 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	//this handler allows 1 concurrent sessions
 	handler := &ConcurrentSessionHandler{
 		sessionStore: sessionStore,
-		getMaxSessions: func() int {
-			return 1
-		},
+		sessionSettingService: NewDefaultSettingService(security.SessionProperties{
+			MaxConcurrentSession: 1,
+		}),
 	}
 
 	s, _ := sessionStore.New(common.DefaultName)

@@ -74,16 +74,16 @@ func provideSessionStore(di storeDI) Store {
 
 type initDI struct {
 	fx.In
-	AppContext      *bootstrap.ApplicationContext
-	SecRegistrar    security.Registrar `optional:"true"`
-	SessionProps    security.SessionProperties
-	SessionStore    Store              `optional:"true"`
-	MaxSessionsFunc GetMaximumSessions `optional:"true"`
+	AppContext            *bootstrap.ApplicationContext
+	SecRegistrar          security.Registrar `optional:"true"`
+	SessionProps          security.SessionProperties
+	SessionStore          Store          `optional:"true"`
+	SessionSettingService SettingService `optional:"true"`
 }
 
 func register(di initDI) {
 	if di.SecRegistrar != nil && di.SessionStore != nil {
-		configurer := newSessionConfigurer(di.SessionProps, di.SessionStore, di.MaxSessionsFunc)
+		configurer := newSessionConfigurer(di.SessionProps, di.SessionStore)
 		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 	}
 }

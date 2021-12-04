@@ -56,7 +56,7 @@ func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *a
 			Issuer(config.Issuer).
 			ErrorPath(config.Endpoints.Error),
 		).
-		With(session.New()).
+		With(session.New().SettingService(config.SessionSettingService)).
 		With(access.New().
 			Request(matcher.AnyRequest()).Authenticated(),
 		).
