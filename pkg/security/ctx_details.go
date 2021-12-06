@@ -22,6 +22,9 @@ type ProviderDetails interface {
 	ProviderId() string
 	ProviderName() string
 	ProviderDisplayName() string
+	ProviderDescription() string
+	ProviderEmail() string
+	ProviderNotificationType() string
 }
 
 type TenantDetails interface {

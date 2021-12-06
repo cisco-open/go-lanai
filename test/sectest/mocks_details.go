@@ -15,6 +15,10 @@ type SecurityDetailsMock struct {
 	TenantId     string
 	ProviderName string
 	ProviderId   string
+	ProviderDisplayName string
+	ProviderDescription string
+	ProviderEmail string
+	ProviderNotificationType string
 	Exp          time.Time
 	Iss          time.Time
 	Permissions  utils.StringSet
@@ -40,10 +44,6 @@ func NewMockedSecurityDetails(opts...SecurityMockOptions) security.Authenticatio
 		fn(&ret.SecurityDetailsMock)
 	}
 	return &ret
-}
-
-func (d *mockedSecurityDetails) ProviderDisplayName() string {
-	panic("implement me")
 }
 
 func (d *mockedSecurityDetails) OriginalUsername() string {
@@ -84,6 +84,23 @@ func (d *mockedSecurityDetails) ProviderId() string {
 func (d *mockedSecurityDetails) ProviderName() string {
 	return d.SecurityDetailsMock.ProviderName
 }
+
+func (d *mockedSecurityDetails) ProviderDisplayName() string {
+	return d.SecurityDetailsMock.ProviderDisplayName
+}
+
+func (d *mockedSecurityDetails) ProviderDescription() string {
+	return d.SecurityDetailsMock.ProviderDescription
+}
+
+func (d *mockedSecurityDetails) ProviderEmail() string {
+	return d.SecurityDetailsMock.ProviderEmail
+}
+
+func (d *mockedSecurityDetails) ProviderNotificationType() string {
+	return d.SecurityDetailsMock.ProviderNotificationType
+}
+
 
 func (d *mockedSecurityDetails) TenantId() string {
 	return d.SecurityDetailsMock.TenantId

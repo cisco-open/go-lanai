@@ -36,6 +36,11 @@ var (
 		oauth2.ClaimTenantSuspended: Optional(TenantSuspended),
 		oauth2.ClaimProviderId:      Optional(ProviderId),
 		oauth2.ClaimProviderName:    Optional(ProviderName),
+		oauth2.ClaimProviderDisplayName:    Optional(ProviderDisplayName),
+		oauth2.ClaimProviderDescription:    Optional(ProviderDescription),
+		oauth2.ClaimProviderEmail: 			Optional(ProviderEmail),
+		oauth2.ClaimProviderNotificationType:    Optional(ProviderNotificationType),
+
 		oauth2.ClaimRoles:           Optional(Roles),
 		oauth2.ClaimPermissions:     Optional(Permissions),
 		oauth2.ClaimOrigUsername:    Optional(OriginalUsername),

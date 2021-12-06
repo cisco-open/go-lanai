@@ -10,6 +10,9 @@ type ProviderDetails struct {
 	Id          string
 	Name        string
 	DisplayName string
+	Description string
+	NotificationType string
+	Email string
 }
 
 type TenantDetails struct {
@@ -83,6 +86,18 @@ func (d *FullContextDetails) ProviderName() string {
 // security.ProviderDetails
 func (d *FullContextDetails) ProviderDisplayName() string {
 	return d.Provider.DisplayName
+}
+
+func (d *FullContextDetails) ProviderDescription() string {
+	return d.Provider.Description
+}
+
+func (d *FullContextDetails) ProviderEmail() string {
+	return d.Provider.Email
+}
+
+func (d *FullContextDetails) ProviderNotificationType() string {
+	return d.Provider.NotificationType
 }
 
 // security.TenantDetails
