@@ -19,6 +19,7 @@ var (
 type configurableLogger struct {
 	logger
 	name      string
+	lvl       LoggingLevel
 	template  log.Logger
 	swappable *log.SwapLogger
 	valuers   ContextValuers
@@ -50,7 +51,7 @@ func (l *configurableLogger) WithContext(ctx context.Context) Logger {
 		return l
 	}
 
-	fields := []interface{}{}
+	fields := make([]interface{}, 0, len(l.valuers)*2)
 	for k, ctxValuer := range l.valuers {
 		valuer := makeValuer(ctx, ctxValuer)
 		fields = append(fields, k, valuer)
@@ -74,6 +75,7 @@ func (l *configurableLogger) setLevel(lv LoggingLevel) {
 	default:
 		opt = level.AllowInfo()
 	}
+	l.lvl = lv
 	l.swappable.Swap(level.NewFilter(l.template, opt))
 }
 

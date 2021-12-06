@@ -4,7 +4,6 @@ import (
 	"embed"
 	"encoding/json"
 	"github.com/ghodss/yaml"
-	"github.com/imdario/mergo"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -15,7 +14,7 @@ import (
 
 // factory is created by init, and used to create new loggers.
 var (
-	factory       loggerFactory
+	factory       *kitLoggerFactory
 	defaultConfig *Properties
 )
 
@@ -25,29 +24,8 @@ func New(name string) ContextualLogger {
 	return factory.createLogger(name)
 }
 
-func RegisterContextLogFields(extractors...ContextValuers) {
+func RegisterContextLogFields(extractors ...ContextValuers) {
 	factory.addContextValuers(extractors...)
-}
-
-func SetLevel(name string, logLevel LoggingLevel) {
-	factory.setLevel(name, logLevel)
-}
-
-func UpdateLoggingConfiguration(properties *Properties) error {
-	mergedProperties := &Properties{}
-	mergeOption := func(mergoConfig *mergo.Config) {
-		mergoConfig.Overwrite = true
-	}
-	err := mergo.Merge(mergedProperties, defaultConfig, mergeOption)
-	if err != nil {
-		return err
-	}
-	err = mergo.Merge(mergedProperties, properties, mergeOption)
-	if err != nil {
-		return err
-	}
-	factory.refresh(mergedProperties)
-	return err
 }
 
 //go:embed defaults-log.yml

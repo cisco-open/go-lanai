@@ -246,13 +246,13 @@ func MakeWebEndpointBase(opts...EndpointOptions) WebEndpointBase {
 	}
 }
 
-// Mapping implements WebEndpoint
-func (b WebEndpointBase) Mapping(op Operation, group string) (web.Mapping, error) {
+// Mappings implements WebEndpoint
+func (b WebEndpointBase) Mappings(op Operation, group string) ([]web.Mapping, error) {
 	builder, e := b.RestMappingBuilder(op, group, b.MappingPath, b.MappingName)
 	if e != nil {
 		return nil, e
 	}
-	return builder.Build(), nil
+	return []web.Mapping{builder.Build()}, nil
 }
 
 func (b WebEndpointBase) MappingPath(_ Operation, props *WebEndpointsProperties) string {

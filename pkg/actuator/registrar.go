@@ -117,15 +117,15 @@ func (r *Registrar) installWebEndpoint(reg *web.Registrar, endpoint Endpoint) ([
 	ops := endpoint.Operations()
 	mappings := make([]web.Mapping, 0, len(ops))
 	for _, op := range ops {
-		mapping, e := endpoint.(WebEndpoint).Mapping(op, "")
+		m, e := endpoint.(WebEndpoint).Mappings(op, "")
 		if e != nil {
 			return nil, e
 		}
 
-		if e := reg.Register(mapping); e != nil {
+		if e := reg.Register(m); e != nil {
 			return nil, e
 		}
-		mappings = append(mappings, mapping)
+		mappings = append(mappings, m...)
 	}
 	return mappings, nil
 }
