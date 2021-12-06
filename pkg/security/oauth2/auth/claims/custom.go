@@ -87,6 +87,38 @@ func ProviderName(ctx context.Context, opt *FactoryOption) (v interface{}, err e
 	return nonZeroOrError(details.ProviderName(), errorMissingDetails)
 }
 
+func ProviderDisplayName(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.ProviderDetails)
+	if !ok {
+		return nil, errorMissingDetails
+	}
+	return nonZeroOrError(details.ProviderDisplayName(), errorMissingDetails)
+}
+
+func ProviderDescription(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.ProviderDetails)
+	if !ok {
+		return nil, errorMissingDetails
+	}
+	return nonZeroOrError(details.ProviderDescription(), errorMissingDetails)
+}
+
+func ProviderEmail(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.ProviderDetails)
+	if !ok {
+		return nil, errorMissingDetails
+	}
+	return nonZeroOrError(details.ProviderEmail(), errorMissingDetails)
+}
+
+func ProviderNotificationType(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	details, ok := opt.Source.Details().(security.ProviderDetails)
+	if !ok {
+		return nil, errorMissingDetails
+	}
+	return nonZeroOrError(details.ProviderNotificationType(), errorMissingDetails)
+}
+
 func Roles(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.AuthenticationDetails)
 	if !ok {

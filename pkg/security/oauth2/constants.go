@@ -168,6 +168,11 @@ const (
 	ClaimTenantSuspended = "tenant_suspended"
 	ClaimProviderId      = "provider_id"
 	ClaimProviderName    = "provider_name"
+	ClaimProviderDisplayName = "provider_display_name"
+	ClaimProviderDescription = "provider_description"
+	ClaimProviderEmail = "provider_email"
+	ClaimProviderNotificationType = "provider_notification_type"
+
 	ClaimAssignedTenants = "assigned_tenants"
 	ClaimRoles           = "roles"
 	ClaimPermissions     = "permissions"

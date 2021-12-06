@@ -105,6 +105,9 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 		Id: facts.provider.Id,
 		Name: facts.provider.Name,
 		DisplayName: facts.provider.DisplayName,
+		Description: facts.provider.Description,
+		Email: facts.provider.Email,
+		NotificationType: facts.provider.NotificationType,
 	}
 
 	// tenant

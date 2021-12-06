@@ -37,6 +37,10 @@ type CheckTokenClaims struct {
 	TenantSuspended *bool           `claim:"tenant_suspended"`
 	ProviderId      string          `claim:"provider_id"`
 	ProviderName    string          `claim:"provider_name"`
+	ProviderDisplayName string 		`claim:"provider_display_name"`
+	ProviderDescription string 		`claim:"provider_description"`
+	ProviderNotificationType string `claim:"provider_notification_type"`
+	ProviderEmail string 			`claim:"provider_email"`
 	AssignedTenants utils.StringSet `claim:"assigned_tenants"`
 	Roles           utils.StringSet `claim:"roles"`
 	Permissions     utils.StringSet `claim:"permissions"`
