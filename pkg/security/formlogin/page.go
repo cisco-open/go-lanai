@@ -18,14 +18,15 @@ const (
 	LoginModelKeyOtpParam           = "otpParam"
 	LoginModelKeyMfaVerifyUrl       = "mfaVerifyUrl"
 	LoginModelKeyMfaRefreshUrl      = "mfaRefreshUrl"
-	LoginModelKeyMsxVersion	        = "MSXVersion"
+	LoginModelKeyMsxVersion         = "MSXVersion"
 )
 
 type DefaultFormLoginController struct {
-	loginTemplate   string
-	loginProcessUrl string
-	usernameParam   string
-	passwordParam   string
+	buildInfoResolver bootstrap.BuildInfoResolver
+	loginTemplate     string
+	loginProcessUrl   string
+	usernameParam     string
+	passwordParam     string
 
 	mfaTemplate   string
 	mfaVerifyUrl  string
@@ -36,10 +37,11 @@ type DefaultFormLoginController struct {
 type PageOptionsFunc func(*DefaultFormLoginPageOptions)
 
 type DefaultFormLoginPageOptions struct {
-	LoginTemplate   string
-	UsernameParam   string
-	PasswordParam   string
-	LoginProcessUrl string
+	BuildInfoResolver bootstrap.BuildInfoResolver
+	LoginTemplate     string
+	UsernameParam     string
+	PasswordParam     string
+	LoginProcessUrl   string
 
 	MfaTemplate   string
 	OtpParam      string
@@ -47,17 +49,18 @@ type DefaultFormLoginPageOptions struct {
 	MfaRefreshUrl string
 }
 
-func NewDefaultLoginFormController(options...PageOptionsFunc) *DefaultFormLoginController {
+func NewDefaultLoginFormController(options ...PageOptionsFunc) *DefaultFormLoginController {
 	opts := DefaultFormLoginPageOptions{}
-	for _,f := range options {
+	for _, f := range options {
 		f(&opts)
 	}
 
 	return &DefaultFormLoginController{
-		loginTemplate:   opts.LoginTemplate,
-		loginProcessUrl: opts.LoginProcessUrl,
-		usernameParam:   opts.UsernameParam,
-		passwordParam:   opts.PasswordParam,
+		buildInfoResolver: opts.BuildInfoResolver,
+		loginTemplate:     opts.LoginTemplate,
+		loginProcessUrl:   opts.LoginProcessUrl,
+		usernameParam:     opts.UsernameParam,
+		passwordParam:     opts.PasswordParam,
 
 		mfaTemplate:   opts.MfaTemplate,
 		mfaVerifyUrl:  opts.MfaVerifyUrl,
@@ -83,10 +86,10 @@ func (c *DefaultFormLoginController) Mappings() []web.Mapping {
 
 func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequest) (*template.ModelView, error) {
 	model := template.Model{
-		LoginModelKeyUsernameParam: c.usernameParam,
-		LoginModelKeyPasswordParam: c.passwordParam,
+		LoginModelKeyUsernameParam:   c.usernameParam,
+		LoginModelKeyPasswordParam:   c.passwordParam,
 		LoginModelKeyLoginProcessUrl: c.loginProcessUrl,
-		LoginModelKeyMsxVersion: c.msxVersion(),
+		LoginModelKeyMsxVersion:      c.msxVersion(),
 	}
 
 	s := session.Get(ctx)
@@ -107,7 +110,7 @@ func (c *DefaultFormLoginController) LoginForm(ctx context.Context, r *LoginRequ
 	}
 
 	return &template.ModelView{
-		View: c.loginTemplate,
+		View:  c.loginTemplate,
 		Model: model,
 	}, nil
 }
@@ -117,7 +120,7 @@ func (c *DefaultFormLoginController) OtpVerificationForm(ctx context.Context, r 
 		LoginModelKeyOtpParam:      c.otpParam,
 		LoginModelKeyMfaVerifyUrl:  c.mfaVerifyUrl,
 		LoginModelKeyMfaRefreshUrl: c.mfaRefreshUrl,
-		LoginModelKeyMsxVersion: c.msxVersion(),
+		LoginModelKeyMsxVersion:    c.msxVersion(),
 	}
 
 	s := session.Get(ctx)
@@ -128,12 +131,16 @@ func (c *DefaultFormLoginController) OtpVerificationForm(ctx context.Context, r 
 	}
 
 	return &template.ModelView{
-		View: c.mfaTemplate,
+		View:  c.mfaTemplate,
 		Model: model,
 	}, nil
 }
 
 func (c *DefaultFormLoginController) msxVersion() string {
+	if c.buildInfoResolver != nil {
+		return c.buildInfoResolver.Resolve().Version
+	}
+
 	if strings.ToLower(bootstrap.BuildVersion) == "unknown" {
 		return ""
 	}

@@ -38,10 +38,16 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func initialize(registrar *web.Registrar, prop SwaggerProperties) {
-	registrar.Register(Content)
-	controller := NewSwaggerController(prop)
-	registrar.Register(controller.Mappings())
+type initDI struct {
+	fx.In
+	Registrar *web.Registrar
+	Properties SwaggerProperties
+	Resolver   bootstrap.BuildInfoResolver `optional:"true"`
+}
+
+func initialize(di initDI) {
+	di.Registrar.MustRegister(Content)
+	di.Registrar.MustRegister(NewSwaggerController(di.Properties, di.Resolver))
 }
 
 func bindSecurityProperties(ctx *bootstrap.ApplicationContext) SwaggerProperties {
