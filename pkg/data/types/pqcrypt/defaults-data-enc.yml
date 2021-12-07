@@ -1,7 +1,7 @@
 data:
   encryption:
-    enabled: false
+    enabled: ${per-tenant-encryption.enabled:false}
     key:
-      type: aes128-gcm96
-      exportable: true
-      allow-plaintext-backup: true
+      type: ${per-tenant-encryption.key-properties.type:aes256-gcm96}
+      exportable: ${per-tenant-encryption.key-properties.exportable:false}
+      allow-plaintext-backup: ${per-tenant-encryption.key-properties.allow-plaintext-backup:false}

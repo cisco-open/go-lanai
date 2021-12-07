@@ -36,7 +36,7 @@ const (
 	KeyTypeRSA3072  = "rsa-3072"
 	KeyTypeRSA4096  = "rsa-4096"
 
-	defaultKeyType = KeyTypeAES128
+	defaultKeyType = KeyTypeAES256
 )
 
 var supportedKeyTypes = utils.NewStringSet(
