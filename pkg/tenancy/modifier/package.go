@@ -8,7 +8,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var logger = log.New("tenant_hierarchy_modifier")
+var logger = log.New("Tenancy.Modify")
 
 var internaModifier Modifier
 

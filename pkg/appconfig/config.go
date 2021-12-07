@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	logger = log.New("AppConfig")
+	logger = log.New("Config")
 	//ErrNotLoaded = errors.New("Configuration not loaded")
 )
 

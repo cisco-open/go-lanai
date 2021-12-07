@@ -7,11 +7,12 @@ import (
 	"strings"
 )
 
-var logger = log.New("jwt")
+var logger = log.New("OAuth2.JWT")
 
 /***********************
 	Crypto
 ************************/
+
 const CryptoKeysPropertiesPrefix = "security"
 
 const (

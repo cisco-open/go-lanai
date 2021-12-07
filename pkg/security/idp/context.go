@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var logger = log.New("SEC.idp")
+var logger = log.New("SEC.IDP")
 
 const (
 	InternalIdpForm = AuthenticationFlow("InternalIdpForm")

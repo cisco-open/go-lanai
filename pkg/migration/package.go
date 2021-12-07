@@ -15,7 +15,7 @@ const (
 	TagPostUpgrade = "post_upgrade"
 )
 
-var logger = log.New("migration")
+var logger = log.New("Migration")
 
 var filterFlag string
 var allowOutOfOrderFlag bool

@@ -8,7 +8,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var logger = log.New("tenancy-loader")
+var logger = log.New("Tenancy.Load")
 
 var internalLoader Loader
 
