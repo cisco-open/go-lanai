@@ -3,9 +3,13 @@ package actuator
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
+	"net/http"
 )
 
 type constructDI struct {
@@ -116,16 +120,29 @@ func (r *Registrar) installWebEndpoint(reg *web.Registrar, endpoint Endpoint) ([
 
 	ops := endpoint.Operations()
 	mappings := make([]web.Mapping, 0, len(ops))
+	paths := utils.NewStringSet()
 	for _, op := range ops {
-		m, e := endpoint.(WebEndpoint).Mappings(op, "")
+		opMappings, e := endpoint.(WebEndpoint).Mappings(op, "")
 		if e != nil {
 			return nil, e
 		}
 
+		if e := reg.Register(opMappings); e != nil {
+			return nil, e
+		}
+		mappings = append(mappings, opMappings...)
+		for _, m := range opMappings {
+			if route, ok := m.(web.RoutedMapping); ok {
+				paths.Add(route.Group() + route.Path())
+			}
+		}
+	}
+	// add OPTIONS route
+	for path := range paths {
+		m := mapping.Options(path).HandlerFunc(optionsHttpHandlerFunc()).Build()
 		if e := reg.Register(m); e != nil {
 			return nil, e
 		}
-		mappings = append(mappings, m...)
 	}
 	return mappings, nil
 }
@@ -180,5 +197,12 @@ func (r *Registrar) shouldExposeToWeb(endpoint Endpoint) bool {
 	default:
 		// explicit exclusion or implicit exclusion without explicit inclusion
 		return false
+	}
+}
+
+
+func optionsHttpHandlerFunc() gin.HandlerFunc {
+	return func(gc *gin.Context) {
+		gc.Status(http.StatusOK)
 	}
 }

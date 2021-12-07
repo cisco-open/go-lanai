@@ -5,8 +5,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
+	matcherutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
+	"net/http"
 )
 
 // a single ActuatorSecurityCustomizer can be registered via Registrar
@@ -39,7 +41,7 @@ func (c *actuatorSecurityConfigurer) Configure(ws security.WebSecurity) {
 	path := fmt.Sprintf("%s/**", c.properties.Endpoints.Web.BasePath)
 
 
-	ws.Route(matcher.RouteWithPattern(path)).
+	ws.Route(matcher.RouteWithPattern(path).And(matcherutils.Not(matcher.RouteWithMethods(http.MethodOptions)))).
 		//
 		With(errorhandling.New())
 
