@@ -5,6 +5,7 @@ import "strings"
 /*********************
 	LoggingLevel
  *********************/
+
 type LoggingLevel int
 
 const (
@@ -41,7 +42,7 @@ var (
 	}
 )
 
-// fmt.Stringer
+// String implements fmt.Stringer
 func (l LoggingLevel) String() string {
 	if s, ok := loggingLevelItoA[l]; ok {
 		return s
@@ -49,12 +50,12 @@ func (l LoggingLevel) String() string {
 	return LevelErrorText
 }
 
-// encoding.TextMarshaler
+// MarshalText implements encoding.TextMarshaler
 func (l LoggingLevel) MarshalText() ([]byte, error) {
 	return []byte(l.String()), nil
 }
 
-// encoding.TextUnmarshaler
+// UnmarshalText implements encoding.TextUnmarshaler
 func (l *LoggingLevel) UnmarshalText(data []byte) error {
 	value := strings.ToUpper(string(data))
 	if v, ok := loggingLevelAtoI[value]; ok {
@@ -66,6 +67,7 @@ func (l *LoggingLevel) UnmarshalText(data []byte) error {
 /*********************
 	Format
  *********************/
+
 type Format int
 
 const (

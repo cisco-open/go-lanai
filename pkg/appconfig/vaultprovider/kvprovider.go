@@ -7,8 +7,9 @@ import (
 	"fmt"
 )
 
-var logger = log.New("vaultprovider")
+var logger = log.New("Config.Vault")
 
+// KeyValueConfigProvider
 //Vault kv v1 differs with v2 API both in how the context path is constructed and how the response is parsed.
 //https://www.vaultproject.io/docs/secrets/kv/kv-v1
 type KeyValueConfigProvider struct {

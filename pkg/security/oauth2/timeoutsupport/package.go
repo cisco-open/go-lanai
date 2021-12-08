@@ -2,14 +2,13 @@ package timeoutsupport
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"go.uber.org/fx"
 )
 
-var logger = log.New("SEC.timeout")
+//var logger = log.New("SEC.Timeout")
 
 var Module = &bootstrap.Module{
 	Name: "timeout",

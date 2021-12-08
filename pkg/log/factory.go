@@ -10,9 +10,11 @@ import (
 	"strings"
 )
 
-const levelDefault = "default"
-const formatJson = "json"
-const outputConsole = "console"
+const (
+	keyLevelDefault  = "default"
+	keySeparator     = "."
+	nameLevelDefault = "ROOT"
+)
 
 type kitLoggerFactory struct {
 	rootLogLevel     LoggingLevel
@@ -24,7 +26,7 @@ type kitLoggerFactory struct {
 }
 
 func newKitLoggerFactory(properties *Properties) *kitLoggerFactory {
-	rootLogLevel, ok := properties.Levels[levelDefault]
+	rootLogLevel, ok := properties.Levels[keyLevelDefault]
 	if !ok {
 		rootLogLevel = LevelInfo
 	}
@@ -39,27 +41,19 @@ func newKitLoggerFactory(properties *Properties) *kitLoggerFactory {
 	}
 }
 
-func (f *kitLoggerFactory) loggerKey(name string) string {
-	return strings.ToLower(name)
-}
-
 func (f *kitLoggerFactory) createLogger(name string) ContextualLogger {
-	key := f.loggerKey(name)
+	key := loggerKey(name)
 	if l, ok := f.registry[key]; ok {
 		return l
 	}
 
-	ll, ok := f.logLevels[key]
-	if !ok {
-		ll = f.rootLogLevel
-	}
-
+	ll := f.resolveEffectiveLevel(key)
 	l := newConfigurableLogger(name, f.templateLogger, ll, f.effectiveValuers)
 	f.registry[key] = l
 	return l
 }
 
-func (f *kitLoggerFactory) addContextValuers(valuers...ContextValuers) {
+func (f *kitLoggerFactory) addContextValuers(valuers ...ContextValuers) {
 	for _, item := range valuers {
 		for k, v := range item {
 			f.effectiveValuers[k] = v
@@ -68,15 +62,47 @@ func (f *kitLoggerFactory) addContextValuers(valuers...ContextValuers) {
 	}
 }
 
-func (f *kitLoggerFactory) setLevel (name string, logLevel LoggingLevel) {
-	key := f.loggerKey(name)
-	if l, ok := f.registry[key]; ok {
-		l.setLevel(logLevel)
+func (f *kitLoggerFactory) setRootLevel(logLevel LoggingLevel) (affected int) {
+	f.rootLogLevel = logLevel
+	for k, l := range f.registry {
+		effective := f.resolveEffectiveLevel(k)
+		l.setLevel(effective)
+		affected++
 	}
+	return
+}
+
+func (f *kitLoggerFactory) setLevel(prefix string, logLevel *LoggingLevel) (affected int) {
+	key := loggerKey(prefix)
+	if (key == "" || key == keyLevelDefault || key == loggerKey(nameLevelDefault)) && logLevel != nil {
+		return f.setRootLevel(*logLevel)
+	}
+
+	if logLevel == nil {
+		// unset
+		if _, ok := f.logLevels[key]; ok {
+			delete(f.logLevels, key)
+		}
+	} else {
+		// set
+		f.logLevels[key] = *logLevel
+	}
+
+	// set effective level to all affected loggers
+	withDot := key + keySeparator
+	for k, l := range f.registry {
+		if k != key && !strings.HasPrefix(k, withDot) {
+			continue
+		}
+		effective := f.resolveEffectiveLevel(k)
+		l.setLevel(effective)
+		affected++
+	}
+	return
 }
 
 func (f *kitLoggerFactory) refresh(properties *Properties) {
-	rootLogLevel, ok := properties.Levels[levelDefault]
+	rootLogLevel, ok := properties.Levels[keyLevelDefault]
 	if !ok {
 		rootLogLevel = LevelInfo
 	}
@@ -92,14 +118,26 @@ func (f *kitLoggerFactory) refresh(properties *Properties) {
 	}
 
 	for key, l := range f.registry {
-		ll, ok := f.logLevels[key]
-		if !ok {
-			ll = rootLogLevel
-		}
+		ll := f.resolveEffectiveLevel(key)
 		l.template = f.templateLogger
 		l.valuers = f.effectiveValuers
 		l.setLevel(ll)
 	}
+}
+
+func (f *kitLoggerFactory) resolveEffectiveLevel(key string) LoggingLevel {
+	prefix := key
+	for i := len(key); i > 0; i = strings.LastIndex(prefix, keySeparator) {
+		prefix = key[0:i]
+		if ll, ok := f.logLevels[prefix]; ok {
+			return ll
+		}
+	}
+	return f.rootLogLevel
+}
+
+func loggerKey(name string) string {
+	return strings.ToLower(name)
 }
 
 func buildContextValuerFromConfig(properties *Properties) ContextValuers {
@@ -127,9 +165,9 @@ func buildTemplateLoggerFromConfig(properties *Properties) log.Logger {
 	switch len(composite.delegates) {
 	case 0:
 		defaultProps := &LoggerProperties{
-			Type:     TypeConsole,
-			Format:   FormatText,
-			Template: defaultTemplate,
+			Type:      TypeConsole,
+			Format:    FormatText,
+			Template:  defaultTemplate,
 			FixedKeys: defaultFixedFields.Values(),
 		}
 		logger, _ = newKitLogger(defaultProps)
@@ -172,6 +210,5 @@ func openOrCreateFile(location string) (*os.File, error) {
 	if location == "" {
 		return nil, fmt.Errorf("location is missing for file logger")
 	}
-	return os.OpenFile(location, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0666)
+	return os.OpenFile(location, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 }
-

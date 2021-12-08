@@ -2,8 +2,9 @@ package web
 
 import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 
-type EmptyRequest struct {}
+type EmptyRequest struct{}
 
+//goland:noinspection GoUnusedConst
 const (
 	MinWebPrecedence = bootstrap.WebPrecedence
 	MaxWebPrecedence = bootstrap.WebPrecedence + bootstrap.FrameworkModulePrecedenceBandwidth
@@ -25,6 +26,7 @@ const (
 	MethodAny = "ANY"
 )
 
+//goland:noinspection GoUnusedConst
 const (
 	HeaderAuthorization      = "Authorization"
 	HeaderOrigin             = "Origin"
@@ -36,4 +38,6 @@ const (
 	HeaderACMaxAge           = "Access-Control-Max-Age"
 	HeaderACRequestHeaders   = "Access-Control-Request-Headers"
 	HeaderACRequestMethod    = "Access-Control-Request-Method"
+	HeaderContentType        = "Content-Type"
+	HeaderContentLength      = "Content-Length"
 )

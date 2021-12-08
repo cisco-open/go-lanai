@@ -36,7 +36,7 @@ type Endpoint interface {
 }
 
 type WebEndpoint interface {
-	Mapping(op Operation, group string) (web.Mapping, error)
+	Mappings(op Operation, group string) ([]web.Mapping, error)
 }
 
 type EndpointExecutor interface {

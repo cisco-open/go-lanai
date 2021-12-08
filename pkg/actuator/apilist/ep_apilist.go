@@ -15,8 +15,6 @@ const (
 	EnableByDefault      = false
 )
 
-type Info map[string]interface{}
-
 // ApiListEndpoint implements actuator.Endpoint, actuator.WebEndpoint
 //goland:noinspection GoNameStartsWithPackageName
 type ApiListEndpoint struct {

@@ -18,6 +18,7 @@ func InitModule(cliCtx *CliExecContext, app *App) *Module {
 			fx.Supply(cliCtx),
 			fx.Supply(app),
 			fx.Provide(provideApplicationContext),
+			fx.Provide(provideBuildInfoResolver),
 			fx.Invoke(bootstrap),
 		},
 	}
@@ -46,6 +47,10 @@ func MiscModules() []*Module {
 func provideApplicationContext(app *App, config ApplicationConfig) *ApplicationContext {
 	app.ctx.config = config
 	return app.ctx
+}
+
+func provideBuildInfoResolver(appCtx *ApplicationContext) BuildInfoResolver {
+	return newDefaultBuildInfoResolver(appCtx)
 }
 
 func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {

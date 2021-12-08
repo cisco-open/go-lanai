@@ -26,7 +26,7 @@ const (
 	defaultPrecedence
 )
 
-var logger = log.New("appconfig")
+var logger = log.New("Config")
 
 var ConfigModule = &bootstrap.Module{
 	Name: "bootstrap endpoint",

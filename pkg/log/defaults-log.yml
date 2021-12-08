@@ -3,11 +3,11 @@ levels:
   Bootstrap: debug
   Web: info
   Security: debug
-  SEC.Err: debug
+  SEC: debug
   OAuth2: debug
   OAuth2.Auth: info
-  ACTR.Info: info
-  ACTR.Health: info
+  Actuator: info
+  ACTR: info
   Data: info
 
 loggers:
@@ -31,7 +31,5 @@ loggers:
 
 # Context Mapping indicate which key-value should be extracted from given context.Context when logger is used
 #context-mappings:
-#  Ctx-1: "ctx1"
-#  Ctx-2: "ctx2"
-#  Ctx-3: "ctx3"
+#  Key-In-Context: "key-in-log"
 
