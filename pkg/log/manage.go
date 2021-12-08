@@ -30,7 +30,7 @@ func Levels(prefix string) (ret map[string]*LevelConfig) {
 		}
 		p := v.name
 		for i := len(v.name); i > 0; i = strings.LastIndex(p, keySeparator) {
-			p = v.name[0 : i]
+			p = v.name[0:i]
 			ret[loggerKey(p)] = &LevelConfig{Name: p}
 		}
 	}
@@ -49,6 +49,7 @@ func Levels(prefix string) (ret map[string]*LevelConfig) {
 	if prefix == "" {
 		ret[keyLevelDefault] = &LevelConfig{
 			Name:            nameLevelDefault,
+			EffectiveLevel:  &factory.rootLogLevel,
 			ConfiguredLevel: &factory.rootLogLevel,
 		}
 	}

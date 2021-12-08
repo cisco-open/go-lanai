@@ -91,7 +91,7 @@ func (f *kitLoggerFactory) setLevel(prefix string, logLevel *LoggingLevel) (affe
 	// set effective level to all affected loggers
 	withDot := key + keySeparator
 	for k, l := range f.registry {
-		if l.name != prefix && !strings.HasPrefix(k, withDot) {
+		if k != key && !strings.HasPrefix(k, withDot) {
 			continue
 		}
 		effective := f.resolveEffectiveLevel(k)

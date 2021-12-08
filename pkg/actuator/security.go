@@ -11,9 +11,10 @@ import (
 	"net/http"
 )
 
-// a single ActuatorSecurityCustomizer can be registered via Registrar
+// ActuatorSecurityCustomizer is a single ActuatorSecurityCustomizer can be registered via Registrar
 // ActuatorSecurityCustomizer is typically responsible to setup authentication scheme
 // it should not configure access control, which is configured via properties
+//goland:noinspection GoNameStartsWithPackageName
 type ActuatorSecurityCustomizer interface {
 	Configure(ws security.WebSecurity)
 }
@@ -42,7 +43,6 @@ func (c *actuatorSecurityConfigurer) Configure(ws security.WebSecurity) {
 
 
 	ws.Route(matcher.RouteWithPattern(path).And(matcherutils.Not(matcher.RouteWithMethods(http.MethodOptions)))).
-		//
 		With(errorhandling.New())
 
 	// configure access control based on properties and installed web endpoints

@@ -200,7 +200,6 @@ func (r *Registrar) shouldExposeToWeb(endpoint Endpoint) bool {
 	}
 }
 
-
 func optionsHttpHandlerFunc() gin.HandlerFunc {
 	return func(gc *gin.Context) {
 		gc.Status(http.StatusOK)
