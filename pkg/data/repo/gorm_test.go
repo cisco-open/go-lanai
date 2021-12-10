@@ -17,6 +17,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 )
@@ -43,7 +44,27 @@ var (
 		uuid.MustParse("9c5fbf48-7154-4222-9af2-1f04140fc042"),
 		uuid.MustParse("576286d7-0ee0-46b1-af18-3de00415eb8a"),
 	}
+	sortedModelIDs []uuid.UUID
 )
+
+func init() {
+	sortedModelIDs = make([]uuid.UUID, len(modelIDs))
+	for i, v := range modelIDs {
+		sortedModelIDs[i] = v
+	}
+	sort.SliceStable(sortedModelIDs, func(i, j int) bool {
+		return lessUUID(sortedModelIDs[i], sortedModelIDs[j])
+	})
+}
+
+func lessUUID(l, r uuid.UUID) bool {
+	for i := range l {
+		if l[i] != r[i] {
+			return l[i] < r[i]
+		}
+	}
+	return false
+}
 
 /*************************
 	Test
@@ -459,6 +480,20 @@ func SubTestPageAndSort(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
 		g.Expect(models).To(HaveLen(2), "paged result should have correct count")
 		g.Expect(models[0].SearchIdx).To(BeEquivalentTo(2), "sorted page result should have correct order")
+
+		// sort + page (reversed order)
+		models = nil
+		e = di.Repo.FindAll(ctx, &models, SortBy("SearchIdx", false), Page(1, 2))
+		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
+		g.Expect(models).To(HaveLen(2), "paged result should have correct count")
+		g.Expect(models[0].SearchIdx).To(BeEquivalentTo(2), "sorted page result should have correct order")
+
+		// page only
+		models = nil
+		e = di.Repo.FindAll(ctx, &models, Page(1, 2))
+		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
+		g.Expect(models).To(HaveLen(2), "paged result should have correct count")
+		g.Expect(models[0].ID).To(BeEquivalentTo(sortedModelIDs[2]), "page result should have correct order (sorted by primary key)")
 
 		// by unselected field
 		e = di.Repo.FindAll(ctx, &models, Select("Value"), SortBy("SearchIdx", true))
