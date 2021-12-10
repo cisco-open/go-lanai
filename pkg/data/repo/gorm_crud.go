@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -217,12 +218,15 @@ func modelFunc(m interface{}) func(*gorm.DB) *gorm.DB {
 	}
 }
 
-func execute(ctx context.Context, db *gorm.DB, condition Condition, options []Option, preOptsFn, fn func(*gorm.DB) *gorm.DB) error {
-	var e error
+func execute(_ context.Context, db *gorm.DB, condition Condition, options []Option, preOptsFn, fn func(*gorm.DB) *gorm.DB) error {
 	if preOptsFn != nil {
-		db = preOptsFn(db)
+		options = append(options, priorityOption{
+			order:   order.Highest,
+			wrapped: preOptsFn,
+		})
 	}
 
+	var e error
 	if db, e = applyOptions(db, options); e != nil {
 		return e
 	}
@@ -254,6 +258,18 @@ func optsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
 			scopes = append(scopes, sub...)
 		default:
 			switch opt := v.(type) {
+			case priorityOption:
+				sub, e := optsToDBFuncs([]Option{opt.wrapped})
+				if e != nil {
+					return nil, e
+				}
+				scopes = append(scopes, sub...)
+			case delayedOption:
+				sub, e := optsToDBFuncs([]Option{opt.wrapped})
+				if e != nil {
+					return nil, e
+				}
+				scopes = append(scopes, sub...)
 			case gormOptions:
 				scopes = append(scopes, opt)
 			case func(*gorm.DB) *gorm.DB:
@@ -270,6 +286,8 @@ func applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
 	if len(opts) == 0 {
 		return db, nil
 	}
+
+	order.SortStable(opts, order.UnorderedMiddleCompare)
 
 	funcs, e := optsToDBFuncs(opts)
 	if e != nil {

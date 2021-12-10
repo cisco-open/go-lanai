@@ -2,6 +2,7 @@ package repo
 
 import "C"
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -13,6 +14,28 @@ const (
 
 type gormOptions func(*gorm.DB) *gorm.DB
 
+// priorityOption is an option wrapper that guarantee to run before regular options
+// priorityOption implements order.PriorityOrdered
+type priorityOption struct {
+	order   int
+	wrapped interface{}
+}
+
+func (o priorityOption) PriorityOrder() int {
+	return o.order
+}
+
+// delayedOption is an option wrapper that guarantee to run after regular options
+// delayedOption implements order.Ordered
+type delayedOption struct {
+	order int
+	wrapped interface{}
+}
+
+func (o delayedOption) Order() int {
+	return o.order
+}
+
 /********************
 	Util Functions
  ********************/
@@ -21,6 +44,7 @@ type gormOptions func(*gorm.DB) *gorm.DB
 // This function is intended for custom repository implementations.
 // The function panic if any Option is not supported type
 func MustApplyOptions(db *gorm.DB, opts ...Option) *gorm.DB {
+	order.SortStable(opts, order.UnorderedMiddleCompare)
 	return AsGormScope(opts)(db)
 }
 
@@ -51,8 +75,8 @@ func AsGormScope(i interface{}) func(*gorm.DB)*gorm.DB {
 		funcs, e = optsToDBFuncs(v)
 	case []Condition, clause.Where:
 		funcs, e = conditionToDBFuncs(Condition(i))
-	case gormOptions:
-		funcs, e = optsToDBFuncs([]Option{v})
+	case gormOptions, priorityOption, delayedOption:
+		funcs, e = optsToDBFuncs([]Option{i})
 	default:
 		funcs, e = conditionToDBFuncs(Condition(i))
 	}
@@ -133,14 +157,26 @@ func Select(query interface{}, args ...interface{}) Option {
 //		CrudRepository.FindAll(ctx, &user, Page(2, 10))
 //		CrudRepository.FindAllBy(ctx, &user, Where(...), Page(2, 10))
 func Page(page, size int) Option {
-	return gormOptions(func(db *gorm.DB) *gorm.DB {
+	opt := gormOptions(func(db *gorm.DB) *gorm.DB {
 		offset := page * size
 		if offset < 0 || size <= 0 || offset + size >= maxUInt32 {
 			_ = db.AddError(ErrorInvalidPagination)
 			return db
 		}
-		return db.Offset(offset).Limit(size)
+		db = db.Offset(offset).Limit(size)
+
+		// add default sorting to ensure fixed order
+		sort := clause.OrderByColumn{Column: clause.Column{Name: clause.PrimaryKey}}
+		db.Statement.AddClauseIfNotExists(clause.OrderBy{
+			Columns:    []clause.OrderByColumn{sort},
+		})
+		return db
 	})
+	// we want to run this option AFTER any Sort or SortBy
+	return delayedOption{
+		order:  order.Lowest,
+		wrapped: opt,
+	}
 }
 
 // Sort is an Option specifying order when retrieve records from database by using column.
@@ -194,3 +230,4 @@ func requireSchema(db *gorm.DB) error {
 	}
 	return nil
 }
+
