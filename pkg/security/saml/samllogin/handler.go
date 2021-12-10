@@ -24,7 +24,7 @@ func (t *TrackedRequestSuccessHandler) HandleAuthenticationSuccess(c context.Con
 		if err == nil {
 			redirectURI = trackedRequest.URI
 		} else {
-			logger.Errorf("error getting tracked request %v", err)
+			logger.WithContext(c).Errorf("error getting tracked request %v", err)
 		}
 		_ = t.tracker.StopTrackingRequest(rw, r, trackedRequestIndex)
 	}

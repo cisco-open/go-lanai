@@ -63,7 +63,7 @@ func RequestWithAuthenticationFlow(flow AuthenticationFlow, idpManager IdentityP
 
 		idp, err := idpManager.GetIdentityProviderByDomain(ctx, host)
 		if err != nil {
-			logger.Debugf("cannot find idp for domain %s", host)
+			logger.WithContext(ctx).Debugf("cannot find idp for domain %s", host)
 			return matchableError()
 		}
 
