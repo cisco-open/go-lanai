@@ -4,12 +4,11 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	util_matcher "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
-	"net"
 	"net/http"
-	"strings"
 )
 
 var logger = log.New("SEC.IDP")
@@ -60,30 +59,11 @@ func RequestWithAuthenticationFlow(flow AuthenticationFlow, idpManager IdentityP
 	}
 
 	matchable := func(ctx context.Context, request *http.Request) (interface{}, error) {
-		var host string
-		fwdAddress := request.Header.Get("X-Forwarded-Host") // capitalisation doesn't matter
-		if fwdAddress != "" {
-			ips := strings.Split(fwdAddress, ",")
-			orig := strings.TrimSpace(ips[0])
-			reqHost, _, err := net.SplitHostPort(orig)
-			if err == nil {
-				host = reqHost
-			} else {
-				logger.Warnf("failed to split host port with err %s", err)
-				host = orig
-			}
-		} else {
-			reqHost, _, err := net.SplitHostPort(request.Host)
-			if err == nil {
-				host = reqHost
-			} else {
-				logger.Warnf("failed to split host port with err %s", err)
-				host = request.Host
-			}
-		}
+		var host = netutil.GetForwardedHostName(request)
 
 		idp, err := idpManager.GetIdentityProviderByDomain(ctx, host)
 		if err != nil {
+			logger.WithContext(ctx).Debugf("cannot find idp for domain %s", host)
 			return matchableError()
 		}
 

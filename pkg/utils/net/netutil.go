@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 )
 
@@ -47,4 +48,27 @@ func GetIp(iface string) (string, error) {
 	}
 
 	return ip.String(), nil
+}
+
+func GetForwardedHostName(request *http.Request) string {
+	var host string
+	fwdAddress := request.Header.Get("X-Forwarded-Host") // capitalisation doesn't matter
+	if fwdAddress != "" {
+		ips := strings.Split(fwdAddress, ",")
+		orig := strings.TrimSpace(ips[0])
+		reqHost, _, err := net.SplitHostPort(orig)
+		if err == nil {
+			host = reqHost
+		} else {
+			host = orig
+		}
+	} else {
+		reqHost, _, err := net.SplitHostPort(request.Host)
+		if err == nil {
+			host = reqHost
+		} else {
+			host = request.Host
+		}
+	}
+	return host
 }

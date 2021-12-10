@@ -7,12 +7,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"encoding/base64"
 	"encoding/xml"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
-	"net"
 	"net/http"
 	"net/url"
 )
@@ -78,23 +78,24 @@ func NewMiddleware(sp saml.ServiceProvider, tracker samlsp.RequestTracker,
 
 func (sp *ServiceProviderMiddleware) MetadataHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		//do this because the refresh metadata middleware is conditional,
+		//but the metadata endpoint is not conditional
+		sp.refreshMetadata(c)
+
 		index := 0
 		descriptor := sp.internal.Metadata()
-		acs := descriptor.SPSSODescriptors[0].AssertionConsumerServices[0]
-		t := true
-		acs.IsDefault = &t
-		acs.Index = index
-		mergedAcs := []saml.IndexedEndpoint{acs}
+		var mergedAcs []saml.IndexedEndpoint
 
 		//we don't support single logout yet, so don't include this in metadata
 		descriptor.SPSSODescriptors[0].SingleLogoutServices = nil
 
+		//we only provide ACS for the domains we configured
 		for _, delegate := range sp.clientManager.GetAllClients() {
-			index++
 			delegateDescriptor := delegate.Metadata().SPSSODescriptors[0]
 			delegateAcs := delegateDescriptor.AssertionConsumerServices[0]
 			delegateAcs.Index = index
 			mergedAcs = append(mergedAcs, delegateAcs)
+			index++
 		}
 
 		descriptor.SPSSODescriptors[0].AssertionConsumerServices = mergedAcs
@@ -107,14 +108,14 @@ func (sp *ServiceProviderMiddleware) MetadataHandlerFunc() gin.HandlerFunc {
 	}
 }
 
+// MakeAuthenticationRequest Since we support multiple domains each with different IDP, the auth request specify which matching ACS should be
+// used for IDP to call back.
 func (sp *ServiceProviderMiddleware) MakeAuthenticationRequest(r *http.Request, w http.ResponseWriter) error {
-	host, _, err := net.SplitHostPort(r.Host)
-	if err != nil {
-		host = r.Host
-	}
+	host := netutil.GetForwardedHostName(r)
 	client, ok := sp.clientManager.GetClientByDomain(host)
 
 	if !ok {
+		logger.Debugf("cannot find idp for domain %s", host)
 		return security.NewExternalSamlAuthenticationError("cannot find idp for this domain")
 	}
 
@@ -231,17 +232,20 @@ func (sp *ServiceProviderMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 //cache that are populated by the refresh metadata middleware instead of populated dynamically on commence
 // because in a multi-instance micro service deployment, the auth request and auth response can occur on
 // different instance
+
 func (sp *ServiceProviderMiddleware) RefreshMetadataHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		idpDetails := sp.idpManager.GetIdentityProvidersWithFlow(c.Request.Context(), idp.ExternalIdpSAML)
-		var samlIdpDetails []SamlIdentityProvider
-		for _, i := range idpDetails {
-			if s, ok := i.(SamlIdentityProvider); ok {
-				samlIdpDetails = append(samlIdpDetails, s)
-			}
+	return sp.refreshMetadata
+}
+
+func (sp *ServiceProviderMiddleware) refreshMetadata(c *gin.Context) {
+	idpDetails := sp.idpManager.GetIdentityProvidersWithFlow(c.Request.Context(), idp.ExternalIdpSAML)
+	var samlIdpDetails []SamlIdentityProvider
+	for _, i := range idpDetails {
+		if s, ok := i.(SamlIdentityProvider); ok {
+			samlIdpDetails = append(samlIdpDetails, s)
 		}
-		sp.clientManager.RefreshCache(samlIdpDetails)
 	}
+	sp.clientManager.RefreshCache(samlIdpDetails)
 }
 
 func (sp *ServiceProviderMiddleware) Commence(c context.Context, r *http.Request, w http.ResponseWriter, _ error) {
