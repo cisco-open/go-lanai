@@ -28,15 +28,19 @@ func (c *NoIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *aut
 		With(session.New().SettingService(config.SessionSettingService)).
 		With(access.New().
 			Request(matcher.AnyRequest()).
-			AllowIf(alwaysDenyWithMessage("Identity provider is not configured for this sub-domain")),
+			AllowIf(authenticatedWithMessage("Identity provider is not configured for this sub-domain")),
 		).
 		With(errorhandling.New().
 			AccessDeniedHandler(handler),
 		)
 }
 
-func alwaysDenyWithMessage(format string, v...interface{}) access.ControlFunc {
-	return func(_ security.Authentication) (decision bool, reason error) {
-		return false, security.NewAccessDeniedError(fmt.Sprintf(format, v...))
+func authenticatedWithMessage(format string, v...interface{}) access.ControlFunc {
+	return func(auth security.Authentication) (decision bool, reason error) {
+		if auth.State() >= security.StateAuthenticated {
+			return true, nil
+		} else {
+			return false, security.NewAccessDeniedError(fmt.Sprintf(format, v...))
+		}
 	}
 }

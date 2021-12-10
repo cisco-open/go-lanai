@@ -40,7 +40,6 @@ func TestMetadataEndpoint(t *testing.T) {
 	m := c.makeMiddleware(feature, ws)
 
 	r := gin.Default()
-	r.Use(m.RefreshMetadataHandler())
 	r.GET(serverProp.ContextPath + feature.metadataPath, m.MetadataHandlerFunc())
 
 	w := httptest.NewRecorder()
@@ -109,15 +108,11 @@ func (m MetadataMatcher) Match(actual interface{}) (success bool, err error) {
 		return false, nil
 	}
 
-	if len(descriptor.SPSSODescriptors[0].AssertionConsumerServices) != 2{
+	if len(descriptor.SPSSODescriptors[0].AssertionConsumerServices) != 1{
 		return false, nil
 	}
 
-	if descriptor.SPSSODescriptors[0].AssertionConsumerServices[0].Location != "http://vms.com:8080/europa/saml/SSO" {
-		return false, nil
-	}
-
-	if descriptor.SPSSODescriptors[0].AssertionConsumerServices[1].Location != "http://saml.vms.com:8080/europa/saml/SSO" {
+	if descriptor.SPSSODescriptors[0].AssertionConsumerServices[0].Location != "http://saml.vms.com:8080/europa/saml/SSO" {
 		return false, nil
 	}
 
