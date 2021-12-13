@@ -32,12 +32,12 @@ func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 			// Authorization header not available, bail
 			return
 		}
-		if !strings.HasPrefix(header,"Basic") {
+		if !strings.HasPrefix(header,"Basic ") {
 			// Not basic auth, bail
 			return
 		}
 
-		encoded := strings.TrimLeft(header, "Basic ")
+		encoded := strings.TrimPrefix(header, "Basic ")
 		decoded, err := base64.StdEncoding.DecodeString(encoded)
 		if err != nil {
 			basic.handleError(ctx, security.NewBadCredentialsError("invalid Authorization header"))
