@@ -22,12 +22,15 @@ import (
 	"go.uber.org/fx"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 const (
 	CliFlagActiveProfile     = "active-profiles"
 	CliFlagAdditionalProfile = "additional-profiles"
 	CliFlagConfigSearchPath  = "config-search-path"
+	CliFlagDebug             = "debug"
+	EnvVarDebug              = "DEBUG"
 )
 
 var (
@@ -56,6 +59,7 @@ type CliExecContext struct {
 	ActiveProfiles     []string
 	AdditionalProfiles []string
 	ConfigSearchPaths  []string
+	Debug              bool
 	Args               []string
 }
 
@@ -67,6 +71,26 @@ func init() {
 		`Comma separated additional profiles. Set property "application.profiles.additional". Additional profiles is added to active profiles`)
 	rootCmd.PersistentFlags().StringSliceVarP(&cliCtx.ConfigSearchPaths, CliFlagConfigSearchPath, "c", []string{},
 		`Comma separated paths. Override property "config.file.search-path"`)
+	rootCmd.PersistentFlags().BoolVar(&cliCtx.Debug, CliFlagDebug, false,
+		fmt.Sprintf(`Boolean that toggles debug features. Override EnvVar "%s"`, EnvVarDebug))
+
+	// parse env vars
+	parseEnvVars()
+}
+
+func parseEnvVars() {
+	if v, ok := os.LookupEnv(EnvVarDebug); ok {
+		if b, e := strconv.ParseBool(v); e == nil {
+			cliCtx.Debug = b
+		} else {
+			cliCtx.Debug = true
+		}
+	}
+}
+
+// DebugEnabled returns false by default, unless environment variable DEBUG is set or application start with --debug
+func DebugEnabled() bool {
+	return cliCtx.Debug
 }
 
 // AddStringFlag should be called before Execute() to register flags that are supported
