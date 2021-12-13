@@ -81,7 +81,7 @@ func (c *FormLoginConfigurer) validate(f *FormLoginFeature, _ security.WebSecuri
 	}
 
 	if f.successHandler == nil {
-		f.successHandler = request_cache.NewSavedRequestAuthenticationSuccessHandler(redirect.NewRedirectWithURL("/"))
+		f.successHandler = request_cache.NewSavedRequestAuthenticationSuccessHandler(redirect.NewRedirectWithRelativePath("/", true))
 	}
 
 	if f.loginProcessUrl == "" {
