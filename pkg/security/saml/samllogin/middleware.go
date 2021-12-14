@@ -72,7 +72,7 @@ func NewMiddleware(sp saml.ServiceProvider, tracker samlsp.RequestTracker,
 		requestTracker:     tracker,
 		successHandler:     handler,
 		authenticator:      authenticator,
-		fallbackEntryPoint: redirect.NewRedirectWithRelativePath(errorPath),
+		fallbackEntryPoint: redirect.NewRedirectWithURL(errorPath),
 	}
 }
 

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -35,6 +36,12 @@ func (e *Engine) addRequestPreProcessor(p RequestPreProcessor) {
 }
 
 func NewEngine() *Engine {
+	if bootstrap.DebugEnabled() {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	e := &Engine{
 		Engine: gin.New(),
 	}

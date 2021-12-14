@@ -21,7 +21,7 @@ func NewNoIdpSecurityConfigurer() *NoIdpSecurityConfigurer {
 
 func (c *NoIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *authserver.Configuration) {
 	// For Authorize endpoint
-	handler := redirect.NewRedirectWithRelativePath(config.Endpoints.Error)
+	handler := redirect.NewRedirectWithURL(config.Endpoints.Error)
 	condition := idp.RequestWithAuthenticationFlow(idp.UnknownIdp, config.IdpManager)
 
 	ws.AndCondition(condition).

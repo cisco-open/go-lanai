@@ -1,6 +1,7 @@
 package session
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
@@ -78,10 +79,12 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 	// configure auth success/error handler
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
 		Add(&ChangeSessionHandler{})
-	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
-		Add(&DebugAuthSuccessHandler{})
-	ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
-		Add(&DebugAuthErrorHandler{})
+	if bootstrap.DebugEnabled() {
+		ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).
+			Add(&DebugAuthSuccessHandler{})
+		ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(*security.CompositeAuthenticationErrorHandler).
+			Add(&DebugAuthErrorHandler{})
+	}
 
 	var settingService SettingService
 	if f.settingService == nil {
