@@ -196,11 +196,11 @@ func (m MetadataMatcher) Match(actual interface{}) (success bool, err error) {
 		return false, nil
 	}
 
-	if descriptor.IDPSSODescriptors[0].SingleSignOnServices[0].Binding != saml.HTTPRedirectBinding || descriptor.IDPSSODescriptors[0].SingleSignOnServices[0].Location != "http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"{
+	if descriptor.IDPSSODescriptors[0].SingleSignOnServices[0].Binding != saml.HTTPPostBinding || descriptor.IDPSSODescriptors[0].SingleSignOnServices[0].Location != "http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"{
 		return false, nil
 	}
 
-	if descriptor.IDPSSODescriptors[0].SingleSignOnServices[1].Binding != saml.HTTPPostBinding || descriptor.IDPSSODescriptors[0].SingleSignOnServices[1].Location != "http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer" {
+	if descriptor.IDPSSODescriptors[0].SingleSignOnServices[1].Binding != saml.HTTPRedirectBinding || descriptor.IDPSSODescriptors[0].SingleSignOnServices[1].Location != "http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer" {
 		return false, nil
 	}
 

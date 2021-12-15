@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
+	"sort"
 )
 
 type Options struct {
@@ -204,6 +205,10 @@ func (mw *SamlAuthorizeEndpointMiddleware) RefreshMetadataHandler(condition web.
 func (mw *SamlAuthorizeEndpointMiddleware) MetadataHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		metadata := mw.idp.Metadata()
+		sort.SliceStable(metadata.IDPSSODescriptors[0].SingleSignOnServices, func(i, j int) bool {
+			return metadata.IDPSSODescriptors[0].SingleSignOnServices[i].Binding < metadata.IDPSSODescriptors[0].SingleSignOnServices[j].Binding
+		})
+
 		var t = true
 		//We always want the authentication request to be signed
 		//But because this is not supported by the saml package, we set it here explicitly
