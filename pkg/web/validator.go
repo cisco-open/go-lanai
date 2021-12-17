@@ -3,11 +3,12 @@ package web
 import (
 	"fmt"
 	"github.com/gin-gonic/gin/binding"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 )
 
 var (
-	bindingValidator *Validate = newValidator(binding.Validator)
+	bindingValidator = newValidator(binding.Validator)
 )
 
 // Validator returns the global validator for binding.
@@ -15,6 +16,7 @@ var (
 func Validator() *Validate {
 	return bindingValidator
 }
+
 
 func newValidator(ginValidator binding.StructValidator) *Validate {
 	validate := ginValidator.Engine().(*validator.Validate)
@@ -39,5 +41,10 @@ func (v *Validate) WithTagName(name string) *Validate {
 
 func (v *Validate) SetTagName(name string) {
 	panic(fmt.Errorf("illegal attempt to modify tag of validator. Please use WithTagName(string)"))
+}
+
+// SetTranslations registers default translations using given regFn
+func (v *Validate) SetTranslations(trans ut.Translator, regFn func(*validator.Validate, ut.Translator) error) error {
+	return regFn(v.Validate, trans)
 }
 
