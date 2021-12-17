@@ -19,9 +19,9 @@ var defaultFixedFields = utils.NewStringSet(
 // Note:
 //	1. "context-mappings" indicate how to map context key to log key, it's map[context-key]log-key
 type Properties struct {
-	Levels   map[string]LoggingLevel     `json:"levels"`
-	Loggers  map[string]LoggerProperties `json:"loggers"`
-	Mappings map[string]string           `json:"context-mappings"`
+	Levels   map[string]LoggingLevel      `json:"levels"`
+	Loggers  map[string]*LoggerProperties `json:"loggers"`
+	Mappings map[string]string            `json:"context-mappings"`
 }
 
 // LoggerProperties individual logger setup
@@ -47,10 +47,10 @@ func newProperties() *Properties {
 		Levels: map[string]LoggingLevel{
 			"default": LevelInfo,
 		},
-		Loggers:  map[string]LoggerProperties{
-			"console": LoggerProperties{
-				Type: TypeConsole,
-				Format: FormatText,
+		Loggers: map[string]*LoggerProperties{
+			"console": {
+				Type:     TypeConsole,
+				Format:   FormatText,
 				Template: defaultTemplate,
 				FixedKeys: utils.CommaSeparatedSlice{
 					LogKeyName, LogKeyMessage, LogKeyTimestamp,

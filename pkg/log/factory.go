@@ -154,7 +154,7 @@ func buildContextValuerFromConfig(properties *Properties) ContextValuers {
 func buildTemplateLoggerFromConfig(properties *Properties) log.Logger {
 	composite := &compositeKitLogger{}
 	for _, loggerProps := range properties.Loggers {
-		logger, e := newKitLogger(&loggerProps)
+		logger, e := newKitLogger(loggerProps)
 		if e != nil {
 			panic(e)
 		}

@@ -39,7 +39,7 @@ var (
 		Levels: map[string]log.LoggingLevel{
 			"default": log.LevelDebug,
 		},
-		Loggers:  map[string]log.LoggerProperties{
+		Loggers:  map[string]*log.LoggerProperties{
 			"console": {
 				Type: log.TypeConsole,
 				Format: log.FormatText,
