@@ -17,6 +17,8 @@ require (
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-git/go-git/v5 v5.3.0
 	github.com/go-kit/kit v0.10.0
+	github.com/go-playground/locales v0.14.0 // indirect
+	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-redis/redis/v8 v8.3.3
 	github.com/gocql/gocql v0.0.0-20210313142353-65899a66288b
