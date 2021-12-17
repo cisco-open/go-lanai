@@ -83,7 +83,31 @@ func OrderedFirstCompare(left interface{}, right interface{}) bool {
 
 // OrderedFirstCompareReverse compares objects based on order interfaces with same rule as OrderedFirstCompare but reversed
 func OrderedFirstCompareReverse(left interface{}, right interface{}) bool {
-	return !OrderedFirstCompare(left, right)
+	// first consider PriorityOrder
+	lp, lpok := left.(PriorityOrdered)
+	rp, rpok := right.(PriorityOrdered)
+	lo, look := left.(Ordered)
+	ro, rook := right.(Ordered)
+
+	switch {
+	// PriorityOrdered cases
+	case lpok && rpok:
+		return lp.PriorityOrder() > rp.PriorityOrder()
+	case lpok && !rpok:
+		return false
+	case !lpok && rpok:
+		return true
+	// Ordered cases
+	case look && rook:
+		return lo.Order() > ro.Order()
+	case look && !rook:
+		return false
+	case !look && rook:
+		return true
+	// not Ordered nor PriorityOrdered
+	default:
+		return false
+	}
 }
 
 // OrderedLastCompare compares objects based on order interfaces with following rule
@@ -98,11 +122,16 @@ func OrderedLastCompare(left interface{}, right interface{}) bool {
 	ro, rook := right.(Ordered)
 
 	switch {
-	// left or right are regular object
-	case !lpok && !look:
-		return true
-	case !rpok && !rook:
+	// if both side are regular objects, there's no order
+	case !lpok && !look && !rpok && !rook:
 		return false
+	// from here down, at least one side is not a regular object
+	// left or right are regular object
+	case !lpok && !look: //left is regular object
+		return true
+	case !rpok && !rook: //right is regular object
+		return false
+	// from here down, both side are ordered or priority ordered
 	// PriorityOrdered cases
 	case lpok && rpok:
 		return lp.PriorityOrder() < rp.PriorityOrder()
@@ -114,13 +143,42 @@ func OrderedLastCompare(left interface{}, right interface{}) bool {
 	case look && rook:
 		return lo.Order() < ro.Order()
 	default:
-		return false
+		return false // theoretically wouldn't get here
 	}
 }
 
 // OrderedLastCompareReverse compares objects based on order interfaces with same rule as OrderedLastCompare but reversed
 func OrderedLastCompareReverse(left interface{}, right interface{}) bool {
-	return !OrderedLastCompare(left, right)
+	// first consider PriorityOrder
+	lp, lpok := left.(PriorityOrdered)
+	rp, rpok := right.(PriorityOrdered)
+	lo, look := left.(Ordered)
+	ro, rook := right.(Ordered)
+
+	switch {
+	// if both side are regular objects, there's no order
+	case !lpok && !look && !rpok && !rook:
+		return false
+	// from here down, at least one side is not a regular object
+	// left or right are regular object
+	case !lpok && !look: //left is regular object
+		return false
+	case !rpok && !rook: //right is regular object
+		return true
+	// from here down, both side are ordered or priority ordered
+	// PriorityOrdered cases
+	case lpok && rpok:
+		return lp.PriorityOrder() > rp.PriorityOrder()
+	case lpok && !rpok:
+		return false
+	case !lpok && rpok:
+		return true
+	// Ordered cases
+	case look && rook:
+		return lo.Order() > ro.Order()
+	default:
+		return false //theoretically wouldn't get here
+	}
 }
 
 // UnorderedMiddleCompare compares objects based on order interfaces with following rule
@@ -136,18 +194,25 @@ func UnorderedMiddleCompare(left interface{}, right interface{}) bool {
 	ro, rook := right.(Ordered)
 
 	switch {
-	// PriorityOrdered cases
+	// PriorityOrdered cases - if at least one of the operand is PriorityOrdered
 	case lpok && rpok:
 		return lp.PriorityOrder() < rp.PriorityOrder()
 	case lpok && !rpok:
 		return true
 	case !lpok && rpok:
 		return false
-	// Unordered case (not Ordered nor PriorityOrdered)
+	// Both are unordered - at this point, we know they are not PriorityOrdered, so we just need to check both are also not Ordered
+	case !look && !rook:
+		return false // return false to indicate left is not less than right, so that the natural order is kept
+	// Left operand is not ordered, right operand is ordered
+	// return true so that un ordered comes before ordered
 	case !look:
 		return true
+	// Right operand is not ordered, left operand is ordered
+	// return false so that un ordered comes before ordered
 	case !rook:
 		return false
+	// both side are ordered
 	default:
 		return lo.Order() < ro.Order()
 	}

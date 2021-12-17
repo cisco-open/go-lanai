@@ -79,6 +79,24 @@ func TestOrderedLastCompareReverse(t *testing.T) {
 		CompareFuncDirectUsageTest(OrderedLastCompareReverse, randdomSize(), randdomSize(), randdomSize(), expectFunc))
 }
 
+func TestUnOrderedMiddleCompare(t *testing.T) {
+	expectFunc := func(p,o,r int) expectation {
+		return expectation{
+			priority: []int{0, p},
+			ordered: []int{p+r, o},
+			regular: []int{p, r},
+			desc: false,
+		}
+	}
+	t.Run("SortTest",
+		SortTest(UnorderedMiddleCompare, randdomSize(), randdomSize(), randdomSize(), expectFunc))
+	t.Run("SortStableTest",
+		SortStableTest(UnorderedMiddleCompare, randdomSize(), randdomSize(), randdomSize(), expectFunc))
+	t.Run("CompareFuncDirectUsageTest",
+		CompareFuncDirectUsageTest(UnorderedMiddleCompare, randdomSize(), randdomSize(), randdomSize(), expectFunc))
+}
+
+
 /**************************
 	SubTests
  **************************/
@@ -96,7 +114,7 @@ func SortStableTest(compareFunc CompareFunc, p, o, r int, expect expectFunc) fun
 	return func(t *testing.T) {
 		slice := makeRandomSlice(p, o, r)
 		SortStable(slice, compareFunc)
-		assertSorted(t, slice, expect(p, o, r))
+		assertStableSorted(t, slice, expect(p, o, r))
 	}
 }
 
@@ -113,38 +131,67 @@ func CompareFuncDirectUsageTest(compareFunc CompareFunc, p, o, r int, expect exp
 /**************************
 	Helpers
  **************************/
-func assertSorted(t *testing.T, slice []unique, expected expectation) {
+func assertStableSorted(t *testing.T, slice []unique, expected expectation) {
 	g := NewWithT(t)
 	// priority
 	assertSortedPortion(g, slice, expected.priority[0], expected.priority[1], expected.desc,
 		(*priorityItem)(nil), func(i interface{}) int {
 			return i.(PriorityOrdered).PriorityOrder()
+		}, func(i interface{}) int {
+			return i.(unique).NaturalOrder()
 		})
 
 	// ordered
 	assertSortedPortion(g, slice, expected.ordered[0], expected.ordered[1], expected.desc,
 		(*orderedItem)(nil), func(i interface{}) int {
 			return i.(Ordered).Order()
+		}, func(i interface{}) int {
+			return i.(unique).NaturalOrder()
 		})
 
 	// regular
 	assertSortedPortion(g, slice, expected.regular[0], expected.regular[1], expected.desc,
-		regularItem(""), nil)
+		(*regularItem)(nil), func(i interface{}) int {
+			return 0
+		}, func(i interface{}) int {
+			return i.(unique).NaturalOrder()
+		})
+}
 
+func assertSorted(t *testing.T, slice []unique, expected expectation) {
+	g := NewWithT(t)
+	// priority
+	assertSortedPortion(g, slice, expected.priority[0], expected.priority[1], expected.desc,
+		(*priorityItem)(nil), func(i interface{}) int {
+			return i.(PriorityOrdered).PriorityOrder()
+		}, nil)
+
+	// ordered
+	assertSortedPortion(g, slice, expected.ordered[0], expected.ordered[1], expected.desc,
+		(*orderedItem)(nil), func(i interface{}) int {
+			return i.(Ordered).Order()
+		}, nil)
+
+	// regular
+	assertSortedPortion(g, slice, expected.regular[0], expected.regular[1], expected.desc,
+		(*regularItem)(nil), func(i interface{}) int {
+			return 0
+		}, nil)
 }
 
 func assertSortedPortion(g *WithT,
 	slice []unique,
 	start, size int, desc bool,
 	expectedType interface{},
-	orderExtractor func(interface{}) int ) {
+	orderExtractor func(interface{}) int,
+	naturalOrderExtractor func(interface{}) int ) {
 
 	for i := 0; i < size; i++ {
 		idx := i + start
 		g.Expect(idx < len(slice)).To(BeTrue(), "length should be greater than %d", idx)
 		g.Expect(slice[idx]).
 			To(BeAssignableToTypeOf(expectedType), "item at %d should be %T", idx, expectedType)
-		if orderExtractor == nil || i == 0 {
+		if i == 0 {
 			continue
 		}
 		// check order value if not first item
@@ -154,6 +201,11 @@ func assertSortedPortion(g *WithT,
 		} else {
 			g.Expect(orderExtractor(slice[idx]) >= orderExtractor(slice[idx-1])).
 				To(BeTrue(), "item at %d should be %T and have order greater than previous", idx, expectedType)
+		}
+
+		if naturalOrderExtractor != nil && orderExtractor(slice[idx]) == orderExtractor(slice[idx-1]) {
+			g.Expect(naturalOrderExtractor(slice[idx]) >= naturalOrderExtractor(slice[idx-1])).
+				To(BeTrue(), "item at %d (natural order: %d) should be %T and have natural order greater than previous (natural order: %d)", idx, naturalOrderExtractor(slice[idx]), expectedType, naturalOrderExtractor(slice[idx-1]))
 		}
 	}
 }
@@ -183,6 +235,11 @@ func makeRandomSlice(priority, order, regular int) []unique {
 	rand.Shuffle(len(s), func(i,j int) {
 		s[i], s[j] = s[j], s[i]
 	})
+
+	for j, _ := range s {
+		s[j].SetNaturalOrder(j)
+	}
+
 	return s
 }
 
@@ -197,18 +254,21 @@ type expectation struct {
 
 type unique interface {
 	Id() string
+	NaturalOrder() int
+	SetNaturalOrder(naturalOrder int)
 }
 
 // priorityItem implemnts PriorityOrdered, unique and Stringer
 type priorityItem struct {
-	order int
-	id string
+	order        int
+	id           string
+	naturalOrder int
 }
 
 func newPriority(order int) *priorityItem {
 	return &priorityItem{
-		order: order,
-		id: uuid.New().String(),
+		order:        order,
+		id:           uuid.New().String(),
 	}
 }
 
@@ -220,20 +280,29 @@ func (i priorityItem) PriorityOrder() int {
 	return i.order
 }
 
+func (i priorityItem) NaturalOrder() int {
+	return i.naturalOrder
+}
+
+func (i *priorityItem) SetNaturalOrder(naturalOrder int) {
+	i.naturalOrder = naturalOrder
+}
+
 func (i priorityItem) String() string {
 	return fmt.Sprintf("p[%d]: %s", i.order, i.id)
 }
 
 // orderedItem implemnts Ordered, unique and Stringer
 type orderedItem struct {
-	order int
-	id string
+	order        int
+	id           string
+	naturalOrder int
 }
 
 func newOrdered(order int) *orderedItem {
 	return &orderedItem{
-		order: order,
-		id: uuid.New().String(),
+		order:        order,
+		id:           uuid.New().String(),
 	}
 }
 
@@ -245,21 +314,42 @@ func (i orderedItem) Order() int {
 	return i.order
 }
 
+func (i orderedItem) NaturalOrder() int {
+	return i.naturalOrder
+}
+
+func (i *orderedItem) SetNaturalOrder(naturalOrder int) {
+	i.naturalOrder = naturalOrder
+}
+
 func (i orderedItem) String() string {
 	return fmt.Sprintf("[%d]: %s", i.order, i.id)
 }
 
 // regularItem only implemnts unique and Stringer
-type regularItem string
+type regularItem struct {
+	id           string
+	naturalOrder int
+}
 
-func newRegular() regularItem {
-	return regularItem(uuid.New().String())
+func newRegular() *regularItem {
+	return &regularItem{
+		id:           uuid.New().String(),
+	}
 }
 
 func (i regularItem) Id() string {
-	return string(i)
+	return i.id
+}
+
+func (i regularItem) NaturalOrder() int {
+	return i.naturalOrder
+}
+
+func (i *regularItem) SetNaturalOrder(naturalOrder int) {
+	i.naturalOrder = naturalOrder
 }
 
 func (i regularItem) String() string {
-	return fmt.Sprintf("----: %s", string(i))
+	return fmt.Sprintf("----: %s", i.id)
 }
