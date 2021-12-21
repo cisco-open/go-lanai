@@ -21,17 +21,22 @@ type Output struct {
 	sc int
 }
 
-// http.StatusCoder
+type CompositeHealthV2 struct {
+	health.SimpleHealth
+	Components map[string]health.Health `json:"details,omitempty"`
+}
+
+// StatusCode http.StatusCoder
 func (o Output) StatusCode() int {
 	return o.sc
 }
 
-// web.BodyContainer
+// Body web.BodyContainer
 func (o Output) Body() interface{} {
 	return o.Health
 }
 
-// json.Marshaler
+// MarshalJSON json.Marshaler
 func (o Output) MarshalJSON() ([]byte, error) {
 	return json.Marshal(o.Health)
 }
@@ -61,7 +66,7 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 	}
 
 	if opt.StatusCodeMapper == nil {
-		scMapper := health.StaticStatusCodeMapper{}
+		scMapper := health.DefaultStaticStatusCodeMapper
 		for k, v := range opt.Properties.Status.ScMapping {
 			scMapper[k] = v
 		}
@@ -93,18 +98,22 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 }
 
 // Read never returns error
-func (ep *HealthEndpoint) Read(ctx context.Context, input *Input) (*Output, error) {
+func (ep *HealthEndpoint) Read(ctx context.Context, _ *Input) (*Output, error) {
 	opts := health.Options{
 		ShowDetails:    ep.shouldShowDetails(ctx),
 		ShowComponents: ep.shouldShowComponents(ctx),
 	}
-	health := ep.contributor.Health(ctx, opts)
+	h := ep.contributor.Health(ctx, opts)
+	switch f := ep.WebEndpointBase.NegotiateFormat(ctx); f {
+	case actuator.ContentTypeSpringBootV2:
+		h = ep.toSpringBootV2(h)
+	}
 
 	// Note: we know that *SystemHealthIndicator respect options (as all CompositeIndicator)
 	// we don't need to sanitize result
 	return &Output{
-		Health: health,
-		sc: ep.scMapper.StatusCode(ctx, health.Status()),
+		Health: h,
+		sc:     ep.scMapper.StatusCode(ctx, h.Status()),
 	}, nil
 }
 
@@ -142,4 +151,26 @@ func (ep *HealthEndpoint) shouldShowComponents(ctx context.Context) bool {
 	default:
 		return ep.isAuthorized(ctx)
 	}
+}
+
+func (ep *HealthEndpoint) toSpringBootV2(h health.Health) health.Health {
+	var composite *health.CompositeHealth
+	switch v := h.(type) {
+	case health.CompositeHealth:
+		composite = &v
+	case *health.CompositeHealth:
+		composite = v
+	default:
+		return h
+	}
+	
+	ret := CompositeHealthV2{
+		SimpleHealth: composite.SimpleHealth,
+		Components:   make(map[string]health.Health),
+	}
+	// recursively convert components
+	for k, v := range composite.Components {
+		ret.Components[k] = ep.toSpringBootV2(v)
+	}
+	return ret
 }

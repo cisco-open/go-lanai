@@ -5,6 +5,7 @@ import "context"
 /*******************************
 	CompositeIndicator
 ********************************/
+
 type IndicatorOptions func(opt *IndicatorOption)
 type IndicatorOption struct {
 	Name         string

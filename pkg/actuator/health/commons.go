@@ -8,6 +8,7 @@ import (
 /*******************************
 	StaticStatusCodeMapper
 ********************************/
+
 var DefaultStaticStatusCodeMapper = StaticStatusCodeMapper{
 	StatusUp:           http.StatusOK,
 	StatusDown:         http.StatusServiceUnavailable,
@@ -27,6 +28,7 @@ func (m StaticStatusCodeMapper) StatusCode(_ context.Context, status Status) int
 /*******************************
 	SimpleHealth
 ********************************/
+
 // SimpleHealth implements Health
 type SimpleHealth struct {
 	Stat Status `json:"status"`
@@ -44,6 +46,7 @@ func (h SimpleHealth) Description() string {
 /*******************************
 	Composite
 ********************************/
+
 // CompositeHealth implement Health
 type CompositeHealth struct {
 	SimpleHealth
@@ -63,6 +66,7 @@ func NewCompositeHealth(status Status, description string, components map[string
 /*******************************
 	DetailedHealth
 ********************************/
+
 // DetailedHealth implement Health
 type DetailedHealth struct {
 	SimpleHealth

@@ -13,6 +13,7 @@ import (
 /**********************************
 	Various Response Encoders
 ***********************************/
+
 type EncodeOptions func(opt *EncodeOption)
 
 type EncodeOption struct {
@@ -47,6 +48,7 @@ func CustomResponseEncoder(opts ...EncodeOptions) httptransport.EncodeResponseFu
 /**********************************
 	JSON Response Encoder
 ***********************************/
+
 func JsonWriteFunc(rw http.ResponseWriter, v interface{}) error {
 	return json.NewEncoder(rw).Encode(v)
 }
@@ -63,6 +65,7 @@ func jsonEncodeResponseFunc(c context.Context, rw http.ResponseWriter, response 
 /**********************************
 	Text Response Encoder
 ***********************************/
+
 func TextWriteFunc(rw http.ResponseWriter, v interface{}) error {
 	var data []byte
 	switch v.(type) {
@@ -97,6 +100,7 @@ func textEncodeResponseFunc(c context.Context, rw http.ResponseWriter, response 
 /**********************************
 	Bytes Response Encoder
 ***********************************/
+
 func BytesWriteFunc(rw http.ResponseWriter, v interface{}) error {
 	var data []byte
 	switch v.(type) {
@@ -129,6 +133,7 @@ func bytesEncodeResponseFunc(c context.Context, rw http.ResponseWriter, response
 /**********************************
 	Response Encoding Helpers
 ***********************************/
+
 // encodeResponse work with endpoint generated with MakeEndpoint
 // we could export this function if needed. But for now, it remains hidden
 func encodeResponse(_ context.Context, opts ...EncodeOptions) error {
