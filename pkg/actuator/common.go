@@ -320,14 +320,7 @@ func (b WebEndpointBase) NegotiateFormat(ctx context.Context) string {
 
 func (b WebEndpointBase) NegotiableResponseEncoder() httptransport.EncodeResponseFunc {
 	return func(ctx context.Context, rw http.ResponseWriter, i interface{}) error {
-		format := ContentTypeSpringBootV3
-		gc := web.GinContext(ctx)
-		if gc != nil {
-			if f := gc.NegotiateFormat(ContentTypeSpringBootV3, ContentTypeSpringBootV2); f != "" {
-				format = f
-			}
-		}
-
+		format := b.NegotiateFormat(ctx)
 		if enc, ok := b.formats[format]; ok {
 			return enc(ctx, rw, i)
 		}
