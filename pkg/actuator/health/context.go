@@ -28,14 +28,14 @@ func (s Status) String() string {
 	}
 }
 
-// encoding.TextMarshaler
+// MarshalText implements encoding.TextMarshaler
 func (s Status) MarshalText() ([]byte, error) {
 	return []byte(s.String()), nil
 }
 
-// encoding.TextUnmarshaler
+//UnmarshalText implements encoding.TextUnmarshaler
 func (s *Status) UnmarshalText(data []byte) error {
-	value := strings.ToUpper(string(data),)
+	value := strings.ToUpper(string(data))
 	switch value {
 	case "UP":
 		*s = StatusUp
@@ -50,11 +50,11 @@ func (s *Status) UnmarshalText(data []byte) error {
 }
 
 const (
-	// Never show the item in the response.
+	// ShowModeNever Never show the item in the response.
 	ShowModeNever ShowMode = iota
-	// Show the item in the response when accessed by an authorized user.
+	// ShowModeAuthorized Show the item in the response when accessed by an authorized user.
 	ShowModeAuthorized
-	// Always show the item in the response.
+	// ShowModeAlways Always show the item in the response.
 	ShowModeAlways
 )
 
@@ -73,12 +73,12 @@ func (m ShowMode) String() string {
 	}
 }
 
-// encoding.TextMarshaler
-func (s ShowMode) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+// MarshalText implements encoding.TextMarshaler
+func (m ShowMode) MarshalText() ([]byte, error) {
+	return []byte(m.String()), nil
 }
 
-// encoding.TextUnmarshaler
+// UnmarshalText implements encoding.TextUnmarshaler
 func (m *ShowMode) UnmarshalText(data []byte) error {
 	value := strings.ToLower(string(data))
 	switch value {

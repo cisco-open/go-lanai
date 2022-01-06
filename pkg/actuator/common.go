@@ -6,13 +6,14 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"fmt"
+	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
 	"reflect"
 	"strings"
 )
 
 var (
-	ctxType = reflect.TypeOf((*context.Context)(nil)).Elem()
+	ctxType   = reflect.TypeOf((*context.Context)(nil)).Elem()
 	errorType = reflect.TypeOf((*error)(nil)).Elem()
 )
 
@@ -29,7 +30,7 @@ type operation struct {
 	output   reflect.Type
 }
 
-func newOperation(mode OperationMode, opFunc OperationFunc, inputMatchers...matcher.Matcher) *operation {
+func newOperation(mode OperationMode, opFunc OperationFunc, inputMatchers ...matcher.Matcher) *operation {
 	var m matcher.Matcher
 	switch len(inputMatchers) {
 	case 0:
@@ -50,11 +51,11 @@ func newOperation(mode OperationMode, opFunc OperationFunc, inputMatchers...matc
 	return &op
 }
 
-func NewReadOperation(opFunc OperationFunc, inputMatchers...matcher.Matcher) Operation {
+func NewReadOperation(opFunc OperationFunc, inputMatchers ...matcher.Matcher) Operation {
 	return newOperation(OperationRead, opFunc, inputMatchers...)
 }
 
-func NewWriteOperation(opFunc OperationFunc, inputMatchers...matcher.Matcher) Operation {
+func NewWriteOperation(opFunc OperationFunc, inputMatchers ...matcher.Matcher) Operation {
 	return newOperation(OperationWrite, opFunc, inputMatchers...)
 }
 
@@ -182,7 +183,7 @@ type EndpointOption struct {
 	EnabledByDefault bool
 }
 
-func MakeEndpointBase(opts...EndpointOptions) EndpointBase {
+func MakeEndpointBase(opts ...EndpointOptions) EndpointBase {
 	opt := EndpointOption{}
 	for _, f := range opts {
 		f(&opt)
@@ -236,13 +237,19 @@ type MappingNameFunc func(op Operation) string
 type WebEndpointBase struct {
 	EndpointBase
 	properties *WebEndpointsProperties
+	formats    map[string]httptransport.EncodeResponseFunc
 }
 
-func MakeWebEndpointBase(opts...EndpointOptions) WebEndpointBase {
+func MakeWebEndpointBase(opts ...EndpointOptions) WebEndpointBase {
 	base := MakeEndpointBase(opts...)
 	return WebEndpointBase{
 		EndpointBase: base,
-		properties: &base.properties.Web,
+		properties:   &base.properties.Web,
+		formats: map[string]httptransport.EncodeResponseFunc{
+			ContentTypeSpringBootV3: SpringBootRespEncoderV3(),
+			ContentTypeSpringBootV2: SpringBootRespEncoderV2(),
+			"application/json":      web.JsonResponseEncoder(),
+		},
 	}
 }
 
@@ -288,7 +295,8 @@ func (b WebEndpointBase) RestMappingBuilder(op Operation, group string,
 	name := nameFunc(op)
 	builder := rest.New(name).
 		Path(path).
-		EndpointFunc(op.Func())
+		EndpointFunc(op.Func()).
+		EncodeResponseFunc(b.NegotiableResponseEncoder())
 
 	switch op.Mode() {
 	case OperationRead:
@@ -300,3 +308,36 @@ func (b WebEndpointBase) RestMappingBuilder(op Operation, group string,
 	}
 }
 
+func (b WebEndpointBase) NegotiateFormat(ctx context.Context) string {
+	gc := web.GinContext(ctx)
+	if gc != nil {
+		if f := gc.NegotiateFormat(ContentTypeSpringBootV3, ContentTypeSpringBootV2); f != "" {
+			return f
+		}
+	}
+	return ContentTypeSpringBootV3
+}
+
+func (b WebEndpointBase) NegotiableResponseEncoder() httptransport.EncodeResponseFunc {
+	return func(ctx context.Context, rw http.ResponseWriter, i interface{}) error {
+		format := b.NegotiateFormat(ctx)
+		if enc, ok := b.formats[format]; ok {
+			return enc(ctx, rw, i)
+		}
+		return web.JsonResponseEncoder()(ctx, rw, i)
+	}
+}
+
+func SpringBootRespEncoderV3() httptransport.EncodeResponseFunc {
+	return web.CustomResponseEncoder(func(opt *web.EncodeOption) {
+		opt.ContentType = ContentTypeSpringBootV3
+		opt.WriteFunc = web.JsonWriteFunc
+	})
+}
+
+func SpringBootRespEncoderV2() httptransport.EncodeResponseFunc {
+	return web.CustomResponseEncoder(func(opt *web.EncodeOption) {
+		opt.ContentType = ContentTypeSpringBootV2
+		opt.WriteFunc = web.JsonWriteFunc
+	})
+}
