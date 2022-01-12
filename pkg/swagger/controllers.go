@@ -55,7 +55,7 @@ type SwaggerController struct {
 
 func NewSwaggerController(props SwaggerProperties, resolver bootstrap.BuildInfoResolver) *SwaggerController {
 	return &SwaggerController{
-		properties: &props,
+		properties:        &props,
 		buildInfoResolver: resolver,
 	}
 }
@@ -70,6 +70,7 @@ func (c *SwaggerController) Mappings() []web.Mapping {
 		rest.New("swagger-resources").Get("/swagger-resources").EndpointFunc(c.resources).Build(),
 		web.NewSimpleMapping("swagger-sso-redirect", "", "swagger-sso-redirect.html", http.MethodGet, nil, c.swaggerRedirect),
 		web.NewSimpleMapping("swagger-spec", "", "/v2/api-docs", http.MethodGet, nil, c.swaggerSpec),
+		web.NewSimpleMapping("oas3-spec", "", "/v3/api-docs", http.MethodGet, nil, c.oas3Spec),
 	}
 }
 
@@ -127,9 +128,9 @@ func (c *SwaggerController) resources(_ context.Context, _ web.EmptyRequest) (re
 	response = []Resource{
 		{
 			Name:           "platform",
-			Url:            "/v2/api-docs?group=platform",
+			Url:            "/v3/api-docs?group=platform",
 			SwaggerVersion: "2.0",
-			Location:       "/v2/api-docs?group=platform",
+			Location:       "/v3/api-docs?group=platform",
 		},
 	}
 	return
@@ -169,6 +170,51 @@ func (c *SwaggerController) swaggerSpec(w http.ResponseWriter, r *http.Request) 
 
 	// version
 	m.Info.Version = c.msxVersion()
+
+	// write to response
+	w.Header().Set(web.HeaderContentType, "application/json")
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(&m)
+}
+
+func (c *SwaggerController) oas3Spec(w http.ResponseWriter, r *http.Request) {
+	var err error
+	defer func() {
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}()
+
+	file, err := os.Open(c.properties.Spec)
+	if err != nil {
+		return
+	}
+	defer func() { _ = file.Close() }()
+
+	var m OAS3Specs
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&m)
+	if err != nil {
+		return
+	}
+
+	// version
+	m.Info.Version = c.msxVersion()
+
+	// host
+	fwdAddress := r.Header.Get("X-Forwarded-Host") // capitalisation doesn't matter
+	if fwdAddress != "" {
+		ips := strings.Split(fwdAddress, ",")
+		server := OAS3Server{
+			URL:         "{schema}://{host}",
+			Description: "Current API Server",
+			Variables: map[string]interface{}{
+				"schema": "http", //TODO should be dynamic value
+				"host":   strings.TrimSpace(ips[0]),
+			},
+		}
+		m.Servers = append([]OAS3Server{server}, m.Servers...)
+	}
 
 	// write to response
 	w.Header().Set(web.HeaderContentType, "application/json")

@@ -29,3 +29,35 @@ type OAS2Info struct {
 	License        map[string]interface{} `json:"license"`
 	Version        string                 `json:"version"`
 }
+
+// OAS3Specs is Swagger 3.0 Specification
+// https://swagger.io/docs/specification/basic-structure/
+// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schema
+type OAS3Specs struct {
+	OpenAPIVersion string                 `json:"openapi"`
+	Info           OAS3Info               `json:"info"`
+	JsonDialect    string                 `json:"jsonSchemaDialect"`
+	Servers        []OAS3Server           `json:"servers"`
+	Paths          map[string]interface{} `json:"paths"`
+	WebHooks       map[string]interface{} `json:"webhooks"`
+	Components     map[string]interface{} `json:"components"`
+	Security       []interface{}          `json:"security"`
+	Tags           []interface{}          `json:"tags"`
+	ExtDocs        map[string]interface{} `json:"externalDocs"`
+}
+
+type OAS3Info struct {
+	Title          string                 `json:"title"`
+	Summary        string                 `json:"summary"`
+	Description    string                 `json:"description"`
+	TermsOfService string                 `json:"termsOfService"`
+	Contact        map[string]interface{} `json:"contact"`
+	License        map[string]interface{} `json:"license"`
+	Version        string                 `json:"version"`
+}
+
+type OAS3Server struct {
+	URL         string                 `json:"url"`
+	Description string                 `json:"description"`
+	Variables   map[string]interface{} `json:"variables"`
+}
