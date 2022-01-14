@@ -90,6 +90,19 @@ func (_ BadRequestError) StatusCode() int {
 	return http.StatusBadRequest
 }
 
+type BindingError struct {
+	error
+}
+
+// StatusCode implements StatusCoder
+func (_ BindingError) StatusCode() int {
+	return http.StatusBadRequest
+}
+
+func (e BindingError) Unwrap() error {
+	return e.error
+}
+
 type ValidationErrors struct {
 	validator.ValidationErrors
 }

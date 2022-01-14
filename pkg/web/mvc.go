@@ -2,9 +2,11 @@ package web
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/go-playground/validator/v10"
 	"io"
 	"net/http"
 	"reflect"
@@ -239,13 +241,13 @@ func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequest
 			ginCtx.ShouldBindQuery)
 
 		if err != nil {
-			return
+			return nil, translateBindingError(err)
 		}
 
 		err = ginCtx.ShouldBind(toBind)
 
 		if err != nil && !(errors.Is(err, io.EOF) && r.ContentLength <= 0) {
-			return
+			return nil, translateBindingError(err)
 		}
 		return toRet.Interface(), validateBinding(c, toBind)
 	}
@@ -260,6 +262,17 @@ func bind(obj interface{}, bindings ...bindingFunc) (err error) {
 		}
 	}
 	return
+}
+
+func translateBindingError(err error) error {
+	var verr validator.ValidationErrors
+	var jsonErr *json.SyntaxError
+	switch {
+	case errors.As(err, &verr), errors.As(err, &jsonErr):
+		return err
+	default:
+		return BindingError{error: err}
+	}
 }
 
 func validateBinding(ctx context.Context, obj interface{}) error {
