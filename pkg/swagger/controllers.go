@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -51,12 +50,14 @@ type Resource struct {
 type SwaggerController struct {
 	properties        *SwaggerProperties
 	buildInfoResolver bootstrap.BuildInfoResolver
+	docLoader         *OASDocLoader
 }
 
 func NewSwaggerController(props SwaggerProperties, resolver bootstrap.BuildInfoResolver) *SwaggerController {
 	return &SwaggerController{
 		properties:        &props,
 		buildInfoResolver: resolver,
+		docLoader: newOASDocLoader(props.Spec),
 	}
 }
 
@@ -69,8 +70,8 @@ func (c *SwaggerController) Mappings() []web.Mapping {
 		rest.New("swagger-configuration-sso").Get("/swagger-resources/configuration/security/sso").EndpointFunc(c.configurationSso).Build(),
 		rest.New("swagger-resources").Get("/swagger-resources").EndpointFunc(c.resources).Build(),
 		web.NewSimpleMapping("swagger-sso-redirect", "", "swagger-sso-redirect.html", http.MethodGet, nil, c.swaggerRedirect),
-		web.NewSimpleMapping("swagger-spec", "", "/v2/api-docs", http.MethodGet, nil, c.swaggerSpec),
-		web.NewSimpleMapping("oas3-spec", "", "/v3/api-docs", http.MethodGet, nil, c.oas3Spec),
+		web.NewSimpleMapping("swagger-spec", "", "/v2/api-docs", http.MethodGet, nil, c.oas2Doc),
+		web.NewSimpleMapping("oas3-spec", "", "/v3/api-docs", http.MethodGet, nil, c.oas3Doc),
 	}
 }
 
@@ -129,14 +130,14 @@ func (c *SwaggerController) resources(_ context.Context, _ web.EmptyRequest) (re
 		{
 			Name:           "platform",
 			Url:            "/v3/api-docs?group=platform",
-			SwaggerVersion: "2.0",
+			SwaggerVersion: "3.0",
 			Location:       "/v3/api-docs?group=platform",
 		},
 	}
 	return
 }
 
-func (c *SwaggerController) swaggerSpec(w http.ResponseWriter, r *http.Request) {
+func (c *SwaggerController) oas2Doc(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -144,40 +145,25 @@ func (c *SwaggerController) swaggerSpec(w http.ResponseWriter, r *http.Request) 
 		}
 	}()
 
-	file, err := os.Open(c.properties.Spec)
-	if err != nil {
-		return
-	}
-	defer func() { _ = file.Close() }()
-
-	var m OAS2Specs
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&m)
-	if err != nil {
+	doc, e := c.docLoader.Load()
+	if e != nil {
+		err = e
 		return
 	}
 
-	// host
-	var host string
-	fwdAddress := r.Header.Get("X-Forwarded-Host") // capitalisation doesn't matter
-	if fwdAddress != "" {
-		ips := strings.Split(fwdAddress, ",")
-		host = strings.TrimSpace(ips[0])
-	} else {
-		host = r.Host
+	switch oas, e := c.process(doc, r); {
+	case e == nil && doc.Version == OASv2:
+		// write to response
+		w.Header().Set(web.HeaderContentType, "application/json")
+		err = json.NewEncoder(w).Encode(oas)
+	case  e == nil:
+		err = fmt.Errorf("OAS3 document is not supported by /v2 endpoint")
+	default:
+		err = e
 	}
-	m.Host = host
-
-	// version
-	m.Info.Version = c.msxVersion()
-
-	// write to response
-	w.Header().Set(web.HeaderContentType, "application/json")
-	encoder := json.NewEncoder(w)
-	err = encoder.Encode(&m)
 }
 
-func (c *SwaggerController) oas3Spec(w http.ResponseWriter, r *http.Request) {
+func (c *SwaggerController) oas3Doc(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -185,41 +171,21 @@ func (c *SwaggerController) oas3Spec(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	file, err := os.Open(c.properties.Spec)
-	if err != nil {
-		return
-	}
-	defer func() { _ = file.Close() }()
-
-	var m OAS3Specs
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&m)
-	if err != nil {
+	doc, e := c.docLoader.Load()
+	if e != nil {
+		err = e
 		return
 	}
 
-	// version
-	m.Info.Version = c.msxVersion()
-
-	// host
-	fwdAddr := r.Header.Values("X-Forwarded-Host") // capitalisation doesn't matter
-	if len(fwdAddr) != 0 {
-		fwdProto := r.Header.Values("X-Forwarded-Proto")
-		schema := "http"
-		if len(fwdProto) != 0 {
-			schema = strings.TrimSpace(fwdProto[0])
-		}
-		server := OAS3Server{
-			URL:         fmt.Sprintf("%s://%s", schema, strings.TrimSpace(fwdAddr[0])),
-			Description: "Current API Server",
-		}
-		m.Servers = append([]OAS3Server{server}, m.Servers...)
+	oas, e := c.process(doc, r)
+	if e != nil {
+		err = e
+		return
 	}
 
 	// write to response
 	w.Header().Set(web.HeaderContentType, "application/json")
-	encoder := json.NewEncoder(w)
-	err = encoder.Encode(&m)
+	err = json.NewEncoder(w).Encode(oas)
 }
 
 func (c *SwaggerController) swaggerRedirect(w http.ResponseWriter, r *http.Request) {
@@ -246,4 +212,52 @@ func (c *SwaggerController) msxVersion() string {
 		return ""
 	}
 	return bootstrap.BuildVersion
+}
+
+func (c *SwaggerController) process(doc *OpenApiSpec, r *http.Request) (interface{}, error) {
+	switch doc.Version {
+	case OASv2:
+		return doc.OAS2, c.processOAS2(doc.OAS2, r)
+	case OASv30, OASv31:
+		return doc.OAS3, c.processOAS3(doc.OAS3, r)
+	}
+	return nil, fmt.Errorf("unknown OAS document version")
+}
+
+func (c *SwaggerController) processOAS2(oas *OAS2, r *http.Request) error {
+	// host
+	var host string
+	fwdAddress := r.Header.Get("X-Forwarded-Host") // capitalisation doesn't matter
+	if fwdAddress != "" {
+		ips := strings.Split(fwdAddress, ",")
+		host = strings.TrimSpace(ips[0])
+	} else {
+		host = r.Host
+	}
+	oas.Host = host
+
+	// version
+	oas.Info.Version = c.msxVersion()
+	return nil
+}
+
+func (c *SwaggerController) processOAS3(oas *OAS3, r *http.Request) error {
+	// version
+	oas.Info.Version = c.msxVersion()
+
+	// host
+	fwdAddr := r.Header.Values("X-Forwarded-Host") // capitalisation doesn't matter
+	if len(fwdAddr) != 0 {
+		fwdProto := r.Header.Values("X-Forwarded-Proto")
+		schema := "http"
+		if len(fwdProto) != 0 {
+			schema = strings.TrimSpace(fwdProto[0])
+		}
+		server := OAS3Server{
+			URL:         fmt.Sprintf("%s://%s", schema, strings.TrimSpace(fwdAddr[0])),
+			Description: "Current API Server",
+		}
+		oas.Servers = append([]OAS3Server{server}, oas.Servers...)
+	}
+	return nil
 }

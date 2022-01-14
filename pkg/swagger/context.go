@@ -1,9 +1,55 @@
 package swagger
 
-// OAS2Specs is Swagger 2.0 Specification
+import (
+	"encoding/json"
+	"errors"
+)
+
+const (
+	OASv2  = "2.0"
+	OASv30 = "3.0.0"
+	OASv31 = "3.1.0"
+)
+
+type OASVersion string
+
+type oasDoc struct {
+	OASLegacyVer OASVersion `json:"swagger"`
+	OAS3Ver      OASVersion `json:"openapi"`
+}
+
+type OpenApiSpec struct {
+	Version OASVersion
+	OAS2   *OAS2
+	OAS3   *OAS3
+}
+
+func (s *OpenApiSpec) UnmarshalJSON(data []byte) error {
+	var doc oasDoc
+	if e := json.Unmarshal(data, &doc); e != nil {
+		return e
+	}
+
+	var specPtr interface{}
+	switch {
+	case doc.OAS3Ver == OASv30, doc.OAS3Ver == OASv31:
+		s.Version = doc.OAS3Ver
+		s.OAS3 = &OAS3{}
+		specPtr = s.OAS3
+	case len(doc.OAS3Ver) == 0 && doc.OASLegacyVer == OASv2:
+		s.Version = OASv2
+		s.OAS2 = &OAS2{}
+		specPtr = s.OAS2
+	default:
+		return errors.New("unknown OAS document version")
+	}
+	return json.Unmarshal(data, specPtr)
+}
+
+// OAS2 is Swagger 2.0 Specification
 // https://swagger.io/docs/specification/2-0/basic-structure/
 // https://github.com/OAI/OpenAPI-Specification/blob/main/versions/2.0.md
-type OAS2Specs struct {
+type OAS2 struct {
 	OpenAPIVersion string                 `json:"swagger"`
 	Info           OAS2Info               `json:"info"`
 	Host           string                 `json:"host"`
@@ -30,10 +76,10 @@ type OAS2Info struct {
 	Version        string                 `json:"version"`
 }
 
-// OAS3Specs is Swagger 3.0 Specification
+// OAS3 is Swagger 3.0 Specification
 // https://swagger.io/docs/specification/basic-structure/
 // https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schema
-type OAS3Specs struct {
+type OAS3 struct {
 	OpenAPIVersion string                 `json:"openapi"`
 	Info           OAS3Info               `json:"info"`
 	JsonDialect    string                 `json:"jsonSchemaDialect"`
