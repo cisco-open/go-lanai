@@ -202,16 +202,16 @@ func (c *SwaggerController) oas3Spec(w http.ResponseWriter, r *http.Request) {
 	m.Info.Version = c.msxVersion()
 
 	// host
-	fwdAddress := r.Header.Get("X-Forwarded-Host") // capitalisation doesn't matter
-	if fwdAddress != "" {
-		ips := strings.Split(fwdAddress, ",")
+	fwdAddr := r.Header.Values("X-Forwarded-Host") // capitalisation doesn't matter
+	if len(fwdAddr) != 0 {
+		fwdProto := r.Header.Values("X-Forwarded-Proto")
+		schema := "http"
+		if len(fwdProto) != 0 {
+			schema = strings.TrimSpace(fwdProto[0])
+		}
 		server := OAS3Server{
-			URL:         "{schema}://{host}",
+			URL:         fmt.Sprintf("%s://%s", schema, strings.TrimSpace(fwdAddr[0])),
 			Description: "Current API Server",
-			Variables: map[string]interface{}{
-				"schema": "http", //TODO should be dynamic value
-				"host":   strings.TrimSpace(ips[0]),
-			},
 		}
 		m.Servers = append([]OAS3Server{server}, m.Servers...)
 	}
