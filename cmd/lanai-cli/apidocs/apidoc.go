@@ -8,7 +8,12 @@ import (
 	"github.com/ghodss/yaml"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
+)
+
+var (
+	cache = map[string]*apidoc{}
 )
 
 type apidoc struct {
@@ -50,6 +55,7 @@ func loadApiDocs(ctx context.Context, paths []string) ([]*apidoc, error) {
 			return nil, e
 		}
 		docs[i] = doc
+		cache[doc.source] = doc
 	}
 	return docs, nil
 }
@@ -67,13 +73,22 @@ func loadApiDoc(ctx context.Context, path string) (doc *apidoc, err error) {
 }
 
 func loadApiDocLocal(_ context.Context, fPath string) (*apidoc, error) {
-	var doc apidoc
-	var e error
+	absPath, e := filepath.Abs(path.Join(cmdutils.GlobalArgs.WorkingDir, fPath))
+	if e != nil {
+		return nil, fmt.Errorf("unable to resolve absolute path of file [%s]: %v", fPath, e)
+	}
+	if cached, ok := cache[absPath]; ok && cached != nil {
+		return cached, nil
+	}
+
+	doc := apidoc{
+		source: absPath,
+	}
 	switch fileExt := strings.ToLower(path.Ext(fPath)); fileExt {
 	case ".yml", ".yaml":
-		doc.source, e = cmdutils.BindYamlFile(&doc.value, fPath)
+		_, e = cmdutils.BindYamlFile(&doc.value, fPath)
 	case ".json", ".json5":
-		doc.source, e = cmdutils.BindJsonFile(&doc.value, fPath)
+		_, e = cmdutils.BindJsonFile(&doc.value, fPath)
 	default:
 		return nil, fmt.Errorf("unsupported file extension for OAS document: %s", fileExt)
 	}

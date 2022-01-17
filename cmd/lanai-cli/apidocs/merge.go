@@ -52,6 +52,10 @@ func RunMerge(cmd *cobra.Command, args []string) error {
 	// TODO resolve external $ref
 	if !MergeArgs.KeepExtRef {
 		logger.Infof("Resolving external $ref...")
+		docs, e = tryResolveExtRefs(cmd.Context(), docs)
+		if e != nil {
+			return e
+		}
 	}
 
 	logger.Infof("Merging...")
