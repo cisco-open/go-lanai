@@ -6,14 +6,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ghodss/yaml"
+	"mime"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 )
 
+const (
+	schemaPrefixGitHub = "github://"
+	schemaPrefixHttp   = "http://"
+	schemaPrefixHttps  = "https://"
+	kDefaultGitHubPAT = "default"
+)
+
 var (
-	cache = map[string]*apidoc{}
+	cache          = map[string]*apidoc{}
+	githubPatCache map[string]string
 )
 
 type apidoc struct {
@@ -48,28 +58,31 @@ func writeApiDocLocal(_ context.Context, doc *apidoc) (string, error) {
 }
 
 func loadApiDocs(ctx context.Context, paths []string) ([]*apidoc, error) {
-	docs := make([]*apidoc, len(paths), len(paths) * 2)
+	docs := make([]*apidoc, len(paths), len(paths)*2)
 	for i, p := range paths {
 		doc, e := loadApiDoc(ctx, p)
 		if e != nil {
 			return nil, e
 		}
 		docs[i] = doc
-		cache[doc.source] = doc
 	}
 	return docs, nil
 }
 
 func loadApiDoc(ctx context.Context, path string) (doc *apidoc, err error) {
+	defer func() {
+		if err == nil && doc != nil {
+			cache[doc.source] = doc
+		}
+	}()
 	switch {
-	case strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://"):
-	// TODO load from remote
-	case strings.HasPrefix(path, "git@"):
-	// TODO load from git
+	case strings.HasPrefix(path, schemaPrefixHttp) || strings.HasPrefix(path, schemaPrefixHttps):
+		return loadApiDocHttp(ctx, path)
+	case strings.HasPrefix(path, schemaPrefixGitHub):
+		return loadApiDocGitHub(ctx, path)
 	default:
 		return loadApiDocLocal(ctx, path)
 	}
-	return
 }
 
 func loadApiDocLocal(_ context.Context, fPath string) (*apidoc, error) {
@@ -96,4 +109,100 @@ func loadApiDocLocal(_ context.Context, fPath string) (*apidoc, error) {
 		return nil, e
 	}
 	return &doc, nil
+}
+
+func loadApiDocGitHub(ctx context.Context, rawUrl string) (*apidoc, error) {
+	rawUrl = strings.Replace(rawUrl, schemaPrefixGitHub, schemaPrefixHttps, 1)
+	return loadApiDocHttp(ctx, rawUrl, func(r *http.Request) {
+		token := githubAccessToken(ctx, r.URL.Host)
+		if len(token) != 0 {
+			r.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+		}
+	})
+}
+
+func loadApiDocHttp(ctx context.Context, rawUrl string, opts ...func(r *http.Request)) (*apidoc, error) {
+	req, e := http.NewRequestWithContext(ctx, http.MethodGet, rawUrl, nil)
+	if e != nil {
+		return nil, fmt.Errorf("invalid URL [%s]: %v", rawUrl, e)
+	}
+
+	urlStr := req.URL.String()
+	if cached, ok := cache[urlStr]; ok && cached != nil {
+		return cached, nil
+	}
+
+	// apply options
+	for _, fn := range opts {
+		fn(req)
+	}
+
+	// send request and check result
+	resp, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return nil, fmt.Errorf("unable to GET requested URL [%s]: %v", urlStr, e)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("unable to Get requested URL [%s]: Status %d", urlStr, resp.StatusCode)
+	}
+
+	// parse format
+	doc := apidoc{
+		source: urlStr,
+	}
+	switch ext := contentTypeAsExt(req, resp); ext {
+	case ".yml", ".yaml":
+		e = cmdutils.BindYaml(resp.Body, &doc.value)
+	case ".json", ".json5":
+		e = json.NewDecoder(resp.Body).Decode(&doc.value)
+	default:
+		return nil, fmt.Errorf("unsupported file format for OAS document: %s", ext)
+	}
+	if e != nil {
+		return nil, e
+	}
+	return &doc, nil
+}
+
+func contentTypeAsExt(req *http.Request, resp *http.Response) string {
+	ct := resp.Header.Get("Content-Type")
+	fileExt := strings.ToLower(path.Ext(req.URL.EscapedPath()))
+	if mt, _, e := mime.ParseMediaType(ct); e == nil {
+		switch {
+		case mt == "application/json":
+			fileExt = ".json"
+		case strings.HasSuffix(mt, "yaml") || strings.HasSuffix(mt, "yml"):
+			fileExt = ".yaml"
+		}
+	}
+	return fileExt
+}
+
+func githubAccessToken(ctx context.Context, host string) string {
+	// populate inmemory cache if possible
+	if githubPatCache == nil {
+		if e := populateGithubPatCache(); e != nil {
+			logger.WithContext(ctx).Warnf("invalid GitHub access token: %v", e)
+			return ""
+		}
+	}
+	token, ok := githubPatCache[host]
+	if !ok {
+		return githubPatCache[kDefaultGitHubPAT]
+	}
+	return token
+}
+
+func populateGithubPatCache() error {
+	githubPatCache = make(map[string]string)
+	for _, arg := range MergeArgs.GitHubPATs {
+		split := strings.SplitN(arg, "@", 2)
+		if len(split) == 1 {
+			githubPatCache[kDefaultGitHubPAT] = split[0]
+		} else {
+			githubPatCache[split[1]] = split[0]
+		}
+	}
+	return nil
 }

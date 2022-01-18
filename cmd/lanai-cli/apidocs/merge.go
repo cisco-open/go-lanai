@@ -14,7 +14,7 @@ import (
 
 var (
 	MergeCmd = &cobra.Command{
-		Use:                "merge <source_files>",
+		Use:                "merge <space_delimited_source_files>",
 		Short:              "Initialize library module, generating additional Makefile rules, etc.",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		Args:               ValidatePositionalArgs,
@@ -27,8 +27,9 @@ var (
 )
 
 type MergeArguments struct {
-	Output     string `flag:"output,o" desc:"output file path"`
-	KeepExtRef bool   `flag:"keep-external-ref,k" desc:"should keep external $ref as-is (skip resolving external $ref)"`
+	Output     string   `flag:"output,o" desc:"output file path, relative to working directory"`
+	KeepExtRef bool     `flag:"keep-external-ref,k" desc:"keep external $ref as-is (skip resolving external $ref)"`
+	GitHubPATs []string `flag:"github-token,T" desc:"GitHub's Personal Access Token(PAT) with format \"<token>[@<hostname>]\". When <hostname> is not specified, the token is used as default."`
 }
 
 func init() {
@@ -43,6 +44,7 @@ func ValidatePositionalArgs(cmd *cobra.Command, args []string) error {
 }
 
 func RunMerge(cmd *cobra.Command, args []string) error {
+
 	logger.Infof("Loading API documents...")
 	docs, e := loadApiDocs(cmd.Context(), args)
 	if e != nil {

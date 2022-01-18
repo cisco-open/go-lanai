@@ -51,7 +51,7 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/fx v1.14.2
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744 // indirect
 	golang.org/x/tools v0.1.7 // indirect
 	gorm.io/driver/postgres v1.1.0

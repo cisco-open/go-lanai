@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ghodss/yaml"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -35,20 +36,24 @@ func BindYamlFile(bind interface{}, filepath string, additionalLookupDirs ...str
 	defer func() {_ = file.Close()}()
 
 	// read and parse file
-	encoded, e := ioutil.ReadAll(file)
-	if e != nil {
-		return "", fmt.Errorf("unable to read file %s: %v", absPath, e)
-	}
-
-	jsonData, e := yaml.YAMLToJSON(encoded)
-	if e != nil {
+	if e := BindYaml(file, bind); e != nil {
 		return "", fmt.Errorf("unable to parse YAML file %s: %v", absPath, e)
 	}
-
-	if e := json.Unmarshal(jsonData, bind); e != nil {
-		return "", fmt.Errorf("unable to bind file %s to %T: %v", absPath, bind, e)
-	}
 	return absPath, nil
+}
+
+// BindYaml read from given io.Reader and parse as YAML
+func BindYaml(reader io.Reader, bind interface{}) error {
+	// read and parse file
+	encoded, e := ioutil.ReadAll(reader)
+	if e != nil {
+		return e
+	}
+
+	if e := yaml.Unmarshal(encoded, bind); e != nil {
+		return e
+	}
+	return nil
 }
 
 // BindJsonFile find, read and bind JSON file, returns absolute path of loaded file

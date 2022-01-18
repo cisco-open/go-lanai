@@ -16,7 +16,7 @@ const (
 
 var (
 	ExtRefSourceReplacement = map[string]string{
-		"https://api.swaggerhub.com/domains/Cisco-Systems46/msx-common-domain/8": "contracts/common-domain-8.yaml",
+		"https://api.swaggerhub.com/domains/Cisco-Systems46/msx-common-domain/8": "github://cto-github.cisco.com/raw/NFV-BU/msx-platform-specs/v1.0.8/common-domain-8.yaml",
 	}
 )
 
@@ -27,15 +27,11 @@ func tryResolveExtRefs(ctx context.Context, docs []*apidoc) ([]*apidoc, error) {
 	}
 
 	for i := 0; i < len(docs); i++ {
-		extra, e := resolveExtRefs(ctx, docs[i])
+		extra, e := resolveExtRefs(ctx, docs[i], seen)
 		if e != nil {
 			return nil, e
 		}
 		for _, doc := range extra {
-			if _, ok := seen[doc.source]; ok {
-				continue
-			}
-			seen[doc.source] = doc
 			docs = append(docs, doc)
 		}
 	}
@@ -44,8 +40,7 @@ func tryResolveExtRefs(ctx context.Context, docs []*apidoc) ([]*apidoc, error) {
 
 // resolveExtRefs traverse given document, inspect all "$ref" fields and try to load additional external documents
 // returns additional documents required
-func resolveExtRefs(ctx context.Context, doc *apidoc) (extra []*apidoc, err error) {
-	seen := map[string]*apidoc{}
+func resolveExtRefs(ctx context.Context, doc *apidoc, seen map[string]*apidoc) (extra []*apidoc, err error) {
 	refResolver := func(val reflect.Value, path string, key, parent reflect.Value) bool {
 		if !strings.HasSuffix(path, refKeySuffix) || !key.IsValid() || parent.Kind() != reflect.Map {
 			return false
@@ -77,6 +72,7 @@ func resolveExtRefs(ctx context.Context, doc *apidoc) (extra []*apidoc, err erro
 			if _, ok := seen[loaded.source]; !ok {
 				extra = append(extra, loaded)
 				seen[loaded.source] = loaded
+				logger.WithContext(ctx).Infof("Loaded external document [%s]", loaded.source)
 			}
 		}
 		return false
