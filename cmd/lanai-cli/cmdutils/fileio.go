@@ -75,7 +75,11 @@ func lookupFile(filePath string, flag int, perm os.FileMode, additionalLookupDir
 	// look up the file
 	lookup := append([]string{GlobalArgs.WorkingDir}, additionalLookupDirs...)
 	for _, dir := range lookup {
-		absPath, err = filepath.Abs(path.Join(dir, filePath))
+		if filepath.IsAbs(filePath) {
+			absPath = filePath
+		} else {
+			absPath, err = filepath.Abs(path.Join(dir, filePath))
+		}
 		if err == nil {
 			// open file
 			f, e := os.OpenFile(absPath, flag, perm)
