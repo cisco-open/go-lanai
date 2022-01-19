@@ -196,15 +196,30 @@ func githubAccessToken(ctx context.Context, host string) string {
 
 func populateGithubPatCache() error {
 	githubPatCache = make(map[string]string)
+	// parse from ResolveConfig
+	for _, v := range ResolveConf.GitHubTokens {
+		token := os.ExpandEnv(v.Token)
+		if len(token) == 0 {
+			continue
+		}
+		host := strings.ToLower(v.Host)
+		if len(host) == 0 {
+			host = kDefaultGitHubPAT
+		}
+		githubPatCache[host] = token
+	}
+
+	// parse from ResolveArguments
 	for _, arg := range ResolveArgs.GitHubPATs {
 		split := strings.SplitN(arg, "@", 2)
-		if len(split[0]) == 0 {
+		val := os.ExpandEnv(split[0])
+		if len(val) == 0 {
 			continue
 		}
 		if len(split) == 1 {
-			githubPatCache[kDefaultGitHubPAT] = split[0]
+			githubPatCache[kDefaultGitHubPAT] = val
 		} else {
-			githubPatCache[split[1]] = split[0]
+			githubPatCache[split[1]] = val
 		}
 	}
 	return nil

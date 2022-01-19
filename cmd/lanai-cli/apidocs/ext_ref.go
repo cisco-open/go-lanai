@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 )
@@ -13,7 +14,7 @@ const (
 	refKey         = `$ref`
 	refLocalPrefix = `#`
 	refKeySuffix   = pathSeparator + refKey
-	replaceArgSeparator = `=`
+	replaceArgSeparator = `=>`
 )
 
 var (
@@ -97,11 +98,14 @@ func doResolveExtRef(ctx context.Context, ref string) (resolved string, loaded *
 
 	// try load additional docs
 	src := altExtSource(split[0])
-	doc, e := loadApiDoc(ctx, src)
-	if e != nil {
-		return "", nil, e
+	if len(src) != 0 {
+		doc, e := loadApiDoc(ctx, src)
+		if e != nil {
+			return "", nil, e
+		}
+		return refLocalPrefix + split[1], doc, nil
 	}
-	return refLocalPrefix + split[1], doc, nil
+	return refLocalPrefix + split[1], nil, nil
 }
 
 type traversalHandler func(val reflect.Value, path string, key, parent reflect.Value) (stop bool)
@@ -159,23 +163,33 @@ func altExtSource(url string) (alt string) {
 
 func populateExtSourceReplace() error {
 	extSourceReplace = map[string]string{}
+	// parse from ResolveConfig
+	for _, v := range ResolveConf.ReplaceExtSources {
+		key, e := normalizeURL(v.Url)
+		if e != nil {
+			return fmt.Errorf(`invalid external source [%s]: %v`, v.Url, e)
+		}
+		extSourceReplace[key] = os.ExpandEnv(v.To)
+	}
+
+	// parse from ResolveArguments
 	for _, pair := range ResolveArgs.ReplaceExtSources {
 		split := strings.SplitN(pair, replaceArgSeparator, 2)
 		if len(split) != 2 {
-			return fmt.Errorf(`invalid external source replacement value. Expect "<original>=<replacement>"`)
+			return fmt.Errorf(`invalid external source replacement value. Expect "<original>=><replacement>"`)
 		}
 		k, e := normalizeURL(split[0])
 		if e != nil {
 			return fmt.Errorf(`invalid external source [%s]: %v`, split[0], e)
 		}
-		extSourceReplace[k] = split[1]
+		extSourceReplace[k] = os.ExpandEnv(split[1])
 
 	}
 	return nil
 }
 
 func normalizeURL(val string) (string, error) {
-	parsed, e := url.Parse(val)
+	parsed, e := url.Parse(os.ExpandEnv(val))
 	if e != nil {
 		return "", e
 	}
