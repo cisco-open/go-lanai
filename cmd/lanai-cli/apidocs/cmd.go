@@ -16,64 +16,7 @@ var (
 )
 
 func init() {
-	Cmd.AddCommand(MergeCmd)
+	Cmd.AddCommand(ResolveCmd)
 }
 
-func Run(cmd *cobra.Command, _ []string) error {
-	//confPath := filepath.Join(Args.Source, "ccv.yml")
-	//conf, e := config.LoadFrom(confPath)
-	//if e != nil {
-	//	logger.Errorf(`unable to load config file "%s"`, confPath)
-	//	return e
-	//}
-	//
-	//out := "./contract.yml"
-	//data, e := conf.ResolveContracts()
-	//if e != nil {
-	//	return e
-	//}
-	//
-	//if ext := filepath.Ext(out); !shared.IsYamlExtension(ext) {
-	//	if data, e = shared.ConvertYamlTo(data, ext); e != nil {
-	//		return e
-	//	}
-	//}
-	//
-	//if e := shared.WriteFile(out, data, 0777); e != nil {
-	//	return e
-	//}
 
-	//if e := cmdutils.LoadYamlConfig(&Module, Args.Metadata); e != nil {
-	//	return e
-	//}
-	//
-	//if e := validateModuleMetadata(cmd.Context()); e != nil {
-	//	return e
-	//}
-	//
-	//if e := generateServiceBuildMakefile(cmd.Context()); e != nil {
-	//	return e
-	//}
-	//
-	//if e := generateDockerfile(cmd.Context()); e != nil {
-	//	return e
-	//}
-	//
-	//if e := generateDockerLaunchScript(cmd.Context()); e != nil {
-	//	return e
-	//}
-	//
-	//if e := generateServiceCICDMakefile(cmd.Context()); e != nil {
-	//	return e
-	//}
-	//
-	//if !Args.Upgrade {
-	//	return nil
-	//}
-	//
-	//if e := forceUpdateServiceMakefile(cmd.Context()); e != nil {
-	//	return e
-	//}
-
-	return nil
-}

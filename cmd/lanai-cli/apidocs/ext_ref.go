@@ -3,6 +3,7 @@ package apidocs
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"reflect"
 	"strings"
 )
@@ -12,15 +13,19 @@ const (
 	refKey         = `$ref`
 	refLocalPrefix = `#`
 	refKeySuffix   = pathSeparator + refKey
+	replaceArgSeparator = `=`
 )
 
 var (
-	ExtRefSourceReplacement = map[string]string{
-		"https://api.swaggerhub.com/domains/Cisco-Systems46/msx-common-domain/8": "github://cto-github.cisco.com/raw/NFV-BU/msx-platform-specs/v1.0.8/common-domain-8.yaml",
-	}
+	extSourceReplace map[string]string
+	extSourceLookup = map[string]string{}
 )
 
 func tryResolveExtRefs(ctx context.Context, docs []*apidoc) ([]*apidoc, error) {
+	if e := populateExtSourceReplace(); e != nil {
+		return nil, e
+	}
+
 	seen := map[string]*apidoc{}
 	for _, doc := range docs {
 		seen[doc.source] = doc
@@ -91,10 +96,7 @@ func doResolveExtRef(ctx context.Context, ref string) (resolved string, loaded *
 	}
 
 	// try load additional docs
-	src := split[0]
-	if replace, ok := ExtRefSourceReplacement[src]; ok && replace != "" {
-		src = replace
-	}
+	src := altExtSource(split[0])
 	doc, e := loadApiDoc(ctx, src)
 	if e != nil {
 		return "", nil, e
@@ -133,4 +135,49 @@ func traverse(val reflect.Value, path string, key, parent reflect.Value, handler
 		}
 	}
 	return false
+}
+
+func altExtSource(url string) (alt string) {
+	if result, ok := extSourceLookup[url]; ok {
+		return result
+	}
+
+	defer func() {
+		extSourceLookup[url] = alt
+	}()
+
+	k, e := normalizeURL(url)
+	if e != nil {
+		return url
+	}
+
+	if result, ok := extSourceReplace[k]; ok {
+		return result
+	}
+	return url
+}
+
+func populateExtSourceReplace() error {
+	extSourceReplace = map[string]string{}
+	for _, pair := range ResolveArgs.ReplaceExtSources {
+		split := strings.SplitN(pair, replaceArgSeparator, 2)
+		if len(split) != 2 {
+			return fmt.Errorf(`invalid external source replacement value. Expect "<original>=<replacement>"`)
+		}
+		k, e := normalizeURL(split[0])
+		if e != nil {
+			return fmt.Errorf(`invalid external source [%s]: %v`, split[0], e)
+		}
+		extSourceReplace[k] = split[1]
+
+	}
+	return nil
+}
+
+func normalizeURL(val string) (string, error) {
+	parsed, e := url.Parse(val)
+	if e != nil {
+		return "", e
+	}
+	return parsed.String(), nil
 }

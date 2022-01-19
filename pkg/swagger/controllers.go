@@ -246,6 +246,7 @@ func (c *SwaggerController) processOAS3(oas *OAS3, r *http.Request) error {
 	oas.Info.Version = c.msxVersion()
 
 	// host
+	oas.Servers = nil
 	fwdAddr := r.Header.Values("X-Forwarded-Host") // capitalisation doesn't matter
 	if len(fwdAddr) != 0 {
 		fwdProto := r.Header.Values("X-Forwarded-Proto")

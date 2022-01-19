@@ -82,14 +82,14 @@ type OAS2Info struct {
 type OAS3 struct {
 	OpenAPIVersion string                 `json:"openapi"`
 	Info           OAS3Info               `json:"info"`
-	JsonDialect    string                 `json:"jsonSchemaDialect"`
-	Servers        []OAS3Server           `json:"servers"`
-	Paths          map[string]interface{} `json:"paths"`
-	WebHooks       map[string]interface{} `json:"webhooks"`
-	Components     map[string]interface{} `json:"components"`
-	Security       []interface{}          `json:"security"`
-	Tags           []interface{}          `json:"tags"`
-	ExtDocs        map[string]interface{} `json:"externalDocs"`
+	JsonDialect    string                 `json:"jsonSchemaDialect,omitempty"`
+	Servers        []OAS3Server           `json:"servers,omitempty"`
+	Paths          map[string]interface{} `json:"paths,omitempty"`
+	WebHooks       map[string]interface{} `json:"webhooks,omitempty"`
+	Components     map[string]interface{} `json:"components,omitempty"`
+	Security       []interface{}          `json:"security,omitempty"`
+	Tags           []interface{}          `json:"tags,omitempty"`
+	ExtDocs        map[string]interface{} `json:"externalDocs,omitempty"`
 }
 
 type OAS3Info struct {

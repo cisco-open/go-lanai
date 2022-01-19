@@ -196,8 +196,11 @@ func githubAccessToken(ctx context.Context, host string) string {
 
 func populateGithubPatCache() error {
 	githubPatCache = make(map[string]string)
-	for _, arg := range MergeArgs.GitHubPATs {
+	for _, arg := range ResolveArgs.GitHubPATs {
 		split := strings.SplitN(arg, "@", 2)
+		if len(split[0]) == 0 {
+			continue
+		}
 		if len(split) == 1 {
 			githubPatCache[kDefaultGitHubPAT] = split[0]
 		} else {
