@@ -35,7 +35,7 @@ var (
 			cmdutils.PrintEnvironment(),
 		),
 	}
-	logTemplate = `{{pad .time -25}} [{{lvl . 5}}]: {{.msg}}`
+	logTemplate = `{{pad -25 .time}} [{{lvl 5 .}}]: {{.msg}}`
 	logProps = log.Properties{
 		Levels: map[string]log.LoggingLevel{
 			"default": log.LevelDebug,
