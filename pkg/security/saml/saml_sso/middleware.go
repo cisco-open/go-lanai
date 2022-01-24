@@ -186,6 +186,9 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 		if err = req.WriteResponse(ctx.Writer); err != nil {
 			mw.handleError(ctx, nil, NewSamlInternalError("error writing saml response", err))
 			return
+		} else {
+			//abort the rest of the handlers because we have already written the response successfully
+			ctx.Abort()
 		}
 	}
 }

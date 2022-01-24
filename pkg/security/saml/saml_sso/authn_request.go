@@ -28,7 +28,7 @@ func UnmarshalRequest(req *saml.IdpAuthnRequest) error {
 func ValidateAuthnRequest(req *saml.IdpAuthnRequest, spDetails SamlSpDetails, spMetadata *saml.EntityDescriptor) error {
 	if !spDetails.SkipAuthRequestSignatureVerification {
 		if err := verifySignature(req); err != nil {
-			return err
+			return NewSamlRequesterError("request signature cannot be verified", err)
 		}
 	}
 
