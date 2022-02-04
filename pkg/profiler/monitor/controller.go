@@ -1,15 +1,16 @@
 package monitor
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/profiler"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/assets"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"net/http"
-	"path/filepath"
 	"time"
 )
 
@@ -19,6 +20,7 @@ const (
 
 var (
 	DataGroups = []DataGroup{GroupBytesAllocated, GroupGCPauses, GroupCPUUsage, GroupPprof}
+	errWSWriterNotAvailable = errors.New("WebSocket writer not available")
 )
 
 type ChartsForwardRequest struct {
@@ -33,7 +35,7 @@ type ChartController struct {
 
 func NewChartController(storage DataStorage, collector *dataCollector) *ChartController {
 	return &ChartController{
-		storage: storage,
+		storage:   storage,
 		collector: collector,
 		upgrader: &websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -93,11 +95,7 @@ func (c *ChartController) Data(gc *gin.Context) {
 }
 
 func (c *ChartController) DataFeed(gc *gin.Context) {
-	var (
-		lastPing time.Time
-		lastPong time.Time
-	)
-
+	// Subscribe data collector
 	ch, id, e := c.collector.Subscribe()
 	defer c.collector.Unsubscribe(id)
 	if e != nil {
@@ -105,50 +103,53 @@ func (c *ChartController) DataFeed(gc *gin.Context) {
 		return
 	}
 
+	// Upgrade to websocket connection
 	ws, e := c.upgrader.Upgrade(gc.Writer, gc.Request, nil)
 	if e != nil {
 		c.handleError(gc, e)
 		return
 	}
+	defer func() {
+		_ = ws.WriteControl(websocket.PingMessage, nil, time.Now().Add(time.Second))
+		_ = ws.Close()
+	}()
 
+	// read and discard all messages
+	go c.wsReadSink(gc.Request.Context())(ws)
+
+	// write feed when received from collector, and send PingMessage every 10 feeds
+	var lastPing, lastPong time.Time
 	ws.SetPongHandler(func(s string) error {
 		lastPong = time.Now()
 		return nil
 	})
 
-	// read and discard all messages
-	go func(c *websocket.Conn) {
-		for {
-			if _, _, err := c.NextReader(); err != nil {
-				_ = c.Close()
-				break
+LOOP:
+	for i := uint(0); true; i++ {
+		select {
+		case feed := <-ch:
+			switch e := c.wsWriteJson(ws, &feed); {
+			case errors.Is(errWSWriterNotAvailable, e):
+				break LOOP
 			}
+		case <-gc.Request.Context().Done():
+			break LOOP
 		}
-	}(ws)
+		if i % 10 != 0 {
+			continue
+		}
 
-	defer func() {
-		c.collector.Unsubscribe(id)
-		_ = ws.Close()
-	}()
+		// If we didn't receive Pong after 1 mins, we quit loop and close connection
+		if lastPing.Sub(lastPong) > time.Minute {
+			break LOOP
+		}
 
-	var i uint
-
-	for feed := range ch {
-		_ = ws.WriteJSON(&feed)
-		i++
-
-		if i%10 == 0 {
-			if diff := lastPing.Sub(lastPong); diff > time.Second*60 {
-				return
-			}
-			now := time.Now()
-			if err := ws.WriteControl(websocket.PingMessage, nil, now.Add(time.Second)); err != nil {
-				return
-			}
-			lastPing = now
+		// Ping
+		lastPing = time.Now()
+		if e := ws.WriteControl(websocket.PingMessage, nil, lastPing.Add(time.Second)); e != nil {
+			break LOOP
 		}
 	}
-	logger.Infof("Loop Quit")
 }
 
 func (c *ChartController) handleError(gc *gin.Context, e error) {
@@ -157,59 +158,24 @@ func (c *ChartController) handleError(gc *gin.Context, e error) {
 	})
 }
 
-func (c *ChartController) Chart(gc *gin.Context) {
-	// re-write path by striping leading context-path
-	path := gc.Request.URL.Path
-	if ctxPath, ok := gc.Request.Context().Value(web.ContextKeyContextPath).(string); ok {
-		var e error
-		if path, e = filepath.Rel(ctxPath, path); e != nil {
-			_ = gc.AbortWithError(500, e)
-			return
-		}
+func (c *ChartController) wsWriteJson(ws *websocket.Conn, v interface{}) error {
+	switch w, e := ws.NextWriter(websocket.TextMessage); {
+	case e != nil:
+		return errWSWriterNotAvailable
+	default:
+		return json.NewEncoder(w).Encode(v)
 	}
-
-	gc.Request.URL.Path = "/" + path
-	h, pattern := http.DefaultServeMux.Handler(gc.Request)
-	fmt.Printf("Pattern: %s", pattern)
-	h.ServeHTTP(gc.Writer, gc.Request)
 }
 
-func (c *ChartController) Forward(gc *gin.Context) {
-	// re-write path by striping leading context-path
-	path := gc.Request.URL.Path
-	if ctxPath, ok := gc.Request.Context().Value(web.ContextKeyContextPath).(string); ok {
-		var e error
-		if path, e = filepath.Rel(ctxPath, path); e != nil {
-			_ = gc.AbortWithError(500, e)
-			return
+func (c *ChartController) wsReadSink(ctx context.Context) func(ws *websocket.Conn) {
+	return func(ws *websocket.Conn) {
+	LOOP:
+		for e := error(nil); e == nil; _, _, e = ws.NextReader() {
+			select {
+			case <-ctx.Done():
+				break LOOP
+			default:
+			}
 		}
 	}
-
-	gc.Request.URL.Path = "/" + path
-	h, pattern := http.DefaultServeMux.Handler(gc.Request)
-	fmt.Printf("Pattern: %s", pattern)
-	h.ServeHTTP(gc.Writer, gc.Request)
 }
-
-//func init() {
-//	http.HandleFunc("/debug/charts/data-feed", s.dataFeedHandler)
-//	http.HandleFunc("/debug/charts/data", dataHandler)
-//	http.HandleFunc("/debug/charts/", handleAsset("static/index.html"))
-//	http.HandleFunc("/debug/charts/main.js", handleAsset("static/main.js"))
-//	http.HandleFunc("/debug/charts/jquery-2.1.4.min.js", handleAsset("static/jquery-2.1.4.min.js"))
-//	http.HandleFunc("/debug/charts/plotly-1.51.3.min.js", handleAsset("static/plotly-1.51.3.min.js"))
-//	http.HandleFunc("/debug/charts/moment.min.js", handleAsset("static/moment.min.js"))
-//
-//	http.DefaultServeMux
-//
-//	myProcess, _ = process.NewProcess(int32(os.Getpid()))
-//
-//	// preallocate arrays in data, helps save on reallocations caused by append()
-//	// when maxCount is large
-//	data.BytesAllocated = make([]SimplePair, 0, maxCount)
-//	data.GcPauses = make([]SimplePair, 0, maxCount)
-//	data.CPUUsage = make([]CPUPair, 0, maxCount)
-//	data.Pprof = make([]PprofPair, 0, maxCount)
-//
-//	go s.gatherData()
-//}
