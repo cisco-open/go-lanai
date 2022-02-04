@@ -17,13 +17,14 @@ require (
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-git/go-git/v5 v5.3.0
 	github.com/go-kit/kit v0.10.0
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-playground/locales v0.14.0
+	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-redis/redis/v8 v8.3.3
 	github.com/gocql/gocql v0.0.0-20210313142353-65899a66288b
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.2
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/consul/api v1.3.0
 	github.com/hashicorp/vault/api v1.1.0
 	github.com/imdario/mergo v0.3.12
@@ -39,13 +40,17 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/cors v1.7.0
 	github.com/russellhaering/goxmldsig v1.1.0
+	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
+	github.com/tklauser/go-sysconf v0.3.9 // indirect
+	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
+	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/fx v1.14.2
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210326060303-6b1517762897

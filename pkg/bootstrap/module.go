@@ -26,6 +26,7 @@ const (
 	KafkaPrecedence
 	WebPrecedence
 	SecurityPrecedence
+	DebugPrecedence
 	ServiceDiscoveryPrecedence
 	DistributedLockPrecedence
 	TenantHierarchyAccessorPrecedence
