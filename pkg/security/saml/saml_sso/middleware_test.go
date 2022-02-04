@@ -57,8 +57,92 @@ func TestSPInitiatedSso(t *testing.T) {
 
 	g := gomega.NewWithT(t)
 	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
-	//TODO: the response is html page with a form post. We need to be able to parse the html page if we want to further
-	// examine the content of the post.
+
+	html := etree.NewDocument()
+	if _, err := html.ReadFrom(w.Body); err != nil {
+		t.Errorf("error parsing html")
+	}
+
+	input := html.FindElement("//input[@name='SAMLResponse']")
+	samlResponse := input.SelectAttrValue("value", "")
+	data, err := base64.StdEncoding.DecodeString(samlResponse)
+
+	if err != nil {
+		t.Errorf("error decode saml response")
+	}
+
+	samlResponseXml := etree.NewDocument()
+	err = samlResponseXml.ReadFromBytes(data)
+
+	if err != nil {
+		t.Errorf("error parsing saml response xml")
+	}
+
+	status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']")
+	g.Expect(status).ToNot(gomega.BeNil())
+}
+
+//In this test we use a different cert key pair so that the SP's actual cert and key do not match the ones that are
+// in its metadata. This way the signature of the auth request won't match the expected signature based on the metadata
+func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
+	testClientStore := newTestSamlClientStore([]DefaultSamlClient{
+		DefaultSamlClient{
+			SamlSpDetails: SamlSpDetails{
+				EntityId:                             "http://localhost:8000/saml/metadata",
+				MetadataSource:                       "testdata/saml_test_sp_metadata.xml",
+				SkipAssertionEncryption:              false,
+				SkipAuthRequestSignatureVerification: false,
+			},
+		},
+	},)
+	testAccountStore := newTestAccountStore()
+
+	r := setupServerForTest(testClientStore, testAccountStore)
+
+	rootURL, _ := url.Parse("http://localhost:8000")
+	cert, _ := cryptoutils.LoadCert("testdata/saml_test_unknown_sp.cert")
+	key, _ := cryptoutils.LoadPrivateKey("testdata/saml_test_unknown_sp.key", "")
+	sp := samlsp.DefaultServiceProvider(samlsp.Options{
+		URL:            *rootURL,
+		Key:            key,
+		Certificate:    cert[0],
+		SignRequest: true,
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/europa/v2/authorize", bytes.NewBufferString(makeAuthnRequest(sp)))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	q := req.URL.Query()
+	q.Add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
+	req.URL.RawQuery = q.Encode()
+	r.ServeHTTP(w, req)
+
+	g := gomega.NewWithT(t)
+	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
+
+	html := etree.NewDocument()
+	if _, err := html.ReadFrom(w.Body); err != nil {
+		t.Errorf("error parsing html")
+	}
+
+	input := html.FindElement("//input[@name='SAMLResponse']")
+	samlResponse := input.SelectAttrValue("value", "")
+	data, err := base64.StdEncoding.DecodeString(samlResponse)
+
+	if err != nil {
+		t.Errorf("error decode saml response")
+	}
+
+	samlResponseXml := etree.NewDocument()
+	err = samlResponseXml.ReadFromBytes(data)
+
+	if err != nil {
+		t.Errorf("error parsing saml response xml")
+	}
+
+	// StatusCode Responder tells the auth requester that there's a problem with the request
+	status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Responder']")
+	g.Expect(status).ToNot(gomega.BeNil())
 }
 
 func TestIDPInitiatedSso(t *testing.T) {
@@ -90,8 +174,29 @@ func TestIDPInitiatedSso(t *testing.T) {
 
 	g := gomega.NewWithT(t)
 	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
-	//TODO: the response is html page with a form post. We need to be able to parse the html page if we want to further
-	// examine the content of the post.
+
+	html := etree.NewDocument()
+	if _, err := html.ReadFrom(w.Body); err != nil {
+		t.Errorf("error parsing html")
+	}
+
+	input := html.FindElement("//input[@name='SAMLResponse']")
+	samlResponse := input.SelectAttrValue("value", "")
+	data, err := base64.StdEncoding.DecodeString(samlResponse)
+
+	if err != nil {
+		t.Errorf("error decode saml response")
+	}
+
+	samlResponseXml := etree.NewDocument()
+	err = samlResponseXml.ReadFromBytes(data)
+
+	if err != nil {
+		t.Errorf("error parsing saml response xml")
+	}
+
+	status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']")
+	g.Expect(status).ToNot(gomega.BeNil())
 }
 
 func TestMetadata(t *testing.T) {
@@ -160,6 +265,7 @@ func setupServerForTest(testClientStore SamlClientStore, testAccountStore securi
 
 	r := gin.Default()
 	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc())
+	r.Use(samlErrorHandlerFunc())
 	r.Use(MockAuthHandler)
 	r.Use(mw.RefreshMetadataHandler(f.ssoCondition))
 	r.Use(mw.AuthorizeHandlerFunc(f.ssoCondition))
@@ -295,6 +401,20 @@ func MockAuthHandler(ctx *gin.Context) {
 	})
 	ctx.Set(security.ContextKeySecurity, auth)
 
+}
+
+func samlErrorHandlerFunc() gin.HandlerFunc {
+	samlErrorHandler := NewSamlErrorHandler()
+	return func(ctx *gin.Context) {
+		ctx.Next()
+
+		for _,e := range ctx.Errors {
+			if errors.Is(e.Err, security.ErrorTypeSecurity) {
+				samlErrorHandler.HandleError(ctx, ctx.Request, ctx.Writer, e)
+				break
+			}
+		}
+	}
 }
 
 /******************************

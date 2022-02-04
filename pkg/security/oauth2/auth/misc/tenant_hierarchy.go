@@ -5,7 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	httptransport "github.com/go-kit/kit/transport/http"
 )
@@ -35,42 +34,41 @@ func (endpoint *TenantHierarchyEndpoint) GetParent(ctx context.Context, req *Hie
 	}
 }
 
-func (endpoint *TenantHierarchyEndpoint) GetChildren(ctx context.Context, req *HierarchyRequest) (utils.StringSet, error) {
+func (endpoint *TenantHierarchyEndpoint) GetChildren(ctx context.Context, req *HierarchyRequest) (interface{}, error) {
 	if allow, err := allowAccess(ctx); !allow {
 		return nil, err
 	}
 
 	children, err := tenancy.GetChildren(ctx, req.TenantId)
 	if err == nil {
-		ret := utils.NewStringSet(children...)
+		ret := children
 		return ret, nil
 	} else {
 		return nil, err
 	}
 }
 
-func (endpoint *TenantHierarchyEndpoint) GetAncestors(ctx context.Context, req *HierarchyRequest) (utils.StringSet, error) {
+func (endpoint *TenantHierarchyEndpoint) GetAncestors(ctx context.Context, req *HierarchyRequest) (interface{}, error) {
 	if allow, err := allowAccess(ctx); !allow {
 		return nil, err
 	}
 
 	ancestor, err := tenancy.GetAncestors(ctx, req.TenantId)
 	if err == nil {
-		ret := utils.NewStringSet(ancestor...)
-		return ret, nil
+		return ancestor, nil
 	} else {
 		return nil, err
 	}
 }
 
-func (endpoint *TenantHierarchyEndpoint) GetDescendants(ctx context.Context, req *HierarchyRequest) (utils.StringSet, error) {
+func (endpoint *TenantHierarchyEndpoint) GetDescendants(ctx context.Context, req *HierarchyRequest) (interface{}, error) {
 	if allow, err := allowAccess(ctx); !allow {
 		return nil, err
 	}
 
 	descendants, err := tenancy.GetDescendants(ctx, req.TenantId)
 	if err == nil {
-		ret := utils.NewStringSet(descendants...)
+		ret := descendants
 		return ret, nil
 	} else {
 		return nil, err
