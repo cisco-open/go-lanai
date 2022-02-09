@@ -5,7 +5,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
+	"fmt"
 	"github.com/hashicorp/consul/api"
+	"strings"
 )
 
 type Customizer interface {
@@ -19,7 +21,7 @@ type Customizers struct {
 
 func NewCustomizers(ctx *bootstrap.ApplicationContext) *Customizers {
 	return &Customizers{
-		Customizers: utils.NewSet(NewDefaultCustomizer(ctx)),
+		Customizers: utils.NewSet(NewDefaultCustomizer(ctx), buildInfoDiscoveryCustomizer{}),
 	}
 }
 
@@ -40,5 +42,28 @@ func (r *Customizers) Apply(ctx context.Context, registration *api.AgentServiceR
 
 	for c, _ := range r.Customizers {
 		c.(Customizer).Customize(ctx, registration)
+	}
+}
+
+type buildInfoDiscoveryCustomizer struct {}
+
+func (b buildInfoDiscoveryCustomizer) Customize(ctx context.Context, reg *api.AgentServiceRegistration) {
+	attrs := map[string]string {
+		TAG_VERSION: bootstrap.BuildVersion,
+		TAG_BUILD_DATE_TIME: bootstrap.BuildTime,
+	}
+
+	components := strings.Split(bootstrap.BuildVersion, "-")
+	if len(components) == 2 {
+		attrs[TAG_BUILD_NUMBER] = components[1]
+	}
+
+	if reg.Meta == nil {
+		reg.Meta = map[string]string{}
+	}
+
+	for k, v := range attrs {
+		reg.Meta[k] = v
+		reg.Tags = append(reg.Tags, fmt.Sprintf("%s=%s", k, v))
 	}
 }

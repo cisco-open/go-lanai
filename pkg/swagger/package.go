@@ -31,7 +31,6 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(bindSecurityProperties),
-		fx.Provide(provideDiscoveryCustomizer),
 		fx.Invoke(initialize),
 	},
 }
@@ -45,11 +44,16 @@ type initDI struct {
 	Registrar *web.Registrar
 	Properties SwaggerProperties
 	Resolver   bootstrap.BuildInfoResolver `optional:"true"`
+	DiscoveryCustomizers *discovery.Customizers `optional:"true"`
 }
 
 func initialize(di initDI) {
 	di.Registrar.MustRegister(Content)
 	di.Registrar.MustRegister(NewSwaggerController(di.Properties, di.Resolver))
+
+	if di.DiscoveryCustomizers != nil {
+		di.DiscoveryCustomizers.Add(swaggerInfoDiscoveryCustomizer{})
+	}
 }
 
 func bindSecurityProperties(ctx *bootstrap.ApplicationContext) SwaggerProperties {
@@ -76,10 +80,4 @@ type DiscoveryCustomizerDIOut struct {
 	fx.Out
 
 	Customizer discovery.Customizer `group:"discovery_customizer"`
-}
-
-func provideDiscoveryCustomizer() DiscoveryCustomizerDIOut {
-	return DiscoveryCustomizerDIOut{
-		Customizer: swaggerInfoDiscoveryCustomizer{},
-	}
 }

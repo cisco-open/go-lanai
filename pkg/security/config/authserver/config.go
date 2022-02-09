@@ -96,17 +96,12 @@ type initDI struct {
 	WebRegistrar         *web.Registrar
 	SecurityRegistrar    security.Registrar
 	DiscoveryCustomizers *discovery.Customizers
-	Customizers          []discovery.Customizer `group:"discovery_customizer"`
 }
 
 // ConfigureAuthorizationServer is the Configuration entry point
 func ConfigureAuthorizationServer(di initDI) {
 	// SMCR
 	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
-	di.DiscoveryCustomizers.Add(bootstrap.BuildInfoDiscoveryCustomizer)
-	for _, c := range di.Customizers {
-		di.DiscoveryCustomizers.Add(c)
-	}
 
 	// Securities
 	di.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: di.Config})

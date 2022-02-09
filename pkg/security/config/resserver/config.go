@@ -55,17 +55,12 @@ type resServerDI struct {
 	Config               *Configuration
 	SecurityRegistrar    security.Registrar
 	DiscoveryCustomizers *discovery.Customizers
-	Customizers          []discovery.Customizer `group:"discovery_customizer"`
 }
 
 // ConfigureResourceServer configuration entry point
 func ConfigureResourceServer(di resServerDI) {
 	// SMCR
 	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
-	di.DiscoveryCustomizers.Add(bootstrap.BuildInfoDiscoveryCustomizer)
-	for _, c := range di.Customizers {
-		di.DiscoveryCustomizers.Add(c)
-	}
 
 	// reigester token auth feature
 	configurer := tokenauth.NewTokenAuthConfigurer(func(opt *tokenauth.TokenAuthOption) {
