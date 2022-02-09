@@ -107,7 +107,8 @@ func (d *DefaultCustomizer) Customize(ctx context.Context, registration *api.Age
 		registration.Meta[k] = v
 		attributeStrings = append(attributeStrings, fmt.Sprintf("%s:%s", k, v))
 	}
-	registration.Tags = append(registration.Tags, kvTag(TAG_COMPONENT_ATTRIBUTES, strings.Join(attributeStrings, COMPONENT_ATTRIBUTE_DELIMITER)))
+	registration.Tags = append(registration.Tags, kvTag(TAG_COMPONENT_ATTRIBUTES, strings.Join(attributeStrings, COMPONENT_ATTRIBUTE_DELIMITER)),
+		kvTag(TAG_SERVICE_NAME, d.componentAttributes[TAG_SERVICE_NAME]))
 }
 
 func kvTag(k string, v string) string {
