@@ -8,13 +8,6 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-/*
-	TODO: For reference the java IDM implementation have the following consul registration customizers
-	1. swaggerPathConsulRegistrationCustomizer
-	add tag: swaggerPath=/swagger
- */
-
-
 type Customizer interface {
 	Customize(ctx context.Context, reg *api.AgentServiceRegistration)
 }
