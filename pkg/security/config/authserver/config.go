@@ -102,6 +102,7 @@ type initDI struct {
 func ConfigureAuthorizationServer(di initDI) {
 	// SMCR
 	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
+	di.DiscoveryCustomizers.Add(bootstrap.BuildInfoDiscoveryCustomizer)
 
 	// Securities
 	di.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: di.Config})

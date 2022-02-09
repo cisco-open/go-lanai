@@ -61,6 +61,7 @@ type resServerDI struct {
 func ConfigureResourceServer(di resServerDI) {
 	// SMCR
 	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
+	di.DiscoveryCustomizers.Add(bootstrap.BuildInfoDiscoveryCustomizer)
 
 	// reigester token auth feature
 	configurer := tokenauth.NewTokenAuthConfigurer(func(opt *tokenauth.TokenAuthOption) {
