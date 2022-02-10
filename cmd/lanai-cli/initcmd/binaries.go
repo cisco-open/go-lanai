@@ -27,7 +27,6 @@ func installBinaries(ctx context.Context) error {
 
 	for p, v := range binaries {
 		installCmd := fmt.Sprintf("go install %s@%s", p, v)
-		logger.WithContext(ctx).Infof("Shell Command: %s", installCmd)
 		opts = append(opts, cmdutils.ShellCmd(installCmd))
 	}
 
