@@ -44,7 +44,6 @@ generate: $(GEN_LIST)
 # 	This target typically run on CI/CD working machine
 test:
 	$(GO) test -v -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/... | tee $(DESTDIR)/tests.out
-
 	$(GO) tool cover -html=$(DESTDIR)/coverage.out -o $(DESTDIR)/coverage.html
 	gocov convert $(DESTDIR)/coverage.out | gocov-xml > $(DESTDIR)/cobertura-coverage.xml
 	cat $(DESTDIR)/tests.out | go-junit-report > $(DESTDIR)/junit-report.xml
