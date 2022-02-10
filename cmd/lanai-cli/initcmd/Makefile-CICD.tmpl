@@ -33,6 +33,13 @@ CLI ?= lanai-cli
 ## CI/CD
 ## Predefined common CI/CD tasks. Such as PR verification, nightly build/release, etc
 
+# test-report:
+# 	Test and generate report. Intended to be used by verification.
+test-report: test
+	$(GO) tool cover -html=$(DESTDIR)/coverage.out -o $(DESTDIR)/coverage.html
+	gocov convert $(DESTDIR)/coverage.out | gocov-xml > $(DESTDIR)/cobertura-coverage.xml
+	cat $(DESTDIR)/tests.out | go-junit-report > $(DESTDIR)/junit-report.xml
+
 # verify:
 #	Test and build application against specified PRIVATE_MODS.
 # 	Required Vars:
@@ -40,7 +47,7 @@ CLI ?= lanai-cli
 #	Example:
 # 		make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
 verify: SAVEPOINT_MARK = tmp/pre-verify
-verify: pre-verify clean test build post-verify
+verify: pre-verify clean test-report build post-verify
 
 # dist:
 #	Make a distribution build with provided PRIVATE_MODS and VERSION,
