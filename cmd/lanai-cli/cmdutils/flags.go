@@ -104,9 +104,7 @@ func parseStructFieldForFlags(f reflect.StructField, fv reflect.Value) (*flagMet
 
 	// get and process tag
 	tokens := strings.Split(flatTag, TagFlagSeparator)
-	for i, s := range tokens {
-		tokens[i] = strings.ToLower(strings.TrimSpace(s))
-	}
+	tokens[0] = strings.ToLower(strings.TrimSpace(tokens[0]))
 
 	// create flag meta
 	meta := flagMeta{

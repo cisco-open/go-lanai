@@ -37,10 +37,12 @@ func BytesResponseEncoder() httptransport.EncodeResponseFunc {
 
 func CustomResponseEncoder(opts ...EncodeOptions) httptransport.EncodeResponseFunc {
 	return func(c context.Context, rw http.ResponseWriter, response interface{}) error {
-		opts = append(opts, func(opt *EncodeOption) {
-			opt.Writer = rw
-			opt.Response = response
-		})
+		opts := append([]EncodeOptions{
+			func(opt *EncodeOption) {
+				opt.Writer = rw
+				opt.Response = response
+			},
+		}, opts...)
 		return encodeResponse(c, opts...)
 	}
 }

@@ -78,7 +78,7 @@ func (r *Registrar) Register(items...interface{}) error {
 	return nil
 }
 
-func (r *Registrar) register(item interface{}) error {
+func (r *Registrar) register(item interface{}) (err error) {
 	if r.initialized {
 		return fmt.Errorf("attempting to register actuator items after actuator has been initialized")
 	}
@@ -87,13 +87,13 @@ func (r *Registrar) register(item interface{}) error {
 	case Endpoint:
 		r.endpoints = append(r.endpoints, item.(Endpoint))
 	case []interface{}:
-		r.Register(item.([]interface{})...)
+		err = r.Register(item.([]interface{})...)
 	case ActuatorSecurityCustomizer:
 		r.securityCustomizer = item.(ActuatorSecurityCustomizer)
 	default:
 		return fmt.Errorf("unsupported actuator type [%T]", item)
 	}
-	return nil
+	return err
 }
 
 func (r *Registrar) installWebEndpoints(reg *web.Registrar) (WebEndpoints, error) {

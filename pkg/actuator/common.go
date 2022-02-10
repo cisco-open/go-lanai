@@ -85,7 +85,7 @@ func (op operation) Execute(ctx context.Context, input interface{}) (interface{}
 	case 1:
 		return nil, ret[0].Interface().(error)
 	case 2:
-		return ret[0].Interface(), ret[0].Interface().(error)
+		return ret[0].Interface(), ret[1].Interface().(error)
 	default:
 		// find error param
 		for _, v := range ret {
