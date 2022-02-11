@@ -267,6 +267,7 @@ func optsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
 				}
 				scopes = append(scopes, sub...)
 			case delayedOption:
+				//SuppressWarnings go:S1871 we can use "opt.wrapped" here, but SONAR doesn't understand type switching
 				sub, e := optsToDBFuncs([]Option{opt.wrapped})
 				if e != nil {
 					return nil, e

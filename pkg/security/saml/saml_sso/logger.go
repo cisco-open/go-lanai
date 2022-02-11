@@ -25,7 +25,7 @@ func (s *loggerAdapter) Print(v ...interface{}) {
 }
 
 func (s *loggerAdapter) Println(v ...interface{}) {
-	s.delegate.Info(fmt.Sprint(v...))
+	s.Print(v...)
 }
 
 func (s *loggerAdapter) Fatal(v ...interface{}) {
@@ -39,8 +39,7 @@ func (s *loggerAdapter) Fatalf(format string, v ...interface{}) {
 }
 
 func (s *loggerAdapter) Fatalln(v ...interface{}) {
-	s.delegate.Error(fmt.Sprint(v...))
-	os.Exit(1)
+	s.Fatal(v...)
 }
 
 func (s *loggerAdapter) Panic(v ...interface{}) {
@@ -54,6 +53,5 @@ func (s *loggerAdapter) Panicf(format string, v ...interface{}) {
 }
 
 func (s *loggerAdapter) Panicln(v ...interface{}) {
-	s.delegate.Error(fmt.Sprint(v...))
-	panic(fmt.Sprint(v...))
+	s.Panic(v...)
 }
