@@ -5,6 +5,10 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	errTmplNotConfigured = `data encryption is not properly configured`
+)
+
 var encryptor Encryptor = plainTextEncryptor{}
 
 var zeroUUID = uuid.UUID{}
@@ -12,7 +16,7 @@ var zeroUUID = uuid.UUID{}
 // Encrypt is a package level API that wraps shared Encryptor.Encrypt
 func Encrypt(ctx context.Context, kid string, v interface{}) (*EncryptedRaw, error) {
 	if encryptor == nil {
-		return nil, newEncryptionError("data encryption is not properly configured")
+		return nil, newEncryptionError(errTmplNotConfigured)
 	}
 	return encryptor.Encrypt(ctx, kid, v)
 }
@@ -20,7 +24,7 @@ func Encrypt(ctx context.Context, kid string, v interface{}) (*EncryptedRaw, err
 // Decrypt is a package level API that wraps shared Encryptor.Decrypt
 func Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error {
 	if encryptor == nil {
-		return newDecryptionError("data encryption is not properly configured")
+		return newDecryptionError(errTmplNotConfigured)
 	}
 	return encryptor.Decrypt(ctx, raw, dest)
 }
@@ -29,7 +33,7 @@ func Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error {
 // Note: KeyOptions is for future support, it's currently ignored
 func CreateKey(ctx context.Context, kid string, opts ...KeyOptions) error {
 	if encryptor == nil {
-		return newEncryptionError("data encryption is not properly configured")
+		return newEncryptionError(errTmplNotConfigured)
 	}
 	return encryptor.KeyOperations().Create(ctx, kid, opts...)
 }

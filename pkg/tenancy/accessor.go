@@ -11,6 +11,11 @@ import (
 	"strings"
 )
 
+const (
+	errTmplNotLoaded = `tenancy is not loaded`
+)
+
+//goland:noinspection GoNameStartsWithPackageName
 type TenancyAccessor struct {
 	rc redis.Client
 }
@@ -23,11 +28,11 @@ func newAccessor(rc redis.Client) *TenancyAccessor {
 
 func (a *TenancyAccessor) GetParent(ctx context.Context, tenantId string) (string, error) {
 	if !a.IsLoaded(ctx) {
-		return "", errors.New("tenancy is not loaded")
+		return "", errors.New(errTmplNotLoaded)
 	}
 
-	gteValue := BuildSpsString(tenantId, IsChildrenOfPredict);
-	lteValue := BuildSpsString(tenantId, IsChildrenOfPredict, RedisZsetMaxByte);
+	gteValue := BuildSpsString(tenantId, IsChildrenOfPredict)
+	lteValue := BuildSpsString(tenantId, IsChildrenOfPredict, RedisZsetMaxByte)
 
 	zrange := &r.ZRangeBy{Min: ZInclusive(gteValue), Max: ZInclusive(lteValue)}
 
@@ -36,7 +41,7 @@ func (a *TenancyAccessor) GetParent(ctx context.Context, tenantId string) (strin
 	relations := cmd.Val()
 
 	if len(relations) == 0 {
-		return "", nil;
+		return "", nil
 	} else if len(relations) > 1 {
 		return "", errors.New(fmt.Sprintf("Tenant should only have one parent, but tenant with Id %s has %d ", tenantId, len(relations)))
 	} else {
@@ -47,34 +52,33 @@ func (a *TenancyAccessor) GetParent(ctx context.Context, tenantId string) (strin
 
 func (a *TenancyAccessor) GetChildren(ctx context.Context, tenantId string) ([]string, error) {
 	if !a.IsLoaded(ctx) {
-		return nil, errors.New("tenancy is not loaded")
+		return nil, errors.New(errTmplNotLoaded)
 	}
 
-	gteValue := BuildSpsString(tenantId, IsParentOfPredict);
-	lteValue := BuildSpsString(tenantId, IsParentOfPredict, RedisZsetMaxByte);
+	gteValue := BuildSpsString(tenantId, IsParentOfPredict)
+	lteValue := BuildSpsString(tenantId, IsParentOfPredict, RedisZsetMaxByte)
 
 	zrange := &r.ZRangeBy{Min: ZInclusive(gteValue), Max: ZInclusive(lteValue)}
 
 	cmd := a.rc.ZRangeByLex(ctx, ZsetKey, zrange)
 
-	var children = []string{}
-	for _, relation := range cmd.Val() {
+	var children = make([]string, len(cmd.Val()))
+	for i, relation := range cmd.Val() {
 		child, err := GetObjectOfSpo(relation)
 		if err != nil {
 			return nil, err
 		}
-		children = append(children, child)
+		children[i] = child
 	}
 	return children, nil
 }
 
 func (a *TenancyAccessor) GetAncestors(ctx context.Context, tenantId string) ([]string, error) {
 	if !a.IsLoaded(ctx) {
-		return nil, errors.New("tenancy is not loaded")
+		return nil, errors.New(errTmplNotLoaded)
 	}
 
-	var ancestors = []string{}
-
+	var ancestors = make([]string, 0)
 	p, err := a.GetParent(ctx, tenantId)
 	for ; p != "" && err == nil; {
 		ancestors = append(ancestors, p)
@@ -90,10 +94,10 @@ func (a *TenancyAccessor) GetAncestors(ctx context.Context, tenantId string) ([]
 
 func (a *TenancyAccessor) GetDescendants(ctx context.Context, tenantId string) ([]string, error) {
 	if !a.IsLoaded(ctx) {
-		return nil, errors.New("tenancy is not loaded")
+		return nil, errors.New(errTmplNotLoaded)
 	}
 
-	var descendants = []string{}
+	descendants := make([]string, 0)
 	idsToVisit := list.New()
 
 	idsToVisit.PushBack(tenantId)
@@ -104,8 +108,8 @@ func (a *TenancyAccessor) GetDescendants(ctx context.Context, tenantId string) (
 			for idsToVisit.Len() > 0 {
 				id := idsToVisit.Front()
 
-				gteValue := BuildSpsString(id.Value.(string), IsParentOfPredict);
-				lteValue := BuildSpsString(id.Value.(string), IsParentOfPredict, RedisZsetMaxByte);
+				gteValue := BuildSpsString(id.Value.(string), IsParentOfPredict)
+				lteValue := BuildSpsString(id.Value.(string), IsParentOfPredict, RedisZsetMaxByte)
 
 				zrange := &r.ZRangeBy{Min: ZInclusive(gteValue), Max: ZInclusive(lteValue)}
 
@@ -145,7 +149,7 @@ func (a *TenancyAccessor) GetDescendants(ctx context.Context, tenantId string) (
 
 func (a *TenancyAccessor) GetRoot(ctx context.Context) (string, error) {
 	if !a.IsLoaded(ctx) {
-		return "", errors.New("tenancy is not loaded")
+		return "", errors.New(errTmplNotLoaded)
 	}
 
 	cmd := a.rc.Get(ctx, RootTenantKey)
