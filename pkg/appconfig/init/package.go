@@ -56,10 +56,6 @@ var ConfigModule = &bootstrap.Module{
 	},
 }
 
-func init() {
-
-}
-
 // Use Entrypoint of appconfig package
 func Use() {
 	bootstrap.Register(ConfigModule)

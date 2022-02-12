@@ -285,6 +285,7 @@ func (r *Registrar) register(i interface{}) (err error) {
 func (r *Registrar) registerUnknownType(i interface{}) (err error) {
 	v := reflect.ValueOf(i)
 	for ; v.Kind() == reflect.Ptr; v = v.Elem() {
+		// SuppressWarnings go:S108 empty block is intended
 	}
 
 	var valid bool

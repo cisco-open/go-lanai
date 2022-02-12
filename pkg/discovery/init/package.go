@@ -31,9 +31,8 @@ func init() {
 	bootstrap.Register(Module)
 }
 
-// Maker func, does nothing. Allow service to include this module in main()
 func Use() {
-
+	// does nothing. Allow service to include this module in main()
 }
 
 func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, conn *consul.Connection) discovery.Client {

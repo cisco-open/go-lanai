@@ -61,7 +61,7 @@ func init() {
 
 // Use does nothing. Allow service to include this module in main()
 func Use() {
-
+	// trigger side-effect
 }
 
 /**************************

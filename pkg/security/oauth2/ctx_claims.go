@@ -28,6 +28,7 @@ func (s StringSetClaim) MarshalJSON() ([]byte, error) {
 	case 1:
 		var v string
 		for v = range s {
+			// SuppressWarnings go:S108 empty block is intended to get any entry in the set
 		}
 		return json.Marshal(v)
 	default:

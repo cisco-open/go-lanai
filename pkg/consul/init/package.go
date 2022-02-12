@@ -2,8 +2,8 @@ package consul
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"go.uber.org/fx"
 )
@@ -24,9 +24,8 @@ func init() {
 	bootstrap.Register(Module)
 }
 
-// Maker func, does nothing. Allow service to include this module in main()
 func Use() {
-
+	// does nothing. Allow service to include this module in main()
 }
 
 func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *consul.ConnectionProperties {
