@@ -75,8 +75,8 @@ func (m *TenancyModifer) AddTenant(ctx context.Context, tenantId string, parentI
 	}
 
 	relations := []*r.Z{
-		&r.Z{0, tenancy.BuildSpsString(tenantId, tenancy.IsChildrenOfPredict, parentId)},
-		&r.Z{0, tenancy.BuildSpsString(parentId, tenancy.IsParentOfPredict, tenantId)}}
+		{Member: tenancy.BuildSpsString(tenantId, tenancy.IsChildrenOfPredict, parentId)},
+		{Member: tenancy.BuildSpsString(parentId, tenancy.IsParentOfPredict, tenantId)}}
 
 
 	cmd := m.rc.ZAdd(ctx, tenancy.ZsetKey, relations...)

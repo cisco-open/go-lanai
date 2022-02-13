@@ -13,7 +13,7 @@ const (
 )
 
 type Input struct {
-	Pattern string `form:match`
+	Pattern string `form:"match"`
 }
 
 type EnvDescriptor struct {
