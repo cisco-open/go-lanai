@@ -13,7 +13,7 @@ GEN_LIST = \
 	{{- end }}
 
 ### Main
-.PHONY: generate clean test $(GEN_LIST) \
+.PHONY: generate clean test lint report $(GEN_LIST) \
 		pre post dist verify publish redist pre-verify post-verify pre-dist post-dist \
 		update-dependency drop-replace git-tag-version git-push-tag git-merge-back git-verify-current-branch
 
@@ -45,12 +45,17 @@ generate: $(GEN_LIST)
 test:
 	$(GO) test -v -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/... | tee $(DESTDIR)/tests.out
 
-# test-report:
+# report:
 # 	Test and generate report. Intended to be used by verification.
-test-report: test
+report: test
 	$(GO) tool cover -html=$(DESTDIR)/coverage.out -o $(DESTDIR)/coverage.html
 	gocov convert $(DESTDIR)/coverage.out | gocov-xml > $(DESTDIR)/cobertura-coverage.xml
 	cat $(DESTDIR)/tests.out | go-junit-report > $(DESTDIR)/junit-report.xml
+
+# lint:
+# 	Invoke "go vet" and other linters
+lint:
+	$(GO) vet ./... 2>&1 | tee $(DESTDIR)/go-vet-report.out
 
 # clean:
 # 	Undo previous "build".  clean $(DESTDIR) and build cache
@@ -74,7 +79,7 @@ $(GEN_LIST):
 #	Example:
 # 		make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
 verify: SAVEPOINT_MARK = tmp/pre-verify
-verify: pre-verify clean test-report post-verify
+verify: pre-verify clean test lint report post-verify
 
 # dist:
 #	Make a distribution build with provided PRIVATE_MODS and VERSION,
