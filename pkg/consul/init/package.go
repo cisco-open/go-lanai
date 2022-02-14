@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
+	"github.com/pkg/errors"
 	"go.uber.org/fx"
 )
 
@@ -29,10 +30,10 @@ func Use() {
 }
 
 func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *consul.ConnectionProperties {
-	c := &consul.ConnectionProperties{
-		//TODO: defaults can be specified here
+	c := &consul.ConnectionProperties{}
+	if e := bootstrapConfig.Bind(c, consul.PropertyPrefix); e != nil {
+		panic(errors.Wrap(e, "failed to bind ConnectionProperties"))
 	}
-	bootstrapConfig.Bind(c, consul.PropertyPrefix)
 	return c
 }
 
@@ -51,5 +52,5 @@ func registerHealth(di regDI) {
 	if di.HealthRegistrar == nil {
 		return
 	}
-	di.HealthRegistrar.Register(consul.NewConsulHealthIndicator(di.ConsulConnection))
+	di.HealthRegistrar.MustRegister(consul.NewConsulHealthIndicator(di.ConsulConnection))
 }

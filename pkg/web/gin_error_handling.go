@@ -22,8 +22,7 @@ func NewGinErrorHandlingCustomizer() *GinErrorHandlingCustomizer {
 }
 
 func (c GinErrorHandlingCustomizer) Customize(ctx context.Context, r *Registrar) error {
-	r.AddGlobalMiddlewares(DefaultErrorHandling())
-	return nil
+	return r.AddGlobalMiddlewares(DefaultErrorHandling())
 }
 
 // DefaultErrorHandling implement error handling logics at last resort, in case errors are not properly handled downstream
@@ -86,5 +85,5 @@ func handleError(_ context.Context, err error, rw http.ResponseWriter) {
 		code = sc.StatusCode()
 	}
 	rw.WriteHeader(code)
-	rw.Write(body)
+	_, _ = rw.Write(body)
 }

@@ -32,7 +32,9 @@ func (c TracingWebCustomizer) Order() int {
 
 func (c *TracingWebCustomizer) Customize(ctx context.Context, r *web.Registrar) error {
 	// for gin
-	r.AddGlobalMiddlewares(GinTracing(c.tracer, tracing.OpNameHttp, excludeRequest))
+	if e := r.AddGlobalMiddlewares(GinTracing(c.tracer, tracing.OpNameHttp, excludeRequest)); e != nil {
+		return e
+	}
 
 	// for go-kit endpoints, because we are unable to finish the created span,
 	// so we rely on Gin middleware to create/finish span

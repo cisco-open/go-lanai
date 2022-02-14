@@ -92,7 +92,7 @@ func registerHealth(di regDI) {
 	if di.HealthRegistrar == nil || di.VaultClient == nil {
 		return
 	}
-	di.HealthRegistrar.Register(&vault.VaultHealthIndicator{
+	di.HealthRegistrar.MustRegister(&vault.VaultHealthIndicator{
 		Client: di.VaultClient,
 	})
 }

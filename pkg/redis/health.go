@@ -16,7 +16,7 @@ func registerHealth(di regDI) {
 	if di.HealthRegistrar == nil {
 		return
 	}
-	di.HealthRegistrar.Register(&RedisHealthIndicator{
+	di.HealthRegistrar.MustRegister(&RedisHealthIndicator{
 		client: di.RedisClient,
 	})
 }

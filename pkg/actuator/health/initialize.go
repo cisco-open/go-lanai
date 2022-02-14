@@ -10,6 +10,9 @@ type Registrar interface {
 	// 	- Indicator
 	// 	- StatusAggregator
 	Register(items ...interface{}) error
+
+	// MustRegister same as Register, but panic if there is error
+	MustRegister(items ...interface{})
 }
 
 // SystemHealthIndicator implements Indicator and Registrar
@@ -44,6 +47,12 @@ func (i *SystemHealthIndicator) Register(items ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+func (i *SystemHealthIndicator) MustRegister(items ...interface{}) {
+	if e := i.Register(items...); e != nil {
+		panic(e)
+	}
 }
 
 func (i *SystemHealthIndicator) register(v interface{}) error {

@@ -57,7 +57,7 @@ func registerEndpoints(registrar *web.Registrar, config *Configuration) {
 				EndpointFunc(opConf.OpenIDConfig).Build(),
 		)
 	}
-	_ = registrar.Register(mappings...)
+	registrar.MustRegister(mappings...)
 }
 
 func acceptJwtMatcher() web.RequestMatcher {

@@ -2,8 +2,8 @@ package cassandra
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"go.uber.org/fx"
 	"github.com/gocql/gocql"
+	"go.uber.org/fx"
 	"time"
 )
 
@@ -35,6 +35,6 @@ func NewSession(p CassandraProperties) *gocql.Session {
 
 func BindCassandraProperties(ctx *bootstrap.ApplicationContext) CassandraProperties {
 	p := NewCassandraProperties()
-	ctx.Config().Bind(p, CassandraPropertiesPrefix)
+	_ = ctx.Config().Bind(p, CassandraPropertiesPrefix) // Note, we don't panic if this bind is missing
 	return *p
 }

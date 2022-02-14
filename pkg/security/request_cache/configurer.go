@@ -51,7 +51,7 @@ func (sc *Configurer) Apply(_ security.Feature, ws security.WebSecurity) error {
 
 			if ws.Shared(security.WSSharedKeyRequestPreProcessors) == nil {
 				ps := map[web.RequestPreProcessorName]web.RequestPreProcessor{p.Name():p}
-				ws.AddShared(security.WSSharedKeyRequestPreProcessors, ps)
+				_ = ws.AddShared(security.WSSharedKeyRequestPreProcessors, ps)
 			} else if ps, ok := ws.Shared(security.WSSharedKeyRequestPreProcessors).(map[web.RequestPreProcessorName]web.RequestPreProcessor); ok {
 				if _, exists := ps[p.name]; !exists {
 					ps[p.Name()] = p

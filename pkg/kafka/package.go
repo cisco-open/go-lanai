@@ -48,7 +48,7 @@ func initialize(di initDI) {
 		return
 	}
 
-	_ = di.HealthRegistrar.Register(&HealthIndicator{
+	di.HealthRegistrar.MustRegister(&HealthIndicator{
 		binder: di.Binder.(SaramaBinder),
 	})
 }
