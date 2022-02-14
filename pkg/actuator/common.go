@@ -153,8 +153,9 @@ func isSupportedOutputType(t reflect.Type) bool {
 		fallthrough
 	case reflect.Map:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func invalidOpFuncSignatureError(f interface{}) error {

@@ -81,6 +81,7 @@ func setCopyistModeFlag(mode mode) {
 		mustSetFlag(flagCopyistRecordMode, "false")
 	case modeRecord:
 		mustSetFlag(flagCopyistRecordMode, "true")
+	default:
 	}
 }
 

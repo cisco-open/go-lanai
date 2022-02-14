@@ -287,8 +287,9 @@ func validateBinding(ctx context.Context, obj interface{}) error {
 	switch v.Kind() {
 	case reflect.Struct:
 		return bindingValidator.StructCtx(ctx, obj)
+	default:
+		return nil
 	}
-	return nil
 }
 
 // returned ptr is the pointer regardless if given type is Ptr or other type

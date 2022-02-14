@@ -86,6 +86,7 @@ func makeJsonDecodeResponseFunc(opt *responseOption) httptransport.DecodeRespons
 			switch ev.Kind() {
 			case reflect.Map, reflect.Slice, reflect.Interface:
 				body = ev.Interface()
+			default:
 			}
 		}
 

@@ -342,6 +342,7 @@ func (d saramaDispatcher) isSupportedMessagePayloadType(t reflect.Type) bool {
 		return d.isSupportedMessagePayloadType(t.Elem())
 	case reflect.Interface, reflect.Func, reflect.Chan:
 		return false
+	default:
+		return true
 	}
-	return true
 }

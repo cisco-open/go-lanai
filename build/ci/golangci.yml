@@ -3,6 +3,7 @@ run:
   tests: false
   skip-dirs:
     - cmd
+    - pkg/security/example
   modules-download-mode: readonly
 
 output:
@@ -52,5 +53,6 @@ severity:
   rules:
     - linters:
         - errorlint
+        - exhaustive
         - unused
       severity: info
