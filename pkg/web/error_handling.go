@@ -95,6 +95,7 @@ func newMappedErrorTranslator(m ErrorTranslateMapping) *mappedErrorTranslator {
 type defaultErrorTranslator struct{}
 
 func (i defaultErrorTranslator) Translate(_ context.Context, err error) error {
+	//nolint:errorlint
 	switch err.(type) {
 	case validator.ValidationErrors:
 		return ValidationErrors{err.(validator.ValidationErrors)}
@@ -118,6 +119,7 @@ func JsonErrorEncoder() httptransport.ErrorEncoder {
 }
 
 func jsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
+	//nolint:errorlint
 	if _, ok := err.(json.Marshaler); !ok {
 		err = NewHttpError(0, err)
 	}

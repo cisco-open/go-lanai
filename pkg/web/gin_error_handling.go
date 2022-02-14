@@ -12,6 +12,7 @@ import (
 /**************************
 	Support GenHandling
  **************************/
+
 // GinErrorHandlingCustomizer implements Customizer
 type GinErrorHandlingCustomizer struct {
 
@@ -38,6 +39,7 @@ func DefaultErrorHandling() gin.HandlerFunc {
 		// if not found, use the first one
 		err := gc.Errors[0].Err
 		for _, e := range gc.Errors {
+			//nolint:errorlint
 			if _,ok := e.Err.(StatusCoder); !ok {
 				err = e.Err
 				break
@@ -47,6 +49,7 @@ func DefaultErrorHandling() gin.HandlerFunc {
 	}
 }
 
+//nolint:errorlint
 func handleError(_ context.Context, err error, rw http.ResponseWriter) {
 	// body
 	contentType, body := "text/plain; charset=utf-8", []byte{}

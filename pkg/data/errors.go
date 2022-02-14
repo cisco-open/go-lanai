@@ -188,6 +188,7 @@ func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
 
 func (e dataError) Unwrap() error {
 	cause := e.Cause()
+	//nolint:errorlint
 	switch cause.(type) {
 	case NestedError:
 		return e.RootCause()
@@ -226,6 +227,7 @@ func NewDataError(code int64, e interface{}, causes ...interface{}) DataError {
 }
 
 func NewErrorWithStatusCode(err error, sc int) DataError {
+	//nolint:errorlint // we don't consider wrapped error here.
 	switch e := err.(type) {
 	case dataError:
 		return &webDataError{dataError: e, SC: sc}

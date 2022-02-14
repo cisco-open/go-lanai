@@ -151,6 +151,7 @@ func (c *client) retryCallback(max int) lb.Callback {
 	}
 }
 
+//nolint:errorlint
 func (c *client) translateError(req *Request, err error) *Error {
 	switch retry := err.(type) {
 	case lb.RetryError:
