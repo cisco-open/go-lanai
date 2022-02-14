@@ -43,6 +43,9 @@ test: generate
 # 	Invoke "go vet" and other linters
 lint:
 	$(GO) vet ./... 2>&1 | tee $(DESTDIR)/go-vet-report.out
+	golangci-lint -c build/ci/golangci.yml \
+    	  --out-format colored-line-number,checkstyle:$(DESTDIR)/golangci-lint-report.xml \
+    	  --issues-exit-code 0 run ./...
 
 # build:
 # 	Generate executable binary and copy resources to $(DESTDIR)

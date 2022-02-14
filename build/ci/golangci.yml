@@ -1,0 +1,61 @@
+# Ref: https://golangci-lint.run/usage/configuration/
+run:
+  tests: false
+  skip-dirs:
+    - cmd
+  modules-download-mode: readonly
+
+output:
+  sort-results: true
+
+# https://golangci-lint.run/usage/linters/
+linters:
+#  enable-all: true
+#  disable-all: true
+  presets:
+    - bugs
+#  enable:
+#    - asciicheck
+#    - ...
+#  disable:
+#    - maligned # deprecated
+
+linters-settings:
+  # https://golangci-lint.run/usage/linters/#exhaustive:
+  exhaustive:
+    default-signifies-exhaustive: true
+    package-scope-only: true
+
+#issues:
+#  # Excluding configuration per-path, per-linter, per-text and per-source
+#  exclude-rules:
+#    # Exclude some linters from running on tests files.
+#    - path: _test\.go
+#      linters:
+#        - errcheck
+#        - dupl
+#    # Exclude some `staticcheck` messages.
+#    - linters:
+#        - staticcheck
+#      text: "SA9003:"
+#    # Exclude `lll` issues for long lines with `go:generate`.
+#    - linters:
+#        - lll
+#      source: "^//go:generate "
+
+severity:
+  # Set the default severity for issues.
+  #
+  # If severity rules are defined and the issues do not match or no severity is provided to the rule
+  # this will be the default severity applied.
+  # Severities should match the supported severity names of the selected out format.
+  # - Code climate: https://docs.codeclimate.com/docs/issues#issue-severity
+  # - Checkstyle: https://checkstyle.sourceforge.io/property_types.html#severity
+  # - GitHub: https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
+  #
+  # Default value is an empty string.
+  default-severity: warning
+#  rules:
+#    - linters:
+#        - ...
+#      severity: info
