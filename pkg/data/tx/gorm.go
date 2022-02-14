@@ -76,7 +76,7 @@ func (m gormTxManager) Transaction(ctx context.Context, tx TxFunc, opts ...*sql.
 			txContext: txContext{Context: ctx},
 			db:        txDb,
 		}
-		return tx(c)
+		return tx(c) //nolint:contextcheck // this is equivalent to context.WithXXX
 	}, opts...)
 }
 

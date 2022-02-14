@@ -477,6 +477,7 @@ func (r *Registrar) installStaticMapping(ctx context.Context, m StaticMapping) e
 	return err
 }
 
+//nolint:contextcheck // context is only for logging purpose
 func (r *Registrar) installRoutedMappings(ctx context.Context, method, group string, mappings []RoutedMapping) error {
 	if len(mappings) == 0 {
 		return nil
@@ -536,6 +537,7 @@ func (r *Registrar) installRoutedMappings(ctx context.Context, method, group str
 	return err
 }
 
+//nolint:contextcheck // context is only for logging purpose
 func (r *Registrar) findMiddlewares(ctx context.Context, group, relativePath string, methods ...string) (gin.HandlersChain, error) {
 	var handlers = make([]gin.HandlerFunc, len(r.middlewares))
 	var matchedMW = make([]MiddlewareMapping, len(r.middlewares))
@@ -626,6 +628,7 @@ func (r *Registrar) loadHtmlTemplates(ctx context.Context) {
 /**************************
 	Helpers
 ***************************/
+
 func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, errTranslators []ErrorTranslator, options []httptransport.ServerOption) gin.HandlerFunc {
 	// create error encoder
 	errenc := m.ErrorEncoder()
@@ -644,7 +647,7 @@ func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, errTranslators [
 		options...,
 	)
 
-	return r.makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition())
+	return r.makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition()) //nolint:contextcheck
 }
 
 // makeGinConditionalHandlerFunc wraps given handler with a request matcher

@@ -135,6 +135,7 @@ func (m *ConsulSyncManager) waitForSession(ctx context.Context) (string, error) 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
+	//nolint:contextcheck // startLoop starts background goroutine, it needs ApplicationContext to ensure the loop is not cancelled by given ctx
 	if e := m.startLoop(); e != nil {
 		return "", e
 	}

@@ -17,14 +17,18 @@ linters:
 #  enable:
 #    - asciicheck
 #    - ...
-#  disable:
-#    - maligned # deprecated
+  disable:
+    - maligned # deprecated
+    - scopelint # deprecated
 
 linters-settings:
   # https://golangci-lint.run/usage/linters/#exhaustive:
   exhaustive:
     default-signifies-exhaustive: true
-    package-scope-only: true
+  # https://golangci-lint.run/usage/linters/#errorlint
+  errorlint:
+    # error constants is still very common in many libraries. So we allow plain error switching for now
+    comparison: true
 
 #issues:
 #  # Excluding configuration per-path, per-linter, per-text and per-source

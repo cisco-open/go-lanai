@@ -47,7 +47,7 @@ func (c *ClientAuthConfigurer) Apply(feature security.Feature, ws security.WebSe
 		AdditionalErrorHandler(f.errorHandler)
 
 	// add middleware to translate authentication error to oauth2 error
-	mw := NewClientAuthMiddleware(func(opt *ClientAuthMWOption) {
+	mw := NewClientAuthMiddleware(func(opt *MWOption) {
 		opt.Authenticator = ws.Authenticator()
 		opt.SuccessHandler = ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler)
 	})

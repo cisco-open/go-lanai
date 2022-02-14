@@ -64,8 +64,8 @@ func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
 	}
 
 	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			logger.WithContext(ac).Info("On Application Start")
+		OnStart: func(_ context.Context) error {
+			logger.WithContext(ac).Info("On Application Start") //nolint:contextcheck
 			return nil
 		},
 	})

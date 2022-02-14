@@ -127,6 +127,7 @@ func (p *OpenIDAuthorizeRequestProcessor) decodeRequestObject(ctx context.Contex
 		}
 	}
 
+	//nolint:contextcheck
 	decoded, e := claimsToAuthRequest(request.Context(), claims)
 	if e != nil {
 		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("invalid request object: %v", e))

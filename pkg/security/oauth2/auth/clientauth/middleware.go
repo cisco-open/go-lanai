@@ -11,33 +11,33 @@ import (
 	"net/http"
 )
 
-type ClientAuthMiddleware struct {
+type Middleware struct {
 	authenticator  security.Authenticator
 	successHandler security.AuthenticationSuccessHandler
 }
 
-type ClientAuthMWOptions func(*ClientAuthMWOption)
+type MWOptions func(*MWOption)
 
-type ClientAuthMWOption struct {
+type MWOption struct {
 	Authenticator  security.Authenticator
 	SuccessHandler security.AuthenticationSuccessHandler
 }
 
-func NewClientAuthMiddleware(opts...ClientAuthMWOptions) *ClientAuthMiddleware {
-	opt := ClientAuthMWOption{}
+func NewClientAuthMiddleware(opts...MWOptions) *Middleware {
+	opt := MWOption{}
 
 	for _, optFunc := range opts {
 		if optFunc != nil {
 			optFunc(&opt)
 		}
 	}
-	return &ClientAuthMiddleware{
+	return &Middleware{
 		authenticator:  opt.Authenticator,
 		successHandler: opt.SuccessHandler,
 	}
 }
 
-func (mw *ClientAuthMiddleware) ClientAuthFormHandlerFunc() web.HandlerFunc {
+func (mw *Middleware) ClientAuthFormHandlerFunc() web.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		if e := r.ParseForm(); e != nil {
 			return
@@ -78,7 +78,7 @@ func (mw *ClientAuthMiddleware) ClientAuthFormHandlerFunc() web.HandlerFunc {
 	}
 }
 
-func (mw *ClientAuthMiddleware) ErrorTranslationHandlerFunc() gin.HandlerFunc {
+func (mw *Middleware) ErrorTranslationHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 		// find first authentication error and translate it
@@ -91,7 +91,7 @@ func (mw *ClientAuthMiddleware) ErrorTranslationHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-func (mw *ClientAuthMiddleware) handleSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, before, new security.Authentication) {
+func (mw *Middleware) handleSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, before, new security.Authentication) {
 	gc := web.GinContext(c)
 	if new != nil {
 		gc.Set(gin.AuthUserKey, new.Principal())
@@ -101,7 +101,8 @@ func (mw *ClientAuthMiddleware) handleSuccess(c context.Context, r *http.Request
 	gc.Next()
 }
 
-func (mw *ClientAuthMiddleware) handleError(c context.Context, err error) {
+//nolint:contextcheck
+func (mw *Middleware) handleError(c context.Context, err error) {
 	gc := web.GinContext(c)
 	security.Clear(gc)
 	_ = gc.Error(err)

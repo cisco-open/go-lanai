@@ -55,7 +55,7 @@ func (c *CompositeIndicator) Health(ctx context.Context, options Options) Health
 		}
 		statuses = append(statuses, h.Status())
 	}
-	status := c.aggregator.Aggregate(nil, statuses...)
+	status := c.aggregator.Aggregate(ctx, statuses...)
 	return NewCompositeHealth(status, "", components)
 }
 

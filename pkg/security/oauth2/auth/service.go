@@ -223,7 +223,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	}
 
 	// create context details
-	return s.detailsFactory.New(mutableCtx, request)
+	return s.detailsFactory.New(mutableCtx, request) //nolint:contextcheck // this is expected usage of MutableCtx
 }
 
 func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, _ oauth2.OAuth2Request, userAuth oauth2.UserAuthentication) (oauth2.UserAuthentication, error) {

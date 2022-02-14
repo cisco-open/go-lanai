@@ -66,6 +66,7 @@ func (t *transit) PrepareKey(ctx context.Context, kid string) error {
 		AllowPlaintextBackup: t.allowPlaintextBk,
 	}
 
+	//nolint:contextcheck
 	if _, e := t.c.Logical(ctx).Post(path, &req); e != nil {
 		return e
 	}
@@ -79,6 +80,7 @@ func (t *transit) Encrypt(ctx context.Context, kid string, plaintext []byte) ([]
 		PlaintextB64: b64,
 	}
 
+	//nolint:contextcheck
 	s, e := t.c.Logical(ctx).Post(path, &req)
 	if e != nil {
 		return nil, e
@@ -94,6 +96,7 @@ func (t *transit) Decrypt(ctx context.Context, kid string, cipher []byte) ([]byt
 		Ciphertext: string(cipher),
 	}
 
+	//nolint:contextcheck
 	s, e := t.c.Logical(ctx).Post(path, &req)
 	if e != nil {
 		return nil, e
@@ -107,6 +110,7 @@ func (t *transit) Decrypt(ctx context.Context, kid string, cipher []byte) ([]byt
 }
 
 func (t *transit) post(ctx context.Context, path string, reqData interface{}) (ret *api.Secret, err error) {
+	//nolint:contextcheck
 	ret, err = t.c.Logical(ctx).Post(path, reqData)
 	switch {
 	case err != nil:

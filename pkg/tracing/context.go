@@ -34,6 +34,7 @@ type SpanOption func(opentracing.Span)
 
 type SpanRewinder func() context.Context
 
+//nolint:contextcheck
 func SpanFromContext(ctx context.Context) (span opentracing.Span) {
 	span = opentracing.SpanFromContext(ctx)
 	if span != nil {
