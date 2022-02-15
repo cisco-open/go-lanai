@@ -50,6 +50,7 @@ func LoadPrivateKey(file string, keyPassword string) (*rsa.PrivateKey, error){
 	}
 	keyBlock, _ := pem.Decode(keyBytes)
 	if keyPassword != "" {
+		//nolint:staticcheck // TODO find alternative
 		unEncryptedKey, err := x509.DecryptPEMBlock(keyBlock, []byte(keyPassword))
 		if err != nil {
 			return nil, err
@@ -125,6 +126,7 @@ func LoadMultiBlockPem(path string, password string) ([]interface{}, error) {
 func parsePrivateKey(block *pem.Block, password string) (interface{}, error) {
 	data := block.Bytes
 	if password != "" {
+		//nolint:staticcheck // TODO find alternative
 		decrypted, e := x509.DecryptPEMBlock(block, []byte(password));
 		if e != nil {
 			return nil, e

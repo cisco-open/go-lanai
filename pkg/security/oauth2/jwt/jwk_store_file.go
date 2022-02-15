@@ -187,7 +187,7 @@ func calculateKid(props CryptoKeyProperties, name string, blockIndex int, key *r
 	// best effort to create a unique suffix for the kid
 	hash := sha256.New224()
 	_, _ = hash.Write(key.N.Bytes())
-	_ = binary.Write(hash, binary.LittleEndian, key.E)
+	_ = binary.Write(hash, binary.LittleEndian, int64(key.E))
 	sum := hash.Sum(nil)
 	suffix := hex.EncodeToString(sum)
 

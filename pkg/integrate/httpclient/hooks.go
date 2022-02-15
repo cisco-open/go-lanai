@@ -21,7 +21,6 @@ const (
 
 const (
 	logKey = "remote-http"
-	ctxKeyStartTime = "start"
 )
 
 const (
@@ -29,6 +28,8 @@ const (
 	mb = kb * kb
 	gb = mb * kb
 )
+
+var ctxKeyStartTime = struct{}{}
 
 // beforeHook implements BeforeHook, order.Ordered
 type beforeHook struct {

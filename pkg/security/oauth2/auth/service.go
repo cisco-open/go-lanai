@@ -127,7 +127,7 @@ func (s *DefaultAuthorizationService) SwitchAuthentication(ctx context.Context,
 	// create the result
 	oauth = oauth2.NewAuthentication(func(conf *oauth2.AuthOption) {
 		conf.Request = request
-		conf.UserAuth = user
+		conf.UserAuth = userAuth
 		conf.Details = details
 	})
 	return

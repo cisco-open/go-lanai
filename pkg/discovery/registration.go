@@ -65,10 +65,12 @@ func NewRegistration(di regDI) *api.AgentServiceRegistration {
 }
 
 func createTags(discoveryProperties DiscoveryProperties, serverProperties web.ServerProperties) []string {
-	tags := make([]string, len(discoveryProperties.Tags))
+	tags := make([]string, len(discoveryProperties.Tags), len(discoveryProperties.Tags)+2)
 	copy(tags, discoveryProperties.Tags)
-	tags = append(tags, fmt.Sprintf("secure=%t", discoveryProperties.Scheme == "https"),
-		fmt.Sprintf("contextPath=%s", serverProperties.ContextPath))
+	tags = append(tags,
+		fmt.Sprintf("secure=%t", discoveryProperties.Scheme == "https"),
+		fmt.Sprintf("contextPath=%s", serverProperties.ContextPath),
+	)
 	return tags
 }
 

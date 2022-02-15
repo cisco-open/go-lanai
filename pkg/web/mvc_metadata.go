@@ -186,14 +186,7 @@ func isHttpRequestPtr(t reflect.Type) bool {
 }
 
 func isSupportedRequestType(t reflect.Type) bool {
-	if isStructOrPtrToStruct(t) {
-		return true
-	}
-	switch t.Kind() {
-	// placeholder for more types
-	default:
-		return false
-	}
+	return isStructOrPtrToStruct(t)
 }
 
 func isSupportedResponseType(t reflect.Type) bool {

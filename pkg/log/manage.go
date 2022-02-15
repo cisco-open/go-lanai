@@ -28,7 +28,7 @@ func Levels(prefix string) (ret map[string]*LevelConfig) {
 		if !strings.HasPrefix(k, prefixKey) {
 			continue
 		}
-		p := v.name
+		var p string
 		for i := len(v.name); i > 0; i = strings.LastIndex(p, keySeparator) {
 			p = v.name[0:i]
 			ret[loggerKey(p)] = &LevelConfig{Name: p}

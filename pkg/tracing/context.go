@@ -26,9 +26,11 @@ const (
 	//OpName = ""
 )
 
-const (
-	spanFinisherKey = "SF"
+type spanKey string
+var (
+	spanFinisherKey spanKey = "SF"
 )
+
 
 type SpanOption func(opentracing.Span)
 

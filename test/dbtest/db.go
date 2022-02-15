@@ -14,14 +14,13 @@ import (
 	"testing"
 )
 
-
-
 const (
-	ctxKeyCopyistCloser   = "copyist-closer"
 	flagCopyistRecordMode = "record"
 )
 
+type copyistCK struct{}
 var (
+	ctxKeyCopyistCloser   = copyistCK{}
 	regOnce = sync.Once{}
 )
 

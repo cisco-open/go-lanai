@@ -34,6 +34,8 @@ linters-settings:
     # So we allow plain error switching for now.
     # TODO we should revise this setting when patterns are more consistent within golang communities
     comparison: false
+  staticcheck:
+    go: "1.16"
 
 severity:
   # - Code climate: https://docs.codeclimate.com/docs/issues#issue-severity
@@ -43,7 +45,8 @@ severity:
   rules:
     - linters:
         - contextcheck
-        -
+        - noctx
+        - staticcheck
       severity: warning
     - linters:
         - errorlint
