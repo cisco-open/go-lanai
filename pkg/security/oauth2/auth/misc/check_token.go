@@ -70,6 +70,7 @@ func (ep *CheckTokenEndpoint) allowDetails(_ context.Context, client oauth2.OAut
 func (ep *CheckTokenEndpoint) checkAccessTokenWithoutDetails(c context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
 	token, e := ep.tokenStoreReader.ReadAccessToken(c, request.Token)
 	if e != nil || token == nil || token.Expired() {
+		//nolint:nilerr // we hide error in response and returns compliant response
 		return ep.inactiveTokenResponse(), nil
 	}
 	return ep.activeTokenResponseWithoutDetails(), nil
@@ -82,6 +83,7 @@ func (ep *CheckTokenEndpoint) checkAccessTokenWithDetails(c context.Context, req
 	}
 	oauth, e := ep.authenticator.Authenticate(c, &candidate)
 	if e != nil || oauth.State() < security.StateAuthenticated {
+		//nolint:nilerr // we hide error in response and returns compliant response
 		return ep.inactiveTokenResponse(), nil
 	}
 

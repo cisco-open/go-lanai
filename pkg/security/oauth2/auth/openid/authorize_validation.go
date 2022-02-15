@@ -235,7 +235,7 @@ func (p *OpenIDAuthorizeRequestProcessor) processMaxAge(ctx context.Context, req
 
 	maxAge, e := time.ParseDuration(fmt.Sprintf("%ss", maxAgeStr))
 	if e != nil {
-		return nil
+		return nil //nolint:nilerr // per OpenID specs, "authroize" endpoint should simply ignore invalid request params
 	}
 
 	current := security.Get(ctx)
