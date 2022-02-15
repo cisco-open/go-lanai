@@ -13,7 +13,6 @@ import (
 	"go.uber.org/fx"
 	"html/template"
 	"io/fs"
-	"math/rand"
 	"net"
 	"net/http"
 	pathutils "path"
@@ -169,7 +168,7 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 	// random port if not set
 	r.port = r.properties.Port
 	if r.port <= 0 {
-		r.port = 32768 + rand.New(rand.NewSource(time.Now().UnixNano())).Intn(32767)
+		r.port = 32768 + utils.RandomIntN(32767)
 	}
 
 	var addr = fmt.Sprintf(":%v", r.port)

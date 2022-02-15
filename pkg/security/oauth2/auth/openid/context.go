@@ -45,6 +45,7 @@ var (
 
 // See https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
 //goland:noinspection GoUnusedConst
+//nolint:gosec
 const (
 	OPMetadataIssuer                = "issuer"
 	OPMetadataAuthEndpoint          = "authorization_endpoint"

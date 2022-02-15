@@ -35,8 +35,26 @@ linters-settings:
     # TODO we should revise this setting when patterns are more consistent within golang communities
     comparison: false
 
-#issues:
-#  exclude-rules:
+severity:
+  # - Code climate: https://docs.codeclimate.com/docs/issues#issue-severity
+  # - Checkstyle: https://checkstyle.sourceforge.io/property_types.html#severity
+  # - GitHub: https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
+  default-severity: error
+  rules:
+    - linters:
+        - contextcheck
+        -
+      severity: warning
+    - linters:
+        - errorlint
+        - exhaustive
+        - unused
+      severity: info
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
 #    - linters:
 #        - errcheck
 #        - dupl
@@ -44,15 +62,3 @@ linters-settings:
 #      text: "SA9003:"
 #      source: "^//go:generate "
 
-
-severity:
-  # - Code climate: https://docs.codeclimate.com/docs/issues#issue-severity
-  # - Checkstyle: https://checkstyle.sourceforge.io/property_types.html#severity
-  # - GitHub: https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
-  default-severity: warning
-  rules:
-    - linters:
-        - errorlint
-        - exhaustive
-        - unused
-      severity: info

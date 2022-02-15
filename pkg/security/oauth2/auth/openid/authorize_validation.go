@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -309,8 +310,12 @@ func getHttpRequest(ctx context.Context) *http.Request {
 	return nil
 }
 
-func httpGet(url string) ([]byte, error) {
-	resp, e := http.Get(url)
+func httpGet(urlStr string) ([]byte, error) {
+	parsed, e := url.Parse(urlStr)
+	if e != nil {
+		return nil, e
+	}
+	resp, e := http.Get(parsed.String())
 	if e != nil {
 		return nil, e
 	}

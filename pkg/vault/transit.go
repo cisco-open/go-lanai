@@ -80,8 +80,7 @@ func (t *transit) Encrypt(ctx context.Context, kid string, plaintext []byte) ([]
 		PlaintextB64: b64,
 	}
 
-	//nolint:contextcheck
-	s, e := t.c.Logical(ctx).Post(path, &req)
+	s, e := t.c.Logical(ctx).Post(path, &req) //nolint:contextcheck
 	if e != nil {
 		return nil, e
 	}
@@ -96,8 +95,7 @@ func (t *transit) Decrypt(ctx context.Context, kid string, cipher []byte) ([]byt
 		Ciphertext: string(cipher),
 	}
 
-	//nolint:contextcheck
-	s, e := t.c.Logical(ctx).Post(path, &req)
+	s, e := t.c.Logical(ctx).Post(path, &req) //nolint:contextcheck
 	if e != nil {
 		return nil, e
 	}
@@ -110,8 +108,7 @@ func (t *transit) Decrypt(ctx context.Context, kid string, cipher []byte) ([]byt
 }
 
 func (t *transit) post(ctx context.Context, path string, reqData interface{}) (ret *api.Secret, err error) {
-	//nolint:contextcheck
-	ret, err = t.c.Logical(ctx).Post(path, reqData)
+	ret, err = t.c.Logical(ctx).Post(path, reqData) //nolint:contextcheck
 	switch {
 	case err != nil:
 		return

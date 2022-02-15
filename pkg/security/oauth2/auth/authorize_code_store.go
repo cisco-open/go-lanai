@@ -2,13 +2,12 @@ package auth
 
 import (
 	"context"
-	"crypto/rand"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
 	"fmt"
-	mathrand "math/rand"
 	"time"
 )
 
@@ -18,7 +17,6 @@ const (
 )
 
 var (
-	authCodeRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	authCodeValidity = 5 * time.Minute
 )
 
@@ -34,6 +32,8 @@ type AuthorizationCodeStore interface {
 /**********************
 	Redis Impl
  **********************/
+
+// RedisAuthorizationCodeStore store authorization code in Redis
 type RedisAuthorizationCodeStore struct {
 	redisClient redis.Client
 }
@@ -60,7 +60,7 @@ func (s *RedisAuthorizationCodeStore) GenerateAuthorizationCode(ctx context.Cont
 		conf.Request = request
 		conf.UserAuth = userAuth
 	})
-	code := randomString(defaultAuthCodeLength)
+	code := utils.RandomStringWithCharset(defaultAuthCodeLength, utils.CharsetAlphabetic)
 
 	if e := s.save(ctx, code, toSave); e != nil {
 		return "", oauth2.NewInternalError(e)
@@ -113,18 +113,3 @@ func (s *RedisAuthorizationCodeStore) authCodeRedisKey(code string) string {
 	return fmt.Sprintf("%s:%s", authCodePrefix, code)
 }
 
-func randomString(length int) string {
-	b := make([]byte, length)
-	_, e := rand.Read(b)
-	if e != nil {
-		mathrand.Seed(time.Now().UnixNano())
-		mathrand.Read(b) // we ignore errors
-	}
-
-	m := len(authCodeRunes)
-	runes := make([]rune, length)
-	for i, _ := range runes {
-		runes[i] = authCodeRunes[int(b[i]) % m]
-	}
-	return string(runes)
-}
