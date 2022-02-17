@@ -12,6 +12,10 @@ import (
 	"sync"
 )
 
+const (
+	goCmdModEdit = `go mod edit`
+)
+
 var (
 	targetTmpGoModFile string
 	targetModule       *GoModule
@@ -177,7 +181,7 @@ func DropReplace(ctx context.Context, module string, version string, opts ...GoC
 }
 
 func DropRequire(ctx context.Context, module string, opts ...GoCmdOptions) error {
-	cmd := "go mod edit"
+	cmd := goCmdModEdit
 	for _, f := range opts {
 		f(&cmd)
 	}
@@ -264,7 +268,7 @@ func GoCommandDecodeJson(ctx context.Context, model interface{}, opts ...ShCmdOp
 	opts = append(opts, ShellStdOut(pw))
 	ech := make(chan error, 1)
 	go func() {
-		defer pw.Close()
+		defer func() { _ = pw.Close() }()
 		defer close(ech)
 		_, e := RunShellCommands(ctx, opts...)
 		if e != nil {
@@ -304,7 +308,7 @@ func withVersionQuery(module string, version string) string {
 }
 
 func dropReplaceCmd(module string, version string, opts []GoCmdOptions) ShCmdOptions {
-	cmd := "go mod edit"
+	cmd := goCmdModEdit
 	for _, f := range opts {
 		f(&cmd)
 	}
@@ -314,7 +318,7 @@ func dropReplaceCmd(module string, version string, opts []GoCmdOptions) ShCmdOpt
 }
 
 func setReplaceCmd(replace *Replace, opts []GoCmdOptions) ShCmdOptions {
-	cmd := "go mod edit"
+	cmd := goCmdModEdit
 	for _, f := range opts {
 		f(&cmd)
 	}

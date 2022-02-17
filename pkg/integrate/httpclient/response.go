@@ -86,6 +86,7 @@ func makeJsonDecodeResponseFunc(opt *responseOption) httptransport.DecodeRespons
 			switch ev.Kind() {
 			case reflect.Map, reflect.Slice, reflect.Interface:
 				body = ev.Interface()
+			default:
 			}
 		}
 
@@ -101,6 +102,7 @@ func makeJsonDecodeResponseFunc(opt *responseOption) httptransport.DecodeRespons
 func handleStatusCodeError(resp *http.Response, errBody interface{}) error {
 	raw, e := decodeJsonBody(resp, errBody)
 	if e != nil {
+		//nolint:errorlint
 		if httpE, ok := e.(*Error); ok {
 			return httpE.WithMessage("unable to parse error response: %v", e)
 		} else {

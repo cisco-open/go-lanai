@@ -11,7 +11,7 @@ import (
 	"reflect"
 )
 
-const(
+const (
 	// e.g. *Model
 	typeModelPtr typeKey = iota
 	// e.g. Model
@@ -26,6 +26,11 @@ const(
 	typeModelPtrSlice
 	// map[string]interface{}
 	typeGenericMap
+)
+
+const (
+	errTmplInvalidCrudValue = `%T is not a valid value for %s, requires %s`
+	errTmplInvalidCrudModel = "%T is not a valid model for %s, requires %s"
 )
 
 type typeKey int
@@ -68,7 +73,7 @@ func newGormCrud(api GormApi, model interface{}) (*GormCrud, error) {
 func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}, options ...Option) error {
 	if !g.isSupportedValue(dest, singleModelRead) {
 		return ErrorInvalidCrudParam.
-			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindById", "*Struct")
+			WithMessage(errTmplInvalidCrudValue, dest, "FindById", "*Struct")
 	}
 
 	// TODO verify this using index key
@@ -91,7 +96,7 @@ func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}
 func (g GormCrud) FindAll(ctx context.Context, dest interface{}, options ...Option) error {
 	if !g.isSupportedValue(dest, multiModelRead) {
 		return ErrorInvalidCrudParam.
-			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindAll", "*[]Struct or *[]*Struct")
+			WithMessage(errTmplInvalidCrudValue, dest, "FindAll", "*[]Struct or *[]*Struct")
 	}
 
 	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
@@ -102,7 +107,7 @@ func (g GormCrud) FindAll(ctx context.Context, dest interface{}, options ...Opti
 func (g GormCrud) FindOneBy(ctx context.Context, dest interface{}, condition Condition, options...Option) error {
 	if !g.isSupportedValue(dest, singleModelRead) {
 		return ErrorInvalidCrudParam.
-			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindOneBy", "*Struct")
+			WithMessage(errTmplInvalidCrudValue, dest, "FindOneBy", "*Struct")
 	}
 
 	return execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
@@ -113,7 +118,7 @@ func (g GormCrud) FindOneBy(ctx context.Context, dest interface{}, condition Con
 func (g GormCrud) FindAllBy(ctx context.Context, dest interface{}, condition Condition, options ...Option) error {
 	if !g.isSupportedValue(dest, multiModelRead) {
 		return ErrorInvalidCrudParam.
-			WithMessage("%T is not a valid value for %s, requires %s", dest, "FindAllBy", "*[]Struct or *[]*Struct")
+			WithMessage(errTmplInvalidCrudValue, dest, "FindAllBy", "*[]Struct or *[]*Struct")
 	}
 
 	return execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
@@ -145,8 +150,7 @@ func (g GormCrud) CountBy(ctx context.Context, condition Condition, options...Op
 
 func (g GormCrud) Save(ctx context.Context, v interface{}, options...Option) error {
 	if !g.isSupportedValue(v, genericModelWrite) {
-		return ErrorInvalidCrudParam.
-			WithMessage("%T is not a valid value for %s, requires %s", v, "Save", "*Struct, []*Struct or []Struct")
+		return ErrorInvalidCrudParam.WithMessage(errTmplInvalidCrudValue, v, "Save", "*Struct or []*Struct or []Struct")
 	}
 
 	return execute(ctx, g.GormApi.DB(ctx), nil, options, nil, func(db *gorm.DB) *gorm.DB {
@@ -156,8 +160,7 @@ func (g GormCrud) Save(ctx context.Context, v interface{}, options...Option) err
 
 func (g GormCrud) Create(ctx context.Context, v interface{}, options...Option) error {
 	if !g.isSupportedValue(v, genericModelWrite) {
-		return ErrorInvalidCrudParam.
-			WithMessage("%T is not a valid value for %s, requires %s", v, "Create", "*Struct, []*Struct or []Struct")
+		return ErrorInvalidCrudParam.WithMessage(errTmplInvalidCrudValue, v, "Create", "*Struct, []*Struct or []Struct")
 	}
 
 	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
@@ -168,7 +171,7 @@ func (g GormCrud) Create(ctx context.Context, v interface{}, options...Option) e
 func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, options...Option) error {
 	if !g.isSupportedValue(model, singleModelWrite) {
 		return ErrorInvalidCrudParam.
-			WithMessage("%T is not a valid model for %s, requires %s", v, "Update", "*Struct or Struct")
+			WithMessage(errTmplInvalidCrudModel, v, "Update", "*Struct or Struct")
 	}
 
 	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(model), func(db *gorm.DB) *gorm.DB {
@@ -179,8 +182,7 @@ func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, 
 
 func (g GormCrud) Delete(ctx context.Context, v interface{}, options...Option) error {
 	if !g.isSupportedValue(v, genericModelWrite) {
-		return ErrorInvalidCrudParam.
-			WithMessage("%T is not a valid value for %s, requires %s", v, "Delete", "*Struct, []*Struct or []Struct")
+		return ErrorInvalidCrudParam.WithMessage(errTmplInvalidCrudValue, v, "Delete", "*Struct, []Struct or []*Struct")
 	}
 
 	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
@@ -265,6 +267,7 @@ func optsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
 				}
 				scopes = append(scopes, sub...)
 			case delayedOption:
+				//SuppressWarnings go:S1871 we can use "opt.wrapped" here, but SONAR doesn't understand type switching
 				sub, e := optsToDBFuncs([]Option{opt.wrapped})
 				if e != nil {
 					return nil, e

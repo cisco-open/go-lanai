@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+const (
+	errTmplFieldExpectString  = `invalid field type. expected string`
+	errTmplFieldExpectInt     = `invalid field type. expected integer`
+	errTmplFieldExpectISO8601 = `invalid field format. expected ISO8601 formatted string`
+)
+
 type valueConverterFunc func(v interface{}) (reflect.Value, error)
 
 /************************
@@ -19,10 +25,11 @@ var accessTokenIgnoredDetails = utils.NewStringSet(
 	JsonFieldExpiryTime, JsonFieldIssueTime, JsonFieldExpiresIn, JsonFieldRefreshTokenValue)
 
 var scopeSeparator = " "
-// json.Marshaler
+
+// MarshalJSON implements json.Marshaler
 func (t *DefaultAccessToken) MarshalJSON() ([]byte, error) {
 	data := map[string]interface{}{}
-	for k,v := range t.details {
+	for k, v := range t.details {
 		data[k] = v
 	}
 	data[JsonFieldAccessTokenValue] = t.value
@@ -41,7 +48,7 @@ func (t *DefaultAccessToken) MarshalJSON() ([]byte, error) {
 	return json.Marshal(data)
 }
 
-// json.Unmarshaler
+// UnmarshalJSON implements json.Unmarshaler
 func (t *DefaultAccessToken) UnmarshalJSON(data []byte) error {
 	parsed := map[string]interface{}{}
 
@@ -89,12 +96,13 @@ func (t *DefaultAccessToken) UnmarshalJSON(data []byte) error {
 /************************
 	DefaultRefreshToken
  ************************/
-// json.Marshaler only DefaultRefreshToken.value is serialized
+
+// MarshalJSON implements json.Marshaler, only DefaultRefreshToken.value is serialized
 func (t *DefaultRefreshToken) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.value)
 }
 
-// json.Unmarshaler
+// UnmarshalJSON implements json.Unmarshaler
 func (t *DefaultRefreshToken) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &t.value)
 }
@@ -116,7 +124,7 @@ func extractField(data map[string]interface{}, field string, required bool, dest
 		return fmt.Errorf("cannot parse field [%s]: %s", field, err.Error())
 	}
 
-	dest :=reflect.ValueOf(destPtr)
+	dest := reflect.ValueOf(destPtr)
 	if !dest.CanSet() {
 		dest = dest.Elem()
 	}
@@ -128,7 +136,7 @@ func extractField(data map[string]interface{}, field string, required bool, dest
 func anyToString(v interface{}) (reflect.Value, error) {
 	_, ok := v.(string)
 	if !ok {
-		return reflect.Value{}, fmt.Errorf("invalid field type. expected string")
+		return reflect.Value{}, fmt.Errorf(errTmplFieldExpectString)
 	}
 	return reflect.ValueOf(v), nil
 }
@@ -136,7 +144,7 @@ func anyToString(v interface{}) (reflect.Value, error) {
 func stringToTokenType(v interface{}) (reflect.Value, error) {
 	s, ok := v.(string)
 	if !ok {
-		return reflect.Value{}, fmt.Errorf("invalid field type. expected string")
+		return reflect.Value{}, fmt.Errorf(errTmplFieldExpectString)
 	}
 	return reflect.ValueOf(TokenType(s)), nil
 }
@@ -144,7 +152,7 @@ func stringToTokenType(v interface{}) (reflect.Value, error) {
 func stringSliceToStringSet(v interface{}) (reflect.Value, error) {
 	stringSlice, ok := v.(string)
 	if !ok {
-		return reflect.Value{}, fmt.Errorf("invalid field type. expected string")
+		return reflect.Value{}, fmt.Errorf(errTmplFieldExpectString)
 	}
 
 	slice := strings.Split(stringSlice, scopeSeparator)
@@ -158,37 +166,37 @@ func stringSliceToStringSet(v interface{}) (reflect.Value, error) {
 func expiryToTime(v interface{}) (reflect.Value, error) {
 	str, ok := v.(string)
 	if !ok {
-		return reflect.Value{}, fmt.Errorf("invalid field type. expected ISO8601 formatted string")
+		return reflect.Value{}, fmt.Errorf(errTmplFieldExpectISO8601)
 	}
 
-	if time := utils.ParseTimeISO8601(str); !time.IsZero() {
-		return reflect.ValueOf(time), nil
-	} else if time := utils.ParseTime(utils.ISO8601Milliseconds, str); !time.IsZero() {
-		return reflect.ValueOf(time), nil
+	if t := utils.ParseTimeISO8601(str); !t.IsZero() {
+		return reflect.ValueOf(t), nil
+	} else if t := utils.ParseTime(utils.ISO8601Milliseconds, str); !t.IsZero() {
+		return reflect.ValueOf(t), nil
 	}
 
-	return reflect.Value{}, fmt.Errorf("invalid field format. expected ISO8601 formatted string")
+	return reflect.Value{}, fmt.Errorf(errTmplFieldExpectISO8601)
 }
 
 func expireInToTimeConverter(issueTime time.Time) valueConverterFunc {
 	return func(v interface{}) (reflect.Value, error) {
 		secs, ok := v.(int64)
 		if !ok {
-			return reflect.Value{}, fmt.Errorf("invalid field type. expected integer")
+			return reflect.Value{}, fmt.Errorf(errTmplFieldExpectInt)
 		}
 
 		if issueTime.IsZero() {
 			issueTime = time.Now()
 		}
-		time := issueTime.Add(time.Duration(secs) * time.Second)
-		return reflect.ValueOf(time), nil
+		t := issueTime.Add(time.Duration(secs) * time.Second)
+		return reflect.ValueOf(t), nil
 	}
 }
 
 func stringToRefreshToken(v interface{}) (reflect.Value, error) {
 	s, ok := v.(string)
 	if !ok {
-		return reflect.Value{}, fmt.Errorf("invalid field type. expected string")
+		return reflect.Value{}, fmt.Errorf(errTmplFieldExpectString)
 	}
 	return reflect.ValueOf(NewDefaultRefreshToken(s)), nil
 }

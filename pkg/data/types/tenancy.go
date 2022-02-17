@@ -151,6 +151,7 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 func (t Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID, error) {
 	v := reflect.ValueOf(dest)
 	for ; v.Kind() == reflect.Ptr; v = v.Elem() {
+		// SuppressWarnings go:S108 empty block is intended
 	}
 
 	switch v.Kind() {
@@ -178,6 +179,7 @@ func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyP
 		return fmt.Errorf("cannot update tenancy automatically to %T, please use struct ptr or map", dest)
 	}
 	for ; v.Kind() == reflect.Ptr; v = v.Elem() {
+		// SuppressWarnings go:S108 empty block is intended
 	}
 
 	switch v.Kind() {

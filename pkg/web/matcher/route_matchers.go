@@ -9,6 +9,7 @@ import (
 	pathutils "path"
 	"strings"
 )
+
 // routeMatcher implement web.RouteMatcher
 type routeMatcher struct {
 	description string
@@ -107,7 +108,7 @@ func RouteWithMethods(methods...string) web.RouteMatcher {
 func RouteWithPattern(pattern string, methods...string) web.RouteMatcher {
 	pDelegate := matcher.WithPathPattern(pattern)
 	pMatcher := &routeMatcher{
-		description: fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
+		description: fmt.Sprintf(descTmplPath, pDelegate.(fmt.Stringer).String()),
 		matchableFunc: routeAbsPath,
 		delegate: pDelegate,
 	}
@@ -124,7 +125,7 @@ func RouteWithURL(url string, methods...string) web.RouteMatcher {
 func RouteWithPrefix(prefix string, methods...string) web.RouteMatcher {
 	pDelegate := matcher.WithPrefix(prefix, true)
 	pMatcher := &routeMatcher{
-		description: fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
+		description: fmt.Sprintf(descTmplPath, pDelegate.(fmt.Stringer).String()),
 		matchableFunc: routeAbsPath,
 		delegate: pDelegate,
 	}
@@ -135,7 +136,7 @@ func RouteWithPrefix(prefix string, methods...string) web.RouteMatcher {
 func RouteWithRegex(regex string, methods...string) web.RouteMatcher {
 	pDelegate := matcher.WithRegex(regex)
 	pMatcher := &routeMatcher{
-		description: fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
+		description: fmt.Sprintf(descTmplPath, pDelegate.(fmt.Stringer).String()),
 		matchableFunc: routeAbsPath,
 		delegate: pDelegate,
 	}

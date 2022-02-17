@@ -53,6 +53,8 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 
 		before := security.Get(ctx)
 		currentAuth, ok := before.(passwd.UsernamePasswordAuthentication)
+
+		//nolint:staticcheck // empty block for document purpose
 		if ok && passwd.IsSamePrincipal(username[0], currentAuth) {
 			// We currently allow re-authenticate without logout.
 			// If we don't want to allow it, we need to figure out how to error out without clearing the authentication.

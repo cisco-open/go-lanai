@@ -15,6 +15,5 @@ func NewRecoveryCustomizer() *RecoveryCustomizer {
 }
 
 func (c RecoveryCustomizer) Customize(ctx context.Context, r *Registrar) error {
-	r.AddGlobalMiddlewares(gin.Recovery())
-	return nil
+	return r.AddGlobalMiddlewares(gin.Recovery())
 }

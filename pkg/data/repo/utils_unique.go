@@ -114,7 +114,7 @@ func asIndex(s *schema.Schema, names []string) (index, error) {
 		case len(paths) > 0:
 			return nil, fmt.Errorf("associations are not supported in this utils")
 		}
-		ret[i] = &schema.IndexOption{ Field: f }
+		ret[i] = &schema.IndexOption{Field: f}
 	}
 	return ret, nil
 }
@@ -198,10 +198,12 @@ func extractValue(modelV reflect.Value, f *schema.Field) (reflect.Value, bool) {
 				return i.Value(), true
 			}
 		}
+		return reflect.Value{}, false
 	case reflect.Struct:
 		return modelV.FieldByIndex(f.StructField.Index), true
+	default:
+		return reflect.Value{}, false
 	}
-	return reflect.Value{}, false
 }
 
 func toInterfaces(v interface{}) (ret []interface{}) {
@@ -215,6 +217,7 @@ func toInterfaces(v interface{}) (ret []interface{}) {
 		return ret
 	case reflect.Struct, reflect.Map:
 		return []interface{}{v}
+	default:
+		return nil
 	}
-	return nil
 }

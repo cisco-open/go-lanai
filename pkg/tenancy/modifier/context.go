@@ -10,8 +10,8 @@ type Modifier interface {
 }
 
 func RemoveTenant(ctx context.Context, tenantId string) error {
-	return internaModifier.RemoveTenant(ctx, tenantId)
+	return internalModifier.RemoveTenant(ctx, tenantId)
 }
 func AddTenant(ctx context.Context, tenantId string, parentId string) error {
-	return internaModifier.AddTenant(ctx, tenantId, parentId)
+	return internalModifier.AddTenant(ctx, tenantId, parentId)
 }

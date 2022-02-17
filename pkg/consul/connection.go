@@ -49,7 +49,7 @@ func (c *Connection) Host() string {
 func (c *Connection) ListKeyValuePairs(ctx context.Context, path string) (results map[string]interface{}, err error) {
 
 	queryOptions := &api.QueryOptions{}
-	entries, _, err := c.client.KV().List(path, queryOptions.WithContext(context.Background()))
+	entries, _, err := c.client.KV().List(path, queryOptions.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	} else if entries == nil {

@@ -11,7 +11,7 @@ import (
 )
 
 // GormSchemaResolver extends SchemaResolver to expose more schema related functions
-type GormSchemaResolver interface{
+type GormSchemaResolver interface {
 	SchemaResolver
 	// Schema returns raw schema.Schema.
 	Schema() *schema.Schema
@@ -36,7 +36,9 @@ func newGormMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
 	case t.Kind() == reflect.Struct:
 		sType = t
 	case t.Kind() == reflect.Ptr:
-		for ; t.Kind() == reflect.Ptr; t = t.Elem() {}
+		for ; t.Kind() == reflect.Ptr; t = t.Elem() {
+			// SuppressWarnings go:S108 empty block is intended
+		}
 		sType = t
 	}
 
@@ -62,11 +64,10 @@ func newGormMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
 
 	return GormMetadata{
 		gormSchemaResolver: resolver,
-		model: reflect.New(sType).Interface(),
-		types: types,
+		model:              reflect.New(sType).Interface(),
+		types:              types,
 	}, nil
 }
-
 
 func (g GormMetadata) isSupportedValue(value interface{}, types utils.Set) bool {
 	t := reflect.TypeOf(value)
@@ -84,11 +85,10 @@ func newGormSchemaResolver(db *gorm.DB, model interface{}) (gormSchemaResolver, 
 	if e := db.Statement.Parse(model); e != nil {
 		return gormSchemaResolver{}, ErrorInvalidCrudModel.WithMessage("failed to parse schema of [%T] - %v", model, e)
 	}
-	return gormSchemaResolver {
+	return gormSchemaResolver{
 		schema: db.Statement.Schema,
 	}, nil
 }
-
 
 func (g gormSchemaResolver) ModelType() reflect.Type {
 	return g.schema.ModelType
@@ -160,7 +160,7 @@ func lookupField(s *schema.Schema, name string) (f *schema.Field, paths []string
 		return nil, nil
 	case 1:
 	default:
-		paths = split[0:len(split) - 1]
+		paths = split[0 : len(split)-1]
 		if s = followRelationships(s, paths); s == nil {
 			return nil, nil
 		}

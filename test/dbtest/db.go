@@ -14,14 +14,13 @@ import (
 	"testing"
 )
 
-
-
 const (
-	ctxKeyCopyistCloser   = "copyist-closer"
 	flagCopyistRecordMode = "record"
 )
 
+type copyistCK struct{}
 var (
+	ctxKeyCopyistCloser   = copyistCK{}
 	regOnce = sync.Once{}
 )
 
@@ -81,6 +80,7 @@ func setCopyistModeFlag(mode mode) {
 		mustSetFlag(flagCopyistRecordMode, "false")
 	case modeRecord:
 		mustSetFlag(flagCopyistRecordMode, "true")
+	default:
 	}
 }
 

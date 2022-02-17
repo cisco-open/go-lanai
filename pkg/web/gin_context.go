@@ -142,7 +142,7 @@ func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
 	}
 
 	handler := func(c *gin.Context) {
-		c = preProcessContext(c)
+		c = preProcessContext(c) //nolint:contextcheck // gin.Context is the context
 		handlerFunc(c.Writer, c.Request)
 	}
 	return handler
@@ -155,7 +155,7 @@ func NewKitGinHandlerFunc(s *httptransport.Server) gin.HandlerFunc {
 	}
 
 	handler := func(c *gin.Context) {
-		c = preProcessContext(c)
+		c = preProcessContext(c) //nolint:contextcheck // gin.Context is the context
 		s.ServeHTTP(c.Writer, c.Request)
 	}
 	return handler

@@ -2,9 +2,8 @@ package jwt
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/rsa"
-	"hash/crc64"
-	"math/rand"
 )
 
 var (
@@ -59,8 +58,7 @@ func (s *StaticJwkStore) getOrNew(kid string) (Jwk, error) {
 		return jwk, nil
 	}
 
-	reader := newPseudoReader(kid)
-	key, e := rsa.GenerateKey(reader, rsaKeySize)
+	key, e := rsa.GenerateKey(rand.Reader, rsaKeySize)
 	if e != nil {
 		return nil, e
 	}
@@ -69,23 +67,4 @@ func (s *StaticJwkStore) getOrNew(kid string) (Jwk, error) {
 	s.lookup[kid] = jwk
 
 	return jwk, nil
-}
-
-// pseudoReader implements io.Reader
-type pseudoReader struct {
-	rand *rand.Rand
-}
-
-func newPseudoReader(seed string) pseudoReader {
-	table := crc64.MakeTable(crc64.ISO)
-	crc := crc64.Checksum([]byte(seed), table)
-	source := rand.NewSource(int64(crc))
-	return pseudoReader{
-		rand: rand.New(source),
-	}
-
-}
-
-func (r pseudoReader) Read(p []byte) (n int, err error) {
-	return r.rand.Read(p)
 }

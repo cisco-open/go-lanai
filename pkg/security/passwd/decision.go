@@ -196,7 +196,7 @@ func (c *PasswordPolicyChecker) Decide(ctx context.Context, _ security.Candidate
 
 	policy, e := c.store.LoadPwdAgingRules(ctx, acct)
 	if e != nil || policy == nil || !policy.PwdAgingRuleEnforced() || policy.PwdMaxAge() <= 0 {
-		return nil
+		return nil //nolint:nilerr // for now, we ignore this error and treat it as if policy is not enabled
 	}
 
 	switch {

@@ -36,6 +36,7 @@ func (t DefaultGormErrorTranslator) TranslateWithDB(db *gorm.DB) error {
 		return nil
 	}
 	err := t.Translate(db.Statement.Context, db.Error)
+	//nolint:errorlint
 	switch e := err.(type) {
 	case DataError:
 		switch {

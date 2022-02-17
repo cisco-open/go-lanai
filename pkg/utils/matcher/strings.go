@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+const (
+	descSuffixCaseInsensitive = `, case insensitive`
+)
+
 // StringMatcher is a typed ChainableMatcher that accept String
 type StringMatcher interface {
 	ChainableMatcher
@@ -58,7 +62,7 @@ func (m *stringMatcher) String() string {
 func WithString(expected string, caseInsensitive bool) StringMatcher {
 	desc := fmt.Sprintf("matches [%s]", expected)
 	if caseInsensitive {
-		desc = desc + ", case insensitive"
+		desc = desc + descSuffixCaseInsensitive
 	}
 	return &stringMatcher{
 		matchFunc: func(_ context.Context, value string) (bool, error) {
@@ -71,7 +75,7 @@ func WithString(expected string, caseInsensitive bool) StringMatcher {
 func WithSubString(substr string, caseInsensitive bool) StringMatcher {
 	desc := fmt.Sprintf("contains [%s]", substr)
 	if caseInsensitive {
-		desc = desc + ", case insensitive"
+		desc = desc + descSuffixCaseInsensitive
 	}
 	return &stringMatcher{
 		matchFunc: func(_ context.Context, value string) (bool, error) {
@@ -103,7 +107,7 @@ func WithPathPattern(pattern string) StringMatcher {
 func WithPrefix(prefix string, caseInsensitive bool) StringMatcher {
 	desc := fmt.Sprintf("start with [%s]", prefix)
 	if caseInsensitive {
-		desc = desc + ", case insensitive"
+		desc = desc + descSuffixCaseInsensitive
 	}
 	return &stringMatcher{
 		matchFunc: func(_ context.Context, value string) (bool, error) {
@@ -116,7 +120,7 @@ func WithPrefix(prefix string, caseInsensitive bool) StringMatcher {
 func WithSuffix(suffix string, caseInsensitive bool) StringMatcher {
 	desc := fmt.Sprintf("ends with [%s]", suffix)
 	if caseInsensitive {
-		desc = desc + ", case insensitive"
+		desc = desc + descSuffixCaseInsensitive
 	}
 	return &stringMatcher{
 		matchFunc: func(_ context.Context, value string) (bool, error) {

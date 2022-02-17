@@ -13,6 +13,12 @@ import (
 	"time"
 )
 
+const (
+	errTmplProducerExists      = `producer for topic %s already exist. please use the existing instance`
+	errTmplSubscriberExists      = `subscriber for topic %s already exist. please use the existing instance`
+	errTmplConsumerGroupExists = `consumer group for topic %s already exist. please use the existing instance`
+)
+
 type SaramaKafkaBinder struct {
 	appConfig            bootstrap.ApplicationConfig
 	properties           *KafkaProperties
@@ -97,8 +103,8 @@ func (b *SaramaKafkaBinder) prepareDefaults(ctx context.Context, saramaDefaults 
 
 func (b *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (Producer, error) {
 	if _, ok := b.producers[topic]; ok {
-		logger.Warnf("producer for topic %s already exist. please use the existing instance", topic)
-		return nil, NewKafkaError(ErrorCodeProducerExists, "producer for topic %s already exist", topic)
+		logger.Warnf(errTmplProducerExists, topic)
+		return nil, NewKafkaError(ErrorCodeProducerExists, errTmplProducerExists, topic)
 	}
 
 	// apply defaults and options
@@ -128,8 +134,8 @@ func (b *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (P
 
 func (b *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error) {
 	if _, ok := b.subscribers[topic]; ok {
-		logger.Warnf("subscriber for topic %s already exist. please use the existing instance", topic)
-		return nil, NewKafkaError(ErrorCodeConsumerExists, "producer for topic %s already exist", topic)
+		logger.Warnf(errTmplSubscriberExists, topic)
+		return nil, NewKafkaError(ErrorCodeConsumerExists, errTmplSubscriberExists, topic)
 	}
 
 	// apply defaults and options
@@ -154,8 +160,8 @@ func (b *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) 
 
 func (b *SaramaKafkaBinder) Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error) {
 	if _, ok := b.consumerGroups[topic]; ok {
-		logger.Warnf("consumer group for topic %s already exist. please use the existing instance", topic)
-		return nil, NewKafkaError(ErrorCodeConsumerExists, "producer for topic %s already exist", topic)
+		logger.Warnf(errTmplConsumerGroupExists, topic)
+		return nil, NewKafkaError(ErrorCodeConsumerExists, errTmplConsumerGroupExists, topic)
 	}
 
 	// apply defaults and options

@@ -211,7 +211,7 @@ type DispatchOptions func(h *handler)
 // the handler should be invoked when certain message header exists and matches the provided matcher
 func FilterOnHeader(header string, matcher matcher.StringMatcher) DispatchOptions {
 	if matcher == nil {
-		return func(h *handler) {}
+		return noop()
 	}
 
 	return func(h *handler) {
@@ -228,5 +228,11 @@ func FilterOnHeader(header string, matcher matcher.StringMatcher) DispatchOption
 			}
 			return true
 		}
+	}
+}
+
+func noop() func(h *handler) {
+	return func(_ *handler) {
+		// noop
 	}
 }

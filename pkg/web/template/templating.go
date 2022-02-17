@@ -74,6 +74,7 @@ func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 	}
 
 	code := http.StatusInternalServerError
+	//nolint:errorlint
 	if sc, ok := err.(httptransport.StatusCoder); ok {
 		code = sc.StatusCode()
 	}

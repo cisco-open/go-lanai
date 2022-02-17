@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -112,7 +113,7 @@ func (p *OpenIDAuthorizeRequestProcessor) decodeRequestObject(ctx context.Contex
 		if strings.HasPrefix(strings.ToLower(reqUri), "https:") {
 			return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("%s must use https", oauth2.ParameterRequestUri))
 		}
-		bytes, e := httpGet(reqUri)
+		bytes, e := httpGet(ctx, reqUri)
 		if e != nil {
 			return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("unable to fetch request object from %s: %v", oauth2.ParameterRequestUri, e))
 		}
@@ -127,6 +128,7 @@ func (p *OpenIDAuthorizeRequestProcessor) decodeRequestObject(ctx context.Contex
 		}
 	}
 
+	//nolint:contextcheck
 	decoded, e := claimsToAuthRequest(request.Context(), claims)
 	if e != nil {
 		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Errorf("invalid request object: %v", e))
@@ -233,7 +235,7 @@ func (p *OpenIDAuthorizeRequestProcessor) processMaxAge(ctx context.Context, req
 
 	maxAge, e := time.ParseDuration(fmt.Sprintf("%ss", maxAgeStr))
 	if e != nil {
-		return nil
+		return nil //nolint:nilerr // per OpenID specs, "authroize" endpoint should simply ignore invalid request params
 	}
 
 	current := security.Get(ctx)
@@ -308,11 +310,21 @@ func getHttpRequest(ctx context.Context) *http.Request {
 	return nil
 }
 
-func httpGet(url string) ([]byte, error) {
-	resp, e := http.Get(url)
+func httpGet(ctx context.Context, urlStr string) ([]byte, error) {
+	parsed, e := url.Parse(urlStr)
 	if e != nil {
 		return nil, e
 	}
+	req, e := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), http.NoBody)
+	if e != nil {
+		return nil, e
+	}
+	resp, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return nil, e
+	}
+	defer func() { _ = resp.Body.Close() }()
+
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, fmt.Errorf("non-2XX status code")
 	}

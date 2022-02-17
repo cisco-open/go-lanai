@@ -12,18 +12,18 @@ import (
 	Func Metadata
 ******************************/
 const (
-	errorMsgExpectFunc = "expecting a function"
-	errorMsgInputParams = "function should have one or two input parameters, where the first is context.Context and the second is a struct or pointer to struct"
-	errorMsgOutputParams = "function should have at least two output parameters, where the the last is error"
+	errorMsgExpectFunc       = "expecting a function"
+	errorMsgInputParams      = "function should have one or two input parameters, where the first is context.Context and the second is a struct or pointer to struct"
+	errorMsgOutputParams     = "function should have at least two output parameters, where the the last is error"
 	errorMsgInvalidSignature = "unable to find request or response type"
 )
 
-var(
-	specialTypeContext = reflect.TypeOf((*context.Context)(nil)).Elem()
+var (
+	specialTypeContext        = reflect.TypeOf((*context.Context)(nil)).Elem()
 	specialTypeHttpRequestPtr = reflect.TypeOf(&http.Request{})
-	specialTypeInt = reflect.TypeOf(int(0))
-	specialTypeHttpHeader = reflect.TypeOf((*http.Header)(nil)).Elem()
-	specialTypeError = reflect.TypeOf((*error)(nil)).Elem()
+	specialTypeInt            = reflect.TypeOf(int(0))
+	specialTypeHttpHeader     = reflect.TypeOf((*http.Header)(nil)).Elem()
+	specialTypeError          = reflect.TypeOf((*error)(nil)).Elem()
 )
 
 // MvcHandlerFuncValidator validate MvcHandlerFunc signature
@@ -42,16 +42,16 @@ func (p param) isValid() bool {
 
 // out parameters
 type mvcOut struct {
-	count int
-	sc param
-	header param
+	count    int
+	sc       param
+	header   param
 	response param
-	error param
+	error    param
 }
 
 // in parameters
 type mvcIn struct {
-	count int
+	count   int
 	context param
 	request param
 }
@@ -60,7 +60,7 @@ type mvcMetadata struct {
 	function *reflect.Value
 	request  reflect.Type
 	response reflect.Type
-	in 		 mvcIn
+	in       mvcIn
 	out      mvcOut
 }
 
@@ -89,7 +89,7 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 	}
 
 	// parse input params
-	for i := t.NumIn() - 1; i >=0; i-- {
+	for i := t.NumIn() - 1; i >= 0; i-- {
 		switch it := t.In(i); {
 		case it.ConvertibleTo(specialTypeContext):
 			meta.in.context = param{i, it}
@@ -102,21 +102,21 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 				target: &f,
 			})
 		}
-		meta.in.count ++
+		meta.in.count++
 	}
 
 	// parse output params
-	for i := t.NumOut() -1; i >=0; i-- {
+	for i := t.NumOut() - 1; i >= 0; i-- {
 		switch ot := t.Out(i); {
 		case ot.ConvertibleTo(specialTypeInt):
-			meta.out.sc = param {i, ot}
+			meta.out.sc = param{i, ot}
 		case ot.ConvertibleTo(specialTypeHttpHeader):
-			meta.out.header = param {i, ot}
+			meta.out.header = param{i, ot}
 		case ot.ConvertibleTo(specialTypeError):
-			meta.out.error = param {i, ot}
+			meta.out.error = param{i, ot}
 		case !meta.out.response.isValid() && isSupportedResponseType(ot):
 			// we allow interface and map as response
-			meta.out.response = param {i, ot}
+			meta.out.response = param{i, ot}
 			meta.response = ot
 		default:
 			panic(&errorInvalidMvcHandlerFunc{
@@ -124,7 +124,7 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 				target: &f,
 			})
 		}
-		meta.out.count ++
+		meta.out.count++
 	}
 
 	if meta.response == nil || meta.in.count < 1 || meta.out.count < 2 || meta.in.count > 1 && meta.request == nil {
@@ -152,7 +152,7 @@ func validateFunc(f *reflect.Value, validator MvcHandlerFuncValidator) (err erro
 		fallthrough
 	case !t.In(0).ConvertibleTo(specialTypeContext):
 		fallthrough
-	case t.NumIn() == 2 && !isSupportedRequestType(t.In(t.NumIn() - 1)):
+	case t.NumIn() == 2 && !isSupportedRequestType(t.In(t.NumIn()-1)):
 		return &errorInvalidMvcHandlerFunc{
 			reason: errors.New(errorMsgInputParams),
 			target: f,
@@ -186,13 +186,7 @@ func isHttpRequestPtr(t reflect.Type) bool {
 }
 
 func isSupportedRequestType(t reflect.Type) bool {
-	if isStructOrPtrToStruct(t) {
-		return true
-	}
-	switch t.Kind() {
-		// placeholder for more types
-	}
-	return false
+	return isStructOrPtrToStruct(t)
 }
 
 func isSupportedResponseType(t reflect.Type) bool {
@@ -210,6 +204,7 @@ func isSupportedResponseType(t reflect.Type) bool {
 		fallthrough
 	case reflect.Array:
 		return t.Elem().Kind() == reflect.Uint8
+	default:
+		return false
 	}
-	return false
 }

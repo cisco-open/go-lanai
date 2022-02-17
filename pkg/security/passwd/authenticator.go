@@ -67,7 +67,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 	}
 
 	// schedule post processing
-	ctx = utils.MakeMutableContext(ctx)
+	ctx = utils.MakeMutableContext(ctx) //nolint:contextcheck
 	var user security.Account
 	defer func() {
 		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)

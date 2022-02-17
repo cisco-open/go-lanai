@@ -24,3 +24,6 @@ Makefile-Generated
 
 # Dependency directories (remove the comment below to include it)
 vendor/
+
+# Sonar Scanner
+.scannerwork

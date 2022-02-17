@@ -46,7 +46,7 @@ func WithCurrentSecurity(ctx context.Context) AuthOptions {
 func WithAuthentication(auth security.Authentication) AuthOptions {
 	oauth, ok := auth.(oauth2.Authentication)
 	if !ok {
-		return func(opt *AuthOption) {}
+		return noop()
 	}
 	return WithAccessToken(oauth.AccessToken().Value())
 }
@@ -102,5 +102,11 @@ func WithUserId(userId string) AuthOptions {
 	return func(opt *AuthOption) {
 		opt.Username = ""
 		opt.UserId = userId
+	}
+}
+
+func noop() func(opt *AuthOption) {
+	return func(_ *AuthOption) {
+		// noop
 	}
 }

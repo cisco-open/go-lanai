@@ -80,6 +80,7 @@ func (eh *ErrorHandlingMiddleware) handleError(c *gin.Context, err error) {
 	}
 }
 
+//nolint:errorlint
 func (eh *ErrorHandlingMiddleware) logError(c *gin.Context, err error) {
 	var errMsgs []string
 	for cause, isNested := err, true; isNested && cause != nil; {

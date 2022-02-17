@@ -51,7 +51,7 @@ func initLevelMap(props *ServerProperties) map[RequestMatcher]log.LoggingLevel {
 			m = withLoggingRequestPattern(pattern)
 		} else {
 			split := strings.Split(v.Method, " ")
-			methods := []string{}
+			methods := make([]string, 0, len(split))
 			for _, s := range split {
 				s := strings.TrimSpace(s)
 				if s != "" {
@@ -90,7 +90,7 @@ func (c LoggingCustomizer) Customize(ctx context.Context, r *Registrar) error {
 	return nil
 }
 
-func (c LoggingCustomizer) PostInit(ctx context.Context, r *Registrar) error {
+func (c LoggingCustomizer) PostInit(_ context.Context, _ *Registrar) error {
 	// release initializing context
 	gin.DefaultWriter = log.NewWriterAdapter(logger, log.LevelDebug)
 	gin.DefaultErrorWriter = log.NewWriterAdapter(logger, log.LevelDebug)
@@ -143,7 +143,7 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 	for k, v := range params.Keys {
 		ctx.Set(k, v)
 	}
-	http := map[string]interface{} {
+	httpEntry := map[string]interface{} {
 		LogKeyHttpStatus:   params.StatusCode,
 		LogKeyHttpMethod:   params.Method,
 		LogKeyHttpClientIP: params.ClientIP,
@@ -153,7 +153,7 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 	}
 
 	// do log
-	f.logger.WithContext(ctx).WithLevel(logLevel).Log(log.LogKeyMessage, msg, LogKeyHttp, http)
+	_ = f.logger.WithContext(ctx).WithLevel(logLevel).Log(log.LogKeyMessage, msg, LogKeyHttp, httpEntry)
 	return
 }
 
@@ -211,7 +211,7 @@ func withLoggingRequestPattern(pattern string, methods...string) *loggingRequest
 	}
 }
 
-func (m *loggingRequestMatcher) RequestMatches(c context.Context, r *http.Request) (bool, error) {
+func (m *loggingRequestMatcher) RequestMatches(_ context.Context, r *http.Request) (bool, error) {
 	path := r.URL.Path
 	match, e := m.pathMatcher.Matches(path)
 	if e != nil || !match {

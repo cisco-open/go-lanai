@@ -17,6 +17,7 @@ func (h *ChangeCsrfHanlder) HandleAuthenticationSuccess(c context.Context, _ *ht
 		return
 	}
 
+	// TODO: review error handling of this block
 	if mc, ok := c.(utils.MutableContext); ok {
 		t, err := h.csrfTokenStore.LoadToken(c)
 
@@ -26,7 +27,9 @@ func (h *ChangeCsrfHanlder) HandleAuthenticationSuccess(c context.Context, _ *ht
 
 		if t != nil {
 			t = h.csrfTokenStore.Generate(c, t.ParameterName, t.HeaderName)
-			h.csrfTokenStore.SaveToken(c, t)
+			if e := h.csrfTokenStore.SaveToken(c, t); e != nil {
+				panic(security.NewInternalError(err.Error()))
+			}
 			mc.Set(web.ContextKeyCsrf, t)
 		}
 	}

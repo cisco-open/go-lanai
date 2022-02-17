@@ -12,6 +12,7 @@ import (
 	SimpleMappingBuilder
  *********************************/
 
+//goland:noinspection GoNameStartsWithPackageName
 type MappingBuilder struct {
 	name        string
 	group       string
@@ -197,6 +198,4 @@ func (b *MappingBuilder) buildMapping() web.SimpleMapping {
 	default:
 		panic(fmt.Errorf("unsupported HandlerFunc type: %T", b.handlerFunc))
 	}
-
-	return nil
 }
