@@ -11,6 +11,7 @@ type SamlClient interface {
 	ShouldSkipAssertionEncryption() bool
 	ShouldSkipAuthRequestSignatureVerification() bool
 	GetTenantRestrictions() utils.StringSet
+	GetTenantRestrictionType() string
 
 	ShouldMetadataRequireSignature() bool
 	ShouldMetadataTrustCheck() bool
@@ -20,6 +21,7 @@ type SamlClient interface {
 type DefaultSamlClient struct {
 	SamlSpDetails
 	TenantRestrictions utils.StringSet
+	TenantRestrictionType string
 }
 
 func (c DefaultSamlClient) ShouldMetadataRequireSignature() bool {
@@ -52,6 +54,10 @@ func (c DefaultSamlClient) ShouldSkipAuthRequestSignatureVerification() bool {
 
 func (c DefaultSamlClient) GetTenantRestrictions() utils.StringSet {
 	return c.TenantRestrictions
+}
+
+func (c DefaultSamlClient) GetTenantRestrictionType() string {
+	return c.TenantRestrictionType
 }
 
 type SamlSpDetails struct {

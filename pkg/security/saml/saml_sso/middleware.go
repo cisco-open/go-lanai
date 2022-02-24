@@ -167,7 +167,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 			mw.handleError(ctx, nil, NewSamlInternalError("saml client not found", err))
 			return
 		}
-		err = mw.validateTenantRestriction(ctx, client.GetTenantRestrictions(), authentication)
+		err = mw.validateTenantRestriction(ctx, client, authentication)
 		if err != nil {
 			mw.handleError(ctx, req, err)
 			return
@@ -237,8 +237,9 @@ func (mw *SamlAuthorizeEndpointMiddleware) handleError(c *gin.Context, authReque
 	c.Abort()
 }
 
+func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context.Context, client SamlClient, auth security.Authentication) error {
+	tenantRestriction := client.GetTenantRestrictions()
 
-func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context.Context, tenantRestriction utils.StringSet, auth security.Authentication) error {
 	if len(tenantRestriction) == 0  {
 		return nil
 	}
@@ -263,10 +264,25 @@ func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context
 	}
 
 	userAccessibleTenants := utils.NewStringSet(acctTenancy.DesignatedTenantIds()...)
-	for t := range tenantRestriction {
-		if !tenancy.AnyHasDescendant(ctx, userAccessibleTenants, t) {
+	switch tenantRestrictionType := client.GetTenantRestrictionType(); tenantRestrictionType {
+	case TenantRestrictionTypeAny:
+		allowed := false
+		for t := range tenantRestriction {
+			if tenancy.AnyHasDescendant(ctx, userAccessibleTenants, t) {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
 			return NewSamlInternalError("client is restricted to tenants which the authenticated user does not have access to")
 		}
+	default: //default to TenantRestrictionTypeAll
+		for t := range tenantRestriction {
+			if !tenancy.AnyHasDescendant(ctx, userAccessibleTenants, t) {
+				return NewSamlInternalError("client is restricted to tenants which the authenticated user does not have access to")
+			}
+		}
 	}
+
 	return nil
 }
