@@ -93,7 +93,7 @@ pipeline {
                         "DOCKER_BUILDKIT=0",
                     ]) { dir ("$WORKSPACE") {
                         sh 'git config --global url."git@cto-github.cisco.com:".insteadOf "https://cto-github.cisco.com/"'
-                        sh go env
+                        sh 'go env'
                         sh "make init"
                         script {
                              sh "make verify"
