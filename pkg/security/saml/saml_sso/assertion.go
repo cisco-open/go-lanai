@@ -69,7 +69,7 @@ func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authenticatio
 		if authMethod, exist := details[security.DetailsKeyAuthMethod]; exist {
 			switch authMethod {
 			case security.AuthMethodPassword:
-				authCtxClassRef = "urn:oasis:names:tc:SAML:2.0:ac:classes:Password"
+				authCtxClassRef = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
 			case security.AuthMethodExternalSaml:
 				authCtxClassRef = "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol"
 			case security.AuthMethodExternalOpenID:
@@ -88,8 +88,8 @@ func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authenticatio
 		},
 		Subject: &saml.Subject{
 			NameID: &saml.NameID{
-				Format:          "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
-				Value:           username,
+				Format:          "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+				Value:           acct.(security.AccountMetadata).Email(),
 			},
 			SubjectConfirmations: []saml.SubjectConfirmation{
 				{
