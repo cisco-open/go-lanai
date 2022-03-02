@@ -32,7 +32,7 @@ var Module = &bootstrap.Module{
 }
 
 func Use() {
-	actuator.Use()
+	bootstrap.Register(actuator.Module)
 	bootstrap.Register(Module)
 }
 
