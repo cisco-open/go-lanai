@@ -33,6 +33,7 @@ func (e CodedError) Cause() error {
 }
 
 func (e CodedError) RootCause() error {
+	//nolint:errorlint
 	if nested, ok := e.Nested.(NestedError); ok {
 		return nested.RootCause()
 	}
@@ -101,6 +102,7 @@ func (e *CodedError) UnmarshalBinary(data []byte) error {
 // Is return true if
 //	1. target has same ErrCode, OR
 //  2. target is a type/sub-type error and the receiver error is in same type/sub-type
+//nolint:errorlint
 func (e CodedError) Is(target error) bool {
 	compare := e.ErrCode
 	if masker, ok := target.(ComparableErrorCoder); ok {
@@ -128,6 +130,7 @@ func (e nestedError) Cause() error {
 	return e.nested
 }
 
+//nolint:errorlint
 func (e nestedError) RootCause() error {
 	for root := e.nested; root != nil; {
 		if nested, ok := root.(NestedError); ok {

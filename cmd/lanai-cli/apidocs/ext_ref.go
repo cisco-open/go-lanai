@@ -10,16 +10,16 @@ import (
 )
 
 const (
-	pathSeparator  = `.`
-	refKey         = `$ref`
-	refLocalPrefix = `#`
-	refKeySuffix   = pathSeparator + refKey
+	pathSeparator       = `.`
+	refKey              = `$ref`
+	refLocalPrefix      = `#`
+	refKeySuffix        = pathSeparator + refKey
 	replaceArgSeparator = `=>`
 )
 
 var (
 	extSourceReplace map[string]string
-	extSourceLookup = map[string]string{}
+	extSourceLookup  = map[string]string{}
 )
 
 func tryResolveExtRefs(ctx context.Context, docs []*apidoc) ([]*apidoc, error) {
@@ -53,6 +53,7 @@ func resolveExtRefs(ctx context.Context, doc *apidoc, seen map[string]*apidoc) (
 		}
 
 		for ; val.Kind() == reflect.Interface || val.Kind() == reflect.Ptr; val = val.Elem() {
+			// SuppressWarnings go:S108 empty block is intended
 		}
 		if val.Kind() != reflect.String {
 			// we don't handle non-string $ref field, bail and continue
@@ -112,6 +113,7 @@ type traversalHandler func(val reflect.Value, path string, key, parent reflect.V
 
 func traverse(val reflect.Value, path string, key, parent reflect.Value, handler traversalHandler) bool {
 	for ; val.Kind() == reflect.Interface || val.Kind() == reflect.Ptr; val = val.Elem() {
+		// SuppressWarnings go:S108 empty block is intended
 	}
 
 	switch val.Kind() {

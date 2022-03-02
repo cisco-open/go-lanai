@@ -18,7 +18,14 @@ const (
 	schemaPrefixGitHub = "github://"
 	schemaPrefixHttp   = "http://"
 	schemaPrefixHttps  = "https://"
-	kDefaultGitHubPAT = "default"
+	kDefaultGitHubPAT  = "default"
+)
+
+const (
+	extYaml    = ".yaml"
+	extYamlAlt = ".yml"
+	extJson    = ".json"
+	extJson5   = ".json5"
 )
 
 var (
@@ -40,13 +47,13 @@ func writeApiDocLocal(_ context.Context, doc *apidoc) (string, error) {
 	defer func() { _ = file.Close() }()
 
 	switch fileExt := strings.ToLower(path.Ext(absPath)); fileExt {
-	case ".yml", ".yaml":
+	case extYaml, extYamlAlt:
 		var data []byte
 		data, e = yaml.Marshal(doc.value)
 		if e == nil {
 			_, e = file.Write(data)
 		}
-	case ".json", ".json5":
+	case extJson, extJson5:
 		e = json.NewEncoder(file).Encode(doc.value)
 	default:
 		return "", fmt.Errorf("unsupported file extension for OAS document: %s", fileExt)
@@ -98,9 +105,9 @@ func loadApiDocLocal(_ context.Context, fPath string) (*apidoc, error) {
 		source: absPath,
 	}
 	switch fileExt := strings.ToLower(path.Ext(fPath)); fileExt {
-	case ".yml", ".yaml":
+	case extYaml, extYamlAlt:
 		_, e = cmdutils.BindYamlFile(&doc.value, fPath)
-	case ".json", ".json5":
+	case extJson, extJson5:
 		_, e = cmdutils.BindJsonFile(&doc.value, fPath)
 	default:
 		return nil, fmt.Errorf("unsupported file extension for OAS document: %s", fileExt)
@@ -152,9 +159,9 @@ func loadApiDocHttp(ctx context.Context, rawUrl string, opts ...func(r *http.Req
 		source: urlStr,
 	}
 	switch ext := contentTypeAsExt(req, resp); ext {
-	case ".yml", ".yaml":
+	case extYaml, extYamlAlt:
 		e = cmdutils.BindYaml(resp.Body, &doc.value)
-	case ".json", ".json5":
+	case extJson, extJson5:
 		e = json.NewDecoder(resp.Body).Decode(&doc.value)
 	default:
 		return nil, fmt.Errorf("unsupported file format for OAS document: %s", ext)
@@ -171,9 +178,9 @@ func contentTypeAsExt(req *http.Request, resp *http.Response) string {
 	if mt, _, e := mime.ParseMediaType(ct); e == nil {
 		switch {
 		case mt == "application/json":
-			fileExt = ".json"
+			fileExt = extJson
 		case strings.HasSuffix(mt, "yaml") || strings.HasSuffix(mt, "yml"):
-			fileExt = ".yaml"
+			fileExt = extYamlAlt
 		}
 	}
 	return fileExt

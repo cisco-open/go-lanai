@@ -70,9 +70,9 @@ var (
 	ErrorTypeOAuth2 = security.NewErrorType(security.ErrorTypeCodeOAuth2, errors.New("error type: oauth2"))
 
 	ErrorSubTypeOAuth2Internal   = security.NewErrorSubType(ErrorSubTypeCodeOAuth2Internal, errors.New("error sub-type: internal"))
-	ErrorSubTypeOAuth2ClientAuth = security.NewErrorSubType(ErrorSubTypeCodeOAuth2ClientAuth, errors.New("error sub-type: oauth2 auth"))
+	ErrorSubTypeOAuth2ClientAuth = security.NewErrorSubType(ErrorSubTypeCodeOAuth2ClientAuth, errors.New("error sub-type: oauth2 client auth"))
 	ErrorSubTypeOAuth2Authorize  = security.NewErrorSubType(ErrorSubTypeCodeOAuth2Authorize, errors.New("error sub-type: oauth2 auth"))
-	ErrorSubTypeOAuth2Grant      = security.NewErrorSubType(ErrorSubTypeCodeOAuth2Grant, errors.New("error sub-type: oauth2 auth"))
+	ErrorSubTypeOAuth2Grant      = security.NewErrorSubType(ErrorSubTypeCodeOAuth2Grant, errors.New("error sub-type: oauth2 grant"))
 	ErrorSubTypeOAuth2Res        = security.NewErrorSubType(ErrorSubTypeCodeOAuth2Res, errors.New("error sub-type: oauth2 resource"))
 )
 

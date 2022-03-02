@@ -133,7 +133,7 @@ func (s *saramaSubscriber) handlePartitions(ctx context.Context, partitions []sa
 			continue
 		}
 		childCtx := utils.MakeMutableContext(ctx)
-		go s.handleMessage(childCtx, msg)
+		go s.handleMessage(childCtx, msg) //nolint:contextcheck
 	}
 }
 

@@ -12,7 +12,12 @@ import (
 )
 
 const (
-	DefaultKidSuffix = "-default"
+	errTmplInvalidJwkName    = `invalid JWK name`
+	errTmplPubPrivMixed      = `found both public and private key block in same PEM file`
+	errTmplNoKeyFoundInPem   = `PEM file doesn't includes any supported private nor public keys`
+	errTmplUnsupportedPubKey = `non-supported public key [%T] in certificate`
+	errTmplUnsupportedFile   = `unrecognized crypto key file format [%s]`
+	errTmplUnsupportedBlock  = `non-supported block [%T] in the file`
 )
 
 // FileJwkStore implements JwkStore and JwkRotator
@@ -26,9 +31,9 @@ type FileJwkStore struct {
 
 func NewFileJwkStore(props CryptoProperties) *FileJwkStore {
 	s := FileJwkStore{
-		cacheById: map[string]Jwk{},
+		cacheById:   map[string]Jwk{},
 		cacheByName: map[string][]Jwk{},
-		indexes: map[string]int{},
+		indexes:     map[string]int{},
 	}
 
 	// load files
@@ -50,7 +55,7 @@ func NewFileJwkStore(props CryptoProperties) *FileJwkStore {
 	return &s
 }
 
-func (s *FileJwkStore) LoadByKid(ctx context.Context, kid string) (Jwk, error) {
+func (s *FileJwkStore) LoadByKid(_ context.Context, kid string) (Jwk, error) {
 	jwk, ok := s.cacheById[kid]
 	if !ok {
 		return nil, fmt.Errorf("cannot find JWK with kid [%s]", kid)
@@ -58,7 +63,7 @@ func (s *FileJwkStore) LoadByKid(ctx context.Context, kid string) (Jwk, error) {
 	return jwk, nil
 }
 
-func (s *FileJwkStore) LoadByName(ctx context.Context, name string) (Jwk, error) {
+func (s *FileJwkStore) LoadByName(_ context.Context, name string) (Jwk, error) {
 	jwks, ok := s.cacheByName[name]
 	if !ok || len(jwks) == 0 {
 		return nil, fmt.Errorf("cannot find JWK with name [%s]", name)
@@ -68,7 +73,7 @@ func (s *FileJwkStore) LoadByName(ctx context.Context, name string) (Jwk, error)
 	return jwks[i], nil
 }
 
-func (s *FileJwkStore) LoadAll(ctx context.Context, names ...string) ([]Jwk, error) {
+func (s *FileJwkStore) LoadAll(_ context.Context, names ...string) ([]Jwk, error) {
 	jwks := make([]Jwk, 0, len(s.cacheById))
 
 	for k, v := range s.cacheByName {
@@ -88,15 +93,15 @@ func (s *FileJwkStore) LoadAll(ctx context.Context, names ...string) ([]Jwk, err
 	return jwks, nil
 }
 
-func (s *FileJwkStore) Rotate(ctx context.Context, name string) error {
-	current, ok := s.indexes[name];
+func (s *FileJwkStore) Rotate(_ context.Context, name string) error {
+	current, ok := s.indexes[name]
 	if !ok {
-		return fmt.Errorf("invalid JWK name")
+		return fmt.Errorf(errTmplInvalidJwkName)
 	}
 
-	jwks, ok := s.cacheByName[name];
+	jwks, ok := s.cacheByName[name]
 	if !ok || len(jwks) == 0 {
-		return fmt.Errorf("invalid JWK name")
+		return fmt.Errorf(errTmplInvalidJwkName)
 	}
 
 	s.indexes[name] = (current + 1) % len(jwks)
@@ -111,9 +116,8 @@ func loadJwks(name string, props CryptoKeyProperties) ([]Jwk, error) {
 	case KeyFileFormatPem:
 		return loadJwksFromPem(name, props)
 	default:
-		return nil, fmt.Errorf("Unrecognized crypto key file format [%s]", props.KeyFormat)
+		return nil, fmt.Errorf(errTmplUnsupportedFile, props.KeyFormat)
 	}
-	return nil, nil
 }
 
 func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
@@ -122,8 +126,8 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 		return nil, fmt.Errorf("unable to load JWK [%s] - %v", name, e)
 	}
 
-	privJwks := []Jwk{}
-	pubJwks := []Jwk{}
+	privJwks := make([]Jwk, 0)
+	pubJwks := make([]Jwk, 0)
 	for i, v := range items {
 		var privKey *rsa.PrivateKey
 		var pubKey *rsa.PublicKey
@@ -138,22 +142,22 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 			cert := v.(*x509.Certificate)
 			k, ok := cert.PublicKey.(*rsa.PublicKey)
 			if !ok {
-				return nil, fmt.Errorf("non-supported public key [%T] in certificate", cert.PublicKey)
+				return nil, fmt.Errorf(errTmplUnsupportedPubKey, cert.PublicKey)
 			}
 			pubKey = k
 		default:
-			return nil, fmt.Errorf("non-supported block [%T] in the file", v)
+			return nil, fmt.Errorf(errTmplUnsupportedBlock, v)
 		}
 
 		// validate and create JWK
 		switch {
 		case privKey == nil && len(privJwks) != 0:
-			return nil, fmt.Errorf("found both public and private key block in same PEM file")
+			return nil, fmt.Errorf(errTmplPubPrivMixed)
 		case privKey == nil:
 			kid := calculateKid(props, name, i, pubKey)
 			pubJwks = append(pubJwks, NewRsaJwk(kid, name, pubKey))
 		case len(pubJwks) != 0:
-			return nil, fmt.Errorf("found both public and private key block in same PEM file")
+			return nil, fmt.Errorf(errTmplPubPrivMixed)
 		default:
 			kid := calculateKid(props, name, i, &privKey.PublicKey)
 			privJwks = append(privJwks, NewRsaPrivateJwk(kid, name, privKey))
@@ -162,10 +166,10 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 
 	switch {
 	case len(pubJwks) == 0 && len(privJwks) == 0:
-		return nil, fmt.Errorf("PEM file doesn't includes any supported private nor public keys")
+		return nil, fmt.Errorf(errTmplNoKeyFoundInPem)
 	case len(pubJwks) != 0 && len(privJwks) != 0:
 		// this should not happen if previous logic (in loop) were correct
-		return nil, fmt.Errorf("found both public and private key block in same PEM file")
+		return nil, fmt.Errorf(errTmplPubPrivMixed)
 	case len(pubJwks) != 0:
 		return pubJwks, nil
 	case len(privJwks) != 0:
@@ -182,8 +186,8 @@ func calculateKid(props CryptoKeyProperties, name string, blockIndex int, key *r
 
 	// best effort to create a unique suffix for the kid
 	hash := sha256.New224()
-	hash.Write(key.N.Bytes())
-	binary.Write(hash, binary.LittleEndian, key.E)
+	_, _ = hash.Write(key.N.Bytes())
+	_ = binary.Write(hash, binary.LittleEndian, int64(key.E))
 	sum := hash.Sum(nil)
 	suffix := hex.EncodeToString(sum)
 

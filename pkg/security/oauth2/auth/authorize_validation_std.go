@@ -127,7 +127,7 @@ func (p *StandardAuthorizeRequestProcessor) validateClientTenancy(ctx context.Co
 	// Note if current security doesn't have valid username, we don't return error here. We let access handler to deal with it
 	username, e := security.GetUsername(userAuth)
 	if !security.IsFullyAuthenticated(userAuth) || e != nil {
-		return nil
+		return nil //nolint:nilerr // intended behaviour
 	}
 
 	acct, e := p.accountStore.LoadAccountByUsername(ctx, username)

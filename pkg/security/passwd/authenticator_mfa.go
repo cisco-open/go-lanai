@@ -43,7 +43,7 @@ func (a *MfaVerifyAuthenticator) Authenticate(ctx context.Context, candidate sec
 	}
 
 	// schedule post processing
-	ctx = utils.MakeMutableContext(ctx)
+	ctx = utils.MakeMutableContext(ctx) //nolint:contextcheck
 	var user security.Account
 	defer func() {
 		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)
@@ -162,7 +162,7 @@ func (a *MfaRefreshAuthenticator) Authenticate(ctx context.Context, candidate se
 	}
 
 	// schedule post processing
-	ctx = utils.MakeMutableContext(ctx)
+	ctx = utils.MakeMutableContext(ctx) //nolint:contextcheck
 	var user security.Account
 	defer func() {
 		auth, err = applyPostAuthenticationProcessors(a.postProcessors, ctx, user, candidate, auth, err)

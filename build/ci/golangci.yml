@@ -1,0 +1,67 @@
+# Ref: https://golangci-lint.run/usage/configuration/
+run:
+  tests: false
+  skip-dirs:
+    - cmd
+    - pkg/security/example
+  modules-download-mode: readonly
+
+output:
+  sort-results: true
+
+# https://golangci-lint.run/usage/linters/
+linters:
+#  enable-all: true
+#  disable-all: true
+  presets:
+    - bugs
+#  enable:
+#    - asciicheck
+#    - ...
+  disable:
+    - maligned # deprecated
+    - scopelint # deprecated
+
+linters-settings:
+  # https://golangci-lint.run/usage/linters/#exhaustive:
+  exhaustive:
+    default-signifies-exhaustive: true
+  # https://golangci-lint.run/usage/linters/#errorlint
+  errorlint:
+    # we don't enforce to use %w. devs should do it using their own judgement
+    errorf: false
+    # error constants is still very common in many libraries. e.g. context.Cancelled
+    # So we allow plain error switching for now.
+    # TODO we should revise this setting when patterns are more consistent within golang communities
+    comparison: false
+  staticcheck:
+    go: "1.16"
+
+severity:
+  # - Code climate: https://docs.codeclimate.com/docs/issues#issue-severity
+  # - Checkstyle: https://checkstyle.sourceforge.io/property_types.html#severity
+  # - GitHub: https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
+  default-severity: error
+  rules:
+    - linters:
+        - contextcheck
+        - noctx
+        - staticcheck
+      severity: warning
+    - linters:
+        - errorlint
+        - exhaustive
+        - unused
+      severity: info
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+#    - linters:
+#        - errcheck
+#        - dupl
+#      path: _test\.go
+#      text: "SA9003:"
+#      source: "^//go:generate "
+

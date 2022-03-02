@@ -138,6 +138,7 @@ func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, cfg *consumerConfig
 	return nil
 }
 
+//nolint:contextcheck // context is passed inside msgCtx
 func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMessage, source interface{}) (err error) {
 	defer func() {
 		switch e := recover().(type) {
@@ -197,14 +198,14 @@ func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMess
 			}
 		}
 
-		if err = d.doDispatch(h, msgCtx); err != nil {
+		if err = d.doDispatch(msgCtx, h); err != nil {
 			return
 		}
 	}
 	return nil
 }
 
-func (d saramaDispatcher) doDispatch(h *handler, msgCtx *MessageContext) (err error) {
+func (d saramaDispatcher) doDispatch(msgCtx *MessageContext, h *handler) (err error) {
 	// invoke handler interceptors
 	ctx, msg := msgCtx.Context, &msgCtx.Message
 	for _, interceptor := range h.interceptors {
@@ -341,6 +342,7 @@ func (d saramaDispatcher) isSupportedMessagePayloadType(t reflect.Type) bool {
 		return d.isSupportedMessagePayloadType(t.Elem())
 	case reflect.Interface, reflect.Func, reflect.Chan:
 		return false
+	default:
+		return true
 	}
-	return true
 }

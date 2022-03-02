@@ -28,6 +28,7 @@ func ParseEncryptedRaw(text string) (ret *EncryptedRaw, err error) {
 	ret = &EncryptedRaw{}
 
 	// first try V1
+	//nolint:errorlint // special error is global var
 	switch e := ret.UnmarshalTextV1([]byte(text)); {
 	case e == nil:
 		return

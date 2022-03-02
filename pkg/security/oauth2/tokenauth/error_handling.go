@@ -17,13 +17,13 @@ func NewOAuth2ErrorHanlder() *OAuth2ErrorHandler {
 	return &OAuth2ErrorHandler{}
 }
 
-// security.ErrorHandler
+// HandleError implements security.ErrorHandler
 func (h *OAuth2ErrorHandler) HandleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 	h.handleError(c, r, rw, err)
 }
 
 func (h *OAuth2ErrorHandler) handleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
-
+	//nolint:errorlint
 	switch oe, ok := err.(oauth2.OAuth2ErrorTranslator); {
 	case ok && errors.Is(err, oauth2.ErrorTypeOAuth2):
 		writeOAuth2Error(c, r, rw, oe)

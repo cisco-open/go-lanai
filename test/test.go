@@ -68,7 +68,7 @@ func RunTest(ctx context.Context, t *testing.T, opts ...Options) {
 func unitTestRunner(ctx context.Context, t *T) {
 	// run setup TestHooks
 	ctx = runTestSetupHooks(ctx, t.T, t.TestHooks, "error when setup test")
-	defer runTestTeardownHooks(t.T, t.TestHooks, "error when cleanup test")
+	defer runTestTeardownHooks(ctx, t.T, t.TestHooks, "error when cleanup test")
 
 	// run test
 	InternalRunSubTests(ctx, t)
@@ -81,7 +81,7 @@ func InternalRunSubTests(ctx context.Context, t *T) {
 		if fn, ok := t.SubTests.Get(n); ok {
 			t.Run(n, func(goT *testing.T) {
 				ctx = runTestSetupHooks(ctx, goT, t.SubTestHooks, "error when setup sub test")
-				defer runTestTeardownHooks(goT, t.SubTestHooks, "error when cleanup sub test")
+				defer runTestTeardownHooks(ctx, goT, t.SubTestHooks, "error when cleanup sub test")
 				fn(ctx, goT)
 			})
 		}
@@ -100,9 +100,9 @@ func runTestSetupHooks(ctx context.Context, t *testing.T, hooks []Hook, errMsg s
 	return ctx
 }
 
-func runTestTeardownHooks(t *testing.T, hooks []Hook, errMsg string) {
+func runTestTeardownHooks(ctx context.Context, t *testing.T, hooks []Hook, errMsg string) {
 	for _, h := range hooks {
-		if e := h.Teardown(nil, t); e != nil {
+		if e := h.Teardown(ctx, t); e != nil {
 			t.Fatalf("%s: %v", errMsg, e)
 		}
 	}

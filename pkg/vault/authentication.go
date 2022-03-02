@@ -9,7 +9,7 @@ func newClientAuthentication(p *ConnectionProperties) ClientAuthentication {
 	var clientAuthentication ClientAuthentication
 	switch p.Authentication {
 	case Token:
-		clientAuthentication = TokenClientAuthentication(p.Token)
+		fallthrough
 	default:
 		clientAuthentication = TokenClientAuthentication(p.Token)
 	}

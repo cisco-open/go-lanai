@@ -11,6 +11,7 @@ var defaultBinaries = map[string]string{
 	"github.com/axw/gocov/gocov":"v1.0.0",
 	"github.com/AlekSi/gocov-xml":"v1.0.0",
 	"github.com/jstemmer/go-junit-report":"v0.9.1",
+	"github.com/golangci/golangci-lint/cmd/golangci-lint":"v1.44.2",
 }
 
 func installBinaries(ctx context.Context) error {
@@ -21,13 +22,16 @@ func installBinaries(ctx context.Context) error {
 	for p, v := range defaultBinaries {
 		binaries[p] = v
 	}
-	for p, b := range Module.Binaries {
-		binaries[p] = b.Version
+	for _, b := range Module.Binaries {
+		if b.Package == "" || b.Version == "" {
+			logger.Warnf(`Invalid binaries entry in Module.yml: package="%s", version="%s"`, b.Package, b.Version)
+			continue
+		}
+		binaries[b.Package] = b.Version
 	}
 
 	for p, v := range binaries {
 		installCmd := fmt.Sprintf("go install %s@%s", p, v)
-		logger.WithContext(ctx).Infof("Shell Command: %s", installCmd)
 		opts = append(opts, cmdutils.ShellCmd(installCmd))
 	}
 

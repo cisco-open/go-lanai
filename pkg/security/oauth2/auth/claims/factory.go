@@ -9,6 +9,10 @@ import (
 	"fmt"
 )
 
+const (
+	errTmplCreateClaimFailed = `unable to create claim [%s]: %v`
+)
+
 var (
 	errorInvalidSpec          = errors.New("invalid claim spec")
 	errorMissingToken         = errors.New("source authentication is missing valid token")
@@ -120,7 +124,7 @@ func populateWithSpecs(ctx context.Context, claims oauth2.Claims, specs map[stri
 
 		v, e := spec.Calculate(ctx, opt)
 		if e != nil && spec.Required(ctx, opt) {
-			return fmt.Errorf("unable to create claim [%s]: %v", c, e)
+			return fmt.Errorf(errTmplCreateClaimFailed, c, e)
 		} else if e != nil {
 			continue
 		}
@@ -141,9 +145,9 @@ func safeSet(claims oauth2.Claims, claim string, value interface{}) (err error) 
 		}
 
 		if e, ok := r.(error); ok {
-			err = fmt.Errorf("unable to create claim [%s]: %v", claim, e)
+			err = fmt.Errorf(errTmplCreateClaimFailed, claim, e)
 		} else {
-			err = fmt.Errorf("unable to create claim [%s]: %v", claim, r)
+			err = fmt.Errorf(errTmplCreateClaimFailed, claim, r)
 		}
 	}()
 

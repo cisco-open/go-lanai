@@ -24,5 +24,5 @@ type regDI struct {
 
 func Register(di regDI) {
 	ep := new(di)
-	di.Registrar.Register(ep)
+	di.Registrar.MustRegister(ep)
 }

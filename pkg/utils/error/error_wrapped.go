@@ -22,6 +22,7 @@ func (e WrappedError) Error() string {
 }
 
 func (e WrappedError) Is(target error) bool {
+	//nolint:errorlint // type assert is intentional
 	switch t := target.(type) {
 	case compareTargeter:
 		wrappedE := t.target()

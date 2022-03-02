@@ -38,17 +38,17 @@ func (l *fxPrinter) LogEvent(event fxevent.Event) {
 	case *fxevent.OnStartExecuted:
 		if e.Err != nil {
 			logger.WithContext(l.appCtx).Warnf("HOOK OnStart\t\t%s called by %s failed in %s: %v", e.FunctionName, e.CallerName, e.Runtime, e.Err)
-		} else {
+		} //else {
 			//logger.WithContext(l.appCtx).Debugf("HOOK OnStart\t\t%s called by %s ran successfully in %s", e.FunctionName, e.CallerName, e.Runtime)
-		}
+		//}
 	case *fxevent.OnStopExecuting:
 		logger.WithContext(l.appCtx).Debugf("HOOK OnStop\t\t%s executing (caller: %s)", e.FunctionName, e.CallerName)
 	case *fxevent.OnStopExecuted:
 		if e.Err != nil {
 			logger.WithContext(l.appCtx).Warnf("HOOK OnStop\t\t%s called by %s failed in %s: %v", e.FunctionName, e.CallerName, e.Runtime, e.Err)
-		} else {
+		} //else {
 			//logger.WithContext(l.appCtx).Debugf("HOOK OnStop\t\t%s called by %s ran successfully in %s", e.FunctionName, e.CallerName, e.Runtime)
-		}
+		//}
 	case *fxevent.Supplied:
 		if e.Err != nil {
 			logger.WithContext(l.appCtx).Warnf("ERROR\tFailed to supply %v: %v", e.TypeName, e.Err)

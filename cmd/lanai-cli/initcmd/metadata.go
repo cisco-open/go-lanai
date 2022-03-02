@@ -16,7 +16,7 @@ type ModuleMetadata struct {
 	Executables map[string]*Executable `json:"execs"`
 	Resources   []*Resource            `json:"resources"`
 	Generates   []*Generate            `json:"generates"`
-	Binaries    map[string]*Binary              `json:"binaries"`
+	Binaries    []*Binary              `json:"binaries"`
 }
 
 type Executable struct {
@@ -35,6 +35,7 @@ type Generate struct {
 }
 
 type Binary struct {
+	Package string `json:"package"`
 	Version string `json:"version"`
 }
 

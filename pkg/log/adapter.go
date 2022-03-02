@@ -22,6 +22,8 @@ func NewWriterAdapter(logger Logger, lvl LoggingLevel) *writerAdapter {
 		kitLogger = level.Warn(logger)
 	case LevelError:
 		kitLogger = level.Error(logger)
+	default:
+		// TODO should be a noop kit logger
 	}
 	return &writerAdapter{
 		logger: kitLogger,

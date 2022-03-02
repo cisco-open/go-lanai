@@ -13,7 +13,6 @@ import (
 	"go.uber.org/fx"
 	"html/template"
 	"io/fs"
-	"math/rand"
 	"net"
 	"net/http"
 	pathutils "path"
@@ -169,7 +168,7 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 	// random port if not set
 	r.port = r.properties.Port
 	if r.port <= 0 {
-		r.port = 32768 + rand.New(rand.NewSource(time.Now().UnixNano())).Intn(32767)
+		r.port = 32768 + utils.RandomIntN(32767)
 	}
 
 	var addr = fmt.Sprintf(":%v", r.port)
@@ -285,6 +284,7 @@ func (r *Registrar) register(i interface{}) (err error) {
 func (r *Registrar) registerUnknownType(i interface{}) (err error) {
 	v := reflect.ValueOf(i)
 	for ; v.Kind() == reflect.Ptr; v = v.Elem() {
+		// SuppressWarnings go:S108 empty block is intended
 	}
 
 	var valid bool
@@ -476,6 +476,7 @@ func (r *Registrar) installStaticMapping(ctx context.Context, m StaticMapping) e
 	return err
 }
 
+//nolint:contextcheck // context is only for logging purpose
 func (r *Registrar) installRoutedMappings(ctx context.Context, method, group string, mappings []RoutedMapping) error {
 	if len(mappings) == 0 {
 		return nil
@@ -535,6 +536,7 @@ func (r *Registrar) installRoutedMappings(ctx context.Context, method, group str
 	return err
 }
 
+//nolint:contextcheck // context is only for logging purpose
 func (r *Registrar) findMiddlewares(ctx context.Context, group, relativePath string, methods ...string) (gin.HandlersChain, error) {
 	var handlers = make([]gin.HandlerFunc, len(r.middlewares))
 	var matchedMW = make([]MiddlewareMapping, len(r.middlewares))
@@ -625,6 +627,7 @@ func (r *Registrar) loadHtmlTemplates(ctx context.Context) {
 /**************************
 	Helpers
 ***************************/
+
 func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, errTranslators []ErrorTranslator, options []httptransport.ServerOption) gin.HandlerFunc {
 	// create error encoder
 	errenc := m.ErrorEncoder()
@@ -643,7 +646,7 @@ func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, errTranslators [
 		options...,
 	)
 
-	return r.makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition())
+	return r.makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition()) //nolint:contextcheck
 }
 
 // makeGinConditionalHandlerFunc wraps given handler with a request matcher

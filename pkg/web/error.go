@@ -47,6 +47,7 @@ type HttpError struct {
 
 // MarshalJSON implements json.Marshaler
 func (e HttpError) MarshalJSON() ([]byte, error) {
+	//nolint:errorlint
 	if original,ok := e.error.(json.Marshaler); ok {
 		return original.MarshalJSON()
 	}
@@ -59,6 +60,7 @@ func (e HttpError) MarshalJSON() ([]byte, error) {
 
 // StatusCode implements StatusCoder
 func (e HttpError) StatusCode() int {
+	//nolint:errorlint
 	if original,ok := e.error.(StatusCoder); ok {
 		return original.StatusCode()
 	} else if e.SC == 0 {
@@ -70,6 +72,7 @@ func (e HttpError) StatusCode() int {
 
 // Headers implements Headerer
 func (e HttpError) Headers() http.Header {
+	//nolint:errorlint
 	if original,ok := e.error.(Headerer); ok {
 		return original.Headers()
 	}

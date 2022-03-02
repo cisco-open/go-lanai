@@ -26,14 +26,14 @@ type mvcMapping struct {
 	errorEncoder       httptransport.ErrorEncoder
 }
 
+// NewMvcMapping exported for inter-package usage only. Use builders.
 func NewMvcMapping(name, group, path, method string, condition RequestMatcher,
 	endpoint endpoint.Endpoint,
 	decodeRequestFunc httptransport.DecodeRequestFunc,
 	encodeRequestFunc httptransport.EncodeRequestFunc,
 	decodeResponseFunc httptransport.DecodeResponseFunc,
 	encodeResponseFunc httptransport.EncodeResponseFunc,
-	errorEncoder httptransport.ErrorEncoder) MvcMapping {
-
+	errorEncoder httptransport.ErrorEncoder) MvcMapping { //SuppressWarnings go:S107 This function is internal use only, converting params to a struct provide no additional benefit
 	return &mvcMapping{
 		name:               name,
 		group:              group,
@@ -287,8 +287,9 @@ func validateBinding(ctx context.Context, obj interface{}) error {
 	switch v.Kind() {
 	case reflect.Struct:
 		return bindingValidator.StructCtx(ctx, obj)
+	default:
+		return nil
 	}
-	return nil
 }
 
 // returned ptr is the pointer regardless if given type is Ptr or other type

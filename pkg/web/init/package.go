@@ -49,13 +49,13 @@ type initDI struct {
 }
 
 func setup(lc fx.Lifecycle, di initDI) {
-	_ = di.Registrar.Register(web.NewLoggingCustomizer(di.Properties))
-	_ = di.Registrar.Register(web.NewRecoveryCustomizer())
-	_ = di.Registrar.Register(web.NewGinErrorHandlingCustomizer())
+	di.Registrar.MustRegister(web.NewLoggingCustomizer(di.Properties))
+	di.Registrar.MustRegister(web.NewRecoveryCustomizer())
+	di.Registrar.MustRegister(web.NewGinErrorHandlingCustomizer())
 
-	_ = di.Registrar.Register(di.Controllers)
-	_ = di.Registrar.Register(di.Customizers)
-	_ = di.Registrar.Register(di.ErrorTranslators)
+	di.Registrar.MustRegister(di.Controllers)
+	di.Registrar.MustRegister(di.Customizers)
+	di.Registrar.MustRegister(di.ErrorTranslators)
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) (err error) {

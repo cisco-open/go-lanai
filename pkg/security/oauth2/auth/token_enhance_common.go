@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+const (
+	errTmplUnsupportedToken = `unsupported token implementation %T`
+)
+
 /*****************************
 	Expiry Time Enhancer
  *****************************/
@@ -24,7 +28,7 @@ func (e *ExpiryTokenEnhancer) Order() int {
 func (e *ExpiryTokenEnhancer) Enhance(_ context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
-		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
+		return nil, oauth2.NewInternalError(errTmplUnsupportedToken, t)
 	}
 
 	if authDetails, ok := oauth.Details().(security.AuthenticationDetails); ok {
@@ -51,7 +55,7 @@ func (e *DetailsTokenEnhancer) Order() int {
 func (e *DetailsTokenEnhancer) Enhance(_ context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
-		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
+		return nil, oauth2.NewInternalError(errTmplUnsupportedToken, t)
 	}
 
 	t.SetScopes(oauth.OAuth2Request().Scopes())
@@ -74,7 +78,7 @@ func (te *BasicClaimsTokenEnhancer) Order() int {
 func (te *BasicClaimsTokenEnhancer) Enhance(_ context.Context, token oauth2.AccessToken, oauth oauth2.Authentication) (oauth2.AccessToken, error) {
 	t, ok := token.(*oauth2.DefaultAccessToken)
 	if !ok {
-		return nil, oauth2.NewInternalError("unsupported token implementation %T", t)
+		return nil, oauth2.NewInternalError(errTmplUnsupportedToken, t)
 	}
 
 	request := oauth.OAuth2Request()

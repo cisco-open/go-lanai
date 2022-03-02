@@ -60,7 +60,8 @@ func DetermineACSEndpoint(req *saml.IdpAuthnRequest) error {
 	if req.Request.AssertionConsumerServiceIndex != "" {
 		for _, spAssertionConsumerService := range req.SPSSODescriptor.AssertionConsumerServices {
 			if strconv.Itoa(spAssertionConsumerService.Index) == req.Request.AssertionConsumerServiceIndex {
-				req.ACSEndpoint = &spAssertionConsumerService
+				v := spAssertionConsumerService
+				req.ACSEndpoint = &v
 				return nil
 			}
 		}
@@ -70,7 +71,8 @@ func DetermineACSEndpoint(req *saml.IdpAuthnRequest) error {
 	if req.Request.AssertionConsumerServiceURL != "" {
 		for _, spAssertionConsumerService := range req.SPSSODescriptor.AssertionConsumerServices {
 			if spAssertionConsumerService.Location == req.Request.AssertionConsumerServiceURL {
-				req.ACSEndpoint = &spAssertionConsumerService
+				v := spAssertionConsumerService
+				req.ACSEndpoint = &v
 				return nil
 			}
 		}
@@ -84,7 +86,8 @@ func DetermineACSEndpoint(req *saml.IdpAuthnRequest) error {
 			if spAssertionConsumerService.IsDefault != nil && *spAssertionConsumerService.IsDefault {
 				switch spAssertionConsumerService.Binding {
 				case saml.HTTPPostBinding, saml.HTTPRedirectBinding:
-					req.ACSEndpoint = &spAssertionConsumerService
+					v := spAssertionConsumerService
+					req.ACSEndpoint = &v
 					return nil
 				}
 			}
@@ -94,7 +97,8 @@ func DetermineACSEndpoint(req *saml.IdpAuthnRequest) error {
 		for _, spAssertionConsumerService := range req.SPSSODescriptor.AssertionConsumerServices {
 			switch spAssertionConsumerService.Binding {
 			case saml.HTTPPostBinding, saml.HTTPRedirectBinding:
-				req.ACSEndpoint = &spAssertionConsumerService
+				v := spAssertionConsumerService
+				req.ACSEndpoint = &v
 				return nil
 			}
 		}

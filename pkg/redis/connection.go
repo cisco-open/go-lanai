@@ -65,7 +65,10 @@ func GetUniversalOptions(p *RedisProperties) (*redis.UniversalOptions, error) {
 			return nil, errors.New("Cannot parse the certificate file content")
 		}
 
-		t := &tls.Config{RootCAs: root}
+		t := &tls.Config{
+			RootCAs: root,
+			MinVersion: tls.VersionTLS12,
+		}
 		universal.TLSConfig = t
 	}
 	return universal, nil
