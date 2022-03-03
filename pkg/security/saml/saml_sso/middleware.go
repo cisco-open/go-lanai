@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -24,14 +25,14 @@ type Options struct {
 	Cert                   *x509.Certificate
 	EntityIdUrl            url.URL
 	SsoUrl                 url.URL
-	serviceProviderManager SamlClientStore
+	serviceProviderManager saml_auth_ctx.SamlClientStore
 }
 
 type SamlAuthorizeEndpointMiddleware struct {
 	accountStore security.AccountStore
 
 	//used to load the saml clients
-	samlClientStore SamlClientStore
+	samlClientStore saml_auth_ctx.SamlClientStore
 	//manages the resolved service provider metadata
 	spMetadataManager *SpMetadataManager
 
@@ -41,7 +42,7 @@ type SamlAuthorizeEndpointMiddleware struct {
 }
 
 func NewSamlAuthorizeEndpointMiddleware(opts Options,
-	serviceProviderManager SamlClientStore,
+	serviceProviderManager saml_auth_ctx.SamlClientStore,
 	accountStore security.AccountStore,
 	attributeGenerator AttributeGenerator) *SamlAuthorizeEndpointMiddleware {
 
@@ -237,7 +238,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) handleError(c *gin.Context, authReque
 	c.Abort()
 }
 
-func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context.Context, client SamlClient, auth security.Authentication) error {
+func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context.Context, client saml_auth_ctx.SamlClient, auth security.Authentication) error {
 	tenantRestriction := client.GetTenantRestrictions()
 
 	if len(tenantRestriction) == 0  {

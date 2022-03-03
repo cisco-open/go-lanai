@@ -1,6 +1,7 @@
 package sectest
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"strings"
 )
@@ -15,27 +16,76 @@ const (
 
 type mockedAccount struct {
 	UserId          string
-	Username        string
+	username        string
 	Password        string
+	tenantId        string
 	DefaultTenant   string
 	AssignedTenants utils.StringSet
-	Permissions     utils.StringSet
+	permissions     utils.StringSet
 }
 
-func newMockedAccount(props *mockedAccountProperties) *mockedAccount {
+func (m *mockedAccount) DefaultDesignatedTenantId() string {
+	return m.DefaultTenant
+}
+
+func (m *mockedAccount) DesignatedTenantIds() []string {
+	return m.AssignedTenants.Values()
+}
+
+func (m *mockedAccount) TenantId() string {
+	return m.tenantId
+}
+
+func (m *mockedAccount) ID() interface{} {
+	return m.UserId
+}
+
+func (m *mockedAccount) Type() security.AccountType {
+	panic("implement me")
+}
+
+func (m *mockedAccount) Username() string {
+	return m.username
+}
+
+func (m *mockedAccount) Credentials() interface{} {
+	panic("implement me")
+}
+
+func (m *mockedAccount) Permissions() []string {
+	return m.permissions.Values()
+}
+
+func (m mockedAccount) Disabled() bool {
+	panic("implement me")
+}
+
+func (m mockedAccount) Locked() bool {
+	panic("implement me")
+}
+
+func (m mockedAccount) UseMFA() bool {
+	panic("implement me")
+}
+
+func (m mockedAccount) CacheableCopy() security.Account {
+	panic("implement me")
+}
+
+func newMockedAccount(props *MockedAccountProperties) *mockedAccount {
 	ret := &mockedAccount{
 		UserId:          props.UserId,
-		Username:        props.Username,
+		username:        props.Username,
 		Password:        props.Password,
 		DefaultTenant:   props.DefaultTenant,
 		AssignedTenants: utils.NewStringSet(props.Tenants...),
-		Permissions:     utils.NewStringSet(props.Perms...),
+		permissions:     utils.NewStringSet(props.Perms...),
 	}
 	switch {
 	case ret.UserId == "":
-		ret.UserId = extIdToId(ret.Username)
-	case ret.Username == "":
-		ret.Username = idToExtId(ret.UserId)
+		ret.UserId = extIdToId(ret.username)
+	case ret.username == "":
+		ret.username = idToExtId(ret.UserId)
 	}
 	return ret
 }
@@ -71,8 +121,8 @@ func newMockedAccounts(props *mockingProperties) *mockedAccounts {
 	}
 	for _, v := range props.Accounts {
 		acct := newMockedAccount(v)
-		if acct.Username != "" {
-			accts.lookup[acct.Username] = acct
+		if acct.username != "" {
+			accts.lookup[acct.username] = acct
 		}
 		if acct.UserId != "" {
 			accts.idLookup[acct.UserId] = acct
@@ -86,7 +136,7 @@ func (m mockedAccounts) find(username, userId string) *mockedAccount {
 		return v
 	}
 
-	if v, ok := m.idLookup[userId]; ok && (username == "" || v.Username == username) {
+	if v, ok := m.idLookup[userId]; ok && (username == "" || v.username == username) {
 		return v
 	}
 	return nil
@@ -94,7 +144,7 @@ func (m mockedAccounts) find(username, userId string) *mockedAccount {
 
 func (m mockedAccounts) idToName(id string) string {
 	if u, ok := m.idLookup[id]; ok {
-		return u.Username
+		return u.username
 	}
 	return idToExtId(id)
 }
