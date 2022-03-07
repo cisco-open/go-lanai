@@ -509,6 +509,20 @@ func SubTestPageAndSort(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(models).To(HaveLen(2), "paged result should have correct count")
 		g.Expect(models[0].SearchIdx).To(BeEquivalentTo(2), "sorted page result should have correct order")
 
+		// page + sort as single option
+		models = nil
+		e = di.Repo.FindAll(ctx, &models, []Option{Page(1, 2), SortBy("SearchIdx", false)})
+		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
+		g.Expect(models).To(HaveLen(2), "paged result should have correct count")
+		g.Expect(models[0].SearchIdx).To(BeEquivalentTo(2), "sorted page result should have correct order")
+
+		// sort + page (reversed order) as single option
+		models = nil
+		e = di.Repo.FindAll(ctx, &models, []Option{SortBy("SearchIdx", false), Page(1, 2)})
+		g.Expect(e).To(Succeed(), "sort by field shouldn't return error")
+		g.Expect(models).To(HaveLen(2), "paged result should have correct count")
+		g.Expect(models[0].SearchIdx).To(BeEquivalentTo(2), "sorted page result should have correct order")
+
 		// page only
 		models = nil
 		e = di.Repo.FindAll(ctx, &models, Page(1, 2))

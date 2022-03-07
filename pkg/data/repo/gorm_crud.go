@@ -253,6 +253,7 @@ func execute(_ context.Context, db *gorm.DB, condition Condition, options []Opti
 }
 
 func optsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
+	order.SortStable(opts, order.UnorderedMiddleCompare)
 	scopes := make([]func(*gorm.DB)*gorm.DB, 0, len(opts))
 	for _, v := range opts {
 		switch rv := reflect.ValueOf(v); rv.Kind() {
@@ -301,8 +302,6 @@ func applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
 	if len(opts) == 0 {
 		return db, nil
 	}
-
-	order.SortStable(opts, order.UnorderedMiddleCompare)
 
 	funcs, e := optsToDBFuncs(opts)
 	if e != nil {
