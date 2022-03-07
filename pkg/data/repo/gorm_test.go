@@ -45,6 +45,7 @@ var (
 		uuid.MustParse("576286d7-0ee0-46b1-af18-3de00415eb8a"),
 	}
 	sortedModelIDs []uuid.UUID
+	nonExistID = uuid.MustParse("2e15c4d2-d427-4af2-b0d9-c3bcb0a8485c")
 )
 
 func init() {
@@ -416,13 +417,23 @@ func SubTestUpdates(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
 		id := modelIDs[0]
-		e = di.Repo.Update(ctx, &TestModel{ID: id}, &TestModel{Value: "Just Updated"})
+		e = di.Repo.Update(ctx, &TestModel{ID: id}, &TestModel{Value: "Just Updated"}, ErrorOnZeroRows())
 		g.Expect(e).To(Succeed(), "Update shouldn't return error")
 
 		var model TestModel
 		e = di.Repo.FindById(ctx, &model, id)
 		g.Expect(e).To(Succeed(), "FindById shouldn't return error")
 		g.Expect(model.Value).To(BeEquivalentTo("Just Updated"), "re-fetched value after Update should be correct")
+
+		// update 0 rows by id without ErrorOnZeroRows option
+		e = di.Repo.Update(ctx, &TestModel{ID: nonExistID}, &TestModel{Value: "Just Updated"})
+		g.Expect(e).To(Succeed(), "Delete shouldn't return error with 0 affected rows")
+
+		// delete 0 rows by with ErrorOnZeroRows option
+		e = di.Repo.Update(ctx, &TestModel{ID: nonExistID}, &TestModel{Value: "Just Updated"}, ErrorOnZeroRows())
+		g.Expect(e).To(HaveOccurred(), "Delete should return error with 0 affected rows and ErrorOnZeroRows")
+		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "Delete should return gorm.ErrRecordNotFound with 0 affected rows and ErrorOnZeroRows")
+		g.Expect(errors.Is(e, data.ErrorRecordNotFound)).To(BeTrue(), "Delete should return data.ErrorRecordNotFound with 0 affected rows and ErrorOnZeroRows")
 	}
 }
 
@@ -436,12 +447,22 @@ func SubTestDelete(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(Succeed(), "Delete shouldn't return error")
 
 		var model TestModel
-		e = di.Repo.FindById(ctx, &model, id)
+		e = di.Repo.FindById(ctx, &model, id, ErrorOnZeroRows())
 		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "re-fetch after Delete should yield RecordNotFound")
 
 		// delete by
 		e = di.Repo.DeleteBy(ctx, Where(`"test_repo_models"."search" < ?`, len(modelIDs)-1))
 		g.Expect(e).To(Succeed(), "DeleteBy shouldn't return error")
+
+		// delete 0 rows by id without ErrorOnZeroRows option
+		e = di.Repo.Delete(ctx, &TestModel{ID: nonExistID})
+		g.Expect(e).To(Succeed(), "Delete shouldn't return error with 0 affected rows")
+
+		// delete 0 rows by with ErrorOnZeroRows option
+		e = di.Repo.Delete(ctx, &TestModel{ID: nonExistID}, ErrorOnZeroRows())
+		g.Expect(e).To(HaveOccurred(), "Delete should return error with 0 affected rows and ErrorOnZeroRows")
+		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(BeTrue(), "Delete should return gorm.ErrRecordNotFound with 0 affected rows and ErrorOnZeroRows")
+		g.Expect(errors.Is(e, data.ErrorRecordNotFound)).To(BeTrue(), "Delete should return data.ErrorRecordNotFound with 0 affected rows and ErrorOnZeroRows")
 
 		// fetch again and validate
 		var count int
@@ -593,7 +614,8 @@ func SubTestTransaction(di *testDI) test.GomegaSubTestFunc {
 		e = tx.Transaction(ctx, func(ctx context.Context) (err error) {
 			var e error
 			// try create one
-			model, _ := createMainModel(id1, 10)
+			model, oto := createMainModel(id1, 10)
+			model.OneToOne = oto
 			e = di.Repo.Save(ctx, model)
 			g.Expect(e).To(Succeed(), "save in transaction shouldn't return error")
 			// try create another with duplicate keys (will fail)
