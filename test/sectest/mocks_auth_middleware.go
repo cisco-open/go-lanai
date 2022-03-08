@@ -29,14 +29,14 @@ type MockUserAuthOption struct {
 	Principal   string
 	Permissions map[string]interface{}
 	State       security.AuthenticationState
-	Details     map[string]interface{}
+	Details     interface{}
 }
 
 type mockUserAuthentication struct {
 	Subject       string
 	PermissionMap map[string]interface{}
 	StateValue    security.AuthenticationState
-	DetailsMap    map[string]interface{}
+	details       interface{}
 }
 
 func NewMockedUserAuthentication(opts...MockUserAuthOptions) *mockUserAuthentication {
@@ -48,7 +48,7 @@ func NewMockedUserAuthentication(opts...MockUserAuthOptions) *mockUserAuthentica
 		Subject:       opt.Principal,
 		PermissionMap: opt.Permissions,
 		StateValue:    opt.State,
-		DetailsMap:    opt.Details,
+		details:    opt.Details,
 	}
 }
 
@@ -65,5 +65,5 @@ func (a *mockUserAuthentication) State() security.AuthenticationState {
 }
 
 func (a *mockUserAuthentication) Details() interface{} {
-	return a.DetailsMap
+	return a.details
 }
