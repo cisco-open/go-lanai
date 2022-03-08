@@ -1,4 +1,4 @@
-package saml_sso_test
+package samlssotest
 
 import (
 	"context"

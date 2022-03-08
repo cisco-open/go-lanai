@@ -1,4 +1,4 @@
-package saml_sso_test
+package samlssotest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"

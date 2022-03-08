@@ -5,9 +5,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samlssotest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"encoding/base64"
 	"encoding/xml"
@@ -25,10 +25,10 @@ import (
 )
 
 func TestSPInitiatedSso(t *testing.T) {
-	sp := saml_sso_test.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
+	sp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
 	metadata, _ := xml.MarshalIndent(sp.Metadata(), "", "  ")
 
-	testClientStore := saml_sso_test.NewMockedSamlClientStore(
+	testClientStore := samlssotest.NewMockedSamlClientStore(
 		DefaultSamlClient{
 			SamlSpDetails: SamlSpDetails{
 				EntityId:                             sp.EntityID,
@@ -52,7 +52,7 @@ func TestSPInitiatedSso(t *testing.T) {
 	g := gomega.NewWithT(t)
 	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
 
-	samlResponseXml, err := saml_sso_test.ParseSamlResponse(w.Body)
+	samlResponseXml, err := samlssotest.ParseSamlResponse(w.Body)
 	if err != nil {
 		t.Errorf("error parsing saml response xml")
 		return
@@ -65,10 +65,10 @@ func TestSPInitiatedSso(t *testing.T) {
 //In this test we use a different cert key pair so that the SP's actual cert and key do not match the ones that are
 // in its metadata. This way the signature of the auth request won't match the expected signature based on the metadata
 func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
-	sp := saml_sso_test.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
+	sp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
 	metadata, _ := xml.MarshalIndent(sp.Metadata(), "", "  ")
 
-	testClientStore := saml_sso_test.NewMockedSamlClientStore(
+	testClientStore := samlssotest.NewMockedSamlClientStore(
 		DefaultSamlClient{
 			SamlSpDetails: SamlSpDetails{
 				EntityId:                             sp.EntityID,
@@ -79,7 +79,7 @@ func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
 		})
 	testAccountStore := sectest.NewMockedAccountStore()
 
-	unknownSp := saml_sso_test.NewSamlSp("http://localhost:8000", "testdata/saml_test_unknown_sp.cert", "testdata/saml_test_unknown_sp.key")
+	unknownSp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_unknown_sp.cert", "testdata/saml_test_unknown_sp.key")
 
 	r := setupServerForTest(testClientStore, testAccountStore)
 
@@ -94,7 +94,7 @@ func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
 	g := gomega.NewWithT(t)
 	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
 
-	samlResponseXml, err := saml_sso_test.ParseSamlResponse(w.Body)
+	samlResponseXml, err := samlssotest.ParseSamlResponse(w.Body)
 
 	if err != nil {
 		t.Errorf("error parsing saml response xml")
@@ -107,10 +107,10 @@ func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
 }
 
 func TestIDPInitiatedSso(t *testing.T) {
-	sp := saml_sso_test.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
+	sp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
 	metadata, _ := xml.MarshalIndent(sp.Metadata(), "", "  ")
 
-	testClientStore := saml_sso_test.NewMockedSamlClientStore(
+	testClientStore := samlssotest.NewMockedSamlClientStore(
 		DefaultSamlClient{
 			SamlSpDetails: SamlSpDetails{
 				EntityId:                             sp.EntityID,
@@ -136,7 +136,7 @@ func TestIDPInitiatedSso(t *testing.T) {
 	g := gomega.NewWithT(t)
 	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
 
-	samlResponseXml, err := saml_sso_test.ParseSamlResponse(w.Body)
+	samlResponseXml, err := samlssotest.ParseSamlResponse(w.Body)
 	if err != nil {
 		t.Errorf("error parsing saml response xml")
 		return
@@ -147,7 +147,7 @@ func TestIDPInitiatedSso(t *testing.T) {
 }
 
 func TestMetadata(t *testing.T) {
-	testClientStore := saml_sso_test.NewMockedSamlClientStore(
+	testClientStore := samlssotest.NewMockedSamlClientStore(
 		DefaultSamlClient{
 			SamlSpDetails: SamlSpDetails{
 				EntityId:                             "http://localhost:8000/saml/metadata",

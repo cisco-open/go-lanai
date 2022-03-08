@@ -8,7 +8,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -17,6 +16,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samlssotest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"embed"
 	"encoding/xml"
@@ -62,8 +62,8 @@ var testUser3 = &sectest.MockedAccountProperties{
 	Tenants: []string{testTenantId3.String()},
 }
 
-var testSp1 = saml_sso_test.NewSamlSp(TEST_SAML_SP_1_URL, TEST_SAML_SP_CERT, TEST_SAML_SP_KEY)
-var testSp2 = saml_sso_test.NewSamlSp(TEST_SAML_SP_2_URL, TEST_SAML_SP_CERT, TEST_SAML_SP_KEY)
+var testSp1 = samlssotest.NewSamlSp(TEST_SAML_SP_1_URL, TEST_SAML_SP_CERT, TEST_SAML_SP_KEY)
+var testSp2 = samlssotest.NewSamlSp(TEST_SAML_SP_2_URL, TEST_SAML_SP_CERT, TEST_SAML_SP_KEY)
 
 
 type DIForTest struct {
@@ -102,10 +102,10 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 		port := di.Register.ServerPort()
 		resp, _ := http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
 			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(saml_sso_test.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
-		samlResponseXml, err := saml_sso_test.ParseSamlResponse(resp.Body)
+		samlResponseXml, err := samlssotest.ParseSamlResponse(resp.Body)
 		if err != nil {
 			t.Errorf("cannot parse response due to error %v", err)
 		}
@@ -119,10 +119,10 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 		})
 		resp, _ = http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
 			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(saml_sso_test.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
-		samlResponseXml, err = saml_sso_test.ParseSamlResponse(resp.Body)
+		samlResponseXml, err = samlssotest.ParseSamlResponse(resp.Body)
 		if err != nil {
 			t.Errorf("cannot parse response due to error %v", err)
 		}
@@ -136,7 +136,7 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 		})
 		resp, _ = http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
 			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(saml_sso_test.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ := ioutil.ReadAll(resp.Body)
@@ -158,7 +158,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		port := di.Register.ServerPort()
 		resp, _ := http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
 			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(saml_sso_test.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ := ioutil.ReadAll(resp.Body)
@@ -172,10 +172,10 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		})
 		resp, _ = http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
 			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(saml_sso_test.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
-		samlResponseXml, err := saml_sso_test.ParseSamlResponse(resp.Body)
+		samlResponseXml, err := samlssotest.ParseSamlResponse(resp.Body)
 		if err != nil {
 			t.Errorf("cannot parse response due to error %v", err)
 		}
@@ -189,7 +189,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		})
 		resp, _ = http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
 			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(saml_sso_test.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ = ioutil.ReadAll(resp.Body)
@@ -257,7 +257,7 @@ func provideMockSamlClient() saml_auth_ctx.SamlClientStore {
 	sp1Metadata, _ := xml.MarshalIndent(testSp1.Metadata(), "", "  ")
 	sp2Metadata, _ := xml.MarshalIndent(testSp2.Metadata(), "", "  ")
 
-	return saml_sso_test.NewMockedSamlClientStore(
+	return samlssotest.NewMockedSamlClientStore(
 		DefaultSamlClient{
 			SamlSpDetails: SamlSpDetails{
 				EntityId:                             testSp1.EntityID,
