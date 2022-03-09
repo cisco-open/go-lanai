@@ -3,6 +3,7 @@ package example
 import (
 	"context"
 	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
+	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"errors"
 )
 
@@ -10,7 +11,7 @@ type InMemorySamlClientStore struct {
 	details []saml_auth.DefaultSamlClient
 }
 
-func NewInMemSpManager() saml_auth.SamlClientStore {
+func NewInMemSpManager() saml_auth_ctx.SamlClientStore {
 	return &InMemorySamlClientStore{
 		details: []saml_auth.DefaultSamlClient{
 			saml_auth.DefaultSamlClient{
@@ -33,15 +34,15 @@ func NewInMemSpManager() saml_auth.SamlClientStore {
 	}
 }
 
-func (i *InMemorySamlClientStore) GetAllSamlClient(context.Context) ([]saml_auth.SamlClient, error) {
-	var result []saml_auth.SamlClient
+func (i *InMemorySamlClientStore) GetAllSamlClient(context.Context) ([]saml_auth_ctx.SamlClient, error) {
+	var result []saml_auth_ctx.SamlClient
 	for _, v := range i.details {
 		result = append(result, v)
 	}
 	return result, nil
 }
 
-func (i *InMemorySamlClientStore) GetSamlClientByEntityId(ctx context.Context, entityId string) (saml_auth.SamlClient, error) {
+func (i *InMemorySamlClientStore) GetSamlClientByEntityId(ctx context.Context, entityId string) (saml_auth_ctx.SamlClient, error) {
 	for _, detail := range i.details {
 		if detail.EntityId == entityId {
 			return detail, nil

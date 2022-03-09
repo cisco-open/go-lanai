@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
@@ -21,13 +22,13 @@ var (
 type SamlAuthorizeEndpointConfigurer struct {
 	properties         samlctx.SamlProperties
 	serverProperties   web.ServerProperties
-	samlClientStore    SamlClientStore
+	samlClientStore    saml_auth_ctx.SamlClientStore
 	accountStore       security.AccountStore
 	attributeGenerator AttributeGenerator
 }
 
 func newSamlAuthorizeEndpointConfigurer(properties samlctx.SamlProperties,
-	samlClientStore SamlClientStore,
+	samlClientStore saml_auth_ctx.SamlClientStore,
 	accountStore security.AccountStore,
 	attributeGenerator AttributeGenerator) *SamlAuthorizeEndpointConfigurer {
 

@@ -52,7 +52,7 @@ func (b *mockedBase) isTokenRevoked(token *MockedToken, value string) bool {
 func (b *mockedBase) newMockedToken(acct *mockedAccount, tenant *mockedTenant, exp time.Time, origUser string) *MockedToken {
 	return &MockedToken{
 		MockedTokenInfo: MockedTokenInfo{
-			UName: acct.Username,
+			UName: acct.username,
 			UID:   acct.UserId,
 			TID:   tenant.ID,
 			TExternalId: tenant.ExternalId,
@@ -79,7 +79,7 @@ func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *mockedAccount) oauth2.
 		opt.Principal = mt.UName
 		opt.State = security.StateAuthenticated
 		opt.Permissions = map[string]interface{}{}
-		for perm := range acct.Permissions {
+		for perm := range acct.permissions {
 			opt.Permissions[perm] = true
 		}
 	})
@@ -91,7 +91,7 @@ func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *mockedAccount) oauth2.
 			TenantId:     mt.TID,
 			Exp:          mt.ExpTime,
 			Iss:          mt.IssTime,
-			Permissions:  acct.Permissions,
+			Permissions:  acct.permissions,
 			Tenants:      acct.AssignedTenants,
 			OrigUsername: mt.OrigU,
 		}
