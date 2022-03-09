@@ -5,23 +5,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
+	"fmt"
 	"github.com/hashicorp/consul/api"
+	"strings"
 )
-
-/*
-	TODO: For reference the java IDM implementation have the following consul registration customizers
-	1. swaggerPathConsulRegistrationCustomizer
-	add tag: swaggerPath=/swagger
-	2. SecurityCompatibilityRegistrationCustomizer
-	add tag: SMCR=3901
-	add metadata: SMCR:3901
-	3. Build info in both tag and metadata
-	TAG_SERVICE_NAME, "build.name",
-	TAG_VERSION, "build.version",
-	TAG_BUILD_DATE_TIME, "build.time",
-	TAG_BUILD_NUMBER, "build.number"
- */
-
 
 type Customizer interface {
 	Customize(ctx context.Context, reg *api.AgentServiceRegistration)
@@ -34,7 +21,7 @@ type Customizers struct {
 
 func NewCustomizers(ctx *bootstrap.ApplicationContext) *Customizers {
 	return &Customizers{
-		Customizers: utils.NewSet(NewDefaultCustomizer(ctx)),
+		Customizers: utils.NewSet(NewDefaultCustomizer(ctx), buildInfoDiscoveryCustomizer{}),
 	}
 }
 
@@ -55,5 +42,28 @@ func (r *Customizers) Apply(ctx context.Context, registration *api.AgentServiceR
 
 	for c, _ := range r.Customizers {
 		c.(Customizer).Customize(ctx, registration)
+	}
+}
+
+type buildInfoDiscoveryCustomizer struct {}
+
+func (b buildInfoDiscoveryCustomizer) Customize(ctx context.Context, reg *api.AgentServiceRegistration) {
+	attrs := map[string]string {
+		TAG_VERSION: bootstrap.BuildVersion,
+		TAG_BUILD_DATE_TIME: bootstrap.BuildTime,
+	}
+
+	components := strings.Split(bootstrap.BuildVersion, "-")
+	if len(components) == 2 {
+		attrs[TAG_BUILD_NUMBER] = components[1]
+	}
+
+	if reg.Meta == nil {
+		reg.Meta = map[string]string{}
+	}
+
+	for k, v := range attrs {
+		reg.Meta[k] = v
+		reg.Tags = append(reg.Tags, fmt.Sprintf("%s=%s", k, v))
 	}
 }
