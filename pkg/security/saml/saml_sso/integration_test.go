@@ -3,7 +3,6 @@ package saml_auth
 import (
 	"bytes"
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
@@ -77,7 +76,7 @@ func Test_Saml_Sso (t *testing.T) {
 	di := &DIForTest{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithModules(webinit.Module, security.Module, tenancy.Module, Module, TestModule),
+		apptest.WithModules(webinit.Module, security.Module, tenancy.Module, Module),
 		apptest.WithDI(di), // tell test framework to do dependencies injection
 		apptest.WithTimeout(300*time.Second),
 		apptest.WithProperties("server.context-path: /auth",
@@ -85,6 +84,7 @@ func Test_Saml_Sso (t *testing.T) {
 			"security.auth.saml.key-file: testdata/saml_test.key"),
 		apptest.WithFxOptions(
 			fx.Provide(provideMockSamlClient, provideMockAccountStore, provideMockAuthMw, provideMockedTenancyAccessor)),
+		apptest.WithFxOptions(fx.Invoke(configureAuthorizationServer)),
 		test.GomegaSubTest(SubTestTenantRestrictionAny(di), "SubTestTenantRestrictionAny"),
 		test.GomegaSubTest(SubTestTenantRestrictionAll(di), "SubTestTenantRestrictionAll"))
 }
@@ -198,22 +198,6 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 	}
 }
 
-
-/*************************************
-This module provides the configuration to setup saml sso feature.
-This is equivalent to authserver.OAuth2AuthorizeModule except this module only sets up the saml sso related feature
-and not the oauth auth server related feature
-
-In addition, this module sets up a mock auth middleware to provide a mocked user session.
-**************************************/
-var TestModule = &bootstrap.Module{
-	Name: "saml sso test configuration",
-	Precedence: security.MinSecurityPrecedence + 20,
-	Options: []fx.Option{
-		fx.Invoke(configureAuthorizationServer),
-	},
-}
-
 type configureDI struct {
 	fx.In
 	SecurityRegistrar    security.Registrar
@@ -222,7 +206,11 @@ type configureDI struct {
 	MockAuthMw *sectest.MockAuthenticationMiddleware
 }
 
-// configureAuthorizationServer is the Configuration entry point
+// This method provides the configuration to setup saml sso feature.
+// This is equivalent to authserver.OAuth2AuthorizeModule except this module only sets up the saml sso related feature
+// and not the oauth auth server related feature
+//
+// In addition, this module sets up a mock auth middleware to provide a mocked user session.
 func configureAuthorizationServer(di configureDI) {
 	//This mocks the session based authentication middleware
 	di.Server.Use(di.MockAuthMw.AuthenticationHandlerFunc())
