@@ -4,22 +4,23 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
 /**********************************
 	Json RequestDetails Encoder
 ***********************************/
-// FIXME this is not a correct implementation, because request should contains FormData bindings, URI bindings, etc
-func jsonEncodeRequestFunc(_ context.Context, r *http.Request, request interface{}) error {
+// TODO Request should contains FormData bindings, URI bindings, etc.
+//		Need to review if request encoder is still needed in "web" package. We have "httpclient" now
+func jsonEncodeRequestFunc(_ context.Context, r *http.Request, body interface{}) error {
 	// review this part
+	r.Header.Set("Content-Type", "application/json")
 	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(request)
-	if err != nil {
-		return err
+	if e := json.NewEncoder(&buf).Encode(body); e != nil {
+		return e
 	}
-	r.Body = ioutil.NopCloser(&buf)
+	r.Body = io.NopCloser(&buf)
 	return nil
 }
 

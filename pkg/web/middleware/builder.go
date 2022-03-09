@@ -31,6 +31,7 @@ func NewBuilder(names ...string) *MappingBuilder {
 /*****************************
 	Public
 ******************************/
+
 func (b *MappingBuilder) Name(name string) *MappingBuilder {
 	b.name = name
 	return b
@@ -51,7 +52,7 @@ func (b *MappingBuilder) ApplyTo(matcher web.RouteMatcher) *MappingBuilder {
 	return b
 }
 
-// support
+// Use set middleware handler. Support:
 // - gin.HandlerFunc
 // - http.HandlerFunc
 // - web.HandlerFunc
@@ -96,13 +97,12 @@ func (b *MappingBuilder) Build() web.MiddlewareMapping {
 	default:
 		panic(fmt.Errorf("unable to build '%s' middleware mapping: unsupported HandlerFunc type %v. please use With(...) or Use(...)", b.name, handlerFunc))
 	}
-
-	return nil
 }
 
 /*****************************
 	Getters
 ******************************/
+
 func (b *MappingBuilder) GetRouteMatcher() web.RouteMatcher {
 	return b.matcher
 }

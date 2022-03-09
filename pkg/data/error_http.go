@@ -29,6 +29,7 @@ func (WebDataErrorTranslator) Order() int {
 }
 
 func (t WebDataErrorTranslator) Translate(ctx context.Context, err error) error {
+	//nolint:errorlint
 	if _, ok := err.(errorutils.ErrorCoder); !ok || !errors.Is(err, ErrorCategoryData) {
 		return err
 	}
@@ -49,10 +50,12 @@ func (t WebDataErrorTranslator) Translate(ctx context.Context, err error) error 
 	}
 }
 
+//nolint:errorlint
 func (t WebDataErrorTranslator) errorWithStatusCode(_ context.Context, err error, sc int) error {
 	return NewErrorWithStatusCode(err.(DataError), sc)
 }
 
+//nolint:errorlint
 func (t WebDataErrorTranslator) dataIntegrityErrorWithStatusCode(_ context.Context, err error, sc int) error {
 	switch err.(DataError).RootCause().(type) {
 	case *pgconn.PgError, pq.Error, *pq.Error:

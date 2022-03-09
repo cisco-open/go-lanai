@@ -71,6 +71,7 @@ const (
 )
 
 // ErrorTypes, can be used in errors.Is
+//goland:noinspection GoUnusedGlobalVariable
 var (
 	ErrorCategoryKafka = NewErrorCategory(Reserved, errors.New("error type: kafka"))
 	ErrorTypeBinding   = NewErrorType(ErrorTypeCodeBinding, errors.New("error type: authentication"))
@@ -78,15 +79,15 @@ var (
 	ErrorTypeConsumer  = NewErrorType(ErrorTypeCodeConsumer, errors.New("error type: internal"))
 
 	ErrorSubTypeBindingInternal = NewErrorSubType(ErrorSubTypeCodeBindingInternal, errors.New("error sub-type: internal"))
-	ErrorSubTypeConnectivity    = NewErrorSubType(ErrorSubTypeCodeConnectivity, errors.New("error sub-type: internal"))
-	ErrorSubTypeProvisioning    = NewErrorSubType(ErrorSubTypeCodeProvisioning, errors.New("error sub-type: internal"))
+	ErrorSubTypeConnectivity    = NewErrorSubType(ErrorSubTypeCodeConnectivity, errors.New("error sub-type: connectivity"))
+	ErrorSubTypeProvisioning    = NewErrorSubType(ErrorSubTypeCodeProvisioning, errors.New("error sub-type: provisioning"))
 
-	ErrorSubTypeProducerGeneral      = NewErrorSubType(ErrorSubTypeCodeProducerGeneral, errors.New("error sub-type: csrf"))
-	ErrorSubTypeIllegalProducerUsage = NewErrorSubType(ErrorSubTypeCodeIllegalProducerUsage, errors.New("error sub-type: csrf"))
-	ErrorSubTypeEncoding             = NewErrorSubType(ErrorSubTypeCodeEncoding, errors.New("error sub-type: csrf"))
-	ErrorSubTypeConsumerGeneral      = NewErrorSubType(ErrorSubTypeCodeConsumerGeneral, errors.New("error sub-type: csrf"))
-	ErrorSubTypeIllegalConsumerUsage = NewErrorSubType(ErrorSubTypeCodeIllegalConsumerUsage, errors.New("error sub-type: csrf"))
-	ErrorSubTypeDecoding             = NewErrorSubType(ErrorSubTypeCodeDecoding, errors.New("error sub-type: csrf"))
+	ErrorSubTypeProducerGeneral      = NewErrorSubType(ErrorSubTypeCodeProducerGeneral, errors.New("error sub-type: producer"))
+	ErrorSubTypeIllegalProducerUsage = NewErrorSubType(ErrorSubTypeCodeIllegalProducerUsage, errors.New("error sub-type: producer api usage"))
+	ErrorSubTypeEncoding             = NewErrorSubType(ErrorSubTypeCodeEncoding, errors.New("error sub-type: encoding"))
+	ErrorSubTypeConsumerGeneral      = NewErrorSubType(ErrorSubTypeCodeConsumerGeneral, errors.New("error sub-type: consumer"))
+	ErrorSubTypeIllegalConsumerUsage = NewErrorSubType(ErrorSubTypeCodeIllegalConsumerUsage, errors.New("error sub-type: consumer api usage"))
+	ErrorSubTypeDecoding             = NewErrorSubType(ErrorSubTypeCodeDecoding, errors.New("error sub-type: decoding"))
 )
 
 func init() {

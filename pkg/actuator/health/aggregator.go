@@ -41,17 +41,19 @@ func NewSimpleStatusAggregator(opts ...AggregateOptions) *SimpleStatusAggregator
 }
 
 func (a SimpleStatusAggregator) Aggregate(_ context.Context, statuses ...Status) Status {
-	var status *Status = nil
+	var status Status
+	unknown := true
 	for _, s := range statuses {
-		if status == nil || a.compare(s, *status) < 0 {
-			status = &s
+		if unknown || a.compare(s, status) < 0 {
+			unknown = false
+			status = s
 		}
 	}
 
-	if status == nil {
+	if unknown {
 		return StatusUnkown
 	}
-	return *status
+	return status
 }
 
 func (a SimpleStatusAggregator) compare(s1, s2 Status) int {

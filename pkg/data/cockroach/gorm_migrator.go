@@ -9,6 +9,8 @@ import (
 /*************************
 	Custom Migrator
  *************************/
+
+// GormMigrator
 // Inverted index support:
 // for now, use PostgreSQL-compatible syntax: https://www.cockroachlabs.com/docs/v20.2/inverted-indexes#creation
 type GormMigrator struct {
@@ -18,7 +20,7 @@ type GormMigrator struct {
 func NewGormMigrator(db *gorm.DB, dialector gorm.Dialector) *GormMigrator {
 	return &GormMigrator{
 		Migrator: postgres.Migrator{
-			migrator.Migrator{
+			Migrator: migrator.Migrator{
 				Config: migrator.Config{
 					DB:                          db,
 					Dialector:                   dialector,

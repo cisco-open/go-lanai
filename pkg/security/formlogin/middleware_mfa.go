@@ -119,6 +119,7 @@ func (mw *MfaAuthenticationMiddleware) handleError(c *gin.Context, err error, ca
 }
 
 func (mw *MfaAuthenticationMiddleware) shouldClear(err error) bool {
+	//nolint:errorlint
 	switch coder, ok := err.(errorutils.ErrorCoder); ok {
 	case coder.Code() == security.ErrorCodeCredentialsExpired:
 		return true

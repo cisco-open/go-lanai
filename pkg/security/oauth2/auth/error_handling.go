@@ -27,7 +27,7 @@ func (h *OAuth2ErrorHandler) HandleError(c context.Context, r *http.Request, rw 
 }
 
 func (h *OAuth2ErrorHandler) handleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
-
+	//nolint:errorlint
 	switch oe, ok := err.(oauth2.OAuth2ErrorTranslator); {
 	case ok && errors.Is(err, errorInvalidRedirectUri):
 		writeOAuth2Error(c, r, rw, oe)

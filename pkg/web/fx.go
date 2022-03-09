@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	typeController      = reflect.TypeOf(func(Controller) {}).In(0)
-	typeCustomizer      = reflect.TypeOf(func(Customizer) {}).In(0)
-	typeErrorTranslator = reflect.TypeOf(func(ErrorTranslator) {}).In(0)
+	typeController      = reflect.TypeOf(func(Controller) {/* empty */}).In(0)
+	typeCustomizer      = reflect.TypeOf(func(Customizer) {/* empty */}).In(0)
+	typeErrorTranslator = reflect.TypeOf(func(ErrorTranslator) {/* empty */}).In(0)
 	typeFxOut           = reflect.TypeOf(fx.Out{})
 )
 

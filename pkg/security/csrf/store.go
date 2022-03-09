@@ -24,6 +24,7 @@ type Token struct {
 	HeaderName string
 }
 
+//TokenStore
 /**
 	The store is responsible for reading the CSRF token associated to the request.
 	How the CSRF token is associated to the request is the implementation's discretion.

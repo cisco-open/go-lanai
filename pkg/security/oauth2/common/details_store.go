@@ -49,6 +49,11 @@ const (
 	//prefix = ""
 )
 
+const (
+	errTmplUnsupportedKey = `unsupported key type %T`
+	errTmplUnsupportedDetails = `unsupported details type %T`
+)
+
 // RedisContextDetailsStore implements security.ContextDetailsStore and auth.AuthorizationRegistry
 type RedisContextDetailsStore struct {
 	vTag   string
@@ -75,12 +80,13 @@ func NewRedisContextDetailsStore(ctx context.Context, cf redis.ClientFactory, ti
 /**********************************
 	security.ContextDetailsStore
  **********************************/
+
 func (r *RedisContextDetailsStore) ReadContextDetails(c context.Context, key interface{}) (security.ContextDetails, error) {
 	switch t := key.(type) {
 	case oauth2.AccessToken:
 		return r.loadDetailsFromAccessToken(c, t)
 	default:
-		return nil, fmt.Errorf("unsupported key type %T", key)
+		return nil, fmt.Errorf(errTmplUnsupportedKey, key)
 	}
 }
 
@@ -89,14 +95,14 @@ func (r *RedisContextDetailsStore) SaveContextDetails(c context.Context, key int
 	case *internal.FullContextDetails:
 	case *internal.SimpleContextDetails:
 	default:
-		return fmt.Errorf("unsupported details type %T", details)
+		return fmt.Errorf(errTmplUnsupportedDetails, details)
 	}
 
 	switch t := key.(type) {
 	case oauth2.AccessToken:
 		return r.saveAccessTokenToDetails(c, t, details)
 	default:
-		return fmt.Errorf("unsupported key type %T", key)
+		return fmt.Errorf(errTmplUnsupportedKey, key)
 	}
 }
 
@@ -106,7 +112,7 @@ func (r *RedisContextDetailsStore) RemoveContextDetails(c context.Context, key i
 		_, e := r.doRemoveDetials(c, t, "")
 		return e
 	default:
-		return fmt.Errorf("unsupported key type %T", key)
+		return fmt.Errorf(errTmplUnsupportedKey, key)
 	}
 }
 
@@ -128,6 +134,7 @@ func (r *RedisContextDetailsStore) ContextDetailsExists(c context.Context, key i
 /**********************************
 	auth.AuthorizationRegistry
  **********************************/
+
 // RegisterRefreshToken save relationships :
 // 		- RefreshToken -> Authentication 	"ART"
 //		- RefreshToken <- User & Client 	"RUC"
@@ -190,7 +197,7 @@ func (r *RedisContextDetailsStore) FindSessionId(ctx context.Context, token oaut
 	case oauth2.RefreshToken:
 		return r.loadSessionId(ctx, keyFuncRefreshTokenFromSession(uniqueTokenKey(t), "*"))
 	default:
-		return "", fmt.Errorf("unsupported key type %T", token)
+		return "", fmt.Errorf(errTmplUnsupportedKey, token)
 	}
 }
 
@@ -541,7 +548,7 @@ func (r *RedisContextDetailsStore) doRemoveRefreshToken(ctx context.Context, tok
 	if token != nil {
 		rtk = uniqueTokenKey(token)
 	}
-	return r.doMultiDelete([](func() (int, error)) {
+	return r.doMultiDelete([]func() (int, error) {
 		func() (int, error) { return r.doDelete(ctx, keyFuncRefreshTokenToAuth(rtk)) },
 		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncRefreshTokenFromUserAndClient(rtk, "*", "*")) },
 		func() (int, error) { return r.doDeleteWithWildcard(ctx, keyFuncRefreshTokenFromSession(rtk, "*")) },
@@ -575,7 +582,7 @@ func (r *RedisContextDetailsStore) doRemoveAllRefreshTokens(ctx context.Context,
 /*********************
 	Other Helpers
  *********************/
-func (r *RedisContextDetailsStore) findSessionId(c context.Context, oauth oauth2.Authentication) (ret string) {
+func (r *RedisContextDetailsStore) findSessionId(_ context.Context, oauth oauth2.Authentication) (ret string) {
 	// try get it from UserAuthentaction first.
 	// this should works on non-proxied authentications
 	var sid interface{}
@@ -614,43 +621,43 @@ func keyFuncLiteral(key string) keyFunc {
 
 func keyFuncAccessTokenToDetails(atk string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixAccessTokenToDetails, tag, atk)
+		return fmt.Sprintf("%s:%s:%s", prefixAccessTokenToDetails, tag, atk) // SuppressWarnings go:S1192
 	}
 }
 
 func keyFuncAccessTokenFromUserAndClient(atk, username, clientId string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s:%s:%s", prefixAccessTokenFromUserAndClient, tag, username, clientId, atk)
+		return fmt.Sprintf("%s:%s:%s:%s:%s", prefixAccessTokenFromUserAndClient, tag, username, clientId, atk) // SuppressWarnings go:S1192
 	}
 }
 
 func keyFuncAccessTokenFromSession(atk, sid string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s:%s", prefixAccessTokenFromSessionId, tag, sid, atk)
+		return fmt.Sprintf("%s:%s:%s:%s", prefixAccessTokenFromSessionId, tag, sid, atk) // SuppressWarnings go:S1192
 	}
 }
 
 func keyFuncAccessFromRefresh(atk, rtk string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s:%s", prefixAccessFromRefreshToken, tag, atk, rtk)
+		return fmt.Sprintf("%s:%s:%s:%s", prefixAccessFromRefreshToken, tag, atk, rtk) // SuppressWarnings go:S1192
 	}
 }
 
 func keyFuncRefreshTokenToAuth(rtk string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToAuthentication, tag, rtk)
+		return fmt.Sprintf("%s:%s:%s", prefixRefreshTokenToAuthentication, tag, rtk) // SuppressWarnings go:S1192
 	}
 }
 
 func keyFuncRefreshTokenFromUserAndClient(rtk, username, clientId string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s:%s:%s", prefixRefreshTokenFromUserAndClient, tag, username, clientId, rtk)
+		return fmt.Sprintf("%s:%s:%s:%s:%s", prefixRefreshTokenFromUserAndClient, tag, username, clientId, rtk) // SuppressWarnings go:S1192
 	}
 }
 
 func keyFuncRefreshTokenFromSession(rtk, sid string) keyFunc {
 	return func(tag string) string {
-		return fmt.Sprintf("%s:%s:%s:%s", prefixRefreshTokenFromSessionId, tag, sid, rtk)
+		return fmt.Sprintf("%s:%s:%s:%s", prefixRefreshTokenFromSessionId, tag, sid, rtk) // SuppressWarnings go:S1192
 	}
 }
 

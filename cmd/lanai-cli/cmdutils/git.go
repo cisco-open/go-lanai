@@ -9,6 +9,10 @@ import (
 	"path/filepath"
 )
 
+const (
+	errTmplGetMarkedTag = `error when getting marked tag %s: %v`
+)
+
 type GitFileMatcher func(path string) bool
 
 func GitFilePattern(patterns ...string) GitFileMatcher {
@@ -106,7 +110,7 @@ func (g *GitUtils) MarkCommit(tag string, commitHash plumbing.Hash) error {
 func (g *GitUtils) MarkedCommit(tag string) (plumbing.Hash, error) {
 	tagRef, e := g.repo.Tag(tag)
 	if e != nil {
-		return plumbing.ZeroHash, fmt.Errorf("error when getting marked tag %s: %v", tag, e)
+		return plumbing.ZeroHash, fmt.Errorf(errTmplGetMarkedTag, tag, e)
 	}
 
 	t, e := g.repo.TagObject(tagRef.Hash())
@@ -115,14 +119,14 @@ func (g *GitUtils) MarkedCommit(tag string) (plumbing.Hash, error) {
 		// annotated tag
 		commit, e := t.Commit()
 		if e != nil {
-			return plumbing.ZeroHash, fmt.Errorf("error when getting marked tag %s: %v", tag, e)
+			return plumbing.ZeroHash, fmt.Errorf(errTmplGetMarkedTag, tag, e)
 		}
 		return commit.Hash, nil
 	case plumbing.ErrObjectNotFound:
 		// lightweight tag, tagRef.Hash is the commit hash
 		return tagRef.Hash(), nil
 	}
-	return plumbing.ZeroHash, fmt.Errorf("error when getting marked tag %s: %v", tag, e)
+	return plumbing.ZeroHash, fmt.Errorf(errTmplGetMarkedTag, tag, e)
 }
 
 // TagMarkedCommit find previously marked commit using "markedTag" and re-tag it with "newTag" as name and opts
@@ -130,7 +134,7 @@ func (g *GitUtils) MarkedCommit(tag string) (plumbing.Hash, error) {
 func (g *GitUtils) TagMarkedCommit(markedTag string, newTag string, opts *git.CreateTagOptions) error {
 	hash, e := g.MarkedCommit(markedTag)
 	if e != nil {
-		return fmt.Errorf("error when getting marked tag %s: %v", markedTag, e)
+		return fmt.Errorf(errTmplGetMarkedTag, markedTag, e)
 	}
 
 	if e := g.TagCommit(newTag, hash, opts, true); e != nil {

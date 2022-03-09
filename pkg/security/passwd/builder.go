@@ -90,7 +90,7 @@ func (b *AuthenticatorBuilder) defaultOptions(f *PasswordAuthFeature) (Authentic
 
 func (b *AuthenticatorBuilder) mfaOptions(f *PasswordAuthFeature) (AuthenticatorOptionsFunc, error) {
 	if !f.mfaEnabled {
-		return func(*AuthenticatorOptions) {}, nil
+		return func(*AuthenticatorOptions) {/* noop */}, nil
 	}
 
 	if f.otpTTL <= 0 {

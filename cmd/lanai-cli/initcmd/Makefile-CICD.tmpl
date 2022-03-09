@@ -6,7 +6,7 @@
 
 ### Main
 .PHONY: init-docker pre-build-docker build-docker push-docker \
-	pre post dist verify publish redist pre-verify post-verify pre-dist post-dist \
+	pre post dist report verify publish redist pre-verify post-verify pre-dist post-dist \
 	update-dependency drop-replace git-tag-version git-push-tag git-merge-back git-verify-current-branch
 
 ## Variables from make command-line
@@ -33,6 +33,13 @@ CLI ?= lanai-cli
 ## CI/CD
 ## Predefined common CI/CD tasks. Such as PR verification, nightly build/release, etc
 
+# report:
+# 	Test and generate report. Intended to be used by verification.
+report: test
+	$(GO) tool cover -html=$(DESTDIR)/coverage.out -o $(DESTDIR)/coverage.html
+	gocov convert $(DESTDIR)/coverage.out | gocov-xml > $(DESTDIR)/cobertura-coverage.xml
+	cat $(DESTDIR)/tests.out | go-junit-report > $(DESTDIR)/junit-report.xml
+
 # verify:
 #	Test and build application against specified PRIVATE_MODS.
 # 	Required Vars:
@@ -40,7 +47,7 @@ CLI ?= lanai-cli
 #	Example:
 # 		make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
 verify: SAVEPOINT_MARK = tmp/pre-verify
-verify: pre-verify clean test build post-verify
+verify: pre-verify clean test lint build report post-verify
 
 # dist:
 #	Make a distribution build with provided PRIVATE_MODS and VERSION,

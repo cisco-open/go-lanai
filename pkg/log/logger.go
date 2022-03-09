@@ -59,44 +59,43 @@ func (l *logger) WithLevel(lvl LoggingLevel) Logger {
 }
 
 func (l *logger) Debugf(msg string, args ...interface{}) {
-
-	l.debugLogger([]interface{}{
+	_ = l.debugLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
 	}).Log()
 }
 
 func (l *logger) Infof(msg string, args ...interface{}) {
-	l.infoLogger([]interface{}{
+	_ = l.infoLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
 	}).Log()
 }
 
 func (l *logger) Warnf(msg string, args ...interface{}) {
-	l.warnLogger([]interface{}{
+	_ = l.warnLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
 	}).Log()
 }
 
 func (l *logger) Errorf(msg string, args ...interface{}) {
-	l.errorLogger([]interface{}{
+	_ = l.errorLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
 	}).Log()
 }
 
 func (l *logger) Debug(msg string, keyvals... interface{}) {
-	l.debugLogger(keyvals).Log(LogKeyMessage, msg)
+	_ = l.debugLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
 func (l *logger) Info(msg string, keyvals... interface{}) {
-	l.infoLogger(keyvals).Log(LogKeyMessage, msg)
+	_ = l.infoLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
 func (l *logger) Warn(msg string, keyvals... interface{}) {
-	l.warnLogger(keyvals).Log(LogKeyMessage, msg)
+	_ = l.warnLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
 func (l *logger) Error(msg string, keyvals... interface{}) {
-	l.errorLogger(keyvals).Log(LogKeyMessage, msg)
+	_ = l.errorLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
 func (l *logger) withKV(keyvals []interface{}) Logger {

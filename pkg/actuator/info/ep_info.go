@@ -44,7 +44,7 @@ func newEndpoint(di regDI) *InfoEndpoint {
 func (ep *InfoEndpoint) Read(ctx context.Context, input *Input) (interface{}, error) {
 	info := Info{}
 	if e := ep.appConfig.Bind(&info, infoPropertiesPrefix); e != nil {
-		return Info{}, nil
+		return Info{}, e
 	}
 
 	buildInfo := map[string]interface{}{}

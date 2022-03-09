@@ -85,7 +85,7 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer,  error) {
 			increment, _ = n.Int64()
 		}
 	}
-	r, err := c.Client.NewRenewer(&api.RenewerInput{
+	return c.Client.NewLifetimeWatcher(&api.LifetimeWatcherInput{
 		Secret: &api.Secret{
 			Auth: &api.SecretAuth{
 				ClientToken: c.Client.Token(),
@@ -94,7 +94,6 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer,  error) {
 		},
 		Increment: int(increment),
 	})
-	return r, nil
 }
 
 func (c *Client) MonitorRenew(ctx context.Context, r *api.Renewer, renewerDescription string) {

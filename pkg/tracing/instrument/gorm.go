@@ -73,35 +73,35 @@ func (p gormPlugin) Name() string {
 
 // Initialize implements gorm.Plugin. This function register tracing related callbacks
 // Default callbacks can be found at github.com/go-gorm/gorm/callbacks/callbacks.go
-func (p gormPlugin) Initialize(db *gorm.DB) (err error) {
-	err = db.Callback().Create().Before(gormCbBeforeCreate).
+func (p gormPlugin) Initialize(db *gorm.DB) error {
+	_ = db.Callback().Create().Before(gormCbBeforeCreate).
 		Register(p.cbBeforeName("create"), p.makeBeforeCallback("create"))
-	err = db.Callback().Create().After(gormCbAfterCreate).
+	_ = db.Callback().Create().After(gormCbAfterCreate).
 		Register(p.cbAfterName("create"), p.makeAfterCallback("create"))
 
-	err = db.Callback().Query().Before(gormCbBeforeQuery).
+	_ = db.Callback().Query().Before(gormCbBeforeQuery).
 		Register(p.cbBeforeName("query"), p.makeBeforeCallback("select"))
-	err = db.Callback().Query().After(gormCbAfterQuery).
+	_ = db.Callback().Query().After(gormCbAfterQuery).
 		Register(p.cbAfterName("query"), p.makeAfterCallback("select"))
 
-	err = db.Callback().Update().Before(gormCbBeforeUpdate).
+	_ = db.Callback().Update().Before(gormCbBeforeUpdate).
 		Register(p.cbBeforeName("update"), p.makeBeforeCallback("update"))
-	err = db.Callback().Update().After(gormCbAfterUpdate).
+	_ = db.Callback().Update().After(gormCbAfterUpdate).
 		Register(p.cbAfterName("update"), p.makeAfterCallback("update"))
 
-	err = db.Callback().Delete().Before(gormCbBeforeDelete).
+	_ = db.Callback().Delete().Before(gormCbBeforeDelete).
 		Register(p.cbBeforeName("delete"), p.makeBeforeCallback("delete"))
-	err = db.Callback().Delete().After(gormCbAfterDelete).
+	_ = db.Callback().Delete().After(gormCbAfterDelete).
 		Register(p.cbAfterName("delete"), p.makeAfterCallback("delete"))
 
-	err = db.Callback().Row().Before(gormCbBeforeRow).
+	_ = db.Callback().Row().Before(gormCbBeforeRow).
 		Register(p.cbBeforeName("row"), p.makeBeforeCallback("row"))
-	err = db.Callback().Row().After(gormCbAfterRow).
+	_ = db.Callback().Row().After(gormCbAfterRow).
 		Register(p.cbAfterName("row"), p.makeAfterCallback("row"))
 
-	err = db.Callback().Raw().Before(gormCbBeforeRaw).
+	_ = db.Callback().Raw().Before(gormCbBeforeRaw).
 		Register(p.cbBeforeName("raw"), p.makeBeforeCallback("sql"))
-	err = db.Callback().Raw().After(gormCbAfterRaw).
+	_ = db.Callback().Raw().After(gormCbAfterRaw).
 		Register(p.cbAfterName("raw"), p.makeAfterCallback("sql"))
 
 	return nil

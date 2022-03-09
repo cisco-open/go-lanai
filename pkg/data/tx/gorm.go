@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	errTmplSPFailure = `SavePoint failed. did you pass along the context provided by Begin(...)?`
+)
+
 type GormTxManager interface {
 	TxManager
 	WithDB(*gorm.DB) GormTxManager
@@ -72,7 +76,7 @@ func (m gormTxManager) Transaction(ctx context.Context, tx TxFunc, opts ...*sql.
 			txContext: txContext{Context: ctx},
 			db:        txDb,
 		}
-		return tx(c)
+		return tx(c) //nolint:contextcheck // this is equivalent to context.WithXXX
 	}, opts...)
 }
 
@@ -98,7 +102,7 @@ func (m gormTxManager) Rollback(ctx context.Context) (context.Context, error) {
 	if tc, ok := ctx.(TxContext); ok && tc.Parent() != nil {
 		return tc.Parent(), nil
 	}
-	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
+	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, errTmplSPFailure)
 }
 
 func (m gormTxManager) Commit(ctx context.Context) (context.Context, error) {
@@ -112,7 +116,7 @@ func (m gormTxManager) Commit(ctx context.Context) (context.Context, error) {
 	if tc, ok := ctx.(TxContext); ok && tc.Parent() != nil {
 		return tc.Parent(), nil
 	}
-	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
+	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, errTmplSPFailure)
 }
 
 func (m gormTxManager) SavePoint(ctx context.Context, name string) (context.Context, error) {
@@ -126,7 +130,7 @@ func (m gormTxManager) SavePoint(ctx context.Context, name string) (context.Cont
 	if tc, ok := ctx.(TxContext); ok && tc.Parent() != nil {
 		return ctx, nil
 	}
-	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
+	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, errTmplSPFailure)
 }
 
 func (m gormTxManager) RollbackTo(ctx context.Context, name string) (context.Context, error) {
@@ -140,7 +144,7 @@ func (m gormTxManager) RollbackTo(ctx context.Context, name string) (context.Con
 	if tc, ok := ctx.(TxContext); ok && tc.Parent() != nil {
 		return ctx, nil
 	}
-	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, "SavePoint failed. did you pass along the context provided by Begin(...)?")
+	return ctx, data.NewDataError(data.ErrorCodeInvalidTransaction, errTmplSPFailure)
 }
 
 // gormTxManagerAdapter bridge a TxManager to GormTxManager with noop operation. Useful for testing

@@ -19,12 +19,13 @@ func GetIp(iface string) (string, error) {
 		if iface != name && strings.Contains(name, "utun") {
 			continue
 		}
-		addrs, err := i.Addrs()
-		if err != nil {
-			return "", err
+		addrs, e := i.Addrs()
+		if e != nil {
+			return "", e
 		}
 		for _, addr := range addrs {
 			switch v := addr.(type) {
+			//SuppressWarnings go:S1871 type switching, not duplicate
 			case *net.IPNet:
 				if v.IP.To4() != nil {
 					ip = v.IP

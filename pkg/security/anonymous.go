@@ -4,17 +4,17 @@ import "context"
 
 type AnonymousCandidate map[string]interface{}
 
-// security.Candidate
+// Principal implements security.Candidate
 func (ac AnonymousCandidate) Principal() interface{} {
 	return "anonymous"
 }
 
-// security.Candidate
+// Credentials implements security.Candidate
 func (_ AnonymousCandidate) Credentials() interface{} {
 	return ""
 }
 
-// security.Candidate
+// Details implements security.Candidate
 func (ac AnonymousCandidate) Details() interface{} {
 	return ac
 }
@@ -36,7 +36,7 @@ func (_ *AnonymousAuthentication) State() AuthenticationState {
 }
 
 func (aa *AnonymousAuthentication) Details() interface{} {
-	return aa.Details()
+	return aa.candidate.Details()
 }
 
 type AnonymousAuthenticator struct{}

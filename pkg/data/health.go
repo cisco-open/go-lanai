@@ -17,11 +17,12 @@ func registerHealth(di regDI) {
 	if di.HealthRegistrar == nil || di.GormDB == nil {
 		return
 	}
-	di.HealthRegistrar.Register(&DbHealthIndicator{
+	di.HealthRegistrar.MustRegister(&DbHealthIndicator{
 		db: di.GormDB,
 	})
 }
 
+// DbHealthIndicator
 // Note: we currently only support one database
 type DbHealthIndicator struct {
 	db *gorm.DB

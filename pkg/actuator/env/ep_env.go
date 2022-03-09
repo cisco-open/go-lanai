@@ -13,7 +13,7 @@ const (
 )
 
 type Input struct {
-	Pattern string `form:match`
+	Pattern string `form:"match"`
 }
 
 type EnvDescriptor struct {
@@ -75,7 +75,7 @@ func (ep *EnvEndpoint) Read(ctx context.Context, input *Input) (*EnvDescriptor, 
 		}
 
 		values := provider.GetSettings()
-		appconfig.VisitEach(values, func(k string, v interface{}) error {
+		_ = appconfig.VisitEach(values, func(k string, v interface{}) error {
 			v = ep.sanitizer.Sanitize(ctx, k, v)
 			psrc.Properties[k] = PValueDescriptor{Value: v, Origin: ""}
 			return nil

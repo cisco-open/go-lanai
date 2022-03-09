@@ -68,4 +68,5 @@ type setupDI struct {
 }
 
 func setup(_ setupDI) {
+	// keep it as default for now
 }

@@ -10,7 +10,7 @@ import (
 
 var logger = log.New("Tenancy.Modify")
 
-var internaModifier Modifier
+var internalModifier Modifier
 
 var Module = &bootstrap.Module{
 	Name: "tenancy-modifier",
@@ -41,9 +41,10 @@ func provideModifier(di modifierDI) Modifier {
 	if e != nil {
 		panic(e)
 	}
-	internaModifier = newModifier(rc, di.Accessor)
-	return internaModifier
+	internalModifier = newModifier(rc, di.Accessor)
+	return internalModifier
 }
 
 func setup(_ Modifier) {
+	// currently, keep everything default
 }

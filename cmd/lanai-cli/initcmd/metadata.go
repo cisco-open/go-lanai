@@ -16,6 +16,7 @@ type ModuleMetadata struct {
 	Executables map[string]*Executable `json:"execs"`
 	Resources   []*Resource            `json:"resources"`
 	Generates   []*Generate            `json:"generates"`
+	Binaries    []*Binary              `json:"binaries"`
 }
 
 type Executable struct {
@@ -31,6 +32,11 @@ type Resource struct {
 
 type Generate struct {
 	Path string `json:"path"`
+}
+
+type Binary struct {
+	Package string `json:"package"`
+	Version string `json:"version"`
 }
 
 func validateModuleMetadata(ctx context.Context) error {

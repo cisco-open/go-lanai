@@ -17,7 +17,7 @@ RES_LIST = \
 	{{- end }}
 
 ### Main
-.PHONY: generate clean test build copy-resources $(GEN_LIST) $(EXECS) $(RES_LIST)
+.PHONY: generate clean test lint build copy-resources $(GEN_LIST) $(EXECS) $(RES_LIST)
 
 ## Required Variables by Local Targets
 GO ?= go
@@ -37,7 +37,15 @@ generate: $(GEN_LIST)
 # 	Invoke "go test" on defined modules.
 # 	This target typically run on CI/CD working machine
 test: generate
-	$(GO) test -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/... $(MODULE)/internal/...
+	$(GO) test -v -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/... $(MODULE)/internal/... | tee $(DESTDIR)/tests.out
+
+# lint:
+# 	Invoke "go vet" and other linters
+lint:
+	$(GO) vet ./... 2>&1 | tee $(DESTDIR)/go-vet-report.out
+	golangci-lint -c build/ci/golangci.yml \
+    	  --out-format colored-line-number,checkstyle:$(DESTDIR)/golangci-lint-report.xml \
+    	  --issues-exit-code 0 run ./...
 
 # build:
 # 	Generate executable binary and copy resources to $(DESTDIR)

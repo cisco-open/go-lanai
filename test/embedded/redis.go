@@ -16,6 +16,7 @@ var embeddedRedis *miniredis.Miniredis
 // The actual port get be get using CurrentRedisPort
 // See RedisWithPort for more details
 func Redis() suitetest.PackageOptions {
+	//nolint:gosec // We can't use utils package here.
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	port := 0x7fff + r.Intn(0x7fff) + 1
 	return RedisWithPort(port)

@@ -32,16 +32,12 @@ func Register(di regDI) {
 	if di.Registrar == nil {
 		return
 	}
-	initialize(di)
-}
-
-func initialize(di regDI) error {
 
 	endpoint := newEndpoint(func(opt *EndpointOption) {
 		opt.MgtProperties = &di.MgtProperties
 		opt.Contributor = di.HealthIndicator
 		opt.Properties = &di.Properties
 	})
-	di.Registrar.Register(endpoint)
-	return nil
+	di.Registrar.MustRegister(endpoint)
 }
+

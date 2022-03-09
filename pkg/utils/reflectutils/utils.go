@@ -17,7 +17,9 @@ func IsExportedField(f reflect.StructField) bool {
 func FindStructField(sType reflect.Type, matcher func(t reflect.StructField) bool) (ret reflect.StructField, found bool) {
 	// dereference pointers and check type
 	t := sType
-	for ; t.Kind() == reflect.Ptr; t = t.Elem() {}
+	for ; t.Kind() == reflect.Ptr; t = t.Elem() {
+		// SuppressWarnings go:S108 empty block is intended
+	}
 	if t.Kind() != reflect.Struct {
 		return ret, false
 	}
@@ -43,7 +45,9 @@ func FindStructField(sType reflect.Type, matcher func(t reflect.StructField) boo
 func ListStructField(sType reflect.Type, matcher func(t reflect.StructField) bool) (ret []reflect.StructField) {
 	// dereference pointers and check type
 	t := sType
-	for ; t.Kind() == reflect.Ptr; t = t.Elem() {}
+	for ; t.Kind() == reflect.Ptr; t = t.Elem() {
+		// SuppressWarnings go:S108 empty block is intended
+	}
 	if t.Kind() != reflect.Struct {
 		return
 	}

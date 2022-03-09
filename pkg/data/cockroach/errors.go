@@ -27,6 +27,7 @@ func (t PostgresErrorTranslator) Order() int {
 
 func (t PostgresErrorTranslator) Translate(_ context.Context, err error) error {
 	var ec int64
+	//nolint:errorlint // we don't consider wrapped error here
 	switch e := err.(type) {
 	case *pgconn.PgError:
 		ec = t.translateErrorCode(e.Code)

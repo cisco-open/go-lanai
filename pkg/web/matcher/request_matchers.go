@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+const (
+	descTmplPath = `path %s`
+)
+
 type matchableFunc func(context.Context, *http.Request) (interface{}, error)
 
 // requestMatcher implement web.RequestMatcher
@@ -81,6 +85,7 @@ func NotRequest(m web.RequestMatcher) web.RequestMatcher {
 	return wrapAsRequestMatcher(matcher.Not(m))
 }
 
+// RequestWithHost
 // TODO support wildcard
 func RequestWithHost(expected string) web.RequestMatcher {
 	delegate := matcher.WithString(expected, true)
@@ -115,7 +120,7 @@ func RequestWithMethods(methods...string) web.RequestMatcher {
 func RequestWithPattern(pattern string, methods...string) web.RequestMatcher {
 	pDelegate := matcher.WithPathPattern(pattern)
 	pMatcher := &requestMatcher{
-		description:   fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
+		description:   fmt.Sprintf(descTmplPath, pDelegate.(fmt.Stringer).String()),
 		matchableFunc: path,
 		delegate:      pDelegate,
 	}
@@ -134,7 +139,7 @@ func RequestWithURL(url string, methods...string) web.RouteMatcher {
 func RequestWithPrefix(prefix string, methods...string) web.RequestMatcher {
 	pDelegate := matcher.WithPrefix(prefix, true)
 	pMatcher := &requestMatcher{
-		description:   fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
+		description:   fmt.Sprintf(descTmplPath, pDelegate.(fmt.Stringer).String()),
 		matchableFunc: path,
 		delegate:      pDelegate,
 	}
@@ -142,12 +147,12 @@ func RequestWithPrefix(prefix string, methods...string) web.RequestMatcher {
 	return wrapAsRequestMatcher(pMatcher.And(mMatcher))
 }
 
-// RequestWithPrefix create a web.RequestMatcher with regular expression
+// RequestWithRegex create a web.RequestMatcher with regular expression
 // if context is available when performing the match, the context path is striped
 func RequestWithRegex(regex string, methods...string) web.RequestMatcher {
 	pDelegate := matcher.WithRegex(regex)
 	pMatcher := &requestMatcher{
-		description:   fmt.Sprintf("path %s", pDelegate.(fmt.Stringer).String()),
+		description:   fmt.Sprintf(descTmplPath, pDelegate.(fmt.Stringer).String()),
 		matchableFunc: path,
 		delegate:      pDelegate,
 	}

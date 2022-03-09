@@ -25,14 +25,17 @@ func NewTracingWebCustomizer(tracer opentracing.Tracer) *TracingWebCustomizer{
 	}
 }
 
-// we want TracingWebCustomizer before anything else
+// Order we want TracingWebCustomizer before anything else
 func (c TracingWebCustomizer) Order() int {
 	return order.Highest
 }
 
-func (c *TracingWebCustomizer) Customize(ctx context.Context, r *web.Registrar) error {
+func (c *TracingWebCustomizer) Customize(_ context.Context, r *web.Registrar) error {
 	// for gin
-	r.AddGlobalMiddlewares(GinTracing(c.tracer, tracing.OpNameHttp, excludeRequest))
+	//nolint:contextcheck
+	if e := r.AddGlobalMiddlewares(GinTracing(c.tracer, tracing.OpNameHttp, excludeRequest)); e != nil {
+		return e
+	}
 
 	// for go-kit endpoints, because we are unable to finish the created span,
 	// so we rely on Gin middleware to create/finish span
@@ -53,38 +56,38 @@ func opNameWithRequest(opName string, r *http.Request) string {
 	exlusion matcher
  *********************/
 var (
-	healthMatcher = exlusionMatcher{
+	healthMatcher = exclusionMatcher{
 		matches: func(r *http.Request) bool {
 			return strings.HasSuffix(r.URL.Path, "/health") && r.Method == http.MethodGet
 		},
 	}
 
-	corsPreflightMatcher = exlusionMatcher{
+	corsPreflightMatcher = exclusionMatcher{
 		matches: func(r *http.Request) bool {
 			return r.Method == http.MethodOptions
 		},
 	}
 )
 
-// exlusionMatcher is specialized web.RequestMatcher that do faster matching (simplier and relaxed logic)
-type exlusionMatcher struct {
+// exclusionMatcher is specialized web.RequestMatcher that do faster matching (simplier and relaxed logic)
+type exclusionMatcher struct {
 	matches func(*http.Request) bool
 }
 
-func (m exlusionMatcher) Matches(i interface{}) (bool, error) {
+func (m exclusionMatcher) Matches(i interface{}) (bool, error) {
 	r, ok := i.(*http.Request)
 	return ok && m.matches(r) , nil
 }
 
-func (m exlusionMatcher) MatchesWithContext(ctx context.Context, i interface{}) (bool, error) {
+func (m exclusionMatcher) MatchesWithContext(_ context.Context, i interface{}) (bool, error) {
 	return m.Matches(i)
 }
 
-func (m exlusionMatcher) Or(matcher ...util_matcher.Matcher) util_matcher.ChainableMatcher {
+func (m exclusionMatcher) Or(matcher ...util_matcher.Matcher) util_matcher.ChainableMatcher {
 	return util_matcher.Or(m, matcher...)
 }
 
-func (m exlusionMatcher) And(matcher ...util_matcher.Matcher) util_matcher.ChainableMatcher {
+func (m exclusionMatcher) And(matcher ...util_matcher.Matcher) util_matcher.ChainableMatcher {
 	return util_matcher.And(m, matcher...)
 }
 

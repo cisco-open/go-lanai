@@ -12,6 +12,7 @@ import (
 /**************************
 	Support GenHandling
  **************************/
+
 // GinErrorHandlingCustomizer implements Customizer
 type GinErrorHandlingCustomizer struct {
 
@@ -22,8 +23,7 @@ func NewGinErrorHandlingCustomizer() *GinErrorHandlingCustomizer {
 }
 
 func (c GinErrorHandlingCustomizer) Customize(ctx context.Context, r *Registrar) error {
-	r.AddGlobalMiddlewares(DefaultErrorHandling())
-	return nil
+	return r.AddGlobalMiddlewares(DefaultErrorHandling())
 }
 
 // DefaultErrorHandling implement error handling logics at last resort, in case errors are not properly handled downstream
@@ -39,6 +39,7 @@ func DefaultErrorHandling() gin.HandlerFunc {
 		// if not found, use the first one
 		err := gc.Errors[0].Err
 		for _, e := range gc.Errors {
+			//nolint:errorlint
 			if _,ok := e.Err.(StatusCoder); !ok {
 				err = e.Err
 				break
@@ -48,6 +49,7 @@ func DefaultErrorHandling() gin.HandlerFunc {
 	}
 }
 
+//nolint:errorlint
 func handleError(_ context.Context, err error, rw http.ResponseWriter) {
 	// body
 	contentType, body := "text/plain; charset=utf-8", []byte{}
@@ -86,5 +88,5 @@ func handleError(_ context.Context, err error, rw http.ResponseWriter) {
 		code = sc.StatusCode()
 	}
 	rw.WriteHeader(code)
-	rw.Write(body)
+	_, _ = rw.Write(body)
 }

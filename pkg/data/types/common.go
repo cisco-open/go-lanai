@@ -28,11 +28,14 @@ func fixWhereClausesForStatementModifier(stmt *gorm.Statement) {
 type stmtModifier struct {}
 
 func (sm stmtModifier) Name() string {
+	// noop
 	return ""
 }
 
 func (sm stmtModifier) Build(clause.Builder) {
+	// noop
 }
 
 func (sm stmtModifier) MergeClause(*clause.Clause) {
+	// noop
 }

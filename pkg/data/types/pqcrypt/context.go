@@ -175,7 +175,7 @@ func (enc compositeEncryptor) Encrypt(ctx context.Context, kid string, v interfa
 func (enc compositeEncryptor) Decrypt(ctx context.Context, raw *EncryptedRaw, dest interface{}) error {
 	for _, delegate := range enc {
 		e := delegate.Decrypt(ctx, raw, dest)
-		switch e {
+		switch e { //nolint:errorlint // special error is global var
 		case nil:
 			return nil
 		case ErrUnsupportedAlgorithm, ErrUnsupportedVersion:

@@ -62,7 +62,7 @@ func effectiveEncodeFunc(ctx context.Context, req *http.Request, val interface{}
 func WithoutHeader(key string) RequestOptions {
 	switch {
 	case key == "":
-		return func(r *Request) {}
+		return noop()
 	default:
 		return func(r *Request) {
 			r.Headers.Del(key)
@@ -73,7 +73,7 @@ func WithoutHeader(key string) RequestOptions {
 func WithHeader(key, value string) RequestOptions {
 	switch {
 	case key == "" || value == "":
-		return func(r *Request) {}
+		return noop()
 	default:
 		return func(r *Request) {
 			r.Headers.Add(key, value)
@@ -84,7 +84,7 @@ func WithHeader(key, value string) RequestOptions {
 func WithParam(key, value string) RequestOptions {
 	switch {
 	case key == "":
-		return func(r *Request) {}
+		return noop()
 	case value == "":
 		return func(r *Request) {
 			delete(r.Params, key)
@@ -147,5 +147,10 @@ func applyParams(req *http.Request, params map[string]string) {
 	req.URL.RawQuery = strings.Join(queries, "&")
 }
 
+func noop() func(r *Request) {
+	return func(_ *Request) {
+		// noop
+	}
+}
 
 

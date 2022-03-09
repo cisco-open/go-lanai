@@ -27,5 +27,9 @@ func RunLibsInit(cmd *cobra.Command, _ []string) error {
 		return e
 	}
 
+	if e := installBinaries(cmd.Context()); e != nil {
+		return e
+	}
+
 	return nil
 }

@@ -51,7 +51,7 @@ func (l *Logical) Write(path string, data interface{}) (ret *api.Secret, err err
 	l.beforeOp("Write", path)
 	defer func() { l.afterOp(err) }()
 
-	ret, err = l.writeWithMethod(http.MethodPut, path, data)
+	ret, err = l.writeWithMethod(http.MethodPut, path, data) //nolint:contextcheck
 	return
 }
 
@@ -60,7 +60,7 @@ func (l *Logical) Post(path string, data interface{}) (ret *api.Secret, err erro
 	l.beforeOp("Post", path)
 	defer func() { l.afterOp(err) }()
 
-	ret, err = l.writeWithMethod(http.MethodPost, path, data)
+	ret, err = l.writeWithMethod(http.MethodPost, path, data) //nolint:contextcheck
 	return
 }
 
@@ -68,7 +68,7 @@ func (l *Logical) Post(path string, data interface{}) (ret *api.Secret, err erro
 func (l *Logical) WriteWithMethod(method, path string, data interface{}) (ret *api.Secret, err error) {
 	l.beforeOp(method, path)
 	defer func() { l.afterOp(err) }()
-	return l.writeWithMethod(strings.ToUpper(method), path, data)
+	return l.writeWithMethod(strings.ToUpper(method), path, data) //nolint:contextcheck
 }
 
 func (l *Logical) beforeOp(name, path string) {
@@ -84,6 +84,7 @@ func (l *Logical) afterOp(err error) {
 	}
 }
 
+//nolint:contextcheck // context is bond with struct
 func (l *Logical) writeWithMethod(method, path string, data interface{}) (*api.Secret, error) {
 	switch method {
 	case http.MethodPost, http.MethodPut:
@@ -99,6 +100,7 @@ func (l *Logical) writeWithMethod(method, path string, data interface{}) (*api.S
 	return l.write(r)
 }
 
+//nolint:contextcheck // context is bond with struct
 func (l *Logical) write(request *api.Request) (*api.Secret, error) {
 	ctx, cancelFunc := context.WithCancel(l.ctx)
 	defer cancelFunc()

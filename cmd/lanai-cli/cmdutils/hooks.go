@@ -53,10 +53,11 @@ func PrintEnvironment() RunE {
 			return nil
 		}
 
-		logger := logger.WithContext(cmd.Context())
-		logger.Debugf("%18s: %s", "Working Directory", GlobalArgs.WorkingDir)
-		logger.Debugf("%18s: %s", "Tmp Directory", GlobalArgs.TmpDir)
-		logger.Debugf("%18s: %s", "Output Directory", GlobalArgs.OutputDir)
+		const tmpl = `%18s: %s`
+		ctxLog := logger.WithContext(cmd.Context())
+		ctxLog.Debugf(tmpl, "Working Directory", GlobalArgs.WorkingDir)
+		ctxLog.Debugf(tmpl, "Tmp Directory", GlobalArgs.TmpDir)
+		ctxLog.Debugf(tmpl, "Output Directory", GlobalArgs.OutputDir)
 		return nil
 	}
 }

@@ -182,6 +182,7 @@ func randString(length int) string {
 	const charset ="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, length)
 	for i := range b {
+		//nolint:gosec // We can't use utils package here.
 		b[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(b)
