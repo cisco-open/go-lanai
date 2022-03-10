@@ -228,6 +228,7 @@ func execute(_ context.Context, db *gorm.DB, condition Condition, options []Opti
 		})
 	}
 
+	// prepare
 	var e error
 	if db, e = applyOptions(db, options); e != nil {
 		return e
@@ -237,13 +238,22 @@ func execute(_ context.Context, db *gorm.DB, condition Condition, options []Opti
 		return e
 	}
 
-	if r := fn(db); r.Error != nil {
+	// execute
+	r := fn(db)
+
+	// post exec
+	switch r, e := applyPostExecOptions(r, options); {
+	case e != nil:
+		return e
+	case r.Error != nil:
 		return r.Error
+	default:
+		return nil
 	}
-	return nil
 }
 
 func optsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
+	order.SortStable(opts, order.UnorderedMiddleCompare)
 	scopes := make([]func(*gorm.DB)*gorm.DB, 0, len(opts))
 	for _, v := range opts {
 		switch rv := reflect.ValueOf(v); rv.Kind() {
@@ -260,6 +270,9 @@ func optsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
 			scopes = append(scopes, sub...)
 		default:
 			switch opt := v.(type) {
+			case postExecOptions:
+				// postExecOptions is not counted as condition, ignore
+				continue
 			case priorityOption:
 				sub, e := optsToDBFuncs([]Option{opt.wrapped})
 				if e != nil {
@@ -290,8 +303,6 @@ func applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
 		return db, nil
 	}
 
-	order.SortStable(opts, order.UnorderedMiddleCompare)
-
 	funcs, e := optsToDBFuncs(opts)
 	if e != nil {
 		return nil, e
@@ -320,6 +331,9 @@ func conditionToDBFuncs(condition Condition) ([]func(*gorm.DB)*gorm.DB, error) {
 	default:
 		var scope func(*gorm.DB)*gorm.DB
 		switch where := condition.(type) {
+		case postExecOptions:
+			// postExecOptions is not counted as condition, scope is a noop
+			scope = func(db *gorm.DB) *gorm.DB { return db }
 		case gormOptions:
 			scope = where
 		case func(*gorm.DB) *gorm.DB:
@@ -330,7 +344,7 @@ func conditionToDBFuncs(condition Condition) ([]func(*gorm.DB)*gorm.DB, error) {
 			}
 		default:
 			scope = func(db *gorm.DB) *gorm.DB {
-				return db.Where(where)
+				return db.Where(condition)
 			}
 		}
 		scopes = []func(*gorm.DB)*gorm.DB{scope}
@@ -350,6 +364,47 @@ func applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, error) {
 	}
 	// Note, we choose to apply funcs by our self instead of using db.Scopes(...),
 	// because we don't want to confuse GORM with other scopes added else where
+	for _, fn := range funcs {
+		db = fn(db)
+	}
+	return db, db.Error
+}
+
+
+func postExecOptsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
+	scopes := make([]func(*gorm.DB)*gorm.DB, 0, len(opts))
+	for _, v := range opts {
+		switch rv := reflect.ValueOf(v); rv.Kind() {
+		case reflect.Slice, reflect.Array:
+			size := rv.Len()
+			slice := make([]Option, size)
+			for i := 0; i < size; i++ {
+				slice[i] = rv.Index(i).Interface()
+			}
+			sub, e := postExecOptsToDBFuncs(slice)
+			if e != nil {
+				return nil, e
+			}
+			scopes = append(scopes, sub...)
+		default:
+			switch opt := v.(type) {
+			case postExecOptions:
+				scopes = append(scopes, opt)
+			}
+		}
+	}
+	return scopes, nil
+}
+
+func applyPostExecOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
+	if len(opts) == 0 {
+		return db, nil
+	}
+
+	funcs, e := postExecOptsToDBFuncs(opts)
+	if e != nil {
+		return nil, e
+	}
 	for _, fn := range funcs {
 		db = fn(db)
 	}

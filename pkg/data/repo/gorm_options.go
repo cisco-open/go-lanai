@@ -2,6 +2,7 @@ package repo
 
 import "C"
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
 	"gorm.io/gorm"
@@ -35,6 +36,9 @@ type delayedOption struct {
 func (o delayedOption) Order() int {
 	return o.order
 }
+
+// postExecOptions is applied after SQL is executed. Mostly useful to assert/update result or update error
+type postExecOptions func(*gorm.DB) *gorm.DB
 
 /********************
 	Util Functions
@@ -77,6 +81,8 @@ func AsGormScope(i interface{}) func(*gorm.DB)*gorm.DB {
 		funcs, e = conditionToDBFuncs(Condition(i))
 	case gormOptions, priorityOption, delayedOption:
 		funcs, e = optsToDBFuncs([]Option{i})
+	case postExecOptions:
+		e = ErrorUnsupportedOptions.WithMessage("unsupported Option %T", v)
 	default:
 		funcs, e = conditionToDBFuncs(Condition(i))
 	}
@@ -212,6 +218,24 @@ func SortBy(fieldName string, desc bool) Option {
 			Column: *col,
 			Desc: desc,
 		})
+	})
+}
+
+// ErrorOnZeroRows a post-exec option that force repository returns error in case of db.AffectedRows == 0
+// This option is useful on certain operations such as CrudRepository.Delete, or CrudRepository.Update,
+// which doesn't return error if there is no row get affected/deleted.
+func ErrorOnZeroRows() Option {
+	// Implementation Note:
+	//	Alternative way (probably the proper way) to implement this is to add "after *" callback that reads
+	// 	statement's settings and process result accordingly, and ErrorOnZeroRows() can be a regular gormOptions that put a flag
+	// 	in statement's settings.
+	// 	The callback approach above would allow our ErrorTranslator to intercept the set error. But for this particular
+	// 	use case, it doesn't matter because we don't need to translate data.ErrorRecordNotFound error
+	return postExecOptions(func(db *gorm.DB) *gorm.DB {
+		if db.Error == nil && db.RowsAffected == 0 {
+			db.Error = data.ErrorRecordNotFound
+		}
+		return db
 	})
 }
 
