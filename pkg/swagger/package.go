@@ -3,6 +3,7 @@ package swagger
 import (
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -43,11 +44,16 @@ type initDI struct {
 	Registrar *web.Registrar
 	Properties SwaggerProperties
 	Resolver   bootstrap.BuildInfoResolver `optional:"true"`
+	DiscoveryCustomizers *discovery.Customizers `optional:"true"`
 }
 
 func initialize(di initDI) {
 	di.Registrar.MustRegister(Content)
 	di.Registrar.MustRegister(NewSwaggerController(di.Properties, di.Resolver))
+
+	if di.DiscoveryCustomizers != nil {
+		di.DiscoveryCustomizers.Add(swaggerInfoDiscoveryCustomizer{})
+	}
 }
 
 func bindSecurityProperties(ctx *bootstrap.ApplicationContext) SwaggerProperties {
@@ -68,4 +74,10 @@ func configureSecurity(di secDI) {
 	if di.SecRegistrar != nil {
 		di.SecRegistrar.Register(&swaggerSecurityConfigurer{})
 	}
+}
+
+type DiscoveryCustomizerDIOut struct {
+	fx.Out
+
+	Customizer discovery.Customizer `group:"discovery_customizer"`
 }

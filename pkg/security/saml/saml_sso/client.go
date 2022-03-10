@@ -1,25 +1,13 @@
 package saml_auth
 
 import (
-	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
-
-type SamlClient interface {
-	GetEntityId() string
-	GetMetadataSource() string
-	ShouldSkipAssertionEncryption() bool
-	ShouldSkipAuthRequestSignatureVerification() bool
-	GetTenantRestrictions() utils.StringSet
-
-	ShouldMetadataRequireSignature() bool
-	ShouldMetadataTrustCheck() bool
-	GetMetadataTrustedKeys() []string
-}
 
 type DefaultSamlClient struct {
 	SamlSpDetails
 	TenantRestrictions utils.StringSet
+	TenantRestrictionType string
 }
 
 func (c DefaultSamlClient) ShouldMetadataRequireSignature() bool {
@@ -54,6 +42,10 @@ func (c DefaultSamlClient) GetTenantRestrictions() utils.StringSet {
 	return c.TenantRestrictions
 }
 
+func (c DefaultSamlClient) GetTenantRestrictionType() string {
+	return c.TenantRestrictionType
+}
+
 type SamlSpDetails struct {
 	EntityId string
 	MetadataSource string
@@ -67,9 +59,4 @@ type SamlSpDetails struct {
 	//currently the implementation is metaiop profile. this field is reserved for future use
 	// https://docs.spring.io/autorepo/docs/spring-security-saml/1.0.x-SNAPSHOT/reference/htmlsingle/#configuration-security-profiles-pkix
 	SecurityProfile string
-}
-
-type SamlClientStore interface {
-	GetAllSamlClient(ctx context.Context) ([]SamlClient, error)
-	GetSamlClientByEntityId(ctx context.Context, entityId string) (SamlClient, error)
 }

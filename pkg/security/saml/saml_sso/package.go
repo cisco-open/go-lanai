@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 )
@@ -28,7 +29,7 @@ type initDI struct {
 	SecRegistrar           security.Registrar `optional:"true"`
 	Properties             saml.SamlProperties
 	ServerProperties       web.ServerProperties
-	ServiceProviderManager SamlClientStore `optional:"true"`
+	ServiceProviderManager saml_auth_ctx.SamlClientStore `optional:"true"`
 	AccountStore           security.AccountStore `optional:"true"`
 	AttributeGenerator     AttributeGenerator `optional:"true"`
 }

@@ -2,6 +2,7 @@ package saml_auth
 
 import (
 	"crypto/x509"
+	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"errors"
@@ -33,7 +34,7 @@ func (m *SpMetadataManager) GetServiceProvider(serviceProviderID string) (SamlSp
 	return SamlSpDetails{}, nil, errors.New(fmt.Sprintf("service provider metadata for %s not found", serviceProviderID))
 }
 
-func (m *SpMetadataManager) RefreshCache(clients []SamlClient) {
+func (m *SpMetadataManager) RefreshCache(clients []saml_auth_ctx.SamlClient) {
 	m.cacheMutex.RLock()
 	remove, refresh := m.compareWithCache(clients)
 	m.cacheMutex.RUnlock()
@@ -70,7 +71,7 @@ func (m *SpMetadataManager) RefreshCache(clients []SamlClient) {
 	}
 }
 
-func (m *SpMetadataManager) compareWithCache(clients []SamlClient) (remove map[string]bool, refresh []SamlSpDetails) {
+func (m *SpMetadataManager) compareWithCache(clients []saml_auth_ctx.SamlClient) (remove map[string]bool, refresh []SamlSpDetails) {
 	keep := make(map[string]bool)
 	remove = make(map[string]bool)
 

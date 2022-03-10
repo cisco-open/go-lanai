@@ -12,12 +12,12 @@ const (
 )
 
 type mockingProperties struct {
-	Accounts      map[string]*mockedAccountProperties `json:"accounts"`
+	Accounts      map[string]*MockedAccountProperties `json:"accounts"`
 	Tenants       map[string]*mockedTenantProperties  `json:"tenants"`
 	TokenValidity utils.Duration                      `json:"token-validity"`
 }
 
-type mockedAccountProperties struct {
+type MockedAccountProperties struct {
 	UserId        string   `json:"id"` // optional field
 	Username      string   `json:"username"`
 	Password      string   `json:"password"`
@@ -33,7 +33,7 @@ type mockedTenantProperties struct {
 
 func bindMockingProperties(ctx *bootstrap.ApplicationContext) *mockingProperties {
 	props := mockingProperties{
-		Accounts:      map[string]*mockedAccountProperties{},
+		Accounts:      map[string]*MockedAccountProperties{},
 		Tenants:       map[string]*mockedTenantProperties{},
 		TokenValidity: utils.Duration(120 * time.Second),
 	}

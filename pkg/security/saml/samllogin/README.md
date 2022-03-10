@@ -1,5 +1,5 @@
 1. Create saml private key and cert using the following command
 
-openssl req -x509 -newkey rsa:2048 -keyout saml_test.key -out saml_test.cert -days 365 -nodes -subj "/CN=myservice.example.com"
+openssl genrsa -out saml.key -aes256 1024
 
-use -passout option to add passphrase to the private key
+openssl req -key saml.key -new -x509 -days 36500 -out saml.crt
