@@ -333,8 +333,12 @@ func (s *RedisStore) save(session *Session) error {
 			args = append(args, sessionOptionField, options)
 
 			//stored separate for easy retrieval
-			args = append(args, common.SessionIdleTimeoutDuration, session.options.IdleTimeout.String())
-			args = append(args, common.SessionAbsTimeoutTime, session.createdOn().Add(session.options.AbsoluteTimeout).Unix())
+			if session.options.IdleTimeout > 0 {
+				args = append(args, common.SessionIdleTimeoutDuration, session.options.IdleTimeout.String())
+			}
+			if session.options.AbsoluteTimeout > 0 {
+				args = append(args, common.SessionAbsTimeoutTime, session.createdOn().Add(session.options.AbsoluteTimeout).Unix())
+			}
 		} else {
 			return err
 		}
@@ -346,9 +350,13 @@ func (s *RedisStore) save(session *Session) error {
 		return hsetCmd.Err()
 	}
 
-	exp := session.expiration()
-	expCmd := s.connection.ExpireAt(s.ctx, key, exp)
-	return expCmd.Err()
+	canExpire, exp := session.expiration()
+	if canExpire {
+		expCmd := s.connection.ExpireAt(s.ctx, key, exp)
+		return expCmd.Err()
+	}
+
+	return nil
 }
 
 func (s *RedisStore) readTimeoutSetting(ctx context.Context, key string) (time.Duration, bool) {

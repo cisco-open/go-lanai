@@ -73,3 +73,114 @@ func TestApplyTimeout_whenSessionNotExpired(t *testing.T) {
 	g.Expect(err).To(gomega.BeNil())
 	g.Expect(valid).To(gomega.BeTrue())
 }
+
+func TestApplyTimeout_whenIdleTimeoutDisabled(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sessionId := "my_session_id"
+	testBeginTime := time.Now()
+
+	//let the session be accessed 10 seconds ago.
+	sessionLastAccessedTime := time.Now().Add(-10 * time.Second)
+	origAbsTimeoutTime := sessionLastAccessedTime.Add(120 * time.Second)
+
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
+	//mock that the session exists
+	mockRedis.EXPECT().Exists(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId)).
+		Return(redis.NewIntResult(1, nil))
+	mockRedis.EXPECT().HMGet(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId), common.SessionIdleTimeoutDuration, common.SessionAbsTimeoutTime).
+		Return(redis.NewSliceResult([]interface{}{nil, strconv.FormatInt(origAbsTimeoutTime.Unix(), 10)}, nil))
+
+	//expects last accessed time to be updated
+	lastAccessTimeMatcher := mock.MatchedBy(func(epoch int64) bool {
+		return epoch >= testBeginTime.Unix()
+	})
+	mockRedis.EXPECT().HSet(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId), common.SessionLastAccessedField, lastAccessTimeMatcher).
+		Return(redis.NewIntResult(1, nil))
+
+	expirationMatcher := mock.MatchedBy(func(expiration time.Time) bool {
+		return expiration.Unix() == origAbsTimeoutTime.Unix()
+	})
+	mockRedis.EXPECT().ExpireAt(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId), expirationMatcher).Return(redis.NewBoolResult(true, nil))
+
+	timeoutApplier := NewRedisTimeoutApplier(mockRedis)
+
+	valid, err := timeoutApplier.ApplyTimeout(context.Background(), sessionId)
+
+	g := gomega.NewWithT(t)
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(valid).To(gomega.BeTrue())
+}
+
+func TestApplyTimeout_whenAbsTimeoutDisabled(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sessionId := "my_session_id"
+	testBeginTime := time.Now()
+
+	//let the session be accessed 10 seconds ago.
+	sessionLastAccessedTime := time.Now().Add(-10 * time.Second)
+	idleTimeout := 60 * time.Second
+	origIdleTimeoutTime := sessionLastAccessedTime.Add(idleTimeout)
+
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
+	//mock that the session exists
+	mockRedis.EXPECT().Exists(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId)).
+		Return(redis.NewIntResult(1, nil))
+	mockRedis.EXPECT().HMGet(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId), common.SessionIdleTimeoutDuration, common.SessionAbsTimeoutTime).
+		Return(redis.NewSliceResult([]interface{}{idleTimeout.String(), nil}, nil))
+
+	//expects last accessed time to be updated
+	lastAccessTimeMatcher := mock.MatchedBy(func(epoch int64) bool {
+		return epoch >= testBeginTime.Unix()
+	})
+	mockRedis.EXPECT().HSet(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId), common.SessionLastAccessedField, lastAccessTimeMatcher).
+		Return(redis.NewIntResult(1, nil))
+
+	expirationMatcher := mock.MatchedBy(func(expiration time.Time) bool {
+		return expiration.After(origIdleTimeoutTime)
+	})
+	mockRedis.EXPECT().ExpireAt(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId), expirationMatcher).Return(redis.NewBoolResult(true, nil))
+
+	timeoutApplier := NewRedisTimeoutApplier(mockRedis)
+
+	valid, err := timeoutApplier.ApplyTimeout(context.Background(), sessionId)
+
+	g := gomega.NewWithT(t)
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(valid).To(gomega.BeTrue())
+}
+
+func TestApplyTimeout_whenBothTimeoutDisabled(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sessionId := "my_session_id"
+	testBeginTime := time.Now()
+
+	//let the session be accessed 10 seconds ago.
+
+	mockRedis := redismock.NewMockUniversalClient(ctrl)
+	//mock that the session exists
+	mockRedis.EXPECT().Exists(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId)).
+		Return(redis.NewIntResult(1, nil))
+	mockRedis.EXPECT().HMGet(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId), common.SessionIdleTimeoutDuration, common.SessionAbsTimeoutTime).
+		Return(redis.NewSliceResult([]interface{}{nil, nil}, nil))
+
+	//expects last accessed time to be updated
+	lastAccessTimeMatcher := mock.MatchedBy(func(epoch int64) bool {
+		return epoch >= testBeginTime.Unix()
+	})
+	mockRedis.EXPECT().HSet(gomock.Any(), fmt.Sprintf("LANAI:SESSION:SESSION:%s", sessionId), common.SessionLastAccessedField, lastAccessTimeMatcher).
+		Return(redis.NewIntResult(1, nil))
+
+	timeoutApplier := NewRedisTimeoutApplier(mockRedis)
+
+	valid, err := timeoutApplier.ApplyTimeout(context.Background(), sessionId)
+
+	g := gomega.NewWithT(t)
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(valid).To(gomega.BeTrue())
+}
