@@ -118,3 +118,108 @@ func TestExpiration(t *testing.T) {
 		t.Errorf("created at %v, last accessed at %v should be valid", s.values[createdTimeKey], s.lastAccessed)
 	}
 }
+
+//TODO: add test scenario for when idle time out is not enabled, abs timeout is not enabled, both not enabled
+
+func TestIdleTimeoutDisabled(t *testing.T) {
+	s := &Session{
+		values: make(map[interface{}]interface{}),
+		name:   "session-key",
+		options: &Options{
+			IdleTimeout: 0,
+			AbsoluteTimeout: 1800 * time.Second,
+		},
+		isNew: true,
+		dirty: false,
+	}
+
+	//just created session should not be expired
+	s.lastAccessed = time.Now()
+	s.values[createdTimeKey] = time.Now()
+
+	if s.isExpired() {
+		t.Errorf("just created session should not be expired")
+	}
+
+	//test scenario for a absolute timeout
+	s.lastAccessed = time.Now().Add(-450 * time.Second)
+	s.values[createdTimeKey] = time.Now().Add(-1801 * time.Second)
+
+	if !s.isExpired() {
+		t.Errorf("created at %v, with abs timeout %v should be expired", s.values[createdTimeKey], s.options.AbsoluteTimeout)
+	}
+
+	//test scenario for a not expired session
+	s.lastAccessed = time.Now().Add(-450 * time.Second)
+	s.values[createdTimeKey] = time.Now().Add(-1700 * time.Second)
+
+	if s.isExpired() {
+		t.Errorf("created at %v, last accessed at %v should be valid", s.values[createdTimeKey], s.lastAccessed)
+	}
+}
+
+func TestAbsTimeoutDisabled(t *testing.T) {
+	s := &Session{
+		values: make(map[interface{}]interface{}),
+		name:   "session-key",
+		options: &Options{
+			IdleTimeout: 900 * time.Second,
+			AbsoluteTimeout: 0 * time.Second,
+		},
+		isNew: true,
+		dirty: false,
+	}
+
+	//just created session should not be expired
+	s.lastAccessed = time.Now()
+	s.values[createdTimeKey] = time.Now()
+
+	if s.isExpired() {
+		t.Errorf("just created session should not be expired")
+	}
+
+	//test scenario for a idle timeout
+	s.lastAccessed = time.Now().Add(-901 * time.Second)
+	s.values[createdTimeKey] = time.Now().Add(-901 * time.Second)
+
+	if !s.isExpired() {
+		t.Errorf("last accessed at %v, with idle timeout %v should be expired", s.lastAccessed, s.options.IdleTimeout)
+	}
+
+	//test scenario for a not expired session
+	s.lastAccessed = time.Now().Add(-450 * time.Second)
+	s.values[createdTimeKey] = time.Now().Add(-800 * time.Second)
+
+	if s.isExpired() {
+		t.Errorf("created at %v, last accessed at %v should be valid", s.values[createdTimeKey], s.lastAccessed)
+	}
+}
+
+func TestBothTimeoutDisabled(t *testing.T) {
+	s := &Session{
+		values: make(map[interface{}]interface{}),
+		name:   "session-key",
+		options: &Options{
+			IdleTimeout: 0 * time.Second,
+			AbsoluteTimeout: 0 * time.Second,
+		},
+		isNew: true,
+		dirty: false,
+	}
+
+	//just created session should not be expired
+	s.lastAccessed = time.Now()
+	s.values[createdTimeKey] = time.Now()
+
+	if s.isExpired() {
+		t.Errorf("just created session should not be expired")
+	}
+
+	//session should not expired
+	s.lastAccessed = time.Now().Add(-1000 * time.Second)
+	s.values[createdTimeKey] = time.Now().Add(-2000 * time.Second)
+
+	if s.isExpired() {
+		t.Errorf("created at %v, last accessed at %v should be valid", s.values[createdTimeKey], s.lastAccessed)
+	}
+}

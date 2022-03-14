@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"github.com/google/uuid"
 	"net/http"
 	"strings"
@@ -224,9 +225,13 @@ func (s *Session) ExpireNow(ctx context.Context) error {
 
 func (s *Session) isExpired() bool {
 	now := time.Now()
-	exp := s.expiration()
+	canExpire, exp := s.expiration()
 
-	return exp.Before(now)
+	if !canExpire {
+		return false
+	} else {
+		return exp.Before(now)
+	}
 }
 
 func (s *Session) createdOn() time.Time {
@@ -237,14 +242,17 @@ func (s *Session) createdOn() time.Time {
 	}
 }
 
-func (s *Session) expiration() time.Time {
-	idleExpiration := s.lastAccessed.Add(s.options.IdleTimeout)
-	absExpiration := s.createdOn().Add(s.options.AbsoluteTimeout)
+func (s *Session) expiration() (canExpire bool, expiration time.Time) {
+	var timeoutSetting common.TimeoutSetting = 0
 
-	//whichever is the earliest
-	if idleExpiration.Before(absExpiration) {
-		return idleExpiration
-	} else {
-		return absExpiration
+	var idleExpiration, absExpiration time.Time
+	if s.options.IdleTimeout > 0 {
+		idleExpiration = s.lastAccessed.Add(s.options.IdleTimeout)
+		timeoutSetting = timeoutSetting | common.IdleTimeoutEnabled
 	}
+	if s.options.AbsoluteTimeout > 0 {
+		absExpiration = s.createdOn().Add(s.options.AbsoluteTimeout)
+		timeoutSetting = timeoutSetting | common.AbsoluteTimeoutEnabled
+	}
+	return common.CalculateExpiration(timeoutSetting, idleExpiration, absExpiration)
 }

@@ -311,6 +311,138 @@ func TestSaveNewSession(t *testing.T) {
 	}
 }
 
+func TestSaveNewSessionWithIdleTimeoutDisabled(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := redismock.NewMockUniversalClient(ctrl)
+	connection := mock
+
+	store := NewRedisStore(connection, func(o *StoreOption){
+		o.IdleTimeout = -1 * time.Second
+	})
+	session, _ := store.New("session_name")
+
+	if session.IsDirty() {
+		t.Error("session should not be dirty")
+	}
+
+	mock.EXPECT().HSet(gomock.Any(),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
+		sessionValueField, gomock.Any(),
+		sessionOptionField, gomock.Any(),
+		common.SessionAbsTimeoutTime, gomock.Any(),
+		common.SessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
+
+	originalLastAccessed := session.lastAccessed
+	var expiresAt time.Time
+	mock.EXPECT().ExpireAt(gomock.Any(),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
+		gomock.Any()).
+		Do(func(ctx context.Context, key string, tm time.Time){
+			expiresAt = tm
+		}).
+		Return(&goRedis.BoolCmd{})
+
+	_ = store.Save(session)
+
+	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
+		t.Error("session last accessed time should be updated")
+	}
+
+	if !expiresAt.Equal(session.createdOn().Add(session.options.AbsoluteTimeout)) {
+		t.Error("session should expire at absolute time out")
+	}
+
+	if session.IsDirty() {
+		t.Error("session should not be dirty")
+	}
+}
+
+func TestSaveNewSessionWithAbsTimeoutDisabled(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := redismock.NewMockUniversalClient(ctrl)
+	connection := mock
+
+	store := NewRedisStore(connection, func(o *StoreOption){
+		o.AbsoluteTimeout = -1 * time.Second
+	})
+	session, _ := store.New("session_name")
+
+	if session.IsDirty() {
+		t.Error("session should not be dirty")
+	}
+
+	mock.EXPECT().HSet(gomock.Any(),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
+		sessionValueField, gomock.Any(),
+		sessionOptionField, gomock.Any(),
+		common.SessionIdleTimeoutDuration, gomock.Any(),
+		common.SessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
+
+	originalLastAccessed := session.lastAccessed
+	var expiresAt time.Time
+	mock.EXPECT().ExpireAt(gomock.Any(),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
+		gomock.Any()).
+		Do(func(ctx context.Context, key string, tm time.Time){
+			expiresAt = tm
+		}).
+		Return(&goRedis.BoolCmd{})
+
+	_ = store.Save(session)
+
+	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
+		t.Error("session last accessed time should be updated")
+	}
+
+	if !expiresAt.Equal(session.lastAccessed.Add(session.options.IdleTimeout)) {
+		t.Error("session should expire at idle time out")
+	}
+
+	if session.IsDirty() {
+		t.Error("session should not be dirty")
+	}
+}
+
+func TestSaveNewSessionWithTimeoutDisabled(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := redismock.NewMockUniversalClient(ctrl)
+	connection := mock
+
+	store := NewRedisStore(connection, func(o *StoreOption){
+		o.IdleTimeout = -1 * time.Second
+		o.AbsoluteTimeout = -1 * time.Second
+	})
+	session, _ := store.New("session_name")
+
+	if session.IsDirty() {
+		t.Error("session should not be dirty")
+	}
+
+	mock.EXPECT().HSet(gomock.Any(),
+		fmt.Sprintf("LANAI:SESSION:%s:%s", session.name, session.id),
+		sessionValueField, gomock.Any(),
+		sessionOptionField, gomock.Any(),
+		common.SessionLastAccessedField, gomock.Any()).Return(&goRedis.IntCmd{})
+
+	originalLastAccessed := session.lastAccessed
+
+	_ = store.Save(session)
+
+	if !session.lastAccessed.After(originalLastAccessed) && session.lastAccessed.Before(time.Now()) {
+		t.Error("session last accessed time should be updated")
+	}
+
+	if session.IsDirty() {
+		t.Error("session should not be dirty")
+	}
+}
+
 func TestSaveDirtySession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -410,3 +542,6 @@ func TestSaveAccessedSession(t *testing.T) {
 		t.Error("session should not be dirty after being saved")
 	}
 }
+
+//TODO: add save accessed session but with either idle, abs timeout disabled or both disabled
+
