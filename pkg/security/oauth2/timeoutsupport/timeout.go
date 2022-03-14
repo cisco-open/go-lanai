@@ -42,26 +42,31 @@ func(r *RedisTimeoutApplier) ApplyTimeout(ctx context.Context, sessionId string)
 	}
 	result, _ := hmGetCmd.Result()
 
-	idleTimeout, err := time.ParseDuration(result[0].(string))
-	if err != nil {
-		return
-	}
-	absTimeoutUnixTime, err := strconv.ParseInt(result[1].(string), 10, 0)
-	if err != nil {
-		return
-	}
-	absExpiration := time.Unix(absTimeoutUnixTime, 0)
-
+	var timeoutSetting common.TimeoutSetting = 0
+	var idleExpiration, absExpiration time.Time
 	now := time.Now()
-	idleExpiration := now.Add(idleTimeout)
-	var expiration time.Time
 
-	//whichever is the earliest
-	if idleExpiration.Before(absExpiration) {
-		expiration = idleExpiration
-	} else {
-		expiration = absExpiration
+	if result[0] != nil {
+		idleTimeout, e := time.ParseDuration(result[0].(string))
+		if e != nil {
+			err = e
+			return
+		}
+		idleExpiration = now.Add(idleTimeout)
+		timeoutSetting = timeoutSetting | common.IdleTimeoutEnabled
 	}
+
+	if result[1] != nil {
+		absTimeoutUnixTime, e := strconv.ParseInt(result[1].(string), 10, 0)
+		if e != nil {
+			err = e
+			return
+		}
+		absExpiration = time.Unix(absTimeoutUnixTime, 0)
+		timeoutSetting = timeoutSetting | common.AbsoluteTimeoutEnabled
+	}
+
+	canExpire, expiration := common.CalculateExpiration(timeoutSetting, idleExpiration, absExpiration)
 
 	//update session last accessed time
 	hsetCmd := r.client.HSet(ctx, key, common.SessionLastAccessedField, now.Unix())
@@ -69,7 +74,9 @@ func(r *RedisTimeoutApplier) ApplyTimeout(ctx context.Context, sessionId string)
 		err = hsetCmd.Err()
 		return
 	}
-	expireCmd := r.client.ExpireAt(ctx, key, expiration)
-	err = expireCmd.Err()
+	if canExpire {
+		expireCmd := r.client.ExpireAt(ctx, key, expiration)
+		err = expireCmd.Err()
+	}
 	return
 }
