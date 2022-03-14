@@ -37,7 +37,7 @@ generate: $(GEN_LIST)
 # 	Invoke "go test" on defined modules.
 # 	This target typically run on CI/CD working machine
 test: generate
-	$(GO) test -v -count=1 -v -failfast -timeout 0 -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/... $(MODULE)/internal/... | tee $(DESTDIR)/tests.out
+	$(GO) test -v -count=1 -v -failfast -timeout 0 -coverpkg $(MODULE)/pkg/...,$(MODULE)/internal/... -coverprofile $(DESTDIR)/coverage.out $(MODULE)/pkg/... $(MODULE)/internal/... | tee $(DESTDIR)/tests.out
 
 # lint:
 # 	Invoke "go vet" and other linters
