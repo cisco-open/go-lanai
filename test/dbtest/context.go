@@ -2,7 +2,9 @@ package dbtest
 
 import (
 	"context"
+	"go.uber.org/fx"
 	"gorm.io/gorm"
+	"testing"
 )
 
 /*************************
@@ -76,4 +78,15 @@ type mockedGormContext struct {
 func (c mockedGormContext) DB() *gorm.DB {
 	return c.db
 }
+
+/*************************
+	Data Setup
+ *************************/
+
+type DI struct {
+	fx.In
+	DB *gorm.DB
+}
+
+type DataSetupStep func(ctx context.Context, t *testing.T, db *gorm.DB) context.Context
 

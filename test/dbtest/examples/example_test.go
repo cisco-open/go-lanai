@@ -6,11 +6,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
+	"embed"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
-	"gorm.io/gorm"
 	"testing"
 )
 
@@ -28,6 +28,37 @@ func (Client) TableName() string {
 }
 
 /*************************
+	Data Setup
+ *************************/
+
+//go:embed testdata/*.yml testdata/*.sql
+var testDataFS embed.FS
+
+func CreateAllTables() dbtest.DataSetupStep {
+	return dbtest.SetupUsingSQLFile(testDataFS, "testdata/tables.sql")
+}
+
+func TruncateAllTables() dbtest.DataSetupStep {
+	return dbtest.SetupTruncateTables("security_clients")
+}
+
+func SeedClients() dbtest.DataSetupStep {
+	var clients []*Client
+	return dbtest.SetupUsingModelSeedFile(testDataFS, &clients, "testdata/model_clients.yml")
+}
+
+// SetupScopeTestPrepareTables returns a test.SetupFunc that prepare the data before each sub-test start,
+// by using multiple dbtest.DataSetupStep. Each step could be:
+// - Raw SQL stored in file. See CreateAllTables
+// - Models data stored in yml and loaded directly into the provided model array. See SeedClients()
+// - AdHoc SQL queries provided via parameter. See dbtest.SetupTruncateTables()
+func SetupScopeTestPrepareTables(di *dbtest.DI) test.SetupFunc {
+	return dbtest.PrepareData(di,
+		CreateAllTables(), TruncateAllTables(), SeedClients(),
+	)
+}
+
+/*************************
 	Test
  *************************/
 
@@ -39,7 +70,7 @@ func (Client) TableName() string {
 
 type testDI struct {
 	fx.In
-	DB *gorm.DB        `optional:"true"`
+	dbtest.DI
 }
 
 func TestDBPlayback(t *testing.T) {
@@ -48,6 +79,7 @@ func TestDBPlayback(t *testing.T) {
 		apptest.Bootstrap(),
 		dbtest.WithDBPlayback("testdb"),
 		apptest.WithDI(di),
+		test.SubTestSetup(SetupScopeTestPrepareTables(&di.DI)),
 		test.GomegaSubTest(SubTestExampleSelect(di), "SelectExample"),
 		test.GomegaSubTest(SubTestExampleTxSave(di), "TransactionalSaveExample"),
 	)
