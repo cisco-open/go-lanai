@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"embed"
+	"github.com/cockroachdb/copyist"
 	"go.uber.org/fx"
 )
 
@@ -37,6 +38,11 @@ func WithDBPlayback(dbName string, opts ...DBOptions) test.Options {
 	testOpts := withDB(modeAuto, dbName, opts)
 	testOpts = append(testOpts, withData()...)
 	return test.WithOptions(testOpts...)
+}
+
+// IsRecording returns true if copyist is in recording mode
+func IsRecording() bool {
+	return copyist.IsRecording()
 }
 
 // WithNoopMocks create a noop tx.TxManager and a noop gorm.DB
