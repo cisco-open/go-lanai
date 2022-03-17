@@ -1,4 +1,4 @@
-package manager_test
+package scope_test
 
 import (
 	"context"

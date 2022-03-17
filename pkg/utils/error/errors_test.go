@@ -139,7 +139,7 @@ func tryReserve(v interface{}) (err error) {
  ************************/
 const (
 	// security reserved
-	Reserved = 998 << ReservedOffset
+	testReserved = 998 << ReservedOffset
 )
 
 // Hierarchy:
@@ -157,7 +157,7 @@ const (
 // All "Type" values are used as mask
 const (
 	_              = iota
-	ErrorTypeCodeA = Reserved + iota<<ErrorTypeOffset
+	ErrorTypeCodeA = testReserved + iota<<ErrorTypeOffset
 	ErrorTypeCodeB
 )
 
@@ -197,7 +197,7 @@ const (
 //goland:noinspection GoSnakeCaseUsage,GoUnusedGlobalVariable
 var (
 	// masked errors for comparison
-	ErrorCategoryTest = NewErrorCategory(Reserved, errors.New("error type: test"))
+	ErrorCategoryTest = NewErrorCategory(testReserved, errors.New("error type: test"))
 	ErrorTypeA        = NewErrorType(ErrorTypeCodeA, errors.New("error type: A"))
 	ErrorTypeB        = NewErrorType(ErrorTypeCodeB, errors.New("error type: B"))
 
