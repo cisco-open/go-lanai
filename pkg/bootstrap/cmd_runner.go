@@ -6,14 +6,9 @@ import (
 	"go.uber.org/fx"
 )
 
-var cliRunnerModule = &Module{
-	Name: "CLI Runner",
-	Precedence: CommandLineRunnerPrecedence,
-	Options: []fx.Option{},
-}
-
 const (
-	FxCliRunnerGroup = "bootstrap_cli_runner"
+	FxCliRunnerGroup    = "bootstrap_cli_runner"
+	CliRunnerModuleName = "CLI Runner"
 )
 
 type CliRunner func(ctx context.Context) error
@@ -52,7 +47,31 @@ func EnableCliRunnerMode(runnerProviders ...interface{}) {
 	enableCliRunnerMode(bootstrapper(), runnerProviders)
 }
 
+func newCliRunnerModule() *Module {
+	return &Module{
+		Name:       CliRunnerModuleName,
+		Precedence: CommandLineRunnerPrecedence,
+		Options:    []fx.Option{fx.Invoke(cliRunnerExec)},
+	}
+}
+
 func enableCliRunnerMode(b *Bootstrapper, runnerProviders []interface{}) {
+	// first find existing runner module or register one
+	var cliRunnerModule *Module
+LOOP:
+	for v := range b.modules {
+		switch m, ok := v.(*Module); {
+		case ok && m != nil && m.Name == CliRunnerModuleName:
+			cliRunnerModule = m
+			break LOOP
+		}
+	}
+	if cliRunnerModule == nil {
+		cliRunnerModule = newCliRunnerModule()
+		b.Register(cliRunnerModule)
+	}
+
+	// create annotated providers and add to module
 	providers := make([]interface{}, len(runnerProviders))
 	for i, provider := range runnerProviders {
 		providers[i] = fx.Annotated{
@@ -60,11 +79,7 @@ func enableCliRunnerMode(b *Bootstrapper, runnerProviders []interface{}) {
 			Target: provider,
 		}
 	}
-
-	cliRunnerModule.Options = []fx.Option{
-		fx.Provide(providers...),
-		fx.Invoke(cliRunnerExec)}
-	b.Register(cliRunnerModule)
+	cliRunnerModule.Options = append(cliRunnerModule.Options, fx.Provide(providers...))
 }
 
 type cliDI struct {
@@ -72,7 +87,6 @@ type cliDI struct {
 	Hooks   []CliRunnerLifecycleHooks `group:"bootstrap_cli_runner"`
 	Runners []CliRunner               `group:"bootstrap_cli_runner"`
 }
-
 
 func cliRunnerExec(lc fx.Lifecycle, shutdowner fx.Shutdowner, di cliDI) {
 	order.SortStable(di.Hooks, order.OrderedFirstCompare)
@@ -100,10 +114,8 @@ func cliRunnerExec(lc fx.Lifecycle, shutdowner fx.Shutdowner, di cliDI) {
 			// we delay error reporting to OnStop
 			return shutdowner.Shutdown()
 		},
-		OnStop:  func(ctx context.Context) error {
+		OnStop: func(ctx context.Context) error {
 			return err
 		},
 	})
 }
-
-
