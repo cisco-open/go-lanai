@@ -1,4 +1,4 @@
-package transit_test
+package vault_test
 
 import (
 	"context"
