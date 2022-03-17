@@ -21,6 +21,13 @@ var TestBootstrapConfigFS embed.FS
 //go:embed test-application.yml
 var TestApplicationConfigFS embed.FS
 
+// testBootstrapper holds all configuration to bootstrap a fs-enabled test
+type testBootstrapper struct {
+	bootstrap.Bootstrapper
+	AppPriorityOptions []fx.Option
+	AppOptions         []fx.Option
+}
+
 // Bootstrap is an entrypoint test.Options that indicates all sub tests should be run within the scope of
 // an slim version of bootstrap.App
 func Bootstrap() test.Options {
@@ -34,26 +41,30 @@ func NewFxTestRunner() test.InternalRunner {
 		ctx = testSetup(ctx, t.T, t.TestHooks)
 		defer testTeardown(ctx, t.T, t.TestHooks)
 
+		// register test module's options without register the module directly
+		// Note:
+		//		we want to support repeated bootstrap but the bootstrap package doesn't support
+		// 		module refresh (caused by singleton pattern).
+		// Note 4.3:
+		//		Now with help of bootstrap.ExecuteContainedApp(), we are able repeatedly bootstrap a self-contained
+		// 		application.
+		tb, ok := ctx.Value(ctxKeyTestBootstrapper).(*testBootstrapper)
+		if !ok || tb == nil {
+			t.Fatalf("Failed to start test %s due to invalid test bootstrap configuration", t.Name())
+			return
+		}
+
 		// default modules
-		appconfig.Use()
+		tb.Register(appconfig.ConfigModule)
 
 		// prepare bootstrap fx options
-		priority := []fx.Option{
+		priority := append([]fx.Option{
 			fx.Supply(t),
 			appconfig.FxEmbeddedDefaults(TestDefaultConfigFS),
 			appconfig.FxEmbeddedBootstrapAdHoc(TestBootstrapConfigFS),
 			appconfig.FxEmbeddedApplicationAdHoc(TestApplicationConfigFS),
-		}
-		regular := make([]fx.Option, 0)
-
-		// register test module's options without register the module directly
-		// Note: we want to support repeated bootstrap but the bootstrap package doesn't support
-		// module refresh (caused by singleton pattern).
-		// To avoid re-declaring same fx.Option, we don't register test module directly
-		if m, ok := ctx.Value(ctxKeyTestModule).(*bootstrap.Module); ok && m != nil {
-			priority = append(priority, m.PriorityOptions...)
-			regular = append(regular, m.Options...)
-		}
+		}, tb.AppPriorityOptions...)
+		regular := append([]fx.Option{}, tb.AppOptions...)
 
 		// bootstrapping
 		bootstrap.NewAppCmd("testapp", priority, regular,
@@ -62,8 +73,8 @@ func NewFxTestRunner() test.InternalRunner {
 				cmd.Args = nil
 			},
 		)
-		bootstrap.EnableCliRunnerMode(newTestCliRunner)
-		bootstrap.Execute()
+		tb.EnableCliRunnerMode(newTestCliRunner)
+		bootstrap.ExecuteContainedApp(ctx, &tb.Bootstrapper)
 	}
 }
 

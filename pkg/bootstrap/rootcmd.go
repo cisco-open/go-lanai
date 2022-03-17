@@ -17,6 +17,7 @@ limitations under the License.
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -102,10 +103,23 @@ func AddBoolFlag(flagVar *bool, name string, defaultValue bool, usage string) {
 	rootCmd.PersistentFlags().BoolVar(flagVar, name, defaultValue, usage)
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
+// Execute run globally configured application.
+// "globally configured" means Module and fx.Options added via package level functions. e.g. Register or AddOptions
+// It adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
+		logger.Errorf("%v", err)
+		os.Exit(1)
+	}
+}
+
+// ExecuteContainedApp is similar to Execute, but run with a separately configured Bootstrapper.
+// In this mode, the bootstrapping process ignore any globally configured modules and options.
+// This is usually called by test framework. Service developers normally don't  use it directly
+func ExecuteContainedApp(ctx context.Context, b *Bootstrapper) {
+	ctx = contextWithBootstrapper(ctx, b)
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		logger.Errorf("%v", err)
 		os.Exit(1)
 	}
@@ -128,7 +142,39 @@ func NewAppCmd(appName string, priorityOptions []fx.Option, regularOptions []fx.
 		execCtx.Cmd = cmd
 		execCtx.Args = args
 
-		app := bootstrapper().NewApp(&execCtx, priorityOptions, regularOptions)
-		app.Run()
+		b, ok := cmd.Context().Value(ctxKeyBootstrapper).(*Bootstrapper)
+		if !ok || b == nil {
+			b = bootstrapper()
+		}
+		b.NewApp(&execCtx, priorityOptions, regularOptions).Run()
 	}
+}
+
+
+/********************
+	Cmd Context
+ ********************/
+
+type bootstrapperCtxKey struct{}
+
+var ctxKeyBootstrapper = bootstrapperCtxKey{}
+
+type bootstrapContext struct {
+	context.Context
+	b *Bootstrapper
+}
+
+func contextWithBootstrapper(parent context.Context, b *Bootstrapper) context.Context {
+	return &bootstrapContext{
+		Context: parent,
+		b: b,
+	}
+}
+
+func (c *bootstrapContext) Value(key interface{}) interface{} {
+	switch {
+	case key == ctxKeyBootstrapper:
+		return c.b
+	}
+	return c.Context.Value(key)
 }

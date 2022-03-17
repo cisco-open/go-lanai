@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
@@ -76,7 +77,7 @@ func Test_Saml_Sso (t *testing.T) {
 	di := &DIForTest{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithModules(webinit.Module, security.Module, tenancy.Module, Module),
+		apptest.WithModules(webinit.Module, security.Module, errorhandling.ErrorHandlingModule, tenancy.Module, samlctx.Module, Module),
 		apptest.WithDI(di), // tell test framework to do dependencies injection
 		apptest.WithTimeout(300*time.Second),
 		apptest.WithProperties("server.context-path: /auth",

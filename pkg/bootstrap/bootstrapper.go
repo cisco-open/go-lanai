@@ -22,6 +22,42 @@ var (
 
 type ContextOption func(ctx context.Context) context.Context
 
+/**************************
+	Singleton Pattern
+ **************************/
+
+func bootstrapper() *Bootstrapper {
+	once.Do(func() {
+		bootstrapperInstance = NewBootstrapper()
+	})
+	return bootstrapperInstance
+}
+
+func Register(m *Module) {
+	bootstrapper().Register(m)
+}
+
+func AddOptions(options ...fx.Option) {
+	bootstrapper().AddOptions(options...)
+}
+
+func AddInitialAppContextOptions(options ...ContextOption) {
+	bootstrapper().AddInitialAppContextOptions(options...)
+}
+
+func AddStartContextOptions(options ...ContextOption) {
+	bootstrapper().AddStartContextOptions(options...)
+}
+
+func AddStopContextOptions(options ...ContextOption) {
+	bootstrapper().AddStopContextOptions(options...)
+}
+
+/**************************
+	Bootstrapper
+ **************************/
+
+// Bootstrapper stores application configurations for bootstrapping
 type Bootstrapper struct {
 	modules      utils.Set
 	adhocModule  *Module
@@ -30,43 +66,39 @@ type Bootstrapper struct {
 	stopCtxOpts  []ContextOption
 }
 
-// singleton pattern
-func bootstrapper() *Bootstrapper {
-	once.Do(func() {
-		bootstrapperInstance = &Bootstrapper{
-			modules:      utils.NewSet(),
-			adhocModule:  newAnonymousModule(),
-			initCtxOpts:  []ContextOption{},
-			startCtxOpts: []ContextOption{},
-			stopCtxOpts:  []ContextOption{},
-		}
-	})
-	return bootstrapperInstance
+// NewBootstrapper create a new Bootstrapper.
+// Note: "bootstrap" package uses Singleton patterns for application bootstrap. Calling this function directly is not recommended
+// 		 This function is exported for test packages to use
+func NewBootstrapper() *Bootstrapper {
+	return &Bootstrapper{
+		modules:      utils.NewSet(),
+		adhocModule:  newAnonymousModule(),
+	}
 }
 
-func Register(m *Module) {
-	b := bootstrapper()
+func (b *Bootstrapper) Register(m *Module) {
 	b.modules.Add(m)
 }
 
-func AddOptions(options ...fx.Option) {
-	b := bootstrapper()
+func (b *Bootstrapper) AddOptions(options ...fx.Option) {
 	b.adhocModule.PriorityOptions = append(b.adhocModule.PriorityOptions, options...)
 }
 
-func AddInitialAppContextOptions(options ...ContextOption) {
-	b := bootstrapper()
+func (b *Bootstrapper) AddInitialAppContextOptions(options ...ContextOption) {
 	b.initCtxOpts = append(b.initCtxOpts, options...)
 }
 
-func AddStartContextOptions(options ...ContextOption) {
-	b := bootstrapper()
+func (b *Bootstrapper) AddStartContextOptions(options ...ContextOption) {
 	b.startCtxOpts = append(b.startCtxOpts, options...)
 }
 
-func AddStopContextOptions(options ...ContextOption) {
-	b := bootstrapper()
+func (b *Bootstrapper) AddStopContextOptions(options ...ContextOption) {
 	b.stopCtxOpts = append(b.stopCtxOpts, options...)
+}
+
+// EnableCliRunnerMode implements CliRunnerEnabler
+func (b *Bootstrapper) EnableCliRunnerMode(runnerProviders ...interface{}) {
+	enableCliRunnerMode(b, runnerProviders)
 }
 
 func (b *Bootstrapper) NewApp(cliCtx *CliExecContext, priorityOptions []fx.Option, regularOptions []fx.Option) *App {

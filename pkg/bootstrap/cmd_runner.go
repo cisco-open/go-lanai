@@ -18,6 +18,11 @@ const (
 
 type CliRunner func(ctx context.Context) error
 
+type CliRunnerEnabler interface {
+	// EnableCliRunnerMode see bootstrap.EnableCliRunnerMode
+	EnableCliRunnerMode(runnerProviders ...interface{})
+}
+
 // CliRunnerLifecycleHooks provide instrumentation around CliRunners
 type CliRunnerLifecycleHooks interface {
 	Before(ctx context.Context, runner CliRunner) context.Context
@@ -33,17 +38,21 @@ type CliRunnerLifecycleHooks interface {
 //			return func(ctx context.Context) error {
 //				// Do your stuff
 //				return err
-//			})
+//			}
 //		}
 //
-// Using this pattern garuantees following things:
+// Using this pattern guarantees following things:
 // 		1. The application is automatically shutdown after all lifecycle hooks finished
 //		2. The runner funcs are run after all other fx.Invoke
-// 		3. All other "OnStop" are executed relardless if any hook function returns error (graceful shutdown)
+// 		3. All other "OnStop" are executed regardless if any hook function returns error (graceful shutdown)
 // 		4. If any hook functions returns error, it reflected as non-zero process exit code
-// 		5. Each cli runner are separatedly traced if tracing is enabled
-// Note: calling this function repeatly would override previous invocation (i.e. only the last invocation takes effect)
+// 		5. Each cli runner are separately traced if tracing is enabled
+// Note: calling this function repeatedly would override previous invocation (i.e. only the last invocation takes effect)
 func EnableCliRunnerMode(runnerProviders ...interface{}) {
+	enableCliRunnerMode(bootstrapper(), runnerProviders)
+}
+
+func enableCliRunnerMode(b *Bootstrapper, runnerProviders []interface{}) {
 	providers := make([]interface{}, len(runnerProviders))
 	for i, provider := range runnerProviders {
 		providers[i] = fx.Annotated{
@@ -55,7 +64,7 @@ func EnableCliRunnerMode(runnerProviders ...interface{}) {
 	cliRunnerModule.Options = []fx.Option{
 		fx.Provide(providers...),
 		fx.Invoke(cliRunnerExec)}
-	Register(cliRunnerModule)
+	b.Register(cliRunnerModule)
 }
 
 type cliDI struct {

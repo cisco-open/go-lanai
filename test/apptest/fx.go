@@ -19,10 +19,11 @@ func WithDI(diTargets ...interface{}) test.Options {
 // WithModules register given modules to test app
 func WithModules(modules ...*bootstrap.Module) test.Options {
 	return test.Setup(func(ctx context.Context, t *testing.T) (context.Context, error) {
+		ret, tb := withTestModule(ctx)
 		for _, m := range modules {
-			bootstrap.Register(m)
+			tb.Register(m)
 		}
-		return ctx, nil
+		return ret, nil
 	})
 }
 
@@ -35,56 +36,54 @@ func WithTimeout(timeout time.Duration) test.Options {
 // see bootstrap.Module
 func WithFxOptions(opts ...fx.Option) test.Options {
 	return test.Setup(func(ctx context.Context, t *testing.T) (context.Context, error) {
-		ret, fxOpts := withTestModule(ctx)
-		fxOpts.Options = append(fxOpts.Options, opts...)
+		ret, tb := withTestModule(ctx)
+		tb.AddOptions(opts...)
 		return ret, nil
 	})
 }
 
-// WithFxPriorityOptions register given fx.Option to test app as priority steps
+// WithFxPriorityOptions register given fx.Option to test app as priority steps, before any other modules
 // see bootstrap.Module
 func WithFxPriorityOptions(opts ...fx.Option) test.Options {
 	return test.Setup(func(ctx context.Context, t *testing.T) (context.Context, error) {
-		ret, fxOpts := withTestModule(ctx)
-		fxOpts.PriorityOptions = append(fxOpts.PriorityOptions, opts...)
+		ret, tb := withTestModule(ctx)
+		tb.AddOptions()
+		tb.AppPriorityOptions = append(tb.AppPriorityOptions, opts...)
 		return ret, nil
 	})
 }
 
-func withTestModule(ctx context.Context) (context.Context, *bootstrap.Module) {
+func withTestModule(ctx context.Context) (context.Context, *testBootstrapper) {
 	ret := ctx
-	m, ok := ctx.Value(ctxKeyTestModule).(*bootstrap.Module)
-	if !ok || m == nil {
-		m = &bootstrap.Module{
-			Name:            "test",
-			Precedence:      bootstrap.LowestPrecedence,
-			PriorityOptions: []fx.Option{},
-			Options:         []fx.Option{},
+	tb, ok := ctx.Value(ctxKeyTestBootstrapper).(*testBootstrapper)
+	if !ok || tb == nil {
+		tb = &testBootstrapper{
+			Bootstrapper: *bootstrap.NewBootstrapper(),
 		}
 		ret = &testFxContext{
 			Context: ctx,
-			module:  m,
+			tb:      tb,
 		}
 	}
-	return ret, m
+	return ret, tb
 }
 
 /*********************
 	Test FX Context
  *********************/
-type testModuleCtxKey struct{}
+type testBootstrapperCtxKey struct{}
 
-var ctxKeyTestModule = testModuleCtxKey{}
+var ctxKeyTestBootstrapper = testBootstrapperCtxKey{}
 
 type testFxContext struct {
 	context.Context
-	module *bootstrap.Module
+	tb *testBootstrapper
 }
 
 func (c *testFxContext) Value(key interface{}) interface{} {
 	switch {
-	case key == ctxKeyTestModule:
-		return c.module
+	case key == ctxKeyTestBootstrapper:
+		return c.tb
 	}
 	return c.Context.Value(key)
 }

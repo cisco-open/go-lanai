@@ -48,6 +48,8 @@ type Module struct {
 	Options         []fx.Option
 }
 
+// newAnonymousModule has lower precedence than framework modules.
+// It is used to hold options registered via AddOptions()
 func newAnonymousModule() *Module {
 	return &Module{
 		Name:       "anonymous",
@@ -55,6 +57,8 @@ func newAnonymousModule() *Module {
 	}
 }
 
+// newApplicationMainModule application main module has the highest precedence.
+// It is used to hold options passed in via NewAppCmd()
 func newApplicationMainModule() *Module {
 	return &Module{
 		Name:       "main",
