@@ -271,7 +271,7 @@ func translateBindingError(err error) error {
 	case errors.As(err, &verr), errors.As(err, &jsonErr):
 		return err
 	default:
-		return BindingError{error: err}
+		return NewBindingError(err)
 	}
 }
 

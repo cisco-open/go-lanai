@@ -195,6 +195,21 @@ func TestRepeatedBootstrapWithCustomSettings(t *testing.T) {
 	g.Expect(counter.fxInvokeCount).To(gomega.Equal(2), "fx invoke func should be invoked twice, 1 for regular order, 1 for priority order")
 }
 
+func TestBootstrapWithMixedResults(t *testing.T) {
+	t.Skipf("Skipped because this test is meant to fail")
+	test.RunTest(context.Background(), t,
+		Bootstrap(),
+		test.GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest-1"),
+		test.GomegaSubTest(SubTestAlwaysFail(), "FailedTest-1"),
+		test.GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest-2"),
+		test.GomegaSubTest(SubTestAlwaysFail(), "FailedTest-2"),
+		test.GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest-3"),
+		test.GomegaSubTest(SubTestAlwaysFail(), "FailedTest-3"),
+		test.GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest-4"),
+		test.GomegaSubTest(SubTestAlwaysFail(), "FailedTest-4"),
+	)
+}
+
 /*************************
 	Sub-Test Cases
  *************************/
@@ -228,6 +243,18 @@ func SubTestWebController(di *webDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(gomega.Succeed(), "http client should be succeeded")
 		g.Expect(resp).To(gomega.Not(gomega.BeNil()), "http response should not be nil ")
 		g.Expect(resp.StatusCode).To(gomega.Equal(200), "http response status should be 200")
+	}
+}
+
+func SubTestAlwaysSucceed() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(true).To(gomega.BeTrue())
+	}
+}
+
+func SubTestAlwaysFail() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(true).To(gomega.BeFalse())
 	}
 }
 

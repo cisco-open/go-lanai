@@ -6,7 +6,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"embed"
-	"fmt"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"testing"
@@ -82,9 +81,7 @@ func newTestCliRunner(t *test.T) bootstrap.CliRunner {
 	return func(ctx context.Context) error {
 		// run test
 		test.InternalRunSubTests(ctx, t)
-		if t.Failed() {
-			return fmt.Errorf("test failed")
-		}
+		// Note: in case of failed tests, we don't return error. GO's testing framework should be able to figure it out from t.Failed()
 		return nil
 	}
 }
