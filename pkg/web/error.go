@@ -150,6 +150,10 @@ func NewBadRequestError(err error) error {
 	return BadRequestError{error: err}
 }
 
+func NewBindingError(e error) error {
+	return BindingError{error: e}
+}
+
 func mergeHeaders(src http.Header, toMerge http.Header) {
 	for k, values := range toMerge {
 		for _, v := range values {
