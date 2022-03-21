@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"github.com/Shopify/sarama"
 	"time"
 )
@@ -66,7 +67,7 @@ type Binder interface {
 }
 
 type BinderLifecycle interface {
-	Initialize(ctx context.Context) error
+	Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) error
 	Start(ctx context.Context) error
 	Shutdown(ctx context.Context) error
 }

@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"fmt"
 	"github.com/Shopify/sarama"
@@ -47,6 +48,7 @@ type factoryDI struct {
 	ProducerInterceptors []ProducerMessageInterceptor  `group:"kafka"`
 	ConsumerInterceptors []ConsumerDispatchInterceptor `group:"kafka"`
 	HandlerInterceptors  []ConsumerHandlerInterceptor  `group:"kafka"`
+	TlsProviderFactory   *tlsconfig.ProviderFactory
 }
 
 func NewKafkaBinder(di factoryDI) Binder {
@@ -65,7 +67,7 @@ func NewKafkaBinder(di factoryDI) Binder {
 		consumerGroups:       make(map[string]BindingLifecycle),
 	}
 
-	if e := s.Initialize(context.Background()); e != nil {
+	if e := s.Initialize(context.Background(), di.TlsProviderFactory); e != nil {
 		panic(e)
 	}
 	return s
@@ -203,9 +205,13 @@ func (b *SaramaKafkaBinder) Client() sarama.Client {
 }
 
 // Initialize implements BinderLifecycle, prepare for use, negotiate default configs, etc.
-func (b *SaramaKafkaBinder) Initialize(ctx context.Context) (err error) {
+func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) (err error) {
 	b.initOnce.Do(func() {
-		cfg := defaultSaramaConfig(b.properties)
+		cfg, e := defaultSaramaConfig(ctx, b.properties, tlsProviderFactory)
+		if e != nil {
+			err = NewKafkaError(ErrorCodeBindingInternal, fmt.Sprintf("unable to create kafka config: %v", e))
+			return
+		}
 
 		// prepare defaults
 		b.prepareDefaults(ctx, cfg)

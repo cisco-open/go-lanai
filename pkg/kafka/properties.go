@@ -3,6 +3,7 @@ package kafka
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
 	"strings"
@@ -24,6 +25,7 @@ type KafkaProperties struct {
 
 type Net struct {
 	Sasl SASL `json:"sasl"`
+	Tls  TLS  `json:"tls"`
 }
 
 type SASL struct {
@@ -37,6 +39,11 @@ type SASL struct {
 	//username and password for SASL/PLAIN authentication
 	User     string `json:"user"`
 	Password string `josn:"password"`
+}
+
+type TLS struct {
+	Enable bool `json:"enabled"`
+	Config tlsconfig.Properties `json:"config"`
 }
 
 type BinderProperties struct {
@@ -118,6 +125,9 @@ func BindKafkaProperties(ctx *bootstrap.ApplicationContext) KafkaProperties {
 			Sasl: SASL{
 				Enable:    false,
 				Handshake: true,
+			},
+			Tls: TLS{
+				Enable: false,
 			},
 		},
 		Binder: BinderProperties{

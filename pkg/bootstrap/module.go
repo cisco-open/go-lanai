@@ -21,6 +21,7 @@ const (
 	ActuatorPrecedence
 	ConsulPrecedence
 	VaultPrecedence
+	TlsConfigPrecedence
 	RedisPrecedence
 	DatabasePrecedence
 	KafkaPrecedence

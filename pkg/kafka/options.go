@@ -2,17 +2,39 @@ package kafka
 
 import (
 	"context"
+	"crypto/tls"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"github.com/Shopify/sarama"
 	"time"
 )
 
-func defaultSaramaConfig(properties *KafkaProperties) (c *sarama.Config) {
+func defaultSaramaConfig(ctx context.Context, properties *KafkaProperties, tcFactory *tlsconfig.ProviderFactory) (c *sarama.Config, err error) {
 	c = sarama.NewConfig()
 	c.Version = sarama.V2_0_0_0
 
+	if properties.Net.Tls.Enable {
+		c.Net.TLS.Enable = true
+		c.Net.TLS.Config = &tls.Config{}
+
+		provider, e := tcFactory.GetProvider(properties.Net.Tls.Config)
+		if e != nil {
+			return nil, e
+		}
+		rootCAs, e := provider.RootCAs(ctx)
+		if e != nil {
+			return nil, e
+		}
+		c.Net.TLS.Config.RootCAs = rootCAs
+		getCertFunc, e := provider.GetClientCertificate(ctx)
+		if e != nil {
+			return nil, e
+		}
+		c.Net.TLS.Config.GetClientCertificate = getCertFunc
+	}
+	
 	if properties.Net.Sasl.Enable {
 		c.Net.SASL.Enable = properties.Net.Sasl.Enable
 		c.Net.SASL.Handshake = properties.Net.Sasl.Handshake
