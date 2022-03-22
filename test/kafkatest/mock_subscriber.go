@@ -26,8 +26,8 @@ func (s *MockedSubscriber) Partitions() []int32 {
 }
 
 func (s *MockedSubscriber) AddHandler(handlerFunc kafka.MessageHandlerFunc, opts ...kafka.DispatchOptions) error {
-	//TODO implement me
-	panic("implement me")
+	// noop
+	return nil
 }
 
 
