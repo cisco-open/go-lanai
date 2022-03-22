@@ -36,9 +36,9 @@ const (
 type typeKey int
 
 var (
-	singleModelRead   = utils.NewSet(typeModelPtr)
-	multiModelRead    = utils.NewSet(typeModelPtrSlicePtr, typeModelSlicePtr)
-	singleModelWrite  = utils.NewSet(typeModelPtr, typeModel)
+	singleModelRead  = utils.NewSet(typeModelPtr)
+	multiModelRead   = utils.NewSet(typeModelPtrSlicePtr, typeModelSlicePtr)
+	singleModelWrite = utils.NewSet(typeModelPtr, typeModel)
 	//multiModelWrite   = utils.NewSet(typeModelPtrSlice, typeModelSlice, typeModelPtrSlicePtr, typeModelSlicePtr)
 	genericModelWrite = utils.NewSet(
 		typeModelPtr,
@@ -104,7 +104,7 @@ func (g GormCrud) FindAll(ctx context.Context, dest interface{}, options ...Opti
 	})
 }
 
-func (g GormCrud) FindOneBy(ctx context.Context, dest interface{}, condition Condition, options...Option) error {
+func (g GormCrud) FindOneBy(ctx context.Context, dest interface{}, condition Condition, options ...Option) error {
 	if !g.isSupportedValue(dest, singleModelRead) {
 		return ErrorInvalidCrudParam.
 			WithMessage(errTmplInvalidCrudValue, dest, "FindOneBy", "*Struct")
@@ -126,7 +126,7 @@ func (g GormCrud) FindAllBy(ctx context.Context, dest interface{}, condition Con
 	})
 }
 
-func (g GormCrud) CountAll(ctx context.Context, options...Option) (int, error) {
+func (g GormCrud) CountAll(ctx context.Context, options ...Option) (int, error) {
 	var ret int64
 	e := execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Count(&ret)
@@ -137,7 +137,7 @@ func (g GormCrud) CountAll(ctx context.Context, options...Option) (int, error) {
 	return int(ret), nil
 }
 
-func (g GormCrud) CountBy(ctx context.Context, condition Condition, options...Option) (int, error) {
+func (g GormCrud) CountBy(ctx context.Context, condition Condition, options ...Option) (int, error) {
 	var ret int64
 	e := execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Count(&ret)
@@ -148,7 +148,7 @@ func (g GormCrud) CountBy(ctx context.Context, condition Condition, options...Op
 	return int(ret), nil
 }
 
-func (g GormCrud) Save(ctx context.Context, v interface{}, options...Option) error {
+func (g GormCrud) Save(ctx context.Context, v interface{}, options ...Option) error {
 	if !g.isSupportedValue(v, genericModelWrite) {
 		return ErrorInvalidCrudParam.WithMessage(errTmplInvalidCrudValue, v, "Save", "*Struct or []*Struct or []Struct")
 	}
@@ -158,7 +158,7 @@ func (g GormCrud) Save(ctx context.Context, v interface{}, options...Option) err
 	})
 }
 
-func (g GormCrud) Create(ctx context.Context, v interface{}, options...Option) error {
+func (g GormCrud) Create(ctx context.Context, v interface{}, options ...Option) error {
 	if !g.isSupportedValue(v, genericModelWrite) {
 		return ErrorInvalidCrudParam.WithMessage(errTmplInvalidCrudValue, v, "Create", "*Struct, []*Struct or []Struct")
 	}
@@ -168,7 +168,7 @@ func (g GormCrud) Create(ctx context.Context, v interface{}, options...Option) e
 	})
 }
 
-func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, options...Option) error {
+func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, options ...Option) error {
 	if !g.isSupportedValue(model, singleModelWrite) {
 		return ErrorInvalidCrudParam.
 			WithMessage(errTmplInvalidCrudModel, v, "Update", "*Struct or Struct")
@@ -180,7 +180,7 @@ func (g GormCrud) Update(ctx context.Context, model interface{}, v interface{}, 
 	})
 }
 
-func (g GormCrud) Delete(ctx context.Context, v interface{}, options...Option) error {
+func (g GormCrud) Delete(ctx context.Context, v interface{}, options ...Option) error {
 	if !g.isSupportedValue(v, genericModelWrite) {
 		return ErrorInvalidCrudParam.WithMessage(errTmplInvalidCrudValue, v, "Delete", "*Struct, []Struct or []*Struct")
 	}
@@ -190,7 +190,7 @@ func (g GormCrud) Delete(ctx context.Context, v interface{}, options...Option) e
 	})
 }
 
-func (g GormCrud) DeleteBy(ctx context.Context, condition Condition, options...Option) error {
+func (g GormCrud) DeleteBy(ctx context.Context, condition Condition, options ...Option) error {
 	return execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		return db.Delete(g.model)
 	})
@@ -206,7 +206,7 @@ func (g GormCrud) Truncate(ctx context.Context) error {
 		if db.Statement.TableExpr == nil {
 			table = db.Statement.Table
 		}
-		return db.Exec(fmt.Sprintf(`TRUNCATE TABLE %s CASCADE`,  db.Statement.Quote(table)))
+		return db.Exec(fmt.Sprintf(`TRUNCATE TABLE %s CASCADE`, db.Statement.Quote(table)))
 	})
 }
 
@@ -220,12 +220,12 @@ func modelFunc(m interface{}) func(*gorm.DB) *gorm.DB {
 	}
 }
 
-func execute(_ context.Context, db *gorm.DB, condition Condition, options []Option, preOptsFn, fn func(*gorm.DB) *gorm.DB) error {
+func execute(_ context.Context, db *gorm.DB, condition Condition, opts []Option, preOptsFn, fn func(*gorm.DB) *gorm.DB) error {
+	// make a copy of option array
+	options := make([]Option, len(opts), len(opts)+1)
+	copy(options, opts)
 	if preOptsFn != nil {
-		options = append(options, priorityOption{
-			order:   order.Highest,
-			wrapped: preOptsFn,
-		})
+		options = append(options, priorityOption{order: order.Highest, wrapped: preOptsFn})
 	}
 
 	// prepare
@@ -252,9 +252,9 @@ func execute(_ context.Context, db *gorm.DB, condition Condition, options []Opti
 	}
 }
 
-func optsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
+func optsToDBFuncs(opts []Option) ([]func(*gorm.DB) *gorm.DB, error) {
 	order.SortStable(opts, order.UnorderedMiddleCompare)
-	scopes := make([]func(*gorm.DB)*gorm.DB, 0, len(opts))
+	scopes := make([]func(*gorm.DB) *gorm.DB, 0, len(opts))
 	for _, v := range opts {
 		switch rv := reflect.ValueOf(v); rv.Kind() {
 		case reflect.Slice, reflect.Array:
@@ -315,12 +315,12 @@ func applyOptions(db *gorm.DB, opts []Option) (*gorm.DB, error) {
 	return db, db.Error
 }
 
-func conditionToDBFuncs(condition Condition) ([]func(*gorm.DB)*gorm.DB, error) {
-	var scopes []func(*gorm.DB)*gorm.DB
+func conditionToDBFuncs(condition Condition) ([]func(*gorm.DB) *gorm.DB, error) {
+	var scopes []func(*gorm.DB) *gorm.DB
 	switch cv := reflect.ValueOf(condition); cv.Kind() {
 	case reflect.Slice, reflect.Array:
 		size := cv.Len()
-		scopes = make([]func(*gorm.DB)*gorm.DB, 0, size)
+		scopes = make([]func(*gorm.DB) *gorm.DB, 0, size)
 		for i := 0; i < size; i++ {
 			sub, e := conditionToDBFuncs(cv.Index(i).Interface())
 			if e != nil {
@@ -329,7 +329,7 @@ func conditionToDBFuncs(condition Condition) ([]func(*gorm.DB)*gorm.DB, error) {
 			scopes = append(scopes, sub...)
 		}
 	default:
-		var scope func(*gorm.DB)*gorm.DB
+		var scope func(*gorm.DB) *gorm.DB
 		switch where := condition.(type) {
 		case postExecOptions:
 			// postExecOptions is not counted as condition, scope is a noop
@@ -347,7 +347,7 @@ func conditionToDBFuncs(condition Condition) ([]func(*gorm.DB)*gorm.DB, error) {
 				return db.Where(condition)
 			}
 		}
-		scopes = []func(*gorm.DB)*gorm.DB{scope}
+		scopes = []func(*gorm.DB) *gorm.DB{scope}
 	}
 
 	return scopes, nil
@@ -370,9 +370,8 @@ func applyCondition(db *gorm.DB, condition Condition) (*gorm.DB, error) {
 	return db, db.Error
 }
 
-
-func postExecOptsToDBFuncs(opts []Option) ([]func(*gorm.DB)*gorm.DB, error) {
-	scopes := make([]func(*gorm.DB)*gorm.DB, 0, len(opts))
+func postExecOptsToDBFuncs(opts []Option) ([]func(*gorm.DB) *gorm.DB, error) {
+	scopes := make([]func(*gorm.DB) *gorm.DB, 0, len(opts))
 	for _, v := range opts {
 		switch rv := reflect.ValueOf(v); rv.Kind() {
 		case reflect.Slice, reflect.Array:
