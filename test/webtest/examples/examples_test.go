@@ -1,12 +1,12 @@
-package webtest
+package examples
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"encoding/json"
 	"fmt"
 	"github.com/onsi/gomega"
@@ -60,49 +60,31 @@ type testDI struct {
 	fx.In
 }
 
-func TestDefaultRealTestServer(t *testing.T) {
+func TestRealTestServer(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithRealServer(),
+		webtest.WithRealServer(),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			web.FxControllerProviders(newTestController),
 		),
-		test.GomegaSubTest(SubTestRealServerUtils(0, DefaultContextPath), "TestRealServerUtils"),
 		test.GomegaSubTest(SubTestEchoWithRelativePath(), "EchoWithRelativePath"),
-		test.GomegaSubTest(SubTestEchoWithAbsolutePath(DefaultContextPath), "EchoWithAbsolutePath"),
-	)
-}
-
-func TestCustomRealTestServer(t *testing.T) {
-	const altContextPath = "/also-test"
-	di := &testDI{}
-	test.RunTest(context.Background(), t,
-		apptest.Bootstrap(),
-		WithRealServer(UseContextPath(altContextPath), UseLogLevel(log.LevelDebug)),
-		apptest.WithDI(di),
-		apptest.WithFxOptions(
-			web.FxControllerProviders(newTestController),
-		),
-		test.GomegaSubTest(SubTestRealServerUtils(0, altContextPath), "TestRealServerUtils"),
-		test.GomegaSubTest(SubTestEchoWithRelativePath(), "EchoWithRelativePath"),
-		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath), "EchoWithAbsolutePath"),
+		test.GomegaSubTest(SubTestEchoWithAbsolutePath(webtest.DefaultContextPath), "EchoWithAbsolutePath"),
 	)
 }
 
 func TestMockedTestServer(t *testing.T) {
-	const altContextPath = "/also-test"
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithMockedServer(UseContextPath(altContextPath), UseLogLevel(log.LevelDebug)),
+		webtest.WithMockedServer(),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			web.FxControllerProviders(newTestController),
 		),
 		test.GomegaSubTest(SubTestEchoWithRelativePath(), "EchoWithRelativePath"),
-		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath), "EchoWithAbsolutePath"),
+		test.GomegaSubTest(SubTestEchoWithAbsolutePath(webtest.DefaultContextPath), "EchoWithAbsolutePath"),
 	)
 }
 
@@ -110,29 +92,15 @@ func TestMockedTestServer(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestRealServerUtils(expectedPort int, expectedContextPath string) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *WithT) {
-		port := CurrentPort(ctx)
-		if expectedPort <= 0 {
-			g.Expect(port).To(BeNumerically(">", 0), "CurrentPort should return valid value")
-		} else {
-			g.Expect(port).To(BeNumerically("==", expectedPort), "CurrentPort should return correct value")
-		}
-
-		ctxPath := CurrentContextPath(ctx)
-		g.Expect(ctxPath).To(Equal(expectedContextPath), "CurrentContextPath should returns correct path")
-	}
-}
-
 func SubTestEchoWithRelativePath() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var req *http.Request
 		var resp *http.Response
 
 		// with relative path
-		req = NewRequest(ctx, http.MethodPost, "/api/v1/echo", strings.NewReader(ValidRequestBody))
+		req = webtest.NewRequest(ctx, http.MethodPost, "/api/v1/echo", strings.NewReader(ValidRequestBody))
 		req.Header.Set("Content-Type", "application/json")
-		resp = MustExec(ctx, req).Response
+		resp = webtest.MustExec(ctx, req).Response
 		assertResponse(t, g, resp, "hello")
 	}
 }
@@ -144,9 +112,9 @@ func SubTestEchoWithAbsolutePath(contextPath string) test.GomegaSubTestFunc {
 
 		// with absolute path
 		url := fmt.Sprintf("http://whatever:0%s/api/v1/echo", contextPath)
-		req = NewRequest(ctx, http.MethodPost, url, strings.NewReader(ValidRequestBody))
+		req = webtest.NewRequest(ctx, http.MethodPost, url, strings.NewReader(ValidRequestBody))
 		req.Header.Set("Content-Type", "application/json")
-		resp = MustExec(ctx, req).Response
+		resp = webtest.MustExec(ctx, req).Response
 		assertResponse(t, g, resp, "hello")
 	}
 }

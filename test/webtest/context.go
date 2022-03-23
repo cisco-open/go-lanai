@@ -2,8 +2,8 @@ package webtest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"go.uber.org/fx"
+	"net/http"
+	"net/http/httptest"
 )
 
 type TestServerOptions func(conf *TestServerConfig)
@@ -14,7 +14,7 @@ type TestServerConfig struct {
 	LogLevel    log.LoggingLevel
 }
 
-type DI struct {
-	fx.In
-	WebRegistrar *web.Registrar
+type ExecResult struct {
+	Response         *http.Response
+	ResponseRecorder *httptest.ResponseRecorder
 }

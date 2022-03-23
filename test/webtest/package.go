@@ -3,10 +3,12 @@ package webtest
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"fmt"
+	"go.uber.org/fx"
 	"testing"
 )
 
@@ -14,24 +16,49 @@ const (
 	DefaultContextPath = "/test"
 )
 
-// WithRealTestServer start a real web server at random port with context-path as DefaultContextPath.
+// WithRealServer start a real web server at random port with context-path as DefaultContextPath.
+// NewRequest(), Exec() and MustExec() can be used to create/send request and verifying result
 // By default, the server doesn't allow CORS and have no security configured.
+// Actual server port can be retrieved via CurrentPort()
 // When using this mode, *web.Registrar became available to inject
-func WithRealTestServer(opts ...TestServerOptions) test.Options {
+func WithRealServer(opts ...TestServerOptions) test.Options {
 	conf := TestServerConfig{
 		ContextPath: DefaultContextPath,
-		LogLevel: log.LevelInfo,
+		LogLevel:    log.LevelInfo,
 	}
 	for _, fn := range opts {
 		fn(&conf)
 	}
 	props := toProperties(&conf)
-	di := DI{}
+	di := setupDI{}
 	return test.WithOptions(
 		apptest.WithModules(webinit.Module),
 		apptest.WithProperties(props...),
 		apptest.WithDI(&di),
 		test.SubTestSetup(testSetupAddrExtractor(&conf, &di)),
+	)
+}
+
+// WithMockedServer initialize web package without starting an actual web server.
+// NewRequest(), Exec() and MustExec() can be used to create/send request and verifying result without creating an actual http connection.
+// By default, the server doesn't allow CORS and have no security configured.
+// When using this mode, *web.Registrar became available to inject
+// Note: In this mode, httptest package is used internally and http.Handler (*web.Engine in our case) is invoked directly
+func WithMockedServer(opts ...TestServerOptions) test.Options {
+	conf := TestServerConfig{
+		ContextPath: DefaultContextPath,
+		LogLevel:    log.LevelInfo,
+	}
+	for _, fn := range opts {
+		fn(&conf)
+	}
+	props := toProperties(&conf)
+	di := setupDI{}
+	return test.WithOptions(
+		apptest.WithModules(mockedWebModule),
+		apptest.WithProperties(props...),
+		apptest.WithDI(&di),
+		test.SubTestSetup(testSetupEngineExtractor(&conf, &di)),
 	)
 }
 
@@ -57,6 +84,12 @@ func UseLogLevel(lvl log.LoggingLevel) TestServerOptions {
 	}
 }
 
+type setupDI struct {
+	fx.In
+	Registrar *web.Registrar
+	Engine    *web.Engine
+}
+
 func toProperties(conf *TestServerConfig) []string {
 	return []string{
 		fmt.Sprintf("server.port: %d", conf.Port),
@@ -66,13 +99,22 @@ func toProperties(conf *TestServerConfig) []string {
 	}
 }
 
-func testSetupAddrExtractor(conf *TestServerConfig, di *DI) test.SetupFunc {
+func testSetupAddrExtractor(conf *TestServerConfig, di *setupDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		v := addr{
+		info := serverInfo{
 			hostname:    "127.0.0.1",
-			port:        di.WebRegistrar.ServerPort(),
+			port:        di.Registrar.ServerPort(),
 			contextPath: conf.ContextPath,
 		}
-		return contestWithAddr(ctx, v), nil
+		return newWetTestContext(ctx, &info, nil), nil
+	}
+}
+
+func testSetupEngineExtractor(conf *TestServerConfig, di *setupDI) test.SetupFunc {
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		info := serverInfo{
+			contextPath: conf.ContextPath,
+		}
+		return  newWetTestContext(ctx, &info, di.Engine), nil
 	}
 }

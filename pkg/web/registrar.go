@@ -70,8 +70,9 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 	return registrar
 }
 
-// initialize should be called during application startup, last change to change configurations, load templates, etc
-func (r *Registrar) initialize(ctx context.Context) (err error) {
+// Initialize should be called during application startup, last change to change configurations, load templates, etc
+// Note: This function is exported for test utilities. Normal applications should use Registrar.Run which invokes this function internally.
+func (r *Registrar) Initialize(ctx context.Context) (err error) {
 	if r.initialized {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
@@ -112,8 +113,9 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	return
 }
 
-// cleanup post initilaize cleanups
-func (r *Registrar) cleanup(ctx context.Context) (err error) {
+// Cleanup kick off post initialization cleanups
+// Note: This function is exported for test utilities. Normal applications should use Registrar.Run which invokes this function internally.
+func (r *Registrar) Cleanup(ctx context.Context) (err error) {
 	if e := r.applyPostInitCustomizers(ctx); e != nil {
 		return e
 	}
@@ -158,11 +160,11 @@ func (r *Registrar) WarnDuplicateMiddlewares(ifWarn bool, excludedPath ...string
 
 // Run configure and start gin engine
 func (r *Registrar) Run(ctx context.Context) (err error) {
-	if err = r.initialize(ctx); err != nil {
+	if err = r.Initialize(ctx); err != nil {
 		return
 	}
 	defer func(ctx context.Context) {
-		_ = r.cleanup(ctx)
+		_ = r.Cleanup(ctx)
 	}(ctx)
 
 	// we let system to choose port if not set
