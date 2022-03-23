@@ -165,13 +165,12 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 		_ = r.cleanup(ctx)
 	}(ctx)
 
-	// random port if not set
-	r.port = r.properties.Port
-	if r.port <= 0 {
-		r.port = 32768 + utils.RandomIntN(32767)
+	// we let system to choose port if not set
+	var addr = fmt.Sprintf(":%v", r.properties.Port)
+	if r.properties.Port <= 0 {
+		addr = ":0"
 	}
 
-	var addr = fmt.Sprintf(":%v", r.port)
 	r.server = &http.Server{
 		Addr:           addr,
 		Handler:        r.engine,
@@ -179,7 +178,13 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	return r.listenAndServe()
+
+	// start the server
+	tcpAddr, e := r.listenAndServe()
+	if e == nil {
+		r.port = tcpAddr.Port
+	}
+	return e
 }
 
 // Stop closes http server
@@ -237,16 +242,16 @@ func (r *Registrar) RegisterWithLifecycle(lc fx.Lifecycle, items ...interface{})
 	})
 }
 
-func (r *Registrar) listenAndServe() error {
+func (r *Registrar) listenAndServe() (*net.TCPAddr, error) {
 	ln, err := net.Listen("tcp", r.server.Addr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	go func() {
 		_ = r.server.Serve(ln)
 	}()
-	return nil
+	return ln.Addr().(*net.TCPAddr), nil
 }
 
 func (r *Registrar) register(i interface{}) (err error) {
