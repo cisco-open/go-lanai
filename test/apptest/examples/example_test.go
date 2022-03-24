@@ -4,13 +4,12 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"embed"
-	"fmt"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -64,11 +63,6 @@ type serviceDI struct {
 	Service DummyService
 }
 
-type webDI struct {
-	fx.In
-	Register *web.Registrar
-}
-
 /*************************
 	Examples
  *************************/
@@ -113,26 +107,40 @@ func TestBootstrapWithCustomConfigAndMocks(t *testing.T) {
 }
 
 // TestBootstrapWithRealWebServer
-// Without specifying server port when webinit.Module is enabled, the web package would create a real
-// server with random port. The port can be retrieved via *web.Registrar
-// Note: due to current bootstrapping limitation, all modules added via apptest.WithModules would affect other tests,
-//		 so no conflicting modules is allowed between all tests of same package.
+// when using together with webtest.WithRealServer(), the web package would create a real server with random port.
+// The port can be retrieved via *web.Registrar, or webtest.CurrentPort()
+// webtest.NewRequest() is also available to automatically fill in host, port and context-path
 func TestBootstrapWithRealWebServer(t *testing.T) {
-	di := webDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithDI(&di), 	// tell test framework to do dependencies injection
-		apptest.WithModules(webinit.Module),
+		webtest.WithRealServer(),
 		apptest.WithFxOptions(
 			// provide DummyController and mocked service
 			fx.Provide(NewMockedService),
 			web.FxControllerProviders(NewDummyController),
 		),
-		test.GomegaSubTest(SubTestExampleWithRealWebController(&di), "SubTestWithRealWebController"),
+		test.GomegaSubTest(SubTestExampleWithRealWebController(), "SubTestWithRealWebController"),
 	)
 }
 
-// TestBootstrapWithRealWebServer
+// TestBootstrapWithMockedWebServer
+// when using together with webtest.WithMockedServer(), the web package would initialize all components as usual
+// without creating a real web server, which would save TCP resources and be faster when execute.
+// In this mode, webtest.NewRequest() and webtest.Exec() (or webtest.MustExec()) should be used to create and execute request
+func TestBootstrapWithMockedWebServer(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithMockedServer(),
+		apptest.WithFxOptions(
+			// provide DummyController and mocked service
+			fx.Provide(NewMockedService),
+			web.FxControllerProviders(NewDummyController),
+		),
+		test.GomegaSubTest(SubTestExampleWithRealWebController(), "SubTestWithRealWebController"),
+	)
+}
+
+// TestBootstrapWithDataMocks
 // Without specifying server port when webinit.Module is enabled, the web package would create a real
 // server with random port. The port can be retrieved via *web.Registrar
 // Note: due to current bootstrapping limitation, all modules added via apptest.WithModules would affect other tests,
@@ -163,12 +171,13 @@ func SubTestExampleWithMockedService(di *serviceDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestExampleWithRealWebController(di *webDI) test.GomegaSubTestFunc {
+func SubTestExampleWithRealWebController() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		port := di.Register.ServerPort()
-		url := fmt.Sprintf("http://localhost:%d/test/api", port)
-		resp, e := http.DefaultClient.Get(url)
+		req := webtest.NewRequest(ctx, http.MethodGet,"/api", nil)
+		// Alternatively: resp := webtest.MustExec(ctx, req)
+		ret, e := webtest.Exec(ctx, req)
 		g.Expect(e).To(Succeed(), "http client should be succeeded")
+		resp := ret.Response
 		g.Expect(resp).To(Not(BeNil()), "http response should not be nil ")
 		g.Expect(resp.StatusCode).To(Equal(200), "http response status should be 200")
 	}

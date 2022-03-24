@@ -2,7 +2,7 @@
 2=ConnBegin	1:nil
 3=TxRollback	1:nil
 4=TxCommit	1:nil
-5=ConnExec	2:"SAVEPOINT my-savepoint"	100:"SERROR\x00C42601\x00Mat or near \"-\": syntax error\x00Dsource SQL:\nSAVEPOINT my-savepoint\n            ^\x00Flexer.go\x00L199\x00RError\x00\x00"
-6=ConnExec	2:"ROLLBACK TO SAVEPOINT my-savepoint"	100:"SERROR\x00C42601\x00Mat or near \"-\": syntax error\x00Dsource SQL:\nROLLBACK TO SAVEPOINT my-savepoint\n                        ^\x00Flexer.go\x00L199\x00RError\x00\x00"
+5=ConnExec	2:"SAVEPOINT my-savepoint"	100:"SERROR\x00C42601\x00Mat or near \"-\": syntax error\x00Dsource SQL:\nSAVEPOINT my-savepoint\n            ^\x00Flexer.go\x00L215\x00RError\x00\x00"
+6=ConnExec	2:"ROLLBACK TO SAVEPOINT my-savepoint"	100:"SERROR\x00C42601\x00Mat or near \"-\": syntax error\x00Dsource SQL:\nROLLBACK TO SAVEPOINT my-savepoint\n                        ^\x00Flexer.go\x00L215\x00RError\x00\x00"
 
 "TestTxManagerWithDBPlayback"=1,2,3,2,3,2,4,2,3,2,5,6
