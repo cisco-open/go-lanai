@@ -73,6 +73,8 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader) *htt
 // returned ExecResult is guaranteed to have non-nil ExecResult.Response if there is no error.
 // ExecResult.ResponseRecorder is non-nil if test server mode is WithMockedServer()
 // this func might return error if test server mode is WithRealServer()
+// Note: don't forget to close the response's body when done with it
+//nolint:bodyclose // we don't close body here, whoever using this function should close it when done
 func Exec(ctx context.Context, req *http.Request) (ExecResult, error) {
 	if handler, ok := ctx.Value(ctxKeyHttpHandler).(http.Handler); ok {
 		// mocked mode
@@ -92,6 +94,7 @@ func Exec(ctx context.Context, req *http.Request) (ExecResult, error) {
 }
 
 // MustExec is same as Exec, but panic instead of returning error
+// Note: don't forget to close the response's body when done with it
 func MustExec(ctx context.Context, req *http.Request) ExecResult {
 	ret, e := Exec(ctx, req)
 	if e != nil {

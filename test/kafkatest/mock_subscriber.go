@@ -2,7 +2,7 @@ package kafkatest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
-	"math/rand"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
 type MockedSubscriber struct {
@@ -13,7 +13,7 @@ type MockedSubscriber struct {
 func NewMockedSubscriber(topic string) *MockedSubscriber {
 	return &MockedSubscriber{
 		T:     topic,
-		Parts: []int32{rand.Int31n(0xffff)},
+		Parts: []int32{int32(utils.RandomIntN(0xffff))},
 	}
 }
 
