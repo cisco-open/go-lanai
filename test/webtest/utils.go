@@ -61,7 +61,7 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader) *htt
 		return httptest.NewRequest(method, tUrl.String(), body)
 	} else {
 		tUrl.Host = fmt.Sprintf("%s:%d", info.hostname, info.port)
-		req, e := http.NewRequest(method, tUrl.String(), body)
+		req, e := http.NewRequestWithContext(ctx, method, tUrl.String(), body)
 		if e != nil {
 			panic(e)
 		}
