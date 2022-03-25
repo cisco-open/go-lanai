@@ -11,18 +11,19 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/samlssotest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"embed"
 	"encoding/xml"
 	"fmt"
 	"github.com/google/uuid"
 	"go.uber.org/fx"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -68,8 +69,7 @@ var testSp2 = samlssotest.NewSamlSp(TEST_SAML_SP_2_URL, TEST_SAML_SP_CERT, TEST_
 
 type DIForTest struct {
 	fx.In
-	Register *web.Registrar
-	Server *web.Engine
+	//Register *web.Registrar
 	MockAuthMw *sectest.MockAuthenticationMiddleware
 }
 
@@ -77,7 +77,8 @@ func Test_Saml_Sso (t *testing.T) {
 	di := &DIForTest{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithModules(webinit.Module, security.Module, errorhandling.ErrorHandlingModule, tenancy.Module, samlctx.Module, Module),
+		webtest.WithMockedServer(webtest.UseContextPath("/auth")),
+		apptest.WithModules(security.Module, errorhandling.ErrorHandlingModule, tenancy.Module, samlctx.Module, Module),
 		apptest.WithDI(di), // tell test framework to do dependencies injection
 		apptest.WithTimeout(300*time.Second),
 		apptest.WithProperties("server.context-path: /auth",
@@ -100,11 +101,8 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 			opt.State = security.StateAuthenticated
 		})
 
-		port := di.Register.ServerPort()
-		resp, _ := http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
-			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
-
+		//port := di.Register.ServerPort()
+		resp := sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
 		samlResponseXml, err := samlssotest.ParseSamlResponse(resp.Body)
 		if err != nil {
@@ -118,10 +116,7 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 			opt.Principal = testUser2.Username
 			opt.State = security.StateAuthenticated
 		})
-		resp, _ = http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
-			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
-
+		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
 		samlResponseXml, err = samlssotest.ParseSamlResponse(resp.Body)
 		if err != nil {
@@ -135,10 +130,7 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 			opt.Principal = testUser3.Username
 			opt.State = security.StateAuthenticated
 		})
-		resp, _ = http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
-			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
-
+		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ := ioutil.ReadAll(resp.Body)
 		htmlContent := string(b)
@@ -156,11 +148,8 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 			opt.State = security.StateAuthenticated
 		})
 
-		port := di.Register.ServerPort()
-		resp, _ := http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
-			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
-
+		//port := di.Register.ServerPort()
+		resp := sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ := ioutil.ReadAll(resp.Body)
 		htmlContent := string(b)
@@ -171,10 +160,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 			opt.Principal = testUser2.Username
 			opt.State = security.StateAuthenticated
 		})
-		resp, _ = http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
-			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
-
+		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
 		samlResponseXml, err := samlssotest.ParseSamlResponse(resp.Body)
 		if err != nil {
@@ -188,10 +174,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 			opt.Principal = testUser3.Username
 			opt.State = security.StateAuthenticated
 		})
-		resp, _ = http.DefaultClient.Post(fmt.Sprintf("http://localhost:%d/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", port),
-			"application/x-www-form-urlencoded",
-			bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
-
+		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ = ioutil.ReadAll(resp.Body)
 		htmlContent = string(b)
@@ -284,4 +267,11 @@ func provideMockedTenancyAccessor() tenancy.Accessor {
 		{Parent: testRootTenantId, Child: testTenantId3},
 	}
 	return mocks.NewMockTenancyAccessor(tenancyRelationship, uuid.New())
+}
+
+func sendAuthorize(ctx context.Context, body io.Reader) *http.Response {
+	const target = "http://localhost:0/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"
+	req := webtest.NewRequest(ctx, http.MethodPost, target, body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	return webtest.MustExec(ctx, req).Response
 }

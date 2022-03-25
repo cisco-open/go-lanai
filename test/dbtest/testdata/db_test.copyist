@@ -1,16 +1,14 @@
 1=DriverOpen	1:nil
 2=ConnQuery	2:"SELECT * FROM \"security_clients\" ORDER BY \"security_clients\".\"id\" LIMIT 1"	1:nil
-3=RowsColumns	9:["id","oauth_client_id","access_token_validity_seconds","additional_information","authorities","auto_approve_scopes","secret","deletable","grant_types","max_tokens_per_user","refresh_token_validity_seconds","registered_redirect_uris","scopes","tenant_restrictions","use_session_timeout","created_at","updated_at","created_by","updated_by"]
-4=RowsNext	11:[10:NGRmNzFjODktZDc3OS00ZjFhLWE4OTMtYTdiZTI2OGIzM2Mw,2:"nfv-kibana-client",4:9000,10:bnVsbA,10:e1JPTEVfVVNFUn0,10:e3JlYWQsd3JpdGV9,2:"$2a$10$LANt.GIMwpy4RlOvgX5wVu2gZHmB2sG6wRedX5w7k8/st/4Qmy95y",6:false,10:e2F1dGhvcml6YXRpb25fY29kZSxyZWZyZXNoX3Rva2VufQ,4:-1,4:18000,10:ey9raWJhbmEvbG9naW59,10:e3JlYWQsd3JpdGV9,1:nil,6:false,8:2021-07-07T18:40:04.987021Z,8:2021-07-07T18:40:04.987021Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw]	1:nil
+3=RowsColumns	9:["id","oauth_client_id"]
+4=RowsNext	11:[10:NjEyYjcxYTMtYWQ4NC00ZjExLWI4MWItOTQ5OTkyNWRlOGY0,2:"test-1"]	1:nil
 5=ConnQuery	2:"SELECT * FROM \"security_clients\""	1:nil
-6=RowsNext	11:[10:NTViYjgzMjYtYzE1Zi00ODQ4LWI5Y2EtYzlkZjVhOWQ2M2Y5,2:"legacy-client-ui",4:9000,10:bnVsbA,10:e1JPTEVfVVNFUn0,10:e3JlYWQsd3JpdGV9,2:"$2a$10$n75FuEVDaitY7VbYZwMpOeS1h081uedHthRKJDbyKZ6yU5yEAsCm2",6:false,10:e3Bhc3N3b3JkLHVybjpjaXNjbzpuZnY6b2F1dGg6Z3JhbnQtdHlwZTpsZWdhY3ktcGFzc3dvcmQtbG9naW4sdXJuOmNpc2NvOm5mdjpvYXV0aDpncmFudC10eXBlOmxlZ2FjeS10d28tZmFjdG9yLXZlcmlmeX0,4:-1,4:18000,10:e30,10:e3JlYWQsd3JpdGV9,1:nil,6:false,8:2021-07-07T18:40:04.987021Z,8:2021-07-07T18:40:04.987021Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw]	1:nil
-7=RowsNext	11:[10:NmQ2YmMzNmYtY2JjNy00YjI5LWI1YWEtMmQ4NDAzMWY0MTk2,2:"legacy-client",4:9000,10:bnVsbA,10:e1JPTEVfVVNFUn0,10:e3JlYWQsd3JpdGV9,2:"$2a$10$GcBUW59jc/mg7CyjTZtV3.M0YG0ZAM7LcRLuh2.HFFZfbQ9X1sOya",6:false,10:e3Bhc3N3b3JkLHVybjpjaXNjbzpuZnY6b2F1dGg6Z3JhbnQtdHlwZTpsZWdhY3ktcGFzc3dvcmQtbG9naW4sdXJuOmNpc2NvOm5mdjpvYXV0aDpncmFudC10eXBlOmxlZ2FjeS10d28tZmFjdG9yLXZlcmlmeX0,4:-1,4:18000,10:e30,10:e3JlYWQsd3JpdGV9,1:nil,6:false,8:2021-07-07T18:40:04.987021Z,8:2021-07-07T18:40:04.987021Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw]	1:nil
-8=RowsNext	11:[10:ZDhlNTJhYzgtZDVjMS00MjUxLWI1NzQtMGZmYzkwMmNmMjFl,2:"nfv-service",4:9000,10:bnVsbA,10:e1JPTEVfVVNFUn0,10:e2FkZHJlc3MsZW1haWwsb3BlbmlkLHBob25lLHByb2ZpbGUscmVhZCx0ZW5hbnRfaGllcmFyY2h5LHRva2VuX2RldGFpbHMsd3JpdGV9,2:"$2a$10$AG5np4UkYdw0HbEOUos.b.V1.g9d2QN4AnD0XJaip0wXkGgaii9PS",6:false,10:e3Bhc3N3b3JkLHVybjpjaXNjbzpuZnY6b2F1dGg6Z3JhbnQtdHlwZTpzd2l0Y2gtdXNlcix1cm46Y2lzY286bmZ2Om9hdXRoOmdyYW50LXR5cGU6c3dpdGNoLXRlbmFudH0,4:-1,4:18000,10:e30,10:e2FkZHJlc3MsZW1haWwsb3BlbmlkLHBob25lLHByb2ZpbGUscmVhZCx0ZW5hbnRfaGllcmFyY2h5LHRva2VuX2RldGFpbHMsd3JpdGV9,1:nil,6:false,8:2021-07-07T18:40:04.987021Z,8:2021-07-07T18:40:04.987021Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw]	1:nil
-9=RowsNext	11:[10:ZGE4NzA4NmEtMDUyNS00NmI2LTljMmItZDg1ZWVhYTdlMjdl,2:"nfv-client",4:9000,10:bnVsbA,10:e1JPTEVfUFVCTElDLFJPTEVfVVNFUn0,10:e2FkZHJlc3MsZW1haWwsb3BlbmlkLHBob25lLHByb2ZpbGUscmVhZCx3cml0ZX0,2:"$2a$10$oNOMRJ53o/KhfsBMOkaMfebEl2jNNVfExmceTKYUuR5Z56vo5nEPe",6:false,10:e2F1dGhvcml6YXRpb25fY29kZSxyZWZyZXNoX3Rva2VuLGltcGxpY2l0LHVybjpjaXNjbzpuZnY6b2F1dGg6Z3JhbnQtdHlwZTpzd2l0Y2gtdXNlcix1cm46Y2lzY286bmZ2Om9hdXRoOmdyYW50LXR5cGU6c3dpdGNoLXRlbmFudH0,4:-1,4:18000,10:ey8sLyoqL3N3YWdnZXItc3NvLXJlZGlyZWN0Lmh0bWwsL2Rhc2hib2FyZC9sb2dpbn0,10:e2FkZHJlc3MsZW1haWwsb3BlbmlkLHBob25lLHByb2ZpbGUscmVhZCx3cml0ZX0,1:nil,6:true,8:2021-07-07T18:40:04.987021Z,8:2021-07-07T18:40:04.987021Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw]	1:nil
-10=RowsNext	11:[]	7:"EOF"
-11=ConnBegin	1:nil
-12=ConnExec	2:"UPDATE \"security_clients\" SET \"oauth_client_id\"=$1 WHERE \"id\" = $2"	1:nil
-13=ResultRowsAffected	4:1	1:nil
-14=TxCommit	1:nil
+6=RowsNext	11:[10:ZDIzMTk0NDctMzY5NS00NjVhLTg4MmQtNmQxNDQxODJhZGI2,2:"test-3"]	1:nil
+7=RowsNext	11:[10:ZTEwOWYzY2EtM2E2MC00M2FmLTgwZGMtNjYzN2VhMTAxZTNk,2:"test-2"]	1:nil
+8=RowsNext	11:[]	7:"EOF"
+9=ConnBegin	1:nil
+10=ConnExec	2:"UPDATE \"security_clients\" SET \"oauth_client_id\"=$1 WHERE \"id\" = $2"	1:nil
+11=ResultRowsAffected	4:1	1:nil
+12=TxCommit	1:nil
 
-"TestDBPlayback"=1,2,3,3,4,5,3,3,4,6,7,8,9,10,11,1,2,3,3,4,11,12,13,14,14
+"TestDBPlayback"=1,2,3,3,4,5,3,3,4,6,7,8,9,1,2,3,3,4,9,10,11,12,12

@@ -4,24 +4,24 @@
 4=ConnBegin	1:nil
 5=ConnQuery	2:"INSERT INTO \"model_example\" (\"tenant_name\",\"value\",\"tenant_id\",\"tenant_path\",\"created_at\",\"updated_at\",\"created_by\",\"updated_by\",\"deleted_at\",\"id\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING \"id\""	1:nil
 6=RowsColumns	9:["id"]
-7=RowsNext	11:[10:YzFjMTdhOWMtZTkwZC00ZjRhLTgyOWUtZWRkOGEyZTZlOGU0]	1:nil
+7=RowsNext	11:[10:NjRiNzVkZTEtNGJmNS00MDc0LWEyN2QtY2QwODBhOTFlNmQ0]	1:nil
 8=TxCommit	1:nil
 9=TxRollback	1:nil
 10=ConnExec	2:"TRUNCATE TABLE \"model_example\" RESTRICT"	1:nil
-11=RowsNext	11:[10:YTY1ZGZlYjYtZjcxMS00MzZkLWI1NTAtZjE2Y2NiZjY1ZTJl]	1:nil
-12=RowsNext	11:[10:OGYwNTM4OWQtMmExYS00ZmY5LTljMTMtZjg5YTc5NTcwMjNh]	1:nil
+11=RowsNext	11:[10:MGQwYTQ2YjAtYjk3ZC00OGIwLTk3YTktMjY5NGE2YWRiYzQz]	1:nil
+12=RowsNext	11:[10:ZjkxY2M4M2UtYjgxMi00NzZjLWI3NmMtMWI4ZTNhNWE4ZWFh]	1:nil
 13=ConnExec	2:"UPDATE \"model_example\" SET \"tenant_name\"=$1,\"value\"=$2,\"tenant_id\"=$3,\"tenant_path\"=$4,\"created_at\"=$5,\"updated_at\"=$6,\"created_by\"=$7,\"updated_by\"=$8,\"deleted_at\"=$9 WHERE \"model_example\".\"tenant_path\" @> $10 AND \"model_example\".\"deleted_at\" IS NULL AND \"id\" = $11"	1:nil
 14=ResultRowsAffected	4:1	1:nil
 15=ConnExec	2:"UPDATE \"model_example\" SET \"tenant_id\"=$1,\"tenant_path\"=$2,\"updated_at\"=$3 WHERE \"model_example\".\"tenant_path\" @> $4 AND \"model_example\".\"deleted_at\" IS NULL AND \"id\" = $5"	1:nil
 16=ConnExec	2:"UPDATE \"model_example\" SET \"tenant_id\"=$1,\"tenant_path\"=$2,\"updated_at\"=$3 WHERE (\"model_example\".\"id\" = $4 OR \"model_example\".\"id\" = $5) AND \"model_example\".\"tenant_path\" @> $6 AND \"model_example\".\"deleted_at\" IS NULL"	1:nil
-17=RowsNext	11:[10:YzJiN2UwODctOTdmZi00MDA3LTk0MmItNzkzNWI5MmE4ZWQ3]	1:nil
-18=RowsNext	11:[10:OGQwNTM0YzMtYjQ4MC00OTU3LThiODUtMGU2NGQ5NDZkNWU0]	1:nil
-19=RowsNext	11:[10:ODI1YzNjMjMtMzUzNi00ZTE3LTkxYjQtN2UzNjgzOWM2YWQ3]	1:nil
-20=RowsNext	11:[10:NzBlZGQyOGMtNzg0YS00MGFjLWFhYmUtM2QxZTJhOTNmNmZi]	1:nil
-21=RowsNext	11:[10:ZjgxMjMzOWMtNDg1Zi00MjNiLTgyNzgtZTcxMjU5NmVkNDlj]	1:nil
-22=RowsNext	11:[10:NWFiMGM3NmEtN2Q2YS00YjMyLTkzZmMtNzRhMDcwMmIwNTk1]	1:nil
+17=RowsNext	11:[10:YTIzYmVhYTktZjM1OS00YzE0LWFjODgtYjhmZWNlMTg5MzJj]	1:nil
+18=RowsNext	11:[10:Y2FhODQyMmUtMTg3Ny00N2E4LThlZDQtYTNlMGZmNmQxYjQ4]	1:nil
+19=RowsNext	11:[10:NWVjNmE2MWYtZWJjYS00ZTgyLWFhZTQtNTIxMDc1OGI5NWUx]	1:nil
+20=RowsNext	11:[10:ZTQ2NTUyOWMtODZlNi00MDE3LTliNTAtYjA2ZjQzN2YyNDg0]	1:nil
+21=RowsNext	11:[10:Nzc5M2YxYjMtNjAyNy00N2JhLTgyZTktNDlhZGJmNDViYWZh]	1:nil
+22=RowsNext	11:[10:ZmFlYjRkNWMtMzc4NS00YTQ3LWFiMWYtZWEyZTdiZTA2OTkx]	1:nil
 23=ConnExec	2:"UPDATE \"model_example\" SET \"deleted_at\"=$1 WHERE \"model_example\".\"tenant_path\" @> $2 AND \"model_example\".\"id\" = $3 AND \"model_example\".\"deleted_at\" IS NULL"	1:nil
 24=ConnExec	2:"UPDATE \"model_example\" SET \"deleted_at\"=$1 WHERE \"model_example\".\"value\" = $2 AND \"model_example\".\"tenant_path\" @> $3 AND \"model_example\".\"deleted_at\" IS NULL"	1:nil
 25=ResultRowsAffected	4:2	1:nil
 
-"TestGormModel"=1,2,3,4,5,6,7,8,4,9,10,3,2,3,4,5,6,11,8,4,5,6,12,8,4,13,14,8,4,9,4,15,14,8,4,15,3,8,4,9,4,15,14,8,4,16,14,8,10,3,2,3,4,5,6,17,8,4,5,6,18,8,4,5,6,19,8,4,5,6,20,8,4,5,6,21,8,4,5,6,22,8,4,23,14,8,4,23,3,8,4,24,25,8,10,3
+"TestGormModel"=1,2,3,4,5,6,6,7,8,4,9,10,3,2,3,4,5,6,6,11,8,4,5,6,6,12,8,4,13,14,8,4,9,4,15,14,8,4,15,3,8,4,9,4,15,14,8,4,16,14,8,10,3,2,3,4,5,6,6,17,8,4,5,6,6,18,8,4,5,6,6,19,8,4,5,6,6,20,8,4,5,6,6,21,8,4,5,6,6,22,8,4,23,14,8,4,23,3,8,4,24,25,8,10,3
