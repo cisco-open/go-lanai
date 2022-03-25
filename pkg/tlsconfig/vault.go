@@ -35,10 +35,10 @@ func (v *VaultProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cer
 
 	go v.renew(ctx)
 
-	return func(certificate *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	return func(certificateReq *tls.CertificateRequestInfo) (*tls.Certificate, error) {
 			v.mutex.RLock()
 			defer v.mutex.RUnlock()
-			e := certificate.SupportsCertificate(v.cachedCertificate)
+			e := certificateReq.SupportsCertificate(v.cachedCertificate)
 			if e != nil {
 				// No acceptable certificate found. Don't send a certificate.
 				// see tls package's func (c *Conn) getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
@@ -129,8 +129,8 @@ func (v *VaultProvider) nextRenew() time.Duration {
 	defer v.mutex.RUnlock()
 
 	minDuration := time.Minute
-	if v.p.MaxRenewFrequency != ""{
-		minDurationConfig, err := time.ParseDuration(v.p.MaxRenewFrequency)
+	if v.p.MinRenewInterval != ""{
+		minDurationConfig, err := time.ParseDuration(v.p.MinRenewInterval)
 		if err != nil {
 			minDuration = minDurationConfig
 		}
@@ -150,6 +150,10 @@ func (v *VaultProvider) nextRenew() time.Duration {
 
 	durationRemain := validTo.Sub(now)
 	next := durationRemain/2
+
+	if minDuration < next {
+		next = minDuration
+	}
 	return next
 }
 

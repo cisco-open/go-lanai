@@ -5,13 +5,13 @@ type Properties struct {
 	Type string `json:"type"`
 
 	// vault Related properties
-	Path string `json:"path"`
-	Role string `json:"role"`
-	CN   string `json:"cn"`
-	IpSans string `json:"ip-sans"`
-	AltNames string `json:"alt-names"`
-	Ttl string `json:"ttl"`
-	MaxRenewFrequency string `json:"max-renew-frequency"`
+	Path             string `json:"path"`
+	Role             string `json:"role"`
+	CN               string `json:"cn"`
+	IpSans           string `json:"ip-sans"`
+	AltNames         string `json:"alt-names"`
+	Ttl              string `json:"ttl"`
+	MinRenewInterval string `json:"min-renew-interval"`
 
 
 	CaCertFile string `json:"ca-cert-file"`

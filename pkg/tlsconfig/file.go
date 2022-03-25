@@ -20,7 +20,7 @@ func NewFileProvider(p Properties) *FileProvider {
 }
 
 func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
-	return func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	return func(certificateReq *tls.CertificateRequestInfo) (*tls.Certificate, error) {
 		keyFile, err := os.Open(f.p.KeyFile)
 		if err != nil {
 			return nil, err
@@ -52,7 +52,15 @@ func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cert
 		if err != nil {
 			return nil, err
 		}
-		return &clientCert, nil
+
+		e := certificateReq.SupportsCertificate(&clientCert)
+		if e != nil {
+			// No acceptable certificate found. Don't send a certificate.
+			// see tls package's func (c *Conn) getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
+			return new(tls.Certificate), nil
+		} else {
+			return &clientCert, nil
+		}
 	}, nil
 }
 
