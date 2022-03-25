@@ -6,12 +6,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
+	"embed"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
-	"gorm.io/gorm"
 	"testing"
 )
 
@@ -41,16 +41,27 @@ func (EncryptedModel) TableName() string {
 /*************************
 	Test Cases
  *************************/
-//
+
 //func TestMain(m *testing.M) {
 //	suitetest.RunTests(m,
 //		dbtest.EnableDBRecordMode(),
 //	)
 //}
 
+//go:embed testdata/*.sql
+var testDataFS embed.FS
+
+func SetupEncryptedMapTestPrepareTables(di *dbDI) test.SetupFunc {
+	return dbtest.PrepareData(&di.DI,
+		dbtest.SetupUsingSQLFile(testDataFS, "testdata/tables.sql"),
+		dbtest.SetupTruncateTables("data_encryption_test"),
+		dbtest.SetupUsingSQLFile(testDataFS, "testdata/data.sql"),
+	)
+}
+
 type dbDI struct {
 	fx.In
-	DB *gorm.DB
+	dbtest.DI
 }
 
 func TestEncryptedMapWithEncryptionEnabled(t *testing.T) {
@@ -67,6 +78,7 @@ func TestEncryptedMapWithEncryptionEnabled(t *testing.T) {
 			fx.Provide(newMockedEncryptor(true)),
 		),
 		apptest.WithDI(&di),
+		test.SubTestSetup(SetupEncryptedMapTestPrepareTables(&di)),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV1PlainMap, expectMap(V1, AlgPlain, v)), "SuccessfulSqlScanWithV1PlainText"),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV2PlainMap, expectMap(V2, AlgPlain, v)), "SuccessfulSqlScanWithV2PlainText"),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV1MockedMap, expectMap(V1, AlgVault, v)), "SuccessfulSqlScanWithV1MockedVault"),
@@ -93,6 +105,7 @@ func TestEncryptedMapWithEncryptionDisabled(t *testing.T) {
 			fx.Provide(newMockedEncryptor(false)),
 		),
 		apptest.WithDI(&di),
+		test.SubTestSetup(SetupEncryptedMapTestPrepareTables(&di)),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV1PlainMap, expectMap(V1, AlgPlain, v)), "SuccessfulSqlScanWithV1PlainText"),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlScan(&di, testModelNameV2PlainMap, expectMap(V2, AlgPlain, v)), "SuccessfulSqlScanWithV2PlainText"),
 		test.GomegaSubTest(SubTestMapSuccessfulSqlValue(&di, v, AlgPlain), "SuccessfulSqlValue"),

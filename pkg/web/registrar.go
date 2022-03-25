@@ -70,8 +70,9 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 	return registrar
 }
 
-// initialize should be called during application startup, last change to change configurations, load templates, etc
-func (r *Registrar) initialize(ctx context.Context) (err error) {
+// Initialize should be called during application startup, last change to change configurations, load templates, etc
+// Note: This function is exported for test utilities. Normal applications should use Registrar.Run which invokes this function internally.
+func (r *Registrar) Initialize(ctx context.Context) (err error) {
 	if r.initialized {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
@@ -112,8 +113,9 @@ func (r *Registrar) initialize(ctx context.Context) (err error) {
 	return
 }
 
-// cleanup post initilaize cleanups
-func (r *Registrar) cleanup(ctx context.Context) (err error) {
+// Cleanup kick off post initialization cleanups
+// Note: This function is exported for test utilities. Normal applications should use Registrar.Run which invokes this function internally.
+func (r *Registrar) Cleanup(ctx context.Context) (err error) {
 	if e := r.applyPostInitCustomizers(ctx); e != nil {
 		return e
 	}
@@ -158,20 +160,19 @@ func (r *Registrar) WarnDuplicateMiddlewares(ifWarn bool, excludedPath ...string
 
 // Run configure and start gin engine
 func (r *Registrar) Run(ctx context.Context) (err error) {
-	if err = r.initialize(ctx); err != nil {
+	if err = r.Initialize(ctx); err != nil {
 		return
 	}
 	defer func(ctx context.Context) {
-		_ = r.cleanup(ctx)
+		_ = r.Cleanup(ctx)
 	}(ctx)
 
-	// random port if not set
-	r.port = r.properties.Port
-	if r.port <= 0 {
-		r.port = 32768 + utils.RandomIntN(32767)
+	// we let system to choose port if not set
+	var addr = fmt.Sprintf(":%v", r.properties.Port)
+	if r.properties.Port <= 0 {
+		addr = ":0"
 	}
 
-	var addr = fmt.Sprintf(":%v", r.port)
 	r.server = &http.Server{
 		Addr:           addr,
 		Handler:        r.engine,
@@ -179,7 +180,13 @@ func (r *Registrar) Run(ctx context.Context) (err error) {
 		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	return r.listenAndServe()
+
+	// start the server
+	tcpAddr, e := r.listenAndServe()
+	if e == nil {
+		r.port = tcpAddr.Port
+	}
+	return e
 }
 
 // Stop closes http server
@@ -237,16 +244,16 @@ func (r *Registrar) RegisterWithLifecycle(lc fx.Lifecycle, items ...interface{})
 	})
 }
 
-func (r *Registrar) listenAndServe() error {
+func (r *Registrar) listenAndServe() (*net.TCPAddr, error) {
 	ln, err := net.Listen("tcp", r.server.Addr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	go func() {
 		_ = r.server.Serve(ln)
 	}()
-	return nil
+	return ln.Addr().(*net.TCPAddr), nil
 }
 
 func (r *Registrar) register(i interface{}) (err error) {

@@ -196,7 +196,7 @@ func SubTestCacheConcurrentSoapTest() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 
 		// Setup concurrent scenarios
-		timeout := 800 * time.Millisecond
+		timeout := 1000 * time.Millisecond
 
 		longVLoader, expectedLongV := staticLoadFunc(100 * time.Millisecond, 60 * time.Second)
 		shortVLoader, expectedShortV := staticLoadFunc(100 * time.Millisecond, 300 * time.Millisecond)

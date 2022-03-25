@@ -22,9 +22,9 @@ func TestMain(m *testing.M) {
 		ch <- v
 		v = <-ch
 	}
-	TestTimeUnit = (5 * time.Since(t)).Round(time.Millisecond)
-	if TestTimeUnit < 5*time.Millisecond {
-		TestTimeUnit = 5 * time.Millisecond
+	TestTimeUnit = (8 * time.Since(t)).Round(time.Millisecond)
+	if TestTimeUnit < 8*time.Millisecond {
+		TestTimeUnit = 8 * time.Millisecond
 	}
 	fmt.Printf("Use base TimeUnit [%v] for testing\n", TestTimeUnit)
 	AddDefaultHook(TestHook)
