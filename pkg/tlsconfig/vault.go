@@ -14,8 +14,9 @@ import (
 )
 
 type VaultProvider struct {
+	ProviderCommon
+
 	vc *vault.Client
-	p Properties
 
 	once sync.Once
 	mutex sync.RWMutex
@@ -27,8 +28,10 @@ type VaultProvider struct {
 
 func NewVaultProvider(vc *vault.Client, p Properties) *VaultProvider {
 	return &VaultProvider{
+		ProviderCommon: ProviderCommon{
+			p,
+		},
 		vc:      vc,
-		p:       p,
 		monitor: loop.NewLoop(),
 	}
 }
@@ -58,6 +61,7 @@ func (v *VaultProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cer
 			if e != nil {
 				// No acceptable certificate found. Don't send a certificate.
 				// see tls package's func (c *Conn) getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
+				//nolint:staticcheck
 				return new(tls.Certificate), nil
 			} else {
 				return v.cachedCertificate, nil

@@ -10,12 +10,14 @@ import (
 )
 
 type FileProvider struct {
-	p Properties
+	ProviderCommon
 }
 
 func NewFileProvider(p Properties) *FileProvider {
 	return &FileProvider{
-		p: p,
+		ProviderCommon{
+			p,
+		},
 	}
 }
 
@@ -58,6 +60,7 @@ func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cert
 		if e != nil {
 			// No acceptable certificate found. Don't send a certificate.
 			// see tls package's tls.Conn.getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
+			//nolint:staticcheck
 			return new(tls.Certificate), nil
 		} else {
 			return &clientCert, nil

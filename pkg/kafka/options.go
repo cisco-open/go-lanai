@@ -33,6 +33,7 @@ func defaultSaramaConfig(ctx context.Context, properties *KafkaProperties, tcFac
 			return nil, nil, err
 		}
 		c.Net.TLS.Config.GetClientCertificate = getCertFunc
+		c.Net.TLS.Config.MinVersion = p.GetMinTlsVersion()
 	}
 	
 	if properties.Net.Sasl.Enable {
