@@ -60,7 +60,7 @@ func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cert
 		if e != nil {
 			// No acceptable certificate found. Don't send a certificate. Don't need to treat as error.
 			// see tls package's tls.Conn.getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
-			return new(tls.Certificate), nil //nolint:golangci-lint
+			return new(tls.Certificate), nil //nolint:nilerr
 		} else {
 			return &clientCert, nil
 		}
