@@ -7,12 +7,15 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"errors"
 	"fmt"
+	"io"
 )
 
 const vaultType = "vault"
 const fileType = "file"
 
 type Provider interface {
+	io.Closer
+
 	// TODO: VerifyPeerCertificate this can be useful when we need to rotate CAs
 	// see https://github.com/golang/go/issues/22836
 	// VerifyPeerCertificate() func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error

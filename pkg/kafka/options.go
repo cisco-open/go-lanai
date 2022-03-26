@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func defaultSaramaConfig(ctx context.Context, properties *KafkaProperties, tcFactory *tlsconfig.ProviderFactory) (c *sarama.Config, err error) {
+func defaultSaramaConfig(ctx context.Context, properties *KafkaProperties, tcFactory *tlsconfig.ProviderFactory) (c *sarama.Config, p tlsconfig.Provider, err error) {
 	c = sarama.NewConfig()
 	c.Version = sarama.V2_0_0_0
 
@@ -19,18 +19,18 @@ func defaultSaramaConfig(ctx context.Context, properties *KafkaProperties, tcFac
 		c.Net.TLS.Enable = true
 		c.Net.TLS.Config = &tls.Config{}
 
-		provider, e := tcFactory.GetProvider(properties.Net.Tls.Config)
-		if e != nil {
-			return nil, e
+		p, err = tcFactory.GetProvider(properties.Net.Tls.Config)
+		if err != nil {
+			return nil, nil, err
 		}
-		rootCAs, e := provider.RootCAs(ctx)
+		rootCAs, e := p.RootCAs(ctx)
 		if e != nil {
-			return nil, e
+			return nil, nil, err
 		}
 		c.Net.TLS.Config.RootCAs = rootCAs
-		getCertFunc, e := provider.GetClientCertificate(ctx)
+		getCertFunc, e := p.GetClientCertificate(ctx)
 		if e != nil {
-			return nil, e
+			return nil, nil, err
 		}
 		c.Net.TLS.Config.GetClientCertificate = getCertFunc
 	}

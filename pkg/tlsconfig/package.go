@@ -1,3 +1,5 @@
+// Package tlsconfig
+// This is an internal package. Do not use outside of go-lanai
 package tlsconfig
 
 import (
@@ -26,8 +28,4 @@ func NewProviderFactory(di factoryDi) *ProviderFactory {
 	return &ProviderFactory{
 		vc: di.Vc,
 	}
-}
-
-func Use() {
-	bootstrap.Register(Module)
 }

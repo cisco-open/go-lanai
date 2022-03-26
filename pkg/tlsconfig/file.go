@@ -33,8 +33,9 @@ func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cert
 		if f.p.KeyPass != "" {
 			keyBlock, _ := pem.Decode(keyBytes)
 			//nolint:staticcheck
-			unEncryptedKey, e := x509.DecryptPEMBlock(keyBlock, []byte("foobar"))
+			unEncryptedKey, e := x509.DecryptPEMBlock(keyBlock, []byte(f.p.KeyPass))
 			if e != nil {
+				return nil, e
 			}
 			keyBlock.Bytes = unEncryptedKey
 			keyBlock.Headers = nil
@@ -56,7 +57,7 @@ func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cert
 		e := certificateReq.SupportsCertificate(&clientCert)
 		if e != nil {
 			// No acceptable certificate found. Don't send a certificate.
-			// see tls package's func (c *Conn) getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
+			// see tls package's tls.Conn.getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
 			return new(tls.Certificate), nil
 		} else {
 			return &clientCert, nil
@@ -72,4 +73,8 @@ func (f *FileProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(caPem)
 	return certPool, nil
+}
+
+func (f *FileProvider) Close() error {
+	return nil
 }

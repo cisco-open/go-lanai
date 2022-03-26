@@ -34,6 +34,7 @@ type SaramaKafkaBinder struct {
 
 	globalClient      sarama.Client
 	adminClient       sarama.ClusterAdmin
+	tlsConfigProvider tlsconfig.Provider
 	provisioner       *saramaTopicProvisioner
 	producers         map[string]BindingLifecycle
 	subscribers       map[string]BindingLifecycle
@@ -207,11 +208,12 @@ func (b *SaramaKafkaBinder) Client() sarama.Client {
 // Initialize implements BinderLifecycle, prepare for use, negotiate default configs, etc.
 func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) (err error) {
 	b.initOnce.Do(func() {
-		cfg, e := defaultSaramaConfig(ctx, b.properties, tlsProviderFactory)
+		cfg, tlsConfigProvider, e := defaultSaramaConfig(ctx, b.properties, tlsProviderFactory)
 		if e != nil {
 			err = NewKafkaError(ErrorCodeBindingInternal, fmt.Sprintf("unable to create kafka config: %v", e))
 			return
 		}
+		b.tlsConfigProvider = tlsConfigProvider
 
 		// prepare defaults
 		b.prepareDefaults(ctx, cfg)
@@ -290,6 +292,10 @@ func (b *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
 
 	if e := b.globalClient.Close(); e != nil {
 		logger.WithContext(ctx).Errorf("error while closing kafka global client: %v", e)
+	}
+
+	if e := b.tlsConfigProvider.Close(); e != nil {
+		logger.WithContext(ctx).Errorf("error while closing tls config provider: %v", e)
 	}
 
 	logger.WithContext(ctx).Infof("Kafka connections closed")

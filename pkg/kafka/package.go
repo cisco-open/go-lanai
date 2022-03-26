@@ -25,7 +25,7 @@ const (
 
 // Use Allow service to include this module in main()
 func Use() {
-	tlsconfig.Use()
+	bootstrap.Register(tlsconfig.Module)
 	bootstrap.Register(Module)
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"io"
 	"io/ioutil"
@@ -16,28 +17,43 @@ type VaultProvider struct {
 	vc *vault.Client
 	p Properties
 
+	once sync.Once
 	mutex sync.RWMutex
 	cachedCertificate *tls.Certificate
+
+	monitor       *loop.Loop
+	monitorCancel context.CancelFunc
 }
 
 func NewVaultProvider(vc *vault.Client, p Properties) *VaultProvider {
 	return &VaultProvider{
-		vc: vc,
-		p: p,
+		vc:      vc,
+		p:       p,
+		monitor: loop.NewLoop(),
 	}
 }
 
 func (v *VaultProvider) GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
-	err := v.generateClientCertificate(ctx)
-	if err != nil {
-		return nil, err
-	}
+	v.once.Do(func(){
+		cert, err := v.generateClientCertificate(ctx)
+		delay := v.tryRenewRepeatIntervalFunc()(cert, err)
 
-	go v.renew(ctx)
+		loopCtx, cancelFunc := v.monitor.Run(context.Background())
+		v.monitorCancel = cancelFunc
+
+		time.AfterFunc(delay, func(){
+			v.monitor.Repeat(v.tryRenew(loopCtx), func(opt *loop.TaskOption) {
+				opt.RepeatIntervalFunc = v.tryRenewRepeatIntervalFunc()
+			})
+		})
+	})
 
 	return func(certificateReq *tls.CertificateRequestInfo) (*tls.Certificate, error) {
 			v.mutex.RLock()
 			defer v.mutex.RUnlock()
+			if v.cachedCertificate == nil {
+				return new(tls.Certificate), nil
+			}
 			e := certificateReq.SupportsCertificate(v.cachedCertificate)
 			if e != nil {
 				// No acceptable certificate found. Don't send a certificate.
@@ -73,7 +89,27 @@ func (v *VaultProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	return certPool, nil
 }
 
-func (v *VaultProvider) generateClientCertificate(ctx context.Context) error {
+func (v *VaultProvider) Close() error {
+	if v.monitorCancel != nil {
+		v.monitorCancel()
+	}
+	return nil
+}
+
+func (v *VaultProvider) tryRenew(loopCtx context.Context) loop.TaskFunc {
+	return func(_ context.Context, l *loop.Loop) (ret interface{}, err error) {
+		//ignore error since we will just schedule another renew
+		ret, err = v.generateClientCertificate(loopCtx)
+		if err != nil {
+			logger.Warn("certificate renew failed: %v", err)
+		} else {
+			logger.Infof("certificate has been renewed")
+		}
+		return
+	}
+}
+
+func (v *VaultProvider) generateClientCertificate(ctx context.Context) (*tls.Certificate, error) {
 	fullPath := path.Join(v.p.Path, "issue", v.p.Role)
 
 	reqData := IssueCertificateRequest{
@@ -85,7 +121,7 @@ func (v *VaultProvider) generateClientCertificate(ctx context.Context) error {
 
 	secret, err := v.vc.Logical(ctx).Write(fullPath, reqData)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	crtPEM := []byte(secret.Data["certificate"].(string))
@@ -96,65 +132,53 @@ func (v *VaultProvider) generateClientCertificate(ctx context.Context) error {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 	v.cachedCertificate = &cert
-	return err
-}
-
-func (v *VaultProvider) renew(ctx context.Context) {
-	for {
-		duration := v.nextRenew()
-		logger.Infof("certificate will be renewed in %v", duration)
-		t := time.NewTimer(duration)
-
-		select {
-		case <-ctx.Done():
-			if !t.Stop() {
-				<-t.C
-			}
-			break
-		case <-t.C:
-			//ignore error since we will just schedule another renew
-			err := v.generateClientCertificate(ctx)
-			if err != nil {
-				logger.Warn("certificate renew failed: %v", err)
-			} else {
-				logger.Infof("certificate has been renewed")
-			}
-		}
-	}
+	return &cert, err
 }
 
 // half way between now and cached certificate expiration.
-func (v *VaultProvider) nextRenew() time.Duration {
-	v.mutex.RLock()
-	defer v.mutex.RUnlock()
+func (v *VaultProvider) tryRenewRepeatIntervalFunc() loop.RepeatIntervalFunc {
+	return func(result interface{}, err error)  (ret time.Duration) {
+		defer func(){
+			logger.Infof("certificate will renew in %v", ret)
+		}()
 
-	minDuration := time.Minute
-	if v.p.MinRenewInterval != ""{
-		minDurationConfig, err := time.ParseDuration(v.p.MinRenewInterval)
-		if err != nil {
-			minDuration = minDurationConfig
+		minDuration := 1 * time.Minute
+		if v.p.MinRenewInterval != ""{
+			minDurationConfig, e := time.ParseDuration(v.p.MinRenewInterval)
+			if e == nil {
+				minDuration = minDurationConfig
+			}
 		}
+
+		if err != nil {
+			return minDuration
+		}
+
+		cert := result.(*tls.Certificate)
+		if len(cert.Certificate) < 1 {
+			return minDuration
+		}
+
+		parsedCert, err := x509.ParseCertificate(cert.Certificate[0])
+		if err != nil {
+			return minDuration
+		}
+
+		validTo := parsedCert.NotAfter
+		now := time.Now()
+
+		if validTo.Before(now) {
+			return minDuration
+		}
+
+		durationRemain := validTo.Sub(now)
+		next := durationRemain/2
+
+		if minDuration > next {
+			next = minDuration
+		}
+		return next
 	}
-
-	parsedCert, err := x509.ParseCertificate(v.cachedCertificate.Certificate[0])
-	if err != nil {
-		return minDuration
-	}
-
-	validTo := parsedCert.NotAfter
-	now := time.Now()
-
-	if validTo.Before(now) {
-		return minDuration
-	}
-
-	durationRemain := validTo.Sub(now)
-	next := durationRemain/2
-
-	if minDuration < next {
-		next = minDuration
-	}
-	return next
 }
 
 type IssueCertificateRequest struct {
