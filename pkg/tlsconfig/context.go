@@ -26,7 +26,7 @@ type Provider interface {
 	// RootCAs this should return the root ca.
 	RootCAs(ctx context.Context) (*x509.CertPool, error)
 
-	GetMinTlsVersion() uint16
+	GetMinTlsVersion() (uint16, error)
 }
 
 type ProviderFactory struct {
