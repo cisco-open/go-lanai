@@ -59,10 +59,9 @@ func (v *VaultProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cer
 			}
 			e := certificateReq.SupportsCertificate(v.cachedCertificate)
 			if e != nil {
-				// No acceptable certificate found. Don't send a certificate.
+				// No acceptable certificate found. Don't send a certificate. Don't need to treat as error.
 				// see tls package's func (c *Conn) getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
-				//nolint:staticcheck
-				return new(tls.Certificate), nil
+				return new(tls.Certificate), nil //nolint:golangci-lint
 			} else {
 				return v.cachedCertificate, nil
 			}

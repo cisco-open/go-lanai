@@ -17,7 +17,8 @@ func defaultSaramaConfig(ctx context.Context, properties *KafkaProperties, tcFac
 
 	if properties.Net.Tls.Enable {
 		c.Net.TLS.Enable = true
-		c.Net.TLS.Config = &tls.Config{}
+		// the minVersion is set later on dynamically
+		c.Net.TLS.Config = &tls.Config{} //nolint:golangci-lint
 
 		p, err = tcFactory.GetProvider(properties.Net.Tls.Config)
 		if err != nil {
