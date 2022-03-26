@@ -294,8 +294,10 @@ func (b *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
 		logger.WithContext(ctx).Errorf("error while closing kafka global client: %v", e)
 	}
 
-	if e := b.tlsConfigProvider.Close(); e != nil {
-		logger.WithContext(ctx).Errorf("error while closing tls config provider: %v", e)
+	if b.tlsConfigProvider != nil {
+		if e := b.tlsConfigProvider.Close(); e != nil {
+			logger.WithContext(ctx).Errorf("error while closing tls config provider: %v", e)
+		}
 	}
 
 	logger.WithContext(ctx).Infof("Kafka connections closed")
