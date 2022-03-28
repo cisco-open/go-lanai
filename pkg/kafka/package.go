@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"go.uber.org/fx"
 )
 
@@ -24,6 +25,7 @@ const (
 
 // Use Allow service to include this module in main()
 func Use() {
+	bootstrap.Register(tlsconfig.Module)
 	bootstrap.Register(Module)
 }
 
