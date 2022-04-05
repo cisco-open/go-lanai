@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "authorizeUrl": "http://localhost:8900/auth/v2/authorize",
+  "clientId": "nfv-client",
+  "clientSecret": "",
+  "tokenUrl": "http://localhost:8900/auth/v2/token"
+}

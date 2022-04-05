@@ -30,7 +30,7 @@ var Module = &bootstrap.Module{
 	},
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
-		fx.Provide(bindSecurityProperties),
+		fx.Provide(bindSwaggerProperties),
 		fx.Invoke(initialize),
 	},
 }
@@ -56,7 +56,7 @@ func initialize(di initDI) {
 	}
 }
 
-func bindSecurityProperties(ctx *bootstrap.ApplicationContext) SwaggerProperties {
+func bindSwaggerProperties(ctx *bootstrap.ApplicationContext) SwaggerProperties {
 	props := NewSwaggerSsoProperties()
 	if err := ctx.Config().Bind(props, SwaggerPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind SwaggerSsoProperties"))
