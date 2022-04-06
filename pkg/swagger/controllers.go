@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"strings"
 )
@@ -54,10 +55,14 @@ type SwaggerController struct {
 }
 
 func NewSwaggerController(props SwaggerProperties, resolver bootstrap.BuildInfoResolver) *SwaggerController {
+	return newSwaggerController(props, resolver)
+}
+
+func newSwaggerController(props SwaggerProperties, resolver bootstrap.BuildInfoResolver, searchFS ...fs.FS) *SwaggerController {
 	return &SwaggerController{
 		properties:        &props,
 		buildInfoResolver: resolver,
-		docLoader: newOASDocLoader(props.Spec),
+		docLoader: newOASDocLoader(props.Spec, searchFS...),
 	}
 }
 
@@ -247,15 +252,17 @@ func (c *SwaggerController) processOAS3(oas *OAS3, r *http.Request) error {
 
 	// host
 	oas.Servers = nil
-	fwdAddr := r.Header.Values("X-Forwarded-Host") // capitalisation doesn't matter
+	fwdAddr := strings.TrimSpace(r.Header.Get("X-Forwarded-Host")) // capitalisation doesn't matter
 	if len(fwdAddr) != 0 {
-		fwdProto := r.Header.Values("X-Forwarded-Proto")
+		host := strings.Split(fwdAddr, ",")[0]
+
+		fwdProto := strings.TrimSpace(r.Header.Get("X-Forwarded-Proto"))
 		schema := "http"
 		if len(fwdProto) != 0 {
-			schema = strings.TrimSpace(fwdProto[0])
+			schema = strings.Split(fwdProto, ",")[0]
 		}
 		server := OAS3Server{
-			URL:         fmt.Sprintf("%s://%s", schema, strings.TrimSpace(fwdAddr[0])),
+			URL:         fmt.Sprintf("%s://%s", strings.TrimSpace(schema), strings.TrimSpace(host)),
 			Description: "Current API Server",
 		}
 		oas.Servers = append([]OAS3Server{server}, oas.Servers...)

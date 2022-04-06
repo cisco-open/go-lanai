@@ -1,0 +1,166 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "This is a dummy OAS2 for testing",
+    "version": "1.0.0",
+    "title": "Dummy OAS2",
+    "contact": {
+      "email": "livdu@cisco.com"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "tags": [
+    {
+      "name": "dummy",
+      "description": "Dummy APIs"
+    }
+  ],
+  "paths": {
+    "/apim/api/dummy": {
+      "get": {
+        "tags": [
+          "dummy"
+        ],
+        "summary": "Get API",
+        "operationId": "dummyGet",
+        "description": "This is a discroption",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful",
+            "schema": {
+              "type": "object",
+              "items": {
+                "$ref": "#/definitions/DummyResponse"
+              }
+            }
+          },
+          "500": {
+            "description": "Too bad"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "dummy"
+        ],
+        "summary": "Post API",
+        "operationId": "dummyPost",
+        "description": "This is a discroption",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "dummyRequest",
+            "schema": {
+              "$ref": "#/definitions/DummyRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DummyResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid"
+          },
+          "409": {
+            "description": "an existing item already exists"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "dummy"
+        ],
+        "summary": "Delete API",
+        "operationId": "dummyDelete",
+        "description": "This is a discroption",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful",
+            "schema": {
+              "type": "object",
+              "items": {
+                "$ref": "#/definitions/DummyResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid"
+          },
+          "409": {
+            "description": "an existing item already exists"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "DummyRequest": {
+      "type": "object",
+      "required": [
+        "value",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        },
+        "value": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "DummyResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "example": "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        },
+        "value": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

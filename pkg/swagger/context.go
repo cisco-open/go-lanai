@@ -52,28 +52,28 @@ func (s *OpenApiSpec) UnmarshalJSON(data []byte) error {
 type OAS2 struct {
 	OpenAPIVersion string                 `json:"swagger"`
 	Info           OAS2Info               `json:"info"`
-	Host           string                 `json:"host"`
-	BasePath       string                 `json:"basePath"`
-	Schemes        []string               `json:"schemes"`
-	Consumes       []string               `json:"consumes"`
-	Produces       []string               `json:"produces"`
-	Paths          map[string]interface{} `json:"paths"`
-	Definitions    map[string]interface{} `json:"definitions"`
-	Parameters     map[string]interface{} `json:"parameters"`
-	Responses      map[string]interface{} `json:"responses"`
-	SecDefs        map[string]interface{} `json:"securityDefinitions"`
-	Security       []interface{}          `json:"security"`
-	Tags           []interface{}          `json:"tags"`
-	ExtDocs        map[string]interface{} `json:"externalDocs"`
+	Host           string                 `json:"host,omitempty"`
+	BasePath       string                 `json:"basePath,omitempty"`
+	Schemes        []string               `json:"schemes,omitempty"`
+	Consumes       []string               `json:"consumes,omitempty"`
+	Produces       []string               `json:"produces,omitempty"`
+	Paths          map[string]interface{} `json:"paths,omitempty"`
+	Definitions    map[string]interface{} `json:"definitions,omitempty"`
+	Parameters     map[string]interface{} `json:"parameters,omitempty"`
+	Responses      map[string]interface{} `json:"responses,omitempty"`
+	SecDefs        map[string]interface{} `json:"securityDefinitions,omitempty"`
+	Security       []interface{}          `json:"security,omitempty"`
+	Tags           []interface{}          `json:"tags,omitempty"`
+	ExtDocs        map[string]interface{} `json:"externalDocs,omitempty"`
 }
 
 type OAS2Info struct {
 	Title          string                 `json:"title"`
-	Description    string                 `json:"description"`
-	TermsOfService string                 `json:"termsOfService"`
-	Contact        map[string]interface{} `json:"contact"`
-	License        map[string]interface{} `json:"license"`
-	Version        string                 `json:"version"`
+	Description    string                 `json:"description,omitempty"`
+	TermsOfService string                 `json:"termsOfService,omitempty"`
+	Contact        map[string]interface{} `json:"contact,omitempty"`
+	License        map[string]interface{} `json:"license,omitempty"`
+	Version        string                 `json:"version,omitempty"`
 }
 
 // OAS3 is Swagger 3.0 Specification
@@ -94,16 +94,16 @@ type OAS3 struct {
 
 type OAS3Info struct {
 	Title          string                 `json:"title"`
-	Summary        string                 `json:"summary"`
-	Description    string                 `json:"description"`
-	TermsOfService string                 `json:"termsOfService"`
-	Contact        map[string]interface{} `json:"contact"`
-	License        map[string]interface{} `json:"license"`
-	Version        string                 `json:"version"`
+	Summary        string                 `json:"summary,omitempty"`
+	Description    string                 `json:"description,omitempty"`
+	TermsOfService string                 `json:"termsOfService,omitempty"`
+	Contact        map[string]interface{} `json:"contact,omitempty"`
+	License        map[string]interface{} `json:"license,omitempty"`
+	Version        string                 `json:"version,omitempty"`
 }
 
 type OAS3Server struct {
 	URL         string                 `json:"url"`
-	Description string                 `json:"description"`
-	Variables   map[string]interface{} `json:"variables"`
+	Description string                 `json:"description,omitempty"`
+	Variables   map[string]interface{} `json:"variables,omitempty"`
 }
