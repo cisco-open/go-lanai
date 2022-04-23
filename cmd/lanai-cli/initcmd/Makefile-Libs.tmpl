@@ -45,7 +45,7 @@ generate: $(GEN_LIST)
 # 	Optional parameter: ARGS="..."
 test:
 	set -o pipefail; \
-	$(GO) test -v -count=1 -v -failfast -timeout 0 \
+	$(GO) test -count=1 -failfast -timeout 0 \
 		-coverpkg $(MODULE)/pkg/...,$(MODULE)/cmd/...,$(MODULE)/test/... \
 		-coverprofile $(DESTDIR)/coverage.out \
 		$(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/... \
