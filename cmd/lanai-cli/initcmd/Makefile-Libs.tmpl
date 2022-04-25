@@ -45,18 +45,17 @@ generate: $(GEN_LIST)
 # 	Optional parameter: ARGS="..."
 test:
 	set -o pipefail; \
-	$(GO) test -count=1 -failfast -timeout 0 \
-		-coverpkg $(MODULE)/pkg/...,$(MODULE)/cmd/...,$(MODULE)/test/... \
-		-coverprofile $(DESTDIR)/coverage.out \
-		$(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/... \
-		$(ARGS) | tee $(DESTDIR)/tests.out
+	gotestsum -f pkgname --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \
+  		$(GO) test -json -count=1 -failfast -timeout=0 -coverprofile $(DESTDIR)/coverage.out \
+  		-coverpkg $(MODULE)/pkg/...,$(MODULE)/cmd/...,$(MODULE)/test/... \
+  		$(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/... $(ARGS)
 
 # report:
 # 	Test and generate report. Intended to be used by verification.
 report: test
 	$(GO) tool cover -html=$(DESTDIR)/coverage.out -o $(DESTDIR)/coverage.html
+	gotestsum --junitfile="$(DESTDIR)/junit-report.xml" --raw-command -- cat $(DESTDIR)/tests.json 2>&1 1>/dev/null
 	gocov convert $(DESTDIR)/coverage.out | gocov-xml > $(DESTDIR)/cobertura-coverage.xml
-	cat $(DESTDIR)/tests.out | go-junit-report > $(DESTDIR)/junit-report.xml
 
 # lint:
 # 	Invoke "go vet" and other linters
