@@ -60,15 +60,17 @@ func migrate(ctx context.Context, r *Registrar, v Versioner) error {
 		if shouldExecuteMigration(s) {
 			logger.Infof("Executing migration step %s: %s", s.Version.String(), s.Description)
 			startTime := time.Now()
-			err = s.Func(ctx) //TODO: manual rollback function?
+			migrationErr := s.Func(ctx) //TODO: manual rollback function?
 			finishTime := time.Now()
 			duration := finishTime.Sub(startTime)
-			if err != nil {
+			if migrationErr != nil {
 				err = v.RecordAppliedMigration(ctx, s.Version, s.Description, false, finishTime, duration)
 				if err != nil {
 					logger.Errorf("error recording failed migration version due to %v", err)
 				}
-				return errors.New(fmt.Sprintf("migration stoped because error at step %v", s.Version))
+				err = errors.New(fmt.Sprintf("migration stopped at step %v because of error: %v", s.Version, migrationErr))
+				logger.Errorf("%v", err)
+				return err
 			} else {
 				err = v.RecordAppliedMigration(ctx, s.Version, s.Description, true, finishTime, duration)
 				if err != nil {
