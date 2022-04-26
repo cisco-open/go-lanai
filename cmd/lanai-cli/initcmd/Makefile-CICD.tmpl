@@ -37,8 +37,8 @@ CLI ?= lanai-cli
 # 	Test and generate report. Intended to be used by verification.
 report: test
 	$(GO) tool cover -html=$(DESTDIR)/coverage.out -o $(DESTDIR)/coverage.html
+	gotestsum --junitfile="$(DESTDIR)/junit-report.xml" --raw-command -- cat $(DESTDIR)/tests.json 2>&1 1>/dev/null
 	gocov convert $(DESTDIR)/coverage.out | gocov-xml > $(DESTDIR)/cobertura-coverage.xml
-	cat $(DESTDIR)/tests.out | go-junit-report > $(DESTDIR)/junit-report.xml
 
 # verify:
 #	Test and build application against specified PRIVATE_MODS.

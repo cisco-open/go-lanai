@@ -37,7 +37,7 @@ func GenerateFileWithOption(ctx context.Context, opt *TemplateOption) error {
 		return nil
 	}
 
-	f, e := os.OpenFile(opt.Output, os.O_CREATE|os.O_WRONLY, opt.OutputPerm)
+	f, e := os.OpenFile(opt.Output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, opt.OutputPerm)
 	if e != nil {
 		return e
 	}
