@@ -24,6 +24,7 @@ type Logger interface {
 	KVLogger
 	KeyValuer
 	Leveler
+	StdLogger
 }
 
 type ContextualLogger interface {
@@ -51,6 +52,12 @@ type FmtLogger interface {
 	Infof(msg string, args... interface{})
 	Warnf(msg string, args... interface{})
 	Errorf(msg string, args... interface{})
+}
+
+type StdLogger interface {
+	Print(v ...interface{})
+	Printf(format string, v ...interface{})
+	Println(v ...interface{})
 }
 
 type Leveler interface {

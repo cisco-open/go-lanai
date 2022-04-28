@@ -20,6 +20,9 @@ const (
 	errTmplConsumerGroupExists = `consumer group for topic %s already exist. please use the existing instance`
 )
 
+type ClusterAdminProviderFunc func() sarama.ClusterAdmin
+type ClientProviderFunc func() sarama.Client
+
 type SaramaKafkaBinder struct {
 	appConfig            bootstrap.ApplicationConfig
 	properties           *KafkaProperties
@@ -102,6 +105,16 @@ func (b *SaramaKafkaBinder) prepareDefaults(ctx context.Context, saramaDefaults 
 	if e := b.appConfig.Bind(&b.defaults.properties, ConfigKafkaDefaultBindingPrefix); e != nil {
 		logger.WithContext(ctx).Infof("default kafka binding properties [%s.*] is not configured")
 	}
+}
+
+// CloseProducer release resources for dynamic producers
+func (b *SaramaKafkaBinder) CloseProducer(ctx context.Context, topic string) {
+	if p, ok := b.producers[topic]; ok {
+		if e := p.Close(); e != nil {
+			logger.WithContext(ctx).Errorf("error while closing kafka producer: %v", e)
+		}
+	}
+	delete(b.producers, topic)
 }
 
 func (b *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (Producer, error) {
@@ -205,6 +218,21 @@ func (b *SaramaKafkaBinder) Client() sarama.Client {
 	return b.globalClient
 }
 
+func (b *SaramaKafkaBinder) ReloadClusterAdmin(ctx context.Context) (err error) {
+	if b.adminClient!=nil {
+		if e := b.adminClient.Close(); e != nil {
+			logger.WithContext(ctx).Errorf("error while closing kafka admin client: %v", e)
+		}
+	}
+	clusterAdmin, err := sarama.NewClusterAdmin(b.brokers, &b.defaults.sarama)
+	if err != nil {
+		err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
+		return err
+	}
+	b.adminClient = clusterAdmin
+	return nil
+}
+
 // Initialize implements BinderLifecycle, prepare for use, negotiate default configs, etc.
 func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) (err error) {
 	b.initOnce.Do(func() {
@@ -219,21 +247,27 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 		b.prepareDefaults(ctx, cfg)
 
 		// create a global client
-		b.globalClient, err = sarama.NewClient(b.brokers, cfg)
-		if err != nil {
-			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
-			return
-		}
+		client, err := sarama.NewClient(b.brokers, cfg)
 
-		b.adminClient, err = sarama.NewClusterAdmin(b.brokers, cfg)
 		if err != nil {
 			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
 			return
 		}
+		b.globalClient = client
+		clusterAdmin, err := sarama.NewClusterAdmin(b.brokers, cfg)
+		if err != nil {
+			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
+			return
+		}
+		b.adminClient = clusterAdmin
 
 		b.provisioner = &saramaTopicProvisioner{
-			globalClient: b.globalClient,
-			adminClient:  b.adminClient,
+			globalClient: func() sarama.Client{
+				return b.globalClient
+			},
+			adminClient:   func() sarama.ClusterAdmin{
+				return b.adminClient
+			},
 		}
 	})
 
@@ -337,7 +371,6 @@ func (b *SaramaKafkaBinder) tryStartTaskFunc(loopCtx context.Context) loop.TaskF
 				allStarted = false
 			}
 		}
-
 		return allStarted, nil
 	}
 }

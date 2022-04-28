@@ -6,16 +6,17 @@ import (
 )
 
 type saramaTopicProvisioner struct {
-	globalClient   sarama.Client
-	adminClient    sarama.ClusterAdmin
+	globalClient ClientProviderFunc
+	adminClient  ClusterAdminProviderFunc
 }
 
 func (p *saramaTopicProvisioner) topicExists(topic string) (bool, error) {
-	if e := p.globalClient.RefreshMetadata(); e != nil {
+	gc := p.globalClient()
+	if e := gc.RefreshMetadata(); e != nil {
 		return false, translateSaramaBindingError(e, "unable to refresh metadata: %v", e)
 	}
 
-	topics, e := p.globalClient.Topics()
+	topics, e := gc.Topics()
 	if e != nil {
 		return false, translateSaramaBindingError(e, "unable to read topics: %v", e)
 	}
@@ -50,14 +51,16 @@ func (p *saramaTopicProvisioner) tryCreateTopic(topic string, cfg *topicConfig) 
 		NumPartitions:     cfg.partitionCount,
 		ReplicationFactor: cfg.replicationFactor,
 	}
-	if e := p.adminClient.CreateTopic(topic, topicDetails, false); e != nil {
+	adminClient := p.adminClient()
+	if e := adminClient.CreateTopic(topic, topicDetails, false); e != nil {
 		return NewKafkaError(ErrorCodeAutoCreateTopicFailed, fmt.Sprintf(`unable to create topic "%s": %v`, topic, e))
 	}
 	return nil
 }
 
 func (p *saramaTopicProvisioner) tryProvisionPartitions(topic string, cfg *topicConfig) error {
-	parts, e := p.globalClient.Partitions(topic)
+	globalClient := p.globalClient()
+	parts, e := globalClient.Partitions(topic)
 	if e != nil {
 		return translateSaramaBindingError(e, "unable to read partitions config of topic %s: %v", topic, e)
 	}
@@ -75,7 +78,8 @@ func (p *saramaTopicProvisioner) tryProvisionPartitions(topic string, cfg *topic
 	}
 
 	// we can create partitions
-	if e := p.adminClient.CreatePartitions(topic, cfg.partitionCount, nil, true); e != nil {
+	adminClient := p.adminClient()
+	if e := adminClient.CreatePartitions(topic, cfg.partitionCount, nil, true); e != nil {
 		return NewKafkaError(ErrorCodeAutoAddPartitionsFailed, fmt.Sprintf(`unable to add partitions to topic "%s": %v`, topic, e))
 	}
 	return nil

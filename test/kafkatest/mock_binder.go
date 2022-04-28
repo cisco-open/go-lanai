@@ -1,6 +1,7 @@
 package kafkatest
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"go.uber.org/fx"
@@ -64,6 +65,11 @@ func (b *MockedBinder) Consume(topic string, group string, _ ...kafka.ConsumerOp
 	}
 	return ret, nil
 }
+
+func (b *MockedBinder) CloseProducer(ctx context.Context,topic string) {
+	delete(b.producers, topic)
+}
+
 
 func (b *MockedBinder) ListTopics() []string {
 	b.mtx.Lock()

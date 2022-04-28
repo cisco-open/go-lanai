@@ -18,14 +18,20 @@ const (
 
 //goland:noinspection GoNameStartsWithPackageName
 type KafkaProperties struct {
-	Brokers utils.CommaSeparatedSlice `json:"brokers"`
-	Net     Net                       `json:"net"`
-	Binder  BinderProperties          `json:"binder"`
+	Brokers  utils.CommaSeparatedSlice `json:"brokers"`
+	Net      Net                       `json:"net"`
+	Metadata Metadata                  `json:"metadata"`
+	Binder   BinderProperties          `json:"binder"`
+	ClientId string                    `json:"client-id"`
 }
 
 type Net struct {
 	Sasl SASL `json:"sasl"`
 	Tls  TLS  `json:"tls"`
+}
+
+type Metadata struct {
+	RefreshFrequency utils.Duration `json:"refresh-frequency"`
 }
 
 type SASL struct {
@@ -42,7 +48,7 @@ type SASL struct {
 }
 
 type TLS struct {
-	Enable bool `json:"enabled"`
+	Enable bool                 `json:"enabled"`
 	Config tlsconfig.Properties `json:"config"`
 }
 
@@ -130,12 +136,16 @@ func BindKafkaProperties(ctx *bootstrap.ApplicationContext) KafkaProperties {
 				Enable: false,
 			},
 		},
+		Metadata: Metadata{
+			RefreshFrequency: utils.Duration(5 * time.Minute),
+		},
 		Binder: BinderProperties{
 			InitialHeartbeat:       utils.Duration(5 * time.Second),
 			WatchdogHeartbeat:      utils.Duration(120 * time.Second),
 			HeartbeatCurveFactor:   0.5,
 			HeartbeatCurveMidpoint: 10, // recommend > 5
 		},
+		ClientId: ctx.Name(),
 	}
 	if err := ctx.Config().Bind(&props, ConfigKafkaPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind kafka properties"))

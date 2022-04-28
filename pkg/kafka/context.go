@@ -64,6 +64,7 @@ type Binder interface {
 	Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error)
 	Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error)
 	ListTopics() []string
+	CloseProducer(ctx context.Context,topic string)
 }
 
 type BinderLifecycle interface {
