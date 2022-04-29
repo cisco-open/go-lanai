@@ -5,8 +5,12 @@ import (
 	"github.com/Shopify/sarama"
 )
 
+// ClusterAdminProviderFunc The function
+type ClusterAdminProviderFunc func() sarama.ClusterAdmin
+type GlobalClientProviderFunc func() sarama.Client
+
 type saramaTopicProvisioner struct {
-	globalClient ClientProviderFunc
+	globalClient GlobalClientProviderFunc
 	adminClient  ClusterAdminProviderFunc
 }
 

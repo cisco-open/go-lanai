@@ -60,11 +60,20 @@ type ProducerOptions func(cfg *bindingConfig)
 type ConsumerOptions func(cfg *bindingConfig)
 
 type Binder interface {
+	// Produce create a message Producer to given topic, if not existed already. This would also auto-create topics if configured correctly
+	// The returned Producer may also implement BindingLifecycle, in which case BindingLifecycle.Close can be used to manually release resources
 	Produce(topic string, options ...ProducerOptions) (Producer, error)
+
+	// Subscribe create a Subscriber of given topic, if not existed already.
+	// The returned Subscriber may also implement BindingLifecycle, in which case BindingLifecycle.Close can be used to manually release resources
 	Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error)
+
+	// Consume create a GroupConsumer of given topic and group, if not existed already.
+	// The returned GroupConsumer may also implement BindingLifecycle, in which case BindingLifecycle.Close can be used to manually release resources
 	Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error)
+
+	// ListTopics list of topics of all managed bindings
 	ListTopics() []string
-	CloseProducer(ctx context.Context,topic string)
 }
 
 type BinderLifecycle interface {
@@ -84,8 +93,11 @@ type BindingLifecycle interface {
 	// Must be called after any configuration and before Producer, Subscriber or GroupConsumer is used
 	Start(ctx context.Context) error
 
-	// Close must be called to release any resource
+	// Close must be called to release any resource. Once called, regardless the return, this instance must be discarded
 	Close() error
+
+	// Closed returns if Close has been called
+	Closed() bool
 }
 
 /************************

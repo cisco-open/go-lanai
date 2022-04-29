@@ -12,12 +12,13 @@ type saramaGroupConsumer struct {
 	topic       string
 	group       string
 	brokers     []string
-	config       *bindingConfig
+	config      *bindingConfig
 	dispatcher  *saramaDispatcher
 	provisioner *saramaTopicProvisioner
 	started     bool
 	consumer    sarama.ConsumerGroup
 	cancelFunc  context.CancelFunc
+	closed      bool
 }
 
 func newSaramaGroupConsumer(topic string, group string, addrs []string, config *bindingConfig, provisioner *saramaTopicProvisioner) (*saramaGroupConsumer, error) {
@@ -52,7 +53,10 @@ func (g *saramaGroupConsumer) Start(ctx context.Context) (err error) {
 			g.started = true
 		}
 	}()
-	if g.started {
+	switch {
+	case g.closed:
+		return ErrorStartClosedBinding.WithMessage("cannot re-start a closed consumer [%s]", g.topic)
+	case g.started:
 		return nil
 	}
 
@@ -79,7 +83,10 @@ func (g *saramaGroupConsumer) Start(ctx context.Context) (err error) {
 func (g *saramaGroupConsumer) Close() error {
 	g.Lock()
 	defer g.Unlock()
-	defer func() { g.started = false }()
+	defer func() {
+		g.started = false
+		g.closed = true
+	}()
 
 	if g.cancelFunc != nil {
 		g.cancelFunc()
@@ -95,6 +102,12 @@ func (g *saramaGroupConsumer) Close() error {
 	}
 
 	return nil
+}
+
+func (g *saramaGroupConsumer) Closed() bool {
+	g.Lock()
+	defer g.Unlock()
+	return g.closed
 }
 
 func (g *saramaGroupConsumer) AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error {
