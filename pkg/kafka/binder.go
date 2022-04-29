@@ -233,21 +233,19 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 		b.prepareDefaults(ctx, cfg)
 
 		// create a global client
-		client, err := sarama.NewClient(b.brokers, cfg)
+		b.globalClient, err = sarama.NewClient(b.brokers, cfg)
+		if err != nil {
+			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
+			logger.WithContext(ctx).Errorf("%v", err)
+			return
+		}
 
+		b.adminClient, err = sarama.NewClusterAdmin(b.brokers, cfg)
 		if err != nil {
 			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
 			logger.WithContext(ctx).Errorf("%v", err)
 			return
 		}
-		b.globalClient = client
-		clusterAdmin, err := sarama.NewClusterAdmin(b.brokers, cfg)
-		if err != nil {
-			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
-			logger.WithContext(ctx).Errorf("%v", err)
-			return
-		}
-		b.adminClient = clusterAdmin
 
 		b.provisioner = &saramaTopicProvisioner{
 			globalClient: b.globalClientProvider,
