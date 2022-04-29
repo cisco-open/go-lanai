@@ -100,21 +100,21 @@ func (l *logger) Error(msg string, keyvals... interface{}) {
 
 
 func (l *logger) Print(args ...interface{})  {
-	_ = l.infoLogger([]interface{}{
+	_ = l.Log([]interface{}{
 		LogKeyMessage, fmt.Sprint(args...),
-	}).Log()
+	})
 }
 
 func (l *logger) Printf(format string, args ...interface{}) {
-	_ = l.infoLogger([]interface{}{
-		LogKeyMessage, fmt.Sprintf(format, args...),
-	}).Log()
+	_ = l.Log([]interface{}{
+		LogKeyMessage,  fmt.Sprintf(format, args...),
+	})
 }
 
 func (l *logger) Println(args ...interface{}) {
-	_ = l.infoLogger([]interface{}{
-		LogKeyMessage, fmt.Sprintln(args...),
-	}).Log()
+	_ = l.Log([]interface{}{
+		LogKeyMessage,  fmt.Sprint(args...),
+	})
 }
 
 func (l *logger) withKV(keyvals []interface{}) Logger {
