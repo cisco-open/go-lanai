@@ -18,6 +18,7 @@ const (
 	errTmplProducerExists      = `producer for topic %s already exist. please use the existing instance`
 	errTmplSubscriberExists      = `subscriber for topic %s already exist. please use the existing instance`
 	errTmplConsumerGroupExists = `consumer group for topic %s already exist. please use the existing instance`
+	errTmplCannotConnectBrokers     = `unable to connect to Kafka brokers %v: %v`
 )
 
 type ClusterAdminProviderFunc func() sarama.ClusterAdmin
@@ -226,7 +227,7 @@ func (b *SaramaKafkaBinder) ReloadClusterAdmin(ctx context.Context) (err error) 
 	}
 	clusterAdmin, err := sarama.NewClusterAdmin(b.brokers, &b.defaults.sarama)
 	if err != nil {
-		err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
+		err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
 		return err
 	}
 	b.adminClient = clusterAdmin
@@ -239,6 +240,7 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 		cfg, tlsConfigProvider, e := defaultSaramaConfig(ctx, b.properties, tlsProviderFactory)
 		if e != nil {
 			err = NewKafkaError(ErrorCodeBindingInternal, fmt.Sprintf("unable to create kafka config: %v", e))
+			logger.WithContext(ctx).Errorf("%v", err)
 			return
 		}
 		b.tlsConfigProvider = tlsConfigProvider
@@ -250,13 +252,15 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 		client, err := sarama.NewClient(b.brokers, cfg)
 
 		if err != nil {
-			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
+			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
+			logger.WithContext(ctx).Errorf("%v", err)
 			return
 		}
 		b.globalClient = client
 		clusterAdmin, err := sarama.NewClusterAdmin(b.brokers, cfg)
 		if err != nil {
-			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
+			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
+			logger.WithContext(ctx).Errorf("%v", err)
 			return
 		}
 		b.adminClient = clusterAdmin
