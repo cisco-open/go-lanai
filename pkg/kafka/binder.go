@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
+	"errors"
 	"fmt"
 	"github.com/Shopify/sarama"
 	"go.uber.org/fx"
@@ -15,9 +16,10 @@ import (
 )
 
 const (
-	errTmplProducerExists      = `producer for topic %s already exist. please use the existing instance`
-	errTmplSubscriberExists      = `subscriber for topic %s already exist. please use the existing instance`
-	errTmplConsumerGroupExists = `consumer group for topic %s already exist. please use the existing instance`
+	errTmplProducerExists       = `producer for topic %s already exist. please use the existing instance`
+	errTmplSubscriberExists     = `subscriber for topic %s already exist. please use the existing instance`
+	errTmplConsumerGroupExists  = `consumer group for topic %s already exist. please use the existing instance`
+	errTmplCannotConnectBrokers = `unable to connect to Kafka brokers %v: %v`
 )
 
 type SaramaKafkaBinder struct {
@@ -36,6 +38,7 @@ type SaramaKafkaBinder struct {
 	adminClient       sarama.ClusterAdmin
 	tlsConfigProvider tlsconfig.Provider
 	provisioner       *saramaTopicProvisioner
+	// TODO consider mutex lock for following fields
 	producers         map[string]BindingLifecycle
 	subscribers       map[string]BindingLifecycle
 	consumerGroups    map[string]BindingLifecycle
@@ -104,8 +107,18 @@ func (b *SaramaKafkaBinder) prepareDefaults(ctx context.Context, saramaDefaults 
 	}
 }
 
+// CloseProducer release resources for dynamic producers
+func (b *SaramaKafkaBinder) CloseProducer(ctx context.Context, topic string) {
+	if p, ok := b.producers[topic]; ok {
+		if e := p.Close(); e != nil {
+			logger.WithContext(ctx).Errorf("error while closing kafka producer: %v", e)
+		}
+	}
+	delete(b.producers, topic)
+}
+
 func (b *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (Producer, error) {
-	if _, ok := b.producers[topic]; ok {
+	if p, ok := b.producers[topic]; ok && !p.Closed() {
 		logger.Warnf(errTmplProducerExists, topic)
 		return nil, NewKafkaError(ErrorCodeProducerExists, errTmplProducerExists, topic)
 	}
@@ -136,7 +149,7 @@ func (b *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (P
 }
 
 func (b *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error) {
-	if _, ok := b.subscribers[topic]; ok {
+	if s, ok := b.subscribers[topic]; ok && !s.Closed() {
 		logger.Warnf(errTmplSubscriberExists, topic)
 		return nil, NewKafkaError(ErrorCodeConsumerExists, errTmplSubscriberExists, topic)
 	}
@@ -162,7 +175,7 @@ func (b *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) 
 }
 
 func (b *SaramaKafkaBinder) Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error) {
-	if _, ok := b.consumerGroups[topic]; ok {
+	if c, ok := b.consumerGroups[topic]; ok && !c.Closed() {
 		logger.Warnf(errTmplConsumerGroupExists, topic)
 		return nil, NewKafkaError(ErrorCodeConsumerExists, errTmplConsumerGroupExists, topic)
 	}
@@ -211,6 +224,7 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 		cfg, tlsConfigProvider, e := defaultSaramaConfig(ctx, b.properties, tlsProviderFactory)
 		if e != nil {
 			err = NewKafkaError(ErrorCodeBindingInternal, fmt.Sprintf("unable to create kafka config: %v", e))
+			logger.WithContext(ctx).Errorf("%v", err)
 			return
 		}
 		b.tlsConfigProvider = tlsConfigProvider
@@ -221,19 +235,21 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 		// create a global client
 		b.globalClient, err = sarama.NewClient(b.brokers, cfg)
 		if err != nil {
-			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
+			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
+			logger.WithContext(ctx).Errorf("%v", err)
 			return
 		}
 
 		b.adminClient, err = sarama.NewClusterAdmin(b.brokers, cfg)
 		if err != nil {
-			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf("unable to connect to Kafka brokers %v: %v", b.brokers, err), err)
+			err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
+			logger.WithContext(ctx).Errorf("%v", err)
 			return
 		}
 
 		b.provisioner = &saramaTopicProvisioner{
-			globalClient: b.globalClient,
-			adminClient:  b.adminClient,
+			globalClient: b.globalClientProvider,
+			adminClient: b.clusterAdminProvider,
 		}
 	})
 
@@ -314,30 +330,49 @@ func (b *SaramaKafkaBinder) loadProperties(name string) *BindingProperties {
 	return &props
 }
 
+func (b *SaramaKafkaBinder) globalClientProvider() (sarama.Client, error) {
+	return b.globalClient, nil
+}
+
+func (b *SaramaKafkaBinder) clusterAdminProvider() (sarama.ClusterAdmin, error) {
+	// simple test to see if admin client is still working
+	filter := sarama.AclFilter{
+		ResourceType: sarama.AclResourceTopic,
+		Operation:    sarama.AclOperationRead,
+	}
+	_, e := b.adminClient.ListAcls(filter)
+	if e == nil {
+		return b.adminClient, nil
+	}
+
+	newClient, e := sarama.NewClusterAdmin(b.brokers, &b.defaults.sarama)
+	if e != nil {
+		return nil, NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, e), e)
+	}
+	_ = b.adminClient.Close()
+	b.adminClient = newClient
+	return newClient, nil
+}
+
 // tryStartTaskFunc try to start any registered bindings if it's not started yet
 // this task should be run periodically to perform delayed start of any Subscriber or GroupConsumer
 func (b *SaramaKafkaBinder) tryStartTaskFunc(loopCtx context.Context) loop.TaskFunc {
 	return func(_ context.Context, l *loop.Loop) (ret interface{}, err error) {
 		// we cannot use passed-in context, because this context will be cancelled as soon as this function finishes
 		allStarted := true
-		for _, lc := range b.producers {
-			if e := lc.Start(loopCtx); e != nil {
-				allStarted = false
+		toProcess := []map[string]BindingLifecycle{
+			b.producers, b.subscribers, b.consumerGroups,
+		}
+		for _, bindings := range toProcess {
+			for k, lc := range bindings {
+				switch e := lc.Start(loopCtx); {
+				case errors.Is(e, ErrorStartClosedBinding):
+					delete(bindings, k)
+				case e != nil:
+					allStarted = false
+				}
 			}
 		}
-
-		for _, lc := range b.subscribers {
-			if e := lc.Start(loopCtx); e != nil {
-				allStarted = false
-			}
-		}
-
-		for _, lc := range b.consumerGroups {
-			if e := lc.Start(loopCtx); e != nil {
-				allStarted = false
-			}
-		}
-
 		return allStarted, nil
 	}
 }

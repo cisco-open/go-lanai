@@ -18,6 +18,7 @@ type saramaProducer struct {
 	msgLogger    MessageLogger
 	interceptors []ProducerMessageInterceptor
 	syncProducer sarama.SyncProducer
+	closed       bool
 }
 
 func newSaramaProducer(topic string, addrs []string, config *bindingConfig) (*saramaProducer, error) {
@@ -96,7 +97,10 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 func (p *saramaProducer) Start(_ context.Context) error {
 	p.Lock()
 	defer p.Unlock()
-	if p.syncProducer != nil {
+	switch {
+	case p.closed:
+		return ErrorStartClosedBinding.WithMessage("cannot re-start a closed producer [%s]", p.topic)
+	case p.syncProducer != nil:
 		return nil
 	}
 	internal, e := sarama.NewSyncProducer(p.brokers, &p.config.sarama)
@@ -116,7 +120,14 @@ func (p *saramaProducer) Close() error {
 	if e := p.syncProducer.Close(); e != nil {
 		return NewKafkaError(ErrorCodeIllegalState, "error when closing producer: %v", e)
 	}
+	p.closed = true
 	return nil
+}
+
+func (p *saramaProducer) Closed() bool {
+	p.Lock()
+	defer p.Unlock()
+	return p.closed
 }
 
 func (p *saramaProducer) prepare(ctx context.Context, v interface{}) *MessageContext {

@@ -50,6 +50,7 @@ const (
 	ErrorCodeConsumerExists
 	ErrorCodeAutoCreateTopicFailed
 	ErrorCodeAutoAddPartitionsFailed
+	ErrorCodeIllegalLifecycleState
 )
 
 // All "SubType" values are used as mask
@@ -74,9 +75,9 @@ const (
 //goland:noinspection GoUnusedGlobalVariable
 var (
 	ErrorCategoryKafka = NewErrorCategory(Reserved, errors.New("error type: kafka"))
-	ErrorTypeBinding   = NewErrorType(ErrorTypeCodeBinding, errors.New("error type: authentication"))
-	ErrorTypeProducer  = NewErrorType(ErrorTypeCodeProducer, errors.New("error type: access control"))
-	ErrorTypeConsumer  = NewErrorType(ErrorTypeCodeConsumer, errors.New("error type: internal"))
+	ErrorTypeBinding   = NewErrorType(ErrorTypeCodeBinding, errors.New("error type: binding"))
+	ErrorTypeProducer  = NewErrorType(ErrorTypeCodeProducer, errors.New("error type: producer"))
+	ErrorTypeConsumer  = NewErrorType(ErrorTypeCodeConsumer, errors.New("error type: consumer"))
 
 	ErrorSubTypeBindingInternal = NewErrorSubType(ErrorSubTypeCodeBindingInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeConnectivity    = NewErrorSubType(ErrorSubTypeCodeConnectivity, errors.New("error sub-type: connectivity"))
@@ -88,6 +89,8 @@ var (
 	ErrorSubTypeConsumerGeneral      = NewErrorSubType(ErrorSubTypeCodeConsumerGeneral, errors.New("error sub-type: consumer"))
 	ErrorSubTypeIllegalConsumerUsage = NewErrorSubType(ErrorSubTypeCodeIllegalConsumerUsage, errors.New("error sub-type: consumer api usage"))
 	ErrorSubTypeDecoding             = NewErrorSubType(ErrorSubTypeCodeDecoding, errors.New("error sub-type: decoding"))
+
+	ErrorStartClosedBinding = NewKafkaError(ErrorCodeIllegalLifecycleState, "error: cannot start closed binding")
 )
 
 func init() {
@@ -98,7 +101,7 @@ func init() {
 	Constructors
 *************************/
 
-func NewKafkaError(code int64, text string, causes ...interface{}) error {
+func NewKafkaError(code int64, text string, causes ...interface{}) *CodedError {
 	return NewCodedError(code, errors.New(text), causes...)
 }
 

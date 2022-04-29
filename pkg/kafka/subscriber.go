@@ -13,13 +13,14 @@ type saramaSubscriber struct {
 	sync.Mutex
 	topic       string
 	brokers     []string
-	config       *bindingConfig
+	config      *bindingConfig
 	dispatcher  *saramaDispatcher
 	provisioner *saramaTopicProvisioner
 	started     bool
 	consumer    sarama.Consumer
 	partitions  []int32
 	cancelFunc  context.CancelFunc
+	closed      bool
 }
 
 func newSaramaSubscriber(topic string, addrs []string, config *bindingConfig, provisioner *saramaTopicProvisioner) (*saramaSubscriber, error) {
@@ -49,7 +50,10 @@ func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
 		}
 	}()
 
-	if s.started {
+	switch {
+	case s.closed:
+		return ErrorStartClosedBinding.WithMessage("cannot re-start a closed subscriber [%s]", s.topic)
+	case s.started:
 		return nil
 	}
 
@@ -85,7 +89,10 @@ func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
 func (s *saramaSubscriber) Close() error {
 	s.Lock()
 	defer s.Unlock()
-	defer func() { s.started = false }()
+	defer func() {
+		s.started = false
+		s.closed = true
+	}()
 
 	if s.cancelFunc != nil {
 		s.cancelFunc()
@@ -99,8 +106,13 @@ func (s *saramaSubscriber) Close() error {
 	if e := s.consumer.Close(); e != nil {
 		return NewKafkaError(ErrorCodeIllegalState, "error when closing subscriber: %v", e)
 	}
-
 	return nil
+}
+
+func (s *saramaSubscriber) Closed() bool {
+	s.Lock()
+	defer s.Unlock()
+	return s.closed
 }
 
 func (s *saramaSubscriber) AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error {

@@ -38,7 +38,6 @@ type initDI struct {
 }
 
 func initialize(di initDI) {
-
 	// register lifecycle functions
 	di.Lifecycle.Append(fx.Hook{
 		OnStart: di.Binder.(BinderLifecycle).Start,

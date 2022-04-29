@@ -98,6 +98,19 @@ func (l *logger) Error(msg string, keyvals... interface{}) {
 	_ = l.errorLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
+
+func (l *logger) Print(args ...interface{})  {
+	_ = l.Log(LogKeyMessage, fmt.Sprint(args...))
+}
+
+func (l *logger) Printf(format string, args ...interface{}) {
+	_ = l.Log(LogKeyMessage, fmt.Sprintf(format, args...))
+}
+
+func (l *logger) Println(args ...interface{}) {
+	_ = l.Log(LogKeyMessage, fmt.Sprintln(args...))
+}
+
 func (l *logger) withKV(keyvals []interface{}) Logger {
 	return &logger{
 		Logger: log.WithPrefix(l.Logger, keyvals...),
