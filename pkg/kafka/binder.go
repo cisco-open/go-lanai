@@ -218,21 +218,6 @@ func (b *SaramaKafkaBinder) Client() sarama.Client {
 	return b.globalClient
 }
 
-func (b *SaramaKafkaBinder) ReloadClusterAdmin(ctx context.Context) (err error) {
-	if b.adminClient != nil {
-		if e := b.adminClient.Close(); e != nil {
-			logger.WithContext(ctx).Errorf("error while closing kafka admin client: %v", e)
-		}
-	}
-	clusterAdmin, err := sarama.NewClusterAdmin(b.brokers, &b.defaults.sarama)
-	if err != nil {
-		err = NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, err), err)
-		return err
-	}
-	b.adminClient = clusterAdmin
-	return nil
-}
-
 // Initialize implements BinderLifecycle, prepare for use, negotiate default configs, etc.
 func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) (err error) {
 	b.initOnce.Do(func() {
@@ -265,12 +250,8 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 		b.adminClient = clusterAdmin
 
 		b.provisioner = &saramaTopicProvisioner{
-			globalClient: func() sarama.Client {
-				return b.globalClient
-			},
-			adminClient: func() sarama.ClusterAdmin {
-				return b.adminClient
-			},
+			globalClient: b.globalClientProvider,
+			adminClient: b.clusterAdminProvider,
 		}
 	})
 
@@ -349,6 +330,30 @@ func (b *SaramaKafkaBinder) loadProperties(name string) *BindingProperties {
 		props = b.defaults.properties // make a fresh copy
 	}
 	return &props
+}
+
+func (b *SaramaKafkaBinder) globalClientProvider() (sarama.Client, error) {
+	return b.globalClient, nil
+}
+
+func (b *SaramaKafkaBinder) clusterAdminProvider() (sarama.ClusterAdmin, error) {
+	// simple test to see if admin client is still working
+	filter := sarama.AclFilter{
+		ResourceType: sarama.AclResourceTopic,
+		Operation:    sarama.AclOperationRead,
+	}
+	_, e := b.adminClient.ListAcls(filter)
+	if e == nil {
+		return b.adminClient, nil
+	}
+
+	newClient, e := sarama.NewClusterAdmin(b.brokers, &b.defaults.sarama)
+	if e != nil {
+		return nil, NewKafkaError(ErrorCodeBrokerNotReachable, fmt.Sprintf(errTmplCannotConnectBrokers, b.brokers, e), e)
+	}
+	_ = b.adminClient.Close()
+	b.adminClient = newClient
+	return newClient, nil
 }
 
 // tryStartTaskFunc try to start any registered bindings if it's not started yet
