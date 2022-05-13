@@ -11,10 +11,13 @@ type SamlProperties struct {
 	CertificateFile string `json:"certificate-file"`
 	KeyFile string  `json:"key-file"`
 	KeyPassword string `json:"key-password"`
+	NameIDFormat string `json:"name-id-format"`
 }
 
 func NewSamlProperties() *SamlProperties {
-	return &SamlProperties{}
+	return &SamlProperties{
+		NameIDFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+	}
 }
 
 func BindSamlProperties(ctx *bootstrap.ApplicationContext) SamlProperties {
