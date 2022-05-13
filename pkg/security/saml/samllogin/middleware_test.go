@@ -6,8 +6,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/beevik/etree"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
 	"github.com/onsi/gomega"
@@ -56,36 +58,64 @@ func TestAcsEndpoint(t *testing.T) {
 }
 
 func TestSamlEntryPoint(t *testing.T) {
-	prop := saml.NewSamlProperties()
-	prop.KeyFile = "testdata/saml_test.key"
-	prop.CertificateFile = "testdata/saml_test.cert"
+	tests := []struct {
+		name string
+		samlProperties saml.SamlProperties
+	}{
+		{
+			name: "NameID Format not configured",
+			samlProperties: saml.SamlProperties{
+				KeyFile:         "testdata/saml_test.key",
+				CertificateFile: "testdata/saml_test.cert"},
+		},
+		{
+			name: "NameID Format set to unspecified.",
+			samlProperties: saml.SamlProperties{
+			KeyFile:         "testdata/saml_test.key",
+			CertificateFile: "testdata/saml_test.cert",
+			NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"},
+		},
+		{
+			name: "NameID Format set to emailAddress.",
+			samlProperties: saml.SamlProperties{
+			KeyFile:         "testdata/saml_test.key",
+			CertificateFile: "testdata/saml_test.cert",
+			NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"},
+		},
+	}
 
-	serverProp := web.NewServerProperties()
-	serverProp.ContextPath = "europa"
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			serverProp := web.NewServerProperties()
+			serverProp.ContextPath = "europa"
 
-	c := newSamlAuthConfigurer(*prop, newTestIdpManager(), newTestFedAccountStore())
-	feature := New()
-	feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
-		*opt =security.DefaultIssuerDetails{
-			Protocol:    "http",
-			Domain:      "vms.com",
-			Port:        8080,
-			ContextPath: serverProp.ContextPath,
-			IncludePort: true,
-		}}))
-	ws := TestWebSecurity{}
+			c := newSamlAuthConfigurer(tt.samlProperties, newTestIdpManager(), newTestFedAccountStore())
+			feature := New()
+			feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
+				*opt =security.DefaultIssuerDetails{
+					Protocol:    "http",
+					Domain:      "vms.com",
+					Port:        8080,
+					ContextPath: serverProp.ContextPath,
+					IncludePort: true,
+				}}))
+			ws := TestWebSecurity{}
 
-	m := c.makeMiddleware(feature, ws)
-	refreshHandler := m.RefreshMetadataHandler()
-	//trigger the refresh manually to simulate the middleware being called.
-	refreshHandler(mockGinContext())
+			m := c.makeMiddleware(feature, ws)
+			refreshHandler := m.RefreshMetadataHandler()
+			//trigger the refresh manually to simulate the middleware being called.
+			refreshHandler(mockGinContext())
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "http://saml.vms.com:8080/europa/v2/authorize", nil)
-	m.Commence(context.TODO(), req, w, errors.New("not authenticated"))
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", "http://saml.vms.com:8080/europa/v2/authorize", nil)
+			m.Commence(context.TODO(), req, w, errors.New("not authenticated"))
 
-	g := gomega.NewWithT(t)
-	g.Expect(w).To(AuthRequestMatcher{})
+			g := gomega.NewWithT(t)
+			g.Expect(w).To(AuthRequestMatcher{
+				SamlProperties: tt.samlProperties,
+			})
+		})
+	}
 }
 
 type MetadataMatcher struct {
@@ -129,20 +159,49 @@ func (m MetadataMatcher) NegatedFailureMessage(actual interface{}) (message stri
 	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(w.Body.Bytes()))
 }
 
-type AuthRequestMatcher struct {}
+type AuthRequestMatcher struct {
+	SamlProperties saml.SamlProperties
+}
 
 func (a AuthRequestMatcher) Match(actual interface{}) (success bool, err error) {
 	w := actual.(*httptest.ResponseRecorder)
-	body := string(w.Body.Bytes())
 
-	if !strings.Contains(body, "action=\"https://dev-940621.oktapreview.com/app/dev-940621_samlservicelocalgo_1/exkwj65c2kC1vwtYi0h7/sso/saml\"") {
+	html := etree.NewDocument()
+	if _, err := html.ReadFrom(w.Body); err != nil {
+		return false, err
+	}
+	formElement := html.FindElement("//form[@action='https://dev-940621.oktapreview.com/app/dev-940621_samlservicelocalgo_1/exkwj65c2kC1vwtYi0h7/sso/saml']")
+	if formElement == nil {
 		return false, nil
 	}
-	if !strings.Contains(body, "id=\"SAMLRequestForm\"") {
+	authRequestElement := html.FindElement("//input[@name='SAMLRequest']")
+	if authRequestElement == nil {
 		return false, nil
 	}
-	if !strings.Contains(body, "method=\"post\"") {
-		return false, nil
+
+	authReqBytes, err := base64.StdEncoding.DecodeString(authRequestElement.SelectAttr("value").Value)
+	if err != nil {
+		return false, err
+	}
+	authReqXml := etree.NewDocument()
+	if err := authReqXml.ReadFromBytes(authReqBytes); err != nil {
+		return false, err
+	}
+
+	nameIdPolicy := authReqXml.FindElement("//samlp:NameIDPolicy")
+
+	if a.SamlProperties.NameIDFormat == "" {
+		if nameIdPolicy.SelectAttr("Format").Value != "urn:oasis:names:tc:SAML:2.0:nameid-format:transient" {
+			return false, errors.New("NameIDPolicy format should be transient if it's not configured in our properties")
+		}
+	} else if a.SamlProperties.NameIDFormat == "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" {
+		if nameIdPolicy.SelectAttr("Format") != nil {
+			return false, errors.New("NameIDPolicy should not have a format, if we configure it to be unspecified")
+		}
+	} else {
+		if nameIdPolicy.SelectAttr("Format").Value != a.SamlProperties.NameIDFormat {
+			return false, errors.New("NameIDPolicy format should match our configuration")
+		}
 	}
 	return true, nil
 }

@@ -91,6 +91,7 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 		MetadataPath:   fmt.Sprintf("%s%s", rootURL.Path, f.metadataPath),
 		SLOPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.sloPath),
 		SignRequest: true,
+		NameIdFormat: s.properties.NameIDFormat,
 	}
 	return opts
 }
@@ -119,6 +120,7 @@ func (s *SamlAuthConfigurer) makeServiceProvider(opts Options) saml.ServiceProvi
 		ForceAuthn:        forceAuthn,
 		SignatureMethod:   signatureMethod,
 		AllowIDPInitiated: opts.AllowIDPInitiated,
+		AuthnNameIDFormat: saml.NameIDFormat(opts.NameIdFormat),
 	}
 	return sp
 }

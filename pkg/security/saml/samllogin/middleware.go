@@ -55,6 +55,7 @@ type Options struct {
 	AllowIDPInitiated bool
 	SignRequest       bool
 	ForceAuthn        bool
+	NameIdFormat string
 }
 
 
