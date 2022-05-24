@@ -25,6 +25,9 @@ func NewConsulDiscoveryClient(ctx context.Context, conn *consul.Connection) Clie
 		instancers: map[string]*ConsulInstancer{},
 	}
 }
+func (c *consulDiscoveryClient) Context() context.Context {
+	return c.ctx
+}
 
 func (c *consulDiscoveryClient) Instancer(serviceName string) (Instancer, error) {
 	if serviceName == "" {

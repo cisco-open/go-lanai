@@ -42,6 +42,19 @@ func NewLoggingCustomizer(props ServerProperties) *LoggingCustomizer {
 	}
 }
 
+// NewSimpleGinLogFormatter is a convenient function that returns a simple gin.LogFormatter without request filtering
+// Normally, LoggingCustomizer configures more complicated gin logging schema automatically.
+// This function is provided purely for integrating with 3rd-party libraries that configures gin.Engine separately.
+// e.g. KrakenD in API Gateway Service
+func NewSimpleGinLogFormatter(logger log.ContextualLogger, level log.LoggingLevel) gin.LogFormatter {
+	formatter := logFormatter{
+		logger:     logger,
+		defaultLvl: level,
+		levels:     nil,
+	}
+	return formatter.intercept
+}
+
 func initLevelMap(props *ServerProperties) map[RequestMatcher]log.LoggingLevel {
 	levels := map[RequestMatcher]log.LoggingLevel{}
 	for _, v := range props.Logging.Levels {

@@ -29,6 +29,7 @@ var (
 )
 
 type Client interface {
+	Context() context.Context
 	Instancer(serviceName string) (Instancer, error)
 }
 
@@ -126,13 +127,52 @@ func InstanceIsHealthy() InstanceMatcher {
 
 func InstanceWithVersion(verPattern string) InstanceMatcher {
 	return &instanceMatcher{
-		desc:      "is healthy",
+		desc:      fmt.Sprintf("of version %s", verPattern),
 		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
 			if instance.Meta == nil {
 				return false, nil
 			}
 			ver, ok := instance.Meta[InstanceMetaKeyVersion]
 			return ok && ver == verPattern, nil
+		},
+	}
+}
+
+func InstanceWithHealth(status HealthStatus) InstanceMatcher {
+	return &instanceMatcher{
+		desc:      fmt.Sprintf("with health status %d", status),
+		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
+			return status == HealthAny || instance.Health == status, nil
+		},
+	}
+}
+
+func InstanceWithMetaKV(key, value string) InstanceMatcher {
+	return &instanceMatcher{
+		desc:      fmt.Sprintf("has meta %s=%s", key, value),
+		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
+			if instance.Meta == nil {
+				return false, nil
+			}
+			v, ok := instance.Meta[key]
+			return ok && (value == "" || value == v), nil
+		},
+	}
+}
+
+func InstanceWithTag(tag string, caseInsensitive bool) InstanceMatcher {
+	return &instanceMatcher{
+		desc:      fmt.Sprintf("with tag %s", tag),
+		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
+			if instance.Tags == nil {
+				return false, nil
+			}
+			for _, t := range instance.Tags {
+				if t == tag || caseInsensitive && strings.EqualFold(t, tag) {
+					return true, nil
+				}
+			}
+			return false, nil
 		},
 	}
 }
