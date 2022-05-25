@@ -20,7 +20,7 @@ require (
 	github.com/go-playground/locales v0.14.0
 	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/go-redis/redis/v8 v8.3.3
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gocql/gocql v0.0.0-20210313142353-65899a66288b
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.2
@@ -33,7 +33,7 @@ require (
 	github.com/mattermost/xml-roundtrip-validator v0.0.0-20201213122252-bcd7e1b9601e
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
-	github.com/onsi/gomega v1.10.3
+	github.com/onsi/gomega v1.18.1
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.3.0
@@ -53,7 +53,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/fx v1.14.2
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	golang.org/x/net v0.0.0-20210326060303-6b1517762897
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	gorm.io/driver/postgres v1.3.1
 	gorm.io/gorm v1.23.3
 	mvdan.cc/sh/v3 v3.2.4
