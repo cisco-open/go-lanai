@@ -13,7 +13,7 @@ var DefaultStaticStatusCodeMapper = StaticStatusCodeMapper{
 	StatusUp:           http.StatusOK,
 	StatusDown:         http.StatusServiceUnavailable,
 	StatusOutOfService: http.StatusServiceUnavailable,
-	StatusUnkown:       http.StatusInternalServerError,
+	StatusUnknown:      http.StatusInternalServerError,
 }
 
 type StaticStatusCodeMapper map[Status]int

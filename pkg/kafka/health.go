@@ -18,7 +18,7 @@ func (i *HealthIndicator) Health(_ context.Context, opts health.Options) health.
 
 	client := i.binder.Client()
 	if client == nil {
-		return health.NewDetailedHealth(health.StatusUnkown, "kafka client not initialized yet", nil)
+		return health.NewDetailedHealth(health.StatusUnknown, "kafka client not initialized yet", nil)
 	}
 
 	var details map[string]interface{}

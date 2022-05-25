@@ -33,7 +33,7 @@ func (o *StatusOrders) UnmarshalText(data []byte) error {
 	split := strings.Split(string(data), ",")
 	for _, s := range split {
 		s = strings.TrimSpace(s)
-		status := StatusUnkown
+		status := StatusUnknown
 		if e := status.UnmarshalText([]byte(s)); e != nil {
 			return e
 		}
@@ -56,7 +56,7 @@ type StatusProperties struct {
 func NewHealthProperties() *HealthProperties {
 	return &HealthProperties{
 		Status: StatusProperties{
-			Orders: StatusOrders{StatusDown, StatusOutOfService, StatusUp, StatusUnkown},
+			Orders: StatusOrders{StatusDown, StatusOutOfService, StatusUp, StatusUnknown},
 			ScMapping: map[Status]int{},
 		},
 		Permissions: []string{},
