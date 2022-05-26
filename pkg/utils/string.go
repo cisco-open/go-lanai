@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 func UnQuote(s string) string {
@@ -40,4 +41,22 @@ func ParseString(s string) interface{} {
 	}
 
 	return s
+}
+
+const dash = rune('-')
+
+// CamelToSnakeCase convert "camelCase" string to "snake-case"
+func CamelToSnakeCase(camelCase string) string {
+	var converted []rune
+	for pos, char := range camelCase {
+		if unicode.IsUpper(char) {
+			if pos>0 && unicode.IsLower([]rune(camelCase)[pos-1]) {
+				converted = append(converted, dash)
+			}
+			converted = append(converted, unicode.ToLower(char))
+		} else {
+			converted = append(converted, unicode.ToLower(char))
+		}
+	}
+	return string(converted)
 }

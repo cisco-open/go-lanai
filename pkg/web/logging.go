@@ -46,11 +46,11 @@ func NewLoggingCustomizer(props ServerProperties) *LoggingCustomizer {
 // Normally, LoggingCustomizer configures more complicated gin logging schema automatically.
 // This function is provided purely for integrating with 3rd-party libraries that configures gin.Engine separately.
 // e.g. KrakenD in API Gateway Service
-func NewSimpleGinLogFormatter(logger log.ContextualLogger, level log.LoggingLevel) gin.LogFormatter {
+func NewSimpleGinLogFormatter(logger log.ContextualLogger, defaultLevel log.LoggingLevel, levels map[RequestMatcher]log.LoggingLevel) gin.LogFormatter {
 	formatter := logFormatter{
 		logger:     logger,
-		defaultLvl: level,
-		levels:     nil,
+		defaultLvl: defaultLevel,
+		levels:     levels,
 	}
 	return formatter.intercept
 }
