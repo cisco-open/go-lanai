@@ -196,6 +196,43 @@ func (g GormCrud) DeleteBy(ctx context.Context, condition Condition, options ...
 	})
 }
 
+func (g GormCrud) DeleteByWithResponse(ctx context.Context, condition Condition, opts ...Option) (*gorm.DB, error) {
+	preOptsFn := modelFunc(g.model)
+	db := g.GormApi.DB(ctx)
+	fn := func(db *gorm.DB) *gorm.DB {
+		return db.Delete(g.model)
+	}
+
+	// make a copy of option array
+	options := make([]Option, len(opts), len(opts)+1)
+	copy(options, opts)
+	if preOptsFn != nil {
+		options = append(options, priorityOption{order: order.Highest, wrapped: preOptsFn})
+	}
+
+	// prepare
+	var e error
+	if db, e = applyOptions(db, options); e != nil {
+		return nil, e
+	}
+
+	if db, e = applyCondition(db, condition); e != nil {
+		return nil, e
+	}
+
+	// execute
+	r := fn(db)
+
+	switch r, e := applyPostExecOptions(r, options); {
+	case e != nil:
+		return r, e
+	case r.Error != nil:
+		return r, r.Error
+	default:
+		return r, nil
+	}
+}
+
 func (g GormCrud) Truncate(ctx context.Context) error {
 	return execute(ctx, g.GormApi.DB(ctx), nil, nil, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
 		if e := db.Statement.Parse(g.model); e != nil {

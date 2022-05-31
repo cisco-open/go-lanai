@@ -3,16 +3,17 @@ package repo
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
+	"gorm.io/gorm"
 	"reflect"
 )
 
 var (
-	ErrorInvalidCrudModel = data.NewDataError(data.ErrorCodeInvalidCrudModel, "invalid model for CrudRepository")
-	ErrorUnsupportedOptions = data.NewDataError(data.ErrorCodeUnsupportedOptions, "unsupported Option")
+	ErrorInvalidCrudModel     = data.NewDataError(data.ErrorCodeInvalidCrudModel, "invalid model for CrudRepository")
+	ErrorUnsupportedOptions   = data.NewDataError(data.ErrorCodeUnsupportedOptions, "unsupported Option")
 	ErrorUnsupportedCondition = data.NewDataError(data.ErrorCodeUnsupportedCondition, "unsupported Condition")
-	ErrorInvalidCrudParam = data.NewDataError(data.ErrorCodeInvalidCrudParam, "invalid CRUD param")
-	ErrorInvalidPagination = data.NewDataError(data.ErrorCodeInvalidPagination, "invalid pagination")
-	ErrorInvalidUtilityUsage = data.NewDataError(data.ErrorCodeInvalidApiUsage, "invalid utility usage")
+	ErrorInvalidCrudParam     = data.NewDataError(data.ErrorCodeInvalidCrudParam, "invalid CRUD param")
+	ErrorInvalidPagination    = data.NewDataError(data.ErrorCodeInvalidPagination, "invalid pagination")
+	ErrorInvalidUtilityUsage  = data.NewDataError(data.ErrorCodeInvalidApiUsage, "invalid utility usage")
 )
 
 // Factory usually used in repository creation.
@@ -21,7 +22,7 @@ type Factory interface {
 	// "model" represent the model this repository works on. It could be Struct or *Struct
 	// It panic if model is not a valid model definition
 	// accepted options depends on implementation. for gorm, *gorm.Session can be supplied
-	NewCRUD(model interface{}, options...interface{}) CrudRepository
+	NewCRUD(model interface{}, options ...interface{}) CrudRepository
 }
 
 // Condition is typically used for generic CRUD repository
@@ -52,10 +53,10 @@ type Condition interface{}
 // 	- ...
 // If given condition is not supported, an error with code data.ErrorCodeUnsupportedOptions will be return
 // TODO Provide more supporting features
-type Option interface {}
+type Option interface{}
 
 // SchemaResolver resolves schema related values
-type SchemaResolver interface{
+type SchemaResolver interface {
 	// ModelType returns reflect type of the model
 	ModelType() reflect.Type
 	// ModelName returns the name of the model
@@ -79,30 +80,30 @@ type CrudRepository interface {
 	// FindById fetch model by primary key and scan it into provided interface.
 	// Accepted "dest" types:
 	//		*ModelStruct
-	FindById(ctx context.Context, dest interface{}, id interface{}, options...Option) error
+	FindById(ctx context.Context, dest interface{}, id interface{}, options ...Option) error
 
 	// FindAll fetch all model scan it into provided slice.
 	// Accepted "dest" types:
 	//		*[]*ModelStruct
 	//		*[]ModelStruct
-	FindAll(ctx context.Context, dest interface{}, options...Option) error
+	FindAll(ctx context.Context, dest interface{}, options ...Option) error
 
 	// FindOneBy fetch single model with given condition and scan result into provided value.
 	// Accepted "dest" types:
 	//		*ModelStruct
-	FindOneBy(ctx context.Context, dest interface{}, condition Condition, options...Option) error
+	FindOneBy(ctx context.Context, dest interface{}, condition Condition, options ...Option) error
 
 	// FindAllBy fetch all model with given condition and scan result into provided value.
 	// Accepted "dest" types:
 	//		*[]*ModelStruct
 	//		*[]ModelStruct
-	FindAllBy(ctx context.Context, dest interface{}, condition Condition, options...Option) error
+	FindAllBy(ctx context.Context, dest interface{}, condition Condition, options ...Option) error
 
 	// CountAll counts all
-	CountAll(ctx context.Context, options...Option) (int, error)
+	CountAll(ctx context.Context, options ...Option) (int, error)
 
 	// CountBy counts based on conditions.
-	CountBy(ctx context.Context, condition Condition, options...Option) (int, error)
+	CountBy(ctx context.Context, condition Condition, options ...Option) (int, error)
 
 	// Save create or update model or model array.
 	// Accepted "v" types:
@@ -114,7 +115,7 @@ type CrudRepository interface {
 	// Note:
 	//		1. map[string]interface{} might not be supported by underlying implementation
 	//		2. ModelStruct is not recommended because auto-generated field default will be lost
-	Save(ctx context.Context, v interface{}, options...Option) error
+	Save(ctx context.Context, v interface{}, options ...Option) error
 
 	// Create create model or model array. returns error if model already exists
 	// Accepted "v" types:
@@ -126,7 +127,7 @@ type CrudRepository interface {
 	// Note:
 	//		1. map[string]interface{} might not be supported by underlying implementation
 	//		2. ModelStruct is not recommended because auto-generated field default will be lost
-	Create(ctx context.Context, v interface{}, options...Option) error
+	Create(ctx context.Context, v interface{}, options ...Option) error
 
 	// Update update model, only non-zero fields of "v" are updated.
 	// "model" is the model to be updated, loaded from DB
@@ -142,7 +143,7 @@ type CrudRepository interface {
 	// 		 https://gorm.io/docs/update.html#Updates-multiple-columns
 	// The workaround is to use Select as described here:
 	//		 https://gorm.io/docs/update.html#Update-Selected-Fields
-	Update(ctx context.Context, model interface{}, v interface{}, options...Option) error
+	Update(ctx context.Context, model interface{}, v interface{}, options ...Option) error
 
 	// Delete delete given model or model array
 	// Accepted "v" types:
@@ -151,11 +152,15 @@ type CrudRepository interface {
 	//		[]ModelStruct
 	//		ModelStruct
 	// returns error if such deletion violate any existing foreign key constraints
-	Delete(ctx context.Context, v interface{}, options...Option) error
+	Delete(ctx context.Context, v interface{}, options ...Option) error
 
 	// DeleteBy delete models matching given condition.
 	// returns error if such deletion violate any existing foreign key constraints
-	DeleteBy(ctx context.Context, condition Condition, options...Option) error
+	DeleteBy(ctx context.Context, condition Condition, options ...Option) error
+
+	// DeleteByWithResponse delete models matching given condition.
+	// returns (1) DB to see the response and (2) error if such deletion violate any existing foreign key constraints
+	DeleteByWithResponse(ctx context.Context, condition Condition, options ...Option) (*gorm.DB, error)
 
 	// Truncate attempt to truncate the table associated the repository
 	// returns error if such truncattion violate any existing foreign key constraints
@@ -164,7 +169,7 @@ type CrudRepository interface {
 }
 
 // Utility is a collection of repository related patterns that are useful for common service layer implementation
-type Utility interface{
+type Utility interface {
 
 	// Model returns a model-specific implementation of Utility.
 	// It is useful when model type cannot be deduced from provided parameters
@@ -198,5 +203,5 @@ type Utility interface{
 	// 		string: single field/column
 	// 		[]string: index key
 	// Note: primary key is not included by default
-	CheckUniqueness(ctx context.Context, v interface{}, keys...interface{}) (map[string]interface{}, error)
+	CheckUniqueness(ctx context.Context, v interface{}, keys ...interface{}) (map[string]interface{}, error)
 }
