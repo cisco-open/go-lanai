@@ -1,4 +1,4 @@
-package discoverymock
+package sdtest
 
 import (
 	"context"
