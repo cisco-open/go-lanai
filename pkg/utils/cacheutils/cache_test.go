@@ -67,12 +67,9 @@ func (c *cacheCounter) updateCount() int {
 }
 
 type cKey struct {
-	value string
+	StringKey
 }
 
-func (k cKey) String() string {
-	return k.value
-}
 
 /*************************
 	Tests
@@ -113,7 +110,7 @@ func SubTestCacheSuccessfulLoad() test.GomegaSubTestFunc {
 		c := NewMemCache()
 		loader, expected := staticLoadFunc(100*time.Millisecond, 60*time.Second)
 
-		k := cKey{value: "u1"}
+		k := cKey{"u1"}
 		counter := &cacheCounter{}
 		validator := fixedValidateFunc(true)
 		auth, _ := testGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), counter.countValidate(validator),
@@ -138,7 +135,7 @@ func SubTestCacheSuccessfulLoad() test.GomegaSubTestFunc {
 
 		// try 0 valued expire time
 		counter.reset()
-		k = cKey{value: "u2"}
+		k = cKey{"u2"}
 		loader, expected = staticNeverExpireLoadFunc(100*time.Millisecond)
 		validator = fixedValidateFunc(true)
 		_, _ = testGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), counter.countValidate(validator),
@@ -162,7 +159,7 @@ func SubTestCacheFailedLoad() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const repeat = 5
 		c := NewMemCache()
-		k := cKey{value: "u1"}
+		k := cKey{"u1"}
 		counter := &cacheCounter{}
 
 		_ = testFailedGetOrLoad(ctx, g, c, &k, nil, nil, "with nil loader")
@@ -198,7 +195,7 @@ func SubTestCacheOnDifferentKeys() test.GomegaSubTestFunc {
 		counters := make([]*cacheCounter, keys)
 		results := make([]interface{}, keys)
 		for i := 0; i < keys; i++ {
-			k := cKey{value: fmt.Sprintf("u%d", i)}
+			k := cKey{StringKey(fmt.Sprintf("u%d", i))}
 			counters[i] = &cacheCounter{}
 			loader, expected := staticLoadFunc(100*time.Millisecond, 60*time.Second)
 			results[i], _ = testRepeatedGetOrLoad(ctx, g, c, &k, counters[i].countLoad(loader), counters[i].countValidate(validator),
@@ -224,7 +221,7 @@ func SubTestCacheSuccessfulUpdate() test.GomegaSubTestFunc {
 		updater, expected := staticUpdateFunc(100*time.Millisecond, 60*time.Second)
 		counter := &cacheCounter{}
 
-		k := cKey{value: "u1"}
+		k := cKey{"u1"}
 		// update should do nothing before load
 		testNonExistsUpdate(ctx, g, c, &k, counter.countUpdate(updater), "before loaded")
 		g.Expect(counter.updateCount()).To(Equal(0), "updater should not be invoked")
@@ -248,7 +245,7 @@ func SubTestCacheFailedUpdate() test.GomegaSubTestFunc {
 		c := NewMemCache()
 		updater, _ := staticErrUpdateFunc(100*time.Millisecond, 60*time.Second)
 		counter := &cacheCounter{}
-		k := cKey{value: "u1"}
+		k := cKey{"u1"}
 
 		// nil check
 		_ = testFailedUpdate(ctx, g, c, &k, nil, nil, nil, "with nil updater")
@@ -282,16 +279,16 @@ func SubTestCacheDelete() test.GomegaSubTestFunc {
 		validator := fixedValidateFunc(true)
 		var toDelete cKey
 		for i := 0; i < longExpKeys; i++ {
-			k := cKey{value: fmt.Sprintf("lu%d", i)}
+			k := cKey{StringKey(fmt.Sprintf("lu%d", i))}
 			loader, expected := staticLoadFunc(0, 60*time.Second)
 			_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, loader, validator,
-				repeat, true, BeIdenticalTo(expected), "for "+k.value)
+				repeat, true, BeIdenticalTo(expected), "for "+k.String())
 			toDelete = k
 		}
 		c.Delete(&toDelete)
 		g.Expect(len(c.store)).To(Equal(2), "one entries should be removed")
 
-		c.Delete(&cKey{value: "non-exists"})
+		c.Delete(&cKey{"non-exists"})
 		g.Expect(len(c.store)).To(Equal(2), "no entries should be removed")
 	}
 }
@@ -305,10 +302,10 @@ func SubTestCacheReset() test.GomegaSubTestFunc {
 		})
 		validator := fixedValidateFunc(true)
 		for i := 0; i < longExpKeys; i++ {
-			k := cKey{value: fmt.Sprintf("lu%d", i)}
+			k := cKey{StringKey(fmt.Sprintf("lu%d", i))}
 			loader, expected := staticLoadFunc(0, 60*time.Second)
 			_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, loader, validator,
-				repeat, true, BeIdenticalTo(expected), "for "+k.value)
+				repeat, true, BeIdenticalTo(expected), "for "+k.String())
 		}
 		c.Reset()
 		g.Expect(len(c.store)).To(Equal(0), "all entries should be removed")
@@ -331,17 +328,17 @@ func SubTestCacheEvict(manual bool) test.GomegaSubTestFunc {
 		validator := fixedValidateFunc(true)
 
 		for i := 0; i < shortExpKeys; i++ {
-			k := cKey{value: fmt.Sprintf("su%d", i)}
+			k := cKey{StringKey(fmt.Sprintf("su%d", i))}
 			loader, expected := staticLoadFunc(100*time.Millisecond, exp)
 			_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, loader, validator,
-				repeat, true, BeIdenticalTo(expected), "for "+k.value)
+				repeat, true, BeIdenticalTo(expected), "for "+k.String())
 		}
 
 		for i := 0; i < longExpKeys; i++ {
-			k := cKey{value: fmt.Sprintf("lu%d", i)}
+			k := cKey{StringKey(fmt.Sprintf("lu%d", i))}
 			loader, expected := staticLoadFunc(100*time.Millisecond, 60*time.Second)
 			_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, loader, validator,
-				repeat, true, BeIdenticalTo(expected), "for "+k.value)
+				repeat, true, BeIdenticalTo(expected), "for "+k.String())
 		}
 
 		time.Sleep(exp)
@@ -382,7 +379,7 @@ func SubTestCacheConcurrentSoapTest() test.GomegaSubTestFunc {
 		params[3], counters[3] = newSuccessCacheParams(c, "short-validity-user", shortVLoader, stableValidator, nil, expectedShortV, nil)
 
 		// first, trigger GetOrLoad with special key and short exp period (for evict)
-		_, _ = testGetOrLoad(ctx, g, c, &cKey{value: "to-evicted-user"}, shortVLoader, stableValidator,
+		_, _ = testGetOrLoad(ctx, g, c, &cKey{"to-evicted-user"}, shortVLoader, stableValidator,
 			true, BeIdenticalTo(expectedShortV), " for to-evicted-user")
 
 		// Run concurrent test
@@ -570,34 +567,34 @@ type testCacheParams struct {
 	msgArg    string
 }
 
-func newSuccessCacheParams(c *cache, username string, loader LoadFunc, validator ValidateFunc, updater UpdateFunc,
+func newSuccessCacheParams(c *cache, key string, loader LoadFunc, validator ValidateFunc, updater UpdateFunc,
 	expected interface{}, vMatcher types.GomegaMatcher) (*testCacheParams, *cacheCounter) {
 
 	counter := &cacheCounter{}
 	return &testCacheParams{
 		c:         c,
-		k:         &cKey{value: username},
+		k:         &cKey{StringKey(key)},
 		loader:    counter.countLoad(loader),
 		validator: counter.countValidate(validator),
 		updater:   counter.countUpdate(updater),
 		expectErr: false,
 		expected:  expected,
 		vMatcher:  vMatcher,
-		msgArg:    "for " + username,
+		msgArg:    "for " + key,
 	}, counter
 }
 
-func newFailedCacheParams(c *cache, username string, loader LoadFunc, validator ValidateFunc, updater UpdateFunc) (*testCacheParams, *cacheCounter) {
+func newFailedCacheParams(c *cache, key string, loader LoadFunc, validator ValidateFunc, updater UpdateFunc) (*testCacheParams, *cacheCounter) {
 
 	counter := &cacheCounter{}
 	return &testCacheParams{
 		c:         c,
-		k:         &cKey{value: username},
+		k:         &cKey{StringKey(key)},
 		loader:    counter.countLoad(loader),
 		validator: counter.countValidate(validator),
 		updater:   counter.countUpdate(updater),
 		expectErr: true,
-		msgArg:    "for " + username,
+		msgArg:    "for " + key,
 	}, counter
 }
 

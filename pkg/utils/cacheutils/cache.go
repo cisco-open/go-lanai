@@ -9,7 +9,20 @@ import (
 	"time"
 )
 
-type Key interface{}
+type Key interface{
+	// Hash is used for internal mapping. It has to be unique and non-pointer
+	Hash() interface{}
+}
+
+type StringKey string
+
+func (s StringKey) Hash() interface{} {
+	return s
+}
+
+func (s StringKey) String() string {
+	return string(s)
+}
 
 type MemCache interface {
 	// GetOrLoad try to get cached entry, using provided validator to check the entry, if not valid, try to load it.
@@ -93,7 +106,7 @@ type replaceEntryFunc func(ctx context.Context, k Key, old *cEntry) *cEntry
 type cache struct {
 	CacheOption
 	mtx    sync.RWMutex
-	store  map[Key]*cEntry
+	store  map[interface{}]*cEntry
 	reaper *time.Ticker
 }
 
@@ -108,7 +121,7 @@ func NewMemCache(opts ...CacheOptions) *cache {
 
 	c := &cache{
 		CacheOption: opt,
-		store:       map[Key]*cEntry{},
+		store:       map[interface{}]*cEntry{},
 	}
 	c.startReaper()
 	return c
@@ -178,7 +191,7 @@ func (c *cache) Delete(k Key) {
 func (c *cache) Reset() {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
-	c.store = map[Key]*cEntry{}
+	c.store = map[interface{}]*cEntry{}
 }
 
 func (c *cache) Evict() {
@@ -288,7 +301,7 @@ func (c *cache) get(pKey Key) (*cEntry, bool) {
 
 // getValue not goroutine-safe
 func (c *cache) getValue(pKey Key) (*cEntry, bool) {
-	k := reflect.Indirect(reflect.ValueOf(pKey)).Interface()
+	k := reflect.Indirect(reflect.ValueOf(pKey.Hash())).Interface()
 	if v, ok := c.store[k]; ok && v != nil {
 		return v, true
 	}
@@ -297,7 +310,7 @@ func (c *cache) getValue(pKey Key) (*cEntry, bool) {
 
 // setValue not goroutine-safe
 func (c *cache) setValue(pKey Key, v *cEntry) {
-	k := reflect.Indirect(reflect.ValueOf(pKey)).Interface()
+	k := reflect.Indirect(reflect.ValueOf(pKey.Hash())).Interface()
 	if v == nil {
 		delete(c.store, k)
 	} else {
@@ -311,7 +324,7 @@ func (c *cache) setValue(pKey Key, v *cEntry) {
 func (c *cache) deleteInvalidatedValues() {
 	for k, v := range c.store {
 		if v.isInvalidated() {
-			c.setValue(&k, nil)
+			delete(c.store, k)
 		}
 	}
 }
