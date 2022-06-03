@@ -135,6 +135,26 @@ func SubTestCacheSuccessfulLoad() test.GomegaSubTestFunc {
 
 		g.Expect(counter.loadCount()).To(Equal(1), "repeated GetOrLoad should only invoke loader once")
 		g.Expect(counter.validateCount()).To(Equal(repeat), "validator should be invoked once per repeated GetOrLoad invocation after invalidation")
+
+		// try 0 valued expire time
+		counter.reset()
+		k = cKey{value: "u2"}
+		loader, expected = staticNeverExpireLoadFunc(100*time.Millisecond)
+		validator = fixedValidateFunc(true)
+		_, _ = testGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), counter.countValidate(validator),
+			true, BeIdenticalTo(expected), "at first time")
+		_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), counter.countValidate(validator),
+			repeat, true, And(BeIdenticalTo(expected), BeIdenticalTo(expected)), "after first load")
+
+		g.Expect(counter.loadCount()).To(Equal(1), "repeated GetOrLoad should only invoke loader once")
+		g.Expect(counter.validateCount()).To(Equal(repeat), "validator should be invoked once per repeated GetOrLoad invocation after invalidation")
+
+		// try nil validator
+		counter.reset()
+		_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), nil,
+			repeat, true, And(BeIdenticalTo(expected), BeIdenticalTo(expected)), "after first load without validator")
+
+		g.Expect(counter.loadCount()).To(Equal(0), "repeated GetOrLoad should never invoked")
 	}
 }
 
@@ -231,7 +251,7 @@ func SubTestCacheFailedUpdate() test.GomegaSubTestFunc {
 		k := cKey{value: "u1"}
 
 		// nil check
-		_ = testFailedUpdate(ctx, g, c, &k, nil, nil, nil, "with nil updaterr")
+		_ = testFailedUpdate(ctx, g, c, &k, nil, nil, nil, "with nil updater")
 
 		// update should do nothing before load
 		testNonExistsUpdate(ctx, g, c, &k, counter.countUpdate(updater), "before loaded")
@@ -657,7 +677,6 @@ func doTestRepeatedConcurrentOperations(ctx context.Context, g *gomega.WithT, p 
 
 type CachedTestValue struct {
 	Value   string
-	ExpTime time.Time
 }
 
 func staticLoadFunc(loadTime time.Duration, validity time.Duration) (LoadFunc, interface{}) {
@@ -667,6 +686,18 @@ func staticLoadFunc(loadTime time.Duration, validity time.Duration) (LoadFunc, i
 	return func(ctx context.Context, k Key) (v interface{}, exp time.Time, err error) {
 		time.Sleep(loadTime)
 		exp =  time.Now().Add(validity)
+		v = toLoad
+		return
+	}, toLoad
+}
+
+func staticNeverExpireLoadFunc(loadTime time.Duration) (LoadFunc, interface{}) {
+	toLoad := CachedTestValue{
+		Value: "Test-Value-" + utils.RandomString(10),
+	}
+	return func(ctx context.Context, k Key) (v interface{}, exp time.Time, err error) {
+		time.Sleep(loadTime)
+		exp =  time.Time{}
 		v = toLoad
 		return
 	}, toLoad

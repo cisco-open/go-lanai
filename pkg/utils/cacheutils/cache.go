@@ -136,7 +136,7 @@ func (c *cache) GetOrLoad(ctx context.Context, k Key, loader LoadFunc, validator
 		// from now on, entry content become immutable
 		// check entry validity
 		// note that we skip validation if the entry is freshly created
-		if isNew || !entry.isExpired() && (entry.lastErr != nil || validator != nil && validator(ctx, entry.value)) {
+		if isNew || !entry.isExpired() && (entry.lastErr != nil || validator == nil || validator(ctx, entry.value)) {
 			// valid entry
 			if entry.lastErr != nil {
 				return nil, entry.lastErr
@@ -154,11 +154,10 @@ func (c *cache) Update(ctx context.Context, k Key, updater UpdateFunc) (bool, er
 		return false, fmt.Errorf("unable to update: UpdateFunc is nil")
 	}
 
-	existing, ok := c.get(k)
+	_, ok := c.get(k)
 	if !ok {
 		return false, nil
 	}
-	existing.wg.Wait()
 
 	newEntry := c.replaceIfPresent(ctx, k, c.updateEntryFunc(updater))
 	if newEntry == nil {
