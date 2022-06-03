@@ -78,6 +78,19 @@ func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authenticatio
 		}
 	}
 
+	var nameId *saml.NameID
+	if acct != nil {
+		nameId = &saml.NameID{
+			Format:          "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+			Value:           acct.(security.AccountMetadata).Email(),
+		}
+	} else {
+		nameId = &saml.NameID{
+			Format:          "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+			Value:           username,
+		}
+	}
+
 	req.Assertion = &saml.Assertion{
 		ID:           fmt.Sprintf("id-%x", cryptoutils.RandomBytes(20)),
 		IssueInstant: saml.TimeNow(),
@@ -87,10 +100,7 @@ func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authenticatio
 			Value:  req.IDP.Metadata().EntityID,
 		},
 		Subject: &saml.Subject{
-			NameID: &saml.NameID{
-				Format:          "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
-				Value:           acct.(security.AccountMetadata).Email(),
-			},
+			NameID: nameId,
 			SubjectConfirmations: []saml.SubjectConfirmation{
 				{
 					Method: "urn:oasis:names:tc:SAML:2.0:cm:bearer",

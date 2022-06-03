@@ -7,14 +7,14 @@ import (
 )
 
 type MockAccountStore struct {
-	accountLookupByUsername map[string]*mockedAccount
-	accountLookupById       map[interface{}]*mockedAccount
+	accountLookupByUsername map[string]*MockedAccount
+	accountLookupById       map[interface{}]*MockedAccount
 }
 
 func NewMockedAccountStore(props... *MockedAccountProperties) *MockAccountStore {
 	store := &MockAccountStore{
-		accountLookupById: make(map[interface{}]*mockedAccount),
-		accountLookupByUsername: make(map[string]*mockedAccount),
+		accountLookupById: make(map[interface{}]*MockedAccount),
+		accountLookupByUsername: make(map[string]*MockedAccount),
 	}
 	for _, v := range props {
 		acct := newMockedAccount(v)

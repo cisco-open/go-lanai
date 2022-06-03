@@ -14,7 +14,7 @@ const (
 	Account & Tenant
  *************************/
 
-type mockedAccount struct {
+type MockedAccount struct {
 	UserId          string
 	username        string
 	Password        string
@@ -22,58 +22,87 @@ type mockedAccount struct {
 	DefaultTenant   string
 	AssignedTenants utils.StringSet
 	permissions     utils.StringSet
+	UserEmail 		string
 }
 
-func (m *mockedAccount) DefaultDesignatedTenantId() string {
+func (m *MockedAccount) RoleNames() []string {
+	panic("implement me")
+}
+
+func (m *MockedAccount) FirstName() string {
+	panic("implement me")
+}
+
+func (m *MockedAccount) LastName() string {
+	panic("implement me")
+}
+
+func (m *MockedAccount) Email() string {
+	return m.UserEmail
+}
+
+func (m *MockedAccount) LocaleCode() string {
+	panic("implement me")
+}
+
+func (m *MockedAccount) CurrencyCode() string {
+	panic("implement me")
+}
+
+func (m *MockedAccount) Value(key string) interface{} {
+	panic("implement me")
+}
+
+func (m *MockedAccount) DefaultDesignatedTenantId() string {
 	return m.DefaultTenant
 }
 
-func (m *mockedAccount) DesignatedTenantIds() []string {
+func (m *MockedAccount) DesignatedTenantIds() []string {
 	return m.AssignedTenants.Values()
 }
 
-func (m *mockedAccount) TenantId() string {
+func (m *MockedAccount) TenantId() string {
 	return m.tenantId
 }
 
-func (m *mockedAccount) ID() interface{} {
+func (m *MockedAccount) ID() interface{} {
 	return m.UserId
 }
 
-func (m *mockedAccount) Type() security.AccountType {
+func (m *MockedAccount) Type() security.AccountType {
 	panic("implement me")
 }
 
-func (m *mockedAccount) Username() string {
+func (m *MockedAccount) Username() string {
 	return m.username
 }
 
-func (m *mockedAccount) Credentials() interface{} {
+func (m *MockedAccount) Credentials() interface{} {
 	panic("implement me")
 }
 
-func (m *mockedAccount) Permissions() []string {
+func (m *MockedAccount) Permissions() []string {
 	return m.permissions.Values()
 }
 
-func (m mockedAccount) Disabled() bool {
+func (m MockedAccount) Disabled() bool {
 	panic("implement me")
 }
 
-func (m mockedAccount) Locked() bool {
+func (m MockedAccount) Locked() bool {
 	panic("implement me")
 }
 
-func (m mockedAccount) UseMFA() bool {
+func (m MockedAccount) UseMFA() bool {
 	panic("implement me")
 }
 
-func (m mockedAccount) CacheableCopy() security.Account {
+func (m MockedAccount) CacheableCopy() security.Account {
 	panic("implement me")
 }
 
-func newMockedAccount(props *MockedAccountProperties) *mockedAccount {
-	ret := &mockedAccount{
+func newMockedAccount(props *MockedAccountProperties) *MockedAccount {
+	ret := &MockedAccount{
 		UserId:          props.UserId,
 		username:        props.Username,
 		Password:        props.Password,
@@ -110,14 +139,14 @@ func newMockedTenant(props *mockedTenantProperties) *mockedTenant {
 }
 
 type mockedAccounts struct {
-	idLookup map[string]*mockedAccount
-	lookup   map[string]*mockedAccount
+	idLookup map[string]*MockedAccount
+	lookup   map[string]*MockedAccount
 }
 
 func newMockedAccounts(props *mockingProperties) *mockedAccounts {
 	accts := mockedAccounts{
-		idLookup: map[string]*mockedAccount{},
-		lookup:   map[string]*mockedAccount{},
+		idLookup: map[string]*MockedAccount{},
+		lookup:   map[string]*MockedAccount{},
 	}
 	for _, v := range props.Accounts {
 		acct := newMockedAccount(v)
@@ -131,7 +160,7 @@ func newMockedAccounts(props *mockingProperties) *mockedAccounts {
 	return &accts
 }
 
-func (m mockedAccounts) find(username, userId string) *mockedAccount {
+func (m mockedAccounts) find(username, userId string) *MockedAccount {
 	if v, ok := m.lookup[username]; ok && (userId == "" || v.UserId == userId) {
 		return v
 	}

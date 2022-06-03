@@ -62,6 +62,47 @@ func TestSPInitiatedSso(t *testing.T) {
 	g.Expect(status).ToNot(gomega.BeNil())
 }
 
+func TestSPInitiatedSsoUnencrypted(t *testing.T) {
+	sp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
+	metadata, _ := xml.MarshalIndent(sp.Metadata(), "", "  ")
+
+	testClientStore := samlssotest.NewMockedSamlClientStore(
+		DefaultSamlClient{
+			SamlSpDetails: SamlSpDetails{
+				EntityId:                             sp.EntityID,
+				MetadataSource:                       string(metadata),
+				SkipAssertionEncryption:              true,
+				SkipAuthRequestSignatureVerification: false,
+			},
+		})
+	testAccountStore := sectest.NewMockedAccountStore()
+
+	r := setupServerForTest(testClientStore, testAccountStore)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/europa/v2/authorize", bytes.NewBufferString(makeAuthnRequest(sp)))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	q := req.URL.Query()
+	q.Add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
+	req.URL.RawQuery = q.Encode()
+	r.ServeHTTP(w, req)
+
+	g := gomega.NewWithT(t)
+	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
+
+	samlResponseXml, err := samlssotest.ParseSamlResponse(w.Body)
+	if err != nil {
+		t.Errorf("error parsing saml response xml")
+		return
+	}
+
+	nameId := samlResponseXml.FindElement("//saml:NameID[@Format='urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress']")
+	g.Expect(nameId.Text()).To(gomega.Equal("test-user@cisco.com"))
+
+	status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']")
+	g.Expect(status).ToNot(gomega.BeNil())
+}
+
 //In this test we use a different cert key pair so that the SP's actual cert and key do not match the ones that are
 // in its metadata. This way the signature of the auth request won't match the expected signature based on the metadata
 func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
@@ -213,7 +254,10 @@ func setupServerForTest(testClientStore saml_auth_ctx.SamlClientStore, testAccou
 	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc())
 	r.Use(samlErrorHandlerFunc())
 	r.Use(sectest.NewMockAuthenticationMiddleware(sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
-		opt.Principal = "test_user"
+		opt.Principal = &sectest.MockedAccount{
+			UserId: "test-user",
+			UserEmail: "test-user@cisco.com",
+		}
 		opt.State = security.StateAuthenticated
 	})).AuthenticationHandlerFunc())
 	r.Use(mw.RefreshMetadataHandler(f.ssoCondition))
@@ -297,3 +341,4 @@ func samlErrorHandlerFunc() gin.HandlerFunc {
 		}
 	}
 }
+

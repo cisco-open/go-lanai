@@ -26,14 +26,14 @@ func (m *MockAuthenticationMiddleware) AuthenticationHandlerFunc() gin.HandlerFu
 type MockUserAuthOptions func(opt *MockUserAuthOption)
 
 type MockUserAuthOption struct {
-	Principal   string
+	Principal   interface{}
 	Permissions map[string]interface{}
 	State       security.AuthenticationState
 	Details     interface{}
 }
 
 type mockUserAuthentication struct {
-	Subject       string
+	Subject       interface{}
 	PermissionMap map[string]interface{}
 	StateValue    security.AuthenticationState
 	details       interface{}

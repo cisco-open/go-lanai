@@ -125,7 +125,7 @@ func (c *mockedAuthClient) option(opts []seclient.AuthOptions) (*seclient.AuthOp
 	return &opt, nil
 }
 
-func (c *mockedAuthClient) resolveTenant(opt *seclient.AuthOption, acct *mockedAccount) (ret *mockedTenant, err error) {
+func (c *mockedAuthClient) resolveTenant(opt *seclient.AuthOption, acct *MockedAccount) (ret *mockedTenant, err error) {
 	if opt.TenantId != "" || opt.TenantExternalId != "" {
 		ret = c.tenants.find(opt.TenantId, opt.TenantExternalId)
 	} else if acct.DefaultTenant != "" {
