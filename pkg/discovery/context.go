@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"fmt"
 	"strings"
@@ -9,10 +10,10 @@ import (
 )
 
 const (
-	InstanceMetaKeyVersion = "version"
+	InstanceMetaKeyVersion     = "version"
 	InstanceMetaKeyContextPath = "context"
-	InstanceMetaKeySMCR = "SMCR"
-	InstanceMetaKeySecure = "secure"
+	InstanceMetaKeySMCR        = "SMCR"
+	InstanceMetaKeySecure      = "secure"
 	//InstanceMetaKey = ""
 )
 
@@ -27,6 +28,13 @@ const (
 var (
 	ErrInstancerStopped = fmt.Errorf("instancer is already stopped")
 )
+
+type ClientOptions func(opt *ClientConfig)
+
+type ClientConfig struct {
+	Logger  log.Logger
+	Verbose bool
+}
 
 type Client interface {
 	Context() context.Context
@@ -63,7 +71,7 @@ func (s *Service) InstanceCount(selector InstanceMatcher) (ret int) {
 				continue
 			}
 		}
-		ret ++
+		ret++
 	}
 	return
 }
@@ -113,7 +121,7 @@ type ServiceCache interface {
 
 var (
 	healthyInstanceMatcher = &instanceMatcher{
-		desc:      "is healthy",
+		desc: "is healthy",
 		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
 			return instance.Health == HealthPassing, nil
 		},
@@ -127,7 +135,7 @@ func InstanceIsHealthy() InstanceMatcher {
 
 func InstanceWithVersion(verPattern string) InstanceMatcher {
 	return &instanceMatcher{
-		desc:      fmt.Sprintf("of version %s", verPattern),
+		desc: fmt.Sprintf("of version %s", verPattern),
 		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
 			if instance.Meta == nil {
 				return false, nil
@@ -140,7 +148,7 @@ func InstanceWithVersion(verPattern string) InstanceMatcher {
 
 func InstanceWithHealth(status HealthStatus) InstanceMatcher {
 	return &instanceMatcher{
-		desc:      fmt.Sprintf("with health status %d", status),
+		desc: fmt.Sprintf("with health status %d", status),
 		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
 			return status == HealthAny || instance.Health == status, nil
 		},
@@ -149,7 +157,7 @@ func InstanceWithHealth(status HealthStatus) InstanceMatcher {
 
 func InstanceWithMetaKV(key, value string) InstanceMatcher {
 	return &instanceMatcher{
-		desc:      fmt.Sprintf("has meta %s=%s", key, value),
+		desc: fmt.Sprintf("has meta %s=%s", key, value),
 		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
 			if instance.Meta == nil {
 				return false, nil
@@ -162,7 +170,7 @@ func InstanceWithMetaKV(key, value string) InstanceMatcher {
 
 func InstanceWithTag(tag string, caseInsensitive bool) InstanceMatcher {
 	return &instanceMatcher{
-		desc:      fmt.Sprintf("with tag %s", tag),
+		desc: fmt.Sprintf("with tag %s", tag),
 		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
 			if instance.Tags == nil {
 				return false, nil
@@ -184,7 +192,7 @@ func InstanceWithTagKV(key, value string, caseInsensitive bool) InstanceMatcher 
 	}
 
 	return &instanceMatcher{
-		desc:      fmt.Sprintf("with tag %s=%s", key, value),
+		desc: fmt.Sprintf("with tag %s=%s", key, value),
 		matchFunc: func(_ context.Context, instance *Instance) (bool, error) {
 			if instance.Tags == nil {
 				return false, nil
