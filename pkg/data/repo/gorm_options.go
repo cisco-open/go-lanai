@@ -109,6 +109,13 @@ func AsGormScope(i interface{}) func(*gorm.DB)*gorm.DB {
 	Options & Conditions
  **************************/
 
+// Or is a Condition that directly bridge parameters to (*gorm.DB).Or()
+func Or(query interface{}, args ...interface{}) Condition {
+	return gormOptions(func(db *gorm.DB) *gorm.DB {
+		return db.Or(query, args...)
+	})
+}
+
 // Where is a Condition that directly bridge parameters to (*gorm.DB).Where()
 func Where(query interface{}, args ...interface{}) Condition {
 	return gormOptions(func(db *gorm.DB) *gorm.DB {
