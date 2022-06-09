@@ -19,6 +19,6 @@ func (b PingIndicator) Health(ctx context.Context, options Options) Health {
 	if g := web.GinContext(ctx); g != nil {
 		return NewDetailedHealth(StatusUp, "", nil)
 	}
-	return NewDetailedHealth(StatusUnkown, "", nil)
+	return NewDetailedHealth(StatusUnknown, "", nil)
 }
 

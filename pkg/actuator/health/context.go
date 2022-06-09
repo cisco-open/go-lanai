@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	StatusUnkown Status = iota
+	StatusUnknown Status = iota
 	StatusUp
 	StatusOutOfService
 	StatusDown
@@ -44,7 +44,7 @@ func (s *Status) UnmarshalText(data []byte) error {
 	case "OUT_OF_SERVICE":
 		*s = StatusOutOfService
 	default:
-		*s = StatusUnkown
+		*s = StatusUnknown
 	}
 	return nil
 }

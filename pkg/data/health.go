@@ -34,7 +34,7 @@ func (i *DbHealthIndicator) Name() string {
 
 func (i *DbHealthIndicator) Health(c context.Context, options health.Options) health.Health {
 	if sqldb, e := i.db.DB(); e != nil {
-		return health.NewDetailedHealth(health.StatusUnkown, "database ping is not available", nil)
+		return health.NewDetailedHealth(health.StatusUnknown, "database ping is not available", nil)
 	} else {
 		if e := sqldb.Ping(); e != nil {
 			return health.NewDetailedHealth(health.StatusDown, "database ping failed", nil)

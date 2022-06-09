@@ -25,7 +25,7 @@ func NewSystemHealthIndicator(di provideDI) *SystemHealthIndicator {
 		CompositeIndicator: CompositeIndicator{
 			name:       "system",
 			delegates:  []Indicator{
-				&PingIndicator{},
+				PingIndicator{},
 			},
 			aggregator: NewSimpleStatusAggregator(func(opt *AggregateOption) {
 				if len(di.Properties.Status.Orders) != 0 {

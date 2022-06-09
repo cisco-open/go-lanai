@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"embed"
+	"fmt"
 	"go.uber.org/fx"
 )
 
@@ -37,12 +38,19 @@ func Use() {
 
 type syncDI struct {
 	fx.In
-	AppCtx *bootstrap.ApplicationContext
-	Conn   *consul.Connection
+	AppCtx          *bootstrap.ApplicationContext
+	Conn            *consul.Connection `optional:"true"`
+	TestSyncManager []SyncManager      `group:"test"`
 }
 
-func provideSyncManager(di syncDI) SyncManager {
-	return newConsulLockManager(di.AppCtx, di.Conn)
+func provideSyncManager(di syncDI) (SyncManager, error) {
+	if len(di.TestSyncManager) != 0 {
+		return di.TestSyncManager[0], nil
+	}
+	if di.Conn == nil {
+		return nil, fmt.Errorf("*consul.Connection is required for 'dsync' package")
+	}
+	return newConsulLockManager(di.AppCtx, di.Conn), nil
 }
 
 /**************************

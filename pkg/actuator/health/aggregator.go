@@ -51,7 +51,7 @@ func (a SimpleStatusAggregator) Aggregate(_ context.Context, statuses ...Status)
 	}
 
 	if unknown {
-		return StatusUnkown
+		return StatusUnknown
 	}
 	return status
 }

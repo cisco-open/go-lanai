@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"io"
@@ -137,7 +138,7 @@ func (f *kitLoggerFactory) resolveEffectiveLevel(key string) LoggingLevel {
 }
 
 func loggerKey(name string) string {
-	return strings.ToLower(name)
+	return utils.CamelToSnakeCase(name)
 }
 
 func buildContextValuerFromConfig(properties *Properties) ContextValuers {

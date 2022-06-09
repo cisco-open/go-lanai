@@ -3,7 +3,7 @@ package matcher
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	web "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"errors"
 	"fmt"
 	"net/http"

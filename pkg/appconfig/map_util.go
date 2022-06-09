@@ -1,13 +1,12 @@
 package appconfig
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"reflect"
 	"strconv"
 	"strings"
-	"unicode"
-
-	"github.com/imdario/mergo"
 )
 
 // Options the flatten options.
@@ -208,19 +207,7 @@ func NormalizeKey(key string, configures...func(*Options)) string {
 	result := ""
 
 	for i, key := range keys {
-		var normalized []rune
-		for pos, char := range key {
-			if unicode.IsUpper(char) {
-				if pos>0 && unicode.IsLower([]rune(key)[pos-1]) {
-					normalized = append(normalized, dash)
-				}
-				normalized = append(normalized, unicode.ToLower(char))
-			} else {
-				normalized = append(normalized, unicode.ToLower(char))
-			}
-		}
-
-		result = result + string(normalized)
+		result = result + utils.CamelToSnakeCase(key)
 		if i < len(keys) - 1 {
 			result = result + "."
 		}

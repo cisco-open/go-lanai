@@ -1,6 +1,7 @@
 levels:
   default: debug
   Bootstrap: debug
+  Config: debug
   Web: info
   Security: debug
   SEC: debug
