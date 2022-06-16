@@ -13,8 +13,7 @@ var logger = log.New("Kafka")
 var Module = &bootstrap.Module{
 	Precedence: bootstrap.KafkaPrecedence,
 	Options: []fx.Option{
-		fx.Provide(BindKafkaProperties),
-		fx.Provide(NewKafkaBinder),
+		fx.Provide(BindKafkaProperties, ProvideKafkaBinder),
 		fx.Invoke(initialize),
 	},
 }
@@ -27,6 +26,29 @@ const (
 func Use() {
 	bootstrap.Register(tlsconfig.Module)
 	bootstrap.Register(Module)
+}
+
+type binderDI struct {
+	fx.In
+	AppContext           *bootstrap.ApplicationContext
+	Properties           KafkaProperties
+	ProducerInterceptors []ProducerMessageInterceptor  `group:"kafka"`
+	ConsumerInterceptors []ConsumerDispatchInterceptor `group:"kafka"`
+	HandlerInterceptors  []ConsumerHandlerInterceptor  `group:"kafka"`
+	TlsProviderFactory   *tlsconfig.ProviderFactory
+}
+
+func ProvideKafkaBinder(di binderDI) Binder {
+	return NewBinder(di.AppContext, func(opt *BinderOption) {
+		*opt = BinderOption{
+			ApplicationConfig:    di.AppContext.Config(),
+			Properties:           di.Properties,
+			ProducerInterceptors: append(opt.ProducerInterceptors, di.ProducerInterceptors...),
+			ConsumerInterceptors: append(opt.ConsumerInterceptors, di.ConsumerInterceptors...),
+			HandlerInterceptors:  append(opt.HandlerInterceptors, di.HandlerInterceptors...),
+			TlsProviderFactory:   di.TlsProviderFactory,
+		}
+	})
 }
 
 type initDI struct {

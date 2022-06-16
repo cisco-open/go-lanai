@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Shopify/sarama"
-	"go.uber.org/fx"
 	"math"
 	"strings"
 	"sync"
@@ -42,36 +41,43 @@ type SaramaKafkaBinder struct {
 	producers         map[string]BindingLifecycle
 	subscribers       map[string]BindingLifecycle
 	consumerGroups    map[string]BindingLifecycle
+	monitorCtx        context.Context
 	monitorCancelFunc context.CancelFunc
 }
 
-type factoryDI struct {
-	fx.In
-	AppContext           *bootstrap.ApplicationContext
+type BinderOptions func(opt *BinderOption)
+
+type BinderOption struct {
+	ApplicationConfig    bootstrap.ApplicationConfig
 	Properties           KafkaProperties
-	ProducerInterceptors []ProducerMessageInterceptor  `group:"kafka"`
-	ConsumerInterceptors []ConsumerDispatchInterceptor `group:"kafka"`
-	HandlerInterceptors  []ConsumerHandlerInterceptor  `group:"kafka"`
+	ProducerInterceptors []ProducerMessageInterceptor
+	ConsumerInterceptors []ConsumerDispatchInterceptor
+	HandlerInterceptors  []ConsumerHandlerInterceptor
 	TlsProviderFactory   *tlsconfig.ProviderFactory
 }
 
-func NewKafkaBinder(di factoryDI) Binder {
+func NewBinder(ctx context.Context, opts ...BinderOptions) *SaramaKafkaBinder {
+	opt := BinderOption{
+		ProducerInterceptors: []ProducerMessageInterceptor{mimeTypeProducerInterceptor{}},
+	}
+	for _, fn := range opts {
+		fn(&opt)
+	}
+	properties := opt.Properties
 	s := &SaramaKafkaBinder{
-		appConfig:  di.AppContext.Config(),
-		properties: &di.Properties,
-		brokers:    di.Properties.Brokers,
-		producerInterceptors: append(di.ProducerInterceptors,
-			mimeTypeProducerInterceptor{},
-		),
-		consumerInterceptors: di.ConsumerInterceptors,
-		handlerInterceptors:  di.HandlerInterceptors,
+		appConfig:            opt.ApplicationConfig,
+		properties:           &properties,
+		brokers:              opt.Properties.Brokers,
+		producerInterceptors: opt.ProducerInterceptors,
+		consumerInterceptors: opt.ConsumerInterceptors,
+		handlerInterceptors:  opt.HandlerInterceptors,
 		monitor:              loop.NewLoop(),
 		producers:            make(map[string]BindingLifecycle),
 		subscribers:          make(map[string]BindingLifecycle),
 		consumerGroups:       make(map[string]BindingLifecycle),
 	}
 
-	if e := s.Initialize(context.Background(), di.TlsProviderFactory); e != nil {
+	if e := s.Initialize(ctx, opt.TlsProviderFactory); e != nil {
 		panic(e)
 	}
 	return s
@@ -139,13 +145,13 @@ func (b *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (P
 	}
 
 	p, err := newSaramaProducer(topic, b.brokers, &cfg)
-
 	if err != nil {
 		return nil, err
-	} else {
-		b.producers[topic] = p
-		return p, nil
 	}
+
+	b.producers[topic] = p
+	//b.monitor.Do(b.tryStartSingleTaskFunc(b.monitorCtx, p))
+	return p, nil
 }
 
 func (b *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error) {
@@ -249,7 +255,7 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 
 		b.provisioner = &saramaTopicProvisioner{
 			globalClient: b.globalClientProvider,
-			adminClient: b.clusterAdminProvider,
+			adminClient:  b.clusterAdminProvider,
 		}
 	})
 
@@ -259,9 +265,8 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 // Start implements BinderLifecycle, start all bindings if not started yet (Producer, Subscriber, GroupConsumer, etc).
 func (b *SaramaKafkaBinder) Start(_ context.Context) (err error) {
 	b.startOnce.Do(func() {
-		var loopCtx context.Context
-		loopCtx, b.monitorCancelFunc = b.monitor.Run(context.Background())
-		b.monitor.Repeat(b.tryStartTaskFunc(loopCtx), func(opt *loop.TaskOption) {
+		b.monitorCtx, b.monitorCancelFunc = b.monitor.Run(context.Background())
+		b.monitor.Repeat(b.tryStartTaskFunc(b.monitorCtx), func(opt *loop.TaskOption) {
 			opt.RepeatIntervalFunc = b.tryStartRepeatIntervalFunc()
 		})
 	})
@@ -352,6 +357,15 @@ func (b *SaramaKafkaBinder) clusterAdminProvider() (sarama.ClusterAdmin, error) 
 	_ = b.adminClient.Close()
 	b.adminClient = newClient
 	return newClient, nil
+}
+
+// tryStartSingleTaskFunc try to start given Binding
+func (b *SaramaKafkaBinder) tryStartSingleTaskFunc(loopCtx context.Context, lc BindingLifecycle) loop.TaskFunc {
+	return func(_ context.Context, l *loop.Loop) (ret interface{}, err error) {
+		// we cannot use passed-in context, because this context will be cancelled as soon as this function finishes
+		e := lc.Start(loopCtx)
+		return e == nil, e
+	}
 }
 
 // tryStartTaskFunc try to start any registered bindings if it's not started yet
