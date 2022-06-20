@@ -77,9 +77,19 @@ type Binder interface {
 }
 
 type BinderLifecycle interface {
+	// Initialize should be called only once, before Shutdown is executed.
 	Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) error
+	// Start should be called only once, before Shutdown is executed.
+	// If the provided context is cancellable, the lifecycle is shutdown automatically when it happens
 	Start(ctx context.Context) error
+	// Shutdown can be called multiple times, but would do nothing if called more than once.
+	// Important:
+	// - Once called, Calling Initialize or Start would cause unexpected error or resource leak
+	// - Once called, any Producer, Subscriber or GroupConsumer issued by this Binder are closed automatically.
+	//	 They should be discarded
 	Shutdown(ctx context.Context) error
+	// Done channel used for monitoring lifecycle. Channel is closed during shutdown
+	Done() <-chan struct{}
 }
 
 type SaramaBinder interface {

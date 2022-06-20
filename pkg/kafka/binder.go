@@ -22,6 +22,7 @@ const (
 )
 
 type SaramaKafkaBinder struct {
+	sync.Mutex
 	appConfig            bootstrap.ApplicationConfig
 	properties           *KafkaProperties
 	brokers              []string
@@ -33,14 +34,17 @@ type SaramaKafkaBinder struct {
 	handlerInterceptors  []ConsumerHandlerInterceptor
 	monitor              *loop.Loop
 
+	// TODO consider mutex lock for following fields
+	producers      map[string]BindingLifecycle
+	subscribers    map[string]BindingLifecycle
+	consumerGroups map[string]BindingLifecycle
+
+	// following fields are protected by mutex lock
 	globalClient      sarama.Client
 	adminClient       sarama.ClusterAdmin
 	tlsConfigProvider tlsconfig.Provider
 	provisioner       *saramaTopicProvisioner
-	// TODO consider mutex lock for following fields
-	producers         map[string]BindingLifecycle
-	subscribers       map[string]BindingLifecycle
-	consumerGroups    map[string]BindingLifecycle
+	closed            bool
 	monitorCtx        context.Context
 	monitorCancelFunc context.CancelFunc
 }
@@ -227,6 +231,13 @@ func (b *SaramaKafkaBinder) Client() sarama.Client {
 // Initialize implements BinderLifecycle, prepare for use, negotiate default configs, etc.
 func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) (err error) {
 	b.initOnce.Do(func() {
+		b.Lock()
+		defer b.Unlock()
+		if b.closed {
+			err = ErrorStartClosedBinding.WithMessage("attempt to initialize Binder after shutdown")
+			return
+		}
+
 		cfg, tlsConfigProvider, e := defaultSaramaConfig(ctx, b.properties, tlsProviderFactory)
 		if e != nil {
 			err = NewKafkaError(ErrorCodeBindingInternal, fmt.Sprintf("unable to create kafka config: %v", e))
@@ -263,24 +274,42 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 }
 
 // Start implements BinderLifecycle, start all bindings if not started yet (Producer, Subscriber, GroupConsumer, etc).
-func (b *SaramaKafkaBinder) Start(_ context.Context) (err error) {
+func (b *SaramaKafkaBinder) Start(ctx context.Context) (err error) {
 	b.startOnce.Do(func() {
-		b.monitorCtx, b.monitorCancelFunc = b.monitor.Run(context.Background())
+		b.Lock()
+		defer b.Unlock()
+		if b.closed {
+			err = ErrorStartClosedBinding.WithMessage("attempt to initialize Binder after shutdown")
+			return
+		}
+		b.monitorCtx, b.monitorCancelFunc = b.monitor.Run(ctx)
 		b.monitor.Repeat(b.tryStartTaskFunc(b.monitorCtx), func(opt *loop.TaskOption) {
 			opt.RepeatIntervalFunc = b.tryStartRepeatIntervalFunc()
 		})
+		go func(c context.Context) {
+			select {
+			case <-c.Done():
+				_ = b.Shutdown(ctx)
+			}
+		}(b.monitorCtx)
 	})
 	return nil
 }
 
 // Shutdown implements BinderLifecycle, close resources
 func (b *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
-	logger.WithContext(ctx).Infof("Kafka shutting down")
-
-	logger.WithContext(ctx).Debugf("stopping binding watchdog...")
-	if b.monitorCancelFunc != nil {
-		b.monitorCancelFunc()
+	b.Lock()
+	defer b.Unlock()
+	defer func() { b.closed = true }()
+	if b.monitorCancelFunc == nil {
+		return nil
 	}
+
+	logger.WithContext(ctx).Infof("Kafka shutting down")
+	logger.WithContext(ctx).Debugf("stopping binding watchdog...")
+	b.monitorCancelFunc()
+	b.monitorCtx = nil
+	b.monitorCancelFunc = nil
 
 	logger.WithContext(ctx).Debugf("closing producers...")
 	for _, p := range b.producers {
@@ -323,6 +352,12 @@ func (b *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
 
 	logger.WithContext(ctx).Infof("Kafka connections closed")
 	return nil
+}
+
+func (b *SaramaKafkaBinder) Done() <-chan struct{} {
+	b.Lock()
+	defer b.Unlock()
+	return b.monitorCtx.Done()
 }
 
 // loadProperties load properties for particular topic

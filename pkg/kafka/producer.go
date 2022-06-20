@@ -121,6 +121,7 @@ func (p *saramaProducer) Close() error {
 		return NewKafkaError(ErrorCodeIllegalState, "error when closing producer: %v", e)
 	}
 	p.closed = true
+	p.syncProducer = nil
 	return nil
 }
 

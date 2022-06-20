@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -53,6 +54,7 @@ func ProvideKafkaBinder(di binderDI) Binder {
 
 type initDI struct {
 	fx.In
+	AppCtx          *bootstrap.ApplicationContext
 	Lifecycle       fx.Lifecycle
 	Properties      KafkaProperties
 	Binder          Binder
@@ -62,7 +64,9 @@ type initDI struct {
 func initialize(di initDI) {
 	// register lifecycle functions
 	di.Lifecycle.Append(fx.Hook{
-		OnStart: di.Binder.(BinderLifecycle).Start,
+		OnStart: func(ctx context.Context) error {
+			return di.Binder.(BinderLifecycle).Start(di.AppCtx)
+		},
 		OnStop:  di.Binder.(BinderLifecycle).Shutdown,
 	})
 
