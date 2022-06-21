@@ -22,7 +22,7 @@ const (
 )
 
 type SaramaKafkaBinder struct {
-	sync.Mutex
+	sync.RWMutex
 	appConfig            bootstrap.ApplicationConfig
 	properties           *KafkaProperties
 	brokers              []string
@@ -154,8 +154,7 @@ func (b *SaramaKafkaBinder) Produce(topic string, options ...ProducerOptions) (P
 	}
 
 	b.producers[topic] = p
-	//b.monitor.Do(b.tryStartSingleTaskFunc(b.monitorCtx, p))
-	return p, nil
+	return p, b.tryScheduleStart(p)
 }
 
 func (b *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) (Subscriber, error) {
@@ -181,7 +180,7 @@ func (b *SaramaKafkaBinder) Subscribe(topic string, options ...ConsumerOptions) 
 	}
 
 	b.subscribers[topic] = sub
-	return sub, nil
+	return sub, b.tryScheduleStart(sub)
 }
 
 func (b *SaramaKafkaBinder) Consume(topic string, group string, options ...ConsumerOptions) (GroupConsumer, error) {
@@ -207,7 +206,7 @@ func (b *SaramaKafkaBinder) Consume(topic string, group string, options ...Consu
 	}
 
 	b.consumerGroups[topic] = cg
-	return cg, nil
+	return cg, b.tryScheduleStart(cg)
 }
 
 func (b *SaramaKafkaBinder) ListTopics() (topics []string) {
@@ -355,8 +354,8 @@ func (b *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
 }
 
 func (b *SaramaKafkaBinder) Done() <-chan struct{} {
-	b.Lock()
-	defer b.Unlock()
+	b.RLock()
+	defer b.RUnlock()
 	return b.monitorCtx.Done()
 }
 
@@ -392,6 +391,16 @@ func (b *SaramaKafkaBinder) clusterAdminProvider() (sarama.ClusterAdmin, error) 
 	_ = b.adminClient.Close()
 	b.adminClient = newClient
 	return newClient, nil
+}
+
+// tryScheduleStart try to schedule start given BindingLifecycle using monitor loop if started, otherwise do nothing
+func (b *SaramaKafkaBinder) tryScheduleStart(lc BindingLifecycle) error {
+	b.RLock()
+	defer b.RUnlock()
+	if b.monitorCtx != nil {
+		b.monitor.Do(b.tryStartSingleTaskFunc(b.monitorCtx, lc))
+	}
+	return nil
 }
 
 // tryStartSingleTaskFunc try to start given Binding
