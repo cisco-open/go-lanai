@@ -198,10 +198,10 @@ func (i *ConsulInstancer) resolveInstancesTask() loop.TaskFunc {
 		if i.lastMeta != nil {
 			lastIndex = i.lastMeta.LastIndex
 		}
-
-		entries, meta, e := i.client.Service(i.serviceName, "", false, &api.QueryOptions{
+		opts := &api.QueryOptions{
 			WaitIndex: lastIndex,
-		})
+		}
+		entries, meta, e := i.client.Service(i.serviceName, "", false, opts.WithContext(ctx))
 
 		i.lastMeta = meta
 		i.processResolvedServiceEntries(ctx, entries, e)

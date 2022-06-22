@@ -60,3 +60,12 @@ func (c *consulDiscoveryClient) Instancer(serviceName string) (Instancer, error)
 
 	return instancer, nil
 }
+
+func (c *consulDiscoveryClient) Close() error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	for _, v := range c.instancers {
+		v.Stop()
+	}
+	return nil
+}
