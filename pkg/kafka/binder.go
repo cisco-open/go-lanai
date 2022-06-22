@@ -282,9 +282,11 @@ func (b *SaramaKafkaBinder) Start(ctx context.Context) (err error) {
 			return
 		}
 		b.monitorCtx, b.monitorCancelFunc = b.monitor.Run(ctx)
+		//nolint:contextcheck // b.monitorCtx is derived from given context
 		b.monitor.Repeat(b.tryStartTaskFunc(b.monitorCtx), func(opt *loop.TaskOption) {
 			opt.RepeatIntervalFunc = b.tryStartRepeatIntervalFunc()
 		})
+		//nolint:contextcheck // b.monitorCtx is derived from given context
 		go func(c context.Context) {
 			select {
 			case <-c.Done():

@@ -64,7 +64,8 @@ type initDI struct {
 func initialize(di initDI) {
 	// register lifecycle functions
 	di.Lifecycle.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
+		OnStart: func(_ context.Context) error {
+			//nolint:contextcheck // intentional, given context is cancelled after bootstrap, AppCtx is cancelled when app close
 			return di.Binder.(BinderLifecycle).Start(di.AppCtx)
 		},
 		OnStop:  di.Binder.(BinderLifecycle).Shutdown,
