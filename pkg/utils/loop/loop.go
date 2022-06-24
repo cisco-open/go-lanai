@@ -3,6 +3,7 @@ package loop
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -30,21 +31,26 @@ type task struct {
 }
 
 type Loop struct {
-	stopCh chan struct{}
-	taskCh chan *task
+	taskCh   chan *task
+	mtx      sync.Mutex
+	ctx      context.Context
+	cancelFn context.CancelFunc
 }
 
 func NewLoop() *Loop {
 	return &Loop{
-		stopCh: make(chan struct{}),
 		taskCh: make(chan *task),
 	}
 }
 
 func (l *Loop) Run(ctx context.Context) (context.Context, context.CancelFunc) {
-	ctxWithCancel, cFunc := context.WithCancel(ctx)
-	go l.loop(ctxWithCancel)
-	return ctxWithCancel, cFunc
+	l.mtx.Lock()
+	defer l.mtx.Unlock()
+	if l.ctx == nil {
+		l.ctx, l.cancelFn = context.WithCancel(ctx)
+		go l.loop(l.ctx)
+	}
+	return l.ctx, l.cancelFn
 }
 
 func (l *Loop) Repeat(tf TaskFunc, opts ...TaskOptions) {
@@ -149,9 +155,12 @@ func (l *Loop) makeTaskFuncWithRepeat(tf TaskFunc, intervalFunc RepeatIntervalFu
 
 func (l *Loop) repeatAfter(tf TaskFunc, interval time.Duration) {
 	go func() {
+		timer := time.NewTimer(interval)
 		select {
-		case <-time.After(interval):
+		case <-timer.C:
 			l.Do(tf)
+		case <-l.ctx.Done():
+			timer.Stop()
 		}
 	}()
 }

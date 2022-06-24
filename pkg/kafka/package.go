@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -13,8 +14,7 @@ var logger = log.New("Kafka")
 var Module = &bootstrap.Module{
 	Precedence: bootstrap.KafkaPrecedence,
 	Options: []fx.Option{
-		fx.Provide(BindKafkaProperties),
-		fx.Provide(NewKafkaBinder),
+		fx.Provide(BindKafkaProperties, ProvideKafkaBinder),
 		fx.Invoke(initialize),
 	},
 }
@@ -29,8 +29,32 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
+type binderDI struct {
+	fx.In
+	AppContext           *bootstrap.ApplicationContext
+	Properties           KafkaProperties
+	ProducerInterceptors []ProducerMessageInterceptor  `group:"kafka"`
+	ConsumerInterceptors []ConsumerDispatchInterceptor `group:"kafka"`
+	HandlerInterceptors  []ConsumerHandlerInterceptor  `group:"kafka"`
+	TlsProviderFactory   *tlsconfig.ProviderFactory
+}
+
+func ProvideKafkaBinder(di binderDI) Binder {
+	return NewBinder(di.AppContext, func(opt *BinderOption) {
+		*opt = BinderOption{
+			ApplicationConfig:    di.AppContext.Config(),
+			Properties:           di.Properties,
+			ProducerInterceptors: append(opt.ProducerInterceptors, di.ProducerInterceptors...),
+			ConsumerInterceptors: append(opt.ConsumerInterceptors, di.ConsumerInterceptors...),
+			HandlerInterceptors:  append(opt.HandlerInterceptors, di.HandlerInterceptors...),
+			TlsProviderFactory:   di.TlsProviderFactory,
+		}
+	})
+}
+
 type initDI struct {
 	fx.In
+	AppCtx          *bootstrap.ApplicationContext
 	Lifecycle       fx.Lifecycle
 	Properties      KafkaProperties
 	Binder          Binder
@@ -40,7 +64,10 @@ type initDI struct {
 func initialize(di initDI) {
 	// register lifecycle functions
 	di.Lifecycle.Append(fx.Hook{
-		OnStart: di.Binder.(BinderLifecycle).Start,
+		OnStart: func(_ context.Context) error {
+			//nolint:contextcheck // intentional, given context is cancelled after bootstrap, AppCtx is cancelled when app close
+			return di.Binder.(BinderLifecycle).Start(di.AppCtx)
+		},
 		OnStop:  di.Binder.(BinderLifecycle).Shutdown,
 	})
 
