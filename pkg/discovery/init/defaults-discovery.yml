@@ -6,3 +6,5 @@ cloud:
       health-check-path: "${server.context-path}/admin/health"
       health-check-interval: 15s
       health-check-critical-timeout: 60s #deregisters an unhealthy instance after 60s
+      tags: "${spring.cloud.consul.discovery.tags:}"
+
