@@ -9,7 +9,6 @@ import (
 
 //goland:noinspection GoNameStartsWithPackageName
 const (
-	applicationPropertiesPrefix = "application"
 	DiscoveryPropertiesPrefix   = "cloud.consul.discovery"
 )
 
