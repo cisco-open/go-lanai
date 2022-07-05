@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=dockerhub.cisco.com/vms-platform-dev-docker/msx-base-amazon:5.0.0-32
 
 ## Build Container ##
-FROM dockerhub.cisco.com/vms-platform-dev-docker/golang:1.16.3 AS builder
+FROM dockerhub.cisco.com/vms-platform-dev-docker/golang:1.18.3 AS builder
 ARG PRIVATE_MODS
 ARG VERSION
 ARG GITKEY
