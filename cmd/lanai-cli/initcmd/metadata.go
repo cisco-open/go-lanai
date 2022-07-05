@@ -17,6 +17,7 @@ type ModuleMetadata struct {
 	Resources   []*Resource            `json:"resources"`
 	Generates   []*Generate            `json:"generates"`
 	Binaries    []*Binary              `json:"binaries"`
+	Sources     []*Source              `json:"sources"`
 }
 
 type Executable struct {
@@ -38,6 +39,17 @@ type Binary struct {
 	Package string `json:"package"`
 	Version string `json:"version"`
 }
+
+type Source struct {
+	Path string `json:"path"`
+}
+
+var (
+	defaultSources = []*Source{
+		{Path: "pkg"},
+		{Path: "internal"},
+	}
+)
 
 func validateModuleMetadata(ctx context.Context) error {
 	if Module.Module = cmdutils.ResolveTargetModule(ctx); Module.Module == nil {
@@ -67,6 +79,27 @@ func validateModuleMetadata(ctx context.Context) error {
 		}
 		v.Path = fixed
 	}
+
+	// fix Sources
+	var sources []*Source
+	if len(Module.Sources) == 0 {
+		Module.Sources = defaultSources
+	}
+	for i, v := range Module.Sources {
+		src := *v
+		fixed, e := fixSourceDir(ctx, src.Path, Module.Module.Path)
+		if e != nil {
+			logger.WithContext(ctx).Infof("invalid value of sources[%d].path: %v", i, e)
+			continue
+
+		}
+		if fixed != src.Path {
+			logger.WithContext(ctx).Debugf("Rewrite Source Path: %s => %s", v.Path, fixed)
+		}
+		src.Path = fixed
+		sources = append(sources, &src)
+	}
+	Module.Sources = sources
 
 	// Name default
 	if Module.Name == "" {
@@ -102,4 +135,24 @@ func fixPkgPath(ctx context.Context, path string, module string) (pkgPath string
 	} else {
 		return
 	}
+}
+
+// fixSourceDir attempts to fix given relative source directory and check if there is any source code in it
+func fixSourceDir(ctx context.Context, dir string, module string) (string, error) {
+	// remove ./, ../, etc
+	dir = filepath.Clean(dir)
+	// remove module prefix
+	dir = strings.TrimPrefix(strings.ToLower(dir), strings.ToLower(module))
+	// remove tailing /
+	dir = strings.TrimSuffix(dir, "/")
+
+	// find .go files
+	srcs, e := cmdutils.LookupFiles("**/*.go", dir)
+	if e != nil {
+		return "", e
+	} else if len(srcs) == 0 {
+		return "", fmt.Errorf(`.go files not found in %s, ignoring`, dir)
+	}
+
+	return dir, nil
 }
