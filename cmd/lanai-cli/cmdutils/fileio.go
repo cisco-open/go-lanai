@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/ghodss/yaml"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -25,6 +27,16 @@ func OpenFile(filePath string, flag int, perm os.FileMode) (absPath string, file
 // Otherwise, return error
 func LookupFile(filePath string, additionalLookupDirs ...string) (absPath string, file *os.File, err error) {
 	return lookupFile(filePath, os.O_RDONLY, 0, additionalLookupDirs...)
+}
+
+// LookupFiles search files using provided pattern under given lookup directories relative to GlobalArgs.WorkingDir.
+// Returns list of absolute path if successful.
+// Otherwise, return error
+func LookupFiles(pattern string, dirs ...string) (absPaths []string, err error) {
+	for i, dir := range dirs {
+		dirs[i] = GlobalArgs.WorkingDir + "/" + dir
+	}
+	return lookupFiles(pattern, dirs)
 }
 
 // BindYamlFile find, read and bind YAML file, returns absolute path of loaded file
@@ -95,6 +107,44 @@ func lookupFile(filePath string, flag int, perm os.FileMode, additionalLookupDir
 		err = fmt.Errorf("unable to find file %s in directories %s", filePath, strings.Join(lookup, ":"))
 	}
 	return
+}
+
+func lookupFiles(pattern string, lookup []string) (paths []string, err error) {
+	// look up the file
+	for _, dir := range lookup {
+		stat, e := os.Stat(dir)
+		if e != nil {
+			return nil, e
+		}
+		files := searchFiles(dir, stat, pattern)
+		paths = append(paths, files...)
+	}
+	return
+}
+
+// searchFiles recursively search for all files in given path if it's a directory
+func searchFiles(path string, stat fs.FileInfo, pattern string) []string {
+	if !stat.IsDir() {
+		if match, e := doublestar.Match(pattern, path); e == nil && match {
+			return []string{path}
+		} else {
+			return nil
+		}
+	}
+
+	entries, e := os.ReadDir(path)
+	if e != nil {
+		return nil
+	}
+	expanded := make([]string, 0)
+	for _, entry := range entries {
+		if info, e := entry.Info(); e == nil {
+			subPath := filepath.Join(path, info.Name())
+			sub := searchFiles(subPath, info, pattern)
+			expanded = append(expanded, sub...)
+		}
+	}
+	return expanded
 }
 
 func isFileExists(filepath string) bool {
