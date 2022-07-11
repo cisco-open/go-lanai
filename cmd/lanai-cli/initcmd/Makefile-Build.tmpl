@@ -41,8 +41,8 @@ test: generate
 	set -o pipefail; \
 	gotestsum -f pkgname --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \
   		$(GO) test -json -count=1 -failfast -timeout=0 -coverprofile $(DESTDIR)/coverage.out \
-  		-coverpkg $(MODULE)/pkg/...,$(MODULE)/internal/... \
-  		$(MODULE)/pkg/... $(MODULE)/internal/... $(ARGS)
+  		-coverpkg {{ range .Sources -}}$(MODULE)/{{- .Path -}}/..., {{- end -}} \
+  		{{ range .Sources -}}$(MODULE)/{{- .Path -}}/... {{ end -}} $(ARGS)
 
 # lint:
 # 	Invoke "go vet" and other linters
