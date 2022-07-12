@@ -16,7 +16,7 @@ var TestHook = &TestTaskHook{}
 func TestMain(m *testing.M) {
 	// This package's tests are time-sensitive. We first need to know the executing host's base performance
 	t := time.Now()
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 50000; i++ {
 		v := time.Now()
 		ch := make(chan time.Time, 1)
 		ch <- v
