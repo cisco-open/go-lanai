@@ -104,6 +104,7 @@ func (l *Logical) writeWithMethod(method, path string, data interface{}) (*api.S
 func (l *Logical) write(request *api.Request) (*api.Secret, error) {
 	ctx, cancelFunc := context.WithCancel(l.ctx)
 	defer cancelFunc()
+	//nolint:staticcheck // Deprecated API. TODO should fix
 	resp, err := l.client.RawRequestWithContext(ctx, request)
 	if resp != nil {
 		defer resp.Body.Close()
