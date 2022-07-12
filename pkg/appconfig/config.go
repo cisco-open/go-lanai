@@ -31,19 +31,18 @@ func (p properties) Value(key string) interface{} {
 
 // Bind bind values to given target, with consideration of key normalization and place holders.
 // The keys from property sources are normalized to snake case if they are camel case.
-// Therefore the binding expects the json tag to be in snake case.
+// Therefore, the binding expects the json tag to be in snake case.
 func (p properties) Bind(target interface{}, prefix string) error {
-	keys := strings.Split(prefix, ".")
-
 	var source interface{} = map[string]interface{}(p)
-
-	for i := 0; i < len(keys); i++ {
-
-		if _, ok := source.(map[string]interface{}); ok {
-			source = source.(map[string]interface{})[keys[i]]
-		} else {
-			//prefix doesn't exist, we just don't bind it
-			return nil
+	if len(prefix) > 0 && prefix != "." {
+		keys := strings.Split(prefix, ".")
+		for i := 0; i < len(keys); i++ {
+			if _, ok := source.(map[string]interface{}); ok {
+				source = source.(map[string]interface{})[keys[i]]
+			} else {
+				//prefix doesn't exist, we just don't bind it
+				return nil
+			}
 		}
 	}
 

@@ -1,0 +1,7 @@
+cloud:
+  gateway:
+    service: "apigateway"
+    scheme: "http"
+    host: "${cloud.gateway.service:apigateway}.service.consul"
+    port: 8765
+

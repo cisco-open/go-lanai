@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/vaultprovider"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"embed"
 	"go.uber.org/fx"
 )
 
@@ -28,10 +29,14 @@ const (
 
 var logger = log.New("Config")
 
+//go:embed defaults-global.yml
+var defaultConfigFS embed.FS
+
 var ConfigModule = &bootstrap.Module{
-	Name: "bootstrap endpoint",
+	Name:       "bootstrap endpoint",
 	Precedence: bootstrap.AppConfigPrecedence,
 	PriorityOptions: []fx.Option{
+		FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(
 			// Bootstrap groups and config
 			newCommandProviderGroup,
@@ -52,7 +57,9 @@ var ConfigModule = &bootstrap.Module{
 			newVaultAppContextProviderGroup,
 			newVaultConfigProperties,
 			// App Config
-			newApplicationConfig),
+			newApplicationConfig,
+			newGlobalProperties,
+		),
 	},
 }
 
@@ -63,7 +70,7 @@ func Use() {
 
 type bootstrapConfigDI struct {
 	fx.In
-	App *bootstrap.App
+	App            *bootstrap.App
 	ProviderGroups []appconfig.ProviderGroup `group:"bootstrap-config"`
 }
 
@@ -91,9 +98,9 @@ type appConfigDIOut struct {
 
 type appConfigDI struct {
 	fx.In
-	App *bootstrap.App
-	ProviderGroups []appconfig.ProviderGroup `group:"application-config"`
-	BootstrapConfig    *appconfig.BootstrapConfig
+	App             *bootstrap.App
+	ProviderGroups  []appconfig.ProviderGroup `group:"application-config"`
+	BootstrapConfig *appconfig.BootstrapConfig
 }
 
 // expose *appconfig.ApplicationConfig as both pointer and interface
@@ -115,16 +122,24 @@ func newApplicationConfig(di appConfigDI) appConfigDIOut {
 
 	return appConfigDIOut{
 		ACPtr: applicationConfig,
-		ACI: applicationConfig,
+		ACI:   applicationConfig,
 	}
+}
+
+func newGlobalProperties(cfg *appconfig.ApplicationConfig) bootstrap.Properties {
+	props := bootstrap.Properties{}
+	if e := cfg.Bind(&props, ""); e != nil {
+		panic(e)
+	}
+	return props
 }
 
 func newConsulConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *consulprovider.ConsulConfigProperties {
 	p := &consulprovider.ConsulConfigProperties{
-		Prefix: "userviceconfiguration",
-		DefaultContext: "defaultapplication",
+		Prefix:           "userviceconfiguration",
+		DefaultContext:   "defaultapplication",
 		ProfileSeparator: ",",
-		Enabled: true,
+		Enabled:          true,
 	}
 	if e := bootstrapConfig.Bind(p, consulprovider.ConsulConfigPrefix); e != nil {
 		panic(e)
@@ -134,11 +149,11 @@ func newConsulConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *cons
 
 func newVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *vaultprovider.KvConfigProperties {
 	p := &vaultprovider.KvConfigProperties{
-		Backend: "secret",
-		DefaultContext: "defaultapplication",
+		Backend:          "secret",
+		DefaultContext:   "defaultapplication",
 		ProfileSeparator: "/",
-		Enabled: true,
-		BackendVersion: 1,
+		Enabled:          true,
+		BackendVersion:   1,
 	}
 	if e := bootstrapConfig.Bind(p, vaultprovider.KvConfigPrefix); e != nil {
 		panic(e)
