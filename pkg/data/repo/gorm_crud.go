@@ -192,7 +192,7 @@ func (g GormCrud) Delete(ctx context.Context, v interface{}, options ...Option) 
 
 func (g GormCrud) DeleteBy(ctx context.Context, condition Condition, options ...Option) error {
 	return execute(ctx, g.GormApi.DB(ctx), condition, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
-		return db.Delete(g.model)
+		return db.Delete(reflect.New(g.ModelType()).Interface())
 	})
 }
 
