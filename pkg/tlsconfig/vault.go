@@ -72,6 +72,7 @@ func (v *VaultProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	fullPath := path.Join("/v1/", v.p.Path, "ca", "pem")
 
 	r := v.vc.NewRequest("GET", fullPath)
+	//nolint:staticcheck // Deprecated API. TODO should fix
 	resp, err := v.vc.RawRequestWithContext(ctx, r)
 	if err != nil {
 		return nil, err
