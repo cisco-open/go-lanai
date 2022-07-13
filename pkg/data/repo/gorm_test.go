@@ -459,7 +459,16 @@ func SubTestDelete(di *testDI) test.GomegaSubTestFunc {
 		e = di.Repo.FindById(ctx, &model, id, ErrorOnZeroRows())
 		g.Expect(errors.Is(e, gorm.ErrRecordNotFound)).To(gomega.BeTrue(), "re-fetch after Delete should yield RecordNotFound")
 
-		// delete by
+		//consecutive delete by with returning clause
+		returningOpts := func(db *gorm.DB) *gorm.DB {
+			return db.Clauses(clause.Returning{})
+		}
+		e = di.Repo.DeleteBy(ctx, Where(`"test_repo_models"."search" = ?`, 1), ErrorOnZeroRows(), returningOpts)
+		g.Expect(e).To(gomega.Succeed(), "DeleteBy shouldn't return error")
+		e = di.Repo.DeleteBy(ctx, Where(`"test_repo_models"."search" = ?`, 2), ErrorOnZeroRows(), returningOpts)
+		g.Expect(e).To(gomega.Succeed(), "DeleteBy shouldn't return error")
+
+		//delete by
 		e = di.Repo.DeleteBy(ctx, Where(`"test_repo_models"."search" < ?`, len(modelIDs)-1))
 		g.Expect(e).To(gomega.Succeed(), "DeleteBy shouldn't return error")
 
