@@ -2,7 +2,7 @@
 
 if [ -z "$POPULATE" ]; then
 {{- range $name, $elem := .Executables }}
-    {{- if gt $elem.Port 0 }}
+    {{- if $elem.Ports }}
     exec ./{{ $name }} "$@"
     {{- end }}
 {{- end }}
