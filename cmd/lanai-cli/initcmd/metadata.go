@@ -21,9 +21,10 @@ type ModuleMetadata struct {
 }
 
 type Executable struct {
-	Main string `json:"main"`
-	Port int    `json:"port"`
-	Type string `json:"type"`
+	Main  string `json:"main"`
+	Port  int    `json:"port"`
+	Ports []int  `json:"ports"`
+	Type  string `json:"type"`
 }
 
 type Resource struct {
@@ -56,7 +57,7 @@ func validateModuleMetadata(ctx context.Context) error {
 		return fmt.Errorf("unable to resolve module name in %s", cmdutils.GlobalArgs.WorkingDir)
 	}
 
-	// fix Executable.Main
+	// fix Executable
 	for k, v := range Module.Executables {
 		fixed, e := fixPkgPath(ctx, v.Main, Module.Module.Path)
 		if e != nil {
@@ -66,6 +67,9 @@ func validateModuleMetadata(ctx context.Context) error {
 			logger.WithContext(ctx).Debugf("Rewrite Main Path: %s => %s", v.Main, fixed)
 		}
 		v.Main = fixed
+		if v.Port > 0 {
+			v.Ports = append([]int{v.Port}, v.Ports...)
+		}
 	}
 
 	// fix Generates

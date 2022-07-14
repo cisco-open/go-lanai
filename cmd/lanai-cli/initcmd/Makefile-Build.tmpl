@@ -37,12 +37,17 @@ generate: $(GEN_LIST)
 # 	Invoke "go test" on defined modules.
 # 	This target typically run on CI/CD working machine
 # 	Optional parameter: ARGS="..."
+ifneq ($(filter true True TRUE,$(SKIP_TEST)),)
+test: generate
+	@echo "Test Skipped..."
+else
 test: generate
 	set -o pipefail; \
 	gotestsum -f pkgname --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \
   		$(GO) test -json -count=1 -failfast -timeout=0 -coverprofile $(DESTDIR)/coverage.out \
   		-coverpkg {{ range .Sources -}}$(MODULE)/{{- .Path -}}/..., {{- end -}} \
   		{{ range .Sources -}}$(MODULE)/{{- .Path -}}/... {{ end -}} $(ARGS)
+endif
 
 # lint:
 # 	Invoke "go vet" and other linters

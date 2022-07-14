@@ -22,9 +22,9 @@ RUN make init-once init-cli drop-replace; \
 ## Distribution Container ##
 FROM ${BASE_IMAGE}
 {{- range $_, $elem := .Executables }}
-{{- if gt $elem.Port 0 }}
-EXPOSE {{ $elem.Port }}
-{{- end }}
+    {{- range $_, $port := $elem.Ports }}
+EXPOSE {{ $port }}
+    {{- end }}
 {{- end }}
 WORKDIR /service/
 COPY build/package/dockerlaunch.sh /service/dockerlaunch.sh
