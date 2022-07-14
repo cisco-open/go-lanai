@@ -134,8 +134,8 @@ func (sp *ServiceProviderMiddleware) MakeAuthenticationRequest(r *http.Request, 
 		return security.NewExternalSamlAuthenticationError("idp does not have supported bindings.")
 	}
 
-	authReq, err := client.MakeAuthenticationRequest(bindingLocation)
-
+	// TODO maybe configurable result binding?
+	authReq, err := client.MakeAuthenticationRequest(bindingLocation, binding, saml.HTTPPostBinding)
 	if err != nil {
 		return security.NewExternalSamlAuthenticationError("cannot make auth request to binding location", err)
 	}
@@ -146,7 +146,10 @@ func (sp *ServiceProviderMiddleware) MakeAuthenticationRequest(r *http.Request, 
 	}
 
 	if binding == saml.HTTPRedirectBinding {
-		redirectURL := authReq.Redirect(relayState)
+		redirectURL, e := authReq.Redirect(relayState, client)
+		if e != nil {
+			return security.NewExternalSamlAuthenticationError("cannot make auth request with HTTP redirect binding", e)
+		}
 		w.Header().Add("Location", redirectURL.String())
 		w.WriteHeader(http.StatusFound)
 	} else if binding == saml.HTTPPostBinding {

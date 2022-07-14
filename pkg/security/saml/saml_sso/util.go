@@ -10,8 +10,8 @@ import (
 func getServiceProviderCert(req *saml.IdpAuthnRequest, usage string) (*x509.Certificate, error) {
 	certStr := ""
 	for _, keyDescriptor := range req.SPSSODescriptor.KeyDescriptors {
-		if keyDescriptor.Use == usage {
-			certStr = keyDescriptor.KeyInfo.Certificate
+		if keyDescriptor.Use == usage && len(keyDescriptor.KeyInfo.X509Data.X509Certificates) > 0 {
+			certStr = keyDescriptor.KeyInfo.X509Data.X509Certificates[0].Data
 			break
 		}
 	}
@@ -20,8 +20,11 @@ func getServiceProviderCert(req *saml.IdpAuthnRequest, usage string) (*x509.Cert
 	// non-empty cert we find.
 	if certStr == "" {
 		for _, keyDescriptor := range req.SPSSODescriptor.KeyDescriptors {
-			if keyDescriptor.Use == "" && keyDescriptor.KeyInfo.Certificate != "" {
-				certStr = keyDescriptor.KeyInfo.Certificate
+			if keyDescriptor.Use == "" &&
+				len(keyDescriptor.KeyInfo.X509Data.X509Certificates) > 0 &&
+				keyDescriptor.KeyInfo.X509Data.X509Certificates[0].Data != "" {
+
+				certStr = keyDescriptor.KeyInfo.X509Data.X509Certificates[0].Data
 				break
 			}
 		}

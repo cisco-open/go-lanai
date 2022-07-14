@@ -12,7 +12,7 @@ import (
 )
 
 func MakeAuthnRequest(sp saml.ServiceProvider, idpUrl string) string {
-	authnRequest, _ := sp.MakeAuthenticationRequest(idpUrl)
+	authnRequest, _ := sp.MakeAuthenticationRequest(idpUrl, saml.HTTPPostBinding, saml.HTTPPostBinding)
 	doc := etree.NewDocument()
 	doc.SetRoot(authnRequest.Element())
 	reqBuf, _ := doc.WriteToBytes()

@@ -171,7 +171,7 @@ func TestMetadata(t *testing.T) {
 
 
 func makeAuthnRequest(sp saml.ServiceProvider) string {
-	authnRequest, _ := sp.MakeAuthenticationRequest("http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
+	authnRequest, _ := sp.MakeAuthenticationRequest("http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", saml.HTTPPostBinding, saml.HTTPPostBinding)
 	doc := etree.NewDocument()
 	doc.SetRoot(authnRequest.Element())
 	reqBuf, _ := doc.WriteToBytes()

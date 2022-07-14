@@ -9,8 +9,8 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/bmatcuk/doublestar/v4 v4.0.1
 	github.com/cockroachdb/copyist v1.4.1
-	github.com/crewjam/httperr v0.0.0-20190612203328-a946449404da
-	github.com/crewjam/saml v0.4.5
+	github.com/crewjam/httperr v0.2.0
+	github.com/crewjam/saml v0.4.8
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/ghodss/yaml v1.0.0
@@ -30,7 +30,7 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/jackc/pgconn v1.10.1
 	github.com/lib/pq v1.10.2
-	github.com/mattermost/xml-roundtrip-validator v0.0.0-20201213122252-bcd7e1b9601e
+	github.com/mattermost/xml-roundtrip-validator v0.1.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/onsi/gomega v1.18.1
@@ -39,7 +39,7 @@ require (
 	github.com/pquerna/otp v1.3.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/cors v1.7.0
-	github.com/russellhaering/goxmldsig v1.1.0
+	github.com/russellhaering/goxmldsig v1.1.1
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5
@@ -52,8 +52,8 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/fx v1.17.1
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	gorm.io/driver/postgres v1.3.1
 	gorm.io/gorm v1.23.3
 	mvdan.cc/sh/v3 v3.2.4
