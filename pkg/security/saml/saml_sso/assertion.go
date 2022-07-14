@@ -16,8 +16,8 @@ const canonicalizerPrefixList = ""
 
 type AttributeGenerator func(account security.Account) []saml.Attribute
 
-//This is similar to the method in saml.IdpAuthnRequest
-//but we have our own logic for generating attributes.
+// MakeAssertion This is similar to the method in saml.IdpAuthnRequest
+// but we have our own logic for generating attributes.
 func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authentication security.Authentication, generator AttributeGenerator) error {
 	username, err := security.GetUsername(authentication)
 
@@ -130,8 +130,8 @@ func MakeAssertion(ctx context.Context, req *saml.IdpAuthnRequest, authenticatio
 	return nil
 }
 
-//This is similar to the implementation in saml.IdpAuthnRequest
-//we re-implement it here because we need to optionally skip encryption
+// MakeAssertionEl This is similar to the implementation in saml.IdpAuthnRequest
+// we re-implement it here because we need to optionally skip encryption
 func MakeAssertionEl(req *saml.IdpAuthnRequest, skipEncryption bool) error {
 	keyPair := tls.Certificate{
 		Certificate: [][]byte{req.IDP.Certificate.Raw},
@@ -193,7 +193,7 @@ func MakeAssertionEl(req *saml.IdpAuthnRequest, skipEncryption bool) error {
 	encryptor := xmlenc.OAEP()
 	encryptor.BlockCipher = xmlenc.AES128CBC
 	encryptor.DigestMethod = &xmlenc.SHA1
-	encryptedDataEl, err := encryptor.Encrypt(certBuf, signedAssertionBuf)
+	encryptedDataEl, err := encryptor.Encrypt(certBuf, signedAssertionBuf, nil)
 	if err != nil {
 		return NewSamlResponderError("error signing assertion")
 	}
