@@ -7,4 +7,5 @@ cloud:
       health-check-interval: 15s
       health-check-critical-timeout: 60s #deregisters an unhealthy instance after 60s
       tags: "${spring.cloud.consul.discovery.tags:}"
-
+      default-selector:
+        tags: ${spring.cloud.consul.discovery.defaultquerytag:}

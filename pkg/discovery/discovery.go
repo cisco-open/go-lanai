@@ -35,6 +35,7 @@ func NewConsulDiscoveryClient(ctx context.Context, conn *consul.Connection, opts
 
 	return &client
 }
+
 func (c *consulDiscoveryClient) Context() context.Context {
 	return c.ctx
 }
@@ -55,6 +56,7 @@ func (c *consulDiscoveryClient) Instancer(serviceName string) (Instancer, error)
 		opt.ServiceName = serviceName
 		opt.Logger = c.config.Logger
 		opt.Verbose = c.config.Verbose
+		opt.Selector = c.config.DefaultSelector
 	})
 	c.instancers[serviceName] = instancer
 

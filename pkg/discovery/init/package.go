@@ -35,8 +35,10 @@ func Use() {
 	// does nothing. Allow service to include this module in main()
 }
 
-func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, conn *consul.Connection) discovery.Client {
-	return discovery.NewConsulDiscoveryClient(ctx, conn)
+func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, conn *consul.Connection, props discovery.DiscoveryProperties) discovery.Client {
+	return discovery.NewConsulDiscoveryClient(ctx, conn, func(opt *discovery.ClientConfig) {
+		opt.DefaultSelector = discovery.InstanceWithProperties(&props.DefaultSelector)
+	})
 }
 
 func setupServiceRegistration(lc fx.Lifecycle,
