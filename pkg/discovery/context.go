@@ -32,8 +32,9 @@ var (
 type ClientOptions func(opt *ClientConfig)
 
 type ClientConfig struct {
-	Logger  log.Logger
-	Verbose bool
+	Logger          log.Logger
+	Verbose         bool
+	DefaultSelector InstanceMatcher
 }
 
 type Client interface {
@@ -209,6 +210,25 @@ func InstanceWithTagKV(key, value string, caseInsensitive bool) InstanceMatcher 
 			return false, nil
 		},
 	}
+}
+
+// InstanceWithProperties returns an InstanceMatcher that matches instances described in given selector properties
+// could return nil
+func InstanceWithProperties(props *SelectorProperties) InstanceMatcher {
+	matchers := make([]matcher.Matcher, 0, len(props.Tags) + len(props.Meta))
+	for _, tag := range props.Tags {
+		if len(tag) != 0 {
+			matchers = append(matchers, InstanceWithTag(tag, true))
+		}
+	}
+	for k, v := range props.Meta {
+		matchers = append(matchers, InstanceWithMetaKV(k, v))
+	}
+
+	if len(matchers) == 0 {
+		return nil
+	}
+	return matcher.And(matchers[0], matchers[1:]...)
 }
 
 // instanceMatcher implements InstanceMatcher and accept *Instance and Instance

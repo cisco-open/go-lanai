@@ -9,7 +9,7 @@ import (
 
 //goland:noinspection GoNameStartsWithPackageName
 const (
-	DiscoveryPropertiesPrefix   = "cloud.consul.discovery"
+	DiscoveryPropertiesPrefix = "cloud.consul.discovery"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -23,15 +23,21 @@ type DiscoveryProperties struct {
 	Port                       int                       `json:"port"`
 	Scheme                     string                    `json:"scheme"`
 	HealthCheckCriticalTimeout string                    `json:"health-check-critical-timeout"` //See api.AgentServiceCheck's DeregisterCriticalServiceAfter field
+	DefaultSelector            SelectorProperties        `json:"default-selector"`              // Default tags or meta to use when discovering other services
+}
+
+type SelectorProperties struct {
+	Tags utils.CommaSeparatedSlice `json:"tags"`
+	Meta map[string]string         `json:"meta"`
 }
 
 func NewDiscoveryProperties() *DiscoveryProperties {
 	return &DiscoveryProperties{
-		Port:                0,
-		Scheme:              "http",
-		HealthCheckInterval: "15s",
+		Port:                       0,
+		Scheme:                     "http",
+		HealthCheckInterval:        "15s",
 		HealthCheckCriticalTimeout: "15s",
-		HealthCheckPath:     fmt.Sprintf("%s", "/admin/health"),
+		HealthCheckPath:            fmt.Sprintf("%s", "/admin/health"),
 	}
 }
 
