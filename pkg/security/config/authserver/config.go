@@ -27,6 +27,7 @@ import (
 
 const (
 	OrderAuthorizeSecurityConfigurer  = 0
+	OrderLogoutSecurityConfigurer     = 50
 	OrderClientAuthSecurityConfigurer = 100
 	OrderTokenAuthSecurityConfigurer  = 200
 )
@@ -109,6 +110,7 @@ func ConfigureAuthorizationServer(di initDI) {
 	for _, configuer := range di.Config.idpConfigurers {
 		di.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: di.Config, delegate: configuer})
 	}
+	di.SecurityRegistrar.Register(&LogoutEndpointConfigurer{config: di.Config, delegate: nil})
 
 	// Additional endpoints and other web configurations
 	di.WebRegistrar.WarnDuplicateMiddlewares(true,
@@ -146,18 +148,18 @@ type Endpoints struct {
 type Configuration struct {
 	// configurable items
 	SessionSettingService session.SettingService
-	ClientStore         oauth2.OAuth2ClientStore
-	ClientSecretEncoder passwd.PasswordEncoder
-	Endpoints           Endpoints
-	UserAccountStore    security.AccountStore
-	TenantStore         security.TenantStore
-	ProviderStore       security.ProviderStore
-	UserPasswordEncoder passwd.PasswordEncoder
-	TokenStore          auth.TokenStore
-	JwkStore            jwt.JwkStore
-	IdpManager          idp.IdentityProviderManager
-	Issuer              security.Issuer
-	OpenIDSSOEnabled    bool
+	ClientStore           oauth2.OAuth2ClientStore
+	ClientSecretEncoder   passwd.PasswordEncoder
+	Endpoints             Endpoints
+	UserAccountStore      security.AccountStore
+	TenantStore           security.TenantStore
+	ProviderStore         security.ProviderStore
+	UserPasswordEncoder   passwd.PasswordEncoder
+	TokenStore            auth.TokenStore
+	JwkStore              jwt.JwkStore
+	IdpManager            idp.IdentityProviderManager
+	Issuer                security.Issuer
+	OpenIDSSOEnabled      bool
 
 	// not directly configurable items
 	appContext                *bootstrap.ApplicationContext

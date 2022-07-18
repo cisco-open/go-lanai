@@ -72,6 +72,8 @@ func (f *LogoutFeature) ErrorHandler(errorHandler security.AuthenticationErrorHa
 /*********************************
 	Constructors and Configure
  *********************************/
+
+// Configure security.Feature entrypoint, used for modifying existing configuration in given security.WebSecurity
 func Configure(ws security.WebSecurity) *LogoutFeature {
 	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
@@ -80,7 +82,7 @@ func Configure(ws security.WebSecurity) *LogoutFeature {
 	panic(fmt.Errorf("unable to configure form login: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }
 
-// Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
+// New Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func New() *LogoutFeature {
 	return &LogoutFeature{
 		successUrl: "/login",
