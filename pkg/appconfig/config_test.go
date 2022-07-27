@@ -220,6 +220,77 @@ func TestSettingValueWithSlicePath(t *testing.T) {
 	t.Run("FullMapTestOutOfIndex2", SetValueTest(values, "a.b[0].c[1]", true, true))
 }
 
+func TestConfigBind(t *testing.T) {
+	type fields struct {
+		properties properties
+		isLoaded   bool
+	}
+	type args struct {
+		target interface{}
+		prefix string
+	}
+
+	type testProperties struct {
+		TestInnerProp bool
+	}
+
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		expectedErr error
+		expected    map[string]interface{}
+	}{
+		{
+			name: "Bind Should Err If Config Not Loaded",
+			fields: fields{
+				properties: map[string]interface{}{},
+				isLoaded:   false,
+			},
+			args: args{
+				target: nil,
+				prefix: "",
+			},
+			expectedErr: errBindWithConfigBeforeLoaded,
+			expected:    nil,
+		},
+		{
+			name: "Bind Should Map Properties To Target",
+			fields: fields{
+				properties: map[string]interface{}{
+					"test": testProperties{
+						TestInnerProp: true,
+					},
+				},
+				isLoaded: true,
+			},
+			args: args{
+				target: testProperties{},
+				prefix: "test",
+			},
+			expectedErr: nil,
+			expected:    map[string]interface{}{"TestInnerProp": true},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &config{
+				properties: tt.fields.properties,
+				isLoaded:   tt.fields.isLoaded,
+			}
+
+			g := NewWithT(t)
+			err := c.Bind(&tt.args.target, tt.args.prefix)
+			if tt.expectedErr != nil {
+				g.Expect(err).To(MatchError(tt.expectedErr), "Bind() error = %v, expectedErr = %v", err, tt.expectedErr)
+			} else {
+				g.Expect(err).To(Succeed(), `Bind() with %v should not have returned error`, c)
+				g.Expect(tt.args.target).To(Equal(tt.expected), "Bind() target = %v, expectedResult = %v", tt.args.target, tt.expected)
+			}
+		})
+	}
+}
+
 /*********************
 	SubTests
  *********************/
