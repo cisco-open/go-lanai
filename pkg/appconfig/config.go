@@ -16,6 +16,7 @@ import (
 var (
 	logger = log.New("Config")
 	//ErrNotLoaded = errors.New("Configuration not loaded")
+	errBindWithConfigBeforeLoaded = errors.New("attempt to bind with config before it's loaded")
 )
 
 // properties implements bootstrap.ApplicationConfig
@@ -186,7 +187,7 @@ func (c *config) Value(key string) interface{} {
 
 func (c *config) Bind(target interface{}, prefix string) error {
 	if !c.isLoaded {
-		return fmt.Errorf("attempt to bind with config before it's loaded loaded ")
+		return errBindWithConfigBeforeLoaded
 	}
 	return c.properties.Bind(target, prefix)
 }
