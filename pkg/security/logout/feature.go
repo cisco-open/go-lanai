@@ -13,20 +13,33 @@ import (
 
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutHandler interface {
+	// HandleLogout is the method MW would use to perform logging out actions.
+	// In case of multiple LogoutHandler are registered, implementing class can terminate logout by implementing ConditionalLogoutHandler
 	HandleLogout(context.Context, *http.Request, http.ResponseWriter, security.Authentication) error
+}
+
+// ConditionalLogoutHandler is a supplementary interface for LogoutHandler.
+// It's capable of cancelling/delaying logout process before any LogoutHandler is executed.
+// When non-nil error is returned and logout middleware is configured with an security.AuthenticationEntryPoint,
+// the entry point is used to delay the logout process
+// In case of multiple ConditionalLogoutHandler, returning error by any handler would immediately terminate the process
+type ConditionalLogoutHandler interface {
+	// ShouldLogout returns error if logging out cannot be performed.
+	ShouldLogout(context.Context, *http.Request, http.ResponseWriter, security.Authentication) error
 }
 
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutFeature struct {
 	successHandler security.AuthenticationSuccessHandler
 	errorHandler   security.AuthenticationErrorHandler
+	entryPoint     security.AuthenticationEntryPoint
 	successUrl     string
 	errorUrl       string
 	logoutHandlers []LogoutHandler
 	logoutUrl      string
 }
 
-// Standard security.Feature entrypoint
+// Identifier Standard security.Feature entrypoint
 func (f *LogoutFeature) Identifier() security.FeatureIdentifier {
 	return FeatureId
 }
@@ -66,6 +79,12 @@ func (f *LogoutFeature) SuccessHandler(successHandler security.AuthenticationSuc
 // ErrorHandler overrides ErrorUrl
 func (f *LogoutFeature) ErrorHandler(errorHandler security.AuthenticationErrorHandler) *LogoutFeature {
 	f.errorHandler = errorHandler
+	return f
+}
+
+// EntryPoint is used when ConditionalLogoutHandler decide cancel/delay logout process
+func (f *LogoutFeature) EntryPoint(entryPoint security.AuthenticationEntryPoint) *LogoutFeature {
+	f.entryPoint = entryPoint
 	return f
 }
 

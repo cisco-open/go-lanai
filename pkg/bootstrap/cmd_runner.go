@@ -31,7 +31,7 @@ type CliRunnerLifecycleHooks interface {
 // example runner provider:
 //		func myRunner(di OtherDependencies) CliRunner {
 //			return func(ctx context.Context) error {
-//				// Do your stuff
+//				// DoA your stuff
 //				return err
 //			}
 //		}

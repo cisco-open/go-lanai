@@ -45,7 +45,7 @@ func (c *FormLoginConfigurer) Apply(feature security.Feature, ws security.WebSec
 	}
 
 	if c.configured {
-		logger.WithContext(ws.Context()).Warnf(`attempting to reconfigure login forms for WebSecurity [%v]. ` +
+		logger.WithContext(ws.Context()).Warnf(`attempting to reconfigure login forms for WebSecurity [%v]. `+
 			`Changes will not be applied. If this is expected, please ignore this warning`, ws)
 		return nil
 	}
@@ -81,7 +81,10 @@ func (c *FormLoginConfigurer) validate(f *FormLoginFeature, _ security.WebSecuri
 	}
 
 	if f.successHandler == nil {
-		f.successHandler = request_cache.NewSavedRequestAuthenticationSuccessHandler(redirect.NewRedirectWithRelativePath("/", true))
+		f.successHandler = request_cache.NewSavedRequestAuthenticationSuccessHandler(
+			redirect.NewRedirectWithRelativePath("/", true),
+			security.IsBeingAuthenticated,
+		)
 	}
 
 	if f.loginProcessUrl == "" {
@@ -96,7 +99,7 @@ func (c *FormLoginConfigurer) validate(f *FormLoginFeature, _ security.WebSecuri
 		return fmt.Errorf("mfaUrl is missing for MFA")
 	}
 
-	if f.mfaEnabled &&  f.mfaVerifyUrl == "" {
+	if f.mfaEnabled && f.mfaVerifyUrl == "" {
 		f.mfaVerifyUrl = f.mfaUrl
 	}
 
@@ -119,13 +122,13 @@ func (c *FormLoginConfigurer) configureErrorHandling(f *FormLoginFeature, ws sec
 	if f.mfaEnabled {
 		if _, ok := f.failureHandler.(*MfaAwareAuthenticationErrorHandler); !ok {
 			f.failureHandler = &MfaAwareAuthenticationErrorHandler{
-				delegate: f.failureHandler,
+				delegate:           f.failureHandler,
 				mfaPendingDelegate: mfaErrorRedirect,
 			}
 		}
 
-		entryPoint = &MfaAwareAuthenticationEntryPoint {
-			delegate: entryPoint,
+		entryPoint = &MfaAwareAuthenticationEntryPoint{
+			delegate:           entryPoint,
 			mfaPendingDelegate: redirect.NewRedirectWithURL(f.mfaUrl),
 		}
 	}
@@ -180,7 +183,7 @@ func (c *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws s
 	login := NewFormAuthenticationMiddleware(func(opts *FormAuthMWOptions) {
 		opts.Authenticator = ws.Authenticator()
 		opts.SuccessHandler = c.effectiveSuccessHandler(f, ws)
-		opts.UsernameParam =  f.usernameParam
+		opts.UsernameParam = f.usernameParam
 		opts.PasswordParam = f.passwordParam
 	})
 	mw := middleware.NewBuilder("form login").
@@ -193,7 +196,7 @@ func (c *FormLoginConfigurer) configureLoginProcessing(f *FormLoginFeature, ws s
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(mapping.Post(f.loginProcessUrl).
 		HandlerFunc(security.NoopHandlerFunc()).
-		Name("login process dummy") )
+		Name("login process dummy"))
 
 	return nil
 }
@@ -202,7 +205,7 @@ func (c *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws sec
 
 	// let ws know to intercept additional url
 	routeVerify := matcher.RouteWithURL(f.mfaVerifyUrl, http.MethodPost)
-	routeRefresh :=	matcher.RouteWithURL(f.mfaRefreshUrl, http.MethodPost)
+	routeRefresh := matcher.RouteWithURL(f.mfaRefreshUrl, http.MethodPost)
 	requestMatcher := matcher.RequestWithURL(f.mfaVerifyUrl, http.MethodPost).
 		Or(matcher.RequestWithURL(f.mfaRefreshUrl, http.MethodPost))
 	ws.Route(routeVerify).Route(routeRefresh)
@@ -212,7 +215,7 @@ func (c *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws sec
 	login := NewMfaAuthenticationMiddleware(func(opts *MfaMWOptions) {
 		opts.Authenticator = ws.Authenticator()
 		opts.SuccessHandler = c.effectiveSuccessHandler(f, ws)
-		opts.OtpParam =  f.otpParam
+		opts.OtpParam = f.otpParam
 	})
 
 	verifyMW := middleware.NewBuilder("otp verify").
@@ -230,10 +233,10 @@ func (c *FormLoginConfigurer) configureMfaProcessing(f *FormLoginFeature, ws sec
 	// configure additional endpoint mappings to trigger middleware
 	ws.Add(mapping.Post(f.mfaVerifyUrl).
 		HandlerFunc(security.NoopHandlerFunc()).
-		Name("otp verify dummy") )
+		Name("otp verify dummy"))
 	ws.Add(mapping.Post(f.mfaRefreshUrl).
 		HandlerFunc(security.NoopHandlerFunc()).
-		Name("otp refresh dummy") )
+		Name("otp refresh dummy"))
 
 	// configure access
 	access.Configure(ws).
@@ -254,7 +257,7 @@ func (c *FormLoginConfigurer) configureCSRF(f *FormLoginFeature, ws security.Web
 func (c *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
 	if _, ok := f.successHandler.(*MfaAwareSuccessHandler); f.mfaEnabled && !ok {
 		f.successHandler = &MfaAwareSuccessHandler{
-			delegate: f.successHandler,
+			delegate:           f.successHandler,
 			mfaPendingDelegate: redirect.NewRedirectWithURL(f.mfaUrl),
 		}
 	}

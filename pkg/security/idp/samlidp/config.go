@@ -64,3 +64,14 @@ func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *a
 			AccessDeniedHandler(handler),
 		)
 }
+
+func (c *SamlIdpSecurityConfigurer) ConfigureLogout(ws security.WebSecurity, config *authserver.Configuration) {
+	if !c.props.Enabled {
+		return
+	}
+
+	ws.With(samllogin.NewLogout().
+			Issuer(config.Issuer).
+			ErrorPath(config.Endpoints.Error),
+		)
+}

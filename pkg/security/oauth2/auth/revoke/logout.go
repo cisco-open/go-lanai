@@ -51,7 +51,7 @@ func NewTokenRevokingLogoutHandler(opts...HanlderOptions) *TokenRevokingLogoutHa
 	}
 }
 
-func (h TokenRevokingLogoutHandler) HandleLogout(ctx context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) error  {
+func (h TokenRevokingLogoutHandler) HandleLogout(ctx context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) error {
 	switch r.Method {
 	case http.MethodGet:
 		return h.handleGet(ctx, auth)

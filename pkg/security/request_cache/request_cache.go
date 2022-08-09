@@ -19,7 +19,7 @@ type CachedRequest struct {
 	Method   string
 	URL      *url.URL
 	Header   http.Header
-	Form 	 url.Values
+	Form     url.Values
 	PostForm url.Values
 	Host     string
 }
@@ -62,7 +62,7 @@ func RemoveCachedRequest(ctx *gin.Context) {
 // Implements the web.RequestCacheAccessor interface
 type CachedRequestPreProcessor struct {
 	store session.Store
-	name web.RequestPreProcessorName
+	name  web.RequestPreProcessorName
 }
 
 func newCachedRequestPreProcessor(store session.Store) *CachedRequestPreProcessor {
@@ -116,18 +116,23 @@ func requestMatches(r *http.Request, cached *CachedRequest) bool {
 	return reflect.DeepEqual(r.URL, cached.URL) && r.Host == cached.Host
 }
 
-func NewSavedRequestAuthenticationSuccessHandler(fallback security.AuthenticationSuccessHandler) security.AuthenticationSuccessHandler {
+func NewSavedRequestAuthenticationSuccessHandler(fallback security.AuthenticationSuccessHandler, condition func(from, to security.Authentication) bool) security.AuthenticationSuccessHandler {
+	if condition == nil {
+		condition = security.IsBeingAuthenticated
+	}
 	return &SavedRequestAuthenticationSuccessHandler{
-		fallback: fallback,
+		condition: condition,
+		fallback:  fallback,
 	}
 }
 
 type SavedRequestAuthenticationSuccessHandler struct {
-	fallback security.AuthenticationSuccessHandler
+	condition func(from, to security.Authentication) bool
+	fallback  security.AuthenticationSuccessHandler
 }
 
 func (h *SavedRequestAuthenticationSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
-	if !security.IsBeingAuthenticated(from, to) {
+	if !h.condition(from, to) {
 		return
 	}
 
@@ -135,7 +140,7 @@ func (h *SavedRequestAuthenticationSuccessHandler) HandleAuthenticationSuccess(c
 
 	if cached != nil {
 		http.Redirect(rw, r, cached.URL.RequestURI(), 302)
-		_,_ = rw.Write([]byte{})
+		_, _ = rw.Write([]byte{})
 		return
 	}
 
@@ -143,7 +148,7 @@ func (h *SavedRequestAuthenticationSuccessHandler) HandleAuthenticationSuccess(c
 }
 
 type SaveRequestEntryPoint struct {
-	delegate security.AuthenticationEntryPoint
+	delegate           security.AuthenticationEntryPoint
 	saveRequestMatcher web.RequestMatcher
 }
 
@@ -164,7 +169,7 @@ func NewSaveRequestEntryPoint(delegate security.AuthenticationEntryPoint) *SaveR
 
 func (s *SaveRequestEntryPoint) Commence(c context.Context, r *http.Request, w http.ResponseWriter, e error) {
 	match, err := s.saveRequestMatcher.MatchesWithContext(c, r)
-	if match && err == nil{
+	if match && err == nil {
 		SaveRequest(c)
 	}
 	s.delegate.Commence(c, r, w, e)

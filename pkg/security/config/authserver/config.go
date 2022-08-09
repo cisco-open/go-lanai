@@ -110,7 +110,7 @@ func ConfigureAuthorizationServer(di initDI) {
 	for _, configuer := range di.Config.idpConfigurers {
 		di.SecurityRegistrar.Register(&AuthorizeEndpointConfigurer{config: di.Config, delegate: configuer})
 	}
-	di.SecurityRegistrar.Register(&LogoutEndpointConfigurer{config: di.Config, delegate: nil})
+	di.SecurityRegistrar.Register(&LogoutEndpointConfigurer{config: di.Config, delegates: di.Config.idpConfigurers})
 
 	// Additional endpoints and other web configurations
 	di.WebRegistrar.WarnDuplicateMiddlewares(true,

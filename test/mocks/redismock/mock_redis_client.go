@@ -876,7 +876,7 @@ func (m *MockUniversalClient) Do(arg0 context.Context, arg1 ...interface{}) *red
 	for _, a := range arg1 {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "Do", varargs...)
+	ret := m.ctrl.Call(m, "DoA", varargs...)
 	ret0, _ := ret[0].(*redis.Cmd)
 	return ret0
 }
@@ -885,7 +885,7 @@ func (m *MockUniversalClient) Do(arg0 context.Context, arg1 ...interface{}) *red
 func (mr *MockUniversalClientMockRecorder) Do(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockUniversalClient)(nil).Do), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoA", reflect.TypeOf((*MockUniversalClient)(nil).Do), varargs...)
 }
 
 // Dump mocks base method.

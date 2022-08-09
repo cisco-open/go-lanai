@@ -101,7 +101,7 @@ func SubTestDo() test.GomegaSubTestFunc {
 
 		// verify
 		now := time.Now()
-		g.Expect(now).To(BeTemporally("~", start, TestTimeUnit), "Do should not wait for long lasting tasks")
+		g.Expect(now).To(BeTemporally("~", start, TestTimeUnit), "DoA should not wait for long lasting tasks")
 	}
 }
 

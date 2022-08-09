@@ -38,7 +38,7 @@ type HttpErrorResponse struct {
 }
 
 // HttpError implements error, json.Marshaler, StatusCoder, Headerer
-// Note: Do not use HttpError as a map key, because is is not hashable (it contains http.Header which is a map)
+// Note: DoA not use HttpError as a map key, because is is not hashable (it contains http.Header which is a map)
 type HttpError struct {
 	error
 	SC int

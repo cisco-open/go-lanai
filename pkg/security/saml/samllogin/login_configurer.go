@@ -66,7 +66,7 @@ func (s *SamlAuthConfigurer) effectiveSuccessHandler(f *Feature, ws security.Web
 	}
 }
 
-func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options {
+func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) SPOptions {
 	cert, err := cryptoutils.LoadCert(s.properties.CertificateFile)
 	if err != nil {
 		panic(security.NewInternalError("cannot load certificate from file", err))
@@ -83,7 +83,7 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 	if err != nil {
 		panic(security.NewInternalError("cannot get issuer's base URL", err))
 	}
-	opts := Options{
+	opts := SPOptions{
 		URL:            *rootURL,
 		Key:            key,
 		Certificate:    cert[0],
@@ -96,7 +96,7 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 	return opts
 }
 
-func (s *SamlAuthConfigurer) makeServiceProvider(opts Options) saml.ServiceProvider {
+func (s *SamlAuthConfigurer) makeServiceProvider(opts SPOptions) saml.ServiceProvider {
 	metadataURL := opts.URL.ResolveReference(&url.URL{Path: opts.MetadataPath})
 	acsURL := opts.URL.ResolveReference(&url.URL{Path: opts.ACSPath})
 	sloURL := opts.URL.ResolveReference(&url.URL{Path: opts.SLOPath})
@@ -125,7 +125,7 @@ func (s *SamlAuthConfigurer) makeServiceProvider(opts Options) saml.ServiceProvi
 	return sp
 }
 
-func (s *SamlAuthConfigurer)  makeRequestTracker(opts Options) samlsp.RequestTracker {
+func (s *SamlAuthConfigurer)  makeRequestTracker(opts SPOptions) samlsp.RequestTracker {
 	codec := samlsp.JWTTrackedRequestCodec{
 		SigningMethod: jwt.SigningMethodRS256,
 		Audience:      opts.URL.String(),
@@ -157,7 +157,7 @@ func (s *SamlAuthConfigurer)  makeRequestTracker(opts Options) samlsp.RequestTra
 	return tracker
 }
 
-func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity) *ServiceProviderMiddleware {
+func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity) *SPLoginMiddleware {
 	opts := s.getServiceProviderConfiguration(f)
 	sp := s.makeServiceProvider(opts)
 	tracker := s.makeRequestTracker(opts)
@@ -172,7 +172,7 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 
 	clientManager := NewCacheableIdpClientManager(sp)
 
-	return NewMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
+	return NewLoginMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
 }
 
 func newSamlAuthConfigurer(properties samlctx.SamlProperties, idpManager idp.IdentityProviderManager,

@@ -21,11 +21,20 @@ import (
 )
 
 /***************************
-	addtional abstractions
+	additional abstractions
  ***************************/
 
+// IdpSecurityConfigurer interface for IDPs to implement for customizing "authorize" process
 type IdpSecurityConfigurer interface {
 	Configure(ws security.WebSecurity, config *Configuration)
+}
+
+// IdpLogoutSecurityConfigurer additional interface that IdpSecurityConfigurer could choose to implement for
+// customizing "logout" process
+// Note: IdpLogoutSecurityConfigurer is only invoked once per instance, the given security.WebSecurity are shared
+//       between IDPs. Therefore, implementing class should not change Route or Condition on the given "ws"
+type IdpLogoutSecurityConfigurer interface {
+	ConfigureLogout(ws security.WebSecurity, config *Configuration)
 }
 
 /***************************
@@ -117,28 +126,13 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			MetadataPath(c.config.Endpoints.SamlMetadata))
 
 	c.delegate.Configure(ws, c.config)
-
-	// Logout Handler
-	// Note: we disable default logout handler here because we don't want to unauthenticate user when PUT or DELETE is used
-	//logoutHandler := revoke.NewTokenRevokingLogoutHandler(func(opt *revoke.HanlderOption) {
-	//	opt.Revoker = c.config.accessRevoker()
-	//})
-	//logoutSuccessHandler := revoke.NewTokenRevokeSuccessHandler(func(opt *revoke.SuccessOption) {
-	//	opt.ClientStore = c.config.ClientStore
-	//	opt.WhitelabelErrorPath = c.config.Endpoints.Error
-	//	opt.RedirectWhitelist = utils.NewStringSet(c.config.properties.RedirectWhitelist...)
-	//})
-	//logout.Configure(ws).
-	//	LogoutUrl(c.config.Endpoints.Logout).
-	//	LogoutHandlers(logoutHandler).
-	//	SuccessHandler(logoutSuccessHandler)
 }
 
 // LogoutEndpointConfigurer implements security.Configurer and order.Ordered
 // responsible to configure "logout" endpoint
 type LogoutEndpointConfigurer struct {
-	config   *Configuration
-	delegate IdpSecurityConfigurer
+	config    *Configuration
+	delegates []IdpSecurityConfigurer
 }
 
 func (c *LogoutEndpointConfigurer) Order() int {
@@ -175,5 +169,9 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 			SuccessHandler(logoutSuccessHandler),
 		)
 
-	//c.delegate.Configure(ws, c.config)
+	for _, configurer := range c.delegates {
+		if lc, ok := configurer.(IdpLogoutSecurityConfigurer); ok {
+			lc.ConfigureLogout(ws, c.config)
+		}
+	}
 }

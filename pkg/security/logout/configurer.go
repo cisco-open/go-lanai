@@ -3,6 +3,7 @@ package logout
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
@@ -43,11 +44,13 @@ func (c *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecuri
 
 	// configure middlewares
 	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
+	order.SortStable(f.logoutHandlers, order.OrderedFirstCompare)
 	logout := NewLogoutMiddleware(
 		c.effectiveSuccessHandler(f, ws),
 		c.effectiveErrorHandler(f, ws),
+		f.entryPoint,
 		f.logoutHandlers...)
-	mw := middleware.NewBuilder("form logout").
+	mw := middleware.NewBuilder("logout").
 		ApplyTo(route).
 		Order(security.MWOrderFormLogout).
 		Use(logout.LogoutHandlerFunc())

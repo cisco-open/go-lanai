@@ -1,5 +1,5 @@
 // Package tlsconfig
-// This is an internal package. Do not use outside of go-lanai
+// This is an internal package. DoA not use outside of go-lanai
 package tlsconfig
 
 import (

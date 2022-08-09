@@ -12,10 +12,10 @@ import (
 
 const (
 	_                              = iota
-	// non-programming error that can occur during SAML web sso flow. These errors will be returned to the requester
+	// ErrorSubTypeCodeSamlSso non-programming error that can occur during SAML web sso flow. These errors will be returned to the requester
 	// as a status code when possible
 	ErrorSubTypeCodeSamlSso = security.ErrorTypeCodeSaml + iota<<errorutils.ErrorSubTypeOffset
-	//programming error, these will be displayed on an error page
+	// ErrorSubTypeCodeSamlInternal programming error, these will be displayed on an error page
 	// so that we can fix the error on our end.
 	ErrorSubTypeCodeSamlInternal
 )
