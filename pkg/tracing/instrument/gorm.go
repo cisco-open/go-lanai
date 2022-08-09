@@ -12,7 +12,7 @@ import (
 
 const (
 	gormCallbackPrefix = "lanai:"
-	gormPluginName = gormCallbackPrefix + "tracing"
+	gormPluginName     = gormCallbackPrefix + "tracing"
 )
 
 const (

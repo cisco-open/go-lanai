@@ -19,9 +19,10 @@ const (
 )
 
 type copyistCK struct{}
+
 var (
-	ctxKeyCopyistCloser   = copyistCK{}
-	regOnce = sync.Once{}
+	ctxKeyCopyistCloser = copyistCK{}
+	regOnce             = sync.Once{}
 )
 
 const (

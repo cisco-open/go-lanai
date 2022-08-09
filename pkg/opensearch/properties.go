@@ -3,7 +3,6 @@ package opensearch
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"embed"
-	"github.com/opensearch-project/opensearch-go"
 	"github.com/pkg/errors"
 )
 
@@ -29,18 +28,10 @@ func NewOpenSearchProperties() *Properties {
 	}
 }
 
-func BindOpenSearchProperties(ctx *bootstrap.ApplicationContext) Properties {
+func BindOpenSearchProperties(ctx *bootstrap.ApplicationContext) *Properties {
 	props := NewOpenSearchProperties()
 	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind OpenSearchProperties"))
 	}
-	return *props
-}
-
-func (c Properties) GetConfig() opensearch.Config {
-	return opensearch.Config{
-		Addresses: c.Addresses,
-		Username:  c.Username,
-		Password:  c.Password,
-	}
+	return props
 }
