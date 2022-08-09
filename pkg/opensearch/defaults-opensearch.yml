@@ -1,0 +1,6 @@
+data:
+  opensearch:
+    addresses:
+      - "http://localhost:9200"
+    username: "admin"
+    password: "admin"
