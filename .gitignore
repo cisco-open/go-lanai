@@ -27,3 +27,6 @@ vendor/
 
 # Sonar Scanner
 .scannerwork
+
+# GoLand
+.idea/
