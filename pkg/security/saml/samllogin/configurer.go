@@ -16,7 +16,7 @@ import (
 	"fmt"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	dsig "github.com/russellhaering/goxmldsig"
 	"net/http"
 	"net/url"
@@ -50,7 +50,7 @@ func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecu
 
 	requestMatcher := matcher.RequestWithPattern(f.acsPath).Or(matcher.RequestWithPattern(f.metadataPath))
 	access.Configure(ws).
-	Request(requestMatcher).WithOrder(order.Highest).PermitAll()
+		Request(requestMatcher).WithOrder(order.Highest).PermitAll()
 
 	//authentication entry point
 	errorhandling.Configure(ws).
@@ -84,13 +84,13 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 		panic(security.NewInternalError("cannot get issuer's base URL", err))
 	}
 	opts := Options{
-		URL:            *rootURL,
-		Key:            key,
-		Certificate:    cert[0],
-		ACSPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.acsPath),
-		MetadataPath:   fmt.Sprintf("%s%s", rootURL.Path, f.metadataPath),
-		SLOPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.sloPath),
-		SignRequest: true,
+		URL:          *rootURL,
+		Key:          key,
+		Certificate:  cert[0],
+		ACSPath:      fmt.Sprintf("%s%s", rootURL.Path, f.acsPath),
+		MetadataPath: fmt.Sprintf("%s%s", rootURL.Path, f.metadataPath),
+		SLOPath:      fmt.Sprintf("%s%s", rootURL.Path, f.sloPath),
+		SignRequest:  true,
 		NameIdFormat: s.properties.NameIDFormat,
 	}
 	return opts
@@ -125,7 +125,7 @@ func (s *SamlAuthConfigurer) makeServiceProvider(opts Options) saml.ServiceProvi
 	return sp
 }
 
-func (s *SamlAuthConfigurer)  makeRequestTracker(opts Options) samlsp.RequestTracker {
+func (s *SamlAuthConfigurer) makeRequestTracker(opts Options) samlsp.RequestTracker {
 	codec := samlsp.JWTTrackedRequestCodec{
 		SigningMethod: jwt.SigningMethodRS256,
 		Audience:      opts.URL.String(),
@@ -147,12 +147,12 @@ func (s *SamlAuthConfigurer)  makeRequestTracker(opts Options) samlsp.RequestTra
 	}
 
 	tracker := CookieRequestTracker{
-		NamePrefix:      "saml_",
-		Codec:           codec,
-		MaxAge:          saml.MaxIssueDelay,
-		SameSite: 		 sameSite,
-		Secure: 		 secure,
-		Path:			 opts.ACSPath,
+		NamePrefix: "saml_",
+		Codec:      codec,
+		MaxAge:     saml.MaxIssueDelay,
+		SameSite:   sameSite,
+		Secure:     secure,
+		Path:       opts.ACSPath,
 	}
 	return tracker
 }
@@ -167,7 +167,7 @@ func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity)
 
 	authenticator := &Authenticator{
 		accountStore: s.accountStore,
-		idpManager: s.samlIdpManager,
+		idpManager:   s.samlIdpManager,
 	}
 
 	clientManager := NewCacheableIdpClientManager(sp)
