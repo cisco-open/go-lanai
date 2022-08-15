@@ -4,21 +4,27 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	appconfigInit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
+	"embed"
 	"go.uber.org/fx"
 )
 
 var logger = log.New("vault")
 
-var Module = &bootstrap.Module {
-	Name: "vault",
+//go:embed defaults-vault.yml
+var defaultConfigFS embed.FS
+
+var Module = &bootstrap.Module{
+	Name:       "vault",
 	Precedence: bootstrap.VaultPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(newConnectionProperties, vault.NewClient),
 	},
 	Options: []fx.Option{
+		appconfigInit.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Invoke(setupRenewal, registerHealth),
 	},
 }

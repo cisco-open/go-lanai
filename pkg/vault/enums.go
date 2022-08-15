@@ -6,20 +6,23 @@ type AuthMethod int
 
 const (
 	Token AuthMethod = iota
+	Kubernetes
 )
 
 const (
-	TokenText   = "TOKEN"
+	TokenText      = "TOKEN"
+	KubernetesText = "KUBERNETES"
 )
-
 
 var (
 	authMethodAtoI = map[string]AuthMethod{
-		strings.ToUpper(TokenText):   Token,
+		strings.ToUpper(TokenText):      Token,
+		strings.ToUpper(KubernetesText): Kubernetes,
 	}
 
 	authMethodItoA = map[AuthMethod]string{
-		Token:   TokenText,
+		Token:      TokenText,
+		Kubernetes: KubernetesText,
 	}
 )
 
