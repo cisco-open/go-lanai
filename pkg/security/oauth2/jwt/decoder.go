@@ -29,10 +29,7 @@ type RSJwtDecoder struct {
 }
 
 func NewRS256JwtDecoder(jwkStore JwkStore, defaultJwkName string) *RSJwtDecoder {
-	parser := &jwt.Parser{
-		UseJSONNumber:        false,
-		SkipClaimsValidation: true,
-	}
+	parser := jwt.NewParser(jwt.WithoutClaimsValidation(), jwt.WithValidMethods([]string{"RS256"}))
 	return &RSJwtDecoder{
 		jwkName:  defaultJwkName,
 		jwkStore: jwkStore,
@@ -89,10 +86,7 @@ type PlaintextJwtDecoder struct {
 }
 
 func NewPlaintextJwtDecoder() *PlaintextJwtDecoder {
-	parser := &jwt.Parser{
-		UseJSONNumber:        false,
-		SkipClaimsValidation: true,
-	}
+	parser := jwt.NewParser(jwt.WithoutClaimsValidation(), jwt.WithValidMethods([]string{"none"}))
 	return &PlaintextJwtDecoder{
 		parser: parser,
 	}
