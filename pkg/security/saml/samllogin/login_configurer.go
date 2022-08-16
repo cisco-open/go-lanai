@@ -4,36 +4,22 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"fmt"
-	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/samlsp"
-	"github.com/dgrijalva/jwt-go"
-	dsig "github.com/russellhaering/goxmldsig"
-	"net/http"
-	"net/url"
 )
 
 type SamlAuthConfigurer struct {
-	properties     samlctx.SamlProperties
-	idpManager     idp.IdentityProviderManager
-	samlIdpManager SamlIdentityProviderManager
-	serverProps    web.ServerProperties
+	*samlConfigurer
 	accountStore   security.FederatedAccountStore
 }
 
-func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
+func (c *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
 	f := feature.(*Feature)
 
-	m := s.makeMiddleware(f, ws)
+	m := c.makeMiddleware(f, ws)
 
 	ws.Route(matcher.RouteWithPattern(f.acsPath)).
 		Route(matcher.RouteWithPattern(f.metadataPath)).
@@ -58,129 +44,27 @@ func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	return nil
 }
 
-func (s *SamlAuthConfigurer) effectiveSuccessHandler(f *Feature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
-	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
-		return security.NewAuthenticationSuccessHandler(globalHandler, f.successHandler)
-	} else {
-		return security.NewAuthenticationSuccessHandler(f.successHandler)
-	}
-}
-
-func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) SPOptions {
-	cert, err := cryptoutils.LoadCert(s.properties.CertificateFile)
-	if err != nil {
-		panic(security.NewInternalError("cannot load certificate from file", err))
-	}
-	if len(cert) > 1 {
-		logger.Warnf("multiple certificate found, using first one")
-	}
-
-	key, err := cryptoutils.LoadPrivateKey(s.properties.KeyFile, s.properties.KeyPassword)
-	if err != nil {
-		panic(security.NewInternalError("cannot load private key from file", err))
-	}
-	rootURL, err := f.issuer.BuildUrl()
-	if err != nil {
-		panic(security.NewInternalError("cannot get issuer's base URL", err))
-	}
-	opts := SPOptions{
-		URL:            *rootURL,
-		Key:            key,
-		Certificate:    cert[0],
-		ACSPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.acsPath),
-		MetadataPath:   fmt.Sprintf("%s%s", rootURL.Path, f.metadataPath),
-		SLOPath: 		fmt.Sprintf("%s%s", rootURL.Path, f.sloPath),
-		SignRequest: true,
-		NameIdFormat: s.properties.NameIDFormat,
-	}
-	return opts
-}
-
-func (s *SamlAuthConfigurer) makeServiceProvider(opts SPOptions) saml.ServiceProvider {
-	metadataURL := opts.URL.ResolveReference(&url.URL{Path: opts.MetadataPath})
-	acsURL := opts.URL.ResolveReference(&url.URL{Path: opts.ACSPath})
-	sloURL := opts.URL.ResolveReference(&url.URL{Path: opts.SLOPath})
-
-	var forceAuthn *bool
-	if opts.ForceAuthn {
-		forceAuthn = &opts.ForceAuthn
-	}
-	signatureMethod := dsig.RSASHA1SignatureMethod
-	if !opts.SignRequest {
-		signatureMethod = ""
-	}
-
-	sp := saml.ServiceProvider{
-		Key:               opts.Key,
-		Certificate:       opts.Certificate,
-		Intermediates:     opts.Intermediates,
-		MetadataURL:       *metadataURL,
-		AcsURL:            *acsURL,
-		SloURL:            *sloURL,
-		ForceAuthn:        forceAuthn,
-		SignatureMethod:   signatureMethod,
-		AllowIDPInitiated: opts.AllowIDPInitiated,
-		AuthnNameIDFormat: saml.NameIDFormat(opts.NameIdFormat),
-	}
-	return sp
-}
-
-func (s *SamlAuthConfigurer)  makeRequestTracker(opts SPOptions) samlsp.RequestTracker {
-	codec := samlsp.JWTTrackedRequestCodec{
-		SigningMethod: jwt.SigningMethodRS256,
-		Audience:      opts.URL.String(),
-		Issuer:        opts.URL.String(),
-		MaxAge:        saml.MaxIssueDelay,
-		Key:           opts.Key,
-	}
-
-	//we want to set sameSite to none, which requires scheme to be https
-	//otherwise we fallback to default mode, which on modern browsers is lax.
-	//cross site functionality is limited in lax mode. the cookie will only be
-	//sent cross site within 2 minutes of its creation.
-	//so with none + https, we make sure production work as expected. and the fallback
-	//provides limited support for development environment.
-	secure := opts.URL.Scheme == "https"
-	sameSite := http.SameSiteDefaultMode
-	if secure {
-		sameSite = http.SameSiteNoneMode
-	}
-
-	tracker := CookieRequestTracker{
-		NamePrefix:      "saml_",
-		Codec:           codec,
-		MaxAge:          saml.MaxIssueDelay,
-		SameSite: 		 sameSite,
-		Secure: 		 secure,
-		Path:			 opts.ACSPath,
-	}
-	return tracker
-}
-
-func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity) *SPLoginMiddleware {
-	opts := s.getServiceProviderConfiguration(f)
-	sp := s.makeServiceProvider(opts)
-	tracker := s.makeRequestTracker(opts)
+func (c *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity) *SPLoginMiddleware {
+	opts := c.getServiceProviderConfiguration(f)
+	sp := c.sharedServiceProvider(opts)
+	clientManager := c.sharedClientManager(opts)
+	tracker := c.sharedRequestTracker(opts)
 	if f.successHandler == nil {
 		f.successHandler = NewTrackedRequestSuccessHandler(tracker)
 	}
 
 	authenticator := &Authenticator{
-		accountStore: s.accountStore,
-		idpManager: s.samlIdpManager,
+		accountStore: c.accountStore,
+		idpManager:   c.samlIdpManager,
 	}
 
-	clientManager := NewCacheableIdpClientManager(sp)
 
-	return NewLoginMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
+	return NewLoginMiddleware(sp, tracker, c.idpManager, clientManager, c.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
 }
 
-func newSamlAuthConfigurer(properties samlctx.SamlProperties, idpManager idp.IdentityProviderManager,
-	accountStore security.FederatedAccountStore) *SamlAuthConfigurer {
+func newSamlAuthConfigurer(shared *samlConfigurer, accountStore security.FederatedAccountStore) *SamlAuthConfigurer {
 	return &SamlAuthConfigurer{
-		properties:     properties,
-		idpManager:     idpManager,
-		samlIdpManager: idpManager.(SamlIdentityProviderManager),
+		samlConfigurer: shared,
 		accountStore:   accountStore,
 	}
 }

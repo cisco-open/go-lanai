@@ -2,17 +2,17 @@ package samllogin
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 )
 
 type SamlLogoutConfigurer struct {
-	SamlAuthConfigurer
+	*samlConfigurer
 }
 
 func (c *SamlLogoutConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
@@ -30,21 +30,27 @@ func (c *SamlLogoutConfigurer) Apply(feature security.Feature, ws security.WebSe
 	// Add some additional endpoints.
 	// Note: those endpoints are available regardless what auth method is used, so no condition is applied
 	// TODO make it configurable
-	ws.Route(matcher.RouteWithPattern("/v2/logout/saml/slo")).
-		Route(matcher.RouteWithPattern("/v2/logout/saml/slo/callback")).
+	ws.Route(matcher.RouteWithPattern(f.sloPath)).
 		Route(matcher.RouteWithPattern("/v2/logout/saml/slo/dummy")).
-		Add(mapping.Get("/v2/logout/saml/slo").
+		Add(mapping.Get(f.sloPath).
 			HandlerFunc(m.LogoutRequestHandlerFunc()).
 			Name("saml slo as sp").Build(),
 		).
-		Add(mapping.Get("/v2/logout/saml/slo/callback").
+		Add(mapping.Post(f.sloPath).
 			HandlerFunc(m.LogoutResponseHandlerFunc()).
-			Name("saml slo callback as sp").Build(),
+			Name("saml slo callback as sp"),
 		).
 		Add(mapping.Get("/v2/logout/saml/slo/dummy").
 			HandlerFunc(m.DummySLOHandlerFunc()).
 			Name("dummy saml slo as sp").Build(),
+		).
+		Add(middleware.NewBuilder("saml idp metadata refresh").
+			Order(security.MWOrderSAMLMetadataRefresh).
+			Use(m.RefreshMetadataHandler()),
 		)
+
+	csrf.Configure(ws).
+		IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(f.sloPath))
 
 	// TODO In case SLO endpoints are invoked when there is no active authenticated session, security would entry point
 	// 		to handle this error. We need to configure it properly
@@ -61,7 +67,9 @@ func (c *SamlLogoutConfigurer) makeLogoutHandler(f *Feature, ws security.WebSecu
 func (c *SamlLogoutConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity) *SPLogoutMiddleware {
 	// TODO revise this part
 	opts := c.getServiceProviderConfiguration(f)
-	sp := c.makeServiceProvider(opts)
+	sp := c.sharedServiceProvider(opts)
+	clientManager := c.sharedClientManager(opts)
+	tracker := c.sharedRequestTracker(opts)
 	if f.successHandler == nil {
 		f.successHandler = request_cache.NewSavedRequestAuthenticationSuccessHandler(
 			redirect.NewRedirectWithURL("/"),
@@ -70,19 +78,12 @@ func (c *SamlLogoutConfigurer) makeMiddleware(f *Feature, ws security.WebSecurit
 			},
 		)
 	}
-	clientManager := NewCacheableIdpClientManager(sp)
 
-	return NewLogoutMiddleware(sp, c.idpManager, clientManager, c.effectiveSuccessHandler(f, ws), f.errorPath)
+	return NewLogoutMiddleware(sp, c.idpManager, clientManager, tracker, c.effectiveSuccessHandler(f, ws), f.errorPath)
 }
 
-func newSamlLogoutConfigurer(properties samlctx.SamlProperties, idpManager idp.IdentityProviderManager,
-	accountStore security.FederatedAccountStore) *SamlLogoutConfigurer {
+func newSamlLogoutConfigurer(shared *samlConfigurer) *SamlLogoutConfigurer {
 	return &SamlLogoutConfigurer{
-		SamlAuthConfigurer: SamlAuthConfigurer{
-			properties:     properties,
-			idpManager:     idpManager,
-			samlIdpManager: idpManager.(SamlIdentityProviderManager),
-			accountStore:   accountStore,
-		},
+		samlConfigurer: shared,
 	}
 }

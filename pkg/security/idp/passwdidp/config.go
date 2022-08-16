@@ -97,8 +97,7 @@ func (c *PasswordIdpSecurityConfigurer) Configure(ws security.WebSecurity, confi
 			AccessDeniedHandler(handler),
 		).
 		With(csrf.New().
-			IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(config.Endpoints.Authorize.Location.Path)).
-			IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(config.Endpoints.Logout)),
+			IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(config.Endpoints.Authorize.Location.Path)),
 		).
 		With(request_cache.New())
 }

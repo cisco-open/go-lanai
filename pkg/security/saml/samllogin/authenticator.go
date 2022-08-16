@@ -7,7 +7,7 @@ import (
 )
 
 type AssertionCandidate struct {
-	Assertion *saml.Assertion
+	Assertion  *saml.Assertion
 	DetailsMap map[string]interface{}
 }
 
@@ -27,28 +27,27 @@ func (a *AssertionCandidate) Details() interface{} {
 }
 
 type samlAssertionAuthentication struct {
-	Acct       security.Account
+	Account    security.Account
+	Assertion  *saml.Assertion
 	Perms      map[string]interface{}
 	DetailsMap map[string]interface{}
 }
 
 func (sa *samlAssertionAuthentication) Principal() interface{} {
-	return sa.Acct
+	return sa.Account
 }
 
-func (sa *samlAssertionAuthentication)  Permissions() security.Permissions {
+func (sa *samlAssertionAuthentication) Permissions() security.Permissions {
 	return sa.Perms
 }
 
-func (sa *samlAssertionAuthentication)  State() security.AuthenticationState {
+func (sa *samlAssertionAuthentication) State() security.AuthenticationState {
 	return security.StateAuthenticated
 }
 
-func (sa *samlAssertionAuthentication)  Details() interface{} {
+func (sa *samlAssertionAuthentication) Details() interface{} {
 	return sa.DetailsMap
 }
-
-
 
 type Authenticator struct {
 	accountStore security.FederatedAccountStore
@@ -81,7 +80,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 	}
 
 	permissions := map[string]interface{}{}
-	for _,p := range user.Permissions() {
+	for _, p := range user.Permissions() {
 		permissions[p] = true
 	}
 
@@ -93,8 +92,9 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 	details[security.DetailsKeyAuthMethod] = security.AuthMethodExternalSaml
 
 	auth := &samlAssertionAuthentication{
-		Acct: user,
-		Perms: permissions,
+		Account:    user,
+		Assertion:  assertionCandidate.Assertion,
+		Perms:      permissions,
 		DetailsMap: details,
 	}
 	return auth, nil

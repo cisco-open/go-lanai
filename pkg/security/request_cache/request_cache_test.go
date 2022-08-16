@@ -112,7 +112,7 @@ func TestSavedRequestAuthenticationSuccessHandler_HandleAuthenticationSuccess(t 
 	mockTo := authmock.NewMockAuthentication(ctrl)
 	mockTo.EXPECT().State().Return(security.StateAuthenticated)
 
-	handler := NewSavedRequestAuthenticationSuccessHandler(nil)
+	handler := NewSavedRequestAuthenticationSuccessHandler(nil, nil)
 
 	handler.HandleAuthenticationSuccess(c, c.Request, c.Writer, mockFrom, mockTo)
 

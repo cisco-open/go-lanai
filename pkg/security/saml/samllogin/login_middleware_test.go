@@ -27,7 +27,7 @@ func TestMetadataEndpoint(t *testing.T) {
 	serverProp := web.NewServerProperties()
 	serverProp.ContextPath = "europa"
 
-	c := newSamlAuthConfigurer(*prop, newTestIdpManager(), newTestFedAccountStore())
+	c := newSamlAuthConfigurer(newSamlConfigurer(*prop, newTestIdpManager()), newTestFedAccountStore())
 	feature := New()
 	feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 		*opt =security.DefaultIssuerDetails{
@@ -89,7 +89,7 @@ func TestSamlEntryPoint(t *testing.T) {
 			serverProp := web.NewServerProperties()
 			serverProp.ContextPath = "europa"
 
-			c := newSamlAuthConfigurer(tt.samlProperties, newTestIdpManager(), newTestFedAccountStore())
+			c := newSamlAuthConfigurer(newSamlConfigurer(tt.samlProperties, newTestIdpManager()), newTestFedAccountStore())
 			feature := New()
 			feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 				*opt =security.DefaultIssuerDetails{

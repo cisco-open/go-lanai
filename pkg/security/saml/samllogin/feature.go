@@ -8,12 +8,11 @@ var (
 )
 
 type Feature struct {
-	id           security.FeatureIdentifier
-	metadataPath string
-	acsPath      string
-	sloPath      string
-	//The path to send the user to when authentication error is encountered
-	errorPath      string
+	id             security.FeatureIdentifier
+	metadataPath   string
+	acsPath        string
+	sloPath        string
+	errorPath      string //The path to send the user to when authentication error is encountered
 	successHandler security.AuthenticationSuccessHandler
 	issuer         security.Issuer
 }
