@@ -3,6 +3,7 @@ package opensearch
 import (
 	"bytes"
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"encoding/json"
 	"fmt"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
@@ -65,16 +66,25 @@ func (c *RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o
 }
 
 func (c *OpenClientImpl) Search(ctx context.Context, o ...Option[opensearchapi.SearchRequest]) (*opensearchapi.Response, error) {
-	before, after := c.GetHooks()
-	defer after.Run(HookContext{ctx, CmdSearch})
-	before.Run(HookContext{ctx, CmdSearch})
 	options := make([]func(request *opensearchapi.SearchRequest), len(o))
 	for i, v := range o {
 		options[i] = v
 	}
+
+	order.SortStable(c.beforeHook, order.OrderedFirstCompare)
+	for _, hook := range c.beforeHook {
+		ctx = hook.Before(ctx, BeforeContext{cmd: CmdSearch, Options: &options})
+	}
+
 	//nolint:makezero
 	options = append(options, Search.WithContext(ctx))
-	return c.client.API.Search(options...)
+	resp, err := c.client.API.Search(options...)
+
+	for _, hook := range c.afterHook {
+		ctx = hook.After(ctx, AfterContext{cmd: CmdSearch, Options: &options, Resp: resp, Err: &err})
+	}
+
+	return resp, err
 }
 
 // searchExt can be extended

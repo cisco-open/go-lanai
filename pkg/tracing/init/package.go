@@ -17,7 +17,7 @@ import (
 var logger = log.New("Tracing")
 
 var Module = &bootstrap.Module{
-	Name: "Tracing",
+	Name:       "Tracing",
 	Precedence: bootstrap.TracingPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(tracing.BindTracingProperties),
@@ -27,6 +27,7 @@ var Module = &bootstrap.Module{
 		fx.Provide(instrument.HttpClientTracingProvider()),
 		fx.Provide(instrument.SecurityScopeTracingProvider()),
 		fx.Provide(instrument.KafkaTracingTracingProvider()),
+		fx.Provide(instrument.OpenSearchTracingProvider),
 		fx.Invoke(initialize),
 	},
 }
@@ -72,6 +73,7 @@ type tracerOut struct {
 	Tracer opentracing.Tracer
 	FxHook TracerClosingHook
 }
+
 func provideTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingProperties) (ret tracerOut) {
 	ret = tracerOut{
 		Tracer: opentracing.NoopTracer{},
@@ -161,4 +163,3 @@ func initialize(lc fx.Lifecycle, di regDI) {
 		lc.Append(fx.Hook(defaultTracerCloser))
 	}
 }
-

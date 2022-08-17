@@ -6,6 +6,34 @@ import (
 	"strings"
 )
 
+// RemoveStable will remove an element from the slice and keep its order. This
+// operation can be potentially costly depending on how large the slice is since
+// it needs to shift all elements that appear after index i over by 1.
+//
+// This function will automatically type itself using type inference.
+//
+// If the given index is not within the bounds of the slice, then the function will
+// panic
+func RemoveStable[T any](slice []T, index int) []T {
+	if index < 0 || index >= len(slice) {
+		panic("invalid slice index")
+	}
+	return append(slice[:index], slice[index+1:]...)
+}
+
+// Remove will not keep the ordering of the slice. It has a very fast operation.
+// This function will automatically type itself using type inference
+// 	intSlice := []int{1, 2, 3, 4}
+// 	intSlice = Remove(intSlice, 1)
+//  // result: {1, 4, 3}
+func Remove[T any](slice []T, index int) []T {
+	if index < 0 || index >= len(slice) {
+		panic("invalid slice index")
+	}
+	slice[index] = slice[len(slice)-1]
+	return slice[:len(slice)-1]
+}
+
 // ConvertSlice attempt to convert []interface{} to []elementType using the first element's type.
 // if given slice is empty, or any elements is not the same type of first one, same slice is returned
 func ConvertSlice(slice []interface{}) interface{} {
