@@ -10,22 +10,20 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/xml"
-	"fmt"
 	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 const (
 	SLOInitiated SLOState = 1 << iota
-	SLOFullyCompleted
-	SLOPartiallyCompleted
-	SLOCompleted
+	SLOCompletedFully
+	SLOCompletedPartially
+	SLOFailed
+	SLOCompleted = SLOCompletedFully | SLOCompletedPartially
 )
 
 type SLOState int
@@ -46,7 +44,6 @@ type SPLogoutMiddleware struct {
 	SPMetadataMiddleware
 	// TODO clean up this
 	bindings           []string // supported SLO bindings, can be saml.HTTPPostBinding or saml.HTTPRedirectBinding. Order indicates preference
-	requestTracker     samlsp.RequestTracker
 	successHandler     security.AuthenticationSuccessHandler
 	fallbackEntryPoint security.AuthenticationEntryPoint
 	//authenticator security.Authenticator
@@ -55,7 +52,6 @@ type SPLogoutMiddleware struct {
 func NewLogoutMiddleware(sp saml.ServiceProvider,
 	idpManager idp.IdentityProviderManager,
 	clientManager *CacheableIdpClientManager,
-	requestTracker samlsp.RequestTracker,
 	successHandler security.AuthenticationSuccessHandler,
 	errorPath string) *SPLogoutMiddleware {
 
@@ -67,7 +63,6 @@ func NewLogoutMiddleware(sp saml.ServiceProvider,
 			clientManager: clientManager,
 		},
 		bindings:           []string{saml.HTTPRedirectBinding, saml.HTTPPostBinding},
-		requestTracker:     requestTracker,
 		successHandler:     successHandler,
 		fallbackEntryPoint: redirect.NewRedirectWithURL(errorPath),
 	}
@@ -90,29 +85,24 @@ func (m *SPLogoutMiddleware) MakeSingleLogoutRequest(ctx context.Context, r *htt
 
 	// create and send SLO request.
 	nameId, format := m.resolveNameId(ctx)
-	// Note: MakeLogoutRequest doesn't handle Redirect properly as of crewjam/saml, we wrap it with a temporary fix
+	// Note 1: MakeLogoutRequest doesn't handle Redirect properly as of crewjam/saml, we wrap it with a temporary fix
+	// Note 2: SLO specs don't requires RelayState
 	sloReq, e := MakeFixedLogoutRequest(client, location, nameId)
 	if e != nil {
 		return security.NewExternalSamlAuthenticationError("cannot make SLO request to binding location", e)
 	}
 	sloReq.NameID.Format = format
 
-	relayState, e := m.requestTracker.TrackRequest(w, r, sloReq.ID)
-	if e != nil {
-		return security.NewExternalSamlAuthenticationError("cannot track saml SLO request", e)
-	}
-
 	switch binding {
 	case saml.HTTPRedirectBinding:
-		if e := m.redirectBindingExecutor(sloReq, relayState, client)(w, r); e != nil {
+		if e := m.redirectBindingExecutor(sloReq, "", client)(w, r); e != nil {
 			return security.NewExternalSamlAuthenticationError("cannot make SLO request with HTTP redirect binding", e)
 		}
 	case saml.HTTPPostBinding:
-		if e := m.postBindingExecutor(sloReq, relayState)(w, r); e != nil {
+		if e := m.postBindingExecutor(sloReq, "")(w, r); e != nil {
 			return security.NewExternalSamlAuthenticationError("cannot post SLO request", e)
 		}
 	}
-
 	return nil
 }
 
@@ -133,14 +123,18 @@ func (m *SPLogoutMiddleware) LogoutRequestHandlerFunc() gin.HandlerFunc {
 // We need to continue our internal logout process
 func (m *SPLogoutMiddleware) LogoutResponseHandlerFunc() gin.HandlerFunc {
 	return func(gc *gin.Context) {
-		encoded := gc.PostForm("SAMLResponse")
+		var encoded string
+		var isRedirect bool
+		if encoded, isRedirect = gc.GetQuery("SAMLResponse"); len(encoded) == 0 {
+			encoded = gc.PostForm("SAMLResponse")
+		}
+
 		decoded, e := base64.StdEncoding.DecodeString(encoded)
 		if e != nil {
 			m.handleError(gc, security.NewExternalSamlAuthenticationError("cannot parse logout response body", e))
 			return
 		}
 
-		// TODO
 		// do some validation first before we decrypt
 		resp := saml.LogoutResponse{}
 		if e := xml.Unmarshal(decoded, &resp); e != nil {
@@ -148,49 +142,26 @@ func (m *SPLogoutMiddleware) LogoutResponseHandlerFunc() gin.HandlerFunc {
 			return
 		}
 
-		_, ok := m.clientManager.GetClientByEntityId(resp.Issuer.Value)
+		client, ok := m.clientManager.GetClientByEntityId(resp.Issuer.Value)
 		if !ok {
 			m.handleError(gc, security.NewExternalSamlAuthenticationError("cannot find idp metadata corresponding for logout response"))
 			return
 		}
 
-		var possibleRequestIDs []string
-		if m.internal.AllowIDPInitiated {
-			possibleRequestIDs = append(possibleRequestIDs, "")
+		// perform validate, handle if success
+		if isRedirect {
+			e = client.ValidateLogoutResponseRedirect(encoded)
+		} else {
+			e = client.ValidateLogoutResponseForm(encoded)
 		}
-
-		trackedRequests := m.requestTracker.GetTrackedRequests(gc.Request)
-		for _, tr := range trackedRequests {
-			possibleRequestIDs = append(possibleRequestIDs, tr.SAMLRequestID)
-		}
-
-		//if resp.Destination != m.internal.SloURL.String() {
-		//	return fmt.Errorf("`Destination` does not match SloURL (expected %q)", sp.SloURL.String())
-		//}
-
-		now := time.Now()
-		if resp.IssueInstant.Add(saml.MaxIssueDelay).Before(now) {
-			e := fmt.Errorf("issueInstant expired at %s", resp.IssueInstant.Add(saml.MaxIssueDelay))
-			m.handleError(gc, security.NewExternalSamlAuthenticationError(e))
-			return
-		}
-
-		if resp.Status.StatusCode.Value != saml.StatusSuccess {
-			// TODO
+		if e == nil {
 			m.handleSuccess(gc)
 			return
 		}
 
-
-		//if e := client.ValidateLogoutResponseRequest(gc.Request); e != nil {
-		//	m.handleError(gc, security.NewExternalSamlAuthenticationError("cannot validate logout response"))
-		//	return
-		//}
-
-		m.updateSLOState(gc, func(current SLOState) SLOState {
-			return current | SLOFullyCompleted | SLOCompleted
-		})
-		m.handleSuccess(gc)
+		// TODO handle partially success
+		// handle error
+		m.handleError(gc, e)
 	}
 }
 
@@ -223,14 +194,16 @@ func (m *SPLogoutMiddleware) resolveNameId(ctx context.Context) (nameId, format 
 	if samlAuth, ok := auth.(*samlAssertionAuthentication); ok &&
 		samlAuth.Assertion != nil && samlAuth.Assertion.Subject != nil && samlAuth.Assertion.Subject.NameID != nil{
 		nameId = samlAuth.Assertion.Subject.NameID.Value
-		//format = samlAuth.Assertion.Subject.NameID.Format
-		format = string(saml.EmailAddressNameIDFormat)
-
+		format = samlAuth.Assertion.Subject.NameID.Format
+		//format = string(saml.EmailAddressNameIDFormat)
 	}
 	return
 }
 
 func (m *SPLogoutMiddleware) handleSuccess(gc *gin.Context) {
+	m.updateSLOState(gc, func(current SLOState) SLOState {
+		return current | SLOCompletedFully
+	})
 	auth := security.Get(gc)
 	m.successHandler.HandleAuthenticationSuccess(gc, gc.Request, gc.Writer, auth, auth)
 	if gc.Writer.Written() {
@@ -238,13 +211,9 @@ func (m *SPLogoutMiddleware) handleSuccess(gc *gin.Context) {
 	}
 }
 
-func (m *SPLogoutMiddleware) handleError(c *gin.Context, err error) {
-	if trackedRequestIndex := c.Request.Form.Get("RelayState"); trackedRequestIndex != "" {
-		_ = m.requestTracker.StopTrackingRequest(c.Writer, c.Request, trackedRequestIndex)
-	}
-	//security.Clear(c)
-	//_ = c.Error(err)
-	//c.Abort()
+func (m *SPLogoutMiddleware) handleError(gc *gin.Context, err error) {
+	_ = gc.Error(err)
+	gc.Abort()
 }
 
 func (m *SPLogoutMiddleware) currentAuthDetails(ctx context.Context) map[string]interface{} {
@@ -339,28 +308,4 @@ func (req *FixedLogoutRequest) Redirect(relayState string, sp *saml.ServiceProvi
 	rv.RawQuery = query
 
 	return rv, nil
-}
-
-// DummySLOHandlerFunc mimic SLO flow for dev purpose, should be removed
-func (m *SPLogoutMiddleware) DummySLOHandlerFunc() gin.HandlerFunc {
-	// TODO
-	const PostHTMLTmpl = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dummy Logout</title>
-</head>
-<body>
-<form action="/auth/v2/logout/saml/slo/callback" method="get">
-    <input type="submit" value="Proceed">
-</form>
-</body>
-</html>
-`
-	return func(gc *gin.Context) {
-		gc.Writer.Header().Set("Content-Type", "text/html")
-		gc.Writer.WriteHeader(http.StatusOK)
-		_, _ = gc.Writer.WriteString(PostHTMLTmpl)
-	}
 }

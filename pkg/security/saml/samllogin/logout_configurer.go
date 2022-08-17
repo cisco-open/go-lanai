@@ -31,7 +31,6 @@ func (c *SamlLogoutConfigurer) Apply(feature security.Feature, ws security.WebSe
 	// Note: those endpoints are available regardless what auth method is used, so no condition is applied
 	// TODO make it configurable
 	ws.Route(matcher.RouteWithPattern(f.sloPath)).
-		Route(matcher.RouteWithPattern("/v2/logout/saml/slo/dummy")).
 		Add(mapping.Get(f.sloPath).
 			HandlerFunc(m.LogoutRequestHandlerFunc()).
 			Name("saml slo as sp").Build(),
@@ -39,10 +38,6 @@ func (c *SamlLogoutConfigurer) Apply(feature security.Feature, ws security.WebSe
 		Add(mapping.Post(f.sloPath).
 			HandlerFunc(m.LogoutResponseHandlerFunc()).
 			Name("saml slo callback as sp"),
-		).
-		Add(mapping.Get("/v2/logout/saml/slo/dummy").
-			HandlerFunc(m.DummySLOHandlerFunc()).
-			Name("dummy saml slo as sp").Build(),
 		).
 		Add(middleware.NewBuilder("saml idp metadata refresh").
 			Order(security.MWOrderSAMLMetadataRefresh).
@@ -69,7 +64,6 @@ func (c *SamlLogoutConfigurer) makeMiddleware(f *Feature, ws security.WebSecurit
 	opts := c.getServiceProviderConfiguration(f)
 	sp := c.sharedServiceProvider(opts)
 	clientManager := c.sharedClientManager(opts)
-	tracker := c.sharedRequestTracker(opts)
 	if f.successHandler == nil {
 		f.successHandler = request_cache.NewSavedRequestAuthenticationSuccessHandler(
 			redirect.NewRedirectWithURL("/"),
@@ -79,7 +73,7 @@ func (c *SamlLogoutConfigurer) makeMiddleware(f *Feature, ws security.WebSecurit
 		)
 	}
 
-	return NewLogoutMiddleware(sp, c.idpManager, clientManager, tracker, c.effectiveSuccessHandler(f, ws), f.errorPath)
+	return NewLogoutMiddleware(sp, c.idpManager, clientManager, c.effectiveSuccessHandler(f, ws), f.errorPath)
 }
 
 func newSamlLogoutConfigurer(shared *samlConfigurer) *SamlLogoutConfigurer {

@@ -6,10 +6,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/beevik/etree"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
 	"github.com/onsi/gomega"
@@ -111,9 +109,8 @@ func TestSamlEntryPoint(t *testing.T) {
 			m.Commence(context.TODO(), req, w, errors.New("not authenticated"))
 
 			g := gomega.NewWithT(t)
-			g.Expect(w).To(AuthRequestMatcher{
-				SamlProperties: tt.samlProperties,
-			})
+			//g.Expect(w).To(NewPostAuthRequestMatcher(tt.samlProperties))
+			g.Expect(w).To(NewRedirectAuthRequestMatcher(tt.samlProperties))
 		})
 	}
 }
@@ -157,65 +154,6 @@ func (m MetadataMatcher) FailureMessage(actual interface{}) (message string) {
 func (m MetadataMatcher) NegatedFailureMessage(actual interface{}) (message string) {
 	w := actual.(*httptest.ResponseRecorder)
 	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(w.Body.Bytes()))
-}
-
-type AuthRequestMatcher struct {
-	SamlProperties saml.SamlProperties
-}
-
-func (a AuthRequestMatcher) Match(actual interface{}) (success bool, err error) {
-	w := actual.(*httptest.ResponseRecorder)
-
-	html := etree.NewDocument()
-	if _, err := html.ReadFrom(w.Body); err != nil {
-		return false, err
-	}
-	formElement := html.FindElement("//form[@action='https://dev-940621.oktapreview.com/app/dev-940621_samlservicelocalgo_1/exkwj65c2kC1vwtYi0h7/sso/saml']")
-	if formElement == nil {
-		return false, nil
-	}
-	authRequestElement := html.FindElement("//input[@name='SAMLRequest']")
-	if authRequestElement == nil {
-		return false, nil
-	}
-
-	authReqBytes, err := base64.StdEncoding.DecodeString(authRequestElement.SelectAttr("value").Value)
-	if err != nil {
-		return false, err
-	}
-	authReqXml := etree.NewDocument()
-	if err := authReqXml.ReadFromBytes(authReqBytes); err != nil {
-		return false, err
-	}
-
-	nameIdPolicy := authReqXml.FindElement("//samlp:NameIDPolicy")
-
-	if a.SamlProperties.NameIDFormat == "" {
-		if nameIdPolicy.SelectAttr("Format").Value != "urn:oasis:names:tc:SAML:2.0:nameid-format:transient" {
-			return false, errors.New("NameIDPolicy format should be transient if it's not configured in our properties")
-		}
-	} else if a.SamlProperties.NameIDFormat == "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" {
-		if nameIdPolicy.SelectAttr("Format") != nil {
-			return false, errors.New("NameIDPolicy should not have a format, if we configure it to be unspecified")
-		}
-	} else {
-		if nameIdPolicy.SelectAttr("Format").Value != a.SamlProperties.NameIDFormat {
-			return false, errors.New("NameIDPolicy format should match our configuration")
-		}
-	}
-	return true, nil
-}
-
-func (a AuthRequestMatcher) FailureMessage(actual interface{}) (message string) {
-	w := actual.(*httptest.ResponseRecorder)
-	body := string(w.Body.Bytes())
-	return fmt.Sprintf("Expected html with form posting auth request. Actual: " + body)
-}
-
-func (a AuthRequestMatcher) NegatedFailureMessage(actual interface{}) (message string) {
-	w := actual.(*httptest.ResponseRecorder)
-	body := string(w.Body.Bytes())
-	return fmt.Sprintf("Expected html with form posting auth request. Actual: " + body)
 }
 
 type TestIdpProvider struct {
