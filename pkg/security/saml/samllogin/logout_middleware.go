@@ -6,7 +6,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/xml"
@@ -42,20 +42,15 @@ func init() {
 
 type SPLogoutMiddleware struct {
 	SPMetadataMiddleware
-	// TODO clean up this
 	bindings           []string // supported SLO bindings, can be saml.HTTPPostBinding or saml.HTTPRedirectBinding. Order indicates preference
 	successHandler     security.AuthenticationSuccessHandler
-	fallbackEntryPoint security.AuthenticationEntryPoint
-	//authenticator security.Authenticator
 }
 
 func NewLogoutMiddleware(sp saml.ServiceProvider,
 	idpManager idp.IdentityProviderManager,
 	clientManager *CacheableIdpClientManager,
-	successHandler security.AuthenticationSuccessHandler,
-	errorPath string) *SPLogoutMiddleware {
+	successHandler security.AuthenticationSuccessHandler) *SPLogoutMiddleware {
 
-	// TODO clean up this
 	return &SPLogoutMiddleware{
 		SPMetadataMiddleware: SPMetadataMiddleware{
 			internal:      sp,
@@ -64,13 +59,11 @@ func NewLogoutMiddleware(sp saml.ServiceProvider,
 		},
 		bindings:           []string{saml.HTTPRedirectBinding, saml.HTTPPostBinding},
 		successHandler:     successHandler,
-		fallbackEntryPoint: redirect.NewRedirectWithURL(errorPath),
 	}
 }
 
 // MakeSingleLogoutRequest initiate SLO at IdP by sending logout request with supported binding
 func (m *SPLogoutMiddleware) MakeSingleLogoutRequest(ctx context.Context, r *http.Request, w http.ResponseWriter) error {
-	// TODO revise error handling
 	// resolve SP client
 	client, e := m.resolveIdpClient(ctx)
 	if e != nil {
@@ -111,7 +104,7 @@ func (m *SPLogoutMiddleware) MakeSingleLogoutRequest(ctx context.Context, r *htt
 // We need to initiate our internal logout process if this SLO process is not initiated by us
 func (m *SPLogoutMiddleware) LogoutRequestHandlerFunc() gin.HandlerFunc {
 	return func(gc *gin.Context) {
-		// TODO we may need to initiate our internal logout process if this SLO process is not initiated by us
+		// TODO Handle Logout Request for IDP-initiated SLO
 		body, e := ioutil.ReadAll(gc.Request.Body)
 		logger.WithContext(gc).Infof("LogoutRequestHandlerFunc: [%v]%s", e, body)
 		return
@@ -123,6 +116,7 @@ func (m *SPLogoutMiddleware) LogoutRequestHandlerFunc() gin.HandlerFunc {
 // We need to continue our internal logout process
 func (m *SPLogoutMiddleware) LogoutResponseHandlerFunc() gin.HandlerFunc {
 	return func(gc *gin.Context) {
+		// TODO Handle Logout Request for IDP-initiated SLO
 		var encoded string
 		var isRedirect bool
 		if encoded, isRedirect = gc.GetQuery("SAMLResponse"); len(encoded) == 0 {
@@ -159,7 +153,6 @@ func (m *SPLogoutMiddleware) LogoutResponseHandlerFunc() gin.HandlerFunc {
 			return
 		}
 
-		// TODO handle partially success
 		// handle error
 		m.handleError(gc, e)
 	}
@@ -168,7 +161,8 @@ func (m *SPLogoutMiddleware) LogoutResponseHandlerFunc() gin.HandlerFunc {
 // Commence implements security.AuthenticationEntryPoint. It's used when SP initiated SLO is required
 func (m *SPLogoutMiddleware) Commence(ctx context.Context, r *http.Request, w http.ResponseWriter, _ error) {
 	if e := m.MakeSingleLogoutRequest(ctx, r, w); e != nil {
-		m.fallbackEntryPoint.Commence(ctx, r, w, e)
+		gc := web.GinContext(ctx)
+		m.handleError(gc, e)
 		return
 	}
 

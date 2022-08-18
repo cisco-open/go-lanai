@@ -29,15 +29,14 @@ func (c *SamlLogoutConfigurer) Apply(feature security.Feature, ws security.WebSe
 
 	// Add some additional endpoints.
 	// Note: those endpoints are available regardless what auth method is used, so no condition is applied
-	// TODO make it configurable
 	ws.Route(matcher.RouteWithPattern(f.sloPath)).
 		Add(mapping.Get(f.sloPath).
 			HandlerFunc(m.LogoutRequestHandlerFunc()).
-			Name("saml slo as sp").Build(),
+			Name("saml slo as sp"),
 		).
 		Add(mapping.Post(f.sloPath).
 			HandlerFunc(m.LogoutResponseHandlerFunc()).
-			Name("saml slo callback as sp"),
+			Name("saml slo as sp"),
 		).
 		Add(middleware.NewBuilder("saml idp metadata refresh").
 			Order(security.MWOrderSAMLMetadataRefresh).
@@ -46,21 +45,14 @@ func (c *SamlLogoutConfigurer) Apply(feature security.Feature, ws security.WebSe
 
 	csrf.Configure(ws).
 		IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(f.sloPath))
-
-	// TODO In case SLO endpoints are invoked when there is no active authenticated session, security would entry point
-	// 		to handle this error. We need to configure it properly
-	//errorhandling.Configure(ws).
-	//	AuthenticationEntryPoint(request_cache.NewSaveRequestEntryPoint(m))
 	return nil
 }
 
-func (c *SamlLogoutConfigurer) makeLogoutHandler(f *Feature, ws security.WebSecurity) *SingleLogoutHandler {
-	// TODO review this part
+func (c *SamlLogoutConfigurer) makeLogoutHandler(_ *Feature, _ security.WebSecurity) *SingleLogoutHandler {
 	return NewSingleLogoutHandler()
 }
 
 func (c *SamlLogoutConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity) *SPLogoutMiddleware {
-	// TODO revise this part
 	opts := c.getServiceProviderConfiguration(f)
 	sp := c.sharedServiceProvider(opts)
 	clientManager := c.sharedClientManager(opts)
@@ -73,7 +65,7 @@ func (c *SamlLogoutConfigurer) makeMiddleware(f *Feature, ws security.WebSecurit
 		)
 	}
 
-	return NewLogoutMiddleware(sp, c.idpManager, clientManager, c.effectiveSuccessHandler(f, ws), f.errorPath)
+	return NewLogoutMiddleware(sp, c.idpManager, clientManager, c.effectiveSuccessHandler(f, ws))
 }
 
 func newSamlLogoutConfigurer(shared *samlConfigurer) *SamlLogoutConfigurer {

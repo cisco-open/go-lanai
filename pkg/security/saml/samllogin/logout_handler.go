@@ -6,13 +6,10 @@ import (
 	"net/http"
 )
 
-type SingleLogoutHandler struct {
-
-}
+type SingleLogoutHandler struct {}
 
 func NewSingleLogoutHandler() *SingleLogoutHandler {
-	return &SingleLogoutHandler{
-	}
+	return &SingleLogoutHandler{}
 }
 
 // ShouldLogout is a logout.ConditionalLogoutHandler method that interrupt logout process by returning authentication error,

@@ -138,7 +138,7 @@ func (c *samlConfigurer) sharedServiceProvider(opts SPOptions) (ret saml.Service
 		SignatureMethod:   signatureMethod,
 		AllowIDPInitiated: opts.AllowIDPInitiated,
 		AuthnNameIDFormat: saml.NameIDFormat(opts.NameIdFormat),
-		LogoutBindings:    []string{saml.HTTPPostBinding},
+		LogoutBindings:    []string{saml.HTTPRedirectBinding},
 	}
 	return sp
 }
