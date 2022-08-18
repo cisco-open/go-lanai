@@ -6,14 +6,13 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/base64"
 	"encoding/gob"
-	"encoding/xml"
 	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -99,62 +98,24 @@ func (m *SPLogoutMiddleware) MakeSingleLogoutRequest(ctx context.Context, r *htt
 	return nil
 }
 
-// LogoutRequestHandlerFunc returns the handler function that handles incoming LogoutRequest sent by IdP.
-// This is used to handle IdP initiated SLO
-// We need to initiate our internal logout process if this SLO process is not initiated by us
-func (m *SPLogoutMiddleware) LogoutRequestHandlerFunc() gin.HandlerFunc {
-	return func(gc *gin.Context) {
-		// TODO Handle Logout Request for IDP-initiated SLO
-		body, e := ioutil.ReadAll(gc.Request.Body)
-		logger.WithContext(gc).Infof("LogoutRequestHandlerFunc: [%v]%s", e, body)
-		return
-	}
-}
-
-// LogoutResponseHandlerFunc returns the handler function that handles LogoutResponse sent by IdP.
+// LogoutHandlerFunc returns the handler function that handles LogoutResponse/LogoutRequest sent by IdP.
 // This is used to handle response of SP initiated SLO, if it's initiated by us.
 // We need to continue our internal logout process
-func (m *SPLogoutMiddleware) LogoutResponseHandlerFunc() gin.HandlerFunc {
+func (m *SPLogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 	return func(gc *gin.Context) {
-		// TODO Handle Logout Request for IDP-initiated SLO
-		var encoded string
-		var isRedirect bool
-		if encoded, isRedirect = gc.GetQuery("SAMLResponse"); len(encoded) == 0 {
-			encoded = gc.PostForm("SAMLResponse")
-		}
-
-		decoded, e := base64.StdEncoding.DecodeString(encoded)
-		if e != nil {
-			m.handleError(gc, security.NewExternalSamlAuthenticationError("cannot parse logout response body", e))
+		var req saml.LogoutRequest
+		var resp saml.LogoutResponse
+		reqR := saml_util.ParseSAMLObject(gc, &req)
+		respR := saml_util.ParseSAMLObject(gc, &resp)
+		switch {
+		case reqR.Err != nil && respR.Err != nil || reqR.Err == nil && respR.Err == nil:
+			m.handleError(gc, security.NewExternalSamlAuthenticationError("Error reading SAMLRequest/SAMLResponse", reqR.Err, respR.Err))
 			return
+		case respR.Err == nil:
+			m.handleLogoutResponse(gc, &resp, respR.Binding, respR.Encoded)
+		case reqR.Err == nil:
+			m.handleLogoutRequest(gc, &req, reqR.Binding, reqR.Encoded)
 		}
-
-		// do some validation first before we decrypt
-		resp := saml.LogoutResponse{}
-		if e := xml.Unmarshal(decoded, &resp); e != nil {
-			m.handleError(gc, security.NewExternalSamlAuthenticationError("Error unmarshalling SAMLResponse as xml", e))
-			return
-		}
-
-		client, ok := m.clientManager.GetClientByEntityId(resp.Issuer.Value)
-		if !ok {
-			m.handleError(gc, security.NewExternalSamlAuthenticationError("cannot find idp metadata corresponding for logout response"))
-			return
-		}
-
-		// perform validate, handle if success
-		if isRedirect {
-			e = client.ValidateLogoutResponseRedirect(encoded)
-		} else {
-			e = client.ValidateLogoutResponseForm(encoded)
-		}
-		if e == nil {
-			m.handleSuccess(gc)
-			return
-		}
-
-		// handle error
-		m.handleError(gc, e)
 	}
 }
 
@@ -169,6 +130,33 @@ func (m *SPLogoutMiddleware) Commence(ctx context.Context, r *http.Request, w ht
 	m.updateSLOState(ctx, func(current SLOState) SLOState {
 		return current | SLOInitiated
 	})
+}
+
+func (m *SPLogoutMiddleware) handleLogoutResponse(gc *gin.Context, resp *saml.LogoutResponse, binding, encoded string) {
+	client, ok := m.clientManager.GetClientByEntityId(resp.Issuer.Value)
+	if !ok {
+		m.handleError(gc, security.NewExternalSamlAuthenticationError("cannot find idp metadata corresponding for logout response"))
+		return
+	}
+
+	// perform validate, handle if success
+	var e error
+	if binding == saml.HTTPRedirectBinding {
+		e = client.ValidateLogoutResponseRedirect(encoded)
+	} else {
+		e = client.ValidateLogoutResponseForm(encoded)
+	}
+	if e == nil {
+		m.handleSuccess(gc)
+		return
+	}
+
+	// handle error
+	m.handleError(gc, e)
+}
+
+func (m *SPLogoutMiddleware) handleLogoutRequest(gc *gin.Context, req *saml.LogoutRequest, binding, encoded string) {
+	// TODO Handle Logout Request for IDP-initiated SLO
 }
 
 func (m *SPLogoutMiddleware) resolveIdpClient(ctx context.Context) (*saml.ServiceProvider, error) {

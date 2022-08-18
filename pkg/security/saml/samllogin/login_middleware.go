@@ -5,9 +5,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
 	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
-	"encoding/base64"
-	"encoding/xml"
+	"fmt"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
@@ -98,27 +98,17 @@ func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.R
 // ACSHandlerFunc Assertion Consumer Service handler endpoint. IDP redirect to this endpoint with authentication response
 func (sp *SPLoginMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		r := c.Request
-		err := r.ParseForm()
-		if err != nil {
-			sp.handleError(c, security.NewExternalSamlAuthenticationError("Can't parse request body", err))
-			return
-		}
-
-		//Parse the response and get entityId
-		rawResponseBuf, err := base64.StdEncoding.DecodeString(r.PostForm.Get("SAMLResponse"))
-		if err != nil {
-			sp.handleError(c, security.NewExternalSamlAuthenticationError("Error decoding (base64) SAMLResponse", err))
-			return
-		}
-
-		// do some validation first before we decrypt
 		resp := saml.Response{}
-		if err := xml.Unmarshal(rawResponseBuf, &resp); err != nil {
-			sp.handleError(c, security.NewExternalSamlAuthenticationError("Error unmarshalling SAMLResponse as xml", err))
+		switch rs := saml_util.ParseSAMLObject(c, &resp); {
+		case rs.Err != nil:
+			sp.handleError(c, security.NewExternalSamlAuthenticationError(fmt.Errorf("cannot process ACS request: %v", rs.Err)))
+			return
+		case rs.Binding != saml.HTTPPostBinding:
+			sp.handleError(c, security.NewExternalSamlAuthenticationError(fmt.Errorf("unsupported binding [%s]", rs.Binding)))
 			return
 		}
 
+		r := c.Request
 		client, ok := sp.clientManager.GetClientByEntityId(resp.Issuer.Value)
 		if !ok {
 			sp.handleError(c, security.NewExternalSamlAuthenticationError("cannot find idp metadata corresponding for assertion"))

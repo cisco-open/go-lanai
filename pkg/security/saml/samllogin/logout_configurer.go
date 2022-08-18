@@ -31,12 +31,12 @@ func (c *SamlLogoutConfigurer) Apply(feature security.Feature, ws security.WebSe
 	// Note: those endpoints are available regardless what auth method is used, so no condition is applied
 	ws.Route(matcher.RouteWithPattern(f.sloPath)).
 		Add(mapping.Get(f.sloPath).
-			HandlerFunc(m.LogoutRequestHandlerFunc()).
-			Name("saml slo as sp"),
+			HandlerFunc(m.LogoutHandlerFunc()).
+			Name("saml slo as sp - get"),
 		).
 		Add(mapping.Post(f.sloPath).
-			HandlerFunc(m.LogoutResponseHandlerFunc()).
-			Name("saml slo as sp"),
+			HandlerFunc(m.LogoutHandlerFunc()).
+			Name("saml slo as sp - post"),
 		).
 		Add(middleware.NewBuilder("saml idp metadata refresh").
 			Order(security.MWOrderSAMLMetadataRefresh).
