@@ -3,6 +3,8 @@ package jwt
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"errors"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	. "github.com/onsi/gomega"
 	"reflect"
@@ -14,7 +16,7 @@ const (
 	testDefaultKid = "default"
 )
 
-var claims = oauth2.MapClaims {
+var claims = oauth2.MapClaims{
 	"aud": []interface{}{"target"},
 	"exp": time.Now().Add(24 * time.Hour).Unix(),
 	"jti": uuid.New().String(),
@@ -40,7 +42,12 @@ func TestJwtWithKid(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
 	g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
-	//TODO more test cases
+
+	// plain text encoding
+	plainEnc := newPlainJwtEncoder()
+	plainValue, err := plainEnc.Encode(context.Background(), claims)
+	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't return error")
+	g.Expect(plainValue).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
 
 	t.Logf("JWT: %s", value)
 
@@ -57,6 +64,10 @@ func TestJwtWithKid(t *testing.T) {
 		SubTestJwtDecodeFailedWithWrongKey(value, kids[0]))
 	t.Run("JwtDecodeFailedWithNonExistingKey",
 		SubTestJwtDecodeFailedWithNonExistingKey(value))
+
+	// decode, not happy, alg is not supported by the decoder
+	t.Run("JwtDecodeFailsWithWrongAlg",
+		SubTestJwtDecodeFailsWithWrongAlg(plainValue, staticJwkStore))
 }
 
 func TestJwtWithoutKid(t *testing.T) {
@@ -69,7 +80,12 @@ func TestJwtWithoutKid(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
 	g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
-	//TODO more test cases
+
+	// plain text encoding
+	plainEnc := newPlainJwtEncoder()
+	plainValue, err := plainEnc.Encode(context.Background(), claims)
+	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't return error")
+	g.Expect(plainValue).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
 
 	t.Logf("JWT: %s", value)
 
@@ -84,6 +100,32 @@ func TestJwtWithoutKid(t *testing.T) {
 		SubTestJwtDecodeFailedWithWrongKey(value, testDefaultKid))
 	t.Run("JwtDecodeFailedWithNonExistingKey",
 		SubTestJwtDecodeFailedWithNonExistingKey(value))
+
+	// decode, not happy, alg is not supported by the decoder
+	t.Run("JwtDecodeFailsWithWrongAlg",
+		SubTestJwtDecodeFailsWithWrongAlg(plainValue, nonRotatingJwkStore))
+}
+
+func TestPlainJwt(t *testing.T) {
+	nonRotatingJwkStore := NewSingleJwkStore(testDefaultKid)
+	enc := NewRS256JwtEncoder(nonRotatingJwkStore, testDefaultKid)
+
+	// encoding
+	value, err := enc.Encode(context.Background(), claims)
+	g := NewWithT(t)
+	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
+	g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
+
+	// plain text encoding
+	plainEnc := newPlainJwtEncoder()
+	plainValue, err := plainEnc.Encode(context.Background(), claims)
+	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't return error")
+	g.Expect(plainValue).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
+
+	t.Logf("JWT: %s", plainValue)
+
+	t.Run("SubTestPlainJwdDecodeSucceeds", SubTestPlainJwdDecodeSucceeds(plainValue))
+	t.Run("SubTestPlainJwtDecodeFailsWithWrongAlg", SubTestPlainJwtDecodeFailsWithWrongAlg(value))
 }
 
 /*************************
@@ -156,6 +198,41 @@ func SubTestJwtDecodeFailedWithNonExistingKey(jwtVal string) SubTest {
 	}
 }
 
+func SubTestJwtDecodeFailsWithWrongAlg(jwtVal string, jwkStore JwkStore) SubTest {
+	return func(t *testing.T) {
+		dec := NewRS256JwtDecoder(jwkStore, testDefaultKid)
+		_, err := dec.Decode(context.Background(), jwtVal)
+
+		g := NewWithT(t)
+		var validationError *jwt.ValidationError
+		g.Expect(errors.As(err, &validationError)).To(BeTrue())
+		g.Expect(validationError.Is(jwt.ErrTokenSignatureInvalid))
+	}
+}
+
+func SubTestPlainJwdDecodeSucceeds(jwtVal string) SubTest {
+	return func(t *testing.T) {
+		dec := NewPlaintextJwtDecoder()
+		parsed, err := dec.Decode(context.Background(), jwtVal)
+
+		g := NewWithT(t)
+		assertDecodeResult(g, parsed, err)
+		assertMapClaims(g, claims, parsed)
+	}
+}
+
+func SubTestPlainJwtDecodeFailsWithWrongAlg(jwtVal string) SubTest {
+	return func(t *testing.T) {
+		dec := NewPlaintextJwtDecoder()
+		_, err := dec.Decode(context.Background(), jwtVal)
+
+		g := NewWithT(t)
+		var validationError *jwt.ValidationError
+		g.Expect(errors.As(err, &validationError)).To(BeTrue())
+		g.Expect(validationError.Is(jwt.ErrTokenSignatureInvalid))
+	}
+}
+
 /*************************
 	Helpers
  *************************/
@@ -170,7 +247,7 @@ func assertMapClaims(g *WithT, expected oauth2.MapClaims, decoded oauth2.Claims)
 	actual := decoded.(oauth2.MapClaims)
 
 	g.Expect(len(actual)).To(Equal(len(expected)), "actual MapClaims should have same size")
-	for k,v := range actual {
+	for k, v := range actual {
 		g.Expect(v).To(BeEquivalentTo(expected[k]), "actual MapClaims should have same [%s]", k)
 	}
 }
@@ -180,7 +257,7 @@ func assertCustomClaims(g *WithT, expected oauth2.MapClaims, decoded oauth2.Clai
 	g.Expect(decoded).To(BeAssignableToTypeOf(customClaims{}), "custom claims is expected")
 	actual := decoded.(customClaims)
 
-	for k,v := range expected {
+	for k, v := range expected {
 		g.Expect(actual.Get(k)).To(BeEquivalentTo(v), "actual claims should have same [%s]", k)
 	}
 }
@@ -266,4 +343,24 @@ func (c *customCompatibleClaims) MarshalJSON() ([]byte, error) {
 
 func (c *customCompatibleClaims) UnmarshalJSON(bytes []byte) error {
 	return c.FieldClaimsMapper.DoUnmarshalJSON(c, bytes)
+}
+
+type plainJwtEncoder struct {
+}
+
+func newPlainJwtEncoder() *plainJwtEncoder {
+	return &plainJwtEncoder{}
+}
+
+func (p *plainJwtEncoder) Encode(_ context.Context, claims interface{}) (string, error) {
+	// type checks
+	var token *jwt.Token
+	switch claims.(type) {
+	case jwt.Claims:
+		token = jwt.NewWithClaims(jwt.SigningMethodNone, claims.(jwt.Claims))
+	default:
+		token = jwt.NewWithClaims(jwt.SigningMethodNone, &jwtGoCompatibleClaims{claims: claims})
+	}
+
+	return token.SignedString(jwt.UnsafeAllowNoneSignatureType)
 }

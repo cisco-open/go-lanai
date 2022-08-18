@@ -45,6 +45,9 @@ func (s CommaSeparatedSlice) MarshalText() ([]byte, error) {
 
 // UnmarshalText encoding.TextUnmarshaler
 func (s *CommaSeparatedSlice) UnmarshalText(data []byte) error {
+	if string(data) == "" {
+		return nil
+	}
 	var result []string
 	split := strings.Split(string(data), ",")
 	for _, s := range split {
@@ -71,7 +74,3 @@ func (s *CommaSeparatedSlice) UnmarshalJSON(data []byte) error {
 	}
 	return s.UnmarshalText([]byte(str))
 }
-
-
-
-

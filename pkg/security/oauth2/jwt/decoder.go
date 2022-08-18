@@ -4,7 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 /*********************
@@ -29,10 +29,7 @@ type RSJwtDecoder struct {
 }
 
 func NewRS256JwtDecoder(jwkStore JwkStore, defaultJwkName string) *RSJwtDecoder {
-	parser := &jwt.Parser{
-		UseJSONNumber: false,
-		SkipClaimsValidation: true,
-	}
+	parser := jwt.NewParser(jwt.WithoutClaimsValidation(), jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
 	return &RSJwtDecoder{
 		jwkName:  defaultJwkName,
 		jwkStore: jwkStore,
@@ -89,12 +86,9 @@ type PlaintextJwtDecoder struct {
 }
 
 func NewPlaintextJwtDecoder() *PlaintextJwtDecoder {
-	parser := &jwt.Parser{
-		UseJSONNumber: false,
-		SkipClaimsValidation: true,
-	}
+	parser := jwt.NewParser(jwt.WithoutClaimsValidation(), jwt.WithValidMethods([]string{jwt.SigningMethodNone.Alg()}))
 	return &PlaintextJwtDecoder{
-		parser:   parser,
+		parser: parser,
 	}
 }
 
@@ -128,4 +122,3 @@ func (dec *PlaintextJwtDecoder) keyFunc(unverified *jwt.Token) (interface{}, err
 		return nil, fmt.Errorf("unsupported alg")
 	}
 }
-

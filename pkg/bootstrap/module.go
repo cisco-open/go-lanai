@@ -9,13 +9,13 @@ const (
 	HighestPrecedence = -LowestPrecedence - 1 // min int
 
 	FrameworkModulePrecedenceBandwidth = 799
-	FrameworkModulePrecedence          = LowestPrecedence - 200 * (FrameworkModulePrecedenceBandwidth+ 1)
+	FrameworkModulePrecedence          = LowestPrecedence - 200*(FrameworkModulePrecedenceBandwidth+1)
 	AnonymousModulePrecedence          = FrameworkModulePrecedence - 1
 	PriorityModulePrecedence           = HighestPrecedence + 1
 )
 
 const (
-	_ = FrameworkModulePrecedence + iota * (FrameworkModulePrecedenceBandwidth+ 1)
+	_ = FrameworkModulePrecedence + iota*(FrameworkModulePrecedenceBandwidth+1)
 	AppConfigPrecedence
 	TracingPrecedence
 	ActuatorPrecedence
@@ -25,6 +25,7 @@ const (
 	RedisPrecedence
 	DatabasePrecedence
 	KafkaPrecedence
+	OpenSearchPrecedence
 	WebPrecedence
 	SecurityPrecedence
 	DebugPrecedence
