@@ -10,8 +10,6 @@ require (
 	github.com/cockroachdb/copyist v1.4.1
 	github.com/crewjam/httperr v0.2.0
 	github.com/crewjam/saml v0.4.8
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/dnaeon/go-vcr v1.2.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-git/go-git/v5 v5.3.0
@@ -21,6 +19,7 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gocql/gocql v0.0.0-20210313142353-65899a66288b
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
@@ -74,7 +73,6 @@ require (
 	github.com/go-git/go-billy/v5 v5.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
