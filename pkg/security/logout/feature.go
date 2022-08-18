@@ -11,10 +11,13 @@ import (
 	Feature Impl
  *********************************/
 
+type Warnings []error
+
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutHandler interface {
 	// HandleLogout is the method MW would use to perform logging out actions.
 	// In case of multiple LogoutHandler are registered, implementing class can terminate logout by implementing ConditionalLogoutHandler
+	// If the returned error is security.ErrorSubTypeAuthWarning, the success handler is used with returned error added to the context
 	HandleLogout(context.Context, *http.Request, http.ResponseWriter, security.Authentication) error
 }
 

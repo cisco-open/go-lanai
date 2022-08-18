@@ -23,13 +23,13 @@ const (
 	SLOCompletedFully
 	SLOCompletedPartially
 	SLOFailed
-	SLOCompleted = SLOCompletedFully | SLOCompletedPartially
+	SLOCompleted = SLOCompletedFully | SLOCompletedPartially | SLOFailed
 )
 
 type SLOState int
 
 func (s SLOState) Is(mask SLOState) bool {
-	return s^mask != 0
+	return s&mask != 0
 }
 
 const (
@@ -192,7 +192,7 @@ func (m *SPLogoutMiddleware) resolveIdpClient(ctx context.Context) (*saml.Servic
 func (m *SPLogoutMiddleware) resolveNameId(ctx context.Context) (nameId, format string) {
 	auth := security.Get(ctx)
 	if samlAuth, ok := auth.(*samlAssertionAuthentication); ok &&
-		samlAuth.Assertion != nil && samlAuth.Assertion.Subject != nil && samlAuth.Assertion.Subject.NameID != nil{
+		samlAuth.Assertion != nil && samlAuth.Assertion.Subject != nil && samlAuth.Assertion.Subject.NameID != nil {
 		nameId = samlAuth.Assertion.Subject.NameID.Value
 		format = samlAuth.Assertion.Subject.NameID.Format
 		//format = string(saml.EmailAddressNameIDFormat)
@@ -211,9 +211,17 @@ func (m *SPLogoutMiddleware) handleSuccess(gc *gin.Context) {
 	}
 }
 
-func (m *SPLogoutMiddleware) handleError(gc *gin.Context, err error) {
-	_ = gc.Error(err)
-	gc.Abort()
+func (m *SPLogoutMiddleware) handleError(gc *gin.Context, e error) {
+	logger.WithContext(gc).Infof("SAML Single Logout failed with error: %v", e)
+	m.updateSLOState(gc, func(current SLOState) SLOState {
+		return current | SLOFailed
+	})
+	// We always let logout continues
+	auth := security.Get(gc)
+	m.successHandler.HandleAuthenticationSuccess(gc, gc.Request, gc.Writer, auth, auth)
+	if gc.Writer.Written() {
+		gc.Abort()
+	}
 }
 
 func (m *SPLogoutMiddleware) currentAuthDetails(ctx context.Context) map[string]interface{} {
@@ -264,11 +272,11 @@ func MakeFixedLogoutRequest(sp *saml.ServiceProvider, idpURL, nameID string) (*F
 // As of crewjam/saml 0.4.8, AuthnRequest's Redirect is fixed for properly setting Signature in redirect URL:
 // 	https://github.com/crewjam/saml/pull/339
 // However, saml.LogoutRequest.Redirect is not fixed. We need to do that by ourselves
-// TODO revisit this part later
+// TODO revisit this part later when newer crewjam/saml library become available
 func (req *FixedLogoutRequest) Redirect(relayState string, sp *saml.ServiceProvider) (*url.URL, error) {
 	w := &bytes.Buffer{}
 	w1 := base64.NewEncoder(base64.StdEncoding, w)
-	defer func() {  }()
+	defer func() {}()
 	w2, _ := flate.NewWriter(w1, 9)
 	doc := etree.NewDocument()
 	doc.SetRoot(req.Element())

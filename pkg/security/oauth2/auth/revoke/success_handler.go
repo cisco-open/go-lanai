@@ -3,12 +3,14 @@ package revoke
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type SuccessOptions func(opt *SuccessOption)
@@ -26,7 +28,7 @@ type TokenRevokeSuccessHandler struct {
 	fallback    security.AuthenticationErrorHandler
 }
 
-func NewTokenRevokeSuccessHandler(opts...SuccessOptions) *TokenRevokeSuccessHandler {
+func NewTokenRevokeSuccessHandler(opts ...SuccessOptions) *TokenRevokeSuccessHandler {
 	opt := SuccessOption{}
 	for _, f := range opts {
 		f(&opt)
@@ -78,9 +80,9 @@ func (h TokenRevokeSuccessHandler) redirect(ctx context.Context, r *http.Request
 		resolved = redirectUri
 	}
 
-	// redirect
-	http.Redirect(rw, r, resolved, http.StatusFound)
-	_,_ = rw.Write([]byte{})
+	redirectUrl := h.appendWarnings(ctx, resolved)
+	http.Redirect(rw, r, redirectUrl, http.StatusFound)
+	_, _ = rw.Write([]byte{})
 }
 
 // In case of PUT, DELETE, PATCH etc, we don't clean authentication. Instead, we invalidate access token carried by header
@@ -102,6 +104,21 @@ func (h TokenRevokeSuccessHandler) isWhitelisted(_ context.Context, redirect str
 	return false
 }
 
+func (h TokenRevokeSuccessHandler) appendWarnings(ctx context.Context, redirect string) string {
+	warnings := logout.GetWarnings(ctx)
+	if len(warnings) == 0 {
+		return redirect
+	}
 
+	redirectUrl, e := url.Parse(redirect)
+	if e != nil {
+		return redirect
+	}
 
-
+	q := redirectUrl.Query()
+	for _, w := range warnings {
+		q.Add("warning", w.Error())
+	}
+	redirectUrl.RawQuery = q.Encode()
+	return redirectUrl.String()
+}

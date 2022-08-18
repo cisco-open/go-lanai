@@ -1,9 +1,19 @@
 package logout
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
+
+var ctxKeyWarnings = "logout.Warnings"
+
+func GetWarnings(ctx context.Context) Warnings {
+	w, _ := ctx.Value(ctxKeyWarnings).(Warnings)
+	return w
+}
 
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutMiddleware struct {
@@ -51,7 +61,10 @@ func (mw *LogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 
 		// perform logout
 		for _, handler := range mw.logoutHandlers {
-			if e := handler.HandleLogout(gc, gc.Request, gc.Writer, before); e != nil {
+			switch e := handler.HandleLogout(gc, gc.Request, gc.Writer, before); {
+			case errors.Is(e, security.ErrorSubTypeAuthWarning):
+				mw.handleWarnings(gc, e)
+			case e != nil:
 				mw.handleError(gc, e)
 				return
 			}
@@ -60,18 +73,34 @@ func (mw *LogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 	}
 }
 
-func (mw *LogoutMiddleware) handleSuccess(c *gin.Context, before security.Authentication) {
-	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, security.Get(c))
-	if c.Writer.Written() {
-		c.Abort()
+func (mw *LogoutMiddleware) handleSuccess(gc *gin.Context, before security.Authentication) {
+	mw.successHandler.HandleAuthenticationSuccess(gc, gc.Request, gc.Writer, before, security.Get(gc))
+	if gc.Writer.Written() {
+		gc.Abort()
 	}
 }
 
-func (mw *LogoutMiddleware) handleError(ctx *gin.Context, err error) {
-	mw.errorHandler.HandleAuthenticationError(ctx, ctx.Request, ctx.Writer,
+func (mw *LogoutMiddleware) handleWarnings(gc *gin.Context, warning error) {
+	var warnings Warnings
+	existing := gc.Value(ctxKeyWarnings)
+	switch v := existing.(type) {
+	case Warnings:
+		warnings = append(v, warning)
+	case []error:
+		warnings = append(v, warning)
+	case nil:
+		warnings = Warnings{warning}
+	default:
+		warnings = Warnings{fmt.Errorf("%v", existing), warning}
+	}
+	gc.Set(ctxKeyWarnings, warnings)
+}
+
+func (mw *LogoutMiddleware) handleError(gc *gin.Context, err error) {
+	mw.errorHandler.HandleAuthenticationError(gc, gc.Request, gc.Writer,
 		security.NewInternalAuthenticationError(err))
-	if ctx.Writer.Written() {
-		ctx.Abort()
+	if gc.Writer.Written() {
+		gc.Abort()
 	}
 }
 
