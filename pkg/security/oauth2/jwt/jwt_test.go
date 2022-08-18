@@ -345,7 +345,6 @@ func (c *customCompatibleClaims) UnmarshalJSON(bytes []byte) error {
 	return c.FieldClaimsMapper.DoUnmarshalJSON(c, bytes)
 }
 
-//
 type plainJwtEncoder struct {
 }
 
