@@ -33,7 +33,7 @@ type SearchResponse[T any] struct {
 	} `json:"hits"`
 }
 
-func (c RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) error {
+func (c *RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) error {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -65,11 +65,14 @@ func (c RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o 
 }
 
 func (c *OpenClientImpl) Search(ctx context.Context, o ...Option[opensearchapi.SearchRequest]) (*opensearchapi.Response, error) {
+	before, after := c.GetHooks()
+	defer after.Run(HookContext{ctx, CmdSearch})
+	before.Run(HookContext{ctx, CmdSearch})
 	options := make([]func(request *opensearchapi.SearchRequest), len(o))
 	for i, v := range o {
 		options[i] = v
 	}
-	//nolint:makezero // linter doesn't like us appending to a non-zero initialized length, however we've exhausted its length in the for-loop above
+	//nolint:makezero
 	options = append(options, Search.WithContext(ctx))
 	return c.client.API.Search(options...)
 }

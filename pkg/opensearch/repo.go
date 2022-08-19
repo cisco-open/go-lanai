@@ -5,9 +5,11 @@ import (
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 )
 
-// This can be the function the user of this repo needs
+// NewRepo will return a OpenSearch repository for any model type T
 func NewRepo[T any](model *T, client OpenClient) Repo[T] {
-	return RepoImpl[T]{client}
+	return &RepoImpl[T]{
+		client: client,
+	}
 }
 
 type Repo[T any] interface {
@@ -19,6 +21,12 @@ type Repo[T any] interface {
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/search/#request-body
 	Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) error
 
+	// Index will create a new Document in the index that is defined
+	//
+	// The index argument defines the index name that the document should be stored in.
+	// The body
+	Index(ctx context.Context, index string, document T, o ...Option[opensearchapi.IndexRequest]) error
+
 	// IndicesCreate will create a new index in the cluster.
 	//
 	// The index argument defines the index name to be created.
@@ -26,8 +34,21 @@ type Repo[T any] interface {
 	//
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/create-index/#request-body
 	IndicesCreate(ctx context.Context, index string, mapping interface{}, o ...Option[opensearchapi.IndicesCreateRequest]) error
+
+	// IndicesDelete will delete an index from the cluster.
+	//
+	// The index argument defines the index name to be created.
+	//
+	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/create-index/#request-body
+	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) error
+
+	AddHook(hook HookContainer)
 }
 
 type RepoImpl[T any] struct {
 	client OpenClient
+}
+
+func (c *RepoImpl[T]) AddHook(hook HookContainer) {
+	c.client.AddHook(hook)
 }
