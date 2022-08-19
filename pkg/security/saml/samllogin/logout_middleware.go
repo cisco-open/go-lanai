@@ -258,7 +258,6 @@ func MakeFixedLogoutRequest(sp *saml.ServiceProvider, idpURL, nameID string) (*F
 func (req *FixedLogoutRequest) Redirect(relayState string, sp *saml.ServiceProvider) (*url.URL, error) {
 	w := &bytes.Buffer{}
 	w1 := base64.NewEncoder(base64.StdEncoding, w)
-	defer func() {}()
 	w2, _ := flate.NewWriter(w1, 9)
 	doc := etree.NewDocument()
 	doc.SetRoot(req.Element())
