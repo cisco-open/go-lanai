@@ -71,7 +71,7 @@ func (c *SamlIdpSecurityConfigurer) ConfigureLogout(ws security.WebSecurity, con
 	}
 
 	ws.With(samllogin.NewLogout().
-			Issuer(config.Issuer).
-			ErrorPath(config.Endpoints.Error),
-		)
+		Issuer(config.Issuer).
+		ErrorPath(config.Endpoints.Error),
+	)
 }

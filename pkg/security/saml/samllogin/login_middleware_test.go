@@ -3,8 +3,8 @@ package samllogin
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin/testdata"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"errors"
 	"fmt"
@@ -25,7 +25,7 @@ func TestMetadataEndpoint(t *testing.T) {
 	serverProp := web.NewServerProperties()
 	serverProp.ContextPath = "europa"
 
-	c := newSamlAuthConfigurer(newSamlConfigurer(*prop, newTestIdpManager()), newTestFedAccountStore())
+	c := newSamlAuthConfigurer(newSamlConfigurer(*prop, testdata.NewTestIdpManager()), testdata.NewTestFedAccountStore())
 	feature := New()
 	feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 		*opt =security.DefaultIssuerDetails{
@@ -87,16 +87,9 @@ func TestSamlEntryPoint(t *testing.T) {
 			serverProp := web.NewServerProperties()
 			serverProp.ContextPath = "europa"
 
-			c := newSamlAuthConfigurer(newSamlConfigurer(tt.samlProperties, newTestIdpManager()), newTestFedAccountStore())
+			c := newSamlAuthConfigurer(newSamlConfigurer(tt.samlProperties, testdata.NewTestIdpManager()), testdata.NewTestFedAccountStore())
 			feature := New()
-			feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
-				*opt =security.DefaultIssuerDetails{
-					Protocol:    "http",
-					Domain:      "vms.com",
-					Port:        8080,
-					ContextPath: serverProp.ContextPath,
-					IncludePort: true,
-				}}))
+			feature.Issuer(testdata.TestIssuer)
 			ws := TestWebSecurity{}
 
 			m := c.makeMiddleware(feature, ws)
@@ -154,106 +147,6 @@ func (m MetadataMatcher) FailureMessage(actual interface{}) (message string) {
 func (m MetadataMatcher) NegatedFailureMessage(actual interface{}) (message string) {
 	w := actual.(*httptest.ResponseRecorder)
 	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(w.Body.Bytes()))
-}
-
-type TestIdpProvider struct {
-	domain string
-	metadataLocation string
-	externalIdpName string
-	externalIdName string
-	entityId string
-	metadataRequireSignature bool
-	metadataTrustCheck bool
-	metadataTrustedKeys []string
-}
-
-func (i TestIdpProvider) GetAutoCreateUserDetails() security.AutoCreateUserDetails {
-	panic("implement me")
-}
-
-func (i TestIdpProvider) ShouldMetadataRequireSignature() bool {
-	return i.metadataRequireSignature
-}
-
-func (i TestIdpProvider) ShouldMetadataTrustCheck() bool {
-	return i.metadataTrustCheck
-}
-
-func (i TestIdpProvider) GetMetadataTrustedKeys() []string {
-	return i.metadataTrustedKeys
-}
-
-func (i TestIdpProvider) Domain() string {
-	return i.domain
-}
-
-func (i TestIdpProvider) EntityId() string {
-	return i.entityId
-}
-
-func (i TestIdpProvider) MetadataLocation() string {
-	return i.metadataLocation
-}
-
-func (i TestIdpProvider) ExternalIdName() string {
-	return i.externalIdName
-}
-
-func (i TestIdpProvider) ExternalIdpName() string {
-	return i.externalIdpName
-}
-
-type TestIdpManager struct {
-	idpDetails TestIdpProvider
-}
-
-func newTestIdpManager() *TestIdpManager {
-	return &TestIdpManager{
-		idpDetails: TestIdpProvider{
-			domain:           "saml.vms.com",
-			metadataLocation: "testdata/okta_metadata.xml",
-			externalIdpName: "okta",
-			externalIdName: "email",
-			entityId: "http://www.okta.com/exkwj65c2kC1vwtYi0h7",
-		},
-	}
-}
-
-func (t *TestIdpManager) GetIdentityProvidersWithFlow(context.Context, idp.AuthenticationFlow) []idp.IdentityProvider {
-	return []idp.IdentityProvider{t.idpDetails}
-}
-
-func (t TestIdpManager) GetIdentityProviderByEntityId(_ context.Context, entityId string) (idp.IdentityProvider, error) {
-	if entityId == t.idpDetails.entityId {
-		return t.idpDetails, nil
-	}
-	return nil, errors.New("not found")
-}
-
-func (t TestIdpManager) GetIdentityProviderByDomain(_ context.Context, domain string) (idp.IdentityProvider, error) {
-	if domain == t.idpDetails.domain {
-		return t.idpDetails, nil
-	}
-	return nil, errors.New("not found")
-}
-
-type TestFedAccountStore struct {
-}
-
-func newTestFedAccountStore() *TestFedAccountStore {
-	return &TestFedAccountStore{}
-}
-
-//The externalIdName and value matches the test assertion
-//The externalIdp matches that from the TestIdpManager
-func (t *TestFedAccountStore) LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string, _ security.AutoCreateUserDetails, _ interface{}) (security.Account, error) {
-	if externalIdName == "email" && externalIdValue == "test@example.com" && externalIdpName == "okta" {
-		return security.NewUsernamePasswordAccount(&security.AcctDetails{
-			ID:              "test@example.com",
-			Type:            security.AccountTypeFederated,
-			Username:        "test"}), nil
-	}
-	return nil, nil
 }
 
 type TestWebSecurity struct {

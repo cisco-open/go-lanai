@@ -9,9 +9,9 @@ const SamlPropertiesPrefix = "security.auth.saml"
 
 type SamlProperties struct {
 	CertificateFile string `json:"certificate-file"`
-	KeyFile string  `json:"key-file"`
-	KeyPassword string `json:"key-password"`
-	NameIDFormat string `json:"name-id-format"`
+	KeyFile         string `json:"key-file"`
+	KeyPassword     string `json:"key-password"`
+	NameIDFormat    string `json:"name-id-format"`
 }
 
 func NewSamlProperties() *SamlProperties {

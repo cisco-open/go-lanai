@@ -189,3 +189,14 @@ func (a AuthRequestMatcher) Match(actual interface{}) (success bool, err error) 
 	}
 	return true, nil
 }
+
+
+/********************
+	Mocks
+ ********************/
+
+
+
+
+
+

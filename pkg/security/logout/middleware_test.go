@@ -134,7 +134,7 @@ type testDI struct {
 	MockedHandler *MockedLogoutHandler
 }
 
-func TestMockedTestServer(t *testing.T) {
+func TestLogoutMiddleware(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),

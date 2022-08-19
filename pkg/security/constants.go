@@ -89,6 +89,7 @@ const (
 	FeatureOrderBasicAuth
 	FeatureOrderFormLogin
 	FeatureOrderSamlLogin
+	FeatureOrderSamlLogout
 	FeatureOrderLogout
 	FeatureOrderOAuth2TokenEndpoint
 	FeatureOrderOAuth2AuthorizeEndpoint
