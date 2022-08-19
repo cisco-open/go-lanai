@@ -67,7 +67,7 @@ func (c *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecuri
 	return nil
 }
 
-func (c *LogoutConfigurer) validate(f *LogoutFeature, ws security.WebSecurity) error {
+func (c *LogoutConfigurer) validate(f *LogoutFeature, _ security.WebSecurity) error {
 	if f.logoutUrl == "" {
 		return fmt.Errorf("logoutUrl is missing for logout")
 	}
