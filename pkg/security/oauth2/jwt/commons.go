@@ -17,6 +17,7 @@ func ParseJwtHeaders(jwtValue string) (map[string]interface{}, error) {
 	}
 
 	// parse Header
+	//nolint:staticcheck
 	headerBytes, e := jwt.DecodeSegment(parts[0])
 	if e != nil {
 		return nil, &jwt.ValidationError{Inner: e, Errors: jwt.ValidationErrorMalformed}

@@ -14,6 +14,7 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(BindOpenSearchProperties),
+		fx.Provide(NewConfig),
 		fx.Provide(NewClient),
 	},
 }

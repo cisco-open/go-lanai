@@ -8,7 +8,7 @@ import (
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 )
 
-func (c RepoImpl[T]) IndicesCreate(
+func (c *RepoImpl[T]) IndicesCreate(
 	ctx context.Context,
 	index string,
 	mapping interface{},
@@ -38,10 +38,14 @@ func (c *OpenClientImpl) IndicesCreate(
 	index string,
 	o ...Option[opensearchapi.IndicesCreateRequest],
 ) (*opensearchapi.Response, error) {
+	before, after := c.GetHooks()
+	defer after.Run(HookContext{ctx, CmdIndicesCreate})
+	before.Run(HookContext{ctx, CmdIndicesCreate})
 	options := make([]func(request *opensearchapi.IndicesCreateRequest), 0, len(o))
 	for i, v := range o {
 		options[i] = v
 	}
+	//nolint:makezero
 	options = append(options, IndicesCreate.WithContext(ctx))
 	return c.client.Indices.Create(index, options...)
 }

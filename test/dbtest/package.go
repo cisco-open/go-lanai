@@ -17,10 +17,10 @@ import (
 //go:embed defaults-dbtest.yml
 var defaultConfigFS embed.FS
 
-
 // EnableDBRecordMode Force enables DB recording mode.
 // Normally recording mode should be enabled via `go test` argument `-record`
 // IMPORTANT: when Record mode is enabled, all tests executing SQL against actual database.
+// Or if Opensearch is being used, any queries to that will be executed against the real opensearch service.
 // 			  So use this mode on LOCAL DEV ONLY, and have the DB copied before executing
 func EnableDBRecordMode() suitetest.PackageOptions {
 	return suitetest.Setup(func() error {
