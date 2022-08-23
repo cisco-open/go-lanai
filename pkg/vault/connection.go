@@ -36,19 +36,28 @@ func NewClient(p *ConnectionProperties) (*Client, error) {
 		return nil, err
 	}
 
-	token, err := clientAuth.Login(client)
-	if err != nil {
-		logger.Warnf("vault apiClient cannot get token %v", err)
-	}
-	client.SetToken(token)
-
-	return &Client{
+	ret := &Client{
 		Client:               client,
 		config:               p,
 		clientAuthentication: clientAuth,
-	}, nil
+	}
+
+	err = ret.Authenticate()
+	if err != nil {
+		logger.Warnf("vault apiClient cannot get token %v", err)
+	}
+	return ret, nil
 }
 
+func (c *Client) Authenticate() error {
+	token, err := c.clientAuthentication.Login(c.Client)
+	if err != nil {
+		return err
+	}
+	c.Client.SetToken(token)
+
+	return nil
+}
 func (c *Client) AddHooks(_ context.Context, hooks ...Hook) {
 	c.hooks = append(c.hooks, hooks...)
 }
@@ -93,19 +102,4 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer, error) {
 		},
 		Increment: int(increment),
 	})
-}
-
-func (c *Client) MonitorRenew(ctx context.Context, r *api.Renewer, renewerDescription string) {
-	for {
-		select {
-		case err := <-r.DoneCh():
-			if err != nil {
-				logger.WithContext(ctx).Errorf("%s renewer failed %v", renewerDescription, err)
-			}
-			logger.WithContext(ctx).Infof("%s renewer stopped", renewerDescription)
-			break
-		case renewal := <-r.RenewCh():
-			logger.WithContext(ctx).Infof("%s successfully renewed at %v", renewerDescription, renewal.RenewedAt)
-		}
-	}
 }
