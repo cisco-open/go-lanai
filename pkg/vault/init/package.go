@@ -58,7 +58,7 @@ func newClient(p *vault.ConnectionProperties) *vault.Client {
 
 type renewDi struct {
 	fx.In
-	VaultClient     *vault.Client `optional:"true"`
+	VaultClient *vault.Client `optional:"true"`
 }
 
 func setupRenewal(lc fx.Lifecycle, di renewDi) {
@@ -66,23 +66,14 @@ func setupRenewal(lc fx.Lifecycle, di renewDi) {
 		return
 	}
 	client := di.VaultClient
-
-	renewer, err := client.GetClientTokenRenewer()
-
-	if err != nil {
-		panic("cannot create renewer for vault token")
-	}
-
+	refresher := vault.NewTokenRefresher(client)
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			//r.Renew() starts a blocking process to periodically renew the token. Therefore we run it as a go routine
-			go renewer.Renew()
-			//this starts a background process to log the renewal events. These two go routine exits when the renewer is stopped
-			go client.MonitorRenew(ctx, renewer, "vault apiClient token")
+			go refresher.Start(ctx)
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			renewer.Stop()
+			refresher.Stop()
 			return nil
 		},
 	})
@@ -91,7 +82,7 @@ func setupRenewal(lc fx.Lifecycle, di renewDi) {
 type regDI struct {
 	fx.In
 	HealthRegistrar health.Registrar `optional:"true"`
-	VaultClient     *vault.Client `optional:"true"`
+	VaultClient     *vault.Client    `optional:"true"`
 }
 
 func registerHealth(di regDI) {

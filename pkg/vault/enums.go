@@ -47,3 +47,12 @@ func (a *AuthMethod) UnmarshalText(data []byte) error {
 	}
 	return nil
 }
+
+func (a *AuthMethod) isRefreshable() bool {
+	if *a == Token {
+		// If it's a regular token, we can't really do anything about it
+		return false
+	} else {
+		return true
+	}
+}
