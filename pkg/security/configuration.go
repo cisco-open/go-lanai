@@ -19,6 +19,12 @@ type Configurer interface {
 	Configure(WebSecurity)
 }
 
+type ConfigurerFunc func(ws WebSecurity)
+
+func (f ConfigurerFunc) Configure(ws WebSecurity) {
+	f(ws)
+}
+
 /************************************
 	Interfaces for other modules
 *************************************/

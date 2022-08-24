@@ -58,7 +58,7 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader) *htt
 
 	if ctx.Value(ctxKeyHttpHandler) != nil {
 		// WithMockedServer is enabled, we use httptest
-		return httptest.NewRequest(method, tUrl.String(), body)
+		return httptest.NewRequest(method, tUrl.String(), body).WithContext(ctx)
 	} else {
 		tUrl.Host = fmt.Sprintf("%s:%d", info.hostname, info.port)
 		req, e := http.NewRequestWithContext(ctx, method, tUrl.String(), body)

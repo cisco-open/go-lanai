@@ -10,6 +10,7 @@ import (
 	Function
  **************************/
 
+// WithMockedSecurity used to mock security.Authentication in the given context, returning a new context
 func WithMockedSecurity(ctx context.Context, opts...SecurityMockOptions) context.Context {
 	details := NewMockedSecurityDetails(opts...).(*mockedSecurityDetails)
 	user := oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {

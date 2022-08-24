@@ -5,21 +5,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
-
 type MockAuthenticationMiddleware struct {
-	MockedAuthentication security.Authentication
+	MWMocker             MWMocker
 }
 
 func NewMockAuthenticationMiddleware(authentication security.Authentication) *MockAuthenticationMiddleware {
 	return &MockAuthenticationMiddleware{
-		MockedAuthentication: authentication,
+		MWMocker: MWMockFunc(func(MWMockContext) security.Authentication {
+			return authentication
+		}),
 	}
 }
 
-func (m *MockAuthenticationMiddleware) AuthenticationHandlerFunc() gin.HandlerFunc{
+func (m *MockAuthenticationMiddleware) AuthenticationHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Set(security.ContextKeySecurity, m.MockedAuthentication)
+		auth := m.MWMocker.Mock(MWMockContext{
+			Request: ctx.Request,
+		})
+		if auth != nil {
+			ctx.Set(security.ContextKeySecurity, auth)
+		}
 	}
 }
 
@@ -39,7 +44,7 @@ type mockUserAuthentication struct {
 	details       interface{}
 }
 
-func NewMockedUserAuthentication(opts...MockUserAuthOptions) *mockUserAuthentication {
+func NewMockedUserAuthentication(opts ...MockUserAuthOptions) *mockUserAuthentication {
 	opt := MockUserAuthOption{}
 	for _, f := range opts {
 		f(&opt)
@@ -48,7 +53,7 @@ func NewMockedUserAuthentication(opts...MockUserAuthOptions) *mockUserAuthentica
 		Subject:       opt.Principal,
 		PermissionMap: opt.Permissions,
 		StateValue:    opt.State,
-		details:    opt.Details,
+		details:       opt.Details,
 	}
 }
 
