@@ -1,0 +1,264 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+    method: GET
+    order: 0
+  response:
+    body: |
+      {"request_id":"81ce1528-274e-9328-bbb0-80602c7e9c6f","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"MPSX2UqCcP6uGfUVvC8PRiG3","creation_time":1662578903,"creation_ttl":5,"display_name":"token-dev-default","entity_id":"","expire_time":"2022-09-07T19:28:28.746390252Z","explicit_max_ttl":8,"id":"token_10s_ttl","issue_time":"2022-09-07T19:28:23.746392294Z","meta":null,"num_uses":0,"orphan":true,"path":"auth/token/create","policies":["root"],"renewable":true,"ttl":1,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "554"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:26 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":1}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 1
+  response:
+    body: |
+      {"request_id":"6ba81816-a123-5578-30fd-1ada2e655e67","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"token_10s_ttl","accessor":"MPSX2UqCcP6uGfUVvC8PRiG3","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":1,"renewable":true,"entity_id":"","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "378"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:26 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":1}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 2
+  response:
+    body: |
+      {"request_id":"63f543d2-d523-9c82-65b4-cdc5a0258860","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"token_10s_ttl","accessor":"MPSX2UqCcP6uGfUVvC8PRiG3","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":1,"renewable":true,"entity_id":"","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "378"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:27 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":1}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 3
+  response:
+    body: |
+      {"request_id":"38fd497f-fccd-0b9f-890a-23fd7549c497","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"token_10s_ttl","accessor":"MPSX2UqCcP6uGfUVvC8PRiG3","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":1,"renewable":true,"entity_id":"","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "378"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:28 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":1}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 4
+  response:
+    body: |
+      {"request_id":"b60a8c8b-8e12-834d-b6bc-b9d4ad15b161","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"token_10s_ttl","accessor":"MPSX2UqCcP6uGfUVvC8PRiG3","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":1,"renewable":true,"entity_id":"","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "378"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:29 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":1}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 5
+  response:
+    body: |
+      {"request_id":"e58bc9b3-4fdb-52f1-d40f-810fd5f1afca","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"token_10s_ttl","accessor":"MPSX2UqCcP6uGfUVvC8PRiG3","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":1,"renewable":true,"entity_id":"","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "378"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:29 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":1}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 6
+  response:
+    body: |
+      {"request_id":"a68a2bca-8439-0216-65ba-df70e7c06454","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"token_10s_ttl","accessor":"MPSX2UqCcP6uGfUVvC8PRiG3","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":1,"renewable":true,"entity_id":"","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "378"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:30 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":1}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 7
+  response:
+    body: |
+      {"errors":["1 error occurred:\n\t* past the max TTL, cannot renew\n\n"]}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "73"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:31 GMT
+    status: 500 Internal Server Error
+    code: 500
+    duration: ""
+- request:
+    body: '{"increment":1}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 8
+  response:
+    body: |
+      {"errors":["permission denied"]}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "33"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:32 GMT
+    status: 403 Forbidden
+    code: 403
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_10s_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+    method: GET
+    order: 9
+  response:
+    body: |
+      {"errors":["permission denied"]}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "33"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 07 Sep 2022 19:28:32 GMT
+    status: 403 Forbidden
+    code: 403
+    duration: ""
+replayposition: 0
