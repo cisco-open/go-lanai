@@ -2,6 +2,7 @@ package sectest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
@@ -33,15 +34,16 @@ type MWMocker interface {
 type MWMockOptions func(opt *MWMockOption)
 
 type MWMockOption struct {
-	MWMocker   MWMocker
-	Configurer security.Configurer
 	Route      web.RouteMatcher
 	Condition  web.RequestMatcher
+	MWMocker   MWMocker
+	Configurer security.Configurer
+	Session    bool
 }
 
 var defaultMWMockOption = MWMockOption{
-	MWMocker:   DirectExtractionMWMocker{},
-	Route:      matcher.AnyRoute(),
+	MWMocker: DirectExtractionMWMocker{},
+	Route:    matcher.AnyRoute(),
 }
 
 func WithMockedMiddleware(opts ...MWMockOptions) test.Options {
@@ -56,7 +58,7 @@ func WithMockedMiddleware(opts ...MWMockOptions) test.Options {
 		),
 	}
 	if opt.MWMocker != nil {
-		testOpts = append(testOpts, apptest.WithFxOptions(fx.Provide(func() MWMocker {return opt.MWMocker})))
+		testOpts = append(testOpts, apptest.WithFxOptions(fx.Provide(func() MWMocker { return opt.MWMocker })))
 	}
 	if opt.Configurer != nil {
 		testOpts = append(testOpts, apptest.WithFxOptions(fx.Invoke(func(reg security.Registrar) {
@@ -64,6 +66,12 @@ func WithMockedMiddleware(opts ...MWMockOptions) test.Options {
 		})))
 	} else {
 		testOpts = append(testOpts, apptest.WithFxOptions(fx.Invoke(RegisterTestConfigurer(opts...))))
+	}
+	if opt.Session {
+		testOpts = append(testOpts,
+			apptest.WithModules(session.Module),
+			apptest.WithFxOptions(fx.Decorate(MockedSessionStoreDecorator)),
+		)
 	}
 	return test.WithOptions(testOpts...)
 }
@@ -93,6 +101,14 @@ func MWCondition(matchers ...web.RequestMatcher) MWMockOptions {
 				opt.Condition = opt.Route.Or(m)
 			}
 		}
+	}
+}
+
+// MWEnableSession returns option for WithMockedMiddleware.
+// This condition is applied to the default test security.Configurer
+func MWEnableSession() MWMockOptions {
+	return func(opt *MWMockOption) {
+		opt.Session = true
 	}
 }
 

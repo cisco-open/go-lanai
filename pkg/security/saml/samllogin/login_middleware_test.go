@@ -3,12 +3,11 @@ package samllogin
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin/testdata"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"errors"
-	"fmt"
-	"github.com/crewjam/saml/samlsp"
+	"github.com/crewjam/saml"
 	"github.com/gin-gonic/gin"
 	"github.com/onsi/gomega"
 	"net/http"
@@ -17,40 +16,6 @@ import (
 	"testing"
 )
 
-func TestMetadataEndpoint(t *testing.T) {
-	prop := saml.NewSamlProperties()
-	prop.KeyFile = "testdata/saml_test.key"
-	prop.CertificateFile = "testdata/saml_test.cert"
-
-	serverProp := web.NewServerProperties()
-	serverProp.ContextPath = "europa"
-
-	c := newSamlAuthConfigurer(newSamlConfigurer(*prop, testdata.NewTestIdpManager()), testdata.NewTestFedAccountStore())
-	feature := New()
-	feature.Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
-		*opt =security.DefaultIssuerDetails{
-		Protocol:    "http",
-		Domain:      "vms.com",
-		Port:        8080,
-		ContextPath: serverProp.ContextPath,
-		IncludePort: true,
-	}}))
-	ws := TestWebSecurity{}
-
-	m := c.makeMiddleware(feature, ws)
-
-	r := gin.Default()
-	r.GET(serverProp.ContextPath + feature.metadataPath, m.MetadataHandlerFunc())
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/europa/saml/metadata", nil)
-
-	r.ServeHTTP(w, req)
-
-	g := gomega.NewWithT(t)
-	g.Expect(w).To(MetadataMatcher{})
-}
-
 func TestAcsEndpoint(t *testing.T) {
 	//TODO Test this when we have facility to create assertions
 }
@@ -58,24 +23,24 @@ func TestAcsEndpoint(t *testing.T) {
 func TestSamlEntryPoint(t *testing.T) {
 	tests := []struct {
 		name string
-		samlProperties saml.SamlProperties
+		samlProperties lanaisaml.SamlProperties
 	}{
 		{
 			name: "NameID Format not configured",
-			samlProperties: saml.SamlProperties{
+			samlProperties: lanaisaml.SamlProperties{
 				KeyFile:         "testdata/saml_test.key",
 				CertificateFile: "testdata/saml_test.cert"},
 		},
 		{
 			name: "NameID Format set to unspecified.",
-			samlProperties: saml.SamlProperties{
+			samlProperties: lanaisaml.SamlProperties{
 			KeyFile:         "testdata/saml_test.key",
 			CertificateFile: "testdata/saml_test.cert",
 			NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"},
 		},
 		{
 			name: "NameID Format set to emailAddress.",
-			samlProperties: saml.SamlProperties{
+			samlProperties: lanaisaml.SamlProperties{
 			KeyFile:         "testdata/saml_test.key",
 			CertificateFile: "testdata/saml_test.cert",
 			NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"},
@@ -106,47 +71,6 @@ func TestSamlEntryPoint(t *testing.T) {
 			g.Expect(w).To(NewRedirectAuthRequestMatcher(tt.samlProperties))
 		})
 	}
-}
-
-type MetadataMatcher struct {
-
-}
-
-func (m MetadataMatcher) Match(actual interface{}) (success bool, err error) {
-	w := actual.(*httptest.ResponseRecorder)
-	descriptor, err := samlsp.ParseMetadata(w.Body.Bytes())
-
-	if err != nil {
-		return false, err
-	}
-
-	if descriptor.EntityID != "http://vms.com:8080/europa/saml/metadata" {
-		return false, nil
-	}
-
-	if len(descriptor.SPSSODescriptors) != 1 {
-		return false, nil
-	}
-
-	if len(descriptor.SPSSODescriptors[0].AssertionConsumerServices) != 1{
-		return false, nil
-	}
-
-	if descriptor.SPSSODescriptors[0].AssertionConsumerServices[0].Location != "http://saml.vms.com:8080/europa/saml/SSO" {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-func (m MetadataMatcher) FailureMessage(actual interface{}) (message string) {
-	w := actual.(*httptest.ResponseRecorder)
-	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(w.Body.Bytes()))
-}
-
-func (m MetadataMatcher) NegatedFailureMessage(actual interface{}) (message string) {
-	w := actual.(*httptest.ResponseRecorder)
-	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(w.Body.Bytes()))
 }
 
 type TestWebSecurity struct {
@@ -208,4 +132,57 @@ func mockGinContext() *gin.Context {
 		Accepted: []string{},
 	}
 	return &gc
+}
+
+type AuthRequestMatcher struct {
+	testdata.SamlRequestMatcher
+}
+
+func NewPostAuthRequestMatcher(props lanaisaml.SamlProperties) *AuthRequestMatcher {
+	return &AuthRequestMatcher{
+		testdata.SamlRequestMatcher{
+			SamlProperties: props,
+			Binding:        saml.HTTPPostBinding,
+			Subject:        "auth request",
+			ExpectedMsg:    "HTML with form posting",
+		},
+	}
+}
+
+func NewRedirectAuthRequestMatcher(props lanaisaml.SamlProperties) *AuthRequestMatcher {
+	return &AuthRequestMatcher{
+		testdata.SamlRequestMatcher{
+			SamlProperties: props,
+			Binding:        saml.HTTPRedirectBinding,
+			Subject:        "auth request",
+			ExpectedMsg:    "redirect with queries",
+		},
+	}
+}
+
+func (a AuthRequestMatcher) Match(actual interface{}) (success bool, err error) {
+	req, e := a.Extract(actual)
+	if e != nil {
+		return false, e
+	}
+
+	if req.Location != "https://dev-940621.oktapreview.com/app/dev-940621_samlservicelocalgo_1/exkwj65c2kC1vwtYi0h7/sso/saml" {
+		return false, errors.New("incorrect request destination")
+	}
+
+	nameIdPolicy := req.XMLDoc.FindElement("//samlp:NameIDPolicy")
+	if a.SamlProperties.NameIDFormat == "" {
+		if nameIdPolicy.SelectAttr("Format").Value != "urn:oasis:names:tc:SAML:2.0:nameid-format:transient" {
+			return false, errors.New("NameIDPolicy format should be transient if it's not configured in our properties")
+		}
+	} else if a.SamlProperties.NameIDFormat == "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" {
+		if nameIdPolicy.SelectAttr("Format") != nil {
+			return false, errors.New("NameIDPolicy should not have a format, if we configure it to be unspecified")
+		}
+	} else {
+		if nameIdPolicy.SelectAttr("Format").Value != a.SamlProperties.NameIDFormat {
+			return false, errors.New("NameIDPolicy format should match our configuration")
+		}
+	}
+	return true, nil
 }

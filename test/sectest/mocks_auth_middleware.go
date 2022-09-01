@@ -7,10 +7,17 @@ import (
 
 type MockAuthenticationMiddleware struct {
 	MWMocker             MWMocker
+	// deprecated, use MWMocker interface or MWMockFunc.
+	// Recommended to use WithMockedMiddleware test options
+	MockedAuthentication security.Authentication
 }
 
+// NewMockAuthenticationMiddleware
+// deprecated, directly set MWMocker field with MWMocker interface or MWMockFunc
+// Recommended to use WithMockedMiddleware test options
 func NewMockAuthenticationMiddleware(authentication security.Authentication) *MockAuthenticationMiddleware {
 	return &MockAuthenticationMiddleware{
+		MockedAuthentication: authentication,
 		MWMocker: MWMockFunc(func(MWMockContext) security.Authentication {
 			return authentication
 		}),
@@ -19,12 +26,16 @@ func NewMockAuthenticationMiddleware(authentication security.Authentication) *Mo
 
 func (m *MockAuthenticationMiddleware) AuthenticationHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		auth := m.MWMocker.Mock(MWMockContext{
-			Request: ctx.Request,
-		})
-		if auth != nil {
-			ctx.Set(security.ContextKeySecurity, auth)
+		var auth security.Authentication
+		if m.MWMocker != nil {
+			auth = m.MWMocker.Mock(MWMockContext{
+				Request: ctx.Request,
+			})
 		}
+		if auth == nil {
+			auth = m.MockedAuthentication
+		}
+		ctx.Set(security.ContextKeySecurity, auth)
 	}
 }
 

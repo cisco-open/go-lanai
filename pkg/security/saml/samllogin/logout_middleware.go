@@ -28,7 +28,7 @@ const (
 type SLOState int
 
 func (s SLOState) Is(mask SLOState) bool {
-	return s&mask != 0
+	return s&mask != 0 || mask == 0 && s == 0
 }
 
 const (
@@ -127,7 +127,7 @@ func (m *SPLogoutMiddleware) Commence(ctx context.Context, r *http.Request, w ht
 		return
 	}
 
-	m.updateSLOState(ctx, func(current SLOState) SLOState {
+	updateSLOState(ctx, func(current SLOState) SLOState {
 		return current | SLOInitiated
 	})
 }
@@ -183,7 +183,7 @@ func (m *SPLogoutMiddleware) resolveNameId(ctx context.Context) (nameId, format 
 }
 
 func (m *SPLogoutMiddleware) handleSuccess(gc *gin.Context) {
-	m.updateSLOState(gc, func(current SLOState) SLOState {
+	updateSLOState(gc, func(current SLOState) SLOState {
 		return current | SLOCompletedFully
 	})
 	auth := security.Get(gc)
@@ -195,7 +195,7 @@ func (m *SPLogoutMiddleware) handleSuccess(gc *gin.Context) {
 
 func (m *SPLogoutMiddleware) handleError(gc *gin.Context, e error) {
 	logger.WithContext(gc).Infof("SAML Single Logout failed with error: %v", e)
-	m.updateSLOState(gc, func(current SLOState) SLOState {
+	updateSLOState(gc, func(current SLOState) SLOState {
 		return current | SLOFailed
 	})
 	// We always let logout continues
@@ -206,7 +206,11 @@ func (m *SPLogoutMiddleware) handleError(gc *gin.Context, e error) {
 	}
 }
 
-func (m *SPLogoutMiddleware) currentAuthDetails(ctx context.Context) map[string]interface{} {
+/***********************
+	Helper Funcs
+ ***********************/
+
+func currentAuthDetails(ctx context.Context) map[string]interface{} {
 	auth := security.Get(ctx)
 	switch m := auth.Details().(type) {
 	case map[string]interface{}:
@@ -216,8 +220,8 @@ func (m *SPLogoutMiddleware) currentAuthDetails(ctx context.Context) map[string]
 	}
 }
 
-func (m *SPLogoutMiddleware) currentSLOState(ctx context.Context) SLOState {
-	details := m.currentAuthDetails(ctx)
+func currentSLOState(ctx context.Context) SLOState {
+	details := currentAuthDetails(ctx)
 	if details == nil {
 		return 0
 	}
@@ -225,8 +229,8 @@ func (m *SPLogoutMiddleware) currentSLOState(ctx context.Context) SLOState {
 	return state
 }
 
-func (m *SPLogoutMiddleware) updateSLOState(ctx context.Context, updater func(current SLOState) SLOState) {
-	details := m.currentAuthDetails(ctx)
+func updateSLOState(ctx context.Context, updater func(current SLOState) SLOState) {
+	details := currentAuthDetails(ctx)
 	if details == nil {
 		return
 	}

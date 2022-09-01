@@ -4,38 +4,63 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"errors"
+	"sort"
 )
 
 type TestIdpManager struct {
-	idpDetails TestIdpProvider
+	idpDetails []TestIdpProvider
 }
 
-func NewTestIdpManager() *TestIdpManager {
-	return &TestIdpManager{
-		idpDetails: TestIdpProvider{
+func NewTestIdpManager(idps ...TestIdpProvider) *TestIdpManager {
+	details := []TestIdpProvider{
+		{
 			domain:           "saml.vms.com",
-			metadataLocation: "testdata/okta_metadata.xml",
-			externalIdpName: "okta",
-			externalIdName: "email",
-			entityId: "http://www.okta.com/exkwj65c2kC1vwtYi0h7",
+			metadataLocation: "testdata/okta_login_test_metadata.xml",
+			externalIdpName:  "okta",
+			externalIdName:   "email",
+			entityId:         "http://www.okta.com/exkwj65c2kC1vwtYi0h7",
 		},
+		{
+			domain:           "saml-alt.vms.com",
+			metadataLocation: "testdata/okta_logout_test_metadata.xml",
+			externalIdpName:  "okta",
+			externalIdName:   "email",
+			entityId:         "http://www.okta.com/exk668ha29xaI4in25d7",
+		},
+	}
+	for _, v := range idps {
+		details = append(details, v)
+	}
+	return &TestIdpManager{
+		idpDetails: details,
 	}
 }
 
-func (t *TestIdpManager) GetIdentityProvidersWithFlow(context.Context, idp.AuthenticationFlow) []idp.IdentityProvider {
-	return []idp.IdentityProvider{t.idpDetails}
+func (t TestIdpManager) GetIdentityProvidersWithFlow(context.Context, idp.AuthenticationFlow) (ret []idp.IdentityProvider) {
+	ret = make([]idp.IdentityProvider, len(t.idpDetails))
+	for i, v := range t.idpDetails {
+		ret[i] = v
+	}
+	sort.SliceStable(ret, func(i, j int) bool {
+		return ret[i].Domain() < ret[j].Domain()
+	})
+	return
 }
 
 func (t TestIdpManager) GetIdentityProviderByEntityId(_ context.Context, entityId string) (idp.IdentityProvider, error) {
-	if entityId == t.idpDetails.entityId {
-		return t.idpDetails, nil
+	for _, v := range t.idpDetails {
+		if entityId == v.entityId {
+			return v, nil
+		}
 	}
 	return nil, errors.New("not found")
 }
 
 func (t TestIdpManager) GetIdentityProviderByDomain(_ context.Context, domain string) (idp.IdentityProvider, error) {
-	if domain == t.idpDetails.domain {
-		return t.idpDetails, nil
+	for _, v := range t.idpDetails {
+		if domain == v.domain {
+			return v, nil
+		}
 	}
 	return nil, errors.New("not found")
 }

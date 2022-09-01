@@ -1,15 +1,15 @@
-package samllogin
+package testdata
 
 import (
 	"bytes"
 	"compress/flate"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/beevik/etree"
-	samllib "github.com/crewjam/saml"
+	"github.com/crewjam/saml"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -24,17 +24,17 @@ type ActualSamlRequest struct {
 }
 
 type SamlRequestMatcher struct {
-	SamlProperties saml.SamlProperties
+	SamlProperties lanaisaml.SamlProperties
 	Binding        string
 	Subject        string
 	ExpectedMsg    string
 }
 
-func (a SamlRequestMatcher) extract(actual interface{}) (*ActualSamlRequest, error) {
+func (a SamlRequestMatcher) Extract(actual interface{}) (*ActualSamlRequest, error) {
 	switch a.Binding {
-	case samllib.HTTPPostBinding:
+	case saml.HTTPPostBinding:
 		return a.extractPost(actual)
-	case samllib.HTTPRedirectBinding:
+	case saml.HTTPRedirectBinding:
 		return a.extractRedirect(actual)
 	default:
 		return nil, fmt.Errorf("unable to verify %s with binding '%s'", a.Subject, a.Binding)
@@ -88,7 +88,13 @@ func (a SamlRequestMatcher) extractPost(actual interface{}) (*ActualSamlRequest,
 }
 
 func (a SamlRequestMatcher) extractRedirect(actual interface{}) (*ActualSamlRequest, error) {
-	resp := actual.(*httptest.ResponseRecorder).Result()
+	var resp *http.Response
+	switch v := actual.(type) {
+	case *httptest.ResponseRecorder:
+		resp = v.Result()
+	case *http.Response:
+		resp = v
+	}
 	if resp.StatusCode < 300 || resp.StatusCode > 399 {
 		return nil, fmt.Errorf("not redirect")
 	}
@@ -106,7 +112,7 @@ func (a SamlRequestMatcher) extractRedirect(actual interface{}) (*ActualSamlRequ
 		return nil, e
 	}
 	r := flate.NewReader(bytes.NewReader(compressed))
-	defer func(){ _ = r.Close() }()
+	defer func() { _ = r.Close() }()
 	reqDecoded, e := ioutil.ReadAll(r)
 	if e != nil {
 		return nil, e
@@ -136,67 +142,3 @@ func (a SamlRequestMatcher) NegatedFailureMessage(actual interface{}) (message s
 	body := string(w.Body.Bytes())
 	return fmt.Sprintf("Expected %s as %s. Actual: %s", a.Subject, a.ExpectedMsg, body)
 }
-
-type AuthRequestMatcher struct {
-	SamlRequestMatcher
-}
-
-func NewPostAuthRequestMatcher(props saml.SamlProperties) *AuthRequestMatcher {
-	return &AuthRequestMatcher{
-		SamlRequestMatcher{
-			SamlProperties: props,
-			Binding:        samllib.HTTPPostBinding,
-			Subject:        "auth request",
-			ExpectedMsg:    "HTML with form posting",
-		},
-	}
-}
-
-func NewRedirectAuthRequestMatcher(props saml.SamlProperties) *AuthRequestMatcher {
-	return &AuthRequestMatcher{
-		SamlRequestMatcher{
-			SamlProperties: props,
-			Binding:        samllib.HTTPRedirectBinding,
-			Subject:        "auth request",
-			ExpectedMsg:    "redirect with queries",
-		},
-	}
-}
-
-func (a AuthRequestMatcher) Match(actual interface{}) (success bool, err error) {
-	req, e := a.extract(actual)
-	if e != nil {
-		return false, e
-	}
-
-	if req.Location != "https://dev-940621.oktapreview.com/app/dev-940621_samlservicelocalgo_1/exkwj65c2kC1vwtYi0h7/sso/saml" {
-		return false, errors.New("incorrect request destination")
-	}
-
-	nameIdPolicy := req.XMLDoc.FindElement("//samlp:NameIDPolicy")
-	if a.SamlProperties.NameIDFormat == "" {
-		if nameIdPolicy.SelectAttr("Format").Value != "urn:oasis:names:tc:SAML:2.0:nameid-format:transient" {
-			return false, errors.New("NameIDPolicy format should be transient if it's not configured in our properties")
-		}
-	} else if a.SamlProperties.NameIDFormat == "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" {
-		if nameIdPolicy.SelectAttr("Format") != nil {
-			return false, errors.New("NameIDPolicy should not have a format, if we configure it to be unspecified")
-		}
-	} else {
-		if nameIdPolicy.SelectAttr("Format").Value != a.SamlProperties.NameIDFormat {
-			return false, errors.New("NameIDPolicy format should match our configuration")
-		}
-	}
-	return true, nil
-}
-
-
-/********************
-	Mocks
- ********************/
-
-
-
-
-
-

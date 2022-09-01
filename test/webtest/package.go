@@ -106,7 +106,7 @@ func testSetupAddrExtractor(conf *TestServerConfig, di *setupDI) test.SetupFunc 
 			port:        di.Registrar.ServerPort(),
 			contextPath: conf.ContextPath,
 		}
-		return newWetTestContext(ctx, &info, nil), nil
+		return newWebTestContext(ctx, &info, nil), nil
 	}
 }
 
@@ -115,6 +115,6 @@ func testSetupEngineExtractor(conf *TestServerConfig, di *setupDI) test.SetupFun
 		info := serverInfo{
 			contextPath: conf.ContextPath,
 		}
-		return  newWetTestContext(ctx, &info, di.Engine), nil
+		return  newWebTestContext(ctx, &info, di.Engine), nil
 	}
 }
