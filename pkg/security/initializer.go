@@ -49,6 +49,12 @@ func (init *initializer) RegisterFeature(featureId FeatureIdentifier, featureCon
 	init.featureConfigurers[featureId] = featureConfigurer
 }
 
+// FindFeature is not threadsafe, usually called in "fx.Invoke" or "fx.Provide"
+func (init *initializer) FindFeature(featureId FeatureIdentifier) FeatureConfigurer {
+	f, _ := init.featureConfigurers[featureId]
+	return f
+}
+
 func (init *initializer) validateState(action string) error {
 	switch {
 	case init.initialized:

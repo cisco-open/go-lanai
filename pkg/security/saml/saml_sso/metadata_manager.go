@@ -1,6 +1,7 @@
 package saml_auth
 
 import (
+	"context"
 	"crypto/x509"
 	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
@@ -34,7 +35,7 @@ func (m *SpMetadataManager) GetServiceProvider(serviceProviderID string) (SamlSp
 	return SamlSpDetails{}, nil, errors.New(fmt.Sprintf("service provider metadata for %s not found", serviceProviderID))
 }
 
-func (m *SpMetadataManager) RefreshCache(clients []saml_auth_ctx.SamlClient) {
+func (m *SpMetadataManager) RefreshCache(ctx context.Context, clients []saml_auth_ctx.SamlClient) {
 	m.cacheMutex.RLock()
 	remove, refresh := m.compareWithCache(clients)
 	m.cacheMutex.RUnlock()
@@ -54,7 +55,7 @@ func (m *SpMetadataManager) RefreshCache(clients []saml_auth_ctx.SamlClient) {
 		return
 	}
 
-	resolved := m.resolveMetadata(refresh)
+	resolved := m.resolveMetadata(ctx, refresh)
 
 	for entityId, doRemove := range remove {
 		if doRemove {
@@ -111,10 +112,10 @@ func (m *SpMetadataManager) compareWithCache(clients []saml_auth_ctx.SamlClient)
 	return remove, refresh
 }
 
-func (m *SpMetadataManager) resolveMetadata(refresh []SamlSpDetails) (resolved map[string]*saml.EntityDescriptor) {
+func (m *SpMetadataManager) resolveMetadata(ctx context.Context, refresh []SamlSpDetails) (resolved map[string]*saml.EntityDescriptor) {
 	resolved = make(map[string]*saml.EntityDescriptor)
 	for _, details := range refresh {
-		spDescriptor, data, err := saml_util.ResolveMetadata(details.MetadataSource, m.httpClient)
+		spDescriptor, data, err := saml_util.ResolveMetadata(ctx, details.MetadataSource, m.httpClient)
 		if err == nil {
 			if details.MetadataRequireSignature && spDescriptor.Signature == nil{
 				logger.Error("sp metadata rejected because it is not signed")

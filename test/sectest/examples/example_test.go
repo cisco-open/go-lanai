@@ -2,16 +2,22 @@ package examples
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"embed"
-	"fmt"
+	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"net/http"
 	"testing"
 )
 
@@ -19,24 +25,9 @@ import (
 	Examples
  *************************/
 
-type TestTarget struct{}
-
-func (t *TestTarget) DoSomethingWithinSecurityScope(ctx context.Context) error {
-	e := scope.Do(ctx, func(scopedCtx context.Context) {
-		// scopedCtx contains switched security context
-		// do something with scopedCtx...
-		_ = t.DoSomethingRequiringSecurity(scopedCtx)
-	}, scope.UseSystemAccount())
-	return e
-}
-
-func (t *TestTarget) DoSomethingRequiringSecurity(ctx context.Context) error {
-	auth := security.Get(ctx)
-	if !security.IsFullyAuthenticated(auth) {
-		return fmt.Errorf("not authenticated")
-	}
-	return nil
-}
+const (
+	TestHeader        = "X-MOCK-AUTH"
+)
 
 // TestUseDefaultSecurityScopeMocking
 // apptest.Bootstrap and sectest.WithMockedScopes are required for usage of scope package
@@ -76,6 +67,45 @@ func TestCurrentSecurityContextMocking(t *testing.T) {
 func TestMockBothCurrentSecurityAndScope(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		test.GomegaSubTest(SubTestExampleMockBoth(), "MockBoth"),
+	)
+}
+
+type testDI struct {
+	fx.In
+	AuthMocker sectest.MWMocker
+}
+
+func TestWithMockedServer(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithMockedServer(),
+		sectest.WithMockedMiddleware(),
+		apptest.WithModules(basicauth.BasicAuthModule, access.AccessControlModule, errorhandling.ErrorHandlingModule),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			fx.Invoke(registerTestController, registerTestSecurity),
+		),
+		test.GomegaSubTest(SubTestExampleWithMockedServer(di), "MockedServerWithMockedContext"),
+	)
+}
+
+func TestWithRealServer(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithRealServer(),
+		sectest.WithMockedMiddleware(
+			// Custom Mocker is required for real server
+			sectest.MWCustomMocker(sectest.MWMockFunc(realServerMockFunc)),
+			//MWCustomConfigurer(security.ConfigurerFunc(realServerSecConfigurer)),
+		),
+		apptest.WithModules(basicauth.BasicAuthModule, access.AccessControlModule, errorhandling.ErrorHandlingModule),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			fx.Invoke(registerTestController, registerTestSecurity),
+		),
+		test.GomegaSubTest(SubTestExampleWithRealServer(di), "RealServerWithHeader"),
 	)
 }
 
@@ -124,4 +154,75 @@ func SubTestExampleMockBoth() test.GomegaSubTestFunc {
 		e := toTest.DoSomethingWithinSecurityScope(ctx)
 		g.Expect(e).To(Succeed(), "security-aware methods shouldn't returns error")
 	}
+}
+
+func SubTestExampleWithMockedServer(_ *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		ctx = sectest.WithMockedSecurity(ctx, securityMock())
+		var req *http.Request
+		var resp *http.Response
+		req = webtest.NewRequest(ctx, http.MethodGet, TestSecuredURL, nil)
+		resp = webtest.MustExec(ctx, req).Response
+		g.Expect(resp).To(Not(BeNil()), "response shouldn't be nil")
+		g.Expect(resp.StatusCode).To(BeNumerically("==", 200), "response should be 200")
+	}
+}
+
+func SubTestExampleWithRealServer(_ *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *http.Request
+		var resp *http.Response
+		req = webtest.NewRequest(ctx, http.MethodGet, TestSecuredURL, nil)
+		req.Header.Set(TestHeader, "yes")
+		resp = webtest.MustExec(ctx, req).Response
+		g.Expect(resp).To(Not(BeNil()), "response shouldn't be nil")
+		g.Expect(resp.StatusCode).To(BeNumerically("==", 200), "response should be 200")
+	}
+}
+
+/*************************
+	Helpers
+ *************************/
+
+func securityMock() sectest.SecurityMockOptions {
+	return func(d *sectest.SecurityDetailsMock) {
+		d.Username = "test-user"
+		d.UserId = uuid.New().String()
+		d.TenantId = uuid.New().String()
+		d.TenantExternalId = "test-tenant"
+		d.Permissions = utils.NewStringSet("TEST_PERMISSION")
+	}
+}
+
+func realServerMockFunc(mc sectest.MWMockContext) security.Authentication {
+	if mc.Request.Header.Get(TestHeader) == "" {
+		return nil
+	}
+	return mockedAuth{}
+}
+
+//goland:noinspection GoUnusedFunction
+func realServerSecConfigurer(ws security.WebSecurity) {
+	ws = ws.Route(matcher.AnyRoute()).
+		With(sectest.NewMockedMW().
+			Mocker(sectest.MWMockFunc(realServerMockFunc)),
+		)
+}
+
+type mockedAuth struct{}
+
+func (a mockedAuth) Principal() interface{} {
+	return "mocked"
+}
+
+func (a mockedAuth) Permissions() security.Permissions {
+	return security.Permissions{}
+}
+
+func (a mockedAuth) State() security.AuthenticationState {
+	return security.StateAuthenticated
+}
+
+func (a mockedAuth) Details() interface{} {
+	return map[string]interface{}{}
 }

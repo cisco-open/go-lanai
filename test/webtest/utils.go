@@ -28,6 +28,8 @@ func CurrentContextPath(ctx context.Context) string {
 	return DefaultContextPath
 }
 
+type RequestOptions func(req *http.Request)
+
 // NewRequest create a new *http.Request based on current execution mode.
 // WithRealServer mode:
 // 	- Created request have Host, Port and ContextPath set to current TestServer.
@@ -40,7 +42,7 @@ func CurrentContextPath(ctx context.Context) string {
 //	- If the given target is absolute URL, host, port and path are kept unchanged
 //
 // This function panic if given target is not valid absolute/relative URL or test server is not enabled
-func NewRequest(ctx context.Context, method, target string, body io.Reader) *http.Request {
+func NewRequest(ctx context.Context, method, target string, body io.Reader, opts...RequestOptions) (req *http.Request) {
 	tUrl, e := url.Parse(target)
 	if e != nil {
 		panic(fmt.Sprintf("invalid request target: %v", e))
@@ -58,15 +60,18 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader) *htt
 
 	if ctx.Value(ctxKeyHttpHandler) != nil {
 		// WithMockedServer is enabled, we use httptest
-		return httptest.NewRequest(method, tUrl.String(), body)
+		req = httptest.NewRequest(method, tUrl.String(), body).WithContext(ctx)
 	} else {
 		tUrl.Host = fmt.Sprintf("%s:%d", info.hostname, info.port)
-		req, e := http.NewRequestWithContext(ctx, method, tUrl.String(), body)
+		req, e = http.NewRequestWithContext(ctx, method, tUrl.String(), body)
 		if e != nil {
 			panic(e)
 		}
-		return req
 	}
+	for _, fn := range opts {
+		fn(req)
+	}
+	return
 }
 
 // Exec execute given request depending on test server mode (real vs mocked)
@@ -75,7 +80,10 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader) *htt
 // this func might return error if test server mode is WithRealServer()
 // Note: don't forget to close the response's body when done with it
 //nolint:bodyclose // we don't close body here, whoever using this function should close it when done
-func Exec(ctx context.Context, req *http.Request) (ExecResult, error) {
+func Exec(ctx context.Context, req *http.Request, opts...RequestOptions) (ExecResult, error) {
+	for _, fn := range opts {
+		fn(req)
+	}
 	if handler, ok := ctx.Value(ctxKeyHttpHandler).(http.Handler); ok {
 		// mocked mode
 		rw := httptest.NewRecorder()
@@ -95,12 +103,38 @@ func Exec(ctx context.Context, req *http.Request) (ExecResult, error) {
 
 // MustExec is same as Exec, but panic instead of returning error
 // Note: don't forget to close the response's body when done with it
-func MustExec(ctx context.Context, req *http.Request) ExecResult {
-	ret, e := Exec(ctx, req)
+func MustExec(ctx context.Context, req *http.Request, opts...RequestOptions) ExecResult {
+	ret, e := Exec(ctx, req, opts...)
 	if e != nil {
 		panic(e)
 	}
 	return ret
+}
+
+/*************************
+	Options
+ *************************/
+
+func WithHeaders(kvs...string) RequestOptions {
+	return func(req *http.Request) {
+		for i := 0; i < len(kvs); i+=2 {
+			if i + 1 < len(kvs) {
+				req.Header.Add(kvs[i], kvs[i+1])
+			} else {
+				req.Header.Add(kvs[i], "")
+			}
+		}
+	}
+}
+
+func WithCookies(resp *http.Response) RequestOptions {
+	cookies := resp.Cookies()
+	kvs := make([]string, len(cookies)*2)
+	for i := range cookies {
+		kvs[i*2] = "Cookie"
+		kvs[i*2+1] = cookies[i].String()
+	}
+	return WithHeaders(kvs...)
 }
 
 /*************************
@@ -127,7 +161,7 @@ type webTestContext struct {
 	handler http.Handler
 }
 
-func newWetTestContext(parent context.Context, info *serverInfo, handler http.Handler) context.Context {
+func newWebTestContext(parent context.Context, info *serverInfo, handler http.Handler) context.Context {
 	return &webTestContext{
 		Context: parent,
 		info:    info,

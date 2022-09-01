@@ -1,18 +1,12 @@
 package samllogin
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"fmt"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -22,52 +16,65 @@ import (
 	"net/url"
 )
 
-type SamlAuthConfigurer struct {
+type spOptionsHashable struct {
+	URL          url.URL
+	ACSPath      string
+	MetadataPath string
+	SLOPath      string
+}
+
+type SPOptions struct {
+	spOptionsHashable
+	Key               *rsa.PrivateKey
+	Certificate       *x509.Certificate
+	Intermediates     []*x509.Certificate
+	AllowIDPInitiated bool
+	SignRequest       bool
+	ForceAuthn        bool
+	NameIdFormat      string
+}
+
+type configurerSharedComponents struct {
+	serviceProvider *saml.ServiceProvider
+	tracker         samlsp.RequestTracker
+	clientManager   *CacheableIdpClientManager
+}
+
+// samlConfigurer is a base implementation for both login and logout configurer.
+// Many components for login and logout are shared
+type samlConfigurer struct {
 	properties     samlctx.SamlProperties
 	idpManager     idp.IdentityProviderManager
 	samlIdpManager SamlIdentityProviderManager
-	serverProps    web.ServerProperties
-	accountStore   security.FederatedAccountStore
+	// Shared components, generated on demand
+	components map[spOptionsHashable]*configurerSharedComponents
 }
 
-func (s *SamlAuthConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
-	f := feature.(*Feature)
-
-	m := s.makeMiddleware(f, ws)
-
-	ws.Route(matcher.RouteWithPattern(f.acsPath)).
-		Route(matcher.RouteWithPattern(f.metadataPath)).
-		Add(mapping.Get(f.metadataPath).
-			HandlerFunc(m.MetadataHandlerFunc()).
-			//metadata is an endpoint that is available without conditions, therefore call Build() to not inherit the ws condition
-			Name("saml metadata").Build()).
-		Add(mapping.Post(f.acsPath).
-			HandlerFunc(m.ACSHandlerFunc()).
-			Name("saml assertion consumer m")).
-		Add(middleware.NewBuilder("saml idp metadata refresh").
-			Order(security.MWOrderSAMLMetadataRefresh).
-			Use(m.RefreshMetadataHandler()))
-
-	requestMatcher := matcher.RequestWithPattern(f.acsPath).Or(matcher.RequestWithPattern(f.metadataPath))
-	access.Configure(ws).
-		Request(requestMatcher).WithOrder(order.Highest).PermitAll()
-
-	//authentication entry point
-	errorhandling.Configure(ws).
-		AuthenticationEntryPoint(request_cache.NewSaveRequestEntryPoint(m))
-	return nil
-}
-
-func (s *SamlAuthConfigurer) effectiveSuccessHandler(f *Feature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
-	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
-		return security.NewAuthenticationSuccessHandler(globalHandler, f.successHandler)
-	} else {
-		return security.NewAuthenticationSuccessHandler(f.successHandler)
+func newSamlConfigurer(properties samlctx.SamlProperties, idpManager idp.IdentityProviderManager) *samlConfigurer {
+	return &samlConfigurer{
+		properties:     properties,
+		idpManager:     idpManager,
+		samlIdpManager: idpManager.(SamlIdentityProviderManager),
 	}
 }
 
-func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options {
-	cert, err := cryptoutils.LoadCert(s.properties.CertificateFile)
+// shared grab shared component based on issuer. Create if not exists.
+// never returns nil
+func (c *samlConfigurer) shared(hashable spOptionsHashable) *configurerSharedComponents {
+	if c.components == nil {
+		c.components = make(map[spOptionsHashable]*configurerSharedComponents)
+	}
+
+	shared, ok := c.components[hashable]
+	if !ok {
+		shared = &configurerSharedComponents{}
+		c.components[hashable] = shared
+	}
+	return shared
+}
+
+func (c *samlConfigurer) getServiceProviderConfiguration(f *Feature) (opt SPOptions) {
+	cert, err := cryptoutils.LoadCert(c.properties.CertificateFile)
 	if err != nil {
 		panic(security.NewInternalError("cannot load certificate from file", err))
 	}
@@ -75,7 +82,7 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 		logger.Warnf("multiple certificate found, using first one")
 	}
 
-	key, err := cryptoutils.LoadPrivateKey(s.properties.KeyFile, s.properties.KeyPassword)
+	key, err := cryptoutils.LoadPrivateKey(c.properties.KeyFile, c.properties.KeyPassword)
 	if err != nil {
 		panic(security.NewInternalError("cannot load private key from file", err))
 	}
@@ -83,20 +90,30 @@ func (s *SamlAuthConfigurer) getServiceProviderConfiguration(f *Feature) Options
 	if err != nil {
 		panic(security.NewInternalError("cannot get issuer's base URL", err))
 	}
-	opts := Options{
-		URL:          *rootURL,
+	opts := SPOptions{
+		spOptionsHashable: spOptionsHashable{
+			URL:          *rootURL,
+			ACSPath:      fmt.Sprintf("%s%s", rootURL.Path, f.acsPath),
+			MetadataPath: fmt.Sprintf("%s%s", rootURL.Path, f.metadataPath),
+			SLOPath:      fmt.Sprintf("%s%s", rootURL.Path, f.sloPath),
+		},
 		Key:          key,
 		Certificate:  cert[0],
-		ACSPath:      fmt.Sprintf("%s%s", rootURL.Path, f.acsPath),
-		MetadataPath: fmt.Sprintf("%s%s", rootURL.Path, f.metadataPath),
-		SLOPath:      fmt.Sprintf("%s%s", rootURL.Path, f.sloPath),
 		SignRequest:  true,
-		NameIdFormat: s.properties.NameIDFormat,
+		NameIdFormat: c.properties.NameIDFormat,
 	}
 	return opts
 }
 
-func (s *SamlAuthConfigurer) makeServiceProvider(opts Options) saml.ServiceProvider {
+func (c *samlConfigurer) sharedServiceProvider(opts SPOptions) (ret saml.ServiceProvider) {
+	if shared := c.shared(opts.spOptionsHashable); shared.serviceProvider != nil {
+		return *shared.serviceProvider
+	} else {
+		defer func() {
+			shared.serviceProvider = &ret
+		}()
+	}
+
 	metadataURL := opts.URL.ResolveReference(&url.URL{Path: opts.MetadataPath})
 	acsURL := opts.URL.ResolveReference(&url.URL{Path: opts.ACSPath})
 	sloURL := opts.URL.ResolveReference(&url.URL{Path: opts.SLOPath})
@@ -121,11 +138,20 @@ func (s *SamlAuthConfigurer) makeServiceProvider(opts Options) saml.ServiceProvi
 		SignatureMethod:   signatureMethod,
 		AllowIDPInitiated: opts.AllowIDPInitiated,
 		AuthnNameIDFormat: saml.NameIDFormat(opts.NameIdFormat),
+		LogoutBindings:    []string{saml.HTTPPostBinding},
 	}
 	return sp
 }
 
-func (s *SamlAuthConfigurer) makeRequestTracker(opts Options) samlsp.RequestTracker {
+func (c *samlConfigurer) sharedRequestTracker(opts SPOptions) (ret samlsp.RequestTracker) {
+	if shared := c.shared(opts.spOptionsHashable); shared.tracker != nil {
+		return shared.tracker
+	} else {
+		defer func() {
+			shared.tracker = ret
+		}()
+	}
+
 	codec := samlsp.JWTTrackedRequestCodec{
 		SigningMethod: jwt.SigningMethodRS256,
 		Audience:      opts.URL.String(),
@@ -157,30 +183,22 @@ func (s *SamlAuthConfigurer) makeRequestTracker(opts Options) samlsp.RequestTrac
 	return tracker
 }
 
-func (s *SamlAuthConfigurer) makeMiddleware(f *Feature, ws security.WebSecurity) *ServiceProviderMiddleware {
-	opts := s.getServiceProviderConfiguration(f)
-	sp := s.makeServiceProvider(opts)
-	tracker := s.makeRequestTracker(opts)
-	if f.successHandler == nil {
-		f.successHandler = NewTrackedRequestSuccessHandler(tracker)
+func (c *samlConfigurer) sharedClientManager(opts SPOptions) (ret *CacheableIdpClientManager) {
+	if shared := c.shared(opts.spOptionsHashable); shared.clientManager != nil {
+		return shared.clientManager
+	} else {
+		defer func() {
+			shared.clientManager = ret
+		}()
 	}
-
-	authenticator := &Authenticator{
-		accountStore: s.accountStore,
-		idpManager:   s.samlIdpManager,
-	}
-
-	clientManager := NewCacheableIdpClientManager(sp)
-
-	return NewMiddleware(sp, tracker, s.idpManager, clientManager, s.effectiveSuccessHandler(f, ws), authenticator, f.errorPath)
+	sp := c.sharedServiceProvider(opts)
+	return NewCacheableIdpClientManager(sp)
 }
 
-func newSamlAuthConfigurer(properties samlctx.SamlProperties, idpManager idp.IdentityProviderManager,
-	accountStore security.FederatedAccountStore) *SamlAuthConfigurer {
-	return &SamlAuthConfigurer{
-		properties:     properties,
-		idpManager:     idpManager,
-		samlIdpManager: idpManager.(SamlIdentityProviderManager),
-		accountStore:   accountStore,
+func (c *samlConfigurer) effectiveSuccessHandler(f *Feature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
+	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
+		return security.NewAuthenticationSuccessHandler(globalHandler, f.successHandler)
+	} else {
+		return security.NewAuthenticationSuccessHandler(f.successHandler)
 	}
 }

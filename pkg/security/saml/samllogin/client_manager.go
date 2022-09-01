@@ -1,6 +1,7 @@
 package samllogin
 
 import (
+	"context"
 	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
@@ -30,7 +31,7 @@ func NewCacheableIdpClientManager(template saml.ServiceProvider) *CacheableIdpCl
 	}
 }
 
-func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdentityProvider) {
+func (m *CacheableIdpClientManager) RefreshCache(ctx context.Context, identityProviders []SamlIdentityProvider) {
 	m.cacheMutex.RLock()
 	remove, refresh := m.compareWithCache(identityProviders)
 	m.cacheMutex.RUnlock()
@@ -49,7 +50,7 @@ func (m *CacheableIdpClientManager) RefreshCache(identityProviders []SamlIdentit
 		return
 	}
 
-	resolved := m.resolveMetadata(refresh)
+	resolved := m.resolveMetadata(ctx, refresh)
 
 	for entityId, doRemove := range remove {
 		if doRemove {
@@ -91,13 +92,13 @@ func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIde
 	return remove, refresh
 }
 
-func (m *CacheableIdpClientManager) resolveMetadata(refresh []SamlIdentityProvider) (resolved map[string]*saml.ServiceProvider){
+func (m *CacheableIdpClientManager) resolveMetadata(ctx context.Context, refresh []SamlIdentityProvider) (resolved map[string]*saml.ServiceProvider){
 	resolved = make(map[string]*saml.ServiceProvider)
 	for _, details := range refresh {
-		idpDescriptor, data, err := saml_util.ResolveMetadata(details.MetadataLocation(), m.httpClient)
+		idpDescriptor, data, err := saml_util.ResolveMetadata(ctx, details.MetadataLocation(), m.httpClient)
 		if err == nil {
 			if details.ShouldMetadataRequireSignature() && idpDescriptor.Signature == nil{
-				logger.Error("idp metadata rejected because it is not signed")
+				logger.WithContext(ctx).Errorf("idp metadata rejected because it is not signed")
 				continue
 			}
 

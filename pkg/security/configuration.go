@@ -12,15 +12,23 @@ import (
 /************************************
 	Interfaces for setting security
 *************************************/
+
 // Configurer can be registered to Registrar.
 // Each Configurer will get a newly created WebSecurity and is responsible to configure for customized security
 type Configurer interface {
 	Configure(WebSecurity)
 }
 
+type ConfigurerFunc func(ws WebSecurity)
+
+func (f ConfigurerFunc) Configure(ws WebSecurity) {
+	f(ws)
+}
+
 /************************************
 	Interfaces for other modules
 *************************************/
+
 // Registrar is the entry point to configure security
 type Registrar interface {
 	// Register is the entry point for all security configuration.
@@ -41,6 +49,7 @@ type Initializer interface {
 	Type definitions for
     specifying web security specs
 *****************************************/
+
 // MiddlewareTemplate is partially configured middleware.MappingBuilder.
 // it holds the middleware's gin.HandlerFunc and order
 // if its route matcher and condition is not set, WebSecurity would make it matches WebSecurity's own values
@@ -112,7 +121,7 @@ type WebSecurity interface {
 	// AddShared add shared value. returns error when the key already exists
 	AddShared(key string, value interface{}) error
 
-	// returns Authenticator
+	// Authenticator returns Authenticator
 	Authenticator() Authenticator
 
 	// Features get currently configured Feature list
@@ -122,13 +131,15 @@ type WebSecurity interface {
 /****************************************
 	Convenient Types
 *****************************************/
+
 type simpleFeatureId string
-// FeatureIdentifier interface
+
+// String implements FeatureIdentifier interface
 func (id simpleFeatureId) String() string {
 	return string(id)
 }
 
-// FeatureIdentifier interface
+// GoString implements FeatureIdentifier interface
 func (id simpleFeatureId) GoString() string {
 	return string(id)
 }
@@ -144,17 +155,17 @@ type featureId struct {
 	order int
 }
 
-// order.Ordered interface
+// Order implements order.Ordered interface
 func (id featureId) Order() int {
 	return id.order
 }
 
-// FeatureIdentifier interface
+// String implements FeatureIdentifier interface
 func (id featureId) String() string {
 	return id.id
 }
 
-// FeatureIdentifier interface
+// GoString implements FeatureIdentifier interface
 func (id featureId) GoString() string {
 	return id.id
 }
@@ -170,22 +181,22 @@ type priorityFeatureId struct {
 	order int
 }
 
-// order.PriorityOrdered interface
+// PriorityOrder implements order.PriorityOrdered interface
 func (id priorityFeatureId) PriorityOrder() int {
 	return id.order
 }
 
-// FeatureIdentifier interface
+// String implements FeatureIdentifier interface
 func (id priorityFeatureId) String() string {
 	return id.id
 }
 
-// FeatureIdentifier interface
+// GoString implements FeatureIdentifier interface
 func (id priorityFeatureId) GoString() string {
 	return id.id
 }
 
-// PriorityFeatureId create an priority ordered FeatureIdentifier
+// PriorityFeatureId create a priority ordered FeatureIdentifier
 func PriorityFeatureId(id string, order int) FeatureIdentifier {
 	return priorityFeatureId{id: id, order: order}
 }

@@ -11,7 +11,7 @@ var defaultBinaries = map[string]string{
 	"github.com/axw/gocov/gocov":                          "v1.1.0",
 	"github.com/AlekSi/gocov-xml":                         "v1.0.0",
 	"gotest.tools/gotestsum":                              "v1.8.0",
-	"github.com/golangci/golangci-lint/cmd/golangci-lint": "v1.46.2",
+	"github.com/golangci/golangci-lint/cmd/golangci-lint": "v1.49.0",
 	"github.com/jstemmer/go-junit-report":                 "v0.9.1",
 }
 

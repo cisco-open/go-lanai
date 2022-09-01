@@ -5,21 +5,37 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
-
 type MockAuthenticationMiddleware struct {
+	MWMocker             MWMocker
+	// deprecated, use MWMocker interface or MWMockFunc.
+	// Recommended to use WithMockedMiddleware test options
 	MockedAuthentication security.Authentication
 }
 
+// NewMockAuthenticationMiddleware
+// deprecated, directly set MWMocker field with MWMocker interface or MWMockFunc
+// Recommended to use WithMockedMiddleware test options
 func NewMockAuthenticationMiddleware(authentication security.Authentication) *MockAuthenticationMiddleware {
 	return &MockAuthenticationMiddleware{
 		MockedAuthentication: authentication,
+		MWMocker: MWMockFunc(func(MWMockContext) security.Authentication {
+			return authentication
+		}),
 	}
 }
 
-func (m *MockAuthenticationMiddleware) AuthenticationHandlerFunc() gin.HandlerFunc{
+func (m *MockAuthenticationMiddleware) AuthenticationHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Set(security.ContextKeySecurity, m.MockedAuthentication)
+		var auth security.Authentication
+		if m.MWMocker != nil {
+			auth = m.MWMocker.Mock(MWMockContext{
+				Request: ctx.Request,
+			})
+		}
+		if auth == nil {
+			auth = m.MockedAuthentication
+		}
+		ctx.Set(security.ContextKeySecurity, auth)
 	}
 }
 
@@ -39,7 +55,7 @@ type mockUserAuthentication struct {
 	details       interface{}
 }
 
-func NewMockedUserAuthentication(opts...MockUserAuthOptions) *mockUserAuthentication {
+func NewMockedUserAuthentication(opts ...MockUserAuthOptions) *mockUserAuthentication {
 	opt := MockUserAuthOption{}
 	for _, f := range opts {
 		f(&opt)
@@ -48,7 +64,7 @@ func NewMockedUserAuthentication(opts...MockUserAuthOptions) *mockUserAuthentica
 		Subject:       opt.Principal,
 		PermissionMap: opt.Permissions,
 		StateValue:    opt.State,
-		details:    opt.Details,
+		details:       opt.Details,
 	}
 }
 

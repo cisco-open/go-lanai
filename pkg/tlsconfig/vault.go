@@ -123,6 +123,7 @@ func (v *VaultProvider) generateClientCertificate(ctx context.Context) (*tls.Cer
 		Ttl: v.p.Ttl,
 	}
 
+	//nolint:contextcheck // context is passed in via Logical(ctx). false positive
 	secret, err := v.vc.Logical(ctx).Write(fullPath, reqData)
 	if err != nil {
 		return nil, err

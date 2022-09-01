@@ -18,7 +18,7 @@ var Module = &bootstrap.Module{
 	},
 }
 
-// Maker func, does nothing. Allow service to include this module in main()
+// Use Maker func, does nothing. Allow service to include this module in main()
 func Use() {
 	bootstrap.Register(Module)
 }

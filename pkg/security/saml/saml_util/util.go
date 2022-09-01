@@ -3,12 +3,15 @@ package saml_util
 import (
 	"context"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/beevik/etree"
 	"github.com/crewjam/httperr"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
+	"github.com/gin-gonic/gin"
 	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/russellhaering/goxmldsig/etreeutils"
 	"io/ioutil"
@@ -24,7 +27,7 @@ func ParseMetadataFromXml(xml string) (*saml.EntityDescriptor, []byte, error) {
 	return metadata, data, err
 }
 
-func ParseMetadataFromFile(fileLocation string) (*saml.EntityDescriptor, []byte, error){
+func ParseMetadataFromFile(fileLocation string) (*saml.EntityDescriptor, []byte, error) {
 	file, err := os.Open(fileLocation)
 	if err != nil {
 		return nil, nil, err
@@ -62,7 +65,7 @@ func FetchMetadata(ctx context.Context, httpClient *http.Client, metadataURL url
 	return metadata, data, err
 }
 
-func ResolveMetadata(metadataSource string, httpClient *http.Client) (*saml.EntityDescriptor, []byte, error) {
+func ResolveMetadata(ctx context.Context, metadataSource string, httpClient *http.Client) (*saml.EntityDescriptor, []byte, error) {
 	if strings.HasPrefix(metadataSource, "<") {
 		return ParseMetadataFromXml(metadataSource)
 	}
@@ -73,13 +76,13 @@ func ResolveMetadata(metadataSource string, httpClient *http.Client) (*saml.Enti
 	}
 	//if it's not url or file url, assume it's relative path
 	if metadataUrl.Scheme == "file" || metadataUrl.Scheme == "" {
-		 return ParseMetadataFromFile(metadataUrl.Path)
+		return ParseMetadataFromFile(metadataUrl.Path)
 	} else {
-		 return FetchMetadata(context.TODO(), httpClient, *metadataUrl)
+		return FetchMetadata(ctx, httpClient, *metadataUrl)
 	}
 }
 
-func VerifySignature(data []byte, trustedCerts...*x509.Certificate) error {
+func VerifySignature(data []byte, trustedCerts ...*x509.Certificate) error {
 	doc := etree.NewDocument()
 	if err := doc.ReadFromBytes(data); err != nil {
 		return errors.New("error parsing metadata for signature verification")
@@ -129,7 +132,7 @@ func VerifySignature(data []byte, trustedCerts...*x509.Certificate) error {
 
 	_, err = validationContext.Validate(el)
 
-	if err!= nil {
+	if err != nil {
 		return errors.New("invalid signature")
 	}
 
@@ -162,4 +165,42 @@ func FindChild(parentEl *etree.Element, childNS string, childTag string) (*etree
 		return childEl, nil
 	}
 	return nil, nil
+}
+
+type ParsableSamlTypes interface {
+	saml.LogoutRequest | saml.LogoutResponse | saml.AuthnRequest | saml.Response
+}
+
+type SAMLObjectParseResult struct {
+	Binding string
+	Encoded string
+	Decoded []byte
+	Err     error
+}
+
+func ParseSAMLObject[T ParsableSamlTypes](gc *gin.Context, dest *T) (ret SAMLObjectParseResult) {
+	param := "SAMLResponse"
+	var i interface{} = dest
+	switch i.(type) {
+	case *saml.LogoutRequest, *saml.AuthnRequest:
+		param = "SAMLRequest"
+	}
+
+	ret.Binding = saml.HTTPRedirectBinding
+	if ret.Encoded, _ = gc.GetQuery(param); len(ret.Encoded) == 0 {
+		ret.Encoded = gc.PostForm(param)
+		ret.Binding = saml.HTTPPostBinding
+	}
+	if len(ret.Encoded) == 0 {
+		ret.Err = fmt.Errorf("unable to find %s in http request", param)
+		return
+	}
+
+	ret.Decoded, ret.Err = base64.StdEncoding.DecodeString(ret.Encoded)
+	if ret.Err != nil {
+		return
+	}
+
+	ret.Err = xml.Unmarshal(ret.Decoded, dest)
+	return
 }

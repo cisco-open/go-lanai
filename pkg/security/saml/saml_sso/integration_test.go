@@ -96,9 +96,11 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 		//testSp1 is configured to use tenant restriction "any"
 
 		//test user 1 has access to one of the tenant in testSp1's tenant restriction, so expect success
-		di.MockAuthMw.MockedAuthentication = sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
-			opt.Principal = testUser1.Username
-			opt.State = security.StateAuthenticated
+		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+				opt.Principal = testUser1.Username
+				opt.State = security.StateAuthenticated
+			})
 		})
 
 		//port := di.Register.ServerPort()
@@ -112,9 +114,11 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 		g.Expect(status).ToNot(BeNil())
 
 		//test user 2 has access to all of the tenant in testSp1's tenant restriction, so expect success
-		di.MockAuthMw.MockedAuthentication = sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
-			opt.Principal = testUser2.Username
-			opt.State = security.StateAuthenticated
+		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+				opt.Principal = testUser2.Username
+				opt.State = security.StateAuthenticated
+			})
 		})
 		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
@@ -126,9 +130,11 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 		g.Expect(status).ToNot(BeNil())
 
 		//test user 3 has no access to any of the tenant in testSp1's tenant restriction, so expect failure
-		di.MockAuthMw.MockedAuthentication = sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
-			opt.Principal = testUser3.Username
-			opt.State = security.StateAuthenticated
+		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+				opt.Principal = testUser3.Username
+				opt.State = security.StateAuthenticated
+			})
 		})
 		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
@@ -143,9 +149,11 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		//testSp2 is configured to use tenant restriction "any"
 
 		//test user 1 has access to one of the tenant in testSp1's tenant restriction, so expect it to be rejected
-		di.MockAuthMw.MockedAuthentication = sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
-			opt.Principal = testUser1.Username
-			opt.State = security.StateAuthenticated
+		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+				opt.Principal = testUser1.Username
+				opt.State = security.StateAuthenticated
+			})
 		})
 
 		//port := di.Register.ServerPort()
@@ -156,9 +164,11 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		g.Expect(strings.Contains(htmlContent, "client is restricted to tenants which the authenticated user does not have access to")).To(BeTrue())
 
 		//test user 2 has access to all of the tenant in testSp1's tenant restriction, so expect success
-		di.MockAuthMw.MockedAuthentication = sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
-			opt.Principal = testUser2.Username
-			opt.State = security.StateAuthenticated
+		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+				opt.Principal = testUser2.Username
+				opt.State = security.StateAuthenticated
+			})
 		})
 		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
@@ -170,9 +180,11 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		g.Expect(status).ToNot(BeNil())
 
 		//test user 3 has no access to any of the tenant in testSp1's tenant restriction, so expect failure
-		di.MockAuthMw.MockedAuthentication = sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
-			opt.Principal = testUser3.Username
-			opt.State = security.StateAuthenticated
+		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+				opt.Principal = testUser3.Username
+				opt.State = security.StateAuthenticated
+			})
 		})
 		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))

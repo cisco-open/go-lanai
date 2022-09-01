@@ -3,6 +3,7 @@ package logout
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
@@ -24,9 +25,9 @@ func newLogoutConfigurer() *LogoutConfigurer {
 	}
 }
 
-func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
+func (c *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecurity) error {
 	// Verify
-	if err := flc.validate(feature.(*LogoutFeature), ws); err != nil {
+	if err := c.validate(feature.(*LogoutFeature), ws); err != nil {
 		return err
 	}
 	f := feature.(*LogoutFeature)
@@ -43,11 +44,13 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 
 	// configure middlewares
 	// Note: since this MW handles a new path, we add middleware as-is instead of a security.MiddlewareTemplate
+	order.SortStable(f.logoutHandlers, order.OrderedFirstCompare)
 	logout := NewLogoutMiddleware(
-		flc.effectiveSuccessHandler(f, ws),
-		flc.effectiveErrorHandler(f, ws),
+		c.effectiveSuccessHandler(f, ws),
+		c.effectiveErrorHandler(f, ws),
+		f.entryPoint,
 		f.logoutHandlers...)
-	mw := middleware.NewBuilder("form logout").
+	mw := middleware.NewBuilder("logout").
 		ApplyTo(route).
 		Order(security.MWOrderFormLogout).
 		Use(logout.LogoutHandlerFunc())
@@ -64,7 +67,7 @@ func (flc *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecu
 	return nil
 }
 
-func (flc *LogoutConfigurer) validate(f *LogoutFeature, ws security.WebSecurity) error {
+func (c *LogoutConfigurer) validate(f *LogoutFeature, _ security.WebSecurity) error {
 	if f.logoutUrl == "" {
 		return fmt.Errorf("logoutUrl is missing for logout")
 	}
@@ -76,7 +79,7 @@ func (flc *LogoutConfigurer) validate(f *LogoutFeature, ws security.WebSecurity)
 	return nil
 }
 
-func (flc *LogoutConfigurer) effectiveSuccessHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
+func (c *LogoutConfigurer) effectiveSuccessHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
 
 	if f.successHandler == nil {
 		f.successHandler = redirect.NewRedirectWithURL(f.successUrl)
@@ -89,7 +92,7 @@ func (flc *LogoutConfigurer) effectiveSuccessHandler(f *LogoutFeature, ws securi
 	}
 }
 
-func (flc *LogoutConfigurer) effectiveErrorHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationErrorHandler {
+func (c *LogoutConfigurer) effectiveErrorHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationErrorHandler {
 
 	if f.errorHandler == nil {
 		f.errorHandler = redirect.NewRedirectWithURL(f.errorUrl)

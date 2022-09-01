@@ -66,6 +66,7 @@ func NewFxTestRunner() test.InternalRunner {
 		regular := append([]fx.Option{}, tb.AppOptions...)
 
 		// bootstrapping
+		//nolint:contextcheck // context is not passed on because the bootstrap process is not cancellable. This is a limitation
 		bootstrap.NewAppCmd("testapp", priority, regular,
 			func(cmd *cobra.Command) {
 				cmd.Use = "testapp"

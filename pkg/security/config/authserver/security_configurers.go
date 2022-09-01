@@ -3,6 +3,7 @@ package authserver
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
@@ -10,18 +11,30 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
 )
 
 /***************************
-	addtional abstractions
+	additional abstractions
  ***************************/
 
+// IdpSecurityConfigurer interface for IDPs to implement for customizing "authorize" process
 type IdpSecurityConfigurer interface {
 	Configure(ws security.WebSecurity, config *Configuration)
+}
+
+// IdpLogoutSecurityConfigurer additional interface that IdpSecurityConfigurer could choose to implement for
+// customizing "logout" process
+// Note: IdpLogoutSecurityConfigurer is only invoked once per instance, the given security.WebSecurity are shared
+//       between IDPs. Therefore, implementing class should not change Route or Condition on the given "ws"
+type IdpLogoutSecurityConfigurer interface {
+	ConfigureLogout(ws security.WebSecurity, config *Configuration)
 }
 
 /***************************
@@ -85,7 +98,7 @@ func (c *TokenAuthEndpointsConfigurer) Configure(ws security.WebSecurity) {
 // AuthorizeEndpointConfigurer implements security.Configurer and order.Ordered
 // responsible to configure "authorize" endpoint
 type AuthorizeEndpointConfigurer struct {
-	config *Configuration
+	config   *Configuration
 	delegate IdpSecurityConfigurer
 }
 
@@ -113,9 +126,22 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			MetadataPath(c.config.Endpoints.SamlMetadata))
 
 	c.delegate.Configure(ws, c.config)
+}
 
+// LogoutEndpointConfigurer implements security.Configurer and order.Ordered
+// responsible to configure "logout" endpoint
+type LogoutEndpointConfigurer struct {
+	config    *Configuration
+	delegates []IdpSecurityConfigurer
+}
+
+func (c *LogoutEndpointConfigurer) Order() int {
+	return OrderLogoutSecurityConfigurer
+}
+
+func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 	// Logout Handler
-	// Note: we disable default logout handler here because we don't want to unauthenticate user when PUT or DELETE is used
+	// Note: we disable default logout errHandler here because we don't want to unauthenticate user when PUT or DELETE is used
 	logoutHandler := revoke.NewTokenRevokingLogoutHandler(func(opt *revoke.HanlderOption) {
 		opt.Revoker = c.config.accessRevoker()
 	})
@@ -124,8 +150,28 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 		opt.WhitelabelErrorPath = c.config.Endpoints.Error
 		opt.RedirectWhitelist = utils.NewStringSet(c.config.properties.RedirectWhitelist...)
 	})
-	logout.Configure(ws).
-		LogoutUrl(c.config.Endpoints.Logout).
-		LogoutHandlers(logoutHandler).
-		SuccessHandler(logoutSuccessHandler)
+
+	errHandler := redirect.NewRedirectWithURL(c.config.Endpoints.Error)
+	ws.With(session.New().SettingService(c.config.SessionSettingService)).
+		With(access.New().
+			Request(matcher.AnyRequest()).Authenticated(),
+		).
+		With(errorhandling.New().
+			AccessDeniedHandler(errHandler),
+		).
+		With(csrf.New().
+			IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(c.config.Endpoints.Logout)),
+		).
+		With(request_cache.New()).
+		With(logout.New().
+			LogoutUrl(c.config.Endpoints.Logout).
+			LogoutHandlers(logoutHandler).
+			SuccessHandler(logoutSuccessHandler),
+		)
+
+	for _, configurer := range c.delegates {
+		if lc, ok := configurer.(IdpLogoutSecurityConfigurer); ok {
+			lc.ConfigureLogout(ws, c.config)
+		}
+	}
 }

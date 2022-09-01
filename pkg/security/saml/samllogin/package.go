@@ -40,7 +40,11 @@ type initDI struct {
 
 func register(di initDI) {
 	if di.SecRegistrar != nil {
-		configurer := newSamlAuthConfigurer(di.SamlProperties, di.IdpManager, di.AccountStore)
-		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+		shared := newSamlConfigurer(di.SamlProperties, di.IdpManager)
+		loginConfigurer := newSamlAuthConfigurer(shared, di.AccountStore)
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, loginConfigurer)
+
+		logoutConfigurer := newSamlLogoutConfigurer(shared)
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(LogoutFeatureId, logoutConfigurer)
 	}
 }

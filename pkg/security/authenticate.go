@@ -11,6 +11,7 @@ import (
 /*****************************
 	Abstraction
  *****************************/
+
 type Candidate interface {
 	Principal() interface{}
 	Credentials() interface{}
@@ -37,7 +38,8 @@ type AuthenticationSuccessHandler interface {
 /*****************************
 	Common Impl.
  *****************************/
-// *CompositeAuthenticator implement Authenticator interface
+
+// CompositeAuthenticator implement Authenticator interface
 type CompositeAuthenticator struct {
 	authenticators []Authenticator
 }
@@ -96,7 +98,7 @@ func (a *CompositeAuthenticator) removeSelf(authenticators []Authenticator) []Au
 	return authenticators[:count]
 }
 
-// *CompositeAuthenticationSuccessHandler implement AuthenticationSuccessHandler interface
+// CompositeAuthenticationSuccessHandler implement AuthenticationSuccessHandler interface
 type CompositeAuthenticationSuccessHandler struct {
 	handlers []AuthenticationSuccessHandler
 }

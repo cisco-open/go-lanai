@@ -9,23 +9,23 @@ import (
 type SecurityMockOptions func(d *SecurityDetailsMock)
 
 type SecurityDetailsMock struct {
-	Username     string
-	UserId       string
-	TenantExternalId   string
-	TenantId     string
-	ProviderName string
-	ProviderId   string
-	ProviderDisplayName string
-	ProviderDescription string
-	ProviderEmail string
+	Username                 string
+	UserId                   string
+	TenantExternalId         string
+	TenantId                 string
+	ProviderName             string
+	ProviderId               string
+	ProviderDisplayName      string
+	ProviderDescription      string
+	ProviderEmail            string
 	ProviderNotificationType string
-	Exp          time.Time
-	Iss          time.Time
-	Permissions  utils.StringSet
-	Tenants      utils.StringSet
-	OrigUsername string
-	UserFirstName    string
-	UserLastName     string
+	Exp                      time.Time
+	Iss                      time.Time
+	Permissions              utils.StringSet
+	Tenants                  utils.StringSet
+	OrigUsername             string
+	UserFirstName            string
+	UserLastName             string
 }
 
 // mockedSecurityDetails implements
@@ -38,7 +38,7 @@ type mockedSecurityDetails struct {
 	SecurityDetailsMock
 }
 
-func NewMockedSecurityDetails(opts...SecurityMockOptions) security.AuthenticationDetails {
+func NewMockedSecurityDetails(opts ...SecurityMockOptions) security.AuthenticationDetails {
 	ret := mockedSecurityDetails{}
 	for _, fn := range opts {
 		fn(&ret.SecurityDetailsMock)
@@ -100,7 +100,6 @@ func (d *mockedSecurityDetails) ProviderEmail() string {
 func (d *mockedSecurityDetails) ProviderNotificationType() string {
 	return d.SecurityDetailsMock.ProviderNotificationType
 }
-
 
 func (d *mockedSecurityDetails) TenantId() string {
 	return d.SecurityDetailsMock.TenantId
