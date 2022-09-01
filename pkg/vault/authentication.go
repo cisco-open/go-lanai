@@ -1,13 +1,17 @@
 package vault
 
+import "github.com/hashicorp/vault/api"
+
 //ClientAuthentication interface represents a vault auth method https://www.vaultproject.io/docs/auth
 type ClientAuthentication interface {
-	Login() (token string, err error)
+	Login(client *api.Client) (token string, err error)
 }
 
 func newClientAuthentication(p *ConnectionProperties) ClientAuthentication {
 	var clientAuthentication ClientAuthentication
 	switch p.Authentication {
+	case Kubernetes:
+		clientAuthentication = TokenKubernetesAuthentication(p.TokenSource.Kubernetes)
 	case Token:
 		fallthrough
 	default:
@@ -18,7 +22,6 @@ func newClientAuthentication(p *ConnectionProperties) ClientAuthentication {
 
 type TokenClientAuthentication string
 
-func (d TokenClientAuthentication) Login() (token string, err error){
+func (d TokenClientAuthentication) Login(client *api.Client) (token string, err error) {
 	return string(d), nil
 }
-

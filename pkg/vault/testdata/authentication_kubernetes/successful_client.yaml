@@ -1,0 +1,28 @@
+---
+version: 1
+interactions:
+    - request:
+        body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJ0ZXN0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InRlc3QtY2xvdWQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidGVzdC1jbG91ZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjhjZmE5ZmVhLWJkNjYtNDUzNy1iZWUzLTExY2U1ODE1ZDk1ZCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDp0ZXN0OnRlc3QtY2xvdWQifQ.l-FdCGDx-chuPrOiTEW4ppi_TCK1MwmIanqDKf8DgIo-dN0hkQYo9gjHIju-JZuiZq7R52we4ST8Unna19jQ0STvp1YQ2bE_XT0ksnlOEX-Q2d_Ha1Tb_ga4nFOVmZh_1fU5lClakQAfkvrtR6J_HqFRnX4CGnNW5wzqOoomUZZDzFsH9WB2pDuGdZ5VMBNe_xdxMf6B2RoKHDmdJFmbFo21AGUZWWGJJ2F-zMhrhIxwmhweGHJVRLXxzx7DyUjZuV6Xx39Hjfa6gUmsNoOjnIQgb9rC4xryVtIj3SXLMo_KqrjZQ9O6q-BKyfJKltyfwXSwnHPgaJ4QEQ4SS08nJA\n","role":"devweb-app"}'
+        form: {}
+        headers:
+            X-Vault-Request:
+                - "true"
+        url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+        method: PUT
+      response:
+        body: |
+            {"request_id":"9e949f58-bde1-44ef-c38e-55cfe8715494","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"hvs.CAESICngzzu01mpt7PVNHPfDbktXmVlkEtVzefwjCITB4gi2Gh4KHGh2cy5GNTJwdzBRaGlHak5Eb3dsREdpQTNYbmg","accessor":"Tj96Jfs3w3QyZBFbcDBkYtXs","policies":["default","devwebapp"],"token_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"test-cloud","service_account_namespace":"test","service_account_secret_name":"test-cloud","service_account_uid":"8cfa9fea-bd66-4537-bee3-11ce5815d95d"},"lease_duration":86400,"renewable":true,"entity_id":"d3b31f53-9a3f-2fca-3c9c-71a445f1d4c7","token_type":"service","orphan":true,"mfa_requirement":null,"num_uses":0}}
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "758"
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 18 Aug 2022 21:17:02 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 39.280875ms

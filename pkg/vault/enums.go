@@ -6,20 +6,23 @@ type AuthMethod int
 
 const (
 	Token AuthMethod = iota
+	Kubernetes
 )
 
 const (
-	TokenText   = "TOKEN"
+	TokenText      = "TOKEN"
+	KubernetesText = "KUBERNETES"
 )
-
 
 var (
 	authMethodAtoI = map[string]AuthMethod{
-		strings.ToUpper(TokenText):   Token,
+		strings.ToUpper(TokenText):      Token,
+		strings.ToUpper(KubernetesText): Kubernetes,
 	}
 
 	authMethodItoA = map[AuthMethod]string{
-		Token:   TokenText,
+		Token:      TokenText,
+		Kubernetes: KubernetesText,
 	}
 )
 
@@ -43,4 +46,13 @@ func (a *AuthMethod) UnmarshalText(data []byte) error {
 		*a = v
 	}
 	return nil
+}
+
+func (a *AuthMethod) isRefreshable() bool {
+	if *a == Token {
+		// If it's a regular token, we can't really do anything about it
+		return false
+	} else {
+		return true
+	}
 }
