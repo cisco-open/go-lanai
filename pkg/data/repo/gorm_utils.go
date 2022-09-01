@@ -19,7 +19,7 @@ func Utils(options ...interface{}) Utility {
 	}
 	switch factory := globalFactory.(type) {
 	case *GormFactory:
-		return newGormUtils(factory, options)
+		return newGormUtils(factory, options...)
 	default:
 		panic("global repo factory is not set, unable to create Utility")
 	}

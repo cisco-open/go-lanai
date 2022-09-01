@@ -201,7 +201,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) RefreshMetadataHandler(condition web.
 		}
 
 		if clients, e := mw.samlClientStore.GetAllSamlClient(c.Request.Context()); e == nil {
-			mw.spMetadataManager.RefreshCache(clients)
+			mw.spMetadataManager.RefreshCache(c, clients)
 		}
 	}
 }

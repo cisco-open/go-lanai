@@ -65,7 +65,7 @@ func FetchMetadata(ctx context.Context, httpClient *http.Client, metadataURL url
 	return metadata, data, err
 }
 
-func ResolveMetadata(metadataSource string, httpClient *http.Client) (*saml.EntityDescriptor, []byte, error) {
+func ResolveMetadata(ctx context.Context, metadataSource string, httpClient *http.Client) (*saml.EntityDescriptor, []byte, error) {
 	if strings.HasPrefix(metadataSource, "<") {
 		return ParseMetadataFromXml(metadataSource)
 	}
@@ -78,7 +78,7 @@ func ResolveMetadata(metadataSource string, httpClient *http.Client) (*saml.Enti
 	if metadataUrl.Scheme == "file" || metadataUrl.Scheme == "" {
 		return ParseMetadataFromFile(metadataUrl.Path)
 	} else {
-		return FetchMetadata(context.TODO(), httpClient, *metadataUrl)
+		return FetchMetadata(ctx, httpClient, *metadataUrl)
 	}
 }
 

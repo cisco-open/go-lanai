@@ -88,7 +88,7 @@ func requestHandler(r *http.Request, c *cassette.Cassette, mode Mode, realTransp
 		if interaction, err := c.GetInteraction(r); mode == ModeReplaying {
 			return interaction, err
 		} else if mode == ModeReplayingOrRecording && err == nil {
-			return interaction, err
+			return interaction, nil
 		}
 	}
 

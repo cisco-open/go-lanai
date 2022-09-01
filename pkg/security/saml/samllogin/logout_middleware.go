@@ -122,8 +122,7 @@ func (m *SPLogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 // Commence implements security.AuthenticationEntryPoint. It's used when SP initiated SLO is required
 func (m *SPLogoutMiddleware) Commence(ctx context.Context, r *http.Request, w http.ResponseWriter, _ error) {
 	if e := m.MakeSingleLogoutRequest(ctx, r, w); e != nil {
-		gc := web.GinContext(ctx)
-		m.handleError(gc, e)
+		m.handleError(ctx, e)
 		return
 	}
 
@@ -182,25 +181,27 @@ func (m *SPLogoutMiddleware) resolveNameId(ctx context.Context) (nameId, format 
 	return
 }
 
-func (m *SPLogoutMiddleware) handleSuccess(gc *gin.Context) {
-	updateSLOState(gc, func(current SLOState) SLOState {
+func (m *SPLogoutMiddleware) handleSuccess(ctx context.Context) {
+	updateSLOState(ctx, func(current SLOState) SLOState {
 		return current | SLOCompletedFully
 	})
-	auth := security.Get(gc)
-	m.successHandler.HandleAuthenticationSuccess(gc, gc.Request, gc.Writer, auth, auth)
+	gc := web.GinContext(ctx)
+	auth := security.Get(ctx)
+	m.successHandler.HandleAuthenticationSuccess(ctx, gc.Request, gc.Writer, auth, auth)
 	if gc.Writer.Written() {
 		gc.Abort()
 	}
 }
 
-func (m *SPLogoutMiddleware) handleError(gc *gin.Context, e error) {
-	logger.WithContext(gc).Infof("SAML Single Logout failed with error: %v", e)
-	updateSLOState(gc, func(current SLOState) SLOState {
+func (m *SPLogoutMiddleware) handleError(ctx context.Context, e error) {
+	logger.WithContext(ctx).Infof("SAML Single Logout failed with error: %v", e)
+	updateSLOState(ctx, func(current SLOState) SLOState {
 		return current | SLOFailed
 	})
 	// We always let logout continues
-	auth := security.Get(gc)
-	m.successHandler.HandleAuthenticationSuccess(gc, gc.Request, gc.Writer, auth, auth)
+	gc := web.GinContext(ctx)
+	auth := security.Get(ctx)
+	m.successHandler.HandleAuthenticationSuccess(ctx, gc.Request, gc.Writer, auth, auth)
 	if gc.Writer.Written() {
 		gc.Abort()
 	}
