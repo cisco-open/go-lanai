@@ -114,7 +114,7 @@ func SubTestExampleProducerRecording(di *testDI) test.GomegaSubTestFunc {
 		di.Recorder.Reset()
 
 		var e error
-		// DoA something that producing messages
+		// Do something that producing messages
 		e = di.Service.GenerateSomeMessages(ctx, 3)
 		g.Expect(e).To(Succeed(), "functions using producers shouldn't fail")
 

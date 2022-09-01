@@ -105,7 +105,7 @@ func (init *initializer) Initialize(ctx context.Context, _ fx.Lifecycle, registr
 			if err := registrar.Register(mapping); err != nil {
 				return err
 			}
-			// DoA some logging
+			// Do some logging
 			logMapping(ctx, mapping)
 		}
 	}
