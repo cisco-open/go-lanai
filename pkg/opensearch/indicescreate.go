@@ -38,16 +38,23 @@ func (c *OpenClientImpl) IndicesCreate(
 	index string,
 	o ...Option[opensearchapi.IndicesCreateRequest],
 ) (*opensearchapi.Response, error) {
-	before, after := c.GetHooks()
-	defer after.Run(HookContext{ctx, CmdIndicesCreate})
-	before.Run(HookContext{ctx, CmdIndicesCreate})
 	options := make([]func(request *opensearchapi.IndicesCreateRequest), 0, len(o))
 	for i, v := range o {
 		options[i] = v
 	}
+	for _, hook := range c.beforeHook {
+		ctx = hook.Before(ctx, BeforeContext{cmd: CmdIndicesCreate, Options: &options})
+	}
+
 	//nolint:makezero
 	options = append(options, IndicesCreate.WithContext(ctx))
-	return c.client.Indices.Create(index, options...)
+	resp, err := c.client.Indices.Create(index, options...)
+
+	for _, hook := range c.afterHook {
+		ctx = hook.After(ctx, AfterContext{cmd: CmdIndicesCreate, Options: &options, Resp: resp, Err: &err})
+	}
+
+	return resp, err
 }
 
 type indicesCreateExt struct {

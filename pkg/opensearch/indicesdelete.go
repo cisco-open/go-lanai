@@ -21,16 +21,22 @@ func (c *RepoImpl[T]) IndicesDelete(ctx context.Context, index string, o ...Opti
 }
 
 func (c *OpenClientImpl) IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) (*opensearchapi.Response, error) {
-	before, after := c.GetHooks()
-	defer after.Run(HookContext{ctx, CmdIndicesDelete})
-	before.Run(HookContext{ctx, CmdIndicesDelete})
 	options := make([]func(request *opensearchapi.IndicesDeleteRequest), len(o))
 	for i, v := range o {
 		options[i] = v
 	}
+	for _, hook := range c.beforeHook {
+		ctx = hook.Before(ctx, BeforeContext{cmd: CmdIndicesDelete, Options: &options})
+	}
+
 	//nolint:makezero
 	options = append(options, IndicesDelete.WithContext(ctx))
-	return c.client.API.Indices.Delete([]string{index}, options...)
+	resp, err := c.client.API.Indices.Delete([]string{index}, options...)
+
+	for _, hook := range c.afterHook {
+		ctx = hook.After(ctx, AfterContext{cmd: CmdIndicesDelete, Options: &options, Resp: resp, Err: &err})
+	}
+	return resp, err
 }
 
 type indicesDeleteExt struct {

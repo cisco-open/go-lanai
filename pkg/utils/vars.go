@@ -6,7 +6,6 @@ import (
 	"reflect"
 )
 
-
 // MustSetIfNotNil takes "src" pointer (e.g. *bool) and set its dereference value to "dst" if not nil
 // this function panic if:
 // - "dst" and "src" are not pointer
@@ -70,6 +69,23 @@ var (
 	FALSE = false
 )
 
+// ToPtr will return a pointer to any given input
+// Example usage:
+//
+//  var stringPtr *string
+// 	someString := "hello world"
+//	stringPtr = ToPtr(someString)
+//
+// 	// or some complex types
+//  var funcPtr *[]func(arg *argType)
+//	someFunc := make([]func(arg *argType), 0)
+//  funcPtr = ToPtr(someFunc)
+func ToPtr[T any](t T) *T {
+	return &t
+}
+
+// BoolPtr
+// Deprecated: make use of ToPtr instead
 func BoolPtr(v bool) *bool {
 	if v {
 		return &TRUE
@@ -78,22 +94,32 @@ func BoolPtr(v bool) *bool {
 	}
 }
 
+// IntPtr
+// Deprecated: make use of ToPtr instead
 func IntPtr(v int) *int {
 	return &v
 }
 
+// UIntPtr
+// Deprecated: make use of ToPtr instead
 func UIntPtr(v uint) *uint {
 	return &v
 }
 
+// Float64Ptr
+// Deprecated: make use of ToPtr instead
 func Float64Ptr(v float64) *float64 {
 	return &v
 }
 
+// StringPtr
+// Deprecated: Make use of ToPtr instead
 func StringPtr(v string) *string {
 	return &v
 }
 
+// UuidPtr
+// Deprecated: make use of ToPtr instead
 func UuidPtr(v uuid.UUID) *uuid.UUID {
 	return &v
 }

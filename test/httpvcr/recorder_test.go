@@ -27,6 +27,7 @@ package recorder_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -173,7 +174,7 @@ func TestModePlaybackMissing(t *testing.T) {
 			t.Fatalf("Expected err but was %T %s", err, err)
 		}
 
-		if urlErr.Err != cassette.ErrInteractionNotFound {
+		if !errors.Is(urlErr.Err, cassette.ErrInteractionNotFound) {
 			t.Fatalf("Expected cassette.ErrInteractionNotFound but was %T %s", err, err)
 		}
 	}

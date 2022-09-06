@@ -37,18 +37,33 @@ type Repo[T any] interface {
 
 	// IndicesDelete will delete an index from the cluster.
 	//
-	// The index argument defines the index name to be created.
+	// The index argument defines the index name to be deleted.
 	//
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/create-index/#request-body
 	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) error
 
-	AddHook(hook HookContainer)
+	AddBeforeHook(hook BeforeHook)
+	AddAfterHook(hook AfterHook)
+	RemoveBeforeHook(hook BeforeHook)
+	RemoveAfterHook(hook AfterHook)
 }
 
 type RepoImpl[T any] struct {
 	client OpenClient
 }
 
-func (c *RepoImpl[T]) AddHook(hook HookContainer) {
-	c.client.AddHook(hook)
+func (c *RepoImpl[T]) AddBeforeHook(hook BeforeHook) {
+	c.client.AddBeforeHook(hook)
+}
+
+func (c *RepoImpl[T]) AddAfterHook(hook AfterHook) {
+	c.client.AddAfterHook(hook)
+}
+
+func (c *RepoImpl[T]) RemoveBeforeHook(hook BeforeHook) {
+	c.client.RemoveBeforeHook(hook)
+}
+
+func (c *RepoImpl[T]) RemoveAfterHook(hook AfterHook) {
+	c.client.RemoveAfterHook(hook)
 }

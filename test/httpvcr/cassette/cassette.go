@@ -25,6 +25,8 @@
 package cassette
 
 import (
+	"bytes"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -42,12 +44,14 @@ const (
 	cassetteFormatV1 = 1
 )
 
+var logger = log.New("httpvcr")
+
 var (
 	// ErrInteractionNotFound indicates that a requested
 	// interaction was not found in the cassette file
 	ErrInteractionNotFound = errors.New("Requested interaction not found")
 
-	// ErrInteractionNotFound indicates that a requested interaction was found but is out of order
+	// ErrInteractionOutOfOrder indicates that a requested interaction was found but is out of order
 	ErrInteractionOutOfOrder = errors.New("requested interaction is out of order")
 )
 
@@ -198,8 +202,15 @@ func (c *Cassette) GetInteraction(r *http.Request) (*Interaction, error) {
 			return i, nil
 		}
 	}
-
-	return nil, ErrInteractionNotFound
+	var b bytes.Buffer
+	if r.Body != nil {
+		return nil, ErrInteractionNotFound
+	}
+	if _, err := b.ReadFrom(r.Body); err != nil {
+		return nil, ErrInteractionNotFound
+	}
+	r.Body = ioutil.NopCloser(&b)
+	return nil, fmt.Errorf("%w: interactions: %v request: %v", ErrInteractionNotFound, len(c.Interactions), b.String())
 }
 
 // Save writes the cassette data on disk for future re-use

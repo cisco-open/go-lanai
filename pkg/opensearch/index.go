@@ -30,16 +30,23 @@ func (c *RepoImpl[T]) Index(ctx context.Context, index string, document T, o ...
 }
 
 func (c *OpenClientImpl) Index(ctx context.Context, index string, body io.Reader, o ...Option[opensearchapi.IndexRequest]) (*opensearchapi.Response, error) {
-	before, after := c.GetHooks()
-	defer after.Run(HookContext{ctx, CmdIndex})
-	before.Run(HookContext{ctx, CmdIndex})
 	options := make([]func(request *opensearchapi.IndexRequest), len(o))
 	for i, v := range o {
 		options[i] = v
 	}
+	for _, hook := range c.beforeHook {
+		ctx = hook.Before(ctx, BeforeContext{cmd: CmdIndex, Options: &options})
+	}
+
 	//nolint:makezero
 	options = append(options, Index.WithContext(ctx))
-	return c.client.API.Index(index, body, options...)
+	resp, err := c.client.API.Index(index, body, options...)
+
+	for _, hook := range c.afterHook {
+		ctx = hook.After(ctx, AfterContext{cmd: CmdIndex, Options: &options, Resp: resp, Err: &err})
+	}
+
+	return resp, err
 }
 
 // indexExt can be extended

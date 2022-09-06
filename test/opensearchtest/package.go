@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/recorder"
 	"github.com/cockroachdb/copyist"
 	opensearchgo "github.com/opensearch-project/opensearch-go"
+	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"go.uber.org/fx"
 	"testing"
 	"time"
@@ -52,6 +53,7 @@ func WithOpenSearchPlayback(mode Mode, recordDelay time.Duration) test.Options {
 				c.Transport = &rec
 				return c
 			}),
+			fx.Provide(IndexEditHookProvider(opensearch.FxOpenSearchBeforeHooksGroup, "test_")),
 		),
 		test.Teardown(stopRecording(&rec)),
 	}
@@ -59,7 +61,8 @@ func WithOpenSearchPlayback(mode Mode, recordDelay time.Duration) test.Options {
 		testOpts = append(testOpts, apptest.WithFxOptions(
 			fx.Provide(
 				SearchDelayerHookProvider(
-					opensearch.FxOpenSearchHooksGroup,
+					opensearch.FxOpenSearchBeforeHooksGroup,
+					opensearch.FxOpenSearchAfterHooksGroup,
 					recordDelay,
 				),
 			),
@@ -100,31 +103,73 @@ type SearchDelayer struct {
 	lastEvent opensearch.CommandType
 }
 
-func (s *SearchDelayer) BeforeHook() func(ctx opensearch.HookContext) {
-	return func(ctx opensearch.HookContext) {
-		if ctx.Cmd == opensearch.CmdSearch && s.lastEvent == opensearch.CmdIndex {
-			time.Sleep(s.Delay)
-		}
+func (s *SearchDelayer) Before(ctx context.Context, beforeContext opensearch.BeforeContext) context.Context {
+	if beforeContext.CommandType() == opensearch.CmdSearch && s.lastEvent == opensearch.CmdIndex {
+		time.Sleep(s.Delay)
 	}
+	return ctx
 }
 
-func (s *SearchDelayer) AfterHook() func(ctx opensearch.HookContext) {
-	return func(ctx opensearch.HookContext) {
-		s.lastEvent = ctx.Cmd
-	}
+func (s *SearchDelayer) After(ctx context.Context, afterContext opensearch.AfterContext) context.Context {
+	s.lastEvent = afterContext.CommandType()
+	return ctx
 }
 
-func SearchDelayerHook(delay time.Duration) opensearch.HookContainer {
-	s := SearchDelayer{Delay: delay}
-	return opensearch.HookContainer{
-		Before: s.BeforeHook(),
-		After:  s.AfterHook(),
-	}
+func SearchDelayerHook(delay time.Duration) *SearchDelayer {
+	return &SearchDelayer{Delay: delay}
 }
 
-func SearchDelayerHookProvider(group string, delay time.Duration) fx.Annotated {
+func SearchDelayerHookProvider(beforeGroup string, afterGroup string, delay time.Duration) (fx.Annotated, fx.Annotated) {
+	searchDelayer := SearchDelayerHook(delay)
 	return fx.Annotated{
-		Group:  group,
-		Target: func() opensearch.HookContainer { return SearchDelayerHook(delay) },
+			Group: beforeGroup, Target: func() opensearch.BeforeHook { return searchDelayer },
+		},
+		fx.Annotated{
+			Group: afterGroup, Target: func() opensearch.AfterHook { return searchDelayer },
+		}
+}
+
+func EditIndexForTesting(prepend string) opensearch.BeforeHookFunc {
+	return func(ctx context.Context, beforeContext opensearch.BeforeContext) context.Context {
+		switch opt := beforeContext.Options.(type) {
+		case *[]func(request *opensearchapi.SearchRequest):
+			f := func(request *opensearchapi.SearchRequest) {
+				var indices []string
+				for _, index := range request.Index {
+					indices = append(indices, prepend+index)
+				}
+				request.Index = indices
+			}
+			*opt = append(*opt, f)
+		case *[]func(request *opensearchapi.IndicesCreateRequest):
+			f := func(request *opensearchapi.IndicesCreateRequest) {
+				request.Index = prepend + request.Index
+			}
+			*opt = append(*opt, f)
+		case *[]func(request *opensearchapi.IndexRequest):
+			f := func(request *opensearchapi.IndexRequest) {
+				request.Index = prepend + request.Index
+			}
+			*opt = append(*opt, f)
+		case *[]func(request *opensearchapi.IndicesDeleteRequest):
+			f := func(request *opensearchapi.IndicesDeleteRequest) {
+				var indices []string
+				for _, index := range request.Index {
+					indices = append(indices, prepend+index)
+				}
+				request.Index = indices
+			}
+			*opt = append(*opt, f)
+		}
+		return ctx
+	}
+}
+
+func IndexEditHookProvider(group string, prepend string) fx.Annotated {
+	return fx.Annotated{
+		Group: group,
+		Target: func() opensearch.BeforeHook {
+			return opensearch.BeforeHookFunc(EditIndexForTesting(prepend))
+		},
 	}
 }

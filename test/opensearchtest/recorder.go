@@ -1,9 +1,12 @@
 package opensearchtest
 
 import (
+	"bytes"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/cassette"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/recorder"
 	"fmt"
 	"github.com/pkg/errors"
+	"io/ioutil"
 	"net/http"
 	"path"
 	"runtime"
@@ -75,7 +78,21 @@ func GetRecorder(options ...RecordOptions) (*recorder.Recorder, error) {
 		return nil, fmt.Errorf("%w, %v", ErrCreatingRecorder, err)
 	}
 	r.SetInOrderInteractions(true)
+	r.SetMatcher(matchBody)
 	return r, nil
+}
+
+// matchBody will ensure that the matcher also matches the contents of the body
+func matchBody(r *http.Request, i cassette.Request) bool {
+	if r.Body == nil {
+		return cassette.DefaultMatcher(r, i)
+	}
+	var b bytes.Buffer
+	if _, err := b.ReadFrom(r.Body); err != nil {
+		return false
+	}
+	r.Body = ioutil.NopCloser(&b)
+	return cassette.DefaultMatcher(r, i) && (b.String() == "" || b.String() == i.Body)
 }
 
 // findTestFile - copied from copyist.go - Searches the call stack, looking for the test that called
