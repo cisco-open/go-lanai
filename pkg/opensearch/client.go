@@ -38,17 +38,16 @@ type OpenClient interface {
 type Option[T Request] func(request *T)
 
 const (
-	// FxOpenSearchHooksGroup defines the FX group for the OpenSearch hooks
-	FxOpenSearchBeforeHooksGroup = "opensearch_before_hooks"
-	FxOpenSearchAfterHooksGroup  = "opensearch_after_hooks"
+	// FxGroup defines the FX group for the OpenSearch
+	FxGroup = "opensearch"
 )
 
 type newClientDI struct {
 	fx.In
 	Config opensearch.Config
 
-	BeforeHook []BeforeHook `group:"opensearch_before_hooks"`
-	AfterHook  []AfterHook  `group:"opensearch_after_hooks"`
+	BeforeHook []BeforeHook `group:"opensearch"`
+	AfterHook  []AfterHook  `group:"opensearch"`
 }
 
 func NewClient(di newClientDI) (OpenClient, error) {
