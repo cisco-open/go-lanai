@@ -53,7 +53,7 @@ func WithOpenSearchPlayback(mode Mode, recordDelay time.Duration) test.Options {
 				c.Transport = &rec
 				return c
 			}),
-			fx.Provide(IndexEditHookProvider(opensearch.FxOpenSearchBeforeHooksGroup, "test_")),
+			fx.Provide(IndexEditHookProvider(opensearch.FxGroup, "test_")),
 		),
 		test.Teardown(stopRecording(&rec)),
 	}
@@ -61,8 +61,8 @@ func WithOpenSearchPlayback(mode Mode, recordDelay time.Duration) test.Options {
 		testOpts = append(testOpts, apptest.WithFxOptions(
 			fx.Provide(
 				SearchDelayerHookProvider(
-					opensearch.FxOpenSearchBeforeHooksGroup,
-					opensearch.FxOpenSearchAfterHooksGroup,
+					opensearch.FxGroup,
+					opensearch.FxGroup,
 					recordDelay,
 				),
 			),
