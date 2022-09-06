@@ -65,14 +65,14 @@ func OpenSearchTracerHook(tracer opentracing.Tracer) *OpenSearchTracer {
 type TracingProvider struct {
 	fx.Out
 
-	before opensearch.BeforeHook `group:"opensearchbeforehooks"`
-	after  opensearch.AfterHook  `group:"opensearchafterhooks"`
+	Before opensearch.BeforeHook `group:"opensearch_before_hooks"`
+	After  opensearch.AfterHook  `group:"opensearch_after_hooks"`
 }
 
 func OpenSearchTracingProvider(tracer opentracing.Tracer) TracingProvider {
 	tracerHook := OpenSearchTracerHook(tracer)
 	return TracingProvider{
-		before: tracerHook,
-		after:  tracerHook,
+		Before: tracerHook,
+		After:  tracerHook,
 	}
 }
