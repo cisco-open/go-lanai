@@ -23,9 +23,6 @@ func (c *RepoImpl[T]) Index(ctx context.Context, index string, document T, o ...
 	if resp.IsError() {
 		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

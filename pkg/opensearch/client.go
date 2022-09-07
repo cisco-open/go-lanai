@@ -21,7 +21,8 @@ type Request interface {
 	opensearchapi.SearchRequest |
 		opensearchapi.IndicesCreateRequest |
 		opensearchapi.IndexRequest |
-		opensearchapi.IndicesDeleteRequest
+		opensearchapi.IndicesDeleteRequest |
+		opensearchapi.PingRequest
 }
 
 type OpenClient interface {
@@ -29,6 +30,7 @@ type OpenClient interface {
 	Index(ctx context.Context, index string, body io.Reader, o ...Option[opensearchapi.IndexRequest]) (*opensearchapi.Response, error)
 	IndicesCreate(ctx context.Context, index string, o ...Option[opensearchapi.IndicesCreateRequest]) (*opensearchapi.Response, error)
 	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) (*opensearchapi.Response, error)
+	Ping(ctx context.Context, o ...Option[opensearchapi.PingRequest]) (*opensearchapi.Response, error)
 	AddBeforeHook(hook BeforeHook)
 	AddAfterHook(hook AfterHook)
 	RemoveBeforeHook(hook BeforeHook)
@@ -96,6 +98,7 @@ const (
 	CmdIndex
 	CmdIndicesCreate
 	CmdIndicesDelete
+	CmdPing
 )
 
 var CmdToString = map[CommandType]string{
@@ -103,6 +106,7 @@ var CmdToString = map[CommandType]string{
 	CmdIndex:         "index",
 	CmdIndicesCreate: "indices create",
 	CmdIndicesDelete: "indices delete",
+	CmdPing:          "ping",
 }
 
 // String will return the command in string format. If the command is not found
