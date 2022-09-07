@@ -113,11 +113,13 @@ pre-build-docker:
 #		- PRIVATE_MODS used for populating build info
 #		- VERSION application version also used as Docker's image tag. Default to "latest" if not specified
 build-docker: DOCKER_TAG = $(if $(VERSION),$(VERSION),latest)
+build-docker: BASE_IMAGE_ARG = $(if $(BASE_IMAGE),--build-arg BASE_IMAGE="$(BASE_IMAGE)",)
 build-docker: init-docker
 	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t {{.Name}}:$(DOCKER_TAG) . \
 	--build-arg PRIVATE_MODS="$(PRIVATE_MODS)" \
 	--build-arg VERSION="$(VERSION)" \
-	--build-arg GITKEY="$(GITKEY)"
+	--build-arg GITKEY="$(GITKEY)" \
+	$(BASE_IMAGE_ARG)
 
 # push-docker:
 #	Re-tag and push given docker image to remote
