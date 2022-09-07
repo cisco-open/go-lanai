@@ -62,6 +62,7 @@ func TestScopeController(t *testing.T) {
 		test.GomegaSubTest(SubTestRecording(di), "SubTestRecording"),
 		test.GomegaSubTest(SubTestHooks(di), "SubTestHooks"),
 		test.GomegaSubTest(SubTestTracer(di), "SubTestTracer"),
+		test.GomegaSubTest(SubTestPing(di), "SubTestPing"),
 	)
 }
 
@@ -438,6 +439,15 @@ func SubTestTracer(di *opensearchDI) test.GomegaSubTestFunc {
 				di.FakeService.Repo.RemoveBeforeHook(openTracer)
 				di.FakeService.Repo.RemoveAfterHook(openTracer)
 			})
+		}
+	}
+}
+
+func SubTestPing(di *opensearchDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		err := di.FakeService.Repo.Ping(ctx)
+		if err != nil {
+			t.Fatalf("unable to search for document")
 		}
 	}
 }
