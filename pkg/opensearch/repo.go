@@ -42,6 +42,9 @@ type Repo[T any] interface {
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/create-index/#request-body
 	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) error
 
+	// Ping will ping the OpenSearch cluster. If no error is returned, then the ping was successful
+	Ping(ctx context.Context, o ...Option[opensearchapi.PingRequest]) error
+
 	AddBeforeHook(hook BeforeHook)
 	AddAfterHook(hook AfterHook)
 	RemoveBeforeHook(hook BeforeHook)

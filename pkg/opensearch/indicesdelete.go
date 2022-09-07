@@ -8,9 +8,6 @@ import (
 
 func (c *RepoImpl[T]) IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) error {
 	resp, err := c.client.IndicesDelete(ctx, index, o...)
-	if err != nil {
-		return err
-	}
 	if resp.IsError() {
 		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
