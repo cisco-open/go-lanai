@@ -1,0 +1,418 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InZhdWx0LWF1dGgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidmF1bHQtYXV0aCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImIzYmI0NjY1LTVjZGEtNGQxZC1hMjRlLTJjZmFmMmYyOWMzNiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OnZhdWx0LWF1dGgifQ.i5bWTPbLK8UrkIU6Wc8oSeyNMQwL4Xdw-zSZj1bhZQFkivgCQwsY4ijHHM5XY4exK1cGfA2jWoGWr1t6_yUqfwcjy1b0a_IRxBiXN4HMkmeRHPsOJEbKtzJ6Bq2xG2S3uZTNxdrEZbth1hRRTPQiZqwXD9lRZeq17foT_LB6X8A5bPhqSPDv1-_RjVm7PbxtuMlmKTEIszavwhC-mDBOPlEtSeufXys_uILOO7wSZHtNfKx9h_4H32zhL7icKYRtAs64eGlqX6bk78dkxETvVdcNFbNrR2VBYxho-maxLPIzk43T6wB9JXeb_PdKz64kSvmjVyNuK-GF0Ydd34K3Pw","role":"devweb-app"}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+    method: PUT
+    order: 0
+  response:
+    body: |
+      {"request_id":"89742f91-c809-b459-a938-a938eb85db81","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.SFMhnGuyIS0D2pcrOzXBODYQ","accessor":"YvK1KUFWnugtlBy5epUyJo08","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:10 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.SFMhnGuyIS0D2pcrOzXBODYQ
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+    method: GET
+    order: 1
+  response:
+    body: |
+      {"request_id":"b9ef516d-ea4e-e281-4c0e-9adb73d3f4bf","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"YvK1KUFWnugtlBy5epUyJo08","creation_time":1662665650,"creation_ttl":4,"display_name":"kubernetes-default-vault-auth","entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","expire_time":"2022-09-08T19:34:14.355626255Z","explicit_max_ttl":0,"external_namespace_policies":{},"id":"s.SFMhnGuyIS0D2pcrOzXBODYQ","identity_policies":["default","devwebapp"],"issue_time":"2022-09-08T19:34:10.35563738Z","meta":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"num_uses":0,"orphan":true,"path":"auth/kubernetes/login","policies":["default"],"renewable":true,"ttl":4,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "893"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:10 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":4}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.SFMhnGuyIS0D2pcrOzXBODYQ
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 2
+  response:
+    body: |
+      {"request_id":"4f633d5d-4819-be18-3cd1-63cd982be5be","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.SFMhnGuyIS0D2pcrOzXBODYQ","accessor":"YvK1KUFWnugtlBy5epUyJo08","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:10 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":4}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.SFMhnGuyIS0D2pcrOzXBODYQ
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 3
+  response:
+    body: |
+      {"request_id":"998aa885-1e17-ad24-daca-66ec5ff7706d","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":["TTL of \"4s\" exceeded the effective max_ttl of \"3s\"; TTL value is capped accordingly"],"auth":{"client_token":"s.SFMhnGuyIS0D2pcrOzXBODYQ","accessor":"YvK1KUFWnugtlBy5epUyJo08","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":3,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "771"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:13 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":4}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.SFMhnGuyIS0D2pcrOzXBODYQ
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 4
+  response:
+    body: |
+      {"request_id":"db35de34-2247-8aed-1849-70568563ad15","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":["TTL of \"4s\" exceeded the effective max_ttl of \"1s\"; TTL value is capped accordingly"],"auth":{"client_token":"s.SFMhnGuyIS0D2pcrOzXBODYQ","accessor":"YvK1KUFWnugtlBy5epUyJo08","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":1,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "771"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:15 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InZhdWx0LWF1dGgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidmF1bHQtYXV0aCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImIzYmI0NjY1LTVjZGEtNGQxZC1hMjRlLTJjZmFmMmYyOWMzNiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OnZhdWx0LWF1dGgifQ.i5bWTPbLK8UrkIU6Wc8oSeyNMQwL4Xdw-zSZj1bhZQFkivgCQwsY4ijHHM5XY4exK1cGfA2jWoGWr1t6_yUqfwcjy1b0a_IRxBiXN4HMkmeRHPsOJEbKtzJ6Bq2xG2S3uZTNxdrEZbth1hRRTPQiZqwXD9lRZeq17foT_LB6X8A5bPhqSPDv1-_RjVm7PbxtuMlmKTEIszavwhC-mDBOPlEtSeufXys_uILOO7wSZHtNfKx9h_4H32zhL7icKYRtAs64eGlqX6bk78dkxETvVdcNFbNrR2VBYxho-maxLPIzk43T6wB9JXeb_PdKz64kSvmjVyNuK-GF0Ydd34K3Pw","role":"devweb-app"}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.SFMhnGuyIS0D2pcrOzXBODYQ
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+    method: PUT
+    order: 5
+  response:
+    body: |
+      {"request_id":"464ba59a-1fc5-bba6-1b59-96d1936a7203","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.x6EDlGSd7tNiWM4KCEZHatwj","accessor":"Pl9TAXwFClL9gE4CZcLRB8xc","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:15 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.x6EDlGSd7tNiWM4KCEZHatwj
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+    method: GET
+    order: 6
+  response:
+    body: |
+      {"request_id":"478cdf38-e47c-91fc-2a29-67825201cdc0","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"Pl9TAXwFClL9gE4CZcLRB8xc","creation_time":1662665655,"creation_ttl":4,"display_name":"kubernetes-default-vault-auth","entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","expire_time":"2022-09-08T19:34:19.502468924Z","explicit_max_ttl":0,"external_namespace_policies":{},"id":"s.x6EDlGSd7tNiWM4KCEZHatwj","identity_policies":["default","devwebapp"],"issue_time":"2022-09-08T19:34:15.502473007Z","meta":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"num_uses":0,"orphan":true,"path":"auth/kubernetes/login","policies":["default"],"renewable":true,"ttl":3,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "894"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:15 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":3}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.x6EDlGSd7tNiWM4KCEZHatwj
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 7
+  response:
+    body: |
+      {"request_id":"6b4897e4-e307-f9ac-86ea-629360feb754","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.x6EDlGSd7tNiWM4KCEZHatwj","accessor":"Pl9TAXwFClL9gE4CZcLRB8xc","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":3,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:15 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InZhdWx0LWF1dGgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidmF1bHQtYXV0aCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImIzYmI0NjY1LTVjZGEtNGQxZC1hMjRlLTJjZmFmMmYyOWMzNiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OnZhdWx0LWF1dGgifQ.i5bWTPbLK8UrkIU6Wc8oSeyNMQwL4Xdw-zSZj1bhZQFkivgCQwsY4ijHHM5XY4exK1cGfA2jWoGWr1t6_yUqfwcjy1b0a_IRxBiXN4HMkmeRHPsOJEbKtzJ6Bq2xG2S3uZTNxdrEZbth1hRRTPQiZqwXD9lRZeq17foT_LB6X8A5bPhqSPDv1-_RjVm7PbxtuMlmKTEIszavwhC-mDBOPlEtSeufXys_uILOO7wSZHtNfKx9h_4H32zhL7icKYRtAs64eGlqX6bk78dkxETvVdcNFbNrR2VBYxho-maxLPIzk43T6wB9JXeb_PdKz64kSvmjVyNuK-GF0Ydd34K3Pw","role":"devweb-app"}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.x6EDlGSd7tNiWM4KCEZHatwj
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+    method: PUT
+    order: 8
+  response:
+    body: |
+      {"request_id":"ae5d6048-5467-e0ec-78d0-92504fb800a6","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ogdWaG1uWWF4NYja9d67sFvy","accessor":"6IGoVvy2s0puF2hggLO02JHY","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:16 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.ogdWaG1uWWF4NYja9d67sFvy
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+    method: GET
+    order: 9
+  response:
+    body: |
+      {"request_id":"32092d35-9fc7-f4ce-a876-81ee0b7d4439","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"6IGoVvy2s0puF2hggLO02JHY","creation_time":1662665656,"creation_ttl":4,"display_name":"kubernetes-default-vault-auth","entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","expire_time":"2022-09-08T19:34:20.370140216Z","explicit_max_ttl":0,"external_namespace_policies":{},"id":"s.ogdWaG1uWWF4NYja9d67sFvy","identity_policies":["default","devwebapp"],"issue_time":"2022-09-08T19:34:16.370144133Z","meta":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"num_uses":0,"orphan":true,"path":"auth/kubernetes/login","policies":["default"],"renewable":true,"ttl":4,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "894"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:16 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":4}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.ogdWaG1uWWF4NYja9d67sFvy
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 10
+  response:
+    body: |
+      {"request_id":"84459435-e583-0c0b-16c1-7c1f44ba942e","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ogdWaG1uWWF4NYja9d67sFvy","accessor":"6IGoVvy2s0puF2hggLO02JHY","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:16 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":4}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.ogdWaG1uWWF4NYja9d67sFvy
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 11
+  response:
+    body: |
+      {"request_id":"8e9ae2de-8b14-af0d-193a-91c826921a94","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":["TTL of \"4s\" exceeded the effective max_ttl of \"3s\"; TTL value is capped accordingly"],"auth":{"client_token":"s.ogdWaG1uWWF4NYja9d67sFvy","accessor":"6IGoVvy2s0puF2hggLO02JHY","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":3,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "771"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:19 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":4}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.ogdWaG1uWWF4NYja9d67sFvy
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 12
+  response:
+    body: |
+      {"request_id":"ec688386-c499-a7fa-f481-ef184d2f3a0d","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":["TTL of \"4s\" exceeded the effective max_ttl of \"1s\"; TTL value is capped accordingly"],"auth":{"client_token":"s.ogdWaG1uWWF4NYja9d67sFvy","accessor":"6IGoVvy2s0puF2hggLO02JHY","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":1,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "771"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:21 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InZhdWx0LWF1dGgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidmF1bHQtYXV0aCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImIzYmI0NjY1LTVjZGEtNGQxZC1hMjRlLTJjZmFmMmYyOWMzNiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OnZhdWx0LWF1dGgifQ.i5bWTPbLK8UrkIU6Wc8oSeyNMQwL4Xdw-zSZj1bhZQFkivgCQwsY4ijHHM5XY4exK1cGfA2jWoGWr1t6_yUqfwcjy1b0a_IRxBiXN4HMkmeRHPsOJEbKtzJ6Bq2xG2S3uZTNxdrEZbth1hRRTPQiZqwXD9lRZeq17foT_LB6X8A5bPhqSPDv1-_RjVm7PbxtuMlmKTEIszavwhC-mDBOPlEtSeufXys_uILOO7wSZHtNfKx9h_4H32zhL7icKYRtAs64eGlqX6bk78dkxETvVdcNFbNrR2VBYxho-maxLPIzk43T6wB9JXeb_PdKz64kSvmjVyNuK-GF0Ydd34K3Pw","role":"devweb-app"}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.ogdWaG1uWWF4NYja9d67sFvy
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+    method: PUT
+    order: 13
+  response:
+    body: |
+      {"request_id":"40e95058-b00f-6610-0886-4a92c22d7a42","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ytt2XcHNHkgQjkRwtLiDPN8d","accessor":"VKJRFk1R0VnIZVDjX6OFp1hg","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:21 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.ytt2XcHNHkgQjkRwtLiDPN8d
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+    method: GET
+    order: 14
+  response:
+    body: |
+      {"request_id":"cbc1ac45-4055-cf15-9a77-d96d1e5e9051","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"VKJRFk1R0VnIZVDjX6OFp1hg","creation_time":1662665661,"creation_ttl":4,"display_name":"kubernetes-default-vault-auth","entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","expire_time":"2022-09-08T19:34:25.495653135Z","explicit_max_ttl":0,"external_namespace_policies":{},"id":"s.ytt2XcHNHkgQjkRwtLiDPN8d","identity_policies":["default","devwebapp"],"issue_time":"2022-09-08T19:34:21.495656718Z","meta":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"num_uses":0,"orphan":true,"path":"auth/kubernetes/login","policies":["default"],"renewable":true,"ttl":4,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "894"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:21 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"increment":4}'
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - s.ytt2XcHNHkgQjkRwtLiDPN8d
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+    method: PUT
+    order: 15
+  response:
+    body: |
+      {"request_id":"e623cf48-d9a3-d3bb-613f-c277e6a6bac8","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ytt2XcHNHkgQjkRwtLiDPN8d","accessor":"VKJRFk1R0VnIZVDjX6OFp1hg","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 08 Sep 2022 19:34:21 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+replayposition: 0
