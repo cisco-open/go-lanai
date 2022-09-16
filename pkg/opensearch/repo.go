@@ -19,7 +19,7 @@ type Repo[T any] interface {
 	// The body argument should follow the Search request body [Format].
 	//
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/search/#request-body
-	Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) error
+	Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) (error, int)
 
 	// Index will create a new Document in the index that is defined
 	//

@@ -94,7 +94,7 @@ func SubTestRecording(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		var dest []GenericAuditEvent
-		err := di.FakeService.Repo.Search(context.Background(), &dest, query,
+		err, _ := di.FakeService.Repo.Search(context.Background(), &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 			opensearch.Search.WithRequestCache(false),
 		)
@@ -120,12 +120,13 @@ func SubTestRecording(di *opensearchDI) test.GomegaSubTestFunc {
 		if err != nil {
 			t.Fatalf("unable to create document in index: %v", err)
 		}
-		err = di.FakeService.Repo.Search(context.Background(), &dest, query,
+		err, totalHits := di.FakeService.Repo.Search(context.Background(), &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 		)
 		if err != nil {
 			t.Fatalf("unable to search for document: %v", err)
 		}
+		g.Expect(totalHits).To(gomega.Equal(3))
 		g.Expect(len(dest)).To(gomega.Equal(3))
 		g.Expect(dest[2].Client_ID).To(gomega.Equal(testEvent.Client_ID))
 	}
@@ -301,7 +302,7 @@ func SubTestHooks(di *opensearchDI) test.GomegaSubTestFunc {
 				for _, hook := range tt.fields.afterHooks {
 					di.FakeService.Repo.AddAfterHook(hook)
 				}
-				err := di.FakeService.Repo.Search(
+				err, _ := di.FakeService.Repo.Search(
 					tt.args.ctx,
 					&tt.args.dest,
 					tt.args.query,
@@ -428,7 +429,7 @@ func SubTestTracer(di *opensearchDI) test.GomegaSubTestFunc {
 				tt.args.ctx = op.NewSpanOrDescendant(tt.args.ctx)
 
 				// ignore errors, we only care about the trace
-				_ = di.FakeService.Repo.Search(
+				_, _ = di.FakeService.Repo.Search(
 					tt.args.ctx,
 					&tt.args.dest,
 					tt.args.query,
