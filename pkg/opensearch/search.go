@@ -34,35 +34,35 @@ type SearchResponse[T any] struct {
 	} `json:"hits"`
 }
 
-func (c *RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) error {
+func (c *RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) (err error, hits int) {
 	var buffer bytes.Buffer
-	err := json.NewEncoder(&buffer).Encode(body)
+	err = json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
-		return fmt.Errorf("unable to encode mapping: %w", err)
+		return fmt.Errorf("unable to encode mapping: %w", err), 0
 	}
 	o = append(o, Search.WithBody(&buffer))
 	resp, err := c.client.Search(ctx, o...)
 	if err != nil {
-		return err
+		return err, 0
 	}
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return err, 0
 	}
 	if resp.IsError() {
-		return fmt.Errorf("error status code: %d", resp.StatusCode)
+		return fmt.Errorf("error status code: %d", resp.StatusCode), 0
 	}
 	var searchResp SearchResponse[T]
 	err = json.Unmarshal(respBody, &searchResp)
 	if err != nil {
-		return err
+		return err, 0
 	}
 	retModel := make([]T, len(searchResp.Hits.Hits))
 	for i, hits := range searchResp.Hits.Hits {
 		retModel[i] = hits.Source
 	}
 	*dest = retModel
-	return nil
+	return nil, searchResp.Hits.Total.Value
 }
 
 func (c *OpenClientImpl) Search(ctx context.Context, o ...Option[opensearchapi.SearchRequest]) (*opensearchapi.Response, error) {
