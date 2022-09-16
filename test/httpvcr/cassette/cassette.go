@@ -34,6 +34,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	"gopkg.in/yaml.v2"
@@ -229,6 +230,11 @@ func (c *Cassette) Save() error {
 			}
 		}
 	}
+
+	// Ensure that all cassettes are saved with interactions in order
+	sort.SliceStable(c.Interactions, func(i, j int) bool {
+		return c.Interactions[i].Order < c.Interactions[j].Order
+	})
 
 	// Create directory for cassette if missing
 	cassetteDir := filepath.Dir(c.File)
