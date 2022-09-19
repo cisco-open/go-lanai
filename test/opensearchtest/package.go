@@ -54,16 +54,6 @@ func SetRecordMode(mode Mode) OpenSearchPlaybackOptions {
 	}
 }
 
-// AddMatchBodyModifier will take the modifier function and add it into the
-// MatchBodyModifiers option
-func AddMatchBodyModifier(f MatchBodyModifier) OpenSearchPlaybackOptions {
-	return func(o *OpenSearchPlaybackOption) {
-		o.RecordOptions = append(o.RecordOptions, func(c *RecordOption) {
-			c.MatchBodyModifiers = append(c.MatchBodyModifiers, f)
-		})
-	}
-}
-
 // WithOpenSearchPlayback will setup the recorder, similar to crdb's copyist functionality
 // where actual interactions with opensearch will be recorded, and then when the mode is set to
 // ModeReplaying, the recorder will respond with its recorded responses.
@@ -71,20 +61,33 @@ func AddMatchBodyModifier(f MatchBodyModifier) OpenSearchPlaybackOptions {
 // opensearch, and a read. opensearch does not immediately have writes available, so the only
 // solution right now is to delay and reads that happen immediately after a write.
 // For some reason, the refresh options on the index to opensearch are not working.
+//
+// To control what is being matched in the http vcr, this function will provide a
+// *MatcherBodyModifierController to uber.FX.
 func WithOpenSearchPlayback(options ...OpenSearchPlaybackOptions) test.Options {
 	var openSearchOption OpenSearchPlaybackOption
 	for _, fn := range options {
 		fn(&openSearchOption)
 	}
 
+	var modifierController MatcherBodyModifierController
+	openSearchOption.RecordOptions = append(
+		openSearchOption.RecordOptions,
+		func(c *RecordOption) {
+			c.MatchBodyModifiers = modifierController.Modifier()
+		},
+	)
+
 	determineMode(&openSearchOption.Mode)
 	rec := recorder.Recorder{}
 	testOpts := []test.Options{
-		test.Setup(getRecording(
-			&rec,
-			openSearchOption.Mode,
-			openSearchOption.RecordOptions...,
-		)),
+		test.Setup(
+			getRecording(
+				&rec,
+				openSearchOption.Mode,
+				openSearchOption.RecordOptions...,
+			),
+		),
 		apptest.WithFxOptions(
 			fx.Decorate(func(c opensearchgo.Config) opensearchgo.Config {
 				c.Transport = &rec
@@ -92,6 +95,7 @@ func WithOpenSearchPlayback(options ...OpenSearchPlaybackOptions) test.Options {
 			}),
 			fx.Provide(
 				IndexEditHookProvider(opensearch.FxGroup, "test_"),
+				func() *MatcherBodyModifierController { return &modifierController },
 			),
 		),
 		test.Teardown(stopRecording(&rec)),
