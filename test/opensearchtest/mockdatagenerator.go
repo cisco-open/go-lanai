@@ -64,10 +64,12 @@ func SetupPrepareOpenSearchData(
 // The time between each event will be uniformly distributed between the startT and endT
 func CreateData(numOfDocuments int, startT time.Time, endT time.Time, dest *[]GenericAuditEvent) {
 	timeDelta := endT.Sub(startT) / time.Duration(numOfDocuments)
+	currentTime := startT
 	genericEvents := make([]GenericAuditEvent, numOfDocuments)
 	for i := 0; i < numOfDocuments; i++ {
 		PopulateSourceWithDeterministicData(&genericEvents[i])
-		genericEvents[i].Time = startT.Add(timeDelta)
+		currentTime = currentTime.Add(timeDelta)
+		genericEvents[i].Time = currentTime
 	}
 	*dest = genericEvents
 }
@@ -91,7 +93,7 @@ func PopulateSourceWithDeterministicData(source *GenericAuditEvent) {
 	source.Keywords = RandStringBytesMaskImprSrcSB(5)
 }
 
-//const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+// const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const letterBytes = "abcdefghij" // limiting the combination of characters
 const (
 	letterIdxBits = 6                    // 6 bits to represent a letter index

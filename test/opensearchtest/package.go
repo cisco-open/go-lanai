@@ -36,6 +36,34 @@ func determineMode(mode *Mode) {
 	}
 }
 
+type OpenSearchPlaybackOptions func(o *OpenSearchPlaybackOption)
+type OpenSearchPlaybackOption struct {
+	Mode          Mode
+	RecordDelay   time.Duration
+	RecordOptions []RecordOptions
+}
+
+func SetRecordDelay(duration time.Duration) OpenSearchPlaybackOptions {
+	return func(o *OpenSearchPlaybackOption) {
+		o.RecordDelay = duration
+	}
+}
+func SetRecordMode(mode Mode) OpenSearchPlaybackOptions {
+	return func(o *OpenSearchPlaybackOption) {
+		o.Mode = mode
+	}
+}
+
+// AddMatchBodyModifier will take the modifier function and add it into the
+// MatchBodyModifiers option
+func AddMatchBodyModifier(f MatchBodyModifier) OpenSearchPlaybackOptions {
+	return func(o *OpenSearchPlaybackOption) {
+		o.RecordOptions = append(o.RecordOptions, func(c *RecordOption) {
+			c.MatchBodyModifiers = append(c.MatchBodyModifiers, f)
+		})
+	}
+}
+
 // WithOpenSearchPlayback will setup the recorder, similar to crdb's copyist functionality
 // where actual interactions with opensearch will be recorded, and then when the mode is set to
 // ModeReplaying, the recorder will respond with its recorded responses.
@@ -43,27 +71,38 @@ func determineMode(mode *Mode) {
 // opensearch, and a read. opensearch does not immediately have writes available, so the only
 // solution right now is to delay and reads that happen immediately after a write.
 // For some reason, the refresh options on the index to opensearch are not working.
-func WithOpenSearchPlayback(mode Mode, recordDelay time.Duration) test.Options {
-	determineMode(&mode)
+func WithOpenSearchPlayback(options ...OpenSearchPlaybackOptions) test.Options {
+	var openSearchOption OpenSearchPlaybackOption
+	for _, fn := range options {
+		fn(&openSearchOption)
+	}
+
+	determineMode(&openSearchOption.Mode)
 	rec := recorder.Recorder{}
 	testOpts := []test.Options{
-		test.Setup(getRecording(&rec, mode)),
+		test.Setup(getRecording(
+			&rec,
+			openSearchOption.Mode,
+			openSearchOption.RecordOptions...,
+		)),
 		apptest.WithFxOptions(
 			fx.Decorate(func(c opensearchgo.Config) opensearchgo.Config {
 				c.Transport = &rec
 				return c
 			}),
-			fx.Provide(IndexEditHookProvider(opensearch.FxGroup, "test_")),
+			fx.Provide(
+				IndexEditHookProvider(opensearch.FxGroup, "test_"),
+			),
 		),
 		test.Teardown(stopRecording(&rec)),
 	}
-	if mode == ModeRecording {
+	if openSearchOption.Mode == ModeRecording {
 		testOpts = append(testOpts, apptest.WithFxOptions(
 			fx.Provide(
 				SearchDelayerHookProvider(
 					opensearch.FxGroup,
 					opensearch.FxGroup,
-					recordDelay,
+					openSearchOption.RecordDelay,
 				),
 			),
 		))
@@ -71,11 +110,14 @@ func WithOpenSearchPlayback(mode Mode, recordDelay time.Duration) test.Options {
 	return test.WithOptions(testOpts...)
 }
 
-func getRecording(rec *recorder.Recorder, mode Mode) test.SetupFunc {
+func getRecording(rec *recorder.Recorder, mode Mode, options ...RecordOptions) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		r, err := GetRecorder(
-			CassetteLocation(GetCassetteLocation()),
-			ReplayMode(mode),
+			append(
+				options,
+				CassetteLocation(GetCassetteLocation()),
+				ReplayMode(mode),
+			)...,
 		)
 		if err != nil {
 			return ctx, err
