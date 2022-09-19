@@ -2,17 +2,19 @@ package initcmd
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"fmt"
 	"os"
+
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 )
 
 var defaultBinaries = map[string]string{
-	"github.com/axw/gocov/gocov":                          "v1.1.0",
-	"github.com/AlekSi/gocov-xml":                         "v1.0.0",
-	"gotest.tools/gotestsum":                              "v1.8.0",
-	"github.com/golangci/golangci-lint/cmd/golangci-lint": "v1.49.0",
-	"github.com/jstemmer/go-junit-report":                 "v0.9.1",
+	"github.com/axw/gocov/gocov":                            "v1.1.0",
+	"github.com/AlekSi/gocov-xml":                           "v1.0.0",
+	"gotest.tools/gotestsum":                                "v1.8.0",
+	"github.com/golangci/golangci-lint/cmd/golangci-lint":   "v1.49.0",
+	"github.com/jstemmer/go-junit-report":                   "v0.9.1",
+	"cto-github.cisco.com/NFV-BU/contract-verifier/cli/ccv": "latest",
 }
 
 func installBinaries(ctx context.Context) error {
