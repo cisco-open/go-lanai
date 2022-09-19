@@ -17,11 +17,11 @@ import (
 	"time"
 )
 
-//	func TestMain(m *testing.M) {
-//		suitetest.RunTests(m,
-//			dbtest.EnableDBRecordMode(),
-//		)
-//	}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
 
 type FakeService struct {
 	Repo opensearch.Repo[GenericAuditEvent]
@@ -128,7 +128,7 @@ func SubTestRecording(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		var dest []GenericAuditEvent
-		err, _ := di.FakeService.Repo.Search(context.Background(), &dest, query,
+		_, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 			opensearch.Search.WithRequestCache(false),
 		)
@@ -154,7 +154,7 @@ func SubTestRecording(di *opensearchDI) test.GomegaSubTestFunc {
 		if err != nil {
 			t.Fatalf("unable to create document in index: %v", err)
 		}
-		err, totalHits := di.FakeService.Repo.Search(context.Background(), &dest, query,
+		totalHits, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 		)
 		if err != nil {
@@ -336,7 +336,7 @@ func SubTestHooks(di *opensearchDI) test.GomegaSubTestFunc {
 				for _, hook := range tt.fields.afterHooks {
 					di.FakeService.Repo.AddAfterHook(hook)
 				}
-				err, _ := di.FakeService.Repo.Search(
+				_, err := di.FakeService.Repo.Search(
 					tt.args.ctx,
 					&tt.args.dest,
 					tt.args.query,
@@ -520,7 +520,7 @@ func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		var dest []GenericAuditEvent
-		err, _ := di.FakeService.Repo.Search(context.Background(), &dest, query,
+		_, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 			opensearch.Search.WithRequestCache(false),
 		)
