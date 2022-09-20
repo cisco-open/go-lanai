@@ -47,7 +47,7 @@ report: test
 #	Example:
 # 		make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
 verify: SAVEPOINT_MARK = tmp/pre-verify
-verify: pre-verify clean test lint build report post-verify
+verify: pre-verify clean test lint build report contract post-verify
 
 # dist:
 #	Make a distribution build with provided PRIVATE_MODS and VERSION,

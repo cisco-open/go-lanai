@@ -95,3 +95,7 @@ $(GEN_LIST):
 resource@{{ .Output }}:
 	cp -rf {{ .Pattern }} $(DESTDIR)/{{ .Output }}
 	{{ end }}
+
+# Runs contract-verifier precheck to verify service contract against CPX guidelines
+contract:
+	ccv precheck
