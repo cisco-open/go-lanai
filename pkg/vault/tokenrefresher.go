@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"errors"
 	"github.com/hashicorp/vault/api"
 	"golang.org/x/net/context"
 	"sync"
@@ -63,8 +64,10 @@ func (r *TokenRefresher) monitorRenew(ctx context.Context) {
 				var err error
 				if r.renewer, err = r.client.GetClientTokenRenewer(); err == nil {
 					break
+				} else if !errors.Is(err, errTokenNotRenewable) {
+					// Don't want to spam this message if the user is using a static token (where renewals aren't needed)
+					logger.WithContext(ctx).Debugf("%s unable to create token renewer, %v", renewerDescription, err)
 				}
-				logger.WithContext(ctx).Debugf("%s unable to create token renewer, %v", renewerDescription, err)
 				time.Sleep(5 * time.Minute)
 			}
 			// Starts a blocking process to periodically renew the token.
@@ -76,7 +79,7 @@ func (r *TokenRefresher) monitorRenew(ctx context.Context) {
 		case err := <-r.renewer.DoneCh():
 			r.renewer = nil
 			switch {
-			case err != nil && !r.isRefreshable():
+			case !r.isRefreshable():
 				// When authentication is token, and if the token expires, we can't really do anything on the client side
 				// Do not quit the renewer in the hopes that the token is recreated & we can resume
 				logger.WithContext(ctx).Warnf("%s renewer stopped for non-refreshable authentication: %v", renewerDescription, err)

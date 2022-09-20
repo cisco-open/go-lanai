@@ -1,0 +1,30 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      X-Vault-Request:
+      - "true"
+      X-Vault-Token:
+      - token_no_ttl
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+    method: GET
+    order: 0
+  response:
+    body: |
+      {"request_id":"cc624d86-594c-8bdc-5052-3b1e768c9302","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"pBC9ytNZEKpMnTXVL1gSzo5Z","creation_time":1663610203,"creation_ttl":0,"display_name":"token-dev-default","entity_id":"","expire_time":null,"explicit_max_ttl":0,"id":"token_no_ttl","issue_time":"2022-09-19T17:56:43.708949673Z","meta":null,"num_uses":0,"orphan":true,"path":"auth/token/create","policies":["root"],"renewable":false,"ttl":0,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "526"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 19 Sep 2022 23:12:58 GMT
+    status: 200 OK
+    code: 200
+    duration: ""
+replayposition: 0
