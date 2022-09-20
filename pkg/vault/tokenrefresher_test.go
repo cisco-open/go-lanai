@@ -66,10 +66,11 @@ func TestTokenRefresher_Start_NonRefreshableToken(t *testing.T) {
 		name         string
 		VaultClient  Client
 		playbackFile string
+		waitTimeSec  time.Duration
 		recorderMode recorder.Mode
 	}{
 		{
-			name: "Regular token should not try to refresh when it cannot be renewed",
+			name: "Tokens with TTL should not try to refresh when renewal lease expires",
 			VaultClient: Client{
 				config: &ConnectionProperties{
 					Authentication: Token,
@@ -77,6 +78,19 @@ func TestTokenRefresher_Start_NonRefreshableToken(t *testing.T) {
 				clientAuthentication: TokenClientAuthentication("token_10s_ttl"), // Token with TTL of 10 sec
 			},
 			playbackFile: "testdata/tokenrefresher/TestNotRefreshableToken",
+			waitTimeSec:  10 * time.Second,
+			recorderMode: recorder.ModeReplaying,
+		},
+		{
+			name: "Static tokens (without TTL) should not try to refresh or renew",
+			VaultClient: Client{
+				config: &ConnectionProperties{
+					Authentication: Token,
+				},
+				clientAuthentication: TokenClientAuthentication("token_no_ttl"), // Token with no ttl - cannot be renewed
+			},
+			waitTimeSec:  3 * time.Second,
+			playbackFile: "testdata/tokenrefresher/TestNonRenewableToken",
 			recorderMode: recorder.ModeReplaying,
 		},
 	}
@@ -98,7 +112,7 @@ func TestTokenRefresher_Start_NonRefreshableToken(t *testing.T) {
 			oldToken := tt.VaultClient.Token()
 			refresher := NewTokenRefresher(&tt.VaultClient)
 			refresher.Start(context.Background())
-			time.Sleep(10 * time.Second)
+			time.Sleep(tt.waitTimeSec)
 			newToken := tt.VaultClient.Token()
 
 			g.Expect(newToken).To(gomega.Equal(oldToken),
