@@ -24,7 +24,6 @@ type Repo[T any] interface {
 	// Index will create a new Document in the index that is defined
 	//
 	// The index argument defines the index name that the document should be stored in.
-	// The body
 	Index(ctx context.Context, index string, document T, o ...Option[opensearchapi.IndexRequest]) error
 
 	// IndicesCreate will create a new index in the cluster.
@@ -41,6 +40,36 @@ type Repo[T any] interface {
 	//
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/create-index/#request-body
 	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) error
+
+	// IndicesPutAlias will create or update an alias
+	//
+	// The index argument defines the index that the alias should point to
+	// The name argument defines the name of the new alias
+	//
+	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/alias/#request-body
+	IndicesPutAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesPutAliasRequest]) error
+
+	// IndicesDeleteAlias deletes an alias
+	//
+	// The index argument defines the index that the alias points to
+	// The name argument defines the name of the alias we would like to delete
+	//
+	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/alias/#request-body
+	IndicesDeleteAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesDeleteAliasRequest]) error
+
+	// IndicesPutIndexTemplate will create or update an alias
+	//
+	// The name argument defines the name of the template
+	// The body argument defines the specified template options to apply (refer to [Format])
+	//
+	// [Format]: https://opensearch.org/docs/latest/opensearch/index-templates/#index-template-options
+	IndicesPutIndexTemplate(ctx context.Context, name string, body interface{}, o ...Option[opensearchapi.IndicesPutIndexTemplateRequest]) error
+
+	// IndicesDeleteIndexTemplate deletes an index template
+	//
+	// The name argument defines the name of the template to delete
+	//
+	IndicesDeleteIndexTemplate(ctx context.Context, name string, o ...Option[opensearchapi.IndicesDeleteIndexTemplateRequest]) error
 
 	// Ping will ping the OpenSearch cluster. If no error is returned, then the ping was successful
 	Ping(ctx context.Context, o ...Option[opensearchapi.PingRequest]) error

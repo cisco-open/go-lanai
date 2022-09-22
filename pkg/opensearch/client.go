@@ -22,6 +22,10 @@ type Request interface {
 		opensearchapi.IndicesCreateRequest |
 		opensearchapi.IndexRequest |
 		opensearchapi.IndicesDeleteRequest |
+		opensearchapi.IndicesPutAliasRequest |
+		opensearchapi.IndicesDeleteAliasRequest |
+		opensearchapi.IndicesPutIndexTemplateRequest |
+		opensearchapi.IndicesDeleteIndexTemplateRequest |
 		opensearchapi.PingRequest
 }
 
@@ -30,6 +34,10 @@ type OpenClient interface {
 	Index(ctx context.Context, index string, body io.Reader, o ...Option[opensearchapi.IndexRequest]) (*opensearchapi.Response, error)
 	IndicesCreate(ctx context.Context, index string, o ...Option[opensearchapi.IndicesCreateRequest]) (*opensearchapi.Response, error)
 	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) (*opensearchapi.Response, error)
+	IndicesPutAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesPutAliasRequest]) (*opensearchapi.Response, error)
+	IndicesDeleteAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesDeleteAliasRequest]) (*opensearchapi.Response, error)
+	IndicesPutIndexTemplate(ctx context.Context, name string, body io.Reader, o ...Option[opensearchapi.IndicesPutIndexTemplateRequest]) (*opensearchapi.Response, error)
+	IndicesDeleteIndexTemplate(ctx context.Context, name string, o ...Option[opensearchapi.IndicesDeleteIndexTemplateRequest]) (*opensearchapi.Response, error)
 	Ping(ctx context.Context, o ...Option[opensearchapi.PingRequest]) (*opensearchapi.Response, error)
 	AddBeforeHook(hook BeforeHook)
 	AddAfterHook(hook AfterHook)
@@ -98,15 +106,23 @@ const (
 	CmdIndex
 	CmdIndicesCreate
 	CmdIndicesDelete
+	CmdIndicesPutAlias
+	CmdIndicesDeleteAlias
+	CmdIndicesPutIndexTemplate
+	CmdIndicesDeleteIndexTemplate
 	CmdPing
 )
 
 var CmdToString = map[CommandType]string{
-	CmdSearch:        "search",
-	CmdIndex:         "index",
-	CmdIndicesCreate: "indices create",
-	CmdIndicesDelete: "indices delete",
-	CmdPing:          "ping",
+	CmdSearch:                     "search",
+	CmdIndex:                      "index",
+	CmdIndicesCreate:              "indices create",
+	CmdIndicesDelete:              "indices delete",
+	CmdIndicesPutAlias:            "indices put alias",
+	CmdIndicesDeleteAlias:         "indices delete alias",
+	CmdIndicesPutIndexTemplate:    "indices put index template",
+	CmdIndicesDeleteIndexTemplate: "indices delete index template",
+	CmdPing:                       "ping",
 }
 
 // String will return the command in string format. If the command is not found
