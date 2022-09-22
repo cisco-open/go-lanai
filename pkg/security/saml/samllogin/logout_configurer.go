@@ -25,7 +25,7 @@ func (c *SamlLogoutConfigurer) Apply(feature security.Feature, ws security.WebSe
 	// configure on top of existing logout feature
 	logout.Configure(ws).
 		AddLogoutHandler(lh).
-		EntryPoint(ep)
+		AddEntryPoint(ep)
 
 	// Add some additional endpoints.
 	// Note: those endpoints are available regardless what auth method is used, so no condition is applied

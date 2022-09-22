@@ -224,7 +224,7 @@ type authorizeEndpointConfigurer struct {
 func(c *authorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 	location := &url.URL{Path: "/v2/authorize"}
 	ws.Route(matcher.RouteWithPattern(location.Path)).
-		With(NewEndpoint().
+		With(New().
 			Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 				*opt = security.DefaultIssuerDetails{
 					Protocol:    "http",
@@ -232,7 +232,7 @@ func(c *authorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 					ContextPath: "/auth",
 					IncludePort: false,
 				}})).
-			SsoCondition(matcher.RequestWithParam(oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO)).
+			SsoCondition(matcher.RequestWithForm(oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO)).
 			SsoLocation(&url.URL{Path: "/v2/authorize", RawQuery: fmt.Sprintf("%s=%s", oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO)}).
 			MetadataPath("/metadata"))
 }

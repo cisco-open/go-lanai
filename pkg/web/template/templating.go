@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
+	"net/url"
+	"path"
 )
 
 const (
@@ -17,8 +19,15 @@ const (
 	ModelKeyMessage        = "message"
 	ModelKeySession        = "session"
 	ModelKeyRequestContext = "rc"
-	ModelKeySecurity 	   = "security"
-	ModelKeyCsrf 		   = "csrf"
+	ModelKeySecurity       = "security"
+	ModelKeyCsrf           = "csrf"
+)
+
+var (
+	viewRedirect          = "redirect:"
+	modelKeyRedirectSC    = "redirect.sc"
+	modelKeyRedirectLoc   = "redirect.location"
+	modelKeyIgnoreCtxPath = "redirect.noCtxPath"
 )
 
 type Model gin.H
@@ -28,6 +37,53 @@ type ModelView struct {
 	View string
 	// Model is map[string]interface{}
 	Model Model
+}
+
+func RedirectView(location string, statusCode int, ignoreContextPath bool) *ModelView {
+	if statusCode < 300 || statusCode > 399 {
+		statusCode = http.StatusFound
+	}
+	return &ModelView{
+		View: viewRedirect,
+		Model: Model{
+			modelKeyRedirectSC:    statusCode,
+			modelKeyRedirectLoc:   location,
+			modelKeyIgnoreCtxPath: ignoreContextPath,
+		},
+	}
+}
+
+func isRedirect(mv *ModelView) (ret bool) {
+	if mv.View != viewRedirect {
+		return
+	}
+	if _, ok := mv.Model[modelKeyRedirectLoc].(string); !ok {
+		return
+	}
+	if _, ok := mv.Model[modelKeyRedirectSC].(int); !ok {
+		return
+	}
+	return true
+}
+
+func redirect(ctx context.Context, mv *ModelView) (int, string) {
+	sc, _ := mv.Model[modelKeyRedirectSC].(int)
+	location := mv.Model[modelKeyRedirectLoc].(string)
+
+	loc, e := url.Parse(location)
+	if e != nil {
+		return sc, location
+	}
+
+	ignoreCtxPath, _ := mv.Model[modelKeyIgnoreCtxPath].(bool)
+	if loc.IsAbs() || ignoreCtxPath {
+		return sc, loc.String()
+	}
+
+	if ctxPath, ok := ctx.Value(web.ContextKeyContextPath).(string); ok {
+		loc.Path = path.Join(ctxPath, loc.Path)
+	}
+	return sc, loc.String()
 }
 
 /**********************************
@@ -51,13 +107,23 @@ func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, respon
 		response = entity.Body()
 	}
 
-	mv, ok := response.(*ModelView)
-	if !ok {
+	var mv *ModelView
+	switch v := response.(type) {
+	case *ModelView:
+		mv = v
+	case ModelView:
+		mv = &v
+	default:
 		return errors.New("unable to use template: response is not *template.ModelView")
 	}
 
-	AddGlobalModelData(c, mv.Model, ctx.Request)
-	ctx.HTML(status, mv.View, mv.Model)
+	switch {
+	case isRedirect(mv):
+		ctx.Redirect(redirect(ctx, mv))
+	default:
+		AddGlobalModelData(c, mv.Model, ctx.Request)
+		ctx.HTML(status, mv.View, mv.Model)
+	}
 	return nil
 }
 
@@ -80,8 +146,8 @@ func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 	}
 
 	model := Model{
-		ModelKeyError: err,
-		ModelKeyMessage: err.Error(),
+		ModelKeyError:      err,
+		ModelKeyMessage:    err.Error(),
 		ModelKeyStatusCode: code,
 		ModelKeyStatusText: http.StatusText(code),
 	}
@@ -96,6 +162,3 @@ func AddGlobalModelData(ctx context.Context, model Model, r *http.Request) {
 	model[ModelKeySecurity] = ctx.Value(web.ContextKeySecurity)
 	model[ModelKeyCsrf] = ctx.Value(web.ContextKeyCsrf)
 }
-
-
-

@@ -193,9 +193,9 @@ func setupServerForTest(testClientStore saml_auth_ctx.SamlClientStore, testAccou
 	serverProp.ContextPath = "europa"
 	c := newSamlAuthorizeEndpointConfigurer(*prop, testClientStore, testAccountStore, nil)
 
-	f := NewEndpoint().
+	f := New().
 		SsoLocation(&url.URL{Path: "/v2/authorize", RawQuery: "grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"}).
-		SsoCondition(matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")).
+		SsoCondition(matcher.RequestWithForm("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")).
 		MetadataPath("/metadata").
 		Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 		*opt =security.DefaultIssuerDetails{
@@ -207,7 +207,8 @@ func setupServerForTest(testClientStore saml_auth_ctx.SamlClientStore, testAccou
 		}}))
 
 	opts := c.getIdentityProviderConfiguration(f)
-	mw := NewSamlAuthorizeEndpointMiddleware(opts, c.samlClientStore, c.accountStore, c.attributeGenerator)
+	metaMw := NewMetadataMiddleware(opts, c.samlClientStore)
+	mw := NewSamlAuthorizeEndpointMiddleware(metaMw, c.accountStore, c.attributeGenerator)
 
 	r := gin.Default()
 	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc())

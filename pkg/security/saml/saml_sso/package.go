@@ -36,9 +36,12 @@ type initDI struct {
 
 func register(di initDI) {
 	if di.SecRegistrar != nil {
-		configurer := newSamlAuthorizeEndpointConfigurer(di.Properties,
+		authConfigurer := newSamlAuthorizeEndpointConfigurer(di.Properties,
 			di.ServiceProviderManager, di.AccountStore,
 			di.AttributeGenerator)
-		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, authConfigurer)
+
+		sloConfigurer := newSamlLogoutEndpointConfigurer(di.Properties, di.ServiceProviderManager)
+		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(SloFeatureId, sloConfigurer)
 	}
 }

@@ -70,7 +70,7 @@ func (c *TestLogoutSecConfigurer) Configure(ws security.WebSecurity) {
 		With(logout.New().
 			LogoutUrl(TestLogoutURL).
 			ErrorUrl(TestLogoutErrorURL).
-			SuccessHandler(WarningsAwareSuccessHandler(TestLogoutSuccessURL)),
+		AddSuccessHandler(WarningsAwareSuccessHandler(TestLogoutSuccessURL)),
 		).
 		With(session.New()).
 		With(csrf.New().IgnoreCsrfProtectionMatcher(matcher.RequestWithPattern(TestLogoutURL))).
@@ -222,10 +222,10 @@ func mockSamlAuth() security.Authentication {
 		*opt = MockedLogoutAssertionOption
 	})
 	return &samlAssertionAuthentication{
-		Account:    nil,
-		Assertion:  assertion,
-		Perms:      security.Permissions{},
-		DetailsMap: map[string]interface{}{},
+		Account:       nil,
+		SamlAssertion: assertion,
+		Perms:         security.Permissions{},
+		DetailsMap:    map[string]interface{}{},
 	}
 }
 

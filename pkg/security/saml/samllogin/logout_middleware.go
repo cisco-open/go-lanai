@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/base64"
 	"encoding/gob"
+	"errors"
 	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
 	"github.com/gin-gonic/gin"
@@ -120,7 +121,12 @@ func (m *SPLogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 }
 
 // Commence implements security.AuthenticationEntryPoint. It's used when SP initiated SLO is required
-func (m *SPLogoutMiddleware) Commence(ctx context.Context, r *http.Request, w http.ResponseWriter, _ error) {
+func (m *SPLogoutMiddleware) Commence(ctx context.Context, r *http.Request, w http.ResponseWriter, err error) {
+	if !errors.Is(err, ErrSamlSloRequired) {
+		return
+	}
+
+	logger.WithContext(ctx).Infof("trying to start SAML SP-Initiated SLO")
 	if e := m.MakeSingleLogoutRequest(ctx, r, w); e != nil {
 		m.handleError(ctx, e)
 		return
@@ -162,7 +168,7 @@ func (m *SPLogoutMiddleware) resolveIdpClient(ctx context.Context) (*saml.Servic
 	var entityId string
 	auth := security.Get(ctx)
 	if samlAuth, ok := auth.(*samlAssertionAuthentication); ok {
-		entityId = samlAuth.Assertion.Issuer.Value
+		entityId = samlAuth.SamlAssertion.Issuer.Value
 	}
 	if sp, ok := m.clientManager.GetClientByEntityId(entityId); ok {
 		return sp, nil
@@ -173,9 +179,9 @@ func (m *SPLogoutMiddleware) resolveIdpClient(ctx context.Context) (*saml.Servic
 func (m *SPLogoutMiddleware) resolveNameId(ctx context.Context) (nameId, format string) {
 	auth := security.Get(ctx)
 	if samlAuth, ok := auth.(*samlAssertionAuthentication); ok &&
-		samlAuth.Assertion != nil && samlAuth.Assertion.Subject != nil && samlAuth.Assertion.Subject.NameID != nil {
-		nameId = samlAuth.Assertion.Subject.NameID.Value
-		format = samlAuth.Assertion.Subject.NameID.Format
+		samlAuth.SamlAssertion != nil && samlAuth.SamlAssertion.Subject != nil && samlAuth.SamlAssertion.Subject.NameID != nil {
+		nameId = samlAuth.SamlAssertion.Subject.NameID.Value
+		format = samlAuth.SamlAssertion.Subject.NameID.Format
 		//format = string(saml.EmailAddressNameIDFormat)
 	}
 	return

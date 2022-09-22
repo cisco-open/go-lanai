@@ -83,10 +83,10 @@ func (c *TestSecConfigurer) Configure(ws security.WebSecurity) {
 	ws.Route(matcher.RouteWithPattern("/**")).
 		With(New().
 			LogoutUrl(TestLogoutURL).
-			EntryPoint(redirect.NewRedirectWithRelativePath(TestLogoutEntryPointURL, false)).
+		AddEntryPoint(redirect.NewRedirectWithRelativePath(TestLogoutEntryPointURL, false)).
 			SuccessUrl(TestLogoutSuccessURL).
 			ErrorUrl(TestLogoutErrorURL).
-			SuccessHandler(WarningsAwareSuccessHandler(TestLogoutSuccessURL)).
+		AddSuccessHandler(WarningsAwareSuccessHandler(TestLogoutSuccessURL)).
 			LogoutHandlers(c.logoutHandler).
 			AddLogoutHandler(anotherHandler),
 		)

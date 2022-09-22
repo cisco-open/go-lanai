@@ -1,6 +1,7 @@
 package logout
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
@@ -48,7 +49,7 @@ func (c *LogoutConfigurer) Apply(feature security.Feature, ws security.WebSecuri
 	logout := NewLogoutMiddleware(
 		c.effectiveSuccessHandler(f, ws),
 		c.effectiveErrorHandler(f, ws),
-		f.entryPoint,
+		c.effectiveEntryPoints(f),
 		f.logoutHandlers...)
 	mw := middleware.NewBuilder("logout").
 		ApplyTo(route).
@@ -72,7 +73,7 @@ func (c *LogoutConfigurer) validate(f *LogoutFeature, _ security.WebSecurity) er
 		return fmt.Errorf("logoutUrl is missing for logout")
 	}
 
-	if f.successUrl == "" && f.successHandler == nil {
+	if f.successUrl == "" && len(f.successHandlers) == 0 {
 		return fmt.Errorf("successUrl and successHandler are both missing for logout")
 	}
 
@@ -81,26 +82,49 @@ func (c *LogoutConfigurer) validate(f *LogoutFeature, _ security.WebSecurity) er
 
 func (c *LogoutConfigurer) effectiveSuccessHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
 
-	if f.successHandler == nil {
-		f.successHandler = redirect.NewRedirectWithURL(f.successUrl)
+	if len(f.successHandlers) == 0 {
+		f.successHandlers = []security.AuthenticationSuccessHandler{redirect.NewRedirectWithURL(f.successUrl)}
 	}
 
+	order.SortStable(f.successHandlers, order.OrderedFirstCompare)
+	sh := security.NewAuthenticationSuccessHandler(f.successHandlers...)
 	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
-		return security.NewAuthenticationSuccessHandler(globalHandler, f.successHandler)
+		return security.NewAuthenticationSuccessHandler(globalHandler, sh)
 	} else {
-		return f.successHandler
+		return sh
 	}
 }
 
 func (c *LogoutConfigurer) effectiveErrorHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationErrorHandler {
 
-	if f.errorHandler == nil {
-		f.errorHandler = redirect.NewRedirectWithURL(f.errorUrl)
+	if len(f.errorHandlers) == 0 {
+		f.errorHandlers = []security.AuthenticationErrorHandler{redirect.NewRedirectWithURL(f.errorUrl)}
 	}
 
+	order.SortStable(f.errorHandlers, order.OrderedFirstCompare)
+	eh := security.NewAuthenticationErrorHandler(f.errorHandlers...)
 	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(security.AuthenticationErrorHandler); ok {
-		return security.NewAuthenticationErrorHandler(globalHandler, f.errorHandler)
+		return security.NewAuthenticationErrorHandler(globalHandler, eh)
 	} else {
-		return f.errorHandler
+		return eh
 	}
 }
+
+func (c *LogoutConfigurer) effectiveEntryPoints(f *LogoutFeature) security.AuthenticationEntryPoint {
+	if len(f.entryPoints) == 0 {
+		return nil
+	}
+
+	order.SortStable(f.entryPoints, order.OrderedFirstCompare)
+	return multiEntryPoints(f.entryPoints)
+}
+
+type multiEntryPoints []security.AuthenticationEntryPoint
+
+func (ep multiEntryPoints) Commence(ctx context.Context, request *http.Request, writer http.ResponseWriter, err error) {
+	for _, entryPoint := range ep {
+		entryPoint.Commence(ctx, request, writer, err)
+	}
+}
+
+

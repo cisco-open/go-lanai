@@ -47,7 +47,7 @@ func ValidateAuthnRequest(req *saml.IdpAuthnRequest, spDetails SamlSpDetails, sp
 }
 
 func verifySignature(req *saml.IdpAuthnRequest) error {
-	data := req.RequestBuffer;
+	data := req.RequestBuffer
 	cert, err := getServiceProviderCert(req,"signing")
 	if err != nil {
 		return NewSamlRequesterError("request signature cannot be verified, because metadata does not include certificate", err)

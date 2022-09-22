@@ -86,7 +86,7 @@ func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIde
 
 	for entityId := range m.cache {
 		if _, ok := keep[entityId]; !ok {
-			remove[entityId] = ok
+			remove[entityId] = true
 		}
 	}
 	return remove, refresh
