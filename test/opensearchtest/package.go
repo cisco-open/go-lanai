@@ -63,18 +63,18 @@ func SetRecordMode(mode Mode) OpenSearchPlaybackOptions {
 // For some reason, the refresh options on the index to opensearch are not working.
 //
 // To control what is being matched in the http vcr, this function will provide a
-// *MatcherBodyModifierController to uber.FX.
+// *MatcherBodyModifiers to uber.FX.
 func WithOpenSearchPlayback(options ...OpenSearchPlaybackOptions) test.Options {
 	var openSearchOption OpenSearchPlaybackOption
 	for _, fn := range options {
 		fn(&openSearchOption)
 	}
 
-	var modifierController MatcherBodyModifierController
+	var modifiers MatcherBodyModifiers
 	openSearchOption.RecordOptions = append(
 		openSearchOption.RecordOptions,
 		func(c *RecordOption) {
-			c.MatchBodyModifiers = modifierController.Modifier()
+			c.Modifiers = &modifiers
 		},
 	)
 
@@ -95,7 +95,7 @@ func WithOpenSearchPlayback(options ...OpenSearchPlaybackOptions) test.Options {
 			}),
 			fx.Provide(
 				IndexEditHookProvider(opensearch.FxGroup, "test_"),
-				func() *MatcherBodyModifierController { return &modifierController },
+				func() *MatcherBodyModifiers { return &modifiers },
 			),
 		),
 		test.Teardown(stopRecording(&rec)),

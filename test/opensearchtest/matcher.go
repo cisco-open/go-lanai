@@ -10,7 +10,7 @@ import (
 // MatchBody will ensure that the Matcher also matches the contents of the body.
 // The contents of the body can be modified by the MatcherBodyModifier before the
 // comparison occurs.
-func MatchBody(modifiers *[]MatcherBodyModifier) cassette.Matcher {
+func MatchBody(modifiers *MatcherBodyModifiers) cassette.Matcher {
 	return func(r *http.Request, i cassette.Request) bool {
 		if r.Body == nil {
 			return cassette.DefaultMatcher(r, i)
@@ -22,8 +22,8 @@ func MatchBody(modifiers *[]MatcherBodyModifier) cassette.Matcher {
 		r.Body = io.NopCloser(&b)
 		requestBody := b.Bytes()
 		recordingBody := []byte(i.Body)
-		if modifiers != nil && *modifiers != nil {
-			for _, modifier := range *modifiers {
+		if modifiers != nil {
+			for _, modifier := range modifiers.Modifier() {
 				modifier(&requestBody)
 				modifier(&recordingBody)
 			}

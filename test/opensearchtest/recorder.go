@@ -30,8 +30,8 @@ const (
 type RecordOptions func(c *RecordOption)
 type RecordOption struct {
 	CassetteLocation   string
-	Mode               Mode
-	MatchBodyModifiers *[]MatcherBodyModifier
+	Mode      Mode
+	Modifiers *MatcherBodyModifiers
 }
 
 func CassetteLocation(location string) RecordOptions {
@@ -76,7 +76,7 @@ func GetRecorder(options ...RecordOptions) (*recorder.Recorder, error) {
 		return nil, fmt.Errorf("%w, %v", ErrCreatingRecorder, err)
 	}
 	r.SetInOrderInteractions(true)
-	r.SetMatcher(MatchBody(recordOption.MatchBodyModifiers))
+	r.SetMatcher(MatchBody(recordOption.Modifiers))
 	return r, nil
 }
 

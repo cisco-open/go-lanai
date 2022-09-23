@@ -40,8 +40,8 @@ func NewFakeService(di fakeServiceDI) FakeService {
 type opensearchDI struct {
 	fx.In
 	FakeService            FakeService
-	Properties             *opensearch.Properties
-	BodyModifierController *MatcherBodyModifierController
+	Properties    *opensearch.Properties
+	BodyModifiers *MatcherBodyModifiers
 }
 
 func TestScopeController(t *testing.T) {
@@ -462,10 +462,10 @@ func SubTestPing(di *opensearchDI) test.GomegaSubTestFunc {
 // a portion of the request that is used to compare requests in the httpvcr/recorder.Recorder
 func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		defer di.BodyModifierController.Clear()
-		di.BodyModifierController.Append(IgnoreGJSONPaths(t, []string{
+		defer di.BodyModifiers.Clear()
+		di.BodyModifiers.Append(IgnoreGJSONPaths(t,
 			"query.bool.filter.range.Time",
-		}))
+		))
 
 		var TimeQuery map[string]interface{}
 		// If we are recording, we want to use a valid time query, however to test

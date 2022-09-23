@@ -5,25 +5,23 @@ import (
 	"testing"
 )
 
-// MatcherBodyModifierController provides a way to control the MatcherBodyModifier that is
+// MatcherBodyModifiers provides a way to control the MatcherBodyModifier that is
 // passed into the MatchBody function.
-type MatcherBodyModifierController struct {
-	modifier []MatcherBodyModifier
-}
+type MatcherBodyModifiers []MatcherBodyModifier
 
 // Modifier will return pointer to the slice of MatcherBodyModifier
-func (m *MatcherBodyModifierController) Modifier() *[]MatcherBodyModifier {
-	return &m.modifier
+func (m *MatcherBodyModifiers) Modifier() []MatcherBodyModifier {
+	return *m
 }
 
-// Append can be used to append a new MatcherBodyModifier to the controller
-func (m *MatcherBodyModifierController) Append(modifier MatcherBodyModifier) {
-	m.modifier = append(m.modifier, modifier)
+// Append can be used to append a new MatcherBodyModifier
+func (m *MatcherBodyModifiers) Append(modifier MatcherBodyModifier) {
+	*m = append(*m, modifier)
 }
 
-// Clear is used to clear all of the existing MatcherBodyModifier in the controller
-func (m *MatcherBodyModifierController) Clear() {
-	m.modifier = nil
+// Clear is used to clear all of the existing MatcherBodyModifier
+func (m *MatcherBodyModifiers) Clear() {
+	*m = nil
 }
 
 // MatcherBodyModifier will modify the body of a request that goes to the MatchBody
@@ -35,7 +33,7 @@ type MatcherBodyModifier func(*[]byte)
 // IgnoreGJSONPaths will ignore any of the fields that are defined by the gjsonPaths
 // which follow the GJSON syntax.
 // https://github.com/tidwall/gjson/blob/master/SYNTAX.md#gjson-path-syntax
-func IgnoreGJSONPaths(t *testing.T, gjsonPaths []string) MatcherBodyModifier {
+func IgnoreGJSONPaths(t *testing.T, gjsonPaths ...string) MatcherBodyModifier {
 	return func(b *[]byte) {
 		var err error
 		for _, path := range gjsonPaths {
