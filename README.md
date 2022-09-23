@@ -36,6 +36,14 @@ to get access to this API. As we write the application, the corresponding module
 bootstrap, web, security. The security module have list of submodules each corresponding to a feature. The security features that will be
 covered by this document is access, session and saml login.
 
+**Additional Reading**
+
+Typically, developer don't need GNU Make to test/build service. However, go-lanai also provides tooling around the testing, build and release
+process that leverages GNU Make.
+
+- [Get Started for Developers](docs/Develop.md)
+- [Get Started for DevOps](docs/CICD.md)
+
 ## Bootstrap
 When writing a go-lanai application, the developer selects the go-lanai module they want to use. Bootstrap refers to the process of 
 how the application instantiate the components needed by the modules and wire them together. 
