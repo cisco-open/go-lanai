@@ -193,6 +193,24 @@ func EditIndexForTesting(prepend string) opensearch.BeforeHookFunc {
 				request.Index = prepend + request.Index
 			}
 			*opt = append(*opt, f)
+		case *[]func(request *opensearchapi.IndicesPutAliasRequest):
+			f := func(request *opensearchapi.IndicesPutAliasRequest) {
+				var indices []string
+				for _, index := range request.Index {
+					indices = append(indices, prepend+index)
+				}
+				request.Index = indices
+			}
+			*opt = append(*opt, f)
+		case *[]func(request *opensearchapi.IndicesDeleteAliasRequest):
+			f := func(request *opensearchapi.IndicesDeleteAliasRequest) {
+				var indices []string
+				for _, index := range request.Index {
+					indices = append(indices, prepend+index)
+				}
+				request.Index = indices
+			}
+			*opt = append(*opt, f)
 		case *[]func(request *opensearchapi.IndicesDeleteRequest):
 			f := func(request *opensearchapi.IndicesDeleteRequest) {
 				var indices []string

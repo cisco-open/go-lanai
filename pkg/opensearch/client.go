@@ -22,6 +22,7 @@ type Request interface {
 		opensearchapi.IndicesCreateRequest |
 		opensearchapi.IndexRequest |
 		opensearchapi.IndicesDeleteRequest |
+		opensearchapi.IndicesGetRequest |
 		opensearchapi.IndicesPutAliasRequest |
 		opensearchapi.IndicesDeleteAliasRequest |
 		opensearchapi.IndicesPutIndexTemplateRequest |
@@ -33,6 +34,7 @@ type OpenClient interface {
 	Search(ctx context.Context, o ...Option[opensearchapi.SearchRequest]) (*opensearchapi.Response, error)
 	Index(ctx context.Context, index string, body io.Reader, o ...Option[opensearchapi.IndexRequest]) (*opensearchapi.Response, error)
 	IndicesCreate(ctx context.Context, index string, o ...Option[opensearchapi.IndicesCreateRequest]) (*opensearchapi.Response, error)
+	IndicesGet(ctx context.Context, index string, o ...Option[opensearchapi.IndicesGetRequest]) (*opensearchapi.Response, error)
 	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) (*opensearchapi.Response, error)
 	IndicesPutAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesPutAliasRequest]) (*opensearchapi.Response, error)
 	IndicesDeleteAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesDeleteAliasRequest]) (*opensearchapi.Response, error)
@@ -105,6 +107,7 @@ const (
 	CmdSearch CommandType = iota
 	CmdIndex
 	CmdIndicesCreate
+	CmdIndicesGet
 	CmdIndicesDelete
 	CmdIndicesPutAlias
 	CmdIndicesDeleteAlias
@@ -117,6 +120,7 @@ var CmdToString = map[CommandType]string{
 	CmdSearch:                     "search",
 	CmdIndex:                      "index",
 	CmdIndicesCreate:              "indices create",
+	CmdIndicesGet:                 "indices get",
 	CmdIndicesDelete:              "indices delete",
 	CmdIndicesPutAlias:            "indices put alias",
 	CmdIndicesDeleteAlias:         "indices delete alias",

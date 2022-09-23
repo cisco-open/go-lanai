@@ -34,6 +34,11 @@ type Repo[T any] interface {
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/create-index/#request-body
 	IndicesCreate(ctx context.Context, index string, mapping interface{}, o ...Option[opensearchapi.IndicesCreateRequest]) error
 
+	// IndicesGet will return information about an index
+	//
+	// The index argument defines the index name we want to get
+	IndicesGet(ctx context.Context, dest *[]byte, index string, o ...Option[opensearchapi.IndicesGetRequest]) error
+
 	// IndicesDelete will delete an index from the cluster.
 	//
 	// The index argument defines the index name to be deleted.
@@ -68,7 +73,6 @@ type Repo[T any] interface {
 	// IndicesDeleteIndexTemplate deletes an index template
 	//
 	// The name argument defines the name of the template to delete
-	//
 	IndicesDeleteIndexTemplate(ctx context.Context, name string, o ...Option[opensearchapi.IndicesDeleteIndexTemplateRequest]) error
 
 	// Ping will ping the OpenSearch cluster. If no error is returned, then the ping was successful
