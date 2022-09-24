@@ -95,7 +95,7 @@ func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIde
 func (m *CacheableIdpClientManager) resolveMetadata(ctx context.Context, refresh []SamlIdentityProvider) (resolved map[string]*saml.ServiceProvider){
 	resolved = make(map[string]*saml.ServiceProvider)
 	for _, details := range refresh {
-		idpDescriptor, data, err := saml_util.ResolveMetadata(ctx, details.MetadataLocation(), m.httpClient)
+		idpDescriptor, data, err := saml_util.ResolveMetadata(ctx, details.MetadataLocation(), saml_util.WithHttpClient(m.httpClient))
 		if err == nil {
 			if details.ShouldMetadataRequireSignature() && idpDescriptor.Signature == nil{
 				logger.WithContext(ctx).Errorf("idp metadata rejected because it is not signed")

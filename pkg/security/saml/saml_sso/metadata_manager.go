@@ -115,7 +115,7 @@ func (m *SpMetadataManager) compareWithCache(clients []saml_auth_ctx.SamlClient)
 func (m *SpMetadataManager) resolveMetadata(ctx context.Context, refresh []SamlSpDetails) (resolved map[string]*saml.EntityDescriptor) {
 	resolved = make(map[string]*saml.EntityDescriptor)
 	for _, details := range refresh {
-		spDescriptor, data, err := saml_util.ResolveMetadata(ctx, details.MetadataSource, m.httpClient)
+		spDescriptor, data, err := saml_util.ResolveMetadata(ctx, details.MetadataSource, saml_util.WithHttpClient(m.httpClient))
 		if err == nil {
 			if details.MetadataRequireSignature && spDescriptor.Signature == nil{
 				logger.Error("sp metadata rejected because it is not signed")

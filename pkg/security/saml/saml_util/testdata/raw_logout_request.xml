@@ -1,0 +1,12 @@
+<samlp:LogoutRequest xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+                     xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="id-29e88023e8fd9344c98f151236752c6cc8a96c1b"
+                     Version="2.0" IssueInstant="2022-09-24T16:58:21.536Z"
+                     Destination="http://msx.com:8765/auth/v2/logout">
+    <saml:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">
+        http://samlsp.msx.com:8090/samlsp/saml/metadata
+    </saml:Issuer>
+    <saml:NameID NameQualifier="http://msx.com:8765/auth"
+                 SPNameQualifier="http://samlsp.msx.com:8090/samlsp/saml/metadata"
+                 Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">superuser
+    </saml:NameID>
+</samlp:LogoutRequest>

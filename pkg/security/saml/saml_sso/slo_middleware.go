@@ -108,9 +108,9 @@ func (mw *SamlSingleLogoutMiddleware) newSamlLogoutRequest(r *http.Request) *Sam
 func (mw *SamlSingleLogoutMiddleware) processLogoutRequest(gc *gin.Context, req *SamlLogoutRequest) error {
 	defer mw.populateContext(gc, req)
 
-	// Note: we returns Requester errors until we can determine the callback binding
-	if req.Request.Issuer == nil {
-		return ErrorSamlSloRequester.WithMessage("logout request missing Issuer", req.Request.Issuer.Value)
+	// Note: we return Requester errors until we can determine the callback binding
+	if req.Request.Issuer == nil || len(req.Request.Issuer.Value) == 0 {
+		return ErrorSamlSloRequester.WithMessage("logout request missing Issuer")
 	}
 
 	// find the service provider metadata

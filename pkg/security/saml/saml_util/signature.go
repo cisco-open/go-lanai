@@ -19,16 +19,6 @@ import (
 	"strings"
 )
 
-const (
-	SAMLEncodingDeflate   = `urn:oasis:names:tc:SAML:2.0:bindings:URL-Encoding:DEFLATE`
-	HttpParamSAMLEncoding = `SAMLEncoding`
-	HttpParamSigAlg       = `SigAlg`
-	HttpParamSignature    = `Signature`
-	HttpParamRelayState   = `RelayState`
-)
-
-var ErrorXMLNotSigned = errors.New("XML document is not signed")
-
 type SignatureVerifyOptions func(sc *SignatureContext)
 type SignatureContext struct {
 	Binding string
@@ -66,6 +56,10 @@ func VerifySignature(opts...SignatureVerifyOptions) error {
 
 // verifyXMLDSign validate Enveloped XMLDSign signature, typically used for PostBinding or Metadata
 func verifyXMLDSign(sc *SignatureContext) error {
+	if len(sc.XMLData) == 0 {
+		return errors.New("XML document is missing for signature verification")
+	}
+
 	doc := etree.NewDocument()
 	if err := doc.ReadFromBytes(sc.XMLData); err != nil {
 		return errors.New("error parsing XML document for signature verification")
