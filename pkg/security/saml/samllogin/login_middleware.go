@@ -72,7 +72,7 @@ func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.R
 	}
 
 	// Note: we only support post for result binding
-	authReq, err := client.MakeAuthenticationRequest(location, binding, saml.HTTPPostBinding)
+	authReq, err := MakeFixedAuthenticationRequest(client, location, binding, saml.HTTPPostBinding)
 	if err != nil {
 		return security.NewExternalSamlAuthenticationError("cannot make auth request to binding location", err)
 	}

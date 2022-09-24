@@ -48,9 +48,9 @@ func (mw *SamlSingleLogoutMiddleware) SLOCondition() web.RequestMatcher {
 
 // ShouldLogout is a logout.ConditionalLogoutHandler method that interrupt logout process by returning authentication error,
 // which would trigger authentication entry point and initiate SLO
-func (mw *SamlSingleLogoutMiddleware) ShouldLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, _ security.Authentication) error {
+func (mw *SamlSingleLogoutMiddleware) ShouldLogout(ctx context.Context, r *http.Request, _ http.ResponseWriter, _ security.Authentication) error {
 	gc := web.GinContext(ctx)
-	samlReq := mw.newSamlLogoutRequest()
+	samlReq := mw.newSamlLogoutRequest(r)
 	var req saml.LogoutRequest
 	parsedReq := saml_util.ParseSAMLObject(gc, &req)
 	switch {
@@ -63,6 +63,7 @@ func (mw *SamlSingleLogoutMiddleware) ShouldLogout(ctx context.Context, _ *http.
 		return ErrorSamlSloRequester.WithMessage("unable to parse SAML SamlLogoutRequest: %v", parsedReq.Err)
 	}
 
+	samlReq.Binding = parsedReq.Binding
 	samlReq.Request = &req
 	samlReq.RequestBuffer = parsedReq.Decoded
 	if e := mw.processLogoutRequest(gc, samlReq); e != nil {
@@ -97,9 +98,10 @@ func (mw *SamlSingleLogoutMiddleware) Commence(ctx context.Context, r *http.Requ
 	mw.HandleError(ctx, r, rw, err)
 }
 
-func (mw *SamlSingleLogoutMiddleware) newSamlLogoutRequest() *SamlLogoutRequest {
+func (mw *SamlSingleLogoutMiddleware) newSamlLogoutRequest(r *http.Request) *SamlLogoutRequest {
 	return &SamlLogoutRequest{
-		IDP: mw.idp,
+		HTTPRequest: r,
+		IDP:         mw.idp,
 	}
 }
 
@@ -153,6 +155,7 @@ func (mw *SamlSingleLogoutMiddleware) determineSloEndpoint(_ *gin.Context, req *
 }
 
 func (mw *SamlSingleLogoutMiddleware) validateLogoutRequest(_ *gin.Context, req *SamlLogoutRequest, spDetails *SamlSpDetails) error {
+	// TODO validate RelayState if present
 	if !spDetails.SkipAuthRequestSignatureVerification {
 		if e := req.VerifySignature(); e != nil {
 			return ErrorSamlSloResponder.WithMessage(e.Error())

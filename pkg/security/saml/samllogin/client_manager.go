@@ -111,7 +111,7 @@ func (m *CacheableIdpClientManager) resolveMetadata(ctx context.Context, refresh
 					}
 				}
 
-				err = saml_util.VerifySignature(data, allCerts...)
+				err = saml_util.VerifySignature(saml_util.MetadataSignature(data, allCerts...))
 				if err != nil {
 					logger.Error("idp metadata rejected because it's signature cannot be verified")
 					continue

@@ -11,7 +11,9 @@ import (
 )
 
 type SamlLogoutRequest struct {
-	Request         *saml.LogoutRequest
+	HTTPRequest *http.Request
+	Binding     string
+	Request     *saml.LogoutRequest
 	RequestBuffer   []byte
 	SPMeta          *saml.EntityDescriptor // the requester
 	SPSSODescriptor *saml.SPSSODescriptor
@@ -22,7 +24,7 @@ type SamlLogoutRequest struct {
 
 func (r SamlLogoutRequest) Validate() error {
 	now := time.Now()
-	if r.Request.Destination != "" &&  r.Request.Destination != r.IDP.LogoutURL.String() {
+	if r.Request.Destination != "" && r.Request.Destination != r.IDP.LogoutURL.String() {
 		return ErrorSamlSloResponder.WithMessage("expected destination to be %q, not %q", r.IDP.LogoutURL.String(), r.Request.Destination)
 	}
 
@@ -37,12 +39,16 @@ func (r SamlLogoutRequest) Validate() error {
 
 func (r SamlLogoutRequest) VerifySignature() error {
 	// TODO we might need to support redirect binding
-	data := r.RequestBuffer
 	cert, e := r.serviceProviderCert("signing")
 	if e != nil {
 		return ErrorSamlSloResponder.WithMessage("logout request signature cannot be verified, because metadata does not include certificate")
 	}
-	return saml_util.VerifySignature(data, cert)
+	return saml_util.VerifySignature(func(sc *saml_util.SignatureContext) {
+		sc.Binding = r.Binding
+		sc.XMLData = r.RequestBuffer
+		sc.Certs = []*x509.Certificate{cert}
+		sc.Request = r.HTTPRequest
+	})
 }
 
 func (r SamlLogoutRequest) WriteResponse(rw http.ResponseWriter) error {
@@ -55,7 +61,7 @@ func (r SamlLogoutRequest) WriteResponse(rw http.ResponseWriter) error {
 	case saml.HTTPPostBinding:
 		data := r.Response.Post("")
 		if e := saml_util.WritePostBindingForm(data, rw); e != nil {
-			return ErrorSamlSloRequester.WithMessage("unable to write response: %v",  e)
+			return ErrorSamlSloRequester.WithMessage("unable to write response: %v", e)
 		}
 	default:
 		return ErrorSamlSloRequester.WithMessage("%s: unsupported binding %s", r.SPMeta.EntityID, r.Callback.Binding)

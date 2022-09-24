@@ -24,7 +24,7 @@ func TestVerifySignature(t *testing.T) {
 		t.Errorf("error setting up test, can't read test metadata")
 	}
 
-	err = VerifySignature(metadata, trusts...)
+	err = VerifySignature(MetadataSignature(metadata, trusts...))
 
 	if err != nil {
 		t.Errorf("expected signature verification to pass, but it failed with error %v", err)
@@ -35,7 +35,7 @@ func TestVerifySignature(t *testing.T) {
 		t.Errorf("error setting up test, test certificate not found")
 	}
 
-	err = VerifySignature(metadata, trusts...)
+	err = VerifySignature(MetadataSignature(metadata, trusts...))
 
 	if err == nil {
 		t.Errorf("expected signature verification to fail, but no error was thrown")

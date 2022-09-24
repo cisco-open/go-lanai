@@ -5,17 +5,14 @@ import (
 	"compress/flate"
 	"context"
 	"crypto/sha256"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"github.com/beevik/etree"
 	"github.com/crewjam/httperr"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
-	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/russellhaering/goxmldsig/etreeutils"
 	"golang.org/x/net/html"
 	"io"
@@ -87,63 +84,6 @@ func ResolveMetadata(ctx context.Context, metadataSource string, httpClient *htt
 	}
 }
 
-func VerifySignature(data []byte, trustedCerts ...*x509.Certificate) error {
-	doc := etree.NewDocument()
-	if err := doc.ReadFromBytes(data); err != nil {
-		return errors.New("error parsing metadata for signature verification")
-	}
-
-	el := doc.Root()
-
-	sigEl, err := FindChild(el, "http://www.w3.org/2000/09/xmldsig#", "Signature")
-
-	if err != nil || sigEl == nil {
-		return errors.New("metadata is not signed")
-	}
-
-	certificateStore := dsig.MemoryX509CertificateStore{
-		Roots: trustedCerts,
-	}
-
-	validationContext := dsig.NewDefaultValidationContext(&certificateStore)
-	validationContext.IdAttribute = "ID"
-	if saml.Clock != nil {
-		validationContext.Clock = saml.Clock
-	}
-
-	//if there's signature but keyInfo is not X509, then we remove the key info element, and just use the
-	//default public key to verify.
-	//if keyinfo is x509, it'll be verified that it's a trusted key before being used to verify the signature
-	//See the logic in validationContext.Validate
-	if el.FindElement("./Signature/KeyInfo/X509Data/X509Certificate") == nil {
-		if keyInfo := sigEl.FindElement("KeyInfo"); keyInfo != nil {
-			sigEl.RemoveChild(keyInfo)
-		}
-	}
-
-	ctx, err := etreeutils.NSBuildParentContext(el)
-	if err != nil {
-		return errors.New("error getting document context for signature check")
-	}
-	ctx, err = ctx.SubContext(el)
-	if err != nil {
-		return errors.New("error getting document sub context for signature check")
-	}
-	//makes a copy of the element
-	el, err = etreeutils.NSDetatch(ctx, el)
-	if err != nil {
-		return errors.New("error getting document for signature check")
-	}
-
-	_, err = validationContext.Validate(el)
-
-	if err != nil {
-		return errors.New("invalid signature")
-	}
-
-	return nil
-}
-
 func FindChild(parentEl *etree.Element, childNS string, childTag string) (*etree.Element, error) {
 	for _, childEl := range parentEl.ChildElements() {
 		if childEl.Tag != childTag {
@@ -173,7 +113,7 @@ func FindChild(parentEl *etree.Element, childNS string, childTag string) (*etree
 }
 
 const (
-	HttpParamSAMLRequest = `SAMLRequest`
+	HttpParamSAMLRequest  = `SAMLRequest`
 	HttpParamSAMLResponse = `SAMLResponse`
 )
 
