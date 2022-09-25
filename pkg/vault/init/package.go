@@ -58,6 +58,7 @@ func newClient(p *vault.ConnectionProperties) *vault.Client {
 
 type renewDi struct {
 	fx.In
+	AppContext  *bootstrap.ApplicationContext
 	VaultClient *vault.Client `optional:"true"`
 }
 
@@ -69,7 +70,8 @@ func setupRenewal(lc fx.Lifecycle, di renewDi) {
 	refresher := vault.NewTokenRefresher(client)
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			go refresher.Start(ctx)
+			//nolint:contextcheck // intended, we don't use passed in context, refresher will depend on application context
+			refresher.Start(di.AppContext)
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

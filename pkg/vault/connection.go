@@ -3,7 +3,12 @@ package vault
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/hashicorp/vault/api"
+)
+
+var (
+	errTokenNotRenewable = errors.New("token is not renewable")
 )
 
 type Client struct {
@@ -86,6 +91,9 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer, error) {
 	var renewable bool
 	if v, ok := secret.Data["renewable"]; ok {
 		renewable, _ = v.(bool)
+	}
+	if !renewable {
+		return nil, errTokenNotRenewable
 	}
 	var increment int64
 	if v, ok := secret.Data["ttl"]; ok {

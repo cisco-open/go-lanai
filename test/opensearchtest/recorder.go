@@ -18,10 +18,11 @@ var (
 	ErrNoCassetteName   = errors.New("requires cassette name")
 )
 
-type RecordOption struct {
-	CassetteLocation string
-	Mode             Mode
-}
+// MatchBodyModifier will modify the body of a request that goes to the cassette Matcher
+// to remove things that might make matching difficult.
+// Example being time parameters in queries, or randomly generated values.
+// To see this in use, check out SubTestTimeBasedQuery in opensearch_test.go
+type MatchBodyModifier func(*[]byte)
 
 type Mode recorder.Mode
 
@@ -36,12 +37,18 @@ const (
 // options is unexported because the Properties that these would edit
 // are unexported also, so there's no point in creating any options out of this package
 type RecordOptions func(c *RecordOption)
+type RecordOption struct {
+	CassetteLocation   string
+	Mode               Mode
+	MatchBodyModifiers []MatchBodyModifier
+}
 
 func CassetteLocation(location string) RecordOptions {
 	return func(c *RecordOption) {
 		c.CassetteLocation = location
 	}
 }
+
 func ReplayMode(mode Mode) RecordOptions {
 	return func(c *RecordOption) {
 		c.Mode = mode
@@ -78,21 +85,30 @@ func GetRecorder(options ...RecordOptions) (*recorder.Recorder, error) {
 		return nil, fmt.Errorf("%w, %v", ErrCreatingRecorder, err)
 	}
 	r.SetInOrderInteractions(true)
-	r.SetMatcher(matchBody)
+	r.SetMatcher(matchBody(recordOption.MatchBodyModifiers))
 	return r, nil
 }
 
 // matchBody will ensure that the matcher also matches the contents of the body
-func matchBody(r *http.Request, i cassette.Request) bool {
-	if r.Body == nil {
-		return cassette.DefaultMatcher(r, i)
+func matchBody(modifiers []MatchBodyModifier) func(r *http.Request, i cassette.Request) bool {
+	return func(r *http.Request, i cassette.Request) bool {
+		if r.Body == nil {
+			return cassette.DefaultMatcher(r, i)
+		}
+		var b bytes.Buffer
+		if _, err := b.ReadFrom(r.Body); err != nil {
+			return false
+		}
+		r.Body = ioutil.NopCloser(&b)
+		requestBody := b.Bytes()
+		recordingBody := []byte(i.Body)
+		for _, modifier := range modifiers {
+			modifier(&requestBody)
+			modifier(&recordingBody)
+		}
+		return cassette.DefaultMatcher(r, i) &&
+			(string(requestBody) == "" || string(requestBody) == string(recordingBody))
 	}
-	var b bytes.Buffer
-	if _, err := b.ReadFrom(r.Body); err != nil {
-		return false
-	}
-	r.Body = ioutil.NopCloser(&b)
-	return cassette.DefaultMatcher(r, i) && (b.String() == "" || b.String() == i.Body)
 }
 
 // findTestFile - copied from copyist.go - Searches the call stack, looking for the test that called

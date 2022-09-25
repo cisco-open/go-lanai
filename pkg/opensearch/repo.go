@@ -19,7 +19,7 @@ type Repo[T any] interface {
 	// The body argument should follow the Search request body [Format].
 	//
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/search/#request-body
-	Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) error
+	Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) (int, error)
 
 	// Index will create a new Document in the index that is defined
 	//
@@ -41,6 +41,9 @@ type Repo[T any] interface {
 	//
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/create-index/#request-body
 	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) error
+
+	// Ping will ping the OpenSearch cluster. If no error is returned, then the ping was successful
+	Ping(ctx context.Context, o ...Option[opensearchapi.PingRequest]) error
 
 	AddBeforeHook(hook BeforeHook)
 	AddAfterHook(hook AfterHook)
