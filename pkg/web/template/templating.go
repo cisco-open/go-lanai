@@ -91,9 +91,9 @@ func redirect(ctx context.Context, mv *ModelView) (int, string) {
 ***********************************/
 
 //goland:noinspection GoNameStartsWithPackageName
-func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, response interface{}) error {
-	ctx := web.GinContext(c)
-	if ctx == nil {
+func TemplateEncodeResponseFunc(ctx context.Context, _ http.ResponseWriter, response interface{}) error {
+	gc := web.GinContext(ctx)
+	if gc == nil {
 		return errors.New("unable to use template: context is not available")
 	}
 
@@ -119,10 +119,10 @@ func TemplateEncodeResponseFunc(c context.Context, _ http.ResponseWriter, respon
 
 	switch {
 	case isRedirect(mv):
-		ctx.Redirect(redirect(ctx, mv))
+		gc.Redirect(redirect(ctx, mv))
 	default:
-		AddGlobalModelData(c, mv.Model, ctx.Request)
-		ctx.HTML(status, mv.View, mv.Model)
+		AddGlobalModelData(ctx, mv.Model, gc.Request)
+		gc.HTML(status, mv.View, mv.Model)
 	}
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/crewjam/httperr"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -64,7 +64,7 @@ func ParseMetadataFromFile(fileLocation string) (*saml.EntityDescriptor, []byte,
 	if err != nil {
 		return nil, nil, err
 	}
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -88,7 +88,7 @@ func FetchMetadata(ctx context.Context, httpClient *http.Client, metadataURL *ur
 		return nil, nil, httperr.Response(*resp)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, data, err
 	}

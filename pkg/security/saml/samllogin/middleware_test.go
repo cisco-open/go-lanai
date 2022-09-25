@@ -18,6 +18,7 @@ import (
 	"github.com/crewjam/saml/samlsp"
 	"github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -158,12 +159,12 @@ func (m MetadataMatcher) compare(expected, actual interface{}, name string) erro
 
 func (m MetadataMatcher) FailureMessage(actual interface{}) (message string) {
 	body := actual.(*http.Response).Body
-	bytes, _ := ioutil.ReadAll(body)
+	bytes, _ := io.ReadAll(body)
 	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(bytes))
 }
 
 func (m MetadataMatcher) NegatedFailureMessage(actual interface{}) (message string) {
 	body := actual.(*http.Response).Body
-	bytes, _ := ioutil.ReadAll(body)
+	bytes, _ := io.ReadAll(body)
 	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(bytes))
 }

@@ -3,6 +3,7 @@ package saml_util
 import (
 	"crypto"
 	"crypto/rsa"
+	//nolint:gosec // weak cryptographic primitive, but we still need to support it
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -182,6 +183,7 @@ func rsaVerify(data, signature []byte, pubKey any, method string) error {
 	var hashAlg crypto.Hash
 	switch method {
 	case dsig.RSASHA1SignatureMethod:
+		//nolint:gosec // weak cryptographic primitive, but we still need to support it
 		h = sha1.New()
 		hashAlg = crypto.SHA1
 	case dsig.RSASHA256SignatureMethod:
