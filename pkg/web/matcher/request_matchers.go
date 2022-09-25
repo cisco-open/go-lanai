@@ -194,7 +194,7 @@ func RequestHasHeader(name string) web.RequestMatcher {
 // RequestHasPostForm matches http.Request that have non-empty value with given parameter in query or post body
 func RequestHasPostForm(param string) web.RequestMatcher {
 	return &requestMatcher{
-		description: fmt.Sprintf("matches have parameter %s", param),
+		description: fmt.Sprintf(`matches have form parameter [%s] in body`, param),
 		matchableFunc: postForm(param),
 		delegate: matcher.AnyNonEmptyString(),
 	}
@@ -203,7 +203,7 @@ func RequestHasPostForm(param string) web.RequestMatcher {
 // RequestHasForm matches http.Request that have non-empty value with given parameter in query or post body
 func RequestHasForm(param string) web.RequestMatcher {
 	return &requestMatcher{
-		description: fmt.Sprintf("matches have parameter %s", param),
+		description: fmt.Sprintf(`matches have form parameter [%s]`, param),
 		matchableFunc: form(param),
 		delegate: matcher.AnyNonEmptyString(),
 	}
@@ -212,7 +212,7 @@ func RequestHasForm(param string) web.RequestMatcher {
 // RequestWithForm matches http.Request that have matching param-value pair in query or post body
 func RequestWithForm(param, value string) web.RequestMatcher {
 	return &requestMatcher{
-		description:   fmt.Sprintf("matches have parameter %s", param),
+		description:   fmt.Sprintf(`matches have form data %s=%s`, param, value),
 		matchableFunc: query(param),
 		delegate:      matcher.WithString(value, true),
 	}
