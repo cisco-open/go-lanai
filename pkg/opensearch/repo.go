@@ -43,8 +43,8 @@ type Repo[T any] interface {
 	//
 	// The index argument defines the index name to be deleted.
 	//
-	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/create-index/#request-body
-	IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) error
+	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/index-apis/delete-index/
+	IndicesDelete(ctx context.Context, index []string, o ...Option[opensearchapi.IndicesDeleteRequest]) error
 
 	// IndicesPutAlias will create or update an alias
 	//
@@ -52,7 +52,7 @@ type Repo[T any] interface {
 	// The name argument defines the name of the new alias
 	//
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/alias/#request-body
-	IndicesPutAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesPutAliasRequest]) error
+	IndicesPutAlias(ctx context.Context, index []string, name string, o ...Option[opensearchapi.IndicesPutAliasRequest]) error
 
 	// IndicesDeleteAlias deletes an alias
 	//
@@ -60,7 +60,7 @@ type Repo[T any] interface {
 	// The name argument defines the name of the alias we would like to delete
 	//
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/alias/#request-body
-	IndicesDeleteAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesDeleteAliasRequest]) error
+	IndicesDeleteAlias(ctx context.Context, index []string, name []string, o ...Option[opensearchapi.IndicesDeleteAliasRequest]) error
 
 	// IndicesPutIndexTemplate will create or update an alias
 	//

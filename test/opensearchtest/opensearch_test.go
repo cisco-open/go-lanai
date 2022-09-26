@@ -535,12 +535,10 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 			},
 		}
 
-		// We dont care if these fail
-		di.FakeService.Repo.IndicesDelete(ctx, fakeNewIndexName)
-		di.FakeService.Repo.IndicesDelete(ctx, "generic_event_1")
-
-		di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
-		di.FakeService.Repo.IndicesDeleteAlias(ctx, fakeNewIndexName, fakeIndexAlias)
+		// The below 3 lines are used for debugging purposes, in the case that the test did not make a full run
+		//di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		//di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
+		//di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
 
 		// Create a Template
 		err := di.FakeService.Repo.IndicesPutIndexTemplate(ctx, fakeTemplateName, indexTemplate)
@@ -555,7 +553,7 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		// Create an Alias for the template
-		err = di.FakeService.Repo.IndicesPutAlias(ctx, fakeNewIndexName, fakeIndexAlias)
+		err = di.FakeService.Repo.IndicesPutAlias(ctx, []string{fakeNewIndexName}, fakeIndexAlias)
 		if err != nil {
 			t.Fatalf("unable to create alias ")
 		}
@@ -571,7 +569,7 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 
 		// Test Cleanup
 		// Delete Alias
-		err = di.FakeService.Repo.IndicesDeleteAlias(ctx, fakeNewIndexName, fakeIndexAlias)
+		err = di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
 		if err != nil {
 			t.Fatalf("unable to delete indices alias ")
 		}
@@ -581,7 +579,7 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 			t.Fatalf("unable to delete index template ")
 		}
 		// Delete index
-		err = di.FakeService.Repo.IndicesDelete(ctx, fakeNewIndexName)
+		err = di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
 		if err != nil {
 			t.Fatalf("unable to delete index ")
 		}

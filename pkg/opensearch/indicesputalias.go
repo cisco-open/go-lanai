@@ -7,7 +7,7 @@ import (
 )
 
 func (c *RepoImpl[T]) IndicesPutAlias(ctx context.Context,
-	index string,
+	index []string,
 	name string,
 	o ...Option[opensearchapi.IndicesPutAliasRequest],
 ) error {
@@ -21,7 +21,7 @@ func (c *RepoImpl[T]) IndicesPutAlias(ctx context.Context,
 	return nil
 }
 
-func (c *OpenClientImpl) IndicesPutAlias(ctx context.Context, index string, name string, o ...Option[opensearchapi.IndicesPutAliasRequest]) (*opensearchapi.Response, error) {
+func (c *OpenClientImpl) IndicesPutAlias(ctx context.Context, index []string, name string, o ...Option[opensearchapi.IndicesPutAliasRequest]) (*opensearchapi.Response, error) {
 	options := make([]func(request *opensearchapi.IndicesPutAliasRequest), len(o))
 	for i, v := range o {
 		options[i] = v
@@ -33,7 +33,7 @@ func (c *OpenClientImpl) IndicesPutAlias(ctx context.Context, index string, name
 
 	//nolint:makezero
 	options = append(options, IndicesPutAlias.WithContext(ctx))
-	resp, err := c.client.API.Indices.PutAlias([]string{index}, name, options...)
+	resp, err := c.client.API.Indices.PutAlias(index, name, options...)
 
 	for _, hook := range c.afterHook {
 		ctx = hook.After(ctx, AfterContext{cmd: CmdIndicesPutAlias, Options: &options, Resp: resp, Err: &err})
