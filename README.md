@@ -1,6 +1,6 @@
 # Writing Applications Using Go-Lanai
 
-Go-Lanai is a set of application framework and modules that makes writing application (especially micro-service) easy. A module represents a feature provided by go-lanai. 
+Go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy. A module represents a feature provided by go-lanai. 
 Go-lanai's module framework is built on top 
 of the [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) framework provided by [uber-go/fx](https://github.com/uber-go/fx). 
 Understanding of the fx framework is needed to understand the rest of the documentation, especially [fx.Provide](https://pkg.go.dev/go.uber.org/fx#Provide) and [fx.Invoke](https://pkg.go.dev/go.uber.org/fx#Invoke) 
@@ -31,14 +31,14 @@ go-lanai includes:
 - web
 
 This document uses an application that supports SAML single sign on to walk through the process of creating a web application
-using go-lanai. At the end of this documentation. You will have a web application that have a private API. You can use single sign on
+using go-lanai. At the end of this documentation. You will have a web application that has a private API. You can use single sign on
 to get access to this API. As we write the application, the corresponding module that is used will be explained in detail. This includes
-bootstrap, web, security. The security module have list of submodules each corresponding to a feature. The security features that will be
+bootstrap, web, security. The security module has a list of submodules, each corresponding to a feature. The security features that will be
 covered by this document is access, session and saml login.
 
 **Additional Reading**
 
-Typically, developer don't need GNU Make to test/build service. However, go-lanai also provides tooling around the testing, build and release
+Typically, developers don't need GNU Make to test/build services. However, go-lanai also provides tooling around the testing, build and release
 process that leverages GNU Make.
 
 - [Get Started for Developers](docs/Develop.md)
@@ -50,9 +50,9 @@ how the application instantiate the components needed by the modules and wire th
 
 Under the hood, the bootstrapper keeps a registry of modules that's enabled in this application. 
 A module is implemented as a group of ```fx.Provide``` and ```fx.Invoke``` options.
-When the app starts, these ```fx.provide``` and ```fx.invoke``` added by all the modules are sorted and executed.
+When the app starts, all module added ```fx.provide``` and ```fx.invoke``` options are sorted and executed.
 
-In go-lanai's module packages, you'll usually see a function like this 
+In go-lanai's module packages, you'll usually see a function like this: 
 
 ```go
 package init
@@ -77,8 +77,8 @@ func Use() {
 }
 ```
 
-This Use() method register the module with the bootstrapper. The application 
-code just need to call the ```Use()``` function to indicate this module should be activated in the application.
+This Use() method registers the module with the bootstrapper. The application 
+code just needs to call the ```Use()``` function to indicate this module should be activated in the application.
 
 ### Tutorial
 Create a project with the following project structure. At the end of this tutorial section, you will have an empty application
@@ -203,22 +203,22 @@ info:
 
 ## Web Module
 The web module enables the application to become a web application. When this module is used, a [gin web server](https://github.com/gin-gonic/gin) is started. The web module
-allows endpoints and middlewares to be added to the web server using dependency injection. The web module abstract away some of the
-boiler plate code of running the web server, so application code just needs to focus on writing the endpoints.
+allows endpoints and middlewares to be added to the web server using dependency injection. The web module abstracts away some of the
+boiler plate code of running the web server, allowing application code to focus on writing the endpoints.
 
-The web module achieves this by providing the following components
+The web module achieves this by providing the following components:
 
-**NewEngine** - this is a wrapped gin web server. Our wrapper allows request to be pre-processed before being handled by gin web server. 
-The only request pre-processor we currently provide is a CachedRequestPreProcessors. This is used during auth process so that the auth server can 
+**NewEngine** - this is a wrapped gin web server. Our wrapper allows the request to be pre-processed before being handled by gin web server. 
+The only request pre-processor we currently provide is a CachedRequestPreProcessors. This is used during the auth process so that the auth server can 
 replay the original request after the session is authenticated.
 
-**NewRegirstrar** - this registrar is used by other packages to register middlewares, endpoints, error translations etc. This registrar is provided so that
+**NewRegistrar** - this registrar is used by other packages to register middlewares, endpoints, error translations etc. This registrar is provided so that
 any other feature that wants to add to the web server can do so via the registrar.
 
 The web module also has a ```fx.Invoke``` which starts the web server and adds all the component in the registrar on it.
 
 ### Tutorial
-Add a controller directory to your project. In this directory we will create a rest endpoint that prints hello when it's called
+Add a controller directory to your project. In this directory we will create a rest endpoint that prints hello when it's called.
 ```
 -example
   -cmd
@@ -233,7 +233,8 @@ Add a controller directory to your project. In this directory we will create a r
   go.mod    
 ```
 
-**hello.go**
+**hello.go** 
+
 In this file, we define a struct called ```helloController```. This struct implements ```web.Controller``` interface which 
 defines the ```Mappings() []web.Mapping``` method. The API endpoint to implementation is expressed as mappings.
 
@@ -333,7 +334,7 @@ The registrar's job is to keep list of two things:
 1. **WebSecurity Configurer**
 
     A ```WebSecurity``` struct holds information on security configuration. This is expressed through a combination of ```Route``` (the path and method pattern which this WebSecurity applies),
-    ```Condition``` (additional conditions of incoming request which this WebSecurity applies to) and ```Features``` (security features to apply).
+    ```Condition``` (additional conditions of incoming requests, which this WebSecurity applies to) and ```Features``` (security features to apply).
 
     To define the desired security configuration, calling code provides implementation of the ```security.Configurer``` interface. It requires a ```Configure(WebSecurity)``` method in 
     which the calling code can configure the ```WebSecurity``` instance. Usually this is provided by application code.
@@ -342,21 +343,21 @@ The registrar's job is to keep list of two things:
 2. **Feature Configurer**
     
     A ```security.FeatureConfigurer``` is internal to the security package, and it's not meant to be used by application code.
-    It defines how a particular feature needs to modify ```WebSecurity```. Usually in terms of what middleware handler functions needs to be added.
+    It defines how a particular feature needs to modify ```WebSecurity```. Usually in terms of what middleware handler functions need to be added.
     For example, the Session feature's configurer will add a couple of middlewares handler functions to the ```WebSecurity``` to load and persist session.
 
 The initializer's job is to apply the security configuration expressed by all the WebSecurity configurers. It does so by looping through 
 the configurers. Each configurer is given a new WebSecurity instance, so that the configurer can express its security configuration on this WebSecurity instance. 
 Then the features specified on this ```WebSecurity``` instance is resolved using the corresponding feature configurer. At this point the ```WebSecurity``` is
-expressed in request patterns and middleware handler functions. The initializer then adds the pattern and handler function as
-mappings to the web registrar. The intializer repeats this process until all the WebSecurity configurers are processed. 
+expressed in request patterns and middleware handler functions. The initializer then adds the pattern and handler functions as
+mappings to the web registrar. The initializer repeats this process until all the WebSecurity configurers are processed. 
 
 ### Access Module
 This module provides access control feature. You can use this feature on a WebSecurity instance to indicate which endpoints
-has what kind of access control
+have what kind of access control.
 
 #### Tutorial
-Add a init directory. The security configurations will be placed in this directory.
+Add an init directory. The security configurations will be placed in this directory.
 ```
 -example
   -cmd
@@ -376,7 +377,7 @@ Add a init directory. The security configurations will be placed in this directo
 
 **init/package.go**
 
-In this file we specify we want to use ```security.Use()```, and we add a ```fx.Invoke(configureSecurity)``` to reigster
+In this file we specify we want to use ```security.Use()```, and we add a ```fx.Invoke(configureSecurity)``` to register
 our WebSecurity configurer.
 
 ```go
@@ -481,6 +482,7 @@ request is authenticated or not. In order to do that we need to enable session. 
 will be set on the response and sent with the request. We can then use to save the authentication state of the user session.
 
 **init/package.go**
+
 Session is stored in redis so we add ```redis.Use()``` activate the redis module.
 
 ```go
@@ -545,7 +547,7 @@ feature configurers.
 2. Add ACS endpoint (/saml/SSO)
 3. Add metadata refresh middleware that covers the above two endpoints
 4. Make the metadata endpoint and acs endpoint public
-5. Add an authentication entry point that will trigger the saml login process.
+5. Add an authentication entry point that will trigger the saml login process
 
 **logout feature configurer** does the following:
 
@@ -561,6 +563,7 @@ Enable the SAML login feature so that when user visits the /hello endpoint, they
 page first.
 
 **init/package.go**
+
 Activate the saml login module with ```samllogin.Use()```. We also add a ```fx.Provide(authserver.BindAuthServerProperties)```.
 This binds the auth related properties into a struct which we will use when configuring the SAML login feature on the web security instance.
 
@@ -657,6 +660,7 @@ func (c *securityConfigurer) Configure(ws security.WebSecurity) {
 ```
 
 **configs/application.yml**
+
 Add SAML related properties to application.yml
 
 ```yaml
@@ -675,11 +679,12 @@ security:
 ```
 
 **configs/saml.cert** and **configs/saml.key**
+
 You'll also need to add a cert and key pair to the configs directory.
 
-At this point, if you run the service you will get errors complaining about missing dependencies. This is because the SAML feature
+At this point, if you run the service you will get errors complaining about missing dependencies. This is because the SAML features
 don't know where to load identity provider data and user data. For this the SAML feature defines the following interfaces. You will
-need to provide implementation for them
+need to provide implementation for them.
 
 1. ```IdentityProviderManager```
 2. ```SamlIdentityProviderManager```
@@ -740,7 +745,8 @@ func (a *AccountStore) LoadAccountByExternalId(ctx context.Context, externalIdNa
 ```
 
 **service/idp_manager.go**
-This implements both the ```IdentityProviderManager``` and ```SamlIdentityProviderManager``` interface. This implementation always
+
+This implements both the ```IdentityProviderManager``` and ```SamlIdentityProviderManager``` interfaces. This implementation always
 returns a hardcoded IDP. A real implementation should return IDP from storage.
 
 ```go
@@ -786,7 +792,7 @@ func (i *IdpManager) GetIdentityProviderByDomain(ctx context.Context, domain str
 
 **service/package.go**
 
-Provide our implementations in a ```Use()``` function
+Provide our implementations in a ```Use()``` function.
 
 ```go
 package service
@@ -806,7 +812,7 @@ func Use() {
 
 **init.go**
 
-Update init.go to provide these services
+Update init.go to provide these services.
 
 ```go
 package serviceinit
@@ -844,7 +850,7 @@ func (c *helloController) Hello(ctx context.Context) (interface{}, error) {
 
 
 ### SAML SSO Module
-This module allows a service to act as IDP (allow others to SSO with the service)
+This module allows a service to act as IDP (allow others to SSO with the service).
 
 This module registers a feature configurer which does the following:
 
