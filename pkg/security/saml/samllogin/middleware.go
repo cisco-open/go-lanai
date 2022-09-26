@@ -3,12 +3,15 @@ package samllogin
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/xml"
 	"github.com/crewjam/saml"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
 )
+
+var SupportedBindings = utils.NewStringSet(saml.HTTPRedirectBinding, saml.HTTPPostBinding)
 
 // SPMetadataMiddleware
 // A SAML service provider should be able to work with multiple identity providers.
@@ -77,10 +80,14 @@ func (m *SPMetadataMiddleware) refreshMetadata(c *gin.Context) {
 }
 
 // resolveBinding find first supported binding using given binding location extractor
-func (m *SPMetadataMiddleware) resolveBinding(supported []string, extractor func(string) string) (location, binding string) {
-	for _, b := range supported {
+func (m *SPMetadataMiddleware) resolveBinding(extractor func(string) string) (location, binding string) {
+	bindings := []string{saml.HTTPRedirectBinding, saml.HTTPPostBinding}
+	if manager, ok := m.idpManager.(SamlBindingManager); ok {
+		bindings = manager.PreferredBindings()
+	}
+	for _, b := range bindings {
 		location = extractor(b)
-		if location != "" {
+		if location != "" && SupportedBindings.Has(b) {
 			binding = b
 			return
 		}
@@ -112,5 +119,3 @@ func (m *SPMetadataMiddleware) postBindingExecutor(req bindableSamlRequest, rela
 		return saml_util.WritePostBindingForm(data, w)
 	}
 }
-
-

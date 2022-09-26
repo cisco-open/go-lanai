@@ -26,7 +26,6 @@ type SPLoginMiddleware struct {
 
 	// list of bindings, can be saml.HTTPPostBinding or saml.HTTPRedirectBinding
 	// order indicates preference
-	bindings       []string
 	requestTracker samlsp.RequestTracker
 
 	authenticator  security.Authenticator
@@ -47,7 +46,6 @@ func NewLoginMiddleware(sp saml.ServiceProvider, tracker samlsp.RequestTracker,
 			idpManager:    idpManager,
 			clientManager: clientManager,
 		},
-		bindings:           []string{saml.HTTPRedirectBinding, saml.HTTPPostBinding},
 		requestTracker:     tracker,
 		successHandler:     handler,
 		authenticator:      authenticator,
@@ -66,7 +64,7 @@ func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.R
 		return security.NewExternalSamlAuthenticationError("cannot find idp for this domain")
 	}
 
-	location, binding := sp.resolveBinding(sp.bindings, client.GetSSOBindingLocation)
+	location, binding := sp.resolveBinding(client.GetSSOBindingLocation)
 	if location == "" {
 		return security.NewExternalSamlAuthenticationError("idp does not have supported bindings.")
 	}

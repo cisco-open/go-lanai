@@ -37,7 +37,6 @@ func init() {
 
 type SPLogoutMiddleware struct {
 	SPMetadataMiddleware
-	bindings           []string // supported SLO bindings, can be saml.HTTPPostBinding or saml.HTTPRedirectBinding. Order indicates preference
 	successHandler     security.AuthenticationSuccessHandler
 }
 
@@ -52,7 +51,6 @@ func NewLogoutMiddleware(sp saml.ServiceProvider,
 			idpManager:    idpManager,
 			clientManager: clientManager,
 		},
-		bindings:           []string{saml.HTTPRedirectBinding, saml.HTTPPostBinding},
 		successHandler:     successHandler,
 	}
 }
@@ -66,7 +64,7 @@ func (m *SPLogoutMiddleware) MakeSingleLogoutRequest(ctx context.Context, r *htt
 	}
 
 	// resolve binding
-	location, binding := m.resolveBinding(m.bindings, client.GetSLOBindingLocation)
+	location, binding := m.resolveBinding(client.GetSLOBindingLocation)
 	if location == "" {
 		return security.NewExternalSamlAuthenticationError("idp does not have supported SLO bindings.")
 	}
