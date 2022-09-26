@@ -75,10 +75,20 @@ func (mw *MetadataMiddleware) MetadataHandlerFunc() gin.HandlerFunc {
 			return metadata.IDPSSODescriptors[0].SingleSignOnServices[i].Binding < metadata.IDPSSODescriptors[0].SingleSignOnServices[j].Binding
 		})
 
-		var t = true
 		//We always want the authentication request to be signed
 		//But because this is not supported by the saml package, we set it here explicitly
+		var t = true
 		metadata.IDPSSODescriptors[0].WantAuthnRequestsSigned = &t
+
+		// We also support POST Binding of logout request, which is not added by crewjam/saml package
+		if mw.idp.LogoutURL.String() != "" {
+			metadata.IDPSSODescriptors[0].SSODescriptor.SingleLogoutServices = []saml.Endpoint{
+				{ Binding:  saml.HTTPRedirectBinding, Location: mw.idp.LogoutURL.String() },
+				{ Binding:  saml.HTTPPostBinding, Location: mw.idp.LogoutURL.String() },
+			}
+		}
+
+		// send the response
 		w := c.Writer
 		buf, _ := xml.MarshalIndent(metadata, "", "  ")
 		w.Header().Set("Content-Type", "application/samlmetadata+xml")

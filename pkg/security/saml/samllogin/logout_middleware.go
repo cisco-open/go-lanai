@@ -81,14 +81,20 @@ func (m *SPLogoutMiddleware) MakeSingleLogoutRequest(ctx context.Context, r *htt
 	}
 	sloReq.NameID.Format = format
 
+	// re-sign the request since we changed the format
+	sloReq.Signature = nil
+	if e := client.SignLogoutRequest(&sloReq.LogoutRequest); e != nil {
+		return security.NewExternalSamlAuthenticationError("cannot sign SLO request", e)
+	}
+
 	switch binding {
 	case saml.HTTPRedirectBinding:
 		if e := m.redirectBindingExecutor(sloReq, "", client)(w, r); e != nil {
-			return security.NewExternalSamlAuthenticationError("cannot make SLO request with HTTP redirect binding", e)
+			return security.NewExternalSamlAuthenticationError("cannot send SLO request with HTTP redirect binding", e)
 		}
 	case saml.HTTPPostBinding:
 		if e := m.postBindingExecutor(sloReq, "")(w, r); e != nil {
-			return security.NewExternalSamlAuthenticationError("cannot post SLO request", e)
+			return security.NewExternalSamlAuthenticationError("cannot send SLO request with HTTP post binding", e)
 		}
 	}
 	return nil
