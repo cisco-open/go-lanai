@@ -7,7 +7,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"encoding/json"
 	"github.com/onsi/gomega"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -536,8 +535,10 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 			},
 		}
 
-		//// We dont care if these fail
+		// We dont care if these fail
 		di.FakeService.Repo.IndicesDelete(ctx, fakeNewIndexName)
+		di.FakeService.Repo.IndicesDelete(ctx, "generic_event_1")
+
 		di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
 		di.FakeService.Repo.IndicesDeleteAlias(ctx, fakeNewIndexName, fakeIndexAlias)
 
@@ -559,37 +560,14 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 			t.Fatalf("unable to create alias ")
 		}
 
-		type getResponseObj struct {
-			Aliases  map[string]interface{} `json:"aliases"`
-			Mappings map[string]interface{} `json:"mappings"`
-			Settings struct {
-				Index struct {
-					CreationDate     string `json:"creation_date"`
-					NumberOfShards   string `json:"number_of_shards"`
-					NumberOfReplicas string `json:"number_of_replicas"`
-					Version          struct {
-						Created string `json:"created"`
-					} `json:"version"`
-					ProvidedName string `json:"provided_name"`
-				} `json:"index"`
-			} `json:"settings"`
-		}
-
-		var responseStore []byte
-		indexGot := make(map[string]*getResponseObj)
-
 		// Get the new index using the Alias and check the obj
-		err = di.FakeService.Repo.IndicesGet(ctx, &responseStore, fakeIndexAlias)
+		resp, err := di.FakeService.Repo.IndicesGet(ctx, fakeIndexAlias)
 		if err != nil {
 			t.Fatalf("unable to get indices information using alias ")
 		}
-		err = json.Unmarshal(responseStore, &indexGot)
-		if err != nil {
-			t.Fatalf("unable to get unmarshall indices get response")
-		}
 
 		// This test proves that the index template works against the newly created indices
-		g.Expect(indexGot["test_generic_events_1"].Settings.Index.NumberOfShards).To(gomega.Equal("4"))
+		g.Expect(resp.Settings.Index.NumberOfShards).To(gomega.Equal("4"))
 
 		// Test Cleanup
 		// Delete Alias

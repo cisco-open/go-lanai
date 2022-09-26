@@ -37,7 +37,7 @@ type Repo[T any] interface {
 	// IndicesGet will return information about an index
 	//
 	// The index argument defines the index name we want to get
-	IndicesGet(ctx context.Context, dest *[]byte, index string, o ...Option[opensearchapi.IndicesGetRequest]) error
+	IndicesGet(ctx context.Context, index string, o ...Option[opensearchapi.IndicesGetRequest]) (*IndicesDetail, error)
 
 	// IndicesDelete will delete an index from the cluster.
 	//
