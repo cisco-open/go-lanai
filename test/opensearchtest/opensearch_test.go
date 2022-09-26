@@ -7,7 +7,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"encoding/json"
 	"github.com/onsi/gomega"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -40,36 +39,9 @@ func NewFakeService(di fakeServiceDI) FakeService {
 
 type opensearchDI struct {
 	fx.In
-	FakeService FakeService
-	Properties  *opensearch.Properties
-}
-
-func IgnoreFilterRangeTime() MatchBodyModifier {
-	return func(b *[]byte) {
-		type FilterRange struct {
-			Query *struct {
-				Bool struct {
-					Filter struct {
-						Range struct {
-							Time *interface {
-							} `json:"Time,omitempty"`
-						}
-					}
-				}
-			}
-		}
-		var filterRange FilterRange
-		err := json.Unmarshal(*b, &filterRange)
-		if err != nil || filterRange.Query == nil || filterRange.Query.Bool.Filter.Range.Time == nil {
-			return
-		}
-		filterRange.Query.Bool.Filter.Range.Time = nil
-		marshalledBytes, err := json.Marshal(filterRange)
-		if err != nil {
-			return
-		}
-		*b = marshalledBytes
-	}
+	FakeService            FakeService
+	Properties    *opensearch.Properties
+	BodyModifiers *MatcherBodyModifiers
 }
 
 func TestScopeController(t *testing.T) {
@@ -79,7 +51,6 @@ func TestScopeController(t *testing.T) {
 		WithOpenSearchPlayback(
 			SetRecordMode(ModeCommandline),
 			SetRecordDelay(time.Millisecond*1500),
-			AddMatchBodyModifier(IgnoreFilterRangeTime()),
 		),
 		apptest.WithTimeout(time.Minute),
 		apptest.WithModules(opensearch.Module),
@@ -487,10 +458,15 @@ func SubTestPing(di *opensearchDI) test.GomegaSubTestFunc {
 	}
 }
 
-// SubTestTimeBasedQuery will test that the MatchBodyModifier can be used to ignore
+// SubTestTimeBasedQuery will test that the MatcherBodyModifier can be used to ignore
 // a portion of the request that is used to compare requests in the httpvcr/recorder.Recorder
 func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		defer di.BodyModifiers.Clear()
+		di.BodyModifiers.Append(IgnoreGJSONPaths(t,
+			"query.bool.filter.range.Time",
+		))
+
 		var TimeQuery map[string]interface{}
 		// If we are recording, we want to use a valid time query, however to test
 		// that the time portion is ignored with our `IgnoreFilterRangeTime` function
@@ -518,7 +494,6 @@ func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 				},
 			},
 		}
-
 		var dest []GenericAuditEvent
 		_, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
