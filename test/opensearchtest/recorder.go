@@ -1,12 +1,9 @@
 package opensearchtest
 
 import (
-	"bytes"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/cassette"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/recorder"
 	"fmt"
 	"github.com/pkg/errors"
-	"io/ioutil"
 	"net/http"
 	"path"
 	"runtime"
@@ -17,12 +14,6 @@ var (
 	ErrCreatingRecorder = errors.New("unable to create recorder")
 	ErrNoCassetteName   = errors.New("requires cassette name")
 )
-
-// MatchBodyModifier will modify the body of a request that goes to the cassette Matcher
-// to remove things that might make matching difficult.
-// Example being time parameters in queries, or randomly generated values.
-// To see this in use, check out SubTestTimeBasedQuery in opensearch_test.go
-type MatchBodyModifier func(*[]byte)
 
 type Mode recorder.Mode
 
@@ -39,8 +30,8 @@ const (
 type RecordOptions func(c *RecordOption)
 type RecordOption struct {
 	CassetteLocation   string
-	Mode               Mode
-	MatchBodyModifiers []MatchBodyModifier
+	Mode      Mode
+	Modifiers *MatcherBodyModifiers
 }
 
 func CassetteLocation(location string) RecordOptions {
@@ -85,30 +76,8 @@ func GetRecorder(options ...RecordOptions) (*recorder.Recorder, error) {
 		return nil, fmt.Errorf("%w, %v", ErrCreatingRecorder, err)
 	}
 	r.SetInOrderInteractions(true)
-	r.SetMatcher(matchBody(recordOption.MatchBodyModifiers))
+	r.SetMatcher(MatchBody(recordOption.Modifiers))
 	return r, nil
-}
-
-// matchBody will ensure that the matcher also matches the contents of the body
-func matchBody(modifiers []MatchBodyModifier) func(r *http.Request, i cassette.Request) bool {
-	return func(r *http.Request, i cassette.Request) bool {
-		if r.Body == nil {
-			return cassette.DefaultMatcher(r, i)
-		}
-		var b bytes.Buffer
-		if _, err := b.ReadFrom(r.Body); err != nil {
-			return false
-		}
-		r.Body = ioutil.NopCloser(&b)
-		requestBody := b.Bytes()
-		recordingBody := []byte(i.Body)
-		for _, modifier := range modifiers {
-			modifier(&requestBody)
-			modifier(&recordingBody)
-		}
-		return cassette.DefaultMatcher(r, i) &&
-			(string(requestBody) == "" || string(requestBody) == string(recordingBody))
-	}
 }
 
 // findTestFile - copied from copyist.go - Searches the call stack, looking for the test that called
