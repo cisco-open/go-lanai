@@ -5,11 +5,10 @@ Go-lanai's module framework is built on top
 of the [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) framework provided by [uber-go/fx](https://github.com/uber-go/fx). 
 Understanding of the fx framework is needed to understand the rest of the documentation, especially [fx.Provide](https://pkg.go.dev/go.uber.org/fx#Provide) and [fx.Invoke](https://pkg.go.dev/go.uber.org/fx#Invoke) 
 
-Modules provided by
-go-lanai includes:
+Modules provided by go-lanai includes:
 - actuator
 - appconfig
-- boostrap
+- [boostrap](pkg/bootstrap/README.md)
 - consul
 - data
 - discovery
@@ -22,18 +21,20 @@ go-lanai includes:
 - profiler
 - redis
 - scheduler
-- security
+- [security](pkg/security/README.md)
 - swagger
 - tenancy
 - tlsconfig
 - tracing
 - vault
-- web
+- [web](pkg/web/README.md)
 
-This document uses an application that supports SAML single sign on to walk through the process of creating a web application
+# Quick Start
+
+In this quick start guide, we use an application that supports SAML single sign on to walk through the process of creating a web application
 using go-lanai. At the end of this documentation. You will have a web application that has a private API. You can use single sign on
 to get access to this API. As we write the application, the corresponding module that is used will be explained in detail. This includes
-bootstrap, web, security. The security module has a list of submodules, each corresponding to a feature. The security features that will be
+bootstrap, web and security. The security module has a list of submodules, each corresponding to a feature. The security features that will be
 covered by this document is access, session and saml login.
 
 **Additional Reading**
@@ -44,44 +45,14 @@ process that leverages GNU Make.
 - [Get Started for Developers](docs/Develop.md)
 - [Get Started for DevOps](docs/CICD.md)
 
-## Bootstrap
-When writing a go-lanai application, the developer selects the go-lanai module they want to use. Bootstrap refers to the process of 
-how the application instantiate the components needed by the modules and wires them together. 
+## Step 1: Bootstrapping the Application
+When writing a go-lanai application, the developer selects the go-lanai module they want to use. [Bootstrap](pkg/bootstrap/README.md) refers to the process 
+during which the application instantiate the components needed by the modules and wires them together. 
 
-Under the hood, the bootstrapper keeps a registry of modules that's enabled in this application. 
-A module is implemented as a group of ```fx.Provide``` and ```fx.Invoke``` options.
-When the app starts, all module added ```fx.provide``` and ```fx.invoke``` options are sorted and executed.
+In each Go-Lanai module, you can usually find a `Use()` function. This function registers the module with Go-Lanai's bootstrapper. 
+The application code calls this method to signal that this module should be activated.
 
-In go-lanai's module packages, you'll usually see a function like this: 
-
-```go
-package init
-
-var Module = &bootstrap.Module{
-	Name: "web",
-	Precedence: web.MinWebPrecedence,
-	PriorityOptions: []fx.Option{
-		appconfig.FxEmbeddedDefaults(defaultConfigFS),
-		fx.Provide(
-			web.BindServerProperties,
-			web.NewEngine,
-			web.NewRegistrar),
-		fx.Invoke(setup),
-	},
-}
-
-// Use Allow service to include this module in main()
-func Use() {
-	bootstrap.Register(Module)
-	bootstrap.Register(cors.Module)
-}
-```
-
-This Use() method registers the module with the bootstrapper. The application 
-code just needs to call the ```Use()``` function to indicate this module should be activated in the application.
-
-### Tutorial
-Create a project with the following project structure. At the end of this tutorial section, you will have an empty application
+Create a project with the following project structure. At the end of this step, you will have an empty application
 that starts. It will be used as the base to add on more features in the later section of the document. 
 
 ```
@@ -201,23 +172,12 @@ info:
       displayName: Example Service
 ```
 
-## Web Module
-The web module enables the application to become a web application. When this module is used, a [gin web server](https://github.com/gin-gonic/gin) is started. The web module
-allows endpoints and middlewares to be added to the web server using dependency injection. The web module abstracts away some of the
-boiler plate code of running the web server, allowing application code to focus on writing the endpoints.
+## Step 2: Add a REST API
 
-The web module achieves this by providing the following components:
+One of the common use case of Go-Lanai is to write a web application. The [web](pkg/web/README.md) facilitates this by abstracting the boilerplate code
+for running a web application, allowing application code to focus on writing the API endpoints. In this step, we will turn the application
+into a web application, and add a REST endpoint to it.
 
-**NewEngine** - this is a wrapped gin web server. Our wrapper allows the request to be pre-processed before being handled by gin web server. 
-The only request pre-processor we currently provide is a CachedRequestPreProcessors. This is used during the auth process so that the auth server can 
-replay the original request after the session is authenticated.
-
-**NewRegistrar** - this registrar is used by other packages to register middlewares, endpoints, error translations etc. This registrar is provided so that
-any other feature that wants to add to the web server can do so via the registrar.
-
-The web module also has a ```fx.Invoke``` which starts the web server and adds all the component in the registrar on it.
-
-### Tutorial
 Add a controller directory to your project. In this directory we will create a rest endpoint that prints hello when it's called.
 ```
 -example
@@ -323,40 +283,19 @@ func main() {
 At this point, if you run the application, you should be able to visit http://localhost:8090/example/api/v1/hello and the browser
 should display "hello".
 
-## Security Module
+## Step 3: Add Access Restriction
 
-The security module is organized into sub packages each corresponding to a security features. The top level ```security.Use()```
+The [security module](pkg/security/README.md) allows application code to configure security related requirements on its endpoints.
+This module is organized into sub packages each corresponding to a security features. The top level ```security.Use()```
 does nothing on its own. It simply provides a mechanism where application code can express its security requirements through configuration.
 
-The security module does this by providing a ```Initializer``` and a ```Registrar```. 
+Application code defines its security requirements by providing security configurers. Each configurer implements a method that configures a ```WebSecurity``` instance.
+Each ```WebSecurity``` instance holds a combination of ```Route``` (the path and method pattern for which this WebSecurity applies),
+```Condition``` (additional conditions of incoming requests for which this WebSecurity applies to) and ```Features``` (security features to apply when the request matches the ```Route``` and ```Condition```).
+Behind the scenes, the security module will add appropriate middleware and endpoints according to the ```WebSecurity``` configurations.
 
-The registrar's job is to keep list of two things:
-1. **WebSecurity Configurer**
+In this step, we will use the access control feature to restrict the hello endpoint to authenticated users only.
 
-    A ```WebSecurity``` struct holds information on security configuration. This is expressed through a combination of ```Route``` (the path and method pattern which this WebSecurity applies),
-    ```Condition``` (additional conditions of incoming requests, which this WebSecurity applies to) and ```Features``` (security features to apply).
-
-    To define the desired security configuration, calling code provides implementation of the ```security.Configurer``` interface. It requires a ```Configure(WebSecurity)``` method in 
-    which the calling code can configure the ```WebSecurity``` instance. Usually this is provided by application code.
-
-
-2. **Feature Configurer**
-    
-    A ```security.FeatureConfigurer``` is internal to the security package, and it's not meant to be used by application code.
-    It defines how a particular feature needs to modify ```WebSecurity```. Usually in terms of what middleware handler functions need to be added.
-    For example, the Session feature's configurer will add a couple of middlewares handler functions to the ```WebSecurity``` to load and persist session.
-
-The initializer's job is to apply the security configuration expressed by all the WebSecurity configurers. It does so by looping through 
-the configurers. Each configurer is given a new WebSecurity instance, so that the configurer can express its security configuration on this WebSecurity instance. 
-Then the features specified on this ```WebSecurity``` instance is resolved using the corresponding feature configurer. At this point the ```WebSecurity``` is
-expressed in request patterns and middleware handler functions. The initializer then adds the pattern and handler functions as
-mappings to the web registrar. The initializer repeats this process until all the WebSecurity configurers are processed. 
-
-### Access Module
-This module provides access control feature. You can use this feature on a WebSecurity instance to indicate which endpoints
-have what kind of access control.
-
-#### Tutorial
 Add an init directory. The security configurations will be placed in this directory.
 ```
 -example
@@ -472,14 +411,13 @@ func main() {
 
 At this point if you run the application and visit the application again, you should get an unauthenticated error.
 
-### Session Module
+## Step 4: Add Session
+
+Because we have restricted access to the /hello endpoint to authenticated user only, we need way to determine if the
+request is authenticated or not. In order to do that we need to enable session. When session is enabled, session cookie
+will be set on the response and sent with the request. We can then save the authentication state of the user in the session.
 When session feature is enabled on a WebSecurity configuration, the request and response to those endpoints will load
 and persist session information.
-
-#### Tutorial
-Because we have restricted access to the /hello endpoint to authenticated user only, we need way to determine if the 
-request is authenticated or not. In order to do that we need to enable session. When session is enabled, session cookie
-will be set on the response and sent with the request. We can then use to save the authentication state of the user session.
 
 **init/package.go**
 
@@ -537,30 +475,11 @@ security:
 
 At this point, if you visit the endpoint again and look at the network traffic, you will see the request and response contains a session cookie.
 
-### Saml Login Module
-This module enables a service to act as an SP (allows login with third party using SAML protocol). This feature has two 
-feature configurers. 
+## Step 5: Add Saml Login
 
-**login feature configurer** does the following:
-
-1. Add metadata endpoint (/saml/metadata)
-2. Add ACS endpoint (/saml/SSO)
-3. Add metadata refresh middleware that covers the above two endpoints
-4. Make the metadata endpoint and acs endpoint public
-5. Add an authentication entry point that will trigger the saml login process
-
-**logout feature configurer** does the following:
-
-1. Add single logout endpoint
-2. Add metadata refresh middleware that covers the endpoint
-3. Add logout handler
-4. Add logout entry point (the entry point to send out the logout request to the IDP)
-
-When SAML login feature is enabled, these middleware and endpoints are added to the web security configuration.
-
-#### Tutorial
-Enable the SAML login feature so that when user visits the /hello endpoint, they will be redirected to the single sign on
-page first.
+Enable the SAML Login feature so that when user visits the /hello endpoint, they will be redirected to the single sign on
+page first. This feature adds a number of middleware and endpoints to allow your application to act as a SAML service provider. See [SAML login feature](pkg/security/saml/samllogin)
+for the list of middleware and endpoints added by this feature.
 
 **init/package.go**
 
@@ -848,37 +767,39 @@ func (c *helloController) Hello(ctx context.Context) (interface{}, error) {
 }
 ```
 
+## What's Next
 
-### SAML SSO Module
-This module allows a service to act as IDP (allow others to SSO with the service).
+In addition to the [boostrap](pkg/bootstrap/README.md), [security](pkg/security/README.md) and [web](pkg/web/README.md)
+that are covered in this document, Go-Lanai provides a number of modules that can be used for different use cases. 
 
-This module registers a feature configurer which does the following:
+If you are interested in modules that facilitate writing micro-services, take a look at these modules:
 
-1. add metadata refresh middleware to the sso endpoint
-2. add sso endpoint
-3. add metadata endpoint
-4. add error handling
+- actuator
+- appconfig
+- discovery
+- dsync
+- integrate
+- migration
 
-#### Tutorial
+If you are interested in modules that provides connectivity to other infrastructure services, take a look at these modules:
 
-TODO:
+- consul
+- data
+- kafka
+- opensearch
+- redis
+- tlsconfig
+- vault
 
-```go
-saml_auth.Use()
-```
+And various other useful modules:
 
-```go
-func (c *ExampleConfigurer) Configure(ws security.WebSecurity) {
-    ws.Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
-		With(saml_auth.NewEndpoint().
-			Issuer(c.config.Issuer).
-			SsoCondition(c.config.Endpoints.SamlSso.Condition).
-			SsoLocation(c.config.Endpoints.SamlSso.Location).
-			MetadataPath(c.config.Endpoints.SamlMetadata))
-	
-	//Add more configuration to WS to finish the rest of the configuration for your app (i.e. what idp to use, etc)
-}
-```
+- log
+- migration
+- profiler
+- scheduler
+- swagger
+- tenancy
+- tracing
 
-#### Pre-made configuration for auth server and resource server
-TODO
+These modules are developed following the same pattern and principals described in this documentation. Explore them by exploring
+their corresponding packages.
