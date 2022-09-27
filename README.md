@@ -46,7 +46,7 @@ process that leverages GNU Make.
 
 ## Bootstrap
 When writing a go-lanai application, the developer selects the go-lanai module they want to use. Bootstrap refers to the process of 
-how the application instantiate the components needed by the modules and wire them together. 
+how the application instantiate the components needed by the modules and wires them together. 
 
 Under the hood, the bootstrapper keeps a registry of modules that's enabled in this application. 
 A module is implemented as a group of ```fx.Provide``` and ```fx.Invoke``` options.
@@ -376,7 +376,7 @@ Add a init directory. The security configurations will be placed in this directo
 
 **init/package.go**
 
-In this file we specify we want to use ```security.Use()```, and we add a ```fx.Invoke(configureSecurity)``` to reigster
+In this file we specify we want to use ```security.Use()```, and we add a ```fx.Invoke(configureSecurity)``` to register
 our WebSecurity configurer.
 
 ```go
@@ -415,7 +415,7 @@ func configureSecurity(di secDI) {
 
 **init/security.go**
 
-Here we implement our WebSecurity configurer. Our configurer specifies that request to any path that starts with "/api/"
+Here we implement our WebSecurity configurer. Our configurer specifies that requests to paths that starts with "/api/"
 should be authenticated.
 
 ```go
@@ -804,9 +804,9 @@ func Use() {
 }
 ```
 
-**init.go**
+**init/package.go**
 
-Update init.go to provide these services
+Update init/package.go to provide these services
 
 ```go
 package serviceinit
