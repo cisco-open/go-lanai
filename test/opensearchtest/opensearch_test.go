@@ -39,7 +39,7 @@ func NewFakeService(di fakeServiceDI) FakeService {
 
 type opensearchDI struct {
 	fx.In
-	FakeService            FakeService
+	FakeService   FakeService
 	Properties    *opensearch.Properties
 	BodyModifiers *MatcherBodyModifiers
 }
@@ -68,6 +68,7 @@ func TestScopeController(t *testing.T) {
 		test.GomegaSubTest(SubTestTracer(di), "SubTestTracer"),
 		test.GomegaSubTest(SubTestPing(di), "SubTestPing"),
 		test.GomegaSubTest(SubTestTimeBasedQuery(di), "SubTestTimeBasedQuery"),
+		test.GomegaSubTest(SubTestTemplateAndAlias(di), "SubTestTemplateAndAlias"),
 	)
 }
 
@@ -503,5 +504,84 @@ func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 			t.Fatalf("unable to search for document")
 		}
 		g.Expect(len(dest)).To(gomega.Equal(5))
+	}
+}
+
+func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		fakeNewIndexName := "generic_events_1"
+		fakeIndexAlias := "generic_event"
+		fakeTemplateName := "test_template"
+		indexTemplate := map[string]interface{}{
+			"index_patterns": []string{"*generic_events*"}, // Pattern needs to accomodate "test_" append
+			"template": map[string]interface{}{
+				"settings": map[string]interface{}{
+					"number_of_shards":   4,
+					"number_of_replicas": 4,
+				},
+			},
+			"version": 1,
+			"_meta": map[string]interface{}{
+				"description": "some description",
+			},
+		}
+		indexMapping := map[string]interface{}{
+			"mappings": map[string]interface{}{
+				"properties": map[string]interface{}{
+					"SubType": map[string]interface{}{
+						"type": "text",
+					},
+				},
+			},
+		}
+
+		// The below 3 lines are used for debugging purposes, in the case that the test did not make a full run
+		//di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		//di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
+		//di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+
+		// Create a Template
+		err := di.FakeService.Repo.IndicesPutIndexTemplate(ctx, fakeTemplateName, indexTemplate)
+		if err != nil {
+			t.Fatalf("unable to create index template")
+		}
+
+		// Create an Index with template pattern
+		err = di.FakeService.Repo.IndicesCreate(ctx, fakeNewIndexName, indexMapping)
+		if err != nil {
+			t.Fatalf("unable to create index")
+		}
+
+		// Create an Alias for the template
+		err = di.FakeService.Repo.IndicesPutAlias(ctx, []string{fakeNewIndexName}, fakeIndexAlias)
+		if err != nil {
+			t.Fatalf("unable to create alias ")
+		}
+
+		// Get the new index using the Alias and check the obj
+		resp, err := di.FakeService.Repo.IndicesGet(ctx, fakeIndexAlias)
+		if err != nil {
+			t.Fatalf("unable to get indices information using alias ")
+		}
+
+		// This test proves that the index template works against the newly created indices
+		g.Expect(resp.Settings.Index.NumberOfShards).To(gomega.Equal("4"))
+
+		// Test Cleanup
+		// Delete Alias
+		err = di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+		if err != nil {
+			t.Fatalf("unable to delete indices alias ")
+		}
+		// Delete Index Template
+		err = di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
+		if err != nil {
+			t.Fatalf("unable to delete index template ")
+		}
+		// Delete index
+		err = di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		if err != nil {
+			t.Fatalf("unable to delete index ")
+		}
 	}
 }
