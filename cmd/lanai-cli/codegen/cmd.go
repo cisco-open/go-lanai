@@ -1,11 +1,14 @@
 package codegen
 
 import (
-	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator"
 	"embed"
+	"fmt"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/spf13/cobra"
-	"path"
+	"io/fs"
+	"os"
 )
 
 const (
@@ -19,62 +22,63 @@ var (
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               Run,
 	}
+
 	Args = Arguments{}
 )
 
 type Arguments struct {
+	Contract          string `flag:"contract,c" desc:"openapi contract"`
+	ProjectName       string `flag:"project,p" desc:"project name"`
+	TemplateDirectory string `flag:"templateDir,t" desc:"Directory where templates are stored, will use built-in templates if not set"`
 }
 
 func init() {
 	cmdutils.PersistentFlags(Cmd, &Args)
 }
 
-//go:embed templates
-var TmplFS embed.FS
-
-func generateFileFromTemplate(ctx context.Context, fs embed.FS, file FileTemplate, fsm FileSystemMapper) error {
-	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
-		FS:         fs,
-		TmplName:   fsm.GetPathToTemplate(file.template),
-		Output:     fsm.GetOutputFilePath(file.template, file.filename, nil),
-		OutputPerm: 0644,
-		Overwrite:  true,
-		Model:      file.model,
-		CommonTmpl: path.Join(fsm.commonDir, "*"),
-	})
-}
-
-type FileTemplate struct {
-	template string
-	filename string
-	model    interface{}
-}
-
-// GenerateTemplates will generate the files
-// fs needs to have a "filesystem" folder to work
-func GenerateTemplates(fsm FileSystemMapper, templates embed.FS) error {
-	// Given a filename & desired template to use, output stuff!
-	// TODO: Actual logic for files, this is just an example
-	file := FileTemplate{template: "test.tmpl", filename: "test.go", model: ""}
-	err := generateFileFromTemplate(context.Background(), templates, file, fsm)
-	if err != nil {
-		return err
-	}
-	file2 := FileTemplate{template: "inner.tmpl", filename: "inner.go", model: ""}
-	err = generateFileFromTemplate(context.Background(), templates, file2, fsm)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+//go:embed all:template/src
+var DefaultFS embed.FS
 
 func Run(cmd *cobra.Command, _ []string) error {
-	fsm, err := NewFileSystemMapper(TmplFS, cmdutils.GlobalArgs.OutputDir)
+	openAPIData, err := openapi3.NewLoader().LoadFromFile(Args.Contract)
+	if err != nil {
+		return fmt.Errorf("error parsing OpenAPI file: %v", err)
+	}
+
+	projectName := Args.ProjectName
+
+	// Populate the data the templates will use
+	data := map[string]interface{}{
+		generator.OpenAPIData: openAPIData,
+		generator.ProjectName: projectName,
+	}
+
+	FSToUse := determineFSToUse()
+
+	template, err := generator.LoadTemplates(FSToUse)
 	if err != nil {
 		return err
 	}
-	if err := GenerateTemplates(fsm, TmplFS); err != nil {
+
+	if err = generator.GenerateFiles(
+		FSToUse,
+		generator.WithData(data),
+		generator.WithFS(FSToUse),
+		generator.WithTemplate(template)); err != nil {
 		return err
 	}
+
+	fmt.Printf("Code generated to %v", cmdutils.GlobalArgs.OutputDir)
 	return nil
+}
+
+func determineFSToUse() fs.FS {
+	var FSToUse fs.FS
+	FSToUse = DefaultFS
+	if Args.TemplateDirectory == "" {
+		fmt.Println("Using default template set")
+	} else {
+		FSToUse = os.DirFS(Args.TemplateDirectory)
+	}
+	return FSToUse
 }
