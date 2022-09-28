@@ -6,7 +6,7 @@ import (
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 )
 
-func (c *RepoImpl[T]) IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) error {
+func (c *RepoImpl[T]) IndicesDelete(ctx context.Context, index []string, o ...Option[opensearchapi.IndicesDeleteRequest]) error {
 	resp, err := c.client.IndicesDelete(ctx, index, o...)
 	if resp.IsError() {
 		return fmt.Errorf("error status code: %d", resp.StatusCode)
@@ -17,7 +17,7 @@ func (c *RepoImpl[T]) IndicesDelete(ctx context.Context, index string, o ...Opti
 	return nil
 }
 
-func (c *OpenClientImpl) IndicesDelete(ctx context.Context, index string, o ...Option[opensearchapi.IndicesDeleteRequest]) (*opensearchapi.Response, error) {
+func (c *OpenClientImpl) IndicesDelete(ctx context.Context, index []string, o ...Option[opensearchapi.IndicesDeleteRequest]) (*opensearchapi.Response, error) {
 	options := make([]func(request *opensearchapi.IndicesDeleteRequest), len(o))
 	for i, v := range o {
 		options[i] = v
@@ -28,7 +28,7 @@ func (c *OpenClientImpl) IndicesDelete(ctx context.Context, index string, o ...O
 
 	//nolint:makezero
 	options = append(options, IndicesDelete.WithContext(ctx))
-	resp, err := c.client.API.Indices.Delete([]string{index}, options...)
+	resp, err := c.client.API.Indices.Delete(index, options...)
 
 	for _, hook := range c.afterHook {
 		ctx = hook.After(ctx, AfterContext{cmd: CmdIndicesDelete, Options: &options, Resp: resp, Err: &err})
