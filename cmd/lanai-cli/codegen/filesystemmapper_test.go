@@ -82,7 +82,7 @@ func TestFileSystemMapper_GetPathToTemplate(t *testing.T) {
 			args: args{
 				tmpl: "inner.tmpl",
 			},
-			want: path.Join("testdata", "validFileSystem", "filesystem", "inner", "inner.tmpl"),
+			want: path.Join("testdata", "validFileSystem", "srcRoot", "inner", "inner.tmpl"),
 		},
 	}
 	for _, tt := range tests {

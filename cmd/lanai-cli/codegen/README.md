@@ -8,7 +8,7 @@ To manipulate where the files are generated to, look at the `templates` director
 ```
 templates/
     common/
-    filesystem/
+    srcRoot/
 ```
 
 ### common
@@ -29,17 +29,17 @@ Hello!
 Hello from common
 ```
 
-### filesystem
+### srcRoot
 
-Files generated from templates inside `filesystem` will be output to a similar hierarchy to where the template is located.
-e.g. If you use `filesystem/inner/inner.tmpl`, then your generated file will be sent to `<output-dir>/inner/inner.go`
+Files generated from templates inside `srcRoot` will be output to a similar hierarchy to where the template is located.
+e.g. If you use `srcRoot/inner/inner.tmpl`, then your generated file will be sent to `<output-dir>/inner/inner.go`
 
 If a folder has a name surrounded by `@`, e.g `@VERSION@`, then that value can be replaced programatically.
 `GetOutputFilePath` takes a modifier map that has the special name, and what want to resolve to.
 
 For example:
 ```go
-//Say we want to make a file from `filesystem/@VERSION@/version.tmpl`
+//Say we want to make a file from `srcRoot/@VERSION@/version.tmpl`
 modifiers := map[string]string{"VERSION": "v2",}
 fsm.GetOutputFilePath("version.tmpl", "version.go", modifiers) // Will generate to <output-dir>/v2/version.tmpl
 ```

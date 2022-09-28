@@ -32,7 +32,7 @@ func init() {
 //go:embed templates
 var TmplFS embed.FS
 
-func generateTestFile(ctx context.Context, fs embed.FS, file File, fsm FileSystemMapper) error {
+func generateFileFromTemplate(ctx context.Context, fs embed.FS, file FileTemplate, fsm FileSystemMapper) error {
 	return cmdutils.GenerateFileWithOption(ctx, &cmdutils.TemplateOption{
 		FS:         fs,
 		TmplName:   fsm.GetPathToTemplate(file.template),
@@ -44,7 +44,7 @@ func generateTestFile(ctx context.Context, fs embed.FS, file File, fsm FileSyste
 	})
 }
 
-type File struct {
+type FileTemplate struct {
 	template string
 	filename string
 	model    interface{}
@@ -55,13 +55,13 @@ type File struct {
 func GenerateTemplates(fsm FileSystemMapper, templates embed.FS) error {
 	// Given a filename & desired template to use, output stuff!
 	// TODO: Actual logic for files, this is just an example
-	file := File{template: "test.tmpl", filename: "test.go", model: ""}
-	err := generateTestFile(context.Background(), templates, file, fsm)
+	file := FileTemplate{template: "test.tmpl", filename: "test.go", model: ""}
+	err := generateFileFromTemplate(context.Background(), templates, file, fsm)
 	if err != nil {
 		return err
 	}
-	file2 := File{template: "inner.tmpl", filename: "inner.go", model: ""}
-	err = generateTestFile(context.Background(), templates, file2, fsm)
+	file2 := FileTemplate{template: "inner.tmpl", filename: "inner.go", model: ""}
+	err = generateFileFromTemplate(context.Background(), templates, file2, fsm)
 	if err != nil {
 		return err
 	}
