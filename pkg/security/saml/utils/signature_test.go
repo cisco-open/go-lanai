@@ -1,14 +1,11 @@
-package saml_util
+package samlutils
 
 import (
-	"bytes"
-	"compress/flate"
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"encoding/base64"
 	"encoding/xml"
 	"fmt"
 	"github.com/beevik/etree"
@@ -20,7 +17,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -68,7 +64,6 @@ func LoadCertificates(ctx context.Context, _ *testing.T) (context.Context, error
 // TestGenerateSignatures this test is used to prepare signed requests.
 // Unless test need to be regenerated, we don't need to run this test
 func TestGenerateSignatures(t *testing.T) {
-	t.Skipf("Signature re-generation is not required")
 	test.RunTest(context.Background(), t,
 		test.SubTestSetup(LoadCertificates),
 		test.GomegaSubTest(SubTestSignPostBinding[saml.AuthnRequest]("raw_authn_request.xml", "signed_authn_request.xml"), "TestSignAuthnPost"),
@@ -200,42 +195,19 @@ func SubTestSignRedirectBinding[T saml.AuthnRequest|saml.LogoutRequest](inputFil
 		e := xml.Unmarshal(data, &req)
 		g.Expect(e).To(Succeed(), "XML unmarshalling should succeed")
 
-		var el *etree.Element
+		var rUrl *url.URL
 		var i interface{} = &req
 		switch v := i.(type) {
 		case *saml.AuthnRequest:
-			el = v.Element()
+			r := &FixedAuthnRequest{*v}
+			rUrl, e = r.Redirect(relayState, TestSP)
 		case *saml.LogoutRequest:
-			el = v.Element()
+			r := &FixedLogoutRequest{*v}
+			rUrl, e = r.Redirect(relayState, TestSP)
 		}
+		g.Expect(e).To(Succeed(), "singing request for redirect binding should succeed")
 
-		w := &bytes.Buffer{}
-		w1 := base64.NewEncoder(base64.StdEncoding, w)
-		w2, _ := flate.NewWriter(w1, 9)
-		doc := etree.NewDocument()
-		doc.SetRoot(el)
-		_, e = doc.WriteTo(w2)
-		g.Expect(e).To(Succeed(), "marshal should succeed")
-		_ = w2.Close()
-		_ = w1.Close()
-
-		rawKVs := make([]string, 1, 3)
-
-		rawKVs[0] = HttpParamSAMLRequest + "=" + url.QueryEscape(string(w.Bytes()))
-		if relayState != "" {
-			rawKVs = append(rawKVs, HttpParamRelayState + "=" + url.QueryEscape(relayState))
-		}
-		rawKVs = append(rawKVs, HttpParamSigAlg + "=" + url.QueryEscape(TestSP.SignatureMethod))
-
-		signingContext, e := saml.GetSigningContext(TestSP)
-		g.Expect(e).To(Succeed(), "creating signing context should succeed")
-
-		toSign := strings.Join(rawKVs, "&")
-		sig, e := signingContext.SignString(toSign)
-		g.Expect(e).To(Succeed(), "signing should succeed")
-
-		sigVal := base64.StdEncoding.EncodeToString(sig)
-		rawQuery := fmt.Sprintf("unrelated=some_value&%s=%s&%s", HttpParamSignature, url.QueryEscape(sigVal), toSign)
+		rawQuery := rUrl.Query().Encode()
 		writeFile(t, g, outputFile, []byte(rawQuery))
 	}
 }

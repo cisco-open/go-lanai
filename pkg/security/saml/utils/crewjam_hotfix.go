@@ -1,9 +1,8 @@
-package samllogin
+package samlutils
 
 import (
 	"bytes"
 	"compress/flate"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
 	"encoding/base64"
 	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
@@ -34,16 +33,16 @@ func redirectUrl(relayState string, sp *saml.ServiceProvider, rootEl *etree.Elem
 	rv, _ := url.Parse(dest)
 	query := rv.Query()
 
-	rawKVs[0] = saml_util.HttpParamSAMLRequest + "=" + url.QueryEscape(string(w.Bytes()))
-	query.Set(saml_util.HttpParamSAMLRequest, string(w.Bytes()))
+	rawKVs[0] = HttpParamSAMLRequest + "=" + url.QueryEscape(string(w.Bytes()))
+	query.Set(HttpParamSAMLRequest, string(w.Bytes()))
 
 	if relayState != "" {
-		rawKVs = append(rawKVs, saml_util.HttpParamRelayState + "=" + url.QueryEscape(relayState))
-		query.Set(saml_util.HttpParamRelayState, relayState)
+		rawKVs = append(rawKVs, HttpParamRelayState+ "=" + url.QueryEscape(relayState))
+		query.Set(HttpParamRelayState, relayState)
 	}
 	if len(sp.SignatureMethod) > 0 {
-		rawKVs = append(rawKVs, saml_util.HttpParamSigAlg + "=" + url.QueryEscape(sp.SignatureMethod))
-		query.Set(saml_util.HttpParamSigAlg, sp.SignatureMethod)
+		rawKVs = append(rawKVs, HttpParamSigAlg+ "=" + url.QueryEscape(sp.SignatureMethod))
+		query.Set(HttpParamSigAlg, sp.SignatureMethod)
 
 		signingContext, e := saml.GetSigningContext(sp)
 		if e != nil {
@@ -56,7 +55,7 @@ func redirectUrl(relayState string, sp *saml.ServiceProvider, rootEl *etree.Elem
 		}
 
 		sigVal := base64.StdEncoding.EncodeToString(sig)
-		query.Set(saml_util.HttpParamSignature, sigVal)
+		query.Set(HttpParamSignature, sigVal)
 	}
 	rv.RawQuery = query.Encode()
 	return rv, nil
@@ -70,7 +69,7 @@ type FixedAuthnRequest struct {
 	saml.AuthnRequest
 }
 
-func MakeFixedAuthenticationRequest(sp *saml.ServiceProvider, idpURL string, binding string, resultBinding string) (*FixedAuthnRequest, error) {
+func NewFixedAuthenticationRequest(sp *saml.ServiceProvider, idpURL string, binding string, resultBinding string) (*FixedAuthnRequest, error) {
 	req, e := sp.MakeAuthenticationRequest(idpURL, binding, resultBinding)
 	if e != nil {
 		return nil, e
@@ -93,7 +92,7 @@ type FixedLogoutRequest struct {
 	saml.LogoutRequest
 }
 
-func MakeFixedLogoutRequest(sp *saml.ServiceProvider, idpURL, nameID string) (*FixedLogoutRequest, error) {
+func NewFixedLogoutRequest(sp *saml.ServiceProvider, idpURL, nameID string) (*FixedLogoutRequest, error) {
 	req, e := sp.MakeLogoutRequest(idpURL, nameID)
 	if e != nil {
 		return nil, e

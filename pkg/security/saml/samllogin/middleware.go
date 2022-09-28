@@ -2,7 +2,7 @@ package samllogin
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/xml"
 	"github.com/crewjam/saml"
@@ -116,6 +116,6 @@ func (m *SPMetadataMiddleware) redirectBindingExecutor(req bindableSamlRequest, 
 func (m *SPMetadataMiddleware) postBindingExecutor(req bindableSamlRequest, relayState string) func(w http.ResponseWriter, r *http.Request) error {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		data := req.Post(relayState)
-		return saml_util.WritePostBindingForm(data, w)
+		return samlutils.WritePostBindingHTML(data, w)
 	}
 }

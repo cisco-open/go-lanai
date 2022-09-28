@@ -9,7 +9,7 @@ import (
 
 var (
 	FeatureId    = security.FeatureId("SamlAuthorizeEndpoint", security.FeatureOrderSamlAuthorizeEndpoint)
-	SloFeatureId = security.FeatureId("SamlSLOEndpoint", security.FeatureOrderLogout)
+	SloFeatureId = security.FeatureId("SamlSLOEndpoint", security.FeatureOrderSamlLogout)
 )
 
 type Feature struct {

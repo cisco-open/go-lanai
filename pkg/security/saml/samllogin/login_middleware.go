@@ -5,7 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"fmt"
 	"github.com/crewjam/saml"
@@ -70,7 +70,7 @@ func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.R
 	}
 
 	// Note: we only support post for result binding
-	authReq, err := MakeFixedAuthenticationRequest(client, location, binding, saml.HTTPPostBinding)
+	authReq, err := samlutils.NewFixedAuthenticationRequest(client, location, binding, saml.HTTPPostBinding)
 	if err != nil {
 		return security.NewExternalSamlAuthenticationError("cannot make auth request to binding location", err)
 	}
@@ -97,7 +97,7 @@ func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.R
 func (sp *SPLoginMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		resp := saml.Response{}
-		switch rs := saml_util.ParseSAMLObject(c, &resp); {
+		switch rs := samlutils.ParseSAMLObject(c, &resp); {
 		case rs.Err != nil:
 			sp.handleError(c, security.NewExternalSamlAuthenticationError(fmt.Errorf("cannot process ACS request: %v", rs.Err)))
 			return

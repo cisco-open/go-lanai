@@ -2,7 +2,7 @@ package saml_auth
 
 import (
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"encoding/base64"
 	"github.com/crewjam/saml"
 	"net/http"
@@ -38,12 +38,11 @@ func (r SamlLogoutRequest) Validate() error {
 }
 
 func (r SamlLogoutRequest) VerifySignature() error {
-	// TODO we might need to support redirect binding
 	cert, e := r.serviceProviderCert("signing")
 	if e != nil {
 		return ErrorSamlSloResponder.WithMessage("logout request signature cannot be verified, because metadata does not include certificate")
 	}
-	return saml_util.VerifySignature(func(sc *saml_util.SignatureContext) {
+	return samlutils.VerifySignature(func(sc *samlutils.SignatureContext) {
 		sc.Binding = r.Binding
 		sc.XMLData = r.RequestBuffer
 		sc.Certs = []*x509.Certificate{cert}
@@ -60,7 +59,7 @@ func (r SamlLogoutRequest) WriteResponse(rw http.ResponseWriter) error {
 	switch r.Callback.Binding {
 	case saml.HTTPPostBinding:
 		data := r.Response.Post("")
-		if e := saml_util.WritePostBindingForm(data, rw); e != nil {
+		if e := samlutils.WritePostBindingHTML(data, rw); e != nil {
 			return ErrorSamlSloRequester.WithMessage("unable to write response: %v", e)
 		}
 	default:

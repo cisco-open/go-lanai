@@ -4,7 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/gob"
 	"errors"
@@ -73,7 +73,7 @@ func (m *SPLogoutMiddleware) MakeSingleLogoutRequest(ctx context.Context, r *htt
 	nameId, format := m.resolveNameId(ctx)
 	// Note 1: MakeLogoutRequest doesn't handle Redirect properly as of crewjam/saml, we wrap it with a temporary fix
 	// Note 2: SLO specs don't requires RelayState
-	sloReq, e := MakeFixedLogoutRequest(client, location, nameId)
+	sloReq, e := samlutils.NewFixedLogoutRequest(client, location, nameId)
 	if e != nil {
 		return security.NewExternalSamlAuthenticationError("cannot make SLO request to binding location", e)
 	}
@@ -105,8 +105,8 @@ func (m *SPLogoutMiddleware) LogoutHandlerFunc() gin.HandlerFunc {
 	return func(gc *gin.Context) {
 		var req saml.LogoutRequest
 		var resp saml.LogoutResponse
-		reqR := saml_util.ParseSAMLObject(gc, &req)
-		respR := saml_util.ParseSAMLObject(gc, &resp)
+		reqR := samlutils.ParseSAMLObject(gc, &req)
+		respR := samlutils.ParseSAMLObject(gc, &resp)
 		switch {
 		case reqR.Err != nil && respR.Err != nil || reqR.Err == nil && respR.Err == nil:
 			m.handleError(gc, security.NewExternalSamlAuthenticationError("Error reading SAMLRequest/SAMLResponse", reqR.Err, respR.Err))

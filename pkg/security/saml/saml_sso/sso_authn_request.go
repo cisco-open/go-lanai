@@ -3,7 +3,7 @@ package saml_auth
 import (
 	"bytes"
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"encoding/xml"
 	"fmt"
 	"github.com/crewjam/saml"
@@ -57,7 +57,7 @@ func verifySignature(req *saml.IdpAuthnRequest) error {
 	if err != nil {
 		return NewSamlRequesterError("request signature cannot be verified, because metadata does not include certificate", err)
 	}
-	return saml_util.VerifySignature(func(sc *saml_util.SignatureContext) {
+	return samlutils.VerifySignature(func(sc *samlutils.SignatureContext) {
 		sc.Binding = binding
 		sc.XMLData = req.RequestBuffer
 		sc.Certs = []*x509.Certificate{cert}

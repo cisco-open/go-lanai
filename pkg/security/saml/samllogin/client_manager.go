@@ -3,7 +3,7 @@ package samllogin
 import (
 	"context"
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"github.com/crewjam/saml"
 	"net"
@@ -95,7 +95,7 @@ func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIde
 func (m *CacheableIdpClientManager) resolveMetadata(ctx context.Context, refresh []SamlIdentityProvider) (resolved map[string]*saml.ServiceProvider){
 	resolved = make(map[string]*saml.ServiceProvider)
 	for _, details := range refresh {
-		idpDescriptor, data, err := saml_util.ResolveMetadata(ctx, details.MetadataLocation(), saml_util.WithHttpClient(m.httpClient))
+		idpDescriptor, data, err := samlutils.ResolveMetadata(ctx, details.MetadataLocation(), samlutils.WithHttpClient(m.httpClient))
 		if err == nil {
 			if details.ShouldMetadataRequireSignature() && idpDescriptor.Signature == nil{
 				logger.WithContext(ctx).Errorf("idp metadata rejected because it is not signed")
@@ -111,7 +111,7 @@ func (m *CacheableIdpClientManager) resolveMetadata(ctx context.Context, refresh
 					}
 				}
 
-				err = saml_util.VerifySignature(saml_util.MetadataSignature(data, allCerts...))
+				err = samlutils.VerifySignature(samlutils.MetadataSignature(data, allCerts...))
 				if err != nil {
 					logger.Error("idp metadata rejected because it's signature cannot be verified")
 					continue

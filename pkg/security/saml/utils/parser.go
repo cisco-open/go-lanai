@@ -1,4 +1,4 @@
-package saml_util
+package samlutils
 
 import (
 	"bytes"

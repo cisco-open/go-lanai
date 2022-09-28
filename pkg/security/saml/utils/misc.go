@@ -1,4 +1,4 @@
-package saml_util
+package samlutils
 
 import (
 	"bytes"
@@ -41,14 +41,12 @@ func FindChild(parentEl *etree.Element, childNS string, childTag string) (*etree
 	return nil, nil
 }
 
-// WritePostBindingForm takes HTML of a request/response submitting form and wrap it in HTML document with proper
+// WritePostBindingHTML takes HTML of a request/response submitting form and wrap it in HTML document with proper
 // script security tags and send it to given ResponseWriter
-func WritePostBindingForm(formHtml []byte, rw http.ResponseWriter) error {
-	rw.Header().Add("Content-Type", "text/html")
-
-	body := append([]byte(`<!DOCTYPE html><html><body>`), formHtml...)
-	body = append(body, []byte(`</body></html>`)...)
+func WritePostBindingHTML(formHtml []byte, rw http.ResponseWriter) error {
+	body := []byte(fmt.Sprintf(`<!DOCTYPE html><html><body>%s</body></html>`, formHtml))
 	csp := fmt.Sprintf("default-src; script-src %s; reflected-xss block; referrer no-referrer;", scriptSrcHash(body))
+	rw.Header().Add("Content-Type", "text/html")
 	rw.Header().Add("Content-Security-Policy", csp)
 	_, e := rw.Write(body)
 	return e

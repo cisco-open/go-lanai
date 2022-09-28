@@ -3,7 +3,7 @@ package saml_auth
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -43,7 +43,7 @@ func (mw *SamlSingleLogoutMiddleware) Order() int {
 }
 
 func (mw *SamlSingleLogoutMiddleware) SLOCondition() web.RequestMatcher {
-	return matcher.RequestHasForm(saml_util.HttpParamSAMLRequest)
+	return matcher.RequestHasForm(samlutils.HttpParamSAMLRequest)
 }
 
 // ShouldLogout is a logout.ConditionalLogoutHandler method that interrupt logout process by returning authentication error,
@@ -52,7 +52,7 @@ func (mw *SamlSingleLogoutMiddleware) ShouldLogout(ctx context.Context, r *http.
 	gc := web.GinContext(ctx)
 	samlReq := mw.newSamlLogoutRequest(r)
 	var req saml.LogoutRequest
-	parsedReq := saml_util.ParseSAMLObject(gc, &req)
+	parsedReq := samlutils.ParseSAMLObject(gc, &req)
 	switch {
 	case parsedReq.Err != nil && len(parsedReq.Encoded) == 0:
 		// not SAML request, ignore
