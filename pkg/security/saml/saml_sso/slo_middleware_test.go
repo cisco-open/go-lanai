@@ -14,11 +14,13 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/testdata"
 	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
+	"embed"
 	"encoding/base64"
 	"encoding/xml"
 	"github.com/beevik/etree"
@@ -43,6 +45,9 @@ const (
 
 
 )
+
+//go:embed testdata/template/*.tmpl
+var TestHTMLTemplates embed.FS
 
 var TestSP *saml.ServiceProvider
 
@@ -78,7 +83,8 @@ type LogoutTestOut struct {
 	SamlClientStore saml_auth_ctx.SamlClientStore
 }
 
-func LogoutTestSecurityConfigProvider(registrar security.Registrar, props lanaisaml.SamlProperties) LogoutTestOut {
+func LogoutTestSecurityConfigProvider(registrar security.Registrar, webReg *web.Registrar) LogoutTestOut {
+	webReg.MustRegister(TestHTMLTemplates)
 	cfg := TestLogoutSecConfigurer{}
 	registrar.Register(&cfg)
 	if TestSP == nil {
@@ -114,6 +120,8 @@ func TestWithMockedServer(t *testing.T) {
 		),
 		test.GomegaSubTest(SubTestSLORedirectBinding(di), "TestSLORedirectBinding"),
 		test.GomegaSubTest(SubTestSLOPostBinding(di), "TestSLOPostBinding"),
+		test.GomegaSubTest(SubTestSLORequesterError(di), "TestSLORequesterError"),
+		test.GomegaSubTest(SubTestSLOResponderError(di), "TestSLOResponderError"),
 	)
 }
 
@@ -145,6 +153,38 @@ func SubTestSLOPostBinding(_ *sloTestDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestSLORequesterError(_ *sloTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *http.Request
+		var resp *http.Response
+		ctx = sectest.WithMockedSecurity(ctx)
+		sp := *TestSP
+		sp.EntityID = "http://unregistered/sp"
+		req, e := newLogoutRequest(ctx, saml.HTTPPostBinding, &sp)
+
+		g.Expect(e).To(Succeed(), "creating redirect SAML request should succeed")
+		resp = webtest.MustExec(ctx, req).Response
+		assertLogoutRequesterErrorResponse(t, g, resp)
+	}
+}
+
+func SubTestSLOResponderError(_ *sloTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *http.Request
+		var resp *http.Response
+		ctx = sectest.WithMockedSecurity(ctx)
+		req, e := newLogoutRequest(ctx, saml.HTTPRedirectBinding, TestSP, func(httpReq *http.Request) {
+			q := httpReq.URL.Query()
+			q.Set("Signature", "YXNkZmFzZGZzZGZzYWRm")
+			httpReq.URL.RawQuery = q.Encode()
+		})
+
+		g.Expect(e).To(Succeed(), "creating redirect SAML request should succeed")
+		resp = webtest.MustExec(ctx, req).Response
+		assertLogoutResponderErrorResponse(t, g, resp)
+	}
+}
+
 /*************************
 	Helpers
  *************************/
@@ -152,7 +192,7 @@ func SubTestSLOPostBinding(_ *sloTestDI) test.GomegaSubTestFunc {
 type logoutSamlOptions func(samlReq *saml.LogoutRequest)
 type logoutHttpOptions func(httpReq *http.Request)
 func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvider, opts...any) (*http.Request, error) {
-	sr, e := samlutils.NewFixedLogoutRequest(TestSP, testdata.TestIdpSloURL.String(), "any_name_id")
+	sr, e := samlutils.NewFixedLogoutRequest(sp, testdata.TestIdpSloURL.String(), "any_name_id")
 	if e != nil {
 		return nil, e
 	}
@@ -174,10 +214,6 @@ func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvi
 		}
 		req = webtest.NewRequest(ctx, http.MethodGet, sloUrl.String(), nil)
 	default:
-		sr.Signature = nil
-		if e := sp.SignLogoutRequest(&sr.LogoutRequest); e != nil {
-			return nil, e
-		}
 		doc := etree.NewDocument()
 		doc.SetRoot(sr.Element())
 		srBuf, e := doc.WriteToBytes()
@@ -206,7 +242,28 @@ func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvi
 
 func assertLogoutSuccessResponse(t *testing.T, g *gomega.WithT, resp *http.Response) {
 	sloResp := assertLogoutResponse(t, g, resp)
+	g.Expect(sloResp.Status.StatusCode).To(Not(BeNil()), "SAML response should have status code")
 	g.Expect(sloResp.Status.StatusCode.Value).To(Equal(saml.StatusSuccess), "SAML response should have success status code")
+}
+
+func assertLogoutResponderErrorResponse(t *testing.T, g *gomega.WithT, resp *http.Response) {
+	sloResp := assertLogoutResponse(t, g, resp)
+	g.Expect(sloResp.Status.StatusCode).To(Not(BeNil()), "SAML response should have status code")
+	g.Expect(sloResp.Status.StatusCode.Value).To(Equal(saml.StatusAuthnFailed), "SAML response should have success status code")
+	g.Expect(sloResp.Status.StatusMessage).To(Not(BeNil()), "SAML response should have status message")
+	g.Expect(sloResp.Status.StatusMessage.Value).To(Not(BeEmpty()), "SAML response should have non-empty status message")
+}
+
+func assertLogoutRequesterErrorResponse(t *testing.T, g *gomega.WithT, resp *http.Response) {
+	g.Expect(resp.StatusCode).To(Not(Equal(http.StatusOK)), "response should not be 200")
+	g.Expect(resp.Header.Get("Content-Type")).To(HavePrefix("text/html"), "response should be HTML")
+	doc := etree.NewDocument()
+	_, e := doc.ReadFrom(resp.Body)
+	g.Expect(e).To(Succeed(), "response body should be a valid HTML")
+
+	el := doc.FindElement("//p[@id='error-msg']")
+	g.Expect(el).To(Not(BeNil()), "response should have error message tag")
+	g.Expect(el.Text()).To(Not(BeEmpty()), "response should have non-empty error message")
 }
 
 func assertLogoutResponse(t *testing.T, g *gomega.WithT, resp *http.Response) *saml.LogoutResponse {
@@ -227,7 +284,7 @@ func assertLogoutResponse(t *testing.T, g *gomega.WithT, resp *http.Response) *s
 }
 
 func extractHTMLFormData(_ *testing.T, g *gomega.WithT, resp *http.Response) map[string]string {
-	g.Expect(resp.Header.Get("Content-Type")).To(Equal("text/html"), "response should be HTML")
+	g.Expect(resp.Header.Get("Content-Type")).To(HavePrefix("text/html"), "response should be HTML")
 	doc := etree.NewDocument()
 	_, e := doc.ReadFrom(resp.Body)
 	g.Expect(e).To(Succeed(), "response body should be a valid HTML")

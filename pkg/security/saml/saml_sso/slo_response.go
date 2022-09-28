@@ -34,7 +34,7 @@ func MakeLogoutResponse(req *SamlLogoutRequest, code string, message string) (*s
 		}
 	}
 
-	if len(req.IDP.SignatureMethod) > 0 {
+	if len(req.IDP.SignatureMethod) == 0 {
 		req.IDP.SignatureMethod = dsig.RSASHA1SignatureMethod
 	}
 

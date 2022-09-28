@@ -73,7 +73,7 @@ func (h *SamlErrorHandler) handleSloError(c context.Context, r *http.Request, rw
 	}
 
 	code := saml.StatusAuthnFailed
-	message := ""
+	message := err.Error()
 	if translator, ok := err.(SamlSsoErrorTranslator); ok { //all the saml sub types should implement the translator API
 		code = translator.TranslateErrorCode()
 		message = translator.TranslateErrorMessage()
