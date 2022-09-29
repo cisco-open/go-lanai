@@ -1,0 +1,3 @@
+files:
+  - "testdata/output/test.go"
+  - "testdata/output/inner/inner.go"
