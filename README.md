@@ -14,7 +14,7 @@ Modules provided by go-lanai includes:
 - discovery
 - dsync
 - integrate
-- kafka
+- [kafka](pkg/kafka/README.md)
 - log
 - migration
 - opensearch
