@@ -97,8 +97,11 @@ func (mw *LogoutMiddleware) handleWarnings(gc *gin.Context, warning error) {
 }
 
 func (mw *LogoutMiddleware) handleError(gc *gin.Context, err error) {
-	mw.errorHandler.HandleAuthenticationError(gc, gc.Request, gc.Writer,
-		security.NewInternalAuthenticationError(err))
+	if !errors.Is(err, security.ErrorTypeSecurity) {
+		err = security.NewInternalAuthenticationError(err.Error(), err)
+	}
+
+	mw.errorHandler.HandleAuthenticationError(gc, gc.Request, gc.Writer, err)
 	if gc.Writer.Written() {
 		gc.Abort()
 	}

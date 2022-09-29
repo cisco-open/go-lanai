@@ -3,6 +3,7 @@ package saml_auth
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"fmt"
 	"github.com/crewjam/saml"
@@ -26,7 +27,8 @@ See http://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf 4.1.3
 */
 //nolint:errorlint
 func (h *SamlErrorHandler) HandleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
-	//catch the saml errors that were weren't able to send back to the client
+	//catch the saml errors that we weren't able to send back to the client
+	err = h.findCause(err)
 	if !errors.Is(err, security.ErrorTypeSaml) {
 		return
 	}
@@ -39,6 +41,20 @@ func (h *SamlErrorHandler) HandleError(c context.Context, r *http.Request, rw ht
 	case errors.Is(err, ErrorSubTypeSamlSlo):
 		h.handleSloError(c, r, rw, err)
 	}
+}
+
+// findCause returns nested error if it's caused by SAML error, otherwise return error itself
+//nolint:errorlint
+func (h *SamlErrorHandler) findCause(err error) error {
+	e := err
+	for ;!errors.Is(e, security.ErrorTypeSaml); {
+		nested, ok := e.(errorutils.NestedError)
+		if !ok {
+			return err
+		}
+		e = nested.Cause()
+	}
+	return e
 }
 
 //nolint:errorlint

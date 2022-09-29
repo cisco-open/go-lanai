@@ -148,7 +148,7 @@ func SubTestLogoutWithoutSAML(_ *sloTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var req *http.Request
 		var resp *http.Response
-		ctx = sectest.WithMockedSecurity(ctx)
+		ctx = sectest.ContextWithSecurity(ctx, sectest.MockedAuthentication())
 		req = webtest.NewRequest(ctx, http.MethodGet, TestLogoutURL, nil)
 		resp = webtest.MustExec(ctx, req).Response
 		assertLogoutSuccessResponse(t, g, resp)

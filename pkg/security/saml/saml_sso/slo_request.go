@@ -11,14 +11,15 @@ import (
 )
 
 type SamlLogoutRequest struct {
-	HTTPRequest *http.Request
-	Binding     string
-	Request     *saml.LogoutRequest
+	HTTPRequest     *http.Request
+	Binding         string
+	Request         *saml.LogoutRequest
 	RequestBuffer   []byte
+	RelayState      string
+	IDP             *saml.IdentityProvider
 	SPMeta          *saml.EntityDescriptor // the requester
 	SPSSODescriptor *saml.SPSSODescriptor
 	Callback        *saml.Endpoint
-	IDP             *saml.IdentityProvider
 	Response        *saml.LogoutResponse
 }
 
@@ -31,9 +32,15 @@ func (r SamlLogoutRequest) Validate() error {
 	if r.Request.IssueInstant.Add(saml.MaxIssueDelay).Before(now) {
 		return ErrorSamlSloResponder.WithMessage("request expired at %s", r.Request.IssueInstant.Add(saml.MaxIssueDelay))
 	}
+
 	if r.Request.Version != "2.0" {
 		return NewSamlRequestVersionMismatch("expected saml version 2.0")
 	}
+
+	if r.Request.NameID == nil || len(r.Request.NameID.Value) == 0 {
+		return ErrorSamlSloResponder.WithMessage("request missing saml:NameID")
+	}
+
 	return nil
 }
 
@@ -58,7 +65,7 @@ func (r SamlLogoutRequest) WriteResponse(rw http.ResponseWriter) error {
 	// the only supported binding is the HTTP-POST binding, so don't need to apply Redirect fix
 	switch r.Callback.Binding {
 	case saml.HTTPPostBinding:
-		data := r.Response.Post("")
+		data := r.Response.Post(r.RelayState)
 		if e := samlutils.WritePostBindingHTML(data, rw); e != nil {
 			return ErrorSamlSloRequester.WithMessage("unable to write response: %v", e)
 		}

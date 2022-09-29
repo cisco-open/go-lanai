@@ -71,7 +71,7 @@ func (sc *Configurer) Apply(feature security.Feature, ws security.WebSecurity) e
 	tokenStore := newSessionBackedStore()
 
 	//Add authentication success handler
-	successHandler := &ChangeCsrfHanlder{
+	successHandler := &ChangeCsrfHandler{
 		csrfTokenStore: tokenStore,
 	}
 	ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(*security.CompositeAuthenticationSuccessHandler).

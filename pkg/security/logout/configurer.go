@@ -81,33 +81,32 @@ func (c *LogoutConfigurer) validate(f *LogoutFeature, _ security.WebSecurity) er
 }
 
 func (c *LogoutConfigurer) effectiveSuccessHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationSuccessHandler {
+	handlers := make([]security.AuthenticationSuccessHandler, len(f.successHandlers), len(f.successHandlers) + 2)
+	copy(handlers, f.successHandlers)
 
-	if len(f.successHandlers) == 0 {
-		f.successHandlers = []security.AuthenticationSuccessHandler{redirect.NewRedirectWithURL(f.successUrl)}
+	if len(handlers) == 0 {
+		handlers = append(handlers, redirect.NewRedirectWithURL(f.successUrl))
 	}
 
-	order.SortStable(f.successHandlers, order.OrderedFirstCompare)
-	sh := security.NewAuthenticationSuccessHandler(f.successHandlers...)
 	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthSuccessHandler).(security.AuthenticationSuccessHandler); ok {
-		return security.NewAuthenticationSuccessHandler(globalHandler, sh)
-	} else {
-		return sh
+		handlers = append([]security.AuthenticationSuccessHandler{globalHandler}, handlers...) // global BEFORE logout success handlers
 	}
+	order.SortStable(handlers, order.OrderedFirstCompare)
+	return security.NewAuthenticationSuccessHandler(handlers...)
 }
 
 func (c *LogoutConfigurer) effectiveErrorHandler(f *LogoutFeature, ws security.WebSecurity) security.AuthenticationErrorHandler {
+	handlers := make([]security.AuthenticationErrorHandler, len(f.errorHandlers), len(f.errorHandlers) + 2)
+	copy(handlers, f.errorHandlers)
 
-	if len(f.errorHandlers) == 0 {
-		f.errorHandlers = []security.AuthenticationErrorHandler{redirect.NewRedirectWithURL(f.errorUrl)}
+	if len(handlers) == 0 {
+		handlers = append(handlers, redirect.NewRedirectWithURL(f.errorUrl))
 	}
 
-	order.SortStable(f.errorHandlers, order.OrderedFirstCompare)
-	eh := security.NewAuthenticationErrorHandler(f.errorHandlers...)
 	if globalHandler, ok := ws.Shared(security.WSSharedKeyCompositeAuthErrorHandler).(security.AuthenticationErrorHandler); ok {
-		return security.NewAuthenticationErrorHandler(globalHandler, eh)
-	} else {
-		return eh
+		handlers = append(handlers, globalHandler) // global AFTER logout error handlers
 	}
+	return security.NewAuthenticationErrorHandler(handlers...)
 }
 
 func (c *LogoutConfigurer) effectiveEntryPoints(f *LogoutFeature) security.AuthenticationEntryPoint {

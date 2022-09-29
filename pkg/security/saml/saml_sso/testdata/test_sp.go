@@ -20,7 +20,6 @@ const (
 	TestSPPrivKeyFile = `testdata/saml_test_sp.key`
 	TestSPAcsURL      = `http://samlsp.msx.com/samlsp/saml/acs`
 	TestSPSloURL      = `http://samlsp.msx.com/samlsp/saml/slo`
-	TestIDPCertFile   = `testdata/saml_test.cert`
 )
 
 var (
@@ -31,14 +30,11 @@ var (
 
 func NewTestSP() *saml.ServiceProvider {
 	var e error
-	var spCerts, idpCerts []*x509.Certificate
+	var spCerts []*x509.Certificate
 	var privKey *rsa.PrivateKey
 	var acsUrl, sloUrl *url.URL
 
 	if spCerts, e = cryptoutils.LoadCert(TestSPCertFile); e != nil {
-		panic(e)
-	}
-	if idpCerts, e = cryptoutils.LoadCert(TestIDPCertFile); e != nil {
 		panic(e)
 	}
 	if privKey, e = cryptoutils.LoadPrivateKey(TestSPPrivKeyFile, ""); e != nil {
@@ -52,7 +48,7 @@ func NewTestSP() *saml.ServiceProvider {
 	}
 
 	testIDP := &saml.IdentityProvider{
-		Certificate: idpCerts[0],
+		Certificate: TestIDPCerts[0],
 		MetadataURL: *TestIdpURL,
 		SSOURL:      *TestIdpSsoURL,
 		LogoutURL:   *TestIdpSloURL,

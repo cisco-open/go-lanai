@@ -31,6 +31,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 )
 
 /*************************
@@ -38,12 +39,10 @@ import (
  *************************/
 
 const (
-	TestContextPath      = webtest.DefaultContextPath
 	TestLogoutErrorURL   = "/error"
 	TestLogoutSuccessURL = "/logout/success"
 	TestRelayState       = "MjJkNjBhNWYtMzAzMS00NmZkLWE2NjktMjRlZTFjNTZiZDBj"
-
-
+	TestUsername         = "test-user"
 )
 
 //go:embed testdata/template/*.tmpl
@@ -91,8 +90,8 @@ func LogoutTestSecurityConfigProvider(registrar security.Registrar, webReg *web.
 		TestSP = testdata.NewTestSP()
 	}
 	return LogoutTestOut{
-		SecConfigurer: &cfg,
-		TestSP: TestSP,
+		SecConfigurer:   &cfg,
+		TestSP:          TestSP,
 		SamlClientStore: testdata.NewTestSamlClientStore(TestSP),
 	}
 }
@@ -120,6 +119,7 @@ func TestWithMockedServer(t *testing.T) {
 		),
 		test.GomegaSubTest(SubTestSLORedirectBinding(di), "TestSLORedirectBinding"),
 		test.GomegaSubTest(SubTestSLOPostBinding(di), "TestSLOPostBinding"),
+		test.GomegaSubTest(SubTestSLOUnauthenticated(di), "TestSLOUnauthenticated"),
 		test.GomegaSubTest(SubTestSLORequesterError(di), "TestSLORequesterError"),
 		test.GomegaSubTest(SubTestSLOResponderError(di), "TestSLOResponderError"),
 	)
@@ -131,57 +131,75 @@ func TestWithMockedServer(t *testing.T) {
 
 func SubTestSLORedirectBinding(_ *sloTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		var req *http.Request
-		var resp *http.Response
-		ctx = sectest.WithMockedSecurity(ctx)
-		req, e := newLogoutRequest(ctx, saml.HTTPRedirectBinding, TestSP)
-		g.Expect(e).To(Succeed(), "creating redirect SAML request should succeed")
-		resp = webtest.MustExec(ctx, req).Response
-		assertLogoutSuccessResponse(t, g, resp)
+		ctx = sectest.ContextWithSecurity(ctx, mockedAuthentication())
+		performRedirectSingleLogout(ctx, t, g, assertLogoutSuccessResponse)
 	}
 }
 
 func SubTestSLOPostBinding(_ *sloTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		var req *http.Request
-		var resp *http.Response
-		ctx = sectest.WithMockedSecurity(ctx)
-		req, e := newLogoutRequest(ctx, saml.HTTPPostBinding, TestSP)
-		g.Expect(e).To(Succeed(), "creating post SAML request should succeed")
-		resp = webtest.MustExec(ctx, req).Response
-		assertLogoutSuccessResponse(t, g, resp)
+		ctx = sectest.ContextWithSecurity(ctx, mockedAuthentication())
+		performPostSingleLogout(ctx, t, g, assertLogoutSuccessResponse)
+	}
+}
+
+func SubTestSLOUnauthenticated(_ *sloTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		performPostSingleLogout(ctx, t, g, assertLogoutSuccessResponse)
 	}
 }
 
 func SubTestSLORequesterError(_ *sloTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		var req *http.Request
-		var resp *http.Response
-		ctx = sectest.WithMockedSecurity(ctx)
-		sp := *TestSP
-		sp.EntityID = "http://unregistered/sp"
-		req, e := newLogoutRequest(ctx, saml.HTTPPostBinding, &sp)
-
-		g.Expect(e).To(Succeed(), "creating redirect SAML request should succeed")
-		resp = webtest.MustExec(ctx, req).Response
-		assertLogoutRequesterErrorResponse(t, g, resp)
+		ctx = sectest.ContextWithSecurity(ctx, mockedAuthentication())
+		// no SP
+		performPostSingleLogout(ctx, t, g, assertLogoutRequesterErrorResponse, func(samlReq *saml.LogoutRequest) {
+			samlReq.Issuer = nil
+		})
+		// unregistered SP
+		performPostSingleLogout(ctx, t, g, assertLogoutRequesterErrorResponse, func(samlReq *saml.LogoutRequest) {
+			samlReq.Issuer.Value = "http://unregistered/sp"
+		})
 	}
 }
 
 func SubTestSLOResponderError(_ *sloTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		var req *http.Request
-		var resp *http.Response
-		ctx = sectest.WithMockedSecurity(ctx)
-		req, e := newLogoutRequest(ctx, saml.HTTPRedirectBinding, TestSP, func(httpReq *http.Request) {
+		ctx = sectest.ContextWithSecurity(ctx, mockedAuthentication())
+		// invalid signature
+		performRedirectSingleLogout(ctx, t, g, assertLogoutResponderErrorResponse, func(httpReq *http.Request) {
 			q := httpReq.URL.Query()
 			q.Set("Signature", "YXNkZmFzZGZzZGZzYWRm")
 			httpReq.URL.RawQuery = q.Encode()
 		})
 
-		g.Expect(e).To(Succeed(), "creating redirect SAML request should succeed")
-		resp = webtest.MustExec(ctx, req).Response
-		assertLogoutResponderErrorResponse(t, g, resp)
+		// expired request
+		performPostSingleLogout(ctx, t, g, assertLogoutResponderErrorResponse, func(samlReq *saml.LogoutRequest) {
+			samlReq.IssueInstant = time.Time{}
+		})
+
+		// missing NameID
+		performPostSingleLogout(ctx, t, g, assertLogoutResponderErrorResponse, func(samlReq *saml.LogoutRequest) {
+			samlReq.NameID = nil
+		})
+
+		// mismatched NameID
+		performPostSingleLogout(ctx, t, g, assertLogoutResponderErrorResponse, func(samlReq *saml.LogoutRequest) {
+			samlReq.NameID.Value = "another-user"
+		})
+
+		// unsupported NameID format
+		performPostSingleLogout(ctx, t, g, assertLogoutResponderErrorResponse, func(samlReq *saml.LogoutRequest) {
+			samlReq.NameID.Format = string(saml.EmailAddressNameIDFormat)
+		})
+
+		// Destination mismatch
+		performPostSingleLogout(ctx, t, g, assertLogoutResponderErrorResponse, func(samlReq *saml.LogoutRequest) {
+			if v, e := url.Parse(samlReq.Destination); e == nil {
+				v.Host = "another.domain"
+				samlReq.Destination = v.String()
+			}
+		})
 	}
 }
 
@@ -191,8 +209,24 @@ func SubTestSLOResponderError(_ *sloTestDI) test.GomegaSubTestFunc {
 
 type logoutSamlOptions func(samlReq *saml.LogoutRequest)
 type logoutHttpOptions func(httpReq *http.Request)
-func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvider, opts...any) (*http.Request, error) {
-	sr, e := samlutils.NewFixedLogoutRequest(sp, testdata.TestIdpSloURL.String(), "any_name_id")
+type logoutResponseAssertion func(t *testing.T, g *gomega.WithT, resp *http.Response)
+
+func performRedirectSingleLogout(ctx context.Context, t *testing.T, g *gomega.WithT, assertion logoutResponseAssertion, opts ...any) {
+	req, e := newLogoutRequest(ctx, saml.HTTPRedirectBinding, TestSP, opts...)
+	g.Expect(e).To(Succeed(), "creating redirect SAML request should succeed")
+	resp := webtest.MustExec(ctx, req).Response
+	assertion(t, g, resp)
+}
+
+func performPostSingleLogout(ctx context.Context, t *testing.T, g *gomega.WithT, assertion logoutResponseAssertion, opts ...any) {
+	req, e := newLogoutRequest(ctx, saml.HTTPPostBinding, TestSP, opts...)
+	g.Expect(e).To(Succeed(), "creating redirect SAML request should succeed")
+	resp := webtest.MustExec(ctx, req).Response
+	assertion(t, g, resp)
+}
+
+func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvider, opts ...any) (*http.Request, error) {
+	sr, e := samlutils.NewFixedLogoutRequest(sp, testdata.TestIdpSloURL.String(), TestUsername)
 	if e != nil {
 		return nil, e
 	}
@@ -214,6 +248,10 @@ func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvi
 		}
 		req = webtest.NewRequest(ctx, http.MethodGet, sloUrl.String(), nil)
 	default:
+		sr.Signature = nil
+		if e := TestSP.SignLogoutRequest(&sr.LogoutRequest); e != nil {
+			return nil, e
+		}
 		doc := etree.NewDocument()
 		doc.SetRoot(sr.Element())
 		srBuf, e := doc.WriteToBytes()
@@ -223,7 +261,7 @@ func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvi
 		encoded := base64.StdEncoding.EncodeToString(srBuf)
 		values := url.Values{
 			"SAMLRequest": []string{encoded},
-			"RelayState": []string{TestRelayState},
+			"RelayState":  []string{TestRelayState},
 		}
 		req = webtest.NewRequest(ctx, http.MethodPost, testdata.TestIdpSloURL.String(), bytes.NewReader([]byte(values.Encode())))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -238,6 +276,33 @@ func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvi
 		}
 	}
 	return req, nil
+}
+
+func mockedAuthentication(opts ...sectest.SecurityMockOptions) sectest.SecurityContextOptions {
+	opts = append([]sectest.SecurityMockOptions{
+		func(d *sectest.SecurityDetailsMock) {
+			d.Username = TestUsername
+		},
+	}, opts...)
+	return func(opt *sectest.SecurityContextOption) {
+		mock := sectest.SecurityDetailsMock{}
+		for _, fn := range opts {
+			fn(&mock)
+		}
+		opt.Authentication = &sectest.MockedAccountAuthentication{
+			Account: sectest.MockedAccount{
+				MockedAccountDetails: sectest.MockedAccountDetails{
+					UserId:          mock.UserId,
+					Username:        mock.Username,
+					TenantId:        mock.TenantId,
+					DefaultTenant:   mock.TenantId,
+					AssignedTenants: mock.Tenants,
+					Permissions:     mock.Permissions,
+				},
+			},
+			AuthState: security.StateAuthenticated,
+		}
+	}
 }
 
 func assertLogoutSuccessResponse(t *testing.T, g *gomega.WithT, resp *http.Response) {
@@ -279,7 +344,13 @@ func assertLogoutResponse(t *testing.T, g *gomega.WithT, resp *http.Response) *s
 	e = xml.Unmarshal(decoded, &sloResp)
 	g.Expect(e).To(Succeed(), "%s should be valid XML of LogoutResponse", samlutils.HttpParamSAMLResponse)
 
-	//g.Expect(values[samlutils.HttpParamRelayState]).To(Equal(TestRelayState), "RelayState should match")
+	e = samlutils.VerifySignature(func(sc *samlutils.SignatureContext) {
+		sc.Binding = saml.HTTPPostBinding
+		sc.XMLData = decoded
+		sc.Certs = testdata.TestIDPCerts
+	})
+	g.Expect(e).To(Succeed(), "LogoutResponse should be properly signature")
+	g.Expect(values[samlutils.HttpParamRelayState]).To(Equal(TestRelayState), "RelayState should match")
 	return &sloResp
 }
 

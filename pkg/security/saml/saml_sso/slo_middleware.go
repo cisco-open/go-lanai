@@ -66,17 +66,22 @@ func (mw *SamlSingleLogoutMiddleware) ShouldLogout(ctx context.Context, r *http.
 	samlReq.Binding = parsedReq.Binding
 	samlReq.Request = &req
 	samlReq.RequestBuffer = parsedReq.Decoded
-	if e := mw.processLogoutRequest(gc, samlReq); e != nil {
+	if e := mw.preProcessLogoutRequest(gc, samlReq); e != nil {
 		return e
 	}
 	return nil
 }
 
 func (mw *SamlSingleLogoutMiddleware) HandleLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, auth security.Authentication) error {
-	if req, ok := ctx.Value(ctxKeySloRequest).(*SamlLogoutRequest); ok {
-		return mw.prepareSuccessSamlResponse(ctx, req)
+	req, ok := ctx.Value(ctxKeySloRequest).(*SamlLogoutRequest)
+	if !ok {
+		return nil
 	}
-	return nil
+	if e := mw.processLogoutRequest(ctx, req, auth); e != nil {
+		return e
+	}
+	return mw.prepareSuccessSamlResponse(ctx, req)
+
 }
 
 func (mw *SamlSingleLogoutMiddleware) HandleAuthenticationSuccess(ctx context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
@@ -105,7 +110,7 @@ func (mw *SamlSingleLogoutMiddleware) newSamlLogoutRequest(r *http.Request) *Sam
 	}
 }
 
-func (mw *SamlSingleLogoutMiddleware) processLogoutRequest(gc *gin.Context, req *SamlLogoutRequest) error {
+func (mw *SamlSingleLogoutMiddleware) preProcessLogoutRequest(gc *gin.Context, req *SamlLogoutRequest) error {
 	defer mw.populateContext(gc, req)
 
 	// Note: we return Requester errors until we can determine the callback binding
@@ -120,6 +125,7 @@ func (mw *SamlSingleLogoutMiddleware) processLogoutRequest(gc *gin.Context, req 
 		return ErrorSamlSloRequester.WithMessage("cannot find service provider metadata [%s]", spId)
 	}
 
+	// resolve SLO response endpoint
 	req.SPMeta = sp
 	if len(req.SPMeta.SPSSODescriptors) != 1 {
 		return ErrorSamlSloRequester.WithMessage("expected exactly one SP SSO descriptor in SP metadata [%s]", spId)
@@ -131,7 +137,12 @@ func (mw *SamlSingleLogoutMiddleware) processLogoutRequest(gc *gin.Context, req 
 		return e
 	}
 
-	return mw.validateLogoutRequest(gc, req, &spDetails)
+	// validate request and relay state
+	req.RelayState = req.HTTPRequest.FormValue(samlutils.HttpParamRelayState)
+	if e := mw.validateLogoutRequest(gc, req, &spDetails); e != nil {
+		return e
+	}
+	return nil
 }
 
 func (mw *SamlSingleLogoutMiddleware) determineSloEndpoint(_ *gin.Context, req *SamlLogoutRequest) error {
@@ -155,13 +166,36 @@ func (mw *SamlSingleLogoutMiddleware) determineSloEndpoint(_ *gin.Context, req *
 }
 
 func (mw *SamlSingleLogoutMiddleware) validateLogoutRequest(_ *gin.Context, req *SamlLogoutRequest, spDetails *SamlSpDetails) error {
-	// TODO validate RelayState if present
 	if !spDetails.SkipAuthRequestSignatureVerification {
 		if e := req.VerifySignature(); e != nil {
 			return ErrorSamlSloResponder.WithMessage(e.Error())
 		}
 	}
 	return req.Validate()
+}
+
+func (mw *SamlSingleLogoutMiddleware) processLogoutRequest(_ context.Context, req *SamlLogoutRequest, auth security.Authentication) error {
+	if auth.State() < security.StatePrincipalKnown {
+		// no additional check are needed
+		return nil
+	}
+
+	nameID := req.Request.NameID
+	switch saml.NameIDFormat(nameID.Format) {
+	case saml.EmailAddressNameIDFormat:
+		fallthrough
+	case saml.TransientNameIDFormat:
+		fallthrough
+	case saml.PersistentNameIDFormat:
+		return ErrorSamlSloResponder.WithMessage("unsupported NameID format [%s]", nameID.Format)
+	default:
+		// we assume it's username
+		if username, e := security.GetUsername(auth); e != nil || username != nameID.Value {
+			logger.Warnf("SAML SLO rejected: NameID doesn't match current session. Caused by: %v", e)
+			return ErrorSamlSloResponder.WithMessage("NameID doesn't match current session")
+		}
+	}
+	return nil
 }
 
 func (mw *SamlSingleLogoutMiddleware) populateContext(gc *gin.Context, req *SamlLogoutRequest) {
