@@ -63,10 +63,7 @@ func (m MockedClient) Scopes() utils.StringSet {
 }
 
 func (m MockedClient) AutoApproveScopes() utils.StringSet {
-	if m.MockedClientProperties.Scopes == nil {
-		return defaultClientScopes
-	}
-	return utils.NewStringSet(m.MockedClientProperties.Scopes...)
+	return m.Scopes()
 }
 
 func (m MockedClient) AccessTokenValidity() time.Duration {
