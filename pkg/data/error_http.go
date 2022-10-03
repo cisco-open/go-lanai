@@ -39,7 +39,7 @@ func (t WebDataErrorTranslator) Translate(ctx context.Context, err error) error 
 		return t.errorWithStatusCode(ctx, err, http.StatusNotFound)
 	case errors.Is(err, ErrorSubTypeDataIntegrity):
 		return t.dataIntegrityErrorWithStatusCode(ctx, err, http.StatusConflict)
-	case errors.Is(err, ErrorSubTypeQuery):
+	case errors.Is(err, ErrorSubTypeQuery), errors.Is(err, ErrorSortByNotSupported):
 		return t.errorWithStatusCode(ctx, err, http.StatusBadRequest)
 	case errors.Is(err, ErrorSubTypeTimeout):
 		return t.errorWithStatusCode(ctx, err, http.StatusRequestTimeout)

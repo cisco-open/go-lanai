@@ -29,7 +29,7 @@ func (o priorityOption) PriorityOrder() int {
 // delayedOption is an option wrapper that guarantee to run after regular options
 // delayedOption implements order.Ordered
 type delayedOption struct {
-	order int
+	order   int
 	wrapped interface{}
 }
 
@@ -67,13 +67,13 @@ func MustApplyConditions(db *gorm.DB, conds ...Condition) *gorm.DB {
 //
 // This function is intended for custom repository implementations. The result can be used as "db.Scopes(result...)"
 // The function panic on any type not listed above
-func AsGormScope(i interface{}) func(*gorm.DB)*gorm.DB {
-	var funcs []func(*gorm.DB)*gorm.DB
+func AsGormScope(i interface{}) func(*gorm.DB) *gorm.DB {
+	var funcs []func(*gorm.DB) *gorm.DB
 	var e error
 	switch v := i.(type) {
-	case func(*gorm.DB)*gorm.DB:
+	case func(*gorm.DB) *gorm.DB:
 		return v
-	case []func(*gorm.DB)*gorm.DB:
+	case []func(*gorm.DB) *gorm.DB:
 		funcs = v
 	case []Option:
 		funcs, e = optsToDBFuncs(v)
@@ -92,11 +92,11 @@ func AsGormScope(i interface{}) func(*gorm.DB)*gorm.DB {
 	case e != nil:
 		panic(e)
 	case len(funcs) == 0:
-		return func(db *gorm.DB)*gorm.DB {return db}
+		return func(db *gorm.DB) *gorm.DB { return db }
 	case len(funcs) == 1:
 		return funcs[0]
 	default:
-		return func(db *gorm.DB)*gorm.DB {
+		return func(db *gorm.DB) *gorm.DB {
 			for _, fn := range funcs {
 				db = fn(db)
 			}
@@ -172,7 +172,7 @@ func Select(query interface{}, args ...interface{}) Option {
 func Page(page, size int) Option {
 	opt := gormOptions(func(db *gorm.DB) *gorm.DB {
 		offset := page * size
-		if offset < 0 || size <= 0 || offset + size >= maxUInt32 {
+		if offset < 0 || size <= 0 || offset+size >= maxUInt32 {
 			_ = db.AddError(ErrorInvalidPagination)
 			return db
 		}
@@ -181,13 +181,13 @@ func Page(page, size int) Option {
 		// add default sorting to ensure fixed order
 		sort := clause.OrderByColumn{Column: clause.Column{Name: clause.PrimaryKey}}
 		db.Statement.AddClauseIfNotExists(clause.OrderBy{
-			Columns:    []clause.OrderByColumn{sort},
+			Columns: []clause.OrderByColumn{sort},
 		})
 		return db
 	})
 	// we want to run this option AFTER any Sort or SortBy
 	return delayedOption{
-		order:  order.Lowest,
+		order:   order.Lowest,
 		wrapped: opt,
 	}
 }
@@ -217,13 +217,13 @@ func SortBy(fieldName string, desc bool) Option {
 		}
 		col, e := toColumn(db.Statement.Schema, fieldName)
 		if e != nil {
-			_ = db.AddError(ErrorUnsupportedOptions.
+			_ = db.AddError(data.ErrorSortByNotSupported.
 				WithMessage("SortBy error: %v", e))
 			return db
 		}
 		return db.Order(clause.OrderByColumn{
 			Column: *col,
-			Desc: desc,
+			Desc:   desc,
 		})
 	})
 }
@@ -261,4 +261,3 @@ func requireSchema(db *gorm.DB) error {
 	}
 	return nil
 }
-
