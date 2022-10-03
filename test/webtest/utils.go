@@ -127,6 +127,20 @@ func WithHeaders(kvs...string) RequestOptions {
 	}
 }
 
+func WithQueries(kvs ...string) RequestOptions {
+	return func(req *http.Request) {
+		q := req.URL.Query()
+		for i := 0; i < len(kvs); i += 2 {
+			if i+1 < len(kvs) {
+				q.Add(kvs[i], kvs[i+1])
+			} else {
+				q.Add(kvs[i], "")
+			}
+		}
+		req.URL.RawQuery = q.Encode()
+	}
+}
+
 func WithCookies(resp *http.Response) RequestOptions {
 	cookies := resp.Cookies()
 	kvs := make([]string, len(cookies)*2)

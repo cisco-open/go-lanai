@@ -55,7 +55,7 @@ func (b *mockedBase) newMockedToken(acct *MockedAccount, tenant *mockedTenant, e
 			UName: acct.MockedAccountDetails.Username,
 			UID:   acct.UserId,
 			TID:   tenant.ID,
-			TExternalId: tenant.ExternalId,
+			TExternalId: tenant.ExtId,
 			OrigU: origUser,
 		},
 		ExpTime: exp,

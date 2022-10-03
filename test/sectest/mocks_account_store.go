@@ -47,13 +47,21 @@ func (m *MockAccountStore) LoadAccountByUsername(_ context.Context, username str
 }
 
 func (m *MockAccountStore) LoadLockingRules(ctx context.Context, acct security.Account) (security.AccountLockingRule, error) {
-	panic("implement me")
+	return &security.DefaultAccount{
+		AcctLockingRule: security.AcctLockingRule{
+			Name:             "test",
+		},
+	}, nil
 }
 
 func (m *MockAccountStore) LoadPwdAgingRules(ctx context.Context, acct security.Account) (security.AccountPwdAgingRule, error) {
-	panic("implement me")
+	return &security.DefaultAccount{
+		AcctPasswordPolicy: security.AcctPasswordPolicy{
+			Name:             "test",
+		},
+	}, nil
 }
 
 func (m *MockAccountStore) Save(ctx context.Context, acct security.Account) error {
-	panic("implement me")
+	return nil
 }

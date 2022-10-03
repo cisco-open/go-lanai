@@ -25,6 +25,7 @@ import (
 	"encoding/xml"
 	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
+	"github.com/gin-gonic/gin"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -64,7 +65,10 @@ func (c *TestLogoutSecConfigurer) Configure(ws security.WebSecurity) {
 		With(logout.New().
 			LogoutUrl(testdata.TestIdpSloPath).
 			AddErrorHandler(redirect.NewRedirectWithURL(TestLogoutErrorURL)).
-			AddSuccessHandler(redirect.NewRedirectWithURL(TestLogoutSuccessURL)),
+			AddSuccessHandler(redirect.NewRedirectWithURL(TestLogoutSuccessURL)).
+			AddErrorHandler(UselessHandler{}).
+			AddSuccessHandler(UselessHandler{}).
+			AddEntryPoint(UselessHandler{}),
 		).
 		With(NewLogout().
 			Issuer(testdata.TestIssuer).
@@ -319,7 +323,7 @@ func assertLogoutResponderErrorResponse(t *testing.T, g *gomega.WithT, resp *htt
 	g.Expect(sloResp.Status.StatusMessage.Value).To(Not(BeEmpty()), "SAML response should have non-empty status message")
 }
 
-func assertLogoutRequesterErrorResponse(t *testing.T, g *gomega.WithT, resp *http.Response) {
+func assertLogoutRequesterErrorResponse(_ *testing.T, g *gomega.WithT, resp *http.Response) {
 	g.Expect(resp.StatusCode).To(Not(Equal(http.StatusOK)), "response should not be 200")
 	g.Expect(resp.Header.Get("Content-Type")).To(HavePrefix("text/html"), "response should be HTML")
 	doc := etree.NewDocument()
@@ -369,3 +373,26 @@ func extractHTMLFormData(_ *testing.T, g *gomega.WithT, resp *http.Response) map
 	}
 	return values
 }
+
+type UselessHandler struct {}
+
+func (h UselessHandler) HandleAuthenticationSuccess(ctx context.Context, _ *http.Request, rw http.ResponseWriter, _, _ security.Authentication) {
+	h.doHandle(ctx, rw)
+}
+
+func (h UselessHandler) HandleAuthenticationError(ctx context.Context, _ *http.Request, rw http.ResponseWriter, _ error) {
+	h.doHandle(ctx, rw)
+}
+
+func (h UselessHandler) Commence(ctx context.Context, r *http.Request, rw http.ResponseWriter, _ error) {
+	h.doHandle(ctx, rw)
+}
+
+func (h UselessHandler) doHandle(_ context.Context, rw http.ResponseWriter) {
+	if grw, ok := rw.(gin.ResponseWriter); ok && grw.Written() {
+		return
+	}
+	rw.WriteHeader(http.StatusUnauthorized)
+	_, _ = rw.Write([]byte("this should not happen"))
+}
+
