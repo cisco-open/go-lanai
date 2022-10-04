@@ -17,8 +17,8 @@ type Feature struct {
 	ssoCondition web.RequestMatcher
 	ssoLocation  *url.URL
 	metadataPath string
-	issuer      security.Issuer
-	sloLocation string
+	issuer    security.Issuer
+	logoutUrl string
 }
 
 // New Standard security.Feature entrypoint for authorization, DSL style. Used with security.WebSecurity
@@ -59,9 +59,10 @@ func (f *Feature) Issuer(issuer security.Issuer) *Feature {
 	return f
 }
 
-// EnableSLO when sloLocation is not empty, SLO Request handling is added
-func (f *Feature) EnableSLO(sloLocation string) *Feature {
-	f.sloLocation = sloLocation
+// EnableSLO when logoutUrl is set, SLO Request handling is added to logout.Feature.
+// SLO feature cannot work properly if this value mismatches the logout URL
+func (f *Feature) EnableSLO(logoutUrl string) *Feature {
+	f.logoutUrl = logoutUrl
 	return f
 }
 

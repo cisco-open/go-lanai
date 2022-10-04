@@ -46,8 +46,10 @@ func (mw *SamlSingleLogoutMiddleware) SLOCondition() web.RequestMatcher {
 	return matcher.RequestHasForm(samlutils.HttpParamSAMLRequest)
 }
 
-// ShouldLogout is a logout.ConditionalLogoutHandler method that interrupt logout process by returning authentication error,
-// which would trigger authentication entry point and initiate SLO
+// ShouldLogout is a logout.ConditionalLogoutHandler method that intercept SP initiated SAML request. Possible outcomes are:
+// - no error returned if the logout is not SAML single logout (no SAMLRequest found)
+// - no error returned if the logout is a valid SAMLLogoutRequest
+// - ErrorSubTypeSamlSlo if SAMLLogoutRequest is found but invalid
 func (mw *SamlSingleLogoutMiddleware) ShouldLogout(ctx context.Context, r *http.Request, _ http.ResponseWriter, _ security.Authentication) error {
 	gc := web.GinContext(ctx)
 	samlReq := mw.newSamlLogoutRequest(r)

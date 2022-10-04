@@ -2,6 +2,7 @@ package samllogin
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
@@ -15,6 +16,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"errors"
@@ -45,18 +47,18 @@ const (
 )
 
 var (
-	MockedLogoutAssertionOption = testdata.AssertionOption{
+	MockedLogoutAssertionOption = samltest.AssertionOption{
 		Issuer:       "http://www.okta.com/exk668ha29xaI4in25d7",
 		NameIDFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
 		NameID:       "test-user",
 		Recipient:    "http://saml.vms.com:8080/test/saml/SSO",
-		Audience:     testdata.TestIssuer.Identifier() + "/saml/metadata",
+		Audience:     samltest.DefaultIssuer.Identifier() + "/saml/metadata",
 		RequestID:    uuid.New().String(),
 	}
-	MockedLogoutResponseOption = testdata.LogoutResponseOption{
+	MockedLogoutResponseOption = samltest.LogoutResponseOption{
 		Issuer:    "http://www.okta.com/exk668ha29xaI4in25d7",
 		Recipient: "http://saml-alt.vms.com:8080/test/saml/slo",
-		Audience:  testdata.TestIssuer.Identifier() + "/saml/metadata",
+		Audience:  samltest.DefaultIssuer.Identifier() + "/saml/metadata",
 		RequestID: uuid.New().String(),
 		Success:   true,
 	}
@@ -80,8 +82,15 @@ func (c *TestLogoutSecConfigurer) Configure(ws security.WebSecurity) {
 
 func (c *TestLogoutSecConfigurer) LogoutFeature() *Feature {
 	return NewLogout().
-		Issuer(testdata.TestIssuer).
+		Issuer(samltest.DefaultIssuer).
 		ErrorPath(TestLogoutErrorURL)
+}
+
+type LogoutTestDI struct {
+	fx.In
+	AppCtx *bootstrap.ApplicationContext
+	SecReg security.Registrar
+	Props lanaisaml.SamlProperties
 }
 
 type LogoutTestOut struct {
@@ -92,15 +101,15 @@ type LogoutTestOut struct {
 	MockedSigner  *saml.ServiceProvider
 }
 
-func LogoutTestSecurityConfigProvider(registrar security.Registrar, props lanaisaml.SamlProperties) LogoutTestOut {
+func LogoutTestSecurityConfigProvider(di LogoutTestDI) LogoutTestOut {
 	cfg := TestLogoutSecConfigurer{}
-	registrar.Register(&cfg)
-	idpManager := testdata.NewTestIdpManager()
+	di.SecReg.Register(&cfg)
+	idpManager := samltest.NewMockedIdpManager(samltest.IDPsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.idp"))
 	return LogoutTestOut{
 		SecConfigurer: &cfg,
 		IdpManager:    idpManager,
 		AccountStore:  testdata.NewTestFedAccountStore(),
-		MockedSigner:  NewMockedSigner(props, idpManager, cfg.LogoutFeature()),
+		MockedSigner:  NewMockedSigner(di.Props, idpManager, cfg.LogoutFeature()),
 	}
 }
 
@@ -218,7 +227,7 @@ func SubTestSLOFailedCallback(di *sloTestDI) test.GomegaSubTestFunc {
  *************************/
 
 func mockSamlAuth() security.Authentication {
-	assertion := testdata.MockAssertion(func(opt *testdata.AssertionOption) {
+	assertion := samltest.MockAssertion(func(opt *samltest.AssertionOption) {
 		*opt = MockedLogoutAssertionOption
 	})
 	return &samlAssertionAuthentication{
@@ -230,7 +239,7 @@ func mockSamlAuth() security.Authentication {
 }
 
 func mockSamlSloResponse(success bool, signer *saml.ServiceProvider) *saml.LogoutResponse {
-	resp := testdata.MockLogoutResponse(func(opt *testdata.LogoutResponseOption) {
+	resp := samltest.MockLogoutResponse(func(opt *samltest.LogoutResponseOption) {
 		*opt = MockedLogoutResponseOption
 		opt.Success = success
 	})

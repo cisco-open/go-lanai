@@ -3,6 +3,7 @@ package saml_auth
 import (
 	"bytes"
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
@@ -11,18 +12,19 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
 	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/testdata"
 	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"embed"
 	"encoding/base64"
-	"encoding/xml"
+	"fmt"
 	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
 	"github.com/gin-gonic/gin"
@@ -49,7 +51,17 @@ const (
 //go:embed testdata/template/*.tmpl
 var TestHTMLTemplates embed.FS
 
-var TestSP *saml.ServiceProvider
+const (
+	TestIdpSloPath = "/logout"
+	TestIdpCertFile = `testdata/saml_test.cert`
+)
+
+var (
+	TestSP *saml.ServiceProvider
+	TestIDPCerts, _ = cryptoutils.LoadCert(TestIdpCertFile)
+	TestIdpURL, _   = samltest.DefaultIssuer.BuildUrl()
+	TestIdpSloURL   = TestIdpURL.ResolveReference(&url.URL{Path: fmt.Sprintf("%s%s", TestIdpURL.Path, TestIdpSloPath)})
+)
 
 type TestLogoutSecConfigurer struct{}
 
@@ -63,7 +75,7 @@ func (c *TestLogoutSecConfigurer) Configure(ws security.WebSecurity) {
 		With(errorhandling.New()).
 		With(request_cache.New()).
 		With(logout.New().
-			LogoutUrl(testdata.TestIdpSloPath).
+			LogoutUrl(TestIdpSloPath).
 			AddErrorHandler(redirect.NewRedirectWithURL(TestLogoutErrorURL)).
 			AddSuccessHandler(redirect.NewRedirectWithURL(TestLogoutSuccessURL)).
 			AddErrorHandler(UselessHandler{}).
@@ -71,32 +83,43 @@ func (c *TestLogoutSecConfigurer) Configure(ws security.WebSecurity) {
 			AddEntryPoint(UselessHandler{}),
 		).
 		With(NewLogout().
-			Issuer(testdata.TestIssuer).
-			EnableSLO(testdata.TestIdpSloPath).
+			Issuer(samltest.DefaultIssuer).
+			EnableSLO(TestIdpSloPath).
 			SsoCondition(matcher.AnyRequest()).
 			SsoLocation(ssoUrl).
 			MetadataPath("does/not/matter"),
 		)
 }
 
-type LogoutTestOut struct {
+type SLOTestDI struct {
+	fx.In
+	AppCtx *bootstrap.ApplicationContext
+	SecReg security.Registrar
+	WebReg *web.Registrar
+}
+
+type SLOTestOut struct {
 	fx.Out
 	SecConfigurer   security.Configurer
 	TestSP          *saml.ServiceProvider
 	SamlClientStore saml_auth_ctx.SamlClientStore
 }
 
-func LogoutTestSecurityConfigProvider(registrar security.Registrar, webReg *web.Registrar) LogoutTestOut {
-	webReg.MustRegister(TestHTMLTemplates)
+func LogoutTestSecurityConfigProvider(di SLOTestDI) SLOTestOut {
+	di.WebReg.MustRegister(TestHTMLTemplates)
 	cfg := TestLogoutSecConfigurer{}
-	registrar.Register(&cfg)
+	di.SecReg.Register(&cfg)
+
+	testSP := samltest.MustNewMockedSP(samltest.SPWithPropertiesPrefix(di.AppCtx.Config(), "mocking.sp.default"))
 	if TestSP == nil {
-		TestSP = testdata.NewTestSP()
+		TestSP = testSP
 	}
-	return LogoutTestOut{
+	return SLOTestOut{
 		SecConfigurer:   &cfg,
 		TestSP:          TestSP,
-		SamlClientStore: testdata.NewTestSamlClientStore(TestSP),
+		SamlClientStore: samltest.NewMockedClientStore(func(opt *samltest.ClientStoreMockOption) {
+			opt.SPs = append(opt.SPs, TestSP)
+		}),
 	}
 }
 
@@ -230,7 +253,7 @@ func performPostSingleLogout(ctx context.Context, t *testing.T, g *gomega.WithT,
 }
 
 func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvider, opts ...any) (*http.Request, error) {
-	sr, e := samlutils.NewFixedLogoutRequest(sp, testdata.TestIdpSloURL.String(), TestUsername)
+	sr, e := samlutils.NewFixedLogoutRequest(sp, TestIdpSloURL.String(), TestUsername)
 	if e != nil {
 		return nil, e
 	}
@@ -267,7 +290,7 @@ func newLogoutRequest(ctx context.Context, binding string, sp *saml.ServiceProvi
 			"SAMLRequest": []string{encoded},
 			"RelayState":  []string{TestRelayState},
 		}
-		req = webtest.NewRequest(ctx, http.MethodPost, testdata.TestIdpSloURL.String(), bytes.NewReader([]byte(values.Encode())))
+		req = webtest.NewRequest(ctx, http.MethodPost, TestIdpSloURL.String(), bytes.NewReader([]byte(values.Encode())))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
 
@@ -337,41 +360,20 @@ func assertLogoutRequesterErrorResponse(_ *testing.T, g *gomega.WithT, resp *htt
 
 func assertLogoutResponse(t *testing.T, g *gomega.WithT, resp *http.Response) *saml.LogoutResponse {
 	g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "response should be 200")
-	values := extractHTMLFormData(t, g, resp)
-	g.Expect(values).To(HaveKey(samlutils.HttpParamSAMLResponse), "response should submit %s", samlutils.HttpParamSAMLResponse)
-	g.Expect(values).To(HaveKey(samlutils.HttpParamRelayState), "response should submit %s", samlutils.HttpParamRelayState)
-
-	encoded := values[samlutils.HttpParamSAMLResponse]
-	decoded, e := base64.StdEncoding.DecodeString(encoded)
-	g.Expect(e).To(Succeed(), "%s should be valid base64", samlutils.HttpParamSAMLResponse)
 	var sloResp saml.LogoutResponse
-	e = xml.Unmarshal(decoded, &sloResp)
-	g.Expect(e).To(Succeed(), "%s should be valid XML of LogoutResponse", samlutils.HttpParamSAMLResponse)
+	rs, e := samltest.ParseBinding(resp, &sloResp)
+	g.Expect(e).To(Succeed(), "response should be a valid SAML binding")
+	g.Expect(rs.Values).To(HaveKey(samlutils.HttpParamSAMLResponse), "response should submit %s", samlutils.HttpParamSAMLResponse)
+	g.Expect(rs.Values).To(HaveKey(samlutils.HttpParamRelayState), "response should submit %s", samlutils.HttpParamRelayState)
 
 	e = samlutils.VerifySignature(func(sc *samlutils.SignatureContext) {
 		sc.Binding = saml.HTTPPostBinding
-		sc.XMLData = decoded
-		sc.Certs = testdata.TestIDPCerts
+		sc.XMLData = rs.Decoded
+		sc.Certs = TestIDPCerts
 	})
 	g.Expect(e).To(Succeed(), "LogoutResponse should be properly signature")
-	g.Expect(values[samlutils.HttpParamRelayState]).To(Equal(TestRelayState), "RelayState should match")
+	g.Expect(rs.Values.Get(samlutils.HttpParamRelayState)).To(Equal(TestRelayState), "RelayState should match")
 	return &sloResp
-}
-
-func extractHTMLFormData(_ *testing.T, g *gomega.WithT, resp *http.Response) map[string]string {
-	g.Expect(resp.Header.Get("Content-Type")).To(HavePrefix("text/html"), "response should be HTML")
-	doc := etree.NewDocument()
-	_, e := doc.ReadFrom(resp.Body)
-	g.Expect(e).To(Succeed(), "response body should be a valid HTML")
-
-	values := map[string]string{}
-	elems := doc.FindElements("//input")
-	for _, el := range elems {
-		name := el.SelectAttrValue("name", "unknown")
-		value := el.SelectAttrValue("value", "")
-		values[name] = value
-	}
-	return values
 }
 
 type UselessHandler struct {}

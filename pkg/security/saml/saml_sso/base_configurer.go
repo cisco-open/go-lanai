@@ -42,7 +42,7 @@ func (c *samlConfigurer) getIdentityProviderConfiguration(f *Feature) *Options {
 			RawQuery: f.ssoLocation.RawQuery,
 		}),
 		SloUrl: *rootURL.ResolveReference(&url.URL{
-			Path: fmt.Sprintf("%s%s", rootURL.Path, f.sloLocation),
+			Path: fmt.Sprintf("%s%s", rootURL.Path, f.logoutUrl),
 		}),
 		SigningMethod:          dsig.RSASHA1SignatureMethod,
 		serviceProviderManager: c.samlClientStore,

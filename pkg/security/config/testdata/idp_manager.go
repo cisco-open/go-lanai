@@ -4,8 +4,9 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"fmt"
 )
 
@@ -18,53 +19,23 @@ const (
 	ExtSamlIdpSLOUrl = "http://external.saml.com/samlidp/logout"
 )
 
-type MockedIDPManager struct {
-	idpPasswd idp.IdentityProvider
-	idpSaml   idp.IdentityProvider
-}
-
-func NewMockedIDPManager() *MockedIDPManager {
-	return &MockedIDPManager{
-		idpPasswd: passwdidp.NewIdentityProvider(func(opt *passwdidp.PasswdIdpDetails) {
-			opt.Domain = IdpDomainPasswd
-		}),
-		idpSaml: samlidp.NewIdentityProvider(func(opt *samlidp.SamlIdpDetails) {
-			opt.EntityId = ExtSamlIdpEntityID
-			opt.Domain = IdpDomainExtSAML
-			opt.ExternalIdpName = ExtSamlIdpName
-			opt.ExternalIdName = "username"
-			opt.MetadataLocation = "testdata/ext-saml-metadata.xml"
-		}),
-	}
-}
-
-func (m *MockedIDPManager) GetIdentityProvidersWithFlow(_ context.Context, flow idp.AuthenticationFlow) []idp.IdentityProvider {
-	switch flow {
-	case idp.InternalIdpForm:
-		return []idp.IdentityProvider{m.idpPasswd}
-	case idp.ExternalIdpSAML:
-		return []idp.IdentityProvider{m.idpSaml}
-	default:
-		return []idp.IdentityProvider{}
-	}
-}
-
-func (m *MockedIDPManager) GetIdentityProviderByDomain(_ context.Context, domain string) (idp.IdentityProvider, error) {
-	switch domain {
-	case IdpDomainPasswd:
-		return m.idpPasswd, nil
-	case IdpDomainExtSAML:
-		return m.idpSaml, nil
-	default:
-		return nil, fmt.Errorf("cannot find IDP for domain [%s]", domain)
-	}
-}
-
-func (m *MockedIDPManager) GetIdentityProviderByEntityId(ctx context.Context, entityId string) (idp.IdentityProvider, error) {
-	if ExtSamlIdpEntityID == entityId {
-		return m.idpSaml, nil
-	}
-	return nil, fmt.Errorf("cannot find IDP for entityId [%s]", entityId)
+func NewMockedIDPManager() *samltest.MockedIdpManager {
+	return samltest.NewMockedIdpManager(func(opt *samltest.IdpManagerMockOption) {
+		opt.IDPList = []idp.IdentityProvider {
+			samlidp.NewIdentityProvider(func(opt *samlidp.SamlIdpDetails) {
+				opt.EntityId = ExtSamlIdpEntityID
+				opt.Domain = IdpDomainExtSAML
+				opt.ExternalIdpName = ExtSamlIdpName
+				opt.ExternalIdName = "username"
+				opt.MetadataLocation = "testdata/ext-saml-metadata.xml"
+			}),
+		}
+		opt.Delegates = []idp.IdentityProviderManager{
+			sectest.NewMockedIDPManager(func(opt *sectest.IdpManagerMockOption) {
+				opt.PasswdIDPDomain = IdpDomainPasswd
+			}),
+		}
+	})
 }
 
 type MockedFedAccountStore struct{}

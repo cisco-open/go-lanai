@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
@@ -33,6 +34,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
@@ -68,6 +70,7 @@ func TestMain(m *testing.M) {
 
 type IntegrationTestDI struct {
 	fx.In
+	AppCtx *bootstrap.ApplicationContext
 	SecReg  security.Registrar
 	WebReg  *web.Registrar
 	Mocking testdata.MockingProperties
@@ -90,7 +93,7 @@ func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
 		AccountStore:         sectest.NewMockedAccountStore(testdata.MapValues(di.Mocking.Accounts)...),
 		PasswordEncoder:      passwd.NewNoopPasswordEncoder(),
 		FedAccountStore:      testdata.NewMockedFedAccountStore(),
-		SamlClientStore:      testdata.NewMockedSamlClientStore(testdata.MapValues(di.Mocking.Clients)...),
+		SamlClientStore:      samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
 	}
 }
 

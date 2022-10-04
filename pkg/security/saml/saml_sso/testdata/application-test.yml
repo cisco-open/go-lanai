@@ -5,3 +5,18 @@ security:
       key-file: "testdata/saml_test.key"
       key-password: ""
       name-id-format: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+
+mocking:
+  sp:
+    default:
+      entity-id: "http://samlsp.msx.com/samlsp/saml/metadata"
+      metadata-source: ""
+      certs: "testdata/saml_test_sp.cert"
+      private-key: "testdata/saml_test_sp.key"
+      acs: "/samlsp/saml/acs"
+      slo: "/samlsp/saml/slo"
+      idp:
+        certs: "testdata/saml_test.cert"
+        sso: "/authorize"
+        slo: "/logout"
+

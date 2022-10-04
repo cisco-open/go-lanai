@@ -27,7 +27,6 @@ See http://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf 4.1.3
 */
 //nolint:errorlint
 func (h *SamlErrorHandler) HandleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
-	//catch the saml errors that we weren't able to send back to the client
 	err = h.findCause(err)
 	if !errors.Is(err, security.ErrorTypeSaml) {
 		return

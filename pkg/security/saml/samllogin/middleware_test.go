@@ -12,6 +12,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"fmt"
@@ -38,14 +39,16 @@ type MetadataTestOut struct {
 }
 
 func MetadataTestSecurityConfigProvider(registrar security.Registrar) MetadataTestOut {
-	idpManager := testdata.NewTestIdpManager()
+	idpManager := samltest.NewMockedIdpManager(func(opt *samltest.IdpManagerMockOption) {
+		opt.IDPList = testdata.DefaultIdpProviders
+	})
 	cfg := security.ConfigurerFunc(func(ws security.WebSecurity) {
 		condition := idp.RequestWithAuthenticationFlow(idp.ExternalIdpSAML, idpManager)
 		ws = ws.AndCondition(condition)
 		ws.Route(matcher.AnyRoute()).
 			AndCondition(condition).
 			With(access.New().Request(matcher.AnyRequest()).Authenticated()).
-			With(New().Issuer(testdata.TestIssuer))
+			With(New().Issuer(samltest.DefaultIssuer))
 	})
 	registrar.Register(&cfg)
 	return MetadataTestOut{

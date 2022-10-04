@@ -27,7 +27,7 @@ func newSamlLogoutEndpointConfigurer(properties samlctx.SamlProperties,
 
 func (c *SamlLogoutEndpointConfigurer) Apply(feature security.Feature, ws security.WebSecurity) (err error) {
 	f := feature.(*Feature)
-	if len(f.sloLocation) == 0 {
+	if len(f.logoutUrl) == 0 {
 		// not enabled
 		return
 	}
@@ -36,7 +36,7 @@ func (c *SamlLogoutEndpointConfigurer) Apply(feature security.Feature, ws securi
 	mw := NewSamlSingleLogoutMiddleware(metaMw)
 	ws.
 		Add(middleware.NewBuilder("Saml Service Provider Refresh").
-			ApplyTo(matcher.RouteWithPattern(f.sloLocation, http.MethodGet, http.MethodPost)).
+			ApplyTo(matcher.RouteWithPattern(f.logoutUrl, http.MethodGet, http.MethodPost)).
 			Order(security.MWOrderSAMLMetadataRefresh).
 			Use(mw.RefreshMetadataHandler(mw.SLOCondition())),
 		)

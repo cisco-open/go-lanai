@@ -1,7 +1,6 @@
 package saml_auth
 
 import (
-	"bytes"
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
@@ -10,20 +9,22 @@ import (
 	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/samlssotest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"embed"
 	"encoding/xml"
 	"fmt"
+	"github.com/crewjam/saml"
+	"github.com/crewjam/saml/samlsp"
 	"github.com/google/uuid"
 	"go.uber.org/fx"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -37,11 +38,11 @@ import 	. "github.com/onsi/gomega"
 var whiteLabelContent embed.FS
 
 const (
-	TEST_SAML_SP_CERT = "testdata/saml_test_sp.cert"
-	TEST_SAML_SP_KEY = "testdata/saml_test_sp.key"
+	TestSamlSPCertFile = "testdata/saml_test_sp.cert"
+	TestSamlSPKeyFile  = "testdata/saml_test_sp.key"
 
-	TEST_SAML_SP_1_URL = "http://localhost:8000"
-	TEST_SAML_SP_2_URL = "http://localhost:8001"
+	TestSamlSP1Url = "http://localhost:8000"
+	TestSamlSP2Url = "http://localhost:8001"
 )
 var testRootTenantId = uuid.New()
 var testTenantId1 = uuid.New()
@@ -63,8 +64,35 @@ var testUser3 = &sectest.MockedAccountProperties{
 	Tenants: []string{testTenantId3.String()},
 }
 
-var testSp1 = samlssotest.NewSamlSp(TEST_SAML_SP_1_URL, TEST_SAML_SP_CERT, TEST_SAML_SP_KEY)
-var testSp2 = samlssotest.NewSamlSp(TEST_SAML_SP_2_URL, TEST_SAML_SP_CERT, TEST_SAML_SP_KEY)
+var testSp1 = samltest.MustNewMockedSP(func(opt *samltest.SPMockOption) {
+	opt.Properties.EntityID = fmt.Sprintf("%s/saml/metadata", TestSamlSP1Url)
+	opt.Properties.PrivateKeySource = TestSamlSPKeyFile
+	opt.Properties.CertsSource = TestSamlSPCertFile
+	opt.Properties.ACSPath = "/saml/acs"
+	opt.Properties.SLOPath = "/saml/slo"
+})
+
+var testSp2 = samltest.MustNewMockedSP(func(opt *samltest.SPMockOption) {
+	opt.Properties.EntityID = fmt.Sprintf("%s/saml/metadata", TestSamlSP2Url)
+	opt.Properties.PrivateKeySource = TestSamlSPKeyFile
+	opt.Properties.CertsSource = TestSamlSPCertFile
+	opt.Properties.ACSPath = "/saml/acs"
+	opt.Properties.SLOPath = "/saml/slo"
+})
+
+func NewSamlSp(spUrl string, certFilePath string, keyFilePath string) saml.ServiceProvider {
+	rootURL, _ := url.Parse(spUrl)
+	cert, _ := cryptoutils.LoadCert(certFilePath)
+	key, _ := cryptoutils.LoadPrivateKey(keyFilePath, "")
+	sp := samlsp.DefaultServiceProvider(samlsp.Options{
+		URL:            *rootURL,
+		Key:            key,
+		Certificate:    cert[0],
+		SignRequest: true,
+		EntityID: fmt.Sprintf("%s/saml/metadata", spUrl),
+	})
+	return sp
+}
 
 
 type DIForTest struct {
@@ -104,12 +132,14 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 		})
 
 		//port := di.Register.ServerPort()
-		resp := sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+		resp := sendAuthorize(ctx, testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
-		samlResponseXml, err := samlssotest.ParseSamlResponse(resp.Body)
+		var samlResp saml.Response
+		_, err := samltest.ParseBinding(resp, &samlResp)
 		if err != nil {
 			t.Errorf("cannot parse response due to error %v", err)
 		}
+		samlResponseXml := samlResp.Element()
 		status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']")
 		g.Expect(status).ToNot(BeNil())
 
@@ -120,9 +150,13 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 				opt.State = security.StateAuthenticated
 			})
 		})
-		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+		resp = sendAuthorize(ctx, testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
-		samlResponseXml, err = samlssotest.ParseSamlResponse(resp.Body)
+		_, err = samltest.ParseBinding(resp, &samlResp)
+		if err != nil {
+			t.Errorf("cannot parse response due to error %v", err)
+		}
+		samlResponseXml = samlResp.Element()
 		if err != nil {
 			t.Errorf("cannot parse response due to error %v", err)
 		}
@@ -136,7 +170,7 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 				opt.State = security.StateAuthenticated
 			})
 		})
-		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+		resp = sendAuthorize(ctx, testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ := ioutil.ReadAll(resp.Body)
 		htmlContent := string(b)
@@ -157,7 +191,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		})
 
 		//port := di.Register.ServerPort()
-		resp := sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+		resp := sendAuthorize(ctx, testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ := ioutil.ReadAll(resp.Body)
 		htmlContent := string(b)
@@ -170,12 +204,14 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 				opt.State = security.StateAuthenticated
 			})
 		})
-		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+		resp = sendAuthorize(ctx, testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK))
-		samlResponseXml, err := samlssotest.ParseSamlResponse(resp.Body)
+		var samlResp saml.Response
+		_, err := samltest.ParseBinding(resp, &samlResp)
 		if err != nil {
 			t.Errorf("cannot parse response due to error %v", err)
 		}
+		samlResponseXml := samlResp.Element()
 		status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']")
 		g.Expect(status).ToNot(BeNil())
 
@@ -186,7 +222,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 				opt.State = security.StateAuthenticated
 			})
 		})
-		resp = sendAuthorize(ctx, bytes.NewBufferString(samlssotest.MakeAuthnRequest(testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")))
+		resp = sendAuthorize(ctx, testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
 		b, _ = ioutil.ReadAll(resp.Body)
 		htmlContent = string(b)
@@ -241,27 +277,30 @@ func provideMockSamlClient() saml_auth_ctx.SamlClientStore {
 	sp1Metadata, _ := xml.MarshalIndent(testSp1.Metadata(), "", "  ")
 	sp2Metadata, _ := xml.MarshalIndent(testSp2.Metadata(), "", "  ")
 
-	return samlssotest.NewMockedSamlClientStore(
-		DefaultSamlClient{
-			SamlSpDetails: SamlSpDetails{
-				EntityId:                             testSp1.EntityID,
-				MetadataSource:                       string(sp1Metadata),
-				SkipAssertionEncryption:              false,
-				SkipAuthRequestSignatureVerification: false,
+	return samltest.NewMockedClientStore(func(opt *samltest.ClientStoreMockOption) {
+		opt.Clients = []saml_auth_ctx.SamlClient{
+			DefaultSamlClient{
+				SamlSpDetails: SamlSpDetails{
+					EntityId:                             testSp1.EntityID,
+					MetadataSource:                       string(sp1Metadata),
+					SkipAssertionEncryption:              false,
+					SkipAuthRequestSignatureVerification: false,
+				},
+				TenantRestrictions: utils.NewStringSet(testTenantId1.String(), testTenantId2.String()),
+				TenantRestrictionType: TenantRestrictionTypeAny,
 			},
-			TenantRestrictions: utils.NewStringSet(testTenantId1.String(), testTenantId2.String()),
-			TenantRestrictionType: TenantRestrictionTypeAny,
-		},
-		DefaultSamlClient{
-			SamlSpDetails: SamlSpDetails{
-				EntityId:                             testSp2.EntityID,
-				MetadataSource:                       string(sp2Metadata),
-				SkipAssertionEncryption:              false,
-				SkipAuthRequestSignatureVerification: false,
+			DefaultSamlClient{
+				SamlSpDetails: SamlSpDetails{
+					EntityId:                             testSp2.EntityID,
+					MetadataSource:                       string(sp2Metadata),
+					SkipAssertionEncryption:              false,
+					SkipAuthRequestSignatureVerification: false,
+				},
+				TenantRestrictions: utils.NewStringSet(testTenantId1.String(), testTenantId2.String()),
+				TenantRestrictionType: TenantRestrictionTypeAll,
 			},
-			TenantRestrictions: utils.NewStringSet(testTenantId1.String(), testTenantId2.String()),
-			TenantRestrictionType: TenantRestrictionTypeAll,
-		})
+		}
+	})
 }
 
 func provideMockAccountStore() security.AccountStore {
@@ -281,9 +320,12 @@ func provideMockedTenancyAccessor() tenancy.Accessor {
 	return mocks.NewMockTenancyAccessor(tenancyRelationship, uuid.New())
 }
 
-func sendAuthorize(ctx context.Context, body io.Reader) *http.Response {
-	const target = "http://localhost:0/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"
-	req := webtest.NewRequest(ctx, http.MethodPost, target, body)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+func sendAuthorize(ctx context.Context, sp *saml.ServiceProvider, targetURL string) *http.Response {
+	authnReq, e := sp.MakeAuthenticationRequest(targetURL, saml.HTTPPostBinding, saml.HTTPPostBinding)
+	if e != nil {
+		panic(e)
+	}
+	req := webtest.NewRequest(ctx, http.MethodPost, targetURL, nil,
+		samltest.RequestWithSAMLPostBinding(authnReq, "my_relay_state"))
 	return webtest.MustExec(ctx, req).Response
 }

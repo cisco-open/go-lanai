@@ -1,3 +1,5 @@
+// TODO move interface to "saml" package
+
 package saml_auth_ctx
 
 import (
