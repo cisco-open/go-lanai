@@ -3,6 +3,7 @@ package samllogin
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"github.com/crewjam/saml"
 )
 
@@ -60,7 +61,7 @@ func (sa *samlAssertionAuthentication) Assertion() *saml.Assertion {
 
 type Authenticator struct {
 	accountStore security.FederatedAccountStore
-	idpManager   SamlIdentityProviderManager
+	idpManager   samlctx.SamlIdentityProviderManager
 }
 
 func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Candidate) (security.Authentication, error) {
@@ -73,7 +74,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 	if err != nil {
 		return nil, security.NewInternalAuthenticationError("Couldn't find idp matching the assertion")
 	}
-	samlIdp, ok := idp.(SamlIdentityProvider)
+	samlIdp, ok := idp.(samlctx.SamlIdentityProvider)
 	if !ok {
 		return nil, security.NewInternalAuthenticationError("Couldn't find idp metadata matching the assertion")
 	}

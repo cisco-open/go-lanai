@@ -4,7 +4,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"net/http"
@@ -15,7 +14,7 @@ type SamlLogoutEndpointConfigurer struct {
 }
 
 func newSamlLogoutEndpointConfigurer(properties samlctx.SamlProperties,
-	samlClientStore saml_auth_ctx.SamlClientStore) *SamlLogoutEndpointConfigurer {
+	samlClientStore samlctx.SamlClientStore) *SamlLogoutEndpointConfigurer {
 
 	return &SamlLogoutEndpointConfigurer{
 		samlConfigurer: samlConfigurer{

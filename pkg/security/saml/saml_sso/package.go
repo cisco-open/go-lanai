@@ -4,8 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"go.uber.org/fx"
 )
@@ -26,10 +25,10 @@ func Use() {
 
 type initDI struct {
 	fx.In
-	SecRegistrar           security.Registrar `optional:"true"`
-	Properties             saml.SamlProperties
-	ServerProperties       web.ServerProperties
-	ServiceProviderManager saml_auth_ctx.SamlClientStore `optional:"true"`
+	SecRegistrar     security.Registrar `optional:"true"`
+	Properties       samlctx.SamlProperties
+	ServerProperties web.ServerProperties
+	ServiceProviderManager samlctx.SamlClientStore `optional:"true"`
 	AccountStore           security.AccountStore `optional:"true"`
 	AttributeGenerator     AttributeGenerator `optional:"true"`
 }

@@ -24,9 +24,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
-	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
@@ -83,7 +82,7 @@ type IntegrationTestOut struct {
 	AccountStore         security.AccountStore
 	PasswordEncoder      passwd.PasswordEncoder
 	FedAccountStore      security.FederatedAccountStore
-	SamlClientStore      saml_auth_ctx.SamlClientStore
+	SamlClientStore      samlctx.SamlClientStore
 }
 
 func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
@@ -115,7 +114,7 @@ func TestWithMockedServer(t *testing.T) {
 			authserver.OAuth2AuthorizeModule, resserver.OAuth2AuthorizeModule,
 			passwdidp.Module, samlidp.Module, authorize.Module, saml_auth.Module,
 			passwd.PasswordAuthModule, formlogin.Module, logout.Module,
-			lanaisaml.Module, samllogin.SamlAuthModule,
+			samlctx.Module, samllogin.SamlAuthModule,
 			basicauth.BasicAuthModule, clientauth.Module,
 			token.Module, access.AccessControlModule, errorhandling.ErrorHandlingModule,
 			request_cache.Module, csrf.Module, session.Module,

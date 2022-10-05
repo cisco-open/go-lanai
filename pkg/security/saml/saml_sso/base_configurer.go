@@ -3,7 +3,6 @@ package saml_auth
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"fmt"
 	dsig "github.com/russellhaering/goxmldsig"
@@ -12,7 +11,7 @@ import (
 
 type samlConfigurer struct {
 	properties      samlctx.SamlProperties
-	samlClientStore saml_auth_ctx.SamlClientStore
+	samlClientStore samlctx.SamlClientStore
 }
 
 func (c *samlConfigurer) getIdentityProviderConfiguration(f *Feature) *Options {

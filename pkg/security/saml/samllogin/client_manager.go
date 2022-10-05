@@ -3,6 +3,7 @@ package samllogin
 import (
 	"context"
 	"crypto/x509"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
 	"github.com/crewjam/saml"
@@ -18,7 +19,7 @@ type CacheableIdpClientManager struct {
 	httpClient *http.Client
 
 	cache map[string]*saml.ServiceProvider
-	processed map[string]SamlIdentityProvider
+	processed map[string]samlctx.SamlIdentityProvider
 	cacheMutex sync.RWMutex
 }
 
@@ -27,11 +28,11 @@ func NewCacheableIdpClientManager(template saml.ServiceProvider) *CacheableIdpCl
 		template: template,
 		httpClient:          http.DefaultClient,
 		cache: make(map[string]*saml.ServiceProvider),
-		processed: make(map[string]SamlIdentityProvider),
+		processed: make(map[string]samlctx.SamlIdentityProvider),
 	}
 }
 
-func (m *CacheableIdpClientManager) RefreshCache(ctx context.Context, identityProviders []SamlIdentityProvider) {
+func (m *CacheableIdpClientManager) RefreshCache(ctx context.Context, identityProviders []samlctx.SamlIdentityProvider) {
 	m.cacheMutex.RLock()
 	remove, refresh := m.compareWithCache(identityProviders)
 	m.cacheMutex.RUnlock()
@@ -67,7 +68,7 @@ func (m *CacheableIdpClientManager) RefreshCache(ctx context.Context, identityPr
 	}
 }
 
-func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIdentityProvider) (remove map[string]bool, refresh []SamlIdentityProvider) {
+func (m *CacheableIdpClientManager) compareWithCache(identityProviders []samlctx.SamlIdentityProvider) (remove map[string]bool, refresh []samlctx.SamlIdentityProvider) {
 	keep := make(map[string]bool)
 	remove = make(map[string]bool)
 
@@ -92,7 +93,7 @@ func (m *CacheableIdpClientManager) compareWithCache(identityProviders []SamlIde
 	return remove, refresh
 }
 
-func (m *CacheableIdpClientManager) resolveMetadata(ctx context.Context, refresh []SamlIdentityProvider) (resolved map[string]*saml.ServiceProvider){
+func (m *CacheableIdpClientManager) resolveMetadata(ctx context.Context, refresh []samlctx.SamlIdentityProvider) (resolved map[string]*saml.ServiceProvider){
 	resolved = make(map[string]*saml.ServiceProvider)
 	for _, details := range refresh {
 		idpDescriptor, data, err := samlutils.ResolveMetadata(ctx, details.MetadataLocation(), samlutils.WithHttpClient(m.httpClient))
@@ -154,7 +155,7 @@ func (m *CacheableIdpClientManager) GetAllClients() []*saml.ServiceProvider {
 	return clients
 }
 
-func (m *CacheableIdpClientManager) GetClientByComparator(comparator func(details SamlIdentityProvider) bool) (client *saml.ServiceProvider, ok bool) {
+func (m *CacheableIdpClientManager) GetClientByComparator(comparator func(details samlctx.SamlIdentityProvider) bool) (client *saml.ServiceProvider, ok bool) {
 	m.cacheMutex.RLock()
 	defer m.cacheMutex.RUnlock()
 
@@ -167,12 +168,12 @@ func (m *CacheableIdpClientManager) GetClientByComparator(comparator func(detail
 }
 
 func (m *CacheableIdpClientManager) GetClientByDomain(domain string) (client *saml.ServiceProvider, ok bool) {
-	return m.GetClientByComparator(func(details SamlIdentityProvider) bool {
+	return m.GetClientByComparator(func(details samlctx.SamlIdentityProvider) bool {
 		return details.Domain() == domain
 	})
 }
 func (m *CacheableIdpClientManager) GetClientByEntityId(entityId string) (client *saml.ServiceProvider, ok bool) {
-	return m.GetClientByComparator(func(details SamlIdentityProvider) bool {
+	return m.GetClientByComparator(func(details samlctx.SamlIdentityProvider) bool {
 		return details.EntityId() == entityId
 	})
 }

@@ -45,7 +45,7 @@ type configurerSharedComponents struct {
 type samlConfigurer struct {
 	properties     samlctx.SamlProperties
 	idpManager     idp.IdentityProviderManager
-	samlIdpManager SamlIdentityProviderManager
+	samlIdpManager samlctx.SamlIdentityProviderManager
 	// Shared components, generated on demand
 	components map[spOptionsHashable]*configurerSharedComponents
 }
@@ -54,7 +54,7 @@ func newSamlConfigurer(properties samlctx.SamlProperties, idpManager idp.Identit
 	return &samlConfigurer{
 		properties:     properties,
 		idpManager:     idpManager,
-		samlIdpManager: idpManager.(SamlIdentityProviderManager),
+		samlIdpManager: idpManager.(samlctx.SamlIdentityProviderManager),
 	}
 }
 

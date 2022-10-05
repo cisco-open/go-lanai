@@ -10,8 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
-	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
@@ -102,7 +101,7 @@ type SLOTestOut struct {
 	fx.Out
 	SecConfigurer   security.Configurer
 	TestSP          *saml.ServiceProvider
-	SamlClientStore saml_auth_ctx.SamlClientStore
+	SamlClientStore samlctx.SamlClientStore
 }
 
 func LogoutTestSecurityConfigProvider(di SLOTestDI) SLOTestOut {
@@ -129,7 +128,7 @@ func LogoutTestSecurityConfigProvider(di SLOTestDI) SLOTestOut {
 
 type sloTestDI struct {
 	fx.In
-	Properties   lanaisaml.SamlProperties
+	Properties   samlctx.SamlProperties
 	MockedSigner *saml.ServiceProvider
 }
 
@@ -139,7 +138,7 @@ func TestWithMockedServer(t *testing.T) {
 		apptest.Bootstrap(),
 		webtest.WithMockedServer(),
 		sectest.WithMockedMiddleware(sectest.MWEnableSession()),
-		apptest.WithModules(Module, logout.Module, request_cache.Module, lanaisaml.Module, access.AccessControlModule, errorhandling.ErrorHandlingModule),
+		apptest.WithModules(Module, logout.Module, request_cache.Module, samlctx.Module, access.AccessControlModule, errorhandling.ErrorHandlingModule),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Provide(LogoutTestSecurityConfigProvider),

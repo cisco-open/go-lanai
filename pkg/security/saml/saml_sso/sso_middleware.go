@@ -3,7 +3,7 @@ package saml_auth
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -167,7 +167,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) handleError(c *gin.Context, authReque
 	c.Abort()
 }
 
-func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context.Context, client saml_auth_ctx.SamlClient, auth security.Authentication) error {
+func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context.Context, client samlctx.SamlClient, auth security.Authentication) error {
 	tenantRestriction := client.GetTenantRestrictions()
 
 	if len(tenantRestriction) == 0 {

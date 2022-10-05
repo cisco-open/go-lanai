@@ -3,7 +3,6 @@ package saml_auth
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
@@ -150,7 +149,7 @@ func TestMetadata(t *testing.T) {
 	g.Expect(w).To(MetadataMatcher{})
 }
 
-func setupServerForTest(testClientStore saml_auth_ctx.SamlClientStore, testAccountStore security.AccountStore) *gin.Engine {
+func setupServerForTest(testClientStore samlctx.SamlClientStore, testAccountStore security.AccountStore) *gin.Engine {
 	prop := samlctx.NewSamlProperties()
 	prop.KeyFile = "testdata/saml_test.key"
 	prop.CertificateFile = "testdata/saml_test.cert"

@@ -3,7 +3,7 @@ package saml_auth
 import (
 	"crypto"
 	"crypto/x509"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/xml"
 	"github.com/crewjam/saml"
@@ -20,16 +20,16 @@ type Options struct {
 	SsoUrl                 url.URL
 	SloUrl                 url.URL
 	SigningMethod          string
-	serviceProviderManager saml_auth_ctx.SamlClientStore
+	serviceProviderManager samlctx.SamlClientStore
 }
 
 type MetadataMiddleware struct {
-	samlClientStore   saml_auth_ctx.SamlClientStore // used to load the saml clients
+	samlClientStore   samlctx.SamlClientStore // used to load the saml clients
 	spMetadataManager *SpMetadataManager            // manages the resolved service provider metadata
 	idp               *saml.IdentityProvider
 }
 
-func NewMetadataMiddleware(opts *Options, samlClientStore saml_auth_ctx.SamlClientStore) *MetadataMiddleware {
+func NewMetadataMiddleware(opts *Options, samlClientStore samlctx.SamlClientStore) *MetadataMiddleware {
 
 	spDescriptorManager := &SpMetadataManager{
 		cache:      make(map[string]*saml.EntityDescriptor),

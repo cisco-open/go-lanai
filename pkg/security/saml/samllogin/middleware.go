@@ -2,6 +2,7 @@ package samllogin
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/xml"
@@ -70,9 +71,9 @@ func (m *SPMetadataMiddleware) RefreshMetadataHandler() gin.HandlerFunc {
 // different instance
 func (m *SPMetadataMiddleware) refreshMetadata(c *gin.Context) {
 	idpDetails := m.idpManager.GetIdentityProvidersWithFlow(c.Request.Context(), idp.ExternalIdpSAML)
-	var samlIdpDetails []SamlIdentityProvider
+	var samlIdpDetails []samlctx.SamlIdentityProvider
 	for _, i := range idpDetails {
-		if s, ok := i.(SamlIdentityProvider); ok {
+		if s, ok := i.(samlctx.SamlIdentityProvider); ok {
 			samlIdpDetails = append(samlIdpDetails, s)
 		}
 	}
@@ -82,7 +83,7 @@ func (m *SPMetadataMiddleware) refreshMetadata(c *gin.Context) {
 // resolveBinding find first supported binding using given binding location extractor
 func (m *SPMetadataMiddleware) resolveBinding(extractor func(string) string) (location, binding string) {
 	bindings := []string{saml.HTTPRedirectBinding, saml.HTTPPostBinding}
-	if manager, ok := m.idpManager.(SamlBindingManager); ok {
+	if manager, ok := m.idpManager.(samlctx.SamlBindingManager); ok {
 		bindings = manager.PreferredBindings()
 	}
 	for _, b := range bindings {

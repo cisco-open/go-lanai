@@ -6,7 +6,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
@@ -273,12 +272,12 @@ func(c *authorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			MetadataPath("/metadata"))
 }
 
-func provideMockSamlClient() saml_auth_ctx.SamlClientStore {
+func provideMockSamlClient() samlctx.SamlClientStore {
 	sp1Metadata, _ := xml.MarshalIndent(testSp1.Metadata(), "", "  ")
 	sp2Metadata, _ := xml.MarshalIndent(testSp2.Metadata(), "", "  ")
 
 	return samltest.NewMockedClientStore(func(opt *samltest.ClientStoreMockOption) {
-		opt.Clients = []saml_auth_ctx.SamlClient{
+		opt.Clients = []samlctx.SamlClient{
 			DefaultSamlClient{
 				SamlSpDetails: SamlSpDetails{
 					EntityId:                             testSp1.EntityID,
