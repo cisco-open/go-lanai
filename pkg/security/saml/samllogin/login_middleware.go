@@ -5,7 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"fmt"
 	"github.com/crewjam/saml"
@@ -26,7 +26,6 @@ type SPLoginMiddleware struct {
 
 	// list of bindings, can be saml.HTTPPostBinding or saml.HTTPRedirectBinding
 	// order indicates preference
-	bindings       []string
 	requestTracker samlsp.RequestTracker
 
 	authenticator  security.Authenticator
@@ -47,7 +46,6 @@ func NewLoginMiddleware(sp saml.ServiceProvider, tracker samlsp.RequestTracker,
 			idpManager:    idpManager,
 			clientManager: clientManager,
 		},
-		bindings:           []string{saml.HTTPRedirectBinding, saml.HTTPPostBinding},
 		requestTracker:     tracker,
 		successHandler:     handler,
 		authenticator:      authenticator,
@@ -66,13 +64,13 @@ func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.R
 		return security.NewExternalSamlAuthenticationError("cannot find idp for this domain")
 	}
 
-	location, binding := sp.resolveBinding(sp.bindings, client.GetSSOBindingLocation)
+	location, binding := sp.resolveBinding(client.GetSSOBindingLocation)
 	if location == "" {
 		return security.NewExternalSamlAuthenticationError("idp does not have supported bindings.")
 	}
 
 	// Note: we only support post for result binding
-	authReq, err := client.MakeAuthenticationRequest(location, binding, saml.HTTPPostBinding)
+	authReq, err := samlutils.NewFixedAuthenticationRequest(client, location, binding, saml.HTTPPostBinding)
 	if err != nil {
 		return security.NewExternalSamlAuthenticationError("cannot make auth request to binding location", err)
 	}
@@ -99,7 +97,7 @@ func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.R
 func (sp *SPLoginMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		resp := saml.Response{}
-		switch rs := saml_util.ParseSAMLObject(c, &resp); {
+		switch rs := samlutils.ParseSAMLObject(c, &resp); {
 		case rs.Err != nil:
 			sp.handleError(c, security.NewExternalSamlAuthenticationError(fmt.Errorf("cannot process ACS request: %v", rs.Err)))
 			return

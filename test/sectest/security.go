@@ -30,6 +30,7 @@ func ContextWithSecurity(ctx context.Context, opts ...SecurityContextOptions) co
 }
 
 // WithMockedSecurity used to mock an oauth2.Authentication in the given context, returning a new context
+// Deprecated: use ContextWithSecurity(ctx, MockedAuthentication(opts...)) instead
 func WithMockedSecurity(ctx context.Context, opts ...SecurityMockOptions) context.Context {
 	return ContextWithSecurity(ctx, MockedAuthentication(opts...))
 }

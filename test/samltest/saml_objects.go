@@ -1,12 +1,29 @@
-package testdata
+package samltest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
+	"encoding/base64"
 	"fmt"
+	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
 	"github.com/google/uuid"
+	"net/url"
 	"time"
 )
+
+// MakeAuthnRequest create a SAML AuthnRequest, sign it and returns
+func MakeAuthnRequest(sp saml.ServiceProvider, idpUrl string) string {
+	authnRequest, _ := sp.MakeAuthenticationRequest(idpUrl, saml.HTTPPostBinding, saml.HTTPPostBinding)
+	doc := etree.NewDocument()
+	doc.SetRoot(authnRequest.Element())
+	reqBuf, _ := doc.WriteToBytes()
+	encodedReqBuf := base64.StdEncoding.EncodeToString(reqBuf)
+
+	data := url.Values{}
+	data.Set("SAMLRequest", encodedReqBuf)
+	data.Add("RelayState", "my_relay_state")
+	return data.Encode()
+}
 
 type AssertionOptions func(opt *AssertionOption)
 type AssertionOption struct {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -192,29 +191,30 @@ func RequestHasHeader(name string) web.RequestMatcher {
 	}
 }
 
-func RequestHasPostParameter(name string) web.RequestMatcher {
-	matchable := func(ctx context.Context, r *http.Request) (interface{}, error) {
-		if g := web.GinContext(ctx); g != nil {
-			p, _ := g.GetPostForm(name)
-			return p, nil
-		} else if _ = r.ParseForm(); len(r.PostForm[name]) != 0 {
-			return r.PostForm[name][0], nil
-		}
-		return nil, errors.New("can't get post param from context. *gin.Context is not available")
-	}
-
+// RequestHasPostForm matches http.Request that have non-empty value with given parameter in query or post body
+func RequestHasPostForm(param string) web.RequestMatcher {
 	return &requestMatcher{
-		description: fmt.Sprintf("matches have parameter %s", name),
-		matchableFunc: matchable,
+		description: fmt.Sprintf(`matches have form parameter [%s] in body`, param),
+		matchableFunc: postForm(param),
 		delegate: matcher.AnyNonEmptyString(),
 	}
 }
 
-func RequestWithParam(name, value string) web.RequestMatcher {
+// RequestHasForm matches http.Request that have non-empty value with given parameter in query or post body
+func RequestHasForm(param string) web.RequestMatcher {
 	return &requestMatcher{
-		description: fmt.Sprintf("matches have parameter %s", name),
-		matchableFunc: param(name),
-		delegate: matcher.WithString(value, true),
+		description: fmt.Sprintf(`matches have form parameter [%s]`, param),
+		matchableFunc: form(param),
+		delegate: matcher.AnyNonEmptyString(),
+	}
+}
+
+// RequestWithForm matches http.Request that have matching param-value pair in query or post body
+func RequestWithForm(param, value string) web.RequestMatcher {
+	return &requestMatcher{
+		description:   fmt.Sprintf(`matches have form data %s=%s`, param, value),
+		matchableFunc: query(param),
+		delegate:      matcher.WithString(value, true),
 	}
 }
 
@@ -269,12 +269,30 @@ func path(c context.Context, r *http.Request) (interface{}, error) {
 	return strings.TrimPrefix(path, ctxPath), nil
 }
 
-func param(name string) matchableFunc {
+func query(name string) matchableFunc {
 	return func (c context.Context, r *http.Request) (interface{}, error) {
 		if e := r.ParseForm(); e != nil {
 			return nil, e
 		}
 		return r.Form.Get(name), nil
+	}
+}
+
+func form(name string) matchableFunc {
+	return func(ctx context.Context, r *http.Request) (interface{}, error) {
+		if e := r.ParseForm(); e != nil {
+			return nil, fmt.Errorf("can't find post form data from request: %v", e)
+		}
+		return r.FormValue(name), nil
+	}
+}
+
+func postForm(name string) matchableFunc {
+	return func(ctx context.Context, r *http.Request) (interface{}, error) {
+		if e := r.ParseForm(); e != nil {
+			return nil, fmt.Errorf("can't find post form data from request: %v", e)
+		}
+		return r.PostFormValue(name), nil
 	}
 }
 

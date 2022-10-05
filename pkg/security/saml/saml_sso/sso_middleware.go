@@ -2,70 +2,31 @@ package saml_auth
 
 import (
 	"context"
-	"crypto"
-	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/crewjam/saml"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"net/url"
-	"sort"
 )
 
-type Options struct {
-	Key                    crypto.PrivateKey
-	Cert                   *x509.Certificate
-	EntityIdUrl            url.URL
-	SsoUrl                 url.URL
-	serviceProviderManager saml_auth_ctx.SamlClientStore
-}
-
 type SamlAuthorizeEndpointMiddleware struct {
-	accountStore security.AccountStore
-
-	//used to load the saml clients
-	samlClientStore saml_auth_ctx.SamlClientStore
-	//manages the resolved service provider metadata
-	spMetadataManager *SpMetadataManager
-
-	idp               *saml.IdentityProvider
-
+	*MetadataMiddleware
+	accountStore       security.AccountStore
 	attributeGenerator AttributeGenerator
 }
 
-func NewSamlAuthorizeEndpointMiddleware(opts Options,
-	serviceProviderManager saml_auth_ctx.SamlClientStore,
+func NewSamlAuthorizeEndpointMiddleware(metaMw *MetadataMiddleware,
 	accountStore security.AccountStore,
 	attributeGenerator AttributeGenerator) *SamlAuthorizeEndpointMiddleware {
 
-	spDescriptorManager := &SpMetadataManager{
-		cache: make(map[string]*saml.EntityDescriptor),
-		processed: make(map[string]SamlSpDetails),
-		httpClient: http.DefaultClient,
-	}
-
-	idp := &saml.IdentityProvider{
-		Key:                     opts.Key,
-		Logger:                  newLoggerAdaptor(logger),
-		Certificate:             opts.Cert,
-		//since we have our own middleware implementation, this value here only serves the purpose of defining the entity id.
-		MetadataURL:             opts.EntityIdUrl,
-		SSOURL:                  opts.SsoUrl,
-	}
-
 	mw := &SamlAuthorizeEndpointMiddleware{
-		idp:                idp,
-		samlClientStore:    serviceProviderManager,
-		spMetadataManager:  spDescriptorManager,
-		accountStore: accountStore,
+		MetadataMiddleware: metaMw,
+		accountStore:       accountStore,
 		attributeGenerator: attributeGenerator,
 	}
 
@@ -74,14 +35,14 @@ func NewSamlAuthorizeEndpointMiddleware(opts Options,
 
 func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+		if matches, err := condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
 			return
 		}
 
 		var req *saml.IdpAuthnRequest
 		var err error
 
-		idpInitiatedMatcher := matcher.RequestWithParam("idp_init", "true")
+		idpInitiatedMatcher := matcher.RequestWithForm("idp_init", "true")
 		isIdpInit, _ := idpInitiatedMatcher.Matches(ctx.Request)
 		if isIdpInit {
 			entityId := ctx.Request.Form.Get("entity_id")
@@ -160,7 +121,6 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 			}
 		}
 
-
 		//check tenancy
 		client, err := mw.samlClientStore.GetSamlClientByEntityId(ctx.Request.Context(), serviceProviderID)
 		if err != nil { //we shouldn't get an error here because we already have the SP's metadata.
@@ -194,37 +154,6 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 	}
 }
 
-func (mw *SamlAuthorizeEndpointMiddleware) RefreshMetadataHandler(condition web.RequestMatcher) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if matches, err :=condition.MatchesWithContext(c.Request.Context(), c.Request); !matches || err != nil {
-			return
-		}
-
-		if clients, e := mw.samlClientStore.GetAllSamlClient(c.Request.Context()); e == nil {
-			mw.spMetadataManager.RefreshCache(c, clients)
-		}
-	}
-}
-
-func (mw *SamlAuthorizeEndpointMiddleware) MetadataHandlerFunc() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		metadata := mw.idp.Metadata()
-		sort.SliceStable(metadata.IDPSSODescriptors[0].SingleSignOnServices, func(i, j int) bool {
-			return metadata.IDPSSODescriptors[0].SingleSignOnServices[i].Binding < metadata.IDPSSODescriptors[0].SingleSignOnServices[j].Binding
-		})
-
-		var t = true
-		//We always want the authentication request to be signed
-		//But because this is not supported by the saml package, we set it here explicitly
-		metadata.IDPSSODescriptors[0].WantAuthnRequestsSigned = &t
-		w := c.Writer
-		buf, _ := xml.MarshalIndent(metadata, "", "  ")
-		w.Header().Set("Content-Type", "application/samlmetadata+xml")
-		w.Header().Set("Content-Disposition", "attachment; filename=metadata.xml")
-		_, _ = w.Write(buf)
-	}
-}
-
 func (mw *SamlAuthorizeEndpointMiddleware) handleError(c *gin.Context, authRequest *saml.IdpAuthnRequest, err error) {
 	if !errors.Is(err, security.ErrorTypeSaml) {
 		err = NewSamlInternalError("saml sso internal error", err)
@@ -241,7 +170,7 @@ func (mw *SamlAuthorizeEndpointMiddleware) handleError(c *gin.Context, authReque
 func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context.Context, client saml_auth_ctx.SamlClient, auth security.Authentication) error {
 	tenantRestriction := client.GetTenantRestrictions()
 
-	if len(tenantRestriction) == 0  {
+	if len(tenantRestriction) == 0 {
 		return nil
 	}
 

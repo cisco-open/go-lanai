@@ -1,19 +1,15 @@
 package saml_auth
 
 import (
-	"bytes"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/samlssotest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	"encoding/base64"
-	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gin-gonic/gin"
@@ -24,39 +20,51 @@ import (
 	"testing"
 )
 
+const (
+	targetSSOUrl = "http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"
+)
+
+var knownSP = samltest.MustNewMockedSP(func(opt *samltest.SPMockOption) {
+	opt.Properties.EntityID = "http://localhost:8000/saml/metadata"
+	opt.Properties.PrivateKeySource = "testdata/saml_test_sp.key"
+	opt.Properties.CertsSource = "testdata/saml_test_sp.cert"
+	opt.Properties.ACSPath = "/saml/acs"
+	opt.Properties.SLOPath = "/saml/slo"
+})
+
+var unknownSP = samltest.MustNewMockedSP(func(opt *samltest.SPMockOption) {
+	opt.Properties.EntityID = "http://localhost:8000/saml/metadata"
+	opt.Properties.PrivateKeySource = "testdata/saml_test_unknown_sp.key"
+	opt.Properties.CertsSource = "testdata/saml_test_unknown_sp.cert"
+	opt.Properties.ACSPath = "/saml/acs"
+	opt.Properties.SLOPath = "/saml/slo"
+})
+
 func TestSPInitiatedSso(t *testing.T) {
-	sp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
-	metadata, _ := xml.MarshalIndent(sp.Metadata(), "", "  ")
+	sp := *knownSP
 
-	testClientStore := samlssotest.NewMockedSamlClientStore(
-		DefaultSamlClient{
-			SamlSpDetails: SamlSpDetails{
-				EntityId:                             sp.EntityID,
-				MetadataSource:                       string(metadata),
-				SkipAssertionEncryption:              false,
-				SkipAuthRequestSignatureVerification: false,
-			},
-		})
+	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
 	testAccountStore := sectest.NewMockedAccountStore()
-
+	g := gomega.NewWithT(t)
 	r := setupServerForTest(testClientStore, testAccountStore)
 
+	authnReq, e := sp.MakeAuthenticationRequest(targetSSOUrl, saml.HTTPPostBinding, saml.HTTPPostBinding)
+	g.Expect(e).To(gomega.Succeed())
+	req, _ := http.NewRequest("POST", "/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", nil)
+	samltest.RequestWithSAMLPostBinding(authnReq, "")(req)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/europa/v2/authorize", bytes.NewBufferString(makeAuthnRequest(sp)))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	q := req.URL.Query()
-	q.Add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
-	req.URL.RawQuery = q.Encode()
 	r.ServeHTTP(w, req)
 
-	g := gomega.NewWithT(t)
 	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
 
-	samlResponseXml, err := samlssotest.ParseSamlResponse(w.Body)
+	var samlResp saml.Response
+	_, err := samltest.ParseBinding(w.Result(), &samlResp)
 	if err != nil {
 		t.Errorf("error parsing saml response xml")
 		return
 	}
+	samlResponseXml := samlResp.Element()
 
 	status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']")
 	g.Expect(status).ToNot(gomega.BeNil())
@@ -65,41 +73,30 @@ func TestSPInitiatedSso(t *testing.T) {
 //In this test we use a different cert key pair so that the SP's actual cert and key do not match the ones that are
 // in its metadata. This way the signature of the auth request won't match the expected signature based on the metadata
 func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
-	sp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
-	metadata, _ := xml.MarshalIndent(sp.Metadata(), "", "  ")
+	sp := *knownSP
 
-	testClientStore := samlssotest.NewMockedSamlClientStore(
-		DefaultSamlClient{
-			SamlSpDetails: SamlSpDetails{
-				EntityId:                             sp.EntityID,
-				MetadataSource:                       string(metadata),
-				SkipAssertionEncryption:              false,
-				SkipAuthRequestSignatureVerification: false,
-			},
-		})
+	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
 	testAccountStore := sectest.NewMockedAccountStore()
-
-	unknownSp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_unknown_sp.cert", "testdata/saml_test_unknown_sp.key")
-
+	g := gomega.NewWithT(t)
 	r := setupServerForTest(testClientStore, testAccountStore)
+	unknownSp := *unknownSP
+
+	authnReq, e := unknownSp.MakeAuthenticationRequest(targetSSOUrl, saml.HTTPPostBinding, saml.HTTPPostBinding)
+	g.Expect(e).To(gomega.Succeed())
+	req, _ := http.NewRequest("POST", "/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", nil)
+	samltest.RequestWithSAMLPostBinding(authnReq, "")(req)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/europa/v2/authorize", bytes.NewBufferString(makeAuthnRequest(unknownSp)))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	q := req.URL.Query()
-	q.Add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
-	req.URL.RawQuery = q.Encode()
 	r.ServeHTTP(w, req)
-
-	g := gomega.NewWithT(t)
 	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
 
-	samlResponseXml, err := samlssotest.ParseSamlResponse(w.Body)
-
+	var samlResp saml.Response
+	_, err := samltest.ParseBinding(w.Result(), &samlResp)
 	if err != nil {
 		t.Errorf("error parsing saml response xml")
 		return
 	}
+	samlResponseXml := samlResp.Element()
 
 	// StatusCode Responder tells the auth requester that there's a problem with the request
 	status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Responder']")
@@ -107,18 +104,9 @@ func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
 }
 
 func TestIDPInitiatedSso(t *testing.T) {
-	sp := samlssotest.NewSamlSp("http://localhost:8000", "testdata/saml_test_sp.cert", "testdata/saml_test_sp.key")
-	metadata, _ := xml.MarshalIndent(sp.Metadata(), "", "  ")
+	sp := *knownSP
 
-	testClientStore := samlssotest.NewMockedSamlClientStore(
-		DefaultSamlClient{
-			SamlSpDetails: SamlSpDetails{
-				EntityId:                             sp.EntityID,
-				MetadataSource:                       string(metadata),
-				SkipAssertionEncryption:              false,
-				SkipAuthRequestSignatureVerification: false,
-			},
-		})
+	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
 	testAccountStore := sectest.NewMockedAccountStore()
 
 	r := setupServerForTest(testClientStore, testAccountStore)
@@ -136,26 +124,19 @@ func TestIDPInitiatedSso(t *testing.T) {
 	g := gomega.NewWithT(t)
 	g.Expect(w.Code).To(gomega.BeEquivalentTo(http.StatusOK))
 
-	samlResponseXml, err := samlssotest.ParseSamlResponse(w.Body)
+	var samlResp saml.Response
+	_, err := samltest.ParseBinding(w.Result(), &samlResp)
 	if err != nil {
 		t.Errorf("error parsing saml response xml")
 		return
 	}
-
+	samlResponseXml := samlResp.Element()
 	status := samlResponseXml.FindElement("//samlp:StatusCode[@Value='urn:oasis:names:tc:SAML:2.0:status:Success']")
 	g.Expect(status).ToNot(gomega.BeNil())
 }
 
 func TestMetadata(t *testing.T) {
-	testClientStore := samlssotest.NewMockedSamlClientStore(
-		DefaultSamlClient{
-			SamlSpDetails: SamlSpDetails{
-				EntityId:                             "http://localhost:8000/saml/metadata",
-				MetadataSource:                       "testdata/saml_test_sp_metadata.xml",
-				SkipAssertionEncryption:              false,
-				SkipAuthRequestSignatureVerification: false,
-			},
-		})
+	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(knownSP))
 	testAccountStore := sectest.NewMockedAccountStore()
 
 	r := setupServerForTest(testClientStore, testAccountStore)
@@ -169,21 +150,6 @@ func TestMetadata(t *testing.T) {
 	g.Expect(w).To(MetadataMatcher{})
 }
 
-
-func makeAuthnRequest(sp saml.ServiceProvider) string {
-	authnRequest, _ := sp.MakeAuthenticationRequest("http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", saml.HTTPPostBinding, saml.HTTPPostBinding)
-	doc := etree.NewDocument()
-	doc.SetRoot(authnRequest.Element())
-	reqBuf, _ := doc.WriteToBytes()
-	encodedReqBuf := base64.StdEncoding.EncodeToString(reqBuf)
-
-	data := url.Values{}
-	data.Set("SAMLRequest", encodedReqBuf)
-	data.Add("RelayState", "my_relay_state")
-
-	return data.Encode()
-}
-
 func setupServerForTest(testClientStore saml_auth_ctx.SamlClientStore, testAccountStore security.AccountStore) *gin.Engine {
 	prop := samlctx.NewSamlProperties()
 	prop.KeyFile = "testdata/saml_test.key"
@@ -193,9 +159,9 @@ func setupServerForTest(testClientStore saml_auth_ctx.SamlClientStore, testAccou
 	serverProp.ContextPath = "europa"
 	c := newSamlAuthorizeEndpointConfigurer(*prop, testClientStore, testAccountStore, nil)
 
-	f := NewEndpoint().
+	f := New().
 		SsoLocation(&url.URL{Path: "/v2/authorize", RawQuery: "grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"}).
-		SsoCondition(matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")).
+		SsoCondition(matcher.RequestWithForm("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")).
 		MetadataPath("/metadata").
 		Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 		*opt =security.DefaultIssuerDetails{
@@ -207,7 +173,8 @@ func setupServerForTest(testClientStore saml_auth_ctx.SamlClientStore, testAccou
 		}}))
 
 	opts := c.getIdentityProviderConfiguration(f)
-	mw := NewSamlAuthorizeEndpointMiddleware(opts, c.samlClientStore, c.accountStore, c.attributeGenerator)
+	metaMw := NewMetadataMiddleware(opts, c.samlClientStore)
+	mw := NewSamlAuthorizeEndpointMiddleware(metaMw, c.accountStore, c.attributeGenerator)
 
 	r := gin.Default()
 	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc())

@@ -60,7 +60,7 @@ func (c *mockedAuthClient) SwitchUser(_ context.Context, opts ...seclient.AuthOp
 		return nil, fmt.Errorf("[Mocked Error] invalid access token")
 	}
 
-	if acct := c.accounts.find(mt.UName, mt.UID); acct == nil || !acct.permissions.Has(security.SpecialPermissionSwitchUser) {
+	if acct := c.accounts.find(mt.UName, mt.UID); acct == nil || !acct.MockedAccountDetails.Permissions.Has(security.SpecialPermissionSwitchUser) {
 		return nil, fmt.Errorf("[Mocked Error] switch user not allowed")
 	}
 
@@ -96,7 +96,7 @@ func (c *mockedAuthClient) SwitchTenant(_ context.Context, opts ...seclient.Auth
 	}
 
 	acct := c.accounts.find(mt.UName, mt.UID)
-	if acct == nil || !acct.permissions.Has(security.SpecialPermissionSwitchTenant) {
+	if acct == nil || !acct.MockedAccountDetails.Permissions.Has(security.SpecialPermissionSwitchTenant) {
 		return nil, fmt.Errorf("[Mocked Error] switch tenant not allowed or deleted user")
 	}
 
@@ -125,7 +125,7 @@ func (c *mockedAuthClient) option(opts []seclient.AuthOptions) (*seclient.AuthOp
 	return &opt, nil
 }
 
-func (c *mockedAuthClient) resolveTenant(opt *seclient.AuthOption, acct *mockedAccount) (ret *mockedTenant, err error) {
+func (c *mockedAuthClient) resolveTenant(opt *seclient.AuthOption, acct *MockedAccount) (ret *mockedTenant, err error) {
 	if opt.TenantId != "" || opt.TenantExternalId != "" {
 		ret = c.tenants.find(opt.TenantId, opt.TenantExternalId)
 	} else if acct.DefaultTenant != "" {
@@ -136,7 +136,7 @@ func (c *mockedAuthClient) resolveTenant(opt *seclient.AuthOption, acct *mockedA
 		return nil, fmt.Errorf("[Mocked Error] tenant not specified and default tenant not configured")
 	}
 
-	if !acct.AssignedTenants.Has(ret.ID) && !acct.permissions.Has(security.SpecialPermissionAccessAllTenant) {
+	if !acct.AssignedTenants.Has(ret.ID) && !acct.MockedAccountDetails.Permissions.Has(security.SpecialPermissionAccessAllTenant) {
 		return nil, fmt.Errorf("[Mocked Error] user does not have access to tenant [%s]", ret.ID)
 	}
 	return

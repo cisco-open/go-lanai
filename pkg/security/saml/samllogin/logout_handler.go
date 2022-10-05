@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+var ErrSamlSloRequired = security.NewAuthenticationError("SAML SLO required")
+
 type SingleLogoutHandler struct {}
 
 func NewSingleLogoutHandler() *SingleLogoutHandler {
@@ -18,7 +20,7 @@ func (h *SingleLogoutHandler) ShouldLogout(ctx context.Context, _ *http.Request,
 	if !h.requiresSamlSLO(ctx, auth) {
 		return nil
 	}
-	return security.NewAuthenticationError("SAML SLO required")
+	return ErrSamlSloRequired
 }
 
 func (h *SingleLogoutHandler) HandleLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, auth security.Authentication) error {

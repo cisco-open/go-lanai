@@ -2,11 +2,13 @@ package saml_auth
 
 import (
 	"bytes"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_util"
+	"crypto/x509"
+	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
 	"encoding/xml"
 	"fmt"
 	"github.com/crewjam/saml"
 	xrv "github.com/mattermost/xml-roundtrip-validator"
+	"net/http"
 	"strconv"
 )
 
@@ -47,12 +49,21 @@ func ValidateAuthnRequest(req *saml.IdpAuthnRequest, spDetails SamlSpDetails, sp
 }
 
 func verifySignature(req *saml.IdpAuthnRequest) error {
-	data := req.RequestBuffer;
+	binding := saml.HTTPPostBinding
+	if req.HTTPRequest.Method == http.MethodGet {
+		binding = saml.HTTPRedirectBinding
+	}
 	cert, err := getServiceProviderCert(req,"signing")
 	if err != nil {
 		return NewSamlRequesterError("request signature cannot be verified, because metadata does not include certificate", err)
 	}
-	return saml_util.VerifySignature(data, cert)
+	return samlutils.VerifySignature(func(sc *samlutils.SignatureContext) {
+		sc.Binding = binding
+		sc.XMLData = req.RequestBuffer
+		sc.Certs = []*x509.Certificate{cert}
+		sc.Request = req.HTTPRequest
+
+	})
 }
 
 func DetermineACSEndpoint(req *saml.IdpAuthnRequest) error {

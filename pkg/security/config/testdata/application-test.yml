@@ -1,0 +1,86 @@
+security:
+  keys:
+    jwt:
+      id: dev
+      format: pem
+      file: "testdata/jwtkeys.pem"
+      password: TheCakeIsaLie
+  jwt:
+    key-name: "jwt"
+  auth:
+    issuer:
+      domain: msx.com
+      protocol: http
+      port: 8900
+      context-path: ${server.context-path}
+      include-port: true
+    saml:
+      certificate-file: "testdata/saml_test.cert"
+      key-file: "testdata/saml_test.key"
+      key-password: ""
+    redirect-whitelist:
+      - "internal.vms.com:*/**"
+    # following section is for backward compatibility
+    session-timeout:
+      idle-timeout-seconds: 5400
+      absolute-timeout-seconds: 10800
+  session:
+    cookie:
+      domain: ${security.auth.issuer.domain}
+    max-concurrent-sessions: 0
+    idle-timeout: "${security.auth.session-timeout.idle-timeout-seconds:5400}s"
+    absolute-timeout: "${security.auth.session-timeout.absolute-timeout-seconds:10800}s"
+  idp:
+    internal:
+      domain: ${security.auth.issuer.domain}
+      session-expired-redirect-url: "http://localhost:9003"
+      endpoints:
+        form-login: "/login#/login"
+        form-login-error: "/login?error=true#/login"
+        otp-verify: "/login/mfa#/otpverify"
+        otp-verify-resend: "/login/mfa/refresh"
+        otp-verify-error: "/login/mfa?error=true#/otpverify"
+#        reset-password-page-url: "http://localhost:9003/#/forgotpassword"
+      mfa:
+        enabled: true
+    saml:
+      enabled: true # set to true if you want to configure certain domian to use external SAML IDP for authentication.
+    openid:
+
+mocking:
+  clients:
+    super-client:
+      id: "test-client"
+      secret: "test-secret"
+      redirect-uris: ["localhost:*/**"]
+  accounts:
+    system:
+      username: "system"
+      password: "system"
+      default-tenant: "id-tenant-1"
+      tenants: ["id-tenant-1", "id-tenant-2", "id-tenant-3"]
+      permissions: ["ACCESS_ALL_TENANTS", "VIEW_OPERATOR_LOGIN_AS_CUSTOMER", "SWITCH_TENANT"]
+    admin:
+      username: "admin"
+      password: "admin"
+      user-id: "id-admin"
+      default-tenant: "id-tenant-1"
+      tenants: [ "id-tenant-1", "id-tenant-2" ]
+      permissions: [ "VIEW_OPERATOR_LOGIN_AS_CUSTOMER", "SWITCH_TENANT" ]
+    regular:
+      username: "regular"
+      password: "regular"
+      user-id: "id-regular"
+      default-tenant: "id-tenant-1"
+      tenants: ["id-tenant-1", "id-tenant-2"]
+      permissions: ["SWITCH_TENANT"]
+  tenants:
+    t1:
+      id: "id-tenant-1"
+      name: "tenant-1"
+    t2:
+      id: "id-tenant-2"
+      name: "tenant-2"
+    t3:
+      id: "id-tenant-3"
+      name: "tenant-3"

@@ -1,6 +1,8 @@
 package samllogin
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+)
 
 var (
 	FeatureId       = security.FeatureId("saml_login", security.FeatureOrderSamlLogin)

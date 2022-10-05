@@ -10,6 +10,11 @@ import (
 	"reflect"
 )
 
+var supportedResponseTypes = []reflect.Type {
+	reflect.TypeOf(ModelView{}),
+	reflect.TypeOf(&ModelView{}),
+}
+
 // ModelViewHandlerFunc is a function with following signature
 // 	- two input parameters with 1st as context.Context and 2nd as <request>
 // 	- two output parameters with 1st as <response> and 2nd as error
@@ -151,10 +156,13 @@ func validateHandlerFunc(f *reflect.Value) error {
 	t := f.Type()
 	// check response type
 	foundMV := false
+	OUTER:
 	for i := t.NumOut() - 1; i >= 0; i-- {
-		if t.Out(i).ConvertibleTo(reflect.TypeOf(&ModelView{})) {
-			foundMV = true
-			break
+		for _, supported := range supportedResponseTypes {
+			if t.Out(i).ConvertibleTo(supported) {
+				foundMV = true
+				break OUTER
+			}
 		}
 	}
 

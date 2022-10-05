@@ -49,13 +49,13 @@ func (b *mockedBase) isTokenRevoked(token *MockedToken, value string) bool {
 	return token.IssTime.Before(b.notBefore) || b.revoked.Has(value)
 }
 
-func (b *mockedBase) newMockedToken(acct *mockedAccount, tenant *mockedTenant, exp time.Time, origUser string) *MockedToken {
+func (b *mockedBase) newMockedToken(acct *MockedAccount, tenant *mockedTenant, exp time.Time, origUser string) *MockedToken {
 	return &MockedToken{
 		MockedTokenInfo: MockedTokenInfo{
-			UName: acct.username,
+			UName: acct.MockedAccountDetails.Username,
 			UID:   acct.UserId,
 			TID:   tenant.ID,
-			TExternalId: tenant.ExternalId,
+			TExternalId: tenant.ExtId,
 			OrigU: origUser,
 		},
 		ExpTime: exp,
@@ -74,12 +74,12 @@ func (b *mockedBase) parseMockedToken(value string) (*MockedToken, error) {
 	return mt, nil
 }
 
-func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *mockedAccount) oauth2.Authentication {
+func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *MockedAccount) oauth2.Authentication {
 	user := oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
 		opt.Principal = mt.UName
 		opt.State = security.StateAuthenticated
 		opt.Permissions = map[string]interface{}{}
-		for perm := range acct.permissions {
+		for perm := range acct.MockedAccountDetails.Permissions {
 			opt.Permissions[perm] = true
 		}
 	})
@@ -91,7 +91,7 @@ func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *mockedAccount) oauth2.
 			TenantId:     mt.TID,
 			Exp:          mt.ExpTime,
 			Iss:          mt.IssTime,
-			Permissions:  acct.permissions,
+			Permissions:  acct.MockedAccountDetails.Permissions,
 			Tenants:      acct.AssignedTenants,
 			OrigUsername: mt.OrigU,
 		}
