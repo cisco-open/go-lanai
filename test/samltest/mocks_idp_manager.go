@@ -87,7 +87,7 @@ func (m MockedIdpManager) GetIdentityProviderByEntityId(ctx context.Context, ent
 		if !ok {
 			continue
 		}
-		if v, e := samlDelegate.GetIdentityProviderByEntityId(ctx, entityId); e != nil {
+		if v, e := samlDelegate.GetIdentityProviderByEntityId(ctx, entityId); e == nil {
 			return v, nil
 		}
 	}
