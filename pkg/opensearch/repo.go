@@ -3,6 +3,7 @@ package opensearch
 import (
 	"context"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
+	"github.com/opensearch-project/opensearch-go/opensearchutil"
 )
 
 // NewRepo will return a OpenSearch repository for any model type T
@@ -21,10 +22,15 @@ type Repo[T any] interface {
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/search/#request-body
 	Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) (int, error)
 
-	// Index will create a new Document in the index that is defined
+	// Index will create a new Document in the index that is defined.
 	//
 	// The index argument defines the index name that the document should be stored in.
 	Index(ctx context.Context, index string, document T, o ...Option[opensearchapi.IndexRequest]) error
+
+	// NewBulkIndexer Will create a new utility helper for bulk requests
+	// [Ref]: https://pkg.go.dev/github.com/opensearch-project/opensearch-go/opensearchutil#BulkIndexerItem
+	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/document-apis/bulk/#request-body
+	NewBulkIndexer(index string) (opensearchutil.BulkIndexer, error)
 
 	// IndicesCreate will create a new index in the cluster.
 	//

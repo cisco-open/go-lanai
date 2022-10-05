@@ -69,6 +69,7 @@ func TestScopeController(t *testing.T) {
 		test.GomegaSubTest(SubTestPing(di), "SubTestPing"),
 		test.GomegaSubTest(SubTestTimeBasedQuery(di), "SubTestTimeBasedQuery"),
 		test.GomegaSubTest(SubTestTemplateAndAlias(di), "SubTestTemplateAndAlias"),
+		test.GomegaSubTest(SubTestBulkAdd(di), "SubTestBulkAdd"),
 	)
 }
 
@@ -583,5 +584,11 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 		if err != nil {
 			t.Fatalf("unable to delete index ")
 		}
+	}
+}
+
+func SubTestBulkAdd(di *opensearchDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+
 	}
 }

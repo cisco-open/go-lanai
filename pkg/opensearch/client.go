@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/opensearch-project/opensearch-go"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
+	"github.com/opensearch-project/opensearch-go/opensearchutil"
 	"go.uber.org/fx"
 	"io"
 	"reflect"
@@ -21,6 +22,7 @@ type Request interface {
 	opensearchapi.SearchRequest |
 		opensearchapi.IndicesCreateRequest |
 		opensearchapi.IndexRequest |
+		opensearchapi.BulkRequest |
 		opensearchapi.IndicesDeleteRequest |
 		opensearchapi.IndicesGetRequest |
 		opensearchapi.IndicesPutAliasRequest |
@@ -33,6 +35,7 @@ type Request interface {
 type OpenClient interface {
 	Search(ctx context.Context, o ...Option[opensearchapi.SearchRequest]) (*opensearchapi.Response, error)
 	Index(ctx context.Context, index string, body io.Reader, o ...Option[opensearchapi.IndexRequest]) (*opensearchapi.Response, error)
+	NewBulkIndexer(index string) (opensearchutil.BulkIndexer, error)
 	IndicesCreate(ctx context.Context, index string, o ...Option[opensearchapi.IndicesCreateRequest]) (*opensearchapi.Response, error)
 	IndicesGet(ctx context.Context, index string, o ...Option[opensearchapi.IndicesGetRequest]) (*opensearchapi.Response, error)
 	IndicesDelete(ctx context.Context, index []string, o ...Option[opensearchapi.IndicesDeleteRequest]) (*opensearchapi.Response, error)
@@ -106,6 +109,7 @@ const (
 const (
 	CmdSearch CommandType = iota
 	CmdIndex
+	CmdBulk
 	CmdIndicesCreate
 	CmdIndicesGet
 	CmdIndicesDelete
@@ -119,6 +123,7 @@ const (
 var CmdToString = map[CommandType]string{
 	CmdSearch:                     "search",
 	CmdIndex:                      "index",
+	CmdBulk:                       "bulk",
 	CmdIndicesCreate:              "indices create",
 	CmdIndicesGet:                 "indices get",
 	CmdIndicesDelete:              "indices delete",

@@ -16,7 +16,7 @@ func (c *RepoImpl[T]) Index(ctx context.Context, index string, document T, o ...
 	if err != nil {
 		return err
 	}
-	resp, err := c.client.Index(ctx, index, &buffer)
+	resp, err := c.client.Index(ctx, index, &buffer, o...)
 	if err != nil {
 		return err
 	}
