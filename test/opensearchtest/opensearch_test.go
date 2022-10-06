@@ -7,20 +7,25 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
+	"encoding/json"
 	"github.com/onsi/gomega"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
+	"github.com/opensearch-project/opensearch-go/opensearchutil"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"go.uber.org/fx"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
 
-//func TestMain(m *testing.M) {
-//	suitetest.RunTests(m,
-//		dbtest.EnableDBRecordMode(),
-//	)
-//}
+func TestMain(m *testing.M) {
+	suitetest.RunTests(m,
+		dbtest.EnableDBRecordMode(),
+	)
+}
 
 type FakeService struct {
 	Repo opensearch.Repo[GenericAuditEvent]
@@ -69,7 +74,7 @@ func TestScopeController(t *testing.T) {
 		test.GomegaSubTest(SubTestPing(di), "SubTestPing"),
 		test.GomegaSubTest(SubTestTimeBasedQuery(di), "SubTestTimeBasedQuery"),
 		test.GomegaSubTest(SubTestTemplateAndAlias(di), "SubTestTemplateAndAlias"),
-		test.GomegaSubTest(SubTestBulkAdd(di), "SubTestBulkAdd"),
+		test.GomegaSubTest(SubTestNewBulkIndexer(di), "SubTestNewBulkIndexer"),
 	)
 }
 
@@ -101,7 +106,7 @@ func SubTestRecording(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		var dest []GenericAuditEvent
-		_, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
+		_, err := di.FakeService.Repo.Search(ctx, &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 			opensearch.Search.WithRequestCache(false),
 		)
@@ -123,11 +128,11 @@ func SubTestRecording(di *opensearchDI) test.GomegaSubTestFunc {
 			Time:      time.Date(2019, 10, 15, 0, 0, 0, 0, time.UTC),
 		}
 
-		err = di.FakeService.Repo.Index(context.Background(), "auditlog", testEvent)
+		err = di.FakeService.Repo.Index(ctx, "auditlog", testEvent)
 		if err != nil {
 			t.Fatalf("unable to create document in index: %v", err)
 		}
-		totalHits, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
+		totalHits, err := di.FakeService.Repo.Search(ctx, &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 		)
 		if err != nil {
@@ -587,8 +592,46 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestBulkAdd(di *opensearchDI) test.GomegaSubTestFunc {
+func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		fakeIndex := "generic_events"
+		testEvent := GenericAuditEvent{
+			Client_ID: "TESTING TESTING",
+			SubType:   "SYNCHRONIZED",
+			Time:      time.Date(2019, 10, 15, 0, 0, 0, 0, time.UTC),
+		}
 
+		buffer, err := json.Marshal(testEvent)
+		if err != nil {
+			t.Fatalf("Unable to Marshal testEvent")
+		}
+
+		bi, err := di.FakeService.Repo.NewBulkIndexer(fakeIndex)
+		if err != nil {
+			t.Fatalf("unable to create a new bulk indexer ")
+		}
+
+		for i := 0; i < 10; i++ {
+			bi.Add(ctx, opensearchutil.BulkIndexerItem{
+				Action: "index",
+				Body:   strings.NewReader(string(buffer)),
+			})
+		}
+
+		if err = bi.Close(ctx); err != nil {
+			t.Fatalf("unable to bulk index")
+		}
+
+		stats := bi.Stats()
+
+		if stats.NumIndexed != (10) {
+			t.Fatalf("Unexcpected NumIndexed got: %d, want: 10", stats.NumIndexed)
+		}
+
+		// Delete index
+		err = di.FakeService.Repo.IndicesDelete(ctx, []string{fakeIndex})
+		if err != nil {
+			t.Fatalf("unable to delete index ")
+		}
 	}
 }

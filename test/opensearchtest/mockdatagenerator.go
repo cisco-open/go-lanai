@@ -3,6 +3,8 @@ package opensearchtest
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
+	"encoding/json"
+	"github.com/opensearch-project/opensearch-go/opensearchutil"
 	"math/rand"
 	"strings"
 	"time"
@@ -45,17 +47,29 @@ func SetupPrepareOpenSearchData(
 	repo.IndicesDelete(context.Background(), []string{"auditlog"})
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
+	bi, err := repo.NewBulkIndexer("test_auditlog")
+	if err != nil {
+		return ctx, err
+	}
 	for _, event := range events {
-		err := repo.Index(
-			context.Background(),
-			"auditlog",
-			event,
-			opensearch.Index.WithRefresh("true"),
-			opensearch.Index.WithWaitForActiveShards("all"),
-		)
+		buffer, err := json.Marshal(event)
 		if err != nil {
 			return ctx, err
 		}
+		bi.Add(ctx, opensearchutil.BulkIndexerItem{
+			Action: "index",
+			Body:   strings.NewReader(string(buffer)),
+		})
+		//err := repo.Index(
+		//	context.Background(),
+		//	"auditlog",
+		//	event,
+		//	opensearch.Index.WithRefresh("true"),
+		//	opensearch.Index.WithWaitForActiveShards("all"),
+		//)
+	}
+	if err = bi.Close(ctx); err != nil {
+		return ctx, err
 	}
 	return ctx, nil
 }
