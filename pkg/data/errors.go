@@ -143,7 +143,7 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
-	ErrorSortByNotSupported   = NewDataError(ErrorCodeUnsupportedOptions, "unsupported SortBy")
+	ErrorSortByUnknownColumn  = NewDataError(ErrorCodeOrmMapping, "SortBy column unknown")
 	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
 	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
 	ErrorDuplicateKey         = NewDataError(ErrorCodeDuplicateKey, "duplicate key")

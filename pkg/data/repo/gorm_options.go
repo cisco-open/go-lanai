@@ -217,7 +217,7 @@ func SortBy(fieldName string, desc bool) Option {
 		}
 		col, e := toColumn(db.Statement.Schema, fieldName)
 		if e != nil {
-			_ = db.AddError(data.ErrorSortByNotSupported.
+			_ = db.AddError(data.ErrorSortByUnknownColumn.
 				WithMessage("SortBy error: %v", e))
 			return db
 		}
