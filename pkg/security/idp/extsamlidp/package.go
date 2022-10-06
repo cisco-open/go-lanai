@@ -3,7 +3,7 @@ package extsamlidp
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
+	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
 	"go.uber.org/fx"
 )
 
@@ -18,7 +18,7 @@ var Module = &bootstrap.Module{
 }
 
 func Use() {
-	samllogin.Use() // samllogin enables External SAML IDP support
+	samlsp.Use() // samllogin enables External SAML IDP support
 	bootstrap.Register(Module)
 }
 

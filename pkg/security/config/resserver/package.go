@@ -14,7 +14,7 @@ import (
 var defaultConfigFS embed.FS
 
 //goland:noinspection GoNameStartsWithPackageName
-var OAuth2AuthorizeModule = &bootstrap.Module{
+var Module = &bootstrap.Module{
 	Name: "oauth2 authserver",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
@@ -27,7 +27,7 @@ var OAuth2AuthorizeModule = &bootstrap.Module{
 
 func Use() {
 	security.Use()
-	bootstrap.Register(OAuth2AuthorizeModule)
+	bootstrap.Register(Module)
 	timeoutsupport.Use()
 }
 

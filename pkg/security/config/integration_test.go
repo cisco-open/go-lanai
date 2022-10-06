@@ -25,8 +25,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
+	samlidp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
+	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -111,12 +111,12 @@ func TestWithMockedServer(t *testing.T) {
 		webtest.WithMockedServer(),
 		sectest.WithMockedMiddleware(sectest.MWEnableSession()),
 		apptest.WithModules(
-			authserver.OAuth2AuthorizeModule, resserver.OAuth2AuthorizeModule,
-			passwdidp.Module, extsamlidp.Module, authorize.Module, saml_auth.Module,
-			passwd.PasswordAuthModule, formlogin.Module, logout.Module,
-			samlctx.Module, samllogin.SamlAuthModule,
-			basicauth.BasicAuthModule, clientauth.Module,
-			token.Module, access.AccessControlModule, errorhandling.ErrorHandlingModule,
+			authserver.Module, resserver.Module,
+			passwdidp.Module, extsamlidp.Module, authorize.Module, samlidp.Module,
+			passwd.Module, formlogin.Module, logout.Module,
+			samlctx.Module, samlsp.Module,
+			basicauth.Module, clientauth.Module,
+			token.Module, access.Module, errorhandling.Module,
 			request_cache.Module, csrf.Module, session.Module,
 			redis.Module,
 		),

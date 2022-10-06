@@ -13,7 +13,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -119,7 +119,7 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			AuthorizeHanlder(c.config.authorizeHandler()),
 		).
 		Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
-		With(saml_auth.New().
+		With(samlidp.New().
 			Issuer(c.config.Issuer).
 			SsoCondition(c.config.Endpoints.SamlSso.Condition).
 			SsoLocation(c.config.Endpoints.SamlSso.Location).
@@ -169,7 +169,7 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 			LogoutHandlers(logoutHandler).
 			AddSuccessHandler(logoutSuccessHandler),
 		).
-		With(saml_auth.NewLogout().
+		With(samlidp.NewLogout().
 			Issuer(c.config.Issuer).
 			SsoCondition(c.config.Endpoints.SamlSso.Condition).
 			SsoLocation(c.config.Endpoints.SamlSso.Location).

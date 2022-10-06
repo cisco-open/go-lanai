@@ -84,7 +84,7 @@ func TestDefaultMWMocking(t *testing.T) {
 		apptest.Bootstrap(),
 		webtest.WithMockedServer(),
 		WithMockedMiddleware(),
-		apptest.WithModules(basicauth.BasicAuthModule, access.AccessControlModule, errorhandling.ErrorHandlingModule),
+		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Invoke(registerTestController, registerTestSecurity),
@@ -104,7 +104,7 @@ func TestCustomMWMocking(t *testing.T) {
 			MWCondition(matcher.RequestWithMethods(http.MethodGet)),
 			MWCustomMocker(nil), // enable autowired mode
 		),
-		apptest.WithModules(basicauth.BasicAuthModule, access.AccessControlModule, errorhandling.ErrorHandlingModule),
+		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Provide(newCustomMocker),
@@ -124,7 +124,7 @@ func TestRealServerMWMocking(t *testing.T) {
 			//MWCustomMocker(MWMockFunc(realServerMockFunc)),
 			MWCustomConfigurer(security.ConfigurerFunc(realServerSecConfigurer)),
 		),
-		apptest.WithModules(basicauth.BasicAuthModule, access.AccessControlModule, errorhandling.ErrorHandlingModule),
+		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Invoke(registerTestController, registerTestSecurity),

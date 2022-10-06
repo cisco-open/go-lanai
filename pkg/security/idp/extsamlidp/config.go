@@ -7,7 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
+	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 )
@@ -52,7 +52,7 @@ func (c *SamlIdpSecurityConfigurer) Configure(ws security.WebSecurity, config *a
 
 	handler := redirect.NewRedirectWithURL(config.Endpoints.Error)
 	ws.
-		With(samllogin.New().
+		With(samlsp.New().
 			Issuer(config.Issuer).
 			ErrorPath(config.Endpoints.Error),
 		).
@@ -70,7 +70,7 @@ func (c *SamlIdpSecurityConfigurer) ConfigureLogout(ws security.WebSecurity, con
 		return
 	}
 
-	ws.With(samllogin.NewLogout().
+	ws.With(samlsp.NewLogout().
 		Issuer(config.Issuer).
 		ErrorPath(config.Endpoints.Error),
 	)

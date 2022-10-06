@@ -3,27 +3,27 @@ package example
 import (
 	"context"
 	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
+	samlidp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
 	"errors"
 )
 
 type InMemorySamlClientStore struct {
-	details []saml_auth.DefaultSamlClient
+	details []samlidp.DefaultSamlClient
 }
 
 func NewInMemSpManager() samlctx.SamlClientStore {
 	return &InMemorySamlClientStore{
-		details: []saml_auth.DefaultSamlClient{
-			saml_auth.DefaultSamlClient{
-				SamlSpDetails: saml_auth.SamlSpDetails{
+		details: []samlidp.DefaultSamlClient{
+			{
+				SamlSpDetails: samlidp.SamlSpDetails{
 					EntityId: "18.205.202.124",
 					MetadataSource: "http://localhost:9090/metadata",
 					SkipAssertionEncryption: true,
 					SkipAuthRequestSignatureVerification: false,
 				},
 			},
-			saml_auth.DefaultSamlClient{
-				SamlSpDetails: saml_auth.SamlSpDetails{
+			{
+				SamlSpDetails: samlidp.SamlSpDetails{
 					EntityId: "http://localhost:8000/saml/metadata",
 					MetadataSource: "http://localhost:8000/saml/metadata",
 					SkipAssertionEncryption: true,
@@ -48,5 +48,5 @@ func (i *InMemorySamlClientStore) GetSamlClientByEntityId(ctx context.Context, e
 			return detail, nil
 		}
 	}
-	return saml_auth.DefaultSamlClient{}, errors.New("not found")
+	return samlidp.DefaultSamlClient{}, errors.New("not found")
 }
