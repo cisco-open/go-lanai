@@ -67,7 +67,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 		Endpoints: Endpoints{
 			Authorize: ConditionalEndpoint{
 				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize},
-				Condition: matcher.NotRequest(matcher.RequestWithParam(oauth2.ParameterGrantType, saml.GrantTypeSamlSSO)),
+				Condition: matcher.NotRequest(matcher.RequestWithForm(oauth2.ParameterGrantType, saml.GrantTypeSamlSSO)),
 			},
 			Approval:   di.Properties.Endpoints.Approval,
 			Token:      di.Properties.Endpoints.Token,
@@ -78,7 +78,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 			Logout:     di.Properties.Endpoints.Logout,
 			SamlSso: ConditionalEndpoint{
 				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize, RawQuery: fmt.Sprintf("%s=%s", oauth2.ParameterGrantType, saml.GrantTypeSamlSSO)},
-				Condition: matcher.RequestWithParam(oauth2.ParameterGrantType, saml.GrantTypeSamlSSO),
+				Condition: matcher.RequestWithForm(oauth2.ParameterGrantType, saml.GrantTypeSamlSSO),
 			},
 			SamlMetadata:    di.Properties.Endpoints.SamlMetadata,
 			TenantHierarchy: di.Properties.Endpoints.TenantHierarchy,

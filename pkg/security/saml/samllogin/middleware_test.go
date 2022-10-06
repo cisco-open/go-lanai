@@ -12,12 +12,14 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"fmt"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -37,14 +39,16 @@ type MetadataTestOut struct {
 }
 
 func MetadataTestSecurityConfigProvider(registrar security.Registrar) MetadataTestOut {
-	idpManager := testdata.NewTestIdpManager()
+	idpManager := samltest.NewMockedIdpManager(func(opt *samltest.IdpManagerMockOption) {
+		opt.IDPList = testdata.DefaultIdpProviders
+	})
 	cfg := security.ConfigurerFunc(func(ws security.WebSecurity) {
 		condition := idp.RequestWithAuthenticationFlow(idp.ExternalIdpSAML, idpManager)
 		ws = ws.AndCondition(condition)
 		ws.Route(matcher.AnyRoute()).
 			AndCondition(condition).
 			With(access.New().Request(matcher.AnyRequest()).Authenticated()).
-			With(New().Issuer(testdata.TestIssuer))
+			With(New().Issuer(samltest.DefaultIssuer))
 	})
 	registrar.Register(&cfg)
 	return MetadataTestOut{
@@ -158,12 +162,12 @@ func (m MetadataMatcher) compare(expected, actual interface{}, name string) erro
 
 func (m MetadataMatcher) FailureMessage(actual interface{}) (message string) {
 	body := actual.(*http.Response).Body
-	bytes, _ := ioutil.ReadAll(body)
+	bytes, _ := io.ReadAll(body)
 	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(bytes))
 }
 
 func (m MetadataMatcher) NegatedFailureMessage(actual interface{}) (message string) {
 	body := actual.(*http.Response).Body
-	bytes, _ := ioutil.ReadAll(body)
+	bytes, _ := io.ReadAll(body)
 	return fmt.Sprintf("metadata doesn't match expectation. actual meta is %s", string(bytes))
 }

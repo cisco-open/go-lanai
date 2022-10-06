@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -113,7 +113,7 @@ func (a SamlRequestMatcher) extractRedirect(actual interface{}) (*ActualSamlRequ
 	}
 	r := flate.NewReader(bytes.NewReader(compressed))
 	defer func() { _ = r.Close() }()
-	reqDecoded, e := ioutil.ReadAll(r)
+	reqDecoded, e := io.ReadAll(r)
 	if e != nil {
 		return nil, e
 	}

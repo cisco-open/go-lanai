@@ -1,0 +1,11 @@
+<samlp:AuthnRequest xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+                    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="id-de2a581e89f6ef3d5c8fae69d1b6231528d67488"
+                    Version="2.0" IssueInstant="2022-09-23T23:10:33.267Z"
+                    Destination="http://msx.com:8765/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"
+                    AssertionConsumerServiceURL="http://localhost:8090/samlsp/saml/SSO"
+                    ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+    <saml:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">
+        http://samlsp.msx.com:8090/samlsp/saml/metadata
+    </saml:Issuer>
+    <samlp:NameIDPolicy AllowCreate="true"></samlp:NameIDPolicy>
+</samlp:AuthnRequest>

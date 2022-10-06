@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor entityID="http://external.saml.com/samlidp/metadata"
+                     xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
+    <md:IDPSSODescriptor WantAuthnRequestsSigned="true"
+                         protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:KeyDescriptor use="signing">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>MIIDUTCCAjigAwIBAgIBADANBgkqhkiG9w0BAQ0FADBBMQswCQYDVQQGEwJ1czEQ
+                        MA4GA1UECAwHT250YXJpbzEOMAwGA1UECgwFQ2lzY28xEDAOBgNVBAMMB3Ztcy5j
+                        b20wIBcNMjIwOTAxMDAyOTIxWhgPMjEyMjA4MDgwMDI5MjFaMEExCzAJBgNVBAYT
+                        AnVzMRAwDgYDVQQIDAdPbnRhcmlvMQ4wDAYDVQQKDAVDaXNjbzEQMA4GA1UEAwwH
+                        dm1zLmNvbTCCASMwDQYJKoZIhvcNAQEBBQADggEQADCCAQsCggECAM72NJpWO2H/
+                        dHAK261DD7GEKNaiYqeO6NTYarHCNpGY+CAdvu5WSU81qLiNMTI8kfRBNp3ZaXLe
+                        Cy10zY8b2+Xikpz61jO3rrcK5ZvmAsaffThy0cE4Rp21FuFepimWIo67UlBpfEJi
+                        D7Xlc/SbyWWc89t25OeHMUW5qz47kysjBcyWYqPjcun5ixUAiZSsbxDq0/wicVJp
+                        4CfZZauciXiwjHVwZ+RSOkVyuSvvgUZf1vm0c/n4ge8lXaN/rS/FbHwDMm2laXoa
+                        wbWMbl9cd3TVCjCbrOo72UcBnrrLwaYDq/pysL9OPNaMsMU4GT8wiDc7NQbb80uJ
+                        svneQlkwlC1lAgMBAAGjUDBOMB0GA1UdDgQWBBQCg3SpvOTuEb4jKnpSpg5Hl3A1
+                        YTAfBgNVHSMEGDAWgBQCg3SpvOTuEb4jKnpSpg5Hl3A1YTAMBgNVHRMEBTADAQH/
+                        MA0GCSqGSIb3DQEBDQUAA4IBAgCjDYuTyBKie9c4BUWNI2KwDYOt0U0XcEpjzW/q
+                        kXfbMzXIPWEgdV7yVAzFp8qIf/IDYaBhadN+32XXoz6pqgOKhbuhRCph8O+4wGJ5
+                        gqDOwofxFfsXNORMJoF2WKePizgWh4Vj0EtO6pkoYkq+FN2S2TMmWDzdt4b1uDtI
+                        9aOm/L3YeHs5jxF974OMzhAfT4b/uxddaUtyQkFcuJqgUq4smcfmdT+XY6pfZ0MP
+                        Rf3i2HyJ28FnS0C7EBUy1AMWP1vSU2qze34JeDAw9IJ5T+NUKoFSVIgK8hpPJA+B
+                        abobbNBcPQUPGYiQ37DC0C/l1BNoyBYXH0wGFAteooHsadSO8Q==
+                    </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                                Location="http://external.saml.com/samlidp/logout"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                                Location="http://external.saml.com/samlidp/logout"/>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                                Location="http://external.saml.com/samlidp/authorize"/>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                                Location="http://external.saml.com/samlidp/authorize"/>
+    </md:IDPSSODescriptor>
+</md:EntityDescriptor>

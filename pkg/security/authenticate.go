@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"sync"
 )
 
 /*****************************
@@ -41,17 +42,20 @@ type AuthenticationSuccessHandler interface {
 
 // CompositeAuthenticator implement Authenticator interface
 type CompositeAuthenticator struct {
+	init sync.Once
 	authenticators []Authenticator
+	flattened      []Authenticator
 }
 
 func NewAuthenticator(authenticators ...Authenticator) Authenticator {
-	ret := &CompositeAuthenticator {}
+	ret := &CompositeAuthenticator{}
 	ret.authenticators = ret.processAuthenticators(authenticators)
 	return ret
 }
 
 func (a *CompositeAuthenticator) Authenticate(ctx context.Context, candidate Candidate) (auth Authentication, err error) {
-	for _,authenticator := range a.authenticators {
+	a.init.Do(func() {a.flattened = a.Authenticators()})
+	for _, authenticator := range a.flattened {
 		auth, err = authenticator.Authenticate(ctx, candidate)
 		if auth != nil || err != nil {
 			return
@@ -60,9 +64,26 @@ func (a *CompositeAuthenticator) Authenticate(ctx context.Context, candidate Can
 	return nil, NewAuthenticatorNotAvailableError(fmt.Sprintf("unable to find authenticator for cadidate %T", candidate))
 }
 
+// Authenticators returns list of authenticators, any nested composite handlers are flattened
+func (a *CompositeAuthenticator) Authenticators() []Authenticator {
+	flattened := make([]Authenticator, 0, len(a.authenticators))
+	for _, handler := range a.authenticators {
+		switch v := handler.(type) {
+		case *CompositeAuthenticator:
+			flattened = append(flattened, v.Authenticators()...)
+		default:
+			flattened = append(flattened, handler)
+		}
+	}
+	sort.SliceStable(flattened, func(i, j int) bool {
+		return order.OrderedFirstCompare(flattened[i], flattened[j])
+	})
+	return flattened
+}
+
 func (a *CompositeAuthenticator) Add(authenticator Authenticator) *CompositeAuthenticator {
 	a.authenticators = a.processAuthenticators(append(a.authenticators, authenticator))
-	sort.SliceStable(a.authenticators, func(i,j int) bool {
+	sort.SliceStable(a.authenticators, func(i, j int) bool {
 		return order.OrderedFirstCompare(a.authenticators[i], a.authenticators[j])
 	})
 	return a
@@ -76,7 +97,7 @@ func (a *CompositeAuthenticator) Merge(composite *CompositeAuthenticator) *Compo
 func (a *CompositeAuthenticator) processAuthenticators(authenticators []Authenticator) []Authenticator {
 	// remove self
 	authenticators = a.removeSelf(authenticators)
-	sort.SliceStable(authenticators, func(i,j int) bool {
+	sort.SliceStable(authenticators, func(i, j int) bool {
 		return order.OrderedFirstCompare(authenticators[i], authenticators[j])
 	})
 	return authenticators
@@ -100,11 +121,13 @@ func (a *CompositeAuthenticator) removeSelf(authenticators []Authenticator) []Au
 
 // CompositeAuthenticationSuccessHandler implement AuthenticationSuccessHandler interface
 type CompositeAuthenticationSuccessHandler struct {
-	handlers []AuthenticationSuccessHandler
+	init      sync.Once
+	handlers  []AuthenticationSuccessHandler
+	flattened []AuthenticationSuccessHandler
 }
 
 func NewAuthenticationSuccessHandler(handlers ...AuthenticationSuccessHandler) *CompositeAuthenticationSuccessHandler {
-	ret := &CompositeAuthenticationSuccessHandler {}
+	ret := &CompositeAuthenticationSuccessHandler{}
 	ret.handlers = ret.processSuccessHandlers(handlers)
 	return ret
 }
@@ -112,9 +135,27 @@ func NewAuthenticationSuccessHandler(handlers ...AuthenticationSuccessHandler) *
 func (h *CompositeAuthenticationSuccessHandler) HandleAuthenticationSuccess(
 	c context.Context, r *http.Request, rw http.ResponseWriter, from, to Authentication) {
 
-	for _,handler := range h.handlers {
+	h.init.Do(func() { h.flattened = h.Handlers() })
+	for _, handler := range h.flattened {
 		handler.HandleAuthenticationSuccess(c, r, rw, from, to)
 	}
+}
+
+// Handlers returns list of authentication handlers, any nested composite handlers are flattened
+func (h *CompositeAuthenticationSuccessHandler) Handlers() []AuthenticationSuccessHandler {
+	flattened := make([]AuthenticationSuccessHandler, 0, len(h.handlers))
+	for _, handler := range h.handlers {
+		switch v := handler.(type) {
+		case *CompositeAuthenticationSuccessHandler:
+			flattened = append(flattened, v.Handlers()...)
+		default:
+			flattened = append(flattened, handler)
+		}
+	}
+	sort.SliceStable(flattened, func(i, j int) bool {
+		return order.OrderedFirstCompare(flattened[i], flattened[j])
+	})
+	return flattened
 }
 
 func (h *CompositeAuthenticationSuccessHandler) Add(handler AuthenticationSuccessHandler) *CompositeAuthenticationSuccessHandler {
@@ -129,7 +170,7 @@ func (h *CompositeAuthenticationSuccessHandler) Merge(composite *CompositeAuthen
 
 func (h *CompositeAuthenticationSuccessHandler) processSuccessHandlers(handlers []AuthenticationSuccessHandler) []AuthenticationSuccessHandler {
 	handlers = h.removeSelf(handlers)
-	sort.SliceStable(handlers, func(i,j int) bool {
+	sort.SliceStable(handlers, func(i, j int) bool {
 		return order.OrderedFirstCompare(handlers[i], handlers[j])
 	})
 	return handlers
@@ -171,4 +212,3 @@ func (b *CompositeAuthenticatorBuilder) Build(c context.Context) (Authenticator,
 	}
 	return NewAuthenticator(authenticators...), nil
 }
-

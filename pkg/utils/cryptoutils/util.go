@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -19,7 +18,7 @@ func LoadCert(file string) ([]*x509.Certificate, error) {
 	if err != nil {
 		return nil, err
 	}
-	certBytes, err := ioutil.ReadAll(certFile)
+	certBytes, err := io.ReadAll(certFile)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +43,7 @@ func LoadPrivateKey(file string, keyPassword string) (*rsa.PrivateKey, error){
 	if err != nil {
 		return nil, err
 	}
-	keyBytes, err := ioutil.ReadAll(keyFile)
+	keyBytes, err := io.ReadAll(keyFile)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +95,7 @@ func LoadMultiBlockPem(path string, password string) ([]interface{}, error) {
 		return nil, err
 	}
 
-	data, err := ioutil.ReadAll(f)
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}

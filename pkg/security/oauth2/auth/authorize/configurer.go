@@ -40,7 +40,7 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 	authRouteMatcher := matcher.RouteWithPattern(f.path, http.MethodGet, http.MethodPost)
 	approveRouteMatcher := matcher.RouteWithPattern(f.approvalPath, http.MethodPost)
 	approveRequestMatcher := matcher.RequestWithPattern(f.approvalPath, http.MethodPost).
-		And(matcher.RequestHasPostParameter(oauth2.ParameterUserApproval))
+		And(matcher.RequestHasPostForm(oauth2.ParameterUserApproval))
 
 	authorizeMW := NewAuthorizeEndpointMiddleware(func(opts *AuthorizeMWOption) {
 		opts.RequestProcessor = f.requestProcessor

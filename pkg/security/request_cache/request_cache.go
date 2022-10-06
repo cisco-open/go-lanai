@@ -157,7 +157,7 @@ func NewSaveRequestEntryPoint(delegate security.AuthenticationEntryPoint) *SaveR
 	notXMLHttpRequest := matcher.NotRequest(matcher.RequestWithHeader("X-Requested-With", "XMLHttpRequest", false))
 	notTrailer := matcher.NotRequest(matcher.RequestHasHeader("Trailer"))
 	notMultiPart := matcher.NotRequest(matcher.RequestWithHeader("Content-Type", "multipart/form-data", true))
-	notCsrf := matcher.NotRequest(matcher.RequestHasHeader(security.CsrfHeaderName).Or(matcher.RequestHasPostParameter(security.CsrfParamName)))
+	notCsrf := matcher.NotRequest(matcher.RequestHasHeader(security.CsrfHeaderName).Or(matcher.RequestHasPostForm(security.CsrfParamName)))
 
 	saveRequestMatcher := notFavicon.And(notXMLHttpRequest).And(notTrailer).And(notMultiPart).And(notCsrf)
 

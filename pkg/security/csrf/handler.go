@@ -8,11 +8,11 @@ import (
 	"net/http"
 )
 
-type ChangeCsrfHanlder struct{
+type ChangeCsrfHandler struct{
 	csrfTokenStore TokenStore
 }
 
-func (h *ChangeCsrfHanlder) HandleAuthenticationSuccess(c context.Context, _ *http.Request, _ http.ResponseWriter, from, to security.Authentication) {
+func (h *ChangeCsrfHandler) HandleAuthenticationSuccess(c context.Context, _ *http.Request, _ http.ResponseWriter, from, to security.Authentication) {
 	if !security.IsBeingAuthenticated(from, to) {
 		return
 	}

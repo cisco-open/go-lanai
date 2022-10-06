@@ -26,11 +26,16 @@ func (a *AssertionCandidate) Details() interface{} {
 	return a.DetailsMap
 }
 
+type SamlAssertionAuthentication interface {
+	security.Authentication
+	Assertion() *saml.Assertion
+}
+
 type samlAssertionAuthentication struct {
-	Account    security.Account
-	Assertion  *saml.Assertion
-	Perms      map[string]interface{}
-	DetailsMap map[string]interface{}
+	Account       security.Account
+	Perms         map[string]interface{}
+	DetailsMap    map[string]interface{}
+	SamlAssertion *saml.Assertion
 }
 
 func (sa *samlAssertionAuthentication) Principal() interface{} {
@@ -47,6 +52,10 @@ func (sa *samlAssertionAuthentication) State() security.AuthenticationState {
 
 func (sa *samlAssertionAuthentication) Details() interface{} {
 	return sa.DetailsMap
+}
+
+func (sa *samlAssertionAuthentication) Assertion() *saml.Assertion {
+	return sa.SamlAssertion
 }
 
 type Authenticator struct {
@@ -92,10 +101,10 @@ func (a *Authenticator) Authenticate(ctx context.Context, candidate security.Can
 	details[security.DetailsKeyAuthMethod] = security.AuthMethodExternalSaml
 
 	auth := &samlAssertionAuthentication{
-		Account:    user,
-		Assertion:  assertionCandidate.Assertion,
-		Perms:      permissions,
-		DetailsMap: details,
+		Account:       user,
+		SamlAssertion: assertionCandidate.Assertion,
+		Perms:         permissions,
+		DetailsMap:    details,
 	}
 	return auth, nil
 }

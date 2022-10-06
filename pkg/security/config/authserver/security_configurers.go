@@ -119,11 +119,12 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			AuthorizeHanlder(c.config.authorizeHandler()),
 		).
 		Route(matcher.RouteWithPattern(c.config.Endpoints.SamlSso.Location.Path)).
-		With(saml_auth.NewEndpoint().
+		With(saml_auth.New().
 			Issuer(c.config.Issuer).
 			SsoCondition(c.config.Endpoints.SamlSso.Condition).
 			SsoLocation(c.config.Endpoints.SamlSso.Location).
-			MetadataPath(c.config.Endpoints.SamlMetadata))
+			MetadataPath(c.config.Endpoints.SamlMetadata).
+			EnableSLO(c.config.Endpoints.Logout))
 
 	c.delegate.Configure(ws, c.config)
 }
@@ -166,7 +167,14 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 		With(logout.New().
 			LogoutUrl(c.config.Endpoints.Logout).
 			LogoutHandlers(logoutHandler).
-			SuccessHandler(logoutSuccessHandler),
+			AddSuccessHandler(logoutSuccessHandler),
+		).
+		With(saml_auth.NewLogout().
+			Issuer(c.config.Issuer).
+			SsoCondition(c.config.Endpoints.SamlSso.Condition).
+			SsoLocation(c.config.Endpoints.SamlSso.Location).
+			MetadataPath(c.config.Endpoints.SamlMetadata).
+			EnableSLO(c.config.Endpoints.Logout),
 		)
 
 	for _, configurer := range c.delegates {
