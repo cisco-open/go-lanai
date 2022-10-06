@@ -1,4 +1,4 @@
-package samlidp
+package extsamlidp
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"

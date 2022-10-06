@@ -15,8 +15,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
@@ -91,7 +91,7 @@ func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
 		IdpManager:           testdata.NewMockedIDPManager(),
 		AccountStore:         sectest.NewMockedAccountStore(testdata.MapValues(di.Mocking.Accounts)...),
 		PasswordEncoder:      passwd.NewNoopPasswordEncoder(),
-		FedAccountStore:      testdata.NewMockedFedAccountStore(),
+		FedAccountStore:      sectest.NewMockedFederatedAccountStore(),
 		SamlClientStore:      samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
 	}
 }
@@ -112,7 +112,7 @@ func TestWithMockedServer(t *testing.T) {
 		sectest.WithMockedMiddleware(sectest.MWEnableSession()),
 		apptest.WithModules(
 			authserver.OAuth2AuthorizeModule, resserver.OAuth2AuthorizeModule,
-			passwdidp.Module, samlidp.Module, authorize.Module, saml_auth.Module,
+			passwdidp.Module, extsamlidp.Module, authorize.Module, saml_auth.Module,
 			passwd.PasswordAuthModule, formlogin.Module, logout.Module,
 			samlctx.Module, samllogin.SamlAuthModule,
 			basicauth.BasicAuthModule, clientauth.Module,

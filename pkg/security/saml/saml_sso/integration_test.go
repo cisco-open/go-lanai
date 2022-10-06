@@ -24,7 +24,7 @@ import (
 	"github.com/crewjam/saml/samlsp"
 	"github.com/google/uuid"
 	"go.uber.org/fx"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -171,7 +171,7 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 		})
 		resp = sendAuthorize(ctx, testSp1, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
-		b, _ := ioutil.ReadAll(resp.Body)
+		b, _ := io.ReadAll(resp.Body)
 		htmlContent := string(b)
 		g.Expect(strings.Contains(htmlContent, "client is restricted to tenants which the authenticated user does not have access to")).To(BeTrue())
 	}
@@ -192,7 +192,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		//port := di.Register.ServerPort()
 		resp := sendAuthorize(ctx, testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
-		b, _ := ioutil.ReadAll(resp.Body)
+		b, _ := io.ReadAll(resp.Body)
 		htmlContent := string(b)
 		g.Expect(strings.Contains(htmlContent, "client is restricted to tenants which the authenticated user does not have access to")).To(BeTrue())
 
@@ -223,7 +223,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 		})
 		resp = sendAuthorize(ctx, testSp2, "http://localhost/auth/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusInternalServerError))
-		b, _ = ioutil.ReadAll(resp.Body)
+		b, _ = io.ReadAll(resp.Body)
 		htmlContent = string(b)
 		g.Expect(strings.Contains(htmlContent, "client is restricted to tenants which the authenticated user does not have access to")).To(BeTrue())
 	}

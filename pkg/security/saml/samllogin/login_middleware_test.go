@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin/testdata"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"errors"
 	"github.com/crewjam/saml"
 	"github.com/gin-gonic/gin"
@@ -56,7 +57,8 @@ func TestSamlEntryPoint(t *testing.T) {
 			idpManager := samltest.NewMockedIdpManager(func(opt *samltest.IdpManagerMockOption) {
 				opt.IDPList = testdata.DefaultIdpProviders
 			})
-			c := newSamlAuthConfigurer(newSamlConfigurer(tt.samlProperties, idpManager), testdata.NewTestFedAccountStore())
+			c := newSamlAuthConfigurer(newSamlConfigurer(tt.samlProperties, idpManager),
+				sectest.NewMockedFederatedAccountStore(testdata.DefaultFedUserProperties...))
 			feature := New()
 			feature.Issuer(samltest.DefaultIssuer)
 			ws := TestWebSecurity{}

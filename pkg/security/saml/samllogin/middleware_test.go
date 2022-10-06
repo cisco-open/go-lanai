@@ -20,7 +20,6 @@ import (
 	"github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 	"sort"
@@ -54,7 +53,7 @@ func MetadataTestSecurityConfigProvider(registrar security.Registrar) MetadataTe
 	return MetadataTestOut{
 		SecConfigurer: &cfg,
 		IdpManager:    idpManager,
-		AccountStore:  testdata.NewTestFedAccountStore(),
+		AccountStore:  sectest.NewMockedFederatedAccountStore(),
 	}
 }
 
@@ -91,7 +90,7 @@ func SubTestMetadata(_ *metadataTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var req *http.Request
 		var resp *http.Response
-		ctx = sectest.WithMockedSecurity(ctx)
+		ctx = sectest.ContextWithSecurity(ctx)
 		req = webtest.NewRequest(ctx, http.MethodGet, "/saml/metadata", nil)
 		resp = webtest.MustExec(ctx, req).Response
 		g.Expect(resp).To(MetadataMatcher{}, "metadata should return correct response")
@@ -111,7 +110,7 @@ func (m MetadataMatcher) Match(actual interface{}) (success bool, err error) {
 		expectedSLO      = "http://saml.vms.com:8080/test/saml/slo"
 	)
 	body := actual.(*http.Response).Body
-	bytes, e := ioutil.ReadAll(body)
+	bytes, e := io.ReadAll(body)
 	if e != nil {
 		return false, e
 	}

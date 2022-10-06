@@ -108,7 +108,7 @@ func LogoutTestSecurityConfigProvider(di LogoutTestDI) LogoutTestOut {
 	return LogoutTestOut{
 		SecConfigurer: &cfg,
 		IdpManager:    idpManager,
-		AccountStore:  testdata.NewTestFedAccountStore(),
+		AccountStore:  sectest.NewMockedFederatedAccountStore(),
 		MockedSigner:  NewMockedSigner(di.Props, idpManager, cfg.LogoutFeature()),
 	}
 }

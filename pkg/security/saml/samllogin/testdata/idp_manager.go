@@ -3,6 +3,7 @@ package testdata
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 )
 
 var DefaultIdpProviders = []idp.IdentityProvider {
@@ -23,5 +24,13 @@ var DefaultIdpProviders = []idp.IdentityProvider {
 			Name:             "okta",
 			IdName:           "email",
 		},
+	},
+}
+
+var DefaultFedUserProperties = []*sectest.MockedFederatedUserProperties {
+	{
+		ExtIdpName:              "okta",
+		ExtIdName:               "email",
+		ExtIdValue:              "test@example.com",
 	},
 }
