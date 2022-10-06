@@ -1,4 +1,4 @@
-# SAML SSO Module
+# SAML IDP Module
 This module allows a service to act as IDP (allow others to SSO with the service).
 
 This module registers a feature configurer which does the following:
@@ -11,7 +11,7 @@ This module registers a feature configurer which does the following:
 ## Example Usage
 
 ```go
-saml_auth.Use()
+samlidp.Use()
 ```
 
 ```go

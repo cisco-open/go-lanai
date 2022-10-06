@@ -1,4 +1,4 @@
-# SAML Login
+# SAML SP
 
 This  module enables a service to act as an SP (allows login with third party using SAML protocol). This feature has two
 feature configurers.
