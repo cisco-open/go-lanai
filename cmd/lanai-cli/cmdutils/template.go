@@ -17,6 +17,7 @@ type TemplateOption struct {
 	Overwrite  bool        // should overwrite if output file already exists
 	Model      interface{}
 	Customizer func(*template.Template)
+	CommonTmpl string
 }
 
 // GenerateFileWithOption generate file using given FS and template name
@@ -41,18 +42,25 @@ func GenerateFileWithOption(ctx context.Context, opt *TemplateOption) error {
 	if e != nil {
 		return e
 	}
-	defer func() {_ = f.Close()}()
+	defer func() { _ = f.Close() }()
 
 	// load template and generate
 	t := template.New(opt.TmplName)
 	if opt.Customizer != nil {
 		opt.Customizer(t)
 	}
+	// load common templates
+	if opt.CommonTmpl != "" {
+		t, e = t.ParseFS(opt.FS, opt.CommonTmpl)
+		if e != nil {
+			return e
+		}
 
+	}
 	t, e = t.ParseFS(opt.FS, opt.TmplName)
 	if e != nil {
 		return e
 	}
 
-	return t.ExecuteTemplate(f, opt.TmplName, opt.Model)
+	return t.ExecuteTemplate(f, path.Base(opt.TmplName), opt.Model)
 }

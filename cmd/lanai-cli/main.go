@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/apidocs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/build"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/deps"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/gittools"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/initcmd"
@@ -16,7 +17,7 @@ import (
 	"os"
 )
 
-const(
+const (
 	CliName = "lanai-cli"
 )
 
@@ -36,14 +37,14 @@ var (
 		),
 	}
 	logTemplate = `{{pad -25 .time}} [{{lvl 5 .}}]: {{.msg}}`
-	logProps = log.Properties{
+	logProps    = log.Properties{
 		Levels: map[string]log.LoggingLevel{
 			"default": log.LevelDebug,
 		},
-		Loggers:  map[string]*log.LoggerProperties{
+		Loggers: map[string]*log.LoggerProperties{
 			"console": {
-				Type: log.TypeConsole,
-				Format: log.FormatText,
+				Type:     log.TypeConsole,
+				Format:   log.FormatText,
 				Template: logTemplate,
 				FixedKeys: utils.CommaSeparatedSlice{
 					log.LogKeyName, log.LogKeyMessage, log.LogKeyTimestamp,
@@ -70,6 +71,7 @@ func main() {
 	rootCmd.AddCommand(gittools.Cmd)
 	rootCmd.AddCommand(build.Cmd)
 	rootCmd.AddCommand(apidocs.Cmd)
+	rootCmd.AddCommand(codegen.Cmd)
 
 	cmdutils.PersistentFlags(rootCmd, &cmdutils.GlobalArgs)
 	if e := rootCmd.ExecuteContext(context.Background()); e != nil {

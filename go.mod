@@ -43,6 +43,8 @@ require (
 	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
+	github.com/tidwall/gjson v1.14.3
+	github.com/tidwall/sjson v1.2.5
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	go.uber.org/fx v1.17.1
 	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed
@@ -137,6 +139,8 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect

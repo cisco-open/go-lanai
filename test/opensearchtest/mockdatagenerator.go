@@ -42,7 +42,7 @@ func SetupPrepareOpenSearchData(
 ) (context.Context, error) {
 	// We don't care if we can't delete this indices - it might not exist
 	//nolint:errcheck
-	repo.IndicesDelete(context.Background(), "auditlog")
+	repo.IndicesDelete(context.Background(), []string{"auditlog"})
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
 	for _, event := range events {
