@@ -16,16 +16,17 @@ func (c *RepoImpl[T]) NewBulkIndexer(ctx context.Context, index string) (opensea
 func (c *OpenClientImpl) NewBulkIndexer(ctx context.Context, index string) (opensearchutil.BulkIndexer, error) {
 
 	for _, hook := range c.beforeHook {
-		ctx = hook.Before(ctx, BeforeContext{cmd: CmdNew, Options: &options})
+		ctx = hook.Before(ctx, BeforeContext{cmd: CmdNewBulkIndexer})
 	}
 
 	bi, err := opensearchutil.NewBulkIndexer(opensearchutil.BulkIndexerConfig{
-		Index:  index,
-		Client: c.client,
+		Index:   index,
+		Client:  c.client,
+		Refresh: "true",
 	})
 
 	for _, hook := range c.afterHook {
-		ctx = hook.After(ctx, AfterContext{cmd: CmdIndicesDelete, Options: &options, Resp: resp, Err: &err})
+		ctx = hook.After(ctx, AfterContext{cmd: CmdNewBulkIndexer, Err: &err})
 	}
 
 	if err != nil {

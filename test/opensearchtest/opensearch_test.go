@@ -7,8 +7,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"encoding/json"
 	"github.com/onsi/gomega"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
@@ -21,11 +19,11 @@ import (
 	"time"
 )
 
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		dbtest.EnableDBRecordMode(),
-	)
-}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
 
 type FakeService struct {
 	Repo opensearch.Repo[GenericAuditEvent]
@@ -605,8 +603,8 @@ func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
 		if err != nil {
 			t.Fatalf("Unable to Marshal testEvent")
 		}
-
-		bi, err := di.FakeService.Repo.NewBulkIndexer(fakeIndex)
+		// TODO figure out how to use existing pre append hook system
+		bi, err := di.FakeService.Repo.NewBulkIndexer(ctx, "test_"+fakeIndex)
 		if err != nil {
 			t.Fatalf("unable to create a new bulk indexer ")
 		}

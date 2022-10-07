@@ -10,7 +10,6 @@ import (
 )
 
 func (c *RepoImpl[T]) Index(ctx context.Context, index string, document T, o ...Option[opensearchapi.IndexRequest]) error {
-
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(document)
 	if err != nil {

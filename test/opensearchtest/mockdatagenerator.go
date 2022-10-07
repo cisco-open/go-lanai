@@ -44,10 +44,11 @@ func SetupPrepareOpenSearchData(
 ) (context.Context, error) {
 	// We don't care if we can't delete this indices - it might not exist
 	//nolint:errcheck
-	repo.IndicesDelete(context.Background(), []string{"auditlog"})
+	repo.IndicesDelete(ctx, []string{"auditlog"})
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
-	bi, err := repo.NewBulkIndexer("test_auditlog")
+	// TODO figure out how to use existing pre append hook system
+	bi, err := repo.NewBulkIndexer(ctx, "test_"+"auditlog")
 	if err != nil {
 		return ctx, err
 	}
@@ -60,13 +61,6 @@ func SetupPrepareOpenSearchData(
 			Action: "index",
 			Body:   strings.NewReader(string(buffer)),
 		})
-		//err := repo.Index(
-		//	context.Background(),
-		//	"auditlog",
-		//	event,
-		//	opensearch.Index.WithRefresh("true"),
-		//	opensearch.Index.WithWaitForActiveShards("all"),
-		//)
 	}
 	if err = bi.Close(ctx); err != nil {
 		return ctx, err

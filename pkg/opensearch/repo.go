@@ -30,7 +30,7 @@ type Repo[T any] interface {
 	// NewBulkIndexer Will create a new utility helper for bulk requests
 	// [Ref]: https://pkg.go.dev/github.com/opensearch-project/opensearch-go/opensearchutil#BulkIndexerItem
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/document-apis/bulk/#request-body
-	NewBulkIndexer(index string) (opensearchutil.BulkIndexer, error)
+	NewBulkIndexer(ctx context.Context, index string) (opensearchutil.BulkIndexer, error)
 
 	// IndicesCreate will create a new index in the cluster.
 	//
