@@ -16,11 +16,11 @@ func (c *RepoImpl[T]) IndicesPutIndexTemplate(ctx context.Context, name string, 
 		return fmt.Errorf("unable to encode mapping: %w", err)
 	}
 	resp, err := c.client.IndicesPutIndexTemplate(ctx, name, &buffer, o...)
-	if resp.IsError() {
-		return fmt.Errorf("error status code: %d", resp.StatusCode)
-	}
 	if err != nil {
 		return err
+	}
+	if resp != nil && resp.IsError() {
+		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	return nil
 }
