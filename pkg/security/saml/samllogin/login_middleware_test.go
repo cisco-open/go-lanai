@@ -6,6 +6,7 @@ import (
 	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin/testdata"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"errors"
 	"github.com/crewjam/saml"
 	"github.com/gin-gonic/gin"
@@ -52,9 +53,12 @@ func TestSamlEntryPoint(t *testing.T) {
 			serverProp := web.NewServerProperties()
 			serverProp.ContextPath = "europa"
 
-			c := newSamlAuthConfigurer(newSamlConfigurer(tt.samlProperties, testdata.NewTestIdpManager()), testdata.NewTestFedAccountStore())
+			idpManager := samltest.NewMockedIdpManager(func(opt *samltest.IdpManagerMockOption) {
+				opt.IDPList = testdata.DefaultIdpProviders
+			})
+			c := newSamlAuthConfigurer(newSamlConfigurer(tt.samlProperties, idpManager), testdata.NewTestFedAccountStore())
 			feature := New()
-			feature.Issuer(testdata.TestIssuer)
+			feature.Issuer(samltest.DefaultIssuer)
 			ws := TestWebSecurity{}
 
 			m := c.makeMiddleware(feature, ws)

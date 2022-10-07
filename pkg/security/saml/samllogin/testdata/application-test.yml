@@ -5,3 +5,12 @@ security:
       key-file: "testdata/saml_test.key"
       key-password: ""
       name-id-format: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+
+mocking:
+  idp:
+    alt:
+      entity-id: "http://www.okta.com/exk668ha29xaI4in25d7"
+      metadata-source: "testdata/okta_logout_test_metadata.xml"
+      domain: "saml-alt.vms.com"
+      name: "okta"
+      id-name: "email"

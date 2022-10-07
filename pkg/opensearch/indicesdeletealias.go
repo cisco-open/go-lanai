@@ -8,11 +8,11 @@ import (
 
 func (c *RepoImpl[T]) IndicesDeleteAlias(ctx context.Context, index []string, name []string, o ...Option[opensearchapi.IndicesDeleteAliasRequest]) error {
 	resp, err := c.client.IndicesDeleteAlias(ctx, index, name, o...)
-	if resp.IsError() {
-		return fmt.Errorf("error status code: %d", resp.StatusCode)
-	}
 	if err != nil {
 		return err
+	}
+	if resp != nil && resp.IsError() {
+		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	return nil
 }

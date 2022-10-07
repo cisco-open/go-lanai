@@ -31,19 +31,16 @@ type IndicesDetail struct {
 func (c *RepoImpl[T]) IndicesGet(ctx context.Context, index string, o ...Option[opensearchapi.IndicesGetRequest]) (*IndicesDetail, error) {
 
 	resp, err := c.client.IndicesGet(ctx, index, o...)
-	if resp.IsError() {
-		return nil, fmt.Errorf("error status code: %d", resp.StatusCode)
-	}
 	if err != nil {
 		return nil, err
+	}
+	if resp != nil && resp.IsError() {
+		return nil, fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
-	}
-	if resp.IsError() {
-		return nil, fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 
 	indicesDetail := make(map[string]*IndicesDetail)

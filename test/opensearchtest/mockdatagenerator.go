@@ -48,7 +48,7 @@ func SetupPrepareOpenSearchData(
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
 	// TODO figure out how to use existing pre append hook system
-	bi, err := repo.NewBulkIndexer(ctx, "test_"+"auditlog")
+	bi, err := repo.NewBulkIndexer("test_" + "auditlog")
 	if err != nil {
 		return ctx, err
 	}

@@ -33,9 +33,9 @@ type ConditionalLogoutHandler interface {
 
 //goland:noinspection GoNameStartsWithPackageName
 type LogoutFeature struct {
-	successHandler security.AuthenticationSuccessHandler
-	errorHandler   security.AuthenticationErrorHandler
-	entryPoint     security.AuthenticationEntryPoint
+	successHandlers []security.AuthenticationSuccessHandler
+	errorHandlers   []security.AuthenticationErrorHandler
+	entryPoints     []security.AuthenticationEntryPoint
 	successUrl     string
 	errorUrl       string
 	logoutHandlers []LogoutHandler
@@ -73,21 +73,21 @@ func (f *LogoutFeature) ErrorUrl(errorUrl string) *LogoutFeature {
 	return f
 }
 
-// SuccessHandler overrides SuccessUrl
-func (f *LogoutFeature) SuccessHandler(successHandler security.AuthenticationSuccessHandler) *LogoutFeature {
-	f.successHandler = successHandler
+// AddSuccessHandler overrides SuccessUrl
+func (f *LogoutFeature) AddSuccessHandler(successHandler security.AuthenticationSuccessHandler) *LogoutFeature {
+	f.successHandlers = append(f.successHandlers, successHandler)
 	return f
 }
 
-// ErrorHandler overrides ErrorUrl
-func (f *LogoutFeature) ErrorHandler(errorHandler security.AuthenticationErrorHandler) *LogoutFeature {
-	f.errorHandler = errorHandler
+// AddErrorHandler overrides ErrorUrl
+func (f *LogoutFeature) AddErrorHandler(errorHandler security.AuthenticationErrorHandler) *LogoutFeature {
+	f.errorHandlers = append(f.errorHandlers, errorHandler)
 	return f
 }
 
-// EntryPoint is used when ConditionalLogoutHandler decide cancel/delay logout process
-func (f *LogoutFeature) EntryPoint(entryPoint security.AuthenticationEntryPoint) *LogoutFeature {
-	f.entryPoint = entryPoint
+// AddEntryPoint is used when ConditionalLogoutHandler decide cancel/delay logout process
+func (f *LogoutFeature) AddEntryPoint(entryPoint security.AuthenticationEntryPoint) *LogoutFeature {
+	f.entryPoints = append(f.entryPoints, entryPoint)
 	return f
 }
 
