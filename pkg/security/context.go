@@ -124,7 +124,7 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 func IsTenantValid(ctx context.Context, tenantId string) bool {
 	parentId, err := tenancy.GetParent(ctx, tenantId)
 	//if we find a parent, that means we have this tenantId in tenant hierarchy, so it's valid
-	if err == nil && parentId != ""  {
+	if err == nil && parentId != "" {
 		return true
 	}
 
@@ -149,7 +149,7 @@ func IsTenantValid(ctx context.Context, tenantId string) bool {
 	is in the user's designated tenant. If yes, this method will return true.
 
 	otherwise, this method return false.
- */
+*/
 func HasAccessToTenant(ctx context.Context, tenantId string) bool {
 	if !IsTenantValid(ctx, tenantId) {
 		return false
@@ -165,6 +165,27 @@ func HasAccessToTenant(ctx context.Context, tenantId string) bool {
 		return tenancy.AnyHasDescendant(ctx, ud.AssignedTenantIds(), tenantId)
 	}
 	return false
+}
+
+// HasAccessToTenantWithCause Similar to HasAccessToTenant but instead of return false, it returns an error
+func HasAccessToTenantWithCause(ctx context.Context, tenantId string) error {
+	if !IsTenantValid(ctx, tenantId) {
+		return ErrorInvalidTenantId
+	}
+
+	auth := Get(ctx)
+
+	if HasPermissions(auth, SpecialPermissionAccessAllTenant) {
+		return nil
+	}
+
+	if ud, ok := auth.Details().(UserDetails); ok {
+		hasDesc := tenancy.AnyHasDescendant(ctx, ud.AssignedTenantIds(), tenantId)
+		if hasDesc {
+			return nil
+		}
+	}
+	return ErrorNoAccess
 }
 
 func IsFullyAuthenticated(auth Authentication) bool {

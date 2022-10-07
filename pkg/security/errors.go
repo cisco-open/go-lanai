@@ -18,6 +18,7 @@ const (
 	ErrorTypeCodeInternal
 	ErrorTypeCodeOAuth2
 	ErrorTypeCodeSaml
+	ErrorTypeCodeTenancy
 )
 
 // All "SubType" values are used as mask
@@ -55,6 +56,13 @@ const (
 	ErrorSubTypeCodeCsrf
 )
 
+// All "SubType" values are used as mask
+// sub types of ErrorTypeCodeTenancy
+const (
+	_                             = iota
+	ErrorSubTypeCodeTenantInvalid = ErrorTypeCodeTenancy + iota<<errorutils.ErrorSubTypeOffset
+)
+
 const (
 	_                         = iota
 	ErrorCodeMissingCsrfToken = ErrorSubTypeCodeCsrf + iota
@@ -77,6 +85,12 @@ var (
 	ErrorSubTypeAccessDenied     = NewErrorSubType(ErrorSubTypeCodeAccessDenied, errors.New("error sub-type: access denied"))
 	ErrorSubTypeInsufficientAuth = NewErrorSubType(ErrorSubTypeCodeInsufficientAuth, errors.New("error sub-type: insufficient auth"))
 	ErrorSubTypeCsrf             = NewErrorSubType(ErrorSubTypeCodeCsrf, errors.New("error sub-type: csrf"))
+)
+
+// Concrete error, can be used in errors.Is for exact match
+var (
+	ErrorNoAccess        = NewCodedError(ErrorSubTypeCodeAccessDenied, "No Access to the tenant")
+	ErrorInvalidTenantId = NewCodedError(ErrorSubTypeCodeTenantInvalid, "Invalid tenant Id")
 )
 
 func init() {
