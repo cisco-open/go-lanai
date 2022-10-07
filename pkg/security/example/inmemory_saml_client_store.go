@@ -2,28 +2,28 @@ package example
 
 import (
 	"context"
-	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	samlidp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
 	"errors"
 )
 
 type InMemorySamlClientStore struct {
-	details []saml_auth.DefaultSamlClient
+	details []samlidp.DefaultSamlClient
 }
 
-func NewInMemSpManager() saml_auth_ctx.SamlClientStore {
+func NewInMemSpManager() samlctx.SamlClientStore {
 	return &InMemorySamlClientStore{
-		details: []saml_auth.DefaultSamlClient{
-			saml_auth.DefaultSamlClient{
-				SamlSpDetails: saml_auth.SamlSpDetails{
+		details: []samlidp.DefaultSamlClient{
+			{
+				SamlSpDetails: samlidp.SamlSpDetails{
 					EntityId: "18.205.202.124",
 					MetadataSource: "http://localhost:9090/metadata",
 					SkipAssertionEncryption: true,
 					SkipAuthRequestSignatureVerification: false,
 				},
 			},
-			saml_auth.DefaultSamlClient{
-				SamlSpDetails: saml_auth.SamlSpDetails{
+			{
+				SamlSpDetails: samlidp.SamlSpDetails{
 					EntityId: "http://localhost:8000/saml/metadata",
 					MetadataSource: "http://localhost:8000/saml/metadata",
 					SkipAssertionEncryption: true,
@@ -34,19 +34,19 @@ func NewInMemSpManager() saml_auth_ctx.SamlClientStore {
 	}
 }
 
-func (i *InMemorySamlClientStore) GetAllSamlClient(context.Context) ([]saml_auth_ctx.SamlClient, error) {
-	var result []saml_auth_ctx.SamlClient
+func (i *InMemorySamlClientStore) GetAllSamlClient(context.Context) ([]samlctx.SamlClient, error) {
+	var result []samlctx.SamlClient
 	for _, v := range i.details {
 		result = append(result, v)
 	}
 	return result, nil
 }
 
-func (i *InMemorySamlClientStore) GetSamlClientByEntityId(ctx context.Context, entityId string) (saml_auth_ctx.SamlClient, error) {
+func (i *InMemorySamlClientStore) GetSamlClientByEntityId(ctx context.Context, entityId string) (samlctx.SamlClient, error) {
 	for _, detail := range i.details {
 		if detail.EntityId == entityId {
 			return detail, nil
 		}
 	}
-	return saml_auth.DefaultSamlClient{}, errors.New("not found")
+	return samlidp.DefaultSamlClient{}, errors.New("not found")
 }
