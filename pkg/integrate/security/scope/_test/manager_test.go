@@ -114,7 +114,7 @@ func TestOverridingDefaultScopeManager(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithFxOptions(
 			fx.Provide(securityint.BindSecurityIntegrationProperties),
-			fx.Provide(provideNoopScopeManager),
+			fx.Decorate(provideNoopScopeManager),
 		),
 		test.GomegaSubTest(SubTestNoopScopeManager(), "VerifyNoopScopeManager"),
 	)
@@ -694,4 +694,3 @@ func securityMockRegular() sectest.SecurityMockOptions {
 		d.Permissions = utils.NewStringSet(security.SpecialPermissionSwitchTenant)
 	}
 }
-
