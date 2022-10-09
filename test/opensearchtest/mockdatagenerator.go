@@ -48,7 +48,7 @@ func SetupPrepareOpenSearchData(
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
 	// TODO figure out how to use existing pre append hook system
-	bi, err := repo.NewBulkIndexer("test_" + "auditlog")
+	bi, err := repo.NewBulkIndexer()
 	if err != nil {
 		return ctx, err
 	}
@@ -58,8 +58,10 @@ func SetupPrepareOpenSearchData(
 			return ctx, err
 		}
 		bi.Add(ctx, opensearchutil.BulkIndexerItem{
-			Action: "index",
-			Body:   strings.NewReader(string(buffer)),
+			Action:     "index",
+			Index:      "test_" + "auditlog",
+			DocumentID: event.ID,
+			Body:       strings.NewReader(string(buffer)),
 		})
 	}
 	if err = bi.Close(ctx); err != nil {

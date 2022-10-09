@@ -604,7 +604,7 @@ func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
 			t.Fatalf("Unable to Marshal testEvent")
 		}
 		// TODO figure out how to use existing pre append hook system
-		bi, err := di.FakeService.Repo.NewBulkIndexer("test_" + fakeIndex)
+		bi, err := di.FakeService.Repo.NewBulkIndexer()
 		if err != nil {
 			t.Fatalf("unable to create a new bulk indexer ")
 		}
@@ -612,6 +612,7 @@ func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
 		for i := 0; i < 10; i++ {
 			bi.Add(ctx, opensearchutil.BulkIndexerItem{
 				Action: "index",
+				Index:  "test_" + fakeIndex,
 				Body:   strings.NewReader(string(buffer)),
 			})
 		}
@@ -621,6 +622,10 @@ func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		stats := bi.Stats()
+
+		if stats.NumRequests != (1) {
+			t.Fatalf("Unexcpected NumRequests got: %d, want: 1", stats.NumRequests)
+		}
 
 		if stats.NumIndexed != (10) {
 			t.Fatalf("Unexcpected NumIndexed got: %d, want: 10", stats.NumIndexed)
