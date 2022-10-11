@@ -36,6 +36,13 @@ type MockedAccountProperties struct {
 	Perms         []string `json:"permissions"`
 }
 
+type MockedFederatedUserProperties struct {
+	MockedAccountProperties
+	ExtIdpName string `json:"ext-idp-name"`
+	ExtIdName  string `json:"ext-id-name"`
+	ExtIdValue string `json:"ext-id-value"`
+}
+
 type MockedTenantProperties struct {
 	ID         string `json:"id"` // optional field
 	ExternalId string `json:"external-id"`

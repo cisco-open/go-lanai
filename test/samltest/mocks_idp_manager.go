@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"errors"
 	"sort"
 )
@@ -78,12 +79,12 @@ func (m MockedIdpManager) GetIdentityProvidersWithFlow(ctx context.Context, flow
 
 func (m MockedIdpManager) GetIdentityProviderByEntityId(ctx context.Context, entityId string) (idp.IdentityProvider, error) {
 	for _, v := range m.idpDetails {
-		if samlIdp, ok := v.(samlIdentityProvider); ok && entityId == samlIdp.EntityId() {
+		if samlIdp, ok := v.(samlctx.SamlIdentityProvider); ok && entityId == samlIdp.EntityId() {
 			return v, nil
 		}
 	}
 	for _, delegate := range m.delegates {
-		samlDelegate, ok := delegate.(samlIdentityProviderManager)
+		samlDelegate, ok := delegate.(samlctx.SamlIdentityProviderManager)
 		if !ok {
 			continue
 		}
