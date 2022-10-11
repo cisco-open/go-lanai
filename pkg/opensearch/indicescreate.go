@@ -24,7 +24,7 @@ func (c *RepoImpl[T]) IndicesCreate(
 	if err != nil {
 		return err
 	}
-	if resp.IsError() {
+	if resp != nil && resp.IsError() {
 		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	return nil

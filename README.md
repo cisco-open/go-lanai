@@ -478,12 +478,12 @@ At this point, if you visit the endpoint again and look at the network traffic, 
 ## Step 5: Add Saml Login
 
 Enable the SAML Login feature so that when user visits the /hello endpoint, they will be redirected to the single sign on
-page first. This feature adds a number of middleware and endpoints to allow your application to act as a SAML service provider. See [SAML login feature](pkg/security/saml/samllogin)
+page first. This feature adds a number of middleware and endpoints to allow your application to act as a SAML service provider. See [SAML login feature](pkg/security/saml/samlsp)
 for the list of middleware and endpoints added by this feature.
 
 **init/package.go**
 
-Activate the saml login module with ```samllogin.Use()```. We also add a ```fx.Provide(authserver.BindAuthServerProperties)```.
+Activate the saml login module with ```samlsp.Use()```. We also add a ```fx.Provide(authserver.BindAuthServerProperties)```.
 This binds the auth related properties into a struct which we will use when configuring the SAML login feature on the web security instance.
 
 We update the ```configureSecurity``` method to take these property structs as dependencies.
@@ -497,7 +497,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samlsp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
 	"cto-github.cisco.com/tishi/example/pkg/controller"
@@ -509,7 +509,7 @@ func Use() {
 	webinit.Use()
 	security.Use()
 	redis.Use() //needs redis for session store
-	samllogin.Use() // enable this service to act as saml sp
+	samlsp.Use() // enable this service to act as saml sp
 
 	bootstrap.AddOptions(
 		fx.Provide(authserver.BindAuthServerProperties), //using the property already defined in go-lanai for convenience
@@ -545,7 +545,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samlsp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -565,7 +565,7 @@ func (c *securityConfigurer) Configure(ws security.WebSecurity) {
 			Request(matcher.AnyRequest()).Authenticated(),
 		).
 		With(session.New()).
-		With(samllogin.New().
+		With(samlsp.New().
 			Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 				*opt = security.DefaultIssuerDetails{
 					Protocol:    c.AuthProperties.Issuer.Protocol,
@@ -674,11 +674,11 @@ package service
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
 )
 
-var targetIdp = samlidp.SamlIdentityProvider{
-	SamlIdpDetails: samlidp.SamlIdpDetails{
+var targetIdp = extsamlidp.SamlIdentityProvider{
+	SamlIdpDetails: extsamlidp.SamlIdpDetails{
 		EntityId:                 "http://msx.com:8900/auth",
 		Domain:                   "localhost",
 		MetadataLocation:         "http://msx.com:8900/auth/metadata",
@@ -741,7 +741,7 @@ func Use() {
 	webinit.Use()
 	security.Use()
 	redis.Use() //needs redis for session store
-	samllogin.Use()
+	samlsp.Use()
 
 	bootstrap.AddOptions(
 		fx.Provide(authserver.BindAuthServerProperties), //using the property already defined in go-lanai for convenience

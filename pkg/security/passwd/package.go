@@ -10,7 +10,7 @@ import (
 
 var logger = log.New("SEC.Passwd")
 
-var PasswordAuthModule = &bootstrap.Module{
+var Module = &bootstrap.Module{
 	Name: "passwd authenticator",
 	Precedence: security.MinSecurityPrecedence + 30,
 	Options: []fx.Option{
@@ -19,7 +19,7 @@ var PasswordAuthModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(PasswordAuthModule)
+	bootstrap.Register(Module)
 }
 
 type initDI struct {

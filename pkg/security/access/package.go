@@ -10,7 +10,7 @@ import (
 var logger = log.New("SEC.Access")
 
 //goland:noinspection GoNameStartsWithPackageName
-var AccessControlModule = &bootstrap.Module{
+var Module = &bootstrap.Module{
 	Name: "access control",
 	Precedence: security.MinSecurityPrecedence + 30,
 	Options: []fx.Option{
@@ -19,7 +19,7 @@ var AccessControlModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(AccessControlModule)
+	bootstrap.Register(Module)
 }
 
 type initDI struct {
