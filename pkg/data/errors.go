@@ -143,6 +143,7 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
+	ErrorSortByUnknownColumn  = NewDataError(ErrorCodeOrmMapping, "SortBy column unknown")
 	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
 	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
 	ErrorDuplicateKey         = NewDataError(ErrorCodeDuplicateKey, "duplicate key")
@@ -175,14 +176,14 @@ func (e dataError) Details() interface{} {
 func (e dataError) WithDetails(details interface{}) DataError {
 	return dataError{
 		CodedError: e.CodedError,
-		details: details,
+		details:    details,
 	}
 }
 
 func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
 	return dataError{
 		CodedError: e.CodedError.WithMessage(msg, args...),
-		details: e.details,
+		details:    e.details,
 	}
 }
 
