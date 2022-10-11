@@ -45,12 +45,12 @@ func (c *RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o
 	if err != nil {
 		return 0, err
 	}
+	if resp != nil && resp.IsError() {
+		return 0, fmt.Errorf("error status code: %d", resp.StatusCode)
+	}
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return 0, err
-	}
-	if resp.IsError() {
-		return 0, fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	var searchResp SearchResponse[T]
 	err = json.Unmarshal(respBody, &searchResp)
@@ -88,6 +88,7 @@ func (c *OpenClientImpl) Search(ctx context.Context, o ...Option[opensearchapi.S
 }
 
 // searchExt can be extended
+//
 //	func (s searchExt) WithSomething() func(request *opensearchapi.SearchRequest) {
 //		return func(request *opensearchapi.SearchRequest) {
 //		}

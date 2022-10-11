@@ -32,7 +32,7 @@ var logger = log.New("Config")
 //go:embed defaults-global.yml
 var defaultConfigFS embed.FS
 
-var ConfigModule = &bootstrap.Module{
+var Module = &bootstrap.Module{
 	Name:       "bootstrap endpoint",
 	Precedence: bootstrap.AppConfigPrecedence,
 	PriorityOptions: []fx.Option{
@@ -65,7 +65,7 @@ var ConfigModule = &bootstrap.Module{
 
 // Use Entrypoint of appconfig package
 func Use() {
-	bootstrap.Register(ConfigModule)
+	bootstrap.Register(Module)
 }
 
 type bootstrapConfigDI struct {

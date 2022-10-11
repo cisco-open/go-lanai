@@ -3,14 +3,14 @@ package example
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"fmt"
 	"strings"
 )
 
 var (
-	globalSamlIdp = samlidp.NewIdentityProvider(func(opt *samlidp.SamlIdpDetails) {
+	globalSamlIdp = extsamlidp.NewIdentityProvider(func(opt *extsamlidp.SamlIdpDetails) {
 		opt.Domain = "saml.vms.com"
 		opt.MetadataLocation = "https://dev-940621.oktapreview.com/app/exkwj65c2kC1vwtYi0h7/sso/saml/metadata"
 		opt.ExternalIdpName = "okta"
