@@ -27,10 +27,13 @@ type Repo[T any] interface {
 	// The index argument defines the index name that the document should be stored in.
 	Index(ctx context.Context, index string, document T, o ...Option[opensearchapi.IndexRequest]) error
 
-	// NewBulkIndexer Will create a new utility helper for bulk requests.
+	// BulkIndexer will process bulk requests of a single action type.
+	//
+	// The index argument defines the index name that the bulk action will target.
+	// The action argument must be one of: ("index", "create", "delete", "update").
+	// The bulkItems argument is the array of struct items to be actioned.
 	//
 	// [Ref]: https://pkg.go.dev/github.com/opensearch-project/opensearch-go/opensearchutil#BulkIndexerItem
-	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/document-apis/bulk/#request-body
 	BulkIndexer(ctx context.Context, index string, action string, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error)
 
 	// IndicesCreate will create a new index in the cluster.
