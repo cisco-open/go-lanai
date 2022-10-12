@@ -9,9 +9,9 @@ type ClientAuthentication interface {
 
 func newClientAuthentication(p *ConnectionProperties) ClientAuthentication {
 	var clientAuthentication ClientAuthentication
-	switch p.TokenSource.Source {
+	switch p.Authentication {
 	case Kubernetes:
-		clientAuthentication = TokenKubernetesAuthentication(p.TokenSource.Kubernetes)
+		clientAuthentication = TokenKubernetesAuthentication(p.Kubernetes)
 	case Token:
 		fallthrough
 	default:

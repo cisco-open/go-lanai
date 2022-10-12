@@ -20,9 +20,7 @@ func TestTokenRefresher_Start_RefreshableToken(t *testing.T) {
 			name: "Kubernetes tokens should refresh the token when it cannot be renewed",
 			VaultClient: Client{
 				config: &ConnectionProperties{
-					TokenSource: TokenSource{
-						Source: Kubernetes,
-					},
+					Authentication: Kubernetes,
 				},
 				clientAuthentication: TokenKubernetesAuthentication(KubernetesConfig{
 					JWTPath: "testdata/tokenrefresher/auth_token",
@@ -75,9 +73,7 @@ func TestTokenRefresher_Start_NonRefreshableToken(t *testing.T) {
 			name: "Tokens with TTL should not try to refresh when renewal lease expires",
 			VaultClient: Client{
 				config: &ConnectionProperties{
-					TokenSource: TokenSource{
-						Source: Token,
-					},
+					Authentication: Token,
 				},
 				clientAuthentication: TokenClientAuthentication("token_10s_ttl"), // Token with TTL of 10 sec
 			},
@@ -89,9 +85,7 @@ func TestTokenRefresher_Start_NonRefreshableToken(t *testing.T) {
 			name: "Static tokens (without TTL) should not try to refresh or renew",
 			VaultClient: Client{
 				config: &ConnectionProperties{
-					TokenSource: TokenSource{
-						Source: Token,
-					},
+					Authentication: Token,
 				},
 				clientAuthentication: TokenClientAuthentication("token_no_ttl"), // Token with no ttl - cannot be renewed
 			},
@@ -145,9 +139,7 @@ func TestTokenRefresher_Start_Stop_Restart(t *testing.T) {
 			name: "Refresher should resume token renewal if stopped & restarted",
 			VaultClient: Client{
 				config: &ConnectionProperties{
-					TokenSource: TokenSource{
-						Source: Kubernetes,
-					},
+					Authentication: Kubernetes,
 				},
 				clientAuthentication: TokenKubernetesAuthentication(KubernetesConfig{
 					JWTPath: "testdata/tokenrefresher/auth_token",
