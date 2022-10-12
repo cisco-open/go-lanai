@@ -9,7 +9,7 @@ type ClientAuthentication interface {
 
 func newClientAuthentication(p *ConnectionProperties) ClientAuthentication {
 	var clientAuthentication ClientAuthentication
-	switch p.Authentication {
+	switch p.TokenSource.Source {
 	case Kubernetes:
 		clientAuthentication = TokenKubernetesAuthentication(p.TokenSource.Kubernetes)
 	case Token:
