@@ -3,8 +3,6 @@ package opensearchtest
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
-	"encoding/json"
-	"github.com/opensearch-project/opensearch-go/opensearchutil"
 	"math/rand"
 	"strings"
 	"time"
@@ -48,25 +46,18 @@ func SetupPrepareOpenSearchData(
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
 	// TODO figure out how to use existing pre append hook system
-	bi, err := repo.NewBulkIndexer()
+	_, err := repo.BulkIndexer(
+		ctx,
+		"test_"+"auditlog",
+		"index",
+		&events,
+		opensearch.BulkIndexer.WithWorkers(1),
+		opensearch.BulkIndexer.WithRefresh("true"),
+	)
 	if err != nil {
 		return ctx, err
 	}
-	for _, event := range events {
-		buffer, err := json.Marshal(event)
-		if err != nil {
-			return ctx, err
-		}
-		bi.Add(ctx, opensearchutil.BulkIndexerItem{
-			Action:     "index",
-			Index:      "test_" + "auditlog",
-			DocumentID: event.ID,
-			Body:       strings.NewReader(string(buffer)),
-		})
-	}
-	if err = bi.Close(ctx); err != nil {
-		return ctx, err
-	}
+
 	return ctx, nil
 }
 

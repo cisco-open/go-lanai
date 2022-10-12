@@ -7,14 +7,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"encoding/json"
 	"github.com/onsi/gomega"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
-	"github.com/opensearch-project/opensearch-go/opensearchutil"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"go.uber.org/fx"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 )
@@ -598,31 +595,18 @@ func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
 			SubType:   "SYNCHRONIZED",
 			Time:      time.Date(2019, 10, 15, 0, 0, 0, 0, time.UTC),
 		}
-
-		buffer, err := json.Marshal(testEvent)
-		if err != nil {
-			t.Fatalf("Unable to Marshal testEvent")
-		}
-		// TODO figure out how to use existing pre append hook system
-		bi, err := di.FakeService.Repo.NewBulkIndexer()
-		if err != nil {
-			t.Fatalf("unable to create a new bulk indexer ")
-		}
-
+		toBulkAdd := make([]GenericAuditEvent, 10)
 		for i := 0; i < 10; i++ {
-			bi.Add(ctx, opensearchutil.BulkIndexerItem{
-				Action: "index",
-				Index:  "test_" + fakeIndex,
-				Body:   strings.NewReader(string(buffer)),
-			})
+			toBulkAdd[i] = testEvent
 		}
-
-		if err = bi.Close(ctx); err != nil {
-			t.Fatalf("unable to bulk index")
-		}
-
-		stats := bi.Stats()
-
+		stats, err := di.FakeService.Repo.BulkIndexer(
+			ctx,
+			"test_"+fakeIndex, // TODO figure out how to use existing pre append hook system
+			"index",
+			&toBulkAdd,
+			opensearch.BulkIndexer.WithWorkers(1),
+			opensearch.BulkIndexer.WithRefresh("true"),
+		)
 		if stats.NumRequests != (1) {
 			t.Fatalf("Unexcpected NumRequests got: %d, want: 1", stats.NumRequests)
 		}

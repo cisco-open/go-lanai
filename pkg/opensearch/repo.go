@@ -31,7 +31,7 @@ type Repo[T any] interface {
 	//
 	// [Ref]: https://pkg.go.dev/github.com/opensearch-project/opensearch-go/opensearchutil#BulkIndexerItem
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/document-apis/bulk/#request-body
-	NewBulkIndexer() (opensearchutil.BulkIndexer, error)
+	BulkIndexer(ctx context.Context, index string, action string, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error)
 
 	// IndicesCreate will create a new index in the cluster.
 	//
