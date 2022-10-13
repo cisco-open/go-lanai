@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // AccessDeniedHandler handles ErrorSubTypeAccessDenied
@@ -38,7 +39,9 @@ type ErrorHandler interface {
 
 // CompositeAuthenticationErrorHandler implement AuthenticationErrorHandler interface
 type CompositeAuthenticationErrorHandler struct {
-	handlers []AuthenticationErrorHandler
+	init      sync.Once
+	handlers  []AuthenticationErrorHandler
+	flattened []AuthenticationErrorHandler
 }
 
 func NewAuthenticationErrorHandler(handlers ...AuthenticationErrorHandler) *CompositeAuthenticationErrorHandler {
@@ -50,9 +53,27 @@ func NewAuthenticationErrorHandler(handlers ...AuthenticationErrorHandler) *Comp
 func (h *CompositeAuthenticationErrorHandler) HandleAuthenticationError(
 	c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 
-	for _,handler := range h.handlers {
+	h.init.Do(func() { h.flattened = h.Handlers() })
+	for _, handler := range h.flattened {
 		handler.HandleAuthenticationError(c, r, rw, err)
 	}
+}
+
+// Handlers returns list of authentication handlers, any nested composite handlers are flattened
+func (h *CompositeAuthenticationErrorHandler) Handlers() []AuthenticationErrorHandler {
+	flattened := make([]AuthenticationErrorHandler, 0, len(h.handlers))
+	for _, handler := range h.handlers {
+		switch h := handler.(type) {
+		case *CompositeAuthenticationErrorHandler:
+			flattened = append(flattened, h.Handlers()...)
+		default:
+			flattened = append(flattened, handler)
+		}
+	}
+	sort.SliceStable(flattened, func(i, j int) bool {
+		return order.OrderedFirstCompare(flattened[i], flattened[j])
+	})
+	return flattened
 }
 
 func (h *CompositeAuthenticationErrorHandler) Size() int {
@@ -72,7 +93,7 @@ func (h *CompositeAuthenticationErrorHandler) Merge(composite *CompositeAuthenti
 func (h *CompositeAuthenticationErrorHandler) processErrorHandlers(handlers []AuthenticationErrorHandler) []AuthenticationErrorHandler {
 	handlers = h.removeSelf(handlers)
 	handlers = h.removeDuplicates(handlers)
-	sort.SliceStable(handlers, func(i,j int) bool {
+	sort.SliceStable(handlers, func(i, j int) bool {
 		return order.OrderedFirstCompare(handlers[i], handlers[j])
 	})
 	return handlers
@@ -107,9 +128,11 @@ func (h *CompositeAuthenticationErrorHandler) removeDuplicates(items []Authentic
 	return unique
 }
 
-// *CompositeAccessDeniedHandler implement AccessDeniedHandler interface
+// CompositeAccessDeniedHandler implement AccessDeniedHandler interface
 type CompositeAccessDeniedHandler struct {
-	handlers []AccessDeniedHandler
+	init sync.Once
+	handlers  []AccessDeniedHandler
+	flattened []AccessDeniedHandler
 }
 
 func NewAccessDeniedHandler(handlers ...AccessDeniedHandler) *CompositeAccessDeniedHandler {
@@ -121,9 +144,27 @@ func NewAccessDeniedHandler(handlers ...AccessDeniedHandler) *CompositeAccessDen
 func (h *CompositeAccessDeniedHandler) HandleAccessDenied(
 	c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 
-	for _,handler := range h.handlers {
+	h.init.Do(func() { h.flattened = h.Handlers()})
+	for _, handler := range h.flattened {
 		handler.HandleAccessDenied(c, r, rw, err)
 	}
+}
+
+// Handlers returns list of authentication handlers, any nested composite handlers are flattened
+func (h *CompositeAccessDeniedHandler) Handlers() []AccessDeniedHandler {
+	flattened := make([]AccessDeniedHandler, 0, len(h.handlers))
+	for _, handler := range h.handlers {
+		switch h := handler.(type) {
+		case *CompositeAccessDeniedHandler:
+			flattened = append(flattened, h.Handlers()...)
+		default:
+			flattened = append(flattened, handler)
+		}
+	}
+	sort.SliceStable(flattened, func(i, j int) bool {
+		return order.OrderedFirstCompare(flattened[i], flattened[j])
+	})
+	return flattened
 }
 
 func (h *CompositeAccessDeniedHandler) Size() int {
@@ -143,7 +184,7 @@ func (h *CompositeAccessDeniedHandler) Merge(composite *CompositeAccessDeniedHan
 func (h *CompositeAccessDeniedHandler) processErrorHandlers(handlers []AccessDeniedHandler) []AccessDeniedHandler {
 	handlers = h.removeSelf(handlers)
 	handlers = h.removeDuplicates(handlers)
-	sort.SliceStable(handlers, func(i,j int) bool {
+	sort.SliceStable(handlers, func(i, j int) bool {
 		return order.OrderedFirstCompare(handlers[i], handlers[j])
 	})
 	return handlers
@@ -192,7 +233,7 @@ func NewErrorHandler(handlers ...ErrorHandler) *CompositeErrorHandler {
 func (h *CompositeErrorHandler) HandleError(
 	c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 
-	for _,handler := range h.handlers {
+	for _, handler := range h.handlers {
 		handler.HandleError(c, r, rw, err)
 	}
 }
@@ -214,7 +255,7 @@ func (h *CompositeErrorHandler) Merge(composite *CompositeErrorHandler) *Composi
 func (h *CompositeErrorHandler) processErrorHandlers(handlers []ErrorHandler) []ErrorHandler {
 	handlers = h.removeSelf(handlers)
 	handlers = h.removeDuplicates(handlers)
-	sort.SliceStable(handlers, func(i,j int) bool {
+	sort.SliceStable(handlers, func(i, j int) bool {
 		return order.OrderedFirstCompare(handlers[i], handlers[j])
 	})
 	return handlers
@@ -274,7 +315,7 @@ func (h *DefaultAuthenticationErrorHandler) HandleAuthenticationError(ctx contex
 }
 
 // DefaultErrorHandler implements ErrorHandler
-type DefaultErrorHandler struct {}
+type DefaultErrorHandler struct{}
 
 func (h *DefaultErrorHandler) HandleError(ctx context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 	WriteError(ctx, r, rw, http.StatusUnauthorized, err)

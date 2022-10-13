@@ -16,7 +16,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
@@ -67,7 +67,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 		Endpoints: Endpoints{
 			Authorize: ConditionalEndpoint{
 				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize},
-				Condition: matcher.NotRequest(matcher.RequestWithParam(oauth2.ParameterGrantType, saml.GrantTypeSamlSSO)),
+				Condition: matcher.NotRequest(matcher.RequestWithForm(oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO)),
 			},
 			Approval:   di.Properties.Endpoints.Approval,
 			Token:      di.Properties.Endpoints.Token,
@@ -77,8 +77,8 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 			Error:      di.Properties.Endpoints.Error,
 			Logout:     di.Properties.Endpoints.Logout,
 			SamlSso: ConditionalEndpoint{
-				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize, RawQuery: fmt.Sprintf("%s=%s", oauth2.ParameterGrantType, saml.GrantTypeSamlSSO)},
-				Condition: matcher.RequestWithParam(oauth2.ParameterGrantType, saml.GrantTypeSamlSSO),
+				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize, RawQuery: fmt.Sprintf("%s=%s", oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO)},
+				Condition: matcher.RequestWithForm(oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO),
 			},
 			SamlMetadata:    di.Properties.Endpoints.SamlMetadata,
 			TenantHierarchy: di.Properties.Endpoints.TenantHierarchy,

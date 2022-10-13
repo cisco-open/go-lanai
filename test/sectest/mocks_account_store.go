@@ -4,17 +4,18 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"errors"
+	"fmt"
 )
 
 type MockAccountStore struct {
-	accountLookupByUsername map[string]*mockedAccount
-	accountLookupById       map[interface{}]*mockedAccount
+	accountLookupByUsername map[string]*MockedAccount
+	accountLookupById       map[interface{}]*MockedAccount
 }
 
 func NewMockedAccountStore(props... *MockedAccountProperties) *MockAccountStore {
 	store := &MockAccountStore{
-		accountLookupById: make(map[interface{}]*mockedAccount),
-		accountLookupByUsername: make(map[string]*mockedAccount),
+		accountLookupById: make(map[interface{}]*MockedAccount),
+		accountLookupByUsername: make(map[string]*MockedAccount),
 	}
 	for _, v := range props {
 		acct := newMockedAccount(v)
@@ -46,14 +47,63 @@ func (m *MockAccountStore) LoadAccountByUsername(_ context.Context, username str
 	return u, nil
 }
 
-func (m *MockAccountStore) LoadLockingRules(ctx context.Context, acct security.Account) (security.AccountLockingRule, error) {
-	panic("implement me")
+func (m *MockAccountStore) LoadLockingRules(_ context.Context, _ security.Account) (security.AccountLockingRule, error) {
+	return &security.DefaultAccount{
+		AcctLockingRule: security.AcctLockingRule{
+			Name:             "test-noop",
+		},
+	}, nil
 }
 
-func (m *MockAccountStore) LoadPwdAgingRules(ctx context.Context, acct security.Account) (security.AccountPwdAgingRule, error) {
-	panic("implement me")
+func (m *MockAccountStore) LoadPwdAgingRules(_ context.Context, _ security.Account) (security.AccountPwdAgingRule, error) {
+	return &security.DefaultAccount{
+		AcctPasswordPolicy: security.AcctPasswordPolicy{
+			Name:             "test-noop",
+		},
+	}, nil
 }
 
-func (m *MockAccountStore) Save(ctx context.Context, acct security.Account) error {
-	panic("implement me")
+func (m *MockAccountStore) Save(_ context.Context, _ security.Account) error {
+	return nil
+}
+
+type MockedFederatedAccountStore struct {
+	mocks []*MockedFederatedUserProperties
+}
+
+func NewMockedFederatedAccountStore(props ...*MockedFederatedUserProperties) MockedFederatedAccountStore {
+	if len(props) == 0 {
+		props = []*MockedFederatedUserProperties{
+			{
+				ExtIdpName:              "*",
+				ExtIdName:               "*",
+				ExtIdValue:              "*",
+			},
+		}
+	}
+	return MockedFederatedAccountStore{mocks: props}
+}
+
+// LoadAccountByExternalId The externalIdName and value matches the test assertion
+// The externalIdp matches that from the MockedIdpName
+func (s MockedFederatedAccountStore) LoadAccountByExternalId(_ context.Context, extIdName string, extIdValue string, extIdpName string, _ security.AutoCreateUserDetails, _ interface{}) (security.Account, error) {
+	for _, p := range s.mocks {
+		if extIdName != p.ExtIdName && p.ExtIdName != "*" ||
+			extIdValue != p.ExtIdValue && p.ExtIdValue != "*" ||
+			extIdpName != p.ExtIdpName && p.ExtIdpName != "*" {
+			continue
+		}
+		p.UserId = s.withDefault(p.UserId, fmt.Sprintf("ext-%s-%s", extIdName, extIdValue))
+		acct := newMockedAccount(&p.MockedAccountProperties)
+		acct.MockedAccountDetails.Type = security.AccountTypeFederated
+		return acct, nil
+	}
+	return nil, fmt.Errorf("unable to find federated user by extIdName=%s, extIdValue=%s, extIdpName=%s", extIdName, extIdValue, extIdpName)
+}
+
+func (s MockedFederatedAccountStore) withDefault(val, defaultVal string) string {
+	if len(val) == 0 {
+		return defaultVal
+	}
+	return val
 }

@@ -46,6 +46,10 @@ var defaultMWMockOption = MWMockOption{
 	Route:    matcher.AnyRoute(),
 }
 
+// WithMockedMiddleware is a test option that automatically install a middleware that populate/save security.Authentication
+// into gin.Context.
+// This option works with webtest.WithMockedServer and by default extract security.Authentication from request's context
+// See examples package for more details
 func WithMockedMiddleware(opts ...MWMockOptions) test.Options {
 	opt := defaultMWMockOption
 	for _, fn := range opts {

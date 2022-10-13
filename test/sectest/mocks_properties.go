@@ -13,8 +13,18 @@ const (
 
 type mockingProperties struct {
 	Accounts      map[string]*MockedAccountProperties `json:"accounts"`
-	Tenants       map[string]*mockedTenantProperties  `json:"tenants"`
+	Tenants       map[string]*MockedTenantProperties  `json:"tenants"`
 	TokenValidity utils.Duration                      `json:"token-validity"`
+}
+
+type MockedClientProperties struct {
+	ClientID     string                    `json:"id"`
+	Secret       string                    `json:"secret"`
+	GrantTypes   utils.CommaSeparatedSlice `json:"grant-types"`
+	Scopes       utils.CommaSeparatedSlice `json:"scopes"`
+	RedirectUris utils.CommaSeparatedSlice `json:"redirect-uris"`
+	ATValidity   time.Duration             `json:"access-token-validity"`
+	RTValidity   time.Duration             `json:"refresh-token-validity"`
 }
 
 type MockedAccountProperties struct {
@@ -26,15 +36,22 @@ type MockedAccountProperties struct {
 	Perms         []string `json:"permissions"`
 }
 
-type mockedTenantProperties struct {
-	ID   string `json:"id"` // optional field
+type MockedFederatedUserProperties struct {
+	MockedAccountProperties
+	ExtIdpName string `json:"ext-idp-name"`
+	ExtIdName  string `json:"ext-id-name"`
+	ExtIdValue string `json:"ext-id-value"`
+}
+
+type MockedTenantProperties struct {
+	ID         string `json:"id"` // optional field
 	ExternalId string `json:"external-id"`
 }
 
 func bindMockingProperties(ctx *bootstrap.ApplicationContext) *mockingProperties {
 	props := mockingProperties{
 		Accounts:      map[string]*MockedAccountProperties{},
-		Tenants:       map[string]*mockedTenantProperties{},
+		Tenants:       map[string]*MockedTenantProperties{},
 		TokenValidity: utils.Duration(120 * time.Second),
 	}
 	if err := ctx.Config().Bind(&props, PropertiesPrefix); err != nil {

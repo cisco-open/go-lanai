@@ -16,7 +16,7 @@ import (
 
 func TestChangeCsrfHanlderShouldChangeCSRFTokenWhenAuthenticated(t *testing.T) {
 	csrfStore := newSessionBackedStore()
-	handler := &ChangeCsrfHanlder{
+	handler := &ChangeCsrfHandler{
 		csrfStore,
 	}
 
@@ -68,7 +68,7 @@ func TestChangeCsrfHanlderShouldChangeCSRFTokenWhenAuthenticated(t *testing.T) {
 
 func TestChangeCsrfHanlderShouldNotChangeCSRFTokenIfNotAuthenticated(t *testing.T) {
 	csrfStore := newSessionBackedStore()
-	handler := &ChangeCsrfHanlder{
+	handler := &ChangeCsrfHandler{
 		csrfStore,
 	}
 

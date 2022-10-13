@@ -81,7 +81,7 @@ func TestWithMockedServer(t *testing.T) {
 		apptest.Bootstrap(),
 		webtest.WithMockedServer(),
 		sectest.WithMockedMiddleware(),
-		apptest.WithModules(basicauth.BasicAuthModule, access.AccessControlModule, errorhandling.ErrorHandlingModule),
+		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Invoke(registerTestController, registerTestSecurity),
@@ -100,7 +100,7 @@ func TestWithRealServer(t *testing.T) {
 			sectest.MWCustomMocker(sectest.MWMockFunc(realServerMockFunc)),
 			//MWCustomConfigurer(security.ConfigurerFunc(realServerSecConfigurer)),
 		),
-		apptest.WithModules(basicauth.BasicAuthModule, access.AccessControlModule, errorhandling.ErrorHandlingModule),
+		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Invoke(registerTestController, registerTestSecurity),

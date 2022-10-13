@@ -1,7 +1,0 @@
-security:
-  auth:
-    saml:
-      certificate-file: "testdata/saml_test.cert"
-      key-file: "testdata/saml_test.key"
-      key-password: ""
-      name-id-format: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"

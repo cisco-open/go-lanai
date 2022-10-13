@@ -24,7 +24,7 @@ func (c *RepoImpl[T]) IndicesCreate(
 	if err != nil {
 		return err
 	}
-	if resp.IsError() {
+	if resp != nil && resp.IsError() {
 		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	return nil
@@ -35,7 +35,7 @@ func (c *OpenClientImpl) IndicesCreate(
 	index string,
 	o ...Option[opensearchapi.IndicesCreateRequest],
 ) (*opensearchapi.Response, error) {
-	options := make([]func(request *opensearchapi.IndicesCreateRequest), 0, len(o))
+	options := make([]func(request *opensearchapi.IndicesCreateRequest), len(o))
 	for i, v := range o {
 		options[i] = v
 	}

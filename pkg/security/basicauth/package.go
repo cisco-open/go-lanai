@@ -7,7 +7,7 @@ import (
 )
 
 //goland:noinspection GoNameStartsWithPackageName
-var BasicAuthModule = &bootstrap.Module{
+var Module = &bootstrap.Module{
 	Name: "basic auth",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
@@ -16,7 +16,7 @@ var BasicAuthModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(BasicAuthModule)
+	bootstrap.Register(Module)
 }
 
 type initDI struct {

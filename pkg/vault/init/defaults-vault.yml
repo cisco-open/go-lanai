@@ -1,6 +1,6 @@
 cloud:
   vault:
-    token-source:
+      authentication: "${spring.cloud.vault.token-source.source:TOKEN}"
       kubernetes:
         jwt-path: "${spring.cloud.vault.token-source.kubernetes.jwt-path:}"
         role: "${spring.cloud.vault.token-source.kubernetes.role:}"

@@ -7,7 +7,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"encoding/json"
 	"github.com/onsi/gomega"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -40,36 +39,9 @@ func NewFakeService(di fakeServiceDI) FakeService {
 
 type opensearchDI struct {
 	fx.In
-	FakeService FakeService
-	Properties  *opensearch.Properties
-}
-
-func IgnoreFilterRangeTime() MatchBodyModifier {
-	return func(b *[]byte) {
-		type FilterRange struct {
-			Query *struct {
-				Bool struct {
-					Filter struct {
-						Range struct {
-							Time *interface {
-							} `json:"Time,omitempty"`
-						}
-					}
-				}
-			}
-		}
-		var filterRange FilterRange
-		err := json.Unmarshal(*b, &filterRange)
-		if err != nil || filterRange.Query == nil || filterRange.Query.Bool.Filter.Range.Time == nil {
-			return
-		}
-		filterRange.Query.Bool.Filter.Range.Time = nil
-		marshalledBytes, err := json.Marshal(filterRange)
-		if err != nil {
-			return
-		}
-		*b = marshalledBytes
-	}
+	FakeService   FakeService
+	Properties    *opensearch.Properties
+	BodyModifiers *MatcherBodyModifiers
 }
 
 func TestScopeController(t *testing.T) {
@@ -79,7 +51,6 @@ func TestScopeController(t *testing.T) {
 		WithOpenSearchPlayback(
 			SetRecordMode(ModeCommandline),
 			SetRecordDelay(time.Millisecond*1500),
-			AddMatchBodyModifier(IgnoreFilterRangeTime()),
 		),
 		apptest.WithTimeout(time.Minute),
 		apptest.WithModules(opensearch.Module),
@@ -97,6 +68,7 @@ func TestScopeController(t *testing.T) {
 		test.GomegaSubTest(SubTestTracer(di), "SubTestTracer"),
 		test.GomegaSubTest(SubTestPing(di), "SubTestPing"),
 		test.GomegaSubTest(SubTestTimeBasedQuery(di), "SubTestTimeBasedQuery"),
+		test.GomegaSubTest(SubTestTemplateAndAlias(di), "SubTestTemplateAndAlias"),
 	)
 }
 
@@ -487,10 +459,15 @@ func SubTestPing(di *opensearchDI) test.GomegaSubTestFunc {
 	}
 }
 
-// SubTestTimeBasedQuery will test that the MatchBodyModifier can be used to ignore
+// SubTestTimeBasedQuery will test that the MatcherBodyModifier can be used to ignore
 // a portion of the request that is used to compare requests in the httpvcr/recorder.Recorder
 func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		defer di.BodyModifiers.Clear()
+		di.BodyModifiers.Append(IgnoreGJSONPaths(t,
+			"query.bool.filter.range.Time",
+		))
+
 		var TimeQuery map[string]interface{}
 		// If we are recording, we want to use a valid time query, however to test
 		// that the time portion is ignored with our `IgnoreFilterRangeTime` function
@@ -518,7 +495,6 @@ func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 				},
 			},
 		}
-
 		var dest []GenericAuditEvent
 		_, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
@@ -528,5 +504,84 @@ func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 			t.Fatalf("unable to search for document")
 		}
 		g.Expect(len(dest)).To(gomega.Equal(5))
+	}
+}
+
+func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		fakeNewIndexName := "generic_events_1"
+		fakeIndexAlias := "generic_event"
+		fakeTemplateName := "test_template"
+		indexTemplate := map[string]interface{}{
+			"index_patterns": []string{"*generic_events*"}, // Pattern needs to accomodate "test_" append
+			"template": map[string]interface{}{
+				"settings": map[string]interface{}{
+					"number_of_shards":   4,
+					"number_of_replicas": 4,
+				},
+			},
+			"version": 1,
+			"_meta": map[string]interface{}{
+				"description": "some description",
+			},
+		}
+		indexMapping := map[string]interface{}{
+			"mappings": map[string]interface{}{
+				"properties": map[string]interface{}{
+					"SubType": map[string]interface{}{
+						"type": "text",
+					},
+				},
+			},
+		}
+
+		// The below 3 lines are used for debugging purposes, in the case that the test did not make a full run
+		//di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		//di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
+		//di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+
+		// Create a Template
+		err := di.FakeService.Repo.IndicesPutIndexTemplate(ctx, fakeTemplateName, indexTemplate)
+		if err != nil {
+			t.Fatalf("unable to create index template")
+		}
+
+		// Create an Index with template pattern
+		err = di.FakeService.Repo.IndicesCreate(ctx, fakeNewIndexName, indexMapping)
+		if err != nil {
+			t.Fatalf("unable to create index")
+		}
+
+		// Create an Alias for the template
+		err = di.FakeService.Repo.IndicesPutAlias(ctx, []string{fakeNewIndexName}, fakeIndexAlias)
+		if err != nil {
+			t.Fatalf("unable to create alias ")
+		}
+
+		// Get the new index using the Alias and check the obj
+		resp, err := di.FakeService.Repo.IndicesGet(ctx, fakeIndexAlias)
+		if err != nil {
+			t.Fatalf("unable to get indices information using alias ")
+		}
+
+		// This test proves that the index template works against the newly created indices
+		g.Expect(resp.Settings.Index.NumberOfShards).To(gomega.Equal("4"))
+
+		// Test Cleanup
+		// Delete Alias
+		err = di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+		if err != nil {
+			t.Fatalf("unable to delete indices alias ")
+		}
+		// Delete Index Template
+		err = di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
+		if err != nil {
+			t.Fatalf("unable to delete index template ")
+		}
+		// Delete index
+		err = di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		if err != nil {
+			t.Fatalf("unable to delete index ")
+		}
 	}
 }

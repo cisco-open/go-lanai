@@ -8,8 +8,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/unknownIdp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
@@ -66,7 +66,7 @@ type authDI struct {
 func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer {
 	return func(config *authserver.Configuration) {
 		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer())
-		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer())
+		config.AddIdp(extsamlidp.NewSamlIdpSecurityConfigurer())
 		config.AddIdp(unknownIdp.NewNoIdpSecurityConfigurer())
 
 		config.IdpManager = di.IdpManager
@@ -79,7 +79,7 @@ func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 		config.Endpoints = authserver.Endpoints{
 			Authorize: authserver.ConditionalEndpoint{
 				Location: &url.URL{Path: "/v2/authorize"},
-				Condition: matcher.NotRequest(matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")),
+				Condition: matcher.NotRequest(matcher.RequestWithForm("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")),
 			},
 			Approval: "/v2/approve",
 			Token: "/v2/token",
@@ -89,7 +89,7 @@ func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 			Logout: "/v2/logout",
 			SamlSso: authserver.ConditionalEndpoint{
 				Location: &url.URL{Path:"/v2/authorize", RawQuery: "grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"},
-				Condition: matcher.RequestWithParam("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"),
+				Condition: matcher.RequestWithForm("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"),
 			},
 			SamlMetadata: "/metadata",
 			TenantHierarchy: "/v2/tenant_hierarchy",

@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	urlutils "net/url"
 	"path"
@@ -78,6 +79,10 @@ func (ep *RedirectHandler) HandleAuthenticationError(c context.Context, r *http.
 }
 
 func (ep *RedirectHandler) doRedirect(c context.Context, r *http.Request, rw http.ResponseWriter, flashes map[string]interface{}) {
+	if grw, ok := rw.(gin.ResponseWriter); ok && grw.Written() {
+		return
+	}
+
 	// save flashes
 	if flashes != nil && len(flashes) != 0 {
 		s := session.Get(c)

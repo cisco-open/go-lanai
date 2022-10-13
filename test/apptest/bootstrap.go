@@ -54,7 +54,7 @@ func NewFxTestRunner() test.InternalRunner {
 		}
 
 		// default modules
-		tb.Register(appconfig.ConfigModule)
+		tb.Register(appconfig.Module)
 
 		// prepare bootstrap fx options
 		priority := append([]fx.Option{

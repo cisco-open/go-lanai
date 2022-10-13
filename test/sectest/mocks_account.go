@@ -7,122 +7,141 @@ import (
 )
 
 const (
-	idPrefix       = "id-"
+	idPrefix = "id-"
 )
 
 /*************************
-	Account & Tenant
+	Account Auth
  *************************/
 
-type mockedAccount struct {
-	UserId          string
-	username        string
-	Password        string
-	tenantId        string
-	DefaultTenant   string
-	AssignedTenants utils.StringSet
-	permissions     utils.StringSet
+type MockedAccountAuthentication struct {
+	Account    MockedAccount
+	AuthState  security.AuthenticationState
+	DetailsMap map[string]interface{}
 }
 
-func (m *mockedAccount) DefaultDesignatedTenantId() string {
+func (a MockedAccountAuthentication) Principal() interface{} {
+	return a.Account
+}
+
+func (a MockedAccountAuthentication) Permissions() security.Permissions {
+	perms := security.Permissions{}
+	for perm := range a.Account.MockedAccountDetails.Permissions {
+		perms[perm] = struct{}{}
+	}
+	return perms
+}
+
+func (a MockedAccountAuthentication) State() security.AuthenticationState {
+	return a.AuthState
+}
+
+func (a MockedAccountAuthentication) Details() interface{} {
+	return a.DetailsMap
+}
+
+/*************************
+	Account
+ *************************/
+
+type MockedAccountDetails struct {
+	UserId          string
+	Type            security.AccountType
+	Username        string
+	Password        string
+	TenantId        string
+	DefaultTenant   string
+	AssignedTenants utils.StringSet
+	Permissions     utils.StringSet
+}
+
+type MockedAccount struct {
+	MockedAccountDetails
+}
+
+func (m MockedAccount) DefaultDesignatedTenantId() string {
 	return m.DefaultTenant
 }
 
-func (m *mockedAccount) DesignatedTenantIds() []string {
+func (m MockedAccount) DesignatedTenantIds() []string {
 	return m.AssignedTenants.Values()
 }
 
-func (m *mockedAccount) TenantId() string {
-	return m.tenantId
+func (m MockedAccount) TenantId() string {
+	return m.MockedAccountDetails.TenantId
 }
 
-func (m *mockedAccount) ID() interface{} {
+func (m MockedAccount) ID() interface{} {
 	return m.UserId
 }
 
-func (m *mockedAccount) Type() security.AccountType {
-	panic("implement me")
+func (m MockedAccount) Type() security.AccountType {
+	return m.MockedAccountDetails.Type
 }
 
-func (m *mockedAccount) Username() string {
-	return m.username
+func (m MockedAccount) Username() string {
+	return m.MockedAccountDetails.Username
 }
 
-func (m *mockedAccount) Credentials() interface{} {
-	panic("implement me")
+func (m MockedAccount) Credentials() interface{} {
+	return ""
 }
 
-func (m *mockedAccount) Permissions() []string {
-	return m.permissions.Values()
+func (m MockedAccount) Permissions() []string {
+	return m.MockedAccountDetails.Permissions.Values()
 }
 
-func (m mockedAccount) Disabled() bool {
-	panic("implement me")
+func (m MockedAccount) Disabled() bool {
+	return false
 }
 
-func (m mockedAccount) Locked() bool {
-	panic("implement me")
+func (m MockedAccount) Locked() bool {
+	return false
 }
 
-func (m mockedAccount) UseMFA() bool {
-	panic("implement me")
+func (m MockedAccount) UseMFA() bool {
+	return false
 }
 
-func (m mockedAccount) CacheableCopy() security.Account {
-	panic("implement me")
+func (m MockedAccount) CacheableCopy() security.Account {
+	return m
 }
 
-func newMockedAccount(props *MockedAccountProperties) *mockedAccount {
-	ret := &mockedAccount{
-		UserId:          props.UserId,
-		username:        props.Username,
-		Password:        props.Password,
-		DefaultTenant:   props.DefaultTenant,
-		AssignedTenants: utils.NewStringSet(props.Tenants...),
-		permissions:     utils.NewStringSet(props.Perms...),
+func newMockedAccount(props *MockedAccountProperties) *MockedAccount {
+	ret := &MockedAccount{
+		MockedAccountDetails{
+			UserId:          props.UserId,
+			Type:            security.AccountTypeApp,
+			Username:        props.Username,
+			Password:        props.Password,
+			DefaultTenant:   props.DefaultTenant,
+			AssignedTenants: utils.NewStringSet(props.Tenants...),
+			Permissions:     utils.NewStringSet(props.Perms...),
+		},
 	}
 	switch {
 	case ret.UserId == "":
-		ret.UserId = extIdToId(ret.username)
-	case ret.username == "":
-		ret.username = idToExtId(ret.UserId)
-	}
-	return ret
-}
-
-type mockedTenant struct {
-	ExternalId string
-	ID   string
-}
-
-func newMockedTenant(props *mockedTenantProperties) *mockedTenant {
-	ret := &mockedTenant{
-		ExternalId: props.ExternalId,
-		ID:   props.ID,
-	}
-	switch {
-	case ret.ID == "":
-		ret.ID = extIdToId(ret.ExternalId)
-	case ret.ExternalId == "":
-		ret.ExternalId = idToExtId(ret.ID)
+		ret.UserId = extIdToId(ret.MockedAccountDetails.Username)
+	case ret.MockedAccountDetails.Username == "":
+		ret.MockedAccountDetails.Username = idToExtId(ret.UserId)
 	}
 	return ret
 }
 
 type mockedAccounts struct {
-	idLookup map[string]*mockedAccount
-	lookup   map[string]*mockedAccount
+	idLookup map[string]*MockedAccount
+	lookup   map[string]*MockedAccount
 }
 
 func newMockedAccounts(props *mockingProperties) *mockedAccounts {
 	accts := mockedAccounts{
-		idLookup: map[string]*mockedAccount{},
-		lookup:   map[string]*mockedAccount{},
+		idLookup: map[string]*MockedAccount{},
+		lookup:   map[string]*MockedAccount{},
 	}
 	for _, v := range props.Accounts {
 		acct := newMockedAccount(v)
-		if acct.username != "" {
-			accts.lookup[acct.username] = acct
+		if acct.MockedAccountDetails.Username != "" {
+			accts.lookup[acct.MockedAccountDetails.Username] = acct
 		}
 		if acct.UserId != "" {
 			accts.idLookup[acct.UserId] = acct
@@ -131,12 +150,12 @@ func newMockedAccounts(props *mockingProperties) *mockedAccounts {
 	return &accts
 }
 
-func (m mockedAccounts) find(username, userId string) *mockedAccount {
+func (m mockedAccounts) find(username, userId string) *MockedAccount {
 	if v, ok := m.lookup[username]; ok && (userId == "" || v.UserId == userId) {
 		return v
 	}
 
-	if v, ok := m.idLookup[userId]; ok && (username == "" || v.username == username) {
+	if v, ok := m.idLookup[userId]; ok && (username == "" || v.MockedAccountDetails.Username == username) {
 		return v
 	}
 	return nil
@@ -144,7 +163,7 @@ func (m mockedAccounts) find(username, userId string) *mockedAccount {
 
 func (m mockedAccounts) idToName(id string) string {
 	if u, ok := m.idLookup[id]; ok {
-		return u.username
+		return u.MockedAccountDetails.Username
 	}
 	return idToExtId(id)
 }
@@ -156,20 +175,43 @@ func (m mockedAccounts) nameToId(name string) string {
 	return extIdToId(name)
 }
 
+type mockedTenant struct {
+	ExtId string
+	ID    string
+}
+
+func newMockedTenant(props *MockedTenantProperties) *mockedTenant {
+	ret := &mockedTenant{
+		ExtId: props.ExternalId,
+		ID:    props.ID,
+	}
+	switch {
+	case ret.ID == "":
+		ret.ID = extIdToId(ret.ExtId)
+	case ret.ExtId == "":
+		ret.ExtId = idToExtId(ret.ID)
+	}
+	return ret
+}
+
+/*************************
+	Tenant
+ *************************/
+
 type mockedTenants struct {
-	idLookup map[string]*mockedTenant
+	idLookup    map[string]*mockedTenant
 	extIdLookup map[string]*mockedTenant
 }
 
 func newMockedTenants(props *mockingProperties) *mockedTenants {
 	tenants := mockedTenants{
-		idLookup: map[string]*mockedTenant{},
-		extIdLookup:   map[string]*mockedTenant{},
+		idLookup:    map[string]*mockedTenant{},
+		extIdLookup: map[string]*mockedTenant{},
 	}
 	for _, v := range props.Tenants {
 		t := newMockedTenant(v)
-		if t.ExternalId != "" {
-			tenants.extIdLookup[t.ExternalId] = t
+		if t.ExtId != "" {
+			tenants.extIdLookup[t.ExtId] = t
 		}
 		if t.ID != "" {
 			tenants.idLookup[t.ID] = t
@@ -179,7 +221,7 @@ func newMockedTenants(props *mockingProperties) *mockedTenants {
 }
 
 func (m mockedTenants) find(tenantId, tenantExternalId string) *mockedTenant {
-	if v, ok := m.idLookup[tenantId]; ok && (tenantExternalId == "" || v.ExternalId == tenantExternalId) {
+	if v, ok := m.idLookup[tenantId]; ok && (tenantExternalId == "" || v.ExtId == tenantExternalId) {
 		return v
 	}
 
@@ -191,7 +233,7 @@ func (m mockedTenants) find(tenantId, tenantExternalId string) *mockedTenant {
 
 func (m mockedTenants) idToExtId(id string) string {
 	if t, ok := m.idLookup[id]; ok {
-		return t.ExternalId
+		return t.ExtId
 	}
 	return idToExtId(id)
 }
