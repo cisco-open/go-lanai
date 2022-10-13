@@ -48,9 +48,9 @@ func SetupPrepareOpenSearchData(
 	// TODO figure out how to use existing pre append hook system
 	_, err := repo.BulkIndexer(
 		ctx,
-		"test_"+"auditlog",
 		"index",
 		&events,
+		opensearch.BulkIndexer.WithIndex("auditlog"),
 		opensearch.BulkIndexer.WithWorkers(1),
 		opensearch.BulkIndexer.WithRefresh("true"),
 	)

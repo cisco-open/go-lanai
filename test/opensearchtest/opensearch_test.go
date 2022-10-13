@@ -540,6 +540,7 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 		//di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
 		//di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
 		//di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+		//di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, "generic_events_template_1")
 
 		// Create a Template
 		err := di.FakeService.Repo.IndicesPutIndexTemplate(ctx, fakeTemplateName, indexTemplate)
@@ -601,9 +602,9 @@ func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 		stats, err := di.FakeService.Repo.BulkIndexer(
 			ctx,
-			"test_"+fakeIndex, // TODO figure out how to use existing pre append hook system
 			"index",
 			&toBulkAdd,
+			opensearch.BulkIndexer.WithIndex(fakeIndex),
 			opensearch.BulkIndexer.WithWorkers(1),
 			opensearch.BulkIndexer.WithRefresh("true"),
 		)

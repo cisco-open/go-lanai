@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, index string, action string, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error) {
+func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, action string, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error) {
 	arrBytes := make([][]byte, len(*bulkItems))
 	for i, item := range *bulkItems {
 		buffer, err := json.Marshal(item)
@@ -18,7 +18,7 @@ func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, index string, action stri
 		arrBytes[i] = buffer
 	}
 
-	bi, err := c.client.BulkIndexer(ctx, index, action, arrBytes, o...)
+	bi, err := c.client.BulkIndexer(ctx, action, arrBytes, o...)
 	if err != nil {
 		return opensearchutil.BulkIndexerStats{}, err
 	}
@@ -26,10 +26,14 @@ func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, index string, action stri
 	return bi.Stats(), nil
 }
 
-func (c *OpenClientImpl) BulkIndexer(ctx context.Context, index string, action string, documents [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error) {
+func (c *OpenClientImpl) BulkIndexer(ctx context.Context, action string, documents [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error) {
 	options := make([]func(config *opensearchutil.BulkIndexerConfig), len(o))
 	for i, v := range o {
 		options[i] = v
+	}
+
+	for _, hook := range c.beforeHook {
+		ctx = hook.Before(ctx, BeforeContext{cmd: CmdBulk, Options: &options})
 	}
 
 	options = append(options, WithClient(c.client))
@@ -42,9 +46,12 @@ func (c *OpenClientImpl) BulkIndexer(ctx context.Context, index string, action s
 	for _, item := range documents {
 		bi.Add(ctx, opensearchutil.BulkIndexerItem{
 			Action: action,
-			Index:  index,
 			Body:   strings.NewReader(string(item)),
 		})
+	}
+
+	for _, hook := range c.afterHook {
+		ctx = hook.After(ctx, AfterContext{cmd: CmdBulk, Options: &options, Err: &err})
 	}
 
 	if err = bi.Close(ctx); err != nil {
@@ -77,6 +84,12 @@ func (e bulkCfgExt) WithWorkers(n int) func(*opensearchutil.BulkIndexerConfig) {
 func (e bulkCfgExt) WithRefresh(s string) func(*opensearchutil.BulkIndexerConfig) {
 	return func(cfg *opensearchutil.BulkIndexerConfig) {
 		cfg.Refresh = s
+	}
+}
+
+func (e bulkCfgExt) WithIndex(i string) func(*opensearchutil.BulkIndexerConfig) {
+	return func(cfg *opensearchutil.BulkIndexerConfig) {
+		cfg.Index = i
 	}
 }
 

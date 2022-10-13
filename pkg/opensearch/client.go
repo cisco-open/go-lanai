@@ -35,7 +35,7 @@ type Request interface {
 type OpenClient interface {
 	Search(ctx context.Context, o ...Option[opensearchapi.SearchRequest]) (*opensearchapi.Response, error)
 	Index(ctx context.Context, index string, body io.Reader, o ...Option[opensearchapi.IndexRequest]) (*opensearchapi.Response, error)
-	BulkIndexer(ctx context.Context, index string, action string, bulkItems [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error)
+	BulkIndexer(ctx context.Context, action string, bulkItems [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error)
 	IndicesCreate(ctx context.Context, index string, o ...Option[opensearchapi.IndicesCreateRequest]) (*opensearchapi.Response, error)
 	IndicesGet(ctx context.Context, index string, o ...Option[opensearchapi.IndicesGetRequest]) (*opensearchapi.Response, error)
 	IndicesDelete(ctx context.Context, index []string, o ...Option[opensearchapi.IndicesDeleteRequest]) (*opensearchapi.Response, error)
@@ -117,6 +117,7 @@ const (
 	CmdIndicesPutIndexTemplate
 	CmdIndicesDeleteIndexTemplate
 	CmdPing
+	CmdBulk
 )
 
 var CmdToString = map[CommandType]string{
@@ -130,6 +131,7 @@ var CmdToString = map[CommandType]string{
 	CmdIndicesPutIndexTemplate:    "indices put index template",
 	CmdIndicesDeleteIndexTemplate: "indices delete index template",
 	CmdPing:                       "ping",
+	CmdBulk:                       "bulk",
 }
 
 // String will return the command in string format. If the command is not found
