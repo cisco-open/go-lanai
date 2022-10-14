@@ -537,10 +537,10 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		// The below 3 lines are used for debugging purposes, in the case that the test did not make a full run
-		//di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
-		//di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
-		//di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
-		//di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, "generic_events_template_1")
+		di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
+		di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+		di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, "generic_events_template_1")
 
 		// Create a Template
 		err := di.FakeService.Repo.IndicesPutIndexTemplate(ctx, fakeTemplateName, indexTemplate)
@@ -606,7 +606,7 @@ func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
 			&toBulkAdd,
 			opensearch.BulkIndexer.WithIndex(fakeIndex),
 			opensearch.BulkIndexer.WithWorkers(1),
-			opensearch.BulkIndexer.WithRefresh("true"),
+			opensearch.BulkIndexer.WithRefresh(true),
 		)
 		if stats.NumRequests != (1) {
 			t.Fatalf("Unexcpected NumRequests got: %d, want: 1", stats.NumRequests)

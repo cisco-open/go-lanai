@@ -2,13 +2,24 @@ package opensearch
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"encoding/json"
 	"github.com/opensearch-project/opensearch-go"
 	"github.com/opensearch-project/opensearch-go/opensearchutil"
+	"strconv"
 	"strings"
 )
 
-func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, action string, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error) {
+type bulkAction string
+
+const (
+	BulkActionIndex  bulkAction = "index"
+	BulkActionCreate            = "create"
+	BulkActionUpdate            = "update"
+	BulkActionDelete            = "delete"
+)
+
+func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, action bulkAction, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error) {
 	arrBytes := make([][]byte, len(*bulkItems))
 	for i, item := range *bulkItems {
 		buffer, err := json.Marshal(item)
@@ -26,17 +37,18 @@ func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, action string, bulkItems 
 	return bi.Stats(), nil
 }
 
-func (c *OpenClientImpl) BulkIndexer(ctx context.Context, action string, documents [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error) {
+func (c *OpenClientImpl) BulkIndexer(ctx context.Context, action bulkAction, documents [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error) {
 	options := make([]func(config *opensearchutil.BulkIndexerConfig), len(o))
 	for i, v := range o {
 		options[i] = v
 	}
 
+	options = append(options, WithClient(c.client))
+	order.SortStable(c.beforeHook, order.OrderedFirstCompare)
 	for _, hook := range c.beforeHook {
 		ctx = hook.Before(ctx, BeforeContext{cmd: CmdBulk, Options: &options})
 	}
 
-	options = append(options, WithClient(c.client))
 	cfg := MakeConfig(options...)
 	bi, err := opensearchutil.NewBulkIndexer(*cfg)
 	if err != nil {
@@ -45,7 +57,7 @@ func (c *OpenClientImpl) BulkIndexer(ctx context.Context, action string, documen
 
 	for _, item := range documents {
 		bi.Add(ctx, opensearchutil.BulkIndexerItem{
-			Action: action,
+			Action: string(action),
 			Body:   strings.NewReader(string(item)),
 		})
 	}
@@ -81,9 +93,9 @@ func (e bulkCfgExt) WithWorkers(n int) func(*opensearchutil.BulkIndexerConfig) {
 	}
 }
 
-func (e bulkCfgExt) WithRefresh(s string) func(*opensearchutil.BulkIndexerConfig) {
+func (e bulkCfgExt) WithRefresh(b bool) func(*opensearchutil.BulkIndexerConfig) {
 	return func(cfg *opensearchutil.BulkIndexerConfig) {
-		cfg.Refresh = s
+		cfg.Refresh = strconv.FormatBool(b)
 	}
 }
 

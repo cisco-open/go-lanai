@@ -52,7 +52,7 @@ func SetupPrepareOpenSearchData(
 		&events,
 		opensearch.BulkIndexer.WithIndex("auditlog"),
 		opensearch.BulkIndexer.WithWorkers(1),
-		opensearch.BulkIndexer.WithRefresh("true"),
+		opensearch.BulkIndexer.WithRefresh(true),
 	)
 	if err != nil {
 		return ctx, err
