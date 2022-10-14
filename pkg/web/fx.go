@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"go.uber.org/fx"
 	"reflect"
-	"runtime"
 )
 
 var (
-	typeController      = reflect.TypeOf(func(Controller) {/* empty */}).In(0)
-	typeCustomizer      = reflect.TypeOf(func(Customizer) {/* empty */}).In(0)
-	typeErrorTranslator = reflect.TypeOf(func(ErrorTranslator) {/* empty */}).In(0)
+	typeController      = reflect.TypeOf(func(Controller) { /* empty */ }).In(0)
+	typeCustomizer      = reflect.TypeOf(func(Customizer) { /* empty */ }).In(0)
+	typeErrorTranslator = reflect.TypeOf(func(ErrorTranslator) { /* empty */ }).In(0)
 	typeFxOut           = reflect.TypeOf(fx.Out{})
 )
 
@@ -34,44 +33,9 @@ func FxErrorTranslatorProviders(targets ...interface{}) fx.Option {
 func groupedProviders(group string, interfaceType reflect.Type, targets []interface{}) []interface{} {
 	ret := make([]interface{}, len(targets))
 	for i, target := range targets {
-		if e := validateFxProviderTarget(interfaceType, target); e != nil {
-			panic(e)
-		}
 
-		ret[i] = fx.Annotated{
-			Group:  group,
-			Target: target,
-		}
+		ret[i] = fx.Annotate(target, fx.As(new(Controller)), fx.ResultTags(fmt.Sprintf("group:\"%s\"", FxGroupControllers)))
+
 	}
 	return ret
-}
-
-// best effort to valid target provider
-func validateFxProviderTarget(interfaceType reflect.Type, target interface{}) error {
-	t := reflect.TypeOf(target)
-	if t.Kind() != reflect.Func {
-		panic(fmt.Errorf("fx annotated provider target must be a function, but got %T", target))
-	}
-
-	for i := 0; i < t.NumOut(); i++ {
-		rt := t.Out(i)
-		if isExactType(interfaceType, rt) {
-			return nil
-		}
-	}
-	return fmt.Errorf("Web registable provider must return type %s.%s, but got %v",
-		interfaceType.PkgPath(), interfaceType.Name(), describeFunc(target))
-}
-
-func describeFunc(f interface{}) string {
-	pc := reflect.ValueOf(f).Pointer()
-	pFunc := runtime.FuncForPC(pc)
-	if pFunc == nil {
-		return "unknown function"
-	}
-	return pFunc.Name()
-}
-
-func isExactType(expected reflect.Type, t reflect.Type) bool {
-	return t.PkgPath() == expected.PkgPath() && t.Name() == expected.Name()
 }
