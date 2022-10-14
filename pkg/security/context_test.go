@@ -8,7 +8,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
@@ -25,11 +24,11 @@ var (
 
 // Uncomment this function to generate a new copyist sql file to test against - needed when expected db sql commands change
 
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		dbtest.EnableDBRecordMode(),
-	)
-}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
 
 type contextTestDI struct {
 	fx.In
