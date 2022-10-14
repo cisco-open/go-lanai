@@ -15,8 +15,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
@@ -24,10 +24,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/request_cache"
-	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	saml_auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samllogin"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	samlidp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
+	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -83,7 +82,7 @@ type IntegrationTestOut struct {
 	AccountStore         security.AccountStore
 	PasswordEncoder      passwd.PasswordEncoder
 	FedAccountStore      security.FederatedAccountStore
-	SamlClientStore      saml_auth_ctx.SamlClientStore
+	SamlClientStore      samlctx.SamlClientStore
 }
 
 func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
@@ -92,7 +91,7 @@ func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
 		IdpManager:           testdata.NewMockedIDPManager(),
 		AccountStore:         sectest.NewMockedAccountStore(testdata.MapValues(di.Mocking.Accounts)...),
 		PasswordEncoder:      passwd.NewNoopPasswordEncoder(),
-		FedAccountStore:      testdata.NewMockedFedAccountStore(),
+		FedAccountStore:      sectest.NewMockedFederatedAccountStore(),
 		SamlClientStore:      samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
 	}
 }
@@ -112,12 +111,12 @@ func TestWithMockedServer(t *testing.T) {
 		webtest.WithMockedServer(),
 		sectest.WithMockedMiddleware(sectest.MWEnableSession()),
 		apptest.WithModules(
-			authserver.OAuth2AuthorizeModule, resserver.OAuth2AuthorizeModule,
-			passwdidp.Module, samlidp.Module, authorize.Module, saml_auth.Module,
-			passwd.PasswordAuthModule, formlogin.Module, logout.Module,
-			lanaisaml.Module, samllogin.SamlAuthModule,
-			basicauth.BasicAuthModule, clientauth.Module,
-			token.Module, access.AccessControlModule, errorhandling.ErrorHandlingModule,
+			authserver.Module, resserver.Module,
+			passwdidp.Module, extsamlidp.Module, authorize.Module, samlidp.Module,
+			passwd.Module, formlogin.Module, logout.Module,
+			samlctx.Module, samlsp.Module,
+			basicauth.Module, clientauth.Module,
+			token.Module, access.Module, errorhandling.Module,
 			request_cache.Module, csrf.Module, session.Module,
 			redis.Module,
 		),

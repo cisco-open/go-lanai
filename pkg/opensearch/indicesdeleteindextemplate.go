@@ -8,11 +8,11 @@ import (
 
 func (c *RepoImpl[T]) IndicesDeleteIndexTemplate(ctx context.Context, name string, o ...Option[opensearchapi.IndicesDeleteIndexTemplateRequest]) error {
 	resp, err := c.client.IndicesDeleteIndexTemplate(ctx, name, o...)
-	if resp.IsError() {
-		return fmt.Errorf("error status code: %d", resp.StatusCode)
-	}
 	if err != nil {
 		return err
+	}
+	if resp != nil && resp.IsError() {
+		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	return nil
 }

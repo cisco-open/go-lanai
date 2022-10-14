@@ -8,8 +8,8 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/samlidp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/unknownIdp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
@@ -66,7 +66,7 @@ type authDI struct {
 func newAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer {
 	return func(config *authserver.Configuration) {
 		config.AddIdp(passwdidp.NewPasswordIdpSecurityConfigurer())
-		config.AddIdp(samlidp.NewSamlIdpSecurityConfigurer())
+		config.AddIdp(extsamlidp.NewSamlIdpSecurityConfigurer())
 		config.AddIdp(unknownIdp.NewNoIdpSecurityConfigurer())
 
 		config.IdpManager = di.IdpManager

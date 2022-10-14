@@ -3,14 +3,14 @@ package samltest
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	saml_auth_ctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/saml_sso/saml_sso_ctx"
+	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
 	"errors"
 	"github.com/crewjam/saml"
 )
 
 type ClientStoreMockOptions func(opt *ClientStoreMockOption)
 type ClientStoreMockOption struct {
-	Clients []saml_auth_ctx.SamlClient
+	Clients []samlctx.SamlClient
 	SPs []*saml.ServiceProvider
 	ClientsProperties map[string]MockedClientProperties
 }
@@ -32,7 +32,7 @@ func ClientsWithSPs(sps...*saml.ServiceProvider) ClientStoreMockOptions {
 }
 
 type MockSamlClientStore struct {
-	details []saml_auth_ctx.SamlClient
+	details []samlctx.SamlClient
 }
 
 func NewMockedClientStore(opts...ClientStoreMockOptions) *MockSamlClientStore {
@@ -41,7 +41,7 @@ func NewMockedClientStore(opts...ClientStoreMockOptions) *MockSamlClientStore {
 		fn(&opt)
 	}
 
-	var details []saml_auth_ctx.SamlClient
+	var details []samlctx.SamlClient
 	switch {
 	case len(opt.Clients) > 0:
 		details = opt.Clients
@@ -64,15 +64,15 @@ func NewMockedClientStore(opts...ClientStoreMockOptions) *MockSamlClientStore {
 	return &MockSamlClientStore{details: details}
 }
 
-func (t *MockSamlClientStore) GetAllSamlClient(_ context.Context) ([]saml_auth_ctx.SamlClient, error) {
-	var result []saml_auth_ctx.SamlClient
+func (t *MockSamlClientStore) GetAllSamlClient(_ context.Context) ([]samlctx.SamlClient, error) {
+	var result []samlctx.SamlClient
 	for _, v := range t.details {
 		result = append(result, v)
 	}
 	return result, nil
 }
 
-func (t *MockSamlClientStore) GetSamlClientByEntityId(_ context.Context, id string) (saml_auth_ctx.SamlClient, error) {
+func (t *MockSamlClientStore) GetSamlClientByEntityId(_ context.Context, id string) (samlctx.SamlClient, error) {
 	for _, detail := range t.details {
 		if detail.GetEntityId() == id {
 			return detail, nil

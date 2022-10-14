@@ -12,11 +12,11 @@ func (c *RepoImpl[T]) IndicesPutAlias(ctx context.Context,
 	o ...Option[opensearchapi.IndicesPutAliasRequest],
 ) error {
 	resp, err := c.client.IndicesPutAlias(ctx, index, name, o...)
-	if resp.IsError() {
-		return fmt.Errorf("error status code: %d", resp.StatusCode)
-	}
 	if err != nil {
 		return err
+	}
+	if resp != nil && resp.IsError() {
+		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	return nil
 }

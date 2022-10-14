@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	idPrefix       = "id-"
+	idPrefix = "id-"
 )
 
 /*************************
@@ -15,8 +15,8 @@ const (
  *************************/
 
 type MockedAccountAuthentication struct {
-	Account MockedAccount
-	AuthState security.AuthenticationState
+	Account    MockedAccount
+	AuthState  security.AuthenticationState
 	DetailsMap map[string]interface{}
 }
 
@@ -46,6 +46,7 @@ func (a MockedAccountAuthentication) Details() interface{} {
 
 type MockedAccountDetails struct {
 	UserId          string
+	Type            security.AccountType
 	Username        string
 	Password        string
 	TenantId        string
@@ -75,7 +76,7 @@ func (m MockedAccount) ID() interface{} {
 }
 
 func (m MockedAccount) Type() security.AccountType {
-	return security.AccountTypeApp
+	return m.MockedAccountDetails.Type
 }
 
 func (m MockedAccount) Username() string {
@@ -108,15 +109,15 @@ func (m MockedAccount) CacheableCopy() security.Account {
 
 func newMockedAccount(props *MockedAccountProperties) *MockedAccount {
 	ret := &MockedAccount{
-		MockedAccountDetails {
+		MockedAccountDetails{
 			UserId:          props.UserId,
+			Type:            security.AccountTypeApp,
 			Username:        props.Username,
 			Password:        props.Password,
 			DefaultTenant:   props.DefaultTenant,
 			AssignedTenants: utils.NewStringSet(props.Tenants...),
 			Permissions:     utils.NewStringSet(props.Perms...),
 		},
-
 	}
 	switch {
 	case ret.UserId == "":
@@ -198,14 +199,14 @@ func newMockedTenant(props *MockedTenantProperties) *mockedTenant {
  *************************/
 
 type mockedTenants struct {
-	idLookup map[string]*mockedTenant
+	idLookup    map[string]*mockedTenant
 	extIdLookup map[string]*mockedTenant
 }
 
 func newMockedTenants(props *mockingProperties) *mockedTenants {
 	tenants := mockedTenants{
-		idLookup: map[string]*mockedTenant{},
-		extIdLookup:   map[string]*mockedTenant{},
+		idLookup:    map[string]*mockedTenant{},
+		extIdLookup: map[string]*mockedTenant{},
 	}
 	for _, v := range props.Tenants {
 		t := newMockedTenant(v)
@@ -243,7 +244,6 @@ func (m mockedTenants) extIdToId(name string) string {
 	}
 	return extIdToId(name)
 }
-
 
 /*************************
 	Helpers

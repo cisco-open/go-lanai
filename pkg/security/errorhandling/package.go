@@ -10,7 +10,7 @@ import (
 var logger = log.New("SEC.Err")
 
 //goland:noinspection GoNameStartsWithPackageName
-var ErrorHandlingModule = &bootstrap.Module{
+var Module = &bootstrap.Module{
 	Name: "error handling",
 	Precedence: security.MinSecurityPrecedence + 20,
 	Options: []fx.Option{
@@ -19,7 +19,7 @@ var ErrorHandlingModule = &bootstrap.Module{
 }
 
 func init() {
-	bootstrap.Register(ErrorHandlingModule)
+	bootstrap.Register(Module)
 }
 
 type initDI struct {
