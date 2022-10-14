@@ -137,7 +137,13 @@ func IsTenantValid(ctx context.Context, tenantId string) bool {
 	return false
 }
 
-//HasAccessToTenant
+//HasAccessToTenant if no error return true, otherwise return false
+func HasAccessToTenant(ctx context.Context, tenantId string) bool {
+	err := HasErrorAccessingTenant(ctx, tenantId)
+	return err == nil
+}
+
+// HasErrorAccessingTenant
 /*
 	if the tenantId is not valid, this method will return false, otherwise the following checks are applied in order
 
@@ -150,25 +156,7 @@ func IsTenantValid(ctx context.Context, tenantId string) bool {
 
 	otherwise, this method return false.
 */
-func HasAccessToTenant(ctx context.Context, tenantId string) bool {
-	if !IsTenantValid(ctx, tenantId) {
-		return false
-	}
-
-	auth := Get(ctx)
-
-	if HasPermissions(auth, SpecialPermissionAccessAllTenant) {
-		return true
-	}
-
-	if ud, ok := auth.Details().(UserDetails); ok {
-		return tenancy.AnyHasDescendant(ctx, ud.AssignedTenantIds(), tenantId)
-	}
-	return false
-}
-
-// HasAccessToTenantWithCause Similar to HasAccessToTenant but instead of return false, it returns an error
-func HasAccessToTenantWithCause(ctx context.Context, tenantId string) error {
+func HasErrorAccessingTenant(ctx context.Context, tenantId string) error {
 	if !IsTenantValid(ctx, tenantId) {
 		return ErrorInvalidTenantId
 	}
