@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.uber.org/fx"
 	"reflect"
+	"runtime"
 )
 
 var (
@@ -33,9 +34,29 @@ func FxErrorTranslatorProviders(targets ...interface{}) fx.Option {
 func groupedProviders(group string, interfaceType reflect.Type, targets []interface{}) []interface{} {
 	ret := make([]interface{}, len(targets))
 	for i, target := range targets {
+		if e := validateFxProviderTarget(interfaceType, target); e != nil {
+			panic(e)
+		}
 
-		ret[i] = fx.Annotate(target, fx.As(new(Controller)), fx.ResultTags(fmt.Sprintf("group:\"%s\"", FxGroupControllers)))
-
+		ret[i] = fx.Annotate(target, fx.As(reflect.New(interfaceType).Interface()), fx.ResultTags(fmt.Sprintf("group:\"%s\"", group)))
 	}
 	return ret
+}
+
+// best effort to valid target provider
+func validateFxProviderTarget(interfaceType reflect.Type, target interface{}) error {
+	t := reflect.TypeOf(target)
+	if t.Kind() != reflect.Func {
+		return fmt.Errorf("fx annotated provider target must be a function, but got %T", target)
+	}
+	return nil
+}
+
+func describeFunc(f interface{}) string {
+	pc := reflect.ValueOf(f).Pointer()
+	pFunc := runtime.FuncForPC(pc)
+	if pFunc == nil {
+		return "unknown function"
+	}
+	return pFunc.Name()
 }
