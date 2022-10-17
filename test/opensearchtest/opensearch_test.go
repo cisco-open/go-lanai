@@ -69,6 +69,7 @@ func TestScopeController(t *testing.T) {
 		test.GomegaSubTest(SubTestPing(di), "SubTestPing"),
 		test.GomegaSubTest(SubTestTimeBasedQuery(di), "SubTestTimeBasedQuery"),
 		test.GomegaSubTest(SubTestTemplateAndAlias(di), "SubTestTemplateAndAlias"),
+		test.GomegaSubTest(SubTestNewBulkIndexer(di), "SubTestNewBulkIndexer"),
 	)
 }
 
@@ -100,7 +101,7 @@ func SubTestRecording(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		var dest []GenericAuditEvent
-		_, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
+		_, err := di.FakeService.Repo.Search(ctx, &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 			opensearch.Search.WithRequestCache(false),
 		)
@@ -122,11 +123,11 @@ func SubTestRecording(di *opensearchDI) test.GomegaSubTestFunc {
 			Time:      time.Date(2019, 10, 15, 0, 0, 0, 0, time.UTC),
 		}
 
-		err = di.FakeService.Repo.Index(context.Background(), "auditlog", testEvent)
+		err = di.FakeService.Repo.Index(ctx, "auditlog", testEvent)
 		if err != nil {
 			t.Fatalf("unable to create document in index: %v", err)
 		}
-		totalHits, err := di.FakeService.Repo.Search(context.Background(), &dest, query,
+		totalHits, err := di.FakeService.Repo.Search(ctx, &dest, query,
 			opensearch.Search.WithIndex("auditlog"),
 		)
 		if err != nil {
@@ -536,9 +537,10 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		// The below 3 lines are used for debugging purposes, in the case that the test did not make a full run
-		//di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
-		//di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
-		//di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+		di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
+		di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+		di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, "generic_events_template_1")
 
 		// Create a Template
 		err := di.FakeService.Repo.IndicesPutIndexTemplate(ctx, fakeTemplateName, indexTemplate)
@@ -580,6 +582,42 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 		// Delete index
 		err = di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		if err != nil {
+			t.Fatalf("unable to delete index ")
+		}
+	}
+}
+
+func SubTestNewBulkIndexer(di *opensearchDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		fakeIndex := "generic_events"
+		testEvent := GenericAuditEvent{
+			Client_ID: "TESTING TESTING",
+			SubType:   "SYNCHRONIZED",
+			Time:      time.Date(2019, 10, 15, 0, 0, 0, 0, time.UTC),
+		}
+		toBulkAdd := make([]GenericAuditEvent, 10)
+		for i := 0; i < 10; i++ {
+			toBulkAdd[i] = testEvent
+		}
+		stats, err := di.FakeService.Repo.BulkIndexer(
+			ctx,
+			"index",
+			&toBulkAdd,
+			opensearch.BulkIndexer.WithIndex(fakeIndex),
+			opensearch.BulkIndexer.WithWorkers(1),
+			opensearch.BulkIndexer.WithRefresh(true),
+		)
+		if stats.NumRequests != (1) {
+			t.Fatalf("Unexcpected NumRequests got: %d, want: 1", stats.NumRequests)
+		}
+
+		if stats.NumIndexed != (10) {
+			t.Fatalf("Unexcpected NumIndexed got: %d, want: 10", stats.NumIndexed)
+		}
+
+		// Delete index
+		err = di.FakeService.Repo.IndicesDelete(ctx, []string{fakeIndex})
 		if err != nil {
 			t.Fatalf("unable to delete index ")
 		}
