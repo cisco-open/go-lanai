@@ -10,13 +10,12 @@ import (
 )
 
 func (c *RepoImpl[T]) Index(ctx context.Context, index string, document T, o ...Option[opensearchapi.IndexRequest]) error {
-
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(document)
 	if err != nil {
 		return err
 	}
-	resp, err := c.client.Index(ctx, index, &buffer)
+	resp, err := c.client.Index(ctx, index, &buffer, o...)
 	if err != nil {
 		return err
 	}
