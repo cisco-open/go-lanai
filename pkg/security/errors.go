@@ -85,7 +85,13 @@ func init() {
 
 // CodedError implements errorutils.ErrorCoder, errorutils.ComparableErrorCoder, errorutils.NestedError
 type CodedError struct {
-	errorutils.CodedError
+	*errorutils.CodedError
+}
+
+func (e CodedError) WithMessage(msg string, args ...interface{}) *CodedError {
+	return &CodedError{
+		CodedError: e.CodedError.WithMessage(msg, args...),
+	}
 }
 
 /************************
@@ -96,13 +102,13 @@ type CodedError struct {
 // supported item are string, error, fmt.Stringer
 func NewCodedError(code int64, e interface{}, causes ...interface{}) *CodedError {
 	return &CodedError{
-		CodedError: *errorutils.NewCodedError(code, e, causes...),
+		CodedError: errorutils.NewCodedError(code, e, causes...),
 	}
 }
 
 func NewErrorCategory(code int64, e error) *CodedError {
 	return &CodedError{
-		CodedError: *errorutils.NewErrorCategory(code, e),
+		CodedError: errorutils.NewErrorCategory(code, e),
 	}
 }
 
