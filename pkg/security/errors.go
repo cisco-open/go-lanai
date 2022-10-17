@@ -90,7 +90,6 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
-	ErrorNoAccess           = NewCodedError(ErrorSubTypeCodeAccessDenied, "No Access to the tenant")
 	ErrorInvalidTenantId    = NewCodedError(ErrorSubTypeCodeTenantInvalid, "Invalid tenant Id")
 	ErrorTenantAccessDenied = NewCodedError(ErrorSubTypeCodeTenantAccessDenied, "No Access to the tenant")
 )
