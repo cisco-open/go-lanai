@@ -45,7 +45,6 @@ func SetupPrepareOpenSearchData(
 	repo.IndicesDelete(ctx, []string{"auditlog"})
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
-	// TODO figure out how to use existing pre append hook system
 	_, err := repo.BulkIndexer(
 		ctx,
 		"index",

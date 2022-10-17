@@ -14,9 +14,9 @@ type bulkAction string
 
 const (
 	BulkActionIndex  bulkAction = "index"
-	BulkActionCreate            = "create"
-	BulkActionUpdate            = "update"
-	BulkActionDelete            = "delete"
+	BulkActionCreate bulkAction = "create"
+	BulkActionUpdate bulkAction = "update"
+	BulkActionDelete bulkAction = "delete"
 )
 
 func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, action bulkAction, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error) {
@@ -43,6 +43,7 @@ func (c *OpenClientImpl) BulkIndexer(ctx context.Context, action bulkAction, doc
 		options[i] = v
 	}
 
+	//nolint:makezero
 	options = append(options, WithClient(c.client))
 	order.SortStable(c.beforeHook, order.OrderedFirstCompare)
 	for _, hook := range c.beforeHook {
@@ -56,10 +57,13 @@ func (c *OpenClientImpl) BulkIndexer(ctx context.Context, action bulkAction, doc
 	}
 
 	for _, item := range documents {
-		bi.Add(ctx, opensearchutil.BulkIndexerItem{
+		err = bi.Add(ctx, opensearchutil.BulkIndexerItem{
 			Action: string(action),
 			Body:   strings.NewReader(string(item)),
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for _, hook := range c.afterHook {
