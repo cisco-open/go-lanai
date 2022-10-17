@@ -92,7 +92,7 @@ var (
 var (
 	ErrorNoAccess           = NewCodedError(ErrorSubTypeCodeAccessDenied, "No Access to the tenant")
 	ErrorInvalidTenantId    = NewCodedError(ErrorSubTypeCodeTenantInvalid, "Invalid tenant Id")
-	ErrorTenantAccessDenied = NewCodedError(ErrorSubTypeCodeTenantInvalid, "No Access to the tenant")
+	ErrorTenantAccessDenied = NewCodedError(ErrorSubTypeCodeTenantAccessDenied, "No Access to the tenant")
 )
 
 func init() {
