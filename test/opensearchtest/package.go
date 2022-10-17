@@ -9,6 +9,7 @@ import (
 	"github.com/cockroachdb/copyist"
 	opensearchgo "github.com/opensearch-project/opensearch-go"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
+	"github.com/opensearch-project/opensearch-go/opensearchutil"
 	"go.uber.org/fx"
 	"testing"
 	"time"
@@ -222,6 +223,11 @@ func EditIndexForTesting(prepend string) opensearch.BeforeHookFunc {
 					indices = append(indices, prepend+index)
 				}
 				request.Index = indices
+			}
+			*opt = append(*opt, f)
+		case *[]func(cfg *opensearchutil.BulkIndexerConfig):
+			f := func(cfg *opensearchutil.BulkIndexerConfig) {
+				cfg.Index = prepend + cfg.Index
 			}
 			*opt = append(*opt, f)
 		}
