@@ -33,5 +33,5 @@ data:
 ```Go
 dbtest.WithDBPlayback("testdb")
 ```
-![img.png](images/new_database.png)
+   ![img.png](images/new_database.png)
 7. Once done, you're all set to run the controller integration web-tests.
