@@ -61,6 +61,7 @@ const (
 const (
 	_                             = iota
 	ErrorSubTypeCodeTenantInvalid = ErrorTypeCodeTenancy + iota<<errorutils.ErrorSubTypeOffset
+	ErrorSubTypeCodeTenantAccessDenied
 )
 
 const (
@@ -89,8 +90,9 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
-	ErrorNoAccess        = NewCodedError(ErrorSubTypeCodeAccessDenied, "No Access to the tenant")
-	ErrorInvalidTenantId = NewCodedError(ErrorSubTypeCodeTenantInvalid, "Invalid tenant Id")
+	ErrorNoAccess           = NewCodedError(ErrorSubTypeCodeAccessDenied, "No Access to the tenant")
+	ErrorInvalidTenantId    = NewCodedError(ErrorSubTypeCodeTenantInvalid, "Invalid tenant Id")
+	ErrorTenantAccessDenied = NewCodedError(ErrorSubTypeCodeTenantInvalid, "No Access to the tenant")
 )
 
 func init() {

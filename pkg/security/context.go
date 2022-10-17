@@ -173,7 +173,7 @@ func HasErrorAccessingTenant(ctx context.Context, tenantId string) error {
 			return nil
 		}
 	}
-	return ErrorNoAccess
+	return ErrorTenantAccessDenied
 }
 
 func IsFullyAuthenticated(auth Authentication) bool {

@@ -6,13 +6,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	"go.uber.org/fx"
-	"gorm.io/gorm"
 	"testing"
 	"time"
 )
@@ -32,8 +30,6 @@ var (
 
 type contextTestDI struct {
 	fx.In
-	dbtest.DI
-	DB *gorm.DB
 	TA tenancy.Accessor
 }
 
@@ -48,30 +44,14 @@ func TestContext(t *testing.T) {
 	di := &contextTestDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		dbtest.WithDBPlayback("testdb"),
 		apptest.WithModules(tenancy.Module),
 		apptest.WithTimeout(time.Minute),
 		apptest.WithFxOptions(
 			fx.Provide(provideMockedTenancyAccessor),
 		),
 		apptest.WithDI(di),
-		test.SubTestSetup(SetupWithMockedSecurity(di)),
 		test.GomegaSubTest(SubTestHasErrorAccessingTenant(di), "SubTestHasErrorAccessingTenant"),
 	)
-}
-
-func SetupWithMockedSecurity(di *contextTestDI) test.SetupFunc {
-	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		mockedAuth := &MockedAccountAuth{
-			permissions: map[string]interface{}{SpecialPermissionAccessAllTenant: struct{}{}},
-			details: &MockedUserDetails{
-				userId:   uuid.New().String(),
-				username: "test user",
-			},
-		}
-		ctx = context.WithValue(ctx, ContextKeySecurity, mockedAuth)
-		return ctx, nil
-	}
 }
 
 func SubTestHasErrorAccessingTenant(di *contextTestDI) test.GomegaSubTestFunc {
@@ -106,20 +86,26 @@ func SubTestHasErrorAccessingTenant(di *contextTestDI) test.GomegaSubTestFunc {
 				assignedTenantIds: utils.NewStringSet(MockedTenantIdA.String()),
 				expectedErr:       nil,
 			},
+			{
+				name:              "test no access",
+				tenantId:          MockedTenantIdA.String(),
+				permission:        SpecialPermissionAPIAdmin,
+				hasDescendant:     true,
+				assignedTenantIds: utils.NewStringSet(),
+				expectedErr:       ErrorTenantAccessDenied,
+			},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				if tt.permission != "" {
-					mockedAuth := &MockedAccountAuth{
-						permissions: map[string]interface{}{tt.permission: struct{}{}},
-						details: &MockedUserDetails{
-							userId:            uuid.New().String(),
-							username:          "test user",
-							assignedTenantIds: tt.assignedTenantIds,
-						},
-					}
-					ctx = context.WithValue(ctx, ContextKeySecurity, mockedAuth)
+				mockedAuth := &MockedAccountAuth{
+					permissions: map[string]interface{}{tt.permission: struct{}{}},
+					details: &MockedUserDetails{
+						userId:            uuid.New().String(),
+						username:          "test user",
+						assignedTenantIds: tt.assignedTenantIds,
+					},
 				}
+				ctx = context.WithValue(ctx, ContextKeySecurity, mockedAuth)
 				err := HasErrorAccessingTenant(ctx, tt.tenantId)
 				g.Expect(errors.Is(err, tt.expectedErr)).To(gomega.BeTrue())
 			})
