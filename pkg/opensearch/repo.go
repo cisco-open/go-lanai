@@ -34,7 +34,7 @@ type Repo[T any] interface {
 	// The bulkItems argument is the array of struct items to be actioned.
 	//
 	// [Ref]: https://pkg.go.dev/github.com/opensearch-project/opensearch-go/opensearchutil#BulkIndexerItem
-	BulkIndexer(ctx context.Context, action bulkAction, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error)
+	BulkIndexer(ctx context.Context, action BulkAction, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error)
 
 	// IndicesCreate will create a new index in the cluster.
 	//
