@@ -16,3 +16,14 @@ any other feature that wants to add to the web server can do so via the registra
 The web module also has a ```fx.Invoke```. Because of it, when the web module is activated, it starts the web server and adds all the component in the registrar on it when 
 the application starts.
 
+# Web Tests
+
+## FAQs:
+
+1. When running web-tests, if you ever encounter the following error: 
+```shell
+pq: no database or schema specified
+```
+Follow the documentation [here](../../test/dbtest/README.md) to configure local database for testing.
+
+2. An example on how to write web tests can be found [here](https://cto-github.cisco.com/NFV-BU/secretsservice/blob/develop/pkg/controller/v2/secretspolicy_test.go).
