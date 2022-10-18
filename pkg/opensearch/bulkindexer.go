@@ -10,16 +10,19 @@ import (
 	"strings"
 )
 
-type bulkAction string
+// BulkAction is intended to be used as an enum type for bulk actions
+//
+// [REF]: https://opensearch.org/docs/1.2/opensearch/rest-api/document-apis/bulk/#request-body
+type BulkAction string
 
 const (
-	BulkActionIndex  bulkAction = "index"
-	BulkActionCreate bulkAction = "create"
-	BulkActionUpdate bulkAction = "update"
-	BulkActionDelete bulkAction = "delete"
+	BulkActionIndex  BulkAction = "index"  // Will add in a document and will override any duplicate (based on ID)
+	BulkActionCreate BulkAction = "create" // Will add a document if it doesn't exist or return an error
+	BulkActionUpdate BulkAction = "update" // Will update an existing document if it exists or return an error
+	BulkActionDelete BulkAction = "delete" // Will delete a document if it exists or return a `not_found`
 )
 
-func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, action bulkAction, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error) {
+func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, action BulkAction, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error) {
 	arrBytes := make([][]byte, len(*bulkItems))
 	for i, item := range *bulkItems {
 		buffer, err := json.Marshal(item)
@@ -37,7 +40,7 @@ func (c *RepoImpl[T]) BulkIndexer(ctx context.Context, action bulkAction, bulkIt
 	return bi.Stats(), nil
 }
 
-func (c *OpenClientImpl) BulkIndexer(ctx context.Context, action bulkAction, documents [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error) {
+func (c *OpenClientImpl) BulkIndexer(ctx context.Context, action BulkAction, documents [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error) {
 	options := make([]func(config *opensearchutil.BulkIndexerConfig), len(o))
 	for i, v := range o {
 		options[i] = v
