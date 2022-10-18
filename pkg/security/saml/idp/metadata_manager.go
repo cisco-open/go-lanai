@@ -118,7 +118,7 @@ func (m *SpMetadataManager) resolveMetadata(ctx context.Context, refresh []SamlS
 		spDescriptor, data, err := samlutils.ResolveMetadata(ctx, details.MetadataSource, samlutils.WithHttpClient(m.httpClient))
 		if err == nil {
 			if details.MetadataRequireSignature && spDescriptor.Signature == nil{
-				logger.Error("sp metadata rejected because it is not signed")
+				logger.WithContext(ctx).Warnf("sp metadata rejected because it is not signed")
 				continue
 			}
 
@@ -133,13 +133,13 @@ func (m *SpMetadataManager) resolveMetadata(ctx context.Context, refresh []SamlS
 
 				err = samlutils.VerifySignature(samlutils.MetadataSignature(data, allCerts...))
 				if err != nil {
-					logger.Error("sp metadata rejected because it's signature cannot be verified")
+					logger.WithContext(ctx).Warnf("sp metadata rejected because it's signature cannot be verified")
 					continue
 				}
 			}
 			resolved[details.EntityId] = spDescriptor
 		} else {
-			logger.Error("could not resolve idp metadata", "details", details)
+			logger.WithContext(ctx).Warnf("could not resolve idp metadata", "details", details)
 		}
 	}
 	return resolved
