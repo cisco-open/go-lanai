@@ -1,9 +1,9 @@
 # Open Search
 
-When using the opensearch package, developers are encouraged to use httpvcr to test. Examples can be found in the `go-lanai/pkg/test/opensearchtest/`.
+When using the opensearch package, developers are encouraged to use WithOpenSearchPlayback, which wraps httpvcr to test. Examples can be found in the `go-lanai/pkg/test/opensearchtest/`.
 
 
-When tests are run httpvcr will generate a yml file in a `./testdata` directory that stores the outgoing requests and corresponding responses and mock them when the test suite is not in RecordMode.
+When tests are run WithOpenSearchPlayback, it will generate a yml file in a `./testdata` directory that stores the outgoing requests and corresponding responses and mock them when the test suite is not in RecordMode.
 
 BodyModifiers can be used to change expected requests/responses - like time.
 
@@ -15,15 +15,15 @@ Check out the example test below.
 package main
 
 import (
-	"testing"
+    "testing"
     "cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
     "cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"go.uber.org/fx"
-	"github.com/onsi/gomega"
-	"github.com/opensearch-project/opensearch-go/opensearchapi"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
+    "cto-github.cisco.com/NFV-BU/go-lanai/test"
+    "cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+    "go.uber.org/fx"
+    "github.com/onsi/gomega"
+    "github.com/opensearch-project/opensearch-go/opensearchapi"
+    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
     "context"
 )
 
