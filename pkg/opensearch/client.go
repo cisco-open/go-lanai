@@ -24,6 +24,7 @@ var (
 
 type Request interface {
 	opensearchapi.SearchRequest |
+		opensearchapi.SearchTemplateRequest |
 		opensearchapi.IndicesCreateRequest |
 		opensearchapi.IndexRequest |
 		opensearchutil.BulkIndexerConfig |
@@ -38,6 +39,7 @@ type Request interface {
 
 type OpenClient interface {
 	Search(ctx context.Context, o ...Option[opensearchapi.SearchRequest]) (*opensearchapi.Response, error)
+	SearchTemplate(ctx context.Context, body io.Reader, o ...Option[opensearchapi.SearchTemplateRequest]) (*opensearchapi.Response, error)
 	Index(ctx context.Context, index string, body io.Reader, o ...Option[opensearchapi.IndexRequest]) (*opensearchapi.Response, error)
 	BulkIndexer(ctx context.Context, action BulkAction, bulkItems [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error)
 	IndicesCreate(ctx context.Context, index string, o ...Option[opensearchapi.IndicesCreateRequest]) (*opensearchapi.Response, error)
@@ -143,6 +145,7 @@ const (
 )
 const (
 	CmdSearch CommandType = iota
+	CmdSearchTemplate
 	CmdIndex
 	CmdIndicesCreate
 	CmdIndicesGet
@@ -157,6 +160,7 @@ const (
 
 var CmdToString = map[CommandType]string{
 	CmdSearch:                     "search",
+	CmdSearchTemplate:             "search template",
 	CmdIndex:                      "index",
 	CmdIndicesCreate:              "indices create",
 	CmdIndicesGet:                 "indices get",
