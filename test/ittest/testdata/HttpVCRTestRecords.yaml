@@ -1,0 +1,75 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:57676
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers: {}
+        url: http://localhost:57676/test/knock
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 38
+        uncompressed: false
+        body: |
+            {"message":"this should be recorded"}
+        headers:
+            Content-Length:
+                - "38"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 20 Oct 2022 20:41:30 GMT
+        status: 200 OK
+        code: 200
+        duration: 3.975625ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:57676
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers: {}
+        url: http://localhost:57676/test/knock
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 38
+        uncompressed: false
+        body: |
+            {"message":"this should be recorded"}
+        headers:
+            Content-Length:
+                - "38"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 20 Oct 2022 20:41:30 GMT
+        status: 200 OK
+        code: 200
+        duration: 219µs
