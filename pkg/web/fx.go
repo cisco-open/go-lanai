@@ -71,10 +71,10 @@ func validateFxProviderTarget(interfaceType reflect.Type, target interface{}) (e
 	isValid := true
 	for i := 0; i < t.NumOut(); i++ {
 		rt := t.Out(i)
-		if !isSupportedType(interfaceType, rt) {
+		if !rt.Implements(interfaceType) {
 			// if it's the last return value
 			if i > 0 && i == t.NumOut()-1 {
-				if !isSupportedType(typeError, rt) {
+				if !rt.Implements(typeError) {
 					isValid = false
 					break
 				}
@@ -104,8 +104,4 @@ func describeFunc(f interface{}) string {
 		return "unknown function"
 	}
 	return pFunc.Name()
-}
-
-func isSupportedType(expected reflect.Type, t reflect.Type) bool {
-	return t.Implements(expected)
 }
