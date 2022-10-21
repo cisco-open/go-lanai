@@ -74,7 +74,7 @@ func validateFxProviderTarget(interfaceType reflect.Type, target interface{}) (e
 		if !rt.Implements(interfaceType) {
 			// if it's the last return value
 			if i > 0 && i == t.NumOut()-1 {
-				if !rt.Implements(typeError) {
+				if !isExactType(typeError, rt) {
 					isValid = false
 					break
 				}
@@ -104,4 +104,8 @@ func describeFunc(f interface{}) string {
 		return "unknown function"
 	}
 	return pFunc.Name()
+}
+
+func isExactType(expected reflect.Type, t reflect.Type) bool {
+	return t.PkgPath() == expected.PkgPath() && t.Name() == expected.Name()
 }
