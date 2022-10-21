@@ -2,6 +2,11 @@ package opensearchtest
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"net/http"
+	"testing"
+	"time"
+
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
@@ -11,9 +16,6 @@ import (
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"go.uber.org/fx"
-	"net/http"
-	"testing"
-	"time"
 )
 
 //func TestMain(m *testing.M) {
@@ -53,7 +55,7 @@ func TestScopeController(t *testing.T) {
 			SetRecordDelay(time.Millisecond*1500),
 		),
 		apptest.WithTimeout(time.Minute),
-		apptest.WithModules(opensearch.Module),
+		apptest.WithModules(opensearch.Module, tlsconfig.Module),
 		apptest.WithFxOptions(
 			fx.Provide(NewFakeService),
 		),
