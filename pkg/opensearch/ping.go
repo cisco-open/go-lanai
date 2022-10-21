@@ -21,7 +21,7 @@ func (c *RepoImpl[T]) Ping(
 }
 
 func (c *OpenClientImpl) Ping(ctx context.Context, o ...Option[opensearchapi.PingRequest]) (*opensearchapi.Response, error) {
-	options := make([]func(request *opensearchapi.PingRequest), 0, len(o))
+	options := make([]func(request *opensearchapi.PingRequest), len(o))
 	for i, v := range o {
 		options[i] = v
 	}
