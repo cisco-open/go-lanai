@@ -2,13 +2,12 @@ package th_loader
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
-	"fmt"
-	goredis "github.com/go-redis/redis/v8"
 	"github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
@@ -29,6 +28,7 @@ type testDI struct {
 	fx.In
 	DB             *gorm.DB `optional:"true"`
 	InternalLoader TenancyLoader
+	ClientFactory  redis.ClientFactory
 }
 
 type MockedTenantHierarchyStore struct {
@@ -70,6 +70,7 @@ func TestLoader(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		apptest.WithModules(redis.Module),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Provide(
@@ -86,12 +87,10 @@ func TestLoader(t *testing.T) {
 
 func SubTestLoadTenantHierarchy(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		universal := &goredis.UniversalOptions{}
-		opts := universal.Simple()
-		opts.Addr = fmt.Sprintf("127.0.0.1:%d", embedded.CurrentRedisPort())
-		client := goredis.NewClient(opts)
-		defer func() { _ = client.Close() }()
-
+		client, e := di.ClientFactory.New(ctx, func(opt *redis.ClientOption) {
+			opt.DbIndex = 5
+		})
+		g.Expect(e).ToNot(gomega.HaveOccurred())
 		di.InternalLoader.rc = client
 
 		err := di.InternalLoader.LoadTenantHierarchy(ctx)
