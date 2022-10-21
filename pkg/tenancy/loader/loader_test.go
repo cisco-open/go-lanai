@@ -57,7 +57,7 @@ func (m MockedTenantHierarchyStore) GetIterator(ctx context.Context) (TenantIter
 	return &MockTenantIterator{}, nil
 }
 
-func provideMockedTenancyLoader() TenancyLoader {
+func provideTenancyLoaderForTest() TenancyLoader {
 	return TenancyLoader{
 		store: MockedTenantHierarchyStore{},
 		accessor: &mocks.MockTenancyAccessor{
@@ -73,7 +73,7 @@ func TestLoader(t *testing.T) {
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Provide(
-				provideMockedTenancyLoader,
+				provideTenancyLoaderForTest,
 			),
 		),
 		test.GomegaSubTest(SubTestLoadTenantHierarchy(di), "SubTestLoadTenantHierarchy"),
