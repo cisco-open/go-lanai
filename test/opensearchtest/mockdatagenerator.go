@@ -42,21 +42,21 @@ func SetupPrepareOpenSearchData(
 ) (context.Context, error) {
 	// We don't care if we can't delete this indices - it might not exist
 	//nolint:errcheck
-	repo.IndicesDelete(context.Background(), []string{"auditlog"})
+	repo.IndicesDelete(ctx, []string{"auditlog"})
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
-	for _, event := range events {
-		err := repo.Index(
-			context.Background(),
-			"auditlog",
-			event,
-			opensearch.Index.WithRefresh("true"),
-			opensearch.Index.WithWaitForActiveShards("all"),
-		)
-		if err != nil {
-			return ctx, err
-		}
+	_, err := repo.BulkIndexer(
+		ctx,
+		"index",
+		&events,
+		opensearch.BulkIndexer.WithIndex("auditlog"),
+		opensearch.BulkIndexer.WithWorkers(1),
+		opensearch.BulkIndexer.WithRefresh(true),
+	)
+	if err != nil {
+		return ctx, err
 	}
+
 	return ctx, nil
 }
 
