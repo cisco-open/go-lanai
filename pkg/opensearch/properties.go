@@ -2,6 +2,7 @@ package opensearch
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"embed"
 	"github.com/pkg/errors"
 )
@@ -17,15 +18,16 @@ type Properties struct {
 	Addresses []string `json:"addresses"`
 	Username  string   `json:"username"`
 	Password  string   `json:"password"`
-	CACert    string   `json:""`
+	TLS       TLS      `json:"TLS"`
+}
+
+type TLS struct {
+	Enable bool                 `json:"enable"`
+	Config tlsconfig.Properties `json:"config"`
 }
 
 func NewOpenSearchProperties() *Properties {
-	return &Properties{
-		Addresses: []string{"http://localhost:9200"},
-		Username:  "admin",
-		Password:  "admin",
-	}
+	return &Properties{} // None by default, they should all be defined in the defaults-opensearch.yml
 }
 
 func BindOpenSearchProperties(ctx *bootstrap.ApplicationContext) *Properties {
