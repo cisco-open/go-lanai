@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/sd"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"net/http"
 	"time"
 )
 
@@ -50,6 +51,7 @@ type ClientOption struct {
 
 // ClientConfig is used to change Client's config
 type ClientConfig struct {
+	HTTPClient  *http.Client // underlying http.Client to use
 	BeforeHooks []BeforeHook
 	AfterHooks  []AfterHook
 	MaxRetries  int // negative value means no retry
@@ -108,6 +110,7 @@ type Endpointer interface {
 
 func DefaultConfig() *ClientConfig {
 	return &ClientConfig{
+		HTTPClient:  http.DefaultClient,
 		BeforeHooks: []BeforeHook{},
 		AfterHooks:  []AfterHook{},
 		MaxRetries:  3,
@@ -134,6 +137,10 @@ func defaultExtHostConfig() *ClientConfig {
 }
 
 func mergeConfig(dst *ClientConfig, src *ClientConfig) {
+	if dst.HTTPClient == nil {
+		dst.HTTPClient = src.HTTPClient
+	}
+
 	if dst.Logger == nil {
 		dst.Logger = src.Logger
 	}

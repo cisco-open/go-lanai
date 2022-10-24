@@ -2,15 +2,20 @@ package ittest
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"github.com/cockroachdb/copyist"
 	"go.uber.org/fx"
 	"gopkg.in/dnaeon/go-vcr.v3/cassette"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"net/http"
 	"testing"
 )
+
+type RecorderDI struct {
+	fx.In
+	Recorder *recorder.Recorder
+}
 
 // WithHttpPlayback enables remote HTTP server playback capabilities supported by `httpvcr`
 // This mode requires apptest.Bootstrap to work
@@ -23,20 +28,34 @@ func WithHttpPlayback(t *testing.T, opts ...HttpVCROptions) test.Options {
 		SavePath: "testdata",
 	}
 
+	var di RecorderDI
 	testOpts := []test.Options{
+		apptest.WithDI(&di),
 		apptest.WithFxOptions(
 			fx.Provide(
 				httpRecorderProvider(initial, opts),
 			),
 			fx.Invoke(httpRecorderCleanup),
 		),
+		test.SubTestSetup(recorderDISetup(&di)),
 	}
 	return test.WithOptions(testOpts...)
 }
 
-// IsRecording returns true if copyist is in recording mode
-func IsRecording() bool {
-	return copyist.IsRecording()
+// Client extract http.Client that provided by Recorder. If Recorder is not available, it returns nil
+func Client(ctx context.Context) *http.Client {
+	if rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder); ok && rec != nil {
+		return rec.GetDefaultClient()
+	}
+	return nil
+}
+
+// IsRecording returns true if HTTP VCR is in recording mode
+func IsRecording(ctx context.Context) bool {
+	if rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder); ok && rec != nil {
+		return rec.IsRecording()
+	}
+	return false
 }
 
 /*************************
@@ -61,7 +80,7 @@ func HttpRecordName(name string) HttpVCROptions {
 }
 
 // HttpRecordCustomMatching returns a HttpVCROptions that allows custom matching of recorded requests
-func HttpRecordCustomMatching(opts...RecordMatcherOptions) HttpVCROptions {
+func HttpRecordCustomMatching(opts ...RecordMatcherOptions) HttpVCROptions {
 	return func(opt *HttpVCROption) {
 		opt.RecordMatching = append(opt.RecordMatching, opts...)
 	}
@@ -74,11 +93,64 @@ func HttpRecordIgnoreHost() HttpVCROptions {
 	})
 }
 
+/****************************
+	Recorder Aware Context
+ ****************************/
 
+type recorderContextKey struct{}
+
+var ckRecorder = recorderContextKey{}
+var ckOrigMatcher = recorderContextKey{}
+
+type recorderAwareContext struct {
+	context.Context
+	recorder    *recorder.Recorder
+	origMatcher cassette.MatcherFunc
+}
+
+func contextWithRecorder(parent context.Context, rec *recorder.Recorder) *recorderAwareContext {
+	return &recorderAwareContext{
+		Context:  parent,
+		recorder: rec,
+	}
+}
+
+func (c *recorderAwareContext) Value(k interface{}) interface{} {
+	switch k {
+	case ckRecorder:
+		return c.recorder
+	default:
+		return c.Context.Value(k)
+	}
+}
+
+func recorderDISetup(di *RecorderDI) test.SetupFunc {
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		return contextWithRecorder(ctx, di.Recorder), nil
+	}
+}
+
+func recorderReset(di *RecorderDI) test.TeardownFunc {
+	// TODO
+	return func(ctx context.Context, t *testing.T) error {
+		rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder)
+		if !ok {
+			return nil
+		}
+		rec.IsRecording()
+		return nil
+	}
+}
 
 /*************************
 	Internals
  *************************/
+
+type vcrOut struct {
+	fx.Out
+	Recorder             *recorder.Recorder
+	HttpClientCustomizer httpclient.ClientCustomizer `group:"http-client"`
+}
 
 func toRecorderOptions(opt HttpVCROption) *recorder.Options {
 	mode := recorder.ModeReplayOnly
@@ -100,18 +172,21 @@ func toRecorderOptions(opt HttpVCROption) *recorder.Options {
 	}
 }
 
-func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (*recorder.Recorder, error) {
-	return func() (*recorder.Recorder, error) {
+func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (vcrOut, error) {
+	return func() (vcrOut, error) {
 		for _, fn := range opts {
 			fn(&initial)
 		}
 		rec, e := recorder.NewWithOptions(toRecorderOptions(initial))
 		if e != nil {
-			return nil, e
+			return vcrOut{}, e
 		}
 		matchFn := NewRecordMatcher(initial.RecordMatching...)
 		rec.SetMatcher(wrapRecordRequestMatcher(matchFn))
-		return rec, nil
+		return vcrOut{
+			Recorder: rec,
+			HttpClientCustomizer: RecordingHttpClientCustomizer{Recorder: rec},
+		}, nil
 	}
 }
 
@@ -132,4 +207,3 @@ func wrapRecordRequestMatcher(fn GenericMatcherFunc[*http.Request, cassette.Requ
 		return true
 	}
 }
-

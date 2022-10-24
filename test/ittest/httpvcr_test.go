@@ -75,6 +75,7 @@ func TestHttpVCRRecording(t *testing.T) {
 			web.FxControllerProviders(NewTestController),
 		),
 		test.GomegaSubTest(SubTestHttpVCR(&di), "TestHttpVCRRecording"),
+		test.GomegaSubTest(SubTestHttpVCRMode(true), "TestHttpVCRMode"),
 	)
 }
 
@@ -86,6 +87,7 @@ func TestHttpVCRPlayback(t *testing.T) {
 		WithHttpPlayback(t, HttpRecordName(RecordName), HttpRecordIgnoreHost()),
 		apptest.WithModules(),
 		apptest.WithDI(&di),
+		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestHttpVCR(&di), "TestHttpVCRReplay"),
 		test.GomegaSubTest(SubTestHttpVCRIncorrectRequestOrder(&di), "TestHttpVCRIncorrectRequestOrder"),
 	)
@@ -95,6 +97,12 @@ func TestHttpVCRPlayback(t *testing.T) {
 	Sub Tests
  *************************/
 
+func SubTestHttpVCRMode(expectRecording bool) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(IsRecording(ctx)).To(Equal(expectRecording), "mode should be correct")
+	}
+}
+
 func SubTestHttpVCR(di *vcrDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
@@ -103,12 +111,12 @@ func SubTestHttpVCR(di *vcrDI) test.GomegaSubTestFunc {
 		var e error
 
 		req = newGetRequest(ctx, t, g)
-		resp, e = di.Recorder.GetDefaultClient().Do(req)
+		resp, e = Client(ctx).Do(req)
 		g.Expect(e).To(Succeed(), "sending request should succeed")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
 
 		req = newPostRequest(ctx, t, g)
-		resp, e = di.Recorder.GetDefaultClient().Do(req)
+		resp, e = Client(ctx).Do(req)
 		g.Expect(e).To(Succeed(), "sending request should succeed")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
 	}
@@ -121,11 +129,11 @@ func SubTestHttpVCRIncorrectRequestOrder(di *vcrDI) test.GomegaSubTestFunc {
 		var e error
 
 		req = newPostRequest(ctx, t, g)
-		_, e = di.Recorder.GetDefaultClient().Do(req)
+		_, e = Client(ctx).Do(req)
 		g.Expect(e).To(HaveOccurred(), "sending request in wrong order should fail")
 
 		req = newGetRequest(ctx, t, g)
-		_, e = di.Recorder.GetDefaultClient().Do(req)
+		_, e = Client(ctx).Do(req)
 		g.Expect(e).To(HaveOccurred(), "sending request in wrong order should fail")
 	}
 }

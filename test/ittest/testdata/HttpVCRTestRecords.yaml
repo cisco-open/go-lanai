@@ -9,13 +9,13 @@ interactions:
         content_length: 0
         transfer_encoding: []
         trailer: {}
-        host: localhost:57676
+        host: localhost:64256
         remote_addr: ""
         request_uri: ""
         body: ""
         form: {}
         headers: {}
-        url: http://localhost:57676/test/knock
+        url: http://localhost:64256/test/knock
         method: GET
       response:
         proto: HTTP/1.1
@@ -33,10 +33,10 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Thu, 20 Oct 2022 20:41:30 GMT
+                - Mon, 24 Oct 2022 16:41:18 GMT
         status: 200 OK
         code: 200
-        duration: 3.975625ms
+        duration: 15.556375ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -45,13 +45,13 @@ interactions:
         content_length: 0
         transfer_encoding: []
         trailer: {}
-        host: localhost:57676
+        host: localhost:64256
         remote_addr: ""
         request_uri: ""
         body: ""
         form: {}
         headers: {}
-        url: http://localhost:57676/test/knock
+        url: http://localhost:64256/test/knock
         method: POST
       response:
         proto: HTTP/1.1
@@ -69,7 +69,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Thu, 20 Oct 2022 20:41:30 GMT
+                - Mon, 24 Oct 2022 16:41:18 GMT
         status: 200 OK
         code: 200
-        duration: 219µs
+        duration: 250.042µs
