@@ -1,10 +1,12 @@
 package codegen
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator"
 	"embed"
-	"github.com/onsi/gomega"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/google/go-cmp/cmp"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,64 +15,145 @@ import (
 
 const testDir = "testdata/"
 
-//go:embed testdata/validFileSystem
-var ValidFilesystem embed.FS
+//go:embed all:template/src
+var ActualFilesystem embed.FS
 
-type ExpectedFiles struct {
-	Files []string `yaml:"files"`
-}
+const serviceName = "testservice"
 
 func TestGenerateTemplates(t *testing.T) {
 	tests := []struct {
-		name                 string
-		wantErr              bool
-		filesystem           embed.FS
-		outputDir            string
-		expectedFileListPath string
+		name       string
+		contract   string
+		wantErr    bool
+		filesystem fs.FS
+		modifiers  map[string]string
+		outputDir  string
+		goldenDir  string
+		update     bool
 	}{
 		{
-			name:                 "Should create files in destination directory in same format as input dir",
-			wantErr:              false,
-			filesystem:           ValidFilesystem,
-			outputDir:            path.Join(testDir, "output"),
-			expectedFileListPath: "testdata/validFileSystem/expectedFiles.yaml",
+			name:       "Should generate the correct files based on an input yaml",
+			contract:   path.Join(testDir, "test.yaml"),
+			wantErr:    false,
+			filesystem: ActualFilesystem,
+			modifiers: map[string]string{
+				"NAME": serviceName,
+			},
+			outputDir: path.Join(testDir, "output"),
+			goldenDir: path.Join("testdata", "golden"),
+			update:    false,
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
+			os.RemoveAll(tt.outputDir)
 			outputDirAbsolute, err := filepath.Abs(tt.outputDir)
 			if err != nil {
-				t.Fatalf("Absolute Path not available")
+				t.Fatalf("Absolute Path for outputdir not available")
 			}
-			fsm, err := NewFileSystemMapper(tt.filesystem, outputDirAbsolute)
-			if tt.wantErr {
-				g.Expect(err).NotTo(gomega.Succeed())
+			absGoldenPath, err := filepath.Abs(tt.goldenDir)
+			if err != nil {
+				t.Fatalf("Absolute Path for golden dir not available")
+			}
+			openAPIData, err := openapi3.NewLoader().LoadFromFile(tt.contract)
+			if err != nil {
+				t.Fatalf("error parsing OpenAPI file: %v", err)
+			}
+
+			data := map[string]interface{}{
+				generator.ProjectName: serviceName,
+				generator.OpenAPIData: openAPIData,
+			}
+			templates, err := generator.LoadTemplates(tt.filesystem)
+			if err != nil {
+				t.Fatalf("Could not load templates: %v", err)
+			}
+
+			cmdutils.GlobalArgs.OutputDir = outputDirAbsolute
+
+			err = generator.GenerateFiles(tt.filesystem,
+				generator.WithData(data),
+				generator.WithFS(tt.filesystem),
+				generator.WithTemplate(templates))
+			if err != nil {
+				t.Fatalf("Could not generate: %v", err)
+			}
+			defer os.RemoveAll(tt.outputDir)
+			var f fs.WalkDirFunc
+			updateGoldenOutput := func(p string, d fs.DirEntry, err error) error {
+				outputPath := path.Join(tt.outputDir, p)
+				goldenPath := path.Join(tt.goldenDir, p)
+				if d.IsDir() {
+					if _, err := os.Stat(goldenPath); os.IsNotExist(err) {
+						dirToCreate := path.Join(absGoldenPath, p)
+						err := os.Mkdir(dirToCreate, 0750)
+						if err != nil && !os.IsExist(err) {
+							t.Fatalf("Could not create directory:%v", err)
+						}
+					}
+				} else {
+					r, err := os.ReadFile(outputPath)
+					if err != nil {
+						t.Fatalf("Could not open output dir file: %v", err)
+					}
+
+					fileToUpdate := path.Join(absGoldenPath, p)
+					err = os.WriteFile(fileToUpdate, r, 0666)
+					if err != nil {
+						t.Fatalf("could not update golden directory: %v", err)
+					}
+				}
+				return nil
+			}
+			compareToGoldenOutput := func(p string, d fs.DirEntry, err error) error {
+				outputPath := path.Join(tt.outputDir, p)
+				goldenPath := path.Join(tt.goldenDir, p)
+				if _, err := os.Stat(goldenPath); os.IsNotExist(err) {
+					t.Fatalf("%v does not exist", goldenPath)
+				}
+
+				if !d.IsDir() {
+					expected := path.Join(tt.goldenDir, p)
+					e, err := os.ReadFile(expected)
+					if err != nil {
+						t.Fatalf("Could not open expected file: %v", err)
+					}
+
+					r, err := os.ReadFile(outputPath)
+					if err != nil {
+						t.Fatalf("Could not open result file: %v", err)
+					}
+
+					if diff := cmp.Diff(string(e), string(r)); diff != "" {
+						t.Errorf("output does not match golden file %v: %s", expected, diff)
+					}
+				}
+				return nil
+			}
+
+			if tt.update {
+				f = updateGoldenOutput
 			} else {
-				g.Expect(err).To(gomega.Succeed())
-
-				err = GenerateTemplates(fsm, tt.filesystem)
-				defer os.RemoveAll(tt.outputDir)
-				g.Expect(err).To(gomega.Succeed(), "error = %v, expected nil", err)
-
-				yamlFile, _ := ioutil.ReadFile(tt.expectedFileListPath)
-				if err != nil {
-					t.Fatalf("Unable to read the yaml")
-				}
-
-				f := ExpectedFiles{}
-				err = yaml.Unmarshal(yamlFile, &f)
-				if err != nil {
-					t.Fatalf("Could not unmarshal yaml")
-				}
-
-				for _, y := range f.Files {
-					_, err = os.Stat(y)
-					g.Expect(err).To(gomega.Succeed(), "file %v does not exist", y)
-				}
+				f = compareToGoldenOutput
+			}
+			err = fs.WalkDir(os.DirFS(tt.outputDir), ".", f)
+			if err != nil {
+				t.Fatalf("Could not compare output and golden dirs: %v", err)
 			}
 
+			if !tt.update {
+				// Check if all dirs in Golden directory were created
+				fs.WalkDir(os.DirFS(tt.goldenDir), ".",
+					func(p string, d fs.DirEntry, err error) error {
+						if d.IsDir() {
+							outputPath := path.Join(tt.outputDir, p)
+							if _, err := os.Stat(outputPath); os.IsNotExist(err) {
+								t.Fatalf("%v expected, but does not exist", outputPath)
+							}
+						}
+						return nil
+					})
+			}
 		})
 	}
 }
