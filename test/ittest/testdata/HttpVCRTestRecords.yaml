@@ -6,16 +6,18 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 0
+        content_length: 63
         transfer_encoding: []
         trailer: {}
-        host: localhost:64256
+        host: localhost:62333
         remote_addr: ""
         request_uri: ""
         body: ""
         form: {}
-        headers: {}
-        url: http://localhost:64256/test/knock
+        headers:
+            X-Http-Record-Index:
+                - "0"
+        url: http://localhost:62333/test/knock
         method: GET
       response:
         proto: HTTP/1.1
@@ -23,35 +25,37 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 38
+        content_length: 223
         uncompressed: false
         body: |
-            {"message":"this should be recorded"}
+            {"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z","slice":[{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}],"object":{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}}
         headers:
             Content-Length:
-                - "38"
+                - "223"
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Mon, 24 Oct 2022 16:41:18 GMT
+                - Tue, 25 Oct 2022 17:52:19 GMT
         status: 200 OK
         code: 200
-        duration: 15.556375ms
+        duration: 7.166417ms
     - id: 1
       request:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 0
+        content_length: 73
         transfer_encoding: []
         trailer: {}
-        host: localhost:64256
+        host: localhost:62333
         remote_addr: ""
         request_uri: ""
         body: ""
         form: {}
-        headers: {}
-        url: http://localhost:64256/test/knock
+        headers:
+            X-Http-Record-Index:
+                - "1"
+        url: http://localhost:62333/test/knock
         method: POST
       response:
         proto: HTTP/1.1
@@ -59,17 +63,17 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 38
+        content_length: 223
         uncompressed: false
         body: |
-            {"message":"this should be recorded"}
+            {"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z","slice":[{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}],"object":{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}}
         headers:
             Content-Length:
-                - "38"
+                - "223"
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Mon, 24 Oct 2022 16:41:18 GMT
+                - Tue, 25 Oct 2022 17:52:19 GMT
         status: 200 OK
         code: 200
-        duration: 250.042µs
+        duration: 210.625µs

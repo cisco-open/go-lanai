@@ -181,8 +181,12 @@ func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (
 		if e != nil {
 			return vcrOut{}, e
 		}
+
 		matchFn := NewRecordMatcher(initial.RecordMatching...)
-		rec.SetMatcher(wrapRecordRequestMatcher(matchFn))
+		idMatchFn := NewRecordIndexAwareMatcher()
+		rec.SetMatcher(wrapRecordRequestMatcher(AndMatcher(matchFn, idMatchFn)))
+		rec.AddHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook)
+		rec.AddHook(SanitizingHook(), recorder.BeforeSaveHook)
 		return vcrOut{
 			Recorder: rec,
 			HttpClientCustomizer: RecordingHttpClientCustomizer{Recorder: rec},

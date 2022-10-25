@@ -12,12 +12,13 @@ interactions:
         host: 127.0.0.1:9203
         remote_addr: ""
         request_uri: ""
-        body: |
-            null
+        body: ""
         form: {}
         headers:
             Content-Type:
                 - application/json; charset=utf-8
+            X-Http-Record-Index:
+                - "0"
         url: http://127.0.0.1:9203/idm/swagger
         method: GET
       response:
@@ -111,12 +112,12 @@ interactions:
             Content-Type:
                 - text/html; charset=utf-8
             Date:
-                - Sat, 22 Oct 2022 17:46:24 GMT
+                - Tue, 25 Oct 2022 17:51:16 GMT
             Vary:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 1.750875ms
+        duration: 3.188708ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -128,12 +129,13 @@ interactions:
         host: localhost:9203
         remote_addr: ""
         request_uri: ""
-        body: |
-            null
+        body: ""
         form: {}
         headers:
             Content-Type:
                 - application/json; charset=utf-8
+            X-Http-Record-Index:
+                - "1"
         url: http://localhost:9203/idm/swagger
         method: GET
       response:
@@ -227,9 +229,9 @@ interactions:
             Content-Type:
                 - text/html; charset=utf-8
             Date:
-                - Sat, 22 Oct 2022 17:46:24 GMT
+                - Tue, 25 Oct 2022 17:51:16 GMT
             Vary:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 4.552625ms
+        duration: 6.329208ms
