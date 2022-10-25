@@ -116,7 +116,7 @@ func TestHttpVCRPlayback(t *testing.T) {
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), HttpRecordIgnoreHost()),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestNormalInteraction(&di), "TestNormalInteraction"),
@@ -128,7 +128,7 @@ func TestHttpVCRPlaybackIncorrectQuery(t *testing.T) {
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), HttpRecordIgnoreHost()),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestIncorrectRequestQuery(&di), "TestIncorrectRequestQuery"),
@@ -140,24 +140,24 @@ func TestHttpVCRPlaybackIncorrectOrder(t *testing.T) {
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), HttpRecordIgnoreHost()),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestIncorrectRequestOrder(&di), "TestIncorrectRequestOrder"),
 	)
 }
 
-//func TestHttpVCRPlaybackIncorrectBody(t *testing.T) {
-//	var di vcrDI
-//	t.Name()
-//	test.RunTest(context.Background(), t,
-//		apptest.Bootstrap(),
-//		WithHttpPlayback(t, HttpRecordName(RecordName), HttpRecordIgnoreHost()),
-//		apptest.WithDI(&di),
-//		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
-//		test.GomegaSubTest(SubTestIncorrectRequestBody(&di), "TestIncorrectRequestBody"),
-//	)
-//}
+func TestHttpVCRPlaybackIncorrectBody(t *testing.T) {
+	var di vcrDI
+	t.Name()
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
+		apptest.WithDI(&di),
+		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
+		//test.GomegaSubTest(SubTestIncorrectRequestBody(&di), "TestIncorrectRequestBody"),
+	)
+}
 
 /*************************
 	Sub Tests

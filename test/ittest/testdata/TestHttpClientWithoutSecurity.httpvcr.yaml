@@ -112,12 +112,12 @@ interactions:
             Content-Type:
                 - text/html; charset=utf-8
             Date:
-                - Tue, 25 Oct 2022 17:51:16 GMT
+                - Tue, 25 Oct 2022 19:38:13 GMT
             Vary:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 3.188708ms
+        duration: 3.827166ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -229,9 +229,9 @@ interactions:
             Content-Type:
                 - text/html; charset=utf-8
             Date:
-                - Tue, 25 Oct 2022 17:51:16 GMT
+                - Tue, 25 Oct 2022 19:38:13 GMT
             Vary:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 6.329208ms
+        duration: 8.10125ms

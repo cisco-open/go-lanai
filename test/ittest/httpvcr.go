@@ -5,12 +5,24 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
+	"flag"
 	"go.uber.org/fx"
 	"gopkg.in/dnaeon/go-vcr.v3/cassette"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"net/http"
+	"strconv"
 	"testing"
 )
+
+const CLIRecordModeFlag = "record"
+
+func init() {
+	// try register "record" flag, it may fail if it's already registered
+	if flag.Lookup(CLIRecordModeFlag) == nil {
+		flag.Bool(CLIRecordModeFlag, true, "record external interaction")
+	}
+}
 
 type RecorderDI struct {
 	fx.In
@@ -62,13 +74,38 @@ func IsRecording(ctx context.Context) bool {
 	Options
  *************************/
 
-// EnableHttpRecordMode returns a HttpVCROptions that enable Recording mode
+// EnablePackageHttpRecordMode returns a suitetest.PackageOptions that enables HTTP recording mode for the entire package.
+// This is usually used in TestMain function.
+// Note: this option has no effect to tests using DisableHttpRecordMode
+// e.g.
+// <code>
+// 	func TestMain(m *testing.M) {
+//		suitetest.RunTests(m,
+//			EnablePackageHttpRecordMode(),
+//		)
+// 	}
+// </code>
+func EnablePackageHttpRecordMode() suitetest.PackageOptions {
+	return suitetest.Setup(func() error {
+		return flag.Set(CLIRecordModeFlag, "true")
+	})
+}
+
+// EnableHttpRecordMode returns a HttpVCROptions that enable Recording mode.
 // Normally recording mode should be enabled via `go test` argument `-record`
+// Note: 	  Record mode is forced off if flag is set to "-record=false" explicitly
 // IMPORTANT: When Record mode is enabled, all tests interact with actual HTTP remote service.
 // 			  So use this mode on LOCAL DEV ONLY
 func EnableHttpRecordMode() HttpVCROptions {
 	return func(opt *HttpVCROption) {
 		opt.Mode = ModeRecording
+	}
+}
+
+// DisableHttpRecordMode returns a HttpVCROptions that force replaying mode regardless the command line flag
+func DisableHttpRecordMode() HttpVCROptions {
+	return func(opt *HttpVCROption) {
+		opt.Mode = ModeReplaying
 	}
 }
 
@@ -160,17 +197,38 @@ type vcrOut struct {
 	HttpClientCustomizer httpclient.ClientCustomizer `group:"http-client"`
 }
 
+func findBoolFlag(name string) (ret *bool) {
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name != name {
+			return
+		}
+		var b bool
+		b, e := strconv.ParseBool(f.Value.String())
+		if e != nil {
+			b = true // default to true
+		}
+		ret = &b
+	})
+	return
+}
+
 func toRecorderOptions(opt HttpVCROption) *recorder.Options {
+	cliFlag := findBoolFlag(CLIRecordModeFlag)
 	mode := recorder.ModeReplayOnly
 	switch opt.Mode {
 	case ModeRecording:
-		mode = recorder.ModeRecordOnly
+		if cliFlag == nil || *cliFlag {
+			mode = recorder.ModeRecordOnly
+		}
 	case ModeCommandline:
-		// TODO
+		if cliFlag != nil && *cliFlag {
+			mode = recorder.ModeRecordOnly
+		}
 	}
+
 	name := opt.Name
 	if len(opt.SavePath) != 0 {
-		name = opt.SavePath + "/" + opt.Name
+		name = opt.SavePath + "/" + opt.Name + ".httpvcr"
 	}
 	return &recorder.Options{
 		CassetteName:       name,

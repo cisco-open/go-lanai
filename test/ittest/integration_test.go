@@ -25,6 +25,12 @@ const (
 	Tests
  *************************/
 
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		EnablePackageHttpRecordMode(),
+//	)
+//}
+
 type hcDI struct {
 	fx.In
 	HttpClient httpclient.Client
@@ -35,7 +41,6 @@ func TestHttpClientWithoutSecurity(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		WithHttpPlayback(t),
-		//WithHttpPlayback(t, EnableHttpRecordMode()),
 		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
 		apptest.WithModules(httpclient.Module),
 		apptest.WithDI(&di),
@@ -49,7 +54,6 @@ func TestHttpClientWithSecurity(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		WithHttpPlayback(t),
-		//WithHttpPlayback(t, EnableHttpRecordMode()),
 		WithRecordedScopes(),
 		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
 		apptest.WithModules(httpclient.Module),

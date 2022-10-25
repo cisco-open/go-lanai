@@ -39,10 +39,10 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Tue, 25 Oct 2022 18:43:50 GMT
+                - Tue, 25 Oct 2022 19:39:25 GMT
         status: 200 OK
         code: 200
-        duration: 80.740959ms
+        duration: 68.605583ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -81,7 +81,7 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Tue, 25 Oct 2022 18:43:50 GMT
+                - Tue, 25 Oct 2022 19:39:25 GMT
         status: 200 OK
         code: 200
-        duration: 252.792µs
+        duration: 268.5µs
