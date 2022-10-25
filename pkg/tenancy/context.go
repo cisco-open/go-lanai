@@ -15,6 +15,7 @@ const StatusKey = "tenant-hierarchy-status"
 
 const STATUS_IN_PROGRESS = "IN_PROGRESS"
 const STATUS_LOADED = "LOADED"
+const STATUS_FAILED_TO_LOAD_ROOT_TENANT = "FAILED_TO_LOAD_ROOT_TENANT"
 
 var cachedRootId string
 
@@ -52,7 +53,7 @@ func GetDescendants(ctx context.Context, tenantId string) ([]string, error) {
 
 /*
 GetRoot because root tenantId won't change once system is started, we can cache it after first successful read.
- */
+*/
 func GetRoot(ctx context.Context) (string, error) {
 	if cachedRootId != "" {
 		return cachedRootId, nil

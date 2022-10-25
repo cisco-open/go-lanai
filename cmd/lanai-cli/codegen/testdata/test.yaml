@@ -1,0 +1,81 @@
+openapi: 3.0.0
+info:
+  title: 'Test Contract'
+  version: '1'
+  termsOfService: 'https://www.cisco.com'
+  license:
+    name: 'MIT'
+paths:
+  '/my/test/path':
+    get:
+      summary: Test Get API
+      parameters:
+        - name: scope
+          in: path
+          schema:
+            format: ^[a-zA-Z0-5-_=]{1,256}$
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestObject'
+    delete:
+      summary: Test Delete API
+      parameters:
+        - name: scope
+          in: path
+          schema:
+            format: ^[a-zA-Z0-5-_=]{1,256}$
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestObject'
+    post:
+      summary: Test Post API
+      parameters:
+        - name: scope
+          in: path
+          schema:
+            format: ^[a-zA-Z0-7-_=]{1,256}$
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestObject'
+components:
+  schemas:
+    TestObject:
+      type: object
+      properties:
+        myValue:
+          type: string
+          minLength: 0
+          maxLength: 128
+        createdOnDate:
+          type: string
+          format: date
+        createdOnDateTime:
+          type: string
+          format: date-time
+        myUuid:
+          type: string
+          format: uuid
+        anotherUuid:
+          type: string
+          format: uuid
+        myValueWithRegexedDefinedInPattern:
+          type: string
+          pattern: ^[a-zA-Z0-9-_=]{1,256}$
+        myValueWithRegexDefinedInFormat:
+          type: string
+          format: ^[a-zA-Z0-8-_=]{1,256}$
