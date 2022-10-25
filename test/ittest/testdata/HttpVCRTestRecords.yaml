@@ -9,15 +9,19 @@ interactions:
         content_length: 63
         transfer_encoding: []
         trailer: {}
-        host: localhost:62333
+        host: webservice
         remote_addr: ""
         request_uri: ""
         body: ""
         form: {}
         headers:
+            Authorization:
+                - '******'
+            Content-Type:
+                - application/x-www-form-urlencoded; charset=utf-8
             X-Http-Record-Index:
                 - "0"
-        url: http://localhost:62333/test/knock
+        url: http://webservice/test/knock?important=value+should+match&password=_hidden&secret=_hidden
         method: GET
       response:
         proto: HTTP/1.1
@@ -35,10 +39,10 @@ interactions:
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Tue, 25 Oct 2022 17:52:19 GMT
+                - Tue, 25 Oct 2022 18:43:50 GMT
         status: 200 OK
         code: 200
-        duration: 7.166417ms
+        duration: 80.740959ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -47,15 +51,19 @@ interactions:
         content_length: 73
         transfer_encoding: []
         trailer: {}
-        host: localhost:62333
+        host: webservice
         remote_addr: ""
         request_uri: ""
         body: ""
         form: {}
         headers:
+            Authorization:
+                - '******'
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
-        url: http://localhost:62333/test/knock
+        url: http://webservice/test/knock?important=value+should+match&password=_hidden&secret=_hidden
         method: POST
       response:
         proto: HTTP/1.1
@@ -63,17 +71,17 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 223
+        content_length: 241
         uncompressed: false
         body: |
-            {"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z","slice":[{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}],"object":{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}}
+            {"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}
         headers:
             Content-Length:
-                - "223"
+                - "241"
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Tue, 25 Oct 2022 17:52:19 GMT
+                - Tue, 25 Oct 2022 18:43:50 GMT
         status: 200 OK
         code: 200
-        duration: 210.625µs
+        duration: 252.792µs

@@ -88,9 +88,17 @@ func HttpRecordCustomMatching(opts ...RecordMatcherOptions) HttpVCROptions {
 
 // HttpRecordIgnoreHost returns a HttpVCROptions that would ignore host when matching recorded requests
 func HttpRecordIgnoreHost() HttpVCROptions {
-	return HttpRecordCustomMatching(func(opt *RecordMatcherOption) {
+	matching := HttpRecordCustomMatching(func(opt *RecordMatcherOption) {
 		opt.URLMatcher = RecordURLMatcherFunc(NewRecordHostIgnoringURLMatcher())
 	})
+	hook := recorder.Hook{
+		Handler: HostIgnoringHook(),
+		Kind:    recorder.BeforeSaveHook,
+	}
+	return func(opt *HttpVCROption) {
+		matching(opt)
+		opt.Hooks = append(opt.Hooks, hook)
+	}
 }
 
 /****************************
@@ -182,11 +190,18 @@ func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (
 			return vcrOut{}, e
 		}
 
+		// set matchers
 		matchFn := NewRecordMatcher(initial.RecordMatching...)
 		idMatchFn := NewRecordIndexAwareMatcher()
 		rec.SetMatcher(wrapRecordRequestMatcher(AndMatcher(matchFn, idMatchFn)))
+
+		//set hooks
+		for _, h := range initial.Hooks {
+			rec.AddHook(h.Handler, h.Kind)
+		}
 		rec.AddHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook)
 		rec.AddHook(SanitizingHook(), recorder.BeforeSaveHook)
+
 		return vcrOut{
 			Recorder: rec,
 			HttpClientCustomizer: RecordingHttpClientCustomizer{Recorder: rec},

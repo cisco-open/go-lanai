@@ -17,6 +17,19 @@ const (
 	ModeRecording
 )
 
+/*************************
+	HttpVCROptions
+ *************************/
+
+type HttpVCROptions func(opt *HttpVCROption)
+type HttpVCROption struct {
+	Name           string
+	Mode           Mode
+	SavePath       string
+	RecordMatching []RecordMatcherOptions
+	Hooks          []recorder.Hook
+}
+
 /******************************
 	HTTP VCR Request Matching
  ******************************/
@@ -60,16 +73,4 @@ func OrMatcher[O, R any](matchers ...GenericMatcherFunc[O, R]) GenericMatcherFun
 		}
 		return e
 	}
-}
-
-/*************************
-	HttpVCROptions
- *************************/
-
-type HttpVCROptions func(opt *HttpVCROption)
-type HttpVCROption struct {
-	Name           string
-	Mode           Mode
-	SavePath       string
-	RecordMatching []RecordMatcherOptions
 }

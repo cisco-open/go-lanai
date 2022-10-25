@@ -6,6 +6,11 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
+)
+
+const (
+	DefaultHost = "webservice"
 )
 
 type ValueSanitizer func(string) string
@@ -70,6 +75,19 @@ func SanitizingHook() func(i *cassette.Interaction) error {
 		return nil
 	}
 }
+
+// HostIgnoringHook changes the host of request to a pre-defined constant, to avoid randomness
+func HostIgnoringHook() func(i *cassette.Interaction) error {
+	return func(i *cassette.Interaction) error {
+		i.Request.URL = strings.Replace(i.Request.URL, i.Request.Host, DefaultHost, 1)
+		i.Request.Host = DefaultHost
+		return nil
+	}
+}
+
+/************************
+	helpers
+ ************************/
 
 func sanitizeValues(values map[string][]string, sanitizers map[string]ValueSanitizer) map[string][]string {
 	for k := range values {
