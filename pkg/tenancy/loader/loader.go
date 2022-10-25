@@ -10,15 +10,15 @@ import (
 )
 
 type TenancyLoader struct {
-	rc redis.Client
-	store TenantHierarchyStore
+	rc       redis.Client
+	store    TenantHierarchyStore
 	accessor tenancy.Accessor
 }
 
 func NewLoader(rc redis.Client, store TenantHierarchyStore, accessor tenancy.Accessor) *TenancyLoader {
 	return &TenancyLoader{
-		rc: rc,
-		store: store,
+		rc:       rc,
+		store:    store,
 		accessor: accessor,
 	}
 }
@@ -74,6 +74,16 @@ func (l *TenancyLoader) LoadTenantHierarchy(ctx context.Context) (err error) {
 					return statusCmd.Err()
 				}
 			}
+		}
+
+		// need to wait until root tenant exists
+		if cmd := tx.Get(ctx, tenancy.RootTenantKey); cmd.Err() != nil {
+			logger.WithContext(ctx).Errorf("Failed to load root tenant due to error: %v", cmd.Err())
+			if statusCmd := tx.Set(ctx, tenancy.StatusKey, tenancy.STATUS_FAILED_TO_LOAD_ROOT_TENANT, 0); statusCmd.Err() != nil {
+				logger.WithContext(ctx).Errorf("Failed to set status to STATUS_FAILED_TO_LOAD_ROOT_TENANT due to error: %v", statusCmd.Err())
+				return statusCmd.Err()
+			}
+			return cmd.Err()
 		}
 
 		if len(relations) != 0 {
