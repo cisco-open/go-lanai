@@ -275,14 +275,14 @@ func newPostRequest(ctx context.Context, _ *testing.T, g *gomega.WithT, opts ...
 
 func prepareRequest(req *http.Request, contentType string, opts []webtest.RequestOptions) {
 	// set headers
-	for _, k := range SensitiveHeaders {
+	for k  := range SensitiveRequestHeaders {
 		req.Header.Set(k, utils.RandomString(20))
 	}
 	req.Header.Set("Content-Type", contentType)
 
 	// set sensitive queries
 	q := req.URL.Query()
-	for _, k := range SensitiveQueries {
+	for k := range SensitiveRequestQueries {
 		q.Set(k, utils.RandomString(10))
 	}
 	q.Set(RequiredQuery, "value should match")

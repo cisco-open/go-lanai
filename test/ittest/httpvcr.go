@@ -257,6 +257,7 @@ func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (
 		for _, h := range initial.Hooks {
 			rec.AddHook(h.Handler, h.Kind)
 		}
+		rec.AddHook(FixedDurationHook(DefaultHttpDuration), recorder.BeforeSaveHook)
 		rec.AddHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook)
 		rec.AddHook(SanitizingHook(), recorder.BeforeSaveHook)
 

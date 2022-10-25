@@ -11,15 +11,6 @@ import (
 	"strconv"
 )
 
-var (
-	xInteractionIndexHeader = `X-Http-Record-Index`
-
-	IgnoredHeaders = utils.NewStringSet(xInteractionIndexHeader)
-
-	SensitiveHeaders = []string{"Authorization", xInteractionIndexHeader}
-	SensitiveQueries = []string{"password", "secret"}
-)
-
 type RecordMatcherOptions func(opt *RecordMatcherOption)
 type RecordMatcherOption struct {
 	URLMatcher    RecordURLMatcherFunc
@@ -31,15 +22,15 @@ type RecordMatcherOption struct {
 // NewRecordMatcher create a custom RecordMatcherFunc to compare recorded request and actual request.
 // By default, the crated matcher compare following:
 // - Method, Host, Path are exact match
-// - Queries are exact match except for SensitiveQueries
-// - Headers are exact match except for SensitiveHeaders
+// - Queries are exact match except for SensitiveRequestQueries
+// - Headers are exact match except for SensitiveRequestHeaders
 // - Body is compared as JSON
 // Note: directly using this function requires knowledge about golang generics and function casting.
 func NewRecordMatcher(opts ...RecordMatcherOptions) GenericMatcherFunc[*http.Request, cassette.Request] {
 	opt := &RecordMatcherOption{
 		URLMatcher:    RecordURLMatcherFunc(NewRecordURLMatcher()),
-		QueryMatcher:  RecordQueryMatcherFunc(NewRecordQueryMatcher(SensitiveQueries...)),
-		HeaderMatcher: RecordHeaderMatcherFunc(NewRecordHeaderMatcher(SensitiveHeaders...)),
+		QueryMatcher:  RecordQueryMatcherFunc(NewRecordQueryMatcher(SensitiveRequestQueries.Values()...)),
+		HeaderMatcher: RecordHeaderMatcherFunc(NewRecordHeaderMatcher(SensitiveRequestHeaders.Values()...)),
 		BodyMatcher:   RecordBodyMatcherFunc(NewRecordJsonBodyMatcher()),
 	}
 	for _, fn := range opts {
@@ -140,7 +131,7 @@ func NewRecordQueryMatcher(fuzzyKeys ...string) GenericMatcherFunc[url.Values, u
 // NewRecordHeaderMatcher returns RecordHeaderMatcherFunc that compare keys and values of recorded and actual queries
 // Any header value is ignored if its key is in the optional fuzzyKeys
 func NewRecordHeaderMatcher(fuzzyKeys ...string) GenericMatcherFunc[http.Header, http.Header] {
-	delegate := newValuesMatcher("header", IgnoredHeaders, fuzzyKeys...)
+	delegate := newValuesMatcher("header", IgnoredRequestHeaders, fuzzyKeys...)
 	return func(out http.Header, record http.Header) error {
 		return delegate(url.Values(out), url.Values(record))
 	}

@@ -1,10 +1,12 @@
 package ittest
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"gopkg.in/dnaeon/go-vcr.v3/cassette"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type Mode recorder.Mode
@@ -15,6 +17,19 @@ const (
 	ModeCommandline Mode = iota
 	ModeReplaying
 	ModeRecording
+)
+
+// DefaultHttpDuration default duration of recorded HTTP interaction
+const DefaultHttpDuration = 200 * time.Microsecond
+
+var (
+	xInteractionIndexHeader = `X-Http-Record-Index`
+
+	IgnoredRequestHeaders = utils.NewStringSet(xInteractionIndexHeader)
+
+	SensitiveRequestHeaders = utils.NewStringSet("Authorization")
+	SensitiveRequestQueries = utils.NewStringSet("password", "secret")
+	SensitiveResponseHeaders = utils.NewStringSet("Date")
 )
 
 /*************************
