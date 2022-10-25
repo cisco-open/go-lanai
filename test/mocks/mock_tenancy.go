@@ -8,7 +8,7 @@ import (
 )
 
 type TenancyRelation struct {
-	Child uuid.UUID
+	Child  uuid.UUID
 	Parent uuid.UUID
 }
 
@@ -17,23 +17,24 @@ type MockTenancyAccessor struct {
 	ChildrenLookup    map[string][]string
 	DescendantsLookup map[string][]string
 	AncestorsLookup   map[string][]string
-	Root 			  string
+	Root              string
+	Isloaded          bool
 }
 
-func NewMockTenancyAccessor (tenantRelations []TenancyRelation, root uuid.UUID) *MockTenancyAccessor {
-	m := &MockTenancyAccessor{
-	}
+func NewMockTenancyAccessor(tenantRelations []TenancyRelation, root uuid.UUID) *MockTenancyAccessor {
+	m := &MockTenancyAccessor{}
+	// default
+	m.Isloaded = true
 	m.Reset(tenantRelations, root)
 	return m
 }
 
-func (m *MockTenancyAccessor) Reset (tenantRelations []TenancyRelation, root uuid.UUID) {
+func (m *MockTenancyAccessor) Reset(tenantRelations []TenancyRelation, root uuid.UUID) {
 	m.ParentLookup = make(map[string]string)
 	m.ChildrenLookup = make(map[string][]string)
 	m.DescendantsLookup = make(map[string][]string)
 	m.AncestorsLookup = make(map[string][]string)
 	m.Root = root.String()
-
 
 	//build the parent and children lookup
 	for _, r := range tenantRelations {
@@ -125,7 +126,7 @@ func (m *MockTenancyAccessor) GetRoot(ctx context.Context) (string, error) {
 }
 
 func (m *MockTenancyAccessor) IsLoaded(ctx context.Context) bool {
-	return true
+	return m.Isloaded
 }
 
 func (m *MockTenancyAccessor) GetTenancyPath(ctx context.Context, tenantId string) ([]uuid.UUID, error) {
