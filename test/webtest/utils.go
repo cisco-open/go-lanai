@@ -42,7 +42,7 @@ type RequestOptions func(req *http.Request)
 //	- If the given target is absolute URL, host, port and path are kept unchanged
 //
 // This function panic if given target is not valid absolute/relative URL or test server is not enabled
-func NewRequest(ctx context.Context, method, target string, body io.Reader, opts...RequestOptions) (req *http.Request) {
+func NewRequest(ctx context.Context, method, target string, body io.Reader, opts ...RequestOptions) (req *http.Request) {
 	tUrl, e := url.Parse(target)
 	if e != nil {
 		panic(fmt.Sprintf("invalid request target: %v", e))
@@ -53,9 +53,16 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader, opts
 		panic("invalid use of webtest.NewRequest(). Make sure webtest.WithRealServer() or webtest.WithMockedServer() is in-effect")
 	}
 
+	originalPath := tUrl.Path
 	if !tUrl.IsAbs() {
 		tUrl.Scheme = "http"
 		tUrl.Path = path.Clean(path.Join(info.contextPath, tUrl.Path))
+		// path.Clean removes trailing slash except for root;
+		// put the trailing slash back if necessary;
+		// make sure it behaves the same as production
+		if originalPath[len(originalPath)-1] == '/' && tUrl.Path != "/" {
+			tUrl.Path += "/"
+		}
 	}
 
 	if ctx.Value(ctxKeyHttpHandler) != nil {
@@ -80,7 +87,7 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader, opts
 // this func might return error if test server mode is WithRealServer()
 // Note: don't forget to close the response's body when done with it
 //nolint:bodyclose // we don't close body here, whoever using this function should close it when done
-func Exec(ctx context.Context, req *http.Request, opts...RequestOptions) (ExecResult, error) {
+func Exec(ctx context.Context, req *http.Request, opts ...RequestOptions) (ExecResult, error) {
 	for _, fn := range opts {
 		fn(req)
 	}
@@ -103,7 +110,7 @@ func Exec(ctx context.Context, req *http.Request, opts...RequestOptions) (ExecRe
 
 // MustExec is same as Exec, but panic instead of returning error
 // Note: don't forget to close the response's body when done with it
-func MustExec(ctx context.Context, req *http.Request, opts...RequestOptions) ExecResult {
+func MustExec(ctx context.Context, req *http.Request, opts ...RequestOptions) ExecResult {
 	ret, e := Exec(ctx, req, opts...)
 	if e != nil {
 		panic(e)
@@ -115,10 +122,10 @@ func MustExec(ctx context.Context, req *http.Request, opts...RequestOptions) Exe
 	Options
  *************************/
 
-func WithHeaders(kvs...string) RequestOptions {
+func WithHeaders(kvs ...string) RequestOptions {
 	return func(req *http.Request) {
-		for i := 0; i < len(kvs); i+=2 {
-			if i + 1 < len(kvs) {
+		for i := 0; i < len(kvs); i += 2 {
+			if i+1 < len(kvs) {
 				req.Header.Add(kvs[i], kvs[i+1])
 			} else {
 				req.Header.Add(kvs[i], "")

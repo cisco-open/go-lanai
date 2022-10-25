@@ -102,9 +102,10 @@ func SubTestSwaggerUIPage() test.GomegaSubTestFunc {
 		// with slash
 		r = webtest.NewRequest(ctx, http.MethodGet, "/swagger/", nil)
 		resp = exec(ctx, r)
-		g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "StatusCode should be correct")
+		g.Expect(resp.StatusCode).To(Equal(http.StatusMovedPermanently), "StatusCode should be correct")
 		contentType = resp.Header.Get("Content-Type")
 		g.Expect(contentType).To(HavePrefix("text/html"), "UI page should have text/html content type")
+		g.Expect(resp.Header.Get("Location")).To(Equal("http:///test/swagger"))
 	}
 }
 
