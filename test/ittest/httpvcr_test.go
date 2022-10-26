@@ -106,12 +106,14 @@ func TestHttpVCRRecording(t *testing.T) {
 		apptest.WithFxOptions(
 			web.FxControllerProviders(NewTestController),
 		),
-		test.GomegaSubTest(SubTestNormalInteraction(&di), "TestHttpVCRRecording"),
 		test.GomegaSubTest(SubTestHttpVCRMode(true), "TestHttpVCRMode"),
+		test.GomegaSubTest(SubTestNormalGet(&di), "TestHttpVCRRecordGet"),
+		test.GomegaSubTest(SubTestNormalPostJson(&di), "TestHttpVCRRecordPostJson"),
+		test.GomegaSubTest(SubTestNormalPostForm(&di), "TestHttpVCRRecordPostForm"),
 	)
 }
 
-func TestHttpVCRPlayback(t *testing.T) {
+func TestHttpVCRPlaybackExact(t *testing.T) {
 	var di vcrDI
 	t.Name()
 	test.RunTest(context.Background(), t,
@@ -119,7 +121,23 @@ func TestHttpVCRPlayback(t *testing.T) {
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
-		test.GomegaSubTest(SubTestNormalInteraction(&di), "TestNormalInteraction"),
+		test.GomegaSubTest(SubTestNormalGet(&di), "TestNormalGet"),
+		test.GomegaSubTest(SubTestNormalPostJson(&di), "TestNormalPostJson"),
+		test.GomegaSubTest(SubTestNormalPostForm(&di), "TestNormalPostForm"),
+	)
+}
+
+func TestHttpVCRPlaybackEquivalent(t *testing.T) {
+	var di vcrDI
+	t.Name()
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
+		apptest.WithDI(&di),
+		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
+		test.GomegaSubTest(SubTestEquivalentGet(&di), "TestEquivalentGet"),
+		test.GomegaSubTest(SubTestEquivalentPostJson(&di), "TestEquivalentPostJson"),
+		test.GomegaSubTest(SubTestEquivalentPostForm(&di), "TestEquivalentPostForm"),
 	)
 }
 
@@ -155,7 +173,10 @@ func TestHttpVCRPlaybackIncorrectBody(t *testing.T) {
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
-		//test.GomegaSubTest(SubTestIncorrectRequestBody(&di), "TestIncorrectRequestBody"),
+		test.GomegaSubTest(SubTestEquivalentGet(&di), "TestEquivalentGet"), // let interaction counter move forward
+		test.GomegaSubTest(SubTestIncorrectRequestJsonBody(&di), "TestIncorrectRequestJsonBody"),
+		test.GomegaSubTest(SubTestNormalPostJson(&di), "TestNormalPostJson"), // let interaction counter move forward
+		test.GomegaSubTest(SubTestIncorrectRequestFormBody(&di), "TestIncorrectRequestFormBody"),
 	)
 }
 
@@ -169,20 +190,65 @@ func SubTestHttpVCRMode(expectRecording bool) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestNormalInteraction(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestNormalGet(di *vcrDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
-		var req *http.Request
-		var resp *http.Response
-		var e error
+		req := newGetRequest(ctx, t, g)
+		resp, e := Client(ctx).Do(req)
+		g.Expect(e).To(Succeed(), "sending request should succeed")
+		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
+	}
+}
 
-		req = newGetRequest(ctx, t, g)
-		resp, e = Client(ctx).Do(req)
+func SubTestNormalPostJson(di *vcrDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
+		req := newPostJsonRequest(ctx, t, g)
+		resp, e := Client(ctx).Do(req)
 		g.Expect(e).To(Succeed(), "sending request should succeed")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
 
-		req = newPostRequest(ctx, t, g)
-		resp, e = Client(ctx).Do(req)
+	}
+}
+
+func SubTestNormalPostForm(di *vcrDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
+
+		req := newPostFormRequest(ctx, t, g)
+		resp, e := Client(ctx).Do(req)
+		g.Expect(e).To(Succeed(), "sending request should succeed")
+		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
+	}
+}
+
+func SubTestEquivalentGet(di *vcrDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
+		req := newGetRequest(ctx, t, g)
+		resp, e := Client(ctx).Do(req)
+		g.Expect(e).To(Succeed(), "sending request should succeed")
+		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
+	}
+}
+
+func SubTestEquivalentPostJson(di *vcrDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
+		req := newPostJsonRequest(ctx, t, g, withBody(CorrectRequestJsonBodyAlt))
+		resp, e := Client(ctx).Do(req)
+		g.Expect(e).To(Succeed(), "sending request should succeed")
+		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
+
+	}
+}
+
+func SubTestEquivalentPostForm(di *vcrDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
+
+		req := newPostFormRequest(ctx, t, g, withBody(CorrectRequestFormBodyAlt))
+		resp, e := Client(ctx).Do(req)
 		g.Expect(e).To(Succeed(), "sending request should succeed")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
 	}
@@ -210,7 +276,7 @@ func SubTestIncorrectRequestOrder(di *vcrDI) test.GomegaSubTestFunc {
 		var req *http.Request
 		var e error
 
-		req = newPostRequest(ctx, t, g)
+		req = newPostJsonRequest(ctx, t, g)
 		_, e = Client(ctx).Do(req)
 		g.Expect(e).To(HaveOccurred(), "sending request in wrong order should fail")
 
@@ -220,19 +286,22 @@ func SubTestIncorrectRequestOrder(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestIncorrectRequestBody(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestIncorrectRequestJsonBody(di *vcrDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
-		var req *http.Request
-		var e error
+		req := newPostJsonRequest(ctx, t, g, withBody(IncorrectRequestJsonBody))
+		_, e := Client(ctx).Do(req)
+		g.Expect(e).To(HaveOccurred(), "sending request with wrong body should fail")
+	}
+}
 
-		req = newGetRequest(ctx, t, g, withBody(IncorrectRequestFormBody))
-		_, e = Client(ctx).Do(req)
-		g.Expect(e).To(HaveOccurred(), "sending request with wrong form body should fail")
+func SubTestIncorrectRequestFormBody(di *vcrDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 
-		req = newPostRequest(ctx, t, g, withBody(IncorrectRequestJsonBody))
-		_, e = Client(ctx).Do(req)
-		g.Expect(e).To(HaveOccurred(), "sending request with wrong json body should fail")
+		req := newPostFormRequest(ctx, t, g, withBody(IncorrectRequestFormBody))
+		_, e := Client(ctx).Do(req)
+		g.Expect(e).To(HaveOccurred(), "sending request with wrong body should fail")
 	}
 }
 
@@ -253,14 +322,14 @@ func newGetRequest(ctx context.Context, _ *testing.T, g *gomega.WithT, opts ...w
 	}
 
 	url := fmt.Sprintf("http://localhost:%d%s%s", port, webtest.CurrentContextPath(ctx), PathGet)
-	req, e := http.NewRequest(http.MethodGet, url, strings.NewReader(CorrectRequestFormBody))
+	req, e := http.NewRequest(http.MethodGet, url, nil)
 	g.Expect(e).To(Succeed(), "creating request should succeed")
 
 	prepareRequest(req, "application/x-www-form-urlencoded; charset=utf-8", opts)
 	return req
 }
 
-func newPostRequest(ctx context.Context, _ *testing.T, g *gomega.WithT, opts ...webtest.RequestOptions) *http.Request {
+func newPostJsonRequest(ctx context.Context, _ *testing.T, g *gomega.WithT, opts ...webtest.RequestOptions) *http.Request {
 	port := webtest.CurrentPort(ctx)
 	if port < 0 {
 		port = 8080
@@ -270,6 +339,19 @@ func newPostRequest(ctx context.Context, _ *testing.T, g *gomega.WithT, opts ...
 	g.Expect(e).To(Succeed(), "creating request should succeed")
 
 	prepareRequest(req, "application/json; charset=utf-8", opts)
+	return req
+}
+
+func newPostFormRequest(ctx context.Context, _ *testing.T, g *gomega.WithT, opts ...webtest.RequestOptions) *http.Request {
+	port := webtest.CurrentPort(ctx)
+	if port < 0 {
+		port = 8080
+	}
+	url := fmt.Sprintf("http://localhost:%d%s%s", port, webtest.CurrentContextPath(ctx), PathPost)
+	req, e := http.NewRequest(http.MethodPost, url, strings.NewReader(CorrectRequestFormBody))
+	g.Expect(e).To(Succeed(), "creating request should succeed")
+
+	prepareRequest(req, "application/x-www-form-urlencoded; charset=utf-8", opts)
 	return req
 }
 

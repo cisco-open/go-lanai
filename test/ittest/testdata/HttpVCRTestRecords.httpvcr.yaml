@@ -6,7 +6,7 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 63
+        content_length: 0
         transfer_encoding: []
         trailer: {}
         host: webservice
@@ -54,7 +54,7 @@ interactions:
         host: webservice
         remote_addr: ""
         request_uri: ""
-        body: ""
+        body: '{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}'
         form: {}
         headers:
             Authorization:
@@ -63,6 +63,56 @@ interactions:
                 - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
+        url: http://webservice/test/knock?important=value+should+match&password=_hidden&secret=_hidden
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 241
+        uncompressed: false
+        body: |
+            {"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}
+        headers:
+            Content-Length:
+                - "241"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 63
+        transfer_encoding: []
+        trailer: {}
+        host: webservice
+        remote_addr: ""
+        request_uri: ""
+        body: bool=true&number=1&string=correct&time=2022-10-11T00%3A00%3A00Z
+        form:
+            bool:
+                - "true"
+            number:
+                - "1"
+            string:
+                - correct
+            time:
+                - "2022-10-11T00:00:00Z"
+        headers:
+            Authorization:
+                - '******'
+            Content-Type:
+                - application/x-www-form-urlencoded; charset=utf-8
+            X-Http-Record-Index:
+                - "2"
         url: http://webservice/test/knock?important=value+should+match&password=_hidden&secret=_hidden
         method: POST
       response:

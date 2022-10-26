@@ -56,6 +56,10 @@ type RecordURLMatcherFunc GenericMatcherFunc[*url.URL, *url.URL]
 type RecordQueryMatcherFunc GenericMatcherFunc[url.Values, url.Values]
 type RecordHeaderMatcherFunc GenericMatcherFunc[http.Header, http.Header]
 type RecordBodyMatcherFunc GenericMatcherFunc[[]byte, []byte]
+type RecordBodyMatcher interface {
+	Support(contentType string) bool
+	Matches(out []byte, record []byte) error
+}
 
 /******************************
 	Request Matcher Logic Ops

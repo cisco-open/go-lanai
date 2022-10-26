@@ -3,6 +3,7 @@ package ittest
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"gopkg.in/dnaeon/go-vcr.v3/cassette"
+	"mime"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -70,11 +71,18 @@ func SanitizingHook() func(i *cassette.Interaction) error {
 	return func(i *cassette.Interaction) error {
 		i.Request.Headers = sanitizeHeaders(i.Request.Headers, SensitiveRequestHeaders)
 		i.Request.URL = sanitizeUrl(i.Request.URL, SensitiveRequestQueries)
-		sanitizeRequestForm(&i.Request, SensitiveRequestQueries)
-		i.Request.Body = sanitizeJsonBody(i.Request.Body)
+		switch mediaType(i.Request.Headers) {
+		case "application/x-www-form-urlencoded":
+			i.Request.Body = sanitizeRequestForm(&i.Request, SensitiveRequestQueries)
+		case "application/json":
+			i.Request.Body = sanitizeJsonBody(i.Request.Body)
+		}
 
 		i.Response.Headers = sanitizeHeaders(i.Response.Headers, SensitiveResponseHeaders)
-		i.Response.Body = sanitizeJsonBody(i.Response.Body)
+		switch mediaType(i.Response.Headers) {
+		case "application/json":
+			i.Request.Body = sanitizeJsonBody(i.Request.Body)
+		}
 		return nil
 	}
 }
@@ -99,6 +107,12 @@ func FixedDurationHook(duration time.Duration) func(i *cassette.Interaction) err
 /************************
 	helpers
  ************************/
+
+func mediaType(header http.Header) string {
+	v := header.Get("Content-Type")
+	media, _, _ := mime.ParseMediaType(v)
+	return media
+}
 
 func sanitizeValues(values map[string][]string, sanitizers map[string]ValueSanitizer, keys utils.StringSet) map[string][]string {
 	for k := range values {
@@ -130,12 +144,12 @@ func sanitizeUrl(raw string, queryKeys utils.StringSet) string {
 	return parsed.String()
 }
 
-func sanitizeRequestForm(req *cassette.Request, queryKeys utils.StringSet) {
+func sanitizeRequestForm(req *cassette.Request, queryKeys utils.StringSet) string {
 	req.Form = sanitizeValues(req.Form, QuerySanitizers, queryKeys)
-	req.Body = req.Form.Encode()
+	return req.Form.Encode()
 }
 
-func sanitizeJsonBody(body string) string{
+func sanitizeJsonBody(body string) string {
 	// TODO
 	return body
 }
