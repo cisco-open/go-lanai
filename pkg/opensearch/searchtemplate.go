@@ -11,14 +11,13 @@ import (
 	"io/ioutil"
 )
 
-func (c *RepoImpl[T]) SearchTemplate(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) (hits int, err error) {
+func (c *RepoImpl[T]) SearchTemplate(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchTemplateRequest]) (hits int, err error) {
 	var buffer bytes.Buffer
 	err = json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
 		return 0, fmt.Errorf("unable to encode mapping: %w", err)
 	}
-	o = append(o, Search.WithBody(&buffer))
-	resp, err := c.client.Search(ctx, o...)
+	resp, err := c.client.SearchTemplate(ctx, &buffer, o...)
 	if err != nil {
 		return 0, err
 	}
