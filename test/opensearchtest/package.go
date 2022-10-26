@@ -230,6 +230,15 @@ func EditIndexForTesting(prepend string) opensearch.BeforeHookFunc {
 				cfg.Index = prepend + cfg.Index
 			}
 			*opt = append(*opt, f)
+		case *[]func(request *opensearchapi.SearchTemplateRequest):
+			f := func(request *opensearchapi.SearchTemplateRequest) {
+				var indices []string
+				for _, index := range request.Index {
+					indices = append(indices, prepend+index)
+				}
+				request.Index = indices
+			}
+			*opt = append(*opt, f)
 		}
 		return ctx
 	}

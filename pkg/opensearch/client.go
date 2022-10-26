@@ -2,6 +2,9 @@ package opensearch
 
 import (
 	"context"
+	"crypto/tls"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"errors"
@@ -11,6 +14,7 @@ import (
 	"github.com/opensearch-project/opensearch-go/opensearchutil"
 	"go.uber.org/fx"
 	"io"
+	"net/http"
 	"reflect"
 )
 
@@ -20,6 +24,7 @@ var (
 
 type Request interface {
 	opensearchapi.SearchRequest |
+		opensearchapi.SearchTemplateRequest |
 		opensearchapi.IndicesCreateRequest |
 		opensearchapi.IndexRequest |
 		opensearchutil.BulkIndexerConfig |
@@ -34,6 +39,7 @@ type Request interface {
 
 type OpenClient interface {
 	Search(ctx context.Context, o ...Option[opensearchapi.SearchRequest]) (*opensearchapi.Response, error)
+	SearchTemplate(ctx context.Context, body io.Reader, o ...Option[opensearchapi.SearchTemplateRequest]) (*opensearchapi.Response, error)
 	Index(ctx context.Context, index string, body io.Reader, o ...Option[opensearchapi.IndexRequest]) (*opensearchapi.Response, error)
 	BulkIndexer(ctx context.Context, action BulkAction, bulkItems [][]byte, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexer, error)
 	IndicesCreate(ctx context.Context, index string, o ...Option[opensearchapi.IndicesCreateRequest]) (*opensearchapi.Response, error)
@@ -83,15 +89,46 @@ func NewClient(di newClientDI) (OpenClient, error) {
 
 type configDI struct {
 	fx.In
-	Properties *Properties
+	Properties         *Properties
+	TlsProviderFactory *tlsconfig.ProviderFactory
 }
 
-func NewConfig(di configDI) opensearch.Config {
-	return opensearch.Config{
+func NewConfig(ctx *bootstrap.ApplicationContext, di configDI) (opensearch.Config, error) {
+	conf := opensearch.Config{
 		Addresses: di.Properties.Addresses,
 		Username:  di.Properties.Username,
 		Password:  di.Properties.Password,
 	}
+
+	if di.Properties.TLS.Enable {
+		p, err := di.TlsProviderFactory.GetProvider(di.Properties.TLS.Config)
+		if err != nil {
+			return conf, err
+		}
+		getClientCertificateFn, err := p.GetClientCertificate(ctx)
+		if err != nil {
+			return conf, err
+		}
+		caCertPool, err := p.RootCAs(ctx)
+		if err != nil {
+			return conf, err
+		}
+		minTLSVersion, err := p.GetMinTlsVersion()
+		if err != nil {
+			return conf, err
+		}
+		//nolint:gosec
+		tlsConf := &tls.Config{
+			GetClientCertificate: getClientCertificateFn,
+			RootCAs:              caCertPool,
+			MinVersion:           minTLSVersion,
+		}
+		conf.Transport = &http.Transport{
+			TLSClientConfig: tlsConf,
+		}
+	}
+
+	return conf, nil
 }
 
 type OpenClientImpl struct {
@@ -108,6 +145,7 @@ const (
 )
 const (
 	CmdSearch CommandType = iota
+	CmdSearchTemplate
 	CmdIndex
 	CmdIndicesCreate
 	CmdIndicesGet
@@ -122,6 +160,7 @@ const (
 
 var CmdToString = map[CommandType]string{
 	CmdSearch:                     "search",
+	CmdSearchTemplate:             "search template",
 	CmdIndex:                      "index",
 	CmdIndicesCreate:              "indices create",
 	CmdIndicesGet:                 "indices get",
@@ -202,8 +241,9 @@ func (c *OpenClientImpl) RemoveAfterHook(hook AfterHook) {
 // BeforeContext is the context given to a BeforeHook
 //
 // Options will be in the form *[]func(request *Request){}, example:
-// 	options := make([]func(request *opensearchapi.SearchRequest), 0)
-// 	BeforeContext{Options: &options}
+//
+//	options := make([]func(request *opensearchapi.SearchRequest), 0)
+//	BeforeContext{Options: &options}
 type BeforeContext struct {
 	cmd     CommandType
 	Options interface{}
@@ -246,8 +286,9 @@ func (f BeforeHookFunc) Before(ctx context.Context, before BeforeContext) contex
 // AfterContext is the context given to a AfterHook
 //
 // Options will be in the form *[]func(request *Request){} example:
-// 	options := make([]func(request *opensearchapi.SearchRequest), 0)
-// 	AfterContext{Options: &options}
+//
+//	options := make([]func(request *opensearchapi.SearchRequest), 0)
+//	AfterContext{Options: &options}
 //
 // Resp and Err can be modified before they are returned out of Request of OpenClientImpl
 // example being OpenClientImpl.Search

@@ -2,6 +2,12 @@ package opensearchtest
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"fmt"
+	"net/http"
+	"testing"
+	"time"
+
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
@@ -11,9 +17,6 @@ import (
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"go.uber.org/fx"
-	"net/http"
-	"testing"
-	"time"
 )
 
 //func TestMain(m *testing.M) {
@@ -53,7 +56,7 @@ func TestScopeController(t *testing.T) {
 			SetRecordDelay(time.Millisecond*1500),
 		),
 		apptest.WithTimeout(time.Minute),
-		apptest.WithModules(opensearch.Module),
+		apptest.WithModules(opensearch.Module, tlsconfig.Module),
 		apptest.WithFxOptions(
 			fx.Provide(NewFakeService),
 		),
@@ -64,6 +67,7 @@ func TestScopeController(t *testing.T) {
 		apptest.WithDI(di),
 		test.SubTestSetup(SetupOpenSearchTest(di)),
 		test.GomegaSubTest(SubTestRecording(di), "SubTestRecording"),
+		test.GomegaSubTest(SubTestSearchTemplate(di), "SubTestSearchTemplate"),
 		test.GomegaSubTest(SubTestHooks(di), "SubTestHooks"),
 		test.GomegaSubTest(SubTestTracer(di), "SubTestTracer"),
 		test.GomegaSubTest(SubTestPing(di), "SubTestPing"),
@@ -386,7 +390,7 @@ func SubTestTracer(di *opensearchDI) test.GomegaSubTestFunc {
 						}
 
 						hits := spans[0].Tag("hits")
-						expectedHits := 3
+						expectedHits := 7
 						if hits.(int) != expectedHits {
 							t.Errorf("expected hits: %v, got: %v", expectedHits, hits.(int))
 						}
@@ -456,6 +460,78 @@ func SubTestPing(di *opensearchDI) test.GomegaSubTestFunc {
 		err := di.FakeService.Repo.Ping(ctx)
 		if err != nil {
 			t.Fatalf("unable to search for document")
+		}
+	}
+}
+
+func SubTestSearchTemplate(di *opensearchDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		type args struct {
+			ctx          context.Context
+			dest         []GenericAuditEvent
+			query        map[string]interface{}
+			options      []opensearch.Option[opensearchapi.SearchTemplateRequest]
+			expectedHits int
+			validator    func(event GenericAuditEvent) error
+		}
+		tests := []struct {
+			name string
+			args args
+		}{
+			{
+				name: "Simple Template Query",
+				args: args{
+					ctx:  ctx,
+					dest: []GenericAuditEvent{},
+					query: map[string]interface{}{
+						"source": map[string]interface{}{
+							"query": map[string]interface{}{
+								"bool": map[string]interface{}{
+									"must": []map[string]interface{}{
+										{
+											"match": map[string]interface{}{
+												"Type": "{{type}}",
+											},
+										},
+									},
+								},
+							},
+						},
+						"params": map[string]interface{}{
+							"type": "DP",
+						},
+					},
+					options: []opensearch.Option[opensearchapi.SearchTemplateRequest]{
+						opensearch.SearchTemplate.WithIndex("auditlog"),
+					},
+					expectedHits: 3,
+					validator: func(event GenericAuditEvent) error {
+						if event.Type != "DP" {
+							return fmt.Errorf("expected event.Type: %v to be DP", event.Type)
+						}
+						return nil
+					},
+				},
+			},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				_, err := di.FakeService.Repo.SearchTemplate(
+					tt.args.ctx,
+					&tt.args.dest,
+					tt.args.query,
+					tt.args.options...,
+				)
+				if err != nil {
+					t.Fatalf("unable to search for document")
+				}
+				g.Expect(len(tt.args.dest)).To(gomega.Equal(tt.args.expectedHits))
+				for _, item := range tt.args.dest {
+					if err := tt.args.validator(item); err != nil {
+						t.Errorf("validation failed: %v", err)
+					}
+				}
+			})
 		}
 	}
 }
