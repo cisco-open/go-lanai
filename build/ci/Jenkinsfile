@@ -54,12 +54,12 @@ pipeline {
                     }
                     sh """
                         set +x
-                        sonar_version=$(curl -s https://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/maven-metadata.xml | grep release | cut -d '>' -f 2 | cut -d '<' -f 1)
-                        echo $sonar_version
-                        curl -s -O https://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/$sonar_version/sonar-scanner-cli-$sonar_version.zip
-                        unzip sonar-scanner-cli-$sonar_version.zip
+                        sonar_version=\$(curl -s https://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/maven-metadata.xml | grep release | cut -d '>' -f 2 | cut -d '<' -f 1)
+                        echo \$sonar_version
+                        curl -s -O https://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/\$sonar_version/sonar-scanner-cli-\$sonar_version.zip
+                        unzip sonar-scanner-cli-\$sonar_version.zip
                         sudo rm -rf /opt/sonar-scanner
-                        sudo mv sonar-scanner-$sonar_version /opt/sonar-scanner
+                        sudo mv sonar-scanner-\$sonar_version /opt/sonar-scanner
                         sonar-scanner --version
                     """
                     TOOLS = env.WORKSPACE + "/bin"
