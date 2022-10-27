@@ -10,7 +10,7 @@ import (
 var internalAccessor Accessor
 
 var Module = &bootstrap.Module{
-	Name:       "tenant-hierarchy",
+	Name: "tenant-hierarchy",
 	Precedence: bootstrap.TenantHierarchyAccessorPrecedence,
 	Options: []fx.Option{
 		fx.Provide(bindCacheProperties),
@@ -30,9 +30,9 @@ func Use() {
 type defaultDI struct {
 	fx.In
 	Ctx                    *bootstrap.ApplicationContext
-	Cf                     redis.ClientFactory `optional:"true"`
-	Prop                   CacheProperties     `optional:"true"`
-	UnnamedTenancyAccessor Accessor            `optional:"true"`
+	Cf                     redis.ClientFactory           `optional:"true"`
+	Prop                   CacheProperties               `optional:"true"`
+	UnnamedTenancyAccessor Accessor                      `optional:"true"`
 }
 
 func defaultTenancyAccessorProvider() fx.Annotated {

@@ -19,7 +19,7 @@ type mocksDIOut struct {
 	AuthClient   seclient.AuthenticationClient
 	TokenReader  oauth2.TokenStoreReader
 	TokenRevoker sectest.MockedTokenRevoker
-	Counter      InvocationCounter
+	Counter InvocationCounter
 }
 
 func provideScopeMocksWithCounter(ctx *bootstrap.ApplicationContext) mocksDIOut {
@@ -37,7 +37,7 @@ func provideScopeMocksWithCounter(ctx *bootstrap.ApplicationContext) mocksDIOut 
 	}
 }
 
-type noopScopeManager struct{}
+type noopScopeManager struct {}
 
 func (m *noopScopeManager) StartScope(ctx context.Context, _ *scope.Scope) (context.Context, error) {
 	return ctx, nil
