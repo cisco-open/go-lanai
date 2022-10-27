@@ -22,6 +22,14 @@ type Repo[T any] interface {
 	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/search/#request-body
 	Search(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchRequest]) (int, error)
 
+	// SearchTemplate allows to use the Mustache language to pre-render a search definition
+	//
+	// The data will be unmarshalled and returned to the dest argument.
+	// The body argument should follow the Search request body [Format].
+	//
+	// [Format]: https://opensearch.org/docs/latest/opensearch/rest-api/search/#request-body
+	SearchTemplate(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchTemplateRequest]) (int, error)
+
 	// Index will create a new Document in the index that is defined.
 	//
 	// The index argument defines the index name that the document should be stored in.
@@ -34,7 +42,7 @@ type Repo[T any] interface {
 	// The bulkItems argument is the array of struct items to be actioned.
 	//
 	// [Ref]: https://pkg.go.dev/github.com/opensearch-project/opensearch-go/opensearchutil#BulkIndexerItem
-	BulkIndexer(ctx context.Context, action bulkAction, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error)
+	BulkIndexer(ctx context.Context, action BulkAction, bulkItems *[]T, o ...Option[opensearchutil.BulkIndexerConfig]) (opensearchutil.BulkIndexerStats, error)
 
 	// IndicesCreate will create a new index in the cluster.
 	//
