@@ -2,6 +2,7 @@ package ittest
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/spyzhov/ajson"
 	"gopkg.in/dnaeon/go-vcr.v3/cassette"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"mime"
@@ -50,7 +51,7 @@ func NewRecorderHookWithOrder(fn recorder.HookFunc, kind recorder.HookKind, orde
 				Kind:    kind,
 			},
 		},
-		order:        order,
+		order: order,
 	}
 }
 
@@ -66,6 +67,23 @@ func (w orderedRecorderHook) Order() int {
 /************************
 	Sanitizer
  ************************/
+
+var (
+	HeaderSanitizers = map[string]ValueSanitizer{
+		"Authorization": RegExpValueSanitizer("^(?P<prefix>Basic |Bearer |Digest ).*|.*", "${prefix}******"),
+		"Date":          SubstituteValueSanitizer("Fri, 19 Aug 2022 8:51:32 GMT"),
+	}
+	QuerySanitizers = map[string]ValueSanitizer{
+		"password": DefaultValueSanitizer(),
+		"secret":   DefaultValueSanitizer(),
+		"nonce":    DefaultValueSanitizer(),
+		"token":    DefaultValueSanitizer(),
+		"access_token":  DefaultValueSanitizer(),
+	}
+	BodySanitizers = map[string]ValueSanitizer{
+		"access_token":  DefaultValueSanitizer(),
+	}
+)
 
 type ValueSanitizer func(string) string
 
@@ -86,23 +104,6 @@ func DefaultValueSanitizer() ValueSanitizer {
 	return SubstituteValueSanitizer("_hidden")
 }
 
-var (
-	HeaderSanitizers = map[string]ValueSanitizer{
-		"Authorization": RegExpValueSanitizer("^(?P<prefix>Basic |Bearer |Digest ).*|.*", "${prefix}******"),
-		"Date": SubstituteValueSanitizer("Fri, 19 Aug 2022 8:51:32 GMT"),
-	}
-	QuerySanitizers = map[string]ValueSanitizer{
-		"password": DefaultValueSanitizer(),
-		"secret":   DefaultValueSanitizer(),
-		"access_token": DefaultValueSanitizer(),
-		"token": DefaultValueSanitizer(),
-	}
-	BodySanitizers = map[string]ValueSanitizer{
-		"access_token": DefaultValueSanitizer(),
-		"secret":   DefaultValueSanitizer(),
-	}
-)
-
 /************************
 	Hooks Functions
  ************************/
@@ -119,6 +120,8 @@ func InteractionIndexAwareHook() func(i *cassette.Interaction) error {
 
 // SanitizingHook is a httpvcr hook that sanitize values in header, query, body (x-form-urlencoded/json)
 func SanitizingHook() func(i *cassette.Interaction) error {
+	reqJsonPaths := parseJsonPaths(FuzzyRequestJsonPaths.Values())
+	respJsonPaths := parseJsonPaths(FuzzyResponseJsonPaths.Values())
 	return func(i *cassette.Interaction) error {
 		i.Request.Headers = sanitizeHeaders(i.Request.Headers, FuzzyRequestHeaders)
 		i.Request.URL = sanitizeUrl(i.Request.URL, FuzzyRequestQueries)
@@ -126,13 +129,13 @@ func SanitizingHook() func(i *cassette.Interaction) error {
 		case "application/x-www-form-urlencoded":
 			i.Request.Body = sanitizeRequestForm(&i.Request, FuzzyRequestQueries)
 		case "application/json":
-			i.Request.Body = sanitizeJsonBody(i.Request.Body)
+			i.Request.Body = sanitizeJsonBody(i.Request.Body, reqJsonPaths)
 		}
 
 		i.Response.Headers = sanitizeHeaders(i.Response.Headers, FuzzyResponseHeaders)
 		switch mediaType(i.Response.Headers) {
 		case "application/json":
-			i.Request.Body = sanitizeJsonBody(i.Request.Body)
+			i.Response.Body = sanitizeJsonBody(i.Response.Body, respJsonPaths)
 		}
 		return nil
 	}
@@ -203,7 +206,30 @@ func sanitizeRequestForm(req *cassette.Request, queryKeys utils.StringSet) strin
 	return req.Form.Encode()
 }
 
-func sanitizeJsonBody(body string) string {
-	// TODO
-	return body
+func sanitizeJsonBody(body string, jsonPaths []parsedJsonPath) string {
+	if len(jsonPaths) == 0 {
+		return body
+	}
+
+	root, e := ajson.Unmarshal([]byte(body))
+	if e != nil {
+		return body
+	}
+	for _, path := range jsonPaths {
+		nodes, e := ajson.ApplyJSONPath(root, path.Parsed)
+		if e != nil || len(nodes) == 0 {
+			continue
+		}
+		for _, node := range nodes {
+			if !node.IsString() {
+				continue
+			}
+			sanitizer, ok := BodySanitizers[node.Key()]
+			if !ok {
+				sanitizer = DefaultValueSanitizer()
+			}
+			_ = node.Set(sanitizer(node.MustString()))
+		}
+	}
+	return root.String()
 }

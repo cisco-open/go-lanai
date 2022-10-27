@@ -21,7 +21,7 @@ interactions:
                 - application/x-www-form-urlencoded; charset=utf-8
             X-Http-Record-Index:
                 - "0"
-        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden
+        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: GET
       response:
         proto: HTTP/1.1
@@ -31,8 +31,7 @@ interactions:
         trailer: {}
         content_length: 223
         uncompressed: false
-        body: |
-            {"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z","slice":[{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}],"object":{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}}
+        body: '{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z","slice":[{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}],"object":{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}}'
         headers:
             Content-Length:
                 - "223"
@@ -63,7 +62,7 @@ interactions:
                 - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
-        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden
+        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: POST
       response:
         proto: HTTP/1.1
@@ -73,8 +72,7 @@ interactions:
         trailer: {}
         content_length: 241
         uncompressed: false
-        body: |
-            {"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}
+        body: '{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}'
         headers:
             Content-Length:
                 - "241"
@@ -113,7 +111,7 @@ interactions:
                 - application/x-www-form-urlencoded; charset=utf-8
             X-Http-Record-Index:
                 - "2"
-        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden
+        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: POST
       response:
         proto: HTTP/1.1
@@ -123,8 +121,7 @@ interactions:
         trailer: {}
         content_length: 241
         uncompressed: false
-        body: |
-            {"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}
+        body: '{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}'
         headers:
             Content-Length:
                 - "241"

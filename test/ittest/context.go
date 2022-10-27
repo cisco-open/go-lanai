@@ -27,9 +27,11 @@ var (
 
 	IgnoredRequestHeaders = utils.NewStringSet(xInteractionIndexHeader)
 
-	FuzzyRequestHeaders      = utils.NewStringSet("Authorization")
-	FuzzyRequestQueries  = utils.NewStringSet("password", "secret", "nonce")
-	FuzzyResponseHeaders = utils.NewStringSet("Date")
+	FuzzyRequestHeaders    = utils.NewStringSet("Authorization")
+	FuzzyRequestQueries    = utils.NewStringSet("password", "secret", "nonce", "token")
+	FuzzyRequestJsonPaths  = utils.NewStringSet()
+	FuzzyResponseHeaders   = utils.NewStringSet("Date")
+	FuzzyResponseJsonPaths = utils.NewStringSet("$..access_token")
 )
 
 /*************************

@@ -71,14 +71,7 @@ func (m RecordJsonBodyMatcher) Matches(out []byte, record []byte) error {
 // Values of any field matching the optional fuzzyJsonPaths is not compared, but outgoing request body must contain
 // all fields that the record contains
 func NewRecordJsonBodyMatcher(fuzzyJsonPaths ...string) RecordBodyMatcher {
-	parsedPaths := make([]parsedJsonPath, 0, len(fuzzyJsonPaths))
-	for _, path := range fuzzyJsonPaths {
-		p, e := ajson.ParseJSONPath(path)
-		if e != nil {
-			panic(e)
-		}
-		parsedPaths = append(parsedPaths, parsedJsonPath{Value: path, Parsed: p})
-	}
+	parsedPaths := parseJsonPaths(fuzzyJsonPaths)
 	return RecordJsonBodyMatcher(func(out []byte, record []byte) error {
 		rRoot, rMatched, e := parseJsonWithFilter(record, parsedPaths)
 		if e != nil {
@@ -115,6 +108,18 @@ func NewRecordJsonBodyMatcher(fuzzyJsonPaths ...string) RecordBodyMatcher {
 type parsedJsonPath struct {
 	Value  string
 	Parsed []string
+}
+
+func parseJsonPaths(jsonPaths []string) (parsed []parsedJsonPath) {
+	parsed = make([]parsedJsonPath, 0, len(jsonPaths))
+	for _, path := range jsonPaths {
+		p, e := ajson.ParseJSONPath(path)
+		if e != nil {
+			panic(e)
+		}
+		parsed = append(parsed, parsedJsonPath{Value: path, Parsed: p})
+	}
+	return
 }
 
 func parseJsonWithFilter(data []byte, jsonPaths []parsedJsonPath) (filtered interface{}, filteredPaths []parsedJsonPath, err error) {
