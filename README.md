@@ -478,7 +478,7 @@ At this point, if you visit the endpoint again and look at the network traffic, 
 ## Step 5: Add Saml Login
 
 Enable the SAML Login feature so that when user visits the /hello endpoint, they will be redirected to the single sign on
-page first. This feature adds a number of middleware and endpoints to allow your application to act as a SAML service provider. See [SAML login feature](pkg/security/saml/samlsp)
+page first. This feature adds a number of middleware and endpoints to allow your application to act as a SAML service provider. See [SAML login feature](pkg/security/saml/sp)
 for the list of middleware and endpoints added by this feature.
 
 **init/package.go**
@@ -497,7 +497,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samlsp"
+	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
 	"cto-github.cisco.com/tishi/example/pkg/controller"
@@ -545,7 +545,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/samlsp"
+	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
