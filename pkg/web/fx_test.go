@@ -26,6 +26,14 @@ func (c *TestController) Test(_ context.Context, _ *http.Request) (response inte
 type NotController struct {
 }
 
+type Service struct {
+}
+
+type ParamsDI struct {
+	fx.In
+	S *Service
+}
+
 type controllerDI struct {
 	fx.In
 	Controllers []Controller `group:"controllers"`
@@ -106,6 +114,24 @@ func TestFxControllerProvider(t *testing.T) {
 			expectedPanic:       false,
 			expectedFxError:     true,
 		},
+		{
+			name: "target uses Fx.In and provides Controller",
+			target: func(p ParamsDI) Controller {
+				return cIface
+			},
+			expectedControllers: []interface{}{cIface},
+			expectedPanic:       false,
+			expectedFxError:     false,
+		},
+		{
+			name: "target uses Fx.In and provides *TestController",
+			target: func(p ParamsDI) *TestController {
+				return cPtr
+			},
+			expectedControllers: nil,
+			expectedPanic:       true,
+			expectedFxError:     false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -118,6 +144,7 @@ func TestFxControllerProvider(t *testing.T) {
 
 			app := fx.New(
 				FxControllerProviders(tt.target),
+				fx.Provide(func() *Service { return &Service{} }),
 				fx.Invoke(func(di controllerDI) {
 					g.Expect(len(di.Controllers)).To(Equal(len(tt.expectedControllers)))
 					for i := 0; i < len(tt.expectedControllers); i++ {
