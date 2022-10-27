@@ -601,6 +601,8 @@ security:
 
 You'll also need to add a cert and key pair to the configs directory.
 
+Note: You could copy both from [Usermanagementservice config](https://cto-github.cisco.com/NFV-BU/usermanagementservice/tree/develop/configs)
+
 At this point, if you run the service you will get errors complaining about missing dependencies. This is because the SAML features
 don't know where to load identity provider data and user data. For this the SAML feature defines the following interfaces. You will
 need to provide implementation for them.
