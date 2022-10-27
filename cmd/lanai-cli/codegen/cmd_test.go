@@ -26,7 +26,6 @@ func TestGenerateTemplates(t *testing.T) {
 		contract   string
 		wantErr    bool
 		filesystem fs.FS
-		modifiers  map[string]string
 		outputDir  string
 		goldenDir  string
 		update     bool
@@ -36,12 +35,9 @@ func TestGenerateTemplates(t *testing.T) {
 			contract:   path.Join(testDir, "test.yaml"),
 			wantErr:    false,
 			filesystem: ActualFilesystem,
-			modifiers: map[string]string{
-				"NAME": serviceName,
-			},
-			outputDir: path.Join(testDir, "output"),
-			goldenDir: path.Join("testdata", "golden"),
-			update:    false,
+			outputDir:  path.Join(testDir, "output"),
+			goldenDir:  path.Join("testdata", "golden"),
+			update:     false,
 		},
 	}
 	for _, tt := range tests {
@@ -63,6 +59,7 @@ func TestGenerateTemplates(t *testing.T) {
 			data := map[string]interface{}{
 				generator.ProjectName: serviceName,
 				generator.OpenAPIData: openAPIData,
+				generator.Repository:  "cto-github.cisco.com/NFV-BU/test-service",
 			}
 			templates, err := generator.LoadTemplates(tt.filesystem)
 			if err != nil {
@@ -145,7 +142,7 @@ func TestGenerateTemplates(t *testing.T) {
 				// Check if all dirs in Golden directory were created
 				fs.WalkDir(os.DirFS(tt.goldenDir), ".",
 					func(p string, d fs.DirEntry, err error) error {
-						if d.IsDir() {
+						if d.Name() != ".ignore" {
 							outputPath := path.Join(tt.outputDir, p)
 							if _, err := os.Stat(outputPath); os.IsNotExist(err) {
 								t.Fatalf("%v expected, but does not exist", outputPath)

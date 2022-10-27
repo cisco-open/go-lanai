@@ -2,6 +2,7 @@ package generator
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"io/fs"
 	"text/template"
 )
@@ -13,7 +14,13 @@ type Generator interface {
 }
 
 type Generators struct {
-	generators []Generator
+	generators  []Generator
+	loadedPaths []templateInfo
+}
+
+type templateInfo struct {
+	tmplPath string
+	dirEntry fs.DirEntry
 }
 
 type Option struct {
@@ -41,21 +48,33 @@ func WithTemplate(template *template.Template) func(o *Option) {
 }
 
 func NewGenerators(opts ...func(*Option)) Generators {
-	return Generators{
+	ret := Generators{
 		generators: []Generator{
 			newApiGenerator(opts...),
 			newProjectGenerator(opts...),
 			newDirectoryGenerator(opts...),
 		},
 	}
+	order.SortStable(ret.generators, order.OrderedLastCompare)
+
+	return ret
 }
 
-func (g *Generators) Generate(tmplPath string, dirEntry fs.DirEntry) error {
+func (g *Generators) Generate() error {
 	for _, gen := range g.generators {
-		if err := gen.Generate(tmplPath, dirEntry); err != nil {
-			return err
+		for _, loadedPath := range g.loadedPaths {
+			if err := gen.Generate(loadedPath.tmplPath, loadedPath.dirEntry); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
+}
+
+func (g *Generators) Load(tmplPath string, dirEntry fs.DirEntry) {
+	g.loadedPaths = append(g.loadedPaths, templateInfo{
+		tmplPath: tmplPath,
+		dirEntry: dirEntry,
+	})
 }
