@@ -3,6 +3,7 @@ package ittest
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
@@ -26,18 +27,27 @@ func init() {
 
 type RecorderDI struct {
 	fx.In
-	Recorder *recorder.Recorder
+	Recorder        *recorder.Recorder
+	RecorderOption  *HttpVCROption
+	RecorderMatcher cassette.MatcherFunc
 }
 
 // WithHttpPlayback enables remote HTTP server playback capabilities supported by `httpvcr`
 // This mode requires apptest.Bootstrap to work
 // Each top-level test should have corresponding recorded HTTP responses in `testdata` folder, or the test will fail.
-// To enable record mode, use `go test ... -record` at CLI, or do it programmatically with EnableHttpRecordMode
+// To enable record mode, use `go test ... -record` at CLI, or do it programmatically with HttpRecordingMode
 // See https://github.com/cockroachdb/copyist for more details
 func WithHttpPlayback(t *testing.T, opts ...HttpVCROptions) test.Options {
 	initial := HttpVCROption{
-		Name:     t.Name(),
-		SavePath: "testdata",
+		Name:           t.Name(),
+		SavePath:       "testdata",
+		RecordMatching: nil,
+		Hooks: []RecorderHook{
+			NewRecorderHook(FixedDurationHook(DefaultHttpDuration), recorder.BeforeSaveHook),
+			NewRecorderHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook),
+			NewRecorderHook(SanitizingHook(), recorder.BeforeSaveHook),
+		},
+		indexAwareMatcher: NewRecordIndexAwareMatcher(), // enforce order
 	}
 
 	var di RecorderDI
@@ -50,9 +60,14 @@ func WithHttpPlayback(t *testing.T, opts ...HttpVCROptions) test.Options {
 			fx.Invoke(httpRecorderCleanup),
 		),
 		test.SubTestSetup(recorderDISetup(&di)),
+		test.SubTestTeardown(recorderReset(&di)),
 	}
 	return test.WithOptions(testOpts...)
 }
+
+/****************************
+	Functions
+ ****************************/
 
 // Client extract http.Client that provided by Recorder. If Recorder is not available, it returns nil
 func Client(ctx context.Context) *http.Client {
@@ -70,40 +85,59 @@ func IsRecording(ctx context.Context) bool {
 	return false
 }
 
+// AdditionalMatcherOptions temporarily add additional RecordMatcherOptions to the current test context
+// on top of test's HttpVCROptions.
+// Note: The additional options take effect within the scope of sub-test. For test level options, use HttpRecordMatching
+func AdditionalMatcherOptions(ctx context.Context, opts...RecordMatcherOptions) {
+	rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder)
+	if !ok || rec == nil {
+		return
+	}
+	// merge matching options
+	opt := ctx.Value(ckRecorderOption).(*HttpVCROption)
+	newOpts := make([]RecordMatcherOptions, len(opt.RecordMatching), len(opt.RecordMatching) + len(opts))
+	copy(newOpts, opt.RecordMatching)
+	newOpts = append(newOpts, opts...)
+
+	// construct and set new matcher
+	newMatcher := newCassetteMatcherFunc(newOpts, opt.indexAwareMatcher)
+	rec.SetMatcher(newMatcher)
+}
+
 /*************************
 	Options
  *************************/
 
-// EnablePackageHttpRecordMode returns a suitetest.PackageOptions that enables HTTP recording mode for the entire package.
+// PackageHttpRecordingMode returns a suitetest.PackageOptions that enables HTTP recording mode for the entire package.
 // This is usually used in TestMain function.
-// Note: this option has no effect to tests using DisableHttpRecordMode
+// Note: this option has no effect to tests using DisableHttpRecordingMode
 // e.g.
 // <code>
 // 	func TestMain(m *testing.M) {
 //		suitetest.RunTests(m,
-//			EnablePackageHttpRecordMode(),
+//			PackageHttpRecordingMode(),
 //		)
 // 	}
 // </code>
-func EnablePackageHttpRecordMode() suitetest.PackageOptions {
+func PackageHttpRecordingMode() suitetest.PackageOptions {
 	return suitetest.Setup(func() error {
 		return flag.Set(CLIRecordModeFlag, "true")
 	})
 }
 
-// EnableHttpRecordMode returns a HttpVCROptions that enable Recording mode.
+// HttpRecordingMode returns a HttpVCROptions that turns on Recording mode.
 // Normally recording mode should be enabled via `go test` argument `-record`
 // Note: 	  Record mode is forced off if flag is set to "-record=false" explicitly
 // IMPORTANT: When Record mode is enabled, all tests interact with actual HTTP remote service.
 // 			  So use this mode on LOCAL DEV ONLY
-func EnableHttpRecordMode() HttpVCROptions {
+func HttpRecordingMode() HttpVCROptions {
 	return func(opt *HttpVCROption) {
 		opt.Mode = ModeRecording
 	}
 }
 
-// DisableHttpRecordMode returns a HttpVCROptions that force replaying mode regardless the command line flag
-func DisableHttpRecordMode() HttpVCROptions {
+// DisableHttpRecordingMode returns a HttpVCROptions that force replaying mode regardless the command line flag
+func DisableHttpRecordingMode() HttpVCROptions {
 	return func(opt *HttpVCROption) {
 		opt.Mode = ModeReplaying
 	}
@@ -116,25 +150,33 @@ func HttpRecordName(name string) HttpVCROptions {
 	}
 }
 
-// HttpRecordCustomMatching returns a HttpVCROptions that allows custom matching of recorded requests
-func HttpRecordCustomMatching(opts ...RecordMatcherOptions) HttpVCROptions {
+// HttpRecordMatching returns a HttpVCROptions that allows custom matching of recorded requests
+func HttpRecordMatching(opts ...RecordMatcherOptions) HttpVCROptions {
 	return func(opt *HttpVCROption) {
 		opt.RecordMatching = append(opt.RecordMatching, opts...)
 	}
 }
 
-// HttpRecordIgnoreHost returns a HttpVCROptions that would ignore host when matching recorded requests
-func HttpRecordIgnoreHost() HttpVCROptions {
-	matching := HttpRecordCustomMatching(func(opt *RecordMatcherOption) {
-		opt.URLMatcher = RecordURLMatcherFunc(NewRecordHostIgnoringURLMatcher())
-	})
-	hook := recorder.Hook{
-		Handler: HostIgnoringHook(),
-		Kind:    recorder.BeforeSaveHook,
-	}
+// HttpRecorderHooks returns a HttpVCROptions that adds recording hooks. If given hooks also implementing order.Ordered,
+// the order will be respected
+func HttpRecorderHooks(hooks ...RecorderHook) HttpVCROptions {
 	return func(opt *HttpVCROption) {
-		matching(opt)
-		opt.Hooks = append(opt.Hooks, hook)
+		opt.Hooks = append(opt.Hooks, hooks...)
+	}
+}
+
+// HttpRecordIgnoreHost convenient HttpVCROptions that would ignore host when matching recorded requests,
+// equivalent to HttpRecordMatching(IgnoreHost())
+func HttpRecordIgnoreHost() HttpVCROptions {
+	return HttpRecordMatching(IgnoreHost())
+}
+
+// DisableHttpRecordOrdering disable HTTP interactions order matching.
+// By default, HTTP interactions have to happen in the recorded order.
+// When this option is used, HTTP interactions can happen in any order. However, each matched record can only replay once
+func DisableHttpRecordOrdering() HttpVCROptions {
+	return func(opt *HttpVCROption) {
+		opt.indexAwareMatcher = nil
 	}
 }
 
@@ -142,21 +184,23 @@ func HttpRecordIgnoreHost() HttpVCROptions {
 	Recorder Aware Context
  ****************************/
 
-type recorderContextKey struct{}
+type recorderCtxKey struct{}
+type optionCtxKey struct{}
 
-var ckRecorder = recorderContextKey{}
-var ckOrigMatcher = recorderContextKey{}
+var ckRecorder = recorderCtxKey{}
+var ckRecorderOption = optionCtxKey{}
 
 type recorderAwareContext struct {
 	context.Context
 	recorder    *recorder.Recorder
-	origMatcher cassette.MatcherFunc
+	origOption  *HttpVCROption
 }
 
-func contextWithRecorder(parent context.Context, rec *recorder.Recorder) *recorderAwareContext {
+func contextWithRecorder(parent context.Context, rec *recorder.Recorder, opt *HttpVCROption) *recorderAwareContext {
 	return &recorderAwareContext{
-		Context:  parent,
-		recorder: rec,
+		Context:     parent,
+		recorder:    rec,
+		origOption:  opt,
 	}
 }
 
@@ -164,6 +208,8 @@ func (c *recorderAwareContext) Value(k interface{}) interface{} {
 	switch k {
 	case ckRecorder:
 		return c.recorder
+	case ckRecorderOption:
+		return c.origOption
 	default:
 		return c.Context.Value(k)
 	}
@@ -171,18 +217,18 @@ func (c *recorderAwareContext) Value(k interface{}) interface{} {
 
 func recorderDISetup(di *RecorderDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		return contextWithRecorder(ctx, di.Recorder), nil
+		return contextWithRecorder(ctx, di.Recorder, di.RecorderOption), nil
 	}
 }
 
+// recorderReset reset recorder to original state in case it changed
 func recorderReset(di *RecorderDI) test.TeardownFunc {
-	// TODO
 	return func(ctx context.Context, t *testing.T) error {
 		rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder)
 		if !ok {
 			return nil
 		}
-		rec.IsRecording()
+		rec.SetMatcher(di.RecorderMatcher)
 		return nil
 	}
 }
@@ -195,6 +241,38 @@ type vcrOut struct {
 	fx.Out
 	Recorder             *recorder.Recorder
 	HttpClientCustomizer httpclient.ClientCustomizer `group:"http-client"`
+	CassetteMatcher      cassette.MatcherFunc
+	HttpVCROption        *HttpVCROption
+}
+
+func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (vcrOut, error) {
+	return func() (vcrOut, error) {
+		opt := initial
+		for _, fn := range opts {
+			fn(&opt)
+		}
+		rec, e := recorder.NewWithOptions(toRecorderOptions(opt))
+		if e != nil {
+			return vcrOut{}, e
+		}
+
+		// set matchers
+		matcher := newCassetteMatcherFunc(opt.RecordMatching, opt.indexAwareMatcher)
+		rec.SetMatcher(matcher)
+
+		//set hooks
+		order.SortStable(opt.Hooks, order.OrderedFirstCompare)
+		for _, h := range opt.Hooks {
+			rec.AddHook(h.Handler(), h.Kind())
+		}
+
+		return vcrOut{
+			Recorder:             rec,
+			HttpClientCustomizer: RecordingHttpClientCustomizer{Recorder: rec},
+			CassetteMatcher:      matcher,
+			HttpVCROption:        &opt,
+		}, nil
+	}
 }
 
 func findBoolFlag(name string) (ret *bool) {
@@ -238,34 +316,12 @@ func toRecorderOptions(opt HttpVCROption) *recorder.Options {
 	}
 }
 
-func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (vcrOut, error) {
-	return func() (vcrOut, error) {
-		for _, fn := range opts {
-			fn(&initial)
-		}
-		rec, e := recorder.NewWithOptions(toRecorderOptions(initial))
-		if e != nil {
-			return vcrOut{}, e
-		}
-
-		// set matchers
-		matchFn := NewRecordMatcher(initial.RecordMatching...)
-		idMatchFn := NewRecordIndexAwareMatcher()
-		rec.SetMatcher(wrapRecordRequestMatcher(AndMatcher(matchFn, idMatchFn)))
-
-		//set hooks
-		for _, h := range initial.Hooks {
-			rec.AddHook(h.Handler, h.Kind)
-		}
-		rec.AddHook(FixedDurationHook(DefaultHttpDuration), recorder.BeforeSaveHook)
-		rec.AddHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook)
-		rec.AddHook(SanitizingHook(), recorder.BeforeSaveHook)
-
-		return vcrOut{
-			Recorder: rec,
-			HttpClientCustomizer: RecordingHttpClientCustomizer{Recorder: rec},
-		}, nil
+func newCassetteMatcherFunc(opts []RecordMatcherOptions, indexAwareMatcher GenericMatcherFunc[*http.Request, cassette.Request]) cassette.MatcherFunc {
+	matcherFn := NewRecordMatcher(opts...)
+	if indexAwareMatcher == nil {
+		return wrapRecordRequestMatcher(matcherFn)
 	}
+	return wrapRecordRequestMatcher(AndMatcher(matcherFn, indexAwareMatcher))
 }
 
 func httpRecorderCleanup(lc fx.Lifecycle, rec *recorder.Recorder) {

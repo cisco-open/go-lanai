@@ -3,6 +3,7 @@ package ittest
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"gopkg.in/dnaeon/go-vcr.v3/cassette"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"mime"
 	"net/http"
 	"net/url"
@@ -15,6 +16,56 @@ import (
 const (
 	DefaultHost = "webservice"
 )
+
+/************************
+	Common
+ ************************/
+
+func NewRecorderHook(fn recorder.HookFunc, kind recorder.HookKind) RecorderHook {
+	return recorderHook{
+		hook: recorder.Hook{
+			Handler: fn,
+			Kind:    kind,
+		},
+	}
+}
+
+type recorderHook struct {
+	hook recorder.Hook
+}
+
+func (w recorderHook) Handler() recorder.HookFunc {
+	return w.hook.Handler
+}
+
+func (w recorderHook) Kind() recorder.HookKind {
+	return w.hook.Kind
+}
+
+func NewRecorderHookWithOrder(fn recorder.HookFunc, kind recorder.HookKind, order int) RecorderHook {
+	return orderedRecorderHook{
+		recorderHook: recorderHook{
+			hook: recorder.Hook{
+				Handler: fn,
+				Kind:    kind,
+			},
+		},
+		order:        order,
+	}
+}
+
+type orderedRecorderHook struct {
+	recorderHook
+	order int
+}
+
+func (w orderedRecorderHook) Order() int {
+	return w.order
+}
+
+/************************
+	Sanitizer
+ ************************/
 
 type ValueSanitizer func(string) string
 
@@ -53,7 +104,7 @@ var (
 )
 
 /************************
-	Hooks
+	Hooks Functions
  ************************/
 
 // InteractionIndexAwareHook inject interaction index into stored header:
@@ -69,16 +120,16 @@ func InteractionIndexAwareHook() func(i *cassette.Interaction) error {
 // SanitizingHook is a httpvcr hook that sanitize values in header, query, body (x-form-urlencoded/json)
 func SanitizingHook() func(i *cassette.Interaction) error {
 	return func(i *cassette.Interaction) error {
-		i.Request.Headers = sanitizeHeaders(i.Request.Headers, SensitiveRequestHeaders)
-		i.Request.URL = sanitizeUrl(i.Request.URL, SensitiveRequestQueries)
+		i.Request.Headers = sanitizeHeaders(i.Request.Headers, FuzzyRequestHeaders)
+		i.Request.URL = sanitizeUrl(i.Request.URL, FuzzyRequestQueries)
 		switch mediaType(i.Request.Headers) {
 		case "application/x-www-form-urlencoded":
-			i.Request.Body = sanitizeRequestForm(&i.Request, SensitiveRequestQueries)
+			i.Request.Body = sanitizeRequestForm(&i.Request, FuzzyRequestQueries)
 		case "application/json":
 			i.Request.Body = sanitizeJsonBody(i.Request.Body)
 		}
 
-		i.Response.Headers = sanitizeHeaders(i.Response.Headers, SensitiveResponseHeaders)
+		i.Response.Headers = sanitizeHeaders(i.Response.Headers, FuzzyResponseHeaders)
 		switch mediaType(i.Response.Headers) {
 		case "application/json":
 			i.Request.Body = sanitizeJsonBody(i.Request.Body)
@@ -87,11 +138,14 @@ func SanitizingHook() func(i *cassette.Interaction) error {
 	}
 }
 
-// HostIgnoringHook changes the host of request to a pre-defined constant, to avoid randomness
-func HostIgnoringHook() func(i *cassette.Interaction) error {
+// LocalhostRewriteHook changes the host of request to a pre-defined constant if it is localhost, in order to avoid randomness
+func LocalhostRewriteHook() func(i *cassette.Interaction) error {
 	return func(i *cassette.Interaction) error {
-		i.Request.URL = strings.Replace(i.Request.URL, i.Request.Host, DefaultHost, 1)
-		i.Request.Host = DefaultHost
+		if strings.HasPrefix(i.Request.Host, "localhost") || strings.HasPrefix(i.Request.Host, "127.0.0.1") {
+			i.Request.URL = strings.Replace(i.Request.URL, i.Request.Host, DefaultHost, 1)
+			i.Request.Host = DefaultHost
+		}
+
 		return nil
 	}
 }

@@ -27,7 +27,7 @@ const (
 
 //func TestMain(m *testing.M) {
 //	suitetest.RunTests(m,
-//		EnablePackageHttpRecordMode(),
+//		PackageHttpRecordingMode(),
 //	)
 //}
 

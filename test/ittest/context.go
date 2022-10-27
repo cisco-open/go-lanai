@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type Mode recorder.Mode
+type Mode int
 
 // Recorder states
 const (
@@ -27,9 +27,9 @@ var (
 
 	IgnoredRequestHeaders = utils.NewStringSet(xInteractionIndexHeader)
 
-	SensitiveRequestHeaders = utils.NewStringSet("Authorization")
-	SensitiveRequestQueries = utils.NewStringSet("password", "secret")
-	SensitiveResponseHeaders = utils.NewStringSet("Date")
+	FuzzyRequestHeaders      = utils.NewStringSet("Authorization")
+	FuzzyRequestQueries  = utils.NewStringSet("password", "secret", "nonce")
+	FuzzyResponseHeaders = utils.NewStringSet("Date")
 )
 
 /*************************
@@ -42,7 +42,10 @@ type HttpVCROption struct {
 	Mode           Mode
 	SavePath       string
 	RecordMatching []RecordMatcherOptions
-	Hooks          []recorder.Hook
+	Hooks          []RecorderHook
+	// special record matcher that enforce interaction order.
+	// to change, use DisableHttpRecordOrdering
+	indexAwareMatcher GenericMatcherFunc[*http.Request, cassette.Request]
 }
 
 /******************************
@@ -59,6 +62,16 @@ type RecordBodyMatcherFunc GenericMatcherFunc[[]byte, []byte]
 type RecordBodyMatcher interface {
 	Support(contentType string) bool
 	Matches(out []byte, record []byte) error
+}
+
+/******************************
+	HTTP VCR Hooks
+ ******************************/
+
+// RecorderHook wrapper of recorder.Hook
+type RecorderHook interface {
+	Handler() recorder.HookFunc
+	Kind() recorder.HookKind
 }
 
 /******************************

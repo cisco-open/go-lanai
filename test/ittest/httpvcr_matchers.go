@@ -7,39 +7,36 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 type RecordMatcherOptions func(opt *RecordMatcherOption)
 type RecordMatcherOption struct {
+	// Convenient Options
+	IgnoreHost     bool
+	FuzzyHeaders   []string
+	FuzzyQueries   []string
+	FuzzyPostForm  []string
+	FuzzyJsonPaths []string
+
+	// Advanced Options, if set, will overwrite corresponding convenient options
+	// Note: directly changing these defaults requires knowledge about golang generics and function casting.
 	URLMatcher    RecordURLMatcherFunc
 	QueryMatcher  RecordQueryMatcherFunc
 	HeaderMatcher RecordHeaderMatcherFunc
-	BodyMatchers   []RecordBodyMatcher
+	BodyMatchers  []RecordBodyMatcher
 }
 
 // NewRecordMatcher create a custom RecordMatcherFunc to compare recorded request and actual request.
 // By default, the crated matcher compare following:
 // - Method, Host, Path are exact match
-// - Queries are exact match except for SensitiveRequestQueries
-// - Headers are exact match except for SensitiveRequestHeaders
-// - Body is compared as JSON
-// Note: directly using this function requires knowledge about golang generics and function casting.
+// - Queries are exact match except for FuzzyRequestQueries
+// - Headers are exact match except for FuzzyRequestHeaders
+// - Body is compared as JSON or x-www-form-urlencoded Form
+//
+// Note: In case the request contains random/temporal data in queries/headers/form/JSON, use Fuzzy* options
 func NewRecordMatcher(opts ...RecordMatcherOptions) GenericMatcherFunc[*http.Request, cassette.Request] {
-	opt := &RecordMatcherOption{
-		URLMatcher:    RecordURLMatcherFunc(NewRecordURLMatcher()),
-		QueryMatcher:  RecordQueryMatcherFunc(NewRecordQueryMatcher(SensitiveRequestQueries.Values()...)),
-		HeaderMatcher: RecordHeaderMatcherFunc(NewRecordHeaderMatcher(SensitiveRequestHeaders.Values()...)),
-		BodyMatchers:   []RecordBodyMatcher{
-			//NewRecordJsonBodyMatcher("$.time"),
-			NewRecordJsonBodyMatcher(),
-			//NewRecordFormBodyMatcher("time"),
-			NewRecordFormBodyMatcher(),
-			NewRecordLiteralBodyMatcher(),
-		},
-	}
-	for _, fn := range opts {
-		fn(opt)
-	}
+	opt := resolveMatcherOption(opts)
 	return func(out *http.Request, record cassette.Request) error {
 		recordUrl, e := url.Parse(record.URL)
 		if e != nil {
@@ -57,10 +54,6 @@ func NewRecordMatcher(opts ...RecordMatcherOptions) GenericMatcherFunc[*http.Req
 		}
 		if e := opt.HeaderMatcher(out.Header, record.Headers); e != nil {
 			return e
-		}
-
-		if len(opt.BodyMatchers) == 0 {
-			return nil
 		}
 
 		var reqBody []byte
@@ -82,5 +75,105 @@ func NewRecordMatcher(opts ...RecordMatcherOptions) GenericMatcherFunc[*http.Req
 			return matcher.Matches(reqBody, []byte(record.Body))
 		}
 		return nil
+	}
+}
+
+func resolveMatcherOption(opts []RecordMatcherOptions) *RecordMatcherOption {
+	opt := RecordMatcherOption{
+		IgnoreHost:    false,
+		FuzzyHeaders:  FuzzyRequestHeaders.Values(),
+		FuzzyQueries:  FuzzyRequestQueries.Values(),
+		FuzzyPostForm: FuzzyRequestQueries.Values(),
+	}
+	for _, fn := range opts {
+		fn(&opt)
+	}
+
+	if opt.URLMatcher == nil {
+		opt.URLMatcher = RecordURLMatcherFunc(NewRecordURLMatcher(opt.IgnoreHost))
+	}
+
+	if opt.QueryMatcher == nil {
+		opt.QueryMatcher = RecordQueryMatcherFunc(NewRecordQueryMatcher(opt.FuzzyQueries...))
+	}
+
+	if opt.HeaderMatcher == nil {
+		opt.HeaderMatcher = RecordHeaderMatcherFunc(NewRecordHeaderMatcher(opt.FuzzyHeaders...))
+	}
+
+	if len(opt.BodyMatchers) == 0 {
+		opt.BodyMatchers = []RecordBodyMatcher{
+			NewRecordJsonBodyMatcher(opt.FuzzyJsonPaths...),
+			NewRecordFormBodyMatcher(opt.FuzzyPostForm...),
+			NewRecordLiteralBodyMatcher(),
+		}
+	}
+
+	return &opt
+}
+
+// NewRecordIndexAwareMatcher is a special matcher that ensure requests are executed in the recorded order
+// Note 1: because current httpvcr lib doesn't expose the interaction ID, we stored it in header
+// 		   using InteractionIndexAwareHook
+// Note 2: the next expected ID would increase regardless if ID matches. So this index should be used together with
+// 		   other matchers: "other_matcher AND NewRecordIndexAwareMatcher()". This matcher need to be put behind
+// 		   any other matchers
+func NewRecordIndexAwareMatcher() GenericMatcherFunc[*http.Request, cassette.Request] {
+	var id int
+	return func(out *http.Request, record cassette.Request) error {
+		recordId, e := strconv.Atoi(record.Headers.Get(xInteractionIndexHeader))
+		if e != nil {
+			return nil
+		}
+		defer func() { id++ }()
+		if id != recordId {
+			return fmt.Errorf("HTTP interaction ID doesn't match")
+		}
+
+		return nil
+	}
+}
+
+/*********************
+	Matcher Options
+ *********************/
+
+// IgnoreHost returns RecordMatcherOptions that ignore host during record matching
+func IgnoreHost() RecordMatcherOptions {
+	return func(opt *RecordMatcherOption) {
+		opt.IgnoreHost = true
+	}
+}
+
+// FuzzyHeaders returns RecordMatcherOptions that ignore header values of given names during record matching
+// Note: still check if the header exists, only value comparison is skipped
+func FuzzyHeaders(headers ...string) RecordMatcherOptions {
+	return func(opt *RecordMatcherOption) {
+		opt.FuzzyHeaders = append(opt.FuzzyHeaders, headers...)
+	}
+}
+
+// FuzzyQueries returns RecordMatcherOptions that ignore query value of given keys during record matching
+// Note: still check if the value exists, only value comparison is skipped.
+// This function dosen't consider POST form data. Use FuzzyForm for both Queries and POST form data
+func FuzzyQueries(queries ...string) RecordMatcherOptions {
+	return FuzzyForm(queries...)
+}
+
+// FuzzyForm returns RecordMatcherOptions that ignore form values (in queries and post body if applicable) of given keys during record matching
+// Note: still check if the value exists, only value comparison is skipped
+func FuzzyForm(formKeys ...string) RecordMatcherOptions {
+	return func(opt *RecordMatcherOption) {
+		opt.FuzzyQueries = append(opt.FuzzyQueries, formKeys...)
+		opt.FuzzyPostForm = append(opt.FuzzyPostForm, formKeys...)
+	}
+}
+
+// FuzzyJsonPaths returns RecordMatcherOptions that ignore fields in JSON body that matching the given JSONPaths
+// Note: still check if the header exists, only value comparison is skipped.
+// JSONPath Syntax: https://goessner.net/articles/JsonPath/
+func FuzzyJsonPaths(jsonPaths ...string) RecordMatcherOptions {
+	return func(opt *RecordMatcherOption) {
+		opt.FuzzyJsonPaths = append(opt.FuzzyJsonPaths, jsonPaths...)
 	}
 }

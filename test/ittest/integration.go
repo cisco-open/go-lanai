@@ -45,7 +45,6 @@ func WithRecordedScopes() test.Options {
 
 type scopeDI struct {
 	fx.In
-	//AuthClient   seclient.AuthenticationClient
 	ItProperties     secit.SecurityIntegrationProperties
 	CryptoProperties jwt.CryptoProperties `optional:"true"`
 	HttpClient httpclient.Client
@@ -54,7 +53,6 @@ type scopeDI struct {
 
 type scopeDIOut struct {
 	fx.Out
-	//AuthClient   seclient.AuthenticationClient
 	TokenReader oauth2.TokenStoreReader
 	JwkStore    jwt.JwkStore
 	//ResServerConfig resserver.ResourceServerConfigurer

@@ -101,7 +101,8 @@ func TestHttpVCRRecording(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		webtest.WithRealServer(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), EnableHttpRecordMode(), HttpRecordIgnoreHost()),
+		WithHttpPlayback(t, HttpRecordName(RecordName),
+			HttpRecordingMode(), HttpRecorderHooks(NewRecorderHook(LocalhostRewriteHook(), recorder.BeforeSaveHook))),
 		apptest.WithDI(&di),
 		apptest.WithFxOptions(
 			web.FxControllerProviders(NewTestController),
@@ -118,7 +119,7 @@ func TestHttpVCRPlaybackExact(t *testing.T) {
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestNormalGet(&di), "TestNormalGet"),
@@ -132,7 +133,7 @@ func TestHttpVCRPlaybackEquivalent(t *testing.T) {
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestEquivalentGet(&di), "TestEquivalentGet"),
@@ -141,27 +142,39 @@ func TestHttpVCRPlaybackEquivalent(t *testing.T) {
 	)
 }
 
-func TestHttpVCRPlaybackIncorrectQuery(t *testing.T) {
-	var di vcrDI
-	t.Name()
-	test.RunTest(context.Background(), t,
-		apptest.Bootstrap(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
-		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
-		test.GomegaSubTest(SubTestIncorrectRequestQuery(&di), "TestIncorrectRequestQuery"),
-	)
-}
-
 func TestHttpVCRPlaybackIncorrectOrder(t *testing.T) {
 	var di vcrDI
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
-		test.GomegaSubTest(SubTestIncorrectRequestOrder(&di), "TestIncorrectRequestOrder"),
+		test.GomegaSubTest(SubTestDifferentRequestOrder(&di, false), "TestDifferentRequestOrder"),
+	)
+}
+
+func TestHttpVCRPlaybackWithOrderDisabled(t *testing.T) {
+	var di vcrDI
+	t.Name()
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost(), DisableHttpRecordOrdering()),
+		apptest.WithDI(&di),
+		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
+		test.GomegaSubTest(SubTestDifferentRequestOrder(&di, true), "TestDifferentRequestOrder"),
+	)
+}
+
+func TestHttpVCRPlaybackIncorrectQuery(t *testing.T) {
+	var di vcrDI
+	t.Name()
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
+		apptest.WithDI(&di),
+		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
+		test.GomegaSubTest(SubTestIncorrectRequestQuery(&di), "TestIncorrectRequestQuery"),
 	)
 }
 
@@ -170,7 +183,7 @@ func TestHttpVCRPlaybackIncorrectBody(t *testing.T) {
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordMode(), HttpRecordIgnoreHost()),
+		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestEquivalentGet(&di), "TestEquivalentGet"), // let interaction counter move forward
@@ -235,6 +248,8 @@ func SubTestEquivalentGet(di *vcrDI) test.GomegaSubTestFunc {
 func SubTestEquivalentPostJson(di *vcrDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
+
+		AdditionalMatcherOptions(ctx, FuzzyJsonPaths("$.time"))
 		req := newPostJsonRequest(ctx, t, g, withBody(CorrectRequestJsonBodyAlt))
 		resp, e := Client(ctx).Do(req)
 		g.Expect(e).To(Succeed(), "sending request should succeed")
@@ -247,10 +262,38 @@ func SubTestEquivalentPostForm(di *vcrDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 
+		AdditionalMatcherOptions(ctx, FuzzyForm("time"))
 		req := newPostFormRequest(ctx, t, g, withBody(CorrectRequestFormBodyAlt))
 		resp, e := Client(ctx).Do(req)
 		g.Expect(e).To(Succeed(), "sending request should succeed")
 		g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
+	}
+}
+
+func SubTestDifferentRequestOrder(di *vcrDI, expectSuccess bool) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
+		var req *http.Request
+		var resp *http.Response
+		var e error
+
+		req = newPostJsonRequest(ctx, t, g)
+		resp, e = Client(ctx).Do(req)
+		if expectSuccess {
+			g.Expect(e).To(Succeed(), "sending request in different order should succeed")
+			g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
+		} else {
+			g.Expect(e).To(HaveOccurred(), "sending request in different order should fail")
+		}
+
+		req = newGetRequest(ctx, t, g)
+		resp, e = Client(ctx).Do(req)
+		if expectSuccess {
+			g.Expect(e).To(Succeed(), "sending request in different order should succeed")
+			g.Expect(resp.StatusCode).To(BeEquivalentTo(http.StatusOK), "server should return 200")
+		} else {
+			g.Expect(e).To(HaveOccurred(), "sending request in different order should fail")
+		}
 	}
 }
 
@@ -267,22 +310,6 @@ func SubTestIncorrectRequestQuery(di *vcrDI) test.GomegaSubTestFunc {
 		})
 		_, e = Client(ctx).Do(req)
 		g.Expect(e).To(HaveOccurred(), "sending request with wrong form body should fail")
-	}
-}
-
-func SubTestIncorrectRequestOrder(di *vcrDI) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
-		var req *http.Request
-		var e error
-
-		req = newPostJsonRequest(ctx, t, g)
-		_, e = Client(ctx).Do(req)
-		g.Expect(e).To(HaveOccurred(), "sending request in wrong order should fail")
-
-		req = newGetRequest(ctx, t, g)
-		_, e = Client(ctx).Do(req)
-		g.Expect(e).To(HaveOccurred(), "sending request in wrong order should fail")
 	}
 }
 
@@ -357,14 +384,14 @@ func newPostFormRequest(ctx context.Context, _ *testing.T, g *gomega.WithT, opts
 
 func prepareRequest(req *http.Request, contentType string, opts []webtest.RequestOptions) {
 	// set headers
-	for k  := range SensitiveRequestHeaders {
+	for k  := range FuzzyRequestHeaders {
 		req.Header.Set(k, utils.RandomString(20))
 	}
 	req.Header.Set("Content-Type", contentType)
 
 	// set sensitive queries
 	q := req.URL.Query()
-	for k := range SensitiveRequestQueries {
+	for k := range FuzzyRequestQueries {
 		q.Set(k, utils.RandomString(10))
 	}
 	q.Set(RequiredQuery, "value should match")

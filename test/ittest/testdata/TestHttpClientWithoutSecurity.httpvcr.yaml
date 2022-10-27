@@ -12,7 +12,8 @@ interactions:
         host: 127.0.0.1:9203
         remote_addr: ""
         request_uri: ""
-        body: ""
+        body: |
+            null
         form: {}
         headers:
             Content-Type:
@@ -112,12 +113,12 @@ interactions:
             Content-Type:
                 - text/html; charset=utf-8
             Date:
-                - Tue, 25 Oct 2022 19:38:13 GMT
+                - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 3.827166ms
+        duration: 200µs
     - id: 1
       request:
         proto: HTTP/1.1
@@ -129,7 +130,8 @@ interactions:
         host: localhost:9203
         remote_addr: ""
         request_uri: ""
-        body: ""
+        body: |
+            null
         form: {}
         headers:
             Content-Type:
@@ -229,9 +231,9 @@ interactions:
             Content-Type:
                 - text/html; charset=utf-8
             Date:
-                - Tue, 25 Oct 2022 19:38:13 GMT
+                - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 8.10125ms
+        duration: 200µs
