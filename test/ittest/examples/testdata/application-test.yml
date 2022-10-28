@@ -1,0 +1,35 @@
+integrate:
+  http:
+    max-retries: 2
+    timeout: 1m
+    logger:
+      level: debug
+  security:
+    service-name: "authservice"
+    failure-back-off: 5m
+    guaranteed-validity: 30s
+    client:
+      client-id: "nfv-service"
+      secret: "nfv-service-secret"
+    accounts:
+      default:
+        username: "system"
+        password: "system"
+
+mocks:
+  sd:
+    authservice:
+      - ID: auth-inst-0
+        Address: 127.0.0.1
+        Port: 8900
+        Tags: [""]
+        Meta:
+          context: "/auth"
+
+    usermanagementgoservice:
+      - ID: idm-inst-0
+        Address: 127.0.0.1
+        Port: 9203
+        Tags: [""]
+        Meta:
+          context: "/idm"
