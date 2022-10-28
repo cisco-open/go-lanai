@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ghodss/yaml"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -49,7 +49,7 @@ func (l OASDocLoader) Load() (*OpenApiSpec, error) {
 	var oas OpenApiSpec
 	switch fileExt := strings.ToLower(path.Ext(l.path)); fileExt {
 	case ".yml", ".yaml":
-		data, e := ioutil.ReadAll(file)
+		data, e := io.ReadAll(file)
 		if e != nil {
 			return nil, e
 		}

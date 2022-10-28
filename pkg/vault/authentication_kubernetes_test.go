@@ -6,7 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/recorder"
 	"github.com/hashicorp/vault/api"
 	"github.com/onsi/gomega"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -19,7 +19,7 @@ func matchVaultResponse(r *http.Request, i cassette.Request) bool {
 	if _, err := b.ReadFrom(r.Body); err != nil {
 		return false
 	}
-	r.Body = ioutil.NopCloser(&b)
+	r.Body = io.NopCloser(&b)
 	return cassette.DefaultMatcher(r, i) && (b.String() == "" || b.String() == i.Body)
 }
 

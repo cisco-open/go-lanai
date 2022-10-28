@@ -118,7 +118,7 @@ func TestRecord(t *testing.T) {
 			t.Fatalf("unable to read request body: %s", err)
 			return false
 		}
-		r.Body = ioutil.NopCloser(&b)
+		r.Body = io.NopCloser(&b)
 		return cassette.DefaultMatcher(r, i) && (b.String() == "" || b.String() == i.Body)
 	})
 
@@ -211,7 +211,7 @@ func TestPassthrough(t *testing.T) {
 		if _, err := b.ReadFrom(r.Body); err != nil {
 			return false
 		}
-		r.Body = ioutil.NopCloser(&b)
+		r.Body = io.NopCloser(&b)
 
 		return b.String() == "alt body"
 	})
@@ -368,7 +368,7 @@ func (test recordTest) perform(t *testing.T, url string, r *recorder.Recorder) {
 	}
 	defer resp.Body.Close()
 
-	content, err := ioutil.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -396,7 +396,7 @@ func (test recordTest) performReq(t *testing.T, ctx context.Context, url string,
 func setupTests(t *testing.T, name string) (runID, cassPath string, tests []recordTest) {
 	runID = time.Now().Format(time.RFC3339Nano)
 
-	dir, err := ioutil.TempDir("", "")
+	dir, err := io.TempDir("", "")
 	if err != nil {
 		t.Fatal(err)
 	}

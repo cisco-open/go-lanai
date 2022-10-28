@@ -7,7 +7,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"io"
-	"io/ioutil"
 	"path"
 	"sync"
 	"time"
@@ -82,7 +81,7 @@ func (v *VaultProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 		_ = Body.Close()
 	}(resp.Body)
 
-	pemBytes, err := ioutil.ReadAll(resp.Body)
+	pemBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

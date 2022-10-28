@@ -12,7 +12,7 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -282,7 +282,7 @@ func assertJsonBody(t *testing.T, g *gomega.WithT, resp *http.Response, expected
 
 func readBodyAsString(_ *testing.T, g *gomega.WithT, resp *http.Response) string {
 	defer func() { _ = resp.Body.Close() }()
-	body, e := ioutil.ReadAll(resp.Body)
+	body, e := io.ReadAll(resp.Body)
 	g.Expect(e).To(Succeed(), "parsing body should not returns error")
 	return string(body)
 }

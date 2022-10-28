@@ -6,7 +6,6 @@ import (
 	"fmt"
 	. "github.com/onsi/gomega"
 	"io"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -170,7 +169,7 @@ func doTestResolvePlaceHoldersWithCircularReference(t *testing.T) {
 
 func loadYaml(reader io.Reader) (map[string]interface{}, error) {
 
-	encoded, e := ioutil.ReadAll(reader)
+	encoded, e := io.ReadAll(reader)
 	if e != nil {
 		return nil, e
 	}

@@ -9,7 +9,6 @@ import (
 	"embed"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -62,7 +61,7 @@ func (configProvider *ConfigProvider) Load(_ context.Context) (loadError error) 
 		}
 	}()
 
-	encoded, loadError := ioutil.ReadAll(configProvider.reader)
+	encoded, loadError := io.ReadAll(configProvider.reader)
 	if loadError != nil {
 		return loadError
 	}

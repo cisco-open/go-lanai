@@ -29,7 +29,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -172,7 +172,7 @@ func New(name string) *Cassette {
 // Load reads a cassette file from disk
 func Load(name string) (*Cassette, error) {
 	c := New(name)
-	data, err := ioutil.ReadFile(c.File)
+	data, err := os.ReadFile(c.File)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (c *Cassette) GetInteraction(r *http.Request) (*Interaction, error) {
 	if _, err := b.ReadFrom(r.Body); err != nil {
 		return nil, ErrInteractionNotFound
 	}
-	r.Body = ioutil.NopCloser(&b)
+	r.Body = io.NopCloser(&b)
 	return nil, fmt.Errorf("%w: interactions: %v request: %v", ErrInteractionNotFound, len(c.Interactions), b.String())
 }
 

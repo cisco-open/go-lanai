@@ -10,7 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -329,7 +329,7 @@ func httpGet(ctx context.Context, urlStr string) ([]byte, error) {
 		return nil, fmt.Errorf("non-2XX status code")
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 func claimsToAuthRequest(ctx context.Context, claims oauth2.Claims) (*auth.AuthorizeRequest, error) {

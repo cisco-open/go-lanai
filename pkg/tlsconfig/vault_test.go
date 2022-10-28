@@ -11,8 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"go.uber.org/fx"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 )
@@ -39,7 +39,7 @@ func TestVaultProvider(t *testing.T) {
 
 func SubTestSetupSubmitCA(di *VaultTestDi) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		data, err := ioutil.ReadFile("testdata/ca-bundle-test.json") //this file has the ca bundle matching ca-cert-test.pem
+		data, err := os.ReadFile("testdata/ca-bundle-test.json") //this file has the ca bundle matching ca-cert-test.pem
 		if err != nil {
 			return ctx, err
 		}
@@ -128,7 +128,7 @@ func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
 		g.Expect(time.Now().Before(parsedCert.NotAfter)).To(BeTrue())
 
 		//try with a different ca, and expect no cert is returned
-		anotherCa, err := ioutil.ReadFile("testdata/ca-cert-test-2")
+		anotherCa, err := os.ReadFile("testdata/ca-cert-test-2")
 		g.Expect(err).NotTo(HaveOccurred())
 		anotherCaPool := x509.NewCertPool()
 		anotherCaPool.AppendCertsFromPEM(anotherCa)

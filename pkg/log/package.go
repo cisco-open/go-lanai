@@ -4,8 +4,8 @@ import (
 	"embed"
 	"encoding/json"
 	"github.com/ghodss/yaml"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -62,7 +62,7 @@ func loadConfig(fs fs.FS, path string) (*Properties, error) {
 		return nil, e
 	}
 
-	encoded, e := ioutil.ReadAll(file)
+	encoded, e := io.ReadAll(file)
 	if e != nil {
 		return nil, e
 	}

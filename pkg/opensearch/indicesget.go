@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -38,7 +38,7 @@ func (c *RepoImpl[T]) IndicesGet(ctx context.Context, index string, o ...Option[
 		return nil, fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

@@ -9,8 +9,8 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"gorm.io/gorm"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"strings"
 	"testing"
 )
@@ -90,7 +90,7 @@ func execSqlFile(ctx context.Context, fsys fs.FS, db *gorm.DB, g *gomega.WithT, 
 	file, e := fsys.Open(filename)
 	g.Expect(e).To(Succeed(), "table preparation should be able to open SQL file '%s'", filename)
 
-	queries, e := ioutil.ReadAll(file)
+	queries, e := io.ReadAll(file)
 	g.Expect(e).To(Succeed(), "table preparation should be able to read SQL file '%s'", filename)
 	for _, q := range strings.Split(string(queries), ";") {
 		q = strings.TrimSpace(q)

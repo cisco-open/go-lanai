@@ -30,7 +30,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -112,7 +111,7 @@ func requestHandler(r *http.Request, c *cassette.Cassette, mode Mode, realTransp
 	reqBody := &bytes.Buffer{}
 	if r.Body != nil && !isNoBody(r.Body) {
 		// Record the request body so we can add it to the cassette
-		r.Body = ioutil.NopCloser(io.TeeReader(r.Body, reqBody))
+		r.Body = io.NopCloser(io.TeeReader(r.Body, reqBody))
 	}
 
 	// Perform client request to it's original
@@ -123,7 +122,7 @@ func requestHandler(r *http.Request, c *cassette.Cassette, mode Mode, realTransp
 	}
 	defer resp.Body.Close()
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +265,7 @@ func (r *Recorder) RoundTrip(req *http.Request) (*http.Response, error) {
 			Header:        interaction.Response.Headers,
 			Close:         true,
 			ContentLength: contentLength,
-			Body:          ioutil.NopCloser(buf),
+			Body:          io.NopCloser(buf),
 		}, nil
 	}
 }

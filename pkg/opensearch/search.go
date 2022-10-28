@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
-	"io/ioutil"
+	"io"
 )
 
 // SearchResponse modeled after https://opensearch.org/docs/latest/opensearch/rest-api/search/#response-body
@@ -48,7 +48,7 @@ func (c *RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o
 	if resp != nil && resp.IsError() {
 		return 0, fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return 0, err
 	}
