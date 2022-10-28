@@ -48,7 +48,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
-	go.uber.org/fx v1.17.1
+	go.uber.org/fx v1.18.2
 	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
 	gopkg.in/dnaeon/go-vcr.v3 v3.1.1
@@ -159,7 +159,7 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/dig v1.14.0 // indirect
+	go.uber.org/dig v1.15.0 // indirect
 	go.uber.org/goleak v1.1.12 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
