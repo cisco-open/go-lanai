@@ -30,7 +30,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -396,7 +395,7 @@ func (test recordTest) performReq(t *testing.T, ctx context.Context, url string,
 func setupTests(t *testing.T, name string) (runID, cassPath string, tests []recordTest) {
 	runID = time.Now().Format(time.RFC3339Nano)
 
-	dir, err := io.TempDir("", "")
+	dir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatal(err)
 	}
