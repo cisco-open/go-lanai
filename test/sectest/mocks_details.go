@@ -19,6 +19,7 @@ type SecurityDetailsMock struct {
 	ProviderDescription      string
 	ProviderEmail            string
 	ProviderNotificationType string
+	AccessToken              string
 	Exp                      time.Time
 	Iss                      time.Time
 	Permissions              utils.StringSet

@@ -21,7 +21,7 @@ interactions:
                 - application/x-www-form-urlencoded; charset=utf-8
             X-Http-Record-Index:
                 - "0"
-        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
+        url: http://webservice/test/knock?access_token=_hidden&important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: GET
       response:
         proto: HTTP/1.1
@@ -62,7 +62,7 @@ interactions:
                 - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
-        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
+        url: http://webservice/test/knock?access_token=_hidden&important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: POST
       response:
         proto: HTTP/1.1
@@ -111,7 +111,7 @@ interactions:
                 - application/x-www-form-urlencoded; charset=utf-8
             X-Http-Record-Index:
                 - "2"
-        url: http://webservice/test/knock?important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
+        url: http://webservice/test/knock?access_token=_hidden&important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: POST
       response:
         proto: HTTP/1.1

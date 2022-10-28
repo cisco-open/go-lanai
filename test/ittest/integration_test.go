@@ -2,12 +2,13 @@ package ittest
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sdtest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -48,8 +49,14 @@ func TestHttpClientWithoutSecurity(t *testing.T) {
 	)
 }
 
+type secHcDI struct {
+	fx.In
+	HttpClient httpclient.Client
+	AuthClient seclient.AuthenticationClient
+}
+
 func TestHttpClientWithSecurity(t *testing.T) {
-	var di hcDI
+	var di secHcDI
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		WithHttpPlayback(t),
@@ -57,12 +64,8 @@ func TestHttpClientWithSecurity(t *testing.T) {
 		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
 		apptest.WithModules(httpclient.Module),
 		apptest.WithDI(&di),
-		apptest.WithFxOptions(
-			fx.Provide(
-				discovery.NewCustomizers,
-			),
-		),
-		test.GomegaSubTest(SubTestHttpClientWithScope(&di), "TestHttpClientWithScope"),
+		test.GomegaSubTest(SubTestScopeAndSystemAccount(&di), "TestScopeAndSystemAccount"),
+		test.GomegaSubTest(SubTestScopeAndCurrentContext(&di), "TestScopeAndCurrentContext"),
 	)
 }
 
@@ -94,7 +97,7 @@ func SubTestHttpClientWithoutSD(di *hcDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestHttpClientWithScope(di *hcDI) test.GomegaSubTestFunc {
+func SubTestScopeAndSystemAccount(di *secHcDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
 		var resp *httpclient.Response
@@ -112,6 +115,36 @@ func SubTestHttpClientWithScope(di *hcDI) test.GomegaSubTestFunc {
 			resp, e = client.Execute(ctx, httpclient.NewRequest("/api/v8/users/current", http.MethodGet), httpclient.CustomResponseDecoder(htmlDecodeFunc()))
 			assertResponse(t, g, resp, e, http.StatusOK)
 		}, scope.UseSystemAccount())
+		g.Expect(e).To(Succeed(), "scope switching should succeed")
+	}
+}
+
+func SubTestScopeAndCurrentContext(di *secHcDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// get a real token
+		rs, e := di.AuthClient.PasswordLogin(ctx, seclient.WithCredentials("superuser", "superuser"))
+		g.Expect(e).To(Succeed(), "initial access token request should be success")
+
+		// Authentication is passed along to the controller in MockedServer mode.
+		ctx = sectest.ContextWithSecurity(ctx, sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
+			d.AccessToken = rs.Token.Value()
+		}))
+
+		var resp *httpclient.Response
+		client, e := di.HttpClient.WithService(ServiceNameIDM)
+		g.Expect(e).To(Succeed(), "client to svc should be available")
+
+		e = scope.Do(ctx, func(ctx context.Context) {
+			resp, e = client.Execute(ctx, httpclient.NewRequest("/api/v8/users/current", http.MethodGet), httpclient.CustomResponseDecoder(htmlDecodeFunc()))
+			assertResponse(t, g, resp, e, http.StatusOK)
+		}, scope.WithUsername("admin"))
+		g.Expect(e).To(Succeed(), "scope switching should succeed")
+
+		// do it again to trigger cached scopes
+		e = scope.Do(ctx, func(ctx context.Context) {
+			resp, e = client.Execute(ctx, httpclient.NewRequest("/api/v8/users/current", http.MethodGet), httpclient.CustomResponseDecoder(htmlDecodeFunc()))
+			assertResponse(t, g, resp, e, http.StatusOK)
+		}, scope.WithUsername("admin"))
 		g.Expect(e).To(Succeed(), "scope switching should succeed")
 	}
 }

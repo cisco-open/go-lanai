@@ -122,7 +122,8 @@ func MustExec(ctx context.Context, req *http.Request, opts ...RequestOptions) Ex
 	Options
  *************************/
 
-func WithHeaders(kvs ...string) RequestOptions {
+// Headers returns a RequestOptions that set additional headers
+func Headers(kvs ...string) RequestOptions {
 	return func(req *http.Request) {
 		for i := 0; i < len(kvs); i += 2 {
 			if i+1 < len(kvs) {
@@ -134,7 +135,8 @@ func WithHeaders(kvs ...string) RequestOptions {
 	}
 }
 
-func WithQueries(kvs ...string) RequestOptions {
+// Queries returns a RequestOptions that set additional queries
+func Queries(kvs ...string) RequestOptions {
 	return func(req *http.Request) {
 		q := req.URL.Query()
 		for i := 0; i < len(kvs); i += 2 {
@@ -148,14 +150,20 @@ func WithQueries(kvs ...string) RequestOptions {
 	}
 }
 
-func WithCookies(resp *http.Response) RequestOptions {
+// Cookies returns a RequestOptions that carry on cookies from given response
+func Cookies(resp *http.Response) RequestOptions {
 	cookies := resp.Cookies()
 	kvs := make([]string, len(cookies)*2)
 	for i := range cookies {
 		kvs[i*2] = "Cookie"
 		kvs[i*2+1] = cookies[i].String()
 	}
-	return WithHeaders(kvs...)
+	return Headers(kvs...)
+}
+
+// ContentType returns a RequestOptions that set content type in header
+func ContentType(v string) RequestOptions {
+	return Headers("Content-Type", v)
 }
 
 /*************************

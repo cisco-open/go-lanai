@@ -99,7 +99,7 @@ func SubTestEchoWithRelativePath() test.GomegaSubTestFunc {
 
 		// with relative path
 		req = webtest.NewRequest(ctx, http.MethodPost, "/api/v1/echo", strings.NewReader(ValidRequestBody),
-			webtest.WithHeaders("Content-Type", "application/json"))
+			webtest.Headers("Content-Type", "application/json"))
 		resp = webtest.MustExec(ctx, req).Response
 		assertResponse(t, g, resp, "hello")
 	}
@@ -113,7 +113,7 @@ func SubTestEchoWithAbsolutePath(contextPath string) test.GomegaSubTestFunc {
 		// with absolute path
 		url := fmt.Sprintf("http://whatever:0%s/api/v1/echo", contextPath)
 		req = webtest.NewRequest(ctx, http.MethodPost, url, strings.NewReader(ValidRequestBody),
-			webtest.WithHeaders("Content-Type", "application/json"))
+			webtest.Headers("Content-Type", "application/json"))
 		resp = webtest.MustExec(ctx, req).Response
 		assertResponse(t, g, resp, "hello")
 	}

@@ -55,7 +55,6 @@ type scopeDIOut struct {
 	fx.Out
 	TokenReader oauth2.TokenStoreReader
 	JwkStore    jwt.JwkStore
-	//ResServerConfig resserver.ResourceServerConfigurer
 }
 
 func provideScopeDI(di scopeDI) scopeDIOut {
@@ -74,7 +73,6 @@ func provideScopeDI(di scopeDI) scopeDIOut {
 					HTTPClient:  di.Recorder.GetDefaultClient(),
 				}
 			}
-			//opt.JwtDecoder = jwt.NewRS256JwtDecoder(jwkStore, di.CryptoProperties.Jwt.KeyName)
 		}),
 	}
 }

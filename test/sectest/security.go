@@ -64,6 +64,7 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 				TExternalId: details.TenantExternalId(),
 				OrigU:       details.OrigUsername,
 			},
+			Token: details.AccessToken,
 			ExpTime: details.Exp,
 			IssTime: details.Iss,
 		}

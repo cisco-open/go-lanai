@@ -16,8 +16,6 @@ import (
 	"testing"
 )
 
-const CLIRecordModeFlag = "record"
-
 func init() {
 	// try register "record" flag, it may fail if it's already registered
 	if flag.Lookup(CLIRecordModeFlag) == nil {

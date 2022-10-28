@@ -11,6 +11,8 @@ import (
 
 type Mode int
 
+const CLIRecordModeFlag = "record-http"
+
 // Recorder states
 const (
 	// ModeCommandline lets the commandline or the state in TestMain to determine the mode. Default to ModeReplaying
@@ -28,7 +30,7 @@ var (
 	IgnoredRequestHeaders = utils.NewStringSet(xInteractionIndexHeader)
 
 	FuzzyRequestHeaders    = utils.NewStringSet("Authorization")
-	FuzzyRequestQueries    = utils.NewStringSet("password", "secret", "nonce", "token")
+	FuzzyRequestQueries    = utils.NewStringSet("password", "secret", "nonce", "token", "access_token")
 	FuzzyRequestJsonPaths  = utils.NewStringSet()
 	FuzzyResponseHeaders   = utils.NewStringSet("Date")
 	FuzzyResponseJsonPaths = utils.NewStringSet("$..access_token")

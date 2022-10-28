@@ -44,12 +44,14 @@ require (
 	github.com/shirou/gopsutil/v3 v3.22.8
 	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5
+	github.com/spyzhov/ajson v0.7.1
 	github.com/stretchr/testify v1.8.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	go.uber.org/fx v1.17.1
 	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
+	gopkg.in/dnaeon/go-vcr.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.3.1
 	gorm.io/gorm v1.23.3
@@ -143,7 +145,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
-	github.com/spyzhov/ajson v0.7.1 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/tidwall/gjson v1.14.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
@@ -170,7 +171,6 @@ require (
 	google.golang.org/genproto v0.0.0-20220207185906-7721543eae58 // indirect
 	google.golang.org/grpc v1.44.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/dnaeon/go-vcr.v3 v3.1.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
