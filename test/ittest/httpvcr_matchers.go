@@ -123,7 +123,7 @@ func NewRecordIndexAwareMatcher() GenericMatcherFunc[*http.Request, cassette.Req
 	return func(out *http.Request, record cassette.Request) error {
 		recordId, e := strconv.Atoi(record.Headers.Get(xInteractionIndexHeader))
 		if e != nil {
-			return nil
+			return e
 		}
 		defer func() { id++ }()
 		if id != recordId {

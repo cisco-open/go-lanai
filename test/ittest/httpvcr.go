@@ -300,6 +300,7 @@ func toRecorderOptions(opt HttpVCROption) *recorder.Options {
 		if cliFlag != nil && *cliFlag {
 			mode = recorder.ModeRecordOnly
 		}
+	default:
 	}
 
 	name := opt.Name

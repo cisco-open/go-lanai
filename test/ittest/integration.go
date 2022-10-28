@@ -26,7 +26,6 @@ func WithRecordedScopes() test.Options {
 		fx.Provide(jwt.BindCryptoProperties),
 		fx.Provide(provideScopeDI),
 	}
-	fxOpts = append(fxOpts)
 
 	opts := []test.Options{
 		apptest.WithModules(scope.Module, seclient.Module),

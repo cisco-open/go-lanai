@@ -14,6 +14,7 @@ import (
 	"net/url"
 )
 
+//nolint:gosec // G101: Potential hardcoded credentials, false positive
 const CheckTokenPath = `/v2/check_token`
 
 // RemoteTokenStoreReader implements oauth2.TokenStoreReader that leverage /check_token endpoint to load authentication
