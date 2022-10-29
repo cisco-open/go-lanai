@@ -39,8 +39,14 @@ type TestDI struct {
 	AuthClient seclient.AuthenticationClient
 }
 
-
 // TestExampleMockedServerTestWithSecurity
+// Behavior based tests that verify Controllers end-to-end behavior by sending requests to a Mocked Server.
+//
+// Please see "example_service.go" for the test subject setup:
+// - ExampleController is properly mapped and protected by permissions
+// - ExampleController uses ExampleService's corresponding method based on the input
+// - ExampleService perform security context switching and make HTTP call to another service (IDM in this case)
+// This test style mimic common microservice tests tasks
 func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 	var di TestDI
 	test.RunTest(context.Background(), t,
@@ -85,6 +91,13 @@ func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 	)
 }
 
+// TestExampleUnitTestWithSecurity
+// Unit tests that verify business logic components (ExampleService) that internally perform security context switching
+// and remote HTTP call.
+//
+// Please see "example_service.go" for the test subject setup:
+// - ExampleService perform security context switching and make HTTP call to another service (IDM in this case)
+// This test style is usually suitable for standalone components that not directly invoked in response of incoming HTTP requests.
 func TestExampleUnitTestWithSecurity(t *testing.T) {
 	var di TestDI
 	test.RunTest(context.Background(), t,
