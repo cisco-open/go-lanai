@@ -39,7 +39,9 @@ type TestDI struct {
 	AuthClient seclient.AuthenticationClient
 }
 
-func TestHttpClientWithSecurity(t *testing.T) {
+
+// TestExampleMockedServerTestWithSecurity
+func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 	var di TestDI
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -62,11 +64,15 @@ func TestHttpClientWithSecurity(t *testing.T) {
 
 		// Because the test subjects (ExampleController, ExampleService) uses service discovery and scopes,
 		// They need to be configured properly for HTTP recorder to work
+		// Note: We use ittest.WithRecordedScopes instead of sectest.WithMockedScopes, because switching context
+		// 		 in recording mode requires real access token in each scope. The HTTP interactions during context
+		// 		 switching is also recorded
 		ittest.WithRecordedScopes(),
+		// See `sdtest` for more examples. The SD mocking is defined in testdata/application-test.yml
 		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
 
 		// Because remote access require current context to be authentic during recording mode,
-		// We need this configuration to pass along the security context from the test context to Controller's context
+		// We need this configuration to pass along the security context from the test context to Controller's context.
 		sectest.WithMockedMiddleware(),
 
 		// Controller requires permissions, we need to mock it for any test that uses webtest
@@ -74,10 +80,42 @@ func TestHttpClientWithSecurity(t *testing.T) {
 
 		// Test order is important, unless ittest.DisableHttpRecordOrdering option is used
 		test.GomegaSubTest(SubTestMockedServerWithSystemAccount(), "TestMockedServerWithSystemAccount"),
-		test.GomegaSubTest(SubTestUnitTestWithSystemAccount(&di), "TestUnitTestWithSystemAccount"),
 		test.GomegaSubTest(SubTestMockedServerWithoutSystemAccount(&di), "TestMockedServerWithoutSystemAccount"),
-		test.GomegaSubTest(SubTestUnitTestWithWithoutSystemAccount(&di), "TestUnitTestWithWithoutSystemAccount"),
 		test.GomegaSubTest(SubTestMockedServerWithCurrentContext(&di), "TestMockedServerWithCurrentContext"),
+	)
+}
+
+func TestExampleUnitTestWithSecurity(t *testing.T) {
+	var di TestDI
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		// Setup your test, includes modules you need, provide test subjects and other mocks
+		apptest.WithModules(httpclient.Module),
+		apptest.WithDI(&di),
+		apptest.WithFxOptions(
+			fx.Provide(NewExampleService),
+		),
+
+		// Tell test framework to use recorded HTTP interaction.
+		// Note: this function accept may options. See ittest/httpvcr.go for more details
+		ittest.WithHttpPlayback(t),
+
+		// Tell test framework to use real service for any HTTP interaction.
+		// This should be enabled during development and turned off before checking in the code
+		//ittest.WithHttpPlayback(t, ittest.HttpRecordingMode()),
+
+		// Because the test subjects (ExampleService) uses service discovery and scopes,
+		// They need to be configured properly for HTTP recorder to work
+		// Note: We use ittest.WithRecordedScopes instead of sectest.WithMockedScopes, because switching context
+		// 		 in recording mode requires real access token in each scope. The HTTP interactions during context
+		// 		 switching is also recorded
+		ittest.WithRecordedScopes(),
+		// See `sdtest` for more examples. The SD mocking is defined in testdata/application-test.yml
+		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
+
+		// Test order is important, unless ittest.DisableHttpRecordOrdering option is used
+		test.GomegaSubTest(SubTestUnitTestWithSystemAccount(&di), "TestUnitTestWithSystemAccount"),
+		test.GomegaSubTest(SubTestUnitTestWithWithoutSystemAccount(&di), "TestUnitTestWithWithoutSystemAccount"),
 		test.GomegaSubTest(SubTestUnitTestWithCurrentContext(&di), "TestUnitTestWithCurrentContext"),
 	)
 }
