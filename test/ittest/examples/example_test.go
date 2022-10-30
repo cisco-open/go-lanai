@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 /*************************
@@ -62,11 +63,9 @@ func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 
 		// Tell test framework to use recorded HTTP interaction.
 		// Note: this function accept may options. See ittest/httpvcr.go for more details
-		ittest.WithHttpPlayback(t),
-
-		// Tell test framework to use real service for any HTTP interaction.
+		ittest.WithHttpPlayback(t), // Enable recording mode to use real service for any HTTP interaction.
 		// This should be enabled during development and turned off before checking in the code
-		//ittest.WithHttpPlayback(t, ittest.HttpRecordingMode()),
+		//ittest.HttpRecordingMode(),
 
 		// Because the test subjects (ExampleController, ExampleService) uses service discovery and scopes,
 		// They need to be configured properly for HTTP recorder to work
@@ -113,11 +112,9 @@ func TestExampleUnitTestWithSecurity(t *testing.T) {
 
 		// Tell test framework to use recorded HTTP interaction.
 		// Note: this function accept may options. See ittest/httpvcr.go for more details
-		ittest.WithHttpPlayback(t),
-
-		// Tell test framework to use real service for any HTTP interaction.
+		ittest.WithHttpPlayback(t), // Enable recording mode to use real service for any HTTP interaction.
 		// This should be enabled during development and turned off before checking in the code
-		//ittest.WithHttpPlayback(t, ittest.HttpRecordingMode()),
+		//ittest.HttpRecordingMode(),
 
 		// Because the test subjects (ExampleService) uses service discovery and scopes,
 		// They need to be configured properly for HTTP recorder to work
@@ -137,7 +134,6 @@ func TestExampleUnitTestWithSecurity(t *testing.T) {
 	)
 }
 
-
 type AnotherTestDI struct {
 	fx.In
 	HttpClient httpclient.Client
@@ -156,19 +152,36 @@ func TestExampleCustomRequestMatching(t *testing.T) {
 
 		// Tell test framework to use recorded HTTP interaction.
 		// Note: this function accept may options. See ittest/httpvcr.go for more details
-		//ittest.WithHttpPlayback(t),
+		ittest.WithHttpPlayback(t,
+			// Enable recording mode to use real service for any HTTP interaction.
+			// This should be enabled during development and turned off before checking in the code
+			//ittest.HttpRecordingMode(),
 
-		// Tell test framework to use real service for any HTTP interaction.
-		// This should be enabled during development and turned off before checking in the code
-		ittest.WithHttpPlayback(t, ittest.HttpRecordingMode(), ittest.HttpRecordIgnoreHost()),
+			// Disable Host matching when replaying. Useful when remote server has random port
+			ittest.HttpRecordIgnoreHost(),
+
+			// Fuzzy request matching for entire test.
+			// Per sub-test customization is also possible using ittest.AdditionalMatcherOptions
+			// Use case: recorded HTTP interactions may contain temporal/random data in headers/queries/body that would
+			// 			 cause replaying difficult. We can customize our request matching to ignore those values.
+			// Note: the request still need to contain those headers/queries/fields to be matched. Only value comparison is disabled.
+			ittest.HttpRecordMatching(
+				// When matching request, values of specified keys in form data (queries and x-form-urlencoded body) are ignored.
+				ittest.FuzzyHeaders("X-Date"),
+				// When matching request, values of specified keys in form data (queries and x-form-urlencoded body) are ignored.
+				ittest.FuzzyForm("time", "random"),
+				// When matching request, values of specified JSONPath in JSON body are ignored.
+				// JSONPath Syntax: https://goessner.net/articles/JsonPath/
+				ittest.FuzzyJsonPaths("$..time"),
+			),
+		),
 
 		// httpclient.Module requires a discover.Client to work.
 		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
 
 		// Test order is important, unless ittest.DisableHttpRecordOrdering option is used
+		test.GomegaSubTest(SubTestCustomRequestMatching(&di), "CustomRequestMatching"),
 		test.GomegaSubTest(SubTestPerSubTestCustomRequestMatching(&di), "PerSubTestCustomRequestMatching"),
-		//test.GomegaSubTest(SubTestUnitTestWithWithoutSystemAccount(&di), "TestUnitTestWithWithoutSystemAccount"),
-		//test.GomegaSubTest(SubTestUnitTestWithCurrentContext(&di), "TestUnitTestWithCurrentContext"),
 	)
 }
 
@@ -298,16 +311,66 @@ func SubTestUnitTestWithCurrentContext(di *TestDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestCustomRequestMatching(di *AnotherTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		client, e := di.HttpClient.WithBaseUrl("http://127.0.0.1:8081/europa")
+		g.Expect(e).To(Succeed(), "client with base URL should be available")
+
+		now := time.Now()
+		body := map[string]interface{}{
+			"fixed-value": "this will be compared",
+			"object": map[string]interface{}{
+				"fixed-value": "this will be compared",
+				"time":        now.Format(time.RFC3339), // this value will be ignored
+			},
+		}
+		// With following temporal/random values in request, this interaction would normally fail during replay mode.
+		// However, with Fuzzy* options, they will match the recorded interaction even the values doesn't match.
+		req := httpclient.NewRequest("/public/ping", http.MethodPost,
+			httpclient.WithHeader("X-Date", now.Format(time.RFC850)),
+			httpclient.WithParam("time", now.Format(time.RFC3339)),
+			httpclient.WithParam("random", utils.RandomString(10)),
+			httpclient.WithBody(body),
+		)
+		resp, e := client.Execute(ctx, req, httpclient.JsonBody(&map[string]interface{}{}))
+		g.Expect(e).To(Succeed(), "execute request with random values shouldn't fail due to Fuzzy matching")
+		g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "response should be 200")
+		g.Expect(resp.Body).To(HaveKeyWithValue("message", "pong"), "response should be correct")
+	}
+}
+
 func SubTestPerSubTestCustomRequestMatching(di *AnotherTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		//TODO
-		ittest.AdditionalMatcherOptions(ctx, ittest.FuzzyQueries("abc"))
+
+		// Fuzzy request matching can be set for particular sub-test.
+		// Any additional matcher options takes effect only for this sub-test.
+		// All test level options still in effect
+		ittest.AdditionalMatcherOptions(ctx, ittest.FuzzyJsonPaths("$.random"))
 
 		client, e := di.HttpClient.WithBaseUrl("http://127.0.0.1:8081/europa")
 		g.Expect(e).To(Succeed(), "client with base URL should be available")
 
-		req := httpclient.NewRequest("/test", http.MethodGet, httpclient.WithParam("abc", utils.RandomString(10)))
-		_, _ = client.Execute(ctx, req)
+		now := time.Now()
+		body := map[string]interface{}{
+			"fixed-value": "this will be compared",
+			"object": map[string]interface{}{
+				"fixed-value": "this will be compared",
+				"time":        now.Format(time.RFC3339), // this value will be ignored
+			},
+			// This would fail with test level matching configuration, but should succeed in this sub-test
+			"random": utils.RandomString(20),
+		}
+		// Any test-level matching options should still in effect
+		req := httpclient.NewRequest("/public/ping", http.MethodPost,
+			httpclient.WithHeader("X-Date", now.Format(time.RFC850)),
+			httpclient.WithParam("time", now.Format(time.RFC3339)),
+			httpclient.WithParam("random", utils.RandomString(10)),
+			httpclient.WithBody(body),
+		)
+		resp, e := client.Execute(ctx, req, httpclient.JsonBody(&map[string]interface{}{}))
+		g.Expect(e).To(Succeed(), "execute request with random values shouldn't fail due to Fuzzy matching")
+		g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "response should be 200")
+		g.Expect(resp.Body).To(HaveKeyWithValue("message", "pong"), "response should be correct")
 	}
 }
 
