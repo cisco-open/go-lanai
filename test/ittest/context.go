@@ -26,6 +26,7 @@ const DefaultHttpDuration = 200 * time.Microsecond
 
 var (
 	xInteractionIndexHeader = `X-Http-Record-Index`
+	xInteractionSeenHeader  = `X-Http-Request-Seen`
 
 	IgnoredRequestHeaders = utils.NewStringSet(xInteractionIndexHeader)
 
@@ -49,7 +50,7 @@ type HttpVCROption struct {
 	Hooks          []RecorderHook
 	// special record matcher that enforce interaction order.
 	// to change, use DisableHttpRecordOrdering
-	indexAwareMatcher GenericMatcherFunc[*http.Request, cassette.Request]
+	indexAwareWrapper *indexAwareMatcherWrapper
 }
 
 /******************************

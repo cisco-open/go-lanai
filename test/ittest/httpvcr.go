@@ -45,7 +45,7 @@ func WithHttpPlayback(t *testing.T, opts ...HttpVCROptions) test.Options {
 			NewRecorderHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook),
 			NewRecorderHook(SanitizingHook(), recorder.BeforeSaveHook),
 		},
-		indexAwareMatcher: NewRecordIndexAwareMatcher(), // enforce order
+		indexAwareWrapper: newIndexAwareMatcherWrapper(), // enforce order
 	}
 
 	var di RecorderDI
@@ -98,7 +98,7 @@ func AdditionalMatcherOptions(ctx context.Context, opts...RecordMatcherOptions) 
 	newOpts = append(newOpts, opts...)
 
 	// construct and set new matcher
-	newMatcher := newCassetteMatcherFunc(newOpts, opt.indexAwareMatcher)
+	newMatcher := newCassetteMatcherFunc(newOpts, opt.indexAwareWrapper)
 	rec.SetMatcher(newMatcher)
 }
 
@@ -174,7 +174,7 @@ func HttpRecordIgnoreHost() HttpVCROptions {
 // When this option is used, HTTP interactions can happen in any order. However, each matched record can only replay once
 func DisableHttpRecordOrdering() HttpVCROptions {
 	return func(opt *HttpVCROption) {
-		opt.indexAwareMatcher = nil
+		opt.indexAwareWrapper = nil
 	}
 }
 
@@ -235,6 +235,11 @@ func recorderReset(di *RecorderDI) test.TeardownFunc {
 	Internals
  *************************/
 
+type vcrDI struct {
+	fx.In
+	VCROptions []HttpVCROptions `group:"http-vcr"`
+}
+
 type vcrOut struct {
 	fx.Out
 	Recorder             *recorder.Recorder
@@ -243,9 +248,10 @@ type vcrOut struct {
 	HttpVCROption        *HttpVCROption
 }
 
-func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (vcrOut, error) {
-	return func() (vcrOut, error) {
+func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func(di vcrDI) (vcrOut, error) {
+	return func(di vcrDI) (vcrOut, error) {
 		opt := initial
+		opts = append(opts, di.VCROptions...)
 		for _, fn := range opts {
 			fn(&opt)
 		}
@@ -255,7 +261,7 @@ func httpRecorderProvider(initial HttpVCROption, opts []HttpVCROptions) func() (
 		}
 
 		// set matchers
-		matcher := newCassetteMatcherFunc(opt.RecordMatching, opt.indexAwareMatcher)
+		matcher := newCassetteMatcherFunc(opt.RecordMatching, opt.indexAwareWrapper)
 		rec.SetMatcher(matcher)
 
 		//set hooks
@@ -315,12 +321,12 @@ func toRecorderOptions(opt HttpVCROption) *recorder.Options {
 	}
 }
 
-func newCassetteMatcherFunc(opts []RecordMatcherOptions, indexAwareMatcher GenericMatcherFunc[*http.Request, cassette.Request]) cassette.MatcherFunc {
+func newCassetteMatcherFunc(opts []RecordMatcherOptions, indexAwareMatcher *indexAwareMatcherWrapper) cassette.MatcherFunc {
 	matcherFn := NewRecordMatcher(opts...)
 	if indexAwareMatcher == nil {
 		return wrapRecordRequestMatcher(matcherFn)
 	}
-	return wrapRecordRequestMatcher(AndMatcher(matcherFn, indexAwareMatcher))
+	return wrapRecordRequestMatcher(indexAwareMatcher.MatcherFunc(RecordMatcherFunc(matcherFn)))
 }
 
 func httpRecorderCleanup(lc fx.Lifecycle, rec *recorder.Recorder) {
@@ -334,7 +340,9 @@ func httpRecorderCleanup(lc fx.Lifecycle, rec *recorder.Recorder) {
 func wrapRecordRequestMatcher(fn GenericMatcherFunc[*http.Request, cassette.Request]) cassette.MatcherFunc {
 	return func(out *http.Request, record cassette.Request) bool {
 		if e := fn(out, record); e != nil {
-			logger.Debugf("HTTP interaction missing: %v", e)
+			if e != errInteractionIDMismatch {
+				logger.Debugf("HTTP interaction missing: %s - %v", record.Headers.Get(xInteractionIndexHeader), e)
+			}
 			return false
 		}
 		return true

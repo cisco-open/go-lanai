@@ -90,19 +90,19 @@ func (c TestController) Post(_ context.Context, r *TestRequest) (*TestResponse, 
 	Tests
  *************************/
 
-type vcrDI struct {
+type vcrTestDI struct {
 	fx.In
 	Recorder *recorder.Recorder
 }
 
 func TestHttpVCRRecording(t *testing.T) {
-	var di vcrDI
+	var di vcrTestDI
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		webtest.WithRealServer(),
 		WithHttpPlayback(t, HttpRecordName(RecordName),
-			HttpRecordingMode(), HttpRecorderHooks(NewRecorderHook(LocalhostRewriteHook(), recorder.BeforeSaveHook))),
+			HttpRecordingMode(), HttpRecorderHooks(NewRecorderHookWithOrder(LocalhostRewriteHook(), recorder.BeforeSaveHook, 0))),
 		apptest.WithDI(&di),
 		apptest.WithFxOptions(
 			web.FxControllerProviders(NewTestController),
@@ -115,7 +115,7 @@ func TestHttpVCRRecording(t *testing.T) {
 }
 
 func TestHttpVCRPlaybackExact(t *testing.T) {
-	var di vcrDI
+	var di vcrTestDI
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -129,7 +129,7 @@ func TestHttpVCRPlaybackExact(t *testing.T) {
 }
 
 func TestHttpVCRPlaybackEquivalent(t *testing.T) {
-	var di vcrDI
+	var di vcrTestDI
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -143,7 +143,7 @@ func TestHttpVCRPlaybackEquivalent(t *testing.T) {
 }
 
 func TestHttpVCRPlaybackIncorrectOrder(t *testing.T) {
-	var di vcrDI
+	var di vcrTestDI
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -155,7 +155,7 @@ func TestHttpVCRPlaybackIncorrectOrder(t *testing.T) {
 }
 
 func TestHttpVCRPlaybackWithOrderDisabled(t *testing.T) {
-	var di vcrDI
+	var di vcrTestDI
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -167,7 +167,7 @@ func TestHttpVCRPlaybackWithOrderDisabled(t *testing.T) {
 }
 
 func TestHttpVCRPlaybackIncorrectQuery(t *testing.T) {
-	var di vcrDI
+	var di vcrTestDI
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -179,16 +179,14 @@ func TestHttpVCRPlaybackIncorrectQuery(t *testing.T) {
 }
 
 func TestHttpVCRPlaybackIncorrectBody(t *testing.T) {
-	var di vcrDI
+	var di vcrTestDI
 	t.Name()
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
-		test.GomegaSubTest(SubTestEquivalentGet(&di), "TestEquivalentGet"), // let interaction counter move forward
 		test.GomegaSubTest(SubTestIncorrectRequestJsonBody(&di), "TestIncorrectRequestJsonBody"),
-		test.GomegaSubTest(SubTestNormalPostJson(&di), "TestNormalPostJson"), // let interaction counter move forward
 		test.GomegaSubTest(SubTestIncorrectRequestFormBody(&di), "TestIncorrectRequestFormBody"),
 	)
 }
@@ -203,7 +201,7 @@ func SubTestHttpVCRMode(expectRecording bool) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestNormalGet(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestNormalGet(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 		req := newGetRequest(ctx, t, g)
@@ -213,7 +211,7 @@ func SubTestNormalGet(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestNormalPostJson(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestNormalPostJson(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 		req := newPostJsonRequest(ctx, t, g)
@@ -224,7 +222,7 @@ func SubTestNormalPostJson(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestNormalPostForm(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestNormalPostForm(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 
@@ -235,7 +233,7 @@ func SubTestNormalPostForm(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestEquivalentGet(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestEquivalentGet(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 		req := newGetRequest(ctx, t, g)
@@ -245,7 +243,7 @@ func SubTestEquivalentGet(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestEquivalentPostJson(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestEquivalentPostJson(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 
@@ -258,7 +256,7 @@ func SubTestEquivalentPostJson(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestEquivalentPostForm(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestEquivalentPostForm(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 
@@ -270,7 +268,7 @@ func SubTestEquivalentPostForm(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestDifferentRequestOrder(di *vcrDI, expectSuccess bool) test.GomegaSubTestFunc {
+func SubTestDifferentRequestOrder(di *vcrTestDI, expectSuccess bool) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 		var req *http.Request
@@ -297,7 +295,7 @@ func SubTestDifferentRequestOrder(di *vcrDI, expectSuccess bool) test.GomegaSubT
 	}
 }
 
-func SubTestIncorrectRequestQuery(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestIncorrectRequestQuery(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 		var req *http.Request
@@ -313,7 +311,7 @@ func SubTestIncorrectRequestQuery(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestIncorrectRequestJsonBody(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestIncorrectRequestJsonBody(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 		req := newPostJsonRequest(ctx, t, g, withBody(IncorrectRequestJsonBody))
@@ -322,7 +320,7 @@ func SubTestIncorrectRequestJsonBody(di *vcrDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestIncorrectRequestFormBody(di *vcrDI) test.GomegaSubTestFunc {
+func SubTestIncorrectRequestFormBody(di *vcrTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 

@@ -70,10 +70,12 @@ func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 
 		// Because the test subjects (ExampleController, ExampleService) uses service discovery and scopes,
 		// They need to be configured properly for HTTP recorder to work
+
 		// Note: We use ittest.WithRecordedScopes instead of sectest.WithMockedScopes, because switching context
 		// 		 in recording mode requires real access token in each scope. The HTTP interactions during context
 		// 		 switching is also recorded
 		ittest.WithRecordedScopes(),
+		// httpclient.Module requires a discovery.Client to work.
 		// See `sdtest` for more examples. The SD mocking is defined in testdata/application-test.yml
 		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
 
@@ -119,10 +121,12 @@ func TestExampleUnitTestWithSecurity(t *testing.T) {
 
 		// Because the test subjects (ExampleService) uses service discovery and scopes,
 		// They need to be configured properly for HTTP recorder to work
+
 		// Note: We use ittest.WithRecordedScopes instead of sectest.WithMockedScopes, because switching context
 		// 		 in recording mode requires real access token in each scope. The HTTP interactions during context
 		// 		 switching is also recorded
 		ittest.WithRecordedScopes(),
+		// httpclient.Module requires a discovery.Client to work.
 		// See `sdtest` for more examples. The SD mocking is defined in testdata/application-test.yml
 		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
 
@@ -130,6 +134,41 @@ func TestExampleUnitTestWithSecurity(t *testing.T) {
 		test.GomegaSubTest(SubTestUnitTestWithSystemAccount(&di), "TestUnitTestWithSystemAccount"),
 		test.GomegaSubTest(SubTestUnitTestWithWithoutSystemAccount(&di), "TestUnitTestWithWithoutSystemAccount"),
 		test.GomegaSubTest(SubTestUnitTestWithCurrentContext(&di), "TestUnitTestWithCurrentContext"),
+	)
+}
+
+
+type AnotherTestDI struct {
+	fx.In
+	HttpClient httpclient.Client
+}
+
+// TestExampleCustomRequestMatching
+// This example demonstrate some custom request matching options.
+// By default, requests need to be replayed in exact order
+func TestExampleCustomRequestMatching(t *testing.T) {
+	var di AnotherTestDI
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		// Setup your test, includes modules you need, provide test subjects and other mocks
+		apptest.WithModules(httpclient.Module),
+		apptest.WithDI(&di),
+
+		// Tell test framework to use recorded HTTP interaction.
+		// Note: this function accept may options. See ittest/httpvcr.go for more details
+		//ittest.WithHttpPlayback(t),
+
+		// Tell test framework to use real service for any HTTP interaction.
+		// This should be enabled during development and turned off before checking in the code
+		ittest.WithHttpPlayback(t, ittest.HttpRecordingMode(), ittest.HttpRecordIgnoreHost()),
+
+		// httpclient.Module requires a discover.Client to work.
+		sdtest.WithMockedSD(sdtest.DefinitionWithPrefix("mocks.sd")),
+
+		// Test order is important, unless ittest.DisableHttpRecordOrdering option is used
+		test.GomegaSubTest(SubTestPerSubTestCustomRequestMatching(&di), "PerSubTestCustomRequestMatching"),
+		//test.GomegaSubTest(SubTestUnitTestWithWithoutSystemAccount(&di), "TestUnitTestWithWithoutSystemAccount"),
+		//test.GomegaSubTest(SubTestUnitTestWithCurrentContext(&di), "TestUnitTestWithCurrentContext"),
 	)
 }
 
@@ -256,6 +295,19 @@ func SubTestUnitTestWithCurrentContext(di *TestDI) test.GomegaSubTestFunc {
 		ret, e := di.Service.CallRemoteWithCurrentContext(ctx)
 		g.Expect(e).To(Succeed(), "functions that calling remote service should not fail")
 		assertResult(t, g, ret, "superuser")
+	}
+}
+
+func SubTestPerSubTestCustomRequestMatching(di *AnotherTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		//TODO
+		ittest.AdditionalMatcherOptions(ctx, ittest.FuzzyQueries("abc"))
+
+		client, e := di.HttpClient.WithBaseUrl("http://127.0.0.1:8081/europa")
+		g.Expect(e).To(Succeed(), "client with base URL should be available")
+
+		req := httpclient.NewRequest("/test", http.MethodGet, httpclient.WithParam("abc", utils.RandomString(10)))
+		_, _ = client.Execute(ctx, req)
 	}
 }
 

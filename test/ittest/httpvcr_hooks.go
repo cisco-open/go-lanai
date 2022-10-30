@@ -85,17 +85,22 @@ var (
 	}
 )
 
-type ValueSanitizer func(string) string
+type ValueSanitizer func(any) any
 
 func RegExpValueSanitizer(regex, repl string) ValueSanitizer {
 	pattern := regexp.MustCompile(regex)
-	return func(str string) string {
-		return pattern.ReplaceAllString(str, repl)
+	return func(i any) any {
+		switch s := i.(type) {
+		case string:
+			return pattern.ReplaceAllString(s, repl)
+		default:
+			return i
+		}
 	}
 }
 
-func SubstituteValueSanitizer(repl string) ValueSanitizer {
-	return func(_ string) string {
+func SubstituteValueSanitizer(repl any) ValueSanitizer {
+	return func(_ any) any {
 		return repl
 	}
 }
@@ -129,13 +134,13 @@ func SanitizingHook() func(i *cassette.Interaction) error {
 		case "application/x-www-form-urlencoded":
 			i.Request.Body = sanitizeRequestForm(&i.Request, FuzzyRequestQueries)
 		case "application/json":
-			i.Request.Body = sanitizeJsonBody(i.Request.Body, reqJsonPaths)
+			i.Request.Body = sanitizeJsonBody(i.Request.Body, BodySanitizers, reqJsonPaths)
 		}
 
 		i.Response.Headers = sanitizeHeaders(i.Response.Headers, FuzzyResponseHeaders)
 		switch mediaType(i.Response.Headers) {
 		case "application/json":
-			i.Response.Body = sanitizeJsonBody(i.Response.Body, respJsonPaths)
+			i.Response.Body = sanitizeJsonBody(i.Response.Body, BodySanitizers, respJsonPaths)
 		}
 		return nil
 	}
@@ -181,7 +186,7 @@ func sanitizeValues(values map[string][]string, sanitizers map[string]ValueSanit
 			sanitizer = DefaultValueSanitizer()
 		}
 		for i := range values[k] {
-			values[k][i] = sanitizer(values[k][i])
+			values[k][i] = sanitizer(values[k][i]).(string)
 		}
 	}
 	return values
@@ -206,7 +211,7 @@ func sanitizeRequestForm(req *cassette.Request, queryKeys utils.StringSet) strin
 	return req.Form.Encode()
 }
 
-func sanitizeJsonBody(body string, jsonPaths []parsedJsonPath) string {
+func sanitizeJsonBody(body string, sanitizers map[string]ValueSanitizer, jsonPaths []parsedJsonPath) string {
 	if len(jsonPaths) == 0 {
 		return body
 	}
@@ -221,14 +226,19 @@ func sanitizeJsonBody(body string, jsonPaths []parsedJsonPath) string {
 			continue
 		}
 		for _, node := range nodes {
-			if !node.IsString() {
-				continue
-			}
-			sanitizer, ok := BodySanitizers[node.Key()]
+			sanitizer, ok := sanitizers[node.Key()]
 			if !ok {
 				sanitizer = DefaultValueSanitizer()
 			}
-			_ = node.Set(sanitizer(node.MustString()))
+			switch node.Type() {
+			case ajson.String:
+				_ = node.Set(sanitizer(node.MustString()))
+			case ajson.Numeric:
+				_ = node.Set(sanitizer(node.MustNumeric()))
+			case ajson.Bool:
+				_ = node.Set(sanitizer(node.MustBool()))
+			default:
+			}
 		}
 	}
 	return root.String()

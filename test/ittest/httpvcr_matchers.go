@@ -10,6 +10,8 @@ import (
 	"strconv"
 )
 
+var errInteractionIDMismatch = fmt.Errorf("HTTP interaction ID doesn't match")
+
 type RecordMatcherOptions func(opt *RecordMatcherOption)
 type RecordMatcherOption struct {
 	// Convenient Options
@@ -112,25 +114,45 @@ func resolveMatcherOption(opts []RecordMatcherOptions) *RecordMatcherOption {
 	return &opt
 }
 
-// NewRecordIndexAwareMatcher is a special matcher that ensure requests are executed in the recorded order
+// indexAwareMatcherWrapper is a special matcher wrapper that ensure requests are executed in the recorded order
+type indexAwareMatcherWrapper struct {
+	// count for total actual request have seen
+	count    int
+}
+
+func newIndexAwareMatcherWrapper() *indexAwareMatcherWrapper {
+	return &indexAwareMatcherWrapper{
+		count: 0,
+	}
+}
+
+// MatcherFunc wrap given delegate with index enforcement
 // Note 1: because current httpvcr lib doesn't expose the interaction ID, we stored it in header
 // 		   using InteractionIndexAwareHook
-// Note 2: the next expected ID would increase regardless if ID matches. So this index should be used together with
-// 		   other matchers: "other_matcher AND NewRecordIndexAwareMatcher()". This matcher need to be put behind
-// 		   any other matchers
-func NewRecordIndexAwareMatcher() GenericMatcherFunc[*http.Request, cassette.Request] {
-	var id int
+// Note 2: This wrapper doesn't invoke delegate if expected ID doesn't match.
+// Note 3: The next expected ID would increase if delegate is a match. This means if recorder couldn't match the
+// 		   request with currently expected interaction, it would keep waiting on the same interaction
+func (w *indexAwareMatcherWrapper) MatcherFunc(delegate RecordMatcherFunc) GenericMatcherFunc[*http.Request, cassette.Request] {
 	return func(out *http.Request, record cassette.Request) error {
 		recordId, e := strconv.Atoi(record.Headers.Get(xInteractionIndexHeader))
 		if e != nil {
-			return e
-		}
-		defer func() { id++ }()
-		if id != recordId {
-			return fmt.Errorf("HTTP interaction ID doesn't match")
+			recordId = -1
 		}
 
-		return nil
+		seen := len(out.Header.Get(xInteractionSeenHeader)) != 0
+		if !seen {
+			// a new request, we adjust the expectation and set the request to be seen
+			out.Header.Set(xInteractionSeenHeader, "true")
+			w.count ++
+		}
+
+		// do interaction match first
+		if w.count != recordId + 1 {
+			return errInteractionIDMismatch
+		}
+
+		// invoke delegate, increase counter if applicable
+		return delegate(out, record)
 	}
 }
 
