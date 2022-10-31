@@ -83,7 +83,7 @@ func provideScopeDI(di scopeDI) scopeDIOut {
 
 type scopeVCROptionsOut struct {
 	fx.Out
-	VCROptions HttpVCROptions `group:"http-vcr"`
+	VCROptions HTTPVCROptions `group:"http-vcr"`
 }
 
 func provideScopeVCROptions() scopeVCROptionsOut {

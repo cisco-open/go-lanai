@@ -21,8 +21,8 @@ const (
 	ModeRecording
 )
 
-// DefaultHttpDuration default duration of recorded HTTP interaction
-const DefaultHttpDuration = 200 * time.Microsecond
+// DefaultHTTPDuration default duration of recorded HTTP interaction
+const DefaultHTTPDuration = 200 * time.Microsecond
 
 var (
 	xInteractionIndexHeader = `X-Http-Record-Index`
@@ -38,11 +38,11 @@ var (
 )
 
 /*************************
-	HttpVCROptions
+	HTTPVCROptions
  *************************/
 
-type HttpVCROptions func(opt *HttpVCROption)
-type HttpVCROption struct {
+type HTTPVCROptions func(opt *HTTPVCROption)
+type HTTPVCROption struct {
 	Name           string
 	Mode           Mode
 	SavePath       string
@@ -83,31 +83,33 @@ type RecorderHook interface {
 	Request Matcher Logic Ops
  ******************************/
 
+// Note: this is currently not used, we kept it for reference
+
 // AndMatcher generic AND operator of given matchers
 // Note: because golang generics requires instantiation, type casting is required.
 // 		 e.g. var m RecordBodyMatcherFunc = RecordBodyMatcherFunc(AndMatcher(matcher1, matcher2))
-func AndMatcher[O, R any](matchers ...GenericMatcherFunc[O, R]) GenericMatcherFunc[O, R] {
-	return func(out O, record R) error {
-		for _, matcher := range matchers {
-			if e := matcher(out, record); e != nil {
-				return e
-			}
-		}
-		return nil
-	}
-}
+//func AndMatcher[O, R any](matchers ...GenericMatcherFunc[O, R]) GenericMatcherFunc[O, R] {
+//	return func(out O, record R) error {
+//		for _, matcher := range matchers {
+//			if e := matcher(out, record); e != nil {
+//				return e
+//			}
+//		}
+//		return nil
+//	}
+//}
 
 // OrMatcher generic OR operator of given matchers
 // Note: because golang generics requires instantiation, type casting is required.
 // 		 e.g. var m RecordBodyMatcherFunc = RecordBodyMatcherFunc(AndMatcher(matcher1, matcher2))
-func OrMatcher[O, R any](matchers ...GenericMatcherFunc[O, R]) GenericMatcherFunc[O, R] {
-	return func(out O, record R) error {
-		var e error
-		for _, matcher := range matchers {
-			if e = matcher(out, record); e == nil {
-				return nil
-			}
-		}
-		return e
-	}
-}
+//func OrMatcher[O, R any](matchers ...GenericMatcherFunc[O, R]) GenericMatcherFunc[O, R] {
+//	return func(out O, record R) error {
+//		var e error
+//		for _, matcher := range matchers {
+//			if e = matcher(out, record); e == nil {
+//				return nil
+//			}
+//		}
+//		return e
+//	}
+//}
