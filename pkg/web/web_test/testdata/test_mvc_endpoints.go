@@ -7,16 +7,6 @@ import (
 	"net/http"
 )
 
-func newJsonResponse(req *JsonRequest) *JsonResponse {
-	return &JsonResponse{
-		UriVar:     req.UriVar,
-		QueryVar:   req.QueryVar,
-		HeaderVar:  req.HeaderVar,
-		JsonString: req.JsonString,
-		JsonInt:    req.JsonInt,
-	}
-}
-
 /*********************
 	Supported
  *********************/
@@ -61,6 +51,36 @@ func Raw(ctx context.Context, req *http.Request) (interface{}, error) {
 
 func NoRequest(_ context.Context) (*JsonResponse, error) {
 	return &JsonResponse{}, nil
+}
+
+func Text(_ context.Context, req *JsonRequest) (*TextResponse, error) {
+	return newTextResponse(req), nil
+}
+
+func TextString(_ context.Context, req *JsonRequest) (string, error) {
+	resp := newTextResponse(req)
+	bytes, e := resp.MarshalText()
+	return string(bytes), e
+}
+
+func TextBytes(_ context.Context, req *JsonRequest) ([]byte, error) {
+	resp := newTextResponse(req)
+	return resp.MarshalText()
+}
+
+func Bytes(_ context.Context, req *JsonRequest) ([]byte, error) {
+	resp := newBytesResponse(req)
+	return resp.MarshalBinary()
+}
+
+func BytesStruct(_ context.Context, req *JsonRequest) (*BytesResponse, error) {
+	return newBytesResponse(req), nil
+}
+
+func BytesString(_ context.Context, req *JsonRequest) (string, error) {
+	resp := newBytesResponse(req)
+	bytes, e := resp.MarshalBinary()
+	return string(bytes), e
 }
 
 /*********************

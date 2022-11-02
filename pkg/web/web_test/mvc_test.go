@@ -14,7 +14,9 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -67,6 +69,9 @@ func TestMvcRegistration(t *testing.T) {
 		test.GomegaSubTest(SubTestWithMvcMapping(&di), "TestWithMvcMapping"),
 		test.GomegaSubTest(SubTestWithMvcVariations(&di), "TestWithMvcVariations"),
 		test.GomegaSubTest(SubTestWithInvalidMvcHandler(&di), "TestWithInvalidMvcHandler"),
+		test.GomegaSubTest(SubTestWithTextResponse(&di), "TestWithTextResponse"),
+		test.GomegaSubTest(SubTestWithBytesResponse(&di), "TestWithBytesResponse"),
+		test.GomegaSubTest(SubTestWithCustomResponseEncoder(&di), "TestWithCustomResponseEncoder"),
 	)
 }
 
@@ -177,14 +182,96 @@ func SubTestWithInvalidMvcHandler(di *TestDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestWithTextResponse(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		reg := NewTestRegister(di)
+		var e error
+		reg.MustRegister(web.NewLoggingCustomizer(di.Properties))
+		mappings := []web.MvcMapping {
+			rest.Post("/text/:var").EndpointFunc(testdata.Text).EncodeResponseFunc(web.TextResponseEncoder()).Build(),
+			rest.Post("/text/string/:var").EndpointFunc(testdata.TextString).EncodeResponseFunc(web.TextResponseEncoder()).Build(),
+			rest.Post("/text/bytes/:var").EndpointFunc(testdata.TextBytes).EncodeResponseFunc(web.TextResponseEncoder()).Build(),
+		}
+		e = reg.Register(mappings)
+		g.Expect(e).To(Succeed(), "register MVC mapping should success")
+
+		e = reg.Initialize(ctx)
+		g.Expect(e).To(Succeed(), "initialize should success")
+		for _, m := range mappings {
+			path := strings.ReplaceAll(m.Path(), ":var", "var-value")
+			testBasicEndpoint(ctx, t, g, m.Method(), path, func(expect *expectation) {
+				expect.headers = map[string]string{
+					"Content-Type": "text/plain; charset=utf-8",
+				}
+				expect.bodyDecoder = urlencodedBodyDecoder()
+				expect.body["int"] = "20"
+			})
+		}
+	}
+}
+
+func SubTestWithBytesResponse(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		reg := NewTestRegister(di)
+		var e error
+		reg.MustRegister(web.NewLoggingCustomizer(di.Properties))
+		mappings := []web.MvcMapping {
+			rest.Post("/bytes/:var").EndpointFunc(testdata.Bytes).EncodeResponseFunc(web.BytesResponseEncoder()).Build(),
+			rest.Post("/bytes/string/:var").EndpointFunc(testdata.BytesString).EncodeResponseFunc(web.BytesResponseEncoder()).Build(),
+			rest.Post("/bytes/struct/:var").EndpointFunc(testdata.BytesStruct).EncodeResponseFunc(web.BytesResponseEncoder()).Build(),
+		}
+		e = reg.Register(mappings)
+		g.Expect(e).To(Succeed(), "register MVC mapping should success")
+
+		e = reg.Initialize(ctx)
+		g.Expect(e).To(Succeed(), "initialize should success")
+		for _, m := range mappings {
+			path := strings.ReplaceAll(m.Path(), ":var", "var-value")
+			testBasicEndpoint(ctx, t, g, m.Method(), path, func(expect *expectation) {
+				expect.headers = map[string]string{
+					"Content-Type": "application/octet-stream",
+				}
+				expect.bodyDecoder = urlencodedBodyDecoder()
+				expect.body["int"] = "20"
+			})
+		}
+	}
+}
+
+func SubTestWithCustomResponseEncoder(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const customContentType = `application/also-json`
+		reg := NewTestRegister(di)
+		var e error
+		reg.MustRegister(web.NewLoggingCustomizer(di.Properties))
+		encoder := web.CustomResponseEncoder(func(opt *web.EncodeOption) {
+			opt.ContentType = customContentType
+			opt.WriteFunc = web.JsonWriteFunc
+		})
+		e = reg.Register(rest.Post("/basic/:var").EndpointFunc(testdata.StructPtr200).EncodeResponseFunc(encoder).Build())
+		g.Expect(e).To(Succeed(), "register MVC mapping should success")
+
+		e = reg.Initialize(ctx)
+		g.Expect(e).To(Succeed(), "initialize should success")
+		testBasicEndpoint(ctx, t, g, http.MethodPost, "/basic/var-value", func(expect *expectation) {
+			expect.headers = map[string]string{
+				"Content-Type": customContentType,
+			}
+		})
+	}
+}
+
 /*************************
 	Helpers
  *************************/
 
-func testBasicEndpoint(ctx context.Context, t *testing.T, g *gomega.WithT, method, path string, expects ...func(*expectation)) {
+func testBasicEndpoint(ctx context.Context, t *testing.T, g *gomega.WithT, method, path string, expects ...func(expect *expectation)) {
 	resp := invokeEndpoint(ctx, t, g, method, path)
 	expect := expectation{
 		status: http.StatusOK,
+		headers: map[string]string{
+			"Content-Type": "application/json; charset=utf-8",
+		},
 		body: map[string]interface{}{
 			"uri":    "var-value",
 			"q":      BasicQueryValue,
@@ -192,13 +279,14 @@ func testBasicEndpoint(ctx context.Context, t *testing.T, g *gomega.WithT, metho
 			"string": "string value",
 			"int":    float64(20),
 		},
+		bodyDecoder: jsonBodyDecoder(),
 	}
 	for _, fn := range expects {
 		if fn != nil {
 			fn(&expect)
 		}
 	}
-	assertRestResponse(t, g, resp, expect)
+	assertResponse(t, g, resp, expect)
 }
 
 func invokeEndpoint(ctx context.Context, _ *testing.T, g *gomega.WithT, method, path string, opts ...webtest.RequestOptions) *http.Response {
@@ -217,20 +305,55 @@ type expectation struct {
 	status  int
 	headers map[string]string
 	body    map[string]interface{}
+	bodyDecoder bodyDecoder
 }
 
-func assertRestResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expect expectation) {
+type bodyDecoder func(body io.Reader) (interface{}, error)
+
+func assertResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expect expectation) {
 	g.Expect(resp.StatusCode).To(Equal(expect.status), "response status code should be correct")
 	for k, v := range expect.headers {
 		g.Expect(resp.Header.Get(k)).To(Equal(v), "response header should have header %s", k)
 	}
 
-	if expect.body != nil {
-		decoder := json.NewDecoder(resp.Body)
-		var body interface{}
-		e := decoder.Decode(&body)
-		g.Expect(e).To(Succeed(), "decode response JSON body should success")
+	if expect.body != nil && expect.bodyDecoder != nil {
+		body, e := expect.bodyDecoder(resp.Body)
+		g.Expect(e).To(Succeed(), "decode response body should success")
 		g.Expect(body).To(BeEquivalentTo(expect.body), "response body should be correct")
+	}
+}
+
+func jsonBodyDecoder() bodyDecoder {
+	return func(body io.Reader) (interface{}, error) {
+		decoder := json.NewDecoder(body)
+		var i interface{}
+		if e := decoder.Decode(&i); e != nil {
+			return nil, e
+		}
+		return i, nil
+	}
+}
+
+func urlencodedBodyDecoder() bodyDecoder {
+	return func(body io.Reader) (interface{}, error) {
+		text, e := io.ReadAll(body)
+		if e != nil {
+			return nil, e
+		}
+		pairs := strings.Split(string(text), "&")
+		ret := map[string]interface{}{}
+		for _, pair := range pairs {
+			kv := strings.SplitN(pair, "=", 2)
+			if len(kv) != 2 {
+				continue
+			}
+			v, e := url.QueryUnescape(kv[1])
+			if e != nil {
+				continue
+			}
+			ret[kv[0]] = v
+		}
+		return ret, nil
 	}
 }
 
