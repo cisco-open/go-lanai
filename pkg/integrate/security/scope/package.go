@@ -18,14 +18,10 @@ var Module = &bootstrap.Module{
 	Name:       "security scope",
 	Precedence: bootstrap.SecurityIntegrationPrecedence,
 	Options: []fx.Option{
-		fx.Provide(defaultScopeManagerProvider()),
+		fx.Provide(provideDefaultScopeManager),
 		fx.Invoke(configureScopeManagers),
 	},
 }
-
-const (
-	fxNameScopeManager = "scope/ScopeManager"
-)
 
 func Use() {
 	seclient.Use()
@@ -46,32 +42,15 @@ func FxManagerCustomizers(providers ...interface{}) []fx.Annotated {
 
 type defaultDI struct {
 	fx.In
-	AuthClient          seclient.AuthenticationClient             `optional:"true"`
-	Properties          securityint.SecurityIntegrationProperties `optional:"true"`
-	TokenStoreReader    oauth2.TokenStoreReader                   `optional:"true"`
-	Customizers         []ManagerCustomizer                       `group:"security-scope"`
-	UnnamedScopeManager ScopeManager                              `optional:"true"`
-}
-
-func defaultScopeManagerProvider() fx.Annotated {
-	return fx.Annotated{
-		Name:   fxNameScopeManager,
-		Target: provideDefaultScopeManager,
-	}
+	AuthClient       seclient.AuthenticationClient             `optional:"true"`
+	Properties       securityint.SecurityIntegrationProperties `optional:"true"`
+	TokenStoreReader oauth2.TokenStoreReader                   `optional:"true"`
+	Customizers      []ManagerCustomizer                       `group:"security-scope"`
 }
 
 func provideDefaultScopeManager(di defaultDI) ScopeManager {
-	// due to limitation of uber/fx, we cannot override provider, which is not good for testing & mocking
-	// the workaround is we always use Named Provider as default,
-	// then bail the initialization if an Unnamed one is present
-	if di.UnnamedScopeManager != nil {
-		return di.UnnamedScopeManager
-	}
-
 	if di.TokenStoreReader == nil || di.AuthClient == nil {
-		msg := fmt.Sprintf(`Security Scope managers requires "resserver" and "seclient", but not configured`)
-		logger.Warnf(msg)
-		panic(msg)
+		return nil
 	}
 
 	// default options
@@ -115,11 +94,11 @@ func provideDefaultScopeManager(di defaultDI) ScopeManager {
 	return newDefaultScopeManager(opts...)
 }
 
-type effectiveDI struct {
-	fx.In
-	EffectiveScopeManager ScopeManager `name:"scope/ScopeManager"`
-}
-
-func configureScopeManagers(di effectiveDI) {
-	scopeManager = di.EffectiveScopeManager
+func configureScopeManagers(EffectiveScopeManager ScopeManager) {
+	if EffectiveScopeManager == nil {
+		msg := fmt.Sprintf(`Security Scope managers requires "resserver" and "seclient", but not configured`)
+		logger.Warnf(msg)
+		panic(msg)
+	}
+	scopeManager = EffectiveScopeManager
 }
