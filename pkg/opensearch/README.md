@@ -1,5 +1,40 @@
 # Open Search
 
+## Configuration
+
+```yaml
+data:
+  opensearch:
+    addresses:
+      - "http://localhost:9200"
+    username: "admin"
+    password: "admin"
+    tls:
+      enable: false
+      config:
+        type: #this value can either be "file" or "vault"
+        min-version: #optional, if omitted, the default value is "tls10"
+
+        # vault type related properties begin
+        path:
+        role:
+        cn:
+        ip-sans:
+        alt-names:
+        ttl:
+        min-renew-interval:
+        # vault type related properties end
+
+        # file type related properties begin
+        ca-cert-file:
+        cert-file:
+        key-file:
+        key-pass:
+        # file type related properties end
+```
+
+## Testing
+
 When using the opensearch package, developers are encouraged to use WithOpenSearchPlayback, which wraps httpvcr to test. Examples can be found in the `go-lanai/pkg/test/opensearchtest/`.
 
 
