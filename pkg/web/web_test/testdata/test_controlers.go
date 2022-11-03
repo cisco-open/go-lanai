@@ -7,6 +7,10 @@ import (
 
 type Controller struct{}
 
+func NewController() Controller {
+	return Controller{}
+}
+
 func (c Controller) Mappings() []web.Mapping {
 	return []web.Mapping{
 		rest.Post("/basic/:var").EndpointFunc(StructPtr200).Build(),
