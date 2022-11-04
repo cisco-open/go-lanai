@@ -62,7 +62,7 @@ func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 		),
 
 		// Tell test framework to use recorded HTTP interaction.
-		// Note: this function accept may options. See ittest/httpvcr.go for more details
+		// Note: this function accept many options. See ittest/httpvcr.go for more details
 		ittest.WithHttpPlayback(t), // Enable recording mode to use real service for any HTTP interaction.
 		// This should be enabled during development and turned off before checking in the code
 		//ittest.HttpRecordingMode(),
@@ -82,7 +82,8 @@ func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 		// We need this configuration to pass along the security context from the test context to Controller's context.
 		sectest.WithMockedMiddleware(),
 
-		// Controller requires permissions, we need to mock it for any test that uses webtest
+		// Controller requires permissions, we need to mock it for any test that uses webtest.
+		// Note: this only works with webtest.WithMockedServer() and sectest.WithMockedMiddleware() together.
 		test.SubTestSetup(MockPermissions()),
 
 		// Test order is important, unless ittest.DisableHttpRecordOrdering option is used

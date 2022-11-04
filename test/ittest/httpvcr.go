@@ -124,10 +124,10 @@ func PackageHttpRecordingMode() suitetest.PackageOptions {
 }
 
 // HttpRecordingMode returns a HTTPVCROptions that turns on Recording mode.
-// Normally recording mode should be enabled via `go test` argument `-record`
-// Note: 	  Record mode is forced off if flag is set to "-record-http=false" explicitly
-// IMPORTANT: When Record mode is enabled, all tests interact with actual HTTP remote service.
-// 			  So use this mode on LOCAL DEV ONLY
+// Normally recording mode should be enabled via `go test` argument `-record-http`
+// Note:	Record mode is forced off if flag is set to "-record-http=false" explicitly
+// IMPORTANT:	When Record mode is enabled, all sub tests interact with actual HTTP remote service.
+// 				So use this mode on LOCAL DEV ONLY
 func HttpRecordingMode() HTTPVCROptions {
 	return func(opt *HTTPVCROption) {
 		opt.Mode = ModeRecording
