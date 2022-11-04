@@ -183,7 +183,7 @@ func SubTestSamlSSOAuthorizeWithPasswdIDP(_ *intDI) test.GomegaSubTestFunc {
 
 func withClientAuth(clientId, secret string) webtest.RequestOptions {
 	v := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", clientId, secret)))
-	return webtest.WithHeaders("Authorization", v)
+	return webtest.Headers("Authorization", v)
 }
 
 func withDefaultClientAuth() webtest.RequestOptions {
@@ -191,7 +191,7 @@ func withDefaultClientAuth() webtest.RequestOptions {
 }
 
 func withDefaultAuthCode() webtest.RequestOptions {
-	return webtest.WithQueries(
+	return webtest.Queries(
 		oauth2.ParameterGrantType, oauth2.GrantTypeAuthCode,
 		oauth2.ParameterClientId, TestClientID,
 		oauth2.ParameterRedirectUri, TestOAuth2CallbackURL,
@@ -200,7 +200,7 @@ func withDefaultAuthCode() webtest.RequestOptions {
 
 func withDefaultSamlSSO() webtest.RequestOptions {
 	return func(req *http.Request) {
-		webtest.WithQueries(
+		webtest.Queries(
 			oauth2.ParameterGrantType, oauth2.GrantTypeSamlSSO,
 			oauth2.ParameterClientId, TestClientID,
 			oauth2.ParameterRedirectUri, TestOAuth2CallbackURL,

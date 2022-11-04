@@ -7,7 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"go.uber.org/fx"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 import . "github.com/onsi/gomega"
@@ -77,7 +77,7 @@ func SubTestFileProvider(di *FileTestDi) test.GomegaSubTestFunc {
 		g.Expect(len(clientCert.Certificate)).To(Equal(1))
 
 		//try with a different ca, and expect no cert is returned
-		anotherCa, err := ioutil.ReadFile("testdata/ca-cert-test-2")
+		anotherCa, err := os.ReadFile("testdata/ca-cert-test-2")
 		g.Expect(err).NotTo(HaveOccurred())
 		anotherCaPool := x509.NewCertPool()
 		anotherCaPool.AppendCertsFromPEM(anotherCa)

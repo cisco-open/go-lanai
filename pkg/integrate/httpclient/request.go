@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	httptransport "github.com/go-kit/kit/transport/http"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -129,7 +129,7 @@ func urlEncodedBodyEncoder(_ context.Context, r *http.Request, v interface{}) er
 		return NewRequestSerializationError(fmt.Errorf("www-form-urlencoded body expects url.Values but got %T", v))
 	}
 	reader := strings.NewReader(values.Encode())
-	r.Body = ioutil.NopCloser(reader)
+	r.Body = io.NopCloser(reader)
 	return nil
 }
 

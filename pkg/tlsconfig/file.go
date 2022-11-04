@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -28,7 +28,7 @@ func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cert
 			return nil, err
 		}
 
-		keyBytes, err := ioutil.ReadAll(keyFile)
+		keyBytes, err := io.ReadAll(keyFile)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +47,7 @@ func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cert
 		if err != nil {
 			return nil, err
 		}
-		certBytes, err := ioutil.ReadAll(certfile)
+		certBytes, err := io.ReadAll(certfile)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func (f *FileProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cert
 }
 
 func (f *FileProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
-	caPem, err := ioutil.ReadFile(f.p.CaCertFile)
+	caPem, err := os.ReadFile(f.p.CaCertFile)
 	if err != nil {
 		return nil, err
 	}

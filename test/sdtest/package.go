@@ -19,39 +19,52 @@ import (
 
 type DI struct {
 	fx.In
+	AppCtx *bootstrap.ApplicationContext
 	Client *ClientMock
 }
 
 type SDMockOptions func(opt *SDMockOption)
 type SDMockOption struct {
-	FS      fs.FS
-	DefPath string
+	FS               fs.FS
+	DefPath          string
+	PropertiesPrefix string
 }
 
 func WithMockedSD(opts ...SDMockOptions) test.Options {
+	var di DI
 	testOpts := []test.Options{
 		apptest.WithFxOptions(
 			fx.Provide(ProvideDiscoveryClient),
 		),
+		apptest.WithDI(&di),
 	}
 	var opt SDMockOption
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	if opt.FS != nil && opt.DefPath != "" {
-		var di DI
-		testOpts = append(testOpts,
-			apptest.WithDI(&di),
-			test.SubTestSetup(SetupServices(&di, opt.FS, opt.DefPath)),
-		)
+
+	// load service definitions
+	switch {
+	case opt.FS != nil && opt.DefPath != "":
+		testOpts = append(testOpts, test.SubTestSetup(SetupServicesWithFile(&di, opt.FS, opt.DefPath)))
+	default:
+		testOpts = append(testOpts, test.SubTestSetup(SetupServicesWithProperties(&di, opt.PropertiesPrefix)))
 	}
 	return test.WithOptions(testOpts...)
 }
 
+// LoadDefinition load service discovery mocking from file system, this override DefinitionWithPrefix
 func LoadDefinition(fsys fs.FS, path string) SDMockOptions {
 	return func(opt *SDMockOption) {
 		opt.FS = fsys
 		opt.DefPath = path
+	}
+}
+
+// DefinitionWithPrefix load service discovery mocking from application properties, with given prefix
+func DefinitionWithPrefix(prefix string) SDMockOptions {
+	return func(opt *SDMockOption) {
+		opt.PropertiesPrefix = prefix
 	}
 }
 
@@ -60,13 +73,24 @@ func ProvideDiscoveryClient(ctx *bootstrap.ApplicationContext) (discovery.Client
 	return c, c
 }
 
-// SetupServices is a test setup function that read service definitions and mock the discovery client
-func SetupServices(di *DI, fsys fs.FS, path string) test.SetupFunc {
+// SetupServicesWithFile is a test setup function that read service definitions from a YAML file and mock the discovery client
+func SetupServicesWithFile(di *DI, fsys fs.FS, path string) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		if di == nil || di.Client == nil {
 			return nil, errors.New("discovery client mock is not available")
 		}
 		e := MockServicesFromFile(di.Client, fsys, path)
+		return ctx, e
+	}
+}
+
+// SetupServicesWithProperties is a test setup function that read service definitions from properties and mock the discovery client
+func SetupServicesWithProperties(di *DI, prefix string) test.SetupFunc {
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		if di == nil || di.Client == nil {
+			return nil, errors.New("discovery client mock is not available")
+		}
+		e := MockServicesFromProperties(di.Client, di.AppCtx.Config(), prefix)
 		return ctx, e
 	}
 }
@@ -84,6 +108,15 @@ func MockServicesFromFile(client *ClientMock, fsys fs.FS, path string) error {
 		return e
 	}
 	if e := yaml.Unmarshal(data, &services); e != nil {
+		return e
+	}
+	return MockServices(client, services)
+}
+
+// MockServicesFromProperties bind mocked service definitions from properties with given prefix and mock ClientMock
+func MockServicesFromProperties(client *ClientMock, appCfg bootstrap.ApplicationConfig, prefix string) error {
+	var services map[string][]*discovery.Instance
+	if e := appCfg.Bind(&services, prefix); e != nil {
 		return e
 	}
 	return MockServices(client, services)

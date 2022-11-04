@@ -47,7 +47,7 @@ func Authentication(auth security.Authentication) SecurityContextOptions {
 
 func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 	return func(opt *SecurityContextOption) {
-		details := NewMockedSecurityDetails(opts...).(*mockedSecurityDetails)
+		details := NewMockedSecurityDetails(opts...)
 		user := oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
 			opt.Principal = details.Username()
 			opt.State = security.StateAuthenticated
@@ -64,6 +64,7 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 				TExternalId: details.TenantExternalId(),
 				OrigU:       details.OrigUsername,
 			},
+			Token: details.AccessToken,
 			ExpTime: details.Exp,
 			IssTime: details.Iss,
 		}

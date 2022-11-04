@@ -7,7 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -95,7 +95,7 @@ func (c LoggingCustomizer) Customize(ctx context.Context, r *Registrar) error {
 	}
 	mw := gin.LoggerWithConfig(gin.LoggerConfig{
 		Formatter: formatter.intercept,
-		Output:    ioutil.Discard, // our logFormatter calls logger directly
+		Output:    io.Discard, // our logFormatter calls logger directly
 	})
 	if e := r.AddGlobalMiddlewares(mw); e != nil {
 		panic(e)

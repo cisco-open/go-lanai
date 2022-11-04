@@ -8,7 +8,6 @@ import (
 	"github.com/ghodss/yaml"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -57,7 +56,7 @@ func BindYamlFile(bind interface{}, filepath string, additionalLookupDirs ...str
 // BindYaml read from given io.Reader and parse as YAML
 func BindYaml(reader io.Reader, bind interface{}) error {
 	// read and parse file
-	encoded, e := ioutil.ReadAll(reader)
+	encoded, e := io.ReadAll(reader)
 	if e != nil {
 		return e
 	}

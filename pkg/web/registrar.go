@@ -623,7 +623,9 @@ func (r *Registrar) kitServerOptions() []httptransport.ServerOption {
 func (r *Registrar) loadHtmlTemplates(ctx context.Context) {
 	osFS := NewOSDirFS("web/", DirFSAllowListDirectory)
 	mFs := NewMergedFS(osFS, r.embedFs...)
-	t, e := template.ParseFS(mFs, "**/*.tmpl")
+	t, e := template.New("html").
+		Funcs(r.engine.FuncMap).
+		ParseFS(mFs, "**/*.tmpl")
 	if e != nil {
 		logger.WithContext(ctx).Infof("no templates loaded: %v", e)
 		return

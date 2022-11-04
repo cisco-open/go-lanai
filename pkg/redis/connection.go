@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -52,7 +52,7 @@ func GetUniversalOptions(p *RedisProperties) (*redis.UniversalOptions, error) {
 			return nil, errors.Wrap(err, "Cannot open root certificates file: "+p.RootCertificates)
 		}
 
-		data, err := ioutil.ReadAll(file)
+		data, err := io.ReadAll(file)
 
 		if err != nil {
 			return nil, errors.Wrap(err, "Cannot read root certificates file: "+p.RootCertificates)

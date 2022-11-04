@@ -192,7 +192,7 @@ func SubTestSLOSuccessCallback(di *sloTestDI) test.GomegaSubTestFunc {
 		samlResp := mockSamlSloResponse(true, di.MockedSigner)
 		body := makeLogoutResponsePostBody(samlResp, uuid.New().String())
 
-		req = webtest.NewRequest(ctx, http.MethodPost, TestSloURL, body, webtest.WithCookies(resp))
+		req = webtest.NewRequest(ctx, http.MethodPost, TestSloURL, body, webtest.Cookies(resp))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		resp = webtest.MustExec(ctx, req).Response
 		assertLogoutReplayResponse(t, g, resp)
@@ -214,7 +214,7 @@ func SubTestSLOFailedCallback(di *sloTestDI) test.GomegaSubTestFunc {
 		samlResp := mockSamlSloResponse(false, di.MockedSigner)
 		body := makeLogoutResponsePostBody(samlResp, uuid.New().String())
 
-		req = webtest.NewRequest(ctx, http.MethodPost, TestSloURL, body, webtest.WithCookies(resp))
+		req = webtest.NewRequest(ctx, http.MethodPost, TestSloURL, body, webtest.Cookies(resp))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		resp = webtest.MustExec(ctx, req).Response
 		assertLogoutReplayResponse(t, g, resp)

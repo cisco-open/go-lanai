@@ -1,0 +1,480 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8900
+        remote_addr: ""
+        request_uri: ""
+        body: nonce=_hidden&password=_hidden
+        form:
+            nonce:
+                - _hidden
+            password:
+                - _hidden
+        headers:
+            Authorization:
+                - Basic ******
+            Content-Type:
+                - application/x-www-form-urlencoded
+            X-Http-Record-Index:
+                - "0"
+        url: http://127.0.0.1:8900/auth/v2/token?grant_type=password&username=system
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"token_type":"bearer","username":"system","access_token":"_hidden","expires_in":8999,"id_token":"eyJhbGciOiJSUzI1NiIsImtpZCI6ImRldi0wIiwidHlwIjoiSldUIn0.eyJhY2NvdW50X3R5cGUiOiJzeXN0ZW0iLCJhY3IiOiJodHRwOi8vbG9jYWxob3N0Ojg5MDAvYXV0aC9sb2EtMiIsImFkZHJlc3MiOnsiZm9ybWF0dGVkIjoiZW5fVVMifSwiYW1yIjpbInBhc3N3b3JkIl0sImFzc2lnbmVkX3RlbmFudHMiOlsiZTBiNWU5NTAtNjEwZC0xMWVjLTgyZmEtNmJiMGI4NWQ1YWMwIl0sImF0X2hhc2giOiJZRmhONzhxbjBaQ2ljcXhCS1NyNWtnIiwiYXVkIjoibmZ2LXNlcnZpY2UiLCJhdXRoX3RpbWUiOjE2NjcwNjY1ODUsImF6cCI6Im5mdi1zZXJ2aWNlIiwiY3VycmVuY3kiOiJVU0QiLCJkZWZhdWx0X3RlbmFudF9pZCI6ImUwYjVlOTUwLTYxMGQtMTFlYy04MmZhLTZiYjBiODVkNWFjMCIsImVtYWlsIjoibm9yZXBseUBjaXNjby5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZXhwIjoxNjY3MDc1NTg1LCJmYW1pbHlfbmFtZSI6InN5c3RlbSIsImdpdmVuX25hbWUiOiJzeXN0ZW0iLCJpYXQiOjE2NjcwNjY1ODUsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODkwMC9hdXRoIiwibG9jYWxlIjoiZW5fVVMiLCJuYW1lIjoic3lzdGVtIHN5c3RlbSIsIm5vbmNlIjoiNzZKdXdJaVF3eiIsInBlcm1pc3Npb25zIjpbIk1BTkFHRV9BUElLRVkiLCJWSUVXX0FQSUtFWSIsIlNXSVRDSF9URU5BTlQiLCJJU19BUElfQURNSU4iLCJBQ0NFU1NfQUxMX1RFTkFOVFMiLCJWSUVXX0FMRVJUX1NFUlZJQ0UiLCJNQU5BR0VfQUxFUlRfU0VSVklDRSIsIlZJRVdfT1BFUkFUT1JfTE9HSU5fQVNfQ1VTVE9NRVIiXSwicHJlZmVycmVkX3VzZXJuYW1lIjoic3lzdGVtIiwicHJvdmlkZXJfaWQiOiJmZTNhZDg5Yy00NDlmLTQyZjItYjRmOC1iMTBhYjdiYzAyNjYiLCJwcm92aWRlcl9uYW1lIjoiQ2lzY29TeXN0ZW1zIiwicm9sZXMiOlsiU0VDVVJJVFlfQ09OVEVYVF9TV0lUQ0hFUl9BUElfQURNSU4iLCJBUElfQURNSU4iXSwic3ViIjoic3lzdGVtIiwidGVuYW50X2lkIjoiZTBiNWU5NTAtNjEwZC0xMWVjLTgyZmEtNmJiMGI4NWQ1YWMwIiwidGVuYW50X25hbWUiOiJ2bXMtdGVuYW50IiwidGVuYW50X3N1c3BlbmRlZCI6ZmFsc2UsInVzZXJfaWQiOiJlMGVmYmUwMC02MTBkLTExZWMtODJmYS02YmIwYjg1ZDVhYzAifQ.L6XVTZz6nofRpWyQbaFF-04nI0kzfEPuyqyXqAj9sjdX8ieun1zfmWnFlceQBW0LyN4Q0sncUTUTtp9hX8IYABOHS6NgqlGg2ITd11fArF-Y28jHt0yxDq-5u9tA0pxBjTHiyuFto6Pik36xJCPdJ38MCCNmjgB6cdBCEvfsBc1Ru9P2vEfqKqZvtnQDleajx8_mcIoK4TKx9ERSn5MWCQIT3aj8BmO_SsCLNNmW1pFY4LsKgia5vwFWaHJvzgCI1zlcZCjG76LjWjslilQIgWU-nr-WFq3W_SpDNuwTAhOIkBbAvVIl5R2uCVvNIxE6j0axksiutWPaBcb5_lKFsA","scope":"openid tenant_hierarchy write email phone profile read token_details address","expiry":"2022-10-29T20:33:05Z","iat":"2022-10-29T18:03:05Z","roles":["SECURITY_CONTEXT_SWITCHER_API_ADMIN","API_ADMIN"],"tenantId":"e0b5e950-610d-11ec-82fa-6bb0b85d5ac0"}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Pragma:
+                - no-cache
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8900
+        remote_addr: ""
+        request_uri: ""
+        body: no_details=false&token=_hidden&token_type_hint=access_token
+        form:
+            no_details:
+                - "false"
+            token:
+                - _hidden
+            token_type_hint:
+                - access_token
+        headers:
+            Authorization:
+                - Basic ******
+            Content-Type:
+                - application/x-www-form-urlencoded
+            X-Http-Record-Index:
+                - "1"
+        url: http://127.0.0.1:8900/auth/v2/check_token
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 1172
+        uncompressed: false
+        body: '{"account_type":"system","active":true,"assigned_tenants":["e0b5e950-610d-11ec-82fa-6bb0b85d5ac0"],"aud":"nfv-service","auth_time":1667066585,"client_id":"nfv-service","currency":"USD","email":"noreply@cisco.com","exp":1667075585,"family_name":"system","given_name":"system","iat":1667066585,"iss":"http://localhost:8900/auth","jti":"cb07b8c8-4219-4c0c-999a-c2cf45855b4d","locale":"en_US","nbf":1667066585,"permissions":["VIEW_ALERT_SERVICE","MANAGE_ALERT_SERVICE","VIEW_OPERATOR_LOGIN_AS_CUSTOMER","MANAGE_APIKEY","VIEW_APIKEY","SWITCH_TENANT","IS_API_ADMIN","ACCESS_ALL_TENANTS"],"provider_description":"Cisco Systems","provider_display_name":"Cisco Systems","provider_email":"noreply@cisco.com","provider_id":"fe3ad89c-449f-42f2-b4f8-b10ab7bc0266","provider_name":"CiscoSystems","provider_notification_type":"EMAIL","roles":["SECURITY_CONTEXT_SWITCHER_API_ADMIN","API_ADMIN"],"scope":["phone","profile","openid","read","email","write","tenant_hierarchy","token_details","address"],"sub":"system","tenant_id":"e0b5e950-610d-11ec-82fa-6bb0b85d5ac0","tenant_name":"vms-tenant","tenant_suspended":false,"user_id":"e0efbe00-610d-11ec-82fa-6bb0b85d5ac0","username":"system"}'
+        headers:
+            Content-Length:
+                - "1172"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8900
+        remote_addr: ""
+        request_uri: ""
+        body: access_token=_hidden&nonce=_hidden
+        form:
+            access_token:
+                - _hidden
+            nonce:
+                - _hidden
+        headers:
+            Authorization:
+                - Basic ******
+            Content-Type:
+                - application/x-www-form-urlencoded
+            X-Http-Record-Index:
+                - "2"
+        url: http://127.0.0.1:8900/auth/v2/token?grant_type=urn%3Acisco%3Anfv%3Aoauth%3Agrant-type%3Aswitch-user&switch_username=admin
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"access_token":"_hidden","roles":["ADMIN"],"scope":"openid address email tenant_hierarchy phone write profile read token_details","tenantId":"e0b5e950-610d-11ec-82fa-6bb0b85d5ac0","token_type":"bearer","username":"admin","expires_in":8999,"expiry":"2022-10-29T20:33:05Z","iat":"2022-10-29T18:03:05Z","id_token":"eyJhbGciOiJSUzI1NiIsImtpZCI6ImRldi0wIiwidHlwIjoiSldUIn0.eyJhY2NvdW50X3R5cGUiOiJ1c2VyIiwiYWRkcmVzcyI6eyJmb3JtYXR0ZWQiOiJlbl9VUyJ9LCJhc3NpZ25lZF90ZW5hbnRzIjpbImUwYjVlOTUwLTYxMGQtMTFlYy04MmZhLTZiYjBiODVkNWFjMCJdLCJhdF9oYXNoIjoibS1IcGVITk9OSG9VOUJ2NVdRTWYzQSIsImF1ZCI6Im5mdi1zZXJ2aWNlIiwiYXV0aF90aW1lIjoxNjY3MDY2NTg1LCJhenAiOiJuZnYtc2VydmljZSIsImN1cnJlbmN5IjoiVVNEIiwiZGVmYXVsdF90ZW5hbnRfaWQiOiJlMGI1ZTk1MC02MTBkLTExZWMtODJmYS02YmIwYjg1ZDVhYzAiLCJlbWFpbCI6Im5vcmVwbHlAY2lzY28uY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV4cCI6MTY2NzA3NTU4NSwiZmFtaWx5X25hbWUiOiJVc2VyIiwiZ2l2ZW5fbmFtZSI6IkFkbWluIiwiaWF0IjoxNjY3MDY2NTg1LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojg5MDAvYXV0aCIsImxvY2FsZSI6ImVuX1VTIiwibmFtZSI6IkFkbWluIFVzZXIiLCJub25jZSI6IktBYzRWaFJLeWMiLCJvcmlnaW5hbF91c2VybmFtZSI6InN5c3RlbSIsInBlcm1pc3Npb25zIjpbIlZJRVdfQklMTElOR19DWUNMRSIsIk1BTkFHRV9ERVZJQ0VfU0VDUkVUUyIsIlZJRVdfREFTSEJPQVJEIiwiTUFOQUdFX05PVElGSUNBVElPTiIsIk1BTkFHRV9CVUxLX0lNUE9SVCIsIlZJRVdfVEVOQU5UX0dST1VQU19VSSIsIlZJRVdfTElDRU5TSU5HX0NPTkZJR1VSQVRJT04iLCJNQU5BR0VfS0FGS0FfRU5EUE9JTlQiLCJNQU5BR0VfTUVUUklDX1RFTVBMQVRFUyIsIlZJRVdfU0VSVklDRV9DT05GSUdfQVVESVQiLCJWSUVXX0lOVEVHUkFUSU9OIiwiTUFOQUdFX1JPTEUiLCJNQU5BR0VfU0lURVMiLCJWSUVXX0xPR19DT05GSUciLCJWSUVXX0JJTExJTkdfUFJJQ0UiLCJWSUVXX0lOQ0lERU5UX0NPTkZJRyIsIk1BTkFHRV9QUklDRV9QTEFOIiwiVklFV19XT1JLRkxPVyIsIlZJRVdfT1BFUkFUT1JfU0lURVMiLCJWSUVXX1RBUkdFVCIsIlZJRVdfU0VSVklDRVMiLCJWSUVXX1JPTEUiLCJWSUVXX1NFUlZJQ0VfQ09ORklHX0FTU0lHTk1FTlQiLCJWSUVXX1JFR0lPTiIsIk1BTkFHRV9TRVJWSUNFX0NPTkZJR19BUFBMSUNBVElPTiIsIk1BTkFHRV9XT1JLRkxPV19TQ0hFRFVMRSIsIlZJRVdfU1RBVFVTIiwiTUFOQUdFX1ZQTiIsIlVQR1JBREVfREVWSUNFUyIsIlZJRVdfU0VSVklDRV9DT05GSUdfQVBQTElDQVRJT04iLCJWSUVXX05PVElGSUNBVElPTiIsIk1BTkFHRV9TTE0iLCJWSUVXX09QRVJBVE9SX0RBU0hCT0FSRCIsIlZJRVdfRVZFTlQiLCJNQU5BR0VfSU5DSURFTlRfQ09ORklHIiwiVklFV19DT05UUk9MX1BMQU5FIiwiTUFOQUdFX0tJQkFOQSIsIlZJRVdfTUVUUklDUyIsIk1BTkFHRV9URU5BTlRfR1JPVVBTIiwiTUFOQUdFX1NTT19TQU1MX1NQIiwiTUFOQUdFX01FVFJJQ1MiLCJWSUVXX1NFUlZJQ0VfQ09ORklHX0FTU0VUIiwiTUFOQUdFX0RFVklDRVMiLCJNQU5BR0VfV09SS0ZMT1dfRVZFTlQiLCJNQU5BR0VfQklMTElOR19QUklDRSIsIk1BTkFHRV9TWVNURU1fU0VDUkVUUyIsIk1BTkFHRV9FTkRfVVNFUiIsIlZJRVdfQ0hBTkdFX1JFUVVFU1QiLCJJTVBPUlRfU0VSVklDRSIsIlZJRVdfQklMTElOR19FVkVOVCIsIk1BTkFHRV9BUFAiLCJNQU5BR0VfTUVUQURBVEEiLCJNQU5BR0VfQ1JfVEVNUExBVEUiLCJWSUVXX1dPUktGTE9XX1ZBUklBQkxFIiwiVklFV19NRVRSSUNfVEVNUExBVEVTIiwiVklFV19TRUNVUklUWV9TRVRUSU5HIiwiVklFV19DUl9URU1QTEFURSIsIlZJRVdfV09SS0ZMT1dfU0NIRURVTEUiLCJWSUVXX1NFQ1JFVF9QT0xJQ0lFUyIsIlZJRVdfQ09OVEFDVCIsIlZJRVdfRU5EX1VTRVIiLCJNQU5BR0VfTElDRU5TSU5HX0FDQ09VTlQiLCJNQU5BR0VfVEVNUExBVEVTIiwiQUNDRVNTX0FMTF9URU5BTlRTIiwiTUFOQUdFX1NDSEVEVUxFX1RBU0siLCJNQU5BR0VfTElDRU5TSU5HX0NPTkZJR1VSQVRJT04iLCJWSUVXX1RFTkFOVF9HUk9VUFMiLCJWSUVXX1NDSEVEVUxFX1RBU0siLCJWSUVXX0lOQ0lERU5UIiwiTUFOQUdFX1NFQ1JFVF9QT0xJQ0lFUyIsIk1BTkFHRV9TRVJWSUNFX0NPTkZJR19BU1NFVCIsIlZJRVdfTElDRU5TSU5HX0FDQ09VTlQiLCJNQU5BR0VfVEVOQU5UIiwiTUFOQUdFX1NTT19JRFAiLCJWSUVXX1dPUktGTE9XX1RBQkxFIiwiTUFOQUdFX0xPQ0FMRSIsIlZJRVdfQlVMS19JTVBPUlQiLCJNQU5BR0VfTlNPIiwiREVWSUNFX01BTkFHRU1FTlQiLCJNQU5BR0VfV09SS0ZMT1dfVkFSSUFCTEUiLCJWSUVXX1NJVEVTIiwiTUFOQUdFX0FMRVJUX1NFUlZJQ0UiLCJTV0lUQ0hfVEVOQU5UX1VJIiwiTUFOQUdFX0NBVEVHT1JZIiwiTUFOQUdFX0xPR19DT05GSUciLCJNQU5BR0VfQlVJTERfSU5GTyIsIk1BTkFHRV9FVkVOVCIsIlZJRVdfQVBJS0VZIiwiVklFV19DUl9BUFBST1ZBTCIsIk1BTkFHRV9JTlRFR1JBVElPTiIsIlZJRVdfTlNPIiwiTUFOQUdFX1NFUlZJQ0VTIiwiVklFV19DUl9UQVNLIiwiTUFOQUdFX1JFR0lPTiIsIk1BTkFHRV9CSUxMSU5HX0NZQ0xFIiwiVklFV19PUEVSQVRPUl9MT0dJTl9BU19DVVNUT01FUiIsIk1BTkFHRV9BUElLRVkiLCJNQU5BR0VfU0VSVklDRV9DT05GSUdfQVNTSUdOTUVOVCIsIlZJRVdfTE9DQUxFX1VJIiwiVklFV19ERVZJQ0VfUlVOTklOR19DT05GSUciLCJWSUVXX0xPQ0FMRSIsIk1BTkFHRV9TRVJWSUNFVFlQRVMiLCJNQU5BR0VfQ09OVEFDVCIsIlZJRVdfQUxMX1RFTVBMQVRFUyIsIlZJRVdfV09SS0ZMT1dfSU5TVEFOQ0UiLCJWSUVXX0tBRktBX0VORFBPSU5UIiwiTUFOQUdFX01FU1NBR0UiLCJNQU5BR0VfV09SS0ZMT1dfUlVOVElNRV9VU0VSIiwiVklFV19URU5BTlQiLCJWSUVXX0FQUCIsIk1BTkFHRV9XT1JLRkxPV19JTlNUQU5DRSIsIkVYUE9SVF9TRVJWSUNFIiwiVklFV19NQUlOVEVOQU5DRV9JTkZPIiwiTUFOQUdFX1NVQlNDUklQVElPTiIsIlZJRVdfU0VUVElOR1NfVUkiLCJWSUVXX1BSSUNFX1BMQU4iLCJWSUVXX01FVEFEQVRBIiwiVklFV19XT1JLRkxPV19UQUJMRV9UWVBFIiwiVklFV19TRU5TSVRJVkVfU0VSVklDRV9DT05GSUdfQVNTRVRfREVUQUlMIiwiVklFV19DT01QT05FTlRfTUVUUklDUyIsIlZJRVdfVEVOQU5UU19VSSIsIlZJRVdfUFJPVklERVIiLCJNQU5BR0VfV09SS0ZMT1ciLCJWSUVXX1NMTSIsIlZJRVdfT1BFUkFUT1JfU0VSVklDRVMiLCJWSUVXX1NZU1RFTV9TRUNSRVRTIiwiVklFV19CVUlMRF9JTkZPIiwiVklFV19MT0NBTEVfU1RSSU5HIiwiTUFOQUdFX01BSU5URU5BTkNFX0lORk8iLCJWSUVXX0NPTVBPTkVOVF9TVEFUVVMiLCJNQU5BR0VfQ1JfVEFTSyIsIk1BTkFHRV9DSEFOR0VfUkVRVUVTVCIsIlZJRVdfUE5QIiwiU1dJVENIX1RFTkFOVCIsIlZJRVdfREVWSUNFX1NFQ1JFVFMiLCJNQU5BR0VfQ1JfQVBQUk9WQUwiLCJNQU5BR0VfU0VDVVJJVFlfU0VUVElORyIsIk1BTkFHRV9UQVJHRVQiLCJWSUVXX1ZQTiIsIk1BTkFHRV9XT1JLRkxPV19UQUJMRSIsIlZJRVdfSU5URUdSQVRJT05fVUkiLCJWSUVXX1dPUktGTE9XX1JVTlRJTUVfVVNFUiIsIk1BTkFHRV9QUk9WSURFUiIsIlZJRVdfQ0FURUdPUlkiLCJWSUVXX0RPQ1VNRU5UQVRJT04iLCJWSUVXX1NVQlNDUklQVElPTiIsIk1BTkFHRV9JTkNJREVOVCIsIlZJRVdfV09SS0ZMT1dfRVZFTlQiLCJWSUVXX0RFVklDRV9NT0RFTFMiLCJWSUVXX01FU1NBR0UiLCJNQU5BR0VfUE5QIiwiTUFOQUdFX1dPUktGTE9XX1RBQkxFX1RZUEUiLCJWSUVXX0RFVklDRVMiLCJWSUVXX0xJQ0VOU0lORyIsIlZJRVdfQUxFUlRfU0VSVklDRSIsIk1BTkFHRV9TU09fU0VDVVJJVFlfQ0xJRU5UIl0sInByZWZlcnJlZF91c2VybmFtZSI6ImFkbWluIiwicHJvdmlkZXJfaWQiOiJmZTNhZDg5Yy00NDlmLTQyZjItYjRmOC1iMTBhYjdiYzAyNjYiLCJwcm92aWRlcl9uYW1lIjoiQ2lzY29TeXN0ZW1zIiwicm9sZXMiOlsiQURNSU4iXSwic3ViIjoiYWRtaW4iLCJ0ZW5hbnRfaWQiOiJlMGI1ZTk1MC02MTBkLTExZWMtODJmYS02YmIwYjg1ZDVhYzAiLCJ0ZW5hbnRfbmFtZSI6InZtcy10ZW5hbnQiLCJ0ZW5hbnRfc3VzcGVuZGVkIjpmYWxzZSwidXNlcl9pZCI6ImUwZmViMjIwLTYxMGQtMTFlYy04MmZhLTZiYjBiODVkNWFjMCJ9.W0U5z96pv7E0BOj8r8RMvXKphviipAkPMtDlZwbHWhDcLpu_02xqxvhOYUgr5JN4frxAM78Bg9Exz1krAkX7qIy3mfTi_pjA63PeAWPo-UEoMwBXddLh4cZMe4KQdxYZf3YvHic1sICeJKzsBevoUS6rjP8OBnEcfEM0hdJ2MppNwCo9CmHCx-Yh_-FsXjpgVq7cb38bk1ScUwJgN5Ky8__tWkRLAkEOD38B8rCuA5C3a4ZAKbhGQlCT6XXAkKwTwqN6X6ERacCx1E_JzvHZqfEIe2RGq_Q9hHMlmeLFld3i907kQgAl424hkc_iYlKi1HLNx607CayTs08FOerEBg"}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Pragma:
+                - no-cache
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8900
+        remote_addr: ""
+        request_uri: ""
+        body: no_details=false&token=_hidden&token_type_hint=access_token
+        form:
+            no_details:
+                - "false"
+            token:
+                - _hidden
+            token_type_hint:
+                - access_token
+        headers:
+            Authorization:
+                - Basic ******
+            Content-Type:
+                - application/x-www-form-urlencoded
+            X-Http-Record-Index:
+                - "3"
+        url: http://127.0.0.1:8900/auth/v2/check_token
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"account_type":"user","active":true,"assigned_tenants":["e0b5e950-610d-11ec-82fa-6bb0b85d5ac0"],"aud":"nfv-service","auth_time":1667066585,"client_id":"nfv-service","currency":"USD","email":"noreply@cisco.com","exp":1667075585,"family_name":"User","given_name":"Admin","iat":1667066585,"iss":"http://localhost:8900/auth","jti":"db1b0834-07af-46ef-a4e2-c6c3f50b5706","locale":"en_US","nbf":1667066585,"original_username":"system","permissions":["VIEW_WORKFLOW_TABLE","MANAGE_CATEGORY","VIEW_COMPONENT_METRICS","VIEW_ALERT_SERVICE","MANAGE_INCIDENT_CONFIG","IMPORT_SERVICE","MANAGE_METADATA","VIEW_TENANTS_UI","MANAGE_WORKFLOW_TABLE","VIEW_BULK_IMPORT","MANAGE_SITES","VIEW_SERVICE_CONFIG_ASSIGNMENT","MANAGE_VPN","MANAGE_EVENT","MANAGE_TARGET","MANAGE_PROVIDER","VIEW_SERVICE_CONFIG_AUDIT","MANAGE_SLM","VIEW_CR_APPROVAL","VIEW_MAINTENANCE_INFO","MANAGE_MAINTENANCE_INFO","VIEW_DEVICE_MODELS","VIEW_LOG_CONFIG","VIEW_ROLE","VIEW_TARGET","MANAGE_CONTACT","VIEW_LOCALE_STRING","MANAGE_KAFKA_ENDPOINT","MANAGE_METRIC_TEMPLATES","MANAGE_WORKFLOW_EVENT","MANAGE_CR_TEMPLATE","VIEW_TENANT_GROUPS","VIEW_KAFKA_ENDPOINT","SWITCH_TENANT_UI","MANAGE_MESSAGE","VIEW_TENANT","EXPORT_SERVICE","VIEW_SENSITIVE_SERVICE_CONFIG_ASSET_DETAIL","VIEW_SUBSCRIPTION","VIEW_WORKFLOW_INSTANCE","VIEW_SYSTEM_SECRETS","VIEW_VPN","VIEW_DOCUMENTATION","MANAGE_BULK_IMPORT","MANAGE_SERVICE_CONFIG_ASSET","VIEW_LICENSING_ACCOUNT","MANAGE_WORKFLOW_TABLE_TYPE","VIEW_SERVICE_CONFIG_APPLICATION","VIEW_METRICS","MANAGE_SECRET_POLICIES","VIEW_PROVIDER","VIEW_PNP","MANAGE_TENANT_GROUPS","MANAGE_SSO_SAML_SP","MANAGE_SYSTEM_SECRETS","VIEW_BILLING_EVENT","VIEW_NSO","MANAGE_WORKFLOW_INSTANCE","MANAGE_DEVICES","VIEW_SCHEDULE_TASK","MANAGE_ALERT_SERVICE","VIEW_CHANGE_REQUEST","MANAGE_LICENSING_CONFIGURATION","VIEW_LOCALE_UI","VIEW_CONTROL_PLANE","MANAGE_KIBANA","VIEW_OPERATOR_LOGIN_AS_CUSTOMER","MANAGE_NOTIFICATION","VIEW_INCIDENT_CONFIG","MANAGE_BILLING_PRICE","MANAGE_APP","MANAGE_SSO_IDP","MANAGE_SERVICETYPES","VIEW_INTEGRATION","VIEW_SECRET_POLICIES","VIEW_CR_TASK","VIEW_PRICE_PLAN","MANAGE_SECURITY_SETTING","VIEW_MESSAGE","VIEW_TENANT_GROUPS_UI","VIEW_REGION","MANAGE_WORKFLOW_SCHEDULE","VIEW_WORKFLOW_VARIABLE","ACCESS_ALL_TENANTS","DEVICE_MANAGEMENT","MANAGE_SERVICES","VIEW_LOCALE","VIEW_ALL_TEMPLATES","VIEW_WORKFLOW","VIEW_SERVICE_CONFIG_ASSET","VIEW_DEVICE_SECRETS","VIEW_CATEGORY","MANAGE_BILLING_CYCLE","VIEW_BUILD_INFO","MANAGE_BUILD_INFO","MANAGE_CHANGE_REQUEST","VIEW_LICENSING_CONFIGURATION","VIEW_LICENSING","MANAGE_SCHEDULE_TASK","MANAGE_REGION","VIEW_DEVICE_RUNNING_CONFIG","VIEW_WORKFLOW_TABLE_TYPE","MANAGE_WORKFLOW","MANAGE_CR_TASK","VIEW_INTEGRATION_UI","MANAGE_DEVICE_SECRETS","VIEW_OPERATOR_SITES","VIEW_EVENT","MANAGE_LICENSING_ACCOUNT","MANAGE_TENANT","MANAGE_LOCALE","MANAGE_LOG_CONFIG","MANAGE_SERVICE_CONFIG_APPLICATION","UPGRADE_DEVICES","VIEW_NOTIFICATION","VIEW_DASHBOARD","VIEW_CR_TEMPLATE","VIEW_METRIC_TEMPLATES","VIEW_SITES","VIEW_SLM","SWITCH_TENANT","VIEW_WORKFLOW_RUNTIME_USER","MANAGE_INCIDENT","VIEW_WORKFLOW_SCHEDULE","MANAGE_INTEGRATION","MANAGE_CR_APPROVAL","VIEW_WORKFLOW_EVENT","MANAGE_SUBSCRIPTION","VIEW_BILLING_CYCLE","VIEW_SECURITY_SETTING","VIEW_END_USER","MANAGE_NSO","VIEW_APP","VIEW_STATUS","VIEW_SETTINGS_UI","VIEW_BILLING_PRICE","MANAGE_PRICE_PLAN","MANAGE_WORKFLOW_VARIABLE","MANAGE_SSO_SECURITY_CLIENT","MANAGE_METRICS","VIEW_APIKEY","MANAGE_APIKEY","VIEW_METADATA","VIEW_COMPONENT_STATUS","VIEW_SERVICES","MANAGE_TEMPLATES","MANAGE_SERVICE_CONFIG_ASSIGNMENT","MANAGE_WORKFLOW_RUNTIME_USER","VIEW_OPERATOR_SERVICES","VIEW_DEVICES","MANAGE_ROLE","MANAGE_END_USER","VIEW_CONTACT","VIEW_INCIDENT","MANAGE_PNP","VIEW_OPERATOR_DASHBOARD"],"provider_description":"Cisco Systems","provider_display_name":"Cisco Systems","provider_email":"noreply@cisco.com","provider_id":"fe3ad89c-449f-42f2-b4f8-b10ab7bc0266","provider_name":"CiscoSystems","provider_notification_type":"EMAIL","roles":["ADMIN"],"scope":["token_details","write","email","openid","profile","tenant_hierarchy","address","phone","read"],"sub":"admin","tenant_id":"e0b5e950-610d-11ec-82fa-6bb0b85d5ac0","tenant_name":"vms-tenant","tenant_suspended":false,"user_id":"e0feb220-610d-11ec-82fa-6bb0b85d5ac0","username":"admin"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:9203
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            null
+        form: {}
+        headers:
+            Authorization:
+                - Bearer ******
+            Content-Type:
+                - application/json; charset=utf-8
+            X-Http-Record-Index:
+                - "4"
+        url: http://127.0.0.1:9203/idm/api/v8/users/current
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 286
+        uncompressed: false
+        body: '{"id":"e0feb220-610d-11ec-82fa-6bb0b85d5ac0","status":"true","deleted":"false","username":"admin","firstName":"Admin","lastName":"User","email":"noreply@cisco.com","roleIds":["e0ab3af0-610d-11ec-82fa-6bb0b85d5ac0"],"tenantIds":[],"passwordPolicyName":"ppolicy_strong","locale":"en_US"}'
+        headers:
+            Content-Length:
+                - "286"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8900
+        remote_addr: ""
+        request_uri: ""
+        body: nonce=_hidden&password=_hidden
+        form:
+            nonce:
+                - _hidden
+            password:
+                - _hidden
+        headers:
+            Authorization:
+                - Basic ******
+            Content-Type:
+                - application/x-www-form-urlencoded
+            X-Http-Record-Index:
+                - "5"
+        url: http://127.0.0.1:8900/auth/v2/token?grant_type=password&username=superuser
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"expires_in":8999,"expiry":"2022-10-29T20:33:05Z","iat":"2022-10-29T18:03:05Z","id_token":"eyJhbGciOiJSUzI1NiIsImtpZCI6ImRldi0wIiwidHlwIjoiSldUIn0.eyJhY2NvdW50X3R5cGUiOiJ1c2VyIiwiYWNyIjoiaHR0cDovL2xvY2FsaG9zdDo4OTAwL2F1dGgvbG9hLTIiLCJhZGRyZXNzIjp7ImZvcm1hdHRlZCI6ImVuX1VTIn0sImFtciI6WyJwYXNzd29yZCJdLCJhc3NpZ25lZF90ZW5hbnRzIjpbImUwYjVlOTUwLTYxMGQtMTFlYy04MmZhLTZiYjBiODVkNWFjMCJdLCJhdF9oYXNoIjoiWFVLcG1RNUxUSHYyUnduLUdpUXZRQSIsImF1ZCI6Im5mdi1zZXJ2aWNlIiwiYXV0aF90aW1lIjoxNjY3MDY2NTg1LCJhenAiOiJuZnYtc2VydmljZSIsImN1cnJlbmN5IjoiVVNEIiwiZGVmYXVsdF90ZW5hbnRfaWQiOiJlMGI1ZTk1MC02MTBkLTExZWMtODJmYS02YmIwYjg1ZDVhYzAiLCJlbWFpbCI6Im5vcmVwbHlAY2lzY28uY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV4cCI6MTY2NzA3NTU4NSwiZmFtaWx5X25hbWUiOiJVc2VyIiwiZ2l2ZW5fbmFtZSI6IlN1cGVyIiwiaWF0IjoxNjY3MDY2NTg1LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojg5MDAvYXV0aCIsImxvY2FsZSI6ImVuX1VTIiwibmFtZSI6IlN1cGVyIFVzZXIiLCJub25jZSI6IkphMHREbDAxMmwiLCJwZXJtaXNzaW9ucyI6WyJWSUVXX1RFTkFOVF9HUk9VUFNfVUkiLCJWSUVXX0NPTlRST0xfUExBTkUiLCJNQU5BR0VfRU5EX1VTRVIiLCJTV0lUQ0hfVEVOQU5UIiwiTUFOQUdFX05PVElGSUNBVElPTiIsIlZJRVdfSU5DSURFTlQiLCJNQU5BR0VfU1NPX1NBTUxfU1AiLCJNQU5BR0VfU1RBTkRBUkRfQ09ORklHIiwiTUFOQUdFX0NPTlRST0xfUExBTkVfQVNTT0NJQVRJT05TIiwiVklFV19PUEVSQVRPUl9TRVJWSUNFUyIsIk1BTkFHRV9TSVRFUyIsIlZJRVdfTk9USUZJQ0FUSU9OIiwiTUFOQUdFX0FQUCIsIk1BTkFHRV9SRU1PVEVfVVNFUlMiLCJNQU5BR0VfUFJJQ0VfUExBTiIsIk1BTkFHRV9DUl9URU1QTEFURSIsIlZJRVdfTUVUUklDX1RFTVBMQVRFUyIsIlZJRVdfU1VCU0NSSVBUSU9OU19VSSIsIlZJRVdfRVZFTlQiLCJNQU5BR0VfQUxFUlRfU0VSVklDRSIsIlNTT19MT0dJTiIsIk1BTkFHRV9CVUlMRF9JTkZPIiwiTUFOQUdFX0NPTlRBQ1QiLCJNQU5BR0VfVEVOQU5UX0dST1VQUyIsIlZJRVdfU0VDUkVUX1BPTElDSUVTIiwiVklFV19TRVRUSU5HU19VSSIsIk1BTkFHRV9BUElLRVkiLCJFWFBPUlRfU0VSVklDRSIsIlZJRVdfU0xNIiwiVklFV19TRVJWSUNFX0NPTkZJR19BU1NFVCIsIk1BTkFHRV9SRUdJT04iLCJJTVBPUlRfU0VSVklDRSIsIlZJRVdfSU5URUdSQVRJT04iLCJWSUVXX09QRVJBVE9SX0xPR0lOX0FTX0NVU1RPTUVSIiwiVklFV19NRVRSSUNTIiwiTUFOQUdFX0NBVEVHT1JZIiwiVklFV19TWVNURU1fU0VDUkVUUyIsIlZJRVdfU0VSVklDRV9DT05GSUdVUkFUSU9OX1VJIiwiVklFV19HQVRFV0FZIiwiUkVHSVNURVJfREVWSUNFUyIsIlZJRVdfVEFSR0VUIiwiVklFV19TRVJWSUNFUyIsIlZJRVdfSU5DSURFTlRfQ09ORklHIiwiTUFOQUdFX0JVTEtfSU1QT1JUIiwiVklFV19NQUlOVEVOQU5DRV9JTkZPIiwiVklFV19TRVJWSUNFX0NPTkZJR19BVURJVCIsIk1BTkFHRV9WVUxORVJBQklMSVRZIiwiVklFV19TVEFUVVMiLCJNQU5BR0VfTUFJTlRFTkFOQ0VfSU5GTyIsIk1BTkFHRV9DUl9UQVNLIiwiTUFOQUdFX0NPTlRST0xfUExBTkUiLCJNQU5BR0VfU0VSVklDRV9DT05GSUdfQVNTSUdOTUVOVCIsIk1BTkFHRV9CSUxMSU5HX0NZQ0xFIiwiTUFOQUdFX1NMTSIsIk1BTkFHRV9HQVRFV0FZIiwiVklFV19BTExfVEVNUExBVEVTIiwiU1dJVENIX1RFTkFOVF9VSSIsIlZJRVdfV09SS0ZMT1dfSU5TVEFOQ0UiLCJNQU5BR0VfQklMTElOR19QUklDRSIsIk1BTkFHRV9TWVNURU1fU0VDUkVUUyIsIk1BTkFHRV9ST0xFIiwiTUFOQUdFX1NTT19JRFAiLCJWSUVXX09QRVJBVE9SX1NJVEVTIiwiVklFV19EQVNIQk9BUkQiLCJBUFBST1ZFX1NFUlZJQ0VTIiwiTUFOQUdFX0xJQ0VOU0lOR19DT05GSUdVUkFUSU9OIiwiTUFOQUdFX1JFTUVESUFUSU9OUyIsIk1BTkFHRV9JTkNJREVOVCIsIlZJRVdfVEVOQU5UU19VSSIsIlZJRVdfTE9DQUxFX1NUUklORyIsIlZJRVdfUk9MRSIsIlZJRVdfVEVOQU5UIiwiVklFV19DT05UQUNUIiwiTUFOQUdFX0xJQ0VOU0lOR19BQ0NPVU5UIiwiTUFOQUdFX1NFQ1VSSVRZX1NFVFRJTkciLCJWSUVXX1dPUktGTE9XIiwiVklFV19JTlRFR1JBVElPTl9VSSIsIk1BTkFHRV9QTlAiLCJWSUVXX0VORF9VU0VSIiwiVklFV19SRU1FRElBVElPTlMiLCJWSUVXX0xPQ0FMRV9VSSIsIlZJRVdfS0FGS0FfRU5EUE9JTlQiLCJWSUVXX0JJTExJTkdfRVZFTlQiLCJWSUVXX1BSSUNFX1BMQU4iLCJWSUVXX0RFVklDRV9SVU5OSU5HX0NPTkZJRyIsIlZJRVdfVEVOQU5UX0dST1VQUyIsIk1BTkFHRV9USEVNRVMiLCJBQ0NFU1NfQUxMX1RFTkFOVFMiLCJNQU5BR0VfRVhURU5TSU9OX1BBUkFNRVRFUlMiLCJNQU5BR0VfREVWSUNFX1NFQ1JFVFMiLCJSRUdJU1RFUl9ERVZJQ0VfQUNUSU9OIiwiVklFV19CVUxLX0lNUE9SVCIsIlZJRVdfVEVOQU5UX1NDSEVEVUxFX1RBU0siLCJWSUVXX0VYVEVOU0lPTl9QQVJBTUVURVJTIiwiTUFOQUdFX1RBUkdFVCIsIk1BTkFHRV9MT0dfQ09ORklHIiwiTUFOQUdFX1NFUlZJQ0VTIiwiVUlfRURJVF9TRVJWSUNFIiwiVklFV19MT0dfQ09ORklHIiwiVklFV19ET0NVTUVOVEFUSU9OIiwiVklFV19ERVZJQ0VfU0VDUkVUUyIsIlZJRVdfTElDRU5TSU5HIiwiVklFV19ERVZJQ0VTIiwiTUFOQUdFX0lOQ0lERU5UX0NPTkZJRyIsIk1BTkFHRV9XT1JLRkxPV19TQ0hFRFVMRSIsIk1BTkFHRV9TRVJWSUNFX0NPTkZJR19BUFBMSUNBVElPTiIsIlZJRVdfU1VCU0NSSVBUSU9OIiwiVklFV19ERVZJQ0VfTU9ERUxTIiwiTUFOQUdFX1RFTkFOVCIsIlZJRVdfTE9DQUxFIiwiVklFV19DUl9BUFBST1ZBTCIsIk1BTkFHRV9MT0NBTEUiLCJWSUVXX1NJVEVTIiwiTUFOQUdFX01FVEFEQVRBIiwiVVBHUkFERV9ERVZJQ0VTIiwiVklFV19CVUlMRF9JTkZPIiwiVklFV19XT1JLRkxPV19TQ0hFRFVMRSIsIk1BTkFHRV9QUk9WSURFUiIsIlZJRVdfU0VDVVJJVFlfU0VUVElORyIsIk1BTkFHRV9OU08iLCJNQU5BR0VfU0VSVklDRV9FWFRFTlNJT04iLCJWSUVXX0FMRVJUX1NFUlZJQ0UiLCJWSUVXX0FQSUtFWSIsIk1BTkFHRV9TU09fU0VDVVJJVFlfQ0xJRU5UIiwiTUFOQUdFX1NVQlNDUklQVElPTiIsIk1BTkFHRV9URVJNU19DT05ESVRJT05TIiwiTUFOQUdFX01FU1NBR0UiLCJNQU5BR0VfU0VDUkVUX1BPTElDSUVTIiwiTUFOQUdFX1NDSEVEVUxFX1RBU0siLCJWSUVXX0NPTVBPTkVOVF9TVEFUVVMiLCJWSUVXX0NPTlRST0xfUExBTkVfQVNTT0NJQVRJT05TIiwiTUFOQUdFX0tBRktBX0VORFBPSU5UIiwiVklFV19DT01QT05FTlRfTUVUUklDUyIsIlZJRVdfVlBOIiwiVklFV19TRVJWSUNFX0NPTkZJR19BUFBMSUNBVElPTiIsIlZJRVdfUkVHSU9OIiwiREVWSUNFX01BTkFHRU1FTlQiLCJNQU5BR0VfQ0hBTkdFX1JFUVVFU1QiLCJWSUVXX1NFTlNJVElWRV9TRVJWSUNFX0NPTkZJR19BU1NFVF9ERVRBSUwiLCJWSUVXX0NIQU5HRV9SRVFVRVNUIiwiTUFOQUdFX0NSX0FQUFJPVkFMIiwiVklFV19OU08iLCJNQU5BR0VfREVWSUNFX01PREVMUyIsIk1BTkFHRV9XT1JLRkxPV19JTlNUQU5DRSIsIlZJRVdfTElDRU5TSU5HX0NPTkZJR1VSQVRJT04iLCJWSUVXX1NUQU5EQVJEX0NPTkZJRyIsIlZJRVdfT1BFUkFUT1JfREFTSEJPQVJEIiwiVklFV19DUl9UQVNLIiwiVklFV19CSUxMSU5HX1BSSUNFIiwiU1VTUEVORF9URU5BTlQiLCJBQ0NFU1NfREVWSUNFX1RFUk1JTkFMIiwiT1JERVJfU0VSVklDRSIsIlZJRVdfVEVSTVNfQ09ORElUSU9OU19VSSIsIlZJRVdfQ0FURUdPUlkiLCJWSUVXX1NFUlZJQ0VfQ09ORklHX0FTU0lHTk1FTlQiLCJWSUVXX01FVEFEQVRBIiwiTUFOQUdFX0VWRU5UIiwiVklFV19BUFAiLCJNQU5BR0VfS0lCQU5BIiwiTUFOQUdFX0RFVklDRVMiLCJWSUVXX1BST1ZJREVSIiwiTUFOQUdFX0lOVEVHUkFUSU9OIiwiVklFV19CSUxMSU5HX0NZQ0xFIiwiTUFOQUdFX01FVFJJQ1MiLCJWSUVXX1JFU09VUkNFU19VSSIsIlZJRVdfUE5QIiwiVklFV19USEVNRVMiLCJWSUVXX0xJQ0VOU0lOR19BQ0NPVU5UIiwiVklFV19WVUxORVJBQklMSVRZIiwiTUFOQUdFX1RFTVBMQVRFUyIsIlZJRVdfVEVSTVNfQ09ORElUSU9OUyIsIlZJRVdfQ1JfVEVNUExBVEUiLCJJU19BUElfQURNSU4iLCJWSUVXX1NFUlZJQ0VfRVhURU5TSU9OIiwiTUFOQUdFX1NFUlZJQ0VUWVBFUyIsIk1BTkFHRV9XT1JLRkxPVyIsIkFQUFJPVkVfU0VSVklDRVNfVUkiLCJNQU5BR0VfVEVOQU5UX1NDSEVEVUxFX1RBU0siLCJNQU5BR0VfTUVUUklDX1RFTVBMQVRFUyIsIlZJRVdfU0NIRURVTEVfVEFTSyIsIlZJRVdfTUVTU0FHRSIsIlZJRVdfUkVNT1RFX1VTRVJTIiwiUFJFX09UUF9BVVRIIiwiTUFOQUdFX1ZQTiIsIlZJRVdfRVZFTlRMT0ciLCJNQU5BR0VfU0VSVklDRV9DT05GSUdfQVNTRVQiXSwicHJlZmVycmVkX3VzZXJuYW1lIjoic3VwZXJ1c2VyIiwicHJvdmlkZXJfaWQiOiJmZTNhZDg5Yy00NDlmLTQyZjItYjRmOC1iMTBhYjdiYzAyNjYiLCJwcm92aWRlcl9uYW1lIjoiQ2lzY29TeXN0ZW1zIiwicm9sZXMiOlsiU1VQRVJVU0VSIl0sInN1YiI6InN1cGVydXNlciIsInRlbmFudF9pZCI6ImUwYjVlOTUwLTYxMGQtMTFlYy04MmZhLTZiYjBiODVkNWFjMCIsInRlbmFudF9uYW1lIjoidm1zLXRlbmFudCIsInRlbmFudF9zdXNwZW5kZWQiOmZhbHNlLCJ1c2VyX2lkIjoiZTBkYTEzMjAtNjEwZC0xMWVjLTgyZmEtNmJiMGI4NWQ1YWMwIn0.GxvBYd7ZeYCriluM52Sywi8jLVkGs9Nd6YTgSYs3DzAP1aODzXZULjDHT0JjioyAedGaCidIF0GOiNI9VMyBcifBSHT0tmQ0jOM8UrFVGEC-sUZch8BiSZ3NRY4zBIBROa417tY_0kTy9icGOBuRRb-hIDYbGo563fxAMvdeEX2vlYF8Kz8jTS8-NlYFIZZ0AXSpAJwuT-OyZYUJ_3EMTgUBBn0pdoc9jir1GClfCCZ8Pf2vUHcSSETR0M2SzAoTkM5BTYPYuZPN0uj5qTfONP_7znJBALxgDLh202ykj1qd_twIWNTlSm8gkocPs3qiMQndLt2nvuGjLC6oTtvsuw","token_type":"bearer","username":"superuser","access_token":"_hidden","roles":["SUPERUSER"],"scope":"profile openid read address phone tenant_hierarchy write email token_details","tenantId":"e0b5e950-610d-11ec-82fa-6bb0b85d5ac0"}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Pragma:
+                - no-cache
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8900
+        remote_addr: ""
+        request_uri: ""
+        body: no_details=false&token=_hidden&token_type_hint=access_token
+        form:
+            no_details:
+                - "false"
+            token:
+                - _hidden
+            token_type_hint:
+                - access_token
+        headers:
+            Authorization:
+                - Basic ******
+            Content-Type:
+                - application/x-www-form-urlencoded
+            X-Http-Record-Index:
+                - "6"
+        url: http://127.0.0.1:8900/auth/v2/check_token
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"account_type":"user","active":true,"assigned_tenants":["e0b5e950-610d-11ec-82fa-6bb0b85d5ac0"],"aud":"nfv-service","auth_time":1667066585,"client_id":"nfv-service","currency":"USD","email":"noreply@cisco.com","exp":1667075585,"family_name":"User","given_name":"Admin","iat":1667066585,"iss":"http://localhost:8900/auth","jti":"db1b0834-07af-46ef-a4e2-c6c3f50b5706","locale":"en_US","nbf":1667066585,"original_username":"system","permissions":["VIEW_LOCALE_UI","MANAGE_PRICE_PLAN","VIEW_WORKFLOW","VIEW_APIKEY","VIEW_KAFKA_ENDPOINT","VIEW_BUILD_INFO","VIEW_VPN","VIEW_BILLING_PRICE","MANAGE_SERVICE_CONFIG_ASSET","VIEW_INTEGRATION_UI","VIEW_WORKFLOW_EVENT","VIEW_DASHBOARD","SWITCH_TENANT_UI","VIEW_WORKFLOW_TABLE_TYPE","SWITCH_TENANT","MANAGE_CR_APPROVAL","VIEW_CATEGORY","VIEW_MESSAGE","VIEW_TENANT_GROUPS","MANAGE_SERVICE_CONFIG_ASSIGNMENT","MANAGE_CONTACT","VIEW_TENANT","MANAGE_WORKFLOW_RUNTIME_USER","VIEW_PNP","VIEW_REGION","VIEW_NOTIFICATION","MANAGE_CATEGORY","VIEW_WORKFLOW_INSTANCE","VIEW_SUBSCRIPTION","VIEW_METRIC_TEMPLATES","MANAGE_SECRET_POLICIES","VIEW_WORKFLOW_TABLE","VIEW_ALL_TEMPLATES","VIEW_SERVICE_CONFIG_AUDIT","ACCESS_ALL_TENANTS","MANAGE_ALERT_SERVICE","VIEW_APP","EXPORT_SERVICE","VIEW_DEVICE_MODELS","VIEW_BILLING_EVENT","VIEW_OPERATOR_SITES","MANAGE_SERVICE_CONFIG_APPLICATION","VIEW_DEVICE_SECRETS","VIEW_PRICE_PLAN","MANAGE_PROVIDER","MANAGE_ROLE","MANAGE_INCIDENT_CONFIG","MANAGE_TEMPLATES","MANAGE_WORKFLOW_VARIABLE","MANAGE_LOG_CONFIG","MANAGE_SECURITY_SETTING","VIEW_TENANT_GROUPS_UI","VIEW_CONTACT","MANAGE_SSO_IDP","VIEW_NSO","MANAGE_SERVICES","VIEW_SENSITIVE_SERVICE_CONFIG_ASSET_DETAIL","MANAGE_INCIDENT","VIEW_TARGET","VIEW_EVENT","VIEW_LICENSING_ACCOUNT","MANAGE_LOCALE","MANAGE_CHANGE_REQUEST","MANAGE_WORKFLOW_TABLE_TYPE","MANAGE_VPN","MANAGE_APP","MANAGE_SITES","VIEW_SERVICES","MANAGE_INTEGRATION","MANAGE_SERVICETYPES","VIEW_WORKFLOW_RUNTIME_USER","VIEW_INCIDENT_CONFIG","MANAGE_SYSTEM_SECRETS","MANAGE_METADATA","VIEW_SITES","VIEW_LICENSING_CONFIGURATION","MANAGE_WORKFLOW_SCHEDULE","MANAGE_METRICS","VIEW_LOCALE_STRING","VIEW_STATUS","MANAGE_END_USER","VIEW_WORKFLOW_SCHEDULE","VIEW_BULK_IMPORT","MANAGE_NSO","MANAGE_DEVICE_SECRETS","VIEW_SERVICE_CONFIG_APPLICATION","VIEW_OPERATOR_DASHBOARD","VIEW_SECRET_POLICIES","VIEW_CHANGE_REQUEST","VIEW_TENANTS_UI","VIEW_ALERT_SERVICE","MANAGE_NOTIFICATION","MANAGE_BULK_IMPORT","VIEW_CONTROL_PLANE","MANAGE_BILLING_PRICE","MANAGE_SSO_SAML_SP","MANAGE_SCHEDULE_TASK","MANAGE_SUBSCRIPTION","VIEW_METADATA","MANAGE_TENANT_GROUPS","MANAGE_MESSAGE","VIEW_SETTINGS_UI","VIEW_PROVIDER","MANAGE_SSO_SECURITY_CLIENT","MANAGE_METRIC_TEMPLATES","VIEW_SERVICE_CONFIG_ASSIGNMENT","MANAGE_BUILD_INFO","VIEW_DEVICE_RUNNING_CONFIG","VIEW_SLM","MANAGE_PNP","VIEW_INTEGRATION","VIEW_ROLE","VIEW_LOCALE","MANAGE_CR_TEMPLATE","VIEW_SCHEDULE_TASK","VIEW_CR_TASK","MANAGE_BILLING_CYCLE","VIEW_MAINTENANCE_INFO","VIEW_SYSTEM_SECRETS","MANAGE_TARGET","IMPORT_SERVICE","VIEW_COMPONENT_METRICS","VIEW_OPERATOR_SERVICES","MANAGE_KIBANA","VIEW_CR_TEMPLATE","DEVICE_MANAGEMENT","MANAGE_WORKFLOW_INSTANCE","MANAGE_MAINTENANCE_INFO","MANAGE_CR_TASK","VIEW_BILLING_CYCLE","MANAGE_TENANT","VIEW_SECURITY_SETTING","MANAGE_EVENT","VIEW_COMPONENT_STATUS","MANAGE_KAFKA_ENDPOINT","MANAGE_DEVICES","VIEW_SERVICE_CONFIG_ASSET","MANAGE_LICENSING_CONFIGURATION","MANAGE_APIKEY","MANAGE_WORKFLOW_TABLE","VIEW_DOCUMENTATION","VIEW_METRICS","UPGRADE_DEVICES","VIEW_END_USER","VIEW_INCIDENT","MANAGE_REGION","VIEW_DEVICES","MANAGE_SLM","MANAGE_LICENSING_ACCOUNT","VIEW_WORKFLOW_VARIABLE","VIEW_CR_APPROVAL","VIEW_OPERATOR_LOGIN_AS_CUSTOMER","MANAGE_WORKFLOW","VIEW_LICENSING","VIEW_LOG_CONFIG","MANAGE_WORKFLOW_EVENT"],"provider_description":"Cisco Systems","provider_display_name":"Cisco Systems","provider_email":"noreply@cisco.com","provider_id":"fe3ad89c-449f-42f2-b4f8-b10ab7bc0266","provider_name":"CiscoSystems","provider_notification_type":"EMAIL","roles":["ADMIN"],"scope":["read","email","token_details","address","openid","profile","tenant_hierarchy","write","phone"],"sub":"admin","tenant_id":"e0b5e950-610d-11ec-82fa-6bb0b85d5ac0","tenant_name":"vms-tenant","tenant_suspended":false,"user_id":"e0feb220-610d-11ec-82fa-6bb0b85d5ac0","username":"admin"}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:9203
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            null
+        form: {}
+        headers:
+            Authorization:
+                - Bearer ******
+            Content-Type:
+                - application/json; charset=utf-8
+            X-Http-Record-Index:
+                - "7"
+        url: http://127.0.0.1:9203/idm/api/v8/users/current
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 286
+        uncompressed: false
+        body: '{"id":"e0feb220-610d-11ec-82fa-6bb0b85d5ac0","status":"true","deleted":"false","username":"admin","firstName":"Admin","lastName":"User","email":"noreply@cisco.com","roleIds":["e0ab3af0-610d-11ec-82fa-6bb0b85d5ac0"],"tenantIds":[],"passwordPolicyName":"ppolicy_strong","locale":"en_US"}'
+        headers:
+            Content-Length:
+                - "286"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8900
+        remote_addr: ""
+        request_uri: ""
+        body: nonce=_hidden&password=_hidden
+        form:
+            nonce:
+                - _hidden
+            password:
+                - _hidden
+        headers:
+            Authorization:
+                - Basic ******
+            Content-Type:
+                - application/x-www-form-urlencoded
+            X-Http-Record-Index:
+                - "8"
+        url: http://127.0.0.1:8900/auth/v2/token?grant_type=password&username=superuser
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"tenantId":"e0b5e950-610d-11ec-82fa-6bb0b85d5ac0","iat":"2022-10-29T18:03:05Z","id_token":"eyJhbGciOiJSUzI1NiIsImtpZCI6ImRldi0wIiwidHlwIjoiSldUIn0.eyJhY2NvdW50X3R5cGUiOiJ1c2VyIiwiYWNyIjoiaHR0cDovL2xvY2FsaG9zdDo4OTAwL2F1dGgvbG9hLTIiLCJhZGRyZXNzIjp7ImZvcm1hdHRlZCI6ImVuX1VTIn0sImFtciI6WyJwYXNzd29yZCJdLCJhc3NpZ25lZF90ZW5hbnRzIjpbImUwYjVlOTUwLTYxMGQtMTFlYy04MmZhLTZiYjBiODVkNWFjMCJdLCJhdF9oYXNoIjoiRHBPd2FYcS1NV09pY0hDSmNwaXFpdyIsImF1ZCI6Im5mdi1zZXJ2aWNlIiwiYXV0aF90aW1lIjoxNjY3MDY2NTg1LCJhenAiOiJuZnYtc2VydmljZSIsImN1cnJlbmN5IjoiVVNEIiwiZGVmYXVsdF90ZW5hbnRfaWQiOiJlMGI1ZTk1MC02MTBkLTExZWMtODJmYS02YmIwYjg1ZDVhYzAiLCJlbWFpbCI6Im5vcmVwbHlAY2lzY28uY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV4cCI6MTY2NzA3NTU4NSwiZmFtaWx5X25hbWUiOiJVc2VyIiwiZ2l2ZW5fbmFtZSI6IlN1cGVyIiwiaWF0IjoxNjY3MDY2NTg1LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojg5MDAvYXV0aCIsImxvY2FsZSI6ImVuX1VTIiwibmFtZSI6IlN1cGVyIFVzZXIiLCJub25jZSI6IkFZQzd6NFk0RzMiLCJwZXJtaXNzaW9ucyI6WyJNQU5BR0VfU0NIRURVTEVfVEFTSyIsIlZJRVdfSU5DSURFTlRfQ09ORklHIiwiTUFOQUdFX1BSSUNFX1BMQU4iLCJWSUVXX0RFVklDRV9SVU5OSU5HX0NPTkZJRyIsIk1BTkFHRV9TU09fU0VDVVJJVFlfQ0xJRU5UIiwiTUFOQUdFX1NMTSIsIlZJRVdfTElDRU5TSU5HX0FDQ09VTlQiLCJWSUVXX09QRVJBVE9SX0xPR0lOX0FTX0NVU1RPTUVSIiwiVklFV19PUEVSQVRPUl9TRVJWSUNFUyIsIk1BTkFHRV9NQUlOVEVOQU5DRV9JTkZPIiwiTUFOQUdFX0NPTlRST0xfUExBTkVfQVNTT0NJQVRJT05TIiwiVklFV19DT05UUk9MX1BMQU5FX0FTU09DSUFUSU9OUyIsIk1BTkFHRV9DUl9BUFBST1ZBTCIsIkVYUE9SVF9TRVJWSUNFIiwiVklFV19TVEFOREFSRF9DT05GSUciLCJWSUVXX01FVEFEQVRBIiwiQVBQUk9WRV9TRVJWSUNFUyIsIlZJRVdfVEVOQU5UX0dST1VQU19VSSIsIlZJRVdfUE5QIiwiTUFOQUdFX0lOVEVHUkFUSU9OIiwiTUFOQUdFX1NUQU5EQVJEX0NPTkZJRyIsIlZJRVdfUFJPVklERVIiLCJNQU5BR0VfTUVTU0FHRSIsIlZJRVdfQ09OVFJPTF9QTEFORSIsIk1BTkFHRV9QTlAiLCJWSUVXX1NFTlNJVElWRV9TRVJWSUNFX0NPTkZJR19BU1NFVF9ERVRBSUwiLCJWSUVXX01FVFJJQ19URU1QTEFURVMiLCJWSUVXX1NZU1RFTV9TRUNSRVRTIiwiSVNfQVBJX0FETUlOIiwiVklFV19ERVZJQ0VfU0VDUkVUUyIsIk1BTkFHRV9NRVRSSUNfVEVNUExBVEVTIiwiTUFOQUdFX0FQSUtFWSIsIlZJRVdfREVWSUNFUyIsIlZJRVdfU0lURVMiLCJNQU5BR0VfQVBQIiwiTUFOQUdFX1dPUktGTE9XX0lOU1RBTkNFIiwiTUFOQUdFX1NVQlNDUklQVElPTiIsIk1BTkFHRV9QUk9WSURFUiIsIk1BTkFHRV9SRU1PVEVfVVNFUlMiLCJVSV9FRElUX1NFUlZJQ0UiLCJWSUVXX1RFUk1TX0NPTkRJVElPTlNfVUkiLCJNQU5BR0VfTE9DQUxFIiwiVklFV19DT01QT05FTlRfU1RBVFVTIiwiVklFV19WVUxORVJBQklMSVRZIiwiVklFV19DT01QT05FTlRfTUVUUklDUyIsIk1BTkFHRV9ERVZJQ0VfU0VDUkVUUyIsIlZJRVdfTE9DQUxFX1NUUklORyIsIlZJRVdfUkVNT1RFX1VTRVJTIiwiVklFV19EQVNIQk9BUkQiLCJWSUVXX1NFUlZJQ0VfQ09ORklHVVJBVElPTl9VSSIsIlZJRVdfUk9MRSIsIlZJRVdfVEFSR0VUIiwiTUFOQUdFX1RFTVBMQVRFUyIsIlNVU1BFTkRfVEVOQU5UIiwiVklFV19NRVNTQUdFIiwiVklFV19FTkRfVVNFUiIsIkFDQ0VTU19BTExfVEVOQU5UUyIsIk1BTkFHRV9TSVRFUyIsIlZJRVdfVEVOQU5UX1NDSEVEVUxFX1RBU0siLCJNQU5BR0VfQ0hBTkdFX1JFUVVFU1QiLCJNQU5BR0VfU0VSVklDRV9DT05GSUdfQVNTSUdOTUVOVCIsIlZJRVdfTlNPIiwiVklFV19XT1JLRkxPV19TQ0hFRFVMRSIsIk9SREVSX1NFUlZJQ0UiLCJWSUVXX0dBVEVXQVkiLCJQUkVfT1RQX0FVVEgiLCJWSUVXX0NBVEVHT1JZIiwiVklFV19USEVNRVMiLCJWSUVXX1dPUktGTE9XIiwiVVBHUkFERV9ERVZJQ0VTIiwiVklFV19BUFAiLCJWSUVXX0lOVEVHUkFUSU9OX1VJIiwiVklFV19NQUlOVEVOQU5DRV9JTkZPIiwiVklFV19CSUxMSU5HX1BSSUNFIiwiVklFV19TRVJWSUNFX0NPTkZJR19BU1NJR05NRU5UIiwiTUFOQUdFX1NFUlZJQ0VfRVhURU5TSU9OIiwiTUFOQUdFX0NSX1RFTVBMQVRFIiwiTUFOQUdFX0xJQ0VOU0lOR19BQ0NPVU5UIiwiVklFV19URU5BTlRfR1JPVVBTIiwiVklFV19LQUZLQV9FTkRQT0lOVCIsIlZJRVdfQ1JfQVBQUk9WQUwiLCJWSUVXX09QRVJBVE9SX0RBU0hCT0FSRCIsIlNXSVRDSF9URU5BTlRfVUkiLCJWSUVXX0NSX1RBU0siLCJNQU5BR0VfVEVOQU5UX0dST1VQUyIsIk1BTkFHRV9UQVJHRVQiLCJERVZJQ0VfTUFOQUdFTUVOVCIsIlZJRVdfSU5DSURFTlQiLCJWSUVXX05PVElGSUNBVElPTiIsIlZJRVdfT1BFUkFUT1JfU0lURVMiLCJNQU5BR0VfQUxFUlRfU0VSVklDRSIsIlZJRVdfUkVTT1VSQ0VTX1VJIiwiVklFV19DT05UQUNUIiwiTUFOQUdFX1ZQTiIsIk1BTkFHRV9TRVJWSUNFX0NPTkZJR19BU1NFVCIsIk1BTkFHRV9HQVRFV0FZIiwiVklFV19TRUNVUklUWV9TRVRUSU5HIiwiVklFV19QUklDRV9QTEFOIiwiVklFV19BTEVSVF9TRVJWSUNFIiwiTUFOQUdFX0NPTlRST0xfUExBTkUiLCJNQU5BR0VfU0VDUkVUX1BPTElDSUVTIiwiTUFOQUdFX0VYVEVOU0lPTl9QQVJBTUVURVJTIiwiVklFV19NRVRSSUNTIiwiVklFV19TRUNSRVRfUE9MSUNJRVMiLCJNQU5BR0VfUkVHSU9OIiwiVklFV19BTExfVEVNUExBVEVTIiwiVklFV19FWFRFTlNJT05fUEFSQU1FVEVSUyIsIk1BTkFHRV9DUl9UQVNLIiwiVklFV19MT0NBTEVfVUkiLCJNQU5BR0VfRU5EX1VTRVIiLCJWSUVXX1RFTkFOVFNfVUkiLCJWSUVXX0lOVEVHUkFUSU9OIiwiVklFV19CSUxMSU5HX0NZQ0xFIiwiVklFV19CVUlMRF9JTkZPIiwiVklFV19WUE4iLCJWSUVXX1NFUlZJQ0VfQ09ORklHX0FTU0VUIiwiSU1QT1JUX1NFUlZJQ0UiLCJWSUVXX0NIQU5HRV9SRVFVRVNUIiwiVklFV19MT0NBTEUiLCJWSUVXX0RPQ1VNRU5UQVRJT04iLCJNQU5BR0VfRVZFTlQiLCJNQU5BR0VfU0VDVVJJVFlfU0VUVElORyIsIk1BTkFHRV9MSUNFTlNJTkdfQ09ORklHVVJBVElPTiIsIlZJRVdfQlVMS19JTVBPUlQiLCJNQU5BR0VfS0FGS0FfRU5EUE9JTlQiLCJNQU5BR0VfV09SS0ZMT1ciLCJNQU5BR0VfUk9MRSIsIk1BTkFHRV9URU5BTlRfU0NIRURVTEVfVEFTSyIsIlZJRVdfV09SS0ZMT1dfSU5TVEFOQ0UiLCJWSUVXX1NFUlZJQ0VfRVhURU5TSU9OIiwiUkVHSVNURVJfREVWSUNFX0FDVElPTiIsIlZJRVdfQ1JfVEVNUExBVEUiLCJNQU5BR0VfV09SS0ZMT1dfU0NIRURVTEUiLCJWSUVXX0xJQ0VOU0lORyIsIk1BTkFHRV9DT05UQUNUIiwiUkVHSVNURVJfREVWSUNFUyIsIk1BTkFHRV9TRVJWSUNFUyIsIk1BTkFHRV9OT1RJRklDQVRJT04iLCJWSUVXX0JJTExJTkdfRVZFTlQiLCJBQ0NFU1NfREVWSUNFX1RFUk1JTkFMIiwiQVBQUk9WRV9TRVJWSUNFU19VSSIsIk1BTkFHRV9TRVJWSUNFX0NPTkZJR19BUFBMSUNBVElPTiIsIk1BTkFHRV9NRVRSSUNTIiwiTUFOQUdFX1NZU1RFTV9TRUNSRVRTIiwiTUFOQUdFX1RIRU1FUyIsIk1BTkFHRV9OU08iLCJNQU5BR0VfQklMTElOR19DWUNMRSIsIk1BTkFHRV9TU09fU0FNTF9TUCIsIlZJRVdfU0VSVklDRVMiLCJWSUVXX0RFVklDRV9NT0RFTFMiLCJNQU5BR0VfVEVOQU5UIiwiVklFV19TVUJTQ1JJUFRJT04iLCJWSUVXX1NFUlZJQ0VfQ09ORklHX0FVRElUIiwiVklFV19TRVJWSUNFX0NPTkZJR19BUFBMSUNBVElPTiIsIlNXSVRDSF9URU5BTlQiLCJNQU5BR0VfQlVMS19JTVBPUlQiLCJNQU5BR0VfSU5DSURFTlRfQ09ORklHIiwiVklFV19MSUNFTlNJTkdfQ09ORklHVVJBVElPTiIsIlZJRVdfUkVHSU9OIiwiTUFOQUdFX0JJTExJTkdfUFJJQ0UiLCJNQU5BR0VfVlVMTkVSQUJJTElUWSIsIlZJRVdfTE9HX0NPTkZJRyIsIlZJRVdfU0VUVElOR1NfVUkiLCJNQU5BR0VfQlVJTERfSU5GTyIsIk1BTkFHRV9TU09fSURQIiwiTUFOQUdFX1JFTUVESUFUSU9OUyIsIlZJRVdfRVZFTlQiLCJWSUVXX0VWRU5UTE9HIiwiVklFV19TTE0iLCJNQU5BR0VfTE9HX0NPTkZJRyIsIlZJRVdfVEVSTVNfQ09ORElUSU9OUyIsIk1BTkFHRV9ERVZJQ0VTIiwiTUFOQUdFX0lOQ0lERU5UIiwiTUFOQUdFX0RFVklDRV9NT0RFTFMiLCJWSUVXX1JFTUVESUFUSU9OUyIsIk1BTkFHRV9TRVJWSUNFVFlQRVMiLCJNQU5BR0VfQ0FURUdPUlkiLCJWSUVXX1NDSEVEVUxFX1RBU0siLCJWSUVXX1NUQVRVUyIsIlZJRVdfU1VCU0NSSVBUSU9OU19VSSIsIk1BTkFHRV9LSUJBTkEiLCJTU09fTE9HSU4iLCJNQU5BR0VfVEVSTVNfQ09ORElUSU9OUyIsIk1BTkFHRV9NRVRBREFUQSIsIlZJRVdfQVBJS0VZIiwiVklFV19URU5BTlQiXSwicHJlZmVycmVkX3VzZXJuYW1lIjoic3VwZXJ1c2VyIiwicHJvdmlkZXJfaWQiOiJmZTNhZDg5Yy00NDlmLTQyZjItYjRmOC1iMTBhYjdiYzAyNjYiLCJwcm92aWRlcl9uYW1lIjoiQ2lzY29TeXN0ZW1zIiwicm9sZXMiOlsiU1VQRVJVU0VSIl0sInN1YiI6InN1cGVydXNlciIsInRlbmFudF9pZCI6ImUwYjVlOTUwLTYxMGQtMTFlYy04MmZhLTZiYjBiODVkNWFjMCIsInRlbmFudF9uYW1lIjoidm1zLXRlbmFudCIsInRlbmFudF9zdXNwZW5kZWQiOmZhbHNlLCJ1c2VyX2lkIjoiZTBkYTEzMjAtNjEwZC0xMWVjLTgyZmEtNmJiMGI4NWQ1YWMwIn0.M3KEz1oQafO8O31gdB-uHWhsFXtuiXA5qdYOEsbmsuvh5oPJTPmttVGb8BfPhsmnCVxNOWAl6jj8JwbGjyVWMOw9LU7auCVjQy8ZI5J2DX7r7IKaAX6qwJNGLp35aW-tl2KAQmffvsZJ5ibZ-yYqvC7xGAKdPnLKOskWgdDQQrTIjIzhtp3aqeiUHHWVbPQo62sMSiltOm7hk_kZcCDAKeOzrIFpTjGJE2VRA8UhExL2u8EczH_n0Y-2MX9mwAQTwSJD-EjvcCLhYuaTCgXZdaNBhc74lVz1nq8NJuZhQj26kvgO1MykxBLOvhiLYBDCK3BgOcO6tpThf8IiE-0Okw","roles":["SUPERUSER"],"scope":"token_details phone profile read write email openid tenant_hierarchy address","token_type":"bearer","username":"superuser","access_token":"_hidden","expires_in":8999,"expiry":"2022-10-29T20:33:05Z"}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Pragma:
+                - no-cache
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:9203
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            null
+        form: {}
+        headers:
+            Authorization:
+                - Bearer ******
+            Content-Type:
+                - application/json; charset=utf-8
+            X-Http-Record-Index:
+                - "9"
+        url: http://127.0.0.1:9203/idm/api/v8/users/current
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 290
+        uncompressed: false
+        body: '{"id":"e0da1320-610d-11ec-82fa-6bb0b85d5ac0","status":"true","deleted":"false","username":"superuser","firstName":"Super","lastName":"User","email":"noreply@cisco.com","roleIds":["e0b1a390-610d-11ec-82fa-6bb0b85d5ac0"],"tenantIds":[],"passwordPolicyName":"ppolicy_strong","locale":"en_US"}'
+        headers:
+            Content-Length:
+                - "290"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs

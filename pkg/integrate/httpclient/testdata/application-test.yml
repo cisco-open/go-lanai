@@ -1,0 +1,23 @@
+integrate:
+  http:
+    max-retries: 2
+    timeout: 1m
+    logger:
+      level: debug
+
+mocks:
+  sd:
+    mockedserver:
+      - ID: 0-mock-inst
+        Address: 127.0.0.1
+        Port: 0
+        Tags: [""]
+        Meta:
+          context: ${server.context-path}
+      - ID: 1-mock-inst
+        Address: 127.0.0.1
+        Port: 8080
+        Health: 3 # HealthCritical
+        Tags: [ "bad instance" ]
+        Meta:
+          context: ${server.context-path}

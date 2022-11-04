@@ -227,6 +227,10 @@ func (c *client) updateConfig(config *ClientConfig) {
 	c.config = config
 	c.options = make([]httptransport.ClientOption, 0)
 
+	if config.HTTPClient != nil {
+		c.options = append(c.options, httptransport.SetClient(config.HTTPClient))
+	}
+
 	before := append(c.defaults.before, config.BeforeHooks...)
 	order.SortStable(before, order.OrderedFirstCompare)
 	for _, h := range before {

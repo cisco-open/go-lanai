@@ -19,6 +19,7 @@ type SecurityDetailsMock struct {
 	ProviderDescription      string
 	ProviderEmail            string
 	ProviderNotificationType string
+	AccessToken              string
 	Exp                      time.Time
 	Iss                      time.Time
 	Permissions              utils.StringSet
@@ -26,128 +27,139 @@ type SecurityDetailsMock struct {
 	OrigUsername             string
 	UserFirstName            string
 	UserLastName             string
+	KVs                      map[string]interface{}
 }
 
-// mockedSecurityDetails implements
+// MockedSecurityDetails implements
 // - security.AuthenticationDetails
 // - security.ProxiedUserDetails
 // - security.UserDetails
 // - security.TenantDetails
 // - security.ProviderDetails
-type mockedSecurityDetails struct {
+// - security.KeyValueDetails
+type MockedSecurityDetails struct {
 	SecurityDetailsMock
 }
 
-func NewMockedSecurityDetails(opts ...SecurityMockOptions) security.AuthenticationDetails {
-	ret := mockedSecurityDetails{}
+func NewMockedSecurityDetails(opts ...SecurityMockOptions) *MockedSecurityDetails {
+	ret := MockedSecurityDetails{}
 	for _, fn := range opts {
 		fn(&ret.SecurityDetailsMock)
 	}
 	return &ret
 }
 
-func (d *mockedSecurityDetails) OriginalUsername() string {
+func (d *MockedSecurityDetails) Value(s string) (interface{}, bool) {
+	v, ok := d.KVs[s]
+	return v, ok
+}
+
+func (d *MockedSecurityDetails) Values() map[string]interface{} {
+	return d.KVs
+}
+
+func (d *MockedSecurityDetails) OriginalUsername() string {
 	return d.OrigUsername
 }
 
-func (d *mockedSecurityDetails) Proxied() bool {
+func (d *MockedSecurityDetails) Proxied() bool {
 	return d.OrigUsername != ""
 }
 
-func (d *mockedSecurityDetails) ExpiryTime() time.Time {
+func (d *MockedSecurityDetails) ExpiryTime() time.Time {
 	return d.Exp
 }
 
-func (d *mockedSecurityDetails) IssueTime() time.Time {
+func (d *MockedSecurityDetails) IssueTime() time.Time {
 	return d.Iss
 }
 
-func (d *mockedSecurityDetails) Roles() utils.StringSet {
+func (d *MockedSecurityDetails) Roles() utils.StringSet {
 	panic("implement me")
 }
 
-func (d *mockedSecurityDetails) Permissions() utils.StringSet {
+func (d *MockedSecurityDetails) Permissions() utils.StringSet {
 	if d.SecurityDetailsMock.Permissions == nil {
 		d.SecurityDetailsMock.Permissions = utils.NewStringSet()
 	}
 	return d.SecurityDetailsMock.Permissions
 }
 
-func (d *mockedSecurityDetails) AuthenticationTime() time.Time {
+func (d *MockedSecurityDetails) AuthenticationTime() time.Time {
 	return d.Iss
 }
 
-func (d *mockedSecurityDetails) ProviderId() string {
+func (d *MockedSecurityDetails) ProviderId() string {
 	return d.SecurityDetailsMock.ProviderId
 }
 
-func (d *mockedSecurityDetails) ProviderName() string {
+func (d *MockedSecurityDetails) ProviderName() string {
 	return d.SecurityDetailsMock.ProviderName
 }
 
-func (d *mockedSecurityDetails) ProviderDisplayName() string {
+func (d *MockedSecurityDetails) ProviderDisplayName() string {
 	return d.SecurityDetailsMock.ProviderDisplayName
 }
 
-func (d *mockedSecurityDetails) ProviderDescription() string {
+func (d *MockedSecurityDetails) ProviderDescription() string {
 	return d.SecurityDetailsMock.ProviderDescription
 }
 
-func (d *mockedSecurityDetails) ProviderEmail() string {
+func (d *MockedSecurityDetails) ProviderEmail() string {
 	return d.SecurityDetailsMock.ProviderEmail
 }
 
-func (d *mockedSecurityDetails) ProviderNotificationType() string {
+func (d *MockedSecurityDetails) ProviderNotificationType() string {
 	return d.SecurityDetailsMock.ProviderNotificationType
 }
 
-func (d *mockedSecurityDetails) TenantId() string {
+func (d *MockedSecurityDetails) TenantId() string {
 	return d.SecurityDetailsMock.TenantId
 }
 
-func (d *mockedSecurityDetails) TenantExternalId() string {
+func (d *MockedSecurityDetails) TenantExternalId() string {
 	return d.SecurityDetailsMock.TenantExternalId
 }
 
-func (d *mockedSecurityDetails) TenantSuspended() bool {
-	panic("implement me")
+func (d *MockedSecurityDetails) TenantSuspended() bool {
+	return false
 }
 
-func (d *mockedSecurityDetails) UserId() string {
+func (d *MockedSecurityDetails) UserId() string {
 	return d.SecurityDetailsMock.UserId
 }
 
-func (d *mockedSecurityDetails) Username() string {
+func (d *MockedSecurityDetails) Username() string {
 	return d.SecurityDetailsMock.Username
 }
 
-func (d *mockedSecurityDetails) AccountType() security.AccountType {
-	panic("implement me")
+func (d *MockedSecurityDetails) AccountType() security.AccountType {
+	return security.AccountTypeDefault
 }
 
-func (d *mockedSecurityDetails) AssignedTenantIds() utils.StringSet {
+func (d *MockedSecurityDetails) AssignedTenantIds() utils.StringSet {
 	if d.Tenants == nil {
 		d.Tenants = utils.NewStringSet()
 	}
 	return d.Tenants
 }
 
-func (d *mockedSecurityDetails) LocaleCode() string {
-	panic("implement me")
+func (d *MockedSecurityDetails) LocaleCode() string {
+	return ""
 }
 
-func (d *mockedSecurityDetails) CurrencyCode() string {
-	panic("implement me")
+func (d *MockedSecurityDetails) CurrencyCode() string {
+	return ""
 }
 
-func (d *mockedSecurityDetails) FirstName() string {
+func (d *MockedSecurityDetails) FirstName() string {
 	return d.UserFirstName
 }
 
-func (d *mockedSecurityDetails) LastName() string {
+func (d *MockedSecurityDetails) LastName() string {
 	return d.UserLastName
 }
 
-func (d *mockedSecurityDetails) Email() string {
-	panic("implement me")
+func (d *MockedSecurityDetails) Email() string {
+	return ""
 }

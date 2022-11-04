@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"strings"
 )
 
@@ -16,7 +16,7 @@ func migrationFuncFromTextFile(fs fs.FS, filePath string, db *gorm.DB) (Migratio
 		panic(errors.New(fmt.Sprintf("%s does not exist or is not a file", filePath)))
 	}
 
-	sql, err := ioutil.ReadAll(file)
+	sql, err := io.ReadAll(file)
 
 	if err != nil {
 		panic(err)

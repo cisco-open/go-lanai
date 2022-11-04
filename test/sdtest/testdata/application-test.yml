@@ -1,0 +1,22 @@
+sd-mocks:
+  service1:
+    - ID: service1-inst-0
+      Address: 192.168.0.100
+      Port: 9000
+      Tags: [ "mocked", "inst0" ]
+      Meta:
+        index: "0"
+    - ID: service1-inst-1
+      Address: 192.168.0.101
+      Port: 9001
+      Tags: [ "mocked", "inst1" ]
+      Meta:
+        index: "1"
+
+  service2:
+    - ID: service2-inst-0
+      Address: 192.168.0.100
+      Port: 9000
+      Tags: [ "mocked", "inst0" ]
+      Meta:
+        index: "0"

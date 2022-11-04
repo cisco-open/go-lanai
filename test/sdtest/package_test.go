@@ -29,11 +29,21 @@ type testDI struct {
 	Client discovery.Client
 }
 
-func TestWithMockedSD(t *testing.T) {
+func TestWithMockedSDWithFileDefinition(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		WithMockedSD(LoadDefinition(testFS, "testdata/services.yml")),
+		apptest.WithDI(di),
+		test.GomegaSubTest(SubTestDiscovery(di), "TestDiscovery"),
+	)
+}
+
+func TestWithMockedSDWithPropertiesDefinition(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		WithMockedSD(DefinitionWithPrefix("sd-mocks")),
 		apptest.WithDI(di),
 		test.GomegaSubTest(SubTestDiscovery(di), "TestDiscovery"),
 	)

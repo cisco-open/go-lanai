@@ -18,23 +18,27 @@ const (
  *************************/
 
 type MockedTokenInfo struct {
-	UName string
-	UID   string
-	TID   string
+	UName       string
+	UID         string
+	TID         string
 	TExternalId string
-	OrigU string
-	Exp   int64
-	Iss   int64
+	OrigU       string
+	Exp         int64
+	Iss         int64
 }
 
 // MockedToken implements oauth2.AccessToken
 type MockedToken struct {
 	MockedTokenInfo
+	Token   string
 	ExpTime time.Time `json:"-"`
 	IssTime time.Time `json:"-"`
 }
 
 func (mt MockedToken) MarshalText() (text []byte, err error) {
+	if len(mt.Token) != 0 {
+		return []byte(mt.Token), nil
+	}
 	mt.Exp = mt.ExpTime.UnixNano()
 	mt.Iss = mt.IssTime.UnixNano()
 	text, err = json.Marshal(mt.MockedTokenInfo)
