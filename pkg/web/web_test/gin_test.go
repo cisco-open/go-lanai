@@ -10,6 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
+	"github.com/gin-gonic/gin"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -32,7 +33,9 @@ func TestGinMiddlewares(t *testing.T) {
 		),
 		test.SubTestSetup(ResetEngine(&di)),
 		test.GomegaSubTest(SubTestGinContextAvailability(&di), "TestGinContextAvailability"),
-		test.GomegaSubTest(SubTestContextKV(&di), "TestContextKV"),
+		test.GomegaSubTest(SubTestContextDefaultKV(&di), "TestContextDefaultKV"),
+		test.GomegaSubTest(SubTestContextSetKV(&di), "TestContextSetKV"),
+		test.GomegaSubTest(SubTestGinHandlerMapping(&di), "TestGinHandlerMapping"),
 	)
 }
 
@@ -72,14 +75,36 @@ type kv struct {
 	v string
 }
 
-func SubTestContextKV(di *TestDI) test.GomegaSubTestFunc {
+func SubTestContextDefaultKV(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		kvs := []kv{
+			{k: web.ContextKeyContextPath, v: webtest.DefaultContextPath},
+			{k: web.ContextKeyContextPath, v: webtest.CurrentContextPath(ctx)},
+		}
+
+		assertion := func(ctx context.Context, req *http.Request) {
+			for _, kv := range kvs {
+				g.Expect(ctx.Value(kv.k)).To(Equal(kv.v), "context should contains correct KV: %s=%s", kv.k, kv.v)
+				g.Expect(req.Context().Value(kv.k)).To(Equal(kv.v), "Request context should contains correct KV: %s=%s", kv.k, kv.v)
+			}
+		}
+
+		// execute test
+		WebInit(ctx, t, g, di,
+			registerAssertingEndpoint(http.MethodPost, "/mw/:var", assertion),
+			registerAssertingMW(http.MethodPost, "/mw/**", assertion),
+		)
+		testEndpoint(ctx, t, g, http.MethodPost, "/mw/var-value")
+	}
+}
+
+func SubTestContextSetKV(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		kvs := map[kv]kvSetter{
 			kv{k: "gin-ctx", v: "gin-ctx-value"}:         ginCtxKVSetter(),
 			kv{k: "req-gin-ctx", v: "req-gin-ctx-value"}: reqGinCtxKVSetter(),
 			kv{k: "web-ctx", v: "web-ctx-value"}:         webCtxKVSetter(),
 			kv{k: "web-req", v: "web-req-value"}:         webReqKVSetter(),
-			//kv{k: "mutable-ctx", v: "mutable-ctx"}:       mutableCtxKVSetter(),
 		}
 		mwAssertion := func(ctx context.Context, req *http.Request) {
 			for kv, setter := range kvs {
@@ -98,6 +123,32 @@ func SubTestContextKV(di *TestDI) test.GomegaSubTestFunc {
 		WebInit(ctx, t, g, di,
 			registerAssertingEndpoint(http.MethodPost, "/mw/:var", epAssertion),
 			registerAssertingMW(http.MethodPost, "/mw/**", mwAssertion),
+		)
+		testEndpoint(ctx, t, g, http.MethodPost, "/mw/var-value")
+	}
+}
+
+func SubTestGinHandlerMapping(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		handlerFn := func(gc *gin.Context) {
+			g.Expect(web.GinContext(gc)).To(Not(BeNil()), "gin.Context from ctx should not be nil")
+			g.Expect(web.GinContext(gc.Request.Context())).To(Not(BeNil()), "gin.Context from ctx should not be nil")
+			g.Expect(web.HttpRequest(gc)).To(Equal(gc.Request), "web.HttpRequest should return same request")
+
+			if resp, e := testdata.Raw(gc.Request.Context(), gc.Request); e != nil {
+				gc.JSON(http.StatusInternalServerError, e)
+			} else {
+				gc.JSON(http.StatusOK, resp)
+			}
+
+		}
+
+		ginMapping := web.NewSimpleGinMapping("gin", "/", "/mw/:var", http.MethodPost, nil, handlerFn)
+		// execute test
+		WebInit(ctx, t, g, di,
+			func(reg *web.Registrar) {
+				reg.MustRegister(ginMapping)
+			},
 		)
 		testEndpoint(ctx, t, g, http.MethodPost, "/mw/var-value")
 	}
@@ -169,8 +220,3 @@ func webReqKVSetter() kvSetter {
 	}
 }
 
-func mutableCtxKVSetter() kvSetter {
-	return func(ctx context.Context, req *http.Request, k, v string) {
-		// TODO
-	}
-}
