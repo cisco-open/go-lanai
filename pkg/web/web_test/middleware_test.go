@@ -116,3 +116,4 @@ func registerEndpoint(method, path string) WebInitFunc {
 			Build())
 	}
 }
+
