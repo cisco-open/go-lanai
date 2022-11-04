@@ -71,6 +71,11 @@ type ClientCustomizer interface {
 	Customize(opt *ClientOption)
 }
 
+type ClientCustomizerFunc func(opt *ClientOption)
+func (fn ClientCustomizerFunc) Customize(opt *ClientOption) {
+	fn(opt)
+}
+
 // BeforeHook is used for ClientConfig and ClientOptions, the RequestFunc is invoked before request is sent
 // implementing class could also implement order.Ordered interface. Highest order is invoked first
 type BeforeHook interface {

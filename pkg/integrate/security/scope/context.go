@@ -137,6 +137,11 @@ type ManagerCustomizer interface {
 	Customize() []ManagerOptions
 }
 
+type ManagerCustomizerFunc func() []ManagerOptions
+func (fn ManagerCustomizerFunc) Customize() []ManagerOptions {
+	return fn()
+}
+
 func BeforeStartHook(hook ScopeOperationHook) ManagerOptions {
 	return func(opt *managerOption) {
 		opt.BeforeStartHooks = append(opt.BeforeStartHooks, hook)

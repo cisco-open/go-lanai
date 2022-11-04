@@ -18,7 +18,7 @@ type Properties struct {
 	Addresses []string `json:"addresses"`
 	Username  string   `json:"username"`
 	Password  string   `json:"password"`
-	TLS       TLS      `json:"TLS"`
+	TLS       TLS      `json:"tls"`
 }
 
 type TLS struct {

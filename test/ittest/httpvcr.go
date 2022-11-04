@@ -86,14 +86,14 @@ func IsRecording(ctx context.Context) bool {
 // AdditionalMatcherOptions temporarily add additional RecordMatcherOptions to the current test context
 // on top of test's HTTPVCROptions.
 // Note: The additional options take effect within the scope of sub-test. For test level options, use HttpRecordMatching
-func AdditionalMatcherOptions(ctx context.Context, opts...RecordMatcherOptions) {
+func AdditionalMatcherOptions(ctx context.Context, opts ...RecordMatcherOptions) {
 	rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder)
 	if !ok || rec == nil {
 		return
 	}
 	// merge matching options
 	opt := ctx.Value(ckRecorderOption).(*HTTPVCROption)
-	newOpts := make([]RecordMatcherOptions, len(opt.RecordMatching), len(opt.RecordMatching) + len(opts))
+	newOpts := make([]RecordMatcherOptions, len(opt.RecordMatching), len(opt.RecordMatching)+len(opts))
 	copy(newOpts, opt.RecordMatching)
 	newOpts = append(newOpts, opts...)
 
@@ -124,10 +124,10 @@ func PackageHttpRecordingMode() suitetest.PackageOptions {
 }
 
 // HttpRecordingMode returns a HTTPVCROptions that turns on Recording mode.
-// Normally recording mode should be enabled via `go test` argument `-record`
-// Note: 	  Record mode is forced off if flag is set to "-record-http=false" explicitly
-// IMPORTANT: When Record mode is enabled, all tests interact with actual HTTP remote service.
-// 			  So use this mode on LOCAL DEV ONLY
+// Normally recording mode should be enabled via `go test` argument `-record-http`
+// Note:	Record mode is forced off if flag is set to "-record-http=false" explicitly
+// IMPORTANT:	When Record mode is enabled, all sub tests interact with actual HTTP remote service.
+// 				So use this mode on LOCAL DEV ONLY
 func HttpRecordingMode() HTTPVCROptions {
 	return func(opt *HTTPVCROption) {
 		opt.Mode = ModeRecording
@@ -190,15 +190,15 @@ var ckRecorderOption = optionCtxKey{}
 
 type recorderAwareContext struct {
 	context.Context
-	recorder    *recorder.Recorder
-	origOption  *HTTPVCROption
+	recorder   *recorder.Recorder
+	origOption *HTTPVCROption
 }
 
 func contextWithRecorder(parent context.Context, rec *recorder.Recorder, opt *HTTPVCROption) *recorderAwareContext {
 	return &recorderAwareContext{
-		Context:     parent,
-		recorder:    rec,
-		origOption:  opt,
+		Context:    parent,
+		recorder:   rec,
+		origOption: opt,
 	}
 }
 
@@ -243,9 +243,9 @@ type vcrDI struct {
 type vcrOut struct {
 	fx.Out
 	Recorder             *recorder.Recorder
-	HttpClientCustomizer httpclient.ClientCustomizer `group:"http-client"`
 	CassetteMatcher      cassette.MatcherFunc
 	HttpVCROption        *HTTPVCROption
+	HttpClientCustomizer httpclient.ClientCustomizer `group:"http-client"`
 }
 
 func httpRecorderProvider(initial HTTPVCROption, opts []HTTPVCROptions) func(di vcrDI) (vcrOut, error) {
@@ -271,10 +271,12 @@ func httpRecorderProvider(initial HTTPVCROption, opts []HTTPVCROptions) func(di 
 		}
 
 		return vcrOut{
-			Recorder:             rec,
-			HttpClientCustomizer: RecordingHttpClientCustomizer{Recorder: rec},
-			CassetteMatcher:      matcher,
-			HttpVCROption:        &opt,
+			Recorder:        rec,
+			CassetteMatcher: matcher,
+			HttpVCROption:   &opt,
+			HttpClientCustomizer: httpclient.ClientCustomizerFunc(func(opt *httpclient.ClientOption) {
+				opt.HTTPClient = rec.GetDefaultClient()
+			}),
 		}, nil
 	}
 }
