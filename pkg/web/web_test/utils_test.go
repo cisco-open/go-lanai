@@ -26,6 +26,15 @@ const (
 	BasicQueryValue  = `query-value`
 )
 
+const (
+	DefaultErrorMsg = `expected error`
+	ErrorHeaderKey  = `X-Error`
+	ErrorHeaderValue  = `just an error`
+	ErrorBodyKeyError = `error`
+	ErrorBodyKeyMsg     = `message`
+	ErrorBodyDetailsKey = `details`
+)
+
 type TestDI struct {
 	fx.In      `ignore-unexported:"true"`
 	Engine     *web.Engine
@@ -55,6 +64,25 @@ func WebInit(ctx context.Context, _ *testing.T, g *gomega.WithT, di *TestDI, ini
 	}
 	e := reg.Initialize(ctx)
 	g.Expect(e).To(Succeed(), "initialize should success")
+}
+
+/*************************
+	Context
+ *************************/
+
+func assertContext(ctx context.Context, _ *testing.T, g *gomega.WithT) {
+	g.Expect(web.GinContext(ctx)).To(Not(BeNil()), "gin.Context from ctx should not be nil")
+	g.Expect(web.HttpRequest(ctx)).To(Not(BeNil()), "web.HttpRequest should not be nil")
+
+	var e error
+	var ret interface{}
+	e = withRecover(func() error { ret = web.MustGinContext(ctx); return nil })
+	g.Expect(e).To(Succeed(), "MustGinContext shouldn't panic")
+	g.Expect(ret).To(Not(BeNil()), "gin.Context from ctx should not be nil")
+
+	e = withRecover(func() error { ret = web.MustHttpRequest(ctx); return nil })
+	g.Expect(e).To(Succeed(), "MustHttpRequest shouldn't panic")
+	g.Expect(ret).To(Not(BeNil()), "web.MustHttpRequest should not be nil")
 }
 
 /*************************
@@ -145,7 +173,7 @@ func (mw *TestMW) Reset() {
 
 func (mw *TestMW) HandlerFunc() web.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		mw.Invocation = append(mw.Invocation, mwInvocation{rw: rw, r:  r, gc: web.GinContext(r.Context())})
+		mw.Invocation = append(mw.Invocation, mwInvocation{rw: rw, r: r, gc: web.GinContext(r.Context())})
 	}
 }
 
@@ -164,7 +192,7 @@ func (mw *TestMW) GinHandlerFunc() gin.HandlerFunc {
 }
 
 type mwExpectation struct {
-	count int
+	count  int
 	single bool
 }
 
@@ -176,7 +204,7 @@ func mwExpectCount(invocationCount int) func(expect *mwExpectation) {
 
 func assertMW(_ *testing.T, g *gomega.WithT, mw *TestMW, expects ...func(expect *mwExpectation)) {
 	expect := mwExpectation{
-		count: 1,
+		count:  1,
 		single: true,
 	}
 	for _, fn := range expects {
@@ -196,5 +224,50 @@ func assertMW(_ *testing.T, g *gomega.WithT, mw *TestMW, expects ...func(expect 
 			g.Expect(v.gc).To(Equal(prev.gc), "invocation's gin.Context should be same as previous invocation")
 		}
 		prev = &mw.Invocation[i]
+	}
+}
+
+/*************************
+	Error
+ *************************/
+
+func testErrorEndpoint(ctx context.Context, t *testing.T, g *gomega.WithT, method, path string, expects ...func(expect *errExpectation)) {
+	resp := invokeEndpoint(ctx, t, g, method, path)
+	expect := errExpectation{
+		status: http.StatusInternalServerError,
+		headers: map[string]string{
+			ErrorHeaderKey: ErrorHeaderValue,
+		},
+		body: map[string]interface{}{
+			ErrorBodyKeyError: http.StatusText(http.StatusInternalServerError),
+			ErrorBodyKeyMsg:   DefaultErrorMsg,
+		},
+		bodyDecoder: jsonBodyDecoder(),
+	}
+	for _, fn := range expects {
+		if fn != nil {
+			fn(&expect)
+		}
+	}
+	assertErrorResponse(t, g, resp, expect)
+}
+
+type errExpectation struct {
+	status      int
+	headers     map[string]string
+	body        map[string]interface{}
+	bodyDecoder bodyDecoder
+}
+
+func assertErrorResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expect errExpectation) {
+	g.Expect(resp.StatusCode).To(Equal(expect.status), "response status code should be correct")
+	for k, v := range expect.headers {
+		g.Expect(resp.Header.Get(k)).To(Equal(v), "response header should have header %s", k)
+	}
+
+	if expect.body != nil && expect.bodyDecoder != nil {
+		body, e := expect.bodyDecoder(resp.Body)
+		g.Expect(e).To(Succeed(), "decode response body should success")
+		g.Expect(body).To(BeEquivalentTo(expect.body), "response body should be correct")
 	}
 }

@@ -51,8 +51,8 @@ func SubTestWithMWMapping(di *TestDI) test.GomegaSubTestFunc {
 			middleware.NewBuilder("mw-gin").ApplyTo(route).Use(mw.GinHandlerFunc()).Build(),
 		}
 		WebInit(ctx, t, g, di,
-			registerEndpoint(http.MethodPut, "/mw/:var"),
-			registerEndpoint(http.MethodPut, "/no-mw/:var"),
+			registerSuccessEndpoint(http.MethodPut, "/mw/:var"),
+			registerSuccessEndpoint(http.MethodPut, "/no-mw/:var"),
 			func(reg *web.Registrar) {
 				e := reg.Register(mappings)
 				g.Expect(e).To(Succeed(), "register controller should success")
@@ -81,10 +81,10 @@ func SubTestWithConditionalMW(di *TestDI) test.GomegaSubTestFunc {
 			middleware.NewBuilder("mw-gin-cond").ApplyTo(route).WithCondition(cond).Use(condMW.GinHandlerFunc()).Build(),
 		}
 		WebInit(ctx, t, g, di,
-			registerEndpoint(http.MethodPut, "/mw/:var"),
-			registerEndpoint(http.MethodPost, "/mw/:var"),
-			registerEndpoint(http.MethodPut, "/no-mw/:var"),
-			registerEndpoint(http.MethodPost, "/no-mw/:var"),
+			registerSuccessEndpoint(http.MethodPut, "/mw/:var"),
+			registerSuccessEndpoint(http.MethodPost, "/mw/:var"),
+			registerSuccessEndpoint(http.MethodPut, "/no-mw/:var"),
+			registerSuccessEndpoint(http.MethodPost, "/no-mw/:var"),
 			func(reg *web.Registrar) {
 				e := reg.Register(mappings)
 				g.Expect(e).To(Succeed(), "register controller should success")
@@ -107,7 +107,7 @@ func SubTestWithConditionalMW(di *TestDI) test.GomegaSubTestFunc {
 	Helper
  *************************/
 
-func registerEndpoint(method, path string) WebInitFunc {
+func registerSuccessEndpoint(method, path string) WebInitFunc {
 	return func(reg *web.Registrar) {
 		reg.MustRegister(rest.New(path).
 			Method(method).

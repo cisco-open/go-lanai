@@ -46,16 +46,12 @@ func TestGinMiddlewares(t *testing.T) {
 func SubTestGinContextAvailability(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		assertion := func(ctx context.Context, req *http.Request) {
-			g.Expect(web.GinContext(ctx)).To(Not(BeNil()), "gin.Context from ctx should not be nil")
+			assertContext(ctx, t, g)
 			g.Expect(web.GinContext(req.Context())).To(Not(BeNil()), "gin.Context from ctx should not be nil")
 			g.Expect(web.HttpRequest(ctx)).To(Equal(req), "web.HttpRequest should return same request")
 
 			var e error
 			var ret interface{}
-			e = withRecover(func() error { ret = web.MustGinContext(ctx); return nil })
-			g.Expect(e).To(Succeed(), "MustGinContext shouldn't panic")
-			g.Expect(ret).To(Not(BeNil()), "gin.Context from ctx should not be nil")
-
 			e = withRecover(func() error { ret = web.MustHttpRequest(ctx); return nil })
 			g.Expect(e).To(Succeed(), "MustHttpRequest shouldn't panic")
 			g.Expect(ret).To(Equal(req), "web.MustHttpRequest should return same request")
