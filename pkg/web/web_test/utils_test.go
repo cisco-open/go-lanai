@@ -5,11 +5,14 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -83,6 +86,42 @@ func assertContext(ctx context.Context, _ *testing.T, g *gomega.WithT) {
 	e = withRecover(func() error { ret = web.MustHttpRequest(ctx); return nil })
 	g.Expect(e).To(Succeed(), "MustHttpRequest shouldn't panic")
 	g.Expect(ret).To(Not(BeNil()), "web.MustHttpRequest should not be nil")
+}
+
+type bodyDecoder func(body io.Reader) (interface{}, error)
+
+func jsonBodyDecoder() bodyDecoder {
+	return func(body io.Reader) (interface{}, error) {
+		decoder := json.NewDecoder(body)
+		var i interface{}
+		if e := decoder.Decode(&i); e != nil {
+			return nil, e
+		}
+		return i, nil
+	}
+}
+
+func urlencodedBodyDecoder() bodyDecoder {
+	return func(body io.Reader) (interface{}, error) {
+		text, e := io.ReadAll(body)
+		if e != nil {
+			return nil, e
+		}
+		pairs := strings.Split(string(text), "&")
+		ret := map[string]interface{}{}
+		for _, pair := range pairs {
+			kv := strings.SplitN(pair, "=", 2)
+			if len(kv) != 2 {
+				continue
+			}
+			v, e := url.QueryUnescape(kv[1])
+			if e != nil {
+				continue
+			}
+			ret[kv[0]] = v
+		}
+		return ret, nil
+	}
 }
 
 /*************************

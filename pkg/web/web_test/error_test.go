@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/validation"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/weberror"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
@@ -12,11 +13,13 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -26,7 +29,7 @@ import (
 	Tests
  *************************/
 
-func TestErrorResponse(t *testing.T) {
+func TestMvcErrorHandling(t *testing.T) {
 	var di TestDI
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -39,9 +42,26 @@ func TestErrorResponse(t *testing.T) {
 		test.GomegaSubTest(SubTestBindingError(&di), "TestBindingError"),
 		test.GomegaSubTest(SubTestHTTPError(&di), "TestHTTPError"),
 		test.GomegaSubTest(SubTestGenericError(&di), "TestGenericError"),
+		test.GomegaSubTest(SubTestBadRequestError(&di), "TestBadRequestError"),
 		test.GomegaSubTest(SubTestCustomError(&di), "TestCustomError"),
 		test.GomegaSubTest(SubTestErrorTranslator(&di), "TestErrorTranslator"),
 		test.GomegaSubTest(SubTestErrorTranslateMapping(&di), "TestErrorTranslateMapping"),
+	)
+}
+
+func TestMWErrorHandling(t *testing.T) {
+	var di TestDI
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithUtilities(),
+		apptest.WithDI(&di),
+		apptest.WithFxOptions(
+			fx.Provide(web.NewEngine),
+		),
+		test.SubTestSetup(ResetEngine(&di)),
+		test.GomegaSubTest(SubTestMWGenericError(&di), "TestMWGenericError"),
+		test.GomegaSubTest(SubTestMWCustomError(&di), "TestMWCustomError"),
+		test.GomegaSubTest(SubTestMWCustomTextError(&di), "TestMWCustomTextError"),
 	)
 }
 
@@ -100,11 +120,27 @@ func SubTestGenericError(di *TestDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestBadRequestError(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		bre := web.NewBadRequestError(errors.New(DefaultErrorMsg))
+		// execute test
+		WebInit(ctx, t, g, di,
+			registerErrorEndpoint(http.MethodGet, "/error", bre),
+		)
+		testErrorEndpoint(ctx, t, g, http.MethodGet, "/error",
+			expectErrorSC(http.StatusBadRequest),
+			expectErrorHeader(nil),
+		)
+	}
+}
+
 func SubTestCustomError(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		err := customError{
-			error: errors.New(DefaultErrorMsg),
-			SC:    http.StatusUnauthorized,
+			customErrorBase{
+				error: errors.New(DefaultErrorMsg),
+				SC:    http.StatusUnauthorized,
+			},
 		}
 		// execute test
 		WebInit(ctx, t, g, di,
@@ -161,6 +197,10 @@ func SubTestErrorTranslateMapping(di *TestDI) test.GomegaSubTestFunc {
 			assertContext(ctx, t, g)
 			return fmt.Errorf(`%d`, http.StatusUnauthorized)
 		})
+		translator1X := web.ErrorTranslateFunc(func(ctx context.Context, err error) error {
+			assertContext(ctx, t, g)
+			return fmt.Errorf(`%d`, http.StatusNotAcceptable)
+		})
 		translator2 := web.ErrorTranslateFunc(func(ctx context.Context, err error) error {
 			assertContext(ctx, t, g)
 			return fmt.Errorf(`%d`, http.StatusForbidden)
@@ -177,19 +217,94 @@ func SubTestErrorTranslateMapping(di *TestDI) test.GomegaSubTestFunc {
 		WebInit(ctx, t, g, di,
 			registerErrorEndpoint(http.MethodGet, "/error/1", err),
 			registerErrorEndpoint(http.MethodGet, "/error/2", err),
+			registerErrorEndpoint(http.MethodPost, "/error/1", err),
 			func(reg *web.Registrar) {
-				e := reg.Register(scTranslator)
-				g.Expect(e).To(Succeed(), "registering error translators should succeed")
-				em1 := weberror.New("e1").
+				emX := weberror.New("eX").
+					ApplyTo(matcher.AnyRoute()).
+					Use(scTranslator).Build()
+				em1 := weberror.New("e1").Order(-100).
 					ApplyTo(matcher.RouteWithPattern("/error/1")).Use(translator1).Build()
-				em2 := weberror.New("e2").
+				em1X := weberror.New("e1").Order(-10).
+					ApplyTo(matcher.RouteWithPattern("/error/1")).
+					WithCondition(matcher.RequestWithMethods(http.MethodPost)).
+					Use(translator1X).Build()
+				em2 := weberror.New("e2").Order(-100).
 					ApplyTo(matcher.RouteWithPattern("/error/2")).Use(translator2).Build()
-				e = reg.Register(em1, em2)
+				e := reg.Register(emX, em1, em2, em1X)
 				g.Expect(e).To(Succeed(), "registering error translate mappings should succeed")
 			},
 		)
 		testErrorEndpoint(ctx, t, g, http.MethodGet, "/error/1", expectErrorSC(http.StatusUnauthorized))
 		testErrorEndpoint(ctx, t, g, http.MethodGet, "/error/2", expectErrorSC(http.StatusForbidden))
+		testErrorEndpoint(ctx, t, g, http.MethodPost, "/error/1", expectErrorSC(http.StatusNotAcceptable))
+	}
+}
+
+func SubTestMWGenericError(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		err := errors.New(DefaultErrorMsg)
+		// execute test
+		WebInit(ctx, t, g, di,
+			registerSuccessEndpoint(http.MethodPost, "/mw/error"),
+			registerErrorMW(http.MethodPost, "/mw/**", err),
+			func(reg *web.Registrar) {
+				reg.MustRegister(web.NewRecoveryCustomizer())
+				reg.MustRegister(web.NewGinErrorHandlingCustomizer())
+			},
+		)
+		testErrorMW(ctx, t, g, http.MethodPost, "/mw/error", func(expect *errExpectation) {
+			expect.bodyDecoder = textBodyDecoder()
+			expect.body = map[string]interface{}{
+				ErrorBodyKeyMsg: DefaultErrorMsg,
+			}
+		})
+	}
+}
+
+func SubTestMWCustomError(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		err := customError{
+			customErrorBase{
+				error: errors.New(DefaultErrorMsg),
+				SC:    http.StatusUnauthorized,
+			},
+		}
+		// execute test
+		WebInit(ctx, t, g, di,
+			registerSuccessEndpoint(http.MethodPost, "/mw/error"),
+			registerErrorMW(http.MethodPost, "/mw/**", err),
+			func(reg *web.Registrar) {
+				reg.MustRegister(web.NewRecoveryCustomizer())
+				reg.MustRegister(web.NewGinErrorHandlingCustomizer())
+			},
+		)
+		testErrorMW(ctx, t, g, http.MethodPost, "/mw/error", expectErrorSC(http.StatusUnauthorized))
+	}
+}
+
+func SubTestMWCustomTextError(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		err := customTextError{
+			customErrorBase{
+				error: errors.New(DefaultErrorMsg),
+				SC:    http.StatusForbidden,
+			},
+		}
+		// execute test
+		WebInit(ctx, t, g, di,
+			registerSuccessEndpoint(http.MethodPost, "/mw/error"),
+			registerErrorMW(http.MethodPost, "/mw/**", err),
+			func(reg *web.Registrar) {
+				reg.MustRegister(web.NewRecoveryCustomizer())
+				reg.MustRegister(web.NewGinErrorHandlingCustomizer())
+			},
+		)
+		testErrorMW(ctx, t, g, http.MethodPost, "/mw/error",
+			expectErrorSC(http.StatusForbidden),
+			func(expect *errExpectation) {
+				expect.bodyDecoder = urlencodedBodyDecoder()
+			},
+		)
 	}
 }
 
@@ -207,9 +322,25 @@ func registerErrorEndpoint(method, path string, err error) WebInitFunc {
 	}
 }
 
+func registerErrorMW(method, pattern string, err error) WebInitFunc {
+	return func(reg *web.Registrar) {
+		reg.MustRegister(middleware.NewBuilder("mw").
+			ApplyTo(matcher.RouteWithPattern(pattern, method)).
+			Use(errorGinMWFunc(err)).
+			Build())
+	}
+}
+
 func errorEndpointFunc(err error) web.MvcHandlerFunc {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
 		return nil, err
+	}
+}
+
+func errorGinMWFunc(err error) gin.HandlerFunc {
+	return func(gc *gin.Context) {
+		_ = gc.Error(err)
+		gc.Abort()
 	}
 }
 
@@ -232,15 +363,53 @@ func expectErrorHeader(header http.Header) func(expect *errExpectation) {
 func testBindingErrorEndpoint(ctx context.Context, t *testing.T, g *gomega.WithT, method, path string, opts ...webtest.RequestOptions) {
 	resp := invokeEndpoint(ctx, t, g, method, path, opts...)
 	expect := errExpectation{
-		status: http.StatusBadRequest,
+		status:      http.StatusBadRequest,
 		bodyDecoder: jsonBodyDecoder(),
 	}
 	assertErrorResponse(t, g, resp, expect)
 }
 
-type customError struct {
+func testErrorMW(ctx context.Context, t *testing.T, g *gomega.WithT, method, path string, expects ...func(expect *errExpectation)) {
+	expectOpt := func(expect *errExpectation) {
+		expect.headers = nil
+	}
+	expects = append([]func(expect *errExpectation){expectOpt}, expects...)
+	testErrorEndpoint(ctx, t, g, method, path, expects...)
+}
+
+func textBodyDecoder() bodyDecoder {
+	return func(body io.Reader) (interface{}, error) {
+		data, e := io.ReadAll(body)
+		if e != nil {
+			return nil, e
+		}
+		return map[string]interface{}{
+			ErrorBodyKeyMsg: string(data),
+		}, nil
+	}
+}
+
+/*************************
+	Helper Types
+ *************************/
+
+type customErrorBase struct {
 	error
 	SC int
+}
+
+func (err customErrorBase) StatusCode() int {
+	return err.SC
+}
+
+func (err customErrorBase) Headers() http.Header {
+	return http.Header{
+		ErrorHeaderKey: []string{ErrorHeaderValue},
+	}
+}
+
+type customError struct {
+	customErrorBase
 }
 
 func (err customError) MarshalJSON() ([]byte, error) {
@@ -248,14 +417,15 @@ func (err customError) MarshalJSON() ([]byte, error) {
 	return []byte(str), nil
 }
 
-func (err customError) StatusCode() int {
-	return err.SC
+type customTextError struct {
+	customErrorBase
 }
 
-func (err customError) Headers() http.Header {
-	return http.Header{
-		ErrorHeaderKey: []string{ErrorHeaderValue},
-	}
+func (err customTextError) MarshalText() ([]byte, error) {
+	values := url.Values{}
+	values.Set(ErrorBodyKeyError, http.StatusText(err.SC))
+	values.Set(ErrorBodyKeyMsg, err.Error())
+	return []byte(values.Encode()), nil
 }
 
 type PickyRequest struct {
