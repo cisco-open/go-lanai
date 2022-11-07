@@ -35,6 +35,7 @@ func (c *RepoImpl[T]) IndicesGet(ctx context.Context, index string, o ...Option[
 		return nil, err
 	}
 	if resp != nil && resp.IsError() {
+		logger.WithContext(ctx).Debugf("error response: %s", resp.String())
 		return nil, fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 
