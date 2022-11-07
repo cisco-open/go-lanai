@@ -21,7 +21,7 @@ import (
 	Tests
  *************************/
 
-func TestMvcRegistration(t *testing.T) {
+func TestRestMvcRegistration(t *testing.T) {
 	var di TestDI
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),

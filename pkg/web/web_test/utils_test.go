@@ -184,6 +184,43 @@ func assertResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expect m
 	}
 }
 
+func testTextEndpoint(ctx context.Context, t *testing.T, g *gomega.WithT, method, path string, expects ...func(expect *textExpectation)) {
+	resp := invokeEndpoint(ctx, t, g, method, path)
+	expect := textExpectation{
+		status: http.StatusOK,
+		headers: map[string]string{
+			"Content-Type": "text/plain; charset=utf-8",
+		},
+	}
+	for _, fn := range expects {
+		if fn != nil {
+			fn(&expect)
+		}
+	}
+	assertTextResponse(t, g, resp, expect)
+}
+
+type textExpectation struct {
+	status      int
+	headers     map[string]string
+	body        []string
+}
+
+func assertTextResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expect textExpectation) {
+	g.Expect(resp.StatusCode).To(Equal(expect.status), "response status code should be correct")
+	for k, v := range expect.headers {
+		g.Expect(resp.Header.Get(k)).To(Equal(v), "response header should have header %s", k)
+	}
+
+	if expect.body != nil {
+		body, e := io.ReadAll(resp.Body)
+		g.Expect(e).To(Succeed(), "decode response body should success")
+		for _, pattern := range expect.body {
+			g.Expect(string(body)).To(MatchRegexp(pattern), "response body should be match pattern [%s]", pattern)
+		}
+	}
+}
+
 /*************************
 	Middleware
  *************************/
