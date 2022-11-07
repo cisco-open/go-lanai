@@ -21,6 +21,7 @@ func (c *RepoImpl[T]) SearchTemplate(ctx context.Context, dest *[]T, body interf
 		return 0, err
 	}
 	if resp != nil && resp.IsError() {
+		logger.WithContext(ctx).Debugf("error response: %s", resp.String())
 		return 0, fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	respBody, err := io.ReadAll(resp.Body)

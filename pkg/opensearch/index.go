@@ -20,6 +20,7 @@ func (c *RepoImpl[T]) Index(ctx context.Context, index string, document T, o ...
 		return err
 	}
 	if resp.IsError() {
+		logger.WithContext(ctx).Debugf("error response: %s", resp.String())
 		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	return nil

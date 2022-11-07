@@ -22,6 +22,7 @@ func NewHealthIndicator(client OpenClient) *HealthIndicator {
 func (i *HealthIndicator) Health(c context.Context, options health.Options) health.Health {
 	resp, err := i.client.Ping(c)
 	if err == nil && !resp.IsError() {
+		logger.WithContext(c).Debugf("error response: %s", resp.String())
 		return health.NewDetailedHealth(health.StatusUp, "opensearch ping succeeded", nil)
 	}
 	return health.NewDetailedHealth(health.StatusDown, "opensearch ping failed", nil)
