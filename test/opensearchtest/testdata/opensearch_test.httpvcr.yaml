@@ -8,16 +8,16 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
     url: http://localhost:9200/
     method: GET
     order: 0
   response:
     body: |
       {
-        "name" : "eb26ad7bd6a1",
+        "name" : "d7365611d118",
         "cluster_name" : "opensearch",
-        "cluster_uuid" : "AfPQRyraTzmY-rQql53cZg",
+        "cluster_uuid" : "xVK5u_pQSXWuQUPDqEEFbw",
         "version" : {
           "distribution" : "opensearch",
           "number" : "2.2.0",
@@ -44,17 +44,19 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test
     method: DELETE
     order: 1
   response:
-    body: '{"acknowledged":true}'
+    body: '{"error":{"root_cause":[{"type":"index_not_found_exception","reason":"no
+      such index [auditlog_test]","index":"auditlog_test","resource.id":"auditlog_test","resource.type":"index_or_alias","index_uuid":"_na_"}],"type":"index_not_found_exception","reason":"no
+      such index [auditlog_test]","index":"auditlog_test","resource.id":"auditlog_test","resource.type":"index_or_alias","index_uuid":"_na_"},"status":404}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
-    status: 200 OK
-    code: 200
+    status: 404 Not Found
+    code: 404
     duration: ""
 - request:
     body: |
@@ -85,12 +87,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_bulk?refresh=true
     method: POST
     order: 2
   response:
-    body: '{"took":84,"errors":false,"items":[{"index":{"_index":"test_auditlog","_id":"o7bBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"pLbBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"pbbBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"prbBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"p7bBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"qLbBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"qbbBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"qrbBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"q7bBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"rLbBEoQBq20V_3IApbB5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":298,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"qotyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"q4tyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"rItyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"rYtyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"rotyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"r4tyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"sItyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"sYtyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"sotyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"s4tyXIQBuDACSyZbBJt8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -107,12 +109,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_search?request_cache=false
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_search?request_cache=false
     method: POST
     order: 3
   response:
-    body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":1.4816045,"hits":[{"_index":"test_auditlog","_id":"q7bBEoQBq20V_3IApbB5","_score":1.4816045,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"test_auditlog","_id":"rLbBEoQBq20V_3IApbB5","_score":1.4816045,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}}]}}'
+    body: '{"took":30,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":1.4816045,"hits":[{"_index":"auditlog_test","_id":"sotyXIQBuDACSyZbBJt8","_score":1.4816045,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"s4tyXIQBuDACSyZbBJt8","_score":1.4816045,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}}]}}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -129,17 +131,17 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_doc
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_doc
     method: POST
     order: 4
   response:
-    body: '{"_index":"test_auditlog","_id":"rrbBEoQBq20V_3IApbCZ","_version":1,"result":"created","_shards":{"total":2,"successful":1,"failed":0},"_seq_no":10,"_primary_term":1}'
+    body: '{"_index":"auditlog_test","_id":"totyXIQBuDACSyZbBZtD","_version":1,"result":"created","_shards":{"total":2,"successful":1,"failed":0},"_seq_no":10,"_primary_term":1}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
       Location:
-      - /test_auditlog/_doc/rrbBEoQBq20V_3IApbCZ
+      - /auditlog_test/_doc/totyXIQBuDACSyZbBZtD
     status: 201 Created
     code: 201
     duration: ""
@@ -153,13 +155,13 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_search
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_search
     method: POST
     order: 5
   response:
     body: |-
-      {"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.2321435,"hits":[{"_index":"test_auditlog","_id":"q7bBEoQBq20V_3IApbB5","_score":1.2321435,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"test_auditlog","_id":"rLbBEoQBq20V_3IApbB5","_score":1.2321435,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}},{"_index":"test_auditlog","_id":"rrbBEoQBq20V_3IApbCZ","_score":1.2321435,"_source":{"Client_ID":"TESTING TESTING","Description":"","Details":"","ID":"","Keywords":"","Orig_User":"","Owner_Tenant_ID":"","Parent_Span_ID":"","Provider_ID":"","Security":"","Service":"","Severity":"","Span_ID":"","SubType":"SYNCHRONIZED","Tenant_ID":"","Tenant_Name":"","Time":"2019-10-15T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"","Type":"","User_ID":"","Username":""}
+      {"took":8,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.2321435,"hits":[{"_index":"auditlog_test","_id":"sotyXIQBuDACSyZbBJt8","_score":1.2321435,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"s4tyXIQBuDACSyZbBJt8","_score":1.2321435,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}},{"_index":"auditlog_test","_id":"totyXIQBuDACSyZbBZtD","_score":1.2321435,"_source":{"Client_ID":"TESTING TESTING","Description":"","Details":"","ID":"","Keywords":"","Orig_User":"","Owner_Tenant_ID":"","Parent_Span_ID":"","Provider_ID":"","Security":"","Service":"","Severity":"","Span_ID":"","SubType":"SYNCHRONIZED","Tenant_ID":"","Tenant_Name":"","Time":"2019-10-15T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"","Type":"","User_ID":"","Username":""}
       }]}}
     headers:
       Content-Type:
@@ -174,8 +176,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test
     method: DELETE
     order: 6
   response:
@@ -215,12 +217,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_bulk?refresh=true
     method: POST
     order: 7
   response:
-    body: '{"took":79,"errors":false,"items":[{"index":{"_index":"test_auditlog","_id":"sbbBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"srbBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"s7bBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"tLbBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"tbbBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"trbBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"t7bBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"uLbBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"ubbBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"urbBEoQBq20V_3IAq7DM","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":119,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"uYtyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"uotyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"u4tyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"vItyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"vYtyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"votyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"v4tyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"wItyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"wYtyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"wotyXIQBuDACSyZbC5u7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -237,12 +239,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_search/template
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_search/template
     method: POST
     order: 8
   response:
-    body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"test_auditlog","_id":"srbBEoQBq20V_3IAq7DM","_score":1.1451323,"_source":{"Client_ID":"dafhj","Description":"","Details":"","ID":"","Keywords":"bajda","Orig_User":"jacdd","Owner_Tenant_ID":"agfdj","Parent_Span_ID":"bejch","Provider_ID":"bhcfd","Security":"","Service":"","Severity":"","Span_ID":"hjgbd","SubType":"SCHEDULE_TASK","Tenant_ID":"ddgic","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hcejb","Type":"DP","User_ID":"dfegd","Username":"djbhi"}},{"_index":"test_auditlog","_id":"trbBEoQBq20V_3IAq7DM","_score":1.1451323,"_source":{"Client_ID":"cbife","Description":"","Details":"","ID":"","Keywords":"afaei","Orig_User":"gfbfc","Owner_Tenant_ID":"fbdfb","Parent_Span_ID":"ficaj","Provider_ID":"febbe","Security":"","Service":"","Severity":"","Span_ID":"gfifa","SubType":"SCHEDULE_TASK","Tenant_ID":"iiijj","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"efabh","Type":"DP","User_ID":"jhhbf","Username":"hebjc"}},{"_index":"test_auditlog","_id":"urbBEoQBq20V_3IAq7DM","_score":1.1451323,"_source":{"Client_ID":"ebiif","Description":"","Details":"","ID":"","Keywords":"cbdei","Orig_User":"ihfcd","Owner_Tenant_ID":"beeea","Parent_Span_ID":"ejfgg","Provider_ID":"ejcac","Security":"","Service":"","Severity":"","Span_ID":"gcgfi","SubType":"SYNCHRONIZED","Tenant_ID":"ifaag","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ggfjc","Type":"DP","User_ID":"caddi","Username":"cchec"}}]}}'
+    body: '{"took":2,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"uotyXIQBuDACSyZbC5u7","_score":1.1451323,"_source":{"Client_ID":"dafhj","Description":"","Details":"","ID":"","Keywords":"bajda","Orig_User":"jacdd","Owner_Tenant_ID":"agfdj","Parent_Span_ID":"bejch","Provider_ID":"bhcfd","Security":"","Service":"","Severity":"","Span_ID":"hjgbd","SubType":"SCHEDULE_TASK","Tenant_ID":"ddgic","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hcejb","Type":"DP","User_ID":"dfegd","Username":"djbhi"}},{"_index":"auditlog_test","_id":"votyXIQBuDACSyZbC5u7","_score":1.1451323,"_source":{"Client_ID":"cbife","Description":"","Details":"","ID":"","Keywords":"afaei","Orig_User":"gfbfc","Owner_Tenant_ID":"fbdfb","Parent_Span_ID":"ficaj","Provider_ID":"febbe","Security":"","Service":"","Severity":"","Span_ID":"gfifa","SubType":"SCHEDULE_TASK","Tenant_ID":"iiijj","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"efabh","Type":"DP","User_ID":"jhhbf","Username":"hebjc"}},{"_index":"auditlog_test","_id":"wotyXIQBuDACSyZbC5u7","_score":1.1451323,"_source":{"Client_ID":"ebiif","Description":"","Details":"","ID":"","Keywords":"cbdei","Orig_User":"ihfcd","Owner_Tenant_ID":"beeea","Parent_Span_ID":"ejfgg","Provider_ID":"ejcac","Security":"","Service":"","Severity":"","Span_ID":"gcgfi","SubType":"SYNCHRONIZED","Tenant_ID":"ifaag","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ggfjc","Type":"DP","User_ID":"caddi","Username":"cchec"}}]}}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -256,8 +258,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test
     method: DELETE
     order: 9
   response:
@@ -297,12 +299,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_bulk?refresh=true
     method: POST
     order: 10
   response:
-    body: '{"took":73,"errors":false,"items":[{"index":{"_index":"test_auditlog","_id":"vrbBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"v7bBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"wLbBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"wbbBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"wrbBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"w7bBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"xLbBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"xbbBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"xrbBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"x7bBEoQBq20V_3IAs7Bc","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":115,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"xotyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"x4tyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"yItyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"yYtyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"yotyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"y4tyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"zItyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"zYtyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"zotyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"z4tyXIQBuDACSyZbDJtp","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -319,12 +321,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_search
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_search
     method: POST
     order: 11
   response:
-    body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"test_auditlog","_id":"vrbBEoQBq20V_3IAs7Bc","_score":1.1451323,"_source":{"Client_ID":"beijb","Description":"","Details":"","ID":"","Keywords":"dieah","Orig_User":"cjcij","Owner_Tenant_ID":"ibfcb","Parent_Span_ID":"jiijc","Provider_ID":"cjeda","Security":"","Service":"","Severity":"","Span_ID":"gbheh","SubType":"SYNCHRONIZED","Tenant_ID":"icbbd","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gefdd","Type":"DP","User_ID":"ccgei","Username":"ajhbj"}},{"_index":"test_auditlog","_id":"wLbBEoQBq20V_3IAs7Bc","_score":1.1451323,"_source":{"Client_ID":"hgdch","Description":"","Details":"","ID":"","Keywords":"gadjd","Orig_User":"jhfja","Owner_Tenant_ID":"jeggd","Parent_Span_ID":"igghh","Provider_ID":"jddcf","Security":"","Service":"","Severity":"","Span_ID":"fbghb","SubType":"SYNCHRONIZED","Tenant_ID":"gfiac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"fjhag","Type":"GP","User_ID":"iffba","Username":"bbjga"}},{"_index":"test_auditlog","_id":"wrbBEoQBq20V_3IAs7Bc","_score":1.1451323,"_source":{"Client_ID":"jdbfa","Description":"","Details":"","ID":"","Keywords":"gefef","Orig_User":"jdcid","Owner_Tenant_ID":"ibeeb","Parent_Span_ID":"jcdag","Provider_ID":"adbcd","Security":"","Service":"","Severity":"","Span_ID":"cidhe","SubType":"SYNCHRONIZED","Tenant_ID":"dihej","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"igeee","Type":"DEVICE","User_ID":"cgcai","Username":"addea"}}]}}'
+    body: '{"took":2,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"xotyXIQBuDACSyZbDJtp","_score":1.1451323,"_source":{"Client_ID":"beijb","Description":"","Details":"","ID":"","Keywords":"dieah","Orig_User":"cjcij","Owner_Tenant_ID":"ibfcb","Parent_Span_ID":"jiijc","Provider_ID":"cjeda","Security":"","Service":"","Severity":"","Span_ID":"gbheh","SubType":"SYNCHRONIZED","Tenant_ID":"icbbd","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gefdd","Type":"DP","User_ID":"ccgei","Username":"ajhbj"}},{"_index":"auditlog_test","_id":"yItyXIQBuDACSyZbDJtp","_score":1.1451323,"_source":{"Client_ID":"hgdch","Description":"","Details":"","ID":"","Keywords":"gadjd","Orig_User":"jhfja","Owner_Tenant_ID":"jeggd","Parent_Span_ID":"igghh","Provider_ID":"jddcf","Security":"","Service":"","Severity":"","Span_ID":"fbghb","SubType":"SYNCHRONIZED","Tenant_ID":"gfiac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"fjhag","Type":"GP","User_ID":"iffba","Username":"bbjga"}},{"_index":"auditlog_test","_id":"yotyXIQBuDACSyZbDJtp","_score":1.1451323,"_source":{"Client_ID":"jdbfa","Description":"","Details":"","ID":"","Keywords":"gefef","Orig_User":"jdcid","Owner_Tenant_ID":"ibeeb","Parent_Span_ID":"jcdag","Provider_ID":"adbcd","Security":"","Service":"","Severity":"","Span_ID":"cidhe","SubType":"SYNCHRONIZED","Tenant_ID":"dihej","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"igeee","Type":"DEVICE","User_ID":"cgcai","Username":"addea"}}]}}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -341,8 +343,8 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_search
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_search
     method: POST
     order: 12
   response:
@@ -366,7 +368,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
     url: http://localhost:9200/dontexist/_search
     method: POST
     order: 13
@@ -387,8 +389,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test
     method: DELETE
     order: 14
   response:
@@ -428,12 +430,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_bulk?refresh=true
     method: POST
     order: 15
   response:
-    body: '{"took":72,"errors":false,"items":[{"index":{"_index":"test_auditlog","_id":"y7bBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"zLbBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"zbbBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"zrbBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"z7bBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"0LbBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"0bbBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"0rbBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"07bBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"1LbBEoQBq20V_3IAs7C5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":123,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"04tyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"1ItyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"1YtyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"1otyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"14tyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"2ItyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"2YtyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"2otyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"24tyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"3ItyXIQBuDACSyZbDZsa","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -450,12 +452,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_search
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_search
     method: POST
     order: 16
   response:
-    body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":7,"relation":"eq"},"max_score":0.38299224,"hits":[{"_index":"test_auditlog","_id":"y7bBEoQBq20V_3IAs7C5","_score":0.38299224,"_source":{"Client_ID":"hcidj","Description":"","Details":"","ID":"","Keywords":"debed","Orig_User":"hfbbb","Owner_Tenant_ID":"bcgda","Parent_Span_ID":"dhffh","Provider_ID":"haeig","Security":"","Service":"","Severity":"","Span_ID":"cddii","SubType":"SYNCHRONIZED","Tenant_ID":"fdeba","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djdjh","Type":"GP","User_ID":"jahed","Username":"ajcif"}},{"_index":"test_auditlog","_id":"zbbBEoQBq20V_3IAs7C5","_score":0.38299224,"_source":{"Client_ID":"ecfai","Description":"","Details":"","ID":"","Keywords":"gaged","Orig_User":"jedci","Owner_Tenant_ID":"dgide","Parent_Span_ID":"ceeag","Provider_ID":"ddbah","Security":"","Service":"","Severity":"","Span_ID":"gbcid","SubType":"SYNCHRONIZED","Tenant_ID":"dfdac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jfefe","Type":"DEVICE","User_ID":"gbbca","Username":"gcihb"}},{"_index":"test_auditlog","_id":"zrbBEoQBq20V_3IAs7C5","_score":0.38299224,"_source":{"Client_ID":"dhahc","Description":"","Details":"","ID":"","Keywords":"cbfbc","Orig_User":"ahcaa","Owner_Tenant_ID":"ehgcd","Parent_Span_ID":"ffbhe","Provider_ID":"abfea","Security":"","Service":"","Severity":"","Span_ID":"dgbcc","SubType":"SYNCHRONIZED","Tenant_ID":"affij","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djcdh","Type":"DP","User_ID":"heaae","Username":"hijce"}},{"_index":"test_auditlog","_id":"z7bBEoQBq20V_3IAs7C5","_score":0.38299224,"_source":{"Client_ID":"hgdfc","Description":"","Details":"","ID":"","Keywords":"eeiah","Orig_User":"jbffa","Owner_Tenant_ID":"ajgcj","Parent_Span_ID":"dfbgj","Provider_ID":"jagbb","Security":"","Service":"","Severity":"","Span_ID":"ieief","SubType":"SYNCHRONIZED","Tenant_ID":"bcjji","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"bijai","Type":"GP","User_ID":"bbchj","Username":"jchge"}},{"_index":"test_auditlog","_id":"0LbBEoQBq20V_3IAs7C5","_score":0.38299224,"_source":{"Client_ID":"igdhi","Description":"","Details":"","ID":"","Keywords":"bdadj","Orig_User":"aeeif","Owner_Tenant_ID":"achea","Parent_Span_ID":"gbihe","Provider_ID":"aeief","Security":"","Service":"","Severity":"","Span_ID":"deibf","SubType":"SYNCHRONIZED","Tenant_ID":"bjjib","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dhebj","Type":"DP","User_ID":"idcad","Username":"hfahc"}},{"_index":"test_auditlog","_id":"0bbBEoQBq20V_3IAs7C5","_score":0.38299224,"_source":{"Client_ID":"gceif","Description":"","Details":"","ID":"","Keywords":"ejbic","Orig_User":"cdecb","Owner_Tenant_ID":"eadgg","Parent_Span_ID":"ecbfe","Provider_ID":"agfgi","Security":"","Service":"","Severity":"","Span_ID":"adica","SubType":"SYNCHRONIZED","Tenant_ID":"jfdfg","Tenant_Name":"","Time":"2021-04-24T16:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jidee","Type":"DP","User_ID":"bhgjb","Username":"cehfb"}},{"_index":"test_auditlog","_id":"0rbBEoQBq20V_3IAs7C5","_score":0.38299224,"_source":{"Client_ID":"jdafg","Description":"","Details":"","ID":"","Keywords":"iibbc","Orig_User":"bcgag","Owner_Tenant_ID":"baedd","Parent_Span_ID":"dbdgg","Provider_ID":"jdgha","Security":"","Service":"","Severity":"","Span_ID":"eaehc","SubType":"SYNCHRONIZED","Tenant_ID":"ijcaa","Tenant_Name":"","Time":"2021-07-06T19:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"eehfh","Type":"GP","User_ID":"eejca","Username":"hhdec"}}]}}'
+    body: '{"took":3,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":7,"relation":"eq"},"max_score":0.38299224,"hits":[{"_index":"auditlog_test","_id":"04tyXIQBuDACSyZbDZsa","_score":0.38299224,"_source":{"Client_ID":"hcidj","Description":"","Details":"","ID":"","Keywords":"debed","Orig_User":"hfbbb","Owner_Tenant_ID":"bcgda","Parent_Span_ID":"dhffh","Provider_ID":"haeig","Security":"","Service":"","Severity":"","Span_ID":"cddii","SubType":"SYNCHRONIZED","Tenant_ID":"fdeba","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djdjh","Type":"GP","User_ID":"jahed","Username":"ajcif"}},{"_index":"auditlog_test","_id":"1YtyXIQBuDACSyZbDZsa","_score":0.38299224,"_source":{"Client_ID":"ecfai","Description":"","Details":"","ID":"","Keywords":"gaged","Orig_User":"jedci","Owner_Tenant_ID":"dgide","Parent_Span_ID":"ceeag","Provider_ID":"ddbah","Security":"","Service":"","Severity":"","Span_ID":"gbcid","SubType":"SYNCHRONIZED","Tenant_ID":"dfdac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jfefe","Type":"DEVICE","User_ID":"gbbca","Username":"gcihb"}},{"_index":"auditlog_test","_id":"1otyXIQBuDACSyZbDZsa","_score":0.38299224,"_source":{"Client_ID":"dhahc","Description":"","Details":"","ID":"","Keywords":"cbfbc","Orig_User":"ahcaa","Owner_Tenant_ID":"ehgcd","Parent_Span_ID":"ffbhe","Provider_ID":"abfea","Security":"","Service":"","Severity":"","Span_ID":"dgbcc","SubType":"SYNCHRONIZED","Tenant_ID":"affij","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djcdh","Type":"DP","User_ID":"heaae","Username":"hijce"}},{"_index":"auditlog_test","_id":"14tyXIQBuDACSyZbDZsa","_score":0.38299224,"_source":{"Client_ID":"hgdfc","Description":"","Details":"","ID":"","Keywords":"eeiah","Orig_User":"jbffa","Owner_Tenant_ID":"ajgcj","Parent_Span_ID":"dfbgj","Provider_ID":"jagbb","Security":"","Service":"","Severity":"","Span_ID":"ieief","SubType":"SYNCHRONIZED","Tenant_ID":"bcjji","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"bijai","Type":"GP","User_ID":"bbchj","Username":"jchge"}},{"_index":"auditlog_test","_id":"2ItyXIQBuDACSyZbDZsa","_score":0.38299224,"_source":{"Client_ID":"igdhi","Description":"","Details":"","ID":"","Keywords":"bdadj","Orig_User":"aeeif","Owner_Tenant_ID":"achea","Parent_Span_ID":"gbihe","Provider_ID":"aeief","Security":"","Service":"","Severity":"","Span_ID":"deibf","SubType":"SYNCHRONIZED","Tenant_ID":"bjjib","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dhebj","Type":"DP","User_ID":"idcad","Username":"hfahc"}},{"_index":"auditlog_test","_id":"2YtyXIQBuDACSyZbDZsa","_score":0.38299224,"_source":{"Client_ID":"gceif","Description":"","Details":"","ID":"","Keywords":"ejbic","Orig_User":"cdecb","Owner_Tenant_ID":"eadgg","Parent_Span_ID":"ecbfe","Provider_ID":"agfgi","Security":"","Service":"","Severity":"","Span_ID":"adica","SubType":"SYNCHRONIZED","Tenant_ID":"jfdfg","Tenant_Name":"","Time":"2021-04-24T16:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jidee","Type":"DP","User_ID":"bhgjb","Username":"cehfb"}},{"_index":"auditlog_test","_id":"2otyXIQBuDACSyZbDZsa","_score":0.38299224,"_source":{"Client_ID":"jdafg","Description":"","Details":"","ID":"","Keywords":"iibbc","Orig_User":"bcgag","Owner_Tenant_ID":"baedd","Parent_Span_ID":"dbdgg","Provider_ID":"jdgha","Security":"","Service":"","Severity":"","Span_ID":"eaehc","SubType":"SYNCHRONIZED","Tenant_ID":"ijcaa","Tenant_Name":"","Time":"2021-07-06T19:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"eehfh","Type":"GP","User_ID":"eejca","Username":"hhdec"}}]}}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -472,8 +474,8 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_search
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_search
     method: POST
     order: 17
   response:
@@ -494,8 +496,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test
     method: DELETE
     order: 18
   response:
@@ -535,12 +537,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_bulk?refresh=true
     method: POST
     order: 19
   response:
-    body: '{"took":100,"errors":false,"items":[{"index":{"_index":"test_auditlog","_id":"2LbBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"2bbBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"2rbBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"27bBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"3LbBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"3bbBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"3rbBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"37bBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"4LbBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"4bbBEoQBq20V_3IAtLBF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":104,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"4ItyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"4YtyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"4otyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"44tyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5ItyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5YtyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5otyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"54tyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"6ItyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"6YtyXIQBuDACSyZbDZu6","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -554,7 +556,7 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
     url: http://localhost:9200/
     method: HEAD
     order: 20
@@ -575,8 +577,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test
     method: DELETE
     order: 21
   response:
@@ -616,12 +618,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_bulk?refresh=true
     method: POST
     order: 22
   response:
-    body: '{"took":100,"errors":false,"items":[{"index":{"_index":"test_auditlog","_id":"5bbBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"5rbBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"57bBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"6LbBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"6bbBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"6rbBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"67bBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"7LbBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"7bbBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"7rbBEoQBq20V_3IAtLC8","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":107,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"7YtyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"7otyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"74tyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"8ItyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"8YtyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"8otyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"84tyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9ItyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9YtyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9otyXIQBuDACSyZbDptE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -638,12 +640,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_search?request_cache=false
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_search?request_cache=false
     method: POST
     order: 23
   response:
-    body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":5,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"test_auditlog","_id":"5bbBEoQBq20V_3IAtLC8","_score":0.0,"_source":{"Client_ID":"cbbbd","Description":"","Details":"","ID":"","Keywords":"dibgb","Orig_User":"cghbb","Owner_Tenant_ID":"fiaec","Parent_Span_ID":"cdcdf","Provider_ID":"bhhbf","Security":"","Service":"","Severity":"","Span_ID":"fjbjc","SubType":"SYNCHRONIZED","Tenant_ID":"bihha","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gicae","Type":"DEVICE","User_ID":"ihece","Username":"dbbac"}},{"_index":"test_auditlog","_id":"5rbBEoQBq20V_3IAtLC8","_score":0.0,"_source":{"Client_ID":"didjj","Description":"","Details":"","ID":"","Keywords":"jbjjb","Orig_User":"gdife","Owner_Tenant_ID":"jffea","Parent_Span_ID":"gjicb","Provider_ID":"jffdj","Security":"","Service":"","Severity":"","Span_ID":"gbife","SubType":"SCHEDULE_TASK","Tenant_ID":"dgief","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"cdbja","Type":"DP","User_ID":"hgcec","Username":"bgfig"}},{"_index":"test_auditlog","_id":"57bBEoQBq20V_3IAtLC8","_score":0.0,"_source":{"Client_ID":"fbhab","Description":"","Details":"","ID":"","Keywords":"hefhj","Orig_User":"cghag","Owner_Tenant_ID":"agjhd","Parent_Span_ID":"hdegc","Provider_ID":"dfjbj","Security":"","Service":"","Severity":"","Span_ID":"jigaa","SubType":"SYNCHRONIZED","Tenant_ID":"figef","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ifgeh","Type":"DP","User_ID":"ahhii","Username":"idcab"}},{"_index":"test_auditlog","_id":"6LbBEoQBq20V_3IAtLC8","_score":0.0,"_source":{"Client_ID":"ibied","Description":"","Details":"","ID":"","Keywords":"fgbja","Orig_User":"djiac","Owner_Tenant_ID":"dhbbb","Parent_Span_ID":"iacbh","Provider_ID":"gbabe","Security":"","Service":"","Severity":"","Span_ID":"ihgjd","SubType":"SYNCHRONIZED","Tenant_ID":"ibddd","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hagab","Type":"DEVICE","User_ID":"eebcf","Username":"hcgfg"}},{"_index":"test_auditlog","_id":"6bbBEoQBq20V_3IAtLC8","_score":0.0,"_source":{"Client_ID":"bfhec","Description":"","Details":"","ID":"","Keywords":"fahif","Orig_User":"ifdbj","Owner_Tenant_ID":"jahjb","Parent_Span_ID":"ggggb","Provider_ID":"jdagf","Security":"","Service":"","Severity":"","Span_ID":"gcjja","SubType":"W","Tenant_ID":"eiece","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"adief","Type":"GP","User_ID":"iddci","Username":"ciecf"}}]}}'
+    body: '{"took":11,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":5,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"auditlog_test","_id":"7YtyXIQBuDACSyZbDptE","_score":0.0,"_source":{"Client_ID":"cbbbd","Description":"","Details":"","ID":"","Keywords":"dibgb","Orig_User":"cghbb","Owner_Tenant_ID":"fiaec","Parent_Span_ID":"cdcdf","Provider_ID":"bhhbf","Security":"","Service":"","Severity":"","Span_ID":"fjbjc","SubType":"SYNCHRONIZED","Tenant_ID":"bihha","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gicae","Type":"DEVICE","User_ID":"ihece","Username":"dbbac"}},{"_index":"auditlog_test","_id":"7otyXIQBuDACSyZbDptE","_score":0.0,"_source":{"Client_ID":"didjj","Description":"","Details":"","ID":"","Keywords":"jbjjb","Orig_User":"gdife","Owner_Tenant_ID":"jffea","Parent_Span_ID":"gjicb","Provider_ID":"jffdj","Security":"","Service":"","Severity":"","Span_ID":"gbife","SubType":"SCHEDULE_TASK","Tenant_ID":"dgief","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"cdbja","Type":"DP","User_ID":"hgcec","Username":"bgfig"}},{"_index":"auditlog_test","_id":"74tyXIQBuDACSyZbDptE","_score":0.0,"_source":{"Client_ID":"fbhab","Description":"","Details":"","ID":"","Keywords":"hefhj","Orig_User":"cghag","Owner_Tenant_ID":"agjhd","Parent_Span_ID":"hdegc","Provider_ID":"dfjbj","Security":"","Service":"","Severity":"","Span_ID":"jigaa","SubType":"SYNCHRONIZED","Tenant_ID":"figef","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ifgeh","Type":"DP","User_ID":"ahhii","Username":"idcab"}},{"_index":"auditlog_test","_id":"8ItyXIQBuDACSyZbDptE","_score":0.0,"_source":{"Client_ID":"ibied","Description":"","Details":"","ID":"","Keywords":"fgbja","Orig_User":"djiac","Owner_Tenant_ID":"dhbbb","Parent_Span_ID":"iacbh","Provider_ID":"gbabe","Security":"","Service":"","Severity":"","Span_ID":"ihgjd","SubType":"SYNCHRONIZED","Tenant_ID":"ibddd","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hagab","Type":"DEVICE","User_ID":"eebcf","Username":"hcgfg"}},{"_index":"auditlog_test","_id":"8YtyXIQBuDACSyZbDptE","_score":0.0,"_source":{"Client_ID":"bfhec","Description":"","Details":"","ID":"","Keywords":"fahif","Orig_User":"ifdbj","Owner_Tenant_ID":"jahjb","Parent_Span_ID":"ggggb","Provider_ID":"jdagf","Security":"","Service":"","Severity":"","Span_ID":"gcjja","SubType":"W","Tenant_ID":"eiece","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"adief","Type":"GP","User_ID":"iddci","Username":"ciecf"}}]}}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -657,8 +659,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test
     method: DELETE
     order: 24
   response:
@@ -698,12 +700,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_bulk?refresh=true
     method: POST
     order: 25
   response:
-    body: '{"took":76,"errors":false,"items":[{"index":{"_index":"test_auditlog","_id":"8rbBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"87bBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"9LbBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"9bbBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"9rbBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"97bBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"-LbBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"-bbBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"-rbBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"-7bBEoQBq20V_3IAtbAt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":117,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"-otyXIQBuDACSyZbDpvs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-4tyXIQBuDACSyZbDpvs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_ItyXIQBuDACSyZbDpvs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_YtyXIQBuDACSyZbDpvs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_otyXIQBuDACSyZbDpvs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_4tyXIQBuDACSyZbDpvs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"AItyXIQBuDACSyZbDpzs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"AYtyXIQBuDACSyZbDpzs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"AotyXIQBuDACSyZbDpzs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"A4tyXIQBuDACSyZbDpzs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -717,14 +719,14 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_generic_events_1
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/generic_events_1_test
     method: DELETE
     order: 26
   response:
     body: '{"error":{"root_cause":[{"type":"index_not_found_exception","reason":"no
-      such index [test_generic_events_1]","index":"test_generic_events_1","resource.id":"test_generic_events_1","resource.type":"index_or_alias","index_uuid":"_na_"}],"type":"index_not_found_exception","reason":"no
-      such index [test_generic_events_1]","index":"test_generic_events_1","resource.id":"test_generic_events_1","resource.type":"index_or_alias","index_uuid":"_na_"},"status":404}'
+      such index [generic_events_1_test]","index":"generic_events_1_test","resource.id":"generic_events_1_test","resource.type":"index_or_alias","index_uuid":"_na_"}],"type":"index_not_found_exception","reason":"no
+      such index [generic_events_1_test]","index":"generic_events_1_test","resource.id":"generic_events_1_test","resource.type":"index_or_alias","index_uuid":"_na_"},"status":404}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -738,7 +740,7 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
     url: http://localhost:9200/_index_template/test_template
     method: DELETE
     order: 27
@@ -759,14 +761,14 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_generic_events_1/_aliases/generic_event
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/generic_events_1_test/_aliases/generic_event
     method: DELETE
     order: 28
   response:
     body: '{"error":{"root_cause":[{"type":"index_not_found_exception","reason":"no
-      such index [test_generic_events_1]","index":"test_generic_events_1","resource.id":"test_generic_events_1","resource.type":"index_or_alias","index_uuid":"_na_"}],"type":"index_not_found_exception","reason":"no
-      such index [test_generic_events_1]","index":"test_generic_events_1","resource.id":"test_generic_events_1","resource.type":"index_or_alias","index_uuid":"_na_"},"status":404}'
+      such index [generic_events_1_test]","index":"generic_events_1_test","resource.id":"generic_events_1_test","resource.type":"index_or_alias","index_uuid":"_na_"}],"type":"index_not_found_exception","reason":"no
+      such index [generic_events_1_test]","index":"generic_events_1_test","resource.id":"generic_events_1_test","resource.type":"index_or_alias","index_uuid":"_na_"},"status":404}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -780,7 +782,7 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
     url: http://localhost:9200/_index_template/generic_events_template_1
     method: DELETE
     order: 29
@@ -804,7 +806,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
     url: http://localhost:9200/_index_template/test_template
     method: PUT
     order: 30
@@ -833,12 +835,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_generic_events_1
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/generic_events_1_test
     method: PUT
     order: 31
   response:
-    body: '{"acknowledged":true,"shards_acknowledged":true,"index":"test_generic_events_1"}'
+    body: '{"acknowledged":true,"shards_acknowledged":true,"index":"generic_events_1_test"}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -852,8 +854,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_generic_events_1/_aliases/generic_event
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/generic_events_1_test/_aliases/generic_event
     method: PUT
     order: 32
   response:
@@ -871,12 +873,12 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
     url: http://localhost:9200/generic_event
     method: GET
     order: 33
   response:
-    body: '{"test_generic_events_1":{"aliases":{"generic_event":{}},"mappings":{"properties":{"SubType":{"type":"text"}}},"settings":{"index":{"creation_date":"1666761995627","number_of_shards":"4","number_of_replicas":"4","uuid":"EtHPWIUEQVy353ahdndm7A","version":{"created":"136237827"},"provided_name":"test_generic_events_1"}}}}'
+    body: '{"generic_events_1_test":{"aliases":{"generic_event":{}},"mappings":{"properties":{"SubType":{"type":"text"}}},"settings":{"index":{"creation_date":"1667998289761","number_of_shards":"4","number_of_replicas":"4","uuid":"H5BzxutRT2mP_v8u3i8wzA","version":{"created":"136237827"},"provided_name":"generic_events_1_test"}}}}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -890,8 +892,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_generic_events_1/_aliases/generic_event
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/generic_events_1_test/_aliases/generic_event
     method: DELETE
     order: 34
   response:
@@ -909,7 +911,7 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
     url: http://localhost:9200/_index_template/test_template
     method: DELETE
     order: 35
@@ -928,8 +930,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_generic_events_1
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/generic_events_1_test
     method: DELETE
     order: 36
   response:
@@ -947,8 +949,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test
     method: DELETE
     order: 37
   response:
@@ -988,12 +990,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_auditlog/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/auditlog_test/_bulk?refresh=true
     method: POST
     order: 38
   response:
-    body: '{"took":151,"errors":false,"items":[{"index":{"_index":"test_auditlog","_id":"CrbBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"C7bBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"DLbBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"DbbBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"DrbBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"D7bBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"ELbBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"EbbBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"ErbBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_auditlog","_id":"E7bBEoQBq20V_3IAtrFv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":99,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"EotyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"E4tyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"FItyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"FYtyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"FotyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"F4tyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GItyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GYtyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GotyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"G4tyXIQBuDACSyZbEJyL","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -1029,12 +1031,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_generic_events/_bulk?refresh=true
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/generic_events_test/_bulk?refresh=true
     method: POST
     order: 39
   response:
-    body: '{"took":98,"errors":false,"items":[{"index":{"_index":"test_generic_events","_id":"FrbBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"F7bBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"GLbBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"GbbBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"GrbBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"G7bBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"HLbBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"HbbBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"HrbBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"test_generic_events","_id":"H7bBEoQBq20V_3IAt7Fb","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+    body: '{"took":95,"errors":false,"items":[{"index":{"_index":"generic_events_test","_id":"HotyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"H4tyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"IItyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"IYtyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"IotyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"I4tyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"JItyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"JYtyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"JotyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"J4tyXIQBuDACSyZbEJzw","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
     headers:
       Content-Type:
       - application/json; charset=UTF-8
@@ -1048,8 +1050,8 @@ interactions:
       Authorization:
       - Basic YWRtaW46YWRtaW4=
       User-Agent:
-      - opensearch-go/1.0.0 (darwin arm64; Go 1.19.1)
-    url: http://localhost:9200/test_generic_events
+      - opensearch-go/1.0.0 (darwin arm64; Go 1.18.3)
+    url: http://localhost:9200/generic_events_test
     method: DELETE
     order: 40
   response:
