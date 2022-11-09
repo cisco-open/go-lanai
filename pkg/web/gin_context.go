@@ -114,7 +114,12 @@ func (c GinContextCustomizer) Order() int {
 }
 
 func (c GinContextCustomizer) Customize(_ context.Context, r *Registrar) error {
-	return r.AddGlobalMiddlewares(GinContextMerger())
+	if e := r.AddGlobalMiddlewares(GinContextMerger()); e != nil {
+		return e
+	}
+	return r.AddEngineOptions(func(engine *Engine) {
+		engine.ContextWithFallback = true
+	})
 }
 
 /**************************
@@ -132,16 +137,17 @@ func GinContextPathAware(props *ServerProperties) gin.HandlerFunc {
 // GinContextMerger is a Gin middleware that merge Request.Context() with gin.Context,
 // allowing values in gin.Context also available via Request.Context().Value().
 // This middleware is mandatory for all mappings.
-// Note:	as of Gin 1.8.0, we set gin.Engine.ContextWithFallback to true. This makes gin.Context fully integrated
+// Note:	as of Gin 1.8.0, if we set gin.Engine.ContextWithFallback to true. This makes gin.Context fully integrated
 // 			with its underling Request.Context(). The side effect of this is gin.Context.Value() is also calling
 // 			Request.Context().Value(), which cause stack overflow on non-existing keys.
 //
-//			To break this loop, we only expose gin.Context itself to Request.Context(), any other
+//			To break this loop, we use different version of utils.ContextValuer to extract values from gin.Context(),
+//			without using gin.Context.Value() function.
 func GinContextMerger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx := utils.MakeMutableContext(c.Request.Context(), ginContextValuer(c))
-		ctx.Set(kGinContextKey, c)
-		c.Request = c.Request.WithContext(ctx)
+	return func(gc *gin.Context) {
+		ctx := utils.MakeMutableContext(gc.Request.Context(), ginContextValuer(gc))
+		ctx.Set(kGinContextKey, gc)
+		gc.Request = gc.Request.WithContext(ctx)
 	}
 }
 
@@ -210,9 +216,16 @@ func integrateGinContextFinalizer(ctx context.Context, _ int, r *http.Request) {
 /**************************
 	helpers
  **************************/
-func ginContextValuer(ginCtx *gin.Context) func(key interface{}) interface{} {
+
+func ginContextValuer(gc *gin.Context) func(key interface{}) interface{} {
 	return func(key interface{}) interface{} {
-		return ginCtx.Value(key)
+		switch strKey, ok := key.(string); ok {
+		case strKey == gin.ContextKey:
+			return gc
+		default:
+			v, _ := gc.Get(strKey)
+			return v
+		}
 	}
 }
 

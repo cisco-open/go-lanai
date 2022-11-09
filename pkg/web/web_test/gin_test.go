@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
@@ -15,12 +16,16 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"net/http"
+	"regexp"
+	"strconv"
 	"testing"
 )
 
 /*************************
 	Tests
  *************************/
+
+var logger = log.New("Web.Test")
 
 func TestGinMiddlewares(t *testing.T) {
 	var di TestDI
@@ -101,21 +106,28 @@ func SubTestContextDefaultKV(di *TestDI) test.GomegaSubTestFunc {
 // - 2. would also reflacted in gin.Context
 func SubTestContextSetKV(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// determine expected behaviors
+		webKVSrc := kvSrcCtx | kvSrcReq
+		if gVer := ginVersion(); gVer.major > 1 || gVer.minor >= 8 {
+			logger.WithContext(ctx).Infof("Using updated rules for Gin v1.8.0+")
+			webKVSrc = kvSrcAll
+		}
 		kvs := map[kv]kvSetter{
 			makeKV("req", "req-value"):                           reqCtxKVSetter(),
 			makeKV("gin-ctx", "gin-ctx-value", kvSrcAll):         ginCtxKVSetter(),
 			makeKV("req-gin-ctx", "req-gin-ctx-value", kvSrcAll): reqGinCtxKVSetter(),
-			makeKV("web-ctx", "web-ctx-value"):                   webCtxKVSetter(),
-			makeKV("web-req", "web-req-value"):                   webReqKVSetter(),
+			makeKV("web-ctx", "web-ctx-value", webKVSrc):         webCtxKVSetter(),
+			makeKV("web-req", "web-req-value", webKVSrc):         webReqKVSetter(),
 		}
 
 		overwrite := map[kv]kvSetter{
 			makeKV("gin-ctx", "gin-ctx-new", kvSrcAll):         ginCtxKVSetter(),
 			makeKV("req-gin-ctx", "req-gin-ctx-new", kvSrcAll): reqGinCtxKVSetter(),
-			makeKV("web-ctx", "web-ctx-new"):                   webCtxKVSetter(),
-			makeKV("web-req", "web-req-new"):                   webReqKVSetter(),
+			makeKV("web-ctx", "web-ctx-new", webKVSrc):         webCtxKVSetter(),
+			makeKV("web-req", "web-req-new", webKVSrc):         webReqKVSetter(),
 		}
 
+		// setup middlewares and endpoints
 		mwAssertion := func(ctx context.Context, req *http.Request) {
 			for kv, setter := range kvs {
 				setter(ctx, req, kv.k, kv.v)
@@ -220,6 +232,32 @@ func assertingMWFunc(assertFn assertionFunc) web.HandlerFunc {
 	}
 }
 
+type ginVer struct {
+	major int
+	minor int
+	patch int
+}
+
+var ginVerPattern = regexp.MustCompile(`^v(?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)`)
+
+func ginVersion() ginVer {
+	matches := ginVerPattern.FindSubmatch([]byte(gin.Version))
+	if len(matches) < 4 {
+		return ginVer{}
+	}
+	var ver ginVer
+	if v, e := strconv.Atoi(string(matches[1])); e == nil {
+		ver.major = v
+	}
+	if v, e := strconv.Atoi(string(matches[2])); e == nil {
+		ver.minor = v
+	}
+	if v, e := strconv.Atoi(string(matches[3])); e == nil {
+		ver.patch = v
+	}
+	return ver
+}
+
 type kvSrc int
 
 const (
@@ -248,13 +286,13 @@ func makeKV(k, v string, src ...kvSrc) kv {
 
 func assertContextKVs(ctx context.Context, _ *testing.T, g *gomega.WithT, req *http.Request, gc *gin.Context, phase string, expectKVs ...kv) {
 	for _, kv := range expectKVs {
-		if kv.src & kvSrcCtx != 0 {
+		if kv.src&kvSrcCtx != 0 {
 			g.Expect(ctx.Value(kv.k)).To(Equal(kv.v), "%s: context should contains correct %s=%s", phase, kv.k, kv.v)
 		}
-		if kv.src & kvSrcReq != 0 {
+		if kv.src&kvSrcReq != 0 {
 			g.Expect(req.Context().Value(kv.k)).To(Equal(kv.v), "%s: Request context should contains correct %s=%s", phase, kv.k, kv.v)
 		}
-		if kv.src & kvSrcGin != 0 {
+		if kv.src&kvSrcGin != 0 {
 			g.Expect(gc.Value(kv.k)).To(Equal(kv.v), "%s: Gin context should contain correct %s=%s", phase, kv.k, kv.v)
 		}
 	}

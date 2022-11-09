@@ -45,6 +45,5 @@ func NewEngine() *Engine {
 	eng := &Engine{
 		Engine: gin.New(),
 	}
-	//eng.ContextWithFallback = true
 	return eng
 }
