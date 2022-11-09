@@ -79,6 +79,7 @@ func WebInit(ctx context.Context, _ *testing.T, g *gomega.WithT, di *TestDI, ini
 
 func assertContext(ctx context.Context, _ *testing.T, g *gomega.WithT) {
 	g.Expect(ctx).To(BeAssignableToTypeOf(utils.NewMutableContext()), "context should be mutable")
+	g.Expect(ctx).To(BeAssignableToTypeOf(utils.NewMutableContext().(utils.ExtendedMutableContext)), "context should be ExtendedMutableContext")
 	g.Expect(web.GinContext(ctx)).To(Not(BeNil()), "gin.Context from ctx should not be nil")
 	g.Expect(web.HttpRequest(ctx)).To(Not(BeNil()), "web.HttpRequest should not be nil")
 

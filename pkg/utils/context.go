@@ -2,7 +2,7 @@ package utils
 
 import "context"
 
-// MutableContext matches *gin.Context
+// MutableContext matches *gin.Context.
 type MutableContext interface {
 	context.Context
 	Set(key string, value interface{})
@@ -13,16 +13,22 @@ type ListableContext interface {
 	Values() map[interface{}]interface{}
 }
 
+// ExtendedMutableContext additional interface, can set KV without wrapping new context
+type ExtendedMutableContext interface {
+	MutableContext
+	SetKV(key interface{}, value interface{})
+}
+
 type ContextValuer func(key interface{}) interface{}
 
-// mutableContext implements MutableContext and ListableContext
+// mutableContext implements GinContext, ListableContext and MutableContext
 type mutableContext struct {
 	context.Context
 	values  map[interface{}]interface{}
 	valuers []ContextValuer
 }
 
-func (ctx mutableContext) Value(key interface{}) (ret interface{}) {
+func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
 	// get value from value map first, in case the key-value pair is overwritten
 	ret, ok := ctx.values[key]
 	if !ok || ret == nil {
@@ -49,6 +55,14 @@ func (ctx *mutableContext) Set(key string, value interface{}) {
 	}
 }
 
+func (ctx *mutableContext) SetKV(key interface{}, value interface{}) {
+	if key != nil && value != nil {
+		ctx.values[key] = value
+	} else if key != nil {
+		delete(ctx.values, key)
+	}
+}
+
 func NewMutableContext() MutableContext {
 	return &mutableContext{
 		Context: context.Background(),
@@ -56,10 +70,12 @@ func NewMutableContext() MutableContext {
 	}
 }
 
-func (ctx mutableContext) Values() map[interface{}]interface{} {
+func (ctx *mutableContext) Values() map[interface{}]interface{} {
 	return ctx.values
 }
 
+// MakeMutableContext return the context itself if it's already a MutableContext and no additional ContextValuer are specified.
+// Otherwise, wrap the given context as MutableContext.
 func MakeMutableContext(parent context.Context, valuers ...ContextValuer) MutableContext {
 	if mutable, ok := parent.(MutableContext); ok && len(valuers) == 0 {
 		return mutable

@@ -11,6 +11,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -74,8 +75,8 @@ func SubTestGinContextAvailability(di *TestDI) test.GomegaSubTestFunc {
 func SubTestContextDefaultKV(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		kvs := []kv{
-			makeKV(web.ContextKeyContextPath, webtest.DefaultContextPath, kvSrcAll),
-			makeKV(web.ContextKeyContextPath, webtest.CurrentContextPath(ctx), kvSrcAll),
+			makeKV(web.ContextKeyContextPath, webtest.DefaultContextPath, nil, kvSrcAll),
+			makeKV(web.ContextKeyContextPath, webtest.CurrentContextPath(ctx), nil, kvSrcAll),
 		}
 
 		assertion := func(ctx context.Context, req *http.Request) {
@@ -107,44 +108,48 @@ func SubTestContextDefaultKV(di *TestDI) test.GomegaSubTestFunc {
 func SubTestContextSetKV(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// determine expected behaviors
+		const (
+			kWebCtx = 0xff
+			kWebReq = 3.14
+		)
 		webKVSrc := kvSrcCtx | kvSrcReq
 		if gVer := ginVersion(); gVer.major > 1 || gVer.minor >= 8 {
 			logger.WithContext(ctx).Infof("Using updated rules for Gin v1.8.0+")
 			webKVSrc = kvSrcAll
 		}
-		kvs := map[kv]kvSetter{
-			makeKV("req", "req-value"):                           reqCtxKVSetter(),
-			makeKV("gin-ctx", "gin-ctx-value", kvSrcAll):         ginCtxKVSetter(),
-			makeKV("req-gin-ctx", "req-gin-ctx-value", kvSrcAll): reqGinCtxKVSetter(),
-			makeKV("web-ctx", "web-ctx-value", webKVSrc):         webCtxKVSetter(),
-			makeKV("web-req", "web-req-value", webKVSrc):         webReqKVSetter(),
+		kvs := []kv{
+			makeKV("req", "req-value", reqCtxKVSetter()),
+			makeKV("gin-ctx", "gin-ctx-value", ginCtxKVSetter(), kvSrcAll),
+			makeKV("req-gin-ctx", "req-gin-ctx-value", reqGinCtxKVSetter(), kvSrcAll),
+			makeKV(kWebCtx, "web-ctx-value", webCtxKVSetter(), webKVSrc),
+			makeKV(kWebReq, "web-req-value", webReqKVSetter(), webKVSrc),
 		}
 
-		overwrite := map[kv]kvSetter{
-			makeKV("gin-ctx", "gin-ctx-new", kvSrcAll):         ginCtxKVSetter(),
-			makeKV("req-gin-ctx", "req-gin-ctx-new", kvSrcAll): reqGinCtxKVSetter(),
-			makeKV("web-ctx", "web-ctx-new", webKVSrc):         webCtxKVSetter(),
-			makeKV("web-req", "web-req-new", webKVSrc):         webReqKVSetter(),
+		overwrite := []kv{
+			makeKV("gin-ctx", "gin-ctx-new", ginCtxKVSetter(), kvSrcAll),
+			makeKV("req-gin-ctx", "req-gin-ctx-new", reqGinCtxKVSetter(), kvSrcAll),
+			makeKV("web-ctx", "web-ctx-new",  webCtxKVSetter(), webKVSrc),
+			makeKV("web-req", "web-req-new", webReqKVSetter(), webKVSrc),
 		}
 
 		// setup middlewares and endpoints
 		mwAssertion := func(ctx context.Context, req *http.Request) {
-			for kv, setter := range kvs {
-				setter(ctx, req, kv.k, kv.v)
+			for _, kv := range kvs {
+				kv.setter(ctx, req, kv.k, kv.v)
 			}
 		}
 
 		epAssertion := func(ctx context.Context, req *http.Request) {
-			assertContextKVs(ctx, t, g, req, web.GinContext(ctx), "Endpoint", keys(kvs)...)
-			for kv, setter := range overwrite {
-				setter(ctx, req, kv.k, kv.v)
+			assertContextKVs(ctx, t, g, req, web.GinContext(ctx), "Endpoint", kvs...)
+			for _, kv := range overwrite {
+				kv.setter(ctx, req, kv.k, kv.v)
 			}
 		}
 
 		ginAssertion := func(gc *gin.Context) {
-			assertContextKVs(gc.Request.Context(), t, g, gc.Request, gc, "PreGinMW", keys(kvs)...)
+			assertContextKVs(gc.Request.Context(), t, g, gc.Request, gc, "PreGinMW", kvs...)
 			gc.Next()
-			assertContextKVs(gc.Request.Context(), t, g, gc.Request, gc, "PostGinMW", keys(overwrite)...)
+			assertContextKVs(gc.Request.Context(), t, g, gc.Request, gc, "PostGinMW", overwrite...)
 		}
 
 		// execute test
@@ -267,13 +272,16 @@ const (
 	kvSrcAll = kvSrcCtx | kvSrcReq | kvSrcGin
 )
 
+type kvSetter func(ctx context.Context, req *http.Request, k, v any)
+
 type kv struct {
-	k   string
-	v   string
-	src kvSrc
+	k      interface{}
+	v      interface{}
+	setter kvSetter
+	src    kvSrc
 }
 
-func makeKV(k, v string, src ...kvSrc) kv {
+func makeKV(k, v any, setter kvSetter, src ...kvSrc) kv {
 	if len(src) == 0 {
 		src = []kvSrc{kvSrcCtx, kvSrcReq}
 	}
@@ -281,19 +289,20 @@ func makeKV(k, v string, src ...kvSrc) kv {
 	for _, s := range src {
 		flag |= s
 	}
-	return kv{k: k, v: v, src: flag}
+	return kv{k: k, v: v, setter: setter, src: flag}
 }
 
 func assertContextKVs(ctx context.Context, _ *testing.T, g *gomega.WithT, req *http.Request, gc *gin.Context, phase string, expectKVs ...kv) {
+
 	for _, kv := range expectKVs {
 		if kv.src&kvSrcCtx != 0 {
-			g.Expect(ctx.Value(kv.k)).To(Equal(kv.v), "%s: context should contains correct %s=%s", phase, kv.k, kv.v)
+			g.Expect(ctx.Value(kv.k)).To(Equal(kv.v), "%s: context should contains correct %v=%v", phase, kv.k, kv.v)
 		}
 		if kv.src&kvSrcReq != 0 {
-			g.Expect(req.Context().Value(kv.k)).To(Equal(kv.v), "%s: Request context should contains correct %s=%s", phase, kv.k, kv.v)
+			g.Expect(req.Context().Value(kv.k)).To(Equal(kv.v), "%s: Request context should contains correct %v=%v", phase, kv.k, kv.v)
 		}
 		if kv.src&kvSrcGin != 0 {
-			g.Expect(gc.Value(kv.k)).To(Equal(kv.v), "%s: Gin context should contain correct %s=%s", phase, kv.k, kv.v)
+			g.Expect(gc.Value(kv.k)).To(Equal(kv.v), "%s: Gin context should contain correct %v=%v", phase, kv.k, kv.v)
 		}
 	}
 	g.Expect(ctx.Value("non-exist")).To(BeNil(), "%s: context should return nil on incorrect Key", phase)
@@ -301,18 +310,8 @@ func assertContextKVs(ctx context.Context, _ *testing.T, g *gomega.WithT, req *h
 	g.Expect(gc.Value("non-exist")).To(BeNil(), "%s: Gin context should return nil on incorrect Key", phase)
 }
 
-func keys[K comparable, V any](m map[K]V) []K {
-	keys := make([]K, 0, len(m))
-	for k, _ := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-type kvSetter func(ctx context.Context, req *http.Request, k, v string)
-
 func reqCtxKVSetter() kvSetter {
-	return func(ctx context.Context, _ *http.Request, k, v string) {
+	return func(ctx context.Context, _ *http.Request, k, v interface{}) {
 		gc := web.GinContext(ctx)
 		newCtx := context.WithValue(gc.Request.Context(), k, v)
 		gc.Request = gc.Request.WithContext(newCtx)
@@ -320,27 +319,27 @@ func reqCtxKVSetter() kvSetter {
 }
 
 func ginCtxKVSetter() kvSetter {
-	return func(ctx context.Context, req *http.Request, k, v string) {
+	return func(ctx context.Context, req *http.Request, k, v interface{}) {
 		gc := web.GinContext(ctx)
-		gc.Set(k, v)
+		gc.Set(fmt.Sprintf(`%v`, k), v)
 	}
 }
 
 func reqGinCtxKVSetter() kvSetter {
-	return func(ctx context.Context, req *http.Request, k, v string) {
+	return func(ctx context.Context, req *http.Request, k, v interface{}) {
 		gc := web.GinContext(req.Context())
-		gc.Set(k, v)
+		gc.Set(fmt.Sprintf(`%v`, k), v)
 	}
 }
 
 func webCtxKVSetter() kvSetter {
-	return func(ctx context.Context, req *http.Request, k, v string) {
+	return func(ctx context.Context, req *http.Request, k, v interface{}) {
 		web.SetKV(ctx, k, v)
 	}
 }
 
 func webReqKVSetter() kvSetter {
-	return func(ctx context.Context, req *http.Request, k, v string) {
+	return func(ctx context.Context, req *http.Request, k, v interface{}) {
 		web.SetKV(req.Context(), k, v)
 	}
 }

@@ -33,10 +33,9 @@ func GinContext(ctx context.Context) *gin.Context {
 		return ginCtx
 	}
 
-	if ginCtx, ok := ctx.Value(kGinContextKey).(*gin.Context); ok {
+	if ginCtx, ok := ctx.Value(gin.ContextKey).(*gin.Context); ok {
 		return ginCtx
 	}
-
 	return nil
 }
 
@@ -61,15 +60,26 @@ func MustHttpRequest(ctx context.Context) *http.Request {
 	return MustGinContext(ctx).Request
 }
 
-// SetKV set a kv pair to given context. The value can be obtained via context.Context.Value(key)
-func SetKV(ctx context.Context, key string, value interface{}) {
-	switch c := ctx.(type) {
-	case utils.MutableContext:
-		c.Set(key, value)
-	default:
-		if gc := GinContext(ctx); gc != nil {
-			gc.Set(key, value)
+// SetKV set a kv pair to given context.
+// The value can be obtained via context.Context.Value(key)
+// - When Key is string, put it in gin.Context
+// - When Key is not string, try MutableKVContext
+// - Fallback to use fmt.Sprintf(`%v`, key) as key and put it in gin.Context
+func SetKV(ctx context.Context, key interface{}, value interface{}) {
+	if strKey, ok := key.(string); ok {
+		switch c := ctx.(type) {
+		case utils.MutableContext:
+			c.Set(strKey, value)
 		}
+		return
+	}
+	if c, ok := ctx.(utils.ExtendedMutableContext); ok {
+		c.SetKV(key, value)
+		return
+	}
+	// fallback
+	if gc := GinContext(ctx); gc != nil {
+		gc.Set(fmt.Sprintf(`%v`, key), value)
 	}
 }
 
@@ -146,7 +156,8 @@ func GinContextPathAware(props *ServerProperties) gin.HandlerFunc {
 func GinContextMerger() gin.HandlerFunc {
 	return func(gc *gin.Context) {
 		ctx := utils.MakeMutableContext(gc.Request.Context(), ginContextValuer(gc))
-		ctx.Set(kGinContextKey, gc)
+		// Note, this is optional since Gin 1.8.0. We are doing this simply for performance
+		ctx.Set(gin.ContextKey, gc)
 		gc.Request = gc.Request.WithContext(ctx)
 	}
 }
@@ -171,22 +182,23 @@ func NewKitGinHandlerFunc(s *httptransport.Server) gin.HandlerFunc {
 	}
 
 	handler := func(c *gin.Context) {
-		c = preProcessGinContext(c) //nolint:contextcheck // gin.Context is the context
+		c = preProcessGinContext(c)
 		s.ServeHTTP(c.Writer, c.Request)
 	}
 	return handler
 }
 
-func preProcessGinContext(c *gin.Context) *gin.Context {
-	// because of GinContextMerger is manditory middleware for all mappings, we are sure c.Request.Context() contains gin.Context.
+func preProcessGinContext(gc *gin.Context) *gin.Context {
+	// because of GinContextMerger is mandatory middleware for all mappings, we are sure gc.Request.Context() contains gin.Context.
 	// So we only need to make sure it's also mutable
-	ctx := utils.MakeMutableContext(c.Request.Context())
-	if ctx != c.Request.Context() {
-		c.Request = c.Request.WithContext(ctx)
+	rc := gc.Request.Context()
+	ctx := utils.MakeMutableContext(rc)
+	if ctx != rc {
+		gc.Request = gc.Request.WithContext(ctx)
 	}
-	// note, we could also make a copy of gin context in case we want to use it out of reqeust scope
+	// note, we could also make a copy of gin context in case we want to use it out of request scope
 	// but currently, we don't have such requirement
-	return c
+	return gc
 }
 
 /**************************
@@ -239,10 +251,10 @@ type simpleGinMapping struct {
 	handlerFunc gin.HandlerFunc
 }
 
-func NewSimpleGinMapping(name, group, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) *simpleGinMapping {
+func NewSimpleGinMapping(name, group, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) SimpleGinMapping {
 	return &simpleGinMapping{
 		simpleMapping: *NewSimpleMapping(name, group, path, method, condition, nil).(*simpleMapping),
-		handlerFunc: handlerFunc,
+		handlerFunc:   handlerFunc,
 	}
 }
 
@@ -264,13 +276,13 @@ func (m simpleGinMapping) GinHandlerFunc() gin.HandlerFunc {
 // middlewareGinMapping implements MiddlewareGinMapping
 type middlewareGinMapping struct {
 	middlewareMapping
-	handlerFunc        gin.HandlerFunc
+	handlerFunc gin.HandlerFunc
 }
 
-func NewMiddlewareGinMapping(name string, order int, matcher RouteMatcher, cond RequestMatcher, handlerFunc gin.HandlerFunc) *middlewareGinMapping {
+func NewMiddlewareGinMapping(name string, order int, matcher RouteMatcher, cond RequestMatcher, handlerFunc gin.HandlerFunc) MiddlewareGinMapping {
 	return &middlewareGinMapping{
 		middlewareMapping: *NewMiddlewareMapping(name, order, matcher, cond, nil).(*middlewareMapping),
-		handlerFunc: handlerFunc,
+		handlerFunc:       handlerFunc,
 	}
 }
 
