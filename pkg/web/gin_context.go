@@ -121,12 +121,22 @@ func (c GinContextCustomizer) Customize(_ context.Context, r *Registrar) error {
 	Handler Funcs
  **************************/
 
+// GinContextPathAware is a Gin middleware mandatory for all mappings.
+// It save the context path into context. The context path can be used in many components/utilities.
 func GinContextPathAware(props *ServerProperties) gin.HandlerFunc {
 	return func(gc *gin.Context) {
 		gc.Set(ContextKeyContextPath, props.ContextPath)
 	}
 }
 
+// GinContextMerger is a Gin middleware that merge Request.Context() with gin.Context,
+// allowing values in gin.Context also available via Request.Context().Value().
+// This middleware is mandatory for all mappings.
+// Note:	as of Gin 1.8.0, we set gin.Engine.ContextWithFallback to true. This makes gin.Context fully integrated
+// 			with its underling Request.Context(). The side effect of this is gin.Context.Value() is also calling
+// 			Request.Context().Value(), which cause stack overflow on non-existing keys.
+//
+//			To break this loop, we only expose gin.Context itself to Request.Context(), any other
 func GinContextMerger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := utils.MakeMutableContext(c.Request.Context(), ginContextValuer(c))
@@ -142,7 +152,7 @@ func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
 	}
 
 	handler := func(c *gin.Context) {
-		c = preProcessContext(c) //nolint:contextcheck // gin.Context is the context
+		c = preProcessGinContext(c)
 		handlerFunc(c.Writer, c.Request)
 	}
 	return handler
@@ -155,20 +165,20 @@ func NewKitGinHandlerFunc(s *httptransport.Server) gin.HandlerFunc {
 	}
 
 	handler := func(c *gin.Context) {
-		c = preProcessContext(c) //nolint:contextcheck // gin.Context is the context
+		c = preProcessGinContext(c) //nolint:contextcheck // gin.Context is the context
 		s.ServeHTTP(c.Writer, c.Request)
 	}
 	return handler
 }
 
-func preProcessContext(c *gin.Context) *gin.Context{
+func preProcessGinContext(c *gin.Context) *gin.Context {
 	// because of GinContextMerger is manditory middleware for all mappings, we are sure c.Request.Context() contains gin.Context.
 	// So we only need to make sure it's also mutable
 	ctx := utils.MakeMutableContext(c.Request.Context())
 	if ctx != c.Request.Context() {
 		c.Request = c.Request.WithContext(ctx)
 	}
-	// note, we could aslo make a copy of gin context in case we want to use it out of reqeust scope
+	// note, we could also make a copy of gin context in case we want to use it out of reqeust scope
 	// but currently, we don't have such requirement
 	return c
 }

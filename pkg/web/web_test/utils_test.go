@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
@@ -44,10 +45,13 @@ type TestDI struct {
 	Properties web.ServerProperties
 }
 
-// ResetRegister reset gin engine to a clean state
+// ResetEngine reset gin engine to a clean state
 func ResetEngine(di *TestDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		di.Engine.Engine = gin.New()
+		// Note: 	we cannot create new web.Engine because the globally available web.Engine instance
+		// 			is also used in webtest. Therefore we can only substitute underlying gin.Engine
+		newEng := web.NewEngine()
+		di.Engine.Engine = newEng.Engine
 		return ctx, nil
 	}
 }
@@ -74,6 +78,7 @@ func WebInit(ctx context.Context, _ *testing.T, g *gomega.WithT, di *TestDI, ini
  *************************/
 
 func assertContext(ctx context.Context, _ *testing.T, g *gomega.WithT) {
+	g.Expect(ctx).To(BeAssignableToTypeOf(utils.NewMutableContext()), "context should be mutable")
 	g.Expect(web.GinContext(ctx)).To(Not(BeNil()), "gin.Context from ctx should not be nil")
 	g.Expect(web.HttpRequest(ctx)).To(Not(BeNil()), "web.HttpRequest should not be nil")
 
