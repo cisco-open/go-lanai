@@ -60,7 +60,7 @@ func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.R
 	client, ok := sp.clientManager.GetClientByDomain(host)
 
 	if !ok {
-		logger.Debugf("cannot find idp for domain %s", host)
+		logger.WithContext(r.Context()).Debugf("cannot find idp for domain %s", host)
 		return security.NewExternalSamlAuthenticationError("cannot find idp for this domain")
 	}
 
@@ -125,7 +125,7 @@ func (sp *SPLoginMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 
 		assertion, err := client.ParseResponse(r, possibleRequestIDs)
 		if err != nil {
-			logger.Error("error processing assertion", "err", err)
+			logger.WithContext(c).Errorf("error processing assertion", "err", err)
 			sp.handleError(c, security.NewExternalSamlAuthenticationError(err.Error(), err))
 			return
 		}
