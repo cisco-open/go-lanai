@@ -16,6 +16,7 @@ func (c *RepoImpl[T]) IndicesPutAlias(ctx context.Context,
 		return err
 	}
 	if resp != nil && resp.IsError() {
+		logger.WithContext(ctx).Debugf("error response: %s", resp.String())
 		return fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	return nil

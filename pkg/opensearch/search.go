@@ -46,6 +46,7 @@ func (c *RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o
 		return 0, err
 	}
 	if resp != nil && resp.IsError() {
+		logger.WithContext(ctx).Debugf("error response: %s", resp.String())
 		return 0, fmt.Errorf("error status code: %d", resp.StatusCode)
 	}
 	respBody, err := io.ReadAll(resp.Body)
