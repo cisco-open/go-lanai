@@ -17,6 +17,7 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	gotemplate "html/template"
+	"mime"
 	"net/http"
 	"regexp"
 	"testing"
@@ -60,8 +61,8 @@ func SubTestStaticAssets(di *TestDI) test.GomegaSubTestFunc {
 			e := reg.Register(fsys, m)
 			g.Expect(e).To(Succeed(), "register assets should success")
 		})
-		testTextEndpoint(ctx, t, g, http.MethodGet, "/static/js", expectTextContentType("application/javascript"))
-		testTextEndpoint(ctx, t, g, http.MethodGet, "/static/static.js", expectTextContentType("application/javascript"))
+		testTextEndpoint(ctx, t, g, http.MethodGet, "/static/js", expectTextContentType(mime.TypeByExtension(".js")))
+		testTextEndpoint(ctx, t, g, http.MethodGet, "/static/static.js", expectTextContentType(mime.TypeByExtension(".js")))
 	}
 }
 
