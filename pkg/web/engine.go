@@ -42,8 +42,8 @@ func NewEngine() *Engine {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	e := &Engine{
+	eng := &Engine{
 		Engine: gin.New(),
 	}
-	return e
+	return eng
 }
