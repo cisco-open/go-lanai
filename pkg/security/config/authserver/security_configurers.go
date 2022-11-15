@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/clientauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/openid"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
@@ -152,6 +153,16 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 		opt.RedirectWhitelist = utils.NewStringSet(c.config.properties.RedirectWhitelist...)
 	})
 
+	oidcLogoutHandler := openid.NewOidcLogoutHandler(func(opt *openid.HandlerOption) {
+		opt.Dec = c.config.sharedJwtDecoder
+		opt.Issuer = c.config.Issuer
+		opt.ClientStore = c.config.ClientStore
+	})
+	oidcLogoutSuccessHandler := openid.NewOidcSuccessHandler(func(opt *openid.SuccessOption) {
+		opt.ClientStore = c.config.ClientStore
+		opt.WhitelabelErrorPath = c.config.Endpoints.Error
+	})
+
 	errHandler := redirect.NewRedirectWithURL(c.config.Endpoints.Error)
 	ws.With(session.New().SettingService(c.config.SessionSettingService)).
 		With(access.New().
@@ -166,8 +177,9 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 		With(request_cache.New()).
 		With(logout.New().
 			LogoutUrl(c.config.Endpoints.Logout).
-			LogoutHandlers(logoutHandler).
-			AddSuccessHandler(logoutSuccessHandler),
+			LogoutHandlers(logoutHandler, oidcLogoutHandler).
+			AddSuccessHandler(logoutSuccessHandler).
+			AddSuccessHandler(oidcLogoutSuccessHandler),
 		).
 		With(samlidp.NewLogout().
 			Issuer(c.config.Issuer).
