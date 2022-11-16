@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/bmatcuk/doublestar/v4"
 	"path/filepath"
+	"strings"
 )
 
 // findLocalGoMods search for given search paths and find and parse all go.mod files.
@@ -29,7 +30,12 @@ func findLocalGoMods(ctx context.Context, searchPaths []string) (map[string]stri
 				logger.Warnf(`Ignoring "%s" due to error: %v`, modPath, e)
 				continue
 			}
-			ret[mod.Module.Path] = filepath.Dir(toRelativePath(modPath))
+			relModPath := filepath.Dir(toRelativePath(modPath))
+			if !strings.HasPrefix(relModPath, ".") {
+				// mod path is a sub folder of current folder
+				relModPath = "./" + relModPath
+			}
+			ret[mod.Module.Path] = relModPath
 		}
 	}
 	return ret, nil
