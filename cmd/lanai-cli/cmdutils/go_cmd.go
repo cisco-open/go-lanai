@@ -161,11 +161,27 @@ func RestoreInvalidReplace(ctx context.Context, replaces []*Replace, opts ...GoC
 		ShellStdOut(os.Stdout),
 	}
 	for _, v := range replaces {
-		cmdOpts = append(cmdOpts, setReplaceCmd(v, opts))
+		cmdOpts = append(cmdOpts, setReplaceCmd([]*Replace{v}, opts))
 	}
 
 	_, err := RunShellCommands(ctx, cmdOpts...)
 
+	return err
+}
+
+// SetReplace Set given replaces in go.mod
+func SetReplace(ctx context.Context, replaces []*Replace, opts ...GoCmdOptions) error {
+	if len(replaces) == 0 {
+		return nil
+	}
+
+	cmdOpts := []ShCmdOptions{
+		ShellShowCmd(true),
+		ShellUseWorkingDir(),
+		ShellStdOut(os.Stdout),
+		setReplaceCmd(replaces, opts),
+	}
+	_, err := RunShellCommands(ctx, cmdOpts...)
 	return err
 }
 
@@ -317,16 +333,19 @@ func dropReplaceCmd(module string, version string, opts []GoCmdOptions) ShCmdOpt
 	return ShellCmd(cmd)
 }
 
-func setReplaceCmd(replace *Replace, opts []GoCmdOptions) ShCmdOptions {
+func setReplaceCmd(replaces []*Replace, opts []GoCmdOptions) ShCmdOptions {
 	cmd := goCmdModEdit
 	for _, f := range opts {
 		f(&cmd)
 	}
-	from := withVersionQuery(replace.Old.Path, replace.Old.Version)
-	to := withVersionQuery(replace.New.Path, replace.New.Version)
-	cmd = fmt.Sprintf("%s -replace %s=%s", cmd, from, to)
+	cmds := []string{cmd}
+	for _, replace := range replaces {
+		from := withVersionQuery(replace.Old.Path, replace.Old.Version)
+		to := withVersionQuery(replace.New.Path, replace.New.Version)
+		cmds = append(cmds, fmt.Sprintf("-replace %s=%s", from, to))
+	}
 
-	return ShellCmd(cmd)
+	return ShellCmd(strings.Join(cmds, " "))
 }
 
 func tmpGoModFile() string {
