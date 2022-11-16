@@ -1,19 +1,27 @@
+{{ with index . "OpenAPIData" }}
+{{- $versionList := versionList .Paths }}
 package controller
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/validation"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	{{- range $versionList }}
+	 controller{{ . }} "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/{{ . }}"
+	{{- end }}
 	"github.com/go-playground/validator/v10/non-standard/validators"
 	"go.uber.org/fx"
 )
 
 func Use() {
+	{{- range $versionList }}
+	 controller{{ . }}.Use()
+	{{- end }}
 	bootstrap.AddOptions(
 		fx.Invoke(register),
 	)
 }
-{{ with index . "OpenAPIData" }}
+
 func register(lc fx.Lifecycle, r *web.Registrar) {
 	// validation, note, related validation translations are registered in errorhandling package
 	_ = web.Validator().RegisterValidation("notblank", validators.NotBlank)
