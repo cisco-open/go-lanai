@@ -10,12 +10,11 @@ import (
 	"strings"
 )
 
-// findLocalGoMods search for given search paths and find and parse all go.mod files.
-// It returns a map of Module name with its relative path to curring working directory
-func findLocalGoMods(ctx context.Context, searchPaths []string) (map[string]string, error) {
-	ret := map[string]string{}
+// resolveLocalMods search for given search paths and find all go.mod files
+func findLocalGoMods(searchPaths ...string) ([]string, error) {
+	var ret []string
 	for _, path := range searchPaths {
-		relPath := toRelativePath(path)
+		relPath := toRelativePath(path, cmdutils.GlobalArgs.WorkingDir)
 		if len(relPath) == 0 {
 			logger.Warnf(`Search path "%s" is ignored`, path)
 			continue
@@ -24,28 +23,36 @@ func findLocalGoMods(ctx context.Context, searchPaths []string) (map[string]stri
 		if e != nil {
 			return nil, fmt.Errorf(`unable to find go.mod in "%s": %v`, path, e)
 		}
-		for _, modPath := range modPaths {
-			mod, e := cmdutils.GetGoMod(ctx, cmdutils.GoCmdModFile(modPath))
-			if e != nil {
-				logger.Warnf(`Ignoring "%s" due to error: %v`, modPath, e)
-				continue
-			}
-			relModPath := filepath.Dir(toRelativePath(modPath))
-			if !strings.HasPrefix(relModPath, ".") {
-				// mod path is a sub folder of current folder
-				relModPath = "./" + relModPath
-			}
-			ret[mod.Module.Path] = relModPath
-		}
+		ret = append(ret, modPaths...)
 	}
 	return ret, nil
 }
 
-func toRelativePath(path string) string {
+// resolveLocalMods search for given search paths and find and parse all go.mod files.
+// It returns a map of Module name with its absolute file path
+func resolveLocalMods(ctx context.Context, searchPaths ...string) (map[string]string, error) {
+	ret := map[string]string{}
+	modPaths, e := findLocalGoMods(searchPaths...)
+	if e != nil {
+		return nil, e
+	}
+
+	for _, modPath := range modPaths {
+		mod, e := cmdutils.GetGoMod(ctx, cmdutils.GoCmdModFile(modPath))
+		if e != nil {
+			logger.Warnf(`Ignoring "%s" due to error: %v`, modPath, e)
+			continue
+		}
+		ret[mod.Module.Path] = modPath
+	}
+	return ret, nil
+}
+
+func toRelativePath(path string, base string) string {
 	if !filepath.IsAbs(path) {
 		return path
 	}
-	path, e := filepath.Rel(cmdutils.GlobalArgs.WorkingDir, path)
+	path, e := filepath.Rel(base, path)
 	if e != nil {
 		return ""
 	}
@@ -59,4 +66,18 @@ func pathMatches(path string, patterns utils.StringSet) bool {
 		}
 	}
 	return false
+}
+
+func resolveLocalReplacePath(modPath string, base string) string {
+	relModPath := filepath.Dir(toRelativePath(modPath, base))
+	switch {
+	case !strings.HasPrefix(relModPath, "."):
+		// mod path is a sub folder of current folder
+		relModPath = "./" + relModPath
+	case relModPath == "..":
+		relModPath = "../"
+	case relModPath == ".":
+		relModPath = "./"
+	}
+	return relModPath
 }

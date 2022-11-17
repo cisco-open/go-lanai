@@ -31,9 +31,10 @@ func init() {
 }
 
 func RunAddReplace(cmd *cobra.Command, _ []string) error {
-	selfMod, e := cmdutils.GetGoMod(cmd.Context())
+	cmdutils.ShCmdLogDisabled = true
+	targetMod, e := cmdutils.GetGoMod(cmd.Context())
 	if e != nil {
-		return fmt.Errorf(`command need to run under a valid go module folder. Cannot open "go.mod": %v`, e)
+		return fmt.Errorf(`command need to run under a valid go module folder. cannot find "go.mod": %v`, e)
 	}
 
 	// validate pattern input
@@ -46,27 +47,46 @@ func RunAddReplace(cmd *cobra.Command, _ []string) error {
 	}
 
 	// find all available modules
-	localMods, e := findLocalGoMods(cmd.Context(), AddReplaceArgs.SearchPaths)
+	localMods, e := resolveLocalMods(cmd.Context(), AddReplaceArgs.SearchPaths...)
 	if e != nil {
 		return e
 	}
 
-	// add replace
+	// find all required modules (using `go list -m`), including sub modules
+	subModFiles, e := findLocalGoMods(cmdutils.GlobalArgs.WorkingDir)
+	if e != nil {
+		return fmt.Errorf(`command need to run under a valid go module folder. cannot find "go.mod": %v`, e)
+	}
+	requires := utils.NewStringSet()
+	for _, modFile := range subModFiles {
+		mods, e := cmdutils.FindModule(cmd.Context(), []cmdutils.GoCmdOptions{cmdutils.GoCmdModFile(modFile)}, "all")
+		if e != nil {
+			return fmt.Errorf(`cannot open "go.mod": %v`, e)
+		}
+		for _, mod := range mods {
+			requires.Add(mod.Path)
+		}
+	}
+
+	// add replace to target mod file
 	var replaces []*cmdutils.Replace
-	for _, req := range selfMod.Require {
-		if !pathMatches(req.Path, toBeReplaced) {
+	for reqPath := range requires {
+		if !pathMatches(reqPath, toBeReplaced) || reqPath == targetMod.Module.Path {
 			continue
 		}
-		relPath, ok := localMods[req.Path]
+		modPath, ok := localMods[reqPath]
 		if !ok {
 			continue
 		}
-		logger.Infof(`Replacing %s => %s`, req.Path, relPath)
+		relModPath := resolveLocalReplacePath(modPath, cmdutils.GlobalArgs.WorkingDir)
+		logger.Debugf(`Replacing %s => %s`, reqPath, relModPath)
 		replaces = append(replaces, &cmdutils.Replace{
-			Old: cmdutils.Module{Path: req.Path},
-			New: cmdutils.Module{Path: relPath},
+			Old: cmdutils.Module{Path: reqPath},
+			New: cmdutils.Module{Path: relModPath},
 		})
 	}
+
+	cmdutils.ShCmdLogDisabled = false
 	if e := cmdutils.SetReplace(cmd.Context(), replaces); e != nil {
 		return fmt.Errorf(`unable to set replace: %v`, e)
 	}
