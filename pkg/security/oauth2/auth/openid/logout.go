@@ -43,7 +43,6 @@ func NewOidcSuccessHandler(opts ...SuccessOptions) *OidcSuccessHandler {
 		clientStore: opt.ClientStore,
 		fallback:    redirect.NewRedirectWithURL(opt.WhitelabelErrorPath),
 	}
-	return &OidcSuccessHandler{}
 }
 
 func (o *OidcSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
