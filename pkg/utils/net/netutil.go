@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -72,4 +73,20 @@ func GetForwardedHostName(request *http.Request) string {
 		}
 	}
 	return host
+}
+
+func AppendRedirectUrl(redirectUrl string, params map[string]string) (string, error) {
+	loc, e := url.ParseRequestURI(redirectUrl)
+	if e != nil || !loc.IsAbs() {
+		return "", errors.New("invalid redirect_uri")
+	}
+
+	// TODO support fragments
+	query := loc.Query()
+	for k, v := range params {
+		query.Add(k, v)
+	}
+	loc.RawQuery = query.Encode()
+
+	return loc.String(), nil
 }

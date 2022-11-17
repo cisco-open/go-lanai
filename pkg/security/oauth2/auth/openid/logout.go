@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
+	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 
 var ParameterRedirectUri = "post_logout_redirect_uri"
 var ParameterIdTokenHint = "id_token_hint"
+var ParameterState = "state"
 
 type SuccessOptions func(opt *SuccessOption)
 
@@ -52,6 +54,14 @@ func (o *OidcSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *h
 	redirectUri := r.FormValue(ParameterRedirectUri)
 	if redirectUri == "" {
 		// as OIDC success handler, we only care about this redirect
+		return
+	}
+
+	state := r.FormValue(ParameterState)
+	redirectUri, err := netutil.AppendRedirectUrl(redirectUri, map[string]string{ParameterState: state})
+
+	if err != nil {
+		o.fallback.HandleAuthenticationError(c, r, rw, err)
 		return
 	}
 
