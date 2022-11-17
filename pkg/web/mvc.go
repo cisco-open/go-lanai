@@ -2,11 +2,9 @@ package web
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/go-playground/validator/v10"
 	"io"
 	"net/http"
 	"reflect"
@@ -265,14 +263,7 @@ func bind(obj interface{}, bindings ...bindingFunc) (err error) {
 }
 
 func translateBindingError(err error) error {
-	var verr validator.ValidationErrors
-	var jsonErr *json.SyntaxError
-	switch {
-	case errors.As(err, &verr), errors.As(err, &jsonErr):
-		return err
-	default:
-		return NewBindingError(err)
-	}
+	return NewBindingError(err)
 }
 
 func validateBinding(ctx context.Context, obj interface{}) error {

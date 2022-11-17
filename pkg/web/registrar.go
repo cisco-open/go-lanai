@@ -24,8 +24,6 @@ import (
 
 //goland:noinspection GoUnusedConst
 const (
-	kGinContextKey = "GinCtx"
-	kKitContextKey = "KitCtx"
 	DefaultGroup   = "/"
 )
 

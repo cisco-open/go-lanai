@@ -80,7 +80,9 @@ func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 
 		// Because remote access require current context to be authentic during recording mode,
 		// We need this configuration to pass along the security context from the test context to Controller's context.
-		sectest.WithMockedMiddleware(),
+		// Note: 	Since gin-gonic v1.8.0+, this setup is not required anymore for webtest.WithMockedServer. Values in
+		//			request's context is automatically linked with gin.Context.
+		//sectest.WithMockedMiddleware(),
 
 		// Controller requires permissions, we need to mock it for any test that uses webtest.
 		// Note: this only works with webtest.WithMockedServer() and sectest.WithMockedMiddleware() together.

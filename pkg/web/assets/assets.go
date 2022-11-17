@@ -22,6 +22,7 @@ func New(relativePath string, assetsRootPath string) web.StaticMapping {
 /*****************************
 	StaticMapping Interface
 ******************************/
+
 func (m *assetsMapping) Name() string {
 	return m.path
 }

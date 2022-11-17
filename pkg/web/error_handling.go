@@ -96,9 +96,9 @@ type defaultErrorTranslator struct{}
 
 func (i defaultErrorTranslator) Translate(_ context.Context, err error) error {
 	//nolint:errorlint
-	switch err.(type) {
+	switch e := err.(type) {
 	case validator.ValidationErrors:
-		return ValidationErrors{err.(validator.ValidationErrors)}
+		return ValidationErrors{e}
 	case StatusCoder, HttpError:
 		return err
 	default:

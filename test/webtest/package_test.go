@@ -33,7 +33,7 @@ type TestResponse struct {
 	Message string `json:"message"`
 }
 
-type testController struct {}
+type testController struct{}
 
 func newTestController() web.Controller {
 	return &testController{}
@@ -106,6 +106,26 @@ func TestMockedTestServer(t *testing.T) {
 	)
 }
 
+func TestUtilities(t *testing.T) {
+	const altContextPath = "/also-test"
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		WithUtilities(UseContextPath(altContextPath), UseLogLevel(log.LevelDebug)),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			fx.Provide(
+				web.NewEngine,
+				web.NewRegistrar,
+			),
+			fx.Invoke(initialize),
+			web.FxControllerProviders(newTestController),
+		),
+		test.GomegaSubTest(SubTestEchoWithRelativePath(), "EchoWithRelativePath"),
+		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath), "EchoWithAbsolutePath"),
+	)
+}
+
 /*************************
 	Sub Tests
  *************************/
@@ -162,4 +182,3 @@ func assertResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expected
 	g.Expect(e).To(Succeed(), "parsing response body shouldn't fail")
 	g.Expect(tsBody.Message).To(Equal(expectedMsg), "response body should be correct")
 }
-

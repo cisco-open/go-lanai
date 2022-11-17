@@ -93,6 +93,10 @@ func (_ BadRequestError) StatusCode() int {
 	return http.StatusBadRequest
 }
 
+func (e BadRequestError) Unwrap() error {
+	return e.error
+}
+
 type BindingError struct {
 	error
 }
@@ -108,6 +112,10 @@ func (e BindingError) Unwrap() error {
 
 type ValidationErrors struct {
 	validator.ValidationErrors
+}
+
+func (e ValidationErrors) Unwrap() error {
+	return e.ValidationErrors
 }
 
 // MarshalJSON implements json.Marshaler
