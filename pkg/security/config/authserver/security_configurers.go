@@ -151,6 +151,7 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 		opt.ClientStore = c.config.ClientStore
 		opt.WhitelabelErrorPath = c.config.Endpoints.Error
 		opt.RedirectWhitelist = utils.NewStringSet(c.config.properties.RedirectWhitelist...)
+		opt.WhitelabelLoggedOutPath = c.config.Endpoints.LoggedOut
 	})
 
 	oidcLogoutHandler := openid.NewOidcLogoutHandler(func(opt *openid.HandlerOption) {
@@ -160,6 +161,10 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 	})
 	oidcLogoutSuccessHandler := openid.NewOidcSuccessHandler(func(opt *openid.SuccessOption) {
 		opt.ClientStore = c.config.ClientStore
+		opt.WhitelabelErrorPath = c.config.Endpoints.Error
+	})
+
+	oidcEntryPoint := openid.NewOidcEntryPoint(func(opt *openid.EpOption) {
 		opt.WhitelabelErrorPath = c.config.Endpoints.Error
 	})
 
@@ -177,9 +182,11 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 		With(request_cache.New()).
 		With(logout.New().
 			LogoutUrl(c.config.Endpoints.Logout).
+			// By using this instead of AddLogoutHandler, the default logout handler is disabled.
 			LogoutHandlers(logoutHandler, oidcLogoutHandler).
 			AddSuccessHandler(logoutSuccessHandler).
-			AddSuccessHandler(oidcLogoutSuccessHandler),
+			AddSuccessHandler(oidcLogoutSuccessHandler).
+			AddEntryPoint(oidcEntryPoint),
 		).
 		With(samlidp.NewLogout().
 			Issuer(c.config.Issuer).

@@ -8,7 +8,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -16,16 +15,18 @@ import (
 type SuccessOptions func(opt *SuccessOption)
 
 type SuccessOption struct {
-	ClientStore         oauth2.OAuth2ClientStore
-	RedirectWhitelist   utils.StringSet
-	WhitelabelErrorPath string
+	ClientStore             oauth2.OAuth2ClientStore
+	RedirectWhitelist       utils.StringSet
+	WhitelabelErrorPath     string
+	WhitelabelLoggedOutPath string
 }
 
 // TokenRevokeSuccessHandler implements security.AuthenticationSuccessHandler
 type TokenRevokeSuccessHandler struct {
-	clientStore oauth2.OAuth2ClientStore
-	whitelist   utils.StringSet
-	fallback    security.AuthenticationErrorHandler
+	clientStore           oauth2.OAuth2ClientStore
+	whitelist             utils.StringSet
+	fallback              security.AuthenticationErrorHandler
+	defaultSuccessHandler security.AuthenticationSuccessHandler
 }
 
 func NewTokenRevokeSuccessHandler(opts ...SuccessOptions) *TokenRevokeSuccessHandler {
@@ -34,9 +35,10 @@ func NewTokenRevokeSuccessHandler(opts ...SuccessOptions) *TokenRevokeSuccessHan
 		f(&opt)
 	}
 	return &TokenRevokeSuccessHandler{
-		clientStore: opt.ClientStore,
-		fallback:    redirect.NewRedirectWithURL(opt.WhitelabelErrorPath),
-		whitelist:   opt.RedirectWhitelist,
+		clientStore:           opt.ClientStore,
+		fallback:              redirect.NewRedirectWithURL(opt.WhitelabelErrorPath),
+		whitelist:             opt.RedirectWhitelist,
+		defaultSuccessHandler: redirect.NewRedirectWithURL(opt.WhitelabelLoggedOutPath),
 	}
 }
 
@@ -59,7 +61,7 @@ func (h TokenRevokeSuccessHandler) redirect(ctx context.Context, r *http.Request
 	// Note: we don't have error handling alternatives (except for panic)
 	redirectUri := r.FormValue(oauth2.ParameterRedirectUri)
 	if redirectUri == "" {
-		h.fallback.HandleAuthenticationError(ctx, r, rw, security.NewInternalError(fmt.Sprintf("missing %s", oauth2.ParameterRedirectUri)))
+		h.defaultSuccessHandler.HandleAuthenticationSuccess(ctx, r, rw, from, to)
 		return
 	}
 
@@ -80,7 +82,11 @@ func (h TokenRevokeSuccessHandler) redirect(ctx context.Context, r *http.Request
 		resolved = redirectUri
 	}
 
-	redirectUrl := h.appendWarnings(ctx, resolved)
+	h.doRedirect(ctx, r, rw, resolved)
+}
+
+func (h TokenRevokeSuccessHandler) doRedirect(ctx context.Context, r *http.Request, rw http.ResponseWriter, redirectUri string) {
+	redirectUrl := h.appendWarnings(ctx, redirectUri)
 	http.Redirect(rw, r, redirectUrl, http.StatusFound)
 	_, _ = rw.Write([]byte{})
 }

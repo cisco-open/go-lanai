@@ -1,8 +1,32 @@
 package openid
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
+	"errors"
 	"net/http"
+)
+
+const (
+	_ = iota
+	// ErrorSubTypeCodeOidcSlo non-programming error that can occur during oidc RP initiated logout
+	ErrorSubTypeCodeOidcSlo = security.ErrorTypeCodeOidc + iota<<errorutils.ErrorSubTypeOffset
+)
+
+const (
+	_ = ErrorSubTypeCodeOidcSlo + iota
+	ErrorCodeOidcSloRp
+	ErrorCodeOidcSloOp
+)
+
+var (
+	ErrorSubTypeOidcSlo = security.NewErrorSubType(ErrorSubTypeCodeOidcSlo, errors.New("error sub-type: oidc slo"))
+
+	// ErrorOidcSloRp errors are displayed as an HTML page with status 400
+	ErrorOidcSloRp = security.NewCodedError(ErrorCodeOidcSloRp, "SLO rp error")
+	// ErrorOidcSloOp errors are displayed as an HTML page with status 500
+	ErrorOidcSloOp = security.NewCodedError(ErrorCodeOidcSloOp, "SLO op error")
 )
 
 func newOpenIDExtendedError(oauth2Code string, value interface{}, causes []interface{}) error {
@@ -45,5 +69,3 @@ func NewRequestURINotSupportedError(value interface{}, causes ...interface{}) er
 func NewRegistrationNotSupportedError(value interface{}, causes ...interface{}) error {
 	return newOpenIDExtendedError(oauth2.ErrorTranslationRegistrationUnsupported, value, causes)
 }
-
-

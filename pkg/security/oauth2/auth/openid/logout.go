@@ -9,10 +9,25 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
 	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"fmt"
+	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 )
+
+// The OIDC RP initiated SLO is implemented by a set of handlers
+// 1. ConditionalHandler
+// 2. SuccessHandler
+// 3. EntryPoint
+// They work together according to the logic in security/logout/LogoutMiddleware
+// First the ConditionalHandler is executed. The ConditionalHandler checks if all the conditions are met in order for us
+//  to process the logout request. This means when the post_logout_redirect_uri is present, the id_token_hint is valid
+//  and the redirect url can be verified according to the info presented by the id token. This happens in the ShouldLogout
+//  method.
+// If ShouldLogout is ok, Then the LogoutHandler chain continues, and the user is logged out.
+//   after the logout handler chain finishes, the SuccessHandler is called, and the user is redirected according to the
+//   post_logout_redirect_uri
+// If Shouldlogout returns error, the logout process is also stopped, and the EntryPoint is called, which will direct user to an error page.
 
 var ParameterRedirectUri = "post_logout_redirect_uri"
 var ParameterIdTokenHint = "id_token_hint"
@@ -46,10 +61,6 @@ func NewOidcSuccessHandler(opts ...SuccessOptions) *OidcSuccessHandler {
 }
 
 func (o *OidcSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, from, to security.Authentication) {
-	if r.FormValue(ParameterRedirectUri) == "" {
-		return
-	}
-
 	redirectUri := r.FormValue(ParameterRedirectUri)
 	if redirectUri == "" {
 		// as OIDC success handler, we only care about this redirect
@@ -57,7 +68,11 @@ func (o *OidcSuccessHandler) HandleAuthenticationSuccess(c context.Context, r *h
 	}
 
 	state := r.FormValue(ParameterState)
-	redirectUri, err := netutil.AppendRedirectUrl(redirectUri, map[string]string{ParameterState: state})
+	params := make(map[string]string)
+	if state != "" {
+		params[ParameterState] = state
+	}
+	redirectUri, err := netutil.AppendRedirectUrl(redirectUri, params)
 
 	if err != nil {
 		o.fallback.HandleAuthenticationError(c, r, rw, err)
@@ -109,9 +124,10 @@ func (o *OidcLogoutHandler) ShouldLogout(ctx context.Context, request *http.Requ
 	case http.MethodDelete:
 		fallthrough
 	default:
-		return security.NewInternalError(fmt.Sprintf("unsupported http verb %v", request.Method))
+		return ErrorOidcSloRp.WithMessage("unsupported http verb %v", request.Method)
 	}
 
+	//if logout request doesn't have this, we don't consider it a oidc logout request, and let other handle it.
 	redirectUri := request.FormValue(ParameterRedirectUri)
 	if redirectUri == "" {
 		return nil
@@ -119,36 +135,45 @@ func (o *OidcLogoutHandler) ShouldLogout(ctx context.Context, request *http.Requ
 
 	idTokenValue := request.FormValue(ParameterIdTokenHint)
 	if strings.TrimSpace(idTokenValue) == "" {
-		return fmt.Errorf(`id token is required from parameter "%s"`, ParameterIdTokenHint)
+		return ErrorOidcSloRp.WithMessage(`id token is required from parameter "%s"`, ParameterIdTokenHint)
 	}
 
 	claims, err := o.dec.Decode(ctx, idTokenValue)
 	if err != nil {
-		return security.NewInternalError("id token cannot be decoded", err)
+		return ErrorOidcSloRp.WithMessage("id token invalid: %v", err)
 	}
 
 	iss := claims.Get(oauth2.ClaimIssuer)
 	if iss != o.issuer.Identifier() {
-		return security.NewInternalError("id token is not issued by this auth server")
+		return ErrorOidcSloRp.WithMessage("id token is not issued by this auth server")
 	}
 
 	sub := claims.Get(oauth2.ClaimSubject)
 	username, err := security.GetUsername(authentication)
 
 	if err != nil {
-		return security.NewInternalError("Couldn't identify current session user", err)
+		return ErrorOidcSloOp.WithMessage("Couldn't identify current session user")
 	} else if sub != username {
-		return security.NewInternalError("logout request rejected because id token is not from the current session's user.")
+		return ErrorOidcSloRp.WithMessage("logout request rejected because id token is not from the current session's user.")
 	}
 
 	clientId := claims.Get(oauth2.ClaimAudience).(string)
 	client, err := auth.LoadAndValidateClientId(ctx, clientId, o.clientStore)
 	if err != nil {
-		return security.NewInternalError(fmt.Sprintf("error loading client %s", clientId), err)
+		return ErrorOidcSloOp.WithMessage("error loading client %s", clientId)
 	}
 	_, err = auth.ResolveRedirectUri(ctx, redirectUri, client)
 	if err != nil {
-		return security.NewInternalError(fmt.Sprintf("redirect url %s is not registered by client %s", redirectUri, clientId))
+		return ErrorOidcSloRp.WithMessage("redirect url %s is not registered by client %s", redirectUri, clientId)
+	}
+
+	r, err := url.Parse(redirectUri)
+	if err != nil {
+		return ErrorOidcSloRp.WithMessage("redirect url %s is not a valid url", redirectUri)
+	} else {
+		if r.RawQuery != "" {
+			return ErrorOidcSloRp.WithMessage("redirect url %s should not contain query parameter", redirectUri)
+		}
 	}
 
 	return nil
@@ -157,4 +182,39 @@ func (o *OidcLogoutHandler) ShouldLogout(ctx context.Context, request *http.Requ
 func (o *OidcLogoutHandler) HandleLogout(ctx context.Context, request *http.Request, writer http.ResponseWriter, authentication security.Authentication) error {
 	//no op, because the default logout handler is sufficient (deleting the current session etc.)
 	return nil
+}
+
+type EpOptions func(opt *EpOption)
+
+type EpOption struct {
+	WhitelabelErrorPath string
+}
+
+type OidcEntryPoint struct {
+	fallback security.AuthenticationEntryPoint
+}
+
+func NewOidcEntryPoint(opts ...EpOptions) *OidcEntryPoint {
+	opt := EpOption{}
+	for _, f := range opts {
+		f(&opt)
+	}
+	return &OidcEntryPoint{
+		fallback: redirect.NewRedirectWithURL(opt.WhitelabelErrorPath),
+	}
+}
+
+func (o *OidcEntryPoint) Commence(ctx context.Context, request *http.Request, writer http.ResponseWriter, err error) {
+	if !errors.Is(err, ErrorSubTypeOidcSlo) {
+		return
+	}
+	switch {
+	case errors.Is(err, ErrorOidcSloRp):
+		fallthrough
+	case errors.Is(err, ErrorOidcSloRp):
+		fallthrough
+	default:
+		o.fallback.Commence(ctx, request, writer, err)
+	}
+	return
 }

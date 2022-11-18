@@ -76,6 +76,10 @@ func (c *TestLogoutSecConfigurer) Configure(ws security.WebSecurity) {
 	})
 	oidcLogoutSuccessHandler := NewOidcSuccessHandler(func(opt *SuccessOption) {
 		opt.ClientStore = clientStore
+		opt.WhitelabelErrorPath = TestLogoutErrorURL
+	})
+	oidcEntryPoint := NewOidcEntryPoint(func(opt *EpOption) {
+		opt.WhitelabelErrorPath = TestLogoutErrorURL
 	})
 
 	ws.Route(matcher.AnyRoute()).
@@ -87,10 +91,10 @@ func (c *TestLogoutSecConfigurer) Configure(ws security.WebSecurity) {
 		With(request_cache.New()).
 		With(logout.New().
 			LogoutUrl(TestOidcSloPath).
-			AddErrorHandler(redirect.NewRedirectWithURL(TestLogoutErrorURL)).
 			//oidc handler and success handler
 			AddLogoutHandler(oidcLogoutHandler).
 			AddSuccessHandler(oidcLogoutSuccessHandler).
+			AddEntryPoint(oidcEntryPoint).
 			// in real configuration, this would be the success handler for other logout protocols
 			// we expect them to not get called when the logout is for OIDC
 			AddSuccessHandler(redirect.NewRedirectWithURL(TestNonOIDCLogoutSuccessURL)).
@@ -183,7 +187,17 @@ func SubTestLogoutWithWrongIdTokenHint() test.GomegaSubTestFunc {
 
 func SubTestLogoutWithInvalidIdTokenHint() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		idToken := "some-invalid-id-token"
+		anotherJwtStore := jwt.NewSingleJwkStore(TestDefaultKid)
+		anotherEnc := jwt.NewRS256JwtEncoder(anotherJwtStore, TestDefaultKid)
+
+		claims := oauth2.MapClaims{
+			"aud": TestClientID,
+			"iss": issuer.Identifier(),
+			"sub": TestUsername,
+		}
+		idToken, err := anotherEnc.Encode(ctx, claims)
+		g.Expect(err).ToNot(HaveOccurred())
+
 		state := "some-state"
 
 		ctx = sectest.ContextWithSecurity(ctx, mockedAuthentication())
