@@ -210,8 +210,8 @@ func (o *OidcEntryPoint) Commence(ctx context.Context, request *http.Request, wr
 	}
 	switch {
 	case errors.Is(err, ErrorOidcSloRp):
-		fallthrough
-	case errors.Is(err, ErrorOidcSloRp):
+		fallthrough //currently we don't have any rp or op specific error handling requirements.
+	case errors.Is(err, ErrorOidcSloOp):
 		fallthrough
 	default:
 		o.fallback.Commence(ctx, request, writer, err)
