@@ -38,7 +38,7 @@ func NewTokenRevokeSuccessHandler(opts ...SuccessOptions) *TokenRevokeSuccessHan
 		clientStore:           opt.ClientStore,
 		fallback:              redirect.NewRedirectWithURL(opt.WhitelabelErrorPath),
 		whitelist:             opt.RedirectWhitelist,
-		defaultSuccessHandler: redirect.NewRedirectWithURL(opt.WhitelabelLoggedOutPath),
+		defaultSuccessHandler: redirect.NewRedirectWithRelativePath(opt.WhitelabelLoggedOutPath, true),
 	}
 }
 
