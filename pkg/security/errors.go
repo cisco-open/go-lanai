@@ -18,6 +18,7 @@ const (
 	ErrorTypeCodeInternal
 	ErrorTypeCodeOAuth2
 	ErrorTypeCodeSaml
+	ErrorTypeCodeOidc
 	ErrorTypeCodeTenancy
 )
 
@@ -77,6 +78,7 @@ var (
 	ErrorTypeAccessControl  = NewErrorType(ErrorTypeCodeAccessControl, errors.New("error type: access control"))
 	ErrorTypeInternal       = NewErrorType(ErrorTypeCodeInternal, errors.New("error type: internal"))
 	ErrorTypeSaml           = NewErrorType(ErrorTypeCodeSaml, errors.New("error type: saml"))
+	ErrorTypeOidc           = NewErrorType(ErrorTypeCodeOidc, errors.New("error type: oidc"))
 
 	ErrorSubTypeInternalError        = NewErrorSubType(ErrorSubTypeCodeInternal, errors.New("error sub-type: internal"))
 	ErrorSubTypeUsernamePasswordAuth = NewErrorSubType(ErrorSubTypeCodeUsernamePasswordAuth, errors.New("error sub-type: internal"))

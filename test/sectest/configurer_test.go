@@ -114,14 +114,32 @@ func TestCustomMWMocking(t *testing.T) {
 	)
 }
 
-func TestRealServerMWMocking(t *testing.T) {
+func TestRealServerMWMockingViaMocker(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		webtest.WithRealServer(),
 		WithMockedMiddleware(
-			// Custom Mocker is required for real server
-			//MWCustomMocker(MWMockFunc(realServerMockFunc)),
+			// Custom Mocker is required for real server, Option 1, directly provide a MWMocker
+			MWCustomMocker(MWMockFunc(realServerMockFunc)),
+		),
+		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			fx.Invoke(registerTestController, registerTestSecurity),
+		),
+		test.GomegaSubTest(SubTestSuccessWithRealServer(di), "TestSuccessWithRealServer"),
+		test.GomegaSubTest(SubTestFailedWithRealServer(di), "TestFailedWithRealServer"),
+	)
+}
+
+func TestRealServerMWMockingViaConfigurer(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithRealServer(),
+		WithMockedMiddleware(
+			// Custom Mocker is required for real server, Option 2, via security.Configurer
 			MWCustomConfigurer(security.ConfigurerFunc(realServerSecConfigurer)),
 		),
 		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
@@ -164,10 +182,9 @@ func SubTestWithMockedContext(_ *testDI) test.GomegaSubTestFunc {
 
 func SubTestCustomOptions(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		ctx = WithMockedSecurity(ctx, securityMock())
 		var req *http.Request
 		var resp *http.Response
-		// GET, condition not matched
+		// GET, condition matched
 		req = webtest.NewRequest(ctx, http.MethodGet, TestSecuredURL, nil)
 		resp = webtest.MustExec(ctx, req).Response
 		g.Expect(resp).To(Not(BeNil()), "response shouldn't be nil")

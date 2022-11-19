@@ -20,13 +20,14 @@ var (
 		oauth2.ClaimAccessTokenHash: RequiredIfImplicitFlow(AccessTokenHash),
 
 		// Custom Profile
-		oauth2.ClaimUserId:          Optional(UserId),
-		oauth2.ClaimAccountType:     Optional(AccountType),
-		oauth2.ClaimTenantId:        Optional(TenantId),
-		oauth2.ClaimTenantExternalId:      Optional(TenantExternalId),
-		oauth2.ClaimTenantSuspended: Optional(TenantSuspended),
-		oauth2.ClaimProviderId:      Optional(ProviderId),
-		oauth2.ClaimProviderName:    Optional(ProviderName),
-		oauth2.ClaimOrigUsername:    Optional(OriginalUsername),
+		oauth2.ClaimUserId:           Optional(UserId),
+		oauth2.ClaimAccountType:      Optional(AccountType),
+		oauth2.ClaimTenantId:         Optional(TenantId),
+		oauth2.ClaimTenantExternalId: Optional(TenantExternalId),
+		oauth2.ClaimTenantSuspended:  Optional(TenantSuspended),
+		oauth2.ClaimProviderId:       Optional(ProviderId),
+		oauth2.ClaimProviderName:     Optional(ProviderName),
+		oauth2.ClaimOrigUsername:     Optional(OriginalUsername),
+		oauth2.ClaimRoles:            Optional(Roles),
 	}
 )

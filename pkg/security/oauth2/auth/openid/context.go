@@ -35,7 +35,7 @@ var (
 		oauth2.GrantTypeSwitchUser,
 		oauth2.GrantTypeSwitchTenant,
 	)
-	SupportedDisplayMode = utils.NewStringSet(DisplayPage, PromptTouch)
+	SupportedDisplayMode  = utils.NewStringSet(DisplayPage, PromptTouch)
 	FullIdTokenGrantTypes = utils.NewStringSet(
 		oauth2.GrantTypePassword,
 		oauth2.GrantTypeSwitchUser,
@@ -82,6 +82,7 @@ const (
 	OPMetadataRequiresRequestUriReg = "require_request_uri_registration"
 	OPMetadataPolicyUri             = "op_policy_uri"
 	OPMetadataTosUri                = "op_tos_uri"
+	OPMetadataEndSessionEndpoint    = "end_session_endpoint"
 )
 
 // OPMetadata leverage claims implementations

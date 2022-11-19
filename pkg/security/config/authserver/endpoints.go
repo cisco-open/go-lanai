@@ -70,10 +70,11 @@ func notAcceptJwtMatcher() web.RequestMatcher {
 
 func prepareWellKnownEndpoint(config *Configuration) *misc.WellKnownEndpoint {
 	extra := map[string]interface{}{
-		openid.OPMetadataAuthEndpoint: config.Endpoints.Authorize.Location.Path,
-		openid.OPMetadataTokenEndpoint: config.Endpoints.Token,
-		openid.OPMetadataUserInfoEndpoint: config.Endpoints.UserInfo,
-		openid.OPMetadataJwkSetURI: config.Endpoints.JwkSet,
+		openid.OPMetadataAuthEndpoint:       config.Endpoints.Authorize.Location.Path,
+		openid.OPMetadataTokenEndpoint:      config.Endpoints.Token,
+		openid.OPMetadataUserInfoEndpoint:   config.Endpoints.UserInfo,
+		openid.OPMetadataJwkSetURI:          config.Endpoints.JwkSet,
+		openid.OPMetadataEndSessionEndpoint: config.Endpoints.Logout,
 	}
 	return misc.NewWellKnownEndpoint(config.Issuer, config.IdpManager, extra)
 }

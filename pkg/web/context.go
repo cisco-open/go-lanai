@@ -91,6 +91,9 @@ type ErrorTranslator interface {
 // ErrorTranslateFunc is similar to ErrorTranslator in function format. Mostly used for selective error translation
 // registration (ErrorHandlerMapping). Same implementing rules applies
 type ErrorTranslateFunc func(ctx context.Context, err error) error
+func (fn ErrorTranslateFunc) Translate(ctx context.Context, err error) error {
+	return fn(ctx, err)
+}
 
 /*********************************
 	Mappings

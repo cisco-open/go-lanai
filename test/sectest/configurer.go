@@ -46,10 +46,27 @@ var defaultMWMockOption = MWMockOption{
 	Route:    matcher.AnyRoute(),
 }
 
-// WithMockedMiddleware is a test option that automatically install a middleware that populate/save security.Authentication
-// into gin.Context.
-// This option works with webtest.WithMockedServer and by default extract security.Authentication from request's context
-// See examples package for more details
+// WithMockedMiddleware is a test option that automatically install a middleware that populate/save
+// security.Authentication into gin.Context.
+//
+// This test option works with webtest.WithMockedServer without any additional settings:
+// - By default extract security.Authentication from request's context.
+// Note: 	Since gin-gonic v1.8.0+, this test option is not required anymore for webtest.WithMockedServer. Values in
+//			request's context is automatically linked with gin.Context.
+//
+// When using with webtest.WithRealServer, a custom MWMocker is required. The MWMocker can be provided by:
+// - Using MWCustomMocker option
+// - Providing a MWMocker using uber/fx
+// - Providing a security.Configurer with NewMockedMW:
+// 		<code>
+// 		func realServerSecConfigurer(ws security.WebSecurity) {
+//			ws.Route(matcher.AnyRoute()).
+//				With(NewMockedMW().
+//					Mocker(MWMockFunc(realServerMockFunc)),
+//				)
+// 		}
+// 		</code>
+// See examples package for more details.
 func WithMockedMiddleware(opts ...MWMockOptions) test.Options {
 	opt := defaultMWMockOption
 	for _, fn := range opts {

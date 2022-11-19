@@ -30,7 +30,7 @@ func WithRealServer(opts ...TestServerOptions) test.Options {
 		fn(&conf)
 	}
 	props := toProperties(&conf)
-	di := setupDI{}
+	di := realSvrDI{}
 	return test.WithOptions(
 		apptest.WithModules(webinit.Module),
 		apptest.WithProperties(props...),
@@ -53,10 +53,37 @@ func WithMockedServer(opts ...TestServerOptions) test.Options {
 		fn(&conf)
 	}
 	props := toProperties(&conf)
-	di := setupDI{}
+	di := mockedSvrDI{}
 	return test.WithOptions(
 		apptest.WithModules(mockedWebModule),
 		apptest.WithProperties(props...),
+		apptest.WithDI(&di),
+		test.SubTestSetup(testSetupEngineExtractor(&conf, &di)),
+	)
+}
+
+// WithUtilities DOES NOT initialize web package, it only provide properties and setup utilities (e.g. MustExec)
+// Important: this mode is mostly for go-lanai internal tests. DO NOT use it in microservices
+//
+// NewRequest(), Exec() and MustExec() can be used to create/send request and verifying result without creating an actual http connection.
+// Note: In this mode, httptest package is used internally and http.Handler (*web.Engine in our case) is invoked directly
+func WithUtilities(opts ...TestServerOptions) test.Options {
+	conf := TestServerConfig{
+		ContextPath: DefaultContextPath,
+		LogLevel:    log.LevelInfo,
+	}
+	for _, fn := range opts {
+		fn(&conf)
+	}
+	props := toProperties(&conf)
+	di := mockedSvrDI{}
+	return test.WithOptions(
+		apptest.WithProperties(props...),
+		apptest.WithFxOptions(
+			fx.Provide(
+				web.BindServerProperties,
+			),
+		),
 		apptest.WithDI(&di),
 		test.SubTestSetup(testSetupEngineExtractor(&conf, &di)),
 	)
@@ -84,10 +111,15 @@ func UseLogLevel(lvl log.LoggingLevel) TestServerOptions {
 	}
 }
 
-type setupDI struct {
+type realSvrDI struct {
 	fx.In
 	Registrar *web.Registrar
 	Engine    *web.Engine
+}
+
+type mockedSvrDI struct {
+	fx.In
+	Engine    *web.Engine `optional:"true"`
 }
 
 func toProperties(conf *TestServerConfig) []string {
@@ -99,7 +131,7 @@ func toProperties(conf *TestServerConfig) []string {
 	}
 }
 
-func testSetupAddrExtractor(conf *TestServerConfig, di *setupDI) test.SetupFunc {
+func testSetupAddrExtractor(conf *TestServerConfig, di *realSvrDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		info := serverInfo{
 			hostname:    "127.0.0.1",
@@ -110,7 +142,7 @@ func testSetupAddrExtractor(conf *TestServerConfig, di *setupDI) test.SetupFunc 
 	}
 }
 
-func testSetupEngineExtractor(conf *TestServerConfig, di *setupDI) test.SetupFunc {
+func testSetupEngineExtractor(conf *TestServerConfig, di *mockedSvrDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		info := serverInfo{
 			contextPath: conf.ContextPath,

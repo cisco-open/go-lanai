@@ -60,5 +60,6 @@ var (
 		OPMetadataRequiresRequestUriReg: claims.Unsupported(),
 		OPMetadataPolicyUri:             claims.Unsupported(),
 		OPMetadataTosUri:                claims.Unsupported(),
+		OPMetadataEndSessionEndpoint:    opMetaEndpoint(OPMetadataEndSessionEndpoint),
 	}
 )
