@@ -89,11 +89,13 @@ func (b *MappingBuilder) Build() web.MiddlewareMapping {
 		condition = b.condition
 	}
 
-	switch handlerFunc.(type) {
+	switch v := handlerFunc.(type) {
 	case gin.HandlerFunc:
-		return web.NewMiddlewareGinMapping(b.name, b.order, b.matcher, condition, handlerFunc.(gin.HandlerFunc))
-	case http.HandlerFunc, web.HandlerFunc:
-		return web.NewMiddlewareMapping(b.name, b.order, b.matcher, condition, handlerFunc.(web.HandlerFunc))
+		return web.NewMiddlewareGinMapping(b.name, b.order, b.matcher, condition, v)
+	case http.HandlerFunc:
+		return web.NewMiddlewareMapping(b.name, b.order, b.matcher, condition, web.HandlerFunc(v))
+	case web.HandlerFunc:
+		return web.NewMiddlewareMapping(b.name, b.order, b.matcher, condition, v)
 	default:
 		panic(fmt.Errorf("unable to build '%s' middleware mapping: unsupported HandlerFunc type %v. please use With(...) or Use(...)", b.name, handlerFunc))
 	}
