@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/authorize"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/clientauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/openid"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/revoke"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/token"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
@@ -150,6 +151,21 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 		opt.ClientStore = c.config.ClientStore
 		opt.WhitelabelErrorPath = c.config.Endpoints.Error
 		opt.RedirectWhitelist = utils.NewStringSet(c.config.properties.RedirectWhitelist...)
+		opt.WhitelabelLoggedOutPath = c.config.Endpoints.LoggedOut
+	})
+
+	oidcLogoutHandler := openid.NewOidcLogoutHandler(func(opt *openid.HandlerOption) {
+		opt.Dec = c.config.sharedJwtDecoder
+		opt.Issuer = c.config.Issuer
+		opt.ClientStore = c.config.ClientStore
+	})
+	oidcLogoutSuccessHandler := openid.NewOidcSuccessHandler(func(opt *openid.SuccessOption) {
+		opt.ClientStore = c.config.ClientStore
+		opt.WhitelabelErrorPath = c.config.Endpoints.Error
+	})
+
+	oidcEntryPoint := openid.NewOidcEntryPoint(func(opt *openid.EpOption) {
+		opt.WhitelabelErrorPath = c.config.Endpoints.Error
 	})
 
 	errHandler := redirect.NewRedirectWithURL(c.config.Endpoints.Error)
@@ -166,8 +182,11 @@ func (c *LogoutEndpointConfigurer) Configure(ws security.WebSecurity) {
 		With(request_cache.New()).
 		With(logout.New().
 			LogoutUrl(c.config.Endpoints.Logout).
-			LogoutHandlers(logoutHandler).
-			AddSuccessHandler(logoutSuccessHandler),
+			// By using this instead of AddLogoutHandler, the default logout handler is disabled.
+			LogoutHandlers(logoutHandler, oidcLogoutHandler).
+			AddSuccessHandler(logoutSuccessHandler).
+			AddSuccessHandler(oidcLogoutSuccessHandler).
+			AddEntryPoint(oidcEntryPoint),
 		).
 		With(samlidp.NewLogout().
 			Issuer(c.config.Issuer).

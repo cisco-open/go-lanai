@@ -76,6 +76,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 			JwkSet:     di.Properties.Endpoints.JwkSet,
 			Error:      di.Properties.Endpoints.Error,
 			Logout:     di.Properties.Endpoints.Logout,
+			LoggedOut:  di.Properties.Endpoints.LoggedOut,
 			SamlSso: ConditionalEndpoint{
 				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize, RawQuery: fmt.Sprintf("%s=%s", oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO)},
 				Condition: matcher.RequestWithForm(oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO),
@@ -139,6 +140,7 @@ type Endpoints struct {
 	UserInfo        string
 	JwkSet          string
 	Logout          string
+	LoggedOut       string
 	Error           string
 	SamlSso         ConditionalEndpoint
 	SamlMetadata    string
