@@ -26,10 +26,9 @@ type HanlderOption struct {
 /**
  * GET method: used for logout by the session controlled clients. The client send user to this endpoint and the session
  * is invalidated. As a result, the tokens controlled by this session is invalidated (See the NfvClientDetails.useSessionTimeout
- * properties). In addition, if an access token is passed in the request, the access token will be invalidated explicitly.
+ * properties). It's also used by SSO logout (OIDC, and SAML GET Binding). In those case, the session is invalidated.
  *
- * POST method: used for SSO logout. Typically browser based. The client redirect user to this endpoint and
- * we revoke all tokens associated with this user
+ * POST method: used for logout by SSO logout (SAML POST Binding). The session is invalidated.
  *
  * PUT/DELETE method: used for token revocation. Typically for service login or token revocation. We grab token
  * from header and revoke this only this token.
@@ -41,7 +40,7 @@ type TokenRevokingLogoutHandler struct {
 	revoker auth.AccessRevoker
 }
 
-func NewTokenRevokingLogoutHandler(opts...HanlderOptions) *TokenRevokingLogoutHandler {
+func NewTokenRevokingLogoutHandler(opts ...HanlderOptions) *TokenRevokingLogoutHandler {
 	opt := HanlderOption{}
 	for _, f := range opts {
 		f(&opt)
@@ -54,9 +53,9 @@ func NewTokenRevokingLogoutHandler(opts...HanlderOptions) *TokenRevokingLogoutHa
 func (h TokenRevokingLogoutHandler) HandleLogout(ctx context.Context, r *http.Request, rw http.ResponseWriter, auth security.Authentication) error {
 	switch r.Method {
 	case http.MethodGet:
-		return h.handleGet(ctx, auth)
+		fallthrough
 	case http.MethodPost:
-		return h.handlePost(ctx, auth)
+		return h.handleGetOrPost(ctx, auth)
 	case http.MethodPut:
 		fallthrough
 	case http.MethodDelete:
@@ -65,7 +64,7 @@ func (h TokenRevokingLogoutHandler) HandleLogout(ctx context.Context, r *http.Re
 	return nil
 }
 
-func (h TokenRevokingLogoutHandler) handleGet(ctx context.Context, auth security.Authentication) error {
+func (h TokenRevokingLogoutHandler) handleGetOrPost(ctx context.Context, auth security.Authentication) error {
 	defer func() {
 		security.Clear(ctx)
 		session.Clear(ctx)
@@ -83,26 +82,8 @@ func (h TokenRevokingLogoutHandler) handleGet(ctx context.Context, auth security
 	return nil
 }
 
-func (h TokenRevokingLogoutHandler) handlePost(ctx context.Context, auth security.Authentication) error  {
-	defer func() {
-		security.Clear(ctx)
-		session.Clear(ctx)
-	}()
-	username, e := security.GetUsername(auth)
-	if e != nil || username == "" {
-		logger.WithContext(ctx).Debugf("invalid use of POST /logout endpoint. session is not found")
-		return e
-	}
-
-	if e := h.revoker.RevokeWithUsername(ctx, username, true); e != nil {
-		logger.WithContext(ctx).Warnf("unable to revoke tokens with username %s: %v", username, e)
-		return e
-	}
-	return nil
-}
-
 // In case of PUT, DELETE, PATCH etc, we don't clean authentication. Instead, we invalidate access token carried by header
-func (h TokenRevokingLogoutHandler) handleDefault(ctx context.Context, r *http.Request) error  {
+func (h TokenRevokingLogoutHandler) handleDefault(ctx context.Context, r *http.Request) error {
 	// grab token
 	tokenValue, e := h.extractAccessToken(ctx, r)
 	if e != nil {
@@ -131,5 +112,3 @@ func (h TokenRevokingLogoutHandler) extractAccessToken(ctx context.Context, r *h
 	}
 	return value, nil
 }
-
-
