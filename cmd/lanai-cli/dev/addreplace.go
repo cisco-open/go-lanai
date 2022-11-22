@@ -1,11 +1,15 @@
 package dev
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/spf13/cobra"
+	"os"
+	"path/filepath"
+	"sort"
 )
 
 var (
@@ -47,43 +51,60 @@ func RunAddReplace(cmd *cobra.Command, _ []string) error {
 	}
 
 	// find all available modules
-	localMods, e := resolveLocalMods(cmd.Context(), AddReplaceArgs.SearchPaths...)
+	localModsMapping, e := resolveLocalMods(cmd.Context(), AddReplaceArgs.SearchPaths...)
 	if e != nil {
 		return e
 	}
-
-	// find all required modules (using `go list -m`), including sub modules
-	subModFiles, e := findLocalGoMods(cmdutils.GlobalArgs.WorkingDir)
-	if e != nil {
-		return fmt.Errorf(`command need to run under a valid go module folder. cannot find "go.mod": %v`, e)
+	localModsReversedMapping := map[string]string{}
+	for k, v := range localModsMapping {
+		localModsReversedMapping[v] = k
 	}
-	requires := utils.NewStringSet()
-	for _, modFile := range subModFiles {
-		mods, e := cmdutils.FindModule(cmd.Context(), []cmdutils.GoCmdOptions{cmdutils.GoCmdModFile(modFile)}, "all")
-		if e != nil {
-			return fmt.Errorf(`cannot open "go.mod": %v`, e)
+
+	// find all required modules, including sub modules
+	requires, e := resolveRequiredModules(cmd.Context())
+
+	// resolve modules that need to be replaced
+	toReplaceMods := utils.NewStringSet()
+	for mod := range requires {
+		if !pathMatches(mod, toBeReplaced) || mod == targetMod.Module.Path {
+			continue
 		}
-		for _, mod := range mods {
-			requires.Add(mod.Path)
+		localPath, ok := localModsMapping[mod]
+		if !ok {
+			continue
+		}
+		toReplaceMods.Add(mod)
+
+		// special treatment, if the local mod path is not git repo root, we need to add replace for its repo root to avoid error:
+		// "ambiguous import: found package git/repo-root/sub-module in multiple modules:
+		//  	git/repo-root/sub-module@version
+		// 		git/repo-root@version"
+		if cmdutils.IsGitRepoRoot(localPath) {
+			continue
+		}
+
+		localRootMod := resolveGitRepoRootModFile(localPath)
+		if rootMod, ok := localModsReversedMapping[localRootMod]; ok {
+			toReplaceMods.Add(rootMod)
+		} else {
+			logger.WithContext(cmd.Context()).Warnf(`Unable to find Git repo root of %s: `, e)
 		}
 	}
 
 	// add replace to target mod file
 	var replaces []*cmdutils.Replace
-	for reqPath := range requires {
-		if !pathMatches(reqPath, toBeReplaced) || reqPath == targetMod.Module.Path {
-			continue
-		}
-		modPath, ok := localMods[reqPath]
-		if !ok {
-			continue
-		}
-		relModPath := resolveLocalReplacePath(modPath, cmdutils.GlobalArgs.WorkingDir)
-		logger.Debugf(`Replacing %s => %s`, reqPath, relModPath)
+	for reqPath := range toReplaceMods {
+		relModPath := resolveLocalReplacePath(localModsMapping[reqPath], cmdutils.GlobalArgs.WorkingDir)
 		replaces = append(replaces, &cmdutils.Replace{
 			Old: cmdutils.Module{Path: reqPath},
 			New: cmdutils.Module{Path: relModPath},
 		})
+	}
+	sort.SliceStable(replaces, func(i, j int) bool {
+		return replaces[i].Old.Path < replaces[j].Old.Path
+	})
+	for _, r := range replaces {
+		logger.Debugf(`Replacing %s => %s`, r.Old.Path, r.New.Path)
 	}
 
 	cmdutils.ShCmdLogDisabled = false
@@ -97,4 +118,35 @@ func RunAddReplace(cmd *cobra.Command, _ []string) error {
 	}
 
 	return nil
+}
+
+func resolveRequiredModules(ctx context.Context) (utils.StringSet, error) {
+	subModFiles, e := findLocalGoModFiles(cmdutils.GlobalArgs.WorkingDir)
+	if e != nil {
+		return nil, fmt.Errorf(`command need to run under a valid go module folder. cannot find "go.mod": %v`, e)
+	}
+	requires := utils.NewStringSet()
+	for _, modFile := range subModFiles {
+		// using `go list -m`
+		mods, e := cmdutils.FindModule(ctx, []cmdutils.GoCmdOptions{cmdutils.GoCmdModFile(modFile)}, "all")
+		if e != nil {
+			return nil, fmt.Errorf(`cannot open "go.mod": %v`, e)
+		}
+		for _, mod := range mods {
+			requires.Add(mod.Path)
+		}
+	}
+	return requires, nil
+}
+
+func resolveGitRepoRootModFile(subModPath string) string {
+	repoRoot, e := cmdutils.FindGitRepoRoot(subModPath)
+	if e != nil {
+		return ""
+	}
+	repoRootModFile := filepath.Join(repoRoot, "go.mod")
+	if _, e := os.Stat(repoRootModFile); e == nil {
+		return repoRootModFile
+	}
+	return ""
 }

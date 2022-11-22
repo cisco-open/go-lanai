@@ -11,7 +11,7 @@ import (
 )
 
 // resolveLocalMods search for given search paths and find all go.mod files
-func findLocalGoMods(searchPaths ...string) ([]string, error) {
+func findLocalGoModFiles(searchPaths ...string) ([]string, error) {
 	var ret []string
 	for _, path := range searchPaths {
 		relPath := toRelativePath(path, cmdutils.GlobalArgs.WorkingDir)
@@ -32,7 +32,7 @@ func findLocalGoMods(searchPaths ...string) ([]string, error) {
 // It returns a map of Module name with its absolute file path
 func resolveLocalMods(ctx context.Context, searchPaths ...string) (map[string]string, error) {
 	ret := map[string]string{}
-	modPaths, e := findLocalGoMods(searchPaths...)
+	modPaths, e := findLocalGoModFiles(searchPaths...)
 	if e != nil {
 		return nil, e
 	}
