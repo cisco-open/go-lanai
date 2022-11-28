@@ -24,7 +24,7 @@ import (
 
 //goland:noinspection GoUnusedConst
 const (
-	DefaultGroup   = "/"
+	DefaultGroup = "/"
 )
 
 type Registrar struct {
@@ -101,6 +101,9 @@ func (r *Registrar) Initialize(ctx context.Context) (err error) {
 	// before starting to register mappings, we want global MW to take effect on our main group
 	var contextPath = pathutils.Clean("/" + r.properties.ContextPath)
 	r.router = r.engine.Group(contextPath)
+
+	// don't remove trailing slashes on requests causing 301 + response
+	r.engine.RedirectTrailingSlash = false
 
 	// register routedMappings to gin engine
 	if err = r.installMappings(ctx); err != nil {
