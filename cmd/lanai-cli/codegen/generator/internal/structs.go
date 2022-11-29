@@ -4,7 +4,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal/representation"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
-	"regexp"
 	"strings"
 	"text/template"
 )
@@ -47,13 +46,8 @@ func requiredList(val interface{}) ([]string, error) {
 }
 
 func defaultNameFromPath(val string) string {
-	parts := regexp.MustCompile(".+\\/(v\\d+)\\/(.+)").FindStringSubmatch(val)
-	var path string
-	if len(parts) == 3 {
-		path = parts[2]
-	}
-	path = strings.ReplaceAll(path, "{", "/")
-	path = strings.ReplaceAll(path, "}", "")
+	path := pathPart(val, PathAfterVersion)
+	path = replaceParameterDelimiters(path, "/", "")
 	pathParts := strings.Split(path, "/")
 
 	// make this camelCase

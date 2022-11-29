@@ -24,9 +24,11 @@ type templateInfo struct {
 }
 
 type Option struct {
-	Template *template.Template
-	Data     map[string]interface{}
-	FS       fs.FS
+	Template      *template.Template
+	Data          map[string]interface{}
+	FS            fs.FS
+	PriorityOrder int
+	Prefix        string
 }
 
 func WithFS(filesystem fs.FS) func(o *Option) {
@@ -47,9 +49,21 @@ func WithTemplate(template *template.Template) func(o *Option) {
 	}
 }
 
+func WithPriorityOrder(order int) func(o *Option) {
+	return func(o *Option) {
+		o.PriorityOrder = order
+	}
+}
+
+func WithPrefix(prefix string) func(o *Option) {
+	return func(o *Option) {
+		o.Prefix = prefix
+	}
+}
 func NewGenerators(opts ...func(*Option)) Generators {
 	ret := Generators{
 		generators: []Generator{
+			newApiGenerator(append(opts, WithPrefix("api.struct."), WithPriorityOrder(defaultApiPriorityOrder-1))...),
 			newApiGenerator(opts...),
 			newProjectGenerator(opts...),
 			newDirectoryGenerator(opts...),

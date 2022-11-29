@@ -57,7 +57,7 @@ func RunDropReplace(cmd *cobra.Command, _ []string) error {
 	changed = len(dropped) != 0
 
 	if changed {
-		if e := cmdutils.GoModTidy(cmd.Context()); e != nil {
+		if e := cmdutils.GoModTidy(cmd.Context(), nil); e != nil {
 			return e
 		}
 	}
