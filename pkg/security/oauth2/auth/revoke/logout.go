@@ -26,9 +26,11 @@ type HanlderOption struct {
 /**
  * GET method: used for logout by the session controlled clients. The client send user to this endpoint and the session
  * is invalidated. As a result, the tokens controlled by this session is invalidated (See the NfvClientDetails.useSessionTimeout
- * properties). It's also used by SSO logout (OIDC, and SAML GET Binding). In those case, the session is invalidated.
+ * properties). It's also used by SSO logout (OIDC, and SAML GET Binding). In those case, the session is invalidated, and the
+ * token controlled by the session is invalidated in the same way.
  *
- * POST method: used for logout by SSO logout (SAML POST Binding). The session is invalidated.
+ * POST method: used for logout by SSO logout (SAML POST Binding). The session is invalidated, and the token controlled
+ * by the session is invalidated (same as the GET method).
  *
  * PUT/DELETE method: used for token revocation. Typically for service login or token revocation. We grab token
  * from header and revoke this only this token.
