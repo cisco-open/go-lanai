@@ -73,7 +73,7 @@ func (h TokenRevokingLogoutHandler) handleGetOrPost(ctx context.Context, auth se
 	}()
 	s := session.Get(ctx)
 	if s == nil {
-		logger.WithContext(ctx).Debugf("invalid use of GET /logout endpoint. session is not found")
+		logger.WithContext(ctx).Debugf("invalid use of GET/POST	 /logout endpoint. session is not found")
 		return nil
 	}
 
