@@ -1,0 +1,78 @@
+{{ define "SchemaProperties" }}
+    {{- $schema := index . 0 -}}
+    {{- $importPrefix := index . 1 }}
+    {{- $numArgs := len . }}
+
+    {{- with $schema.Data.Ref }}
+        {{ template "EmbedStruct" args . $importPrefix }}
+    {{- else }}
+        {{- template "propertiesFromSchema" args $schema }}
+        {{- range $schema.Data.Value.AllOf }}
+            {{- $innerSchema := schema $schema.Name . }}
+            {{- template "SchemaProperties" args $innerSchema $importPrefix }}
+        {{- end }}
+        {{- template "additionalProperties" $schema.Data }}
+    {{- end }}
+{{- end }}
+
+{{ define "additionalProperties" }}
+    {{- with .Value.AdditionalProperties }}
+        {{- $property := property "" . }}
+        {{- $additionalPropsType := propertyType $property }}
+            Values *map[string]{{ $additionalPropsType }}
+    {{- end }}
+{{- end }}
+
+{{ define "propertiesFromSchema" }}
+    {{- $schema := index . 0 }}
+    {{- $requiredList := requiredList $schema.Data }}
+    {{- range $propName, $prop := $schema.Data.Value.Properties }}
+        {{- $property := property $propName $prop }}
+        {{- $property = propertyTypePrefix $property $schema.Name }}
+        {{ template "properties" args $property $requiredList}}
+    {{- end }}
+{{- end }}
+
+{{ define "properties" }}
+   {{- $property := index . 0 }}
+   {{- $requiredList := index . 1 }}
+   {{- toTitle $property.PropertyName }} {{ template "pointer" args $property $requiredList }}{{ propertyType $property }} {{ structTag $property $requiredList}}`
+{{- end }}
+
+{{ define "pointer" }}
+   {{- $property := index . 0 }}
+    {{- $requiredList := index . 1 }}
+   {{- $prop := $property.PropertyData }}
+    {{- $propIsRequired := listContains $requiredList $property.PropertyName }}
+    {{- if shouldHavePointer $prop $propIsRequired }} * {{- end }}
+{{- end }}
+
+{{ define "EmbedStruct" }}
+    {{- $ref := index . 0 }}
+    {{- $structName := basePath $ref }}
+    {{- $structName = toTitle $structName }}
+    {{- $structLocation := structLocation $structName }}
+
+    {{- $currentPkg := index . 1 }}
+    {{- $pkgName := basePath $structLocation }}
+    {{- /* Don't put prefix if the current package is the same location as where the struct is from */ -}}
+    {{- with ne $currentPkg $structLocation }}{{ $pkgName }}.{{ end }}{{ toTitle $structName }}
+{{- end }}
+
+{{ define "ParameterProperty" }}
+    {{- $parameter := index . 0 }}
+
+    {{- $importPrefix := "" }}
+    {{- $arraySize := len . }}
+    {{- if gt $arraySize 1 }}
+        {{- $importPrefix = index . 1 }}
+    {{- end }}
+
+    {{- $requiredList := requiredList $parameter.Value }}
+    {{- with $parameter.Ref }}
+        {{- template "EmbedStruct" args . $importPrefix }}
+    {{- else }}
+        {{- $property := property $parameter.Value.Name $parameter.Value }}
+        {{- template "properties" args $property $requiredList}}
+    {{- end }}
+{{- end }}

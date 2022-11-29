@@ -15,6 +15,10 @@ type ApiGenerator struct {
 	filesystem fs.FS
 }
 
+var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
+
+const apiGenerationOrder = 1
+
 func newApiGenerator(opts ...func(option *Option)) *ApiGenerator {
 	o := &Option{}
 	for _, fn := range opts {
@@ -36,24 +40,22 @@ func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 	iterateOver := m.data[OpenAPIData].(*openapi3.T).Paths
 	var toGenerate []GenerationContext
 	for pathName, pathData := range iterateOver {
-		// TODO: Function to determine baseFilename
-		baseFilename := strings.ReplaceAll(pathName, "/", "") + ".go"
-		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), m.data, m.filesystem)
+		data := copyOf(m.data)
+		data["PathData"] = pathData
+		data["PathName"] = pathName
+		data["Version"] = apiVersion(pathName)
+
+		baseFilename := filenameFromPath(pathName)
+		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data, m.filesystem)
 		if err != nil {
 			return err
 		}
 
-		filename := path.Join(targetDir, baseFilename)
-
-		data := copyOf(m.data)
-		data["PathData"] = pathData
-		data["PathName"] = pathName
 		toGenerate = append(toGenerate, *NewGenerationContext(
 			tmplPath,
-			filename,
+			path.Join(targetDir, baseFilename),
 			data,
 		))
-
 	}
 
 	for _, gc := range toGenerate {
@@ -65,4 +67,33 @@ func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 	}
 
 	return nil
+}
+
+func filenameFromPath(pathName string) string {
+	// Use everything that comes after the version name
+	// /my/api/v1/testpath/{scope} -> testpath_scope.go
+	parts := versionRegex.FindStringSubmatch(pathName)
+	result := pathName
+	if len(parts) == 3 {
+		result = parts[2] //testpath/{scope}
+	}
+	result = strings.ReplaceAll(result, "/", "")
+	result = strings.ReplaceAll(result, "{", "_")
+	result = strings.ReplaceAll(result, "}", "_")
+
+	// Check if last character is a _, if so just drop it
+	result = strings.Trim(result, "_") + ".go"
+	return result
+}
+
+func apiVersion(pathName string) (version string) {
+	parts := versionRegex.FindStringSubmatch(pathName)
+	if len(parts) == 3 {
+		version = parts[1]
+	}
+	return version
+}
+
+func (m *ApiGenerator) PriorityOrder() int {
+	return apiGenerationOrder
 }
