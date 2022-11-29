@@ -43,7 +43,7 @@ func GenerateFileFromTemplate(gc GenerationContext, template *template.Template)
 	if path.Ext(gc.filename) == ".go" {
 		err := formatGoCode(gc.filename)
 		if err != nil {
-			return fmt.Errorf("error formatting go code: %v", err)
+			return fmt.Errorf("error formatting go code for file %v: %v", gc.filename, err)
 		}
 	}
 	return nil
@@ -121,7 +121,7 @@ func resolvePath(modifiers map[string]interface{}, unresolvedTargetDir string) (
 			continue
 		}
 		// replace @s to template compatible format
-		unresolvedTargetDir = strings.Replace(unresolvedTargetDir, match[0], fmt.Sprintf("{{ index . \"%v\" }}", match[1]), 1)
+		unresolvedTargetDir = strings.Replace(unresolvedTargetDir, match[0], fmt.Sprintf("{{ with index . \"%v\"}}{{.}}{{ end }}", match[1]), 1)
 	}
 
 	tmpl := template.Must(template.New("filepath").Parse(unresolvedTargetDir))
