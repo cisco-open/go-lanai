@@ -9,17 +9,19 @@ import (
 )
 
 type RedisTimeoutApplier struct {
-	client redis.Client
+	sessionName string
+	client      redis.Client
 }
 
 func NewRedisTimeoutApplier(client redis.Client) *RedisTimeoutApplier {
 	return &RedisTimeoutApplier{
-		client: client,
+		sessionName: common.DefaultName,
+		client:      client,
 	}
 }
 
-func(r *RedisTimeoutApplier) ApplyTimeout(ctx context.Context, sessionId string) (valid bool, err error) {
-	key := common.GetRedisSessionKey(common.DefaultName, sessionId)
+func (r *RedisTimeoutApplier) ApplyTimeout(ctx context.Context, sessionId string) (valid bool, err error) {
+	key := common.GetRedisSessionKey(r.sessionName, sessionId)
 
 	//check if session exists
 	existCmd := r.client.Exists(ctx, key)
