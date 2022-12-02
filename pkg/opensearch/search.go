@@ -5,9 +5,15 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"io"
+	"net/http"
+)
+
+var (
+	ErrIndexNotFound = errors.New("index not found")
 )
 
 // SearchResponse modeled after https://opensearch.org/docs/latest/opensearch/rest-api/search/#response-body
@@ -46,8 +52,12 @@ func (c *RepoImpl[T]) Search(ctx context.Context, dest *[]T, body interface{}, o
 		return 0, err
 	}
 	if resp != nil && resp.IsError() {
-		logger.WithContext(ctx).Debugf("error response: %s", resp.String())
-		return 0, fmt.Errorf("error status code: %d", resp.StatusCode)
+		logger.WithContext(ctx).Errorf("error response: %s", resp.String())
+		if resp.StatusCode == http.StatusNotFound {
+			return 0, fmt.Errorf("%w", ErrIndexNotFound)
+		} else {
+			return 0, fmt.Errorf("error status code: %d", resp.StatusCode)
+		}
 	}
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
