@@ -12,7 +12,7 @@ const (
 //goland:noinspection GoNameStartsWithPackageName
 type AuthServerProperties struct {
 	Issuer            IssuerProperties    `json:"issuer"`
-	RedirectWhitelist []string     `json:"redirect-whitelist"`
+	RedirectWhitelist []string            `json:"redirect-whitelist"`
 	Endpoints         EndpointsProperties `json:"endpoints"`
 }
 
@@ -38,6 +38,7 @@ type EndpointsProperties struct {
 	TenantHierarchy string `json:"tenant-hierarchy"`
 	Error           string `json:"error"`
 	Logout          string `json:"logout"`
+	LoggedOut       string `json:"logged-out"`
 	UserInfo        string `json:"user-info"`
 	JwkSet          string `json:"jwk-set"`
 	SamlMetadata    string `json:"saml-metadata"`
@@ -65,6 +66,7 @@ func NewAuthServerProperties() *AuthServerProperties {
 			UserInfo:        "/v2/userinfo",
 			JwkSet:          "/v2/jwks",
 			SamlMetadata:    "/metadata",
+			LoggedOut:       "/",
 		},
 	}
 }

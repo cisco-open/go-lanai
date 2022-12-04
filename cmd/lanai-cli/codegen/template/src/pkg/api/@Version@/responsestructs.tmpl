@@ -1,0 +1,42 @@
+{{ define "ResponseStructGroup" }}
+    {{- $operation := index . 0 }}
+    {{- $currentPkg := index . 1 }}
+
+    {{- /* Have if there's more than just one, append the name */ -}}
+    {{ $numCreatedStructs := 0 }}
+
+    {{- range $responseName, $response := $operation.Data.Responses }}
+        {{- $isEmptyWrapper := containsSingularRef $response }}
+        {{- $isEmpty := isEmpty $response }}
+
+        {{- $shouldSkip := or $isEmptyWrapper $isEmpty }}
+        {{ if not $shouldSkip }}
+            {{- $nameSuffix := "" }}
+            {{- $numCreatedStructs = increment $numCreatedStructs }}
+            {{- if gt $numCreatedStructs 1 }}
+                {{- $nameSuffix = $responseName }}
+            {{- end }}
+            {{- $structName := concat $operation.Name "Response" $nameSuffix }}
+            {{- $structName = toTitle $structName }}
+            {{ template "responseStruct" args $structName $response }}
+            {{- registerStruct $structName $currentPkg }}
+         {{- end }}
+
+    {{- end }}
+{{- end }}
+
+{{- define "responseStruct" }}
+    {{- $structName := index . 0 }}
+    {{- $response := index . 1 }}
+
+    type {{ toTitle $structName}} struct {
+        {{- range $response.Value.Content }}
+            {{ $schema := schema "" .Schema }}
+            {{ template "SchemaProperties" args $schema "api" }}
+            {{- $requiredList := requiredList .Schema }}
+            {{- if eq .Schema.Value.Type "array" }}
+                {{ template "propertiesFromSchema" args $schema }}
+            {{- end }}
+        {{- end }}
+    }
+{{- end }}
