@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal/representation"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"reflect"
@@ -9,18 +10,21 @@ import (
 func importsUsedByPath(pathItem openapi3.PathItem) []string {
 	var allImports []string
 	for _, operation := range pathOperations(pathItem) {
-		responses := Responses(operation.Responses)
-		parameters := Parameters(operation.Parameters)
-		var requestBody RequestBody
+		responses := representation.Responses(operation.Responses)
+		parameters := representation.Parameters(operation.Parameters)
+		var requestBody representation.RequestBody
 		if operation.RequestBody != nil {
-			requestBody = RequestBody(*operation.RequestBody)
+			requestBody = representation.RequestBody(*operation.RequestBody)
 		}
-		allImports = append(allImports, responses.ImportsUsed()...)
+
+		refs := responses.RefsUsed()
 		numFieldsInRequestStruct := parameters.CountFields() + requestBody.CountFields()
 		if numFieldsInRequestStruct != 1 {
-			allImports = append(allImports, parameters.ImportsUsed()...)
-			allImports = append(allImports, requestBody.ImportsUsed()...)
+			refs = append(refs, parameters.RefsUsed()...)
+			refs = append(refs, requestBody.RefsUsed()...)
 		}
+
+		allImports = append(allImports, getImportsFromRef(refs)...)
 	}
 
 	uniqueImports := make(map[string]bool)
@@ -54,15 +58,15 @@ type RefChecker interface {
 func refCheckerFactory(element interface{}) (result []RefChecker, err error) {
 	switch getInterfaceType(element) {
 	case ResponseRefPtr:
-		result = append(result, Response(*element.(*openapi3.ResponseRef)))
+		result = append(result, representation.Response(*element.(*openapi3.ResponseRef)))
 	case OperationPtr:
 		// Assume this is for Requests, so give requestbodies & parameters
 		op := element.(*openapi3.Operation)
-		var r RequestBody
+		var r representation.RequestBody
 		if op.RequestBody != nil {
-			r = RequestBody(*op.RequestBody)
+			r = representation.RequestBody(*op.RequestBody)
 		}
-		p := Parameters(op.Parameters)
+		p := representation.Parameters(op.Parameters)
 		result = append(result, r)
 		result = append(result, p)
 	default:

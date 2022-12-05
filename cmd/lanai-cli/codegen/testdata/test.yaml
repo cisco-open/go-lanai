@@ -83,6 +83,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GenericResponse'
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
 
 components:
   schemas:
@@ -185,6 +188,8 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GenericResponse'
+    204:
+      description: No content
   parameters:
     QueryParam:
       name: testParam

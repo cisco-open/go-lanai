@@ -18,6 +18,7 @@ var (
 		"defaultNameFromPath": defaultNameFromPath,
 		"registerStruct":      registerStruct,
 		"structLocation":      structLocation,
+		"structRegistry":      getStructRegistry,
 		"importsUsedByPath":   importsUsedByPath,
 		"isEmpty":             isEmpty,
 		"property":            representation.NewProperty,
@@ -70,4 +71,8 @@ func registerStruct(schemaName string, packageName string) string {
 
 func structLocation(schemaName string) string {
 	return structRegistry[strings.ToLower(schemaName)]
+}
+
+func getStructRegistry() map[string]string {
+	return structRegistry
 }

@@ -9,9 +9,7 @@ package {{$version}}
 {{- with index . "PathData" }}
     {{- range $opName, $opData := pathOperations . }}
         {{- $defaultName := defaultNameFromPath $pathName }}
-        {{- $defaultName = concat $defaultName $opName }}
-
-        {{- $operation := operation $defaultName $opData }}
+        {{- $operation := concat $defaultName $opName | operation $opData }}
         {{- template "structsForOperation" args $operation $pkgName }}
     {{- end }}
 {{ end }}
