@@ -46,13 +46,13 @@ func (cp CookieProperties) SameSite() http.SameSite {
 
 //NewSessionProperties create a SessionProperties with default values
 func NewSessionProperties() *SessionProperties {
-	return &SessionProperties {
+	return &SessionProperties{
 		Cookie: CookieProperties{
 			HttpOnly: true,
-			Path: "/",
+			Path:     "/",
 		},
-		IdleTimeout: utils.Duration(900 * time.Second),
-		AbsoluteTimeout: utils.Duration(1800 * time.Second),
+		IdleTimeout:          utils.Duration(900 * time.Second),
+		AbsoluteTimeout:      utils.Duration(1800 * time.Second),
 		MaxConcurrentSession: 0, //unlimited
 	}
 }
@@ -66,16 +66,14 @@ func BindSessionProperties(ctx *bootstrap.ApplicationContext) SessionProperties 
 	return *props
 }
 
-
 const TimeoutPropertiesPrefix = "security.timeout-support"
 
 type TimeoutSupportProperties struct {
-	DbIndex              int            `json:"db-index"`
+	DbIndex     int    `json:"db-index"`
 }
 
 func NewTimeoutSupportProperties() *TimeoutSupportProperties {
-	return &TimeoutSupportProperties{
-	}
+	return &TimeoutSupportProperties{}
 }
 
 func BindTimeoutSupportProperties(ctx *bootstrap.ApplicationContext) TimeoutSupportProperties {

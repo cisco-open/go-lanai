@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/deps"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/dev"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/gittools"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/initcmd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/noop"
@@ -72,6 +73,7 @@ func main() {
 	rootCmd.AddCommand(build.Cmd)
 	rootCmd.AddCommand(apidocs.Cmd)
 	rootCmd.AddCommand(codegen.Cmd)
+	rootCmd.AddCommand(dev.Cmd)
 
 	cmdutils.PersistentFlags(rootCmd, &cmdutils.GlobalArgs)
 	if e := rootCmd.ExecuteContext(context.Background()); e != nil {

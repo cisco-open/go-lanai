@@ -6,6 +6,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"os"
 	"path/filepath"
 )
 
@@ -27,6 +28,46 @@ func GitFilePattern(patterns ...string) GitFileMatcher {
 		}
 		return false
 	}
+}
+
+func IsGitRepoRoot(path string) bool {
+	var e error
+	if path, e = filepath.Abs(path); e != nil {
+		return false
+	}
+	switch info, e := os.Stat(path); {
+	case e != nil:
+		return false
+	case !info.IsDir():
+		path = filepath.Dir(path)
+	}
+	info, e := os.Stat(filepath.Join(path, git.GitDirName))
+	return !os.IsNotExist(e) && info.IsDir()
+}
+
+// FindGitRepoRoot returns parent folder that containing `.git`
+func FindGitRepoRoot(path string) (string, error) {
+	var e error
+	if path, e = filepath.Abs(path); e != nil {
+		return "", e
+	}
+	switch info, e := os.Stat(path); {
+	case e != nil:
+		return "", e
+	case !info.IsDir():
+		path = filepath.Dir(path)
+	}
+	for curr := path;; {
+		if info, e := os.Stat(filepath.Join(curr, git.GitDirName)); !os.IsNotExist(e) && info.IsDir() {
+			return curr, nil
+		}
+		if dir := filepath.Dir(curr); dir != curr {
+			curr = dir
+			continue
+		}
+		break
+	}
+	return "", fmt.Errorf(`couldn't find Git repo root for path [%s]`, path)
 }
 
 type GitUtils struct {
