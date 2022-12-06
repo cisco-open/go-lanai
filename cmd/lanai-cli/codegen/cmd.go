@@ -27,9 +27,10 @@ var (
 )
 
 type Arguments struct {
-	Contract          string `flag:"contract,c" desc:"openapi contract"`
-	ProjectName       string `flag:"project,p" desc:"project name"`
-	TemplateDirectory string `flag:"templateDir,t" desc:"Directory where templates are stored, will use built-in templates if not set"`
+	Contract           string `flag:"contract,c" desc:"openapi contract"`
+	ProjectName        string `flag:"project,p" desc:"project name"`
+	TemplateDirectory  string `flag:"templateDir,t" desc:"Directory where templates are stored, will use built-in templates if not set"`
+	RepositoryRootPath string `flag:"repository,r" desc:"Repository name"`
 }
 
 func init() {
@@ -46,11 +47,12 @@ func Run(cmd *cobra.Command, _ []string) error {
 	}
 
 	projectName := Args.ProjectName
-
+	repository := Args.RepositoryRootPath
 	// Populate the data the templates will use
 	data := map[string]interface{}{
 		generator.OpenAPIData: openAPIData,
 		generator.ProjectName: projectName,
+		generator.Repository:  repository,
 	}
 
 	FSToUse := determineFSToUse()

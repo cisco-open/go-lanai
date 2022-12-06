@@ -52,7 +52,7 @@ func TestCachedRequestPreProcessor_Process(t *testing.T) {
 
 	mockSessionStore := sessionmock.NewMockStore(ctrl)
 
-	processor := newCachedRequestPreProcessor(mockSessionStore)
+	processor := newCachedRequestPreProcessor(common.DefaultName, mockSessionStore)
 
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 

@@ -7,6 +7,8 @@ import (
 	"text/template"
 )
 
+const projectGenerationOrder = 0
+
 // ProjectGenerator generates 1 file based on the templatePath being used
 type ProjectGenerator struct {
 	data       map[string]interface{}
@@ -59,4 +61,8 @@ func (o *ProjectGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 	)
 	logger.Infof("project generator generating %v\n", targetDir)
 	return GenerateFileFromTemplate(file, o.template)
+}
+
+func (o *ProjectGenerator) PriorityOrder() int {
+	return projectGenerationOrder
 }

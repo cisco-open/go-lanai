@@ -19,6 +19,10 @@ var Module = &bootstrap.Module{
 	},
 }
 
+type timeoutDI struct {
+
+}
+
 func provideTimeoutSupport(ctx *bootstrap.ApplicationContext, cf redis.ClientFactory, prop security.TimeoutSupportProperties) oauth2.TimeoutApplier {
 	client, err := cf.New(ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = prop.DbIndex

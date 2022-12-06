@@ -9,10 +9,16 @@ import (
 
 func GenerateFiles(filesystem fs.FS, opts ...func(*Option)) error {
 	generators := NewGenerators(opts...)
-	return fs.WalkDir(filesystem, ".",
+	if err := fs.WalkDir(filesystem, ".",
 		func(p string, d fs.DirEntry, err error) error {
-			return generators.Generate(p, d)
-		})
+			// load the files into the generator
+			generators.Load(p, d)
+			return nil
+		}); err != nil {
+		return err
+	}
+	//	 generate
+	return generators.Generate()
 }
 
 func LoadTemplates(filesystem fs.FS) (*template.Template, error) {
@@ -41,10 +47,7 @@ func LoadTemplates(filesystem fs.FS) (*template.Template, error) {
 
 func templateFunctions() template.FuncMap {
 	templateFunctions := make(template.FuncMap)
-	funcMaps := []template.FuncMap{
-		internal.PackageFuncMap,
-	}
-	for _, fm := range funcMaps {
+	for _, fm := range internal.TemplateFuncMaps {
 		for k, v := range fm {
 			templateFunctions[k] = v
 		}
