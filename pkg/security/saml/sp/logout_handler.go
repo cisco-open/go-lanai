@@ -8,7 +8,7 @@ import (
 
 var ErrSamlSloRequired = security.NewAuthenticationError("SAML SLO required")
 
-type SingleLogoutHandler struct {}
+type SingleLogoutHandler struct{}
 
 func NewSingleLogoutHandler() *SingleLogoutHandler {
 	return &SingleLogoutHandler{}
@@ -27,7 +27,7 @@ func (h *SingleLogoutHandler) HandleLogout(ctx context.Context, _ *http.Request,
 	if !h.wasSLOFailed(ctx, auth) {
 		return nil
 	}
-	return security.NewAuthenticationWarningError("SAML Single Logout failed")
+	return security.NewAuthenticationWarningError("cisco.saml.logout.failed")
 }
 
 func (h *SingleLogoutHandler) samlDetails(_ context.Context, auth security.Authentication) (map[string]interface{}, bool) {
