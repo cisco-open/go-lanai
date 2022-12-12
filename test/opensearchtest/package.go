@@ -16,6 +16,10 @@ import (
 	"time"
 )
 
+// IndexSuffix is the suffix we append to the index name when running opensearch tests, so that we don't
+// corrupt the application's indices.
+const IndexSuffix = "_test"
+
 // IsRecording returns true if copyist is currently in recording mode.
 // We wrap the copyist.IsRecording because we re-use the same commandline flag
 // as the copyist library, and flag.Bool doesn't like it when you have two places
@@ -187,7 +191,7 @@ func (e *EditIndexForTestingHook) Order() int {
 
 func NewEditingIndexForTestingHook() opensearch.BeforeHook {
 	return &EditIndexForTestingHook{
-		Suffix: "_test",
+		Suffix: IndexSuffix,
 	}
 }
 
