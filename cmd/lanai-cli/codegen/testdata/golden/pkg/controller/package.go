@@ -12,9 +12,9 @@ import (
 )
 
 func Use() {
-	controllerv1.Use()
-	controllerv2.Use()
-	controllerv3.Use()
+	bootstrap.Register(controllerv1.Module)
+	bootstrap.Register(controllerv2.Module)
+	bootstrap.Register(controllerv3.Module)
 	bootstrap.AddOptions(
 		fx.Invoke(register),
 	)

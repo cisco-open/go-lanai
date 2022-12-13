@@ -15,7 +15,7 @@ import (
 
 func Use() {
 	{{- range $versionList }}
-	 controller{{ . }}.Use()
+	 bootstrap.Register(controller{{ . }}.Module)
 	{{- end }}
 	bootstrap.AddOptions(
 		fx.Invoke(register),

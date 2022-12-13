@@ -4,12 +4,15 @@ package v2
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"go.uber.org/fx"
 )
 
-func Use() {
-	bootstrap.AddOptions(
+var Module = &bootstrap.Module{
+	Name:       "v2-controller",
+	Precedence: bootstrap.AnonymousModulePrecedence,
+	Options: []fx.Option{
 		web.FxControllerProviders(
 			NewTestpathController,
 		),
-	)
+	},
 }
