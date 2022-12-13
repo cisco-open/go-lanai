@@ -3,6 +3,7 @@ package opensearchtest
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/recorder"
@@ -14,6 +15,10 @@ import (
 	"testing"
 	"time"
 )
+
+// IndexSuffix is the suffix we append to the index name when running opensearch tests, so that we don't
+// corrupt the application's indices.
+const IndexSuffix = "_test"
 
 // IsRecording returns true if copyist is currently in recording mode.
 // We wrap the copyist.IsRecording because we re-use the same commandline flag
@@ -95,7 +100,7 @@ func WithOpenSearchPlayback(options ...OpenSearchPlaybackOptions) test.Options {
 				return c
 			}),
 			fx.Provide(
-				IndexEditHookProvider(opensearch.FxGroup, "_test"),
+				IndexEditHookProvider(opensearch.FxGroup),
 				func() *MatcherBodyModifiers { return &modifiers },
 			),
 		),
@@ -176,79 +181,89 @@ func SearchDelayerHookProvider(beforeGroup string, afterGroup string, delay time
 		}
 }
 
-func EditIndexForTesting(suffix string) opensearch.BeforeHookFunc {
-	return func(ctx context.Context, beforeContext opensearch.BeforeContext) context.Context {
-		switch opt := beforeContext.Options.(type) {
-		case *[]func(request *opensearchapi.SearchRequest):
-			f := func(request *opensearchapi.SearchRequest) {
-				var indices []string
-				for _, index := range request.Index {
-					indices = append(indices, index+suffix)
-				}
-				request.Index = indices
-			}
-			*opt = append(*opt, f)
-		case *[]func(request *opensearchapi.IndicesCreateRequest):
-			f := func(request *opensearchapi.IndicesCreateRequest) {
-				request.Index = request.Index + suffix
-			}
-			*opt = append(*opt, f)
-		case *[]func(request *opensearchapi.IndexRequest):
-			f := func(request *opensearchapi.IndexRequest) {
-				request.Index = request.Index + suffix
-			}
-			*opt = append(*opt, f)
-		case *[]func(request *opensearchapi.IndicesPutAliasRequest):
-			f := func(request *opensearchapi.IndicesPutAliasRequest) {
-				var indices []string
-				for _, index := range request.Index {
-					indices = append(indices, index+suffix)
-				}
-				request.Index = indices
-			}
-			*opt = append(*opt, f)
-		case *[]func(request *opensearchapi.IndicesDeleteAliasRequest):
-			f := func(request *opensearchapi.IndicesDeleteAliasRequest) {
-				var indices []string
-				for _, index := range request.Index {
-					indices = append(indices, index+suffix)
-				}
-				request.Index = indices
-			}
-			*opt = append(*opt, f)
-		case *[]func(request *opensearchapi.IndicesDeleteRequest):
-			f := func(request *opensearchapi.IndicesDeleteRequest) {
-				var indices []string
-				for _, index := range request.Index {
-					indices = append(indices, index+suffix)
-				}
-				request.Index = indices
-			}
-			*opt = append(*opt, f)
-		case *[]func(cfg *opensearchutil.BulkIndexerConfig):
-			f := func(cfg *opensearchutil.BulkIndexerConfig) {
-				cfg.Index = cfg.Index + suffix
-			}
-			*opt = append(*opt, f)
-		case *[]func(request *opensearchapi.SearchTemplateRequest):
-			f := func(request *opensearchapi.SearchTemplateRequest) {
-				var indices []string
-				for _, index := range request.Index {
-					indices = append(indices, index+suffix)
-				}
-				request.Index = indices
-			}
-			*opt = append(*opt, f)
-		}
-		return ctx
+type EditIndexForTestingHook struct {
+	Suffix string
+}
+
+func (e *EditIndexForTestingHook) Order() int {
+	return order.Highest
+}
+
+func NewEditingIndexForTestingHook() opensearch.BeforeHook {
+	return &EditIndexForTestingHook{
+		Suffix: IndexSuffix,
 	}
 }
 
-func IndexEditHookProvider(group string, suffix string) fx.Annotated {
+func (e *EditIndexForTestingHook) Before(ctx context.Context, before opensearch.BeforeContext) context.Context {
+	switch opt := before.Options.(type) {
+	case *[]func(request *opensearchapi.SearchRequest):
+		f := func(request *opensearchapi.SearchRequest) {
+			var indices []string
+			for _, index := range request.Index {
+				indices = append(indices, index+e.Suffix)
+			}
+			request.Index = indices
+		}
+		*opt = append(*opt, f)
+	case *[]func(request *opensearchapi.IndicesCreateRequest):
+		f := func(request *opensearchapi.IndicesCreateRequest) {
+			request.Index = request.Index + e.Suffix
+		}
+		*opt = append(*opt, f)
+	case *[]func(request *opensearchapi.IndexRequest):
+		f := func(request *opensearchapi.IndexRequest) {
+			request.Index = request.Index + e.Suffix
+		}
+		*opt = append(*opt, f)
+	case *[]func(request *opensearchapi.IndicesPutAliasRequest):
+		f := func(request *opensearchapi.IndicesPutAliasRequest) {
+			var indices []string
+			for _, index := range request.Index {
+				indices = append(indices, index+e.Suffix)
+			}
+			request.Index = indices
+		}
+		*opt = append(*opt, f)
+	case *[]func(request *opensearchapi.IndicesDeleteAliasRequest):
+		f := func(request *opensearchapi.IndicesDeleteAliasRequest) {
+			var indices []string
+			for _, index := range request.Index {
+				indices = append(indices, index+e.Suffix)
+			}
+			request.Index = indices
+		}
+		*opt = append(*opt, f)
+	case *[]func(request *opensearchapi.IndicesDeleteRequest):
+		f := func(request *opensearchapi.IndicesDeleteRequest) {
+			var indices []string
+			for _, index := range request.Index {
+				indices = append(indices, index+e.Suffix)
+			}
+			request.Index = indices
+		}
+		*opt = append(*opt, f)
+	case *[]func(cfg *opensearchutil.BulkIndexerConfig):
+		f := func(cfg *opensearchutil.BulkIndexerConfig) {
+			cfg.Index = cfg.Index + e.Suffix
+		}
+		*opt = append(*opt, f)
+	case *[]func(request *opensearchapi.SearchTemplateRequest):
+		f := func(request *opensearchapi.SearchTemplateRequest) {
+			var indices []string
+			for _, index := range request.Index {
+				indices = append(indices, index+e.Suffix)
+			}
+			request.Index = indices
+		}
+		*opt = append(*opt, f)
+	}
+	return ctx
+}
+
+func IndexEditHookProvider(group string) fx.Annotated {
 	return fx.Annotated{
-		Group: group,
-		Target: func() opensearch.BeforeHook {
-			return opensearch.BeforeHookFunc(EditIndexForTesting(suffix))
-		},
+		Group:  group,
+		Target: NewEditingIndexForTestingHook,
 	}
 }
