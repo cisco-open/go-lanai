@@ -299,3 +299,53 @@ func TestRemoveStableStructSlices(t *testing.T) {
 		})
 	}
 }
+
+func TestReverse(t *testing.T) {
+	type args struct {
+		input []any
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected []any
+	}{
+		{
+			name: "simple ints",
+			args: args{
+				input: []any{1, 3, 2, 4},
+			},
+			expected: []any{4, 2, 3, 1},
+		},
+		{
+			name: "simple strings",
+			args: args{
+				input: []any{"5", "4", "1", "3"},
+			},
+			expected: []any{"3", "1", "4", "5"},
+		},
+		{
+			name: "int and string mix",
+			args: args{
+				input: []any{5, "4", "1", "3"},
+			},
+			expected: []any{"3", "1", "4", 5},
+		},
+		{
+			name: "string and struct mix",
+			args: args{
+				input: []any{struct{ s string }{s: "hello"}, "4", "1", "3"},
+			},
+			expected: []any{"3", "1", "4", struct{ s string }{s: "hello"}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Reverse(tt.args.input)
+			for i, value := range tt.expected {
+				if value != tt.args.input[i] {
+					t.Fatalf("Reverse() = %v, want %v", tt.args, tt.expected)
+				}
+			}
+		})
+	}
+}
