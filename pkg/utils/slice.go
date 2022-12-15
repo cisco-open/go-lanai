@@ -6,6 +6,13 @@ import (
 	"strings"
 )
 
+// Reverse will reverse the order of the given slice
+func Reverse[T any](input []T) {
+	for i, j := 0, len(input)-1; i < j; i, j = i+1, j-1 {
+		input[i], input[j] = input[j], input[i]
+	}
+}
+
 // RemoveStable will remove an element from the slice and keep its order. This
 // operation can be potentially costly depending on how large the slice is since
 // it needs to shift all elements that appear after index i over by 1.
@@ -23,9 +30,10 @@ func RemoveStable[T any](slice []T, index int) []T {
 
 // Remove will not keep the ordering of the slice. It has a very fast operation.
 // This function will automatically type itself using type inference
-// 	intSlice := []int{1, 2, 3, 4}
-// 	intSlice = Remove(intSlice, 1)
-//  // result: {1, 4, 3}
+//
+//		intSlice := []int{1, 2, 3, 4}
+//		intSlice = Remove(intSlice, 1)
+//	 	result: {1, 4, 3}
 func Remove[T any](slice []T, index int) []T {
 	if index < 0 || index >= len(slice) {
 		panic("invalid slice index")

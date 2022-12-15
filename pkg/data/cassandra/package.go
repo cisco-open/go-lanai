@@ -2,13 +2,16 @@ package cassandra
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"github.com/gocql/gocql"
 	"go.uber.org/fx"
 	"time"
 )
 
+var logger = log.New("Cassandra")
+
 var Module = &bootstrap.Module{
-	Name: "cockroach",
+	Name:       "cassandra",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
 		fx.Provide(BindCassandraProperties, NewSession),
@@ -29,7 +32,10 @@ func NewSession(p CassandraProperties) *gocql.Session {
 		Password: p.Password,
 	}
 
-	session, _ := cluster.CreateSession()
+	session, err := cluster.CreateSession()
+	if err != nil {
+		logger.Errorf("unable to create session: %v", err)
+	}
 	return session
 }
 
