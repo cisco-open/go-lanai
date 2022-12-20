@@ -13,6 +13,7 @@ type RevokerOptions func(opt *RevokerOption)
 
 type RevokerOption struct {
 	AuthRegistry     auth.AuthorizationRegistry
+	SessionName      string
 	SessionStore     session.Store
 	TokenStoreReader oauth2.TokenStoreReader
 }
@@ -20,17 +21,21 @@ type RevokerOption struct {
 // DefaultAccessRevoker implements auth.AccessRevoker
 type DefaultAccessRevoker struct {
 	authRegistry     auth.AuthorizationRegistry
+	sessionName      string
 	sessionStore     session.Store
 	tokenStoreReader oauth2.TokenStoreReader
 }
 
 func NewDefaultAccessRevoker(opts ...RevokerOptions) *DefaultAccessRevoker {
-	opt := RevokerOption{}
+	opt := RevokerOption{
+		SessionName: common.DefaultName,
+	}
 	for _, f := range opts {
 		f(&opt)
 	}
 	return &DefaultAccessRevoker{
-		authRegistry:     opt.AuthRegistry,
+		authRegistry: opt.AuthRegistry,
+		sessionName: opt.SessionName,
 		sessionStore:     opt.SessionStore,
 		tokenStoreReader: opt.TokenStoreReader,
 	}
@@ -54,7 +59,7 @@ func (r DefaultAccessRevoker) RevokeWithSessionId(ctx context.Context, sessionId
 
 func (r DefaultAccessRevoker) RevokeWithUsername(ctx context.Context, username string, revokeRefreshToken bool) (err error) {
 	// expire all sessions
-	if e := r.sessionStore.WithContext(ctx).InvalidateByPrincipalName(username, common.DefaultName); e != nil {
+	if e := r.sessionStore.WithContext(ctx).InvalidateByPrincipalName(username, r.sessionName); e != nil {
 		logger.WithContext(ctx).Warnf("Unable to expire session for username [%s]: %v", username, e)
 		err = e
 	}

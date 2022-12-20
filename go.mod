@@ -9,7 +9,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.0.1
 	github.com/cockroachdb/copyist v1.4.1
 	github.com/crewjam/httperr v0.2.0
-	github.com/crewjam/saml v0.4.8
+	github.com/crewjam/saml v0.4.9
 	github.com/getkin/kin-openapi v0.103.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/gin-gonic/gin v1.8.1

@@ -10,6 +10,9 @@ import (
 	"strings"
 )
 
+// ShCmdLogDisabled Disable shell command logging. When set to true, ShCmdOption.ShowCmd no longer take effect
+var ShCmdLogDisabled bool
+
 // ShCmdOptions is the options for the RunShellCommands func
 type ShCmdOptions func(opt *ShCmdOption)
 
@@ -126,7 +129,7 @@ func runSingleCommand(ctx context.Context, cmd string, opt *ShCmdOption) (uint8,
 		return 1, err
 	}
 
-	if opt.ShowCmd {
+	if opt.ShowCmd && !ShCmdLogDisabled {
 		logger.WithContext(ctx).Infof("Shell Command: %s", cmd)
 	}
 

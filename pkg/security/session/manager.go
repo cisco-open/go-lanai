@@ -3,7 +3,6 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
@@ -12,11 +11,11 @@ import (
 
 const (
 	sessionKeySecurity = "Security"
-	contextKeySession = web.ContextKeySession
+	contextKeySession  = web.ContextKeySession
 )
 
 func Get(c context.Context) *Session {
-	session,_ := c.Value(contextKeySession).(*Session)
+	session, _ := c.Value(contextKeySession).(*Session)
 	return session
 }
 
@@ -30,11 +29,13 @@ func Clear(c context.Context) {
 }
 
 type Manager struct {
+	name  string
 	store Store
 }
 
-func NewManager(store Store) *Manager {
+func NewManager(sessionName string, store Store) *Manager {
 	return &Manager{
+		name:  sessionName,
 		store: store,
 	}
 }
@@ -48,11 +49,11 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 
 		var id string
 
-		if cookie, err := c.Request.Cookie(common.DefaultName); err == nil {
+		if cookie, err := c.Request.Cookie(m.name); err == nil {
 			id = cookie.Value
 		}
 
-		session, err := m.store.WithContext(c).Get(id, common.DefaultName)
+		session, err := m.store.WithContext(c).Get(id, m.name)
 		// If session store is not operating properly, we cannot continue for misc that needs session
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)

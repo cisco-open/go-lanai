@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"github.com/gin-gonic/gin"
@@ -61,12 +60,14 @@ func RemoveCachedRequest(ctx *gin.Context) {
 // CachedRequestPreProcessor is designed to be used by code outside of the security package.
 // Implements the web.RequestCacheAccessor interface
 type CachedRequestPreProcessor struct {
-	store session.Store
-	name  web.RequestPreProcessorName
+	sessionName string
+	store       session.Store
+	name        web.RequestPreProcessorName
 }
 
-func newCachedRequestPreProcessor(store session.Store) *CachedRequestPreProcessor {
+func newCachedRequestPreProcessor(sessionName string, store session.Store) *CachedRequestPreProcessor {
 	return &CachedRequestPreProcessor{
+		sessionName: sessionName,
 		store: store,
 		name:  "CachedRequestPreProcessor",
 	}
@@ -77,9 +78,9 @@ func (p *CachedRequestPreProcessor) Name() web.RequestPreProcessorName {
 }
 
 func (p *CachedRequestPreProcessor) Process(r *http.Request) error {
-	if cookie, err := r.Cookie(common.DefaultName); err == nil {
+	if cookie, err := r.Cookie(p.sessionName); err == nil {
 		id := cookie.Value
-		if s, err := p.store.WithContext(r.Context()).Get(id, common.DefaultName); err == nil {
+		if s, err := p.store.WithContext(r.Context()).Get(id, p.sessionName); err == nil {
 			cached, ok := s.Get(SessionKeyCachedRequest).(*CachedRequest)
 			if ok && cached != nil && requestMatches(r, cached) {
 				s.Delete(SessionKeyCachedRequest)
