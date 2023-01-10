@@ -16,5 +16,6 @@ func init() {
 		stringsFuncMap,
 		structsFuncMap,
 		helperFuncMap,
+		pathFuncMap,
 	}
 }
