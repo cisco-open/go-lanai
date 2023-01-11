@@ -4,11 +4,17 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/validation"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	controllerv1 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v1"
+	controllerv2 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v2"
+	controllerv3 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v3"
 	"github.com/go-playground/validator/v10/non-standard/validators"
 	"go.uber.org/fx"
 )
 
 func Use() {
+	bootstrap.Register(controllerv1.Module)
+	bootstrap.Register(controllerv2.Module)
+	bootstrap.Register(controllerv3.Module)
 	bootstrap.AddOptions(
 		fx.Invoke(register),
 	)

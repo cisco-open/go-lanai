@@ -15,6 +15,6 @@ type DeleteTestPathResponse struct {
 	api.GenericResponse
 }
 
-type TestpathscopeGetRequest struct {
+type TestpathScopeGetRequest struct {
 	Scope string `uri:"scope" binding:"required,regexA79C5"`
 }

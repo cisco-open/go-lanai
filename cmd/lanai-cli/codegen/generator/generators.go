@@ -53,6 +53,7 @@ func NewGenerators(opts ...func(*Option)) Generators {
 			newApiGenerator(opts...),
 			newProjectGenerator(opts...),
 			newDirectoryGenerator(opts...),
+			newVersionGenerator(opts...),
 		},
 	}
 	order.SortStable(ret.generators, order.OrderedLastCompare)
