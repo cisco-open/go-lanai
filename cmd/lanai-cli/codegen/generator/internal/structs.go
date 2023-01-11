@@ -47,16 +47,24 @@ func requiredList(val interface{}) ([]string, error) {
 }
 
 func defaultNameFromPath(val string) string {
-	result := val
 	parts := regexp.MustCompile(".+\\/(v\\d+)\\/(.+)").FindStringSubmatch(val)
+	var path string
 	if len(parts) == 3 {
-		result = parts[2]
+		path = parts[2]
 	}
-	result = strings.ReplaceAll(result, "/", "")
-	result = strings.ReplaceAll(result, "{", "")
-	result = strings.ReplaceAll(result, "}", "")
+	path = strings.ReplaceAll(path, "{", "/")
+	path = strings.ReplaceAll(path, "}", "")
+	pathParts := strings.Split(path, "/")
 
-	return result
+	// make this camelCase
+	for p := range pathParts {
+		if p == 0 {
+			continue
+		}
+		pathParts[p] = toTitle(pathParts[p])
+	}
+
+	return strings.Join(pathParts, "")
 }
 
 var structRegistry = make(map[string]string)
