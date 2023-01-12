@@ -7,6 +7,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.15.0
 	github.com/beevik/etree v1.1.0
 	github.com/bmatcuk/doublestar/v4 v4.0.1
+	github.com/cockroachdb/cockroach-go/v2 v2.2.20
 	github.com/cockroachdb/copyist v1.4.1
 	github.com/crewjam/httperr v0.2.0
 	github.com/crewjam/saml v0.4.9
@@ -30,8 +31,8 @@ require (
 	github.com/hashicorp/vault/api/auth/kubernetes v0.2.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/imdario/mergo v0.3.12
-	github.com/jackc/pgconn v1.11.0
-	github.com/lib/pq v1.10.2
+	github.com/jackc/pgconn v1.12.1
+	github.com/lib/pq v1.10.6
 	github.com/mattermost/xml-roundtrip-validator v0.1.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/onsi/gomega v1.18.1
@@ -51,13 +52,13 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	go.uber.org/fx v1.18.2
-	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed
+	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
 	golang.org/x/text v0.3.7
 	gopkg.in/dnaeon/go-vcr.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/postgres v1.3.1
-	gorm.io/gorm v1.23.3
+	gorm.io/driver/postgres v1.3.5
+	gorm.io/gorm v1.23.5
 	mvdan.cc/sh/v3 v3.2.4
 )
 
@@ -118,14 +119,14 @@ require (
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3 v1.1.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.2.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.10.0 // indirect
-	github.com/jackc/pgx/v4 v4.15.0 // indirect
+	github.com/jackc/pgtype v1.11.0 // indirect
+	github.com/jackc/pgx/v4 v4.16.1 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
-	github.com/jmoiron/sqlx v1.3.4 // indirect
+	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect

@@ -89,4 +89,3 @@ type DI struct {
 }
 
 type DataSetupStep func(ctx context.Context, t *testing.T, db *gorm.DB) context.Context
-

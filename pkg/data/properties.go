@@ -13,7 +13,12 @@ const (
 )
 
 type DataProperties struct {
-	Logging     LoggingProperties `json:"logging"`
+	Logging     LoggingProperties     `json:"logging"`
+	Transaction TransactionProperties `json:"transaction"`
+}
+
+type TransactionProperties struct {
+	MaxRetry int `json:"max-retry"`
 }
 
 type LoggingProperties struct {
@@ -21,17 +26,20 @@ type LoggingProperties struct {
 	SlowThreshold utils.Duration   `json:"slow-threshold"`
 }
 
-//NewDataProperties create a DataProperties with default values
+// NewDataProperties create a DataProperties with default values
 func NewDataProperties() *DataProperties {
 	return &DataProperties{
-		Logging:     LoggingProperties{
-			Level: log.LevelWarn,
+		Logging: LoggingProperties{
+			Level:         log.LevelWarn,
 			SlowThreshold: utils.Duration(15 * time.Second),
+		},
+		Transaction: TransactionProperties{
+			MaxRetry: 5,
 		},
 	}
 }
 
-//BindDataProperties create and bind SessionProperties, with a optional prefix
+// BindDataProperties create and bind SessionProperties, with a optional prefix
 func BindDataProperties(ctx *bootstrap.ApplicationContext) DataProperties {
 	props := NewDataProperties()
 	if err := ctx.Config().Bind(props, ManagementPropertiesPrefix); err != nil {
@@ -39,5 +47,3 @@ func BindDataProperties(ctx *bootstrap.ApplicationContext) DataProperties {
 	}
 	return *props
 }
-
-

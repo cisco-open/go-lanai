@@ -9,13 +9,13 @@ import (
 type TxFunc func(ctx context.Context) error
 
 //goland:noinspection GoNameStartsWithPackageName
-type TxManager interface{
+type TxManager interface {
 	Transaction(ctx context.Context, tx TxFunc, opts ...*sql.TxOptions) error
 }
 
 // ManualTxManager defines interfaces for manual transaction management
 // if any methods returns an error, the returned context should be disgarded
-type ManualTxManager interface{
+type ManualTxManager interface {
 	Begin(ctx context.Context, opts ...*sql.TxOptions) (context.Context, error)
 	Rollback(ctx context.Context) (context.Context, error)
 	Commit(ctx context.Context) (context.Context, error)
@@ -35,6 +35,14 @@ var ctxKeyBeginCtx = txBacktraceCtxKey{}
 // txContext helps ManualTxManager to backtrace context used for ManualTxManager.Begin
 type txContext struct {
 	context.Context
+}
+
+// newGormTxContext will check if the given context.Context is a TxContext. If so,
+// It will increment the nestLevel of the new TxContext.
+func newGormTxContext(ctx context.Context) txContext {
+	return txContext{
+		Context: ctx,
+	}
 }
 
 func (c txContext) Value(key interface{}) interface{} {

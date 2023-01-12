@@ -21,6 +21,7 @@ var Module = &bootstrap.Module{
 			data.NewGorm,
 			data.ErrorHandlingGormConfigurer(),
 			gormErrTranslatorProvider(),
+			transactionMaxRetry(),
 		),
 		web.FxErrorTranslatorProviders(
 			webErrTranslatorProvider(data.NewWebDataErrorTranslator),
@@ -50,9 +51,18 @@ func webErrTranslatorProvider(provider interface{}) func() web.ErrorTranslator {
 
 func gormErrTranslatorProvider() fx.Annotated {
 	return fx.Annotated{
-		Group:  data.GormConfigurerGroup,
+		Group: data.GormConfigurerGroup,
 		Target: func() data.ErrorTranslator {
 			return data.NewGormErrorTranslator()
+		},
+	}
+}
+
+func transactionMaxRetry() fx.Annotated {
+	return fx.Annotated{
+		Group: tx.FxTransactionExecuterOption,
+		Target: func(properties data.DataProperties) tx.TransactionExecuterOption {
+			return tx.MaxRetries(properties.Transaction.MaxRetry, 0)
 		},
 	}
 }
