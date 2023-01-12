@@ -28,6 +28,7 @@ require (
 	github.com/hashicorp/consul/api v1.12.0
 	github.com/hashicorp/vault/api v1.7.2
 	github.com/hashicorp/vault/api/auth/kubernetes v0.2.0
+	github.com/iancoleman/strcase v0.2.0
 	github.com/imdario/mergo v0.3.12
 	github.com/jackc/pgconn v1.11.0
 	github.com/lib/pq v1.10.2
@@ -41,6 +42,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/cors v1.7.0
 	github.com/russellhaering/goxmldsig v1.1.1
+	github.com/sergi/go-diff v1.1.0
 	github.com/shirou/gopsutil/v3 v3.22.8
 	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5
@@ -51,6 +53,7 @@ require (
 	go.uber.org/fx v1.18.2
 	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
+	golang.org/x/text v0.3.7
 	gopkg.in/dnaeon/go-vcr.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.3.1
@@ -146,7 +149,6 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/tidwall/gjson v1.14.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
@@ -168,7 +170,6 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	google.golang.org/genproto v0.0.0-20220207185906-7721543eae58 // indirect
 	google.golang.org/grpc v1.44.0 // indirect

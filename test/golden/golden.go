@@ -4,6 +4,7 @@ package golden
 import (
 	"encoding/json"
 	"github.com/google/go-cmp/cmp"
+	"github.com/iancoleman/strcase"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"os"
 	"path/filepath"
@@ -28,7 +29,7 @@ type GoldenFileTestingT interface {
 func PopulateGoldenFiles(t GoldenFileTestingT, data interface{}) {
 	t.Errorf("Running PopulateGoldenFiles will result in a failed test.")
 	if reflect.ValueOf(data).Kind() != reflect.Struct {
-		t.Fatalf("expected data to be of type struct")
+		t.Fatalf("expected data to be of type struct and not of type: %v", reflect.ValueOf(data).Kind())
 	}
 	goldenFilePath := GetGoldenFilePath(t)
 	b, err := json.MarshalIndent(data, MarshalPrefix, MarshalIndent)
@@ -61,6 +62,7 @@ func GetGoldenFilePath(t GoldenFileTestingT) string {
 	for i, part := range splitName {
 		if i == len(splitName)-1 {
 			// if this is the last part, use it as the .json
+			part = strcase.ToSnake(part)
 			goldenFilePath = filepath.Join(goldenFilePath, part+".json")
 			break
 		}
