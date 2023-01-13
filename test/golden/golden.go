@@ -1,9 +1,15 @@
 // Package golden will contain some utility functions for golden file testing
+//
+// # PopulateGoldenFiles will need to be added to the first test run and then removed
+//
+// Golden Files are populated and asserted based on the current runs test name
+// t should be of a type *testing.T ref:[https://pkg.go.dev/testing#T]
 package golden
 
 import (
 	"encoding/json"
 	"github.com/google/go-cmp/cmp"
+	"github.com/iancoleman/strcase"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"os"
 	"path/filepath"
@@ -22,13 +28,13 @@ type GoldenFileTestingT interface {
 	Name() string
 }
 
-// PopulateGoldenFiles will write golden files to the according to the GetGoldenFilePath function
-// data should be of a type struct and not []byte or string. The function will
-// marshal the data into JSON.
+// PopulateGoldenFiles will write golden files to the according path returned from
+// the GetGoldenFilePath function. The function will marshal the data into JSON.
+// data should be of a type struct and not []byte or string.
 func PopulateGoldenFiles(t GoldenFileTestingT, data interface{}) {
 	t.Errorf("Running PopulateGoldenFiles will result in a failed test.")
 	if reflect.ValueOf(data).Kind() != reflect.Struct {
-		t.Fatalf("expected data to be of type struct")
+		t.Fatalf("expected data to be of type struct and not of type: %v", reflect.ValueOf(data).Kind())
 	}
 	goldenFilePath := GetGoldenFilePath(t)
 	b, err := json.MarshalIndent(data, MarshalPrefix, MarshalIndent)
@@ -50,7 +56,7 @@ func PopulateGoldenFiles(t GoldenFileTestingT, data interface{}) {
 	}
 }
 
-// GetGoldenFilePath will typically return the path in the form ./testdata/golden/<sub-test-name>/<table-driven-test-name>.json
+// GetGoldenFilePath will typically return the path in the form ./testdata/golden/<sub-test-name>/<table_driven_test_name>.json
 // However, if the test is not run in a subtest or table driven test, the path may differ. However, the last portion
 // of the path will always become the golden json name.
 func GetGoldenFilePath(t GoldenFileTestingT) string {
@@ -61,6 +67,7 @@ func GetGoldenFilePath(t GoldenFileTestingT) string {
 	for i, part := range splitName {
 		if i == len(splitName)-1 {
 			// if this is the last part, use it as the .json
+			part = strcase.ToSnake(part)
 			goldenFilePath = filepath.Join(goldenFilePath, part+".json")
 			break
 		}

@@ -44,7 +44,7 @@ func TestWithAppTest(t *testing.T) {
 
 func SubTestWithoutTableDriven() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		expectedPath := filepath.Join("testdata", "golden", "TestWithAppTest", "SubTestWithoutTableDriven.json")
+		expectedPath := filepath.Join("testdata", "golden", "TestWithAppTest", "sub_test_without_table_driven.json")
 		if got := GetGoldenFilePath(t); got != expectedPath {
 			t.Errorf("GetGoldenFilePath() = %v, want %v", got, expectedPath)
 		}
@@ -64,6 +64,10 @@ func SubTestWithTableDriven() test.GomegaSubTestFunc {
 			{
 				name: "test_a_standard_non_subtest_test_with_snake_case_already",
 				want: filepath.Join("testdata", "golden", "TestWithAppTest", "SubTestWithTableDriven", "test_a_standard_non_subtest_test_with_snake_case_already.json"),
+			},
+			{
+				name: "TestName, ToBe.snake case with lowerCase",
+				want: filepath.Join("testdata", "golden", "TestWithAppTest", "SubTestWithTableDriven", "test_name,_to_be_snake_case_with_lower_case.json"),
 			},
 		}
 		for _, tt := range tests {
