@@ -70,7 +70,12 @@ func Run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fmt.Printf("Code generated to %v", cmdutils.GlobalArgs.OutputDir)
+	fmt.Printf("Code generated to %v\n", cmdutils.GlobalArgs.OutputDir)
+	//	Run go mod tidy
+	err = cmdutils.GoModTidy(cmd.Context(), []cmdutils.ShCmdOptions{cmdutils.ShellUseOutputDir()})
+	if err != nil {
+		return fmt.Errorf("could not tidy go code: %v", err)
+	}
 	return nil
 }
 

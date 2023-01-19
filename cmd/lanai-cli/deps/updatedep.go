@@ -47,7 +47,7 @@ func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 	}
 
 	// go mod tidy to update implicit dependencies changes
-	if e := cmdutils.GoModTidy(cmd.Context()); e != nil {
+	if e := cmdutils.GoModTidy(cmd.Context(), nil); e != nil {
 		return e
 	}
 
