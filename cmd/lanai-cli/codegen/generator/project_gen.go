@@ -1,20 +1,25 @@
 package generator
 
 import (
+	"fmt"
 	"io/fs"
 	"path"
 	"regexp"
 	"text/template"
 )
 
-const projectGenerationOrder = 0
+const (
+	defaultProjectPriorityOrder = 0
+	defaultProjectRegex         = "^(?:project.)(.+)(?:.tmpl)"
+)
 
 // ProjectGenerator generates 1 file based on the templatePath being used
 type ProjectGenerator struct {
-	data       map[string]interface{}
-	template   *template.Template
-	nameRegex  *regexp.Regexp
-	filesystem fs.FS
+	data          map[string]interface{}
+	template      *template.Template
+	nameRegex     *regexp.Regexp
+	filesystem    fs.FS
+	priorityOrder int
 }
 
 // newProjectGenerator returns a new generator for single files
@@ -23,11 +28,23 @@ func newProjectGenerator(opts ...func(option *Option)) *ProjectGenerator {
 	for _, fn := range opts {
 		fn(o)
 	}
+
+	priorityOrder := o.PriorityOrder
+	if priorityOrder == 0 {
+		priorityOrder = defaultProjectPriorityOrder
+	}
+
+	regex := defaultProjectRegex
+	if o.Prefix != "" {
+		regex = fmt.Sprintf("^(%v)(.+)(.tmpl)", o.Prefix)
+	}
+
 	return &ProjectGenerator{
-		data:       o.Data,
-		template:   o.Template,
-		nameRegex:  regexp.MustCompile("^(?:project.)(.+)(?:.tmpl)"),
-		filesystem: o.FS,
+		data:          o.Data,
+		template:      o.Template,
+		nameRegex:     regexp.MustCompile(regex),
+		filesystem:    o.FS,
+		priorityOrder: priorityOrder,
 	}
 }
 
@@ -64,5 +81,5 @@ func (o *ProjectGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 }
 
 func (o *ProjectGenerator) PriorityOrder() int {
-	return projectGenerationOrder
+	return o.priorityOrder
 }
