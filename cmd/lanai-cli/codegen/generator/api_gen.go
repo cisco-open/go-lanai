@@ -17,13 +17,15 @@ type ApiGenerator struct {
 	nameRegex     *regexp.Regexp
 	prefix        string
 	priorityOrder int
+	regenRule     string
 }
 
-const defaultApiNameRegex = "^(api.)(.+)(.tmpl)"
+const (
+	defaultApiNameRegex = "^(api.)(.+)(.tmpl)"
+	apiGeneratorName    = "api"
+)
 
 var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
-
-const defaultApiPriorityOrder = 2
 
 func newApiGenerator(opts ...func(option *Option)) *ApiGenerator {
 	o := &Option{}
@@ -31,6 +33,10 @@ func newApiGenerator(opts ...func(option *Option)) *ApiGenerator {
 		fn(o)
 	}
 
+	rules, ok := o.Rules[apiGeneratorName]
+	if ok {
+		o.RegenRule = rules.Regeneration
+	}
 	priorityOrder := o.PriorityOrder
 	if priorityOrder == 0 {
 		priorityOrder = defaultApiPriorityOrder
@@ -46,6 +52,7 @@ func newApiGenerator(opts ...func(option *Option)) *ApiGenerator {
 		filesystem:    o.FS,
 		nameRegex:     regexp.MustCompile(regex),
 		priorityOrder: priorityOrder,
+		regenRule:     o.RegenRule,
 	}
 }
 
@@ -72,6 +79,7 @@ func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 		toGenerate = append(toGenerate, *NewGenerationContext(
 			tmplPath,
 			path.Join(targetDir, baseFilename),
+			m.regenRule,
 			data,
 		))
 	}
