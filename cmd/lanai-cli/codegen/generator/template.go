@@ -25,6 +25,7 @@ func LoadTemplates(filesystem fs.FS) (*template.Template, error) {
 	tmpl := template.New("templates")
 	tmpl.Funcs(templateFunctions())
 
+	internal.Load()
 	if err := fs.WalkDir(filesystem, ".",
 		func(p string, d fs.DirEntry, err error) error {
 			if !d.IsDir() && isTemplateFile(d) {

@@ -19,3 +19,9 @@ func init() {
 		pathFuncMap,
 	}
 }
+
+// Load will reset any global registries used internally
+func Load() {
+	validatedRegexes = make(map[string]string)
+	structRegistry = make(map[string]string)
+}

@@ -12,7 +12,7 @@ var (
 	stringsFuncMap = template.FuncMap{
 		"toTitle":  toTitle,
 		"concat":   concat,
-		"basePath": path.Base,
+		"basePath": basePath,
 		"toLower":  toLower,
 	}
 )
@@ -27,4 +27,11 @@ func concat(values ...string) string {
 
 func toLower(val string) string {
 	return strings.ToLower(val)
+}
+
+func basePath(val string) string {
+	if val == "" {
+		return val
+	}
+	return path.Base(val)
 }

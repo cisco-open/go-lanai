@@ -7,23 +7,17 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
-	v3 "cto-github.cisco.com/NFV-BU/test-service/pkg/service/v3"
 	"go.uber.org/fx"
 )
 
-type AnotherTestController struct {
-	anotherTestService v3.AnotherTestService
-}
+type AnotherTestController struct{}
 
 type anotherTestControllerDI struct {
 	fx.In
-	AnotherTestService v3.AnotherTestService
 }
 
 func NewAnotherTestController(di anotherTestControllerDI) web.Controller {
-	return &AnotherTestController{
-		anotherTestService: di.AnotherTestService,
-	}
+	return &AnotherTestController{}
 }
 
 func (c *AnotherTestController) Mappings() []web.Mapping {
@@ -36,6 +30,6 @@ func (c *AnotherTestController) Mappings() []web.Mapping {
 	}
 }
 
-func (c *AnotherTestController) GetAnotherTest(ctx context.Context, req api.GenericResponse) (interface{}, error) {
-	return nil, nil
+func (c *AnotherTestController) GetAnotherTest(ctx context.Context, req api.GenericResponse) (int, interface{}, error) {
+	return 501, nil, nil
 }
