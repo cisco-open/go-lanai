@@ -27,9 +27,18 @@ func (c *AnotherTestController) Mappings() []web.Mapping {
 			Get("/api/v3/anotherTest").
 			EndpointFunc(c.GetAnotherTest).
 			Build(),
+		rest.
+			New("anothertest-post").
+			Post("/api/v3/anotherTest").
+			EndpointFunc(c.TestWithNoRequestBody).
+			Build(),
 	}
 }
 
 func (c *AnotherTestController) GetAnotherTest(ctx context.Context, req api.GenericResponse) (int, interface{}, error) {
+	return 501, nil, nil
+}
+
+func (c *AnotherTestController) TestWithNoRequestBody(ctx context.Context) (int, interface{}, error) {
 	return 501, nil, nil
 }

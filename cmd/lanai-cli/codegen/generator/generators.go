@@ -13,6 +13,7 @@ const (
 	defaultProjectPriorityOrder = iota
 	defaultApiStructOrder
 	defaultApiPriorityOrder
+	defaultDeletePriorityOrder
 )
 
 type Generator interface {
@@ -90,6 +91,7 @@ func NewGenerators(opts ...func(*Option)) Generators {
 			newProjectGenerator(opts...),
 			newDirectoryGenerator(opts...),
 			newVersionGenerator(opts...),
+			newDeleteGenerator(opts...),
 		},
 	}
 	order.SortStable(ret.generators, order.OrderedLastCompare)
