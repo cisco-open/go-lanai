@@ -21,11 +21,16 @@ func GenerateFiles(filesystem fs.FS, opts ...func(*Option)) error {
 	return generators.Generate()
 }
 
-func LoadTemplates(filesystem fs.FS) (*template.Template, error) {
+type LoaderOptions struct {
+	InitialRegexes map[string]string
+}
+
+func LoadTemplates(filesystem fs.FS, loaderOptions LoaderOptions) (*template.Template, error) {
 	tmpl := template.New("templates")
 	tmpl.Funcs(templateFunctions())
 
 	internal.Load()
+	internal.AddPredefinedRegexes(loaderOptions.InitialRegexes)
 	if err := fs.WalkDir(filesystem, ".",
 		func(p string, d fs.DirEntry, err error) error {
 			if !d.IsDir() && isTemplateFile(d) {

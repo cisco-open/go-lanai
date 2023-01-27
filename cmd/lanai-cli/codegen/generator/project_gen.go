@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	defaultProjectPriorityOrder = 0
-	defaultProjectRegex         = "^(?:project.)(.+)(?:.tmpl)"
+	defaultProjectRegex  = "^(?:project.)(.+)(?:.tmpl)"
+	projectGeneratorName = "project"
 )
 
 // ProjectGenerator generates 1 file based on the templatePath being used
@@ -20,6 +20,7 @@ type ProjectGenerator struct {
 	nameRegex     *regexp.Regexp
 	filesystem    fs.FS
 	priorityOrder int
+	regenRule     string
 }
 
 // newProjectGenerator returns a new generator for single files
@@ -28,7 +29,10 @@ func newProjectGenerator(opts ...func(option *Option)) *ProjectGenerator {
 	for _, fn := range opts {
 		fn(o)
 	}
-
+	rules, ok := o.Rules[projectGeneratorName]
+	if ok {
+		o.RegenRule = rules.Regeneration
+	}
 	priorityOrder := o.PriorityOrder
 	if priorityOrder == 0 {
 		priorityOrder = defaultProjectPriorityOrder
@@ -39,12 +43,14 @@ func newProjectGenerator(opts ...func(option *Option)) *ProjectGenerator {
 		regex = fmt.Sprintf("^(%v)(.+)(.tmpl)", o.Prefix)
 	}
 
+	logger.Infof("RegenRule: %v", o.RegenRule)
 	return &ProjectGenerator{
 		data:          o.Data,
 		template:      o.Template,
 		nameRegex:     regexp.MustCompile(regex),
 		filesystem:    o.FS,
 		priorityOrder: priorityOrder,
+		regenRule:     o.RegenRule,
 	}
 }
 
@@ -74,6 +80,7 @@ func (o *ProjectGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 	file := *NewGenerationContext(
 		tmplPath,
 		path.Join(targetDir, baseFilename),
+		o.regenRule,
 		o.data,
 	)
 	logger.Infof("project generator generating %v\n", targetDir)

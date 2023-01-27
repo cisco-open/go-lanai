@@ -12,19 +12,28 @@ type VersionGenerator struct {
 	data       map[string]interface{}
 	template   *template.Template
 	nameRegex  *regexp.Regexp
+	regenRule  string
 	filesystem fs.FS
 }
+
+const versionGeneratorName = "version"
 
 func newVersionGenerator(opts ...func(option *Option)) *VersionGenerator {
 	o := &Option{}
 	for _, fn := range opts {
 		fn(o)
 	}
+	rules, ok := o.Rules[versionGeneratorName]
+	if ok {
+		o.RegenRule = rules.Regeneration
+	}
+
 	return &VersionGenerator{
 		data:       o.Data,
 		template:   o.Template,
 		filesystem: o.FS,
 		nameRegex:  regexp.MustCompile("^(version.)(.+)(.tmpl)"),
+		regenRule:  o.RegenRule,
 	}
 }
 
@@ -66,6 +75,7 @@ func (m *VersionGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 		toGenerate = append(toGenerate, *NewGenerationContext(
 			tmplPath,
 			path.Join(targetDir, m.determineFilename(tmplPath)),
+			m.regenRule,
 			data,
 		))
 	}

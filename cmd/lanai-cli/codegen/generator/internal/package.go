@@ -25,3 +25,9 @@ func Load() {
 	validatedRegexes = make(map[string]string)
 	structRegistry = make(map[string]string)
 }
+
+func AddPredefinedRegexes(initialRegexes map[string]string) {
+	for key, value := range initialRegexes {
+		predefinedRegexes[key] = value
+	}
+}
