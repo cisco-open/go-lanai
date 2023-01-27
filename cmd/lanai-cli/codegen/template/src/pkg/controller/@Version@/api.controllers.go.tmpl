@@ -106,13 +106,15 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
                     {{- end }}
             {{- end }}
             {{- if not $singularRef }}
-                {{- if $operation.Data.RequestBody.Ref }}
-                    {{- $singularRef = $operation.Data.RequestBody.Ref }}
-                {{- else if $operation.Data.RequestBody.Value.Content }}
-                   {{- range $operation.Data.RequestBody.Value.Content }}
-                        {{- if .Schema.Ref }}
-                            {{- $singularRef = .Schema.Ref }}
-                            {{- break -}}
+                {{- if $operation.Data.RequestBody }}
+                    {{- if $operation.Data.RequestBody.Ref }}
+                        {{- $singularRef = $operation.Data.RequestBody.Ref }}
+                    {{- else if $operation.Data.RequestBody.Value.Content }}
+                       {{- range $operation.Data.RequestBody.Value.Content }}
+                            {{- if .Schema.Ref }}
+                                {{- $singularRef = .Schema.Ref }}
+                                {{- break -}}
+                            {{- end }}
                         {{- end }}
                     {{- end }}
                 {{- end }}
@@ -134,8 +136,7 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         {{- $defaultResponseIs200 := eq $defaultResponse "200"}}
         {{- $noResponses := not $operation.Data.Responses }}
         {{- $hideStatus := or $noResponses $defaultResponseIs200 }}
-        func (c * {{ $controllerName }}) {{toTitle $operation.Name}}(ctx context.Context, req {{$importName}}.{{toTitle $requestStructName}}) ({{if not $hideStatus}} int, {{- end }}interface{}, error) {
-            {{- /* CODEGEN TODO: populate function logic (PLAT-1688) */ -}}
+        func (c * {{ $controllerName }}) {{toTitle $operation.Name}}(ctx context.Context{{ if $requestStructName }}, req {{$importName}}.{{toTitle $requestStructName}}{{- end}}) ({{if not $hideStatus}} int, {{- end }}interface{}, error) {
             return {{if not $hideStatus}} 501, {{- end }}nil, nil
         }
 
