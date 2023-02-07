@@ -50,6 +50,7 @@ func bindings(propertyName string, element *openapi3.SchemaRef, requiredList []s
 	bindingParts = append(bindingParts, regexTag(element)...)
 	bindingParts = append(bindingParts, limitTags(element)...)
 	bindingParts = append(bindingParts, omitEmptyTags(propertyName, requiredList, element)...)
+	bindingParts = append(bindingParts, enumOf(element.Value.Enum)...)
 	return strings.Join(bindingParts, ",")
 }
 
@@ -94,5 +95,22 @@ func omitEmptyTags(propertyName string, requiredList []string, schemaRef *openap
 	if !listContains(requiredList, propertyName) && valuePassesValidation(schemaRef.Value, zeroValue(schemaRef.Value)) {
 		result = append(result, "omitempty")
 	}
+	return result
+}
+
+func enumOf(enums []interface{}) (result []string) {
+	allEnums := ""
+	for _, e := range enums {
+		if e == nil {
+			continue
+		}
+		allEnums += fmt.Sprintf("%v ", e.(string))
+	}
+
+	if allEnums == "" {
+		return result
+	}
+	binding := strings.TrimSpace("enumof=" + allEnums)
+	result = append(result, binding)
 	return result
 }
