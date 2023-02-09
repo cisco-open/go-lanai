@@ -91,6 +91,12 @@ func shouldHavePointer(element interface{}, isRequired bool) (bool, error) {
 	if schema.Value.Type == "object" && isRequired {
 		return true, nil
 	}
+	if schema.Value.Nullable {
+		return true, nil
+	}
+	if schema.Value.Enum != nil {
+		return false, nil
+	}
 	return valuePassesValidation(schema.Value, zeroValue(schema.Value)), nil
 }
 

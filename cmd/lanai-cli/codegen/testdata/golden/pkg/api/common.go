@@ -23,6 +23,8 @@ type GenericResponse struct {
 	NumberValue                     *float64                    `json:"numberValue" binding:"max=10,omitempty"`
 	ObjectValue                     *GenericResponseObjectValue `json:"objectValue" binding:"required"`
 	StringValue                     *string                     `json:"stringValue" binding:"required,max=128"`
+	StringWithEnum                  string                      `json:"stringWithEnum" binding:"omitempty,enumof=asc desc"`
+	StringWithNilEnum               *string                     `json:"stringWithNilEnum" binding:"omitempty,enumof=asc desc"`
 	StringWithRegexDefinedInFormat  string                      `json:"stringWithRegexDefinedInFormat" binding:"regexCD184"`
 	StringWithRegexDefinedInPattern string                      `json:"stringWithRegexDefinedInPattern" binding:"required,regexEB33C"`
 	Values                          *map[string]string

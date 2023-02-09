@@ -21,7 +21,7 @@ type ApiGenerator struct {
 }
 
 const (
-	defaultApiNameRegex = "^(api.)(.+)(.tmpl)"
+	defaultApiNameRegex = "^(api\\.)(.+)(.tmpl)"
 	apiGeneratorName    = "api"
 )
 

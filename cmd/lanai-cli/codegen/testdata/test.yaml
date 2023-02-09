@@ -149,6 +149,18 @@ components:
           items:
               $ref: '#/components/schemas/GenericObject'
           type: array
+        stringWithEnum:
+          type: string
+          enum:
+            - asc
+            - desc
+        stringWithNilEnum:
+          type: string
+          enum:
+            - asc
+            - desc
+            - null
+          nullable: true
       additionalProperties:
         type: string
     ArrayItem:
