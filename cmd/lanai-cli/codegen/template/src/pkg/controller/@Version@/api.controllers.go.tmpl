@@ -11,39 +11,31 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
     "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-    {{- template "imports" $rootData -}}
+    {{- template "controllerImports" $rootData -}}
 	"go.uber.org/fx"
 )
 
 {{- $nameFromPath := defaultNameFromPath $pathName }}
-{{- $controllerName := concat $nameFromPath "Controller" }}
-{{- $controllerName = toTitle $controllerName }}
+{{- $controllerName := concat $nameFromPath "Controller" | toTitle }}
 
-{{- $serviceName := concat $nameFromPath "Service" }}
 {{- $diName := concat $nameFromPath "Controller" "DI" }}
 
-type {{ $controllerName }} struct {
-    {{ $serviceName }} {{- with index . "Version" }} {{ . }}. {{- end }}{{ toTitle $serviceName }}
-}
+type {{ $controllerName }} struct {}
 
 type {{ $diName }} struct {
     fx.In
-    {{ toTitle $serviceName }} {{- with index . "Version" }} {{ . }}. {{- end }}{{ toTitle $serviceName }}
 }
 
 func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
-    return &{{$controllerName }}{
-        {{ $serviceName }}: di.{{ toTitle $serviceName }},
-    }
+    return &{{$controllerName }}{}
 }
 
 {{ template "mappingFunction" args $rootData }}
 
 {{ template "controllerFunctions" args . }}
 
-{{ define "imports" }}
-    {{- $pathName := index . "PathName" }}
-    {{- $pathName = defaultNameFromPath $pathName }}
+{{ define "controllerImports" }}
+    {{- $pathName := index . "PathName" | defaultNameFromPath }}
     {{- $pathData := index . "PathData" }}
     {{- $repository := index . "Repository" }}
     {{- $version := index . "Version" }}
@@ -51,25 +43,18 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- $hasCommonImport := false }}
     {{- $hasAPIImport := false }}
     {{- range $opName, $opData := pathOperations $pathData }}
-        {{- $defaultName := concat $pathName $opName }}
-        {{- $operation := operation $defaultName $opData }}
-        {{- $requestStructName := concat $operation.Name "Request" }}
-        {{- if structLocation $requestStructName }}
-            {{- $hasAPIImport = true }}
-        {{- else }}
+        {{- $structRegistry := structRegistry }}
+        {{- $operation := concat $pathName $opName | operation $opData }}
+
+        {{- $requestStruct := $operation.StructForMessage "Request" $structRegistry }}
+        {{- if eq $requestStruct.Import "pkg/api"  }}
             {{- $hasCommonImport = true }}
+        {{- else if $requestStruct.Import }}
+            {{- $hasAPIImport = true }}
         {{- end }}
+        
     {{- end }}
-    {{- /* It's like this because of weird new-line issues */ -}}
-    {{- if and $hasCommonImport $hasAPIImport }}
-        "{{$repository}}/pkg/api"
-        api{{$version}} "{{$repository}}/pkg/api/{{$version}}"
-    {{- else if $hasCommonImport}}
-        "{{$repository}}/pkg/api"
-    {{- else if $hasAPIImport }}
-        api{{$version}} "{{$repository}}/pkg/api/{{$version}}"
-    {{- end }}
-	{{ $version }} "{{$repository}}/pkg/service/{{$version}}"
+    {{- template "ImportStruct" args $hasCommonImport $hasAPIImport . -}}
 {{ end }}
 
 {{ define "mappingFunction" }}
@@ -78,17 +63,14 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- $pathName := index $rootData "PathName" }}
     {{- $nameFromPath := defaultNameFromPath $pathName }}
 
-    {{- $controllerName := concat $nameFromPath "Controller" }}
-    {{- $controllerName = toTitle $controllerName }}
-
+    {{- $controllerName := concat $nameFromPath "Controller" | toTitle}}
     {{- $pathData := index $rootData "PathData" }}
     {{- $pathName := index $rootData "PathName" }}
     func (c * {{ $controllerName }} ) Mappings() []web.Mapping {
         return []web.Mapping{
         {{- with $pathData }}
             {{- range $opName, $opData := pathOperations . }}
-                {{- $defaultName := concat $nameFromPath $opName }}
-                {{- $operation := operation $defaultName $opData }}
+                {{- $operation :=  concat $nameFromPath $opName | operation $opData }}
             rest.
                 New("{{ mappingName $pathName $opName }}").
                 {{$opName}}("{{ mappingPath $pathName }}").
@@ -107,12 +89,10 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- $pathName := index $rootData "PathName" }}
     {{- $nameFromPath := defaultNameFromPath $pathName }}
 
-    {{- $controllerName := concat $nameFromPath "Controller" }}
-    {{- $controllerName = toTitle $controllerName }}
+    {{- $controllerName := concat $nameFromPath "Controller" | toTitle}}
 
     {{- range $opName, $opData := pathOperations $pathData }}
-        {{- $defaultName := concat $nameFromPath $opName }}
-        {{- $operation := operation $defaultName $opData }}
+        {{- $operation := concat $nameFromPath $opName | operation $opData }}
 
         {{- $requestStructName := concat $operation.Name "Request" }}
         {{- $importName := structLocation $requestStructName }}
@@ -126,13 +106,15 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
                     {{- end }}
             {{- end }}
             {{- if not $singularRef }}
-                {{- if $operation.Data.RequestBody.Ref }}
-                    {{- $singularRef = $operation.Data.RequestBody.Ref }}
-                {{- else if $operation.Data.RequestBody.Value.Content }}
-                   {{- range $operation.Data.RequestBody.Value.Content }}
-                        {{- if .Schema.Ref }}
-                            {{- $singularRef = .Schema.Ref }}
-                            {{- break -}}
+                {{- if $operation.Data.RequestBody }}
+                    {{- if $operation.Data.RequestBody.Ref }}
+                        {{- $singularRef = $operation.Data.RequestBody.Ref }}
+                    {{- else if $operation.Data.RequestBody.Value.Content }}
+                       {{- range $operation.Data.RequestBody.Value.Content }}
+                            {{- if .Schema.Ref }}
+                                {{- $singularRef = .Schema.Ref }}
+                                {{- break -}}
+                            {{- end }}
                         {{- end }}
                     {{- end }}
                 {{- end }}
@@ -154,8 +136,7 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         {{- $defaultResponseIs200 := eq $defaultResponse "200"}}
         {{- $noResponses := not $operation.Data.Responses }}
         {{- $hideStatus := or $noResponses $defaultResponseIs200 }}
-        func (c * {{ $controllerName }}) {{toTitle $operation.Name}}(ctx context.Context, req {{$importName}}.{{toTitle $requestStructName}}) ({{if not $hideStatus}} int, {{- end }}interface{}, error) {
-            {{- /* CODEGEN TODO: populate function logic (PLAT-1688) */ -}}
+        func (c * {{ $controllerName }}) {{toTitle $operation.Name}}(ctx context.Context{{ if $requestStructName }}, req {{$importName}}.{{toTitle $requestStructName}}{{- end}}) ({{if not $hideStatus}} int, {{- end }}interface{}, error) {
             return {{if not $hideStatus}} 501, {{- end }}nil, nil
         }
 

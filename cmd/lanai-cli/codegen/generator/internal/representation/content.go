@@ -1,4 +1,4 @@
-package internal
+package representation
 
 import "github.com/getkin/kin-openapi/openapi3"
 

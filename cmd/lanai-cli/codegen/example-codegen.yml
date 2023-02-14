@@ -1,0 +1,12 @@
+contract: ./testdata/test.yaml
+#templateDirectory: template/src
+repositoryRootPath: cto-github.cisco.com/NFV-BU/testservice
+projectName: testservice
+#regeneration: overwrite
+generatorRules:
+  project:
+    regeneration: overwrite #overwrite | ignore | reference
+  api:
+    regeneration: overwrite
+regexes:
+  testRegex: "^[a-zA-Z0-5-_=]{1,256}$"

@@ -17,15 +17,21 @@ var Module = &bootstrap.Module{
 	},
 }
 
+const (
+	FxTransactionExecuterOption = "TransactionExecuterOption"
+)
+
 type txDI struct {
 	fx.In
-	UnnamedTx TxManager `optional:"true"`
-	DB        *gorm.DB  `optional:"true"`
+	UnnamedTx TxManager                   `optional:"true"`
+	DB        *gorm.DB                    `optional:"true"`
+	Executer  TransactionExecuter         `optional:"true"`
+	Options   []TransactionExecuterOption `group:"TransactionExecuterOption"`
 }
 
 type txManagerOut struct {
 	fx.Out
-	Tx     TxManager     `name:"tx/TxManager"`
+	Tx     TxManager `name:"tx/TxManager"`
 	GormTx GormTxManager
 }
 
@@ -38,7 +44,7 @@ func provideGormTxManager(di txDI) txManagerOut {
 			return txManagerOut{Tx: override, GormTx: override}
 		} else {
 			// we should avoid this path
-			return txManagerOut{Tx: di.UnnamedTx, GormTx: gormTxManagerAdapter{TxManager: di.UnnamedTx} }
+			return txManagerOut{Tx: di.UnnamedTx, GormTx: gormTxManagerAdapter{TxManager: di.UnnamedTx}}
 		}
 	}
 
@@ -46,7 +52,10 @@ func provideGormTxManager(di txDI) txManagerOut {
 		panic("default GormTxManager requires a *gorm.DB")
 	}
 
-	m := newGormTxManager(di.DB)
+	if di.Executer == nil {
+		di.Executer = NewDefaultExecuter(di.Options...)
+	}
+	m := newGormTxManager(di.DB, di.Executer)
 	return txManagerOut{
 		Tx:     m,
 		GormTx: m,

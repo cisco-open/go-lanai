@@ -61,7 +61,7 @@ func TestGenerateTemplates(t *testing.T) {
 				generator.OpenAPIData: openAPIData,
 				generator.Repository:  "cto-github.cisco.com/NFV-BU/test-service",
 			}
-			templates, err := generator.LoadTemplates(tt.filesystem)
+			templates, err := generator.LoadTemplates(tt.filesystem, generator.LoaderOptions{})
 			if err != nil {
 				t.Fatalf("Could not load templates: %v", err)
 			}

@@ -8,23 +8,17 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
 	apiv1 "cto-github.cisco.com/NFV-BU/test-service/pkg/api/v1"
-	v1 "cto-github.cisco.com/NFV-BU/test-service/pkg/service/v1"
 	"go.uber.org/fx"
 )
 
-type TestpathScopeController struct {
-	testpathScopeService v1.TestpathScopeService
-}
+type TestpathScopeController struct{}
 
 type testpathScopeControllerDI struct {
 	fx.In
-	TestpathScopeService v1.TestpathScopeService
 }
 
 func NewTestpathScopeController(di testpathScopeControllerDI) web.Controller {
-	return &TestpathScopeController{
-		testpathScopeService: di.TestpathScopeService,
-	}
+	return &TestpathScopeController{}
 }
 
 func (c *TestpathScopeController) Mappings() []web.Mapping {

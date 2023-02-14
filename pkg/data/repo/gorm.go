@@ -10,7 +10,7 @@ import (
 
 type TxWithGormFunc func(ctx context.Context, tx *gorm.DB) error
 
-type GormApi interface{
+type GormApi interface {
 	DB(ctx context.Context) *gorm.DB
 	Transaction(ctx context.Context, txFunc TxWithGormFunc, opts ...*sql.TxOptions) error
 	WithSession(config *gorm.Session) GormApi
@@ -23,7 +23,7 @@ type gormApi struct {
 
 func newGormApi(db *gorm.DB, txManager tx.GormTxManager) GormApi {
 	return gormApi{
-		db: db,
+		db:        db,
 		txManager: txManager.WithDB(db),
 	}
 }
@@ -31,7 +31,7 @@ func newGormApi(db *gorm.DB, txManager tx.GormTxManager) GormApi {
 func (g gormApi) WithSession(config *gorm.Session) GormApi {
 	db := g.db.Session(config)
 	return gormApi{
-		db: db,
+		db:        db,
 		txManager: g.txManager.WithDB(db),
 	}
 }

@@ -9,6 +9,13 @@ import (
 
 var logger = log.New("Codegen.generator")
 
+const (
+	defaultProjectPriorityOrder = iota
+	defaultApiStructOrder
+	defaultApiPriorityOrder
+	defaultDeletePriorityOrder
+)
+
 type Generator interface {
 	Generate(tmplPath string, dirEntry fs.DirEntry) error
 }
@@ -16,6 +23,10 @@ type Generator interface {
 type Generators struct {
 	generators  []Generator
 	loadedPaths []templateInfo
+}
+
+type Rules struct {
+	Regeneration string `yaml:"regeneration"`
 }
 
 type templateInfo struct {
@@ -29,8 +40,20 @@ type Option struct {
 	FS            fs.FS
 	PriorityOrder int
 	Prefix        string
+	RegenRule     string
+	Rules         map[string]Rules
 }
 
+func WithRules(rules map[string]Rules) func(o *Option) {
+	return func(option *Option) {
+		option.Rules = rules
+	}
+}
+func WithRegenerationRule(globalRegenerationRule string) func(o *Option) {
+	return func(option *Option) {
+		option.RegenRule = globalRegenerationRule
+	}
+}
 func WithFS(filesystem fs.FS) func(o *Option) {
 	return func(option *Option) {
 		option.FS = filesystem
@@ -63,11 +86,12 @@ func WithPrefix(prefix string) func(o *Option) {
 func NewGenerators(opts ...func(*Option)) Generators {
 	ret := Generators{
 		generators: []Generator{
-			newApiGenerator(append(opts, WithPrefix("api.struct."), WithPriorityOrder(defaultApiPriorityOrder-1))...),
+			newApiGenerator(append(opts, WithPrefix("api-struct."), WithPriorityOrder(defaultApiStructOrder))...),
 			newApiGenerator(opts...),
 			newProjectGenerator(opts...),
 			newDirectoryGenerator(opts...),
 			newVersionGenerator(opts...),
+			newDeleteGenerator(opts...),
 		},
 	}
 	order.SortStable(ret.generators, order.OrderedLastCompare)
