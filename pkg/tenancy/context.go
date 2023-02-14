@@ -17,8 +17,6 @@ const STATUS_IN_PROGRESS = "IN_PROGRESS"
 const STATUS_LOADED = "LOADED"
 const STATUS_FAILED_TO_LOAD_ROOT_TENANT = "FAILED_TO_LOAD_ROOT_TENANT"
 
-var cachedRootId string
-
 type Accessor interface {
 	GetParent(ctx context.Context, tenantId string) (string, error)
 	GetChildren(ctx context.Context, tenantId string) ([]string, error)
@@ -55,12 +53,7 @@ func GetDescendants(ctx context.Context, tenantId string) ([]string, error) {
 GetRoot because root tenantId won't change once system is started, we can cache it after first successful read.
 */
 func GetRoot(ctx context.Context) (string, error) {
-	if cachedRootId != "" {
-		return cachedRootId, nil
-	}
-	var err error
-	cachedRootId, err = internalAccessor.GetRoot(ctx)
-	return cachedRootId, err
+	return internalAccessor.GetRoot(ctx)
 }
 
 func GetTenancyPath(ctx context.Context, tenantId string) ([]uuid.UUID, error) {
