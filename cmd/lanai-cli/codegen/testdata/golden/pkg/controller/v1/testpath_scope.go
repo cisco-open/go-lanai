@@ -6,7 +6,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
 	apiv1 "cto-github.cisco.com/NFV-BU/test-service/pkg/api/v1"
 	"go.uber.org/fx"
 )
@@ -49,6 +48,6 @@ func (c *TestpathScopeController) TestpathScopeGet(ctx context.Context, req apiv
 	return nil, nil
 }
 
-func (c *TestpathScopeController) PostTestPath(ctx context.Context, req api.PathParam) (interface{}, error) {
+func (c *TestpathScopeController) PostTestPath(ctx context.Context, req apiv1.PostTestPathRequest) (interface{}, error) {
 	return nil, nil
 }

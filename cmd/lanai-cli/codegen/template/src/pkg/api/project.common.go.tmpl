@@ -110,8 +110,10 @@ package api
 {{ define "componentParameterStructs" }}
     {{- $parameters := index . 0 }}
     {{ range $parameterName, $parameterData := $parameters }}
+        {{- if eq $parameterData.Value.Schema.Value.Type "object" }}
         type {{ toTitle $parameterName }} struct {
             {{ template "ParameterProperty" args $parameterData "pkg/api" }}
         }
+        {{- end }}
     {{ end }}
 {{- end }}

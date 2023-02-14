@@ -43,11 +43,3 @@ type GenericResponseWithAllOf struct {
 type TestRequest struct {
 	Uuid string `json:"uuid" binding:"uuid"`
 }
-
-type PathParam struct {
-	Scope string `uri:"scope" binding:"required,regexA397E"`
-}
-
-type QueryParam struct {
-	TestParam *string `form:"testParam" binding:"max=128,omitempty"`
-}
