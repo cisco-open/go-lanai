@@ -14,13 +14,14 @@ type GenericObjectEnabled struct {
 type GenericResponse struct {
 	ArrayOfObjects                  []GenericObject             `json:"arrayOfObjects"`
 	ArrayOfRef                      *[]string                   `json:"arrayOfRef" binding:"omitempty"`
+	ArrayOfUUIDs                    *[]string                   `json:"arrayOfUUIDs" binding:"omitempty,dive,uuid"`
 	CreatedOnDate                   string                      `json:"createdOnDate" binding:"required,date"`
 	CreatedOnDateTime               string                      `json:"createdOnDateTime" binding:"date-time"`
 	DirectRef                       GenericObject               `json:"directRef"`
-	IntegerValue                    *int                        `json:"integerValue" binding:"max=5,omitempty"`
+	IntegerValue                    *int                        `json:"integerValue" binding:"omitempty,max=5"`
 	MyUuid                          string                      `json:"myUuid" binding:"uuid"`
-	NumberArray                     *[]float64                  `json:"numberArray" binding:"max=10,omitempty"`
-	NumberValue                     *float64                    `json:"numberValue" binding:"max=10,omitempty"`
+	NumberArray                     *[]float64                  `json:"numberArray" binding:"omitempty,max=10"`
+	NumberValue                     *float64                    `json:"numberValue" binding:"omitempty,max=10"`
 	ObjectValue                     *GenericResponseObjectValue `json:"objectValue" binding:"required"`
 	StringValue                     *string                     `json:"stringValue" binding:"required,max=128"`
 	StringWithEnum                  string                      `json:"stringWithEnum" binding:"omitempty,enumof=asc desc"`

@@ -46,12 +46,24 @@ func nameType(element interface{}) string {
 func bindings(propertyName string, element *openapi3.SchemaRef, requiredList []string) string {
 	var bindingParts []string
 
-	bindingParts = append(bindingParts, requiredTag(propertyName, requiredList)...)
-	bindingParts = append(bindingParts, regexTag(element)...)
-	bindingParts = append(bindingParts, limitTags(element)...)
 	bindingParts = append(bindingParts, omitEmptyTags(propertyName, requiredList, element)...)
-	bindingParts = append(bindingParts, enumOf(element.Value.Enum)...)
+	bindingParts = append(bindingParts, requiredTag(propertyName, requiredList)...)
+	bindingParts = append(bindingParts, validationTags(element, requiredList)...)
 	return strings.Join(bindingParts, ",")
+}
+
+func validationTags(element *openapi3.SchemaRef, requiredList []string) []string {
+	result := regexTag(element)
+	result = append(result, limitTags(element)...)
+	result = append(result, enumOf(element.Value.Enum)...)
+	if element.Value.Type == "array" {
+		innerParts := validationTags(element.Value.Items, requiredList)
+		if innerParts != nil {
+			result = append(result, "dive")
+			result = append(result, innerParts...)
+		}
+	}
+	return result
 }
 
 func requiredTag(propertyName string, requiredList []string) (result []string) {
