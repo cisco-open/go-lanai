@@ -126,6 +126,7 @@ components:
           maximum: 10
         integerValue:
           type: integer
+          format: int32
           maximum: 5
         numberArray:
           type: array
@@ -148,6 +149,11 @@ components:
         arrayOfObjects:
           items:
               $ref: '#/components/schemas/GenericObject'
+          type: array
+        arrayOfUUIDs:
+          items:
+            type: string
+            format: uuid
           type: array
         stringWithEnum:
           type: string

@@ -29,6 +29,9 @@ type Regex struct {
 }
 
 func regex(value openapi3.Schema) *Regex {
+	if value.Type != "string" {
+		return nil
+	}
 	r := Regex{}
 	if predefinedRegexes[value.Format] != "" {
 		r.Value = predefinedRegexes[value.Format]
@@ -45,7 +48,6 @@ func regex(value openapi3.Schema) *Regex {
 }
 
 func generateNameFromRegex(regex string) string {
-	//TODO: In a config file, add a way for the user to define their own names for their regexes
 	for predefinedRegexName, predefinedRegexValue := range predefinedRegexes {
 		if predefinedRegexValue == regex {
 			return predefinedRegexName
