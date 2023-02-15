@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"fmt"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"reflect"
@@ -75,10 +76,20 @@ func (g GormCrud) FindById(ctx context.Context, dest interface{}, id interface{}
 			WithMessage(errTmplInvalidCrudValue, dest, "FindById", "*Struct")
 	}
 
-	eq := clause.Eq{Column: clause.PrimaryColumn, Value: id}
+	// TODO verify this using index key
+	switch v := id.(type) {
+	case string:
+		if uid, e := uuid.Parse(v); e == nil {
+			id = uid
+		}
+	case *string:
+		if uid, e := uuid.Parse(*v); e == nil {
+			id = uid
+		}
+	}
 
 	return execute(ctx, g.GormApi.DB(ctx), nil, options, modelFunc(g.model), func(db *gorm.DB) *gorm.DB {
-		return db.Take(dest, eq)
+		return db.Take(dest, id)
 	})
 }
 
