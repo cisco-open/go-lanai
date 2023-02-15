@@ -8,12 +8,12 @@ type ApiPolicy struct {
 
 type GenericObject struct {
 	Enabled        GenericObjectEnabled        `json:"enabled"`
-	Id             *string                     `json:"id" binding:"omitempty"`
+	Id             *string                     `json:"id"`
 	ValueWithAllOf GenericObjectValueWithAllOf `json:"valueWithAllOf"`
 }
 
 type GenericObjectEnabled struct {
-	Inner *string `json:"inner" binding:"omitempty"`
+	Inner *string `json:"inner"`
 }
 
 type GenericObjectValueWithAllOf struct {
@@ -22,20 +22,20 @@ type GenericObjectValueWithAllOf struct {
 
 type GenericResponse struct {
 	ArrayOfObjects                  []GenericObject             `json:"arrayOfObjects"`
-	ArrayOfRef                      *[]string                   `json:"arrayOfRef" binding:"omitempty"`
+	ArrayOfRef                      *[]string                   `json:"arrayOfRef"`
 	ArrayOfUUIDs                    *[]string                   `json:"arrayOfUUIDs" binding:"omitempty,dive,uuid"`
 	CreatedOnDate                   string                      `json:"createdOnDate" binding:"required,date"`
-	CreatedOnDateTime               string                      `json:"createdOnDateTime" binding:"date-time"`
+	CreatedOnDateTime               string                      `json:"createdOnDateTime" binding:"omitempty,date-time"`
 	DirectRef                       GenericObject               `json:"directRef"`
 	IntegerValue                    *int                        `json:"integerValue" binding:"omitempty,max=5"`
-	MyUuid                          string                      `json:"myUuid" binding:"uuid"`
+	MyUuid                          string                      `json:"myUuid" binding:"omitempty,uuid"`
 	NumberArray                     *[]float64                  `json:"numberArray" binding:"omitempty,max=10"`
 	NumberValue                     *float64                    `json:"numberValue" binding:"omitempty,max=10"`
 	ObjectValue                     *GenericResponseObjectValue `json:"objectValue" binding:"required"`
 	StringValue                     *string                     `json:"stringValue" binding:"required,max=128"`
 	StringWithEnum                  string                      `json:"stringWithEnum" binding:"omitempty,enumof=asc desc"`
 	StringWithNilEnum               *string                     `json:"stringWithNilEnum" binding:"omitempty,enumof=asc desc"`
-	StringWithRegexDefinedInFormat  string                      `json:"stringWithRegexDefinedInFormat" binding:"regexCD184"`
+	StringWithRegexDefinedInFormat  string                      `json:"stringWithRegexDefinedInFormat" binding:"omitempty,regexCD184"`
 	StringWithRegexDefinedInPattern string                      `json:"stringWithRegexDefinedInPattern" binding:"required,regexEB33C"`
 	Values                          *map[string]string
 }
@@ -45,10 +45,10 @@ type GenericResponseObjectValue struct {
 }
 
 type GenericResponseWithAllOf struct {
-	Id *string `json:"id" binding:"omitempty"`
+	Id *string `json:"id"`
 	GenericResponse
 }
 
 type TestRequest struct {
-	Uuid string `json:"uuid" binding:"uuid"`
+	Uuid string `json:"uuid" binding:"omitempty,uuid"`
 }

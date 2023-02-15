@@ -12,7 +12,7 @@ type DeleteTestPathRequest struct {
 }
 
 type DeleteTestPathResponse struct {
-	Id *string `json:"id" binding:"omitempty"`
+	Id *string `json:"id"`
 	api.GenericResponse
 }
 

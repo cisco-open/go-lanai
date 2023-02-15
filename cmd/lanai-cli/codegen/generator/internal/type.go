@@ -103,7 +103,7 @@ func shouldHavePointer(element interface{}, isRequired bool) (bool, error) {
 func valuePassesValidation(schema *openapi3.Schema, value reflect.Value) (result bool) {
 	switch value.Kind() {
 	case reflect.String:
-		if rValue := regex(*schema); rValue != nil {
+		if rValue, _ := regex(*schema); rValue != nil {
 			found, err := regexp.MatchString(rValue.Value, value.String())
 			if err == nil || !found {
 				return false

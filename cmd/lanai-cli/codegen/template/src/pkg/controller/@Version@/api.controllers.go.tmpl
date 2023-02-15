@@ -131,7 +131,7 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         {{ $defaultResponse := "" }}
         {{ range $respName, $respData := $operation.Data.Responses }}
             {{ $defaultResponse = $respName}}
-            {{ break }}
+            {{- break -}}
         {{- end }}
         {{- $defaultResponseIs200 := eq $defaultResponse "200"}}
         {{- $noResponses := not $operation.Data.Responses }}

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"strings"
@@ -28,9 +29,9 @@ type Regex struct {
 	Name  string
 }
 
-func regex(value openapi3.Schema) *Regex {
+func regex(value openapi3.Schema) (*Regex, error) {
 	if value.Type != "string" {
-		return nil
+		return nil, errors.New("schema is not a string type for regex")
 	}
 	r := Regex{}
 	if predefinedRegexes[value.Format] != "" {
@@ -40,11 +41,11 @@ func regex(value openapi3.Schema) *Regex {
 	} else if value.Format != "" {
 		r.Value = value.Format
 	} else {
-		return nil
+		return nil, nil
 	}
 
 	r.Name = generateNameFromRegex(r.Value)
-	return &r
+	return &r, nil
 }
 
 func generateNameFromRegex(regex string) string {
@@ -58,15 +59,12 @@ func generateNameFromRegex(regex string) string {
 	return fmt.Sprintf("regex%v", hashedString)
 }
 
-func registerRegex(value openapi3.Schema) string {
-	if value.Type != "string" {
-		return ""
-	}
-	r := regex(value)
-	if r == nil || validatedRegexes[r.Value] != "" {
-		return ""
+func registerRegex(value openapi3.Schema) (string, error) {
+	r, err := regex(value)
+	if err != nil || r == nil || validatedRegexes[r.Value] != "" {
+		return "", err
 	}
 
 	validatedRegexes[r.Value] = r.Name
-	return r.Name
+	return r.Name, nil
 }
