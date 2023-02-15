@@ -44,16 +44,16 @@ func schemaToString(val *openapi3.SchemaRef, defaultObjectName string) (result s
 		result = reflect.TypeOf(1).String()
 	case openapi3.TypeString:
 		result = reflect.TypeOf("string").String()
+	case openapi3.TypeArray:
+		result = "[]" + schemaToString(val.Value.Items, defaultObjectName)
 	case openapi3.TypeObject:
+		fallthrough
+	default:
 		if val.Ref != "" {
 			result = path.Base(val.Ref)
 		} else {
 			result = defaultObjectName
 		}
-	case openapi3.TypeArray:
-		result = "[]" + schemaToString(val.Value.Items, defaultObjectName)
-	default:
-		result = "string"
 	}
 
 	return result

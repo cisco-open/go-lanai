@@ -2,13 +2,22 @@
 // Derived from openapi contract - components
 package api
 
+type ApiPolicy struct {
+	Unlimited bool `json:"unlimited"`
+}
+
 type GenericObject struct {
-	Enabled GenericObjectEnabled `json:"enabled"`
-	Id      *string              `json:"id" binding:"omitempty"`
+	Enabled        GenericObjectEnabled        `json:"enabled"`
+	Id             *string                     `json:"id" binding:"omitempty"`
+	ValueWithAllOf GenericObjectValueWithAllOf `json:"valueWithAllOf"`
 }
 
 type GenericObjectEnabled struct {
 	Inner *string `json:"inner" binding:"omitempty"`
+}
+
+type GenericObjectValueWithAllOf struct {
+	ApiPolicy
 }
 
 type GenericResponse struct {
