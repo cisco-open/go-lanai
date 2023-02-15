@@ -188,6 +188,14 @@ components:
           properties:
             inner:
               type: string
+        valueWithAllOf:
+          allOf:
+              - $ref: '#/components/schemas/ApiPolicy'
+    ApiPolicy:
+        properties:
+            unlimited:
+                type: boolean
+        type: object
     InvalidObjectSchema:
       type: string
   responses:
