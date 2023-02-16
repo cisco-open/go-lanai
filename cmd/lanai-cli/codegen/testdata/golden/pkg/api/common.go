@@ -14,8 +14,6 @@ type AdditonalPropertyTestAttributeWithEmptyObjAP struct {
 
 type AdditonalPropertyTestAttributeWithFalseAP struct {
 	Property *string `json:"property"`
-
-	Values *map[string]interface{}
 }
 
 type AdditonalPropertyTestAttributeWithTrueAP struct {

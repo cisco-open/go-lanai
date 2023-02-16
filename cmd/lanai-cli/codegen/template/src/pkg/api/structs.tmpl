@@ -18,7 +18,10 @@
 {{ define "additionalProperties" }}
     {{- $additionalPropertyType := "" }}
     {{- if .Value.AdditionalPropertiesAllowed }}
-        {{ $additionalPropertyType = "interface{}" }}
+        {{ $additionalPropsAllowed := derefBoolPtr .Value.AdditionalPropertiesAllowed }}
+        {{- if eq $additionalPropsAllowed true }}
+            {{ $additionalPropertyType = "interface{}" }}
+        {{- end }}
     {{- end }}
     {{- with .Value.AdditionalProperties }}
         {{- $property := property "" . }}
