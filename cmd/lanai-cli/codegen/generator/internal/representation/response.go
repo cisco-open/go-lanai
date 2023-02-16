@@ -59,6 +59,12 @@ func (r Response) RefsUsed() (result []string) {
 	for _, c := range r.Value.Content {
 		if c.Schema.Ref != "" {
 			refs = append(refs, path.Base(c.Schema.Ref))
+		} else {
+			for _, a := range c.Schema.Value.AllOf {
+				if a.Ref != "" {
+					refs = append(refs, path.Base(a.Ref))
+				}
+			}
 		}
 	}
 

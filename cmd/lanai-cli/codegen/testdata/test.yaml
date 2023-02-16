@@ -91,9 +91,79 @@ paths:
       responses:
         '204':
           $ref: '#/components/responses/204'
-
 components:
   schemas:
+    AdditonalPropertyTest:
+        allOf:
+            - properties:
+                attributeWithTrueAP:
+                    additionalProperties: true
+                    nullable: true
+                    type: object
+                attributeWithEmptyObjAP:
+                    additionalProperties: {}
+                    nullable: true
+                    type: object
+                attributeWithFalseAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties: false
+                    nullable: true
+                    type: object
+              type: object
+    Device:
+        allOf:
+            - properties:
+                createdOn:
+                    format: date-time
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                modifiedOn:
+                    format: date-time
+                    nullable: true
+                    type: string
+                serviceType:
+                    maxLength: 128
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DeviceStatus'
+                statusDetails:
+                    additionalProperties:
+                        $ref: '#/components/schemas/DeviceStatus'
+                    type: object
+                subscriptionId:
+                    format: uuid
+                    type: string
+                userId:
+                    format: uuid
+                    type: string
+              type: object
+    DeviceStatus:
+        properties:
+            lastUpdated:
+                format: date-time
+                type: string
+            lastUpdatedMessage:
+                maxLength: 128
+                minLength: 1
+                type: string
+            severity:
+                maxLength: 128
+                minLength: 1
+                type: string
+            value:
+                maxLength: 128
+                minLength: 1
+                type: string
+        required:
+            - value
+            - severity
+            - lastUpdated
+            - lastUpdatedMessage
+        type: object
     GenericResponse:
       type: object
       required:

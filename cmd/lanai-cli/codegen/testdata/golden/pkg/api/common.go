@@ -2,8 +2,48 @@
 // Derived from openapi contract - components
 package api
 
+type AdditonalPropertyTest struct {
+	AttributeWithEmptyObjAP *AdditonalPropertyTestAttributeWithEmptyObjAP `json:"attributeWithEmptyObjAP"`
+	AttributeWithFalseAP    *AdditonalPropertyTestAttributeWithFalseAP    `json:"attributeWithFalseAP"`
+	AttributeWithTrueAP     *AdditonalPropertyTestAttributeWithTrueAP     `json:"attributeWithTrueAP"`
+}
+
+type AdditonalPropertyTestAttributeWithEmptyObjAP struct {
+	Values *map[string]interface{}
+}
+
+type AdditonalPropertyTestAttributeWithFalseAP struct {
+	Property *string `json:"property"`
+}
+
+type AdditonalPropertyTestAttributeWithTrueAP struct {
+	Values *map[string]interface{}
+}
+
 type ApiPolicy struct {
 	Unlimited bool `json:"unlimited"`
+}
+
+type Device struct {
+	CreatedOn      string              `json:"createdOn" binding:"omitempty,date-time"`
+	Id             string              `json:"id" binding:"omitempty,uuid"`
+	ModifiedOn     *string             `json:"modifiedOn" binding:"omitempty,date-time"`
+	ServiceType    *string             `json:"serviceType" binding:"omitempty,max=128"`
+	Status         DeviceStatus        `json:"status"`
+	StatusDetails  DeviceStatusDetails `json:"statusDetails"`
+	SubscriptionId string              `json:"subscriptionId" binding:"omitempty,uuid"`
+	UserId         string              `json:"userId" binding:"omitempty,uuid"`
+}
+
+type DeviceStatusDetails struct {
+	Values *map[string]DeviceStatus
+}
+
+type DeviceStatus struct {
+	LastUpdated        string `json:"lastUpdated" binding:"required,date-time"`
+	LastUpdatedMessage string `json:"lastUpdatedMessage" binding:"required,min=1,max=128"`
+	Severity           string `json:"severity" binding:"required,min=1,max=128"`
+	Value              string `json:"value" binding:"required,min=1,max=128"`
 }
 
 type GenericObject struct {

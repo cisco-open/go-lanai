@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"github.com/getkin/kin-openapi/openapi3"
 	"reflect"
 	"strconv"
@@ -13,6 +14,7 @@ var (
 		"increment":    increment,
 		"listContains": listContains,
 		"log":          templateLog,
+		"derefBoolPtr": derefBoolPtr,
 	}
 )
 
@@ -84,4 +86,11 @@ func listContains(list []string, needle string) bool {
 func templateLog(message string) string {
 	logger.Infof(message)
 	return ""
+}
+
+func derefBoolPtr(ptr *bool) (bool, error) {
+	if ptr == nil {
+		return false, errors.New("pointer is nil")
+	}
+	return *ptr, nil
 }
