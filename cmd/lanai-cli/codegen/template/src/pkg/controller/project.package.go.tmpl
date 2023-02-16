@@ -57,8 +57,10 @@ func register(lc fx.Lifecycle, r *web.Registrar) {
 {{- end }}
 
 {{- define "registerValidation" }}
-    {{- if registerRegex .Value }}
-    {{- with regex .Value }}
-    _ = web.Validator().RegisterValidationCtx("{{ .Name }}", validation.Regex("{{ .Value }}"))
-    {{- end}} {{- end}}
+    {{- if eq .Value.Type "string" }}
+        {{- if registerRegex .Value }}
+        {{- with regex .Value }}
+        _ = web.Validator().RegisterValidationCtx("{{ .Name }}", validation.Regex("{{ .Value }}"))
+        {{- end}} {{- end}}
+    {{- end }}
 {{- end }}

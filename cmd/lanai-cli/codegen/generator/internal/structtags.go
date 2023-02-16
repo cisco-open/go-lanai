@@ -45,13 +45,25 @@ func nameType(element interface{}) string {
 
 func bindings(propertyName string, element *openapi3.SchemaRef, requiredList []string) string {
 	var bindingParts []string
-
+	validationTags := validationTags(element, requiredList)
+	bindingParts = append(bindingParts, omitEmptyTags(propertyName, requiredList, len(validationTags), element)...)
 	bindingParts = append(bindingParts, requiredTag(propertyName, requiredList)...)
-	bindingParts = append(bindingParts, regexTag(element)...)
-	bindingParts = append(bindingParts, limitTags(element)...)
-	bindingParts = append(bindingParts, omitEmptyTags(propertyName, requiredList, element)...)
-	bindingParts = append(bindingParts, enumOf(element.Value.Enum)...)
+	bindingParts = append(bindingParts, validationTags...)
 	return strings.Join(bindingParts, ",")
+}
+
+func validationTags(element *openapi3.SchemaRef, requiredList []string) []string {
+	result := regexTag(element)
+	result = append(result, limitTags(element)...)
+	result = append(result, enumOf(element.Value.Enum)...)
+	if element.Value.Type == "array" {
+		innerParts := validationTags(element.Value.Items, requiredList)
+		if innerParts != nil {
+			result = append(result, "dive")
+			result = append(result, innerParts...)
+		}
+	}
+	return result
 }
 
 func requiredTag(propertyName string, requiredList []string) (result []string) {
@@ -65,7 +77,7 @@ func regexTag(element *openapi3.SchemaRef) (result []string) {
 	if element == nil {
 		return result
 	}
-	rValue := regex(*element.Value)
+	rValue, _ := regex(*element.Value)
 	if rValue != nil && rValue.Value != "" {
 		result = append(result, generateNameFromRegex(rValue.Value))
 	}
@@ -87,12 +99,15 @@ func limitTags(element *openapi3.SchemaRef) (result []string) {
 	return result
 }
 
-func omitEmptyTags(propertyName string, requiredList []string, schemaRef *openapi3.SchemaRef) (result []string) {
+// omitEmptyTags will adds omitEmpty tag if:
+// the property is not the list of required properties
+// numberOfValidationTags > 0 - if there are any validations that need to be omitted
+func omitEmptyTags(propertyName string, requiredList []string, numberOfValidationTags int, schemaRef *openapi3.SchemaRef) (result []string) {
 	if schemaRef == nil {
 		return result
 	}
 
-	if !listContains(requiredList, propertyName) && valuePassesValidation(schemaRef.Value, zeroValue(schemaRef.Value)) {
+	if !listContains(requiredList, propertyName) && numberOfValidationTags > 0 {
 		result = append(result, "omitempty")
 	}
 	return result

@@ -2,11 +2,14 @@
     {{- $operation := index . 0 }}
     {{- $currentPkg := index . 1 }}
 
-    {{- $isEmptyWrapper := containsSingularRef $operation.Data }}
+    {{- $hasOneRef := containsSingularRef $operation.Data }}
+    {{- $reqBody := $operation.Data.RequestBody }}
+    {{- $onlyHasReqBodyRef := and $hasOneRef $reqBody}}
+
     {{- $isEmpty := isEmpty $operation.Data }}
 
-    {{- $shouldSkip := or $isEmptyWrapper $isEmpty }}
-
+    {{/* Skip making struct if there won't be anything in it, or just one ref in the request body (function will import it directly) */}}
+    {{- $shouldSkip := or $isEmpty $onlyHasReqBodyRef }}
     {{ if not $shouldSkip }}
         {{- $structName := concat $operation.Name "Request" }}
         {{- $structName = toTitle $structName }}

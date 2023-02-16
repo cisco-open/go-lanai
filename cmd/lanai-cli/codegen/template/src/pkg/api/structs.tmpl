@@ -69,7 +69,10 @@
     {{- end }}
 
     {{- $requiredList := requiredList $parameter.Value }}
-    {{- with $parameter.Ref }}
+    {{- $isRef := $parameter.Ref }}
+    {{- $isObject := eq $parameter.Value.Schema.Value.Type "object" }}
+    {{- $shouldEmbed := and $isRef $isObject }}
+    {{- with $shouldEmbed }}
         {{- template "EmbedStruct" args . $importPrefix }}
     {{- else }}
         {{- $property := property $parameter.Value.Name $parameter.Value }}
