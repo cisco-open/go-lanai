@@ -16,10 +16,20 @@
 {{- end }}
 
 {{ define "additionalProperties" }}
+    {{- $additionalPropertyType := "" }}
+    {{- if .Value.AdditionalPropertiesAllowed }}
+        {{ $additionalPropertyType = "interface{}" }}
+    {{- end }}
     {{- with .Value.AdditionalProperties }}
         {{- $property := property "" . }}
-        {{- $additionalPropsType := propertyType $property }}
-            Values *map[string]{{ $additionalPropsType }}
+        {{- $additionalPropertyType = propertyType $property }}
+        {{- if eq $additionalPropertyType "" }}
+            {{- $additionalPropertyType = "interface{}" }}
+        {{- end }}
+    {{- end }}
+
+    {{- if ne $additionalPropertyType "" }}
+        Values *map[string]{{ $additionalPropertyType }}
     {{- end }}
 {{- end }}
 

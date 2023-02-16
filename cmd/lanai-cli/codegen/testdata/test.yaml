@@ -94,6 +94,25 @@ paths:
 
 components:
   schemas:
+    AdditonalPropertyTest:
+        allOf:
+            - properties:
+                attributeWithTrueAP:
+                    additionalProperties: true
+                    nullable: true
+                    type: object
+                attributeWithEmptyObjAP:
+                    additionalProperties: {}
+                    nullable: true
+                    type: object
+                attributeWithFalseAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties: false
+                    nullable: true
+                    type: object
+              type: object
     GenericResponse:
       type: object
       required:

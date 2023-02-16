@@ -2,6 +2,26 @@
 // Derived from openapi contract - components
 package api
 
+type AdditonalPropertyTest struct {
+	AttributeWithEmptyObjAP *AdditonalPropertyTestAttributeWithEmptyObjAP `json:"attributeWithEmptyObjAP"`
+	AttributeWithFalseAP    *AdditonalPropertyTestAttributeWithFalseAP    `json:"attributeWithFalseAP"`
+	AttributeWithTrueAP     *AdditonalPropertyTestAttributeWithTrueAP     `json:"attributeWithTrueAP"`
+}
+
+type AdditonalPropertyTestAttributeWithEmptyObjAP struct {
+	Values *map[string]interface{}
+}
+
+type AdditonalPropertyTestAttributeWithFalseAP struct {
+	Property *string `json:"property"`
+
+	Values *map[string]interface{}
+}
+
+type AdditonalPropertyTestAttributeWithTrueAP struct {
+	Values *map[string]interface{}
+}
+
 type ApiPolicy struct {
 	Unlimited bool `json:"unlimited"`
 }
