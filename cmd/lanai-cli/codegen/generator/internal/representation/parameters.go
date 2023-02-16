@@ -28,6 +28,12 @@ func (r Parameters) RefsUsed() []string {
 	for _, param := range r {
 		if param.Ref != "" {
 			refs = append(refs, path.Base(param.Ref))
+		} else {
+			for _, a := range param.Value.Schema.Value.AllOf {
+				if a.Ref != "" {
+					refs = append(refs, path.Base(a.Ref))
+				}
+			}
 		}
 	}
 	return refs
