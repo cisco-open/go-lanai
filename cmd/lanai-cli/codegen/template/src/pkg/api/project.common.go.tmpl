@@ -22,8 +22,10 @@ package api
 
     {{- $parameters := $components.Parameters }}
     {{ range $parameterName, $parameterData := $parameters }}
+        {{- if eq $parameterData.Value.Schema.Value.Type "object" }}
         {{- $structName := toTitle $parameterName }}
         {{ registerStruct $structName "pkg/api" -}}
+        {{- end }}
     {{- end }}
 
 {{- end }}
