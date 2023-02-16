@@ -92,7 +92,15 @@ package api
         {{/* Check if something was actually made before diving deeper into the struct */}}
         {{- if $wasCreated }}
             {{/* Make another struct for each applicable property */}}
-            {{ template "componentSchemaStructs" args $schema.Data.Value.Properties $schema.Name }}
+            {{- range $schema.Data.Value.AllOf }}
+                {{- if .Ref }}
+                    {{/* This ref will already have a struct made, don't make another one */}}
+                {{- else }}
+                    {{ template "componentSchemaStructs" args .Value.Properties $schema.Name }}
+                {{- end}}
+            {{- else }}
+                {{ template "componentSchemaStructs" args $schema.Data.Value.Properties $schema.Name }}
+            {{- end }}
         {{- end }}
     {{- end }}
 {{- end }}
