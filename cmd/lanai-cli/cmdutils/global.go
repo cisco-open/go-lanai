@@ -12,7 +12,7 @@ const (
 )
 
 var (
-	logger = log.New("Build")
+	logger     = log.New("Build")
 	GlobalArgs = Global{
 		WorkingDir: DefaultWorkingDir(),
 		TmpDir:     DefaultTemporaryDir(),
@@ -24,7 +24,7 @@ type Global struct {
 	WorkingDir string `flag:"workspace,w" desc:"working directory containing 'go.mod'. All non-absolute paths are relative to this directory"`
 	TmpDir     string `flag:"tmp-dir" desc:"temporary directory."`
 	OutputDir  string `flag:"output,o" desc:"output directory. All non-absolute paths for output are relative to this directory"`
-	Verbose      bool   `flag:"debug" desc:"show debug information"`
+	Verbose    bool   `flag:"debug" desc:"show debug information"`
 }
 
 func (g Global) AbsPath(base, path string) string {
@@ -68,6 +68,7 @@ func currentDir() string {
 }
 
 // goModDir works from current directory backward along the FS tree until find go.mod file
+// if root directory is hit and it's still not found, return the currentDir
 func goModDir() string {
 	currDir, e := os.Getwd()
 	if e != nil {
@@ -78,6 +79,9 @@ func goModDir() string {
 		gomodPath := dir + "/go.mod"
 		if _, e := os.Stat(gomodPath); e == nil {
 			return dir
+		}
+		if dir == "/" {
+			break
 		}
 	}
 	return currentDir()
