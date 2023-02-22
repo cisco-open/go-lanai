@@ -5,7 +5,7 @@ cloud:
       scheme: http
       health-check-path: "${server.context-path}/admin/health"
       health-check-interval: 15s
-      health-check-critical-timeout: 60s #deregisters an unhealthy instance after 60s
+      health-check-critical-timeout: 1h  # How long Consul waits for an unhealthy instance to recover before deregistering
       tags: "${spring.cloud.consul.discovery.tags:}"
       default-selector:
         tags: ${spring.cloud.consul.discovery.defaultquerytag:}
