@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
+	"math"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -18,6 +19,7 @@ type cacheCounter struct {
 	lc uint64
 	vc uint64
 	uc uint64
+	fc uint64
 }
 
 func (c *cacheCounter) reset() {
@@ -38,8 +40,13 @@ func (c *cacheCounter) countValidate(fn ValidateFunc) ValidateFunc {
 	if fn == nil {
 		return nil
 	}
-	return func(ctx context.Context, v interface{}) bool {
+	return func(ctx context.Context, v interface{}) (valid bool) {
 		atomic.AddUint64(&c.vc, 1)
+		defer func() {
+			if !valid {
+				atomic.AddUint64(&c.fc, 1)
+			}
+		}()
 		return fn(ctx, v)
 	}
 }
@@ -64,6 +71,10 @@ func (c *cacheCounter) validateCount() int {
 
 func (c *cacheCounter) updateCount() int {
 	return int(atomic.LoadUint64(&c.uc))
+}
+
+func (c *cacheCounter) invalidCount() int {
+	return int(atomic.LoadUint64(&c.fc))
 }
 
 type cKey struct {
@@ -361,7 +372,7 @@ func SubTestCacheConcurrentSoapTest() test.GomegaSubTestFunc {
 		shortVLoader, expectedShortV := staticLoadFunc(100*time.Millisecond, 200*time.Millisecond)
 
 		stableValidator := fixedValidateFunc(true)
-		unstableValidator, ticker := failOccasionallyValidateFunc(5, 200*time.Millisecond)
+		unstableValidator, ticker := failOccasionallyValidateFunc(3, 250*time.Millisecond)
 		defer ticker.Stop()
 
 		longVUpdater := copyUpdateFunc(0, 60*time.Second)
@@ -389,16 +400,25 @@ func SubTestCacheConcurrentSoapTest() test.GomegaSubTestFunc {
 		}
 
 		// Assert invocation count
+		fmt.Printf("load counts: %d %d %d %d\n", counters[0].loadCount(), counters[1].loadCount(), counters[2].loadCount(), counters[3].loadCount())
+		fmt.Printf("invalid counts: %d %d %d %d\n", counters[0].invalidCount(), counters[1].invalidCount(), counters[2].invalidCount(), counters[3].invalidCount())
 		g.Expect(count).To(BeNumerically(">", 500), "GetOrLoad should be invoked many times")
 
+		// long stable
 		g.Expect(counters[0].loadCount()).To(Equal(1), "repeated GetOrLoad of long validity should only invoke loader once")
-		g.Expect(counters[1].loadCount()).To(BeNumerically("<=", 5), "repeated GetOrLoad of unstable result should invoke loader <= 5 times (maximum invalidation chance <=5)")
+		// long unstable
+		maxLoad := counters[1].invalidCount() + 1 // actual invalid count + initial load
+		minLoad := int(math.Min(float64(maxLoad), 2))
+		g.Expect(counters[1].loadCount()).To(BeNumerically(">=", minLoad), "repeated GetOrLoad of unstable result should invoke loader more than once if validator returns false at least once")
+		g.Expect(counters[1].loadCount()).To(BeNumerically("<=", maxLoad), "repeated GetOrLoad of unstable result should invoke loader %d times (invalid count + initial load)", maxLoad)
+		// error
 		g.Expect(counters[2].loadCount()).To(Equal(1), "repeated GetOrLoad of error result should invoke loader once")
+		g.Expect(counters[2].validateCount()).To(Equal(0), "repeated GetOrLoad of error result should never invoke validator ")
+		// short stable
 		g.Expect(counters[3].loadCount()).To(BeNumerically(">=", 2), "repeated GetOrLoad of short validity should invoke loader more than once")
 		g.Expect(counters[3].loadCount()).To(BeNumerically("<=", 10), "repeated GetOrLoad of short validity should not invoke loader too many times ( <= 10)")
 
 		g.Expect(len(c.store)).To(BeNumerically("<=", 4), "invalidated(expired) entries should be removed")
-		fmt.Printf("load counts: %d %d %d %d\n", counters[0].loadCount(), counters[1].loadCount(), counters[2].loadCount(), counters[3].loadCount())
 	}
 }
 
@@ -730,9 +750,9 @@ func failOccasionallyValidateFunc(maxN int, delay time.Duration) (ValidateFunc, 
 	fn := func() {
 		mtx.Lock()
 		defer mtx.Unlock()
-		if count < maxN && !fail {
+		if !fail {
 			fail = true
-			count++
+
 		}
 	}
 	ticker := time.NewTicker(delay)
@@ -748,8 +768,9 @@ func failOccasionallyValidateFunc(maxN int, delay time.Duration) (ValidateFunc, 
 	return func(ctx context.Context, value interface{}) bool {
 		mtx.Lock()
 		defer mtx.Unlock()
-		if fail {
+		if count < maxN && fail {
 			fail = false
+			count++
 			return false
 		}
 		return true
