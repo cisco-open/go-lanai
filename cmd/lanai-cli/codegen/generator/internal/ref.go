@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-func importsUsedByPath(pathItem openapi3.PathItem) []string {
+func importsUsedByPath(pathItem openapi3.PathItem, repositoryPath string) []string {
 	var allImports []string
 	for _, operation := range pathOperations(pathItem) {
 		responses := representation.Responses(operation.Responses)
@@ -24,7 +24,15 @@ func importsUsedByPath(pathItem openapi3.PathItem) []string {
 			refs = append(refs, requestBody.RefsUsed()...)
 		}
 
-		allImports = append(allImports, getImportsFromRef(refs)...)
+		for _, i := range getImportsFromRef(refs) {
+			allImports = append(allImports, repositoryPath+"/"+i)
+		}
+
+		// Grab any external dependencies
+		allImports = append(allImports, responses.ExternalImports()...)
+		allImports = append(allImports, parameters.ExternalImports()...)
+		allImports = append(allImports, requestBody.ExternalImports()...)
+
 	}
 
 	uniqueImports := make(map[string]bool)

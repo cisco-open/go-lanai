@@ -25,16 +25,42 @@ func (r Parameters) RefsUsed() []string {
 		return nil
 	}
 	var refs []string
-	for _, param := range r {
-		if param.Ref != "" {
-			refs = append(refs, path.Base(param.Ref))
-		} else {
-			for _, a := range param.Value.Schema.Value.AllOf {
-				if a.Ref != "" {
-					refs = append(refs, path.Base(a.Ref))
+	for _, schema := range r.schemas() {
+		if schema.Ref != "" {
+			refs = append(refs, path.Base(schema.Ref))
+		}
+	}
+	return refs
+}
+
+func (r Parameters) ExternalImports() []string {
+	if r.CountFields() == 0 {
+		return nil
+	}
+	var imports []string
+	for _, parameter := range r {
+		if parameter.Ref == "" && parameter.Value.In != "path" {
+			for _, schema := range parameterSchemas(parameter) {
+				if isUUID(schema) {
+					imports = append(imports, UUID_IMPORT_PATH)
 				}
 			}
 		}
 	}
-	return refs
+	return imports
+}
+
+func (r Parameters) schemas() (result []*openapi3.SchemaRef) {
+	for _, parameter := range r {
+		result = append(result, parameterSchemas(parameter)...)
+	}
+	return result
+}
+
+func parameterSchemas(parameter *openapi3.ParameterRef) (result []*openapi3.SchemaRef) {
+	result = append(result, parameter.Value.Schema)
+	for _, a := range parameter.Value.Schema.Value.AllOf {
+		result = append(result, a)
+	}
+	return result
 }

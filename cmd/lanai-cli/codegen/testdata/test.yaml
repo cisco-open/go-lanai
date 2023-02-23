@@ -56,6 +56,18 @@ paths:
           $ref: '#/components/responses/200'
         '400':
           $ref: '#/components/responses/400'
+  '/my/api/v1/uuidtest/{id}':
+    get:
+      summary: Test UUID In Path Parameter
+      operationId: TestUUIDInPathParam
+      description: Path parameters should not be given the uuid.UUID type as go validation will break, so it should be string
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            format: uuid
+            type: string
   '/my/api/v2/testpath':
     get:
       operationId: GetAllTestPaths
@@ -75,6 +87,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericResponse'
+  '/my/api/v2/testArrayUUID':
+    get:
+      summary: Test UUID In an array
+      operationId: TestUUIDInArray
+      parameters:
+        - name: id
+          in: query
+          schema:
+            items:
+                type: string
+                format: uuid
+            type: array
   '/my/api/v3/anotherTest':
     get:
       operationId: GetAnotherTest

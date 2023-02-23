@@ -4,19 +4,17 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal/representation"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/google/uuid"
 	"path"
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 func propertyType(property representation.Property) (string, error) {
-	schema, err := convertToSchemaRef(property.PropertyData)
-	if err != nil {
-		return "", err
-	}
-
-	return schemaToString(schema, toTitle(property.TypePrefix+toTitle(property.PropertyName))), nil
+	defaultObjectName := toTitle(property.TypePrefix + toTitle(property.PropertyName))
+	return schemaToText(property.PropertyData, defaultObjectName)
 }
 
 func convertToSchemaRef(element interface{}) (*openapi3.SchemaRef, error) {
@@ -33,9 +31,25 @@ func convertToSchemaRef(element interface{}) (*openapi3.SchemaRef, error) {
 	return val, nil
 }
 
-func schemaToString(val *openapi3.SchemaRef, defaultObjectName string) (result string) {
+func shouldBeUUIDType(element interface{}) bool {
+	schema, err := convertToSchemaRef(element)
+	if err != nil && schema.Value.Type != openapi3.TypeString {
+		return false
+	}
+
+	formatIsUUID := strings.ToLower(schema.Value.Pattern) == "uuid" || strings.ToLower(schema.Value.Format) == "uuid"
+	// exclude path parameters because go's validation only supports base types, so this should stay as a string
+	isNotInPathParameter := getInterfaceType(element) != ParameterPtr || element.(*openapi3.Parameter).In != "path"
+	return formatIsUUID && isNotInPathParameter
+}
+
+func schemaToText(element interface{}, defaultObjectName string) (result string, err error) {
+	schema, err := convertToSchemaRef(element)
+	if err != nil {
+		return "", err
+	}
 	// for the non-object things
-	switch val.Value.Type {
+	switch schema.Value.Type {
 	case openapi3.TypeBoolean:
 		result = reflect.TypeOf(true).String()
 	case openapi3.TypeNumber:
@@ -43,20 +57,28 @@ func schemaToString(val *openapi3.SchemaRef, defaultObjectName string) (result s
 	case openapi3.TypeInteger:
 		result = reflect.TypeOf(1).String()
 	case openapi3.TypeString:
-		result = reflect.TypeOf("string").String()
+		if shouldBeUUIDType(element) {
+			result = reflect.TypeOf(uuid.UUID{}).String()
+		} else {
+			result = reflect.TypeOf("string").String()
+		}
 	case openapi3.TypeArray:
-		result = "[]" + schemaToString(val.Value.Items, defaultObjectName)
+		inner, err := schemaToText(schema.Value.Items, defaultObjectName)
+		if err != nil {
+			return "", err
+		}
+		result = "[]" + inner
 	case openapi3.TypeObject:
 		fallthrough
 	default:
-		if val.Ref != "" {
-			result = path.Base(val.Ref)
+		if schema.Ref != "" {
+			result = path.Base(schema.Ref)
 		} else {
 			result = defaultObjectName
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func schemaToGoType(val *openapi3.Schema) (result reflect.Type) {

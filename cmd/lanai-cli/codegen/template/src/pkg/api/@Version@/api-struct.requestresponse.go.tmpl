@@ -18,10 +18,10 @@ package {{$version}}
     {{- /* Based on the structs imported by this path, define imports */ -}}
     {{- $pathData := index . "PathData" }}
     {{- $repo := index . "Repository" }}
-    {{- with importsUsedByPath $pathData }}
+    {{- with importsUsedByPath $pathData $repo}}
         import (
             {{- range . }}
-            "{{ $repo }}/{{.}}"
+            "{{.}}"
             {{- end }}
         )
     {{- end }}

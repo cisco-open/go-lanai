@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal/representation"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"strings"
@@ -21,10 +20,6 @@ var (
 		"structRegistry":      getStructRegistry,
 		"importsUsedByPath":   importsUsedByPath,
 		"isEmpty":             isEmpty,
-		"property":            representation.NewProperty,
-		"propertyTypePrefix":  representation.PropertyTypePrefix,
-		"operation":           representation.NewOperation,
-		"schema":              representation.NewSchema,
 		"pathOperations":      pathOperations,
 	}
 )

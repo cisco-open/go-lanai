@@ -2,6 +2,10 @@
 // Derived from openapi contract - components
 package api
 
+import (
+	"github.com/google/uuid"
+)
+
 type AdditonalPropertyTest struct {
 	AttributeWithEmptyObjAP *AdditonalPropertyTestAttributeWithEmptyObjAP `json:"attributeWithEmptyObjAP"`
 	AttributeWithFalseAP    *AdditonalPropertyTestAttributeWithFalseAP    `json:"attributeWithFalseAP"`
@@ -26,13 +30,13 @@ type ApiPolicy struct {
 
 type Device struct {
 	CreatedOn      string              `json:"createdOn" binding:"omitempty,date-time"`
-	Id             string              `json:"id" binding:"omitempty,uuid"`
+	Id             uuid.UUID           `json:"id"`
 	ModifiedOn     *string             `json:"modifiedOn" binding:"omitempty,date-time"`
 	ServiceType    *string             `json:"serviceType" binding:"omitempty,max=128"`
 	Status         DeviceStatus        `json:"status"`
 	StatusDetails  DeviceStatusDetails `json:"statusDetails"`
-	SubscriptionId string              `json:"subscriptionId" binding:"omitempty,uuid"`
-	UserId         string              `json:"userId" binding:"omitempty,uuid"`
+	SubscriptionId uuid.UUID           `json:"subscriptionId"`
+	UserId         uuid.UUID           `json:"userId"`
 }
 
 type DeviceStatusDetails struct {
@@ -63,12 +67,12 @@ type GenericObjectValueWithAllOf struct {
 type GenericResponse struct {
 	ArrayOfObjects                  []GenericObject             `json:"arrayOfObjects"`
 	ArrayOfRef                      *[]string                   `json:"arrayOfRef"`
-	ArrayOfUUIDs                    *[]string                   `json:"arrayOfUUIDs" binding:"omitempty,dive,uuid"`
+	ArrayOfUUIDs                    *[]uuid.UUID                `json:"arrayOfUUIDs"`
 	CreatedOnDate                   string                      `json:"createdOnDate" binding:"required,date"`
 	CreatedOnDateTime               string                      `json:"createdOnDateTime" binding:"omitempty,date-time"`
 	DirectRef                       GenericObject               `json:"directRef"`
 	IntegerValue                    *int                        `json:"integerValue" binding:"omitempty,max=5"`
-	MyUuid                          string                      `json:"myUuid" binding:"omitempty,uuid"`
+	MyUuid                          uuid.UUID                   `json:"myUuid"`
 	NumberArray                     *[]float64                  `json:"numberArray" binding:"omitempty,max=10"`
 	NumberValue                     *float64                    `json:"numberValue" binding:"omitempty,max=10"`
 	ObjectValue                     *GenericResponseObjectValue `json:"objectValue" binding:"required"`
@@ -90,5 +94,5 @@ type GenericResponseWithAllOf struct {
 }
 
 type TestRequest struct {
-	Uuid string `json:"uuid" binding:"omitempty,uuid"`
+	Uuid uuid.UUID `json:"uuid"`
 }
