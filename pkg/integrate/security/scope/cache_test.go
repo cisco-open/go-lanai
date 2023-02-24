@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
+	"math"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -16,8 +17,9 @@ import (
 )
 
 type cacheCounter struct {
-	lc     uint64
+	lc uint64
 	vc uint64
+	fc uint64
 }
 
 func (c *cacheCounter) reset() {
@@ -32,8 +34,13 @@ func (c *cacheCounter) countLoad(fn loadFunc) loadFunc {
 }
 
 func (c *cacheCounter) countValidate(fn validateFunc) validateFunc {
-	return func(ctx context.Context, v entryValue) bool {
+	return func(ctx context.Context, v entryValue) (valid bool) {
 		atomic.AddUint64(&c.vc, 1)
+		defer func() {
+			if !valid {
+				atomic.AddUint64(&c.fc, 1)
+			}
+		}()
 		return fn(ctx, v)
 	}
 }
@@ -44,6 +51,10 @@ func (c *cacheCounter) loadCount() int {
 
 func (c *cacheCounter) validateCount() int {
 	return int(atomic.LoadUint64(&c.vc))
+}
+
+func (c *cacheCounter) invalidCount() int {
+	return int(atomic.LoadUint64(&c.fc))
 }
 
 /*************************
@@ -78,9 +89,9 @@ func SubTestCacheSuccessfulLoad() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const repeat = 5
 		c := newCache()
-		loader, expected := staticLoadFunc(100 * time.Millisecond, 60 * time.Second)
+		loader, expected := staticLoadFunc(100*time.Millisecond, 60*time.Second)
 
-		k := cKey{username:   "u1"}
+		k := cKey{username: "u1"}
 		counter := &cacheCounter{}
 		validator := fixedValidateFunc(true)
 		auth, _ := testGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), counter.countValidate(validator),
@@ -95,7 +106,7 @@ func SubTestCacheSuccessfulLoad() test.GomegaSubTestFunc {
 
 		// try to get with previous data invalid
 		counter.reset()
-		loader, expected = staticLoadFunc(100 * time.Millisecond, 60 * time.Second)
+		loader, expected = staticLoadFunc(100*time.Millisecond, 60*time.Second)
 		validator = notValidateFunc(auth)
 		_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), counter.countValidate(validator),
 			repeat, true, And(BeIdenticalTo(expected), Not(BeIdenticalTo(auth))), "after invalidation")
@@ -109,9 +120,9 @@ func SubTestCacheFailedLoad() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const repeat = 5
 		c := newCache()
-		loader, _ := staticErrLoadFunc(100 * time.Millisecond, 200 * time.Millisecond)
+		loader, _ := staticErrLoadFunc(100*time.Millisecond, 200*time.Millisecond)
 
-		k := cKey{username:   "u1"}
+		k := cKey{username: "u1"}
 		counter := &cacheCounter{}
 		validator := fixedValidateFunc(true)
 		_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), counter.countValidate(validator),
@@ -123,7 +134,7 @@ func SubTestCacheFailedLoad() test.GomegaSubTestFunc {
 		// try to get with previous data invalid
 		counter.reset()
 		time.Sleep(200 * time.Millisecond)
-		loader, _ = staticErrLoadFunc(200 * time.Millisecond, 200 * time.Millisecond)
+		loader, _ = staticErrLoadFunc(200*time.Millisecond, 200*time.Millisecond)
 		validator = fixedValidateFunc(false)
 		_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, counter.countLoad(loader), counter.countValidate(validator),
 			5, false, nil, "after invalidation")
@@ -143,11 +154,11 @@ func SubTestCacheOnDifferentKeys() test.GomegaSubTestFunc {
 		counters := make([]*cacheCounter, keys)
 		results := make([]entryValue, keys)
 		for i := 0; i < keys; i++ {
-			k := cKey{username:   fmt.Sprintf("u%d", i)}
+			k := cKey{username: fmt.Sprintf("u%d", i)}
 			counters[i] = &cacheCounter{}
-			loader, expected := staticLoadFunc(100 * time.Millisecond, 60 * time.Second)
+			loader, expected := staticLoadFunc(100*time.Millisecond, 60*time.Second)
 			results[i], _ = testRepeatedGetOrLoad(ctx, g, c, &k, counters[i].countLoad(loader), counters[i].countValidate(validator),
-				repeat, true, BeIdenticalTo(expected), "for " + k.String())
+				repeat, true, BeIdenticalTo(expected), "for "+k.String())
 
 		}
 
@@ -157,7 +168,7 @@ func SubTestCacheOnDifferentKeys() test.GomegaSubTestFunc {
 				g.Expect(results[i]).To(Not(BeIdenticalTo(results[j])), "different key should yield different value")
 			}
 			g.Expect(counters[i].loadCount()).To(Equal(1), "repeated GetOrLoad of k%d should only invoke loader once", i)
-			g.Expect(counters[i].validateCount()).To(Equal(repeat - 1), "validator of k%d should be invoked once per repeated GetOrLoad invocation", i)
+			g.Expect(counters[i].validateCount()).To(Equal(repeat-1), "validator of k%d should be invoked once per repeated GetOrLoad invocation", i)
 		}
 	}
 }
@@ -174,17 +185,17 @@ func SubTestCacheEvict() test.GomegaSubTestFunc {
 		validator := fixedValidateFunc(true)
 
 		for i := 0; i < shortExpKeys; i++ {
-			k := cKey{username:   fmt.Sprintf("su%d", i)}
-			loader, expected := staticLoadFunc(100 * time.Millisecond, exp)
+			k := cKey{username: fmt.Sprintf("su%d", i)}
+			loader, expected := staticLoadFunc(100*time.Millisecond, exp)
 			_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, loader, validator,
-				repeat, true, BeIdenticalTo(expected), "for " + k.username)
+				repeat, true, BeIdenticalTo(expected), "for "+k.username)
 		}
 
 		for i := 0; i < longExpKeys; i++ {
-			k := cKey{username:   fmt.Sprintf("lu%d", i)}
-			loader, expected := staticLoadFunc(100 * time.Millisecond, 60 * time.Second)
+			k := cKey{username: fmt.Sprintf("lu%d", i)}
+			loader, expected := staticLoadFunc(100*time.Millisecond, 60*time.Second)
 			_, _ = testRepeatedGetOrLoad(ctx, g, c, &k, loader, validator,
-				repeat, true, BeIdenticalTo(expected), "for " + k.username)
+				repeat, true, BeIdenticalTo(expected), "for "+k.username)
 		}
 
 		time.Sleep(exp)
@@ -198,13 +209,13 @@ func SubTestCacheConcurrentSoapTest() test.GomegaSubTestFunc {
 		// Setup concurrent scenarios
 		timeout := 1000 * time.Millisecond
 
-		longVLoader, expectedLongV := staticLoadFunc(100 * time.Millisecond, 60 * time.Second)
-		shortVLoader, expectedShortV := staticLoadFunc(100 * time.Millisecond, 300 * time.Millisecond)
-		unstableLoader, expectedUnstable := staticLoadFunc(100 * time.Millisecond, 60 * time.Second)
-		errLoader, _ := staticErrLoadFunc(100 * time.Millisecond, 60 * time.Second)
+		longVLoader, expectedLongV := staticLoadFunc(100*time.Millisecond, 60*time.Second)
+		shortVLoader, expectedShortV := staticLoadFunc(100*time.Millisecond, 300*time.Millisecond)
+		unstableLoader, expectedUnstable := staticLoadFunc(100*time.Millisecond, 60*time.Second)
+		errLoader, _ := staticErrLoadFunc(100*time.Millisecond, 60*time.Second)
 
 		stableValidator := fixedValidateFunc(true)
-		unstableValidator, ticker := failOccasionallyValidateFunc(2, 200 * time.Millisecond)
+		unstableValidator, ticker := failOccasionallyValidateFunc(2, 200*time.Millisecond)
 		defer ticker.Stop()
 
 		c := newCache(func(opt *cacheOption) {
@@ -218,7 +229,7 @@ func SubTestCacheConcurrentSoapTest() test.GomegaSubTestFunc {
 		params[3], counters[3] = newSuccessCacheParams(c, "short-validity-user", shortVLoader, stableValidator, expectedShortV, nil)
 
 		// first, trigger GetOrLoad with special key and short exp period (for evict)
-		_, _ = testGetOrLoad(ctx, g, c, &cKey{username:   "to-evicted-user"}, shortVLoader, stableValidator,
+		_, _ = testGetOrLoad(ctx, g, c, &cKey{username: "to-evicted-user"}, shortVLoader, stableValidator,
 			true, BeIdenticalTo(expectedShortV), " for to-evicted-user")
 
 		// Run concurrent test
@@ -228,14 +239,24 @@ func SubTestCacheConcurrentSoapTest() test.GomegaSubTestFunc {
 		}
 
 		// Assert invocation count
+		fmt.Printf("load counts: %d %d %d %d\n", counters[0].loadCount(), counters[1].loadCount(), counters[2].loadCount(), counters[3].loadCount())
+		fmt.Printf("invalid counts: %d %d %d %d\n", counters[0].invalidCount(), counters[1].invalidCount(), counters[2].invalidCount(), counters[3].invalidCount())
 		g.Expect(count).To(BeNumerically(">", 500), "GetOrLoad should be invoked many times")
+		// long stable
 		g.Expect(counters[0].loadCount()).To(Equal(1), "repeated GetOrLoad of long validity should only invoke loader once")
-		g.Expect(counters[1].loadCount()).To(Equal(3), "repeated GetOrLoad of unstable result should invoke loader 3 times (invalidated twice)")
+		// long unstable
+		maxLoad := counters[1].invalidCount() + 1 // actual invalid count + initial load
+		minLoad := int(math.Min(float64(maxLoad), 2))
+		g.Expect(counters[1].loadCount()).To(BeNumerically(">=", minLoad), "repeated GetOrLoad of unstable result should invoke loader more than once if validator returns false at least once")
+		g.Expect(counters[1].loadCount()).To(BeNumerically("<=", maxLoad), "repeated GetOrLoad of unstable result should invoke loader %d times (invalid count + initial load)", maxLoad)
+		// error
 		g.Expect(counters[2].loadCount()).To(Equal(1), "repeated GetOrLoad of error result should invoke loader once")
+		g.Expect(counters[2].validateCount()).To(Equal(0), "repeated GetOrLoad of error result should never invoke validator ")
+		// short stable
 		g.Expect(counters[3].loadCount()).To(BeNumerically(">=", 2), "repeated GetOrLoad of short validity should invoke loader more than once")
 		g.Expect(counters[3].loadCount()).To(BeNumerically("<=", 10), "repeated GetOrLoad of short validity should not invoke loader too many times ( <= 10)")
+
 		g.Expect(len(c.store)).To(BeNumerically("<=", 4), "invalidated(expired) entries should be removed")
-		fmt.Printf("load counts: %d %d %d %d\n", counters[0].loadCount(), counters[1].loadCount(), counters[2].loadCount(), counters[3].loadCount())
 	}
 }
 
@@ -260,7 +281,7 @@ func newSuccessCacheParams(c *cache, username string, loader loadFunc, validator
 	counter := &cacheCounter{}
 	return &testCacheParams{
 		c:         c,
-		k:         &cKey{username:   username},
+		k:         &cKey{username: username},
 		loader:    counter.countLoad(loader),
 		validator: counter.countValidate(validator),
 		expectErr: false,
@@ -275,7 +296,7 @@ func newFailedCacheParams(c *cache, username string, loader loadFunc, validator 
 	counter := &cacheCounter{}
 	return &testCacheParams{
 		c:         c,
-		k:         &cKey{username:   username},
+		k:         &cKey{username: username},
 		loader:    counter.countLoad(loader),
 		validator: counter.countValidate(validator),
 		expectErr: true,
@@ -285,7 +306,7 @@ func newFailedCacheParams(c *cache, username string, loader loadFunc, validator 
 
 func testSuccessGetOrLoad(ctx context.Context, g *gomega.WithT,
 	c *cache, k *cKey, loader loadFunc, validator validateFunc,
-	expected entryValue, vMatcher types.GomegaMatcher, msgArgs...interface{}) entryValue {
+	expected entryValue, vMatcher types.GomegaMatcher, msgArgs ...interface{}) entryValue {
 
 	v, e := c.GetOrLoad(ctx, k, loader, validator)
 	g.Expect(e).To(Succeed(), fmt.Sprintf("GetOrLoad should not fail on repeated invocation %s", msgArgs...))
@@ -301,7 +322,7 @@ func testSuccessGetOrLoad(ctx context.Context, g *gomega.WithT,
 
 func testFailedGetOrLoad(ctx context.Context, g *gomega.WithT,
 	c *cache, k *cKey, loader loadFunc, validator validateFunc,
-	msgArgs...interface{}) error {
+	msgArgs ...interface{}) error {
 
 	_, e := c.GetOrLoad(ctx, k, loader, validator)
 	g.Expect(e).To(Not(Succeed()), fmt.Sprintf("GetOrLoad should fail on repeated invocation %s", msgArgs...))
@@ -310,7 +331,7 @@ func testFailedGetOrLoad(ctx context.Context, g *gomega.WithT,
 
 func testGetOrLoad(ctx context.Context, g *gomega.WithT,
 	c *cache, k *cKey, loader loadFunc, validator validateFunc,
-	shouldSuccess bool, vMatcher types.GomegaMatcher, msgArgs...interface{}) (entryValue, error) {
+	shouldSuccess bool, vMatcher types.GomegaMatcher, msgArgs ...interface{}) (entryValue, error) {
 
 	if shouldSuccess {
 		v := testSuccessGetOrLoad(ctx, g, c, k, loader, validator, nil, vMatcher, msgArgs...)
@@ -323,7 +344,7 @@ func testGetOrLoad(ctx context.Context, g *gomega.WithT,
 
 func testRepeatedGetOrLoad(ctx context.Context, g *gomega.WithT,
 	c *cache, k *cKey, loader loadFunc, validator validateFunc,
-	n int, shouldSuccess bool, vMatcher types.GomegaMatcher, msgArgs...interface{}) (ret entryValue, err error) {
+	n int, shouldSuccess bool, vMatcher types.GomegaMatcher, msgArgs ...interface{}) (ret entryValue, err error) {
 
 	// try to get
 	for i := 0; i < n; i++ {
@@ -439,9 +460,8 @@ func failOccasionallyValidateFunc(n int, delay time.Duration) (validateFunc, *ti
 	fn := func() {
 		mtx.Lock()
 		defer mtx.Unlock()
-		if count < n && !fail {
+		if !fail {
 			fail = true
-			count ++
 		}
 	}
 	ticker := time.NewTicker(delay)
@@ -457,8 +477,9 @@ func failOccasionallyValidateFunc(n int, delay time.Duration) (validateFunc, *ti
 	return func(ctx context.Context, value entryValue) bool {
 		mtx.Lock()
 		defer mtx.Unlock()
-		if fail {
+		if count < n && fail {
 			fail = false
+			count++
 			return false
 		}
 		return true
