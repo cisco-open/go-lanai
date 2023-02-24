@@ -113,7 +113,6 @@ cloud:
     config:
       enabled: true
     discovery:
-      health-check-critical-timeout: 1h
       ip-address: ${spring.cloud.consul.discovery.ipaddress:}
   vault:
     kv:
