@@ -27,9 +27,18 @@ func (c *TestArrayUUIDController) Mappings() []web.Mapping {
 			Get("/api/v2/testArrayUUID").
 			EndpointFunc(c.TestUUIDInArray).
 			Build(),
+		rest.
+			New("testarrayuuid-put").
+			Put("/api/v2/testArrayUUID").
+			EndpointFunc(c.TestRequestBodyWithAllOf).
+			Build(),
 	}
 }
 
 func (c *TestArrayUUIDController) TestUUIDInArray(ctx context.Context, req apiv2.TestUUIDInArrayRequest) (interface{}, error) {
+	return nil, nil
+}
+
+func (c *TestArrayUUIDController) TestRequestBodyWithAllOf(ctx context.Context, req apiv2.TestRequestBodyWithAllOfRequest) (interface{}, error) {
 	return nil, nil
 }

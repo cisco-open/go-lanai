@@ -87,6 +87,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericResponse'
+  '/my/api/v4/testRequestBodyUsingARefWithAllOf':
+    post:
+        operationId: createDevice
+        requestBody:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/DeviceCreate'
+            required: true
+  '/my/api/v4/testAPIThatDoesntUseAnyImports':
+    post:
+        operationId: createDevice
   '/my/api/v2/testArrayUUID':
     get:
       summary: Test UUID In an array
@@ -99,6 +111,20 @@ paths:
                 type: string
                 format: uuid
             type: array
+    put:
+        operationId: TestRequestBodyWithAllOf
+        parameters:
+            - in: path
+              name: id
+              required: true
+              schema:
+                type: string
+        requestBody:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/RequestBodyWithAllOf'
+            required: true
   '/my/api/v3/anotherTest':
     get:
       operationId: GetAnotherTest
@@ -117,6 +143,35 @@ paths:
           $ref: '#/components/responses/204'
 components:
   schemas:
+    DeviceCreate:
+        allOf:
+            - properties:
+                serviceInstanceId:
+                    format: uuid
+                    type: string
+              required:
+                - serviceInstanceId
+              type: object
+            - $ref: '#/components/schemas/DeviceUpdate'
+    DeviceUpdate:
+          allOf:
+              - properties:
+                  attributes:
+                      additionalProperties: {}
+                      nullable: true
+                      type: object
+                type: object
+    RequestBodyWithAllOf:
+        allOf:
+            - properties:
+                attributes:
+                    additionalProperties: {}
+                    nullable: true
+                    type: object
+                managed:
+                    default: false
+                    type: boolean
+              type: object
     AdditonalPropertyTest:
         allOf:
             - properties:

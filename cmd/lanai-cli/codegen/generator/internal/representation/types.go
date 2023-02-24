@@ -35,3 +35,16 @@ func NewSchema(name string, data *openapi3.SchemaRef) Schema {
 		Data: data,
 	}
 }
+
+func (s Schema) AllSchemaRefs() (result openapi3.SchemaRefs) {
+	if s.Data.Value.AllOf == nil || s.Data.Ref != "" {
+		result = append(result, s.Data)
+	} else {
+		for _, schemaRef := range s.Data.Value.AllOf {
+			schema := NewSchema(s.Name, schemaRef)
+			result = append(result, schema.AllSchemaRefs()...)
+		}
+	}
+
+	return result
+}

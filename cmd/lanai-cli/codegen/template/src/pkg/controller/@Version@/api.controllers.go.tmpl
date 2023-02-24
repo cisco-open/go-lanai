@@ -52,7 +52,25 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         {{- else if $requestStruct.Import }}
             {{- $hasAPIImport = true }}
         {{- end }}
-        
+
+        {{- $importName := structLocation $requestStruct.Struct }}
+        {{- /* No Import Name - struct doesn't exist - it's probably from common.go */ -}}
+        {{- if not $importName }}
+            {{- $operationRefs := $operation.RefsUsed }}
+            {{- if $operationRefs }}
+                {{- $singularRef := index $operationRefs 0 }}
+                {{- $importedStructName := basePath $singularRef }}
+                {{- $importName = structLocation $importedStructName }}
+                {{- $importName = basePath $importName }}
+            {{- end }}
+        {{- else }}
+            {{- $importName = basePath $importName }}
+            {{- $importName = concat "api" $importName}}
+        {{- end }}
+
+        {{- if eq $importName "api" }}
+            {{- $hasCommonImport = true }}
+        {{- end }}
     {{- end }}
     {{- template "ImportStruct" args $hasCommonImport $hasAPIImport . -}}
 {{ end }}
@@ -94,35 +112,19 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- range $opName, $opData := pathOperations $pathData }}
         {{- $operation := concat $nameFromPath $opName | operation $opData }}
 
-        {{- $requestStructName := concat $operation.Name "Request" }}
-        {{- $importName := structLocation $requestStructName }}
+        {{- $importedStructName := concat $operation.Name "Request" }}
+        {{- $importName := structLocation $importedStructName }}
         {{- /* No Import Name - struct doesn't exist - it's probably from common.go */ -}}
         {{- if not $importName }}
-            {{- $singularRef := "" }}
-            {{- range $operation.Data.Parameters }}
-                    {{- if .Ref }}
-                        {{- $singularRef = .Ref }}
-                        {{- break -}}
-                    {{- end }}
+            {{- $operationRefs := $operation.RefsUsed }}
+            {{- if $operationRefs }}
+                {{- $singularRef := index $operationRefs 0 }}
+                {{- $importedStructName = basePath $singularRef }}
+                {{- $importName = structLocation $importedStructName }}
+                {{- $importName = basePath $importName }}
+            {{- else }}
+                {{- $importedStructName = "" }}
             {{- end }}
-            {{- if not $singularRef }}
-                {{- if $operation.Data.RequestBody }}
-                    {{- if $operation.Data.RequestBody.Ref }}
-                        {{- $singularRef = $operation.Data.RequestBody.Ref }}
-                    {{- else if $operation.Data.RequestBody.Value.Content }}
-                       {{- range $operation.Data.RequestBody.Value.Content }}
-                            {{- if .Schema.Ref }}
-                                {{- $singularRef = .Schema.Ref }}
-                                {{- break -}}
-                            {{- end }}
-                        {{- end }}
-                    {{- end }}
-                {{- end }}
-            {{- end }}
-
-            {{- $requestStructName = basePath $singularRef }}
-            {{- $importName = structLocation $requestStructName }}
-            {{- $importName = basePath $importName }}
         {{- else }}
             {{- $importName = basePath $importName }}
             {{- $importName = concat "api" $importName}}
@@ -136,7 +138,7 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         {{- $defaultResponseIs200 := eq $defaultResponse "200"}}
         {{- $noResponses := not $operation.Data.Responses }}
         {{- $hideStatus := or $noResponses $defaultResponseIs200 }}
-        func (c * {{ $controllerName }}) {{toTitle $operation.Name}}(ctx context.Context{{ if $requestStructName }}, req {{$importName}}.{{toTitle $requestStructName}}{{- end}}) ({{if not $hideStatus}} int, {{- end }}interface{}, error) {
+        func (c * {{ $controllerName }}) {{toTitle $operation.Name}}(ctx context.Context{{ if $importedStructName }}, req {{$importName}}.{{toTitle $importedStructName}}{{- end}}) ({{if not $hideStatus}} int, {{- end }}interface{}, error) {
             return {{if not $hideStatus}} 501, {{- end }}nil, nil
         }
 

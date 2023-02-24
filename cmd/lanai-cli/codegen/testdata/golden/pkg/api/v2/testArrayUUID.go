@@ -3,9 +3,15 @@
 package v2
 
 import (
+	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
 	"github.com/google/uuid"
 )
 
 type TestUUIDInArrayRequest struct {
 	Id *[]uuid.UUID `form:"id"`
+}
+
+type TestRequestBodyWithAllOfRequest struct {
+	Id *string `uri:"id" binding:"required"`
+	api.RequestBodyWithAllOf
 }

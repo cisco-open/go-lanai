@@ -7,6 +7,13 @@ import (
 
 type Parameters openapi3.Parameters
 
+func FromParameterMap(paramMap openapi3.ParametersMap) Parameters {
+	result := Parameters{}
+	for _, j := range paramMap {
+		result = append(result, j)
+	}
+	return result
+}
 func (r Parameters) CountFields() int {
 	return len(r)
 }

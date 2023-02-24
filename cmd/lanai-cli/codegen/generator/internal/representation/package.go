@@ -15,6 +15,7 @@ var (
 		"operation":          NewOperation,
 		"schema":             NewSchema,
 		"components":         NewComponents,
+		"requestBody":        NewRequestBody,
 	}
 )
 

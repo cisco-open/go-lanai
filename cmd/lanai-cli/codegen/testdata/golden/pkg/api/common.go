@@ -43,11 +43,24 @@ type DeviceStatusDetails struct {
 	Values *map[string]DeviceStatus
 }
 
+type DeviceCreate struct {
+	ServiceInstanceId uuid.UUID `json:"serviceInstanceId" binding:"required"`
+	DeviceUpdate
+}
+
 type DeviceStatus struct {
 	LastUpdated        string `json:"lastUpdated" binding:"required,date-time"`
 	LastUpdatedMessage string `json:"lastUpdatedMessage" binding:"required,min=1,max=128"`
 	Severity           string `json:"severity" binding:"required,min=1,max=128"`
 	Value              string `json:"value" binding:"required,min=1,max=128"`
+}
+
+type DeviceUpdate struct {
+	Attributes *DeviceUpdateAttributes `json:"attributes"`
+}
+
+type DeviceUpdateAttributes struct {
+	Values *map[string]interface{}
 }
 
 type GenericObject struct {
@@ -91,6 +104,15 @@ type GenericResponseObjectValue struct {
 type GenericResponseWithAllOf struct {
 	Id *string `json:"id"`
 	GenericResponse
+}
+
+type RequestBodyWithAllOf struct {
+	Attributes *RequestBodyWithAllOfAttributes `json:"attributes"`
+	Managed    bool                            `json:"managed"`
+}
+
+type RequestBodyWithAllOfAttributes struct {
+	Values *map[string]interface{}
 }
 
 type TestRequest struct {

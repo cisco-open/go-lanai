@@ -22,8 +22,12 @@
                     {{ template "EmbedStruct" args . $currentPkg }}
                 {{- else }}
                     {{- range .Value.Content }}
-                        {{- $schema := schema "" .Schema }}
-                        {{- template "SchemaProperties" args $schema "api" }}
+                       {{- with .Schema.Ref }}
+                            {{ template "EmbedStruct" args . $currentPkg }}
+                        {{- else }}
+                           {{- $schema := schema "" .Schema }}
+                           {{- template "SchemaProperties" args $schema "api" }}
+                        {{- end }}
                     {{- end }}
                 {{- end }}
             {{- end }}

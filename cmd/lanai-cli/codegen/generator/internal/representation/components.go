@@ -25,43 +25,30 @@ func (c Components) Imports() (result []string) {
 
 func (c Components) allProperties() (result []openapi3.Schemas) {
 	for _, schema := range c.Schemas {
-		if schema.Ref == "" {
-			result = append(result, schema.Value.Properties)
-		} else {
-			for _, a := range schema.Value.AllOf {
-				if a.Ref == "" {
-					result = append(result, a.Value.Properties)
-				}
+		s := Schema{Data: schema}
+		for _, j := range s.AllSchemaRefs() {
+			if j.Ref == "" {
+				result = append(result, j.Value.Properties)
 			}
 		}
 	}
 
 	for _, requestBody := range c.RequestBodies {
-		if requestBody.Value == nil {
+		if requestBody == nil || requestBody.Value == nil {
 			continue
 		}
-		for _, j := range requestBody.Value.Content {
-			if j.Schema.Ref == "" {
-				result = append(result, j.Schema.Value.Properties)
-			} else {
-				for _, a := range j.Schema.Value.AllOf {
-					if a.Ref != "" {
-						result = append(result, a.Value.Properties)
-					}
-				}
+		r := RequestBody(*requestBody)
+		for _, j := range r.schemas() {
+			if j.Ref == "" {
+				result = append(result, j.Value.Properties)
 			}
 		}
 	}
 
-	for _, parameter := range c.Parameters {
+	parameters := FromParameterMap(c.Parameters)
+	for _, parameter := range parameters.schemas() {
 		if parameter.Ref == "" {
-			result = append(result, parameter.Value.Schema.Value.Properties)
-		} else {
-			for _, a := range parameter.Value.Schema.Value.AllOf {
-				if a.Ref == "" {
-					result = append(result, a.Value.Properties)
-				}
-			}
+			result = append(result, parameter.Value.Properties)
 		}
 	}
 	return result

@@ -3,15 +3,14 @@
     {{- $importPrefix := index . 1 }}
     {{- $numArgs := len . }}
 
-    {{- with $schema.Data.Ref }}
-        {{ template "EmbedStruct" args . $importPrefix }}
-    {{- else }}
-        {{- template "propertiesFromSchema" args $schema }}
-        {{- range $schema.Data.Value.AllOf }}
-            {{- $innerSchema := schema $schema.Name . }}
-            {{- template "SchemaProperties" args $innerSchema $importPrefix }}
+    {{- range $i, $schemaRef := $schema.AllSchemaRefs }}
+        {{- with $schemaRef.Ref }}
+            {{ template "EmbedStruct" args . $importPrefix }}
+        {{- else }}
+            {{- $innerSchema := schema $schema.Name $schemaRef }}
+            {{- template "propertiesFromSchema" args $innerSchema }}
+            {{- template "additionalProperties" $innerSchema.Data }}
         {{- end }}
-        {{- template "additionalProperties" $schema.Data }}
     {{- end }}
 {{- end }}
 
