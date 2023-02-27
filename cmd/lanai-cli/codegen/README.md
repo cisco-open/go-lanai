@@ -251,7 +251,8 @@ In codegen.yml, if you set `regeneration`  to `overwrite` & run:
 contract: ./contract.yml
 repositoryRootPath: cto-github.cisco.com/NFV-BU/testservice
 projectName: testservice
-regeneration: overwrite
+regeneration:
+  default: overwrite
 ```
  It will regenerate the files & blow away any user changes. This is the default behavior:
 ```
@@ -266,7 +267,8 @@ regeneration: overwrite
 
 Change it to `ignore` & run
 ```yaml
-regeneration: ignore
+regeneration:
+  default: ignore 
 ```
 It won't modify any existing old files:
 ```
@@ -281,7 +283,8 @@ It won't modify any existing old files:
 
 If you change it to `reference`
 ```yaml
-regeneration: reference
+regeneration:
+  default: overwrite
 ```
 It'll generate a new file next to the original with a `ref` suffix: 
 ```
@@ -304,10 +307,11 @@ contract: ./contract.yml
 templateDirectory: template/src
 repositoryRootPath: cto-github.cisco.com/NFV-BU/testservice
 projectName: testservice
-regeneration: overwrite
-generatorRules:
-  project:
-    regeneration: reference #overwrite | ignore | reference
+regeneration:
+  default: overwrite
+  # Applies specific rules to files matching these patterns
+  rules:
+    "pkg/controller/*/*": reference #overwrite | ignore | reference
 regexes:
   testRegex: "^[a-zA-Z0-5-_=]{1,256}$"
 ```
@@ -330,9 +334,13 @@ This table describes the behaviors of each rule when you try to regenerate on `m
 
 - `regexes` - a string-string array, label any regexes that appear in the contract so they can be registered by
   go-lanai's validator. This field is optional - any unlabelled fields will be given a generated name
-- `generatorRules` - each entry of this map must be the name of a generator type (`project`, `api`, `version`).
+- `rules` - each entry of this map must a file pattern, to be applied to any generated files that match the pattern.
   Any rules defined here will overwrite the global rule for relevant files (see `Development/Generators`). Supported rules include:
   - `regeneration`
+  
+  Matching is done via [filepath.Match](https://pkg.go.dev/path/filepath#Match), so check what kind of patterns you can use there.
+  
+  In the above example, this would apply the `reference` regeneration rule to `pkg/controller/v1/package.go`
 
 ## Development
 
@@ -372,8 +380,9 @@ when writing your own.
 |----------------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------|
 | `args`         | `args <...interface >`                              | Helper to provide arguments to a template block. Arguments can be accessed with `index . <arg index >` |
 | `increment`    | `increment <int>`                                   | Given a number, returns that number + 1                                                                |
-| `log`          | `log <string>`                                      | logs your message in the console                                                                       |
+| `log`          | `log <interface>`                                   | logs your message in the console                                                                       |
 | `listContains` | `listContains <haystack []string>, <needle string>` | Returns true if the needle is in the haystack                                                          |
+| `derefBoolPtr` | `derefBoolPtr <bool*>`                              | converts a boolean pointer and returns the underlying bool                                             |
 
 #### Regex Related
 
@@ -409,8 +418,8 @@ Constructors:
 |----------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `property`           | `property <name - string, data - interface{}>`                   |                                                                                                                                                                        |
 | `propertyTypePrefix` | `propertyTypePrefix <representation.Property> <prefix - string>` | Assigns a prefix for the go type of that property (i.e `MyPrefix` + `CustomType` = `MyPrefixCustomType`, in case different schemas define `CustomType` more than once) |
-| `operation`          | `mappingPath <string>`                                           |                                                                                                                                                                        |
-| `schema`             | `mappingPath <string>`                                           |                                                                                                                                                                        |
+| `operation`          | `operation <data - *openapi3.Operation, string>`                 | If the operation lacks an OperationID, use the second argument to assign a name                                                                                        |
+| `schema`             | `schema <string, data - *openapi3.SchemaRef>`                    |                                                                                                                                                                        |
 
 
 | Function Name         | Usage                                                          | Comments                                                                                                                |

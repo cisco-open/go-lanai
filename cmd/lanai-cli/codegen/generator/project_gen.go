@@ -15,12 +15,13 @@ const (
 
 // ProjectGenerator generates 1 file based on the templatePath being used
 type ProjectGenerator struct {
-	data          map[string]interface{}
-	template      *template.Template
-	nameRegex     *regexp.Regexp
-	filesystem    fs.FS
-	priorityOrder int
-	regenRule     string
+	data             map[string]interface{}
+	template         *template.Template
+	nameRegex        *regexp.Regexp
+	filesystem       fs.FS
+	priorityOrder    int
+	defaultRegenRule string
+	rules            map[string]string
 }
 
 // newProjectGenerator returns a new generator for single files
@@ -28,10 +29,6 @@ func newProjectGenerator(opts ...func(option *Option)) *ProjectGenerator {
 	o := &Option{}
 	for _, fn := range opts {
 		fn(o)
-	}
-	rules, ok := o.Rules[projectGeneratorName]
-	if ok {
-		o.RegenRule = rules.Regeneration
 	}
 	priorityOrder := o.PriorityOrder
 	if priorityOrder == 0 {
@@ -45,12 +42,13 @@ func newProjectGenerator(opts ...func(option *Option)) *ProjectGenerator {
 
 	logger.Infof("RegenRule: %v", o.RegenRule)
 	return &ProjectGenerator{
-		data:          o.Data,
-		template:      o.Template,
-		nameRegex:     regexp.MustCompile(regex),
-		filesystem:    o.FS,
-		priorityOrder: priorityOrder,
-		regenRule:     o.RegenRule,
+		data:             o.Data,
+		template:         o.Template,
+		nameRegex:        regexp.MustCompile(regex),
+		filesystem:       o.FS,
+		priorityOrder:    priorityOrder,
+		defaultRegenRule: o.RegenRule,
+		rules:            o.Rules,
 	}
 }
 
@@ -77,13 +75,19 @@ func (o *ProjectGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 	}
 	baseFilename := o.determineFilename(tmplPath)
 
+	outputFile := path.Join(targetDir, baseFilename)
+
+	regenRule, err := getApplicableRegenRules(outputFile, o.rules, o.defaultRegenRule)
+	if err != nil {
+		return err
+	}
 	file := *NewGenerationContext(
 		tmplPath,
-		path.Join(targetDir, baseFilename),
-		o.regenRule,
+		outputFile,
+		regenRule,
 		o.data,
 	)
-	logger.Infof("project generator generating %v\n", targetDir)
+	logger.Infof("project generator generating %v\n", outputFile)
 	return GenerateFileFromTemplate(file, o.template)
 }
 

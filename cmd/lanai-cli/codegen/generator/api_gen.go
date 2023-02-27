@@ -11,13 +11,14 @@ import (
 )
 
 type ApiGenerator struct {
-	data          map[string]interface{}
-	template      *template.Template
-	filesystem    fs.FS
-	nameRegex     *regexp.Regexp
-	prefix        string
-	priorityOrder int
-	regenRule     string
+	data             map[string]interface{}
+	template         *template.Template
+	filesystem       fs.FS
+	nameRegex        *regexp.Regexp
+	prefix           string
+	priorityOrder    int
+	defaultRegenRule string
+	rules            map[string]string
 }
 
 const (
@@ -32,11 +33,6 @@ func newApiGenerator(opts ...func(option *Option)) *ApiGenerator {
 	for _, fn := range opts {
 		fn(o)
 	}
-
-	rules, ok := o.Rules[apiGeneratorName]
-	if ok {
-		o.RegenRule = rules.Regeneration
-	}
 	priorityOrder := o.PriorityOrder
 	if priorityOrder == 0 {
 		priorityOrder = defaultApiPriorityOrder
@@ -47,12 +43,13 @@ func newApiGenerator(opts ...func(option *Option)) *ApiGenerator {
 		regex = fmt.Sprintf("^(%v)(.+)(.tmpl)", o.Prefix)
 	}
 	return &ApiGenerator{
-		data:          o.Data,
-		template:      o.Template,
-		filesystem:    o.FS,
-		nameRegex:     regexp.MustCompile(regex),
-		priorityOrder: priorityOrder,
-		regenRule:     o.RegenRule,
+		data:             o.Data,
+		template:         o.Template,
+		filesystem:       o.FS,
+		nameRegex:        regexp.MustCompile(regex),
+		priorityOrder:    priorityOrder,
+		defaultRegenRule: o.RegenRule,
+		rules:            o.Rules,
 	}
 }
 
@@ -76,10 +73,15 @@ func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 			return err
 		}
 
+		outputFile := path.Join(targetDir, baseFilename)
+		regenRule, err := getApplicableRegenRules(outputFile, m.rules, m.defaultRegenRule)
+		if err != nil {
+			return err
+		}
 		toGenerate = append(toGenerate, *NewGenerationContext(
 			tmplPath,
-			path.Join(targetDir, baseFilename),
-			m.regenRule,
+			outputFile,
+			regenRule,
 			data,
 		))
 	}

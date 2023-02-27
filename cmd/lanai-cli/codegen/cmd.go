@@ -30,14 +30,18 @@ var (
 type Arguments struct {
 	Config string `flag:"config,c" desc:"Configuration file, if not defined will default to codegen.yml"`
 }
+
+type Regeneration struct {
+	Default string            `yaml:"default"`
+	Rules   map[string]string `yaml:"rules"`
+}
 type Config struct {
-	Contract           string                     `yaml:"contract"`
-	ProjectName        string                     `yaml:"projectName"`
-	TemplateDirectory  string                     `yaml:"templateDirectory"`
-	RepositoryRootPath string                     `yaml:"repositoryRootPath"`
-	Regeneration       string                     `yaml:"regeneration"`
-	GeneratorRules     map[string]generator.Rules `yaml:"generatorRules"`
-	Regexes            map[string]string          `yaml:"regexes"`
+	Contract           string            `yaml:"contract"`
+	ProjectName        string            `yaml:"projectName"`
+	TemplateDirectory  string            `yaml:"templateDirectory"`
+	RepositoryRootPath string            `yaml:"repositoryRootPath"`
+	Regeneration       Regeneration      `yaml:"regeneration"`
+	Regexes            map[string]string `yaml:"regexes"`
 }
 
 func init() {
@@ -82,14 +86,13 @@ func Run(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-
 	if err = generator.GenerateFiles(
 		FSToUse,
 		generator.WithData(data),
 		generator.WithFS(FSToUse),
 		generator.WithTemplate(template),
-		generator.WithRegenerationRule(Configuration.Regeneration),
-		generator.WithRules(Configuration.GeneratorRules)); err != nil {
+		generator.WithRegenerationRule(Configuration.Regeneration.Default),
+		generator.WithRules(Configuration.Regeneration.Rules)); err != nil {
 		return err
 	}
 
@@ -118,7 +121,6 @@ func processConfigurationFile(configFilePath string) error {
 		Configuration.RepositoryRootPath = config.RepositoryRootPath
 		Configuration.TemplateDirectory = config.TemplateDirectory
 		Configuration.Regeneration = config.Regeneration
-		Configuration.GeneratorRules = config.GeneratorRules
 		Configuration.Regexes = config.Regexes
 	}
 	return nil
