@@ -6,6 +6,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
+	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
 	apiv1 "cto-github.cisco.com/NFV-BU/test-service/pkg/api/v1"
 	"go.uber.org/fx"
 )
@@ -40,14 +41,14 @@ func (c *TestpathScopeController) Mappings() []web.Mapping {
 	}
 }
 
-func (c *TestpathScopeController) DeleteTestPath(ctx context.Context, req apiv1.DeleteTestPathRequest) (interface{}, error) {
-	return nil, nil
+func (c *TestpathScopeController) DeleteTestPath(ctx context.Context, req apiv1.DeleteTestPathRequest) (*apiv1.DeleteTestPathResponse, error) {
+	return &apiv1.DeleteTestPathResponse{}, nil
 }
 
-func (c *TestpathScopeController) TestpathScopeGet(ctx context.Context, req apiv1.TestpathScopeGetRequest) (interface{}, error) {
-	return nil, nil
+func (c *TestpathScopeController) TestpathScopeGet(ctx context.Context, req apiv1.TestpathScopeGetRequest) (*api.GenericResponseWithAllOf, error) {
+	return &api.GenericResponseWithAllOf{}, nil
 }
 
-func (c *TestpathScopeController) PostTestPath(ctx context.Context, req apiv1.PostTestPathRequest) (interface{}, error) {
-	return nil, nil
+func (c *TestpathScopeController) PostTestPath(ctx context.Context, req apiv1.PostTestPathRequest) (*api.GenericResponse, error) {
+	return &api.GenericResponse{}, nil
 }

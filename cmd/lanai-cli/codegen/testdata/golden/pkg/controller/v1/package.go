@@ -12,6 +12,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.AnonymousModulePrecedence,
 	Options: []fx.Option{
 		web.FxControllerProviders(
+			NewControllerResponsesTestController,
 			NewRequestBodyTestsIdController,
 			NewTestpathScopeController,
 			NewUuidtestIdController,

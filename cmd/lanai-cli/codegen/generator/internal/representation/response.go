@@ -66,7 +66,10 @@ func (r Response) ContainsRef() bool {
 func (r Response) RefsUsed() (result []string) {
 	var refs []string
 	if r.Ref != "" {
-		refs = append(refs, path.Base(r.Ref))
+		// Double check that this isn't an empty wrapper around another ref
+		if r.CountFields() != 1 {
+			refs = append(refs, path.Base(r.Ref))
+		}
 	}
 
 	for _, schema := range r.schemas() {

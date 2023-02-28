@@ -10,10 +10,11 @@ import (
 
 var (
 	stringsFuncMap = template.FuncMap{
-		"toTitle":  toTitle,
-		"concat":   concat,
-		"basePath": basePath,
-		"toLower":  toLower,
+		"toTitle":   toTitle,
+		"concat":    concat,
+		"basePath":  basePath,
+		"toLower":   toLower,
+		"hasPrefix": strings.HasPrefix,
 	}
 )
 

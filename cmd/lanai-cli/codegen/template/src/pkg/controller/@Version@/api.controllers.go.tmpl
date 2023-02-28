@@ -43,33 +43,24 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- $hasCommonImport := false }}
     {{- $hasAPIImport := false }}
     {{- range $opName, $opData := pathOperations $pathData }}
-        {{- $structRegistry := structRegistry }}
         {{- $operation := concat $pathName $opName | operation $opData }}
 
-        {{- $requestStruct := $operation.StructForMessage "Request" $structRegistry }}
-        {{- if eq $requestStruct.Import "pkg/api"  }}
-            {{- $hasCommonImport = true }}
-        {{- else if $requestStruct.Import }}
-            {{- $hasAPIImport = true }}
-        {{- end }}
-
-        {{- $importName := structLocation $requestStruct.Struct }}
-        {{- /* No Import Name - struct doesn't exist - it's probably from common.go */ -}}
-        {{- if not $importName }}
-            {{- $operationRefs := $operation.RefsUsed }}
-            {{- if $operationRefs }}
-                {{- $singularRef := index $operationRefs 0 }}
-                {{- $importedStructName := basePath $singularRef }}
-                {{- $importName = structLocation $importedStructName }}
-                {{- $importName = basePath $importName }}
+        {{- $requestStruct := $operation.RequestStruct structRegistry }}
+        {{- if $requestStruct }}
+            {{- if eq $requestStruct.Import "pkg/api"  }}
+                {{- $hasCommonImport = true }}
+            {{- else if $requestStruct.Import }}
+                {{- $hasAPIImport = true }}
             {{- end }}
-        {{- else }}
-            {{- $importName = basePath $importName }}
-            {{- $importName = concat "api" $importName}}
         {{- end }}
 
-        {{- if eq $importName "api" }}
-            {{- $hasCommonImport = true }}
+        {{- $responseStruct := $operation.ResponseStruct structRegistry }}
+        {{- if $responseStruct }}
+            {{- if eq $responseStruct.Import "pkg/api"  }}
+                {{- $hasCommonImport = true }}
+            {{- else if $responseStruct.Import }}
+                {{- $hasAPIImport = true }}
+            {{- end }}
         {{- end }}
     {{- end }}
     {{- template "ImportStruct" args $hasCommonImport $hasAPIImport . -}}
@@ -112,24 +103,6 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- range $opName, $opData := pathOperations $pathData }}
         {{- $operation := concat $nameFromPath $opName | operation $opData }}
 
-        {{- $importedStructName := concat $operation.Name "Request" }}
-        {{- $importName := structLocation $importedStructName }}
-        {{- /* No Import Name - struct doesn't exist - it's probably from common.go */ -}}
-        {{- if not $importName }}
-            {{- $operationRefs := $operation.RefsUsed }}
-            {{- if $operationRefs }}
-                {{- $singularRef := index $operationRefs 0 }}
-                {{- $importedStructName = basePath $singularRef }}
-                {{- $importName = structLocation $importedStructName }}
-                {{- $importName = basePath $importName }}
-            {{- else }}
-                {{- $importedStructName = "" }}
-            {{- end }}
-        {{- else }}
-            {{- $importName = basePath $importName }}
-            {{- $importName = concat "api" $importName}}
-        {{- end }}
-
         {{ $defaultResponse := "" }}
         {{ range $respName, $respData := $operation.Data.Responses }}
             {{ $defaultResponse = $respName}}
@@ -138,9 +111,87 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         {{- $defaultResponseIs200 := eq $defaultResponse "200"}}
         {{- $noResponses := not $operation.Data.Responses }}
         {{- $hideStatus := or $noResponses $defaultResponseIs200 }}
-        func (c * {{ $controllerName }}) {{toTitle $operation.Name}}(ctx context.Context{{ if $importedStructName }}, req {{$importName}}.{{toTitle $importedStructName}}{{- end}}) ({{if not $hideStatus}} int, {{- end }}interface{}, error) {
-            return {{if not $hideStatus}} 501, {{- end }}nil, nil
+        func (c * {{ $controllerName }}) {{ template "controllerFuncArguments" args $operation}} {{template "controllerFuncReturnType" args $hideStatus $operation}} {
+            return {{if not $hideStatus}} 501, {{- end }}{{- template "responseBodyDefaultValue" args $hideStatus $operation}}, nil
         }
 
     {{- end }}
+{{- end }}
+
+{{ define "controllerFuncArguments" }}
+    {{- $operation := index . 0 }}
+    {{- $requestStruct := $operation.RequestStruct structRegistry}}
+    {{- $type := "" }}
+    {{- $import := "" }}
+    {{- if $requestStruct }}
+        {{- $type = toTitle $requestStruct.Struct }}
+        {{- $import = $requestStruct.ImportAlias }}
+    {{- end }}
+
+    {{- toTitle $operation.Name -}}(ctx context.Context{{ if $type }}, req {{basePath $import}}.{{$type}}{{- end}})
+{{- end }}
+
+{{ define "controllerFuncReturnType" }}
+    {{- $hideStatus := index . 0 -}}
+    {{- $operation := index . 1 }}
+
+    {{- $importPrefix := "" }}
+    {{- $type := "" }}
+    {{- $responseStruct := $operation.ResponseStruct structRegistry -}}
+    {{- if $responseStruct }}
+        {{- $importPrefix = $responseStruct.ImportAlias }}
+        {{- $type = toTitle $responseStruct.Struct }}
+    {{- end }}
+
+    {{- $pointer := "" }}
+    {{- if $importPrefix }}
+        {{- $pointer = "*" }}
+    {{- else }}
+        {{- /*If this is an array of an object, add a pointer to the array, otherwise just return an array of the type */ -}}
+        {{- range $i, $content := $operation.AllResponseContent }}
+            {{- $isNotObject := ne $content.Schema.Value.Type "object" }}
+            {{- $isNotArray := ne $content.Schema.Value.Type "array" }}
+            {{- $isBaseType := and $isNotObject $isNotArray }}
+            {{- if $isBaseType}}
+                {{- $type = schemaToText $content.Schema "" "" }}
+            {{- end }}
+            {{- break }}
+        {{- end }}
+    {{- end -}}
+
+({{if not $hideStatus}} int, {{- end }}{{$pointer}}{{with $importPrefix}}{{.}}.{{ end }}{{with $type}}{{.}}{{else}}interface{}{{end}}, error)
+{{- end }}
+
+{{ define "responseBodyDefaultValue" -}}
+    {{- $hideStatus := index . 0 -}}
+    {{- $operation := index . 1 }}
+
+    {{- $importPrefix := "" }}
+    {{- $type := "" }}
+    {{- $responseStruct := $operation.StructForMessage "Response" structRegistry -}}
+    {{- if $responseStruct }}
+        {{- $importPrefix = $responseStruct.ImportAlias }}
+        {{- $type = toTitle $responseStruct.Struct }}
+    {{- end -}}
+
+    {{ if $importPrefix -}}
+        &{{$importPrefix}}.{{$type}}{}
+    {{- else -}}
+       {{- range $i, $content := $operation.AllResponseContent }}
+            {{- $type = $content.Schema.Value.Type }}
+            {{- break }}
+        {{- end }}
+        {{- $defaultValue := "nil" }}
+        {{- if eq $type "string" -}}
+            {{- $defaultValue = "\"\"" }}
+        {{- else if eq $type "integer" }}
+            {{- $defaultValue = "0" }}
+        {{- else if eq $type "number" }}
+            {{- $defaultValue = "0.0" }}
+        {{- else if eq $type "boolean" }}
+            {{- $defaultValue = "false" }}
+        {{- end }}
+
+        {{- $defaultValue -}}
+    {{- end -}}
 {{- end }}

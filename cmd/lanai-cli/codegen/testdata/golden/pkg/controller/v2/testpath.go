@@ -6,6 +6,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
+	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
 	apiv2 "cto-github.cisco.com/NFV-BU/test-service/pkg/api/v2"
 	"go.uber.org/fx"
 )
@@ -30,6 +31,6 @@ func (c *TestpathController) Mappings() []web.Mapping {
 	}
 }
 
-func (c *TestpathController) GetAllTestPaths(ctx context.Context, req apiv2.GetAllTestPathsRequest) (int, interface{}, error) {
-	return 501, nil, nil
+func (c *TestpathController) GetAllTestPaths(ctx context.Context, req apiv2.GetAllTestPathsRequest) (int, *api.GenericResponse, error) {
+	return 501, &api.GenericResponse{}, nil
 }
