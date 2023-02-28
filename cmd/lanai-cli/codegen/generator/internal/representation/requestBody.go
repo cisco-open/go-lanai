@@ -47,15 +47,34 @@ func (r RequestBody) RefsUsed() (result []string) {
 	if len(r.Value.Content) > 1 {
 		logger.Warn("more than one mediatype defined in requestBody, undefined behavior may occur")
 	}
-	for _, j := range r.Value.Content {
-		if j.Schema.Ref != "" {
-			result = append(result, path.Base(j.Schema.Ref))
-		} else {
-			for _, a := range j.Schema.Value.AllOf {
-				if a.Ref != "" {
-					result = append(result, path.Base(a.Ref))
-				}
-			}
+	for _, schema := range r.schemas() {
+		if schema.Ref != "" {
+			result = append(result, path.Base(schema.Ref))
+		}
+	}
+	return result
+}
+
+func (r RequestBody) ExternalImports() (result []string) {
+	if r.CountFields() == 0 {
+		return
+	}
+	if r.Value == nil {
+		return
+	}
+	for _, schema := range r.schemas() {
+		if isUUID(schema) {
+			result = append(result, UUID_IMPORT_PATH)
+		}
+	}
+	return result
+}
+
+func (r RequestBody) schemas() (result []*openapi3.SchemaRef) {
+	for _, c := range r.Value.Content {
+		result = append(result, c.Schema)
+		for _, a := range c.Schema.Value.AllOf {
+			result = append(result, a)
 		}
 	}
 	return result

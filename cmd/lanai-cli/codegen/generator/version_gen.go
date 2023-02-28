@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"path"
 	"regexp"
+	"sort"
 	"text/template"
 )
 
@@ -64,6 +65,7 @@ func (m *VersionGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 	var toGenerate []GenerationContext
 	for version, versionData := range iterateOver {
 		data := copyOf(m.data)
+		sort.Strings(versionData)
 		data["VersionData"] = versionData
 		data["Version"] = version
 

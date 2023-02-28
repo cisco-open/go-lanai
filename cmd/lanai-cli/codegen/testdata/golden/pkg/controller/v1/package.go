@@ -13,6 +13,7 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		web.FxControllerProviders(
 			NewTestpathScopeController,
+			NewUuidtestIdController,
 		),
 	},
 }

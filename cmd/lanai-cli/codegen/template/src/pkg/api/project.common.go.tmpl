@@ -2,10 +2,23 @@
 // Derived from openapi contract - components
 package api
 {{ with index . "OpenAPIData" }}
+    {{ template "externalCommonImports" args .Components }}
     {{ template "registerStructs" args .Components }}
     {{ template "componentSchemaStructs" args .Components.Schemas }}
     {{ template "componentRequestBodiesStructs" args .Components.RequestBodies }}
     {{ template "componentParameterStructs" args .Components.Parameters }}
+{{- end }}
+
+{{ define "externalCommonImports" }}
+    {{- $components := index . 0 }}
+    {{- $c := components $components }}
+    {{- with $c.Imports }}
+    import (
+        {{ range . }}
+        "{{.}}"
+        {{- end }}
+    )
+    {{- end }}
 {{- end }}
 
 {{ define "registerStructs" }}

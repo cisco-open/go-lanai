@@ -34,6 +34,18 @@ func (r Responses) Sorted() (result []Response) {
 	return result
 }
 
+func (r Responses) ExternalImports() (result []string) {
+	for _, response := range r {
+		resp := Response(*response)
+		// check if a struct will be created from this response
+		if resp.CountFields() == 0 || (resp.CountFields() == 1 && resp.ContainsRef()) {
+			break
+		}
+		result = append(result, resp.ExternalImports()...)
+	}
+	return result
+}
+
 type Response openapi3.ResponseRef
 
 func (r Response) CountFields() (result int) {
@@ -56,17 +68,34 @@ func (r Response) RefsUsed() (result []string) {
 	if r.Ref != "" {
 		refs = append(refs, path.Base(r.Ref))
 	}
-	for _, c := range r.Value.Content {
-		if c.Schema.Ref != "" {
-			refs = append(refs, path.Base(c.Schema.Ref))
-		} else {
-			for _, a := range c.Schema.Value.AllOf {
-				if a.Ref != "" {
-					refs = append(refs, path.Base(a.Ref))
-				}
-			}
+
+	for _, schema := range r.schemas() {
+		if schema.Ref != "" {
+			refs = append(refs, path.Base(schema.Ref))
 		}
 	}
 
 	return refs
+}
+
+func (r Response) ExternalImports() (result []string) {
+	if r.Ref != "" {
+		return result
+	}
+	for _, schema := range r.schemas() {
+		if isUUID(schema) {
+			result = append(result, UUID_IMPORT_PATH)
+		}
+	}
+	return result
+}
+
+func (r Response) schemas() (result []*openapi3.SchemaRef) {
+	for _, c := range r.Value.Content {
+		result = append(result, c.Schema)
+		for _, a := range c.Schema.Value.AllOf {
+			result = append(result, a)
+		}
+	}
+	return result
 }
