@@ -33,7 +33,6 @@
         {{- range $response.Value.Content }}
             {{ $schema := schema "" .Schema }}
             {{ template "SchemaProperties" args $schema "api" }}
-            {{- $requiredList := requiredList .Schema }}
             {{- if eq .Schema.Value.Type "array" }}
                 {{ template "propertiesFromSchema" args $schema }}
             {{- end }}
