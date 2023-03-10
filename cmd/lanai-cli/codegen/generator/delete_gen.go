@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 )
 
 // DeleteGenerator will read delete.*.tmpl files, and delete any generated
@@ -47,15 +48,55 @@ func (d *DeleteGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error 
 		return err
 	}
 	deleteRegex := regexp.MustCompile(string(regexContent))
-
 	outputFS := os.DirFS(cmdutils.GlobalArgs.OutputDir)
 	err = deleteFilesMatchingRegex(outputFS, deleteRegex)
 	if err != nil {
 		return err
 	}
 
+	err = deleteDuplicateReferenceFiles(outputFS)
+	if err != nil {
+		return err
+	}
+
 	err = deleteEmptyDirectories(outputFS)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func deleteDuplicateReferenceFiles(outputFS fs.FS) error {
+	if err := fs.WalkDir(outputFS, ".", func(p string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
+			if strings.HasSuffix(p, "ref") {
+				originalFile := strings.TrimRight(p, "ref")
+				originalContent, err := fs.ReadFile(outputFS, originalFile)
+				if err != nil {
+					return err
+				} else if originalContent == nil {
+					return nil
+				}
+
+				content, err := fs.ReadFile(outputFS, p)
+				if err != nil {
+					return err
+				} else if content == nil {
+					return nil
+				}
+
+				if string(content) == string(originalContent) {
+					toRemove := fmt.Sprintf("%v/%v", cmdutils.GlobalArgs.OutputDir, p)
+					logger.Infof("delete generator deleting duplicate reference file %v\n", toRemove)
+					err := os.Remove(toRemove)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+		return nil
+	}); err != nil {
 		return err
 	}
 	return nil

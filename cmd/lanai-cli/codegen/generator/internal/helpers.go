@@ -83,8 +83,8 @@ func listContains(list []string, needle string) bool {
 	return false
 }
 
-func templateLog(message string) string {
-	logger.Infof(message)
+func templateLog(message interface{}) string {
+	logger.Infof("%v", message)
 	return ""
 }
 

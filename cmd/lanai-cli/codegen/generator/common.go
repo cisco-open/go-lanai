@@ -179,3 +179,18 @@ func copyOf(data map[string]interface{}) map[string]interface{} {
 	}
 	return dataCopy
 }
+
+func getApplicableRegenRules(outputFile string, rules map[string]string, defaultRule string) (string, error) {
+	pathAfterOutputDir := strings.TrimPrefix(outputFile, cmdutils.GlobalArgs.OutputDir+"/")
+	regenRule := defaultRule
+	for pattern, rule := range rules {
+		match, err := filepath.Match(pattern, pathAfterOutputDir)
+		if err != nil {
+			return "", err
+		}
+		if match {
+			regenRule = rule
+		}
+	}
+	return regenRule, nil
+}

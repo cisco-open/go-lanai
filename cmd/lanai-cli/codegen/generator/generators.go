@@ -25,10 +25,6 @@ type Generators struct {
 	loadedPaths []templateInfo
 }
 
-type Rules struct {
-	Regeneration string `yaml:"regeneration"`
-}
-
 type templateInfo struct {
 	tmplPath string
 	dirEntry fs.DirEntry
@@ -41,10 +37,10 @@ type Option struct {
 	PriorityOrder int
 	Prefix        string
 	RegenRule     string
-	Rules         map[string]Rules
+	Rules         map[string]string
 }
 
-func WithRules(rules map[string]Rules) func(o *Option) {
+func WithRules(rules map[string]string) func(o *Option) {
 	return func(option *Option) {
 		option.Rules = rules
 	}

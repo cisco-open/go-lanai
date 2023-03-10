@@ -100,3 +100,15 @@ func (o Operation) responseStruct(structRegistry map[string]string) (result Stru
 	}
 	return result
 }
+
+func (o Operation) RefsUsed() (result []string) {
+	for _, p := range o.Data.Parameters {
+		result = append(result, p.Ref)
+	}
+	if o.Data.RequestBody != nil {
+		r := RequestBody(*o.Data.RequestBody)
+		result = append(result, r.RefsUsed()...)
+	}
+
+	return result
+}

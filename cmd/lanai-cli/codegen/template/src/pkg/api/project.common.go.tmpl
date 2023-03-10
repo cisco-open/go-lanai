@@ -23,9 +23,8 @@ package api
 
 {{ define "registerStructs" }}
     {{- $components := index . 0 }}
-    {{- $schema := $components.Schemas }}
 
-    {{ template "registerSchemaStructs" args $schema }}
+    {{ template "registerSchemaStructs" args $components.Schemas }}
 
     {{- $requestBodies := $components.RequestBodies }}
     {{ range $requestName, $requestData := $requestBodies }}
@@ -44,7 +43,7 @@ package api
 {{- end }}
 
 {{ define "registerSchemaStructs" }}
-    {{- $schema := index . 0 }}
+    {{- $schemas := index . 0 }}
 
     {{- $namePrefix := "" }}
     {{- $numArgs := len . }}
@@ -53,7 +52,7 @@ package api
     {{- end }}
     {{- $namePrefix = toTitle $namePrefix }}
 
-    {{- range $schemaName, $schemaData := $schema }}
+    {{- range $schemaName, $schemaData := $schemas }}
         {{- $wasCreated := false }}
         {{- $structName := toTitle $schemaName }}
         {{- $structName = concat $namePrefix $structName }}
@@ -92,12 +91,7 @@ package api
         {{- if or $isObject $schema.Data.Value.AllOf }}
             {{- if not $schema.Data.Ref }}
                 type {{ $schema.Name }} struct {
-                        {{- range $schema.Data.Value.AllOf }}
-                            {{- $innerSchema := schema $structName . }}
-                            {{- template "SchemaProperties" args $innerSchema "pkg/api" }}
-                        {{- else }}
-                            {{- template "SchemaProperties" args $schema "pkg/api" }}
-                        {{- end }}
+                    {{- template "SchemaProperties" args $schema "pkg/api" }}
                 }
                 {{ $wasCreated = true }}
             {{- end }}
@@ -105,14 +99,13 @@ package api
         {{/* Check if something was actually made before diving deeper into the struct */}}
         {{- if $wasCreated }}
             {{/* Make another struct for each applicable property */}}
-            {{- range $schema.Data.Value.AllOf }}
-                {{- if .Ref }}
+            {{- range $_, $schemaRef := $schema.AllSchemaRefs }}
+                {{- with $schemaRef.Ref }}
                     {{/* This ref will already have a struct made, don't make another one */}}
                 {{- else }}
-                    {{ template "componentSchemaStructs" args .Value.Properties $schema.Name }}
-                {{- end}}
-            {{- else }}
-                {{ template "componentSchemaStructs" args $schema.Data.Value.Properties $schema.Name }}
+                    {{- $innerSchema := schema $schema.Name $schemaRef }}
+                    {{ template "componentSchemaStructs" args $innerSchema.Data.Value.Properties $innerSchema.Name }}
+                {{- end }}
             {{- end }}
         {{- end }}
     {{- end }}

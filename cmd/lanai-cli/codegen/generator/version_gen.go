@@ -10,11 +10,12 @@ import (
 )
 
 type VersionGenerator struct {
-	data       map[string]interface{}
-	template   *template.Template
-	nameRegex  *regexp.Regexp
-	regenRule  string
-	filesystem fs.FS
+	data             map[string]interface{}
+	template         *template.Template
+	nameRegex        *regexp.Regexp
+	defaultRegenRule string
+	rules            map[string]string
+	filesystem       fs.FS
 }
 
 const versionGeneratorName = "version"
@@ -24,17 +25,14 @@ func newVersionGenerator(opts ...func(option *Option)) *VersionGenerator {
 	for _, fn := range opts {
 		fn(o)
 	}
-	rules, ok := o.Rules[versionGeneratorName]
-	if ok {
-		o.RegenRule = rules.Regeneration
-	}
 
 	return &VersionGenerator{
-		data:       o.Data,
-		template:   o.Template,
-		filesystem: o.FS,
-		nameRegex:  regexp.MustCompile("^(version.)(.+)(.tmpl)"),
-		regenRule:  o.RegenRule,
+		data:             o.Data,
+		template:         o.Template,
+		filesystem:       o.FS,
+		nameRegex:        regexp.MustCompile("^(version.)(.+)(.tmpl)"),
+		defaultRegenRule: o.RegenRule,
+		rules:            o.Rules,
 	}
 }
 
@@ -74,10 +72,15 @@ func (m *VersionGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 			return err
 		}
 
+		outputFile := path.Join(targetDir, m.determineFilename(tmplPath))
+		regenRule, err := getApplicableRegenRules(outputFile, m.rules, m.defaultRegenRule)
+		if err != nil {
+			return err
+		}
 		toGenerate = append(toGenerate, *NewGenerationContext(
 			tmplPath,
-			path.Join(targetDir, m.determineFilename(tmplPath)),
-			m.regenRule,
+			outputFile,
+			regenRule,
 			data,
 		))
 	}

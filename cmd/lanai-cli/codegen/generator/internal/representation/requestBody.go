@@ -7,6 +7,9 @@ import (
 
 type RequestBody openapi3.RequestBodyRef
 
+func NewRequestBody(body openapi3.RequestBodyRef) RequestBody {
+	return RequestBody(body)
+}
 func (r RequestBody) ContainsRef() (result bool) {
 	if r.Ref != "" {
 		return true
