@@ -1,4 +1,4 @@
-package representation
+package internal
 
 import (
 	"github.com/getkin/kin-openapi/openapi3"
@@ -9,13 +9,12 @@ import (
 type Responses openapi3.Responses
 
 func (r Responses) RefsUsed() (result []string) {
-	for _, response := range r {
-		resp := Response(*response)
+	for _, response := range r.Sorted() {
 		// check if a struct will be created from this response
-		if resp.CountFields() == 0 || (resp.CountFields() == 1 && resp.ContainsRef()) {
+		if response.CountFields() == 0 || (response.CountFields() == 1 && response.ContainsRef()) {
 			break
 		}
-		result = append(result, resp.RefsUsed()...)
+		result = append(result, response.RefsUsed()...)
 	}
 	return result
 }
@@ -86,19 +85,14 @@ func (r Response) ExternalImports() (result []string) {
 		return result
 	}
 	for _, schema := range r.schemas() {
-		if isUUID(schema) {
-			result = append(result, UUID_IMPORT_PATH)
-		}
+		result = append(result, externalImportsFromFormat(schema)...)
 	}
 	return result
 }
 
 func (r Response) schemas() (result []*openapi3.SchemaRef) {
 	for _, c := range r.Value.Content {
-		result = append(result, c.Schema)
-		for _, a := range c.Schema.Value.AllOf {
-			result = append(result, a)
-		}
+		result = append(result, _SchemaRef(*c.Schema).AllSchemas()...)
 	}
 	return result
 }

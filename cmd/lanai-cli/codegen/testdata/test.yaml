@@ -406,6 +406,12 @@ components:
                 userId:
                     format: uuid
                     type: string
+                stringWithFormatOnlyInAnAllOfSchema:
+                    type: string
+                    format: allOfExclusiveFormat
+                regexWithBackslashes:
+                    type: string
+                    format: ^[a-zA-Z0-9\_\-\.\@]{1,128}$
               type: object
     DeviceStatus:
         properties:
@@ -462,8 +468,13 @@ components:
           maximum: 10
         integerValue:
           type: integer
+        integer32Value:
+          type: integer
           format: int32
           maximum: 5
+        integer64Value:
+          type: integer
+          format: int64
         numberArray:
           type: array
           items:
@@ -503,6 +514,11 @@ components:
             - desc
             - null
           nullable: true
+        email:
+          type: string
+          format: email
+        emptyObject:
+          type: object
       additionalProperties:
         type: string
     ArrayItem:

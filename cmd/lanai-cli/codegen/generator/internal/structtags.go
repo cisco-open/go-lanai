@@ -7,14 +7,18 @@ import (
 )
 
 func structTags(p Property) string {
-	requiredParams := p.RequiredList
 	nameType := nameType(p.PropertyData)
 	name := p.PropertyName
 	if p.OmitJSON {
 		name = "-"
+	} else if nameType == "json" {
+		schema, _ := convertToSchemaRef(p.PropertyData)
+		if p.IsOptional() && schema.Value.Type != "array" && (ShouldHavePointer(p) || !zeroValueIsValid(schema)) {
+			name = fmt.Sprintf("%v,omitempty", name)
+		}
 	}
 	result := fmt.Sprintf("%v:\"%v\"", nameType, name)
-	binding := bindings(p.PropertyName, p.PropertyData, requiredParams)
+	binding := bindings(p.PropertyName, p.PropertyData, p.RequiredList)
 	if binding != "" {
 		result = fmt.Sprintf("%v binding:\"%v\"", result, binding)
 	}
@@ -27,10 +31,10 @@ func nameType(element interface{}) string {
 	nameType := "json"
 
 	interfaceType := getInterfaceType(element)
-	switch interfaceType {
-	case SchemaRefPtr:
+	switch element.(type) {
+	case *openapi3.SchemaRef:
 		nameType = "json"
-	case ParameterPtr:
+	case *openapi3.Parameter:
 		switch element.(*openapi3.Parameter).In {
 		case "query":
 			nameType = "form"
@@ -46,15 +50,16 @@ func nameType(element interface{}) string {
 }
 
 func bindings(propertyName string, data interface{}, requiredList []string) string {
-	var bindingParts []string
-	validationTags := validationTags(data, requiredList)
-	bindingParts = append(bindingParts, omitEmptyTags(propertyName, requiredList, len(validationTags))...)
-	bindingParts = append(bindingParts, requiredTag(propertyName, requiredList)...)
-	bindingParts = append(bindingParts, validationTags...)
+	bindingParts := requiredTag(propertyName, requiredList)
+	if isBaseType(data) {
+		validationTags := validationTags(data)
+		bindingParts = append(bindingParts, omitEmptyTags(propertyName, requiredList, len(validationTags))...)
+		bindingParts = append(bindingParts, validationTags...)
+	}
 	return strings.Join(bindingParts, ",")
 }
 
-func validationTags(data interface{}, requiredList []string) []string {
+func validationTags(data interface{}) []string {
 	result := regexTag(data)
 	schemaRef, err := convertToSchemaRef(data)
 	if err != nil {
@@ -62,8 +67,8 @@ func validationTags(data interface{}, requiredList []string) []string {
 	}
 	result = append(result, limitTags(schemaRef)...)
 	result = append(result, enumOf(schemaRef.Value.Enum)...)
-	if schemaRef.Value.Type == "array" {
-		innerParts := validationTags(schemaRef.Value.Items, requiredList)
+	if schemaRef.Value.Type == openapi3.TypeArray {
+		innerParts := validationTags(schemaRef.Value.Items)
 		if innerParts != nil {
 			result = append(result, "dive")
 			result = append(result, innerParts...)
@@ -80,16 +85,13 @@ func requiredTag(propertyName string, requiredList []string) (result []string) {
 }
 
 func regexTag(element interface{}) (result []string) {
-	if element == nil || shouldBeUUIDType(element) {
-		return result
-	}
 	schemaRef, err := convertToSchemaRef(element)
 	if err != nil {
 		return nil
 	}
 	rValue, _ := regex(*schemaRef.Value)
-	if rValue != nil && rValue.Value != "" {
-		result = append(result, generateNameFromRegex(rValue.Value))
+	if rValue != nil {
+		result = append(result, rValue.Name)
 	}
 	return result
 }
@@ -110,7 +112,7 @@ func limitTags(schemaRef *openapi3.SchemaRef) (result []string) {
 }
 
 // omitEmptyTags will adds omitEmpty tag if:
-// the property is not the list of required properties
+// the property is not in the list of required properties
 // numberOfValidationTags > 0 - if there are any validations that need to be omitted
 func omitEmptyTags(propertyName string, requiredList []string, numberOfValidationTags int) (result []string) {
 	if !listContains(requiredList, propertyName) && numberOfValidationTags > 0 {

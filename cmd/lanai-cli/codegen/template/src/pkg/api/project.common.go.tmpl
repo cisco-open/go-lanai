@@ -102,7 +102,7 @@ package api
         {{/* Check if something was actually made before diving deeper into the struct */}}
         {{- if $wasCreated }}
             {{/* Make another struct for each applicable property */}}
-            {{- range $_, $schemaRef := $schema.AllSchemaRefs }}
+            {{- range $_, $schemaRef := $schema.AllSchemas }}
                 {{- with $schemaRef.Ref }}
                     {{/* This ref will already have a struct made, don't make another one */}}
                 {{- else }}

@@ -1,9 +1,7 @@
 package internal
 
 const (
-	SchemaRefPtr   = "*SchemaRef"
-	ParameterPtr   = "*Parameter"
-	SchemaPtr      = "*Schema"
-	OperationPtr   = "*Operation"
-	ResponseRefPtr = "*ResponseRef"
+	UUID_IMPORT_PATH = "github.com/google/uuid"
+	JSON_IMPORT_PATH = "encoding/json"
+	TIME_IMPORT_PATH = "time"
 )

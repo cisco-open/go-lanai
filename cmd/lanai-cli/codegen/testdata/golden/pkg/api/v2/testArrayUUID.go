@@ -4,11 +4,10 @@ package v2
 
 import (
 	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
-	"github.com/google/uuid"
 )
 
 type TestUUIDInArrayRequest struct {
-	Id *[]uuid.UUID `form:"id"`
+	Id []string `form:"id" binding:"omitempty,dive,uuid"`
 }
 
 type TestRequestBodyWithAllOfRequest struct {

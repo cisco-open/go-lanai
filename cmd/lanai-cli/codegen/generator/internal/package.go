@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal/representation"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"text/template"
 )
@@ -18,7 +17,6 @@ func init() {
 		structsFuncMap,
 		helperFuncMap,
 		pathFuncMap,
-		representation.FuncMap,
 		propertyFuncMap,
 	}
 }
