@@ -37,12 +37,24 @@ func (t *AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP) UnmarshalJ
 }
 
 func (t AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP) MarshalJSON() ([]byte, error) {
-	result := make(map[string]interface{})
-	for i, j := range t.Values {
-		result[i] = j
+	type AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP_ AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP
+	bytes, err := json.Marshal(AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP_(t))
+	if err != nil {
+		return nil, err
 	}
-	result["property"] = t.Property
-	return json.Marshal(result)
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
 }
 
 type AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP struct {
@@ -62,12 +74,24 @@ func (t *AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP) Unmarsh
 }
 
 func (t AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP) MarshalJSON() ([]byte, error) {
-	result := make(map[string]interface{})
-	for i, j := range t.Values {
-		result[i] = j
+	type AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP_ AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP
+	bytes, err := json.Marshal(AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP_(t))
+	if err != nil {
+		return nil, err
 	}
-	result["property"] = t.Property
-	return json.Marshal(result)
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
 }
 
 type AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP struct {
@@ -87,12 +111,24 @@ func (t *AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP) Unmarshal
 }
 
 func (t AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP) MarshalJSON() ([]byte, error) {
-	result := make(map[string]interface{})
-	for i, j := range t.Values {
-		result[i] = j
+	type AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP_ AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP
+	bytes, err := json.Marshal(AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP_(t))
+	if err != nil {
+		return nil, err
 	}
-	result["property"] = t.Property
-	return json.Marshal(result)
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
 }
 
 type ApiPolicy struct {
@@ -172,27 +208,24 @@ func (t *GenericResponse) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (t GenericResponse) MarshalJSON() ([]byte, error) {
-	result := make(map[string]interface{})
-	for i, j := range t.Values {
-		result[i] = j
+	type GenericResponse_ GenericResponse
+	bytes, err := json.Marshal(GenericResponse_(t))
+	if err != nil {
+		return nil, err
 	}
-	result["arrayOfObjects"] = t.ArrayOfObjects
-	result["arrayOfRef"] = t.ArrayOfRef
-	result["arrayOfUUIDs"] = t.ArrayOfUUIDs
-	result["createdOnDate"] = t.CreatedOnDate
-	result["createdOnDateTime"] = t.CreatedOnDateTime
-	result["directRef"] = t.DirectRef
-	result["integerValue"] = t.IntegerValue
-	result["myUuid"] = t.MyUuid
-	result["numberArray"] = t.NumberArray
-	result["numberValue"] = t.NumberValue
-	result["objectValue"] = t.ObjectValue
-	result["stringValue"] = t.StringValue
-	result["stringWithEnum"] = t.StringWithEnum
-	result["stringWithNilEnum"] = t.StringWithNilEnum
-	result["stringWithRegexDefinedInFormat"] = t.StringWithRegexDefinedInFormat
-	result["stringWithRegexDefinedInPattern"] = t.StringWithRegexDefinedInPattern
-	return json.Marshal(result)
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
 }
 
 type GenericResponseObjectValue struct {
@@ -221,14 +254,24 @@ func (t *ObjectWithRefAndAdditionalProperties) UnmarshalJSON(data []byte) (err e
 }
 
 func (t ObjectWithRefAndAdditionalProperties) MarshalJSON() ([]byte, error) {
-	result := make(map[string]interface{})
-	for i, j := range t.Values {
-		result[i] = j
+	type ObjectWithRefAndAdditionalProperties_ ObjectWithRefAndAdditionalProperties
+	bytes, err := json.Marshal(ObjectWithRefAndAdditionalProperties_(t))
+	if err != nil {
+		return nil, err
 	}
-	result["enabled"] = t.Enabled
-	result["id"] = t.Id
-	result["valueWithAllOf"] = t.ValueWithAllOf
-	return json.Marshal(result)
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
 }
 
 type RequestBodyWithAllOf struct {
