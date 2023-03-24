@@ -3,25 +3,132 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/google/uuid"
 )
 
-type AdditonalPropertyTest struct {
-	AttributeWithEmptyObjAP *AdditonalPropertyTestAttributeWithEmptyObjAP `json:"attributeWithEmptyObjAP"`
-	AttributeWithFalseAP    *AdditonalPropertyTestAttributeWithFalseAP    `json:"attributeWithFalseAP"`
-	AttributeWithTrueAP     *AdditonalPropertyTestAttributeWithTrueAP     `json:"attributeWithTrueAP"`
+type AdditionalPropertyTest struct {
+	AttributeWithEmptyObjAP                  map[string]interface{}                                          `json:"attributeWithEmptyObjAP"`
+	AttributeWithFalseAP                     *AdditionalPropertyTestAttributeWithFalseAP                     `json:"attributeWithFalseAP"`
+	AttributeWithObjectPropertiesAndObjAP    *AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP    `json:"attributeWithObjectPropertiesAndObjAP"`
+	AttributeWithObjectPropertiesAndStringAP *AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP `json:"attributeWithObjectPropertiesAndStringAP"`
+	AttributeWithObjectPropertiesAndTrueAP   *AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP   `json:"attributeWithObjectPropertiesAndTrueAP"`
+	AttributeWithTrueAP                      map[string]interface{}                                          `json:"attributeWithTrueAP"`
 }
 
-type AdditonalPropertyTestAttributeWithEmptyObjAP struct {
-	Values *map[string]interface{}
-}
-
-type AdditonalPropertyTestAttributeWithFalseAP struct {
+type AdditionalPropertyTestAttributeWithFalseAP struct {
 	Property *string `json:"property"`
 }
 
-type AdditonalPropertyTestAttributeWithTrueAP struct {
-	Values *map[string]interface{}
+type AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP struct {
+	Property *string                `json:"property"`
+	Values   map[string]interface{} `json:"-"`
+}
+
+func (t *AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP) UnmarshalJSON(data []byte) (err error) {
+	type ptrType *AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP
+	if e := json.Unmarshal(data, ptrType(t)); e != nil {
+		return e
+	}
+	if e := json.Unmarshal(data, &t.Values); e != nil {
+		return e
+	}
+	return nil
+}
+
+func (t AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP) MarshalJSON() ([]byte, error) {
+	type AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP_ AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP
+	bytes, err := json.Marshal(AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP_(t))
+	if err != nil {
+		return nil, err
+	}
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
+}
+
+type AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP struct {
+	Property *string           `json:"property"`
+	Values   map[string]string `json:"-"`
+}
+
+func (t *AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP) UnmarshalJSON(data []byte) (err error) {
+	type ptrType *AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP
+	if e := json.Unmarshal(data, ptrType(t)); e != nil {
+		return e
+	}
+	if e := json.Unmarshal(data, &t.Values); e != nil {
+		return e
+	}
+	return nil
+}
+
+func (t AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP) MarshalJSON() ([]byte, error) {
+	type AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP_ AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP
+	bytes, err := json.Marshal(AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP_(t))
+	if err != nil {
+		return nil, err
+	}
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
+}
+
+type AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP struct {
+	Property *string                `json:"property"`
+	Values   map[string]interface{} `json:"-"`
+}
+
+func (t *AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP) UnmarshalJSON(data []byte) (err error) {
+	type ptrType *AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP
+	if e := json.Unmarshal(data, ptrType(t)); e != nil {
+		return e
+	}
+	if e := json.Unmarshal(data, &t.Values); e != nil {
+		return e
+	}
+	return nil
+}
+
+func (t AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP) MarshalJSON() ([]byte, error) {
+	type AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP_ AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP
+	bytes, err := json.Marshal(AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP_(t))
+	if err != nil {
+		return nil, err
+	}
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
 }
 
 type ApiPolicy struct {
@@ -29,18 +136,14 @@ type ApiPolicy struct {
 }
 
 type Device struct {
-	CreatedOn      string              `json:"createdOn" binding:"omitempty,date-time"`
-	Id             uuid.UUID           `json:"id"`
-	ModifiedOn     *string             `json:"modifiedOn" binding:"omitempty,date-time"`
-	ServiceType    *string             `json:"serviceType" binding:"omitempty,max=128"`
-	Status         DeviceStatus        `json:"status"`
-	StatusDetails  DeviceStatusDetails `json:"statusDetails"`
-	SubscriptionId uuid.UUID           `json:"subscriptionId"`
-	UserId         uuid.UUID           `json:"userId"`
-}
-
-type DeviceStatusDetails struct {
-	Values *map[string]DeviceStatus
+	CreatedOn      string                  `json:"createdOn" binding:"omitempty,date-time"`
+	Id             uuid.UUID               `json:"id"`
+	ModifiedOn     *string                 `json:"modifiedOn" binding:"omitempty,date-time"`
+	ServiceType    *string                 `json:"serviceType" binding:"omitempty,max=128"`
+	Status         DeviceStatus            `json:"status"`
+	StatusDetails  map[string]DeviceStatus `json:"statusDetails"`
+	SubscriptionId uuid.UUID               `json:"subscriptionId"`
+	UserId         uuid.UUID               `json:"userId"`
 }
 
 type DeviceCreate struct {
@@ -56,11 +159,7 @@ type DeviceStatus struct {
 }
 
 type DeviceUpdate struct {
-	Attributes *DeviceUpdateAttributes `json:"attributes"`
-}
-
-type DeviceUpdateAttributes struct {
-	Values *map[string]interface{}
+	Attributes map[string]interface{} `json:"attributes"`
 }
 
 type GenericObject struct {
@@ -91,10 +190,42 @@ type GenericResponse struct {
 	ObjectValue                     *GenericResponseObjectValue `json:"objectValue" binding:"required"`
 	StringValue                     *string                     `json:"stringValue" binding:"required,max=128"`
 	StringWithEnum                  string                      `json:"stringWithEnum" binding:"omitempty,enumof=asc desc"`
-	StringWithNilEnum               *string                     `json:"stringWithNilEnum" binding:"omitempty,enumof=asc desc"`
+	StringWithNilEnum               string                      `json:"stringWithNilEnum" binding:"omitempty,enumof=asc desc"`
 	StringWithRegexDefinedInFormat  string                      `json:"stringWithRegexDefinedInFormat" binding:"omitempty,regexCD184"`
 	StringWithRegexDefinedInPattern string                      `json:"stringWithRegexDefinedInPattern" binding:"required,regexEB33C"`
-	Values                          *map[string]string
+	Values                          map[string]string           `json:"-"`
+}
+
+func (t *GenericResponse) UnmarshalJSON(data []byte) (err error) {
+	type ptrType *GenericResponse
+	if e := json.Unmarshal(data, ptrType(t)); e != nil {
+		return e
+	}
+	if e := json.Unmarshal(data, &t.Values); e != nil {
+		return e
+	}
+	return nil
+}
+
+func (t GenericResponse) MarshalJSON() ([]byte, error) {
+	type GenericResponse_ GenericResponse
+	bytes, err := json.Marshal(GenericResponse_(t))
+	if err != nil {
+		return nil, err
+	}
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
 }
 
 type GenericResponseObjectValue struct {
@@ -106,13 +237,46 @@ type GenericResponseWithAllOf struct {
 	GenericResponse
 }
 
-type RequestBodyWithAllOf struct {
-	Attributes *RequestBodyWithAllOfAttributes `json:"attributes"`
-	Managed    bool                            `json:"managed"`
+type ObjectWithRefAndAdditionalProperties struct {
+	Values map[string]string `json:"-"`
+	GenericObject
 }
 
-type RequestBodyWithAllOfAttributes struct {
-	Values *map[string]interface{}
+func (t *ObjectWithRefAndAdditionalProperties) UnmarshalJSON(data []byte) (err error) {
+	type ptrType *ObjectWithRefAndAdditionalProperties
+	if e := json.Unmarshal(data, ptrType(t)); e != nil {
+		return e
+	}
+	if e := json.Unmarshal(data, &t.Values); e != nil {
+		return e
+	}
+	return nil
+}
+
+func (t ObjectWithRefAndAdditionalProperties) MarshalJSON() ([]byte, error) {
+	type ObjectWithRefAndAdditionalProperties_ ObjectWithRefAndAdditionalProperties
+	bytes, err := json.Marshal(ObjectWithRefAndAdditionalProperties_(t))
+	if err != nil {
+		return nil, err
+	}
+	if t.Values == nil || len(t.Values) == 0 {
+		return bytes, nil
+	}
+	extra, err := json.Marshal(t.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(bytes) == "{}" {
+		return extra, nil
+	}
+	bytes[len(bytes)-1] = ','
+	return append(bytes, extra[1:]...), nil
+}
+
+type RequestBodyWithAllOf struct {
+	Attributes map[string]interface{} `json:"attributes"`
+	Managed    bool                   `json:"managed"`
 }
 
 type TestRequest struct {

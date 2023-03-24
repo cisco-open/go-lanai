@@ -10,40 +10,47 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 )
 
-func propertyType(property representation.Property) (string, error) {
-	defaultObjectName := toTitle(property.TypePrefix + toTitle(property.PropertyName))
-	return schemaToText(property.PropertyData, defaultObjectName)
-}
-
-func convertToSchemaRef(element interface{}) (*openapi3.SchemaRef, error) {
-	var val *openapi3.SchemaRef
-	interfaceType := getInterfaceType(element)
-	switch interfaceType {
-	case SchemaRefPtr:
-		val = element.(*openapi3.SchemaRef)
-	case ParameterPtr:
-		val = element.(*openapi3.Parameter).Schema
-	default:
-		return nil, fmt.Errorf("convertToSchemaRef: unsupported interface %v", interfaceType)
+var (
+	propertyFuncMap = template.FuncMap{
+		"property": NewProperty,
 	}
-	return val, nil
+)
+
+type Property struct {
+	PropertyName string
+	TypePrefix   string
+	OmitJSON     bool
+	RequiredList []string
+	PropertyData interface{}
 }
 
-func shouldBeUUIDType(element interface{}) bool {
-	schema, err := convertToSchemaRef(element)
-	if err != nil && schema.Value.Type != openapi3.TypeString {
-		return false
+func NewProperty(data interface{}, name string, requiredList []string, typePrefix ...string) Property {
+	return Property{
+		PropertyName: name,
+		PropertyData: data,
+		RequiredList: requiredList,
+		TypePrefix:   strings.Join(typePrefix, ""),
 	}
-
-	formatIsUUID := strings.ToLower(schema.Value.Pattern) == "uuid" || strings.ToLower(schema.Value.Format) == "uuid"
-	// exclude path parameters because go's validation only supports base types, so this should stay as a string
-	isNotInPathParameter := getInterfaceType(element) != ParameterPtr || element.(*openapi3.Parameter).In != "path"
-	return formatIsUUID && isNotInPathParameter
 }
 
-func schemaToText(element interface{}, defaultObjectName string) (result string, err error) {
+func (p Property) SetOmitJSON(val bool) Property {
+	p.OmitJSON = val
+	return p
+}
+
+func propertyToGoType(p Property, currentPkg string) (string, error) {
+	defaultObjectName := toTitle(p.TypePrefix + toTitle(p.PropertyName))
+	result, err := schemaToText(p.PropertyData, defaultObjectName, currentPkg)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func schemaToText(element interface{}, defaultObjectName string, currentPkg string) (result string, err error) {
 	schema, err := convertToSchemaRef(element)
 	if err != nil {
 		return "", err
@@ -63,16 +70,36 @@ func schemaToText(element interface{}, defaultObjectName string) (result string,
 			result = reflect.TypeOf("string").String()
 		}
 	case openapi3.TypeArray:
-		inner, err := schemaToText(schema.Value.Items, defaultObjectName)
+		inner, err := schemaToText(schema.Value.Items, defaultObjectName, currentPkg)
 		if err != nil {
 			return "", err
 		}
 		result = "[]" + inner
 	case openapi3.TypeObject:
+		if len(schema.Value.Properties) == 0 {
+			s := representation.NewSchema("", schema)
+			if s.HasAdditionalProperties() {
+				innerType := ""
+				if schema.Value.AdditionalPropertiesAllowed != nil && *schema.Value.AdditionalPropertiesAllowed {
+					innerType = "interface{}"
+				} else {
+					innerType, err = schemaToText(schema.Value.AdditionalProperties, "interface{}", currentPkg)
+					if err != nil {
+						return "", err
+					}
+				}
+				result = "map[string]" + innerType
+				return result, nil
+			}
+		}
 		fallthrough
 	default:
 		if schema.Ref != "" {
 			result = path.Base(schema.Ref)
+			refPackage, ok := structRegistry[strings.ToLower(result)]
+			if ok && refPackage != currentPkg {
+				result = fmt.Sprintf("%v.%v", path.Base(refPackage), result)
+			}
 		} else {
 			result = defaultObjectName
 		}
@@ -81,45 +108,25 @@ func schemaToText(element interface{}, defaultObjectName string) (result string,
 	return result, nil
 }
 
-func schemaToGoType(val *openapi3.Schema) (result reflect.Type) {
-	switch val.Type {
-	case openapi3.TypeBoolean:
-		result = reflect.TypeOf(true)
-	case openapi3.TypeNumber:
-		result = reflect.TypeOf(1.1)
-	case openapi3.TypeInteger:
-		result = reflect.TypeOf(1)
-	case openapi3.TypeString:
-		result = reflect.TypeOf("string")
-	case openapi3.TypeArray:
-		itemsType := schemaToGoType(val.Items.Value)
-		if itemsType != nil {
-			result = reflect.SliceOf(itemsType)
+func shouldHavePointer(p Property) bool {
+	isRequired := listContains(p.RequiredList, p.PropertyName)
+	schema, _ := convertToSchemaRef(p.PropertyData)
+	if schema.Value.Enum != nil {
+		return false
+	}
+	if len(schema.Value.Properties) == 0 {
+		s := representation.NewSchema("", schema)
+		if s.HasAdditionalProperties() {
+			return false
 		}
-	case openapi3.TypeObject:
-	//	Do nothing
-	default:
-		logger.Warnf("getType: type %v doesn't have corresponding mapping", val.Type)
-	}
-
-	return result
-}
-
-func shouldHavePointer(element interface{}, isRequired bool) (bool, error) {
-	schema, err := convertToSchemaRef(element)
-	if err != nil {
-		return false, err
-	}
-	if schema.Value.Type == "object" && isRequired {
-		return true, nil
 	}
 	if schema.Value.Nullable {
-		return true, nil
+		return true
 	}
-	if schema.Value.Enum != nil {
-		return false, nil
+	if schema.Value.Type == "object" && isRequired {
+		return true
 	}
-	return valuePassesValidation(schema.Value, zeroValue(schema.Value)), nil
+	return valuePassesValidation(schema.Value, zeroValue(schema.Value))
 }
 
 func valuePassesValidation(schema *openapi3.Schema, value reflect.Value) (result bool) {

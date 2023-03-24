@@ -53,6 +53,8 @@ func (r RequestBody) RefsUsed() (result []string) {
 	for _, schema := range r.schemas() {
 		if schema.Ref != "" {
 			result = append(result, path.Base(schema.Ref))
+		} else if schema.Value.Type == "array" && schema.Value.Items.Ref != "" {
+			result = append(result, schema.Value.Items.Ref)
 		}
 	}
 	return result
@@ -68,6 +70,11 @@ func (r RequestBody) ExternalImports() (result []string) {
 	for _, schema := range r.schemas() {
 		if isUUID(schema) {
 			result = append(result, UUID_IMPORT_PATH)
+		}
+		if schema.Ref == "" {
+			if schema.Value.Type != "" && schema.Value.Type != "object" {
+				result = append(result, JSON_IMPORT_PATH)
+			}
 		}
 	}
 	return result

@@ -2,9 +2,11 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"reflect"
 	"strconv"
+	"strings"
 	"text/template"
 )
 
@@ -20,6 +22,20 @@ var (
 
 func args(values ...interface{}) []interface{} {
 	return values
+}
+
+func convertToSchemaRef(element interface{}) (*openapi3.SchemaRef, error) {
+	var val *openapi3.SchemaRef
+	interfaceType := getInterfaceType(element)
+	switch interfaceType {
+	case SchemaRefPtr:
+		val = element.(*openapi3.SchemaRef)
+	case ParameterPtr:
+		val = element.(*openapi3.Parameter).Schema
+	default:
+		return nil, fmt.Errorf("convertToSchemaRef: unsupported interface %v", interfaceType)
+	}
+	return val, nil
 }
 
 func getInterfaceType(val interface{}) string {
@@ -39,6 +55,30 @@ func zeroValue(schema *openapi3.Schema) reflect.Value {
 	}
 	zvValue := reflect.Zero(goType)
 	return zvValue
+}
+
+func schemaToGoType(val *openapi3.Schema) (result reflect.Type) {
+	switch val.Type {
+	case openapi3.TypeBoolean:
+		result = reflect.TypeOf(true)
+	case openapi3.TypeNumber:
+		result = reflect.TypeOf(1.1)
+	case openapi3.TypeInteger:
+		result = reflect.TypeOf(1)
+	case openapi3.TypeString:
+		result = reflect.TypeOf("string")
+	case openapi3.TypeArray:
+		itemsType := schemaToGoType(val.Items.Value)
+		if itemsType != nil {
+			result = reflect.SliceOf(itemsType)
+		}
+	case openapi3.TypeObject:
+	//	Do nothing
+	default:
+		logger.Warnf("getType: type %v doesn't have corresponding mapping", val.Type)
+	}
+
+	return result
 }
 
 func limitsForSchema(element *openapi3.Schema) (min, max string) {
@@ -83,7 +123,7 @@ func listContains(list []string, needle string) bool {
 	return false
 }
 
-func templateLog(message interface{}) string {
+func templateLog(message ...interface{}) string {
 	logger.Infof("%v", message)
 	return ""
 }
@@ -93,4 +133,16 @@ func derefBoolPtr(ptr *bool) (bool, error) {
 		return false, errors.New("pointer is nil")
 	}
 	return *ptr, nil
+}
+
+func shouldBeUUIDType(element interface{}) bool {
+	schema, err := convertToSchemaRef(element)
+	if err != nil && schema.Value.Type != openapi3.TypeString {
+		return false
+	}
+
+	formatIsUUID := strings.ToLower(schema.Value.Pattern) == "uuid" || strings.ToLower(schema.Value.Format) == "uuid"
+	// exclude path parameters because go's validation only supports base types, so this should stay as a string
+	isNotInPathParameter := getInterfaceType(element) != ParameterPtr || element.(*openapi3.Parameter).In != "path"
+	return formatIsUUID && isNotInPathParameter
 }

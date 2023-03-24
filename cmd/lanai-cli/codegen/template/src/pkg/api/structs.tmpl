@@ -1,62 +1,52 @@
 {{ define "SchemaProperties" }}
     {{- $schema := index . 0 -}}
-    {{- $importPrefix := index . 1 }}
-    {{- $numArgs := len . }}
-
+    {{- $currentPkg := index . 1 }}
     {{- range $i, $schemaRef := $schema.AllSchemaRefs }}
         {{- with $schemaRef.Ref }}
-            {{ template "EmbedStruct" args . $importPrefix }}
+            {{ template "EmbedStruct" args . $currentPkg }}
         {{- else }}
             {{- $innerSchema := schema $schema.Name $schemaRef }}
-            {{- template "propertiesFromSchema" args $innerSchema }}
-            {{- template "additionalProperties" $innerSchema.Data }}
+            {{- template "propertiesFromSchema" args $innerSchema $currentPkg}}
+            {{- template "additionalProperties" args $innerSchema $currentPkg}}
         {{- end }}
     {{- end }}
 {{- end }}
 
 {{ define "additionalProperties" }}
-    {{- $additionalPropertyType := "" }}
-    {{- if .Value.AdditionalPropertiesAllowed }}
-        {{ $additionalPropsAllowed := derefBoolPtr .Value.AdditionalPropertiesAllowed }}
-        {{- if eq $additionalPropsAllowed true }}
-            {{ $additionalPropertyType = "interface{}" }}
+    {{- $schema := index . 0 }}
+    {{- $currentPkg := index . 1 }}
+    {{- if $schema.HasAdditionalProperties  }}
+        {{- $additionalPropertyType := "" }}
+        {{- with $schema.Data.Value.AdditionalProperties }}
+            {{- $property := property . "" nil }}
+            {{- $additionalPropertyType = propertyToGoType $property $currentPkg}}
         {{- end }}
-    {{- end }}
-    {{- with .Value.AdditionalProperties }}
-        {{- $property := property "" . }}
-        {{- $additionalPropertyType = propertyType $property }}
         {{- if eq $additionalPropertyType "" }}
             {{- $additionalPropertyType = "interface{}" }}
         {{- end }}
-    {{- end }}
-
-    {{- if ne $additionalPropertyType "" }}
-        Values *map[string]{{ $additionalPropertyType }}
+        Values map[string]{{ $additionalPropertyType }} `json:"-"`
     {{- end }}
 {{- end }}
 
 {{ define "propertiesFromSchema" }}
     {{- $schema := index . 0 }}
+    {{- $currentPkg := index . 1 }}
     {{- $requiredList := requiredList $schema.Data }}
-    {{- range $propName, $prop := $schema.Data.Value.Properties }}
-        {{- $property := property $propName $prop }}
-        {{- $property = propertyTypePrefix $property $schema.Name }}
-        {{ template "properties" args $property $requiredList}}
+    {{- range $propName, $prop := $schema.AllProperties }}
+        {{- $property := property $prop $propName $requiredList $schema.Name }}
+        {{ template "properties" args $property $currentPkg}}
     {{- end }}
 {{- end }}
 
 {{ define "properties" }}
    {{- $property := index . 0 }}
-   {{- $requiredList := index . 1 }}
-   {{- toTitle $property.PropertyName }} {{ template "pointer" args $property $requiredList }}{{ propertyType $property }} {{ structTag $property $requiredList}}`
+   {{- $currentPkg := index . 1 }}
+   {{- toTitle $property.PropertyName }} {{ template "pointer" args $property }}{{ propertyToGoType $property $currentPkg}} {{ structTags $property}}
 {{- end }}
 
 {{ define "pointer" }}
    {{- $property := index . 0 }}
-    {{- $requiredList := index . 1 }}
-   {{- $prop := $property.PropertyData }}
-    {{- $propIsRequired := listContains $requiredList $property.PropertyName }}
-    {{- if shouldHavePointer $prop $propIsRequired }} * {{- end }}
+   {{- if shouldHavePointer $property }} * {{- end }}
 {{- end }}
 
 {{ define "EmbedStruct" }}
@@ -73,21 +63,16 @@
 
 {{ define "ParameterProperty" }}
     {{- $parameter := index . 0 }}
+    {{- $currentPkg := index . 1 }}
 
-    {{- $importPrefix := "" }}
-    {{- $arraySize := len . }}
-    {{- if gt $arraySize 1 }}
-        {{- $importPrefix = index . 1 }}
-    {{- end }}
-
-    {{- $requiredList := requiredList $parameter.Value }}
     {{- $isRef := $parameter.Ref }}
     {{- $isObject := eq $parameter.Value.Schema.Value.Type "object" }}
     {{- $shouldEmbed := and $isRef $isObject }}
     {{- with $shouldEmbed }}
-        {{- template "EmbedStruct" args . $importPrefix }}
+        {{- template "EmbedStruct" args . $currentPkg }}
     {{- else }}
-        {{- $property := property $parameter.Value.Name $parameter.Value }}
-        {{- template "properties" args $property $requiredList}}
+        {{- $requiredList := requiredList $parameter.Value }}
+        {{- $property := property $parameter.Value $parameter.Value.Name $requiredList }}
+        {{- template "properties" args $property $currentPkg}}
     {{- end }}
 {{- end }}

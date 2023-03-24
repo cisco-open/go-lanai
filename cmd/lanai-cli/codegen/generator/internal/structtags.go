@@ -1,19 +1,25 @@
 package internal
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal/representation"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"strings"
 )
 
-func structTag(property representation.Property, requiredParams []string) string {
-	nameType := nameType(property.PropertyData)
-	result := fmt.Sprintf("`%v:\"%v\"", nameType, property.PropertyName)
-	binding := bindings(property.PropertyName, property.PropertyData, requiredParams)
+func structTags(p Property) string {
+	requiredParams := p.RequiredList
+	nameType := nameType(p.PropertyData)
+	name := p.PropertyName
+	if p.OmitJSON {
+		name = "-"
+	}
+	result := fmt.Sprintf("%v:\"%v\"", nameType, name)
+	binding := bindings(p.PropertyName, p.PropertyData, requiredParams)
 	if binding != "" {
 		result = fmt.Sprintf("%v binding:\"%v\"", result, binding)
 	}
+
+	result = fmt.Sprintf("`%v`", result)
 	return result
 }
 

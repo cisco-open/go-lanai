@@ -87,13 +87,16 @@ package api
 
         {{- $schema := schema $structName $schemaData }}
 
-        {{- $isObject := eq $schema.Data.Value.Type "object" }}
-        {{- if or $isObject $schema.Data.Value.AllOf }}
+        {{- if or $schema.Data.Value.AllOf $schema.Data.Value.Properties }}
             {{- if not $schema.Data.Ref }}
                 type {{ $schema.Name }} struct {
                     {{- template "SchemaProperties" args $schema "pkg/api" }}
                 }
-                {{ $wasCreated = true }}
+                {{- $wasCreated = true }}
+
+                {{- if $schema.HasAdditionalProperties }}
+                    {{- template "componentWithAdditionalPropertyMarshallingFunctions" args $schema}}
+                {{- end }}
             {{- end }}
         {{- end }}
         {{/* Check if something was actually made before diving deeper into the struct */}}
@@ -132,4 +135,39 @@ package api
         }
         {{- end }}
     {{ end }}
+{{- end }}
+
+{{ define "componentWithAdditionalPropertyMarshallingFunctions"}}
+    {{ $schema := index . 0 }}
+    func (t *{{$schema.Name}}) UnmarshalJSON(data []byte) (err error) {
+        type ptrType *{{$schema.Name}}
+        if e := json.Unmarshal(data, ptrType(t)); e != nil {
+            return e
+        }
+        if e := json.Unmarshal(data, &t.Values); e != nil {
+            return e
+        }
+        return nil
+    }
+
+    func (t {{$schema.Name}}) MarshalJSON() ([]byte, error) {
+        type {{$schema.Name}}_ {{$schema.Name}}
+        bytes, err := json.Marshal({{$schema.Name}}_(t))
+        if err != nil {
+            return nil, err
+        }
+        if t.Values == nil || len(t.Values) == 0 {
+            return bytes, nil
+        }
+        extra, err := json.Marshal(t.Values)
+        if err != nil {
+            return nil, err
+        }
+
+        if string(bytes) == "{}"  {
+            return extra, nil
+        }
+        bytes[len(bytes)-1] = ','
+        return append(bytes, extra[1:]...), nil
+    }
 {{- end }}

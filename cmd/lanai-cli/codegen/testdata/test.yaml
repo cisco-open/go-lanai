@@ -56,6 +56,101 @@ paths:
           $ref: '#/components/responses/200'
         '400':
           $ref: '#/components/responses/400'
+  '/my/api/v1/requestBodyTests/{id}':
+      patch:
+        summary: Test Patch
+        description: Given an array request body, it should be included in the request struct
+        operationId: PatchTestPath
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                minItems: 1
+      put:
+        summary: Test Put
+        description: Given an request that uses a ref, it should be included in the request struct
+        operationId: PutTestPath
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+      delete:
+        summary: Test String RequestBody
+        description: Given a string request body, it should be included in the request struct
+        operationId: TestStringRequestBody
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: string
+      get:
+         summary: Test RequestBody With AdditionalProperties
+         description: Given a request body with additionalProperties, it should be included in the request struct
+         operationId: TestRequestBodyWithAdditionalProperties
+         parameters:
+           - name: id
+             in: path
+             required: true
+             schema:
+               type: string
+               format: uuid
+         requestBody:
+           required: true
+           content:
+             application/json:
+               schema:
+                 type: object
+                 additionalProperties: {}
+      post:
+        tags:
+          - Services
+        summary: Updates the service status.
+        operationId: updateServiceStatus
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenericObject'
+                minItems: 1
   '/my/api/v1/uuidtest/{id}':
     get:
       summary: Test UUID In Path Parameter
@@ -172,7 +267,7 @@ components:
                     default: false
                     type: boolean
               type: object
-    AdditonalPropertyTest:
+    AdditionalPropertyTest:
         allOf:
             - properties:
                 attributeWithTrueAP:
@@ -188,6 +283,28 @@ components:
                       property:
                         type: string
                     additionalProperties: false
+                    nullable: true
+                    type: object
+                attributeWithObjectPropertiesAndObjAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties: {}
+                    nullable: true
+                    type: object
+                attributeWithObjectPropertiesAndTrueAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties: true
+                    nullable: true
+                    type: object
+                attributeWithObjectPropertiesAndStringAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties:
+                        type: string
                     nullable: true
                     type: object
               type: object
@@ -340,6 +457,13 @@ components:
         valueWithAllOf:
           allOf:
               - $ref: '#/components/schemas/ApiPolicy'
+    ObjectWithRefAndAdditionalProperties:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/GenericObject'
+      additionalProperties:
+        type: string
+
     ApiPolicy:
         properties:
             unlimited:

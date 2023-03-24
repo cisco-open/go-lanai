@@ -16,7 +16,13 @@ func (c Components) Imports() (result []string) {
 		for _, properties := range schemas {
 			if isUUID(properties) {
 				result = append(result, UUID_IMPORT_PATH)
-				return
+			}
+			if len(properties.Value.Properties) != 0 {
+				propertySchema := NewSchema("", properties)
+				if propertySchema.HasAdditionalProperties() {
+					result = append(result, JSON_IMPORT_PATH)
+				}
+
 			}
 		}
 	}

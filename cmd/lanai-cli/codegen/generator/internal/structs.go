@@ -3,17 +3,15 @@ package internal
 import (
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
+	"path"
 	"strings"
 	"text/template"
 )
 
 var (
 	structsFuncMap = template.FuncMap{
-		"propertyType":        propertyType,
-		"structTag":           structTag,
 		"requiredList":        requiredList,
 		"containsSingularRef": containsSingularRef,
-		"shouldHavePointer":   shouldHavePointer,
 		"defaultNameFromPath": defaultNameFromPath,
 		"registerStruct":      registerStruct,
 		"structLocation":      structLocation,
@@ -21,6 +19,9 @@ var (
 		"importsUsedByPath":   importsUsedByPath,
 		"isEmpty":             isEmpty,
 		"pathOperations":      pathOperations,
+		"structTags":          structTags,
+		"shouldHavePointer":   shouldHavePointer,
+		"propertyToGoType":    propertyToGoType,
 	}
 )
 
@@ -65,7 +66,7 @@ func registerStruct(schemaName string, packageName string) string {
 }
 
 func structLocation(schemaName string) string {
-	return structRegistry[strings.ToLower(schemaName)]
+	return structRegistry[strings.ToLower(path.Base(schemaName))]
 }
 
 func getStructRegistry() map[string]string {
