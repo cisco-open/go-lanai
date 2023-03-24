@@ -19,6 +19,7 @@ func init() {
 		helperFuncMap,
 		pathFuncMap,
 		representation.FuncMap,
+		propertyFuncMap,
 	}
 }
 

@@ -10,16 +10,15 @@ import (
 var (
 	logger  = log.New("Codegen.generator.internal.representations")
 	FuncMap = template.FuncMap{
-		"property":           NewProperty,
-		"propertyTypePrefix": PropertyTypePrefix,
-		"operation":          NewOperation,
-		"schema":             NewSchema,
-		"components":         NewComponents,
-		"requestBody":        NewRequestBody,
+		"operation":   NewOperation,
+		"schema":      NewSchema,
+		"components":  NewComponents,
+		"requestBody": NewRequestBody,
 	}
 )
 
 const UUID_IMPORT_PATH = "github.com/google/uuid"
+const JSON_IMPORT_PATH = "encoding/json"
 
 func isUUID(schema *openapi3.SchemaRef) bool {
 	if schema.Ref != "" {
