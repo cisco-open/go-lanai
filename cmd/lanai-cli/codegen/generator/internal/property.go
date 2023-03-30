@@ -15,7 +15,8 @@ import (
 
 var (
 	propertyFuncMap = template.FuncMap{
-		"property": NewProperty,
+		"property":     NewProperty,
+		"schemaToText": schemaToText,
 	}
 )
 

@@ -3,6 +3,7 @@ package representation
 import (
 	"errors"
 	"github.com/getkin/kin-openapi/openapi3"
+	"path"
 	"strings"
 )
 
@@ -22,86 +23,24 @@ func NewOperation(data *openapi3.Operation, defaultName string) Operation {
 	}
 }
 
-func (o Operation) StructForMessage(messageType string, structRegistry map[string]string) (Struct, error) {
+func (o Operation) StructForMessage(messageType string, structRegistry map[string]string) (*Struct, error) {
 	switch strings.ToLower(messageType) {
 	case "request":
-		return o.requestStruct(structRegistry), nil
+		return o.RequestStruct(structRegistry), nil
 	case "response":
-		return o.responseStruct(structRegistry), nil
+		return o.ResponseStruct(structRegistry), nil
 	default:
-		return Struct{}, errors.New("type must be \"request\" or \"response\"")
+		return nil, errors.New("type must be \"request\" or \"response\"")
 	}
 }
 
 type Struct struct {
-	Import string
-	Struct string
+	Import      string
+	ImportAlias string
+	Struct      string
 }
 
-func (o Operation) requestStruct(structRegistry map[string]string) (result Struct) {
-	defaultName := o.Name + "Request"
-	defaultImport := structRegistry[strings.ToLower(defaultName)]
-	if defaultImport != "" {
-		result = Struct{
-			Import: defaultImport,
-			Struct: defaultName,
-		}
-		return result
-	}
-
-	paramRefs := Parameters(o.Data.Parameters).RefsUsed()
-	if len(paramRefs) == 1 {
-		result = Struct{
-			Import: structRegistry[strings.ToLower(paramRefs[0])],
-			Struct: paramRefs[0],
-		}
-		return result
-	}
-
-	if o.Data.RequestBody != nil {
-		requestBodyRefs := RequestBody(*o.Data.RequestBody).RefsUsed()
-		if len(requestBodyRefs) == 1 {
-			result = Struct{
-				Import: structRegistry[strings.ToLower(requestBodyRefs[0])],
-				Struct: requestBodyRefs[0],
-			}
-			return result
-		}
-	}
-	return result
-}
-func (o Operation) responseStruct(structRegistry map[string]string) (result Struct) {
-	defaultName := o.Name + "Response"
-	defaultImport := structRegistry[strings.ToLower(defaultName)]
-	if defaultImport != "" {
-		result = Struct{
-			Import: defaultImport,
-			Struct: defaultName,
-		}
-		return result
-	}
-	responses := Responses(o.Data.Responses).Sorted()
-	responseRef := ""
-	for _, response := range responses {
-		refsUsed := response.RefsUsed()
-		// Assume the last one is the "deepest" ref
-		// eg. test.yaml: PostTestPath -> responses -> 200 -> GenericResponse
-		if len(refsUsed) > 0 {
-			responseRef = refsUsed[len(refsUsed)-1]
-		}
-		// Only interested in the first response
-		break
-	}
-	if responseRef != "" {
-		result = Struct{
-			Import: structRegistry[strings.ToLower(responseRef)],
-			Struct: responseRef,
-		}
-	}
-	return result
-}
-
-func (o Operation) RefsUsed() (result []string) {
+func (o Operation) RequestRefsUsed() (result []string) {
 	for _, p := range o.Data.Parameters {
 		result = append(result, p.Ref)
 	}
@@ -110,5 +49,81 @@ func (o Operation) RefsUsed() (result []string) {
 		result = append(result, r.RefsUsed()...)
 	}
 
+	return result
+}
+
+func (o Operation) ResponseRefsUsed() (result []string) {
+	responses := Responses(o.Data.Responses).Sorted()
+	for _, resp := range responses {
+		if resp.CountFields() == 1 && resp.ContainsRef() {
+			result = append(result, resp.RefsUsed()...)
+			break
+		}
+		break
+	}
+	return result
+}
+
+func (o Operation) RequestStruct(structRegistry map[string]string) *Struct {
+	structName := o.Name + "Request"
+	var structPackage, importAlias string
+	p, ok := structRegistry[strings.ToLower(structName)]
+	if ok {
+		structPackage = p
+		importAlias = "api" + path.Base(structPackage)
+	} else {
+		refs := o.RequestRefsUsed()
+		if refs == nil {
+			return nil
+		}
+		singularRef := refs[0]
+		structName = path.Base(singularRef)
+
+		p, ok := structRegistry[strings.ToLower(structName)]
+		if ok {
+			importAlias = path.Base(p)
+			structPackage = p
+		}
+	}
+	return &Struct{
+		Import:      structPackage,
+		ImportAlias: importAlias,
+		Struct:      structName,
+	}
+}
+
+func (o Operation) ResponseStruct(structRegistry map[string]string) *Struct {
+	structName := o.Name + "Response"
+	structPackage := structRegistry[strings.ToLower(structName)]
+	importAlias := ""
+	if structPackage == "" {
+		refsUsed := o.ResponseRefsUsed()
+		if len(refsUsed) == 0 {
+			return nil
+		}
+		responseRef := refsUsed[0]
+		structName = path.Base(responseRef)
+		p, ok := structRegistry[strings.ToLower(structName)]
+		if ok {
+			structPackage = p
+			importAlias = path.Base(p)
+		}
+	} else {
+		importAlias = "api" + path.Base(structPackage)
+	}
+	return &Struct{
+		Import:      structPackage,
+		ImportAlias: importAlias,
+		Struct:      structName,
+	}
+}
+
+func (o Operation) AllResponseContent() (result []*openapi3.MediaType) {
+	responses := Responses(o.Data.Responses).Sorted()
+	for _, response := range responses {
+		for _, content := range response.Value.Content {
+			result = append(result, content)
+		}
+	}
 	return result
 }

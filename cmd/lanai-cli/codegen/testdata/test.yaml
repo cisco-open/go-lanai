@@ -151,6 +151,76 @@ paths:
                 items:
                   $ref: '#/components/schemas/GenericObject'
                 minItems: 1
+  '/my/api/v1/controllerResponsesTest':
+      get:
+        summary: Test Common Object Array Response
+        description: Given an array of a ref'd component as response, controller should return an array of pointers to that component
+        operationId: TestCommonObjectArrayResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/GenericObject'
+      put:
+        summary: Test Common Object Response
+        description: Given a response using a common object, controller should return a pointer to that component
+        operationId: TestCommonObjectResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GenericObject'
+      delete:
+        summary: Test Response Object
+        description: Given a response using a response, controller should return a pointer to that response object
+        operationId: TestResponseObjectResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    firstProperty:
+                      type: integer
+                    secondProperty:
+                      type: string
+
+      patch:
+        summary: Test String Array Response
+        description: Given an array of strings response, controller should return an array of strings (without pointers)
+        operationId: TestStringArrayResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    type: string
+      trace:
+        summary: Test String response
+        description: Given a string as a response, controller should return a string
+        operationId: TestStringResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: string
+      head:
+        summary: Test No Response
+        description: Given no request body, controller should return an interface
+        operationId: TestNoResponse
   '/my/api/v1/uuidtest/{id}':
     get:
       summary: Test UUID In Path Parameter
