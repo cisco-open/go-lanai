@@ -7,6 +7,14 @@ import (
 )
 
 func structTags(p Property) string {
+	result := ""
+	switch p.PropertyData.(type) {
+	case *openapi3.Parameter:
+		if p.PropertyData.(*openapi3.Parameter).In == "header" {
+			result = fmt.Sprintf("header:\"%v\" ", p.PropertyName)
+		}
+	}
+
 	nameType := nameType(p.PropertyData)
 	name := p.PropertyName
 	if p.OmitJSON {
@@ -17,7 +25,7 @@ func structTags(p Property) string {
 			name = fmt.Sprintf("%v,omitempty", name)
 		}
 	}
-	result := fmt.Sprintf("%v:\"%v\"", nameType, name)
+	result = result + fmt.Sprintf("%v:\"%v\"", nameType, name)
 	binding := bindings(p.PropertyName, p.PropertyData, p.RequiredList)
 	if binding != "" {
 		result = fmt.Sprintf("%v binding:\"%v\"", result, binding)
@@ -30,13 +38,12 @@ func structTags(p Property) string {
 func nameType(element interface{}) string {
 	nameType := "json"
 
-	interfaceType := getInterfaceType(element)
 	switch element.(type) {
 	case *openapi3.SchemaRef:
 		nameType = "json"
 	case *openapi3.Parameter:
 		switch element.(*openapi3.Parameter).In {
-		case "query":
+		case "query", "header":
 			nameType = "form"
 		case "path":
 			fallthrough
@@ -44,7 +51,7 @@ func nameType(element interface{}) string {
 			nameType = "uri"
 		}
 	default:
-		logger.Errorf("no supported added for struct-tags for %v, double check contract or log a bug", interfaceType)
+		logger.Errorf("no supported added for struct-tags for %v, double check contract or log a bug", getInterfaceType(element))
 	}
 	return nameType
 }
