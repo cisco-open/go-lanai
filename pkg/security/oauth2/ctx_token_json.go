@@ -20,6 +20,7 @@ type valueConverterFunc func(v interface{}) (reflect.Value, error)
 /************************
 	DefaultAccessToken
  ************************/
+
 var accessTokenIgnoredDetails = utils.NewStringSet(
 	JsonFieldAccessTokenValue, JsonFieldTokenType, JsonFieldScope,
 	JsonFieldExpiryTime, JsonFieldIssueTime, JsonFieldExpiresIn, JsonFieldRefreshTokenValue)
@@ -69,13 +70,14 @@ func (t *DefaultAccessToken) UnmarshalJSON(data []byte) error {
 	}
 
 	// issue time is optional
-	if err := extractField(parsed, JsonFieldExpiryTime, false, &t.issueTime, expiryToTime); err != nil {
+	if err := extractField(parsed, JsonFieldIssueTime, false, &t.issueTime, expiryToTime); err != nil {
 		return err
 	}
 
 	// default to parse expiry time from JsonFieldExpiryTime field, fall back to JsonFieldExpiresIn
-	if err := extractField(parsed, JsonFieldExpiryTime, false, &t.expiryTime, expiryToTime); err != nil {
-		if err := extractField(parsed, JsonFieldExpiresIn, false, &t.expiryTime, expireInToTimeConverter(t.issueTime)); err != nil {
+	// sets required to true so we can fallback to JsonFieldExpiresIn.
+	if err := extractField(parsed, JsonFieldExpiryTime, true, &t.expiryTime, expiryToTime); err != nil {
+		if err := extractField(parsed, JsonFieldExpiresIn, true, &t.expiryTime, expireInToTimeConverter(t.issueTime)); err != nil {
 			return err
 		}
 	}
@@ -110,6 +112,7 @@ func (t *DefaultRefreshToken) UnmarshalJSON(data []byte) error {
 /************************
 	Helpers
  ************************/
+
 func extractField(data map[string]interface{}, field string, required bool, destPtr interface{}, converter valueConverterFunc) error {
 	v, ok := data[field]
 	switch {
@@ -180,7 +183,7 @@ func expiryToTime(v interface{}) (reflect.Value, error) {
 
 func expireInToTimeConverter(issueTime time.Time) valueConverterFunc {
 	return func(v interface{}) (reflect.Value, error) {
-		secs, ok := v.(int64)
+		secs, ok := v.(float64)
 		if !ok {
 			return reflect.Value{}, fmt.Errorf(errTmplFieldExpectInt)
 		}

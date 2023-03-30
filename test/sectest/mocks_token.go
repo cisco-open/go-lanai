@@ -30,9 +30,10 @@ type MockedTokenInfo struct {
 // MockedToken implements oauth2.AccessToken
 type MockedToken struct {
 	MockedTokenInfo
-	Token   string
-	ExpTime time.Time `json:"-"`
-	IssTime time.Time `json:"-"`
+	Token        string
+	ExpTime      time.Time `json:"-"`
+	IssTime      time.Time `json:"-"`
+	MockedScopes []string  `json:"-"`
 }
 
 func (mt MockedToken) MarshalText() (text []byte, err error) {
@@ -95,7 +96,7 @@ func (mt *MockedToken) IssueTime() time.Time {
 }
 
 func (mt *MockedToken) Scopes() utils.StringSet {
-	return utils.NewStringSet()
+	return utils.NewStringSet(mt.MockedScopes...)
 }
 
 func (mt *MockedToken) RefreshToken() oauth2.RefreshToken {
