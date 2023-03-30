@@ -16,6 +16,11 @@ paths:
           schema:
             format: "^[a-zA-Z0-5-_=]{1,256}$"
             type: string
+        - name: HEADER-PARAM
+          in: header
+          schema:
+            type: boolean
+
       responses:
         '200':
           description: OK

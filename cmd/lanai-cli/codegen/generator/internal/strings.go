@@ -10,11 +10,12 @@ import (
 
 var (
 	stringsFuncMap = template.FuncMap{
-		"toTitle":   toTitle,
-		"concat":    concat,
-		"basePath":  basePath,
-		"toLower":   toLower,
-		"hasPrefix": strings.HasPrefix,
+		"toTitle":       toTitle,
+		"concat":        concat,
+		"basePath":      basePath,
+		"toLower":       toLower,
+		"hasPrefix":     strings.HasPrefix,
+		"replaceDashes": replaceDash,
 	}
 )
 
@@ -35,4 +36,8 @@ func basePath(val string) string {
 		return val
 	}
 	return path.Base(val)
+}
+
+func replaceDash(val string) string {
+	return strings.ReplaceAll(val, "-", "_")
 }
