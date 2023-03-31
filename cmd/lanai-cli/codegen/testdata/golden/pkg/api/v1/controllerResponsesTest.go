@@ -3,6 +3,6 @@
 package v1
 
 type TestResponseObjectResponseResponse struct {
-	FirstProperty  *int    `json:"firstProperty"`
-	SecondProperty *string `json:"secondProperty"`
+	FirstProperty  int    `json:"firstProperty"`
+	SecondProperty string `json:"secondProperty"`
 }

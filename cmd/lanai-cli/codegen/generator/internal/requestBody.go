@@ -1,4 +1,4 @@
-package representation
+package internal
 
 import (
 	"github.com/getkin/kin-openapi/openapi3"
@@ -68,9 +68,7 @@ func (r RequestBody) ExternalImports() (result []string) {
 		return
 	}
 	for _, schema := range r.schemas() {
-		if isUUID(schema) {
-			result = append(result, UUID_IMPORT_PATH)
-		}
+		result = append(result, externalImportsFromFormat(schema)...)
 		if schema.Ref == "" {
 			if schema.Value.Type != "" && schema.Value.Type != "object" {
 				result = append(result, JSON_IMPORT_PATH)
@@ -80,12 +78,9 @@ func (r RequestBody) ExternalImports() (result []string) {
 	return result
 }
 
-func (r RequestBody) schemas() (result []*openapi3.SchemaRef) {
+func (r RequestBody) schemas() (result openapi3.SchemaRefs) {
 	for _, c := range r.Value.Content {
-		result = append(result, c.Schema)
-		for _, a := range c.Schema.Value.AllOf {
-			result = append(result, a)
-		}
+		result = append(result, _SchemaRef(*c.Schema).AllSchemas()...)
 	}
 	return result
 }

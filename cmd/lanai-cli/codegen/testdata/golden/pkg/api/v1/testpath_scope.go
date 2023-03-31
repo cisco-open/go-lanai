@@ -7,12 +7,12 @@ import (
 )
 
 type DeleteTestPathRequest struct {
-	Scope     string  `uri:"scope" binding:"required,regexA79C5"`
-	TestParam *string `form:"testParam" binding:"omitempty,max=128"`
+	Scope     string `uri:"scope" binding:"required,regexA79C5"`
+	TestParam string `form:"testParam" binding:"omitempty,max=128"`
 }
 
 type DeleteTestPathResponse struct {
-	Id *string `json:"id"`
+	Id string `json:"id"`
 	api.GenericResponse
 }
 

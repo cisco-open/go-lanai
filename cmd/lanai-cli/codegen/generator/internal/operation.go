@@ -1,4 +1,4 @@
-package representation
+package internal
 
 import (
 	"errors"

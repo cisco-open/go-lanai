@@ -29,9 +29,13 @@ func register(lc fx.Lifecycle, r *web.Registrar) {
 	_ = web.Validator().RegisterValidation("notblank", validators.NotBlank)
 	_ = web.Validator().RegisterValidation("enumof", validation.CaseInsensitiveOneOf())
     {{- range .Components.Schemas }}
-        {{- range .Value.Properties }}
-                {{- template "registerValidation" . }}
-         {{- end}}
+        {{- $schema := schema "" . }}
+        {{- range $schema.AllSchemas }}
+            {{- $s := schema "" . }}
+            {{- range $s.Data.Value.Properties }}
+                    {{- template "registerValidation" . }}
+             {{- end}}
+        {{- end }}
     {{- end }}
     {{- range .Paths }}
         {{- template "registerRequestParameterValidation" .Get}}
