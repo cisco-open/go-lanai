@@ -1,4 +1,4 @@
-package representation
+package internal
 
 import (
 	"github.com/getkin/kin-openapi/openapi3"
@@ -46,28 +46,18 @@ func (r Parameters) ExternalImports() []string {
 	}
 	var imports []string
 	for _, parameter := range r {
-		if parameter.Ref == "" && parameter.Value.In != "path" {
-			for _, schema := range parameterSchemas(parameter) {
-				if isUUID(schema) {
-					imports = append(imports, UUID_IMPORT_PATH)
-				}
+		if parameter.Ref == "" && parameter.Value.In != "path" && parameter.Value.In != "query" {
+			for _, schema := range _SchemaRef(*parameter.Value.Schema).AllSchemas() {
+				imports = append(imports, externalImportsFromFormat(schema)...)
 			}
 		}
 	}
 	return imports
 }
 
-func (r Parameters) schemas() (result []*openapi3.SchemaRef) {
+func (r Parameters) schemas() (result openapi3.SchemaRefs) {
 	for _, parameter := range r {
-		result = append(result, parameterSchemas(parameter)...)
-	}
-	return result
-}
-
-func parameterSchemas(parameter *openapi3.ParameterRef) (result []*openapi3.SchemaRef) {
-	result = append(result, parameter.Value.Schema)
-	for _, a := range parameter.Value.Schema.Value.AllOf {
-		result = append(result, a)
+		result = append(result, _SchemaRef(*parameter.Value.Schema).AllSchemas()...)
 	}
 	return result
 }

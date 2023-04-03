@@ -20,24 +20,23 @@ var (
 		"isEmpty":             isEmpty,
 		"pathOperations":      pathOperations,
 		"structTags":          structTags,
-		"shouldHavePointer":   shouldHavePointer,
-		"propertyToGoType":    propertyToGoType,
+		"shouldHavePointer":   ShouldHavePointer,
+		"propertyToGoType":    PropertyToGoType,
 	}
 )
 
 func requiredList(val interface{}) ([]string, error) {
 	var list []string
-	interfaceType := getInterfaceType(val)
-	switch interfaceType {
-	case SchemaRefPtr:
+	switch val.(type) {
+	case *openapi3.SchemaRef:
 		list = val.(*openapi3.SchemaRef).Value.Required
-	case ParameterPtr:
+	case *openapi3.Parameter:
 		parameter := val.(*openapi3.Parameter)
 		if parameter.Required {
 			list = append(list, parameter.Name)
 		}
 	default:
-		return nil, fmt.Errorf("requiredList error: unsupported interface %v", interfaceType)
+		return nil, fmt.Errorf("requiredList error: unsupported interface %v", getInterfaceType(val))
 	}
 	return list, nil
 }

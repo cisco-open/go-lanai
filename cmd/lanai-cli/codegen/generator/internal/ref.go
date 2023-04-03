@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal/representation"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"reflect"
@@ -10,11 +9,11 @@ import (
 func importsUsedByPath(pathItem openapi3.PathItem, repositoryPath string) []string {
 	var allImports []string
 	for _, operation := range pathOperations(pathItem) {
-		responses := representation.Responses(operation.Responses)
-		parameters := representation.Parameters(operation.Parameters)
-		var requestBody representation.RequestBody
+		responses := Responses(operation.Responses)
+		parameters := Parameters(operation.Parameters)
+		var requestBody RequestBody
 		if operation.RequestBody != nil {
-			requestBody = representation.RequestBody(*operation.RequestBody)
+			requestBody = RequestBody(*operation.RequestBody)
 		}
 
 		refs := responses.RefsUsed()
@@ -64,19 +63,16 @@ type RefChecker interface {
 }
 
 func refCheckerFactory(element interface{}) (result []RefChecker, err error) {
-	switch getInterfaceType(element) {
-	case ResponseRefPtr:
-		result = append(result, representation.Response(*element.(*openapi3.ResponseRef)))
-	case OperationPtr:
+	switch element.(type) {
+	case *openapi3.ResponseRef:
+		result = append(result, Response(*element.(*openapi3.ResponseRef)))
+	case *openapi3.Operation:
 		// Assume this is for Requests, so give requestbodies & parameters
 		op := element.(*openapi3.Operation)
-		var r representation.RequestBody
 		if op.RequestBody != nil {
-			r = representation.RequestBody(*op.RequestBody)
+			result = append(result, RequestBody(*op.RequestBody))
 		}
-		p := representation.Parameters(op.Parameters)
-		result = append(result, r)
-		result = append(result, p)
+		result = append(result, Parameters(op.Parameters))
 	default:
 		return nil, fmt.Errorf("element not supported: %v", reflect.TypeOf(element))
 	}

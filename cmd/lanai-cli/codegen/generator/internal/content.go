@@ -1,4 +1,4 @@
-package representation
+package internal
 
 import "github.com/getkin/kin-openapi/openapi3"
 
@@ -8,6 +8,10 @@ func (c *Content) ContainsRef() bool {
 	for _, c := range *c {
 		if c.Schema.Ref != "" {
 			return true
+		} else {
+			if c.Schema.Value.Type == "array" {
+				return c.Schema.Value.Items.Ref != ""
+			}
 		}
 	}
 	return false

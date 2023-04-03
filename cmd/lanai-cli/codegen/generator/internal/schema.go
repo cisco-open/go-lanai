@@ -1,4 +1,4 @@
-package representation
+package internal
 
 //Representations of common structs in the templates, letting them look a little cleaner
 
@@ -18,18 +18,11 @@ func NewSchema(name string, data *openapi3.SchemaRef) Schema {
 	}
 }
 
-func (s Schema) AllSchemaRefs() (result openapi3.SchemaRefs) {
-	if s.Data.Value.AllOf == nil || s.Data.Ref != "" || s.HasAdditionalProperties() {
-		result = append(result, s.Data)
-	}
-	if s.Data.Ref == "" {
-		for _, schemaRef := range s.Data.Value.AllOf {
-			schema := NewSchema(s.Name, schemaRef)
-			result = append(result, schema.AllSchemaRefs()...)
-		}
-	}
-
-	return result
+func (s Schema) AllSchemas() openapi3.SchemaRefs {
+	return _SchemaRef(*s.Data).AllSchemas()
+}
+func (s Schema) StructProperties() (result openapi3.SchemaRefs) {
+	return _SchemaRef(*s.Data).StructProperties()
 }
 
 func (s Schema) AllProperties() (result openapi3.Schemas) {
@@ -46,10 +39,6 @@ func (s Schema) Type() string {
 	}
 	return s.Data.Value.Type
 }
-
 func (s Schema) HasAdditionalProperties() bool {
-	additionalPropertiesAllowed := s.Data.Value.AdditionalPropertiesAllowed != nil && *s.Data.Value.AdditionalPropertiesAllowed
-	additionalPropsDefined := s.Data.Value.AdditionalProperties != nil
-
-	return additionalPropertiesAllowed || additionalPropsDefined
+	return _SchemaRef(*s.Data).HasAdditionalProperties()
 }

@@ -18,6 +18,10 @@ var (
 		"log":          templateLog,
 		"derefBoolPtr": derefBoolPtr,
 	}
+	formatToExternalImport = map[string]string{
+		"uuid":      UUID_IMPORT_PATH,
+		"date-time": TIME_IMPORT_PATH,
+	}
 )
 
 func args(values ...interface{}) []interface{} {
@@ -26,14 +30,13 @@ func args(values ...interface{}) []interface{} {
 
 func convertToSchemaRef(element interface{}) (*openapi3.SchemaRef, error) {
 	var val *openapi3.SchemaRef
-	interfaceType := getInterfaceType(element)
-	switch interfaceType {
-	case SchemaRefPtr:
+	switch element.(type) {
+	case *openapi3.SchemaRef:
 		val = element.(*openapi3.SchemaRef)
-	case ParameterPtr:
+	case *openapi3.Parameter:
 		val = element.(*openapi3.Parameter).Schema
 	default:
-		return nil, fmt.Errorf("convertToSchemaRef: unsupported interface %v", interfaceType)
+		return nil, fmt.Errorf("convertToSchemaRef: unsupported interface %v", getInterfaceType(element))
 	}
 	return val, nil
 }
@@ -57,16 +60,34 @@ func zeroValue(schema *openapi3.Schema) reflect.Value {
 	return zvValue
 }
 
-func schemaToGoType(val *openapi3.Schema) (result reflect.Type) {
+func schemaToGoBaseTypes(val *openapi3.Schema) (result reflect.Type) {
 	switch val.Type {
 	case openapi3.TypeBoolean:
 		result = reflect.TypeOf(true)
 	case openapi3.TypeNumber:
 		result = reflect.TypeOf(1.1)
 	case openapi3.TypeInteger:
-		result = reflect.TypeOf(1)
+		var v interface{}
+		switch val.Format {
+		case "int32":
+			v = int32(1)
+		case "int64":
+			v = int64(1)
+		default:
+			v = 1
+		}
+		result = reflect.TypeOf(v)
 	case openapi3.TypeString:
 		result = reflect.TypeOf("string")
+	default:
+		result = nil
+	}
+	return
+}
+func schemaToGoType(val *openapi3.Schema) (result reflect.Type) {
+	switch val.Type {
+	case openapi3.TypeBoolean, openapi3.TypeNumber, openapi3.TypeInteger, openapi3.TypeString:
+		result = schemaToGoBaseTypes(val)
 	case openapi3.TypeArray:
 		itemsType := schemaToGoType(val.Items.Value)
 		if itemsType != nil {
@@ -135,14 +156,36 @@ func derefBoolPtr(ptr *bool) (bool, error) {
 	return *ptr, nil
 }
 
-func shouldBeUUIDType(element interface{}) bool {
+func matchesFormat(element interface{}, specificType string) bool {
 	schema, err := convertToSchemaRef(element)
 	if err != nil && schema.Value.Type != openapi3.TypeString {
 		return false
 	}
 
-	formatIsUUID := strings.ToLower(schema.Value.Pattern) == "uuid" || strings.ToLower(schema.Value.Format) == "uuid"
+	formatMatchesType := strings.ToLower(schema.Value.Pattern) == specificType || strings.ToLower(schema.Value.Format) == specificType
 	// exclude path parameters because go's validation only supports base types, so this should stay as a string
-	isNotInPathParameter := getInterfaceType(element) != ParameterPtr || element.(*openapi3.Parameter).In != "path"
-	return formatIsUUID && isNotInPathParameter
+	isNotInPathParameter := reflect.TypeOf(element) != reflect.TypeOf(&openapi3.Parameter{}) || element.(*openapi3.Parameter).In != "path"
+	isNotInQueryParameter := reflect.TypeOf(element) != reflect.TypeOf(&openapi3.Parameter{}) || element.(*openapi3.Parameter).In != "query"
+
+	return formatMatchesType && (isNotInPathParameter && isNotInQueryParameter)
+}
+
+func isBaseType(element interface{}) bool {
+	usesExternalType := false
+	for format := range formatToExternalImport {
+		if matchesFormat(element, format) {
+			usesExternalType = true
+			break
+		}
+	}
+
+	return !usesExternalType
+}
+func externalImportsFromFormat(element interface{}) (result []string) {
+	for format, externalImport := range formatToExternalImport {
+		if matchesFormat(element, format) {
+			result = append(result, externalImport)
+		}
+	}
+	return
 }

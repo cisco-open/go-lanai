@@ -4,10 +4,9 @@ package v2
 
 import (
 	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
-	"github.com/google/uuid"
 )
 
 type GetAllTestPathsRequest struct {
-	Id uuid.UUID `form:"id" binding:"required"`
+	Id string `form:"id" binding:"required,uuid"`
 	api.TestRequest
 }
