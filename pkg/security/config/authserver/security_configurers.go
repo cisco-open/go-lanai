@@ -33,7 +33,8 @@ type IdpSecurityConfigurer interface {
 // IdpLogoutSecurityConfigurer additional interface that IdpSecurityConfigurer could choose to implement for
 // customizing "logout" process
 // Note: IdpLogoutSecurityConfigurer is only invoked once per instance, the given security.WebSecurity are shared
-//       between IDPs. Therefore, implementing class should not change Route or Condition on the given "ws"
+//
+//	between IDPs. Therefore, implementing class should not change Route or Condition on the given "ws"
 type IdpLogoutSecurityConfigurer interface {
 	ConfigureLogout(ws security.WebSecurity, config *Configuration)
 }
@@ -125,7 +126,8 @@ func (c *AuthorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 			SsoCondition(c.config.Endpoints.SamlSso.Condition).
 			SsoLocation(c.config.Endpoints.SamlSso.Location).
 			MetadataPath(c.config.Endpoints.SamlMetadata).
-			EnableSLO(c.config.Endpoints.Logout))
+			EnableSLO(c.config.Endpoints.Logout).
+			SigningMethod(c.config.SamlIdpSigningMethod))
 
 	c.delegate.Configure(ws, c.config)
 }

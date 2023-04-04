@@ -31,6 +31,18 @@ func (c *samlConfigurer) getIdentityProviderConfiguration(f *Feature) *Options {
 		panic(security.NewInternalError("cannot get issuer's base URL", err))
 	}
 
+	var signingMethod string
+	switch f.signingMethod {
+	case dsig.RSASHA1SignatureMethod:
+		fallthrough
+	case dsig.RSASHA256SignatureMethod:
+		fallthrough
+	case dsig.RSASHA512SignatureMethod:
+		signingMethod = f.signingMethod
+	default:
+		signingMethod = dsig.RSASHA1SignatureMethod
+	}
+
 	return &Options{
 		Key:  key,
 		Cert: cert[0],
@@ -43,7 +55,7 @@ func (c *samlConfigurer) getIdentityProviderConfiguration(f *Feature) *Options {
 		SloUrl: *rootURL.ResolveReference(&url.URL{
 			Path: fmt.Sprintf("%s%s", rootURL.Path, f.logoutUrl),
 		}),
-		SigningMethod:          dsig.RSASHA1SignatureMethod,
+		SigningMethod:          signingMethod,
 		serviceProviderManager: c.samlClientStore,
 	}
 }

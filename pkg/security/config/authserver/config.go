@@ -162,6 +162,7 @@ type Configuration struct {
 	IdpManager            idp.IdentityProviderManager
 	Issuer                security.Issuer
 	OpenIDSSOEnabled      bool
+	SamlIdpSigningMethod  string
 
 	// not directly configurable items
 	appContext                *bootstrap.ApplicationContext
