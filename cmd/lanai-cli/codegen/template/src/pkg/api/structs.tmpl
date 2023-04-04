@@ -40,7 +40,7 @@
 
 {{ define "properties" }}
    {{- $property := index . 0 }}
-   {{- toTitle $property.PropertyName }} {{ template "pointer" args $property }}{{ propertyToGoType $property }} {{ structTags $property}}
+   {{- toTitle $property.PropertyName | replaceDashes }} {{ template "pointer" args $property }}{{ propertyToGoType $property }} {{ structTags $property}}
 {{- end }}
 
 {{ define "pointer" }}

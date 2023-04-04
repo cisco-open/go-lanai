@@ -17,7 +17,8 @@ type DeleteTestPathResponse struct {
 }
 
 type TestpathScopeGetRequest struct {
-	Scope string `uri:"scope" binding:"required,regexA79C5"`
+	Scope        string `uri:"scope" binding:"required,regexA79C5"`
+	HEADER_PARAM bool   `header:"HEADER-PARAM" form:"HEADER-PARAM"`
 }
 
 type PostTestPathRequest struct {
