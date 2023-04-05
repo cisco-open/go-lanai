@@ -19,34 +19,34 @@ type ControlCondition matcher.ChainableMatcher
 /**************************
 	Common Impl.
 ***************************/
-type matchableFunc func(context.Context, interface{}) (interface{}, error)
 
-type controlCondition struct {
-	description string
-	controlFunc ControlFunc
+// ConditionWithControlFunc is a common ControlCondition implementation backed by ControlFunc
+type ConditionWithControlFunc struct {
+	Description string
+	ControlFunc ControlFunc
 }
 
-func (m *controlCondition) Matches(i interface{}) (bool, error) {
-	return m.MatchesWithContext(context.TODO(), i)
+func (m *ConditionWithControlFunc) Matches(i interface{}) (bool, error) {
+	return m.MatchesWithContext(context.Background(), i)
 }
 
-func (m *controlCondition) MatchesWithContext(c context.Context, _ interface{}) (bool, error) {
+func (m *ConditionWithControlFunc) MatchesWithContext(c context.Context, _ interface{}) (bool, error) {
 	auth := security.Get(c)
-	return m.controlFunc(auth)
+	return m.ControlFunc(auth)
 }
 
-func (m *controlCondition) Or(matchers ...matcher.Matcher) matcher.ChainableMatcher {
+func (m *ConditionWithControlFunc) Or(matchers ...matcher.Matcher) matcher.ChainableMatcher {
 	return matcher.Or(m, matchers...)
 }
 
-func (m *controlCondition) And(matchers ...matcher.Matcher) matcher.ChainableMatcher {
+func (m *ConditionWithControlFunc) And(matchers ...matcher.Matcher) matcher.ChainableMatcher {
 	return matcher.And(m, matchers...)
 }
 
-func (m controlCondition) String() string {
+func (m ConditionWithControlFunc) String() string {
 	switch {
-	case len(m.description) != 0:
-		return m.description
+	case len(m.Description) != 0:
+		return m.Description
 	default:
 		return "access.ControlCondition"
 	}
@@ -55,13 +55,14 @@ func (m controlCondition) String() string {
 /**************************
 	Constructors
 ***************************/
+
 // RequirePermissions returns ControlCondition using HasPermissionsWithExpr
 // e.g. RequirePermissions("P1 && P2 && !(P3 || P4)"), means security.Permissions contains both P1 and P2 but not contains neither P3 nor P4
 // see HasPermissionsWithExpr for expression syntax
 func RequirePermissions(expr string) ControlCondition {
-	return &controlCondition{
-		description:   fmt.Sprintf("user's permissions match [%s]", expr),
-		controlFunc:   HasPermissionsWithExpr(expr),
+	return &ConditionWithControlFunc{
+		Description: fmt.Sprintf("user's permissions match [%s]", expr),
+		ControlFunc: HasPermissionsWithExpr(expr),
 	}
 }
 

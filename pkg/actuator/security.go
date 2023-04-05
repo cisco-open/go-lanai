@@ -87,6 +87,8 @@ func (c *actuatorSecurityConfigurer) configureAccessControl(ac *access.AccessCon
 	case len(permissions) == 0:
 		ac.Request(m).Authenticated()
 	default:
+		// TODO temporary change
 		ac.Request(m).HasPermissions(permissions...)
+		//ac.Request(m).AllowIf(tokenauth.ScopesApproved(permissions...))
 	}
 }

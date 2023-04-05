@@ -125,7 +125,7 @@ func (sp *SPLoginMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 
 		assertion, err := client.ParseResponse(r, possibleRequestIDs)
 		if err != nil {
-			logger.WithContext(c).Errorf("error processing assertion", "err", err)
+			logger.WithContext(c).Error("error processing assertion", "err", err)
 			sp.handleError(c, security.NewExternalSamlAuthenticationError(err.Error(), err))
 			return
 		}
