@@ -28,6 +28,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericResponseWithAllOf'
+    patch:
+      summary: Test Patch API - Parameters with Default Values
+      parameters:
+        - name: scope
+          in: path
+          schema:
+            type: string
+        - name: queryDefault
+          in: query
+          schema:
+            type: string
+            default: defaultQuery
+        - name: headerDefault
+          in: header
+          schema:
+            type: string
+            default: defaultHeader
     delete:
       summary: Test Delete API
       operationId: DeleteTestPath
