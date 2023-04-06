@@ -3,6 +3,7 @@ package swagger
 const SwaggerPrefix = "swagger"
 
 type SwaggerProperties struct {
+	BasePath string                    `json:"base-path"`
 	Spec     string                    `json:"spec"`
 	Security SwaggerSecurityProperties `json:"security"`
 }
