@@ -1,7 +1,7 @@
 swagger:
   spec: configs/api-doc.json
   security:
-    enabled: true
+    secure-docs: true
     sso:
       base-url: http://localhost:8900/auth
       token-path: /v2/token

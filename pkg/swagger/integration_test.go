@@ -45,7 +45,7 @@ func TestSwaggerDocSecurityDisabledWithMockedServer(t *testing.T) {
 			access.Module,
 			errorhandling.Module,
 		),
-		apptest.WithProperties("swagger.security.enabled=false", "swagger.spec: testdata/api-docs-v3.yml"),
+		apptest.WithProperties("swagger.security.secure-docs=false", "swagger.spec: testdata/api-docs-v3.yml"),
 		apptest.WithFxOptions(
 			fx.Provide(
 				IntegrationTestMocksProvider,
@@ -82,7 +82,7 @@ func TestSwaggerDocSecurityEnabledWithMockedServer(t *testing.T) {
 			access.Module,
 			errorhandling.Module,
 		),
-		apptest.WithProperties("swagger.security.enabled=true", "swagger.spec: testdata/api-docs-v3.yml"),
+		apptest.WithProperties("swagger.security.secure-docs=true", "swagger.spec: testdata/api-docs-v3.yml"),
 		apptest.WithFxOptions(
 			fx.Provide(
 				IntegrationTestMocksProvider,

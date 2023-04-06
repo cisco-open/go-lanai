@@ -8,8 +8,8 @@ type SwaggerProperties struct {
 }
 
 type SwaggerSecurityProperties struct {
-	Enabled bool                 `json:"enabled"`
-	Sso     SwaggerSsoProperties `json:"sso"`
+	SecureDocs bool                 `json:"secure-docs"`
+	Sso        SwaggerSsoProperties `json:"sso"`
 }
 
 type SwaggerSsoProperties struct {

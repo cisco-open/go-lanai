@@ -72,7 +72,7 @@ type secDI struct {
 
 // configureSecurity register security.Configurer that control how security works on endpoints
 func configureSecurity(di secDI) {
-	if di.SecRegistrar != nil && di.Properties.Security.Enabled {
+	if di.SecRegistrar != nil && di.Properties.Security.SecureDocs {
 		di.SecRegistrar.Register(&swaggerSecurityConfigurer{})
 	}
 }
