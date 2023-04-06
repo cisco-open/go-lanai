@@ -9,10 +9,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 )
 
-type swaggerSecurityConfigurer struct{}
+type swaggerSecurityConfigurer struct {
+}
 
 func (c *swaggerSecurityConfigurer) Configure(ws security.WebSecurity) {
-
 	// DSL style example
 	// for REST API
 	ws.Route(matcher.RouteWithPattern("/v2/api-docs").Or(matcher.RouteWithPattern("/v3/api-docs"))).

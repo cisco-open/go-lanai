@@ -23,7 +23,7 @@ var defaultConfigFS embed.FS
 var logger = log.New("Swagger")
 
 var Module = &bootstrap.Module{
-	Name: "swagger",
+	Name:       "swagger",
 	Precedence: bootstrap.SwaggerPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Invoke(configureSecurity),
@@ -41,10 +41,10 @@ func Use() {
 
 type initDI struct {
 	fx.In
-	Registrar *web.Registrar
-	Properties SwaggerProperties
-	Resolver   bootstrap.BuildInfoResolver `optional:"true"`
-	DiscoveryCustomizers *discovery.Customizers `optional:"true"`
+	Registrar            *web.Registrar
+	Properties           SwaggerProperties
+	Resolver             bootstrap.BuildInfoResolver `optional:"true"`
+	DiscoveryCustomizers *discovery.Customizers      `optional:"true"`
 }
 
 func initialize(di initDI) {
@@ -67,11 +67,12 @@ func bindSwaggerProperties(ctx *bootstrap.ApplicationContext) SwaggerProperties 
 type secDI struct {
 	fx.In
 	SecRegistrar security.Registrar `optional:"true"`
+	Properties   SwaggerProperties
 }
 
 // configureSecurity register security.Configurer that control how security works on endpoints
 func configureSecurity(di secDI) {
-	if di.SecRegistrar != nil {
+	if di.SecRegistrar != nil && di.Properties.Security.Enabled {
 		di.SecRegistrar.Register(&swaggerSecurityConfigurer{})
 	}
 }
