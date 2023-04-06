@@ -22,9 +22,10 @@
             {{- $additionalPropertyType = propertyToGoType $property }}
         {{- end }}
         {{- if eq $additionalPropertyType "" }}
-            {{- $additionalPropertyType = "interface{}" }}
+            Values json.RawMessage `json:"-"`
+        {{- else }}
+            Values map[string]{{ $additionalPropertyType }} `json:"-"`
         {{- end }}
-        Values map[string]{{ $additionalPropertyType }} `json:"-"`
     {{- end }}
 {{- end }}
 

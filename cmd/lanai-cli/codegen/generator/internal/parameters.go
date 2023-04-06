@@ -48,7 +48,9 @@ func (r Parameters) ExternalImports() []string {
 	for _, parameter := range r {
 		if parameter.Ref == "" && parameter.Value.In != "path" && parameter.Value.In != "query" {
 			for _, schema := range _SchemaRef(*parameter.Value.Schema).AllSchemas() {
-				imports = append(imports, externalImportsFromFormat(schema)...)
+				if schema != nil {
+					imports = append(imports, _SchemaRef(*schema).ExternalImports()...)
+				}
 			}
 		}
 	}

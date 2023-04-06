@@ -9,12 +9,12 @@ import (
 )
 
 type AdditionalPropertyTest struct {
-	AttributeWithEmptyObjAP                  map[string]interface{}                                          `json:"attributeWithEmptyObjAP,omitempty"`
+	AttributeWithEmptyObjAP                  json.RawMessage                                                 `json:"attributeWithEmptyObjAP,omitempty"`
 	AttributeWithFalseAP                     *AdditionalPropertyTestAttributeWithFalseAP                     `json:"attributeWithFalseAP,omitempty"`
 	AttributeWithObjectPropertiesAndObjAP    *AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP    `json:"attributeWithObjectPropertiesAndObjAP,omitempty"`
 	AttributeWithObjectPropertiesAndStringAP *AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP `json:"attributeWithObjectPropertiesAndStringAP,omitempty"`
 	AttributeWithObjectPropertiesAndTrueAP   *AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP   `json:"attributeWithObjectPropertiesAndTrueAP,omitempty"`
-	AttributeWithTrueAP                      map[string]interface{}                                          `json:"attributeWithTrueAP,omitempty"`
+	AttributeWithTrueAP                      json.RawMessage                                                 `json:"attributeWithTrueAP,omitempty"`
 }
 
 type AdditionalPropertyTestAttributeWithFalseAP struct {
@@ -22,8 +22,8 @@ type AdditionalPropertyTestAttributeWithFalseAP struct {
 }
 
 type AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP struct {
-	Property string                 `json:"property"`
-	Values   map[string]interface{} `json:"-"`
+	Property string          `json:"property"`
+	Values   json.RawMessage `json:"-"`
 }
 
 func (t *AdditionalPropertyTestAttributeWithObjectPropertiesAndObjAP) UnmarshalJSON(data []byte) (err error) {
@@ -96,8 +96,8 @@ func (t AdditionalPropertyTestAttributeWithObjectPropertiesAndStringAP) MarshalJ
 }
 
 type AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP struct {
-	Property string                 `json:"property"`
-	Values   map[string]interface{} `json:"-"`
+	Property string          `json:"property"`
+	Values   json.RawMessage `json:"-"`
 }
 
 func (t *AdditionalPropertyTestAttributeWithObjectPropertiesAndTrueAP) UnmarshalJSON(data []byte) (err error) {
@@ -162,7 +162,7 @@ type DeviceStatus struct {
 }
 
 type DeviceUpdate struct {
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
+	Attributes json.RawMessage `json:"attributes,omitempty"`
 }
 
 type GenericObject struct {
@@ -187,7 +187,7 @@ type GenericResponse struct {
 	CreatedOnDateTime               *time.Time                  `json:"createdOnDateTime,omitempty"`
 	DirectRef                       GenericObject               `json:"directRef,omitempty"`
 	Email                           *string                     `json:"email,omitempty" binding:"omitempty,email"`
-	EmptyObject                     map[string]interface{}      `json:"emptyObject,omitempty"`
+	EmptyObject                     json.RawMessage             `json:"emptyObject,omitempty"`
 	Integer32Value                  int32                       `json:"integer32Value" binding:"omitempty,max=5"`
 	Integer64Value                  int64                       `json:"integer64Value"`
 	IntegerValue                    int                         `json:"integerValue"`
@@ -282,8 +282,8 @@ func (t ObjectWithRefAndAdditionalProperties) MarshalJSON() ([]byte, error) {
 }
 
 type RequestBodyWithAllOf struct {
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
-	Managed    bool                   `json:"managed,omitempty"`
+	Attributes json.RawMessage `json:"attributes,omitempty"`
+	Managed    bool            `json:"managed,omitempty"`
 }
 
 type TestRequest struct {

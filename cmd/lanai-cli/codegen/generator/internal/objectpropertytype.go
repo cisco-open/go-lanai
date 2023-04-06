@@ -1,9 +1,12 @@
 package internal
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"encoding/json"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"path"
+	"reflect"
 	"strings"
 )
 
@@ -36,18 +39,23 @@ func (o ObjectType) toText() (result string, err error) {
 	switch schema.Value.Type {
 	case openapi3.TypeObject:
 		if len(schema.Value.Properties) == 0 {
-			if schema.Value.AdditionalPropertiesAllowed != nil && *schema.Value.AdditionalPropertiesAllowed {
-				result = "map[string]interface{}"
+			if utils.FromPtr(schema.Value.AdditionalPropertiesAllowed) {
+				result = reflect.TypeOf(json.RawMessage{}).String()
 			} else {
 				additionalPropertyType, err := getDataTypeToTextTranslator(
 					schema.Value.AdditionalProperties,
 					WithCurrentPackage(o.currentPkg),
 					WithRestrictExternalTypes(o.restrictExternalTypes),
-					WithDefaultObjectName("interface{}")).toText()
+					WithDefaultObjectName("")).toText()
 				if err != nil {
 					return "", err
 				}
-				result = "map[string]" + additionalPropertyType
+
+				if additionalPropertyType == "" {
+					result = reflect.TypeOf(json.RawMessage{}).String()
+				} else {
+					result = "map[string]" + additionalPropertyType
+				}
 			}
 			return result, nil
 		}

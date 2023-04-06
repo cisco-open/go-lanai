@@ -35,6 +35,9 @@ func convertToSchemaRef(element interface{}) (*openapi3.SchemaRef, error) {
 		val = element.(*openapi3.SchemaRef)
 	case *openapi3.Parameter:
 		val = element.(*openapi3.Parameter).Schema
+	case _SchemaRef:
+		toSchemaRef := openapi3.SchemaRef(element.(_SchemaRef))
+		val = &toSchemaRef
 	default:
 		return nil, fmt.Errorf("convertToSchemaRef: unsupported interface %v", getInterfaceType(element))
 	}
@@ -180,12 +183,4 @@ func isBaseType(element interface{}) bool {
 	}
 
 	return !usesExternalType
-}
-func externalImportsFromFormat(element interface{}) (result []string) {
-	for format, externalImport := range formatToExternalImport {
-		if matchesFormat(element, format) {
-			result = append(result, externalImport)
-		}
-	}
-	return
 }

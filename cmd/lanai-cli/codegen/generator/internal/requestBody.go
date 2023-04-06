@@ -68,7 +68,7 @@ func (r RequestBody) ExternalImports() (result []string) {
 		return
 	}
 	for _, schema := range r.schemas() {
-		result = append(result, externalImportsFromFormat(schema)...)
+		result = append(result, _SchemaRef(*schema).ExternalImports()...)
 		if schema.Ref == "" {
 			if schema.Value.Type != "" && schema.Value.Type != "object" {
 				result = append(result, JSON_IMPORT_PATH)

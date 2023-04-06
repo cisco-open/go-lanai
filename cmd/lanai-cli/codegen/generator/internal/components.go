@@ -14,13 +14,7 @@ func (c Components) Imports() (result []string) {
 	for _, schemas := range c.AllProperties() {
 		//if any property uses a UUID, add the import in
 		for _, properties := range schemas {
-			result = append(result, externalImportsFromFormat(properties)...)
-			if len(properties.Value.Properties) != 0 {
-				if _SchemaRef(*properties).HasAdditionalProperties() {
-					result = append(result, JSON_IMPORT_PATH)
-				}
-
-			}
+			result = append(result, _SchemaRef(*properties).ExternalImports()...)
 		}
 	}
 	return result

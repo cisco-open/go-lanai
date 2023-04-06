@@ -1,6 +1,9 @@
 package internal
 
-import "github.com/getkin/kin-openapi/openapi3"
+import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/getkin/kin-openapi/openapi3"
+)
 
 type _SchemaRef openapi3.SchemaRef
 
@@ -46,8 +49,34 @@ func (s _SchemaRef) StructProperties() (result openapi3.SchemaRefs) {
 
 // HasAdditionalProperties returns true if the schema supports additionalProperties of any kind
 func (s _SchemaRef) HasAdditionalProperties() bool {
-	additionalPropertiesAllowed := s.Value.AdditionalPropertiesAllowed != nil && *s.Value.AdditionalPropertiesAllowed
+	additionalPropertiesAllowed := utils.FromPtr(s.Value.AdditionalPropertiesAllowed)
 	additionalPropsDefined := s.Value.AdditionalProperties != nil
 
 	return additionalPropertiesAllowed || additionalPropsDefined
+}
+
+func (s _SchemaRef) HasObjectAdditionalProperties() bool {
+	additionalPropertiesAllowed := utils.FromPtr(s.Value.AdditionalPropertiesAllowed)
+	objectAdditionalPropertiesAllowed := s.Value.AdditionalProperties != nil &&
+		(s.Value.AdditionalProperties.Value.Type == openapi3.TypeObject || s.Value.AdditionalProperties.Value.Type == "")
+
+	return additionalPropertiesAllowed || objectAdditionalPropertiesAllowed
+}
+
+func (s _SchemaRef) ExternalImports() (result []string) {
+	result = s.externalImportsFromFormat()
+
+	if s.HasObjectAdditionalProperties() {
+		result = append(result, JSON_IMPORT_PATH)
+	}
+	return
+}
+
+func (s _SchemaRef) externalImportsFromFormat() (result []string) {
+	for format, externalImport := range formatToExternalImport {
+		if matchesFormat(s, format) {
+			result = append(result, externalImport)
+		}
+	}
+	return result
 }

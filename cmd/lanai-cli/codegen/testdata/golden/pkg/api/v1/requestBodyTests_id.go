@@ -22,8 +22,8 @@ func (t TestStringRequestBodyRequest) MarshalJSON() ([]byte, error) {
 }
 
 type TestRequestBodyWithAdditionalPropertiesRequest struct {
-	Id     string                 `uri:"id" binding:"required,uuid"`
-	Values map[string]interface{} `json:"-"`
+	Id     string          `uri:"id" binding:"required,uuid"`
+	Values json.RawMessage `json:"-"`
 }
 
 type PatchTestPathRequest struct {

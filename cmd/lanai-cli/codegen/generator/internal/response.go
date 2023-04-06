@@ -85,7 +85,7 @@ func (r Response) ExternalImports() (result []string) {
 		return result
 	}
 	for _, schema := range r.schemas() {
-		result = append(result, externalImportsFromFormat(schema)...)
+		result = append(result, _SchemaRef(*schema).ExternalImports()...)
 	}
 	return result
 }
