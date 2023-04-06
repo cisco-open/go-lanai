@@ -62,7 +62,7 @@ func newSwaggerController(props SwaggerProperties, resolver bootstrap.BuildInfoR
 	return &SwaggerController{
 		properties:        &props,
 		buildInfoResolver: resolver,
-		docLoader: newOASDocLoader(props.Spec, searchFS...),
+		docLoader:         newOASDocLoader(props.Spec, searchFS...),
 	}
 }
 
@@ -161,7 +161,7 @@ func (c *SwaggerController) oas2Doc(w http.ResponseWriter, r *http.Request) {
 		// write to response
 		w.Header().Set(web.HeaderContentType, "application/json")
 		err = json.NewEncoder(w).Encode(oas)
-	case  e == nil:
+	case e == nil:
 		err = fmt.Errorf("OAS3 document is not supported by /v2 endpoint")
 	default:
 		err = e
@@ -261,10 +261,19 @@ func (c *SwaggerController) processOAS3(oas *OAS3, r *http.Request) error {
 		if len(fwdProto) != 0 {
 			schema = strings.Split(fwdProto, ",")[0]
 		}
+		serverUrl := fmt.Sprintf("%s://%s", strings.TrimSpace(schema), strings.TrimSpace(host))
+		if c.properties.BasePath != "" {
+			basePath := strings.TrimSpace(c.properties.BasePath)
+			if !strings.HasPrefix(c.properties.BasePath, "/") {
+				basePath = fmt.Sprintf("/%s", basePath)
+			}
+			serverUrl = fmt.Sprintf("%s%s", serverUrl, basePath)
+		}
 		server := OAS3Server{
-			URL:         fmt.Sprintf("%s://%s", strings.TrimSpace(schema), strings.TrimSpace(host)),
+			URL:         serverUrl,
 			Description: "Current API Server",
 		}
+
 		oas.Servers = append([]OAS3Server{server}, oas.Servers...)
 	}
 	return nil
