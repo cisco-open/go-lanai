@@ -45,7 +45,7 @@ func TestOAS3Endpoints(t *testing.T) {
 		webtest.WithMockedServer(),
 		apptest.WithDI(di),
 		apptest.WithProperties(
-			"swagger.spec: testdata/api-docs-v3.yml",
+			"swagger.spec: testdata/api-docs-v3.yml", "swagger.base-path: /myapp",
 		),
 		apptest.WithFxOptions(
 			appconfig.FxEmbeddedDefaults(defaultConfigFS),
