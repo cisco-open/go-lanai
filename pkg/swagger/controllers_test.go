@@ -64,6 +64,42 @@ func TestOAS3Endpoints(t *testing.T) {
 	)
 }
 
+func TestOAS3EndpointsWithoutBasePath(t *testing.T) {
+	di := &swaggerDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithMockedServer(),
+		apptest.WithDI(di),
+		apptest.WithProperties(
+			"swagger.spec: testdata/api-docs-v3.yml",
+		),
+		apptest.WithFxOptions(
+			appconfig.FxEmbeddedDefaults(defaultConfigFS),
+			fx.Provide(bindSwaggerProperties),
+			fx.Invoke(initializeTest),
+		),
+		test.GomegaSubTest(SubTestOAS3DocsForwardHostAndProtoWithoutBasePath(), "TestOAS3DocsForwardHostAndProtoWithoutBasePath"),
+	)
+}
+
+func TestOAS3EndpointsBasePathWithoutSlash(t *testing.T) {
+	di := &swaggerDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithMockedServer(),
+		apptest.WithDI(di),
+		apptest.WithProperties(
+			"swagger.spec: testdata/api-docs-v3.yml", "swagger.base-path: myapp",
+		),
+		apptest.WithFxOptions(
+			appconfig.FxEmbeddedDefaults(defaultConfigFS),
+			fx.Provide(bindSwaggerProperties),
+			fx.Invoke(initializeTest),
+		),
+		test.GomegaSubTest(SubTestOAS3DocsForwardHostAndProto(), "TestOAS3DocsForwardHostAndProtoAndBasePathWithoutSlash"),
+	)
+}
+
 func TestOAS2Endpoints(t *testing.T) {
 	di := &swaggerDI{}
 	test.RunTest(context.Background(), t,
@@ -217,6 +253,31 @@ func SubTestOAS3DocsForwardHostAndProto() test.GomegaSubTestFunc {
 		)
 		g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "StatusCode should be correct")
 		assertJsonBody(t, g, resp, "testdata/expected_oas3_https_server.json")
+	}
+}
+
+func SubTestOAS3DocsForwardHostAndProtoWithoutBasePath() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var r *http.Request
+		var resp *http.Response
+
+		// single host
+		r = webtest.NewRequest(ctx, http.MethodGet, "/v3/api-docs", nil)
+		resp = exec(ctx, r,
+			withHeader("X-Forwarded-Host", "my.test.server:9876"),
+			withHeader("X-Forwarded-Proto", "https"),
+		)
+		g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "StatusCode should be correct")
+		assertJsonBody(t, g, resp, "testdata/expected_oas3_https_server_no_base_path.json")
+
+		// multiple hosts
+		r = webtest.NewRequest(ctx, http.MethodGet, "/v3/api-docs", nil)
+		resp = exec(ctx, r,
+			withHeader("X-Forwarded-Host", "my.test.server:9876,my.alt.test.server:8765"),
+			withHeader("X-Forwarded-Proto", "https,https"),
+		)
+		g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "StatusCode should be correct")
+		assertJsonBody(t, g, resp, "testdata/expected_oas3_https_server_no_base_path.json")
 	}
 }
 
