@@ -20,6 +20,7 @@ var (
 /*******************************
 	Operation
 ********************************/
+
 // operation implements Operation, and hold some metadata with reflection
 type operation struct {
 	mode     OperationMode
