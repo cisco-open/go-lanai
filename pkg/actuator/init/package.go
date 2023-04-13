@@ -5,7 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/alive"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/apilist"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/env"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health/endpoint"
+	health "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health/endpoint"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/info"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/loggers"
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"

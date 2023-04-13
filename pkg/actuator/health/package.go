@@ -6,10 +6,14 @@ import (
 )
 
 var Module = &bootstrap.Module{
-	Name: "actuator-health",
+	Name:       "actuator-health",
 	Precedence: bootstrap.ActuatorPrecedence,
 	Options: []fx.Option{
-		fx.Provide(provide, BindHealthProperties),
+		fx.Provide(
+			BindHealthProperties,
+			NewSystemHealthRegistrar,
+			provideInterfaces,
+		),
 	},
 }
 
@@ -17,22 +21,7 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-type provideDI struct {
-	fx.In
-	Properties    HealthProperties
+func provideInterfaces(reg *SystemHealthRegistrar) (Registrar, Indicator) {
+	return reg, reg.Indicator
 }
 
-type provideOut struct {
-	fx.Out
-	Registrar       Registrar
-	HealthIndicator *SystemHealthIndicator
-}
-
-// provide SystemHealthIndicator as both Registrar and *SystemHealthIndicator
-func provide(di provideDI) (out provideOut) {
-	indicator := NewSystemHealthIndicator(di)
-	return provideOut{
-		Registrar: indicator,
-		HealthIndicator: indicator,
-	}
-}
