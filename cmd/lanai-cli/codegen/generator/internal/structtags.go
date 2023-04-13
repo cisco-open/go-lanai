@@ -8,12 +8,6 @@ import (
 
 func structTags(p Property) string {
 	result := ""
-	switch p.PropertyData.(type) {
-	case *openapi3.Parameter:
-		if p.PropertyData.(*openapi3.Parameter).In == "header" {
-			result = fmt.Sprintf("header:\"%v\" ", p.PropertyName)
-		}
-	}
 
 	nameType := nameType(p.PropertyData)
 	name := p.PropertyName
@@ -25,13 +19,34 @@ func structTags(p Property) string {
 			name = fmt.Sprintf("%v,omitempty", name)
 		}
 	}
-	result = result + fmt.Sprintf("%v:\"%v\"", nameType, name)
+
+	result = result + fmt.Sprintf("%v:\"%v%v\"", nameType, name, defaultValue(p))
 	binding := bindings(p.PropertyName, p.PropertyData, p.RequiredList)
 	if binding != "" {
 		result = fmt.Sprintf("%v binding:\"%v\"", result, binding)
 	}
 
 	result = fmt.Sprintf("`%v`", result)
+	return result
+}
+
+func defaultValue(p Property) string {
+	// default values don't make sense for required properties
+	if !p.IsOptional() {
+		return ""
+	}
+
+	result := ""
+	switch p.PropertyData.(type) {
+	case *openapi3.Parameter:
+		in := p.PropertyData.(*openapi3.Parameter).In
+		if in == "header" || in == "query" {
+			schema, _ := convertToSchemaRef(p.PropertyData)
+			if schema.Value.Default != nil {
+				result = ",default=" + fmt.Sprintf("%v", schema.Value.Default)
+			}
+		}
+	}
 	return result
 }
 
@@ -43,7 +58,9 @@ func nameType(element interface{}) string {
 		nameType = "json"
 	case *openapi3.Parameter:
 		switch element.(*openapi3.Parameter).In {
-		case "query", "header":
+		case "header":
+			nameType = "header"
+		case "query":
 			nameType = "form"
 		case "path":
 			fallthrough

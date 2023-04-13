@@ -34,6 +34,11 @@ func (c *TestpathScopeController) Mappings() []web.Mapping {
 			EndpointFunc(c.TestpathScopeGet).
 			Build(),
 		rest.
+			New("testpath-scope-patch").
+			Patch("/api/v1/testpath/:scope").
+			EndpointFunc(c.TestpathScopePatch).
+			Build(),
+		rest.
 			New("testpath-scope-post").
 			Post("/api/v1/testpath/:scope").
 			EndpointFunc(c.PostTestPath).
@@ -47,6 +52,10 @@ func (c *TestpathScopeController) DeleteTestPath(ctx context.Context, req apiv1.
 
 func (c *TestpathScopeController) TestpathScopeGet(ctx context.Context, req apiv1.TestpathScopeGetRequest) (*api.GenericResponseWithAllOf, error) {
 	return &api.GenericResponseWithAllOf{}, nil
+}
+
+func (c *TestpathScopeController) TestpathScopePatch(ctx context.Context, req apiv1.TestpathScopePatchRequest) (interface{}, error) {
+	return nil, nil
 }
 
 func (c *TestpathScopeController) PostTestPath(ctx context.Context, req apiv1.PostTestPathRequest) (*api.GenericResponse, error) {
