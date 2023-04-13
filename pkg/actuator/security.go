@@ -29,7 +29,10 @@ func (f SecurityCustomizerFunc) Customize(ws security.WebSecurity) {
 	f(ws)
 }
 
-// AccessControlCustomizer TODO
+// AccessControlCustomizer Similar to SecurityCustomizer, but is used to customize access control of each endpoint.
+// Implementations of AccessControlCustomizer can be registered via Registrar, and NewAccessControlByPermissions is
+// used if no other customizer is registered.
+// Also See NewSimpleAccessControl, NewAccessControlByPermissions, NewAccessControlByScopes
 type AccessControlCustomizer interface {
 	Customize(ac *access.AccessControlFeature, epId string, paths []string)
 }

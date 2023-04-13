@@ -55,12 +55,12 @@ func NewLoginMiddleware(sp saml.ServiceProvider, tracker samlsp.RequestTracker,
 
 // MakeAuthenticationRequest Since we support multiple domains each with different IDP, the auth request specify which matching ACS should be
 // used for IDP to call back.
-func (sp *SPLoginMiddleware) MakeAuthenticationRequest(r *http.Request, w http.ResponseWriter) error {
+func (sp *SPLoginMiddleware) MakeAuthenticationRequest(ctx context.Context, r *http.Request, w http.ResponseWriter) error {
 	host := netutil.GetForwardedHostName(r)
 	client, ok := sp.clientManager.GetClientByDomain(host)
 
 	if !ok {
-		logger.WithContext(r.Context()).Debugf("cannot find idp for domain %s", host)
+		logger.WithContext(ctx).Debugf("cannot find idp for domain %s", host)
 		return security.NewExternalSamlAuthenticationError("cannot find idp for this domain")
 	}
 
@@ -146,7 +146,7 @@ func (sp *SPLoginMiddleware) ACSHandlerFunc() gin.HandlerFunc {
 }
 
 func (sp *SPLoginMiddleware) Commence(c context.Context, r *http.Request, w http.ResponseWriter, _ error) {
-	err := sp.MakeAuthenticationRequest(r, w)
+	err := sp.MakeAuthenticationRequest(c, r, w)
 	if err != nil {
 		sp.fallbackEntryPoint.Commence(c, r, w, err)
 	}
