@@ -395,12 +395,14 @@ when writing your own.
 
 #### String Related
 
-| Function Name | Usage                | Comments                                                  |
-|---------------|----------------------|-----------------------------------------------------------|
-| `toTitle`     | `toTitle <string>`   | Applies title cases (`myStruct` -> `MyStruct`)            |
-| `concat`      | `concat <...string>` | Joins all the provided strings together                   |
-| `toLower`     | `toLower <string>`   | Sets string to all lowercase `MyStruct` -> `mystruct`     |
-| `basePath`    | `basePath <string>`  | Given a path `my/cool/path`, returns the base part `path` |
+| Function Name   | Usage                    | Comments                                                  |
+|-----------------|--------------------------|-----------------------------------------------------------|
+| `toTitle`       | `toTitle <string>`       | Applies title cases (`myStruct` -> `MyStruct`)            |
+| `concat`        | `concat <...string>`     | Joins all the provided strings together                   |
+| `toLower`       | `toLower <string>`       | Sets string to all lowercase `MyStruct` -> `mystruct`     |
+| `basePath`      | `basePath <string>`      | Given a path `my/cool/path`, returns the base part `path` |
+| `hasPrefix`     | `hasPrefix <string>`     | Calls strings.HasPrefix on the input                      |
+| `replaceDashes` | `replaceDashes <string>` | Replaces any dashes in string with underscores            |
 
 #### Path Related
 
@@ -412,28 +414,23 @@ when writing your own.
 
 #### Struct/DTO Related
 
-The `internal/representation` package provides some helpers & groupings for the different openAPI components.
-
 Constructors:
 
-| Function Name        | Usage                                                            | Comments                                                                                                                                                               |
-|----------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `property`           | `property <name - string, data - interface{}>`                   |                                                                                                                                                                        |
-| `propertyTypePrefix` | `propertyTypePrefix <representation.Property> <prefix - string>` | Assigns a prefix for the go type of that property (i.e `MyPrefix` + `CustomType` = `MyPrefixCustomType`, in case different schemas define `CustomType` more than once) |
-| `operation`          | `operation <data - *openapi3.Operation, string>`                 | If the operation lacks an OperationID, use the second argument to assign a name                                                                                        |
-| `schema`             | `schema <string, data - *openapi3.SchemaRef>`                    |                                                                                                                                                                        |
+| Function Name        | Usage                                                                                 | Comments                                                                                                                                                               |
+|----------------------|---------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `property`           | `property <data - interface{}, name - string, currentPkg - string, prefix ...string>` |                                                                                                                                                                        |
+| `operation`          | `operation <data - *openapi3.Operation, string>`                                      | If the operation lacks an OperationID, use the second argument to assign a name                                                                                        |
+| `schema`             | `schema <string, data - *openapi3.SchemaRef>`                                         |                                                                                                                                                                        |
 
 
-| Function Name         | Usage                                                          | Comments                                                                                                                |
-|-----------------------|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| `shouldHavePointer`   | `shouldHavePointer <interface{}, isRequired bool>`             | Check for if this struct property should be a pointer                                                                   |
-| `propertyType`        | `propertyType <representation.Property>`                       | Returns the go-type (string, float, etc) of the property                                                                |
-| `structTag`           | `structTag <representation.Property, requiredParams []string>` | Returns the struct tags of the property, if the property is in the list of requiredParams, a required tag will be added |
-| `requiredList`        | `requiredList <*SchemaRef or *Parameter>`                      | Returns a list of any required parameters in this object                                                                |
-| `containsSingularRef` | `containsSingularRef`                                          | Returns true if the object doesn't contain anything except one ref                                                      |
-| `defaultNameFromPath` | `defaultNameFromPath <string>`                                 | `/my/api/v1/testpath/{scope}` -> `TestpathScope`                                                                        |
-| `registerStruct`      | `registerStruct <schemaName string, packageName string>`       | Registers a struct & it's package name for the purposes of importing                                                    |
-| `structLocation`      | `structLocation <structName string>`                           | Returns the package that the struct is a part of                                                                        |
-| `importsUsedByPath`   | `importsUsedByPath <openapi3.PathItem>`                        | Returns a list of imports (i.e where structs are located) that the path is expected to use                              |
-| `isEmpty`             | `isEmpty`                                                      | Returns true if the object doesn't actually contain any fields (i.e parameters, or anything in the response)            |
-| `pathOperations`      | `pathOperations <pathItem opernapi3.PathItem>`                 | Returns a slice of operations that are defined in the Path                                                              |
+| Function Name         | Usage                                                    | Comments                                                                                                                |
+|-----------------------|----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `shouldHavePointer`   | `shouldHavePointer <interface{}, isRequired bool>`       | Check for if this struct property should be a pointer                                                                   |
+| `structTags`          | `structTag <representation.Property>`                    | Returns the struct tags of the property, if the property is in the list of requiredParams, a required tag will be added |
+| `requiredList`        | `requiredList <*SchemaRef or *Parameter>`                | Returns a list of any required parameters in this object                                                                |
+| `containsSingularRef` | `containsSingularRef`                                    | Returns true if the object doesn't contain anything except one ref                                                      |
+| `defaultNameFromPath` | `defaultNameFromPath <string>`                           | `/my/api/v1/testpath/{scope}` -> `TestpathScope`                                                                        |
+| `registerStruct`      | `registerStruct <schemaName string, packageName string>` | Registers a struct & it's package name for the purposes of importing                                                    |
+| `structLocation`      | `structLocation <structName string>`                     | Returns the package that the struct is a part of                                                                        |
+| `importsUsedByPath`   | `importsUsedByPath <openapi3.PathItem>`                  | Returns a list of imports (i.e where structs are located) that the path is expected to use                              |
+| `isEmpty`             | `isEmpty`                                                | Returns true if the object doesn't actually contain any fields (i.e parameters, or anything in the response)            |
