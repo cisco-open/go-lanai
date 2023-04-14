@@ -30,3 +30,7 @@ vendor/
 
 # GoLand
 .idea/
+
+
+# Codegen
+output

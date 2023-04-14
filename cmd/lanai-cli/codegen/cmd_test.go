@@ -32,11 +32,11 @@ func TestGenerateTemplates(t *testing.T) {
 	}{
 		{
 			name:       "Should generate the correct files based on an input yaml",
-			contract:   path.Join(testDir, "test.yaml"),
+			contract:   path.Join(testDir, "test", "test.yaml"),
 			wantErr:    false,
 			filesystem: ActualFilesystem,
-			outputDir:  path.Join(testDir, "output"),
-			goldenDir:  path.Join("testdata", "golden"),
+			outputDir:  path.Join(testDir, "test", "output"),
+			goldenDir:  path.Join("testdata", "test", "golden"),
 			update:     false,
 		},
 	}

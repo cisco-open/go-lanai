@@ -1,0 +1,7 @@
+{{ define "imports" }}
+    import (
+        {{ range . }}
+        {{ with .Alias }} {{ . }} {{ end }}"{{.Path}}"
+        {{- end }}
+    )
+{{- end }}
