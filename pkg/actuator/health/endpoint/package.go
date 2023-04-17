@@ -11,11 +11,21 @@ package healthep
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"go.uber.org/fx"
 )
 
-func init() {
+var Module = &bootstrap.Module{
+	Name: "actuator-health-ep",
+	Precedence: actuator.MinActuatorPrecedence,
+	Options: []fx.Option{
+		fx.Invoke(register),
+	},
+}
+
+func Register() {
 	health.Use()
+	bootstrap.Register(Module)
 }
 
 type regDI struct {
@@ -26,7 +36,7 @@ type regDI struct {
 	MgtProperties   actuator.ManagementProperties `optional:"true"`
 }
 
-func Register(di regDI) {
+func register(di regDI) {
 	// Note: when actuator.Registrar is nil, we don't need to anything
 	if di.Registrar == nil {
 		return

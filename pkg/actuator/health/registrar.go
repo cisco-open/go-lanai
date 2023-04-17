@@ -37,6 +37,9 @@ func NewSystemHealthRegistrar(di regDI) *SystemHealthRegistrar {
 // supported input parameters are:
 // 	- Indicator
 // 	- StatusAggregator
+// 	- DetailsDisclosureControl
+// 	- ComponentsDisclosureControl
+//  - DisclosureControl
 func (i *SystemHealthRegistrar) Register(items ...interface{}) error {
 	for _, v := range items {
 		if e := i.register(v); e != nil {

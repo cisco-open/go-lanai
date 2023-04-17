@@ -138,6 +138,9 @@ func NewSimpleAccessControl(acCreator func(epId string) access.ControlFunc) Acce
 func NewAccessControlByPermissions(properties SecurityProperties, defaultPerms ...string) AccessControlCustomizer {
 	return NewSimpleAccessControl(func(epId string) access.ControlFunc {
 		enabled, permissions := collectSecurityFacts(epId, &properties)
+		if len(permissions) == 0 {
+			permissions = defaultPerms
+		}
 		switch {
 		case !enabled:
 			return access.PermitAll
