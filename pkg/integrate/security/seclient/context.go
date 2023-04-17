@@ -9,23 +9,27 @@ import (
 type AuthOptions func(opt *AuthOption)
 
 type AuthOption struct {
-	Password    string	// Password is used by password login
-	AccessToken string	// AccessToken is used by switch user/tenant
-	Username    string	// Username is used by password login and switch user
-	UserId      string	// UserId is used by switch user
-	TenantId    string	// TenantId is used by password login and switch user/tenant
-	TenantExternalId  string	// TenantExternalId is used by password login and switch user/tenant
+	Password         string   // Password is used by password login
+	AccessToken      string   // AccessToken is used by switch user/tenant
+	Username         string   // Username is used by password login and switch user
+	UserId           string   // UserId is used by switch user
+	TenantId         string   // TenantId is used by password login and switch user/tenant
+	TenantExternalId string   // TenantExternalId is used by password login and switch user/tenant
+	Scopes           []string // OAuth Scopes option
+	ClientID         string   // ClientID that is used for the client credentials auth flow
+	ClientSecret     string   // ClientSecret that is used for the client credentials auth flow
 }
 
 type AuthenticationClient interface {
 	PasswordLogin(ctx context.Context, opts ...AuthOptions) (*Result, error)
+	ClientCredentials(ctx context.Context, opts ...AuthOptions) (*Result, error)
 	SwitchUser(ctx context.Context, opts ...AuthOptions) (*Result, error)
 	SwitchTenant(ctx context.Context, opts ...AuthOptions) (*Result, error)
 }
 
 type Result struct {
 	Request oauth2.OAuth2Request
-	Token oauth2.AccessToken
+	Token   oauth2.AccessToken
 }
 
 /****************************
@@ -102,6 +106,19 @@ func WithUserId(userId string) AuthOptions {
 	return func(opt *AuthOption) {
 		opt.Username = ""
 		opt.UserId = userId
+	}
+}
+
+func WithScope(scope []string) AuthOptions {
+	return func(opt *AuthOption) {
+		opt.Scopes = scope
+	}
+}
+
+func WithClientAuth(clientID, secret string) AuthOptions {
+	return func(opt *AuthOption) {
+		opt.ClientID = clientID
+		opt.ClientSecret = secret
 	}
 }
 
