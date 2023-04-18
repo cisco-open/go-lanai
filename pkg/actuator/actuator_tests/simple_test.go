@@ -36,7 +36,6 @@ func TestSimpleAdminEndpoints(t *testing.T) {
 		),
 		apptest.WithConfigFS(testdata.TestConfigFS),
 		apptest.WithFxOptions(
-			fx.Provide(testdata.NewMockedHealthIndicator),
 			fx.Invoke(ConfigureSecurity),
 		),
 		test.GomegaSubTest(SubTestInfoEndpointV3(), "TestInfoEndpointV3"),

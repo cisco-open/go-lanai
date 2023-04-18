@@ -33,11 +33,10 @@ func TestEnvEndpoint(t *testing.T) {
 		),
 		apptest.WithConfigFS(testdata.TestConfigFS),
 		apptest.WithFxOptions(
-			fx.Provide(testdata.NewMockedHealthIndicator),
 			fx.Invoke(ConfigureSecurity),
 		),
-		test.GomegaSubTest(SubTestEnvWithPermissions(), "TestEnvWithPermissions"),
-		test.GomegaSubTest(SubTestEnvWithoutPermissions(), "TestEnvWithoutPermissions"),
+		test.GomegaSubTest(SubTestEnvWithAccess(mockedSecurityAdmin()), "TestEnvWithAccess"),
+		test.GomegaSubTest(SubTestEnvWithoutAccess(mockedSecurityNonAdmin()), "TestEnvWithoutAccess"),
 		test.GomegaSubTest(SubTestEnvWithoutAuth(), "TestEnvWithoutAuth"),
 	)
 }
@@ -46,9 +45,9 @@ func TestEnvEndpoint(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestEnvWithPermissions() test.GomegaSubTestFunc {
+func SubTestEnvWithAccess(secOpts sectest.SecurityContextOptions) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		ctx = sectest.ContextWithSecurity(ctx, mockedSecurityAdmin())
+		ctx = sectest.ContextWithSecurity(ctx, secOpts)
 		// with admin security GET
 		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/env", nil, defaultRequestOptions())
 		resp := webtest.MustExec(ctx, req)
@@ -57,15 +56,14 @@ func SubTestEnvWithPermissions() test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestEnvWithoutPermissions() test.GomegaSubTestFunc {
+func SubTestEnvWithoutAccess(secOpts sectest.SecurityContextOptions) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		ctx = sectest.ContextWithSecurity(ctx, mockedSecurityNonAdmin())
+		ctx = sectest.ContextWithSecurity(ctx, secOpts)
 
 		// with non-admin security GET
 		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/env", nil, defaultRequestOptions())
 		resp := webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusForbidden)
-		// TODO verify response body
 	}
 }
 

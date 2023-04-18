@@ -11,10 +11,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	. "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -27,10 +27,6 @@ import (
 /*************************
 	Test Setup
  *************************/
-
-const (
-	SpecialScopeAdmin = "admin"
-)
 
 func ConfigureHealth(healthReg health.Registrar, mock *testdata.MockedHealthIndicator) {
 	healthReg.MustRegister(mock)
@@ -102,10 +98,10 @@ func TestHealthWithCustomDisclosure(t *testing.T) {
 			fx.Invoke(ConfigureCustomHealthDisclosure),
 		),
 		apptest.WithDI(di),
-		test.GomegaSubTest(SubTestHealthWithDetails(mockedSecurityAdminScope()), "TestHealthWithPermissions"),
-		test.GomegaSubTest(SubTestHealthWithoutDetails(mockedSecurityNonAdmin()), "TestHealthWithoutPermissions"),
+		test.GomegaSubTest(SubTestHealthWithDetails(mockedSecurityScopedAdmin()), "TestHealthWithPermissions"),
+		test.GomegaSubTest(SubTestHealthWithoutDetails(mockedSecurityAdmin()), "TestHealthWithoutPermissions"),
 		test.GomegaSubTest(SubTestHealthWithoutAuth(), "TestHealthWithoutAuth"),
-		test.GomegaSubTest(SubTestHealthDownWithDetails(di, mockedSecurityAdminScope()), "TestHealthDownWithDetails"),
+		test.GomegaSubTest(SubTestHealthDownWithDetails(di, mockedSecurityScopedAdmin()), "TestHealthDownWithDetails"),
 		test.GomegaSubTest(SubTestHealthDownWithoutDetails(di), "TestHealthDownWithoutDetails"),
 		test.GomegaSubTest(SubTestHealthIndicator(di), "TestHealthIndicator"),
 	)
@@ -247,43 +243,39 @@ func SubTestHealthIndicator(di *HealthTestDI) test.GomegaSubTestFunc {
 	Common Helpers
  *************************/
 
-func mockedSecurityAdminScope() sectest.SecurityContextOptions {
-	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
-		d.Scopes = utils.NewStringSet(SpecialScopeAdmin)
-	})
-}
-
 func assertHealthV3Response(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedStatus health.Status, expectDetails, expectComponents bool) {
 	body, e := io.ReadAll(resp.Body)
 	g.Expect(e).To(Succeed(), `health response body should be readable`)
-	g.Expect(body).To(MatchJsonPath("$.status", BeEquivalentTo(expectedStatus.String())), "health response should have status [%v]", expectedStatus)
+	g.Expect(body).To(HaveJsonPathWithValue("$.status", expectedStatus.String()), "health response should have status [%v]", expectedStatus)
 
 	if expectComponents {
-		g.Expect(body).To(MatchJsonPath("$..components", Not(BeEmpty())), "v3 health response should have components")
+		g.Expect(body).To(HaveJsonPath("$..components"), "v3 health response should have components")
 	} else {
-		g.Expect(body).NotTo(MatchJsonPath("$..components", Not(BeEmpty())), "v3 health response should not have components")
+		g.Expect(body).NotTo(HaveJsonPath("$..components"), "v3 health response should not have components")
 	}
 
 	if expectDetails {
-		g.Expect(body).To(MatchJsonPath("$..details", Not(BeEmpty())), "v3 health response should have details")
+		g.Expect(body).To(HaveJsonPath("$..details"), "v3 health response should have details")
 	} else {
-		g.Expect(body).NotTo(MatchJsonPath("$..details", Not(BeEmpty())), "v3 health response should not have details")
+		g.Expect(body).NotTo(HaveJsonPath("$..details"), "v3 health response should not have details")
 	}
 }
 
 func assertHealthV2Response(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedStatus health.Status, expectDetails, expectComponents bool) {
 	body, e := io.ReadAll(resp.Body)
 	g.Expect(e).To(Succeed(), `health response body should be readable`)
-	g.Expect(body).To(MatchJsonPath("$.status", BeEquivalentTo(expectedStatus.String())), "health response should have status [%v]", expectedStatus)
+	g.Expect(body).To(HaveJsonPathWithValue("$.status", ContainElement(expectedStatus.String())), "health response should have status [%v]", expectedStatus)
+
 	if expectComponents {
-		g.Expect(body).To(MatchJsonPath("$..details", Not(BeEmpty())), "v2 health response should have components")
+		g.Expect(body).To(HaveJsonPath("$..details"), "v2 health response should have components")
 	} else {
-		g.Expect(body).NotTo(MatchJsonPath("$..details", Not(BeEmpty())), "v2 health response should not have components")
+		g.Expect(body).NotTo(HaveJsonPath("$..details"), "v2 health response should not have components")
 	}
+
 	if expectDetails {
-		g.Expect(body).To(MatchJsonPath("$..detailed", Not(BeEmpty())), "v2 health response should have details")
+		g.Expect(body).To(HaveJsonPath("$..detailed"), "v2 health response should have details")
 	} else {
-		g.Expect(body).NotTo(MatchJsonPath("$..detailed", Not(BeEmpty())), "v2 health response should not have details")
+		g.Expect(body).NotTo(HaveJsonPath("$..detailed"), "v2 health response should not have details")
 	}
 }
 

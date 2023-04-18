@@ -33,11 +33,10 @@ func TestLoggersEndpoint(t *testing.T) {
 		),
 		apptest.WithConfigFS(testdata.TestConfigFS),
 		apptest.WithFxOptions(
-			fx.Provide(testdata.NewMockedHealthIndicator),
 			fx.Invoke(ConfigureSecurity),
 		),
-		test.GomegaSubTest(SubTestLoggersWithPermissions(), "TestLoggersWithPermissions"),
-		test.GomegaSubTest(SubTestLoggersWithoutPermissions(), "TestLoggersWithoutPermissions"),
+		test.GomegaSubTest(SubTestLoggersWithAccess(mockedSecurityAdmin()), "TestLoggersWithAccess"),
+		test.GomegaSubTest(SubTestLoggersWithoutAccess(mockedSecurityNonAdmin()), "TestLoggersWithoutAccess"),
 		test.GomegaSubTest(SubTestLoggersWithoutAuth(), "TestLoggersWithoutAuth"),
 	)
 }
@@ -46,9 +45,9 @@ func TestLoggersEndpoint(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestLoggersWithPermissions() test.GomegaSubTestFunc {
+func SubTestLoggersWithAccess(secOpts sectest.SecurityContextOptions) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		ctx = sectest.ContextWithSecurity(ctx, mockedSecurityAdmin())
+		ctx = sectest.ContextWithSecurity(ctx, secOpts)
 		// with admin security GET
 		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/loggers", nil, defaultRequestOptions())
 		resp := webtest.MustExec(ctx, req)
@@ -63,21 +62,19 @@ func SubTestLoggersWithPermissions() test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestLoggersWithoutPermissions() test.GomegaSubTestFunc {
+func SubTestLoggersWithoutAccess(secOpts sectest.SecurityContextOptions) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		ctx = sectest.ContextWithSecurity(ctx, mockedSecurityNonAdmin())
+		ctx = sectest.ContextWithSecurity(ctx, secOpts)
 
 		// with non-admin security GET
 		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/loggers", nil, defaultRequestOptions())
 		resp := webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusForbidden)
-		// TODO verify response body
 
 		// with non-admin security GET with name
 		req = webtest.NewRequest(ctx, http.MethodGet, "/admin/loggers/actuator", nil, defaultRequestOptions())
 		resp = webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusOK, "Content-Type", actuator.ContentTypeSpringBootV3)
-		// TODO verify response body
 	}
 }
 
