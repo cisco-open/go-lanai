@@ -6,9 +6,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
 	matcherutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"fmt"
 	"net/http"
+	"regexp"
 )
 
 /*******************************
@@ -118,9 +120,9 @@ func NewSimpleAccessControl(acCreator func(epId string) access.ControlFunc) Acce
 		}
 
 		// configure request matchers
-		m := matcher.RequestWithPattern(paths[0])
+		m := pathToRequestPattern(paths[0])
 		for _, p := range paths[1:] {
-			m = m.Or(matcher.RequestWithPattern(p))
+			m = m.Or(pathToRequestPattern(p))
 		}
 
 		// configure access control
@@ -181,6 +183,15 @@ func NewAccessControlByScopes(properties SecurityProperties, usePermissions bool
 			return tokenauth.ScopesApproved(scopes...)
 		}
 	})
+}
+
+var pathVarRegex = regexp.MustCompile(`:[a-zA-Z0-9\-_]+`)
+
+// pathToRequestPattern convert path variables to wildcard request pattern
+// "/path/to/:any/endpoint" would converted to "/path/to/*/endpoint
+func pathToRequestPattern(path string) web.RequestMatcher {
+	patternStr := pathVarRegex.ReplaceAllString(path, "*")
+	return matcher.RequestWithPattern(patternStr)
 }
 
 func collectSecurityFacts(epId string, properties *SecurityProperties, defaults ...string) (enabled bool, permissions []string) {
