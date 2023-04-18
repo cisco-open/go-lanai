@@ -71,7 +71,8 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 
 		auth := oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {
 			opt.Request = oauth2.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
-				opt.ClientId = "mock"
+				opt.ClientId = details.ClientID
+				opt.Scopes = details.Scopes
 				opt.Approved = true
 			})
 			opt.Token = token

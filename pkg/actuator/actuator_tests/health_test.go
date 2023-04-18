@@ -7,8 +7,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health/endpoint"
 	actuatorinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/init"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
@@ -16,6 +19,7 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -24,9 +28,19 @@ import (
 	Test Setup
  *************************/
 
+const (
+	SpecialScopeAdmin = "admin"
+)
 
 func ConfigureHealth(healthReg health.Registrar, mock *testdata.MockedHealthIndicator) {
 	healthReg.MustRegister(mock)
+}
+
+func ConfigureCustomHealthDisclosure(healthReg health.Registrar) {
+	healthReg.MustRegister(health.DisclosureControlFunc(func(ctx context.Context) (ok bool) {
+		ok, _ = tokenauth.ScopesApproved(SpecialScopeAdmin)(security.Get(ctx))
+		return
+	}))
 }
 
 type HealthTestDI struct {
@@ -57,10 +71,42 @@ func TestHealthEndpoint(t *testing.T) {
 			fx.Invoke(ConfigureHealth),
 		),
 		apptest.WithDI(di),
-		test.GomegaSubTest(SubTestHealthWithPermissions(), "TestHealthWithPermissions"),
-		test.GomegaSubTest(SubTestHealthWithoutPermissions(), "TestHealthWithoutPermissions"),
+		test.GomegaSubTest(SubTestHealthWithDetails(mockedSecurityAdmin()), "TestHealthWithDetails"),
+		test.GomegaSubTest(SubTestHealthWithoutDetails(mockedSecurityNonAdmin()), "TestHealthWithoutDetails"),
 		test.GomegaSubTest(SubTestHealthWithoutAuth(), "TestHealthWithoutAuth"),
-		test.GomegaSubTest(SubTestHealthNegativeCases(di), "TestHealthNegativeCases"),
+		test.GomegaSubTest(SubTestHealthDownWithDetails(di, mockedSecurityAdmin()), "TestHealthDownWithDetails"),
+		test.GomegaSubTest(SubTestHealthDownWithoutDetails(di), "TestHealthDownWithoutDetails"),
+		test.GomegaSubTest(SubTestHealthIndicator(di), "TestHealthIndicator"),
+	)
+}
+
+func TestHealthWithCustomDisclosure(t *testing.T) {
+	di := &HealthTestDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithMockedServer(),
+		sectest.WithMockedMiddleware(),
+		apptest.WithModules(
+			actuatorinit.Module, actuator.Module, access.Module, errorhandling.Module,
+			health.Module, healthep.Module,
+		),
+		apptest.WithConfigFS(testdata.TestConfigFS),
+		apptest.WithProperties(
+			"management.endpoint.health.show-details: custom",
+			"management.endpoint.health.show-components: custom",
+		),
+		apptest.WithFxOptions(
+			fx.Provide(testdata.NewMockedHealthIndicator),
+			fx.Invoke(ConfigureSecurity),
+			fx.Invoke(ConfigureHealth),
+			fx.Invoke(ConfigureCustomHealthDisclosure),
+		),
+		apptest.WithDI(di),
+		test.GomegaSubTest(SubTestHealthWithDetails(mockedSecurityAdminScope()), "TestHealthWithPermissions"),
+		test.GomegaSubTest(SubTestHealthWithoutDetails(mockedSecurityNonAdmin()), "TestHealthWithoutPermissions"),
+		test.GomegaSubTest(SubTestHealthWithoutAuth(), "TestHealthWithoutAuth"),
+		test.GomegaSubTest(SubTestHealthDownWithDetails(di, mockedSecurityAdminScope()), "TestHealthDownWithDetails"),
+		test.GomegaSubTest(SubTestHealthDownWithoutDetails(di), "TestHealthDownWithoutDetails"),
 		test.GomegaSubTest(SubTestHealthIndicator(di), "TestHealthIndicator"),
 	)
 }
@@ -69,38 +115,39 @@ func TestHealthEndpoint(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestHealthWithPermissions() test.GomegaSubTestFunc {
+func SubTestHealthWithDetails(secOpts sectest.SecurityContextOptions) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		ctx = sectest.ContextWithSecurity(ctx, mockedSecurityAdmin())
+		ctx = sectest.ContextWithSecurity(ctx, secOpts)
 
 		// with admin security GET
 		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, defaultRequestOptions())
 		resp := webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusOK, "Content-Type", actuator.ContentTypeSpringBootV3)
-		// TODO verify response body
+		assertHealthV3Response(t, g, resp.Response, health.StatusUp, true, true)
 
 		// with admin security GET V2
 		req = webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, v2RequestOptions())
 		resp = webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusOK, "Content-Type", actuator.ContentTypeSpringBootV2)
-		// TODO verify response body
+		assertHealthV2Response(t, g, resp.Response, health.StatusUp, true, true)
 	}
 }
 
-func SubTestHealthWithoutPermissions() test.GomegaSubTestFunc {
+func SubTestHealthWithoutDetails(secOpts sectest.SecurityContextOptions) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		ctx = sectest.ContextWithSecurity(ctx, mockedSecurityNonAdmin())
+		ctx = sectest.ContextWithSecurity(ctx, secOpts)
 
 		// with non-admin security GET
 		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, defaultRequestOptions())
 		resp := webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusOK, "Content-Type", actuator.ContentTypeSpringBootV3)
-		// TODO verify response body
+		assertHealthV3Response(t, g, resp.Response, health.StatusUp, false, false)
 
 		// with non-admin security GET V2
 		req = webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, v2RequestOptions())
 		resp = webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusOK, "Content-Type", actuator.ContentTypeSpringBootV2)
+		assertHealthV2Response(t, g, resp.Response, health.StatusUp, false, false)
 	}
 }
 
@@ -110,16 +157,40 @@ func SubTestHealthWithoutAuth() test.GomegaSubTestFunc {
 		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, defaultRequestOptions())
 		resp := webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusOK, "Content-Type", actuator.ContentTypeSpringBootV3)
-		// TODO verify response body
+		assertHealthV3Response(t, g, resp.Response, health.StatusUp, false, false)
 
 		// with admin security GET V2
 		req = webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, v2RequestOptions())
 		resp = webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusOK, "Content-Type", actuator.ContentTypeSpringBootV2)
+		assertHealthV2Response(t, g, resp.Response, health.StatusUp, false, false)
 	}
 }
 
-func SubTestHealthNegativeCases(di *HealthTestDI) test.GomegaSubTestFunc {
+func SubTestHealthDownWithDetails(di *HealthTestDI, secOpts sectest.SecurityContextOptions) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *WithT) {
+		ctx = sectest.ContextWithSecurity(ctx, secOpts)
+		// negative cases
+		defer func() {
+			di.MockedIndicator.Status = health.StatusUp
+		}()
+		// down
+		di.MockedIndicator.Status = health.StatusDown
+		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, defaultRequestOptions())
+		resp := webtest.MustExec(ctx, req)
+		assertResponse(t, g, resp.Response, http.StatusServiceUnavailable, "Content-Type", actuator.ContentTypeSpringBootV3)
+		assertHealthV3Response(t, g, resp.Response, health.StatusDown, true, true)
+
+		// out of service
+		di.MockedIndicator.Status = health.StatusOutOfService
+		req = webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, defaultRequestOptions())
+		resp = webtest.MustExec(ctx, req)
+		assertResponse(t, g, resp.Response, http.StatusServiceUnavailable, "Content-Type", actuator.ContentTypeSpringBootV3)
+		assertHealthV2Response(t, g, resp.Response, health.StatusOutOfService, true, true)
+	}
+}
+
+func SubTestHealthDownWithoutDetails(di *HealthTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		// negative cases
 		defer func() {
@@ -130,20 +201,17 @@ func SubTestHealthNegativeCases(di *HealthTestDI) test.GomegaSubTestFunc {
 		req := webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, defaultRequestOptions())
 		resp := webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusServiceUnavailable, "Content-Type", actuator.ContentTypeSpringBootV3)
-		// TODO verify response body
+		assertHealthV3Response(t, g, resp.Response, health.StatusDown, false, false)
 
 		// out of service
 		di.MockedIndicator.Status = health.StatusOutOfService
 		req = webtest.NewRequest(ctx, http.MethodGet, "/admin/health", nil, defaultRequestOptions())
 		resp = webtest.MustExec(ctx, req)
 		assertResponse(t, g, resp.Response, http.StatusServiceUnavailable, "Content-Type", actuator.ContentTypeSpringBootV3)
-		// TODO verify response body
+		assertHealthV2Response(t, g, resp.Response, health.StatusOutOfService, false, false)
 	}
 }
 
-/*************************
-	Common Helpers
- *************************/
 
 func SubTestHealthIndicator(di *HealthTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
@@ -172,6 +240,50 @@ func SubTestHealthIndicator(di *HealthTestDI) test.GomegaSubTestFunc {
 		}()
 		h = di.HealthIndicator.Health(ctx, opts)
 		assertHealth(t, g, h, health.StatusDown, opts)
+	}
+}
+
+/*************************
+	Common Helpers
+ *************************/
+
+func mockedSecurityAdminScope() sectest.SecurityContextOptions {
+	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
+		d.Scopes = utils.NewStringSet(SpecialScopeAdmin)
+	})
+}
+
+func assertHealthV3Response(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedStatus health.Status, expectDetails, expectComponents bool) {
+	body, e := io.ReadAll(resp.Body)
+	g.Expect(e).To(Succeed(), `health response body should be readable`)
+	g.Expect(body).To(MatchJsonPath("$.status", BeEquivalentTo(expectedStatus.String())), "health response should have status [%v]", expectedStatus)
+
+	if expectComponents {
+		g.Expect(body).To(MatchJsonPath("$..components", Not(BeEmpty())), "v3 health response should have components")
+	} else {
+		g.Expect(body).NotTo(MatchJsonPath("$..components", Not(BeEmpty())), "v3 health response should not have components")
+	}
+
+	if expectDetails {
+		g.Expect(body).To(MatchJsonPath("$..details", Not(BeEmpty())), "v3 health response should have details")
+	} else {
+		g.Expect(body).NotTo(MatchJsonPath("$..details", Not(BeEmpty())), "v3 health response should not have details")
+	}
+}
+
+func assertHealthV2Response(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedStatus health.Status, expectDetails, expectComponents bool) {
+	body, e := io.ReadAll(resp.Body)
+	g.Expect(e).To(Succeed(), `health response body should be readable`)
+	g.Expect(body).To(MatchJsonPath("$.status", BeEquivalentTo(expectedStatus.String())), "health response should have status [%v]", expectedStatus)
+	if expectComponents {
+		g.Expect(body).To(MatchJsonPath("$..details", Not(BeEmpty())), "v2 health response should have components")
+	} else {
+		g.Expect(body).NotTo(MatchJsonPath("$..details", Not(BeEmpty())), "v2 health response should not have components")
+	}
+	if expectDetails {
+		g.Expect(body).To(MatchJsonPath("$..detailed", Not(BeEmpty())), "v2 health response should have details")
+	} else {
+		g.Expect(body).NotTo(MatchJsonPath("$..detailed", Not(BeEmpty())), "v2 health response should not have details")
 	}
 }
 
