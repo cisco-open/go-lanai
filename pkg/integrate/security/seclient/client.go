@@ -233,11 +233,17 @@ func (c *remoteAuthClient) withClientAuth(opt *AuthOption) httpclient.RequestOpt
 // WithNonEmptyURLValues will accept a map[key][values] and convert it to a url.Values.
 // The function will check that the values, typed []string has a length > 0. Otherwise,
 // will not insert the key into the url.Values
-func WithNonEmptyURLValues(values map[string][]string) url.Values {
+func WithNonEmptyURLValues(mappedValues map[string][]string) url.Values {
 	urlValues := url.Values{}
-	for valueKey, value := range values {
-		if len(value) > 0 {
-			urlValues[valueKey] = value
+	for valueKey, values := range mappedValues {
+		var nonEmptyValues []string
+		for _, value := range values {
+			if value != "" {
+				nonEmptyValues = append(nonEmptyValues, value)
+			}
+		}
+		if len(nonEmptyValues) > 0 {
+			urlValues[valueKey] = nonEmptyValues
 		}
 	}
 	return urlValues
