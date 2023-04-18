@@ -138,6 +138,16 @@ func TestWithNonEmptyURLValues(t *testing.T) {
 				"key2": {"value1", "value2"},
 			},
 		},
+		{
+			name: "two keys, first has empty values, but using urlValues",
+			args: args{values: url.Values{
+				"key1": {""},
+				"key2": {"value1", "value2"},
+			}},
+			want: url.Values{
+				"key2": {"value1", "value2"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
