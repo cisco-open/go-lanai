@@ -17,6 +17,34 @@ type mockedAuthClient struct {
 	tokenExp time.Duration
 }
 
+// ClientCredentials mocked function will accept any clientID as long as it is accompanied
+// by a client Secret.
+// If the tokenExp is not defined, will default to 3600
+func (c *mockedAuthClient) ClientCredentials(ctx context.Context, opts ...seclient.AuthOptions) (*seclient.Result, error) {
+	opt, err := c.option(opts)
+	if err != nil {
+		return nil, err
+	}
+	if opt.ClientID != "" || opt.ClientSecret != "" {
+		return nil, fmt.Errorf("clientID and clientSecret need to be defined")
+	}
+	tokenExp := c.tokenExp
+	if tokenExp == 0 {
+		tokenExp = 3600
+	}
+	now := time.Now()
+	exp := now.UTC().Add(tokenExp)
+	return &seclient.Result{
+		Request: nil,
+		Token: &MockedToken{
+			ExpTime:      exp,
+			IssTime:      now,
+			MockedScopes: opt.Scopes,
+		},
+	}, nil
+
+}
+
 func newMockedAuthClient(props *mockingProperties, base *mockedBase) seclient.AuthenticationClient {
 	return &mockedAuthClient{
 		mockedBase: base,

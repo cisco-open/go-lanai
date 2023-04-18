@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -11,7 +12,7 @@ func TestAccessTokenJSONSerialization(t *testing.T) {
 	refresh := NewDefaultRefreshToken("refresh token value").PutDetails("d1", "v1")
 	token := NewDefaultAccessToken("token value")
 	token.
-		SetExpireTime(time.Now().Add(2 * time.Hour)).
+		SetExpireTime(time.Now().Add(2*time.Hour)).
 		PutDetails("d1", "v1").
 		PutDetails("d2", "v1").
 		AddScopes("s1", "s2").
@@ -19,7 +20,7 @@ func TestAccessTokenJSONSerialization(t *testing.T) {
 	token.Claims().Set("c1", "v1")
 	token.Claims().Set("c2", "v2")
 
-	bytes , err := json.Marshal(token)
+	bytes, err := json.Marshal(token)
 	str := string(bytes)
 	fmt.Printf("JSON: %s\n", str)
 
@@ -30,7 +31,7 @@ func TestAccessTokenJSONSerialization(t *testing.T) {
 	case len(str) == 0:
 		t.Errorf("json should not be empty")
 
-	//TODO more cases
+		//TODO more cases
 	}
 
 	// Deserialize
@@ -66,5 +67,82 @@ func TestAccessTokenJSONSerialization(t *testing.T) {
 		t.Errorf("parsed refresh token should be correct\n")
 
 		//TODO more cases
+	}
+}
+
+type TestTimeFormat time.Time
+
+type TestAccessToken struct {
+	AccessToken  string         `json:"access_token,omitempty"`
+	ExpiresIn    float64        `json:"expires_in,omitempty"`
+	Expiry       TestTimeFormat `json:"expiry"`
+	Iat          TestTimeFormat `json:"iat"`
+	RefreshToken string         `json:"refresh_token,omitempty"`
+	Scope        string         `json:"scope,omitempty"`
+	TokenType    string         `json:"token_type,omitempty"`
+}
+
+// MarshalJSON is defined so we can set the iat and expiry time formatting correctly
+func (t TestTimeFormat) MarshalJSON() ([]byte, error) {
+	newTime := time.Time(t)
+	return []byte(fmt.Sprintf("%q", newTime.Format(utils.ISO8601Seconds))), nil
+
+}
+
+func TestUnmarshal(t *testing.T) {
+	// timeNow can be used as the replacement to the time.Now() call. That way
+	// none of the times will be offset from each other
+	timeNow := time.Now().UTC().Truncate(time.Second)
+	tests := []struct {
+		name            string
+		testAccessToken TestAccessToken
+		validator       func(t *testing.T, token DefaultAccessToken)
+	}{
+		{
+			name: "Check Expires In",
+			testAccessToken: TestAccessToken{
+				AccessToken: "simple create",
+				TokenType:   "bearer", Scope: "s1",
+				ExpiresIn: 3600,
+				Iat:       TestTimeFormat(timeNow),
+			},
+			validator: func(t *testing.T, token DefaultAccessToken) {
+				expectedExpiry := timeNow.Add(3600 * time.Second).UTC()
+				expiryTime := token.expiryTime.UTC()
+				if !expectedExpiry.Equal(expiryTime) {
+					t.Errorf("expected: %v , got: %v", expectedExpiry, expiryTime)
+				}
+			},
+		},
+		{
+			name: "Check Expiry",
+			testAccessToken: TestAccessToken{
+				AccessToken: "simple create",
+				TokenType:   "bearer", Scope: "s1",
+				Expiry: TestTimeFormat(timeNow.Add(3600 * time.Second)),
+				Iat:    TestTimeFormat(timeNow),
+			},
+			validator: func(t *testing.T, token DefaultAccessToken) {
+				expectedExpiry := timeNow.Add(3600 * time.Second).UTC()
+				expiryTime := token.expiryTime.UTC()
+				if !expectedExpiry.Equal(expiryTime) {
+					t.Errorf("expected: %v , got: %v", expectedExpiry, expiryTime)
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			accessToken := DefaultAccessToken{}
+			b, err := json.Marshal(tt.testAccessToken)
+			if err != nil {
+				t.Fatalf("unable to setup test: %v", err)
+			}
+			err = json.Unmarshal(b, &accessToken)
+			if err != nil {
+				t.Errorf("error unmarshalling: %v", err)
+			}
+			tt.validator(t, accessToken)
+		})
 	}
 }
