@@ -1,17 +1,15 @@
-package health
+package healthep
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
 )
 
 const (
-	ID                   = "health"
-	EnableByDefault      = true
+	ID              = "health"
+	EnableByDefault = true
 )
 
 type Input struct{}
@@ -43,23 +41,24 @@ func (o Output) MarshalJSON() ([]byte, error) {
 
 type EndpointOptions func(opt *EndpointOption)
 type EndpointOption struct {
-	Contributor      health.Indicator
-	StatusCodeMapper health.StatusCodeMapper
-	MgtProperties    *actuator.ManagementProperties
-	Properties       *health.HealthProperties
+	Contributor       health.Indicator
+	StatusCodeMapper  health.StatusCodeMapper
+	MgtProperties     actuator.ManagementProperties
+	Properties        health.HealthProperties
+	DetailsControl    health.DetailsDisclosureControl
+	ComponentsControl health.ComponentsDisclosureControl
 }
 
 // HealthEndpoint implements actuator.Endpoint, actuator.WebEndpoint
 type HealthEndpoint struct {
 	actuator.WebEndpointBase
-	contributor    health.Indicator
-	scMapper       health.StatusCodeMapper
-	showDetails    health.ShowMode
-	showComponents health.ShowMode
-	permissions    utils.StringSet
+	contributor       health.Indicator
+	scMapper          health.StatusCodeMapper
+	detailsControl    health.DetailsDisclosureControl
+	componentsControl health.ComponentsDisclosureControl
 }
 
-func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
+func newEndpoint(opts ...EndpointOptions) (*HealthEndpoint, error) {
 	opt := EndpointOption{}
 	for _, f := range opts {
 		f(&opt)
@@ -73,16 +72,16 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 		opt.StatusCodeMapper = scMapper
 	}
 
-	showComponents := opt.Properties.ShowDetails
-	if opt.Properties.ShowComponents != nil {
-		showComponents = *opt.Properties.ShowComponents
+	disclosureCtrl, e := newDefaultDisclosureControl(&opt.Properties, opt.DetailsControl, opt.ComponentsControl)
+	if e != nil {
+		return nil, e
 	}
+
 	ep := HealthEndpoint{
-		contributor:    opt.Contributor,
-		scMapper:       opt.StatusCodeMapper,
-		showDetails:    opt.Properties.ShowDetails,
-		showComponents: showComponents,
-		permissions:    utils.NewStringSet(opt.Properties.Permissions...),
+		contributor:       opt.Contributor,
+		scMapper:          opt.StatusCodeMapper,
+		detailsControl:    disclosureCtrl,
+		componentsControl: disclosureCtrl,
 	}
 
 	properties := opt.MgtProperties
@@ -94,14 +93,15 @@ func newEndpoint(opts ...EndpointOptions) *HealthEndpoint {
 		opt.Properties = &properties.Endpoints
 		opt.EnabledByDefault = EnableByDefault
 	})
-	return &ep
+
+	return &ep, nil
 }
 
 // Read never returns error
 func (ep *HealthEndpoint) Read(ctx context.Context, _ *Input) (*Output, error) {
 	opts := health.Options{
-		ShowDetails:    ep.shouldShowDetails(ctx),
-		ShowComponents: ep.shouldShowComponents(ctx),
+		ShowDetails:    ep.detailsControl.ShouldShowDetails(ctx),
+		ShowComponents: ep.componentsControl.ShouldShowComponents(ctx),
 	}
 	h := ep.contributor.Health(ctx, opts)
 	switch f := ep.WebEndpointBase.NegotiateFormat(ctx); f {
@@ -109,48 +109,12 @@ func (ep *HealthEndpoint) Read(ctx context.Context, _ *Input) (*Output, error) {
 		h = ep.toSpringBootV2(h)
 	}
 
-	// Note: we know that *SystemHealthIndicator respect options (as all CompositeIndicator)
+	// Note: we know that *SystemHealthInitializer respect options (as all CompositeIndicator)
 	// we don't need to sanitize result
 	return &Output{
 		Health: h,
 		sc:     ep.scMapper.StatusCode(ctx, h.Status()),
 	}, nil
-}
-
-func (ep *HealthEndpoint) isAuthorized(ctx context.Context) bool {
-	auth := security.Get(ctx)
-	if auth.State() < security.StateAuthenticated || auth.Permissions() == nil {
-		return false
-	}
-	for p, _ := range ep.permissions {
-		if _, ok := auth.Permissions()[p]; !ok {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (ep *HealthEndpoint) shouldShowDetails(ctx context.Context) bool {
-	switch ep.showDetails {
-	case health.ShowModeNever:
-		return false
-	case health.ShowModeAlways:
-		return true
-	default:
-		return ep.isAuthorized(ctx)
-	}
-}
-
-func (ep *HealthEndpoint) shouldShowComponents(ctx context.Context) bool {
-	switch ep.showComponents {
-	case health.ShowModeNever:
-		return false
-	case health.ShowModeAlways:
-		return true
-	default:
-		return ep.isAuthorized(ctx)
-	}
 }
 
 func (ep *HealthEndpoint) toSpringBootV2(h health.Health) health.Health {
@@ -163,7 +127,7 @@ func (ep *HealthEndpoint) toSpringBootV2(h health.Health) health.Health {
 	default:
 		return h
 	}
-	
+
 	ret := CompositeHealthV2{
 		SimpleHealth: composite.SimpleHealth,
 		Components:   make(map[string]health.Health),

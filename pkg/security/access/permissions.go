@@ -12,6 +12,9 @@ import (
 /**************************
 	Common ControlFunc
 ***************************/
+
+// HasPermissions returns a ControlFunc that checks permissions of current auth.
+// If the given auth doesn't contain all specified permission, the ControlFunc returns false and a security.AccessDeniedError
 func HasPermissions(permissions...string) ControlFunc {
 	return func(auth security.Authentication) (bool, error) {
 		switch {
@@ -30,6 +33,7 @@ func HasPermissions(permissions...string) ControlFunc {
 /**************************
 	Permission Expr
 ***************************/
+
 const (
 	opAnd   = "&&"
 	opOr    = "||"

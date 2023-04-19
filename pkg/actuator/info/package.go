@@ -12,10 +12,12 @@ var logger = log.New("ACTR.Info")
 var Module = &bootstrap.Module{
 	Name: "actuator-info",
 	Precedence: actuator.MinActuatorPrecedence,
-	Options: []fx.Option{},
+	Options: []fx.Option{
+		fx.Invoke(register),
+	},
 }
 
-func init() {
+func Register() {
 	bootstrap.Register(Module)
 }
 
@@ -26,7 +28,7 @@ type regDI struct {
 	AppContext    *bootstrap.ApplicationContext
 }
 
-func Register(di regDI) {
+func register(di regDI) {
 	ep := newEndpoint(di)
 	di.Registrar.MustRegister(ep)
 }

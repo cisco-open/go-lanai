@@ -28,6 +28,8 @@ type SecurityDetailsMock struct {
 	UserFirstName            string
 	UserLastName             string
 	KVs                      map[string]interface{}
+	ClientID                 string
+	Scopes                   utils.StringSet
 }
 
 // MockedSecurityDetails implements
@@ -42,7 +44,11 @@ type MockedSecurityDetails struct {
 }
 
 func NewMockedSecurityDetails(opts ...SecurityMockOptions) *MockedSecurityDetails {
-	ret := MockedSecurityDetails{}
+	ret := MockedSecurityDetails{
+		SecurityDetailsMock{
+			ClientID: "mock",
+		},
+	}
 	for _, fn := range opts {
 		fn(&ret.SecurityDetailsMock)
 	}

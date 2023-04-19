@@ -8,6 +8,7 @@ import (
 /*******************************
 	SimpleStatusAggregator
 ********************************/
+
 var (
 	DefaultStatusOrders = []Status{
 		StatusDown, StatusOutOfService, StatusUp, StatusDown,

@@ -1,5 +1,8 @@
 // Package golden will contain some utility functions for golden file testing
 //
+// Golden File Testing pattern explained here:
+// 		https://ieftimov.com/posts/testing-in-go-golden-files/
+//
 // # PopulateGoldenFiles will need to be added to the first test run and then removed
 //
 // Golden Files are populated and asserted based on the current runs test name

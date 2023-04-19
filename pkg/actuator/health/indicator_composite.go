@@ -13,7 +13,7 @@ type IndicatorOption struct {
 	Aggregator   StatusAggregator
 }
 
-// CompositeIndicator implement Indicator and SystemHealthIndicator
+// CompositeIndicator implement Indicator and SystemHealthRegistrar
 type CompositeIndicator struct {
 	name       string
 	delegates  []Indicator
