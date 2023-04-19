@@ -1,4 +1,4 @@
-package testutils
+package gomegautils
 
 import (
 	"fmt"

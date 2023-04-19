@@ -12,7 +12,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	. "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
+	. "cto-github.cisco.com/NFV-BU/go-lanai/test/utils/gomega"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"fmt"
 	"github.com/onsi/gomega"
