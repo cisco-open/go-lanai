@@ -1,1 +1,1 @@
-package testservice_migrate
+package main
