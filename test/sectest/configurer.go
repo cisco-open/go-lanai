@@ -37,11 +37,13 @@ type MWMockOption struct {
 	Route      web.RouteMatcher
 	Condition  web.RequestMatcher
 	MWMocker   MWMocker
+	MWOrder    int
 	Configurer security.Configurer
 	Session    bool
 }
 
 var defaultMWMockOption = MWMockOption{
+	MWOrder:  security.MWOrderPreAuth + 5,
 	MWMocker: DirectExtractionMWMocker{},
 	Route:    matcher.AnyRoute(),
 }
@@ -126,10 +128,19 @@ func MWCondition(matchers ...web.RequestMatcher) MWMockOptions {
 }
 
 // MWEnableSession returns option for WithMockedMiddleware.
-// This condition is applied to the default test security.Configurer
+// Enabling in-memory session
 func MWEnableSession() MWMockOptions {
 	return func(opt *MWMockOption) {
 		opt.Session = true
+	}
+}
+
+// MWForceOverride returns option for WithMockedMiddleware.
+// Increase the order of mocking middleware to be the last auth middleware before access control.
+// Use this would override any other installed authenticators
+func MWForceOverride() MWMockOptions {
+	return func(opt *MWMockOption) {
+		opt.MWOrder = security.MWOrderAccessControl - 5
 	}
 }
 
@@ -191,12 +202,21 @@ func registerSecTest(di regDI) {
 }
 
 type Feature struct {
+	MWOrder  int
 	MWMocker MWMocker
 }
 
 // NewMockedMW Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func NewMockedMW() *Feature {
-	return &Feature{}
+	return &Feature{
+		MWOrder: defaultMWMockOption.MWOrder,
+		MWMocker: defaultMWMockOption.MWMocker,
+	}
+}
+
+func (f *Feature) Order(mwOrder int) *Feature {
+	f.MWOrder = mwOrder
+	return f
 }
 
 func (f *Feature) Mocker(mocker MWMocker) *Feature {
@@ -234,7 +254,7 @@ func (c *FeatureConfigurer) Apply(feature security.Feature, ws security.WebSecur
 		MWMocker: f.MWMocker,
 	}
 	mw := middleware.NewBuilder("mocked-auth-mw").
-		Order(security.MWOrderPreAuth + 5).
+		Order(f.MWOrder).
 		Use(mock.AuthenticationHandlerFunc())
 	ws.Add(mw)
 
@@ -267,7 +287,10 @@ func RegisterTestConfigurer(opts ...MWMockOptions) func(di mwDI) {
 
 func newTestSecurityConfigurer(opt *MWMockOption) func(ws security.WebSecurity) {
 	return func(ws security.WebSecurity) {
-		ws = ws.Route(opt.Route).With(NewMockedMW().Mocker(opt.MWMocker))
+		ws = ws.Route(opt.Route).With(NewMockedMW().
+			Order(opt.MWOrder).
+			Mocker(opt.MWMocker),
+		)
 		if opt.Condition != nil {
 			ws.Condition(opt.Condition)
 		}
