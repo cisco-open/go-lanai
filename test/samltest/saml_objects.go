@@ -25,6 +25,23 @@ func MakeAuthnRequest(sp saml.ServiceProvider, idpUrl string) string {
 	return data.Encode()
 }
 
+type AttributeOptions func(attr *saml.Attribute)
+func MockAttribute(name, value string, opts ...AttributeOptions) saml.Attribute {
+	attr := saml.Attribute{
+		FriendlyName: name,
+		Name:         name,
+		NameFormat:   "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+		Values:       []saml.AttributeValue{{
+			Type:   "xs:string",
+			Value:  value,
+		}},
+	}
+	for _, fn := range opts {
+		fn(&attr)
+	}
+	return attr
+}
+
 type AssertionOptions func(opt *AssertionOption)
 type AssertionOption struct {
 	Issuer       string // entity ID
@@ -33,6 +50,7 @@ type AssertionOption struct {
 	Recipient    string
 	Audience     string // entity ID
 	RequestID    string
+	Attributes   []saml.Attribute
 }
 
 func MockAssertion(opts ...AssertionOptions) *saml.Assertion {
@@ -89,7 +107,7 @@ func MockAssertion(opts ...AssertionOptions) *saml.Assertion {
 		},
 		AttributeStatements: []saml.AttributeStatement{
 			{
-				Attributes: []saml.Attribute{},
+				Attributes: opt.Attributes,
 			},
 		},
 	}
