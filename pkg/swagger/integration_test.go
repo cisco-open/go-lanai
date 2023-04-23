@@ -2,13 +2,10 @@ package swagger
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
@@ -29,11 +26,6 @@ func TestMain(m *testing.M) {
 	)
 }
 
-type IntegrationTestDI struct {
-	fx.In
-	SecReg security.Registrar
-}
-
 func TestSwaggerDocSecurityDisabledWithMockedServer(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -48,7 +40,6 @@ func TestSwaggerDocSecurityDisabledWithMockedServer(t *testing.T) {
 		apptest.WithProperties("swagger.security.secure-docs=false", "swagger.spec: testdata/api-docs-v3.yml"),
 		apptest.WithFxOptions(
 			fx.Provide(
-				IntegrationTestMocksProvider,
 				NewResServerConfigurer,
 				bindSwaggerProperties,
 			),
@@ -85,7 +76,6 @@ func TestSwaggerDocSecurityEnabledWithMockedServer(t *testing.T) {
 		apptest.WithProperties("swagger.security.secure-docs=true", "swagger.spec: testdata/api-docs-v3.yml"),
 		apptest.WithFxOptions(
 			fx.Provide(
-				IntegrationTestMocksProvider,
 				NewResServerConfigurer,
 				bindSwaggerProperties,
 			),
@@ -106,17 +96,6 @@ func TestSwaggerDocSecurityEnabledWithMockedServer(t *testing.T) {
 			g.Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 		}, "TestSwaggerDocApiSecurityEnabled"),
 	)
-}
-
-type IntegrationTestOut struct {
-	fx.Out
-	DiscoveryCustomizers *discovery.Customizers
-}
-
-func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
-	return IntegrationTestOut{
-		DiscoveryCustomizers: &discovery.Customizers{Customizers: utils.NewSet()},
-	}
 }
 
 func NewResServerConfigurer() resserver.ResourceServerConfigurer {

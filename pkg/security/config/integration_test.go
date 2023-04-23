@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
@@ -28,7 +27,6 @@ import (
 	samlidp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
 	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -77,7 +75,6 @@ type IntegrationTestDI struct {
 
 type IntegrationTestOut struct {
 	fx.Out
-	DiscoveryCustomizers *discovery.Customizers
 	IdpManager           idp.IdentityProviderManager
 	AccountStore         security.AccountStore
 	PasswordEncoder      passwd.PasswordEncoder
@@ -87,7 +84,6 @@ type IntegrationTestOut struct {
 
 func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
 	return IntegrationTestOut{
-		DiscoveryCustomizers: &discovery.Customizers{Customizers: utils.NewSet()},
 		IdpManager:           testdata.NewMockedIDPManager(),
 		AccountStore:         sectest.NewMockedAccountStore(testdata.MapValues(di.Mocking.Accounts)...),
 		PasswordEncoder:      passwd.NewNoopPasswordEncoder(),

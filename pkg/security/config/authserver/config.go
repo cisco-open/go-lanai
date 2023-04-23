@@ -97,13 +97,15 @@ type initDI struct {
 	Config               *Configuration
 	WebRegistrar         *web.Registrar
 	SecurityRegistrar    security.Registrar
-	DiscoveryCustomizers *discovery.Customizers
+	DiscoveryCustomizers *discovery.Customizers `optional:"true"`
 }
 
 // ConfigureAuthorizationServer is the Configuration entry point
 func ConfigureAuthorizationServer(di initDI) {
-	// SMCR
-	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
+	// SMCR only applicable when discovery is on
+	if di.DiscoveryCustomizers != nil {
+		di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
+	}
 
 	// Securities
 	di.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: di.Config})
