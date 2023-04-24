@@ -68,5 +68,5 @@ func WithEndpoints(opts ...ActuatorOptions) test.Options {
 
 // disableDefaultSecurity disable auto-configured "tokenauth" authentication
 func disableDefaultSecurity(reg *actuator.Registrar) {
-	reg.MustRegister(actuator.SecurityCustomizerFunc(func(ws security.WebSecurity) {}))
+	reg.MustRegister(actuator.SecurityCustomizerFunc(func(ws security.WebSecurity) {/* this would override default */}))
 }

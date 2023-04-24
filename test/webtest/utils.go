@@ -118,8 +118,7 @@ func applyRequestOptions(ctx context.Context, req *http.Request, withDefaults bo
 	// extract default request options from context
 	if withDefaults {
 		if conf, ok := ctx.Value(ctxKeyConfig).(*TestServerConfig); ok && len(conf.RequestOptions) != 0 {
-			cpy := make([]RequestOptions, len(conf.RequestOptions))
-			copy(cpy, conf.RequestOptions)
+			cpy := append([]RequestOptions{}, conf.RequestOptions...)
 			opts = append(cpy, opts...)
 		}
 	}

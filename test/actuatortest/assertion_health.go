@@ -61,45 +61,49 @@ func AssertHealthResponse(t *testing.T, resp *http.Response, expectations ...Exp
 }
 
 func assertHealthResponseV3(_ *testing.T, g *gomega.WithT, resp *http.Response, exp *ExpectedHealth) {
+	const jsonPathComponents = "$..components"
+	const jsonPathDetails = "$..details"
 	body, e := io.ReadAll(resp.Body)
 	g.Expect(e).To(Succeed(), `health response body should be readable`)
 	g.Expect(body).To(HaveJsonPathWithValue("$.status", exp.Status.String()), "health response should have status [%v]", exp.Status)
 
 	if exp.HasComponents {
-		g.Expect(body).To(HaveJsonPath("$..components"), "v3 health response should have components")
+		g.Expect(body).To(HaveJsonPath(jsonPathComponents), "v3 health response should have components")
 		for _, comps := range exp.RequiredComponents {
 			jsonPath := fmt.Sprintf("$.components.%s", comps)
 			g.Expect(body).To(HaveJsonPath(jsonPath), "v3 health response should have '%s' status", comps)
 		}
 	} else {
-		g.Expect(body).NotTo(HaveJsonPath("$..components"), "v3 health response should not have components")
+		g.Expect(body).NotTo(HaveJsonPath(jsonPathComponents), "v3 health response should not have components")
 	}
 
 	if exp.HasDetails {
-		g.Expect(body).To(HaveJsonPath("$..details"), "v3 health response should have details")
+		g.Expect(body).To(HaveJsonPath(jsonPathDetails), "v3 health response should have details")
 	} else {
-		g.Expect(body).NotTo(HaveJsonPath("$..details"), "v3 health response should not have details")
+		g.Expect(body).NotTo(HaveJsonPath(jsonPathDetails), "v3 health response should not have details")
 	}
 }
 
 func assertHealthResponseV2(_ *testing.T, g *gomega.WithT, resp *http.Response, exp *ExpectedHealth) {
+	const jsonPathComponents = "$..details"
+	const jsonPathDetails = "$..detailed"
 	body, e := io.ReadAll(resp.Body)
 	g.Expect(e).To(Succeed(), `health response body should be readable`)
 	g.Expect(body).To(HaveJsonPathWithValue("$.status", ContainElement(exp.Status.String())), "health response should have status [%v]", exp.Status)
 
 	if exp.HasComponents {
-		g.Expect(body).To(HaveJsonPath("$..details"), "v2 health response should have components")
+		g.Expect(body).To(HaveJsonPath(jsonPathComponents), "v2 health response should have components")
 		for _, comps := range exp.RequiredComponents {
 			jsonPath := fmt.Sprintf("$.details.%s", comps)
 			g.Expect(body).To(HaveJsonPath(jsonPath), "v2 health response should have '%s' status", comps)
 		}
 	} else {
-		g.Expect(body).NotTo(HaveJsonPath("$..details"), "v2 health response should not have components")
+		g.Expect(body).NotTo(HaveJsonPath(jsonPathComponents), "v2 health response should not have components")
 	}
 
 	if exp.HasDetails {
-		g.Expect(body).To(HaveJsonPath("$..detailed"), "v2 health response should have details")
+		g.Expect(body).To(HaveJsonPath(jsonPathDetails), "v2 health response should have details")
 	} else {
-		g.Expect(body).NotTo(HaveJsonPath("$..detailed"), "v2 health response should not have details")
+		g.Expect(body).NotTo(HaveJsonPath(jsonPathDetails), "v2 health response should not have details")
 	}
 }
