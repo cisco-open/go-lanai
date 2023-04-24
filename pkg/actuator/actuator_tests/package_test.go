@@ -2,7 +2,6 @@ package actuator_tests
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
@@ -20,10 +19,6 @@ import (
 const (
 	SpecialScopeAdmin = "admin"
 )
-
-func ConfigureSecurity(reg *actuator.Registrar) {
-	reg.MustRegister(actuator.SecurityCustomizerFunc(func(ws security.WebSecurity) {}))
-}
 
 type TestDI struct {
 	fx.In
@@ -51,16 +46,16 @@ func mockedSecurityNonAdmin() sectest.SecurityContextOptions {
 	})
 }
 
-func defaultRequestOptions() webtest.RequestOptions {
-	return webtest.Headers(
-		"Accept", "application/json",
-	)
+func v3RequestOptions() webtest.RequestOptions {
+	return func(req *http.Request) {
+		req.Header.Set("Accept", "application/json")
+	}
 }
 
 func v2RequestOptions() webtest.RequestOptions {
-	return webtest.Headers(
-		"Accept", actuator.ContentTypeSpringBootV2,
-	)
+	return func(req *http.Request) {
+		req.Header.Set("Accept", actuator.ContentTypeSpringBootV2)
+	}
 }
 
 func assertResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedStatus int, expectedHeaders ...string) {
