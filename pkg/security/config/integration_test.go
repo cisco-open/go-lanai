@@ -69,7 +69,7 @@ func TestMain(m *testing.M) {
 
 type IntegrationTestDI struct {
 	fx.In
-	AppCtx *bootstrap.ApplicationContext
+	AppCtx  *bootstrap.ApplicationContext
 	SecReg  security.Registrar
 	WebReg  *web.Registrar
 	Mocking testdata.MockingProperties

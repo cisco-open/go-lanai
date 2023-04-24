@@ -29,6 +29,18 @@ func WithConfigFS(fs ...embed.FS) test.Options {
 	return WithFxOptions(opts...)
 }
 
+// WithBootstrapConfigFS provides per-test config capability.
+// It register an embed.FS as bootstrap config, in which properties like "config.file.search-path" can be overrided.
+// the given embed.FS should contains at least one yml file.
+// see appconfig.FxEmbeddedBootstrapAdHoc
+func WithBootstrapConfigFS(fs ...embed.FS) test.Options {
+	opts := make([]fx.Option, len(fs))
+	for i, fs := range fs {
+		opts[i] = appconfiginit.FxEmbeddedBootstrapAdHoc(fs)
+	}
+	return WithFxOptions(opts...)
+}
+
 // WithProperties provides per-test config capability.
 // It registers ad-hoc test application properties. Supported format of each Key-Value pair are:
 // 	- "dotted.properties=value"

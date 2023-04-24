@@ -111,6 +111,18 @@ func UseLogLevel(lvl log.LoggingLevel) TestServerOptions {
 	}
 }
 
+// AddDefaultRequestOptions returns a TestServerOptions that add default RequestOptions on every request
+// created via NewRequest.
+func AddDefaultRequestOptions(opts...RequestOptions) TestServerOptions {
+	return func(conf *TestServerConfig) {
+		if conf.RequestOptions == nil {
+			conf.RequestOptions = opts
+		} else {
+			conf.RequestOptions = append(conf.RequestOptions, opts...)
+		}
+	}
+}
+
 type realSvrDI struct {
 	fx.In
 	Registrar *web.Registrar
@@ -138,7 +150,7 @@ func testSetupAddrExtractor(conf *TestServerConfig, di *realSvrDI) test.SetupFun
 			port:        di.Registrar.ServerPort(),
 			contextPath: conf.ContextPath,
 		}
-		return newWebTestContext(ctx, &info, nil), nil
+		return newWebTestContext(ctx, conf, &info, nil), nil
 	}
 }
 
@@ -147,6 +159,6 @@ func testSetupEngineExtractor(conf *TestServerConfig, di *mockedSvrDI) test.Setu
 		info := serverInfo{
 			contextPath: conf.ContextPath,
 		}
-		return  newWebTestContext(ctx, &info, di.Engine), nil
+		return  newWebTestContext(ctx, conf, &info, di.Engine), nil
 	}
 }

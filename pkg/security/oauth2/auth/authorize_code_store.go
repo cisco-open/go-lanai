@@ -87,9 +87,8 @@ func (s *RedisAuthorizationCodeStore) ConsumeAuthorizationCode(ctx context.Conte
 	}
 
 	if onetime {
-		cmd := s.redisClient.Del(ctx, key)
-		if cmd.Err() != nil {
-			logger.WithContext(ctx).Warn("authorization code was not removed: " + e.Error())
+		if cmd := s.redisClient.Del(ctx, key); cmd.Err() != nil {
+			logger.WithContext(ctx).Warnf("authorization code was not removed: %v", cmd.Err())
 		}
 	}
 	return toLoad, nil

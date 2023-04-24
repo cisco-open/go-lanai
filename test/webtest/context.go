@@ -9,9 +9,10 @@ import (
 type TestServerOptions func(conf *TestServerConfig)
 
 type TestServerConfig struct {
-	Port        int
-	ContextPath string
-	LogLevel    log.LoggingLevel
+	Port           int
+	ContextPath    string
+	LogLevel       log.LoggingLevel
+	RequestOptions []RequestOptions
 }
 
 type ExecResult struct {

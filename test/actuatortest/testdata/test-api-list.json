@@ -1,0 +1,19 @@
+[
+  {
+    "name": "TEST",
+    "resources": [
+      {
+        "name": "Get Something",
+        "endpoint": "/test/api/get",
+        "method": "GET",
+        "produces": "application/json"
+      },
+      {
+        "name": "Post Something",
+        "endpoint": "/test/api/post",
+        "method": "POST",
+        "produces": "application/json"
+      }
+    ]
+  }
+]

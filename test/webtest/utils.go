@@ -75,9 +75,7 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader, opts
 			panic(e)
 		}
 	}
-	for _, fn := range opts {
-		fn(req)
-	}
+	applyRequestOptions(ctx, req, true, opts)
 	return
 }
 
@@ -88,9 +86,7 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader, opts
 // Note: don't forget to close the response's body when done with it
 //nolint:bodyclose // we don't close body here, whoever using this function should close it when done
 func Exec(ctx context.Context, req *http.Request, opts ...RequestOptions) (ExecResult, error) {
-	for _, fn := range opts {
-		fn(req)
-	}
+	applyRequestOptions(ctx, req, false, opts)
 	if handler, ok := ctx.Value(ctxKeyHttpHandler).(http.Handler); ok {
 		// mocked mode
 		rw := httptest.NewRecorder()
@@ -116,6 +112,21 @@ func MustExec(ctx context.Context, req *http.Request, opts ...RequestOptions) Ex
 		panic(e)
 	}
 	return ret
+}
+
+func applyRequestOptions(ctx context.Context, req *http.Request, withDefaults bool, opts []RequestOptions) {
+	// extract default request options from context
+	if withDefaults {
+		if conf, ok := ctx.Value(ctxKeyConfig).(*TestServerConfig); ok && len(conf.RequestOptions) != 0 {
+			cpy := append([]RequestOptions{}, conf.RequestOptions...)
+			opts = append(cpy, opts...)
+		}
+	}
+
+	// apply all options
+	for _, fn := range opts {
+		fn(req)
+	}
 }
 
 /*************************
@@ -174,6 +185,10 @@ type infoCtxKey struct{}
 
 var ctxKeyInfo = infoCtxKey{}
 
+type configCtxKey struct{}
+
+var ctxKeyConfig = configCtxKey{}
+
 type httpHandlerCtxKey struct{}
 
 var ctxKeyHttpHandler = httpHandlerCtxKey{}
@@ -187,13 +202,15 @@ type serverInfo struct {
 type webTestContext struct {
 	context.Context
 	info    *serverInfo
+	config  *TestServerConfig
 	handler http.Handler
 }
 
-func newWebTestContext(parent context.Context, info *serverInfo, handler http.Handler) context.Context {
+func newWebTestContext(parent context.Context, config *TestServerConfig, info *serverInfo, handler http.Handler) context.Context {
 	return &webTestContext{
 		Context: parent,
 		info:    info,
+		config:  config,
 		handler: handler,
 	}
 }
@@ -202,6 +219,10 @@ func (c *webTestContext) Value(key interface{}) interface{} {
 	switch {
 	case key == ctxKeyInfo && c.info != nil:
 		return c.info
+	case key == ctxKeyConfig && c.config != nil:
+		{
+			return c.config
+		}
 	case key == ctxKeyHttpHandler && c.handler != nil:
 		return c.handler
 	}
