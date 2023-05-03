@@ -30,6 +30,7 @@ type SecurityDetailsMock struct {
 	KVs                      map[string]interface{}
 	ClientID                 string
 	Scopes                   utils.StringSet
+	UserEmail                string
 }
 
 // MockedSecurityDetails implements
@@ -167,5 +168,5 @@ func (d *MockedSecurityDetails) LastName() string {
 }
 
 func (d *MockedSecurityDetails) Email() string {
-	return ""
+	return d.UserEmail
 }
