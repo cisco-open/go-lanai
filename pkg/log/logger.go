@@ -58,6 +58,12 @@ func (l *logger) WithLevel(lvl LoggingLevel) Logger {
 	}
 }
 
+func (l *logger) WithCaller(caller interface{}) Logger {
+	return &logger{
+		Logger: log.WithSuffix(l.Logger, LogKeyCaller, caller),
+	}
+}
+
 func (l *logger) Debugf(msg string, args ...interface{}) {
 	_ = l.debugLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
