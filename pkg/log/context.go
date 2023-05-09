@@ -24,6 +24,7 @@ type Logger interface {
 	KVLogger
 	KeyValuer
 	Leveler
+	CallerValuer
 	StdLogger
 }
 
@@ -38,6 +39,10 @@ type Contextual interface {
 
 type KeyValuer interface {
 	WithKV(keyvals...interface{}) Logger
+}
+
+type CallerValuer interface {
+	WithCaller(caller interface{}) Logger
 }
 
 type KVLogger interface {
