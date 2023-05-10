@@ -7,7 +7,7 @@
 7=RowsColumns	9:["id"]
 8=RowsNext	11:[10:OTJkMjIzNTktNmU2MS00NDA3LWFkZjEtY2VlMmFlOGI4MjYy]	1:nil
 9=TxCommit	1:nil
-10=ConnQuery	2:"INSERT INTO \"test_errors\" (\"uk\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	100:"SERROR\x00C23505\x00Mduplicate key value (uk)=('Model-1') violates unique constraint \"idx_unique_key\"\x00Ferrors.go\x00L98\x00RNewUniquenessConstraintViolationError\x00\x00"
+10=ConnQuery	2:"INSERT INTO \"test_errors\" (\"uk\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	100:"SERROR\x00C23505\x00Mduplicate key value violates unique constraint \"idx_unique_key\"\x00DKey (uk)=('Model-1') already exists.\x00nidx_unique_key\x00Ferrors.go\x00L103\x00RNewUniquenessConstraintViolationError\x00\x00"
 11=TxRollback	1:nil
 
-"TestErrorTranslation"=1,2,3,4,3,5,6,7,8,9,5,10,11
+"TestErrorTranslation"=1,2,3,4,3,5,6,7,7,8,9,5,10,11

@@ -31,8 +31,6 @@ func (t PostgresErrorTranslator) Translate(_ context.Context, err error) error {
 	switch e := err.(type) {
 	case *pgconn.PgError:
 		ec = t.translateErrorCode(e.Code)
-	case pq.Error:
-		ec = t.translateErrorCode(string(e.Code))
 	case *pq.Error:
 		ec = t.translateErrorCode(string(e.Code))
 	default:
