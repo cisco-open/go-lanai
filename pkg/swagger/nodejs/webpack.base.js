@@ -71,7 +71,7 @@ module.exports = env => {
           test: /\.svg$/,
           exclude: /node_modules/,
           use: {
-            loader: 'react-svg-loader'
+            loader: '@svgr/webpack'
           }
         }
       ]
