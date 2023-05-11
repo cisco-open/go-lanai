@@ -30,7 +30,7 @@
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-svg-loader": "^3.0.0",
-    "swagger-ui": "4.5.2",
+    "swagger-ui": "4.18.3",
     "url-parse": "^1.5.10",
     "webpack": "^5.67.0",
     "webpack-bundle-analyzer": "^4.5.0",
