@@ -7,7 +7,7 @@ module.exports = env => {
   return {
     entry: {
       "swagger-ui-bundle": {
-        import: ['swagger-ui', 'swagger-ui/dist/swagger-ui-standalone-preset']
+        import: ['swagger-ui']
       },
       "nfv-swagger-ui": {
         import: './js/nfv-swagger-ui.js',
@@ -71,7 +71,7 @@ module.exports = env => {
           test: /\.svg$/,
           exclude: /node_modules/,
           use: {
-            loader: 'react-svg-loader'
+            loader: '@svgr/webpack'
           }
         }
       ]
