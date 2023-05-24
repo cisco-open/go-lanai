@@ -2,13 +2,14 @@ package data
 
 import (
 	"context"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgconn"
-	"github.com/lib/pq"
 	"net/http"
 	"regexp"
+
+	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 var (
