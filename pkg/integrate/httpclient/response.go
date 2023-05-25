@@ -13,9 +13,9 @@ import (
 
 type Response struct {
 	StatusCode int
-	Headers http.Header
-	Body interface{}
-	RawBody []byte `json:"-"`
+	Headers    http.Header
+	Body       interface{}
+	RawBody    []byte `json:"-"`
 }
 
 type ResponseOptions func(opt *responseOption)
@@ -128,9 +128,10 @@ func decodeJsonBody(resp *http.Response, body interface{}) ([]byte, error) {
 	if e != nil {
 		return nil, NewSerializationError(fmt.Errorf("response IO error: %s", e), resp, data)
 	}
-
-	if e := json.Unmarshal(data, body); e != nil {
-		return data, NewSerializationError(fmt.Errorf("response unmarshal error: %s", e), resp, data)
+	if len(data) > 0 {
+		if e := json.Unmarshal(data, body); e != nil {
+			return data, NewSerializationError(fmt.Errorf("response unmarshal error: %s", e), resp, data)
+		}
 	}
 	return data, nil
 }
@@ -188,4 +189,3 @@ func (b defaultErrorBody) MarshalJSON() ([]byte, error) {
 func (b *defaultErrorBody) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &b.jsonErrorBody)
 }
-
