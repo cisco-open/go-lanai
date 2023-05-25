@@ -25,9 +25,11 @@ import (
  *************************/
 
 const (
-	SDServiceName = `mockedserver`
-	TestPath      = "/echo"
-	TestErrorPath = "/fail"
+	SDServiceName          = `mockedserver`
+	TestPath               = "/echo"
+	TestErrorPath          = "/fail"
+	TestNoContentPath      = "/nocontent"
+	TestNoContentErrorPath = "/nocontentfail"
 )
 
 // UpdateMockedSD update SD record to use the random server port
@@ -67,8 +69,10 @@ func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 		),
 		test.SubTestSetup(UpdateMockedSD(&di)),
 		test.GomegaSubTest(SubTestWithSD(&di), "TestWithSD"),
+		test.GomegaSubTest(SubTestWithSDNoResponseContent(&di), "TestWithSDNoResponseContent"),
 		test.GomegaSubTest(SubTestWithBaseURL(&di), "TestWithBaseURL"),
 		test.GomegaSubTest(SubTestWithErrorResponse(&di), "TestWithErrorResponse"),
+		test.GomegaSubTest(SubTestWithNoContentErrorResponse(&di), "SubTestWithNoContentErrorResponse"),
 		test.GomegaSubTest(SubTestWithFailedSD(&di), "TestWithFailedSD"),
 	)
 }
@@ -82,6 +86,14 @@ func SubTestWithSD(di *TestDI) test.GomegaSubTestFunc {
 		client, e := di.HttpClient.WithService(SDServiceName)
 		g.Expect(e).To(Succeed(), "client with service name should be available")
 		performEchoTest(ctx, t, g, client)
+	}
+}
+
+func SubTestWithSDNoResponseContent(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		client, e := di.HttpClient.WithService(SDServiceName)
+		g.Expect(e).To(Succeed(), "client with service name should be available")
+		performNoResponseBodyTest(ctx, t, g, client)
 	}
 }
 
@@ -108,6 +120,21 @@ func SubTestWithErrorResponse(di *TestDI) test.GomegaSubTestFunc {
 
 		_, err := client.Execute(ctx, req, JsonBody(&EchoResponse{}))
 		assertErrorResponse(t, g, err, sc)
+	}
+}
+
+func SubTestWithNoContentErrorResponse(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		client, e := di.HttpClient.WithService("mockedserver")
+		g.Expect(e).To(Succeed(), "client with service name should be available")
+
+		sc := 400 + utils.RandomIntN(10)
+		req := NewRequest(TestNoContentErrorPath, http.MethodPut,
+			WithParam("sc", fmt.Sprintf("%d", sc)),
+		)
+
+		_, err := client.Execute(ctx, req, JsonBody(&NoContentResponse{}))
+		assertNoContentErrorResponse(t, g, err, sc)
 	}
 }
 
@@ -144,6 +171,11 @@ type EchoResponse struct {
 	Headers map[string]string `json:"headers"`
 	Form    map[string]string `json:"form"`
 	ReqBody EchoRequest       `json:"body"`
+}
+
+type NoContentResponse struct {
+	Headers map[string]string `json:"headers"`
+	Form    map[string]string `json:"form"`
 }
 
 /*************************
@@ -195,6 +227,20 @@ func performEchoTest(ctx context.Context, t *testing.T, g *gomega.WithT, client 
 	assertResponse(t, g, resp, http.StatusOK, &expected)
 }
 
+func performNoResponseBodyTest(ctx context.Context, t *testing.T, g *gomega.WithT, client Client) {
+	random := utils.RandomString(20)
+	now := time.Now().Format(time.RFC3339)
+	req := NewRequest(TestNoContentPath, http.MethodPost,
+		WithHeader("X-Data", random),
+		WithParam("time", now),
+		WithParam("data", random),
+	)
+
+	resp, e := client.Execute(ctx, req, JsonBody(&NoContentResponse{}))
+	g.Expect(e).To(Succeed(), "execute request shouldn't fail")
+	assertNoContentResponse(t, g, resp, http.StatusNoContent)
+}
+
 func assertResponse(_ *testing.T, g *gomega.WithT, resp *Response, expectedSC int, expectedBody *EchoResponse) {
 	g.Expect(resp).To(Not(BeNil()), "response cannot be nil")
 	g.Expect(resp.StatusCode).To(Equal(expectedSC), "response status code should be correct")
@@ -214,6 +260,23 @@ func assertResponse(_ *testing.T, g *gomega.WithT, resp *Response, expectedSC in
 	g.Expect(respBody.ReqBody).To(BeEquivalentTo(expectedBody.ReqBody), ".ReqBody should correct")
 }
 
+func assertNoContentResponse(_ *testing.T, g *gomega.WithT, resp *Response, expectedSC int) {
+	g.Expect(resp).To(Not(BeNil()), "response cannot be nil")
+	g.Expect(resp.StatusCode).To(Equal(expectedSC), "response status code should be correct")
+	g.Expect(resp.Headers).To(HaveKey("Content-Type"), "response headers should at least have content-type")
+}
+
+func assertNoContentErrorResponse(_ *testing.T, g *gomega.WithT, err error, expectedSC int) {
+	g.Expect(err).To(HaveOccurred(), "execute request with random values should fail")
+	g.Expect(err).To(BeAssignableToTypeOf(&Error{}), "error should be correct type")
+
+	resp := err.(*Error).Response
+	g.Expect(resp).To(Not(BeNil()), "error should contains response")
+	//g.Expect(resp.StatusCode).To(Equal(expectedSC), "error response should have correct status code")
+	g.Expect(resp.Header).To(HaveKey("Content-Type"), "error response headers should at least have content-type")
+	g.Expect(resp.Body).To(Not(BeNil()), "error response should have parsed body")
+}
+
 func assertErrorResponse(_ *testing.T, g *gomega.WithT, err error, expectedSC int) {
 	g.Expect(err).To(HaveOccurred(), "execute request with random values should fail")
 	g.Expect(err.Error()).To(HaveSuffix(testdata.ErrorMessage), "error should have correct value")
@@ -231,7 +294,6 @@ func assertErrorResponse(_ *testing.T, g *gomega.WithT, err error, expectedSC in
 	g.Expect(resp.Body).To(Not(BeNil()), "error response should have parsed body")
 	g.Expect(resp.Body.Error()).To(Equal(testdata.ErrorMessage), "error response should correct error field")
 	g.Expect(resp.Body.Message()).To(Equal(testdata.ErrorMessage), "error response should correct message")
-
 
 	//g.Expect(resp.StatusCode).To(Equal(expectedSC), "response status code should be correct")
 	//
