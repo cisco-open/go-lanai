@@ -272,7 +272,7 @@ func assertNoContentErrorResponse(_ *testing.T, g *gomega.WithT, err error, expe
 
 	resp := err.(*Error).Response
 	g.Expect(resp).To(Not(BeNil()), "error should contains response")
-	//g.Expect(resp.StatusCode).To(Equal(expectedSC), "error response should have correct status code")
+	g.Expect(resp.StatusCode).To(Equal(expectedSC), "error response should have correct status code")
 	g.Expect(resp.Header).To(HaveKey("Content-Type"), "error response headers should at least have content-type")
 	g.Expect(resp.Body).To(Not(BeNil()), "error response should have parsed body")
 }
