@@ -1,0 +1,8 @@
+#services:
+#  test:
+#    url: ''
+#bundles:
+#  test:
+#    resource: "/bundles/bundle.tar.gz"
+decision_logs:
+  console: true
