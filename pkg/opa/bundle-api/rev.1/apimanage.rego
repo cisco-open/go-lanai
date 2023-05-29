@@ -1,6 +1,7 @@
 package apimanage
 
 import future.keywords
+import data.roles.has_permission
 
 # API permissions lookup from Data
 default required_permissions := []
@@ -16,8 +17,5 @@ required_permissions := permissions {
 default allow_api := false
 allow_api if {
 	some perm in required_permissions
-	input.auth.userAuth.permissions[perm]
+	has_permission(perm)
 }
-
-# API access with JWT from request
-# TBD

@@ -8,11 +8,12 @@ import (
 	sdktest "github.com/open-policy-agent/opa/sdk/test"
 	"go.uber.org/fx"
 	"io/fs"
+	"strings"
 )
 
 //TODO this is just a POC, bundles should be loaded from bundle server
 
-//go:embed bundle-api-1/**
+//go:embed bundle-api/roles/** bundle-api/rev.2/**
 var BundleFS embed.FS
 
 var Bundles = map[string]embed.FS {
@@ -70,7 +71,7 @@ func loadBundleFiles(fsys fs.FS) (map[string]string, error) {
 		if e != nil {
 			return nil
 		}
-		ret[d.Name()] = string(data)
+		ret[strings.ReplaceAll(path, "/", "_")] = string(data)
 		return nil
 	})
 	if e != nil {
