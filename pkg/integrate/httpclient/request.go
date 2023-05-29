@@ -1,8 +1,10 @@
 package httpclient
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"io"
@@ -25,16 +27,49 @@ type Request struct {
 
 func NewRequest(path, method string, opts ...RequestOptions) *Request {
 	r := Request{
-		Path:       path,
-		Method:     method,
-		Params:     map[string]string{},
-		Headers:    http.Header{},
-		EncodeFunc: httptransport.EncodeJSONRequest,
+		Path:    path,
+		Method:  method,
+		Params:  map[string]string{},
+		Headers: http.Header{},
+		//EncodeFunc: httptransport.EncodeJSONRequest, // TODO change this encoder
+		EncodeFunc: EncodeJSONRequest,
 	}
 	for _, f := range opts {
 		f(&r)
 	}
 	return &r
+}
+
+// TODO: Set the content-length, but GET and DELETEs should have 0 content length, so only set it to >0 if
+// TODO: we have something
+func EncodeJSONRequest(c context.Context, r *http.Request, request interface{}) error {
+	if request == nil {
+		return nil
+	}
+	r.Header.Set("Content-Type", "application/json; charset=utf-8")
+	type Headerer interface {
+		Headers() http.Header
+	}
+	if headerer, ok := request.(Headerer); ok {
+		for k := range headerer.Headers() {
+			r.Header.Set(k, headerer.Headers().Get(k))
+		}
+	}
+	var b bytes.Buffer
+	r.Body = io.NopCloser(&b)
+	err := json.NewEncoder(&b).Encode(request)
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, b.Len())
+	copy(buf, b.Bytes())
+	r.GetBody = func() (io.ReadCloser, error) {
+		r := bytes.NewReader(buf)
+		return io.NopCloser(r), nil
+	}
+	r.ContentLength = int64(b.Len())
+	return nil
 }
 
 func effectiveEncodeFunc(ctx context.Context, req *http.Request, val interface{}) error {
@@ -152,5 +187,3 @@ func noop() func(r *Request) {
 		// noop
 	}
 }
-
-
