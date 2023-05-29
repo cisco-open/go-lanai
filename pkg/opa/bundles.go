@@ -12,7 +12,7 @@ import (
 
 //TODO this is just a POC, bundles should be loaded from bundle server
 
-//go:embed bundle/**
+//go:embed bundle-1/**
 var BundleFS embed.FS
 
 var Bundles = map[string]embed.FS {
