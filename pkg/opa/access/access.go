@@ -41,7 +41,7 @@ type RequestClause struct {
 	Scheme string      `json:"scheme"`
 	Path   string      `json:"path"`
 	Method string      `json:"method"`
-	Body   string      `json:"body"`
+	Body   string      `json:"body"` // Do not use it for now
 	Header http.Header `json:"header"`
 	Query  url.Values  `json:"query"`
 	JWT    string      `json:"jwt"`
@@ -56,7 +56,6 @@ func NewRequestClause(req *http.Request) *RequestClause {
 		Scheme: req.URL.Scheme,
 		Path:   req.URL.Path,
 		Method: req.Method,
-		Body:   "",
 		Header: req.Header,
 		Query:  req.URL.Query(),
 		JWT:    jwt,

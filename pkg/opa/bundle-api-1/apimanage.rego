@@ -2,6 +2,7 @@ package apimanage
 
 import future.keywords
 
+# API access with authentication from input
 default allow_api := false
 allow_api if {
 	input.request.method == "GET"
@@ -44,3 +45,6 @@ allow_api if {
 	input.request.path == "/apim/api/v1/enforce/keys/verify"
 	input.auth.userAuth.permissions["IS_API_ADMIN"]
 }
+
+# API access with JWT from request
+# TBD

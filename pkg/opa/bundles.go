@@ -12,11 +12,11 @@ import (
 
 //TODO this is just a POC, bundles should be loaded from bundle server
 
-//go:embed bundle-1/**
+//go:embed bundle-api-1/**
 var BundleFS embed.FS
 
 var Bundles = map[string]embed.FS {
-	"/bundles/bundle.tar.gz": BundleFS,
+	"/bundles/api.tar.gz": BundleFS,
 }
 
 type BundleServerOut struct {
