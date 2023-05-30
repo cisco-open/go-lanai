@@ -11,6 +11,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sdtest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"encoding/json"
 	"github.com/onsi/gomega"
@@ -28,11 +29,11 @@ import (
 
 // TestMain globally enable HTTP recording mode
 // Important: this should always be disabled when checking in
-//func TestMain(m *testing.M) {
-//	suitetest.RunTests(m,
-//		ittest.PackageHttpRecordingMode(),
-//	)
-//}
+func TestMain(m *testing.M) {
+	suitetest.RunTests(m,
+		ittest.PackageHttpRecordingMode(),
+	)
+}
 
 type TestDI struct {
 	fx.In
