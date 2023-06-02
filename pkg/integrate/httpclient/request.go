@@ -3,6 +3,7 @@ package httpclient
 import (
 	"bytes"
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -27,11 +28,10 @@ type Request struct {
 
 func NewRequest(path, method string, opts ...RequestOptions) *Request {
 	r := Request{
-		Path:    path,
-		Method:  method,
-		Params:  map[string]string{},
-		Headers: http.Header{},
-		//EncodeFunc: httptransport.EncodeJSONRequest, // TODO change this encoder
+		Path:       path,
+		Method:     method,
+		Params:     map[string]string{},
+		Headers:    http.Header{},
 		EncodeFunc: EncodeJSONRequest,
 	}
 	for _, f := range opts {
@@ -40,17 +40,15 @@ func NewRequest(path, method string, opts ...RequestOptions) *Request {
 	return &r
 }
 
-// TODO: Set the content-length, but GET and DELETEs should have 0 content length, so only set it to >0 if
-// TODO: we have something
 func EncodeJSONRequest(c context.Context, r *http.Request, request interface{}) error {
 	if request == nil {
+		r.Body = http.NoBody
+		r.GetBody = nil
+		r.ContentLength = 0
 		return nil
 	}
 	r.Header.Set("Content-Type", "application/json; charset=utf-8")
-	type Headerer interface {
-		Headers() http.Header
-	}
-	if headerer, ok := request.(Headerer); ok {
+	if headerer, ok := request.(web.Headerer); ok {
 		for k := range headerer.Headers() {
 			r.Header.Set(k, headerer.Headers().Get(k))
 		}
@@ -62,8 +60,7 @@ func EncodeJSONRequest(c context.Context, r *http.Request, request interface{}) 
 		return err
 	}
 
-	buf := make([]byte, b.Len())
-	copy(buf, b.Bytes())
+	buf := b.Bytes()
 	r.GetBody = func() (io.ReadCloser, error) {
 		r := bytes.NewReader(buf)
 		return io.NopCloser(r), nil
