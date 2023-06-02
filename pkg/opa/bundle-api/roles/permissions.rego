@@ -6,7 +6,7 @@ import future.keywords
 has_permission(p) if {
 	# Check permissions with Authentication from Input
     has_auth
-	input.auth.userAuth.permissions[p]
+	p in input.auth.permissions
 } else {
 	# Check permissions with JWT
 	not has_auth
@@ -23,5 +23,4 @@ jwt_claims := jwt if {
 
 has_auth if {
 	_ = input.auth
-    _ = input.auth.userAuth
 }

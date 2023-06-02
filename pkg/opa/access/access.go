@@ -41,7 +41,7 @@ func PrepareOpaQuery(ctx context.Context, policy string, req *http.Request) *sdk
 		Now:                 time.Now(),
 		Path:                policy,
 		Input:               opa.InputApiAccess{
-			Authentication: security.Get(ctx),
+			Authentication: opa.NewAuthenticationClause(ctx),
 			Request:        opa.NewRequestClause(req),
 		},
 		StrictBuiltinErrors: false,

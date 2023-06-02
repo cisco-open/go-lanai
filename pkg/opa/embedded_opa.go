@@ -14,12 +14,18 @@ import (
 	"io"
 )
 
+var embeddedOPA *sdk.OPA
+
 type EmbeddedOPAReadyCH <-chan struct{}
 
 type EmbeddedOPAOut struct {
 	fx.Out
 	OPA   *sdk.OPA
 	Ready EmbeddedOPAReadyCH
+}
+
+func EmbeddedOPA() *sdk.OPA {
+	return embeddedOPA
 }
 
 func ProvideEmbeddedOPA(appCtx *bootstrap.ApplicationContext, bundleServer *sdktest.Server) (EmbeddedOPAOut, error) {
@@ -48,6 +54,7 @@ func ProvideEmbeddedOPA(appCtx *bootstrap.ApplicationContext, bundleServer *sdkt
 }
 
 func InitializeEmbeddedOPA(lc fx.Lifecycle, opa *sdk.OPA, ready EmbeddedOPAReadyCH) {
+	embeddedOPA = opa
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			select {
