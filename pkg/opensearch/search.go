@@ -25,7 +25,7 @@ type SearchResponse[T any] struct {
 		Successful int `json:"successful"`
 		Skipped    int `json:"skipped"`
 		Failed     int `json:"failed"`
-	}
+	} `json:"_shards"`
 	Hits struct {
 		MaxScore float64 `json:"max_score"`
 		Total    struct {
