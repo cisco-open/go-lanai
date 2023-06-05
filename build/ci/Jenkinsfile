@@ -1,5 +1,9 @@
 @Library('platform-jenkins-lib') _
-
+/**
+ * @auther xinzlu
+ * lanaiLibPipeline is managed by the platform jenkins lib:
+ * https://cto-github.cisco.com/NFV-BU/msx-platform-jenkins-lib/blob/develop/vars/lanaiLibPipeline.groovy
+ */
 lanaiLibPipeline {
     repoName = 'go-lanai'
 }
