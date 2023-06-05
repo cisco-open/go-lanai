@@ -16,7 +16,7 @@ const (
 type DataGroup string
 
 type DataStorage interface {
-	Read(ctx context.Context, groups...DataGroup) (map[DataGroup]RawEntries, error)
+	Read(ctx context.Context, groups ...DataGroup) (map[DataGroup]RawEntries, error)
 
 	// Append save data entry
 	Append(ctx context.Context, group DataGroup, entry interface{}, cap int64) error
@@ -48,8 +48,8 @@ func (v RawEntries) MarshalJSON() (data []byte, err error) {
 }
 
 type SimplePair struct {
-	Ts    uint64
-	Value uint64
+	Ts    uint64 `json:"Ts"`
+	Value uint64 `json:"Value"`
 }
 
 func (p *SimplePair) MarshalBinary() (data []byte, err error) {
@@ -57,9 +57,9 @@ func (p *SimplePair) MarshalBinary() (data []byte, err error) {
 }
 
 type CPUPair struct {
-	Ts   uint64
-	User float64
-	Sys  float64
+	Ts   uint64  `json:"Ts"`
+	User float64 `json:"User"`
+	Sys  float64 `json:"Sys"`
 }
 
 func (p *CPUPair) MarshalBinary() (data []byte, err error) {
@@ -67,12 +67,12 @@ func (p *CPUPair) MarshalBinary() (data []byte, err error) {
 }
 
 type PprofPair struct {
-	Ts           uint64
-	Block        int
-	Goroutine    int
-	Heap         int
-	Mutex        int
-	Threadcreate int
+	Ts           uint64 `json:"Ts"`
+	Block        int    `json:"Block"`
+	Goroutine    int    `json:"Goroutine"`
+	Heap         int    `json:"Heap"`
+	Mutex        int    `json:"Mutex"`
+	Threadcreate int    `json:"Threadcreate"`
 }
 
 func (p *PprofPair) MarshalBinary() (data []byte, err error) {
