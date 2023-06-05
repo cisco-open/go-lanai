@@ -17,8 +17,8 @@ func (b PingIndicator) Health(ctx context.Context, options Options) Health {
 	// very basic check: if the given context is *gin.Context, it means the health check is invoked via web endpoint.
 	// therefore the web framework is still working
 	if g := web.GinContext(ctx); g != nil {
-		return NewDetailedHealth(StatusUp, "", nil)
+		return NewDetailedHealth(StatusUp, "ping", nil)
 	}
-	return NewDetailedHealth(StatusUnknown, "", nil)
+	return NewDetailedHealth(StatusUnknown, "ping", nil)
 }
 

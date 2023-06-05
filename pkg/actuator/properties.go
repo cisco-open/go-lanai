@@ -68,14 +68,14 @@ func NewManagementProperties() *ManagementProperties {
 			EnabledByDefault: false,
 			Permissions:      []string{},
 			Endpoints:        map[string]EndpointSecurityProperties{
-				"alive": EndpointSecurityProperties{
-					Enabled: utils.BoolPtr(false),
+				"alive": {
+					Enabled: utils.ToPtr(false),
 				},
-				"info": EndpointSecurityProperties{
-					Enabled: utils.BoolPtr(false),
+				"info": {
+					Enabled: utils.ToPtr(false),
 				},
-				"health": EndpointSecurityProperties{
-					Enabled: utils.BoolPtr(false),
+				"health": {
+					Enabled: utils.ToPtr(false),
 				},
 			},
 		},

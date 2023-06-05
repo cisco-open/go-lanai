@@ -8,7 +8,7 @@ Understanding of the fx framework is needed to understand the rest of the docume
 Modules provided by go-lanai includes:
 - actuator
 - appconfig
-- [boostrap](pkg/bootstrap/README.md)
+- [bootstrap](pkg/bootstrap/README.md)
 - consul
 - data
 - discovery
@@ -113,7 +113,6 @@ cloud:
     config:
       enabled: true
     discovery:
-      health-check-critical-timeout: 1h
       ip-address: ${spring.cloud.consul.discovery.ipaddress:}
   vault:
     kv:
@@ -805,3 +804,8 @@ And various other useful modules:
 
 These modules are developed following the same pattern and principals described in this documentation. Explore them by exploring
 their corresponding packages.
+
+# lanai-cli
+
+go-lanai is a CLI building tool that provides various commands:
+- [codegen](cmd/lanai-cli/codegen/README.md) - provides a code generator that generates code based on an OpenAPI contract

@@ -128,7 +128,6 @@ func TestGormCRUDRepository(t *testing.T) {
 		test.GomegaSubTest(SubTestDelete(di), "TestDelete"),
 		test.GomegaSubTest(SubTestRepoSyntax(di), "TestRepoSyntax"),
 		test.GomegaSubTest(SubTestPageAndSort(di), "TestPageAndSort"),
-		test.GomegaSubTest(SubTestTransaction(di), "TestTransaction"),
 		test.GomegaSubTest(SubTestUtilFunctions(di), "TestUtilFunctions"),
 	)
 }
@@ -151,6 +150,40 @@ func TestGormUtils(t *testing.T) {
 		test.SubTestSetup(SetupTestPrepareTables(di)),
 		test.GomegaSubTest(SubTestResolveSchema(di), "TestResolveSchema"),
 		test.GomegaSubTest(SubTestCheckUniqueness(di), "TestCheckUniqueness"),
+	)
+}
+
+func TestCockroachTransactions(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		dbtest.WithDBPlayback("testdb"),
+		apptest.WithModules(Module),
+		apptest.WithTimeout(time.Minute),
+		apptest.WithFxOptions(
+			fx.Provide(NewTestRepository),
+			fx.Supply(fx.Annotated{
+				Target: tx.MaxRetries(1, 0),
+				Group:  tx.FxTransactionExecuterOption,
+			}),
+		),
+		apptest.WithProperties(
+			"data.logging.level: debug",
+			"log.levels.data: debug",
+		),
+		apptest.WithDI(di),
+		test.SubTestSetup(SetupTestPrepareTables(di)),
+		test.GomegaSubTest(SubTestTransactionRetry(di), "TestTransactionRetry"),
+
+		// The below 3 Transaction tests use nested transactions, which automatically use SavePoint with a name that is
+		// equal to the memory address of the function so copyist is not happy with that. Comment them out when pushing to a branch
+		//test.GomegaSubTest(SubTestTransaction(di), "TestTransaction"),
+		//test.GomegaSubTest(SubTestNestedTransactionRetry(di), "SubTestNestedTransactionRetry"),
+		//test.GomegaSubTest(SubTestNestedTransactionRetryExpectRollback(di), "SubTestNestedTransactionRetryExpectRollback"),
+
+		test.GomegaSubTest(SubTestManualTransactionRetry(di), "SubTestManualTransactionRetry"),
+		test.GomegaSubTest(SubTestNestedManualTransactionRollback(di), "SubTestNestedManualTransactionRollback"),
+		test.GomegaSubTest(SubTestNestedManualTransaction(di), "SubTestNestedManualTransaction"),
 	)
 }
 
@@ -692,6 +725,505 @@ func SubTestTransaction(di *testDI) test.GomegaSubTestFunc {
 		e = di.Repo.FindById(ctx, &model, modelIDs[1])
 		g.Expect(e).To(gomega.Succeed(), "finding second model shouldn't fail")
 		g.Expect(model.Value).ToNot(gomega.Equal(newValue), "second model shouldn't get updated")
+	}
+}
+
+func SubTestTransactionRetry(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// Setup the test case to be similar to https://www.cockroachlabs.com/docs/v22.2/demo-serializable
+		// 1) We will create two models to setup the scenario.
+		// 2) Create two concurrent transactions where each transaction is in charge of modifying one of the models
+		// 3) In each transaction, they will perform a search that includes the other model.
+		// 4) After the search, the transactions will modify the search field of their model.
+		// If the retry works automatically, then the model 1 transaction will re-run and should successfully
+		// change model1's search value to the updatedSearchValue
+		originalSearchValue, updatedSearchValue := 20, 21
+		ID1, ID2 := uuid.New(), uuid.New()
+		model1, oto := createMainModel(ID1, originalSearchValue)
+		model1.OneToOne = oto
+		err := di.Repo.Save(ctx, model1)
+		g.Expect(err).To(gomega.Succeed())
+		model2, oto := createMainModel(ID2, originalSearchValue)
+		model2.OneToOne = oto
+		err = di.Repo.Save(ctx, model2)
+		g.Expect(err).To(gomega.Succeed())
+
+		var testModels []*TestModel
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+
+		// This Transaction2 happens during the execution of Transaction1. This will
+		// cause a serializable isolation violation by modifying an entry that shows up
+		// in the Transaction1's query.
+		model2Transaction := func(ctx context.Context, tx2 *gorm.DB) error {
+			err := tx2.Where("search = ?", model2.SearchIdx).Find(&testModels).Error
+			g.Expect(err).To(gomega.Succeed())
+			model2.SearchIdx = updatedSearchValue
+			err = tx2.Updates(model2).Error
+			g.Expect(err).To(gomega.Succeed())
+			return nil
+		}
+
+		// Transaction1 will execute transaction2 not as a nested transaction, but as a separate
+		// transaction. This will mimic two transactions happening simultaneously where transaction 2
+		// completes first.
+		// We expect this Transaction1 to complete more than once (depends on number of retries), so
+		// if the transaction has already run once, we do not want to trigger Transaction2 again.
+		var executedModel1Transaction bool
+		model1Transaction := func(ctx1 context.Context, tx1 *gorm.DB) error {
+			err := tx1.Where("search = ?", model1.SearchIdx).Find(&testModels).Error
+			g.Expect(err).To(gomega.Succeed())
+
+			if !executedModel1Transaction {
+				// using ctx and not ctx1 to make sure we're doing a concurrent transaction
+				// and not a nested transaction
+				err = gormRepo.Transaction(ctx, model2Transaction)
+				g.Expect(err).To(gomega.Succeed())
+			}
+			model1.SearchIdx = updatedSearchValue
+			err = tx1.Updates(model1).Error
+			g.Expect(err).To(gomega.Succeed())
+			executedModel1Transaction = true
+			return nil
+		}
+
+		// We trigger Transaction1, which will then trigger Transaction2
+		err = gormRepo.Transaction(ctx, model1Transaction)
+
+		if tx.ErrIsRetryable(err) {
+			t.Fatalf("the transaction was not retried: %v", err)
+		}
+		g.Expect(err).To(gomega.Succeed())
+
+		// Validation
+		err = gormRepo.DB(ctx).Where("search = ?", originalSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(0))
+		err = gormRepo.DB(ctx).Where("search = ?", updatedSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(2))
+
+	}
+}
+
+// SubTestNestedTransactionRetry will be the same as the non nested one, however we'll wrap the model 1 transaction
+// around another transaction. This will test to see if an inner transaction is able to be retried.
+func SubTestNestedTransactionRetry(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		originalSearchValue, updatedSearchValue := 20, 21
+		ID1, ID2 := uuid.New(), uuid.New()
+		model1, oto := createMainModel(ID1, originalSearchValue)
+		model1.OneToOne = oto
+		err := di.Repo.Save(ctx, model1)
+		g.Expect(err).To(gomega.Succeed())
+		model2, oto := createMainModel(ID2, originalSearchValue)
+		model2.OneToOne = oto
+		err = di.Repo.Save(ctx, model2)
+		g.Expect(err).To(gomega.Succeed())
+
+		var testModels []*TestModel
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+
+		model2Transaction := func(ctx2 context.Context, tx2 *gorm.DB) error {
+			err := tx2.Where("search = ?", model2.SearchIdx).Find(&testModels).Error
+			g.Expect(err).To(gomega.Succeed())
+			model2.SearchIdx = updatedSearchValue
+			err = tx2.Updates(model2).Error
+			g.Expect(err).To(gomega.Succeed())
+			return nil
+		}
+
+		var executedModel1Transaction bool
+		model1Transaction := func(ctx1 context.Context, tx1 *gorm.DB) error {
+			err := tx1.Where("search = ?", model1.SearchIdx).Find(&testModels).Error
+			g.Expect(err).To(gomega.Succeed())
+
+			if !executedModel1Transaction {
+				// we use ctx1 to nest the transaction
+				err = gormRepo.Transaction(ctx1, model2Transaction)
+				g.Expect(err).To(gomega.Succeed())
+			}
+			model1.SearchIdx = updatedSearchValue
+			err = tx1.Updates(model1).Error
+			g.Expect(err).To(gomega.Succeed())
+			executedModel1Transaction = true
+			return nil
+		}
+
+		var model1TransactionErr error
+		outerTransaction := func(ctxOuter context.Context, txOuter *gorm.DB) error {
+			model1TransactionErr = gormRepo.Transaction(ctxOuter, model1Transaction)
+			return model1TransactionErr
+		}
+		// We trigger Transaction1, which will then trigger Transaction2
+		err = gormRepo.Transaction(ctx, outerTransaction)
+
+		if tx.ErrIsRetryable(err) {
+			t.Fatalf("the transaction was not retried: %v", err)
+		}
+		g.Expect(err).To(gomega.Succeed())
+
+		// Validation
+		err = gormRepo.DB(ctx).Where("search = ?", originalSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(0))
+		err = gormRepo.DB(ctx).Where("search = ?", updatedSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(2))
+	}
+}
+
+// SubTestNestedTransactionRetryExpectRollback will be the same as the retry, however instead
+// of succeeding the retry, we will rollback the outermost transaction.
+// This is a sanity check to make sure that the transactions are actually nested, and a rollback
+// on the outermost transaction will result in all the inner transactions being void.
+func SubTestNestedTransactionRetryExpectRollback(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		originalSearchValue, updatedSearchValue := 20, 21
+		ID1, ID2 := uuid.New(), uuid.New()
+		model1, oto := createMainModel(ID1, originalSearchValue)
+		model1.OneToOne = oto
+		err := di.Repo.Save(ctx, model1)
+		g.Expect(err).To(gomega.Succeed())
+		model2, oto := createMainModel(ID2, originalSearchValue)
+		model2.OneToOne = oto
+		err = di.Repo.Save(ctx, model2)
+		g.Expect(err).To(gomega.Succeed())
+
+		var testModels []*TestModel
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+
+		model2Transaction := func(ctx2 context.Context) error {
+			err := di.Repo.FindAllBy(ctx2, &testModels, Where("search = ?", model2.SearchIdx))
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.Update(ctx2, model2, TestModel{SearchIdx: updatedSearchValue})
+			g.Expect(err).To(gomega.Succeed())
+			return nil
+		}
+
+		var executedModel1Transaction bool
+		model1Transaction := func(ctx1 context.Context) error {
+			err := di.Repo.FindAllBy(ctx1, &testModels, Where("search = ?", model1.SearchIdx))
+			g.Expect(err).To(gomega.Succeed())
+
+			if !executedModel1Transaction {
+				// we use ctx1 to nest the transaction
+				err = tx.Transaction(ctx1, model2Transaction)
+				g.Expect(err).To(gomega.Succeed())
+			}
+			err = di.Repo.Update(ctx1, model1, TestModel{SearchIdx: updatedSearchValue})
+			g.Expect(err).To(gomega.Succeed())
+			executedModel1Transaction = true
+			return nil
+		}
+
+		//var model1TransactionErr error
+		outerTransaction := func(ctxOuter context.Context) error {
+			_ = tx.Transaction(ctxOuter, model1Transaction)
+			return errors.New("Hello World, this should rollback transaction")
+			//return model1TransactionErr
+		}
+		// We trigger Transaction1, which will then trigger Transaction2
+		err = tx.Transaction(ctx, outerTransaction)
+
+		if tx.ErrIsRetryable(err) {
+			t.Fatalf("the transaction was not retried: %v", err)
+		}
+		//g.Expect(err).To(gomega.Succeed())
+
+		// Validation
+		err = gormRepo.DB(ctx).Where("search = ?", originalSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(2))
+		err = gormRepo.DB(ctx).Where("search = ?", updatedSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(0))
+	}
+}
+
+// SubTestManualTransactionRetry will test that a retry happens when two concurrent transactions cause
+// a serializable error due to contention.
+func SubTestManualTransactionRetry(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		originalSearchValue, updatedSearchValue := 20, 21
+		ID1, ID2 := uuid.New(), uuid.New()
+		model1, oto := createMainModel(ID1, originalSearchValue)
+		model1.OneToOne = oto
+		err := di.Repo.Save(ctx, model1)
+		g.Expect(err).To(gomega.Succeed())
+		model2, oto := createMainModel(ID2, originalSearchValue)
+		model2.OneToOne = oto
+		err = di.Repo.Save(ctx, model2)
+		g.Expect(err).To(gomega.Succeed())
+		var testModels []TestModel
+
+		transaction2 := func(tx2Ctx context.Context) {
+			tx2Ctx, err := tx.Begin(tx2Ctx)
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.FindAllBy(tx2Ctx, &testModels, Where("search = ? ", model2.SearchIdx))
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.Update(tx2Ctx, model2, TestModel{SearchIdx: updatedSearchValue})
+			g.Expect(err).To(gomega.Succeed())
+			tx2Ctx, err = tx.Commit(tx2Ctx)
+		}
+		maxRetries := 1
+		retryCount := 0
+		for {
+			tx1Ctx, err := tx.Begin(ctx)
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.FindAllBy(tx1Ctx, &testModels, Where("search = ? ", model1.SearchIdx))
+			g.Expect(err).To(gomega.Succeed())
+			if retryCount == 0 {
+				// A non nested transaction. This is a concurrent transaction that will modify
+				// the searchIdx
+				transaction2(ctx)
+			}
+			err = di.Repo.Update(tx1Ctx, model1, TestModel{SearchIdx: updatedSearchValue})
+			g.Expect(err).To(gomega.Succeed())
+			_, err = tx.Commit(tx1Ctx) // should have rolled back automatically if it failed
+			if err == nil || !tx.ErrIsRetryable(err) {
+				break
+			}
+			retryCount++
+			if maxRetries > retryCount {
+				break
+			}
+		}
+		// Validation
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+		err = gormRepo.DB(ctx).Where("search = ?", originalSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(0))
+		err = gormRepo.DB(ctx).Where("search = ?", updatedSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(2))
+	}
+}
+
+func SubTestNestedManualTransaction(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		originalSearchValue, updatedSearchValue := 20, 21
+		ID1, ID2 := uuid.New(), uuid.New()
+		model1, oto := createMainModel(ID1, originalSearchValue)
+		model1.OneToOne = oto
+		err := di.Repo.Save(ctx, model1)
+		g.Expect(err).To(gomega.Succeed())
+		model2, oto := createMainModel(ID2, originalSearchValue)
+		model2.OneToOne = oto
+		err = di.Repo.Save(ctx, model2)
+		g.Expect(err).To(gomega.Succeed())
+		var testModels []TestModel
+
+		tx1Ctx, err := tx.Begin(ctx)
+		g.Expect(err).To(gomega.Succeed())
+		// Optional transaction where we update model1, we are going to fail it and rollback
+		{
+			tx2Ctx, err := tx.SavePoint(tx1Ctx, "item1")
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.FindAllBy(tx2Ctx, &testModels, Where("search = ? ", model1.SearchIdx))
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.Update(tx2Ctx, model1, TestModel{SearchIdx: updatedSearchValue})
+			g.Expect(err).To(gomega.Succeed())
+			tx2Ctx, err = tx.RollbackTo(tx2Ctx, "item1")
+		}
+		// Transaction where we update model 2
+		{
+			tx2Ctx, err := tx.SavePoint(tx1Ctx, "item2")
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.FindAllBy(tx2Ctx, &testModels, Where("search = ? ", model2.SearchIdx))
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.Update(tx2Ctx, model2, TestModel{SearchIdx: updatedSearchValue})
+			g.Expect(err).To(gomega.Succeed())
+		}
+		tx1Ctx, err = tx.Commit(tx1Ctx) // should have rolled back automatically if it failed
+		g.Expect(err).To(gomega.Succeed())
+		// Validation
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+		err = gormRepo.DB(ctx).Where("search = ?", originalSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(1))
+		err = gormRepo.DB(ctx).Where("search = ?", updatedSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(1))
+	}
+}
+
+// SubTestNestedManualTransactionRollback tests to ensure that the nested transaction can be rolled back if the
+// outer transaction is also rolled back
+func SubTestNestedManualTransactionRollback(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		originalSearchValue, updatedSearchValue := 20, 21
+		ID1, ID2 := uuid.New(), uuid.New()
+		model1, oto := createMainModel(ID1, originalSearchValue)
+		model1.OneToOne = oto
+		err := di.Repo.Save(ctx, model1)
+		g.Expect(err).To(gomega.Succeed())
+		model2, oto := createMainModel(ID2, originalSearchValue)
+		model2.OneToOne = oto
+		err = di.Repo.Save(ctx, model2)
+		g.Expect(err).To(gomega.Succeed())
+		var testModels []TestModel
+
+		transaction2 := func(tx1Ctx context.Context) {
+			tx2Ctx, err := tx.SavePoint(tx1Ctx, "savepoint")
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.FindAllBy(tx2Ctx, &testModels, Where("search = ? ", model2.SearchIdx))
+			g.Expect(err).To(gomega.Succeed())
+			err = di.Repo.Update(tx2Ctx, model2, TestModel{SearchIdx: updatedSearchValue})
+			g.Expect(err).To(gomega.Succeed())
+		}
+		tx1Ctx, err := tx.Begin(ctx)
+		g.Expect(err).To(gomega.Succeed())
+		err = di.Repo.FindAllBy(tx1Ctx, &testModels, Where("search = ? ", model1.SearchIdx))
+		g.Expect(err).To(gomega.Succeed())
+		transaction2(tx1Ctx)
+		err = di.Repo.Update(tx1Ctx, model1, TestModel{SearchIdx: updatedSearchValue})
+		g.Expect(err).To(gomega.Succeed())
+		tx1Ctx, err = tx.Rollback(tx1Ctx)
+		// Validation
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+		err = gormRepo.DB(ctx).Where("search = ?", originalSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(2))
+		err = gormRepo.DB(ctx).Where("search = ?", updatedSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(0))
+	}
+}
+
+func SubTestManualTransactionRetryExpectRollbackVanillaGorm(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		originalSearchValue, updatedSearchValue := 20, 21
+		ID1, ID2 := uuid.New(), uuid.New()
+		model1, oto := createMainModel(ID1, originalSearchValue)
+		model1.OneToOne = oto
+		err := di.Repo.Save(ctx, model1)
+		g.Expect(err).To(gomega.Succeed())
+		model2, oto := createMainModel(ID2, originalSearchValue)
+		model2.OneToOne = oto
+		err = di.Repo.Save(ctx, model2)
+		g.Expect(err).To(gomega.Succeed())
+		var testModels []TestModel
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+
+		transaction2 := func(db *gorm.DB) {
+			innerTx := db.Begin()
+			err = innerTx.Error
+			g.Expect(err).To(gomega.Succeed())
+			err = innerTx.Find(&testModels, innerTx.Where("search = ? ", model2.SearchIdx)).Error
+			g.Expect(err).To(gomega.Succeed())
+			model2.SearchIdx = updatedSearchValue
+			innerTx.Updates(model2)
+			err = innerTx.Commit().Error
+			g.Expect(err).To(gomega.Succeed())
+		}
+		maxRetries := 1
+		retryCount := 0
+		for {
+			innerTx := gormRepo.DB(ctx).Begin()
+			err = innerTx.Error
+			g.Expect(err).To(gomega.Succeed())
+			err = innerTx.Find(&testModels, innerTx.Where("search = ? ", model2.SearchIdx)).Error
+			g.Expect(err).To(gomega.Succeed())
+			if retryCount == 0 {
+				transaction2(innerTx)
+			}
+			model1.SearchIdx = updatedSearchValue
+			innerTx.Updates(model1)
+			g.Expect(err).To(gomega.Succeed())
+			if retryCount == 0 {
+				err = innerTx.Commit().Error
+			} else {
+				err = innerTx.Rollback().Error
+			}
+			if err == nil || !tx.ErrIsRetryable(err) {
+				break
+			}
+			retryCount++
+			if maxRetries > retryCount {
+				break
+			}
+		}
+		// Validation
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+		err = gormRepo.DB(ctx).Where("search = ?", originalSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(2))
+		err = gormRepo.DB(ctx).Where("search = ?", updatedSearchValue).Find(&testModels).Error
+		g.Expect(err).To(gomega.Succeed())
+		g.Expect(len(testModels)).To(gomega.Equal(0))
+	}
+}
+
+// SubTestNestedTransaction, will verify that things are happening through a nested
+// transaction by nesting one transaction, and then rolling it back
+func SubTestNestedTransaction(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		originalSearchValue, updatedSearchValue := 20, 21
+		ID1, ID2 := uuid.New(), uuid.New()
+		model1, oto := createMainModel(ID1, originalSearchValue)
+		model1.OneToOne = oto
+		err := di.Repo.Save(ctx, model1)
+		g.Expect(err).To(gomega.Succeed())
+		model2, oto := createMainModel(ID2, originalSearchValue)
+		model2.OneToOne = oto
+		err = di.Repo.Save(ctx, model2)
+		g.Expect(err).To(gomega.Succeed())
+
+		var throwayModels []*TestModel
+		gormRepo, ok := di.Repo.(GormApi)
+		g.Expect(ok).To(gomega.BeTrue(), "repository should also GormApi")
+
+		// This Transaction2 happens during the execution of Transaction1. This will
+		// cause a serializable isolation violation by modifying an entry that shows up
+		// in the Transaction1's query.
+		model2Transaction := func(ctx context.Context) error {
+			err = di.Repo.FindAll(ctx, &throwayModels, Where("search = ?", model2.SearchIdx))
+			g.Expect(err).To(gomega.Succeed())
+			model2.SearchIdx = updatedSearchValue
+			err = di.Repo.Update(ctx, model2, model2)
+			g.Expect(err).To(gomega.Succeed())
+			return ErrorInvalidCrudParam
+		}
+
+		var executedModel1Transaction bool
+		model1Transaction := func(ctx context.Context, tx1 *gorm.DB) error {
+			if !executedModel1Transaction {
+				err = tx.Transaction(ctx, model2Transaction)
+				//err = gormRepo.Transaction(ctx, model2Transaction)
+				//g.Expect(err).To(gomega.Succeed())
+			}
+			model1.SearchIdx = updatedSearchValue
+			err = tx1.Updates(model1).Error
+			g.Expect(err).To(gomega.Succeed())
+			executedModel1Transaction = true
+			return nil
+		}
+
+		// We trigger Transaction1, which will then trigger Transaction2
+		err = gormRepo.Transaction(ctx, model1Transaction)
+
+		// errWithSQLState is implemented by pgx (pgconn.PgError) and lib/pq
+		type errWithSQLState interface {
+			SQLState() string
+		}
+		var sqlErr errWithSQLState
+		if err != nil && errors.As(err, &sqlErr) {
+			code := sqlErr.SQLState()
+			if code == "CR000" || code == "40001" {
+				// If the transaction was retried, it would re-run and pass.
+				t.Fatalf("the transaction was not retried: %v", err)
+			}
+		}
+		g.Expect(err).To(gomega.Succeed())
+
+		// TODO: add validation
 	}
 }
 

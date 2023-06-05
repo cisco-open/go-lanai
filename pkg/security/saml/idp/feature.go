@@ -13,12 +13,13 @@ var (
 )
 
 type Feature struct {
-	id           security.FeatureIdentifier
-	ssoCondition web.RequestMatcher
-	ssoLocation  *url.URL
-	metadataPath string
-	issuer    security.Issuer
-	logoutUrl string
+	id            security.FeatureIdentifier
+	ssoCondition  web.RequestMatcher
+	ssoLocation   *url.URL
+	signingMethod string
+	metadataPath  string
+	issuer        security.Issuer
+	logoutUrl     string
 }
 
 // New Standard security.Feature entrypoint for authorization, DSL style. Used with security.WebSecurity
@@ -56,6 +57,11 @@ func (f *Feature) MetadataPath(path string) *Feature {
 
 func (f *Feature) Issuer(issuer security.Issuer) *Feature {
 	f.issuer = issuer
+	return f
+}
+
+func (f *Feature) SigningMethod(signatureMethod string) *Feature {
+	f.signingMethod = signatureMethod
 	return f
 }
 

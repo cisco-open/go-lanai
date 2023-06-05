@@ -9,7 +9,7 @@
     }
   },
   "servers": [{
-    "url":"http://my.test.server:9876",
+    "url":"http://my.test.server:9876/myapp",
     "description": "Current API Server"
   }],
   "paths": {

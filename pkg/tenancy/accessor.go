@@ -17,12 +17,14 @@ const (
 
 //goland:noinspection GoNameStartsWithPackageName
 type TenancyAccessor struct {
-	rc redis.Client
+	cachedRootID string
+	rc           redis.Client
 }
 
 func newAccessor(rc redis.Client) *TenancyAccessor {
 	return &TenancyAccessor{
-		rc: rc,
+		cachedRootID: "",
+		rc:           rc,
 	}
 }
 
@@ -80,7 +82,7 @@ func (a *TenancyAccessor) GetAncestors(ctx context.Context, tenantId string) ([]
 
 	var ancestors = make([]string, 0)
 	p, err := a.GetParent(ctx, tenantId)
-	for ; p != "" && err == nil; {
+	for p != "" && err == nil {
 		ancestors = append(ancestors, p)
 		p, err = a.GetParent(ctx, p)
 	}
@@ -102,7 +104,7 @@ func (a *TenancyAccessor) GetDescendants(ctx context.Context, tenantId string) (
 
 	idsToVisit.PushBack(tenantId)
 
-	for idsToVisit.Len()>0 {
+	for idsToVisit.Len() > 0 {
 
 		cmds, err := a.rc.Pipelined(ctx, func(pipeliner r.Pipeliner) error {
 			for idsToVisit.Len() > 0 {
@@ -147,21 +149,31 @@ func (a *TenancyAccessor) GetDescendants(ctx context.Context, tenantId string) (
 	return descendants, nil
 }
 
+// GetRoot will return the root tenantID.
+// Because the root tenantId won't change once system is started, we can cache
+// it after first successful read.
 func (a *TenancyAccessor) GetRoot(ctx context.Context) (string, error) {
 	if !a.IsLoaded(ctx) {
 		return "", errors.New(errTmplNotLoaded)
 	}
-
+	if a.cachedRootID != "" {
+		return a.cachedRootID, nil
+	}
 	cmd := a.rc.Get(ctx, RootTenantKey)
-	return cmd.Val(), cmd.Err()
+	if cmd.Err() != nil {
+		a.cachedRootID = ""
+	} else {
+		a.cachedRootID = cmd.Val()
+	}
+	return a.cachedRootID, cmd.Err()
 }
 
-func (a *TenancyAccessor) IsLoaded(ctx context.Context) bool{
+func (a *TenancyAccessor) IsLoaded(ctx context.Context) bool {
 	cmd := a.rc.Get(ctx, StatusKey)
 	if cmd.Err() != nil {
 		return false
 	}
-	return	strings.HasPrefix(cmd.Val(), STATUS_LOADED)
+	return strings.HasPrefix(cmd.Val(), STATUS_LOADED)
 }
 
 func (a *TenancyAccessor) GetTenancyPath(ctx context.Context, tenantId string) ([]uuid.UUID, error) {

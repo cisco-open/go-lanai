@@ -33,7 +33,7 @@ func Use() {
 
 func pqErrorTranslatorProvider() fx.Annotated {
 	return fx.Annotated{
-		Group: data.GormConfigurerGroup,
+		Group:  data.GormConfigurerGroup,
 		Target: NewPqErrorTranslator,
 	}
 }
@@ -41,4 +41,3 @@ func pqErrorTranslatorProvider() fx.Annotated {
 /**************************
 	Initialize
 ***************************/
-

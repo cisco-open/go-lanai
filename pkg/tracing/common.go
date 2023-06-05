@@ -5,6 +5,10 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+/**********************
+	SpanOptions
+ **********************/
+
 func SpanTag(key string, v interface{}) SpanOption {
 	return func(span opentracing.Span) {
 		span.SetTag(key, v)

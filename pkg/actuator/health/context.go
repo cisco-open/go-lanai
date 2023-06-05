@@ -56,6 +56,8 @@ const (
 	ShowModeAuthorized
 	// ShowModeAlways Always show the item in the response.
 	ShowModeAlways
+	// ShowModeCustom Shows the item in response with a customized rule.
+	ShowModeCustom
 )
 
 // ShowMode is options for showing items in responses from the HealthEndpoint web extensions.
@@ -68,6 +70,8 @@ func (m ShowMode) String() string {
 		return "authorized"
 	case ShowModeAlways:
 		return "always"
+	case ShowModeCustom:
+		return "custom"
 	default:
 		return "never"
 	}
@@ -86,10 +90,26 @@ func (m *ShowMode) UnmarshalText(data []byte) error {
 		*m = ShowModeAuthorized
 	case "always":
 		*m = ShowModeAlways
+	case "custom":
+		*m = ShowModeCustom
 	default:
 		*m = ShowModeNever
 	}
 	return nil
+}
+
+type Registrar interface {
+	// Register configure SystemHealthRegistrar and HealthEndpoint
+	// supported input parameters are:
+	// 	- Indicator
+	// 	- StatusAggregator
+	// 	- DetailsDisclosureControl
+	// 	- ComponentsDisclosureControl
+	//  - DisclosureControl
+	Register(items ...interface{}) error
+
+	// MustRegister same as Register, but panic if there is error
+	MustRegister(items ...interface{})
 }
 
 type StatusAggregator interface {
@@ -113,4 +133,29 @@ type Options struct {
 type Indicator interface {
 	Name() string
 	Health(context.Context, Options) Health
+}
+
+type DetailsDisclosureControl interface {
+	ShouldShowDetails(ctx context.Context) bool
+}
+
+type ComponentsDisclosureControl interface {
+	ShouldShowComponents(ctx context.Context) bool
+}
+
+type DisclosureControl interface {
+	DetailsDisclosureControl
+	ComponentsDisclosureControl
+}
+
+// DisclosureControlFunc convert function to DisclosureControl
+// This type can be registered via Registrar.Register
+type DisclosureControlFunc func(ctx context.Context) bool
+
+func (fn DisclosureControlFunc) ShouldShowDetails(ctx context.Context) bool {
+	return fn(ctx)
+}
+
+func (fn DisclosureControlFunc) ShouldShowComponents(ctx context.Context) bool {
+	return fn(ctx)
 }

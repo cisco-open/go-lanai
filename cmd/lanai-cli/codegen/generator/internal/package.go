@@ -17,5 +17,18 @@ func init() {
 		structsFuncMap,
 		helperFuncMap,
 		pathFuncMap,
+		propertyFuncMap,
+	}
+}
+
+// Load will reset any global registries used internally
+func Load() {
+	validatedRegexes = make(map[string]string)
+	structRegistry = make(map[string]string)
+}
+
+func AddPredefinedRegexes(initialRegexes map[string]string) {
+	for key, value := range initialRegexes {
+		predefinedRegexes[key] = value
 	}
 }

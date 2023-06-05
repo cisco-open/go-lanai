@@ -72,22 +72,29 @@ func NewComponent(b kafka.Binder) (*MyComponent, error) {
 Here you will have a component that have a reference to a message producer. The ```BindingName``` option allows binding specific configuration
 to be applied to your producer. See the documentation on ```BindingName``` for more details.
 
-To add a consumer to the ```Binder```
+To add a consumer to the ```Binder```, use ```fx.Invoke``` to registers the functions so that it's executed eagerly on application start.
+See fx documentation for the difference between ```fx.Invoke``` and ```fx.Provide```.  
 
 ```go
-func NewConsumer(Binder kafka.Binder) *MyConsumer {
-	ret := &MyConsumer{
+fx.Invoke(AddConsumer)
+```
+
+```go
+func AddConsumer(Binder kafka.Binder) error {
+	mc := &MyConsumer{
 	}
 	consumer, e := di.Binder.Consume("MY_TOPIC", kafkaGroup, kafka.BindingName("my-binding-name"))
 	if e != nil {
-		panic(e)
+		return e
 	}
-	if e := consumer.AddHandler(ret.MyMessageHandler); e != nil {
-		panic(e)
+	if e := consumer.AddHandler(mc.MyMessageHandler); e != nil {
+		return e
 	}
-	return ret
+	return nil
 }
 ```
+
+```*MyConsumer``` has a method that implements ```Kafka.MessageHandlerFunc```  
 
 See ```Kafka.MessageHandlerFunc``` for details on what methods are acceptable as message handler functions you can use in the ```consumer.AddHandler``` call.
 

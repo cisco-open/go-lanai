@@ -113,7 +113,7 @@ func RunAddReplace(cmd *cobra.Command, _ []string) error {
 	}
 
 	// do "go mod tidy"
-	if e := cmdutils.GoModTidy(cmd.Context()); e != nil {
+	if e := cmdutils.GoModTidy(cmd.Context(), nil); e != nil {
 		return e
 	}
 

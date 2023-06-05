@@ -2,13 +2,14 @@ package data
 
 import (
 	"context"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgconn"
-	"github.com/lib/pq"
 	"net/http"
 	"regexp"
+
+	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 var (
@@ -58,7 +59,7 @@ func (t WebDataErrorTranslator) errorWithStatusCode(_ context.Context, err error
 //nolint:errorlint
 func (t WebDataErrorTranslator) dataIntegrityErrorWithStatusCode(_ context.Context, err error, sc int) error {
 	switch err.(DataError).RootCause().(type) {
-	case *pgconn.PgError, pq.Error, *pq.Error:
+	case *pgconn.PgError, *pq.Error:
 	default:
 		return NewErrorWithStatusCode(err.(DataError), sc)
 	}

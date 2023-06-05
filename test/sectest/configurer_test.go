@@ -103,6 +103,7 @@ func TestCustomMWMocking(t *testing.T) {
 			MWRoute(matcher.RouteWithPattern("/api/**")),
 			MWCondition(matcher.RequestWithMethods(http.MethodGet)),
 			MWCustomMocker(nil), // enable autowired mode
+			MWForceOverride(),
 		),
 		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
 		apptest.WithDI(di),

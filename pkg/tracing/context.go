@@ -36,6 +36,10 @@ type SpanOption func(opentracing.Span)
 
 type SpanRewinder func() context.Context
 
+/**********************
+	Context
+ **********************/
+
 //nolint:contextcheck
 func SpanFromContext(ctx context.Context) (span opentracing.Span) {
 	span = opentracing.SpanFromContext(ctx)
@@ -67,6 +71,22 @@ func SpanRewinderFromContext(ctx context.Context) SpanRewinder {
 func ContextWithSpanRewinder(ctx context.Context, finisher SpanRewinder) context.Context {
 	return context.WithValue(ctx, spanFinisherKey, finisher)
 }
+
+func TraceIdFromContext(ctx context.Context) (ret interface{}) {
+	return traceIdContextValuer(ctx)
+}
+
+func SpanIdFromContext(ctx context.Context) (ret interface{}) {
+	return spanIdContextValuer(ctx)
+}
+
+func ParentIdFromContext(ctx context.Context) (ret interface{}) {
+	return parentIdContextValuer(ctx)
+}
+
+/**********************
+	Span Operators
+ **********************/
 
 type SpanOperator struct {
 	tracer        opentracing.Tracer

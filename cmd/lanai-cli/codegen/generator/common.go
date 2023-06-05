@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"go/format"
+	"io"
 	"io/fs"
 	"os"
 	"path"
@@ -17,6 +18,10 @@ import (
 
 const defaultSrcRootDir = "template/src"
 
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
 func GenerateFileFromTemplate(gc GenerationContext, template *template.Template) error {
 	if gc.templatePath == "" {
 		return fmt.Errorf("no templatePath name defined")
@@ -29,18 +34,17 @@ func GenerateFileFromTemplate(gc GenerationContext, template *template.Template)
 	if err := mkdirIfNotExists(outputFolder); err != nil {
 		return fmt.Errorf("unable to create directory of templatePath output [%s]", outputFolder)
 	}
-
-	f, e := os.OpenFile(gc.filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if e != nil {
-		return e
+	wc, err := applyRegenRule(&gc)
+	if err != nil {
+		return err
 	}
-	defer func() { _ = f.Close() }()
+	defer func() { _ = wc.Close() }()
 
-	if err := template.ExecuteTemplate(f, gc.templatePath, gc.model); err != nil {
+	if err := template.ExecuteTemplate(wc, gc.templatePath, gc.model); err != nil {
 		return fmt.Errorf("templatePath could not be executed: %v", err)
 	}
 
-	if path.Ext(gc.filename) == ".go" {
+	if isGoExt(gc.filename) {
 		err := formatGoCode(gc.filename)
 		if err != nil {
 			return fmt.Errorf("error formatting go code for file %v: %v", gc.filename, err)
@@ -60,6 +64,42 @@ func mkdirIfNotExists(path string) error {
 		}
 	}
 	return nil
+}
+
+type emptyWriteCloser struct{}
+
+func (e *emptyWriteCloser) Write(p []byte) (n int, err error) {
+	return 0, nil
+}
+
+func (e *emptyWriteCloser) Close() (err error) {
+	return nil
+}
+
+func applyRegenRule(gc *GenerationContext) (f io.WriteCloser, err error) {
+	if fileExists(gc.filename) {
+		switch gc.regenRule {
+		case regenRuleIgnore:
+			logger.Infof("ignore rule defined for existing file %v, ignoring", gc.filename)
+			//	make an empty applyRegenRule to allow the template to be executed (and keep any runtime logic consistent)
+			return &emptyWriteCloser{}, nil
+		case regenRuleReference:
+			gc.filename += "ref"
+			fallthrough
+		case regenRuleOverwrite:
+			break
+		}
+	}
+	f, err = os.OpenFile(gc.filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
+func isGoExt(filename string) bool {
+	return path.Ext(filename) == ".go" || path.Ext(filename) == ".goref"
 }
 
 func formatGoCode(outputFilePath string) error {
@@ -138,4 +178,19 @@ func copyOf(data map[string]interface{}) map[string]interface{} {
 		dataCopy[k] = v
 	}
 	return dataCopy
+}
+
+func getApplicableRegenRules(outputFile string, rules map[string]string, defaultRule string) (string, error) {
+	pathAfterOutputDir := strings.TrimPrefix(outputFile, cmdutils.GlobalArgs.OutputDir+"/")
+	regenRule := defaultRule
+	for pattern, rule := range rules {
+		match, err := filepath.Match(pattern, pathAfterOutputDir)
+		if err != nil {
+			return "", err
+		}
+		if match {
+			regenRule = rule
+		}
+	}
+	return regenRule, nil
 }

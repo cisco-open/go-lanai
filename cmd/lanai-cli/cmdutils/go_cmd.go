@@ -229,21 +229,24 @@ func GoGet(ctx context.Context, module string, versionQuery string, opts ...GoCm
 	return e
 }
 
-func GoModTidy(ctx context.Context, opts ...GoCmdOptions) error {
+func GoModTidy(ctx context.Context, extraShellOptions []ShCmdOptions, opts ...GoCmdOptions) error {
 	cmd := "go mod tidy"
 	for _, f := range opts {
 		f(&cmd)
 	}
 
-	_, e := RunShellCommands(ctx,
+	shellOptions := []ShCmdOptions{
 		ShellShowCmd(true),
 		ShellUseWorkingDir(),
 		ShellCmd(cmd),
-		ShellStdOut(os.Stdout))
+		ShellStdOut(os.Stdout),
+	}
+	shellOptions = append(shellOptions, extraShellOptions...)
+	_, e := RunShellCommands(ctx, shellOptions...)
 	return e
 }
 
-func GetGoMod(ctx context.Context, opts ...GoCmdOptions) (*GoMod, error){
+func GetGoMod(ctx context.Context, opts ...GoCmdOptions) (*GoMod, error) {
 	cmd := fmt.Sprintf("go mod edit -json")
 	for _, f := range opts {
 		f(&cmd)

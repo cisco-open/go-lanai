@@ -8,11 +8,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
 const (
-	nonceCharset ="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	nonceCharset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 type AuthClientOptions func(opt *AuthClientOption)
@@ -37,7 +38,7 @@ type remoteAuthClient struct {
 
 func NewRemoteAuthClient(opts ...AuthClientOptions) *remoteAuthClient {
 	opt := AuthClientOption{
-		PwdLoginPath: "/v2/token",
+		PwdLoginPath:      "/v2/token",
 		SwitchContextPath: "/v2/token",
 	}
 	for _, fn := range opts {
@@ -60,11 +61,11 @@ func NewRemoteAuthClient(opts ...AuthClientOptions) *remoteAuthClient {
 		client: client.WithConfig(&httpclient.ClientConfig{
 			// Note: we don't want access token passthrough
 			BeforeHooks: []httpclient.BeforeHook{},
-			Logger:     logger,
-			MaxRetries: 2,
-			Timeout:    30 * time.Second,
+			Logger:      logger,
+			MaxRetries:  2,
+			Timeout:     30 * time.Second,
 			Logging: httpclient.LoggingConfig{
-				Level:        log.LevelDebug,
+				Level: log.LevelDebug,
 				//DetailsLevel: httpclient.LogDetailsLevelMinimum,
 				//SanitizeHeaders: utils.NewStringSet(),
 			},
@@ -76,6 +77,27 @@ func NewRemoteAuthClient(opts ...AuthClientOptions) *remoteAuthClient {
 	}
 }
 
+func (c *remoteAuthClient) ClientCredentials(ctx context.Context, opts ...AuthOptions) (*Result, error) {
+	opt := c.option(opts)
+	reqOpts := []httpclient.RequestOptions{
+		c.withClientAuth(opt),
+		httpclient.WithHeader(httpclient.HeaderContentType, httpclient.MediaTypeFormUrlEncoded),
+		httpclient.WithUrlEncodedBody(WithNonEmptyURLValues(url.Values{
+			oauth2.ParameterGrantType: {oauth2.GrantTypeClientCredentials},
+			oauth2.ClaimScope:         {strings.Join(opt.Scopes, " ")},
+		})),
+	}
+
+	reqOpts = append(reqOpts, c.reqOptionsForTenancy(opt)...)
+
+	// prepare request
+	req := httpclient.NewRequest(c.pwdLoginPath, http.MethodPost, reqOpts...)
+	// send request and parse response
+	body := oauth2.NewDefaultAccessToken("")
+	resp, e := c.client.Execute(ctx, req, httpclient.JsonBody(body))
+	return c.handleResponse(resp, e)
+}
+
 func (c *remoteAuthClient) PasswordLogin(ctx context.Context, opts ...AuthOptions) (*Result, error) {
 	opt := c.option(opts)
 
@@ -83,11 +105,12 @@ func (c *remoteAuthClient) PasswordLogin(ctx context.Context, opts ...AuthOption
 	reqOpts := []httpclient.RequestOptions{
 		httpclient.WithParam(oauth2.ParameterGrantType, oauth2.GrantTypePassword),
 		httpclient.WithParam(oauth2.ParameterUsername, opt.Username),
-		httpclient.WithBasicAuth(c.clientId, c.clientSecret),
-		httpclient.WithUrlEncodedBody(url.Values{
-			oauth2.ParameterPassword: []string{opt.Password},
-			oauth2.ParameterNonce: []string{nonce},
-		}),
+		c.withClientAuth(opt),
+		httpclient.WithUrlEncodedBody(WithNonEmptyURLValues(url.Values{
+			oauth2.ParameterPassword: {opt.Password},
+			oauth2.ParameterNonce:    {nonce},
+			oauth2.ClaimScope:        {strings.Join(opt.Scopes, " ")},
+		})),
 	}
 	reqOpts = append(reqOpts, c.reqOptionsForTenancy(opt)...)
 
@@ -105,11 +128,12 @@ func (c *remoteAuthClient) SwitchUser(ctx context.Context, opts ...AuthOptions) 
 	nonce := c.generateNonce(10)
 	reqOpts := []httpclient.RequestOptions{
 		httpclient.WithParam(oauth2.ParameterGrantType, oauth2.GrantTypeSwitchUser),
-		httpclient.WithBasicAuth(c.clientId, c.clientSecret),
-		httpclient.WithUrlEncodedBody(url.Values{
-			oauth2.ParameterAccessToken: []string{opt.AccessToken},
-			oauth2.ParameterNonce: []string{nonce},
-		}),
+		c.withClientAuth(opt),
+		httpclient.WithUrlEncodedBody(WithNonEmptyURLValues(url.Values{
+			oauth2.ParameterAccessToken: {opt.AccessToken},
+			oauth2.ParameterNonce:       {nonce},
+			oauth2.ClaimScope:           {strings.Join(opt.Scopes, " ")},
+		})),
 	}
 	reqOpts = append(reqOpts, c.reqOptionsForSwitchUser(opt)...)
 	reqOpts = append(reqOpts, c.reqOptionsForTenancy(opt)...)
@@ -128,11 +152,12 @@ func (c *remoteAuthClient) SwitchTenant(ctx context.Context, opts ...AuthOptions
 	nonce := c.generateNonce(10)
 	reqOpts := []httpclient.RequestOptions{
 		httpclient.WithParam(oauth2.ParameterGrantType, oauth2.GrantTypeSwitchTenant),
-		httpclient.WithBasicAuth(c.clientId, c.clientSecret),
-		httpclient.WithUrlEncodedBody(url.Values{
-			oauth2.ParameterAccessToken: []string{opt.AccessToken},
-			oauth2.ParameterNonce: []string{nonce},
-		}),
+		c.withClientAuth(opt),
+		httpclient.WithUrlEncodedBody(WithNonEmptyURLValues(url.Values{
+			oauth2.ParameterAccessToken: {opt.AccessToken},
+			oauth2.ParameterNonce:       {nonce},
+			oauth2.ClaimScope:           {strings.Join(opt.Scopes, " ")},
+		})),
 	}
 	reqOpts = append(reqOpts, c.reqOptionsForTenancy(opt)...)
 
@@ -182,10 +207,44 @@ func (c *remoteAuthClient) handleResponse(resp *httpclient.Response, e error) (*
 	token := resp.Body.(oauth2.AccessToken)
 	return &Result{
 		//Request: nil,
-		Token:   token,
+		Token: token,
 	}, nil
 }
 
 func (c *remoteAuthClient) generateNonce(length int) string {
 	return utils.RandomString(length)
+}
+
+// withClientAuth will return a requestOption based off of WithBasicAuth, but
+// use the clientID from the AuthOptions. If the AuthOption.ClientID is empty, then
+// it will return WithBasicAuth using the fallback remoteAuthClient.clientId and secret instead
+func (c *remoteAuthClient) withClientAuth(opt *AuthOption) httpclient.RequestOptions {
+	clientID := opt.ClientID
+	secret := opt.ClientSecret
+
+	if clientID == "" {
+		clientID = c.clientId
+		secret = c.clientSecret
+	}
+
+	return httpclient.WithBasicAuth(clientID, secret)
+}
+
+// WithNonEmptyURLValues will accept a map[key][values] and convert it to a url.Values.
+// The function will check that the values, typed []string has a length > 0. Otherwise,
+// will not insert the key into the url.Values
+func WithNonEmptyURLValues(mappedValues map[string][]string) url.Values {
+	urlValues := url.Values{}
+	for valueKey, values := range mappedValues {
+		var nonEmptyValues []string
+		for _, value := range values {
+			if value != "" {
+				nonEmptyValues = append(nonEmptyValues, value)
+			}
+		}
+		if len(nonEmptyValues) > 0 {
+			urlValues[valueKey] = nonEmptyValues
+		}
+	}
+	return urlValues
 }

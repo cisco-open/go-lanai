@@ -29,13 +29,13 @@ type Registrar struct {
 	properties         *ManagementProperties
 	endpoints          []Endpoint
 	securityConfigurer security.Configurer
-	securityCustomizer ActuatorSecurityCustomizer
+	securityCustomizer SecurityCustomizer
+	accessCustomizer   AccessControlCustomizer
 }
 
 func NewRegistrar(di constructDI) *Registrar {
 	return &Registrar{
-		properties: &di.Properties,
-		securityCustomizer: &DefaultActuatorSecurityCustomizer{},
+		properties:         &di.Properties,
 	}
 }
 
@@ -63,13 +63,13 @@ func (r *Registrar) initialize(di initDI) error {
 	return nil
 }
 
-func (r *Registrar) MustRegister(items...interface{}) {
+func (r *Registrar) MustRegister(items ...interface{}) {
 	if e := r.Register(items...); e != nil {
 		panic(e)
 	}
 }
 
-func (r *Registrar) Register(items...interface{}) error {
+func (r *Registrar) Register(items ...interface{}) error {
 	for _, item := range items {
 		if e := r.register(item); e != nil {
 			return e
@@ -83,13 +83,15 @@ func (r *Registrar) register(item interface{}) (err error) {
 		return fmt.Errorf("attempting to register actuator items after actuator has been initialized")
 	}
 
-	switch item.(type) {
+	switch v := item.(type) {
 	case Endpoint:
-		r.endpoints = append(r.endpoints, item.(Endpoint))
+		r.endpoints = append(r.endpoints, v)
 	case []interface{}:
-		err = r.Register(item.([]interface{})...)
-	case ActuatorSecurityCustomizer:
-		r.securityCustomizer = item.(ActuatorSecurityCustomizer)
+		err = r.Register(v...)
+	case SecurityCustomizer:
+		r.securityCustomizer = v
+	case AccessControlCustomizer:
+		r.accessCustomizer = v
 	default:
 		return fmt.Errorf("unsupported actuator type [%T]", item)
 	}
@@ -152,13 +154,8 @@ func (r *Registrar) installWebSecurity(reg security.Registrar, endpoints WebEndp
 		return nil
 	}
 
-	configurer := actuatorSecurityConfigurer{
-		properties: r.properties,
-		endpoints:  endpoints,
-		customizer: r.securityCustomizer,
-	}
-	reg.Register(&configurer)
-
+	configurer := newActuatorSecurityConfigurer(r.properties, endpoints, r.securityCustomizer, r.accessCustomizer)
+	reg.Register(configurer)
 	return nil
 }
 

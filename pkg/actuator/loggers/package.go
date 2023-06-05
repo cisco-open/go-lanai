@@ -9,12 +9,14 @@ import (
 //var logger = log.New("ACTR.LoggerLevel")
 
 var Module = &bootstrap.Module{
-	Name:       "actuator-apilist",
+	Name:       "actuator-loggers",
 	Precedence: actuator.MinActuatorPrecedence,
-	Options: []fx.Option{},
+	Options: []fx.Option{
+		fx.Invoke(register),
+	},
 }
 
-func init() {
+func Register() {
 	bootstrap.Register(Module)
 }
 
@@ -24,7 +26,7 @@ type regDI struct {
 	MgtProperties actuator.ManagementProperties
 }
 
-func Register(di regDI) {
+func register(di regDI) {
 	ep := newEndpoint(di)
 	di.Registrar.MustRegister(ep)
 }

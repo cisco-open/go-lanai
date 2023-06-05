@@ -1,20 +1,27 @@
 package generator
 
 import (
+	"fmt"
 	"io/fs"
 	"path"
 	"regexp"
 	"text/template"
 )
 
-const projectGenerationOrder = 0
+const (
+	defaultProjectRegex  = "^(?:project.)(.+)(?:.tmpl)"
+	projectGeneratorName = "project"
+)
 
 // ProjectGenerator generates 1 file based on the templatePath being used
 type ProjectGenerator struct {
-	data       map[string]interface{}
-	template   *template.Template
-	nameRegex  *regexp.Regexp
-	filesystem fs.FS
+	data             map[string]interface{}
+	template         *template.Template
+	nameRegex        *regexp.Regexp
+	filesystem       fs.FS
+	priorityOrder    int
+	defaultRegenRule string
+	rules            map[string]string
 }
 
 // newProjectGenerator returns a new generator for single files
@@ -23,11 +30,25 @@ func newProjectGenerator(opts ...func(option *Option)) *ProjectGenerator {
 	for _, fn := range opts {
 		fn(o)
 	}
+	priorityOrder := o.PriorityOrder
+	if priorityOrder == 0 {
+		priorityOrder = defaultProjectPriorityOrder
+	}
+
+	regex := defaultProjectRegex
+	if o.Prefix != "" {
+		regex = fmt.Sprintf("^(%v)(.+)(.tmpl)", o.Prefix)
+	}
+
+	logger.Infof("RegenRule: %v", o.RegenRule)
 	return &ProjectGenerator{
-		data:       o.Data,
-		template:   o.Template,
-		nameRegex:  regexp.MustCompile("^(?:project.)(.+)(?:.tmpl)"),
-		filesystem: o.FS,
+		data:             o.Data,
+		template:         o.Template,
+		nameRegex:        regexp.MustCompile(regex),
+		filesystem:       o.FS,
+		priorityOrder:    priorityOrder,
+		defaultRegenRule: o.RegenRule,
+		rules:            o.Rules,
 	}
 }
 
@@ -54,15 +75,22 @@ func (o *ProjectGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 	}
 	baseFilename := o.determineFilename(tmplPath)
 
+	outputFile := path.Join(targetDir, baseFilename)
+
+	regenRule, err := getApplicableRegenRules(outputFile, o.rules, o.defaultRegenRule)
+	if err != nil {
+		return err
+	}
 	file := *NewGenerationContext(
 		tmplPath,
-		path.Join(targetDir, baseFilename),
+		outputFile,
+		regenRule,
 		o.data,
 	)
-	logger.Infof("project generator generating %v\n", targetDir)
+	logger.Infof("project generator generating %v\n", outputFile)
 	return GenerateFileFromTemplate(file, o.template)
 }
 
 func (o *ProjectGenerator) PriorityOrder() int {
-	return projectGenerationOrder
+	return o.priorityOrder
 }

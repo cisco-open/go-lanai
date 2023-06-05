@@ -1,59 +1,49 @@
 package internal
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal/representation"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
-	"regexp"
+	"path"
 	"strings"
 	"text/template"
 )
 
 var (
 	structsFuncMap = template.FuncMap{
-		"propertyType":        propertyType,
-		"structTag":           structTag,
 		"requiredList":        requiredList,
 		"containsSingularRef": containsSingularRef,
-		"shouldHavePointer":   shouldHavePointer,
 		"defaultNameFromPath": defaultNameFromPath,
 		"registerStruct":      registerStruct,
 		"structLocation":      structLocation,
+		"structRegistry":      getStructRegistry,
 		"importsUsedByPath":   importsUsedByPath,
 		"isEmpty":             isEmpty,
-		"property":            representation.NewProperty,
-		"propertyTypePrefix":  representation.PropertyTypePrefix,
-		"operation":           representation.NewOperation,
-		"schema":              representation.NewSchema,
 		"pathOperations":      pathOperations,
+		"structTags":          structTags,
+		"shouldHavePointer":   ShouldHavePointer,
+		"propertyToGoType":    PropertyToGoType,
 	}
 )
 
 func requiredList(val interface{}) ([]string, error) {
 	var list []string
-	interfaceType := getInterfaceType(val)
-	switch interfaceType {
-	case SchemaRefPtr:
+	switch val.(type) {
+	case *openapi3.SchemaRef:
 		list = val.(*openapi3.SchemaRef).Value.Required
-	case ParameterPtr:
+	case *openapi3.Parameter:
 		parameter := val.(*openapi3.Parameter)
 		if parameter.Required {
 			list = append(list, parameter.Name)
 		}
 	default:
-		return nil, fmt.Errorf("requiredList error: unsupported interface %v", interfaceType)
+		return nil, fmt.Errorf("requiredList error: unsupported interface %v", getInterfaceType(val))
 	}
 	return list, nil
 }
 
 func defaultNameFromPath(val string) string {
-	parts := regexp.MustCompile(".+\\/(v\\d+)\\/(.+)").FindStringSubmatch(val)
-	var path string
-	if len(parts) == 3 {
-		path = parts[2]
-	}
-	path = strings.ReplaceAll(path, "{", "/")
-	path = strings.ReplaceAll(path, "}", "")
+	path := pathPart(val, PathAfterVersion)
+	path = replaceParameterDelimiters(path, "/", "")
 	pathParts := strings.Split(path, "/")
 
 	// make this camelCase
@@ -75,5 +65,9 @@ func registerStruct(schemaName string, packageName string) string {
 }
 
 func structLocation(schemaName string) string {
-	return structRegistry[strings.ToLower(schemaName)]
+	return structRegistry[strings.ToLower(path.Base(schemaName))]
+}
+
+func getStructRegistry() map[string]string {
+	return structRegistry
 }

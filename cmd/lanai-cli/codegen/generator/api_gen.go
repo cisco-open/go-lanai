@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"io/fs"
 	"path"
@@ -10,29 +11,50 @@ import (
 )
 
 type ApiGenerator struct {
-	data       map[string]interface{}
-	template   *template.Template
-	filesystem fs.FS
+	data             map[string]interface{}
+	template         *template.Template
+	filesystem       fs.FS
+	nameRegex        *regexp.Regexp
+	prefix           string
+	priorityOrder    int
+	defaultRegenRule string
+	rules            map[string]string
 }
 
-var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
+const (
+	defaultApiNameRegex = "^(api\\.)(.+)(.tmpl)"
+	apiGeneratorName    = "api"
+)
 
-const apiGenerationOrder = 1
+var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
 
 func newApiGenerator(opts ...func(option *Option)) *ApiGenerator {
 	o := &Option{}
 	for _, fn := range opts {
 		fn(o)
 	}
+	priorityOrder := o.PriorityOrder
+	if priorityOrder == 0 {
+		priorityOrder = defaultApiPriorityOrder
+	}
+
+	regex := defaultApiNameRegex
+	if o.Prefix != "" {
+		regex = fmt.Sprintf("^(%v)(.+)(.tmpl)", o.Prefix)
+	}
 	return &ApiGenerator{
-		data:       o.Data,
-		template:   o.Template,
-		filesystem: o.FS,
+		data:             o.Data,
+		template:         o.Template,
+		filesystem:       o.FS,
+		nameRegex:        regexp.MustCompile(regex),
+		priorityOrder:    priorityOrder,
+		defaultRegenRule: o.RegenRule,
+		rules:            o.Rules,
 	}
 }
 
 func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
-	if dirEntry.IsDir() || !regexp.MustCompile("^(api.)(.+)(.tmpl)").MatchString(path.Base(tmplPath)) {
+	if dirEntry.IsDir() || !m.nameRegex.MatchString(path.Base(tmplPath)) {
 		// Skip over it
 		return nil
 	}
@@ -51,9 +73,15 @@ func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 			return err
 		}
 
+		outputFile := path.Join(targetDir, baseFilename)
+		regenRule, err := getApplicableRegenRules(outputFile, m.rules, m.defaultRegenRule)
+		if err != nil {
+			return err
+		}
 		toGenerate = append(toGenerate, *NewGenerationContext(
 			tmplPath,
-			path.Join(targetDir, baseFilename),
+			outputFile,
+			regenRule,
 			data,
 		))
 	}
@@ -95,5 +123,5 @@ func apiVersion(pathName string) (version string) {
 }
 
 func (m *ApiGenerator) PriorityOrder() int {
-	return apiGenerationOrder
+	return m.priorityOrder
 }

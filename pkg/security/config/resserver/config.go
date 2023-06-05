@@ -54,13 +54,15 @@ type resServerDI struct {
 	fx.In
 	Config               *Configuration
 	SecurityRegistrar    security.Registrar
-	DiscoveryCustomizers *discovery.Customizers
+	DiscoveryCustomizers *discovery.Customizers `optional:"true"`
 }
 
 // ConfigureResourceServer configuration entry point
 func ConfigureResourceServer(di resServerDI) {
-	// SMCR
-	di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
+	// SMCR only applicable when discovery is on
+	if di.DiscoveryCustomizers != nil {
+		di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
+	}
 
 	// reigester token auth feature
 	configurer := tokenauth.NewTokenAuthConfigurer(func(opt *tokenauth.TokenAuthOption) {

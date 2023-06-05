@@ -2,11 +2,14 @@
     {{- $operation := index . 0 }}
     {{- $currentPkg := index . 1 }}
 
-    {{- $isEmptyWrapper := containsSingularRef $operation.Data }}
+    {{- $hasOneRef := containsSingularRef $operation.Data }}
+    {{- $reqBody := $operation.Data.RequestBody }}
+    {{- $onlyHasReqBodyRef := and $hasOneRef $reqBody}}
+
     {{- $isEmpty := isEmpty $operation.Data }}
 
-    {{- $shouldSkip := or $isEmptyWrapper $isEmpty }}
-
+    {{/* Skip making struct if there won't be anything in it, or just one ref in the request body (function will import it directly) */}}
+    {{- $shouldSkip := or $isEmpty $onlyHasReqBodyRef }}
     {{ if not $shouldSkip }}
         {{- $structName := concat $operation.Name "Request" }}
         {{- $structName = toTitle $structName }}
@@ -19,12 +22,54 @@
                     {{ template "EmbedStruct" args . $currentPkg }}
                 {{- else }}
                     {{- range .Value.Content }}
-                        {{- $schema := schema "" .Schema }}
-                        {{- template "SchemaProperties" args $schema "api" }}
+                       {{- with .Schema.Ref }}
+                            {{ template "EmbedStruct" args . $currentPkg }}
+                        {{- else }}
+                           {{- $schema := schema "" .Schema }}
+                           {{- template "SchemaProperties" args $schema "api" }}
+                           {{- if ne $schema.Type "object" }}
+                                {{- $requiredList := requiredList $schema.Data }}
+                                {{- $property := property $schema.Data "Body" $requiredList $currentPkg $schema.Name }}
+                                {{- $property = $property.SetOmitJSON true }}
+                                {{ template "properties" args $property }}
+                           {{- end }}
+                        {{- end }}
                     {{- end }}
                 {{- end }}
             {{- end }}
         }
+
+        {{- template "requestBodyMarshallingFunctions" args $operation }}
         {{- registerStruct $structName $currentPkg }}
+    {{- end }}
+{{- end }}
+
+{{ define "requestBodyMarshallingFunctions" }}
+    {{- $operation := index . 0 }}
+    {{- $addMarshallingFunctions := false }}
+    {{- $structName := concat $operation.Name "Request" }}
+    {{- $structName = toTitle $structName }}
+
+    {{- with $operation.Data.RequestBody }}
+        {{- if eq .Ref "" }}
+            {{- range .Value.Content }}
+                {{- if eq .Schema.Ref "" }}
+                    {{- if ne .Schema.Value.Type "object" }}
+                        {{- $addMarshallingFunctions = true }}
+                    {{- end }}
+                {{- end }}
+            {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- if $addMarshallingFunctions }}
+
+    func (t *{{ $structName }}) UnmarshalJSON(data []byte) (err error) {
+        return json.Unmarshal(data, &t.Body)
+    }
+
+    func (t {{ $structName }}) MarshalJSON() ([]byte, error)  {
+        return json.Marshal(t.Body)
+    }
+
     {{- end }}
 {{- end }}

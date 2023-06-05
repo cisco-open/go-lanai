@@ -19,6 +19,7 @@ import (
 
 const (
 	ValidRequestBody = `{"message": "hello"}`
+	ValidQuery       = `hello`
 )
 
 /*************************
@@ -27,10 +28,12 @@ const (
 
 type TestRequest struct {
 	Message string `json:"message"`
+	Query   string `form:"q"`
 }
 
 type TestResponse struct {
 	Message string `json:"message"`
+	Query   string `json:"query"`
 }
 
 type testController struct{}
@@ -49,6 +52,7 @@ func (c *testController) Mappings() []web.Mapping {
 func (c *testController) Echo(_ context.Context, req *TestRequest) (interface{}, error) {
 	return &TestResponse{
 		Message: req.Message,
+		Query:   req.Query,
 	}, nil
 }
 
@@ -70,8 +74,8 @@ func TestDefaultRealTestServer(t *testing.T) {
 			web.FxControllerProviders(newTestController),
 		),
 		test.GomegaSubTest(SubTestRealServerUtils(0, DefaultContextPath), "TestRealServerUtils"),
-		test.GomegaSubTest(SubTestEchoWithRelativePath(), "EchoWithRelativePath"),
-		test.GomegaSubTest(SubTestEchoWithAbsolutePath(DefaultContextPath), "EchoWithAbsolutePath"),
+		test.GomegaSubTest(SubTestEchoWithRelativePath(false), "EchoWithRelativePath"),
+		test.GomegaSubTest(SubTestEchoWithAbsolutePath(DefaultContextPath, false), "EchoWithAbsolutePath"),
 	)
 }
 
@@ -80,29 +84,51 @@ func TestCustomRealTestServer(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithRealServer(UseContextPath(altContextPath), UseLogLevel(log.LevelDebug)),
+		WithRealServer(
+			UseContextPath(altContextPath),
+			UseLogLevel(log.LevelDebug),
+			AddDefaultRequestOptions(Queries("q", ValidQuery)),
+		),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			web.FxControllerProviders(newTestController),
 		),
 		test.GomegaSubTest(SubTestRealServerUtils(0, altContextPath), "TestRealServerUtils"),
-		test.GomegaSubTest(SubTestEchoWithRelativePath(), "EchoWithRelativePath"),
-		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath), "EchoWithAbsolutePath"),
+		test.GomegaSubTest(SubTestEchoWithRelativePath(true), "EchoWithRelativePath"),
+		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath, true), "EchoWithAbsolutePath"),
 	)
 }
 
-func TestMockedTestServer(t *testing.T) {
-	const altContextPath = "/also-test"
+func TestDefaultMockedTestServer(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithMockedServer(UseContextPath(altContextPath), UseLogLevel(log.LevelDebug)),
+		WithMockedServer(),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			web.FxControllerProviders(newTestController),
 		),
-		test.GomegaSubTest(SubTestEchoWithRelativePath(), "EchoWithRelativePath"),
-		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath), "EchoWithAbsolutePath"),
+		test.GomegaSubTest(SubTestEchoWithRelativePath(false), "EchoWithRelativePath"),
+		test.GomegaSubTest(SubTestEchoWithAbsolutePath(DefaultContextPath, false), "EchoWithAbsolutePath"),
+	)
+}
+
+func TestCustomMockedTestServer(t *testing.T) {
+	const altContextPath = "/also-test"
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		WithMockedServer(
+			UseContextPath(altContextPath),
+			UseLogLevel(log.LevelDebug),
+			AddDefaultRequestOptions(Queries("q", ValidQuery)),
+		),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			web.FxControllerProviders(newTestController),
+		),
+		test.GomegaSubTest(SubTestEchoWithRelativePath(true), "EchoWithRelativePath"),
+		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath, true), "EchoWithAbsolutePath"),
 	)
 }
 
@@ -111,7 +137,11 @@ func TestUtilities(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		WithUtilities(UseContextPath(altContextPath), UseLogLevel(log.LevelDebug)),
+		WithUtilities(
+			UseContextPath(altContextPath),
+			UseLogLevel(log.LevelDebug),
+			AddDefaultRequestOptions(Queries("q", ValidQuery)),
+		),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Provide(
@@ -121,8 +151,8 @@ func TestUtilities(t *testing.T) {
 			fx.Invoke(initialize),
 			web.FxControllerProviders(newTestController),
 		),
-		test.GomegaSubTest(SubTestEchoWithRelativePath(), "EchoWithRelativePath"),
-		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath), "EchoWithAbsolutePath"),
+		test.GomegaSubTest(SubTestEchoWithRelativePath(true), "EchoWithRelativePath"),
+		test.GomegaSubTest(SubTestEchoWithAbsolutePath(altContextPath, true), "EchoWithAbsolutePath"),
 	)
 }
 
@@ -144,7 +174,7 @@ func SubTestRealServerUtils(expectedPort int, expectedContextPath string) test.G
 	}
 }
 
-func SubTestEchoWithRelativePath() test.GomegaSubTestFunc {
+func SubTestEchoWithRelativePath(expectQuery bool) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var req *http.Request
 		var resp *http.Response
@@ -153,11 +183,11 @@ func SubTestEchoWithRelativePath() test.GomegaSubTestFunc {
 		req = NewRequest(ctx, http.MethodPost, "/api/v1/echo", strings.NewReader(ValidRequestBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp = MustExec(ctx, req).Response
-		assertResponse(t, g, resp, "hello")
+		assertResponse(t, g, resp, "hello", expectQuery)
 	}
 }
 
-func SubTestEchoWithAbsolutePath(contextPath string) test.GomegaSubTestFunc {
+func SubTestEchoWithAbsolutePath(contextPath string, expectQuery bool) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var req *http.Request
 		var resp *http.Response
@@ -167,7 +197,7 @@ func SubTestEchoWithAbsolutePath(contextPath string) test.GomegaSubTestFunc {
 		req = NewRequest(ctx, http.MethodPost, url, strings.NewReader(ValidRequestBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp = MustExec(ctx, req).Response
-		assertResponse(t, g, resp, "hello")
+		assertResponse(t, g, resp, "hello", expectQuery)
 	}
 }
 
@@ -175,10 +205,13 @@ func SubTestEchoWithAbsolutePath(contextPath string) test.GomegaSubTestFunc {
 	Helpers
  *************************/
 
-func assertResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedMsg string) {
+func assertResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedMsg string, expectQuery bool) {
 	g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "response should be 200")
 	var tsBody TestResponse
 	e := json.NewDecoder(resp.Body).Decode(&tsBody)
 	g.Expect(e).To(Succeed(), "parsing response body shouldn't fail")
-	g.Expect(tsBody.Message).To(Equal(expectedMsg), "response body should be correct")
+	g.Expect(tsBody.Message).To(Equal(expectedMsg), "response body should have correct message")
+	if expectQuery {
+		g.Expect(tsBody.Query).To(Equal(ValidQuery), "response body should have correct query")
+	}
 }

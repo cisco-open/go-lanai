@@ -1,0 +1,10 @@
+management:
+  endpoint:
+    health:
+      show-components: always
+      show-details: always
+    apilist:
+      enabled: true
+      static-path: "testdata/test-api-list.json"
+  security:
+    enabled-by-default: false

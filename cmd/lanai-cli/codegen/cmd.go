@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"io/fs"
 	"os"
@@ -22,15 +23,25 @@ var (
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               Run,
 	}
-
-	Args = Arguments{}
+	Args          = Arguments{}
+	Configuration = Config{}
 )
 
 type Arguments struct {
-	Contract           string `flag:"contract,c" desc:"openapi contract"`
-	ProjectName        string `flag:"project,p" desc:"project name"`
-	TemplateDirectory  string `flag:"templateDir,t" desc:"Directory where templates are stored, will use built-in templates if not set"`
-	RepositoryRootPath string `flag:"repository,r" desc:"Repository name"`
+	Config string `flag:"config,c" desc:"Configuration file, if not defined will default to codegen.yml"`
+}
+
+type Regeneration struct {
+	Default string            `yaml:"default"`
+	Rules   map[string]string `yaml:"rules"`
+}
+type Config struct {
+	Contract           string            `yaml:"contract"`
+	ProjectName        string            `yaml:"projectName"`
+	TemplateDirectory  string            `yaml:"templateDirectory"`
+	RepositoryRootPath string            `yaml:"repositoryRootPath"`
+	Regeneration       Regeneration      `yaml:"regeneration"`
+	Regexes            map[string]string `yaml:"regexes"`
 }
 
 func init() {
@@ -41,13 +52,24 @@ func init() {
 var DefaultFS embed.FS
 
 func Run(cmd *cobra.Command, _ []string) error {
-	openAPIData, err := openapi3.NewLoader().LoadFromFile(Args.Contract)
+	configFilePath := Args.Config
+	if configFilePath == "" {
+		configFilePath = "codegen.yml"
+	}
+	if _, err := os.Stat(configFilePath); err == nil {
+		err := processConfigurationFile(configFilePath)
+		if err != nil {
+			return err
+		}
+	}
+
+	openAPIData, err := openapi3.NewLoader().LoadFromFile(Configuration.Contract)
 	if err != nil {
 		return fmt.Errorf("error parsing OpenAPI file: %v", err)
 	}
 
-	projectName := Args.ProjectName
-	repository := Args.RepositoryRootPath
+	projectName := Configuration.ProjectName
+	repository := Configuration.RepositoryRootPath
 	// Populate the data the templates will use
 	data := map[string]interface{}{
 		generator.OpenAPIData: openAPIData,
@@ -57,30 +79,60 @@ func Run(cmd *cobra.Command, _ []string) error {
 
 	FSToUse := determineFSToUse()
 
-	template, err := generator.LoadTemplates(FSToUse)
+	loaderOpts := generator.LoaderOptions{
+		InitialRegexes: Configuration.Regexes,
+	}
+	template, err := generator.LoadTemplates(FSToUse, loaderOpts)
 	if err != nil {
 		return err
 	}
-
 	if err = generator.GenerateFiles(
 		FSToUse,
 		generator.WithData(data),
 		generator.WithFS(FSToUse),
-		generator.WithTemplate(template)); err != nil {
+		generator.WithTemplate(template),
+		generator.WithRegenerationRule(Configuration.Regeneration.Default),
+		generator.WithRules(Configuration.Regeneration.Rules)); err != nil {
 		return err
 	}
 
-	fmt.Printf("Code generated to %v", cmdutils.GlobalArgs.OutputDir)
+	fmt.Printf("Code generated to %v\n", cmdutils.GlobalArgs.OutputDir)
+	//	Run go mod tidy
+	err = cmdutils.GoModTidy(cmd.Context(), []cmdutils.ShCmdOptions{cmdutils.ShellUseOutputDir()})
+	if err != nil {
+		return fmt.Errorf("could not tidy go code: %v", err)
+	}
+	return nil
+}
+
+func processConfigurationFile(configFilePath string) error {
+	configFile, err := os.ReadFile(configFilePath)
+	if err != nil {
+		fmt.Printf("error parsing config file: %v\n", err)
+	}
+	if configFile != nil {
+		config := Config{}
+		err = yaml.Unmarshal(configFile, &config)
+		if err != nil {
+			return fmt.Errorf("error unmarshalling yaml file: %v", err)
+		}
+		Configuration.ProjectName = config.ProjectName
+		Configuration.Contract = config.Contract
+		Configuration.RepositoryRootPath = config.RepositoryRootPath
+		Configuration.TemplateDirectory = config.TemplateDirectory
+		Configuration.Regeneration = config.Regeneration
+		Configuration.Regexes = config.Regexes
+	}
 	return nil
 }
 
 func determineFSToUse() fs.FS {
 	var FSToUse fs.FS
 	FSToUse = DefaultFS
-	if Args.TemplateDirectory == "" {
+	if Configuration.TemplateDirectory == "" {
 		fmt.Println("Using default template set")
 	} else {
-		FSToUse = os.DirFS(Args.TemplateDirectory)
+		FSToUse = os.DirFS(Configuration.TemplateDirectory)
 	}
 	return FSToUse
 }

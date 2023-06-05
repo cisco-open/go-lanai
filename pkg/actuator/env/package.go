@@ -11,10 +11,11 @@ var Module = &bootstrap.Module{
 	Precedence: actuator.MinActuatorPrecedence,
 	Options: []fx.Option{
 		fx.Provide(BindEnvProperties),
+		fx.Invoke(register),
 	},
 }
 
-func init() {
+func Register() {
 	bootstrap.Register(Module)
 }
 
@@ -26,7 +27,7 @@ type regDI struct {
 	Properties    EnvProperties
 }
 
-func Register(di regDI) {
+func register(di regDI) {
 	ep := new(di)
 	di.Registrar.MustRegister(ep)
 }
