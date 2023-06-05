@@ -283,6 +283,15 @@ paths:
                     schema:
                         $ref: '#/components/schemas/DeviceCreate'
             required: true
+  '/apim/api/v1/keys':
+    get:
+        description: Returns paged response, and requires VIEW_APIKEY permission
+        operationId: searchApiKeys
+        parameters:
+            - $ref: '#/components/parameters/StringParamThatZeroValueIsValidFor'
+        summary: Search for API Keys
+        tags:
+            - API Keys Management
   '/my/api/v4/testAPIThatDoesntUseAnyImports':
     post:
         operationId: createDevice
@@ -603,6 +612,14 @@ components:
     204:
       description: No content
   parameters:
+    StringParamThatZeroValueIsValidFor:
+        in: query
+        name: StringParamThatZeroValueIsValidFor
+        schema:
+            description: asc | desc | (empty value)
+            format: ^$|^[Aa][Ss][Cc]|[Dd][Ee][Ss][Cc]$
+            maxLength: 32
+            type: string
     QueryParam:
       name: testParam
       in: query

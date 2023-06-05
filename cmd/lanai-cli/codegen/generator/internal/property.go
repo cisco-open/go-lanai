@@ -104,7 +104,7 @@ func valuePassesValidation(schema *openapi3.Schema, value reflect.Value) (result
 	case reflect.String:
 		if rValue, _ := regex(*schema); rValue != nil {
 			found, err := regexp.MatchString(rValue.Value, value.String())
-			if err == nil || !found {
+			if err != nil || !found {
 				return false
 			}
 		}
