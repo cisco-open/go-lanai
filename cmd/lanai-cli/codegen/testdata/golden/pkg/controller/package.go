@@ -34,6 +34,7 @@ func register(lc fx.Lifecycle, r *web.Registrar) {
 	_ = web.Validator().RegisterValidationCtx("date", validation.Regex("^\\d{4}-\\d{2}-\\d{2}$"))
 	_ = web.Validator().RegisterValidationCtx("regexCD184", validation.Regex("^[a-zA-Z0-8-_=]{1,256}$"))
 	_ = web.Validator().RegisterValidationCtx("regexEB33C", validation.Regex("^[a-zA-Z0-9-_=]{1,256}$"))
+	_ = web.Validator().RegisterValidationCtx("regexD4EC2", validation.Regex("^$|^[Aa][Ss][Cc]|[Dd][Ee][Ss][Cc]$"))
 	_ = web.Validator().RegisterValidationCtx("regexA79C5", validation.Regex("^[a-zA-Z0-5-_=]{1,256}$"))
 	_ = web.Validator().RegisterValidationCtx("regexA397E", validation.Regex("^[a-zA-Z0-7-_=]{1,256}$"))
 }
