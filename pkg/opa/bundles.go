@@ -8,20 +8,17 @@ import (
 	sdktest "github.com/open-policy-agent/opa/sdk/test"
 	"go.uber.org/fx"
 	"io/fs"
+	"path/filepath"
 	"strings"
 )
 
 //TODO this is just a POC, bundles should be loaded from bundle server
 
-//go:embed bundle-api/roles/** bundle-api/rev.2/** bundle-tenancy/**
+//go:embed bundle/.manifest bundle/roles bundle/operations bundle/tenancy  bundle/ownership bundle/api.rev.2 bundle/poc
 var BundleFS embed.FS
 
-//go:embed bundle-tenancy/**
-var TenancyBundleFS embed.FS
-
 var Bundles = map[string]embed.FS {
-	"/bundles/api.tar.gz": BundleFS,
-	"/bundles/tenancy.tar.gz": TenancyBundleFS,
+	"/bundles/bundle.tar.gz": BundleFS,
 }
 
 type BundleServerOut struct {
@@ -65,8 +62,10 @@ func InitializeBundleServer(lc fx.Lifecycle, server *sdktest.Server) {
 }
 
 func loadBundleFiles(fsys fs.FS) (map[string]string, error) {
-	ret := map[string]string{}
-	e := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, _ error) error {
+	// find and read all files
+	files := map[string][]byte{}
+	rootPath := "."
+	e := fs.WalkDir(fsys, rootPath, func(path string, d fs.DirEntry, _ error) error {
 		// Note we ignore any error and let it walk through entire tree
 		if d.IsDir() {
 			return nil
@@ -75,13 +74,30 @@ func loadBundleFiles(fsys fs.FS) (map[string]string, error) {
 		if e != nil {
 			return nil
 		}
-		ret[strings.ReplaceAll(path, "/", "_")] = string(data)
+		if d.Name() == ".manifest" {
+			rootPath = filepath.Dir(path)
+		}
+		files[path] = data
 		return nil
 	})
 	if e != nil {
 		return nil, e
-	} else if len(ret) == 0 {
+	} else if len(files) == 0 {
 		return nil, fmt.Errorf("no files was found in bundle FS")
+	}
+
+	// prepare bundle content
+	ret := map[string]string{}
+	for path, data := range files {
+		name, e := filepath.Rel(rootPath, path)
+		if e != nil {
+			name = path
+		}
+		if strings.HasSuffix(name, ".json") {
+			// nested data documents are not implemented in the dummy server
+			name = strings.ReplaceAll(path, "/", "_")
+		}
+		ret[name] = string(data)
 	}
 	return ret, nil
 }

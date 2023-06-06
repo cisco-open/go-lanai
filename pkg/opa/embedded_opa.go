@@ -97,11 +97,6 @@ func LoadConfig(appCtx *bootstrap.ApplicationContext, bundleServer *sdktest.Serv
 			"poc": {
 				"url": %q
 			}
-		},
-		"bundles": {
-			"api": {
-				"resource": "/bundles/api.tar.gz"
-			}
 		}
 	}`, bundleServer.URL())
 

@@ -27,7 +27,8 @@ func AllowResource(ctx context.Context, resType string, op opa.ResourceOperation
 	for _, fn := range opts {
 		fn(&res)
 	}
-	opaOpts := PrepareOpaQuery(ctx, "tenancy/allow_resource", resType, op, &res)
+	policy := fmt.Sprintf("%s/allow_%v", resType, op)
+	opaOpts := PrepareOpaQuery(ctx, policy, resType, op, &res)
 	result, e := opa.EmbeddedOPA().Decision(ctx, *opaOpts)
 	if e != nil {
 		return security.NewAccessDeniedError(e)

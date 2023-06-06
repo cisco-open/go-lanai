@@ -122,19 +122,23 @@ const (
 	OpDelete
 )
 
-func (op ResourceOperation) MarshalText() ([]byte, error) {
+func (op ResourceOperation) String() string {
 	switch op {
 	case OpRead:
-		return []byte(`read`), nil
+		return `read`
 	case OpWrite:
-		return []byte(`write`), nil
+		return `write`
 	case OpCreate:
-		return []byte("create"), nil
+		return `create`
 	case OpDelete:
-		return []byte("delete"), nil
+		return `delete`
 	default:
-		return []byte{}, nil
+		return ``
 	}
+}
+
+func (op ResourceOperation) MarshalText() ([]byte, error) {
+	return []byte(op.String()), nil
 }
 
 func (op ResourceOperation) MarshalJSON() ([]byte, error) {
