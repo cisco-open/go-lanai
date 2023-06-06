@@ -186,7 +186,7 @@ type GenericResponse struct {
 	CreatedOnDate                   string                      `json:"createdOnDate" binding:"required,date"`
 	CreatedOnDateTime               *time.Time                  `json:"createdOnDateTime,omitempty"`
 	DirectRef                       GenericObject               `json:"directRef,omitempty"`
-	Email                           *string                     `json:"email,omitempty" binding:"omitempty,email"`
+	Email                           string                      `json:"email" binding:"omitempty,email"`
 	EmptyObject                     map[string]interface{}      `json:"emptyObject,omitempty"`
 	Integer32Value                  int32                       `json:"integer32Value" binding:"omitempty,max=5"`
 	Integer64Value                  int64                       `json:"integer64Value"`
