@@ -35,6 +35,11 @@ func requiredList(val interface{}) ([]string, error) {
 		if parameter.Required {
 			list = append(list, parameter.Name)
 		}
+	case *openapi3.RequestBody:
+		reqBody := val.(*openapi3.RequestBody)
+		if reqBody.Required {
+			list = append(list, "Body")
+		}
 	default:
 		return nil, fmt.Errorf("requiredList error: unsupported interface %v", getInterfaceType(val))
 	}

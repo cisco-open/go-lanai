@@ -9,8 +9,8 @@ import (
 )
 
 type TestStringRequestBodyRequest struct {
-	Id   string `uri:"id" binding:"required,uuid"`
-	Body string `json:"-"`
+	Id   string  `uri:"id" binding:"required,uuid"`
+	Body *string `json:"-" binding:"required"`
 }
 
 func (t *TestStringRequestBodyRequest) UnmarshalJSON(data []byte) (err error) {
@@ -28,7 +28,7 @@ type TestRequestBodyWithAdditionalPropertiesRequest struct {
 
 type PatchTestPathRequest struct {
 	Id   string      `uri:"id" binding:"required,uuid"`
-	Body []uuid.UUID `json:"-" binding:"omitempty,min=1,dive,uuid"`
+	Body []uuid.UUID `json:"-" binding:"required,min=1,dive,uuid"`
 }
 
 func (t *PatchTestPathRequest) UnmarshalJSON(data []byte) (err error) {
@@ -41,7 +41,7 @@ func (t PatchTestPathRequest) MarshalJSON() ([]byte, error) {
 
 type UpdateServiceStatusRequest struct {
 	Id   string              `uri:"id" binding:"required,uuid"`
-	Body []api.GenericObject `json:"-" binding:"omitempty,min=1"`
+	Body []api.GenericObject `json:"-" binding:"required,min=1"`
 }
 
 func (t *UpdateServiceStatusRequest) UnmarshalJSON(data []byte) (err error) {
