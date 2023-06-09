@@ -1,8 +1,10 @@
 package codegen
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"embed"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -10,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"io/fs"
 	"os"
+	"path/filepath"
 )
 
 const (
@@ -17,7 +20,8 @@ const (
 )
 
 var (
-	Cmd = &cobra.Command{
+	logger = log.New("Codegen")
+	Cmd    = &cobra.Command{
 		Use:                CommandName,
 		Short:              "Given openapi contract, generate controllers/structs",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
@@ -52,10 +56,23 @@ func init() {
 var DefaultFS embed.FS
 
 func Run(cmd *cobra.Command, _ []string) error {
+	ctxLog := logger.WithContext(cmd.Context())
+
+	currDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	ctxLog.Debugf("Current dir: %s", currDir)
+
 	configFilePath := Args.Config
 	if configFilePath == "" {
 		configFilePath = "codegen.yml"
 	}
+	ctxLog.Debugf("Config file path: %s", configFilePath)
+
+	configDir := filepath.Dir(configFilePath)
+	ctxLog.Debugf("Config directory: %s", configDir)
+
 	if _, err := os.Stat(configFilePath); err == nil {
 		err := processConfigurationFile(configFilePath)
 		if err != nil {
@@ -63,7 +80,16 @@ func Run(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	openAPIData, err := openapi3.NewLoader().LoadFromFile(Configuration.Contract)
+	contractFilePath := Configuration.Contract
+	ctxLog.Debugf("Configured contract file path: %s", contractFilePath)
+
+	if !filepath.IsAbs(contractFilePath) {
+		// contractFilePath is converted to be relative to current directory
+		contractFilePath = filepath.Join(configDir, contractFilePath)
+	}
+	ctxLog.Debugf("Contract file path: %s", contractFilePath)
+
+	openAPIData, err := openapi3.NewLoader().LoadFromFile(contractFilePath)
 	if err != nil {
 		return fmt.Errorf("error parsing OpenAPI file: %v", err)
 	}
@@ -77,7 +103,7 @@ func Run(cmd *cobra.Command, _ []string) error {
 		generator.Repository:  repository,
 	}
 
-	FSToUse := determineFSToUse()
+	FSToUse := determineFSToUse(cmd.Context(), configDir)
 
 	loaderOpts := generator.LoaderOptions{
 		InitialRegexes: Configuration.Regexes,
@@ -126,13 +152,21 @@ func processConfigurationFile(configFilePath string) error {
 	return nil
 }
 
-func determineFSToUse() fs.FS {
+func determineFSToUse(ctx context.Context, configDir string) fs.FS {
+	ctxLog := logger.WithContext(ctx)
 	var FSToUse fs.FS
 	FSToUse = DefaultFS
-	if Configuration.TemplateDirectory == "" {
-		fmt.Println("Using default template set")
+	templateDirectory := Configuration.TemplateDirectory
+	ctxLog.Debugf("Configured template directory: %s", templateDirectory)
+	if templateDirectory == "" {
+		ctxLog.Debugf("Using default template set as configured template directory is empty.")
 	} else {
-		FSToUse = os.DirFS(Configuration.TemplateDirectory)
+		if !filepath.IsAbs(templateDirectory) {
+			// templateDirectory is converted to be relative to current directory
+			templateDirectory = filepath.Join(configDir, templateDirectory)
+		}
+		ctxLog.Debugf("Template directory: %s", templateDirectory)
+		FSToUse = os.DirFS(templateDirectory)
 	}
 	return FSToUse
 }

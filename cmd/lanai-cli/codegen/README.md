@@ -109,10 +109,13 @@ components:
 ```
 
 2. Make a `codegen.yml`
+
+Notes: If contract/templateDirectory are relative paths, they must be relative to the location of this config file.
 ```yaml
 contract: ./contract.yml
 repositoryRootPath: cto-github.cisco.com/NFV-BU/testservice
 projectName: testservice
+#templateDirectory:
 ```
 
 3. Run `lanai-cli codegen -o ./` Files will be generated to your directory:

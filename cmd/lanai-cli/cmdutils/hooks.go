@@ -83,4 +83,3 @@ func ensureDir(path *string, base string, cleanIfExist bool) (err error) {
 	err = mkdirIfNotExists(*path)
 	return
 }
-
