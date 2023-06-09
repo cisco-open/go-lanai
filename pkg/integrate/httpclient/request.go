@@ -42,7 +42,7 @@ func NewRequest(path, method string, opts ...RequestOptions) *Request {
 
 func EncodeJSONRequest(c context.Context, r *http.Request, request interface{}) error {
 	if request == nil {
-		r.Body = http.NoBody
+		r.Body = nil
 		r.GetBody = nil
 		r.ContentLength = 0
 		return nil
