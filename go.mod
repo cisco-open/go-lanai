@@ -35,7 +35,7 @@ require (
 	github.com/mattermost/xml-roundtrip-validator v0.1.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/onsi/gomega v1.18.1
-	github.com/open-policy-agent/opa v0.52.0
+	github.com/open-policy-agent/opa v0.53.1
 	github.com/opensearch-project/opensearch-go v1.1.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
@@ -53,7 +53,7 @@ require (
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	go.uber.org/fx v1.18.2
 	golang.org/x/crypto v0.7.0
-	golang.org/x/net v0.9.0
+	golang.org/x/net v0.10.0
 	golang.org/x/text v0.9.0
 	gopkg.in/dnaeon/go-vcr.v3 v3.1.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -165,13 +165,13 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/prometheus/client_golang v1.15.0 // indirect
+	github.com/prometheus/client_golang v1.15.1 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
+	github.com/sirupsen/logrus v1.9.2 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
 	github.com/tidwall/gjson v1.14.3 // indirect
@@ -199,16 +199,16 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
-	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
-	golang.org/x/term v0.7.0 // indirect
+	golang.org/x/sync v0.2.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
-	google.golang.org/grpc v1.54.0 // indirect
+	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
+	google.golang.org/grpc v1.55.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	oras.land/oras-go/v2 v2.0.2 // indirect
+	oras.land/oras-go/v2 v2.2.0 // indirect
 )

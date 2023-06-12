@@ -16,6 +16,7 @@ var logger = log.New("OPA.Data")
 type ResourceOptions func(res *Resource)
 
 type Resource struct {
+	OPA        *sdk.OPA
 	TenantID   string              `json:"tenant_id,omitempty"`
 	TenantPath []string            `json:"tenant_path,omitempty"`
 	OwnerID    string              `json:"owner_id,omitempty"`
@@ -23,13 +24,13 @@ type Resource struct {
 }
 
 func AllowResource(ctx context.Context, resType string, op opa.ResourceOperation, opts ...ResourceOptions) error {
-	res := Resource{}
+	res := Resource{OPA: opa.EmbeddedOPA()}
 	for _, fn := range opts {
 		fn(&res)
 	}
 	policy := fmt.Sprintf("%s/allow_%v", resType, op)
-	opaOpts := PrepareOpaQuery(ctx, policy, resType, op, &res)
-	result, e := opa.EmbeddedOPA().Decision(ctx, *opaOpts)
+	opaOpts := PrepareDecisionQuery(ctx, policy, resType, op, &res)
+	result, e := res.OPA.Decision(ctx, *opaOpts)
 	if e != nil {
 		return security.NewAccessDeniedError(e)
 	}
@@ -45,7 +46,7 @@ func AllowResource(ctx context.Context, resType string, op opa.ResourceOperation
 	return nil
 }
 
-func PrepareOpaQuery(ctx context.Context, policy string, resType string, op opa.ResourceOperation, res *Resource) *sdk.DecisionOptions {
+func PrepareDecisionQuery(ctx context.Context, policy string, resType string, op opa.ResourceOperation, res *Resource) *sdk.DecisionOptions {
 	input := opa.InputApiAccess{
 		Authentication: opa.NewAuthenticationClause(ctx),
 		Resource:       opa.NewResourceClause(resType, op),

@@ -1,4 +1,4 @@
-package types
+package opadata
 
 import (
 	"context"
@@ -101,7 +101,6 @@ func TenancyCheck(flags ...TenancyCheckFlag) func(*gorm.DB) *gorm.DB {
 type Tenancy struct {
 	TenantID   uuid.UUID  `gorm:"type:KeyID;not null"`
 	TenantPath TenantPath `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
-	//TenantPath TenantPath `gorm:"-"  json:"-"`
 }
 
 // SkipTenancyCheck is used for embedding models to override tenancy check behavior.

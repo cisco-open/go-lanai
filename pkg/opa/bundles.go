@@ -47,6 +47,7 @@ func ProvideBundleServer(appCtx *bootstrap.ApplicationContext) (BundleServerOut,
 	if e != nil {
 		return BundleServerOut{}, fmt.Errorf("failed to start OPA bundle server: %v", e)
 	}
+	logger.WithContext(appCtx).Infof("OPA Bundles served at %q", server.URL())
 	return BundleServerOut{
 		Server: server,
 	}, nil

@@ -34,6 +34,7 @@ func memberAdminOptions() sectest.SecurityContextOptions {
 		d.ProviderId = ProviderId
 		d.Permissions = utils.NewStringSet("IS_API_ADMIN", "VIEW", "MANAGE")
 		d.Roles = utils.NewStringSet("SUPERUSER")
+		d.Tenants = utils.NewStringSet(TenantId, AnotherTenantId)
 	})
 }
 
@@ -45,6 +46,7 @@ func memberOwnerOptions() sectest.SecurityContextOptions {
 		d.ProviderId = ProviderId
 		d.Permissions = utils.NewStringSet("VIEW")
 		d.Roles = utils.NewStringSet("USER")
+		d.Tenants = utils.NewStringSet(TenantId)
 	})
 }
 
@@ -56,6 +58,7 @@ func memberNonOwnerOptions() sectest.SecurityContextOptions {
 		d.ProviderId = ProviderId
 		d.Permissions = utils.NewStringSet("VIEW")
 		d.Roles = utils.NewStringSet("USER")
+		d.Tenants = utils.NewStringSet(TenantId)
 	})
 }
 
@@ -67,18 +70,13 @@ func nonMemberAdminOptions() sectest.SecurityContextOptions {
 		d.ProviderId = ProviderId
 		d.Permissions = utils.NewStringSet("IS_API_ADMIN")
 		d.Roles = utils.NewStringSet("SUPERUSER")
+		d.Tenants = utils.NewStringSet(AnotherTenantId)
 	})
 }
 
 /*************************
 	Test
  *************************/
-
-//func TestMain(m *testing.M) {
-//	suitetest.RunTests(m,
-//		dbtest.EnableDBRecordMode(),
-//	)
-//}
 
 type testDI struct {
 	fx.In
