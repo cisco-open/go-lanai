@@ -10,7 +10,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -51,11 +50,11 @@ type loadModelFunc func(ctx context.Context, db *gorm.DB, tenantId uuid.UUID, g 
 	Test
  *************************/
 
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		dbtest.EnableDBRecordMode(),
-	)
-}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
 
 type testDI struct {
 	fx.In

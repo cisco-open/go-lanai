@@ -27,40 +27,40 @@ const (
 	Types
  ****************************/
 
-// TenantPath implements
+// PolicyFilter implements
 // - schema.GormDataTypeInterface
 // - schema.QueryClausesInterface
 // - schema.UpdateClausesInterface
 // - schema.DeleteClausesInterface
 // this data type adds "WHERE" clause for tenancy filtering
-type TenantPath pqx.UUIDArray
+type PolicyFilter pqx.UUIDArray
 
 // Value implements driver.Valuer
-func (t TenantPath) Value() (driver.Value, error) {
+func (t PolicyFilter) Value() (driver.Value, error) {
 	return pqx.UUIDArray(t).Value()
 }
 
 // Scan implements sql.Scanner
-func (t *TenantPath) Scan(src interface{}) error {
+func (t *PolicyFilter) Scan(src interface{}) error {
 	return (*pqx.UUIDArray)(t).Scan(src)
 }
 
-func (t TenantPath) GormDataType() string {
+func (t PolicyFilter) GormDataType() string {
 	return "uuid[]"
 }
 
 // QueryClauses implements schema.QueryClausesInterface,
-func (t TenantPath) QueryClauses(f *schema.Field) []clause.Interface {
+func (t PolicyFilter) QueryClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newTenancyFilterClause(f, true)}
 }
 
 // UpdateClauses implements schema.UpdateClausesInterface,
-func (t TenantPath) UpdateClauses(f *schema.Field) []clause.Interface {
+func (t PolicyFilter) UpdateClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newTenancyFilterClause(f, false)}
 }
 
 // DeleteClauses implements schema.DeleteClausesInterface,
-func (t TenantPath) DeleteClauses(f *schema.Field) []clause.Interface {
+func (t PolicyFilter) DeleteClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newTenancyFilterClause(f, false)}
 }
 

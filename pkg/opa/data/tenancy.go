@@ -15,14 +15,14 @@ import (
 
 const (
 	fieldTenantID   = "TenantID"
-	fieldTenantPath = "TenantPath"
+	fieldTenantPath = "PolicyFilter"
 	colTenantID     = "tenant_id"
 	colTenantPath   = "tenant_path"
 )
 
 var (
 	typeUUID          = reflect.TypeOf(uuid.Nil)
-	typeTenantPath    = reflect.TypeOf(TenantPath{})
+	typeTenantPath    = reflect.TypeOf(PolicyFilter{})
 	typeTenancy    = reflect.TypeOf(Tenancy{})
 	typeTenancyPtr    = reflect.TypeOf(&Tenancy{})
 	mapKeysTenantID   = utils.NewStringSet(fieldTenantID, colTenantID)
@@ -81,7 +81,7 @@ func TenancyCheck(flags ...TenancyCheckFlag) func(*gorm.DB) *gorm.DB {
 	}
 }
 
-// Tenancy is an embedded type for data model. It's responsible for populating TenantPath and check for Tenancy related data
+// Tenancy is an embedded type for data model. It's responsible for populating PolicyFilter and check for Tenancy related data
 // when crating/updating. Tenancy implements
 // - callbacks.BeforeCreateInterface
 // - callbacks.BeforeUpdateInterface
@@ -99,8 +99,8 @@ func TenancyCheck(flags ...TenancyCheckFlag) func(*gorm.DB) *gorm.DB {
 // }
 // </code>
 type Tenancy struct {
-	TenantID   uuid.UUID  `gorm:"type:KeyID;not null"`
-	TenantPath TenantPath `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
+	TenantID   uuid.UUID    `gorm:"type:KeyID;not null"`
+	TenantPath PolicyFilter `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
 }
 
 // SkipTenancyCheck is used for embedding models to override tenancy check behavior.
@@ -173,7 +173,7 @@ func (t Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID
 	return uuid.Nil, nil
 }
 
-func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyPath TenantPath) error {
+func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyPath PolicyFilter) error {
 	v := reflect.ValueOf(dest)
 	if v.Kind() == reflect.Struct {
 		return fmt.Errorf("cannot update tenancy automatically to %T, please use struct ptr or map", dest)

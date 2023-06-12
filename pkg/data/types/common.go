@@ -5,6 +5,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+const (
+	TagFilter = "filter"
+)
+
 // FixWhereClausesForStatementModifier applies special fix for
 // db.Model(&model{}).Where(&model{f1:v1}).Or(&model{f2:v2})...
 // Ref:	https://github.com/go-gorm/gorm/issues/3627

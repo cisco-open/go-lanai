@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
+	"database/sql/driver"
 	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -29,19 +30,19 @@ import (
 // this data type adds "WHERE" clause for tenancy filtering
 type TenantPath pqx.UUIDArray
 
-//// Value implements driver.Valuer
-//func (t TenantPath) Value() (driver.Value, error) {
-//	return pqx.UUIDArray(t).Value()
-//}
-//
-//// Scan implements sql.Scanner
-//func (t *TenantPath) Scan(src interface{}) error {
-//	return (*pqx.UUIDArray)(t).Scan(src)
-//}
-//
-//func (t TenantPath) GormDataType() string {
-//	return "uuid[]"
-//}
+// Value implements driver.Valuer
+func (t TenantPath) Value() (driver.Value, error) {
+	return pqx.UUIDArray(t).Value()
+}
+
+// Scan implements sql.Scanner
+func (t *TenantPath) Scan(src interface{}) error {
+	return (*pqx.UUIDArray)(t).Scan(src)
+}
+
+func (t TenantPath) GormDataType() string {
+	return "uuid[]"
+}
 
 // QueryClauses implements schema.QueryClausesInterface,
 func (t TenantPath) QueryClauses(f *schema.Field) []clause.Interface {
