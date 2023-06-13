@@ -38,7 +38,9 @@ func SubTestFilterByTenantID(di *testDI) test.GomegaSubTestFunc {
 		// member admin
 		ctx = sectest.ContextWithSecurity(ctx, memberAdminOptions())
 		// member admin - can read
-		result, e := FilterResource(ctx, "poc", opa.OpRead, func(res *Resource) {})
+		result, e := FilterResource(ctx, "poc", opa.OpRead, func(rf *ResourceFilter) {
+			rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{})
+		})
 		g.Expect(e).To(Succeed())
 		fmt.Println(result)
 	}

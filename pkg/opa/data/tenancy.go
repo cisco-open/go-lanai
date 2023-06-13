@@ -3,7 +3,6 @@ package opadata
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
 	"errors"
@@ -20,66 +19,7 @@ const (
 	colTenantPath   = "tenant_path"
 )
 
-var (
-	typeUUID          = reflect.TypeOf(uuid.Nil)
-	typeTenantPath    = reflect.TypeOf(PolicyFilter{})
-	typeTenancy    = reflect.TypeOf(Tenancy{})
-	typeTenancyPtr    = reflect.TypeOf(&Tenancy{})
-	mapKeysTenantID   = utils.NewStringSet(fieldTenantID, colTenantID)
-	mapKeysTenantPath = utils.NewStringSet(fieldTenantPath, colTenantPath)
-)
 
-type ckTenancyCheckMode struct{}
-
-const (
-	TenancyCheckFlagWriteValueCheck TenancyCheckFlag = 1 << iota
-	TenancyCheckFlagWriteFiltering
-	TenancyCheckFlagReadFiltering
-)
-
-// TenancyCheckFlag bitwise Flag of tenancy flag mode
-type TenancyCheckFlag uint
-
-const (
-	tcModeDefault = tcMode(TenancyCheckFlagWriteFiltering | TenancyCheckFlagWriteValueCheck)
-)
-
-// tcMode enum of tenancyCheckMode
-type tcMode uint
-
-func (m tcMode) hasFlags(flags ...TenancyCheckFlag) bool {
-	for _, flag := range flags {
-		if m & tcMode(flag) == 0 {
-			return false
-		}
-	}
-	return true
-}
-
-// SkipTenancyCheck is used as a scope for gorm.DB to skip tenancy check
-// e.g. db.WithContext(ctx).Scopes(SkipTenancyCheck()).Find(...)
-// Note using this scope without context would panic
-func SkipTenancyCheck() func(*gorm.DB) *gorm.DB {
-	return TenancyCheck(0)
-}
-
-// TenancyCheck is used as a scope for gorm.DB to override tenancy check
-// e.g. db.WithContext(ctx).Scopes(TenancyCheck()).Find(...)
-// Note using this scope without context would panic
-func TenancyCheck(flags ...TenancyCheckFlag) func(*gorm.DB) *gorm.DB {
-	return func(tx *gorm.DB) *gorm.DB {
-		if tx.Statement.Context == nil {
-			panic("SkipTenancyCheck used without context")
-		}
-		var mode tcMode
-		for _, flag := range flags {
-			mode = mode | tcMode(flag)
-		}
-		ctx := context.WithValue(tx.Statement.Context, ckTenancyCheckMode{}, mode)
-		tx.Statement.Context = ctx
-		return tx
-	}
-}
 
 // Tenancy is an embedded type for data model. It's responsible for populating PolicyFilter and check for Tenancy related data
 // when crating/updating. Tenancy implements
@@ -90,7 +30,7 @@ func TenancyCheck(flags ...TenancyCheckFlag) func(*gorm.DB) *gorm.DB {
 // - `filter:"rw"`: CRUD operations are all enforced,
 //					this mode filters result of any Select/Update/Delete query based on current security context
 // - `filter:"-"`: 	filtering is disabled. Note: setting TenantID to in-accessible tenant is still enforced.
-//					to disable TenantID value check, use SkipTenancyCheck
+//					to disable TenantID value check, use SkipPolicyFiltering
 // e.g.
 // <code>
 // type TenancyModel struct {
@@ -103,10 +43,10 @@ type Tenancy struct {
 	TenantPath PolicyFilter `gorm:"type:uuid[];index:,type:gin;not null"  json:"-"`
 }
 
-// SkipTenancyCheck is used for embedding models to override tenancy check behavior.
+// SkipPolicyFiltering is used for embedding models to override tenancy check behavior.
 // It should be called within model's hooks. this function would panic if context is not set yet
 func (Tenancy) SkipTenancyCheck(tx *gorm.DB) {
-	SkipTenancyCheck()(tx)
+	SkipPolicyFiltering()(tx)
 }
 
 func (t *Tenancy) BeforeCreate(tx *gorm.DB) error {
@@ -115,15 +55,17 @@ func (t *Tenancy) BeforeCreate(tx *gorm.DB) error {
 		return errors.New("tenantId is required")
 	}
 
-	if !shouldSkip(tx.Statement.Context, TenancyCheckFlagWriteValueCheck, tcModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, t.TenantID.String()) {
+	if !shouldSkip(tx.Statement.Context, FilteringFlagWriteValueCheck, filteringModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, t.TenantID.String()) {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", t.TenantID.String()))
 	}
 
-	path, err := tenancy.GetTenancyPath(tx.Statement.Context, t.TenantID.String())
-	if err == nil {
-		t.TenantPath = path
-	}
-	return err
+	// TODO
+	//path, err := tenancy.GetTenancyPath(tx.Statement.Context, t.TenantID.String())
+	//if err == nil {
+	//	t.TenantPath = path
+	//}
+	//return err
+	return nil
 }
 
 // BeforeUpdate Check if user is allowed to update this item's tenancy to the target tenant.
@@ -137,15 +79,17 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 		return e
 	}
 
-	if !shouldSkip(tx.Statement.Context, TenancyCheckFlagWriteValueCheck, tcModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
+	if !shouldSkip(tx.Statement.Context, FilteringFlagWriteValueCheck, filteringModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", tenantId.String()))
 	}
 
-	path, err := tenancy.GetTenancyPath(tx.Statement.Context, tenantId.String())
-	if err == nil {
-		err = t.updateTenantPath(tx.Statement.Context, dest, path)
-	}
-	return err
+	// TODO
+	//path, err := tenancy.GetTenancyPath(tx.Statement.Context, tenantId.String())
+	//if err == nil {
+	//	err = t.updateTenantPath(tx.Statement.Context, dest, path)
+	//}
+	//return err
+	return nil
 }
 
 func (t Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID, error) {
@@ -229,12 +173,12 @@ func (Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflect.T
 	return "", reflect.Value{}, false
 }
 
-func shouldSkip(ctx context.Context, flag TenancyCheckFlag, fallback tcMode) bool {
+func shouldSkip(ctx context.Context, flag FilteringFlag, fallback filteringMode) bool {
 	if ctx == nil || !security.IsFullyAuthenticated(security.Get(ctx)) {
 		return true
 	}
-	switch v := ctx.Value(ckTenancyCheckMode{}).(type) {
-	case tcMode:
+	switch v := ctx.Value(ckFilteringMode{}).(type) {
+	case filteringMode:
 		return !v.hasFlags(flag)
 	default:
 		return !fallback.hasFlags(flag)

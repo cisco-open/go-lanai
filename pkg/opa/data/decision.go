@@ -16,11 +16,11 @@ var logger = log.New("OPA.Data")
 type ResourceOptions func(res *Resource)
 
 type Resource struct {
-	OPA        *sdk.OPA
-	TenantID   string              `json:"tenant_id,omitempty"`
-	TenantPath []string            `json:"tenant_path,omitempty"`
-	OwnerID    string              `json:"owner_id,omitempty"`
-	Share      map[string][]string `json:"share,omitempty"`
+	OPA         *sdk.OPA
+	TenantID    string                 `json:"tenant_id,omitempty"`
+	TenantPath  []string               `json:"tenant_path,omitempty"`
+	OwnerID     string                 `json:"owner_id,omitempty"`
+	Share       map[string][]string    `json:"share,omitempty"`
 }
 
 func AllowResource(ctx context.Context, resType string, op opa.ResourceOperation, opts ...ResourceOptions) error {

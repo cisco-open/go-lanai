@@ -1,0 +1,26 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"-- Model A, full access attributes: tenant_id, tenant_path, owner\nCREATE TABLE IF NOT EXISTS public.test_opa_model_a\n(\n    id            UUID        NOT NULL DEFAULT gen_random_uuid(),\n    \"tenant_name\" STRING      NOT NULL,\n    \"owner_name\"  STRING      NOT NULL,\n    \"value\"       STRING      NOT NULL,\n    tenant_id     UUID        NULL,\n    tenant_path   UUID[]      NULL,\n    owner_id      UUID        NULL,\n    created_at    TIMESTAMPTZ NULL,\n    updated_at    TIMESTAMPTZ NULL,\n    created_by    UUID        NULL,\n    updated_by    UUID        NULL,\n    deleted_at    TIMESTAMPTZ NULL,\n    CONSTRAINT \"primary\" PRIMARY KEY (id ASC),\n    INVERTED      INDEX idx_tenant_path (tenant_path),\n    INDEX         idx_tenant_name(tenant_name ASC),\n    FAMILY        \"primary\"(id, tenant_name, value, tenant_id, tenant_path, created_at, updated_at, created_by, updated_by, deleted_at)\n)"	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnExec	2:"TRUNCATE TABLE \"test_opa_model_a\" CASCADE;"	1:nil
+5=ConnBegin	1:nil
+6=ConnQuery	2:"INSERT INTO \"test_opa_model_a\" (\"value\",\"tenant_name\",\"owner_name\",\"tenant_id\",\"tenant_path\",\"owner_id\",\"created_at\",\"updated_at\",\"created_by\",\"updated_by\",\"id\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22),($23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33),($34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44),($45,$46,$47,$48,$49,$50,$51,$52,$53,$54,$55),($56,$57,$58,$59,$60,$61,$62,$63,$64,$65,$66),($67,$68,$69,$70,$71,$72,$73,$74,$75,$76,$77),($78,$79,$80,$81,$82,$83,$84,$85,$86,$87,$88),($89,$90,$91,$92,$93,$94,$95,$96,$97,$98,$99) RETURNING \"id\""	1:nil
+7=RowsColumns	9:["id"]
+8=RowsNext	11:[10:MDE3MjdiYTEtZDNiZi00OGU3LWIzYzctY2M0MDcxMGUwOGJi]	1:nil
+9=RowsNext	11:[10:MGJjYzgzMDEtMjIzNi00NzA5LTkxMTYtNTA1ZDY2MjVlNDMx]	1:nil
+10=RowsNext	11:[10:ZDk3MzMyMDYtMGI3My00ZGU5LTljYTQtZWFmMmMxZTJiYmFl]	1:nil
+11=RowsNext	11:[10:OTU3Nzg1YzYtZDc1YS00N2NkLWEzZGQtZTI5ZjEyMTlhZmQ3]	1:nil
+12=RowsNext	11:[10:NTY3ZmY3NWEtMzU0Zi00YTNhLWFmZmUtNGNlZDZmODc2ODY0]	1:nil
+13=RowsNext	11:[10:MWViZmRhOTktYTk5NC00NTI2LTljNWQtMjc4OTJmOGYxMDc5]	1:nil
+14=RowsNext	11:[10:OGFhNWIyOTAtZmYxNS00MDBhLTg3YTctY2ZjODkwNjVjYmNh]	1:nil
+15=RowsNext	11:[10:NGNjNGQxNWYtYjA5NS00NmZlLWE0OTAtYWU3YTBlOTI1MTU4]	1:nil
+16=RowsNext	11:[10:NjE3YWFlMjgtYzk4MS00OTg4LTk0OTYtOWJkMTA2M2IwNjc2]	1:nil
+17=RowsNext	11:[]	7:"EOF"
+18=TxCommit	1:nil
+19=ConnQuery	2:"SELECT * FROM \"test_opa_model_a\" WHERE ((\"test_opa_model_a\".\"owner_id\" = $1 AND \"test_opa_model_a\".\"tenant_id\" = $2) OR (\"test_opa_model_a\".\"owner_id\" = $3 AND \"test_opa_model_a\".\"tenant_path\" @> $4))"	1:nil
+20=RowsColumns	9:["id","tenant_name","owner_name","value","tenant_id","tenant_path","owner_id","created_at","updated_at","created_by","updated_by","deleted_at"]
+21=RowsNext	11:[10:ZDk3MzMyMDYtMGI3My00ZGU5LTljYTQtZWFmMmMxZTJiYmFl,2:"Tenant A-1",2:"user1",2:"A - T-A-1 - U-1",10:YmU5MTUzMWUtY2E5Ni00NmViLWFlYTYtYjdlMGUyYTUwZTIx,10:ezIzOTY3ZGZlLWQ5MGYtNGUxYi05NDA2LWUyZGY2Njg1ZjIzMixkODQyM2FjYy0yOGNiLTQyMDktOTVkNi0wODlkZTdmYjI3ZWYsYmU5MTUzMWUtY2E5Ni00NmViLWFlYTYtYjdlMGUyYTUwZTIxfQ,10:NTk1OTU5ZTQtODgwMy00YWIxLThhY2YtYWNmYjkyYmI3MzIy,8:2023-06-13T22:00:09.318789Z,8:2023-06-13T22:00:09.318789Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,1:nil]	1:nil
+22=RowsNext	11:[10:MGJjYzgzMDEtMjIzNi00NzA5LTkxMTYtNTA1ZDY2MjVlNDMx,2:"Tenant A",2:"user1",2:"A - T-A - U-1",10:ZDg0MjNhY2MtMjhjYi00MjA5LTk1ZDYtMDg5ZGU3ZmIyN2Vm,10:ezIzOTY3ZGZlLWQ5MGYtNGUxYi05NDA2LWUyZGY2Njg1ZjIzMixkODQyM2FjYy0yOGNiLTQyMDktOTVkNi0wODlkZTdmYjI3ZWZ9,10:NTk1OTU5ZTQtODgwMy00YWIxLThhY2YtYWNmYjkyYmI3MzIy,8:2023-06-13T22:00:09.318789Z,8:2023-06-13T22:00:09.318789Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,1:nil]	1:nil
+23=RowsNext	11:[10:OTU3Nzg1YzYtZDc1YS00N2NkLWEzZGQtZTI5ZjEyMTlhZmQ3,2:"Tenant A-2",2:"user1",2:"A - T-A-2 - U-1",10:YjUwYzE4ZDktMTc0MS00OWJkLTg1MzYtMzA5NDNkZmZmYjQ1,10:ezIzOTY3ZGZlLWQ5MGYtNGUxYi05NDA2LWUyZGY2Njg1ZjIzMixkODQyM2FjYy0yOGNiLTQyMDktOTVkNi0wODlkZTdmYjI3ZWYsYjUwYzE4ZDktMTc0MS00OWJkLTg1MzYtMzA5NDNkZmZmYjQ1fQ,10:NTk1OTU5ZTQtODgwMy00YWIxLThhY2YtYWNmYjkyYmI3MzIy,8:2023-06-13T22:00:09.318789Z,8:2023-06-13T22:00:09.318789Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,1:nil]	1:nil
+24=RowsNext	11:[10:OGFhNWIyOTAtZmYxNS00MDBhLTg3YTctY2ZjODkwNjVjYmNh,2:"Tenant B-1",2:"user2",2:"A - T-B-1 - U-2",10:MTUxM2IwMTUtNmE3ZC00ZGUzLThiNGYtY2JiMDkwYWMxMjZk,10:ezIzOTY3ZGZlLWQ5MGYtNGUxYi05NDA2LWUyZGY2Njg1ZjIzMiwzN2I3MTgxYS0wODkyLTQ3MDYtOGYyNi02MGQyODZiNjNmMTQsMTUxM2IwMTUtNmE3ZC00ZGUzLThiNGYtY2JiMDkwYWMxMjZkfQ,10:OWE5MDFjOTEtYTNkNi00ZDM5LTlhZGYtMzRlNzRiYjMyZGUy,8:2023-06-13T22:00:09.318789Z,8:2023-06-13T22:00:09.318789Z,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,10:MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAw,1:nil]	1:nil
+
+"TestOPAFilter"=1,2,3,4,3,5,6,7,7,8,9,10,11,12,13,14,15,16,17,18,19,20,20,21,17,19,20,20,22,23,21,17,19,20,20,24,17

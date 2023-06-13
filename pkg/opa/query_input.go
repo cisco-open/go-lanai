@@ -12,6 +12,13 @@ import (
 	Common Inputs
  ********************/
 
+const (
+	InputPrefixRoot           = `input`
+	InputPrefixAuthentication = `auth`
+	InputPrefixRequest        = `request`
+	InputPrefixResource       = `resource`
+)
+
 type InputApiAccess struct {
 	Authentication *AuthenticationClause `json:"auth,omitempty"`
 	Request        *RequestClause        `json:"request,omitempty"`
@@ -157,7 +164,7 @@ type ResourceClause struct {
 
 func NewResourceClause(resType string, op ResourceOperation) *ResourceClause {
 	return &ResourceClause{
-		Type: resType,
+		Type:      resType,
 		Operation: op,
 	}
 }

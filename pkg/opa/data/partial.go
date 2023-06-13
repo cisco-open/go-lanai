@@ -9,8 +9,20 @@ import (
 	"time"
 )
 
-func FilterResource(ctx context.Context, resType string, op opa.ResourceOperation, opts ...ResourceOptions) (*sdk.PartialResult, error) {
-	res := Resource{OPA: opa.EmbeddedOPA()}
+type ResourceFilterOptions func(rf *ResourceFilter)
+
+type ResourceFilter struct {
+	OPA         *sdk.OPA
+	TenantID    string                         `json:"tenant_id,omitempty"`
+	TenantPath  []string                       `json:"tenant_path,omitempty"`
+	OwnerID     string                         `json:"owner_id,omitempty"`
+	Share       map[string][]string            `json:"share,omitempty"`
+	Unknowns    []string                       `json:"-"`
+	QueryMapper ContextAwarePartialQueryMapper `json:"-"`
+}
+
+func FilterResource(ctx context.Context, resType string, op opa.ResourceOperation, opts ...ResourceFilterOptions) (*sdk.PartialResult, error) {
+	res := ResourceFilter{OPA: opa.EmbeddedOPA()}
 	for _, fn := range opts {
 		fn(&res)
 	}
@@ -24,7 +36,7 @@ func FilterResource(ctx context.Context, resType string, op opa.ResourceOperatio
 	return result, nil
 }
 
-func PreparePartialQuery(ctx context.Context, policy string, resType string, op opa.ResourceOperation, res *Resource) *sdk.PartialOptions {
+func PreparePartialQuery(ctx context.Context, policy string, resType string, op opa.ResourceOperation, res *ResourceFilter) *sdk.PartialOptions {
 	input := opa.InputApiAccess{
 		Authentication: opa.NewAuthenticationClause(ctx),
 		Resource:       opa.NewResourceClause(resType, op),
@@ -35,13 +47,11 @@ func PreparePartialQuery(ctx context.Context, policy string, resType string, op 
 	input.Resource.Share = res.Share
 
 	opts := sdk.PartialOptions{
-		Now:                 time.Now(),
-		Input:               &input,
-		Query:               policy,
-		Unknowns:            []string{
-			"input.resource.tenant_id", "input.resource.tenant_path", "input.resource.owner_id", "input.resource.share",
-		},
-		Mapper:              &PartialQueryMapper{ctx: ctx},
+		Now:   time.Now(),
+		Input: &input,
+		Query: policy,
+		Unknowns: res.Unknowns,
+		Mapper: res.QueryMapper.WithContext(ctx),
 	}
 
 	if data, e := json.Marshal(opts.Input); e != nil {
