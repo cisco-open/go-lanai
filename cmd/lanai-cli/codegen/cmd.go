@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"io/fs"
 	"os"
+	"path/filepath"
 )
 
 const (
@@ -122,6 +123,18 @@ func processConfigurationFile(configFilePath string) error {
 		Configuration.TemplateDirectory = config.TemplateDirectory
 		Configuration.Regeneration = config.Regeneration
 		Configuration.Regexes = config.Regexes
+
+		configDir := filepath.Dir(configFilePath)
+
+		if !filepath.IsAbs(Configuration.Contract) {
+			// Contract is converted to be relative to current directory
+			Configuration.Contract = filepath.Join(configDir, Configuration.Contract)
+		}
+
+		if Configuration.TemplateDirectory != "" && !filepath.IsAbs(Configuration.TemplateDirectory) {
+			// TemplateDirectory is converted to be relative to current directory
+			Configuration.TemplateDirectory = filepath.Join(configDir, Configuration.TemplateDirectory)
+		}
 	}
 	return nil
 }
