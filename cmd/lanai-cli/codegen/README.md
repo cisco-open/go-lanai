@@ -115,7 +115,6 @@ Notes: If contract/templateDirectory are relative paths, they must be relative t
 contract: ./contract.yml
 repositoryRootPath: cto-github.cisco.com/NFV-BU/testservice
 projectName: testservice
-#templateDirectory:
 ```
 
 3. Run `lanai-cli codegen -o ./` Files will be generated to your directory:
