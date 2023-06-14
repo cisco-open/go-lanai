@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -77,14 +78,18 @@ func (c policyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 		return
 	}
 
-	rs, e := FilterResource(stmt.Context, "poc", flagToResOp(c.Flag), c.opaFilterOptions(stmt))
+	rs, e := opa.FilterResource(stmt.Context, "poc", flagToResOp(c.Flag), c.opaFilterOptions(stmt))
 	if e != nil {
-		stmt.Error = data.NewInternalError(fmt.Sprintf(`OPA filtering failed with error: %v`, e), e)
+		switch {
+		case errors.Is(e, opa.QueriesNotResolvedError):
+			stmt.Error = data.NewRecordNotFoundError("record not found")
+		default:
+			stmt.Error = data.NewInternalError(fmt.Sprintf(`OPA filtering failed with error: %v`, e), e)
+		}
 		return
 	}
-	exprs, ok := rs.Result.([]clause.Expression)
-	if !ok {
-		stmt.Error = data.NewInternalError(fmt.Sprintf(`OPA filtering failed with unsupported result type: %T`, rs.Result))
+	exprs := rs.Result.([]clause.Expression)
+	if len(exprs) == 0 {
 		return
 	}
 
@@ -100,13 +105,13 @@ func (c policyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	}
 }
 
-func (c policyFilterClause) opaFilterOptions(stmt *gorm.Statement) ResourceFilterOptions {
+func (c policyFilterClause) opaFilterOptions(stmt *gorm.Statement) opa.ResourceFilterOptions {
 	unknowns := make([]string, 0, len(c.Fields))
 	for k := range c.Fields {
 		unknown := fmt.Sprintf(`%s.%s.%s`, opa.InputPrefixRoot, opa.InputPrefixResource, k)
 		unknowns = append(unknowns, unknown)
 	}
-	return func(rf *ResourceFilter) {
+	return func(rf *opa.ResourceFilter) {
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
 			Fields:    c.Fields,

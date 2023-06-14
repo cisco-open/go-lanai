@@ -2,15 +2,20 @@ package opadata
 
 import (
 	"context"
-	"github.com/open-policy-agent/opa/sdk"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	"gorm.io/gorm"
 )
 
-type ContextAwarePartialQueryMapper interface {
-	sdk.PartialQueryMapper
-	WithContext(ctx context.Context) ContextAwarePartialQueryMapper
-	Context() context.Context
-}
+var logger = log.New("OPA.Data")
+
+var (
+	QueryTranslationError = opa.NewError(`generic query translation error`)
+)
+
+const (
+	TagOPA = `opa`
+)
 
 type ckFilteringMode struct{}
 

@@ -3,12 +3,14 @@ package opadata
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/regoexpr"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/sdk"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -47,7 +49,11 @@ func NewGormPartialQueryMapper(cfg *GormMapperConfig) *GormPartialQueryMapper {
 	}
 }
 
-func (m *GormPartialQueryMapper) WithContext(ctx context.Context) ContextAwarePartialQueryMapper {
+/*****************************
+	ContextAware
+ *****************************/
+
+func (m *GormPartialQueryMapper) WithContext(ctx context.Context) sdk.PartialQueryMapper {
 	mapper := *m
 	mapper.ctx = ctx
 	return &mapper
@@ -57,8 +63,12 @@ func (m *GormPartialQueryMapper) Context() context.Context {
 	return m.ctx
 }
 
+/*****************************
+	sdk.PartialQueryMapper
+ *****************************/
+
 func (m *GormPartialQueryMapper) MapResults(pq *rego.PartialQueries) (interface{}, error) {
-	return TranslatePartialQueries(m.ctx, pq, func(opts *TranslateOption[clause.Expression]) {
+	return regoexpr.TranslatePartialQueries(m.ctx, pq, func(opts *regoexpr.TranslateOption[clause.Expression]) {
 		opts.Translator = m
 	})
 }
@@ -98,19 +108,19 @@ func (m *GormPartialQueryMapper) Comparison(ctx context.Context, op ast.Ref, col
 	}
 
 	switch op.Hash() {
-	case OpHashEqual, OpHashEq:
+	case regoexpr.OpHashEqual, regoexpr.OpHashEq:
 		ret = &clause.Eq{Column: col, Value: val}
-	case OpHashNeq:
+	case regoexpr.OpHashNeq:
 		ret = &clause.Neq{Column: col, Value: val}
-	case OpHashLte:
+	case regoexpr.OpHashLte:
 		ret = &clause.Lte{Column: col, Value: val}
-	case OpHashLt:
+	case regoexpr.OpHashLt:
 		ret = &clause.Lt{Column: col, Value: val}
-	case OpHashGte:
+	case regoexpr.OpHashGte:
 		ret = &clause.Gte{Column: col, Value: val}
-	case OpHashGt:
+	case regoexpr.OpHashGt:
 		ret = &clause.Gt{Column: col, Value: val}
-	case OpHashIn:
+	case regoexpr.OpHashIn:
 		// TODO should use statement quote
 		sql := fmt.Sprintf("%s @> ?", m.Quote(ctx, col))
 		ret = clause.Expr{
@@ -118,7 +128,7 @@ func (m *GormPartialQueryMapper) Comparison(ctx context.Context, op ast.Ref, col
 			Vars: []interface{}{val},
 		}
 	default:
-		return nil, NewPartialError("Unsupported Rego operator: %v", op)
+		return nil, QueryTranslationError.WithMessage("Unsupported Rego operator: %v", op)
 	}
 	return
 }
@@ -137,7 +147,7 @@ func (m *GormPartialQueryMapper) Field(_ context.Context, colRef ast.Ref) (ret *
 	idx := strings.LastIndex(path, ".")
 	f, ok := m.fields[path[idx+1:]]
 	if !ok {
-		return ret, NewPartialError(`unable to resolve column with OPA unknowns [%s]`, path)
+		return ret, QueryTranslationError.WithMessage(`unable to resolve column with OPA unknowns [%s]`, path)
 	}
 	return f, nil
 }
@@ -150,11 +160,11 @@ func (m *GormPartialQueryMapper) Value(_ context.Context, f *schema.Field, val i
 	case ft == typeUUID:
 		return m.toUUID(val)
 	case ft == typeUUIDPtr:
-		uuid, e := m.toUUID(val)
+		parsed, e := m.toUUID(val)
 		if e != nil {
 			return nil, e
 		}
-		return &uuid, nil
+		return &parsed, nil
 	case ft == typeUUIDArray:
 		return m.toUUIDArray(val)
 	default:
@@ -178,7 +188,7 @@ func (m *GormPartialQueryMapper) toUUID(val interface{}) (uuid.UUID, error) {
 		}
 		return uuid.Nil, nil
 	}
-	return uuid.Nil, NewPartialError(`unable to convert [%v] to UUID`, val)
+	return uuid.Nil, QueryTranslationError.WithMessage(`unable to convert [%v] to UUID`, val)
 }
 
 func (m *GormPartialQueryMapper) toUUIDArray(val interface{}) (pqx.UUIDArray, error) {
@@ -217,5 +227,5 @@ func (m *GormPartialQueryMapper) toUUIDArray(val interface{}) (pqx.UUIDArray, er
 	if val == nil {
 		return pqx.UUIDArray{}, nil
 	}
-	return nil, NewPartialError(`unable to convert [%v] to UUID array`, val)
+	return nil, QueryTranslationError.WithMessage(`unable to convert [%v] to UUID array`, val)
 }

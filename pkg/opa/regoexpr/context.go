@@ -1,13 +1,21 @@
-package opadata
+package regoexpr
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	"github.com/open-policy-agent/opa/ast"
 )
 
-const (
-	TagOPA = `opa`
+var (
+	ParsingError = opa.NewError(`generic OPA partial query parsing error`)
 )
+
+type QueryTranslator[EXPR any] interface {
+	Negate(ctx context.Context, expr EXPR) EXPR
+	And(ctx context.Context, expr ...EXPR) EXPR
+	Or(ctx context.Context, expr ...EXPR) EXPR
+	Comparison(ctx context.Context, op ast.Ref, colRef ast.Ref, val interface{}) (EXPR, error)
+}
 
 var (
 	TermInternal         = ast.VarTerm("internal")
@@ -31,10 +39,3 @@ var (
 	OpHashGt    = OpGt.Hash()
 	OpHashIn    = OpIn.Hash()
 )
-
-type QueryTranslator[EXPR any] interface {
-	Negate(ctx context.Context, expr EXPR) EXPR
-	And(ctx context.Context, expr ...EXPR) EXPR
-	Or(ctx context.Context, expr ...EXPR) EXPR
-	Comparison(ctx context.Context, op ast.Ref, colRef ast.Ref, val interface{}) (EXPR, error)
-}

@@ -62,7 +62,8 @@ func TestOPAFilter(t *testing.T) {
 		),
 		apptest.WithDI(di),
 		test.SubTestSetup(SetupTestCreateTenancyModels(di)),
-		test.GomegaSubTest(SubTestModelList(di), "TestModelList"),
+		test.GomegaSubTest(SubTestModelListWithAllSupportedFields(di), "TestModelListWithAllSupportedFields"),
+		//test.GomegaSubTest(SubTestModelListWithoutTenancy(di), "TestModelListWithoutTenancy"),
 	)
 }
 
@@ -97,7 +98,7 @@ func SetupTestCreateTenancyModels(di *FilterTestDI) test.SetupFunc {
 	)
 }
 
-func SubTestModelList(di *FilterTestDI) test.GomegaSubTestFunc {
+func SubTestModelListWithAllSupportedFields(di *FilterTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var models []*ModelA
 		var rs *gorm.DB
@@ -121,6 +122,26 @@ func SubTestModelList(di *FilterTestDI) test.GomegaSubTestFunc {
 		g.Expect(rs).To(Not(BeNil()))
 		g.Expect(rs.Error).To(Succeed(), "list models should return no error")
 		g.Expect(models).To(HaveLen(1), "user1 should see %d models", 1)
+	}
+}
+
+func SubTestModelListWithoutTenancy(di *FilterTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var models []*ModelB
+		var rs *gorm.DB
+		// user1
+		ctx = sectest.ContextWithSecurity(ctx, user1Options())
+		rs = di.DB.WithContext(ctx).Model(&ModelB{}).Find(&models)
+		g.Expect(rs).To(Not(BeNil()))
+		g.Expect(rs.Error).To(Succeed(), "list models should return no error")
+		g.Expect(models).To(HaveLen(5), "user1 should see %d models", 5)
+
+		// user2
+		ctx = sectest.ContextWithSecurity(ctx, user2Options())
+		rs = di.DB.WithContext(ctx).Model(&ModelB{}).Find(&models)
+		g.Expect(rs).To(Not(BeNil()))
+		g.Expect(rs.Error).To(Succeed(), "list models should return no error")
+		g.Expect(models).To(HaveLen(4), "user1 should see %d models", 4)
 	}
 }
 
@@ -208,6 +229,21 @@ func (ModelA) TableName() string {
 //	}
 //	return t.Tenancy.BeforeUpdate(tx)
 //}
+
+// ModelB has no tenancy
+type ModelB struct {
+	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	Value      string
+	TenantName string
+	OwnerName  string
+	OwnerID    uuid.UUID     `gorm:"type:KeyID;not null" opa:"owner_id"`
+	Filter     PolicyFilter  `gorm:"-"`
+	types.Audit
+}
+
+func (ModelB) TableName() string {
+	return "test_opa_model_a"
+}
 
 type ModelASoftDelete struct {
 	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`

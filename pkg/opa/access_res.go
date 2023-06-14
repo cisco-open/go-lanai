@@ -1,17 +1,12 @@
-package opadata
+package opa
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"encoding/json"
 	"fmt"
 	"github.com/open-policy-agent/opa/sdk"
 	"time"
 )
-
-var logger = log.New("OPA.Data")
 
 type ResourceOptions func(res *Resource)
 
@@ -23,33 +18,33 @@ type Resource struct {
 	Share       map[string][]string    `json:"share,omitempty"`
 }
 
-func AllowResource(ctx context.Context, resType string, op opa.ResourceOperation, opts ...ResourceOptions) error {
-	res := Resource{OPA: opa.EmbeddedOPA()}
+func AllowResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceOptions) error {
+	res := Resource{OPA: EmbeddedOPA()}
 	for _, fn := range opts {
 		fn(&res)
 	}
 	policy := fmt.Sprintf("%s/allow_%v", resType, op)
-	opaOpts := PrepareDecisionQuery(ctx, policy, resType, op, &res)
+	opaOpts := PrepareResourceDecisionQuery(ctx, policy, resType, op, &res)
 	result, e := res.OPA.Decision(ctx, *opaOpts)
 	if e != nil {
-		return security.NewAccessDeniedError(e)
+		return AccessDeniedError.WithMessage("unable to execute OPA query: %v", e)
 	}
 	logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, result.Result)
 	switch v := result.Result.(type) {
 	case bool:
 		if !v {
-			return security.NewAccessDeniedError("Resource Denied")
+			return AccessDeniedError.WithMessage("Resource Access Denied")
 		}
 	default:
-		return security.NewAccessDeniedError(fmt.Errorf("unknow OPA result type %T", result.Result))
+		return AccessDeniedError.WithMessage("unsupported OPA result type %T", result.Result)
 	}
 	return nil
 }
 
-func PrepareDecisionQuery(ctx context.Context, policy string, resType string, op opa.ResourceOperation, res *Resource) *sdk.DecisionOptions {
-	input := opa.InputApiAccess{
-		Authentication: opa.NewAuthenticationClause(ctx),
-		Resource:       opa.NewResourceClause(resType, op),
+func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *Resource) *sdk.DecisionOptions {
+	input := InputApiAccess{
+		Authentication: NewAuthenticationClause(ctx),
+		Resource:       NewResourceClause(resType, op),
 	}
 	input.Resource.TenantID = res.TenantID
 	input.Resource.OwnerID = res.OwnerID
