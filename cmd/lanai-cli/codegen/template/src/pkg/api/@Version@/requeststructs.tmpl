@@ -28,7 +28,7 @@
                            {{- $schema := schema "" .Schema }}
                            {{- template "SchemaProperties" args $schema "api" }}
                            {{- if ne $schema.Type "object" }}
-                                {{- $requiredList := requiredList $schema.Data }}
+                                {{- $requiredList := requiredList $operation.Data.RequestBody.Value }}
                                 {{- $property := property $schema.Data "Body" $requiredList $currentPkg $schema.Name }}
                                 {{- $property = $property.SetOmitJSON true }}
                                 {{ template "properties" args $property }}

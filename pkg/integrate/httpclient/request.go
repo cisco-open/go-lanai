@@ -1,8 +1,11 @@
 package httpclient
 
 import (
+	"bytes"
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"io"
@@ -29,12 +32,41 @@ func NewRequest(path, method string, opts ...RequestOptions) *Request {
 		Method:     method,
 		Params:     map[string]string{},
 		Headers:    http.Header{},
-		EncodeFunc: httptransport.EncodeJSONRequest,
+		EncodeFunc: EncodeJSONRequest,
 	}
 	for _, f := range opts {
 		f(&r)
 	}
 	return &r
+}
+
+func EncodeJSONRequest(c context.Context, r *http.Request, request interface{}) error {
+	if request == nil {
+		r.Body = nil
+		r.GetBody = nil
+		r.ContentLength = 0
+		return nil
+	}
+	r.Header.Set("Content-Type", "application/json; charset=utf-8")
+	if headerer, ok := request.(web.Headerer); ok {
+		for k := range headerer.Headers() {
+			r.Header.Set(k, headerer.Headers().Get(k))
+		}
+	}
+	var b bytes.Buffer
+	r.Body = io.NopCloser(&b)
+	err := json.NewEncoder(&b).Encode(request)
+	if err != nil {
+		return err
+	}
+
+	buf := b.Bytes()
+	r.GetBody = func() (io.ReadCloser, error) {
+		r := bytes.NewReader(buf)
+		return io.NopCloser(r), nil
+	}
+	r.ContentLength = int64(b.Len())
+	return nil
 }
 
 func effectiveEncodeFunc(ctx context.Context, req *http.Request, val interface{}) error {
@@ -152,5 +184,3 @@ func noop() func(r *Request) {
 		// noop
 	}
 }
-
-

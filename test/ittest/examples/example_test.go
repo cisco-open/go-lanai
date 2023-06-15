@@ -16,7 +16,9 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"net"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -316,8 +318,33 @@ func SubTestUnitTestWithCurrentContext(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestCustomRequestMatching(di *AnotherTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client, e := di.HttpClient.WithBaseUrl("http://127.0.0.1:8081/europa")
-		g.Expect(e).To(Succeed(), "client with base URL should be available")
+		// create a listener with the desired port.
+		listener, err := net.Listen("tcp", "127.0.0.1:8081")
+		if err != nil {
+			t.Fatalf("unable to create listener: %v", err)
+		}
+		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			msg := map[string]interface{}{"message": "pong"}
+			b, err := json.Marshal(msg)
+			if err != nil {
+				t.Fatalf("unable to marshal message: %v", err)
+			}
+			_, err = w.Write(b)
+			if err != nil {
+				t.Fatalf("unable to write: %v", err)
+			}
+		}))
+		err = srv.Listener.Close()
+		if err != nil {
+			t.Fatalf("unable to close initial listener: %v", err)
+		}
+		srv.Listener = listener
+		srv.Start()
+		defer srv.Close()
+		client, err := di.HttpClient.WithBaseUrl("http://127.0.0.1:8081")
+		g.Expect(err).To(Succeed(), "client with base URL should be available")
 
 		now := time.Now()
 		body := map[string]interface{}{
@@ -329,7 +356,7 @@ func SubTestCustomRequestMatching(di *AnotherTestDI) test.GomegaSubTestFunc {
 		}
 		// With following temporal/random values in request, this interaction would normally fail during replay mode.
 		// However, with Fuzzy* options, they will match the recorded interaction even the values doesn't match.
-		req := httpclient.NewRequest("/public/ping", http.MethodPost,
+		req := httpclient.NewRequest("/api/ping", http.MethodGet,
 			httpclient.WithHeader("X-Date", now.Format(time.RFC850)),
 			httpclient.WithParam("time", now.Format(time.RFC3339)),
 			httpclient.WithParam("random", utils.RandomString(10)),
@@ -344,7 +371,31 @@ func SubTestCustomRequestMatching(di *AnotherTestDI) test.GomegaSubTestFunc {
 
 func SubTestPerSubTestCustomRequestMatching(di *AnotherTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-
+		// create a listener with the desired port.
+		listener, err := net.Listen("tcp", "127.0.0.1:8081")
+		if err != nil {
+			t.Fatalf("unable to create listener: %v", err)
+		}
+		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			msg := map[string]interface{}{"message": "pong"}
+			b, err := json.Marshal(msg)
+			if err != nil {
+				t.Fatalf("unable to marshal message: %v", err)
+			}
+			_, err = w.Write(b)
+			if err != nil {
+				t.Fatalf("unable to write: %v", err)
+			}
+		}))
+		err = srv.Listener.Close()
+		if err != nil {
+			t.Fatalf("unable to close initial listener: %v", err)
+		}
+		srv.Listener = listener
+		srv.Start()
+		defer srv.Close()
 		// Fuzzy request matching can be set for particular sub-test.
 		// Any additional matcher options takes effect only for this sub-test.
 		// All test level options still in effect
@@ -364,7 +415,7 @@ func SubTestPerSubTestCustomRequestMatching(di *AnotherTestDI) test.GomegaSubTes
 			"random": utils.RandomString(20),
 		}
 		// Any test-level matching options should still in effect
-		req := httpclient.NewRequest("/public/ping", http.MethodPost,
+		req := httpclient.NewRequest("/api/ping", http.MethodGet,
 			httpclient.WithHeader("X-Date", now.Format(time.RFC850)),
 			httpclient.WithParam("time", now.Format(time.RFC3339)),
 			httpclient.WithParam("random", utils.RandomString(10)),
