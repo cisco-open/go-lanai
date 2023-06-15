@@ -11,15 +11,16 @@ import (
 type ResourceOptions func(res *Resource)
 
 type Resource struct {
-	OPA         *sdk.OPA
-	TenantID    string                 `json:"tenant_id,omitempty"`
-	TenantPath  []string               `json:"tenant_path,omitempty"`
-	OwnerID     string                 `json:"owner_id,omitempty"`
-	Share       map[string][]string    `json:"share,omitempty"`
+	OPA        *sdk.OPA
+	TenantID   string
+	TenantPath []string
+	OwnerID    string
+	Share      map[string][]string
+	ExtraData  map[string]interface{}
 }
 
 func AllowResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceOptions) error {
-	res := Resource{OPA: EmbeddedOPA()}
+	res := Resource{OPA: EmbeddedOPA(), ExtraData: map[string]interface{}{}}
 	for _, fn := range opts {
 		fn(&res)
 	}
@@ -42,14 +43,15 @@ func AllowResource(ctx context.Context, resType string, op ResourceOperation, op
 }
 
 func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *Resource) *sdk.DecisionOptions {
-	input := InputApiAccess{
-		Authentication: NewAuthenticationClause(ctx),
-		Resource:       NewResourceClause(resType, op),
-	}
+	input := NewInput()
+	input.Authentication = NewAuthenticationClause(ctx)
+	input.Resource = NewResourceClause(resType, op)
+
 	input.Resource.TenantID = res.TenantID
 	input.Resource.OwnerID = res.OwnerID
 	input.Resource.TenantPath = res.TenantPath
 	input.Resource.Share = res.Share
+	input.Resource.ExtraData = res.ExtraData
 
 	opts := sdk.DecisionOptions{
 		Now:                 time.Now(),

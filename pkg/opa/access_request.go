@@ -12,14 +12,15 @@ type RequestQueryOptions func(opt *RequestQueryOption)
 type RequestQueryOption struct {
 	OPA    *sdk.OPA
 	Policy string
+	ExtraData   map[string]interface{}
 }
 
 func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOptions) error {
-	opt := RequestQueryOption{OPA: EmbeddedOPA()}
+	opt := RequestQueryOption{OPA: EmbeddedOPA(), ExtraData: map[string]interface{}{}}
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	opaOpts := PrepareRequestDecisionQuery(ctx, opt.Policy, req)
+	opaOpts := PrepareRequestDecisionQuery(ctx, opt.Policy, req, opt.ExtraData)
 	result, e := opt.OPA.Decision(ctx, *opaOpts)
 	if e != nil {
 		return AccessDeniedError.WithMessage("unable to execute OPA query: %v", e)
@@ -36,14 +37,15 @@ func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOp
 	}
 }
 
-func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.Request) *sdk.DecisionOptions {
+func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.Request, extra map[string]interface{}) *sdk.DecisionOptions {
+	input := NewInput()
+	input.Authentication = NewAuthenticationClause(ctx)
+	input.Request = NewRequestClause(req)
+	input.Request.ExtraData = extra
 	opts := sdk.DecisionOptions{
 		Now:                 time.Now(),
 		Path:                policy,
-		Input:               InputApiAccess{
-			Authentication: NewAuthenticationClause(ctx),
-			Request:        NewRequestClause(req),
-		},
+		Input:               input,
 		StrictBuiltinErrors: false,
 	}
 

@@ -20,12 +20,13 @@ type ResourceFilterOptions func(rf *ResourceFilter)
 type ResourceFilter struct {
 	OPA         *sdk.OPA
 	Policy      string
-	Unknowns    []string               `json:"-"`
-	QueryMapper sdk.PartialQueryMapper `json:"-"`
+	Unknowns    []string
+	QueryMapper sdk.PartialQueryMapper
+	ExtraData   map[string]interface{}
 }
 
 func FilterResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceFilterOptions) (*sdk.PartialResult, error) {
-	res := ResourceFilter{OPA: EmbeddedOPA()}
+	res := ResourceFilter{OPA: EmbeddedOPA(), ExtraData: map[string]interface{}{}}
 	for _, fn := range opts {
 		fn(&res)
 	}
@@ -47,10 +48,10 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 }
 
 func PrepareResourcePartialQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *ResourceFilter) *sdk.PartialOptions {
-	input := InputApiAccess{
-		Authentication: NewAuthenticationClause(ctx),
-		Resource:       NewResourceClause(resType, op),
-	}
+	input := NewInput()
+	input.Authentication = NewAuthenticationClause(ctx)
+	input.Resource = NewResourceClause(resType, op)
+	input.Resource.ExtraData = res.ExtraData
 
 	mapper := res.QueryMapper
 	if v, ok := res.QueryMapper.(ContextAwarePartialQueryMapper); ok {
@@ -58,7 +59,7 @@ func PrepareResourcePartialQuery(ctx context.Context, policy string, resType str
 	}
 	opts := sdk.PartialOptions{
 		Now:      time.Now(),
-		Input:    &input,
+		Input:    input,
 		Query:    policy,
 		Unknowns: res.Unknowns,
 		Mapper:   mapper,

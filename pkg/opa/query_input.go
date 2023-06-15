@@ -4,6 +4,8 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -19,10 +21,20 @@ const (
 	InputPrefixResource       = `resource`
 )
 
-type InputApiAccess struct {
-	Authentication *AuthenticationClause `json:"auth,omitempty"`
-	Request        *RequestClause        `json:"request,omitempty"`
-	Resource       *ResourceClause       `json:"resource,omitempty"`
+type Input struct {
+	Authentication *AuthenticationClause  `json:"auth,omitempty"`
+	Request        *RequestClause         `json:"request,omitempty"`
+	Resource       *ResourceClause        `json:"resource,omitempty"`
+	ExtraData      map[string]interface{} `json:"-"`
+}
+
+func (c Input) MarshalJSON() ([]byte, error) {
+	type clause Input
+	return marshalMergedJSON(clause(c), c.ExtraData)
+}
+
+func NewInput() *Input {
+	return &Input{}
 }
 
 /*****************************
@@ -34,12 +46,13 @@ type AuthenticationClause struct {
 	Username    string   `json:"username"`
 	Permissions []string `json:"permissions"`
 	// Optional fields
-	UserID            string             `json:"user_id,omitempty"`
-	TenantID          string             `json:"tenant_id,omitempty"`
-	ProviderID        string             `json:"provider_id,omitempty"`
-	Roles             []string           `json:"roles,omitempty"`
-	AccessibleTenants []string           `json:"accessible_tenants,omitempty"`
-	Client            *OAuthClientClause `json:"client"`
+	UserID            string                 `json:"user_id,omitempty"`
+	TenantID          string                 `json:"tenant_id,omitempty"`
+	ProviderID        string                 `json:"provider_id,omitempty"`
+	Roles             []string               `json:"roles,omitempty"`
+	AccessibleTenants []string               `json:"accessible_tenants,omitempty"`
+	Client            *OAuthClientClause     `json:"client"`
+	ExtraData         map[string]interface{} `json:"-"`
 }
 
 type OAuthClientClause struct {
@@ -67,6 +80,11 @@ func NewAuthenticationClause(ctx context.Context) *AuthenticationClause {
 	}
 
 	return ret
+}
+
+func (c AuthenticationClause) MarshalJSON() ([]byte, error) {
+	type clause AuthenticationClause
+	return marshalMergedJSON(clause(c), c.ExtraData)
 }
 
 func newAuthenticationClause(auth security.Authentication) *AuthenticationClause {
@@ -103,11 +121,17 @@ func mustGetUsername(auth security.Authentication) string {
  **************************/
 
 type RequestClause struct {
-	Scheme string      `json:"scheme,omitempty"`
-	Path   string      `json:"path,omitempty"`
-	Method string      `json:"method,omitempty"`
-	Header http.Header `json:"header,omitempty"`
-	Query  url.Values  `json:"query,omitempty"`
+	Scheme    string                 `json:"scheme,omitempty"`
+	Path      string                 `json:"path,omitempty"`
+	Method    string                 `json:"method,omitempty"`
+	Header    http.Header            `json:"header,omitempty"`
+	Query     url.Values             `json:"query,omitempty"`
+	ExtraData map[string]interface{} `json:"-"`
+}
+
+func (c RequestClause) MarshalJSON() ([]byte, error) {
+	type clause RequestClause
+	return marshalMergedJSON(clause(c), c.ExtraData)
 }
 
 func NewRequestClause(req *http.Request) *RequestClause {
@@ -154,12 +178,13 @@ func (op ResourceOperation) MarshalJSON() ([]byte, error) {
 }
 
 type ResourceClause struct {
-	Type       string              `json:"type"`
-	Operation  ResourceOperation   `json:"op"`
-	TenantID   string              `json:"tenant_id,omitempty"`
-	TenantPath []string            `json:"tenant_path,omitempty"`
-	OwnerID    string              `json:"owner_id,omitempty"`
-	Share      map[string][]string `json:"share,omitempty"`
+	Type       string                 `json:"type"`
+	Operation  ResourceOperation      `json:"op"`
+	TenantID   string                 `json:"tenant_id,omitempty"`
+	TenantPath []string               `json:"tenant_path,omitempty"`
+	OwnerID    string                 `json:"owner_id,omitempty"`
+	Share      map[string][]string    `json:"share,omitempty"`
+	ExtraData  map[string]interface{} `json:"-"`
 }
 
 func NewResourceClause(resType string, op ResourceOperation) *ResourceClause {
@@ -167,4 +192,30 @@ func NewResourceClause(resType string, op ResourceOperation) *ResourceClause {
 		Type:      resType,
 		Operation: op,
 	}
+}
+
+func (c ResourceClause) MarshalJSON() ([]byte, error) {
+	type clause ResourceClause
+	return marshalMergedJSON(clause(c), c.ExtraData)
+}
+
+/*************************
+	Helpers
+ *************************/
+
+// marshalMergedJSON merge extra into v, v have to be struct or map
+func marshalMergedJSON(obj interface{}, extra map[string]interface{}) ([]byte, error) {
+	data, e := json.Marshal(obj)
+	if len(extra) == 0 || e != nil {
+		return data, e
+	}
+	// merge extra
+	var m map[string]interface{}
+	if e := json.Unmarshal(data, &m); e != nil {
+		return nil, fmt.Errorf("unable to merge JSON: %v", e)
+	}
+	for k, v := range extra {
+		m[k] = v
+	}
+	return json.Marshal(m)
 }

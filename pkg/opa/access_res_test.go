@@ -110,6 +110,7 @@ func SubTestMemberAdmin(di *testDI) test.GomegaSubTestFunc {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
+			res.ExtraData["debug"] = "test"
 		})
 		g.Expect(e).To(Succeed())
 		// member admin - can write

@@ -238,7 +238,7 @@ type ModelB struct {
 	TenantName string
 	OwnerName  string
 	OwnerID    uuid.UUID    `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	PolicyAware `opa:"type:poc"`
+	OPAPolicyFilter PolicyFilter `gorm:"-" opa:"type:poc"`
 	types.Audit
 }
 
