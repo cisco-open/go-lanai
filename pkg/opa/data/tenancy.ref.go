@@ -131,7 +131,7 @@ func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyP
 		if v.Type().Key().Kind() != reflect.String {
 			return fmt.Errorf("cannot update tenancy automatically with gorm update target type [%T], please use struct ptr or map", dest)
 		}
-		ek, ev, ok := t.findMapValue(v, mapKeysTenantPath, typeTenantPath)
+		ek, ev, ok := t.findMapValue(v, mapKeysTenantPath, typePolicyFilter)
 		// Note: if tenant path is explicitly set and correct, we don't change it
 		switch {
 		case ok && !reflect.DeepEqual(ev.Interface(), tenancyPath):
@@ -140,7 +140,7 @@ func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyP
 			v.SetMapIndex(reflect.ValueOf(fieldTenantPath), reflect.ValueOf(tenancyPath))
 		}
 	case reflect.Struct:
-		if _, fv, ok := t.findStructField(v, fieldTenantPath, typeTenantPath); ok {
+		if _, fv, ok := t.findStructField(v, fieldTenantPath, typePolicyFilter); ok {
 			fv.Set(reflect.ValueOf(tenancyPath))
 		}
 	default:

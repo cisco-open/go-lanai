@@ -48,9 +48,9 @@ func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.R
 	}
 
 	if data, e := json.Marshal(opts.Input); e != nil {
-		logger.WithContext(ctx).Errorf("Input marshalling error: %v", e)
+		logger.WithContext(ctx).Errorf("InputField marshalling error: %v", e)
 	} else {
-		logger.WithContext(ctx).Debugf("Input: %s", data)
+		logger.WithContext(ctx).Debugf("InputField: %s", data)
 	}
 	return &opts
 }

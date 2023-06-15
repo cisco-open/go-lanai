@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/regoexpr"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -13,7 +12,6 @@ import (
 	"github.com/open-policy-agent/opa/sdk"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
 	"reflect"
 	"strings"
 )
@@ -22,22 +20,16 @@ var (
 	typeUUID          = reflect.TypeOf(uuid.Nil)
 	typeUUIDPtr       = reflect.TypeOf(&uuid.UUID{})
 	typeUUIDArray     = reflect.TypeOf(pqx.UUIDArray{})
-
-	typeTenantPath    = reflect.TypeOf(PolicyFilter{})
-	typeTenancy       = reflect.TypeOf(Tenancy{})
-	typeTenancyPtr    = reflect.TypeOf(&Tenancy{})
-	mapKeysTenantID   = utils.NewStringSet(fieldTenantID, colTenantID)
-	mapKeysTenantPath = utils.NewStringSet(fieldTenantPath, colTenantPath)
 )
 
 type GormMapperConfig struct {
-	Fields    map[string]*schema.Field
+	Fields    map[string]*TaggedField
 	Statement *gorm.Statement
 }
 
 type GormPartialQueryMapper struct {
 	ctx    context.Context
-	fields map[string]*schema.Field
+	fields map[string]*TaggedField
 	stmt   *gorm.Statement
 }
 
@@ -141,7 +133,7 @@ func (m *GormPartialQueryMapper) Quote(_ context.Context, field interface{}) str
 	return m.stmt.Quote(field)
 }
 
-func (m *GormPartialQueryMapper) Field(_ context.Context, colRef ast.Ref) (ret *schema.Field, err error) {
+func (m *GormPartialQueryMapper) Field(_ context.Context, colRef ast.Ref) (ret *TaggedField, err error) {
 	// TODO review this part
 	path := colRef.String()
 	idx := strings.LastIndex(path, ".")
@@ -152,7 +144,7 @@ func (m *GormPartialQueryMapper) Field(_ context.Context, colRef ast.Ref) (ret *
 	return f, nil
 }
 
-func (m *GormPartialQueryMapper) Value(_ context.Context, f *schema.Field, val interface{}) (interface{}, error) {
+func (m *GormPartialQueryMapper) Value(_ context.Context, f *TaggedField, val interface{}) (interface{}, error) {
 	if rv := reflect.ValueOf(val); rv.CanConvert(f.FieldType) {
 		return rv.Convert(f.FieldType).Interface(), nil
 	}

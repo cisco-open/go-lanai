@@ -31,7 +31,6 @@ import (
 // - schema.DeleteClausesInterface
 // this data type adds "WHERE" clause for tenancy filtering
 type PolicyFilter struct {
-
 }
 
 // QueryClauses implements schema.QueryClausesInterface,
@@ -56,20 +55,22 @@ func (pf PolicyFilter) DeleteClauses(f *schema.Field) []clause.Interface {
 // policyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type policyFilterClause struct {
-	types.NoopStatementModifier
+	metadata
 	Flag   FilteringFlag
 	Mode   filteringMode
-	Fields map[string]*schema.Field
-	Schema *schema.Schema
+	types.NoopStatementModifier
 }
 
 func newPolicyFilterClause(f *schema.Field, flag FilteringFlag) *policyFilterClause {
 	// TODO determine mode
+	meta, e := loadMetadata(f.Schema)
+	if e != nil {
+		panic(e)
+	}
 	return &policyFilterClause{
-		Flag:   flag,
-		Mode:   determineFilteringMode(f),
-		Fields: collectFields(f.Schema),
-		Schema: f.Schema,
+		metadata: *meta,
+		Flag:     flag,
+		Mode:     determineFilteringMode(f),
 	}
 }
 
@@ -78,7 +79,7 @@ func (c policyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 		return
 	}
 
-	rs, e := opa.FilterResource(stmt.Context, "poc", flagToResOp(c.Flag), c.opaFilterOptions(stmt))
+	rs, e := opa.FilterResource(stmt.Context, c.ResType, flagToResOp(c.Flag), c.opaFilterOptions(stmt))
 	if e != nil {
 		switch {
 		case errors.Is(e, opa.QueriesNotResolvedError):
@@ -112,6 +113,7 @@ func (c policyFilterClause) opaFilterOptions(stmt *gorm.Statement) opa.ResourceF
 		unknowns = append(unknowns, unknown)
 	}
 	return func(rf *opa.ResourceFilter) {
+		rf.Policy = c.Policy
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
 			Fields:    c.Fields,
@@ -152,16 +154,6 @@ func determineFilteringMode(f *schema.Field) (mode filteringMode) {
 		}
 		if strings.ContainsRune(tag, 'w') {
 			mode = mode | filteringMode(FilteringFlagWriteFiltering)
-		}
-	}
-	return
-}
-
-func collectFields(s *schema.Schema) (ret map[string]*schema.Field) {
-	ret = map[string]*schema.Field{}
-	for _, f := range s.Fields {
-		if tag, ok := f.Tag.Lookup(TagOPA); ok {
-			ret[strings.TrimSpace(tag)] = f
 		}
 	}
 	return

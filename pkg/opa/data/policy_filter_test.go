@@ -12,6 +12,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -35,11 +36,11 @@ var (
 	Test
  *************************/
 
-//func TestMain(m *testing.M) {
-//	suitetest.RunTests(m,
-//		dbtest.EnableDBRecordMode(),
-//	)
-//}
+func TestMain(m *testing.M) {
+	suitetest.RunTests(m,
+		dbtest.EnableDBRecordMode(),
+	)
+}
 
 type FilterTestDI struct {
 	fx.In
@@ -63,7 +64,7 @@ func TestOPAFilter(t *testing.T) {
 		apptest.WithDI(di),
 		test.SubTestSetup(SetupTestCreateTenancyModels(di)),
 		test.GomegaSubTest(SubTestModelListWithAllSupportedFields(di), "TestModelListWithAllSupportedFields"),
-		//test.GomegaSubTest(SubTestModelListWithoutTenancy(di), "TestModelListWithoutTenancy"),
+		test.GomegaSubTest(SubTestModelListWithoutTenancy(di), "TestModelListWithoutTenancy"),
 	)
 }
 
@@ -208,14 +209,14 @@ func toSoftDeleteVariation(m *ModelA) *ModelASoftDelete {
  *************************/
 
 type ModelA struct {
-	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-	Value      string
-	TenantName string
-	OwnerName  string
-	TenantID   uuid.UUID     `gorm:"type:KeyID;not null" opa:"tenant_id"`
-	TenantPath pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null" opa:"tenant_path"`
-	OwnerID    uuid.UUID     `gorm:"type:KeyID;not null" opa:"owner_id"`
-	Filter     PolicyFilter  `gorm:"-"`
+	ID          uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	Value       string
+	TenantName  string
+	OwnerName   string
+	TenantID    uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
+	TenantPath  pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
+	OwnerID     uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+	PolicyAware `opa:"type:poc"`
 	types.Audit
 }
 
@@ -236,8 +237,8 @@ type ModelB struct {
 	Value      string
 	TenantName string
 	OwnerName  string
-	OwnerID    uuid.UUID     `gorm:"type:KeyID;not null" opa:"owner_id"`
-	Filter     PolicyFilter  `gorm:"-"`
+	OwnerID    uuid.UUID    `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+	PolicyAware `opa:"type:poc"`
 	types.Audit
 }
 

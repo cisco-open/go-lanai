@@ -18,7 +18,8 @@ type ContextAwarePartialQueryMapper interface {
 type ResourceFilterOptions func(rf *ResourceFilter)
 
 type ResourceFilter struct {
-	OPA *sdk.OPA
+	OPA         *sdk.OPA
+	Policy      string
 	Unknowns    []string               `json:"-"`
 	QueryMapper sdk.PartialQueryMapper `json:"-"`
 }
@@ -28,8 +29,10 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 	for _, fn := range opts {
 		fn(&res)
 	}
-	policy := fmt.Sprintf("data.%s.filter_%v = true", resType, op)
-	opaOpts := PrepareResourcePartialQuery(ctx, policy, resType, op, &res)
+	if len(res.Policy) == 0 {
+		res.Policy = fmt.Sprintf("data.%s.filter_%v", resType, op)
+	}
+	opaOpts := PrepareResourcePartialQuery(ctx, res.Policy, resType, op, &res)
 	result, e := res.OPA.Partial(ctx, *opaOpts)
 	if e != nil {
 		switch {
@@ -62,9 +65,9 @@ func PrepareResourcePartialQuery(ctx context.Context, policy string, resType str
 	}
 
 	if data, e := json.Marshal(opts.Input); e != nil {
-		logger.WithContext(ctx).Errorf("Input marshalling error: %v", e)
+		logger.WithContext(ctx).Errorf("InputField marshalling error: %v", e)
 	} else {
-		logger.WithContext(ctx).Debugf("Input: %s", data)
+		logger.WithContext(ctx).Debugf("InputField: %s", data)
 	}
 	return &opts
 }
