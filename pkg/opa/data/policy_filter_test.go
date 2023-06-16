@@ -92,11 +92,18 @@ func SetupTestCreateTenancyModels(di *FilterTestDI) test.SetupFunc {
 			MockedModelLookupByOwner[m.OwnerID] = ids
 		}
 	}
-	return dbtest.PrepareData(&di.DI,
+	fn := dbtest.PrepareData(&di.DI,
 		dbtest.SetupUsingSQLFile(testdata.ModelADataFS, "create_table_a.sql"),
 		dbtest.SetupTruncateTables(ModelA{}.TableName()),
 		dbtest.SetupUsingModelSeedFile(testdata.ModelADataFS, &models, "model_a.yml", closure),
 	)
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		newCtx := sectest.ContextWithSecurity(ctx, adminSecOptions())
+		if _, e := fn(newCtx, t); e != nil {
+			return ctx, e
+		}
+		return ctx, nil
+	}
 }
 
 func SubTestModelListWithAllSupportedFields(di *FilterTestDI) test.GomegaSubTestFunc {
@@ -104,21 +111,21 @@ func SubTestModelListWithAllSupportedFields(di *FilterTestDI) test.GomegaSubTest
 		var models []*ModelA
 		var rs *gorm.DB
 		// user1
-		ctx = sectest.ContextWithSecurity(ctx, user1Options())
+		ctx = sectest.ContextWithSecurity(ctx, user1SecOptions())
 		rs = di.DB.WithContext(ctx).Model(&ModelA{}).Find(&models)
 		g.Expect(rs).To(Not(BeNil()))
 		g.Expect(rs.Error).To(Succeed(), "list models should return no error")
 		g.Expect(models).To(HaveLen(1), "user1 should see %d models", 1)
 
 		// user1 with parent Tenant A
-		ctx = sectest.ContextWithSecurity(ctx, user1Options(testdata.MockedTenantIdA))
+		ctx = sectest.ContextWithSecurity(ctx, user1SecOptions(testdata.MockedTenantIdA))
 		rs = di.DB.WithContext(ctx).Model(&ModelA{}).Find(&models)
 		g.Expect(rs).To(Not(BeNil()))
 		g.Expect(rs.Error).To(Succeed(), "list models should return no error")
 		g.Expect(models).To(HaveLen(3), "user1 should see %d models", 3)
 
 		// user2
-		ctx = sectest.ContextWithSecurity(ctx, user2Options())
+		ctx = sectest.ContextWithSecurity(ctx, user2SecOptions())
 		rs = di.DB.WithContext(ctx).Model(&ModelA{}).Find(&models)
 		g.Expect(rs).To(Not(BeNil()))
 		g.Expect(rs.Error).To(Succeed(), "list models should return no error")
@@ -131,14 +138,14 @@ func SubTestModelListWithoutTenancy(di *FilterTestDI) test.GomegaSubTestFunc {
 		var models []*ModelB
 		var rs *gorm.DB
 		// user1
-		ctx = sectest.ContextWithSecurity(ctx, user1Options())
+		ctx = sectest.ContextWithSecurity(ctx, user1SecOptions())
 		rs = di.DB.WithContext(ctx).Model(&ModelB{}).Find(&models)
 		g.Expect(rs).To(Not(BeNil()))
 		g.Expect(rs.Error).To(Succeed(), "list models should return no error")
 		g.Expect(models).To(HaveLen(5), "user1 should see %d models", 5)
 
 		// user2
-		ctx = sectest.ContextWithSecurity(ctx, user2Options())
+		ctx = sectest.ContextWithSecurity(ctx, user2SecOptions())
 		rs = di.DB.WithContext(ctx).Model(&ModelB{}).Find(&models)
 		g.Expect(rs).To(Not(BeNil()))
 		g.Expect(rs.Error).To(Succeed(), "list models should return no error")
@@ -150,7 +157,22 @@ func SubTestModelListWithoutTenancy(di *FilterTestDI) test.GomegaSubTestFunc {
 	Helpers
  *************************/
 
-func user1Options(tenantId ...uuid.UUID) sectest.SecurityContextOptions {
+func adminSecOptions(tenantId ...uuid.UUID) sectest.SecurityContextOptions {
+	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
+		d.Username = "admin"
+		d.UserId = testdata.MockedAdminId.String()
+		d.TenantExternalId = "Root Tenant"
+		d.Permissions = utils.NewStringSet("VIEW", "MANAGE")
+		d.Roles = utils.NewStringSet("ADMIN")
+		d.Tenants = utils.NewStringSet(testdata.MockedRootTenantId.String())
+		d.TenantId = testdata.MockedRootTenantId.String()
+		if len(tenantId) != 0 {
+			d.TenantId = tenantId[0].String()
+		}
+	})
+}
+
+func user1SecOptions(tenantId ...uuid.UUID) sectest.SecurityContextOptions {
 	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
 		d.Username = "user1"
 		d.UserId = testdata.MockedUserId1.String()
@@ -165,7 +187,7 @@ func user1Options(tenantId ...uuid.UUID) sectest.SecurityContextOptions {
 	})
 }
 
-func user2Options(tenantId ...uuid.UUID) sectest.SecurityContextOptions {
+func user2SecOptions(tenantId ...uuid.UUID) sectest.SecurityContextOptions {
 	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
 		d.Username = "user2"
 		d.UserId = testdata.MockedUserId2.String()
@@ -183,7 +205,7 @@ func user2Options(tenantId ...uuid.UUID) sectest.SecurityContextOptions {
 func loadModelWithId(ctx context.Context, db *gorm.DB, id uuid.UUID, g *gomega.WithT) *ModelA {
 	m := ModelA{}
 	r := db.WithContext(ctx).Take(&m, id)
-	g.Expect(r.Error).To(Succeed(), "load model with ID [%v] should return no error", id)
+	g.Expect(r.Error).To(Succeed(), "load modelInfo with ID [%v] should return no error", id)
 	return &m
 }
 

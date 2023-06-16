@@ -19,6 +19,10 @@ var (
 	QueryTranslationError = opa.NewError(`generic query translation error`)
 )
 
+/*****************
+	Tag
+ *****************/
+
 const (
 	TagOPA              = `opa`
 	TagDelimiter        = `;`
@@ -28,10 +32,6 @@ const (
 	TagKeyResourceType  = `type`
 	TagKeyPolicy        = `policy`
 )
-
-/*****************
-	Tag
- *****************/
 
 type opaTag struct {
 	InputField string

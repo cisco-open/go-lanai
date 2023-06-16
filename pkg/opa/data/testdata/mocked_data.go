@@ -11,6 +11,7 @@ import (
 var ModelADataFS embed.FS
 
 var (
+	MockedAdminId = uuid.MustParse("710e8219-ed8d-474e-8f7d-96b27e46dba9")
 	MockedUserId1 = uuid.MustParse("595959e4-8803-4ab1-8acf-acfb92bb7322")
 	MockedUserId2 = uuid.MustParse("9a901c91-a3d6-4d39-9adf-34e74bb32de2")
 	MockedRootTenantId = uuid.MustParse("23967dfe-d90f-4e1b-9406-e2df6685f232")

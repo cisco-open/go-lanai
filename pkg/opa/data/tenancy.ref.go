@@ -21,7 +21,7 @@ const (
 
 
 
-// Tenancy is an embedded type for data model. It's responsible for populating PolicyFilter and check for Tenancy related data
+// Tenancy is an embedded type for data modelInfo. It's responsible for populating PolicyFilter and check for Tenancy related data
 // when crating/updating. Tenancy implements
 // - callbacks.BeforeCreateInterface
 // - callbacks.BeforeUpdateInterface
@@ -44,7 +44,7 @@ type Tenancy struct {
 }
 
 // SkipPolicyFiltering is used for embedding models to override tenancy check behavior.
-// It should be called within model's hooks. this function would panic if context is not set yet
+// It should be called within modelInfo's hooks. this function would panic if context is not set yet
 func (Tenancy) SkipTenancyCheck(tx *gorm.DB) {
 	SkipPolicyFiltering()(tx)
 }

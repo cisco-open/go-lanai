@@ -26,8 +26,8 @@ var (
 )
 
 const (
-	errTmplEmbeddedStructNotFound = `PolicyAware not found on model [%s]. Tips: embedding PolicyAware is required for any OPA DB usage`
-	errTmplOPATagNotFound         = `'opa' tag is not found on embedded PolicyAware in model [%s]. Tips: the embedded PolicyAware should have 'opa' tag with at least resource type defined`
+	errTmplEmbeddedStructNotFound = `PolicyAware not found on modelInfo [%s]. Tips: embedding PolicyAware is required for any OPA DB usage`
+	errTmplOPATagNotFound         = `'opa' tag is not found on embedded PolicyAware in modelInfo [%s]. Tips: the embedded PolicyAware should have 'opa' tag with at least resource type defined`
 )
 
 type TaggedField struct {

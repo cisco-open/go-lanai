@@ -7,7 +7,9 @@ has_permission(p) if {
 	# Check permissions with Authentication from Input
     has_auth
 	p in input.auth.permissions
-} else {
+}
+
+has_permission(p) if {
 	# Check permissions with JWT
 	not has_auth
     some role in jwt_claims.roles

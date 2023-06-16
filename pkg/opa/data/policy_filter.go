@@ -94,7 +94,7 @@ func (c policyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 		return
 	}
 
-	// special fix for db.Model(&model{}).Where(&model{f1:v1}).Or(&model{f2:v2})...
+	// special fix for db.Model(&modelInfo{}).Where(&modelInfo{f1:v1}).Or(&modelInfo{f2:v2})...
 	// Ref:	https://github.com/go-gorm/gorm/issues/3627
 	//		https://github.com/go-gorm/gorm/commit/9b2181199d88ed6f74650d73fa9d20264dd134c0#diff-e3e9193af67f3a706b3fe042a9f121d3609721da110f6a585cdb1d1660fd5a3c
 	types.FixWhereClausesForStatementModifier(stmt)
