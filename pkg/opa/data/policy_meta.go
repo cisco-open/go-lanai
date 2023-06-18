@@ -18,16 +18,11 @@ var (
 		reflect.PointerTo(typePolicyAware),
 		reflect.PointerTo(typePolicyFilter),
 	)
-
-	typeTenancy       = reflect.TypeOf(Tenancy{})
-	typeTenancyPtr    = reflect.TypeOf(&Tenancy{})
-	mapKeysTenantID   = utils.NewStringSet(fieldTenantID, colTenantID)
-	mapKeysTenantPath = utils.NewStringSet(fieldTenantPath, colTenantPath)
 )
 
 const (
-	errTmplEmbeddedStructNotFound = `PolicyAware not found on modelInfo [%s]. Tips: embedding PolicyAware is required for any OPA DB usage`
-	errTmplOPATagNotFound         = `'opa' tag is not found on embedded PolicyAware in modelInfo [%s]. Tips: the embedded PolicyAware should have 'opa' tag with at least resource type defined`
+	errTmplEmbeddedStructNotFound = `PolicyAware not found on targetModel [%s]. Tips: embedding PolicyAware is required for any OPA DB usage`
+	errTmplOPATagNotFound         = `'opa' tag is not found on embedded PolicyAware in targetModel [%s]. Tips: the embedded PolicyAware should have 'opa' tag with at least resource type defined`
 )
 
 type TaggedField struct {
@@ -38,6 +33,7 @@ type TaggedField struct {
 type metadata struct {
 	ResType string
 	Policy  string
+	Mode    policyMode
 	Fields  map[string]*TaggedField
 	Schema  *schema.Schema
 }
@@ -47,13 +43,14 @@ func newMetadata(s *schema.Schema) (*metadata, error) {
 	if e != nil {
 		return nil, e
 	}
-	tag, e := parsePolicy(s)
+	tag, e := parseTag(s)
 	if e != nil {
 		return nil, e
 	}
 	return &metadata{
 		ResType: tag.ResType,
 		Policy:  tag.Policy,
+		Mode:    tag.Mode,
 		Fields:  fields,
 		Schema:  s,
 	}, nil
@@ -92,8 +89,8 @@ func collectFields(s *schema.Schema) (ret map[string]*TaggedField, err error) {
 	return
 }
 
-func parsePolicy(s *schema.Schema) (*opaTag, error) {
-	tags, ok := findPolicyTag(s.ModelType)
+func parseTag(s *schema.Schema) (*opaTag, error) {
+	tags, ok := findTag(s.ModelType)
 	if !ok {
 		return nil, fmt.Errorf(errTmplEmbeddedStructNotFound, s.Name)
 	}
@@ -113,9 +110,9 @@ func parsePolicy(s *schema.Schema) (*opaTag, error) {
 
 }
 
-// findPolicyTag recursively find tag of marker types
+// findTag recursively find tag of marker types
 // result is undefined if given type and embedded type are not Struct
-func findPolicyTag(typ reflect.Type) (reflect.StructTag, bool) {
+func findTag(typ reflect.Type) (reflect.StructTag, bool) {
 	count := typ.NumField()
 	for i := 0; i < count; i++ {
 		f := typ.Field(i)
@@ -123,7 +120,7 @@ func findPolicyTag(typ reflect.Type) (reflect.StructTag, bool) {
 			return f.Tag, true
 		}
 		if f.Anonymous {
-			if tag, ok := findPolicyTag(f.Type); ok {
+			if tag, ok := findTag(f.Type); ok {
 				return tag, ok
 			}
 		}

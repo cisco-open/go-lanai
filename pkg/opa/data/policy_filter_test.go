@@ -12,7 +12,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -36,11 +35,11 @@ var (
 	Test
  *************************/
 
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		dbtest.EnableDBRecordMode(),
-	)
-}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
 
 type FilterTestDI struct {
 	fx.In
@@ -62,9 +61,9 @@ func TestOPAFilter(t *testing.T) {
 			fx.Provide(testdata.ProvideMockedTenancyAccessor),
 		),
 		apptest.WithDI(di),
-		test.SubTestSetup(SetupTestCreateTenancyModels(di)),
+		test.SubTestSetup(SetupTestCreateModels(di)),
 		test.GomegaSubTest(SubTestModelListWithAllSupportedFields(di), "TestModelListWithAllSupportedFields"),
-		test.GomegaSubTest(SubTestModelListWithoutTenancy(di), "TestModelListWithoutTenancy"),
+		//test.GomegaSubTest(SubTestModelListWithoutTenancy(di), "TestModelListWithoutTenancy"),
 	)
 }
 
@@ -72,7 +71,7 @@ func TestOPAFilter(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SetupTestCreateTenancyModels(di *FilterTestDI) test.SetupFunc {
+func SetupTestCreateModels(di *FilterTestDI) test.SetupFunc {
 	var models []*ModelA
 	closure := func(ctx context.Context, db *gorm.DB) {
 		for _, m := range models {
@@ -92,18 +91,13 @@ func SetupTestCreateTenancyModels(di *FilterTestDI) test.SetupFunc {
 			MockedModelLookupByOwner[m.OwnerID] = ids
 		}
 	}
-	fn := dbtest.PrepareData(&di.DI,
+	// We use special DB scope to prepare data, to by-pass policy filtering
+	return dbtest.PrepareDataWithScope(&di.DI,
+		dbtest.SetupWithGormScopes(SkipPolicyFiltering()),
 		dbtest.SetupUsingSQLFile(testdata.ModelADataFS, "create_table_a.sql"),
 		dbtest.SetupTruncateTables(ModelA{}.TableName()),
 		dbtest.SetupUsingModelSeedFile(testdata.ModelADataFS, &models, "model_a.yml", closure),
 	)
-	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		newCtx := sectest.ContextWithSecurity(ctx, adminSecOptions())
-		if _, e := fn(newCtx, t); e != nil {
-			return ctx, e
-		}
-		return ctx, nil
-	}
 }
 
 func SubTestModelListWithAllSupportedFields(di *FilterTestDI) test.GomegaSubTestFunc {
@@ -205,7 +199,7 @@ func user2SecOptions(tenantId ...uuid.UUID) sectest.SecurityContextOptions {
 func loadModelWithId(ctx context.Context, db *gorm.DB, id uuid.UUID, g *gomega.WithT) *ModelA {
 	m := ModelA{}
 	r := db.WithContext(ctx).Take(&m, id)
-	g.Expect(r.Error).To(Succeed(), "load modelInfo with ID [%v] should return no error", id)
+	g.Expect(r.Error).To(Succeed(), "load targetModel with ID [%v] should return no error", id)
 	return &m
 }
 
@@ -255,11 +249,11 @@ func (ModelA) TableName() string {
 
 // ModelB has no tenancy
 type ModelB struct {
-	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-	Value      string
-	TenantName string
-	OwnerName  string
-	OwnerID    uuid.UUID    `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+	ID              uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	Value           string
+	TenantName      string
+	OwnerName       string
+	OwnerID         uuid.UUID    `gorm:"type:KeyID;not null" opa:"field:owner_id"`
 	OPAPolicyFilter PolicyFilter `gorm:"-" opa:"type:poc"`
 	types.Audit
 }

@@ -21,7 +21,7 @@ const (
 
 
 
-// Tenancy is an embedded type for data modelInfo. It's responsible for populating PolicyFilter and check for Tenancy related data
+// Tenancy is an embedded type for data targetModel. It's responsible for populating PolicyFilter and check for Tenancy related data
 // when crating/updating. Tenancy implements
 // - callbacks.BeforeCreateInterface
 // - callbacks.BeforeUpdateInterface
@@ -44,7 +44,7 @@ type Tenancy struct {
 }
 
 // SkipPolicyFiltering is used for embedding models to override tenancy check behavior.
-// It should be called within modelInfo's hooks. this function would panic if context is not set yet
+// It should be called within targetModel's hooks. this function would panic if context is not set yet
 func (Tenancy) SkipTenancyCheck(tx *gorm.DB) {
 	SkipPolicyFiltering()(tx)
 }
@@ -55,7 +55,7 @@ func (t *Tenancy) BeforeCreate(tx *gorm.DB) error {
 		return errors.New("tenantId is required")
 	}
 
-	if !shouldSkip(tx.Statement.Context, FilteringFlagWriteValueCheck, filteringModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, t.TenantID.String()) {
+	if !shouldSkip(tx.Statement.Context, PolicyFlagCreate, policyModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, t.TenantID.String()) {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", t.TenantID.String()))
 	}
 
@@ -79,7 +79,7 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 		return e
 	}
 
-	if !shouldSkip(tx.Statement.Context, FilteringFlagWriteValueCheck, filteringModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
+	if !shouldSkip(tx.Statement.Context, PolicyFlagCreate, policyModeDefault) && !security.HasAccessToTenant(tx.Statement.Context, tenantId.String()) {
 		return errors.New(fmt.Sprintf("user does not have access to tenant %s", tenantId.String()))
 	}
 
@@ -173,12 +173,12 @@ func (Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflect.T
 	return "", reflect.Value{}, false
 }
 
-func shouldSkip(ctx context.Context, flag FilteringFlag, fallback filteringMode) bool {
+func shouldSkip(ctx context.Context, flag PolicyFlag, fallback policyMode) bool {
 	if ctx == nil || !security.IsFullyAuthenticated(security.Get(ctx)) {
 		return true
 	}
-	switch v := ctx.Value(ckFilteringMode{}).(type) {
-	case filteringMode:
+	switch v := ctx.Value(ckFilterMode{}).(type) {
+	case policyMode:
 		return !v.hasFlags(flag)
 	default:
 		return !fallback.hasFlags(flag)

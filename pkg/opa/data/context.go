@@ -31,15 +31,22 @@ const (
 	TagKeyInputFieldAlt = `input`
 	TagKeyResourceType  = `type`
 	TagKeyPolicy        = `policy`
+	TagKeyMode          = `mode`
 )
 
 type opaTag struct {
 	InputField string
 	ResType    string
 	Policy     string
+	Mode       policyMode
 }
 
 func (t *opaTag) UnmarshalText(data []byte) error {
+	// setup default
+	*t = opaTag{
+		Mode: defaultPolicyMode,
+	}
+	// parse kv pairs
 	terms := strings.Split(string(data), TagDelimiter)
 	for _, term := range terms {
 		kv := strings.SplitN(term, TagAssignment, 2)
@@ -60,6 +67,10 @@ func (t *opaTag) UnmarshalText(data []byte) error {
 			t.ResType = v
 		case TagKeyPolicy:
 			t.Policy = v
+		case TagKeyMode:
+			if e := t.Mode.UnmarshalText([]byte(v)); e != nil {
+				return fmt.Errorf(`invalid "opa" tag, unrecognized mode "%s"`, v)
+			}
 		default:
 			return fmt.Errorf(`invalid "opa" tag, unrecognized key "%s"`, k)
 		}
@@ -71,37 +82,45 @@ func (t *opaTag) UnmarshalText(data []byte) error {
 	Flags and Mode
  ********************/
 
-type ckFilteringMode struct{}
-
 const (
-	FilteringFlagWriteValueCheck FilteringFlag = 1 << iota
-	FilteringFlagReadFiltering
-	FilteringFlagWriteFiltering
-	FilteringFlagDeleteFiltering
+	PolicyFlagCreate PolicyFlag = 1 << iota
+	PolicyFlagRead
+	PolicyFlagUpdate
+	PolicyFlagDelete
 )
 
-// FilteringFlag bitwise Flag of tenancy flag mode
-type FilteringFlag uint
+// PolicyFlag bitwise Flag of tenancy flag mode
+type PolicyFlag uint
 
 const (
-	filteringModeDefault = filteringMode(FilteringFlagReadFiltering | FilteringFlagWriteFiltering | FilteringFlagWriteValueCheck)
+	defaultPolicyMode = policyMode(PolicyFlagCreate | PolicyFlagRead | PolicyFlagUpdate | PolicyFlagDelete)
 )
 
-// filteringMode enum of tenancyCheckMode
-type filteringMode uint
+// policyMode enum of policyMode
+type policyMode uint
 
-func (m filteringMode) hasFlags(flags ...FilteringFlag) bool {
+//goland:noinspection GoMixedReceiverTypes
+func (m policyMode) hasFlags(flags ...PolicyFlag) bool {
 	for _, flag := range flags {
-		if m&filteringMode(flag) == 0 {
+		if m&policyMode(flag) == 0 {
 			return false
 		}
 	}
 	return true
 }
 
+//goland:noinspection GoMixedReceiverTypes
+func (m *policyMode) UnmarshalText(data []byte) error {
+	//TODO
+	*m = defaultPolicyMode
+	return nil
+}
+
 /********************
 	GORM Scopes
  ********************/
+
+type ckFilterMode struct{}
 
 // SkipPolicyFiltering is used as a scope for gorm.DB to skip tenancy check
 // e.g. db.WithContext(ctx).Scopes(SkipPolicyFiltering()).Find(...)
@@ -113,17 +132,29 @@ func SkipPolicyFiltering() func(*gorm.DB) *gorm.DB {
 // FilterByPolicy is used as a scope for gorm.DB to override tenancy check
 // e.g. db.WithContext(ctx).Scopes(FilterByPolicy()).Find(...)
 // Note using this scope without context would panic
-func FilterByPolicy(flags ...FilteringFlag) func(*gorm.DB) *gorm.DB {
+func FilterByPolicy(flags ...PolicyFlag) func(*gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		if tx.Statement.Context == nil {
-			panic("SkipPolicyFiltering used without context")
+			panic("FilterByPolicy scope is used without context")
 		}
-		var mode filteringMode
+		var mode policyMode
 		for _, flag := range flags {
-			mode = mode | filteringMode(flag)
+			mode = mode | policyMode(flag)
 		}
-		ctx := context.WithValue(tx.Statement.Context, ckFilteringMode{}, mode)
+		ctx := context.WithValue(tx.Statement.Context, ckFilterMode{}, mode)
 		tx.Statement.Context = ctx
 		return tx
+	}
+}
+
+func shouldSkip(ctx context.Context, flag PolicyFlag, fallback policyMode) bool {
+	if ctx == nil {
+		return defaultPolicyMode.hasFlags(flag)
+	}
+	switch v := ctx.Value(ckFilterMode{}).(type) {
+	case policyMode:
+		return !v.hasFlags(flag)
+	default:
+		return !fallback.hasFlags(flag)
 	}
 }
