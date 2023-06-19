@@ -7,7 +7,6 @@ import data.ops.is
 import data.ownership.is_owner
 import data.ownership.is_shared
 
-#default filter_read := false
 filter_read if {
     input.resource.type == "poc"
     is("read")
@@ -28,3 +27,53 @@ filter_read if {
     is_shared("read")
     allow_tenant_access
 }
+
+filter_write if {
+    input.resource.type == "poc"
+    is("write")
+    has_permission("MANAGE")
+    allow_tenant_access
+}
+
+filter_write if {
+    input.resource.type == "poc"
+    is("write")
+    is_owner
+    allow_tenant_access
+}
+
+filter_write if {
+    input.resource.type == "poc"
+    is("write")
+    is_shared("write")
+    allow_tenant_access
+}
+
+filter_write if {
+    input.resource.type == "poc"
+    is("write")
+    has_permission("MANAGE")
+    allow_tenant_access
+}
+
+filter_delete if {
+    input.resource.type == "poc"
+    is("delete")
+    has_permission("MANAGE")
+    allow_tenant_access
+}
+
+filter_delete if {
+    input.resource.type == "poc"
+    is("delete")
+    is_owner
+    allow_tenant_access
+}
+
+filter_delete if {
+    input.resource.type == "poc"
+    is("delete")
+    is_shared("delete")
+    allow_tenant_access
+}
+

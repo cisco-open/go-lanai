@@ -1,6 +1,7 @@
 package opadata
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
@@ -24,6 +25,7 @@ import (
 // - schema.QueryClausesInterface
 // - schema.UpdateClausesInterface
 // - schema.DeleteClausesInterface
+// - schema.CreateClausesInterface
 // this data type adds "WHERE" clause for tenancy filtering
 type PolicyFilter struct {}
 
@@ -42,23 +44,36 @@ func (pf PolicyFilter) DeleteClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newPolicyFilterClause(f, PolicyFlagDelete)}
 }
 
+// CreateClauses implements schema.CreateClausesInterface,
+func (pf PolicyFilter) CreateClauses(f *schema.Field) []clause.Interface {
+	return []clause.Interface{newPolicyFilterClause(f, PolicyFlagCreate)}
+}
+
+/***************************
+	Read, Update, Delete
+ ***************************/
+
 // policyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type policyFilterClause struct {
+	types.NoopStatementModifier
 	metadata
 	Flag PolicyFlag
-	types.NoopStatementModifier
 }
 
-func newPolicyFilterClause(f *schema.Field, flag PolicyFlag) *policyFilterClause {
-	// TODO determine mode
+func newPolicyFilterClause(f *schema.Field, flag PolicyFlag) clause.Interface {
 	meta, e := loadMetadata(f.Schema)
 	if e != nil {
 		panic(e)
 	}
-	return &policyFilterClause{
-		metadata: *meta,
-		Flag:     flag,
+	switch flag {
+	case PolicyFlagCreate:
+		return newCreatePolicyFilterClause(meta)
+	default:
+		return &policyFilterClause{
+			metadata: *meta,
+			Flag:     flag,
+		}
 	}
 }
 
@@ -110,7 +125,69 @@ func (c policyFilterClause) opaFilterOptions(stmt *gorm.Statement) opa.ResourceF
 	}
 }
 
+/***************************
+	Create
+ ***************************/
 
+// createPolicyFilterClause is a special policyFilterClause that TODO
+type createPolicyFilterClause struct {
+	policyFilterClause
+}
+
+func newCreatePolicyFilterClause(meta *metadata) *createPolicyFilterClause {
+	return &createPolicyFilterClause{
+		policyFilterClause{
+			metadata:              *meta,
+			Flag:                  PolicyFlagCreate,
+		},
+	}
+}
+
+func (c createPolicyFilterClause) ModifyStatement(stmt *gorm.Statement) {
+	if shouldSkip(stmt.Context, PolicyFlagCreate, c.Mode) {
+		return
+	}
+
+	m, e := resolveTargetModel(stmt, &c.metadata)
+	if e != nil {
+		_ = stmt.Statement.AddError(e)
+		return
+	}
+
+	if e := c.checkPolicy(stmt.Context, &m, opa.OpCreate); e != nil {
+		_ = stmt.Statement.AddError(e)
+		return
+	}
+}
+
+func (c createPolicyFilterClause) checkPolicy(ctx context.Context, m *targetModel, op opa.ResourceOperation) error {
+	input := map[string]interface{}{}
+	switch {
+	case m.val.IsValid():
+		// create by model struct
+		for k, tagged := range m.meta.Fields {
+			v := m.val.FieldByIndex(tagged.StructField.Index).Interface()
+			input[k] = v
+		}
+	case m.valueMap != nil:
+		// create by value map
+		for k, tagged := range m.meta.Fields {
+			v, ok := m.valueMap[tagged.Name]
+			if !ok || v == nil {
+				v, ok = m.valueMap[tagged.DBName]
+			}
+			if ok {
+				input[k] = v
+			}
+		}
+	default:
+		return opa.AccessDeniedError.WithMessage(`Cannot resolve values for model creation`)
+	}
+
+	return opa.AllowResource(ctx, m.meta.ResType, op, func(res *opa.Resource) {
+		res.ExtraData = input
+	})
+}
 
 /***********************
 	Helpers

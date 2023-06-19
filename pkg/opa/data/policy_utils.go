@@ -3,6 +3,7 @@ package opadata
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
+	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"reflect"
 	"sync"
@@ -13,6 +14,7 @@ var cache = &sync.Map{}
 var (
 	typePolicyAware   = reflect.TypeOf(PolicyAware{})
 	typePolicyFilter  = reflect.TypeOf(PolicyFilter{})
+	typeGenericMap    = reflect.TypeOf(map[string]interface{}{})
 	policyMarkerTypes = utils.NewSet(
 		typePolicyAware, typePolicyFilter,
 		reflect.PointerTo(typePolicyAware),
@@ -24,6 +26,10 @@ const (
 	errTmplEmbeddedStructNotFound = `PolicyAware not found on targetModel [%s]. Tips: embedding PolicyAware is required for any OPA DB usage`
 	errTmplOPATagNotFound         = `'opa' tag is not found on embedded PolicyAware in targetModel [%s]. Tips: the embedded PolicyAware should have 'opa' tag with at least resource type defined`
 )
+
+/*******************
+	Metadata
+ *******************/
 
 type TaggedField struct {
 	*schema.Field
@@ -126,4 +132,69 @@ func findTag(typ reflect.Type) (reflect.StructTag, bool) {
 		}
 	}
 	return "", false
+}
+
+/*********************
+	Model Resolver
+ *********************/
+
+// targetModel collected information about current targetModel
+type targetModel struct {
+	meta     *metadata
+	ptr      reflect.Value
+	val      reflect.Value
+	valueMap map[string]interface{}
+}
+
+func resolveTargetModel(stmt *gorm.Statement, meta *metadata) (m targetModel, err error) {
+	m.meta = meta
+	v, e := resolveTargetModelValue(stmt)
+	if e != nil {
+		return m, e
+	}
+	switch v.Kind() {
+	case reflect.Pointer:
+		m.ptr = v
+		m.val = v.Elem()
+		// sanity check
+		if m.meta.Schema.ModelType != m.val.Type() {
+			return targetModel{}, fmt.Errorf("policy metadata and current model type mismatches")
+		}
+	case reflect.Map:
+		m.valueMap = v.Convert(typeGenericMap).Interface().(map[string]interface{})
+	}
+	return
+
+}
+
+// resolveTargetModelValue find the pointer of enclosing targetModel struct or a map
+func resolveTargetModelValue(stmt *gorm.Statement) (rv reflect.Value, err error) {
+	// batch vs single model
+	switch stmt.ReflectValue.Kind() {
+	case reflect.Slice, reflect.Array:
+		if stmt.CurDestIndex >= stmt.ReflectValue.Len() {
+			break
+		}
+		rv = stmt.ReflectValue.Index(stmt.CurDestIndex)
+	case reflect.Struct:
+		fallthrough
+	case reflect.Map:
+		rv = stmt.ReflectValue
+	}
+
+	switch {
+	case !rv.IsValid():
+		break
+	case rv.Type() == stmt.Schema.ModelType && rv.CanAddr():
+		return rv.Addr(), nil
+	case rv.Type() == reflect.PointerTo(stmt.Schema.ModelType):
+		return rv, nil
+	case rv.Type() == typeGenericMap:
+		return rv, nil
+	}
+	return rv, fmt.Errorf("unable to extract current model value")
+}
+
+func resolveTargetModelAsMap(stmt *gorm.Statement) (rv reflect.Value, err error) {
+	return
 }
