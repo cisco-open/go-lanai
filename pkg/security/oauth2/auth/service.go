@@ -172,9 +172,12 @@ func (s *DefaultAuthorizationService) RefreshAccessToken(c context.Context, oaut
 	return s.postTokenEnhancer.Enhance(c, saved, oauth)
 }
 
-/****************************
-	Authorization Helpers
- ****************************/
+/*
+***************************
+
+		Authorization Helpers
+	 ***************************
+*/
 type authFacts struct {
 	request  oauth2.OAuth2Request
 	client   oauth2.OAuth2Client
@@ -184,6 +187,7 @@ type authFacts struct {
 	source   oauth2.Authentication
 }
 
+// TODO: in here we need to resolve the per tenant permission
 func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	request oauth2.OAuth2Request, userAuth oauth2.UserAuthentication,
 	src oauth2.Authentication) (security.ContextDetails, error) {
@@ -332,7 +336,9 @@ func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 		if e != nil {
 			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with id [%s]", account.Username(), tenantId))
 		}
-	} else {
+	}
+
+	if tenantExternalId != "" {
 		tenant, e = s.tenantStore.LoadTenantByExternalId(ctx, tenantExternalId)
 		if e != nil {
 			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with externalId [%s]", account.Username(), tenantExternalId))
@@ -343,6 +349,9 @@ func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 }
 
 func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, client oauth2.OAuth2Client) error {
+	if tenant == nil {
+		return nil
+	}
 
 	// special permission ACCESS_ALL_TENANTS
 	for _, p := range account.Permissions() {
@@ -374,6 +383,10 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, te
 }
 
 func (s *DefaultAuthorizationService) loadProvider(ctx context.Context, _ oauth2.OAuth2Request, tenant *security.Tenant) (*security.Provider, error) {
+	if tenant == nil {
+		return nil, nil
+	}
+
 	providerId := tenant.ProviderId
 	if providerId == "" {
 		return nil, newInvalidProviderError("provider ID is not avalilable")
@@ -420,9 +433,12 @@ func (s *DefaultAuthorizationService) determineAuthenticationTime(ctx context.Co
 	return
 }
 
-/****************************
-	Helpers
- ****************************/
+/*
+***************************
+
+		Helpers
+	 ***************************
+*/
 func (s *DefaultAuthorizationService) reuseOrNewAccessToken(c context.Context, oauth oauth2.Authentication) *oauth2.DefaultAccessToken {
 	existing, e := s.tokenStore.ReusableAccessToken(c, oauth)
 	if e != nil || existing == nil {
@@ -442,9 +458,12 @@ func minTime(t1, t2 time.Time) time.Time {
 	}
 }
 
-/****************************
-	Errors
- ****************************/
+/*
+***************************
+
+		Errors
+	 ***************************
+*/
 func newImmutableContextError(reasons ...interface{}) error {
 	return oauth2.NewInternalError("context is not mutable", reasons...)
 }
