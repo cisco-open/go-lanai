@@ -27,68 +27,78 @@ import (
 // - schema.DeleteClausesInterface
 // - schema.CreateClausesInterface
 // this data type adds "WHERE" clause for tenancy filtering
-type PolicyFilter struct {}
+type PolicyFilter struct{}
 
 // QueryClauses implements schema.QueryClausesInterface,
 func (pf PolicyFilter) QueryClauses(f *schema.Field) []clause.Interface {
-	return []clause.Interface{newPolicyFilterClause(f, PolicyFlagRead)}
+	return []clause.Interface{newStatementModifier(f, DBOperationFlagRead)}
 }
 
 // UpdateClauses implements schema.UpdateClausesInterface,
 func (pf PolicyFilter) UpdateClauses(f *schema.Field) []clause.Interface {
-	return []clause.Interface{newPolicyFilterClause(f, PolicyFlagUpdate)}
+	return []clause.Interface{newStatementModifier(f, DBOperationFlagUpdate)}
 }
 
 // DeleteClauses implements schema.DeleteClausesInterface,
 func (pf PolicyFilter) DeleteClauses(f *schema.Field) []clause.Interface {
-	return []clause.Interface{newPolicyFilterClause(f, PolicyFlagDelete)}
+	return []clause.Interface{newStatementModifier(f, DBOperationFlagDelete)}
 }
 
 // CreateClauses implements schema.CreateClausesInterface,
 func (pf PolicyFilter) CreateClauses(f *schema.Field) []clause.Interface {
-	return []clause.Interface{newPolicyFilterClause(f, PolicyFlagCreate)}
+	return []clause.Interface{newStatementModifier(f, DBOperationFlagCreate)}
 }
 
 /***************************
 	Read, Update, Delete
  ***************************/
 
-// policyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
+// statementModifier implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
-type policyFilterClause struct {
+type statementModifier struct {
 	types.NoopStatementModifier
 	metadata
-	Flag PolicyFlag
+	Flag                 DBOperationFlag
+	OPAFilterOptionsFunc func(stmt *gorm.Statement) (opa.ResourceFilterOptions, error)
 }
 
-func newPolicyFilterClause(f *schema.Field, flag PolicyFlag) clause.Interface {
+func newStatementModifier(f *schema.Field, flag DBOperationFlag) clause.Interface {
 	meta, e := loadMetadata(f.Schema)
 	if e != nil {
 		panic(e)
 	}
 	switch flag {
-	case PolicyFlagCreate:
-		return newCreatePolicyFilterClause(meta)
+	case DBOperationFlagCreate:
+		return newCreateStatementModifier(meta)
+	case DBOperationFlagUpdate:
+		return newUpdateStatementModifier(meta)
 	default:
-		return &policyFilterClause{
+		ret := &statementModifier{
 			metadata: *meta,
 			Flag:     flag,
 		}
+		ret.OPAFilterOptionsFunc = ret.opaFilterOptions
+		return ret
 	}
 }
 
-func (c policyFilterClause) ModifyStatement(stmt *gorm.Statement) {
-	if shouldSkip(stmt.Context, c.Flag, c.Mode) {
+func (m statementModifier) ModifyStatement(stmt *gorm.Statement) {
+	if shouldSkip(stmt.Context, m.Flag, m.Mode) {
 		return
 	}
 
-	rs, e := opa.FilterResource(stmt.Context, c.ResType, flagToResOp(c.Flag), c.opaFilterOptions(stmt))
+	filterOpts, e := m.OPAFilterOptionsFunc(stmt)
+	if e != nil {
+		_ = stmt.AddError(data.NewDataError(data.ErrorCodeInvalidApiUsage, fmt.Sprintf(`OPA filtering failed with error: %v`, e), e))
+		return
+	}
+	rs, e := opa.FilterResource(stmt.Context, m.ResType, flagToResOp(m.Flag), filterOpts)
 	if e != nil {
 		switch {
 		case errors.Is(e, opa.QueriesNotResolvedError):
-			stmt.Error = data.NewRecordNotFoundError("record not found")
+			_ = stmt.AddError(data.NewRecordNotFoundError("record not found"))
 		default:
-			stmt.Error = data.NewInternalError(fmt.Sprintf(`OPA filtering failed with error: %v`, e), e)
+			_ = stmt.AddError(data.NewInternalError(fmt.Sprintf(`OPA filtering failed with error: %v`, e), e))
 		}
 		return
 	}
@@ -97,7 +107,7 @@ func (c policyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 		return
 	}
 
-	// special fix for db.Model(&targetModel{}).Where(&targetModel{f1:v1}).Or(&targetModel{f2:v2})...
+	// special fix for db.Model(&policyTarget{}).Where(&policyTarget{f1:v1}).Or(&policyTarget{f2:v2})...
 	// Ref:	https://github.com/go-gorm/gorm/issues/3627
 	//		https://github.com/go-gorm/gorm/commit/9b2181199d88ed6f74650d73fa9d20264dd134c0#diff-e3e9193af67f3a706b3fe042a9f121d3609721da110f6a585cdb1d1660fd5a3c
 	types.FixWhereClausesForStatementModifier(stmt)
@@ -109,83 +119,112 @@ func (c policyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	}
 }
 
-func (c policyFilterClause) opaFilterOptions(stmt *gorm.Statement) opa.ResourceFilterOptions {
-	unknowns := make([]string, 0, len(c.Fields))
-	for k := range c.Fields {
+func (m statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.ResourceFilterOptions, error) {
+	unknowns := make([]string, 0, len(m.Fields))
+	for k := range m.Fields {
 		unknown := fmt.Sprintf(`%s.%s.%s`, opa.InputPrefixRoot, opa.InputPrefixResource, k)
 		unknowns = append(unknowns, unknown)
 	}
 	return func(rf *opa.ResourceFilter) {
-		rf.Policy = c.Policy
+		rf.Policy = m.Policy
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
-			Fields:    c.Fields,
+			Fields:    m.Fields,
 			Statement: stmt,
 		})
+	}, nil
+}
+
+/***************************
+	Update
+ ***************************/
+
+// updateStatementModifier is a special statementModifier that TODO
+type updateStatementModifier struct {
+	statementModifier
+}
+
+func newUpdateStatementModifier(meta *metadata) *updateStatementModifier {
+	ret := &updateStatementModifier{
+		statementModifier{
+			metadata: *meta,
+			Flag:     DBOperationFlagUpdate,
+		},
 	}
+	ret.OPAFilterOptionsFunc = ret.opaFilterOptions
+	return ret
+}
+
+func (m updateStatementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.ResourceFilterOptions, error) {
+	opts, e := m.statementModifier.opaFilterOptions(stmt)
+	if e != nil {
+		return nil, e
+	}
+	models, e := resolvePolicyTargets(stmt, &m.metadata, m.Flag)
+	if e != nil {
+		return nil, UnsupportedUsageError.WithMessage("failed resolve delta in 'update' DB operation: %v", e)
+	}
+	switch len(models) {
+	case 1:
+		break
+	case 0:
+		return nil, UnsupportedUsageError.WithMessage("unable to resolve delta in 'update' DB operation")
+	default:
+		return nil, UnsupportedUsageError.WithMessage("'update' DB operation with batch update is not supported")
+	}
+	values, e := models[0].toResourceValues()
+	if e != nil {
+		return opts, UnsupportedUsageError.WithMessage(`%v`, e)
+	}
+	return func(rf *opa.ResourceFilter) {
+		opts(rf)
+		rf.Delta = values
+	}, nil
 }
 
 /***************************
 	Create
  ***************************/
 
-// createPolicyFilterClause is a special policyFilterClause that TODO
-type createPolicyFilterClause struct {
-	policyFilterClause
+// createStatementModifier is a special statementModifier that perform OPA policy check on resource creation
+// Note: this modifier doesn't actually modify statement, it checks the to-be-created model/map against OPA and
+// 		 returns error if not allowed
+type createStatementModifier struct {
+	statementModifier
 }
 
-func newCreatePolicyFilterClause(meta *metadata) *createPolicyFilterClause {
-	return &createPolicyFilterClause{
-		policyFilterClause{
-			metadata:              *meta,
-			Flag:                  PolicyFlagCreate,
+func newCreateStatementModifier(meta *metadata) *createStatementModifier {
+	return &createStatementModifier{
+		statementModifier{
+			metadata: *meta,
+			Flag:     DBOperationFlagCreate,
 		},
 	}
 }
 
-func (c createPolicyFilterClause) ModifyStatement(stmt *gorm.Statement) {
-	if shouldSkip(stmt.Context, PolicyFlagCreate, c.Mode) {
+func (m createStatementModifier) ModifyStatement(stmt *gorm.Statement) {
+	if shouldSkip(stmt.Context, DBOperationFlagCreate, m.Mode) {
 		return
 	}
 
-	m, e := resolveTargetModel(stmt, &c.metadata)
-	if e != nil {
-		_ = stmt.Statement.AddError(e)
+	models, e := resolvePolicyTargets(stmt, &m.metadata, m.Flag)
+	if stmt.Statement.AddError(e) != nil {
 		return
 	}
-
-	if e := c.checkPolicy(stmt.Context, &m, opa.OpCreate); e != nil {
-		_ = stmt.Statement.AddError(e)
-		return
+	for _, model := range models {
+		if stmt.Statement.AddError(m.checkPolicy(stmt.Context, &model)) != nil {
+			return
+		}
 	}
 }
 
-func (c createPolicyFilterClause) checkPolicy(ctx context.Context, m *targetModel, op opa.ResourceOperation) error {
-	input := map[string]interface{}{}
-	switch {
-	case m.val.IsValid():
-		// create by model struct
-		for k, tagged := range m.meta.Fields {
-			v := m.val.FieldByIndex(tagged.StructField.Index).Interface()
-			input[k] = v
-		}
-	case m.valueMap != nil:
-		// create by value map
-		for k, tagged := range m.meta.Fields {
-			v, ok := m.valueMap[tagged.Name]
-			if !ok || v == nil {
-				v, ok = m.valueMap[tagged.DBName]
-			}
-			if ok {
-				input[k] = v
-			}
-		}
-	default:
+func (m createStatementModifier) checkPolicy(ctx context.Context, model *policyTarget) error {
+	values, e := model.toResourceValues()
+	if e != nil {
 		return opa.AccessDeniedError.WithMessage(`Cannot resolve values for model creation`)
 	}
-
-	return opa.AllowResource(ctx, m.meta.ResType, op, func(res *opa.Resource) {
-		res.ExtraData = input
+	return opa.AllowResource(ctx, model.meta.ResType, opa.OpCreate, func(res *opa.Resource) {
+		res.ResourceValues = *values
 	})
 }
 
@@ -193,53 +232,15 @@ func (c createPolicyFilterClause) checkPolicy(ctx context.Context, m *targetMode
 	Helpers
  ***********************/
 
-func flagToResOp(flag PolicyFlag) opa.ResourceOperation {
+func flagToResOp(flag DBOperationFlag) opa.ResourceOperation {
 	switch flag {
-	case PolicyFlagRead:
+	case DBOperationFlagRead:
 		return opa.OpRead
-	case PolicyFlagUpdate:
+	case DBOperationFlagUpdate:
 		return opa.OpWrite
-	case PolicyFlagDelete:
+	case DBOperationFlagDelete:
 		return opa.OpDelete
 	default:
 		return opa.OpCreate
 	}
 }
-
-//func extractFilterTag(f *schema.Field) string {
-//	if tag, ok := f.Tag.Lookup(types.TagFilter); ok {
-//		return strings.ToLower(strings.TrimSpace(tag))
-//	}
-//	// TODO Fix this: check if tag is available on embedded struct
-//	sf, ok := reflectutils.FindStructField(f.Schema.ModelType, func(t reflect.StructField) bool {
-//		return t.Anonymous && (t.Type.AssignableTo(typeTenancy) || t.Type.AssignableTo(typeTenancyPtr))
-//	})
-//	if ok {
-//		return sf.Tag.Get(types.TagFilter)
-//	}
-//	return ""
-//}
-//
-//func determineFilteringMode(f *schema.Field) (mode policyMode) {
-//	// TODO determine mode
-//	mode = 0
-//	tag := extractFilterTag(f)
-//	switch tag {
-//	case "":
-//		mode = defaultPolicyMode
-//	case "-":
-//	default:
-//		if strings.ContainsRune(tag, 'r') {
-//			mode = mode | policyMode(PolicyFlagRead)
-//		}
-//		if strings.ContainsRune(tag, 'w') {
-//			mode = mode | policyMode(PolicyFlagUpdate)
-//		}
-//	}
-//	return
-//}
-
-
-
-
-

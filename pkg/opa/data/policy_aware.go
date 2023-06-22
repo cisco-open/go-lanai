@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// PolicyAware is an embedded type for data targetModel. It's responsible for applying PolicyFilter and
+// PolicyAware is an embedded type for data policyTarget. It's responsible for applying PolicyFilter and
 // populating/checking OPA policy related data field
 // TODO update following description
 // when crating/updating. PolicyAware implements
@@ -17,7 +17,7 @@ import (
 // - `filter:"rw"`: CRUD operations are all enforced,
 //					this mode filters result of any Select/Update/Delete query based on current security context
 // - `filter:"-"`: 	filtering is disabled. Note: setting TenantID to in-accessible tenant is still enforced.
-//					to disable TenantID value check, use SkipPolicyFiltering
+//					to disable TenantID model check, use SkipPolicyFiltering
 // e.g.
 // <code>
 // type TenancyModel struct {
@@ -36,7 +36,7 @@ func (p PolicyAware) BeforeCreate(tx *gorm.DB) error {
 		return e
 	}
 
-	if shouldSkip(tx.Statement.Context, PolicyFlagCreate, meta.Mode) {
+	if shouldSkip(tx.Statement.Context, DBOperationFlagCreate, meta.Mode) {
 		return nil
 	}
 
@@ -58,10 +58,10 @@ func (p PolicyAware) BeforeUpdate(tx *gorm.DB) error {
 	Helpers
  *******************/
 
-func checkPolicy(ctx context.Context, m *targetModel, op opa.ResourceOperation) error {
+func checkPolicy(ctx context.Context, m *policyTarget, op opa.ResourceOperation) error {
 	input := map[string]interface{}{}
 	for k, tagged := range m.meta.Fields {
-		v := m.val.FieldByIndex(tagged.StructField.Index).Interface()
+		v := m.modelValue.FieldByIndex(tagged.StructField.Index).Interface()
 		input[k] = v
 	}
 	return opa.AllowResource(ctx, m.meta.ResType, op, func(res *opa.Resource) {

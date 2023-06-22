@@ -53,6 +53,7 @@ func TestOPAFilterWithAllFields(t *testing.T) {
 	di := &TestDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		apptest.WithTimeout(10 * time.Minute),
 		dbtest.WithDBPlayback("testdb"),
 		apptest.WithModules(tenancy.Module, opa.Module),
 		apptest.WithProperties(
@@ -69,6 +70,7 @@ func TestOPAFilterWithAllFields(t *testing.T) {
 		test.GomegaSubTest(SubTestModelList(di), "TestModelList"),
 		test.GomegaSubTest(SubTestModelGet(di), "TestModelGet"),
 		test.GomegaSubTest(SubTestModelUpdate(di), "TestModelUpdate"),
+		test.GomegaSubTest(SubTestModelUpdateWithDelta(di), "TestModelUpdateWithDelta"),
 		test.GomegaSubTest(SubTestModelDelete(di), "TestModelDelete"),
 		//test.GomegaSubTest(SubTestModelSave(di), "TestModelSave"),
 	)
@@ -97,9 +99,9 @@ func SetupTestCreateModels(di *dbtest.DI) test.SetupFunc {
 
 func SubTestModelCreate(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		var model *ModelA
+		var model, model2 ModelA
 		var rs *gorm.DB
-		model = &ModelA{
+		model = ModelA{
 			Value:      "test created",
 			TenantName: "Tenant A-1",
 			OwnerName:  "user1",
@@ -107,34 +109,37 @@ func SubTestModelCreate(di *TestDI) test.GomegaSubTestFunc {
 			TenantPath: pqx.UUIDArray{testdata.MockedRootTenantId, testdata.MockedTenantIdA, testdata.MockedTenantIdA1},
 			OwnerID:    testdata.MockedUserId1,
 		}
+		model2 = model
 		// user1 - tenant A-1
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		model.ID = uuid.New()
-		rs = di.DB.WithContext(ctx).Create(model)
+		rs = di.DB.WithContext(ctx).Create(&model)
 		g.Expect(rs.Error).To(Succeed(), "create model of currently selected tenant should return no error")
 
 		// user1 with parent Tenant A
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		model.ID = uuid.New()
-		rs = di.DB.WithContext(ctx).Create(model)
+		model2.ID = uuid.New()
+		rs = di.DB.WithContext(ctx).CreateInBatches([]*ModelA{&model, &model2}, 10)
 		g.Expect(rs.Error).To(Succeed(), "create model of current tenant's sub-tenant should return no error")
 
 		// user1 with other tenant branch
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		model.ID = uuid.New()
-		rs = di.DB.WithContext(ctx).Create(model)
+		rs = di.DB.WithContext(ctx).Create(&model)
 		g.Expect(rs.Error).To(HaveOccurred(), "create model by non tenant member should return error")
 
 		// user1 without permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
 		model.ID = uuid.New()
-		rs = di.DB.WithContext(ctx).Create(model)
+		model2.ID = uuid.New()
+		rs = di.DB.WithContext(ctx).CreateInBatches([]*ModelA{&model, &model2}, 10)
 		g.Expect(rs.Error).To(HaveOccurred(), "create model by non tenant member should return error")
 
 		// user2
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions(), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		model.ID = uuid.New()
-		rs = di.DB.WithContext(ctx).Create(model)
+		rs = di.DB.WithContext(ctx).Create(&model)
 		g.Expect(rs.Error).To(HaveOccurred(), "create model by non tenant member should return error")
 	}
 }
@@ -278,6 +283,49 @@ func SubTestModelUpdate(di *TestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions())
 		id = findIDByOwner(testdata.MockedUserId1)
 		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{Value: NewValue})
+		g.Expect(rs.Error).To(Succeed(), "update model of other tenant should return no error")
+		g.Expect(rs.RowsAffected).To(BeEquivalentTo(0), "update model of other tenant should not affect any rows")
+	}
+}
+
+func SubTestModelUpdateWithDelta(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var NewValue = uuid.MustParse("a5aaa07a-e7d7-4f66-bec8-1e651badacbd")
+		var id uuid.UUID
+		var model *ModelA
+		var rs *gorm.DB
+		var e error
+		// user1 - owner
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA))
+		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdA2)
+		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
+		g.Expect(rs.Error).To(Succeed(), "update model as owner should return no error")
+		g.Expect(rs.RowsAffected).To(BeEquivalentTo(1), "update model as owner should affect rows")
+		model, e = loadModel[ModelA](ctx, di.DB, id)
+		g.Expect(e).To(Succeed(), "model should exist")
+		g.Expect(model.OwnerID).To(Equal(NewValue), "model's value should be updated")
+
+		// user1 - not owner, but have permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA), testdata.ExtraPermsSecurityOptions("MANAGE"))
+		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdA2)
+		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(map[string]interface{}{"owner_id": NewValue})
+		g.Expect(rs.Error).To(Succeed(), "update model with permission should return no error")
+		g.Expect(rs.RowsAffected).To(BeEquivalentTo(1), "update model with permission should affect rows")
+		model, e = loadModel[ModelA](ctx, di.DB, id)
+		g.Expect(e).To(Succeed(), "model should exist")
+		g.Expect(model.OwnerID).To(Equal(NewValue), "model's value should be updated")
+
+		// user2 - not owner, is member, no permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions(testdata.MockedTenantIdB))
+		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdB2)
+		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
+		g.Expect(rs.Error).To(Succeed(), "update model of others should return no error")
+		g.Expect(rs.RowsAffected).To(BeEquivalentTo(0), "update model of others should not affect any rows")
+
+		// user2 - not owner, not member, no permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions())
+		id = findIDByOwner(testdata.MockedUserId1)
+		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
 		g.Expect(rs.Error).To(Succeed(), "update model of other tenant should return no error")
 		g.Expect(rs.RowsAffected).To(BeEquivalentTo(0), "update model of other tenant should not affect any rows")
 	}

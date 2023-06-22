@@ -177,14 +177,26 @@ func (op ResourceOperation) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + string(text) + `"`), nil
 }
 
-type ResourceClause struct {
-	Type       string                 `json:"type"`
-	Operation  ResourceOperation      `json:"op"`
+type ResourceValues struct {
 	TenantID   string                 `json:"tenant_id,omitempty"`
 	TenantPath []string               `json:"tenant_path,omitempty"`
 	OwnerID    string                 `json:"owner_id,omitempty"`
 	Share      map[string][]string    `json:"share,omitempty"`
 	ExtraData  map[string]interface{} `json:"-"`
+}
+
+func (c ResourceValues) MarshalJSON() ([]byte, error) {
+	type clause ResourceValues
+	return marshalMergedJSON(clause(c), c.ExtraData)
+}
+
+type CurrentResourceValues ResourceValues
+
+type ResourceClause struct {
+	CurrentResourceValues
+	Type      string            `json:"type"`
+	Operation ResourceOperation `json:"op"`
+	Delta     *ResourceValues    `json:"delta,omitempty"`
 }
 
 func NewResourceClause(resType string, op ResourceOperation) *ResourceClause {

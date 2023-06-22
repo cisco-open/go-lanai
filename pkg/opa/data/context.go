@@ -17,6 +17,7 @@ var logger = log.New("OPA.Data")
 
 var (
 	QueryTranslationError = opa.NewError(`generic query translation error`)
+	UnsupportedUsageError = opa.NewError(`generic unsupported usage error`)
 )
 
 /*****************
@@ -57,7 +58,7 @@ func (t *opaTag) UnmarshalText(data []byte) error {
 		case 2:
 			v = strings.TrimSpace(kv[1])
 		default:
-			return fmt.Errorf(`invalid "opa" tag format, expect "key:value", but got "%s"`, term)
+			return fmt.Errorf(`invalid "opa" tag format, expect "key:model", but got "%s"`, term)
 		}
 		k := kv[0]
 		switch k {
@@ -83,24 +84,24 @@ func (t *opaTag) UnmarshalText(data []byte) error {
  ********************/
 
 const (
-	PolicyFlagCreate PolicyFlag = 1 << iota
-	PolicyFlagRead
-	PolicyFlagUpdate
-	PolicyFlagDelete
+	DBOperationFlagCreate DBOperationFlag = 1 << iota
+	DBOperationFlagRead
+	DBOperationFlagUpdate
+	DBOperationFlagDelete
 )
 
-// PolicyFlag bitwise Flag of tenancy flag mode
-type PolicyFlag uint
+// DBOperationFlag bitwise Flag of tenancy flag mode
+type DBOperationFlag uint
 
 const (
-	defaultPolicyMode = policyMode(PolicyFlagCreate | PolicyFlagRead | PolicyFlagUpdate | PolicyFlagDelete)
+	defaultPolicyMode = policyMode(DBOperationFlagCreate | DBOperationFlagRead | DBOperationFlagUpdate | DBOperationFlagDelete)
 )
 
 // policyMode enum of policyMode
 type policyMode uint
 
 //goland:noinspection GoMixedReceiverTypes
-func (m policyMode) hasFlags(flags ...PolicyFlag) bool {
+func (m policyMode) hasFlags(flags ...DBOperationFlag) bool {
 	for _, flag := range flags {
 		if m&policyMode(flag) == 0 {
 			return false
@@ -132,7 +133,7 @@ func SkipPolicyFiltering() func(*gorm.DB) *gorm.DB {
 // FilterByPolicy is used as a scope for gorm.DB to override tenancy check
 // e.g. db.WithContext(ctx).Scopes(FilterByPolicy()).Find(...)
 // Note using this scope without context would panic
-func FilterByPolicy(flags ...PolicyFlag) func(*gorm.DB) *gorm.DB {
+func FilterByPolicy(flags ...DBOperationFlag) func(*gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		if tx.Statement.Context == nil {
 			panic("FilterByPolicy scope is used without context")
@@ -147,7 +148,7 @@ func FilterByPolicy(flags ...PolicyFlag) func(*gorm.DB) *gorm.DB {
 	}
 }
 
-func shouldSkip(ctx context.Context, flag PolicyFlag, fallback policyMode) bool {
+func shouldSkip(ctx context.Context, flag DBOperationFlag, fallback policyMode) bool {
 	if ctx == nil {
 		return defaultPolicyMode.hasFlags(flag)
 	}

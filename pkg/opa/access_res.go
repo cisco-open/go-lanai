@@ -12,15 +12,14 @@ type ResourceOptions func(res *Resource)
 
 type Resource struct {
 	OPA        *sdk.OPA
-	TenantID   string
-	TenantPath []string
-	OwnerID    string
-	Share      map[string][]string
-	ExtraData  map[string]interface{}
+	ResourceValues
+	Delta *ResourceValues
 }
 
 func AllowResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceOptions) error {
-	res := Resource{OPA: EmbeddedOPA(), ExtraData: map[string]interface{}{}}
+	res := Resource{OPA: EmbeddedOPA(),
+		ResourceValues: ResourceValues{ExtraData: map[string]interface{}{}},
+	}
 	for _, fn := range opts {
 		fn(&res)
 	}
@@ -47,11 +46,8 @@ func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType st
 	input.Authentication = NewAuthenticationClause(ctx)
 	input.Resource = NewResourceClause(resType, op)
 
-	input.Resource.TenantID = res.TenantID
-	input.Resource.OwnerID = res.OwnerID
-	input.Resource.TenantPath = res.TenantPath
-	input.Resource.Share = res.Share
-	input.Resource.ExtraData = res.ExtraData
+	input.Resource.CurrentResourceValues = CurrentResourceValues(res.ResourceValues)
+	input.Resource.Delta = res.Delta
 
 	opts := sdk.DecisionOptions{
 		Now:                 time.Now(),

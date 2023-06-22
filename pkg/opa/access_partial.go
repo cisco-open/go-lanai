@@ -22,11 +22,15 @@ type ResourceFilter struct {
 	Policy      string
 	Unknowns    []string
 	QueryMapper sdk.PartialQueryMapper
+	Delta       *ResourceValues
 	ExtraData   map[string]interface{}
 }
 
 func FilterResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceFilterOptions) (*sdk.PartialResult, error) {
-	res := ResourceFilter{OPA: EmbeddedOPA(), ExtraData: map[string]interface{}{}}
+	res := ResourceFilter{
+		OPA:       EmbeddedOPA(),
+		ExtraData: map[string]interface{}{},
+	}
 	for _, fn := range opts {
 		fn(&res)
 	}
@@ -52,6 +56,7 @@ func PrepareResourcePartialQuery(ctx context.Context, policy string, resType str
 	input.Authentication = NewAuthenticationClause(ctx)
 	input.Resource = NewResourceClause(resType, op)
 	input.Resource.ExtraData = res.ExtraData
+	input.Resource.Delta = res.Delta
 
 	mapper := res.QueryMapper
 	if v, ok := res.QueryMapper.(ContextAwarePartialQueryMapper); ok {
