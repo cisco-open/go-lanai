@@ -12,7 +12,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
@@ -39,11 +38,11 @@ var (
 	Test
  *************************/
 
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		dbtest.EnableDBRecordMode(),
-	)
-}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
 
 type TestDI struct {
 	fx.In
@@ -285,7 +284,6 @@ func SubTestModelUpdate(di *TestDI) test.GomegaSubTestFunc {
 	}
 }
 
-// TODO The expectations of this test should be different based on policies
 func SubTestModelUpdateWithDelta(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var NewValue = uuid.MustParse("a5aaa07a-e7d7-4f66-bec8-1e651badacbd")
@@ -295,8 +293,8 @@ func SubTestModelUpdateWithDelta(di *TestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA))
 		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdA2)
 		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
-		assertDBResult(ctx, g, rs, "update model as owner", nil, 1)
-		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model as owner", "OwnerID", NewValue)
+		assertDBResult(ctx, g, rs, "update model as owner", opa.ErrAccessDenied, 0)
+		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model as owner", "OwnerID", testdata.MockedUserId1)
 
 		// user1 - not owner, but have permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA), testdata.ExtraPermsSecurityOptions("MANAGE"))
@@ -309,14 +307,14 @@ func SubTestModelUpdateWithDelta(di *TestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions(testdata.MockedTenantIdB))
 		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdB2)
 		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
-		assertDBResult(ctx, g, rs, "update model of others", nil, 0)
+		assertDBResult(ctx, g, rs, "update model of others", opa.ErrAccessDenied, 0)
 		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model of othersr", "OwnerID", testdata.MockedUserId1)
 
 		// user2 - not owner, not member, no permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions())
 		id = findIDByOwner(testdata.MockedUserId1)
 		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
-		assertDBResult(ctx, g, rs, "update model of other tenant", nil, 0)
+		assertDBResult(ctx, g, rs, "update model of other tenant", opa.ErrAccessDenied, 0)
 		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model of other tenant", "OwnerID", testdata.MockedUserId1)
 	}
 }

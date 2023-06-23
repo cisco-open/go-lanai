@@ -2,10 +2,12 @@ package poc
 
 import future.keywords
 import data.tenancy.allow_tenant_access
+import data.tenancy.allow_change_tenant
 import data.roles.has_permission
 import data.ops.is
 import data.ownership.is_owner
 import data.ownership.is_shared
+import data.ownership.allow_change_owner
 
 default allow_read := false
 allow_read if {
@@ -35,6 +37,8 @@ allow_write if {
     is("write")
     has_permission("MANAGE")
     allow_tenant_access
+    allow_change_owner
+    allow_change_tenant
 }
 
 allow_write if {
@@ -42,6 +46,8 @@ allow_write if {
     is("write")
     is_owner
     allow_tenant_access
+    allow_change_owner
+    allow_change_tenant
 }
 
 allow_write if {
@@ -49,6 +55,8 @@ allow_write if {
     is("write")
     is_shared("write")
     allow_tenant_access
+    allow_change_owner
+    allow_change_tenant
 }
 
 default allow_create := false

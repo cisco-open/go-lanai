@@ -151,6 +151,8 @@ type policyTarget struct {
 	valueMap   map[string]interface{}
 }
 
+// toResourceValues convert to opa.ResourceValues
+// might return nil without error if there is no recognized changes
 func (m policyTarget) toResourceValues() (*opa.ResourceValues, error) {
 	input := map[string]interface{}{}
 	switch {
@@ -174,7 +176,11 @@ func (m policyTarget) toResourceValues() (*opa.ResourceValues, error) {
 			}
 		}
 	default:
-		return nil, opa.ErrAccessDenied.WithMessage(`Cannot resolve values for model create/update`)
+		return nil, ErrUnsupportedUsage.WithMessage(`Cannot resolve values for model create/update`)
+	}
+
+	if len(input) == 0 {
+		return nil, nil
 	}
 	return &opa.ResourceValues{
 		ExtraData: input,

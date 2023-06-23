@@ -92,7 +92,7 @@ func (m statementModifier) ModifyStatement(stmt *gorm.Statement) {
 	if e != nil {
 		switch {
 		case errors.Is(e, opa.ErrQueriesNotResolved):
-			_ = stmt.AddError(data.NewRecordNotFoundError("record not found"))
+			_ = stmt.AddError(opa.ErrAccessDenied.WithMessage("record not found"))
 		default:
 			_ = stmt.AddError(data.NewInternalError(fmt.Sprintf(`OPA filtering failed with error: %v`, e), e))
 		}
