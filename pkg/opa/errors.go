@@ -3,9 +3,9 @@ package opa
 import "fmt"
 
 var (
-	InternalError           = NewError("internal error")
-	AccessDeniedError       = NewError("Access Denied")
-	QueriesNotResolvedError = NewError(`OPA cannot resolve partial queries`)
+	ErrInternal           = NewError("internal error")
+	ErrAccessDenied       = NewError("Access Denied")
+	ErrQueriesNotResolved = NewError(`OPA cannot resolve partial queries`)
 )
 
 var errorCode int

@@ -23,7 +23,7 @@ func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOp
 	opaOpts := PrepareRequestDecisionQuery(ctx, opt.Policy, req, opt.ExtraData)
 	result, e := opt.OPA.Decision(ctx, *opaOpts)
 	if e != nil {
-		return AccessDeniedError.WithMessage("unable to execute OPA query: %v", e)
+		return ErrAccessDenied.WithMessage("unable to execute OPA query: %v", e)
 	}
 	logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, result.Result)
 	switch v := result.Result.(type) {
@@ -31,9 +31,9 @@ func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOp
 		if v {
 			return nil
 		}
-		return AccessDeniedError
+		return ErrAccessDenied
 	default:
-		return AccessDeniedError.WithMessage("unsupported OPA result type %T", result.Result)
+		return ErrAccessDenied.WithMessage("unsupported OPA result type %T", result.Result)
 	}
 }
 

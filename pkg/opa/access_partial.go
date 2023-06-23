@@ -41,10 +41,10 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 	result, e := res.OPA.Partial(ctx, *opaOpts)
 	if e != nil {
 		switch {
-		case errors.Is(e, QueriesNotResolvedError):
+		case errors.Is(e, ErrQueriesNotResolved):
 			return nil, e
 		default:
-			return nil, InternalError.WithMessage("failed to perform partial evaluation: %v", e)
+			return nil, ErrInternal.WithMessage("failed to perform partial evaluation: %v", e)
 		}
 	}
 	logger.WithContext(ctx).Infof("Partial Result [%s]: %v", result.ID, result.AST)

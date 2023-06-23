@@ -13,10 +13,6 @@ import (
 )
 
 /****************************
-	Func
- ****************************/
-
-/****************************
 	Types
  ****************************/
 
@@ -50,7 +46,7 @@ func (pf PolicyFilter) CreateClauses(f *schema.Field) []clause.Interface {
 }
 
 /***************************
-	Read, Update, Delete
+	Read, Delete
  ***************************/
 
 // statementModifier implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
@@ -95,7 +91,7 @@ func (m statementModifier) ModifyStatement(stmt *gorm.Statement) {
 	rs, e := opa.FilterResource(stmt.Context, m.ResType, flagToResOp(m.Flag), filterOpts)
 	if e != nil {
 		switch {
-		case errors.Is(e, opa.QueriesNotResolvedError):
+		case errors.Is(e, opa.ErrQueriesNotResolved):
 			_ = stmt.AddError(data.NewRecordNotFoundError("record not found"))
 		default:
 			_ = stmt.AddError(data.NewInternalError(fmt.Sprintf(`OPA filtering failed with error: %v`, e), e))
@@ -162,19 +158,19 @@ func (m updateStatementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.Res
 	}
 	models, e := resolvePolicyTargets(stmt, &m.metadata, m.Flag)
 	if e != nil {
-		return nil, UnsupportedUsageError.WithMessage("failed resolve delta in 'update' DB operation: %v", e)
+		return nil, ErrUnsupportedUsage.WithMessage("failed resolve delta in 'update' DB operation: %v", e)
 	}
 	switch len(models) {
 	case 1:
 		break
 	case 0:
-		return nil, UnsupportedUsageError.WithMessage("unable to resolve delta in 'update' DB operation")
+		return nil, ErrUnsupportedUsage.WithMessage("unable to resolve delta in 'update' DB operation")
 	default:
-		return nil, UnsupportedUsageError.WithMessage("'update' DB operation with batch update is not supported")
+		return nil, ErrUnsupportedUsage.WithMessage("'update' DB operation with batch update is not supported")
 	}
 	values, e := models[0].toResourceValues()
 	if e != nil {
-		return opts, UnsupportedUsageError.WithMessage(`%v`, e)
+		return opts, ErrUnsupportedUsage.WithMessage(`%v`, e)
 	}
 	return func(rf *opa.ResourceFilter) {
 		opts(rf)
@@ -221,7 +217,7 @@ func (m createStatementModifier) ModifyStatement(stmt *gorm.Statement) {
 func (m createStatementModifier) checkPolicy(ctx context.Context, model *policyTarget) error {
 	values, e := model.toResourceValues()
 	if e != nil {
-		return opa.AccessDeniedError.WithMessage(`Cannot resolve values for model creation`)
+		return opa.ErrAccessDenied.WithMessage(`Cannot resolve values for model creation`)
 	}
 	return opa.AllowResource(ctx, model.meta.ResType, opa.OpCreate, func(res *opa.Resource) {
 		res.ResourceValues = *values

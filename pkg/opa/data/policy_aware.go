@@ -1,8 +1,6 @@
 package opadata
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	"gorm.io/gorm"
 )
 
@@ -58,14 +56,4 @@ func (p PolicyAware) BeforeUpdate(tx *gorm.DB) error {
 	Helpers
  *******************/
 
-func checkPolicy(ctx context.Context, m *policyTarget, op opa.ResourceOperation) error {
-	input := map[string]interface{}{}
-	for k, tagged := range m.meta.Fields {
-		v := m.modelValue.FieldByIndex(tagged.StructField.Index).Interface()
-		input[k] = v
-	}
-	return opa.AllowResource(ctx, m.meta.ResType, op, func(res *opa.Resource) {
-		res.ExtraData = input
-	})
-}
 

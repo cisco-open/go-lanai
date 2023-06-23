@@ -120,7 +120,7 @@ func (m *GormPartialQueryMapper) Comparison(ctx context.Context, op ast.Ref, col
 			Vars: []interface{}{val},
 		}
 	default:
-		return nil, QueryTranslationError.WithMessage("Unsupported Rego operator: %v", op)
+		return nil, ErrQueryTranslation.WithMessage("Unsupported Rego operator: %v", op)
 	}
 	return
 }
@@ -139,7 +139,7 @@ func (m *GormPartialQueryMapper) Field(_ context.Context, colRef ast.Ref) (ret *
 	idx := strings.LastIndex(path, ".")
 	f, ok := m.fields[path[idx+1:]]
 	if !ok {
-		return ret, QueryTranslationError.WithMessage(`unable to resolve column with OPA unknowns [%s]`, path)
+		return ret, ErrQueryTranslation.WithMessage(`unable to resolve column with OPA unknowns [%s]`, path)
 	}
 	return f, nil
 }
@@ -180,7 +180,7 @@ func (m *GormPartialQueryMapper) toUUID(val interface{}) (uuid.UUID, error) {
 		}
 		return uuid.Nil, nil
 	}
-	return uuid.Nil, QueryTranslationError.WithMessage(`unable to convert [%v] to UUID`, val)
+	return uuid.Nil, ErrQueryTranslation.WithMessage(`unable to convert [%v] to UUID`, val)
 }
 
 func (m *GormPartialQueryMapper) toUUIDArray(val interface{}) (pqx.UUIDArray, error) {
@@ -219,5 +219,5 @@ func (m *GormPartialQueryMapper) toUUIDArray(val interface{}) (pqx.UUIDArray, er
 	if val == nil {
 		return pqx.UUIDArray{}, nil
 	}
-	return nil, QueryTranslationError.WithMessage(`unable to convert [%v] to UUID array`, val)
+	return nil, ErrQueryTranslation.WithMessage(`unable to convert [%v] to UUID array`, val)
 }

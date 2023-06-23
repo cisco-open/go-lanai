@@ -85,7 +85,7 @@ func collectFields(s *schema.Schema) (ret map[string]*TaggedField, err error) {
 				continue
 			}
 			if f.PrimaryKey {
-				return nil, UnsupportedUsageError.WithMessage(`"%s" tag cannot be used on primary key`, TagOPA)
+				return nil, ErrUnsupportedUsage.WithMessage(`"%s" tag cannot be used on primary key`, TagOPA)
 			}
 			tagged := TaggedField{
 				Field: f,
@@ -174,7 +174,7 @@ func (m policyTarget) toResourceValues() (*opa.ResourceValues, error) {
 			}
 		}
 	default:
-		return nil, opa.AccessDeniedError.WithMessage(`Cannot resolve values for model create/update`)
+		return nil, opa.ErrAccessDenied.WithMessage(`Cannot resolve values for model create/update`)
 	}
 	return &opa.ResourceValues{
 		ExtraData: input,

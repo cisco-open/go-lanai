@@ -27,16 +27,16 @@ func AllowResource(ctx context.Context, resType string, op ResourceOperation, op
 	opaOpts := PrepareResourceDecisionQuery(ctx, policy, resType, op, &res)
 	result, e := res.OPA.Decision(ctx, *opaOpts)
 	if e != nil {
-		return AccessDeniedError.WithMessage("unable to execute OPA query: %v", e)
+		return ErrAccessDenied.WithMessage("unable to execute OPA query: %v", e)
 	}
 	logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, result.Result)
 	switch v := result.Result.(type) {
 	case bool:
 		if !v {
-			return AccessDeniedError.WithMessage("Resource Access Denied")
+			return ErrAccessDenied.WithMessage("Resource Access Denied")
 		}
 	default:
-		return AccessDeniedError.WithMessage("unsupported OPA result type %T", result.Result)
+		return ErrAccessDenied.WithMessage("unsupported OPA result type %T", result.Result)
 	}
 	return nil
 }

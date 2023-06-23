@@ -23,7 +23,7 @@ type TranslateOption[EXPR any] struct {
 // 2. When PartialQueries.Queries is not empty but contains nil body, it means access is GRANTED regardless any unknown values
 func TranslatePartialQueries[EXPR any](ctx context.Context, pq *rego.PartialQueries, opts ...TranslateOptions[EXPR]) ([]EXPR, error) {
 	if len(pq.Queries) == 0 {
-		return nil, opa.QueriesNotResolvedError
+		return nil, opa.ErrQueriesNotResolved
 	}
 	opt := TranslateOption[EXPR]{}
 	for _, fn := range opts {

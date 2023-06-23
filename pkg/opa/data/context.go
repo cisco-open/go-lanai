@@ -16,8 +16,8 @@ var logger = log.New("OPA.Data")
  *****************/
 
 var (
-	QueryTranslationError = opa.NewError(`generic query translation error`)
-	UnsupportedUsageError = opa.NewError(`generic unsupported usage error`)
+	ErrQueryTranslation = opa.NewError(`generic query translation error`)
+	ErrUnsupportedUsage = opa.NewError(`generic unsupported usage error`)
 )
 
 /*****************
