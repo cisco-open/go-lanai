@@ -18,15 +18,15 @@ type QueryTranslator[EXPR any] interface {
 }
 
 var (
-	TermInternal         = ast.VarTerm("internal")
-	OpIn         ast.Ref = []*ast.Term{TermInternal, ast.StringTerm("in")}
-	OpEqual              = ast.Equality.Ref()
-	OpEq                 = ast.Equal.Ref()
-	OpNeq                = ast.NotEqual.Ref()
-	OpLte                = ast.LessThanEq.Ref()
-	OpLt                 = ast.LessThan.Ref()
-	OpGte                = ast.GreaterThanEq.Ref()
-	OpGt                 = ast.GreaterThan.Ref()
+	TermInternal = ast.VarTerm("internal")
+	OpIn         = ast.Ref([]*ast.Term{TermInternal, ast.StringTerm("in")})
+	OpEqual      = ast.Equality.Ref()
+	OpEq         = ast.Equal.Ref()
+	OpNeq        = ast.NotEqual.Ref()
+	OpLte        = ast.LessThanEq.Ref()
+	OpLt         = ast.LessThan.Ref()
+	OpGte        = ast.GreaterThanEq.Ref()
+	OpGt         = ast.GreaterThan.Ref()
 )
 
 var (

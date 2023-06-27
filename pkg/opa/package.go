@@ -1,6 +1,7 @@
 package opa
 
 import (
+	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"embed"
@@ -9,16 +10,15 @@ import (
 
 var logger = log.New("OPA")
 
-//go:embed opa-config.yml
-var ConfigFS embed.FS
+//go:embed defaults-opa.yml
+var defaultConfigFS embed.FS
 
 var Module = &bootstrap.Module{
 	Precedence: bootstrap.SecurityPrecedence,
 	Options: []fx.Option{
-		fx.Provide(ProvideEmbeddedOPA),
-		fx.Provide(ProvideBundleServer),
+		appconfig.FxEmbeddedDefaults(defaultConfigFS),
+		fx.Provide(BindProperties, ProvideEmbeddedOPA),
 		fx.Invoke(InitializeEmbeddedOPA),
-		fx.Invoke(InitializeBundleServer),
 	},
 }
 

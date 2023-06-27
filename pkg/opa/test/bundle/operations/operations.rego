@@ -2,8 +2,6 @@ package ops
 
 import future.keywords
 
-default op := ""
-
 # Check Operation
 is(op) if {
     input.resource.op == op

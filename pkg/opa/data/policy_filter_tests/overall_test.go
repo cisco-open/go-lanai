@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	opadata "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/policy_filter_tests/testdata"
+	opatest "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -56,7 +57,8 @@ func TestOPAFilterWithAllFields(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithTimeout(10*time.Minute),
 		dbtest.WithDBPlayback("testdb"),
-		apptest.WithModules(tenancy.Module, opa.Module),
+		opatest.WithBundles(),
+		apptest.WithModules(tenancy.Module),
 		apptest.WithProperties(
 			"data.logging.level: debug",
 			"log.levels.data: debug",

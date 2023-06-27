@@ -26,10 +26,14 @@ func AllowResource(ctx context.Context, resType string, op ResourceOperation, op
 	policy := fmt.Sprintf("%s/allow_%v", resType, op)
 	opaOpts := PrepareResourceDecisionQuery(ctx, policy, resType, op, &res)
 	result, e := res.OPA.Decision(ctx, *opaOpts)
-	if e != nil {
+	switch {
+	case sdk.IsUndefinedErr(e):
+		logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, "not true")
+		return ErrAccessDenied.WithMessage("Resource Access Denied")
+	case e != nil:
 		return ErrAccessDenied.WithMessage("unable to execute OPA query: %v", e)
 	}
-	logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, result.Result)
+
 	switch v := result.Result.(type) {
 	case bool:
 		if !v {

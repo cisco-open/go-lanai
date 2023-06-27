@@ -4,8 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -209,25 +207,4 @@ func NewResourceClause(resType string, op ResourceOperation) *ResourceClause {
 func (c ResourceClause) MarshalJSON() ([]byte, error) {
 	type clause ResourceClause
 	return marshalMergedJSON(clause(c), c.ExtraData)
-}
-
-/*************************
-	Helpers
- *************************/
-
-// marshalMergedJSON merge extra into v, v have to be struct or map
-func marshalMergedJSON(obj interface{}, extra map[string]interface{}) ([]byte, error) {
-	data, e := json.Marshal(obj)
-	if len(extra) == 0 || e != nil {
-		return data, e
-	}
-	// merge extra
-	var m map[string]interface{}
-	if e := json.Unmarshal(data, &m); e != nil {
-		return nil, fmt.Errorf("unable to merge JSON: %v", e)
-	}
-	for k, v := range extra {
-		m[k] = v
-	}
-	return json.Marshal(m)
 }

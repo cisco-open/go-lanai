@@ -22,7 +22,11 @@ func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOp
 	}
 	opaOpts := PrepareRequestDecisionQuery(ctx, opt.Policy, req, opt.ExtraData)
 	result, e := opt.OPA.Decision(ctx, *opaOpts)
-	if e != nil {
+	switch {
+	case sdk.IsUndefinedErr(e):
+		logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, "not true")
+		return ErrAccessDenied
+	case e != nil:
 		return ErrAccessDenied.WithMessage("unable to execute OPA query: %v", e)
 	}
 	logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, result.Result)

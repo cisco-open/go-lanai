@@ -16,8 +16,6 @@ has_permission(p) if {
 	p in data.role_permissions[role]
 }
 
-default jwt_claims := {}
-
 jwt_claims := jwt if {
 	token := trim_prefix(input.request.header.Authorization[_], "Bearer ")
 	[_, jwt, _] := io.jwt.decode(token)

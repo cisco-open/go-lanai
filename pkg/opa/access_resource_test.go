@@ -2,6 +2,7 @@ package opa
 
 import (
 	"context"
+	opatestserver "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test/server"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -13,12 +14,12 @@ import (
 )
 
 const (
-	OwnerUserId  = "20523d89-d5e9-40d0-afe3-3a74c298b55a"
-	AnotherUserId  = "e7498b90-cec3-41fd-ac20-acd41769fb88"
-	RootTenantId = "7b3934fc-edc4-4a1c-9249-3dc7055eb124"
-	TenantId = "8eebb711-7d24-48fb-94da-361c573d7c20"
+	OwnerUserId     = "20523d89-d5e9-40d0-afe3-3a74c298b55a"
+	AnotherUserId   = "e7498b90-cec3-41fd-ac20-acd41769fb88"
+	RootTenantId    = "7b3934fc-edc4-4a1c-9249-3dc7055eb124"
+	TenantId        = "8eebb711-7d24-48fb-94da-361c573d7c20"
 	AnotherTenantId = "b11ef279-1309-4c43-8355-99c9d494097b"
-	ProviderId = "fe3ad89c-449f-42f2-b4f8-b10ab7bc0266"
+	ProviderId      = "fe3ad89c-449f-42f2-b4f8-b10ab7bc0266"
 )
 
 /*************************
@@ -87,6 +88,10 @@ func TestAllowResource(t *testing.T) {
 		apptest.Bootstrap(),
 		//apptest.WithTimeout(5 * time.Minute),
 		apptest.WithModules(Module),
+		apptest.WithFxOptions(
+			fx.Provide(BundleServerProvider()),
+			fx.Invoke(opatestserver.InitializeBundleServer),
+		),
 		apptest.WithDI(di),
 		test.GomegaSubTest(SubTestMemberAdmin(di), "TestMemberAdmin"),
 		test.GomegaSubTest(SubTestMemberOwner(di), "TestMemberOwner"),
@@ -192,7 +197,7 @@ func SubTestSharedUser(di *testDI) test.GomegaSubTestFunc {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
-			res.Share = map[string][]string {
+			res.Share = map[string][]string{
 				AnotherUserId: {"read"},
 			}
 		})
@@ -203,7 +208,7 @@ func SubTestSharedUser(di *testDI) test.GomegaSubTestFunc {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
-			res.Share = map[string][]string {
+			res.Share = map[string][]string{
 				AnotherUserId: {"read", "write"},
 			}
 		})

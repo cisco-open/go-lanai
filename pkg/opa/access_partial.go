@@ -41,6 +41,8 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 	result, e := res.OPA.Partial(ctx, *opaOpts)
 	if e != nil {
 		switch {
+		case sdk.IsUndefinedErr(e):
+			return nil, ErrAccessDenied
 		case errors.Is(e, ErrQueriesNotResolved):
 			return nil, e
 		default:

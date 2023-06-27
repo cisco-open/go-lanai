@@ -1,9 +1,8 @@
-package opa
+package opatestserver
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"embed"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 	sdktest "github.com/open-policy-agent/opa/sdk/test"
 	"go.uber.org/fx"
@@ -12,45 +11,50 @@ import (
 	"strings"
 )
 
-//TODO this is just a POC, bundles should be loaded from bundle server
+var logger = log.New("OPA.Test")
 
-//go:embed bundle/.manifest bundle/roles bundle/operations bundle/tenancy  bundle/ownership bundle/api.rev.2 bundle/poc
-var BundleFS embed.FS
-
-var Bundles = map[string]embed.FS {
-	"/bundles/bundle.tar.gz": BundleFS,
+type BundleServerOptions func(cfg *BundleServerConfig)
+type BundleServerConfig struct {
+	Bundles map[string]fs.FS
 }
 
-type BundleServerOut struct {
-	fx.Out
-	Server *sdktest.Server
+// WithBundleFS is a BundleServerOptions to add bundles from system
+func WithBundleFS(name string, fsys fs.FS) BundleServerOptions {
+	return func(cfg *BundleServerConfig) {
+		cfg.Bundles[name] = fsys
+	}
 }
 
-func ProvideBundleServer(appCtx *bootstrap.ApplicationContext) (BundleServerOut, error){
-	opts := make([]func(*sdktest.Server) error, 0, 5)
-	for name, fsys := range Bundles {
+func NewBundleServer(ctx context.Context, opts ...BundleServerOptions) (*sdktest.Server, error) {
+	cfg := BundleServerConfig{
+		Bundles: map[string]fs.FS{},
+	}
+	for _, fn := range opts {
+		fn(&cfg)
+	}
+
+	svrOpts := make([]func(*sdktest.Server) error, 0, 5)
+	for name, fsys := range cfg.Bundles {
 		policies, e := loadBundleFiles(fsys)
 		if e != nil {
-			logger.WithContext(appCtx).Warnf("unable to load bundle [%s]: ", name, e)
+			logger.WithContext(ctx).Warnf("unable to load bundle [%s]: ", name, e)
 			continue
 		}
-		opts = append(opts, sdktest.MockBundle(name, policies))
+		svrOpts = append(svrOpts, sdktest.MockBundle(name, policies))
 	}
-	if len(opts) == 0 {
-		return BundleServerOut{}, fmt.Errorf("failed to start OPA bundle server, unable to load any bundle")
+	if len(svrOpts) == 0 {
+		return nil, fmt.Errorf("failed to start OPA bundle server, unable to load any bundle")
 	}
 
 	ready := make(chan struct{}, 1)
-	defer func() {close(ready)}()
-	opts = append(opts, sdktest.Ready(ready))
-	server, e := sdktest.NewServer(opts...)
+	defer func() { close(ready) }()
+	svrOpts = append(svrOpts, sdktest.Ready(ready))
+	server, e := sdktest.NewServer(svrOpts...)
 	if e != nil {
-		return BundleServerOut{}, fmt.Errorf("failed to start OPA bundle server: %v", e)
+		return nil, fmt.Errorf("failed to start OPA bundle server: %v", e)
 	}
-	logger.WithContext(appCtx).Infof("OPA Bundles served at %q", server.URL())
-	return BundleServerOut{
-		Server: server,
-	}, nil
+	logger.WithContext(ctx).Infof("OPA Bundles served at %q", server.URL())
+	return server, nil
 }
 
 func InitializeBundleServer(lc fx.Lifecycle, server *sdktest.Server) {

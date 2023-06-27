@@ -9,7 +9,7 @@ import data.ownership.is_owner
 import data.ownership.is_shared
 import data.ownership.allow_change_owner
 
-default allow_read := false
+# Read
 allow_read if {
     input.resource.type == "poc"
     is("read")
@@ -31,7 +31,7 @@ allow_read if {
     allow_tenant_access
 }
 
-default allow_write := false
+# Write/Update
 allow_write if {
     input.resource.type == "poc"
     is("write")
@@ -59,7 +59,7 @@ allow_write if {
     allow_change_tenant
 }
 
-default allow_create := false
+# Create
 allow_create if {
     input.resource.type == "poc"
     is("create")
@@ -67,7 +67,7 @@ allow_create if {
     allow_tenant_access
 }
 
-default allow_delete := false
+# Delete
 allow_delete if {
     input.resource.type == "poc"
     is("delete")

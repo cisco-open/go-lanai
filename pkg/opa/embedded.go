@@ -1,17 +1,12 @@
 package opa
 
 import (
-	"bytes"
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"encoding/json"
 	"fmt"
-	"github.com/ghodss/yaml"
 	"github.com/open-policy-agent/opa/sdk"
-	sdktest "github.com/open-policy-agent/opa/sdk/test"
 	"go.uber.org/fx"
-	"io"
 )
 
 var embeddedOPA *sdk.OPA
@@ -24,18 +19,25 @@ type EmbeddedOPAOut struct {
 	Ready EmbeddedOPAReadyCH
 }
 
+type EmbeddedOPADI struct {
+	fx.In
+	AppCtx      *bootstrap.ApplicationContext
+	Properties  Properties
+	Customizers []ConfigCustomizer `group:"opa"`
+}
+
 func EmbeddedOPA() *sdk.OPA {
 	return embeddedOPA
 }
 
-func ProvideEmbeddedOPA(appCtx *bootstrap.ApplicationContext, bundleServer *sdktest.Server) (EmbeddedOPAOut, error) {
-	cfg, e := LoadConfig(appCtx, bundleServer)
+func ProvideEmbeddedOPA(di EmbeddedOPADI) (EmbeddedOPAOut, error) {
+	cfg, e := LoadConfig(di.AppCtx, di.Properties, di.Customizers...)
 	if e != nil {
-		return EmbeddedOPAOut{}, fmt.Errorf("unable to load OPA config: %v", e)
+		return EmbeddedOPAOut{}, fmt.Errorf("unable to load OPA Config: %v", e)
 	}
-	opaLog := NewOPALogger(logger.WithContext(appCtx), log.LevelInfo)
+	opaLog := NewOPALogger(logger.WithContext(di.AppCtx), log.LevelInfo)
 	ready := make(chan struct{}, 1)
-	opa, e := sdk.New(appCtx, sdk.Options{
+	opa, e := sdk.New(di.AppCtx, sdk.Options{
 		ID:            `Embedded-OPA`,
 		Config:        cfg,
 		Logger:        opaLog,
@@ -70,42 +72,4 @@ func InitializeEmbeddedOPA(lc fx.Lifecycle, opa *sdk.OPA, ready EmbeddedOPAReady
 			return nil
 		},
 	})
-}
-
-// LoadConfig
-// TODO POC only
-func LoadConfig(appCtx *bootstrap.ApplicationContext, bundleServer *sdktest.Server) (io.Reader, error){
-	baseCfg, e := ConfigFS.Open("opa-config.yml")
-	if e != nil {
-		return nil, e
-	}
-	baseYml, e := io.ReadAll(baseCfg)
-	if e != nil {
-		return nil, e
-	}
-	baseJson, e := yaml.YAMLToJSON(baseYml)
-	if e != nil {
-		return nil, e
-	}
-	var cfg map[string]interface{}
-	if e := json.Unmarshal(baseJson, &cfg); e != nil {
-		return nil, e
-	}
-
-	pocJson := fmt.Sprintf(`{
-		"services": {
-			"poc": {
-				"url": %q
-			}
-		}
-	}`, bundleServer.URL())
-
-	if e := json.Unmarshal([]byte(pocJson), &cfg); e != nil {
-		return nil, e
-	}
-	cfgJson, e := json.Marshal(cfg)
-	if e != nil {
-		return nil, e
-	}
-	return bytes.NewReader(cfgJson), nil
 }

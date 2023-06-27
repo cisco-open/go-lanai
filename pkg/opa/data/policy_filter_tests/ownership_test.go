@@ -3,9 +3,9 @@ package policy_filter_tests
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	opadata "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/policy_filter_tests/testdata"
+	opatest "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
@@ -37,7 +37,7 @@ func TestOPAFilterWithOwnership(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		dbtest.WithDBPlayback("testdb"),
-		apptest.WithModules(opa.Module),
+		opatest.WithBundles(),
 		apptest.WithProperties(
 			"data.logging.level: debug",
 			"log.levels.data: debug",
