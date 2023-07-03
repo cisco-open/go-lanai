@@ -35,7 +35,7 @@ See `go.mod` [Example](res/Example-Go-Mod.mod)
 In addition to `go.mod`, a descriptor file `Module.yml` is required to provide additional information 
 about the service.
 
-`Module.yml` is used by `lanai-cli` (See [Tooling](#Tooling)) to generate proper `Makefile` for the service
+`Module.yml` is used by `lanai-cli` (See [Tooling](#tooling)) to generate proper `Makefile` for the service
 
 See `Module.yml` [Example](res/Example-Module.yml)
 
@@ -49,7 +49,7 @@ such as generating `Dockerfile` and additional Makefile components
 > Note 1: This template can be copied directly with simple file rename.
 
 > Note 2: Alternatively, `lanai-cli` tool can be installed manually, and the CLI can generate the Makefile. 
-> See [Tooling](#Tooling)
+> See [Tooling](#tooling)
 
 ### Git Ignore `.gitignore`
 
@@ -110,10 +110,10 @@ go install cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli@develop
 
 > Note: `@develop` can be changed to the latest stable version
 
-After successfully install the CLI, it can be used to generate bootstrapping Makefiles:
+After successfully install the CLI, it can be used to generate bootstrapping Makefiles to the current directory:
 
 ```
-lanai-cli init --force --upgrade
+lanai-cli init --force --upgrade -o .
 ```
 
 ### CLI Usage
