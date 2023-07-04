@@ -203,7 +203,7 @@ func SubTestOAuth2AuthCode(di *intDI) test.GomegaSubTestFunc {
 		resp := webtest.MustExec(ctx, req)
 		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
 		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusFound), "response should have correct status code")
-		assertAuthorizeResponse(t, g, resp.Response, false, false)
+		assertAuthorizeResponse(t, g, resp.Response, false)
 
 		// token
 		code := extractAuthCode(resp.Response)
@@ -227,7 +227,7 @@ func SubTestOAuth2AuthCodeWithoutTenant(di *intDI) test.GomegaSubTestFunc {
 		resp := webtest.MustExec(ctx, req)
 		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
 		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusFound), "response should have correct status code")
-		assertAuthorizeResponse(t, g, resp.Response, false, false)
+		assertAuthorizeResponse(t, g, resp.Response, false)
 
 		// token
 		code := extractAuthCode(resp.Response)
@@ -395,7 +395,7 @@ func assertTokenResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, exp
 	}
 }
 
-func assertAuthorizeResponse(t *testing.T, g *gomega.WithT, resp *http.Response, expectErr bool, expectSamlSSO bool) {
+func assertAuthorizeResponse(t *testing.T, g *gomega.WithT, resp *http.Response, expectErr bool) {
 	g.Expect(resp.Header.Get("Set-Cookie")).To(Not(BeEmpty()), "authorize response should set cookie")
 	switch {
 	case expectErr:
