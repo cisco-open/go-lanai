@@ -400,8 +400,6 @@ func assertAuthorizeResponse(t *testing.T, g *gomega.WithT, resp *http.Response,
 	switch {
 	case expectErr:
 		g.Expect(resp.Header.Get("Location")).To(Equal(ExpectedRedirectError), "authorize response should redirect to error page")
-	case expectSamlSSO:
-		//assertSamlRedirectResponse(t, g, resp)
 	default:
 		assertCallbackRedirectResponse(t, g, resp)
 	}
