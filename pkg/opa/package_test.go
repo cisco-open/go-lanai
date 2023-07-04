@@ -4,9 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	opatestserver "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test/server"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"embed"
-	"fmt"
 	"github.com/open-policy-agent/opa/plugins/bundle"
 	oparest "github.com/open-policy-agent/opa/plugins/rest"
 	sdktest "github.com/open-policy-agent/opa/sdk/test"
@@ -18,8 +16,13 @@ import (
 	Common Test Setup
  *************************/
 
-//go:embed test/bundle/.manifest test/bundle/roles test/bundle/operations test/bundle/tenancy test/bundle/ownership test/bundle/api test/bundle/poc
+//go:embed test/bundle/roles test/bundle/operations test/bundle/tenancy test/bundle/ownership test/bundle/api test/bundle/poc
 var TestBundleFS embed.FS
+
+const (
+	bundleName       = "test-bundle"
+	bundleServerName = "test-bundle-server"
+)
 
 type BundleServerDI struct {
 	fx.In
@@ -34,55 +37,45 @@ type BundleServerOut struct {
 
 func BundleServerProvider(bundleFSs ...fs.FS) func(BundleServerDI) (BundleServerOut, error) {
 	if len(bundleFSs) == 0 {
-		bundleFSs =  []fs.FS{TestBundleFS}
+		bundleFSs = []fs.FS{TestBundleFS}
 	}
 	return func(di BundleServerDI) (BundleServerOut, error) {
-		opts := make([]opatestserver.BundleServerOptions, 0, len(bundleFSs) + 1)
-		names := make([]string, 0, len(bundleFSs) + 1)
-		for _, fsys := range bundleFSs {
-			name := fmt.Sprintf("/bundles/test-%s", utils.RandomString(6))
-			opts = append(opts, opatestserver.WithBundleFS(name, fsys))
-			names = append(names, name)
-		}
-
-		server, e := opatestserver.NewBundleServer(di.AppCtx, opts...)
+		server, e := opatestserver.NewBundleServer(di.AppCtx,
+			opatestserver.WithBundleSources(bundleFSs...), opatestserver.WithBundleName(bundleName))
 		if e != nil {
 			return BundleServerOut{}, e
 		}
 		return BundleServerOut{
 			Server:     server,
-			Customizer: newConfigCustomizer(server, names),
+			Customizer: newConfigCustomizer(server, bundleName),
 		}, nil
 	}
 }
 
 type configCustomizer struct {
-	Server      *sdktest.Server
-	BundleNames []string
+	Server     *sdktest.Server
+	BundleName string
 }
 
-func newConfigCustomizer(server *sdktest.Server, bundleNames []string) *configCustomizer {
+func newConfigCustomizer(server *sdktest.Server, bundleName string) *configCustomizer {
 	return &configCustomizer{
-		Server: server,
-		BundleNames: bundleNames,
+		Server:     server,
+		BundleName: bundleName,
 	}
 }
 
 func (c configCustomizer) Customize(_ context.Context, cfg *Config) {
-	const serviceKey = `test-bundle-server`
 	cfg.Services = map[string]*oparest.Config{
-		serviceKey: {
-			Name:             serviceKey,
+		bundleServerName: {
+			Name:             bundleServerName,
 			URL:              c.Server.URL(),
 			AllowInsecureTLS: true,
 		},
 	}
-	cfg.Bundles = map[string]*bundle.Source{}
-	for _, name := range c.BundleNames {
-		src := &bundle.Source{
-			Service:        serviceKey,
-			Resource:       name,
-		}
-		cfg.Bundles[name] = src
+	cfg.Bundles = map[string]*bundle.Source{
+		c.BundleName: {
+			Service:  bundleServerName,
+			Resource: "/bundles/" + c.BundleName,
+		},
 	}
 }

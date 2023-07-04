@@ -2,42 +2,53 @@ package opadata
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/regoexpr"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/sdk"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 	"reflect"
 	"strings"
+	"time"
 )
 
 var (
-	typeUUID          = reflect.TypeOf(uuid.Nil)
-	typeUUIDPtr       = reflect.TypeOf(&uuid.UUID{})
-	typeUUIDArray     = reflect.TypeOf(pqx.UUIDArray{})
+	typeScanner = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
+	typeValuer = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
+
+	colRefPrefix = ast.Ref{ast.VarTerm("input"), ast.StringTerm("resource")}
+)
+
+const (
+	dataTypeJSONB = "jsonb"
 )
 
 type GormMapperConfig struct {
+	Metadata  *metadata
 	Fields    map[string]*TaggedField
 	Statement *gorm.Statement
 }
 
 type GormPartialQueryMapper struct {
-	ctx    context.Context
-	fields map[string]*TaggedField
-	stmt   *gorm.Statement
+	ctx       context.Context
+	metadata  *metadata
+	fields    map[string]*TaggedField
+	stmt      *gorm.Statement
 }
 
 func NewGormPartialQueryMapper(cfg *GormMapperConfig) *GormPartialQueryMapper {
 	return &GormPartialQueryMapper{
-		ctx:    context.Background(),
-		fields: cfg.Fields,
-		stmt:   cfg.Statement,
+		ctx:       context.Background(),
+		metadata:  cfg.Metadata,
+		fields:    cfg.Fields,
+		stmt:      cfg.Statement,
 	}
 }
 
@@ -87,36 +98,30 @@ func (m *GormPartialQueryMapper) Or(_ context.Context, exprs ...clause.Expressio
 }
 
 func (m *GormPartialQueryMapper) Comparison(ctx context.Context, op ast.Ref, colRef ast.Ref, val interface{}) (ret clause.Expression, err error) {
-	f, e := m.Field(ctx, colRef)
+	field, path, e := m.ResolveField(ctx, colRef)
 	if e != nil {
 		return nil, e
 	}
-	col := clause.Column{
-		Table: f.Schema.Table,
-		Name:  f.DBName,
-	}
-	if val, e = m.Value(ctx, f, val); e != nil {
-		return nil, e
-	}
+	colExpr := m.ResolveColumnExpr(ctx, field, path...)
+	val = m.ResolveValueExpr(ctx, val, field)
 
 	switch op.Hash() {
 	case regoexpr.OpHashEqual, regoexpr.OpHashEq:
-		ret = &clause.Eq{Column: col, Value: val}
+		ret = &clause.Eq{Column: colExpr, Value: val}
 	case regoexpr.OpHashNeq:
-		ret = &clause.Neq{Column: col, Value: val}
+		ret = &clause.Neq{Column: colExpr, Value: val}
 	case regoexpr.OpHashLte:
-		ret = &clause.Lte{Column: col, Value: val}
+		ret = &clause.Lte{Column: colExpr, Value: val}
 	case regoexpr.OpHashLt:
-		ret = &clause.Lt{Column: col, Value: val}
+		ret = &clause.Lt{Column: colExpr, Value: val}
 	case regoexpr.OpHashGte:
-		ret = &clause.Gte{Column: col, Value: val}
+		ret = &clause.Gte{Column: colExpr, Value: val}
 	case regoexpr.OpHashGt:
-		ret = &clause.Gt{Column: col, Value: val}
+		ret = &clause.Gt{Column: colExpr, Value: val}
 	case regoexpr.OpHashIn:
-		// TODO should use statement quote
-		sql := fmt.Sprintf("%s @> ?", m.Quote(ctx, col))
+		expr := fmt.Sprintf("%s @> ?", colExpr)
 		ret = clause.Expr{
-			SQL:  sql,
+			SQL:  expr,
 			Vars: []interface{}{val},
 		}
 	default:
@@ -129,95 +134,217 @@ func (m *GormPartialQueryMapper) Comparison(ctx context.Context, op ast.Ref, col
 	Helpers
  ****************/
 
-func (m *GormPartialQueryMapper) Quote(_ context.Context, field interface{}) string {
+func (m *GormPartialQueryMapper) Quote(field interface{}) string {
 	return m.stmt.Quote(field)
 }
 
-func (m *GormPartialQueryMapper) Field(_ context.Context, colRef ast.Ref) (ret *TaggedField, err error) {
+func (m *GormPartialQueryMapper) ResolveField(_ context.Context, colRef ast.Ref) (ret *TaggedField, jsonbPath []string, err error) {
 	// TODO review this part
-	path := colRef.String()
-	idx := strings.LastIndex(path, ".")
-	f, ok := m.fields[path[idx+1:]]
-	if !ok {
-		return ret, ErrQueryTranslation.WithMessage(`unable to resolve column with OPA unknowns [%s]`, path)
+	if !colRef.HasPrefix(colRefPrefix) {
+		return nil, nil, ErrQueryTranslation.WithMessage(`OPA unknowns [%v] is missing prefix "%v"`, colRef, colRefPrefix)
 	}
-	return f, nil
-}
 
-func (m *GormPartialQueryMapper) Value(_ context.Context, f *TaggedField, val interface{}) (interface{}, error) {
-	if rv := reflect.ValueOf(val); rv.CanConvert(f.FieldType) {
-		return rv.Convert(f.FieldType).Interface(), nil
-	}
-	switch ft := f.FieldType; {
-	case ft == typeUUID:
-		return m.toUUID(val)
-	case ft == typeUUIDPtr:
-		parsed, e := m.toUUID(val)
-		if e != nil {
-			return nil, e
+	var field *TaggedField
+	var key string
+	var remaining []string
+	for _, term := range colRef[len(colRefPrefix):] {
+		var str string
+		if e := ast.As(term.Value, &str); e != nil {
+			return nil, nil, ErrQueryTranslation.WithMessage(`OPA unknowns [%v] contains invalid term [%v]`, colRef, term)
 		}
-		return &parsed, nil
-	case ft == typeUUIDArray:
-		return m.toUUIDArray(val)
-	default:
-		return val, nil
-	}
-}
 
-func (m *GormPartialQueryMapper) toUUID(val interface{}) (uuid.UUID, error) {
-	switch v := val.(type) {
-	case string:
-		parsed, e := uuid.Parse(v)
-		if e != nil {
-			return uuid.Nil, e
-		}
-		return parsed, nil
-	case uuid.UUID:
-		return v, nil
-	case *uuid.UUID:
-		if v != nil {
-			return *v, nil
-		}
-		return uuid.Nil, nil
-	}
-	return uuid.Nil, ErrQueryTranslation.WithMessage(`unable to convert [%v] to UUID`, val)
-}
-
-func (m *GormPartialQueryMapper) toUUIDArray(val interface{}) (pqx.UUIDArray, error) {
-	switch v := val.(type) {
-	case []string:
-		uuids := pqx.UUIDArray(make([]uuid.UUID, len(v)))
-		for i := range v {
-			parsed, e := uuid.Parse(v[i])
-			if e != nil {
-				return nil, e
+		if field == nil {
+			key = key + "." + str
+			if key[0] == '.' {
+				key = key[1:]
 			}
-			uuids[i] = parsed
+			field, _ = m.fields[key]
+		} else {
+			remaining = append(remaining, str)
 		}
-	case []uuid.UUID:
-		return v, nil
-	case []*uuid.UUID:
-		uuids := pqx.UUIDArray(make([]uuid.UUID, 0, len(v)))
-		for _, ptr := range v {
-			if ptr != nil {
-				uuids = append(uuids, *ptr)
+	}
+	if field == nil {
+		return nil, nil, ErrQueryTranslation.WithMessage(`unable to resolve column with OPA unknowns [%v]`, colRef)
+	}
+	if len(remaining) != 0 && strings.ToLower(string(field.DataType)) != dataTypeJSONB {
+		return nil, nil, ErrQueryTranslation.WithMessage(`unable to resolve column with OPA unknowns [%v]: found field "%s" but it's not JSONB`, colRef, field.Name)
+	}
+	return field, remaining, nil
+}
+
+// ResolveColumnExpr resolve column clause with given field and optional JSONB path
+func (m *GormPartialQueryMapper) ResolveColumnExpr(_ context.Context, field *TaggedField, paths...string) string {
+	col := clause.Column{
+		Table: field.Schema.Table,
+		Name:  field.DBName,
+	}
+	if len(paths) == 0 {
+		return m.Quote(col)
+	}
+	// with remaining paths, the field is JSONB
+	expr := m.Quote(col)
+	for _, path := range paths {
+		expr = fmt.Sprintf(`%s -> '%s'`, expr, path)
+	}
+	return expr
+}
+
+func (m *GormPartialQueryMapper) ResolveValueExpr(_ context.Context, val interface{}, field *TaggedField) interface{} {
+	rv := reflect.ValueOf(val)
+	// try convert using field's type
+	if v, ok := m.resolveValueByType(rv, field.FieldType); ok {
+		return v.Interface()
+	}
+	// fallback to presenting value to DB recognizable pattern based on data type
+	if v, ok := m.resolveValueByDataType(rv, field.DataType); ok {
+		return v.Interface()
+	}
+	return val
+}
+
+// resolveValueByType convert given src to DB recognizable value of given type hint. e.g. []string to pqx.UUIDArray.
+// In case the type hint is potential reference or container of source value, the source value is converted and wrapped
+// using type hint.
+// 		e.g. pqx.UUIDArray is a potential container of string, the string is converted to a pqx.UUIDArray with single element
+// 		e.g. uuid.UUID is a potential reference of string, the string is converted to a pointer to uuid.UUID
+// Note: This function guarantees that the returned value is same type of given type hint
+func (m *GormPartialQueryMapper) resolveValueByType(src reflect.Value, typeHint reflect.Type) (reflect.Value, bool) {
+	// first, try convert directly, or via sql.Scanner API
+	if resolved, ok := m.toType(src, typeHint); ok {
+		return resolved, true
+	}
+
+	// second, if it's slice, array or pointer, try to convert given value to its Elem()
+	var resolved reflect.Value
+	switch typeHint.Kind() {
+	case reflect.Slice, reflect.Array, reflect.Pointer:
+		v, ok := m.resolveValueByType(src, typeHint.Elem())
+		if !ok {
+			return resolved, false
+		}
+		resolved = v
+	}
+
+	// wrap resolved value into proper type
+	switch typeHint.Kind() {
+	case reflect.Slice:
+		ret := reflect.MakeSlice(typeHint, 1, 1)
+		ret.Index(0).Set(resolved)
+		return ret, true
+	case reflect.Pointer:
+		if resolved.CanAddr() {
+			return resolved.Addr(), true
+		}
+		return src, false
+	case reflect.Array:
+		ret := reflect.New(typeHint).Elem()
+		if typeHint.Len() > 0 {
+			ret.Index(0).Set(resolved)
+		}
+		return ret, true
+	}
+
+	return src, false
+}
+
+// resolveValueByDataType try to present value to DB recognizable pattern based on data type.
+// Note: we only support minimum set of data types.
+func (m *GormPartialQueryMapper) resolveValueByDataType(src reflect.Value, dataType schema.DataType) (reflect.Value, bool) {
+	switch strings.ToLower(string(dataType)) {
+	case "jsonb":
+		if data, e := json.Marshal(src.Interface()); e == nil {
+			return reflect.ValueOf(string(data)), true
+		}
+	case string(schema.Time):
+		if intValue, ok := m.toType(src, reflect.TypeOf(int64(0))); ok {
+			// treat value as timestamp in seconds
+			t := time.Unix(intValue.Int(), 0)
+			return reflect.ValueOf(t), true
+		}
+
+		if src.Kind() == reflect.String {
+			if t := utils.ParseTimeISO8601(src.String()); !t.IsZero() {
+				return reflect.ValueOf(t), true
 			}
 		}
-	case string:
-		parsed, e := uuid.Parse(v)
-		if e != nil {
-			return nil, e
-		}
-		return pqx.UUIDArray{parsed}, nil
-	case uuid.UUID:
-		return pqx.UUIDArray{v}, nil
-	case *uuid.UUID:
-		if v != nil {
-			return pqx.UUIDArray{*v}, nil
-		}
 	}
-	if val == nil {
-		return pqx.UUIDArray{}, nil
-	}
-	return nil, ErrQueryTranslation.WithMessage(`unable to convert [%v] to UUID array`, val)
+	return src, false
 }
+
+// toType convert source value to given type using direct convert if it's scalar, string, alias, etc.,
+// or using sql.Scanner interface
+func (m *GormPartialQueryMapper) toType(src reflect.Value, typ reflect.Type) (reflect.Value, bool) {
+	switch {
+	case src.CanConvert(typ):
+		return src.Convert(typ), true
+	case typ.Implements(typeScanner):
+		v := reflect.New(typ).Elem()
+		if e := v.Interface().(sql.Scanner).Scan(src.Interface()); e == nil {
+			return v, true
+		}
+	case reflect.PointerTo(typ).Implements(typeScanner):
+		v := reflect.New(typ)
+		if e := v.Interface().(sql.Scanner).Scan(src.Interface()); e == nil {
+			return v.Elem(), true
+		}
+	}
+	return src, false
+}
+
+//func (m *GormPartialQueryMapper) toUUID(val interface{}) (uuid.UUID, error) {
+//	switch v := val.(type) {
+//	case string:
+//		parsed, e := uuid.Parse(v)
+//		if e != nil {
+//			return uuid.Nil, e
+//		}
+//		return parsed, nil
+//	case uuid.UUID:
+//		return v, nil
+//	case *uuid.UUID:
+//		if v != nil {
+//			return *v, nil
+//		}
+//		return uuid.Nil, nil
+//	}
+//	return uuid.Nil, ErrQueryTranslation.WithMessage(`unable to convert [%v] to UUID`, val)
+//}
+//
+//func (m *GormPartialQueryMapper) toUUIDArray(val interface{}) (pqx.UUIDArray, error) {
+//	switch v := val.(type) {
+//	case []string:
+//		uuids := pqx.UUIDArray(make([]uuid.UUID, len(v)))
+//		for i := range v {
+//			parsed, e := uuid.Parse(v[i])
+//			if e != nil {
+//				return nil, e
+//			}
+//			uuids[i] = parsed
+//		}
+//	case []uuid.UUID:
+//		return v, nil
+//	case []*uuid.UUID:
+//		uuids := pqx.UUIDArray(make([]uuid.UUID, 0, len(v)))
+//		for _, ptr := range v {
+//			if ptr != nil {
+//				uuids = append(uuids, *ptr)
+//			}
+//		}
+//	case string:
+//		parsed, e := uuid.Parse(v)
+//		if e != nil {
+//			return nil, e
+//		}
+//		return pqx.UUIDArray{parsed}, nil
+//	case uuid.UUID:
+//		return pqx.UUIDArray{v}, nil
+//	case *uuid.UUID:
+//		if v != nil {
+//			return pqx.UUIDArray{*v}, nil
+//		}
+//	}
+//	if val == nil {
+//		return pqx.UUIDArray{}, nil
+//	}
+//	return nil, ErrQueryTranslation.WithMessage(`unable to convert [%v] to UUID array`, val)
+//}

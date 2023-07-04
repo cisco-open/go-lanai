@@ -15,7 +15,7 @@ allow_change_owner if {
 
 # owner is same as current user
 allow_change_owner if {
-    input.resource.delta.owner_id == input.auth.user_id
+    input.resource.delta.owner_id == input.resource.owner_id
 }
 
 # owner is not changed

@@ -20,9 +20,7 @@ allow_change_tenant if {
 }
 
 allow_change_tenant if {
-    input.resource.delta.tenant_id = input.auth.tenant_id
+    input.resource.delta.tenant_id = input.resource.tenant_id
+    input.resource.delta.tenant_path[_] = input.resource.tenant_id
 }
 
-allow_change_tenant if {
-    input.resource.delta.tenant_path[_] = input.auth.tenant_id
-}

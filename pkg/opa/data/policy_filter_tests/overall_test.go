@@ -59,15 +59,12 @@ func TestOPAFilterWithAllFields(t *testing.T) {
 		dbtest.WithDBPlayback("testdb"),
 		opatest.WithBundles(),
 		apptest.WithModules(tenancy.Module),
-		apptest.WithProperties(
-			"data.logging.level: debug",
-			"log.levels.data: debug",
-		),
+		apptest.WithConfigFS(testdata.ConfigFS),
 		apptest.WithFxOptions(
 			fx.Provide(testdata.ProvideMockedTenancyAccessor),
 		),
 		apptest.WithDI(di),
-		test.SubTestSetup(SetupTestCreateModels(&di.DI)),
+		test.SubTestSetup(SetupTestPrepareModelA(&di.DI)),
 		test.GomegaSubTest(SubTestModelCreate(di), "TestModelCreate"),
 		test.GomegaSubTest(SubTestModelCreateByMap(di), "TestModelCreateByMap"),
 		test.GomegaSubTest(SubTestModelList(di), "TestModelList"),
@@ -83,7 +80,7 @@ func TestOPAFilterWithAllFields(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SetupTestCreateModels(di *dbtest.DI) test.SetupFunc {
+func SetupTestPrepareModelA(di *dbtest.DI) test.SetupFunc {
 	var models []*ModelA
 	closure := func(ctx context.Context, db *gorm.DB) {
 		for _, m := range models {

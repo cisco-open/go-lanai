@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"reflect"
+	"strings"
 	"sync"
 )
 
@@ -33,8 +34,31 @@ const (
  *******************/
 
 type TaggedField struct {
-	*schema.Field
-	OPATag opaTag
+	schema.Field
+	OPATag       opaTag
+	RelationPath TaggedRelationPath
+}
+
+func (f TaggedField) InputField() string {
+	if len(f.RelationPath) == 0 {
+		return f.OPATag.InputField
+	}
+	return f.RelationPath.InputField() + "." + f.OPATag.InputField
+}
+
+type TaggedRelationship struct {
+	schema.Relationship
+	OPATag       opaTag
+}
+
+type TaggedRelationPath []*TaggedRelationship
+
+func (path TaggedRelationPath) InputField() string {
+	names := make([]string, len(path))
+	for i := range path {
+		names[i] = path[i].OPATag.InputField
+	}
+	return strings.Join(names, ".")
 }
 
 type metadata struct {
@@ -46,7 +70,7 @@ type metadata struct {
 }
 
 func newMetadata(s *schema.Schema) (*metadata, error) {
-	fields, e := collectFields(s)
+	fields, e := collectAllFields(s)
 	if e != nil {
 		return nil, e
 	}
@@ -77,26 +101,80 @@ func loadMetadata(s *schema.Schema) (*metadata, error) {
 	return v.(*metadata), nil
 }
 
-func collectFields(s *schema.Schema) (ret map[string]*TaggedField, err error) {
+func collectAllFields(s *schema.Schema) (ret map[string]*TaggedField, err error) {
 	ret = map[string]*TaggedField{}
+	if err = collectFields(s, ret); err != nil {
+		return
+	}
+	for _, r := range s.Relationships.Relations {
+		if err = collectRelationship(r, nil, utils.NewSet(), ret); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func collectFields(s *schema.Schema, dest map[string]*TaggedField) error {
 	for _, f := range s.Fields {
 		if tag, ok := f.Tag.Lookup(TagOPA); ok {
 			if len(f.DBName) == 0 {
 				continue
 			}
 			if f.PrimaryKey {
-				return nil, ErrUnsupportedUsage.WithMessage(`"%s" tag cannot be used on primary key`, TagOPA)
+				return ErrUnsupportedUsage.WithMessage(`"%s" tag cannot be used on primary key`, TagOPA)
 			}
 			tagged := TaggedField{
-				Field: f,
+				Field: *f,
 			}
-			if e := tagged.OPATag.UnmarshalText([]byte(tag)); e != nil {
-				return nil, e
+
+			switch e := tagged.OPATag.UnmarshalText([]byte(tag)); {
+			case e != nil:
+				return ErrUnsupportedUsage.WithMessage(`invalid "%s" tag on %s.%s: %v`, TagOPA, s.Name, f.Name, e)
+			case len(tagged.OPATag.InputField) == 0:
+				return ErrUnsupportedUsage.WithMessage(`invalid "%s" tag on %s.%s: "%s" or "%s" is required`, TagOPA, s.Name, f.Name, TagKeyInputField, TagKeyInputFieldAlt)
 			}
-			ret[tagged.OPATag.InputField] = &tagged
+			dest[tagged.OPATag.InputField] = &tagged
 		}
 	}
-	return
+	return nil
+}
+
+func collectRelationship(r *schema.Relationship, path TaggedRelationPath, visited utils.Set, dest map[string]*TaggedField) error {
+	tag, ok := r.Field.Tag.Lookup(TagOPA)
+	if !ok || visited.Has(r.FieldSchema) {
+		return nil
+	}
+	visited.Add(r.FieldSchema)
+
+	// parse OPA tag of given relation
+	taggedR := TaggedRelationship{
+		Relationship: *r,
+	}
+	switch e := taggedR.OPATag.UnmarshalText([]byte(tag)); {
+	case e != nil:
+		return ErrUnsupportedUsage.WithMessage(`invalid "%s" tag on %s.%s: %v`, TagOPA, r.Schema.Name, r.Field.Name, e)
+	case len(taggedR.OPATag.InputField) == 0:
+		return ErrUnsupportedUsage.WithMessage(`invalid "%s" tag on %s.%s: "%s" or "%s" is required`, TagOPA, r.Schema.Name, r.Field.Name, TagKeyInputField, TagKeyInputFieldAlt)
+	}
+	path = append(path, &taggedR)
+
+	// collect fields of relationship's fields
+	fields := map[string]*TaggedField{}
+	if e := collectFields(r.FieldSchema, fields); e != nil {
+		return e
+	}
+	for _, tagged := range fields {
+		tagged.RelationPath = make([]*TaggedRelationship, len(path))
+		copy(tagged.RelationPath, path)
+		dest[tagged.InputField()] = tagged
+	}
+	// recursively collect fields of relationship
+	for _, r := range r.FieldSchema.Relationships.Relations {
+		if e := collectRelationship(r, path, visited, dest); e != nil {
+			return e
+		}
+	}
+	return nil
 }
 
 func parseTag(s *schema.Schema) (*opaTag, error) {

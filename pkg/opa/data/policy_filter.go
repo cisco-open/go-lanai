@@ -125,6 +125,7 @@ func (m statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.ResourceF
 		rf.Policy = m.Policy
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
+			Metadata:  &m.metadata,
 			Fields:    m.Fields,
 			Statement: stmt,
 		})

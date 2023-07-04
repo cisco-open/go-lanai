@@ -10,13 +10,15 @@ import (
 	"github.com/google/uuid"
 )
 
-//go:embed create_table_a.sql model_a.yml
+//go:embed *.sql *.yml
 var ModelADataFS embed.FS
 
 var (
 	MockedAdminId = uuid.MustParse("710e8219-ed8d-474e-8f7d-96b27e46dba9")
 	MockedUserId1 = uuid.MustParse("595959e4-8803-4ab1-8acf-acfb92bb7322")
 	MockedUserId2 = uuid.MustParse("9a901c91-a3d6-4d39-9adf-34e74bb32de2")
+	MockedUserId3 = uuid.MustParse("e212a869-b636-4dc6-83db-e1ccd59e5e0e")
+
 	MockedRootTenantId = uuid.MustParse("23967dfe-d90f-4e1b-9406-e2df6685f232")
 	MockedTenantIdA    = uuid.MustParse("d8423acc-28cb-4209-95d6-089de7fb27ef")
 	MockedTenantIdB    = uuid.MustParse("37b7181a-0892-4706-8f26-60d286b63f14")
@@ -91,6 +93,22 @@ func User2SecurityOptions(tenantId ...uuid.UUID) sectest.SecurityMockOptions {
 		d.Roles = utils.NewStringSet("USER")
 		d.Tenants = utils.NewStringSet(MockedTenantIdB.String())
 		d.TenantId = MockedTenantIdB1.String()
+		if len(tenantId) != 0 {
+			d.TenantId = tenantId[0].String()
+			d.Tenants.Add(d.TenantId)
+		}
+	}
+}
+
+func User3SecurityOptions(tenantId ...uuid.UUID) sectest.SecurityMockOptions {
+	return func(d *sectest.SecurityDetailsMock) {
+		d.Username = "user3"
+		d.UserId = MockedUserId3.String()
+		d.TenantExternalId = "Tenant A"
+		d.Permissions = utils.NewStringSet("NO_VIEW")
+		d.Roles = utils.NewStringSet("USER")
+		d.Tenants = utils.NewStringSet(MockedTenantIdA.String())
+		d.TenantId = MockedTenantIdA1.String()
 		if len(tenantId) != 0 {
 			d.TenantId = tenantId[0].String()
 			d.Tenants.Add(d.TenantId)

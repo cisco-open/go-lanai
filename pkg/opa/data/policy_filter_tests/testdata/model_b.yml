@@ -1,0 +1,54 @@
+###### For User 3 ######
+- ID: "01727ba1-d3bf-48e7-b3c7-cc40710e08bb"
+  OwnerName: "user3"
+  Value: "B-1 U-3"
+  OwnerID: "e212a869-b636-4dc6-83db-e1ccd59e5e0e"
+  Sharing:
+    595959e4-8803-4ab1-8acf-acfb92bb7322: ["write", "read"]
+
+- ID: "0bcc8301-2236-4709-9116-505d6625e431"
+  OwnerName: "user3"
+  Value: "B-2 U-3"
+  OwnerID: "e212a869-b636-4dc6-83db-e1ccd59e5e0e"
+  Sharing:
+    "9a901c91-a3d6-4d39-9adf-34e74bb32de2": ["write", "read"]
+
+- ID: "d9733206-0b73-4de9-9ca4-eaf2c1e2bbae"
+  OwnerName: "user3"
+  Value: "B-3 U-3"
+  OwnerID: "e212a869-b636-4dc6-83db-e1ccd59e5e0e"
+  Sharing:
+    "595959e4-8803-4ab1-8acf-acfb92bb7322": ["read"]
+    "9a901c91-a3d6-4d39-9adf-34e74bb32de2": ["read"]
+
+###### For User 1 ######
+- ID: "957785c6-d75a-47cd-a3dd-e29f1219afd7"
+  OwnerName: "user1"
+  Value: "B-1 U-1"
+  OwnerID: "595959e4-8803-4ab1-8acf-acfb92bb7322"
+
+- ID: "4cc4d15f-b095-46fe-a490-ae7a0e925158"
+  OwnerName: "user1"
+  Value: "B-2 U-1"
+  OwnerID: "595959e4-8803-4ab1-8acf-acfb92bb7322"
+
+- ID: "567ff75a-354f-4a3a-affe-4ced6f876864"
+  OwnerName: "user1"
+  Value: "B-3 U-1"
+  OwnerID: "595959e4-8803-4ab1-8acf-acfb92bb7322"
+
+###### For User 2 ######
+- ID: "1ebfda99-a994-4526-9c5d-27892f8f1079"
+  OwnerName: "user2"
+  Value: "B-1 U-2"
+  OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
+
+- ID: "8aa5b290-ff15-400a-87a7-cfc89065cbca"
+  OwnerName: "user2"
+  Value: "B-2 U-2"
+  OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
+
+- ID: "617aae28-c981-4988-9496-9bd1063b0676"
+  OwnerName: "user2"
+  Value: "B-3 U-2"
+  OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"

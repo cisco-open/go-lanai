@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.test_opa_model_a
     deleted_at    TIMESTAMPTZ NULL,
     CONSTRAINT "primary" PRIMARY KEY (id ASC),
     INVERTED      INDEX idx_tenant_path (tenant_path),
-    INDEX         idx_tenant_name(tenant_name ASC),
+    INDEX         idx_tenant_id(tenant_id ASC),
+    INDEX         idx_owner_id(owner_id ASC),
     FAMILY        "primary"(id, tenant_name, value, tenant_id, tenant_path, created_at, updated_at, created_by, updated_by, deleted_at)
 );

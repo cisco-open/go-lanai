@@ -1,3 +1,0 @@
-{
-  "roots": ["roles", "role_permissions","ops", "tenancy", "ownership", "testservice", "poc"]
-}

@@ -47,8 +47,8 @@ func (p PolicyAware) BeforeCreate(tx *gorm.DB) error {
 // BeforeUpdate Check if OPA policy allow to update this policy related field.
 // We don't check the original values because we don't have that information in this hook.
 func (p PolicyAware) BeforeUpdate(tx *gorm.DB) error {
-	// TODO TBD: should we check tenant ID, tenant path, owner, etc ?
-	// 			 should we auto-populate tenant ID, tenant path, owner, etc ?
+	// TODO TBD: should we auto-populate tenant ID, tenant path, owner, etc ?
+	//
 	return nil
 }
 
