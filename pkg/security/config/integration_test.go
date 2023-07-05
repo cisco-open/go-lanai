@@ -63,7 +63,6 @@ import (
 const (
 	ExpectedRedirectError     = `/test/error`
 	ExpectedAuthorizeCallback = `http://localhost/test/callback`
-	ExpectedExtSSORedirect    = `https://stg-id.cisco.com/app/ciscoid-stg_platformsuitesaml_1/exk7daofwrsrXPoyr1d7/sso/saml`
 	TestClientID              = "test-client"
 	TestClientSecret          = "test-secret"
 	TestOAuth2CallbackURL     = "http://localhost/oauth/callback"
@@ -148,6 +147,20 @@ func TestWithMockedServer(t *testing.T) {
 		//token tests
 		test.GomegaSubTest(SubTestOAuth2AuthCode(di), "TestOAuth2AuthCode"),
 		test.GomegaSubTest(SubTestOAuth2AuthCodeWithoutTenant(di), "TestOAuth2AuthCodeWithoutTenant"),
+
+		//switch tenant
+
+		// a user has access to two tenants, switch from one to the other
+		//  the permission is not per tenant, so user permission doesn't change
+		test.GomegaSubTest(SubTestOAuth2SwitchTenant(di), "TestOauth2SwitchTenant"),
+
+		// a user that doesn't have access to any tenant adds a tenant, switch to this new tenant
+		//  the permission is per tenant, so user permission is changed
+		test.GomegaSubTest(SubTestOauth2SwitchToJustCreatedTenant(di), "TestOauth2SwitchToJustCreatedTenant"),
+
+		// a user has access to two tenants, switch from one to the other
+		//  the permission is per tenant, so user permission is changed
+		test.GomegaSubTest(SubTestOauth2SwitchTenantWithPerTenantPermission(di), "TestOauth2SwitchTenantWithPerTenantPermission"),
 	)
 }
 
@@ -161,7 +174,7 @@ func SubTestOAuth2AuthorizeWithPasswdIDP(_ *intDI) test.GomegaSubTestFunc {
 		var resp *http.Response
 		uri := fmt.Sprintf("http://%s/test/v2/authorize", testdata.IdpDomainPasswd)
 		req = webtest.NewRequest(ctx, http.MethodGet, uri, nil,
-			withDefaultClientAuth(), withDefaultAuthCode())
+			withDefaultAuthCode())
 		resp = webtest.MustExec(ctx, req).Response
 		fmt.Printf("%v\n", resp)
 		assertRedirectResponse(t, g, resp, "/test/login")
@@ -174,7 +187,7 @@ func SubTestOAuth2AuthorizeWithSamlSSO(_ *intDI) test.GomegaSubTestFunc {
 		var resp *http.Response
 		uri := fmt.Sprintf("http://%s/test/v2/authorize", testdata.IdpDomainExtSAML)
 		req = webtest.NewRequest(ctx, http.MethodGet, uri, nil,
-			withDefaultClientAuth(), withDefaultAuthCode())
+			withDefaultAuthCode())
 		resp = webtest.MustExec(ctx, req).Response
 		fmt.Printf("%v\n", resp)
 		assertRedirectResponse(t, g, resp, testdata.ExtSamlIdpSSOUrl)
@@ -263,13 +276,74 @@ func SubTestOAuth2AuthCodeWithoutTenant(di *intDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestOAuth2SwitchTenant(di *intDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// mock authentication
+		fedAccount := di.Mocking.FedAccounts["fed1"]
+		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
+		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
+
+		// authorize
+		req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions())
+		resp := webtest.MustExec(ctx, req)
+		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusFound), "response should have correct status code")
+		assertAuthorizeResponse(t, g, resp.Response, false)
+
+		// token
+		code := extractAuthCode(resp.Response)
+		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code), tokenReqOptions())
+		resp = webtest.MustExec(ctx, req)
+		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
+		a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+
+		//switch tenant
+		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", switchTenantBody(a.Value(), "id-tenant-2"), tokenReqOptions(), withDefaultClientAuth())
+		resp = webtest.MustExec(ctx, req)
+		g.Expect(resp).ToNot(BeNil())
+		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK))
+		a = assertTokenResponse(t, g, resp.Response, fedAccount.Username, false)
+		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+
+		tenantDetails, ok := auth.Details().(security.TenantDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(tenantDetails.TenantId()).To(Equal("id-tenant-2"))
+	}
+}
+
+// TODO notes:
+// The existing implementation of switching tenant is the following (See switch_tenant.go)
+// 1. user has security.SpecialPermissionSwitchTenant - TODO: either we make this configurable, or in CDA every user needs to have this permission seeded.
+// 2. reduce scope (if the requested client is different, or if request indicated different scope) - we don't need to worry about this part.
+// 3. switch authentication
+//   3.a create context details:
+//       this will load new facts: account, tenant, verify tenant access, load provider - TODO: this is where change needs to be made, we need to load per tenant permission and compliment/override the global user permission
+//   3.b create user auth based on context details - TODO: this is also where change needs to be made, when we switch tenant, we didn't use to switch user permission, so we re-use the old userAuth, but now that needs to change.
+//       we need to do something similar to switch user (i.e. loadUserAuthentication)
+//
+// The general approach should be that whenever we are loading tenant, we need to give a chance to override the user's permission
+// in case the permission is per tenanted.
+
+func SubTestOauth2SwitchToJustCreatedTenant(di *intDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+
+	}
+}
+
+func SubTestOauth2SwitchTenantWithPerTenantPermission(di *intDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+
+	}
+}
+
 /*************************
 	Helpers
  *************************/
 
 func withClientAuth(clientId, secret string) webtest.RequestOptions {
 	v := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", clientId, secret)))
-	return webtest.Headers("Authorization", v)
+	return webtest.Headers("Authorization", fmt.Sprintf("Basic %s", v))
 }
 
 func withDefaultClientAuth() webtest.RequestOptions {
@@ -401,6 +475,14 @@ func tokenReqOptions() webtest.RequestOptions {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.Header.Set("Accept", "application/json")
 	}
+}
+
+func switchTenantBody(accessToken string, tenantId string) io.Reader {
+	values := url.Values{}
+	values.Set(oauth2.ParameterGrantType, oauth2.GrantTypeSwitchTenant)
+	values.Set(oauth2.ParameterAccessToken, accessToken)
+	values.Set(oauth2.ParameterTenantId, tenantId)
+	return strings.NewReader(values.Encode())
 }
 
 func assertTokenResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedUsername string, expectRefreshToken bool) oauth2.AccessToken {

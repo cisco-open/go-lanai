@@ -187,12 +187,12 @@ type authFacts struct {
 	source   oauth2.Authentication
 }
 
-// TODO: in here we need to resolve the per tenant permission
 func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	request oauth2.OAuth2Request, userAuth oauth2.UserAuthentication,
 	src oauth2.Authentication) (security.ContextDetails, error) {
 	now := time.Now().UTC()
 
+	// TODO: in here we need to resolve the per tenant permission so that the facts would have the per tenant permission
 	facts, e := s.loadAndVerifyFacts(ctx, request, userAuth)
 	if e != nil {
 		return nil, e
@@ -298,6 +298,7 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 	}, nil
 }
 
+// TODO: because permission is per tenant, we need to have tenant info here as well
 func (s *DefaultAuthorizationService) loadAccount(ctx context.Context, _ oauth2.OAuth2Request, userAuth security.Authentication) (security.Account, error) {
 	// sanity check, this should not happen
 	if userAuth.State() < security.StateAuthenticated || userAuth.Principal() == nil {
@@ -316,6 +317,7 @@ func (s *DefaultAuthorizationService) loadAccount(ctx context.Context, _ oauth2.
 	return acct, nil
 }
 
+// TODO: or perhaps this is where we populate the per tenant permission
 func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oauth2.OAuth2Request, account security.Account) (*security.Tenant, error) {
 	acctT, ok := account.(security.AccountTenancy)
 	if !ok {
@@ -348,6 +350,14 @@ func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oa
 	return tenant, nil
 }
 
+// TODO:
+// Normally the user should have its designated tenant list populated.
+// However the case for when the user logging in the first time needs special consideration
+// The sequence that happens there is:
+//  1. user is authenticated
+//  2. user has a token - this token has no tenant
+//  3. user use this token to create a tenant
+//  4. select that tenant for the user - this is ok because before this method is called, we are loading the user - the account should be reloaded there with the new tenant
 func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, client oauth2.OAuth2Client) error {
 	if tenant == nil {
 		return nil
