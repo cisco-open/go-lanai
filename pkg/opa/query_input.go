@@ -142,45 +142,21 @@ func NewRequestClause(req *http.Request) *RequestClause {
 	}
 }
 
-type ResourceOperation int
+type ResourceOperation string
 
 const (
-	OpRead ResourceOperation = iota
-	OpWrite
-	OpCreate
-	OpDelete
+	OpRead   ResourceOperation = `read`
+	OpWrite  ResourceOperation = `write`
+	OpCreate ResourceOperation = `create`
+	OpDelete ResourceOperation = `delete`
 )
 
-func (op ResourceOperation) String() string {
-	switch op {
-	case OpRead:
-		return `read`
-	case OpWrite:
-		return `write`
-	case OpCreate:
-		return `create`
-	case OpDelete:
-		return `delete`
-	default:
-		return ``
-	}
-}
-
-func (op ResourceOperation) MarshalText() ([]byte, error) {
-	return []byte(op.String()), nil
-}
-
-func (op ResourceOperation) MarshalJSON() ([]byte, error) {
-	text, _ := op.MarshalText()
-	return []byte(`"` + string(text) + `"`), nil
-}
-
 type ResourceValues struct {
-	TenantID   string                 `json:"tenant_id,omitempty"`
-	TenantPath []string               `json:"tenant_path,omitempty"`
-	OwnerID    string                 `json:"owner_id,omitempty"`
-	Share      map[string][]string    `json:"share,omitempty"`
-	ExtraData  map[string]interface{} `json:"-"`
+	TenantID   string                         `json:"tenant_id,omitempty"`
+	TenantPath []string                       `json:"tenant_path,omitempty"`
+	OwnerID    string                         `json:"owner_id,omitempty"`
+	Share      map[string][]ResourceOperation `json:"share,omitempty"`
+	ExtraData  map[string]interface{}         `json:"-"`
 }
 
 func (c ResourceValues) MarshalJSON() ([]byte, error) {
@@ -194,7 +170,7 @@ type ResourceClause struct {
 	CurrentResourceValues
 	Type      string            `json:"type"`
 	Operation ResourceOperation `json:"op"`
-	Delta     *ResourceValues    `json:"delta,omitempty"`
+	Delta     *ResourceValues   `json:"delta,omitempty"`
 }
 
 func NewResourceClause(resType string, op ResourceOperation) *ResourceClause {

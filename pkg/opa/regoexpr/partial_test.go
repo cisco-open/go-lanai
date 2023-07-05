@@ -2,7 +2,7 @@ package regoexpr
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
+	opatest "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -82,14 +82,14 @@ type testDI struct {
 }
 
 // TODO
-func TestFilterResource(t *testing.T) {
+func TestPartialParser(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		//apptest.WithTimeout(5 * time.Minute),
-		apptest.WithModules(opa.Module),
+		opatest.WithBundles(),
 		apptest.WithDI(di),
-		test.GomegaSubTest(SubTestFilterByTenantID(di), "TestFilterByTenantID"),
+		test.GomegaSubTest(SubTestEquality(di), "TestEquality"),
 	)
 }
 
@@ -97,7 +97,7 @@ func TestFilterResource(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestFilterByTenantID(di *testDI) test.GomegaSubTestFunc {
+func SubTestEquality(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		//var e error
 		// member admin

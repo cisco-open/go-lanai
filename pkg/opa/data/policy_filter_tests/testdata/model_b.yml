@@ -21,34 +21,52 @@
     "595959e4-8803-4ab1-8acf-acfb92bb7322": ["read"]
     "9a901c91-a3d6-4d39-9adf-34e74bb32de2": ["read"]
 
-###### For User 1 ######
+###### For User 1 - allow user3 to delete, allow user2 to read ######
 - ID: "957785c6-d75a-47cd-a3dd-e29f1219afd7"
   OwnerName: "user1"
   Value: "B-1 U-1"
   OwnerID: "595959e4-8803-4ab1-8acf-acfb92bb7322"
+  Sharing:
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "delete", "write", "read" ]
+    9a901c91-a3d6-4d39-9adf-34e74bb32de2: ["read"]
 
 - ID: "4cc4d15f-b095-46fe-a490-ae7a0e925158"
   OwnerName: "user1"
   Value: "B-2 U-1"
   OwnerID: "595959e4-8803-4ab1-8acf-acfb92bb7322"
+  Sharing:
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "delete", "write", "read" ]
+    9a901c91-a3d6-4d39-9adf-34e74bb32de2: ["read"]
 
 - ID: "567ff75a-354f-4a3a-affe-4ced6f876864"
   OwnerName: "user1"
   Value: "B-3 U-1"
   OwnerID: "595959e4-8803-4ab1-8acf-acfb92bb7322"
+  Sharing:
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "delete", "write", "read" ]
+    9a901c91-a3d6-4d39-9adf-34e74bb32de2: ["read"]
 
-###### For User 2 ######
+###### For User 2 - allow user3 to write, allow user 1 to read ######
 - ID: "1ebfda99-a994-4526-9c5d-27892f8f1079"
   OwnerName: "user2"
   Value: "B-1 U-2"
   OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
+  Sharing:
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read" ]
+    595959e4-8803-4ab1-8acf-acfb92bb7322: [ "read" ]
 
 - ID: "8aa5b290-ff15-400a-87a7-cfc89065cbca"
   OwnerName: "user2"
   Value: "B-2 U-2"
   OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
+  Sharing:
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read" ]
+    595959e4-8803-4ab1-8acf-acfb92bb7322: [ "read" ]
 
 - ID: "617aae28-c981-4988-9496-9bd1063b0676"
   OwnerName: "user2"
   Value: "B-3 U-2"
   OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
+  Sharing:
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read" ]
+    595959e4-8803-4ab1-8acf-acfb92bb7322: [ "read" ]

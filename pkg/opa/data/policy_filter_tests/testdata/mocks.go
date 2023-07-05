@@ -11,7 +11,7 @@ import (
 )
 
 //go:embed *.sql *.yml
-var ModelADataFS embed.FS
+var ModelDataFS embed.FS
 
 var (
 	MockedAdminId = uuid.MustParse("710e8219-ed8d-474e-8f7d-96b27e46dba9")

@@ -197,7 +197,7 @@ func SubTestSharedUser(di *testDI) test.GomegaSubTestFunc {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
-			res.Share = map[string][]string{
+			res.Share = map[string][]ResourceOperation{
 				AnotherUserId: {"read"},
 			}
 		})
@@ -208,7 +208,7 @@ func SubTestSharedUser(di *testDI) test.GomegaSubTestFunc {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
-			res.Share = map[string][]string{
+			res.Share = map[string][]ResourceOperation{
 				AnotherUserId: {"read", "write"},
 			}
 		})

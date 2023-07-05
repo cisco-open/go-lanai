@@ -57,7 +57,7 @@ func TestOPAFilterWithAllFields(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithTimeout(10*time.Minute),
 		dbtest.WithDBPlayback("testdb"),
-		opatest.WithBundles(),
+		opatest.WithBundles(opatest.DefaultBundleFS, testdata.ModelABundleFS),
 		apptest.WithModules(tenancy.Module),
 		apptest.WithConfigFS(testdata.ConfigFS),
 		apptest.WithFxOptions(
@@ -83,17 +83,27 @@ func TestOPAFilterWithAllFields(t *testing.T) {
 func SetupTestPrepareModelA(di *dbtest.DI) test.SetupFunc {
 	var models []*ModelA
 	closure := func(ctx context.Context, db *gorm.DB) {
+		resetIdLookup()
+		const more = 9
+		extra := make([]*ModelA, 0, len(models)*more)
 		for _, m := range models {
 			key := LookupKey{Tenant: m.TenantID, Owner: m.OwnerID}
 			prepareIdLookup(m.ID, key)
+			for i := 0; i < more; i++ {
+				newM := *m
+				newM.ID = uuid.New()
+				prepareIdLookup(newM.ID, key)
+				extra = append(extra, &newM)
+			}
 		}
+		db.WithContext(ctx).CreateInBatches(extra, 50)
 	}
 	// We use special DB scope to prepare data, to by-pass policy filtering
 	return dbtest.PrepareDataWithScope(di,
 		dbtest.SetupWithGormScopes(opadata.SkipPolicyFiltering()),
-		dbtest.SetupUsingSQLFile(testdata.ModelADataFS, "create_table_a.sql"),
+		dbtest.SetupUsingSQLFile(testdata.ModelDataFS, "create_table_a.sql"),
 		dbtest.SetupTruncateTables(ModelA{}.TableName()),
-		dbtest.SetupUsingModelSeedFile(testdata.ModelADataFS, &models, "model_a.yml", closure),
+		dbtest.SetupUsingModelSeedFile(testdata.ModelDataFS, &models, "model_a.yml", closure),
 	)
 }
 
@@ -200,22 +210,22 @@ func SubTestModelList(di *TestDI) test.GomegaSubTestFunc {
 		// user1
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
 		rs = di.DB.WithContext(ctx).Model(&ModelA{}).Find(&models)
-		assertDBResult(ctx, g, rs, "list models of user1", nil, 1)
-		g.Expect(models).To(HaveLen(1), "user1 should see %d models", 1)
+		assertDBResult(ctx, g, rs, "list models of user1", nil, 10)
+		g.Expect(models).To(HaveLen(10), "user1 should see %d models", 10)
 		assertOwnership(g, testdata.MockedUserId1, "list models of user1", models...)
 
 		// user1 with parent Tenant A
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA))
 		rs = di.DB.WithContext(ctx).Model(&ModelA{}).Find(&models)
-		assertDBResult(ctx, g, rs, "list models with parent tenant admin", nil, 3)
-		g.Expect(models).To(HaveLen(3), "user1 should see %d models", 3)
+		assertDBResult(ctx, g, rs, "list models with parent tenant admin", nil, 30)
+		g.Expect(models).To(HaveLen(30), "user1 should see %d models", 30)
 		assertOwnership(g, testdata.MockedUserId1, "list models with parent tenant admin", models...)
 
 		// user2
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions())
 		rs = di.DB.WithContext(ctx).Model(&ModelA{}).Find(&models)
-		assertDBResult(ctx, g, rs, "list models of user2", nil, 1)
-		g.Expect(models).To(HaveLen(1), "user2 should see %d models", 1)
+		assertDBResult(ctx, g, rs, "list models of user2", nil, 10)
+		g.Expect(models).To(HaveLen(10), "user2 should see %d models", 10)
 		assertOwnership(g, testdata.MockedUserId2, "list models of user2", models...)
 	}
 }
@@ -292,29 +302,29 @@ func SubTestModelUpdateWithDelta(di *TestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA))
 		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdA2)
 		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
-		assertDBResult(ctx, g, rs, "update model as owner", opa.ErrAccessDenied, 0)
-		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model as owner", "OwnerID", testdata.MockedUserId1)
+		assertDBResult(ctx, g, rs, "change model's owner as owner", nil, 0)
+		assertPostOpModel[ModelA](ctx, g, di.DB, id, "change model's owner as owner", "OwnerID", testdata.MockedUserId1)
 
 		// user1 - not owner, but have permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdA2)
 		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(map[string]interface{}{"owner_id": NewValue})
-		assertDBResult(ctx, g, rs, "update model with permission", nil, 1)
-		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model with permission", "OwnerID", NewValue)
+		assertDBResult(ctx, g, rs, "change model's owner with permission", nil, 1)
+		assertPostOpModel[ModelA](ctx, g, di.DB, id, "change model's owner with permission", "OwnerID", NewValue)
 
 		// user2 - not owner, is member, no permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions(testdata.MockedTenantIdB))
 		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdB2)
 		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
-		assertDBResult(ctx, g, rs, "update model of others", opa.ErrAccessDenied, 0)
-		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model of othersr", "OwnerID", testdata.MockedUserId1)
+		assertDBResult(ctx, g, rs, "change model's owner of others", nil, 0)
+		assertPostOpModel[ModelA](ctx, g, di.DB, id, "change model's owner of others", "OwnerID", testdata.MockedUserId1)
 
 		// user2 - not owner, not member, no permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions())
 		id = findIDByOwner(testdata.MockedUserId1)
 		rs = di.DB.WithContext(ctx).Model(&ModelA{ID: id}).Updates(&ModelA{OwnerID: NewValue})
-		assertDBResult(ctx, g, rs, "update model of other tenant", opa.ErrAccessDenied, 0)
-		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model of other tenant", "OwnerID", testdata.MockedUserId1)
+		assertDBResult(ctx, g, rs, "update model's owner of other tenant", nil, 0)
+		assertPostOpModel[ModelA](ctx, g, di.DB, id, "update model's owner of other tenant", "OwnerID", testdata.MockedUserId1)
 	}
 }
 
@@ -366,7 +376,7 @@ func SubTestModelSave(di *TestDI) test.GomegaSubTestFunc {
 		rs = di.DB.WithContext(ctx).Save(model)
 		assertDBResult(ctx, g, rs, "save model as owner", nil, 1)
 		assertPostOpModel[ModelA](ctx, g, di.DB, id, "save model of other tenant", "Value", NewValue)
-		
+
 		// user1 - not owner, but have permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdA2)
@@ -375,7 +385,7 @@ func SubTestModelSave(di *TestDI) test.GomegaSubTestFunc {
 		rs = di.DB.WithContext(ctx).Save(model)
 		assertDBResult(ctx, g, rs, "save model with permission", nil, 1)
 		assertPostOpModel[ModelA](ctx, g, di.DB, id, "save model with permission", "Value", NewValue)
-		
+
 		// user2 - not owner, is member, no permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions(testdata.MockedTenantIdB))
 		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdB2)
@@ -384,7 +394,7 @@ func SubTestModelSave(di *TestDI) test.GomegaSubTestFunc {
 		rs = di.DB.WithContext(ctx).Save(model)
 		assertDBResult(ctx, g, rs, "save model of others", opa.ErrAccessDenied, 0)
 		assertPostOpModel[ModelA](ctx, g, di.DB, id, "save model of others", "OwnerID", testdata.MockedUserId1)
-		
+
 		// user2 - not owner, not member, no permission
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions())
 		id = findIDByOwner(testdata.MockedUserId1)
@@ -451,6 +461,12 @@ func assertOwnership[T any](g *gomega.WithT, ownerId uuid.UUID, op string, model
 	Helpers
  *************************/
 
+func resetIdLookup() {
+	MockedModelLookupByTenant = map[uuid.UUID][]uuid.UUID{}
+	MockedModelLookupByOwner = map[uuid.UUID][]uuid.UUID{}
+	MockedModelLookupByKey = map[LookupKey][]uuid.UUID{}
+}
+
 func prepareIdLookup(modelId uuid.UUID, key LookupKey) {
 	var ids []uuid.UUID
 	ids, _ = MockedModelLookupByKey[key]
@@ -464,33 +480,41 @@ func prepareIdLookup(modelId uuid.UUID, key LookupKey) {
 func findID(ownerId, tenantId uuid.UUID) uuid.UUID {
 	key := LookupKey{Tenant: tenantId, Owner: ownerId}
 	ids, _ := MockedModelLookupByKey[key]
-	if len(ids) == 0 {
-		return uuid.UUID{}
+	for i := range ids {
+		if ids[i] == uuid.Nil {
+			continue
+		}
+		ret := ids[i]
+		ids[i] = uuid.Nil
+		return ret
 	}
-	return ids[0]
+	return uuid.Nil
 }
 
 func findIDByTenant(tenantId uuid.UUID) uuid.UUID {
 	ids, _ := MockedModelLookupByTenant[tenantId]
-	if len(ids) == 0 {
-		return uuid.UUID{}
+	for i := range ids {
+		if ids[i] == uuid.Nil {
+			continue
+		}
+		ret := ids[i]
+		ids[i] = uuid.Nil
+		return ret
 	}
-	return ids[0]
+	return uuid.Nil
 }
 
 func findIDByOwner(ownerId uuid.UUID) uuid.UUID {
 	ids, _ := MockedModelLookupByOwner[ownerId]
-	if len(ids) == 0 {
-		return uuid.UUID{}
+	for i := range ids {
+		if ids[i] == uuid.Nil {
+			continue
+		}
+		ret := ids[i]
+		ids[i] = uuid.Nil
+		return ret
 	}
-	return ids[0]
-}
-
-func takeModelById[T any](ctx context.Context, db *gorm.DB, dest *T, id uuid.UUID) (rs *gorm.DB) {
-	var zero T
-	*dest = zero
-	rs = db.WithContext(ctx).Take(&dest, id)
-	return
+	return uuid.Nil
 }
 
 // loadModel load model without policy filtering
@@ -538,7 +562,7 @@ type ModelA struct {
 	TenantID            uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
 	TenantPath          pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
 	OwnerID             uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	opadata.PolicyAware `opa:"type:poc"`
+	opadata.PolicyAware `opa:"type:model"`
 	types.Audit
 	types.SoftDelete
 }
