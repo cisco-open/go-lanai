@@ -62,5 +62,11 @@ func GenerateFileWithOption(ctx context.Context, opt *TemplateOption) error {
 		return e
 	}
 
-	return t.ExecuteTemplate(f, path.Base(opt.TmplName), opt.Model)
+	e = t.ExecuteTemplate(f, path.Base(opt.TmplName), opt.Model)
+	if e != nil {
+		return e
+	}
+
+	logger.WithContext(ctx).Infof("Generated file [%s]", opt.Output)
+	return nil
 }
