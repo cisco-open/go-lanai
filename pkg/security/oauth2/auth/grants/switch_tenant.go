@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	switchTenantPermissions = []string {
+	switchTenantPermissions = []string{
 		security.SpecialPermissionSwitchTenant,
 	}
 )
@@ -18,7 +18,7 @@ var (
 // SwitchTenantGranter implements auth.TokenGranter
 type SwitchTenantGranter struct {
 	PermissionBasedGranter
-	authService  auth.AuthorizationService
+	authService auth.AuthorizationService
 }
 
 func NewSwitchTenantGranter(authService auth.AuthorizationService, authenticator security.Authenticator) *SwitchTenantGranter {
@@ -34,7 +34,7 @@ func NewSwitchTenantGranter(authService auth.AuthorizationService, authenticator
 		PermissionBasedGranter: PermissionBasedGranter{
 			authenticator: authenticator,
 		},
-		authService:   authService,
+		authService: authService,
 	}
 }
 
@@ -77,6 +77,10 @@ func (g *SwitchTenantGranter) Grant(ctx context.Context, request *auth.TokenRequ
 	if e != nil {
 		return nil, e
 	}
+
+	//TODO: we need to reload the user's authentication because the permission could change per tenant.
+	// we need to do something similar to line 88 in switch_user.go, i.e. calling g.loadUserAuthentication(ctx, request)
+	// to get a new userAuth instead of using stored.UserAuthentication
 
 	// create authentication
 	oauth, e := g.authService.SwitchAuthentication(ctx, req, stored.UserAuthentication(), stored)

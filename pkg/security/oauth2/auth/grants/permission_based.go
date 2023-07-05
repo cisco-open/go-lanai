@@ -51,7 +51,7 @@ func (g *PermissionBasedGranter) authenticateToken(ctx context.Context, request 
 	return oauth, nil
 }
 
-func (g *PermissionBasedGranter) validateStoredPermissions(ctx context.Context, stored security.Authentication, permissions...string) error {
+func (g *PermissionBasedGranter) validateStoredPermissions(ctx context.Context, stored security.Authentication, permissions ...string) error {
 	perms := stored.Permissions()
 	if perms == nil {
 		return oauth2.NewInvalidGrantError("user has no permissions")
@@ -64,9 +64,9 @@ func (g *PermissionBasedGranter) validateStoredPermissions(ctx context.Context, 
 	return nil
 }
 
-// DE7384 Removed original vs requesting VaultClient ID validation for cases where original VaultClient ID was requested by
+// DE7384 Removed original vs requesting Client ID validation for cases where original Client ID was requested by
 // authenticated user and attempted security context switch is using system user causing original vs requesting
-// VaultClient ID mismatch.
+// Client ID mismatch.
 //
 // Expectation is that only users with appropriate VIEW_OPERATOR_LOGIN_AS_CUSTOMER and
 // SWITCH_TENANT permissions along with appropriate grant type are allowed to perform the security context
@@ -87,7 +87,7 @@ func (g *PermissionBasedGranter) validateStoredClient(ctx context.Context, clien
 // New scopes should be copied from either original request (if no "scope" param) or the token request.
 // in both cases, they need to be validated against current client
 func (g *PermissionBasedGranter) reduceScope(ctx context.Context, client oauth2.OAuth2Client,
-	src oauth2.OAuth2Request, request *auth.TokenRequest, ) (oauth2.OAuth2Request, error) {
+	src oauth2.OAuth2Request, request *auth.TokenRequest) (oauth2.OAuth2Request, error) {
 
 	original := src.Scopes()
 	scopes := request.Scopes
