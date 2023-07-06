@@ -36,14 +36,20 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
+	. "cto-github.cisco.com/NFV-BU/go-lanai/test/utils/gomega"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"github.com/crewjam/saml"
+	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -55,9 +61,12 @@ import (
  *************************/
 
 const (
-	TestClientID          = "test-client"
-	TestClientSecret      = "test-secret"
-	TestOAuth2CallbackURL = "http://localhost/oauth/callback"
+	ExpectedRedirectError     = `/test/error`
+	ExpectedAuthorizeCallback = `http://localhost/test/callback`
+	ExpectedExtSSORedirect    = `https://stg-id.cisco.com/app/ciscoid-stg_platformsuitesaml_1/exk7daofwrsrXPoyr1d7/sso/saml`
+	TestClientID              = "test-client"
+	TestClientSecret          = "test-secret"
+	TestOAuth2CallbackURL     = "http://localhost/oauth/callback"
 )
 
 // TestMain is the only place we should kick off embedded redis
@@ -91,8 +100,9 @@ func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
 		IdpManager:           testdata.NewMockedIDPManager(),
 		AccountStore:         sectest.NewMockedAccountStore(testdata.MapValues(di.Mocking.Accounts)...),
 		PasswordEncoder:      passwd.NewNoopPasswordEncoder(),
-		FedAccountStore:      sectest.NewMockedFederatedAccountStore(),
-		SamlClientStore:      samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
+
+		FedAccountStore: sectest.NewMockedFederatedAccountStore(testdata.MapValues(di.Mocking.FedAccounts)...),
+		SamlClientStore: samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
 	}
 }
 
@@ -102,6 +112,9 @@ func IntegrationTestMocksProvider(di IntegrationTestDI) IntegrationTestOut {
 
 type intDI struct {
 	fx.In
+	FedAccountStore security.FederatedAccountStore
+	Mocking         testdata.MockingProperties
+	TokenReader     oauth2.TokenStoreReader
 }
 
 func TestWithMockedServer(t *testing.T) {
@@ -132,6 +145,9 @@ func TestWithMockedServer(t *testing.T) {
 		test.GomegaSubTest(SubTestOAuth2AuthorizeWithPasswdIDP(di), "TestOAuth2AuthorizeWithPasswdIDP"),
 		test.GomegaSubTest(SubTestOAuth2AuthorizeWithSamlSSO(di), "TestOAuth2AuthorizeWithSamlSSO"),
 		test.GomegaSubTest(SubTestSamlSSOAuthorizeWithPasswdIDP(di), "TestSamlSSOAuthorizeWithPasswdIDP"),
+		//token tests
+		test.GomegaSubTest(SubTestOAuth2AuthCode(di), "TestOAuth2AuthCode"),
+		test.GomegaSubTest(SubTestOAuth2AuthCodeWithoutTenant(di), "TestOAuth2AuthCodeWithoutTenant"),
 	)
 }
 
@@ -174,6 +190,76 @@ func SubTestSamlSSOAuthorizeWithPasswdIDP(_ *intDI) test.GomegaSubTestFunc {
 		resp = webtest.MustExec(ctx, req).Response
 		fmt.Printf("%v\n", resp)
 		assertRedirectResponse(t, g, resp, "/test/login")
+	}
+}
+
+func SubTestOAuth2AuthCode(di *intDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// mock authentication
+		fedAccount := di.Mocking.FedAccounts["fed1"]
+		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
+		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
+
+		// authorize
+		req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions())
+		resp := webtest.MustExec(ctx, req)
+		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusFound), "response should have correct status code")
+		assertAuthorizeResponse(t, g, resp.Response, false)
+
+		// token
+		code := extractAuthCode(resp.Response)
+		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code), tokenReqOptions())
+		resp = webtest.MustExec(ctx, req)
+		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
+		a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+
+		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+		userDetail, ok := auth.Details().(security.UserDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(userDetail.UserId()).To(Equal(fedAccount.UserId))
+		tenantDetail, ok := auth.Details().(security.TenantDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(tenantDetail.TenantId()).To(Equal(fedAccount.DefaultTenant))
+		providerDetail, ok := auth.Details().(security.ProviderDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(providerDetail.ProviderId()).To(Not(BeEmpty()))
+	}
+}
+
+func SubTestOAuth2AuthCodeWithoutTenant(di *intDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// mock authentication
+		fedAccount := di.Mocking.FedAccounts["fed2"]
+		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
+		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
+
+		// authorize
+		req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions())
+		resp := webtest.MustExec(ctx, req)
+		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusFound), "response should have correct status code")
+		assertAuthorizeResponse(t, g, resp.Response, false)
+
+		// token
+		code := extractAuthCode(resp.Response)
+		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code), tokenReqOptions())
+		resp = webtest.MustExec(ctx, req)
+		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
+		a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+
+		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+		userDetail, ok := auth.Details().(security.UserDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(userDetail.UserId()).To(Equal(fedAccount.UserId))
+		tenantDetail, ok := auth.Details().(security.TenantDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(tenantDetail.TenantId()).To(BeEmpty())
+		providerDetail, ok := auth.Details().(security.ProviderDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(providerDetail.ProviderId()).To(BeEmpty())
 	}
 }
 
@@ -221,4 +307,142 @@ func assertRedirectResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, 
 	} else {
 		g.Expect(loc.Path).To(Equal(expectedUrl), "response's redirect location should have correct path")
 	}
+}
+
+func contextWithSamlAuth(ctx context.Context, fedAcctStore security.FederatedAccountStore, mock *sectest.MockedFederatedUserProperties) (context.Context, error) {
+	assertion := mockAssertion(mock)
+	acct, e := fedAcctStore.LoadAccountByExternalId(ctx,
+		mock.ExtIdName,
+		mock.ExtIdValue,
+		mock.ExtIdpName,
+		MockAutoCreateUserDetails{},
+		assertion)
+	if e != nil {
+		return nil, e
+	}
+
+	return sectest.ContextWithSecurity(ctx, sectest.Authentication(
+		&samltest.MockedSamlAssertionAuthentication{
+			Account:       acct,
+			DetailsMap:    map[string]interface{}{},
+			SamlAssertion: assertion,
+		}),
+	), nil
+}
+
+func mockAssertion(mock *sectest.MockedFederatedUserProperties) *saml.Assertion {
+	return samltest.MockAssertion(func(opt *samltest.AssertionOption) {
+		opt.NameIDFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:email"
+		opt.NameID = mock.ExtIdValue
+		opt.RequestID = uuid.New().String()
+		opt.Issuer = "http://some-entity-id"
+		opt.Recipient = "http://some-sp/sso"
+		opt.Audience = "http://some-sp"
+	})
+}
+
+type MockAutoCreateUserDetails struct{}
+
+func (m MockAutoCreateUserDetails) IsEnabled() bool {
+	return true
+}
+
+func (m MockAutoCreateUserDetails) GetEmailWhiteList() []string {
+	return []string{}
+}
+
+func (m MockAutoCreateUserDetails) GetAttributeMapping() map[string]string {
+	return map[string]string{
+		"firstName": "FirstName",
+		"lastName":  "LastName",
+		"email":     "Email",
+	}
+}
+
+func (m MockAutoCreateUserDetails) GetElevatedUserRoleNames() []string {
+	return []string{}
+}
+
+func (m MockAutoCreateUserDetails) GetRegularUserRoleNames() []string {
+	return []string{}
+}
+
+func authorizeReqOptions() webtest.RequestOptions {
+	return func(req *http.Request) {
+		req.Host = fmt.Sprintf("http://%s", testdata.IdpDomainExtSAML)
+		req.URL.Host = fmt.Sprintf("http://%s", testdata.IdpDomainExtSAML)
+		values := url.Values{}
+		values.Set(oauth2.ParameterGrantType, oauth2.GrantTypeAuthCode)
+		values.Set(oauth2.ParameterResponseType, "code")
+		values.Set(oauth2.ParameterClientId, "test-client")
+		values.Set(oauth2.ParameterRedirectUri, "http://localhost/test/callback")
+		req.URL.RawQuery = values.Encode()
+	}
+}
+
+func extractAuthCode(resp *http.Response) string {
+	loc := resp.Header.Get("Location")
+	locUrl, _ := url.Parse(loc)
+	return locUrl.Query().Get("code")
+}
+
+func authCodeReqBody(code string) io.Reader {
+	values := url.Values{}
+	values.Set(oauth2.ParameterGrantType, oauth2.GrantTypeAuthCode)
+	values.Set(oauth2.ParameterClientId, "test-client")
+	values.Set(oauth2.ParameterClientSecret, "test-secret")
+	values.Set(oauth2.ParameterRedirectUri, "http://localhost/test/callback")
+	values.Set(oauth2.ParameterAuthCode, code)
+	return strings.NewReader(values.Encode())
+}
+
+func tokenReqOptions() webtest.RequestOptions {
+	return func(req *http.Request) {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Accept", "application/json")
+	}
+}
+
+func assertTokenResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedUsername string, expectRefreshToken bool) oauth2.AccessToken {
+	body, e := io.ReadAll(resp.Body)
+	g.Expect(e).To(Succeed(), `token response body should be readable`)
+	g.Expect(body).To(HaveJsonPath("$.access_token"), "token response should have access_token")
+	g.Expect(body).To(HaveJsonPath("$.expires_in"), "token response should have expires_in")
+	g.Expect(body).To(HaveJsonPath("$.scope"), "token response should have scope")
+	g.Expect(body).To(HaveJsonPathWithValue("$.token_type", ContainElement("bearer")), "token response should have token_type")
+	g.Expect(body).To(HaveJsonPathWithValue("$.username", expectedUsername), "token response should have correct username")
+
+	if expectRefreshToken {
+		g.Expect(body).To(HaveJsonPath("$.refresh_token"), "token response should have refresh_token")
+	} else {
+		g.Expect(body).NotTo(HaveJsonPath("$..refresh_token"), "token response should not have refresh_token")
+	}
+
+	accessToken := oauth2.NewDefaultAccessToken("")
+	e = json.Unmarshal(body, accessToken)
+	g.Expect(e).ToNot(HaveOccurred())
+	return accessToken
+}
+
+func assertAuthorizeResponse(t *testing.T, g *gomega.WithT, resp *http.Response, expectErr bool) {
+	g.Expect(resp.Header.Get("Set-Cookie")).To(Not(BeEmpty()), "authorize response should set cookie")
+	switch {
+	case expectErr:
+		g.Expect(resp.Header.Get("Location")).To(Equal(ExpectedRedirectError), "authorize response should redirect to error page")
+	default:
+		assertCallbackRedirectResponse(t, g, resp)
+	}
+}
+
+func assertCallbackRedirectResponse(_ *testing.T, g *gomega.WithT, resp *http.Response) {
+	expected, _ := url.Parse(ExpectedAuthorizeCallback)
+	loc := resp.Header.Get("Location")
+	locUrl, e := url.Parse(loc)
+	g.Expect(e).To(Succeed(), "authorize redirect location should be a valid URL")
+	g.Expect(locUrl.Scheme).To(Equal(expected.Scheme), "authorize redirect should have correct scheme")
+	g.Expect(locUrl.Host).To(Equal(expected.Host), "authorize redirect should have correct host")
+	g.Expect(locUrl.Path).To(Equal(expected.Path), "authorize redirect should have correct path")
+	q := locUrl.Query()
+	g.Expect(q.Get("code")).To(Not(BeEmpty()), "authorize redirect queries should have code")
+	return
 }

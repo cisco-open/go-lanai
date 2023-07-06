@@ -8,15 +8,16 @@ import (
 const MockingPrefix = "mocking"
 
 type MockingProperties struct {
-	Accounts      map[string]*sectest.MockedAccountProperties `json:"accounts"`
-	Tenants       map[string]*sectest.MockedTenantProperties  `json:"tenants"`
-	Clients       map[string]*sectest.MockedClientProperties  `json:"clients"`
+	Accounts    map[string]*sectest.MockedAccountProperties       `json:"accounts"`
+	FedAccounts map[string]*sectest.MockedFederatedUserProperties `json:"fed-accounts"`
+	Tenants     map[string]*sectest.MockedTenantProperties        `json:"tenants"`
+	Clients     map[string]*sectest.MockedClientProperties        `json:"clients"`
 }
 
 func BindMockingProperties(appCtx *bootstrap.ApplicationContext) MockingProperties {
 	props := MockingProperties{
-		Accounts:      map[string]*sectest.MockedAccountProperties{},
-		Tenants:       map[string]*sectest.MockedTenantProperties{},
+		Accounts: map[string]*sectest.MockedAccountProperties{},
+		Tenants:  map[string]*sectest.MockedTenantProperties{},
 	}
 	if e := appCtx.Config().Bind(&props, MockingPrefix); e != nil {
 		panic(e)

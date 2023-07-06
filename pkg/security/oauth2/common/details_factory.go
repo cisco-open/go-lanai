@@ -13,21 +13,17 @@ import (
 type FactoryOptions func(option *FactoryOption)
 
 type FactoryOption struct {
-
 }
 
 type ContextDetailsFactory struct {
-
 }
 
-func NewContextDetailsFactory(opts...FactoryOptions) *ContextDetailsFactory {
+func NewContextDetailsFactory(opts ...FactoryOptions) *ContextDetailsFactory {
 	opt := FactoryOption{}
 	for _, f := range opts {
 		f(&opt)
 	}
-	return &ContextDetailsFactory {
-
-	}
+	return &ContextDetailsFactory{}
 }
 
 type facts struct {
@@ -45,19 +41,22 @@ type facts struct {
 
 func (f *ContextDetailsFactory) New(ctx context.Context, request oauth2.OAuth2Request) (security.ContextDetails, error) {
 	facts := f.loadFacts(ctx, request)
-	if facts.account == nil || facts.tenant == nil || facts.provider == nil {
+	if facts.account == nil {
 		return f.createSimple(ctx, facts)
 	}
 	return f.create(ctx, facts)
 }
 
-/**********************
-	Helpers
- **********************/
+/*
+*********************
+
+		Helpers
+	 *********************
+*/
 func (f *ContextDetailsFactory) loadFacts(ctx context.Context, request oauth2.OAuth2Request) *facts {
 	facts := facts{
 		request: request,
-		client: ctx.Value(oauth2.CtxKeyAuthenticatedClient).(oauth2.OAuth2Client),
+		client:  ctx.Value(oauth2.CtxKeyAuthenticatedClient).(oauth2.OAuth2Client),
 	}
 
 	if ctx.Value(oauth2.CtxKeyAuthenticatedAccount) != nil {
@@ -101,27 +100,36 @@ func (f *ContextDetailsFactory) loadFacts(ctx context.Context, request oauth2.OA
 
 func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*internal.FullContextDetails, error) {
 	// provider
-	pd := internal.ProviderDetails{
-		Id: facts.provider.Id,
-		Name: facts.provider.Name,
-		DisplayName: facts.provider.DisplayName,
-		Description: facts.provider.Description,
-		Email: facts.provider.Email,
-		NotificationType: facts.provider.NotificationType,
+	var pd internal.ProviderDetails
+	if facts.provider != nil {
+		pd = internal.ProviderDetails{
+			Id:               facts.provider.Id,
+			Name:             facts.provider.Name,
+			DisplayName:      facts.provider.DisplayName,
+			Description:      facts.provider.Description,
+			Email:            facts.provider.Email,
+			NotificationType: facts.provider.NotificationType,
+		}
+	} else {
+		pd = internal.ProviderDetails{}
 	}
 
 	// tenant
-	td := internal.TenantDetails{
-		Id: facts.tenant.Id,
-		ExternalId: facts.tenant.ExternalId,
-		Suspended: facts.tenant.Suspended,
+	var td internal.TenantDetails
+	if facts.tenant != nil {
+		td = internal.TenantDetails{
+			Id:         facts.tenant.Id,
+			ExternalId: facts.tenant.ExternalId,
+			Suspended:  facts.tenant.Suspended}
+	} else {
+		td = internal.TenantDetails{}
 	}
 
 	// user
 	ud := internal.UserDetails{
-		Id: facts.account.ID().(string),
-		Username: facts.account.Username(),
-		AccountType: facts.account.Type(),
+		Id:                facts.account.ID().(string),
+		Username:          facts.account.Username(),
+		AccountType:       facts.account.Type(),
 		AssignedTenantIds: utils.NewStringSet(facts.account.(security.AccountTenancy).DesignatedTenantIds()...),
 	}
 
@@ -140,12 +148,12 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 	}
 
 	return &internal.FullContextDetails{
-		Provider: pd,
-		Tenant: td,
-		User: ud,
+		Provider:       pd,
+		Tenant:         td,
+		User:           ud,
 		Authentication: *ad,
-		KV: f.createKVDetails(ctx, facts),
-	},  nil
+		KV:             f.createKVDetails(ctx, facts),
+	}, nil
 }
 
 func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) (*internal.SimpleContextDetails, error) {
@@ -157,8 +165,8 @@ func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) 
 
 	return &internal.SimpleContextDetails{
 		Authentication: *ad,
-		KV: f.createKVDetails(ctx, facts),
-	},  nil
+		KV:             f.createKVDetails(ctx, facts),
+	}, nil
 }
 
 func (f *ContextDetailsFactory) createAuthDetails(ctx context.Context, facts *facts) (*internal.AuthenticationDetails, error) {
