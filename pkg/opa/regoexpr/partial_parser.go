@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"encoding/json"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"reflect"
@@ -204,6 +205,11 @@ func TranslateThreeTermsOp[EXPR any](ctx context.Context, astExpr *ast.Expr, opt
 	if e != nil {
 		return zero, ParsingError.WithMessage(`unable to resolve Rego value [%v]: %v`, val, e)
 	}
+	if v, ok := value.(json.Number); ok {
+		if value, e = v.Float64(); e != nil {
+			return zero, ParsingError.WithMessage(`unable to resolve Rego value [%v] as number: %v`, val, e)
+		}
+	}
 
 	// resolve operator and column
 	if ref.IsGround() {
@@ -219,7 +225,7 @@ func TranslateThreeTermsOp[EXPR any](ctx context.Context, astExpr *ast.Expr, opt
 	Helpers
  **********************/
 
-// note: when we calculate hash, we don't want to consider its Index
+// note: when we calculate hash, we don't want to consider its Index and non-ground part
 func calculateHash(astExpr *ast.Expr) int {
 	expr := astExpr.Copy()
 	expr.Index = 0

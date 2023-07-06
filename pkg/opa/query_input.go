@@ -154,9 +154,9 @@ const (
 type ResourceValues struct {
 	TenantID   string                         `json:"tenant_id,omitempty"`
 	TenantPath []string                       `json:"tenant_path,omitempty"`
-	OwnerID    string                         `json:"owner_id,omitempty"`
-	Share      map[string][]ResourceOperation `json:"share,omitempty"`
-	ExtraData  map[string]interface{}         `json:"-"`
+	OwnerID   string                         `json:"owner_id,omitempty"`
+	Sharing   map[string][]ResourceOperation `json:"sharing,omitempty"`
+	ExtraData map[string]interface{}         `json:"-"`
 }
 
 func (c ResourceValues) MarshalJSON() ([]byte, error) {

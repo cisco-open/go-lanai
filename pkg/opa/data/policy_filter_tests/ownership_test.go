@@ -316,7 +316,7 @@ type ModelB struct {
 	Value           string
 	OwnerName       string
 	OwnerID         uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	Sharing         constraints.Sharing  `opa:"field:share"`
+	Sharing         constraints.Sharing  `opa:"field:sharing"`
 	OPAPolicyFilter opadata.PolicyFilter `gorm:"-" opa:"type:model"`
 	types.Audit
 	// For testing utils only

@@ -4,18 +4,18 @@ import future.keywords
 
 # Check Sharing
 is_shared(op) if {
-     op = input.resource.share[input.auth.user_id][_]
+     op = input.resource.sharing[input.auth.user_id][_]
 }
 
 # Check Sharing Update
 # sharing didn't change
 allow_change_sharing if {
-    not input.resource.delta.share
+    not input.resource.delta.sharing
 }
 
 # sharing is same as before
 allow_change_sharing if {
-    input.resource.delta.share = input.resource.share
+    input.resource.delta.sharing = input.resource.sharing
 }
 
 # owner can change sharing
@@ -25,5 +25,5 @@ allow_change_sharing if {
 
 # other user with proper shared status can change sharing
 allow_change_sharing if {
-    input.resource.share[input.auth.user_id][_] = "share"
+    input.resource.sharing[input.auth.user_id][_] = "share"
 }
