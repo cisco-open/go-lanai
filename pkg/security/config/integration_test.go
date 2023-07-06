@@ -39,6 +39,7 @@ import (
 	. "cto-github.cisco.com/NFV-BU/go-lanai/test/utils/gomega"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/crewjam/saml"
 	"github.com/google/uuid"
@@ -113,6 +114,7 @@ type intDI struct {
 	fx.In
 	FedAccountStore security.FederatedAccountStore
 	Mocking         testdata.MockingProperties
+	TokenReader     oauth2.TokenStoreReader
 }
 
 func TestWithMockedServer(t *testing.T) {
@@ -211,7 +213,18 @@ func SubTestOAuth2AuthCode(di *intDI) test.GomegaSubTestFunc {
 		resp = webtest.MustExec(ctx, req)
 		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
 		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+		a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+
+		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+		userDetail, ok := auth.Details().(security.UserDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(userDetail.UserId()).To(Equal(fedAccount.UserId))
+		tenantDetail, ok := auth.Details().(security.TenantDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(tenantDetail.TenantId()).To(Equal(fedAccount.DefaultTenant))
+		providerDetail, ok := auth.Details().(security.ProviderDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(providerDetail.ProviderId()).To(Not(BeEmpty()))
 	}
 }
 
@@ -235,7 +248,18 @@ func SubTestOAuth2AuthCodeWithoutTenant(di *intDI) test.GomegaSubTestFunc {
 		resp = webtest.MustExec(ctx, req)
 		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
 		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+		a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+
+		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+		userDetail, ok := auth.Details().(security.UserDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(userDetail.UserId()).To(Equal(fedAccount.UserId))
+		tenantDetail, ok := auth.Details().(security.TenantDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(tenantDetail.TenantId()).To(BeEmpty())
+		providerDetail, ok := auth.Details().(security.ProviderDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(providerDetail.ProviderId()).To(BeEmpty())
 	}
 }
 
@@ -379,7 +403,7 @@ func tokenReqOptions() webtest.RequestOptions {
 	}
 }
 
-func assertTokenResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedUsername string, expectRefreshToken bool) {
+func assertTokenResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, expectedUsername string, expectRefreshToken bool) oauth2.AccessToken {
 	body, e := io.ReadAll(resp.Body)
 	g.Expect(e).To(Succeed(), `token response body should be readable`)
 	g.Expect(body).To(HaveJsonPath("$.access_token"), "token response should have access_token")
@@ -393,6 +417,11 @@ func assertTokenResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, exp
 	} else {
 		g.Expect(body).NotTo(HaveJsonPath("$..refresh_token"), "token response should not have refresh_token")
 	}
+
+	accessToken := oauth2.NewDefaultAccessToken("")
+	e = json.Unmarshal(body, accessToken)
+	g.Expect(e).ToNot(HaveOccurred())
+	return accessToken
 }
 
 func assertAuthorizeResponse(t *testing.T, g *gomega.WithT, resp *http.Response, expectErr bool) {
