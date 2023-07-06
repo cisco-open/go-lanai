@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
+	"sync"
 )
 
 /****************************
@@ -54,31 +55,44 @@ func (pf PolicyFilter) CreateClauses(f *schema.Field) []clause.Interface {
 type statementModifier struct {
 	types.NoopStatementModifier
 	metadata
+	initOnce             sync.Once
+	Schema               *schema.Schema
 	Flag                 DBOperationFlag
 	OPAFilterOptionsFunc func(stmt *gorm.Statement) (opa.ResourceFilterOptions, error)
 }
 
 func newStatementModifier(f *schema.Field, flag DBOperationFlag) clause.Interface {
-	meta, e := loadMetadata(f.Schema)
-	if e != nil {
-		panic(e)
-	}
 	switch flag {
 	case DBOperationFlagCreate:
-		return newCreateStatementModifier(meta)
+		return newCreateStatementModifier(f.Schema)
 	case DBOperationFlagUpdate:
-		return newUpdateStatementModifier(meta)
+		return newUpdateStatementModifier(f.Schema)
 	default:
 		ret := &statementModifier{
-			metadata: *meta,
-			Flag:     flag,
+			Schema: f.Schema,
+			Flag:   flag,
 		}
 		ret.OPAFilterOptionsFunc = ret.opaFilterOptions
 		return ret
 	}
 }
 
-func (m statementModifier) ModifyStatement(stmt *gorm.Statement) {
+func (m *statementModifier) lazyInit() (err error) {
+	m.initOnce.Do(func() {
+		if ptr, e := loadMetadata(m.Schema); e != nil {
+			err = data.NewDataError(data.ErrorCodeInvalidApiUsage, e)
+		} else {
+			m.metadata = *ptr
+		}
+	})
+	return
+}
+
+func (m *statementModifier) ModifyStatement(stmt *gorm.Statement) {
+	if stmt.AddError(m.lazyInit()) != nil {
+		return
+	}
+
 	if shouldSkip(stmt.Context, m.Flag, m.Mode) {
 		return
 	}
@@ -115,7 +129,7 @@ func (m statementModifier) ModifyStatement(stmt *gorm.Statement) {
 	}
 }
 
-func (m statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.ResourceFilterOptions, error) {
+func (m *statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.ResourceFilterOptions, error) {
 	unknowns := make([]string, 0, len(m.Fields))
 	for k := range m.Fields {
 		unknown := fmt.Sprintf(`%s.%s.%s`, opa.InputPrefixRoot, opa.InputPrefixResource, k)
@@ -141,18 +155,18 @@ type updateStatementModifier struct {
 	statementModifier
 }
 
-func newUpdateStatementModifier(meta *metadata) *updateStatementModifier {
+func newUpdateStatementModifier(s *schema.Schema) *updateStatementModifier {
 	ret := &updateStatementModifier{
 		statementModifier{
-			metadata: *meta,
-			Flag:     DBOperationFlagUpdate,
+			Schema: s,
+			Flag:   DBOperationFlagUpdate,
 		},
 	}
 	ret.OPAFilterOptionsFunc = ret.opaFilterOptions
 	return ret
 }
 
-func (m updateStatementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.ResourceFilterOptions, error) {
+func (m *updateStatementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.ResourceFilterOptions, error) {
 	opts, e := m.statementModifier.opaFilterOptions(stmt)
 	if e != nil {
 		return nil, e
@@ -190,16 +204,20 @@ type createStatementModifier struct {
 	statementModifier
 }
 
-func newCreateStatementModifier(meta *metadata) *createStatementModifier {
+func newCreateStatementModifier(s *schema.Schema) *createStatementModifier {
 	return &createStatementModifier{
 		statementModifier{
-			metadata: *meta,
-			Flag:     DBOperationFlagCreate,
+			Schema: s,
+			Flag:   DBOperationFlagCreate,
 		},
 	}
 }
 
-func (m createStatementModifier) ModifyStatement(stmt *gorm.Statement) {
+func (m *createStatementModifier) ModifyStatement(stmt *gorm.Statement) {
+	if stmt.AddError(m.lazyInit()) != nil {
+		return
+	}
+
 	if shouldSkip(stmt.Context, DBOperationFlagCreate, m.Mode) {
 		return
 	}
@@ -215,7 +233,7 @@ func (m createStatementModifier) ModifyStatement(stmt *gorm.Statement) {
 	}
 }
 
-func (m createStatementModifier) checkPolicy(ctx context.Context, model *policyTarget) error {
+func (m *createStatementModifier) checkPolicy(ctx context.Context, model *policyTarget) error {
 	values, e := model.toResourceValues()
 	if e != nil {
 		return opa.ErrAccessDenied.WithMessage(`Cannot resolve values for model creation`)

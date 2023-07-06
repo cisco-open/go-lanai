@@ -5,6 +5,7 @@ import data.roles.has_permission
 import data.ops.is
 import data.ownership.is_owner
 import data.ownership.is_shared
+import data.ownership.allow_change_sharing
 import data.ownership.allow_change_owner
 
 # Filters
@@ -37,6 +38,7 @@ allow_write if {
     is("write")
     has_permission("MANAGE")
     allow_change_owner
+    allow_change_sharing
 }
 
 allow_write if {
@@ -44,6 +46,7 @@ allow_write if {
     is("write")
     is_owner
     allow_change_owner
+    allow_change_sharing
 }
 
 allow_write if {
@@ -51,6 +54,7 @@ allow_write if {
     is("write")
     is_shared("write")
     allow_change_owner
+    allow_change_sharing
 }
 
 # Create

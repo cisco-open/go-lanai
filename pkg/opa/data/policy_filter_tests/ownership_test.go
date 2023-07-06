@@ -11,7 +11,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/onsi/gomega"
@@ -35,11 +34,11 @@ var TypicalSharing = constraints.Sharing{
 	Test
  *************************/
 
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		dbtest.EnableDBRecordMode(),
-	)
-}
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
 
 type OwnerTestDI struct {
 	fx.In
@@ -63,6 +62,7 @@ func TestOPAFilterWithOwnership(t *testing.T) {
 		test.GomegaSubTest(SubTestModelBUpdate(di), "TestModelBUpdate"),
 		test.GomegaSubTest(SubTestModelBDelete(di), "TestModelBDelete"),
 		test.GomegaSubTest(SubTestModelBUpdateOwner(di), "TestModelBUpdateOwner"),
+		test.GomegaSubTest(SubTestModelBUpdateSharing(di), "TestModelBUpdateSharing"),
 	)
 }
 
@@ -161,7 +161,7 @@ func SubTestModelBCreateByMap(di *OwnerTestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions(), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		modelMap["ID"] = uuid.New()
 		rs = di.DB.WithContext(ctx).Model(&ModelB{}).Create(shallowCopyMap(modelMap))
-		assertDBResult(ctx, g, rs, "create model with incorrect owner ID", opa.ErrAccessDenied, 1)
+		assertDBResult(ctx, g, rs, "create model with incorrect owner ID", opa.ErrAccessDenied, 0)
 	}
 }
 
@@ -267,6 +267,41 @@ func SubTestModelBUpdateOwner(di *OwnerTestDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestModelBUpdateSharing(di *OwnerTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var id uuid.UUID
+		var rs *gorm.DB
+		// prepare some data
+		id = findIDByOwner(testdata.MockedUserId2)
+		model, e := loadModel[ModelB](ctx, di.DB, id)
+		g.Expect(e).To(Succeed(), "original model should be exists")
+		var OriginalSharing = constraints.Sharing(shallowCopyMap(model.Sharing))
+		var UpdatedSharing = constraints.Sharing(shallowCopyMap(model.Sharing))
+		UpdatedSharing.Share(testdata.MockedUserId1, constraints.SharedPermissionWrite, constraints.SharedPermissionRead)
+
+		// user2 - owner
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions())
+		id = findIDByOwner(testdata.MockedUserId2)
+		rs = di.DB.WithContext(ctx).Model(&ModelB{ID: id}).Updates(&ModelB{Sharing: UpdatedSharing})
+		assertDBResult(ctx, g, rs, "change model's sharing as owner", nil, 1)
+		assertPostOpModel[ModelB](ctx, g, di.DB, id, "change model's sharing as owner", "Sharing", UpdatedSharing)
+
+		// user3 - not owner, shared with "share"
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User3SecurityOptions())
+		id = findIDByOwner(testdata.MockedUserId2)
+		rs = di.DB.WithContext(ctx).Model(&ModelB{ID: id}).Updates(map[string]interface{}{"sharing": UpdatedSharing})
+		assertDBResult(ctx, g, rs, "change model's sharing with shared permission", nil, 1)
+		assertPostOpModel[ModelB](ctx, g, di.DB, id, "change model's sharing with shared permission", "Sharing", UpdatedSharing)
+
+		// user2 - not owner, and not shared with "share
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
+		id = findIDByOwner(testdata.MockedUserId2)
+		rs = di.DB.WithContext(ctx).Model(&ModelB{ID: id}).Updates(&ModelB{Sharing: UpdatedSharing})
+		assertDBResult(ctx, g, rs, "change model's sharing without shared permission", nil, 0)
+		assertPostOpModel[ModelB](ctx, g, di.DB, id, "change model's sharing without shared permission", "Sharing", OriginalSharing)
+	}
+}
+
 /*************************
 	Helpers
  *************************/
@@ -284,7 +319,8 @@ type ModelB struct {
 	Sharing         constraints.Sharing  `opa:"field:share"`
 	OPAPolicyFilter opadata.PolicyFilter `gorm:"-" opa:"type:model"`
 	types.Audit
-	//Shared          []*Shared            `gorm:"foreignKey:ResID;references:ID" opa:"field:shared"`
+	// For testing utils only
+	Shared []*Shared `gorm:"foreignKey:ResID;references:ID" opa:"field:shared"`
 }
 
 func (ModelB) TableName() string {

@@ -18,15 +18,23 @@ type SharedPermission opa.ResourceOperation
 type Sharing map[uuid.UUID][]SharedPermission
 
 // Value implements driver.Valuer
-func (t Sharing) Value() (driver.Value, error) {
-	return pqx.JsonbValue(t)
+func (s Sharing) Value() (driver.Value, error) {
+	return pqx.JsonbValue(s)
 }
 
 // Scan implements sql.Scanner
-func (t *Sharing) Scan(src interface{}) error {
-	return pqx.JsonbScan(src, t)
+func (s *Sharing) Scan(src interface{}) error {
+	return pqx.JsonbScan(src, s)
 }
 
-func (t Sharing) GormDataType() string {
+func (s Sharing) GormDataType() string {
 	return "jsonb"
+}
+
+func (s Sharing) Share(userID uuid.UUID, perms ...SharedPermission) {
+	if len(perms) == 0 {
+		delete(s, userID)
+	} else {
+		s[userID] = perms
+	}
 }

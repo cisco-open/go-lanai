@@ -5,7 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/regoexpr"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"database/sql"
-	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"github.com/open-policy-agent/opa/ast"
@@ -21,8 +20,6 @@ import (
 
 var (
 	typeScanner = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
-	typeValuer = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
-
 	colRefPrefix = ast.Ref{ast.VarTerm("input"), ast.StringTerm("resource")}
 )
 
@@ -291,60 +288,3 @@ func (m *GormPartialQueryMapper) toType(src reflect.Value, typ reflect.Type) (re
 	return src, false
 }
 
-//func (m *GormPartialQueryMapper) toUUID(val interface{}) (uuid.UUID, error) {
-//	switch v := val.(type) {
-//	case string:
-//		parsed, e := uuid.Parse(v)
-//		if e != nil {
-//			return uuid.Nil, e
-//		}
-//		return parsed, nil
-//	case uuid.UUID:
-//		return v, nil
-//	case *uuid.UUID:
-//		if v != nil {
-//			return *v, nil
-//		}
-//		return uuid.Nil, nil
-//	}
-//	return uuid.Nil, ErrQueryTranslation.WithMessage(`unable to convert [%v] to UUID`, val)
-//}
-//
-//func (m *GormPartialQueryMapper) toUUIDArray(val interface{}) (pqx.UUIDArray, error) {
-//	switch v := val.(type) {
-//	case []string:
-//		uuids := pqx.UUIDArray(make([]uuid.UUID, len(v)))
-//		for i := range v {
-//			parsed, e := uuid.Parse(v[i])
-//			if e != nil {
-//				return nil, e
-//			}
-//			uuids[i] = parsed
-//		}
-//	case []uuid.UUID:
-//		return v, nil
-//	case []*uuid.UUID:
-//		uuids := pqx.UUIDArray(make([]uuid.UUID, 0, len(v)))
-//		for _, ptr := range v {
-//			if ptr != nil {
-//				uuids = append(uuids, *ptr)
-//			}
-//		}
-//	case string:
-//		parsed, e := uuid.Parse(v)
-//		if e != nil {
-//			return nil, e
-//		}
-//		return pqx.UUIDArray{parsed}, nil
-//	case uuid.UUID:
-//		return pqx.UUIDArray{v}, nil
-//	case *uuid.UUID:
-//		if v != nil {
-//			return pqx.UUIDArray{*v}, nil
-//		}
-//	}
-//	if val == nil {
-//		return pqx.UUIDArray{}, nil
-//	}
-//	return nil, ErrQueryTranslation.WithMessage(`unable to convert [%v] to UUID array`, val)
-//}

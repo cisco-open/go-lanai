@@ -8,6 +8,7 @@ is_owner if {
     input.resource.owner_id == input.auth.user_id
 }
 
+# Check Ownership Updates
 # owner has permission
 allow_change_owner if {
     has_permission("MANAGE")

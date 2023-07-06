@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"reflect"
@@ -11,7 +12,7 @@ import (
 
 var logger = log.New("OPA.AST")
 
-type TranslateOptions[EXPR any]  func(opts *TranslateOption[EXPR])
+type TranslateOptions[EXPR any] func(opts *TranslateOption[EXPR])
 type TranslateOption[EXPR any] struct {
 	Translator QueryTranslator[EXPR]
 }
@@ -22,9 +23,6 @@ type TranslateOption[EXPR any] struct {
 // 2. When PartialQueries.Queries is not empty but contains nil body, it means access is GRANTED regardless any unknown values
 func TranslatePartialQueries[EXPR any](ctx context.Context, pq *rego.PartialQueries, opts ...TranslateOptions[EXPR]) ([]EXPR, error) {
 	logger.WithContext(ctx).Debugf("Queries: %v", pq)
-	if len(pq.Queries) == 0 {
-		return nil, opa.ErrQueriesNotResolved
-	}
 
 	opt := TranslateOption[EXPR]{}
 	for _, fn := range opts {
@@ -34,16 +32,25 @@ func TranslatePartialQueries[EXPR any](ctx context.Context, pq *rego.PartialQuer
 		return nil, ParsingError.WithMessage("query translator is nil")
 	}
 
-	queries := NormalizeQueries(ctx, pq.Queries)
-	if len(queries) == 0 {
+	// normalize
+	queries, changed := NormalizeQueries(ctx, pq.Queries)
+	if changed {
+		logger.WithContext(ctx).Debugf("Normalized Queries: %v", queries)
+	}
+	// If queries is nil, it means any unknowns can satisfy.
+	// However, if queries is empty, it means no unknowns would satisfy
+	switch {
+	case queries == nil:
 		return []EXPR{}, nil
+	case len(queries) == 0:
+		return nil, opa.ErrQueriesNotResolved
 	}
 
 	exprs := make([]EXPR, 0, len(queries))
 	for _, body := range queries {
-		logger.WithContext(ctx).Debugf("Query: %v", body)
+		logger.WithContext(ctx).Debugf("Parsing Query: %v", body)
 		ands := make([]EXPR, 0, 5)
-		for _ ,expr := range body {
+		for _, expr := range body {
 			if qExpr, e := TranslateExpression(ctx, expr, &opt); e != nil {
 				return nil, e
 			} else if !reflect.ValueOf(qExpr).IsZero() {
@@ -56,41 +63,97 @@ func TranslatePartialQueries[EXPR any](ctx context.Context, pq *rego.PartialQuer
 }
 
 // NormalizeQueries remove duplicate queries and duplicate expressions in each query
-// TODO we should further normalizing queries by look at equalities:
-// 		e.g. "value1 = input.resource.field AND value2 = input.resource.field" would always yield "false"
-func NormalizeQueries(ctx context.Context, queries []ast.Body) []ast.Body {
-	ret := make([]ast.Body, 0, len(queries))
-	defer func() {
-		if len(queries) != len(ret) {
-			logger.WithContext(ctx).Debugf("Normalized Queries %d -> %d", len(queries), len(ret))
-		}
-	}()
+func NormalizeQueries(ctx context.Context, queries []ast.Body) (ret []ast.Body, changed bool) {
+	ret = make([]ast.Body, 0, len(queries))
 	bodyHash := map[int]struct{}{}
 	for _, body := range queries {
 		if body == nil {
 			// Because queries are "OR", if any query is nil, it means the entire queries always yield "true".
 			// This means OPA can conclude the requested policy query without any unknowns
-			return nil
+			return nil, true
 		}
 
 		// check duplicates
 		if _, ok := bodyHash[body.Hash()]; ok {
+			changed = true
 			continue
 		}
 		bodyHash[body.Hash()] = struct{}{}
 
-		// go through expressions
-		exprs := make([]*ast.Expr, 0, len(body))
-		exprHash := map[int]struct{}{}
-		for _ ,expr := range body {
-			if _, ok := exprHash[expr.Hash()]; !ok {
-				exprHash[expr.Hash()] = struct{}{}
-				exprs = append(exprs, expr)
-			}
+		// normalize body
+		if exprs, ok := NormalizeExpressions(ctx, body); len(exprs) != 0 {
+			ret = append(ret, exprs)
+			changed = changed || ok
+		} else {
+			changed = true
 		}
-		ret = append(ret, exprs)
 	}
-	return ret
+	return
+}
+
+// NormalizeExpressions remove duplicate expressions in query
+func NormalizeExpressions(ctx context.Context, body ast.Body) (exprs ast.Body, changed bool) {
+	exprs = make([]*ast.Expr, 0, len(body))
+	if HasControversialExpressions(ctx, body) {
+		logger.WithContext(ctx).Debugf("Controversial Query: %v", body)
+		return exprs, true
+	}
+	exprHash := map[int]struct{}{}
+	for _, expr := range body {
+		hash := calculateHash(expr)
+		if _, ok := exprHash[hash]; !ok {
+			exprHash[hash] = struct{}{}
+			exprs = append(exprs, expr)
+		} else {
+			changed = true
+		}
+	}
+	return
+}
+
+// HasControversialExpressions analyze given expression and return true if it contains controversial expressions:
+// Examples:
+// - "value1 = input.resource.field AND value2 = input.resource.field"
+// - "value1 = input.resource.field AND value1 != input.resource.field"
+func HasControversialExpressions(_ context.Context, body []*ast.Expr) (ret bool) {
+	equals := map[int]int{}
+	notEquals := map[int]utils.Set{}
+	for _, expr := range body {
+		ref, val, op, ok := resolveThreeTermsOp(expr)
+		if !ok || !ref.IsGround() {
+			continue
+		}
+		// only handle equalities
+		negate := false
+		switch {
+		case OpEqual.Equal(op) || OpEq.Equal(op):
+			negate = expr.Negated
+		case OpNeq.Equal(op):
+			negate = !expr.Negated
+		default:
+			continue
+		}
+		// compare values by hashes
+		rHash := ref.Hash()
+		vHash := val.Hash()
+		if negate {
+			if _, ok := notEquals[rHash]; !ok {
+				notEquals[rHash] = utils.NewSet()
+			}
+			notEquals[rHash].Add(vHash)
+		} else {
+			// var == v1 AND var == v2
+			if v, ok := equals[rHash]; ok && v != vHash {
+				return true
+			}
+			equals[rHash] = vHash
+		}
+		// var == v1 AND var != v1
+		if notEquals[rHash].Has(equals[rHash]) {
+			return true
+		}
+	}
+	return false
 }
 
 func TranslateExpression[EXPR any](ctx context.Context, astExpr *ast.Expr, opt *TranslateOption[EXPR]) (ret EXPR, err error) {
@@ -111,11 +174,10 @@ func TranslateExpression[EXPR any](ctx context.Context, astExpr *ast.Expr, opt *
 }
 
 func TranslateOperationExpr[EXPR any](ctx context.Context, astExpr *ast.Expr, opt *TranslateOption[EXPR]) (ret EXPR, err error) {
-	op := astExpr.Operator()
 	operands := astExpr.Operands()
 	switch len(operands) {
 	case 2:
-		ret, err = TranslateThreeTermsOp(ctx, op, operands, opt)
+		ret, err = TranslateThreeTermsOp(ctx, astExpr, opt)
 	default:
 		err = ParsingError.WithMessage("Unsupported Rego operation: %v", astExpr)
 	}
@@ -129,21 +191,12 @@ func TranslateOperationExpr[EXPR any](ctx context.Context, astExpr *ast.Expr, op
 	return
 }
 
-func TranslateThreeTermsOp[EXPR any](ctx context.Context, op ast.Ref, operands []*ast.Term, opt *TranslateOption[EXPR]) (ret EXPR, err error) {
+func TranslateThreeTermsOp[EXPR any](ctx context.Context, astExpr *ast.Expr, opt *TranslateOption[EXPR]) (ret EXPR, err error) {
 	// format "op(Ref, Value)", "Ref op Value"
-	var ref ast.Ref
-	var val ast.Value
 	var zero EXPR
-	for _, term := range operands {
-		switch v := term.Value.(type) {
-		case ast.Ref:
-			ref = v
-		default:
-			val = v
-		}
-	}
-	if ref == nil || val == nil {
-		return zero, ParsingError.WithMessage(`invalid Rego operation format: expected "op(Ref, Value)", but got %v(%v)`, op, operands)
+	ref, val, op, ok := resolveThreeTermsOp(astExpr)
+	if !ok {
+		return zero, ParsingError.WithMessage(`invalid Rego operation format: expected "op(Ref, Value)", but got %v(%v)`, astExpr.OperatorTerm(), astExpr.Operands())
 	}
 
 	// resolve value
@@ -160,6 +213,39 @@ func TranslateThreeTermsOp[EXPR any](ctx context.Context, op ast.Ref, operands [
 	ground := ref.GroundPrefix()
 	op = OpIn
 	return opt.Translator.Comparison(ctx, op, ground, value)
+}
+
+/**********************
+	Helpers
+ **********************/
+
+// note: when we calculate hash, we don't want to consider its Index
+func calculateHash(astExpr *ast.Expr) int {
+	expr := astExpr.Copy()
+	expr.Index = 0
+	return expr.Hash()
+}
+
+func resolveThreeTermsOp(astExpr *ast.Expr) (ref ast.Ref, val ast.Value, op ast.Ref, ok bool) {
+	// format "op(Ref, Value)", "Ref op Value"
+	op = astExpr.Operator()
+	operands := astExpr.Operands()
+	if op == nil || len(operands) != 2 {
+		return nil, nil, nil, false
+	}
+
+	for _, term := range operands {
+		switch v := term.Value.(type) {
+		case ast.Ref:
+			ref = v
+		default:
+			val = v
+		}
+	}
+	if ref == nil || val == nil {
+		return nil, nil, nil, false
+	}
+	return ref, val, op, true
 }
 
 type illegalResolver struct{}

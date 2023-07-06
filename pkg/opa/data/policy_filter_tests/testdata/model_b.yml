@@ -46,13 +46,13 @@
     e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "delete", "write", "read" ]
     9a901c91-a3d6-4d39-9adf-34e74bb32de2: ["read"]
 
-###### For User 2 - allow user3 to write, allow user 1 to read ######
+###### For User 2 - allow user3 to share, allow user 1 to read ######
 - ID: "1ebfda99-a994-4526-9c5d-27892f8f1079"
   OwnerName: "user2"
   Value: "B-1 U-2"
   OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
   Sharing:
-    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read" ]
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read", "share" ]
     595959e4-8803-4ab1-8acf-acfb92bb7322: [ "read" ]
 
 - ID: "8aa5b290-ff15-400a-87a7-cfc89065cbca"
@@ -60,7 +60,7 @@
   Value: "B-2 U-2"
   OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
   Sharing:
-    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read" ]
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read", "share" ]
     595959e4-8803-4ab1-8acf-acfb92bb7322: [ "read" ]
 
 - ID: "617aae28-c981-4988-9496-9bd1063b0676"
@@ -68,5 +68,5 @@
   Value: "B-3 U-2"
   OwnerID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
   Sharing:
-    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read" ]
+    e212a869-b636-4dc6-83db-e1ccd59e5e0e: [ "write", "read", "share" ]
     595959e4-8803-4ab1-8acf-acfb92bb7322: [ "read" ]

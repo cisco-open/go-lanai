@@ -38,7 +38,7 @@ const (
 type opaTag struct {
 	InputField string
 	ResType    string
-	Policy     string
+	Policy   string
 	Mode       policyMode
 }
 

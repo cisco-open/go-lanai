@@ -198,7 +198,7 @@ func SubTestModelCreateByMap(di *TestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User2SecurityOptions(), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		modelMap["ID"] = uuid.New()
 		rs = di.DB.WithContext(ctx).Model(&ModelA{}).Create(shallowCopyMap(modelMap))
-		assertDBResult(ctx, g, rs, "create model without correct owner", opa.ErrAccessDenied, 1)
+		assertDBResult(ctx, g, rs, "create model without correct owner", opa.ErrAccessDenied, 0)
 		g.Expect(rs.Error).To(HaveOccurred(), "create model by non tenant member should return error")
 	}
 }
@@ -439,13 +439,20 @@ func assertPostOpModel[T any](ctx context.Context, g *gomega.WithT, db *gorm.DB,
 }
 
 func assertDBResult(_ context.Context, g *gomega.WithT, rs *gorm.DB, op string, expectedErr error, expectedRows int) {
+	defer func() {
+		g.Expect(rs.RowsAffected).To(BeNumerically("==", expectedRows), "%s should affect %d rows", op, expectedRows)
+	}()
+	// if expected rows is 0, but actual result is opa.ErrAccessDenied, we consider it as acceptable behavior
 	if expectedErr != nil {
 		g.Expect(rs.Error).To(HaveOccurred(), "%s should return error", op)
 		g.Expect(errors.Is(rs.Error, expectedErr)).To(BeTrue(), "%s should return correct error", op)
 		return
+	} else if expectedRows == 0 && rs.Error != nil {
+		g.Expect(errors.Is(rs.Error, opa.ErrAccessDenied)).To(BeTrue(), "%s should return correct error", op)
+		return
+	} else {
+		g.Expect(rs.Error).To(Succeed(), "%s should return no error", op)
 	}
-	g.Expect(rs.Error).To(Succeed(), "%s should return no error", op)
-	g.Expect(rs.RowsAffected).To(BeNumerically("==", expectedRows), "%s should affect %d rows", op, expectedRows)
 }
 
 func assertOwnership[T any](g *gomega.WithT, ownerId uuid.UUID, op string, models ...*T) {
