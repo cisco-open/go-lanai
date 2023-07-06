@@ -6,6 +6,7 @@ execs:
     port: 8080
   migrate:
     main: cmd/europa/migrate.go
+    type: migrator
   seeder:
     main: cmd/europa/seeder.go
 
