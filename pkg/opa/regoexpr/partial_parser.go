@@ -53,6 +53,7 @@ func TranslatePartialQueries[EXPR any](ctx context.Context, pq *rego.PartialQuer
 		ands := make([]EXPR, 0, 5)
 		for _, expr := range body {
 			if qExpr, e := TranslateExpression(ctx, expr, &opt); e != nil {
+				logger.WithContext(ctx).Debugf("%v", e)
 				return nil, e
 			} else if !reflect.ValueOf(qExpr).IsZero() {
 				ands = append(ands, qExpr)
@@ -163,13 +164,8 @@ func TranslateExpression[EXPR any](ctx context.Context, astExpr *ast.Expr, opt *
 	switch {
 	case astExpr.OperatorTerm() != nil:
 		ret, err = TranslateOperationExpr(ctx, astExpr, opt)
-	case astExpr.IsEquality():
-		ast.WalkTerms(astExpr, func(term *ast.Term) bool {
-			logger.WithContext(ctx).Debugf("Term: %T\n", term.Value)
-			return true
-		})
-		var zero EXPR
-		return zero, ParsingError.WithMessage("unsupported Rego expression: %v", astExpr)
+	default:
+		return ret, ParsingError.WithMessage("unsupported Rego expression: %v", astExpr)
 	}
 	return
 }
@@ -180,7 +176,7 @@ func TranslateOperationExpr[EXPR any](ctx context.Context, astExpr *ast.Expr, op
 	case 2:
 		ret, err = TranslateThreeTermsOp(ctx, astExpr, opt)
 	default:
-		err = ParsingError.WithMessage("Unsupported Rego operation: %v", astExpr)
+		err = ParsingError.WithMessage("unsupported Rego operation: %v", astExpr)
 	}
 	if err != nil {
 		return
@@ -196,8 +192,11 @@ func TranslateThreeTermsOp[EXPR any](ctx context.Context, astExpr *ast.Expr, opt
 	// format "op(Ref, Value)", "Ref op Value"
 	var zero EXPR
 	ref, val, op, ok := resolveThreeTermsOp(astExpr)
-	if !ok {
+	switch {
+	case !ok:
 		return zero, ParsingError.WithMessage(`invalid Rego operation format: expected "op(Ref, Value)", but got %v(%v)`, astExpr.OperatorTerm(), astExpr.Operands())
+	case op.HasPrefix(OpInternal):
+		return zero, ParsingError.WithMessage(`unsupported Rego operator [%v]`, op)
 	}
 
 	// resolve value

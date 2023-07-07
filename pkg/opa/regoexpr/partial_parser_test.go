@@ -2,11 +2,13 @@ package regoexpr
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"errors"
 	"fmt"
 	"github.com/onsi/gomega"
-	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -27,12 +29,18 @@ const (
 )
 
 var DefaultUnknowns = []string{"input.list", "input.map", "input.map_list", "input.single"}
+var DefaultInput = map[string]interface{}{
+	"known_list":     []string{"value1", "value2"},
+	"known_map":      map[string]string{"key1": "value1", "key2": "value2"},
+	"known_map_list": map[string][]string{"key1": {"value1"}, "key2": {"value2"}},
+	"known_single":   "value",
+}
 
 /*************************
 	Test
  *************************/
 
-func TestPartialParser(t *testing.T) {
+func TestParseQueries(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		test.GomegaSubTest(SubTestEqual(), "TestEqual"),
 		test.GomegaSubTest(SubTestNotEqual(), "TestNotEqual"),
@@ -41,6 +49,8 @@ func TestPartialParser(t *testing.T) {
 		test.GomegaSubTest(SubTestContains(), "TestContains"),
 		test.GomegaSubTest(SubTestAnd(), "TestAnd"),
 		test.GomegaSubTest(SubTestMultiQueries(), "TestMultiQueries"),
+		test.GomegaSubTest(SubTestAccessDenied(), "TestAccessDenied"),
+		test.GomegaSubTest(SubTestAccessGranted(), "TestAccessGranted"),
 	)
 }
 
@@ -53,6 +63,15 @@ func TestNormalizeQueries(t *testing.T) {
 	)
 }
 
+func TestErrorHandling(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		test.GomegaSubTest(SubTestInternalFunctions(), "TestInternalFunctions"),
+		test.GomegaSubTest(SubTestNonOperationExpr(), "TestSingleTermOperation"),
+		test.GomegaSubTest(SubTestNonThreeTermOperation(), "TestNonThreeTermOperation"),
+		test.GomegaSubTest(SubTestUnresolvableValues(), "TestUnresolvableValue"),
+	)
+}
+
 /*************************
 	Sub Tests
  *************************/
@@ -60,7 +79,7 @@ func TestNormalizeQueries(t *testing.T) {
 func SubTestEqual() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const rules = `allow if input.single = "target"`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs, Expect("input.single", "eq", TargetValue))
 	}
 }
@@ -68,7 +87,7 @@ func SubTestEqual() test.GomegaSubTestFunc {
 func SubTestNotEqual() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const rules = `allow if input.single != "target"`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs, Expect("input.single", "neq", TargetValue))
 	}
 }
@@ -76,7 +95,7 @@ func SubTestNotEqual() test.GomegaSubTestFunc {
 func SubTestNegate() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const rules = `allow if not input.single = "target"`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs, Expect("input.single", "neq", TargetValue))
 	}
 }
@@ -84,7 +103,7 @@ func SubTestNegate() test.GomegaSubTestFunc {
 func SubTestComparison() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const rules = `allow if input.single > 0`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs, Expect("input.single", "gt", 0))
 	}
 }
@@ -92,7 +111,7 @@ func SubTestComparison() test.GomegaSubTestFunc {
 func SubTestContains() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const rules = `allow if input.list[_] = "target"`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs, Expect("input.list", "internal.in", TargetValue))
 	}
 }
@@ -104,7 +123,7 @@ func SubTestAnd() test.GomegaSubTestFunc {
 			input.map["map-key"] = "target"
 			input.map_list["map-key"][_] = "target"
 		}`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs, ExpectAnd(
 			Expect(`input.list`, "internal.in", TargetValue),
 			Expect(`input.map["map-key"]`, "eq", TargetValue),
@@ -117,16 +136,22 @@ func SubTestMultiQueries() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const rules = `allow if {
 			input.list[_] = "target"
+			input.known_list[_] = "value1"
+		}
+		allow if {
+			input.single = "target"
+			input.known_single = "won't match"
 		}
 		allow if {
 			input.map["map-key"] = "target"
+			input.known_single = "value"
 		}
 		allow if {
 			input.list[_] = "target"
 			input.map["map-key"] = "target"
 			input.map_list["map-key"][_] = "target"
 		}`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
 			Expect(`input.list`, "internal.in", TargetValue),
 			Expect(`input.map["map-key"]`, "eq", TargetValue),
@@ -136,6 +161,47 @@ func SubTestMultiQueries() test.GomegaSubTestFunc {
 				Expect(`input.map_list["map-key"]`, "internal.in", TargetValue),
 			),
 		)
+	}
+}
+
+func SubTestAccessDenied() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const rules = `allow if {
+			input.list[_] = "target"
+			input.known_single = "won't match"
+		}
+		allow if {
+			input.single = "target"
+			input.known_list[_] = "won't match"
+		}
+		allow if {
+			input.list[_] = "target"
+			input.map["map-key"] = "target"
+			input.known_map_list["map-key"][_] = "won't match'"
+		}`
+		_, e := TranslatePartial(ctx, g, rules, "allow")
+		g.Expect(e).To(gomega.HaveOccurred(), "translating partial queries should return error")
+		g.Expect(errors.Is(e, opa.ErrQueriesNotResolved)).To(gomega.BeTrue(), "translating partial queries should return ErrQueriesNotResolved")
+	}
+}
+
+func SubTestAccessGranted() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const rules = `allow if {
+			input.list[_] = "target"
+			input.known_single = "value"
+		}
+		allow if {
+			input.known_list[_] = "value1"
+		}
+		allow if {
+			input.list[_] = "target"
+			input.map["map-key"] = "target"
+			input.known_map_list["key1"][_] = "value1"
+		}`
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
+		g.Expect(exprs).ToNot(gomega.BeNil(), "translated expressions should not be nil")
+		g.Expect(exprs).To(gomega.HaveLen(0), "granted access should be a empty expressions list")
 	}
 }
 
@@ -152,15 +218,14 @@ func SubTestDuplicateQueries() test.GomegaSubTestFunc {
 			input.map["map-key"] = "target"
 			input.map_list["map-key"][_] = "target"
 		}`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
-		// Note: for some reason, the query with duplicates always appears at the end.
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
+			Expect(`input.single`, "eq", TargetValue),
 			ExpectAnd(
 				Expect(`input.list`, "internal.in", TargetValue),
 				Expect(`input.map["map-key"]`, "eq", TargetValue),
 				Expect(`input.map_list["map-key"]`, "internal.in", TargetValue),
 			),
-			Expect(`input.single`, "eq", TargetValue),
 		)
 	}
 }
@@ -175,13 +240,12 @@ func SubTestDuplicateExprs() test.GomegaSubTestFunc {
 		allow if {
 			input.list[_] = "target"
 		}`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
-		// Note: for some reason, the query with duplicates always appears at the end.
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
 			Expect(`input.list`, "internal.in", TargetValue),
 			ExpectAnd(
-				Expect(`input.single`, "eq", TargetValue),
 				Expect(`input.list`, "internal.in", TargetValue),
+				Expect(`input.single`, "eq", TargetValue),
 			),
 		)
 	}
@@ -198,11 +262,11 @@ func SubTestMultiValuesOnUnknown() test.GomegaSubTestFunc {
 			input.list[_] = "target"
 			input.list[_] = "another"
 		}`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
 			ExpectAnd(
-				Expect(`input.list`, "internal.in", TargetValue),
 				Expect(`input.list`, "internal.in", "another"),
+				Expect(`input.list`, "internal.in", TargetValue),
 			),
 		)
 	}
@@ -221,14 +285,82 @@ func SubTestEqualAndNotEqual() test.GomegaSubTestFunc {
 			input.list[_] = "target"
 			input.single != "another"
 		}`
-		exprs := TranslatePartial(ctx, g, rules, "allow")
+		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
 			ExpectAnd(
-				Expect(`input.single`, "eq", TargetValue),
 				Expect(`input.list`, "internal.in", TargetValue),
+				Expect(`input.single`, "eq", TargetValue),
 				Expect(`input.single`, "neq", "another"),
 			),
 		)
+	}
+}
+
+func SubTestInternalFunctions() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const rules = `allow if {
+			"target" in input.list
+		}
+		allow if {
+			input.single = "target"
+		}`
+		_, e := TranslatePartial(ctx, g, rules, "allow")
+		g.Expect(e).To(gomega.HaveOccurred(), "translating partial queries should return error")
+		g.Expect(errors.Is(e, ParsingError)).To(gomega.BeTrue(), "translating partial queries should return ParsingError")
+	}
+}
+
+func SubTestNonOperationExpr() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const rules = `allow if {
+			with_default
+		}
+		default with_default = false
+		with_default if input.single = "target"`
+		_, e := TranslatePartial(ctx, g, rules, "allow")
+		g.Expect(e).To(gomega.HaveOccurred(), "translating partial queries should return error")
+		g.Expect(errors.Is(e, ParsingError)).To(gomega.BeTrue(), "translating partial queries should return ParsingError")
+	}
+}
+
+func SubTestNonThreeTermOperation() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const rules = `allow if {
+			substring(input.single, 2, 3) = "get"
+		}`
+		_, e := TranslatePartial(ctx, g, rules, "allow")
+		g.Expect(e).To(gomega.HaveOccurred(), "translating partial queries should return error")
+		g.Expect(errors.Is(e, ParsingError)).To(gomega.BeTrue(), "translating partial queries should return ParsingError")
+	}
+}
+
+func SubTestUnresolvableValues() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		const rules1 = `allow {
+			input.map = call(input.single)
+		}
+		call(v) := result { result := {"foo": "bar"} }`
+		_, e = TranslatePartial(ctx, g, rules1, "allow")
+		g.Expect(e).To(gomega.HaveOccurred(), "translating partial queries should return error")
+		g.Expect(errors.Is(e, ParsingError)).To(gomega.BeTrue(), "translating partial queries should return ParsingError")
+
+		const rules2 = `allow {
+			input.map = call(input.single)
+		}
+		call(v) := result { result := {"foo": v} }`
+		_, e = TranslatePartial(ctx, g, rules2, "allow")
+		g.Expect(e).To(gomega.HaveOccurred(), "translating partial queries should return error")
+		g.Expect(errors.Is(e, ParsingError)).To(gomega.BeTrue(), "translating partial queries should return ParsingError")
+
+		const rules3 = `allow {
+			input.map = with_default
+		}
+		default with_default = {}
+		with_default := {"foo":"bar"} { input.single = "target" }`
+		_, e = TranslatePartial(ctx, g, rules3, "allow")
+		g.Expect(e).To(gomega.HaveOccurred(), "translating partial queries should return error")
+		g.Expect(errors.Is(e, ParsingError)).To(gomega.BeTrue(), "translating partial queries should return ParsingError")
 	}
 }
 
@@ -241,6 +373,23 @@ type ExpectedExpr struct {
 	Ref   string
 	Value interface{}
 	Op    string
+}
+
+func (ee *ExpectedExpr) Compare(another *ExpectedExpr) int {
+	switch ee.Op {
+	case OpAnd, OpOr:
+		if ret := len(ee.Exprs) - len(another.Exprs); ret != 0 {
+			return ret
+		}
+	default:
+		if ret := strings.Compare(ee.Ref, another.Ref); ret != 0 {
+			return ret
+		}
+	}
+	if ret := strings.Compare(ee.Op, another.Op); ret != 0 {
+		return ret
+	}
+	return 0
 }
 
 func Expect(ref, op string, value interface{}) *ExpectedExpr {
@@ -260,26 +409,39 @@ func ExpectAnd(exprs ...*ExpectedExpr) *ExpectedExpr {
 
 func AssertExpressions(ctx context.Context, g *gomega.WithT, exprs []TestExpression, expected ...*ExpectedExpr) {
 	g.Expect(exprs).To(gomega.HaveLen(len(expected)), "expressions should have correct count")
-	for i := range exprs {
-		expect := expected[i]
-		if expect.Op != OpAnd {
-			expect = ExpectAnd(expect)
+	for i := range expected {
+		if expected[i].Op != OpAnd {
+			expected[i] = ExpectAnd(expected[i])
 		}
-		exprs[i].Assert(ctx, g, expect)
+	}
+	sort.SliceStable(expected, func(i, j int) bool {
+		return expected[i].Compare(expected[j]) < 0
+	})
+	for i := range exprs {
+		exprs[i].Assert(ctx, g, expected[i])
 	}
 }
 
-func TranslatePartial(ctx context.Context, g *gomega.WithT, rules, queryName string, unknowns ...string) []TestExpression {
+func MustTranslatePartial(ctx context.Context, g *gomega.WithT, rules, queryName string, unknowns ...string) []TestExpression {
+	exprs, e := TranslatePartial(ctx, g, rules, queryName, unknowns...)
+	g.Expect(e).To(gomega.Succeed(), "translating partial queries should not return error")
+	return exprs
+}
+
+func TranslatePartial(ctx context.Context, g *gomega.WithT, rules, queryName string, unknowns ...string) ([]TestExpression, error) {
 	pq := ExecutePartial(ctx, g, rules, queryName, unknowns...)
 	exprs, e := TranslatePartialQueries(ctx, pq, func(opts *TranslateOption[TestExpression]) {
 		opts.Translator = TestQueryTranslator{}
 	})
-	g.Expect(e).To(gomega.Succeed(), "translating partial queries should not return error")
-	fmt.Printf("Exprs: %v\n", &TestCompositeExpr{
-		Exprs: exprs,
-		Op:    OpOr,
+	if e != nil {
+		return nil, e
+	}
+
+	sort.SliceStable(exprs, func(i, j int) bool {
+		return exprs[i].Compare(exprs[j]) < 0
 	})
-	return exprs
+	fmt.Printf("Exprs: %v\n", &TestCompositeExpr{Exprs: exprs, Op: OpOr})
+	return exprs, nil
 }
 
 func ExecutePartial(ctx context.Context, g *gomega.WithT, rules, queryName string, unknowns ...string) *rego.PartialQueries {
@@ -292,6 +454,7 @@ func ExecutePartial(ctx context.Context, g *gomega.WithT, rules, queryName strin
 	prepared, e := rego.New(
 		rego.Query(query),
 		rego.Unknowns(unknowns),
+		rego.Input(DefaultInput),
 		rego.Module(ModuleFileName, module),
 	).PrepareForPartial(ctx)
 	g.Expect(e).To(gomega.Succeed(), "preparing partial should not return error")
@@ -300,130 +463,4 @@ func ExecutePartial(ctx context.Context, g *gomega.WithT, rules, queryName strin
 	g.Expect(e).To(gomega.Succeed(), "partial evaluation should not return error")
 	g.Expect(pq).ToNot(gomega.BeNil(), "partial queries should not be nil")
 	return pq
-}
-
-/****************************
-	Test Query Translator
- ****************************/
-
-const (
-	OpOr    = `OR`
-	OpAnd   = `AND`
-	OpNotIn = `internal.not_in`
-)
-
-type TestExpression interface {
-	Assert(ctx context.Context, g *gomega.WithT, expected *ExpectedExpr)
-}
-
-type TestExpr struct {
-	Ref   string
-	Value interface{}
-	Op    string
-}
-
-func (expr *TestExpr) Assert(_ context.Context, g *gomega.WithT, expected *ExpectedExpr) {
-	g.Expect(expected.Exprs).To(gomega.HaveLen(0), "expect %s, but got comparison expression [%v]", expected.Op, expr)
-	g.Expect(expr.Op).To(gomega.BeEquivalentTo(expected.Op), "op should be correct")
-	g.Expect(expr.Ref).To(gomega.BeEquivalentTo(expected.Ref), "ref should be correct")
-	g.Expect(expr.Value).To(gomega.BeEquivalentTo(expected.Value), "value should be correct")
-}
-
-func (expr *TestExpr) String() string {
-	return fmt.Sprintf("%s %s '%v'", expr.Ref, expr.Op, expr.Value)
-}
-
-type TestCompositeExpr struct {
-	Exprs []TestExpression
-	Op    string
-}
-
-func (expr *TestCompositeExpr) Assert(ctx context.Context, g *gomega.WithT, expected *ExpectedExpr) {
-	g.Expect(expr.Exprs).To(gomega.HaveLen(len(expected.Exprs)), "composite expressions should have correct length")
-	g.Expect(expr.Op).To(gomega.BeEquivalentTo(expected.Op), "op should be correct")
-	for i := range expr.Exprs {
-		expr.Exprs[i].Assert(ctx, g, expected.Exprs[i])
-	}
-}
-
-func (expr *TestCompositeExpr) String() (ret string) {
-	strs := make([]string, len(expr.Exprs))
-	for i := range expr.Exprs {
-		strs[i] = fmt.Sprint(expr.Exprs[i])
-	}
-	switch expr.Op {
-	case OpOr:
-		ret = "(" + strings.Join(strs, " "+expr.Op+" ") + ")"
-	case OpAnd:
-		ret = strings.Join(strs, " "+expr.Op+" ")
-	}
-	return
-}
-
-type TestQueryTranslator struct{}
-
-func (t TestQueryTranslator) Negate(ctx context.Context, expr TestExpression) TestExpression {
-	switch v := expr.(type) {
-	case *TestExpr:
-		return t.negate(v)
-	case *TestCompositeExpr:
-		exprs := make([]TestExpression, len(v.Exprs))
-		for i := range v.Exprs {
-			exprs[i] = t.Negate(ctx, v.Exprs[i])
-		}
-		op := OpAnd
-		if v.Op == OpAnd {
-			op = OpOr
-		}
-		return &TestCompositeExpr{
-			Exprs: exprs,
-			Op:    op,
-		}
-	}
-	return expr
-}
-
-func (t TestQueryTranslator) And(_ context.Context, exprs ...TestExpression) TestExpression {
-	return &TestCompositeExpr{
-		Exprs: exprs,
-		Op:    OpAnd,
-	}
-}
-
-func (t TestQueryTranslator) Or(_ context.Context, exprs ...TestExpression) TestExpression {
-	return &TestCompositeExpr{
-		Exprs: exprs,
-		Op:    OpOr,
-	}
-}
-
-func (t TestQueryTranslator) Comparison(_ context.Context, op ast.Ref, colRef ast.Ref, val interface{}) (ret TestExpression, err error) {
-	return &TestExpr{
-		Ref:   colRef.String(),
-		Value: val,
-		Op:    op.String(),
-	}, nil
-}
-
-func (t TestQueryTranslator) negate(expr *TestExpr) TestExpression {
-	newExpr := *expr
-	switch expr.Op {
-	case OpEq.String(), OpEqual.String():
-		newExpr.Op = OpNeq.String()
-	case OpNeq.String():
-		newExpr.Op = OpEq.String()
-	case OpLte.String():
-		newExpr.Op = OpGt.String()
-	case OpLt.String():
-		newExpr.Op = OpGte.String()
-	case OpGte.String():
-		newExpr.Op = OpLt.String()
-	case OpGt.String():
-		newExpr.Op = OpLte.String()
-	case OpIn.String():
-		newExpr.Op = OpNotIn
-	default:
-		newExpr.Op = "unsupported negation"
-	}
-	return &newExpr
 }
