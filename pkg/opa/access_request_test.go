@@ -3,12 +3,15 @@ package opa
 import (
 	"context"
 	opatestserver "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test/server"
+	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/testdata"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"errors"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"net/http"
 	"testing"
 )
 
@@ -33,6 +36,7 @@ func TestAllowRequest(t *testing.T) {
 		apptest.WithDI(di),
 		test.GomegaSubTest(SubTestRequestWithPermission(di), "TestRequestWithPermission"),
 		test.GomegaSubTest(SubTestRequestWithoutPermission(di), "TestRequestWithoutPermission"),
+		test.GomegaSubTest(SubTestRequestWithoutPolicy(di), "TestRequestWithoutPolicy"),
 	)
 }
 
@@ -40,48 +44,64 @@ func TestAllowRequest(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestRequestWithPermission(di *testDI) test.GomegaSubTestFunc {
+func SubTestRequestWithPermission(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *http.Request
 		var e error
-		// member admin
-		ctx = sectest.ContextWithSecurity(ctx, memberAdminOptions())
-		// member admin - can read
-		e = AllowResource(ctx, "poc", OpWrite, func(res *Resource) {
-			res.TenantID = TenantId
-			res.OwnerID = OwnerUserId
-			res.TenantPath = []string{RootTenantId, TenantId}
-			res.ExtraData["debug"] = "test"
+		// admin - can read
+		ctx = sectest.ContextWithSecurity(ctx, MemberAdminOptions())
+		req = MockRequest(ctx, http.MethodGet, "/test/api/get")
+		e = AllowRequest(ctx, req, func(opt *RequestQueryOption) {
+			opt.Policy = "testservice/allow_api"
 		})
-		g.Expect(e).To(Succeed())
-		// member admin - can write
-		e = AllowResource(ctx, "poc", OpWrite, func(res *Resource) {
-			res.TenantID = TenantId
-			res.OwnerID = OwnerUserId
-			res.TenantPath = []string{RootTenantId, TenantId}
+		g.Expect(e).To(Succeed(), "API access should be granted")
+
+		// user - can read
+		ctx = sectest.ContextWithSecurity(ctx, MemberNonOwnerOptions())
+		req = MockRequest(ctx, http.MethodGet, "/test/api/get")
+		e = AllowRequest(ctx, req, func(opt *RequestQueryOption) {
+			opt.Policy = "testservice/allow_api"
 		})
-		g.Expect(e).To(Succeed())
+		g.Expect(e).To(Succeed(), "API access should be granted")
 	}
 }
 
-func SubTestRequestWithoutPermission(di *testDI) test.GomegaSubTestFunc {
+func SubTestRequestWithoutPermission(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *http.Request
 		var e error
-		// owner - can read
-		ctx = sectest.ContextWithSecurity(ctx, memberOwnerOptions())
-		// member user - can read
-		e = AllowResource(ctx, "poc", OpRead, func(res *Resource) {
-			res.TenantID = TenantId
-			res.OwnerID = OwnerUserId
-			res.TenantPath = []string{RootTenantId, TenantId}
+		// user - cannot write
+		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
+		req = MockRequest(ctx, http.MethodPost, "/test/api/post")
+		e = AllowRequest(ctx, req, func(opt *RequestQueryOption) {
+			opt.Policy = "testservice/allow_api"
 		})
-		g.Expect(e).To(Succeed())
-
-		// owner - can write
-		e = AllowResource(ctx, "poc", OpWrite, func(res *Resource) {
-			res.TenantID = TenantId
-			res.OwnerID = OwnerUserId
-			res.TenantPath = []string{RootTenantId, TenantId}
-		})
-		g.Expect(e).To(Succeed())
+		g.Expect(e).To(HaveOccurred(), "API access should be denied")
+		g.Expect(errors.Is(e, ErrAccessDenied)).To(BeTrue(), "error should be ErrAccessDenied")
 	}
 }
+
+func SubTestRequestWithoutPolicy(_ *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *http.Request
+		var e error
+		// user - cannot write
+		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
+		req = MockRequest(ctx, http.MethodPost, "/test/api/post")
+		e = AllowRequest(ctx, req, func(opt *RequestQueryOption) {
+			opt.Policy = "testservice/unknown_policy"
+		})
+		g.Expect(e).To(HaveOccurred(), "API access should be denied")
+		g.Expect(errors.Is(e, ErrAccessDenied)).To(BeTrue(), "error should be ErrAccessDenied")
+	}
+}
+
+/*************************
+	Helpers
+ *************************/
+
+func MockRequest(ctx context.Context, method, path string) *http.Request {
+	req, _ := http.NewRequestWithContext(ctx, method, path, nil)
+	return req
+}
+

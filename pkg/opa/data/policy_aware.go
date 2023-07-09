@@ -4,13 +4,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// PolicyAware is an embedded type for data policyTarget. It's responsible for applying PolicyFilter and
+// PolicyAware is an Embedded type for data policyTarget. It's responsible for applying PolicyFilter and
 // populating/checking OPA policy related data field
 // TODO update following description
 // when crating/updating. PolicyAware implements
 // - callbacks.BeforeCreateInterface
 // - callbacks.BeforeUpdateInterface
-// When used as an embedded type, tag `filter` can be used to override default tenancy check behavior:
+// When used as an Embedded type, tag `filter` can be used to override default tenancy check behavior:
 // - `filter:"w"`: 	create/update/delete are enforced (Default mode)
 // - `filter:"rw"`: CRUD operations are all enforced,
 //					this mode filters result of any Select/Update/Delete query based on current security context
@@ -34,7 +34,7 @@ func (p PolicyAware) BeforeCreate(tx *gorm.DB) error {
 		return e
 	}
 
-	if shouldSkip(tx.Statement.Context, DBOperationFlagCreate, meta.Mode) {
+	if shouldSkip(tx.Statement.Context, DBOperationFlagCreate, meta.mode) {
 		return nil
 	}
 

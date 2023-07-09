@@ -93,7 +93,7 @@ func (m *statementModifier) ModifyStatement(stmt *gorm.Statement) {
 		return
 	}
 
-	if shouldSkip(stmt.Context, m.Flag, m.Mode) {
+	if shouldSkip(stmt.Context, m.Flag, m.mode) {
 		return
 	}
 
@@ -136,7 +136,9 @@ func (m *statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.Resource
 		unknowns = append(unknowns, unknown)
 	}
 	return func(rf *opa.ResourceFilter) {
-		rf.Policy = m.Policy
+		if p, ok := m.Policies[m.Flag]; ok && p != TagValueIgnore {
+			rf.Policy = p
+		}
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
 			Metadata:  &m.metadata,
@@ -218,7 +220,7 @@ func (m *createStatementModifier) ModifyStatement(stmt *gorm.Statement) {
 		return
 	}
 
-	if shouldSkip(stmt.Context, DBOperationFlagCreate, m.Mode) {
+	if shouldSkip(stmt.Context, DBOperationFlagCreate, m.mode) {
 		return
 	}
 

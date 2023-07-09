@@ -4,7 +4,6 @@ import future.keywords
 import data.roles.has_permission
 
 # API access Rules
-#default allow_api := false
 
 # /test/api/get
 allow_api if {

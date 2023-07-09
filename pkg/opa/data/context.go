@@ -26,30 +26,33 @@ var (
 
 const (
 	TagOPA              = `opa`
-	TagDelimiter        = `;`
+	TagDelimiter        = `,`
 	TagAssignment       = `:`
+	TagValueIgnore      = "-"
 	TagKeyInputField    = `field`
 	TagKeyInputFieldAlt = `input`
 	TagKeyResourceType  = `type`
-	TagKeyPolicy        = `policy`
-	TagKeyMode          = `mode`
 )
 
-type opaTag struct {
+type OPATag struct {
 	InputField string
 	ResType    string
-	Policy   string
-	Mode       policyMode
+	Policies   map[DBOperationFlag]string
+	mode       policyMode
 }
 
-func (t *opaTag) UnmarshalText(data []byte) error {
+func (t *OPATag) UnmarshalText(data []byte) error {
 	// setup default
-	*t = opaTag{
-		Mode: defaultPolicyMode,
+	*t = OPATag{
+		mode: defaultPolicyMode,
 	}
 	// parse kv pairs
 	terms := strings.Split(string(data), TagDelimiter)
 	for _, term := range terms {
+		term = strings.TrimSpace(term)
+		if len(term) == 0 {
+			continue
+		}
 		kv := strings.SplitN(term, TagAssignment, 2)
 		var v string
 		switch len(kv) {
@@ -60,21 +63,38 @@ func (t *opaTag) UnmarshalText(data []byte) error {
 		default:
 			return fmt.Errorf(`invalid "opa" tag format, expect "key:model", but got "%s"`, term)
 		}
-		k := kv[0]
+		k := strings.TrimSpace(kv[0])
 		switch k {
 		case TagKeyInputField, TagKeyInputFieldAlt:
 			t.InputField = v
 		case TagKeyResourceType:
 			t.ResType = v
-		case TagKeyPolicy:
-			t.Policy = v
-		case TagKeyMode:
-			if e := t.Mode.UnmarshalText([]byte(v)); e != nil {
-				return fmt.Errorf(`invalid "opa" tag, unrecognized mode "%s"`, v)
-			}
 		default:
-			return fmt.Errorf(`invalid "opa" tag, unrecognized key "%s"`, k)
+			if e := t.parsePolicy(kv); e == nil {
+				continue
+			}
+			return ErrUnsupportedUsage.WithMessage(`invalid "opa" tag, unrecognized key "%s"`, k)
 		}
+	}
+	return nil
+}
+
+func (t *OPATag) parsePolicy(kv []string) error {
+	if len(kv) != 2 {
+		return fmt.Errorf(`invalid policy, expect <mode>%s<policy_name>`, TagAssignment)
+	}
+	var flag DBOperationFlag
+	if e := flag.UnmarshalText([]byte(strings.TrimSpace(kv[0]))); e != nil {
+		return e
+	}
+	if t.Policies == nil {
+		t.Policies = map[DBOperationFlag]string{}
+	}
+	t.Policies[flag] = strings.TrimSpace(kv[1])
+	if kv[1] == TagValueIgnore {
+		t.mode = t.mode & ^policyMode(flag)
+	} else {
+		t.mode = t.mode | policyMode(flag)
 	}
 	return nil
 }
@@ -90,8 +110,46 @@ const (
 	DBOperationFlagDelete
 )
 
+const (
+	dbOpTextCreate = `create`
+	dbOpTextRead   = `read`
+	dbOpTextUpdate = `update`
+	dbOpTextDelete = `delete`
+)
+
 // DBOperationFlag bitwise Flag of tenancy flag mode
 type DBOperationFlag uint
+
+func (f DBOperationFlag) MarshalText() ([]byte, error) {
+	switch f {
+	case DBOperationFlagCreate:
+		return []byte(dbOpTextCreate), nil
+	case DBOperationFlagRead:
+		return []byte(dbOpTextRead), nil
+	case DBOperationFlagUpdate:
+		return []byte(dbOpTextUpdate), nil
+	case DBOperationFlagDelete:
+		return []byte(dbOpTextDelete), nil
+	}
+	return []byte{}, nil
+}
+
+func (f *DBOperationFlag) UnmarshalText(data []byte) error {
+
+	switch v := string(data); v {
+	case dbOpTextCreate:
+		*f = DBOperationFlagCreate
+	case dbOpTextRead:
+		*f = DBOperationFlagRead
+	case dbOpTextUpdate:
+		*f = DBOperationFlagUpdate
+	case dbOpTextDelete:
+		*f = DBOperationFlagDelete
+	default:
+		return fmt.Errorf("unrecognized DB operation flag '%s'", string(data))
+	}
+	return nil
+}
 
 const (
 	defaultPolicyMode = policyMode(DBOperationFlagCreate | DBOperationFlagRead | DBOperationFlagUpdate | DBOperationFlagDelete)
@@ -108,13 +166,6 @@ func (m policyMode) hasFlags(flags ...DBOperationFlag) bool {
 		}
 	}
 	return true
-}
-
-//goland:noinspection GoMixedReceiverTypes
-func (m *policyMode) UnmarshalText(data []byte) error {
-	//TODO
-	*m = defaultPolicyMode
-	return nil
 }
 
 /********************

@@ -3,7 +3,7 @@ package opa
 import (
 	"context"
 	opatestserver "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test/server"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/testdata"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
@@ -12,67 +12,6 @@ import (
 	"go.uber.org/fx"
 	"testing"
 )
-
-const (
-	OwnerUserId     = "20523d89-d5e9-40d0-afe3-3a74c298b55a"
-	AnotherUserId   = "e7498b90-cec3-41fd-ac20-acd41769fb88"
-	RootTenantId    = "7b3934fc-edc4-4a1c-9249-3dc7055eb124"
-	TenantId        = "8eebb711-7d24-48fb-94da-361c573d7c20"
-	AnotherTenantId = "b11ef279-1309-4c43-8355-99c9d494097b"
-	ProviderId      = "fe3ad89c-449f-42f2-b4f8-b10ab7bc0266"
-)
-
-/*************************
-	Test Setup
- *************************/
-
-func memberAdminOptions() sectest.SecurityContextOptions {
-	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
-		d.Username = "admin"
-		d.UserId = AnotherUserId
-		d.TenantId = TenantId
-		d.ProviderId = ProviderId
-		d.Permissions = utils.NewStringSet("IS_API_ADMIN", "VIEW", "MANAGE")
-		d.Roles = utils.NewStringSet("SUPERUSER")
-		d.Tenants = utils.NewStringSet(TenantId, AnotherTenantId)
-	})
-}
-
-func memberOwnerOptions() sectest.SecurityContextOptions {
-	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
-		d.Username = "testuser-member-owner"
-		d.UserId = OwnerUserId
-		d.TenantId = TenantId
-		d.ProviderId = ProviderId
-		d.Permissions = utils.NewStringSet("VIEW")
-		d.Roles = utils.NewStringSet("USER")
-		d.Tenants = utils.NewStringSet(TenantId)
-	})
-}
-
-func memberNonOwnerOptions() sectest.SecurityContextOptions {
-	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
-		d.Username = "testuser-member-non-owner"
-		d.UserId = AnotherUserId
-		d.TenantId = TenantId
-		d.ProviderId = ProviderId
-		d.Permissions = utils.NewStringSet("VIEW")
-		d.Roles = utils.NewStringSet("USER")
-		d.Tenants = utils.NewStringSet(TenantId)
-	})
-}
-
-func nonMemberAdminOptions() sectest.SecurityContextOptions {
-	return sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
-		d.Username = "testuser-non-member"
-		d.UserId = AnotherUserId
-		d.TenantId = AnotherTenantId
-		d.ProviderId = ProviderId
-		d.Permissions = utils.NewStringSet("IS_API_ADMIN")
-		d.Roles = utils.NewStringSet("SUPERUSER")
-		d.Tenants = utils.NewStringSet(AnotherTenantId)
-	})
-}
 
 /*************************
 	Test
@@ -105,11 +44,11 @@ func TestAllowResource(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestMemberAdmin(di *testDI) test.GomegaSubTestFunc {
+func SubTestMemberAdmin(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
 		// member admin
-		ctx = sectest.ContextWithSecurity(ctx, memberAdminOptions())
+		ctx = sectest.ContextWithSecurity(ctx, MemberAdminOptions())
 		// member admin - can read
 		e = AllowResource(ctx, "poc", OpWrite, func(res *Resource) {
 			res.TenantID = TenantId
@@ -128,11 +67,11 @@ func SubTestMemberAdmin(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestMemberOwner(di *testDI) test.GomegaSubTestFunc {
+func SubTestMemberOwner(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
 		// owner - can read
-		ctx = sectest.ContextWithSecurity(ctx, memberOwnerOptions())
+		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
 		// member user - can read
 		e = AllowResource(ctx, "poc", OpRead, func(res *Resource) {
 			res.TenantID = TenantId
@@ -151,11 +90,11 @@ func SubTestMemberOwner(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestMemberNonOwner(di *testDI) test.GomegaSubTestFunc {
+func SubTestMemberNonOwner(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
 		// member user
-		ctx = sectest.ContextWithSecurity(ctx, memberNonOwnerOptions())
+		ctx = sectest.ContextWithSecurity(ctx, MemberNonOwnerOptions())
 		// member user - can read
 		e = AllowResource(ctx, "poc", OpRead, func(res *Resource) {
 			res.TenantID = TenantId
@@ -174,11 +113,11 @@ func SubTestMemberNonOwner(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestNonMember(di *testDI) test.GomegaSubTestFunc {
+func SubTestNonMember(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
 		// non-member admin - can't read
-		ctx = sectest.ContextWithSecurity(ctx, nonMemberAdminOptions())
+		ctx = sectest.ContextWithSecurity(ctx, NonMemberAdminOptions())
 		e = AllowResource(ctx, "poc", OpRead, func(res *Resource) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
@@ -188,10 +127,10 @@ func SubTestNonMember(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestSharedUser(di *testDI) test.GomegaSubTestFunc {
+func SubTestSharedUser(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
-		ctx = sectest.ContextWithSecurity(ctx, memberNonOwnerOptions())
+		ctx = sectest.ContextWithSecurity(ctx, MemberNonOwnerOptions())
 		// non-member user but shared - cannot write if not allowed
 		e = AllowResource(ctx, "poc", OpWrite, func(res *Resource) {
 			res.TenantID = TenantId

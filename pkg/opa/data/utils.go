@@ -26,7 +26,7 @@ var (
 
 const (
 	errTmplEmbeddedStructNotFound = `PolicyAware not found on policyTarget [%s]. Tips: embedding PolicyAware is required for any OPA DB usage`
-	errTmplOPATagNotFound         = `'opa' tag is not found on embedded PolicyAware in policyTarget [%s]. Tips: the embedded PolicyAware should have 'opa' tag with at least resource type defined`
+	errTmplOPATagNotFound         = `'opa' tag is not found on Embedded PolicyAware in policyTarget [%s]. Tips: the Embedded PolicyAware should have 'opa' tag with at least resource type defined`
 )
 
 /*******************
@@ -35,7 +35,7 @@ const (
 
 type TaggedField struct {
 	schema.Field
-	OPATag       opaTag
+	OPATag       OPATag
 	RelationPath TaggedRelationPath
 }
 
@@ -48,7 +48,7 @@ func (f TaggedField) InputField() string {
 
 type TaggedRelationship struct {
 	schema.Relationship
-	OPATag       opaTag
+	OPATag OPATag
 }
 
 type TaggedRelationPath []*TaggedRelationship
@@ -62,11 +62,11 @@ func (path TaggedRelationPath) InputField() string {
 }
 
 type metadata struct {
-	ResType string
-	Policy  string
-	Mode    policyMode
-	Fields  map[string]*TaggedField
-	Schema  *schema.Schema
+	ResType  string
+	Policies map[DBOperationFlag]string
+	Fields   map[string]*TaggedField
+	Schema   *schema.Schema
+	mode     policyMode
 }
 
 func newMetadata(s *schema.Schema) (*metadata, error) {
@@ -79,11 +79,11 @@ func newMetadata(s *schema.Schema) (*metadata, error) {
 		return nil, e
 	}
 	return &metadata{
-		ResType: tag.ResType,
-		Policy:  tag.Policy,
-		Mode:    tag.Mode,
-		Fields:  fields,
-		Schema:  s,
+		ResType:  tag.ResType,
+		Policies: tag.Policies,
+		Fields:   fields,
+		Schema:   s,
+		mode:     tag.mode,
 	}, nil
 }
 
@@ -177,7 +177,7 @@ func collectRelationship(r *schema.Relationship, path TaggedRelationPath, visite
 	return nil
 }
 
-func parseTag(s *schema.Schema) (*opaTag, error) {
+func parseTag(s *schema.Schema) (*OPATag, error) {
 	tags, ok := findTag(s.ModelType)
 	if !ok {
 		return nil, fmt.Errorf(errTmplEmbeddedStructNotFound, s.Name)
@@ -186,7 +186,7 @@ func parseTag(s *schema.Schema) (*opaTag, error) {
 	if !ok {
 		return nil, fmt.Errorf(errTmplOPATagNotFound, s.Name)
 	}
-	var parsed opaTag
+	var parsed OPATag
 	if e := parsed.UnmarshalText([]byte(tag)); e != nil {
 		return nil, e
 	}
@@ -199,7 +199,7 @@ func parseTag(s *schema.Schema) (*opaTag, error) {
 }
 
 // findTag recursively find tag of marker types
-// result is undefined if given type and embedded type are not Struct
+// result is undefined if given type and Embedded type are not Struct
 func findTag(typ reflect.Type) (reflect.StructTag, bool) {
 	count := typ.NumField()
 	for i := 0; i < count; i++ {
