@@ -562,14 +562,14 @@ func shallowCopyMap[K comparable, V any](src map[K]V) map[K]V {
  *************************/
 
 type ModelA struct {
-	ID                  uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-	Value               string
-	TenantName          string
-	OwnerName           string
-	TenantID            uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
-	TenantPath          pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
-	OwnerID             uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	opadata.PolicyAware `opa:"type:model"`
+	ID              uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	Value           string
+	TenantName      string
+	OwnerName       string
+	TenantID        uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
+	TenantPath      pqx.UUIDArray        `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
+	OwnerID         uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+	opadata.PolicyFilter `opa:"type:model"`
 	types.Audit
 	types.SoftDelete
 }

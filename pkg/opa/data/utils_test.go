@@ -86,7 +86,8 @@ func TestMetadataLoader(t *testing.T) {
 		//apptest.WithTimeout(10*time.Minute),
 		dbtest.WithNoopMocks(),
 		apptest.WithDI(di),
-		test.GomegaSubTest(SubTestValidOPATag(di), "TestValidOPATag"),
+		test.GomegaSubTest(SubTestFilterAsEmbedded(di), "TestFilterAsEmbedded"),
+		test.GomegaSubTest(SubTestFilterAsField(di), "TestFilterAsField"),
 		test.GomegaSubTest(SubTestEmbeddedStruct(di), "TestEmbeddedStruct"),
 		test.GomegaSubTest(SubTestRelationshipParsing(di), "TestRelationshipParsing"),
 		test.GomegaSubTest(SubTestMissingOPATag(di), "TestMissingOPATag"),
@@ -238,23 +239,54 @@ func SubTestModelSave(di *TestDI) test.GomegaSubTestFunc {
 
 /*** Metadata SubTests ***/
 
-func SubTestValidOPATag(di *TestDI) test.GomegaSubTestFunc {
-	type model struct {
+func SubTestFilterAsEmbedded(di *TestDI) test.GomegaSubTestFunc {
+	type model1 struct {
+		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value        string    `opa:"field:some_field"`
+		PolicyFilter `opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
+	}
+	type model2 struct {
 		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 		Value        string    `opa:"field:some_field"`
 		PolicyFilter `gorm:"-" opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
+	expected := &ExpectedMetadata{
+		ResType:  "res",
+		Fields:   map[string][]string{"some_field": {"Value"}},
+		Policies: map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
+		Mode:     uint(DBOperationFlagUpdate | DBOperationFlagRead),
+	}
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// without gorm tag
+		s, e := schema.Parse(&model1{}, schemaCache, di.DB.NamingStrategy)
+		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
+
+		meta, e := loadMetadata(s)
+		g.Expect(e).To(Succeed(), "load metadata should not return error")
+		assertMetadata(meta, g, expected)
+
+		// with gorm tag
+		s, e = schema.Parse(&model2{}, schemaCache, di.DB.NamingStrategy)
+		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
+
+		meta, e = loadMetadata(s)
+		g.Expect(e).To(Succeed(), "load metadata should not return error")
+		assertMetadata(meta, g, expected)
+	}
+}
+
+func SubTestMissingFilterField(di *TestDI) test.GomegaSubTestFunc {
+	type model struct {
+		ID    uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value string    `opa:"field:some_field"`
+	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
-		meta, e := loadMetadata(s)
-		g.Expect(e).To(Succeed(), "load metadata should not return error")
-		assertMetadata(meta, g, &ExpectedMetadata{
-			ResType:  "res",
-			Fields:   map[string][]string{"some_field": {"Value"}},
-			Policies: map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
-			Mode:     uint(DBOperationFlagUpdate | DBOperationFlagRead),
-		})
+		_, e = loadMetadata(s)
+		g.Expect(e).To(HaveOccurred(), "load metadata should return error")
 	}
 }
 
@@ -270,6 +302,8 @@ func SubTestEmbeddedStruct(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
+
 		meta, e := loadMetadata(s)
 		g.Expect(e).To(Succeed(), "load metadata should not return error")
 		assertMetadata(meta, g, &ExpectedMetadata{
@@ -304,6 +338,8 @@ func SubTestRelationshipParsing(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
+
 		meta, e := loadMetadata(s)
 		g.Expect(e).To(Succeed(), "load metadata should not return error")
 		assertMetadata(meta, g, &ExpectedMetadata{
@@ -319,16 +355,35 @@ func SubTestRelationshipParsing(di *TestDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestMissingFilterField(di *TestDI) test.GomegaSubTestFunc {
-	type model struct {
-		ID    uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value string    `opa:"field:some_field"`
+func SubTestFilterAsField(di *TestDI) test.GomegaSubTestFunc {
+	type model1 struct {
+		ID     uuid.UUID    `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value  string       `opa:"field:some_field"`
+		Filter PolicyFilter `opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
+	}
+	type model2 struct {
+		ID     uuid.UUID    `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value  string       `opa:"field:some_field"`
+		Filter PolicyFilter `gorm:"-" opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
+		// without gorm tag
+		s, e := schema.Parse(&model1{}, schemaCache, di.DB.NamingStrategy)
+		g.Expect(e).To(HaveOccurred(), "parsing schema should return error when gorm tag is missing")
+
+		// with gorm tag
+		s, e = schema.Parse(&model2{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
-		_, e = loadMetadata(s)
-		g.Expect(e).To(HaveOccurred(), "load metadata should return error")
+		assertSchema(s, g)
+
+		meta, e := loadMetadata(s)
+		g.Expect(e).To(Succeed(), "load metadata should not return error")
+		assertMetadata(meta, g, &ExpectedMetadata{
+			ResType:  "res",
+			Fields:   map[string][]string{"some_field": {"Value"}},
+			Policies: map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
+			Mode:     uint(DBOperationFlagUpdate | DBOperationFlagRead),
+		})
 	}
 }
 
@@ -341,6 +396,8 @@ func SubTestMissingOPATag(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
+
 		_, e = loadMetadata(s)
 		g.Expect(e).To(HaveOccurred(), "load metadata should return error")
 	}
@@ -355,6 +412,8 @@ func SubTestMissingResourceType(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
+
 		_, e = loadMetadata(s)
 		g.Expect(e).To(HaveOccurred(), "load metadata should return error")
 	}
@@ -379,6 +438,8 @@ func SubTestMissingFieldValue(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model1{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema of model 1 should not return error")
+		assertSchema(s, g)
+
 		_, e = loadMetadata(s)
 		g.Expect(e).To(HaveOccurred(), "load metadata of model 1 should return error")
 
@@ -398,6 +459,8 @@ func SubTestInvalidTagKV(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
+
 		_, e = loadMetadata(s)
 		g.Expect(e).To(HaveOccurred(), "load metadata should return error")
 	}
@@ -417,11 +480,13 @@ func SubTestInvalidTagFormat(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model1{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema of model 1 should not return error")
+		assertSchema(s, g)
 		_, e = loadMetadata(s)
 		g.Expect(e).To(HaveOccurred(), "load metadata of model 1 should return error")
 
 		s, e = schema.Parse(&model2{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema of model 2 should not return error")
+		assertSchema(s, g)
 		_, e = loadMetadata(s)
 		g.Expect(e).To(HaveOccurred(), "load metadata of model 2 should return error")
 	}
@@ -436,6 +501,7 @@ func SubTestOPATagOnPrimaryKey(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
 		_, e = loadMetadata(s)
 		g.Expect(e).To(HaveOccurred(), "load metadata should return error")
 	}
@@ -473,7 +539,7 @@ func assertResolvedModelValue(model *policyTarget, _ *testing.T, g *gomega.WithT
 	g.Expect(reflect.Indirect(model.modelPtr)).To(Equal(model.modelValue), ".modelPtr should be the pointer of .modelValue")
 	v := model.modelValue.FieldByName("Value")
 	g.Expect(v.IsValid()).To(BeTrue(), ".modelValue should have field 'Value'")
-	g.Expect(v.Interface()).To(BeEquivalentTo(expected), ".modelValue should have correct field model")
+	g.Expect(v.Interface()).To(BeEquivalentTo(expected), ".modelValue should have correct field 'Value'")
 }
 
 func assertResolvedValueMap(model *policyTarget, _ *testing.T, g *gomega.WithT, expected string) {
@@ -524,6 +590,13 @@ func assertMetadata(meta *metadata, g *gomega.WithT, expected *ExpectedMetadata)
 	g.Expect(meta.mode).To(BeEquivalentTo(expected.Mode), "metadata should have correct mode")
 }
 
+func assertSchema(s *schema.Schema, g *gomega.WithT) {
+	g.Expect(s.CreateClauses).To(HaveLen(1), "schema's create clauses should have exactly one clause")
+	g.Expect(s.QueryClauses).To(HaveLen(1), "schema's query clauses should have exactly one clause")
+	g.Expect(s.UpdateClauses).To(HaveLen(1), "schema's update clauses should have exactly one clause")
+	g.Expect(s.DeleteClauses).To(HaveLen(1), "schema's delete clauses should have exactly one clause")
+}
+
 /*************************
 	Models
  *************************/
@@ -544,7 +617,7 @@ type Model struct {
 	ID           uuid.UUID                `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 	Value        string                   `opa:"field:model"`
 	Extractor    TestModelTargetExtractor `gorm:"-"`
-	PolicyFilter `gorm:"-" opa:"type:test,read:allow_read, update:allow_update,delete:-,"`
+	PolicyFilter `opa:"type:test,read:allow_read, update:allow_update,delete:-,"`
 }
 
 func (Model) TableName() string {

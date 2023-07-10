@@ -103,7 +103,9 @@ func (c TestExtractorClause) copyStruct(src reflect.Value) reflect.Value {
 	dst := reflect.Indirect(reflect.New(src.Type()))
 	for _, f := range fields {
 		v := dst.FieldByIndex(f.Index)
-		v.Set(src.FieldByIndex(f.Index))
+		if v.CanSet() {
+			v.Set(src.FieldByIndex(f.Index))
+		}
 	}
 	return dst
 }

@@ -312,12 +312,12 @@ func SubTestModelBUpdateSharing(di *OwnerTestDI) test.GomegaSubTestFunc {
 
 // ModelB has no tenancy
 type ModelB struct {
-	ID              uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-	Value           string
-	OwnerName       string
-	OwnerID         uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	Sharing         constraints.Sharing  `opa:"field:sharing"`
-	OPAPolicyFilter opadata.PolicyFilter `gorm:"-" opa:"type:model"`
+	ID        uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	Value     string
+	OwnerName string
+	OwnerID   uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+	Sharing   constraints.Sharing  `opa:"field:sharing"`
+	OPAFilter opadata.PolicyFilter `gorm:"-" opa:"type:model"`
 	types.Audit
 	// For testing utils only
 	Shared []*Shared `gorm:"foreignKey:ResID;references:ID" opa:"field:shared"`

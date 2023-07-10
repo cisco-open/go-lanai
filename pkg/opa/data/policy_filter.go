@@ -13,36 +13,115 @@ import (
 	"sync"
 )
 
+// PolicyFilter is a marker type that can be used in model struct as Embedded Struct or Struct Field.
+// It's responsible for automatically applying OPA policy-based data filtering on model fields with "opa" tag.
+//
+// PolicyFilter uses following GORM interfaces to modify PostgreSQL statements during select/update/delete,
+// and apply value checks during create/update:
+//
+// 	- schema.QueryClausesInterface
+// 	- schema.UpdateClausesInterface
+// 	- schema.DeleteClausesInterface
+// 	- schema.CreateClausesInterface
+//
+// When PolicyFilter is present in data model, any model's fields tagged with "opa" will be used by OPA engine as following:
+//
+//	- During "create", values are included with path "input.resource.<opa_field_name>"
+// 	- During "update", values are included with path "input.resources.delta.<opa_field_name>"
+// 	- During "select/update/delete", "input.resources.<opa_field_name>" is used as "unknowns" during OPA Partial Evaluation,
+// 	  and the result is translated to "WHERE" clause in PostgreSQL
+//
+// Where "<opa_field_name>" is specified by "opa" tag as `opa:"field:<opa_field_name>"`
+//
+// # Usage:
+//
+// Regardless if PolicyFilter is used as Embedded Struct or Struct Field, "opa" tag is required with resource type defined:
+// 	  `opa:"type:<opa_res_type>"`
+//
+//	- When used as Embedded Struct, "gorm" tag is optional. But if present, the only acceptable tag is `gorm:"-"`
+//	- When used as Struct Field, `gorm:"-"` is required, and the field need to be exported.
+//
+// # Examples:
+//
+// 	// Used as Embedded Struct
+// 	type Model struct {
+//		ID              uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+//		Value           string
+//		TenantID        uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
+//		TenantPath      pqx.UUIDArray        `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
+//		OwnerID         uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+//		opadata.PolicyFilter `opa:"type:my_resource"`
+// 	}
+//
+// 	// Used as Struct Field
+// 	type Model struct {
+//		ID        uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+//		Value     string
+//		OwnerName string
+//		OwnerID   uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+//		Sharing   constraints.Sharing  `opa:"field:sharing"`
+//		OPAFilter opadata.PolicyFilter `gorm:"-" opa:"type:my_resource"`
+// 	}
+//
+// Note: OPA filtering on relationships are currently not supported
+//
+// # Supported Tags:
+//
+// OPA tag should be in format of:
+//	  `opa:"<key>:<value,<key>:<value>,..."`
+// Invalid format or use of unsupported tag keys will result schema parsing error.
+//
+// Supported tag keys are:
+// 	- "field:<opa_input_field_name>": required on any data field in model, only applicable on data fields
+// 	- "input:<opa_input_field_name>": "input" is an alias of "field", only applicable on data fields
+// 	- "type:<opa_resource_type>": required on PolicyFilter. Ignored on other fields.
+//    This value will be used as prefix/package of OPA policy: e.g. "<opa_resource_type>/<policy_name>"
+//
+// Following keys can override CRUD policies and only applicable on PolicyFilter:
+//
+// 		+ "create:<policy_name>": optional, override policy used in OPA during create.
+// 		+ "read:<policy_name>": optional, override policy used in OPA during read.
+// 		+ "update:<policy_name>": optional, override policy used in OPA during update.
+// 		+ "delete:<policy_name>": optional, override policy used in OPA during delete.
+//
+// Note: When <policy_name> is "-", policy-based data filtering is disabled for that operation.
+// The default values are "filter_<op>"
+type PolicyFilter struct{
+	policyFilter
+	PolicyFilter policyFilter `gorm:"-"`
+}
+
 /****************************
 	Types
  ****************************/
 
-// PolicyFilter implements
+// policyFilter implements
 // - schema.GormDataTypeInterface
 // - schema.QueryClausesInterface
 // - schema.UpdateClausesInterface
 // - schema.DeleteClausesInterface
 // - schema.CreateClausesInterface
-// this data type adds "WHERE" clause for tenancy filtering
-type PolicyFilter struct{}
+// this data type adds "WHERE" clause for OPA policy filtering
+// Note: policyFilter should be used in model struct as a named field with `gorm:"-"` tag
+type policyFilter struct{}
 
 // QueryClauses implements schema.QueryClausesInterface,
-func (pf PolicyFilter) QueryClauses(f *schema.Field) []clause.Interface {
+func (pf policyFilter) QueryClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newStatementModifier(f, DBOperationFlagRead)}
 }
 
 // UpdateClauses implements schema.UpdateClausesInterface,
-func (pf PolicyFilter) UpdateClauses(f *schema.Field) []clause.Interface {
+func (pf policyFilter) UpdateClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newStatementModifier(f, DBOperationFlagUpdate)}
 }
 
 // DeleteClauses implements schema.DeleteClausesInterface,
-func (pf PolicyFilter) DeleteClauses(f *schema.Field) []clause.Interface {
+func (pf policyFilter) DeleteClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newStatementModifier(f, DBOperationFlagDelete)}
 }
 
 // CreateClauses implements schema.CreateClausesInterface,
-func (pf PolicyFilter) CreateClauses(f *schema.Field) []clause.Interface {
+func (pf policyFilter) CreateClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{newStatementModifier(f, DBOperationFlagCreate)}
 }
 
