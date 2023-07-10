@@ -28,14 +28,14 @@ const (
 )
 
 type GormMapperConfig struct {
-	Metadata  *metadata
+	Metadata  *Metadata
 	Fields    map[string]*TaggedField
 	Statement *gorm.Statement
 }
 
 type GormPartialQueryMapper struct {
 	ctx       context.Context
-	metadata  *metadata
+	metadata  *Metadata
 	fields    map[string]*TaggedField
 	stmt      *gorm.Statement
 }

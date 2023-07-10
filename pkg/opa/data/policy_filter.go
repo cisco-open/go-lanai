@@ -133,7 +133,7 @@ func (pf policyFilter) CreateClauses(f *schema.Field) []clause.Interface {
 // See gorm.DeletedAt for impl. reference
 type statementModifier struct {
 	types.NoopStatementModifier
-	metadata
+	Metadata
 	initOnce             sync.Once
 	Schema               *schema.Schema
 	Flag                 DBOperationFlag
@@ -161,7 +161,7 @@ func (m *statementModifier) lazyInit() (err error) {
 		if ptr, e := loadMetadata(m.Schema); e != nil {
 			err = data.NewDataError(data.ErrorCodeInvalidApiUsage, e)
 		} else {
-			m.metadata = *ptr
+			m.Metadata = *ptr
 		}
 	})
 	return
@@ -220,7 +220,7 @@ func (m *statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.Resource
 		}
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
-			Metadata:  &m.metadata,
+			Metadata:  &m.Metadata,
 			Fields:    m.Fields,
 			Statement: stmt,
 		})
@@ -252,7 +252,7 @@ func (m *updateStatementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.Re
 	if e != nil {
 		return nil, e
 	}
-	models, e := resolvePolicyTargets(stmt, &m.metadata, m.Flag)
+	models, e := resolvePolicyTargets(stmt, &m.Metadata, m.Flag)
 	if e != nil {
 		return nil, ErrUnsupportedUsage.WithMessage("failed resolve delta in 'update' DB operation: %v", e)
 	}
@@ -303,7 +303,7 @@ func (m *createStatementModifier) ModifyStatement(stmt *gorm.Statement) {
 		return
 	}
 
-	models, e := resolvePolicyTargets(stmt, &m.metadata, m.Flag)
+	models, e := resolvePolicyTargets(stmt, &m.Metadata, m.Flag)
 	if stmt.Statement.AddError(e) != nil {
 		return
 	}

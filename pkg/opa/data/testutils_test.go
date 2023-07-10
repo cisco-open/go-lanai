@@ -61,7 +61,7 @@ func (pf TestModelTargetExtractor) CreateClauses(f *schema.Field) []clause.Inter
 
 type TestExtractorClause struct {
 	types.NoopStatementModifier
-	meta *metadata
+	meta *Metadata
 	flag DBOperationFlag
 }
 
