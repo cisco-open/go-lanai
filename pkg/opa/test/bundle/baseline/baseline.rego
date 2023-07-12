@@ -1,0 +1,5 @@
+package baseline
+
+allow {
+    input
+}

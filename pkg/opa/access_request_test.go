@@ -34,6 +34,7 @@ func TestAllowRequest(t *testing.T) {
 			fx.Invoke(opatestserver.InitializeBundleServer),
 		),
 		apptest.WithDI(di),
+		test.GomegaSubTest(SubTestRequestBaseline(di), "TestRequestBaseline"),
 		test.GomegaSubTest(SubTestRequestWithPermission(di), "TestRequestWithPermission"),
 		test.GomegaSubTest(SubTestRequestWithoutPermission(di), "TestRequestWithoutPermission"),
 		test.GomegaSubTest(SubTestRequestWithoutPolicy(di), "TestRequestWithoutPolicy"),
@@ -43,6 +44,21 @@ func TestAllowRequest(t *testing.T) {
 /*************************
 	Sub Tests
  *************************/
+
+func SubTestRequestBaseline(_ *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *http.Request
+		var e error
+		req = MockRequest(ctx, http.MethodGet, "/doesnt/matter")
+		e = AllowRequest(ctx, req, func(opt *RequestQueryOption) {
+			opt.Policy = "baseline/allow"
+			opt.RawInput = map[string]interface{}{
+				"just_data": "data",
+			}
+		})
+		g.Expect(e).To(Succeed())
+	}
+}
 
 func SubTestRequestWithPermission(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {

@@ -10,9 +10,10 @@ import (
 
 type RequestQueryOptions func(opt *RequestQueryOption)
 type RequestQueryOption struct {
-	OPA    *sdk.OPA
-	Policy string
-	ExtraData   map[string]interface{}
+	OPA       *sdk.OPA
+	Policy    string
+	ExtraData map[string]interface{}
+	RawInput  interface{}
 }
 
 func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOptions) error {
@@ -20,7 +21,7 @@ func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOp
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	opaOpts := PrepareRequestDecisionQuery(ctx, opt.Policy, req, opt.ExtraData)
+	opaOpts := PrepareRequestDecisionQuery(ctx, opt.Policy, req, &opt)
 	result, e := opt.OPA.Decision(ctx, *opaOpts)
 	switch {
 	case sdk.IsUndefinedErr(e):
@@ -41,11 +42,8 @@ func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOp
 	}
 }
 
-func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.Request, extra map[string]interface{}) *sdk.DecisionOptions {
-	input := NewInput()
-	input.Authentication = NewAuthenticationClause(ctx)
-	input.Request = NewRequestClause(req)
-	input.Request.ExtraData = extra
+func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.Request, opt *RequestQueryOption) *sdk.DecisionOptions {
+	input := constructRequestDecisionInput(ctx, req, opt)
 	opts := sdk.DecisionOptions{
 		Now:                 time.Now(),
 		Path:                policy,
@@ -61,3 +59,13 @@ func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.R
 	return &opts
 }
 
+func constructRequestDecisionInput(ctx context.Context, req *http.Request, opt *RequestQueryOption) interface{} {
+	if opt.RawInput != nil {
+		return opt.RawInput
+	}
+	input := NewInput()
+	input.Authentication = NewAuthenticationClause(ctx)
+	input.Request = NewRequestClause(req)
+	input.Request.ExtraData = opt.ExtraData
+	return input
+}

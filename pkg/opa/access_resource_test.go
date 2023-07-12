@@ -32,6 +32,7 @@ func TestAllowResource(t *testing.T) {
 			fx.Invoke(opatestserver.InitializeBundleServer),
 		),
 		apptest.WithDI(di),
+		test.GomegaSubTest(SubTestResourceBaseline(di), "TestResourceBaseline"),
 		test.GomegaSubTest(SubTestMemberAdmin(di), "TestMemberAdmin"),
 		test.GomegaSubTest(SubTestMemberOwner(di), "TestMemberOwner"),
 		test.GomegaSubTest(SubTestMemberNonOwner(di), "TestMemberNonOwner"),
@@ -43,6 +44,19 @@ func TestAllowResource(t *testing.T) {
 /*************************
 	Sub Tests
  *************************/
+
+func SubTestResourceBaseline(_ *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var e error
+		e = AllowResource(ctx, "doesn't matter", "whatever", func(res *Resource) {
+			res.Policy = "baseline/allow"
+			res.RawInput = map[string]interface{}{
+				"just_data": "data",
+			}
+		})
+		g.Expect(e).To(Succeed())
+	}
+}
 
 func SubTestMemberAdmin(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {

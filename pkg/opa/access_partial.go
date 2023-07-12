@@ -24,6 +24,7 @@ type ResourceFilter struct {
 	QueryMapper sdk.PartialQueryMapper
 	Delta       *ResourceValues
 	ExtraData   map[string]interface{}
+	RawInput    interface{}
 }
 
 func FilterResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceFilterOptions) (*sdk.PartialResult, error) {
@@ -54,12 +55,7 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 }
 
 func PrepareResourcePartialQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *ResourceFilter) *sdk.PartialOptions {
-	input := NewInput()
-	input.Authentication = NewAuthenticationClause(ctx)
-	input.Resource = NewResourceClause(resType, op)
-	input.Resource.ExtraData = res.ExtraData
-	input.Resource.Delta = res.Delta
-
+	input := constructResourcePartialInput(ctx, resType, op, res)
 	mapper := res.QueryMapper
 	if v, ok := res.QueryMapper.(ContextAwarePartialQueryMapper); ok {
 		mapper = v.WithContext(ctx)
@@ -78,4 +74,16 @@ func PrepareResourcePartialQuery(ctx context.Context, policy string, resType str
 		logger.WithContext(ctx).Debugf("Input: %s", data)
 	}
 	return &opts
+}
+
+func constructResourcePartialInput(ctx context.Context, resType string, op ResourceOperation, res *ResourceFilter) interface{} {
+	if res.RawInput != nil {
+		return res.RawInput
+	}
+	input := NewInput()
+	input.Authentication = NewAuthenticationClause(ctx)
+	input.Resource = NewResourceClause(resType, op)
+	input.Resource.ExtraData = res.ExtraData
+	input.Resource.Delta = res.Delta
+	return input
 }

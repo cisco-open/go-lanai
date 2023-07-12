@@ -16,7 +16,7 @@ import (
 	Common Test Setup
  *************************/
 
-//go:embed test/bundle/roles test/bundle/operations test/bundle/tenancy test/bundle/ownership test/bundle/api test/bundle/poc
+//go:embed test/bundle/**
 var TestBundleFS embed.FS
 
 const (
