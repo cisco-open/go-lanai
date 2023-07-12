@@ -15,6 +15,8 @@ const (
 
 type SharedPermission opa.ResourceOperation
 
+// Sharing is a Model type that stores mapping between user IDs and a list of allowed permissions as JSONB map
+// This type works with OPA sharing policy
 type Sharing map[uuid.UUID][]SharedPermission
 
 // Value implements driver.Valuer

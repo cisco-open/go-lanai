@@ -1,0 +1,80 @@
+{
+  "auth": {
+    "username": "testuser",
+    "permissions": [
+      "VIEW",
+      "ADMIN"
+    ],
+    "user_id": "20523d89-d5e9-40d0-afe3-3a74c298b55a",
+    "tenant_id": "8eebb711-7d24-48fb-94da-361c573d7c20",
+    "provider_id": "fe3ad89c-449f-42f2-b4f8-b10ab7bc0266",
+    "roles": [
+      "CONSUMER"
+    ],
+    "accessible_tenants": [
+      "8eebb711-7d24-48fb-94da-361c573d7c20"
+    ],
+    "client": {
+      "client_id": "nfv-service",
+      "scopes": [
+        "write",
+        "read"
+      ]
+    }
+  },
+  "request": {
+    "path": "/test/api/get",
+    "method": "GET",
+    "header": {
+      "Authorization": [
+        "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImRldi0wIiwidHlwIjoiSldUIn0.eyJhdWQiOiJuZnYtYXBpIiwiY2xpZW50X2lkIjoibmZ2LXNlcnZpY2UiLCJlbWFpbCI6InRlc3R1c2VyQGNpc2NvLmNvbSIsImV4cCI6MTY4NzgwNTc5MywiZmlyc3ROYW1lIjoiVGVzdCIsImlhdCI6MTY4Nzc5Njc5MywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4OTAwL2F1dGgiLCJqdGkiOiJkNWFkNzFhMS01ZGU5LTRmNmQtYTE1My03ODdiMWYyMzMxZTAiLCJsYXN0TmFtZSI6IlVzZXIiLCJuYmYiOjE2ODc3OTY3OTMsInJvbGVzIjpbIkNPTlNVTUVSIl0sInNjb3BlIjpbIndyaXRlIiwicmVhZCJdLCJzdWIiOiJ0ZXN0dXNlciIsInRlbmFudElkIjoiOGVlYmI3MTEtN2QyNC00OGZiLTk0ZGEtMzYxYzU3M2Q3YzIwIiwidXNlcl9uYW1lIjoidGVzdHVzZXIifQ.PR4jbf9DwUsmMuqna2eRYGmX8lFHDXaP7dNDtJrSHw_qDMInVlV5xFB7HZ7bj1Np2395zDLo1C7-72c10f5sxv8FRWZeHRXuG-EQYWeVV0oEiENodbst4JKSQeIOW-nWnm3fRAkIbgbetRUY5ZwAE3bVMAdHXPHKqO3Hu50PIUTyVBjXpJYRkcVVUWTGRmgH2eO3qeHLRAxbKfbiUOHtzRIfhTZi9sow7C-QrOvA3msU1D_EMhZUCar0BDmvXh_OOzQl2p6M5ZNS6xmiiNFtfLCNht76_Bi92MlbPTd2zcYBkig8nycaUIDrN0F7zShM-X0sUDUGKZxIh3NvyaqT9Q"
+      ],
+      "Content-Length": [
+        "214"
+      ],
+      "Content-Type": [
+        "application/json"
+      ]
+    }
+  },
+  "resource": {
+    "type": "poc",
+    "op": "read",
+    "tenant_id": "8eebb711-7d24-48fb-94da-361c573d7c20",
+    "tenant_path": [
+      "7b3934fc-edc4-4a1c-9249-3dc7055eb124",
+      "8eebb711-7d24-48fb-94da-361c573d7c20"
+    ],
+    "owner_id": "20523d89-d5e9-40d0-afe3-3a74c298b55a",
+    "sharing": {
+      "595959e4-8803-4ab1-8acf-acfb92bb7322": [
+        "write",
+        "read"
+      ],
+      "e212a869-b636-4dc6-83db-e1ccd59e5e0e": [
+        "write",
+        "read",
+        "share"
+      ]
+    },
+    "delta": {
+      "tenant_id": "8eebb711-7d24-48fb-94da-361c573d7c20",
+      "tenant_path": [
+        "7b3934fc-edc4-4a1c-9249-3dc7055eb124",
+        "8eebb711-7d24-48fb-94da-361c573d7c20"
+      ],
+      "owner_id": "20523d89-d5e9-40d0-afe3-3a74c298b55a",
+      "sharing": {
+        "595959e4-8803-4ab1-8acf-acfb92bb7322": [
+          "write",
+          "read"
+        ],
+        "e212a869-b636-4dc6-83db-e1ccd59e5e0e": [
+          "write",
+          "read",
+          "share"
+        ]
+      }
+    }
+  }
+}

@@ -21,9 +21,12 @@ WHERE (("test_opa_model_a"."owner_id" = '595959e4-8803-4ab1-8acf-acfb92bb7322' A
   AND "id" = '957785c6-d75a-47cd-a3dd-e29f1219afd7';
 
 SELECT *
-FROM "test_opa_model_a"
-WHERE (("test_opa_model_a"."owner_id" = '595959e4-8803-4ab1-8acf-acfb92bb7322' AND
-        "test_opa_model_a"."tenant_id" = 'be91531e-ca96-46eb-aea6-b7e0e2a50e21') OR
-       ("test_opa_model_a"."owner_id" = '595959e4-8803-4ab1-8acf-acfb92bb7322' AND
-        "test_opa_model_a"."tenant_path" @> '{"be91531e-ca96-46eb-aea6-b7e0e2a50e21"}'))
-  AND "test_opa_model_a"."deleted_at" IS NULL;
+FROM "my_resource"
+WHERE ("my_resource"."owner_id" = '595959e4-8803-4ab1-8acf-acfb92bb7322' AND
+       "my_resource"."tenant_id" = 'd8423acc-28cb-4209-95d6-089de7fb27ef')
+   OR ("my_resource"."owner_id" = '595959e4-8803-4ab1-8acf-acfb92bb7322' AND
+       "my_resource"."tenant_path" @> '{"d8423acc-28cb-4209-95d6-089de7fb27ef"}')
+   OR ("sharing" -> '595959e4-8803-4ab1-8acf-acfb92bb7322' @> '"read"' AND
+       "my_resource"."tenant_id" = 'd8423acc-28cb-4209-95d6-089de7fb27ef')
+   OR ("sharing" -> '595959e4-8803-4ab1-8acf-acfb92bb7322' @> '"read"' AND
+       "my_resource"."tenant_path" @> '{"d8423acc-28cb-4209-95d6-089de7fb27ef"}');
