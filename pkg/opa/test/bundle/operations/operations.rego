@@ -3,11 +3,12 @@ package ops
 import future.keywords
 
 # Check Operation
-is(op) if {
+is(op) {
+    op != ""
     input.resource.op == op
 }
 
-is(op) if {
+is(op) {
     op != ""
     input.resource.op == ""
 }
