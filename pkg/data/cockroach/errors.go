@@ -2,8 +2,10 @@ package cockroach
 
 import (
 	"context"
+
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"github.com/lib/pq"
 )
 

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	ServiceNameIDM  = `usermanagementgoservice`
+	ServiceNameIDM = `usermanagementgoservice`
 )
 
 /*************************

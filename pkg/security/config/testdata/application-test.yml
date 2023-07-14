@@ -52,28 +52,55 @@ mocking:
     super-client:
       id: "test-client"
       secret: "test-secret"
+      access-token-validity: 3600s
       redirect-uris: ["localhost:*/**"]
   accounts:
     system:
       username: "system"
       password: "system"
+      id: "id-system"
       default-tenant: "id-tenant-1"
       tenants: ["id-tenant-1", "id-tenant-2", "id-tenant-3"]
       permissions: ["ACCESS_ALL_TENANTS", "VIEW_OPERATOR_LOGIN_AS_CUSTOMER", "SWITCH_TENANT"]
     admin:
       username: "admin"
       password: "admin"
-      user-id: "id-admin"
+      id: "id-admin"
       default-tenant: "id-tenant-1"
       tenants: [ "id-tenant-1", "id-tenant-2" ]
       permissions: [ "VIEW_OPERATOR_LOGIN_AS_CUSTOMER", "SWITCH_TENANT" ]
     regular:
       username: "regular"
       password: "regular"
-      user-id: "id-regular"
+      id: "id-regular"
       default-tenant: "id-tenant-1"
       tenants: ["id-tenant-1", "id-tenant-2"]
       permissions: ["SWITCH_TENANT"]
+    fed1:
+      username: "fed1@cisco.com"
+      id: "id-fed-1"
+      default-tenant: "id-tenant-1"
+      tenants: ["id-tenant-1", "id-tenant-2"]
+      permissions: ["SWITCH_TENANT"]
+    fed2:
+      username: "fed2@cisco.com"
+      id: "id-fed-2"
+  fed-accounts:
+    fed1:
+      ext-idp-name: "cci"
+      ext-id-name: "email"
+      ext-id-value: "fed1@cisco.com"
+      username: "fed1@cisco.com"
+      id: "id-fed-1"
+      default-tenant: "id-tenant-1"
+      tenants: ["id-tenant-1", "id-tenant-2"]
+      permissions: ["SWITCH_TENANT"]
+    fed2:
+      ext-idp-name: "cci"
+      ext-id-name: "email"
+      ext-id-value: "fed2@cisco.com"
+      username: "fed2@cisco.com"
+      id: "id-fed-2"
   tenants:
     t1:
       id: "id-tenant-1"

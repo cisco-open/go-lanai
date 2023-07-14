@@ -65,8 +65,8 @@ func (c *TestLogoutSecConfigurer) Configure(ws security.WebSecurity) {
 		GrantTypes:   utils.CommaSeparatedSlice{"authorization_code"},
 		Scopes:       utils.CommaSeparatedSlice{"openid", "profile", "email", "address", "phone", "read", "write"},
 		RedirectUris: utils.CommaSeparatedSlice{TestRPUrl},
-		ATValidity:   time.Hour,
-		RTValidity:   time.Hour,
+		ATValidity:   utils.Duration(time.Hour),
+		RTValidity:   utils.Duration(time.Hour),
 	})
 
 	oidcLogoutHandler := NewOidcLogoutHandler(func(opt *HandlerOption) {

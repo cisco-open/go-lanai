@@ -7,13 +7,13 @@
 // Derived from contents in openapi contract, path: {{ $pathName }}
 package {{ $version }}
 
-import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-    {{- template "controllerImports" $rootData -}}
-	"go.uber.org/fx"
-)
+{{ $imports := NewImports }}
+{{ $imports = $imports.Add "context" }}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web" }}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest" }}
+{{- template "controllerImports" args $rootData $imports -}}
+{{ $imports = $imports.Add "go.uber.org/fx" }}
+{{ template "imports" $imports }}
 
 {{- $nameFromPath := defaultNameFromPath $pathName }}
 {{- $controllerName := concat $nameFromPath "Controller" | toTitle }}
@@ -35,35 +35,52 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
 {{ template "controllerFunctions" args . }}
 
 {{ define "controllerImports" }}
-    {{- $pathName := index . "PathName" | defaultNameFromPath }}
-    {{- $pathData := index . "PathData" }}
-    {{- $repository := index . "Repository" }}
-    {{- $version := index . "Version" }}
+    {{- $rootData := index . 0 }}
+    {{- $imports := index . 1 }}
+    {{- $pathName := index $rootData "PathName" | defaultNameFromPath }}
+    {{- $pathData := index $rootData "PathData" }}
+    {{- $repository := index $rootData "Repository" }}
+    {{- $version := index $rootData "Version" }}
 
     {{- $hasCommonImport := false }}
     {{- $hasAPIImport := false }}
-    {{- range $opName, $opData := pathOperations $pathData }}
+    {{- range $opName, $opData := $pathData.Operations  }}
         {{- $operation := concat $pathName $opName | operation $opData }}
 
         {{- $requestStruct := $operation.RequestStruct structRegistry }}
         {{- if $requestStruct }}
-            {{- if eq $requestStruct.Import "pkg/api"  }}
+            {{- if eq $requestStruct.Package "pkg/api"  }}
                 {{- $hasCommonImport = true }}
-            {{- else if $requestStruct.Import }}
+            {{- else if $requestStruct.Package }}
                 {{- $hasAPIImport = true }}
             {{- end }}
         {{- end }}
 
         {{- $responseStruct := $operation.ResponseStruct structRegistry }}
         {{- if $responseStruct }}
-            {{- if eq $responseStruct.Import "pkg/api"  }}
+            {{- log $responseStruct.Package }}
+            {{- if eq $responseStruct.Package "pkg/api"  }}
                 {{- $hasCommonImport = true }}
-            {{- else if $responseStruct.Import }}
+            {{- else if $responseStruct.Package }}
                 {{- $hasAPIImport = true }}
             {{- end }}
         {{- end }}
     {{- end }}
-    {{- template "ImportStruct" args $hasCommonImport $hasAPIImport . -}}
+
+    {{- $repository := index $rootData "Repository" }}
+    {{- $version := index $rootData "Version" }}
+    {{- $commonImport := concat $repository "/pkg/api" }}
+    {{- $apiImport := concat $repository "/pkg/api/" $version }}
+    {{- $apiImportAlias := concat "api" $version }}
+    {{- /* It's like this because of weird new-line issues */ -}}
+    {{- if and $hasCommonImport $hasAPIImport }}
+        {{ $imports = $imports.Add $commonImport }}
+        {{ $imports = $imports.AddWithAlias $apiImport $apiImportAlias }}
+    {{- else if $hasCommonImport}}
+        {{ $imports = $imports.Add $commonImport }}
+    {{- else if $hasAPIImport }}
+        {{ $imports = $imports.AddWithAlias $apiImport $apiImportAlias }}
+    {{- end }}
 {{ end }}
 
 {{ define "mappingFunction" }}
@@ -78,8 +95,9 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     func (c * {{ $controllerName }} ) Mappings() []web.Mapping {
         return []web.Mapping{
         {{- with $pathData }}
-            {{- range $opName, $opData := pathOperations . }}
-                {{- $operation :=  concat $nameFromPath $opName | operation $opData }}
+            {{- range $opName, $opData := .Operations }}
+                {{- $opName = toLower $opName | toTitle }}
+                {{- $operation := $opName | concat $nameFromPath | operation $opData }}
             rest.
                 New("{{ mappingName $pathName $opName }}").
                 {{$opName}}("{{ mappingPath $pathName }}").
@@ -100,8 +118,8 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
 
     {{- $controllerName := concat $nameFromPath "Controller" | toTitle}}
 
-    {{- range $opName, $opData := pathOperations $pathData }}
-        {{- $operation := concat $nameFromPath $opName | operation $opData }}
+    {{- range $opName, $opData := $pathData.Operations }}
+        {{- $operation := toLower $opName | toTitle | concat $nameFromPath | operation $opData }}
 
         {{ $defaultResponse := "" }}
         {{ range $respName, $respData := $operation.Data.Responses }}
@@ -124,10 +142,10 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- $type := "" }}
     {{- $import := "" }}
     {{- if $requestStruct }}
-        {{- $type = toTitle $requestStruct.Struct }}
-        {{- $import = $requestStruct.ImportAlias }}
+        {{- $type = toTitle $requestStruct.Name }}
+        {{- $import = basePath $requestStruct.Package }}
+        {{- if ne $import "api" }} {{- $import = concat "api" $import }} {{- end }}
     {{- end }}
-
     {{- toTitle $operation.Name -}}(ctx context.Context{{ if $type }}, req {{basePath $import}}.{{$type}}{{- end}})
 {{- end }}
 
@@ -135,16 +153,17 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- $hideStatus := index . 0 -}}
     {{- $operation := index . 1 }}
 
-    {{- $importPrefix := "" }}
+    {{- $import := "" }}
     {{- $type := "" }}
     {{- $responseStruct := $operation.ResponseStruct structRegistry -}}
     {{- if $responseStruct }}
-        {{- $importPrefix = $responseStruct.ImportAlias }}
-        {{- $type = toTitle $responseStruct.Struct }}
+        {{- $type = toTitle $responseStruct.Name }}
+        {{- $import = basePath $responseStruct.Package }}
+        {{- if ne $import "api" }} {{- $import = concat "api" $import }} {{- end }}
     {{- end }}
 
     {{- $pointer := "" }}
-    {{- if $importPrefix }}
+    {{- if $import }}
         {{- $pointer = "*" }}
     {{- else }}
         {{- /*If this is an array of an object, add a pointer to the array, otherwise just return an array of the type */ -}}
@@ -159,23 +178,24 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         {{- end }}
     {{- end -}}
 
-({{if not $hideStatus}} int, {{- end }}{{$pointer}}{{with $importPrefix}}{{.}}.{{ end }}{{with $type}}{{.}}{{else}}interface{}{{end}}, error)
+({{if not $hideStatus}} int, {{- end }}{{$pointer}}{{with $import}}{{.}}.{{ end }}{{with $type}}{{.}}{{else}}interface{}{{end}}, error)
 {{- end }}
 
 {{ define "responseBodyDefaultValue" -}}
     {{- $hideStatus := index . 0 -}}
     {{- $operation := index . 1 }}
 
-    {{- $importPrefix := "" }}
+    {{- $import := "" }}
     {{- $type := "" }}
     {{- $responseStruct := $operation.StructForMessage "Response" structRegistry -}}
     {{- if $responseStruct }}
-        {{- $importPrefix = $responseStruct.ImportAlias }}
-        {{- $type = toTitle $responseStruct.Struct }}
+        {{- $import = basePath $responseStruct.Package }}
+        {{- $type = toTitle $responseStruct.Name }}
+        {{- if ne $import "api" }} {{- $import = concat "api" $import }} {{- end }}
     {{- end -}}
 
-    {{ if $importPrefix -}}
-        &{{$importPrefix}}.{{$type}}{}
+    {{ if $import -}}
+        &{{$import}}.{{$type}}{}
     {{- else -}}
        {{- range $i, $content := $operation.AllResponseContent }}
             {{- $type = $content.Schema.Value.Type }}

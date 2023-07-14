@@ -3,52 +3,49 @@
     {{- $currentPkg := index . 1 }}
 
     {{- $hasOneRef := containsSingularRef $operation.Data }}
-    {{- $reqBody := $operation.Data.RequestBody }}
-    {{- $onlyHasReqBodyRef := and $hasOneRef $reqBody}}
+    {{- $onlyHasReqBodyRef := and $hasOneRef $operation.Data.RequestBody}}
 
     {{- $isEmpty := isEmpty $operation.Data }}
 
     {{/* Skip making struct if there won't be anything in it, or just one ref in the request body (function will import it directly) */}}
     {{- $shouldSkip := or $isEmpty $onlyHasReqBodyRef }}
     {{ if not $shouldSkip }}
-        {{- $structName := concat $operation.Name "Request" }}
-        {{- $structName = toTitle $structName }}
-        type {{ $structName }} struct {
-            {{- range $operation.Data.Parameters }}
-                    {{ template "ParameterProperty" args . $currentPkg }}
-            {{- end }}
-            {{- with $operation.Data.RequestBody }}
-                {{- with .Ref }}
-                    {{ template "EmbedStruct" args . $currentPkg }}
-                {{- else }}
-                    {{- range .Value.Content }}
-                       {{- with .Schema.Ref }}
-                            {{ template "EmbedStruct" args . $currentPkg }}
-                        {{- else }}
-                           {{- $schema := schema "" .Schema }}
-                           {{- template "SchemaProperties" args $schema "api" }}
-                           {{- if ne $schema.Type "object" }}
-                                {{- $requiredList := requiredList $schema.Data }}
-                                {{- $property := property $schema.Data "Body" $requiredList $currentPkg $schema.Name }}
-                                {{- $property = $property.SetOmitJSON true }}
-                                {{ template "properties" args $property }}
-                           {{- end }}
-                        {{- end }}
+        {{- $structName := concat $operation.Name "Request" | toTitle }}
+        {{- $respStruct := NewStruct $structName $currentPkg }}
+        {{- range $operation.Data.Parameters }}
+                {{ template "ParameterProperty" args . $currentPkg $respStruct }}
+        {{- end }}
+        {{- with $operation.Data.RequestBody }}
+            {{- with .Ref }}
+                {{- $respStruct = $respStruct.AddEmbeddedStruct . }}
+            {{- else }}
+                {{- range .Value.Content }}
+                   {{- with .Schema.Ref }}
+                        {{- $respStruct = $respStruct.AddEmbeddedStruct . }}
+                    {{- else }}
+                       {{- $schema := schema "" .Schema }}
+                       {{- template "SchemaProperties" args $schema "pkg/api" $respStruct }}
+                       {{- if ne $schema.Type "object" }}
+                            {{- $requiredList := requiredList $operation.Data.RequestBody.Value }}
+                            {{- $property := property $schema.Data "Body" $requiredList $currentPkg $schema.Name }}
+                            {{- $property = $property.SetOmitJSON true }}
+                            {{ template "properties" args $property $respStruct}}
+                       {{- end }}
                     {{- end }}
                 {{- end }}
             {{- end }}
-        }
+        {{- end }}
+        {{ template "struct" args $respStruct }}
 
         {{- template "requestBodyMarshallingFunctions" args $operation }}
-        {{- registerStruct $structName $currentPkg }}
+        {{- registerStruct $respStruct.Name $respStruct.Package }}
     {{- end }}
 {{- end }}
 
 {{ define "requestBodyMarshallingFunctions" }}
     {{- $operation := index . 0 }}
     {{- $addMarshallingFunctions := false }}
-    {{- $structName := concat $operation.Name "Request" }}
-    {{- $structName = toTitle $structName }}
+    {{- $structName := concat $operation.Name "Request" | toTitle }}
 
     {{- with $operation.Data.RequestBody }}
         {{- if eq .Ref "" }}

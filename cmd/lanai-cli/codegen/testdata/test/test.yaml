@@ -1,0 +1,651 @@
+openapi: 3.0.0
+info:
+  title: 'Test Contract'
+  version: '1'
+  termsOfService: 'https://www.cisco.com'
+  license:
+    name: 'MIT'
+paths:
+  '/my/api/v1/testpath/{scope}':
+    get:
+      summary: Test Get API (No operation ID)
+      parameters:
+        - name: scope
+          in: path
+          required: true
+          schema:
+            format: "^[a-zA-Z0-5-_=]{1,256}$"
+            type: string
+        - name: HEADER-PARAM
+          in: header
+          schema:
+            type: boolean
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponseWithAllOf'
+    patch:
+      summary: Test Patch API - Parameters with Default Values
+      parameters:
+        - name: scope
+          in: path
+          schema:
+            type: string
+        - name: queryDefault
+          in: query
+          schema:
+            type: string
+            default: defaultQuery
+        - name: headerDefault
+          in: header
+          schema:
+            type: string
+            default: defaultHeader
+    delete:
+      summary: Test Delete API
+      operationId: DeleteTestPath
+      parameters:
+        - name: scope
+          in: path
+          required: true
+          schema:
+            format: "^[a-zA-Z0-5-_=]{1,256}$"
+            type: string
+        - $ref: '#/components/parameters/QueryParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+                  - $ref: '#/components/schemas/GenericResponse'
+    post:
+      summary: Test Post API
+      operationId: PostTestPath
+      parameters:
+        - $ref: '#/components/parameters/PathParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/200'
+        '400':
+          $ref: '#/components/responses/400'
+  '/my/api/v1/requestBodyTests/{id}':
+      patch:
+        summary: Test Patch
+        description: Given an array request body, it should be included in the request struct
+        operationId: PatchTestPath
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                minItems: 1
+      put:
+        summary: Test Put
+        description: Given an request that uses a ref, it should be included in the request struct
+        operationId: PutTestPath
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+      delete:
+        summary: Test String RequestBody
+        description: Given a string request body, it should be included in the request struct
+        operationId: TestStringRequestBody
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: string
+      get:
+         summary: Test RequestBody With AdditionalProperties
+         description: Given a request body with additionalProperties, it should be included in the request struct
+         operationId: TestRequestBodyWithAdditionalProperties
+         parameters:
+           - name: id
+             in: path
+             required: true
+             schema:
+               type: string
+               format: uuid
+         requestBody:
+           required: true
+           content:
+             application/json:
+               schema:
+                 type: object
+                 additionalProperties: {}
+      post:
+        tags:
+          - Services
+        summary: Updates the service status.
+        operationId: updateServiceStatus
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenericObject'
+                minItems: 1
+  '/my/api/v1/controllerResponsesTest':
+      get:
+        summary: Test Common Object Array Response
+        description: Given an array of a ref'd component as response, controller should return an array of pointers to that component
+        operationId: TestCommonObjectArrayResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/GenericObject'
+      put:
+        summary: Test Common Object Response
+        description: Given a response using a common object, controller should return a pointer to that component
+        operationId: TestCommonObjectResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GenericObject'
+      delete:
+        summary: Test Response Object
+        description: Given a response using a response, controller should return a pointer to that response object
+        operationId: TestResponseObjectResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    firstProperty:
+                      type: integer
+                    secondProperty:
+                      type: string
+
+      patch:
+        summary: Test String Array Response
+        description: Given an array of strings response, controller should return an array of strings (without pointers)
+        operationId: TestStringArrayResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    type: string
+      trace:
+        summary: Test String response
+        description: Given a string as a response, controller should return a string
+        operationId: TestStringResponse
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: string
+      head:
+        summary: Test No Response
+        description: Given no request body, controller should return an interface
+        operationId: TestNoResponse
+  '/my/api/v1/uuidtest/{id}':
+    get:
+      summary: Test UUID In Path Parameter
+      operationId: TestUUIDInPathParam
+      description: Path parameters should not be given the uuid.UUID type as go validation will break, so it should be string
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            format: uuid
+            type: string
+  '/my/api/v2/testpath':
+    get:
+      operationId: GetAllTestPaths
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: '#/components/requestBodies/TestRequest'
+      responses:
+        '204':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+  '/my/api/v4/testRequestBodyUsingARefWithAllOf':
+    post:
+        operationId: createDevice
+        requestBody:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/DeviceCreate'
+            required: true
+  '/apim/api/v1/keys':
+    get:
+        description: Returns paged response, and requires VIEW_APIKEY permission
+        operationId: searchApiKeys
+        parameters:
+            - $ref: '#/components/parameters/StringParamThatZeroValueIsValidFor'
+        summary: Search for API Keys
+        tags:
+            - API Keys Management
+  '/my/api/v4/testAPIThatDoesntUseAnyImports':
+    post:
+        operationId: createDevice
+  '/my/api/v2/testArrayUUID':
+    get:
+      summary: Test UUID In an array
+      operationId: TestUUIDInArray
+      parameters:
+        - name: id
+          in: query
+          schema:
+            items:
+                type: string
+                format: uuid
+            type: array
+    put:
+        operationId: TestRequestBodyWithAllOf
+        parameters:
+            - in: path
+              name: id
+              required: true
+              schema:
+                type: string
+        requestBody:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/RequestBodyWithAllOf'
+            required: true
+  '/my/api/v3/anotherTest':
+    get:
+      operationId: GetAnotherTest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericResponse'
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+    post:
+      operationId: testWithNoRequestBody
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+components:
+  schemas:
+    DeviceCreate:
+        allOf:
+            - properties:
+                serviceInstanceId:
+                    format: uuid
+                    type: string
+              required:
+                - serviceInstanceId
+              type: object
+            - $ref: '#/components/schemas/DeviceUpdate'
+    DeviceUpdate:
+          allOf:
+              - properties:
+                  attributes:
+                      additionalProperties: {}
+                      nullable: true
+                      type: object
+                type: object
+    RequestBodyWithAllOf:
+        allOf:
+            - properties:
+                attributes:
+                    additionalProperties: {}
+                    nullable: true
+                    type: object
+                managed:
+                    default: false
+                    type: boolean
+              type: object
+    AdditionalPropertyTest:
+        allOf:
+            - properties:
+                attributeWithTrueAP:
+                    additionalProperties: true
+                    nullable: true
+                    type: object
+                attributeWithEmptyObjAP:
+                    additionalProperties: {}
+                    nullable: true
+                    type: object
+                attributeWithFalseAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties: false
+                    nullable: true
+                    type: object
+                attributeWithObjectPropertiesAndObjAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties: {}
+                    nullable: true
+                    type: object
+                attributeWithObjectPropertiesAndTrueAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties: true
+                    nullable: true
+                    type: object
+                attributeWithObjectPropertiesAndStringAP:
+                    properties:
+                      property:
+                        type: string
+                    additionalProperties:
+                        type: string
+                    nullable: true
+                    type: object
+              type: object
+    Device:
+        allOf:
+            - properties:
+                createdOn:
+                    format: date-time
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                modifiedOn:
+                    format: date-time
+                    nullable: true
+                    type: string
+                serviceType:
+                    maxLength: 128
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DeviceStatus'
+                statusDetails:
+                    additionalProperties:
+                        $ref: '#/components/schemas/DeviceStatus'
+                    type: object
+                subscriptionId:
+                    format: uuid
+                    type: string
+                userId:
+                    format: uuid
+                    type: string
+                stringWithFormatOnlyInAnAllOfSchema:
+                    type: string
+                    format: allOfExclusiveFormat
+                regexWithBackslashes:
+                    type: string
+                    format: ^[a-zA-Z0-9\_\-\.\@]{1,128}$
+              type: object
+    DeviceStatus:
+        properties:
+            lastUpdated:
+                format: date-time
+                type: string
+            lastUpdatedMessage:
+                maxLength: 128
+                minLength: 1
+                type: string
+            severity:
+                maxLength: 128
+                minLength: 1
+                type: string
+            value:
+                maxLength: 128
+                minLength: 1
+                type: string
+        required:
+            - value
+            - severity
+            - lastUpdated
+            - lastUpdatedMessage
+        type: object
+    GenericResponse:
+      type: object
+      required:
+        - stringValue
+        - createdOnDate
+        - stringWithRegexDefinedInPattern
+        - objectValue
+      properties:
+        stringValue:
+          type: string
+          minLength: 0
+          maxLength: 128
+        createdOnDate:
+          type: string
+          format: date
+        createdOnDateTime:
+          type: string
+          format: date-time
+        myUuid:
+          type: string
+          format: uuid
+        stringWithRegexDefinedInPattern:
+          type: string
+          pattern: "^[a-zA-Z0-9-_=]{1,256}$"
+        stringWithRegexDefinedInFormat:
+          type: string
+          format: "^[a-zA-Z0-8-_=]{1,256}$"
+        numberValue:
+          type: number
+          maximum: 10
+        integerValue:
+          type: integer
+        integer32Value:
+          type: integer
+          format: int32
+          maximum: 5
+        integer64Value:
+          type: integer
+          format: int64
+        numberArray:
+          type: array
+          items:
+            type: number
+          maxItems: 10
+        objectValue:
+          type: object
+          required:
+            - objectNumber
+          properties:
+            objectNumber:
+              type: number
+        directRef:
+           $ref: '#/components/schemas/GenericObject'
+        arrayOfRef:
+          items:
+              $ref: '#/components/schemas/ArrayItem'
+          type: array
+        arrayOfObjects:
+          items:
+              $ref: '#/components/schemas/GenericObject'
+          type: array
+        arrayOfUUIDs:
+          items:
+            type: string
+            format: uuid
+          type: array
+        stringWithEnum:
+          type: string
+          enum:
+            - asc
+            - desc
+        stringWithNilEnum:
+          type: string
+          enum:
+            - asc
+            - desc
+            - null
+          nullable: true
+        email:
+          type: string
+          format: email
+        emptyObject:
+          type: object
+      additionalProperties:
+        type: string
+    ArrayItem:
+      type: string
+    GenericResponseWithAllOf:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: string
+        - $ref: '#/components/schemas/GenericResponse'
+    GenericObject:
+      type: object
+      properties:
+        id:
+          type: string
+        enabled:
+          type: object
+          properties:
+            inner:
+              type: string
+        valueWithAllOf:
+          allOf:
+              - $ref: '#/components/schemas/ApiPolicy'
+    ObjectWithRefAndAdditionalProperties:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/GenericObject'
+      additionalProperties:
+        type: string
+
+    ApiPolicy:
+        properties:
+            unlimited:
+                type: boolean
+        type: object
+    InvalidObjectSchema:
+      type: string
+  responses:
+    400:
+      description: Bad Request
+      headers:
+        Some-Kinda-Header:
+          description: "Some kinda header for this"
+          schema:
+            $ref: '#/components/schemas/GenericResponse'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              BadRequestResponse:
+                $ref: '#/components/schemas/InvalidObjectSchema'
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GenericResponse'
+    204:
+      description: No content
+  parameters:
+    StringParamThatZeroValueIsValidFor:
+        in: query
+        name: StringParamThatZeroValueIsValidFor
+        schema:
+            description: asc | desc | (empty value)
+            format: ^$|^[Aa][Ss][Cc]|[Dd][Ee][Ss][Cc]$
+            maxLength: 32
+            type: string
+    QueryParam:
+      name: testParam
+      in: query
+      description: A test parameter
+      required: false
+      deprecated: false
+      allowEmptyValue: true
+      schema:
+        type: string
+        minLength: 0
+        maxLength: 128
+    PathParam:
+      name: scope
+      in: path
+      required: true
+      schema:
+        format: "^[a-zA-Z0-7-_=]{1,256}$"
+        type: string
+  requestBodies:
+    TestRequest:
+      description: Test Request
+      required: false
+      content:
+        "application/json":
+          schema:
+            properties:
+              uuid:
+                type: string
+                format: uuid

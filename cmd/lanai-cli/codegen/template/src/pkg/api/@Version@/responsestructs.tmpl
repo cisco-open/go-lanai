@@ -16,9 +16,8 @@
             {{- if gt $numCreatedStructs 1 }}
                 {{- $nameSuffix = $responseName }}
             {{- end }}
-            {{- $structName := concat $operation.Name "Response" $nameSuffix }}
-            {{- $structName = toTitle $structName }}
-            {{ template "responseStruct" args $structName $response }}
+            {{- $structName := concat $operation.Name "Response" $nameSuffix | toTitle }}
+            {{ template "responseStruct" args $structName $currentPkg $response }}
             {{- registerStruct $structName $currentPkg }}
          {{- end }}
 
@@ -27,15 +26,13 @@
 
 {{- define "responseStruct" }}
     {{- $structName := index . 0 }}
-    {{- $response := index . 1 }}
+    {{- $currentPkg := index . 1 }}
+    {{- $response := index . 2 }}
 
-    type {{ toTitle $structName}} struct {
-        {{- range $response.Value.Content }}
-            {{ $schema := schema "" .Schema }}
-            {{ template "SchemaProperties" args $schema "api" }}
-            {{- if eq .Schema.Value.Type "array" }}
-                {{ template "propertiesFromSchema" args $schema }}
-            {{- end }}
-        {{- end }}
-    }
+    {{- $respStruct := NewStruct $structName $currentPkg }}
+    {{- range $response.Value.Content }}
+        {{ $schema := schema "" .Schema }}
+        {{- template "SchemaProperties" args $schema $currentPkg $respStruct }}
+    {{- end }}
+    {{ template "struct" args $respStruct }}
 {{- end }}

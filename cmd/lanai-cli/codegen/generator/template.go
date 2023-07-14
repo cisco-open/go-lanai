@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/internal"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs"
 	"io/fs"
 	"path"
 	"text/template"
@@ -29,8 +29,8 @@ func LoadTemplates(filesystem fs.FS, loaderOptions LoaderOptions) (*template.Tem
 	tmpl := template.New("templates")
 	tmpl.Funcs(templateFunctions())
 
-	internal.Load()
-	internal.AddPredefinedRegexes(loaderOptions.InitialRegexes)
+	template_funcs.Load()
+	template_funcs.AddPredefinedRegexes(loaderOptions.InitialRegexes)
 	if err := fs.WalkDir(filesystem, ".",
 		func(p string, d fs.DirEntry, err error) error {
 			if !d.IsDir() && isTemplateFile(d) {
@@ -53,7 +53,7 @@ func LoadTemplates(filesystem fs.FS, loaderOptions LoaderOptions) (*template.Tem
 
 func templateFunctions() template.FuncMap {
 	templateFunctions := make(template.FuncMap)
-	for _, fm := range internal.TemplateFuncMaps {
+	for _, fm := range template_funcs.TemplateFuncMaps {
 		for k, v := range fm {
 			templateFunctions[k] = v
 		}

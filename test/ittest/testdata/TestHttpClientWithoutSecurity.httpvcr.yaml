@@ -12,12 +12,9 @@ interactions:
         host: 127.0.0.1:9203
         remote_addr: ""
         request_uri: ""
-        body: |
-            null
+        body: ""
         form: {}
         headers:
-            Content-Type:
-                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "0"
         url: http://127.0.0.1:9203/idm/swagger
@@ -130,12 +127,9 @@ interactions:
         host: localhost:9203
         remote_addr: ""
         request_uri: ""
-        body: |
-            null
+        body: ""
         form: {}
         headers:
-            Content-Type:
-                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
         url: http://localhost:9203/idm/swagger

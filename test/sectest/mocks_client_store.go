@@ -2,6 +2,7 @@ package sectest
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
@@ -30,6 +31,46 @@ var (
 
 type MockedClient struct {
 	MockedClientProperties
+}
+
+func (m MockedClient) ID() interface{} {
+	return m.MockedClientProperties.ClientID
+}
+
+func (m MockedClient) Type() security.AccountType {
+	return security.AccountTypeDefault
+}
+
+func (m MockedClient) Username() string {
+	return m.MockedClientProperties.ClientID
+}
+
+func (m MockedClient) Credentials() interface{} {
+	return m.MockedClientProperties.Secret
+}
+
+func (m MockedClient) Permissions() []string {
+	return nil
+}
+
+func (m MockedClient) Disabled() bool {
+	return false
+}
+
+func (m MockedClient) Locked() bool {
+	return false
+}
+
+func (m MockedClient) UseMFA() bool {
+	return false
+}
+
+func (m MockedClient) CacheableCopy() security.Account {
+	cp := MockedClient{
+		m.MockedClientProperties,
+	}
+	cp.MockedClientProperties.Secret = ""
+	return cp
 }
 
 func (m MockedClient) ClientId() string {
@@ -67,11 +108,11 @@ func (m MockedClient) AutoApproveScopes() utils.StringSet {
 }
 
 func (m MockedClient) AccessTokenValidity() time.Duration {
-	return m.MockedClientProperties.ATValidity
+	return time.Duration(m.MockedClientProperties.ATValidity)
 }
 
 func (m MockedClient) RefreshTokenValidity() time.Duration {
-	return m.MockedClientProperties.RTValidity
+	return time.Duration(m.MockedClientProperties.RTValidity)
 }
 
 func (m MockedClient) UseSessionTimeout() bool {

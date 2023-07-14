@@ -8,6 +8,9 @@ PRIVATE_REPOS = \
 null  =
 space = $(null) #
 comma = ,
+# example of pseudo version is v0.11.1-0.20230615155859-57d47298acc1
+# it's made up of tagged version, timestamp and commit hash
+pseudo_version_pattern = (v[0-9]+(\.[A-Za-z0-9]+)+)-(0.)?[0-9]+-[A-Za-z0-9]+
 
 ### Main
 .PHONY: init-once init-ws init-cli init print
@@ -68,9 +71,10 @@ init-cli: print
 else
 # For CI/CD and Service Dev
 init-cli: CLI_VERSION = $(shell $(GO) list -modfile "$(CLI_GOMOD_FILE)" -m -f {{.Version}} $(CLI_MOD_PATH))
-init-cli: CLI_PKG_PATH = $(CLI_PKG)@$(CLI_VERSION)
+# If the version is a pseudo version, we want to use the commit hash (the last 12 characters) for the go install command
+init-cli: CLI_PKG_PATH = $(if [["$(CLI_VERSION)" =~ $(pseudo_version_pattern)]],$(CLI_PKG)@$(shell printf $(CLI_VERSION) | tail -c 12),$(CLI_PKG)@$(CLI_VERSION))
 init-cli: init-ws print
-	@echo Installing $(CLI_PKG) $(CLI_VERSION) ...
+	@echo Installing $(CLI_PKG_PATH) $(CLI_VERSION) ...
 	@cd $(INIT_TMP_DIR); $(GO) install -ldflags="-X main.BuildVersion=$(CLI_VERSION)" $(CLI_PKG_PATH)
 endif
 

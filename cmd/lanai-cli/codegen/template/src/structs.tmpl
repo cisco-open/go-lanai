@@ -1,0 +1,78 @@
+{{ define "SchemaProperties" }}
+    {{- $schema := index . 0 -}}
+    {{- $currentPkg := index . 1 }}
+    {{- $struct := index . 2 }}
+
+    {{- range $i, $schemaRef := $schema.StructProperties }}
+        {{- with $schemaRef.Ref }}
+            {{- $struct = $struct.AddEmbeddedStruct . }}
+        {{- else }}
+            {{- $innerSchema := schema $schema.Name $schemaRef }}
+
+            {{- $requiredList := requiredList $innerSchema.Data }}
+            {{- range $propName, $prop := $innerSchema.AllProperties }}
+                {{- $property := property $prop $propName $requiredList $currentPkg $innerSchema.Name }}
+                {{ template "properties" args $property $struct }}
+            {{- end }}
+
+            {{- if $innerSchema.HasAdditionalProperties  }}
+                {{- $additionalPropertyType := "" }}
+                {{- with $innerSchema.Data.Value.AdditionalProperties }}
+                    {{- $property := property . "" nil $currentPkg }}
+                    {{- $additionalPropertyType = propertyToGoType $property }}
+                {{- end }}
+                {{- if not $additionalPropertyType }}
+                    {{- $additionalPropertyType = "interface{}" }}
+                {{- end }}
+                {{- $type := concat "map[string]" $additionalPropertyType }}
+                {{- $myAdditionalProp := NewMyProperty "Values" $type }}
+                {{- $myAdditionalProp = $myAdditionalProp.AddBinding "`json:\"-\"`" }}
+                {{- $struct = $struct.AddProperties $myAdditionalProp }}
+            {{- end }}
+        {{- end }}
+    {{- end }}
+{{- end }}
+
+{{ define "ParameterProperty" }}
+    {{- $parameter := index . 0 }}
+    {{- $currentPkg := index . 1 }}
+
+    {{- $struct := index . 2 }}
+
+    {{- $isRef := $parameter.Ref }}
+    {{- $isObject := eq $parameter.Value.Schema.Value.Type "object" }}
+    {{- $shouldEmbed := and $isRef $isObject }}
+    {{- with $shouldEmbed }}
+        {{- $struct = $struct.AddEmbeddedStruct $parameter.Ref }}
+    {{- else }}
+        {{- $requiredList := requiredList $parameter.Value }}
+        {{- $property := property $parameter.Value $parameter.Value.Name $requiredList $currentPkg }}
+        {{- template "properties" args $property $struct }}
+    {{- end }}
+{{- end }}
+
+{{ define "properties" }}
+   {{- $property := index . 0 }}
+   {{- $struct := index . 1 }}
+
+   {{- $type := propertyToGoType $property }}
+   {{- if shouldHavePointer $property }} {{$type = concat "*" $type}} {{- end }}
+
+   {{- $prop := NewMyProperty $property.PropertyName $type }}
+   {{- $prop = structTags $property | $prop.AddBinding }}
+
+   {{- $struct = $struct.AddProperties $prop }}
+{{- end }}
+
+{{ define "struct" }}
+    {{- $struct := index . 0 }}
+    type {{ $struct.Name }} struct {
+        {{- range $struct.Properties }}
+            {{- $name := toTitle .Name | replaceDashes }}
+            {{ $name }} {{ .Type }} {{ .Bindings }}
+        {{- end }}
+        {{- range $struct.EmbeddedStructs }}
+            {{ if ne .Package $struct.Package }}{{ basePath .Package}}.{{end }}{{ .Name }}
+        {{- end }}
+    }
+{{- end }}

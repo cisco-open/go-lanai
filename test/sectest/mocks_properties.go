@@ -23,8 +23,8 @@ type MockedClientProperties struct {
 	GrantTypes   utils.CommaSeparatedSlice `json:"grant-types"`
 	Scopes       utils.CommaSeparatedSlice `json:"scopes"`
 	RedirectUris utils.CommaSeparatedSlice `json:"redirect-uris"`
-	ATValidity   time.Duration             `json:"access-token-validity"`
-	RTValidity   time.Duration             `json:"refresh-token-validity"`
+	ATValidity   utils.Duration            `json:"access-token-validity"`
+	RTValidity   utils.Duration            `json:"refresh-token-validity"`
 }
 
 type MockedAccountProperties struct {

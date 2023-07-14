@@ -2,23 +2,20 @@
 // Derived from openapi contract - components
 package api
 {{ with index . "OpenAPIData" }}
-    {{ template "externalCommonImports" args .Components }}
+    {{- $c := components .Components }}
+    {{ $imports := NewImports }}
+    {{- with $c.Imports }}
+        {{- range . }}
+            {{ $imports = $imports.Add . }}
+        {{- end }}
+    {{- end }}
+
+    {{ template "imports" $imports }}
+
     {{ template "registerStructs" args .Components }}
     {{ template "componentSchemaStructs" args .Components.Schemas }}
     {{ template "componentRequestBodiesStructs" args .Components.RequestBodies }}
     {{ template "componentParameterStructs" args .Components.Parameters }}
-{{- end }}
-
-{{ define "externalCommonImports" }}
-    {{- $components := index . 0 }}
-    {{- $c := components $components }}
-    {{- with $c.Imports }}
-    import (
-        {{ range . }}
-        "{{.}}"
-        {{- end }}
-    )
-    {{- end }}
 {{- end }}
 
 {{ define "registerStructs" }}
@@ -89,9 +86,9 @@ package api
 
         {{- if or $schema.Data.Value.AllOf $schema.Data.Value.Properties }}
             {{- if not $schema.Data.Ref }}
-                type {{ $schema.Name }} struct {
-                    {{- template "SchemaProperties" args $schema "pkg/api" }}
-                }
+                {{- $struct := NewStruct $structName "pkg/api" }}
+                {{- template "SchemaProperties" args $schema "pkg/api" $struct}}
+                {{ template "struct" args $struct }}
                 {{- $wasCreated = true }}
 
                 {{- if $schema.HasAdditionalProperties }}
@@ -117,22 +114,23 @@ package api
 {{ define "componentRequestBodiesStructs" }}
     {{- $requestBodies := index . 0 }}
     {{ range $requestName, $requestData := $requestBodies }}
-        type {{ toTitle $requestName }} struct {
-                {{- range $requestData.Value.Content }}
-                    {{- $schema := schema $requestName .Schema }}
-                    {{- template "SchemaProperties" args $schema "pkg/api" }}
-                {{- end }}
-        }
+        {{ $struct := NewStruct $requestName "pkg/api" }}
+        {{- range $requestData.Value.Content }}
+            {{- $schema := schema $requestName .Schema }}
+            {{- template "SchemaProperties" args $schema "pkg/api" $struct }}
+        {{- end }}
+        {{ template "struct" args $struct }}
     {{- end }}
 {{- end }}
 
 {{ define "componentParameterStructs" }}
     {{- $parameters := index . 0 }}
     {{ range $parameterName, $parameterData := $parameters }}
+        {{ $structName := toTitle $parameterName }}
         {{- if eq $parameterData.Value.Schema.Value.Type "object" }}
-        type {{ toTitle $parameterName }} struct {
-            {{ template "ParameterProperty" args $parameterData "pkg/api" }}
-        }
+            {{ $struct := NewStruct $structName "pkg/api" }}
+            {{ template "ParameterProperty" args $parameterData "pkg/api" $struct}}
+            {{ template "struct" args $struct }}
         {{- end }}
     {{ end }}
 {{- end }}
