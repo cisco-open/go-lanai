@@ -52,6 +52,19 @@ func (c Config) MarshalJSON() ([]byte, error) {
 	return marshalMergedJSON(config(c), c.ExtraConfig, minimizeMap)
 }
 
+func (c Config) MarshalText() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+func (c Config) JSONReader(ctx context.Context) (io.Reader, error) {
+	var buf bytes.Buffer
+	if e := json.NewEncoder(&buf).Encode(&c); e != nil {
+		return nil, e
+	}
+	logger.WithContext(ctx).Debugf("OPA Config: %s", buf.Bytes())
+	return &buf, nil
+}
+
 // see OPA's internal distributedtracing.distributedTracingConfig (internal/distributedtracing/distributedtracing.go)
 type distributedTracingConfig struct {
 	Type                  string `json:"type,omitempty"`
@@ -78,7 +91,7 @@ type diskConfig struct {
 }
 
 // LoadConfig create config and combine values from defaults and properties
-func LoadConfig(ctx context.Context, props Properties, customizers ...ConfigCustomizer) (io.Reader, error) {
+func LoadConfig(ctx context.Context, props Properties, customizers ...ConfigCustomizer) (*Config, error) {
 	var cfg Config
 	cfg.ExtraConfig = map[string]interface{}{}
 	if e := applyProperties(&props, &cfg); e != nil {
@@ -87,13 +100,7 @@ func LoadConfig(ctx context.Context, props Properties, customizers ...ConfigCust
 	for _, customizer := range customizers {
 		customizer.Customize(ctx, &cfg)
 	}
-
-	var buf bytes.Buffer
-	if e := json.NewEncoder(&buf).Encode(&cfg); e != nil {
-		return nil, e
-	}
-	logger.WithContext(ctx).Debugf("OPA Config: %s", buf.Bytes())
-	return &buf, nil
+	return &cfg, nil
 }
 
 func applyProperties(props *Properties, cfg *Config) error {

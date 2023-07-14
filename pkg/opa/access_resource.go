@@ -15,11 +15,15 @@ type Resource struct {
 	Policy string
 	ResourceValues
 	Delta    *ResourceValues
+	InputCustomizers []InputCustomizer
+	// RawInput overrides any input related options
 	RawInput interface{}
 }
 
 func AllowResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceOptions) error {
-	res := Resource{OPA: EmbeddedOPA(),
+	res := Resource{
+		OPA: EmbeddedOPA(),
+		InputCustomizers: embeddedOPA.inputCustomizers,
 		ResourceValues: ResourceValues{ExtraData: map[string]interface{}{}},
 	}
 	for _, fn := range opts {
@@ -28,7 +32,10 @@ func AllowResource(ctx context.Context, resType string, op ResourceOperation, op
 	if len(res.Policy) == 0 {
 		res.Policy = fmt.Sprintf("%s/allow_%v", resType, op)
 	}
-	opaOpts := PrepareResourceDecisionQuery(ctx, res.Policy, resType, op, &res)
+	opaOpts, e := PrepareResourceDecisionQuery(ctx, res.Policy, resType, op, &res)
+	if e != nil {
+		return ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
+	}
 	result, e := res.OPA.Decision(ctx, *opaOpts)
 	switch {
 	case sdk.IsUndefinedErr(e):
@@ -49,8 +56,11 @@ func AllowResource(ctx context.Context, resType string, op ResourceOperation, op
 	return nil
 }
 
-func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *Resource) *sdk.DecisionOptions {
-	input := constructResourceDecisionInput(ctx, resType, op, res)
+func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *Resource) (*sdk.DecisionOptions, error) {
+	input, e := constructResourceDecisionInput(ctx, resType, op, res)
+	if e != nil {
+		return nil, e
+	}
 	opts := sdk.DecisionOptions{
 		Now:                 time.Now(),
 		Path:                policy,
@@ -63,18 +73,23 @@ func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType st
 	} else {
 		logger.WithContext(ctx).Debugf("Input: %s", data)
 	}
-	return &opts
+	return &opts, nil
 }
 
-func constructResourceDecisionInput(ctx context.Context, resType string, op ResourceOperation, res *Resource) interface{} {
+func constructResourceDecisionInput(ctx context.Context, resType string, op ResourceOperation, res *Resource) (interface{}, error) {
 	if res.RawInput != nil {
-		return res.RawInput
+		return res.RawInput, nil
 	}
 	input := NewInput()
-	input.Authentication = NewAuthenticationClause(ctx)
+	input.Authentication = NewAuthenticationClause()
 	input.Resource = NewResourceClause(resType, op)
-
 	input.Resource.CurrentResourceValues = CurrentResourceValues(res.ResourceValues)
 	input.Resource.Delta = res.Delta
-	return input
+
+	for _, customizer := range res.InputCustomizers {
+		if e := customizer.Customize(ctx, input); e != nil {
+			return nil, e
+		}
+	}
+	return input, nil
 }

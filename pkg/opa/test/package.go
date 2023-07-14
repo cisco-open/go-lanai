@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
+	opainit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/init"
 	opatestserver "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test/server"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -29,7 +30,7 @@ const (
 // If no bundle FS provided, DefaultBundleFS is used.
 func WithBundles(bundleFSs ...fs.FS) test.Options {
 	return test.WithOptions(
-		apptest.WithModules(opa.Module),
+		apptest.WithModules(opainit.Module),
 		apptest.WithFxOptions(
 			fx.Provide(BundleServerProvider(bundleFSs...)),
 			fx.Invoke(opatestserver.InitializeBundleServer),

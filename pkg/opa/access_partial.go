@@ -18,19 +18,23 @@ type ContextAwarePartialQueryMapper interface {
 type ResourceFilterOptions func(rf *ResourceFilter)
 
 type ResourceFilter struct {
-	OPA         *sdk.OPA
-	Policy      string
-	Unknowns    []string
-	QueryMapper sdk.PartialQueryMapper
-	Delta       *ResourceValues
-	ExtraData   map[string]interface{}
-	RawInput    interface{}
+	OPA              *sdk.OPA
+	Policy           string
+	Unknowns         []string
+	QueryMapper      sdk.PartialQueryMapper
+	Delta            *ResourceValues
+	ExtraData        map[string]interface{}
+	InputCustomizers []InputCustomizer
+	// RawInput overrides any input related options
+	RawInput interface{}
 }
 
 func FilterResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceFilterOptions) (*sdk.PartialResult, error) {
 	res := ResourceFilter{
-		OPA:       EmbeddedOPA(),
-		ExtraData: map[string]interface{}{},
+		OPA:              EmbeddedOPA(),
+		InputCustomizers: embeddedOPA.inputCustomizers,
+		QueryMapper:      &sdk.RawMapper{},
+		ExtraData:        map[string]interface{}{},
 	}
 	for _, fn := range opts {
 		fn(&res)
@@ -38,24 +42,30 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 	if len(res.Policy) == 0 {
 		res.Policy = fmt.Sprintf("data.%s.filter_%v", resType, op)
 	}
-	opaOpts := PrepareResourcePartialQuery(ctx, res.Policy, resType, op, &res)
+	opaOpts, e := PrepareResourcePartialQuery(ctx, res.Policy, resType, op, &res)
+	if e != nil {
+		return nil, ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
+	}
 	result, e := res.OPA.Partial(ctx, *opaOpts)
 	if e != nil {
 		switch {
 		case sdk.IsUndefinedErr(e):
 			return nil, ErrAccessDenied
 		case errors.Is(e, ErrQueriesNotResolved):
-			return nil, e
+			return nil, ErrAccessDenied.WithMessage(e.Error())
 		default:
-			return nil, ErrInternal.WithMessage("failed to perform partial evaluation: %v", e)
+			return nil, ErrAccessDenied.WithMessage("failed to perform partial evaluation: %v", e)
 		}
 	}
 	logger.WithContext(ctx).Infof("Partial Result [%s]: %v", result.ID, result.AST)
 	return result, nil
 }
 
-func PrepareResourcePartialQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *ResourceFilter) *sdk.PartialOptions {
-	input := constructResourcePartialInput(ctx, resType, op, res)
+func PrepareResourcePartialQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *ResourceFilter) (*sdk.PartialOptions, error) {
+	input, e := constructResourcePartialInput(ctx, resType, op, res)
+	if e != nil {
+		return nil, e
+	}
 	mapper := res.QueryMapper
 	if v, ok := res.QueryMapper.(ContextAwarePartialQueryMapper); ok {
 		mapper = v.WithContext(ctx)
@@ -73,17 +83,26 @@ func PrepareResourcePartialQuery(ctx context.Context, policy string, resType str
 	} else {
 		logger.WithContext(ctx).Debugf("Input: %s", data)
 	}
-	return &opts
+	return &opts, nil
 }
 
-func constructResourcePartialInput(ctx context.Context, resType string, op ResourceOperation, res *ResourceFilter) interface{} {
+func constructResourcePartialInput(ctx context.Context, resType string, op ResourceOperation, res *ResourceFilter) (interface{}, error) {
 	if res.RawInput != nil {
-		return res.RawInput
+		return res.RawInput, nil
 	}
 	input := NewInput()
-	input.Authentication = NewAuthenticationClause(ctx)
+	input.Authentication = NewAuthenticationClause()
 	input.Resource = NewResourceClause(resType, op)
 	input.Resource.ExtraData = res.ExtraData
 	input.Resource.Delta = res.Delta
-	return input
+
+	for _, customizer := range res.InputCustomizers {
+		if e := customizer.Customize(ctx, input); e != nil {
+			return nil, e
+		}
+	}
+	return input, nil
 }
+
+
+

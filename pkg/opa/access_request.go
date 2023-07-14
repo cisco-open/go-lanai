@@ -10,18 +10,27 @@ import (
 
 type RequestQueryOptions func(opt *RequestQueryOption)
 type RequestQueryOption struct {
-	OPA       *sdk.OPA
-	Policy    string
-	ExtraData map[string]interface{}
-	RawInput  interface{}
+	OPA              *sdk.OPA
+	Policy           string
+	ExtraData        map[string]interface{}
+	InputCustomizers []InputCustomizer
+	// RawInput overrides any input related options
+	RawInput interface{}
 }
 
 func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOptions) error {
-	opt := RequestQueryOption{OPA: EmbeddedOPA(), ExtraData: map[string]interface{}{}}
+	opt := RequestQueryOption{
+		OPA:              EmbeddedOPA(),
+		InputCustomizers: embeddedOPA.inputCustomizers,
+		ExtraData:        map[string]interface{}{},
+	}
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	opaOpts := PrepareRequestDecisionQuery(ctx, opt.Policy, req, &opt)
+	opaOpts, e := PrepareRequestDecisionQuery(ctx, opt.Policy, req, &opt)
+	if e != nil {
+		return ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
+	}
 	result, e := opt.OPA.Decision(ctx, *opaOpts)
 	switch {
 	case sdk.IsUndefinedErr(e):
@@ -42,8 +51,11 @@ func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOp
 	}
 }
 
-func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.Request, opt *RequestQueryOption) *sdk.DecisionOptions {
-	input := constructRequestDecisionInput(ctx, req, opt)
+func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.Request, opt *RequestQueryOption) (*sdk.DecisionOptions, error) {
+	input, e := constructRequestDecisionInput(ctx, req, opt)
+	if e != nil {
+		return nil, e
+	}
 	opts := sdk.DecisionOptions{
 		Now:                 time.Now(),
 		Path:                policy,
@@ -56,16 +68,21 @@ func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.R
 	} else {
 		logger.WithContext(ctx).Debugf("Input: %s", data)
 	}
-	return &opts
+	return &opts, nil
 }
 
-func constructRequestDecisionInput(ctx context.Context, req *http.Request, opt *RequestQueryOption) interface{} {
+func constructRequestDecisionInput(ctx context.Context, req *http.Request, opt *RequestQueryOption) (interface{}, error) {
 	if opt.RawInput != nil {
-		return opt.RawInput
+		return opt.RawInput, nil
 	}
 	input := NewInput()
-	input.Authentication = NewAuthenticationClause(ctx)
+	input.Authentication = NewAuthenticationClause()
 	input.Request = NewRequestClause(req)
 	input.Request.ExtraData = opt.ExtraData
-	return input
+	for _, customizer := range opt.InputCustomizers {
+		if e := customizer.Customize(ctx, input); e != nil {
+			return nil, e
+		}
+	}
+	return input, nil
 }

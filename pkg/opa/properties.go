@@ -1,9 +1,7 @@
 package opa
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
 )
 
 const PropertiesPrefix = "security.opa"
@@ -37,12 +35,4 @@ type PollingProperties struct {
 
 func NewProperties() *Properties {
 	return &Properties{}
-}
-
-func BindProperties(ctx *bootstrap.ApplicationContext) Properties {
-	props := NewProperties()
-	if e := ctx.Config().Bind(props, PropertiesPrefix); e != nil {
-		panic(fmt.Errorf("failed to bind OPA properties: %v", e))
-	}
-	return *props
 }

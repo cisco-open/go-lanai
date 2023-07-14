@@ -5,6 +5,8 @@ import (
 	opalogging "github.com/open-policy-agent/opa/logging"
 )
 
+var logger = log.New("OPA")
+
 var (
 	logLevelMapper = map[opalogging.Level]log.LoggingLevel{
 		opalogging.Debug: log.LevelDebug,

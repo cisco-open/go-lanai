@@ -2,8 +2,6 @@ package opa
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"net/http"
 	"net/url"
 )
@@ -35,16 +33,25 @@ func NewInput() *Input {
 	return &Input{}
 }
 
+type InputCustomizer interface {
+	Customize(ctx context.Context, input *Input) error
+}
+
+type InputCustomizerFunc func(ctx context.Context, input *Input) error
+func (fn InputCustomizerFunc) Customize(ctx context.Context, input *Input) error {
+	return fn(ctx, input)
+}
+
 /*****************************
 	Common Identity Blocks
  *****************************/
 
 type AuthenticationClause struct {
 	// Required fields
-	Username    string   `json:"username"`
+	UserID      string   `json:"user_id"`
 	Permissions []string `json:"permissions"`
 	// Optional fields
-	UserID            string                 `json:"user_id,omitempty"`
+	Username          string                 `json:"username,omitempty"`
 	TenantID          string                 `json:"tenant_id,omitempty"`
 	ProviderID        string                 `json:"provider_id,omitempty"`
 	Roles             []string               `json:"roles,omitempty"`
@@ -59,59 +66,15 @@ type OAuthClientClause struct {
 	Scopes    []string `json:"scopes"`
 }
 
-func NewAuthenticationClause(ctx context.Context) *AuthenticationClause {
-	auth := security.Get(ctx)
-	ret := newAuthenticationClause(auth)
-	details := auth.Details()
-	if v, ok := details.(security.UserDetails); ok {
-		ret.UserID = v.UserId()
-		ret.AccessibleTenants = v.AssignedTenantIds().Values()
-	}
-	if v, ok := details.(security.TenantDetails); ok {
-		ret.TenantID = v.TenantId()
-	}
-	if v, ok := details.(security.ProviderDetails); ok {
-		ret.ProviderID = v.ProviderId()
-	}
-	if v, ok := details.(security.AuthenticationDetails); ok {
-		ret.Roles = v.Roles().Values()
-	}
-
-	return ret
-}
-
 func (c AuthenticationClause) MarshalJSON() ([]byte, error) {
 	type clause AuthenticationClause
 	return marshalMergedJSON(clause(c), c.ExtraData)
 }
 
-func newAuthenticationClause(auth security.Authentication) *AuthenticationClause {
-	ret := AuthenticationClause{
-		Username: mustGetUsername(auth),
+func NewAuthenticationClause() *AuthenticationClause {
+	return &AuthenticationClause{
+		ExtraData: map[string]interface{}{},
 	}
-	ret.Permissions = make([]string, 0, len(auth.Permissions()))
-	for k := range auth.Permissions() {
-		ret.Permissions = append(ret.Permissions, k)
-	}
-
-	switch v := auth.(type) {
-	case oauth2.Authentication:
-		ret.Client = &OAuthClientClause{
-			ClientID:  v.OAuth2Request().ClientId(),
-			GrantType: v.OAuth2Request().GrantType(),
-			Scopes:    v.OAuth2Request().Scopes().Values(),
-		}
-	default:
-	}
-	return &ret
-}
-
-func mustGetUsername(auth security.Authentication) string {
-	username, e := security.GetUsername(auth)
-	if e != nil {
-		return ""
-	}
-	return username
 }
 
 /**************************
@@ -154,9 +117,9 @@ const (
 type ResourceValues struct {
 	TenantID   string                         `json:"tenant_id,omitempty"`
 	TenantPath []string                       `json:"tenant_path,omitempty"`
-	OwnerID   string                         `json:"owner_id,omitempty"`
-	Sharing   map[string][]ResourceOperation `json:"sharing,omitempty"`
-	ExtraData map[string]interface{}         `json:"-"`
+	OwnerID    string                         `json:"owner_id,omitempty"`
+	Sharing    map[string][]ResourceOperation `json:"sharing,omitempty"`
+	ExtraData  map[string]interface{}         `json:"-"`
 }
 
 func (c ResourceValues) MarshalJSON() ([]byte, error) {
