@@ -24,7 +24,7 @@ type opaLogger struct {
 }
 
 func NewOPALogger(logger log.Logger, lvl log.LoggingLevel) opalogging.Logger {
-	level := opalogging.Info
+	var level opalogging.Level
 	switch lvl {
 	case log.LevelDebug:
 		level = opalogging.Debug
@@ -32,6 +32,8 @@ func NewOPALogger(logger log.Logger, lvl log.LoggingLevel) opalogging.Logger {
 		level = opalogging.Warn
 	case log.LevelError:
 		level = opalogging.Error
+	default:
+		level = opalogging.Info
 	}
 	return &opaLogger{
 		logger: logger.WithLevel(lvl),

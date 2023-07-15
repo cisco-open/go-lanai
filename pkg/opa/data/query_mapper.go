@@ -213,17 +213,20 @@ func (m *GormPartialQueryMapper) resolveValueByType(src reflect.Value, typeHint 
 
 	// second, if it's slice, array or pointer, try to convert given value to its Elem()
 	var resolved reflect.Value
-	switch typeHint.Kind() {
+	kind := typeHint.Kind()
+	switch kind {
 	case reflect.Slice, reflect.Array, reflect.Pointer:
 		v, ok := m.resolveValueByType(src, typeHint.Elem())
 		if !ok {
 			return resolved, false
 		}
 		resolved = v
+	default:
+		return src, false
 	}
 
 	// wrap resolved value into proper type
-	switch typeHint.Kind() {
+	switch kind {
 	case reflect.Slice:
 		ret := reflect.MakeSlice(typeHint, 1, 1)
 		ret.Index(0).Set(resolved)
@@ -240,7 +243,6 @@ func (m *GormPartialQueryMapper) resolveValueByType(src reflect.Value, typeHint 
 		}
 		return ret, true
 	}
-
 	return src, false
 }
 

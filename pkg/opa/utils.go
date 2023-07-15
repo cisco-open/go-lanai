@@ -37,6 +37,7 @@ func minimize(rv reflect.Value) (minimized reflect.Value, isZero bool) {
 		rv = rv.Elem()
 	}
 	isZero = !rv.IsValid() || rv.IsZero()
+	//nolint:exhaustive // we only deal with map and slice
 	switch rv.Kind() {
 	case reflect.Map:
 		rv = minimizeMapValue(rv)

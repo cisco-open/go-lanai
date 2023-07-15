@@ -1,6 +1,9 @@
 package opa
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrInternal           = NewError("internal error")
@@ -20,8 +23,8 @@ func (e Error) Error() string {
 }
 
 func (e Error) Is(err error) bool {
-	v, ok := err.(Error)
-	return ok && v.code == e.code
+	var v Error
+	return errors.As(err, &v) && v.code == e.code
 }
 
 func (e Error) WithMessage(tmpl string, args ...interface{}) Error {

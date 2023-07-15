@@ -115,6 +115,7 @@ func walkReflectValue(stmt *gorm.Statement, fn func(value reflect.Value) error) 
 
 // walkValues recursively walk give model, support slice, array, struct and map
 func walkValues(rv reflect.Value, fn func(value reflect.Value) error) error {
+	//nolint:exhaustive // we only deal with map, struct and slice
 	switch rv.Kind() {
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < rv.Len(); i++ {

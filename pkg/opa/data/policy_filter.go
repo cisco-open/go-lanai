@@ -307,8 +307,8 @@ func (m *createStatementModifier) ModifyStatement(stmt *gorm.Statement) {
 	if stmt.Statement.AddError(e) != nil {
 		return
 	}
-	for _, model := range models {
-		if stmt.Statement.AddError(m.checkPolicy(stmt.Context, &model)) != nil {
+	for i := range models {
+		if stmt.Statement.AddError(m.checkPolicy(stmt.Context, &models[i])) != nil {
 			return
 		}
 	}

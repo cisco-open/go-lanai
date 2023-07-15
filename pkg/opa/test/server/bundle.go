@@ -83,7 +83,7 @@ func loadBundleFiles(fsys fs.FS, dest map[string]string) error {
 		}
 		data, e := fs.ReadFile(fsys, path)
 		if e != nil {
-			return nil
+			return e
 		}
 		if d.Name() == ".manifest" {
 			rootPath = filepath.Dir(path)
