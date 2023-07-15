@@ -19,6 +19,9 @@ import (
 //go:embed bundle/**
 var DefaultBundleFS embed.FS
 
+//go:embed test-defaults-opa.yml
+var DefaultConfigFS embed.FS
+
 const (
 	TestBundleName = `test-bundle`
 	TestBundlePathPrefix = `/bundles/`
@@ -31,6 +34,7 @@ const (
 func WithBundles(bundleFSs ...fs.FS) test.Options {
 	return test.WithOptions(
 		apptest.WithModules(opainit.Module),
+		apptest.WithConfigFS(DefaultConfigFS),
 		apptest.WithFxOptions(
 			fx.Provide(BundleServerProvider(bundleFSs...)),
 			fx.Invoke(opatestserver.InitializeBundleServer),
