@@ -18,23 +18,33 @@ var (
 // SwitchTenantGranter implements auth.TokenGranter
 type SwitchTenantGranter struct {
 	PermissionBasedGranter
-	authService auth.AuthorizationService
+	accountStore security.AccountStore
+	authService  auth.AuthorizationService
 }
 
-func NewSwitchTenantGranter(authService auth.AuthorizationService, authenticator security.Authenticator) *SwitchTenantGranter {
+func NewSwitchTenantGranter(
+	authService auth.AuthorizationService,
+	authenticator security.Authenticator,
+	accountStore security.AccountStore,
+) *SwitchTenantGranter {
 	if authenticator == nil {
-		panic(fmt.Errorf("cannot create SwitchUserGranter without authenticator."))
+		panic(fmt.Errorf("cannot create SwitcTenantGranter without authenticator."))
 	}
 
 	if authService == nil {
-		panic(fmt.Errorf("cannot create SwitchUserGranter without authorization service."))
+		panic(fmt.Errorf("cannot create SwitchTenantGranter without authorization service."))
+	}
+
+	if accountStore == nil {
+		panic(fmt.Errorf("cannot create SwitchTenantGranter without account store."))
 	}
 
 	return &SwitchTenantGranter{
 		PermissionBasedGranter: PermissionBasedGranter{
 			authenticator: authenticator,
 		},
-		authService: authService,
+		authService:  authService,
+		accountStore: accountStore,
 	}
 }
 
@@ -78,11 +88,6 @@ func (g *SwitchTenantGranter) Grant(ctx context.Context, request *auth.TokenRequ
 		return nil, e
 	}
 
-	//TODO: we need to reload the user's authentication because the permission could change per tenant.
-	// we need to do something similar to line 88 in switch_user.go, i.e. calling g.loadUserAuthentication(ctx, request)
-	// to get a new userAuth instead of using stored.UserAuthentication
-
-	// create authentication
 	oauth, e := g.authService.SwitchAuthentication(ctx, req, stored.UserAuthentication(), stored)
 	if e != nil {
 		return nil, oauth2.NewInvalidGrantError(e)
@@ -124,14 +129,20 @@ func (g *SwitchTenantGranter) validate(ctx context.Context, request *auth.TokenR
 		return nil
 	}
 
+	var tenantHasChanged bool
+
 	tenantId, _ := request.Extensions[oauth2.ParameterTenantId].(string)
-	if strings.TrimSpace(tenantId) == srcTenant.TenantId() {
+	if strings.TrimSpace(tenantId) != srcTenant.TenantId() {
+		tenantHasChanged = true
+	}
+	tenantExternalId, _ := request.Extensions[oauth2.ParameterTenantExternalId].(string)
+	if strings.TrimSpace(tenantExternalId) == srcTenant.TenantExternalId() {
+		tenantHasChanged = true
+	}
+
+	if !tenantHasChanged {
 		return oauth2.NewInvalidGrantError("cannot switch to same tenant")
 	}
 
-	tenantExternalId, _ := request.Extensions[oauth2.ParameterTenantExternalId].(string)
-	if strings.TrimSpace(tenantExternalId) == srcTenant.TenantExternalId() {
-		return oauth2.NewInvalidGrantError("cannot switch to same tenant")
-	}
 	return nil
 }

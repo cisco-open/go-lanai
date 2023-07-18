@@ -240,7 +240,7 @@ func (c *Configuration) tokenGranter() auth.TokenGranter {
 			grants.NewClientCredentialsGranter(c.authorizationService()),
 			grants.NewRefreshGranter(c.authorizationService(), c.tokenStore()),
 			grants.NewSwitchUserGranter(c.authorizationService(), c.tokenAuthenticator(), c.UserAccountStore),
-			grants.NewSwitchTenantGranter(c.authorizationService(), c.tokenAuthenticator()),
+			grants.NewSwitchTenantGranter(c.authorizationService(), c.tokenAuthenticator(), c.UserAccountStore),
 		}
 
 		// password granter is optional

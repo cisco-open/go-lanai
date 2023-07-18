@@ -176,20 +176,26 @@ func (m mockedAccounts) nameToId(name string) string {
 }
 
 type mockedTenant struct {
-	ExtId string
-	ID    string
+	ExternalId string
+	ProviderId string
+	ID         string
+	// the mockedTenant Permissions is a map of MockedAccountDetails.UserId to
+	// slice of permissions. This is defined so that we can define per-tenant
+	// permissions in a mocked setting. See MockAccountStoreWithFinalize for
+	// examples on this usage.
+	Permissions map[string][]string
 }
 
 func newMockedTenant(props *MockedTenantProperties) *mockedTenant {
 	ret := &mockedTenant{
-		ExtId: props.ExternalId,
-		ID:    props.ID,
+		ExternalId: props.ExternalId,
+		ID:         props.ID,
 	}
 	switch {
 	case ret.ID == "":
-		ret.ID = extIdToId(ret.ExtId)
-	case ret.ExtId == "":
-		ret.ExtId = idToExtId(ret.ID)
+		ret.ID = extIdToId(ret.ExternalId)
+	case ret.ExternalId == "":
+		ret.ExternalId = idToExtId(ret.ID)
 	}
 	return ret
 }
@@ -210,8 +216,8 @@ func newMockedTenants(props *mockingProperties) *mockedTenants {
 	}
 	for _, v := range props.Tenants {
 		t := newMockedTenant(v)
-		if t.ExtId != "" {
-			tenants.extIdLookup[t.ExtId] = t
+		if t.ExternalId != "" {
+			tenants.extIdLookup[t.ExternalId] = t
 		}
 		if t.ID != "" {
 			tenants.idLookup[t.ID] = t
@@ -221,7 +227,7 @@ func newMockedTenants(props *mockingProperties) *mockedTenants {
 }
 
 func (m mockedTenants) find(tenantId, tenantExternalId string) *mockedTenant {
-	if v, ok := m.idLookup[tenantId]; ok && (tenantExternalId == "" || v.ExtId == tenantExternalId) {
+	if v, ok := m.idLookup[tenantId]; ok && (tenantExternalId == "" || v.ExternalId == tenantExternalId) {
 		return v
 	}
 
@@ -233,7 +239,7 @@ func (m mockedTenants) find(tenantId, tenantExternalId string) *mockedTenant {
 
 func (m mockedTenants) idToExtId(id string) string {
 	if t, ok := m.idLookup[id]; ok {
-		return t.ExtId
+		return t.ExternalId
 	}
 	return idToExtId(id)
 }

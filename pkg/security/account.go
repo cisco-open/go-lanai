@@ -11,6 +11,7 @@ import (
  ******************************/
 
 type AccountType int
+
 const (
 	AccountTypeUnknown AccountType = iota
 	AccountTypeDefault
@@ -67,6 +68,27 @@ type Account interface {
 	CacheableCopy() Account
 }
 
+type AccountFinalizeOption struct {
+	Tenant *Tenant
+}
+type AccountFinalizeOptions func(option *AccountFinalizeOption)
+
+func FinalizeWithTenant(tenant *Tenant) AccountFinalizeOptions {
+	return func(option *AccountFinalizeOption) {
+		option.Tenant = tenant
+	}
+}
+
+type AccountFinalizer interface {
+	// Finalize is a function that will allow a service to modify the account before it
+	// is put into the security context. An example usage of this is to allow for per-tenant
+	// permissions where a user can have different permissions depending on which tenant is selected.
+	//
+	// Note that the Account.ID and Account.Username should not be changed. If those fields are changed
+	// an error will be reported.
+	Finalize(ctx context.Context, account Account, options ...AccountFinalizeOptions) (Account, error)
+}
+
 type AccountStore interface {
 	// LoadAccountById find account by its Domain
 	LoadAccountById(ctx context.Context, id interface{}) (Account, error)
@@ -105,9 +127,9 @@ type AccountHistory interface {
 	GracefulAuthCount() int
 }
 
-/*********************************
-	Abstraction - Multi Tenancy
- *********************************/
+/********************************
+		Abstraction - Multi Tenancy
+*********************************/
 
 type AccountTenancy interface {
 	DefaultDesignatedTenantId() string

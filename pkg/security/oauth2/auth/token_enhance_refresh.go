@@ -13,6 +13,7 @@ var (
 		oauth2.GrantTypeAuthCode,
 		oauth2.GrantTypeImplicit,
 		oauth2.GrantTypeRefresh,
+		oauth2.GrantTypeSwitchTenant, // Need this to create a new refresh token when switching tenants
 		//oauth2.GrantTypePassword, // this is for dev purpose, shouldn't be allowed
 	)
 )
@@ -62,8 +63,8 @@ func (te *RefreshTokenEnhancer) Enhance(ctx context.Context, token oauth2.Access
 	claims := oauth2.BasicClaims{
 		Id:       id,
 		Audience: oauth2.StringSetClaim(utils.NewStringSet(client.ClientId())),
-		Issuer: te.issuer.Identifier(),
-		Scopes: request.Scopes(),
+		Issuer:   te.issuer.Identifier(),
+		Scopes:   request.Scopes(),
 	}
 
 	if oauth.UserAuthentication() != nil {
@@ -89,6 +90,7 @@ func (te *RefreshTokenEnhancer) Enhance(ctx context.Context, token oauth2.Access
 /*****************************
 	Helpers
  *****************************/
+
 func (te *RefreshTokenEnhancer) isRefreshTokenNeeded(ctx context.Context, token oauth2.AccessToken, oauth oauth2.Authentication, client oauth2.OAuth2Client) bool {
 	// refresh grant should be allowed for the client
 	if e := ValidateGrant(ctx, client, oauth2.GrantTypeRefresh); e != nil {
@@ -103,4 +105,3 @@ func (te *RefreshTokenEnhancer) isRefreshTokenNeeded(ctx context.Context, token 
 	// last, if given token already have an refresh token, no need to generate new
 	return token.RefreshToken() == nil || token.RefreshToken().WillExpire() && token.RefreshToken().Expired()
 }
-
