@@ -52,11 +52,11 @@ func (b *mockedBase) isTokenRevoked(token *MockedToken, value string) bool {
 func (b *mockedBase) newMockedToken(acct *MockedAccount, tenant *mockedTenant, exp time.Time, origUser string) *MockedToken {
 	return &MockedToken{
 		MockedTokenInfo: MockedTokenInfo{
-			UName: acct.MockedAccountDetails.Username,
-			UID:   acct.UserId,
-			TID:   tenant.ID,
-			TExternalId: tenant.ExtId,
-			OrigU: origUser,
+			UName:       acct.MockedAccountDetails.Username,
+			UID:         acct.UserId,
+			TID:         tenant.ID,
+			TExternalId: tenant.ExternalId,
+			OrigU:       origUser,
 		},
 		ExpTime: exp,
 		IssTime: time.Now().UTC(),
@@ -85,15 +85,15 @@ func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *MockedAccount) oauth2.
 	})
 	details := NewMockedSecurityDetails(func(d *SecurityDetailsMock) {
 		*d = SecurityDetailsMock{
-			Username:     mt.UName,
-			UserId:       mt.UID,
-			TenantExternalId:   mt.TExternalId,
-			TenantId:     mt.TID,
-			Exp:          mt.ExpTime,
-			Iss:          mt.IssTime,
-			Permissions:  acct.MockedAccountDetails.Permissions,
-			Tenants:      acct.AssignedTenants,
-			OrigUsername: mt.OrigU,
+			Username:         mt.UName,
+			UserId:           mt.UID,
+			TenantExternalId: mt.TExternalId,
+			TenantId:         mt.TID,
+			Exp:              mt.ExpTime,
+			Iss:              mt.IssTime,
+			Permissions:      acct.MockedAccountDetails.Permissions,
+			Tenants:          acct.AssignedTenants,
+			OrigUsername:     mt.OrigU,
 		}
 	})
 	return oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {

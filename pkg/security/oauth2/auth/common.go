@@ -71,7 +71,7 @@ func ValidateGrant(_ context.Context, client oauth2.OAuth2Client, grantType stri
 	return nil
 }
 
-func ValidateScope(c context.Context, client oauth2.OAuth2Client, scopes...string) error {
+func ValidateScope(c context.Context, client oauth2.OAuth2Client, scopes ...string) error {
 	for _, scope := range scopes {
 		if !client.Scopes().Has(scope) {
 			return oauth2.NewInvalidScopeError("invalid scope: " + scope)
@@ -157,13 +157,40 @@ func ResolveRedirectUri(_ context.Context, redirectUri string, client oauth2.OAu
 	return "", oauth2.NewInvalidRedirectUriError("the redirect_uri must be registered with the client")
 }
 
+type ConvertOptions struct {
+	SkipTypeCheck   bool
+	userAuthOptions []OverrideAuthOptions
+}
+
+func (c *ConvertOptions) AppendUserAuthOptions(option OverrideAuthOptions) {
+	c.userAuthOptions = append(c.userAuthOptions, option)
+}
+
+type ConvertOption func(option *ConvertOptions)
+
+func ConvertWithSkipTypeCheck(skipTypeCheck bool) ConvertOption {
+	return func(option *ConvertOptions) {
+		option.SkipTypeCheck = skipTypeCheck
+	}
+}
+
+// OverrideAuthOptions allows the oauth2.UserAuthOptions to be overridden during the
+// conversion when creating and returning a new user authentication.
+type OverrideAuthOptions func(userAuth security.Authentication) oauth2.UserAuthOptions
+
 // ConvertToOAuthUserAuthentication takes any type of authentication and convert it into oauth2.Authentication
-func ConvertToOAuthUserAuthentication(userAuth security.Authentication) oauth2.UserAuthentication {
-	switch ua := userAuth.(type) {
-	case nil:
-		return nil
-	case oauth2.UserAuthentication:
-		return ua
+func ConvertToOAuthUserAuthentication(userAuth security.Authentication, options ...ConvertOption) oauth2.UserAuthentication {
+	var opts ConvertOptions
+	for _, opt := range options {
+		opt(&opts)
+	}
+	if !opts.SkipTypeCheck {
+		switch ua := userAuth.(type) {
+		case nil:
+			return nil
+		case oauth2.UserAuthentication:
+			return ua
+		}
 	}
 
 	principal, e := security.GetUsername(userAuth)
@@ -178,10 +205,21 @@ func ConvertToOAuthUserAuthentication(userAuth security.Authentication) oauth2.U
 		}
 	}
 
-	return oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
+	defaultOption := func(opt *oauth2.UserAuthOption) {
 		opt.Principal = principal
 		opt.Permissions = userAuth.Permissions()
 		opt.State = userAuth.State()
 		opt.Details = details
-	})
+	}
+
+	var wrappedAuthOptions []oauth2.UserAuthOptions
+	for _, opt := range opts.userAuthOptions {
+		wrappedOption := opt(userAuth)
+		wrappedAuthOptions = append(wrappedAuthOptions, wrappedOption)
+	}
+
+	var authenticationOptions []oauth2.UserAuthOptions
+	authenticationOptions = append(authenticationOptions, defaultOption)
+	authenticationOptions = append(authenticationOptions, wrappedAuthOptions...)
+	return oauth2.NewUserAuthentication(authenticationOptions...)
 }

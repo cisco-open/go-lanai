@@ -43,7 +43,10 @@ func TestSPInitiatedSso(t *testing.T) {
 	sp := *knownSP
 
 	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
-	testAccountStore := sectest.NewMockedAccountStore()
+	testAccountStore := sectest.NewMockedAccountStore(
+		[]*sectest.MockedAccountProperties{},
+		[]*sectest.MockedTenantProperties{},
+	)
 	g := gomega.NewWithT(t)
 	r := setupServerForTest(testClientStore, testAccountStore)
 
@@ -69,13 +72,16 @@ func TestSPInitiatedSso(t *testing.T) {
 	g.Expect(status).ToNot(gomega.BeNil())
 }
 
-//In this test we use a different cert key pair so that the SP's actual cert and key do not match the ones that are
+// In this test we use a different cert key pair so that the SP's actual cert and key do not match the ones that are
 // in its metadata. This way the signature of the auth request won't match the expected signature based on the metadata
 func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
 	sp := *knownSP
 
 	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
-	testAccountStore := sectest.NewMockedAccountStore()
+	testAccountStore := sectest.NewMockedAccountStore(
+		[]*sectest.MockedAccountProperties{},
+		[]*sectest.MockedTenantProperties{},
+	)
 	g := gomega.NewWithT(t)
 	r := setupServerForTest(testClientStore, testAccountStore)
 	unknownSp := *unknownSP
@@ -106,7 +112,10 @@ func TestIDPInitiatedSso(t *testing.T) {
 	sp := *knownSP
 
 	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
-	testAccountStore := sectest.NewMockedAccountStore()
+	testAccountStore := sectest.NewMockedAccountStore(
+		[]*sectest.MockedAccountProperties{},
+		[]*sectest.MockedTenantProperties{},
+	)
 
 	r := setupServerForTest(testClientStore, testAccountStore)
 
@@ -136,7 +145,10 @@ func TestIDPInitiatedSso(t *testing.T) {
 
 func TestMetadata(t *testing.T) {
 	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(knownSP))
-	testAccountStore := sectest.NewMockedAccountStore()
+	testAccountStore := sectest.NewMockedAccountStore(
+		[]*sectest.MockedAccountProperties{},
+		[]*sectest.MockedTenantProperties{},
+	)
 
 	r := setupServerForTest(testClientStore, testAccountStore)
 	w := httptest.NewRecorder()
@@ -163,29 +175,30 @@ func setupServerForTest(testClientStore samlctx.SamlClientStore, testAccountStor
 		SsoCondition(matcher.RequestWithForm("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")).
 		MetadataPath("/metadata").
 		Issuer(security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
-		*opt =security.DefaultIssuerDetails{
-			Protocol:    "http",
-			Domain:      "vms.com",
-			Port:        8080,
-			ContextPath: serverProp.ContextPath,
-			IncludePort: true,
-		}}))
+			*opt = security.DefaultIssuerDetails{
+				Protocol:    "http",
+				Domain:      "vms.com",
+				Port:        8080,
+				ContextPath: serverProp.ContextPath,
+				IncludePort: true,
+			}
+		}))
 
 	opts := c.getIdentityProviderConfiguration(f)
 	metaMw := NewMetadataMiddleware(opts, c.samlClientStore)
 	mw := NewSamlAuthorizeEndpointMiddleware(metaMw, c.accountStore, c.attributeGenerator)
 
 	r := gin.Default()
-	r.GET(serverProp.ContextPath + f.metadataPath, mw.MetadataHandlerFunc())
+	r.GET(serverProp.ContextPath+f.metadataPath, mw.MetadataHandlerFunc())
 	r.Use(samlErrorHandlerFunc())
-	r.Use(sectest.NewMockAuthenticationMiddleware(sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+	r.Use(sectest.NewMockAuthenticationMiddleware(sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption) {
 		opt.Principal = "test_user"
 		opt.State = security.StateAuthenticated
 	})).AuthenticationHandlerFunc())
 	r.Use(mw.RefreshMetadataHandler(f.ssoCondition))
 	r.Use(mw.AuthorizeHandlerFunc(f.ssoCondition))
-	r.POST(serverProp.ContextPath + f.ssoLocation.Path, security.NoopHandlerFunc())
-	r.GET(serverProp.ContextPath + f.ssoLocation.Path, security.NoopHandlerFunc())
+	r.POST(serverProp.ContextPath+f.ssoLocation.Path, security.NoopHandlerFunc())
+	r.GET(serverProp.ContextPath+f.ssoLocation.Path, security.NoopHandlerFunc())
 
 	return r
 }
@@ -194,7 +207,6 @@ func setupServerForTest(testClientStore samlctx.SamlClientStore, testAccountStor
 * Matcher
 *************/
 type MetadataMatcher struct {
-
 }
 
 func (m MetadataMatcher) Match(actual interface{}) (success bool, err error) {
@@ -213,11 +225,11 @@ func (m MetadataMatcher) Match(actual interface{}) (success bool, err error) {
 		return false, nil
 	}
 
-	if len(descriptor.IDPSSODescriptors[0].SingleSignOnServices) != 2{
+	if len(descriptor.IDPSSODescriptors[0].SingleSignOnServices) != 2 {
 		return false, nil
 	}
 
-	if descriptor.IDPSSODescriptors[0].SingleSignOnServices[0].Binding != saml.HTTPPostBinding || descriptor.IDPSSODescriptors[0].SingleSignOnServices[0].Location != "http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer"{
+	if descriptor.IDPSSODescriptors[0].SingleSignOnServices[0].Binding != saml.HTTPPostBinding || descriptor.IDPSSODescriptors[0].SingleSignOnServices[0].Location != "http://vms.com:8080/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer" {
 		return false, nil
 	}
 
@@ -255,7 +267,7 @@ func samlErrorHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Next()
 
-		for _,e := range ctx.Errors {
+		for _, e := range ctx.Errors {
 			if errors.Is(e.Err, security.ErrorTypeSecurity) {
 				samlErrorHandler.HandleError(ctx, ctx.Request, ctx.Writer, e)
 				break
