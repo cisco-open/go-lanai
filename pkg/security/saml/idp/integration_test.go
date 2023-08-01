@@ -31,7 +31,7 @@ import (
 	"testing"
 	"time"
 )
-import 	. "github.com/onsi/gomega"
+import . "github.com/onsi/gomega"
 
 //go:embed testdata/*
 var whiteLabelContent embed.FS
@@ -43,6 +43,7 @@ const (
 	TestSamlSP1Url = "http://localhost:8000"
 	TestSamlSP2Url = "http://localhost:8001"
 )
+
 var testRootTenantId = uuid.New()
 var testTenantId1 = uuid.New()
 var testTenantId2 = uuid.New()
@@ -50,17 +51,17 @@ var testTenantId3 = uuid.New()
 
 var testUser1 = &sectest.MockedAccountProperties{
 	Username: "testuser1",
-	Tenants: []string{testTenantId1.String()},
+	Tenants:  []string{testTenantId1.String()},
 }
 
 var testUser2 = &sectest.MockedAccountProperties{
 	Username: "testuser2",
-	Tenants: []string{testTenantId1.String(), testTenantId2.String()},
+	Tenants:  []string{testTenantId1.String(), testTenantId2.String()},
 }
 
 var testUser3 = &sectest.MockedAccountProperties{
 	Username: "testuser3",
-	Tenants: []string{testTenantId3.String()},
+	Tenants:  []string{testTenantId3.String()},
 }
 
 var testSp1 = samltest.MustNewMockedSP(func(opt *samltest.SPMockOption) {
@@ -84,15 +85,14 @@ func NewSamlSp(spUrl string, certFilePath string, keyFilePath string) saml.Servi
 	cert, _ := cryptoutils.LoadCert(certFilePath)
 	key, _ := cryptoutils.LoadPrivateKey(keyFilePath, "")
 	sp := samlsp.DefaultServiceProvider(samlsp.Options{
-		URL:            *rootURL,
-		Key:            key,
-		Certificate:    cert[0],
+		URL:         *rootURL,
+		Key:         key,
+		Certificate: cert[0],
 		SignRequest: true,
-		EntityID: fmt.Sprintf("%s/saml/metadata", spUrl),
+		EntityID:    fmt.Sprintf("%s/saml/metadata", spUrl),
 	})
 	return sp
 }
-
 
 type DIForTest struct {
 	fx.In
@@ -100,7 +100,7 @@ type DIForTest struct {
 	MockAuthMw *sectest.MockAuthenticationMiddleware
 }
 
-func Test_Saml_Sso (t *testing.T) {
+func Test_Saml_Sso(t *testing.T) {
 	di := &DIForTest{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
@@ -124,7 +124,7 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 
 		//test user 1 has access to one of the tenant in testSp1's tenant restriction, so expect success
 		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
-			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption) {
 				opt.Principal = testUser1.Username
 				opt.State = security.StateAuthenticated
 			})
@@ -144,7 +144,7 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 
 		//test user 2 has access to all of the tenant in testSp1's tenant restriction, so expect success
 		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
-			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption) {
 				opt.Principal = testUser2.Username
 				opt.State = security.StateAuthenticated
 			})
@@ -164,7 +164,7 @@ func SubTestTenantRestrictionAny(di *DIForTest) test.GomegaSubTestFunc {
 
 		//test user 3 has no access to any of the tenant in testSp1's tenant restriction, so expect failure
 		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
-			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption) {
 				opt.Principal = testUser3.Username
 				opt.State = security.StateAuthenticated
 			})
@@ -183,7 +183,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 
 		//test user 1 has access to one of the tenant in testSp1's tenant restriction, so expect it to be rejected
 		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
-			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption) {
 				opt.Principal = testUser1.Username
 				opt.State = security.StateAuthenticated
 			})
@@ -198,7 +198,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 
 		//test user 2 has access to all of the tenant in testSp1's tenant restriction, so expect success
 		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
-			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption) {
 				opt.Principal = testUser2.Username
 				opt.State = security.StateAuthenticated
 			})
@@ -216,7 +216,7 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 
 		//test user 3 has no access to any of the tenant in testSp1's tenant restriction, so expect failure
 		di.MockAuthMw.MWMocker = sectest.MWMockFunc(func(_ sectest.MWMockContext) security.Authentication {
-			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption){
+			return sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption) {
 				opt.Principal = testUser3.Username
 				opt.State = security.StateAuthenticated
 			})
@@ -231,10 +231,10 @@ func SubTestTenantRestrictionAll(di *DIForTest) test.GomegaSubTestFunc {
 
 type configureDI struct {
 	fx.In
-	SecurityRegistrar    security.Registrar
-	WebRegister *web.Registrar
-	Server *web.Engine
-	MockAuthMw *sectest.MockAuthenticationMiddleware
+	SecurityRegistrar security.Registrar
+	WebRegister       *web.Registrar
+	Server            *web.Engine
+	MockAuthMw        *sectest.MockAuthenticationMiddleware
 }
 
 // This method provides the configuration to setup saml sso feature.
@@ -256,7 +256,7 @@ func configureAuthorizationServer(di configureDI) {
 type authorizeEndpointConfigurer struct {
 }
 
-func(c *authorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
+func (c *authorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 	location := &url.URL{Path: "/v2/authorize"}
 	ws.Route(matcher.RouteWithPattern(location.Path)).
 		With(New().
@@ -266,7 +266,8 @@ func(c *authorizeEndpointConfigurer) Configure(ws security.WebSecurity) {
 					Domain:      "localhost",
 					ContextPath: "/auth",
 					IncludePort: false,
-				}})).
+				}
+			})).
 			SsoCondition(matcher.RequestWithForm(oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO)).
 			SsoLocation(&url.URL{Path: "/v2/authorize", RawQuery: fmt.Sprintf("%s=%s", oauth2.ParameterGrantType, samlctx.GrantTypeSamlSSO)}).
 			MetadataPath("/metadata"))
@@ -285,7 +286,7 @@ func provideMockSamlClient() samlctx.SamlClientStore {
 					SkipAssertionEncryption:              false,
 					SkipAuthRequestSignatureVerification: false,
 				},
-				TenantRestrictions: utils.NewStringSet(testTenantId1.String(), testTenantId2.String()),
+				TenantRestrictions:    utils.NewStringSet(testTenantId1.String(), testTenantId2.String()),
 				TenantRestrictionType: TenantRestrictionTypeAny,
 			},
 			DefaultSamlClient{
@@ -295,7 +296,7 @@ func provideMockSamlClient() samlctx.SamlClientStore {
 					SkipAssertionEncryption:              false,
 					SkipAuthRequestSignatureVerification: false,
 				},
-				TenantRestrictions: utils.NewStringSet(testTenantId1.String(), testTenantId2.String()),
+				TenantRestrictions:    utils.NewStringSet(testTenantId1.String(), testTenantId2.String()),
 				TenantRestrictionType: TenantRestrictionTypeAll,
 			},
 		}
@@ -303,7 +304,12 @@ func provideMockSamlClient() samlctx.SamlClientStore {
 }
 
 func provideMockAccountStore() security.AccountStore {
-	return sectest.NewMockedAccountStore(testUser1, testUser2, testUser3)
+	return sectest.NewMockedAccountStore(
+		[]*sectest.MockedAccountProperties{
+			testUser1, testUser2, testUser3,
+		},
+		[]*sectest.MockedTenantProperties{},
+	)
 }
 
 func provideMockAuthMw() *sectest.MockAuthenticationMiddleware {

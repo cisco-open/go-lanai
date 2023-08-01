@@ -15,7 +15,7 @@ type Provider struct {
 	Description      string
 	LocaleCode       string
 	NotificationType string
-	Email string
+	Email            string
 	//CurrencyCode string
 }
 

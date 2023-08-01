@@ -185,9 +185,9 @@ type authFacts struct {
 	tenant   *security.Tenant
 	provider *security.Provider
 	source   oauth2.Authentication
+	userAuth oauth2.UserAuthentication
 }
 
-// TODO: in here we need to resolve the per tenant permission
 func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	request oauth2.OAuth2Request, userAuth oauth2.UserAuthentication,
 	src oauth2.Authentication) (security.ContextDetails, error) {
@@ -207,7 +207,7 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 	mutableCtx.Set(oauth2.CtxKeyAuthenticatedAccount, facts.account)
 	mutableCtx.Set(oauth2.CtxKeyAuthorizedTenant, facts.tenant)
 	mutableCtx.Set(oauth2.CtxKeyAuthorizedProvider, facts.provider)
-	mutableCtx.Set(oauth2.CtxKeyUserAuthentication, userAuth)
+	mutableCtx.Set(oauth2.CtxKeyUserAuthentication, facts.userAuth)
 	mutableCtx.Set(oauth2.CtxKeyAuthorizationIssueTime, now)
 	if src != nil {
 		facts.source = src
@@ -268,26 +268,56 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return &authFacts{client: client}, nil
 	}
 
-	account, e := s.loadAccount(ctx, request, userAuth)
-	if e != nil {
-		return nil, e
+	account, err := s.loadAccount(ctx, request, userAuth)
+	if err != nil {
+		return nil, err
 	} else if account.Locked() || account.Disabled() {
 		return nil, newInvalidUserError("unsupported user's account locked or disabled")
 	}
 
-	tenant, e := s.loadTenant(ctx, request, account)
-	if e != nil {
-		return nil, e
+	tenant, err := s.loadTenant(ctx, request, account)
+	if err != nil {
+		return nil, err
 	}
 
-	if e := s.verifyTenantAccess(ctx, tenant, account, client); e != nil {
-		return nil, e
+	if err = s.verifyTenantAccess(ctx, tenant, account, client); err != nil {
+		return nil, err
 	}
 
-	provider, e := s.loadProvider(ctx, request, tenant)
-	if e != nil {
-		return nil, e
+	provider, err := s.loadProvider(ctx, request, tenant)
+	if err != nil {
+		return nil, err
 	}
+
+	if finalizer, ok := s.accountStore.(security.AccountFinalizer); ok && tenant != nil {
+		newAccount, err := finalizer.Finalize(ctx, account, security.FinalizeWithTenant(tenant))
+		if err != nil {
+			return nil, err
+		}
+		// Check that the ID and username have not been tampered with
+		if newAccount.ID() != account.ID() || newAccount.Username() != account.Username() {
+			return nil, newTamperedIDOrUsernameError()
+		}
+		account = newAccount
+	}
+	// after account finalizer, we can re-create the userAuth security.Authentication,
+	// and then return it from here
+	// The Principal and State cannot change. Details and Permissions may change
+	// can use something similar to auth.ConvertToOAuthUserAuthentication to grab things from, but then
+	// edit the permissions
+	// So keep everything from userAuth, we only need permissions from account
+	// Check that the account userID and username did not change from the finalizer
+
+	newUserAuth := ConvertToOAuthUserAuthentication(
+		userAuth,
+		ConvertWithSkipTypeCheck(true),
+		func(option *ConvertOptions) {
+			option.AppendUserAuthOptions(func(userAuth security.Authentication) oauth2.UserAuthOptions {
+				return func(opt *oauth2.UserAuthOption) {
+					opt.Permissions = userAuth.Permissions()
+				}
+			})
+		})
 
 	return &authFacts{
 		request:  request,
@@ -295,10 +325,15 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		account:  account,
 		tenant:   tenant,
 		provider: provider,
+		userAuth: newUserAuth,
 	}, nil
 }
 
-func (s *DefaultAuthorizationService) loadAccount(ctx context.Context, _ oauth2.OAuth2Request, userAuth security.Authentication) (security.Account, error) {
+func (s *DefaultAuthorizationService) loadAccount(
+	ctx context.Context,
+	_ oauth2.OAuth2Request,
+	userAuth security.Authentication,
+) (security.Account, error) {
 	// sanity check, this should not happen
 	if userAuth.State() < security.StateAuthenticated || userAuth.Principal() == nil {
 		return nil, newUnauthenticatedUserError()
@@ -309,14 +344,19 @@ func (s *DefaultAuthorizationService) loadAccount(ctx context.Context, _ oauth2.
 		return nil, newInvalidUserError(err)
 	}
 
-	acct, e := s.accountStore.LoadAccountByUsername(ctx, username)
-	if e != nil {
-		return nil, newInvalidUserError(e)
+	acct, err := s.accountStore.LoadAccountByUsername(ctx, username)
+	if err != nil {
+		return nil, newInvalidUserError(err)
 	}
+
 	return acct, nil
 }
 
-func (s *DefaultAuthorizationService) loadTenant(ctx context.Context, request oauth2.OAuth2Request, account security.Account) (*security.Tenant, error) {
+func (s *DefaultAuthorizationService) loadTenant(
+	ctx context.Context,
+	request oauth2.OAuth2Request,
+	account security.Account,
+) (*security.Tenant, error) {
 	acctT, ok := account.(security.AccountTenancy)
 	if !ok {
 		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
@@ -458,12 +498,45 @@ func minTime(t1, t2 time.Time) time.Time {
 	}
 }
 
+//func ConvertToUserAuthenticationWithPermissions(
+//	userAuth security.Authentication,
+//	account security.Account,
+//) oauth2.UserAuthentication {
+//	principal, e := security.GetUsername(userAuth)
+//	if e != nil {
+//		principal = fmt.Sprintf("%v", userAuth)
+//	}
+//
+//	details, ok := userAuth.Details().(map[string]interface{})
+//	if !ok {
+//		details = map[string]interface{}{
+//			"Literal": userAuth.Details(),
+//		}
+//	}
+//	permissions := make(map[string]interface{})
+//	for _, permission := range account.Permissions() {
+//		permissions[permission] = nil
+//	}
+//
+//	return oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
+//		opt.Principal = principal
+//		opt.Permissions = permissions
+//		opt.State = userAuth.State()
+//		opt.Details = details
+//	})
+//}
+
 /*
 ***************************
 
 		Errors
 	 ***************************
 */
+
+func newTamperedIDOrUsernameError(reasons ...interface{}) error {
+	return oauth2.NewInternalError("finalizer tampered with the ID or Username field", reasons...)
+}
+
 func newImmutableContextError(reasons ...interface{}) error {
 	return oauth2.NewInternalError("context is not mutable", reasons...)
 }

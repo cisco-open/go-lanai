@@ -44,8 +44,9 @@ type MockedFederatedUserProperties struct {
 }
 
 type MockedTenantProperties struct {
-	ID         string `json:"id"` // optional field
-	ExternalId string `json:"external-id"`
+	ID         string              `json:"id"` // optional field
+	ExternalId string              `json:"external-id"`
+	Perms      map[string][]string `json:"permissions"` // permissions are MockedAccountProperties.UserId to permissions
 }
 
 func bindMockingProperties(ctx *bootstrap.ApplicationContext) *mockingProperties {
