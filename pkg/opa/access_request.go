@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-type RequestQueryOptions func(opt *RequestQueryOption)
-type RequestQueryOption struct {
+type RequestQueryOptions func(opt *RequestQuery)
+type RequestQuery struct {
 	OPA              *sdk.OPA
 	Policy           string
 	ExtraData        map[string]interface{}
@@ -18,8 +18,14 @@ type RequestQueryOption struct {
 	RawInput interface{}
 }
 
+func RequestQueryWithPolicy(policy string) RequestQueryOptions {
+	return func(opt *RequestQuery) {
+		opt.Policy = policy
+	}
+}
+
 func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOptions) error {
-	opt := RequestQueryOption{
+	opt := RequestQuery{
 		OPA:              EmbeddedOPA(),
 		InputCustomizers: embeddedOPA.inputCustomizers,
 		ExtraData:        map[string]interface{}{},
@@ -32,26 +38,10 @@ func AllowRequest(ctx context.Context, req *http.Request, opts ...RequestQueryOp
 		return ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
 	}
 	result, e := opt.OPA.Decision(ctx, *opaOpts)
-	switch {
-	case sdk.IsUndefinedErr(e):
-		logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, "not true")
-		return ErrAccessDenied
-	case e != nil:
-		return ErrAccessDenied.WithMessage("unable to execute OPA query: %v", e)
-	}
-	logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, result.Result)
-	switch v := result.Result.(type) {
-	case bool:
-		if v {
-			return nil
-		}
-		return ErrAccessDenied
-	default:
-		return ErrAccessDenied.WithMessage("unsupported OPA result type %T", result.Result)
-	}
+	return handleDecisionResult(ctx, result, e, "API")
 }
 
-func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.Request, opt *RequestQueryOption) (*sdk.DecisionOptions, error) {
+func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.Request, opt *RequestQuery) (*sdk.DecisionOptions, error) {
 	input, e := constructRequestDecisionInput(ctx, req, opt)
 	if e != nil {
 		return nil, e
@@ -71,7 +61,7 @@ func PrepareRequestDecisionQuery(ctx context.Context, policy string, req *http.R
 	return &opts, nil
 }
 
-func constructRequestDecisionInput(ctx context.Context, req *http.Request, opt *RequestQueryOption) (interface{}, error) {
+func constructRequestDecisionInput(ctx context.Context, req *http.Request, opt *RequestQuery) (interface{}, error) {
 	if opt.RawInput != nil {
 		return opt.RawInput, nil
 	}

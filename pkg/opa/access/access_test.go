@@ -2,6 +2,7 @@ package opaaccess_test
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	opaaccess "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/access"
 	opatest "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
@@ -19,7 +20,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
-	"github.com/open-policy-agent/opa/sdk"
 	"go.uber.org/fx"
 	"net/http"
 	"testing"
@@ -30,13 +30,13 @@ import (
 	Test Setup
  ************************/
 
-func RegisterSecurityConfigurer(reg security.Registrar, opa *sdk.OPA) {
+func RegisterSecurityConfigurer(reg security.Registrar) {
 	configurer := security.ConfigurerFunc(func(ws security.WebSecurity) {
 		ws.Route(matcher.RouteWithPattern("/api/**")).
 			With(access.New().
 				Request(matcher.AnyRequest()).
 				WithOrder(order.Highest).
-				CustomDecisionMaker(opaaccess.DecisionMakerWithOPA(opa, "testservice/allow_api")),
+				CustomDecisionMaker(opaaccess.DecisionMakerWithOPA(opa.RequestQueryWithPolicy("testservice/allow_api"))),
 			).
 			With(errorhandling.New())
 	})

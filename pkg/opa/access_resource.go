@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-type ResourceOptions func(res *Resource)
+type ResourceQueryOptions func(res *ResourceQuery)
 
-type Resource struct {
+type ResourceQuery struct {
 	OPA    *sdk.OPA
 	Policy string
 	ResourceValues
@@ -20,8 +20,8 @@ type Resource struct {
 	RawInput interface{}
 }
 
-func AllowResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceOptions) error {
-	res := Resource{
+func AllowResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceQueryOptions) error {
+	res := ResourceQuery{
 		OPA: EmbeddedOPA(),
 		InputCustomizers: embeddedOPA.inputCustomizers,
 		ResourceValues: ResourceValues{ExtraData: map[string]interface{}{}},
@@ -37,26 +37,10 @@ func AllowResource(ctx context.Context, resType string, op ResourceOperation, op
 		return ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
 	}
 	result, e := res.OPA.Decision(ctx, *opaOpts)
-	switch {
-	case sdk.IsUndefinedErr(e):
-		logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, "not true")
-		return ErrAccessDenied.WithMessage("Resource Access Denied")
-	case e != nil:
-		return ErrAccessDenied.WithMessage("unable to execute OPA query: %v", e)
-	}
-
-	switch v := result.Result.(type) {
-	case bool:
-		if !v {
-			return ErrAccessDenied.WithMessage("Resource Access Denied")
-		}
-	default:
-		return ErrAccessDenied.WithMessage("unsupported OPA result type %T", result.Result)
-	}
-	return nil
+	return handleDecisionResult(ctx, result, e, "ResourceQuery")
 }
 
-func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *Resource) (*sdk.DecisionOptions, error) {
+func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *ResourceQuery) (*sdk.DecisionOptions, error) {
 	input, e := constructResourceDecisionInput(ctx, resType, op, res)
 	if e != nil {
 		return nil, e
@@ -76,7 +60,7 @@ func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType st
 	return &opts, nil
 }
 
-func constructResourceDecisionInput(ctx context.Context, resType string, op ResourceOperation, res *Resource) (interface{}, error) {
+func constructResourceDecisionInput(ctx context.Context, resType string, op ResourceOperation, res *ResourceQuery) (interface{}, error) {
 	if res.RawInput != nil {
 		return res.RawInput, nil
 	}

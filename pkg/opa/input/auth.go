@@ -8,10 +8,14 @@ import (
 )
 
 func PopulateAuthenticationClause(ctx context.Context, input *opa.Input) error {
+	auth := security.Get(ctx)
+	if !security.IsFullyAuthenticated(auth) {
+		input.Authentication = nil
+		return nil
+	}
 	if input.Authentication == nil {
 		input.Authentication = opa.NewAuthenticationClause()
 	}
-	auth := security.Get(ctx)
 	return populateAuthenticationClause(auth, input.Authentication)
 }
 

@@ -18,9 +18,9 @@ type ContextAwarePartialQueryMapper interface {
 type ResourceFilterOptions func(rf *ResourceFilter)
 
 type ResourceFilter struct {
-	OPA              *sdk.OPA
-	Policy           string
-	Unknowns         []string
+	OPA      *sdk.OPA
+	Query    string
+	Unknowns []string
 	QueryMapper      sdk.PartialQueryMapper
 	Delta            *ResourceValues
 	ExtraData        map[string]interface{}
@@ -39,10 +39,10 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 	for _, fn := range opts {
 		fn(&res)
 	}
-	if len(res.Policy) == 0 {
-		res.Policy = fmt.Sprintf("data.%s.filter_%v", resType, op)
+	if len(res.Query) == 0 {
+		res.Query = fmt.Sprintf("data.%s.filter_%v", resType, op)
 	}
-	opaOpts, e := PrepareResourcePartialQuery(ctx, res.Policy, resType, op, &res)
+	opaOpts, e := PrepareResourcePartialQuery(ctx, res.Query, resType, op, &res)
 	if e != nil {
 		return nil, ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
 	}

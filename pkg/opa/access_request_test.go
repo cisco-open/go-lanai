@@ -47,8 +47,7 @@ func SubTestRequestBaseline(_ *testDI) test.GomegaSubTestFunc {
 		var req *http.Request
 		var e error
 		req = MockRequest(ctx, http.MethodGet, "/doesnt/matter")
-		e = opa.AllowRequest(ctx, req, func(opt *opa.RequestQueryOption) {
-			opt.Policy = "baseline/allow"
+		e = opa.AllowRequest(ctx, req, opa.RequestQueryWithPolicy("baseline/allow"), func(opt *opa.RequestQuery) {
 			opt.RawInput = map[string]interface{}{
 				"just_data": "data",
 			}
@@ -64,17 +63,13 @@ func SubTestRequestWithPermission(_ *testDI) test.GomegaSubTestFunc {
 		// admin - can read
 		ctx = sectest.ContextWithSecurity(ctx, MemberAdminOptions())
 		req = MockRequest(ctx, http.MethodGet, "/test/api/get")
-		e = opa.AllowRequest(ctx, req, func(opt *opa.RequestQueryOption) {
-			opt.Policy = "testservice/allow_api"
-		})
+		e = opa.AllowRequest(ctx, req, opa.RequestQueryWithPolicy("testservice/allow_api"))
 		g.Expect(e).To(Succeed(), "API access should be granted")
 
 		// user - can read
 		ctx = sectest.ContextWithSecurity(ctx, MemberNonOwnerOptions())
 		req = MockRequest(ctx, http.MethodGet, "/test/api/get")
-		e = opa.AllowRequest(ctx, req, func(opt *opa.RequestQueryOption) {
-			opt.Policy = "testservice/allow_api"
-		})
+		e = opa.AllowRequest(ctx, req, opa.RequestQueryWithPolicy("testservice/allow_api"))
 		g.Expect(e).To(Succeed(), "API access should be granted")
 	}
 }
@@ -86,7 +81,7 @@ func SubTestRequestWithoutPermission(_ *testDI) test.GomegaSubTestFunc {
 		// user - cannot write
 		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
 		req = MockRequest(ctx, http.MethodPost, "/test/api/post")
-		e = opa.AllowRequest(ctx, req, func(opt *opa.RequestQueryOption) {
+		e = opa.AllowRequest(ctx, req, func(opt *opa.RequestQuery) {
 			opt.Policy = "testservice/allow_api"
 		})
 		g.Expect(e).To(HaveOccurred(), "API access should be denied")
@@ -101,9 +96,7 @@ func SubTestRequestWithoutPolicy(_ *testDI) test.GomegaSubTestFunc {
 		// user - cannot write
 		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
 		req = MockRequest(ctx, http.MethodPost, "/test/api/post")
-		e = opa.AllowRequest(ctx, req, func(opt *opa.RequestQueryOption) {
-			opt.Policy = "testservice/unknown_policy"
-		})
+		e = opa.AllowRequest(ctx, req, opa.RequestQueryWithPolicy("testservice/unknown_policy"))
 		g.Expect(e).To(HaveOccurred(), "API access should be denied")
 		g.Expect(errors.Is(e, opa.ErrAccessDenied)).To(BeTrue(), "error should be ErrAccessDenied")
 	}
@@ -116,7 +109,7 @@ func SubTestRequestInvalidInputCustomizer(_ *testDI) test.GomegaSubTestFunc {
 		// user - cannot write
 		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
 		req = MockRequest(ctx, http.MethodPost, "/test/api/post")
-		e = opa.AllowRequest(ctx, req, func(opt *opa.RequestQueryOption) {
+		e = opa.AllowRequest(ctx, req, func(opt *opa.RequestQuery) {
 			opt.InputCustomizers = append(opt.InputCustomizers, opa.InputCustomizerFunc(func(ctx context.Context, input *opa.Input) error {
 				return errors.New("oops")
 			}))

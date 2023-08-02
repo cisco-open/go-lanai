@@ -45,7 +45,7 @@ func SubTestPartialBaseline(_ *testDI) test.GomegaSubTestFunc {
 		var pq *sdk.PartialResult
 		var e error
 		pq, e = opa.FilterResource(ctx, "doesn't matter", "whatever", func(res *opa.ResourceFilter) {
-			res.Policy = "data.baseline.filter"
+			res.Query = "data.baseline.filter"
 			res.Unknowns = []string{"input.fail"}
 			res.RawInput = map[string]interface{}{
 				"just_data": "data",
@@ -109,7 +109,7 @@ func SubTestPartialWithoutPolicy(_ *testDI) test.GomegaSubTestFunc {
 				"input.resource.owner_id",
 			}
 			res.ExtraData["debug"] = "test"
-			res.Policy = "data.poc.unknown_policy"
+			res.Query = "data.poc.unknown_policy"
 			res.QueryMapper = regoexpr.NoopPartialQueryMapper{}
 		})
 		g.Expect(e).To(HaveOccurred())

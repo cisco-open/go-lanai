@@ -48,7 +48,7 @@ func TestAllowResource(t *testing.T) {
 func SubTestResourceBaseline(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
-		e = opa.AllowResource(ctx, "doesn't matter", "whatever", func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "doesn't matter", "whatever", func(res *opa.ResourceQuery) {
 			res.Policy = "baseline/allow"
 			res.RawInput = map[string]interface{}{
 				"just_data": "data",
@@ -64,7 +64,7 @@ func SubTestMemberAdmin(_ *testDI) test.GomegaSubTestFunc {
 		// member admin
 		ctx = sectest.ContextWithSecurity(ctx, MemberAdminOptions())
 		// member admin - can read
-		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -72,7 +72,7 @@ func SubTestMemberAdmin(_ *testDI) test.GomegaSubTestFunc {
 		})
 		g.Expect(e).To(Succeed())
 		// member admin - can write
-		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -87,7 +87,7 @@ func SubTestMemberOwner(_ *testDI) test.GomegaSubTestFunc {
 		// owner - can read
 		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
 		// member user - can read
-		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -95,7 +95,7 @@ func SubTestMemberOwner(_ *testDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(Succeed())
 
 		// owner - can write
-		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -110,7 +110,7 @@ func SubTestMemberNonOwner(_ *testDI) test.GomegaSubTestFunc {
 		// member user
 		ctx = sectest.ContextWithSecurity(ctx, MemberNonOwnerOptions())
 		// member user - can read
-		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -118,7 +118,7 @@ func SubTestMemberNonOwner(_ *testDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(Succeed())
 
 		// member user - cannot write
-		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -132,7 +132,7 @@ func SubTestNonMember(_ *testDI) test.GomegaSubTestFunc {
 		var e error
 		// non-member admin - can't read
 		ctx = sectest.ContextWithSecurity(ctx, NonMemberAdminOptions())
-		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -146,7 +146,7 @@ func SubTestSharedUser(_ *testDI) test.GomegaSubTestFunc {
 		var e error
 		ctx = sectest.ContextWithSecurity(ctx, MemberNonOwnerOptions())
 		// non-member user but shared - cannot write if not allowed
-		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -157,7 +157,7 @@ func SubTestSharedUser(_ *testDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(HaveOccurred())
 
 		// non-member user but shared - can write if allowed
-		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpWrite, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -174,7 +174,7 @@ func SubTestResourceWithoutPolicy(_ *testDI) test.GomegaSubTestFunc {
 		var e error
 		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
 		// member user - can read
-		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}
@@ -190,7 +190,7 @@ func SubTestResourceInvalidInputCustomizer(_ *testDI) test.GomegaSubTestFunc {
 		var e error
 		ctx = sectest.ContextWithSecurity(ctx, MemberOwnerOptions())
 		// member user - can read
-		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.Resource) {
+		e = opa.AllowResource(ctx, "poc", opa.OpRead, func(res *opa.ResourceQuery) {
 			res.TenantID = TenantId
 			res.OwnerID = OwnerUserId
 			res.TenantPath = []string{RootTenantId, TenantId}

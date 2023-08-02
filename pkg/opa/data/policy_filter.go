@@ -216,7 +216,7 @@ func (m *statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.Resource
 	}
 	return func(rf *opa.ResourceFilter) {
 		if p, ok := m.Policies[m.Flag]; ok && p != TagValueIgnore {
-			rf.Policy = p
+			rf.Query = p
 		}
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
@@ -319,7 +319,7 @@ func (m *createStatementModifier) checkPolicy(ctx context.Context, model *policy
 	if e != nil {
 		return opa.ErrAccessDenied.WithMessage(`Cannot resolve values for model creation`)
 	}
-	return opa.AllowResource(ctx, model.meta.ResType, opa.OpCreate, func(res *opa.Resource) {
+	return opa.AllowResource(ctx, model.meta.ResType, opa.OpCreate, func(res *opa.ResourceQuery) {
 		res.ResourceValues = *values
 	})
 }

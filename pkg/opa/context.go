@@ -30,7 +30,9 @@ func (c Input) MarshalJSON() ([]byte, error) {
 }
 
 func NewInput() *Input {
-	return &Input{}
+	return &Input{
+		ExtraData: make(map[string]interface{}),
+	}
 }
 
 type InputCustomizer interface {
@@ -38,6 +40,7 @@ type InputCustomizer interface {
 }
 
 type InputCustomizerFunc func(ctx context.Context, input *Input) error
+
 func (fn InputCustomizerFunc) Customize(ctx context.Context, input *Input) error {
 	return fn(ctx, input)
 }
@@ -78,7 +81,7 @@ func NewAuthenticationClause() *AuthenticationClause {
 }
 
 /**************************
-	Common Resource Blocks
+	Common ResourceQuery Blocks
  **************************/
 
 type RequestClause struct {
