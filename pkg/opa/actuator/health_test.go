@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health/endpoint"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	opaactuator "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/actuator"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/actuator/testdata"
 	opatest "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test"
@@ -16,7 +17,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
-	"github.com/open-policy-agent/opa/sdk"
 	"go.uber.org/fx"
 	"net/http"
 	"testing"
@@ -32,8 +32,8 @@ func ConfigureHealth(healthReg health.Registrar, mock *testdata.MockedHealthIndi
 	healthReg.MustRegister(mock)
 }
 
-func ConfigureCustomHealthDisclosure(opaEngine *sdk.OPA, healthReg health.Registrar) {
-	healthReg.MustRegister(opaactuator.NewHealthDisclosureControlWithOPA(opaEngine, "actuator/allow_health_details"))
+func ConfigureCustomHealthDisclosure(healthReg health.Registrar) {
+	healthReg.MustRegister(opaactuator.NewHealthDisclosureControlWithOPA(opa.QueryWithPolicy("actuator/allow_health_details")))
 }
 
 type HealthTestDI struct {
