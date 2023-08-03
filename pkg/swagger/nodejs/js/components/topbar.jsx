@@ -1,6 +1,5 @@
 import React, { cloneElement } from "react"
 import PropTypes from "prop-types"
-import Logo from "../../images/cda-dark-1.svg"
 
 export default class SsoTopBar extends React.Component {
 
@@ -147,7 +146,7 @@ export default class SsoTopBar extends React.Component {
                 <div className="wrapper">
                     <div className="topbar-wrapper">
                         <Link>
-                            <Logo height={40} width={40} viewBox="0 0 1024 1024"/>
+                            <h1/>CDA<h1/>
                         </Link>
                         <form className="download-url-wrapper" style={{visibility: 'hidden'}}>
                             {control.map((el, i) => cloneElement(el, { key: i }))}
