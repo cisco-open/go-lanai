@@ -1,6 +1,6 @@
 import React, { cloneElement } from "react"
 import PropTypes from "prop-types"
-import Logo from "../../images/msx-dark-1.svg"
+import Logo from "../../images/cda-dark-1.svg"
 
 export default class SsoTopBar extends React.Component {
 
