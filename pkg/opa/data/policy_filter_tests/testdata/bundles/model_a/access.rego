@@ -3,8 +3,9 @@ package model
 import future.keywords
 import data.tenancy.allow_tenant_access
 import data.tenancy.allow_change_tenant
-import data.roles.has_permission
-import data.ops.is
+import data.rbac.has_permission
+import data.resource.is_type
+import data.resource.is_op
 import data.ownership.is_owner
 import data.ownership.is_shared
 import data.ownership.allow_change_owner
@@ -16,30 +17,30 @@ filter_delete = allow_delete
 
 # Read
 allow_read if {
-    input.resource.type == "model"
-    is("read")
+    is_type("model")
+    is_op("read")
     has_permission("VIEW")
     allow_tenant_access
 }
 
 allow_read if {
-    input.resource.type == "model"
-    is("read")
+    is_type("model")
+    is_op("read")
     is_owner
     allow_tenant_access
 }
 
 allow_read if {
-    input.resource.type == "model"
-    is("read")
+    is_type("model")
+    is_op("read")
     is_shared("read")
     allow_tenant_access
 }
 
 # Write/Update
 allow_write if {
-    input.resource.type == "model"
-    is("write")
+    is_type("model")
+    is_op("write")
     has_permission("MANAGE")
     allow_tenant_access
     allow_change_owner
@@ -47,8 +48,8 @@ allow_write if {
 }
 
 allow_write if {
-    input.resource.type == "model"
-    is("write")
+    is_type("model")
+    is_op("write")
     is_owner
     allow_tenant_access
     allow_change_owner
@@ -56,8 +57,8 @@ allow_write if {
 }
 
 allow_write if {
-    input.resource.type == "model"
-    is("write")
+    is_type("model")
+    is_op("write")
     is_shared("write")
     allow_tenant_access
     allow_change_owner
@@ -66,8 +67,8 @@ allow_write if {
 
 # Create
 allow_create if {
-    input.resource.type == "model"
-    is("create")
+    is_type("model")
+    is_op("create")
     has_permission("MANAGE")
     is_owner
     allow_tenant_access
@@ -75,22 +76,22 @@ allow_create if {
 
 # Delete
 allow_delete if {
-    input.resource.type == "model"
-    is("delete")
+    is_type("model")
+    is_op("delete")
     has_permission("MANAGE")
     allow_tenant_access
 }
 
 allow_delete if {
-    input.resource.type == "model"
-    is("delete")
+    is_type("model")
+    is_op("delete")
     is_owner
     allow_tenant_access
 }
 
 allow_delete if {
-    input.resource.type == "model"
-    is("delete")
+    is_type("model")
+    is_op("delete")
     is_shared("delete")
     allow_tenant_access
 }

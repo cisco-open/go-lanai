@@ -1,7 +1,7 @@
 package testservice
 
 import future.keywords
-import data.roles.has_permission
+import data.rbac.has_permission
 
 # API access Rules
 
