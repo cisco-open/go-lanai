@@ -13,7 +13,7 @@ const (
 var (
 	Cmd = &cobra.Command{
 		Use:                "webjars",
-		Short:              "DownloadHandlerFunc Webjars and extract",
+		Short:              "Download Webjars and extract",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE:               Run,
 	}
