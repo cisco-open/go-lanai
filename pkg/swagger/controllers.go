@@ -33,11 +33,18 @@ type UiConfiguration struct {
 }
 
 type SsoConfiguration struct {
-	Enabled      bool   `json:"enabled"`
-	AuthorizeUrl string `json:"authorizeUrl"`
-	ClientId     string `json:"clientId"`
-	ClientSecret string `json:"clientSecret"`
-	TokenUrl     string `json:"tokenUrl"`
+	Enabled          bool        `json:"enabled"`
+	AuthorizeUrl     string      `json:"authorizeUrl"`
+	ClientId         string      `json:"clientId"`
+	ClientSecret     string      `json:"clientSecret"`
+	TokenUrl         string      `json:"tokenUrl"`
+	AdditionalParams []ParamMeta `json:"additionalParameters"`
+}
+
+type ParamMeta struct {
+	Name      string `json:"name"`
+	SourceUrl string `json:"sourceUrl"`
+	JsonPath  string `json:"jsonPath"`
 }
 
 type Resource struct {
@@ -120,12 +127,23 @@ func (c *SwaggerController) configurationSecurity(_ context.Context, _ web.Empty
 }
 
 func (c *SwaggerController) configurationSso(_ context.Context, _ web.EmptyRequest) (response interface{}, err error) {
+	params := make([]ParamMeta, 0)
+
+	for _, v := range c.properties.Security.Sso.AdditionalParams {
+		params = append(params, ParamMeta{
+			Name:      v.Name,
+			SourceUrl: v.SourceUrl,
+			JsonPath:  v.JsonPath,
+		})
+	}
+
 	response = SsoConfiguration{
-		Enabled:      c.properties.Security.Sso.ClientId != "",
-		TokenUrl:     fmt.Sprintf("%s%s", c.properties.Security.Sso.BaseUrl, c.properties.Security.Sso.TokenPath),
-		AuthorizeUrl: fmt.Sprintf("%s%s", c.properties.Security.Sso.BaseUrl, c.properties.Security.Sso.AuthorizePath),
-		ClientId:     c.properties.Security.Sso.ClientId,
-		ClientSecret: c.properties.Security.Sso.ClientSecret,
+		Enabled:          c.properties.Security.Sso.ClientId != "",
+		TokenUrl:         fmt.Sprintf("%s%s", c.properties.Security.Sso.BaseUrl, c.properties.Security.Sso.TokenPath),
+		AuthorizeUrl:     fmt.Sprintf("%s%s", c.properties.Security.Sso.BaseUrl, c.properties.Security.Sso.AuthorizePath),
+		ClientId:         c.properties.Security.Sso.ClientId,
+		ClientSecret:     c.properties.Security.Sso.ClientSecret,
+		AdditionalParams: params,
 	}
 	return
 }

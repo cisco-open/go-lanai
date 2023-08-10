@@ -11,7 +11,9 @@ export default class SsoTopBar extends React.Component {
         specSelectors: PropTypes.object.isRequired,
         specActions: PropTypes.object.isRequired,
         getComponent: PropTypes.func.isRequired,
-        getConfigs: PropTypes.func.isRequired
+        getConfigs: PropTypes.func.isRequired,
+        parameterName: PropTypes.object,
+        parameterValue: PropTypes.object
     }
 
     constructor(props, context) {
@@ -74,6 +76,15 @@ export default class SsoTopBar extends React.Component {
         e.preventDefault()
     }
 
+    onAuthorizeWithParams = (e) => {
+        const form = e.target;
+        const formData = new FormData(form);
+        this.props.parameterName = formData.get("parameterName")
+        this.props.parameterValue = formData.get("parameterValue")
+        this.ssoAuthorize();
+        e.preventDefault()
+    }
+
     onLogoutClick = (e) => {
         e.preventDefault()
     }
@@ -118,8 +129,16 @@ export default class SsoTopBar extends React.Component {
         const isLoading = specSelectors.loadingStatus() === "loading";
         const isAuthorized = ssoSelectors.isAuthorized();
         const hasRefreshToken = ssoSelectors.hasRefreshToken();
+        const username = ssoSelectors.getTokenUsername();
+        const tenantId = ssoSelectors.getTokenTenantId();
+
+        var params = []
+        if (ssoSelectors.ssoConfigs()) {
+            params = ssoSelectors.ssoConfigs()["additionalParameters"]
+        }
 
         let { url, urls } = getConfigs()
+
         const control = []
 
         if(!urls || !(urls instanceof Array)) {
@@ -149,12 +168,29 @@ export default class SsoTopBar extends React.Component {
                         <Link>
                             <Logo height={40} width={40} viewBox="0 0 1024 1024"/>
                         </Link>
+                        { isAuthorized && hasRefreshToken &&
+                            <div style={{color: '#fff'}}>{username}, Tenant {(tenantId) ? tenantId : "not selected" }</div>
+                        }
                         <form className="download-url-wrapper" style={{visibility: 'hidden'}}>
                             {control.map((el, i) => cloneElement(el, { key: i }))}
                         </form>
 
                         { isAuthorized && hasRefreshToken &&
-                            <Button className="btn authorize" onClick={ this.onRefreshClick }>Refresh</Button>
+                            <>
+                                <Button className="btn authorize" onClick={ this.onRefreshClick }>Refresh</Button>
+                                <form onSubmit={this.onAuthorizeWithParams}>
+                                    <label>
+                                        &nbsp;&nbsp;
+                                        <select name="parameterName">
+                                            {params.map(function(item) {
+                                                return <option value={item.name}>{item.name}</option>;
+                                            })}
+                                        </select>
+                                    </label>
+                                    <label><input name="parameterValue"/></label>
+                                    <button className="btn authorize" type="submit">Authorize</button>
+                                </form>
+                            </>
                         }
                         { !isAuthorized &&
                             <Button className="btn authorize" onClick={ this.onLoginClick }>Login</Button>
