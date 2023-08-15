@@ -6,6 +6,7 @@ type SwaggerProperties struct {
 	BasePath string                    `json:"base-path"`
 	Spec     string                    `json:"spec"`
 	Security SwaggerSecurityProperties `json:"security"`
+	UI       SwaggerUIProperties       `json:"ui"`
 }
 
 type SwaggerSecurityProperties struct {
@@ -19,6 +20,10 @@ type SwaggerSsoProperties struct {
 	AuthorizePath string `json:"authorize-path"`
 	ClientId      string `json:"client-id"`
 	ClientSecret  string `json:"client-secret"`
+}
+
+type SwaggerUIProperties struct {
+	Title string `json:"title"`
 }
 
 func NewSwaggerSsoProperties() *SwaggerProperties {

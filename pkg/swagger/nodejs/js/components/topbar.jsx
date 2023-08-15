@@ -118,7 +118,7 @@ export default class SsoTopBar extends React.Component {
         const isAuthorized = ssoSelectors.isAuthorized();
         const hasRefreshToken = ssoSelectors.hasRefreshToken();
 
-        let { url, urls } = getConfigs()
+        let { url, urls, title } = getConfigs()
         const control = []
 
         if(!urls || !(urls instanceof Array)) {
@@ -146,7 +146,7 @@ export default class SsoTopBar extends React.Component {
                 <div className="wrapper">
                     <div className="topbar-wrapper">
                         <Link>
-                            <h1/>CDA<h1/>
+                            <h1/>{title}<h1/>
                         </Link>
                         <form className="download-url-wrapper" style={{visibility: 'hidden'}}>
                             {control.map((el, i) => cloneElement(el, { key: i }))}

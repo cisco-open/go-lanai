@@ -8,3 +8,5 @@ swagger:
       authorize-path: /v2/authorize
       client-id: nfv-client
       #client-secret: nfv-secret
+  ui:
+    title: CDA
