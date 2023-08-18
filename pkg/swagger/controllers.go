@@ -30,6 +30,7 @@ type UiConfiguration struct {
 	SupportedSubmitMethods   []string `json:"supportedSubmitMethods"`
 	TagsSorter               string   `json:"tagsSorter"`
 	ValidatorUrl             string   `json:"validatorUrl"`
+	Title                    string   `json:"title"`
 }
 
 type SsoConfiguration struct {
@@ -103,6 +104,7 @@ func (c *SwaggerController) configurationUi(_ context.Context, _ web.EmptyReques
 		TagsSorter:               "alpha",
 		ValidatorUrl:             "",
 		SupportedSubmitMethods:   []string{"get", "put", "post", "delete", "options", "head", "patch", "trace"},
+		Title:                    c.properties.UI.Title,
 	}
 	return
 }

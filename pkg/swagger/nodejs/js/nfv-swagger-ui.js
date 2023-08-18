@@ -55,6 +55,7 @@ window.onload = () => {
       operationsSorter: configUI.operationsSorter,
       showExtensions: configUI.showExtensions,
       tagSorter: configUI.tagSorter,
+      title: configUI.title,
       /*--------------------------------------------*\
        * Network
       \*--------------------------------------------*/

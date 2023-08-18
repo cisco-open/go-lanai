@@ -13,3 +13,6 @@ swagger:
           display-name: Tenant Id
 #         candidate-source-url:
 #         candidate-json-path:
+
+  ui:
+    title: CDA
