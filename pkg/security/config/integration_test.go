@@ -417,7 +417,7 @@ func SubTestOauth2SwitchTenantWithPerTenantPermission(di *intDI) test.GomegaSubT
 				),
 			},
 		}
-		SubTestOauth2SwitchTenant(di, tests, fedAccount)
+		SubTestOauth2SwitchTenant(di, tests, fedAccount)(ctx, t, g)
 	}
 }
 
@@ -453,7 +453,7 @@ func SubTestOAuth2SwitchTenantNoFinalizer(di *intDI) test.GomegaSubTestFunc {
 				),
 			},
 		}
-		SubTestOauth2SwitchTenant(di, tests, fedAccount)
+		SubTestOauth2SwitchTenant(di, tests, fedAccount)(ctx, t, g)
 	}
 }
 
