@@ -46,12 +46,14 @@ func IsRecording() bool {
 }
 
 // WithNoopMocks create a noop tx.TxManager and a noop gorm.DB
-// This mode requires apptest.Bootstrap to work, and should not be used together with No
+// This mode requires apptest.Bootstrap to work, and should not be used together with WithDBPlayback
+// Note: in this mode, gorm.DB's DryRun and SkipDefaultTransaction are enabled
 func WithNoopMocks() test.Options {
 	testOpts := withData()
 	testOpts = append(testOpts, apptest.WithFxOptions(
 		fx.Provide(provideNoopTxManager),
 		fx.Provide(provideNoopGormDialector),
+		fx.Invoke(enableGormDryRun),
 	))
 	return test.WithOptions(testOpts...)
 }

@@ -40,3 +40,13 @@ func MakeDecisionMakerFunc(matcher AcrMatcher, cf ControlFunc) DecisionMakerFunc
 		}
 	}
 }
+
+func WrapDecisionMakerFunc(matcher AcrMatcher, dmf DecisionMakerFunc) DecisionMakerFunc {
+	return func(ctx context.Context, r *http.Request) (bool, error) {
+		matches, err := matcher.MatchesWithContext(ctx, r)
+		if !matches || err != nil {
+			return false, err
+		}
+		return dmf(ctx, r)
+	}
+}

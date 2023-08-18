@@ -65,7 +65,7 @@ func ListStructField(sType reflect.Type, matcher func(t reflect.StructField) boo
 				for i := range sub {
 					sub[i].Index = append(f.Index, sub[i].Index...)
 				}
-				return sub
+				ret = append(ret, sub...)
 			}
 		}
 	}

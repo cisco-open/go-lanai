@@ -1,0 +1,7 @@
+data:
+  logging:
+    level: debug
+
+log:
+  levels:
+    data: debug

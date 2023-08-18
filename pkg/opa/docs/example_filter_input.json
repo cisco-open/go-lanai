@@ -1,0 +1,28 @@
+{
+  "auth": {
+    "username": "user1",
+    "permissions": [
+      "NO_VIEW",
+      "MANAGE"
+    ],
+    "user_id": "595959e4-8803-4ab1-8acf-acfb92bb7322",
+    "tenant_id": "d8423acc-28cb-4209-95d6-089de7fb27ef",
+    "roles": [
+      "USER"
+    ],
+    "accessible_tenants": [
+      "d8423acc-28cb-4209-95d6-089de7fb27ef"
+    ],
+    "client": {
+      "client_id": "mock",
+      "scopes": []
+    }
+  },
+  "resource": {
+    "type": "poc",
+    "op": "write",
+    "delta": {
+      "owner_id": "a5aaa07a-e7d7-4f66-bec8-1e651badacbd"
+    }
+  }
+}

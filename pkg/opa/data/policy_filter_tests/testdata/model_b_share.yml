@@ -1,0 +1,22 @@
+###### User 3's Resources ######
+# 1st shared to user 1
+- ResID: "01727ba1-d3bf-48e7-b3c7-cc40710e08bb"
+  UserID: "595959e4-8803-4ab1-8acf-acfb92bb7322"
+  Username: "user1"
+  Operations: ["read", "write"]
+
+# 2st shared to user 2
+- ResID: "0bcc8301-2236-4709-9116-505d6625e431"
+  UserID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
+  Username: "user2"
+  Operations: ["read", "write"]
+
+# 1st shared to user 1 and user 2
+- ResID: "d9733206-0b73-4de9-9ca4-eaf2c1e2bbae"
+  UserID: "595959e4-8803-4ab1-8acf-acfb92bb7322"
+  Username: "user1"
+  Operations: ["read"]
+- ResID: "d9733206-0b73-4de9-9ca4-eaf2c1e2bbae"
+  UserID: "9a901c91-a3d6-4d39-9adf-34e74bb32de2"
+  Username: "user2"
+  Operations: ["read"]
