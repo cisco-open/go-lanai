@@ -10,5 +10,6 @@ swagger:
       #client-secret: nfv-secret
       additional-params:
         - name: tenant_id
-#          source-url:
-#          json-path:
+          display-name: Tenant Id
+#         candidate-source-url:
+#         candidate-json-path:

@@ -19,13 +19,14 @@ type SwaggerSsoProperties struct {
 	AuthorizePath    string                `json:"authorize-path"`
 	ClientId         string                `json:"client-id"`
 	ClientSecret     string                `json:"client-secret"`
-	AdditionalParams []ParameterProperties `json:"additional-params"`
+	AdditionalParams []ParameterProperties `json:"additional-params" binding:"omitempty"`
 }
 
 type ParameterProperties struct {
-	Name      string `json:"name"`
-	SourceUrl string `json:"source-url"`
-	JsonPath  string `json:"json-path"`
+	Name               string `json:"name"`
+	DisplayName        string `json:"display-name"`
+	CandidateSourceUrl string `json:"candidate-source-url"`
+	CandidateJsonPath  string `json:"candidate-json-path"`
 }
 
 func NewSwaggerSsoProperties() *SwaggerProperties {

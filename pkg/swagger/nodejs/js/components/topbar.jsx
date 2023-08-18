@@ -129,8 +129,8 @@ export default class SsoTopBar extends React.Component {
         const isLoading = specSelectors.loadingStatus() === "loading";
         const isAuthorized = ssoSelectors.isAuthorized();
         const hasRefreshToken = ssoSelectors.hasRefreshToken();
-        const username = ssoSelectors.getTokenUsername();
-        const tenantId = ssoSelectors.getTokenTenantId();
+        const username = ssoSelectors.getFromTokenResponse("username");
+        const tenantId = ssoSelectors.getFromTokenResponse("tenantId");
 
         var params = []
         if (ssoSelectors.ssoConfigs()) {
@@ -168,7 +168,7 @@ export default class SsoTopBar extends React.Component {
                         <Link>
                             <Logo height={40} width={40} viewBox="0 0 1024 1024"/>
                         </Link>
-                        { isAuthorized && hasRefreshToken &&
+                        { isAuthorized && hasRefreshToken && params &&
                             <div style={{color: '#fff'}}>{username}, Tenant {(tenantId) ? tenantId : "not selected" }</div>
                         }
                         <form className="download-url-wrapper" style={{visibility: 'hidden'}}>
@@ -178,18 +178,20 @@ export default class SsoTopBar extends React.Component {
                         { isAuthorized && hasRefreshToken &&
                             <>
                                 <Button className="btn authorize" onClick={ this.onRefreshClick }>Refresh</Button>
-                                <form onSubmit={this.onAuthorizeWithParams}>
-                                    <label>
-                                        &nbsp;&nbsp;
-                                        <select name="parameterName">
-                                            {params.map(function(item) {
-                                                return <option value={item.name}>{item.name}</option>;
-                                            })}
-                                        </select>
-                                    </label>
-                                    <label><input name="parameterValue"/></label>
-                                    <button className="btn authorize" type="submit">Authorize</button>
-                                </form>
+                                { params &&
+                                    <form onSubmit={this.onAuthorizeWithParams}>
+                                        <label>
+                                            &nbsp;&nbsp;
+                                            <select name="parameterName">
+                                                {params.map(function(item) {
+                                                    return <option label={item.displayName} value={item.name}>{item.name}</option>;
+                                                })}
+                                            </select>
+                                        </label>
+                                        <label><input name="parameterValue"/></label>
+                                        <button className="btn authorize" type="submit">Authorize</button>
+                                    </form>
+                                }
                             </>
                         }
                         { !isAuthorized &&

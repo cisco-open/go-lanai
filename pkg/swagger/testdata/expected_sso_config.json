@@ -7,8 +7,9 @@
   "additionalParameters": [
     {
       "name": "tenant_id",
-      "sourceUrl": "",
-      "jsonPath": ""
+      "displayName": "Tenant Id",
+      "candidateSourceUrl": "",
+      "candidateJsonPath": ""
     }
   ]
 }

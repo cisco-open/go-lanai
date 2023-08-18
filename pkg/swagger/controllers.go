@@ -42,9 +42,10 @@ type SsoConfiguration struct {
 }
 
 type ParamMeta struct {
-	Name      string `json:"name"`
-	SourceUrl string `json:"sourceUrl"`
-	JsonPath  string `json:"jsonPath"`
+	Name               string `json:"name"`
+	DisplayName        string `json:"displayName"`
+	CandidateSourceUrl string `json:"candidateSourceUrl"`
+	CandidateJsonPath  string `json:"candidateJsonPath"`
 }
 
 type Resource struct {
@@ -127,13 +128,14 @@ func (c *SwaggerController) configurationSecurity(_ context.Context, _ web.Empty
 }
 
 func (c *SwaggerController) configurationSso(_ context.Context, _ web.EmptyRequest) (response interface{}, err error) {
-	params := make([]ParamMeta, 0)
+	var params []ParamMeta
 
 	for _, v := range c.properties.Security.Sso.AdditionalParams {
 		params = append(params, ParamMeta{
-			Name:      v.Name,
-			SourceUrl: v.SourceUrl,
-			JsonPath:  v.JsonPath,
+			Name:               v.Name,
+			DisplayName:        v.DisplayName,
+			CandidateSourceUrl: v.CandidateSourceUrl,
+			CandidateJsonPath:  v.CandidateJsonPath,
 		})
 	}
 
