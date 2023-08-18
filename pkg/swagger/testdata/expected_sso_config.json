@@ -3,5 +3,13 @@
   "authorizeUrl": "http://localhost:8900/auth/v2/authorize",
   "clientId": "nfv-client",
   "clientSecret": "",
-  "tokenUrl": "http://localhost:8900/auth/v2/token"
+  "tokenUrl": "http://localhost:8900/auth/v2/token",
+  "additionalParameters": [
+    {
+      "name": "tenant_id",
+      "displayName": "Tenant Id",
+      "candidateSourceUrl": "",
+      "candidateJsonPath": ""
+    }
+  ]
 }

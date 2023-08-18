@@ -33,11 +33,19 @@ type UiConfiguration struct {
 }
 
 type SsoConfiguration struct {
-	Enabled      bool   `json:"enabled"`
-	AuthorizeUrl string `json:"authorizeUrl"`
-	ClientId     string `json:"clientId"`
-	ClientSecret string `json:"clientSecret"`
-	TokenUrl     string `json:"tokenUrl"`
+	Enabled          bool        `json:"enabled"`
+	AuthorizeUrl     string      `json:"authorizeUrl"`
+	ClientId         string      `json:"clientId"`
+	ClientSecret     string      `json:"clientSecret"`
+	TokenUrl         string      `json:"tokenUrl"`
+	AdditionalParams []ParamMeta `json:"additionalParameters"`
+}
+
+type ParamMeta struct {
+	Name               string `json:"name"`
+	DisplayName        string `json:"displayName"`
+	CandidateSourceUrl string `json:"candidateSourceUrl"`
+	CandidateJsonPath  string `json:"candidateJsonPath"`
 }
 
 type Resource struct {
@@ -120,12 +128,24 @@ func (c *SwaggerController) configurationSecurity(_ context.Context, _ web.Empty
 }
 
 func (c *SwaggerController) configurationSso(_ context.Context, _ web.EmptyRequest) (response interface{}, err error) {
+	var params []ParamMeta
+
+	for _, v := range c.properties.Security.Sso.AdditionalParams {
+		params = append(params, ParamMeta{
+			Name:               v.Name,
+			DisplayName:        v.DisplayName,
+			CandidateSourceUrl: v.CandidateSourceUrl,
+			CandidateJsonPath:  v.CandidateJsonPath,
+		})
+	}
+
 	response = SsoConfiguration{
-		Enabled:      c.properties.Security.Sso.ClientId != "",
-		TokenUrl:     fmt.Sprintf("%s%s", c.properties.Security.Sso.BaseUrl, c.properties.Security.Sso.TokenPath),
-		AuthorizeUrl: fmt.Sprintf("%s%s", c.properties.Security.Sso.BaseUrl, c.properties.Security.Sso.AuthorizePath),
-		ClientId:     c.properties.Security.Sso.ClientId,
-		ClientSecret: c.properties.Security.Sso.ClientSecret,
+		Enabled:          c.properties.Security.Sso.ClientId != "",
+		TokenUrl:         fmt.Sprintf("%s%s", c.properties.Security.Sso.BaseUrl, c.properties.Security.Sso.TokenPath),
+		AuthorizeUrl:     fmt.Sprintf("%s%s", c.properties.Security.Sso.BaseUrl, c.properties.Security.Sso.AuthorizePath),
+		ClientId:         c.properties.Security.Sso.ClientId,
+		ClientSecret:     c.properties.Security.Sso.ClientSecret,
+		AdditionalParams: params,
 	}
 	return
 }

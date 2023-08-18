@@ -5,7 +5,7 @@ import { PluginErrorSource } from "./sso-plugin";
 export const InProgressRedirectKey = "CurrentRedirectSSO";
 export const SsoStateKeyPrefix = "sso-";
 
-export function authorize ( { ssoActions, errActions, ssoConfigs={} } ) {
+export function authorize ( { ssoActions, errActions, ssoConfigs={} , parameterName, parameterValue} ) {
 
     if (!validateSsoConfigs({errActions, ssoConfigs})) {
         return;
@@ -42,6 +42,10 @@ export function authorize ( { ssoActions, errActions, ssoConfigs={} } ) {
         if (typeof additionalQueryStringParams[key] !== "undefined") {
             query.push([key, additionalQueryStringParams[key]].map(encodeURIComponent).join("="))
         }
+    }
+
+    if (parameterName && parameterValue) {
+        query.push(parameterName+"="+parameterValue)
     }
 
     const authorizationUrl = authorizeUrl
