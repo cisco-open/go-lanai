@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "type": "object",
+  "required": [
+    "auth"
+  ],
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "request"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "resource"
+      ]
+    }
+  ],
+  "properties": {
+    "auth": {
+      "$ref": "#/$defs/authentication"
+    },
+    "request": {
+      "$ref": "#/$defs/request"
+    },
+    "resource": {
+      "$ref": "#/$defs/resource"
+    }
+  },
+  "$defs": {
+    "authentication": {
+      "type": "object",
+      "required": [
+        "user_id",
+        "permissions",
+        "tenant_id",
+        "client"
+      ],
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tenant_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "provider_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "accessible_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "client": {
+          "type": "object",
+          "required": [
+            "client_id",
+            "scopes"
+          ],
+          "properties": {
+            "client_id": {
+              "type": "string"
+            },
+            "scopes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "required": [
+        "path",
+        "method"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "header": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "required": [
+        "type",
+        "op"
+      ],
+      "allOf": [
+        {
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "op": {
+              "type": "string"
+            },
+            "delta": {
+              "$ref": "#/$defs/resource-values"
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/resource-values"
+        }
+      ]
+    },
+    "resource-values": {
+      "type": "object",
+      "properties": {
+        "tenant_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tenant_path": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "owner_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sharing": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

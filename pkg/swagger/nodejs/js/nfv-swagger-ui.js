@@ -94,6 +94,7 @@ window.onload = () => {
       ssoRedirectUrl: baseUrl + "/swagger-sso-redirect.html",
       clientId: ssoSecurity.clientId,
       clientSecret: ssoSecurity.clientSecret,
+      additionalParameters: ssoSecurity.additionalParameters,
     });
 
     return ui;

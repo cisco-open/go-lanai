@@ -1,0 +1,105 @@
+package regoexpr
+
+import (
+	"github.com/open-policy-agent/opa/ast"
+	"reflect"
+	"strconv"
+)
+
+type ConvertableValueNumberType interface {
+	int | int8 | int16 | int32 | int64 | float32 | float64 | uint | uint8 | uint16 | uint32 | uint64
+}
+
+type ConvertableValueType interface {
+	string | bool | ConvertableValueNumberType
+}
+
+// ConvertValue
+// TODO this might not be needed if ast.AS() works
+func ConvertValue[T ConvertableValueType](value ast.Value) (ret T, err error) {
+	destType := reflect.TypeOf(ret)
+	var rv reflect.Value
+	switch destType.Kind() {
+	case reflect.String:
+		rv = convertValueToString(value)
+	case reflect.Bool:
+		rv = convertValueToBool(value)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		rv = convertValueToInt(value)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		rv = convertValueToUInt(value)
+	case reflect.Float32, reflect.Float64:
+		rv = convertValueToFloat(value)
+	}
+	if !rv.IsValid() {
+		if e := ast.As(value, &ret); e != nil {
+			return ret, ParsingError.WithMessage("unable to convert rego value '%v' to type %T: %v", value, ret, e)
+		}
+		return
+	}
+	return rv.Convert(destType).Interface().(T), nil
+}
+
+func convertValueToString(value ast.Value) reflect.Value {
+	switch v := value.(type) {
+	case ast.String:
+		return reflect.ValueOf(string(v))
+	default:
+		return reflect.ValueOf(value.String())
+	}
+}
+
+func convertValueToInt(value ast.Value) (ret reflect.Value) {
+	switch v := value.(type) {
+	case ast.Number:
+		if i, ok := v.Int64(); ok {
+			return reflect.ValueOf(i)
+		}
+	case ast.String:
+		if v, e := strconv.ParseInt(string(v), 10, 0); e == nil {
+			return reflect.ValueOf(v)
+		}
+	}
+	return
+}
+
+func convertValueToUInt(value ast.Value) (ret reflect.Value) {
+	ret = convertValueToInt(value)
+	typ := reflect.TypeOf(uint(0))
+	if ret.IsValid() && ret.CanConvert(typ) {
+		return ret.Convert(typ)
+	}
+	return
+}
+
+func convertValueToFloat(value ast.Value) (ret reflect.Value) {
+	switch v := value.(type) {
+	case ast.Number:
+		if i, ok := v.Float64(); ok {
+			return reflect.ValueOf(i)
+		}
+	case ast.String:
+		if v, e := strconv.ParseFloat(string(v), 0); e == nil {
+			return reflect.ValueOf(v)
+		}
+	}
+	return
+}
+
+func convertValueToBool(value ast.Value) (ret reflect.Value) {
+	switch v := value.(type) {
+	case ast.Number:
+		ret = convertValueToInt(value)
+		typ := reflect.TypeOf(true)
+		if ret.IsValid() && ret.CanConvert(typ) {
+			return ret.Convert(typ)
+		}
+	case ast.Boolean:
+		return reflect.ValueOf(bool(v))
+	case ast.String:
+		if v, e := strconv.ParseBool(string(v)); e == nil {
+			return reflect.ValueOf(v)
+		}
+	}
+	return
+}

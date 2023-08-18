@@ -1,0 +1,31 @@
+{
+  "auth": {
+    "username": "testuser-member-owner",
+    "permissions": [
+      "VIEW"
+    ],
+    "user_id": "20523d89-d5e9-40d0-afe3-3a74c298b55a",
+    "tenant_id": "8eebb711-7d24-48fb-94da-361c573d7c20",
+    "provider_id": "fe3ad89c-449f-42f2-b4f8-b10ab7bc0266",
+    "roles": [
+      "USER"
+    ],
+    "accessible_tenants": [
+      "8eebb711-7d24-48fb-94da-361c573d7c20"
+    ],
+    "client": {
+      "client_id": "mock",
+      "scopes": []
+    }
+  },
+  "resource": {
+    "tenant_id": "8eebb711-7d24-48fb-94da-361c573d7c20",
+    "tenant_path": [
+      "7b3934fc-edc4-4a1c-9249-3dc7055eb124",
+      "8eebb711-7d24-48fb-94da-361c573d7c20"
+    ],
+    "owner_id": "20523d89-d5e9-40d0-afe3-3a74c298b55a",
+    "type": "poc",
+    "op": "read"
+  }
+}

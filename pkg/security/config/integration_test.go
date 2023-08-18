@@ -331,7 +331,17 @@ func SubTestOauth2AccessCodeSwitchTenant(di *intDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
 
 		// authorize
-		req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions())
+		req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, func(req *http.Request) {
+			req.Host = fmt.Sprintf("http://%s", testdata.IdpDomainExtSAML)
+			req.URL.Host = fmt.Sprintf("http://%s", testdata.IdpDomainExtSAML)
+			values := url.Values{}
+			values.Set(oauth2.ParameterGrantType, oauth2.GrantTypeAuthCode)
+			values.Set(oauth2.ParameterResponseType, "code")
+			values.Set(oauth2.ParameterClientId, "test-client")
+			values.Set(oauth2.ParameterRedirectUri, "http://localhost/test/callback")
+			values.Set(oauth2.ParameterTenantId, "id-tenant-3")
+			req.URL.RawQuery = values.Encode()
+		})
 		resp := webtest.MustExec(ctx, req)
 		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
 		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusFound), "response should have correct status code")
@@ -339,7 +349,7 @@ func SubTestOauth2AccessCodeSwitchTenant(di *intDI) test.GomegaSubTestFunc {
 
 		// token
 		code := extractAuthCode(resp.Response)
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code, "id-tenant-3"), tokenReqOptions())
+		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code, ""), tokenReqOptions())
 		resp = webtest.MustExec(ctx, req)
 		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
 		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")

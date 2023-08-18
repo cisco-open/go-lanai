@@ -1,0 +1,308 @@
+{
+  "result": {
+    "queries": [
+      [
+        {
+          "index": 0,
+          "terms": {
+            "type": "ref",
+            "value": [
+              {
+                "type": "var",
+                "value": "data"
+              },
+              {
+                "type": "string",
+                "value": "partial"
+              },
+              {
+                "type": "string",
+                "value": "ownership"
+              },
+              {
+                "type": "string",
+                "value": "is_owner"
+              }
+            ]
+          }
+        },
+        {
+          "index": 1,
+          "terms": {
+            "type": "ref",
+            "value": [
+              {
+                "type": "var",
+                "value": "data"
+              },
+              {
+                "type": "string",
+                "value": "partial"
+              },
+              {
+                "type": "string",
+                "value": "tenancy"
+              },
+              {
+                "type": "string",
+                "value": "allow_tenant_access"
+              }
+            ]
+          }
+        }
+      ]
+    ],
+    "support": [
+      {
+        "package": {
+          "path": [
+            {
+              "type": "var",
+              "value": "data"
+            },
+            {
+              "type": "string",
+              "value": "partial"
+            },
+            {
+              "type": "string",
+              "value": "ownership"
+            }
+          ]
+        },
+        "rules": [
+          {
+            "body": [
+              {
+                "index": 0,
+                "terms": {
+                  "type": "boolean",
+                  "value": true
+                }
+              }
+            ],
+            "default": true,
+            "head": {
+              "name": "is_owner",
+              "value": {
+                "type": "boolean",
+                "value": false
+              },
+              "ref": [
+                {
+                  "type": "var",
+                  "value": "is_owner"
+                }
+              ]
+            }
+          },
+          {
+            "body": [
+              {
+                "index": 0,
+                "terms": [
+                  {
+                    "type": "ref",
+                    "value": [
+                      {
+                        "type": "var",
+                        "value": "eq"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "value": "e7498b90-cec3-41fd-ac20-acd41769fb88"
+                  },
+                  {
+                    "type": "ref",
+                    "value": [
+                      {
+                        "type": "var",
+                        "value": "input"
+                      },
+                      {
+                        "type": "string",
+                        "value": "resource"
+                      },
+                      {
+                        "type": "string",
+                        "value": "owner_id"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "head": {
+              "name": "is_owner",
+              "value": {
+                "type": "boolean",
+                "value": true
+              },
+              "ref": [
+                {
+                  "type": "var",
+                  "value": "is_owner"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "package": {
+          "path": [
+            {
+              "type": "var",
+              "value": "data"
+            },
+            {
+              "type": "string",
+              "value": "partial"
+            },
+            {
+              "type": "string",
+              "value": "tenancy"
+            }
+          ]
+        },
+        "rules": [
+          {
+            "body": [
+              {
+                "index": 0,
+                "terms": {
+                  "type": "boolean",
+                  "value": true
+                }
+              }
+            ],
+            "default": true,
+            "head": {
+              "name": "allow_tenant_access",
+              "value": {
+                "type": "boolean",
+                "value": false
+              },
+              "ref": [
+                {
+                  "type": "var",
+                  "value": "allow_tenant_access"
+                }
+              ]
+            }
+          },
+          {
+            "body": [
+              {
+                "index": 0,
+                "terms": [
+                  {
+                    "type": "ref",
+                    "value": [
+                      {
+                        "type": "var",
+                        "value": "eq"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "value": "7b3934fc-edc4-4a1c-9249-3dc7055eb124"
+                  },
+                  {
+                    "type": "ref",
+                    "value": [
+                      {
+                        "type": "var",
+                        "value": "input"
+                      },
+                      {
+                        "type": "string",
+                        "value": "resource"
+                      },
+                      {
+                        "type": "string",
+                        "value": "tenant_id"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "head": {
+              "name": "allow_tenant_access",
+              "value": {
+                "type": "boolean",
+                "value": true
+              },
+              "ref": [
+                {
+                  "type": "var",
+                  "value": "allow_tenant_access"
+                }
+              ]
+            }
+          },
+          {
+            "body": [
+              {
+                "index": 0,
+                "terms": [
+                  {
+                    "type": "ref",
+                    "value": [
+                      {
+                        "type": "var",
+                        "value": "eq"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "value": "7b3934fc-edc4-4a1c-9249-3dc7055eb124"
+                  },
+                  {
+                    "type": "ref",
+                    "value": [
+                      {
+                        "type": "var",
+                        "value": "input"
+                      },
+                      {
+                        "type": "string",
+                        "value": "resource"
+                      },
+                      {
+                        "type": "string",
+                        "value": "tenant_path"
+                      },
+                      {
+                        "type": "var",
+                        "value": "$06"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "head": {
+              "name": "allow_tenant_access",
+              "value": {
+                "type": "boolean",
+                "value": true
+              },
+              "ref": [
+                {
+                  "type": "var",
+                  "value": "allow_tenant_access"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

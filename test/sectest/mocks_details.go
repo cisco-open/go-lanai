@@ -23,6 +23,7 @@ type SecurityDetailsMock struct {
 	Exp                      time.Time
 	Iss                      time.Time
 	Permissions              utils.StringSet
+	Roles                    utils.StringSet
 	Tenants                  utils.StringSet
 	OrigUsername             string
 	UserFirstName            string
@@ -81,7 +82,7 @@ func (d *MockedSecurityDetails) IssueTime() time.Time {
 }
 
 func (d *MockedSecurityDetails) Roles() utils.StringSet {
-	panic("implement me")
+	return d.SecurityDetailsMock.Roles
 }
 
 func (d *MockedSecurityDetails) Permissions() utils.StringSet {

@@ -78,6 +78,14 @@ func SeedCatToysRelations() DataSetupStep {
 func SetupScopeTestPrepareTables(di *DI) test.SetupFunc {
 	return PrepareData(di,
 		CreateAllTables(), TruncateAllTables(),
+	)
+}
+
+func SetupScopeTestPrepareData(di *DI) test.SetupFunc {
+	return PrepareDataWithScope(di,
+		SetupWithGormScopes(func(db *gorm.DB) *gorm.DB {
+			return db.Set("scopeKey", "scopeValue")
+		}),
 		SeedCats(), SeedToys(), SeedCatToysRelations(),
 	)
 }
@@ -104,6 +112,7 @@ func TestScopeController(t *testing.T) {
 		),
 		apptest.WithDI(di),
 		test.SubTestSetup(SetupScopeTestPrepareTables(&di.DI)),
+		test.SubTestSetup(SetupScopeTestPrepareData(&di.DI)),
 		test.GomegaSubTest(SubTestCats(di), "TestCats"),
 		test.GomegaSubTest(SubTestToys(di), "TestToys"),
 	)

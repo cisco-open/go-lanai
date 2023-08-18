@@ -63,7 +63,7 @@ export function initSsoInterceptors(system) {
     }
 }
 
-export function startOrResumeAuthorize({ssoActions, errActions, ssoSelectors}) {
+export function startOrResumeAuthorize({ssoActions, errActions, ssoSelectors, parameterName, parameterValue}) {
     const ssoConfigs = ssoSelectors.ssoConfigs();
     const authorized = ssoSelectors.isAuthorized();
     const progress = loadRedirectProgress();
@@ -78,7 +78,7 @@ export function startOrResumeAuthorize({ssoActions, errActions, ssoSelectors}) {
             }
         }
     } else {
-        return ssoAuthorize({ssoActions, errActions, ssoSelectors});
+        return ssoAuthorize({ssoActions, errActions, ssoSelectors, parameterName, parameterValue});
     }
 
     return {
@@ -87,13 +87,13 @@ export function startOrResumeAuthorize({ssoActions, errActions, ssoSelectors}) {
     }
 }
 
-export function ssoAuthorize({ssoActions, errActions, ssoSelectors}) {
+export function ssoAuthorize({ssoActions, errActions, ssoSelectors, parameterName, parameterValue}) {
     const ssoConfigs = ssoSelectors.ssoConfigs();
     const authorized = ssoSelectors.isAuthorized();
 
-    if (ssoConfigs && !authorized) {
-        console.info("SSO Authorizing");
-        if (authorize({ssoActions, errActions, ssoConfigs})) {
+    if (ssoConfigs) {
+        console.info("SSO Authorizing with parameter name " + parameterName + " " + parameterValue);
+        if (authorize({ssoActions, errActions, ssoConfigs, parameterName, parameterValue})) {
             return {
                 type: SsoStateType.Status,
                 payload: { status: SsoStatus.Authorizing }

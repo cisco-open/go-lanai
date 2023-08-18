@@ -62,7 +62,7 @@ func (t TenantPath) DeleteClauses(f *schema.Field) []clause.Interface {
 // tenancyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type tenancyFilterClause struct {
-	stmtModifier
+	NoopStatementModifier
 	Flag TenancyCheckFlag
 	Mode tcMode
 	Field *schema.Field
@@ -121,7 +121,7 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	// special fix for db.Model(&model{}).Where(&model{f1:v1}).Or(&model{f2:v2})...
 	// Ref:	https://github.com/go-gorm/gorm/issues/3627
 	//		https://github.com/go-gorm/gorm/commit/9b2181199d88ed6f74650d73fa9d20264dd134c0#diff-e3e9193af67f3a706b3fe042a9f121d3609721da110f6a585cdb1d1660fd5a3c
-	fixWhereClausesForStatementModifier(stmt)
+	FixWhereClausesForStatementModifier(stmt)
 
 	// add tenancy filter condition
 	colExpr := stmt.Quote(clause.Column{Table: clause.CurrentTable, Name: c.Field.DBName})
