@@ -7,10 +7,11 @@ import (
 
 //goland:noinspection GoNameStartsWithPackageName
 type AccessControl struct {
-	owner *AccessControlFeature
-	order int
+	owner   *AccessControlFeature
+	order   int
 	matcher AcrMatcher
 	control ControlFunc
+	custom  DecisionMakerFunc
 }
 
 // Order implements order.Ordered
@@ -38,13 +39,19 @@ func (ac *AccessControl) Authenticated() *AccessControlFeature {
 	return ac.owner
 }
 
-func (ac *AccessControl) HasPermissions(permissions...string) *AccessControlFeature {
+func (ac *AccessControl) HasPermissions(permissions ...string) *AccessControlFeature {
 	ac.control = HasPermissions(permissions...)
 	return ac.owner
 }
 
 func (ac *AccessControl) AllowIf(cf ControlFunc) *AccessControlFeature {
 	ac.control = cf
+	return ac.owner
+}
+
+// CustomDecisionMaker override ControlFunc. Order and AcrMatcher are still applied
+func (ac *AccessControl) CustomDecisionMaker(dmf DecisionMakerFunc) *AccessControlFeature {
+	ac.custom = dmf
 	return ac.owner
 }
 
@@ -61,7 +68,7 @@ func (f *AccessControlFeature) Identifier() security.FeatureIdentifier {
 // Request configure access control of requests matching given AcrMatcher
 func (f *AccessControlFeature) Request(matcher AcrMatcher) *AccessControl {
 	ac := &AccessControl{
-		owner: f,
+		owner:   f,
 		matcher: matcher,
 	}
 	f.acl = append(f.acl, ac)
@@ -71,7 +78,7 @@ func (f *AccessControlFeature) Request(matcher AcrMatcher) *AccessControl {
 func Configure(ws security.WebSecurity) *AccessControlFeature {
 	feature := New()
 	if fc, ok := ws.(security.FeatureModifier); ok {
-		return  fc.Enable(feature).(*AccessControlFeature)
+		return fc.Enable(feature).(*AccessControlFeature)
 	}
 	panic(fmt.Errorf("unable to configure access control: provided WebSecurity [%T] doesn't support FeatureModifier", ws))
 }

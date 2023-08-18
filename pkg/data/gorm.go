@@ -9,6 +9,21 @@ import (
 	"time"
 )
 
+const (
+	GormCallbackBeforeCreate = "gorm:before_create"
+	GormCallbackAfterCreate  = "gorm:after_create"
+	GormCallbackBeforeQuery  = "gorm:query"
+	GormCallbackAfterQuery   = "gorm:after_query"
+	GormCallbackBeforeUpdate = "gorm:before_update"
+	GormCallbackAfterUpdate  = "gorm:after_update"
+	GormCallbackBeforeDelete = "gorm:before_delete"
+	GormCallbackAfterDelete  = "gorm:after_delete"
+	GormCallbackBeforeRow    = "gorm:row"
+	GormCallbackAfterRow     = "gorm:row"
+	GormCallbackBeforeRaw    = "gorm:raw"
+	GormCallbackAfterRaw     = "gorm:raw"
+)
+
 type gormInitDI struct {
 	fx.In
 	Dialector gorm.Dialector

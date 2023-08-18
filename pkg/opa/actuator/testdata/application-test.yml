@@ -1,0 +1,28 @@
+# standarized information on the service
+info:
+  app:
+    msx:
+      # defaults to this services version, can be overridden in consul via installer
+      version: ${info.app.version}
+      show-build-info: true
+    name: actuator-test
+    description: Actuator tests
+    version: ${application.build.version}
+    build-time: ${application.build.build-time}
+    attributes:
+      displayName: Test
+      parent: platform
+      type: platform
+
+management:
+  endpoint:
+    health:
+      status:
+        # because PingIndicator would return "unknown", so we move unknown to highest order
+        order: down, out_of_service, up, unknown
+      show-details: custom
+      show-components: custom
+  security:
+    endpoint:
+      info:
+        enabled: true

@@ -78,6 +78,7 @@ func (d noopGormDialector) RollbackTo(_ *gorm.DB, _ string) error {
 /*****************************
 	gorm cockroach error
  *****************************/
+
 func pqErrorTranslatorProvider() fx.Annotated {
 	return fx.Annotated{
 		Group: data.GormConfigurerGroup,
@@ -94,6 +95,15 @@ func gormErrTranslatorProvider() fx.Annotated {
 			return data.NewGormErrorTranslator()
 		},
 	}
+}
+
+/*****************************
+	gorm dry run
+ *****************************/
+
+func enableGormDryRun(db *gorm.DB){
+	db.DryRun = true
+	db.SkipDefaultTransaction = true
 }
 
 

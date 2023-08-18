@@ -16,10 +16,27 @@ import (
 )
 
 // PrepareData is a convenient function that returns a test.SetupFunc that executes given DataSetupStep in provided order
+// Note: PrepareData accumulate all changes applied to context
 func PrepareData(di *DI, steps ...DataSetupStep) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		for _, fn := range steps {
 			ctx = fn(ctx, t, di.DB)
+			if t.Failed() {
+				return ctx, errors.New("test failed during data preparation")
+			}
+		}
+		return ctx, nil
+	}
+}
+
+// PrepareDataWithScope is similar to PrepareData, it applies given DataSetupScope before executing all DataSetupStep.
+// DataSetupScope is used to prepare context and gorm.DB for all given DataSetupStep
+// Note: Different from PrepareData, PrepareDataWithScope doesn't accumulate changes to context
+func PrepareDataWithScope(di *DI, scope DataSetupScope, steps ...DataSetupStep) test.SetupFunc {
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		scopedCtx, db := scope(ctx, t, di.DB)
+		for _, fn := range steps {
+			scopedCtx = fn(scopedCtx, t, db)
 			if t.Failed() {
 				return ctx, errors.New("test failed during data preparation")
 			}
@@ -84,6 +101,13 @@ func SetupTruncateTables(tables ...string) DataSetupStep {
 		sqls[i] = truncateTableSql(table)
 	}
 	return SetupUsingSQLQueries(sqls...)
+}
+
+// SetupWithGormScopes returns a DataSetupScope that applies given gorm scopes
+func SetupWithGormScopes(scopes ...func(*gorm.DB) *gorm.DB) DataSetupScope {
+	return func(ctx context.Context, t *testing.T, db *gorm.DB) (context.Context, *gorm.DB) {
+		return ctx, db.Scopes(scopes...)
+	}
 }
 
 func execSqlFile(ctx context.Context, fsys fs.FS, db *gorm.DB, g *gomega.WithT, filename string) {
