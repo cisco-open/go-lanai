@@ -69,7 +69,7 @@ type Account interface {
 }
 
 type AccountFinalizeOption struct {
-	Tenant *Tenant
+	Tenant *Tenant // Tenant field can be nil
 }
 type AccountFinalizeOptions func(option *AccountFinalizeOption)
 

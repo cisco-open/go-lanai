@@ -289,7 +289,7 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, err
 	}
 
-	if finalizer, ok := s.accountStore.(security.AccountFinalizer); ok && tenant != nil {
+	if finalizer, ok := s.accountStore.(security.AccountFinalizer); ok {
 		newAccount, err := finalizer.Finalize(ctx, account, security.FinalizeWithTenant(tenant))
 		if err != nil {
 			return nil, err
