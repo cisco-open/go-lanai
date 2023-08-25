@@ -31,13 +31,14 @@ func (m *MockAccountStoreWithFinalize) Finalize(
 	for _, option := range options {
 		option(&opts)
 	}
-	if opts.Tenant == nil {
-		return nil, fmt.Errorf("expected non nil tenant")
-	}
 
 	u, ok := m.accountLookupByUsername[account.Username()]
 	if !ok {
 		return nil, fmt.Errorf("username: %v not found", account.Username())
+	}
+	if opts.Tenant == nil {
+		u.MockedAccountDetails.Permissions = utils.NewStringSet(security.SpecialPermissionSwitchTenant)
+		return u, nil
 	}
 	tenant, ok := m.tenantIDLookup[opts.Tenant.Id]
 	if !ok {
