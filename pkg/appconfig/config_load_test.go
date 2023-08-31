@@ -15,70 +15,85 @@ const (
 )
 
 var (
-	Groups = []ProviderGroup {
-		&TestProviderGroup {
-			order:       0,
-			providers:   []Provider {
+	Groups = []ProviderGroup{
+		&TestProviderGroup{
+			order: 0,
+			providers: []Provider{
 				&TestProvider{
-					mocked:   map[string]interface{}{
-						KeyProvidersCap: 2,
+					mocked: map[string]interface{}{
+						KeyProvidersCap:    2,
 						KeyValueOverridden: "g-0-p-1",
-						"application": map[string]interface{} {
-							"profiles": map[string]interface{} { "additional": []string{"profile-0-1"} },
+						"application": map[string]interface{}{
+							"profiles": map[string]interface{}{
+								"additional": []string{"profile-0-1"},
+								"active":     []interface{}{"active-0-1"},
+							},
 						},
 					},
-					name:     "g-0-p-1",
-					order:    1,
+					name:  "g-0-p-1",
+					order: 1,
 				},
 				&TestProvider{
-					mocked:   map[string]interface{}{
-						KeyProvidersCap: 3,
+					mocked: map[string]interface{}{
+						KeyProvidersCap:    3,
 						KeyValueOverridden: "g-0-p-0",
-						"application": map[string]interface{} {
-							"profiles": map[string]interface{} { "additional": []string{"profile-0-0"} },
+						"application": map[string]interface{}{
+							"profiles": map[string]interface{}{
+								"additional": []string{"profile-0-0"},
+								"active":     []interface{}{"active-0-0"},
+							},
 						},
 					},
-					name:     "g-0-p-0",
-					order:    0,
+					name:  "g-0-p-0",
+					order: 0,
 				},
 			},
 		},
-		&TestProviderGroup {
-			order:       1,
-			providers:   []Provider {
+		&TestProviderGroup{
+			order: 1,
+			providers: []Provider{
 				&TestProvider{
-					mocked:   map[string]interface{}{
-						KeyProvidersCap: 1,
-						KeyValueOverridden: "g-1-p-2",
+					mocked: map[string]interface{}{
+						KeyProvidersCap:       1,
+						KeyValueOverridden:    "g-1-p-2",
 						KeyValueNotOverridden: ValueNotOverridden,
-						"application": map[string]interface{} {
-							"profiles": map[string]interface{} { "additional": []string{"profile-1-2"} },
+						"application": map[string]interface{}{
+							"profiles": map[string]interface{}{
+								"additional": []string{"profile-1-2"},
+								"active":     []interface{}{"active-1-2"},
+							},
 						},
 					},
-					name:     "g-1-p-2",
-					order:    2,
+					name:  "g-1-p-2",
+					order: 2,
 				},
 				&TestProvider{
-					mocked:   map[string]interface{}{
-						KeyProvidersCap: 1,
+					mocked: map[string]interface{}{
+						KeyProvidersCap:    1,
 						KeyValueOverridden: "g-1-p-0",
-						"application": map[string]interface{} {
-							"profiles": map[string]interface{} { "additional": []string{"profile-1-0"} },
+						"application": map[string]interface{}{
+							"profiles": map[string]interface{}{
+								"additional": []string{"profile-1-0"},
+								"active":     []interface{}{"active-1-0"},
+							},
 						},
 					},
-					name:     "g-1-p-0",
-					order:    0,
+					name:  "g-1-p-0",
+					order: 0,
 				},
 				&TestProvider{
-					mocked:   map[string]interface{}{
-						KeyProvidersCap: 1,
+					mocked: map[string]interface{}{
+						KeyProvidersCap:    1,
 						KeyValueOverridden: "g-1-p-1",
-						"application": map[string]interface{} {
-							"profiles": map[string]interface{} { "additional": []string{"profile-1-1"} },
+						"application": map[string]interface{}{
+							"profiles": map[string]interface{}{
+								"additional": []string{"profile-1-1"},
+								"active":     []interface{}{"active-1-1"},
+							},
 						},
 					},
-					name:     "g-1-p-1",
-					order:    1,
+					name:  "g-1-p-1",
+					order: 1,
 				},
 			},
 		},
@@ -97,6 +112,10 @@ func TestMultiPassLoad(t *testing.T) {
 	g.Expect(conf.Value(KeyValueOverridden)).To(Equal(first.Name()), "overridden value should be set by highest precedence provider")
 	g.Expect(conf.Value(KeyValueNotOverridden)).To(Equal(ValueNotOverridden), "not overridden value should be correct")
 	g.Expect(conf.Value(PropertyKeyAdditionalProfiles)).To(HaveLen(5), "additional profiles should appended and have 5 entries")
+	g.Expect(conf.Value(PropertyKeyActiveProfiles)).To(HaveLen(1), "active profiles should override and have 1 entry")
+	ap := conf.Value(PropertyKeyActiveProfiles).([]interface{})
+	g.Expect(ap[0]).To(Equal("active-0-0"))
+	g.Expect(conf.profiles).To(HaveLen(6), "should have active profiles plus additional profiles")
 }
 
 /*********************
@@ -107,12 +126,15 @@ func TestMultiPassLoad(t *testing.T) {
 	Helpers
  *********************/
 
-/*********************
-	Mock Types
- *********************/
+/*
+********************
+
+		Mock Types
+	 ********************
+*/
 type TestProviderGroup struct {
-	order int
-	providers []Provider
+	order       int
+	providers   []Provider
 	shouldReset bool
 }
 
