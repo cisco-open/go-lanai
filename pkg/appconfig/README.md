@@ -96,3 +96,21 @@ Unlike other properties, this property is appended if it's defined in multiple p
 
 Because each property source can add more profiles, the property loading process in both bootstrap and application stage will continue to refresh the list of property sources until there are no new
 property sources. i.e. when the value of these two properties stabilizes.
+
+## Requirements and Best Practices
+
+### Json Tag in Struct
+We require the json tag in struct to be snake-case instead of camelCase. This is because internally all the property names from property sources are normalized
+to snake-case and merged together. This allows user to define their property either using snake-case or camelCase. But the developer must use
+snake-case to bind the resulting property to struct field, because that is the format that all properties uses internally.
+
+### Fields that Supports Binding
+In some cases the property value might correspond to special types. For example, a property might represent a time duration or a slice.
+In this case, the struct field type needs to be able to unmarshall the property values. Go-lanai provides some utility types to help with this
+so that developer does not need to write custom json unmarshalling code. This is a list of the available types:
+
+* utils.Duration
+* utils.CommaSeparatedSlice
+* utils.StringSet
+* uitls.Set
+* utils.GenericSet[T]
