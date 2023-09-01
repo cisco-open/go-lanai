@@ -12,7 +12,7 @@ type StaticProviderGroup struct {
 	StaticProviders []Provider
 }
 
-func NewStaticProviderGroup(order int, providers... Provider) *StaticProviderGroup {
+func NewStaticProviderGroup(order int, providers ...Provider) *StaticProviderGroup {
 	return &StaticProviderGroup{
 		Precedence:      order,
 		StaticProviders: providers,
@@ -62,7 +62,7 @@ func (g *DynamicProviderGroup) Providers(ctx context.Context, _ bootstrap.Applic
 
 	// we assume ProviderKeys are sorted already
 	// Note, we re-assign order of each providers starting with group's order and move backwards
-	for i, order := len(g.ProviderKeys) - 1, g.Precedence; i >= 0; i-- {
+	for i, order := len(g.ProviderKeys)-1, g.Precedence; i >= 0; i-- {
 		p, ok := g.ProviderLookup[g.ProviderKeys[i]]
 		if !ok {
 			continue
@@ -142,11 +142,12 @@ func (g *ProfileBasedProviderGroup) Providers(ctx context.Context, conf bootstra
 
 func resolveProfiles(conf bootstrap.ApplicationConfig) (profiles []string) {
 	// active profiles
-	active, _ := conf.Value(PropertyKeyActiveProfiles).([]string)
+	active, _ := conf.Value(PropertyKeyActiveProfiles).([]interface{})
 	for _, p := range active {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			profiles = append(profiles, p)
+		pStr, _ := p.(string)
+		pStr = strings.TrimSpace(pStr)
+		if pStr != "" {
+			profiles = append(profiles, pStr)
 		}
 	}
 
