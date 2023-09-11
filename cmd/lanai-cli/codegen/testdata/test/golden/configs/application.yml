@@ -11,8 +11,8 @@ info:
     build-time: ${application.build.build-time}
     attributes:
       displayName: testservice
-      parent: TODO
-      type: TODO
+      parent: unknown
+      type: unknown
 
 redis:
   addrs: ${spring.redis.host:localhost}:6379

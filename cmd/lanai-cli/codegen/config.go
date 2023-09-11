@@ -9,21 +9,21 @@ const (
 )
 
 type VersionedConfig struct {
-	Version ConfigVersion `yaml:"version"`
+	Version ConfigVersion `json:"version"`
 	Config
 	ConfigV2
 }
 
 type Regeneration struct {
-	Default string            `yaml:"default"`
-	Rules   map[string]string `yaml:"rules"`
+	Default string            `json:"default"`
+	Rules   map[string]string `json:"rules"`
 }
 
 type Config struct {
-	Contract           string            `yaml:"contract"`
-	ProjectName        string            `yaml:"projectName"`
-	TemplateDirectory  string            `yaml:"templateDirectory"`
-	RepositoryRootPath string            `yaml:"repositoryRootPath"`
-	Regeneration       Regeneration      `yaml:"regeneration"`
-	Regexes            map[string]string `yaml:"regexes"`
+	Contract           string            `json:"contract"`
+	ProjectName        string            `json:"projectName"`
+	TemplateDirectory  string            `json:"templateDirectory"`
+	RepositoryRootPath string            `json:"repositoryRootPath"`
+	Regeneration       Regeneration      `json:"regeneration"`
+	Regexes            map[string]string `json:"regexes"`
 }
