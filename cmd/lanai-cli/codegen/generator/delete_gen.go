@@ -15,24 +15,28 @@ import (
 type DeleteGenerator struct {
 	priorityOrder int
 	nameRegex     *regexp.Regexp
-	filesystem    fs.FS
+	templateFS    fs.FS
+	outputFS      fs.FS
 }
 
-func newDeleteGenerator(opts ...func(option *Option)) *DeleteGenerator {
-	o := &Option{}
+type DeleteOption struct {
+	Option
+	PriorityOrder int
+}
+
+func newDeleteGenerator(opts ...func(opt *DeleteOption)) *DeleteGenerator {
+	o := &DeleteOption{
+		PriorityOrder: defaultProjectPriorityOrder,
+	}
 	for _, fn := range opts {
 		fn(o)
 	}
 
-	priorityOrder := o.PriorityOrder
-	if priorityOrder == 0 {
-		priorityOrder = defaultProjectPriorityOrder
-	}
-
 	return &DeleteGenerator{
-		priorityOrder: priorityOrder,
+		priorityOrder: o.PriorityOrder,
 		nameRegex:     regexp.MustCompile("^(?:delete)(.+)(?:.tmpl)"),
-		filesystem:    o.FS,
+		templateFS:    o.TemplateFS,
+		outputFS:      o.OutputFS,
 	}
 }
 
@@ -43,7 +47,7 @@ func (d *DeleteGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error 
 	}
 
 	// Go through the output dir, if anything matches the regex, delete the file
-	regexContent, err := fs.ReadFile(d.filesystem, tmplPath)
+	regexContent, err := fs.ReadFile(d.templateFS, tmplPath)
 	if err != nil {
 		return err
 	}

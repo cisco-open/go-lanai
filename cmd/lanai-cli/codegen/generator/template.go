@@ -7,17 +7,8 @@ import (
 	"text/template"
 )
 
-func GenerateFiles(filesystem fs.FS, opts ...func(*Option)) error {
+func GenerateFiles(opts ...func(*Option)) error {
 	generators := NewGenerators(opts...)
-	if err := fs.WalkDir(filesystem, ".",
-		func(p string, d fs.DirEntry, err error) error {
-			// load the files into the generator
-			generators.Load(p, d)
-			return nil
-		}); err != nil {
-		return err
-	}
-	//	 generate
 	return generators.Generate()
 }
 

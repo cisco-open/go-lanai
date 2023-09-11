@@ -2,17 +2,17 @@ package generator
 
 type GenerationContext struct {
 	templatePath string
-	filename     string
-	regenRule    string
+	filename  string
+	regenMode RegenMode
 	//	 Add the template (template.Template) here
 	model interface{}
 }
 
-func NewGenerationContext(templatePath string, filename string, regenRule string, model interface{}) *GenerationContext {
+func NewGenerationContext(templatePath string, filename string, regenMode RegenMode, model interface{}) *GenerationContext {
 	return &GenerationContext{
 		templatePath: templatePath,
 		filename:     filename,
-		regenRule:    regenRule,
+		regenMode:    regenMode,
 		model:        model,
 	}
 }

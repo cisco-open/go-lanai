@@ -1,0 +1,62 @@
+package serviceinit
+
+{{ $imports := NewImports }}
+{{ $imports = $imports.Add "go.uber.org/fx" }}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap" }}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis" }}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver" }}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/swagger" }}
+{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/init" "actuator" }}
+{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init" "appconfig" }}
+{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init" "web" }}
+{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/init" "consul" }}
+{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init" "vault" }}
+{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/init" "tracing" }}
+{{ $imports = $imports.Add (concat .Project.Module "/pkg/controller") }}
+{{ template "imports" $imports }}
+
+var Module = &bootstrap.Module{
+	Name:       "{{.Project.Name}}",
+	Precedence: bootstrap.AnonymousModulePrecedence,
+	Options:    []fx.Option{
+		fx.Provide(newResServerConfigurer),
+		fx.Invoke(configureSecurity),
+	},
+}
+
+// Use initialize components needed in this service
+func Use() {
+	// basic modules
+	appconfig.Use()
+	consul.Use()
+	vault.Use()
+	tracing.Use()
+
+	// web related
+	web.Use()
+	redis.Use()
+	actuator.Use()
+	swagger.Use()
+
+	// data related
+	//data.Use()
+	//cockroach.Use()
+
+	// service-to-service integration related
+	//discoveryinit.Use()
+	//httpclient.Use()
+	//scope.Use()
+	//kafka.Use()
+
+	// security related modules
+	resserver.Use()
+
+	// {{.Project.Name}}
+	bootstrap.Register(Module)
+	bootstrap.Register(controller.Module)
+	for _, m := range controller.SubModules {
+		bootstrap.Register(m)
+	}
+}
+
+

@@ -1,0 +1,49 @@
+application:
+  name: skeleton-service
+
+config:
+  file:
+    search-path: ["configs", "configs/profiles"]
+
+cloud:
+  consul:
+    host: ${spring.cloud.consul.host:localhost}
+    port: 8500
+    config:
+      enabled: true
+    discovery:
+      health-check-critical-timeout: 2m # de-registers an unhealthy instance after certain time
+      ip-address: ${spring.cloud.consul.discovery.ipaddress:}
+  vault:
+    kv:
+      enabled: true
+    host: ${spring.cloud.vault.host:localhost}
+    port: 8200
+    scheme: http
+    token: replace_with_token_value # replace with actual token value or provide this value via other property source (i.e. env variable or commandline args)
+
+server:
+  port: 9898
+  context-path: /skeleton
+
+# This section will refresh the logger configuration after bootstrap is invoked.
+log:
+  levels:
+    default: debug
+    Bootstrap: warn
+    Web: debug
+    Data: info
+    Kafka: info
+    SEC.Session: info
+    OAuth2.Auth: info
+#  loggers:
+#    text-file:
+#      type: file
+#      format: text
+#      location: "logs/text.log"
+#      template: '{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+#      fixed-keys: "spanId, traceId, parentId, http"
+#    json-file:
+#      type: file
+#      format: json
+#      location: "logs/json.log"
