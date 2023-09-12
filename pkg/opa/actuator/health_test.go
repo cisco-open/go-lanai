@@ -209,8 +209,8 @@ func assertHealth(t *testing.T, g *gomega.WithT, h health.Health, expected healt
 			g.Expect(v.Components).To(BeEmpty(), "Composite health should not contains components")
 		}
 		// recursively assert components
-		for _, comp := range v.Components {
-			if comp.Description() == "ping" {
+		for k, comp := range v.Components {
+			if k == "ping" || k == "opa" {
 				continue
 			}
 			assertHealth(t, g, comp, expected, expectedOpts)

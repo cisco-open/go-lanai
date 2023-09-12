@@ -7,7 +7,8 @@ import (
 
 type DirectoryGenerator struct {
 	data       map[string]interface{}
-	filesystem fs.FS
+	templateFS fs.FS
+	outputFS   fs.FS
 }
 
 func newDirectoryGenerator(opts ...func(option *Option)) *DirectoryGenerator {
@@ -17,7 +18,8 @@ func newDirectoryGenerator(opts ...func(option *Option)) *DirectoryGenerator {
 	}
 	return &DirectoryGenerator{
 		data:       o.Data,
-		filesystem: o.FS,
+		templateFS: o.TemplateFS,
+		outputFS:   o.OutputFS,
 	}
 }
 
@@ -26,7 +28,7 @@ func (d *DirectoryGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) err
 		return nil
 	}
 
-	targetDir, err := ConvertSrcRootToTargetDir(tmplPath, d.data, d.filesystem)
+	targetDir, err := ConvertSrcRootToTargetDir(tmplPath, d.data, d.templateFS)
 	if err != nil {
 		return err
 	}

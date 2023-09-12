@@ -9,34 +9,37 @@ import (
 	"text/template"
 )
 
-type VersionGenerator struct {
+// ApiVersionGenerator generate 1 file per API version, based on OpenAPI specs
+type ApiVersionGenerator struct {
 	data             map[string]interface{}
 	template         *template.Template
 	nameRegex        *regexp.Regexp
-	defaultRegenRule string
-	rules            map[string]string
-	filesystem       fs.FS
+	defaultRegenRule RegenMode
+	rules            RegenRules
+	templateFS       fs.FS
+	outputFS         fs.FS
 }
 
 const versionGeneratorName = "version"
 
-func newVersionGenerator(opts ...func(option *Option)) *VersionGenerator {
+func newApiVersionGenerator(opts ...func(option *Option)) *ApiVersionGenerator {
 	o := &Option{}
 	for _, fn := range opts {
 		fn(o)
 	}
 
-	return &VersionGenerator{
+	return &ApiVersionGenerator{
 		data:             o.Data,
 		template:         o.Template,
-		filesystem:       o.FS,
+		templateFS:       o.TemplateFS,
+		outputFS:         o.OutputFS,
 		nameRegex:        regexp.MustCompile("^(version.)(.+)(.tmpl)"),
-		defaultRegenRule: o.RegenRule,
-		rules:            o.Rules,
+		defaultRegenRule: o.DefaultRegenMode,
+		rules:            o.RegenRules,
 	}
 }
 
-func (m *VersionGenerator) determineFilename(template string) string {
+func (m *ApiVersionGenerator) determineFilename(template string) string {
 	var result string
 	matches := m.nameRegex.FindStringSubmatch(path.Base(template))
 	if len(matches) < 2 {
@@ -47,7 +50,7 @@ func (m *VersionGenerator) determineFilename(template string) string {
 	return result
 }
 
-func (m *VersionGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
+func (m *ApiVersionGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 	if dirEntry.IsDir() || !m.nameRegex.MatchString(path.Base(tmplPath)) {
 		// Skip over it
 		return nil
@@ -55,7 +58,7 @@ func (m *VersionGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 
 	// get all versions
 	iterateOver := make(map[string][]string)
-	for pathName, _ := range m.data[OpenAPIData].(*openapi3.T).Paths {
+	for pathName, _ := range m.data[CKOpenAPIData].(*openapi3.T).Paths {
 		version := apiVersion(pathName)
 		iterateOver[version] = append(iterateOver[version], pathName)
 	}
@@ -67,7 +70,7 @@ func (m *VersionGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error
 		data["VersionData"] = versionData
 		data["Version"] = version
 
-		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data, m.filesystem)
+		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data, m.templateFS)
 		if err != nil {
 			return err
 		}

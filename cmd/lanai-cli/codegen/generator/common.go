@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"embed"
 	"fmt"
+	"github.com/bmatcuk/doublestar/v4"
 	"go/format"
 	"io"
 	"io/fs"
@@ -78,15 +79,15 @@ func (e *emptyWriteCloser) Close() (err error) {
 
 func applyRegenRule(gc *GenerationContext) (f io.WriteCloser, err error) {
 	if fileExists(gc.filename) {
-		switch gc.regenRule {
-		case regenRuleIgnore:
+		switch gc.regenMode {
+		case RegenModeIgnore:
 			logger.Infof("ignore rule defined for existing file %v, ignoring", gc.filename)
 			//	make an empty applyRegenRule to allow the template to be executed (and keep any runtime logic consistent)
 			return &emptyWriteCloser{}, nil
-		case regenRuleReference:
+		case RegenModeReference:
 			gc.filename += "ref"
 			fallthrough
-		case regenRuleOverwrite:
+		case RegenModeOverwrite:
 			break
 		}
 	}
@@ -180,17 +181,17 @@ func copyOf(data map[string]interface{}) map[string]interface{} {
 	return dataCopy
 }
 
-func getApplicableRegenRules(outputFile string, rules map[string]string, defaultRule string) (string, error) {
+func getApplicableRegenRules(outputFile string, rules RegenRules, defaultMode RegenMode) (RegenMode, error) {
 	pathAfterOutputDir := strings.TrimPrefix(outputFile, cmdutils.GlobalArgs.OutputDir+"/")
-	regenRule := defaultRule
-	for pattern, rule := range rules {
-		match, err := filepath.Match(pattern, pathAfterOutputDir)
+	mode := defaultMode
+	for _, r := range rules {
+		match, err := doublestar.Match(r.Pattern, pathAfterOutputDir)
 		if err != nil {
 			return "", err
 		}
 		if match {
-			regenRule = rule
+			mode = r.Mode
 		}
 	}
-	return regenRule, nil
+	return mode, nil
 }

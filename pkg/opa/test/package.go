@@ -9,6 +9,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"embed"
+	"fmt"
 	"github.com/open-policy-agent/opa/plugins/bundle"
 	oparest "github.com/open-policy-agent/opa/plugins/rest"
 	sdktest "github.com/open-policy-agent/opa/sdk/test"
@@ -23,7 +24,7 @@ var DefaultBundleFS embed.FS
 var DefaultConfigFS embed.FS
 
 const (
-	TestBundleName = `test-bundle`
+	TestBundleName       = `test-bundle`
 	TestBundlePathPrefix = `/bundles/`
 	BundleServiceKey     = "test-bundle-service"
 )
@@ -38,6 +39,7 @@ func WithBundles(bundleFSs ...fs.FS) test.Options {
 		apptest.WithFxOptions(
 			fx.Provide(BundleServerProvider(bundleFSs...)),
 			fx.Invoke(opatestserver.InitializeBundleServer),
+			fx.Invoke(WaitForOPAReady),
 		),
 	)
 }
@@ -68,6 +70,19 @@ func BundleServerProvider(bundleFSs ...fs.FS) func(BundleServerDI) (BundleServer
 			Customizer: newConfigCustomizer(server, TestBundleName),
 		}, nil
 	}
+}
+
+func WaitForOPAReady(lc fx.Lifecycle, ready opa.EmbeddedOPAReadyCH) {
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			select {
+			case <-ready:
+				return nil
+			case <-ctx.Done():
+				return fmt.Errorf("OPA Engine cannot be initialized before timeout")
+			}
+		},
+	})
 }
 
 type configCustomizer struct {

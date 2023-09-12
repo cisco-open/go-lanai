@@ -23,7 +23,7 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(BindProperties, ProvideEmbeddedOPA),
-		fx.Invoke(InitializeEmbeddedOPA),
+		fx.Invoke(InitializeEmbeddedOPA, RegisterHealth),
 	},
 }
 
@@ -74,13 +74,13 @@ func ProvideEmbeddedOPA(di EmbeddedOPADI) (EmbeddedOPAOut, error) {
 func InitializeEmbeddedOPA(lc fx.Lifecycle, opa *sdk.OPA, ready opa.EmbeddedOPAReadyCH) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			select {
-			case <-ready:
-				logger.WithContext(ctx).Infof("Embedded OPA is Ready")
-				return nil
-			case <-ctx.Done():
-				return fmt.Errorf("embedded OPA is failed to start")
-			}
+			go func() {
+				select {
+				case <-ready:
+					logger.WithContext(ctx).Infof("Embedded OPA is Ready")
+				}
+			}()
+			return nil
 		},
 		OnStop: func(ctx context.Context) error {
 			opa.Stop(ctx)

@@ -13,43 +13,48 @@ import (
 type ApiGenerator struct {
 	data             map[string]interface{}
 	template         *template.Template
-	filesystem       fs.FS
+	templateFS       fs.FS
+	outputFS         fs.FS
 	nameRegex        *regexp.Regexp
 	prefix           string
 	priorityOrder    int
-	defaultRegenRule string
-	rules            map[string]string
+	defaultRegenRule RegenMode
+	rules            RegenRules
 }
 
 const (
-	defaultApiNameRegex = "^(api\\.)(.+)(.tmpl)"
-	apiGeneratorName    = "api"
+	apiMatcherRegexTemplate = `^(%s)(.+)(.tmpl)`
+	apiDefaultPrefix        = "api."
+	apiStructDefaultPrefix  = "api-struct."
 )
 
 var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
 
-func newApiGenerator(opts ...func(option *Option)) *ApiGenerator {
-	o := &Option{}
+type ApiGenOption struct {
+	Option
+	Prefix        string
+	PriorityOrder int
+}
+
+func newApiGenerator(opts ...func(opt *ApiGenOption)) *ApiGenerator {
+	o := &ApiGenOption{
+		Prefix:        apiDefaultPrefix,
+		PriorityOrder: defaultApiPriorityOrder,
+	}
 	for _, fn := range opts {
 		fn(o)
 	}
-	priorityOrder := o.PriorityOrder
-	if priorityOrder == 0 {
-		priorityOrder = defaultApiPriorityOrder
-	}
 
-	regex := defaultApiNameRegex
-	if o.Prefix != "" {
-		regex = fmt.Sprintf("^(%v)(.+)(.tmpl)", o.Prefix)
-	}
+	regex := fmt.Sprintf(apiMatcherRegexTemplate, regexp.QuoteMeta(o.Prefix))
 	return &ApiGenerator{
 		data:             o.Data,
 		template:         o.Template,
-		filesystem:       o.FS,
+		templateFS:       o.TemplateFS,
+		outputFS:         o.OutputFS,
 		nameRegex:        regexp.MustCompile(regex),
-		priorityOrder:    priorityOrder,
-		defaultRegenRule: o.RegenRule,
-		rules:            o.Rules,
+		priorityOrder:    o.PriorityOrder,
+		defaultRegenRule: o.DefaultRegenMode,
+		rules:            o.RegenRules,
 	}
 }
 
@@ -59,7 +64,7 @@ func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 		return nil
 	}
 
-	iterateOver := m.data[OpenAPIData].(*openapi3.T).Paths
+	iterateOver := m.data[CKOpenAPIData].(*openapi3.T).Paths
 	var toGenerate []GenerationContext
 	for pathName, pathData := range iterateOver {
 		data := copyOf(m.data)
@@ -68,7 +73,7 @@ func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 		data["Version"] = apiVersion(pathName)
 
 		baseFilename := filenameFromPath(pathName)
-		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data, m.filesystem)
+		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data, m.templateFS)
 		if err != nil {
 			return err
 		}
