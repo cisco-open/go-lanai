@@ -50,8 +50,8 @@ func (m *ApiVersionGenerator) determineFilename(template string) string {
 	return result
 }
 
-func (m *ApiVersionGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
-	if dirEntry.IsDir() || !m.nameRegex.MatchString(path.Base(tmplPath)) {
+func (m *ApiVersionGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
+	if tmplInfo.IsDir() || !m.nameRegex.MatchString(path.Base(tmplPath)) {
 		// Skip over it
 		return nil
 	}

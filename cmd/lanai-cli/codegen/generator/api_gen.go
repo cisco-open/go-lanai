@@ -58,8 +58,8 @@ func newApiGenerator(opts ...func(opt *ApiGenOption)) *ApiGenerator {
 	}
 }
 
-func (m *ApiGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
-	if dirEntry.IsDir() || !m.nameRegex.MatchString(path.Base(tmplPath)) {
+func (m *ApiGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
+	if tmplInfo.IsDir() || !m.nameRegex.MatchString(path.Base(tmplPath)) {
 		// Skip over it
 		return nil
 	}
@@ -127,6 +127,6 @@ func apiVersion(pathName string) (version string) {
 	return version
 }
 
-func (m *ApiGenerator) PriorityOrder() int {
+func (m *ApiGenerator) Order() int {
 	return m.priorityOrder
 }

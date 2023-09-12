@@ -67,8 +67,8 @@ func (o *FileGenerator) determineFilename(template string) string {
 	return result
 }
 
-func (o *FileGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
-	if dirEntry.IsDir() || !o.nameRegex.MatchString(path.Base(tmplPath)) {
+func (o *FileGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
+	if tmplInfo.IsDir() || !o.nameRegex.MatchString(path.Base(tmplPath)) {
 		// Skip over it
 		return nil
 	}
@@ -95,6 +95,6 @@ func (o *FileGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
 	return GenerateFileFromTemplate(file, o.template)
 }
 
-func (o *FileGenerator) PriorityOrder() int {
+func (o *FileGenerator) Order() int {
 	return o.priorityOrder
 }

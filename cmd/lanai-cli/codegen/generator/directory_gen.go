@@ -23,8 +23,8 @@ func newDirectoryGenerator(opts ...func(option *Option)) *DirectoryGenerator {
 	}
 }
 
-func (d *DirectoryGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
-	if !dirEntry.IsDir() {
+func (d *DirectoryGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
+	if !tmplInfo.IsDir() {
 		return nil
 	}
 
@@ -33,7 +33,7 @@ func (d *DirectoryGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) err
 		return err
 	}
 	logger.Infof("directory generator generating %v\n", targetDir)
-	if err := os.Mkdir(targetDir, 0744); err != nil && !os.IsExist(err) {
+	if err := os.MkdirAll(targetDir, 0744); err != nil && !os.IsExist(err) {
 		return err
 	}
 

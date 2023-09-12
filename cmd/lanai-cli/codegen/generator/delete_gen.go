@@ -40,8 +40,8 @@ func newDeleteGenerator(opts ...func(opt *DeleteOption)) *DeleteGenerator {
 	}
 }
 
-func (d *DeleteGenerator) Generate(tmplPath string, dirEntry fs.DirEntry) error {
-	if dirEntry.IsDir() || !d.nameRegex.MatchString(path.Base(tmplPath)) {
+func (d *DeleteGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
+	if tmplInfo.IsDir() || !d.nameRegex.MatchString(path.Base(tmplPath)) {
 		// Skip over it
 		return nil
 	}
@@ -158,6 +158,6 @@ func deleteEmptyDirectories(outputFS fs.FS) error {
 	return nil
 }
 
-func (d *DeleteGenerator) PriorityOrder() int {
+func (d *DeleteGenerator) Order() int {
 	return defaultDeletePriorityOrder
 }
