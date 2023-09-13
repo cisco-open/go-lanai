@@ -15,17 +15,19 @@ const (
 	defaultDeletePriorityOrder
 )
 
-/*******************
-	Generators
- *******************/
+func GenerateFiles(opts ...Options) error {
+	generators := NewGenerators(opts...)
+	return generators.Generate()
+}
 
 type Generators struct {
 	Option
 	groups     []Group
 }
 
-func NewGenerators(opts ...func(*Option)) Generators {
+func NewGenerators(opts ...Options) Generators {
 	ret := Generators{
+		Option: DefaultOption,
 		groups: []Group{
 			APIGroup{},
 			ProjectGroup{},
@@ -39,6 +41,7 @@ func NewGenerators(opts ...func(*Option)) Generators {
 }
 
 func (g *Generators) Generate() error {
+
 	// scan all templates
 	tmpls := make(map[string]fs.FileInfo)
 	e := fs.WalkDir(g.TemplateFS, ".", func(p string, d fs.DirEntry, err error) error {

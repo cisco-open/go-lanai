@@ -1,16 +1,8 @@
 package generator
 
-/******************
-	Context Data
- ******************/
-
-// Keys in template's context data as map
-const (
-	CKOpenAPIData = "OpenAPIData"
-	CKProjectName = "ProjectName"
-	CKRepository  = "Repository"
-	CKProject     = "Project"
-)
+/*********************
+	Project
+ *********************/
 
 type Project struct {
 	Name        string
@@ -18,6 +10,43 @@ type Project struct {
 	Description string
 	Port        int
 	ContextPath string
+}
+
+/*********************
+	Components
+ *********************/
+
+type Components struct {
+	Contract Contract
+}
+
+type Contract struct {
+	Path   string
+	Naming ContractNaming
+}
+
+type ContractNaming struct {
+	RegExps map[string]string
+}
+
+/********************
+	Template Data
+ ********************/
+
+// Keys in template's context data as map
+const (
+	KDataOpenAPI     = "OpenAPIData"
+	KDataProjectName = "ProjectName"
+	KDataRepository  = "Repository"
+	KDataProject     = "Project"
+)
+
+func DataWithProject(p *Project) map[string]interface{} {
+	return map[string]interface{}{
+		KDataProjectName: p.Name,
+		KDataRepository: p.Module,
+		KDataProject: p,
+	}
 }
 
 /******************

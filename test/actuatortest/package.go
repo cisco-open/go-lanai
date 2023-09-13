@@ -26,7 +26,7 @@ import (
 // Note 2:	Actuator endpoints usually requires correct properties to be fully functional,
 //			make sure the test have all "management" properties configured correctly.
 //
-// Note 3:	Additional endpoints can be added by directly adding their Modules in test.
+// Note 3:	Additional endpoints can be added by directly adding their Components in test.
 //
 // Example:
 // test.RunTest(context.Background(), t,

@@ -12,7 +12,15 @@ type Options func(opt *Option)
 type Option struct {
     Template *template.Template
     // Data used
+    // Deprecated: Data should be calculated from Project, Components, etc.
     Data map[string]interface{}
+
+    // Project general project information
+    Project Project
+
+    // Components defines what to generate and their settings
+    Components Components
+
     // FS
     // Deprecated: This is incorrect and confusing: We need two FSs, one is template FS as input (could be embedded or OS dir),
     // and the other one is output FS.
@@ -39,7 +47,11 @@ type Option struct {
     //     "Option" struct if "Prefix" is applicable to that particular generator
     // 	2. Change the name to "TemplatePrefix" to avoid confusion
     Prefix           string
+
+    // DefaultRegenMode default output file operation mode during re-generation
     DefaultRegenMode RegenMode
+
+    // RegenRules rules of output file operation mode during re-generation
     RegenRules       RegenRules
 }
 
@@ -75,9 +87,25 @@ func WithTemplateFS(templateFS fs.FS) func(o *Option) {
     }
 }
 
+// WithData
+// Deprecated, use WithConfig instead
 func WithData(data map[string]interface{}) func(o *Option) {
     return func(o *Option) {
         o.Data = data
+    }
+}
+
+// WithProject general information about the project to generate
+func WithProject(project Project) func(o *Option) {
+    return func(o *Option) {
+        o.Project = project
+    }
+}
+
+// WithComponents defines what to generate and their settings
+func WithComponents(comps Components) func(o *Option) {
+    return func(o *Option) {
+        o.Components = comps
     }
 }
 
@@ -102,3 +130,4 @@ func WithPrefix(prefix string) func(o *Option) {
         o.Prefix = prefix
     }
 }
+

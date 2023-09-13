@@ -11,8 +11,13 @@ type DirectoryGenerator struct {
 	outputFS   fs.FS
 }
 
-func newDirectoryGenerator(opts ...func(option *Option)) *DirectoryGenerator {
-	o := &Option{}
+type DirOption struct {
+	Option
+	Data map[string]interface{}
+}
+
+func newDirectoryGenerator(opts ...func(option *DirOption)) *DirectoryGenerator {
+	o := &DirOption{}
 	for _, fn := range opts {
 		fn(o)
 	}

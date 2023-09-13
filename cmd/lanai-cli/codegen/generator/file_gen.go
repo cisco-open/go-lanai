@@ -25,16 +25,17 @@ type FileGenerator struct {
 	rules            RegenRules
 }
 
-type FileGenOption struct {
+type FileOption struct {
 	Option
+	Data          map[string]interface{}
 	Prefix        string
 	PriorityOrder int
 }
 
 // newFileGenerator returns a new generator for single files
-func newFileGenerator(opts ...func(opt *FileGenOption)) *FileGenerator {
-	o := &FileGenOption{
-		Prefix: projectDefaultPrefix,
+func newFileGenerator(opts ...func(opt *FileOption)) *FileGenerator {
+	o := &FileOption{
+		Prefix:        projectDefaultPrefix,
 		PriorityOrder: defaultProjectPriorityOrder,
 	}
 	for _, fn := range opts {

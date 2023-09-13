@@ -5,12 +5,12 @@ info:
       # defaults to this services version, can be overridden in consul via installer
       version: ${info.app.version}
       show-build-info: true
-    name: "{{.Project.Name}}"
-    description: "{{.Project.Description}}"
+    name: "testservice"
+    description: ""
     version: ${application.build.version}
     build-time: ${application.build.build-time}
     attributes:
-      displayName: "{{.Project.Name}}"
+      displayName: "testservice"
       parent: unknown
       type: unknown
 

@@ -22,8 +22,13 @@ type ApiVersionGenerator struct {
 
 const versionGeneratorName = "version"
 
-func newApiVersionGenerator(opts ...func(option *Option)) *ApiVersionGenerator {
-	o := &Option{}
+type ApiVerOption struct {
+	Option
+	Data map[string]interface{}
+}
+
+func newApiVersionGenerator(opts ...func(option *ApiVerOption)) *ApiVersionGenerator {
+	o := &ApiVerOption{}
 	for _, fn := range opts {
 		fn(o)
 	}
@@ -58,7 +63,7 @@ func (m *ApiVersionGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) er
 
 	// get all versions
 	iterateOver := make(map[string][]string)
-	for pathName, _ := range m.data[CKOpenAPIData].(*openapi3.T).Paths {
+	for pathName, _ := range m.data[KDataOpenAPI].(*openapi3.T).Paths {
 		version := apiVersion(pathName)
 		iterateOver[version] = append(iterateOver[version], pathName)
 	}

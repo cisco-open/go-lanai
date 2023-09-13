@@ -30,16 +30,17 @@ const (
 
 var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
 
-type ApiGenOption struct {
+type ApiOption struct {
 	Option
-	Prefix        string
-	PriorityOrder int
+	Data   map[string]interface{}
+	Prefix string
+	Order  int
 }
 
-func newApiGenerator(opts ...func(opt *ApiGenOption)) *ApiGenerator {
-	o := &ApiGenOption{
-		Prefix:        apiDefaultPrefix,
-		PriorityOrder: defaultApiPriorityOrder,
+func newApiGenerator(opts ...func(opt *ApiOption)) *ApiGenerator {
+	o := &ApiOption{
+		Prefix: apiDefaultPrefix,
+		Order:  defaultApiPriorityOrder,
 	}
 	for _, fn := range opts {
 		fn(o)
@@ -52,7 +53,7 @@ func newApiGenerator(opts ...func(opt *ApiGenOption)) *ApiGenerator {
 		templateFS:       o.TemplateFS,
 		outputFS:         o.OutputFS,
 		nameRegex:        regexp.MustCompile(regex),
-		priorityOrder:    o.PriorityOrder,
+		priorityOrder:    o.Order,
 		defaultRegenRule: o.DefaultRegenMode,
 		rules:            o.RegenRules,
 	}
@@ -64,7 +65,7 @@ func (m *ApiGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
 		return nil
 	}
 
-	iterateOver := m.data[CKOpenAPIData].(*openapi3.T).Paths
+	iterateOver := m.data[KDataOpenAPI].(*openapi3.T).Paths
 	var toGenerate []GenerationContext
 	for pathName, pathData := range iterateOver {
 		data := copyOf(m.data)

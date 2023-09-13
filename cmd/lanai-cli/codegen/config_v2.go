@@ -9,6 +9,14 @@ type ConfigV2 struct {
 	Regen      RegenerationV2 `json:"regen"`
 }
 
+func (c ConfigV2) ToOptions() []generator.Options {
+	return []generator.Options{
+		c.Project.ToOption(),
+		c.Components.ToOption(),
+		c.Regen.ToOption(),
+	}
+}
+
 type ProjectV2 struct {
 	// Name service name
 	Name string `json:"name"`
@@ -22,12 +30,33 @@ type ProjectV2 struct {
 	Description string `json:"description"`
 }
 
+func (p *ProjectV2) ToOption() generator.Options {
+	return generator.WithProject(generator.Project{
+		Name:        p.Name,
+		Module:      p.Module,
+		Description: p.Description,
+		Port:        p.Port,
+		ContextPath: p.ContextPath,
+	})
+}
+
 type TemplatesV2 struct {
 	Path string `json:"path"`
 }
 
 type ComponentsV2 struct {
 	Contract ContractV2 `json:"contract"`
+}
+
+func (c *ComponentsV2) ToOption() generator.Options {
+	return generator.WithComponents(generator.Components{
+		Contract: generator.Contract{
+			Path:   c.Contract.Path,
+			Naming: generator.ContractNaming{
+				RegExps: c.Contract.Naming.RegExps,
+			},
+		},
+	})
 }
 
 type ContractV2 struct {
@@ -55,7 +84,7 @@ type RegenerationV2 struct {
 	Rules   RegenRules `json:"rules"`
 }
 
-func (r RegenerationV2) AsGeneratorOption() func(*generator.Option) {
+func (r RegenerationV2) ToOption() func(*generator.Option) {
 	rules := make(generator.RegenRules, len(r.Rules))
 	for i := range r.Rules {
 		rules[i] = generator.RegenRule{

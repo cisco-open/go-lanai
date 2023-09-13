@@ -7,11 +7,6 @@ import (
 	"text/template"
 )
 
-func GenerateFiles(opts ...func(*Option)) error {
-	generators := NewGenerators(opts...)
-	return generators.Generate()
-}
-
 type LoaderOptions struct {
 	InitialRegexes map[string]string
 }
