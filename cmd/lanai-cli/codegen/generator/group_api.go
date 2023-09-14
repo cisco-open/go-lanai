@@ -16,53 +16,56 @@ func (g APIGroup) Name() string {
     return "API"
 }
 
-func (g APIGroup) Generators(opts ...Options) ([]Generator, error) {
-    groupOpt := DefaultOption
+func (g APIGroup) Data(opts ...DataLoaderOptions) (map[string]interface{}, error) {
+    opt := DataLoaderOption{}
     for _, fn := range opts {
-        fn(&groupOpt)
+        fn(&opt)
     }
-
-    data, e := g.prepareData(&groupOpt)
-    if e != nil {
-        return nil, e
-    }
-
-    gens := []Generator{
-        newDirectoryGenerator(func(opt *DirOption) {
-            opt.Option = groupOpt
-            opt.Data = data
-        }),
-        newApiGenerator(func(opt *ApiOption) {
-            opt.Option = groupOpt
-            opt.Data = data
-        }),
-        newApiGenerator(func(opt *ApiOption) {
-            opt.Option = groupOpt
-            opt.Data = data
-            opt.Order = defaultApiStructOrder
-            opt.Prefix = apiStructDefaultPrefix
-        }),
-        newFileGenerator(func(opt *FileOption) {
-            opt.Option = groupOpt
-            opt.Data = data
-            opt.Prefix = "api-common."
-        }),
-        newApiVersionGenerator(func(opt *ApiVerOption) {
-            opt.Option = groupOpt
-            opt.Data = data
-        }),
-    }
-    order.SortStable(gens, order.UnorderedMiddleCompare)
-    return gens, nil
-}
-
-func (g APIGroup) prepareData(opt *Option) (map[string]interface{}, error) {
-    data := DataWithProject(&opt.Project)
 
     openAPIData, err := openapi3.NewLoader().LoadFromFile(opt.Components.Contract.Path)
     if err != nil {
         return nil, fmt.Errorf("error parsing OpenAPI file: %v", err)
     }
-    data[KDataOpenAPI] = openAPIData
-    return data, nil
+
+    return map[string]interface{}{
+        KDataOpenAPI: openAPIData,
+    }, nil
+}
+
+func (g APIGroup) Generators(opts ...GenLoaderOptions) ([]Generator, error) {
+    loaderOpt := GenLoaderOption{
+        Option: DefaultOption,
+    }
+    for _, fn := range opts {
+        fn(&loaderOpt)
+    }
+
+    gens := []Generator{
+        newDirectoryGenerator(func(opt *DirOption) {
+            opt.Option = loaderOpt.Option
+            opt.Data = loaderOpt.Data
+            opt.Patterns = []string{"pkg/api/**", "pkg/controllers/**"}
+        }),
+        newApiGenerator(func(opt *ApiOption) {
+            opt.Option = loaderOpt.Option
+            opt.Data = loaderOpt.Data
+        }),
+        newApiGenerator(func(opt *ApiOption) {
+            opt.Option = loaderOpt.Option
+            opt.Data = loaderOpt.Data
+            opt.Order = defaultApiStructOrder
+            opt.Prefix = apiStructDefaultPrefix
+        }),
+        newFileGenerator(func(opt *FileOption) {
+            opt.Option = loaderOpt.Option
+            opt.Data = loaderOpt.Data
+            opt.Prefix = "api-common."
+        }),
+        newApiVersionGenerator(func(opt *ApiVerOption) {
+            opt.Option = loaderOpt.Option
+            opt.Data = loaderOpt.Data
+        }),
+    }
+    order.SortStable(gens, order.UnorderedMiddleCompare)
+    return gens, nil
 }

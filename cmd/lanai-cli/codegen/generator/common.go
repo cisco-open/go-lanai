@@ -3,12 +3,10 @@ package generator
 import (
 	"bytes"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"embed"
 	"fmt"
 	"github.com/bmatcuk/doublestar/v4"
 	"go/format"
 	"io"
-	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -16,8 +14,6 @@ import (
 	"strings"
 	"text/template"
 )
-
-const defaultSrcRootDir = "template/src"
 
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
@@ -60,7 +56,7 @@ func mkdirIfNotExists(path string) error {
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if e := os.MkdirAll(path, 0744); e != nil {
+		if e := os.MkdirAll(path, 0755); e != nil {
 			return e
 		}
 	}
@@ -120,31 +116,15 @@ func formatGoCode(outputFilePath string) error {
 
 // ConvertSrcRootToTargetDir will take a path containing a SrcRoot directory, and return
 // an equivalent path to the target directory, with any special folders resolved with modifiers
-// e.g template/srcRoot/cmd/@NAME@/main.go -> output/dir/cmd/myservice/main.go
-func ConvertSrcRootToTargetDir(srcPath string, modifiers map[string]interface{}, filesystem fs.FS) (string, error) {
-	relativeDir := relativePathFromSrcRoot(srcPath, filesystem)
-	unresolvedTargetDir := combineWithOutputDir(relativeDir)
-
+// e.g cmd/@NAME@/main.go -> output/dir/cmd/myservice/main.go
+// Note: srcPath should be always relative to template root
+func ConvertSrcRootToTargetDir(srcPath string, modifiers map[string]interface{}) (string, error) {
+	unresolvedTargetDir := combineWithOutputDir(srcPath)
 	if modifiers == nil {
 		return unresolvedTargetDir, nil
 	}
 
 	return resolvePath(modifiers, unresolvedTargetDir)
-}
-
-func relativePathFromSrcRoot(path string, templates fs.FS) string {
-	_, isEmbedFS := templates.(embed.FS)
-	if isEmbedFS {
-		parts := strings.SplitAfterN(path, defaultSrcRootDir+"/", 2)
-		if len(parts) != 2 {
-			return ""
-		} else {
-			return parts[1]
-		}
-	} else {
-		//	For os.FS, the path is already considered relative
-		return path
-	}
 }
 
 func combineWithOutputDir(relativeDir string) string {

@@ -38,6 +38,8 @@ func init() {
 	cmdutils.PersistentFlags(Cmd, &Args)
 }
 
+const DefaultTemplateRoot = "template/src"
+
 //go:embed all:template/src
 var DefaultTemplateFS embed.FS
 
@@ -73,19 +75,21 @@ func GenerateWithConfigPath(ctx context.Context, configPath string) error {
 }
 
 func GenerateWithConfig(ctx context.Context, cfg *ConfigV2) error {
-	FSToUse := determineTemplateFSToUse(cfg)
+	tmplFS, e := determineTemplateFSToUse(cfg)
+	if e != nil {
+		return e
+	}
 	loaderOpts := generator.LoaderOptions{
 		InitialRegexes: cfg.Components.Contract.Naming.RegExps,
 	}
-	template, err := generator.LoadTemplates(FSToUse, loaderOpts)
+	template, err := generator.LoadTemplates(tmplFS, loaderOpts)
 	if err != nil {
 		return err
 	}
 
 	// Do generate
 	opts := append(cfg.ToOptions(),
-		generator.WithOutputFS(os.DirFS(cmdutils.GlobalArgs.OutputDir)),
-		generator.WithTemplateFS(FSToUse),
+		generator.WithTemplateFS(tmplFS),
 		generator.WithTemplate(template),
 	)
 	if err = generator.GenerateFiles(opts...); err != nil {
@@ -136,11 +140,11 @@ func tryResolveRelativePath(path, refDir string) string {
 	return path
 }
 
-func determineTemplateFSToUse(cfg *ConfigV2) fs.FS {
+func determineTemplateFSToUse(cfg *ConfigV2) (fs.FS, error) {
 	if len(cfg.Templates.Path) == 0 {
 		logger.Infof("Using default template set")
-		return DefaultTemplateFS
+		return fs.Sub(DefaultTemplateFS, DefaultTemplateRoot)
 	} else {
-		return os.DirFS(cfg.Templates.Path)
+		return os.DirFS(cfg.Templates.Path), nil
 	}
 }

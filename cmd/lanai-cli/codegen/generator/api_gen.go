@@ -14,10 +14,9 @@ type ApiGenerator struct {
 	data             map[string]interface{}
 	template         *template.Template
 	templateFS       fs.FS
-	outputFS         fs.FS
 	nameRegex        *regexp.Regexp
 	prefix           string
-	priorityOrder    int
+	order            int
 	defaultRegenRule RegenMode
 	rules            RegenRules
 }
@@ -51,9 +50,8 @@ func newApiGenerator(opts ...func(opt *ApiOption)) *ApiGenerator {
 		data:             o.Data,
 		template:         o.Template,
 		templateFS:       o.TemplateFS,
-		outputFS:         o.OutputFS,
 		nameRegex:        regexp.MustCompile(regex),
-		priorityOrder:    o.Order,
+		order:            o.Order,
 		defaultRegenRule: o.DefaultRegenMode,
 		rules:            o.RegenRules,
 	}
@@ -74,7 +72,7 @@ func (m *ApiGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
 		data["Version"] = apiVersion(pathName)
 
 		baseFilename := filenameFromPath(pathName)
-		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data, m.templateFS)
+		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data)
 		if err != nil {
 			return err
 		}
@@ -129,5 +127,5 @@ func apiVersion(pathName string) (version string) {
 }
 
 func (m *ApiGenerator) Order() int {
-	return m.priorityOrder
+	return m.order
 }

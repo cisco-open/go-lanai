@@ -41,7 +41,7 @@ const (
 	KDataProject     = "Project"
 )
 
-func DataWithProject(p *Project) map[string]interface{} {
+func newCommonData(p *Project) map[string]interface{} {
 	return map[string]interface{}{
 		KDataProjectName: p.Name,
 		KDataRepository: p.Module,

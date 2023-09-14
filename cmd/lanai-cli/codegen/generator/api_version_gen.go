@@ -17,7 +17,6 @@ type ApiVersionGenerator struct {
 	defaultRegenRule RegenMode
 	rules            RegenRules
 	templateFS       fs.FS
-	outputFS         fs.FS
 }
 
 const versionGeneratorName = "version"
@@ -37,7 +36,6 @@ func newApiVersionGenerator(opts ...func(option *ApiVerOption)) *ApiVersionGener
 		data:             o.Data,
 		template:         o.Template,
 		templateFS:       o.TemplateFS,
-		outputFS:         o.OutputFS,
 		nameRegex:        regexp.MustCompile("^(version.)(.+)(.tmpl)"),
 		defaultRegenRule: o.DefaultRegenMode,
 		rules:            o.RegenRules,
@@ -75,7 +73,7 @@ func (m *ApiVersionGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) er
 		data["VersionData"] = versionData
 		data["Version"] = version
 
-		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data, m.templateFS)
+		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data)
 		if err != nil {
 			return err
 		}

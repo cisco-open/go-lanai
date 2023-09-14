@@ -37,10 +37,40 @@ func NewGenerators(opts ...Options) Generators {
 		fn(&ret.Option)
 	}
 	order.SortStable(ret.groups, order.UnorderedMiddleCompare)
+	if ret.DefaultRegenMode != RegenModeIgnore {
+		logger.Warnf(`Default Regen Mode is not "ignore". This is DANGEROUS!`)
+	}
 	return ret
 }
 
 func (g *Generators) Generate() error {
+
+	// populate data
+	data := newCommonData(&g.Project)
+	for _, group := range g.groups {
+		groupData, e := group.Data(func(opt *DataLoaderOption) {
+			opt.Project = g.Project
+			opt.Components = g.Components
+		})
+		if e != nil {
+			return e
+		}
+		g.shallowMerge(data, groupData)
+	}
+
+	// prepare generators by groups
+	generators := make([]Generator, 0, len(g.groups) * 5)
+	for _, group := range g.groups {
+		gens, e := group.Generators(func(opt *GenLoaderOption) {
+			opt.Option = g.Option
+			opt.Data = data
+			opt.Template = g.Template
+		})
+		if e != nil {
+			return e
+		}
+		generators = append(generators, gens...)
+	}
 
 	// scan all templates
 	tmpls := make(map[string]fs.FileInfo)
@@ -57,19 +87,19 @@ func (g *Generators) Generate() error {
 		return e
 	}
 
-	// execute generators by groups
-	for _, group := range g.groups {
-		gens, e := group.Generators(func(opt *Option) { *opt = g.Option })
-		if e != nil {
-			return e
-		}
-		for _, gen := range gens {
-			for path, info := range tmpls {
-				if err := gen.Generate(path, info); err != nil {
-					return err
-				}
+	// execute generators
+	for _, gen := range generators {
+		for path, info := range tmpls {
+			if err := gen.Generate(path, info); err != nil {
+				return err
 			}
 		}
 	}
 	return nil
+}
+
+func (g *Generators) shallowMerge(dest, src map[string]interface{}) {
+	for k, v := range src {
+		dest[k] = v
+	}
 }

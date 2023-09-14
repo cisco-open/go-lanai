@@ -19,24 +19,23 @@ type FileGenerator struct {
 	template         *template.Template
 	nameRegex        *regexp.Regexp
 	templateFS       fs.FS
-	outputFS         fs.FS
-	priorityOrder    int
+	order            int
 	defaultRegenRule RegenMode
 	rules            RegenRules
 }
 
 type FileOption struct {
 	Option
-	Data          map[string]interface{}
-	Prefix        string
-	PriorityOrder int
+	Data   map[string]interface{}
+	Prefix string
+	Order  int
 }
 
 // newFileGenerator returns a new generator for single files
 func newFileGenerator(opts ...func(opt *FileOption)) *FileGenerator {
 	o := &FileOption{
-		Prefix:        projectDefaultPrefix,
-		PriorityOrder: defaultProjectPriorityOrder,
+		Prefix: projectDefaultPrefix,
+		Order:  defaultProjectPriorityOrder,
 	}
 	for _, fn := range opts {
 		fn(o)
@@ -50,8 +49,7 @@ func newFileGenerator(opts ...func(opt *FileOption)) *FileGenerator {
 		template:         o.Template,
 		nameRegex:        regexp.MustCompile(regex),
 		templateFS:       o.TemplateFS,
-		outputFS:         o.OutputFS,
-		priorityOrder:    o.PriorityOrder,
+		order:            o.Order,
 		defaultRegenRule: o.DefaultRegenMode,
 		rules:            o.RegenRules,
 	}
@@ -74,7 +72,7 @@ func (o *FileGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
 		return nil
 	}
 
-	targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), o.data, o.templateFS)
+	targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), o.data)
 	if err != nil {
 		return err
 	}
@@ -97,5 +95,5 @@ func (o *FileGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
 }
 
 func (o *FileGenerator) Order() int {
-	return o.priorityOrder
+	return o.order
 }

@@ -10,6 +10,7 @@ package serviceinit
 {{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init" "appconfig" }}
 {{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init" "web" }}
 {{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/init" "consul" }}
+{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery/init" "discoveryinit" }}
 {{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init" "vault" }}
 {{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/init" "tracing" }}
 {{ $imports = $imports.Add (concat .Project.Module "/pkg/controller") }}
@@ -30,6 +31,7 @@ func Use() {
 	appconfig.Use()
 	consul.Use()
 	vault.Use()
+	discoveryinit.Use()
 	tracing.Use()
 
 	// web related
@@ -43,7 +45,6 @@ func Use() {
 	//cockroach.Use()
 
 	// service-to-service integration related
-	//discoveryinit.Use()
 	//httpclient.Use()
 	//scope.Use()
 	//kafka.Use()

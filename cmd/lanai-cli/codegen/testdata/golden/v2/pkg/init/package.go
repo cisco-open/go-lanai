@@ -5,6 +5,7 @@ import (
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	consul "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/init"
+	discoveryinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/swagger"
@@ -30,6 +31,7 @@ func Use() {
 	appconfig.Use()
 	consul.Use()
 	vault.Use()
+	discoveryinit.Use()
 	tracing.Use()
 
 	// web related
@@ -43,7 +45,6 @@ func Use() {
 	//cockroach.Use()
 
 	// service-to-service integration related
-	//discoveryinit.Use()
 	//httpclient.Use()
 	//scope.Use()
 	//kafka.Use()

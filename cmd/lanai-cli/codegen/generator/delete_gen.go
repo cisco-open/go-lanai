@@ -13,30 +13,28 @@ import (
 // DeleteGenerator will read delete.*.tmpl files, and delete any generated
 // code that matches the regex defined in them, as well as any empty directories after the deletion
 type DeleteGenerator struct {
-	priorityOrder int
-	nameRegex     *regexp.Regexp
-	templateFS    fs.FS
-	outputFS      fs.FS
+	order      int
+	nameRegex  *regexp.Regexp
+	templateFS fs.FS
 }
 
 type DeleteOption struct {
 	Option
-	PriorityOrder int
+	Order int
 }
 
 func newDeleteGenerator(opts ...func(opt *DeleteOption)) *DeleteGenerator {
 	o := &DeleteOption{
-		PriorityOrder: defaultProjectPriorityOrder,
+		Order: defaultProjectPriorityOrder,
 	}
 	for _, fn := range opts {
 		fn(o)
 	}
 
 	return &DeleteGenerator{
-		priorityOrder: o.PriorityOrder,
-		nameRegex:     regexp.MustCompile("^(?:delete)(.+)(?:.tmpl)"),
-		templateFS:    o.TemplateFS,
-		outputFS:      o.OutputFS,
+		order:      o.Order,
+		nameRegex:  regexp.MustCompile("^(?:delete)(.+)(?:.tmpl)"),
+		templateFS: o.TemplateFS,
 	}
 }
 
