@@ -31,9 +31,10 @@ var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
 
 type ApiOption struct {
 	Option
-	Data   map[string]interface{}
-	Prefix string
-	Order  int
+	Template *template.Template
+	Data     map[string]interface{}
+	Prefix   string
+	Order    int
 }
 
 func newApiGenerator(opts ...func(opt *ApiOption)) *ApiGenerator {

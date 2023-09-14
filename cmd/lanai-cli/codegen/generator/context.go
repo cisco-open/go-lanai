@@ -36,10 +36,6 @@ type Option struct {
 
 	// RegenRules rules of output file operation mode during re-generation
 	RegenRules RegenRules
-
-	// internal fields, should not be set by external packages
-	Template *template.Template
-	//Data     map[string]interface{}
 }
 
 /*******************
@@ -68,27 +64,26 @@ type Group interface {
 
 	// Name unique identifier of the group
 	Name() string
+
+	// CustomizeTemplate is used to customize *template.Template for group specific need
+	CustomizeTemplate() (TemplateOptions, error)
+
 	// Data load and process group specific data. Such data might be useful for other group.
 	// This function of all groups are called before any invocation of their Generators().
 	// The results are merged into one map and served to Generators() for constructing generators.
 	// Important: For each top-level component in Data should be owned by the group that generating it.
 	// 			  Other groups can read it but should not change or replace it.
-	Data(opts ...DataLoaderOptions) (map[string]interface{}, error)
+	Data() (map[string]interface{}, error)
 	// Generators prepare generators with proper generator list based on options. Group can decide the group is not
 	// applicable, in such case, Group can return empty list without error
 	// The returned generators should be sorted.
-	Generators(opts ...GenLoaderOptions) ([]Generator, error)
+	Generators(opts ...GeneratorOptions) ([]Generator, error)
 }
 
-type DataLoaderOptions func(opt *DataLoaderOption)
-type DataLoaderOption struct {
-	Project    Project
-	Components Components
-}
-
-type GenLoaderOptions func(opt *GenLoaderOption)
-type GenLoaderOption struct {
-	Option
+//goland:noinspection GoNameStartsWithPackageName
+type GeneratorOptions func(opt *GeneratorOption)
+//goland:noinspection GoNameStartsWithPackageName
+type GeneratorOption struct {
 	Template *template.Template
 	Data     map[string]interface{}
 }

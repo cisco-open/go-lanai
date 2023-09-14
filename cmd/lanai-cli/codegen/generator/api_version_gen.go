@@ -23,6 +23,7 @@ const versionGeneratorName = "version"
 
 type ApiVerOption struct {
 	Option
+	Template *template.Template
 	Data map[string]interface{}
 }
 

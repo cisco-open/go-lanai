@@ -28,13 +28,13 @@ type Generators struct {
 func NewGenerators(opts ...Options) Generators {
 	ret := Generators{
 		Option: DefaultOption,
-		groups: []Group{
-			APIGroup{},
-			ProjectGroup{},
-		},
 	}
 	for _, fn := range opts {
 		fn(&ret.Option)
+	}
+	ret.groups = []Group{
+		APIGroup{ Option: ret.Option },
+		ProjectGroup{ Option: ret.Option },
 	}
 	order.SortStable(ret.groups, order.UnorderedMiddleCompare)
 	if ret.DefaultRegenMode != RegenModeIgnore {
@@ -45,13 +45,24 @@ func NewGenerators(opts ...Options) Generators {
 
 func (g *Generators) Generate() error {
 
+	// load templates
+	tmplOpts := make([]TemplateOptions, 0, len(g.groups))
+	for _, group := range g.groups {
+		opts, e := group.CustomizeTemplate()
+		if e != nil {
+			return e
+		}
+		tmplOpts = append(tmplOpts, opts)
+	}
+	template, e := LoadTemplates(g.TemplateFS, tmplOpts...)
+	if e != nil {
+		return e
+	}
+
 	// populate data
 	data := newCommonData(&g.Project)
 	for _, group := range g.groups {
-		groupData, e := group.Data(func(opt *DataLoaderOption) {
-			opt.Project = g.Project
-			opt.Components = g.Components
-		})
+		groupData, e := group.Data()
 		if e != nil {
 			return e
 		}
@@ -61,10 +72,9 @@ func (g *Generators) Generate() error {
 	// prepare generators by groups
 	generators := make([]Generator, 0, len(g.groups) * 5)
 	for _, group := range g.groups {
-		gens, e := group.Generators(func(opt *GenLoaderOption) {
-			opt.Option = g.Option
+		gens, e := group.Generators(func(opt *GeneratorOption) {
 			opt.Data = data
-			opt.Template = g.Template
+			opt.Template = template
 		})
 		if e != nil {
 			return e
@@ -74,7 +84,7 @@ func (g *Generators) Generate() error {
 
 	// scan all templates
 	tmpls := make(map[string]fs.FileInfo)
-	e := fs.WalkDir(g.TemplateFS, ".", func(p string, d fs.DirEntry, err error) error {
+	e = fs.WalkDir(g.TemplateFS, ".", func(p string, d fs.DirEntry, err error) error {
 		// load the files into the generator
 		fi, e := d.Info()
 		if e != nil {

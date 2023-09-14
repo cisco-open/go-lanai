@@ -26,6 +26,7 @@ type FileGenerator struct {
 
 type FileOption struct {
 	Option
+	Template *template.Template
 	Data   map[string]interface{}
 	Prefix string
 	Order  int

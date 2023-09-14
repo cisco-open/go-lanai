@@ -79,21 +79,12 @@ func GenerateWithConfig(ctx context.Context, cfg *ConfigV2) error {
 	if e != nil {
 		return e
 	}
-	loaderOpts := generator.LoaderOptions{
-		InitialRegexes: cfg.Components.Contract.Naming.RegExps,
-	}
-	template, err := generator.LoadTemplates(tmplFS, loaderOpts)
-	if err != nil {
-		return err
-	}
-
 	// Do generate
 	opts := append(cfg.ToOptions(),
 		generator.WithTemplateFS(tmplFS),
-		generator.WithTemplate(template),
 	)
-	if err = generator.GenerateFiles(opts...); err != nil {
-		return err
+	if e = generator.GenerateFiles(opts...); e != nil {
+		return e
 	}
 	logger.Infof("Code generated to %v", cmdutils.GlobalArgs.OutputDir)
 	return nil

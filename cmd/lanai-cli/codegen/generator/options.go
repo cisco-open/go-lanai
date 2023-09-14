@@ -2,7 +2,6 @@ package generator
 
 import (
     "io/fs"
-    "text/template"
 )
 
 // WithRegenRules Set re-generation rules, Fallback to default mode if no rules matches the output file
@@ -35,10 +34,5 @@ func WithComponents(comps Components) func(o *Option) {
     }
 }
 
-func WithTemplate(template *template.Template) func(o *Option) {
-    return func(o *Option) {
-        o.Template = template
-    }
-}
 
 
