@@ -36,14 +36,15 @@ log:
     Kafka: info
     SEC.Session: info
     OAuth2.Auth: info
-#  loggers:
-#    text-file:
-#      type: file
-#      format: text
-#      location: "logs/text.log"
-#      template: '{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
-#      fixed-keys: "spanId, traceId, parentId, http"
-#    json-file:
-#      type: file
-#      format: json
-#      location: "logs/json.log"
+    #  loggers:
+    #    text-file:
+    #      type: file
+    #      format: text
+    #      location: "logs/text.log"
+    #      template: '{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+    #      fixed-keys: "spanId, traceId, parentId, http"
+    #    json-file:
+    #      type: file
+    #      format: json
+    #      location: "logs/json.log"
+

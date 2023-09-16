@@ -3,9 +3,9 @@ package generator
 import (
 	"bytes"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"errors"
 	"fmt"
 	"github.com/bmatcuk/doublestar/v4"
-	"go/format"
 	"io"
 	"os"
 	"path"
@@ -41,12 +41,10 @@ func GenerateFileFromTemplate(gc GenerationContext, template *template.Template)
 		return fmt.Errorf("templatePath could not be executed: %v", err)
 	}
 
-	if isGoExt(gc.filename) {
-		err := formatGoCode(gc.filename)
-		if err != nil {
-			return fmt.Errorf("error formatting go code for file %v: %v", gc.filename, err)
-		}
+	if e := FormatFile(gc.filename, FileTypeUnknown); e != nil && !errors.Is(e, errFormatterUnsupportedFileType) {
+		return fmt.Errorf("error formatting go code for file %v: %v", gc.filename, e)
 	}
+
 	return nil
 }
 
@@ -93,25 +91,6 @@ func applyRegenRule(gc *GenerationContext) (f io.WriteCloser, err error) {
 	}
 
 	return f, nil
-}
-
-func isGoExt(filename string) bool {
-	return path.Ext(filename) == ".go" || path.Ext(filename) == ".goref"
-}
-
-func formatGoCode(outputFilePath string) error {
-	r, err := os.ReadFile(outputFilePath)
-	if err != nil {
-		return err
-	}
-	formatted, err := format.Source(r)
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(outputFilePath, formatted, 0644); err != nil {
-		return err
-	}
-	return nil
 }
 
 // ConvertSrcRootToTargetDir will take a path containing a SrcRoot directory, and return
