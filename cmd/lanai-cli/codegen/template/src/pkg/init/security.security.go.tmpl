@@ -3,9 +3,9 @@ package serviceinit
 {{ $imports := NewImports }}
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver" }}
 {{ if eq .Security.Access.Preset "opa" }}
-{{ template "security-preset/opa/imports" $imports }}
+{{ template "security-preset/opa/init/imports" $imports }}
 {{else}}
-{{ template "security-preset/freestyle/imports" $imports }}
+{{ template "security-preset/freestyle/init/imports" $imports }}
 {{end}}
 {{ template "imports" $imports }}
 
@@ -19,7 +19,7 @@ func newResServerConfigurer() resserver.ResourceServerConfigurer {
 {{end}}
 
 {{ if eq .Security.Access.Preset "opa" }}
-{{ template "security-preset/opa/sourcecode" . }}
+{{ template "security-preset/opa/init/sourcecode" . }}
 {{else}}
-{{ template "security-preset/freestyle/sourcecode" . }}
+{{ template "security-preset/freestyle/init/sourcecode" . }}
 {{end}}

@@ -1,4 +1,4 @@
-{{define "security-preset/opa/imports"}}
+{{define "security-preset/opa/init/imports"}}
 {{ $imports := . }}
 {{ $imports = $imports.Add "go.uber.org/fx" }}
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security" }}
@@ -15,7 +15,7 @@
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher" }}
 {{end}}
 
-{{define "security-preset/opa/sourcecode"}}
+{{define "security-preset/opa/init/sourcecode"}}
 type securityConfigurer struct {}
 
 func (c *securityConfigurer) Configure(ws security.WebSecurity) {

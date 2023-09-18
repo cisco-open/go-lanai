@@ -37,26 +37,8 @@ management:
     health:
       show-components: always # authorized | always | never | custom
       show-details: always # authorized | always | never | custom
-    apilist:
-      enabled: true
-      static-fs: "configs/api-list.json"
   security:
     enabled-by-default: false
-
-security:
-  keys:
-    jwt:
-      id: dev
-      format: pem
-      file: "configs/jwtpubkey.pem"
-      password: TheCakeIsaLie
-  jwt:
-    key-name: "jwt"
-  session:
-    idle-timeout: "${security.auth.session-timeout.idle-timeout-seconds:9000}s"
-    absolute-timeout: "${security.auth.session-timeout.absolute-timeout-seconds:18000}s"
-  timeout-support:
-    db-index: 8 # this should have the same value as security.session.db-index on auth service
 
 swagger:
   spec: configs/api-docs-v3.yml

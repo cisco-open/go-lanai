@@ -1,0 +1,16 @@
+{{ $healthDetails := "always" }}
+{{ if eq .Security.Access.Preset "opa" }}
+{{ $healthDetails = "custom" }}
+{{end}}
+management:
+  enabled: true
+  endpoint:
+    health:
+      show-components: {{$healthDetails}}   # authorized | always | never | custom
+      show-details: {{$healthDetails}}      # authorized | always | never | custom
+  security:
+  {{if and (.ProjectInit.EnabledModules.Has "security") (ne .Security.Access.Preset "freestyle") }}
+    enabled-by-default: true
+  {{else}}
+    enabled-by-default: false
+  {{end}}

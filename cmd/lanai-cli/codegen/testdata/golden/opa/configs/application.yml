@@ -35,13 +35,10 @@ management:
   enabled: true
   endpoint:
     health:
-      show-components: always # authorized | always | never | custom
-      show-details: always # authorized | always | never | custom
-    apilist:
-      enabled: true
-      static-fs: "configs/api-list.json"
+      show-components: custom # authorized | always | never | custom
+      show-details: custom # authorized | always | never | custom
   security:
-    enabled-by-default: false
+    enabled-by-default: true
 
 security:
   keys:
@@ -57,6 +54,18 @@ security:
     absolute-timeout: "${security.auth.session-timeout.absolute-timeout-seconds:18000}s"
   timeout-support:
     db-index: 8 # this should have the same value as security.session.db-index on auth service
+  opa:
+    server:
+      url: "http://localhost:8911/policy"
+      polling-min-delay: 5m
+      polling-max-delay: 1h
+      long-polling-timeout: 30s
+    bundles:
+      testservice:
+        name: testservice
+        # url: "/bundles/testservice"
+    logging:
+      decision-logs-enabled: true
 
 swagger:
   spec: configs/api-docs-v3.yml

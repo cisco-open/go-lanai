@@ -14,10 +14,13 @@ info:
       parent: unknown
       type: unknown
 
+{{if (.ProjectInit.EnabledModules.Has "redis")}}
 redis:
   addrs: ${spring.redis.host:localhost}:6379
   db: 0
+{{end}}
 
+{{if (.ProjectInit.EnabledModules.Has "tracing")}}
 tracing:
   enabled: true
   jaeger:
@@ -26,42 +29,27 @@ tracing:
   sampler:
     enabled: true
     limit-per-second: 50
+{{end}}
 
+{{if (.ProjectInit.EnabledModules.Has "web")}}
 server:
   logging:
     default-level: "info"
+{{end}}
 
-management:
-  enabled: true
-  endpoint:
-    health:
-      show-components: always   # authorized | always | never | custom
-      show-details: always      # authorized | always | never | custom
-    apilist:
-      enabled: true
-      static-fs: "configs/api-list.json"
-  security:
-    enabled-by-default: false
+{{if (.ProjectInit.EnabledModules.Has "actuator")}}
+{{template "configs/presets.actuator.yml.tmpl" .}}
+{{end}}
 
-security:
-  keys:
-    jwt:
-      id: dev
-      format: pem
-      file: "configs/jwtpubkey.pem"
-      password: TheCakeIsaLie
-  jwt:
-    key-name: "jwt"
-  session:
-    idle-timeout: "${security.auth.session-timeout.idle-timeout-seconds:9000}s"
-    absolute-timeout: "${security.auth.session-timeout.absolute-timeout-seconds:18000}s"
-  timeout-support:
-    db-index: 8 # this should have the same value as security.session.db-index on auth service
+{{if (.ProjectInit.EnabledModules.Has "security")}}
+{{template "configs/presets.security.yml.tmpl" .}}
+{{end}}
 
+{{if (.ProjectInit.EnabledModules.Has "swagger")}}
 swagger:
   spec: configs/api-docs-v3.yml
   security:
     sso:
       base-url: ${swagger.security.sso.baseurl:http://localhost:8900/auth}
       client-id: nfv-client
-
+{{end}}

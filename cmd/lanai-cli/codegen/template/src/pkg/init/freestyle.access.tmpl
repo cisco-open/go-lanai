@@ -1,4 +1,4 @@
-{{define "security-preset/freestyle/imports"}}
+{{define "security-preset/freestyle/init/imports"}}
 {{ $imports := . }}
 {{ $imports = $imports.Add "context" }}
 {{ $imports = $imports.Add "go.uber.org/fx" }}
@@ -12,7 +12,7 @@
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher" }}
 {{end}}
 
-{{define "security-preset/freestyle/sourcecode"}}
+{{define "security-preset/freestyle/init/sourcecode"}}
 type secDI struct {
 	fx.In
 	SecReg         security.Registrar

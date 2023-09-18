@@ -37,9 +37,6 @@ management:
     health:
       show-components: always # authorized | always | never | custom
       show-details: always # authorized | always | never | custom
-    apilist:
-      enabled: true
-      static-fs: "configs/api-list.json"
   security:
     enabled-by-default: false
 
