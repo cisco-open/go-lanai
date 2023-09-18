@@ -1,52 +1,76 @@
 package generator
 
 import (
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 )
 
-type ProjectGroup struct{
-    Option
+/**********************
+   Data
+**********************/
+
+type ProjectInit struct {
+	EnabledModules utils.StringSet
+}
+
+/**********************
+   Group
+**********************/
+
+type ProjectGroup struct {
+	Option
 }
 
 func (g ProjectGroup) Order() int {
-    return GroupOrderProject
+	return GroupOrderProject
 }
 
 func (g ProjectGroup) Name() string {
-    return "API"
+	return "API"
 }
 
 func (g ProjectGroup) CustomizeTemplate() (TemplateOptions, error) {
-    return func(opt *TemplateOption) {}, nil
+	return func(opt *TemplateOption) {}, nil
 }
 
 func (g ProjectGroup) Data() (map[string]interface{}, error) {
-    // TODO load Project scaffolding Data here instead of taking from options
-    return map[string]interface{}{}, nil
+	// TODO dynamic project scaffolding data instead of hard coded
+	enabled := ResolveEnabledLanaiModules(
+		LanaiAppConfig, LanaiConsul, LanaiVault, LanaiDiscovery,
+		LanaiWeb, LanaiActuator, LanaiSwagger,
+		LanaiSecurity, LanaiResServer,
+		LanaiTracing, 
+	)
+	initData := ProjectInit{
+		EnabledModules: enabled,
+	}
+	return map[string]interface{}{
+		KDataLanaiModules: SupportedLanaiModules,
+		KDataProjectInit:  initData,
+	}, nil
 }
 
 func (g ProjectGroup) Generators(opts ...GeneratorOptions) ([]Generator, error) {
-    genOpt := GeneratorOption{}
-    for _, fn := range opts {
-        fn(&genOpt)
-    }
+	genOpt := GeneratorOption{}
+	for _, fn := range opts {
+		fn(&genOpt)
+	}
 
-    // Note: for backward compatibility, Default RegenMode is set to ignore
-    gens := []Generator{
-        newFileGenerator(func(opt *FileOption) {
-            opt.Option = g.Option
-            opt.Template = genOpt.Template
-            opt.DefaultRegenMode = RegenModeIgnore
-            opt.Data = genOpt.Data
-        }),
-        newDirectoryGenerator(func(opt *DirOption) {
-            opt.Option = g.Option
-            opt.Data = genOpt.Data
-            opt.Patterns = []string{"cmd/**", "configs/**", "pkg/init/**"}
-        }),
-        newDeleteGenerator(func(opt *DeleteOption) { opt.Option = g.Option }),
-    }
-    order.SortStable(gens, order.UnorderedMiddleCompare)
-    return gens, nil
+	// Note: for backward compatibility, Default RegenMode is set to ignore
+	gens := []Generator{
+		newFileGenerator(func(opt *FileOption) {
+			opt.Option = g.Option
+			opt.Template = genOpt.Template
+			opt.DefaultRegenMode = RegenModeIgnore
+			opt.Data = genOpt.Data
+		}),
+		newDirectoryGenerator(func(opt *DirOption) {
+			opt.Option = g.Option
+			opt.Data = genOpt.Data
+			opt.Patterns = []string{"cmd/**", "configs/**", "pkg/init/**"}
+		}),
+		newDeleteGenerator(func(opt *DeleteOption) { opt.Option = g.Option }),
+	}
+	order.SortStable(gens, order.UnorderedMiddleCompare)
+	return gens, nil
 }
-

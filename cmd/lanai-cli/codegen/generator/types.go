@@ -21,32 +21,12 @@ type Components struct {
 }
 
 type Contract struct {
-	Path   string
-	Naming ContractNaming
+	Path    string
+	Naming  ContractNaming
 }
 
 type ContractNaming struct {
 	RegExps map[string]string
-}
-
-/********************
-	Template Data
- ********************/
-
-// Keys in template's context data as map
-const (
-	KDataOpenAPI     = "OpenAPIData"
-	KDataProjectName = "ProjectName"
-	KDataRepository  = "Repository"
-	KDataProject     = "Project"
-)
-
-func newCommonData(p *Project) map[string]interface{} {
-	return map[string]interface{}{
-		KDataProjectName: p.Name,
-		KDataRepository: p.Module,
-		KDataProject: p,
-	}
 }
 
 /******************

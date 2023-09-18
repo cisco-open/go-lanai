@@ -108,6 +108,14 @@ func (g *Generators) Generate() error {
 	return nil
 }
 
+func newCommonData(p *Project) map[string]interface{} {
+	return map[string]interface{}{
+		KDataProjectName: p.Name,
+		KDataRepository:  p.Module,
+		KDataProject:     p,
+	}
+}
+
 func (g *Generators) shallowMerge(dest, src map[string]interface{}) {
 	for k, v := range src {
 		dest[k] = v

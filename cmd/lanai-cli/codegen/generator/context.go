@@ -6,6 +6,20 @@ import (
 	"text/template"
 )
 
+/***************************
+	Global Vars/Constants
+ ***************************/
+
+// Keys in template's context data as map
+const (
+	KDataOpenAPI      = "OpenAPIData"
+	KDataProjectName  = "ProjectName"
+	KDataRepository   = "Repository"
+	KDataProject      = "Project"
+	KDataProjectInit  = "ProjectInit"
+	KDataLanaiModules = "LanaiModules"
+)
+
 const (
 	GroupOrderAPI = iota
 	GroupOrderProject
@@ -82,6 +96,7 @@ type Group interface {
 
 //goland:noinspection GoNameStartsWithPackageName
 type GeneratorOptions func(opt *GeneratorOption)
+
 //goland:noinspection GoNameStartsWithPackageName
 type GeneratorOption struct {
 	Template *template.Template

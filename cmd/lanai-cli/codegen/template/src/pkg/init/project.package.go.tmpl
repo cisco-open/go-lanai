@@ -3,16 +3,9 @@ package serviceinit
 {{ $imports := NewImports }}
 {{ $imports = $imports.Add "go.uber.org/fx" }}
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/swagger" }}
-{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/init" "actuator" }}
-{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init" "appconfig" }}
-{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init" "web" }}
-{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/init" "consul" }}
-{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery/init" "discoveryinit" }}
-{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init" "vault" }}
-{{ $imports = $imports.AddWithAlias "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/init" "tracing" }}
+{{ range (.LanaiModules.Modules.FilterByName .ProjectInit.EnabledModules) }}
+{{ $imports = $imports.Add (.ImportPath "cto-github.cisco.com/NFV-BU/go-lanai/pkg") .ImportAlias }}
+{{ end }}
 {{ $imports = $imports.Add (concat .Project.Module "/pkg/controller") }}
 {{ template "imports" $imports }}
 
@@ -28,29 +21,43 @@ var Module = &bootstrap.Module{
 // Use initialize components needed in this service
 func Use() {
 	// basic modules
-	appconfig.Use()
-	consul.Use()
-	vault.Use()
-	discoveryinit.Use()
-	tracing.Use()
+    {{ range .LanaiModules.Basic }}
+    {{- if not ($.ProjectInit.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
 
 	// web related
-	web.Use()
-	redis.Use()
-	actuator.Use()
-	swagger.Use()
+    {{ range .LanaiModules.Web }}
+    {{- if not ($.ProjectInit.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
 
 	// data related
-	//data.Use()
-	//cockroach.Use()
+    {{ range .LanaiModules.Data }}
+    {{- if not ($.ProjectInit.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
 
 	// service-to-service integration related
-	//httpclient.Use()
-	//scope.Use()
-	//kafka.Use()
+    {{ range .LanaiModules.Integration }}
+    {{- if not ($.ProjectInit.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
 
 	// security related modules
-	resserver.Use()
+    {{ range .LanaiModules.Security }}
+    {{- if not ($.ProjectInit.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
+
+    {{- $otherModules := (.LanaiModules.Others.FilterByName .ProjectInit.EnabledModules) }}
+    {{- if ne (len $otherModules) 0 }}
+
+    // other modules
+    {{ range $otherModules -}}
+    {{.Ref}}.Use()
+    {{ end }}
+    {{- end }}
 
 	// {{.Project.Name}}
 	bootstrap.Register(Module)
