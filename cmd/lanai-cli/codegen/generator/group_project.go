@@ -39,7 +39,7 @@ func (g ProjectGroup) Data() (map[string]interface{}, error) {
 		LanaiAppConfig, LanaiConsul, LanaiVault, LanaiDiscovery,
 		LanaiWeb, LanaiActuator, LanaiSwagger,
 		LanaiSecurity, LanaiResServer,
-		LanaiTracing, 
+		LanaiTracing,
 	)
 	initData := ProjectInit{
 		EnabledModules: enabled,
