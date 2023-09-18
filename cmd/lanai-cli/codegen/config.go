@@ -8,6 +8,11 @@ const (
 	Version2       ConfigVersion = `v2`
 )
 
+var DefaultVersionedConfig = VersionedConfig{
+	Version:  "v1",
+	ConfigV2: DefaultConfigV2,
+}
+
 type VersionedConfig struct {
 	Version ConfigVersion `json:"version"`
 	Config
@@ -51,6 +56,7 @@ func (c Config) ToV2() *ConfigV2 {
 					RegExps: c.Regexes,
 				},
 			},
+			Security: DefaultConfigV2.Components.Security,
 		},
 		Regen:      RegenerationV2{
 			Default: RegenMode(c.Regeneration.Default),

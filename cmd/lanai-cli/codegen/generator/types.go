@@ -1,5 +1,7 @@
 package generator
 
+import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+
 /*********************
 	Project
  *********************/
@@ -12,21 +14,62 @@ type Project struct {
 	ContextPath string
 }
 
+type ProjectInit struct {
+	EnabledModules utils.StringSet
+}
+
 /*********************
 	Components
  *********************/
 
 type Components struct {
 	Contract Contract
+	Security Security
 }
 
+/*********************
+	API Contract
+ *********************/
+
 type Contract struct {
-	Path    string
-	Naming  ContractNaming
+	Path   string
+	Naming ContractNaming
 }
 
 type ContractNaming struct {
 	RegExps map[string]string
+}
+
+/*********************
+	Web Security
+ *********************/
+
+type Security struct {
+	Authentication Authentication
+	Access         Access
+}
+
+type AuthenticationMethod string
+
+const (
+	AuthNone   AuthenticationMethod = `none`
+	AuthOAuth2 AuthenticationMethod = `oauth2`
+	// TODO more authentication methods like basic, form, etc...
+)
+
+type Authentication struct {
+	Method AuthenticationMethod
+}
+
+type AccessPreset string
+
+const (
+	AccessPresetFreestyle AccessPreset = `freestyle`
+	AccessPresetOPA       AccessPreset = `opa`
+)
+
+type Access struct {
+	Preset AccessPreset
 }
 
 /******************

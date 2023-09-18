@@ -1,6 +1,5 @@
-package serviceinit
-
-{{ $imports := NewImports }}
+{{define "security-preset/freestyle/imports"}}
+{{ $imports := . }}
 {{ $imports = $imports.Add "context" }}
 {{ $imports = $imports.Add "go.uber.org/fx" }}
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security" }}
@@ -11,15 +10,9 @@ package serviceinit
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver" }}
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth" }}
 {{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher" }}
-{{ template "imports" $imports }}
+{{end}}
 
-// newResServerConfigurer required for token auth
-func newResServerConfigurer() resserver.ResourceServerConfigurer {
-	return func(config *resserver.Configuration) {
-		//do nothing
-	}
-}
-
+{{define "security-preset/freestyle/sourcecode"}}
 type secDI struct {
 	fx.In
 	SecReg         security.Registrar
@@ -68,3 +61,4 @@ func (c *securityConfigurer) Configure(ws security.WebSecurity) {
 		).
 		With(errorhandling.New())
 }
+{{end}}

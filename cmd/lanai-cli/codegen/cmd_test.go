@@ -42,6 +42,22 @@ func TestGenerateTemplates(t *testing.T) {
 			goldenDir:  "testdata/golden/v1",
 			update:     false,
 		},
+		{
+			name:       "TestV2OPAConfiguration",
+			configPath: "testdata/test-codegen-opa.yml",
+			wantErr:    false,
+			outputDir:  "testdata/output/opa",
+			goldenDir:  "testdata/golden/opa",
+			update:     false,
+		},
+		{
+			name:       "TestV2NoSecConfiguration",
+			configPath: "testdata/test-codegen-nosec.yml",
+			wantErr:    false,
+			outputDir:  "testdata/output/nosec",
+			goldenDir:  "testdata/golden/nosec",
+			update:     false,
+		},
 	}
 
 	subTests := make([]test.Options, len(plans))

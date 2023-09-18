@@ -2,6 +2,7 @@ package generator
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"io/fs"
 )
@@ -22,7 +23,7 @@ func GenerateFiles(opts ...Options) error {
 
 type Generators struct {
 	Option
-	groups     []Group
+	groups []Group
 }
 
 func NewGenerators(opts ...Options) Generators {
@@ -33,8 +34,9 @@ func NewGenerators(opts ...Options) Generators {
 		fn(&ret.Option)
 	}
 	ret.groups = []Group{
-		APIGroup{ Option: ret.Option },
-		ProjectGroup{ Option: ret.Option },
+		APIGroup{Option: ret.Option},
+		SecurityGroup{Option: ret.Option},
+		ProjectGroup{Option: ret.Option},
 	}
 	order.SortStable(ret.groups, order.UnorderedMiddleCompare)
 	if ret.DefaultRegenMode != RegenModeIgnore {
@@ -60,17 +62,15 @@ func (g *Generators) Generate() error {
 	}
 
 	// populate data
-	data := newCommonData(&g.Project)
+	data := newGenerationData(&g.Project)
 	for _, group := range g.groups {
-		groupData, e := group.Data()
-		if e != nil {
+		if e := group.CustomizeData(data); e != nil {
 			return e
 		}
-		g.shallowMerge(data, groupData)
 	}
 
 	// prepare generators by groups
-	generators := make([]Generator, 0, len(g.groups) * 5)
+	generators := make([]Generator, 0, len(g.groups)*5)
 	for _, group := range g.groups {
 		gens, e := group.Generators(func(opt *GeneratorOption) {
 			opt.Data = data
@@ -108,16 +108,14 @@ func (g *Generators) Generate() error {
 	return nil
 }
 
-func newCommonData(p *Project) map[string]interface{} {
+func newGenerationData(p *Project) GenerationData {
 	return map[string]interface{}{
-		KDataProjectName: p.Name,
-		KDataRepository:  p.Module,
-		KDataProject:     p,
-	}
-}
-
-func (g *Generators) shallowMerge(dest, src map[string]interface{}) {
-	for k, v := range src {
-		dest[k] = v
+		KDataProjectName:  p.Name,
+		KDataRepository:   p.Module,
+		KDataProject:      p,
+		KDataLanaiModules: SupportedLanaiModules,
+		KDataProjectInit: &ProjectInit{
+			EnabledModules: utils.NewStringSet(),
+		},
 	}
 }

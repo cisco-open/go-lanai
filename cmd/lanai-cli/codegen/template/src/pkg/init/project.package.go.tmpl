@@ -13,8 +13,8 @@ var Module = &bootstrap.Module{
 	Name:       "{{.Project.Name}}",
 	Precedence: bootstrap.AnonymousModulePrecedence,
 	Options:    []fx.Option{
-		fx.Provide(newResServerConfigurer),
-		fx.Invoke(configureSecurity),
+	    {{if (.ProjectInit.EnabledModules.Has "resserver")}}fx.Provide(newResServerConfigurer),{{end}}
+	    {{if (.ProjectInit.EnabledModules.Has "security")}}fx.Invoke(configureSecurity),{{end}}
 	},
 }
 

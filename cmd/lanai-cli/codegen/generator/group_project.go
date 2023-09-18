@@ -1,17 +1,8 @@
 package generator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 )
-
-/**********************
-   Data
-**********************/
-
-type ProjectInit struct {
-	EnabledModules utils.StringSet
-}
 
 /**********************
    Group
@@ -26,28 +17,18 @@ func (g ProjectGroup) Order() int {
 }
 
 func (g ProjectGroup) Name() string {
-	return "API"
+	return "Project"
 }
 
 func (g ProjectGroup) CustomizeTemplate() (TemplateOptions, error) {
 	return func(opt *TemplateOption) {}, nil
 }
 
-func (g ProjectGroup) Data() (map[string]interface{}, error) {
-	// TODO dynamic project scaffolding data instead of hard coded
-	enabled := ResolveEnabledLanaiModules(
-		LanaiAppConfig, LanaiConsul, LanaiVault, LanaiDiscovery,
-		LanaiWeb, LanaiActuator, LanaiSwagger,
-		LanaiSecurity, LanaiResServer,
-		LanaiTracing,
-	)
-	initData := ProjectInit{
-		EnabledModules: enabled,
-	}
-	return map[string]interface{}{
-		KDataLanaiModules: SupportedLanaiModules,
-		KDataProjectInit:  initData,
-	}, nil
+func (g ProjectGroup) CustomizeData(data GenerationData) error {
+	basic := ResolveEnabledLanaiModules(LanaiAppConfig, LanaiConsul, LanaiVault, LanaiRedis, LanaiTracing, LanaiDiscovery)
+	pInit := data.ProjectMetadata()
+	pInit.EnabledModules.Add(basic.Values()...)
+	return nil
 }
 
 func (g ProjectGroup) Generators(opts ...GeneratorOptions) ([]Generator, error) {

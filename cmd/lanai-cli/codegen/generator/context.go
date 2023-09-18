@@ -1,7 +1,8 @@
 package generator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"io/fs"
 	"text/template"
 )
@@ -10,9 +11,8 @@ import (
 	Global Vars/Constants
  ***************************/
 
-// Keys in template's context data as map
+// Global Keys in template's context data as map
 const (
-	KDataOpenAPI      = "OpenAPIData"
 	KDataProjectName  = "ProjectName"
 	KDataRepository   = "Repository"
 	KDataProject      = "Project"
@@ -22,6 +22,7 @@ const (
 
 const (
 	GroupOrderAPI = iota
+	GroupOrderSecurity
 	GroupOrderProject
 )
 
@@ -31,6 +32,17 @@ const (
 
 var DefaultOption = Option{
 	DefaultRegenMode: RegenModeIgnore,
+	Components: Components{
+		Contract: Contract{},
+		Security: Security{
+			Authentication: Authentication{
+				Method: AuthOAuth2,
+			},
+			Access:         Access{
+				Preset: AccessPresetFreestyle,
+			},
+		},
+	},
 }
 
 type Options func(opt *Option)
@@ -82,12 +94,13 @@ type Group interface {
 	// CustomizeTemplate is used to customize *template.Template for group specific need
 	CustomizeTemplate() (TemplateOptions, error)
 
-	// Data load and process group specific data. Such data might be useful for other group.
-	// This function of all groups are called before any invocation of their Generators().
-	// The results are merged into one map and served to Generators() for constructing generators.
+	// CustomizeData customize data and load group specific data. All data is shared with other groups.
+	// This function of all groups are called in order before any invocation of their Generators().
+	// The results are propagate to other groups and served to Generators() for constructing generators.
 	// Important: For each top-level component in Data should be owned by the group that generating it.
 	// 			  Other groups can read it but should not change or replace it.
-	Data() (map[string]interface{}, error)
+	//			  The exception is "ProjectInit" object, which all groups can add to it
+	CustomizeData(data GenerationData) error
 	// Generators prepare generators with proper generator list based on options. Group can decide the group is not
 	// applicable, in such case, Group can return empty list without error
 	// The returned generators should be sorted.
@@ -106,6 +119,18 @@ type GeneratorOption struct {
 /************************
 	Generation Context
  ************************/
+
+type GenerationData map[string]interface{}
+
+func (d GenerationData) ProjectMetadata() *ProjectInit {
+    _, ok := d[KDataProjectInit]
+    if !ok {
+        d[KDataProjectInit] = &ProjectInit{
+            EnabledModules: utils.NewStringSet(),
+        }
+    }
+    return d[KDataProjectInit].(*ProjectInit)
+}
 
 type GenerationContext struct {
 	templatePath string

@@ -95,7 +95,7 @@ func processConfigurationFile(configFilePath string) (*ConfigV2, error) {
 	if e != nil {
 		return nil, fmt.Errorf(`error reading config file "%s": %v`, configFilePath, e)
 	}
-	var versioned VersionedConfig
+	versioned := DefaultVersionedConfig
 	e = yaml.Unmarshal(configFile, &versioned)
 	if e != nil {
 		return nil, fmt.Errorf(`error unmarshalling yaml file "%s": %v`, configFilePath, e)
