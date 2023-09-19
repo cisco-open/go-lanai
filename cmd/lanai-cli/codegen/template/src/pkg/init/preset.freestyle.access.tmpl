@@ -23,12 +23,14 @@ type secDI struct {
 
 // healthDisclosureControl is a custom health details disclosure control.
 // This example allows all users to see health details.
+// TODO implement this properly for desired security model
 func healthDisclosureControl() health.DisclosureControlFunc {
 	return func(ctx context.Context) bool {
 		return true
 	}
 }
 
+// TODO implement this properly for desired security model
 func configureSecurity(di secDI) {
     // Configure custom security of actuator endpoint here, if applicable.
     // This example doesn't setup any custom security for actuator. Everything is configured via application.yml
