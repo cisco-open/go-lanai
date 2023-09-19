@@ -44,6 +44,14 @@ const DefaultTemplateRoot = "template/src"
 var DefaultTemplateFS embed.FS
 
 func Run(cmd *cobra.Command, _ []string) error {
+	if !cmdutils.GlobalArgs.Verbose {
+		_ = log.UpdateLoggingConfiguration(&log.Properties{
+			Levels:   map[string]log.LoggingLevel{
+				"default": log.LevelInfo,
+			},
+		})
+	}
+
 	// process arguments
 	configFilePath := Args.Config
 	if configFilePath == "" {
