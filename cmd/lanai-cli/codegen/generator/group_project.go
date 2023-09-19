@@ -21,7 +21,7 @@ func (g ProjectGroup) Name() string {
 }
 
 func (g ProjectGroup) CustomizeTemplate() (TemplateOptions, error) {
-	return func(opt *TemplateOption) {}, nil
+	return nil, nil
 }
 
 func (g ProjectGroup) CustomizeData(data GenerationData) error {

@@ -92,13 +92,13 @@ func (m *ApiGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
 	}
 
 	for _, gc := range toGenerate {
-		logger.Infof("api generator generating %v\n", gc.filename)
+		logger.Debugf("[API] generating %v", gc.filename)
 		err := GenerateFileFromTemplate(gc, m.template)
 		if err != nil {
 			return err
 		}
+		globalCounter.Record(gc.filename)
 	}
-
 	return nil
 }
 

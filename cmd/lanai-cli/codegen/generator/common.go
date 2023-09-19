@@ -19,6 +19,7 @@ func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil
 }
+
 func GenerateFileFromTemplate(gc GenerationContext, template *template.Template) error {
 	if gc.templatePath == "" {
 		return fmt.Errorf("no templatePath name defined")
@@ -153,4 +154,19 @@ func getApplicableRegenRules(outputFile string, rules RegenRules, defaultMode Re
 		}
 	}
 	return mode, nil
+}
+
+// counter used to count touched file, grouped by directories
+type counter map[string]int
+
+func (c counter) Record(filePath string) {
+	dir := filepath.Dir(filePath)
+	v, _ := c[dir]
+	c[dir] = v + 1
+}
+
+func (c counter) Cleanup(filePath string) {
+	dir := filepath.Dir(filePath)
+	v, _ := c[dir]
+	c[dir] = v - 1
 }

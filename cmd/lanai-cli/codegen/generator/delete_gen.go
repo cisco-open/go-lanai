@@ -89,11 +89,12 @@ func deleteDuplicateReferenceFiles(outputFS fs.FS) error {
 
 				if string(content) == string(originalContent) {
 					toRemove := fmt.Sprintf("%v/%v", cmdutils.GlobalArgs.OutputDir, p)
-					logger.Infof("delete generator deleting duplicate reference file %v\n", toRemove)
+					logger.Debugf("[Cleanup] deleting duplicate reference file %v", toRemove)
 					err := os.Remove(toRemove)
 					if err != nil {
 						return err
 					}
+					globalCounter.Cleanup(toRemove)
 				}
 			}
 		}
@@ -115,11 +116,12 @@ func deleteFilesMatchingRegex(outputFS fs.FS, deleteRegex *regexp.Regexp) error 
 			}
 			if deleteRegex.MatchString(string(content)) {
 				toRemove := fmt.Sprintf("%v/%v", cmdutils.GlobalArgs.OutputDir, p)
-				logger.Infof("delete generator deleting empty file %v\n", toRemove)
+				logger.Debugf("[Cleanup] deleting empty file %v", toRemove)
 				err := os.Remove(toRemove)
 				if err != nil {
 					return err
 				}
+				globalCounter.Cleanup(toRemove)
 			}
 			return err
 		}
@@ -147,7 +149,7 @@ func deleteEmptyDirectories(outputFS fs.FS) error {
 	}
 
 	for _, toRemove := range emptyDirList {
-		logger.Infof("delete generator deleting empty dir %v\n", toRemove)
+		logger.Debugf("[Cleanup] deleting empty dir %v", toRemove)
 		err := os.Remove(toRemove)
 		if err != nil {
 			return err

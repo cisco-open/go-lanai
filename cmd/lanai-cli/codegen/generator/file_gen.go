@@ -43,8 +43,7 @@ func newFileGenerator(opts ...func(opt *FileOption)) *FileGenerator {
 	}
 
 	regex := fmt.Sprintf(projectMatcherRegexTemplate, regexp.QuoteMeta(o.Prefix))
-
-	logger.Infof("DefaultRegenMode: %v", o.DefaultRegenMode)
+	logger.Debugf("Templates [%s] DefaultRegenMode: %v", regex, o.DefaultRegenMode)
 	return &FileGenerator{
 		data:             o.Data,
 		template:         o.Template,
@@ -85,14 +84,18 @@ func (o *FileGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
 	if err != nil {
 		return err
 	}
-	file := *NewGenerationContext(
+	gc := *NewGenerationContext(
 		tmplPath,
 		outputFile,
 		regenRule,
 		o.data,
 	)
-	logger.Infof("project generator generating %v\n", outputFile)
-	return GenerateFileFromTemplate(file, o.template)
+	logger.Debugf("[File] generating %v", gc.filename)
+	if e := GenerateFileFromTemplate(gc, o.template); e != nil {
+		return e
+	}
+	globalCounter.Record(outputFile)
+	return nil
 }
 
 func (o *FileGenerator) Order() int {

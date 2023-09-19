@@ -36,7 +36,7 @@ func (g OPAPolicyGroup) Name() string {
 }
 
 func (g OPAPolicyGroup) CustomizeTemplate() (TemplateOptions, error) {
-	return func(opt *TemplateOption) {}, nil
+	return nil, nil
 }
 
 func (g OPAPolicyGroup) CustomizeData(data GenerationData) error {

@@ -9,4 +9,4 @@ var FuncMap = template.FuncMap{
 	"requiredList": requiredList,
 }
 
-var logger = log.New("Codegen.generator.internal")
+var logger = log.New("Internal")

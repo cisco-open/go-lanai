@@ -29,7 +29,7 @@ func (g SecurityGroup) Name() string {
 }
 
 func (g SecurityGroup) CustomizeTemplate() (TemplateOptions, error) {
-	return func(opt *TemplateOption) {}, nil
+	return nil, nil
 }
 
 func (g SecurityGroup) CustomizeData(data GenerationData) error {

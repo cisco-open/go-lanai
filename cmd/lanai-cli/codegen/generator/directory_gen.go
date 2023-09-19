@@ -39,7 +39,7 @@ func (d *DirectoryGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) err
 	if err != nil {
 		return err
 	}
-	logger.Infof("directory generator generating %v", targetDir)
+	logger.Debugf("[Dir] generating %v", targetDir)
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil && !os.IsExist(err) {
 		return err

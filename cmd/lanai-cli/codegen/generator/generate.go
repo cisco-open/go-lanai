@@ -1,13 +1,17 @@
 package generator
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"fmt"
 	"io/fs"
+	"path/filepath"
 )
 
-var logger = log.New("Codegen.generator")
+var logger = log.New("Codegen")
+var globalCounter counter
 
 const (
 	defaultProjectPriorityOrder = iota
@@ -47,14 +51,18 @@ func NewGenerators(opts ...Options) Generators {
 }
 
 func (g *Generators) Generate() error {
+	// reset counter
+	globalCounter = counter{}
+
 	// load templates
 	tmplOpts := make([]TemplateOptions, 0, len(g.groups))
 	for _, group := range g.groups {
-		opts, e := group.CustomizeTemplate()
-		if e != nil {
+		switch opts, e := group.CustomizeTemplate(); {
+		case e != nil:
 			return e
+		case opts != nil:
+			tmplOpts = append(tmplOpts, opts)
 		}
-		tmplOpts = append(tmplOpts, opts)
 	}
 	template, e := LoadTemplates(g.TemplateFS, tmplOpts...)
 	if e != nil {
@@ -104,6 +112,19 @@ func (g *Generators) Generate() error {
 				return err
 			}
 		}
+	}
+
+	// log summary
+	for k, v := range globalCounter {
+		if v == 0 {
+			continue
+		}
+		path, e := filepath.Rel(cmdutils.GlobalArgs.OutputDir, k)
+		if e != nil {
+			path = k
+		}
+		count := fmt.Sprintf(`%d Files`, v)
+		logger.Infof(`Generated %9s > %s`, count, path)
 	}
 	return nil
 }
