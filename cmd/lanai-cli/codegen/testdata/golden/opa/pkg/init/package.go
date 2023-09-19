@@ -6,6 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	consul "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/init"
 	discovery "cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery/init"
+	opainit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
@@ -53,7 +54,7 @@ func Use() {
 	// security related modules
 	security.Use()
 	resserver.Use()
-	//opainit.Use()
+	opainit.Use()
 
 	// testservice
 	bootstrap.Register(Module)

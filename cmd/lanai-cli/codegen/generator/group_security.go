@@ -42,6 +42,10 @@ func (g SecurityGroup) CustomizeData(data GenerationData) error {
 	case AuthOAuth2:
 		modules = append(modules, LanaiSecurity, LanaiResServer)
 	}
+	switch g.Components.Security.Access.Preset {
+	case AccessPresetOPA:
+		modules = append(modules, LanaiOPA)
+	}
 	pInit := data.ProjectMetadata()
 	sec := ResolveEnabledLanaiModules(modules...)
 	pInit.EnabledModules.Add(sec.Values()...)
