@@ -1,0 +1,34 @@
+package {{.OPAPolicy.APIPackage}}
+
+import future.keywords
+import data.mocks
+
+### Tests ###
+{{range $path, $item := .OpenAPIData.Paths}}
+    {{range $method, $op := $item.Operations}}
+    {{- $policyName := print (lower $method) "_" (defaultNameFromPath $path | snakecase) }}
+# Test: {{$method}} {{$path}}
+test_{{$policyName}}_allowed {
+    # TODO Implement test case and mocks
+	allow_api with input as {"auth": mocks.allowed_auth, "request": mocks_request("{{$method}}", "{{$path}}")}
+}
+
+test_{{$policyName}}_denied {
+    # TODO Implement test case and mocks
+	allow_api with input as {"auth": mocks.denied_auth, "request": mocks_request("{{$method}}", "{{$path}}")}
+}
+    {{end}}
+{{end}}
+
+### Mocks ###
+mocks_request(method, path) = req {
+	req := {
+		"endpoint_id": "env",
+		"header": {
+			"Authorization": ["Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImRldi0wIiwidHlwIjoiSldUIn0.eyJhdWQiOiJuZnYtYXBpIiwiY2xpZW50X2lkIjoibmZ2LXNlcnZpY2UiLCJlbWFpbCI6Im5vcmVwbHlAY2lzY28uY29tIiwiZXhwIjoxNjkxMTAwMjE4LCJmaXJzdE5hbWUiOiJTdXBlciIsImlhdCI6MTY5MTA5MTIxOCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4OTAwL2F1dGgiLCJqdGkiOiI1NGEzYjhlZC03NDBiLTRjOTctOGQ2OS00YWFkNjMzM2I1NmIiLCJsYXN0TmFtZSI6IlVzZXIiLCJuYmYiOjE2OTEwOTEyMTgsInJvbGVzIjpbIlNVUEVSVVNFUiJdLCJzY29wZSI6WyJyZWFkIiwid3JpdGUiLCJhZG1pbiJdLCJzdWIiOiJzdXBlcnVzZXIiLCJ0ZW5hbnRJZCI6IjdiMzkzNGZjLWVkYzQtNGExYy05MjQ5LTNkYzcwNTVlYjEyNCIsInVzZXJfbmFtZSI6InN1cGVydXNlciJ9.BkA_g1Eueu4l_dJYGB4_0_qZugQSslSG1DgldXUA3R1tEqoc6k5nHclBtRuTTEuwGRU8IUuxTnPaY_2di4MKXysw5PgqxwlcB7RozEvD51cB2jqyIMRW_FHfwm3dH4Im5-pK1lG5oTYFPyRHCAZ506S7mOlcqizvyT_IMiWwInyKtpRTyN0HFLbhkcQQodFfS-8OlFRGmOPctozr0f586Xaiw4nMwEIO5J7KzjLhIVK_hKEglAdjA0tsD118Nvn3P_KlVNYJrXdpdHpgVzjdWHKprUlGG6MQQ3EG3fjBGCu5pjbVmNCfd5zSAVUZ1cj-IudhyX4mH1pzz0daTHp1Aw"],
+			"Content-Type": ["application/json"],
+		},
+		"method": method,
+		"path": path,
+	}
+}

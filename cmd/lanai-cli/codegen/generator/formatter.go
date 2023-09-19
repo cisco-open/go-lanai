@@ -3,6 +3,7 @@ package generator
 import (
 	"bytes"
 	"fmt"
+	regoformat "github.com/open-policy-agent/opa/format"
 	"go/format"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -15,6 +16,7 @@ const (
 	FileTypeUnknown FileType = ""
 	FileTypeGo      FileType = "go"
 	FileTypeYaml    FileType = "yaml"
+	FileTypeRego    FileType = "rego"
 )
 
 type FileType string
@@ -28,6 +30,7 @@ var errFormatterUnsupportedFileType = fmt.Errorf("unsupported file type to forma
 var formatters = map[FileType]TextFormatter{
 	FileTypeGo:   GoSourceFormatter{},
 	FileTypeYaml: YamlFormatter{},
+	FileTypeRego: RegoFormatter{},
 }
 
 // FormatFile clean up given file with file path, replace the content with prettier format.
@@ -39,6 +42,8 @@ func FormatFile(path string, typeHint FileType) error {
 			typeHint = FileTypeGo
 		case ".yml", ".yaml":
 			typeHint = FileTypeYaml
+		case ".rego":
+			typeHint = FileTypeRego
 		default:
 			return errFormatterUnsupportedFileType
 		}
@@ -148,4 +153,10 @@ func (f YamlFormatter) copyNode(src *yaml.Node, contents ...*yaml.Node) *yaml.No
 	node := *src
 	node.Content = contents
 	return &node
+}
+
+type RegoFormatter struct{}
+
+func (f RegoFormatter) Format(in []byte) ([]byte, error) {
+	return regoformat.Source("generated.rego", in)
 }

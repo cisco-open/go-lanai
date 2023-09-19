@@ -35,6 +35,7 @@ func NewGenerators(opts ...Options) Generators {
 	}
 	ret.groups = []Group{
 		APIGroup{Option: ret.Option},
+		OPAPolicyGroup{Option: ret.Option},
 		SecurityGroup{Option: ret.Option},
 		ProjectGroup{Option: ret.Option},
 	}
@@ -46,7 +47,6 @@ func NewGenerators(opts ...Options) Generators {
 }
 
 func (g *Generators) Generate() error {
-
 	// load templates
 	tmplOpts := make([]TemplateOptions, 0, len(g.groups))
 	for _, group := range g.groups {

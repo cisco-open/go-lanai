@@ -16,6 +16,11 @@
 {{end}}
 
 {{define "security-preset/opa/init/sourcecode"}}
+{{/* .OPAPolicy.APIPackage is set by OPAPolicyGroup */}}
+{{$policypackage := .OPAPolicy.APIPackage}}
+{{if not $policypackage}}
+{{$policypackage = .Project.Name }}
+{{end}}
 type securityConfigurer struct {}
 
 func (c *securityConfigurer) Configure(ws security.WebSecurity) {
@@ -29,7 +34,7 @@ func (c *securityConfigurer) Configure(ws security.WebSecurity) {
 			Request(matcher.AnyRequest()).
 			WithOrder(order.Highest).
 			// TODO Verify if policy path is correct
-			CustomDecisionMaker(opaaccess.DecisionMakerWithOPA(opa.RequestQueryWithPolicy("{{.Project.Name}}/allow_api"))),
+			CustomDecisionMaker(opaaccess.DecisionMakerWithOPA(opa.RequestQueryWithPolicy("{{$policypackage}}/allow_api"))),
 		).
 		With(errorhandling.New())
 }

@@ -22,6 +22,7 @@ const (
 
 const (
 	GroupOrderAPI = iota
+	GroupOrderOPAPolicy
 	GroupOrderSecurity
 	GroupOrderProject
 )

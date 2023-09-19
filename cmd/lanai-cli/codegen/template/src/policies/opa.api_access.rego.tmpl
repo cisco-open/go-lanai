@@ -1,0 +1,40 @@
+# METADATA
+# title: {{.OPAPolicy.APIPackage}}
+# description: Checking if user is allowed to access API.
+# authors:
+#   - Your Name <your_email@email.com>
+# custom:
+#   short_description: user is allowed to access API
+package {{.OPAPolicy.APIPackage}}
+
+import data.actuator.allow_endpoint
+import data.actuator.allow_health_details
+
+# TODO Update imports based on policies
+#import data.rbac.has_permission
+#import data.rbac.has_any_permission
+
+# API access Rules
+{{range $path, $item := .OpenAPIData.Paths}}
+    {{range $method, $op := $item.Operations}}
+# METADATA
+# description: {{$method}} {{$path}}
+allow_api {
+	input.request.method == "{{$method}}"
+	    {{- $pattern := $path }}
+        {{- range $op.Parameters}}
+            {{- if eq .Value.In "path"}}
+                {{- $pattern = $pattern | replace (print "{" .Value.Name "}") "*" }}
+            {{- end}}
+        {{- end}}
+        {{- if eq $path $pattern}}
+	input.request.path == "{{$path}}"
+	    {{- else}}
+    glob.match("{{$pattern}}", ["/"], input.request.path)
+        {{- end}}
+    # TODO Choose proper constraints
+	#has_permission("PERMISSION")
+	#has_any_permission({"PERMISSION1","PERMISSION2","PERMISSION3"})
+}
+    {{end}}
+{{end}}

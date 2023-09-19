@@ -36,7 +36,7 @@ func (c *securityConfigurer) Configure(ws security.WebSecurity) {
 			Request(matcher.AnyRequest()).
 			WithOrder(order.Highest).
 			// TODO Verify if policy path is correct
-			CustomDecisionMaker(opaaccess.DecisionMakerWithOPA(opa.RequestQueryWithPolicy("testservice/allow_api"))),
+			CustomDecisionMaker(opaaccess.DecisionMakerWithOPA(opa.RequestQueryWithPolicy("testservice_api/allow_api"))),
 		).
 		With(errorhandling.New())
 }
