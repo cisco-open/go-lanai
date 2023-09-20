@@ -1,8 +1,8 @@
 package generator
 
 import (
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"io/fs"
 	"text/template"
 )
@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	GroupOrderAPI = iota
+	GroupOrderAPI = iota * 100
 	GroupOrderOPAPolicy
 	GroupOrderSecurity
 	GroupOrderProject
@@ -38,7 +38,7 @@ var DefaultOption = Option{
 			Authentication: Authentication{
 				Method: AuthOAuth2,
 			},
-			Access:         Access{
+			Access: Access{
 				Preset: AccessPresetFreestyle,
 			},
 		},
@@ -113,8 +113,9 @@ type GeneratorOptions func(opt *GeneratorOption)
 
 //goland:noinspection GoNameStartsWithPackageName
 type GeneratorOption struct {
+	Option
 	Template *template.Template
-	Data     map[string]interface{}
+	Data     GenerationData
 }
 
 /************************
@@ -129,8 +130,8 @@ type ProjectMetadata struct {
 type GenerationData map[string]interface{}
 
 func (d GenerationData) ProjectMetadata() *ProjectMetadata {
-    meta, _ := d[KDataProject].(*ProjectMetadata)
-    return meta
+	meta, _ := d[KDataProject].(*ProjectMetadata)
+	return meta
 }
 
 /************************

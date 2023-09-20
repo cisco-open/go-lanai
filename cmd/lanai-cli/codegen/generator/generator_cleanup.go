@@ -10,42 +10,42 @@ import (
 	"strings"
 )
 
-// DeleteGenerator will read delete.*.tmpl files, and delete any generated
+// CleanupGenerator will read delete.*.tmpl files, and delete any generated
 // code that matches the regex defined in them, as well as any empty directories after the deletion
-type DeleteGenerator struct {
+type CleanupGenerator struct {
 	order      int
 	nameRegex  *regexp.Regexp
 	templateFS fs.FS
 }
 
-type DeleteOption struct {
-	Option
+type CleanupOption struct {
+	GeneratorOption
 	Order int
 }
 
-func newDeleteGenerator(opts ...func(opt *DeleteOption)) *DeleteGenerator {
-	o := &DeleteOption{
-		Order: defaultProjectPriorityOrder,
+func newCleanupGenerator(gOpt GeneratorOption, opts ...func(opt *CleanupOption)) *CleanupGenerator {
+	o := &CleanupOption{
+		GeneratorOption: gOpt,
 	}
 	for _, fn := range opts {
 		fn(o)
 	}
 
-	return &DeleteGenerator{
+	return &CleanupGenerator{
 		order:      o.Order,
 		nameRegex:  regexp.MustCompile("^(?:delete)(.+)(?:.tmpl)"),
 		templateFS: o.TemplateFS,
 	}
 }
 
-func (d *DeleteGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
-	if tmplInfo.IsDir() || !d.nameRegex.MatchString(path.Base(tmplPath)) {
+func (g *CleanupGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
+	if tmplInfo.IsDir() || !g.nameRegex.MatchString(path.Base(tmplPath)) {
 		// Skip over it
 		return nil
 	}
 
 	// Go through the output dir, if anything matches the regex, delete the file
-	regexContent, err := fs.ReadFile(d.templateFS, tmplPath)
+	regexContent, err := fs.ReadFile(g.templateFS, tmplPath)
 	if err != nil {
 		return err
 	}
@@ -158,6 +158,6 @@ func deleteEmptyDirectories(outputFS fs.FS) error {
 	return nil
 }
 
-func (d *DeleteGenerator) Order() int {
-	return defaultDeletePriorityOrder
+func (g *CleanupGenerator) Order() int {
+	return g.order
 }

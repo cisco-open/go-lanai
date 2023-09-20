@@ -109,8 +109,8 @@ var SupportedLanaiModules = LanaiModules{
 	Others:      []*LanaiModule{LanaiDSync},
 }
 
-// LanaiModuleDependencies some module requires other modules to initialized.
-// The dependency list doesn't includes always-required modules like "bootstrap" and "appconfig"
+// LanaiModuleDependencies some module requires other modules to be initialized.
+// The dependency list doesn't include always-required modules like "bootstrap" and "appconfig"
 var LanaiModuleDependencies = map[*LanaiModule][]*LanaiModule{
 	LanaiSecurity:      {LanaiRedis},
 	LanaiResServer:     {LanaiSecurity},
@@ -119,7 +119,6 @@ var LanaiModuleDependencies = map[*LanaiModule][]*LanaiModule{
 	LanaiSwagger:       {LanaiWeb},
 	LanaiCockroach:     {LanaiData},
 	LanaiSecurityScope: {LanaiSecurity},
-	LanaiOPA:           {LanaiOPA},
 	LanaiDSync:         {LanaiConsul},
 }
 

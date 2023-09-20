@@ -13,13 +13,12 @@ type DirectoryGenerator struct {
 }
 
 type DirOption struct {
-	Option
-	Data    map[string]interface{}
+	GeneratorOption
 	Patterns []string
 }
 
-func newDirectoryGenerator(opts ...func(option *DirOption)) *DirectoryGenerator {
-	o := &DirOption{}
+func newDirectoryGenerator(gOpt GeneratorOption, opts ...func(option *DirOption)) *DirectoryGenerator {
+	o := &DirOption{ GeneratorOption: gOpt }
 	for _, fn := range opts {
 		fn(o)
 	}

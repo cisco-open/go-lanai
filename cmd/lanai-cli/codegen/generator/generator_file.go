@@ -10,7 +10,7 @@ import (
 
 const (
 	projectMatcherRegexTemplate = "^(?:%s)(.+)(?:.tmpl)"
-	projectDefaultPrefix        = "project."
+	fileDefaultPrefix           = "project."
 )
 
 // FileGenerator is a basic generator that generates 1 file based on the templatePath being used
@@ -25,18 +25,16 @@ type FileGenerator struct {
 }
 
 type FileOption struct {
-	Option
-	Template *template.Template
-	Data   map[string]interface{}
+	GeneratorOption
 	Prefix string
 	Order  int
 }
 
 // newFileGenerator returns a new generator for single files
-func newFileGenerator(opts ...func(opt *FileOption)) *FileGenerator {
+func newFileGenerator(gOpt GeneratorOption, opts ...func(opt *FileOption)) *FileGenerator {
 	o := &FileOption{
-		Prefix: projectDefaultPrefix,
-		Order:  defaultProjectPriorityOrder,
+		GeneratorOption: gOpt,
+		Prefix:          fileDefaultPrefix,
 	}
 	for _, fn := range opts {
 		fn(o)

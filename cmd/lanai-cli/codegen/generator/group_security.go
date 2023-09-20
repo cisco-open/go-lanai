@@ -55,23 +55,18 @@ func (g SecurityGroup) Generators(opts ...GeneratorOptions) ([]Generator, error)
 	if !g.isApplicable() {
 		return []Generator{}, nil
 	}
-	genOpt := GeneratorOption{}
+	gOpt := GeneratorOption{}
 	for _, fn := range opts {
-		fn(&genOpt)
+		fn(&gOpt)
 	}
 
 	// Note: for backward compatibility, Default RegenMode is set to ignore
 	gens := []Generator{
-		newFileGenerator(func(opt *FileOption) {
-			opt.Option = g.Option
-			opt.Template = genOpt.Template
+		newFileGenerator(gOpt, func(opt *FileOption) {
 			opt.DefaultRegenMode = RegenModeIgnore
-			opt.Data = genOpt.Data
 			opt.Prefix = "security."
 		}),
-		newDirectoryGenerator(func(opt *DirOption) {
-			opt.Option = g.Option
-			opt.Data = genOpt.Data
+		newDirectoryGenerator(gOpt, func(opt *DirOption) {
 			opt.Patterns = []string{"configs/**", "pkg/init/**"}
 		}),
 	}

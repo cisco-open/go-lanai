@@ -4,6 +4,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 )
 
+const (
+	gOrderCleanup = GroupOrderProject + iota
+)
+
 /**********************
    Group
 **********************/
@@ -32,25 +36,23 @@ func (g ProjectGroup) CustomizeData(data GenerationData) error {
 }
 
 func (g ProjectGroup) Generators(opts ...GeneratorOptions) ([]Generator, error) {
-	genOpt := GeneratorOption{}
+	gOpt := GeneratorOption{}
 	for _, fn := range opts {
-		fn(&genOpt)
+		fn(&gOpt)
 	}
 
 	// Note: for backward compatibility, Default RegenMode is set to ignore
 	gens := []Generator{
-		newFileGenerator(func(opt *FileOption) {
-			opt.Option = g.Option
-			opt.Template = genOpt.Template
+		newFileGenerator(gOpt, func(opt *FileOption) {
 			opt.DefaultRegenMode = RegenModeIgnore
-			opt.Data = genOpt.Data
+			opt.Prefix = "project."
 		}),
-		newDirectoryGenerator(func(opt *DirOption) {
-			opt.Option = g.Option
-			opt.Data = genOpt.Data
+		newDirectoryGenerator(gOpt, func(opt *DirOption) {
 			opt.Patterns = []string{"cmd/**", "configs/**", "pkg/init/**"}
 		}),
-		newDeleteGenerator(func(opt *DeleteOption) { opt.Option = g.Option }),
+		newCleanupGenerator(gOpt, func(opt *CleanupOption) {
+			opt.Order = gOrderCleanup
+		}),
 	}
 	order.SortStable(gens, order.UnorderedMiddleCompare)
 	return gens, nil

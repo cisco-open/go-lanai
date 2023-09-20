@@ -22,13 +22,11 @@ type ApiVersionGenerator struct {
 const versionGeneratorName = "version"
 
 type ApiVerOption struct {
-	Option
-	Template *template.Template
-	Data map[string]interface{}
+	GeneratorOption
 }
 
-func newApiVersionGenerator(opts ...func(option *ApiVerOption)) *ApiVersionGenerator {
-	o := &ApiVerOption{}
+func newApiVersionGenerator(gOpt GeneratorOption, opts ...func(option *ApiVerOption)) *ApiVersionGenerator {
+	o := &ApiVerOption{ GeneratorOption: gOpt }
 	for _, fn := range opts {
 		fn(o)
 	}

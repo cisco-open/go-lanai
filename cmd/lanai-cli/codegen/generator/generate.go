@@ -13,13 +13,6 @@ import (
 var logger = log.New("Codegen")
 var globalCounter counter
 
-const (
-	defaultProjectPriorityOrder = iota
-	defaultApiStructOrder
-	defaultApiPriorityOrder
-	defaultDeletePriorityOrder
-)
-
 func GenerateFiles(opts ...Options) error {
 	generators := NewGenerators(opts...)
 	return generators.Generate()
@@ -81,6 +74,7 @@ func (g *Generators) Generate() error {
 	generators := make([]Generator, 0, len(g.groups)*5)
 	for _, group := range g.groups {
 		gens, e := group.Generators(func(opt *GeneratorOption) {
+			opt.Option = g.Option
 			opt.Data = data
 			opt.Template = template
 		})

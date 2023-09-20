@@ -19,6 +19,12 @@ const (
    Group
 **********************/
 
+const (
+	gOrderApiCommon = GroupOrderAPI + iota
+	gOrderApiStruct
+	gOrderApiController
+)
+
 type APIGroup struct {
 	Option
 }
@@ -52,40 +58,28 @@ func (g APIGroup) CustomizeData(data GenerationData) error {
 }
 
 func (g APIGroup) Generators(opts ...GeneratorOptions) ([]Generator, error) {
-	genOpt := GeneratorOption{}
+	gOpt := GeneratorOption{}
 	for _, fn := range opts {
-		fn(&genOpt)
+		fn(&gOpt)
 	}
 
 	gens := []Generator{
-		newDirectoryGenerator(func(opt *DirOption) {
-			opt.Option = g.Option
-			opt.Data = genOpt.Data
+		newDirectoryGenerator(gOpt, func(opt *DirOption) {
 			opt.Patterns = []string{"pkg/api/**", "pkg/controllers/**"}
 		}),
-		newApiGenerator(func(opt *ApiOption) {
-			opt.Option = g.Option
-			opt.Template = genOpt.Template
-			opt.Data = genOpt.Data
-		}),
-		newApiGenerator(func(opt *ApiOption) {
-			opt.Option = g.Option
-			opt.Template = genOpt.Template
-			opt.Data = genOpt.Data
-			opt.Order = defaultApiStructOrder
-			opt.Prefix = apiStructDefaultPrefix
-		}),
-		newFileGenerator(func(opt *FileOption) {
-			opt.Option = g.Option
-			opt.Template = genOpt.Template
-			opt.Data = genOpt.Data
+		newFileGenerator(gOpt, func(opt *FileOption) {
+			opt.Order = gOrderApiCommon
 			opt.Prefix = "api-common."
 		}),
-		newApiVersionGenerator(func(opt *ApiVerOption) {
-			opt.Option = g.Option
-			opt.Template = genOpt.Template
-			opt.Data = genOpt.Data
+		newApiGenerator(gOpt, func(opt *ApiOption) {
+			opt.Order = gOrderApiController
+			opt.Prefix = apiDefaultPrefix
 		}),
+		newApiGenerator(gOpt, func(opt *ApiOption) {
+			opt.Order = gOrderApiStruct
+			opt.Prefix = apiStructPrefix
+		}),
+		newApiVersionGenerator(gOpt),
 	}
 	order.SortStable(gens, order.UnorderedMiddleCompare)
 	return gens, nil

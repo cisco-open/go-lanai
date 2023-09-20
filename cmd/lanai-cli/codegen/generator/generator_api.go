@@ -24,23 +24,21 @@ type ApiGenerator struct {
 const (
 	apiMatcherRegexTemplate = `^(%s)(.+)(.tmpl)`
 	apiDefaultPrefix        = "api."
-	apiStructDefaultPrefix  = "api-struct."
+	apiStructPrefix         = "api-struct."
 )
 
 var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
 
 type ApiOption struct {
-	Option
-	Template *template.Template
-	Data     map[string]interface{}
-	Prefix   string
-	Order    int
+	GeneratorOption
+	Prefix string
+	Order  int
 }
 
-func newApiGenerator(opts ...func(opt *ApiOption)) *ApiGenerator {
+func newApiGenerator(gOpt GeneratorOption, opts ...func(opt *ApiOption)) *ApiGenerator {
 	o := &ApiOption{
-		Prefix: apiDefaultPrefix,
-		Order:  defaultApiPriorityOrder,
+		GeneratorOption: gOpt,
+		Prefix:          apiDefaultPrefix,
 	}
 	for _, fn := range opts {
 		fn(o)
