@@ -70,7 +70,7 @@ func (g *Generators) Generate() error {
 	}
 
 	// populate data
-	data := newGenerationData(&g.Project)
+	data := NewGenerationData(&g.Project)
 	for _, group := range g.groups {
 		if e := group.CustomizeData(data); e != nil {
 			return e
@@ -129,14 +129,14 @@ func (g *Generators) Generate() error {
 	return nil
 }
 
-func newGenerationData(p *Project) GenerationData {
+func NewGenerationData(p *Project) GenerationData {
 	return map[string]interface{}{
-		KDataProjectName:  p.Name,
-		KDataRepository:   p.Module,
-		KDataProject:      p,
-		KDataLanaiModules: SupportedLanaiModules,
-		KDataProjectInit: &ProjectInit{
+		KDataProjectName: p.Name,
+		KDataRepository:  p.Module,
+		KDataProject: &ProjectMetadata{
+			Project:        *p,
 			EnabledModules: utils.NewStringSet(),
 		},
+		KDataLanaiModules: SupportedLanaiModules,
 	}
 }

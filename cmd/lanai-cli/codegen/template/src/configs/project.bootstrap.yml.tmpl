@@ -6,7 +6,7 @@ config:
     search-path: ["configs", "configs/profiles"]
 
 cloud:
-{{if (.ProjectInit.EnabledModules.Has "consul")}}
+{{if (.Project.EnabledModules.Has "consul")}}
   consul:
     host: ${spring.cloud.consul.host:localhost}
     port: 8500
@@ -16,7 +16,7 @@ cloud:
       health-check-critical-timeout: 2m # de-registers an unhealthy instance after certain time
       ip-address: ${spring.cloud.consul.discovery.ipaddress:}
 {{end}}
-{{if (.ProjectInit.EnabledModules.Has "vault")}}
+{{if (.Project.EnabledModules.Has "vault")}}
   vault:
     kv:
       enabled: true
@@ -26,7 +26,7 @@ cloud:
     token: replace_with_token_value # replace with actual token value or provide this value via other property source (i.e. env variable or commandline args)
 {{end}}
 
-{{if (.ProjectInit.EnabledModules.Has "web")}}
+{{if (.Project.EnabledModules.Has "web")}}
 server:
   port: {{.Project.Port}}
   context-path: "{{.Project.ContextPath}}"

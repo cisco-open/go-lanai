@@ -46,9 +46,8 @@ func (g SecurityGroup) CustomizeData(data GenerationData) error {
 	case AccessPresetOPA:
 		modules = append(modules, LanaiOPA)
 	}
-	pInit := data.ProjectMetadata()
 	sec := ResolveEnabledLanaiModules(modules...)
-	pInit.EnabledModules.Add(sec.Values()...)
+	data.ProjectMetadata().EnabledModules.Add(sec.Values()...)
 	return nil
 }
 

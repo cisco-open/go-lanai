@@ -1,7 +1,5 @@
 package generator
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-
 /*********************
 	Project
  *********************/
@@ -12,10 +10,6 @@ type Project struct {
 	Description string
 	Port        int
 	ContextPath string
-}
-
-type ProjectInit struct {
-	EnabledModules utils.StringSet
 }
 
 /*********************

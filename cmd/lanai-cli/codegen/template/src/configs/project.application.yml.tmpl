@@ -14,13 +14,13 @@ info:
       parent: unknown
       type: unknown
 
-{{if (.ProjectInit.EnabledModules.Has "redis")}}
+{{if (.Project.EnabledModules.Has "redis")}}
 redis:
   addrs: ${spring.redis.host:localhost}:6379
   db: 0
 {{end}}
 
-{{if (.ProjectInit.EnabledModules.Has "tracing")}}
+{{if (.Project.EnabledModules.Has "tracing")}}
 tracing:
   enabled: true
   jaeger:
@@ -31,21 +31,21 @@ tracing:
     limit-per-second: 50
 {{end}}
 
-{{if (.ProjectInit.EnabledModules.Has "web")}}
+{{if (.Project.EnabledModules.Has "web")}}
 server:
   logging:
     default-level: "info"
 {{end}}
 
-{{if (.ProjectInit.EnabledModules.Has "actuator")}}
+{{if (.Project.EnabledModules.Has "actuator")}}
 {{template "configs/presets.actuator.yml.tmpl" .}}
 {{end}}
 
-{{if (.ProjectInit.EnabledModules.Has "security")}}
+{{if (.Project.EnabledModules.Has "security")}}
 {{template "configs/presets.security.yml.tmpl" .}}
 {{end}}
 
-{{if (.ProjectInit.EnabledModules.Has "swagger")}}
+{{if (.Project.EnabledModules.Has "swagger")}}
 swagger:
   spec: configs/api-docs-v3.yml
   security:

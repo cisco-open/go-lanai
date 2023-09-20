@@ -16,7 +16,6 @@ const (
 	KDataProjectName  = "ProjectName"
 	KDataRepository   = "Repository"
 	KDataProject      = "Project"
-	KDataProjectInit  = "ProjectInit"
 	KDataLanaiModules = "LanaiModules"
 )
 
@@ -100,8 +99,9 @@ type Group interface {
 	// The results are propagate to other groups and served to Generators() for constructing generators.
 	// Important: For each top-level component in Data should be owned by the group that generating it.
 	// 			  Other groups can read it but should not change or replace it.
-	//			  The exception is "ProjectInit" object, which all groups can add to it
+	//			  The exception is "ProjectMetadata" object, which all groups can add to it
 	CustomizeData(data GenerationData) error
+
 	// Generators prepare generators with proper generator list based on options. Group can decide the group is not
 	// applicable, in such case, Group can return empty list without error
 	// The returned generators should be sorted.
@@ -118,20 +118,24 @@ type GeneratorOption struct {
 }
 
 /************************
-	Generation Context
+	Generation Data
  ************************/
+
+type ProjectMetadata struct {
+	Project
+	EnabledModules utils.StringSet
+}
 
 type GenerationData map[string]interface{}
 
-func (d GenerationData) ProjectMetadata() *ProjectInit {
-    _, ok := d[KDataProjectInit]
-    if !ok {
-        d[KDataProjectInit] = &ProjectInit{
-            EnabledModules: utils.NewStringSet(),
-        }
-    }
-    return d[KDataProjectInit].(*ProjectInit)
+func (d GenerationData) ProjectMetadata() *ProjectMetadata {
+    meta, _ := d[KDataProject].(*ProjectMetadata)
+    return meta
 }
+
+/************************
+	Generation Context
+ ************************/
 
 type GenerationContext struct {
 	templatePath string
