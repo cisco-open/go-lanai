@@ -1,0 +1,23 @@
+# Path to the openAPI 3 Contract
+contract: ./test-api-docs.yml
+
+# Path to have custom templates
+#templateDirectory: template/src
+
+# The import path of this project
+repositoryRootPath: cto-github.cisco.com/NFV-BU/test-service
+projectName: testservice
+
+# Rule for what happens if a generate a file would overwrite an existing one (default: overwrite)
+# overwrite
+# ignore - do nothing
+# reference - generate a new file with `ref` suffix if the file differs
+regeneration:
+  default: overwrite #if not set, this will be overwrite
+  # Applies specific rules to files matching these patterns
+#  rules:
+#    "pkg/controller/*/*": reference
+
+# Define regexes here so they can get names, otherwise they'll have hashed names
+#regexes:
+#  testRegex: "^[a-zA-Z0-5-_=]{1,256}$"

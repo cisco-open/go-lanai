@@ -6,6 +6,7 @@ config:
     search-path: ["configs", "configs/profiles"]
 
 cloud:
+{{if (.Project.EnabledModules.Has "consul")}}
   consul:
     host: ${spring.cloud.consul.host:localhost}
     port: 8500
@@ -14,6 +15,8 @@ cloud:
     discovery:
       health-check-critical-timeout: 2m # de-registers an unhealthy instance after certain time
       ip-address: ${spring.cloud.consul.discovery.ipaddress:}
+{{end}}
+{{if (.Project.EnabledModules.Has "vault")}}
   vault:
     kv:
       enabled: true
@@ -21,10 +24,13 @@ cloud:
     port: 8200
     scheme: http
     token: replace_with_token_value # replace with actual token value or provide this value via other property source (i.e. env variable or commandline args)
+{{end}}
 
+{{if (.Project.EnabledModules.Has "web")}}
 server:
   port: {{.Project.Port}}
-  context-path: {{.Project.ContextPath}}
+  context-path: "{{.Project.ContextPath}}"
+{{end}}
 
 # This section will refresh the logger configuration after bootstrap is invoked.
 log:

@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/openapi"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
+	"github.com/Masterminds/sprig/v3"
 	"text/template"
 )
 
@@ -14,6 +15,7 @@ var (
 
 func init() {
 	TemplateFuncMaps = []template.FuncMap{
+		sprig.GenericFuncMap(),
 		util.FuncMap,
 		_go.FuncMap,
 		openapi.FuncMap,

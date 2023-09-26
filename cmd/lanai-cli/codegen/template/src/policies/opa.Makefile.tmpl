@@ -1,0 +1,32 @@
+### Settings
+NAME ?= {{.Project.Name}}
+OUTPUT ?= {{.Project.Name}}
+DESC ?= batch created bundle for {{.Project.Name}}
+REF = .tmp/upload_ref
+
+### Main
+.PHONY: test pack upload
+
+test:
+	opa test . -b constraints.tar.gz -v
+
+pack:
+	@echo
+	@echo Packing...
+	mkdir -p .tmp
+	tar -czvf .tmp/policies.tar.gz --exclude='*_test.*' *.rego *.json
+
+upload: pack
+	@echo
+	@echo Uploading...
+	@curl -s 'http://localhost:8911/policy/api/v1/batch/upload' \
+    	-H 'Content-Type: application/gzip' \
+    	-H 'Accept: text/plain' \
+    	--data-binary '@.tmp/policies.tar.gz' > $(REF)
+	@echo REF = $$(cat $(REF))
+	@echo
+	@echo Creating Bundle...
+	@curl -s 'http://localhost:8911/policy/api/v1/batch/import/bundle' \
+	-H 'Content-Type: application/json' \
+	-d "{\"name\": \"$(NAME)\", \"output_name\": \"$(OUTPUT)\",\"description\": \"$(DESC)\", \"ref\": \"$$(cat $(REF))\"}"
+

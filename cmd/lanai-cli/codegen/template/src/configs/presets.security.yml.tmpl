@@ -1,0 +1,30 @@
+security:
+  {{ if eq .Security.Authentication.Method "oauth2" }}
+  keys:
+    jwt:
+      id: dev
+      format: pem
+      file: "configs/jwtpubkey.pem"
+      password: TheCakeIsaLie
+  jwt:
+    key-name: "jwt"
+  session:
+    idle-timeout: "${security.auth.session-timeout.idle-timeout-seconds:9000}s"
+    absolute-timeout: "${security.auth.session-timeout.absolute-timeout-seconds:18000}s"
+  timeout-support:
+    db-index: 8 # this should have the same value as security.session.db-index on auth service
+  {{end}}
+  {{ if eq .Security.Access.Preset "opa" }}
+  opa:
+    server:
+      url: "http://localhost:8911/policy"
+      polling-min-delay: 5m
+      polling-max-delay: 1h
+      long-polling-timeout: 30s
+    bundles:
+      {{.Project.Name}}:
+        name: {{.Project.Name}}
+        # url: "/bundles/{{.Project.Name}}"
+    logging:
+      decision-logs-enabled: true
+  {{end}}

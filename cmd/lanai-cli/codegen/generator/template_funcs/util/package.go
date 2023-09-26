@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-var logger = log.New("internal")
+var logger = log.New("Internal")
 var FuncMap = template.FuncMap{
 	"toTitle":       ToTitle,
 	"toLower":       ToLower,

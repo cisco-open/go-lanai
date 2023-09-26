@@ -5,7 +5,7 @@ import (
 	"text/template"
 )
 
-var logger = log.New("internal")
+var logger = log.New("Internal")
 var FuncMap = template.FuncMap{
 	"importsUsedByPath":   ImportsUsedByPath,
 	"containsSingularRef": containsSingularRef,

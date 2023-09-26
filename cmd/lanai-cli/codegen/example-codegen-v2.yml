@@ -29,6 +29,13 @@ components:
       # Define names of regular expressions appeared in OpenAPI docs here. Otherwise, they'll have generated names.
       regular-expressions:
         exampleRegex: "^$|^[Aa][Ss][Cc]|[Dd][Ee][Ss][Cc]$"
+  security:
+    authn:
+      # Authentication method. Currently support: oauth2 | none
+      method: oauth2
+    access:
+      # Access preset for API & Actuator endpoints. Currently support: freestyle | opa
+      preset: freestyle
 
 # Regeneration config. Defines behaviours when re-run codegen on an existing project
 # Supported Modes:

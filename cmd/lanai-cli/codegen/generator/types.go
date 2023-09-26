@@ -1,16 +1,8 @@
 package generator
 
-/******************
-	Context Data
- ******************/
-
-// Keys in template's context data as map
-const (
-	CKOpenAPIData = "OpenAPIData"
-	CKProjectName = "ProjectName"
-	CKRepository  = "Repository"
-	CKProject     = "Project"
-)
+/*********************
+	Project
+ *********************/
 
 type Project struct {
 	Name        string
@@ -18,6 +10,60 @@ type Project struct {
 	Description string
 	Port        int
 	ContextPath string
+}
+
+/*********************
+	Components
+ *********************/
+
+type Components struct {
+	Contract Contract
+	Security Security
+}
+
+/*********************
+	API Contract
+ *********************/
+
+type Contract struct {
+	Path   string
+	Naming ContractNaming
+}
+
+type ContractNaming struct {
+	RegExps map[string]string
+}
+
+/*********************
+	Web Security
+ *********************/
+
+type Security struct {
+	Authentication Authentication
+	Access         Access
+}
+
+type AuthenticationMethod string
+
+const (
+	AuthNone   AuthenticationMethod = `none`
+	AuthOAuth2 AuthenticationMethod = `oauth2`
+	// TODO more authentication methods like basic, form, etc...
+)
+
+type Authentication struct {
+	Method AuthenticationMethod
+}
+
+type AccessPreset string
+
+const (
+	AccessPresetFreestyle AccessPreset = `freestyle`
+	AccessPresetOPA       AccessPreset = `opa`
+)
+
+type Access struct {
+	Preset AccessPreset
 }
 
 /******************
