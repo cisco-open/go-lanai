@@ -134,12 +134,12 @@ func apiVersion(pathName string) (version string) {
 
 func apiOutputResolver() TemplateOutputResolver {
 	return TemplateOutputResolverFunc(func(ctx context.Context, tmplDesc TemplateDescriptor, data GenerationData) (TemplateOutputDescriptor, error) {
-		path, e := ConvertSrcRootToTargetDir(tmplDesc.Path, data)
+		resolvedTmplPath, e := resolvePathWithData(tmplDesc.Path, data)
 		if e != nil {
 			return TemplateOutputDescriptor{}, e
 		}
+		dir := resolveOutputDir(resolvedTmplPath)
 
-		dir := filepath.Dir(path)
 		filename := filenameFromPath(data["PathName"].(string))
 		return TemplateOutputDescriptor{
 			Path: filepath.Join(dir, filename),

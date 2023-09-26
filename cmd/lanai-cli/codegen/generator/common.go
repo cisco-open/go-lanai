@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"bytes"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"errors"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 )
@@ -92,45 +90,6 @@ func applyRegenRule(gc *GenerationContext) (f io.WriteCloser, err error) {
 	}
 
 	return f, nil
-}
-
-// ConvertSrcRootToTargetDir will take a path containing a SrcRoot directory, and return
-// an equivalent path to the target directory, with any special folders resolved with modifiers
-// e.g cmd/@NAME@/main.go -> output/dir/cmd/myservice/main.go
-// Note: srcPath should be always relative to template root
-func ConvertSrcRootToTargetDir(srcPath string, modifiers map[string]interface{}) (string, error) {
-	unresolvedTargetDir := combineWithOutputDir(srcPath)
-	if modifiers == nil {
-		return unresolvedTargetDir, nil
-	}
-
-	return resolvePath(modifiers, unresolvedTargetDir)
-}
-
-func combineWithOutputDir(relativeDir string) string {
-	return path.Join(cmdutils.GlobalArgs.OutputDir, relativeDir)
-}
-
-func resolvePath(modifiers map[string]interface{}, unresolvedTargetDir string) (string, error) {
-	matches := regexp.MustCompile("@(.+?)@").FindAllStringSubmatch(unresolvedTargetDir, -1)
-	if len(matches) == 0 {
-		return unresolvedTargetDir, nil
-	}
-
-	for _, match := range matches {
-		if len(match) != 2 {
-			continue
-		}
-		// replace @s to template compatible format
-		unresolvedTargetDir = strings.Replace(unresolvedTargetDir, match[0], fmt.Sprintf("{{ with index . \"%v\"}}{{.}}{{ end }}", match[1]), 1)
-	}
-
-	tmpl := template.Must(template.New("filepath").Parse(unresolvedTargetDir))
-	buf := new(bytes.Buffer)
-	if err := tmpl.Execute(buf, modifiers); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
 }
 
 func copyOf(data map[string]interface{}) map[string]interface{} {
