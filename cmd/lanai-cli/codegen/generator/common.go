@@ -1,28 +1,23 @@
 package generator
 
 import (
-	"bytes"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"embed"
+	"errors"
 	"fmt"
 	"github.com/bmatcuk/doublestar/v4"
-	"go/format"
 	"io"
-	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 )
-
-const defaultSrcRootDir = "template/src"
 
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil
 }
+
 func GenerateFileFromTemplate(gc GenerationContext, template *template.Template) error {
 	if gc.templatePath == "" {
 		return fmt.Errorf("no templatePath name defined")
@@ -45,12 +40,10 @@ func GenerateFileFromTemplate(gc GenerationContext, template *template.Template)
 		return fmt.Errorf("templatePath could not be executed: %v", err)
 	}
 
-	if isGoExt(gc.filename) {
-		err := formatGoCode(gc.filename)
-		if err != nil {
-			return fmt.Errorf("error formatting go code for file %v: %v", gc.filename, err)
-		}
+	if e := FormatFile(gc.filename, FileTypeUnknown); e != nil && !errors.Is(e, errFormatterUnsupportedFileType) {
+		return fmt.Errorf("error formatting go code for file %v: %v", gc.filename, e)
 	}
+
 	return nil
 }
 
@@ -60,7 +53,7 @@ func mkdirIfNotExists(path string) error {
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if e := os.MkdirAll(path, 0744); e != nil {
+		if e := os.MkdirAll(path, 0755); e != nil {
 			return e
 		}
 	}
@@ -99,80 +92,6 @@ func applyRegenRule(gc *GenerationContext) (f io.WriteCloser, err error) {
 	return f, nil
 }
 
-func isGoExt(filename string) bool {
-	return path.Ext(filename) == ".go" || path.Ext(filename) == ".goref"
-}
-
-func formatGoCode(outputFilePath string) error {
-	r, err := os.ReadFile(outputFilePath)
-	if err != nil {
-		return err
-	}
-	formatted, err := format.Source(r)
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(outputFilePath, formatted, 0644); err != nil {
-		return err
-	}
-	return nil
-}
-
-// ConvertSrcRootToTargetDir will take a path containing a SrcRoot directory, and return
-// an equivalent path to the target directory, with any special folders resolved with modifiers
-// e.g template/srcRoot/cmd/@NAME@/main.go -> output/dir/cmd/myservice/main.go
-func ConvertSrcRootToTargetDir(srcPath string, modifiers map[string]interface{}, filesystem fs.FS) (string, error) {
-	relativeDir := relativePathFromSrcRoot(srcPath, filesystem)
-	unresolvedTargetDir := combineWithOutputDir(relativeDir)
-
-	if modifiers == nil {
-		return unresolvedTargetDir, nil
-	}
-
-	return resolvePath(modifiers, unresolvedTargetDir)
-}
-
-func relativePathFromSrcRoot(path string, templates fs.FS) string {
-	_, isEmbedFS := templates.(embed.FS)
-	if isEmbedFS {
-		parts := strings.SplitAfterN(path, defaultSrcRootDir+"/", 2)
-		if len(parts) != 2 {
-			return ""
-		} else {
-			return parts[1]
-		}
-	} else {
-		//	For os.FS, the path is already considered relative
-		return path
-	}
-}
-
-func combineWithOutputDir(relativeDir string) string {
-	return path.Join(cmdutils.GlobalArgs.OutputDir, relativeDir)
-}
-
-func resolvePath(modifiers map[string]interface{}, unresolvedTargetDir string) (string, error) {
-	matches := regexp.MustCompile("@(.+?)@").FindAllStringSubmatch(unresolvedTargetDir, -1)
-	if len(matches) == 0 {
-		return unresolvedTargetDir, nil
-	}
-
-	for _, match := range matches {
-		if len(match) != 2 {
-			continue
-		}
-		// replace @s to template compatible format
-		unresolvedTargetDir = strings.Replace(unresolvedTargetDir, match[0], fmt.Sprintf("{{ with index . \"%v\"}}{{.}}{{ end }}", match[1]), 1)
-	}
-
-	tmpl := template.Must(template.New("filepath").Parse(unresolvedTargetDir))
-	buf := new(bytes.Buffer)
-	if err := tmpl.Execute(buf, modifiers); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
 func copyOf(data map[string]interface{}) map[string]interface{} {
 	dataCopy := make(map[string]interface{})
 	for k, v := range data {
@@ -194,4 +113,19 @@ func getApplicableRegenRules(outputFile string, rules RegenRules, defaultMode Re
 		}
 	}
 	return mode, nil
+}
+
+// counter used to count touched file, grouped by directories
+type counter map[string]int
+
+func (c counter) Record(filePath string) {
+	dir := filepath.Dir(filePath)
+	v, _ := c[dir]
+	c[dir] = v + 1
+}
+
+func (c counter) Cleanup(filePath string) {
+	dir := filepath.Dir(filePath)
+	v, _ := c[dir]
+	c[dir] = v - 1
 }

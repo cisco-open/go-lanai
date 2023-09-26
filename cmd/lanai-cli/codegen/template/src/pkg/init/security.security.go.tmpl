@@ -1,0 +1,27 @@
+package serviceinit
+
+{{ $imports := NewImports }}
+{{if (.Project.EnabledModules.Has "resserver")}}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver" }}
+{{end}}
+{{ if eq .Security.Access.Preset "opa" }}
+{{ template "security-preset/opa/init/imports" $imports }}
+{{else}}
+{{ template "security-preset/freestyle/init/imports" $imports }}
+{{end}}
+{{ template "imports" $imports }}
+
+{{if (.Project.EnabledModules.Has "resserver")}}
+// newResServerConfigurer required for token auth
+func newResServerConfigurer() resserver.ResourceServerConfigurer {
+	return func(config *resserver.Configuration) {
+		//do nothing
+	}
+}
+{{end}}
+
+{{ if eq .Security.Access.Preset "opa" }}
+{{ template "security-preset/opa/init/sourcecode" . }}
+{{else}}
+{{ template "security-preset/freestyle/init/sourcecode" . }}
+{{end}}
