@@ -63,10 +63,10 @@ func (g OPAPolicyGroup) Generators(opts ...GeneratorOptions) ([]Generator, error
 	gens := []Generator{
 		newFileGenerator(gOpt, func(opt *FileOption) {
 			opt.DefaultRegenMode = RegenModeIgnore
-			opt.Prefix = "opa."
+			opt.Prefix = "opa"
 		}),
 		newDirectoryGenerator(gOpt, func(opt *DirOption) {
-			opt.Patterns = []string{"policies/**"}
+			opt.Matcher = isDir().And(matchPatterns("policies/**"))
 		}),
 	}
 	order.SortStable(gens, order.UnorderedMiddleCompare)

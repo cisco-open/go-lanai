@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
@@ -13,9 +14,9 @@ import (
 var logger = log.New("Codegen")
 var globalCounter counter
 
-func GenerateFiles(opts ...Options) error {
+func GenerateFiles(ctx context.Context, opts ...Options) error {
 	generators := NewGenerators(opts...)
-	return generators.Generate()
+	return generators.Generate(ctx)
 }
 
 type Generators struct {
@@ -43,7 +44,7 @@ func NewGenerators(opts ...Options) Generators {
 	return ret
 }
 
-func (g *Generators) Generate() error {
+func (g *Generators) Generate(ctx context.Context) error {
 	// reset counter
 	globalCounter = counter{}
 
@@ -85,14 +86,14 @@ func (g *Generators) Generate() error {
 	}
 
 	// scan all templates
-	tmpls := make(map[string]fs.FileInfo)
+	tmpls := make([]TemplateDescriptor, 0, len(template.Templates()) * 2)
 	e = fs.WalkDir(g.TemplateFS, ".", func(p string, d fs.DirEntry, err error) error {
 		// load the files into the generator
 		fi, e := d.Info()
 		if e != nil {
 			return e
 		}
-		tmpls[p] = fi
+		tmpls = append(tmpls, TemplateDescriptor{Path: p, FileInfo: fi})
 		return err
 	})
 	if e != nil {
@@ -101,8 +102,8 @@ func (g *Generators) Generate() error {
 
 	// execute generators
 	for _, gen := range generators {
-		for path, info := range tmpls {
-			if err := gen.Generate(path, info); err != nil {
+		for _, tmpl := range tmpls {
+			if err := gen.Generate(ctx, tmpl); err != nil {
 				return err
 			}
 		}

@@ -64,10 +64,10 @@ func (g SecurityGroup) Generators(opts ...GeneratorOptions) ([]Generator, error)
 	gens := []Generator{
 		newFileGenerator(gOpt, func(opt *FileOption) {
 			opt.DefaultRegenMode = RegenModeIgnore
-			opt.Prefix = "security."
+			opt.Prefix = "security"
 		}),
 		newDirectoryGenerator(gOpt, func(opt *DirOption) {
-			opt.Patterns = []string{"configs/**", "pkg/init/**"}
+			opt.Matcher = isDir().And(matchPatterns("configs/**", "pkg/init/**"))
 		}),
 	}
 	order.SortStable(gens, order.UnorderedMiddleCompare)

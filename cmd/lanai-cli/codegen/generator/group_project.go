@@ -45,10 +45,10 @@ func (g ProjectGroup) Generators(opts ...GeneratorOptions) ([]Generator, error) 
 	gens := []Generator{
 		newFileGenerator(gOpt, func(opt *FileOption) {
 			opt.DefaultRegenMode = RegenModeIgnore
-			opt.Prefix = "project."
+			opt.Prefix = "project"
 		}),
 		newDirectoryGenerator(gOpt, func(opt *DirOption) {
-			opt.Patterns = []string{"cmd/**", "configs/**", "pkg/init/**"}
+			opt.Matcher = isDir().And(matchPatterns("cmd/**", "configs/**", "pkg/init/**"))
 		}),
 		newCleanupGenerator(gOpt, func(opt *CleanupOption) {
 			opt.Order = gOrderCleanup

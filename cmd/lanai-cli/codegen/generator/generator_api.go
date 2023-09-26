@@ -1,10 +1,11 @@
 package generator
 
 import (
+	"context"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"io/fs"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
@@ -14,25 +15,25 @@ type ApiGenerator struct {
 	data             map[string]interface{}
 	template         *template.Template
 	templateFS       fs.FS
-	nameRegex        *regexp.Regexp
-	prefix           string
+	matcher          TemplateMatcher
+	outputResolver   TemplateOutputResolver
 	order            int
 	defaultRegenRule RegenMode
 	rules            RegenRules
 }
 
 const (
-	apiMatcherRegexTemplate = `^(%s)(.+)(.tmpl)`
-	apiDefaultPrefix        = "api."
-	apiStructPrefix         = "api-struct."
+	apiDefaultPrefix        = "api"
+	apiStructPrefix         = "api-struct"
 )
 
 var versionRegex = regexp.MustCompile(".+\\/(v\\d+)\\/(.+)")
 
 type ApiOption struct {
 	GeneratorOption
-	Prefix string
-	Order  int
+	Matcher        TemplateMatcher
+	Prefix         string
+	Order          int
 }
 
 func newApiGenerator(gOpt GeneratorOption, opts ...func(opt *ApiOption)) *ApiGenerator {
@@ -44,46 +45,48 @@ func newApiGenerator(gOpt GeneratorOption, opts ...func(opt *ApiOption)) *ApiGen
 		fn(o)
 	}
 
-	regex := fmt.Sprintf(apiMatcherRegexTemplate, regexp.QuoteMeta(o.Prefix))
+	if o.Matcher == nil {
+		pattern := fmt.Sprintf(patternWithFilePrefix, o.Prefix)
+		o.Matcher = isTmplFile().And(matchPatterns(pattern))
+	}
+
 	return &ApiGenerator{
 		data:             o.Data,
 		template:         o.Template,
 		templateFS:       o.TemplateFS,
-		nameRegex:        regexp.MustCompile(regex),
+		matcher:          o.Matcher,
+		outputResolver:   apiOutputResolver(),
 		order:            o.Order,
 		defaultRegenRule: o.DefaultRegenMode,
 		rules:            o.RegenRules,
 	}
 }
 
-func (m *ApiGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
-	if tmplInfo.IsDir() || !m.nameRegex.MatchString(path.Base(tmplPath)) {
-		// Skip over it
-		return nil
+func (g *ApiGenerator) Generate(ctx context.Context, tmplDesc TemplateDescriptor) error {
+	if ok, e := g.matcher.Matches(tmplDesc); e != nil || !ok {
+		return e
 	}
 
-	iterateOver := m.data[KDataOpenAPI].(*openapi3.T).Paths
+	iterateOver := g.data[KDataOpenAPI].(*openapi3.T).Paths
 	var toGenerate []GenerationContext
 	for pathName, pathData := range iterateOver {
-		data := copyOf(m.data)
+		data := copyOf(g.data)
 		data["PathData"] = pathData
 		data["PathName"] = pathName
 		data["Version"] = apiVersion(pathName)
 
-		baseFilename := filenameFromPath(pathName)
-		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data)
-		if err != nil {
-			return err
+		output, e := g.outputResolver.Resolve(ctx, tmplDesc, data)
+		if e != nil {
+			return e
 		}
 
-		outputFile := path.Join(targetDir, baseFilename)
-		regenRule, err := getApplicableRegenRules(outputFile, m.rules, m.defaultRegenRule)
+		regenRule, err := getApplicableRegenRules(output.Path, g.rules, g.defaultRegenRule)
 		if err != nil {
 			return err
 		}
 		toGenerate = append(toGenerate, *NewGenerationContext(
-			tmplPath,
-			outputFile,
+			tmplDesc.Path,
+			output.Path,
 			regenRule,
 			data,
 		))
@@ -91,13 +94,17 @@ func (m *ApiGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
 
 	for _, gc := range toGenerate {
 		logger.Debugf("[API] generating %v", gc.filename)
-		err := GenerateFileFromTemplate(gc, m.template)
+		err := GenerateFileFromTemplate(gc, g.template)
 		if err != nil {
 			return err
 		}
 		globalCounter.Record(gc.filename)
 	}
 	return nil
+}
+
+func (g *ApiGenerator) Order() int {
+	return g.order
 }
 
 func filenameFromPath(pathName string) string {
@@ -125,6 +132,18 @@ func apiVersion(pathName string) (version string) {
 	return version
 }
 
-func (m *ApiGenerator) Order() int {
-	return m.order
+func apiOutputResolver() TemplateOutputResolver {
+	return TemplateOutputResolverFunc(func(ctx context.Context, tmplDesc TemplateDescriptor, data GenerationData) (TemplateOutputDescriptor, error) {
+		path, e := ConvertSrcRootToTargetDir(tmplDesc.Path, data)
+		if e != nil {
+			return TemplateOutputDescriptor{}, e
+		}
+
+		dir := filepath.Dir(path)
+		filename := filenameFromPath(data["PathName"].(string))
+		return TemplateOutputDescriptor{
+			Path: filepath.Join(dir, filename),
+		}, nil
+	})
 }
+

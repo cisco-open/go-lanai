@@ -91,7 +91,7 @@ func GenerateWithConfig(ctx context.Context, cfg *ConfigV2) error {
 	opts := append(cfg.ToOptions(),
 		generator.WithTemplateFS(tmplFS),
 	)
-	if e = generator.GenerateFiles(opts...); e != nil {
+	if e = generator.GenerateFiles(ctx, opts...); e != nil {
 		return e
 	}
 	logger.Infof("Code generated to %v", cmdutils.GlobalArgs.OutputDir)

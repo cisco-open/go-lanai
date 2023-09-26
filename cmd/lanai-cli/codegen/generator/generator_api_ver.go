@@ -1,10 +1,9 @@
 package generator
 
 import (
+	"context"
 	"github.com/getkin/kin-openapi/openapi3"
 	"io/fs"
-	"path"
-	"regexp"
 	"sort"
 	"text/template"
 )
@@ -13,10 +12,11 @@ import (
 type ApiVersionGenerator struct {
 	data             map[string]interface{}
 	template         *template.Template
-	nameRegex        *regexp.Regexp
 	defaultRegenRule RegenMode
 	rules            RegenRules
 	templateFS       fs.FS
+	matcher          TemplateMatcher
+	outputResolver   TemplateOutputResolver
 }
 
 const versionGeneratorName = "version"
@@ -26,7 +26,9 @@ type ApiVerOption struct {
 }
 
 func newApiVersionGenerator(gOpt GeneratorOption, opts ...func(option *ApiVerOption)) *ApiVersionGenerator {
-	o := &ApiVerOption{ GeneratorOption: gOpt }
+	o := &ApiVerOption{
+		GeneratorOption: gOpt,
+	}
 	for _, fn := range opts {
 		fn(o)
 	}
@@ -35,56 +37,44 @@ func newApiVersionGenerator(gOpt GeneratorOption, opts ...func(option *ApiVerOpt
 		data:             o.Data,
 		template:         o.Template,
 		templateFS:       o.TemplateFS,
-		nameRegex:        regexp.MustCompile("^(version.)(.+)(.tmpl)"),
+		matcher:          isTmplFile().And(matchPatterns("**/version.*.tmpl")),
+		outputResolver:   regexOutputResolver(`(?:version\.)(?P<filename>.+)(?:\.tmpl)`),
 		defaultRegenRule: o.DefaultRegenMode,
 		rules:            o.RegenRules,
 	}
 }
 
-func (m *ApiVersionGenerator) determineFilename(template string) string {
-	var result string
-	matches := m.nameRegex.FindStringSubmatch(path.Base(template))
-	if len(matches) < 2 {
-		result = ""
-	}
-
-	result = matches[2]
-	return result
-}
-
-func (m *ApiVersionGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
-	if tmplInfo.IsDir() || !m.nameRegex.MatchString(path.Base(tmplPath)) {
-		// Skip over it
-		return nil
+func (g *ApiVersionGenerator) Generate(ctx context.Context, tmplDesc TemplateDescriptor) error {
+	if ok, e := g.matcher.Matches(tmplDesc); e != nil || !ok {
+		return e
 	}
 
 	// get all versions
 	iterateOver := make(map[string][]string)
-	for pathName, _ := range m.data[KDataOpenAPI].(*openapi3.T).Paths {
+	for pathName, _ := range g.data[KDataOpenAPI].(*openapi3.T).Paths {
 		version := apiVersion(pathName)
 		iterateOver[version] = append(iterateOver[version], pathName)
 	}
 
 	var toGenerate []GenerationContext
 	for version, versionData := range iterateOver {
-		data := copyOf(m.data)
+		data := copyOf(g.data)
 		sort.Strings(versionData)
 		data["VersionData"] = versionData
 		data["Version"] = version
 
-		targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), data)
-		if err != nil {
-			return err
+		output, e := g.outputResolver.Resolve(ctx, tmplDesc, data)
+		if e != nil {
+			return e
 		}
 
-		outputFile := path.Join(targetDir, m.determineFilename(tmplPath))
-		regenRule, err := getApplicableRegenRules(outputFile, m.rules, m.defaultRegenRule)
+		regenRule, err := getApplicableRegenRules(output.Path, g.rules, g.defaultRegenRule)
 		if err != nil {
 			return err
 		}
 		toGenerate = append(toGenerate, *NewGenerationContext(
-			tmplPath,
-			outputFile,
+			tmplDesc.Path,
+			output.Path,
 			regenRule,
 			data,
 		))
@@ -92,7 +82,7 @@ func (m *ApiVersionGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) er
 
 	for _, gc := range toGenerate {
 		logger.Debugf("[API] generating %v", gc.filename)
-		err := GenerateFileFromTemplate(gc, m.template)
+		err := GenerateFileFromTemplate(gc, g.template)
 		if err != nil {
 			return err
 		}

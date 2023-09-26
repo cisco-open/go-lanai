@@ -65,11 +65,11 @@ func (g APIGroup) Generators(opts ...GeneratorOptions) ([]Generator, error) {
 
 	gens := []Generator{
 		newDirectoryGenerator(gOpt, func(opt *DirOption) {
-			opt.Patterns = []string{"pkg/api/**", "pkg/controllers/**"}
+			opt.Matcher = isDir().And(matchPatterns("pkg/api/**", "pkg/controllers/**"))
 		}),
 		newFileGenerator(gOpt, func(opt *FileOption) {
 			opt.Order = gOrderApiCommon
-			opt.Prefix = "api-common."
+			opt.Prefix = "api-common"
 		}),
 		newApiGenerator(gOpt, func(opt *ApiOption) {
 			opt.Order = gOrderApiController

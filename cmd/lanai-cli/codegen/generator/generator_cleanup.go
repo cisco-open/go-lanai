@@ -1,11 +1,11 @@
 package generator
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 )
@@ -14,8 +14,8 @@ import (
 // code that matches the regex defined in them, as well as any empty directories after the deletion
 type CleanupGenerator struct {
 	order      int
-	nameRegex  *regexp.Regexp
 	templateFS fs.FS
+	matcher TemplateMatcher
 }
 
 type CleanupOption struct {
@@ -33,19 +33,18 @@ func newCleanupGenerator(gOpt GeneratorOption, opts ...func(opt *CleanupOption))
 
 	return &CleanupGenerator{
 		order:      o.Order,
-		nameRegex:  regexp.MustCompile("^(?:delete)(.+)(?:.tmpl)"),
 		templateFS: o.TemplateFS,
+		matcher: isTmplFile().And(matchPatterns("**/delete.empty.tmpl")),
 	}
 }
 
-func (g *CleanupGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
-	if tmplInfo.IsDir() || !g.nameRegex.MatchString(path.Base(tmplPath)) {
-		// Skip over it
-		return nil
+func (g *CleanupGenerator) Generate(_ context.Context, tmplDesc TemplateDescriptor) error {
+	if ok, e := g.matcher.Matches(tmplDesc); e != nil || !ok {
+		return e
 	}
 
 	// Go through the output dir, if anything matches the regex, delete the file
-	regexContent, err := fs.ReadFile(g.templateFS, tmplPath)
+	regexContent, err := fs.ReadFile(g.templateFS, tmplDesc.Path)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,10 @@ import (
 	"text/template"
 )
 
+/**********************
+	Template Loader
+ **********************/
+
 type TemplateFuncProvider func(funcMap template.FuncMap) (template.FuncMap, error)
 type TemplatePreHook func(tmpl *template.Template, tmplPaths []string) (*template.Template, []string, error)
 type TemplatePostHook func(tmpl *template.Template) (*template.Template, error)
@@ -21,7 +25,7 @@ type TemplateOption struct {
 
 func LoadTemplates(fsys fs.FS, opts ...TemplateOptions) (tmpl *template.Template, err error) {
 	opt := TemplateOption{
-		Pattern: "**/*.tmpl",
+		Pattern:       "**/*.tmpl",
 		FuncProviders: []TemplateFuncProvider{defaultTemplateFuncProvider()},
 	}
 	for _, fn := range opts {
@@ -96,3 +100,4 @@ func findTemplateFiles(fsys fs.FS, pattern string) (filenames []string, err erro
 		})
 	return
 }
+

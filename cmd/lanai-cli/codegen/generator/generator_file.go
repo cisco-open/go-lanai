@@ -1,24 +1,24 @@
 package generator
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
-	"path"
 	"regexp"
 	"text/template"
 )
 
 const (
-	projectMatcherRegexTemplate = "^(?:%s)(.+)(?:.tmpl)"
-	fileDefaultPrefix           = "project."
+	fileDefaultPrefix   = "project"
 )
 
 // FileGenerator is a basic generator that generates 1 file based on the templatePath being used
 type FileGenerator struct {
 	data             map[string]interface{}
 	template         *template.Template
-	nameRegex        *regexp.Regexp
 	templateFS       fs.FS
+	matcher          TemplateMatcher
+	outputResolver   TemplateOutputResolver
 	order            int
 	defaultRegenRule RegenMode
 	rules            RegenRules
@@ -26,8 +26,10 @@ type FileGenerator struct {
 
 type FileOption struct {
 	GeneratorOption
-	Prefix string
-	Order  int
+	Matcher        TemplateMatcher
+	OutputResolver TemplateOutputResolver
+	Prefix         string
+	Order          int
 }
 
 // newFileGenerator returns a new generator for single files
@@ -40,12 +42,22 @@ func newFileGenerator(gOpt GeneratorOption, opts ...func(opt *FileOption)) *File
 		fn(o)
 	}
 
-	regex := fmt.Sprintf(projectMatcherRegexTemplate, regexp.QuoteMeta(o.Prefix))
-	logger.Debugf("Templates [%s] DefaultRegenMode: %v", regex, o.DefaultRegenMode)
+	if o.Matcher == nil {
+		pattern := fmt.Sprintf(patternWithFilePrefix, o.Prefix)
+		o.Matcher = isTmplFile().And(matchPatterns(pattern))
+	}
+
+	if o.OutputResolver == nil {
+		regex := fmt.Sprintf(outputRegexWithFilePrefix, regexp.QuoteMeta(o.Prefix))
+		o.OutputResolver = regexOutputResolver(regex)
+	}
+
+	logger.Debugf("Templates [%v] DefaultRegenMode: %v", o.Matcher, o.DefaultRegenMode)
 	return &FileGenerator{
 		data:             o.Data,
 		template:         o.Template,
-		nameRegex:        regexp.MustCompile(regex),
+		matcher:          o.Matcher,
+		outputResolver:   o.OutputResolver,
 		templateFS:       o.TemplateFS,
 		order:            o.Order,
 		defaultRegenRule: o.DefaultRegenMode,
@@ -53,49 +65,34 @@ func newFileGenerator(gOpt GeneratorOption, opts ...func(opt *FileOption)) *File
 	}
 }
 
-func (o *FileGenerator) determineFilename(template string) string {
-	var result string
-	matches := o.nameRegex.FindStringSubmatch(path.Base(template))
-	if len(matches) < 2 {
-		result = ""
+func (g *FileGenerator) Generate(ctx context.Context, tmplDesc TemplateDescriptor) error {
+	if ok, e := g.matcher.Matches(tmplDesc); e != nil || !ok {
+		return e
 	}
 
-	result = matches[1]
-	return result
-}
-
-func (o *FileGenerator) Generate(tmplPath string, tmplInfo fs.FileInfo) error {
-	if tmplInfo.IsDir() || !o.nameRegex.MatchString(path.Base(tmplPath)) {
-		// Skip over it
-		return nil
+	output, e := g.outputResolver.Resolve(ctx, tmplDesc, g.data)
+	if e != nil {
+		return e
 	}
 
-	targetDir, err := ConvertSrcRootToTargetDir(path.Dir(tmplPath), o.data)
-	if err != nil {
-		return err
-	}
-	baseFilename := o.determineFilename(tmplPath)
-
-	outputFile := path.Join(targetDir, baseFilename)
-
-	regenRule, err := getApplicableRegenRules(outputFile, o.rules, o.defaultRegenRule)
+	regenRule, err := getApplicableRegenRules(output.Path, g.rules, g.defaultRegenRule)
 	if err != nil {
 		return err
 	}
 	gc := *NewGenerationContext(
-		tmplPath,
-		outputFile,
+		tmplDesc.Path,
+		output.Path,
 		regenRule,
-		o.data,
+		g.data,
 	)
 	logger.Debugf("[File] generating %v", gc.filename)
-	if e := GenerateFileFromTemplate(gc, o.template); e != nil {
+	if e := GenerateFileFromTemplate(gc, g.template); e != nil {
 		return e
 	}
-	globalCounter.Record(outputFile)
+	globalCounter.Record(output.Path)
 	return nil
 }
 
-func (o *FileGenerator) Order() int {
-	return o.order
+func (g *FileGenerator) Order() int {
+	return g.order
 }

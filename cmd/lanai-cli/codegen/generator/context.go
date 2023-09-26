@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"io/fs"
@@ -68,6 +70,27 @@ type Option struct {
 	Interfaces
  *******************/
 
+type TemplateDescriptor struct {
+	Path     string
+	FileInfo fs.FileInfo
+}
+
+type TemplateMatcher cmdutils.ChainableMatcher[TemplateDescriptor]
+
+type TemplateOutputDescriptor struct {
+	Path string
+}
+
+type TemplateOutputResolver interface {
+	Resolve(ctx context.Context, tmplDesc TemplateDescriptor, data GenerationData) (TemplateOutputDescriptor, error)
+}
+
+type TemplateOutputResolverFunc func(ctx context.Context, tmplDesc TemplateDescriptor, data GenerationData) (TemplateOutputDescriptor, error)
+
+func (fn TemplateOutputResolverFunc) Resolve(ctx context.Context, tmplDesc TemplateDescriptor, data GenerationData) (TemplateOutputDescriptor, error) {
+	return fn(ctx, tmplDesc, data)
+}
+
 // Generator interface for various code generation
 type Generator interface {
 	// Generate files based on given template.
@@ -79,7 +102,7 @@ type Generator interface {
 	// 	- Creating directories
 	//  - Generating single file
 	//  - Generating multiple files
-	Generate(tmplPath string, tmplInfo fs.FileInfo) error
+	Generate(ctx context.Context, tmplDesc TemplateDescriptor) error
 }
 
 // Group is a collection of concrete generator instances that work together to generate set of files and directories
