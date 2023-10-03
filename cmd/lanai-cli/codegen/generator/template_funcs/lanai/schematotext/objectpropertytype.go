@@ -38,11 +38,11 @@ func (o objectType) ToText() (result string, err error) {
 	switch schema.Value.Type {
 	case openapi3.TypeObject:
 		if len(schema.Value.Properties) == 0 {
-			if schema.Value.AdditionalPropertiesAllowed != nil && *schema.Value.AdditionalPropertiesAllowed {
+			if schema.Value.AdditionalProperties.Has != nil && *schema.Value.AdditionalProperties.Has {
 				result = "map[string]interface{}"
 			} else {
 				additionalPropertyType, err := NewDataTypeToTextTranslator(
-					schema.Value.AdditionalProperties,
+					schema.Value.AdditionalProperties.Schema,
 					WithCurrentPackage(o.currentPkg),
 					WithRestrictExternalTypes(o.restrictExternalTypes),
 					WithDefaultObjectName("interface{}")).ToText()
