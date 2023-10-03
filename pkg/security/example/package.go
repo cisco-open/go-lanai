@@ -24,7 +24,7 @@ import (
 var logger = log.New("SEC.Example")
 
 //go:generate npm install --prefix web/nodejs
-//go:generate go run github.com/mholt/archiver/cmd/arc -overwrite -folder-safe=false unarchive web/nodejs/node_modules/@msx/login-app/login-app-ui.zip web/login-ui/
+//go:generate go run github.com/mholt/archiver/v3/cmd/arc -overwrite -folder-safe=false unarchive web/nodejs/node_modules/@msx/login-app/login-app-ui.zip web/login-ui/
 //go:embed web/login-ui/*
 var GeneratedContent embed.FS
 
