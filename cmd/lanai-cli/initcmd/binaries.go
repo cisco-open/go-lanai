@@ -14,7 +14,7 @@ var defaultBinaries = map[string]string{
 	"gotest.tools/gotestsum":                                "v1.8.0",
 	"github.com/golangci/golangci-lint/cmd/golangci-lint":   "v1.53.1",
 	"github.com/jstemmer/go-junit-report":                   "v0.9.1",
-	"cto-github.cisco.com/NFV-BU/contract-verifier/cli/ccv": "latest",
+	"cto-github.cisco.com/NFV-BU/contract-verifier/cli/ccv": "v1.4.2",
 }
 
 func installBinaries(ctx context.Context) error {
