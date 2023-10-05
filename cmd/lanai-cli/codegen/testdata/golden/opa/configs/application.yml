@@ -65,7 +65,8 @@ security:
         name: testservice
         # url: "/bundles/testservice"
     logging:
-      decision-logs-enabled: true
+      level: "debug"
+      decision-logs-level: "debug" # "off" to turn off globally
 
 swagger:
   spec: configs/api-docs-v3.yml

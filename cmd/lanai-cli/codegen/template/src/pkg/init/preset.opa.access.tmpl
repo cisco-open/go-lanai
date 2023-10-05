@@ -53,7 +53,10 @@ func configureSecurity(di secDI) {
 		di.ActrReg.MustRegister(acCustomizer)
 	}
 	if di.HealthReg != nil {
-		di.HealthReg.MustRegister(opaactuator.NewHealthDisclosureControlWithOPA(opa.QueryWithPolicy("actuator/allow_health_details")))
+		di.HealthReg.MustRegister(opaactuator.NewHealthDisclosureControlWithOPA(
+		    opa.QueryWithPolicy("actuator/allow_health_details"),
+		    opa.SilentQuery(),
+		))
 	}
 
 	di.SecReg.Register(&securityConfigurer{})
