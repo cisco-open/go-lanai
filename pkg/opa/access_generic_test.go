@@ -44,7 +44,7 @@ func SubTestGenericBaseline() test.GomegaSubTestFunc {
 			q.RawInput = map[string]interface{}{
 				"just_data": "data",
 			}
-		})
+		}, opa.SilentQuery())
 		g.Expect(e).To(Succeed())
 	}
 }

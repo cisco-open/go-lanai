@@ -1,6 +1,7 @@
 package opa
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	opalogging "github.com/open-policy-agent/opa/logging"
 )
@@ -16,8 +17,11 @@ var (
 	}
 )
 
+/*******************
+	OPA logger
+ *******************/
+
 // opaLogger implement logging.Logger
-// TODO WithContext per log
 type opaLogger struct {
 	logger log.Logger
 	level  opalogging.Level
@@ -38,6 +42,13 @@ func NewOPALogger(logger log.Logger, lvl log.LoggingLevel) opalogging.Logger {
 	return &opaLogger{
 		logger: logger.WithLevel(lvl),
 		level:  level,
+	}
+}
+
+func (l *opaLogger) WithContext(ctx context.Context) *opaLogger {
+	return &opaLogger{
+		logger: logger.WithContext(ctx),
+		level:  l.level,
 	}
 }
 

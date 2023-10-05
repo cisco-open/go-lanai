@@ -7,4 +7,5 @@ security:
       long-polling-timeout: 30s
     bundles:
     logging:
-      decision-logs-enabled: true
+      level: debug
+      decision-logs-level: debug

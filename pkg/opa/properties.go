@@ -1,6 +1,7 @@
 package opa
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
@@ -19,12 +20,13 @@ type BundleServerProperties struct {
 }
 
 type BundleSourceProperties struct {
-	Path               string         `json:"path"`
+	Path string `json:"path"`
 	PollingProperties
 }
 
 type LoggingProperties struct {
-	DecisionLogsEnabled bool `json:"decision-logs-enabled"`
+	LogLevel          log.LoggingLevel `json:"level"`
+	DecisionLogsLevel log.LoggingLevel `json:"decision-logs-level"`
 }
 
 type PollingProperties struct {

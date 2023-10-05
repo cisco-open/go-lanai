@@ -2,7 +2,7 @@ package opa
 
 import (
 	"context"
-	"encoding/json"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"errors"
 	"fmt"
 	"github.com/open-policy-agent/opa/sdk"
@@ -27,6 +27,15 @@ type ResourceFilter struct {
 	InputCustomizers []InputCustomizer
 	// RawInput overrides any input related options
 	RawInput interface{}
+	// LogLevel override decision log level when presented
+	LogLevel *log.LoggingLevel
+}
+
+func SilentResourceFilter() ResourceFilterOptions {
+	var silent = log.LevelOff
+	return func(opt *ResourceFilter) {
+		opt.LogLevel = &silent
+	}
 }
 
 func FilterResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceFilterOptions) (*sdk.PartialResult, error) {
@@ -42,23 +51,14 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 	if len(res.Query) == 0 {
 		res.Query = fmt.Sprintf("data.%s.filter_%v", resType, op)
 	}
+	ctx = contextWithOverriddenLogLevel(ctx, res.LogLevel)
 	opaOpts, e := PrepareResourcePartialQuery(ctx, res.Query, resType, op, &res)
 	if e != nil {
 		return nil, ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
 	}
+
 	result, e := res.OPA.Partial(ctx, *opaOpts)
-	if e != nil {
-		switch {
-		case sdk.IsUndefinedErr(e):
-			return nil, ErrAccessDenied
-		case errors.Is(e, ErrQueriesNotResolved):
-			return nil, ErrAccessDenied.WithMessage(e.Error())
-		default:
-			return nil, ErrAccessDenied.WithMessage("failed to perform partial evaluation: %v", e)
-		}
-	}
-	logger.WithContext(ctx).Infof("Partial Result [%s]: %v", result.ID, result.AST)
-	return result, nil
+	return handlePartialResult(ctx, result, e)
 }
 
 func PrepareResourcePartialQuery(ctx context.Context, policy string, resType string, op ResourceOperation, res *ResourceFilter) (*sdk.PartialOptions, error) {
@@ -78,11 +78,11 @@ func PrepareResourcePartialQuery(ctx context.Context, policy string, resType str
 		Mapper:   mapper,
 	}
 
-	if data, e := json.Marshal(opts.Input); e != nil {
-		logger.WithContext(ctx).Errorf("Input marshalling error: %v", e)
-	} else {
-		logger.WithContext(ctx).Debugf("Input: %s", data)
-	}
+	//if data, e := json.Marshal(opts.Input); e != nil {
+	//	eventLogger(ctx, log.LevelError).Printf("Input marshalling error: %v", e)
+	//} else {
+	//	eventLogger(ctx, log.LevelDebug).Printf("Input: %s", data)
+	//}
 	return &opts, nil
 }
 
@@ -102,6 +102,35 @@ func constructResourcePartialInput(ctx context.Context, resType string, op Resou
 		}
 	}
 	return input, nil
+}
+
+func handlePartialResult(ctx context.Context, result *sdk.PartialResult, rErr error) (_ *sdk.PartialResult, err error) {
+	var event partialResultEvent
+	defer func() {
+		if err == nil {
+			eventLogger(ctx, log.LevelDebug).WithKV(kLogPartialResult, event).Printf("Partial [%s]", event.ID)
+		} else {
+			eventLogger(ctx, log.LevelDebug).WithKV(kLogPartialReason, event).Printf("Deny Partial [%s]", event.ID)
+		}
+	}()
+
+	if result != nil {
+		event.ID = result.ID
+	}
+
+	if rErr != nil {
+		event.Err = rErr
+		switch {
+		case sdk.IsUndefinedErr(rErr):
+			return nil, ErrAccessDenied
+		case errors.Is(rErr, ErrQueriesNotResolved):
+			return nil, ErrAccessDenied.WithMessage(rErr.Error())
+		default:
+			return nil, ErrAccessDenied.WithMessage("failed to perform partial evaluation: %v", rErr)
+		}
+	}
+	event.AST = (*partialQueriesLog)(result.AST)
+	return result, nil
 }
 
 

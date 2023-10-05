@@ -53,7 +53,7 @@ func SubTestResourceBaseline(_ *testDI) test.GomegaSubTestFunc {
 			res.RawInput = map[string]interface{}{
 				"just_data": "data",
 			}
-		})
+		}, opa.SilentResourceQuery())
 		g.Expect(e).To(Succeed())
 	}
 }

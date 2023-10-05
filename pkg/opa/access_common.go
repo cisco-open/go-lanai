@@ -2,26 +2,50 @@ package opa
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"github.com/open-policy-agent/opa/sdk"
 )
 
-func handleDecisionResult(ctx context.Context, result *sdk.DecisionResult, err error, targetName string) error {
+func contextWithOverriddenLogLevel(ctx context.Context, override *log.LoggingLevel) context.Context {
+	if override == nil {
+		return ctx
+	}
+	return logContextWithLevel(ctx, *override)
+}
+
+func handleDecisionResult(ctx context.Context, result *sdk.DecisionResult, rErr error, targetName string) (err error) {
+	var parsedResult interface{}
+	defer func() {
+		event := &resultEvent{
+			Result: parsedResult,
+			Deny:   err != nil,
+		}
+		if result != nil {
+			event.ID = result.ID
+		}
+		if err == nil {
+			eventLogger(ctx, log.LevelDebug).WithKV(kLogDecisionReason, event).Printf("Allow [%v]", event.ID)
+		} else {
+			eventLogger(ctx, log.LevelDebug).WithKV(kLogDecisionReason, event).Printf("Deny [%v]", event.ID)
+		}
+	}()
+
 	switch {
-	case sdk.IsUndefinedErr(err):
-		logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, "not true")
+	case sdk.IsUndefinedErr(rErr):
+		parsedResult = "not true"
 		return errorWithTargetName(targetName)
-	case err != nil:
-		return ErrAccessDenied.WithMessage("unable to execute OPA query: %v", err)
+	case rErr != nil:
+		parsedResult = rErr
+		return ErrAccessDenied.WithMessage("unable to execute OPA query: %v", rErr)
 	}
 
+	parsedResult = result.Result
 	switch v := result.Result.(type) {
 	case bool:
 		if !v {
-			logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, result.Result)
 			return errorWithTargetName(targetName)
 		}
 	default:
-		logger.WithContext(ctx).Infof("Decision [%s]: %v", result.ID, result.Result)
 		return ErrAccessDenied.WithMessage("unsupported OPA result type %T", result.Result)
 	}
 	return nil

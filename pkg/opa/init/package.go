@@ -60,6 +60,7 @@ func ProvideEmbeddedOPA(di EmbeddedOPADI) (EmbeddedOPAOut, error) {
 	}
 	embedded, ready, e := opa.NewEmbeddedOPA(di.AppCtx,
 		opa.WithConfig(cfg),
+		opa.WithLogLevel(di.Properties.Logging.LogLevel),
 		opa.WithInputCustomizers(opainput.DefaultInputCustomizers...),
 	)
 	if e != nil {

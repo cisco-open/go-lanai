@@ -51,7 +51,7 @@ func SubTestPartialBaseline(_ *testDI) test.GomegaSubTestFunc {
 				"just_data": "data",
 			}
 			res.QueryMapper = regoexpr.NoopPartialQueryMapper{}
-		})
+		}, opa.SilentResourceFilter())
 		g.Expect(e).To(Succeed())
 		g.Expect(pq).ToNot(BeNil())
 	}
