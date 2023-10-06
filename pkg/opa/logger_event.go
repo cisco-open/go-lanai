@@ -122,7 +122,10 @@ type decisionEvent struct {
 }
 
 func (de decisionEvent) String() string {
-	v, _ := json.Marshal(de.event)
+	v, e := json.Marshal(de.event)
+	if e != nil {
+		return fmt.Sprintf("%v", de.event)
+	}
 	return string(v)
 }
 

@@ -133,7 +133,8 @@ func applyProperties(props *Properties, cfg *Config) error {
 
 	// bundles
 	cfg.Bundles = map[string]*bundle.Source{}
-	for k, v := range props.Bundles {
+	for k := range props.Bundles {
+		v := props.Bundles[k]
 		polling := props.Server.PollingProperties
 		if e := mergo.Merge(&polling, &v.PollingProperties, mergo.WithOverride); e != nil {
 			return fmt.Errorf("unable to merge polling properties of bundle [%s]: %v", k, e)

@@ -143,7 +143,8 @@ func NewMockedFederatedAccountStore(props ...*MockedFederatedUserProperties) Moc
 // LoadAccountByExternalId The externalIdName and value matches the test assertion
 // The externalIdp matches that from the MockedIdpName
 func (s MockedFederatedAccountStore) LoadAccountByExternalId(_ context.Context, extIdName string, extIdValue string, extIdpName string, _ security.AutoCreateUserDetails, _ interface{}) (security.Account, error) {
-	for _, p := range s.mocks {
+	for i := range s.mocks {
+		p := s.mocks[i]
 		if extIdName != p.ExtIdName && p.ExtIdName != "*" ||
 			extIdValue != p.ExtIdValue && p.ExtIdValue != "*" ||
 			extIdpName != p.ExtIdpName && p.ExtIdpName != "*" {
