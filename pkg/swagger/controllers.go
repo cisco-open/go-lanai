@@ -168,6 +168,7 @@ func (c *SwaggerController) oas2Doc(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
+			logger.WithContext(r.Context()).Errorf("Failed to serve OAS document: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}()
@@ -194,6 +195,7 @@ func (c *SwaggerController) oas3Doc(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
+			logger.WithContext(r.Context()).Errorf("Failed to serve OAS document: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}()
@@ -217,13 +219,16 @@ func (c *SwaggerController) oas3Doc(w http.ResponseWriter, r *http.Request) {
 
 func (c *SwaggerController) swaggerRedirect(w http.ResponseWriter, r *http.Request) {
 	fs := http.FS(Content)
-	file, err := fs.Open("generated/swagger-sso-redirect.html")
+	path := "generated/swagger-sso-redirect.html"
+	file, err := fs.Open(path)
 	if err != nil {
+		logger.WithContext(r.Context()).Errorf("Unable to open file '%s': %v", path, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	fileInfo, err := file.Stat()
 	if err != nil {
+		logger.WithContext(r.Context()).Errorf("Unable to stat file '%s': %v", path, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
