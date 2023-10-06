@@ -115,7 +115,11 @@ pre-build-docker:
 build-docker: DOCKER_TAG = $(if $(VERSION),$(VERSION),latest)
 build-docker: BASE_IMAGE_ARG = $(if $(BASE_IMAGE),--build-arg BASE_IMAGE="$(BASE_IMAGE)",)
 build-docker: init-docker
-	$(DOCKER) build -f "build/package/Dockerfile" --ssh default --progress=plain -t {{.Name}}:$(DOCKER_TAG) . \
+	$(DOCKER) build -f "build/package/Dockerfile" \
+	--ssh default \
+	--progress=plain \
+	--label service_version=$(DOCKER_TAG) \
+	-t {{.Name}}:$(DOCKER_TAG) . \
 	--build-arg PRIVATE_MODS="$(PRIVATE_MODS)" \
 	--build-arg VERSION="$(VERSION)" \
 	--build-arg GITKEY="$(GITKEY)" \

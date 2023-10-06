@@ -38,6 +38,7 @@ func TestNoopGorm(t *testing.T) {
 		WithNoopMocks(),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestGormDialetorValidation(&di, noopGormDialector{}), "GormDialetorValidation"),
+		test.GomegaSubTest(SubTestGormDryRun(&di), "TestGormDryRun"),
 	)
 }
 
@@ -51,4 +52,21 @@ func SubTestGormDialetorValidation(di *gormDI, expected interface{}) test.Gomega
 		g.Expect(di.GormDB.Dialector).To(Not(BeNil()), "Dialector should not be nil")
 		g.Expect(di.GormDB.Dialector).To(BeAssignableToTypeOf(expected), "Dialector should be expected type")
 	}
+}
+
+func SubTestGormDryRun(di *gormDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var rs *gorm.DB
+		rs = di.GormDB.Create(&Model{Value: "doesn't matter"})
+		g.Expect(rs.Error).To(Succeed(), "create should succeed")
+
+		var models []*Model
+		rs = di.GormDB.Find(&models)
+		g.Expect(rs.Error).To(Succeed(), "find should succeed")
+	}
+}
+
+type Model struct {
+	ID    string `gorm:"primaryKey;"`
+	Value string
 }

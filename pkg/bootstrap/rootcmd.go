@@ -68,7 +68,7 @@ func init() {
 	// config flags
 	rootCmd.PersistentFlags().StringSliceVarP(&cliCtx.ActiveProfiles, CliFlagActiveProfile, "P", []string{},
 		`Comma separated active profiles. Override property "application.profiles.active"`)
-	rootCmd.PersistentFlags().StringSliceVarP(&cliCtx.AdditionalProfiles, CliFlagAdditionalProfile, "p", []string{},
+	rootCmd.PersistentFlags().StringSliceVarP(&cliCtx.AdditionalProfiles, CliFlagAdditionalProfile, "p", []string{}, // small letter p instead of capital P
 		`Comma separated additional profiles. Set property "application.profiles.additional". Additional profiles is added to active profiles`)
 	rootCmd.PersistentFlags().StringSliceVarP(&cliCtx.ConfigSearchPaths, CliFlagConfigSearchPath, "c", []string{},
 		`Comma separated paths. Override property "config.file.search-path"`)
@@ -150,7 +150,6 @@ func NewAppCmd(appName string, priorityOptions []fx.Option, regularOptions []fx.
 	}
 }
 
-
 /********************
 	Cmd Context
  ********************/
@@ -167,7 +166,7 @@ type bootstrapContext struct {
 func contextWithBootstrapper(parent context.Context, b *Bootstrapper) context.Context {
 	return &bootstrapContext{
 		Context: parent,
-		b: b,
+		b:       b,
 	}
 }
 

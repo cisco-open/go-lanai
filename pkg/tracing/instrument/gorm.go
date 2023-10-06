@@ -15,21 +15,6 @@ const (
 	gormPluginName     = gormCallbackPrefix + "tracing"
 )
 
-const (
-	gormCbBeforeCreate = "gorm:before_create"
-	gormCbAfterCreate  = "gorm:after_create"
-	gormCbBeforeQuery  = "gorm:query"
-	gormCbAfterQuery   = "gorm:after_query"
-	gormCbBeforeUpdate = "gorm:before_update"
-	gormCbAfterUpdate  = "gorm:after_update"
-	gormCbBeforeDelete = "gorm:before_delete"
-	gormCbAfterDelete  = "gorm:after_delete"
-	gormCbBeforeRow    = "gorm:row"
-	gormCbAfterRow     = "gorm:row"
-	gormCbBeforeRaw    = "gorm:raw"
-	gormCbAfterRaw     = "gorm:raw"
-)
-
 type gormConfigurer struct {
 	tracer opentracing.Tracer
 }
@@ -74,34 +59,34 @@ func (p gormPlugin) Name() string {
 // Initialize implements gorm.Plugin. This function register tracing related callbacks
 // Default callbacks can be found at github.com/go-gorm/gorm/callbacks/callbacks.go
 func (p gormPlugin) Initialize(db *gorm.DB) error {
-	_ = db.Callback().Create().Before(gormCbBeforeCreate).
+	_ = db.Callback().Create().Before(data.GormCallbackBeforeCreate).
 		Register(p.cbBeforeName("create"), p.makeBeforeCallback("create"))
-	_ = db.Callback().Create().After(gormCbAfterCreate).
+	_ = db.Callback().Create().After(data.GormCallbackAfterCreate).
 		Register(p.cbAfterName("create"), p.makeAfterCallback("create"))
 
-	_ = db.Callback().Query().Before(gormCbBeforeQuery).
+	_ = db.Callback().Query().Before(data.GormCallbackBeforeQuery).
 		Register(p.cbBeforeName("query"), p.makeBeforeCallback("select"))
-	_ = db.Callback().Query().After(gormCbAfterQuery).
+	_ = db.Callback().Query().After(data.GormCallbackAfterQuery).
 		Register(p.cbAfterName("query"), p.makeAfterCallback("select"))
 
-	_ = db.Callback().Update().Before(gormCbBeforeUpdate).
+	_ = db.Callback().Update().Before(data.GormCallbackBeforeUpdate).
 		Register(p.cbBeforeName("update"), p.makeBeforeCallback("update"))
-	_ = db.Callback().Update().After(gormCbAfterUpdate).
+	_ = db.Callback().Update().After(data.GormCallbackAfterUpdate).
 		Register(p.cbAfterName("update"), p.makeAfterCallback("update"))
 
-	_ = db.Callback().Delete().Before(gormCbBeforeDelete).
+	_ = db.Callback().Delete().Before(data.GormCallbackBeforeDelete).
 		Register(p.cbBeforeName("delete"), p.makeBeforeCallback("delete"))
-	_ = db.Callback().Delete().After(gormCbAfterDelete).
+	_ = db.Callback().Delete().After(data.GormCallbackAfterDelete).
 		Register(p.cbAfterName("delete"), p.makeAfterCallback("delete"))
 
-	_ = db.Callback().Row().Before(gormCbBeforeRow).
+	_ = db.Callback().Row().Before(data.GormCallbackBeforeRow).
 		Register(p.cbBeforeName("row"), p.makeBeforeCallback("row"))
-	_ = db.Callback().Row().After(gormCbAfterRow).
+	_ = db.Callback().Row().After(data.GormCallbackAfterRow).
 		Register(p.cbAfterName("row"), p.makeAfterCallback("row"))
 
-	_ = db.Callback().Raw().Before(gormCbBeforeRaw).
+	_ = db.Callback().Raw().Before(data.GormCallbackBeforeRaw).
 		Register(p.cbBeforeName("raw"), p.makeBeforeCallback("sql"))
-	_ = db.Callback().Raw().After(gormCbAfterRaw).
+	_ = db.Callback().Raw().After(data.GormCallbackAfterRaw).
 		Register(p.cbAfterName("raw"), p.makeAfterCallback("sql"))
 
 	return nil

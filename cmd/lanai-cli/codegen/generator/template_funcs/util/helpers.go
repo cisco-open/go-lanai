@@ -32,8 +32,8 @@ func increment(val int) int {
 	return val + 1
 }
 
-func templateLog(message ...interface{}) string {
-	logger.Infof("%v", message)
+func templateLog(tmpl string, args ...interface{}) string {
+	logger.Debugf(tmpl, args...)
 	return ""
 }
 

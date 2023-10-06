@@ -1,17 +1,20 @@
 package codegen
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"embed"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"io/fs"
 	"os"
 	"path/filepath"
 )
+
+var logger = log.New("Codegen")
 
 const (
 	CommandName = "codegen"
@@ -25,127 +28,122 @@ var (
 		RunE:               Run,
 	}
 	Args          = Arguments{}
-	Configuration = Config{}
 )
 
 type Arguments struct {
 	Config string `flag:"config,c" desc:"Configuration file, if not defined will default to codegen.yml"`
 }
 
-type Regeneration struct {
-	Default string            `yaml:"default"`
-	Rules   map[string]string `yaml:"rules"`
-}
-type Config struct {
-	Contract           string            `yaml:"contract"`
-	ProjectName        string            `yaml:"projectName"`
-	TemplateDirectory  string            `yaml:"templateDirectory"`
-	RepositoryRootPath string            `yaml:"repositoryRootPath"`
-	Regeneration       Regeneration      `yaml:"regeneration"`
-	Regexes            map[string]string `yaml:"regexes"`
-}
-
 func init() {
 	cmdutils.PersistentFlags(Cmd, &Args)
 }
 
+const DefaultTemplateRoot = "template/src"
+
 //go:embed all:template/src
-var DefaultFS embed.FS
+var DefaultTemplateFS embed.FS
 
 func Run(cmd *cobra.Command, _ []string) error {
+	if !cmdutils.GlobalArgs.Verbose {
+		_ = log.UpdateLoggingConfiguration(&log.Properties{
+			Levels:   map[string]log.LoggingLevel{
+				"default": log.LevelInfo,
+			},
+		})
+	}
+
+	// process arguments
 	configFilePath := Args.Config
 	if configFilePath == "" {
 		configFilePath = "codegen.yml"
 	}
-	if _, err := os.Stat(configFilePath); err == nil {
-		err := processConfigurationFile(configFilePath)
-		if err != nil {
-			return err
-		}
+
+	// do generation
+	if e := GenerateWithConfigPath(cmd.Context(), configFilePath); e != nil {
+		return e
 	}
 
-	openAPIData, err := openapi3.NewLoader().LoadFromFile(Configuration.Contract)
-	if err != nil {
-		return fmt.Errorf("error parsing OpenAPI file: %v", err)
-	}
+	//	run go mod tidy
 
-	projectName := Configuration.ProjectName
-	repository := Configuration.RepositoryRootPath
-	// Populate the data the templates will use
-	data := map[string]interface{}{
-		generator.OpenAPIData: openAPIData,
-		generator.ProjectName: projectName,
-		generator.Repository:  repository,
-	}
-
-	FSToUse := determineFSToUse()
-
-	loaderOpts := generator.LoaderOptions{
-		InitialRegexes: Configuration.Regexes,
-	}
-	template, err := generator.LoadTemplates(FSToUse, loaderOpts)
-	if err != nil {
-		return err
-	}
-	if err = generator.GenerateFiles(
-		FSToUse,
-		generator.WithData(data),
-		generator.WithFS(FSToUse),
-		generator.WithTemplate(template),
-		generator.WithRegenerationRule(Configuration.Regeneration.Default),
-		generator.WithRules(Configuration.Regeneration.Rules)); err != nil {
-		return err
-	}
-
-	fmt.Printf("Code generated to %v\n", cmdutils.GlobalArgs.OutputDir)
-	//	Run go mod tidy
-	err = cmdutils.GoModTidy(cmd.Context(), []cmdutils.ShCmdOptions{cmdutils.ShellUseOutputDir()})
-	if err != nil {
-		return fmt.Errorf("could not tidy go code: %v", err)
+	if e := cmdutils.GoModTidy(cmd.Context(), []cmdutils.ShCmdOptions{cmdutils.ShellUseOutputDir()}); e != nil {
+		return fmt.Errorf("'go mod tidy' failed: %v", e)
 	}
 	return nil
 }
 
-func processConfigurationFile(configFilePath string) error {
-	configFile, err := os.ReadFile(configFilePath)
-	if err != nil {
-		fmt.Printf("error parsing config file: %v\n", err)
+func GenerateWithConfigPath(ctx context.Context, configPath string) error {
+	if _, e := os.Stat(configPath); e != nil {
+		return e
 	}
-	if configFile != nil {
-		config := Config{}
-		err = yaml.Unmarshal(configFile, &config)
-		if err != nil {
-			return fmt.Errorf("error unmarshalling yaml file: %v", err)
-		}
-		Configuration.ProjectName = config.ProjectName
-		Configuration.Contract = config.Contract
-		Configuration.RepositoryRootPath = config.RepositoryRootPath
-		Configuration.TemplateDirectory = config.TemplateDirectory
-		Configuration.Regeneration = config.Regeneration
-		Configuration.Regexes = config.Regexes
-
-		configDir := filepath.Dir(configFilePath)
-
-		if !filepath.IsAbs(Configuration.Contract) {
-			// Contract is converted to be relative to current directory
-			Configuration.Contract = filepath.Join(configDir, Configuration.Contract)
-		}
-
-		if Configuration.TemplateDirectory != "" && !filepath.IsAbs(Configuration.TemplateDirectory) {
-			// TemplateDirectory is converted to be relative to current directory
-			Configuration.TemplateDirectory = filepath.Join(configDir, Configuration.TemplateDirectory)
-		}
+	cfg, e := processConfigurationFile(configPath)
+	if e != nil {
+		return e
 	}
+	return GenerateWithConfig(ctx, cfg)
+}
+
+func GenerateWithConfig(ctx context.Context, cfg *ConfigV2) error {
+	tmplFS, e := determineTemplateFSToUse(cfg)
+	if e != nil {
+		return e
+	}
+	// Do generate
+	opts := append(cfg.ToOptions(),
+		generator.WithTemplateFS(tmplFS),
+	)
+	if e = generator.GenerateFiles(ctx, opts...); e != nil {
+		return e
+	}
+	logger.Infof("Code generated to %v", cmdutils.GlobalArgs.OutputDir)
 	return nil
 }
 
-func determineFSToUse() fs.FS {
-	var FSToUse fs.FS
-	FSToUse = DefaultFS
-	if Configuration.TemplateDirectory == "" {
-		fmt.Println("Using default template set")
+func processConfigurationFile(configFilePath string) (*ConfigV2, error) {
+	configFile, e := os.ReadFile(configFilePath)
+	if e != nil {
+		return nil, fmt.Errorf(`error reading config file "%s": %v`, configFilePath, e)
+	}
+	versioned := DefaultVersionedConfig
+	e = yaml.Unmarshal(configFile, &versioned)
+	if e != nil {
+		return nil, fmt.Errorf(`error unmarshalling yaml file "%s": %v`, configFilePath, e)
+	}
+	cfg, e := resolveVersionedConfig(&versioned)
+	if e != nil {
+		return nil, e
+	}
+
+	configDir := filepath.Dir(configFilePath)
+	// Contract and template paths are converted to be relative to config file path
+	cfg.Components.Contract.Path = tryResolveRelativePath(cfg.Components.Contract.Path, configDir)
+	cfg.Templates.Path = tryResolveRelativePath(cfg.Templates.Path, configDir)
+	return cfg, nil
+}
+
+func resolveVersionedConfig(versioned *VersionedConfig) (*ConfigV2, error) {
+	switch versioned.Version {
+	case Version1, "":
+		return versioned.Config.ToV2(), nil
+	case Version2:
+		return &versioned.ConfigV2, nil
+	default:
+		return nil, fmt.Errorf(`unsupported config version "%s"`, versioned.Version)
+	}
+}
+
+func tryResolveRelativePath(path, refDir string) string {
+	if len(path) != 0 && !filepath.IsAbs(path) {
+		// path is converted to be relative to refDir
+		return filepath.Clean(filepath.Join(refDir, path))
+	}
+	return path
+}
+
+func determineTemplateFSToUse(cfg *ConfigV2) (fs.FS, error) {
+	if len(cfg.Templates.Path) == 0 {
+		logger.Infof("Using default template set")
+		return fs.Sub(DefaultTemplateFS, DefaultTemplateRoot)
 	} else {
-		FSToUse = os.DirFS(Configuration.TemplateDirectory)
+		return os.DirFS(cfg.Templates.Path), nil
 	}
-	return FSToUse
 }

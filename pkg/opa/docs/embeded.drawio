@@ -1,0 +1,64 @@
+<mxfile host="Electron" modified="2023-07-12T21:12:41.547Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.1 Chrome/112.0.5615.204 Electron/24.6.1 Safari/537.36" etag="3EJDMadItsB6ibOiryT4" version="21.6.1" type="device">
+  <diagram id="prtHgNgQTEPvFCAcTncT" name="Page-1">
+    <mxGraphModel dx="1010" dy="688" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="GjybWeXD36zkzStFM2kX-1" value="OPA-Enabled Service" style="swimlane;whiteSpace=wrap;html=1;swimlaneLine=1;glass=0;shadow=0;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="130" width="530" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-5" value="API Controllers" style="verticalLabelPosition=middle;verticalAlign=middle;html=1;shape=mxgraph.basic.rect;fillColor2=none;strokeWidth=1;size=20;indent=5;top=0;bottom=0;labelPosition=center;align=center;fillColor=none;" vertex="1" parent="GjybWeXD36zkzStFM2kX-1">
+          <mxGeometry y="30" width="350" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-7" value="OPA Engine" style="verticalLabelPosition=middle;verticalAlign=middle;html=1;shape=mxgraph.basic.rect;fillColor2=none;strokeWidth=1;size=20;indent=5;top=0;bottom=0;right=0;labelPosition=center;align=center;horizontal=0;topRightStyle=rounded;bottomRightStyle=rounded;fillColor=none;" vertex="1" parent="GjybWeXD36zkzStFM2kX-1">
+          <mxGeometry x="440" y="23" width="90" height="247" as="geometry" />
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-2" value="Business Logics" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="GjybWeXD36zkzStFM2kX-1">
+          <mxGeometry y="100" width="350" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;shape=flexArrow;startArrow=block;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;labelBorderColor=none;" edge="1" parent="GjybWeXD36zkzStFM2kX-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="310" y="62" as="sourcePoint" />
+            <mxPoint x="387" y="62" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-13" value="Func Calls" style="edgeLabel;html=1;align=center;verticalAlign=top;resizable=0;points=[];labelPosition=center;verticalLabelPosition=bottom;" vertex="1" connectable="0" parent="GjybWeXD36zkzStFM2kX-11">
+          <mxGeometry x="-0.6104" y="-5" relative="1" as="geometry">
+            <mxPoint x="-10" y="4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-8" value="OPA SDK" style="verticalLabelPosition=middle;verticalAlign=middle;html=1;shape=mxgraph.basic.rect;fillColor2=none;strokeWidth=1;size=20;indent=5;top=0;bottom=0;right=0;labelPosition=center;align=center;horizontal=0;topRightStyle=rounded;bottomRightStyle=rounded;fillColor=none;" vertex="1" parent="GjybWeXD36zkzStFM2kX-1">
+          <mxGeometry x="350" y="23" width="90" height="247" as="geometry" />
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-6" value="Data Layer" style="verticalLabelPosition=middle;verticalAlign=middle;html=1;shape=mxgraph.basic.rect;fillColor2=none;strokeWidth=1;size=20;indent=5;bottom=0;top=0;labelPosition=center;align=center;bottomLeftStyle=rounded;fillColor=none;left=0;" vertex="1" parent="GjybWeXD36zkzStFM2kX-1">
+          <mxGeometry y="190" width="350" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-12" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;shape=flexArrow;startArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="360" as="sourcePoint" />
+            <mxPoint x="530" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-14" value="Func Calls" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="GjybWeXD36zkzStFM2kX-12">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint x="-30" y="26" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-15" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;shape=flexArrow;startArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="550" y="320" as="sourcePoint" />
+            <mxPoint x="612" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-16" value="Func Calls" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="GjybWeXD36zkzStFM2kX-15">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint x="32" y="25" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GjybWeXD36zkzStFM2kX-17" value="Kubernetes Pod" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="90" width="570" height="330" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

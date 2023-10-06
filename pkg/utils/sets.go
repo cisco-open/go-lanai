@@ -126,7 +126,7 @@ func (s StringSet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-/** Generic Set **/
+/** Interface Set **/
 
 type Set map[interface{}]void
 
@@ -229,6 +229,90 @@ func (s Set) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON json.Unmarshaler
 func (s Set) UnmarshalJSON(data []byte) error {
 	values := make([]interface{}, 0)
+	if err := json.Unmarshal(data, &values); err != nil {
+		return err
+	}
+
+	s.Add(values...)
+	return nil
+}
+
+/** Generic Set **/
+
+type GenericSet[T comparable] map[T]void
+
+func NewGenericSet[T comparable](values...T) GenericSet[T] {
+	return make(GenericSet[T]).Add(values...)
+}
+
+func (s GenericSet[T]) Add(values...T) GenericSet[T] {
+	for _, item := range values {
+		s[item] = void{}
+	}
+	return s
+}
+
+func (s GenericSet[T]) Remove(values...T) GenericSet[T] {
+	for _, item := range values {
+		delete(s, item)
+	}
+	return s
+}
+
+func (s GenericSet[T]) Has(value T) bool {
+	_, ok := s[value]
+	return ok
+}
+
+func (s GenericSet[T]) HasAll(values ...T) bool {
+	for _, v := range values {
+		if !s.Has(v) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s GenericSet[T]) Equals(another GenericSet[T]) bool {
+	if len(s) != len(another){
+		return false
+	} else if len(s) == 0 && len(another) == 0 {
+		return true
+	}
+	for k := range another {
+		if !s.Has(k) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s GenericSet[T]) Values() []T {
+	values := make([]T, len(s))
+	var i int
+	for item := range s {
+		values[i] = item
+		i++
+	}
+	return values
+}
+
+func (s GenericSet[T]) Copy() GenericSet[T] {
+	cp := NewGenericSet[T]()
+	for k := range s {
+		cp[k] = void{}
+	}
+	return cp
+}
+
+// MarshalJSON json.Marshaler
+func (s GenericSet[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Values())
+}
+
+// UnmarshalJSON json.Unmarshaler
+func (s GenericSet[T]) UnmarshalJSON(data []byte) error {
+	values := make([]T, 0)
 	if err := json.Unmarshal(data, &values); err != nil {
 		return err
 	}

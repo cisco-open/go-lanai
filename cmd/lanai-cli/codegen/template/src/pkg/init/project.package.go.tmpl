@@ -1,0 +1,70 @@
+package serviceinit
+
+{{ $imports := NewImports }}
+{{ $imports = $imports.Add "go.uber.org/fx" }}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap" }}
+{{ range (.LanaiModules.Modules.FilterByName .Project.EnabledModules) }}
+{{ $imports = $imports.Add (.ImportPath "cto-github.cisco.com/NFV-BU/go-lanai/pkg") .ImportAlias }}
+{{ end }}
+{{ $imports = $imports.Add (concat .Project.Module "/pkg/controller") }}
+{{ template "imports" $imports }}
+
+var Module = &bootstrap.Module{
+	Name:       "{{.Project.Name}}",
+	Precedence: bootstrap.AnonymousModulePrecedence,
+	Options:    []fx.Option{
+	    {{if (.Project.EnabledModules.Has "resserver")}}fx.Provide(newResServerConfigurer),{{end}}
+	    {{if (.Project.EnabledModules.Has "security")}}fx.Invoke(configureSecurity),{{end}}
+	},
+}
+
+// Use initialize components needed in this service
+func Use() {
+	// basic modules
+    {{ range .LanaiModules.Basic }}
+    {{- if not ($.Project.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
+
+	// web related
+    {{ range .LanaiModules.Web }}
+    {{- if not ($.Project.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
+
+	// data related
+    {{ range .LanaiModules.Data }}
+    {{- if not ($.Project.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
+
+	// service-to-service integration related
+    {{ range .LanaiModules.Integration }}
+    {{- if not ($.Project.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
+
+	// security related modules
+    {{ range .LanaiModules.Security }}
+    {{- if not ($.Project.EnabledModules.Has .Name) }}//{{- end -}}
+    {{.Ref}}.Use()
+    {{ end }}
+
+    {{- $otherModules := (.LanaiModules.Others.FilterByName .Project.EnabledModules) }}
+    {{- if ne (len $otherModules) 0 }}
+
+    // other modules
+    {{ range $otherModules -}}
+    {{.Ref}}.Use()
+    {{ end }}
+    {{- end }}
+
+	// {{.Project.Name}}
+	bootstrap.Register(Module)
+	bootstrap.Register(controller.Module)
+	for _, m := range controller.SubModules {
+		bootstrap.Register(m)
+	}
+}
+
+

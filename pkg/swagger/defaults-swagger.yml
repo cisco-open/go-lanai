@@ -8,3 +8,11 @@ swagger:
       authorize-path: /v2/authorize
       client-id: nfv-client
       #client-secret: nfv-secret
+      additional-params:
+        - name: tenant_id
+          display-name: Tenant Id
+#         candidate-source-url:
+#         candidate-json-path:
+
+  ui:
+    title: CDA

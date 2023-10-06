@@ -35,8 +35,12 @@ func (acc *AccessControlConfigurer) Apply(feature security.Feature, ws security.
 	sort.SliceStable(f.acl, func(i, j int) bool {
 		return order.OrderedFirstCompare(f.acl[i], f.acl[j])
 	})
-	for i,ac := range f.acl {
-		decisionMakers[i] = MakeDecisionMakerFunc(ac.matcher, ac.control)
+	for i, ac := range f.acl {
+		if ac.custom != nil {
+			decisionMakers[i] = WrapDecisionMakerFunc(ac.matcher, ac.custom)
+		} else {
+			decisionMakers[i] = MakeDecisionMakerFunc(ac.matcher, ac.control)
+		}
 	}
 
 	// register middlewares

@@ -7,7 +7,7 @@ Understanding of the fx framework is needed to understand the rest of the docume
 
 Modules provided by go-lanai includes:
 - actuator
-- appconfig
+- [appconfig](pkg/appconfig/README.md)
 - [bootstrap](pkg/bootstrap/README.md)
 - consul
 - data

@@ -1,7 +1,31 @@
+{{- $module := index . "Repository" }}
 package main
 
-import "fmt"
+{{ $imports := NewImports }}
+{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap" }}
+{{ $imports = $imports.AddWithAlias (concat .Project.Module "/pkg/init" ) "serviceinit" }}
+{{ $imports = $imports.Add "go.uber.org/fx" }}
+{{ $imports = $imports.Add "time" }}
+{{ template "imports" $imports }}
+
+func init() {
+	// initialize modules
+	serviceinit.Use()
+
+	//gin.SetMode(gin.ReleaseMode)
+}
 
 func main() {
-    fmt.Println("{{ index . "ProjectName"}}")
+	// bootstrapping
+	bootstrap.NewAppCmd(
+		"{{.Project.Name}}",
+		[]fx.Option{
+			// Some priority fx.Provide() and fx.Invoke()
+		},
+		[]fx.Option{
+			fx.StartTimeout(60 * time.Second),
+			// fx.Provide(),
+		},
+	)
+	bootstrap.Execute()
 }

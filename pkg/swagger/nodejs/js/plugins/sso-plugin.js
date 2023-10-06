@@ -66,6 +66,10 @@ export const NfvOAuth2SsoPlugin = () => {
                     },
                     getAccessToken: (state) => state.getIn(["token", 'access_token']),
                     getRefreshToken: (state) => state.getIn(["token", 'refresh_token']),
+                    getFromTokenResponse: (state, path) => {
+                        let pathArray = path.split(",")
+                        return state.getIn(["token", ...pathArray])
+                    },
                     originalRequestInterceptor: (state) => state.get("originalRequestInterceptor"),
                     originalResponseInterceptor: (state) => state.get("originalResponseInterceptor"),
                 },
