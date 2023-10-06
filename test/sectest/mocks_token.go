@@ -18,13 +18,13 @@ const (
  *************************/
 
 type MockedTokenInfo struct {
-	UName       string
-	UID         string
-	TID         string
-	TExternalId string
-	OrigU       string
-	Exp         int64
-	Iss         int64
+	UName       string `json:"UName"`
+	UID         string `json:"UID"`
+	TID         string `json:"TID"`
+	TExternalId string `json:"TExternalId"`
+	OrigU       string `json:"OrigU"`
+	Exp         int64  `json:"Exp"`
+	Iss         int64  `json:"Iss"`
 }
 
 // MockedToken implements oauth2.AccessToken

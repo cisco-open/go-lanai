@@ -19,9 +19,9 @@ type oasDoc struct {
 }
 
 type OpenApiSpec struct {
-	Version OASVersion
-	OAS2   *OAS2
-	OAS3   *OAS3
+	Version OASVersion `json:"Version"`
+	OAS2    *OAS2      `json:"OAS2"`
+	OAS3    *OAS3      `json:"OAS3"`
 }
 
 func (s *OpenApiSpec) UnmarshalJSON(data []byte) error {
