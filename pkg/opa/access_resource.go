@@ -2,7 +2,7 @@ package opa
 
 import (
 	"context"
-	"encoding/json"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 	"github.com/open-policy-agent/opa/sdk"
 	"time"
@@ -18,6 +18,15 @@ type ResourceQuery struct {
 	InputCustomizers []InputCustomizer
 	// RawInput overrides any input related options
 	RawInput interface{}
+	// LogLevel override decision log level when presented
+	LogLevel *log.LoggingLevel
+}
+
+func SilentResourceQuery() ResourceQueryOptions {
+	var silent = log.LevelOff
+	return func(opt *ResourceQuery) {
+		opt.LogLevel = &silent
+	}
 }
 
 func AllowResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceQueryOptions) error {
@@ -32,6 +41,7 @@ func AllowResource(ctx context.Context, resType string, op ResourceOperation, op
 	if len(res.Policy) == 0 {
 		res.Policy = fmt.Sprintf("%s/allow_%v", resType, op)
 	}
+	ctx = contextWithOverriddenLogLevel(ctx, res.LogLevel)
 	opaOpts, e := PrepareResourceDecisionQuery(ctx, res.Policy, resType, op, &res)
 	if e != nil {
 		return ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
@@ -52,11 +62,11 @@ func PrepareResourceDecisionQuery(ctx context.Context, policy string, resType st
 		StrictBuiltinErrors: false,
 	}
 
-	if data, e := json.Marshal(opts.Input); e != nil {
-		logger.WithContext(ctx).Errorf("Input marshalling error: %v", e)
-	} else {
-		logger.WithContext(ctx).Debugf("Input: %s", data)
-	}
+	//if data, e := json.Marshal(opts.Input); e != nil {
+	//	eventLogger(ctx, log.LevelError).Printf("Input marshalling error: %v", e)
+	//} else {
+	//	eventLogger(ctx, log.LevelDebug).Printf("Input: %s", data)
+	//}
 	return &opts, nil
 }
 

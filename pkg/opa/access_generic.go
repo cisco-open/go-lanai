@@ -2,7 +2,7 @@ package opa
 
 import (
 	"context"
-	"encoding/json"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"github.com/open-policy-agent/opa/sdk"
 	"time"
 )
@@ -14,11 +14,20 @@ type Query struct {
 	Policy           string
 	InputCustomizers []InputCustomizer
 	RawInput         interface{}
+	// LogLevel override decision log level when presented
+	LogLevel *log.LoggingLevel
 }
 
 func QueryWithPolicy(policy string) QueryOptions {
 	return func(q *Query) {
 		q.Policy = policy
+	}
+}
+
+func SilentQuery() QueryOptions {
+	var silent = log.LevelOff
+	return func(opt *Query) {
+		opt.LogLevel = &silent
 	}
 }
 
@@ -41,6 +50,7 @@ func Allow(ctx context.Context, opts ...QueryOptions) error {
 	if len(query.Policy) == 0 {
 		return ErrInternal.WithMessage("policy is required for generic Allow function")
 	}
+	ctx = contextWithOverriddenLogLevel(ctx, query.LogLevel)
 	opaOpts, e := PrepareGenericDecisionQuery(ctx, &query)
 	if e != nil {
 		return ErrInternal.WithMessage(`error when preparing OPA input: %v`, e)
@@ -61,11 +71,11 @@ func PrepareGenericDecisionQuery(ctx context.Context, query *Query) (*sdk.Decisi
 		StrictBuiltinErrors: false,
 	}
 
-	if data, e := json.Marshal(opts.Input); e != nil {
-		logger.WithContext(ctx).Errorf("Input marshalling error: %v", e)
-	} else {
-		logger.WithContext(ctx).Debugf("Input: %s", data)
-	}
+	//if data, e := json.Marshal(opts.Input); e != nil {
+	//	eventLogger(ctx, log.LevelError).Printf("Input marshalling error: %v", e)
+	//} else {
+	//	eventLogger(ctx, log.LevelDebug).Printf("Input: %s", data)
+	//}
 	return &opts, nil
 }
 

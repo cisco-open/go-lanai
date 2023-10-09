@@ -3,6 +3,7 @@ package opa
 import (
 	"bytes"
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
 	"fmt"
@@ -35,7 +36,7 @@ type Config struct {
 	Bundles                      map[string]*bundle.Source  `json:"bundles,omitempty"`
 	DecisionLogs                 *opalogs.Config            `json:"decision_logs,omitempty"`
 	Status                       *opastatus.Config          `json:"status,omitempty"`
-	Plugins                      map[string]json.RawMessage `json:"plugins,omitempty"`
+	Plugins                      map[string]interface{}     `json:"plugins,omitempty"`
 	Keys                         map[string]*opakeys.Config `json:"keys,omitempty"`
 	DefaultDecision              *string                    `json:"default_decision,omitempty"`
 	DefaultAuthorizationDecision *string                    `json:"default_authorization_decision,omitempty"`
@@ -92,8 +93,10 @@ type diskConfig struct {
 
 // LoadConfig create config and combine values from defaults and properties
 func LoadConfig(ctx context.Context, props Properties, customizers ...ConfigCustomizer) (*Config, error) {
-	var cfg Config
-	cfg.ExtraConfig = map[string]interface{}{}
+	cfg := Config{
+		Plugins:     map[string]interface{}{},
+		ExtraConfig: map[string]interface{}{},
+	}
 	if e := applyProperties(&props, &cfg); e != nil {
 		return nil, e
 	}
@@ -121,13 +124,17 @@ func applyProperties(props *Properties, cfg *Config) error {
 	}
 
 	// decision logs
-	cfg.DecisionLogs = &opalogs.Config{
-		ConsoleLogs: props.Logging.DecisionLogsEnabled,
+	if props.Logging.DecisionLogsLevel != log.LevelOff {
+		cfg.Plugins[pluginNameDecisionLogger] = props.Logging
+		cfg.DecisionLogs = &opalogs.Config{
+			Plugin:      utils.ToPtr(pluginNameDecisionLogger),
+		}
 	}
 
 	// bundles
 	cfg.Bundles = map[string]*bundle.Source{}
-	for k, v := range props.Bundles {
+	for k := range props.Bundles {
+		v := props.Bundles[k]
 		polling := props.Server.PollingProperties
 		if e := mergo.Merge(&polling, &v.PollingProperties, mergo.WithOverride); e != nil {
 			return fmt.Errorf("unable to merge polling properties of bundle [%s]: %v", k, e)

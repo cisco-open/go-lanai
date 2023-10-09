@@ -24,8 +24,8 @@ func (s SchemaRef) AllSchemas() (result openapi3.SchemaRefs) {
 
 // HasAdditionalProperties returns true if the schema supports additionalProperties of any kind
 func (s SchemaRef) HasAdditionalProperties() bool {
-	additionalPropertiesAllowed := s.Value.AdditionalPropertiesAllowed != nil && *s.Value.AdditionalPropertiesAllowed
-	additionalPropsDefined := s.Value.AdditionalProperties != nil
+	additionalPropertiesAllowed := s.Value.AdditionalProperties.Has != nil && *s.Value.AdditionalProperties.Has
+	additionalPropsDefined := s.Value.AdditionalProperties.Schema != nil
 
 	return additionalPropertiesAllowed || additionalPropsDefined
 }

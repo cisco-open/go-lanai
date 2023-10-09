@@ -12,4 +12,5 @@ security:
         polling-max-delay: 90s
         long-polling-timeout: 10s
     logging:
-      decision-logs-enabled: true
+      level: debug
+      decision-logs-level: debug

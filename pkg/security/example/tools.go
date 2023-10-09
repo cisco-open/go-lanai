@@ -3,7 +3,7 @@
 package example
 
 import (
-	_ "github.com/mholt/archiver/cmd/arc"
+	_ "github.com/mholt/archiver/v3/cmd/arc"
 )
 
 // https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module

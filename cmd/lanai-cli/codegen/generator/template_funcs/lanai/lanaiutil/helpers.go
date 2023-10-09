@@ -46,11 +46,13 @@ func MatchesFormat(element interface{}, specificType string) bool {
 
 func ConvertToSchemaRef(element interface{}) (*openapi3.SchemaRef, error) {
 	var val *openapi3.SchemaRef
-	switch element.(type) {
+	switch v := element.(type) {
 	case *openapi3.SchemaRef:
-		val = element.(*openapi3.SchemaRef)
+		val = v
 	case *openapi3.Parameter:
-		val = element.(*openapi3.Parameter).Schema
+		val = v.Schema
+	case openapi3.AdditionalProperties:
+		val = v.Schema
 	default:
 		return nil, fmt.Errorf("ConvertToSchemaRef: unsupported interface %v", util.GetInterfaceType(element))
 	}

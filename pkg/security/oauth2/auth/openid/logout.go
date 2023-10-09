@@ -29,6 +29,7 @@ import (
 //   post_logout_redirect_uri
 // If Shouldlogout returns error, the logout process is also stopped, and the EntryPoint is called, which will direct user to an error page.
 
+//nolint:gosec // not sure why linter think this is the case: "G101: Potential hardcoded credentials"
 var ParameterRedirectUri = "post_logout_redirect_uri"
 var ParameterIdTokenHint = "id_token_hint"
 var ParameterState = "state"

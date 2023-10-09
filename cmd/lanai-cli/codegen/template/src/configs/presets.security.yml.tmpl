@@ -26,5 +26,6 @@ security:
         name: {{.Project.Name}}
         # url: "/bundles/{{.Project.Name}}"
     logging:
-      decision-logs-enabled: true
+      level: "debug"
+      decision-logs-level: "debug"    # "off" to turn off globally
   {{end}}

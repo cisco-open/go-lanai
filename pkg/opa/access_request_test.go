@@ -51,7 +51,7 @@ func SubTestRequestBaseline(_ *testDI) test.GomegaSubTestFunc {
 			opt.RawInput = map[string]interface{}{
 				"just_data": "data",
 			}
-		})
+		}, opa.SilentRequestQuery())
 		g.Expect(e).To(Succeed())
 	}
 }

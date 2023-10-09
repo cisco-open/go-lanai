@@ -5,6 +5,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 	opalogging "github.com/open-policy-agent/opa/logging"
+	"github.com/open-policy-agent/opa/plugins"
 	"github.com/open-policy-agent/opa/sdk"
 	"io"
 )
@@ -25,10 +26,12 @@ type EmbeddedOPAOptions func(opts *EmbeddedOPAOption)
 type EmbeddedOPAOption struct {
 	// SDKOptions raw sdk.Options
 	SDKOptions sdk.Options
-	// Config struct overridge SDKOptions.Config
+	// Config struct overrides SDKOptions.Config
 	Config *Config
 	// InputCustomizers installed as global input customizers for any OPA queries
 	InputCustomizers []InputCustomizer
+	// Properties for extra configuration that not included in Config
+	Properties *Properties
 }
 
 func WithConfig(cfg *Config) EmbeddedOPAOptions {
@@ -46,13 +49,24 @@ func WithRawConfig(jsonReader io.Reader) EmbeddedOPAOptions {
 func WithLogger(logger opalogging.Logger) EmbeddedOPAOptions {
 	return func(opts *EmbeddedOPAOption) {
 		opts.SDKOptions.Logger = logger
-		opts.SDKOptions.ConsoleLogger = logger
+	}
+}
+
+func WithLogLevel(level log.LoggingLevel) EmbeddedOPAOptions {
+	return func(opts *EmbeddedOPAOption) {
+		opts.SDKOptions.Logger = NewOPALogger(logger, level)
 	}
 }
 
 func WithInputCustomizers(customizers ...InputCustomizer) EmbeddedOPAOptions {
 	return func(opts *EmbeddedOPAOption) {
 		opts.InputCustomizers = customizers
+	}
+}
+
+func WithProperties(props Properties) EmbeddedOPAOptions {
+	return func(opts *EmbeddedOPAOption) {
+		opts.Properties = &props
 	}
 }
 
@@ -64,6 +78,9 @@ func NewEmbeddedOPA(ctx context.Context, opts ...EmbeddedOPAOptions) (*sdk.OPA, 
 		SDKOptions: sdk.Options{
 			ID:    `Embedded-OPA`,
 			Ready: readyCh,
+			Plugins: map[string]plugins.Factory{
+				pluginNameDecisionLogger: decisionLogPluginFactory{},
+			},
 		},
 	}
 	for _, fn := range opts {
@@ -86,6 +103,14 @@ func NewEmbeddedOPA(ctx context.Context, opts ...EmbeddedOPAOptions) (*sdk.OPA, 
 }
 
 func validateOptions(ctx context.Context, opt *EmbeddedOPAOption) error {
+	// check logger
+	if opt.SDKOptions.Logger == nil {
+		opaLog := NewOPALogger(logger.WithContext(ctx), log.LevelInfo)
+		WithLogger(opaLog)(opt)
+	} else if v, ok := opt.SDKOptions.Logger.(*opaLogger); ok {
+		WithLogger(v.WithContext(ctx))(opt)
+	}
+
 	// check config
 	switch {
 	case opt.Config == nil && opt.SDKOptions.Config == nil:
@@ -96,12 +121,6 @@ func validateOptions(ctx context.Context, opt *EmbeddedOPAOption) error {
 			return e
 		}
 		WithRawConfig(reader)(opt)
-	}
-	// check logger
-	switch {
-	case opt.SDKOptions.Logger == nil && opt.SDKOptions.ConsoleLogger == nil:
-		opaLog := NewOPALogger(logger.WithContext(ctx), log.LevelInfo)
-		WithLogger(opaLog)(opt)
 	}
 	return nil
 }
