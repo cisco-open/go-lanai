@@ -11,7 +11,9 @@ import (
 	"gorm.io/gorm"
 	"io"
 	"io/fs"
+	"regexp"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -103,6 +105,28 @@ func SetupTruncateTables(tables ...string) DataSetupStep {
 	return SetupUsingSQLQueries(sqls...)
 }
 
+// SetupDropTables returns a DataSetupStep that truncate given tables in single DROP TABLE IF EXISTS
+func SetupDropTables(tables ...string) DataSetupStep {
+	for i := range tables {
+		tables[i] = fmt.Sprintf(`"%s"`, tables[i])
+	}
+	sql := fmt.Sprintf(`DROP TABLE IF EXISTS %s CASCADE;`, strings.Join(tables, ", "))
+	return SetupUsingSQLQueries(sql)
+}
+
+// SetupOnce returns a DataSetupStep that run given DataSetupSteps within the given sync.Once.
+// How sync.Once is scoped is up to caller. e.g. once per test, once per package execution, etc...
+func SetupOnce(once *sync.Once, steps ...DataSetupStep) DataSetupStep {
+	return func(ctx context.Context, t *testing.T, db *gorm.DB) context.Context {
+		once.Do(func() {
+			for _, step := range steps {
+				ctx = step(ctx, t, db)
+			}
+		})
+		return ctx
+	}
+}
+
 // SetupWithGormScopes returns a DataSetupScope that applies given gorm scopes
 func SetupWithGormScopes(scopes ...func(*gorm.DB) *gorm.DB) DataSetupScope {
 	return func(ctx context.Context, t *testing.T, db *gorm.DB) (context.Context, *gorm.DB) {
@@ -110,13 +134,16 @@ func SetupWithGormScopes(scopes ...func(*gorm.DB) *gorm.DB) DataSetupScope {
 	}
 }
 
+var sqlStatementSep = regexp.MustCompile(`; *$`)
+
 func execSqlFile(ctx context.Context, fsys fs.FS, db *gorm.DB, g *gomega.WithT, filename string) {
 	file, e := fsys.Open(filename)
 	g.Expect(e).To(Succeed(), "table preparation should be able to open SQL file '%s'", filename)
 
 	queries, e := io.ReadAll(file)
 	g.Expect(e).To(Succeed(), "table preparation should be able to read SQL file '%s'", filename)
-	for _, q := range strings.Split(string(queries), ";") {
+
+	for _, q := range sqlStatementSep.Split(string(queries), -1) {
 		q = strings.TrimSpace(q)
 		if q == "" {
 			continue
