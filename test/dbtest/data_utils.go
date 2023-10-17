@@ -107,10 +107,11 @@ func SetupTruncateTables(tables ...string) DataSetupStep {
 
 // SetupDropTables returns a DataSetupStep that truncate given tables in single DROP TABLE IF EXISTS
 func SetupDropTables(tables ...string) DataSetupStep {
+	tableLiterals := make([]string, len(tables))
 	for i := range tables {
-		tables[i] = fmt.Sprintf(`"%s"`, tables[i])
+		tableLiterals[i] = fmt.Sprintf(`"%s"`, tables[i])
 	}
-	sql := fmt.Sprintf(`DROP TABLE IF EXISTS %s CASCADE;`, strings.Join(tables, ", "))
+	sql := fmt.Sprintf(`DROP TABLE IF EXISTS %s CASCADE;`, strings.Join(tableLiterals, ", "))
 	return SetupUsingSQLQueries(sql)
 }
 
