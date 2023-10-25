@@ -1,21 +1,20 @@
 package redis
 
 import (
+	"context"
 	"crypto/tls"
-	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
-	"io"
-	"os"
 )
 
 // KeepTTL is an option for Set command to keep key's existing TTL.
 // For example:
 //
-//    rdb.Set(ctx, key, value, redis.KeepTTL)
+//	rdb.Set(ctx, key, value, redis.KeepTTL)
 const KeepTTL = redis.KeepTTL
 
-func GetUniversalOptions(p *RedisProperties) (*redis.UniversalOptions, error) {
+func GetUniversalOptions(ctx context.Context, p *RedisProperties, tc *tlsconfig.ProviderFactory) (*redis.UniversalOptions, error) {
 	universal := &redis.UniversalOptions{
 		Addrs:              p.Addresses,
 		DB:                 p.DB,
@@ -44,33 +43,27 @@ func GetUniversalOptions(p *RedisProperties) (*redis.UniversalOptions, error) {
 		MasterName:       p.MasterName,
 		SentinelPassword: p.SentinelPassword,
 	}
-
-	if p.RootCertificates != "" {
-		file, err := os.Open(p.RootCertificates)
-
+	if p.Tls.Enable {
+		t := &tls.Config{} //nolint:gosec // the minVersion is set later on dynamically, so "G402: TLS MinVersion too low." is a false positive
+		provider, err := tc.GetProvider(p.Tls.Config)
 		if err != nil {
-			return nil, errors.Wrap(err, "Cannot open root certificates file: "+p.RootCertificates)
+			return nil, errors.Wrap(err, "Cannot fetch tls provider")
 		}
-
-		data, err := io.ReadAll(file)
-
+		t.MinVersion, err = provider.GetMinTlsVersion()
 		if err != nil {
-			return nil, errors.Wrap(err, "Cannot read root certificates file: "+p.RootCertificates)
+			return nil, errors.Wrap(err, "Cannot fetch min tls version from provider")
 		}
-
-		root := x509.NewCertPool()
-		ok := root.AppendCertsFromPEM(data)
-
-		if !ok {
-			return nil, errors.New("Cannot parse the certificate file content")
+		t.GetClientCertificate, err = provider.GetClientCertificate(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "Cannot fetch getCertificate func from provider")
 		}
-
-		t := &tls.Config{
-			RootCAs: root,
-			MinVersion: tls.VersionTLS12,
+		t.RootCAs, err = provider.RootCAs(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "Cannot fetch root CAs from provider")
 		}
 		universal.TLSConfig = t
 	}
+
 	return universal, nil
 }
 

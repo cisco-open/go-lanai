@@ -31,9 +31,9 @@ func (i *RedisHealthIndicator) Name() string {
 
 func (i *RedisHealthIndicator) Health(c context.Context, options health.Options) health.Health {
 	if _, e := i.client.Ping(c).Result(); e != nil {
+		logger.WithContext(c).Errorf("Health Ping to Redis failed: %s", e)
 		return health.NewDetailedHealth(health.StatusDown, "redis ping failed", nil)
 	} else {
 		return health.NewDetailedHealth(health.StatusUp, "redis ping succeeded", nil)
 	}
 }
-

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
@@ -10,7 +11,8 @@ import (
 type ClientOptions func(opt *ClientOption)
 
 type ClientOption struct {
-	DbIndex int
+	DbIndex            int
+	TlsProviderFactory *tlsconfig.ProviderFactory
 }
 
 type OptionsAwareHook interface {
@@ -43,8 +45,8 @@ type clientFactory struct {
 func NewClientFactory(p RedisProperties) ClientFactory {
 	return &clientFactory{
 		properties: p,
-		hooks: []redis.Hook{},
-		clients: map[ClientOption]clientRecord{},
+		hooks:      []redis.Hook{},
+		clients:    map[ClientOption]clientRecord{},
 	}
 }
 
@@ -64,7 +66,7 @@ func (f *clientFactory) New(ctx context.Context, opts ...ClientOptions) (Client,
 	}
 
 	// prepare options
-	options, e := GetUniversalOptions(&f.properties)
+	options, e := GetUniversalOptions(ctx, &f.properties, opt.TlsProviderFactory)
 	if e != nil {
 		return nil, errors.Wrap(e, "Invalid redis configuration")
 	}
@@ -72,7 +74,7 @@ func (f *clientFactory) New(ctx context.Context, opts ...ClientOptions) (Client,
 	// customize
 	options.DB = opt.DbIndex
 
-	c := client {
+	c := client{
 		UniversalClient: redis.NewUniversalClient(options),
 	}
 
