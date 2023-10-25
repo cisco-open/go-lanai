@@ -28,6 +28,7 @@ import (
 	samlidp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
 	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
@@ -150,7 +151,7 @@ func TestWithMockedServer(t *testing.T) {
 			basicauth.Module, clientauth.Module,
 			token.Module, access.Module, errorhandling.Module,
 			request_cache.Module, csrf.Module, session.Module,
-			redis.Module,
+			redis.Module, tlsconfig.Module,
 		),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
@@ -194,7 +195,7 @@ func TestWithMockedServerWithoutFinalizer(t *testing.T) {
 			basicauth.Module, clientauth.Module,
 			token.Module, access.Module, errorhandling.Module,
 			request_cache.Module, csrf.Module, session.Module,
-			redis.Module,
+			redis.Module, tlsconfig.Module,
 		),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
