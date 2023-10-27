@@ -12,7 +12,7 @@ import (
 var logger = log.New("tlsconfig")
 
 var Module = &bootstrap.Module{
-	Name: "tls-config",
+	Name:       "tls-config",
 	Precedence: bootstrap.TlsConfigPrecedence,
 	Options: []fx.Option{
 		fx.Provide(NewProviderFactory),

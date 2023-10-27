@@ -68,7 +68,7 @@ func initialize(di initDI) {
 			//nolint:contextcheck // intentional, given context is cancelled after bootstrap, AppCtx is cancelled when app close
 			return di.Binder.(BinderLifecycle).Start(di.AppCtx)
 		},
-		OnStop:  di.Binder.(BinderLifecycle).Shutdown,
+		OnStop: di.Binder.(BinderLifecycle).Shutdown,
 	})
 
 	// register health endpoints if applicable

@@ -72,6 +72,7 @@ const (
 )
 
 // ErrorTypes, can be used in errors.Is
+//
 //goland:noinspection GoUnusedGlobalVariable
 var (
 	ErrorCategoryKafka = NewErrorCategory(Reserved, errors.New("error type: kafka"))

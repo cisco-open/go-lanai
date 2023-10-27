@@ -4,6 +4,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"go.uber.org/fx"
 )
 
@@ -24,6 +25,7 @@ var Module = &bootstrap.Module{
 }
 
 func Use() {
+	bootstrap.Register(tlsconfig.Module)
 	bootstrap.Register(Module)
 }
 

@@ -12,12 +12,10 @@ import (
 )
 import . "github.com/onsi/gomega"
 
-
 type FileTestDi struct {
 	fx.In
 	ProviderFactory *ProviderFactory
 }
-
 
 func TestFileProvider(t *testing.T) {
 	di := &FileTestDi{}
@@ -32,11 +30,11 @@ func TestFileProvider(t *testing.T) {
 func SubTestFileProvider(di *FileTestDi) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		p := Properties{
-			Type: "file",
+			Type:       "file",
 			CaCertFile: "testdata/ca-cert-test.pem",
-			CertFile: "testdata/client-cert-signed-test.pem",
-			KeyFile: "testdata/client-key-test.pem",
-			KeyPass: "foobar",
+			CertFile:   "testdata/client-cert-signed-test.pem",
+			KeyFile:    "testdata/client-key-test.pem",
+			KeyPass:    "foobar",
 		}
 
 		provider, err := di.ProviderFactory.GetProvider(p)

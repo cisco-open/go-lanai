@@ -2,6 +2,7 @@ package cockroach
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"github.com/pkg/errors"
 )
 
@@ -17,23 +18,26 @@ type CockroachProperties struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	SslMode  string `json:"sslmode"`
-	SslRootCert string `json:"sslrootcert"`
-	SslCert string `json:"sslcert"`
-	SslKey string `json:"sslkey"`
+	Tls      TLS    `json:"tls"`
 }
 
-//NewCockroachProperties create a CockroachProperties with default values
+type TLS struct {
+	Enable bool                 `json:"enabled"`
+	Config tlsconfig.Properties `json:"config"`
+}
+
+// NewCockroachProperties create a CockroachProperties with default values
 func NewCockroachProperties() *CockroachProperties {
 	return &CockroachProperties{
 		Host:     "localhost",
 		Port:     26257,
 		Username: "root",
 		Password: "root",
-		SslMode: "disable",
+		SslMode:  "disable",
 	}
 }
 
-//BindCockroachProperties create and bind SessionProperties, with a optional prefix
+// BindCockroachProperties create and bind SessionProperties, with a optional prefix
 func BindCockroachProperties(ctx *bootstrap.ApplicationContext) CockroachProperties {
 	props := NewCockroachProperties()
 	if err := ctx.Config().Bind(props, CockroachPropertiesPrefix); err != nil {
@@ -41,4 +45,3 @@ func BindCockroachProperties(ctx *bootstrap.ApplicationContext) CockroachPropert
 	}
 	return *props
 }
-

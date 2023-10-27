@@ -21,7 +21,7 @@ import . "github.com/onsi/gomega"
 type VaultTestDi struct {
 	fx.In
 	ProviderFactory *ProviderFactory
-	VaultClient *vault.Client
+	VaultClient     *vault.Client
 }
 
 // This test assumes your vault has PKI backend enabled (i.e. vault secrets enable pki)

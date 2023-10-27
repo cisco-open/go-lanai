@@ -21,7 +21,7 @@ type Provider interface {
 	// VerifyPeerCertificate() func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
 
 	// GetClientCertificate this should return a function that returns the client certificate
-	GetClientCertificate(ctx context.Context) (func (*tls.CertificateRequestInfo) (*tls.Certificate, error), error)
+	GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error)
 
 	// RootCAs this should return the root ca.
 	RootCAs(ctx context.Context) (*x509.CertPool, error)

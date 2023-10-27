@@ -17,8 +17,8 @@ type VaultProvider struct {
 
 	vc *vault.Client
 
-	once sync.Once
-	mutex sync.RWMutex
+	once              sync.Once
+	mutex             sync.RWMutex
 	cachedCertificate *tls.Certificate
 
 	monitor       *loop.Loop
@@ -36,14 +36,14 @@ func NewVaultProvider(vc *vault.Client, p Properties) *VaultProvider {
 }
 
 func (v *VaultProvider) GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
-	v.once.Do(func(){
+	v.once.Do(func() {
 		cert, err := v.generateClientCertificate(ctx)
 		delay := v.tryRenewRepeatIntervalFunc()(cert, err)
 
 		loopCtx, cancelFunc := v.monitor.Run(context.Background())
 		v.monitorCancel = cancelFunc
 
-		time.AfterFunc(delay, func(){
+		time.AfterFunc(delay, func() {
 			v.monitor.Repeat(v.tryRenew(loopCtx), func(opt *loop.TaskOption) {
 				opt.RepeatIntervalFunc = v.tryRenewRepeatIntervalFunc()
 			})
@@ -51,19 +51,19 @@ func (v *VaultProvider) GetClientCertificate(ctx context.Context) (func(*tls.Cer
 	})
 
 	return func(certificateReq *tls.CertificateRequestInfo) (*tls.Certificate, error) {
-			v.mutex.RLock()
-			defer v.mutex.RUnlock()
-			if v.cachedCertificate == nil {
-				return new(tls.Certificate), nil
-			}
-			e := certificateReq.SupportsCertificate(v.cachedCertificate)
-			if e != nil {
-				// No acceptable certificate found. Don't send a certificate. Don't need to treat as error.
-				// see tls package's func (c *Conn) getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
-				return new(tls.Certificate), nil //nolint:nilerr
-			} else {
-				return v.cachedCertificate, nil
-			}
+		v.mutex.RLock()
+		defer v.mutex.RUnlock()
+		if v.cachedCertificate == nil {
+			return new(tls.Certificate), nil
+		}
+		e := certificateReq.SupportsCertificate(v.cachedCertificate)
+		if e != nil {
+			// No acceptable certificate found. Don't send a certificate. Don't need to treat as error.
+			// see tls package's func (c *Conn) getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
+			return new(tls.Certificate), nil //nolint:nilerr
+		} else {
+			return v.cachedCertificate, nil
+		}
 	}, nil
 }
 
@@ -88,7 +88,13 @@ func (v *VaultProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(pemBytes)
-
+	if v.p.FileCache.Enabled {
+		logger.WithContext(ctx).Infof("gonna cache the ca using config: %v", v.p.FileCache)
+		err := v.CacheCaToFile(pemBytes)
+		if err != nil {
+			return certPool, err
+		}
+	}
 	return certPool, nil
 }
 
@@ -117,9 +123,9 @@ func (v *VaultProvider) generateClientCertificate(ctx context.Context) (*tls.Cer
 
 	reqData := IssueCertificateRequest{
 		CommonName: v.p.CN,
-		IpSans: v.p.IpSans,
-		AltNames: v.p.AltNames,
-		Ttl: v.p.Ttl,
+		IpSans:     v.p.IpSans,
+		AltNames:   v.p.AltNames,
+		Ttl:        v.p.Ttl,
 	}
 
 	//nolint:contextcheck // context is passed in via Logical(ctx). false positive
@@ -136,18 +142,24 @@ func (v *VaultProvider) generateClientCertificate(ctx context.Context) (*tls.Cer
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 	v.cachedCertificate = &cert
+	if v.p.FileCache.Enabled {
+		err := v.CacheCertToFile(&cert)
+		if err != nil {
+			return &cert, err
+		}
+	}
 	return &cert, err
 }
 
 // half way between now and cached certificate expiration.
 func (v *VaultProvider) tryRenewRepeatIntervalFunc() loop.RepeatIntervalFunc {
-	return func(result interface{}, err error)  (ret time.Duration) {
-		defer func(){
+	return func(result interface{}, err error) (ret time.Duration) {
+		defer func() {
 			logger.Infof("certificate will renew in %v", ret)
 		}()
 
 		minDuration := 1 * time.Minute
-		if v.p.MinRenewInterval != ""{
+		if v.p.MinRenewInterval != "" {
 			minDurationConfig, e := time.ParseDuration(v.p.MinRenewInterval)
 			if e == nil {
 				minDuration = minDurationConfig
@@ -176,7 +188,7 @@ func (v *VaultProvider) tryRenewRepeatIntervalFunc() loop.RepeatIntervalFunc {
 		}
 
 		durationRemain := validTo.Sub(now)
-		next := durationRemain/2
+		next := durationRemain / 2
 
 		if minDuration > next {
 			next = minDuration

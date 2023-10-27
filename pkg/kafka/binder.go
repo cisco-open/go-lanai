@@ -236,7 +236,6 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 			err = ErrorStartClosedBinding.WithMessage("attempt to initialize Binder after shutdown")
 			return
 		}
-
 		cfg, tlsConfigProvider, e := defaultSaramaConfig(ctx, b.properties, tlsProviderFactory)
 		if e != nil {
 			err = NewKafkaError(ErrorCodeBindingInternal, fmt.Sprintf("unable to create kafka config: %v", e))
@@ -442,7 +441,8 @@ func (b *SaramaKafkaBinder) tryStartTaskFunc(loopCtx context.Context) loop.TaskF
 // when all bindings are successfully started, we reduce the repeating rate
 // S-shaped curve.
 // Logistic Function 	https://en.wikipedia.org/wiki/Logistic_function
-//						https://en.wikipedia.org/wiki/Generalised_logistic_function
+//
+//	https://en.wikipedia.org/wiki/Generalised_logistic_function
 func (b *SaramaKafkaBinder) tryStartRepeatIntervalFunc() loop.RepeatIntervalFunc {
 
 	var fn func(int) time.Duration
@@ -478,7 +478,8 @@ func (b *SaramaKafkaBinder) tryStartRepeatIntervalFunc() loop.RepeatIntervalFunc
 
 // logisticModel returns delay function f(n) using logistic model
 // Logistic Function 	https://en.wikipedia.org/wiki/Logistic_function
-//						https://en.wikipedia.org/wiki/Generalised_logistic_function
+//
+//	https://en.wikipedia.org/wiki/Generalised_logistic_function
 func (b *SaramaKafkaBinder) logisticModel(min, max, k, n0 float64, y0 time.Duration) func(n int) time.Duration {
 	// minK is calculated to make sure f(0) < min + y0 (first value is within y0 seconds of min value)
 	minK := math.Log((max-min)/float64(y0)-1) / n0

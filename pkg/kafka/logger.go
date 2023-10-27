@@ -16,16 +16,16 @@ type MessageLogger interface {
 type LoggerOptions func(opt *loggerOption)
 
 type loggerOption struct {
-	Name string
+	Name  string
 	Level log.LoggingLevel
 }
 
 type saramaMessageLogger struct {
 	logger log.ContextualLogger
-	level log.LoggingLevel
+	level  log.LoggingLevel
 }
 
-func newSaramaMessageLogger(opts...LoggerOptions) *saramaMessageLogger {
+func newSaramaMessageLogger(opts ...LoggerOptions) *saramaMessageLogger {
 	opt := loggerOption{
 		Name:  "Kafka.Msg",
 		Level: log.LevelDebug,
