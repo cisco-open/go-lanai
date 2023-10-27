@@ -31,7 +31,7 @@ func (v *VaultProvider) CacheCertToFile(cert *tls.Certificate) error {
 		return fmt.Errorf("failed to encode certificate to PEM")
 	}
 
-	err := os.WriteFile(certfilepath, pemBytes, 0644)
+	err := os.WriteFile(certfilepath, pemBytes, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write PEM data to file: %v", err)
 	}
@@ -63,7 +63,7 @@ func (v *VaultProvider) CacheCertToFile(cert *tls.Certificate) error {
 func (v *VaultProvider) CacheCaToFile(pemData []byte) error {
 	cafilepath := v.p.FileCache.Path + v.ProviderCommon.p.FileCache.Prefix + CaSuffix
 
-	err := os.WriteFile(cafilepath, pemData, 0644)
+	err := os.WriteFile(cafilepath, pemData, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write PEM data to file: %v", err)
 	}
