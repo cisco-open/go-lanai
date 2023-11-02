@@ -1,4 +1,4 @@
-package model
+package resource.model
 
 import future.keywords
 import data.tenancy.allow_tenant_access

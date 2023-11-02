@@ -1,4 +1,4 @@
-package model
+package resource.model
 
 import future.keywords
 import data.rbac.has_permission

@@ -27,11 +27,14 @@ const (
 	TagKeyInputField    = `field`
 	TagKeyInputFieldAlt = `input`
 	TagKeyResourceType  = `type`
+	TagKeyOPAPackage    = `package`
 )
 
 type OPATag struct {
+	// InputField applies to "to-be-filtered-by" model fields.
 	InputField string
 	ResType    string
+	OPAPackage string
 	Policies   map[DBOperationFlag]string
 	mode       policyMode
 }
@@ -64,6 +67,8 @@ func (t *OPATag) UnmarshalText(data []byte) error {
 			t.InputField = v
 		case TagKeyResourceType:
 			t.ResType = v
+		case TagKeyOPAPackage:
+			t.OPAPackage = v
 		default:
 			if e := t.parsePolicy(kv); e == nil {
 				continue
@@ -92,6 +97,13 @@ func (t *OPATag) parsePolicy(kv []string) error {
 		t.mode = t.mode | policyMode(flag)
 	}
 	return nil
+}
+
+// Queries normalized queries for OPA.
+// By default, queries are
+func (t *OPATag) Queries() map[DBOperationFlag]string {
+	//TODO
+	return t.Policies
 }
 
 /********************
@@ -162,7 +174,3 @@ func (m policyMode) hasFlags(flags ...DBOperationFlag) bool {
 	}
 	return true
 }
-
-
-
-

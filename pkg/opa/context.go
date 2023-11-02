@@ -7,6 +7,14 @@ import (
 )
 
 /********************
+	Constants
+ ********************/
+
+const (
+	PackagePrefixResource = `resource`
+)
+
+/********************
 	Common Inputs
  ********************/
 

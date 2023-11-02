@@ -60,11 +60,12 @@ func (path TaggedRelationPath) InputField() string {
 }
 
 type Metadata struct {
-	ResType  string
-	Policies map[DBOperationFlag]string
-	Fields   map[string]*TaggedField
-	Schema   *schema.Schema
-	mode     policyMode
+	ResType    string
+	OPAPackage string
+	Policies   map[DBOperationFlag]string
+	Fields     map[string]*TaggedField
+	Schema     *schema.Schema
+	mode       policyMode
 }
 
 func newMetadata(s *schema.Schema) (*Metadata, error) {
@@ -77,11 +78,12 @@ func newMetadata(s *schema.Schema) (*Metadata, error) {
 		return nil, e
 	}
 	return &Metadata{
-		ResType:  tag.ResType,
-		Policies: tag.Policies,
-		Fields:   fields,
-		Schema:   s,
-		mode:     tag.mode,
+		ResType:    tag.ResType,
+		OPAPackage: tag.OPAPackage,
+		Policies:   tag.Policies,
+		Fields:     fields,
+		Schema:     s,
+		mode:       tag.mode,
 	}, nil
 }
 
