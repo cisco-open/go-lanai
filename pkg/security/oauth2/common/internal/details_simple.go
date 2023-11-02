@@ -8,19 +8,36 @@ import (
 // SimpleContextDetails implements
 // - security.AuthenticationDetails
 // - security.KeyValueDetails
+// It is used to represent a client credential
 type SimpleContextDetails struct {
 	Authentication AuthenticationDetails
+	Tenant         TenantDetails
+	Client         ClientDetails
 	KV             map[string]interface{}
 }
 
-func NewSimpleContextDetails() *SimpleContextDetails {
-	return &SimpleContextDetails{
-		Authentication: AuthenticationDetails{
-			Roles:       utils.NewStringSet(),
-			Permissions: utils.NewStringSet(),
-		},
-		KV: map[string]interface{}{},
-	}
+func (d *SimpleContextDetails) ClientId() string {
+	return d.Client.Id
+}
+
+func (d *SimpleContextDetails) AssignedTenantIds() utils.StringSet {
+	return d.Client.AssignedTenantIds
+}
+
+func (d *SimpleContextDetails) Scopes() utils.StringSet {
+	return d.Client.Scopes
+}
+
+func (d *SimpleContextDetails) TenantId() string {
+	return d.Tenant.Id
+}
+
+func (d *SimpleContextDetails) TenantExternalId() string {
+	return d.Tenant.ExternalId
+}
+
+func (d *SimpleContextDetails) TenantSuspended() bool {
+	return d.Tenant.Suspended
 }
 
 // security.AuthenticationDetails

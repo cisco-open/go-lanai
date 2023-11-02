@@ -20,7 +20,7 @@ type ClientDetails struct {
 	AccessTokenValidity  time.Duration
 	RefreshTokenValidity time.Duration
 	UseSessionTimeout    bool
-	TenantRestrictions   utils.StringSet
+	AssignedTenantIds    utils.StringSet
 	ResourceIds          utils.StringSet
 }
 
@@ -81,8 +81,8 @@ func (c *DefaultOAuth2Client) UseSessionTimeout() bool {
 	return c.ClientDetails.UseSessionTimeout
 }
 
-func (c *DefaultOAuth2Client) TenantRestrictions() utils.StringSet {
-	return c.ClientDetails.TenantRestrictions
+func (c *DefaultOAuth2Client) AssignedTenantIds() utils.StringSet {
+	return c.ClientDetails.AssignedTenantIds
 }
 
 func (c *DefaultOAuth2Client) ResourceIDs() utils.StringSet {
@@ -128,7 +128,7 @@ func (c *DefaultOAuth2Client) UseMFA() bool {
 }
 
 func (c *DefaultOAuth2Client) CacheableCopy() security.Account {
-	copy := DefaultOAuth2Client {
+	copy := DefaultOAuth2Client{
 		ClientDetails: c.ClientDetails,
 	}
 	copy.ClientDetails.Secret = ""

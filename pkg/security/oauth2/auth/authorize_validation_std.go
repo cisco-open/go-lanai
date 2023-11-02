@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
@@ -17,14 +16,14 @@ var (
 // it validate auth request against standard oauth2 specs
 type StandardAuthorizeRequestProcessor struct {
 	clientStore  oauth2.OAuth2ClientStore
-	accountStore security.AccountStore
+	accountStore oauth2.OAuth2AccountStore
 }
 
 type StdARPOptions func(*StdARPOption)
 
 type StdARPOption struct {
 	ClientStore  oauth2.OAuth2ClientStore
-	AccountStore security.AccountStore
+	AccountStore oauth2.OAuth2AccountStore
 }
 
 func NewStandardAuthorizeRequestProcessor(opts ...StdARPOptions) *StandardAuthorizeRequestProcessor {
@@ -114,37 +113,22 @@ func (p *StandardAuthorizeRequestProcessor) validateScope(ctx context.Context, r
 }
 
 func (p *StandardAuthorizeRequestProcessor) validateClientTenancy(ctx context.Context, client oauth2.OAuth2Client) error {
-	clientTenancy := client.TenantRestrictions()
-	if len(clientTenancy) == 0 {
-		return nil
-	}
-
 	userAuth := security.Get(ctx)
-	if security.HasPermissions(userAuth, security.SpecialPermissionAccessAllTenant) {
-		return nil
-	}
-
 	// Note if current security doesn't have valid username, we don't return error here. We let access handler to deal with it
 	username, e := security.GetUsername(userAuth)
 	if !security.IsFullyAuthenticated(userAuth) || e != nil {
 		return nil //nolint:nilerr // intended behaviour
 	}
 
-	acct, e := p.accountStore.LoadAccountByUsername(ctx, username)
-	if e != nil {
+	acct, e := p.accountStore.LoadAccountByUsername(ctx, username, client.ClientId())
+	if e != nil || acct == nil {
 		security.Clear(ctx)
 		return security.NewUsernameNotFoundError("cannot retrieve account from current session")
 	}
 
-	userAccessibleTenants := utils.NewStringSet()
-	if acctTenancy, ok := acct.(security.AccountTenancy); ok {
-		userAccessibleTenants.Add(acctTenancy.DesignatedTenantIds()...)
-	}
-
-	for t := range clientTenancy {
-		if !tenancy.AnyHasDescendant(ctx, userAccessibleTenants, t) {
-			return oauth2.NewUnauthorizedClientError("client is restricted to tenants which the authenticated user does not have access to")
-		}
+	if len(acct.(security.AccountTenancy).DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeSystem) {
+		security.Clear(ctx)
+		return security.NewUsernameNotFoundError("user has no access to tenants of this client")
 	}
 	return nil
 }

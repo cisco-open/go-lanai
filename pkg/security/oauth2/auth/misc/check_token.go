@@ -13,9 +13,9 @@ import (
 
 const (
 	msgInvalidTokenType = "unsupported token type"
-	msgInvalidToken = "token is invalid or expired"
-	hintAccessToken = "access_token"
-	hintRefreshToken = "refresh_token"
+	msgInvalidToken     = "token is invalid or expired"
+	hintAccessToken     = "access_token"
+	hintRefreshToken    = "refresh_token"
 )
 
 type CheckTokenRequest struct {
@@ -47,7 +47,9 @@ func (ep *CheckTokenEndpoint) CheckToken(c context.Context, request *CheckTokenR
 		return nil, oauth2.NewInvalidClientError("check token endpoint requires client authentication")
 	}
 
-	// TBD: maybe we should disallow client to check the token that wasn't issued to same client
+	// TBD: maybe we should disallow client to check the token that wasn't issued to same client https://oauth.net/2/token-introspection/
+	// if token is issued to public client, any client with token_detail can check
+	// if token is issued to private client, only issuing client can check
 	switch request.Hint {
 	case "":
 		fallthrough
@@ -78,7 +80,7 @@ func (ep *CheckTokenEndpoint) checkAccessTokenWithoutDetails(c context.Context, 
 
 func (ep *CheckTokenEndpoint) checkAccessTokenWithDetails(c context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
 	candidate := tokenauth.BearerToken{
-		Token: request.Token,
+		Token:      request.Token,
 		DetailsMap: map[string]interface{}{},
 	}
 	oauth, e := ep.authenticator.Authenticate(c, &candidate)

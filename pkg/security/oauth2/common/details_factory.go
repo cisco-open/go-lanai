@@ -163,9 +163,31 @@ func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) 
 		return nil, e
 	}
 
+	// tenant
+	var td internal.TenantDetails
+	if facts.tenant != nil {
+		td = internal.TenantDetails{
+			Id:         facts.tenant.Id,
+			ExternalId: facts.tenant.ExternalId,
+			Suspended:  facts.tenant.Suspended}
+	} else {
+		td = internal.TenantDetails{}
+	}
+
+	var cd internal.ClientDetails
+	if facts.client != nil {
+		cd = internal.ClientDetails{
+			Id:                facts.client.ClientId(),
+			Scopes:            facts.client.Scopes(),
+			AssignedTenantIds: facts.client.AssignedTenantIds(),
+		}
+	}
+
 	return &internal.SimpleContextDetails{
 		Authentication: *ad,
 		KV:             f.createKVDetails(ctx, facts),
+		Tenant:         td,
+		Client:         cd,
 	}, nil
 }
 
@@ -177,6 +199,7 @@ func (f *ContextDetailsFactory) createAuthDetails(ctx context.Context, facts *fa
 			d.Roles = utils.NewStringSet(meta.RoleNames()...)
 		}
 	} else {
+		//TODO: this should be removed
 		d.Roles = utils.NewStringSet()
 		d.Permissions = facts.client.Scopes().Copy()
 	}

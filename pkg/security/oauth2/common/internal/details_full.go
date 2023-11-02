@@ -7,18 +7,18 @@ import (
 )
 
 type ProviderDetails struct {
-	Id          string
-	Name        string
-	DisplayName string
-	Description string
+	Id               string
+	Name             string
+	DisplayName      string
+	Description      string
 	NotificationType string
-	Email string
+	Email            string
 }
 
 type TenantDetails struct {
-	Id        string
+	Id         string
 	ExternalId string
-	Suspended bool
+	Suspended  bool
 }
 
 type UserDetails struct {
@@ -31,6 +31,12 @@ type UserDetails struct {
 	FirstName         string
 	LastName          string
 	Email             string
+}
+
+type ClientDetails struct {
+	Id                string
+	AssignedTenantIds utils.StringSet
+	Scopes            utils.StringSet
 }
 
 type AuthenticationDetails struct {
@@ -54,14 +60,29 @@ type FullContextDetails struct {
 	Provider       ProviderDetails
 	Tenant         TenantDetails
 	User           UserDetails
+	Client         ClientDetails
 	Authentication AuthenticationDetails
 	KV             map[string]interface{}
+}
+
+func (d *FullContextDetails) ClientId() string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *FullContextDetails) Scopes() utils.StringSet {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewFullContextDetails() *FullContextDetails {
 	return &FullContextDetails{
 		Provider: ProviderDetails{},
 		Tenant:   TenantDetails{},
+		Client: ClientDetails{
+			AssignedTenantIds: utils.NewStringSet(),
+			Scopes:            utils.NewStringSet(),
+		},
 		User: UserDetails{
 			AssignedTenantIds: utils.NewStringSet(),
 		},
@@ -209,6 +230,3 @@ func (d *FullContextDetails) Values() (ret map[string]interface{}) {
 	}
 	return
 }
-
-
-

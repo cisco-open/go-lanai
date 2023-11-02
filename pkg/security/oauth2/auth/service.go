@@ -32,7 +32,7 @@ type DASOptions func(*DASOption)
 type DASOption struct {
 	DetailsFactory     *common.ContextDetailsFactory
 	ClientStore        oauth2.OAuth2ClientStore
-	AccountStore       security.AccountStore
+	AccountStore       oauth2.OAuth2AccountStore
 	TenantStore        security.TenantStore
 	ProviderStore      security.ProviderStore
 	Issuer             security.Issuer
@@ -45,7 +45,7 @@ type DASOption struct {
 type DefaultAuthorizationService struct {
 	detailsFactory    *common.ContextDetailsFactory
 	clientStore       oauth2.OAuth2ClientStore
-	accountStore      security.AccountStore
+	accountStore      oauth2.OAuth2AccountStore
 	tenantStore       security.TenantStore
 	providerStore     security.ProviderStore
 	tokenStore        TokenStore
@@ -99,7 +99,6 @@ func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context,
 	if userAuth, err = s.createUserAuthentication(ctx, request, userAuth); err != nil {
 		return
 	}
-
 	// create the result
 	oauth = oauth2.NewAuthentication(func(conf *oauth2.AuthOption) {
 		conf.Request = request
@@ -264,8 +263,21 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, newInvalidClientError()
 	}
 
+	// For client credential flow - no user auth
 	if userAuth == nil {
-		return &authFacts{client: client}, nil
+		var defaultTenant string
+		if len(client.AssignedTenantIds()) == 1 {
+			defaultTenant = client.AssignedTenantIds().Values()[0]
+		}
+		tenant, err := s.loadTenant(ctx, request, defaultTenant)
+		if err != nil {
+			return nil, newInvalidTenantForClientError("error loading tenant")
+		}
+
+		if tenant != nil && !client.Scopes().Has(oauth2.ScopeSystem) && !tenancy.AnyHasDescendant(ctx, client.AssignedTenantIds(), tenant.Id) {
+			return nil, newInvalidTenantForClientError(fmt.Sprintf("client doesn't have access to %s", tenant.Id))
+		}
+		return &authFacts{client: client, tenant: tenant}, nil
 	}
 
 	account, err := s.loadAccount(ctx, request, userAuth)
@@ -275,7 +287,16 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, newInvalidUserError("unsupported user's account locked or disabled")
 	}
 
-	tenant, err := s.loadTenant(ctx, request, account)
+	acctT, ok := account.(security.AccountTenancy)
+	if !ok {
+		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
+	}
+
+	if len(acctT.DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeSystem) {
+		return nil, newInvalidUserError("unsupported user does not have access according to client's tenants")
+	}
+
+	tenant, err := s.loadTenant(ctx, request, acctT.DefaultDesignatedTenantId())
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +352,7 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 
 func (s *DefaultAuthorizationService) loadAccount(
 	ctx context.Context,
-	_ oauth2.OAuth2Request,
+	req oauth2.OAuth2Request,
 	userAuth security.Authentication,
 ) (security.Account, error) {
 	// sanity check, this should not happen
@@ -344,7 +365,7 @@ func (s *DefaultAuthorizationService) loadAccount(
 		return nil, newInvalidUserError(err)
 	}
 
-	acct, err := s.accountStore.LoadAccountByUsername(ctx, username)
+	acct, err := s.accountStore.LoadAccountByUsername(ctx, username, req.ClientId())
 	if err != nil {
 		return nil, newInvalidUserError(err)
 	}
@@ -355,18 +376,13 @@ func (s *DefaultAuthorizationService) loadAccount(
 func (s *DefaultAuthorizationService) loadTenant(
 	ctx context.Context,
 	request oauth2.OAuth2Request,
-	account security.Account,
+	defaultTenantId string,
 ) (*security.Tenant, error) {
-	acctT, ok := account.(security.AccountTenancy)
-	if !ok {
-		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
-	}
-
 	// extract tenant id or name
 	tenantId, idOk := request.Parameters()[oauth2.ParameterTenantId]
 	tenantExternalId, nOk := request.Parameters()[oauth2.ParameterTenantExternalId]
 	if (!idOk || tenantId == "") && (!nOk || tenantExternalId == "") {
-		tenantId = acctT.DefaultDesignatedTenantId()
+		tenantId = defaultTenantId
 	}
 
 	var tenant *security.Tenant
@@ -374,14 +390,14 @@ func (s *DefaultAuthorizationService) loadTenant(
 	if tenantId != "" {
 		tenant, e = s.tenantStore.LoadTenantById(ctx, tenantId)
 		if e != nil {
-			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with id [%s]", account.Username(), tenantId))
+			return nil, newInvalidTenantForUserError(fmt.Sprintf("error loading tenant with id [%s]", tenantId))
 		}
 	}
 
 	if tenantExternalId != "" {
 		tenant, e = s.tenantStore.LoadTenantByExternalId(ctx, tenantExternalId)
 		if e != nil {
-			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with externalId [%s]", account.Username(), tenantExternalId))
+			return nil, newInvalidTenantForUserError(fmt.Sprintf("error loading tenant with externalId [%s]", tenantExternalId))
 		}
 	}
 
@@ -411,8 +427,9 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, te
 	}
 
 	// check client's tenant restrictions
-	if len(client.TenantRestrictions()) != 0 {
-		for t := range client.TenantRestrictions() {
+	// TODO: remove this part because we would have already checked
+	if len(client.AssignedTenantIds()) != 0 {
+		for t := range client.AssignedTenantIds() {
 			if !tenancy.AnyHasDescendant(ctx, tenantIds, t) {
 				return oauth2.NewInvalidGrantError("client is restricted to tenants that the user doesn't have access to")
 			}
@@ -543,6 +560,10 @@ func newImmutableContextError(reasons ...interface{}) error {
 
 func newInvalidClientError(reasons ...interface{}) error {
 	return oauth2.NewInvalidGrantError("trying authroize with unknown client", reasons...)
+}
+
+func newInvalidTenantForClientError(reasons ...interface{}) error {
+	return oauth2.NewInvalidGrantError("authenticated client doesn't have access to the requested tenant", reasons...)
 }
 
 func newUnauthenticatedUserError(reasons ...interface{}) error {

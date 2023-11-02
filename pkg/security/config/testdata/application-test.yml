@@ -54,6 +54,29 @@ mocking:
       secret: "test-secret"
       access-token-validity: 3600s
       redirect-uris: ["localhost:*/**"]
+      tenants: []
+      scopes: "system"
+    tenanted-client:
+      id: "test-client-for-tenants"
+      secret: "test-secret"
+      access-token-validity: 3600s
+      redirect-uris: ["localhost:*/**"]
+      tenants: ["id-tenant-1", "id-tenant-2"]
+      scopes: "scope_a,scope_b"
+    one-tenant-client:
+      id: "test-client-for-one-tenant"
+      secret: "test-secret"
+      access-token-validity: 3600s
+      redirect-uris: ["localhost:*/**"]
+      tenants: ["id-tenant-2"]
+      scopes: "scope_a,scope_b"
+    another-tenant-client:
+      id: "another-tenant-client"
+      secret: "test-secret"
+      access-token-validity: 3600s
+      redirect-uris: ["localhost:*/**"]
+      tenants: ["id-tenant-3"]
+      scopes: "scope_a,scope_b"
   accounts:
     system:
       username: "system"

@@ -11,8 +11,8 @@ import (
 
 // Authentication extends security.Authentication
 type Authentication interface {
-	security.Authentication
-	UserAuthentication() security.Authentication
+	security.Authentication                      // User auth takes precedence when both user and client are authenticated
+	UserAuthentication() security.Authentication // The detail here is just the user detail. The overall detail from security.Authentication can be something else
 	OAuth2Request() OAuth2Request
 	AccessToken() AccessToken
 }
@@ -35,7 +35,7 @@ type authentication struct {
 	details   interface{}
 }
 
-func NewAuthentication(opts...AuthenticationOptions) Authentication {
+func NewAuthentication(opts ...AuthenticationOptions) Authentication {
 	config := AuthOption{}
 	for _, opt := range opts {
 		opt(&config)
@@ -124,10 +124,10 @@ type userAuthentication struct {
 	DetailsVal    map[string]interface{}       `json:"details"`
 }
 
-func NewUserAuthentication(opts...UserAuthOptions) *userAuthentication {
+func NewUserAuthentication(opts ...UserAuthOptions) *userAuthentication {
 	opt := UserAuthOption{
 		Permissions: map[string]interface{}{},
-		Details: map[string]interface{}{},
+		Details:     map[string]interface{}{},
 	}
 	for _, f := range opts {
 		f(&opt)
@@ -165,8 +165,8 @@ func (a *userAuthentication) DetailsMap() map[string]interface{} {
 }
 
 /*********************
- 	Timeout Support
- *********************/
+	Timeout Support
+*********************/
 
 type TimeoutApplier interface {
 	ApplyTimeout(ctx context.Context, sessionId string) (valid bool, err error)

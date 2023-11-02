@@ -239,8 +239,8 @@ func (c *Configuration) tokenGranter() auth.TokenGranter {
 			grants.NewAuthorizationCodeGranter(c.authorizationService(), c.authorizeCodeStore()),
 			grants.NewClientCredentialsGranter(c.authorizationService()),
 			grants.NewRefreshGranter(c.authorizationService(), c.tokenStore()),
-			grants.NewSwitchUserGranter(c.authorizationService(), c.tokenAuthenticator(), c.UserAccountStore),
-			grants.NewSwitchTenantGranter(c.authorizationService(), c.tokenAuthenticator(), c.UserAccountStore),
+			grants.NewSwitchUserGranter(c.authorizationService(), c.tokenAuthenticator(), auth.NewOAuth2AccountStore(c.UserAccountStore, c.ClientStore)),
+			grants.NewSwitchTenantGranter(c.authorizationService(), c.tokenAuthenticator(), auth.NewOAuth2AccountStore(c.UserAccountStore, c.ClientStore)),
 		}
 
 		// password granter is optional
@@ -303,7 +303,7 @@ func (c *Configuration) authorizationService() auth.AuthorizationService {
 			conf.DetailsFactory = c.contextDetailsFactory()
 			conf.Issuer = c.Issuer
 			conf.ClientStore = c.ClientStore
-			conf.AccountStore = c.UserAccountStore
+			conf.AccountStore = auth.NewOAuth2AccountStore(c.UserAccountStore, c.ClientStore)
 			conf.TenantStore = c.TenantStore
 			conf.ProviderStore = c.ProviderStore
 			if c.OpenIDSSOEnabled {
@@ -352,7 +352,7 @@ func (c *Configuration) authorizeRequestProcessor() auth.AuthorizeRequestProcess
 		processors := []auth.ChainedAuthorizeRequestProcessor{
 			auth.NewStandardAuthorizeRequestProcessor(func(opt *auth.StdARPOption) {
 				opt.ClientStore = c.ClientStore
-				opt.AccountStore = c.UserAccountStore
+				opt.AccountStore = auth.NewOAuth2AccountStore(c.UserAccountStore, c.ClientStore)
 			}),
 		}
 		if c.OpenIDSSOEnabled {

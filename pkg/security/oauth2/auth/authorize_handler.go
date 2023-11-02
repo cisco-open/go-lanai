@@ -128,7 +128,7 @@ func (h *DefaultAuthorizeHandler) MakeAuthCodeResponse(ctx context.Context, r *A
 		return nil, e
 	}
 
-	logger.WithContext(ctx).Debug("authorization_code="+code)
+	logger.WithContext(ctx).Debug("authorization_code=" + code)
 	values := map[string]string{
 		oauth2.ParameterAuthCode: code,
 	}
@@ -147,9 +147,12 @@ func (h *DefaultAuthorizeHandler) MakeImplicitResponse(ctx context.Context, r *A
 	panic("implicit response is not implemented")
 }
 
-/*************************
-	Helpers
- *************************/
+/*
+************************
+
+		Helpers
+	 ************************
+*/
 func (h *DefaultAuthorizeHandler) recordSessionId(ctx context.Context, user oauth2.UserAuthentication) {
 	s := session.Get(ctx)
 	if s == nil {
@@ -157,5 +160,3 @@ func (h *DefaultAuthorizeHandler) recordSessionId(ctx context.Context, user oaut
 	}
 	user.DetailsMap()[security.DetailsKeySessionId] = s.GetID()
 }
-
-

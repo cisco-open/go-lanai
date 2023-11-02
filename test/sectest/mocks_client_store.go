@@ -119,8 +119,8 @@ func (m MockedClient) UseSessionTimeout() bool {
 	return true
 }
 
-func (m MockedClient) TenantRestrictions() utils.StringSet {
-	return utils.NewStringSet()
+func (m MockedClient) AssignedTenantIds() utils.StringSet {
+	return utils.NewStringSet(m.MockedClientProperties.AssignedTenantIds...)
 }
 
 func (m MockedClient) ResourceIDs() utils.StringSet {

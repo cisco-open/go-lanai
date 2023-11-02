@@ -14,7 +14,7 @@ type InMemoryClientStore struct {
 
 func NewInMemoryClientStore(props ClientsProperties) oauth2.OAuth2ClientStore {
 	lookup := make(map[string]*auth.DefaultOAuth2Client)
-	for _,v := range props.Clients {
+	for _, v := range props.Clients {
 		lookup[v.ClientId] = newOAuth2Client(v)
 	}
 	return &InMemoryClientStore{
@@ -32,17 +32,16 @@ func (s *InMemoryClientStore) LoadClientByClientId(c context.Context, clientId s
 func newOAuth2Client(props PropertiesBasedClient) *auth.DefaultOAuth2Client {
 	return &auth.DefaultOAuth2Client{
 		ClientDetails: auth.ClientDetails{
-			ClientId: props.ClientId,
-			Secret: props.Secret,
-			GrantTypes: utils.NewStringSet(props.GrantTypes...),
-			RedirectUris: utils.NewStringSet(props.RedirectUris...),
-			Scopes: utils.NewStringSet(props.Scopes...),
-			AutoApproveScopes: utils.NewStringSet(props.AutoApproveScopes...),
-			AccessTokenValidity: utils.ParseDuration(props.AccessTokenValidity),
+			ClientId:             props.ClientId,
+			Secret:               props.Secret,
+			GrantTypes:           utils.NewStringSet(props.GrantTypes...),
+			RedirectUris:         utils.NewStringSet(props.RedirectUris...),
+			Scopes:               utils.NewStringSet(props.Scopes...),
+			AutoApproveScopes:    utils.NewStringSet(props.AutoApproveScopes...),
+			AccessTokenValidity:  utils.ParseDuration(props.AccessTokenValidity),
 			RefreshTokenValidity: utils.ParseDuration(props.RefreshTokenValidity),
-			UseSessionTimeout: props.UseSessionTimeout,
-			TenantRestrictions: utils.NewStringSet(props.TenantRestrictions...),
+			UseSessionTimeout:    props.UseSessionTimeout,
+			AssignedTenantIds:    utils.NewStringSet(props.TenantRestrictions...),
 		},
 	}
 }
-

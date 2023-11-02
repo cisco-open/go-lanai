@@ -2,6 +2,7 @@ package authserver
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/misc"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/openid"
 	utils_matcher "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
@@ -15,7 +16,7 @@ import (
 func registerEndpoints(registrar *web.Registrar, config *Configuration) {
 	jwks := misc.NewJwkSetEndpoint(config.jwkStore())
 	ct := misc.NewCheckTokenEndpoint(config.Issuer, config.tokenStore())
-	ui := misc.NewUserInfoEndpoint(config.Issuer, config.UserAccountStore, config.jwtEncoder())
+	ui := misc.NewUserInfoEndpoint(config.Issuer, auth.NewOAuth2AccountStore(config.UserAccountStore, config.ClientStore), config.jwtEncoder())
 	th := misc.NewTenantHierarchyEndpoint()
 
 	mappings := []interface{}{

@@ -50,6 +50,8 @@ func populateAuthenticationClause(auth security.Authentication, clause *opa.Auth
 	if v, ok := details.(security.AuthenticationDetails); ok {
 		clause.Roles = v.Roles().Values()
 	}
+
+	//TODO: support client credential
 	return nil
 }
 

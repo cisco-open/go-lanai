@@ -22,7 +22,7 @@ type OAuth2Client interface {
 	AccessTokenValidity() time.Duration
 	RefreshTokenValidity() time.Duration
 	UseSessionTimeout() bool
-	TenantRestrictions() utils.StringSet
+	AssignedTenantIds() utils.StringSet
 	ResourceIDs() utils.StringSet
 }
 
@@ -34,4 +34,3 @@ type OAuth2Client interface {
 type OAuth2ClientStore interface {
 	LoadClientByClientId(ctx context.Context, clientId string) (OAuth2Client, error)
 }
-

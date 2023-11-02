@@ -32,7 +32,7 @@ type FactoryOption struct {
 	Specs           []map[string]ClaimSpec
 	Source          oauth2.Authentication
 	Issuer          security.Issuer
-	AccountStore    security.AccountStore
+	AccountStore    oauth2.OAuth2AccountStore
 	AccessToken     oauth2.AccessToken
 	RequestedClaims RequestedClaims
 	ClaimsFormula   []map[string]ClaimSpec
@@ -65,7 +65,7 @@ func WithIssuer(issuer security.Issuer) FactoryOptions {
 	}
 }
 
-func WithAccountStore(accountStore security.AccountStore) FactoryOptions {
+func WithAccountStore(accountStore oauth2.OAuth2AccountStore) FactoryOptions {
 	return func(opt *FactoryOption) {
 		opt.AccountStore = accountStore
 	}
@@ -155,9 +155,12 @@ func safeSet(claims oauth2.Claims, claim string, value interface{}) (err error) 
 	return nil
 }
 
-/*************************
-	helpers
- *************************/
+/*
+************************
+
+		helpers
+	 ************************
+*/
 func tryReloadAccount(ctx context.Context, opt *FactoryOption) security.Account {
 	if acct, ok := ctx.Value(oauth2.CtxKeyAuthenticatedAccount).(security.Account); ok {
 		return acct
@@ -172,7 +175,7 @@ func tryReloadAccount(ctx context.Context, opt *FactoryOption) security.Account 
 		return nil
 	}
 
-	user, e := opt.AccountStore.LoadAccountById(ctx, details.UserId())
+	user, e := opt.AccountStore.LoadAccountById(ctx, details.UserId(), opt.Source.OAuth2Request().ClientId())
 	if e != nil {
 		return nil
 	}
