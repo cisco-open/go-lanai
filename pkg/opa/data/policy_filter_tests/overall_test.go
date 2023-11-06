@@ -13,13 +13,11 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"errors"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -401,55 +399,6 @@ func SubTestModelSave(di *TestDI) test.GomegaSubTestFunc {
 		rs = di.DB.WithContext(ctx).Save(model)
 		assertDBResult(ctx, g, rs, "save model with different owner", opa.ErrAccessDenied, 0)
 		assertPostOpModel[ModelA](ctx, g, di.DB, id, "save model with different owner", "OwnerID", testdata.MockedUserId1)
-	}
-}
-
-/*************************
-	Asserts
- *************************/
-
-func assertPostOpModel[T any](ctx context.Context, g *gomega.WithT, db *gorm.DB, id uuid.UUID, op string, expectedKVs ...interface{}) *T {
-	model, e := loadModel[T](ctx, db, id)
-	if len(expectedKVs) == 0 {
-		g.Expect(e).To(HaveOccurred(), "model should not exist after %s", op)
-		g.Expect(errors.Is(e, data.ErrorRecordNotFound)).To(BeTrue(), "get model after %s should return record not found error", op)
-		return nil
-	}
-
-	g.Expect(e).To(Succeed(), "model should exist after %s", op)
-	rv := reflect.Indirect(reflect.ValueOf(model))
-	for i := 0; i < len(expectedKVs)-1; i += 2 {
-		k := expectedKVs[i].(string)
-		fv := rv.FieldByName(k)
-		g.Expect(fv.IsValid()).To(BeTrue(), `model should have field "%s"" (after %s)`, k, op)
-		g.Expect(fv.Interface()).To(BeEquivalentTo(expectedKVs[i+1]), `model's field "%s" should have correct value (after %s)`, k, op)
-	}
-	return model
-}
-
-func assertDBResult(_ context.Context, g *gomega.WithT, rs *gorm.DB, op string, expectedErr error, expectedRows int) {
-	defer func() {
-		g.Expect(rs.RowsAffected).To(BeNumerically("==", expectedRows), "%s should affect %d rows", op, expectedRows)
-	}()
-	// if expected rows is 0, but actual result is opa.ErrAccessDenied, we consider it as acceptable behavior
-	if expectedErr != nil {
-		g.Expect(rs.Error).To(HaveOccurred(), "%s should return error", op)
-		g.Expect(errors.Is(rs.Error, expectedErr)).To(BeTrue(), "%s should return correct error", op)
-		return
-	} else if expectedRows == 0 && rs.Error != nil {
-		g.Expect(errors.Is(rs.Error, opa.ErrAccessDenied)).To(BeTrue(), "%s should return correct error", op)
-		return
-	} else {
-		g.Expect(rs.Error).To(Succeed(), "%s should return no error", op)
-	}
-}
-
-func assertOwnership[T any](g *gomega.WithT, ownerId uuid.UUID, op string, models ...*T) {
-	for i, model := range models {
-		rv := reflect.Indirect(reflect.ValueOf(model))
-		fv := rv.FieldByName("OwnerID")
-		g.Expect(fv.IsValid()).To(BeTrue(), `model should have field "OwnerID"`)
-		g.Expect(fv.Interface()).To(BeEquivalentTo(ownerId), `model's' OwnerID should have correct value at idx %d' (%s)`, i, op)
 	}
 }
 

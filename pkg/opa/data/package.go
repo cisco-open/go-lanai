@@ -75,9 +75,9 @@ func FilterByPolicies(flags ...DBOperationFlag) func(*gorm.DB) *gorm.DB {
 	}
 }
 
-// FilterByQueries is used as a scope for gorm.DB to override policy-based data filtering.
+// FilterWithQueries is used as a scope for gorm.DB to override policy-based data filtering.
 // Used to customize queries of specified DB operation. Additional DBOperationFlag-string pairs can be provided.
-// e.g. db.WithContext(ctx).Scopes(FilterByQueries(DBOperationFlagRead, "resource.type.allow_read")).Find(...)
+// e.g. db.WithContext(ctx).Scopes(FilterWithQueries(DBOperationFlagRead, "resource.type.allow_read")).Find(...)
 // Important: This scope accept FULL QUERY including policy package.
 // Notes:
 // - It's recommended to use dotted format without leading "data.". PolicyFilter would adjust the format based on operation.
@@ -85,7 +85,7 @@ func FilterByPolicies(flags ...DBOperationFlag) func(*gorm.DB) *gorm.DB {
 // - This scope doesn't enable/disable data-filtering. It only overrides queries set in tag.
 // - Using this scope without context would panic
 // - Having incorrect parameters cause panic
-func FilterByQueries(op DBOperationFlag, query string, more ...interface{}) func(*gorm.DB) *gorm.DB {
+func FilterWithQueries(op DBOperationFlag, query string, more ...interface{}) func(*gorm.DB) *gorm.DB {
 	policies := map[DBOperationFlag]string{op: query}
 	for i := range more {
 		if op, ok := more[i].(DBOperationFlag); ok && i + 1 < len(more) {
@@ -117,13 +117,38 @@ func FilterByQueries(op DBOperationFlag, query string, more ...interface{}) func
 	}
 }
 
+// FilterWithExtraData is used as a scope for gorm.DB to provide extra key-value pairs as input during policy-based data filtering.
+// The extra KV pairs are added under `input.resource`
+// e.g. db.WithContext(ctx).Scopes(FilterWithExtraData("exception", "ignore_tenancy")).Find(...)
+func FilterWithExtraData(kvs ...string) func(*gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if tx.Statement.Context == nil {
+			panic("FilterByQueries scope is used without context")
+		}
+		ctx := tx.Statement.Context
+		existing, ok := ctx.Value(ckFilterExtraData{}).(map[string]interface{})
+		if !ok {
+			existing = map[string]interface{}{}
+			ctx = context.WithValue(ctx, ckFilterExtraData{}, existing)
+		}
+		for i := range kvs {
+			if i + 1 < len(kvs) && len(kvs[i]) != 0 {
+				existing[kvs[i]] = kvs[i+1]
+			}
+			i++
+		}
+		tx.Statement.Context = ctx
+		return tx
+	}
+}
+
 /********************
 	Helpers
  ********************/
 
 type ckFilterMode struct{}
 type ckFilterQueries struct{}
-type ckFilterExtraInput struct{}
+type ckFilterExtraData struct{}
 
 func shouldSkip(ctx context.Context, flag DBOperationFlag, fallback policyMode) bool {
 	if ctx == nil {
@@ -161,6 +186,17 @@ func resolveQuery(ctx context.Context, flag DBOperationFlag, isPartial bool, met
 		pkg = fmt.Sprintf("%s.%s", opa.PackagePrefixResource, meta.ResType)
 	}
 	return finalizeQuery(fmt.Sprintf("data.%s.%s", pkg, policy), isPartial)
+}
+
+func populateExtraData(ctx context.Context, input map[string]interface{}) {
+	extra, ok := ctx.Value(ckFilterExtraData{}).(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	for k, v := range extra {
+		input[k] = v
+	}
 }
 
 func finalizeQuery(query string, isPartial bool) string {

@@ -222,6 +222,7 @@ func (m *statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.Resource
 			Fields:    m.Fields,
 			Statement: stmt,
 		})
+		populateExtraData(stmt.Context, rf.ExtraData)
 	}, nil
 }
 
@@ -320,6 +321,7 @@ func (m *createStatementModifier) checkPolicy(ctx context.Context, model *policy
 	return opa.AllowResource(ctx, model.meta.ResType, opa.OpCreate, func(res *opa.ResourceQuery) {
 		res.ResourceValues = *values
 		res.Policy = resolveQuery(ctx, m.Flag, false, &m.Metadata)
+		populateExtraData(ctx, res.ExtraData)
 	})
 }
 

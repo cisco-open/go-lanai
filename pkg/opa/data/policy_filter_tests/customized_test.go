@@ -111,7 +111,7 @@ func SubTestModelCCreate(di *TestDI) test.GomegaSubTestFunc {
 		// user1 - other tenant branch - strict rule
 		model.ID = uuid.New()
 		rs = di.DB.WithContext(ctx).
-			Scopes(opadata.FilterByQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
 			Create(&model)
 		assertDBResult(ctx, g, rs, "create model of non-selected tenant with strict rule", opa.ErrAccessDenied, 0)
 
@@ -119,16 +119,16 @@ func SubTestModelCCreate(di *TestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA1), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		model.ID = uuid.New()
 		rs = di.DB.WithContext(ctx).
-			Scopes(opadata.FilterByQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
 			Create(&model)
 		assertDBResult(ctx, g, rs, "create model of selected tenant with strict rule", nil, 1)
 
 		// user1 - other tenant branch - relaxed rule with exception
-		//model.ID = uuid.New()
-		//rs = di.DB.WithContext(ctx).
-		//Scopes(opadata.FilterByQueries(opadata.DBOperationFlagCreate, "allow_create")).
-		//Create(&model)
-		//assertDBResult(ctx, g, rs, "create model of non-selected tenant with strict rule", opa.ErrAccessDenied, 0)
+		model.ID = uuid.New()
+		rs = di.DB.WithContext(ctx).
+		Scopes(opadata.FilterWithExtraData("exception", "skip")).
+		Create(&model)
+		assertDBResult(ctx, g, rs, "create model of non-selected tenant with exception", nil, 1)
 	}
 }
 
@@ -146,20 +146,18 @@ func SubTestModelCList(di *TestDI) test.GomegaSubTestFunc {
 		// user1 - strict rule (tenancy)
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
 		rs = di.DB.WithContext(ctx).Model(&ModelC{}).
-			Scopes(opadata.FilterByQueries(opadata.DBOperationFlagRead, "res.test.filter_read")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagRead, "res.test.filter_read")).
 			Find(&models)
 		assertDBResult(ctx, g, rs, "list models using strict rule", nil, 10)
 		g.Expect(models).To(HaveLen(10), "user1 should see %d models", 10)
 		assertOwnership(g, testdata.MockedUserId1, "list models using strict rule", models...)
 
 		// user1 - relaxed rule (exceptions)
-		//rs = di.DB.WithContext(ctx).Model(&ModelC{}).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagRead, "res.test.filter_read")).
-		//	Find(&models)
-		//assertDBResult(ctx, g, rs, "list models using relaxed rule and exceptions", nil, 50)
-		//g.Expect(models).To(HaveLen(50), "user1 should see %d models", 50)
-		//assertOwnership(g, testdata.MockedUserId1, "list models using relaxed rule and exceptions", models...)
-
+		rs = di.DB.WithContext(ctx).Model(&ModelC{}).
+			Scopes(opadata.FilterWithExtraData("exception", "skip")).
+			Find(&models)
+		assertDBResult(ctx, g, rs, "list models using relaxed rule and exceptions", nil, 90)
+		g.Expect(models).To(HaveLen(90), "user1 should see %d models", 90)
 	}
 }
 
@@ -177,7 +175,7 @@ func SubTestModelCGet(di *TestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB))
 		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdA2)
 		rs = di.DB.WithContext(ctx).
-			Scopes(opadata.FilterByQueries(opadata.DBOperationFlagRead, "res.test.filter_read")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagRead, "res.test.filter_read")).
 			Take(new(ModelC), id)
 		assertDBResult(ctx, g, rs, "owner get model from different tenant with strict rule", data.ErrorRecordNotFound, 0)
 
@@ -185,17 +183,17 @@ func SubTestModelCGet(di *TestDI) test.GomegaSubTestFunc {
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA))
 		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdA2)
 		rs = di.DB.WithContext(ctx).
-			Scopes(opadata.FilterByQueries(opadata.DBOperationFlagRead, "res.test.filter_read")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagRead, "res.test.filter_read")).
 			Take(new(ModelC), id)
 		assertDBResult(ctx, g, rs, "owner get model from same tenant with strict rule", nil, 1)
 
-		// user1 - relaxed rule (exception) - non-owner, same tenant
-		//ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA), testdata.ExtraPermsSecurityOptions("VIEW_GLOBAL"))
-		//id = findID(testdata.MockedUserId2, testdata.MockedTenantIdA2)
-		//rs = di.DB.WithContext(ctx).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagRead, "res.test.filter_read")).
-		//	Take(new(ModelA), id)
-		//assertDBResult(ctx, g, rs, "get model with permission", nil, 1)
+		// user1 - relaxed rule (exception) - non-owner, diff tenant, no permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB))
+		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdA2)
+		rs = di.DB.WithContext(ctx).
+			Scopes(opadata.FilterWithExtraData("exception", "skip")).
+			Take(new(ModelC), id)
+		assertDBResult(ctx, g, rs, "get model with permission", nil, 1)
 	}
 }
 
@@ -224,21 +222,30 @@ func SubTestModelCUpdate(di *TestDI) test.GomegaSubTestFunc {
 		id = findIDByOwner(testdata.MockedUserId1)
 		rs = di.DB.WithContext(ctx).Model(&ModelC{ID: id}).
 			Scopes(opadata.FilterByPolicies(opadata.DBOperationFlagUpdate)).
-			Scopes(opadata.FilterByQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
 			Updates(&ModelC{Value: NewValue})
 		assertDBResult(ctx, g, rs, "update model with alternative rule", nil, 1)
 		assertPostOpModel[ModelC](ctx, g, di.DB, id, "update model with alternative rule", "Value", NewValue)
 
-		// user1 - enabled (allow_write_alt, exception) - non-owner, no permission
-		//ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA))
-		//id = findIDByOwner(testdata.MockedUserId2)
-		//rs = di.DB.WithContext(ctx).Model(&ModelC{ID: id}).
-		//	Scopes(opadata.FilterByPolicies(opadata.DBOperationFlagUpdate)).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
-		//	Updates(&ModelC{Value: NewValue})
-		//assertDBResult(ctx, g, rs, "update model with alternative rule and exception", nil, 1)
-		//assertPostOpModel[ModelC](ctx, g, di.DB, id, "update model with alternative rule and exception", "Value", NewValue)
+		// user1 - enabled (allow_write_alt) - non-owner, no permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA))
+		id = findIDByOwner(testdata.MockedUserId2)
+		rs = di.DB.WithContext(ctx).Model(&ModelC{ID: id}).
+			Scopes(opadata.FilterByPolicies(opadata.DBOperationFlagUpdate)).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
+			Updates(&ModelC{Value: NewValue})
+		assertDBResult(ctx, g, rs, "update model with alternative rule", nil, 0)
+
+		// user2 - enabled (allow_write_alt, exception) -  not owner, not member, no permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA))
+		id = findIDByOwner(testdata.MockedUserId2)
+		rs = di.DB.WithContext(ctx).Model(&ModelC{ID: id}).
+			Scopes(opadata.FilterByPolicies(opadata.DBOperationFlagUpdate)).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
+			Scopes(opadata.FilterWithExtraData("exception", "skip")).
+			Updates(&ModelC{Value: NewValue})
+		assertDBResult(ctx, g, rs, "update model with alternative rule and exception", nil, 1)
+		assertPostOpModel[ModelC](ctx, g, di.DB, id, "update model with alternative rule and exception", "Value", NewValue)
 	}
 }
 
@@ -253,15 +260,24 @@ func SubTestModelCDelete(di *TestDI) test.GomegaSubTestFunc {
 		assertDBResult(ctx, g, rs, "delete model of other tenant", nil, 0)
 		assertPostOpModel[ModelC](ctx, g, di.DB, id, "delete model of other tenant", "exists")
 
+		// user1 - relaxed rule (allow_delete_alt) - not owner, not member, no permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
+		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdB1)
+		rs = di.DB.WithContext(ctx).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagDelete, "res.test.allow_delete_alt")).
+			Delete(&ModelC{ID: id})
+		assertDBResult(ctx, g, rs, "delete model of other tenant", nil, 0)
+		assertPostOpModel[ModelC](ctx, g, di.DB, id, "delete model of other tenant", "exists")
+
 		// user1 - relaxed rule (allow_delete_alt, exception) - not owner, not member, no permission
-		//ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
-		//id = findID(testdata.MockedUserId2, testdata.MockedTenantIdB1)
-		//rs = di.DB.WithContext(ctx).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
-		//	Delete(&ModelC{ID: id})
-		//assertDBResult(ctx, g, rs, "delete model of other tenant with exception", nil, 1)
-		//assertPostOpModel[ModelC](ctx, g, di.DB, id, "delete model of other tenant with exception")
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
+		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdB1)
+		rs = di.DB.WithContext(ctx).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagDelete, "res.test.allow_delete_alt")).
+			Scopes(opadata.FilterWithExtraData("exception", "skip")).
+			Delete(&ModelC{ID: id})
+		assertDBResult(ctx, g, rs, "delete model of other tenant with exception", nil, 1)
+		assertPostOpModel[ModelC](ctx, g, di.DB, id, "delete model of other tenant with exception")
 	}
 }
 
@@ -287,7 +303,7 @@ func SubTestModelCSave(di *TestDI) test.GomegaSubTestFunc {
 		model.Value = NewValue
 		rs = di.DB.WithContext(ctx).
 			Scopes(opadata.FilterByPolicies(opadata.DBOperationFlagCreate, opadata.DBOperationFlagUpdate)).
-			Scopes(opadata.FilterByQueries(
+			Scopes(opadata.FilterWithQueries(
 				opadata.DBOperationFlagUpdate, "res.test.allow_write_alt",
 				opadata.DBOperationFlagCreate, "res.test.allow_create",
 			)).
@@ -302,25 +318,25 @@ func SubTestModelCSave(di *TestDI) test.GomegaSubTestFunc {
 		model.Value = NewValue
 		rs = di.DB.WithContext(ctx).
 			Scopes(opadata.FilterByPolicies(opadata.DBOperationFlagCreate, opadata.DBOperationFlagUpdate)).
-			Scopes(opadata.FilterByQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
-			Scopes(opadata.FilterByQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
 			Save(model)
 		assertDBResult(ctx, g, rs, "save new model in same tenant as owner", nil, 1)
 		assertPostOpModel[ModelC](ctx, g, di.DB, id, "save new model in same tenant as owner", "Value", NewValue)
 
 		// user1 - create:strict, update:relaxed - different tenant update without permission (exception)
-		//ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB))
-		//id = findID(testdata.MockedUserId1, testdata.MockedTenantIdA2)
-		//model = mustLoadModel[ModelC](ctx, g, di.DB, id)
-		//model.Value = NewValue
-		//rs = di.DB.WithContext(ctx).
-		//	Scopes(opadata.FilterByPolicies(opadata.DBOperationFlagCreate, opadata.DBOperationFlagUpdate)).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
-		//	Scopes(opadata.FilterByQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")). // TDOO
-		//	Save(model)
-		//assertDBResult(ctx, g, rs, "save existing model without permission but exempted", nil, 1)
-		//assertPostOpModel[ModelC](ctx, g, di.DB, id, "save existing model without permission but exempted", "Value", NewValue)
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB))
+		id = findID(testdata.MockedUserId1, testdata.MockedTenantIdA2)
+		model = mustLoadModel[ModelC](ctx, g, di.DB, id)
+		model.Value = NewValue
+		rs = di.DB.WithContext(ctx).
+			Scopes(opadata.FilterByPolicies(opadata.DBOperationFlagCreate, opadata.DBOperationFlagUpdate)).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagUpdate, "res.test.allow_write_alt")).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
+			Scopes(opadata.FilterWithExtraData("exception", "skip")).
+			Save(model)
+		assertDBResult(ctx, g, rs, "save existing model without permission but exempted", nil, 1)
+		assertPostOpModel[ModelC](ctx, g, di.DB, id, "save existing model without permission but exempted", "Value", NewValue)
 	}
 }
 

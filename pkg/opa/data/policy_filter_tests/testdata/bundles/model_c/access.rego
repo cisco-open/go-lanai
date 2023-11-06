@@ -50,11 +50,9 @@ allow_read_alt {
 }
 
 allow_read_alt {
-# TODO with exception
     is_type("model")
     is_op("read")
-    has_permission("VIEW_GLOBAL")
-    is_owner
+    input.resource.exception == "skip"
 }
 
 # Write/Update
@@ -94,11 +92,9 @@ allow_write_alt {
 }
 
 allow_write_alt {
-# TODO with exception
     is_type("model")
     is_op("write")
-    has_permission("MANAGE_GLOBAL")
-    is_owner
+    input.resource.exception == "skip"
 }
 
 # Create
@@ -121,10 +117,9 @@ allow_create_alt {
 }
 
 allow_create_alt {
-    # TODO with exception
     is_type("model")
     is_op("create")
-    has_permission("MANAGE_GLOBAL")
+    input.resource.exception == "skip"
 }
 
 # Delete
@@ -151,8 +146,9 @@ allow_delete_alt {
 }
 
 allow_delete_alt {
-    # TODO with exception
-    allow_delete
+    is_type("model")
+    is_op("delete")
+    input.resource.exception == "skip"
 }
 
 
