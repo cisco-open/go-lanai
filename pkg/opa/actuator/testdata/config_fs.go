@@ -7,3 +7,4 @@ var TestConfigFS embed.FS
 
 //go:embed bundles/**
 var ActuatorBundleFS embed.FS
+

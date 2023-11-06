@@ -46,17 +46,18 @@ func SubTestResolveFromModel() test.GomegaSubTestFunc {
 	type model struct {
 		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 		Value        string    `opa:"field:some_field"`
-		PolicyFilter `opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
+		PolicyFilter `opa:"type:res,package:test.res, read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		meta, e := resolveMetadata(&model{})
 		g.Expect(e).To(Succeed(), "resolve metadata should not return error")
 		assertSchema(meta.Schema, g)
 		assertMetadata(meta, g, &ExpectedMetadata{
-			ResType:  "res",
-			Fields:   map[string][]string{"some_field": {"Value"}},
-			Policies: map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
-			Mode:     uint(DBOperationFlagUpdate | DBOperationFlagRead),
+			ResType:    "res",
+			OPAPackage: "test.res",
+			Fields:     map[string][]string{"some_field": {"Value"}},
+			Policies:   map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
+			Mode:       uint(DBOperationFlagUpdate | DBOperationFlagRead),
 		})
 	}
 }
@@ -65,18 +66,19 @@ func SubTestFilterAsEmbedded(di *TestDI) test.GomegaSubTestFunc {
 	type model1 struct {
 		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 		Value        string    `opa:"field:some_field"`
-		PolicyFilter `opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
+		PolicyFilter `opa:"type:res,package:test.res,read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	type model2 struct {
 		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 		Value        string    `opa:"field:some_field"`
-		PolicyFilter `gorm:"-" opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
+		PolicyFilter `gorm:"-" opa:"type:res,package:test.res,read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	expected := &ExpectedMetadata{
-		ResType:  "res",
-		Fields:   map[string][]string{"some_field": {"Value"}},
-		Policies: map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
-		Mode:     uint(DBOperationFlagUpdate | DBOperationFlagRead),
+		ResType:    "res",
+		OPAPackage: "test.res",
+		Fields:     map[string][]string{"some_field": {"Value"}},
+		Policies:   map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
+		Mode:       uint(DBOperationFlagUpdate | DBOperationFlagRead),
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// without gorm tag
@@ -334,15 +336,17 @@ func SubTestOPATagOnPrimaryKey(di *TestDI) test.GomegaSubTestFunc {
  *************************/
 
 type ExpectedMetadata struct {
-	ResType  string
-	Fields   map[string][]string
-	Policies map[string]string
-	Mode     uint
+	ResType    string
+	OPAPackage string
+	Fields     map[string][]string
+	Policies   map[string]string
+	Mode       uint
 }
 
 func assertMetadata(meta *Metadata, g *gomega.WithT, expected *ExpectedMetadata) {
 	g.Expect(meta).ToNot(BeNil(), "metadata should not be nil")
 	g.Expect(meta.ResType).To(Equal(expected.ResType), "metadata should have correct resource type")
+	g.Expect(meta.OPAPackage).To(Equal(expected.OPAPackage), "metadata should have correct package")
 	// check fields
 	g.Expect(meta.Fields).To(HaveLen(len(expected.Fields)), "metadata should have correct fields")
 	for k, v := range expected.Fields {

@@ -30,13 +30,35 @@ const (
 	TagKeyOPAPackage    = `package`
 )
 
+// OPATag supported key-value pairs in `opa` tag.
+// `opa` tag is in format of `opa:"<key>:<value>, [<more_keys>:<more_values>, ...]".
+// Unless specified, each key-value pair only takes effect on either "to-be-filtered-by" model fields (Model Fields)
+// or PolicyFilter (regardless if embedded or as a field), but not both.
 type OPATag struct {
-	// InputField applies to "to-be-filtered-by" model fields.
+	// InputField Required on "to-be-filtered-by" model fields. Specify mappings between model field and OPA input fields.
+	// e.g. `opa:"field:myProperty"` translate to `input.resource.myProperty` in OPA input
 	InputField string
-	ResType    string
+
+	// ResType Required on PolicyFilter. This value contributes to both OPA query and OPA input:
+	// - ResType is set to OPA input as `input.resource.type`
+	// - Unless OPAPackage or Policies is specified, ResType is also part of OPA query:
+	//   "data.resource.{{RestType}}.<filter|allow>_{{DBOperationFlag}}"
+	ResType string
+
+	// OPAPackage Optional on PolicyFilter. Used to overwrite default OPA query.
+	// Resulting query is "data.{{OPAPackage}}.<filter|allow>_{{DBOperationFlag}}"
+	// e.g. `opa:"type:my_res, package:my.res" -> the OPA query is "data.my.res.filter_{{DBOperationFlag}}"
 	OPAPackage string
-	Policies   map[DBOperationFlag]string
-	mode       policyMode
+
+	// Policies Optional on PolicyFilter. Fine control of OPA queries for each type of DB operation.
+	// - If set to "-", the corresponding DB operation is disabled for data-filtering.
+	// 	 e.g. `opa:"type:my_res, read:-"` disables OPA data filtering for read operations (SELECT statements)
+	// - If set to any other non-empty string, it's used to construct OPA query
+	// 	 e.g. `opa:"type:my_res, read:my_custom_filter"` -> OPA query "data.resource.my_res.my_custom_filter" is used for read operations.
+	Policies map[DBOperationFlag]string
+
+	// mode bitwise flags for enabled/disabled DB operations
+	mode     policyMode
 }
 
 func (t *OPATag) UnmarshalText(data []byte) error {

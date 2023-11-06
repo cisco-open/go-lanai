@@ -215,9 +215,7 @@ func (m *statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.Resource
 		unknowns = append(unknowns, unknown)
 	}
 	return func(rf *opa.ResourceFilter) {
-		if p, ok := m.Policies[m.Flag]; ok && p != TagValueIgnore {
-			rf.Query = p
-		}
+		rf.Query = resolveQuery(stmt.Context, m.Flag, true, &m.Metadata)
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
 			Metadata:  &m.Metadata,
@@ -321,6 +319,7 @@ func (m *createStatementModifier) checkPolicy(ctx context.Context, model *policy
 	}
 	return opa.AllowResource(ctx, model.meta.ResType, opa.OpCreate, func(res *opa.ResourceQuery) {
 		res.ResourceValues = *values
+		res.Policy = resolveQuery(ctx, m.Flag, false, &m.Metadata)
 	})
 }
 

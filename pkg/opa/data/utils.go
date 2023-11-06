@@ -13,7 +13,8 @@ import (
 	Model Resolver
  *********************/
 
-// policyTarget collected information about current policyTarget
+// policyTarget collected information about current policy target.
+// The target could be a model struct instance, pointer, map of key-value pairs, etc.
 type policyTarget struct {
 	meta       *Metadata
 	modelPtr   reflect.Value
