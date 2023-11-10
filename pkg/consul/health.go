@@ -27,5 +27,3 @@ func (i *ConsulHealthIndicator) Health(c context.Context, options health.Options
 		return health.NewDetailedHealth(health.StatusUp, "consul leader status succeeded", nil)
 	}
 }
-
-

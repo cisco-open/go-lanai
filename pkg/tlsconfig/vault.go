@@ -38,6 +38,10 @@ func NewVaultProvider(vc *vault.Client, p Properties) *VaultProvider {
 func (v *VaultProvider) GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
 	v.once.Do(func() {
 		cert, err := v.generateClientCertificate(ctx)
+		if err != nil {
+			logger.Errorf("Failed to get certificate from Vault: %s", err.Error())
+			return
+		}
 		delay := v.tryRenewRepeatIntervalFunc()(cert, err)
 
 		loopCtx, cancelFunc := v.monitor.Run(context.Background())
@@ -151,50 +155,17 @@ func (v *VaultProvider) generateClientCertificate(ctx context.Context) (*tls.Cer
 	return &cert, err
 }
 
-// half way between now and cached certificate expiration.
-func (v *VaultProvider) tryRenewRepeatIntervalFunc() loop.RepeatIntervalFunc {
-	return func(result interface{}, err error) (ret time.Duration) {
-		defer func() {
-			logger.Infof("certificate will renew in %v", ret)
-		}()
+// CacheCertToFile will write out a cert and key to files based on configured path and prefix
+func (v *VaultProvider) CacheCertToFile(cert *tls.Certificate) error {
+	certfilepath := v.p.FileCache.Path + v.ProviderCommon.p.FileCache.Prefix + CertSuffix
+	keyfilepath := v.p.FileCache.Path + v.ProviderCommon.p.FileCache.Prefix + KeySuffix
+	return CacheCertToFile(cert, certfilepath, keyfilepath)
+}
 
-		minDuration := 1 * time.Minute
-		if v.p.MinRenewInterval != "" {
-			minDurationConfig, e := time.ParseDuration(v.p.MinRenewInterval)
-			if e == nil {
-				minDuration = minDurationConfig
-			}
-		}
-
-		if err != nil {
-			return minDuration
-		}
-
-		cert := result.(*tls.Certificate)
-		if len(cert.Certificate) < 1 {
-			return minDuration
-		}
-
-		parsedCert, err := x509.ParseCertificate(cert.Certificate[0])
-		if err != nil {
-			return minDuration
-		}
-
-		validTo := parsedCert.NotAfter
-		now := time.Now()
-
-		if validTo.Before(now) {
-			return minDuration
-		}
-
-		durationRemain := validTo.Sub(now)
-		next := durationRemain / 2
-
-		if minDuration > next {
-			next = minDuration
-		}
-		return next
-	}
+// CacheCaToFile writes the provided ca cert pool to a file based on the provided config
+func (v *VaultProvider) CacheCaToFile(pemData []byte) error {
+	cafilepath := v.p.FileCache.Path + v.ProviderCommon.p.FileCache.Prefix + CaSuffix
+	return CacheCaToFile(pemData, cafilepath)
 }
 
 type IssueCertificateRequest struct {

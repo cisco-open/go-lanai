@@ -20,6 +20,10 @@ type Properties struct {
 	CertFile   string `json:"cert-file"`
 	KeyFile    string `json:"key-file"`
 	KeyPass    string `json:"key-pass"`
+
+	// acm type related properties
+	Arn        string `json:"arn"`
+	Passphrase string `json:"passphrase"`
 }
 
 type FileCache struct {

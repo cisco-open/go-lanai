@@ -3,6 +3,7 @@
 package tlsconfig
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws/acm"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
@@ -21,11 +22,13 @@ var Module = &bootstrap.Module{
 
 type factoryDi struct {
 	fx.In
-	Vc *vault.Client `optional:"true"`
+	Vc  *vault.Client `optional:"true"`
+	Acm acm.AcmClient `optional:"true"`
 }
 
 func NewProviderFactory(di factoryDi) *ProviderFactory {
 	return &ProviderFactory{
-		vc: di.Vc,
+		vc:  di.Vc,
+		acm: &di.Acm,
 	}
 }

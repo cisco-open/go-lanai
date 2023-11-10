@@ -5,7 +5,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
-	"fmt"
 	"github.com/hashicorp/consul/api"
 	"strings"
 )
@@ -19,19 +18,6 @@ const (
 var (
 	ErrNoInstances = errors.New("No matching service instances found")
 )
-
-type ConnectionProperties struct {
-	Host    string `json:"host"`
-	Port    int    `json:"port"`
-	Scheme  string `json:"scheme"`
-	Config  struct {
-		AclToken string `json:"acl-token"`
-	}
-}
-
-func (c ConnectionProperties) Address() string {
-	return fmt.Sprintf("%s:%d", c.Host, c.Port)
-}
 
 type Connection struct {
 	config *ConnectionProperties
@@ -120,15 +106,28 @@ func NewConnection(connectionConfig *ConnectionProperties) (*Connection, error) 
 	clientConfig := api.DefaultConfig()
 	clientConfig.Address = connectionConfig.Address()
 	clientConfig.Scheme = connectionConfig.Scheme
-	clientConfig.Token = connectionConfig.Config.AclToken
-	clientConfig.TLSConfig.InsecureSkipVerify = true
-
-	if client, err := api.NewClient(clientConfig); err != nil {
-		return nil, err
-	} else {
-		return &Connection{
-			config: connectionConfig,
-			client: client,
-		}, nil
+	if clientConfig.Scheme == "https" {
+		clientConfig.TLSConfig.CAFile = connectionConfig.Ssl.Cacert
+		clientConfig.TLSConfig.CertFile = connectionConfig.Ssl.ClientCert
+		clientConfig.TLSConfig.KeyFile = connectionConfig.Ssl.ClientKey
+		clientConfig.TLSConfig.InsecureSkipVerify = connectionConfig.Ssl.Insecure
 	}
+
+	clientAuth := newClientAuthentication(connectionConfig)
+
+	client, err := api.NewClient(clientConfig)
+	if err != nil {
+		return nil, err
+	}
+	token, err := clientAuth.Login(client)
+	clientConfig.Token = token
+	client, err = api.NewClient(clientConfig)
+	if err != nil {
+		return nil, err
+	}
+	return &Connection{
+		config: connectionConfig,
+		client: client,
+	}, nil
+
 }

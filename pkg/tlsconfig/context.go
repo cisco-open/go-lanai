@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws/acm"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 
 const vaultType = "vault"
 const fileType = "file"
+const acmType = "acm"
 
 type Provider interface {
 	io.Closer
@@ -30,7 +32,8 @@ type Provider interface {
 }
 
 type ProviderFactory struct {
-	vc *vault.Client
+	vc  *vault.Client
+	acm *acm.AcmClient
 }
 
 func (f *ProviderFactory) GetProvider(properties Properties) (Provider, error) {
@@ -43,6 +46,14 @@ func (f *ProviderFactory) GetProvider(properties Properties) (Provider, error) {
 		}
 	case fileType:
 		return NewFileProvider(properties), nil
+	case acmType:
+		logger.Infof("This is the provider factory struct acm val: %v", f.acm)
+		if f.acm != nil {
+			logger.Infof("gonna try an acm provider")
+			return NewAcmProvider(f.acm, properties), nil
+		} else {
+			return nil, errors.New("can't create AWS ACM tls config because there is no AWS ACM client")
+		}
 	}
 	return nil, errors.New(fmt.Sprintf("%s based tls config provider is not supported", properties.Type))
 }
