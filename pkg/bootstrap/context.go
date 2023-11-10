@@ -11,9 +11,10 @@ const (
 
 type startTimeCtxKey struct{}
 type stopTimeCtxKey struct{}
+
 var (
 	ctxKeyStartTime = startTimeCtxKey{}
-	ctxKeyStopTime = stopTimeCtxKey{}
+	ctxKeyStopTime  = stopTimeCtxKey{}
 )
 
 type ApplicationConfig interface {
@@ -49,9 +50,13 @@ func (c *ApplicationContext) Name() string {
 	return "lanai"
 }
 
-/**************************
- context.Context Interface
-***************************/
+/*
+*************************
+
+	context.Context Interface
+
+**************************
+*/
 func (_ *ApplicationContext) String() string {
 	return "application context"
 }
