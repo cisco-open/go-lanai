@@ -47,9 +47,7 @@ func (f *ProviderFactory) GetProvider(properties Properties) (Provider, error) {
 	case fileType:
 		return NewFileProvider(properties), nil
 	case acmType:
-		logger.Infof("This is the provider factory struct acm val: %v", f.acm)
 		if f.acm != nil {
-			logger.Infof("gonna try an acm provider")
 			return NewAcmProvider(f.acm, properties), nil
 		} else {
 			return nil, errors.New("can't create AWS ACM tls config because there is no AWS ACM client")

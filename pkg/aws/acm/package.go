@@ -3,14 +3,14 @@ package acm
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"github.com/aws/aws-sdk-go/service/acm"
+	"github.com/aws/aws-sdk-go/service/acm/acmiface"
 	"go.uber.org/fx"
 )
 
 var logger = log.New("Aws")
 
 type AcmClient struct {
-	Client *acm.ACM
+	Client acmiface.ACMAPI
 }
 
 var Module = &bootstrap.Module{
