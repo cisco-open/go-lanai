@@ -120,6 +120,9 @@ func NewConnection(connectionConfig *ConnectionProperties) (*Connection, error) 
 		return nil, err
 	}
 	token, err := clientAuth.Login(client)
+	if err != nil {
+		return nil, err
+	}
 	clientConfig.Token = token
 	client, err = api.NewClient(clientConfig)
 	if err != nil {

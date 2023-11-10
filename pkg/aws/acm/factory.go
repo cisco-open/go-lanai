@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"os"
 )
 
@@ -41,8 +42,29 @@ func (f *awsSessionFactoryImpl) New(ctx context.Context) (*acm.ACM, error) {
 		}
 		role := f.properties.Credentials.RoleARN
 		if role == "" {
-			role = os.Getenv("")
+			role = os.Getenv("AWS_ROLE_ARN")
 		}
+		token, err := os.ReadFile(path)
+		if err != nil {
+			logger.WithContext(ctx).Errorf("Failed to read web identity token file: %s", err.Error())
+			return nil, err
+		}
+		sess, err := session.NewSession(cfg)
+		if err != nil {
+			return nil, err
+		}
+		params := &sts.AssumeRoleWithWebIdentityInput{
+			RoleArn:          aws.String(role),
+			RoleSessionName:  aws.String(f.properties.Credentials.RoleSessionName),
+			WebIdentityToken: aws.String(string(token)),
+		}
+		svc := sts.New(sess)
+		assumedRole, err := svc.AssumeRoleWithWebIdentity(params)
+		if err != nil {
+			logger.WithContext(ctx).Errorf("Failed to assume role via STS: %s", err.Error())
+			return nil, err
+		}
+		cred = credentials.NewStaticCredentials(*assumedRole.Credentials.AccessKeyId, *assumedRole.Credentials.SecretAccessKey, *assumedRole.Credentials.SessionToken)
 	default:
 		cred = credentials.NewEnvCredentials()
 	}

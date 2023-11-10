@@ -144,7 +144,10 @@ func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certi
 	keyBytes := pem.EncodeToMemory(keyBlock)
 
 	cert, err := tls.X509KeyPair(crtPEM, keyBytes)
-
+	if err != nil {
+		logger.Errorf("Could not create cert from PEM: %s", err.Error())
+		return nil, err
+	}
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 	a.cachedCertificate = &cert
@@ -177,7 +180,7 @@ func (a *AcmProvider) CacheCertToFile(cert *tls.Certificate) error {
 }
 
 // CacheCaToFile writes the provided ca cert pool to a file based on the provided config
-func (a AcmProvider) CacheCaToFile(pemData []byte) error {
+func (a *AcmProvider) CacheCaToFile(pemData []byte) error {
 	cafilepath := a.p.FileCache.Path + a.ProviderCommon.p.FileCache.Prefix + CaSuffix
 	return CacheCaToFile(pemData, cafilepath)
 }
