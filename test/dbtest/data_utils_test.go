@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
+	"sync"
 	"testing"
 	"time"
 )
@@ -48,6 +49,10 @@ var testDataFS embed.FS
 
 var testCatIDs []uuid.UUID
 
+func DropAllTables() DataSetupStep {
+	return SetupDropTables("test_cat_toys", "test_cats", "test_toys")
+}
+
 func CreateAllTables() DataSetupStep {
 	return SetupUsingSQLFile(testDataFS, "testdata/tables.sql")
 }
@@ -76,8 +81,13 @@ func SeedCatToysRelations() DataSetupStep {
 }
 
 func SetupScopeTestPrepareTables(di *DI) test.SetupFunc {
+	var once sync.Once
 	return PrepareData(di,
-		CreateAllTables(), TruncateAllTables(),
+		SetupOnce(&once,
+			DropAllTables(),
+			CreateAllTables(),
+		),
+		TruncateAllTables(),
 	)
 }
 

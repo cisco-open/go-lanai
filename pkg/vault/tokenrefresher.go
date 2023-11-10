@@ -1,9 +1,9 @@
 package vault
 
 import (
+	"context"
 	"errors"
 	"github.com/hashicorp/vault/api"
-	"golang.org/x/net/context"
 	"sync"
 	"time"
 )

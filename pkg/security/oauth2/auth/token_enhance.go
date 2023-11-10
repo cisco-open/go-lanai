@@ -1,9 +1,9 @@
 package auth
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"golang.org/x/net/context"
 )
 
 /*****************************
