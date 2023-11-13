@@ -36,7 +36,7 @@ type Credentials struct {
 	//TokenFile is the path to the STS OIDC token file if omitted environment variable AWS_WEB_IDENTITY_TOKEN_FILE will be used
 	TokenFile string `json:"token-file"`
 	//RoleSessionName username to associate with session e.g. service account
-	RoleSessionName string `json:"roleSessionName"`
+	RoleSessionName string `json:"role-session-name"`
 }
 
 func NewAwsProperties(ctx *bootstrap.ApplicationContext) AcmProperties {

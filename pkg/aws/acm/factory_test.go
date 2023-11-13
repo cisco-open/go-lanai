@@ -28,4 +28,22 @@ func TestAwsSessionFactoryImpl_New(t *testing.T) {
 	bctx := bootstrap.NewApplicationContext()
 	acmclient := newDefaultClient(bctx, factory)
 	assert.NotNil(t, acmclient)
+
+	factory = NewAwsAcmFactory(
+		AcmProperties{
+			Region: "us-east-1",
+			Credentials: Credentials{
+				Type:            "sts",
+				RoleARN:         "some-test-arn",
+				RoleSessionName: "myappname",
+			},
+		})
+
+	result, err = factory.New(ctx)
+
+	require.NoError(t, err)
+	assert.IsType(t, &acm.ACM{}, result)
+	bctx = bootstrap.NewApplicationContext()
+	acmclient = newDefaultClient(bctx, factory)
+	assert.NotNil(t, acmclient)
 }
