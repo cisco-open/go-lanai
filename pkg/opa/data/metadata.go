@@ -123,8 +123,8 @@ func collectFields(s *schema.Schema, dest map[string]*TaggedField) error {
 			if len(f.DBName) == 0 {
 				continue
 			}
-			if f.PrimaryKey {
-				return ErrUnsupportedUsage.WithMessage(`"%s" tag cannot be used on primary key`, TagOPA)
+			if f.PrimaryKey && len(s.PrimaryFields) == 1 {
+				return ErrUnsupportedUsage.WithMessage(`"%s" tag cannot be used on single primary key`, TagOPA)
 			}
 			tagged := TaggedField{
 				Field: *f,

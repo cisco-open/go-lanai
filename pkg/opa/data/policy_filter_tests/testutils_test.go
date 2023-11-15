@@ -28,7 +28,7 @@ var (
 	Asserts
  *************************/
 
-func assertPostOpModel[T any](ctx context.Context, g *gomega.WithT, db *gorm.DB, id uuid.UUID, op string, expectedKVs ...interface{}) *T {
+func assertPostOpModel[T any](ctx context.Context, g *gomega.WithT, db *gorm.DB, id interface{}, op string, expectedKVs ...interface{}) *T {
     model, e := loadModel[T](ctx, db, id)
     if len(expectedKVs) == 0 {
         g.Expect(e).To(HaveOccurred(), "model should not exist after %s", op)
@@ -134,9 +134,13 @@ func findIDByOwner(ownerId uuid.UUID) uuid.UUID {
 }
 
 // loadModel load model without policy filtering
-func loadModel[T any](ctx context.Context, db *gorm.DB, id uuid.UUID) (*T, error) {
+func loadModel[T any](ctx context.Context, db *gorm.DB, id interface{}, opts ...func(*gorm.DB)*gorm.DB) (*T, error) {
     var dest T
-    rs := db.WithContext(ctx).Scopes(opadata.SkipPolicyFiltering()).Take(&dest, id)
+    tx := db.WithContext(ctx).Scopes(opadata.SkipPolicyFiltering())
+    for _, fn := range opts {
+        tx = fn(tx)
+    }
+    rs := tx.Take(&dest, id)
     if rs.Error != nil {
         return nil, rs.Error
     }
@@ -144,8 +148,8 @@ func loadModel[T any](ctx context.Context, db *gorm.DB, id uuid.UUID) (*T, error
 }
 
 // mustLoadModel load model without policy filtering
-func mustLoadModel[T any](ctx context.Context, g *gomega.WithT, db *gorm.DB, id uuid.UUID) *T {
-    ret, e := loadModel[T](ctx, db, id)
+func mustLoadModel[T any](ctx context.Context, g *gomega.WithT, db *gorm.DB, id interface{}, opts ...func(*gorm.DB)*gorm.DB) *T {
+    ret, e := loadModel[T](ctx, db, id, opts...)
     g.Expect(e).To(Succeed(), "model must exists")
     return ret
 }

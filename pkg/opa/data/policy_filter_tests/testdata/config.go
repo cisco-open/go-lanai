@@ -13,3 +13,6 @@ var ModelBBundleFS embed.FS
 
 //go:embed bundles/model_c
 var ModelCBundleFS embed.FS
+
+//go:embed bundles/model_d
+var ModelDBundleFS embed.FS
