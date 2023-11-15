@@ -66,6 +66,9 @@ import (
 const (
 	ExpectedAuthorizeCallback = `http://localhost/test/callback`
 	TestClientID              = "test-client"
+	TestTenantedClientID1     = "tenant-client-1"
+	TestTenantedClientID2     = "tenant-client-2"
+	TestTenantedClientID3     = "tenant-client-3"
 	TestClientSecret          = "test-secret"
 	TestOAuth2CallbackURL     = "http://localhost/oauth/callback"
 )
@@ -180,12 +183,11 @@ func TestWithMockedServer(t *testing.T) {
 		test.GomegaSubTest(SubTestOAuth2AuthCodeWithoutTenant(di), "TestOAuth2AuthCodeWithoutTenant"),
 		test.GomegaSubTest(SubTestOAuth2AuthCodeWithTenantClient(di), "TestOAuth2AuthCodeWithTenantClient"),
 		test.GomegaSubTest(SubTestOAuth2PasswordGrant(di), "TestOAuth2PasswordGrant"),
-		test.GomegaSubTest(SubTestSystemClientCredential(di), "TestSystemClientCredential"), //This is what we support currently
 		test.GomegaSubTest(SubTestTenantClientCredential(di), "TestTenantClientCredential"),
 
 		//switch tenants
 		test.GomegaSubTest(SubTestOauth2SwitchTenantWithPerTenantPermission(di), "TestOauth2SwitchTenantWithPerTenantPermission"),
-		test.GomegaSubTest(SubTestOauth2AccessCodeSwitchTenant(di), "SubTestOauth2AccessCodeSwitchTenant"),
+		test.GomegaSubTest(SubTestOauth2AccessCodeSwitchTenant(di), "TestOauth2AccessCodeSwitchTenant"),
 	)
 }
 
@@ -333,146 +335,204 @@ func SubTestOAuth2AuthCodeWithoutTenant(di *intDI) test.GomegaSubTestFunc {
 	}
 }
 
+type AuthCodeWithTenantClientTestStruct struct {
+	name                          string
+	clientId                      string
+	expectAuthorizeErr            bool
+	expectedAuthTenantId          string
+	expectedAuthAssignedTenantIds []string
+	expectedAuthProviderId        string
+}
+
 func SubTestOAuth2AuthCodeWithTenantClient(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		// Test case 1, user tenants and client tenants has no intersection
-		// mock authentication
 		fedAccount := di.Mocking.FedAccounts["fed1"] //this user has access to 2 tenants
 		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
 		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
 
-		// authorize
-		req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions("another-tenant-client")) //this client has 1 tenants, no intersection with user
-		resp := webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		assertAuthorizeResponse(t, g, resp.Response, true)
+		tests := []AuthCodeWithTenantClientTestStruct{
+			{
+				name:               "User tenants and client tenants has no overlap",
+				clientId:           TestTenantedClientID3,
+				expectAuthorizeErr: true,
+			},
+			{
+				name:                          "User with client that has access to all tenants",
+				clientId:                      TestClientID,
+				expectAuthorizeErr:            false,
+				expectedAuthTenantId:          fedAccount.DefaultTenant,
+				expectedAuthAssignedTenantIds: fedAccount.Tenants,
+				expectedAuthProviderId:        "test-provider",
+			},
+			{
+				name:                          "User tenants overlap with client tenants",
+				clientId:                      TestTenantedClientID2,
+				expectAuthorizeErr:            false,
+				expectedAuthTenantId:          "",                      //this is empty because the user's default tenant is not in client's tenants.
+				expectedAuthAssignedTenantIds: []string{"id-tenant-2"}, //this is the intersection of the user's tenants and the client's tenants
+				expectedAuthProviderId:        "",                      //because there isn't a default tenant, the provider is empty. (Provider is derived from the selected tenant).
+			},
+		}
 
-		// Test case 2, non-empty intersection using system client
-		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestClientID))
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		assertAuthorizeResponse(t, g, resp.Response, false)
-		code := extractAuthCode(resp.Response)
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code, TestClientID, ""), tokenReqOptions())
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
-		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		assertUserAuth(t, g, auth, fedAccount.UserId, fedAccount.DefaultTenant, utils.NewStringSet(fedAccount.Tenants...), "test-provider")
+		for _, test := range tests {
+			// authorize
+			req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(test.clientId)) //this client has 1 tenants, no intersection with user
+			resp := webtest.MustExec(ctx, req)
+			g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+			assertAuthorizeResponse(t, g, resp.Response, test.expectAuthorizeErr)
 
-		// Test case 3, non-empty intersection using non-system client
-		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions("test-client-for-one-tenant")) //this client has 1 tenant that overlaps with user
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		assertAuthorizeResponse(t, g, resp.Response, false)
-		code = extractAuthCode(resp.Response)
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code, "test-client-for-one-tenant", ""), tokenReqOptions())
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a = assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
-		auth, e = di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		assertUserAuth(t, g, auth, fedAccount.UserId, "", utils.NewStringSet("id-tenant-2"), "") //expected provider Id is empty because there isn't a default tenant selected
+			if !test.expectAuthorizeErr {
+				code := extractAuthCode(resp.Response)
+				req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code, test.clientId, ""), tokenReqOptions())
+				resp = webtest.MustExec(ctx, req)
+				g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+				g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
+				a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+				auth, err := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+				g.Expect(err).To(Not(HaveOccurred()))
+				assertUserAuth(t, g, auth, fedAccount.UserId, test.expectedAuthTenantId, utils.NewStringSet(test.expectedAuthAssignedTenantIds...), test.expectedAuthProviderId)
+			}
+		}
 	}
+}
+
+type PasswordGrantTestStruct struct {
+	name                          string
+	clientId                      string
+	expectedTokenRespStatus       int
+	expectedAuthTenantId          string
+	expectedAuthAssignedTenantIds []string
+	expectedAuthProviderId        string
 }
 
 func SubTestOAuth2PasswordGrant(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		// system client
-		req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", passwordGrantReqBody("", "regular", "regular"), tokenReqOptions(), withDefaultClientAuth())
-		resp := webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a := assertTokenResponse(t, g, resp.Response, "regular", false)
-		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		g.Expect(e).ToNot(HaveOccurred())
-		assertUserAuth(t, g, auth, "id-regular", "id-tenant-1", utils.NewStringSet("id-tenant-1", "id-tenant-2"), "test-provider")
+		tests := []PasswordGrantTestStruct{
+			{
+				name:                    "User tenants and client tenant has no overlap",
+				clientId:                TestTenantedClientID3,
+				expectedTokenRespStatus: http.StatusBadRequest,
+			},
+			{
+				name:                          "User with client that has access to all tenants",
+				clientId:                      TestClientID,
+				expectedTokenRespStatus:       http.StatusOK,
+				expectedAuthTenantId:          "id-tenant-1",
+				expectedAuthAssignedTenantIds: []string{"id-tenant-1", "id-tenant-2"},
+				expectedAuthProviderId:        "test-provider",
+			},
+			{
+				name:                          "User tenants overlaps client tenants",
+				clientId:                      TestTenantedClientID2,
+				expectedTokenRespStatus:       http.StatusOK,
+				expectedAuthTenantId:          "",                      // because default tenantId doesn't overlap with client tenant
+				expectedAuthAssignedTenantIds: []string{"id-tenant-2"}, // the user tenants that overlaps with client tenants
+				expectedAuthProviderId:        "",                      // because providerId is derived from selected tenant
+			},
+		}
 
-		// no intersection
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", passwordGrantReqBody("", "regular", "regular"), tokenReqOptions(), withClientAuth("another-tenant-client", TestClientSecret))
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusBadRequest), "response should have correct status code")
+		for _, test := range tests {
+			// no intersection
+			req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", passwordGrantReqBody("", "regular", "regular"), tokenReqOptions(), withClientAuth(test.clientId, TestClientSecret))
+			resp := webtest.MustExec(ctx, req)
+			g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+			g.Expect(resp.Response.StatusCode).To(Equal(test.expectedTokenRespStatus), "response should have correct status code")
 
-		// intersection
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", passwordGrantReqBody("", "regular", "regular"), tokenReqOptions(), withClientAuth("test-client-for-one-tenant", TestClientSecret))
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a = assertTokenResponse(t, g, resp.Response, "regular", false)
-		auth, e = di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		g.Expect(e).ToNot(HaveOccurred())
-		assertUserAuth(t, g, auth, "id-regular", "", utils.NewStringSet("id-tenant-2"), "")
+			if test.expectedTokenRespStatus == http.StatusOK {
+				a := assertTokenResponse(t, g, resp.Response, "regular", false)
+				auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+				g.Expect(e).ToNot(HaveOccurred())
+				assertUserAuth(t, g, auth, "id-regular", test.expectedAuthTenantId, utils.NewStringSet(test.expectedAuthAssignedTenantIds...), test.expectedAuthProviderId)
+			}
+		}
 	}
 }
 
-func SubTestSystemClientCredential(di *intDI) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		// not selecting any tenant
-		req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody(""), tokenReqOptions(), withDefaultClientAuth())
-		resp := webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a := assertTokenResponse(t, g, resp.Response, "", false)
-		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		g.Expect(e).ToNot(HaveOccurred())
-		assertClientCredentialAuth(t, g, auth, "test-client", "", utils.NewStringSet(), utils.NewStringSet("system"))
-
-		// select tenant
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody("id-tenant-1"), tokenReqOptions(), withClientAuth("test-client", "test-secret"))
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a = assertTokenResponse(t, g, resp.Response, "", false)
-		auth, e = di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		assertClientCredentialAuth(t, g, auth, "test-client", "id-tenant-1", utils.NewStringSet(), utils.NewStringSet("system"))
-		g.Expect(e).ToNot(HaveOccurred())
-	}
+type ClientCredentialTestStruct struct {
+	name                    string
+	clientId                string
+	selectTenantId          string
+	expectedTenantId        string
+	expectedTokenRespStatus int
+	clientTenants           []string
+	clientScopes            []string
 }
 
 func SubTestTenantClientCredential(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		// client to multiple tenant without tenant selection
-		req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody(""), tokenReqOptions(), withClientAuth("test-client-for-tenants", "test-secret"))
-		resp := webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a := assertTokenResponse(t, g, resp.Response, "", false)
-		auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		assertClientCredentialAuth(t, g, auth, "test-client-for-tenants", "", utils.NewStringSet("id-tenant-1", "id-tenant-2"), utils.NewStringSet("scope_a", "scope_b"))
-		g.Expect(e).ToNot(HaveOccurred())
+		tests := []ClientCredentialTestStruct{
+			{
+				name:                    "client with access to all tenants, but does not select tenant",
+				clientId:                TestClientID,
+				selectTenantId:          "",
+				expectedTenantId:        "",
+				expectedTokenRespStatus: http.StatusOK,
+				clientTenants:           []string{},
+				clientScopes:            []string{oauth2.ScopeSystem},
+			},
+			{
+				name:                    "client with access to all tenants, select tenant",
+				clientId:                TestClientID,
+				selectTenantId:          "id-tenant-1",
+				expectedTenantId:        "id-tenant-1",
+				expectedTokenRespStatus: http.StatusOK,
+				clientTenants:           []string{},
+				clientScopes:            []string{oauth2.ScopeSystem},
+			},
+			{
+				name:                    "client with access to multiple tenants without tenant selection",
+				clientId:                TestTenantedClientID1,
+				selectTenantId:          "",
+				expectedTenantId:        "",
+				expectedTokenRespStatus: http.StatusOK,
+				clientTenants:           []string{"id-tenant-1", "id-tenant-2"},
+				clientScopes:            []string{"scope_a", "scope_b"},
+			},
+			{
+				name:                    "client to multiple tenant with tenant selection",
+				clientId:                TestTenantedClientID1,
+				selectTenantId:          "id-tenant-1",
+				expectedTenantId:        "id-tenant-1",
+				expectedTokenRespStatus: http.StatusOK,
+				clientTenants:           []string{"id-tenant-1", "id-tenant-2"},
+				clientScopes:            []string{"scope_a", "scope_b"},
+			},
+			{
+				name:                    "client to multiple tenant with tenant selection that is not accessible by client",
+				clientId:                TestTenantedClientID1,
+				selectTenantId:          "id-tenant-3",
+				expectedTokenRespStatus: http.StatusBadRequest,
+			},
+			{
+				name:                    "client to multiple tenant with tenant selection for non-exist tenant",
+				clientId:                TestTenantedClientID1,
+				selectTenantId:          "id-tenant-not-exist",
+				expectedTokenRespStatus: http.StatusBadRequest,
+			},
+			{
+				name:                    "client to single tenant without selection",
+				clientId:                TestTenantedClientID2,
+				selectTenantId:          "",
+				expectedTenantId:        "id-tenant-2", //because this client only has one tenant, so we defaulted to it
+				expectedTokenRespStatus: http.StatusOK,
+				clientTenants:           []string{"id-tenant-2"},
+				clientScopes:            []string{"scope_a", "scope_b"},
+			},
+		}
 
-		// client to multiple tenant with tenant selection
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody("id-tenant-1"), tokenReqOptions(), withClientAuth("test-client-for-tenants", "test-secret"))
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a = assertTokenResponse(t, g, resp.Response, "", false)
-		auth, e = di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		assertClientCredentialAuth(t, g, auth, "test-client-for-tenants", "id-tenant-1", utils.NewStringSet("id-tenant-1", "id-tenant-2"), utils.NewStringSet("scope_a", "scope_b"))
-		g.Expect(e).ToNot(HaveOccurred())
+		for _, test := range tests {
+			req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody(test.selectTenantId), tokenReqOptions(), withClientAuth(test.clientId, TestClientSecret))
+			resp := webtest.MustExec(ctx, req)
+			g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+			g.Expect(resp.Response.StatusCode).To(Equal(test.expectedTokenRespStatus), "response should have correct status code")
 
-		// client to multiple tenant with invalid tenant selection
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody("id-tenant-3"), tokenReqOptions(), withClientAuth("test-client-for-tenants", "test-secret"))
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusBadRequest), "response should have correct status code")
-
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody("id-tenant-not-exist"), tokenReqOptions(), withClientAuth("test-client-for-tenants", "test-secret"))
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusBadRequest), "response should have correct status code")
-
-		// client to single tenant without selection
-		req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody(""), tokenReqOptions(), withClientAuth("test-client-for-one-tenant", "test-secret"))
-		resp = webtest.MustExec(ctx, req)
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-		a = assertTokenResponse(t, g, resp.Response, "", false)
-		auth, e = di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-		assertClientCredentialAuth(t, g, auth, "test-client-for-one-tenant", "id-tenant-2", utils.NewStringSet("id-tenant-2"), utils.NewStringSet("scope_a", "scope_b"))
-		g.Expect(e).ToNot(HaveOccurred())
+			if test.expectedTokenRespStatus == http.StatusOK {
+				a := assertTokenResponse(t, g, resp.Response, "", false)
+				auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+				g.Expect(e).ToNot(HaveOccurred())
+				assertClientCredentialAuth(t, g, auth, test.clientId, test.expectedTenantId, utils.NewStringSet(test.clientTenants...), utils.NewStringSet(test.clientScopes...))
+			}
+		}
 	}
 }
 
@@ -863,7 +923,7 @@ func authCodeReqBody(code string, clientId string, tenantId string) io.Reader {
 	values := url.Values{}
 	values.Set(oauth2.ParameterGrantType, oauth2.GrantTypeAuthCode)
 	values.Set(oauth2.ParameterClientId, clientId)
-	values.Set(oauth2.ParameterClientSecret, "test-secret")
+	values.Set(oauth2.ParameterClientSecret, TestClientSecret)
 	values.Set(oauth2.ParameterRedirectUri, "http://localhost/test/callback")
 	values.Set(oauth2.ParameterAuthCode, code)
 	if tenantId != "" {

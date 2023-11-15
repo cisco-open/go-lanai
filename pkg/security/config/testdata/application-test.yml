@@ -56,22 +56,22 @@ mocking:
       redirect-uris: ["localhost:*/**"]
       tenants: []
       scopes: "system"
-    tenanted-client:
-      id: "test-client-for-tenants"
+    tenanted-client-1:
+      id: "tenant-client-1"
       secret: "test-secret"
       access-token-validity: 3600s
       redirect-uris: ["localhost:*/**"]
       tenants: ["id-tenant-1", "id-tenant-2"]
       scopes: "scope_a,scope_b"
-    one-tenant-client:
-      id: "test-client-for-one-tenant"
+    tenanted-client-2:
+      id: "tenant-client-2"
       secret: "test-secret"
       access-token-validity: 3600s
       redirect-uris: ["localhost:*/**"]
       tenants: ["id-tenant-2"]
       scopes: "scope_a,scope_b"
-    another-tenant-client:
-      id: "another-tenant-client"
+    tenanted-client-3:
+      id: "tenant-client-3"
       secret: "test-secret"
       access-token-validity: 3600s
       redirect-uris: ["localhost:*/**"]
