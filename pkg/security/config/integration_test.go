@@ -1023,7 +1023,7 @@ func assertClientCredentialAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authe
 	td, ok := auth.Details().(security.TenantDetails)
 	g.Expect(ok).To(BeTrue())
 	g.Expect(td.TenantId()).To(Equal(expectedTenantId))
-	cd, ok := auth.Details().(security.ClientDetails)
+	cd, ok := auth.Details().(oauth2.ClientDetails)
 	g.Expect(ok).To(BeTrue())
 	g.Expect(cd.ClientId()).To(Equal(expectedClientId))
 	g.Expect(cd.Scopes().HasAll(expectedScopes.Values()...)).To(BeTrue(), fmt.Sprintf("expected scopes %s doesn't match actual scopes %s", expectedScopes, cd.Scopes()))

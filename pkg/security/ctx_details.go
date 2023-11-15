@@ -45,13 +45,6 @@ type UserDetails interface {
 	Email() string
 }
 
-// TODO: review if this is a suitable package for this interface
-type ClientDetails interface {
-	ClientId() string
-	AssignedTenantIds() utils.StringSet
-	Scopes() utils.StringSet
-}
-
 type AuthenticationDetails interface {
 	ExpiryTime() time.Time
 	IssueTime() time.Time

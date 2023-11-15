@@ -66,13 +66,11 @@ type FullContextDetails struct {
 }
 
 func (d *FullContextDetails) ClientId() string {
-	//TODO implement me
-	panic("implement me")
+	return d.Client.Id
 }
 
 func (d *FullContextDetails) Scopes() utils.StringSet {
-	//TODO implement me
-	panic("implement me")
+	return d.Client.Scopes
 }
 
 func NewFullContextDetails() *FullContextDetails {

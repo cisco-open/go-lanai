@@ -141,6 +141,15 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 		ud.CurrencyCode = meta.CurrencyCode()
 	}
 
+	var cd internal.ClientDetails
+	if facts.client != nil {
+		cd = internal.ClientDetails{
+			Id:                facts.client.ClientId(),
+			Scopes:            facts.client.Scopes(),
+			AssignedTenantIds: facts.client.AssignedTenantIds(),
+		}
+	}
+
 	// auth details
 	ad, e := f.createAuthDetails(ctx, facts)
 	if e != nil {
@@ -151,6 +160,7 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 		Provider:       pd,
 		Tenant:         td,
 		User:           ud,
+		Client:         cd,
 		Authentication: *ad,
 		KV:             f.createKVDetails(ctx, facts),
 	}, nil
