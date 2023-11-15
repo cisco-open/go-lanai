@@ -422,18 +422,9 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, te
 	}
 
 	// check account
+	// the account's tenants already takes into consideration the requesting client's tenants.
 	if !tenancy.AnyHasDescendant(ctx, tenantIds, tenant.Id) {
 		return oauth2.NewInvalidGrantError("user does not have access to specified tenant")
-	}
-
-	// check client's tenant restrictions
-	// TODO: remove this part because we would have already checked
-	if len(client.AssignedTenantIds()) != 0 {
-		for t := range client.AssignedTenantIds() {
-			if !tenancy.AnyHasDescendant(ctx, tenantIds, t) {
-				return oauth2.NewInvalidGrantError("client is restricted to tenants that the user doesn't have access to")
-			}
-		}
 	}
 
 	return nil
