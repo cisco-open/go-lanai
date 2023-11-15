@@ -1,4 +1,4 @@
-package policy_filter_tests
+package filter_tests
 
 import (
     "context"
@@ -136,7 +136,7 @@ func findIDByOwner(ownerId uuid.UUID) uuid.UUID {
 // loadModel load model without policy filtering
 func loadModel[T any](ctx context.Context, db *gorm.DB, id interface{}, opts ...func(*gorm.DB)*gorm.DB) (*T, error) {
     var dest T
-    tx := db.WithContext(ctx).Scopes(opadata.SkipPolicyFiltering())
+    tx := db.WithContext(ctx).Scopes(opadata.SkipFiltering())
     for _, fn := range opts {
         tx = fn(tx)
     }

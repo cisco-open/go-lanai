@@ -15,15 +15,17 @@ var (
 )
 
 var (
-	typePolicyFilter  = reflect.TypeOf(PolicyFilter{})
+	typeFilteredModel = reflect.TypeOf(FilteredModel{})
+	typeFilter = reflect.TypeOf(Filter{})
 	typeGenericMap    = reflect.TypeOf(map[string]interface{}{})
 	policyMarkerTypes = utils.NewSet(
-		typePolicyFilter, reflect.PointerTo(typePolicyFilter),
+		typeFilteredModel, reflect.PointerTo(typeFilteredModel),
+		typeFilter, reflect.PointerTo(typeFilter),
 	)
 )
 
 const (
-	errTmplEmbeddedStructNotFound = `PolicyAware not found on policyTarget [%s]. Tips: embedding PolicyAware is required for any OPA DB usage`
+	errTmplEmbeddedStructNotFound = `FilteredModel or Filter not found in model struct [%s]. Tips: embedding 'FilteredModel'' or having field with type 'Filter'' is required for any OPA DB usage`
 	errTmplOPATagNotFound         = `'opa' tag is not found on Embedded PolicyAware in policyTarget [%s]. Tips: the Embedded PolicyAware should have 'opa' tag with at least resource type defined`
 )
 
@@ -181,14 +183,19 @@ func collectRelationship(r *schema.Relationship, path TaggedRelationPath, visite
 }
 
 func parseTag(s *schema.Schema) (*OPATag, error) {
-	tags, ok := findTag(s.ModelType)
+	f, ok := findMarkerField(s.ModelType)
 	if !ok {
 		return nil, fmt.Errorf(errTmplEmbeddedStructNotFound, s.Name)
 	}
-	tag, ok := tags.Lookup(TagOPA)
+	if e := validateMarkerField(s.ModelType, f); e != nil {
+		return nil, e
+	}
+
+	tag, ok := f.Tag.Lookup(TagOPA)
 	if !ok {
 		return nil, fmt.Errorf(errTmplOPATagNotFound, s.Name)
 	}
+
 	var parsed OPATag
 	if e := parsed.UnmarshalText([]byte(tag)); e != nil {
 		return nil, e
@@ -201,20 +208,39 @@ func parseTag(s *schema.Schema) (*OPATag, error) {
 
 }
 
-// findTag recursively find tag of marker types
+// findMarkerField recursively find tag of marker types
 // result is undefined if given type and Embedded type are not Struct
-func findTag(typ reflect.Type) (reflect.StructTag, bool) {
+func findMarkerField(typ reflect.Type) (reflect.StructField, bool) {
 	count := typ.NumField()
 	for i := 0; i < count; i++ {
 		f := typ.Field(i)
 		if policyMarkerTypes.Has(f.Type) {
-			return f.Tag, true
+			return f, true
 		}
 		if f.Anonymous {
-			if tag, ok := findTag(f.Type); ok {
-				return tag, ok
+			if field, ok := findMarkerField(f.Type); ok {
+				field.Index = append(f.Index, field.Index...)
+				return field, ok
 			}
 		}
 	}
-	return "", false
+	return reflect.StructField{}, false
+}
+
+func validateMarkerField(typ reflect.Type, field reflect.StructField) error {
+	_, ok := field.Tag.Lookup("gorm")
+	if !field.Anonymous && !ok {
+		return fmt.Errorf(`gorm:"-" tag is required on Filter field`)
+	}
+
+	for i := range field.Index {
+		f := typ.FieldByIndex(field.Index[:i+1])
+		if !f.Anonymous {
+			continue
+		}
+		if _, ok := f.Tag.Lookup("gorm"); ok {
+			return fmt.Errorf(`"gorm" tag is not allowed on embedded struct containing FilteredModel`)
+		}
+	}
+	return nil
 }

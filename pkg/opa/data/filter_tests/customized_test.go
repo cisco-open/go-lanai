@@ -1,4 +1,4 @@
-package policy_filter_tests
+package filter_tests
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	opadata "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/policy_filter_tests/testdata"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/filter_tests/testdata"
 	opatest "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
@@ -83,7 +83,7 @@ func SetupTestPrepareModelC(di *dbtest.DI) test.SetupFunc {
 	}
 	// We use special DB scope to prepare data, to by-pass policy filtering
 	return dbtest.PrepareDataWithScope(di,
-		dbtest.SetupWithGormScopes(opadata.SkipPolicyFiltering()),
+		dbtest.SetupWithGormScopes(opadata.SkipFiltering()),
 		dbtest.SetupUsingSQLFile(testdata.ModelDataFS, "create_table_c.sql"),
 		dbtest.SetupTruncateTables(ModelC{}.TableName()),
 		dbtest.SetupUsingModelSeedFile(testdata.ModelDataFS, &models, "model_c.yml", closure),
@@ -355,8 +355,8 @@ type ModelC struct {
 	OwnerName            string
 	TenantID             uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
 	TenantPath           pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
-	OwnerID              uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	opadata.PolicyFilter `opa:"type:model, package:res.test, read:allow_read_alt, update:-, create:allow_create_alt"`
+	OwnerID               uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+	opadata.FilteredModel `opa:"type:model, package:res.test, read:allow_read_alt, update:-, create:allow_create_alt"`
 	types.Audit
 }
 

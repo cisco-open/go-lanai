@@ -35,6 +35,8 @@ func TestMetadataLoader(t *testing.T) {
 		test.GomegaSubTest(SubTestInvalidTagKV(di), "TestInvalidTagKV"),
 		test.GomegaSubTest(SubTestInvalidTagFormat(di), "TestInvalidTagFormat"),
 		test.GomegaSubTest(SubTestOPATagOnPrimaryKey(di), "TestOPATagOnPrimaryKey"),
+		test.GomegaSubTest(SubTestOPATagOnCompositePrimaryKey(di), "TestOPATagOnCompositePrimaryKey"),
+		test.GomegaSubTest(SubTestFilterGormTagOnEmbedded(di), "TestFilterGormTagOnEmbedded"),
 	)
 }
 
@@ -44,9 +46,9 @@ func TestMetadataLoader(t *testing.T) {
 
 func SubTestResolveFromModel() test.GomegaSubTestFunc {
 	type model struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field:some_field"`
-		PolicyFilter `opa:"type:res,package:test.res, read:allow_read, update:allow_update,delete:-,create:-,"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"field:some_field"`
+		FilteredModel `opa:"type:res,package:test.res, read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		meta, e := resolveMetadata(&model{})
@@ -63,41 +65,25 @@ func SubTestResolveFromModel() test.GomegaSubTestFunc {
 }
 
 func SubTestFilterAsEmbedded(di *TestDI) test.GomegaSubTestFunc {
-	type model1 struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field:some_field"`
-		PolicyFilter `opa:"type:res,package:test.res,read:allow_read, update:allow_update,delete:-,create:-,"`
-	}
-	type model2 struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field:some_field"`
-		PolicyFilter `gorm:"-" opa:"type:res,package:test.res,read:allow_read, update:allow_update,delete:-,create:-,"`
-	}
-	expected := &ExpectedMetadata{
-		ResType:    "res",
-		OPAPackage: "test.res",
-		Fields:     map[string][]string{"some_field": {"Value"}},
-		Policies:   map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
-		Mode:       uint(DBOperationFlagUpdate | DBOperationFlagRead),
+	type model struct {
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"field:some_field"`
+		FilteredModel `opa:"type:res,package:test.res,read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		// without gorm tag
-		s, e := schema.Parse(&model1{}, schemaCache, di.DB.NamingStrategy)
+		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
 		g.Expect(e).To(Succeed(), "parsing schema should not return error")
 		assertSchema(s, g)
 
 		meta, e := loadMetadata(s)
 		g.Expect(e).To(Succeed(), "load metadata should not return error")
-		assertMetadata(meta, g, expected)
-
-		// with gorm tag
-		s, e = schema.Parse(&model2{}, schemaCache, di.DB.NamingStrategy)
-		g.Expect(e).To(Succeed(), "parsing schema should not return error")
-		assertSchema(s, g)
-
-		meta, e = loadMetadata(s)
-		g.Expect(e).To(Succeed(), "load metadata should not return error")
-		assertMetadata(meta, g, expected)
+		assertMetadata(meta, g, &ExpectedMetadata{
+			ResType:    "res",
+			OPAPackage: "test.res",
+			Fields:     map[string][]string{"some_field": {"Value"}},
+			Policies:   map[string]string{"read": "allow_read", "update": "allow_update", "delete": "-", "create": "-"},
+			Mode:       uint(DBOperationFlagUpdate | DBOperationFlagRead),
+		})
 	}
 }
 
@@ -116,8 +102,8 @@ func SubTestMissingFilterField(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestEmbeddedStruct(di *TestDI) test.GomegaSubTestFunc {
 	type Embedded struct {
-		Value        string `gorm:"type:text" opa:"field:some_field"`
-		PolicyFilter `gorm:"-" opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
+		Value         string `gorm:"type:text" opa:"field:some_field"`
+		FilteredModel `opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	type model struct {
 		ID uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
@@ -151,13 +137,13 @@ func SubTestRelationshipParsing(di *TestDI) test.GomegaSubTestFunc {
 		Value string `opa:"field:value"`
 	}
 	type model struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field:value"`
-		ToMany       []*toMany `gorm:"foreignKey:RefID;references:ID" opa:"field:to_many"`
-		ToOne        *toOne    `gorm:"foreignKey:RefID;references:ID" opa:"input:to_one"`
-		BelongToID   uuid.UUID
-		BelongTo     *toOne `gorm:"foreignKey:BelongToID;" opa:"field:belong_to"`
-		PolicyFilter `gorm:"-" opa:"type:res"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"field:value"`
+		ToMany        []*toMany `gorm:"foreignKey:RefID;references:ID" opa:"field:to_many"`
+		ToOne         *toOne    `gorm:"foreignKey:RefID;references:ID" opa:"input:to_one"`
+		BelongToID    uuid.UUID
+		BelongTo      *toOne `gorm:"foreignKey:BelongToID;" opa:"field:belong_to"`
+		FilteredModel `opa:"type:res"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
@@ -181,14 +167,14 @@ func SubTestRelationshipParsing(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestFilterAsField(di *TestDI) test.GomegaSubTestFunc {
 	type model1 struct {
-		ID     uuid.UUID    `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value  string       `opa:"field:some_field"`
-		Filter PolicyFilter `opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
+		ID     uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value  string    `opa:"field:some_field"`
+		Filter Filter    `opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	type model2 struct {
-		ID     uuid.UUID    `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value  string       `opa:"field:some_field"`
-		Filter PolicyFilter `gorm:"-" opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
+		ID     uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value  string    `opa:"field:some_field"`
+		Filter Filter    `gorm:"-" opa:"type:res,read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// without gorm tag
@@ -213,9 +199,9 @@ func SubTestFilterAsField(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestMissingOPATag(di *TestDI) test.GomegaSubTestFunc {
 	type model struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field:some_field"`
-		PolicyFilter `gorm:"-"`
+		ID    uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value string    `opa:"field:some_field"`
+		FilteredModel
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
@@ -229,9 +215,9 @@ func SubTestMissingOPATag(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestMissingResourceType(di *TestDI) test.GomegaSubTestFunc {
 	type model struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field:some_field"`
-		PolicyFilter `gorm:"-" opa:"read:allow_read, update:allow_update,delete:-,create:-,"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"field:some_field"`
+		FilteredModel `opa:"read:allow_read, update:allow_update,delete:-,create:-,"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
@@ -250,14 +236,14 @@ func SubTestMissingFieldValue(di *TestDI) test.GomegaSubTestFunc {
 		Value string `opa:"field:value"`
 	}
 	type model1 struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field:"`
-		PolicyFilter `gorm:"-" opa:"type:res"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"field:"`
+		FilteredModel `opa:"type:res"`
 	}
 	type model2 struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Relation     *relation `gorm:"foreignKey:RefID;references:ID" opa:"input:"`
-		PolicyFilter `gorm:"-" opa:"type:res"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Relation      *relation `gorm:"foreignKey:RefID;references:ID" opa:"input:"`
+		FilteredModel `opa:"type:res"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model1{}, schemaCache, di.DB.NamingStrategy)
@@ -276,9 +262,9 @@ func SubTestMissingFieldValue(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestInvalidTagKV(di *TestDI) test.GomegaSubTestFunc {
 	type model struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"invalid:value"`
-		PolicyFilter `gorm:"-" opa:"type:res"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"invalid:value"`
+		FilteredModel `opa:"type:res"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
@@ -292,14 +278,14 @@ func SubTestInvalidTagKV(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestInvalidTagFormat(di *TestDI) test.GomegaSubTestFunc {
 	type model1 struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field=value"`
-		PolicyFilter `gorm:"-" opa:"type:res"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"field=value"`
+		FilteredModel `opa:"type:res"`
 	}
 	type model2 struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-		Value        string    `opa:"field:value"`
-		PolicyFilter `gorm:"-" opa:"type=res"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"field:value"`
+		FilteredModel `opa:"type=res"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model1{}, schemaCache, di.DB.NamingStrategy)
@@ -318,9 +304,9 @@ func SubTestInvalidTagFormat(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestOPATagOnPrimaryKey(di *TestDI) test.GomegaSubTestFunc {
 	type model struct {
-		ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();" opa:"field:id"`
-		Value        string    `opa:"field:value"`
-		PolicyFilter `gorm:"-" opa:"type:res"`
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();" opa:"field:id"`
+		Value         string    `opa:"field:value"`
+		FilteredModel `opa:"type:res"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
@@ -328,6 +314,71 @@ func SubTestOPATagOnPrimaryKey(di *TestDI) test.GomegaSubTestFunc {
 		assertSchema(s, g)
 		_, e = loadMetadata(s)
 		g.Expect(e).To(HaveOccurred(), "load metadata should return error")
+	}
+}
+
+func SubTestOPATagOnCompositePrimaryKey(di *TestDI) test.GomegaSubTestFunc {
+	type model struct {
+		PID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();" opa:"field:pid"`
+		UID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();" opa:"field:uid"`
+		Value         string
+		FilteredModel `opa:"type:res"`
+	}
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		s, e := schema.Parse(&model{}, schemaCache, di.DB.NamingStrategy)
+		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchema(s, g)
+
+		meta, e := loadMetadata(s)
+		g.Expect(e).To(Succeed(), "load metadata should not return error")
+		assertMetadata(meta, g, &ExpectedMetadata{
+			ResType: "res",
+			Fields:  map[string][]string{"pid": {"PID"}, "uid": {"UID"}},
+			Mode:    uint(defaultPolicyMode),
+		})
+	}
+}
+
+func SubTestFilterGormTagOnEmbedded(di *TestDI) test.GomegaSubTestFunc {
+	type model1 struct {
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		Value         string    `opa:"field:some_field"`
+		FilteredModel `gorm:"-" opa:"type:res,package:test.res,read:allow_read, update:allow_update,delete:-,create:-,"`
+	}
+	type nested struct {
+		AnotherValue string `opa:"field:another_field"`
+		model1
+	}
+	type Embedded struct {
+		Value         string    `opa:"field:some_field"`
+		FilteredModel `opa:"type:res,package:test.res,read:allow_read, update:allow_update,delete:-,create:-,"`
+	}
+	type model2 struct {
+		ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+		AnotherValue string `opa:"field:another_field"`
+		Embedded `gorm:"-"`
+	}
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// gorm tag directly applied on embedded struct
+		s, e := schema.Parse(&model1{}, schemaCache, di.DB.NamingStrategy)
+		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchemaNoClauses(s, g)
+		_, e = loadMetadata(s)
+		g.Expect(e).To(HaveOccurred(), "load metadata should fail")
+
+		// gorm tag directly applied on embedded struct, but nested
+		s, e = schema.Parse(&nested{}, schemaCache, di.DB.NamingStrategy)
+		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchemaNoClauses(s, g)
+		_, e = loadMetadata(s)
+		g.Expect(e).To(HaveOccurred(), "load metadata should fail")
+
+		// gorm tag indirectly applied on embedded struct
+		s, e = schema.Parse(&model2{}, schemaCache, di.DB.NamingStrategy)
+		g.Expect(e).To(Succeed(), "parsing schema should not return error")
+		assertSchemaNoClauses(s, g)
+		_, e = loadMetadata(s)
+		g.Expect(e).To(HaveOccurred(), "load metadata should fail")
 	}
 }
 
@@ -379,4 +430,11 @@ func assertSchema(s *schema.Schema, g *gomega.WithT) {
 	g.Expect(s.QueryClauses).To(HaveLen(1), "schema's query clauses should have exactly one clause")
 	g.Expect(s.UpdateClauses).To(HaveLen(1), "schema's update clauses should have exactly one clause")
 	g.Expect(s.DeleteClauses).To(HaveLen(1), "schema's delete clauses should have exactly one clause")
+}
+
+func assertSchemaNoClauses(s *schema.Schema, g *gomega.WithT) {
+	g.Expect(s.CreateClauses).To(HaveLen(0), "schema's create clauses should be empty")
+	g.Expect(s.QueryClauses).To(HaveLen(0), "schema's query clauses should be empty")
+	g.Expect(s.UpdateClauses).To(HaveLen(0), "schema's update clauses should be empty")
+	g.Expect(s.DeleteClauses).To(HaveLen(0), "schema's delete clauses should be empty")
 }

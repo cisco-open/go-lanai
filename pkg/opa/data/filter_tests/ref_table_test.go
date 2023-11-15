@@ -1,11 +1,11 @@
-package policy_filter_tests
+package filter_tests
 
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	opadata "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/policy_filter_tests/testdata"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/filter_tests/testdata"
 	opatest "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
@@ -67,10 +67,6 @@ func TestOPAFilterOnRelations(t *testing.T) {
 		test.GomegaSubTest(SubTestModelDListByRef(di), "TestModelListByRef"),
 		test.GomegaSubTest(SubTestModelDRemoveRelations(di), "TestModelRemoveRelations"),
 		test.GomegaSubTest(SubTestModelDRemoveForeignRelations(di), "TestModelRemoveForeignRelations"),
-		//test.GomegaSubTest(SubTestModelCGet(di), "TestModelGet"),
-		//test.GomegaSubTest(SubTestModelCUpdate(di), "TestModelUpdate"),
-		//test.GomegaSubTest(SubTestModelCDelete(di), "TestModelDelete"),
-		//test.GomegaSubTest(SubTestModelCSave(di), "TestModelSave"),
 	)
 }
 
@@ -84,7 +80,7 @@ func SetupTestPrepareModelD(di *dbtest.DI) test.SetupFunc {
 	tables := []string{ModelDUser{}.TableName(), ModelD{}.TableName(), ModelDRef{}.TableName()}
 	// We use special DB scope to prepare data, to by-pass policy filtering
 	return dbtest.PrepareDataWithScope(di,
-		dbtest.SetupWithGormScopes(opadata.SkipPolicyFiltering()),
+		dbtest.SetupWithGormScopes(opadata.SkipFiltering()),
 		dbtest.SetupDropTables(tables...),
 		dbtest.SetupUsingSQLFile(testdata.ModelDataFS, "create_table_d.sql"),
 		dbtest.SetupUsingModelSeedFile(testdata.ModelDataFS, &users, "model_d_user.yml"),
@@ -391,7 +387,7 @@ type ModelD struct {
 	// UserRelations is read-only, don't set associations via this field
 	UserRelations []*ModelDRef `gorm:"foreignKey:ModelID;<-:false"`
 
-	opadata.PolicyFilter `opa:"type:model"`
+	opadata.FilteredModel `opa:"type:model"`
 	types.Audit
 }
 
@@ -410,8 +406,8 @@ type ModelDRef struct {
 	UserID               uuid.UUID   `gorm:"primaryKey;type:uuid;" opa:"field:owner_id"`
 	ModelID              uuid.UUID   `gorm:"primaryKey;type:uuid;"`
 	User                 *ModelDUser `gorm:"foreignKey:user_id"`
-	Model                *ModelD     `gorm:"foreignKey:model_id"`
-	opadata.PolicyFilter `opa:"type:user_model_ref"`
+	Model                 *ModelD     `gorm:"foreignKey:model_id"`
+	opadata.FilteredModel `opa:"type:user_model_ref"`
 	types.Audit
 }
 

@@ -18,7 +18,7 @@ var logger = log.New("OPA.Data")
 
 // ResolveResource parse given model and resolve resource type and resource values using "opa" tags
 // Typically used together with opa.AllowResource as manual policy enforcement.
-// ModelType should be model struct with PolicyFilter and valid "opa" tags.
+// ModelType should be model struct with FilteredModel and valid "opa" tags.
 // Note: resValues could be nil if all OPA related values are zero
 func ResolveResource[ModelType any](model *ModelType) (resType string, resValues *opa.ResourceValues, err error) {
 	rv := reflect.ValueOf(model)
@@ -49,10 +49,10 @@ func ResolveResource[ModelType any](model *ModelType) (resType string, resValues
 	GORM Scopes
  ********************/
 
-// SkipPolicyFiltering is used as a scope for gorm.DB to skip policy-based data filtering
-// e.g. db.WithContext(ctx).Scopes(SkipPolicyFiltering()).Find(...)
+// SkipFiltering is used as a scope for gorm.DB to skip policy-based data filtering
+// e.g. db.WithContext(ctx).Scopes(SkipFiltering()).Find(...)
 // Using this scope without context would panic
-func SkipPolicyFiltering() func(*gorm.DB) *gorm.DB {
+func SkipFiltering() func(*gorm.DB) *gorm.DB {
 	return FilterByPolicies(0)
 }
 
@@ -80,7 +80,7 @@ func FilterByPolicies(flags ...DBOperationFlag) func(*gorm.DB) *gorm.DB {
 // e.g. db.WithContext(ctx).Scopes(FilterWithQueries(DBOperationFlagRead, "resource.type.allow_read")).Find(...)
 // Important: This scope accept FULL QUERY including policy package.
 // Notes:
-// - It's recommended to use dotted format without leading "data.". PolicyFilter would adjust the format based on operation.
+// - It's recommended to use dotted format without leading "data.". FilteredModel would adjust the format based on operation.
 // 	 e.g. "resource.type.allow_read"
 // - This scope doesn't enable/disable data-filtering. It only overrides queries set in tag.
 // - Using this scope without context would panic
