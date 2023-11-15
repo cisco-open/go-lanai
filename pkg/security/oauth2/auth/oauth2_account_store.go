@@ -60,7 +60,7 @@ func (o *OAuth2AccountStore) LoadAccountById(ctx context.Context, id interface{}
 	var effectiveTenants []string
 
 	for _, t := range a.(security.AccountTenancy).DesignatedTenantIds() {
-		if c.Scopes().Has(oauth2.ScopeSystem) || tenancy.AnyHasDescendant(ctx, c.AssignedTenantIds(), t) {
+		if c.Scopes().Has(oauth2.ScopeCrossTenant) || tenancy.AnyHasDescendant(ctx, c.AssignedTenantIds(), t) {
 			effectiveTenants = append(effectiveTenants, t)
 		}
 	}
@@ -100,7 +100,7 @@ func (o *OAuth2AccountStore) LoadAccountByUsername(ctx context.Context, username
 
 	for _, t := range a.(security.AccountTenancy).DesignatedTenantIds() {
 		// if user's tenant is children of client's tenant, add it
-		if c.Scopes().Has(oauth2.ScopeSystem) || tenancy.AnyHasDescendant(ctx, c.AssignedTenantIds(), t) {
+		if c.Scopes().Has(oauth2.ScopeCrossTenant) || tenancy.AnyHasDescendant(ctx, c.AssignedTenantIds(), t) {
 			effectiveTenants.Add(t)
 		}
 	}

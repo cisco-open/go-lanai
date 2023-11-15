@@ -126,7 +126,7 @@ func (p *StandardAuthorizeRequestProcessor) validateClientTenancy(ctx context.Co
 		return security.NewUsernameNotFoundError("cannot retrieve account from current session")
 	}
 
-	if len(acct.(security.AccountTenancy).DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeSystem) {
+	if len(acct.(security.AccountTenancy).DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeCrossTenant) {
 		security.Clear(ctx)
 		return security.NewUsernameNotFoundError("user has no access to tenants of this client")
 	}

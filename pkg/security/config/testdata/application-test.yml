@@ -55,7 +55,7 @@ mocking:
       access-token-validity: 3600s
       redirect-uris: ["localhost:*/**"]
       tenants: []
-      scopes: "system"
+      scopes: "cross_tenant"
     tenanted-client-1:
       id: "tenant-client-1"
       secret: "test-secret"

@@ -468,7 +468,7 @@ func SubTestTenantClientCredential(di *intDI) test.GomegaSubTestFunc {
 				expectedTenantId:        "",
 				expectedTokenRespStatus: http.StatusOK,
 				clientTenants:           []string{},
-				clientScopes:            []string{oauth2.ScopeSystem},
+				clientScopes:            []string{oauth2.ScopeCrossTenant},
 			},
 			{
 				name:                    "client with access to all tenants, select tenant",
@@ -477,7 +477,7 @@ func SubTestTenantClientCredential(di *intDI) test.GomegaSubTestFunc {
 				expectedTenantId:        "id-tenant-1",
 				expectedTokenRespStatus: http.StatusOK,
 				clientTenants:           []string{},
-				clientScopes:            []string{oauth2.ScopeSystem},
+				clientScopes:            []string{oauth2.ScopeCrossTenant},
 			},
 			{
 				name:                    "client with access to multiple tenants without tenant selection",
@@ -1026,7 +1026,7 @@ func assertClientCredentialAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authe
 	cd, ok := auth.Details().(security.ClientDetails)
 	g.Expect(ok).To(BeTrue())
 	g.Expect(cd.ClientId()).To(Equal(expectedClientId))
-	g.Expect(cd.Scopes().HasAll(expectedScopes.Values()...)).To(BeTrue())
+	g.Expect(cd.Scopes().HasAll(expectedScopes.Values()...)).To(BeTrue(), fmt.Sprintf("expected scopes %s doesn't match actual scopes %s", expectedScopes, cd.Scopes()))
 	g.Expect(expectedScopes.HasAll(cd.Scopes().Values()...)).To(BeTrue())
 	g.Expect(cd.AssignedTenantIds().HasAll(expectedTenants.Values()...)).To(BeTrue())
 	g.Expect(expectedTenants.HasAll(cd.AssignedTenantIds().Values()...)).To(BeTrue())

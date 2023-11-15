@@ -71,7 +71,7 @@ const (
 	ScopeOidcEmail       = "email"
 	ScopeOidcAddress     = "address"
 	ScopeOidcPhone       = "phone"
-	ScopeSystem          = "system" //TODO remove this and replace with root tenant access
+	ScopeCrossTenant     = "cross_tenant"
 )
 
 const (

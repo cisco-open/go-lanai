@@ -274,7 +274,7 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 			return nil, newInvalidTenantForClientError("error loading tenant")
 		}
 
-		if tenant != nil && !client.Scopes().Has(oauth2.ScopeSystem) && !tenancy.AnyHasDescendant(ctx, client.AssignedTenantIds(), tenant.Id) {
+		if tenant != nil && !client.Scopes().Has(oauth2.ScopeCrossTenant) && !tenancy.AnyHasDescendant(ctx, client.AssignedTenantIds(), tenant.Id) {
 			return nil, newInvalidTenantForClientError(fmt.Sprintf("client doesn't have access to %s", tenant.Id))
 		}
 		return &authFacts{client: client, tenant: tenant}, nil
@@ -292,7 +292,7 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
 	}
 
-	if len(acctT.DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeSystem) {
+	if len(acctT.DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeCrossTenant) {
 		return nil, newInvalidUserError("unsupported user does not have access according to client's tenants")
 	}
 
