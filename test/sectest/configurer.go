@@ -137,8 +137,6 @@ func MWEnableSession() MWMockOptions {
 	}
 }
 
-//TODO: add an option to move this to be earlier in the middleware order
-
 func MWForcePreOAuth2AuthValidation() MWMockOptions {
 	return func(opt *MWMockOption) {
 		opt.MWOrder = security.MWOrderOAuth2AuthValidation - 5
