@@ -64,18 +64,16 @@ func (g *PermissionBasedGranter) validateStoredPermissions(ctx context.Context, 
 	return nil
 }
 
-// DE7384 Removed original vs requesting Client ID validation for cases where original Client ID was requested by
-// authenticated user and attempted security context switch is using system user causing original vs requesting
-// Client ID mismatch.
-//
 // Expectation is that only users with appropriate VIEW_OPERATOR_LOGIN_AS_CUSTOMER and
 // SWITCH_TENANT permissions along with appropriate grant type are allowed to perform the security context
 // switch.  This enforcement is done in other parts of the security context switch flow.
 func (g *PermissionBasedGranter) validateStoredClient(ctx context.Context, client oauth2.OAuth2Client, src oauth2.OAuth2Request) error {
 	original := src.ClientId()
 	requested := client.ClientId()
-	logger.WithContext(ctx).Debug(fmt.Sprintf("security context switch as original Client ID [%s] and requesting Client ID [%s]", original, requested))
 
+	if original != requested {
+		return oauth2.NewInvalidGrantError(fmt.Sprintf("security context switch as original Client ID [%s] and requesting Client ID [%s]", original, requested))
+	}
 	return nil
 }
 
