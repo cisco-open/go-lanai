@@ -1,4 +1,4 @@
-package poc
+package resource.poc
 
 import future.keywords
 import data.tenancy.allow_tenant_access
