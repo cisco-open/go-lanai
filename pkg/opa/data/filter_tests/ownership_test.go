@@ -1,4 +1,4 @@
-package policy_filter_tests
+package filter_tests
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	opadata "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/constraints"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/policy_filter_tests/testdata"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data/filter_tests/testdata"
 	opatest "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -91,7 +91,7 @@ func SetupTestPrepareModelB(di *dbtest.DI) test.SetupFunc {
 	}
 	// We use special DB scope to prepare data, to by-pass policy filtering
 	return dbtest.PrepareDataWithScope(di,
-		dbtest.SetupWithGormScopes(opadata.SkipPolicyFiltering()),
+		dbtest.SetupWithGormScopes(opadata.SkipFiltering()),
 		dbtest.SetupUsingSQLFile(testdata.ModelDataFS, "create_table_b.sql"),
 		dbtest.SetupTruncateTables(ModelB{}.TableName(), Shared{}.TableName()),
 		dbtest.SetupUsingModelSeedFile(testdata.ModelDataFS, &models, "model_b.yml", closure),
@@ -316,8 +316,8 @@ type ModelB struct {
 	Value     string
 	OwnerName string
 	OwnerID   uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	Sharing   constraints.Sharing  `opa:"field:sharing"`
-	OPAFilter opadata.PolicyFilter `gorm:"-" opa:"type:model"`
+	Sharing   constraints.Sharing   `opa:"field:sharing"`
+	OPAFilter opadata.Filter `gorm:"-" opa:"type:model"`
 	types.Audit
 	// For testing utils only
 	Shared []*Shared `gorm:"foreignKey:ResID;references:ID" opa:"field:shared"`

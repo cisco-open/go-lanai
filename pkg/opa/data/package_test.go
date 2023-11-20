@@ -45,8 +45,8 @@ func SubTestResolveResource() test.GomegaSubTestFunc {
 		Sharing    pqx.JsonbMap  `gorm:"type:jsonb;not null" opa:"field:sharing"`
 		OPAArray   []string      `gorm:"type:text[]" opa:"field:extra_array"`
 		OPASingle  string        `opa:"field:extra_single"`
-		OPAMap     pqx.JsonbMap  `opa:"field:extra_map"`
-		Filter     PolicyFilter  `gorm:"-" opa:"type:res"`
+		OPAMap pqx.JsonbMap  `opa:"field:extra_map"`
+		Filter FilteredModel `gorm:"-" opa:"type:res"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		model := &Model{
@@ -57,7 +57,7 @@ func SubTestResolveResource() test.GomegaSubTestFunc {
 			OPAArray:   []string{"v1", "v2"},
 			OPASingle:  "value",
 			OPAMap:     pqx.JsonbMap{"key": "value"},
-			Filter:     PolicyFilter{},
+			Filter:     FilteredModel{},
 		}
 		typ, v, e := ResolveResource(model)
 		g.Expect(e).To(Succeed(), "resolve resource should not return error")
@@ -81,15 +81,15 @@ func SubTestResolveInvalidModel() test.GomegaSubTestFunc {
 		ID         uuid.UUID     `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 		OPAArray   []string      `gorm:"type:text[]" opa:"field:extra_array"`
 		OPASingle  string        `opa:"field:extra_single"`
-		OPAMap     pqx.JsonbMap  `opa:"field:extra_map"`
-		Filter     PolicyFilter  `gorm:"-"`
+		OPAMap pqx.JsonbMap  `opa:"field:extra_map"`
+		Filter FilteredModel `gorm:"-"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		model := &Model{
-			OPAArray:   []string{"v1", "v2"},
-			OPASingle:  "value",
-			OPAMap:     pqx.JsonbMap{"key": "value"},
-			Filter:     PolicyFilter{},
+			OPAArray:  []string{"v1", "v2"},
+			OPASingle: "value",
+			OPAMap:    pqx.JsonbMap{"key": "value"},
+			Filter:    FilteredModel{},
 		}
 		_, _, e := ResolveResource(model)
 		g.Expect(e).To(HaveOccurred(), "resolve resource should return error")
@@ -101,15 +101,15 @@ func SubTestInvalidGenerics() test.GomegaSubTestFunc {
 		ID         uuid.UUID     `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 		OPAArray   []string      `gorm:"type:text[]" opa:"field:extra_array"`
 		OPASingle  string        `opa:"field:extra_single"`
-		OPAMap     pqx.JsonbMap  `opa:"field:extra_map"`
-		Filter     PolicyFilter  `gorm:"-" opa:"res"`
+		OPAMap pqx.JsonbMap  `opa:"field:extra_map"`
+		Filter FilteredModel `gorm:"-" opa:"res"`
 	}
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		model := &Model{
-			OPAArray:   []string{"v1", "v2"},
-			OPASingle:  "value",
-			OPAMap:     pqx.JsonbMap{"key": "value"},
-			Filter:     PolicyFilter{},
+			OPAArray:  []string{"v1", "v2"},
+			OPASingle: "value",
+			OPAMap:    pqx.JsonbMap{"key": "value"},
+			Filter:    FilteredModel{},
 		}
 		models := []*Model{model}
 		_, _, e := ResolveResource(&models)

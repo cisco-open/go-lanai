@@ -18,12 +18,24 @@ type ContextAwarePartialQueryMapper interface {
 type ResourceFilterOptions func(rf *ResourceFilter)
 
 type ResourceFilter struct {
-	OPA      *sdk.OPA
-	Query    string
+	// OPA (Optional) instance to use for evaluation. Default to EmbeddedOPA()
+	OPA *sdk.OPA
+	// Query (Optional) OPA query to evaluate.
+	// Default to `data.resource.<resource_type>.filter_<resource_operation>`
+	Query string
+	// Unknowns (Required) List of unknown input fields for partial evaluation. Not providing "unknowns" would not
+	// result in immediate error, but very like result in access denial.
 	Unknowns []string
-	QueryMapper      sdk.PartialQueryMapper
-	Delta            *ResourceValues
-	ExtraData        map[string]interface{}
+	// QueryMapper (Optional) Custom sdk.PartialQueryMapper for translating result rego.PartialQueries.
+	// By default, partial result is *rego.PartialQueries. QueryMapper can translate it to other structure.
+	// e.g. SQL "Where" clause
+	QueryMapper sdk.PartialQueryMapper
+	// Delta (Optional) Resource's "changed-to" fields and values. Delta is only applicable to "write" operation.
+	// OPA policies may have rules on what values the resource's certain fields can be changed to.
+	Delta *ResourceValues
+	// ExtraData  (Optional) any key-value pairs in ExtraData will be added into query input under `input.resource.*`
+	ExtraData map[string]interface{}
+	// InputCustomizers customizers to finalize/modify query input before evaluation
 	InputCustomizers []InputCustomizer
 	// RawInput overrides any input related options
 	RawInput interface{}
@@ -49,7 +61,7 @@ func FilterResource(ctx context.Context, resType string, op ResourceOperation, o
 		fn(&res)
 	}
 	if len(res.Query) == 0 {
-		res.Query = fmt.Sprintf("data.%s.filter_%v", resType, op)
+		res.Query = fmt.Sprintf("data.%s.%s.filter_%v", PackagePrefixResource, resType, op)
 	}
 	ctx = contextWithOverriddenLogLevel(ctx, res.LogLevel)
 	opaOpts, e := PrepareResourcePartialQuery(ctx, res.Query, resType, op, &res)
@@ -132,6 +144,3 @@ func handlePartialResult(ctx context.Context, result *sdk.PartialResult, rErr er
 	event.AST = (*partialQueriesLog)(result.AST)
 	return result, nil
 }
-
-
-
