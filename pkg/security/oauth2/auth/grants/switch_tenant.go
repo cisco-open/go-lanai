@@ -18,14 +18,14 @@ var (
 // SwitchTenantGranter implements auth.TokenGranter
 type SwitchTenantGranter struct {
 	PermissionBasedGranter
-	accountStore oauth2.OAuth2AccountStore
+	accountStore security.AccountStore
 	authService  auth.AuthorizationService
 }
 
 func NewSwitchTenantGranter(
 	authService auth.AuthorizationService,
 	authenticator security.Authenticator,
-	accountStore oauth2.OAuth2AccountStore,
+	accountStore security.AccountStore,
 ) *SwitchTenantGranter {
 	if authenticator == nil {
 		panic(fmt.Errorf("cannot create SwitcTenantGranter without authenticator."))

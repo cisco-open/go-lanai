@@ -46,11 +46,11 @@ func (r UserInfoJwtResponse) MarshalText() (text []byte, err error) {
 
 type UserInfoEndpoint struct {
 	issuer       security.Issuer
-	accountStore oauth2.OAuth2AccountStore
+	accountStore security.AccountStore
 	jwtEncoder   jwt.JwtEncoder
 }
 
-func NewUserInfoEndpoint(issuer security.Issuer, accountStore oauth2.OAuth2AccountStore, jwtEncoder jwt.JwtEncoder) *UserInfoEndpoint {
+func NewUserInfoEndpoint(issuer security.Issuer, accountStore security.AccountStore, jwtEncoder jwt.JwtEncoder) *UserInfoEndpoint {
 	return &UserInfoEndpoint{
 		issuer:       issuer,
 		accountStore: accountStore,

@@ -32,7 +32,7 @@ type DASOptions func(*DASOption)
 type DASOption struct {
 	DetailsFactory     *common.ContextDetailsFactory
 	ClientStore        oauth2.OAuth2ClientStore
-	AccountStore       oauth2.OAuth2AccountStore
+	AccountStore       security.AccountStore
 	TenantStore        security.TenantStore
 	ProviderStore      security.ProviderStore
 	Issuer             security.Issuer
@@ -45,7 +45,7 @@ type DASOption struct {
 type DefaultAuthorizationService struct {
 	detailsFactory    *common.ContextDetailsFactory
 	clientStore       oauth2.OAuth2ClientStore
-	accountStore      oauth2.OAuth2AccountStore
+	accountStore      security.AccountStore
 	tenantStore       security.TenantStore
 	providerStore     security.ProviderStore
 	tokenStore        TokenStore
@@ -287,6 +287,11 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, newInvalidUserError("unsupported user's account locked or disabled")
 	}
 
+	account, err = WrapAccount(ctx, account, client)
+	if err != nil {
+		return nil, err
+	}
+
 	acctT, ok := account.(security.AccountTenancy)
 	if !ok {
 		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
@@ -303,7 +308,7 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 
 	if err = s.verifyTenantAccess(ctx, tenant, account, client); err != nil {
 		return nil, err
-	}
+	} // still do this, and verify with intersection here
 
 	provider, err := s.loadProvider(ctx, request, tenant)
 	if err != nil {
@@ -319,8 +324,21 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		if newAccount.ID() != account.ID() || newAccount.Username() != account.Username() {
 			return nil, newTamperedIDOrUsernameError()
 		}
+		// Check tenancy has not been tampered with
+		if _, ok := newAccount.(security.AccountTenancy); !ok {
+			return nil, newTamperedTenancyError()
+		}
+		if newAccount.(security.AccountTenancy).DefaultDesignatedTenantId() != account.(security.AccountTenancy).DefaultDesignatedTenantId() {
+			return nil, newTamperedTenancyError()
+		}
+		if !utils.NewStringSet(newAccount.(security.AccountTenancy).DesignatedTenantIds()...).HasAll(account.(security.AccountTenancy).DesignatedTenantIds()...) ||
+			!utils.NewStringSet(account.(security.AccountTenancy).DesignatedTenantIds()...).HasAll(newAccount.(security.AccountTenancy).DesignatedTenantIds()...) {
+			return nil, newTamperedTenancyError()
+		}
+
 		account = newAccount
 	}
+
 	// after account finalizer, we can re-create the userAuth security.Authentication,
 	// and then return it from here
 	// The Principal and State cannot change. Details and Permissions may change
@@ -365,7 +383,7 @@ func (s *DefaultAuthorizationService) loadAccount(
 		return nil, newInvalidUserError(err)
 	}
 
-	acct, err := s.accountStore.LoadAccountByUsername(ctx, username, req.ClientId())
+	acct, err := s.accountStore.LoadAccountByUsername(ctx, username)
 	if err != nil {
 		return nil, newInvalidUserError(err)
 	}
@@ -543,6 +561,10 @@ func minTime(t1, t2 time.Time) time.Time {
 
 func newTamperedIDOrUsernameError(reasons ...interface{}) error {
 	return oauth2.NewInternalError("finalizer tampered with the ID or Username field", reasons...)
+}
+
+func newTamperedTenancyError(reasons ...interface{}) error {
+	return oauth2.NewInternalError("finalizer tampered with the tenancy of the account", reasons...)
 }
 
 func newImmutableContextError(reasons ...interface{}) error {

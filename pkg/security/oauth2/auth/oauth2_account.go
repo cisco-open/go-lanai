@@ -9,50 +9,14 @@ import (
 	"errors"
 )
 
-type OAuth2AccountStore struct {
-	accountStore security.AccountStore
-	clientStore  oauth2.OAuth2ClientStore
+type OAuth2Account struct {
+	account security.Account
+
+	defaultDesignatedTenantId string
+	designatedTenantIds       []string
 }
 
-func (o *OAuth2AccountStore) Finalize(ctx context.Context, account security.Account, options ...security.AccountFinalizeOptions) (security.Account, error) {
-	if f, ok := o.accountStore.(security.AccountFinalizer); ok {
-		ddt := account.(security.AccountTenancy).DefaultDesignatedTenantId()
-		dt := account.(security.AccountTenancy).DesignatedTenantIds()
-		newAcct, err := f.Finalize(ctx, account, options...)
-		if err != nil {
-			return nil, err
-		} else {
-			return &OAuth2Account{
-				account:                   newAcct,
-				designatedTenantIds:       dt,
-				defaultDesignatedTenantId: ddt,
-			}, nil
-		}
-	} else {
-		return account, nil
-	}
-}
-
-func NewOAuth2AccountStore(a security.AccountStore, c oauth2.OAuth2ClientStore) *OAuth2AccountStore {
-	return &OAuth2AccountStore{
-		accountStore: a,
-		clientStore:  c,
-	}
-}
-
-func (o *OAuth2AccountStore) LoadAccountById(ctx context.Context, id interface{}, clientId string) (security.Account, error) {
-	c, err := o.clientStore.LoadClientByClientId(ctx, clientId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	a, err := o.accountStore.LoadAccountById(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
-
+func WrapAccount(ctx context.Context, a security.Account, c oauth2.OAuth2Client) (security.Account, error) {
 	if _, ok := a.(security.AccountTenancy); !ok {
 		return nil, errors.New("account must have tenancy")
 	}
@@ -77,61 +41,6 @@ func (o *OAuth2AccountStore) LoadAccountById(ctx context.Context, id interface{}
 		designatedTenantIds:       effectiveTenants,
 		defaultDesignatedTenantId: defaultTenantId,
 	}, nil
-}
-
-func (o *OAuth2AccountStore) LoadAccountByUsername(ctx context.Context, username string, clientId string) (security.Account, error) {
-	c, err := o.clientStore.LoadClientByClientId(ctx, clientId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	a, err := o.accountStore.LoadAccountByUsername(ctx, username)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if _, ok := a.(security.AccountTenancy); !ok {
-		return nil, errors.New("account must have tenancy")
-	}
-
-	effectiveTenants := utils.NewStringSet()
-
-	for _, t := range a.(security.AccountTenancy).DesignatedTenantIds() {
-		// if user's tenant is children of client's tenant, add it
-		if c.Scopes().Has(oauth2.ScopeCrossTenant) || tenancy.AnyHasDescendant(ctx, c.AssignedTenantIds(), t) {
-			effectiveTenants.Add(t)
-		}
-	}
-
-	userPerms := utils.NewStringSet(a.Permissions()...)
-	for t, _ := range c.AssignedTenantIds() {
-		if userPerms.Has(security.SpecialPermissionAccessAllTenant) || tenancy.AnyHasDescendant(ctx,
-			utils.NewStringSet(a.(security.AccountTenancy).DesignatedTenantIds()...), t) {
-			effectiveTenants.Add(t)
-		}
-	}
-
-	var defaultTenantId string
-	if tenancy.AnyHasDescendant(ctx,
-		effectiveTenants,
-		a.(security.AccountTenancy).DefaultDesignatedTenantId()) {
-		defaultTenantId = a.(security.AccountTenancy).DefaultDesignatedTenantId()
-	}
-
-	return &OAuth2Account{
-		account:                   a,
-		designatedTenantIds:       effectiveTenants.Values(),
-		defaultDesignatedTenantId: defaultTenantId,
-	}, nil
-}
-
-type OAuth2Account struct {
-	account security.Account
-
-	defaultDesignatedTenantId string
-	designatedTenantIds       []string
 }
 
 /***********************************

@@ -1036,8 +1036,8 @@ func assertUserAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authentication, e
 	userDetail, ok := auth.Details().(security.UserDetails)
 	g.Expect(ok).To(BeTrue())
 	g.Expect(userDetail.UserId()).To(Equal(expectedUserId))
-	g.Expect(userDetail.AssignedTenantIds().HasAll(expectedAssignedTenants.Values()...)).To(BeTrue())
-	g.Expect(expectedAssignedTenants.HasAll(userDetail.AssignedTenantIds().Values()...)).To(BeTrue())
+	g.Expect(userDetail.AssignedTenantIds().HasAll(expectedAssignedTenants.Values()...)).To(BeTrue(), fmt.Sprintf("expected tenants %s, actual tenants %s", expectedAssignedTenants, userDetail.AssignedTenantIds()))
+	g.Expect(expectedAssignedTenants.HasAll(userDetail.AssignedTenantIds().Values()...)).To(BeTrue(), fmt.Sprintf("expected tenants %s, actual tenants %s", expectedAssignedTenants, userDetail.AssignedTenantIds()))
 
 	tenantDetail, ok := auth.Details().(security.TenantDetails)
 	g.Expect(ok).To(BeTrue())

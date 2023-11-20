@@ -19,10 +19,10 @@ var (
 type SwitchUserGranter struct {
 	PermissionBasedGranter
 	authService  auth.AuthorizationService
-	accountStore oauth2.OAuth2AccountStore
+	accountStore security.AccountStore
 }
 
-func NewSwitchUserGranter(authService auth.AuthorizationService, authenticator security.Authenticator, accountStore oauth2.OAuth2AccountStore) *SwitchUserGranter {
+func NewSwitchUserGranter(authService auth.AuthorizationService, authenticator security.Authenticator, accountStore security.AccountStore) *SwitchUserGranter {
 	if authenticator == nil {
 		panic(fmt.Errorf("cannot create SwitchUserGranter without authenticator."))
 	}
@@ -156,11 +156,11 @@ func (g *SwitchUserGranter) loadUserAuthentication(ctx context.Context, request 
 	// we prefer username over userId
 	switch {
 	case username != "":
-		if account, e = g.accountStore.LoadAccountByUsername(ctx, username, request.ClientId); e != nil {
+		if account, e = g.accountStore.LoadAccountByUsername(ctx, username); e != nil {
 			return nil, oauth2.NewInvalidGrantError(fmt.Sprintf("invalid %s [%s]", oauth2.ParameterSwitchUsername, username), e)
 		}
 	default:
-		if account, e = g.accountStore.LoadAccountById(ctx, userId, request.ClientId); e != nil {
+		if account, e = g.accountStore.LoadAccountById(ctx, userId); e != nil {
 			return nil, oauth2.NewInvalidGrantError(fmt.Sprintf("invalid %s [%s]", oauth2.ParameterSwitchUserId, userId), e)
 		}
 	}

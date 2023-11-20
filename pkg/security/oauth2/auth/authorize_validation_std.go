@@ -16,14 +16,14 @@ var (
 // it validate auth request against standard oauth2 specs
 type StandardAuthorizeRequestProcessor struct {
 	clientStore  oauth2.OAuth2ClientStore
-	accountStore oauth2.OAuth2AccountStore
+	accountStore security.AccountStore
 }
 
 type StdARPOptions func(*StdARPOption)
 
 type StdARPOption struct {
 	ClientStore  oauth2.OAuth2ClientStore
-	AccountStore oauth2.OAuth2AccountStore
+	AccountStore security.AccountStore
 }
 
 func NewStandardAuthorizeRequestProcessor(opts ...StdARPOptions) *StandardAuthorizeRequestProcessor {
@@ -120,10 +120,15 @@ func (p *StandardAuthorizeRequestProcessor) validateClientTenancy(ctx context.Co
 		return nil //nolint:nilerr // intended behaviour
 	}
 
-	acct, e := p.accountStore.LoadAccountByUsername(ctx, username, client.ClientId())
+	acct, e := p.accountStore.LoadAccountByUsername(ctx, username)
 	if e != nil || acct == nil {
 		security.Clear(ctx)
 		return security.NewUsernameNotFoundError("cannot retrieve account from current session")
+	}
+	acct, e = WrapAccount(ctx, acct, client)
+	if e != nil || acct == nil {
+		security.Clear(ctx)
+		return security.NewUsernameNotFoundError("cannot resolve user and client tenancy")
 	}
 
 	if len(acct.(security.AccountTenancy).DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeCrossTenant) {

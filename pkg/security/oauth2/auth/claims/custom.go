@@ -32,19 +32,29 @@ func Currency(ctx context.Context, opt *FactoryOption) (v interface{}, err error
 
 func DefaultTenantId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
 	acct := tryReloadAccount(ctx, opt)
-	tenancy, ok :=acct.(security.AccountTenancy)
+	tenancy, ok := acct.(security.AccountTenancy)
 	if !ok {
 		return nil, errorMissingDetails
 	}
 	return nonZeroOrError(tenancy.DefaultDesignatedTenantId(), errorMissingDetails)
 }
 
+// AssignedTenants gets assigned tenants in Auth. The value is user's tenant intersecting client's tenants.
 func AssignedTenants(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.UserDetails)
 	if !ok {
 		return nil, errorMissingDetails
 	}
 	return nonZeroOrError(details.AssignedTenantIds(), errorMissingDetails)
+}
+
+func AccountAssignedTenants(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
+	acct := tryReloadAccount(ctx, opt)
+	tenancy, ok := acct.(security.AccountTenancy)
+	if !ok {
+		return nil, errorMissingDetails
+	}
+	return nonZeroOrError(utils.NewStringSet(tenancy.DesignatedTenantIds()...), errorMissingDetails)
 }
 
 func TenantId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
