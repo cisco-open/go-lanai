@@ -129,20 +129,10 @@ allow_delete if {
     has_permission("MANAGE")
 }
 
-allow_delete if {
+allow_delete_alt {
     is_type("model")
     is_op("delete")
     is_owner
-}
-
-allow_delete if {
-    is_type("model")
-    is_op("delete")
-    is_shared("delete")
-}
-
-allow_delete_alt {
-    allow_delete
 }
 
 allow_delete_alt {

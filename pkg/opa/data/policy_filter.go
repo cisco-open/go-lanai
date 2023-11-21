@@ -384,19 +384,3 @@ func (m *createStatementModifier) checkPolicy(ctx context.Context, model *policy
 	})
 }
 
-/***********************
-	Helpers
- ***********************/
-
-func flagToResOp(flag DBOperationFlag) opa.ResourceOperation {
-	switch flag {
-	case DBOperationFlagRead:
-		return opa.OpRead
-	case DBOperationFlagUpdate:
-		return opa.OpWrite
-	case DBOperationFlagDelete:
-		return opa.OpDelete
-	default:
-		return opa.OpCreate
-	}
-}

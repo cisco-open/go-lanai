@@ -2,7 +2,6 @@ package opadata
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	"fmt"
 	"gorm.io/gorm"
@@ -10,7 +9,7 @@ import (
 	"strings"
 )
 
-var logger = log.New("OPA.Data")
+//var logger = log.New("OPA.Data")
 
 /**********************
 	Global Functions
@@ -184,6 +183,12 @@ func resolveQuery(ctx context.Context, flag DBOperationFlag, isPartial bool, met
 		return ""
 	case len(pkg) == 0:
 		pkg = fmt.Sprintf("%s.%s", opa.PackagePrefixResource, meta.ResType)
+	case len(policy) == 0:
+		if isPartial {
+			policy = fmt.Sprintf(DefaultPartialQueryTemplate, flagToResOp(flag))
+		} else {
+			policy = fmt.Sprintf(DefaultQueryTemplate, flagToResOp(flag))
+		}
 	}
 	return finalizeQuery(fmt.Sprintf("data.%s.%s", pkg, policy), isPartial)
 }
@@ -196,6 +201,19 @@ func populateExtraData(ctx context.Context, input map[string]interface{}) {
 
 	for k, v := range extra {
 		input[k] = v
+	}
+}
+
+func flagToResOp(flag DBOperationFlag) opa.ResourceOperation {
+	switch flag {
+	case DBOperationFlagRead:
+		return opa.OpRead
+	case DBOperationFlagUpdate:
+		return opa.OpWrite
+	case DBOperationFlagDelete:
+		return opa.OpDelete
+	default:
+		return opa.OpCreate
 	}
 }
 
