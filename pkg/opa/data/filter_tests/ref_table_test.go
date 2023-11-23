@@ -407,7 +407,7 @@ type ModelDRef struct {
 	ModelID              uuid.UUID   `gorm:"primaryKey;type:uuid;"`
 	User                 *ModelDUser `gorm:"foreignKey:user_id"`
 	Model                 *ModelD     `gorm:"foreignKey:model_id"`
-	opadata.FilteredModel `opa:"type:user_model_ref"`
+	opadata.FilteredModel `opa:"type:user_model_ref,read:filter_read"`
 	types.Audit
 }
 

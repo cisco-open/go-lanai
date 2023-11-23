@@ -102,32 +102,35 @@ func SubTestModelCCreate(di *TestDI) test.GomegaSubTestFunc {
 			TenantPath: pqx.UUIDArray{testdata.MockedRootTenantId, testdata.MockedTenantIdA, testdata.MockedTenantIdA1},
 			OwnerID:    testdata.MockedUserId1,
 		}
-		// user1 - other tenant branch - relaxed rule (default, allow_create_alt)
-		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB), testdata.ExtraPermsSecurityOptions("MANAGE_GLOBAL"))
-		model.ID = uuid.New()
-		rs = di.DB.WithContext(ctx).Create(&model)
-		assertDBResult(ctx, g, rs, "create model of non-selected tenant with relaxed rule", nil, 1)
-
-		// user1 - other tenant branch - strict rule
-		model.ID = uuid.New()
-		rs = di.DB.WithContext(ctx).
-			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
-			Create(&model)
-		assertDBResult(ctx, g, rs, "create model of non-selected tenant with strict rule", opa.ErrAccessDenied, 0)
-
-		// user1 - tenant A - strict rule - with proper permission
+		// user1 - selected tenant branch - with permission - default rule
 		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdA1), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		model.ID = uuid.New()
+		rs = di.DB.WithContext(ctx).Create(&model)
+		assertDBResult(ctx, g, rs, "create model of selected tenant with strict/default rule", nil, 1)
+
+		// user1 - other tenant branch - with permission - default rule
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB), testdata.ExtraPermsSecurityOptions("MANAGE"))
+		model.ID = uuid.New()
 		rs = di.DB.WithContext(ctx).
 			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagCreate, "res.test.allow_create")).
 			Create(&model)
-		assertDBResult(ctx, g, rs, "create model of selected tenant with strict rule", nil, 1)
+		assertDBResult(ctx, g, rs, "create model of non-selected tenant with strict/default rule", opa.ErrAccessDenied, 0)
 
-		// user1 - other tenant branch - relaxed rule with exception
+		// user1 - other tenant branch - relaxed rule - with proper permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB), testdata.ExtraPermsSecurityOptions("MANAGE_GLOBAL"))
 		model.ID = uuid.New()
 		rs = di.DB.WithContext(ctx).
-		Scopes(opadata.FilterWithExtraData("exception", "skip")).
-		Create(&model)
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagCreate, "res.test.allow_create_alt")).
+			Create(&model)
+		assertDBResult(ctx, g, rs, "create model of non-selected tenant with relaxed rule", nil, 1)
+
+		// user1 - other tenant branch - no permission - relaxed rule with exception
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(testdata.MockedTenantIdB))
+		model.ID = uuid.New()
+		rs = di.DB.WithContext(ctx).
+			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagCreate, "res.test.allow_create_alt")).
+			Scopes(opadata.FilterWithExtraData("exception", "skip")).
+			Create(&model)
 		assertDBResult(ctx, g, rs, "create model of non-selected tenant with exception", nil, 1)
 	}
 }
@@ -253,15 +256,15 @@ func SubTestModelCDelete(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var id uuid.UUID
 		var rs *gorm.DB
-		// user1 - default rule (filter_delete) - not owner, not member, no permission
-		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
+		// user1 - default rule (filter_delete) - not owner, not member, but have permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdB1)
 		rs = di.DB.WithContext(ctx).Delete(&ModelC{ID: id})
-		assertDBResult(ctx, g, rs, "delete model of other tenant", nil, 0)
-		assertPostOpModel[ModelC](ctx, g, di.DB, id, "delete model of other tenant", "exists")
+		assertDBResult(ctx, g, rs, "delete model of other tenant with permission", nil, 1)
+		assertPostOpModel[ModelC](ctx, g, di.DB, id, "delete model of other tenant with permission")
 
-		// user1 - relaxed rule (allow_delete_alt) - not owner, not member, no permission
-		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
+		// user1 - alternative rule (allow_delete_alt) - not owner, not member, but have permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdB1)
 		rs = di.DB.WithContext(ctx).
 			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagDelete, "res.test.allow_delete_alt")).
@@ -269,8 +272,8 @@ func SubTestModelCDelete(di *TestDI) test.GomegaSubTestFunc {
 		assertDBResult(ctx, g, rs, "delete model of other tenant", nil, 0)
 		assertPostOpModel[ModelC](ctx, g, di.DB, id, "delete model of other tenant", "exists")
 
-		// user1 - relaxed rule (allow_delete_alt, exception) - not owner, not member, no permission
-		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions())
+		// user1 - alternative rule (allow_delete_alt, exception) - not owner, not member, but have permission
+		ctx = testdata.ContextWithSecurityMock(ctx, testdata.User1SecurityOptions(), testdata.ExtraPermsSecurityOptions("MANAGE"))
 		id = findID(testdata.MockedUserId2, testdata.MockedTenantIdB1)
 		rs = di.DB.WithContext(ctx).
 			Scopes(opadata.FilterWithQueries(opadata.DBOperationFlagDelete, "res.test.allow_delete_alt")).
@@ -349,14 +352,14 @@ func SubTestModelCSave(di *TestDI) test.GomegaSubTestFunc {
  *************************/
 
 type ModelC struct {
-	ID                   uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-	Value                string
-	TenantName           string
-	OwnerName            string
-	TenantID             uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
-	TenantPath           pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
+	ID                    uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	Value                 string
+	TenantName            string
+	OwnerName             string
+	TenantID              uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
+	TenantPath            pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
 	OwnerID               uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	opadata.FilteredModel `opa:"type:model, package:res.test, read:allow_read_alt, update:-, create:allow_create_alt"`
+	opadata.FilteredModel `opa:"type:model, package:res.test, read:allow_read_alt, update:-"`
 	types.Audit
 }
 

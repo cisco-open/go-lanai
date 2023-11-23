@@ -7,6 +7,15 @@ import (
 )
 
 /*****************
+	Constants
+ *****************/
+
+const (
+	DefaultQueryTemplate = `allow_%s`
+	DefaultPartialQueryTemplate = `filter_%s`
+)
+
+/*****************
 	Errors
  *****************/
 
