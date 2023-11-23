@@ -287,26 +287,21 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, newInvalidUserError("unsupported user's account locked or disabled")
 	}
 
-	account, err = WrapAccount(ctx, account, client)
+	defaultTenantId, assignedTenants, err := common.ResolveClientUserTenants(ctx, account, client)
 	if err != nil {
-		return nil, err
+		return nil, newInvalidTenantForUserError(fmt.Sprintf("can't resolve account [%T] and client's [%T] tenants", account, client))
 	}
 
-	acctT, ok := account.(security.AccountTenancy)
-	if !ok {
-		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
-	}
-
-	if len(acctT.DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeCrossTenant) {
+	if len(assignedTenants) == 0 && !client.Scopes().Has(oauth2.ScopeCrossTenant) {
 		return nil, newInvalidUserError("unsupported user does not have access according to client's tenants")
 	}
 
-	tenant, err := s.loadTenant(ctx, request, acctT.DefaultDesignatedTenantId())
+	tenant, err := s.loadTenant(ctx, request, defaultTenantId)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = s.verifyTenantAccess(ctx, tenant, account, client); err != nil {
+	if err = s.verifyTenantAccess(ctx, tenant, account, assignedTenants); err != nil {
 		return nil, err
 	} // still do this, and verify with intersection here
 
@@ -422,7 +417,7 @@ func (s *DefaultAuthorizationService) loadTenant(
 	return tenant, nil
 }
 
-func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, client oauth2.OAuth2Client) error {
+func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, assignedTenantIds []string) error {
 	if tenant == nil {
 		return nil
 	}
@@ -434,13 +429,8 @@ func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, te
 		}
 	}
 
-	tenantIds := utils.NewStringSet()
-	if acctT, ok := account.(security.AccountTenancy); ok {
-		tenantIds = utils.NewStringSet(acctT.DesignatedTenantIds()...)
-	}
+	tenantIds := utils.NewStringSet(assignedTenantIds...)
 
-	// check account
-	// the account's tenants already takes into consideration the requesting client's tenants.
 	if !tenancy.AnyHasDescendant(ctx, tenantIds, tenant.Id) {
 		return oauth2.NewInvalidGrantError("user does not have access to specified tenant")
 	}

@@ -326,12 +326,10 @@ func SubTestOAuth2AuthCodeWithoutTenant(di *intDI) test.GomegaSubTestFunc {
 		userDetail, ok := auth.Details().(security.UserDetails)
 		g.Expect(ok).To(BeTrue())
 		g.Expect(userDetail.UserId()).To(Equal(fedAccount.UserId))
-		tenantDetail, ok := auth.Details().(security.TenantDetails)
-		g.Expect(ok).To(BeTrue())
-		g.Expect(tenantDetail.TenantId()).To(BeEmpty())
-		providerDetail, ok := auth.Details().(security.ProviderDetails)
-		g.Expect(ok).To(BeTrue())
-		g.Expect(providerDetail.ProviderId()).To(BeEmpty())
+		_, ok = auth.Details().(security.TenantDetails)
+		g.Expect(ok).To(BeFalse())
+		_, ok = auth.Details().(security.ProviderDetails)
+		g.Expect(ok).To(BeFalse())
 	}
 }
 
@@ -700,8 +698,7 @@ func SubTestOauth2SwitchTenant(
 		auth, err := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
 		g.Expect(err).To(BeNil(), "unable to read auth: %v", err)
 		tenantDetails, ok := auth.Details().(security.TenantDetails)
-		g.Expect(ok).To(BeTrue())
-		g.Expect(tenantDetails.TenantId()).To(Equal(""))
+		g.Expect(ok).To(BeFalse()) // because no tenant selection
 		userDetails, ok := auth.Details().(security.AuthenticationDetails)
 		g.Expect(ok).To(BeTrue())
 		g.Expect(userDetails.Permissions()).To(Equal(utils.NewStringSet(PermissionSwitchTenant)))
@@ -772,8 +769,13 @@ func SubTestOauth2SwitchTenant(
 				auth, err = di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
 
 				tenantDetails, ok = auth.Details().(security.TenantDetails)
-				g.Expect(ok).To(BeTrue())
-				g.Expect(tenantDetails.TenantId()).To(Equal(oldValues.tenantID))
+				if oldValues.tenantID != "" {
+					g.Expect(ok).To(BeTrue())
+					g.Expect(tenantDetails.TenantId()).To(Equal(oldValues.tenantID))
+				} else {
+					g.Expect(ok).To(BeFalse())
+				}
+
 				g.Expect(err).To(BeNil(), "unable to read auth: %v", err)
 				userDetails, ok = auth.Details().(security.AuthenticationDetails)
 				g.Expect(ok).To(BeTrue())
@@ -1021,8 +1023,12 @@ func assertClientCredentialAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authe
 	g.Expect(auth.State()).To(Equal(security.StateAuthenticated))
 	g.Expect(auth.UserAuthentication()).To(BeNil())
 	td, ok := auth.Details().(security.TenantDetails)
-	g.Expect(ok).To(BeTrue())
-	g.Expect(td.TenantId()).To(Equal(expectedTenantId))
+	if expectedTenantId != "" {
+		g.Expect(ok).To(BeTrue())
+		g.Expect(td.TenantId()).To(Equal(expectedTenantId))
+	} else {
+		g.Expect(ok).To(BeFalse())
+	}
 	cd, ok := auth.Details().(oauth2.ClientDetails)
 	g.Expect(ok).To(BeTrue())
 	g.Expect(cd.ClientId()).To(Equal(expectedClientId))
@@ -1036,15 +1042,24 @@ func assertUserAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authentication, e
 	userDetail, ok := auth.Details().(security.UserDetails)
 	g.Expect(ok).To(BeTrue())
 	g.Expect(userDetail.UserId()).To(Equal(expectedUserId))
-	g.Expect(userDetail.AssignedTenantIds().HasAll(expectedAssignedTenants.Values()...)).To(BeTrue(), fmt.Sprintf("expected tenants %s, actual tenants %s", expectedAssignedTenants, userDetail.AssignedTenantIds()))
-	g.Expect(expectedAssignedTenants.HasAll(userDetail.AssignedTenantIds().Values()...)).To(BeTrue(), fmt.Sprintf("expected tenants %s, actual tenants %s", expectedAssignedTenants, userDetail.AssignedTenantIds()))
+
+	tenantAccessDetails, ok := auth.Details().(security.TenantAccessDetails)
+	g.Expect(tenantAccessDetails.EffectiveAssignedTenantIds().HasAll(expectedAssignedTenants.Values()...)).To(BeTrue(), fmt.Sprintf("expected tenants %s, actual tenants %s", expectedAssignedTenants, tenantAccessDetails.EffectiveAssignedTenantIds()))
+	g.Expect(expectedAssignedTenants.HasAll(tenantAccessDetails.EffectiveAssignedTenantIds().Values()...)).To(BeTrue(), fmt.Sprintf("expected tenants %s, actual tenants %s", expectedAssignedTenants, tenantAccessDetails.EffectiveAssignedTenantIds()))
 
 	tenantDetail, ok := auth.Details().(security.TenantDetails)
-	g.Expect(ok).To(BeTrue())
-	g.Expect(tenantDetail.TenantId()).To(Equal(expectedTenantId))
+	if expectedTenantId != "" {
+		g.Expect(ok).To(BeTrue())
+		g.Expect(tenantDetail.TenantId()).To(Equal(expectedTenantId))
+	} else {
+		g.Expect(ok).To(BeFalse())
+	}
 
-	providerDetail, ok := auth.Details().(security.ProviderDetails)
-	g.Expect(ok).To(BeTrue())
-	g.Expect(providerDetail.ProviderId()).To(Equal(expectedProviderId))
-
+	if expectedProviderId != "" {
+		providerDetail, ok := auth.Details().(security.ProviderDetails)
+		g.Expect(ok).To(BeTrue())
+		g.Expect(providerDetail.ProviderId()).To(Equal(expectedProviderId))
+	} else {
+		g.Expect(ok).To(BeFalse())
+	}
 }

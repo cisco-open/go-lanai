@@ -39,6 +39,10 @@ type ClientDetails struct {
 	Scopes            utils.StringSet
 }
 
+type TenantAccessDetails struct {
+	EffectiveAssignedTenantIds utils.StringSet
+}
+
 type AuthenticationDetails struct {
 	IssueTime          time.Time
 	ExpiryTime         time.Time
@@ -49,34 +53,32 @@ type AuthenticationDetails struct {
 	Proxied            bool
 }
 
-// FullContextDetails implements
+// ClientUserContextDetails implements
 // - security.UserDetails
-// - security.TenantDetails
-// - security.ProviderDetails
 // - security.AuthenticationDetails
 // - security.ProxiedUserDetails
 // - security.KeyValueDetails
-type FullContextDetails struct {
-	Provider       ProviderDetails
-	Tenant         TenantDetails
+// - oauth2.ClientDetails
+// - security.TenantAccessDetails
+
+type ClientUserContextDetails struct {
 	User           UserDetails
 	Client         ClientDetails
+	TenantAccess   TenantAccessDetails
 	Authentication AuthenticationDetails
 	KV             map[string]interface{}
 }
 
-func (d *FullContextDetails) ClientId() string {
+func (d *ClientUserContextDetails) ClientId() string {
 	return d.Client.Id
 }
 
-func (d *FullContextDetails) Scopes() utils.StringSet {
+func (d *ClientUserContextDetails) Scopes() utils.StringSet {
 	return d.Client.Scopes
 }
 
-func NewFullContextDetails() *FullContextDetails {
-	return &FullContextDetails{
-		Provider: ProviderDetails{},
-		Tenant:   TenantDetails{},
+func NewClientUserContextDetails() *ClientUserContextDetails {
+	return &ClientUserContextDetails{
 		Client: ClientDetails{
 			AssignedTenantIds: utils.NewStringSet(),
 			Scopes:            utils.NewStringSet(),
@@ -89,142 +91,189 @@ func NewFullContextDetails() *FullContextDetails {
 			Permissions: utils.NewStringSet(),
 		},
 		KV: map[string]interface{}{},
+		TenantAccess: TenantAccessDetails{
+			EffectiveAssignedTenantIds: utils.NewStringSet(),
+		},
 	}
 }
 
-// security.ProviderDetails
-func (d *FullContextDetails) ProviderId() string {
-	return d.Provider.Id
-}
-
-// security.ProviderDetails
-func (d *FullContextDetails) ProviderName() string {
-	return d.Provider.Name
-}
-
-// security.ProviderDetails
-func (d *FullContextDetails) ProviderDisplayName() string {
-	return d.Provider.DisplayName
-}
-
-func (d *FullContextDetails) ProviderDescription() string {
-	return d.Provider.Description
-}
-
-func (d *FullContextDetails) ProviderEmail() string {
-	return d.Provider.Email
-}
-
-func (d *FullContextDetails) ProviderNotificationType() string {
-	return d.Provider.NotificationType
-}
-
-// security.TenantDetails
-func (d *FullContextDetails) TenantId() string {
-	return d.Tenant.Id
-}
-
-// security.TenantDetails
-func (d *FullContextDetails) TenantExternalId() string {
-	return d.Tenant.ExternalId
-}
-
-// security.TenantDetails
-func (d *FullContextDetails) TenantSuspended() bool {
-	return d.Tenant.Suspended
-}
-
 // security.UserDetails
-func (d *FullContextDetails) UserId() string {
+func (d *ClientUserContextDetails) UserId() string {
 	return d.User.Id
 }
 
 // security.UserDetails
-func (d *FullContextDetails) Username() string {
+func (d *ClientUserContextDetails) Username() string {
 	return d.User.Username
 }
 
 // security.UserDetails
-func (d *FullContextDetails) AccountType() security.AccountType {
+func (d *ClientUserContextDetails) AccountType() security.AccountType {
 	return d.User.AccountType
 }
 
 // security.UserDetails
-func (d *FullContextDetails) AssignedTenantIds() utils.StringSet {
+func (d *ClientUserContextDetails) AssignedTenantIds() utils.StringSet {
 	return d.User.AssignedTenantIds
 }
 
 // security.UserDetails
-func (d *FullContextDetails) LocaleCode() string {
+func (d *ClientUserContextDetails) LocaleCode() string {
 	return d.User.LocaleCode
 }
 
 // security.UserDetails
-func (d *FullContextDetails) CurrencyCode() string {
+func (d *ClientUserContextDetails) CurrencyCode() string {
 	return d.User.CurrencyCode
 }
 
 // security.UserDetails
-func (d *FullContextDetails) FirstName() string {
+func (d *ClientUserContextDetails) FirstName() string {
 	return d.User.FirstName
 }
 
 // security.UserDetails
-func (d *FullContextDetails) LastName() string {
+func (d *ClientUserContextDetails) LastName() string {
 	return d.User.LastName
 }
 
 // security.UserDetails
-func (d *FullContextDetails) Email() string {
+func (d *ClientUserContextDetails) Email() string {
 	return d.User.Email
 }
 
 // security.AuthenticationDetails
-func (d *FullContextDetails) ExpiryTime() time.Time {
+func (d *ClientUserContextDetails) ExpiryTime() time.Time {
 	return d.Authentication.ExpiryTime
 }
 
 // security.AuthenticationDetails
-func (d *FullContextDetails) IssueTime() time.Time {
+func (d *ClientUserContextDetails) IssueTime() time.Time {
 	return d.Authentication.IssueTime
 }
 
 // security.AuthenticationDetails
-func (d *FullContextDetails) Roles() utils.StringSet {
+func (d *ClientUserContextDetails) Roles() utils.StringSet {
 	return d.Authentication.Roles
 }
 
 // security.AuthenticationDetails
-func (d *FullContextDetails) Permissions() utils.StringSet {
+func (d *ClientUserContextDetails) Permissions() utils.StringSet {
 	return d.Authentication.Permissions
 }
 
 // security.AuthenticationDetails
-func (d *FullContextDetails) AuthenticationTime() time.Time {
+func (d *ClientUserContextDetails) AuthenticationTime() time.Time {
 	return d.Authentication.AuthenticationTime
 }
 
 // security.ProxiedUserDetails
-func (d *FullContextDetails) OriginalUsername() string {
+func (d *ClientUserContextDetails) OriginalUsername() string {
 	return d.Authentication.OriginalUsername
 }
 
 // security.ProxiedUserDetails
-func (d *FullContextDetails) Proxied() bool {
+func (d *ClientUserContextDetails) Proxied() bool {
 	return d.Authentication.Proxied
 }
 
 // security.KeyValueDetails
-func (d *FullContextDetails) Value(key string) (v interface{}, ok bool) {
+func (d *ClientUserContextDetails) Value(key string) (v interface{}, ok bool) {
 	v, ok = d.KV[key]
 	return
 }
 
 // security.KeyValueDetails
-func (d *FullContextDetails) Values() (ret map[string]interface{}) {
+func (d *ClientUserContextDetails) Values() (ret map[string]interface{}) {
 	ret = map[string]interface{}{}
 	for k, v := range d.KV {
 		ret[k] = v
 	}
 	return
+}
+
+func (d *ClientUserContextDetails) EffectiveAssignedTenantIds() utils.StringSet {
+	return d.TenantAccess.EffectiveAssignedTenantIds
+}
+
+// ClientUserContextDetails implements
+// - security.UserDetails
+// - security.TenantDetails
+// - security.ProviderDetails
+// - security.AuthenticationDetails
+// - security.ProxiedUserDetails
+// - security.KeyValueDetails
+// - oauth2.ClientDetails
+// - security.TenantAccessDetails
+
+type ClientUserTenantedContextDetails struct {
+	ClientUserContextDetails
+	Tenant   TenantDetails
+	Provider ProviderDetails
+}
+
+func NewClientUserTenantedContextDetails() *ClientUserTenantedContextDetails {
+	return &ClientUserTenantedContextDetails{
+		ClientUserContextDetails: ClientUserContextDetails{
+			Client: ClientDetails{
+				AssignedTenantIds: utils.NewStringSet(),
+				Scopes:            utils.NewStringSet(),
+			},
+			User: UserDetails{
+				AssignedTenantIds: utils.NewStringSet(),
+			},
+			Authentication: AuthenticationDetails{
+				Roles:       utils.NewStringSet(),
+				Permissions: utils.NewStringSet(),
+			},
+			KV: map[string]interface{}{},
+			TenantAccess: TenantAccessDetails{
+				EffectiveAssignedTenantIds: utils.NewStringSet(),
+			},
+		},
+		Tenant:   TenantDetails{},
+		Provider: ProviderDetails{},
+	}
+}
+
+// security.TenantDetails
+func (d *ClientUserTenantedContextDetails) TenantId() string {
+	return d.Tenant.Id
+}
+
+// security.TenantDetails
+func (d *ClientUserTenantedContextDetails) TenantExternalId() string {
+	return d.Tenant.ExternalId
+}
+
+// security.TenantDetails
+func (d *ClientUserTenantedContextDetails) TenantSuspended() bool {
+	return d.Tenant.Suspended
+}
+
+// security.ProviderDetails
+func (d *ClientUserTenantedContextDetails) ProviderId() string {
+	return d.Provider.Id
+}
+
+// security.ProviderDetails
+func (d *ClientUserTenantedContextDetails) ProviderName() string {
+	return d.Provider.Name
+}
+
+// security.ProviderDetails
+func (d *ClientUserTenantedContextDetails) ProviderDisplayName() string {
+	return d.Provider.DisplayName
+}
+
+func (d *ClientUserTenantedContextDetails) ProviderDescription() string {
+	return d.Provider.Description
+}
+
+func (d *ClientUserTenantedContextDetails) ProviderEmail() string {
+	return d.Provider.Email
+}
+
+func (d *ClientUserTenantedContextDetails) ProviderNotificationType() string {
+	return d.Provider.NotificationType
 }

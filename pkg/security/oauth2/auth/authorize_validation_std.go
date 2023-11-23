@@ -4,6 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
@@ -125,13 +126,13 @@ func (p *StandardAuthorizeRequestProcessor) validateClientTenancy(ctx context.Co
 		security.Clear(ctx)
 		return security.NewUsernameNotFoundError("cannot retrieve account from current session")
 	}
-	acct, e = WrapAccount(ctx, acct, client)
-	if e != nil || acct == nil {
+	_, assignedTenants, e := common.ResolveClientUserTenants(ctx, acct, client)
+	if e != nil {
 		security.Clear(ctx)
 		return security.NewUsernameNotFoundError("cannot resolve user and client tenancy")
 	}
 
-	if len(acct.(security.AccountTenancy).DesignatedTenantIds()) == 0 && !client.Scopes().Has(oauth2.ScopeCrossTenant) {
+	if len(assignedTenants) == 0 && !client.Scopes().Has(oauth2.ScopeCrossTenant) {
 		security.Clear(ctx)
 		return security.NewUsernameNotFoundError("user has no access to tenants of this client")
 	}

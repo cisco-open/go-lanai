@@ -41,9 +41,14 @@ type facts struct {
 
 func (f *ContextDetailsFactory) New(ctx context.Context, request oauth2.OAuth2Request) (security.ContextDetails, error) {
 	facts := f.loadFacts(ctx, request)
+
+	// The auth only have client
 	if facts.account == nil {
 		return f.createSimple(ctx, facts)
 	}
+
+	// The auth has both client and user
+	// creates either the ClientUserContextDetail or ClientUserTenantedContextDetail
 	return f.create(ctx, facts)
 }
 
@@ -98,33 +103,7 @@ func (f *ContextDetailsFactory) loadFacts(ctx context.Context, request oauth2.OA
 	return &facts
 }
 
-func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*internal.FullContextDetails, error) {
-	// provider
-	var pd internal.ProviderDetails
-	if facts.provider != nil {
-		pd = internal.ProviderDetails{
-			Id:               facts.provider.Id,
-			Name:             facts.provider.Name,
-			DisplayName:      facts.provider.DisplayName,
-			Description:      facts.provider.Description,
-			Email:            facts.provider.Email,
-			NotificationType: facts.provider.NotificationType,
-		}
-	} else {
-		pd = internal.ProviderDetails{}
-	}
-
-	// tenant
-	var td internal.TenantDetails
-	if facts.tenant != nil {
-		td = internal.TenantDetails{
-			Id:         facts.tenant.Id,
-			ExternalId: facts.tenant.ExternalId,
-			Suspended:  facts.tenant.Suspended}
-	} else {
-		td = internal.TenantDetails{}
-	}
-
+func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (security.ContextDetails, error) {
 	// user
 	ud := internal.UserDetails{
 		Id:                facts.account.ID().(string),
@@ -156,49 +135,87 @@ func (f *ContextDetailsFactory) create(ctx context.Context, facts *facts) (*inte
 		return nil, e
 	}
 
-	return &internal.FullContextDetails{
-		Provider:       pd,
-		Tenant:         td,
-		User:           ud,
-		Client:         cd,
-		Authentication: *ad,
-		KV:             f.createKVDetails(ctx, facts),
-	}, nil
+	_, assignedTenantId, e := ResolveClientUserTenants(ctx, facts.account, facts.client)
+	if e != nil {
+		return nil, e
+	}
+
+	if facts.tenant != nil {
+		// provider
+		pd := internal.ProviderDetails{
+			Id:               facts.provider.Id,
+			Name:             facts.provider.Name,
+			DisplayName:      facts.provider.DisplayName,
+			Description:      facts.provider.Description,
+			Email:            facts.provider.Email,
+			NotificationType: facts.provider.NotificationType,
+		}
+
+		td := internal.TenantDetails{
+			Id:         facts.tenant.Id,
+			ExternalId: facts.tenant.ExternalId,
+			Suspended:  facts.tenant.Suspended,
+		}
+		return &internal.ClientUserTenantedContextDetails{
+			ClientUserContextDetails: internal.ClientUserContextDetails{
+				User:           ud,
+				Client:         cd,
+				Authentication: *ad,
+				KV:             f.createKVDetails(ctx, facts),
+				TenantAccess: internal.TenantAccessDetails{
+					EffectiveAssignedTenantIds: utils.NewStringSet(assignedTenantId...),
+				},
+			},
+			Provider: pd,
+			Tenant:   td,
+		}, nil
+	} else {
+		return &internal.ClientUserContextDetails{
+			User:           ud,
+			Client:         cd,
+			Authentication: *ad,
+			KV:             f.createKVDetails(ctx, facts),
+			TenantAccess: internal.TenantAccessDetails{
+				EffectiveAssignedTenantIds: utils.NewStringSet(assignedTenantId...),
+			},
+		}, nil
+	}
 }
 
-func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) (*internal.SimpleContextDetails, error) {
-	// creds
+func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) (security.ContextDetails, error) {
 	ad, e := f.createAuthDetails(ctx, facts)
 	if e != nil {
 		return nil, e
 	}
 
-	// tenant
-	var td internal.TenantDetails
+	cd := internal.ClientDetails{
+		Id:                facts.client.ClientId(),
+		Scopes:            facts.client.Scopes(),
+		AssignedTenantIds: facts.client.AssignedTenantIds(),
+	}
+
 	if facts.tenant != nil {
-		td = internal.TenantDetails{
+		td := internal.TenantDetails{
 			Id:         facts.tenant.Id,
 			ExternalId: facts.tenant.ExternalId,
-			Suspended:  facts.tenant.Suspended}
-	} else {
-		td = internal.TenantDetails{}
-	}
-
-	var cd internal.ClientDetails
-	if facts.client != nil {
-		cd = internal.ClientDetails{
-			Id:                facts.client.ClientId(),
-			Scopes:            facts.client.Scopes(),
-			AssignedTenantIds: facts.client.AssignedTenantIds(),
+			Suspended:  facts.tenant.Suspended,
 		}
+		return &internal.ClientTenantedContextDetails{
+			ClientContextDetails: internal.ClientContextDetails{
+				Authentication: *ad,
+				KV:             f.createKVDetails(ctx, facts),
+				Client:         cd,
+			},
+			Tenant: td,
+		}, nil
+	} else {
+		return &internal.ClientContextDetails{
+			Authentication: *ad,
+			KV:             f.createKVDetails(ctx, facts),
+			Client:         cd,
+		}, nil
 	}
 
-	return &internal.SimpleContextDetails{
-		Authentication: *ad,
-		KV:             f.createKVDetails(ctx, facts),
-		Tenant:         td,
-		Client:         cd,
-	}, nil
 }
 
 func (f *ContextDetailsFactory) createAuthDetails(ctx context.Context, facts *facts) (*internal.AuthenticationDetails, error) {
@@ -209,9 +226,8 @@ func (f *ContextDetailsFactory) createAuthDetails(ctx context.Context, facts *fa
 			d.Roles = utils.NewStringSet(meta.RoleNames()...)
 		}
 	} else {
-		//TODO: this should be removed
 		d.Roles = utils.NewStringSet()
-		d.Permissions = facts.client.Scopes().Copy()
+		d.Permissions = utils.NewStringSet()
 	}
 
 	d.AuthenticationTime = facts.authTime

@@ -48,15 +48,6 @@ func AssignedTenants(ctx context.Context, opt *FactoryOption) (v interface{}, er
 	return nonZeroOrError(details.AssignedTenantIds(), errorMissingDetails)
 }
 
-func AccountAssignedTenants(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
-	acct := tryReloadAccount(ctx, opt)
-	tenancy, ok := acct.(security.AccountTenancy)
-	if !ok {
-		return nil, errorMissingDetails
-	}
-	return nonZeroOrError(utils.NewStringSet(tenancy.DesignatedTenantIds()...), errorMissingDetails)
-}
-
 func TenantId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.TenantDetails)
 	if !ok {

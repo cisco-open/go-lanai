@@ -21,7 +21,7 @@ var (
 		oauth2.ClaimCurrency:          Optional(Currency),
 		oauth2.ClaimUpdatedAt:         Unsupported(),
 		oauth2.ClaimDefaultTenantId:   Optional(DefaultTenantId),
-		oauth2.ClaimAssignedTenants:   Optional(AccountAssignedTenants),
+		oauth2.ClaimAssignedTenants:   Optional(AssignedTenants),
 		oauth2.ClaimRoles:             Optional(Roles),
 		oauth2.ClaimPermissions:       Optional(Permissions),
 	}

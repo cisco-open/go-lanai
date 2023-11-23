@@ -51,7 +51,6 @@ func populateAuthenticationClause(auth security.Authentication, clause *opa.Auth
 		clause.Roles = v.Roles().Values()
 	}
 
-	//TODO: support client credential
 	return nil
 }
 

@@ -18,6 +18,7 @@ type ContextDetails interface {
 	KeyValueDetails
 }
 
+// ProviderDetails is available if tenant is selected (tenant dictates provider)
 type ProviderDetails interface {
 	ProviderId() string
 	ProviderName() string
@@ -27,12 +28,22 @@ type ProviderDetails interface {
 	ProviderNotificationType() string
 }
 
+// TenantDetails is available in the following scenarios:
+//
+//	user auth, tenant can be determined (either selected tenant, or there is a default tenant)
+//	client auth, tenant can be determined (either selected tenant, or there is a default tenant)
 type TenantDetails interface {
 	TenantId() string
 	TenantExternalId() string
 	TenantSuspended() bool
 }
 
+// TenantAccessDetails This is available if authenticated entity is supposed to have access to tenants.
+type TenantAccessDetails interface {
+	EffectiveAssignedTenantIds() utils.StringSet
+}
+
+// UserDetails is available for user authentication
 type UserDetails interface {
 	UserId() string
 	Username() string

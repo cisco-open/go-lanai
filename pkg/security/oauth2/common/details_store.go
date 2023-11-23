@@ -92,8 +92,10 @@ func (r *RedisContextDetailsStore) ReadContextDetails(c context.Context, key int
 
 func (r *RedisContextDetailsStore) SaveContextDetails(c context.Context, key interface{}, details security.ContextDetails) error {
 	switch details.(type) {
-	case *internal.FullContextDetails:
-	case *internal.SimpleContextDetails:
+	case *internal.ClientUserContextDetails:
+	case *internal.ClientContextDetails:
+	case *internal.ClientUserTenantedContextDetails:
+	case *internal.ClientTenantedContextDetails:
 	default:
 		return fmt.Errorf(errTmplUnsupportedDetails, details)
 	}
@@ -410,21 +412,40 @@ func (r *RedisContextDetailsStore) loadDetailsFromAccessToken(c context.Context,
 		}
 	}
 
-	fullDetails := internal.NewFullContextDetails()
+	fullDetails := internal.NewClientUserTenantedContextDetails()
 	if e := r.doLoad(c, keyFuncAccessTokenToDetails(uniqueTokenKey(t)), &fullDetails); e != nil {
 		return nil, e
 	}
 
 	if fullDetails.User.Id == "" || fullDetails.User.Username == "" {
 		// no user details, we assume it's a simple context
-		return &internal.SimpleContextDetails{
-			Authentication: fullDetails.Authentication,
-			KV:             fullDetails.KV,
-			Tenant:         fullDetails.Tenant,
-			Client:         fullDetails.Client,
-		}, nil
+		if fullDetails.Tenant.Id == "" {
+			return &internal.ClientContextDetails{
+				Authentication: fullDetails.Authentication,
+				KV:             fullDetails.KV,
+				Client:         fullDetails.Client,
+			}, nil
+		} else {
+			return &internal.ClientTenantedContextDetails{
+				ClientContextDetails: internal.ClientContextDetails{
+					Authentication: fullDetails.Authentication,
+					KV:             fullDetails.KV,
+					Client:         fullDetails.Client,
+				},
+				Tenant: fullDetails.Tenant,
+			}, nil
+		}
+	} else {
+		if fullDetails.Tenant.Id == "" {
+			return &internal.ClientUserContextDetails{
+				User:           fullDetails.User,
+				Client:         fullDetails.Client,
+				TenantAccess:   fullDetails.TenantAccess,
+				Authentication: fullDetails.Authentication,
+				KV:             fullDetails.KV,
+			}, nil
+		}
 	}
-
 	return fullDetails, nil
 }
 
@@ -454,10 +475,10 @@ func (r *RedisContextDetailsStore) doRemoveDetials(ctx context.Context, token oa
 	return i, nil
 }
 
-//   - AccessToken -> ContextDetails	"AAT"
-//   - AccessToken <- User & Client 	"AUC"
-//   - AccessToken -> SessionId 		"AS"
-//   - AccessToken <-> RefreshToken 	"AR"
+// - AccessToken -> ContextDetails	"AAT"
+// - AccessToken <- User & Client 	"AUC"
+// - AccessToken -> SessionId 		"AS"
+// - AccessToken <-> RefreshToken 	"AR"
 func (r *RedisContextDetailsStore) doRemoveAccessToken(ctx context.Context, token oauth2.AccessToken, atk string) error {
 	if token != nil {
 		atk = uniqueTokenKey(token)
