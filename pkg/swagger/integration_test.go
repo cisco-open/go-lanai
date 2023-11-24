@@ -6,7 +6,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
@@ -35,7 +34,6 @@ func TestSwaggerDocSecurityDisabledWithMockedServer(t *testing.T) {
 		apptest.WithModules(
 			resserver.Module,
 			redis.Module,
-			tlsconfig.Module,
 			access.Module,
 			errorhandling.Module,
 		),
@@ -72,7 +70,6 @@ func TestSwaggerDocSecurityEnabledWithMockedServer(t *testing.T) {
 		apptest.WithModules(
 			resserver.Module,
 			redis.Module,
-			tlsconfig.Module,
 			access.Module,
 			errorhandling.Module,
 		),

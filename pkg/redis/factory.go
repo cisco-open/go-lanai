@@ -12,7 +12,7 @@ type ClientOptions func(opt *ClientOption)
 
 type ClientOption struct {
 	DbIndex            int
-	TlsProviderFactory *tlsconfig.ProviderFactory
+	TLSProviderFactory *tlsconfig.ProviderFactory
 }
 
 type OptionsAwareHook interface {
@@ -65,14 +65,17 @@ func (f *clientFactory) New(ctx context.Context, opts ...ClientOptions) (Client,
 		return existing.client, nil
 	}
 
+	// TODO review this part for more reasonable API design
+	connOpts := []ConnOptions{ WithDB(opt.DbIndex) }
+	if f.properties.TLS.Enabled {
+		connOpts = append(connOpts, WithTLS(ctx, opt.TLSProviderFactory, f.properties.TLS.Config))
+	}
+
 	// prepare options
-	options, e := GetUniversalOptions(ctx, &f.properties, opt.TlsProviderFactory)
+	options, e := GetUniversalOptions(&f.properties, connOpts...)
 	if e != nil {
 		return nil, errors.Wrap(e, "Invalid redis configuration")
 	}
-
-	// customize
-	options.DB = opt.DbIndex
 
 	c := client{
 		UniversalClient: redis.NewUniversalClient(options),

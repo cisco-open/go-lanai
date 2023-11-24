@@ -3,7 +3,6 @@ package embedded
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
@@ -42,7 +41,7 @@ func TestRedisWithApp(t *testing.T) {
 	di := &redisDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithModules(redis.Module, tlsconfig.Module),
+		apptest.WithModules(redis.Module),
 		apptest.WithDI(di),
 		test.GomegaSubTest(SubTestWithApp(di), "WithApp"),
 	)

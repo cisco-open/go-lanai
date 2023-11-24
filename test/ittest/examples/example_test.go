@@ -65,7 +65,7 @@ func TestExampleMockedServerTestWithSecurity(t *testing.T) {
 
 		// Tell test framework to use recorded HTTP interaction.
 		// Note: this function accept many options. See ittest/httpvcr.go for more details
-		ittest.WithHttpPlayback(t), // Enable recording mode to use real service for any HTTP interaction.
+		ittest.WithHttpPlayback(t), // Enabled recording mode to use real service for any HTTP interaction.
 		// This should be enabled during development and turned off before checking in the code
 		//ittest.HttpRecordingMode(),
 
@@ -117,7 +117,7 @@ func TestExampleUnitTestWithSecurity(t *testing.T) {
 
 		// Tell test framework to use recorded HTTP interaction.
 		// Note: this function accept may options. See ittest/httpvcr.go for more details
-		ittest.WithHttpPlayback(t), // Enable recording mode to use real service for any HTTP interaction.
+		ittest.WithHttpPlayback(t), // Enabled recording mode to use real service for any HTTP interaction.
 		// This should be enabled during development and turned off before checking in the code
 		//ittest.HttpRecordingMode(),
 
@@ -158,7 +158,7 @@ func TestExampleCustomRequestMatching(t *testing.T) {
 		// Tell test framework to use recorded HTTP interaction.
 		// Note: this function accept may options. See ittest/httpvcr.go for more details
 		ittest.WithHttpPlayback(t,
-			// Enable recording mode to use real service for any HTTP interaction.
+			// Enabled recording mode to use real service for any HTTP interaction.
 			// This should be enabled during development and turned off before checking in the code
 			//ittest.HttpRecordingMode(),
 

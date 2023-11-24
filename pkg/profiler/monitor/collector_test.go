@@ -3,7 +3,6 @@ package monitor
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
@@ -40,7 +39,7 @@ func TestLogoutMiddleware(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithModules(Module, redis.Module, tlsconfig.Module),
+		apptest.WithModules(Module, redis.Module),
 		apptest.WithDI(di),
 		test.GomegaSubTest(SubTestSubscribe(di), "TestSubscribe"),
 	)

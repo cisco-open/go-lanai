@@ -21,14 +21,21 @@ var Module = &bootstrap.Module{
 
 // Use Allow service to include this module in main()
 func Use() {
-	bootstrap.Register(tlsconfig.Module)
 	bootstrap.Register(Module)
 }
 
-func newDefaultClient(ctx *bootstrap.ApplicationContext, f ClientFactory, p RedisProperties, t *tlsconfig.ProviderFactory) Client {
-	c, e := f.New(ctx, func(opt *ClientOption) {
-		opt.DbIndex = p.DB
-		opt.TlsProviderFactory = t
+type clientDI struct {
+	fx.In
+	AppCtx             *bootstrap.ApplicationContext
+	Factory            ClientFactory
+	Properties         RedisProperties
+	TLSProviderFactory *tlsconfig.ProviderFactory `optional:"true"`
+}
+
+func newDefaultClient(di clientDI) Client {
+	c, e := di.Factory.New(di.AppCtx, func(opt *ClientOption) {
+		opt.DbIndex = di.Properties.DB
+		opt.TLSProviderFactory = di.TLSProviderFactory
 	})
 
 	if e != nil {

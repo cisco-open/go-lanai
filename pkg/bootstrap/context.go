@@ -50,13 +50,9 @@ func (c *ApplicationContext) Name() string {
 	return "lanai"
 }
 
-/*
-*************************
-
-	context.Context Interface
-
-**************************
-*/
+/**************************
+ context.Context Interface
+ **************************/
 func (_ *ApplicationContext) String() string {
 	return "application context"
 }

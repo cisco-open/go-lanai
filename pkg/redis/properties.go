@@ -44,7 +44,7 @@ type RedisProperties struct {
 	//path to root certificates files
 	//RootCertificates string `json:"root-certificates"`
 	// TLS Properties for Redis
-	Tls TLS `json:"tls"`
+	TLS TLSProperties `json:"tls"`
 	// Only cluster clients.
 
 	MaxRedirects   int  `json:"max-redirects"`
@@ -58,9 +58,10 @@ type RedisProperties struct {
 	SentinelPassword string `json:"sentinel-password"`
 }
 
-type TLS struct {
-	Enable bool                 `json:"enabled"`
-	Config tlsconfig.Properties `json:"config"`
+// TODO refactor this for central TLS config control
+type TLSProperties struct {
+	Enabled bool                 `json:"enabled"`
+	Config  tlsconfig.Properties `json:"config"`
 }
 
 func NewRedisProperties(ctx *bootstrap.ApplicationContext) *RedisProperties {
