@@ -13,10 +13,14 @@ import (
 	"sync"
 )
 
-// PolicyFilter is a marker type that can be used in model struct as Embedded Struct or Struct Field.
+/****************************
+	Types
+ ****************************/
+
+// FilteredModel is a marker type that can be used in model struct as Embedded Struct.
 // It's responsible for automatically applying OPA policy-based data filtering on model fields with "opa" tag.
 //
-// PolicyFilter uses following GORM interfaces to modify PostgreSQL statements during select/update/delete,
+// FilteredModel uses following GORM interfaces to modify PostgreSQL statements during select/update/delete,
 // and apply value checks during create/update:
 //
 // 	- schema.QueryClausesInterface
@@ -24,7 +28,7 @@ import (
 // 	- schema.DeleteClausesInterface
 // 	- schema.CreateClausesInterface
 //
-// When PolicyFilter is present in data model, any model's fields tagged with "opa" will be used by OPA engine as following:
+// When FilteredModel is present in data model, any model's fields tagged with "opa" will be used by OPA engine as following:
 //
 //	- During "create", values are included with path "input.resource.<opa_field_name>"
 // 	- During "update", values are included with path "input.resources.delta.<opa_field_name>"
@@ -35,32 +39,20 @@ import (
 //
 // # Usage:
 //
-// Regardless if PolicyFilter is used as Embedded Struct or Struct Field, "opa" tag is required with resource type defined:
-// 	  `opa:"type:<opa_res_type>"`
-//
-//	- When used as Embedded Struct, "gorm" tag is optional. But if present, the only acceptable tag is `gorm:"-"`
-//	- When used as Struct Field, `gorm:"-"` is required, and the field need to be exported.
+// FilteredModel is used as Embedded Struct in model struct,
+//  - "opa" tag is required with resource type defined:
+// 	  	`opa:"type:<opa_res_type>"`
+//	- "gorm" tag should not be applied to the embedded struct
 //
 // # Examples:
 //
-// 	// Used as Embedded Struct
 // 	type Model struct {
 //		ID              uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 //		Value           string
 //		TenantID        uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
 //		TenantPath      pqx.UUIDArray        `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
 //		OwnerID         uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-//		opadata.PolicyFilter `opa:"type:my_resource"`
-// 	}
-//
-// 	// Used as Struct Field
-// 	type Model struct {
-//		ID        uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-//		Value     string
-//		OwnerName string
-//		OwnerID   uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-//		Sharing   constraints.Sharing  `opa:"field:sharing"`
-//		OPAFilter opadata.PolicyFilter `gorm:"-" opa:"type:my_resource"`
+//		opadata.FilteredModel `opa:"type:my_resource"`
 // 	}
 //
 // Note: OPA filtering on relationships are currently not supported
@@ -74,25 +66,92 @@ import (
 // Supported tag keys are:
 // 	- "field:<opa_input_field_name>": required on any data field in model, only applicable on data fields
 // 	- "input:<opa_input_field_name>": "input" is an alias of "field", only applicable on data fields
-// 	- "type:<opa_resource_type>": required on PolicyFilter. Ignored on other fields.
+// 	- "type:<opa_resource_type>": required on FilteredModel. Ignored on other fields.
 //    This value will be used as prefix/package of OPA policy: e.g. "<opa_resource_type>/<policy_name>"
 //
-// Following keys can override CRUD policies and only applicable on PolicyFilter:
+// Following keys can override CRUD policies and only applicable on FilteredModel:
 //
 // 		+ "create:<policy_name>": optional, override policy used in OPA during create.
 // 		+ "read:<policy_name>": optional, override policy used in OPA during read.
 // 		+ "update:<policy_name>": optional, override policy used in OPA during update.
 // 		+ "delete:<policy_name>": optional, override policy used in OPA during delete.
+//  	+ "package:<policy_package>": optional, override policy's package. Default is "resource.<opa_resource_type>"
 //
 // Note: When <policy_name> is "-", policy-based data filtering is disabled for that operation.
 // The default values are "filter_<op>"
-type PolicyFilter struct{
-	policyFilter
+type FilteredModel struct{
 	PolicyFilter policyFilter `gorm:"-"`
 }
 
+// Filter is a marker type that can be used in model struct as Struct Field.
+// It's responsible for automatically applying OPA policy-based data filtering on model fields with "opa" tag.
+//
+// Filter uses following GORM interfaces to modify PostgreSQL statements during select/update/delete,
+// and apply value checks during create/update:
+//
+// 	- schema.QueryClausesInterface
+// 	- schema.UpdateClausesInterface
+// 	- schema.DeleteClausesInterface
+// 	- schema.CreateClausesInterface
+//
+// When Filter is present in data model, any model's fields tagged with "opa" will be used by OPA engine as following:
+//
+//	- During "create", values are included with path "input.resource.<opa_field_name>"
+// 	- During "update", values are included with path "input.resources.delta.<opa_field_name>"
+// 	- During "select/update/delete", "input.resources.<opa_field_name>" is used as "unknowns" during OPA Partial Evaluation,
+// 	  and the result is translated to "WHERE" clause in PostgreSQL
+//
+// Where "<opa_field_name>" is specified by "opa" tag as `opa:"field:<opa_field_name>"`
+//
+// # Usage:
+//
+// Filter is used as type of Struct Field within model struct:
+//	- "opa" tag is required on the field with resource type defined:
+// 	  	`opa:"type:<opa_res_type>"`
+//	- `gorm:"-"` is required
+//  - the field need to be exported
+//
+// # Examples:
+//
+// 	type Model struct {
+//		ID        uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+//		Value     string
+//		OwnerName string
+//		OwnerID   uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+//		Sharing   constraints.Sharing  `opa:"field:sharing"`
+//		OPAFilter opadata.Filter `gorm:"-" opa:"type:my_resource"`
+// 	}
+//
+// Note: OPA filtering on relationships are currently not supported
+//
+// # Supported Tags:
+//
+// OPA tag should be in format of:
+//	  `opa:"<key>:<value,<key>:<value>,..."`
+// Invalid format or use of unsupported tag keys will result schema parsing error.
+//
+// Supported tag keys are:
+// 	- "field:<opa_input_field_name>": required on any data field in model, only applicable on data fields
+// 	- "input:<opa_input_field_name>": "input" is an alias of "field", only applicable on data fields
+// 	- "type:<opa_resource_type>": required on FilteredModel. Ignored on other fields.
+//    This value will be used as prefix/package of OPA policy: e.g. "<opa_resource_type>/<policy_name>"
+//
+// Following keys can override CRUD policies and only applicable on FilteredModel:
+//
+// 		+ "create:<policy_name>": optional, override policy used in OPA during create.
+// 		+ "read:<policy_name>": optional, override policy used in OPA during read.
+// 		+ "update:<policy_name>": optional, override policy used in OPA during update.
+// 		+ "delete:<policy_name>": optional, override policy used in OPA during delete.
+//  	+ "package:<policy_package>": optional, override policy's package. Default is "resource.<opa_resource_type>"
+//
+// Note: When <policy_name> is "-", policy-based data filtering is disabled for that operation.
+// The default values are "filter_<op>"
+type Filter struct{
+	policyFilter
+}
+
 /****************************
-	Types
+	Policy Filter
  ****************************/
 
 // policyFilter implements
@@ -215,15 +274,14 @@ func (m *statementModifier) opaFilterOptions(stmt *gorm.Statement) (opa.Resource
 		unknowns = append(unknowns, unknown)
 	}
 	return func(rf *opa.ResourceFilter) {
-		if p, ok := m.Policies[m.Flag]; ok && p != TagValueIgnore {
-			rf.Query = p
-		}
+		rf.Query = resolveQuery(stmt.Context, m.Flag, true, &m.Metadata)
 		rf.Unknowns = unknowns
 		rf.QueryMapper = NewGormPartialQueryMapper(&GormMapperConfig{
 			Metadata:  &m.Metadata,
 			Fields:    m.Fields,
 			Statement: stmt,
 		})
+		populateExtraData(stmt.Context, rf.ExtraData)
 	}, nil
 }
 
@@ -321,22 +379,8 @@ func (m *createStatementModifier) checkPolicy(ctx context.Context, model *policy
 	}
 	return opa.AllowResource(ctx, model.meta.ResType, opa.OpCreate, func(res *opa.ResourceQuery) {
 		res.ResourceValues = *values
+		res.Policy = resolveQuery(ctx, m.Flag, false, &m.Metadata)
+		populateExtraData(ctx, res.ExtraData)
 	})
 }
 
-/***********************
-	Helpers
- ***********************/
-
-func flagToResOp(flag DBOperationFlag) opa.ResourceOperation {
-	switch flag {
-	case DBOperationFlagRead:
-		return opa.OpRead
-	case DBOperationFlagUpdate:
-		return opa.OpWrite
-	case DBOperationFlagDelete:
-		return opa.OpDelete
-	default:
-		return opa.OpCreate
-	}
-}

@@ -2,13 +2,14 @@ package opadata
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
+	"fmt"
 	"gorm.io/gorm"
 	"reflect"
+	"strings"
 )
 
-var logger = log.New("OPA.Data")
+//var logger = log.New("OPA.Data")
 
 /**********************
 	Global Functions
@@ -16,7 +17,7 @@ var logger = log.New("OPA.Data")
 
 // ResolveResource parse given model and resolve resource type and resource values using "opa" tags
 // Typically used together with opa.AllowResource as manual policy enforcement.
-// ModelType should be model struct with PolicyFilter and valid "opa" tags.
+// ModelType should be model struct with FilteredModel and valid "opa" tags.
 // Note: resValues could be nil if all OPA related values are zero
 func ResolveResource[ModelType any](model *ModelType) (resType string, resValues *opa.ResourceValues, err error) {
 	rv := reflect.ValueOf(model)
@@ -47,20 +48,21 @@ func ResolveResource[ModelType any](model *ModelType) (resType string, resValues
 	GORM Scopes
  ********************/
 
-// SkipPolicyFiltering is used as a scope for gorm.DB to skip policy-based data filtering
-// e.g. db.WithContext(ctx).Scopes(SkipPolicyFiltering()).Find(...)
-// Note using this scope without context would panic
-func SkipPolicyFiltering() func(*gorm.DB) *gorm.DB {
-	return FilterByPolicy(0)
+// SkipFiltering is used as a scope for gorm.DB to skip policy-based data filtering
+// e.g. db.WithContext(ctx).Scopes(SkipFiltering()).Find(...)
+// Using this scope without context would panic
+func SkipFiltering() func(*gorm.DB) *gorm.DB {
+	return FilterByPolicies(0)
 }
 
-// FilterByPolicy is used as a scope for gorm.DB to override policy-based data filtering
-// e.g. db.WithContext(ctx).Scopes(FilterByPolicy()).Find(...)
-// Note using this scope without context would panic
-func FilterByPolicy(flags ...DBOperationFlag) func(*gorm.DB) *gorm.DB {
+// FilterByPolicies is used as a scope for gorm.DB to override policy-based data filtering.
+// The specified operations are enabled, and the rest are disabled
+// e.g. db.WithContext(ctx).Scopes(FilterByPolicies(DBOperationFlagRead)).Find(...)
+// Using this scope without context would panic
+func FilterByPolicies(flags ...DBOperationFlag) func(*gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		if tx.Statement.Context == nil {
-			panic("FilterByPolicy scope is used without context")
+			panic("FilterByPolicies scope is used without context")
 		}
 		var mode policyMode
 		for _, flag := range flags {
@@ -72,11 +74,80 @@ func FilterByPolicy(flags ...DBOperationFlag) func(*gorm.DB) *gorm.DB {
 	}
 }
 
+// FilterWithQueries is used as a scope for gorm.DB to override policy-based data filtering.
+// Used to customize queries of specified DB operation. Additional DBOperationFlag-string pairs can be provided.
+// e.g. db.WithContext(ctx).Scopes(FilterWithQueries(DBOperationFlagRead, "resource.type.allow_read")).Find(...)
+// Important: This scope accept FULL QUERY including policy package.
+// Notes:
+// - It's recommended to use dotted format without leading "data.". FilteredModel would adjust the format based on operation.
+// 	 e.g. "resource.type.allow_read"
+// - This scope doesn't enable/disable data-filtering. It only overrides queries set in tag.
+// - Using this scope without context would panic
+// - Having incorrect parameters cause panic
+func FilterWithQueries(op DBOperationFlag, query string, more ...interface{}) func(*gorm.DB) *gorm.DB {
+	policies := map[DBOperationFlag]string{op: query}
+	for i := range more {
+		if op, ok := more[i].(DBOperationFlag); ok && i + 1 < len(more) {
+			if v, ok := more[i+1].(string); !ok {
+				panic("FilterByQueries scope only support DBOperationFlag and string pairs")
+			} else if len(v) != 0 {
+				policies[op] = v
+			}
+		}
+		i++
+	}
+	return func(tx *gorm.DB) *gorm.DB {
+		if tx.Statement.Context == nil {
+			panic("FilterByQueries scope is used without context")
+		}
+		ctx := tx.Statement.Context
+		existing, ok := ctx.Value(ckFilterQueries{}).(map[DBOperationFlag]string)
+		if !ok {
+			existing = map[DBOperationFlag]string{}
+			ctx = context.WithValue(ctx, ckFilterQueries{}, existing)
+		}
+		for flag, p := range policies {
+			if len(p) != 0 {
+				existing[flag] = p
+			}
+		}
+		tx.Statement.Context = ctx
+		return tx
+	}
+}
+
+// FilterWithExtraData is used as a scope for gorm.DB to provide extra key-value pairs as input during policy-based data filtering.
+// The extra KV pairs are added under `input.resource`
+// e.g. db.WithContext(ctx).Scopes(FilterWithExtraData("exception", "ignore_tenancy")).Find(...)
+func FilterWithExtraData(kvs ...string) func(*gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if tx.Statement.Context == nil {
+			panic("FilterByQueries scope is used without context")
+		}
+		ctx := tx.Statement.Context
+		existing, ok := ctx.Value(ckFilterExtraData{}).(map[string]interface{})
+		if !ok {
+			existing = map[string]interface{}{}
+			ctx = context.WithValue(ctx, ckFilterExtraData{}, existing)
+		}
+		for i := range kvs {
+			if i + 1 < len(kvs) && len(kvs[i]) != 0 {
+				existing[kvs[i]] = kvs[i+1]
+			}
+			i++
+		}
+		tx.Statement.Context = ctx
+		return tx
+	}
+}
+
 /********************
 	Helpers
  ********************/
 
 type ckFilterMode struct{}
+type ckFilterQueries struct{}
+type ckFilterExtraData struct{}
 
 func shouldSkip(ctx context.Context, flag DBOperationFlag, fallback policyMode) bool {
 	if ctx == nil {
@@ -88,4 +159,73 @@ func shouldSkip(ctx context.Context, flag DBOperationFlag, fallback policyMode) 
 	default:
 		return !fallback.hasFlags(flag)
 	}
+}
+
+func resolveQuery(ctx context.Context, flag DBOperationFlag, isPartial bool, meta *Metadata) string {
+	// ad-hoc info
+	if queries, ok := ctx.Value(ckFilterQueries{}).(map[DBOperationFlag]string); ok {
+		if q, ok := queries[flag]; ok && len(q) != 0 {
+			return finalizeQuery(q, isPartial)
+		}
+	}
+
+	// declarative info
+	pkg := meta.OPAPackage
+	var policy string
+	if p, ok := meta.Policies[flag]; ok && p != TagValueIgnore {
+		policy = p
+	}
+
+	// fallbacks
+	switch {
+	case len(pkg) == 0 && len(policy) == 0:
+		// everything default
+		return ""
+	case len(pkg) == 0:
+		pkg = fmt.Sprintf("%s.%s", opa.PackagePrefixResource, meta.ResType)
+	case len(policy) == 0:
+		if isPartial {
+			policy = fmt.Sprintf(DefaultPartialQueryTemplate, flagToResOp(flag))
+		} else {
+			policy = fmt.Sprintf(DefaultQueryTemplate, flagToResOp(flag))
+		}
+	}
+	return finalizeQuery(fmt.Sprintf("data.%s.%s", pkg, policy), isPartial)
+}
+
+func populateExtraData(ctx context.Context, input map[string]interface{}) {
+	extra, ok := ctx.Value(ckFilterExtraData{}).(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	for k, v := range extra {
+		input[k] = v
+	}
+}
+
+func flagToResOp(flag DBOperationFlag) opa.ResourceOperation {
+	switch flag {
+	case DBOperationFlagRead:
+		return opa.OpRead
+	case DBOperationFlagUpdate:
+		return opa.OpWrite
+	case DBOperationFlagDelete:
+		return opa.OpDelete
+	default:
+		return opa.OpCreate
+	}
+}
+
+func finalizeQuery(query string, isPartial bool) string {
+	if isPartial {
+		query = strings.ReplaceAll(query, "/", ".")
+		if !strings.HasPrefix(query, "data.") {
+			query = "data." + query
+		}
+	} else {
+		query = strings.ReplaceAll(query, ".", "/")
+		query = strings.TrimPrefix(query, "data/")
+	}
+	return query
 }

@@ -1,0 +1,57 @@
+###### Root Tenant ######
+- ID: "01727ba1-d3bf-48e7-b3c7-cc40710e08bb"
+  TenantName: "Root Tenant"
+  Value: "D - T-Root"
+  TenantID: "23967dfe-d90f-4e1b-9406-e2df6685f232"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232"]
+
+###### Tenant A branch ######
+# tenant A
+- ID: "0bcc8301-2236-4709-9116-505d6625e431"
+  TenantName: "Tenant A"
+  Value: "D - T-A"
+  TenantID: "d8423acc-28cb-4209-95d6-089de7fb27ef"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232", "d8423acc-28cb-4209-95d6-089de7fb27ef" ]
+# tenant A-1
+- ID: "d9733206-0b73-4de9-9ca4-eaf2c1e2bbae"
+  TenantName: "Tenant A-1"
+  Value: "D - T-A-1"
+  TenantID: "be91531e-ca96-46eb-aea6-b7e0e2a50e21"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232", "d8423acc-28cb-4209-95d6-089de7fb27ef", "be91531e-ca96-46eb-aea6-b7e0e2a50e21" ]
+# Tenant A-2
+- ID: "957785c6-d75a-47cd-a3dd-e29f1219afd7"
+  TenantName: "Tenant A-2"
+  Value: "D - T-A-2"
+  TenantID: "b50c18d9-1741-49bd-8536-30943dfffb45"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232", "d8423acc-28cb-4209-95d6-089de7fb27ef", "b50c18d9-1741-49bd-8536-30943dfffb45" ]
+- ID: "567ff75a-354f-4a3a-affe-4ced6f876864"
+  TenantName: "Tenant A-2"
+  Value: "D - T-A-2"
+  TenantID: "b50c18d9-1741-49bd-8536-30943dfffb45"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232", "d8423acc-28cb-4209-95d6-089de7fb27ef", "b50c18d9-1741-49bd-8536-30943dfffb45" ]
+
+###### Tenant B branch ######
+# tenant B
+- ID: "1ebfda99-a994-4526-9c5d-27892f8f1079"
+  TenantName: "Tenant B"
+  Value: "D - T-B"
+  TenantID: "37b7181a-0892-4706-8f26-60d286b63f14"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232", "37b7181a-0892-4706-8f26-60d286b63f14" ]
+# tenant B-1
+- ID: "8aa5b290-ff15-400a-87a7-cfc89065cbca"
+  TenantName: "Tenant B-1"
+  Value: "D - T-B-1"
+  TenantID: "1513b015-6a7d-4de3-8b4f-cbb090ac126d"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232", "37b7181a-0892-4706-8f26-60d286b63f14", "1513b015-6a7d-4de3-8b4f-cbb090ac126d" ]
+# Tenant B-2
+- ID: "4cc4d15f-b095-46fe-a490-ae7a0e925158"
+  TenantName: "Tenant B-2"
+  Value: "D - T-B-2"
+  TenantID: "b21445de-9192-45de-acd7-91745ab4cc13"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232", "37b7181a-0892-4706-8f26-60d286b63f14", "b21445de-9192-45de-acd7-91745ab4cc13" ]
+- ID: "617aae28-c981-4988-9496-9bd1063b0676"
+  TenantName: "Tenant B-2"
+  OwnerName: "user2"
+  Value: "D - T-B-2"
+  TenantID: "b21445de-9192-45de-acd7-91745ab4cc13"
+  TenantPath: [ "23967dfe-d90f-4e1b-9406-e2df6685f232", "37b7181a-0892-4706-8f26-60d286b63f14", "b21445de-9192-45de-acd7-91745ab4cc13" ]

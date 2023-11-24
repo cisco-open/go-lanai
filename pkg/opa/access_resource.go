@@ -11,10 +11,17 @@ import (
 type ResourceQueryOptions func(res *ResourceQuery)
 
 type ResourceQuery struct {
-	OPA    *sdk.OPA
+	// OPA (Optional) Instance to use for evaluation. Default to EmbeddedOPA()
+	OPA *sdk.OPA
+	// Policy (Optional) OPA query/policy to evaluate.
+	// Default to `resource/<resource_type>/allow_<resource_operation>`
 	Policy string
+	// ResourceValues (Required) Resource's current fields and values that policy may be interested in
 	ResourceValues
-	Delta    *ResourceValues
+	// Delta (Optional) Resource's "changed-to" fields and values. Delta is only applicable to "write" operation.
+	// OPA policies may have rules on what values the resource's certain fields can be changed to.
+	Delta *ResourceValues
+	// InputCustomizers customizers to finalize/modify query input before evaluation
 	InputCustomizers []InputCustomizer
 	// RawInput overrides any input related options
 	RawInput interface{}
@@ -31,15 +38,15 @@ func SilentResourceQuery() ResourceQueryOptions {
 
 func AllowResource(ctx context.Context, resType string, op ResourceOperation, opts ...ResourceQueryOptions) error {
 	res := ResourceQuery{
-		OPA: EmbeddedOPA(),
+		OPA:              EmbeddedOPA(),
 		InputCustomizers: embeddedOPA.inputCustomizers,
-		ResourceValues: ResourceValues{ExtraData: map[string]interface{}{}},
+		ResourceValues:   ResourceValues{ExtraData: map[string]interface{}{}},
 	}
 	for _, fn := range opts {
 		fn(&res)
 	}
 	if len(res.Policy) == 0 {
-		res.Policy = fmt.Sprintf("%s/allow_%v", resType, op)
+		res.Policy = fmt.Sprintf("%s/%s/allow_%v", PackagePrefixResource, resType, op)
 	}
 	ctx = contextWithOverriddenLogLevel(ctx, res.LogLevel)
 	opaOpts, e := PrepareResourceDecisionQuery(ctx, res.Policy, resType, op, &res)

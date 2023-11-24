@@ -6,11 +6,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	testutils "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
 	"embed"
 	"github.com/google/uuid"
 )
 
-//go:embed *.sql *.yml
+//go:embed *.sql *.yml uuid_pool.txt
 var ModelDataFS embed.FS
 
 var (
@@ -27,6 +28,14 @@ var (
 	MockedTenantIdB1   = uuid.MustParse("1513b015-6a7d-4de3-8b4f-cbb090ac126d")
 	MockedTenantIdB2   = uuid.MustParse("b21445de-9192-45de-acd7-91745ab4cc13")
 )
+
+/*************************
+	ID Pool
+ *************************/
+
+func NewUUIDPool() (*testutils.UUIDPool, error) {
+	return testutils.NewUUIDPool(ModelDataFS, "uuid_pool.txt")
+}
 
 /*************************
 	Tenancy

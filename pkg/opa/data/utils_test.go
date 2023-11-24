@@ -26,7 +26,7 @@ const (
  *************************/
 
 func SkipPolicyFilteringScopeDecorator(db *gorm.DB) *gorm.DB {
-	return db.Scopes(SkipPolicyFiltering())
+	return db.Scopes(SkipFiltering())
 }
 
 func SetupTestCreateModels(di *dbtest.DI) test.SetupFunc {
@@ -277,8 +277,8 @@ CREATE TABLE IF NOT EXISTS public.test_opa_utils_model
 type Model struct {
 	ID           uuid.UUID                `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 	Value        string                   `opa:"field:model"`
-	Extractor    TestModelTargetExtractor `gorm:"-"`
-	PolicyFilter `opa:"type:test,read:allow_read, update:allow_update,delete:-,"`
+	Extractor     TestModelTargetExtractor `gorm:"-"`
+	FilteredModel `opa:"type:test,read:allow_read, update:allow_update,delete:-,"`
 }
 
 func (Model) TableName() string {
