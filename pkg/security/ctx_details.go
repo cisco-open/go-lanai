@@ -38,16 +38,14 @@ type TenantDetails interface {
 	TenantSuspended() bool
 }
 
-// TenantAccessDetails This is available if authenticated entity is supposed to have access to tenants.
-type TenantAccessDetails interface {
-	EffectiveAssignedTenantIds() utils.StringSet
-}
-
 // UserDetails is available for user authentication
 type UserDetails interface {
 	UserId() string
 	Username() string
 	AccountType() AccountType
+	// AssignedTenantIds
+	// Deprecated: usage of this method is not encouraged. Designs that require user to select tenancy is preferred
+	// i.e. design tenancy based on TenantDetails instead.
 	AssignedTenantIds() utils.StringSet
 	LocaleCode() string
 	CurrencyCode() string

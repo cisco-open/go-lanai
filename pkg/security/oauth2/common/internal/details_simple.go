@@ -9,7 +9,6 @@ import (
 // - security.AuthenticationDetails
 // - security.KeyValueDetails
 // - oauth2.ClientDetails
-// - security.TenantAccessDetails
 // It is used to represent a client credential
 type ClientContextDetails struct {
 	Authentication AuthenticationDetails
@@ -73,13 +72,14 @@ func (d *ClientContextDetails) Values() (ret map[string]interface{}) {
 // ClientTenantedContextDetails implements
 // - security.AuthenticationDetails
 // - security.KeyValueDetails
-// - security.Tenant
+// - security.TenantDetails
+// - security.ProviderDetails
 // - oauth2.ClientDetails
-// - security.TenantAccessDetails
 // It is used to represent a client credential with selected tenant
 type ClientTenantedContextDetails struct {
 	ClientContextDetails
-	Tenant TenantDetails
+	Tenant   TenantDetails
+	Provider ProviderDetails
 }
 
 func (d *ClientTenantedContextDetails) TenantId() string {
@@ -92,4 +92,31 @@ func (d *ClientTenantedContextDetails) TenantExternalId() string {
 
 func (d *ClientTenantedContextDetails) TenantSuspended() bool {
 	return d.Tenant.Suspended
+}
+
+// security.ProviderDetails
+func (d *ClientTenantedContextDetails) ProviderId() string {
+	return d.Provider.Id
+}
+
+// security.ProviderDetails
+func (d *ClientTenantedContextDetails) ProviderName() string {
+	return d.Provider.Name
+}
+
+// security.ProviderDetails
+func (d *ClientTenantedContextDetails) ProviderDisplayName() string {
+	return d.Provider.DisplayName
+}
+
+func (d *ClientTenantedContextDetails) ProviderDescription() string {
+	return d.Provider.Description
+}
+
+func (d *ClientTenantedContextDetails) ProviderEmail() string {
+	return d.Provider.Email
+}
+
+func (d *ClientTenantedContextDetails) ProviderNotificationType() string {
+	return d.Provider.NotificationType
 }

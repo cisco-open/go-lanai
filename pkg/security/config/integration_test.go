@@ -109,8 +109,11 @@ type IntegrationTestOption func(di IntegrationTestDI, out *IntegrationTestOut)
 
 func IntegrationTestMocksProvider(opts ...IntegrationTestOption) func(IntegrationTestDI) IntegrationTestOut {
 	return func(di IntegrationTestDI) IntegrationTestOut {
-		mockRootId := uuid.New()
-		mockTenantAccessor := mocks.NewMockTenancyAccessor(nil, mockRootId)
+		mockTenantAccessor := mocks.NewMockTenancyAccessorUsingStrIds([]mocks.TenancyRelationWithStrId{
+			{ParentId: "id-tenant-root", ChildId: "id-tenant-1"},
+			{ParentId: "id-tenant-root", ChildId: "id-tenant-2"},
+			{ParentId: "id-tenant-root", ChildId: "id-tenant-3"},
+		}, "id-tenant-root")
 
 		integrationTestOut := IntegrationTestOut{
 			DiscoveryCustomizers: &discovery.Customizers{Customizers: utils.NewSet()},
@@ -334,12 +337,12 @@ func SubTestOAuth2AuthCodeWithoutTenant(di *intDI) test.GomegaSubTestFunc {
 }
 
 type AuthCodeWithTenantClientTestStruct struct {
-	name                          string
-	clientId                      string
-	expectAuthorizeErr            bool
-	expectedAuthTenantId          string
-	expectedAuthAssignedTenantIds []string
-	expectedAuthProviderId        string
+	name                               string
+	clientId                           string
+	expectAuthorizeErr                 bool
+	expectedAuthTenantId               string
+	expectedEffectiveAssignedTenantIds []string
+	expectedAuthProviderId             string
 }
 
 func SubTestOAuth2AuthCodeWithTenantClient(di *intDI) test.GomegaSubTestFunc {
@@ -350,25 +353,28 @@ func SubTestOAuth2AuthCodeWithTenantClient(di *intDI) test.GomegaSubTestFunc {
 
 		tests := []AuthCodeWithTenantClientTestStruct{
 			{
-				name:               "User tenants and client tenants has no overlap",
-				clientId:           TestTenantedClientID3,
-				expectAuthorizeErr: true,
+				name:                               "User tenants and client tenants has no overlap",
+				clientId:                           TestTenantedClientID3,
+				expectAuthorizeErr:                 false,
+				expectedAuthTenantId:               "",
+				expectedEffectiveAssignedTenantIds: nil,
+				expectedAuthProviderId:             "",
 			},
 			{
-				name:                          "User with client that has access to all tenants",
-				clientId:                      TestClientID,
-				expectAuthorizeErr:            false,
-				expectedAuthTenantId:          fedAccount.DefaultTenant,
-				expectedAuthAssignedTenantIds: fedAccount.Tenants,
-				expectedAuthProviderId:        "test-provider",
+				name:                               "User with client that has access to all tenants",
+				clientId:                           TestClientID,
+				expectAuthorizeErr:                 false,
+				expectedAuthTenantId:               fedAccount.DefaultTenant,
+				expectedEffectiveAssignedTenantIds: fedAccount.Tenants,
+				expectedAuthProviderId:             "test-provider",
 			},
 			{
-				name:                          "User tenants overlap with client tenants",
-				clientId:                      TestTenantedClientID2,
-				expectAuthorizeErr:            false,
-				expectedAuthTenantId:          "",                      //this is empty because the user's default tenant is not in client's tenants.
-				expectedAuthAssignedTenantIds: []string{"id-tenant-2"}, //this is the intersection of the user's tenants and the client's tenants
-				expectedAuthProviderId:        "",                      //because there isn't a default tenant, the provider is empty. (Provider is derived from the selected tenant).
+				name:                               "User tenants overlap with client tenants",
+				clientId:                           TestTenantedClientID2,
+				expectAuthorizeErr:                 false,
+				expectedAuthTenantId:               "",                      //this is empty because the user's default tenant is not in client's tenants.
+				expectedEffectiveAssignedTenantIds: []string{"id-tenant-2"}, //this is the intersection of the user's tenants and the client's tenants
+				expectedAuthProviderId:             "",                      //because there isn't a default tenant, the provider is empty. (Provider is derived from the selected tenant).
 			},
 		}
 
@@ -388,44 +394,47 @@ func SubTestOAuth2AuthCodeWithTenantClient(di *intDI) test.GomegaSubTestFunc {
 				a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
 				auth, err := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
 				g.Expect(err).To(Not(HaveOccurred()))
-				assertUserAuth(t, g, auth, fedAccount.UserId, test.expectedAuthTenantId, utils.NewStringSet(test.expectedAuthAssignedTenantIds...), test.expectedAuthProviderId)
+				assertUserAuth(t, g, auth, fedAccount.UserId, test.expectedAuthTenantId, utils.NewStringSet(test.expectedEffectiveAssignedTenantIds...), test.expectedAuthProviderId)
 			}
 		}
 	}
 }
 
 type PasswordGrantTestStruct struct {
-	name                          string
-	clientId                      string
-	expectedTokenRespStatus       int
-	expectedAuthTenantId          string
-	expectedAuthAssignedTenantIds []string
-	expectedAuthProviderId        string
+	name                               string
+	clientId                           string
+	expectedTokenRespStatus            int
+	expectedAuthTenantId               string
+	expectedEffectiveAssignedTenantIds []string
+	expectedAuthProviderId             string
 }
 
 func SubTestOAuth2PasswordGrant(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		tests := []PasswordGrantTestStruct{
 			{
-				name:                    "User tenants and client tenant has no overlap",
-				clientId:                TestTenantedClientID3,
-				expectedTokenRespStatus: http.StatusBadRequest,
+				name:                               "User tenants and client tenant has no overlap",
+				clientId:                           TestTenantedClientID3,
+				expectedTokenRespStatus:            http.StatusOK,
+				expectedAuthTenantId:               "",
+				expectedEffectiveAssignedTenantIds: nil,
+				expectedAuthProviderId:             "",
 			},
 			{
-				name:                          "User with client that has access to all tenants",
-				clientId:                      TestClientID,
-				expectedTokenRespStatus:       http.StatusOK,
-				expectedAuthTenantId:          "id-tenant-1",
-				expectedAuthAssignedTenantIds: []string{"id-tenant-1", "id-tenant-2"},
-				expectedAuthProviderId:        "test-provider",
+				name:                               "User with client that has access to all tenants",
+				clientId:                           TestClientID,
+				expectedTokenRespStatus:            http.StatusOK,
+				expectedAuthTenantId:               "id-tenant-1",
+				expectedEffectiveAssignedTenantIds: []string{"id-tenant-1", "id-tenant-2"},
+				expectedAuthProviderId:             "test-provider",
 			},
 			{
-				name:                          "User tenants overlaps client tenants",
-				clientId:                      TestTenantedClientID2,
-				expectedTokenRespStatus:       http.StatusOK,
-				expectedAuthTenantId:          "",                      // because default tenantId doesn't overlap with client tenant
-				expectedAuthAssignedTenantIds: []string{"id-tenant-2"}, // the user tenants that overlaps with client tenants
-				expectedAuthProviderId:        "",                      // because providerId is derived from selected tenant
+				name:                               "User tenants overlaps client tenants",
+				clientId:                           TestTenantedClientID2,
+				expectedTokenRespStatus:            http.StatusOK,
+				expectedAuthTenantId:               "",                      // because default tenantId doesn't overlap with client tenant
+				expectedEffectiveAssignedTenantIds: []string{"id-tenant-2"}, // the user tenants that overlaps with client tenants
+				expectedAuthProviderId:             "",                      // because providerId is derived from selected tenant
 			},
 		}
 
@@ -440,7 +449,7 @@ func SubTestOAuth2PasswordGrant(di *intDI) test.GomegaSubTestFunc {
 				a := assertTokenResponse(t, g, resp.Response, "regular", false)
 				auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
 				g.Expect(e).ToNot(HaveOccurred())
-				assertUserAuth(t, g, auth, "id-regular", test.expectedAuthTenantId, utils.NewStringSet(test.expectedAuthAssignedTenantIds...), test.expectedAuthProviderId)
+				assertUserAuth(t, g, auth, "id-regular", test.expectedAuthTenantId, utils.NewStringSet(test.expectedEffectiveAssignedTenantIds...), test.expectedAuthProviderId)
 			}
 		}
 	}
@@ -460,13 +469,13 @@ func SubTestTenantClientCredential(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		tests := []ClientCredentialTestStruct{
 			{
-				name:                    "client with access to all tenants, but does not select tenant",
+				name:                    "client with access to root tenant, but does not select tenant",
 				clientId:                TestClientID,
 				selectTenantId:          "",
-				expectedTenantId:        "",
+				expectedTenantId:        "id-tenant-root",
 				expectedTokenRespStatus: http.StatusOK,
-				clientTenants:           []string{},
-				clientScopes:            []string{oauth2.ScopeCrossTenant},
+				clientTenants:           []string{"id-tenant-root"},
+				clientScopes:            []string{"scope_a"},
 			},
 			{
 				name:                    "client with access to all tenants, select tenant",
@@ -474,8 +483,8 @@ func SubTestTenantClientCredential(di *intDI) test.GomegaSubTestFunc {
 				selectTenantId:          "id-tenant-1",
 				expectedTenantId:        "id-tenant-1",
 				expectedTokenRespStatus: http.StatusOK,
-				clientTenants:           []string{},
-				clientScopes:            []string{oauth2.ScopeCrossTenant},
+				clientTenants:           []string{"id-tenant-root"},
+				clientScopes:            []string{"scope_a"},
 			},
 			{
 				name:                    "client with access to multiple tenants without tenant selection",
@@ -1016,6 +1025,13 @@ func assertAuthorizeResponse(t *testing.T, g *gomega.WithT, resp *http.Response,
 	}
 }
 
+// This interface is not exposed, we declared it in test to check the internal implementation
+type ClientDetails interface {
+	ClientId() string
+	AssignedTenantIds() utils.StringSet
+	Scopes() utils.StringSet
+}
+
 func assertClientCredentialAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authentication, expectedClientId string, expectedTenantId string, expectedTenants utils.StringSet, expectedScopes utils.StringSet) {
 	g.Expect(auth.Principal()).To(Equal(expectedClientId))
 	g.Expect(auth.Permissions()).To(HaveLen(0))
@@ -1029,13 +1045,18 @@ func assertClientCredentialAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authe
 	} else {
 		g.Expect(ok).To(BeFalse())
 	}
-	cd, ok := auth.Details().(oauth2.ClientDetails)
+	cd, ok := auth.Details().(ClientDetails)
 	g.Expect(ok).To(BeTrue())
 	g.Expect(cd.ClientId()).To(Equal(expectedClientId))
 	g.Expect(cd.Scopes().HasAll(expectedScopes.Values()...)).To(BeTrue(), fmt.Sprintf("expected scopes %s doesn't match actual scopes %s", expectedScopes, cd.Scopes()))
-	g.Expect(expectedScopes.HasAll(cd.Scopes().Values()...)).To(BeTrue())
+	g.Expect(expectedScopes.HasAll(cd.Scopes().Values()...)).To(BeTrue(), fmt.Sprintf("expected scopes %s doesn't match actual scopes %s", expectedScopes, cd.Scopes()))
 	g.Expect(cd.AssignedTenantIds().HasAll(expectedTenants.Values()...)).To(BeTrue())
 	g.Expect(expectedTenants.HasAll(cd.AssignedTenantIds().Values()...)).To(BeTrue())
+}
+
+// This interface is not exposed. We define it in test in order to check the internal implementation.
+type TenantAccessDetails interface {
+	EffectiveAssignedTenantIds() utils.StringSet
 }
 
 func assertUserAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authentication, expectedUserId string, expectedTenantId string, expectedAssignedTenants utils.StringSet, expectedProviderId string) {
@@ -1043,7 +1064,7 @@ func assertUserAuth(_ *testing.T, g *gomega.WithT, auth oauth2.Authentication, e
 	g.Expect(ok).To(BeTrue())
 	g.Expect(userDetail.UserId()).To(Equal(expectedUserId))
 
-	tenantAccessDetails, ok := auth.Details().(security.TenantAccessDetails)
+	tenantAccessDetails, ok := auth.Details().(TenantAccessDetails)
 	g.Expect(tenantAccessDetails.EffectiveAssignedTenantIds().HasAll(expectedAssignedTenants.Values()...)).To(BeTrue(), fmt.Sprintf("expected tenants %s, actual tenants %s", expectedAssignedTenants, tenantAccessDetails.EffectiveAssignedTenantIds()))
 	g.Expect(expectedAssignedTenants.HasAll(tenantAccessDetails.EffectiveAssignedTenantIds().Values()...)).To(BeTrue(), fmt.Sprintf("expected tenants %s, actual tenants %s", expectedAssignedTenants, tenantAccessDetails.EffectiveAssignedTenantIds()))
 

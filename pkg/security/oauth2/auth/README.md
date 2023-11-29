@@ -42,8 +42,8 @@ curl --location --request POST 'http://localhost:8900/auth/v2/token?grant_type=c
 ## Password
 This grant allows client to authenticate both the client and the user by issuing both the client id client secret and username and password.
 The optional tenant id parameter will select the current tenant for the resulting security context. The tenants this authentication context
-has access to is based on the intersection of the user's assigned tenants and the client's assigned tenants. This grant requires the authorization
-server to be able to authenticate user using its password. It's not applicable if the user is authenticated via a SSO protocol (such as SAML).
+can switch to is based on the intersection of the user's assigned tenants and the client's assigned tenants. This grant requires the authorization
+server to be able to authenticate user using its password. It's not applicable if the user is authenticated via an SSO protocol (such as SAML).
 
 ### Fields
 | Field         | Value                             | Note                      |
@@ -76,7 +76,7 @@ curl --location --request POST 'http://localhost:8900/auth/v2/token' \
 This grant allows client to authenticate both the client and user. Unlike the password grant, it doesn't need the user to provide
 their credentials to the client. The authorization request returns an auth code. The client needs to call the token API with the auth code
 to get the access token. In the token request, the tenant id parameter is an optional parameter to select the tenant for the resulting security context. 
-The tenants this authentication context has access to is based on the intersection of the user's assigned tenants and the client's assigned tenants.
+The tenants this authentication context can switch to is based on the intersection of the user's assigned tenants and the client's assigned tenants.
 
 ### Authorize Request Fields
 See OAuth2 Spec for definition of corresponding fields
@@ -208,7 +208,6 @@ curl --location --request POST 'http://localhost:8900/auth/v2/token' \
 | phone            | OIDC scope to get user phone related claims in user info and id token   |
 | token_details    | allows client to get token details from check_token API                 |
 | tenant_hierarchy | allows client to use the tenant_hierarchy API                           |
-| cross_tenant     | allows client to access all tenants                                     |
 
 ## Client Registration Consideration
 
@@ -247,7 +246,6 @@ not be given to any public client because they can't be trusted with keeping cli
 | phone            | Yes                        | Yes                                                        |
 | token_details    | No                         | No                                                         |
 | tenant_hierarchy | No                         | No (assuming self registered client is isolated to tenant) |                                                       |
-| cross_tenant     | Yes                        | No (assuming self registered client is isolated to tenant) |
 
 ## Check Token
 This API allows a client to check a given token's validity. In addition, a client with the token_details scope can get the security context

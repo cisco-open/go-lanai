@@ -71,7 +71,6 @@ const (
 	ScopeOidcEmail       = "email"
 	ScopeOidcAddress     = "address"
 	ScopeOidcPhone       = "phone"
-	ScopeCrossTenant     = "cross_tenant"
 )
 
 const (

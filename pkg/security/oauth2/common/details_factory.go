@@ -200,13 +200,22 @@ func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) 
 			ExternalId: facts.tenant.ExternalId,
 			Suspended:  facts.tenant.Suspended,
 		}
+		pd := internal.ProviderDetails{
+			Id:               facts.provider.Id,
+			Name:             facts.provider.Name,
+			DisplayName:      facts.provider.DisplayName,
+			Description:      facts.provider.Description,
+			NotificationType: facts.provider.NotificationType,
+			Email:            facts.provider.Email,
+		}
 		return &internal.ClientTenantedContextDetails{
 			ClientContextDetails: internal.ClientContextDetails{
 				Authentication: *ad,
 				KV:             f.createKVDetails(ctx, facts),
 				Client:         cd,
 			},
-			Tenant: td,
+			Tenant:   td,
+			Provider: pd,
 		}, nil
 	} else {
 		return &internal.ClientContextDetails{
@@ -215,7 +224,6 @@ func (f *ContextDetailsFactory) createSimple(ctx context.Context, facts *facts) 
 			Client:         cd,
 		}, nil
 	}
-
 }
 
 func (f *ContextDetailsFactory) createAuthDetails(ctx context.Context, facts *facts) (*internal.AuthenticationDetails, error) {
@@ -227,7 +235,7 @@ func (f *ContextDetailsFactory) createAuthDetails(ctx context.Context, facts *fa
 		}
 	} else {
 		d.Roles = utils.NewStringSet()
-		d.Permissions = utils.NewStringSet()
+		d.Permissions = facts.request.Scopes()
 	}
 
 	d.AuthenticationTime = facts.authTime

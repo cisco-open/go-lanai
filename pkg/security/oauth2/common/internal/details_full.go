@@ -59,7 +59,6 @@ type AuthenticationDetails struct {
 // - security.ProxiedUserDetails
 // - security.KeyValueDetails
 // - oauth2.ClientDetails
-// - security.TenantAccessDetails
 
 type ClientUserContextDetails struct {
 	User           UserDetails
@@ -204,7 +203,6 @@ func (d *ClientUserContextDetails) EffectiveAssignedTenantIds() utils.StringSet 
 // - security.ProxiedUserDetails
 // - security.KeyValueDetails
 // - oauth2.ClientDetails
-// - security.TenantAccessDetails
 
 type ClientUserTenantedContextDetails struct {
 	ClientUserContextDetails

@@ -54,8 +54,8 @@ mocking:
       secret: "test-secret"
       access-token-validity: 3600s
       redirect-uris: ["localhost:*/**"]
-      tenants: []
-      scopes: "cross_tenant"
+      tenants: ["id-tenant-root"]
+      scopes: "scope_a"
     tenanted-client-1:
       id: "tenant-client-1"
       secret: "test-secret"
@@ -139,6 +139,10 @@ mocking:
       tenants: ["id-tenant-1", "id-tenant-2", "id-tenant-3"]
       permissions: ["SWITCH_TENANT"]
   tenants:
+    root:
+      id: "id-tenant-root"
+      external-id: "id-tenant-root"
+      name: "tenant-root"
     t1:
       id: "id-tenant-1"
       external-id: "id-tenant-1"

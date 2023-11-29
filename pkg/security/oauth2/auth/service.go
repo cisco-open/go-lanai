@@ -263,27 +263,10 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, newInvalidClientError()
 	}
 
-	// For client credential flow - no user auth
-	if userAuth == nil {
-		var defaultTenant string
-		if len(client.AssignedTenantIds()) == 1 {
-			defaultTenant = client.AssignedTenantIds().Values()[0]
-		}
-		tenant, err := s.loadTenant(ctx, request, defaultTenant)
-		if err != nil {
-			return nil, newInvalidTenantForClientError("error loading tenant")
-		}
-
-		if tenant != nil && !client.Scopes().Has(oauth2.ScopeCrossTenant) && !tenancy.AnyHasDescendant(ctx, client.AssignedTenantIds(), tenant.Id) {
-			return nil, newInvalidTenantForClientError(fmt.Sprintf("client doesn't have access to %s", tenant.Id))
-		}
-		return &authFacts{client: client, tenant: tenant}, nil
-	}
-
 	account, err := s.loadAccount(ctx, request, userAuth)
 	if err != nil {
 		return nil, err
-	} else if account.Locked() || account.Disabled() {
+	} else if account != nil && (account.Locked() || account.Disabled()) {
 		return nil, newInvalidUserError("unsupported user's account locked or disabled")
 	}
 
@@ -292,22 +275,27 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, newInvalidTenantForUserError(fmt.Sprintf("can't resolve account [%T] and client's [%T] tenants", account, client))
 	}
 
-	if len(assignedTenants) == 0 && !client.Scopes().Has(oauth2.ScopeCrossTenant) {
-		return nil, newInvalidUserError("unsupported user does not have access according to client's tenants")
-	}
-
 	tenant, err := s.loadTenant(ctx, request, defaultTenantId)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = s.verifyTenantAccess(ctx, tenant, account, assignedTenants); err != nil {
+	if err = s.verifyTenantAccess(ctx, tenant, account, client, assignedTenants); err != nil {
 		return nil, err
 	} // still do this, and verify with intersection here
 
 	provider, err := s.loadProvider(ctx, request, tenant)
 	if err != nil {
 		return nil, err
+	}
+
+	if account == nil { // at this point we have all the information we need if it's only client auth
+		return &authFacts{
+			request:  request,
+			client:   client,
+			tenant:   tenant,
+			provider: provider,
+		}, nil
 	}
 
 	if finalizer, ok := s.accountStore.(security.AccountFinalizer); ok {
@@ -368,6 +356,10 @@ func (s *DefaultAuthorizationService) loadAccount(
 	req oauth2.OAuth2Request,
 	userAuth security.Authentication,
 ) (security.Account, error) {
+	if userAuth == nil {
+		return nil, nil
+	}
+
 	// sanity check, this should not happen
 	if userAuth.State() < security.StateAuthenticated || userAuth.Principal() == nil {
 		return nil, newUnauthenticatedUserError()
@@ -417,16 +409,9 @@ func (s *DefaultAuthorizationService) loadTenant(
 	return tenant, nil
 }
 
-func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, assignedTenantIds []string) error {
+func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, client oauth2.OAuth2Client, assignedTenantIds []string) error {
 	if tenant == nil {
 		return nil
-	}
-
-	// special permission ACCESS_ALL_TENANTS
-	for _, p := range account.Permissions() {
-		if p == security.SpecialPermissionAccessAllTenant {
-			return nil
-		}
 	}
 
 	tenantIds := utils.NewStringSet(assignedTenantIds...)
