@@ -44,6 +44,10 @@ const (
 )
 
 const (
+	SpecialTenantIdWildcard = "*"
+)
+
+const (
 	DetailsKeyAuthWarning = "AuthWarning"
 	DetailsKeyAuthTime    = "AuthTime"
 	DetailsKeyAuthMethod  = "AuthMethod"

@@ -29,7 +29,6 @@ var (
 		oauth2.ClaimUserId:                   Optional(UserId),
 		oauth2.ClaimAccountType:              Optional(AccountType),
 		oauth2.ClaimCurrency:                 Optional(Currency),
-		oauth2.ClaimAssignedTenants:          Optional(AssignedTenants),
 		oauth2.ClaimDefaultTenantId:          Optional(DefaultTenantId),
 		oauth2.ClaimTenantId:                 Optional(TenantId),
 		oauth2.ClaimTenantExternalId:         Optional(TenantExternalId),

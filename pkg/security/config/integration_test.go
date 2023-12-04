@@ -379,23 +379,25 @@ func SubTestOAuth2AuthCodeWithTenantClient(di *intDI) test.GomegaSubTestFunc {
 		}
 
 		for _, test := range tests {
-			// authorize
-			req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(test.clientId)) //this client has 1 tenants, no intersection with user
-			resp := webtest.MustExec(ctx, req)
-			g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-			assertAuthorizeResponse(t, g, resp.Response, test.expectAuthorizeErr)
-
-			if !test.expectAuthorizeErr {
-				code := extractAuthCode(resp.Response)
-				req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code, test.clientId, ""), tokenReqOptions())
-				resp = webtest.MustExec(ctx, req)
+			t.Run(test.name, func(t *testing.T) {
+				// authorize
+				req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(test.clientId)) //this client has 1 tenants, no intersection with user
+				resp := webtest.MustExec(ctx, req)
 				g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-				g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
-				a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
-				auth, err := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-				g.Expect(err).To(Not(HaveOccurred()))
-				assertUserAuth(t, g, auth, fedAccount.UserId, test.expectedAuthTenantId, utils.NewStringSet(test.expectedEffectiveAssignedTenantIds...), test.expectedAuthProviderId)
-			}
+				assertAuthorizeResponse(t, g, resp.Response, test.expectAuthorizeErr)
+
+				if !test.expectAuthorizeErr {
+					code := extractAuthCode(resp.Response)
+					req = webtest.NewRequest(ctx, http.MethodPost, "/v2/token", authCodeReqBody(code, test.clientId, ""), tokenReqOptions())
+					resp = webtest.MustExec(ctx, req)
+					g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+					g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
+					a := assertTokenResponse(t, g, resp.Response, fedAccount.Username, true)
+					auth, err := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+					g.Expect(err).To(Not(HaveOccurred()))
+					assertUserAuth(t, g, auth, fedAccount.UserId, test.expectedAuthTenantId, utils.NewStringSet(test.expectedEffectiveAssignedTenantIds...), test.expectedAuthProviderId)
+				}
+			})
 		}
 	}
 }
@@ -439,18 +441,19 @@ func SubTestOAuth2PasswordGrant(di *intDI) test.GomegaSubTestFunc {
 		}
 
 		for _, test := range tests {
-			// no intersection
-			req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", passwordGrantReqBody("", "regular", "regular"), tokenReqOptions(), withClientAuth(test.clientId, TestClientSecret))
-			resp := webtest.MustExec(ctx, req)
-			g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-			g.Expect(resp.Response.StatusCode).To(Equal(test.expectedTokenRespStatus), "response should have correct status code")
+			t.Run(test.name, func(t *testing.T) {
+				req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", passwordGrantReqBody("", "regular", "regular"), tokenReqOptions(), withClientAuth(test.clientId, TestClientSecret))
+				resp := webtest.MustExec(ctx, req)
+				g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+				g.Expect(resp.Response.StatusCode).To(Equal(test.expectedTokenRespStatus), "response should have correct status code")
 
-			if test.expectedTokenRespStatus == http.StatusOK {
-				a := assertTokenResponse(t, g, resp.Response, "regular", false)
-				auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-				g.Expect(e).ToNot(HaveOccurred())
-				assertUserAuth(t, g, auth, "id-regular", test.expectedAuthTenantId, utils.NewStringSet(test.expectedEffectiveAssignedTenantIds...), test.expectedAuthProviderId)
-			}
+				if test.expectedTokenRespStatus == http.StatusOK {
+					a := assertTokenResponse(t, g, resp.Response, "regular", false)
+					auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+					g.Expect(e).ToNot(HaveOccurred())
+					assertUserAuth(t, g, auth, "id-regular", test.expectedAuthTenantId, utils.NewStringSet(test.expectedEffectiveAssignedTenantIds...), test.expectedAuthProviderId)
+				}
+			})
 		}
 	}
 }
@@ -528,17 +531,19 @@ func SubTestTenantClientCredential(di *intDI) test.GomegaSubTestFunc {
 		}
 
 		for _, test := range tests {
-			req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody(test.selectTenantId), tokenReqOptions(), withClientAuth(test.clientId, TestClientSecret))
-			resp := webtest.MustExec(ctx, req)
-			g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-			g.Expect(resp.Response.StatusCode).To(Equal(test.expectedTokenRespStatus), "response should have correct status code")
+			t.Run(test.name, func(t *testing.T) {
+				req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", clientCredentialReqBody(test.selectTenantId), tokenReqOptions(), withClientAuth(test.clientId, TestClientSecret))
+				resp := webtest.MustExec(ctx, req)
+				g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+				g.Expect(resp.Response.StatusCode).To(Equal(test.expectedTokenRespStatus), "response should have correct status code")
 
-			if test.expectedTokenRespStatus == http.StatusOK {
-				a := assertTokenResponse(t, g, resp.Response, "", false)
-				auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
-				g.Expect(e).ToNot(HaveOccurred())
-				assertClientCredentialAuth(t, g, auth, test.clientId, test.expectedTenantId, utils.NewStringSet(test.clientTenants...), utils.NewStringSet(test.clientScopes...))
-			}
+				if test.expectedTokenRespStatus == http.StatusOK {
+					a := assertTokenResponse(t, g, resp.Response, "", false)
+					auth, e := di.TokenReader.ReadAuthentication(ctx, a.Value(), oauth2.TokenHintAccessToken)
+					g.Expect(e).ToNot(HaveOccurred())
+					assertClientCredentialAuth(t, g, auth, test.clientId, test.expectedTenantId, utils.NewStringSet(test.clientTenants...), utils.NewStringSet(test.clientScopes...))
+				}
+			})
 		}
 	}
 }

@@ -2,6 +2,7 @@ package opainput
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/internal"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
@@ -39,7 +40,9 @@ func populateAuthenticationClause(auth security.Authentication, clause *opa.Auth
 	details := auth.Details()
 	if v, ok := details.(security.UserDetails); ok {
 		clause.UserID = v.UserId()
-		clause.AccessibleTenants = v.AssignedTenantIds().Values()
+	}
+	if v, ok := details.(internal.TenantAccessDetails); ok {
+		clause.AccessibleTenants = v.EffectiveAssignedTenantIds().Values()
 	}
 	if v, ok := details.(security.TenantDetails); ok {
 		clause.TenantID = v.TenantId()

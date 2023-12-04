@@ -7,6 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
+	"golang.org/x/exp/slices"
 )
 
 func ResolveClientUserTenants(ctx context.Context, a security.Account, c oauth2.OAuth2Client) (defaultTenantId string, assignedTenants []string, err error) {
@@ -19,31 +20,41 @@ func ResolveClientUserTenants(ctx context.Context, a security.Account, c oauth2.
 		return defaultTenantId, assignedTenants, nil
 	}
 
-	if _, ok := a.(security.AccountTenancy); !ok {
+	at, ok := a.(security.AccountTenancy)
+	if !ok {
 		return "", nil, errors.New("account must have tenancy")
 	}
 
 	// To get the intersection of client and user's tenants
 	// we need to do two loops.
 	// First loop through the account's tenant.
-	// If this tenant is the client's tenant's descendant, we add it to the return set.
+	// If this tenant is any of the client's tenant's descendant, we add it to the return set.
 	// Then loop through the client's tenant.
-	// If this tenant is the account's tenant's descendant, we add it to the return set.
+	// If this tenant is any of the account's tenant's descendant, we add it to the return set.
 	tenantSet := utils.NewStringSet()
-	for _, t := range a.(security.AccountTenancy).DesignatedTenantIds() {
-		if tenancy.AnyHasDescendant(ctx, c.AssignedTenantIds(), t) {
-			tenantSet = tenantSet.Add(t)
+	if c.AssignedTenantIds().Has(security.SpecialTenantIdWildcard) {
+		tenantSet = tenantSet.Add(at.DesignatedTenantIds()...)
+	} else {
+		for _, t := range at.DesignatedTenantIds() {
+			if tenancy.AnyHasDescendant(ctx, c.AssignedTenantIds(), t) {
+				tenantSet = tenantSet.Add(t)
+			}
 		}
 	}
 
-	for t, _ := range c.AssignedTenantIds() {
-		if tenancy.AnyHasDescendant(ctx,
-			utils.NewStringSet(a.(security.AccountTenancy).DesignatedTenantIds()...), t) {
-			tenantSet = tenantSet.Add(t)
+	if slices.Contains(at.DesignatedTenantIds(), security.SpecialTenantIdWildcard) {
+		tenantSet = tenantSet.Add(c.AssignedTenantIds().Values()...)
+	} else {
+		for t, _ := range c.AssignedTenantIds() {
+			if tenancy.AnyHasDescendant(ctx,
+				utils.NewStringSet(at.DesignatedTenantIds()...), t) {
+				tenantSet = tenantSet.Add(t)
+			}
 		}
 	}
 
-	if tenancy.AnyHasDescendant(ctx, tenantSet, a.(security.AccountTenancy).DefaultDesignatedTenantId()) {
+	if tenantSet.Has(security.SpecialTenantIdWildcard) ||
+		tenancy.AnyHasDescendant(ctx, tenantSet, a.(security.AccountTenancy).DefaultDesignatedTenantId()) {
 		defaultTenantId = a.(security.AccountTenancy).DefaultDesignatedTenantId()
 	}
 

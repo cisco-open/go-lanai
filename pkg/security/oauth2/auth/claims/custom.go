@@ -39,15 +39,6 @@ func DefaultTenantId(ctx context.Context, opt *FactoryOption) (v interface{}, er
 	return nonZeroOrError(tenancy.DefaultDesignatedTenantId(), errorMissingDetails)
 }
 
-// AssignedTenants gets assigned tenants in Auth. The value is user's tenant intersecting client's tenants.
-func AssignedTenants(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
-	details, ok := opt.Source.Details().(security.UserDetails)
-	if !ok {
-		return nil, errorMissingDetails
-	}
-	return nonZeroOrError(details.AssignedTenantIds(), errorMissingDetails)
-}
-
 func TenantId(ctx context.Context, opt *FactoryOption) (v interface{}, err error) {
 	details, ok := opt.Source.Details().(security.TenantDetails)
 	if !ok {

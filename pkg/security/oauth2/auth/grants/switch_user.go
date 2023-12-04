@@ -2,17 +2,18 @@ package grants
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/internal"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"strings"
 )
 
 var (
-	switchUserPermissions = []string{
-		security.SpecialPermissionSwitchUser, security.SpecialPermissionAccessAllTenant,
-	}
+	switchUserPermissions = []string{security.SpecialPermissionSwitchUser}
 )
 
 // SwitchUserGranter implements auth.TokenGranter
@@ -124,6 +125,15 @@ func (g *SwitchUserGranter) validate(ctx context.Context, request *auth.TokenReq
 		return e
 	}
 
+	srcTenants, ok := stored.Details().(internal.TenantAccessDetails)
+	if !ok {
+		return oauth2.NewInvalidGrantError("access token is not associated with a list of tenants")
+	}
+
+	if !canAccessAllTenants(ctx, srcTenants.EffectiveAssignedTenantIds()) {
+		return oauth2.NewInvalidGrantError("user needs to be able to access all tenants to switch user")
+	}
+
 	srcUser, ok := stored.Details().(security.UserDetails)
 	if !ok {
 		return oauth2.NewInvalidGrantError("access token is not associated with a valid user")
@@ -175,4 +185,16 @@ func (g *SwitchUserGranter) loadUserAuthentication(ctx context.Context, request 
 		opt.Permissions = permissions
 		opt.State = security.StateAuthenticated
 	}), nil
+}
+
+func canAccessAllTenants(ctx context.Context, assignedTenantIds utils.StringSet) bool {
+	if assignedTenantIds.Has(security.SpecialTenantIdWildcard) {
+		return true
+	}
+
+	rootId, err := tenancy.GetRoot(ctx)
+	if err != nil {
+		return false
+	}
+	return assignedTenantIds.Has(rootId)
 }
