@@ -1,4 +1,4 @@
-package tlsconfig
+package certsource
 
 import (
 	"crypto/tls"

@@ -1,0 +1,110 @@
+tls:
+  sources:
+    vault:
+      type: vault
+      path: /pki
+      role: localhost
+      cn: redis
+      ip-sans: 127.0.0.1
+      alt-names: localhost
+      ttl: 5d
+      file-cache:
+        enabled: false
+        path: ".tmp/certs/"
+        prefix: "redis"
+    file:
+      type: file
+      ca-cert-file: "configs/tls/ca.crt"
+      cert-file: "configs/tls/redis.crt"
+      key-file: "configs/tls/redis.key"
+
+kafka:
+  brokers: slmservice:9092
+  net:
+    tls:
+      enabled: true
+      config:
+        type: file
+        CaCertFile: /Users/chrholme/go/src/cto-github.cisco.com/NFV-BU/infraoperator/certtest/ca.pem
+        CertFile: /Users/chrholme/go/src/cto-github.cisco.com/NFV-BU/infraoperator/certtest/kafka.keystore.pem
+        KeyFile: /Users/chrholme/go/src/cto-github.cisco.com/NFV-BU/infraoperator/certtest/kafka.key
+
+redis:
+  addrs: ${spring.redis.host:localhost}:6379
+  #  addrs: localhost:30380
+  db: 0
+  #  password: password
+  tls:
+    enabled: true
+    #    config:
+    #      type: file
+    #      ca-cert-file: "configs/tls/ca.crt"
+    #      cert-file: "configs/tls/redis.crt"
+    #      key-file: "configs/tls/redis.key"
+    config:
+      type: vault
+      path: /pki
+      role: localhost
+      cn: redis
+      ip-sans: 127.0.0.1
+      alt-names: localhost
+      ttl: 5d
+      file-cache:
+        enabled: false
+        path: ".tmp/certs/"
+        prefix: "redis"
+
+aws:
+  acm:
+    credentials:
+      #type: static
+      #id: test
+      #secret: test
+      type: sts
+      token-file: /Users/chrholme/go/src/cto-github.cisco.com/chrholme/testgolanai/k8s_jwt
+      role-arn: 123jk1j221ljk1lk12038102981blah
+      role-session-name: blah
+    region: us-east-1
+    endpoint: http://127.0.0.1:31566
+
+data:
+  logging:
+    level: debug
+  cockroach:
+    host: localhost
+    port: 26257
+    #    port: 32625
+    sslmode: require
+    #    sslmode: disable
+    #    username: root
+    #    password: root
+    database: testdb
+    tls:
+      enabled: true
+      #      config:
+      #        type: file
+      #        ca-cert-file: "configs/tls/ca.crt"
+      #        cert-file: "configs/tls/client.root.crt"
+      #        key-file: "configs/tls/client.root.key"
+
+      #      config:
+      #        type: acm
+      #        arn: arn:aws:acm:us-east-1:000000000000:certificate/b7c99e12-a58f-4a1e-8489-87931d200ca5
+      #        passphrase: changeme
+      #        fileCache:
+      #          enabled: true
+      #          prefix: cdb-example
+      #          path: /Users/chrholme/go/src/cto-github.cisco.com/chrholme/testgolanai/
+
+      config:
+        type: vault
+        path: /pki
+        role: localhost
+        cn: root
+        ip-sans: 127.0.0.1
+        alt-names: localhost
+        ttl: 5d
+        file-cache:
+          enabled: true
+          path: ".tmp/certs/"
+          prefix: "cockroachdb"

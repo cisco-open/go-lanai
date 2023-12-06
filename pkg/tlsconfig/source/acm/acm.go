@@ -1,4 +1,4 @@
-package tlsconfig
+package acmcerts
 
 import (
 	"context"
@@ -6,11 +6,13 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws/acm"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"encoding/pem"
 	"github.com/aws/aws-sdk-go/aws"
 	awsacm "github.com/aws/aws-sdk-go/service/acm"
+	"github.com/aws/aws-sdk-go/service/acm/acmiface"
 	"go.step.sm/crypto/pemutil"
 	"strings"
 	"sync"
@@ -18,8 +20,8 @@ import (
 )
 
 type AcmProvider struct {
-	ProviderCommon
-	acmClient         *acm.AcmClient
+	props             SourceProperties
+	acmClient         acmiface.ACMAPI
 	cachedCertificate *tls.Certificate
 	mutex             sync.RWMutex
 	once              sync.Once
@@ -27,11 +29,9 @@ type AcmProvider struct {
 	monitorCancel     context.CancelFunc
 }
 
-func NewAcmProvider(acm *acm.AcmClient, p Properties) *AcmProvider {
+func NewAcmProvider(acm acmiface.ACMAPI, p SourceProperties) tlsconfig.Source {
 	return &AcmProvider{
-		ProviderCommon: ProviderCommon{
-			p,
-		},
+		props:     p,
 		acmClient: acm,
 		monitor:   loop.NewLoop(),
 	}
@@ -41,14 +41,28 @@ func (a *AcmProvider) Close() error {
 	return nil
 }
 
+func (a *AcmProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions) (*tls.Config, error) {
+	//TODO
+	panic("not implemented")
+}
+
+func (a *AcmProvider) Files(ctx context.Context) (*tlsconfig.CertificateFiles, error) {
+	//TODO
+	panic("not implemented")
+}
+
+func (a *AcmProvider) GetMinTlsVersion() (uint16, error) {
+	return certsource.ParseTLSVersion(a.props.MinTLSVersion)
+}
+
 func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	input := &awsacm.ExportCertificateInput{
-		CertificateArn: aws.String(a.p.Arn),
-		Passphrase:     []byte(a.p.Passphrase),
+		CertificateArn: aws.String(a.props.ARN),
+		Passphrase:     []byte(a.props.Passphrase),
 	}
-	output, err := a.acmClient.Client.ExportCertificateWithContext(ctx, input)
+	output, err := a.acmClient.ExportCertificateWithContext(ctx, input)
 	if err != nil {
-		logger.Errorf("Could not fetch ACM certificate %s: %s", a.p.Arn, err.Error())
+		logger.Errorf("Could not fetch ACM certificate %s: %s", a.props.ARN, err.Error())
 		return nil, err
 	}
 	//Clean the returned CA (deal with bug in localStack)
@@ -56,7 +70,7 @@ func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	pemBytes := []byte(cleantext)
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(pemBytes)
-	if a.p.FileCache.Enabled {
+	if a.props.FileCache.Enabled {
 		err := a.CacheCaToFile(pemBytes)
 		if err != nil {
 			return certPool, err
@@ -72,14 +86,15 @@ func (a *AcmProvider) GetClientCertificate(ctx context.Context) (func(*tls.Certi
 			logger.Errorf("Failed to get certificate from ACM: %s", err.Error())
 			return
 		}
-		delay := a.tryRenewRepeatIntervalFunc()(cert, err)
+		renewIntervalFunc := certsource.RenewRepeatIntervalFunc(time.Duration(a.props.MinRenewInterval))
+		delay := renewIntervalFunc(cert, err)
 
 		loopCtx, cancelFunc := a.monitor.Run(context.Background())
 		a.monitorCancel = cancelFunc
 
 		time.AfterFunc(delay, func() {
 			a.monitor.Repeat(a.tryRenew(loopCtx), func(opt *loop.TaskOption) {
-				opt.RepeatIntervalFunc = a.tryRenewRepeatIntervalFunc()
+				opt.RepeatIntervalFunc = renewIntervalFunc
 			})
 		})
 	})
@@ -103,19 +118,19 @@ func (a *AcmProvider) GetClientCertificate(ctx context.Context) (func(*tls.Certi
 
 func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certificate, error) {
 	input := &awsacm.ExportCertificateInput{
-		CertificateArn: aws.String(a.p.Arn),
-		Passphrase:     []byte(a.p.Passphrase),
+		CertificateArn: aws.String(a.props.ARN),
+		Passphrase:     []byte(a.props.Passphrase),
 	}
-	output, err := a.acmClient.Client.ExportCertificateWithContext(ctx, input)
+	output, err := a.acmClient.ExportCertificateWithContext(ctx, input)
 	if err != nil {
-		logger.Errorf("Could not fetch ACM certificate %s: %s", a.p.Arn, err.Error())
+		logger.Errorf("Could not fetch ACM certificate %s: %s", a.props.ARN, err.Error())
 		return nil, err
 	}
 	crtPEM := []byte(*output.Certificate)
 
 	keyBlock, _ := pem.Decode([]byte(*output.PrivateKey))
 	//nolint:staticcheck
-	unEncryptedKey, err := pemutil.DecryptPKCS8PrivateKey(keyBlock.Bytes, []byte(a.p.Passphrase))
+	unEncryptedKey, err := pemutil.DecryptPKCS8PrivateKey(keyBlock.Bytes, []byte(a.props.Passphrase))
 	if err != nil {
 		logger.Errorf("Could not decrypt pkcs8 private key: %s", err.Error())
 		return nil, err
@@ -151,7 +166,7 @@ func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certi
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 	a.cachedCertificate = &cert
-	if a.p.FileCache.Enabled {
+	if a.props.FileCache.Enabled {
 		err := a.CacheCertToFile(&cert)
 		if err != nil {
 			return &cert, err
@@ -162,11 +177,11 @@ func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certi
 
 func (a *AcmProvider) renewClientCertificate(ctx context.Context) error {
 	input := &awsacm.RenewCertificateInput{
-		CertificateArn: aws.String(a.p.Arn),
+		CertificateArn: aws.String(a.props.ARN),
 	}
-	_, err := a.acmClient.Client.RenewCertificate(input)
+	_, err := a.acmClient.RenewCertificate(input)
 	if err != nil {
-		logger.Errorf("Could not renew ACM certificate %s: %s", a.p.Arn, err.Error())
+		logger.Errorf("Could not renew ACM certificate %s: %s", a.props.ARN, err.Error())
 		return err
 	}
 	return nil
@@ -174,15 +189,15 @@ func (a *AcmProvider) renewClientCertificate(ctx context.Context) error {
 
 // CacheCertToFile will write out a cert and key to files based on configured path and prefix
 func (a *AcmProvider) CacheCertToFile(cert *tls.Certificate) error {
-	certfilepath := a.p.FileCache.Path + a.ProviderCommon.p.FileCache.Prefix + CertSuffix
-	keyfilepath := a.p.FileCache.Path + a.ProviderCommon.p.FileCache.Prefix + KeySuffix
-	return CacheCertToFile(cert, certfilepath, keyfilepath)
+	certfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CertSuffix
+	keyfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.KeySuffix
+	return certsource.CacheCertToFile(cert, certfilepath, keyfilepath)
 }
 
 // CacheCaToFile writes the provided ca cert pool to a file based on the provided config
 func (a *AcmProvider) CacheCaToFile(pemData []byte) error {
-	cafilepath := a.p.FileCache.Path + a.ProviderCommon.p.FileCache.Prefix + CaSuffix
-	return CacheCaToFile(pemData, cafilepath)
+	cafilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CaSuffix
+	return certsource.CacheCaToFile(pemData, cafilepath)
 }
 
 func (a *AcmProvider) tryRenew(loopCtx context.Context) loop.TaskFunc {

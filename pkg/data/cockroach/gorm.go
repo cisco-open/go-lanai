@@ -1,7 +1,6 @@
 package cockroach
 
 import (
-	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"fmt"
@@ -27,7 +26,7 @@ type initDI struct {
 	fx.In
 	AppContext  *bootstrap.ApplicationContext
 	Properties  CockroachProperties
-	TLSProvider *tlsconfig.ProviderFactory
+	CertsManager tlsconfig.Manager `optional:"true"`
 }
 
 func NewGormDialetor(di initDI) gorm.Dialector {
@@ -39,27 +38,21 @@ func NewGormDialetor(di initDI) gorm.Dialector {
 		dsKeySslMode: di.Properties.SslMode,
 	}
 	// Setup TLS properties
-	if di.Properties.Tls.Enable {
-		if !di.Properties.Tls.Config.FileCache.Enabled && di.Properties.Tls.Config.Type == "vault" {
-			logger.Error("Can't enable tls for postgres driver with vault tls provider without enabling FileCache.")
+	if di.Properties.Tls.Enable && di.CertsManager != nil {
+		source, e := di.CertsManager.Source(di.AppContext, func(opt *tlsconfig.Option) {
+			// TODO review this
+			opt.ConfigPath = CockroachPropertiesPrefix + ".tls.config"
+		})
+		if e == nil {
+			certFiles, e := source.Files(di.AppContext)
+			if e == nil {
+				options[dsKeySslRootCert] = strings.Join(certFiles.RootCAPaths, " ")
+				options[dsKeySslCert] = certFiles.ClientCertificatePath
+				options[dsKeySslKey] = certFiles.ClientKeyPath
+				// TODO key passphrase?
+			}
 		} else {
-			provider, err := di.TLSProvider.GetProvider(di.Properties.Tls.Config)
-			if err != nil {
-				logger.Error("Failed to provision tls provider.")
-			}
-			ctx := context.Background()
-			_, err = provider.GetClientCertificate(ctx)
-			if err != nil {
-				logger.Error("Failed to fetch tls certificate.")
-			}
-			_, err = provider.RootCAs(ctx)
-			if err != nil {
-				logger.Error("Failed to fetch ca certificate.")
-			}
-			basePath := di.Properties.Tls.Config.FileCache.Path + di.Properties.Tls.Config.FileCache.Prefix
-			options[dsKeySslRootCert] = basePath + tlsconfig.CaSuffix
-			options[dsKeySslCert] = basePath + tlsconfig.CertSuffix
-			options[dsKeySslKey] = basePath + tlsconfig.KeySuffix
+			logger.Errorf("Failed to provision TLS certificates: %v", e)
 		}
 	}
 

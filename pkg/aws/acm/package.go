@@ -9,10 +9,6 @@ import (
 
 var logger = log.New("Aws")
 
-type AcmClient struct {
-	Client acmiface.ACMAPI
-}
-
 var Module = &bootstrap.Module{
 	Name:       "ACM",
 	Precedence: bootstrap.AcmPresedence,
@@ -29,11 +25,6 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func newDefaultClient(ctx *bootstrap.ApplicationContext, f AwsAcmFactory) AcmClient {
-	c, e := f.New(ctx)
-
-	if e != nil {
-		panic(e)
-	}
-	return AcmClient{c}
+func newDefaultClient(ctx *bootstrap.ApplicationContext, f AwsAcmFactory) (acmiface.ACMAPI, error) {
+	return f.New(ctx)
 }

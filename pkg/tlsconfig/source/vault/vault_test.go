@@ -1,9 +1,13 @@
-package tlsconfig
+package vaultcerts_test
 
 import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	tlsconfiginit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/init"
+	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/vault"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	vaultinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
@@ -20,7 +24,8 @@ import . "github.com/onsi/gomega"
 
 type VaultTestDi struct {
 	fx.In
-	ProviderFactory *ProviderFactory
+	ProviderFactory *tlsconfig.ProviderFactory
+	Manager         tlsconfig.Manager
 	VaultClient     *vault.Client
 }
 
@@ -31,7 +36,10 @@ func TestVaultProvider(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		apptest.WithDI(di),
-		apptest.WithModules(Module, vaultinit.Module),
+		apptest.WithModules(tlsconfiginit.Module, vaultinit.Module),
+		apptest.WithFxOptions(
+			fx.Invoke(vaultcerts.Register),
+		),
 		test.SubTestSetup(SubTestSetupSubmitCA(di)),
 		test.GomegaSubTest(SubTestVaultProvider(di), "SubTestVaultProvider"),
 	)
@@ -59,16 +67,18 @@ func SubTestSetupSubmitCA(di *VaultTestDi) test.SetupFunc {
 
 func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		p := Properties{
-			Type:             "vault",
+		p := vaultcerts.SourceProperties{
 			Path:             "pki/",
 			Role:             "localhost",
 			CN:               "localhost",
-			Ttl:              "10s",
-			MinRenewInterval: "2s",
+			TTL:              "10s",
+			MinRenewInterval: utils.Duration(2 * time.Second),
 		}
 
-		provider, err := di.ProviderFactory.GetProvider(p)
+		provider, err := di.Manager.Provider(ctx, func(opt *tlsconfig.Option) {
+			opt.Type = tlsconfig.SourceVault
+			opt.RawConfig = p
+		})
 		g.Expect(err).NotTo(HaveOccurred())
 
 		caPool, err := provider.RootCAs(ctx)

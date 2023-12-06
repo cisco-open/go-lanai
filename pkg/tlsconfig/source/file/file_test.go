@@ -1,9 +1,12 @@
-package tlsconfig
+package filecerts_test
 
 import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	tlsconfiginit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/init"
+	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/file"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"go.uber.org/fx"
@@ -14,7 +17,7 @@ import . "github.com/onsi/gomega"
 
 type FileTestDi struct {
 	fx.In
-	ProviderFactory *ProviderFactory
+	ProviderFactory *tlsconfig.ProviderFactory
 }
 
 func TestFileProvider(t *testing.T) {
@@ -22,16 +25,19 @@ func TestFileProvider(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		apptest.WithDI(di),
-		apptest.WithModules(Module),
+		apptest.WithModules(tlsconfiginit.Module),
+		apptest.WithFxOptions(
+			fx.Invoke(filecerts.FxProvider),
+		),
 		test.GomegaSubTest(SubTestFileProvider(di), "SubTestFileProvider"),
 	)
 }
 
 func SubTestFileProvider(di *FileTestDi) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		p := Properties{
+		p := tlsconfig.Properties{
 			Type:       "file",
-			CaCertFile: "testdata/ca-cert-test.pem",
+			CACertFile: "testdata/ca-cert-test.pem",
 			CertFile:   "testdata/client-cert-signed-test.pem",
 			KeyFile:    "testdata/client-key-test.pem",
 			KeyPass:    "foobar",
