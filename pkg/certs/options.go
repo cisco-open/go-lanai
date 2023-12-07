@@ -1,4 +1,4 @@
-package tlsconfig
+package certs
 
 func WithSourceProperties(props *SourceProperties) Options {
     return func(opt *Option) {

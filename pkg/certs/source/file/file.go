@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
-	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
+	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
 	"encoding/pem"
 	"io"
 	"os"
@@ -16,13 +16,13 @@ type FileProvider struct {
 	p SourceProperties
 }
 
-func NewFileProvider(p SourceProperties) tlsconfig.Source {
+func NewFileProvider(p SourceProperties) certs.Source {
 	return &FileProvider{
 		p: p,
 	}
 }
 
-func (f *FileProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions) (*tls.Config, error) {
+func (f *FileProvider) TLSConfig(ctx context.Context, _ ...certs.TLSOptions) (*tls.Config, error) {
 	rootCAs, e := f.RootCAs(ctx)
 	if e != nil {
 		return nil, e
@@ -38,8 +38,8 @@ func (f *FileProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions)
 	}, nil
 }
 
-func (f *FileProvider) Files(_ context.Context) (*tlsconfig.CertificateFiles, error) {
-	return &tlsconfig.CertificateFiles{
+func (f *FileProvider) Files(_ context.Context) (*certs.CertificateFiles, error) {
+	return &certs.CertificateFiles{
 		RootCAPaths:          []string{f.toAbsPath(f.p.CACertFile)},
 		CertificatePath:      f.toAbsPath(f.p.CertFile),
 		PrivateKeyPath:       f.toAbsPath(f.p.KeyFile),

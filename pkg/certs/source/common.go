@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"encoding/json"
 	"errors"
@@ -24,7 +24,7 @@ var tlsVersions = map[string]uint16{
 
 var logger = log.New("TLS.Config")
 
-func NewFactory[PropertiesType any](typ tlsconfig.SourceType, rawDefaultConfig json.RawMessage, constructor func(props PropertiesType) tlsconfig.Source) (*GenericFactory[PropertiesType], error) {
+func NewFactory[PropertiesType any](typ certs.SourceType, rawDefaultConfig json.RawMessage, constructor func(props PropertiesType) certs.Source) (*GenericFactory[PropertiesType], error) {
 	var zero PropertiesType
 	defaults, e := ParseConfigWithDefaults(zero, rawDefaultConfig)
 	if e != nil {
@@ -41,17 +41,17 @@ func NewFactory[PropertiesType any](typ tlsconfig.SourceType, rawDefaultConfig j
 }
 
 type GenericFactory[PropertiesType any] struct {
-	SourceType tlsconfig.SourceType
-	Defaults PropertiesType
-	Constructor func(props PropertiesType) tlsconfig.Source
+	SourceType  certs.SourceType
+	Defaults    PropertiesType
+	Constructor func(props PropertiesType) certs.Source
 }
 
-func (f *GenericFactory[T]) Type() tlsconfig.SourceType {
+func (f *GenericFactory[T]) Type() certs.SourceType {
 	return f.SourceType
 }
 
-func (f *GenericFactory[T]) LoadAndInit(_ context.Context, opts ...tlsconfig.SourceOptions) (tlsconfig.Source, error) {
-	src := tlsconfig.SourceConfig{}
+func (f *GenericFactory[T]) LoadAndInit(_ context.Context, opts ...certs.SourceOptions) (certs.Source, error) {
+	src := certs.SourceConfig{}
 	for _, fn := range opts {
 		fn(&src)
 	}

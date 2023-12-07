@@ -1,4 +1,4 @@
-package tlsconfig
+package certs
 
 import (
 	"encoding/json"
@@ -35,8 +35,8 @@ type Properties struct {
 
 // SourceProperties convenient properties for other package to bind
 type SourceProperties struct {
-	Preset string `json:"preset"`
-	Raw json.RawMessage `json:"-"`
+	Preset string          `json:"preset"`
+	Raw    json.RawMessage `json:"-"`
 }
 
 func (p *SourceProperties) UnmarshalJSON(data []byte) error {
@@ -51,5 +51,9 @@ type FileCache struct {
 	Prefix  string `json:"prefix"`
 }
 
-
-
+func NewProperties() *Properties {
+	return &Properties{
+		Sources: map[SourceType]json.RawMessage{},
+		Presets: map[string]json.RawMessage{},
+	}
+}

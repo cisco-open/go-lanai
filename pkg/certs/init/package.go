@@ -1,13 +1,13 @@
-// Package tlsconfiginit
+// Package certsinit
 // Initialize certificate manager with various of certificate sources
-package tlsconfiginit
+package certsinit
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
-	acmcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/acm"
-	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/file"
-	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/vault"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
+	acmcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/acm"
+	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/file"
+	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/vault"
 	"fmt"
 	"go.uber.org/fx"
 )
@@ -35,12 +35,12 @@ func Use() {
 type mgrDI struct {
 	fx.In
 	AppCfg    bootstrap.ApplicationConfig
-	Props     tlsconfig.Properties
-	Factories []tlsconfig.SourceFactory `group:"certs"`
+	Props     certs.Properties
+	Factories []certs.SourceFactory `group:"certs"`
 }
 
-func ProvideDefaultManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
-	reg := tlsconfig.NewDefaultManager(func(mgr *tlsconfig.DefaultManager) {
+func ProvideDefaultManager(di mgrDI) (certs.Manager, certs.Registrar) {
+	reg := certs.NewDefaultManager(func(mgr *certs.DefaultManager) {
 		mgr.ConfigLoaderFunc = di.AppCfg.Bind
 		mgr.Properties = di.Props
 	})
@@ -53,10 +53,10 @@ func ProvideDefaultManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
 }
 
 // BindProperties create and bind SessionProperties, with a optional prefix
-func BindProperties(appCfg bootstrap.ApplicationConfig) tlsconfig.Properties {
-	var props tlsconfig.Properties
-	if e := appCfg.Bind(&props, PropertiesPrefix); e != nil {
+func BindProperties(appCfg bootstrap.ApplicationConfig) certs.Properties {
+	props := certs.NewProperties()
+	if e := appCfg.Bind(props, PropertiesPrefix); e != nil {
 		panic(fmt.Errorf("failed to bind certificate properties: %v", e))
 	}
-	return props
+	return *props
 }

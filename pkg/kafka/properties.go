@@ -3,7 +3,7 @@ package kafka
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
 	"strings"
@@ -48,8 +48,8 @@ type SASL struct {
 }
 
 type TLS struct {
-	Enable bool                       `json:"enabled"`
-	Config tlsconfig.SourceProperties `json:"config"`
+	Enable bool                   `json:"enabled"`
+	Config certs.SourceProperties `json:"config"`
 }
 
 type BinderProperties struct {

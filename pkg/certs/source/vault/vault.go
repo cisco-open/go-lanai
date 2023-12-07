@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
-	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
+	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"io"
@@ -28,7 +28,7 @@ type VaultProvider struct {
 	monitorCancel context.CancelFunc
 }
 
-func NewVaultProvider(lcCtx context.Context, vc *vault.Client, p SourceProperties) tlsconfig.Source {
+func NewVaultProvider(lcCtx context.Context, vc *vault.Client, p SourceProperties) certs.Source {
 	if lcCtx == nil {
 		lcCtx = context.Background()
 	}
@@ -40,7 +40,7 @@ func NewVaultProvider(lcCtx context.Context, vc *vault.Client, p SourcePropertie
 	}
 }
 
-func (v *VaultProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions) (*tls.Config, error) {
+func (v *VaultProvider) TLSConfig(ctx context.Context, _ ...certs.TLSOptions) (*tls.Config, error) {
 	if e := v.LazyInit(ctx); e != nil {
 		return nil, e
 	}
@@ -59,7 +59,7 @@ func (v *VaultProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions
 	}, nil
 }
 
-func (v *VaultProvider) Files(ctx context.Context) (*tlsconfig.CertificateFiles, error) {
+func (v *VaultProvider) Files(ctx context.Context) (*certs.CertificateFiles, error) {
 	if e := v.LazyInit(ctx); e != nil {
 		return nil, e
 	}
@@ -68,7 +68,7 @@ func (v *VaultProvider) Files(ctx context.Context) (*tlsconfig.CertificateFiles,
 	cafilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.CaSuffix
 	certfilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.CertSuffix
 	keyfilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.KeySuffix
-	return &tlsconfig.CertificateFiles{
+	return &certs.CertificateFiles{
 		RootCAPaths:          []string{cafilepath},
 		CertificatePath:      certfilepath,
 		PrivateKeyPath:       keyfilepath,

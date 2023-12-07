@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"errors"
 	"fmt"
@@ -33,8 +33,8 @@ type SaramaKafkaBinder struct {
 	producerInterceptors []ProducerMessageInterceptor
 	consumerInterceptors []ConsumerDispatchInterceptor
 	handlerInterceptors  []ConsumerHandlerInterceptor
-	monitor              *loop.Loop
-	tlsCertsManager      tlsconfig.Manager
+	monitor         *loop.Loop
+	tlsCertsManager certs.Manager
 
 	// TODO consider mutex lock for following fields
 	producers      map[string]BindingLifecycle
@@ -43,9 +43,9 @@ type SaramaKafkaBinder struct {
 
 	// following fields are protected by mutex lock
 	globalClient      sarama.Client
-	adminClient       sarama.ClusterAdmin
-	tlsSource         tlsconfig.Source
-	provisioner       *saramaTopicProvisioner
+	adminClient sarama.ClusterAdmin
+	tlsSource   certs.Source
+	provisioner *saramaTopicProvisioner
 	closed            bool
 	monitorCtx        context.Context
 	monitorCancelFunc context.CancelFunc
@@ -58,8 +58,8 @@ type BinderOption struct {
 	Properties           KafkaProperties
 	ProducerInterceptors []ProducerMessageInterceptor
 	ConsumerInterceptors []ConsumerDispatchInterceptor
-	HandlerInterceptors  []ConsumerHandlerInterceptor
-	TLSCertsManager      tlsconfig.Manager
+	HandlerInterceptors []ConsumerHandlerInterceptor
+	TLSCertsManager     certs.Manager
 }
 
 func NewBinder(ctx context.Context, opts ...BinderOptions) *SaramaKafkaBinder {
@@ -252,7 +252,7 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context) (err error) {
 				err = fmt.Errorf("failed to initialize Binder: TLS Auth is enabled but certificate manager is not provisioned")
 				return
 			}
-			b.tlsSource, err = b.tlsCertsManager.Source(ctx, tlsconfig.WithSourceProperties(&b.properties.Net.Tls.Config))
+			b.tlsSource, err = b.tlsCertsManager.Source(ctx, certs.WithSourceProperties(&b.properties.Net.Tls.Config))
 			if err != nil {
 				logger.WithContext(ctx).Errorf("failed to get tls provider: %s", err.Error())
 				return

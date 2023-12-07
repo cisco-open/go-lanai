@@ -3,7 +3,7 @@ package opensearch
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"errors"
@@ -89,7 +89,7 @@ func NewClient(di newClientDI) (OpenClient, error) {
 type configDI struct {
 	fx.In
 	Properties      *Properties
-	TLSCertsManager tlsconfig.Manager `optional:"true"`
+	TLSCertsManager certs.Manager `optional:"true"`
 }
 
 func NewConfig(ctx *bootstrap.ApplicationContext, di configDI) (opensearch.Config, error) {
@@ -103,7 +103,7 @@ func NewConfig(ctx *bootstrap.ApplicationContext, di configDI) (opensearch.Confi
 		if di.TLSCertsManager == nil {
 			return conf, fmt.Errorf("TLS is enabled of OpenSearch, but certificate manager is not initialized")
 		}
-		tlsSrc, err := di.TLSCertsManager.Source(ctx, tlsconfig.WithSourceProperties(&di.Properties.TLS.Config))
+		tlsSrc, err := di.TLSCertsManager.Source(ctx, certs.WithSourceProperties(&di.Properties.TLS.Config))
 		if err != nil {
 			return conf, err
 		}

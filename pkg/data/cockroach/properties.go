@@ -2,7 +2,7 @@ package cockroach
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"github.com/pkg/errors"
 )
 
@@ -22,8 +22,8 @@ type CockroachProperties struct {
 }
 
 type TLS struct {
-	Enable bool                       `json:"enabled"`
-	Config tlsconfig.SourceProperties `json:"config"`
+	Enable bool                   `json:"enabled"`
+	Config certs.SourceProperties `json:"config"`
 }
 
 // NewCockroachProperties create a CockroachProperties with default values

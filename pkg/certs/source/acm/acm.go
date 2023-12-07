@@ -6,8 +6,8 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
-	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
+	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"encoding/pem"
 	"github.com/aws/aws-sdk-go/aws"
@@ -29,7 +29,7 @@ type AcmProvider struct {
 	monitorCancel     context.CancelFunc
 }
 
-func NewAcmProvider(acm acmiface.ACMAPI, p SourceProperties) tlsconfig.Source {
+func NewAcmProvider(acm acmiface.ACMAPI, p SourceProperties) certs.Source {
 	return &AcmProvider{
 		props:     p,
 		acmClient: acm,
@@ -41,7 +41,7 @@ func (a *AcmProvider) Close() error {
 	return nil
 }
 
-func (a *AcmProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions) (*tls.Config, error) {
+func (a *AcmProvider) TLSConfig(ctx context.Context, _ ...certs.TLSOptions) (*tls.Config, error) {
 	if e := a.LazyInit(ctx); e != nil {
 		return nil, e
 	}
@@ -60,7 +60,7 @@ func (a *AcmProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions) 
 	}, nil
 }
 
-func (a *AcmProvider) Files(ctx context.Context) (*tlsconfig.CertificateFiles, error) {
+func (a *AcmProvider) Files(ctx context.Context) (*certs.CertificateFiles, error) {
 	if e := a.LazyInit(ctx); e != nil {
 		return nil, e
 	}
@@ -68,7 +68,7 @@ func (a *AcmProvider) Files(ctx context.Context) (*tlsconfig.CertificateFiles, e
 	cafilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CaSuffix
 	certfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CertSuffix
 	keyfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.KeySuffix
-	return &tlsconfig.CertificateFiles{
+	return &certs.CertificateFiles{
 		RootCAPaths:          []string{cafilepath},
 		CertificatePath:      certfilepath,
 		PrivateKeyPath:       keyfilepath,

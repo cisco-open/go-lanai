@@ -5,13 +5,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
-	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/vault"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
+	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/vault"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	vaultinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"fmt"
 	"go.uber.org/fx"
 	"os"
 	"testing"
@@ -22,11 +23,15 @@ import . "github.com/onsi/gomega"
 type mgrDI struct {
 	fx.In
 	AppCfg bootstrap.ApplicationConfig
-	Factories []tlsconfig.SourceFactory `group:"certs"`
+	Props     certs.Properties
+	Factories []certs.SourceFactory `group:"certs"`
 }
 
-func ProvideTestManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
-	reg := tlsconfig.NewDefaultManager(di.AppCfg.Bind)
+func ProvideTestManager(di mgrDI) (certs.Manager, certs.Registrar) {
+	reg := certs.NewDefaultManager(func(mgr *certs.DefaultManager) {
+		mgr.ConfigLoaderFunc = di.AppCfg.Bind
+		mgr.Properties = di.Props
+	})
 	for _, f := range di.Factories {
 		if f != nil {
 			reg.MustRegister(f)
@@ -35,10 +40,18 @@ func ProvideTestManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
 	return reg, reg
 }
 
+func BindTestProperties(appCfg bootstrap.ApplicationConfig) certs.Properties {
+	props := certs.NewProperties()
+	if e := appCfg.Bind(props, "tls"); e != nil {
+		panic(fmt.Errorf("failed to bind certificate properties: %v", e))
+	}
+	return *props
+}
+
 type VaultTestDi struct {
 	fx.In
-	Manager         tlsconfig.Manager
-	VaultClient     *vault.Client
+	Manager     certs.Manager
+	VaultClient *vault.Client
 }
 
 // This test assumes your vault has PKI backend enabled (i.e. vault secrets enable pki)
@@ -50,7 +63,7 @@ func TestVaultProvider(t *testing.T) {
 		apptest.WithDI(di),
 		apptest.WithModules(vaultinit.Module),
 		apptest.WithFxOptions(
-			fx.Provide(tlsconfig.BindProperties, ProvideTestManager, vaultcerts.FxProvider()),
+			fx.Provide(ProvideTestManager, BindTestProperties, vaultcerts.FxProvider()),
 		),
 		test.SubTestSetup(SubTestSetupSubmitCA(di)),
 		test.GomegaSubTest(SubTestVaultProvider(di), "SubTestVaultProvider"),
@@ -80,7 +93,7 @@ func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
 			MinRenewInterval: utils.Duration(2 * time.Second),
 		}
 
-		tlsSrc, err := di.Manager.Source(ctx, tlsconfig.WithType(tlsconfig.SourceVault, p))
+		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceVault, p))
 		g.Expect(err).NotTo(HaveOccurred())
 
 		tlsCfg, err := tlsSrc.TLSConfig(ctx)

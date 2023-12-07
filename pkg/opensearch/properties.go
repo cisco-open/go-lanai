@@ -2,7 +2,7 @@ package opensearch
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"embed"
 	"github.com/pkg/errors"
 )
@@ -22,8 +22,8 @@ type Properties struct {
 }
 
 type TLS struct {
-	Enable bool                       `json:"enable"`
-	Config tlsconfig.SourceProperties `json:"config"`
+	Enable bool                   `json:"enable"`
+	Config certs.SourceProperties `json:"config"`
 }
 
 func NewOpenSearchProperties() *Properties {

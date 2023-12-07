@@ -2,7 +2,7 @@ package redis
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
@@ -62,12 +62,12 @@ func withDB(dbIndex int) ConnOptions {
 	}
 }
 
-func withTLS(ctx context.Context, certsMgr tlsconfig.Manager, p *tlsconfig.SourceProperties) ConnOptions {
+func withTLS(ctx context.Context, certsMgr certs.Manager, p *certs.SourceProperties) ConnOptions {
 	return func(opt *redis.UniversalOptions) error {
 		if certsMgr == nil {
 			return fmt.Errorf("TLS auth is enabled for Redis, but certificate manager is not available")
 		}
-		src, err := certsMgr.Source(ctx, tlsconfig.WithSourceProperties(p))
+		src, err := certsMgr.Source(ctx, certs.WithSourceProperties(p))
 		if err != nil {
 			return errors.Wrapf(err, "failed to initialize redis connection: %v", err)
 		}

@@ -2,7 +2,7 @@ package redis
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
@@ -39,13 +39,13 @@ type clientFactory struct {
 	properties   RedisProperties
 	hooks        []redis.Hook
 	clients      map[ClientOption]clientRecord
-	certsManager tlsconfig.Manager
+	certsManager certs.Manager
 }
 
 type FactoryOptions func(opt *FactoryOption)
 type FactoryOption struct {
 	Properties      RedisProperties
-	TLSCertsManager tlsconfig.Manager
+	TLSCertsManager certs.Manager
 }
 
 func NewClientFactory(opts...FactoryOptions) ClientFactory {

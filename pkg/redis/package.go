@@ -3,7 +3,7 @@ package redis
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"go.uber.org/fx"
 )
 
@@ -26,8 +26,8 @@ func Use() {
 
 type factoryDI struct {
 	fx.In
-	Props RedisProperties
-	CertManager tlsconfig.Manager `optional:"true"`
+	Props       RedisProperties
+	CertManager certs.Manager `optional:"true"`
 }
 
 func provideClientFactory(di factoryDI) ClientFactory {

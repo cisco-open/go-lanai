@@ -4,8 +4,8 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"go.uber.org/fx"
 )
 
@@ -35,7 +35,7 @@ type binderDI struct {
 	ProducerInterceptors []ProducerMessageInterceptor  `group:"kafka"`
 	ConsumerInterceptors []ConsumerDispatchInterceptor `group:"kafka"`
 	HandlerInterceptors  []ConsumerHandlerInterceptor  `group:"kafka"`
-	TLSCertsManager      tlsconfig.Manager
+	TLSCertsManager      certs.Manager                 `optional:"true"`
 }
 
 func ProvideKafkaBinder(di binderDI) Binder {

@@ -2,7 +2,7 @@ package cockroach
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"fmt"
 	"go.uber.org/fx"
 	"gorm.io/driver/postgres"
@@ -26,8 +26,8 @@ const (
 type initDI struct {
 	fx.In
 	AppContext  *bootstrap.ApplicationContext
-	Properties  CockroachProperties
-	CertsManager tlsconfig.Manager `optional:"true"`
+	Properties   CockroachProperties
+	CertsManager certs.Manager `optional:"true"`
 }
 
 func NewGormDialetor(di initDI) gorm.Dialector {
@@ -40,7 +40,7 @@ func NewGormDialetor(di initDI) gorm.Dialector {
 	}
 	// Setup TLS properties
 	if di.Properties.Tls.Enable && di.CertsManager != nil {
-		source, e := di.CertsManager.Source(di.AppContext, tlsconfig.WithSourceProperties(&di.Properties.Tls.Config))
+		source, e := di.CertsManager.Source(di.AppContext, certs.WithSourceProperties(&di.Properties.Tls.Config))
 		if e == nil {
 			certFiles, e := source.Files(di.AppContext)
 			if e == nil {

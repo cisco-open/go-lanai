@@ -2,7 +2,7 @@ package redis
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
 	"time"
@@ -59,8 +59,8 @@ type RedisProperties struct {
 }
 
 type TLSProperties struct {
-	Enabled bool                       `json:"enabled"`
-	Config  tlsconfig.SourceProperties `json:"config"`
+	Enabled bool                   `json:"enabled"`
+	Config  certs.SourceProperties `json:"config"`
 }
 
 func BindRedisProperties(ctx *bootstrap.ApplicationContext) RedisProperties {

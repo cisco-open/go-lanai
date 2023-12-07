@@ -1,6 +1,6 @@
 // Package tlsconfig
 // This is an internal package. Do not use outside of go-lanai
-package tlsconfig
+package certs
 
 import (
 	"context"

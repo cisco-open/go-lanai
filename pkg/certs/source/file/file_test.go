@@ -5,10 +5,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
-	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/file"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
+	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/file"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"fmt"
 	"go.uber.org/fx"
 	"os"
 	"testing"
@@ -17,12 +18,16 @@ import . "github.com/onsi/gomega"
 
 type mgrDI struct {
 	fx.In
-	AppCfg bootstrap.ApplicationConfig
-	Factories []tlsconfig.SourceFactory `group:"certs"`
+	AppCfg    bootstrap.ApplicationConfig
+	Props     certs.Properties
+	Factories []certs.SourceFactory `group:"certs"`
 }
 
-func ProvideTestManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
-	reg := tlsconfig.NewDefaultManager(di.AppCfg.Bind)
+func ProvideTestManager(di mgrDI) (certs.Manager, certs.Registrar) {
+	reg := certs.NewDefaultManager(func(mgr *certs.DefaultManager) {
+		mgr.ConfigLoaderFunc = di.AppCfg.Bind
+		mgr.Properties = di.Props
+	})
 	for _, f := range di.Factories {
 		if f != nil {
 			reg.MustRegister(f)
@@ -31,9 +36,17 @@ func ProvideTestManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
 	return reg, reg
 }
 
+func BindTestProperties(appCfg bootstrap.ApplicationConfig) certs.Properties {
+	props := certs.NewProperties()
+	if e := appCfg.Bind(props, "tls"); e != nil {
+		panic(fmt.Errorf("failed to bind certificate properties: %v", e))
+	}
+	return *props
+}
+
 type FileTestDi struct {
 	fx.In
-	CertsManager tlsconfig.Manager
+	CertsManager certs.Manager
 }
 
 func TestFileCertificateSource(t *testing.T) {
@@ -42,7 +55,7 @@ func TestFileCertificateSource(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
-			fx.Provide(tlsconfig.BindProperties, ProvideTestManager, filecerts.FxProvider()),
+			fx.Provide(ProvideTestManager, BindTestProperties, filecerts.FxProvider()),
 		),
 		test.GomegaSubTest(SubTestTLSConfig(di), "SubTestTLSConfig"),
 		test.GomegaSubTest(SubTestFiles(di), "TestFiles"),
@@ -58,7 +71,7 @@ func SubTestTLSConfig(di *FileTestDi) test.GomegaSubTestFunc {
 			KeyPass:    "foobar",
 		}
 
-		tlsSrc, err := di.CertsManager.Source(ctx, tlsconfig.WithType(tlsconfig.SourceFile, p))
+		tlsSrc, err := di.CertsManager.Source(ctx, certs.WithType(certs.SourceFile, p))
 		g.Expect(err).NotTo(HaveOccurred())
 
 		tlsCfg, err := tlsSrc.TLSConfig(ctx)
@@ -116,7 +129,7 @@ func SubTestFiles(di *FileTestDi) test.GomegaSubTestFunc {
 			KeyPass:    "foobar",
 		}
 
-		tlsSrc, err := di.CertsManager.Source(ctx, tlsconfig.WithType(tlsconfig.SourceFile, p))
+		tlsSrc, err := di.CertsManager.Source(ctx, certs.WithType(certs.SourceFile, p))
 		g.Expect(err).NotTo(HaveOccurred())
 
 		tlsFiles, err := tlsSrc.Files(ctx)
