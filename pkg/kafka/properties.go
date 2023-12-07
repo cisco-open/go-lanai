@@ -48,8 +48,8 @@ type SASL struct {
 }
 
 type TLS struct {
-	Enable bool                 `json:"enabled"`
-	Config tlsconfig.Properties `json:"config"`
+	Enable bool                       `json:"enabled"`
+	Config tlsconfig.SourceProperties `json:"config"`
 }
 
 type BinderProperties struct {

@@ -22,8 +22,8 @@ type Properties struct {
 }
 
 type TLS struct {
-	Enable bool                 `json:"enable"`
-	Config tlsconfig.Properties `json:"config"`
+	Enable bool                       `json:"enable"`
+	Config tlsconfig.SourceProperties `json:"config"`
 }
 
 func NewOpenSearchProperties() *Properties {

@@ -69,10 +69,9 @@ func (v *VaultProvider) Files(ctx context.Context) (*tlsconfig.CertificateFiles,
 	certfilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.CertSuffix
 	keyfilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.KeySuffix
 	return &tlsconfig.CertificateFiles{
-		RootCAPaths:           []string{cafilepath},
-		ClientCertificatePath: certfilepath,
-		ClientKeyPath:         keyfilepath,
-		ClientKeyPassphrase:   "",
+		RootCAPaths:          []string{cafilepath},
+		CertificatePath:      certfilepath,
+		PrivateKeyPath:       keyfilepath,
 	}, nil
 }
 
@@ -110,6 +109,8 @@ func (v *VaultProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	return certPool, nil
 }
 
+// GetMinTlsVersion
+// Deprecated
 func (v *VaultProvider) GetMinTlsVersion() (uint16, error) {
 	return certsource.ParseTLSVersion(v.p.MinTLSVersion)
 }

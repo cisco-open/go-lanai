@@ -25,7 +25,6 @@ const (
 
 // Use Allow service to include this module in main()
 func Use() {
-	bootstrap.Register(tlsconfig.Module)
 	bootstrap.Register(Module)
 }
 
@@ -36,7 +35,7 @@ type binderDI struct {
 	ProducerInterceptors []ProducerMessageInterceptor  `group:"kafka"`
 	ConsumerInterceptors []ConsumerDispatchInterceptor `group:"kafka"`
 	HandlerInterceptors  []ConsumerHandlerInterceptor  `group:"kafka"`
-	TlsProviderFactory   *tlsconfig.ProviderFactory
+	TLSCertsManager      tlsconfig.Manager
 }
 
 func ProvideKafkaBinder(di binderDI) Binder {
@@ -47,7 +46,7 @@ func ProvideKafkaBinder(di binderDI) Binder {
 			ProducerInterceptors: append(opt.ProducerInterceptors, di.ProducerInterceptors...),
 			ConsumerInterceptors: append(opt.ConsumerInterceptors, di.ConsumerInterceptors...),
 			HandlerInterceptors:  append(opt.HandlerInterceptors, di.HandlerInterceptors...),
-			TlsProviderFactory:   di.TlsProviderFactory,
+			TLSCertsManager:      di.TLSCertsManager,
 		}
 	})
 }
@@ -68,7 +67,9 @@ func initialize(di initDI) {
 			//nolint:contextcheck // intentional, given context is cancelled after bootstrap, AppCtx is cancelled when app close
 			return di.Binder.(BinderLifecycle).Start(di.AppCtx)
 		},
-		OnStop: di.Binder.(BinderLifecycle).Shutdown,
+		OnStop: func(ctx context.Context) error {
+			return di.Binder.(BinderLifecycle).Shutdown(ctx)
+		},
 	})
 
 	// register health endpoints if applicable

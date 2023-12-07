@@ -4,27 +4,39 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
-	tlsconfiginit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/init"
 	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/vault"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	vaultinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"errors"
-	"fmt"
 	"go.uber.org/fx"
-	"net/http"
 	"os"
 	"testing"
 	"time"
 )
 import . "github.com/onsi/gomega"
 
+type mgrDI struct {
+	fx.In
+	AppCfg bootstrap.ApplicationConfig
+	Factories []tlsconfig.SourceFactory `group:"certs"`
+}
+
+func ProvideTestManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
+	reg := tlsconfig.NewDefaultManager(di.AppCfg.Bind)
+	for _, f := range di.Factories {
+		if f != nil {
+			reg.MustRegister(f)
+		}
+	}
+	return reg, reg
+}
+
 type VaultTestDi struct {
 	fx.In
-	ProviderFactory *tlsconfig.ProviderFactory
 	Manager         tlsconfig.Manager
 	VaultClient     *vault.Client
 }
@@ -36,9 +48,9 @@ func TestVaultProvider(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		apptest.WithDI(di),
-		apptest.WithModules(tlsconfiginit.Module, vaultinit.Module),
+		apptest.WithModules(vaultinit.Module),
 		apptest.WithFxOptions(
-			fx.Invoke(vaultcerts.Register),
+			fx.Provide(tlsconfig.BindProperties, ProvideTestManager, vaultcerts.FxProvider()),
 		),
 		test.SubTestSetup(SubTestSetupSubmitCA(di)),
 		test.GomegaSubTest(SubTestVaultProvider(di), "SubTestVaultProvider"),
@@ -53,14 +65,7 @@ func SubTestSetupSubmitCA(di *VaultTestDi) test.SetupFunc {
 		}
 		r := di.VaultClient.NewRequest("POST", "/v1/pki/config/ca")
 		r.BodyBytes = data
-		resp, err := di.VaultClient.RawRequestWithContext(ctx, r)
-		if err != nil {
-			return ctx, err
-		}
-		if resp.StatusCode != http.StatusNoContent {
-			return ctx, errors.New(fmt.Sprintf("could not submit ca to vault, vault responded with %s", resp.Status))
-		}
-
+		_, err = di.VaultClient.Logical(ctx).WriteBytesWithContext(ctx, "/pki/config/ca", data)
 		return ctx, err
 	}
 }
@@ -75,23 +80,19 @@ func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
 			MinRenewInterval: utils.Duration(2 * time.Second),
 		}
 
-		provider, err := di.Manager.Provider(ctx, func(opt *tlsconfig.Option) {
-			opt.Type = tlsconfig.SourceVault
-			opt.RawConfig = p
-		})
+		tlsSrc, err := di.Manager.Source(ctx, tlsconfig.WithType(tlsconfig.SourceVault, p))
 		g.Expect(err).NotTo(HaveOccurred())
 
-		caPool, err := provider.RootCAs(ctx)
+		tlsCfg, err := tlsSrc.TLSConfig(ctx)
 		g.Expect(err).NotTo(HaveOccurred())
-		g.Expect(len(caPool.Subjects())).To(Equal(1))
-
-		getClientCert, err := provider.GetClientCertificate(ctx)
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(tlsCfg.RootCAs).ToNot(BeNil())
+		g.Expect(tlsCfg.RootCAs.Subjects()).ToNot(BeEmpty())
+		g.Expect(tlsCfg.RootCAs).ToNot(BeNil())
 
 		//try with the ca that the cert is signed with
 		// the signature scheme and version is captured from a kafka broker that uses tls connection.
 		certReqInfo := &tls.CertificateRequestInfo{
-			AcceptableCAs: caPool.Subjects(),
+			AcceptableCAs: tlsCfg.RootCAs.Subjects(),
 			SignatureSchemes: []tls.SignatureScheme{
 				tls.ECDSAWithP256AndSHA256,
 				tls.ECDSAWithP384AndSHA384,
@@ -110,7 +111,7 @@ func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
 			},
 			Version: 772,
 		}
-		clientCert, err := getClientCert(certReqInfo)
+		clientCert, err := tlsCfg.GetClientCertificate(certReqInfo)
 		g.Expect(err).NotTo(HaveOccurred())
 		g.Expect(clientCert).NotTo(BeNil())
 		g.Expect(len(clientCert.Certificate)).To(Equal(1))
@@ -126,7 +127,7 @@ func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
 		//Sleep for 15 seconds, so the original cert is expired
 		//we expect the renew process to kick in and got a new cert
 		time.Sleep(13 * time.Second)
-		clientCert, err = getClientCert(certReqInfo)
+		clientCert, err = tlsCfg.GetClientCertificate(certReqInfo)
 		g.Expect(err).NotTo(HaveOccurred())
 		g.Expect(clientCert).NotTo(BeNil())
 		g.Expect(len(clientCert.Certificate)).To(Equal(1))
@@ -144,7 +145,7 @@ func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
 		anotherCaPool.AppendCertsFromPEM(anotherCa)
 
 		certReqInfo.AcceptableCAs = anotherCaPool.Subjects()
-		clientCert, err = getClientCert(certReqInfo)
+		clientCert, err = tlsCfg.GetClientCertificate(certReqInfo)
 		g.Expect(err).NotTo(HaveOccurred())
 		g.Expect(len(clientCert.Certificate)).To(Equal(0))
 	}

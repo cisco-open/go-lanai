@@ -38,7 +38,7 @@ type mgrDI struct {
 }
 
 func ProvideDefaultManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
-	reg := tlsconfig.NewDefaultManager(di.AppCfg)
+	reg := tlsconfig.NewDefaultManager(di.AppCfg.Bind)
 	for _, f := range di.Factories {
 		if f != nil {
 			reg.MustRegister(f)

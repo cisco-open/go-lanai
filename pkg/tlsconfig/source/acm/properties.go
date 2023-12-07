@@ -6,9 +6,9 @@ import (
 )
 
 type SourceProperties struct {
-	MinTLSVersion string `json:"min-version"`
-	ARN           string `json:"arn"`
-	Passphrase    string `json:"passphrase"`
+	MinTLSVersion    string              `json:"min-version"`
+	ARN              string              `json:"arn"`
+	Passphrase       string              `json:"passphrase"`
 	MinRenewInterval utils.Duration      `json:"min-renew-interval"`
 	FileCache        tlsconfig.FileCache `json:"file-cache"`
 }

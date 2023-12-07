@@ -40,18 +40,20 @@ func (f *FileProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions)
 
 func (f *FileProvider) Files(_ context.Context) (*tlsconfig.CertificateFiles, error) {
 	return &tlsconfig.CertificateFiles{
-		RootCAPaths:           []string{f.toAbsPath(f.p.CACertFile)},
-		ClientCertificatePath: f.toAbsPath(f.p.CertFile),
-		ClientKeyPath:         f.toAbsPath(f.p.KeyFile),
-		ClientKeyPassphrase:   f.p.KeyPass,
+		RootCAPaths:          []string{f.toAbsPath(f.p.CACertFile)},
+		CertificatePath:      f.toAbsPath(f.p.CertFile),
+		PrivateKeyPath:       f.toAbsPath(f.p.KeyFile),
+		PrivateKeyPassphrase: f.p.KeyPass,
 	}, nil
 }
 
+// GetClientCertificate
+// Deprecated
 func (f *FileProvider) GetClientCertificate(_ context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
 	return f.toGetClientCertificateFunc(), nil
 }
 
-func (f *FileProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
+func (f *FileProvider) RootCAs(_ context.Context) (*x509.CertPool, error) {
 	caPem, err := os.ReadFile(f.p.CACertFile)
 	if err != nil {
 		return nil, err
@@ -61,10 +63,14 @@ func (f *FileProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	return certPool, nil
 }
 
+// GetMinTlsVersion
+// Deprecated
 func (f *FileProvider) GetMinTlsVersion() (uint16, error) {
 	return certsource.ParseTLSVersion(f.p.MinTLSVersion)
 }
 
+// Close
+// Deprecated
 func (f *FileProvider) Close() error {
 	return nil
 }

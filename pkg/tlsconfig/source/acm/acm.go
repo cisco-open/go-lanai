@@ -42,15 +42,41 @@ func (a *AcmProvider) Close() error {
 }
 
 func (a *AcmProvider) TLSConfig(ctx context.Context, _ ...tlsconfig.TLSOptions) (*tls.Config, error) {
-	//TODO
-	panic("not implemented")
+	if e := a.LazyInit(ctx); e != nil {
+		return nil, e
+	}
+	rootCAs, e := a.RootCAs(ctx)
+	if e != nil {
+		return nil, e
+	}
+	minVer, e := certsource.ParseTLSVersion(a.props.MinTLSVersion)
+	if e != nil {
+		return nil, e
+	}
+	return &tls.Config{
+		GetClientCertificate: a.toGetClientCertificateFunc(),
+		RootCAs:              rootCAs,
+		MinVersion:           minVer,
+	}, nil
 }
 
 func (a *AcmProvider) Files(ctx context.Context) (*tlsconfig.CertificateFiles, error) {
-	//TODO
-	panic("not implemented")
+	if e := a.LazyInit(ctx); e != nil {
+		return nil, e
+	}
+	// TODO generalize this impl
+	cafilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CaSuffix
+	certfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CertSuffix
+	keyfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.KeySuffix
+	return &tlsconfig.CertificateFiles{
+		RootCAPaths:          []string{cafilepath},
+		CertificatePath:      certfilepath,
+		PrivateKeyPath:       keyfilepath,
+	}, nil
 }
 
+// GetMinTlsVersion
+// Deprecated
 func (a *AcmProvider) GetMinTlsVersion() (uint16, error) {
 	return certsource.ParseTLSVersion(a.props.MinTLSVersion)
 }
@@ -79,9 +105,21 @@ func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	return certPool, nil
 }
 
+// GetClientCertificate
+// Deprecated
 func (a *AcmProvider) GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
+	if e := a.LazyInit(ctx); e != nil {
+		return nil, e
+	}
+	return a.toGetClientCertificateFunc(), nil
+
+}
+
+func (a *AcmProvider) LazyInit(ctx context.Context) error {
+	var err error
 	a.once.Do(func() {
-		cert, err := a.generateClientCertificate(ctx)
+		var cert *tls.Certificate
+		cert, err = a.generateClientCertificate(ctx)
 		if err != nil {
 			logger.Errorf("Failed to get certificate from ACM: %s", err.Error())
 			return
@@ -98,6 +136,10 @@ func (a *AcmProvider) GetClientCertificate(ctx context.Context) (func(*tls.Certi
 			})
 		})
 	})
+	return err
+}
+
+func (a *AcmProvider) toGetClientCertificateFunc() func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 	return func(certificateReq *tls.CertificateRequestInfo) (*tls.Certificate, error) {
 		a.mutex.RLock()
 		defer a.mutex.RUnlock()
@@ -112,8 +154,7 @@ func (a *AcmProvider) GetClientCertificate(ctx context.Context) (func(*tls.Certi
 		} else {
 			return a.cachedCertificate, nil
 		}
-	}, nil
-
+	}
 }
 
 func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certificate, error) {
@@ -175,7 +216,7 @@ func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certi
 	return &cert, nil
 }
 
-func (a *AcmProvider) renewClientCertificate(ctx context.Context) error {
+func (a *AcmProvider) renewClientCertificate(_ context.Context) error {
 	input := &awsacm.RenewCertificateInput{
 		CertificateArn: aws.String(a.props.ARN),
 	}

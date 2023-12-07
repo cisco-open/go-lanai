@@ -37,6 +37,18 @@ type Properties struct {
 	Presets map[string]json.RawMessage     `json:"presets"`
 }
 
+// SourceProperties convenient properties for other package to bind
+type SourceProperties struct {
+	Preset string `json:"preset"`
+	Raw json.RawMessage `json:"-"`
+}
+
+func (p *SourceProperties) UnmarshalJSON(data []byte) error {
+	p.Raw = data
+	type props SourceProperties
+	return json.Unmarshal(data, (*props)(p))
+}
+
 type FileCache struct {
 	Enabled bool   `json:"enabled"`
 	Path    string `json:"path"`
@@ -51,3 +63,5 @@ func BindProperties(appCfg bootstrap.ApplicationConfig) Properties {
 	}
 	return props
 }
+
+

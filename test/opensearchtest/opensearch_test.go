@@ -2,7 +2,6 @@ package opensearchtest
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"fmt"
 	"net/http"
 	"testing"
@@ -56,7 +55,7 @@ func TestScopeController(t *testing.T) {
 			SetRecordDelay(time.Millisecond*1500),
 		),
 		apptest.WithTimeout(time.Minute),
-		apptest.WithModules(opensearch.Module, tlsconfig.Module),
+		apptest.WithModules(opensearch.Module),
 		apptest.WithFxOptions(
 			fx.Provide(NewFakeService),
 		),

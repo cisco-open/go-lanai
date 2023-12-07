@@ -20,6 +20,7 @@ const (
 	dsKeySslRootCert = "sslrootcert"
 	dsKeySslCert     = "sslcert"
 	dsKeySslKey      = "sslkey"
+	dsKeySslKeyPass  = "sslpassword "
 )
 
 type initDI struct {
@@ -39,17 +40,16 @@ func NewGormDialetor(di initDI) gorm.Dialector {
 	}
 	// Setup TLS properties
 	if di.Properties.Tls.Enable && di.CertsManager != nil {
-		source, e := di.CertsManager.Source(di.AppContext, func(opt *tlsconfig.Option) {
-			// TODO review this
-			opt.ConfigPath = CockroachPropertiesPrefix + ".tls.config"
-		})
+		source, e := di.CertsManager.Source(di.AppContext, tlsconfig.WithSourceProperties(&di.Properties.Tls.Config))
 		if e == nil {
 			certFiles, e := source.Files(di.AppContext)
 			if e == nil {
 				options[dsKeySslRootCert] = strings.Join(certFiles.RootCAPaths, " ")
-				options[dsKeySslCert] = certFiles.ClientCertificatePath
-				options[dsKeySslKey] = certFiles.ClientKeyPath
-				// TODO key passphrase?
+				options[dsKeySslCert] = certFiles.CertificatePath
+				options[dsKeySslKey] = certFiles.PrivateKeyPath
+				if len(certFiles.PrivateKeyPassphrase) != 0 {
+					options[dsKeySslKeyPass] = certFiles.PrivateKeyPassphrase
+				}
 			}
 		} else {
 			logger.Errorf("Failed to provision TLS certificates: %v", e)

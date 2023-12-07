@@ -26,7 +26,8 @@ func TestAwsSessionFactoryImpl_New(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &acm.ACM{}, result)
 	bctx := bootstrap.NewApplicationContext()
-	acmclient := newDefaultClient(bctx, factory)
+	acmclient, e := newDefaultClient(bctx, factory)
+	assert.Nil(t, e)
 	assert.NotNil(t, acmclient)
 
 	factory = NewAwsAcmFactory(
@@ -44,6 +45,7 @@ func TestAwsSessionFactoryImpl_New(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &acm.ACM{}, result)
 	bctx = bootstrap.NewApplicationContext()
-	acmclient = newDefaultClient(bctx, factory)
+	acmclient, e = newDefaultClient(bctx, factory)
+	assert.Nil(t, e)
 	assert.NotNil(t, acmclient)
 }

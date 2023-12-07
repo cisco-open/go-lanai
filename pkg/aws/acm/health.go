@@ -4,13 +4,14 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"github.com/aws/aws-sdk-go/service/acm"
+	"github.com/aws/aws-sdk-go/service/acm/acmiface"
 	"go.uber.org/fx"
 )
 
 type regDI struct {
 	fx.In
 	HealthRegistrar health.Registrar `optional:"true"`
-	AcmClient       AcmClient
+	AcmClient       acmiface.ACMAPI
 }
 
 func registerHealth(di regDI) {
@@ -24,7 +25,7 @@ func registerHealth(di regDI) {
 
 // AwsHealthIndicator
 type AcmHealthIndicator struct {
-	AcmClient AcmClient
+	AcmClient acmiface.ACMAPI
 }
 
 func (i *AcmHealthIndicator) Name() string {
@@ -33,7 +34,7 @@ func (i *AcmHealthIndicator) Name() string {
 
 func (i *AcmHealthIndicator) Health(c context.Context, options health.Options) health.Health {
 	input := &acm.GetAccountConfigurationInput{}
-	if _, e := i.AcmClient.Client.GetAccountConfigurationWithContext(c, input); e != nil {
+	if _, e := i.AcmClient.GetAccountConfigurationWithContext(c, input); e != nil {
 		logger.WithContext(c).Errorf("AWS ACM connection not available or identity invalid: %v", e)
 		return health.NewDetailedHealth(health.StatusUnknown, "AWS ACM connection not available or identity invalid", nil)
 	} else {

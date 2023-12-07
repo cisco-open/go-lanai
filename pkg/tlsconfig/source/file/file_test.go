@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
-	tlsconfiginit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/init"
 	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig/source/file"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
@@ -15,48 +15,62 @@ import (
 )
 import . "github.com/onsi/gomega"
 
-type FileTestDi struct {
+type mgrDI struct {
 	fx.In
-	ProviderFactory *tlsconfig.ProviderFactory
+	AppCfg bootstrap.ApplicationConfig
+	Factories []tlsconfig.SourceFactory `group:"certs"`
 }
 
-func TestFileProvider(t *testing.T) {
+func ProvideTestManager(di mgrDI) (tlsconfig.Manager, tlsconfig.Registrar) {
+	reg := tlsconfig.NewDefaultManager(di.AppCfg.Bind)
+	for _, f := range di.Factories {
+		if f != nil {
+			reg.MustRegister(f)
+		}
+	}
+	return reg, reg
+}
+
+type FileTestDi struct {
+	fx.In
+	CertsManager tlsconfig.Manager
+}
+
+func TestFileCertificateSource(t *testing.T) {
 	di := &FileTestDi{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		apptest.WithDI(di),
-		apptest.WithModules(tlsconfiginit.Module),
 		apptest.WithFxOptions(
-			fx.Invoke(filecerts.FxProvider),
+			fx.Provide(tlsconfig.BindProperties, ProvideTestManager, filecerts.FxProvider()),
 		),
-		test.GomegaSubTest(SubTestFileProvider(di), "SubTestFileProvider"),
+		test.GomegaSubTest(SubTestTLSConfig(di), "SubTestTLSConfig"),
+		test.GomegaSubTest(SubTestFiles(di), "TestFiles"),
 	)
 }
 
-func SubTestFileProvider(di *FileTestDi) test.GomegaSubTestFunc {
+func SubTestTLSConfig(di *FileTestDi) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		p := tlsconfig.Properties{
-			Type:       "file",
+		p := filecerts.SourceProperties{
 			CACertFile: "testdata/ca-cert-test.pem",
 			CertFile:   "testdata/client-cert-signed-test.pem",
 			KeyFile:    "testdata/client-key-test.pem",
 			KeyPass:    "foobar",
 		}
 
-		provider, err := di.ProviderFactory.GetProvider(p)
+		tlsSrc, err := di.CertsManager.Source(ctx, tlsconfig.WithType(tlsconfig.SourceFile, p))
 		g.Expect(err).NotTo(HaveOccurred())
 
-		caPool, err := provider.RootCAs(ctx)
+		tlsCfg, err := tlsSrc.TLSConfig(ctx)
 		g.Expect(err).NotTo(HaveOccurred())
-		g.Expect(len(caPool.Subjects())).To(Equal(1))
-
-		getClientCert, err := provider.GetClientCertificate(ctx)
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(tlsCfg.RootCAs).ToNot(BeNil())
+		g.Expect(len(tlsCfg.RootCAs.Subjects())).To(Equal(1))
+		g.Expect(tlsCfg.GetClientCertificate).ToNot(BeNil())
 
 		//try with the ca that the cert is signed with
 		// the signature scheme and version is captured from a kafka broker that uses tls connection.
 		certReqInfo := &tls.CertificateRequestInfo{
-			AcceptableCAs: caPool.Subjects(),
+			AcceptableCAs: tlsCfg.RootCAs.Subjects(),
 			SignatureSchemes: []tls.SignatureScheme{
 				tls.ECDSAWithP256AndSHA256,
 				tls.ECDSAWithP384AndSHA384,
@@ -75,7 +89,7 @@ func SubTestFileProvider(di *FileTestDi) test.GomegaSubTestFunc {
 			},
 			Version: 772,
 		}
-		clientCert, err := getClientCert(certReqInfo)
+		clientCert, err := tlsCfg.GetClientCertificate(certReqInfo)
 		g.Expect(err).NotTo(HaveOccurred())
 		g.Expect(clientCert).NotTo(BeNil())
 		g.Expect(len(clientCert.Certificate)).To(Equal(1))
@@ -87,8 +101,29 @@ func SubTestFileProvider(di *FileTestDi) test.GomegaSubTestFunc {
 		anotherCaPool.AppendCertsFromPEM(anotherCa)
 
 		certReqInfo.AcceptableCAs = anotherCaPool.Subjects()
-		clientCert, err = getClientCert(certReqInfo)
+		clientCert, err = tlsCfg.GetClientCertificate(certReqInfo)
 		g.Expect(err).NotTo(HaveOccurred())
 		g.Expect(len(clientCert.Certificate)).To(Equal(0))
+	}
+}
+
+func SubTestFiles(di *FileTestDi) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *WithT) {
+		p := filecerts.SourceProperties{
+			CACertFile: "testdata/ca-cert-test.pem",
+			CertFile:   "testdata/client-cert-signed-test.pem",
+			KeyFile:    "testdata/client-key-test.pem",
+			KeyPass:    "foobar",
+		}
+
+		tlsSrc, err := di.CertsManager.Source(ctx, tlsconfig.WithType(tlsconfig.SourceFile, p))
+		g.Expect(err).NotTo(HaveOccurred())
+
+		tlsFiles, err := tlsSrc.Files(ctx)
+		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(tlsFiles.RootCAPaths).To(ContainElement(ContainSubstring("testdata/ca-cert-test.pem")))
+		g.Expect(tlsFiles.CertificatePath).To(ContainSubstring("testdata/client-cert-signed-test.pem"))
+		g.Expect(tlsFiles.PrivateKeyPath).To(ContainSubstring("testdata/client-key-test.pem"))
+		g.Expect(tlsFiles.PrivateKeyPassphrase).To(Equal("foobar"))
 	}
 }

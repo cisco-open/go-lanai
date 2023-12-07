@@ -2,7 +2,6 @@ package opensearch
 
 import (
 	"context"
-	"crypto/tls"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
@@ -89,8 +88,8 @@ func NewClient(di newClientDI) (OpenClient, error) {
 
 type configDI struct {
 	fx.In
-	Properties         *Properties
-	TlsProviderFactory *tlsconfig.ProviderFactory
+	Properties      *Properties
+	TLSCertsManager tlsconfig.Manager `optional:"true"`
 }
 
 func NewConfig(ctx *bootstrap.ApplicationContext, di configDI) (opensearch.Config, error) {
@@ -101,27 +100,16 @@ func NewConfig(ctx *bootstrap.ApplicationContext, di configDI) (opensearch.Confi
 	}
 
 	if di.Properties.TLS.Enable {
-		p, err := di.TlsProviderFactory.GetProvider(di.Properties.TLS.Config)
+		if di.TLSCertsManager == nil {
+			return conf, fmt.Errorf("TLS is enabled of OpenSearch, but certificate manager is not initialized")
+		}
+		tlsSrc, err := di.TLSCertsManager.Source(ctx, tlsconfig.WithSourceProperties(&di.Properties.TLS.Config))
 		if err != nil {
 			return conf, err
 		}
-		getClientCertificateFn, err := p.GetClientCertificate(ctx)
-		if err != nil {
-			return conf, err
-		}
-		caCertPool, err := p.RootCAs(ctx)
-		if err != nil {
-			return conf, err
-		}
-		minTLSVersion, err := p.GetMinTlsVersion()
-		if err != nil {
-			return conf, err
-		}
-		//nolint:gosec
-		tlsConf := &tls.Config{
-			GetClientCertificate: getClientCertificateFn,
-			RootCAs:              caCertPool,
-			MinVersion:           minTLSVersion,
+		tlsConf, e := tlsSrc.TLSConfig(ctx)
+		if e != nil {
+			return conf, fmt.Errorf("failed to initialize TLS for OpenSearch: %v", e)
 		}
 		conf.Transport = &http.Transport{
 			TLSClientConfig: tlsConf,

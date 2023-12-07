@@ -50,16 +50,26 @@ type Source interface {
 	TLSConfig(ctx context.Context, opts ...TLSOptions) (*tls.Config, error)
 	// Files get certificates as local files. For drivers that support filesystem based certificates config e.g. postgres DSN
 	Files(ctx context.Context) (*CertificateFiles, error)
+	// Certificates get current certificate set (CAs, certificates keys). For drivers that want to setup/manage certificates manually
+	// TODO Is this necessary?
+	//Certificates(ctx context.Context) (*CertificateSet, error)
 }
 
 // CertificateFiles filesystem based certificates and keys.
 // All values in this struct are corresponding file's path on local filesystem.
 // Some system can only reference certificates by path on filesystem
 type CertificateFiles struct {
-	RootCAPaths           []string
-	ClientCertificatePath string
-	ClientKeyPath         string
-	ClientKeyPassphrase   string
+	RootCAPaths          []string
+	CertificatePath      string
+	PrivateKeyPath       string
+	PrivateKeyPassphrase string
+}
+
+// CertificateSet TODO check if this is necessary
+type CertificateSet struct {
+	RootCAs     *x509.CertPool
+	Certificate *tls.Certificate
+	PrivateKey  []byte
 }
 
 type Options func(opt *Option)
@@ -67,20 +77,24 @@ type Option struct {
 	// Preset name of the preset config. Set this field to reuse configuration from properties (tls.presets.<name>).
 	// This field is exclusive with ConfigPath, Type and RawConfig
 	Preset string
+
 	// ConfigPath is similar to Preset, but should be the full property path. e.g. "redis.tls".
 	// This field is exclusive with Preset, Type and RawConfig
 	ConfigPath string
-	// Type type of the certificate source. Set this field for manual configuration
-	// This field is exclusive with Preset and ConfigPath
-	Type SourceType
+
 	// RawConfig raw configuration of the certificate source, required when Type is set.
-	// Supported types: json.RawMessage, []byte or string, any properties struct
+	// This field is exclusive with Preset and ConfigPath
+	// Supported types: json.RawMessage, []byte (JSON), string (JSON), or any struct compatible with corresponding SourceType
 	RawConfig interface{}
+
+	// Type type of the certificate source. Set this field for manual configuration
+	// This field is ignored if any of Preset or ConfigPath is set.
+	// If RawConfig includes "type" field, Type is optional. In such case, if Type is set, it overrides the value from RawConfig
+	Type SourceType
 }
 
 // Manager is the package's top-level interface that provide TLS configurations
 type Manager interface {
-	Provider(ctx context.Context, opts ...Options) (Provider, error)
 	Source(ctx context.Context, opts ...Options) (Source, error)
 }
 
@@ -114,7 +128,11 @@ func (f *ProviderFactory) GetProvider(properties Properties) (Provider, error) {
 	if e != nil {
 		return nil, e
 	}
-	return f.Manager.Provider(f.AppCtx, opts)
+	if src, e := f.Manager.Source(f.AppCtx, opts); e != nil {
+		return nil, e
+	} else {
+		return src.(Provider), nil
+	}
 }
 
 func (f *ProviderFactory) convertLegacyProps(properties *Properties) (Options, error) {

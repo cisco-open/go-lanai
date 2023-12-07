@@ -2,12 +2,12 @@ package tlsconfig_test
 
 import (
 	"context"
+	"crypto/tls"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -19,16 +19,24 @@ import (
 	Test Setup
  *************************/
 
+type ManagerDI struct {
+	fx.In
+	AppCfg bootstrap.ApplicationConfig
+}
+
+func ProvideTestManager(di ManagerDI) *tlsconfig.DefaultManager {
+	return tlsconfig.NewDefaultManager(di.AppCfg.Bind)
+}
+
 type ManagerTestDI struct {
 	fx.In
-	AppConfig bootstrap.ApplicationConfig
 	Manager   *tlsconfig.DefaultManager
 }
 
 func RegisterTestFactories(manager *tlsconfig.DefaultManager) {
-	manager.MustRegister(&TestProviderFactory{T: tlsconfig.SourceFile})
-	manager.MustRegister(&TestProviderFactory{T: tlsconfig.SourceVault})
-	manager.MustRegister(&TestProviderFactory{T: tlsconfig.SourceACM})
+	manager.MustRegister(&TestSourceFactory{SrcType: tlsconfig.SourceFile})
+	manager.MustRegister(&TestSourceFactory{SrcType: tlsconfig.SourceVault})
+	manager.MustRegister(&TestSourceFactory{SrcType: tlsconfig.SourceACM})
 
 }
 
@@ -41,13 +49,11 @@ func TestManager(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		apptest.WithDI(di),
-		//apptest.WithModules(Module),
 		apptest.WithFxOptions(
-			fx.Provide(tlsconfig.NewDefaultManager),
+			fx.Provide(ProvideTestManager),
 			fx.Invoke(RegisterTestFactories),
 		),
-		test.GomegaSubTest(SubTestLoadProperties(di), "TestFileProvider"),
-		test.GomegaSubTest(SubTestLoadProviderByConfigPath(di), "TestLoadProviderByConfigPath"),
+		test.GomegaSubTest(SubTestLoadSourceByConfigPath(di), "TestLoadSourceByConfigPath"),
 	)
 }
 
@@ -55,28 +61,17 @@ func TestManager(t *testing.T) {
 	SubTest
  *************************/
 
-func SubTestLoadProperties(di *ManagerTestDI) test.GomegaSubTestFunc {
+func SubTestLoadSourceByConfigPath(di *ManagerTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var e error
-		cfg := tlsconfig.SourceConfig{}
-		e = di.AppConfig.Bind(&cfg, "tls.sources.vault")
-		g.Expect(e).To(Succeed(), "bind vault source should not fail")
-
-		cfg = tlsconfig.SourceConfig{}
-		e = di.AppConfig.Bind(&cfg, "tls.sources.file")
-		g.Expect(e).To(Succeed(), "bind file source should not fail")
-	}
-}
-
-func SubTestLoadProviderByConfigPath(di *ManagerTestDI) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		var e error
-		var p tlsconfig.Provider
-		p, e = di.Manager.Provider(ctx, func(opt *tlsconfig.Option) {
-			opt.ConfigPath = "redis.tls.config"
-		})
-		g.Expect(e).To(Succeed(), "get provider by ConfigPath should not fail")
-		g.Expect(p).To(Not(BeNil()), "provider by ConfigPath should not be nil")
+		var s tlsconfig.Source
+		s, e = di.Manager.Source(ctx, tlsconfig.WithConfigPath("redis.tls.config"))
+		g.Expect(e).To(Succeed(), "load source by ConfigPath should not fail")
+		g.Expect(s).To(Not(BeNil()), "source by ConfigPath should not be nil")
+		g.Expect(s).To(BeAssignableToTypeOf(new(TestSource)), "source should be a test source")
+		ts := s.(*TestSource)
+		g.Expect(ts.Type).To(Equal(tlsconfig.SourceVault), "source should be correct type")
+		g.Expect(ts.Config).ToNot(BeEmpty(), "source's config should not be empty'")
 	}
 }
 
@@ -84,24 +79,39 @@ func SubTestLoadProviderByConfigPath(di *ManagerTestDI) test.GomegaSubTestFunc {
 	Helpers
  *************************/
 
-type TestProviderFactory struct {
-	T tlsconfig.SourceType
+type TestSourceFactory struct {
+	SrcType tlsconfig.SourceType
 }
 
-func (f *TestProviderFactory) Type() tlsconfig.SourceType {
-	return f.T
+func (f *TestSourceFactory) Type() tlsconfig.SourceType {
+	return f.SrcType
 }
 
-func (f *TestProviderFactory) LoadAndInit(_ context.Context, opts ...tlsconfig.SourceOptions) (tlsconfig.Provider, error) {
+func (f *TestSourceFactory) LoadAndInit(_ context.Context, opts ...tlsconfig.SourceOptions) (tlsconfig.Source, error) {
 	src := tlsconfig.SourceConfig{}
 	for _, fn := range opts {
 		fn(&src)
 	}
-	var props tlsconfig.Properties
-	if e := json.Unmarshal(src.RawConfig, &props); e != nil {
+	var config map[string]interface{}
+	if e := json.Unmarshal(src.RawConfig, &config); e != nil {
 		return nil, e
 	}
-	// TODO
-	return nil, errors.New(fmt.Sprintf("%s based tls config provider is not supported", props.Type))
+	return &TestSource{
+		Type:   f.SrcType,
+		Config: config,
+	}, nil
+}
+
+type TestSource struct {
+	Type tlsconfig.SourceType
+	Config map[string]interface{}
+}
+
+func (s *TestSource) TLSConfig(_ context.Context, _ ...tlsconfig.TLSOptions) (*tls.Config, error) {
+	return nil, fmt.Errorf("dummy source, for test only")
+}
+
+func (s *TestSource) Files(_ context.Context) (*tlsconfig.CertificateFiles, error) {
+	return nil, fmt.Errorf("dummy source, for test only")
 }
 

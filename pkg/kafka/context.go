@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"github.com/Shopify/sarama"
 	"time"
 )
@@ -78,7 +77,7 @@ type Binder interface {
 
 type BinderLifecycle interface {
 	// Initialize should be called only once, before Shutdown is executed.
-	Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) error
+	Initialize(ctx context.Context) error
 	// Start should be called only once, before Shutdown is executed.
 	// If the provided context is cancellable, the lifecycle is shutdown automatically when it happens
 	Start(ctx context.Context) error

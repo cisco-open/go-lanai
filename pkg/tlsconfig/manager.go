@@ -1,25 +1,22 @@
 package tlsconfig
 
 import (
-    "context"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-    "encoding/json"
-    "fmt"
-    "sync"
+	"context"
+	"encoding/json"
+	"fmt"
+	"sync"
 )
 
 type DefaultManager struct {
     sync.Mutex
-	AppConfig bootstrap.ApplicationConfig
+	ConfigLoaderFunc func(target interface{}, configPath string) error
 	Factories map[SourceType]SourceFactory
-    Providers map[string]Provider
 }
 
-func NewDefaultManager(appCfg bootstrap.ApplicationConfig) *DefaultManager {
+func NewDefaultManager(cfgLoaderFn func(target interface{}, configPath string) error) *DefaultManager {
 	return &DefaultManager{
-        AppConfig: appCfg,
+		ConfigLoaderFunc: cfgLoaderFn,
 		Factories: make(map[SourceType]SourceFactory),
-        Providers:  make(map[string]Provider),
 	}
 }
 
@@ -59,13 +56,6 @@ func (m *DefaultManager) Source(ctx context.Context, opts ...Options) (Source, e
 	})
 }
 
-// Provider
-// Deprecated
-func (m *DefaultManager) Provider(ctx context.Context, opts ...Options) (Provider, error) {
-	srcFactory, e := m.Source(ctx, opts...)
-	return srcFactory.(Provider), e
-}
-
 func (m *DefaultManager) register(item interface{}) error {
 	switch v := item.(type) {
 	case SourceFactory:
@@ -79,32 +69,37 @@ func (m *DefaultManager) register(item interface{}) error {
 func (m *DefaultManager) resolveSourceConfig(opt *Option) (*sourceConfig, error) {
 	var src sourceConfig
     switch {
-    case len(opt.Preset) != 0 && len(opt.ConfigPath) == 0 && len(opt.Type) == 0:
+    case len(opt.Preset) != 0 && len(opt.ConfigPath) == 0 && opt.RawConfig == nil:
         opt.ConfigPath = fmt.Sprintf("%s.presets.%s", PropertiesPrefix, opt.Preset)
-    case len(opt.Preset) == 0 && len(opt.ConfigPath) != 0 && len(opt.Type) == 0:
+    case len(opt.Preset) == 0 && len(opt.ConfigPath) != 0 && opt.RawConfig == nil:
         // do nothing
-    case len(opt.Preset) == 0 && len(opt.ConfigPath) == 0 && len(opt.Type) != 0:
-		src.Type = opt.Type
+    case len(opt.Preset) == 0 && len(opt.ConfigPath) == 0 && opt.RawConfig != nil:
+		var rawJson []byte
 		switch v := opt.RawConfig.(type) {
 		case json.RawMessage:
-			src.RawConfig = v
+			rawJson = v
 		case []byte:
-			src.RawConfig = v
+			rawJson = v
 		case string:
-			src.RawConfig = []byte(v)
+			rawJson = []byte(v)
 		default:
-			raw, e := json.Marshal(opt.RawConfig)
-			if e != nil {
+			var e error
+			if rawJson, e = json.Marshal(opt.RawConfig); e != nil {
 				return nil, fmt.Errorf(`invalid certificate options, unsupported RawConfig type [%T]: %v`, opt.RawConfig, e)
 			}
-			src.RawConfig = raw
+		}
+		if e := json.Unmarshal(rawJson, &src); e != nil {
+			return nil, fmt.Errorf(`invalid certificate options, cannot parse "raw config" as a valid JSON block: %v`, e)
+		}
+		if len(opt.Type) != 0 {
+			src.Type = opt.Type
 		}
 		return &src, nil
     default:
-        return nil, fmt.Errorf(`invalid certificate options, "preset", "config path" and "raw config" are exclusive. Got %v`, opt)
+        return nil, fmt.Errorf(`invalid certificate options, one of "preset", "config path" or "raw config" is required. Got %v`, opt)
     }
 
-    if e := m.AppConfig.Bind(&src, opt.ConfigPath); e != nil {
+    if e := m.ConfigLoaderFunc(&src, opt.ConfigPath); e != nil {
         return nil, fmt.Errorf(`unable to resolve certificate source configuration: %v`, e)
     }
     return &src, nil
