@@ -13,8 +13,8 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.RedisPrecedence,
 	Options: []fx.Option{
 		fx.Provide(BindRedisProperties),
-		fx.Provide(NewClientFactory),
-		fx.Provide(newDefaultClient),
+		fx.Provide(provideClientFactory),
+		fx.Provide(provideDefaultClient),
 		fx.Invoke(registerHealth),
 	},
 }
@@ -24,18 +24,29 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
+type factoryDI struct {
+	fx.In
+	Props RedisProperties
+	CertManager tlsconfig.Manager `optional:"true"`
+}
+
+func provideClientFactory(di factoryDI) ClientFactory {
+	return NewClientFactory(func(opt *FactoryOption) {
+		opt.Properties = di.Props
+		opt.TLSCertsManager = di.CertManager
+	})
+}
+
 type clientDI struct {
 	fx.In
 	AppCtx             *bootstrap.ApplicationContext
 	Factory            ClientFactory
 	Properties         RedisProperties
-	TLSProviderFactory *tlsconfig.ProviderFactory `optional:"true"`
 }
 
-func newDefaultClient(di clientDI) Client {
+func provideDefaultClient(di clientDI) Client {
 	c, e := di.Factory.New(di.AppCtx, func(opt *ClientOption) {
 		opt.DbIndex = di.Properties.DB
-		opt.TLSProviderFactory = di.TLSProviderFactory
 	})
 
 	if e != nil {

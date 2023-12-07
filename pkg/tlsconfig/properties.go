@@ -1,12 +1,8 @@
 package tlsconfig
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"encoding/json"
-	"github.com/pkg/errors"
 )
-
-const PropertiesPrefix = `tls`
 
 type Properties struct {
 	// type can be vault or file
@@ -55,13 +51,5 @@ type FileCache struct {
 	Prefix  string `json:"prefix"`
 }
 
-// BindProperties create and bind SessionProperties, with a optional prefix
-func BindProperties(appCfg bootstrap.ApplicationConfig) Properties {
-	var props Properties
-	if err := appCfg.Bind(&props, PropertiesPrefix); err != nil {
-		panic(errors.Wrap(err, "failed to bind Properties"))
-	}
-	return props
-}
 
 

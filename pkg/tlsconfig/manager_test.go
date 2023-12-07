@@ -24,13 +24,20 @@ type ManagerDI struct {
 	AppCfg bootstrap.ApplicationConfig
 }
 
-func ProvideTestManager(di ManagerDI) *tlsconfig.DefaultManager {
-	return tlsconfig.NewDefaultManager(di.AppCfg.Bind)
+func ProvideTestManager(di ManagerDI) (*tlsconfig.DefaultManager, error) {
+	var props tlsconfig.Properties
+	if e := di.AppCfg.Bind(&props, "tls"); e != nil {
+		return nil, fmt.Errorf("failed to bind TLS properties")
+	}
+	return tlsconfig.NewDefaultManager(func(mgr *tlsconfig.DefaultManager) {
+		mgr.ConfigLoaderFunc = di.AppCfg.Bind
+		mgr.Properties = props
+	}), nil
 }
 
 type ManagerTestDI struct {
 	fx.In
-	Manager   *tlsconfig.DefaultManager
+	Manager *tlsconfig.DefaultManager
 }
 
 func RegisterTestFactories(manager *tlsconfig.DefaultManager) {
@@ -103,7 +110,7 @@ func (f *TestSourceFactory) LoadAndInit(_ context.Context, opts ...tlsconfig.Sou
 }
 
 type TestSource struct {
-	Type tlsconfig.SourceType
+	Type   tlsconfig.SourceType
 	Config map[string]interface{}
 }
 
@@ -114,4 +121,3 @@ func (s *TestSource) TLSConfig(_ context.Context, _ ...tlsconfig.TLSOptions) (*t
 func (s *TestSource) Files(_ context.Context) (*tlsconfig.CertificateFiles, error) {
 	return nil, fmt.Errorf("dummy source, for test only")
 }
-

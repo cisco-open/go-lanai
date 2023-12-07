@@ -1,13 +1,12 @@
+// Package tlsconfig
+// This is an internal package. Do not use outside of go-lanai
 package tlsconfig
 
 import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"encoding/json"
-	"fmt"
-	"io"
 )
 
 const (
@@ -24,21 +23,21 @@ type SourceType string
 
 // Provider
 // Deprecated
-type Provider interface {
-	io.Closer
-
-	// TODO: VerifyPeerCertificate this can be useful when we need to rotate CAs
-	// see https://github.com/golang/go/issues/22836
-	// VerifyPeerCertificate() func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
-
-	// GetClientCertificate this should return a function that returns the client certificate
-	GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error)
-
-	// RootCAs this should return the root ca.
-	RootCAs(ctx context.Context) (*x509.CertPool, error)
-
-	GetMinTlsVersion() (uint16, error)
-}
+//type Provider interface {
+//	io.Closer
+//
+//	// TODO: VerifyPeerCertificate this can be useful when we need to rotate CAs
+//	// see https://github.com/golang/go/issues/22836
+//	// VerifyPeerCertificate() func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
+//
+//	// GetClientCertificate this should return a function that returns the client certificate
+//	GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error)
+//
+//	// RootCAs this should return the root ca.
+//	RootCAs(ctx context.Context) (*x509.CertPool, error)
+//
+//	GetMinTlsVersion() (uint16, error)
+//}
 
 type TLSOptions func(opt *TLSOption)
 type TLSOption struct {
@@ -118,30 +117,30 @@ type SourceFactory interface {
 
 // ProviderFactory
 // Deprecated
-type ProviderFactory struct {
-	Manager
-	AppCtx *bootstrap.ApplicationContext
-}
-
-func (f *ProviderFactory) GetProvider(properties Properties) (Provider, error) {
-	opts, e := f.convertLegacyProps(&properties)
-	if e != nil {
-		return nil, e
-	}
-	if src, e := f.Manager.Source(f.AppCtx, opts); e != nil {
-		return nil, e
-	} else {
-		return src.(Provider), nil
-	}
-}
-
-func (f *ProviderFactory) convertLegacyProps(properties *Properties) (Options, error) {
-	rawConfig, e := json.Marshal(properties)
-	if e != nil {
-		return nil, fmt.Errorf(`cannot convert legacy properties: %v`, e)
-	}
-	return func(opt *Option) {
-		opt.Type = properties.Type
-		opt.RawConfig = rawConfig
-	}, nil
-}
+//type ProviderFactory struct {
+//	Manager
+//	AppCtx *bootstrap.ApplicationContext
+//}
+//
+//func (f *ProviderFactory) GetProvider(properties Properties) (Provider, error) {
+//	opts, e := f.convertLegacyProps(&properties)
+//	if e != nil {
+//		return nil, e
+//	}
+//	if src, e := f.Manager.Source(f.AppCtx, opts); e != nil {
+//		return nil, e
+//	} else {
+//		return src.(Provider), nil
+//	}
+//}
+//
+//func (f *ProviderFactory) convertLegacyProps(properties *Properties) (Options, error) {
+//	rawConfig, e := json.Marshal(properties)
+//	if e != nil {
+//		return nil, fmt.Errorf(`cannot convert legacy properties: %v`, e)
+//	}
+//	return func(opt *Option) {
+//		opt.Type = properties.Type
+//		opt.RawConfig = rawConfig
+//	}, nil
+//}

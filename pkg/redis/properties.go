@@ -58,14 +58,9 @@ type RedisProperties struct {
 	SentinelPassword string `json:"sentinel-password"`
 }
 
-// TODO refactor this for central TLS config control
 type TLSProperties struct {
-	Enabled bool                 `json:"enabled"`
-	Config  tlsconfig.Properties `json:"config"`
-}
-
-func NewRedisProperties(ctx *bootstrap.ApplicationContext) *RedisProperties {
-	return &RedisProperties{}
+	Enabled bool                       `json:"enabled"`
+	Config  tlsconfig.SourceProperties `json:"config"`
 }
 
 func BindRedisProperties(ctx *bootstrap.ApplicationContext) RedisProperties {

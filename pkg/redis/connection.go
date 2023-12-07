@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"crypto/tls"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"fmt"
 	"github.com/go-redis/redis/v8"
@@ -56,36 +55,27 @@ func GetUniversalOptions(p *RedisProperties, opts ...ConnOptions) (*redis.Univer
 	return universal, nil
 }
 
-func WithDB(dbIndex int) ConnOptions {
+func withDB(dbIndex int) ConnOptions {
 	return func(opt *redis.UniversalOptions) error {
 		opt.DB = dbIndex
 		return nil
 	}
 }
 
-func WithTLS(ctx context.Context, tc *tlsconfig.ProviderFactory, p tlsconfig.Properties) ConnOptions {
+func withTLS(ctx context.Context, certsMgr tlsconfig.Manager, p *tlsconfig.SourceProperties) ConnOptions {
 	return func(opt *redis.UniversalOptions) error {
-		if tc == nil {
-			return fmt.Errorf("TLS auth is enabled for Redis, but TLSProviderFactory is not available")
+		if certsMgr == nil {
+			return fmt.Errorf("TLS auth is enabled for Redis, but certificate manager is not available")
 		}
-		t := &tls.Config{} //nolint:gosec // the minVersion is set later on dynamically, so "G402: TLSProperties MinVersion too low." is a false positive
-		provider, err := tc.GetProvider(p)
+		src, err := certsMgr.Source(ctx, tlsconfig.WithSourceProperties(p))
 		if err != nil {
-			return errors.Wrap(err, "Cannot fetch tls provider")
+			return errors.Wrapf(err, "failed to initialize redis connection: %v", err)
 		}
-		t.MinVersion, err = provider.GetMinTlsVersion()
+
+		opt.TLSConfig, err = src.TLSConfig(ctx)
 		if err != nil {
-			return errors.Wrap(err, "Cannot fetch min tls version from provider")
+			return errors.Wrapf(err, "failed to initialize redis connection: %v", err)
 		}
-		t.GetClientCertificate, err = provider.GetClientCertificate(ctx)
-		if err != nil {
-			return errors.Wrap(err, "Cannot fetch getCertificate func from provider")
-		}
-		t.RootCAs, err = provider.RootCAs(ctx)
-		if err != nil {
-			return errors.Wrap(err, "Cannot fetch root CAs from provider")
-		}
-		opt.TLSConfig = t
 		return nil
 	}
 }

@@ -11,8 +11,7 @@ import (
 type ClientOptions func(opt *ClientOption)
 
 type ClientOption struct {
-	DbIndex            int
-	TLSProviderFactory *tlsconfig.ProviderFactory
+	DbIndex int
 }
 
 type OptionsAwareHook interface {
@@ -21,7 +20,7 @@ type OptionsAwareHook interface {
 }
 
 type ClientFactory interface {
-	// New returns an newly created Client
+	// New returns a newly created Client
 	New(ctx context.Context, opts ...ClientOptions) (Client, error)
 
 	// AddHooks add hooks to all Client already created and any future Client created via this interface
@@ -37,16 +36,28 @@ type clientRecord struct {
 }
 
 type clientFactory struct {
-	properties RedisProperties
-	hooks      []redis.Hook
-	clients    map[ClientOption]clientRecord
+	properties   RedisProperties
+	hooks        []redis.Hook
+	clients      map[ClientOption]clientRecord
+	certsManager tlsconfig.Manager
 }
 
-func NewClientFactory(p RedisProperties) ClientFactory {
+type FactoryOptions func(opt *FactoryOption)
+type FactoryOption struct {
+	Properties      RedisProperties
+	TLSCertsManager tlsconfig.Manager
+}
+
+func NewClientFactory(opts...FactoryOptions) ClientFactory {
+	opt := FactoryOption{}
+	for _, fn := range opts {
+		fn(&opt)
+	}
 	return &clientFactory{
-		properties: p,
-		hooks:      []redis.Hook{},
-		clients:    map[ClientOption]clientRecord{},
+		properties:   opt.Properties,
+		hooks:        []redis.Hook{},
+		clients:      map[ClientOption]clientRecord{},
+		certsManager: opt.TLSCertsManager,
 	}
 }
 
@@ -66,9 +77,9 @@ func (f *clientFactory) New(ctx context.Context, opts ...ClientOptions) (Client,
 	}
 
 	// TODO review this part for more reasonable API design
-	connOpts := []ConnOptions{ WithDB(opt.DbIndex) }
+	connOpts := []ConnOptions{withDB(opt.DbIndex)}
 	if f.properties.TLS.Enabled {
-		connOpts = append(connOpts, WithTLS(ctx, opt.TLSProviderFactory, f.properties.TLS.Config))
+		connOpts = append(connOpts, withTLS(ctx, f.certsManager, &f.properties.TLS.Config))
 	}
 
 	// prepare options
