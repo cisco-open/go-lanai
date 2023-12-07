@@ -280,9 +280,9 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, err
 	}
 
-	if err = s.verifyTenantAccess(ctx, tenant, account, client, assignedTenants); err != nil {
+	if err = s.verifyTenantAccess(ctx, tenant, assignedTenants); err != nil {
 		return nil, err
-	} // still do this, and verify with intersection here
+	}
 
 	provider, err := s.loadProvider(ctx, request, tenant)
 	if err != nil {
@@ -409,12 +409,16 @@ func (s *DefaultAuthorizationService) loadTenant(
 	return tenant, nil
 }
 
-func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, client oauth2.OAuth2Client, assignedTenantIds []string) error {
+func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, assignedTenantIds []string) error {
 	if tenant == nil {
 		return nil
 	}
 
 	tenantIds := utils.NewStringSet(assignedTenantIds...)
+
+	if tenantIds.Has(security.SpecialTenantIdWildcard) {
+		return nil
+	}
 
 	if !tenancy.AnyHasDescendant(ctx, tenantIds, tenant.Id) {
 		return oauth2.NewInvalidGrantError("user does not have access to specified tenant")

@@ -145,7 +145,7 @@ func (d *MockedSecurityDetails) AccountType() security.AccountType {
 	return security.AccountTypeDefault
 }
 
-// Deprecate: the interface is deprecated
+// Deprecated: the interface is deprecated
 func (d *MockedSecurityDetails) AssignedTenantIds() utils.StringSet {
 	if d.Tenants == nil {
 		d.Tenants = utils.NewStringSet()

@@ -8,7 +8,7 @@ import (
 )
 
 // TenancyRelation
-// Deprecate: use the string version instead
+// Deprecated: use the string version instead
 type TenancyRelation struct {
 	Child  uuid.UUID
 	Parent uuid.UUID
@@ -29,7 +29,7 @@ type MockTenancyAccessor struct {
 }
 
 // NewMockTenancyAccessor
-// Deprecate: Use string version instead
+// Deprecated: Use string version instead
 func NewMockTenancyAccessor(tenantRelations []TenancyRelation, root uuid.UUID) *MockTenancyAccessor {
 	m := &MockTenancyAccessor{}
 	// default
@@ -40,13 +40,13 @@ func NewMockTenancyAccessor(tenantRelations []TenancyRelation, root uuid.UUID) *
 
 func NewMockTenancyAccessorUsingStrIds(tenantRelations []TenancyRelationWithStrId, root string) *MockTenancyAccessor {
 	m := &MockTenancyAccessor{}
-	m.Isloaded = false
+	m.Isloaded = true
 	m.ResetWithStrIds(tenantRelations, root)
 	return m
 }
 
 // Reset
-// Deprecate: Use the str version instead
+// Deprecated: Use the str version instead
 func (m *MockTenancyAccessor) Reset(tenantRelations []TenancyRelation, root uuid.UUID) {
 	var trWithStrId []TenancyRelationWithStrId
 	for _, tr := range tenantRelations {

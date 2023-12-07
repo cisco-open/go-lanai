@@ -112,7 +112,7 @@ func (d *ClientUserContextDetails) AccountType() security.AccountType {
 }
 
 // security.UserDetails
-// Deprecate: the interface is deprecated
+// Deprecated: the interface is deprecated
 func (d *ClientUserContextDetails) AssignedTenantIds() utils.StringSet {
 	return d.User.AssignedTenantIds
 }

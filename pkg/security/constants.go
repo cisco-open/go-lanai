@@ -31,7 +31,7 @@ const (
 
 const (
 	// SpecialPermissionAccessAllTenant
-	// Deprecate: this permission is no longer sufficient to determine tenancy access
+	// Deprecated: this permission is no longer sufficient to determine tenancy access
 	// in the case of an oauth2 authentication where the client is also tenanted.
 	// We are deprecating the use case where a user does not select a tenant.
 	SpecialPermissionAccessAllTenant = "ACCESS_ALL_TENANTS"
