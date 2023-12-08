@@ -22,7 +22,7 @@ var tlsVersions = map[string]uint16{
 	"tls13": tls.VersionTLS13,
 }
 
-var logger = log.New("TLS.Config")
+var logger = log.New("Certs.Source")
 
 func NewFactory[PropertiesType any](typ certs.SourceType, rawDefaultConfig json.RawMessage, constructor func(props PropertiesType) certs.Source) (*GenericFactory[PropertiesType], error) {
 	var zero PropertiesType
@@ -92,7 +92,7 @@ func ParseTLSVersion(verStr string) (uint16, error) {
 func RenewRepeatIntervalFunc(fallbackInterval time.Duration) loop.RepeatIntervalFunc {
 	return func(result interface{}, err error) (ret time.Duration) {
 		defer func() {
-			logger.Infof("certificate will renew in %v", ret)
+			logger.Debugf("certificate will renew in %v", ret)
 		}()
 
 		minDuration := 1 * time.Minute

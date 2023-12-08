@@ -66,7 +66,8 @@ func TestVaultProvider(t *testing.T) {
 			fx.Provide(ProvideTestManager, BindTestProperties, vaultcerts.FxProvider()),
 		),
 		test.SubTestSetup(SubTestSetupSubmitCA(di)),
-		test.GomegaSubTest(SubTestVaultProvider(di), "SubTestVaultProvider"),
+		test.GomegaSubTest(SubTestVaultTLSConfig(di), "SubTestVaultTLSConfig"),
+		test.GomegaSubTest(SubTestVaultCertFiles(di), "SubTestVaultCertFiles"),
 	)
 }
 
@@ -83,7 +84,7 @@ func SubTestSetupSubmitCA(di *VaultTestDi) test.SetupFunc {
 	}
 }
 
-func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
+func SubTestVaultTLSConfig(di *VaultTestDi) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		p := vaultcerts.SourceProperties{
 			Path:             "pki/",
@@ -162,4 +163,47 @@ func SubTestVaultProvider(di *VaultTestDi) test.GomegaSubTestFunc {
 		g.Expect(err).NotTo(HaveOccurred())
 		g.Expect(len(clientCert.Certificate)).To(Equal(0))
 	}
+}
+
+func SubTestVaultCertFiles(di *VaultTestDi) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *WithT) {
+		p := vaultcerts.SourceProperties{
+			Path:             "pki/",
+			Role:             "localhost",
+			CN:               "localhost",
+			TTL:              "10s",
+			MinRenewInterval: utils.Duration(2 * time.Second),
+			CachePath: "testdata/.tmp/",
+		}
+
+		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceVault, p))
+		g.Expect(err).NotTo(HaveOccurred())
+
+		tlsFiles, err := tlsSrc.Files(ctx)
+		g.Expect(err).NotTo(HaveOccurred())
+		const fileRegexTmpl = `testdata/\.tmp/vault/localhost-localhost-[0-9]+-%s\.pem`
+		g.Expect(tlsFiles.RootCAPaths).To(ContainElement(MatchRegexp(fileRegexTmpl, "ca")))
+		AssertFilesExist(g, tlsFiles.RootCAPaths)
+		g.Expect(tlsFiles.CertificatePath).To(MatchRegexp(fileRegexTmpl, "cert"))
+		AssertFileExists(g, tlsFiles.CertificatePath)
+		g.Expect(tlsFiles.PrivateKeyPath).To(MatchRegexp(fileRegexTmpl, "key"))
+		AssertFileExists(g, tlsFiles.PrivateKeyPath)
+		g.Expect(tlsFiles.PrivateKeyPassphrase).To(Equal(""))
+	}
+}
+
+/*************************
+	Helpers
+ *************************/
+
+func AssertFilesExist(g *WithT, paths []string) {
+	for _, path := range paths {
+		AssertFileExists(g, path)
+	}
+}
+
+func AssertFileExists(g *WithT, path string) {
+	data, e := os.ReadFile(path)
+	g.Expect(e).To(Succeed(), "reading file '%s' should not fail", path)
+	g.Expect(data).ToNot(BeEmpty(), "file '%s' should not be empty", path)
 }

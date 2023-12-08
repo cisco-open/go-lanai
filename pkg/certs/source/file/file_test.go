@@ -135,8 +135,27 @@ func SubTestFiles(di *FileTestDi) test.GomegaSubTestFunc {
 		tlsFiles, err := tlsSrc.Files(ctx)
 		g.Expect(err).NotTo(HaveOccurred())
 		g.Expect(tlsFiles.RootCAPaths).To(ContainElement(ContainSubstring("testdata/ca-cert-test.pem")))
+		AssertFilesExist(g, tlsFiles.RootCAPaths)
 		g.Expect(tlsFiles.CertificatePath).To(ContainSubstring("testdata/client-cert-signed-test.pem"))
+		AssertFileExists(g, tlsFiles.CertificatePath)
 		g.Expect(tlsFiles.PrivateKeyPath).To(ContainSubstring("testdata/client-key-test.pem"))
+		AssertFileExists(g, tlsFiles.PrivateKeyPath)
 		g.Expect(tlsFiles.PrivateKeyPassphrase).To(Equal("foobar"))
 	}
+}
+
+/*************************
+	Helpers
+ *************************/
+
+func AssertFilesExist(g *WithT, paths []string) {
+	for _, path := range paths {
+		AssertFileExists(g, path)
+	}
+}
+
+func AssertFileExists(g *WithT, path string) {
+	data, e := os.ReadFile(path)
+	g.Expect(e).To(Succeed(), "reading file '%s' should not fail", path)
+	g.Expect(data).ToNot(BeEmpty(), "file '%s' should not be empty", path)
 }

@@ -77,7 +77,7 @@ type Option struct {
 	// This field is exclusive with ConfigPath, Type and RawConfig
 	Preset string
 
-	// ConfigPath is similar to Preset, but should be the full property path. e.g. "redis.tls".
+	// ConfigPath is similar to Preset, but should be the full property path. e.g.  "redis.tls.config".
 	// This field is exclusive with Preset, Type and RawConfig
 	ConfigPath string
 
@@ -99,7 +99,7 @@ type Manager interface {
 
 // Registrar is the additional top-level interface for supported Provider to register itself
 // Supported types:
-// - ProviderFactory
+// - SourceFactory
 type Registrar interface {
 	Register(items ...interface{}) error
 	MustRegister(items ...interface{})

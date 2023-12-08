@@ -47,12 +47,6 @@ func (f *FileProvider) Files(_ context.Context) (*certs.CertificateFiles, error)
 	}, nil
 }
 
-// GetClientCertificate
-// Deprecated
-func (f *FileProvider) GetClientCertificate(_ context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
-	return f.toGetClientCertificateFunc(), nil
-}
-
 func (f *FileProvider) RootCAs(_ context.Context) (*x509.CertPool, error) {
 	caPem, err := os.ReadFile(f.p.CACertFile)
 	if err != nil {
@@ -61,18 +55,6 @@ func (f *FileProvider) RootCAs(_ context.Context) (*x509.CertPool, error) {
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(caPem)
 	return certPool, nil
-}
-
-// GetMinTlsVersion
-// Deprecated
-func (f *FileProvider) GetMinTlsVersion() (uint16, error) {
-	return certsource.ParseTLSVersion(f.p.MinTLSVersion)
-}
-
-// Close
-// Deprecated
-func (f *FileProvider) Close() error {
-	return nil
 }
 
 func (f *FileProvider) toGetClientCertificateFunc() func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {

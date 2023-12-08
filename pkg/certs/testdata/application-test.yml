@@ -17,6 +17,16 @@ tls:
       ca-cert-file: "configs/tls/ca.crt"
       cert-file: "configs/tls/redis.crt"
       key-file: "configs/tls/redis.key"
+  presets:
+    redis-vault:
+      type: vault
+      cn: redis
+    redis-file:
+      type: file
+      ca-cert-file: "configs/tls/ca.crt"
+      cert-file: "configs/tls/redis.crt"
+      key-file: "configs/tls/redis.key"
+
 
 kafka:
   brokers: slmservice:9092

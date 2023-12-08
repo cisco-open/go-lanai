@@ -8,8 +8,10 @@ import (
 	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
+	"fmt"
 	"io"
 	"path"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,7 +19,8 @@ import (
 type VaultProvider struct {
 	p SourceProperties
 
-	vc *vault.Client
+	vc    *vault.Client
+	cache *certsource.FileCache
 
 	once              sync.Once
 	mutex             sync.RWMutex
@@ -32,10 +35,19 @@ func NewVaultProvider(lcCtx context.Context, vc *vault.Client, p SourcePropertie
 	if lcCtx == nil {
 		lcCtx = context.Background()
 	}
+	cache, e := certsource.NewFileCache(func(opt *certsource.FileCacheOption) {
+		opt.Root = p.CachePath
+		opt.Type = sourceType
+		opt.Prefix = resolveCacheKey(&p)
+	})
+	if e != nil {
+		logger.WithContext(lcCtx).Warnf("file cache for %s certificate source is not enabled: %v", sourceType, e)
+	}
 	return &VaultProvider{
 		p:       p,
 		vc:      vc,
 		lcCtx:   lcCtx,
+		cache:   cache,
 		monitor: loop.NewLoop(),
 	}
 }
@@ -63,23 +75,15 @@ func (v *VaultProvider) Files(ctx context.Context) (*certs.CertificateFiles, err
 	if e := v.LazyInit(ctx); e != nil {
 		return nil, e
 	}
-
-	// TODO generalize this impl
-	cafilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.CaSuffix
-	certfilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.CertSuffix
-	keyfilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.KeySuffix
-	return &certs.CertificateFiles{
-		RootCAPaths:          []string{cafilepath},
-		CertificatePath:      certfilepath,
-		PrivateKeyPath:       keyfilepath,
-	}, nil
-}
-
-func (v *VaultProvider) GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
-	if e := v.LazyInit(ctx); e != nil {
-		return nil, e
+	if v.cache == nil {
+		return nil, fmt.Errorf("unable to access certificates as local files: file cache is not enabled for source [%s]", sourceType)
 	}
-	return v.toGetClientCertificateFunc(), nil
+
+	return &certs.CertificateFiles{
+		RootCAPaths:     []string{v.cache.ResolvePath(certsource.CachedFileKeyCA)},
+		CertificatePath: v.cache.ResolvePath(certsource.CachedFileKeyCertificate),
+		PrivateKeyPath:  v.cache.ResolvePath(certsource.CachedFileKeyPrivateKey),
+	}, nil
 }
 
 func (v *VaultProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
@@ -99,25 +103,26 @@ func (v *VaultProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(pemBytes)
-	if v.p.FileCache.Enabled {
-		logger.WithContext(ctx).Infof("gonna cache the ca using config: %v", v.p.FileCache)
-		err := v.CacheCaToFile(pemBytes)
-		if err != nil {
+	if v.cache != nil {
+		if err := v.cache.CachePEM(pemBytes, certsource.CachedFileKeyCA); err != nil {
+			logger.WithContext(ctx).Warnf(`unable to cache CA: %v`, err)
 			return certPool, err
 		}
 	}
 	return certPool, nil
 }
 
-// GetMinTlsVersion
-// Deprecated
-func (v *VaultProvider) GetMinTlsVersion() (uint16, error) {
-	return certsource.ParseTLSVersion(v.p.MinTLSVersion)
-}
-
 func (v *VaultProvider) LazyInit(ctx context.Context) error {
 	var err error
 	v.once.Do(func() {
+		// At least get RootCA once
+		// TODO should we renew RootCA periodically?
+		_, err = v.RootCAs(ctx)
+		if err != nil {
+			logger.Errorf("Failed to get CAs from Vault: %s", err.Error())
+			return
+		}
+		// At least get Certificate once
 		var cert *tls.Certificate
 		cert, err = v.generateClientCertificate(ctx)
 		if err != nil {
@@ -171,7 +176,7 @@ func (v *VaultProvider) tryRenew(loopCtx context.Context) loop.TaskFunc {
 		if err != nil {
 			logger.Warn("certificate renew failed: %v", err)
 		} else {
-			logger.Infof("certificate has been renewed")
+			logger.Debugf("certificate has been renewed")
 		}
 		return
 	}
@@ -201,26 +206,32 @@ func (v *VaultProvider) generateClientCertificate(ctx context.Context) (*tls.Cer
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 	v.cachedCertificate = &cert
-	if v.p.FileCache.Enabled {
-		err := v.CacheCertToFile(&cert)
-		if err != nil {
+	if v.cache != nil {
+		if err := v.cache.CacheCertificate(&cert); err != nil {
+			logger.WithContext(ctx).Warnf(`unable to cache certificate: %v`, err)
 			return &cert, err
 		}
 	}
 	return &cert, err
 }
 
-// CacheCertToFile will write out a cert and key to files based on configured path and prefix
-func (v *VaultProvider) CacheCertToFile(cert *tls.Certificate) error {
-	certfilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.CertSuffix
-	keyfilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.KeySuffix
-	return certsource.CacheCertToFile(cert, certfilepath, keyfilepath)
-}
+var (
+	cacheKeyReplacer = strings.NewReplacer(
+		" ", "-",
+		".", "-",
+		"_", "-",
+		"@", "-at-",
+		"/", "-",
+		"\\", "-",
+	)
+	cacheKeyCount = 0
+)
 
-// CacheCaToFile writes the provided ca cert pool to a file based on the provided config
-func (v *VaultProvider) CacheCaToFile(pemData []byte) error {
-	cafilepath := v.p.FileCache.Path + v.p.FileCache.Prefix + certsource.CaSuffix
-	return certsource.CacheCaToFile(pemData, cafilepath)
+func resolveCacheKey(p *SourceProperties) (key string) {
+	cacheKeyCount++
+	key = fmt.Sprintf(`%s-%s-%d`, p.Role, p.CN, cacheKeyCount)
+	key = cacheKeyReplacer.Replace(key)
+	return key
 }
 
 type IssueCertificateRequest struct {

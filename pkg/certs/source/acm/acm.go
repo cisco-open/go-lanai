@@ -10,10 +10,12 @@ import (
 	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"encoding/pem"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	awsacm "github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
 	"go.step.sm/crypto/pemutil"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +24,7 @@ import (
 type AcmProvider struct {
 	props             SourceProperties
 	acmClient         acmiface.ACMAPI
+	cache             *certsource.FileCache
 	cachedCertificate *tls.Certificate
 	mutex             sync.RWMutex
 	once              sync.Once
@@ -30,9 +33,18 @@ type AcmProvider struct {
 }
 
 func NewAcmProvider(acm acmiface.ACMAPI, p SourceProperties) certs.Source {
+	cache, e := certsource.NewFileCache(func(opt *certsource.FileCacheOption) {
+		opt.Root = p.CachePath
+		opt.Type = sourceType
+		opt.Prefix = resolveCacheKey(&p)
+	})
+	if e != nil {
+		logger.Warnf("file cache for %s certificate source is not enabled: %v", sourceType, e)
+	}
 	return &AcmProvider{
 		props:     p,
 		acmClient: acm,
+		cache:     cache,
 		monitor:   loop.NewLoop(),
 	}
 }
@@ -64,14 +76,14 @@ func (a *AcmProvider) Files(ctx context.Context) (*certs.CertificateFiles, error
 	if e := a.LazyInit(ctx); e != nil {
 		return nil, e
 	}
-	// TODO generalize this impl
-	cafilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CaSuffix
-	certfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CertSuffix
-	keyfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.KeySuffix
+	if a.cache == nil {
+		return nil, fmt.Errorf("unable to access certificates as local files: file cache is not enabled for source [%s]", sourceType)
+	}
+
 	return &certs.CertificateFiles{
-		RootCAPaths:          []string{cafilepath},
-		CertificatePath:      certfilepath,
-		PrivateKeyPath:       keyfilepath,
+		RootCAPaths:     []string{a.cache.ResolvePath(certsource.CachedFileKeyCA)},
+		CertificatePath: a.cache.ResolvePath(certsource.CachedFileKeyCertificate),
+		PrivateKeyPath:  a.cache.ResolvePath(certsource.CachedFileKeyPrivateKey),
 	}, nil
 }
 
@@ -96,9 +108,9 @@ func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	pemBytes := []byte(cleantext)
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(pemBytes)
-	if a.props.FileCache.Enabled {
-		err := a.CacheCaToFile(pemBytes)
-		if err != nil {
+	if a.cache != nil {
+		if err := a.cache.CachePEM(pemBytes, certsource.CachedFileKeyCA); err != nil {
+			logger.WithContext(ctx).Warnf(`unable to cache CA: %v`, err)
 			return certPool, err
 		}
 	}
@@ -207,9 +219,9 @@ func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certi
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 	a.cachedCertificate = &cert
-	if a.props.FileCache.Enabled {
-		err := a.CacheCertToFile(&cert)
-		if err != nil {
+	if a.cache != nil {
+		if err := a.cache.CacheCertificate(&cert); err != nil {
+			logger.WithContext(ctx).Warnf(`unable to cache certificate: %v`, err)
 			return &cert, err
 		}
 	}
@@ -228,19 +240,6 @@ func (a *AcmProvider) renewClientCertificate(_ context.Context) error {
 	return nil
 }
 
-// CacheCertToFile will write out a cert and key to files based on configured path and prefix
-func (a *AcmProvider) CacheCertToFile(cert *tls.Certificate) error {
-	certfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CertSuffix
-	keyfilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.KeySuffix
-	return certsource.CacheCertToFile(cert, certfilepath, keyfilepath)
-}
-
-// CacheCaToFile writes the provided ca cert pool to a file based on the provided config
-func (a *AcmProvider) CacheCaToFile(pemData []byte) error {
-	cafilepath := a.props.FileCache.Path + a.props.FileCache.Prefix + certsource.CaSuffix
-	return certsource.CacheCaToFile(pemData, cafilepath)
-}
-
 func (a *AcmProvider) tryRenew(loopCtx context.Context) loop.TaskFunc {
 	return func(_ context.Context, l *loop.Loop) (ret interface{}, err error) {
 		//ignore error since we will just schedule another renew
@@ -256,4 +255,35 @@ func (a *AcmProvider) tryRenew(loopCtx context.Context) loop.TaskFunc {
 		}
 		return
 	}
+}
+
+var (
+	arnRegex         = regexp.MustCompile(`arn:(?P<part>[^:]+):(?P<srv>[^:]+):(?P<region>[^:]+):(?P<acct>[^:]+):((?P<res_type>[^:]+)[\/:])?(?P<res_id>[^:]+)$`)
+	cacheKeyReplacer = strings.NewReplacer(
+		" ", "-",
+		".", "-",
+		"_", "-",
+		"@", "-at-",
+	)
+	cacheKeyCount = 0
+)
+
+func resolveCacheKey(p *SourceProperties) (key string) {
+	var resId, resType string
+	matches := arnRegex.FindStringSubmatch(p.ARN)
+	for i, name := range arnRegex.SubexpNames() {
+		if i >= len(matches) {
+			break
+		}
+		switch name {
+		case "res_id":
+			resId = matches[i]
+		case "res_type":
+			resType = matches[i]
+		}
+	}
+	cacheKeyCount++
+	key = fmt.Sprintf(`%s-%s-%d`, resType, resId, cacheKeyCount)
+	key = cacheKeyReplacer.Replace(key)
+	return key
 }
