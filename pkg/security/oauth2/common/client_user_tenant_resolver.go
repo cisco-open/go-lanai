@@ -10,6 +10,13 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+/*
+ResolveClientUserTenants will take the client's assigned tenants and the user's assigned tenants, and use them to compute the tenants
+this security context has access to as a result. For example, if a client is assigned to tenant-1, it means anyone using this client
+has access to tenant-1. If a user who has access to tenant-1 and tenant-2 is authenticated using this client. Then the resulting
+security context should indicate that the user has only access to tenant-1. As a result, the user's default tenant may or may not
+still be valid, so this method also returns that.
+*/
 func ResolveClientUserTenants(ctx context.Context, a security.Account, c oauth2.OAuth2Client) (defaultTenantId string, assignedTenants []string, err error) {
 	// client only
 	if a == nil {

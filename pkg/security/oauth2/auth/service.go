@@ -272,7 +272,7 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 
 	defaultTenantId, assignedTenants, err := common.ResolveClientUserTenants(ctx, account, client)
 	if err != nil {
-		return nil, newInvalidTenantForUserError(fmt.Sprintf("can't resolve account [%T] and client's [%T] tenants", account, client))
+		return nil, newInvalidTenantForUserError(fmt.Errorf("can't resolve account [%T] and client's [%T] tenants", account, client))
 	}
 
 	tenant, err := s.loadTenant(ctx, request, defaultTenantId)
@@ -314,8 +314,7 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		if newAccount.(security.AccountTenancy).DefaultDesignatedTenantId() != account.(security.AccountTenancy).DefaultDesignatedTenantId() {
 			return nil, newTamperedTenancyError()
 		}
-		if !utils.NewStringSet(newAccount.(security.AccountTenancy).DesignatedTenantIds()...).HasAll(account.(security.AccountTenancy).DesignatedTenantIds()...) ||
-			!utils.NewStringSet(account.(security.AccountTenancy).DesignatedTenantIds()...).HasAll(newAccount.(security.AccountTenancy).DesignatedTenantIds()...) {
+		if !utils.NewStringSet(newAccount.(security.AccountTenancy).DesignatedTenantIds()...).Equals(utils.NewStringSet(account.(security.AccountTenancy).DesignatedTenantIds()...)) {
 			return nil, newTamperedTenancyError()
 		}
 

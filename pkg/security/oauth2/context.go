@@ -11,8 +11,8 @@ import (
 
 // Authentication extends security.Authentication
 type Authentication interface {
-	security.Authentication                      // User auth takes precedence when both user and client are authenticated
-	UserAuthentication() security.Authentication // The detail here is just the user detail. The overall detail from security.Authentication can be something else
+	security.Authentication
+	UserAuthentication() security.Authentication
 	OAuth2Request() OAuth2Request
 	AccessToken() AccessToken
 }

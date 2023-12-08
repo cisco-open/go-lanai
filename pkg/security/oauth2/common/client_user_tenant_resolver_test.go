@@ -84,7 +84,7 @@ func SubTestClientAndUser() test.GomegaSubTestFunc {
 
 		defaultTenantId, tenantIds, e := ResolveClientUserTenants(ctx, user, client)
 		g.Expect(e).To(Not(HaveOccurred()))
-		g.Expect(defaultTenantId).To(Equal("id-tenant-1-a")) // this client has multiple tenants, so we can't pick a default
+		g.Expect(defaultTenantId).To(Equal("id-tenant-1-a")) // default tenant is still within the set of resolved tenants, so keep it.
 		g.Expect(len(tenantIds)).To(Equal(2))
 		g.Expect(utils.NewStringSet(tenantIds...)).To(Equal(utils.NewStringSet("id-tenant-1-a", "id-tenant-2-b")))
 
@@ -98,7 +98,7 @@ func SubTestClientAndUser() test.GomegaSubTestFunc {
 
 		defaultTenantId, tenantIds, e = ResolveClientUserTenants(ctx, user, client)
 		g.Expect(e).To(Not(HaveOccurred()))
-		g.Expect(defaultTenantId).To(Equal("")) // this client has multiple tenants, so we can't pick a default
+		g.Expect(defaultTenantId).To(Equal("")) //default tenant is no longer part of the assigned tenants, so it's empty.
 		g.Expect(len(tenantIds)).To(Equal(2))
 		g.Expect(utils.NewStringSet(tenantIds...)).To(Equal(utils.NewStringSet("id-tenant-1-a", "id-tenant-2-b")))
 
@@ -112,7 +112,7 @@ func SubTestClientAndUser() test.GomegaSubTestFunc {
 
 		defaultTenantId, tenantIds, e = ResolveClientUserTenants(ctx, user, client)
 		g.Expect(e).To(Not(HaveOccurred()))
-		g.Expect(defaultTenantId).To(Equal("id-tenant-1")) // this client has multiple tenants, so we can't pick a default
+		g.Expect(defaultTenantId).To(Equal("id-tenant-1")) //default tenant is still part of the result tenants, so keep it.
 		g.Expect(len(tenantIds)).To(Equal(2))
 		g.Expect(utils.NewStringSet(tenantIds...)).To(Equal(utils.NewStringSet("id-tenant-1", "id-tenant-2-b")))
 	}

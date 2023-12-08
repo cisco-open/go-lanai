@@ -193,7 +193,7 @@ func canAccessAllTenants(ctx context.Context, assignedTenantIds utils.StringSet)
 	}
 
 	rootId, err := tenancy.GetRoot(ctx)
-	if err != nil {
+	if err != nil || rootId == "" {
 		return false
 	}
 	return assignedTenantIds.Has(rootId)
