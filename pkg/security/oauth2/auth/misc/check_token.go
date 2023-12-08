@@ -13,9 +13,9 @@ import (
 
 const (
 	msgInvalidTokenType = "unsupported token type"
-	msgInvalidToken = "token is invalid or expired"
-	hintAccessToken = "access_token"
-	hintRefreshToken = "refresh_token"
+	msgInvalidToken     = "token is invalid or expired"
+	hintAccessToken     = "access_token"
+	hintRefreshToken    = "refresh_token"
 )
 
 type CheckTokenRequest struct {
@@ -41,13 +41,19 @@ func NewCheckTokenEndpoint(issuer security.Issuer, tokenStoreReader oauth2.Token
 	}
 }
 
+// CheckToken is the token introspection end point as defined in https://datatracker.ietf.org/doc/html/rfc7662
+// This endpoint is used by protected resources to query the authorization server to determine the state and metadata of a token.
+// Because this request is issued by a protected resource, the client used by the protected resource is not going to be the same
+// as the client the token is issued for.
+// The auth server require the protected resource to be specifically authorized to call this endpoint by means of client authentication
+// and client scope (token_details).
+// This end point is not meant to be used for other means. Any client that's not a protected resource should not be given this scope.
 func (ep *CheckTokenEndpoint) CheckToken(c context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
 	client := auth.RetrieveAuthenticatedClient(c)
 	if client == nil {
 		return nil, oauth2.NewInvalidClientError("check token endpoint requires client authentication")
 	}
 
-	// TBD: maybe we should disallow client to check the token that wasn't issued to same client
 	switch request.Hint {
 	case "":
 		fallthrough
@@ -78,7 +84,7 @@ func (ep *CheckTokenEndpoint) checkAccessTokenWithoutDetails(c context.Context, 
 
 func (ep *CheckTokenEndpoint) checkAccessTokenWithDetails(c context.Context, request *CheckTokenRequest) (response *CheckTokenClaims, err error) {
 	candidate := tokenauth.BearerToken{
-		Token: request.Token,
+		Token:      request.Token,
 		DetailsMap: map[string]interface{}{},
 	}
 	oauth, e := ep.authenticator.Authenticate(c, &candidate)

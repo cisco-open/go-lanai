@@ -21,7 +21,7 @@ import (
 type exampleDI struct {
 	fx.In
 	MockAccessor tenancy.Accessor
-	DB *gorm.DB
+	DB           *gorm.DB
 }
 
 func TestGormModel(t *testing.T) {
@@ -76,7 +76,7 @@ func SubExampleModelCreateWithTenancy(di *exampleDI) test.GomegaSubTestFunc {
 			ID:         uuid.New(),
 			TenantName: "Tenant A-1",
 			Value:      "Any",
-			Tenancy:    Tenancy{
+			Tenancy: Tenancy{
 				TenantID: MockedTenantIdA1,
 			},
 		}
@@ -89,7 +89,7 @@ func SubExampleModelCreateWithTenancy(di *exampleDI) test.GomegaSubTestFunc {
 			ID:         uuid.New(),
 			TenantName: "Tenant B-1",
 			Value:      "Any",
-			Tenancy:    Tenancy{
+			Tenancy: Tenancy{
 				TenantID: MockedTenantIdB1,
 			},
 		}
@@ -203,9 +203,9 @@ func SubExampleModelDeleteWithTenancy(di *exampleDI) test.GomegaSubTestFunc {
 
 func newExampleModel(tenantIO uuid.UUID) *ExampleModel {
 	return &ExampleModel{
-		ID:         uuid.New(),
-		Value:      "Any",
-		Tenancy:    Tenancy{
+		ID:    uuid.New(),
+		Value: "Any",
+		Tenancy: Tenancy{
 			TenantID: tenantIO,
 		},
 	}
@@ -218,7 +218,6 @@ func mockAccessAllTenants(ctx context.Context) context.Context {
 		d.TenantExternalId = "any-tenant-ext-id"
 		d.TenantId = MockedRootTenantId.String()
 		d.Tenants = utils.NewStringSet(MockedRootTenantId.String())
-		d.Permissions = utils.NewStringSet(security.SpecialPermissionAccessAllTenant)
 	})
 }
 
@@ -263,5 +262,3 @@ CREATE TABLE IF NOT EXISTS public.model_example (
 	INDEX idx_tenant_name (tenant_name ASC),
 	FAMILY "primary" (id, tenant_name, value, tenant_id, tenant_path, created_at, updated_at, created_by, updated_by, deleted_at)
 );`
-
-

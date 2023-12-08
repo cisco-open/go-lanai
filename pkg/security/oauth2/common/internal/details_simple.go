@@ -5,60 +5,118 @@ import (
 	"time"
 )
 
-// SimpleContextDetails implements
+// ClientContextDetails implements
 // - security.AuthenticationDetails
 // - security.KeyValueDetails
-type SimpleContextDetails struct {
+// - oauth2.ClientDetails
+// It is used to represent a client credential
+type ClientContextDetails struct {
 	Authentication AuthenticationDetails
+	Client         ClientDetails
 	KV             map[string]interface{}
+	TenantAccess   TenantAccessDetails
 }
 
-func NewSimpleContextDetails() *SimpleContextDetails {
-	return &SimpleContextDetails{
-		Authentication: AuthenticationDetails{
-			Roles:       utils.NewStringSet(),
-			Permissions: utils.NewStringSet(),
-		},
-		KV: map[string]interface{}{},
-	}
+func (d *ClientContextDetails) ClientId() string {
+	return d.Client.Id
+}
+
+func (d *ClientContextDetails) AssignedTenantIds() utils.StringSet {
+	return d.Client.AssignedTenantIds
+}
+
+func (d *ClientContextDetails) Scopes() utils.StringSet {
+	return d.Client.Scopes
 }
 
 // security.AuthenticationDetails
-func (d *SimpleContextDetails) ExpiryTime() time.Time {
+func (d *ClientContextDetails) ExpiryTime() time.Time {
 	return d.Authentication.ExpiryTime
 }
 
 // security.AuthenticationDetails
-func (d *SimpleContextDetails) IssueTime() time.Time {
+func (d *ClientContextDetails) IssueTime() time.Time {
 	return d.Authentication.IssueTime
 }
 
 // security.AuthenticationDetails
-func (d *SimpleContextDetails) Roles() utils.StringSet {
+func (d *ClientContextDetails) Roles() utils.StringSet {
 	return d.Authentication.Roles
 }
 
 // security.AuthenticationDetails
-func (d *SimpleContextDetails) Permissions() utils.StringSet {
+func (d *ClientContextDetails) Permissions() utils.StringSet {
 	return d.Authentication.Permissions
 }
 
 // security.AuthenticationDetails
-func (d *SimpleContextDetails) AuthenticationTime() time.Time {
+func (d *ClientContextDetails) AuthenticationTime() time.Time {
 	return d.Authentication.AuthenticationTime
 }
 
 // security.KeyValueDetails
-func (d *SimpleContextDetails) Value(key string) (v interface{}, ok bool) {
+func (d *ClientContextDetails) Value(key string) (v interface{}, ok bool) {
 	v, ok = d.KV[key]
 	return
 }
 
 // security.KeyValueDetails
-func (d *SimpleContextDetails) Values() (ret map[string]interface{}) {
+func (d *ClientContextDetails) Values() (ret map[string]interface{}) {
 	ret = map[string]interface{}{}
 	for k, v := range d.KV {
 		ret[k] = v
 	}
 	return
+}
+
+// ClientTenantedContextDetails implements
+// - security.AuthenticationDetails
+// - security.KeyValueDetails
+// - security.TenantDetails
+// - security.ProviderDetails
+// - oauth2.ClientDetails
+// It is used to represent a client credential with selected tenant
+type ClientTenantedContextDetails struct {
+	ClientContextDetails
+	Tenant   TenantDetails
+	Provider ProviderDetails
+}
+
+func (d *ClientTenantedContextDetails) TenantId() string {
+	return d.Tenant.Id
+}
+
+func (d *ClientTenantedContextDetails) TenantExternalId() string {
+	return d.Tenant.ExternalId
+}
+
+func (d *ClientTenantedContextDetails) TenantSuspended() bool {
+	return d.Tenant.Suspended
+}
+
+// security.ProviderDetails
+func (d *ClientTenantedContextDetails) ProviderId() string {
+	return d.Provider.Id
+}
+
+// security.ProviderDetails
+func (d *ClientTenantedContextDetails) ProviderName() string {
+	return d.Provider.Name
+}
+
+// security.ProviderDetails
+func (d *ClientTenantedContextDetails) ProviderDisplayName() string {
+	return d.Provider.DisplayName
+}
+
+func (d *ClientTenantedContextDetails) ProviderDescription() string {
+	return d.Provider.Description
+}
+
+func (d *ClientTenantedContextDetails) ProviderEmail() string {
+	return d.Provider.Email
+}
+
+func (d *ClientTenantedContextDetails) ProviderNotificationType() string {
+	return d.Provider.NotificationType
 }

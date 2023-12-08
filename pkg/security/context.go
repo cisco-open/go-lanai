@@ -2,6 +2,7 @@ package security
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/internal"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -120,7 +121,7 @@ func HasPermissions(auth Authentication, permissions ...string) bool {
 	return true
 }
 
-//IsTenantValid In most cases, the HasAccessToTenant should be used instead. It checks both the tenant's validity and whether the user has access to it
+// IsTenantValid In most cases, the HasAccessToTenant should be used instead. It checks both the tenant's validity and whether the user has access to it
 func IsTenantValid(ctx context.Context, tenantId string) bool {
 	parentId, err := tenancy.GetParent(ctx, tenantId)
 	//if we find a parent, that means we have this tenantId in tenant hierarchy, so it's valid
@@ -137,7 +138,7 @@ func IsTenantValid(ctx context.Context, tenantId string) bool {
 	return false
 }
 
-//HasAccessToTenant if no error return true, otherwise return false
+// HasAccessToTenant if no error return true, otherwise return false
 func HasAccessToTenant(ctx context.Context, tenantId string) bool {
 	err := HasErrorAccessingTenant(ctx, tenantId)
 	return err == nil
@@ -162,13 +163,12 @@ func HasErrorAccessingTenant(ctx context.Context, tenantId string) error {
 	}
 
 	auth := Get(ctx)
+	if ud, ok := auth.Details().(internal.TenantAccessDetails); ok {
+		if ud.EffectiveAssignedTenantIds().Has(SpecialTenantIdWildcard) {
+			return nil
+		}
 
-	if HasPermissions(auth, SpecialPermissionAccessAllTenant) {
-		return nil
-	}
-
-	if ud, ok := auth.Details().(UserDetails); ok {
-		hasDesc := tenancy.AnyHasDescendant(ctx, ud.AssignedTenantIds(), tenantId)
+		hasDesc := tenancy.AnyHasDescendant(ctx, ud.EffectiveAssignedTenantIds(), tenantId)
 		if hasDesc {
 			return nil
 		}

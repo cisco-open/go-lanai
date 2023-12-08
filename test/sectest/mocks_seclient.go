@@ -164,7 +164,7 @@ func (c *mockedAuthClient) resolveTenant(opt *seclient.AuthOption, acct *MockedA
 		return nil, fmt.Errorf("[Mocked Error] tenant not specified and default tenant not configured")
 	}
 
-	if !acct.AssignedTenants.Has(ret.ID) && !acct.MockedAccountDetails.Permissions.Has(security.SpecialPermissionAccessAllTenant) {
+	if !acct.AssignedTenants.Has(ret.ID) && !acct.AssignedTenants.Has(security.SpecialTenantIdWildcard) {
 		return nil, fmt.Errorf("[Mocked Error] user does not have access to tenant [%s]", ret.ID)
 	}
 	return

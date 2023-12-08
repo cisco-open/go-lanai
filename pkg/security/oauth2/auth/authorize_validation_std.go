@@ -4,7 +4,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
@@ -63,10 +62,6 @@ func (p *StandardAuthorizeRequestProcessor) Process(ctx context.Context, request
 		return nil, e
 	}
 
-	if e := p.validateClientTenancy(ctx, client); e != nil {
-		return nil, e
-	}
-
 	return chain.Next(ctx, request)
 }
 
@@ -109,42 +104,6 @@ func (p *StandardAuthorizeRequestProcessor) validateScope(ctx context.Context, r
 		request.Scopes = client.Scopes().Copy()
 	} else if e := ValidateAllScopes(ctx, client, request.Scopes); e != nil {
 		return e
-	}
-	return nil
-}
-
-func (p *StandardAuthorizeRequestProcessor) validateClientTenancy(ctx context.Context, client oauth2.OAuth2Client) error {
-	clientTenancy := client.TenantRestrictions()
-	if len(clientTenancy) == 0 {
-		return nil
-	}
-
-	userAuth := security.Get(ctx)
-	if security.HasPermissions(userAuth, security.SpecialPermissionAccessAllTenant) {
-		return nil
-	}
-
-	// Note if current security doesn't have valid username, we don't return error here. We let access handler to deal with it
-	username, e := security.GetUsername(userAuth)
-	if !security.IsFullyAuthenticated(userAuth) || e != nil {
-		return nil //nolint:nilerr // intended behaviour
-	}
-
-	acct, e := p.accountStore.LoadAccountByUsername(ctx, username)
-	if e != nil {
-		security.Clear(ctx)
-		return security.NewUsernameNotFoundError("cannot retrieve account from current session")
-	}
-
-	userAccessibleTenants := utils.NewStringSet()
-	if acctTenancy, ok := acct.(security.AccountTenancy); ok {
-		userAccessibleTenants.Add(acctTenancy.DesignatedTenantIds()...)
-	}
-
-	for t := range clientTenancy {
-		if !tenancy.AnyHasDescendant(ctx, userAccessibleTenants, t) {
-			return oauth2.NewUnauthorizedClientError("client is restricted to tenants which the authenticated user does not have access to")
-		}
 	}
 	return nil
 }

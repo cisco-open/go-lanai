@@ -72,11 +72,11 @@ func SubTestHasErrorAccessingTenant(di *contextTestDI) test.GomegaSubTestFunc {
 				expectedErr:   ErrorInvalidTenantId,
 			},
 			{
-				name:          "test has access to all",
-				tenantId:      MockedRootTenantId.String(),
-				permission:    SpecialPermissionAccessAllTenant,
-				hasDescendant: false,
-				expectedErr:   nil,
+				name:              "test has access to all",
+				tenantId:          MockedRootTenantId.String(),
+				assignedTenantIds: utils.NewStringSet(SpecialTenantIdWildcard),
+				hasDescendant:     false,
+				expectedErr:       nil,
 			},
 			{
 				name:              "test has access to tenant",

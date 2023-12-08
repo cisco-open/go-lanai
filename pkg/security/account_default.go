@@ -15,7 +15,7 @@ type AcctDetails struct {
 	UseMFA                    bool
 	DefaultDesignatedTenantId string
 	DesignatedTenantIds       []string
-	TenantId				  string
+	TenantId                  string
 	LastLoginTime             time.Time
 	LoginFailures             []time.Time
 	SerialFailedAttempts      int
@@ -59,7 +59,7 @@ type DefaultAccount struct {
 }
 
 func NewUsernamePasswordAccount(details *AcctDetails) *DefaultAccount {
-	return &DefaultAccount{ AcctDetails: *details}
+	return &DefaultAccount{AcctDetails: *details}
 }
 
 /***********************************
@@ -152,7 +152,7 @@ func (a *DefaultAccount) GracefulAuthCount() int {
  ***********************************/
 
 func (a *DefaultAccount) IncrementGracefulAuthCount() {
-	a.AcctDetails.GracefulAuthCount ++
+	a.AcctDetails.GracefulAuthCount++
 }
 
 func (a *DefaultAccount) LockAccount() {
@@ -170,7 +170,7 @@ func (a *DefaultAccount) UnlockAccount() {
 func (a *DefaultAccount) RecordFailure(failureTime time.Time, limit int) {
 	failures := append(a.AcctDetails.LoginFailures, failureTime)
 	if len(failures) > limit {
-		failures = failures[len(failures) - limit:]
+		failures = failures[len(failures)-limit:]
 	}
 	a.AcctDetails.LoginFailures = failures
 	a.AcctDetails.SerialFailedAttempts = len(failures)

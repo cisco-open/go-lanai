@@ -18,6 +18,7 @@ type ContextDetails interface {
 	KeyValueDetails
 }
 
+// ProviderDetails is available if tenant is selected (tenant dictates provider)
 type ProviderDetails interface {
 	ProviderId() string
 	ProviderName() string
@@ -27,16 +28,24 @@ type ProviderDetails interface {
 	ProviderNotificationType() string
 }
 
+// TenantDetails is available in the following scenarios:
+//
+//	user auth, tenant can be determined (either selected tenant, or there is a default tenant)
+//	client auth, tenant can be determined (either selected tenant, or there is a default tenant)
 type TenantDetails interface {
 	TenantId() string
 	TenantExternalId() string
 	TenantSuspended() bool
 }
 
+// UserDetails is available for user authentication
 type UserDetails interface {
 	UserId() string
 	Username() string
 	AccountType() AccountType
+	// AssignedTenantIds
+	// Deprecated: usage of this method is not encouraged. Designs that require user to select tenancy is preferred
+	// i.e. design tenancy based on TenantDetails instead.
 	AssignedTenantIds() utils.StringSet
 	LocaleCode() string
 	CurrencyCode() string

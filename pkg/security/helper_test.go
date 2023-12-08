@@ -25,7 +25,12 @@ func (m MockedUserDetails) AccountType() AccountType {
 	return 0
 }
 
+// Deprecated: the interface is deprecated
 func (m MockedUserDetails) AssignedTenantIds() utils.StringSet {
+	return m.assignedTenantIds
+}
+
+func (m MockedUserDetails) EffectiveAssignedTenantIds() utils.StringSet {
 	return m.assignedTenantIds
 }
 

@@ -99,7 +99,6 @@ func (s *DefaultAuthorizationService) CreateAuthentication(ctx context.Context,
 	if userAuth, err = s.createUserAuthentication(ctx, request, userAuth); err != nil {
 		return
 	}
-
 	// create the result
 	oauth = oauth2.NewAuthentication(func(conf *oauth2.AuthOption) {
 		conf.Request = request
@@ -264,29 +263,39 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		return nil, newInvalidClientError()
 	}
 
-	if userAuth == nil {
-		return &authFacts{client: client}, nil
-	}
-
 	account, err := s.loadAccount(ctx, request, userAuth)
 	if err != nil {
 		return nil, err
-	} else if account.Locked() || account.Disabled() {
+	} else if account != nil && (account.Locked() || account.Disabled()) {
 		return nil, newInvalidUserError("unsupported user's account locked or disabled")
 	}
 
-	tenant, err := s.loadTenant(ctx, request, account)
+	defaultTenantId, assignedTenants, err := common.ResolveClientUserTenants(ctx, account, client)
+	if err != nil {
+		return nil, newInvalidTenantForUserError(fmt.Errorf("can't resolve account [%T] and client's [%T] tenants", account, client))
+	}
+
+	tenant, err := s.loadTenant(ctx, request, defaultTenantId)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = s.verifyTenantAccess(ctx, tenant, account, client); err != nil {
+	if err = s.verifyTenantAccess(ctx, tenant, assignedTenants); err != nil {
 		return nil, err
 	}
 
 	provider, err := s.loadProvider(ctx, request, tenant)
 	if err != nil {
 		return nil, err
+	}
+
+	if account == nil { // at this point we have all the information we need if it's only client auth
+		return &authFacts{
+			request:  request,
+			client:   client,
+			tenant:   tenant,
+			provider: provider,
+		}, nil
 	}
 
 	if finalizer, ok := s.accountStore.(security.AccountFinalizer); ok {
@@ -298,8 +307,20 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 		if newAccount.ID() != account.ID() || newAccount.Username() != account.Username() {
 			return nil, newTamperedIDOrUsernameError()
 		}
+		// Check tenancy has not been tampered with
+		if _, ok := newAccount.(security.AccountTenancy); !ok {
+			return nil, newTamperedTenancyError()
+		}
+		if newAccount.(security.AccountTenancy).DefaultDesignatedTenantId() != account.(security.AccountTenancy).DefaultDesignatedTenantId() {
+			return nil, newTamperedTenancyError()
+		}
+		if !utils.NewStringSet(newAccount.(security.AccountTenancy).DesignatedTenantIds()...).Equals(utils.NewStringSet(account.(security.AccountTenancy).DesignatedTenantIds()...)) {
+			return nil, newTamperedTenancyError()
+		}
+
 		account = newAccount
 	}
+
 	// after account finalizer, we can re-create the userAuth security.Authentication,
 	// and then return it from here
 	// The Principal and State cannot change. Details and Permissions may change
@@ -331,9 +352,13 @@ func (s *DefaultAuthorizationService) loadAndVerifyFacts(ctx context.Context, re
 
 func (s *DefaultAuthorizationService) loadAccount(
 	ctx context.Context,
-	_ oauth2.OAuth2Request,
+	req oauth2.OAuth2Request,
 	userAuth security.Authentication,
 ) (security.Account, error) {
+	if userAuth == nil {
+		return nil, nil
+	}
+
 	// sanity check, this should not happen
 	if userAuth.State() < security.StateAuthenticated || userAuth.Principal() == nil {
 		return nil, newUnauthenticatedUserError()
@@ -355,18 +380,13 @@ func (s *DefaultAuthorizationService) loadAccount(
 func (s *DefaultAuthorizationService) loadTenant(
 	ctx context.Context,
 	request oauth2.OAuth2Request,
-	account security.Account,
+	defaultTenantId string,
 ) (*security.Tenant, error) {
-	acctT, ok := account.(security.AccountTenancy)
-	if !ok {
-		return nil, newInvalidTenantForUserError(fmt.Sprintf("account [%T] does not provide tenancy information", account))
-	}
-
 	// extract tenant id or name
 	tenantId, idOk := request.Parameters()[oauth2.ParameterTenantId]
 	tenantExternalId, nOk := request.Parameters()[oauth2.ParameterTenantExternalId]
 	if (!idOk || tenantId == "") && (!nOk || tenantExternalId == "") {
-		tenantId = acctT.DefaultDesignatedTenantId()
+		tenantId = defaultTenantId
 	}
 
 	var tenant *security.Tenant
@@ -374,49 +394,33 @@ func (s *DefaultAuthorizationService) loadTenant(
 	if tenantId != "" {
 		tenant, e = s.tenantStore.LoadTenantById(ctx, tenantId)
 		if e != nil {
-			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with id [%s]", account.Username(), tenantId))
+			return nil, newInvalidTenantForUserError(fmt.Sprintf("error loading tenant with id [%s]", tenantId))
 		}
 	}
 
 	if tenantExternalId != "" {
 		tenant, e = s.tenantStore.LoadTenantByExternalId(ctx, tenantExternalId)
 		if e != nil {
-			return nil, newInvalidTenantForUserError(fmt.Sprintf("user [%s] does not access tenant with externalId [%s]", account.Username(), tenantExternalId))
+			return nil, newInvalidTenantForUserError(fmt.Sprintf("error loading tenant with externalId [%s]", tenantExternalId))
 		}
 	}
 
 	return tenant, nil
 }
 
-func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, account security.Account, client oauth2.OAuth2Client) error {
+func (s *DefaultAuthorizationService) verifyTenantAccess(ctx context.Context, tenant *security.Tenant, assignedTenantIds []string) error {
 	if tenant == nil {
 		return nil
 	}
 
-	// special permission ACCESS_ALL_TENANTS
-	for _, p := range account.Permissions() {
-		if p == security.SpecialPermissionAccessAllTenant {
-			return nil
-		}
+	tenantIds := utils.NewStringSet(assignedTenantIds...)
+
+	if tenantIds.Has(security.SpecialTenantIdWildcard) {
+		return nil
 	}
 
-	tenantIds := utils.NewStringSet()
-	if acctT, ok := account.(security.AccountTenancy); ok {
-		tenantIds = utils.NewStringSet(acctT.DesignatedTenantIds()...)
-	}
-
-	// check account
 	if !tenancy.AnyHasDescendant(ctx, tenantIds, tenant.Id) {
 		return oauth2.NewInvalidGrantError("user does not have access to specified tenant")
-	}
-
-	// check client's tenant restrictions
-	if len(client.TenantRestrictions()) != 0 {
-		for t := range client.TenantRestrictions() {
-			if !tenancy.AnyHasDescendant(ctx, tenantIds, t) {
-				return oauth2.NewInvalidGrantError("client is restricted to tenants that the user doesn't have access to")
-			}
-		}
 	}
 
 	return nil
@@ -537,12 +541,20 @@ func newTamperedIDOrUsernameError(reasons ...interface{}) error {
 	return oauth2.NewInternalError("finalizer tampered with the ID or Username field", reasons...)
 }
 
+func newTamperedTenancyError(reasons ...interface{}) error {
+	return oauth2.NewInternalError("finalizer tampered with the tenancy of the account", reasons...)
+}
+
 func newImmutableContextError(reasons ...interface{}) error {
 	return oauth2.NewInternalError("context is not mutable", reasons...)
 }
 
 func newInvalidClientError(reasons ...interface{}) error {
 	return oauth2.NewInvalidGrantError("trying authroize with unknown client", reasons...)
+}
+
+func newInvalidTenantForClientError(reasons ...interface{}) error {
+	return oauth2.NewInvalidGrantError("authenticated client doesn't have access to the requested tenant", reasons...)
 }
 
 func newUnauthenticatedUserError(reasons ...interface{}) error {
