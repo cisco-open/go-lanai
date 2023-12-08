@@ -147,10 +147,7 @@ func (d *MockedSecurityDetails) AccountType() security.AccountType {
 
 // Deprecated: the interface is deprecated
 func (d *MockedSecurityDetails) AssignedTenantIds() utils.StringSet {
-	if d.Tenants == nil {
-		d.Tenants = utils.NewStringSet()
-	}
-	return d.Tenants
+	return d.EffectiveAssignedTenantIds()
 }
 
 func (d *MockedSecurityDetails) EffectiveAssignedTenantIds() utils.StringSet {
