@@ -111,3 +111,31 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer, error) {
 		Increment: int(increment),
 	})
 }
+
+func (c *Client) Clone(customizers ...func(cfg *api.Config)) (*Client, error) {
+	cfg := c.Client.CloneConfig()
+	for _, fn := range customizers {
+		fn(cfg)
+	}
+	newClient, e := api.NewClient(cfg)
+	if e != nil {
+		return nil, e
+	}
+	props := *c.config
+	hooks := make([]Hook, len(c.hooks))
+	for i := range c.hooks {
+		hooks[i] = c.hooks[i]
+	}
+
+	ret := &Client{
+		Client:               newClient,
+		config:               &props,
+		clientAuthentication: c.clientAuthentication,
+		hooks:                hooks,
+	}
+
+	if e := ret.Authenticate(); e != nil {
+		logger.Warnf("vault client clone cannot get token %v", e)
+	}
+	return ret, nil
+}

@@ -1,11 +1,10 @@
-// Package tlsconfig
-// This is an internal package. Do not use outside of go-lanai
+// Package certs
+// Defines necessary interfaces and types for certificate management
 package certs
 
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 )
 
@@ -18,26 +17,7 @@ const (
 	SourceFile  SourceType = "file"
 	SourceACM   SourceType = "acm"
 )
-
 type SourceType string
-
-// Provider
-// Deprecated
-//type Provider interface {
-//	io.Closer
-//
-//	// TODO: VerifyPeerCertificate this can be useful when we need to rotate CAs
-//	// see https://github.com/golang/go/issues/22836
-//	// VerifyPeerCertificate() func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
-//
-//	// GetClientCertificate this should return a function that returns the client certificate
-//	GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error)
-//
-//	// RootCAs this should return the root ca.
-//	RootCAs(ctx context.Context) (*x509.CertPool, error)
-//
-//	GetMinTlsVersion() (uint16, error)
-//}
 
 type TLSOptions func(opt *TLSOption)
 type TLSOption struct {
@@ -49,9 +29,6 @@ type Source interface {
 	TLSConfig(ctx context.Context, opts ...TLSOptions) (*tls.Config, error)
 	// Files get certificates as local files. For drivers that support filesystem based certificates config e.g. postgres DSN
 	Files(ctx context.Context) (*CertificateFiles, error)
-	// Certificates get current certificate set (CAs, certificates keys). For drivers that want to setup/manage certificates manually
-	// TODO Is this necessary?
-	//Certificates(ctx context.Context) (*CertificateSet, error)
 }
 
 // CertificateFiles filesystem based certificates and keys.
@@ -62,13 +39,6 @@ type CertificateFiles struct {
 	CertificatePath      string
 	PrivateKeyPath       string
 	PrivateKeyPassphrase string
-}
-
-// CertificateSet TODO check if this is necessary
-type CertificateSet struct {
-	RootCAs     *x509.CertPool
-	Certificate *tls.Certificate
-	PrivateKey  []byte
 }
 
 type Options func(opt *Option)

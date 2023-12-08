@@ -48,6 +48,7 @@ type HTTPVCROption struct {
 	SavePath       string
 	RecordMatching []RecordMatcherOptions
 	Hooks          []RecorderHook
+	RealTransport  http.RoundTripper
 	// special record matcher that enforce interaction order.
 	// to change, use DisableHttpRecordOrdering
 	indexAwareWrapper *indexAwareMatcherWrapper

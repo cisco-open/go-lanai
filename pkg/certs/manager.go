@@ -81,8 +81,9 @@ func (m *DefaultManager) resolveSourceConfig(opt *Option) (*sourceConfig, error)
 		if !ok {
 			return nil, fmt.Errorf(`invalid certificate options: preset [%s] is not found`, opt.Preset)
 		}
-		// FIXME parse Type
-		src.RawConfig = preset
+		if e := json.Unmarshal(preset, &src); e != nil {
+			return nil, fmt.Errorf(`unable to resolve certificate source preset [%s]: %v`, opt.Preset, e)
+		}
 	case len(opt.Preset) == 0 && len(opt.ConfigPath) != 0 && opt.RawConfig == nil:
 		if e := m.ConfigLoaderFunc(&src, opt.ConfigPath); e != nil {
 			return nil, fmt.Errorf(`unable to resolve certificate source configuration: %v`, e)
@@ -105,7 +106,6 @@ func (m *DefaultManager) resolveSourceConfig(opt *Option) (*sourceConfig, error)
 		if e := json.Unmarshal(rawJson, &src); e != nil {
 			return nil, fmt.Errorf(`invalid certificate options, cannot parse "raw config" as a valid JSON block: %v`, e)
 		}
-		// FIXME make sure src.Type is set in case opt.Type is not provided
 		if len(opt.Type) != 0 {
 			src.Type = opt.Type
 		}

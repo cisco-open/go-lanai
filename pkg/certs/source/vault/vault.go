@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"fmt"
@@ -31,9 +32,9 @@ type VaultProvider struct {
 	monitorCancel context.CancelFunc
 }
 
-func NewVaultProvider(lcCtx context.Context, vc *vault.Client, p SourceProperties) certs.Source {
-	if lcCtx == nil {
-		lcCtx = context.Background()
+func NewVaultProvider(ctx context.Context, vc *vault.Client, p SourceProperties) certs.Source {
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	cache, e := certsource.NewFileCache(func(opt *certsource.FileCacheOption) {
 		opt.Root = p.CachePath
@@ -41,12 +42,12 @@ func NewVaultProvider(lcCtx context.Context, vc *vault.Client, p SourcePropertie
 		opt.Prefix = resolveCacheKey(&p)
 	})
 	if e != nil {
-		logger.WithContext(lcCtx).Warnf("file cache for %s certificate source is not enabled: %v", sourceType, e)
+		logger.WithContext(ctx).Warnf("file cache for %s certificate source is not enabled: %v", sourceType, e)
 	}
 	return &VaultProvider{
 		p:       p,
 		vc:      vc,
-		lcCtx:   lcCtx,
+		lcCtx:   ctx,
 		cache:   cache,
 		monitor: loop.NewLoop(),
 	}
@@ -189,7 +190,7 @@ func (v *VaultProvider) generateClientCertificate(ctx context.Context) (*tls.Cer
 		CommonName: v.p.CN,
 		IpSans:     v.p.IpSans,
 		AltNames:   v.p.AltNames,
-		Ttl:        v.p.TTL,
+		TTL:        v.p.TTL,
 	}
 
 	//nolint:contextcheck // context is passed in via Logical(ctx). false positive
@@ -235,8 +236,8 @@ func resolveCacheKey(p *SourceProperties) (key string) {
 }
 
 type IssueCertificateRequest struct {
-	CommonName string `json:"common_name,omitempty"`
-	Ttl        string `json:"ttl,omitempty"`
-	AltNames   string `json:"alt_names,omitempty"`
-	IpSans     string `json:"ip_sans,omitempty"`
+	CommonName string        `json:"common_name,omitempty"`
+	TTL        utils.Duration `json:"ttl,omitempty"`
+	AltNames   string        `json:"alt_names,omitempty"`
+	IpSans     string        `json:"ip_sans,omitempty"`
 }

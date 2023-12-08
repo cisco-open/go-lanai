@@ -1,6 +1,7 @@
 package acmcerts
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -18,6 +19,7 @@ const (
 
 type factoryDI struct {
 	fx.In
+	AppCtx    *bootstrap.ApplicationContext
 	Props     certs.Properties `optional:"true"`
 	AcmClient acmiface.ACMAPI  `optional:"true"`
 }
@@ -36,7 +38,7 @@ func FxProvider() fx.Annotated {
 				rawDefaults, _ = di.Props.Sources[sourceType]
 			}
 			factory, e := certsource.NewFactory[SourceProperties](sourceType, rawDefaults, func(props SourceProperties) certs.Source {
-				return NewAcmProvider(di.AcmClient, props)
+				return NewAcmProvider(di.AppCtx, di.AcmClient, props)
 			})
 			if e != nil {
 				return nil, fmt.Errorf(`unable to register certificate source type [%s]: %v`, sourceType, e)

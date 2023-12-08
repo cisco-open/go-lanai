@@ -11,7 +11,7 @@ type SourceProperties struct {
 	CN               string         `json:"cn"`
 	IpSans           string         `json:"ip-sans"`
 	AltNames         string         `json:"alt-names"`
-	TTL              string         `json:"ttl"`
+	TTL              utils.Duration `json:"ttl"`
 	MinRenewInterval utils.Duration `json:"min-renew-interval"`
 	CachePath        string         `json:"cache-path"`
 }

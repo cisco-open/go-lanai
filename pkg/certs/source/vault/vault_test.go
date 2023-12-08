@@ -12,17 +12,47 @@ import (
 	vaultinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
 	"fmt"
+	"github.com/hashicorp/vault/api"
+	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"os"
 	"testing"
 	"time"
 )
-import . "github.com/onsi/gomega"
+
+/*************************
+	Test Setup
+ *************************/
+
+var TestCAExpiration = utils.ParseTimeISO8601("2033-11-27T23:04:45Z")
+
+var TestCertReqInfoTmpl = tls.CertificateRequestInfo{
+	AcceptableCAs: [][]byte{},
+	SignatureSchemes: []tls.SignatureScheme{
+		tls.ECDSAWithP256AndSHA256,
+		tls.ECDSAWithP384AndSHA384,
+		tls.ECDSAWithP521AndSHA512,
+		tls.PSSWithSHA256,
+		tls.PSSWithSHA384,
+		tls.PSSWithSHA512,
+		2057,
+		2058,
+		2059,
+		tls.PKCS1WithSHA256,
+		tls.PKCS1WithSHA384,
+		tls.PKCS1WithSHA512,
+		tls.ECDSAWithSHA1,
+		tls.PKCS1WithSHA1,
+	},
+	Version: 772,
+}
 
 type mgrDI struct {
 	fx.In
-	AppCfg bootstrap.ApplicationConfig
+	AppCfg    bootstrap.ApplicationConfig
 	Props     certs.Properties
 	Factories []certs.SourceFactory `group:"certs"`
 }
@@ -48,26 +78,75 @@ func BindTestProperties(appCfg bootstrap.ApplicationConfig) certs.Properties {
 	return *props
 }
 
-type VaultTestDi struct {
+type RecordedVaultDI struct {
 	fx.In
-	Manager     certs.Manager
+	Recorder    *recorder.Recorder
 	VaultClient *vault.Client
 }
 
+type RecordedVaultOut struct {
+	fx.Out
+	TestVaultClient *vault.Client `name:"test"`
+}
+
+func ProvideRecordedVault(di RecordedVaultDI) (RecordedVaultOut, error) {
+	testClient, e := di.VaultClient.Clone(func(cfg *api.Config) {
+		cfg.HttpClient.Transport = di.Recorder
+	})
+	if e != nil {
+		return RecordedVaultOut{}, e
+	}
+	return RecordedVaultOut{
+		TestVaultClient: testClient,
+	}, nil
+}
+
+type VaultRecorderOptionsOut struct {
+	fx.Out
+	VCROptions ittest.HTTPVCROptions `group:"http-vcr"`
+}
+
+func ProvideVaultRecorderOptions(defaultClient *vault.Client) VaultRecorderOptionsOut {
+	return VaultRecorderOptionsOut{
+		VCROptions: func(opt *ittest.HTTPVCROption) {
+			opt.RealTransport = defaultClient.CloneConfig().HttpClient.Transport
+		},
+	}
+}
+
+type VaultTestDi struct {
+	fx.In
+	Manager     certs.Manager
+	VaultClient *vault.Client `name:"test"`
+}
+
+/*************************
+	Tests
+ *************************/
+
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		ittest.PackageHttpRecordingMode(),
+//	)
+//}
+
 // This test assumes your vault has PKI backend enabled (i.e. vault secrets enable pki)
 func TestVaultProvider(t *testing.T) {
-	t.Skipf("skipped because this test requires real vault server")
+	//t.Skipf("skipped because this test requires real vault server")
 	di := &VaultTestDi{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		ittest.WithHttpPlayback(t),
 		apptest.WithDI(di),
 		apptest.WithModules(vaultinit.Module),
 		apptest.WithFxOptions(
 			fx.Provide(ProvideTestManager, BindTestProperties, vaultcerts.FxProvider()),
+			fx.Provide(ProvideRecordedVault, ProvideVaultRecorderOptions),
 		),
 		test.SubTestSetup(SubTestSetupSubmitCA(di)),
 		test.GomegaSubTest(SubTestVaultTLSConfig(di), "SubTestVaultTLSConfig"),
 		test.GomegaSubTest(SubTestVaultCertFiles(di), "SubTestVaultCertFiles"),
+		test.GomegaSubTest(SubTestVaultRenewal(di), "SubTestVaultRenewal"),
 	)
 }
 
@@ -86,101 +165,68 @@ func SubTestSetupSubmitCA(di *VaultTestDi) test.SetupFunc {
 
 func SubTestVaultTLSConfig(di *VaultTestDi) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
+		// For recorded HTTP, the certificate should be valid for very long time for repeated tests
 		p := vaultcerts.SourceProperties{
 			Path:             "pki/",
 			Role:             "localhost",
 			CN:               "localhost",
-			TTL:              "10s",
+			TTL:              MaxCertificateTTL(), // many years
 			MinRenewInterval: utils.Duration(2 * time.Second),
 		}
 
 		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceVault, p))
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).To(Succeed())
 
 		tlsCfg, err := tlsSrc.TLSConfig(ctx)
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).To(Succeed())
 		g.Expect(tlsCfg.RootCAs).ToNot(BeNil())
 		g.Expect(tlsCfg.RootCAs.Subjects()).ToNot(BeEmpty())
 		g.Expect(tlsCfg.RootCAs).ToNot(BeNil())
 
-		//try with the ca that the cert is signed with
-		// the signature scheme and version is captured from a kafka broker that uses tls connection.
-		certReqInfo := &tls.CertificateRequestInfo{
-			AcceptableCAs: tlsCfg.RootCAs.Subjects(),
-			SignatureSchemes: []tls.SignatureScheme{
-				tls.ECDSAWithP256AndSHA256,
-				tls.ECDSAWithP384AndSHA384,
-				tls.ECDSAWithP521AndSHA512,
-				tls.PSSWithSHA256,
-				tls.PSSWithSHA384,
-				tls.PSSWithSHA512,
-				2057,
-				2058,
-				2059,
-				tls.PKCS1WithSHA256,
-				tls.PKCS1WithSHA384,
-				tls.PKCS1WithSHA512,
-				tls.ECDSAWithSHA1,
-				tls.PKCS1WithSHA1,
-			},
-			Version: 772,
-		}
+		// try with the ca that the cert is signed with
+		// the signature scheme and version is captured from server that uses tls connection.
+		certReqInfo := NewTestCertificateRequestInfo(tlsCfg)
 		clientCert, err := tlsCfg.GetClientCertificate(certReqInfo)
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).To(Succeed())
 		g.Expect(clientCert).NotTo(BeNil())
 		g.Expect(len(clientCert.Certificate)).To(Equal(1))
 
 		parsedCert, err := x509.ParseCertificate(clientCert.Certificate[0])
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).To(Succeed())
 		//expect the cert to be valid
-		g.Expect(time.Now().After(parsedCert.NotBefore)).To(BeTrue())
-		g.Expect(time.Now().Before(parsedCert.NotAfter)).To(BeTrue())
-		// because we specified our ttl to be 10s, we expect the cert to be expired after 10 seconds
-		g.Expect(time.Now().Add(11 * time.Second).After(parsedCert.NotAfter)).To(BeTrue())
-
-		//Sleep for 15 seconds, so the original cert is expired
-		//we expect the renew process to kick in and got a new cert
-		time.Sleep(13 * time.Second)
-		clientCert, err = tlsCfg.GetClientCertificate(certReqInfo)
-		g.Expect(err).NotTo(HaveOccurred())
-		g.Expect(clientCert).NotTo(BeNil())
-		g.Expect(len(clientCert.Certificate)).To(Equal(1))
-
-		parsedCert, err = x509.ParseCertificate(clientCert.Certificate[0])
-		g.Expect(err).NotTo(HaveOccurred())
-		//we expect the cert to be valid
 		g.Expect(time.Now().After(parsedCert.NotBefore)).To(BeTrue())
 		g.Expect(time.Now().Before(parsedCert.NotAfter)).To(BeTrue())
 
 		//try with a different ca, and expect no cert is returned
 		anotherCa, err := os.ReadFile("testdata/ca-cert-test-2")
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).To(Succeed())
 		anotherCaPool := x509.NewCertPool()
 		anotherCaPool.AppendCertsFromPEM(anotherCa)
 
 		certReqInfo.AcceptableCAs = anotherCaPool.Subjects()
 		clientCert, err = tlsCfg.GetClientCertificate(certReqInfo)
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).To(Succeed())
 		g.Expect(len(clientCert.Certificate)).To(Equal(0))
 	}
 }
 
 func SubTestVaultCertFiles(di *VaultTestDi) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
+		// For recorded HTTP, the certificate should be valid for very long time for repeated tests
 		p := vaultcerts.SourceProperties{
 			Path:             "pki/",
 			Role:             "localhost",
 			CN:               "localhost",
-			TTL:              "10s",
+			TTL:              MaxCertificateTTL(), // many years
 			MinRenewInterval: utils.Duration(2 * time.Second),
-			CachePath: "testdata/.tmp/",
+			CachePath:        "testdata/.tmp/",
 		}
 
 		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceVault, p))
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).To(Succeed())
 
 		tlsFiles, err := tlsSrc.Files(ctx)
-		g.Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).To(Succeed())
 		const fileRegexTmpl = `testdata/\.tmp/vault/localhost-localhost-[0-9]+-%s\.pem`
 		g.Expect(tlsFiles.RootCAPaths).To(ContainElement(MatchRegexp(fileRegexTmpl, "ca")))
 		AssertFilesExist(g, tlsFiles.RootCAPaths)
@@ -192,9 +238,55 @@ func SubTestVaultCertFiles(di *VaultTestDi) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestVaultRenewal(di *VaultTestDi) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *WithT) {
+		var ttl = 5 * time.Second // short
+		p := vaultcerts.SourceProperties{
+			Path:             "pki/",
+			Role:             "localhost",
+			CN:               "localhost",
+			TTL:              utils.Duration(ttl),
+			MinRenewInterval: utils.Duration(1 * time.Second),
+			CachePath:        "testdata/.tmp/",
+		}
+
+		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceVault, p))
+		g.Expect(err).To(Succeed())
+
+		// Note: In this test case, the certificate have short TTL, we don't check certificate's validity due to HTTP playback.
+		// 		 Instead, we focus on certificate been renewed (different after delay)
+		tlsFiles, err := tlsSrc.Files(ctx)
+		g.Expect(err).To(Succeed())
+		beforeCert := LoadFile(g, tlsFiles.CertificatePath)
+		beforeKey := LoadFile(g, tlsFiles.PrivateKeyPath)
+
+		//Sleep for more than half of the TTL, so the original cert is renewed
+		//we expect the renew process to kick in and got a new cert
+		time.Sleep(ttl-time.Second)
+		tlsFiles, err = tlsSrc.Files(ctx)
+		g.Expect(err).To(Succeed())
+
+		// verify new cert is different from the old one
+		afterCert := LoadFile(g, tlsFiles.CertificatePath)
+		g.Expect(afterCert).ToNot(BeEquivalentTo(beforeCert), "new cert should be issued")
+		afterKey := LoadFile(g, tlsFiles.PrivateKeyPath)
+		g.Expect(afterKey).ToNot(BeEquivalentTo(beforeKey), "new key should be issued")
+	}
+}
+
 /*************************
 	Helpers
  *************************/
+
+func MaxCertificateTTL() utils.Duration {
+	return utils.Duration(TestCAExpiration.Sub(time.Now()) - time.Minute)
+}
+
+func NewTestCertificateRequestInfo(tlsCfg *tls.Config) *tls.CertificateRequestInfo {
+	info := TestCertReqInfoTmpl
+	info.AcceptableCAs = tlsCfg.RootCAs.Subjects()
+	return &info
+}
 
 func AssertFilesExist(g *WithT, paths []string) {
 	for _, path := range paths {
@@ -203,7 +295,12 @@ func AssertFilesExist(g *WithT, paths []string) {
 }
 
 func AssertFileExists(g *WithT, path string) {
+	LoadFile(g, path)
+}
+
+func LoadFile(g *WithT, path string) []byte {
 	data, e := os.ReadFile(path)
 	g.Expect(e).To(Succeed(), "reading file '%s' should not fail", path)
 	g.Expect(data).ToNot(BeEmpty(), "file '%s' should not be empty", path)
+	return data
 }

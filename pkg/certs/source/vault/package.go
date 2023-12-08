@@ -1,7 +1,7 @@
 package vaultcerts
 
 import (
-	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
@@ -19,6 +19,7 @@ const (
 
 type factoryDI struct {
 	fx.In
+	AppCtx      *bootstrap.ApplicationContext
 	Props       certs.Properties `optional:"true"`
 	VaultClient *vault.Client    `optional:"true"`
 }
@@ -37,8 +38,7 @@ func FxProvider() fx.Annotated {
 				rawDefaults, _ = di.Props.Sources[sourceType]
 			}
 			factory, e := certsource.NewFactory[SourceProperties](sourceType, rawDefaults, func(props SourceProperties) certs.Source {
-				// TODO review context
-				return NewVaultProvider(context.Background(), di.VaultClient, props)
+				return NewVaultProvider(di.AppCtx, di.VaultClient, props)
 			})
 			if e != nil {
 				return nil, fmt.Errorf(`unable to register certificate source type [%s]: %v`, sourceType, e)

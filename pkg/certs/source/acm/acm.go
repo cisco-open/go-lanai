@@ -26,25 +26,30 @@ type AcmProvider struct {
 	acmClient         acmiface.ACMAPI
 	cache             *certsource.FileCache
 	cachedCertificate *tls.Certificate
+	lcCtx             context.Context
 	mutex             sync.RWMutex
 	once              sync.Once
 	monitor           *loop.Loop
 	monitorCancel     context.CancelFunc
 }
 
-func NewAcmProvider(acm acmiface.ACMAPI, p SourceProperties) certs.Source {
+func NewAcmProvider(ctx context.Context, acm acmiface.ACMAPI, p SourceProperties) certs.Source {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	cache, e := certsource.NewFileCache(func(opt *certsource.FileCacheOption) {
 		opt.Root = p.CachePath
 		opt.Type = sourceType
 		opt.Prefix = resolveCacheKey(&p)
 	})
 	if e != nil {
-		logger.Warnf("file cache for %s certificate source is not enabled: %v", sourceType, e)
+		logger.WithContext(ctx).Warnf("file cache for %s certificate source is not enabled: %v", sourceType, e)
 	}
 	return &AcmProvider{
 		props:     p,
 		acmClient: acm,
 		cache:     cache,
+		lcCtx:     ctx,
 		monitor:   loop.NewLoop(),
 	}
 }
@@ -87,12 +92,6 @@ func (a *AcmProvider) Files(ctx context.Context) (*certs.CertificateFiles, error
 	}, nil
 }
 
-// GetMinTlsVersion
-// Deprecated
-func (a *AcmProvider) GetMinTlsVersion() (uint16, error) {
-	return certsource.ParseTLSVersion(a.props.MinTLSVersion)
-}
-
 func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	input := &awsacm.ExportCertificateInput{
 		CertificateArn: aws.String(a.props.ARN),
@@ -117,16 +116,6 @@ func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 	return certPool, nil
 }
 
-// GetClientCertificate
-// Deprecated
-func (a *AcmProvider) GetClientCertificate(ctx context.Context) (func(*tls.CertificateRequestInfo) (*tls.Certificate, error), error) {
-	if e := a.LazyInit(ctx); e != nil {
-		return nil, e
-	}
-	return a.toGetClientCertificateFunc(), nil
-
-}
-
 func (a *AcmProvider) LazyInit(ctx context.Context) error {
 	var err error
 	a.once.Do(func() {
@@ -139,7 +128,7 @@ func (a *AcmProvider) LazyInit(ctx context.Context) error {
 		renewIntervalFunc := certsource.RenewRepeatIntervalFunc(time.Duration(a.props.MinRenewInterval))
 		delay := renewIntervalFunc(cert, err)
 
-		loopCtx, cancelFunc := a.monitor.Run(context.Background())
+		loopCtx, cancelFunc := a.monitor.Run(a.lcCtx)
 		a.monitorCancel = cancelFunc
 
 		time.AfterFunc(delay, func() {
@@ -162,7 +151,7 @@ func (a *AcmProvider) toGetClientCertificateFunc() func(*tls.CertificateRequestI
 		if e != nil {
 			// No acceptable certificate found. Don't send a certificate. Don't need to treat as error.
 			// see tls package's func (c *Conn) getClientCertificate(cri *CertificateRequestInfo) (*Certificate, error)
-			return new(tls.Certificate), nil //nolint:nilerr
+			return new(tls.Certificate), nil //nolint:nilerr // as intended
 		} else {
 			return a.cachedCertificate, nil
 		}
@@ -182,7 +171,6 @@ func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certi
 	crtPEM := []byte(*output.Certificate)
 
 	keyBlock, _ := pem.Decode([]byte(*output.PrivateKey))
-	//nolint:staticcheck
 	unEncryptedKey, err := pemutil.DecryptPKCS8PrivateKey(keyBlock.Bytes, []byte(a.props.Passphrase))
 	if err != nil {
 		logger.Errorf("Could not decrypt pkcs8 private key: %s", err.Error())

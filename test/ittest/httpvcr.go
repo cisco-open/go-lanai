@@ -178,6 +178,13 @@ func DisableHttpRecordOrdering() HTTPVCROptions {
 	}
 }
 
+// HttpTransport override the RealTransport during recording mode. This option has no effect in playback mode
+func HttpTransport(transport *http.Transport) HTTPVCROptions {
+	return func(opt *HTTPVCROption) {
+		opt.RealTransport = transport
+	}
+}
+
 /****************************
 	Recorder Aware Context
  ****************************/
@@ -318,7 +325,7 @@ func toRecorderOptions(opt HTTPVCROption) *recorder.Options {
 	return &recorder.Options{
 		CassetteName:       name,
 		Mode:               mode,
-		RealTransport:      http.DefaultTransport,
+		RealTransport:      opt.RealTransport,
 		SkipRequestLatency: true,
 	}
 }
