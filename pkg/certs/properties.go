@@ -9,10 +9,15 @@ type Properties struct {
 	Presets map[string]json.RawMessage     `json:"presets"`
 }
 
-// SourceProperties convenient properties for other package to bind
+// SourceProperties convenient properties for other package to bind.
 type SourceProperties struct {
-	Preset string          `json:"preset"`
-	Raw    json.RawMessage `json:"-"`
+	// Preset is optional. When set, it should match a key in Properties.Presets
+	Preset string `json:"preset"`
+	// Type is required when Preset is not set, optional and ignored when Preset is set.
+	Type SourceType `json:"type"`
+	// Raw stores configuration as JSON.
+	// When Preset is set, Raw might be empty. Otherwise, Raw should at least have "type"
+	Raw json.RawMessage `json:"-"`
 }
 
 func (p *SourceProperties) UnmarshalJSON(data []byte) error {

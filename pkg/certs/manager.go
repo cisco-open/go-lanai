@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sync"
 )
 
@@ -58,9 +59,28 @@ func (m *DefaultManager) Source(ctx context.Context, opts ...Options) (Source, e
 	if !ok {
 		return nil, fmt.Errorf("unsupported TLS source: %s", srcCfg.Type)
 	}
-	return factory.LoadAndInit(ctx, func(src *SourceConfig) {
+	src, e := factory.LoadAndInit(ctx, func(src *SourceConfig) {
 		src.RawConfig = srcCfg.RawConfig
 	})
+	if e != nil {
+		return nil, e
+	}
+
+	sources, _ := m.activeSources[srcCfg.Type]
+	sources = append(sources, src)
+	m.activeSources[srcCfg.Type] = sources
+	return src, nil
+}
+
+func (m *DefaultManager) Close() error {
+	for _, sources := range m.activeSources {
+		for _, src := range sources {
+			if closer, ok := src.(io.Closer); ok {
+				_ = closer.Close()
+			}
+		}
+	}
+	return nil
 }
 
 func (m *DefaultManager) register(item interface{}) error {

@@ -48,7 +48,7 @@ func (d Duration) MarshalText() (text []byte, err error) {
 // encoding.TextUnmarshaler
 func (d *Duration) UnmarshalText(text []byte) error {
 	if d == nil {
-		return errors.New("duration poiter is nil")
+		return errors.New("duration pointer is nil")
 	}
 
 	parsed, e := time.ParseDuration(string(text))

@@ -3,6 +3,7 @@
 package certsinit
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	acmcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/acm"
@@ -10,6 +11,7 @@ import (
 	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/vault"
 	"fmt"
 	"go.uber.org/fx"
+	"io"
 )
 
 const PropertiesPrefix = `tls`
@@ -25,6 +27,7 @@ var Module = &bootstrap.Module{
 			vaultcerts.FxProvider(),
 			acmcerts.FxProvider(),
 		),
+		fx.Invoke(RegisterManagerLifecycle),
 	},
 }
 
@@ -59,4 +62,13 @@ func BindProperties(appCfg bootstrap.ApplicationConfig) certs.Properties {
 		panic(fmt.Errorf("failed to bind certificate properties: %v", e))
 	}
 	return *props
+}
+
+func RegisterManagerLifecycle(lc fx.Lifecycle, m certs.Manager) {
+	lc.Append(fx.StopHook(func(context.Context) error {
+		if closer, ok := m.(io.Closer); ok {
+			return closer.Close()
+		}
+		return nil
+	}))
 }

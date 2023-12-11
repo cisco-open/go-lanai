@@ -1,120 +1,72 @@
+# Note:
+# 1. The actual configurations for different certificate sources are defined by individual source's implementation.
+# 2. The actual TLS configurations for different components are defined by individual component's implementation
+# Configuration there is for testing only, and shall not be used as actual configuration
 tls:
   sources:
     vault:
       type: vault
       path: /pki
       role: localhost
-      cn: redis
       ip-sans: 127.0.0.1
       alt-names: localhost
-      ttl: 5d
-      file-cache:
-        enabled: false
-        path: ".tmp/certs/"
-        prefix: "redis"
+      ttl: 120h
+      cache-path: "testdata/.tmp"
     file:
       type: file
-      ca-cert-file: "configs/tls/ca.crt"
-      cert-file: "configs/tls/redis.crt"
-      key-file: "configs/tls/redis.key"
+      ca-cert-file: "testdata/ca.crt"
+      cert-file: "testdata/source-default.crt"
+      key-file: "testdata/source-default.key"
   presets:
-    redis-vault:
-      type: vault
-      cn: redis
     redis-file:
+      # CA is same as source default
       type: file
-      ca-cert-file: "configs/tls/ca.crt"
-      cert-file: "configs/tls/redis.crt"
-      key-file: "configs/tls/redis.key"
+      cert-file: "testdata/preset.crt"
+      key-file: "testdata/preset.key"
 
 
 kafka:
-  brokers: slmservice:9092
-  net:
-    tls:
-      enabled: true
-      config:
-        type: file
-        CaCertFile: /Users/chrholme/go/src/cto-github.cisco.com/NFV-BU/infraoperator/certtest/ca.pem
-        CertFile: /Users/chrholme/go/src/cto-github.cisco.com/NFV-BU/infraoperator/certtest/kafka.keystore.pem
-        KeyFile: /Users/chrholme/go/src/cto-github.cisco.com/NFV-BU/infraoperator/certtest/kafka.key
-
-redis:
-  addrs: ${spring.redis.host:localhost}:6379
-  #  addrs: localhost:30380
-  db: 0
-  #  password: password
+  brokers: localhost:9092
   tls:
     enabled: true
-    #    config:
-    #      type: file
-    #      ca-cert-file: "configs/tls/ca.crt"
-    #      cert-file: "configs/tls/redis.crt"
-    #      key-file: "configs/tls/redis.key"
-    config:
-      type: vault
-      path: /pki
-      role: localhost
-      cn: redis
-      ip-sans: 127.0.0.1
-      alt-names: localhost
-      ttl: 5d
-      file-cache:
-        enabled: false
-        path: ".tmp/certs/"
-        prefix: "redis"
+    # TLS certificates using source defaults
+    certs:
+      type: file
 
-aws:
-  acm:
-    credentials:
-      #type: static
-      #id: test
-      #secret: test
-      type: sts
-      token-file: /Users/chrholme/go/src/cto-github.cisco.com/chrholme/testgolanai/k8s_jwt
-      role-arn: 123jk1j221ljk1lk12038102981blah
-      role-session-name: blah
-    region: us-east-1
-    endpoint: http://127.0.0.1:31566
+redis:
+  addrs: localhost:6379
+  db: 0
+  tls:
+    enabled: true
+    # TLS certificates using preset
+    certs:
+      preset: "redis-file"
 
 data:
-  logging:
-    level: debug
   cockroach:
     host: localhost
     port: 26257
-    #    port: 32625
     sslmode: require
-    #    sslmode: disable
-    #    username: root
-    #    password: root
     database: testdb
     tls:
       enabled: true
-      #      config:
-      #        type: file
-      #        ca-cert-file: "configs/tls/ca.crt"
-      #        cert-file: "configs/tls/client.root.crt"
-      #        key-file: "configs/tls/client.root.key"
+      # TLS certificates using adhoc (CA uses source default)
+      certs:
+        type: file
+        cert-file: "testdata/adhoc.crt"
+        key-file: "testdata/adhoc.key"
 
-      #      config:
-      #        type: acm
-      #        arn: arn:aws:acm:us-east-1:000000000000:certificate/b7c99e12-a58f-4a1e-8489-87931d200ca5
-      #        passphrase: changeme
-      #        fileCache:
-      #          enabled: true
-      #          prefix: cdb-example
-      #          path: /Users/chrholme/go/src/cto-github.cisco.com/chrholme/testgolanai/
+#aws:
+#  acm:
+#    credentials:
+#      #type: static
+#      #id: test
+#      #secret: test
+#      type: sts
+#      token-file: /Users/chrholme/go/src/cto-github.cisco.com/chrholme/testgolanai/k8s_jwt
+#      role-arn: 123jk1j221ljk1lk12038102981blah
+#      role-session-name: blah
+#    region: us-east-1
+#    endpoint: http://127.0.0.1:31566
 
-      config:
-        type: vault
-        path: /pki
-        role: localhost
-        cn: root
-        ip-sans: 127.0.0.1
-        alt-names: localhost
-        ttl: 5d
-        file-cache:
-          enabled: true
-          path: ".tmp/certs/"
-          prefix: "cockroachdb"
+
