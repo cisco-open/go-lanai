@@ -11,9 +11,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"encoding/pem"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	awsacm "github.com/aws/aws-sdk-go/service/acm"
-	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
 	"go.step.sm/crypto/pemutil"
 	"regexp"
 	"strings"
@@ -23,7 +21,7 @@ import (
 
 type AcmProvider struct {
 	props             SourceProperties
-	acmClient         acmiface.ACMAPI
+	acmClient         *acm.Client
 	cache             *certsource.FileCache
 	cachedCertificate *tls.Certificate
 	lcCtx             context.Context
@@ -33,7 +31,7 @@ type AcmProvider struct {
 	monitorCancel     context.CancelFunc
 }
 
-func NewAcmProvider(ctx context.Context, acm acmiface.ACMAPI, p SourceProperties) certs.Source {
+func NewAcmProvider(ctx context.Context, acm *acm.Client, p SourceProperties) certs.Source {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -93,11 +91,11 @@ func (a *AcmProvider) Files(ctx context.Context) (*certs.CertificateFiles, error
 }
 
 func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
-	input := &awsacm.ExportCertificateInput{
-		CertificateArn: aws.String(a.props.ARN),
+	input := &acm.ExportCertificateInput{
+		CertificateArn: &a.props.ARN,
 		Passphrase:     []byte(a.props.Passphrase),
 	}
-	output, err := a.acmClient.ExportCertificateWithContext(ctx, input)
+	output, err := a.acmClient.ExportCertificate(ctx, input)
 	if err != nil {
 		logger.Errorf("Could not fetch ACM certificate %s: %s", a.props.ARN, err.Error())
 		return nil, err
@@ -119,6 +117,14 @@ func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 func (a *AcmProvider) LazyInit(ctx context.Context) error {
 	var err error
 	a.once.Do(func() {
+		// At least get RootCA once
+		// TODO should we renew RootCA periodically?
+		_, err = a.RootCAs(ctx)
+		if err != nil {
+			logger.Errorf("Failed to get CAs from ACM: %s", err.Error())
+			return
+		}
+		// At least get Certificate once
 		var cert *tls.Certificate
 		cert, err = a.generateClientCertificate(ctx)
 		if err != nil {
@@ -159,11 +165,11 @@ func (a *AcmProvider) toGetClientCertificateFunc() func(*tls.CertificateRequestI
 }
 
 func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certificate, error) {
-	input := &awsacm.ExportCertificateInput{
-		CertificateArn: aws.String(a.props.ARN),
+	input := &acm.ExportCertificateInput{
+		CertificateArn: &a.props.ARN,
 		Passphrase:     []byte(a.props.Passphrase),
 	}
-	output, err := a.acmClient.ExportCertificateWithContext(ctx, input)
+	output, err := a.acmClient.ExportCertificate(ctx, input)
 	if err != nil {
 		logger.Errorf("Could not fetch ACM certificate %s: %s", a.props.ARN, err.Error())
 		return nil, err
@@ -216,11 +222,11 @@ func (a *AcmProvider) generateClientCertificate(ctx context.Context) (*tls.Certi
 	return &cert, nil
 }
 
-func (a *AcmProvider) renewClientCertificate(_ context.Context) error {
-	input := &awsacm.RenewCertificateInput{
-		CertificateArn: aws.String(a.props.ARN),
+func (a *AcmProvider) renewClientCertificate(ctx context.Context) error {
+	input := &acm.RenewCertificateInput{
+		CertificateArn: &a.props.ARN,
 	}
-	_, err := a.acmClient.RenewCertificate(input)
+	_, err := a.acmClient.RenewCertificate(ctx, input)
 	if err != nil {
 		logger.Errorf("Could not renew ACM certificate %s: %s", a.props.ARN, err.Error())
 		return err

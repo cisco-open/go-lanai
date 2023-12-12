@@ -1,4 +1,4 @@
-package acm
+package aws
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -6,11 +6,18 @@ import (
 )
 
 const (
-	ConfigRootACM = "aws.acm"
+	ConfigRootACM = "aws"
 )
 
-// AwsProperties describes common config used to consume AWS services
-type AcmProperties struct {
+const (
+	CredentialsTypeStatic CredentialsType = `static`
+	CredentialsTypeSTS    CredentialsType = `sts`
+)
+
+type CredentialsType string
+
+// Properties describes common config used to consume AWS services
+type Properties struct {
 	//Region for AWS client defaults to us-east-1
 	Region string `json:"region"`
 	//Endpoint for AWS client default empty can be used to override if consuming localstack
@@ -22,7 +29,7 @@ type AcmProperties struct {
 // Credentials defines the type of credentials to use for AWS
 type Credentials struct {
 	//Type is one of static, env or sts.  Defaults to env.
-	Type string `json:"type"`
+	Type CredentialsType `json:"type"`
 
 	//The following is only relevant to static credential
 	//Id is the AWS_ACCESS_KEY_ID for the account
@@ -39,8 +46,8 @@ type Credentials struct {
 	RoleSessionName string `json:"role-session-name"`
 }
 
-func NewAwsProperties(ctx *bootstrap.ApplicationContext) AcmProperties {
-	return AcmProperties{
+func NewProperties() Properties {
+	return Properties{
 		Region: "us-east-1",
 		Credentials: Credentials{
 			Type: "env",
@@ -48,10 +55,10 @@ func NewAwsProperties(ctx *bootstrap.ApplicationContext) AcmProperties {
 	}
 }
 
-func BindAwsProperties(ctx *bootstrap.ApplicationContext) AcmProperties {
-	props := NewAwsProperties(ctx)
+func BindAwsProperties(ctx *bootstrap.ApplicationContext) Properties {
+	props := NewProperties()
 	if err := ctx.Config().Bind(&props, ConfigRootACM); err != nil {
-		panic(errors.Wrap(err, "failed to bind aws.AwsProperties"))
+		panic(errors.Wrap(err, "failed to bind acm.Properties"))
 	}
 	return props
 }

@@ -2,67 +2,28 @@ package acm
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/acm"
-	"github.com/aws/aws-sdk-go/service/sts"
-	"os"
+	awsclient "cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
 )
 
-type AwsAcmFactory interface {
-	New(ctx context.Context) (*acm.ACM, error)
+type ClientFactory interface {
+	New(ctx context.Context, opts...func(opt *acm.Options)) (*acm.Client, error)
 }
 
-func NewAwsAcmFactory(p AcmProperties) AwsAcmFactory {
-	return &awsSessionFactoryImpl{
-		properties: p,
+func NewClientFactory(loader awsclient.ConfigLoader) ClientFactory {
+	return &acmFactory{
+		configLoader: loader,
 	}
 }
 
-type awsSessionFactoryImpl struct {
-	properties AcmProperties
+type acmFactory struct {
+	configLoader awsclient.ConfigLoader
 }
 
-func (f *awsSessionFactoryImpl) New(ctx context.Context) (*acm.ACM, error) {
-	cfg := aws.NewConfig()
-	cfg.Region = aws.String(f.properties.Region)
-	if f.properties.Endpoint != "" {
-		cfg.Endpoint = aws.String(f.properties.Endpoint)
+func (f *acmFactory) New(ctx context.Context, opts...func(opt *acm.Options)) (*acm.Client, error) {
+	cfg, e := f.configLoader.Load(ctx)
+	if e != nil {
+		return nil, e
 	}
-	var cred *credentials.Credentials
-	switch f.properties.Credentials.Type {
-	case "static":
-		cred = credentials.NewStaticCredentials(f.properties.Credentials.Id, f.properties.Credentials.Secret, "")
-
-	case "sts":
-		path := f.properties.Credentials.TokenFile
-		if path == "" {
-			path = os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
-		}
-		role := f.properties.Credentials.RoleARN
-		if role == "" {
-			role = os.Getenv("AWS_ROLE_ARN")
-		}
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return nil, err
-		}
-		tokenProvider := stscreds.FetchTokenPath(path)
-		svc := sts.New(sess)
-		roleProvider := stscreds.NewWebIdentityRoleProviderWithOptions(svc, role, f.properties.Credentials.RoleSessionName, tokenProvider)
-		cred = credentials.NewCredentials(roleProvider)
-	default:
-		cred = credentials.NewEnvCredentials()
-	}
-	cfg.Credentials = cred
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-	a := acm.New(sess)
-	logger.WithContext(ctx).Info("New AWS ACM client created")
-	return a, nil
+	return acm.NewFromConfig(cfg, opts...), nil
 }

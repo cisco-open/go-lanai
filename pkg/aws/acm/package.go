@@ -1,9 +1,10 @@
 package acm
 
 import (
+	awsclient "cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
 	"go.uber.org/fx"
 )
 
@@ -11,11 +12,10 @@ var logger = log.New("Aws")
 
 var Module = &bootstrap.Module{
 	Name:       "ACM",
-	Precedence: bootstrap.AcmPresedence,
+	Precedence: bootstrap.AwsPrecedence,
 	Options: []fx.Option{
-		fx.Provide(BindAwsProperties),
-		fx.Provide(NewAwsAcmFactory),
-		fx.Provide(newDefaultClient),
+		fx.Provide(NewClientFactory),
+		fx.Provide(NewDefaultClient),
 		fx.Invoke(registerHealth),
 	},
 }
@@ -23,8 +23,9 @@ var Module = &bootstrap.Module{
 // Use func, does nothing. Allow service to include this module in main()
 func Use() {
 	bootstrap.Register(Module)
+	bootstrap.Register(awsclient.Module)
 }
 
-func newDefaultClient(ctx *bootstrap.ApplicationContext, f AwsAcmFactory) (acmiface.ACMAPI, error) {
-	return f.New(ctx)
+func NewDefaultClient(ctx *bootstrap.ApplicationContext, factory ClientFactory) (*acm.Client, error) {
+	return factory.New(ctx)
 }

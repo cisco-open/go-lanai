@@ -7,7 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
 	"go.uber.org/fx"
 )
 
@@ -21,7 +21,7 @@ type factoryDI struct {
 	fx.In
 	AppCtx    *bootstrap.ApplicationContext
 	Props     certs.Properties `optional:"true"`
-	AcmClient acmiface.ACMAPI  `optional:"true"`
+	AcmClient *acm.Client      `optional:"true"`
 }
 
 func FxProvider() fx.Annotated {

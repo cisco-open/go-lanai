@@ -3,39 +3,38 @@ package acm
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"github.com/aws/aws-sdk-go/service/acm"
-	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
 	"go.uber.org/fx"
 )
 
 type regDI struct {
 	fx.In
 	HealthRegistrar health.Registrar `optional:"true"`
-	AcmClient       acmiface.ACMAPI
+	AcmClient       *acm.Client
 }
 
 func registerHealth(di regDI) {
 	if di.HealthRegistrar == nil {
 		return
 	}
-	di.HealthRegistrar.MustRegister(&AcmHealthIndicator{
+	di.HealthRegistrar.MustRegister(&HealthIndicator{
 		AcmClient: di.AcmClient,
 	})
 }
 
-// AwsHealthIndicator
-type AcmHealthIndicator struct {
-	AcmClient acmiface.ACMAPI
+// HealthIndicator monitor ACM client status
+type HealthIndicator struct {
+	AcmClient *acm.Client
 }
 
-func (i *AcmHealthIndicator) Name() string {
+func (i *HealthIndicator) Name() string {
 	return "aws.acm"
 }
 
-func (i *AcmHealthIndicator) Health(c context.Context, options health.Options) health.Health {
+func (i *HealthIndicator) Health(ctx context.Context, options health.Options) health.Health {
 	input := &acm.GetAccountConfigurationInput{}
-	if _, e := i.AcmClient.GetAccountConfigurationWithContext(c, input); e != nil {
-		logger.WithContext(c).Errorf("AWS ACM connection not available or identity invalid: %v", e)
+	if _, e := i.AcmClient.GetAccountConfiguration(ctx, input); e != nil {
+		logger.WithContext(ctx).Warnf("AWS ACM connection not available or identity invalid: %v", e)
 		return health.NewDetailedHealth(health.StatusUnknown, "AWS ACM connection not available or identity invalid", nil)
 	} else {
 		return health.NewDetailedHealth(health.StatusUp, "aws connect succeeded", nil)

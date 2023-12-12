@@ -21,7 +21,7 @@ const (
 	ActuatorPrecedence
 	ConsulPrecedence
 	VaultPrecedence
-	AcmPresedence
+	AwsPrecedence
 	TlsConfigPrecedence
 	RedisPrecedence
 	DatabasePrecedence
