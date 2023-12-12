@@ -13,7 +13,7 @@ type regDI struct {
 	AcmClient       *acm.Client
 }
 
-func registerHealth(di regDI) {
+func RegisterHealth(di regDI) {
 	if di.HealthRegistrar == nil {
 		return
 	}
@@ -31,7 +31,7 @@ func (i *HealthIndicator) Name() string {
 	return "aws.acm"
 }
 
-func (i *HealthIndicator) Health(ctx context.Context, options health.Options) health.Health {
+func (i *HealthIndicator) Health(ctx context.Context, _ health.Options) health.Health {
 	input := &acm.GetAccountConfigurationInput{}
 	if _, e := i.AcmClient.GetAccountConfiguration(ctx, input); e != nil {
 		logger.WithContext(ctx).Warnf("AWS ACM connection not available or identity invalid: %v", e)

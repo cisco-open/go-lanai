@@ -16,7 +16,7 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		fx.Provide(NewClientFactory),
 		fx.Provide(NewDefaultClient),
-		fx.Invoke(registerHealth),
+		fx.Invoke(RegisterHealth),
 	},
 }
 

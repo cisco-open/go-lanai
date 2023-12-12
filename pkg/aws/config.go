@@ -17,21 +17,24 @@ type ConfigLoader interface {
 	Load(ctx context.Context, opts ...config.LoadOptionsFunc) (aws.Config, error)
 }
 
-func NewConfigLoader(p Properties) ConfigLoader {
-	return PropertiesBasedConfigLoader{
-		Properties: &p,
+func NewConfigLoader(p Properties, customizers ...config.LoadOptionsFunc) ConfigLoader {
+	return &PropertiesBasedConfigLoader{
+		Properties:  &p,
+		Customizers: customizers,
 	}
 }
 
 type PropertiesBasedConfigLoader struct {
-	Properties *Properties
+	Properties  *Properties
+	Customizers []config.LoadOptionsFunc
 }
 
-func (l PropertiesBasedConfigLoader) Load(ctx context.Context, opts ...config.LoadOptionsFunc) (aws.Config, error) {
+func (l *PropertiesBasedConfigLoader) Load(ctx context.Context, opts ...config.LoadOptionsFunc) (aws.Config, error) {
+	extraOpts := append(l.Customizers, opts...)
 	opts = append([]config.LoadOptionsFunc{
 		WithBasicProperties(l.Properties),
-		WithCredentialsProperties(ctx, l.Properties, opts...)},
-		opts...,
+		WithCredentialsProperties(ctx, l.Properties, extraOpts...)},
+		extraOpts...,
 	)
 	return LoadConfig(ctx, opts...)
 }
@@ -61,14 +64,14 @@ func WithBasicProperties(p *Properties) config.LoadOptionsFunc {
 	}
 }
 
-func WithCredentialsProperties(ctx context.Context, p *Properties, opts ...config.LoadOptionsFunc) config.LoadOptionsFunc {
+func WithCredentialsProperties(ctx context.Context, p *Properties, globalOpts ...config.LoadOptionsFunc) config.LoadOptionsFunc {
 	return func(opt *config.LoadOptions) error {
 		switch p.Credentials.Type {
 		case CredentialsTypeStatic:
-			opt.Credentials = credentials.NewStaticCredentialsProvider(p.Credentials.Id, p.Credentials.Secret, "")
+			opt.Credentials = credentials.NewStaticCredentialsProvider(p.Credentials.Id, p.Credentials.Secret, "static_auth")
 		case CredentialsTypeSTS:
 			var e error
-			if opt.Credentials, e = NewStsCredentialsProvider(ctx, p, opts...); e != nil {
+			if opt.Credentials, e = NewStsCredentialsProvider(ctx, p, globalOpts...); e != nil {
 				return fmt.Errorf(errTmpl, e)
 			}
 		default:
@@ -89,7 +92,6 @@ func NewStsCredentialsProvider(ctx context.Context, p *Properties, opts ...confi
 		roleArn = os.Getenv("AWS_ROLE_ARN")
 	}
 
-	// TODO endpoint
 	opts = append([]config.LoadOptionsFunc{WithBasicProperties(p)}, opts...)
 	cfg, e := LoadConfig(ctx, opts...)
 	if e != nil {
