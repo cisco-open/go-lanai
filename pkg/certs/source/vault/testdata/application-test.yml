@@ -1,0 +1,5 @@
+tls:
+  sources:
+    vault:
+      type: vault
+      cache-path: "testdata/.tmp/certs"

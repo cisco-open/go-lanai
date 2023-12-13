@@ -1,24 +1,28 @@
-package vaultcerts_test
+package acmcerts_test
 
 import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	awsconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws"
+	acmclient "cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws/acm"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/vault"
+	acmcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/acm"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
-	vaultinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
 	"fmt"
-	"github.com/hashicorp/vault/api"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
+	"github.com/aws/aws-sdk-go-v2/service/acm/types"
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -28,7 +32,10 @@ import (
 	Test Setup
  *************************/
 
-var TestCAExpiration = utils.ParseTimeISO8601("2033-11-27T23:04:45Z")
+const (
+	CtxKeyARNValid      = "arn:valid"
+	CtxKeyARNShortLived = "arn:short"
+)
 
 var TestCertReqInfoTmpl = tls.CertificateRequestInfo{
 	AcceptableCAs: [][]byte{},
@@ -79,46 +86,26 @@ func BindTestProperties(appCfg bootstrap.ApplicationConfig) certs.Properties {
 	return *props
 }
 
-type RecordedVaultDI struct {
+func AwsHTTPVCROptions() ittest.HTTPVCROptions {
+	return ittest.HttpRecordMatching(ittest.FuzzyHeaders("Amz-Sdk-Invocation-Id", "X-Amz-Date", "User-Agent"))
+}
+
+type RecordedAwsDI struct {
 	fx.In
-	Recorder    *recorder.Recorder
-	VaultClient *vault.Client
+	Recorder *recorder.Recorder
 }
 
-type RecordedVaultOut struct {
-	fx.Out
-	TestVaultClient *vault.Client `name:"test"`
-}
-
-func ProvideRecordedVault(di RecordedVaultDI) (RecordedVaultOut, error) {
-	testClient, e := di.VaultClient.Clone(func(cfg *api.Config) {
-		cfg.HttpClient.Transport = di.Recorder
-	})
-	if e != nil {
-		return RecordedVaultOut{}, e
-	}
-	return RecordedVaultOut{
-		TestVaultClient: testClient,
-	}, nil
-}
-
-type VaultRecorderOptionsOut struct {
-	fx.Out
-	VCROptions ittest.HTTPVCROptions `group:"http-vcr"`
-}
-
-func ProvideVaultRecorderOptions(defaultClient *vault.Client) VaultRecorderOptionsOut {
-	return VaultRecorderOptionsOut{
-		VCROptions: func(opt *ittest.HTTPVCROption) {
-			opt.RealTransport = defaultClient.CloneConfig().HttpClient.Transport
-		},
+func CustomizeAwsClient(di RecordedAwsDI) config.LoadOptionsFunc {
+	return func(opt *config.LoadOptions) error {
+		opt.HTTPClient = di.Recorder.GetDefaultClient()
+		return nil
 	}
 }
 
-type VaultTestDi struct {
+type AcmTestDI struct {
 	fx.In
-	Manager     certs.Manager
-	VaultClient *vault.Client `name:"test"`
+	AcmClient *acm.Client
+	Manager   certs.Manager
 }
 
 /*************************
@@ -131,36 +118,52 @@ type VaultTestDi struct {
 //	)
 //}
 
-// This test assumes your vault has PKI backend enabled (i.e. vault secrets enable pki)
-func TestVaultProvider(t *testing.T) {
-	//t.Skipf("skipped because this test requires real vault server")
-	di := &VaultTestDi{}
+// This test assumes you are running LocatStack (https://docs.localstack.cloud/user-guide/aws/feature-coverage/) at localhost
+func TestDefaultClient(t *testing.T) {
+	di := &AcmTestDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		ittest.WithHttpPlayback(t),
+		ittest.WithHttpPlayback(t, AwsHTTPVCROptions()),
 		apptest.WithDI(di),
-		apptest.WithModules(vaultinit.Module),
+		apptest.WithModules(awsconfig.Module, acmclient.Module),
 		apptest.WithFxOptions(
-			fx.Provide(ProvideTestManager, BindTestProperties, vaultcerts.FxProvider()),
-			fx.Provide(ProvideRecordedVault, ProvideVaultRecorderOptions),
+			fx.Provide(ProvideTestManager, BindTestProperties, acmcerts.FxProvider()),
+			fx.Provide(awsconfig.FxCustomizerProvider(CustomizeAwsClient)),
 		),
 		test.SubTestSetup(SubTestSetupCleanupTempDir()),
-		test.SubTestSetup(SubTestSetupSubmitCA(di)),
-		test.GomegaSubTest(SubTestVaultTLSConfig(di), "SubTestVaultTLSConfig"),
-		test.GomegaSubTest(SubTestVaultCertFiles(di), "SubTestVaultCertFiles"),
-		test.GomegaSubTest(SubTestVaultRenewal(di), "SubTestVaultRenewal"),
+		test.SubTestSetup(SubTestSetupImportCerts(di)),
+		test.GomegaSubTest(SubTestAcmTLSConfig(di), "TestAcmTLSConfig"),
+		test.GomegaSubTest(SubTestAcmCertFiles(di), "TestAcmCertFiles"),
+		test.GomegaSubTest(SubTestVaultRenewal(di), "TestVaultRenewal"),
 	)
 }
 
-func SubTestSetupSubmitCA(di *VaultTestDi) test.SetupFunc {
+/*************************
+	Sub Tests
+ *************************/
+
+func SubTestSetupImportCerts(di *AcmTestDI) test.SetupFunc {
+	var once sync.Once
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		data, err := os.ReadFile("testdata/ca-bundle-test.json") //this file has the ca bundle matching ca-cert-test.pem
-		if err != nil {
-			return ctx, err
-		}
-		r := di.VaultClient.NewRequest("POST", "/v1/pki/config/ca")
-		r.BodyBytes = data
-		_, err = di.VaultClient.Logical(ctx).WriteBytesWithContext(ctx, "/pki/config/ca", data)
+		var err error
+		once.Do(func() {
+			g := gomega.NewWithT(t)
+			var arn string
+			// the valid one
+			arn, err = ImportCertificate(ctx, g, di.AcmClient,
+				"testdata/test-client.crt", "testdata/test-client.key", "testdata/test-ca.crt")
+			if err != nil {
+				return
+			}
+			ctx = context.WithValue(ctx, CtxKeyARNValid, arn)
+			// for renewal, we cannot test renewal because AWS
+			//arn, err = ImportCertificate(ctx, g, di.AcmClient,
+			//	"testdata/test-client-short.crt", "testdata/test-client-short.key", "testdata/test-ca-short.crt")
+			//if err != nil {
+			//	return
+			//}
+			//ctx = context.WithValue(ctx, CtxKeyARNShortLived, arn)
+		})
 		return ctx, err
 	}
 }
@@ -175,18 +178,16 @@ func SubTestSetupCleanupTempDir() test.SetupFunc {
 	}
 }
 
-func SubTestVaultTLSConfig(di *VaultTestDi) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *WithT) {
+func SubTestAcmTLSConfig(di *AcmTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// For recorded HTTP, the certificate should be valid for very long time for repeated tests
-		p := vaultcerts.SourceProperties{
-			Path:             "pki/",
-			Role:             "localhost",
-			CN:               "localhost",
-			TTL:              MaxCertificateTTL(), // many years
+		p := acmcerts.SourceProperties{
+			ARN:              ctx.Value(CtxKeyARNValid).(string),
+			Passphrase:       "doesn't matter",
 			MinRenewInterval: utils.Duration(2 * time.Second),
 		}
 
-		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceVault, p))
+		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceACM, p))
 		g.Expect(err).To(Succeed())
 
 		tlsCfg, err := tlsSrc.TLSConfig(ctx)
@@ -222,24 +223,25 @@ func SubTestVaultTLSConfig(di *VaultTestDi) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestVaultCertFiles(di *VaultTestDi) test.GomegaSubTestFunc {
+func SubTestAcmCertFiles(di *AcmTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		// For recorded HTTP, the certificate should be valid for very long time for repeated tests
-		p := vaultcerts.SourceProperties{
-			Path:             "pki/",
-			Role:             "localhost",
-			CN:               "localhost",
-			TTL:              MaxCertificateTTL(), // many years
+		arn := ctx.Value(CtxKeyARNValid).(string)
+		p := acmcerts.SourceProperties{
+			ARN:              arn,
+			Passphrase:       "doesn't matter",
 			MinRenewInterval: utils.Duration(2 * time.Second),
 			CachePath:        "testdata/.tmp/certs",
 		}
 
-		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceVault, p))
+		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceACM, p))
 		g.Expect(err).To(Succeed())
 
 		tlsFiles, err := tlsSrc.Files(ctx)
 		g.Expect(err).To(Succeed())
-		const fileRegexTmpl = `testdata/\.tmp/certs/vault/localhost-localhost-[0-9]+-%s\.pem`
+
+		expectedId := arn[strings.LastIndex(arn, "/")+1:]
+		var fileRegexTmpl = fmt.Sprintf(`testdata/\.tmp/certs/acm/certificate-%s-[0-9]+-%%s\.pem`, expectedId)
 		g.Expect(tlsFiles.RootCAPaths).To(ContainElement(MatchRegexp(fileRegexTmpl, "ca")))
 		AssertFilesExist(g, tlsFiles.RootCAPaths)
 		g.Expect(tlsFiles.CertificatePath).To(MatchRegexp(fileRegexTmpl, "cert"))
@@ -250,19 +252,18 @@ func SubTestVaultCertFiles(di *VaultTestDi) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestVaultRenewal(di *VaultTestDi) test.GomegaSubTestFunc {
+func SubTestVaultRenewal(di *AcmTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
+		t.Skipf("Renewal test is not possible for imported certificates")
 		var ttl = 5 * time.Second // short
-		p := vaultcerts.SourceProperties{
-			Path:             "pki/",
-			Role:             "localhost",
-			CN:               "localhost",
-			TTL:              utils.Duration(ttl),
-			MinRenewInterval: utils.Duration(1 * time.Second),
+		p := acmcerts.SourceProperties{
+			ARN:              ctx.Value(CtxKeyARNShortLived).(string),
+			Passphrase:       "doesn't matter",
+			MinRenewInterval: utils.Duration(2 * time.Second),
 			CachePath:        "testdata/.tmp/certs",
 		}
 
-		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceVault, p))
+		tlsSrc, err := di.Manager.Source(ctx, certs.WithType(certs.SourceACM, p))
 		g.Expect(err).To(Succeed())
 
 		// Note: In this test case, the certificate have short TTL, we don't check certificate's validity due to HTTP playback.
@@ -290,10 +291,6 @@ func SubTestVaultRenewal(di *VaultTestDi) test.GomegaSubTestFunc {
 	Helpers
  *************************/
 
-func MaxCertificateTTL() utils.Duration {
-	return utils.Duration(TestCAExpiration.Sub(time.Now()) - time.Minute)
-}
-
 func NewTestCertificateRequestInfo(tlsCfg *tls.Config) *tls.CertificateRequestInfo {
 	info := TestCertReqInfoTmpl
 	info.AcceptableCAs = tlsCfg.RootCAs.Subjects()
@@ -315,4 +312,26 @@ func LoadFile(g *WithT, path string) []byte {
 	g.Expect(e).To(Succeed(), "reading file '%s' should not fail", path)
 	g.Expect(data).ToNot(BeEmpty(), "file '%s' should not be empty", path)
 	return data
+}
+
+func ImportCertificate(ctx context.Context, g *gomega.WithT, acmClient *acm.Client, certPath, keyPath, caPath string) (string, error) {
+	certBytes := LoadFile(g, certPath)
+	keyBytes := LoadFile(g, keyPath)
+	caBytes := LoadFile(g, caPath)
+	output, e := acmClient.ImportCertificate(ctx, &acm.ImportCertificateInput{
+		Certificate:      certBytes,
+		PrivateKey:       keyBytes,
+		CertificateChain: caBytes,
+		Tags: []types.Tag{{
+			Key:   utils.ToPtr("name"),
+			Value: utils.ToPtr("test"),
+		}},
+	})
+	if e != nil {
+		return "", e
+	}
+	if output.CertificateArn == nil {
+		return "", fmt.Errorf("ImportCertificate didn't return any ARN")
+	}
+	return *output.CertificateArn, nil
 }

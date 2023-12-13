@@ -72,6 +72,10 @@ func TestDefaultClient(t *testing.T) {
     )
 }
 
+/*************************
+	Sub Test
+ *************************/
+
 func SubTestImportCertificate(di *AcmTestDI) test.GomegaSubTestFunc {
     return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
         input := &acm.ImportCertificateInput{
