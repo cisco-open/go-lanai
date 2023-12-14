@@ -36,18 +36,22 @@ func (m *MockAccountStoreWithFinalize) Finalize(
 	if !ok {
 		return nil, fmt.Errorf("username: %v not found", account.Username())
 	}
+	ret := *u
+	ret.MockedAccountDetails.DefaultTenant = account.(security.AccountTenancy).DefaultDesignatedTenantId()
+	ret.MockedAccountDetails.AssignedTenants = utils.NewStringSet(account.(security.AccountTenancy).DesignatedTenantIds()...)
+
 	if opts.Tenant == nil {
-		u.MockedAccountDetails.Permissions = utils.NewStringSet(security.SpecialPermissionSwitchTenant)
-		return u, nil
+		ret.MockedAccountDetails.Permissions = utils.NewStringSet(security.SpecialPermissionSwitchTenant)
+		return ret, nil
 	}
 	tenant, ok := m.tenantIDLookup[opts.Tenant.Id]
 	if !ok {
 		return nil, fmt.Errorf("tenantID: %v not found", opts.Tenant.Id)
 	}
 	if permissions, ok := tenant.Permissions[account.ID().(string)]; ok {
-		u.MockedAccountDetails.Permissions = utils.NewStringSet(permissions...)
+		ret.MockedAccountDetails.Permissions = utils.NewStringSet(permissions...)
 	}
-	return u, nil
+	return ret, nil
 }
 
 type MockAccountStore struct {

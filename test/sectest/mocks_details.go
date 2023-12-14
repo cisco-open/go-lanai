@@ -40,6 +40,7 @@ type SecurityDetailsMock struct {
 // - security.TenantDetails
 // - security.ProviderDetails
 // - security.KeyValueDetails
+// - internal.TenantAccessDetails
 type MockedSecurityDetails struct {
 	SecurityDetailsMock
 }
@@ -144,7 +145,12 @@ func (d *MockedSecurityDetails) AccountType() security.AccountType {
 	return security.AccountTypeDefault
 }
 
+// Deprecated: the interface is deprecated
 func (d *MockedSecurityDetails) AssignedTenantIds() utils.StringSet {
+	return d.EffectiveAssignedTenantIds()
+}
+
+func (d *MockedSecurityDetails) EffectiveAssignedTenantIds() utils.StringSet {
 	if d.Tenants == nil {
 		d.Tenants = utils.NewStringSet()
 	}

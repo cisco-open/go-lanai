@@ -54,7 +54,8 @@ func GobRegister() {
 ************************/
 
 type MFAMode int
-const(
+
+const (
 	MFAModeSkip = iota
 	MFAModeOptional
 	MFAModeMust
@@ -62,8 +63,8 @@ const(
 
 // UsernamePasswordPair is the supported security.Candidate of this authenticator
 type UsernamePasswordPair struct {
-	Username string
-	Password string
+	Username   string
+	Password   string
 	DetailsMap map[string]interface{}
 	EnforceMFA MFAMode
 }
@@ -86,8 +87,8 @@ func (upp *UsernamePasswordPair) Details() interface{} {
 // MFAOtpVerification is the supported security.Candidate for MFA authentication
 type MFAOtpVerification struct {
 	CurrentAuth UsernamePasswordAuthentication
-	OTP string
-	DetailsMap map[string]interface{}
+	OTP         string
+	DetailsMap  map[string]interface{}
 }
 
 // Principal implements security.Candidate
@@ -108,7 +109,7 @@ func (uop *MFAOtpVerification) Details() interface{} {
 // MFAOtpRefresh is the supported security.Candidate for MFA OTP refresh
 type MFAOtpRefresh struct {
 	CurrentAuth UsernamePasswordAuthentication
-	DetailsMap map[string]interface{}
+	DetailsMap  map[string]interface{}
 }
 
 // Principal implements security.Candidate
@@ -138,6 +139,7 @@ type UsernamePasswordAuthentication interface {
 	OTPIdentifier() string
 }
 
+// TODO: do we want the details here to also implement the ctx_details interfaces?
 // usernamePasswordAuthentication
 // Note: all fields should not be used directly. It's exported only because gob only deal with exported field
 type usernamePasswordAuthentication struct {

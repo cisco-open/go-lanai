@@ -580,7 +580,7 @@ func mockedSecurityWithAllTenantAccess(parent context.Context) context.Context {
 		populateDefaults(m)
 		m.Tenants = utils.NewStringSet(MockedRootTenantId.String())
 		m.TenantId = MockedRootTenantId.String()
-		m.Permissions.Add(security.SpecialPermissionAccessAllTenant)
+		m.Tenants.Add(security.SpecialTenantIdWildcard)
 	})
 }
 

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"cto-github.cisco.com/NFV-BU/go-lanai/internal"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
@@ -63,8 +64,8 @@ func (t TenantPath) DeleteClauses(f *schema.Field) []clause.Interface {
 // See gorm.DeletedAt for impl. reference
 type tenancyFilterClause struct {
 	NoopStatementModifier
-	Flag TenancyCheckFlag
-	Mode tcMode
+	Flag  TenancyCheckFlag
+	Mode  tcMode
 	Field *schema.Field
 }
 
@@ -88,9 +89,9 @@ func newTenancyFilterClause(f *schema.Field, isRead bool) *tenancyFilterClause {
 		flag = TenancyCheckFlagReadFiltering
 	}
 	return &tenancyFilterClause{
-		Flag:         flag,
-		Mode:         mode,
-		Field:        f,
+		Flag:  flag,
+		Mode:  mode,
+		Field: f,
 	}
 }
 
@@ -146,13 +147,12 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 
 func requiredTenancyFiltering(stmt *gorm.Statement) (tenantIDs []uuid.UUID) {
 	auth := security.Get(stmt.Context)
-	if security.HasPermissions(auth, security.SpecialPermissionAccessAllTenant) {
-		return nil
-	}
-
-	ud, _ := auth.Details().(security.UserDetails)
-	if ud != nil {
-		idsStr := ud.AssignedTenantIds()
+	ta, _ := auth.Details().(internal.TenantAccessDetails)
+	if ta != nil {
+		idsStr := ta.EffectiveAssignedTenantIds()
+		if idsStr.Has(security.SpecialTenantIdWildcard) {
+			return nil
+		}
 		tenantIDs = make([]uuid.UUID, 0, len(idsStr))
 		for tenant := range idsStr {
 			if tenantId, e := uuid.Parse(tenant); e == nil {

@@ -18,13 +18,14 @@ type mockingProperties struct {
 }
 
 type MockedClientProperties struct {
-	ClientID     string                    `json:"id"`
-	Secret       string                    `json:"secret"`
-	GrantTypes   utils.CommaSeparatedSlice `json:"grant-types"`
-	Scopes       utils.CommaSeparatedSlice `json:"scopes"`
-	RedirectUris utils.CommaSeparatedSlice `json:"redirect-uris"`
-	ATValidity   utils.Duration            `json:"access-token-validity"`
-	RTValidity   utils.Duration            `json:"refresh-token-validity"`
+	ClientID          string                    `json:"id"`
+	Secret            string                    `json:"secret"`
+	GrantTypes        utils.CommaSeparatedSlice `json:"grant-types"`
+	Scopes            utils.CommaSeparatedSlice `json:"scopes"`
+	RedirectUris      utils.CommaSeparatedSlice `json:"redirect-uris"`
+	ATValidity        utils.Duration            `json:"access-token-validity"`
+	RTValidity        utils.Duration            `json:"refresh-token-validity"`
+	AssignedTenantIds utils.CommaSeparatedSlice `json:"tenants"`
 }
 
 type MockedAccountProperties struct {

@@ -7,9 +7,16 @@ import (
 	"github.com/google/uuid"
 )
 
+// TenancyRelation
+// Deprecated: use the string version instead
 type TenancyRelation struct {
 	Child  uuid.UUID
 	Parent uuid.UUID
+}
+
+type TenancyRelationWithStrId struct {
+	ChildId  string
+	ParentId string
 }
 
 type MockTenancyAccessor struct {
@@ -21,6 +28,8 @@ type MockTenancyAccessor struct {
 	Isloaded          bool
 }
 
+// NewMockTenancyAccessor
+// Deprecated: Use string version instead
 func NewMockTenancyAccessor(tenantRelations []TenancyRelation, root uuid.UUID) *MockTenancyAccessor {
 	m := &MockTenancyAccessor{}
 	// default
@@ -29,20 +38,41 @@ func NewMockTenancyAccessor(tenantRelations []TenancyRelation, root uuid.UUID) *
 	return m
 }
 
+func NewMockTenancyAccessorUsingStrIds(tenantRelations []TenancyRelationWithStrId, root string) *MockTenancyAccessor {
+	m := &MockTenancyAccessor{}
+	m.Isloaded = true
+	m.ResetWithStrIds(tenantRelations, root)
+	return m
+}
+
+// Reset
+// Deprecated: Use the str version instead
 func (m *MockTenancyAccessor) Reset(tenantRelations []TenancyRelation, root uuid.UUID) {
+	var trWithStrId []TenancyRelationWithStrId
+	for _, tr := range tenantRelations {
+		trWithStrId = append(trWithStrId, TenancyRelationWithStrId{
+			ChildId:  tr.Child.String(),
+			ParentId: tr.Parent.String(),
+		})
+	}
+	rootStrId := root.String()
+	m.ResetWithStrIds(trWithStrId, rootStrId)
+}
+
+func (m *MockTenancyAccessor) ResetWithStrIds(tenantRelations []TenancyRelationWithStrId, root string) {
 	m.ParentLookup = make(map[string]string)
 	m.ChildrenLookup = make(map[string][]string)
 	m.DescendantsLookup = make(map[string][]string)
 	m.AncestorsLookup = make(map[string][]string)
-	m.Root = root.String()
+	m.Root = root
 
 	//build the parent and children lookup
 	for _, r := range tenantRelations {
-		m.ParentLookup[r.Child.String()] = r.Parent.String()
+		m.ParentLookup[r.ChildId] = r.ParentId
 
-		children := m.ChildrenLookup[r.Parent.String()]
-		children = append(children, r.Child.String())
-		m.ChildrenLookup[r.Parent.String()] = children
+		children := m.ChildrenLookup[r.ParentId]
+		children = append(children, r.ChildId)
+		m.ChildrenLookup[r.ParentId] = children
 	}
 
 	//build the ancestor lookup

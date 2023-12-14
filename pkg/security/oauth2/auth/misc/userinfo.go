@@ -15,8 +15,8 @@ import (
 var (
 	scopedSpecs = map[string]map[string]claims.ClaimSpec{
 		oauth2.ScopeOidcProfile: claims.ProfileScopeSpecs,
-		oauth2.ScopeOidcEmail: claims.EmailScopeSpecs,
-		oauth2.ScopeOidcPhone: claims.PhoneScopeSpecs,
+		oauth2.ScopeOidcEmail:   claims.EmailScopeSpecs,
+		oauth2.ScopeOidcPhone:   claims.PhoneScopeSpecs,
 		oauth2.ScopeOidcAddress: claims.AddressScopeSpecs,
 	}
 	defaultSpecs = []map[string]claims.ClaimSpec{
@@ -126,7 +126,7 @@ func (ep *UserInfoEndpoint) determineClaimSpecs(request oauth2.OAuth2Request) []
 		return fullSpecs
 	}
 
-	specs := make([]map[string]claims.ClaimSpec, len(defaultSpecs), len(defaultSpecs) + len(request.Scopes()))
+	specs := make([]map[string]claims.ClaimSpec, len(defaultSpecs), len(defaultSpecs)+len(request.Scopes()))
 	for i, spec := range defaultSpecs {
 		specs[i] = spec
 	}

@@ -155,9 +155,12 @@ func safeSet(claims oauth2.Claims, claim string, value interface{}) (err error) 
 	return nil
 }
 
-/*************************
-	helpers
- *************************/
+/*
+************************
+
+		helpers
+	 ************************
+*/
 func tryReloadAccount(ctx context.Context, opt *FactoryOption) security.Account {
 	if acct, ok := ctx.Value(oauth2.CtxKeyAuthenticatedAccount).(security.Account); ok {
 		return acct

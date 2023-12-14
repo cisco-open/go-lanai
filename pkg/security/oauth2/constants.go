@@ -22,7 +22,7 @@ const (
 	ParameterUsername            = "username"
 	ParameterPassword            = "password"
 	ParameterTenantId            = "tenant_id"
-	ParameterTenantExternalId          = "tenant_name" //for backward compatibility we map it to tenant_name
+	ParameterTenantExternalId    = "tenant_name" //for backward compatibility we map it to tenant_name
 	ParameterNonce               = "nonce"
 	ParameterMaxAge              = "max_age"
 	ParameterError               = "error"
@@ -160,17 +160,17 @@ const (
 	/**
 	 * NFV Additions - custom
 	 */
-	ClaimUserId          = "user_id"
-	ClaimAccountType     = "account_type"
-	ClaimCurrency        = "currency"
-	ClaimTenantId        = "tenant_id"
-	ClaimTenantExternalId      = "tenant_name" //for backward compatibility we map it to tenant_name
-	ClaimTenantSuspended = "tenant_suspended"
-	ClaimProviderId      = "provider_id"
-	ClaimProviderName    = "provider_name"
-	ClaimProviderDisplayName = "provider_display_name"
-	ClaimProviderDescription = "provider_description"
-	ClaimProviderEmail = "provider_email"
+	ClaimUserId                   = "user_id"
+	ClaimAccountType              = "account_type"
+	ClaimCurrency                 = "currency"
+	ClaimTenantId                 = "tenant_id"
+	ClaimTenantExternalId         = "tenant_name" //for backward compatibility we map it to tenant_name
+	ClaimTenantSuspended          = "tenant_suspended"
+	ClaimProviderId               = "provider_id"
+	ClaimProviderName             = "provider_name"
+	ClaimProviderDisplayName      = "provider_display_name"
+	ClaimProviderDescription      = "provider_description"
+	ClaimProviderEmail            = "provider_email"
 	ClaimProviderNotificationType = "provider_notification_type"
 
 	ClaimAssignedTenants = "assigned_tenants"

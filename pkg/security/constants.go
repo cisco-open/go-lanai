@@ -25,18 +25,26 @@ const (
 	 *
 	 * For now we use project version + incremental number as tag, but we could also use timestamp or date
 	 */
-	CompatibilityReference = "4000"
+	CompatibilityReference    = "4000"
 	CompatibilityReferenceTag = "SMCR" // SMCR = Security Model Compatibility Ref
 )
 
 const (
+	// SpecialPermissionAccessAllTenant
+	// Deprecated: this permission is no longer sufficient to determine tenancy access
+	// in the case of an oauth2 authentication where the client is also tenanted.
+	// We are deprecating the use case where a user does not select a tenant.
 	SpecialPermissionAccessAllTenant = "ACCESS_ALL_TENANTS"
-	SpecialPermissionAPIAdmin = "IS_API_ADMIN"
-	SpecialPermissionSwitchTenant = "SWITCH_TENANT"
-	SpecialPermissionSwitchUser = "VIEW_OPERATOR_LOGIN_AS_CUSTOMER"
+	SpecialPermissionAPIAdmin        = "IS_API_ADMIN"
+	SpecialPermissionSwitchTenant    = "SWITCH_TENANT"
+	SpecialPermissionSwitchUser      = "VIEW_OPERATOR_LOGIN_AS_CUSTOMER"
 	//SpecialPermissionAdmin = "IS_ADMIN"
 	//SpecialPermissionOperator = "IS_OPERATOR"
 	//SpecialPermission = ""
+)
+
+const (
+	SpecialTenantIdWildcard = "*"
 )
 
 const (
@@ -54,16 +62,16 @@ const (
 )
 
 const (
-	WSSharedKeyCompositeAuthSuccessHandler = "CompositeAuthSuccessHandler"
-	WSSharedKeyCompositeAuthErrorHandler = "CompositeAuthErrorHandler"
+	WSSharedKeyCompositeAuthSuccessHandler  = "CompositeAuthSuccessHandler"
+	WSSharedKeyCompositeAuthErrorHandler    = "CompositeAuthErrorHandler"
 	WSSharedKeyCompositeAccessDeniedHandler = "CompositeAccessDeniedHandler"
-	WSSharedKeySessionStore = "SessionStore"
-	WSSharedKeyRequestPreProcessors = "RequestPreProcessors"
+	WSSharedKeySessionStore                 = "SessionStore"
+	WSSharedKeyRequestPreProcessors         = "RequestPreProcessors"
 )
 
 // Middleware Orders
 const (
-	_ = HighestMiddlewareOrder + iota * 20
+	_ = HighestMiddlewareOrder + iota*20
 	MWOrderSessionHandling
 	MWOrderAuthPersistence
 	MWOrderErrorHandling
@@ -76,8 +84,8 @@ const (
 	MWOrderFormAuth
 	MWOrderOAuth2TokenAuth
 	// ... more MW goes here
-	MWOrderAccessControl = LowestMiddlewareOrder - 200
-	MWOrderOAuth2Endpoints = MWOrderAccessControl + 100
+	MWOrderAccessControl     = LowestMiddlewareOrder - 200
+	MWOrderOAuth2Endpoints   = MWOrderAccessControl + 100
 	MWOrderSamlAuthEndpoints = MWOrderAccessControl + 100
 )
 
@@ -105,10 +113,9 @@ const (
 
 // AuthenticationSuccessHandler Orders, if not listed here, it's unordered. Unordered handlers are applied at last
 const (
-	_ = iota
+	_                         = iota
 	HandlerOrderChangeSession = iota * 100
 	HandlerOrderConcurrentSession
-
 )
 
 // CSRF headers and parameter names - shared by CSRF feature and session feature's request cache

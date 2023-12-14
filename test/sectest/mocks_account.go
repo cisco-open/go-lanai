@@ -84,7 +84,7 @@ func (m MockedAccount) Username() string {
 }
 
 func (m MockedAccount) Credentials() interface{} {
-	return ""
+	return m.MockedAccountDetails.Password
 }
 
 func (m MockedAccount) Permissions() []string {

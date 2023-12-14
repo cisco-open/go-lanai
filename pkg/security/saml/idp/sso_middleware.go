@@ -179,10 +179,6 @@ func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context
 		return NewSamlInternalError("cannot validate tenancy restriction due to unknown username", e)
 	}
 
-	if security.HasPermissions(auth, security.SpecialPermissionAccessAllTenant) {
-		return nil
-	}
-
 	acct, e := mw.accountStore.LoadAccountByUsername(ctx, username)
 	if e != nil {
 		return NewSamlInternalError("cannot validate tenancy restriction due to error fetching account", e)
@@ -194,6 +190,11 @@ func (mw *SamlAuthorizeEndpointMiddleware) validateTenantRestriction(ctx context
 	}
 
 	userAccessibleTenants := utils.NewStringSet(acctTenancy.DesignatedTenantIds()...)
+
+	if userAccessibleTenants.Has(security.SpecialTenantIdWildcard) {
+		return nil
+	}
+
 	switch tenantRestrictionType := client.GetTenantRestrictionType(); tenantRestrictionType {
 	case TenantRestrictionTypeAny:
 		allowed := false
