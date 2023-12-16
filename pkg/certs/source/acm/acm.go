@@ -32,9 +32,6 @@ type AcmProvider struct {
 }
 
 func NewAcmProvider(ctx context.Context, acm *acm.Client, p SourceProperties) certs.Source {
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	cache, e := certsource.NewFileCache(func(opt *certsource.FileCacheOption) {
 		opt.Root = p.CachePath
 		opt.Type = sourceType
@@ -68,6 +65,7 @@ func (a *AcmProvider) TLSConfig(ctx context.Context, _ ...certs.TLSOptions) (*tl
 	if e != nil {
 		return nil, e
 	}
+	//nolint:gosec // false positive -  G402: TLS MinVersion too low
 	return &tls.Config{
 		GetClientCertificate: a.toGetClientCertificateFunc(),
 		RootCAs:              rootCAs,

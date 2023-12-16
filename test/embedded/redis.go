@@ -37,6 +37,7 @@ func Redis(opts ...RedisOptions) suitetest.PackageOptions {
 // WithRedis start redis at random port (32768-65535) on per test basis
 // The actual port get be get using CurrentRedisPort
 func WithRedis(opts ...RedisOptions) test.Options {
+	//nolint:gosec // Not security related
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := RedisConfig{
 		Port: 0x7fff + r.Intn(0x7fff) + 1,
@@ -77,7 +78,8 @@ func CurrentRedisPort(ctx context.Context) (port int) {
 	})
 
 	switch v := ret.(type) {
-	case int: return v
+	case int:
+		return v
 	}
 	return
 }

@@ -33,9 +33,6 @@ type VaultProvider struct {
 }
 
 func NewVaultProvider(ctx context.Context, vc *vault.Client, p SourceProperties) certs.Source {
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	cache, e := certsource.NewFileCache(func(opt *certsource.FileCacheOption) {
 		opt.Root = p.CachePath
 		opt.Type = sourceType
@@ -65,6 +62,7 @@ func (v *VaultProvider) TLSConfig(ctx context.Context, _ ...certs.TLSOptions) (*
 	if e != nil {
 		return nil, e
 	}
+	//nolint:gosec // false positive -  G402: TLS MinVersion too low
 	return &tls.Config{
 		GetClientCertificate: v.toGetClientCertificateFunc(),
 		RootCAs:              rootCAs,

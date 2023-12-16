@@ -88,6 +88,7 @@ func (r *RemoteTokenStoreReader) ReadAccessToken(ctx context.Context, value stri
 	return token, nil
 }
 
+//nolint:staticcheck // this feature is not fully implemented yet
 func (r *RemoteTokenStoreReader) ReadRefreshToken(ctx context.Context, value string) (oauth2.RefreshToken, error) {
 	token, e := r.parseRefreshToken(ctx, value)
 	switch {
@@ -124,6 +125,7 @@ func (r *RemoteTokenStoreReader) readAccessToken(ctx context.Context, value stri
 	return r.createAccessToken(&detailedClaims.BasicClaims, value), nil
 }
 
+//nolint:staticcheck // this feature is not fully implemented yet
 func (r *RemoteTokenStoreReader) parseRefreshToken(_ context.Context, _ string) (*oauth2.DefaultRefreshToken, error) {
 	return nil, fmt.Errorf("remote refresh token validation is not supported")
 }

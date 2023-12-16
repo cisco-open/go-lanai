@@ -31,6 +31,7 @@ func (f *FileProvider) TLSConfig(ctx context.Context, _ ...certs.TLSOptions) (*t
 	if e != nil {
 		return nil, e
 	}
+	//nolint:gosec // false positive -  G402: TLS MinVersion too low
 	return &tls.Config{
 		GetClientCertificate: f.toGetClientCertificateFunc(),
 		RootCAs: rootCAs,
