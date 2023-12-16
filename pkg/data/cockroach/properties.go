@@ -23,7 +23,7 @@ type CockroachProperties struct {
 
 type TLS struct {
 	Enable bool                   `json:"enabled"`
-	Config certs.SourceProperties `json:"config"`
+	Config certs.SourceProperties `json:"certs"`
 }
 
 // NewCockroachProperties create a CockroachProperties with default values

@@ -6,9 +6,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	acmcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/acm"
 	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/file"
-	vaultcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/vault"
 	"fmt"
 	"go.uber.org/fx"
 	"io"
@@ -17,15 +15,12 @@ import (
 const PropertiesPrefix = `tls`
 
 var Module = &bootstrap.Module{
-	Name:       "tls-config",
+	Name:       "certs",
 	Precedence: bootstrap.TlsConfigPrecedence,
 	Options: []fx.Option{
 		fx.Provide(BindProperties, ProvideDefaultManager),
-		// TODO maybe we don't automatically register all sources
 		fx.Provide(
 			filecerts.FxProvider(),
-			vaultcerts.FxProvider(),
-			acmcerts.FxProvider(),
 		),
 		fx.Invoke(RegisterManagerLifecycle),
 	},

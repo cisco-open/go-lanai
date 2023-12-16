@@ -76,10 +76,9 @@ func (f *clientFactory) New(ctx context.Context, opts ...ClientOptions) (Client,
 		return existing.client, nil
 	}
 
-	// TODO review this part for more reasonable API design
 	connOpts := []ConnOptions{withDB(opt.DbIndex)}
 	if f.properties.TLS.Enabled {
-		connOpts = append(connOpts, withTLS(ctx, f.certsManager, &f.properties.TLS.Config))
+		connOpts = append(connOpts, withTLS(ctx, f.certsManager, &f.properties.TLS.Certs))
 	}
 
 	// prepare options

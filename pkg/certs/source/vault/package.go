@@ -17,6 +17,18 @@ const (
 	sourceType = certs.SourceVault
 )
 
+var Module = &bootstrap.Module{
+	Name:       "certs-vault",
+	Precedence: bootstrap.TlsConfigPrecedence,
+	Options: []fx.Option{
+		fx.Provide(FxProvider()),
+	},
+}
+
+func Use() {
+	bootstrap.Register(Module)
+}
+
 type factoryDI struct {
 	fx.In
 	AppCtx      *bootstrap.ApplicationContext

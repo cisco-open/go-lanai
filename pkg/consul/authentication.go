@@ -2,6 +2,8 @@ package consul
 
 import "github.com/hashicorp/consul/api"
 
+// ClientAuthentication
+// TODO review ClientAuthentication and KubernetesClient
 type ClientAuthentication interface {
 	Login(client *api.Client) (token string, err error)
 }

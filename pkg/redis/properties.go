@@ -41,8 +41,6 @@ type RedisProperties struct {
 	IdleTimeout        time.Duration `json:"idle-timeout"`
 	IdleCheckFrequency time.Duration `json:"idle-check-frequency"`
 
-	//path to root certificates files
-	//RootCertificates string `json:"root-certificates"`
 	// TLS Properties for Redis
 	TLS TLSProperties `json:"tls"`
 	// Only cluster clients.
@@ -60,7 +58,7 @@ type RedisProperties struct {
 
 type TLSProperties struct {
 	Enabled bool                   `json:"enabled"`
-	Config  certs.SourceProperties `json:"config"`
+	Certs   certs.SourceProperties `json:"certs"`
 }
 
 func BindRedisProperties(ctx *bootstrap.ApplicationContext) RedisProperties {

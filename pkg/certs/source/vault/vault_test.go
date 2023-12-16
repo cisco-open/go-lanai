@@ -133,15 +133,14 @@ type VaultTestDi struct {
 
 // This test assumes your vault has PKI backend enabled (i.e. vault secrets enable pki)
 func TestVaultProvider(t *testing.T) {
-	//t.Skipf("skipped because this test requires real vault server")
 	di := &VaultTestDi{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		ittest.WithHttpPlayback(t),
 		apptest.WithDI(di),
-		apptest.WithModules(vaultinit.Module),
+		apptest.WithModules(vaultinit.Module, vaultcerts.Module),
 		apptest.WithFxOptions(
-			fx.Provide(ProvideTestManager, BindTestProperties, vaultcerts.FxProvider()),
+			fx.Provide(ProvideTestManager, BindTestProperties),
 			fx.Provide(ProvideRecordedVault, ProvideVaultRecorderOptions),
 		),
 		test.SubTestSetup(SubTestSetupCleanupTempDir()),

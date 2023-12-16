@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	awsconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws"
-	acmclient "cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws/acm"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	acmcerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/acm"
@@ -104,8 +103,8 @@ func CustomizeAwsClient(di RecordedAwsDI) config.LoadOptionsFunc {
 
 type AcmTestDI struct {
 	fx.In
-	AcmClient *acm.Client
-	Manager   certs.Manager
+	Manager         certs.Manager
+	AwsConfigLoader awsconfig.ConfigLoader
 }
 
 /*************************
@@ -125,9 +124,9 @@ func TestDefaultClient(t *testing.T) {
 		apptest.Bootstrap(),
 		ittest.WithHttpPlayback(t, AwsHTTPVCROptions()),
 		apptest.WithDI(di),
-		apptest.WithModules(awsconfig.Module, acmclient.Module),
+		apptest.WithModules(awsconfig.Module, acmcerts.Module),
 		apptest.WithFxOptions(
-			fx.Provide(ProvideTestManager, BindTestProperties, acmcerts.FxProvider()),
+			fx.Provide(ProvideTestManager, BindTestProperties),
 			fx.Provide(awsconfig.FxCustomizerProvider(CustomizeAwsClient)),
 		),
 		test.SubTestSetup(SubTestSetupCleanupTempDir()),
@@ -148,16 +147,19 @@ func SubTestSetupImportCerts(di *AcmTestDI) test.SetupFunc {
 		var err error
 		once.Do(func() {
 			g := gomega.NewWithT(t)
+			cfg, e := di.AwsConfigLoader.Load(ctx)
+			g.Expect(e).To(Succeed(), "load AWS config should not fail")
+			client := acm.NewFromConfig(cfg)
+
 			var arn string
 			// the valid one
-			arn, err = ImportCertificate(ctx, g, di.AcmClient,
-				"testdata/test-client.crt", "testdata/test-client.key", "testdata/test-ca.crt")
+			arn, err = ImportCertificate(ctx, g, client, "testdata/test-client.crt", "testdata/test-client.key", "testdata/test-ca.crt")
 			if err != nil {
 				return
 			}
 			ctx = context.WithValue(ctx, CtxKeyARNValid, arn)
 			// for renewal, we cannot test renewal because AWS
-			//arn, err = ImportCertificate(ctx, g, di.AcmClient,
+			//arn, err = ImportCertificate(ctx, g, client,
 			//	"testdata/test-client-short.crt", "testdata/test-client-short.key", "testdata/test-ca-short.crt")
 			//if err != nil {
 			//	return
@@ -275,7 +277,7 @@ func SubTestVaultRenewal(di *AcmTestDI) test.GomegaSubTestFunc {
 
 		//Sleep for more than half of the TTL, so the original cert is renewed
 		//we expect the renew process to kick in and got a new cert
-		time.Sleep(ttl-time.Second)
+		time.Sleep(ttl - time.Second)
 		tlsFiles, err = tlsSrc.Files(ctx)
 		g.Expect(err).To(Succeed())
 

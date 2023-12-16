@@ -29,9 +29,13 @@ type ApplicationContext struct {
 	config ApplicationConfig
 }
 
-func NewApplicationContext() *ApplicationContext {
+func NewApplicationContext(opts ...ContextOption) *ApplicationContext {
+	ctx := context.Background()
+	for _, fn := range opts {
+		ctx = fn(ctx)
+	}
 	return &ApplicationContext{
-		Context: context.WithValue(context.Background(), ctxKeyStartTime, time.Now().UTC()),
+		Context: context.WithValue(ctx, ctxKeyStartTime, time.Now().UTC()),
 	}
 }
 

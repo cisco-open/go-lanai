@@ -6,7 +6,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"fmt"
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/onsi/gomega"
@@ -19,15 +18,17 @@ import (
 	Examples
  *************************/
 
-// TestMain is the only place we should kick off embedded redis
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		embedded.Redis(),
-	)
-}
+// TestMain is the alternative place we could kick off embedded redis at the package level
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		embedded.Redis(),
+//	)
+//}
 
 func TestRedisWithoutApp(t *testing.T) {
 	test.RunTest(context.Background(), t,
+		// Kick off embedded redis at test level
+		embedded.WithRedis(),
 		test.GomegaSubTest(SubTestExampleWithoutApp(), "SubTestWithoutApp"),
 	)
 }
@@ -42,6 +43,8 @@ func TestRedisWithApp(t *testing.T) {
 	di := &redisDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		// Kick off embedded redis at test level
+		embedded.WithRedis(),
 		apptest.WithModules(redis.Module),
 		apptest.WithDI(di),
 		test.GomegaSubTest(SubTestExampleWithApp(di), "SubTestWithApp"),
@@ -57,7 +60,7 @@ func SubTestExampleWithoutApp() test.GomegaSubTestFunc {
 		// create an simple client
 		universal := &goredis.UniversalOptions{}
 		opts := universal.Simple()
-		opts.Addr = fmt.Sprintf("127.0.0.1:%d", embedded.CurrentRedisPort())
+		opts.Addr = fmt.Sprintf("127.0.0.1:%d", embedded.CurrentRedisPort(ctx))
 		client := goredis.NewClient(opts)
 		defer func() { _ = client.Close() }()
 

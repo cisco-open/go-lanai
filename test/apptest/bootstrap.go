@@ -8,7 +8,9 @@ import (
 	"embed"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
+	"reflect"
 	"testing"
+	"time"
 )
 
 //go:embed test-defaults.yml
@@ -53,8 +55,9 @@ func NewFxTestRunner() test.InternalRunner {
 			return
 		}
 
-		// default modules
+		// default modules and context
 		tb.Register(appconfig.Module)
+		tb.AddInitialAppContextOptions(mergeInitContext(ctx))
 
 		// prepare bootstrap fx options
 		priority := append([]fx.Option{
@@ -106,4 +109,76 @@ func testTeardown(ctx context.Context, t *testing.T, hooks []test.Hook) {
 			t.Fatalf("error when setup test: %v", e)
 		}
 	}
+}
+
+func mergeInitContext(sources ...context.Context) bootstrap.ContextOption {
+	return func(ctx context.Context) context.Context {
+		srcs := make([]context.Context, len(sources) + 1)
+		srcs[0] = ctx
+		for i := range sources {
+			srcs[i+1] = sources[i]
+		}
+		return newMergedContext(srcs...)
+	}
+}
+
+/************************
+	Init Context
+ ************************/
+
+func newMergedContext(ctxList ...context.Context) context.Context {
+	done := make(chan struct{})
+	cases := make([]reflect.SelectCase, len(ctxList))
+	for i, ctx := range ctxList {
+		cases[i] = reflect.SelectCase{
+			Dir:  reflect.SelectRecv,
+			Chan: reflect.ValueOf(ctx.Done()),
+		}
+	}
+	go func() {
+		_, _, _ = reflect.Select(cases)
+		close(done)
+	}()
+
+	return &mergedContext{
+		sources: ctxList,
+		done:    done,
+	}
+}
+
+type mergedContext struct {
+	sources []context.Context
+	done    <-chan struct{}
+}
+
+func (mc mergedContext) Deadline() (earliest time.Time, ok bool) {
+	for _, ctx := range mc.sources {
+		if deadline, subOk := ctx.Deadline(); subOk && (earliest.IsZero() || deadline.Before(earliest)) {
+			earliest = deadline
+			ok = true
+		}
+	}
+	return
+}
+
+func (mc mergedContext) Done() <-chan struct{} {
+	return mc.done
+}
+
+func (mc mergedContext) Err() error {
+	for _, ctx := range mc.sources {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (mc mergedContext) Value(key any) any {
+	for _, ctx := range mc.sources {
+		if v := ctx.Value(key); v != nil {
+			return v
+		}
+	}
+	return nil
 }

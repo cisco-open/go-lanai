@@ -56,7 +56,7 @@ func SubTestWithoutApp() test.GomegaSubTestFunc {
 		// create an simple client
 		universal := &goredis.UniversalOptions{}
 		opts := universal.Simple()
-		opts.Addr = fmt.Sprintf("127.0.0.1:%d", CurrentRedisPort())
+		opts.Addr = fmt.Sprintf("127.0.0.1:%d", CurrentRedisPort(ctx))
 		client := goredis.NewClient(opts)
 		defer func() { _ = client.Close() }()
 

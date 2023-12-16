@@ -105,17 +105,10 @@ func (b *Bootstrapper) EnableCliRunnerMode(runnerProviders ...interface{}) {
 func (b *Bootstrapper) NewApp(cliCtx *CliExecContext, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
 	// create App
 	app := &App{
-		ctx:          NewApplicationContext(),
+		ctx:          NewApplicationContext(b.initCtxOpts...),
 		startCtxOpts: b.startCtxOpts,
 		stopCtxOpts:  b.stopCtxOpts,
 	}
-
-	// update application context before creating the app
-	ctx := app.ctx.Context
-	for _, opt := range b.initCtxOpts {
-		ctx = opt(ctx)
-	}
-	app.ctx = app.ctx.withContext(ctx)
 
 	// Decide default module
 	initModule := InitModule(cliCtx, app)
