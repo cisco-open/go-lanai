@@ -50,7 +50,7 @@ func (r *TokenRefresher) Stop() {
 }
 
 func (r *TokenRefresher) isRefreshable() bool {
-	return r.client.config.Authentication.isRefreshable()
+	return r.client.properties.Authentication.isRefreshable()
 }
 
 // Starts a blocking process to monitor if the token stops being renewed

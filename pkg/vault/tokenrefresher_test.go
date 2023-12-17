@@ -19,10 +19,10 @@ func TestTokenRefresher_Start_RefreshableToken(t *testing.T) {
 		{
 			name: "Kubernetes tokens should refresh the token when it cannot be renewed",
 			VaultClient: Client{
-				config: &ConnectionProperties{
+				properties: &ConnectionProperties{
 					Authentication: Kubernetes,
 				},
-				clientAuthentication: TokenKubernetesAuthentication(KubernetesConfig{
+				clientAuth: TokenKubernetesAuthentication(KubernetesConfig{
 					JWTPath: "testdata/tokenrefresher/auth_token",
 					Role:    "devweb-app",
 				}),
@@ -72,10 +72,10 @@ func TestTokenRefresher_Start_NonRefreshableToken(t *testing.T) {
 		{
 			name: "Tokens with TTL should not try to refresh when renewal lease expires",
 			VaultClient: Client{
-				config: &ConnectionProperties{
+				properties: &ConnectionProperties{
 					Authentication: Token,
 				},
-				clientAuthentication: TokenClientAuthentication("token_10s_ttl"), // Token with TTL of 10 sec
+				clientAuth: TokenClientAuthentication("token_10s_ttl"), // Token with TTL of 10 sec
 			},
 			playbackFile: "testdata/tokenrefresher/TestNotRefreshableToken",
 			waitTimeSec:  10 * time.Second,
@@ -84,10 +84,10 @@ func TestTokenRefresher_Start_NonRefreshableToken(t *testing.T) {
 		{
 			name: "Static tokens (without TTL) should not try to refresh or renew",
 			VaultClient: Client{
-				config: &ConnectionProperties{
+				properties: &ConnectionProperties{
 					Authentication: Token,
 				},
-				clientAuthentication: TokenClientAuthentication("token_no_ttl"), // Token with no ttl - cannot be renewed
+				clientAuth: TokenClientAuthentication("token_no_ttl"), // Token with no ttl - cannot be renewed
 			},
 			waitTimeSec:  3 * time.Second,
 			playbackFile: "testdata/tokenrefresher/TestNonRenewableToken",
@@ -138,10 +138,10 @@ func TestTokenRefresher_Start_Stop_Restart(t *testing.T) {
 		{
 			name: "Refresher should resume token renewal if stopped & restarted",
 			VaultClient: Client{
-				config: &ConnectionProperties{
+				properties: &ConnectionProperties{
 					Authentication: Kubernetes,
 				},
-				clientAuthentication: TokenKubernetesAuthentication(KubernetesConfig{
+				clientAuth: TokenKubernetesAuthentication(KubernetesConfig{
 					JWTPath: "testdata/tokenrefresher/auth_token",
 					Role:    "devweb-app",
 				}),

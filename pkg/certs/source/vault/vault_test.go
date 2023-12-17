@@ -14,7 +14,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
 	"fmt"
-	"github.com/hashicorp/vault/api"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
@@ -79,38 +78,15 @@ func BindTestProperties(appCfg bootstrap.ApplicationConfig) certs.Properties {
 	return *props
 }
 
-type RecordedVaultDI struct {
-	fx.In
-	Recorder    *recorder.Recorder
-	VaultClient *vault.Client
-}
-
-type RecordedVaultOut struct {
-	fx.Out
-	TestVaultClient *vault.Client `name:"test"`
-}
-
-func ProvideRecordedVault(di RecordedVaultDI) (RecordedVaultOut, error) {
-	testClient, e := di.VaultClient.Clone(func(cfg *api.Config) {
-		cfg.HttpClient.Transport = di.Recorder
-	})
-	if e != nil {
-		return RecordedVaultOut{}, e
-	}
-	return RecordedVaultOut{
-		TestVaultClient: testClient,
-	}, nil
-}
-
-type VaultRecorderOptionsOut struct {
-	fx.Out
-	VCROptions ittest.HTTPVCROptions `group:"http-vcr"`
-}
-
-func ProvideVaultRecorderOptions(defaultClient *vault.Client) VaultRecorderOptionsOut {
-	return VaultRecorderOptionsOut{
-		VCROptions: func(opt *ittest.HTTPVCROption) {
-			opt.RealTransport = defaultClient.CloneConfig().HttpClient.Transport
+func RecordedVaultProvider() fx.Annotated {
+	return fx.Annotated{
+		Group: "vault",
+		Target: func(recorder *recorder.Recorder) vault.ClientOptions {
+			return func(cfg *vault.ClientConfig) error {
+				recorder.SetRealTransport(cfg.HttpClient.Transport)
+				cfg.HttpClient.Transport = recorder
+				return nil
+			}
 		},
 	}
 }
@@ -118,7 +94,7 @@ func ProvideVaultRecorderOptions(defaultClient *vault.Client) VaultRecorderOptio
 type VaultTestDi struct {
 	fx.In
 	Manager     certs.Manager
-	VaultClient *vault.Client `name:"test"`
+	VaultClient *vault.Client
 }
 
 /*************************
@@ -136,12 +112,12 @@ func TestVaultProvider(t *testing.T) {
 	di := &VaultTestDi{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		ittest.WithHttpPlayback(t),
+		ittest.WithHttpPlayback(t, ittest.DisableHttpRecordOrdering()),
 		apptest.WithDI(di),
 		apptest.WithModules(vaultinit.Module, vaultcerts.Module),
 		apptest.WithFxOptions(
+			fx.Provide(RecordedVaultProvider()),
 			fx.Provide(ProvideTestManager, BindTestProperties),
-			fx.Provide(ProvideRecordedVault, ProvideVaultRecorderOptions),
 		),
 		test.SubTestSetup(SubTestSetupCleanupTempDir()),
 		test.SubTestSetup(SubTestSetupSubmitCA(di)),

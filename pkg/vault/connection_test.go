@@ -31,8 +31,8 @@ func TestClient_Authenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			client, _ := api.NewClient(api.DefaultConfig())
 			c := &Client{
-				clientAuthentication: tt.fields.clientAuthentication,
-				Client:               client,
+				clientAuth: tt.fields.clientAuthentication,
+				Client:     client,
 			}
 			if err := c.Authenticate(); (err != nil) != tt.wantErr {
 				t.Errorf("Authenticate() error = %v, wantErr %v", err, tt.wantErr)

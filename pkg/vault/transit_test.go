@@ -6,26 +6,51 @@ import (
 	vaultinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
 	"encoding/json"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"testing"
 )
 
 var (
-	testKid1 = "d3803a9e-f2f2-4960-bdb1-aeec92d88ca4"
-	testKid2 = "3100e6b7-eb62-4676-9bf4-391aba1f2fae"
+	testKid1         = "d3803a9e-f2f2-4960-bdb1-aeec92d88ca4"
+	testKid2         = "3100e6b7-eb62-4676-9bf4-391aba1f2fae"
 	testKidIncorrect = "e668ce1d-e2fe-42d2-a1e2-9b553555378f"
-	plaintextData = map[string]interface{}{
+	plaintextData    = map[string]interface{}{
 		"key1": "value1",
 		"key2": 2.0,
 	}
 )
 
 /*************************
-	Test Cases
+	Test Setup
  *************************/
+
+func RecordedVaultProvider() fx.Annotated {
+	return fx.Annotated{
+		Group: "vault",
+		Target: func(recorder *recorder.Recorder) vault.ClientOptions {
+			return func(cfg *vault.ClientConfig) error {
+				recorder.SetRealTransport(cfg.HttpClient.Transport)
+				cfg.HttpClient.Transport = recorder
+				return nil
+			}
+		},
+	}
+}
+
+/*************************
+	Tests
+ *************************/
+
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		ittest.PackageHttpRecordingMode(),
+//	)
+//}
 
 type transitDI struct {
 	fx.In
@@ -33,11 +58,15 @@ type transitDI struct {
 }
 
 func TestTransitEngineWithRealVault(t *testing.T) {
-	t.Skipf("skipped because this test requires real vault server")
+	//t.Skipf("skipped because this test requires real vault server")
 	di := transitDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		ittest.WithHttpPlayback(t, ittest.DisableHttpRecordOrdering()),
 		apptest.WithModules(vaultinit.Module),
+		apptest.WithFxOptions(
+			fx.Provide(RecordedVaultProvider()),
+		),
 		apptest.WithDI(&di),
 		test.SubTestSetup(SubTestSetupCreateKey(&di)),
 		test.GomegaSubTest(SubTestEncryption(&di, testKid1), "EncryptionWithFirstKey"),

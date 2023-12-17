@@ -1,0 +1,621 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "0"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/auth/token/lookup-self
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 659
+        uncompressed: false
+        body: '{"request_id":"1f189258-d1ae-04bb-4138-c6af957cf4ef","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"Icly5ijJ8n6c4JJeydHatmWK","creation_time":1701561578,"creation_ttl":315360000,"display_name":"token-dev-default","entity_id":"","expire_time":"2033-11-29T23:58:49.018661926Z","explicit_max_ttl":0,"id":"replace_with_token_value","issue_time":"2023-12-02T23:59:38.157038549Z","last_renewal":"2023-12-17T22:01:36.01866201Z","last_renewal_time":1702850496,"meta":null,"num_uses":0,"orphan":true,"path":"auth/token/create","policies":["root"],"renewable":true,"ttl":314070719,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "659"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 23
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"increment":314070719}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/auth/token/renew-self
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 433
+        uncompressed: false
+        body: '{"request_id":"54443a85-561e-fc08-40e2-8bb89d4e2f97","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"replace_with_token_value","accessor":"Icly5ijJ8n6c4JJeydHatmWK","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":314070719,"renewable":true,"entity_id":"","token_type":"service","orphan":true,"mfa_requirement":null,"num_uses":0}}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "433"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 71
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"type":"aes256-gcm96","exportable":true,"allow_plaintext_backup":true}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/keys/d3803a9e-f2f2-4960-bdb1-aeec92d88ca4
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 71
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"type":"aes256-gcm96","exportable":true,"allow_plaintext_backup":true}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "3"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/keys/3100e6b7-eb62-4676-9bf4-391aba1f2fae
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 71
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"type":"aes256-gcm96","exportable":true,"allow_plaintext_backup":true}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "4"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/keys/e668ce1d-e2fe-42d2-a1e2-9b553555378f
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 52
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"plaintext":"eyJrZXkxIjoidmFsdWUxIiwia2V5MiI6Mn0="}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/encrypt/d3803a9e-f2f2-4960-bdb1-aeec92d88ca4
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 272
+        uncompressed: false
+        body: '{"request_id":"70043c4e-6daa-15ae-3b32-8ec2508dedb9","lease_id":"","renewable":false,"lease_duration":0,"data":{"ciphertext":"vault:v1:DoH7nNNyJ+0OTJOC/2LZNBHVjsSFNCXaGs6inoUrpLQ9+JWgpLAKkldg951jBkoFLdUuPtlD","key_version":1},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "272"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 98
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"ciphertext":"vault:v1:DoH7nNNyJ+0OTJOC/2LZNBHVjsSFNCXaGs6inoUrpLQ9+JWgpLAKkldg951jBkoFLdUuPtlD"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "6"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/decrypt/d3803a9e-f2f2-4960-bdb1-aeec92d88ca4
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 210
+        uncompressed: false
+        body: '{"request_id":"9e133894-843b-3af7-354d-c69c6282f6e0","lease_id":"","renewable":false,"lease_duration":0,"data":{"plaintext":"eyJrZXkxIjoidmFsdWUxIiwia2V5MiI6Mn0="},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "210"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 98
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"ciphertext":"vault:v1:DoH7nNNyJ+0OTJOC/2LZNBHVjsSFNCXaGs6inoUrpLQ9+JWgpLAKkldg951jBkoFLdUuPtlD"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "7"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/decrypt/e668ce1d-e2fe-42d2-a1e2-9b553555378f
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 53
+        uncompressed: false
+        body: '{"errors":["cipher: message authentication failed"]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "53"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 400 Bad Request
+        code: 400
+        duration: 200µs
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 71
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"type":"aes256-gcm96","exportable":true,"allow_plaintext_backup":true}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "8"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/keys/d3803a9e-f2f2-4960-bdb1-aeec92d88ca4
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 71
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"type":"aes256-gcm96","exportable":true,"allow_plaintext_backup":true}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "9"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/keys/3100e6b7-eb62-4676-9bf4-391aba1f2fae
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 10
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 71
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"type":"aes256-gcm96","exportable":true,"allow_plaintext_backup":true}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "10"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/keys/e668ce1d-e2fe-42d2-a1e2-9b553555378f
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 52
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"plaintext":"eyJrZXkxIjoidmFsdWUxIiwia2V5MiI6Mn0="}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "11"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/encrypt/3100e6b7-eb62-4676-9bf4-391aba1f2fae
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 272
+        uncompressed: false
+        body: '{"request_id":"232aff0b-7f44-11ad-8671-e9aaf5b9f0fe","lease_id":"","renewable":false,"lease_duration":0,"data":{"ciphertext":"vault:v1:KJznIMukq3kShqon93RwK2OVB2KnHHhpZ8UH2CwL4u3bbR/jw3YyWv5AJpcvPbhYdPm2y7tl","key_version":1},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "272"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 12
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 98
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"ciphertext":"vault:v1:KJznIMukq3kShqon93RwK2OVB2KnHHhpZ8UH2CwL4u3bbR/jw3YyWv5AJpcvPbhYdPm2y7tl"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "12"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/decrypt/3100e6b7-eb62-4676-9bf4-391aba1f2fae
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 210
+        uncompressed: false
+        body: '{"request_id":"819d006c-fa71-5536-8210-595c29e93ff8","lease_id":"","renewable":false,"lease_duration":0,"data":{"plaintext":"eyJrZXkxIjoidmFsdWUxIiwia2V5MiI6Mn0="},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "210"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 13
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 98
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"ciphertext":"vault:v1:KJznIMukq3kShqon93RwK2OVB2KnHHhpZ8UH2CwL4u3bbR/jw3YyWv5AJpcvPbhYdPm2y7tl"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "13"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/transit/decrypt/e668ce1d-e2fe-42d2-a1e2-9b553555378f
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 53
+        uncompressed: false
+        body: '{"errors":["cipher: message authentication failed"]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "53"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 400 Bad Request
+        code: 400
+        duration: 200µs

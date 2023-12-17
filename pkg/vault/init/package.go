@@ -6,13 +6,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	appconfigInit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
 	"embed"
 	"go.uber.org/fx"
 )
-
-var logger = log.New("vault")
 
 //go:embed defaults-vault.yml
 var defaultConfigFS embed.FS
@@ -21,7 +18,7 @@ var Module = &bootstrap.Module{
 	Name:       "vault",
 	Precedence: bootstrap.VaultPrecedence,
 	PriorityOptions: []fx.Option{
-		fx.Provide(newConnectionProperties, vault.NewClient),
+		fx.Provide(BindConnectionProperties, ProvideDefaultClient),
 	},
 	Options: []fx.Option{
 		appconfigInit.FxEmbeddedDefaults(defaultConfigFS),
@@ -34,22 +31,29 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault.ConnectionProperties {
-	c := &vault.ConnectionProperties{
+func BindConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) (vault.ConnectionProperties, error) {
+	c := vault.ConnectionProperties{
 		Host:           "localhost",
 		Port:           8200,
 		Scheme:         "http",
 		Authentication: vault.Token,
 		Token:          "replace_with_token_value",
 	}
-	if e := bootstrapConfig.Bind(c, vault.PropertyPrefix); e != nil {
-		panic(e)
+	if e := bootstrapConfig.Bind(&c, vault.PropertyPrefix); e != nil {
+		return c, e
 	}
-	return c
+	return c, nil
 }
 
-func newClient(p *vault.ConnectionProperties) *vault.Client {
-	c, err := vault.NewClient(p)
+type clientDI struct {
+	fx.In
+	Props       vault.ConnectionProperties
+	Customizers []vault.ClientOptions `group:"vault"`
+}
+
+func ProvideDefaultClient(di clientDI) *vault.Client {
+	opts := append([]vault.ClientOptions{vault.WithProperties(di.Props)}, di.Customizers...)
+	c, err := vault.NewClient(opts...)
 	if err != nil {
 		panic(err)
 	}

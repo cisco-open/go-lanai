@@ -11,51 +11,73 @@ var (
 	errTokenNotRenewable = errors.New("token is not renewable")
 )
 
-type Client struct {
-	*api.Client
-	config               *ConnectionProperties
-	clientAuthentication ClientAuthentication
-	hooks                []Hook
+type ClientOptions func(cfg *ClientConfig) error
+type ClientConfig struct {
+	*api.Config
+	Properties *ConnectionProperties
+	ClientAuth ClientAuthentication
+	Hooks      []Hook
 }
 
-func NewClient(p *ConnectionProperties) (*Client, error) {
-	clientAuth := newClientAuthentication(p)
-
-	clientConfig := api.DefaultConfig()
-	clientConfig.Address = p.Address()
-	if p.Scheme == "https" {
-		t := api.TLSConfig{
-			CACert:     p.Ssl.Cacert,
-			ClientCert: p.Ssl.ClientCert,
-			ClientKey:  p.Ssl.ClientKey,
-			Insecure:   p.Ssl.Insecure,
+func WithProperties(p ConnectionProperties) ClientOptions {
+	return func(cfg *ClientConfig) error {
+		cfg.Properties = &p
+		cfg.ClientAuth = newClientAuthentication(&p)
+		cfg.Address = p.Address()
+		if p.Scheme == "https" {
+			t := api.TLSConfig{
+				CACert:     p.Ssl.Cacert,
+				ClientCert: p.Ssl.ClientCert,
+				ClientKey:  p.Ssl.ClientKey,
+				Insecure:   p.Ssl.Insecure,
+			}
+			err := cfg.ConfigureTLS(&t)
+			if err != nil {
+				return err
+			}
 		}
-		err := clientConfig.ConfigureTLS(&t)
-		if err != nil {
-			return nil, err
+		return nil
+	}
+}
+
+type Client struct {
+	*api.Client
+	properties *ConnectionProperties
+	clientAuth ClientAuthentication
+	hooks      []Hook
+}
+
+func NewClient(opts ...ClientOptions) (*Client, error) {
+	cfg := ClientConfig{
+		Config:     api.DefaultConfig(),
+		ClientAuth: TokenClientAuthentication(""),
+	}
+	for _, fn := range opts {
+		if e := fn(&cfg); e != nil {
+			return nil, e
 		}
 	}
 
-	client, err := api.NewClient(clientConfig)
+	client, err := api.NewClient(cfg.Config)
 	if err != nil {
 		return nil, err
 	}
 
 	ret := &Client{
-		Client:               client,
-		config:               p,
-		clientAuthentication: clientAuth,
+		Client:     client,
+		properties: cfg.Properties,
+		clientAuth: cfg.ClientAuth,
+		hooks:      cfg.Hooks,
 	}
 
-	err = ret.Authenticate()
-	if err != nil {
+	if err = ret.Authenticate(); err != nil {
 		logger.Warnf("vault apiClient cannot get token %v", err)
 	}
 	return ret, nil
 }
 
 func (c *Client) Authenticate() error {
-	token, err := c.clientAuthentication.Login(c.Client)
+	token, err := c.clientAuth.Login(c.Client)
 	if err != nil {
 		return err
 	}
@@ -121,17 +143,17 @@ func (c *Client) Clone(customizers ...func(cfg *api.Config)) (*Client, error) {
 	if e != nil {
 		return nil, e
 	}
-	props := *c.config
+	props := *c.properties
 	hooks := make([]Hook, len(c.hooks))
 	for i := range c.hooks {
 		hooks[i] = c.hooks[i]
 	}
 
 	ret := &Client{
-		Client:               newClient,
-		config:               &props,
-		clientAuthentication: c.clientAuthentication,
-		hooks:                hooks,
+		Client:     newClient,
+		properties: &props,
+		clientAuth: c.clientAuth,
+		hooks:      hooks,
 	}
 
 	if e := ret.Authenticate(); e != nil {
