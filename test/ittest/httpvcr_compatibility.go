@@ -50,6 +50,7 @@ func ConvertCassetteFileV1toV2(src, dest string) error {
         return fmt.Errorf("unable to convert record file: %v", e)
     }
 
+    //nolint:gosec // G306: Expect WriteFile permissions to be 0600 or less - 0600 is too low
     if e := os.WriteFile(dest, v2bytes, 0644); e != nil {
         return fmt.Errorf("unable to convert record file, failed to write to destination: %v", e)
     }
