@@ -11,7 +11,6 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
-	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"testing"
 )
 
@@ -24,23 +23,6 @@ var (
 		"key2": 2.0,
 	}
 )
-
-/*************************
-	Test Setup
- *************************/
-
-func RecordedVaultProvider() fx.Annotated {
-	return fx.Annotated{
-		Group: "vault",
-		Target: func(recorder *recorder.Recorder) vault.ClientOptions {
-			return func(cfg *vault.ClientConfig) error {
-				recorder.SetRealTransport(cfg.HttpClient.Transport)
-				cfg.HttpClient.Transport = recorder
-				return nil
-			}
-		},
-	}
-}
 
 /*************************
 	Tests

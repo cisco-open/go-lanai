@@ -15,6 +15,7 @@ import (
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -191,6 +192,12 @@ func TestHttpVCRPlaybackIncorrectBody(t *testing.T) {
 	)
 }
 
+func TestHttpVCRRecordsConversion(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		test.GomegaSubTest(SubTestConvertV1ToV2(), "TestConvertV1ToV2"),
+	)
+}
+
 /*************************
 	Sub Tests
  *************************/
@@ -327,6 +334,27 @@ func SubTestIncorrectRequestFormBody(di *vcrTestDI) test.GomegaSubTestFunc {
 		req := newPostFormRequest(ctx, t, g, withBody(IncorrectRequestFormBody))
 		_, e := Client(ctx).Do(req)
 		g.Expect(e).To(HaveOccurred(), "sending request with wrong body should fail")
+	}
+}
+
+func SubTestConvertV1ToV2() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const destName = `testdata/.tmp/v1-to-v2-result.httpvcr`
+		e := os.MkdirAll("testdata/.tmp/", 0755)
+		g.Expect(e).To(Succeed(), "prepare .tmp folder should not fail")
+
+		destPath := fmt.Sprintf(`%s.yaml`, destName)
+		e = ConvertCassetteFileV1toV2("testdata/V1Records.httpvcr.yaml", destPath)
+		g.Expect(e).To(Succeed(), "converting v1 to v2 should not fail")
+
+		rec, e := recorder.NewWithOptions(&recorder.Options{
+			CassetteName:       destName,
+			Mode:               recorder.ModeReplayOnly,
+			SkipRequestLatency: false,
+		})
+		g.Expect(e).To(Succeed(), "create recorder with converted cassette file should not fail")
+		g.Expect(rec).ToNot(BeNil(), "created recorder with converted cassette file should not be nil")
+		_ = rec.Stop()
 	}
 }
 

@@ -385,7 +385,9 @@ func (s *DefaultAuthorizationService) loadTenant(
 	// extract tenant id or name
 	tenantId, idOk := request.Parameters()[oauth2.ParameterTenantId]
 	tenantExternalId, nOk := request.Parameters()[oauth2.ParameterTenantExternalId]
-	if (!idOk || tenantId == "") && (!nOk || tenantExternalId == "") {
+	// TODO review this logic regarding to wildcard "*" and tenant auto-selection
+	// Note: default tenant ID might be wildcard "*", in such case, we don't load tenant if tenant is not selected
+	if (!idOk || tenantId == "") && (!nOk || tenantExternalId == "") && defaultTenantId != security.SpecialTenantIdWildcard {
 		tenantId = defaultTenantId
 	}
 

@@ -1,0 +1,202 @@
+interactions:
+- id: 0
+  request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InZhdWx0LWF1dGgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidmF1bHQtYXV0aCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImIzYmI0NjY1LTVjZGEtNGQxZC1hMjRlLTJjZmFmMmYyOWMzNiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OnZhdWx0LWF1dGgifQ.i5bWTPbLK8UrkIU6Wc8oSeyNMQwL4Xdw-zSZj1bhZQFkivgCQwsY4ijHHM5XY4exK1cGfA2jWoGWr1t6_yUqfwcjy1b0a_IRxBiXN4HMkmeRHPsOJEbKtzJ6Bq2xG2S3uZTNxdrEZbth1hRRTPQiZqwXD9lRZeq17foT_LB6X8A5bPhqSPDv1-_RjVm7PbxtuMlmKTEIszavwhC-mDBOPlEtSeufXys_uILOO7wSZHtNfKx9h_4H32zhL7icKYRtAs64eGlqX6bk78dkxETvVdcNFbNrR2VBYxho-maxLPIzk43T6wB9JXeb_PdKz64kSvmjVyNuK-GF0Ydd34K3Pw","role":"devweb-app"}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "0"
+    host: 127.0.0.1:8200
+    method: PUT
+    order: 0
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+  response:
+    body: |
+      {"request_id":"c95d4f2a-5368-00fd-fc34-e3692c8a6a4d","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ve79fNPWyIDt6XM8ra0BrFJL","accessor":"acnIAUpDSWMYeD0yEhUX0X6O","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    code: 200
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 24 Aug 2022 18:19:46 GMT
+    status: 200 OK
+- id: 1
+  request:
+    body: ""
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "1"
+    host: 127.0.0.1:8200
+    method: GET
+    order: 1
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+  response:
+    body: |
+      {"request_id":"95d2c5c5-b4e0-77a0-531c-84206cf9e942","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"acnIAUpDSWMYeD0yEhUX0X6O","creation_time":1661365186,"creation_ttl":4,"display_name":"kubernetes-default-vault-auth","entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","expire_time":"2022-08-24T18:19:50.853948676Z","explicit_max_ttl":0,"external_namespace_policies":{},"id":"s.ve79fNPWyIDt6XM8ra0BrFJL","identity_policies":["default","devwebapp"],"issue_time":"2022-08-24T18:19:46.853959092Z","meta":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"num_uses":0,"orphan":true,"path":"auth/kubernetes/login","policies":["default"],"renewable":true,"ttl":3,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}
+    code: 200
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "894"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 24 Aug 2022 18:19:46 GMT
+    status: 200 OK
+- id: 2
+  request:
+    body: '{"increment":3}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "2"
+    host: 127.0.0.1:8200
+    method: PUT
+    order: 2
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+  response:
+    body: |
+      {"request_id":"7e6940c3-5539-a5a6-d9fd-2838909fb81a","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ve79fNPWyIDt6XM8ra0BrFJL","accessor":"acnIAUpDSWMYeD0yEhUX0X6O","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":3,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    code: 200
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 24 Aug 2022 18:19:46 GMT
+    status: 200 OK
+- id: 3
+  request:
+    body: '{"increment":3}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "3"
+    host: 127.0.0.1:8200
+    method: PUT
+    order: 3
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+  response:
+    body: |
+      {"request_id":"dba4dde4-799b-4052-94e0-0c6d081e6021","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ve79fNPWyIDt6XM8ra0BrFJL","accessor":"acnIAUpDSWMYeD0yEhUX0X6O","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":3,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    code: 200
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 24 Aug 2022 18:19:49 GMT
+    status: 200 OK
+- id: 4
+  request:
+    body: '{"increment":3}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "4"
+    host: 127.0.0.1:8200
+    method: PUT
+    order: 4
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+  response:
+    body: |
+      {"request_id":"70d96f57-995d-6e2b-a6bb-597ec6e54aed","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":["TTL of \"3s\" exceeded the effective max_ttl of \"1s\"; TTL value is capped accordingly"],"auth":{"client_token":"s.ve79fNPWyIDt6XM8ra0BrFJL","accessor":"acnIAUpDSWMYeD0yEhUX0X6O","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":1,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    code: 200
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "771"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 24 Aug 2022 18:19:51 GMT
+    status: 200 OK
+- id: 5
+  request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InZhdWx0LWF1dGgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidmF1bHQtYXV0aCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImIzYmI0NjY1LTVjZGEtNGQxZC1hMjRlLTJjZmFmMmYyOWMzNiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OnZhdWx0LWF1dGgifQ.i5bWTPbLK8UrkIU6Wc8oSeyNMQwL4Xdw-zSZj1bhZQFkivgCQwsY4ijHHM5XY4exK1cGfA2jWoGWr1t6_yUqfwcjy1b0a_IRxBiXN4HMkmeRHPsOJEbKtzJ6Bq2xG2S3uZTNxdrEZbth1hRRTPQiZqwXD9lRZeq17foT_LB6X8A5bPhqSPDv1-_RjVm7PbxtuMlmKTEIszavwhC-mDBOPlEtSeufXys_uILOO7wSZHtNfKx9h_4H32zhL7icKYRtAs64eGlqX6bk78dkxETvVdcNFbNrR2VBYxho-maxLPIzk43T6wB9JXeb_PdKz64kSvmjVyNuK-GF0Ydd34K3Pw","role":"devweb-app"}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "5"
+    host: 127.0.0.1:8200
+    method: PUT
+    order: 5
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+  response:
+    body: |
+      {"request_id":"84930a6e-cdca-f0db-55ae-e6ee2e251b0c","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ub7vWbwdimtxAcNCKli3EHBF","accessor":"oYYThu4Ldt8F6RZVEhZHzHUT","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    code: 200
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 24 Aug 2022 18:19:51 GMT
+    status: 200 OK
+- id: 6
+  request:
+    body: ""
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "6"
+    host: 127.0.0.1:8200
+    method: GET
+    order: 6
+    url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+  response:
+    body: |
+      {"request_id":"aaf89462-1028-d61b-f6cb-b869e2f6e9b0","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"oYYThu4Ldt8F6RZVEhZHzHUT","creation_time":1661365191,"creation_ttl":4,"display_name":"kubernetes-default-vault-auth","entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","expire_time":"2022-08-24T18:19:55.168486011Z","explicit_max_ttl":0,"external_namespace_policies":{},"id":"s.ub7vWbwdimtxAcNCKli3EHBF","identity_policies":["default","devwebapp"],"issue_time":"2022-08-24T18:19:51.168489261Z","meta":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"num_uses":0,"orphan":true,"path":"auth/kubernetes/login","policies":["default"],"renewable":true,"ttl":4,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}
+    code: 200
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "894"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 24 Aug 2022 18:19:51 GMT
+    status: 200 OK
+- id: 7
+  request:
+    body: '{"increment":4}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "7"
+    host: 127.0.0.1:8200
+    method: PUT
+    order: 7
+    url: http://127.0.0.1:8200/v1/auth/token/renew-self
+  response:
+    body: |
+      {"request_id":"73e3a50c-4658-76c7-472d-a70649693875","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"s.ub7vWbwdimtxAcNCKli3EHBF","accessor":"oYYThu4Ldt8F6RZVEhZHzHUT","policies":["default","devwebapp"],"token_policies":["default"],"identity_policies":["default","devwebapp"],"metadata":{"role":"devweb-app","service_account_name":"vault-auth","service_account_namespace":"default","service_account_secret_name":"vault-auth","service_account_uid":"b3bb4665-5cda-4d1d-a24e-2cfaf2f29c36"},"lease_duration":4,"renewable":true,"entity_id":"13dad9b7-2e02-6fd2-990d-ff9dd62b7831","token_type":"service","orphan":true}}
+    code: 200
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "684"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 24 Aug 2022 18:19:51 GMT
+    status: 200 OK
+version: 2

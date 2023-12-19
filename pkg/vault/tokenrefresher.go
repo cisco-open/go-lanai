@@ -18,7 +18,7 @@ type TokenRefresher struct {
 	cancelLock sync.Mutex
 }
 
-const renewerDescription = "vault apiClient token"
+const renewerDescription = "vault client token"
 
 func NewTokenRefresher(client *Client) *TokenRefresher {
 	return &TokenRefresher{
@@ -92,7 +92,7 @@ func (r *TokenRefresher) monitorRenew(ctx context.Context) {
 
 			err = r.client.Authenticate()
 			if err != nil {
-				logger.WithContext(ctx).Errorf("Could not get a new token: %v")
+				logger.WithContext(ctx).Errorf("Could not get a new token: %v", err)
 				break
 			}
 

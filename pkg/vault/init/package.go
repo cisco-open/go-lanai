@@ -48,12 +48,12 @@ func BindConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) (vault
 type clientDI struct {
 	fx.In
 	Props       vault.ConnectionProperties
-	Customizers []vault.ClientOptions `group:"vault"`
+	Customizers []vault.Options `group:"vault"`
 }
 
 func ProvideDefaultClient(di clientDI) *vault.Client {
-	opts := append([]vault.ClientOptions{vault.WithProperties(di.Props)}, di.Customizers...)
-	c, err := vault.NewClient(opts...)
+	opts := append([]vault.Options{vault.WithProperties(di.Props)}, di.Customizers...)
+	c, err := vault.New(opts...)
 	if err != nil {
 		panic(err)
 	}

@@ -11,7 +11,7 @@ var (
 	errTokenNotRenewable = errors.New("token is not renewable")
 )
 
-type ClientOptions func(cfg *ClientConfig) error
+type Options func(cfg *ClientConfig) error
 type ClientConfig struct {
 	*api.Config
 	Properties *ConnectionProperties
@@ -19,17 +19,17 @@ type ClientConfig struct {
 	Hooks      []Hook
 }
 
-func WithProperties(p ConnectionProperties) ClientOptions {
+func WithProperties(p ConnectionProperties) Options {
 	return func(cfg *ClientConfig) error {
 		cfg.Properties = &p
 		cfg.ClientAuth = newClientAuthentication(&p)
 		cfg.Address = p.Address()
 		if p.Scheme == "https" {
 			t := api.TLSConfig{
-				CACert:     p.Ssl.Cacert,
-				ClientCert: p.Ssl.ClientCert,
-				ClientKey:  p.Ssl.ClientKey,
-				Insecure:   p.Ssl.Insecure,
+				CACert:     p.SSL.CaCert,
+				ClientCert: p.SSL.ClientCert,
+				ClientKey:  p.SSL.ClientKey,
+				Insecure:   p.SSL.Insecure,
 			}
 			err := cfg.ConfigureTLS(&t)
 			if err != nil {
@@ -47,7 +47,7 @@ type Client struct {
 	hooks      []Hook
 }
 
-func NewClient(opts ...ClientOptions) (*Client, error) {
+func New(opts ...Options) (*Client, error) {
 	cfg := ClientConfig{
 		Config:     api.DefaultConfig(),
 		ClientAuth: TokenClientAuthentication(""),
@@ -58,6 +58,10 @@ func NewClient(opts ...ClientOptions) (*Client, error) {
 		}
 	}
 
+	return newClient(&cfg)
+}
+
+func newClient(cfg *ClientConfig) (*Client, error) {
 	client, err := api.NewClient(cfg.Config)
 	if err != nil {
 		return nil, err
@@ -134,30 +138,28 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer, error) {
 	})
 }
 
-func (c *Client) Clone(customizers ...func(cfg *api.Config)) (*Client, error) {
-	cfg := c.Client.CloneConfig()
-	for _, fn := range customizers {
-		fn(cfg)
+func (c *Client) Clone(opts ...Options) (*Client, error) {
+	cfg := ClientConfig{
+		Config:     c.Client.CloneConfig(),
+		Properties: c.cloneProperties(),
+		ClientAuth: c.clientAuth,
+		Hooks:      make([]Hook, len(c.hooks)),
 	}
-	newClient, e := api.NewClient(cfg)
-	if e != nil {
-		return nil, e
-	}
-	props := *c.properties
-	hooks := make([]Hook, len(c.hooks))
 	for i := range c.hooks {
-		hooks[i] = c.hooks[i]
+		cfg.Hooks[i] = c.hooks[i]
 	}
+	for _, fn := range opts {
+		if e := fn(&cfg); e != nil {
+			return nil, e
+		}
+	}
+	return newClient(&cfg)
+}
 
-	ret := &Client{
-		Client:     newClient,
-		properties: &props,
-		clientAuth: c.clientAuth,
-		hooks:      hooks,
+func (c *Client) cloneProperties() *ConnectionProperties {
+	if c.properties == nil {
+		return nil
 	}
-
-	if e := ret.Authenticate(); e != nil {
-		logger.Warnf("vault client clone cannot get token %v", e)
-	}
-	return ret, nil
+	p := *c.properties
+	return &p
 }

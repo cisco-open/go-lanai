@@ -1,0 +1,83 @@
+interactions:
+- id: 0
+  request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJ0ZXN0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InRlc3QtY2xvdWQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidGVzdC1jbG91ZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjhjZmE5ZmVhLWJkNjYtNDUzNy1iZWUzLTExY2U1ODE1ZDk1ZCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDp0ZXN0OnRlc3QtY2xvdWQifQ.l-FdCGDx-chuPrOiTEW4ppi_TCK1MwmIanqDKf8DgIo-dN0hkQYo9gjHIju-JZuiZq7R52we4ST8Unna19jQ0STvp1YQ2bE_XT0ksnlOEX-Q2d_Ha1Tb_ga4nFOVmZh_1fU5lClakQAfkvrtR6J_HqFRnX4CGnNW5wzqOoomUZZDzFsH9WB2pDuGdZ5VMBNe_xdxMf6B2RoKHDmdJFmbFo21AGUZWWGJJ2F-zMhrhIxwmhweGHJVRLXxzx7DyUjZuV6Xx39Hjfa6gUmsNoOjnIQgb9rC4xryVtIj3SXLMo_KqrjZQ9O6q-BKyfJKltyfwXSwnHPgaJ4QEQ4SS08nJA\n","role":"invalid-role"}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "0"
+    host: 127.0.0.1:8200
+    method: PUT
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+  response:
+    body: |
+      {"errors":["invalid role name \"invalid-role\""]}
+    code: 400
+    duration: 2.8025ms
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "50"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Aug 2022 21:17:23 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+    status: 400 Bad Request
+- id: 1
+  request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJ0ZXN0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InRlc3QtY2xvdWQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidGVzdC1jbG91ZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjhjZmE5ZmVhLWJkNjYtNDUzNy1iZWUzLTExY2U1ODE1ZDk1ZCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDp0ZXN0OnRlc3QtY2xvdWQifQ.l-FdCGDx-chuPrOiTEW4ppi_TCK1MwmIanqDKf8DgIo-dN0hkQYo9gjHIju-JZuiZq7R52we4ST8Unna19jQ0STvp1YQ2bE_XT0ksnlOEX-Q2d_Ha1Tb_ga4nFOVmZh_1fU5lClakQAfkvrtR6J_HqFRnX4CGnNW5wzqOoomUZZDzFsH9WB2pDuGdZ5VMBNe_xdxMf6B2RoKHDmdJFmbFo21AGUZWWGJJ2F-zMhrhIxwmhweGHJVRLXxzx7DyUjZuV6Xx39Hjfa6gUmsNoOjnIQgb9rC4xryVtIj3SXLMo_KqrjZQ9O6q-BKyfJKltyfwXSwnHPgaJ4QEQ4SS08nJA\n","role":"invalid-role"}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "1"
+    host: 127.0.0.1:8200
+    method: PUT
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+  response:
+    body: |
+      {"errors":["invalid role name \"invalid-role\""]}
+    code: 400
+    duration: 2.709875ms
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "50"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Aug 2022 21:17:45 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+    status: 400 Bad Request
+- id: 2
+  request:
+    body: '{"jwt":"eyJhbGciOiJSUzI1NiIsImtpZCI6IlBHU0JFMmhSTVpfRllPeVhoRTE1N0FHWDU3aVpNNjNLc1lZQkZfVUlVc28ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJ0ZXN0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InRlc3QtY2xvdWQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidGVzdC1jbG91ZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjhjZmE5ZmVhLWJkNjYtNDUzNy1iZWUzLTExY2U1ODE1ZDk1ZCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDp0ZXN0OnRlc3QtY2xvdWQifQ.l-FdCGDx-chuPrOiTEW4ppi_TCK1MwmIanqDKf8DgIo-dN0hkQYo9gjHIju-JZuiZq7R52we4ST8Unna19jQ0STvp1YQ2bE_XT0ksnlOEX-Q2d_Ha1Tb_ga4nFOVmZh_1fU5lClakQAfkvrtR6J_HqFRnX4CGnNW5wzqOoomUZZDzFsH9WB2pDuGdZ5VMBNe_xdxMf6B2RoKHDmdJFmbFo21AGUZWWGJJ2F-zMhrhIxwmhweGHJVRLXxzx7DyUjZuV6Xx39Hjfa6gUmsNoOjnIQgb9rC4xryVtIj3SXLMo_KqrjZQ9O6q-BKyfJKltyfwXSwnHPgaJ4QEQ4SS08nJA\n","role":"invalid-role"}'
+    form: {}
+    headers:
+      X-Http-Record-Index:
+      - "2"
+    host: 127.0.0.1:8200
+    method: PUT
+    url: http://127.0.0.1:8200/v1/auth/kubernetes/login
+  response:
+    body: |
+      {"errors":["invalid role name \"invalid-role\""]}
+    code: 400
+    duration: 3.142417ms
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Length:
+      - "50"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Aug 2022 21:20:59 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+    status: 400 Bad Request
+version: 2

@@ -81,7 +81,7 @@ func BindTestProperties(appCfg bootstrap.ApplicationConfig) certs.Properties {
 func RecordedVaultProvider() fx.Annotated {
 	return fx.Annotated{
 		Group: "vault",
-		Target: func(recorder *recorder.Recorder) vault.ClientOptions {
+		Target: func(recorder *recorder.Recorder) vault.Options {
 			return func(cfg *vault.ClientConfig) error {
 				recorder.SetRealTransport(cfg.HttpClient.Transport)
 				cfg.HttpClient.Transport = recorder

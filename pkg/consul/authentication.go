@@ -23,6 +23,6 @@ func newClientAuthentication(p *ConnectionProperties) ClientAuthentication {
 
 type TokenClientAuthentication string
 
-func (d TokenClientAuthentication) Login(client *api.Client) (token string, err error) {
+func (d TokenClientAuthentication) Login(_ *api.Client) (token string, err error) {
 	return string(d), nil
 }

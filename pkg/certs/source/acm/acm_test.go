@@ -133,7 +133,7 @@ func TestDefaultClient(t *testing.T) {
 		test.SubTestSetup(SubTestSetupImportCerts(di)),
 		test.GomegaSubTest(SubTestAcmTLSConfig(di), "TestAcmTLSConfig"),
 		test.GomegaSubTest(SubTestAcmCertFiles(di), "TestAcmCertFiles"),
-		test.GomegaSubTest(SubTestVaultRenewal(di), "TestVaultRenewal"),
+		test.GomegaSubTest(SubTestAcmRenewal(di), "TestAcmRenewal"),
 	)
 }
 
@@ -254,7 +254,7 @@ func SubTestAcmCertFiles(di *AcmTestDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestVaultRenewal(di *AcmTestDI) test.GomegaSubTestFunc {
+func SubTestAcmRenewal(di *AcmTestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		t.Skipf("Renewal test is not possible for imported certificates")
 		var ttl = 5 * time.Second // short

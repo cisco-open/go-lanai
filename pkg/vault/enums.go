@@ -2,57 +2,24 @@ package vault
 
 import "strings"
 
-type AuthMethod int
-
 const (
-	Token AuthMethod = iota
-	Kubernetes
+	Token      = AuthMethod("token")
+	Kubernetes = AuthMethod("kubernetes")
 )
 
-const (
-	TokenText      = "TOKEN"
-	KubernetesText = "KUBERNETES"
-)
-
-var (
-	authMethodAtoI = map[string]AuthMethod{
-		strings.ToUpper(TokenText):      Token,
-		strings.ToUpper(KubernetesText): Kubernetes,
-	}
-
-	authMethodItoA = map[AuthMethod]string{
-		Token:      TokenText,
-		Kubernetes: KubernetesText,
-	}
-)
-
-// fmt.Stringer
-func (a AuthMethod) String() string {
-	if s, ok := authMethodItoA[a]; ok {
-		return s
-	}
-	return "unknown"
+var refreshable = map[AuthMethod]struct{}{
+	Kubernetes: {},
 }
 
-// encoding.TextMarshaler
-func (a AuthMethod) MarshalText() ([]byte, error) {
-	return []byte(a.String()), nil
-}
+type AuthMethod string
 
-// encoding.TextUnmarshaler
+// UnmarshalText encoding.TextUnmarshaler
 func (a *AuthMethod) UnmarshalText(data []byte) error {
-	value := strings.ToUpper(string(data))
-	if v, ok := authMethodAtoI[value]; ok {
-		*a = v
-	}
+	*a = AuthMethod(strings.ToUpper(string(data)))
 	return nil
 }
 
-func (a *AuthMethod) isRefreshable() bool {
-	if *a == Token {
-		// If it's a regular token, we can't really do anything about it
-		return false
-	} else {
-		return true
-	}
+func (a AuthMethod) isRefreshable() bool {
+	_, ok := refreshable[a]
+	return ok
 }
