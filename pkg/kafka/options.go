@@ -2,47 +2,20 @@ package kafka
 
 import (
 	"context"
-	"crypto/tls"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
 	"github.com/Shopify/sarama"
 	"time"
 )
 
-func defaultSaramaConfig(ctx context.Context, properties *KafkaProperties, tcFactory *tlsconfig.ProviderFactory) (c *sarama.Config, p tlsconfig.Provider, err error) {
+func defaultSaramaConfig(_ context.Context, properties *KafkaProperties) (c *sarama.Config, err error) {
 	c = sarama.NewConfig()
 	c.Version = sarama.V2_0_0_0
 
 	c.ClientID = properties.ClientId
 	c.Metadata.RefreshFrequency = time.Duration(properties.Metadata.RefreshFrequency)
 
-	if properties.Net.Tls.Enable {
-		c.Net.TLS.Enable = true
-		c.Net.TLS.Config = &tls.Config{} //nolint:gosec // the minVersion is set later on dynamically, so "G402: TLS MinVersion too low." is a false positive
-
-		p, err = tcFactory.GetProvider(properties.Net.Tls.Config)
-		if err != nil {
-			return nil, nil, err
-		}
-		rootCAs, e := p.RootCAs(ctx)
-		if e != nil {
-			return nil, nil, err
-		}
-		c.Net.TLS.Config.RootCAs = rootCAs
-		getCertFunc, e := p.GetClientCertificate(ctx)
-		if e != nil {
-			return nil, nil, err
-		}
-		c.Net.TLS.Config.GetClientCertificate = getCertFunc
-		minTlsVersion, e := p.GetMinTlsVersion()
-		if e != nil {
-			return nil, nil, err
-		}
-		c.Net.TLS.Config.MinVersion = minTlsVersion
-	}
-	
 	if properties.Net.Sasl.Enable {
 		c.Net.SASL.Enable = properties.Net.Sasl.Enable
 		c.Net.SASL.Handshake = properties.Net.Sasl.Handshake
@@ -65,10 +38,11 @@ func defaultSaramaConfig(ctx context.Context, properties *KafkaProperties, tcFac
 // Regardless if name is specified or if corresponding BindingProperties is found,
 // any ProducerOptions or ConsumerOptions used at compile time still apply.
 // The overriding order is as follows:
-// 		BindingProperties with matching name >
-//		BindingProperties with name "default" >
-//		ProducerOptions or ConsumerOptions >
-// 		prepared defaults during initialization
+//
+//	BindingProperties with matching name >
+//	BindingProperties with name "default" >
+//	ProducerOptions or ConsumerOptions >
+//	prepared defaults during initialization
 func BindingName(name string) func(cfg *bindingConfig) {
 	return func(config *bindingConfig) {
 		if name != "" {
@@ -213,10 +187,10 @@ type MessageOptions func(config *messageConfig)
 // WithKey specify key used for the message. The key is typically used for partitioning.
 // Supported values depends on the KeyEncoder option on the Producer.
 // Default encoder support following types:
-// 	- uuid.UUID
-// 	- string
-// 	- []byte
-// 	- encoding.BinaryMarshaler
+//   - uuid.UUID
+//   - string
+//   - []byte
+//   - encoding.BinaryMarshaler
 func WithKey(key interface{}) MessageOptions {
 	return func(config *messageConfig) {
 		config.Key = key

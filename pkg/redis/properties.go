@@ -2,6 +2,7 @@ package redis
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
 	"time"
@@ -40,9 +41,8 @@ type RedisProperties struct {
 	IdleTimeout        time.Duration `json:"idle-timeout"`
 	IdleCheckFrequency time.Duration `json:"idle-check-frequency"`
 
-	//path to root certificates files
-	RootCertificates string `json:"root-certificates"`
-
+	// TLS Properties for Redis
+	TLS TLSProperties `json:"tls"`
 	// Only cluster clients.
 
 	MaxRedirects   int  `json:"max-redirects"`
@@ -56,8 +56,9 @@ type RedisProperties struct {
 	SentinelPassword string `json:"sentinel-password"`
 }
 
-func NewRedisProperties(ctx *bootstrap.ApplicationContext) *RedisProperties {
-	return &RedisProperties{}
+type TLSProperties struct {
+	Enabled bool                   `json:"enabled"`
+	Certs   certs.SourceProperties `json:"certs"`
 }
 
 func BindRedisProperties(ctx *bootstrap.ApplicationContext) RedisProperties {

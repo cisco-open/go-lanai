@@ -1,0 +1,102 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN=Dev-CA @ Cisco, C=CA, ST=Ontario, L=Toronto, O=Cisco/emailAddress=dev@cisco.com
+        Validity
+            Not Before: Nov 30 23:08:49 2023 GMT
+            Not After : Nov 27 23:08:49 2033 GMT
+        Subject: CN=redis
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:c3:84:43:15:ce:22:fd:5d:ac:d4:3f:49:57:b9:
+                    5b:05:02:52:06:86:9b:7b:12:1b:92:6f:9a:a3:7c:
+                    e1:34:71:d6:48:2c:3f:df:15:cd:3d:31:a5:e3:f5:
+                    16:1b:8c:17:aa:53:f6:ac:8b:f2:13:e3:53:8e:df:
+                    87:64:c8:f1:c9:22:9c:ad:fc:12:97:51:23:1e:2b:
+                    ca:e1:15:82:6c:be:ef:cc:a4:74:90:4d:f4:f6:91:
+                    3e:d7:d9:07:1d:f5:52:2d:8a:09:54:1a:f9:85:33:
+                    6c:4b:b5:47:51:5c:4c:46:2f:2f:39:a9:77:50:bf:
+                    60:a7:b5:18:6c:42:09:c3:c3:a4:85:d7:43:40:4d:
+                    82:d9:b8:f0:73:69:96:e5:1d:f4:7b:46:63:7c:19:
+                    99:45:ed:1d:ad:1e:2d:55:46:b7:f0:4d:78:fe:d7:
+                    86:3f:65:62:37:33:78:7e:d1:ca:85:77:03:1d:73:
+                    56:75:b1:fd:3a:51:e4:64:d0:70:62:cb:72:bc:35:
+                    35:f1:08:48:98:9b:2e:f6:df:27:9a:ff:25:7a:81:
+                    ea:f8:0c:af:b7:75:54:a8:75:87:53:32:80:00:af:
+                    b8:72:28:22:41:b0:6c:f9:13:74:3d:aa:34:01:92:
+                    1f:80:52:3c:ba:cd:e0:fd:b8:2c:84:9c:75:68:a8:
+                    e6:e3
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication
+            X509v3 Subject Alternative Name: critical
+                DNS:localhost, DNS:redis, IP Address:127.0.0.1
+            X509v3 Subject Key Identifier: 
+                DC:72:AF:20:F2:0E:BC:EF:8B:EA:64:C9:48:3B:F3:E3:02:49:5F:72
+            X509v3 Authority Key Identifier: 
+                B4:91:21:1A:AD:CF:87:C7:C6:B2:1C:61:8F:C8:C5:3F:CB:1D:04:F2
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+        37:b4:92:67:cc:36:1e:40:27:94:26:56:52:73:bf:8b:c2:72:
+        50:39:20:25:c5:0c:76:c4:28:cf:8a:c5:b3:34:fe:5a:1c:aa:
+        40:4e:d3:70:9a:e2:ff:46:01:b9:ae:3d:27:f0:dd:f2:64:5e:
+        b8:64:8f:55:2b:81:6c:4f:99:f3:64:db:5d:f2:24:94:7b:79:
+        5a:6c:9a:76:a8:64:6b:f9:73:21:0d:11:06:86:c5:b6:de:e0:
+        b3:d5:b6:50:94:ca:5b:00:32:f7:27:3f:5c:f9:75:5e:c7:87:
+        e7:ad:7c:0d:c4:54:6e:5d:34:cd:55:76:4a:ff:7c:51:92:c2:
+        79:34:e9:f7:3b:73:6f:d8:ec:6d:c1:c1:89:87:24:d8:0c:9c:
+        cf:23:b2:f9:fe:94:d1:b5:ec:99:10:fe:b9:03:f2:41:78:29:
+        86:bd:46:1f:d5:60:79:fa:11:10:b8:d9:00:d1:e8:47:38:cb:
+        10:64:a7:83:36:e1:b1:f2:f2:db:0b:4a:7d:a9:b9:d7:73:37:
+        4f:c5:24:2f:1d:e7:93:3f:66:9c:22:23:e8:63:50:39:86:29:
+        d5:b0:f2:1f:20:84:86:75:48:39:3f:9a:a1:46:56:fb:e3:13:
+        b4:cc:46:08:c6:79:aa:e8:38:32:76:d7:29:a3:6a:43:f7:5c:
+        38:d9:1f:34:01:f1:68:64:92:48:c9:9d:41:a4:eb:35:f2:45:
+        fc:0a:7c:e6:46:4a:f7:c8:f6:53:78:ff:1a:c4:8d:41:a9:ca:
+        5d:42:df:fb:7c:36:9f:e4:53:0a:c7:99:1f:d4:23:24:29:3e:
+        8f:40:86:15:3d:a2:d1:10:36:70:1a:f9:93:49:25:ae:61:c0:
+        0c:d4:c5:ac:ec:1f:c4:42:bd:ca:62:4c:a8:f3:55:32:c9:d2:
+        c1:f3:77:68:b0:ac:8c:68:3a:db:5b:70:40:21:93:e0:35:87:
+        16:09:3a:e6:c3:96:21:bc:5f:b5:3b:07:b1:9f:03:74:ec:4e:
+        31:f6:64:1f:dc:79:5c:3f:0c:56:63:43:f0:43:69:4a:86:63:
+        9c:ce:6a:5b:42:24:78:c6:dd:5e:61:58:0d:17:6e:75:f6:84:
+        81:16:4b:78:d1:97:d0:73:aa:b4:b4:7f:e1:8a:6a:68:1f:f6:
+        3f:c0:e5:a0:dc:88:d3:75:7b:08:9d:19:8c:38:34:77:10:f7:
+        78:a8:f4:b3:74:66:99:77:16:e9:bc:f2:fa:4a:53:aa:21:0c:
+        45:e1:30:6d:c7:84:66:d6:3a:bb:7f:59:f3:3f:1c:1f:d6:85:
+        68:cc:8e:64:72:5a:8c:75:26:d3:e1:3a:cc:3a:dc:2a:9a:d3:
+        2b:ce:b7:90:4e:d2:51:80
+-----BEGIN CERTIFICATE-----
+MIIEnDCCAoSgAwIBAgIBATANBgkqhkiG9w0BAQsFADB4MRcwFQYDVQQDDA5EZXYt
+Q0EgQCBDaXNjbzELMAkGA1UEBhMCQ0ExEDAOBgNVBAgMB09udGFyaW8xEDAOBgNV
+BAcMB1Rvcm9udG8xDjAMBgNVBAoMBUNpc2NvMRwwGgYJKoZIhvcNAQkBFg1kZXZA
+Y2lzY28uY29tMB4XDTIzMTEzMDIzMDg0OVoXDTMzMTEyNzIzMDg0OVowEDEOMAwG
+A1UEAwwFcmVkaXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDDhEMV
+ziL9XazUP0lXuVsFAlIGhpt7EhuSb5qjfOE0cdZILD/fFc09MaXj9RYbjBeqU/as
+i/IT41OO34dkyPHJIpyt/BKXUSMeK8rhFYJsvu/MpHSQTfT2kT7X2Qcd9VItiglU
+GvmFM2xLtUdRXExGLy85qXdQv2CntRhsQgnDw6SF10NATYLZuPBzaZblHfR7RmN8
+GZlF7R2tHi1VRrfwTXj+14Y/ZWI3M3h+0cqFdwMdc1Z1sf06UeRk0HBiy3K8NTXx
+CEiYmy723yea/yV6ger4DK+3dVSodYdTMoAAr7hyKCJBsGz5E3Q9qjQBkh+AUjy6
+zeD9uCyEnHVoqObjAgMBAAGjgZgwgZUwDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQW
+MBQGCCsGAQUFBwMBBggrBgEFBQcDAjAkBgNVHREBAf8EGjAYgglsb2NhbGhvc3SC
+BXJlZGlzhwR/AAABMB0GA1UdDgQWBBTccq8g8g6874vqZMlIO/PjAklfcjAfBgNV
+HSMEGDAWgBS0kSEarc+Hx8ayHGGPyMU/yx0E8jANBgkqhkiG9w0BAQsFAAOCAgEA
+N7SSZ8w2HkAnlCZWUnO/i8JyUDkgJcUMdsQoz4rFszT+WhyqQE7TcJri/0YBua49
+J/Dd8mReuGSPVSuBbE+Z82TbXfIklHt5Wmyadqhka/lzIQ0RBobFtt7gs9W2UJTK
+WwAy9yc/XPl1XseH5618DcRUbl00zVV2Sv98UZLCeTTp9ztzb9jsbcHBiYck2Ayc
+zyOy+f6U0bXsmRD+uQPyQXgphr1GH9VgefoRELjZANHoRzjLEGSngzbhsfLy2wtK
+fam513M3T8UkLx3nkz9mnCIj6GNQOYYp1bDyHyCEhnVIOT+aoUZW++MTtMxGCMZ5
+qug4MnbXKaNqQ/dcONkfNAHxaGSSSMmdQaTrNfJF/Ap85kZK98j2U3j/GsSNQanK
+XULf+3w2n+RTCseZH9QjJCk+j0CGFT2i0RA2cBr5k0klrmHADNTFrOwfxEK9ymJM
+qPNVMsnSwfN3aLCsjGg621twQCGT4DWHFgk65sOWIbxftTsHsZ8DdOxOMfZkH9x5
+XD8MVmND8ENpSoZjnM5qW0IkeMbdXmFYDRdudfaEgRZLeNGX0HOqtLR/4YpqaB/2
+P8DloNyI03V7CJ0ZjDg0dxD3eKj0s3RmmXcW6bzy+kpTqiEMReEwbceEZtY6u39Z
+8z8cH9aFaMyOZHJajHUm0+E6zDrcKprTK863kE7SUYA=
+-----END CERTIFICATE-----

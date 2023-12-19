@@ -1,0 +1,7 @@
+certificates:
+  sources:
+    file:
+      type: file
+      ca-cert-file: "testdata/ca.crt"
+      cert-file: "testdata/client.crt"
+      key-file: "testdata/client.key"

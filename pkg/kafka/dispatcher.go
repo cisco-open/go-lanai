@@ -11,24 +11,23 @@ import (
 
 // MessageHandlerFunc is message handling function that conform with following signature:
 //
-// 	func (ctx context.Context, [OPTIONAL_INPUT_PARAMS...]) error
+//		func (ctx context.Context, [OPTIONAL_INPUT_PARAMS...]) error
 //
-//  Where OPTIONAL_INPUT_PARAMS could contain following components (of which order is not important):
-// 	- PAYLOAD_PARAM 	< AnyPayloadType >: 	message payload, where PayloadType could be any type other than interface, function or chan.
-//		                         				If PayloadType is interface{}, raw []byte will be used
-// 	- HEADERS_PARAM 	< Headers >: 			message headers
-// 	- METADATA_PARAM 	< *MessageMetadata >: 	message metadata, includes timestamp, keys, partition, etc.
-// 	- MESSAGE_PARAM 	< *Message >: 			raw message, where Message.Payload would be PayloadType if PAYLOAD_PARAM is also present, or []byte
+//	 Where OPTIONAL_INPUT_PARAMS could contain following components (of which order is not important):
+//		- PAYLOAD_PARAM 	< AnyPayloadType >: 	message payload, where PayloadType could be any type other than interface, function or chan.
+//			                         				If PayloadType is interface{}, raw []byte will be used
+//		- HEADERS_PARAM 	< Headers >: 			message headers
+//		- METADATA_PARAM 	< *MessageMetadata >: 	message metadata, includes timestamp, keys, partition, etc.
+//		- MESSAGE_PARAM 	< *Message >: 			raw message, where Message.Payload would be PayloadType if PAYLOAD_PARAM is also present, or []byte
 //
 // For Example:
 //
-// 	func Handle(ctx context.Context, payload *MyStruct) error
-// 	func Handle(ctx context.Context, payload *MyStruct, meta *MessageMetadata) error
-// 	func Handle(ctx context.Context, payload map[string]interface{}) error
-// 	func Handle(ctx context.Context, headers Headers, payload *MyStruct) error
-// 	func Handle(ctx context.Context, payload *MyStruct, raw *Message) error
-// 	func Handle(ctx context.Context, raw *Message) error
-//
+//	func Handle(ctx context.Context, payload *MyStruct) error
+//	func Handle(ctx context.Context, payload *MyStruct, meta *MessageMetadata) error
+//	func Handle(ctx context.Context, payload map[string]interface{}) error
+//	func Handle(ctx context.Context, headers Headers, payload *MyStruct) error
+//	func Handle(ctx context.Context, payload *MyStruct, raw *Message) error
+//	func Handle(ctx context.Context, raw *Message) error
 type MessageHandlerFunc interface{}
 
 type MessageFilterFunc func(ctx context.Context, msg *Message) (shouldHandle bool)

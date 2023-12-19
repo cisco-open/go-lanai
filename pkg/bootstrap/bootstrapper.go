@@ -68,11 +68,12 @@ type Bootstrapper struct {
 
 // NewBootstrapper create a new Bootstrapper.
 // Note: "bootstrap" package uses Singleton patterns for application bootstrap. Calling this function directly is not recommended
-// 		 This function is exported for test packages to use
+//
+//	This function is exported for test packages to use
 func NewBootstrapper() *Bootstrapper {
 	return &Bootstrapper{
-		modules:      utils.NewSet(),
-		adhocModule:  newAnonymousModule(),
+		modules:     utils.NewSet(),
+		adhocModule: newAnonymousModule(),
 	}
 }
 
@@ -104,17 +105,10 @@ func (b *Bootstrapper) EnableCliRunnerMode(runnerProviders ...interface{}) {
 func (b *Bootstrapper) NewApp(cliCtx *CliExecContext, priorityOptions []fx.Option, regularOptions []fx.Option) *App {
 	// create App
 	app := &App{
-		ctx:          NewApplicationContext(),
+		ctx:          NewApplicationContext(b.initCtxOpts...),
 		startCtxOpts: b.startCtxOpts,
 		stopCtxOpts:  b.stopCtxOpts,
 	}
-
-	// update application context before creating the app
-	ctx := app.ctx.Context
-	for _, opt := range b.initCtxOpts {
-		ctx = opt(ctx)
-	}
-	app.ctx = app.ctx.withContext(ctx)
 
 	// Decide default module
 	initModule := InitModule(cliCtx, app)
@@ -166,9 +160,10 @@ type App struct {
 
 // EagerGetApplicationContext returns the global ApplicationContext before it becomes available for dependency injection
 // Important: packages should typically get ApplicationContext via fx's dependency injection,
-//			  which internal application config are guaranteed.
-//			  Only packages involved in priority bootstrap (appconfig, consul, vault, etc)
-//			  should use this function for logging purpose
+//
+//	which internal application config are guaranteed.
+//	Only packages involved in priority bootstrap (appconfig, consul, vault, etc)
+//	should use this function for logging purpose
 func (app *App) EagerGetApplicationContext() *ApplicationContext {
 	return app.ctx
 }

@@ -6,12 +6,14 @@ import (
 	vaultinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"strings"
 	"testing"
 )
@@ -23,8 +25,31 @@ var (
 )
 
 /*************************
+	Test Setup
+ *************************/
+
+func RecordedVaultProvider() fx.Annotated {
+	return fx.Annotated{
+		Group: "vault",
+		Target: func(recorder *recorder.Recorder) vault.Options {
+			return func(cfg *vault.ClientConfig) error {
+				recorder.SetRealTransport(cfg.HttpClient.Transport)
+				cfg.HttpClient.Transport = recorder
+				return nil
+			}
+		},
+	}
+}
+
+/*************************
 	Test Cases
  *************************/
+
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		ittest.PackageHttpRecordingMode(),
+//	)
+//}
 
 type transitDI struct {
 	fx.In
@@ -32,7 +57,7 @@ type transitDI struct {
 }
 
 func TestVaultEncryptorWithRealVault(t *testing.T) {
-	t.Skipf("skipped because this test requires real vault server")
+	//t.Skipf("skipped because this test requires real vault server")
 	mapValue := map[string]interface{}{
 		"key1": "value1",
 		"key2": 2.0,
@@ -48,7 +73,11 @@ func TestVaultEncryptorWithRealVault(t *testing.T) {
 	}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		ittest.WithHttpPlayback(t, ittest.DisableHttpRecordOrdering()),
 		apptest.WithModules(vaultinit.Module),
+		apptest.WithFxOptions(
+			fx.Provide(RecordedVaultProvider()),
+		),
 		apptest.WithDI(&di),
 		test.SubTestSetup(SubTestSetupCreateKey(&di)),
 		test.GomegaSubTest(SubTestVaultEncryptor(&di, &props, testKid, mapValue), "VaultMap"),
@@ -89,16 +118,16 @@ func TestVaultEncryptorWithMockedTransitEngine(t *testing.T) {
 func TestV1DecryptionWithMockedTransitEngine(t *testing.T) {
 	enc := newMockedVaultEncryptor()
 	const kid = `d3803a9e-f2f2-4960-bdb1-aeec92d88ca4`
-	const mapData     = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.util.HashMap\",{\"key1\":\"value1\",\"key2\":2}]"}`
+	const mapData = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.util.HashMap\",{\"key1\":\"value1\",\"key2\":2}]"}`
 	mapValue := map[string]interface{}{
 		"key1": "value1",
 		"key2": 2.0,
 	}
-	const strData     = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.lang.String\",\"this is a string\"]"}`
+	const strData = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.lang.String\",\"this is a string\"]"}`
 	strValue := "this is a string"
-	const arrData     = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.util.ArrayList\",[\"value1\",2]]"}`
+	const arrData = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e","d":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4:[\"java.util.ArrayList\",[\"value1\",2]]"}`
 	arrValue := []interface{}{"value1", 2.0}
-	const nilData     = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e"}`
+	const nilData = `{"v":1,"kid":"d3803a9e-f2f2-4960-bdb1-aeec92d88ca4","alg":"e"}`
 
 	test.RunTest(context.Background(), t,
 		test.GomegaSubTest(SubTestV1VaultDecryption(enc, mapData, kid, mapValue), "PlainTextMap"),
@@ -165,7 +194,6 @@ func SubTestVaultEncryptor(di *transitDI, props *KeyProperties, uuidStr string, 
 		} else {
 			g.Expect(raw.Raw).To(BeEmpty(), "encrypted raw should be a empty")
 		}
-
 
 		// serialize
 		bytes, e := json.Marshal(raw)

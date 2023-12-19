@@ -11,9 +11,10 @@ const (
 
 type startTimeCtxKey struct{}
 type stopTimeCtxKey struct{}
+
 var (
 	ctxKeyStartTime = startTimeCtxKey{}
-	ctxKeyStopTime = stopTimeCtxKey{}
+	ctxKeyStopTime  = stopTimeCtxKey{}
 )
 
 type ApplicationConfig interface {
@@ -28,9 +29,13 @@ type ApplicationContext struct {
 	config ApplicationConfig
 }
 
-func NewApplicationContext() *ApplicationContext {
+func NewApplicationContext(opts ...ContextOption) *ApplicationContext {
+	ctx := context.Background()
+	for _, fn := range opts {
+		ctx = fn(ctx)
+	}
 	return &ApplicationContext{
-		Context: context.WithValue(context.Background(), ctxKeyStartTime, time.Now().UTC()),
+		Context: context.WithValue(ctx, ctxKeyStartTime, time.Now().UTC()),
 	}
 }
 
@@ -51,7 +56,7 @@ func (c *ApplicationContext) Name() string {
 
 /**************************
  context.Context Interface
-***************************/
+ **************************/
 func (_ *ApplicationContext) String() string {
 	return "application context"
 }

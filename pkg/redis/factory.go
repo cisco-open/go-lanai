@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
@@ -19,7 +20,7 @@ type OptionsAwareHook interface {
 }
 
 type ClientFactory interface {
-	// New returns an newly created Client
+	// New returns a newly created Client
 	New(ctx context.Context, opts ...ClientOptions) (Client, error)
 
 	// AddHooks add hooks to all Client already created and any future Client created via this interface
@@ -35,16 +36,28 @@ type clientRecord struct {
 }
 
 type clientFactory struct {
-	properties RedisProperties
-	hooks      []redis.Hook
-	clients    map[ClientOption]clientRecord
+	properties   RedisProperties
+	hooks        []redis.Hook
+	clients      map[ClientOption]clientRecord
+	certsManager certs.Manager
 }
 
-func NewClientFactory(p RedisProperties) ClientFactory {
+type FactoryOptions func(opt *FactoryOption)
+type FactoryOption struct {
+	Properties      RedisProperties
+	TLSCertsManager certs.Manager
+}
+
+func NewClientFactory(opts...FactoryOptions) ClientFactory {
+	opt := FactoryOption{}
+	for _, fn := range opts {
+		fn(&opt)
+	}
 	return &clientFactory{
-		properties: p,
-		hooks: []redis.Hook{},
-		clients: map[ClientOption]clientRecord{},
+		properties:   opt.Properties,
+		hooks:        []redis.Hook{},
+		clients:      map[ClientOption]clientRecord{},
+		certsManager: opt.TLSCertsManager,
 	}
 }
 
@@ -63,16 +76,18 @@ func (f *clientFactory) New(ctx context.Context, opts ...ClientOptions) (Client,
 		return existing.client, nil
 	}
 
+	connOpts := []ConnOptions{withDB(opt.DbIndex)}
+	if f.properties.TLS.Enabled {
+		connOpts = append(connOpts, withTLS(ctx, f.certsManager, &f.properties.TLS.Certs))
+	}
+
 	// prepare options
-	options, e := GetUniversalOptions(&f.properties)
+	options, e := GetUniversalOptions(&f.properties, connOpts...)
 	if e != nil {
 		return nil, errors.Wrap(e, "Invalid redis configuration")
 	}
 
-	// customize
-	options.DB = opt.DbIndex
-
-	c := client {
+	c := client{
 		UniversalClient: redis.NewUniversalClient(options),
 	}
 

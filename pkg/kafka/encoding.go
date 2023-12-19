@@ -55,8 +55,8 @@ func newSaramaEncoder(v interface{}, enc Encoder) sarama.Encoder {
 		enc = binaryEncoder{}
 	}
 	return &saramaEncoderWrapper{
-		v:     v,
-		enc:   enc,
+		v:   v,
+		enc: enc,
 	}
 }
 
@@ -96,6 +96,3 @@ func (i mimeTypeProducerInterceptor) Intercept(msgCtx *MessageContext) (*Message
 	msgCtx.Message.Payload = newSaramaEncoder(msgCtx.Message.Payload, msgCtx.ValueEncoder)
 	return msgCtx, nil
 }
-
-
-

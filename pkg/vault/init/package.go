@@ -2,17 +2,14 @@ package vault
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	appconfigInit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
+	vaulthealth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/health"
 	"embed"
 	"go.uber.org/fx"
 )
-
-var logger = log.New("vault")
 
 //go:embed defaults-vault.yml
 var defaultConfigFS embed.FS
@@ -21,11 +18,11 @@ var Module = &bootstrap.Module{
 	Name:       "vault",
 	Precedence: bootstrap.VaultPrecedence,
 	PriorityOptions: []fx.Option{
-		fx.Provide(newConnectionProperties, vault.NewClient),
+		fx.Provide(BindConnectionProperties, ProvideDefaultClient),
 	},
 	Options: []fx.Option{
 		appconfigInit.FxEmbeddedDefaults(defaultConfigFS),
-		fx.Invoke(setupRenewal, registerHealth),
+		fx.Invoke(vaulthealth.Register, manageClientLifecycle),
 	},
 }
 
@@ -34,64 +31,54 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func newConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) *vault.ConnectionProperties {
-	c := &vault.ConnectionProperties{
+func BindConnectionProperties(bootstrapConfig *appconfig.BootstrapConfig) (vault.ConnectionProperties, error) {
+	c := vault.ConnectionProperties{
 		Host:           "localhost",
 		Port:           8200,
 		Scheme:         "http",
 		Authentication: vault.Token,
 		Token:          "replace_with_token_value",
 	}
-	if e := bootstrapConfig.Bind(c, vault.PropertyPrefix); e != nil {
-		panic(e)
+	if e := bootstrapConfig.Bind(&c, vault.PropertyPrefix); e != nil {
+		return c, e
 	}
-	return c
+	return c, nil
 }
 
-func newClient(p *vault.ConnectionProperties) *vault.Client {
-	c, err := vault.NewClient(p)
+type clientDI struct {
+	fx.In
+	Props       vault.ConnectionProperties
+	Customizers []vault.Options `group:"vault"`
+}
+
+func ProvideDefaultClient(di clientDI) *vault.Client {
+	opts := append([]vault.Options{
+		vault.WithProperties(di.Props),
+	}, di.Customizers...)
+	client, err := vault.New(opts...)
 	if err != nil {
 		panic(err)
 	}
-	return c
+	return client
 }
 
-type renewDi struct {
+type lcDI struct {
 	fx.In
-	AppContext  *bootstrap.ApplicationContext
+	AppCtx      *bootstrap.ApplicationContext
+	Lifecycle   fx.Lifecycle
 	VaultClient *vault.Client `optional:"true"`
 }
 
-func setupRenewal(lc fx.Lifecycle, di renewDi) {
+func manageClientLifecycle(di lcDI) {
 	if di.VaultClient == nil {
 		return
 	}
-	client := di.VaultClient
-	refresher := vault.NewTokenRefresher(client)
-	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			//nolint:contextcheck // intended, we don't use passed in context, refresher will depend on application context
-			refresher.Start(di.AppContext)
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			refresher.Stop()
-			return nil
-		},
-	})
+	di.Lifecycle.Append(fx.StartHook(func(_ context.Context) {
+		//nolint:contextcheck // Non-inherited new context - intentional. Start hook context expires when startup finishes
+		di.VaultClient.AutoRenewToken(di.AppCtx)
+	}))
+	di.Lifecycle.Append(fx.StopHook(func(_ context.Context) error {
+		return di.VaultClient.Close()
+	}))
 }
 
-type regDI struct {
-	fx.In
-	HealthRegistrar health.Registrar `optional:"true"`
-	VaultClient     *vault.Client    `optional:"true"`
-}
-
-func registerHealth(di regDI) {
-	if di.HealthRegistrar == nil || di.VaultClient == nil {
-		return
-	}
-	di.HealthRegistrar.MustRegister(&vault.VaultHealthIndicator{
-		Client: di.VaultClient,
-	})
-}

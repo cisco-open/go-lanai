@@ -30,4 +30,3 @@ func NewGormMigrator(db *gorm.DB, dialector gorm.Dialector) *GormMigrator {
 		},
 	}
 }
-

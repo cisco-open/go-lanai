@@ -7,7 +7,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
+	"errors"
 	"flag"
+	"fmt"
 	"go.uber.org/fx"
 	"gopkg.in/dnaeon/go-vcr.v3/cassette"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
@@ -178,6 +180,13 @@ func DisableHttpRecordOrdering() HTTPVCROptions {
 	}
 }
 
+// HttpTransport override the RealTransport during recording mode. This option has no effect in playback mode
+func HttpTransport(transport *http.Transport) HTTPVCROptions {
+	return func(opt *HTTPVCROption) {
+		opt.RealTransport = transport
+	}
+}
+
 /****************************
 	Recorder Aware Context
  ****************************/
@@ -318,7 +327,7 @@ func toRecorderOptions(opt HTTPVCROption) *recorder.Options {
 	return &recorder.Options{
 		CassetteName:       name,
 		Mode:               mode,
-		RealTransport:      http.DefaultTransport,
+		RealTransport:      opt.RealTransport,
 		SkipRequestLatency: true,
 	}
 }
@@ -342,8 +351,11 @@ func httpRecorderCleanup(lc fx.Lifecycle, rec *recorder.Recorder) {
 func wrapRecordRequestMatcher(fn GenericMatcherFunc[*http.Request, cassette.Request]) cassette.MatcherFunc {
 	return func(out *http.Request, record cassette.Request) bool {
 		if e := fn(out, record); e != nil {
-			if e != errInteractionIDMismatch {
-				logger.Debugf("HTTP interaction missing: %s - %v", record.Headers.Get(xInteractionIndexHeader), e)
+			if !errors.Is(e, errInteractionIDMismatch) {
+				logger.Debugf("HTTP interaction missing: %s - %v: expect %s, but got %s",
+					record.Headers.Get(xInteractionIndexHeader), e,
+					fmt.Sprintf(`%s "%s"`, record.Method, record.URL),
+					fmt.Sprintf(`%s "%s"`, out.Method, out.URL.String()))
 			}
 			return false
 		}

@@ -1,0 +1,725 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "0"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/auth/token/lookup-self
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 660
+        uncompressed: false
+        body: '{"request_id":"c9eca317-1eed-f50c-6c39-29adb59e9fd4","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"Icly5ijJ8n6c4JJeydHatmWK","creation_time":1701561578,"creation_ttl":315360000,"display_name":"token-dev-default","entity_id":"","expire_time":"2033-11-29T23:58:49.645786763Z","explicit_max_ttl":0,"id":"replace_with_token_value","issue_time":"2023-12-02T23:59:38.157038549Z","last_renewal":"2023-12-17T22:00:43.645786847Z","last_renewal_time":1702850443,"meta":null,"num_uses":0,"orphan":true,"path":"auth/token/create","policies":["root"],"renewable":true,"ttl":314071033,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "660"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 3089
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: |-
+            {
+              "pem_bundle":"-----BEGIN CERTIFICATE-----\nMIIDtTCCAp2gAwIBAgIUZqfbRx3TG8RPVmBd77gyGFDzpiIwDQYJKoZIhvcNAQEL\nBQAwXjELMAkGA1UEBhMCQ0ExCzAJBgNVBAgMAk9OMRAwDgYDVQQHDAdUb3JvbnRv\nMQ4wDAYDVQQKDAVDaXNjbzEMMAoGA1UECwwDTVNYMRIwEAYDVQQDDAlsb2NhbGhv\nc3QwIBcNMjIwMzIxMjA0OTQyWhgPMjEyMjAyMjUyMDQ5NDJaMF4xCzAJBgNVBAYT\nAkNBMQswCQYDVQQIDAJPTjEQMA4GA1UEBwwHVG9yb250bzEOMAwGA1UECgwFQ2lz\nY28xDDAKBgNVBAsMA01TWDESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG\n9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkfLHLqP96V774qNC/8LabrZkDseTA2lBrfGz\nQKnIGuXwXcG5UitQtCgHORH3Vdb3GnxdFOakggmxIwTFd9IRWBfe83w3vA7YFVN7\nZNuSYZoa3p8zBn9oU0f7ImiyR+77fEYp+BuSdtLv2XAPP7861MKpCtksmagYchh2\nKaXHJiArUdQfI6dfU4tQO9O4vrG7CQLx4Z2PU6z3uzDkC56Q59RoJpCAwR7PXP5l\nopKifmifSdGZSlA1tub2nTClzZX4AqpgJscvlTY80RMgwwxICkbJtVII8ueRy5qV\nWzYqXfl91eOvy4JXaT4stWWQ2RG5L4szYqkMvTOtLAHrJ73bMQIDAQABo2kwZzAd\nBgNVHQ4EFgQU8XVriGQJvpvAgzPTVgCcx7jsUC0wHwYDVR0jBBgwFoAU8XVriGQJ\nvpvAgzPTVgCcx7jsUC0wDwYDVR0TAQH/BAUwAwEB/zAUBgNVHREEDTALgglsb2Nh\nbGhvc3QwDQYJKoZIhvcNAQELBQADggEBAEEOPBoMAVYe0KtismdS8qe6OffwjCIU\nUgA5654EsuryxZs6SXMiU3X4lPZZoNBv0DNOLRPhBbQU4NjGJjSRFPO0s+DaeSCm\nCo39x4GQ2MSJfojhC5SEedMzEFMkiYfxyTlfdaFH6sGaUIo6wYgCUszklKddWUsS\nUdclFVg9RLY/3A1lpfkXM0tm2cJpI504XOufidjl8XBQQ5xcnApOXCqLMm2/YONL\nQ71rD1WJrLgOzMlJLbL8gmMKNEazJDw/yuBH4iKJyndaT9dItgpwBCVIPAT9Ko/e\nw0BZxCc3lbqjL8Rp4BlCIPk9OnEMcSstmCbUM+JlugnOA/L3qLhhP7Q=\n-----END CERTIFICATE-----\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAkfLHLqP96V774qNC/8LabrZkDseTA2lBrfGzQKnIGuXwXcG5\nUitQtCgHORH3Vdb3GnxdFOakggmxIwTFd9IRWBfe83w3vA7YFVN7ZNuSYZoa3p8z\nBn9oU0f7ImiyR+77fEYp+BuSdtLv2XAPP7861MKpCtksmagYchh2KaXHJiArUdQf\nI6dfU4tQO9O4vrG7CQLx4Z2PU6z3uzDkC56Q59RoJpCAwR7PXP5lopKifmifSdGZ\nSlA1tub2nTClzZX4AqpgJscvlTY80RMgwwxICkbJtVII8ueRy5qVWzYqXfl91eOv\ny4JXaT4stWWQ2RG5L4szYqkMvTOtLAHrJ73bMQIDAQABAoIBAA1StO9badJIGRUe\nO39iy6Mj7AQj4JYlAYmGGQuX/CQFddDvPnJDcT9y8H7blqEryZytuecOq3mR9i1I\n0hhvMSViL3h5cFKO5dejim4Bc85MXbPRI1yuXIkOtvyUA2NY6/TzKEFljfQiKyJF\nriSu+alCuGD8xIsl2s5ukHnaj/CZR5nkRLMIplwgF6U08bta/fnfm2547bfA+6wO\n8DidceusC1QfcAep9Ci/WZGAFS7pU+/t6XajxdCEACkWpqfXmfhHUHh6cCYh6rvT\nRvUnjet2R9YOQsxg6SAoLeXiDEEus5Jh/d9e/0s0qad5lgh8VTF5hAnelW7iCQub\nnp3+iwkCgYEAuBetUmAKJXV69Mp59aoxXRvDhP+XHVZO/Sr82JXGDp1/zdDtPb3E\nn9HSOQWIZ+Jw/67ksuu3R9gXgvZBknu/VmbxTqxAtS7x0uTrj2YfdbnC1fy3rMC9\nOl1be0liG6BHAgnWkQMeB/JeYgw8XaUGAXdJq+bKTX+dyOzRub92LWkCgYEAyvTh\nEvW3uomigI++gR8i0V7sN3i1HnXFbZv+I1iMaOOeWNjat5jXhYRxf18ZdxltxPYH\nE4WmVHboHO2FCQoe/4nrqw1cGA2R+5ZZKSOFYKKh97JqYy+uERn31O72MXdmRfv8\nFCOfH9XJGkLsiIeuK3c/hdofL/lJqcnsn1TbXokCgYEAnnGSdXG/idoBR6r1KSGg\ndvisYU3ybAea2H8lO+w8mNup4iTN6/PmxX87pmRCsNbOVuHaaLxD9QvhwI/ehAsJ\n9X2IdyP+VXLgI5lvvO4yaYrGTJLEK2V/+DndwNC6Jfje5Lw+9nRuZnyOC2lok1iz\nQJPAzrlGqUkLLqHVKD/HoPECgYBk8a8Qkw4yxUoBz3zdE/NpV2D9phfPcpwjjDa2\ntdAAS1Xyssj2EBsB2YHp7A7qYcdq80NJvmugDxQbbzd/63zHdH22sgpgHD/DdmAa\nSgSIr9sHK8ImWwykjNnrGn9w0wYXQOF70svONbK0URz8Ox+xlroNhROF9ONig4Ah\nLz98oQKBgDbAfZLEfSNRCfUL46cuIDOPkcPZCsI/s9ubBagrECoWDVmFhYJ7owrd\nxOAH75jv1whEYWZiCOwdPCaNZSnUy+an/Ia7tLhC2i8eWmKuhjtp/M31rwhEw2Ib\nKYxGOJ3gez6eq2PJI2JPzGTF+HC4HRe6hoEbJS8gbcmTiRfc8uzv\n-----END RSA PRIVATE KEY-----"
+            }
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/config/ca
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 581
+        uncompressed: false
+        body: '{"request_id":"d3cea8dd-3ad6-4666-e75d-67022c1a555a","lease_id":"","renewable":false,"lease_duration":0,"data":{"imported_issuers":null,"imported_keys":null,"mapping":{"deb99e6d-ba52-84cb-31f3-51d451acb2fa":"e4a2e2b4-2ce5-6713-3b7f-bfb0ec0f73fa"}},"wrap_info":null,"warnings":["This mount hasn''t configured any authority information access (AIA) fields; this may make it harder for systems to find missing certificates in the chain or to validate revocation status of certificates. Consider updating /config/urls or the newly generated issuer with this information."],"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "581"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 23
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"increment":314071033}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/auth/token/renew-self
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 433
+        uncompressed: false
+        body: '{"request_id":"a0709e7a-397e-ddc9-5819-32418ca56ff5","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"replace_with_token_value","accessor":"Icly5ijJ8n6c4JJeydHatmWK","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":314071033,"renewable":true,"entity_id":"","token_type":"service","orphan":true,"mfa_requirement":null,"num_uses":0}}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "433"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "3"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/ca/pem
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: |-
+            -----BEGIN CERTIFICATE-----
+            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
+            b78GdoopSeF5MPyb18g17hLXSiWt
+            -----END CERTIFICATE-----
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/pem-certificate-chain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 53
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"common_name":"localhost","ttl":"87193h2m8.989149s"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "4"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/issue/localhost
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"request_id":"b0cc8f3b-86c4-c81e-cdbe-cc42b4ed6c64","lease_id":"","renewable":false,"lease_duration":0,"data":{"ca_chain":["-----BEGIN CERTIFICATE-----\n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\nb78GdoopSeF5MPyb18g17hLXSiWt\n-----END CERTIFICATE-----"],"certificate":"-----BEGIN CERTIFICATE-----\nMIIEozCCAougAwIBAgIUaDSidtTsick+fdY6UfSdtN0sC70wDQYJKoZIhvcNAQEL\nBQAweDEXMBUGA1UEAwwORGV2LUNBIEAgQ2lzY28xCzAJBgNVBAYTAkNBMRAwDgYD\nVQQIDAdPbnRhcmlvMRAwDgYDVQQHDAdUb3JvbnRvMQ4wDAYDVQQKDAVDaXNjbzEc\nMBoGCSqGSIb3DQEJARYNZGV2QGNpc2NvLmNvbTAeFw0yMzEyMTcyMjAxMDZaFw0z\nMzExMjcyMzAzNDRaMBQxEjAQBgNVBAMTCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcN\nAQEBBQADggEPADCCAQoCggEBAMr5uH5V9vQvKF9sCn3BjVwmmrqN+5bqhtxtXtNt\ntRhfce/iDPKNS1V80qCuLBFUDZ6AGslTMM+BN4HXgv1Acvxg8ePe6gs9iMR3xYEN\nJDMmDpBtp4i9w1fySCc3H9U2WjJQ2qhupoOqGCp/S04UU17Lf9S/A7MM2ZbhsdvU\nL2pYd3g2GqS+XT2b1iEWwO2Y7Nk511W6AbJZs1hfarv+v/+B24fX2JvF1e+1JVsx\nftgo+0iu3ZWqO53q7M/Vi/9sDAok9GurbV3nTZK2kHB2FESRSHcW84fKiDLsT9bT\n21J84c+pzIszeucR3uJtAMp7BwVSN1qsE+pVv1IdLcy8c7cCAwEAAaOBiDCBhTAO\nBgNVHQ8BAf8EBAMCA6gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0G\nA1UdDgQWBBQJBb3jBy3C+xsWmUSKkvO20ZQx+zAfBgNVHSMEGDAWgBS0kSEarc+H\nx8ayHGGPyMU/yx0E8jAUBgNVHREEDTALgglsb2NhbGhvc3QwDQYJKoZIhvcNAQEL\nBQADggIBAIGR8Pw9xDeaG7Mm3jXajowZOBlvRD5Quz7JU4nFuymnlt5XkGxXaOPq\nL9T2tnGgDXEIBlRa1EUDXNW4by5P/J2W8GuCfofbXUF6M5joDDEKfX2390ZLxXVm\nU9QdWdkYMqToCWv6dJt3qN+4NE/h808aToXjJhKFkpV1htPmBQ+UOk6XUAStUf4H\nOPd40OI+fb3bo55rcrF2srHngU9Vhi/z9HltJr7Z+/qspFSTQoxdJdAY/dMmINsm\nfgEjfA3XpWPzJkd5vxCSGvMRmpA7QxL3v9lTNSW5tnaeqehQ0AYMm+nN6Byfr3gD\n09bY5Sy9xdPGOVr1NRpIpKyFmeOMOXMmcFNTGLqK6xum7HA59NCPA7cG2ei4SRSP\nxlzPhwzQA05qrgcjts8IG3rdTRaG1Gl1IvkLe008NvhxfVttnNq31W2crVRTLRk7\nvMMsPM2T6sj6AuQ0EMqwHRiAFpDsQtmbpalDjWjkqVKBztUbQINnz4abOdRk+xUI\n7ARxZXOflOWFWxdD1/iKt56Fx6T8BtTW7D5iydKzj+zXSK47qiAGwAvg0NXB/InK\n55G64uAUd4X+x9v6PvYCGyqr1ShrbPjc2yjdIKqxahSxzOWYUJGTYwoml7OQbCoO\nnmZ/4r46wMIQbufePG5H//uAPlTlZZI3NuVpY0i7/u7t3dDlGJKM\n-----END CERTIFICATE-----","expiration":2016745424,"issuing_ca":"-----BEGIN CERTIFICATE-----\n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\nb78GdoopSeF5MPyb18g17hLXSiWt\n-----END CERTIFICATE-----","private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAyvm4flX29C8oX2wKfcGNXCaauo37luqG3G1e0221GF9x7+IM\n8o1LVXzSoK4sEVQNnoAayVMwz4E3gdeC/UBy/GDx497qCz2IxHfFgQ0kMyYOkG2n\niL3DV/JIJzcf1TZaMlDaqG6mg6oYKn9LThRTXst/1L8DswzZluGx29Qvalh3eDYa\npL5dPZvWIRbA7Zjs2TnXVboBslmzWF9qu/6//4Hbh9fYm8XV77UlWzF+2Cj7SK7d\nlao7nersz9WL/2wMCiT0a6ttXedNkraQcHYURJFIdxbzh8qIMuxP1tPbUnzhz6nM\nizN65xHe4m0AynsHBVI3WqwT6lW/Uh0tzLxztwIDAQABAoIBAQC0TS+9yc8dCebr\nHKYVH6HagdBgd09Nt/ckR2M8nO+JPv+O/1ZQ/4Iz5jWT1iP/IJMYgONKg0OQkFAm\nXrJVFLMPzW4R5Sox4e9j1qDzCiFl7iBx23Y+2ZJ0xRui+iyk0Ss+FuSlSeVQgAAH\ngBv8t8F3K33aFfPLUVbX2JSNmeakp2wZ23MqivsE0JCYJRKgaZeb5Nj/QUuJ5AXF\nZmAMEbCXJ44nTreHWx9+B61EMcALnv8ZLDQWusB6er6jBLSMxMPUA9hjOeNlrnCV\nBg5uQ6jStIWbdsnOVPu7//iBGKhFLH1R9dhY5CNXwaOUbV0PiAz3Pay89MOufmuQ\nZRQlYjXBAoGBAN4Je0uB2bmsaBrv6CtHgRNHOFEA0cpJpDX1NS3ZZyp2yimzINgJ\nNH+6CTeklnh4rNMpFm73Ywurkcg4/4wsYa1feaotuAr8tkX92Kv6VGjbODWYVG3l\npala74J2o8bSFTye2G62zzTfrCMn+GgtnboNM6erygNw8do52SS2X5lzAoGBAOoF\n07GqM3OMXeMwGgcT+Y91YrQm/Oy+lWhhCTc1458QXlDYtDFo8Fx3bOhrXH4ZjXz5\nqFhfPedHQcdos32DfoeBpsSHiS8XD4Lnr1XBTPG0/sRZljVC4jtTal22OznWHa/2\nXv0FjXwwHPfAtpYF7DJpdKCpxoQhJrWAmtaPGvutAoGBAJguO3k3GHkv93Ju99uh\n+I+0Ap9SRne1HX12AOrZ1OG/5TPLeDlZpcfdRDAE+LS9UQaxZJTNre7zuslWd6Al\nUxU3GPZQu5GcP3mdUIIe4vezOMVTEJr6CR8YGox6sCm3F6Mi5AiN91qv6xV1ccZF\nbZN1NPA4yA6vvLPrbi7BaKiNAoGASJTCEWo+RuoT/HBgwi05y3qWwFUPQMXjRNpD\np3H5RM4o0l5DlMd9NNB9YKBbsWhvb4Fm6vGvG1oIVrZsZNMxnQljFbULoSU/1FPT\nF3+6Q4TlNzSp158E122JocLxH4D++CIrV8IvHYM2mMiWWHVBymjWmTXOshAuF0Dp\nxP3hWokCgYBmqANBR47DqE0ACs9rcoccunJDetmLlWBn9I2awhUDF78VtwYpvG5H\n/CKmeZnm9BxbceYprqqIWoH7qnmdZ8cKb/puN0GrCCqZlSIoipzbFuCGLbr3ooQb\nEl659w4KIeFaH0QtigHHJqqcUfaH3Wh/OFuu8KOcrQ12s4mCWw/pvQ==\n-----END RSA PRIVATE KEY-----","private_key_type":"rsa","serial_number":"68:34:a2:76:d4:ec:89:c9:3e:7d:d6:3a:51:f4:9d:b4:dd:2c:0b:bd"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/ca/pem
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: |-
+            -----BEGIN CERTIFICATE-----
+            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
+            b78GdoopSeF5MPyb18g17hLXSiWt
+            -----END CERTIFICATE-----
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/pem-certificate-chain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 3089
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: |-
+            {
+              "pem_bundle":"-----BEGIN CERTIFICATE-----\nMIIDtTCCAp2gAwIBAgIUZqfbRx3TG8RPVmBd77gyGFDzpiIwDQYJKoZIhvcNAQEL\nBQAwXjELMAkGA1UEBhMCQ0ExCzAJBgNVBAgMAk9OMRAwDgYDVQQHDAdUb3JvbnRv\nMQ4wDAYDVQQKDAVDaXNjbzEMMAoGA1UECwwDTVNYMRIwEAYDVQQDDAlsb2NhbGhv\nc3QwIBcNMjIwMzIxMjA0OTQyWhgPMjEyMjAyMjUyMDQ5NDJaMF4xCzAJBgNVBAYT\nAkNBMQswCQYDVQQIDAJPTjEQMA4GA1UEBwwHVG9yb250bzEOMAwGA1UECgwFQ2lz\nY28xDDAKBgNVBAsMA01TWDESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG\n9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkfLHLqP96V774qNC/8LabrZkDseTA2lBrfGz\nQKnIGuXwXcG5UitQtCgHORH3Vdb3GnxdFOakggmxIwTFd9IRWBfe83w3vA7YFVN7\nZNuSYZoa3p8zBn9oU0f7ImiyR+77fEYp+BuSdtLv2XAPP7861MKpCtksmagYchh2\nKaXHJiArUdQfI6dfU4tQO9O4vrG7CQLx4Z2PU6z3uzDkC56Q59RoJpCAwR7PXP5l\nopKifmifSdGZSlA1tub2nTClzZX4AqpgJscvlTY80RMgwwxICkbJtVII8ueRy5qV\nWzYqXfl91eOvy4JXaT4stWWQ2RG5L4szYqkMvTOtLAHrJ73bMQIDAQABo2kwZzAd\nBgNVHQ4EFgQU8XVriGQJvpvAgzPTVgCcx7jsUC0wHwYDVR0jBBgwFoAU8XVriGQJ\nvpvAgzPTVgCcx7jsUC0wDwYDVR0TAQH/BAUwAwEB/zAUBgNVHREEDTALgglsb2Nh\nbGhvc3QwDQYJKoZIhvcNAQELBQADggEBAEEOPBoMAVYe0KtismdS8qe6OffwjCIU\nUgA5654EsuryxZs6SXMiU3X4lPZZoNBv0DNOLRPhBbQU4NjGJjSRFPO0s+DaeSCm\nCo39x4GQ2MSJfojhC5SEedMzEFMkiYfxyTlfdaFH6sGaUIo6wYgCUszklKddWUsS\nUdclFVg9RLY/3A1lpfkXM0tm2cJpI504XOufidjl8XBQQ5xcnApOXCqLMm2/YONL\nQ71rD1WJrLgOzMlJLbL8gmMKNEazJDw/yuBH4iKJyndaT9dItgpwBCVIPAT9Ko/e\nw0BZxCc3lbqjL8Rp4BlCIPk9OnEMcSstmCbUM+JlugnOA/L3qLhhP7Q=\n-----END CERTIFICATE-----\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAkfLHLqP96V774qNC/8LabrZkDseTA2lBrfGzQKnIGuXwXcG5\nUitQtCgHORH3Vdb3GnxdFOakggmxIwTFd9IRWBfe83w3vA7YFVN7ZNuSYZoa3p8z\nBn9oU0f7ImiyR+77fEYp+BuSdtLv2XAPP7861MKpCtksmagYchh2KaXHJiArUdQf\nI6dfU4tQO9O4vrG7CQLx4Z2PU6z3uzDkC56Q59RoJpCAwR7PXP5lopKifmifSdGZ\nSlA1tub2nTClzZX4AqpgJscvlTY80RMgwwxICkbJtVII8ueRy5qVWzYqXfl91eOv\ny4JXaT4stWWQ2RG5L4szYqkMvTOtLAHrJ73bMQIDAQABAoIBAA1StO9badJIGRUe\nO39iy6Mj7AQj4JYlAYmGGQuX/CQFddDvPnJDcT9y8H7blqEryZytuecOq3mR9i1I\n0hhvMSViL3h5cFKO5dejim4Bc85MXbPRI1yuXIkOtvyUA2NY6/TzKEFljfQiKyJF\nriSu+alCuGD8xIsl2s5ukHnaj/CZR5nkRLMIplwgF6U08bta/fnfm2547bfA+6wO\n8DidceusC1QfcAep9Ci/WZGAFS7pU+/t6XajxdCEACkWpqfXmfhHUHh6cCYh6rvT\nRvUnjet2R9YOQsxg6SAoLeXiDEEus5Jh/d9e/0s0qad5lgh8VTF5hAnelW7iCQub\nnp3+iwkCgYEAuBetUmAKJXV69Mp59aoxXRvDhP+XHVZO/Sr82JXGDp1/zdDtPb3E\nn9HSOQWIZ+Jw/67ksuu3R9gXgvZBknu/VmbxTqxAtS7x0uTrj2YfdbnC1fy3rMC9\nOl1be0liG6BHAgnWkQMeB/JeYgw8XaUGAXdJq+bKTX+dyOzRub92LWkCgYEAyvTh\nEvW3uomigI++gR8i0V7sN3i1HnXFbZv+I1iMaOOeWNjat5jXhYRxf18ZdxltxPYH\nE4WmVHboHO2FCQoe/4nrqw1cGA2R+5ZZKSOFYKKh97JqYy+uERn31O72MXdmRfv8\nFCOfH9XJGkLsiIeuK3c/hdofL/lJqcnsn1TbXokCgYEAnnGSdXG/idoBR6r1KSGg\ndvisYU3ybAea2H8lO+w8mNup4iTN6/PmxX87pmRCsNbOVuHaaLxD9QvhwI/ehAsJ\n9X2IdyP+VXLgI5lvvO4yaYrGTJLEK2V/+DndwNC6Jfje5Lw+9nRuZnyOC2lok1iz\nQJPAzrlGqUkLLqHVKD/HoPECgYBk8a8Qkw4yxUoBz3zdE/NpV2D9phfPcpwjjDa2\ntdAAS1Xyssj2EBsB2YHp7A7qYcdq80NJvmugDxQbbzd/63zHdH22sgpgHD/DdmAa\nSgSIr9sHK8ImWwykjNnrGn9w0wYXQOF70svONbK0URz8Ox+xlroNhROF9ONig4Ah\nLz98oQKBgDbAfZLEfSNRCfUL46cuIDOPkcPZCsI/s9ubBagrECoWDVmFhYJ7owrd\nxOAH75jv1whEYWZiCOwdPCaNZSnUy+an/Ia7tLhC2i8eWmKuhjtp/M31rwhEw2Ib\nKYxGOJ3gez6eq2PJI2JPzGTF+HC4HRe6hoEbJS8gbcmTiRfc8uzv\n-----END RSA PRIVATE KEY-----"
+            }
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "6"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/config/ca
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 581
+        uncompressed: false
+        body: '{"request_id":"5860ba4d-9f44-3ae9-a748-629e45ba7d02","lease_id":"","renewable":false,"lease_duration":0,"data":{"imported_issuers":null,"imported_keys":null,"mapping":{"deb99e6d-ba52-84cb-31f3-51d451acb2fa":"e4a2e2b4-2ce5-6713-3b7f-bfb0ec0f73fa"}},"wrap_info":null,"warnings":["This mount hasn''t configured any authority information access (AIA) fields; this may make it harder for systems to find missing certificates in the chain or to validate revocation status of certificates. Consider updating /config/urls or the newly generated issuer with this information."],"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "581"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "7"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/ca/pem
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: |-
+            -----BEGIN CERTIFICATE-----
+            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
+            b78GdoopSeF5MPyb18g17hLXSiWt
+            -----END CERTIFICATE-----
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/pem-certificate-chain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 53
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"common_name":"localhost","ttl":"87193h2m8.767484s"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "8"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/issue/localhost
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"request_id":"f3492edb-3c9c-b7cf-eba2-84069ad5a2b5","lease_id":"","renewable":false,"lease_duration":0,"data":{"ca_chain":["-----BEGIN CERTIFICATE-----\n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\nb78GdoopSeF5MPyb18g17hLXSiWt\n-----END CERTIFICATE-----"],"certificate":"-----BEGIN CERTIFICATE-----\nMIIEozCCAougAwIBAgIUO/H9qyNQVCOW33Eqi8qUpdm77jswDQYJKoZIhvcNAQEL\nBQAweDEXMBUGA1UEAwwORGV2LUNBIEAgQ2lzY28xCzAJBgNVBAYTAkNBMRAwDgYD\nVQQIDAdPbnRhcmlvMRAwDgYDVQQHDAdUb3JvbnRvMQ4wDAYDVQQKDAVDaXNjbzEc\nMBoGCSqGSIb3DQEJARYNZGV2QGNpc2NvLmNvbTAeFw0yMzEyMTcyMjAxMDZaFw0z\nMzExMjcyMzAzNDRaMBQxEjAQBgNVBAMTCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcN\nAQEBBQADggEPADCCAQoCggEBAJiovjVOZ3cpwPfI8reGW+FJVQ1YU5YxnK7nj2KG\nCaFVSx5HpgxOorJ5jOxVWxLmLKZhNVU7J4u6K198epb7q0Kq9isvP8l+POF25o9N\nBhmkFqlTtAHwHxHu5McrRg7zEkvc6EsokhkXsOwp5BxZPMTw8OxNXRKoTSJRQ3Oi\nmdj7ag9sPEXdosG/iM3WfP13+mTC6rbH44SJJc4AvJ+qOjZpMXpJYLXK5q/eXKNN\nWOhexT648NU0ZgGj5j05bJHRa0Vix1+ZEYn0c7nA9h/tziNdhRI6XDkzP0P/9nLH\nRGKC8Sh20nrz2pg08d5Plf707mqLpTlBkWHqHj0GqUkWNOMCAwEAAaOBiDCBhTAO\nBgNVHQ8BAf8EBAMCA6gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0G\nA1UdDgQWBBTvnCh821y7cSBBRLF/62AmViedOzAfBgNVHSMEGDAWgBS0kSEarc+H\nx8ayHGGPyMU/yx0E8jAUBgNVHREEDTALgglsb2NhbGhvc3QwDQYJKoZIhvcNAQEL\nBQADggIBAC9n6pnk+guYEVvCRaoei+RCGpST/KwUan7v/OeLWFsOHBWbedDUylbl\nAEqba8bkGrBmL3QYBnv020yuUQhPv9pmR54eCfkp3yDaNh5OXktHa31nHqZ6BIvA\nlncmxZaku3FF4iKlVdAzjhdP/tnndC13o+9GaHomRdsZKAXYmviIYmkr4E/+uQjf\nJclNgIyLDv1IFLRkYXedZQbUEG8wiueI1D3miTProz0jVmc1gYgBSithZZAWFS28\nUwg9hbYVL9MjP7XLNm2WI2GXYqLbr0aILaR34o+Sw912gkGGM8VaCo4cI6a3VxCw\nxk6dTGPmqu0bbTh6twJ+2RbalAuF5aLONWaN+gIGjC0aVVFojF2/g/ofBuxXsMfl\nFF3UWP3era8fwC/GxXvxReQpTgJ8JbmGfHUsvjn7Y0P4iOyv1bAVNt2+ofBPVrpP\nHDYsPRm3xvwalnHX6Orlb96eywUfTa7F3Ngn/+W7fKA7ZIzoS3C3+brdkQ0OxkkK\n0qmoh+ojeNIFt28eIYF1hP5nDcNhcP0OBMRlr9VO5FhGmDcZW9bwdn0dIf47RoYj\nTa7rh0xAHVYcy2ywxHlqyqUddmA+l/qw3mOrGbZROG/03FhbOcsxlvgJVB2w/fn/\nWPci4DTXkAvwMTqSreQpvbD93z7ghgf3IJuwr2SFNkEATGOrbHQh\n-----END CERTIFICATE-----","expiration":2016745424,"issuing_ca":"-----BEGIN CERTIFICATE-----\n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\nb78GdoopSeF5MPyb18g17hLXSiWt\n-----END CERTIFICATE-----","private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAmKi+NU5ndynA98jyt4Zb4UlVDVhTljGcruePYoYJoVVLHkem\nDE6isnmM7FVbEuYspmE1VTsni7orX3x6lvurQqr2Ky8/yX484Xbmj00GGaQWqVO0\nAfAfEe7kxytGDvMSS9zoSyiSGRew7CnkHFk8xPDw7E1dEqhNIlFDc6KZ2PtqD2w8\nRd2iwb+IzdZ8/Xf6ZMLqtsfjhIklzgC8n6o6Nmkxeklgtcrmr95co01Y6F7FPrjw\n1TRmAaPmPTlskdFrRWLHX5kRifRzucD2H+3OI12FEjpcOTM/Q//2csdEYoLxKHbS\nevPamDTx3k+V/vTuaoulOUGRYeoePQapSRY04wIDAQABAoIBABb3E54rTE9V3ayo\n8zJ+qOXMRVo7ll962SpKtXxJ07sMfL9yYd1qGvmkZXnMIWZHcCIbb42B16IigJHd\nxQdfltTxqRS4B+2E6x2z6F1YZfmHgM06RVMhT1tAR/RaYzCuimsVMXDVCp1xvfDZ\nIHLPTeAGqwexX7YF0Yy/EtmbdW95r205RGmOtyQ/QJH2Al1J0wIuh3KSIgbIvbbc\ny08azYN2VQF7rOrwNJEDVTPrM4mJ8lfji3lUM26IYqrDV2yhGyGDvpcxmiexwzbd\nvDrqeazsNwb6plSpiDdvEjzoMXRJROzyuKz70Sl+M5O/1R6KaZHhfkIwqYbyiZxo\nFx8zcuECgYEAwTSroEiOvFGNiVnRZcGnIclgwMcHlUGJWIAoxTM3tkP7+Ti/mep0\nwZ7l+uNczz/XM1r8gr4eMt5H/paNIRj0GOXpfvBaoyrMWBavL8QR6RzYFoVcUGbF\nPqlJ0lMnk1oOOB9VgUDw+oiTxReyY1vRsLgk0CZ+V/xQeyzu0IOUKPMCgYEAykZ3\nwgIpGe4YRSqtL94mrrKOp0W8ZTEj/F1voVKVCMhkOStsX1rzsbFxiL6NiwPq8f6W\ngpSq1gfQTkqSKwPmO///43rYgUsWRYetLfkDekS2glTXQs9lLVGipimVZkpC42gf\nllsoPJiktFijCyi4NK3Ue89bSgZ8DAub2EVFwFECgYADYOJnaR1l2Z85+aIZv2sm\nwhi5BkHxsDWwoH0WBbFBtKqhTwa6sEjeYeLvoi4rSZh/w2WK+7wXc5+aqhNJsuAB\n13NfzuAm3ka4e50QnsMZanG04xwcI8/rKpap4N5eS0LYZGPgYLxWBTFgTuvFpQNj\nrbSnFyU6cKUPoleCuepLVQKBgEF0/Fw0Bsj1W7VGUjUjVrFB5xgKYST9+f843V7/\nMmtdLdGyU6en7ySZn3v47iUGZ4lYMaygH4iTjr1HNHXnFSJlfZFHt7hfbB2kAk7W\nPmHaypTyj5Z3Nu6rdE8BNe+cKHkewNoPNb4mR2Z1KI3752BkwFYwjAIwhwP+3bfm\n8uOBAoGBAKLYI+dYxAWXZGn0+vCsMJcXtakKRxXDlZhffny2ONMkWN+6phIe4t4L\n5ANF3AKCxCgnae+Et66Gs8MSscBP1IGtJsN1FLfzQD+yqFXH+S4n3ajGqoGJR7Bb\nTtNYmZVtwbiUqbOHsLp40nYciiOAlvAmhciEPo7rjqzl18OF0374\n-----END RSA PRIVATE KEY-----","private_key_type":"rsa","serial_number":"3b:f1:fd:ab:23:50:54:23:96:df:71:2a:8b:ca:94:a5:d9:bb:ee:3b"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 3089
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: |-
+            {
+              "pem_bundle":"-----BEGIN CERTIFICATE-----\nMIIDtTCCAp2gAwIBAgIUZqfbRx3TG8RPVmBd77gyGFDzpiIwDQYJKoZIhvcNAQEL\nBQAwXjELMAkGA1UEBhMCQ0ExCzAJBgNVBAgMAk9OMRAwDgYDVQQHDAdUb3JvbnRv\nMQ4wDAYDVQQKDAVDaXNjbzEMMAoGA1UECwwDTVNYMRIwEAYDVQQDDAlsb2NhbGhv\nc3QwIBcNMjIwMzIxMjA0OTQyWhgPMjEyMjAyMjUyMDQ5NDJaMF4xCzAJBgNVBAYT\nAkNBMQswCQYDVQQIDAJPTjEQMA4GA1UEBwwHVG9yb250bzEOMAwGA1UECgwFQ2lz\nY28xDDAKBgNVBAsMA01TWDESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG\n9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkfLHLqP96V774qNC/8LabrZkDseTA2lBrfGz\nQKnIGuXwXcG5UitQtCgHORH3Vdb3GnxdFOakggmxIwTFd9IRWBfe83w3vA7YFVN7\nZNuSYZoa3p8zBn9oU0f7ImiyR+77fEYp+BuSdtLv2XAPP7861MKpCtksmagYchh2\nKaXHJiArUdQfI6dfU4tQO9O4vrG7CQLx4Z2PU6z3uzDkC56Q59RoJpCAwR7PXP5l\nopKifmifSdGZSlA1tub2nTClzZX4AqpgJscvlTY80RMgwwxICkbJtVII8ueRy5qV\nWzYqXfl91eOvy4JXaT4stWWQ2RG5L4szYqkMvTOtLAHrJ73bMQIDAQABo2kwZzAd\nBgNVHQ4EFgQU8XVriGQJvpvAgzPTVgCcx7jsUC0wHwYDVR0jBBgwFoAU8XVriGQJ\nvpvAgzPTVgCcx7jsUC0wDwYDVR0TAQH/BAUwAwEB/zAUBgNVHREEDTALgglsb2Nh\nbGhvc3QwDQYJKoZIhvcNAQELBQADggEBAEEOPBoMAVYe0KtismdS8qe6OffwjCIU\nUgA5654EsuryxZs6SXMiU3X4lPZZoNBv0DNOLRPhBbQU4NjGJjSRFPO0s+DaeSCm\nCo39x4GQ2MSJfojhC5SEedMzEFMkiYfxyTlfdaFH6sGaUIo6wYgCUszklKddWUsS\nUdclFVg9RLY/3A1lpfkXM0tm2cJpI504XOufidjl8XBQQ5xcnApOXCqLMm2/YONL\nQ71rD1WJrLgOzMlJLbL8gmMKNEazJDw/yuBH4iKJyndaT9dItgpwBCVIPAT9Ko/e\nw0BZxCc3lbqjL8Rp4BlCIPk9OnEMcSstmCbUM+JlugnOA/L3qLhhP7Q=\n-----END CERTIFICATE-----\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAkfLHLqP96V774qNC/8LabrZkDseTA2lBrfGzQKnIGuXwXcG5\nUitQtCgHORH3Vdb3GnxdFOakggmxIwTFd9IRWBfe83w3vA7YFVN7ZNuSYZoa3p8z\nBn9oU0f7ImiyR+77fEYp+BuSdtLv2XAPP7861MKpCtksmagYchh2KaXHJiArUdQf\nI6dfU4tQO9O4vrG7CQLx4Z2PU6z3uzDkC56Q59RoJpCAwR7PXP5lopKifmifSdGZ\nSlA1tub2nTClzZX4AqpgJscvlTY80RMgwwxICkbJtVII8ueRy5qVWzYqXfl91eOv\ny4JXaT4stWWQ2RG5L4szYqkMvTOtLAHrJ73bMQIDAQABAoIBAA1StO9badJIGRUe\nO39iy6Mj7AQj4JYlAYmGGQuX/CQFddDvPnJDcT9y8H7blqEryZytuecOq3mR9i1I\n0hhvMSViL3h5cFKO5dejim4Bc85MXbPRI1yuXIkOtvyUA2NY6/TzKEFljfQiKyJF\nriSu+alCuGD8xIsl2s5ukHnaj/CZR5nkRLMIplwgF6U08bta/fnfm2547bfA+6wO\n8DidceusC1QfcAep9Ci/WZGAFS7pU+/t6XajxdCEACkWpqfXmfhHUHh6cCYh6rvT\nRvUnjet2R9YOQsxg6SAoLeXiDEEus5Jh/d9e/0s0qad5lgh8VTF5hAnelW7iCQub\nnp3+iwkCgYEAuBetUmAKJXV69Mp59aoxXRvDhP+XHVZO/Sr82JXGDp1/zdDtPb3E\nn9HSOQWIZ+Jw/67ksuu3R9gXgvZBknu/VmbxTqxAtS7x0uTrj2YfdbnC1fy3rMC9\nOl1be0liG6BHAgnWkQMeB/JeYgw8XaUGAXdJq+bKTX+dyOzRub92LWkCgYEAyvTh\nEvW3uomigI++gR8i0V7sN3i1HnXFbZv+I1iMaOOeWNjat5jXhYRxf18ZdxltxPYH\nE4WmVHboHO2FCQoe/4nrqw1cGA2R+5ZZKSOFYKKh97JqYy+uERn31O72MXdmRfv8\nFCOfH9XJGkLsiIeuK3c/hdofL/lJqcnsn1TbXokCgYEAnnGSdXG/idoBR6r1KSGg\ndvisYU3ybAea2H8lO+w8mNup4iTN6/PmxX87pmRCsNbOVuHaaLxD9QvhwI/ehAsJ\n9X2IdyP+VXLgI5lvvO4yaYrGTJLEK2V/+DndwNC6Jfje5Lw+9nRuZnyOC2lok1iz\nQJPAzrlGqUkLLqHVKD/HoPECgYBk8a8Qkw4yxUoBz3zdE/NpV2D9phfPcpwjjDa2\ntdAAS1Xyssj2EBsB2YHp7A7qYcdq80NJvmugDxQbbzd/63zHdH22sgpgHD/DdmAa\nSgSIr9sHK8ImWwykjNnrGn9w0wYXQOF70svONbK0URz8Ox+xlroNhROF9ONig4Ah\nLz98oQKBgDbAfZLEfSNRCfUL46cuIDOPkcPZCsI/s9ubBagrECoWDVmFhYJ7owrd\nxOAH75jv1whEYWZiCOwdPCaNZSnUy+an/Ia7tLhC2i8eWmKuhjtp/M31rwhEw2Ib\nKYxGOJ3gez6eq2PJI2JPzGTF+HC4HRe6hoEbJS8gbcmTiRfc8uzv\n-----END RSA PRIVATE KEY-----"
+            }
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "9"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/config/ca
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 581
+        uncompressed: false
+        body: '{"request_id":"8a5272f3-60a9-78b9-9086-c335424452e2","lease_id":"","renewable":false,"lease_duration":0,"data":{"imported_issuers":null,"imported_keys":null,"mapping":{"deb99e6d-ba52-84cb-31f3-51d451acb2fa":"e4a2e2b4-2ce5-6713-3b7f-bfb0ec0f73fa"}},"wrap_info":null,"warnings":["This mount hasn''t configured any authority information access (AIA) fields; this may make it harder for systems to find missing certificates in the chain or to validate revocation status of certificates. Consider updating /config/urls or the newly generated issuer with this information."],"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "581"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 10
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "10"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/ca/pem
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: |-
+            -----BEGIN CERTIFICATE-----
+            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
+            b78GdoopSeF5MPyb18g17hLXSiWt
+            -----END CERTIFICATE-----
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/pem-certificate-chain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 38
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"common_name":"localhost","ttl":"5s"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "11"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/issue/localhost
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"request_id":"fb821e19-d8fe-e57a-fc1c-48fe603b23f3","lease_id":"","renewable":false,"lease_duration":0,"data":{"ca_chain":["-----BEGIN CERTIFICATE-----\n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\nb78GdoopSeF5MPyb18g17hLXSiWt\n-----END CERTIFICATE-----"],"certificate":"-----BEGIN CERTIFICATE-----\nMIIEozCCAougAwIBAgIUfwqFGUcT7kv9J3GXfAdDoV7ZYfYwDQYJKoZIhvcNAQEL\nBQAweDEXMBUGA1UEAwwORGV2LUNBIEAgQ2lzY28xCzAJBgNVBAYTAkNBMRAwDgYD\nVQQIDAdPbnRhcmlvMRAwDgYDVQQHDAdUb3JvbnRvMQ4wDAYDVQQKDAVDaXNjbzEc\nMBoGCSqGSIb3DQEJARYNZGV2QGNpc2NvLmNvbTAeFw0yMzEyMTcyMjAxMDZaFw0y\nMzEyMTcyMjAxNDFaMBQxEjAQBgNVBAMTCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcN\nAQEBBQADggEPADCCAQoCggEBAKGFZEGCClw3xFVPA8EP4Mk57l9I0etUI8oA1lLF\n/7E4I0hq56b0QbANLDjhREUmlyyrf5GoFagbjMZvVFV0KHZSwCctmR3LnE9c4XSj\nXdf4iTyucQOaqx251LL01aaIVK4H1sjkdYf56p7Ju4I6jdBcth6G+XP2iEukNhAv\nt/ZFE4hPGym0HRvo76YmjbGHNHKfMSm42QLe7MFrrYwUXkMiBBdQx61Qu3/1mE44\naFcqB1nZd6rjMoBdYBEIaoTZon74gncGcuZqZ2VjqxYb+uugsoPf6JIo6KKBAOG9\nwZiT+ApHN1FpdY62FD8JvoaIu2IUi3aXAQQpP84X5KhRsRECAwEAAaOBiDCBhTAO\nBgNVHQ8BAf8EBAMCA6gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0G\nA1UdDgQWBBRRNus4vVF3EjUc8nEkIN9cXFtx0DAfBgNVHSMEGDAWgBS0kSEarc+H\nx8ayHGGPyMU/yx0E8jAUBgNVHREEDTALgglsb2NhbGhvc3QwDQYJKoZIhvcNAQEL\nBQADggIBAAq5Gz4fiI9yHsqnOUYMAGvOJnp/wg0AWffmP5Dlnf48BpxvqvJtCZci\nn9nDMKrlFgCQP2zCF6vHgZ4QK6XdiaTn1o41GAeGG6p9+e14XgDsZrFcDQ6rviDH\nQp6LUIQROsEJFk4wLG6HtVyFPyLbavG+YvirVx2tNzxmFbOEOMVR+EutLu5Uf0zK\ngis4t7d2IiAsREIhTEoi2FVlZ17/VP6XcJDo5v43igx718BOuI3RUL3Xtr5CAD05\n9nXchA/iVQl6I6nbaJH+14a7Jo0JZDKjRdIuuB+TeJybUINX5vrMMPUPf6wKZ8i1\nQx9YhxzPXIji+IPZk6lALeC5ka/3mr/4WpK9UQ7OBnOtEThJ1HSxLKIL0d/mg+nZ\nC3eRfMzU275uzYl6BNDfw7KiZko4dHUTtIixtpxz+1CwWN/qHpJ8dR5rbmYlZEY8\nTKi8pPuhfYYAzP1S2lSsZH2Mo1cj+qSPJA0O5mrQ+mJ7zSUgrrZuLWEujP7GxYER\nAUz/uu3Y6bY3AXvrZUujc6NqBMbA1nBt2gZaEH0KK0ovpZkIy83POefN+/7pdufb\n5ZSeQrIVGc5DF6h2Q0/RsT5sb/7LloVBiDb/Xbwkk6MXfUF720Jq+PTgTakLyD5A\njmBEf0mc2tMGAoq1SJg92Xx6DSUtmgnQ/ckuCC3zybjsj9kgPa5Y\n-----END CERTIFICATE-----","expiration":1702850501,"issuing_ca":"-----BEGIN CERTIFICATE-----\n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\nb78GdoopSeF5MPyb18g17hLXSiWt\n-----END CERTIFICATE-----","private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAoYVkQYIKXDfEVU8DwQ/gyTnuX0jR61QjygDWUsX/sTgjSGrn\npvRBsA0sOOFERSaXLKt/kagVqBuMxm9UVXQodlLAJy2ZHcucT1zhdKNd1/iJPK5x\nA5qrHbnUsvTVpohUrgfWyOR1h/nqnsm7gjqN0Fy2Hob5c/aIS6Q2EC+39kUTiE8b\nKbQdG+jvpiaNsYc0cp8xKbjZAt7swWutjBReQyIEF1DHrVC7f/WYTjhoVyoHWdl3\nquMygF1gEQhqhNmifviCdwZy5mpnZWOrFhv666Cyg9/okijoooEA4b3BmJP4Ckc3\nUWl1jrYUPwm+hoi7YhSLdpcBBCk/zhfkqFGxEQIDAQABAoIBAQCWYtc8svIoeHfh\noebx63G0ia6qoudof3evDeZ/PQDbpVQcigTTippaa3lgIEVrSQn6OldVa7V2Ruhk\nnaVcxwEhYdys3aSxfDE2J1l3OuAWRL6qdBSfcXOfArXKRXFjU43cV0og062mhAdx\n/owKLbB6bsfWVn+N+91c6DC6E2Pp814Lq2mcDbn7BLuEPN4//eUGhS+5IpBFx1jP\nVHDsWlFmiD4QBqsucjNqbGSnKjkvjKMGEOkKTHndAsZH19b5EBIQ1elLIooBn6U0\nqsbEUqEZFe259BrDXX6WK4GTPLqWfMaxULGfWZ46uDHKT2lYa3Rgg/WeL8YS5rAN\nxwM9PIYNAoGBAM7oDrJuLw+6VGFGvxOL4bI6biC8is9WglGnBM0lIuiPrPUTAP2V\nzVtO6CRGEZBZ93RGxZt1+2Abbv7mz8WLipo1HlXBcKTAprfibiqmjQUBl9QuI0RC\n/HXU4RrWQQ2Km2GmvNAN6xWhpJHmNjiIVnNBj3OX5IFrzb3V/MHkyMWXAoGBAMfY\nhudLKkWRNkhuWL63rg3+ABgh0hKVOcKvHIl2Hwb2stvbWUl20rDNy0ZDAFdGUfdl\ngmV1chXTOupPeMsH54XHJf1L92CfEE2PVeXeLnS2od8yCe9llrF+FVZ1N/uxzxCP\nFU4v/gr+HvhZar6PeMyTjoc2HqJWt40ToKz/WqOXAoGBAJmO0nGMovLaSAuWFPOt\nykibYuZ6585vlvKAsWiLWjgdgbC1dPO/PRS6IEHjmt92Vdf/OmNhkbnHQn590M/8\n+1XtfGEK2s37iQBKVZbj2x9PCl7YCyZ7TKEq6BIh10/0gdNcix8iZUm9mMULhUw5\nq2eIza1tmpKO7rgoW5mPcY5rAoGAHbsy5roiAdOGtePkxArjlCVTskNl02nr+/C9\nWB4Ao7KUDW1mrS1GTxNuyHczV8iYbSvm6F0+qcyRGUbVe68jXJ2yIyroFLHVZRSL\n/PS/CJIbJu901u7QKnvNhN1PhNyBJ7+Bte4h51TDGsOCw/LoT9cr/yWoDRLFn/Fp\nmBMtUuUCgYAoDl9tA16ehgMY3m3ba19mA+SS0RSQpZFpnFWEna8YZKKA7uqMRV9B\nYxcNhzlV5Gzw+V8XsRnlfwxWY+wLuhoajdLm8KWj5bHW2JL49Y1a7TKksiXa3480\nDdTeBYxNk8NiSdTJCesbWl2kZaz4s4gGxNJuBX/no8Z2a4rwpGmUrA==\n-----END RSA PRIVATE KEY-----","private_key_type":"rsa","serial_number":"7f:0a:85:19:47:13:ee:4b:fd:27:71:97:7c:07:43:a1:5e:d9:61:f6"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 12
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 38
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"common_name":"localhost","ttl":"5s"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "12"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/pki/issue/localhost
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"request_id":"bafd3d92-fb20-b7e5-64bd-d370505c0a77","lease_id":"","renewable":false,"lease_duration":0,"data":{"ca_chain":["-----BEGIN CERTIFICATE-----\n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\nb78GdoopSeF5MPyb18g17hLXSiWt\n-----END CERTIFICATE-----"],"certificate":"-----BEGIN CERTIFICATE-----\nMIIEozCCAougAwIBAgIUT5QqPEtfmwF2hAS7MdO3RS1N4cUwDQYJKoZIhvcNAQEL\nBQAweDEXMBUGA1UEAwwORGV2LUNBIEAgQ2lzY28xCzAJBgNVBAYTAkNBMRAwDgYD\nVQQIDAdPbnRhcmlvMRAwDgYDVQQHDAdUb3JvbnRvMQ4wDAYDVQQKDAVDaXNjbzEc\nMBoGCSqGSIb3DQEJARYNZGV2QGNpc2NvLmNvbTAeFw0yMzEyMTcyMjAxMDhaFw0y\nMzEyMTcyMjAxNDNaMBQxEjAQBgNVBAMTCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcN\nAQEBBQADggEPADCCAQoCggEBAJhqPnxMeIM7dlgKsYXR3l+EMDODO3WQY6q3iR1Y\nxW+fsmva45Ul6KP/gv2p3zhYwqQXCv97CLVUpb1RhFkfJvL1FSuyOcTikQ+8J5/N\nmYa7oE+XIHWM//1AMqe5+bS6azfn6rO2YQZjKAiKV8ZNZPS5952qP3Enhgs9OSsl\njxFUBCZHlbkXkCJiyGHm3/K0uiP37u0/WR4DDkxRJkEemAjyU+A8j4OhFjcrDSQG\nwBFMlHVm/jTlTtCBNeR/cZF6/kEToF3QdnBiBiOlj8vWoxD0XzZzPSKBcfdxp7fp\nKnk5VaGS/TJ64u4B5Xykw/sEBZPEdHRXMJPhBrKnO49N828CAwEAAaOBiDCBhTAO\nBgNVHQ8BAf8EBAMCA6gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0G\nA1UdDgQWBBS0hq0iryUo2O23vaXUBvFzzF8JxjAfBgNVHSMEGDAWgBS0kSEarc+H\nx8ayHGGPyMU/yx0E8jAUBgNVHREEDTALgglsb2NhbGhvc3QwDQYJKoZIhvcNAQEL\nBQADggIBAFi1liAxulgCYDQPUGTVfAyjWwoNp/9cjy1mP+jZ06Jy2YHfOMpV8QiP\n38B5T1DBfKMFYkzsdgeWA2H2c4ckZvf+EyY2BkrbJ+AG8gWVjB9hfdte67oKfWhG\nIPxBugsrKXI5oSFOjeaygcdVtomLlBHL+zkV5R9kujwLHSsaWECklYv99bjIgZjV\n3dZWvv8ejZH1HNP1oWBCmXV9XTiA6pHLGM0Sih8gnKoi63ye6peAzCU4Qo1hT0Oy\nnrvsie/g6s64VJ60I/ZgAr6EkA4wOF+biHmsc21tYiHRvTK2ud2gNloVuPKQUz3t\nwXhPh7NMjBW2kZoGJl3oy02dm35DorijXaDe4r44BKkC2sPMMfE4JxBvqFGgmli+\ncXCsJtD0KSURZeLHzAkWuCHBDXYESN7btUi9gYAMemHzlf/aisrqUiOK2rJiFlYp\nPbwRRl2i56W0uDyweL5JGczyAkSmAWF/kiM0Cnhjvd5RNg6HntsNORtNIciqWEGh\nLwGc5ejxkemy5Of4ZcuD2KrGDMa58vcsrQQ/umahF6hcrO+SMSWhCUQ+jNzD5kqS\niJAI9ybJOPrCj7yoXbHUzrKq7D/t7dBTEtv/eUVgZUyHAjBonSLTWBYAXNd83Sx5\nwZM1Us6lPHFMYX7Y5NBLxK/ra4fhANW351/IzsOzJZeVMoGg+tD0\n-----END CERTIFICATE-----","expiration":1702850503,"issuing_ca":"-----BEGIN CERTIFICATE-----\n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\nb78GdoopSeF5MPyb18g17hLXSiWt\n-----END CERTIFICATE-----","private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEAmGo+fEx4gzt2WAqxhdHeX4QwM4M7dZBjqreJHVjFb5+ya9rj\nlSXoo/+C/anfOFjCpBcK/3sItVSlvVGEWR8m8vUVK7I5xOKRD7wnn82ZhrugT5cg\ndYz//UAyp7n5tLprN+fqs7ZhBmMoCIpXxk1k9Ln3nao/cSeGCz05KyWPEVQEJkeV\nuReQImLIYebf8rS6I/fu7T9ZHgMOTFEmQR6YCPJT4DyPg6EWNysNJAbAEUyUdWb+\nNOVO0IE15H9xkXr+QROgXdB2cGIGI6WPy9ajEPRfNnM9IoFx93Gnt+kqeTlVoZL9\nMnri7gHlfKTD+wQFk8R0dFcwk+EGsqc7j03zbwIDAQABAoIBAAbziYgHwNNTafFY\nA4Kz8K1wjPY8fQC+ph0KI+HHw7F0miGbKRgLU5HvPF0vWzPpsG7lciX2yY3jn2+E\nAUJDTnZ0QRPuG/5jyvPpw/Dg4qindAdNQDi8RoyZWfYWYFIi0nMJS8YIgmJVMWU6\nUgiETR9wP9/b/Oq/P7jRgQL7wouqtEQyvmlS0kC5M+yEN3iOVUm1IcfHPj69ghpW\n55ck0HVK12GZXRMiqaH38FwD0IIMFfBJ44SYvwjtrSX8Fkif9kG5CxXfngmZZmTX\nGtiXqQHmAeoUuIW2fiTY65X7QQ8kZClu40NdCXrTMq9GWALtj8Iz6/EaMyVd5Mto\nnKXCFAECgYEAyXrjXdJ8C0KKLWqEa/IJRR+5lh9WsACi32PuqfJ2cfbV38r7OtRo\nrijo/CEa9cwJc95phB44abQzEBxyHnqjK+X7AtTEudYEpxGsoHX6uPbHr/QSJdzb\nn03pihy17Mh3vLvvIny1OL/Dko+9sBzB5OmQmfvRvBk1ThPqZcFTcW8CgYEAwah6\nhSYjTnEQph/iPXb3LshBIae1RSpqTZUig1OBCr13RILR7nbjCTCjrSaJFF4MkjY5\nMI/CFNgRrIinH8+mKAe8Tc4Edt4TB7B2hVRyAMA+WBAMwyETNPTPbD0sTNDry52F\nTeJeYzDXKSy1HuS362mQ8JDVQdAkuiLFZSWIngECgYBHlCwAog3Fpk8W0XfYLbXT\nY/D3/4w5nRBAEu2wXN5toIbdKezVOq8x6IDVSiGc328gRgzwjhf2nbliaOi2IVWk\n++CQYey+JOWkQSg2HZQEcFADF8/2uZ8g2no0wfxz8chwOcg8VVfAoIgnon9+eMj9\nvWjM++TIUaBZa8PjgKpXawKBgCEA9oh0nHXE3SKCsorpGG03oan7q+/yr5UzQmOB\nOq+65HWfmel7B2xMhsh+lcQL1zaf2RVGmrv0quZtj5XjTJzr3JKh9q7PYAzibQCC\nCL/KA5X8fkBPBbfztNnsfv1EabsUyGAioRVkgHa68M8oCZQsNJBbDo0dzPSP8nYv\ndF4BAoGAXy+jYxC0d+wy0ozt2/74Nf2Uz0/yMgg/VeTN39UP3KTu7JVP8+ZR77QT\nuBB9XCVqdQyms4XSDZ58NSYJ/e+RC4Fdoy/DF+vHNmDPvnBdVIWN96Knw+XXv6MB\nzqMbDYe9867vDJ5dzc0ZTZmJqzSHY8aMiCzjxwO56tZKuSk9mbM=\n-----END RSA PRIVATE KEY-----","private_key_type":"rsa","serial_number":"4f:94:2a:3c:4b:5f:9b:01:76:84:04:bb:31:d3:b7:45:2d:4d:e1:c5"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs

@@ -5,7 +5,6 @@ import (
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
 	"go.uber.org/fx"
 )
 
@@ -24,7 +23,6 @@ var Module = &bootstrap.Module{
 
 func Use() {
 	bootstrap.Register(Module)
-	bootstrap.Register(tlsconfig.Module)
 }
 
 type regDI struct {

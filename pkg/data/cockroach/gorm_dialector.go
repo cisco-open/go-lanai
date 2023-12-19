@@ -22,5 +22,3 @@ func NewGormDialectorWithConfig(config postgres.Config) *GormDialector {
 func (d GormDialector) Migrator(db *gorm.DB) gorm.Migrator {
 	return NewGormMigrator(db, d)
 }
-
-

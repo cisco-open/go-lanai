@@ -17,33 +17,17 @@ const (
 )
 
 var (
-	ErrNoInstances = errors.New("No matching service instances found")
+	ErrNoInstances = errors.New("no matching service instances found")
 )
 
-type ConnectionProperties struct {
-	Host    string `json:"host"`
-	Port    int    `json:"port"`
-	Scheme  string `json:"scheme"`
-	Config  struct {
-		AclToken string `json:"acl-token"`
-	}
-}
-
-func (c ConnectionProperties) Address() string {
-	return fmt.Sprintf("%s:%d", c.Host, c.Port)
-}
-
 type Connection struct {
-	config *ConnectionProperties
-	client *api.Client
+	client     *api.Client
+	properties *ConnectionProperties
+	clientAuth ClientAuthentication
 }
 
 func (c *Connection) Client() *api.Client {
 	return c.client
-}
-
-func (c *Connection) Host() string {
-	return c.config.Host
 }
 
 func (c *Connection) ListKeyValuePairs(ctx context.Context, path string) (results map[string]interface{}, err error) {
@@ -53,9 +37,9 @@ func (c *Connection) ListKeyValuePairs(ctx context.Context, path string) (result
 	if err != nil {
 		return nil, err
 	} else if entries == nil {
-		logger.WithContext(ctx).Warnf("No appconfig retrieved from consul (%s): %s", c.Host(), path)
+		logger.WithContext(ctx).Warnf("No appconfig retrieved from consul (%s): %s", c.host(), path)
 	} else {
-		logger.WithContext(ctx).Infof("Retrieved %d configs from consul (%s): %s", len(entries), c.Host(), path)
+		logger.WithContext(ctx).Infof("Retrieved %d configs from consul (%s): %s", len(entries), c.host(), path)
 	}
 
 	prefix := path + "/"
@@ -86,10 +70,10 @@ func (c *Connection) GetKeyValue(ctx context.Context, path string) (value []byte
 	if err != nil {
 		return nil, err
 	} else if data == nil {
-		logger.WithContext(ctx).Warnf("No kv pair retrieved from consul %q: %s", c.Host(), path)
+		logger.WithContext(ctx).Warnf("No kv pair retrieved from consul %q: %s", c.host(), path)
 		value = nil
 	} else {
-		logger.WithContext(ctx).Infof("Retrieved kv pair from consul %q: %s", c.Host(), path)
+		logger.WithContext(ctx).Infof("Retrieved kv pair from consul %q: %s", c.host(), path)
 		value = data.Value
 	}
 
@@ -112,23 +96,71 @@ func (c *Connection) SetKeyValue(ctx context.Context, path string, value []byte)
 		return err
 	}
 
-	logger.WithContext(ctx).Infof("Stored kv pair to consul %q: %s", c.Host(), path)
+	logger.WithContext(ctx).Infof("Stored kv pair to consul %q: %s", c.host(), path)
 	return nil
 }
 
-func NewConnection(connectionConfig *ConnectionProperties) (*Connection, error) {
-	clientConfig := api.DefaultConfig()
-	clientConfig.Address = connectionConfig.Address()
-	clientConfig.Scheme = connectionConfig.Scheme
-	clientConfig.Token = connectionConfig.Config.AclToken
-	clientConfig.TLSConfig.InsecureSkipVerify = true
+func (c *Connection) host() string {
+	return fmt.Sprintf(`%s:%d`, c.properties.Host, c.properties.Port)
+}
 
-	if client, err := api.NewClient(clientConfig); err != nil {
-		return nil, err
-	} else {
-		return &Connection{
-			config: connectionConfig,
-			client: client,
-		}, nil
+type Options func(cfg *ClientConfig) error
+type ClientConfig struct {
+	*api.Config
+	Properties *ConnectionProperties
+	ClientAuth ClientAuthentication
+}
+
+func WithProperties(p ConnectionProperties) Options {
+	return func(cfg *ClientConfig) error {
+		cfg.Properties = &p
+		cfg.ClientAuth = newClientAuthentication(&p)
+		cfg.Address = p.Address()
+		cfg.Scheme = p.Scheme
+		if cfg.Scheme == "https" {
+			cfg.TLSConfig.CAFile = p.SSL.CaCert
+			cfg.TLSConfig.CertFile = p.SSL.ClientCert
+			cfg.TLSConfig.KeyFile = p.SSL.ClientKey
+			cfg.TLSConfig.InsecureSkipVerify = p.SSL.Insecure
+		}
+		return nil
 	}
+}
+
+func New(opts ...Options) (*Connection, error) {
+	cfg := ClientConfig{
+		Config:     api.DefaultConfig(),
+		ClientAuth: TokenClientAuthentication(""),
+	}
+	for _, fn := range opts {
+		if e := fn(&cfg); e != nil {
+			return nil, e
+		}
+	}
+	return newConn(&cfg)
+}
+
+func newConn(cfg *ClientConfig) (*Connection, error) {
+	client, err := api.NewClient(cfg.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.ClientAuth != nil {
+		token, err := cfg.ClientAuth.Login(client)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Token = token
+	}
+
+	client, err = api.NewClient(cfg.Config)
+	if err != nil {
+		return nil, err
+	}
+	return &Connection{
+		client:     client,
+		properties: cfg.Properties,
+		clientAuth: cfg.ClientAuth,
+	}, nil
 }

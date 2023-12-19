@@ -1,21 +1,23 @@
 package redis
 
 import (
-	"crypto/tls"
-	"crypto/x509"
+	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
-	"io"
-	"os"
 )
 
 // KeepTTL is an option for Set command to keep key's existing TTL.
 // For example:
 //
-//    rdb.Set(ctx, key, value, redis.KeepTTL)
+//	rdb.Set(ctx, key, value, redis.KeepTTL)
 const KeepTTL = redis.KeepTTL
 
-func GetUniversalOptions(p *RedisProperties) (*redis.UniversalOptions, error) {
+// ConnOptions options for connectivity by manipulating redis.UniversalOptions
+type ConnOptions func(opt *redis.UniversalOptions) error
+
+func GetUniversalOptions(p *RedisProperties, opts ...ConnOptions) (*redis.UniversalOptions, error) {
 	universal := &redis.UniversalOptions{
 		Addrs:              p.Addresses,
 		DB:                 p.DB,
@@ -45,33 +47,37 @@ func GetUniversalOptions(p *RedisProperties) (*redis.UniversalOptions, error) {
 		SentinelPassword: p.SentinelPassword,
 	}
 
-	if p.RootCertificates != "" {
-		file, err := os.Open(p.RootCertificates)
-
-		if err != nil {
-			return nil, errors.Wrap(err, "Cannot open root certificates file: "+p.RootCertificates)
+	for _, fn := range opts {
+		if e := fn(universal); e != nil {
+			return nil, e
 		}
-
-		data, err := io.ReadAll(file)
-
-		if err != nil {
-			return nil, errors.Wrap(err, "Cannot read root certificates file: "+p.RootCertificates)
-		}
-
-		root := x509.NewCertPool()
-		ok := root.AppendCertsFromPEM(data)
-
-		if !ok {
-			return nil, errors.New("Cannot parse the certificate file content")
-		}
-
-		t := &tls.Config{
-			RootCAs: root,
-			MinVersion: tls.VersionTLS12,
-		}
-		universal.TLSConfig = t
 	}
 	return universal, nil
+}
+
+func withDB(dbIndex int) ConnOptions {
+	return func(opt *redis.UniversalOptions) error {
+		opt.DB = dbIndex
+		return nil
+	}
+}
+
+func withTLS(ctx context.Context, certsMgr certs.Manager, p *certs.SourceProperties) ConnOptions {
+	return func(opt *redis.UniversalOptions) error {
+		if certsMgr == nil {
+			return fmt.Errorf("TLS auth is enabled for Redis, but certificate manager is not available")
+		}
+		src, err := certsMgr.Source(ctx, certs.WithSourceProperties(p))
+		if err != nil {
+			return errors.Wrapf(err, "failed to initialize redis connection: %v", err)
+		}
+
+		opt.TLSConfig, err = src.TLSConfig(ctx)
+		if err != nil {
+			return errors.Wrapf(err, "failed to initialize redis connection: %v", err)
+		}
+		return nil
+	}
 }
 
 type Client interface {

@@ -1,0 +1,363 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 177
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"id":"token_short_ttl","policies":["root"],"ttl":"1s","explicit_max_ttl":"1s","display_name":"token_short_ttl","num_uses":0,"renewable":true,"type":"service","entity_alias":""}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "0"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - hvs.H8NP7lNhGlg4jX21gRWZvOMn
+        url: http://127.0.0.1:8200/v1/auth/token/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 606
+        uncompressed: false
+        body: '{"request_id":"c9460a3f-d6c1-36dc-8292-373eb0d63d90","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":["Supplying a custom ID for the token uses the weaker SHA1 hashing instead of the more secure SHA2-256 HMAC for token obfuscation. SHA1 hashed tokens on the wire leads to less secure lookups."],"auth":{"client_token":"token_short_ttl","accessor":"sHh9818CglBHWXbwBJYNpEqc","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":1,"renewable":true,"entity_id":"","token_type":"service","orphan":false,"mfa_requirement":null,"num_uses":0}}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "606"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 172
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"id":"token_no_ttl","policies":["root"],"ttl":"0s","explicit_max_ttl":"0s","display_name":"token_no_ttl","num_uses":0,"renewable":false,"type":"service","entity_alias":""}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - hvs.H8NP7lNhGlg4jX21gRWZvOMn
+        url: http://127.0.0.1:8200/v1/auth/token/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 57
+        uncompressed: false
+        body: '{"errors":["cannot create a token with a duplicate ID"]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "57"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 400 Bad Request
+        code: 400
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_short_ttl
+        url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 560
+        uncompressed: false
+        body: '{"request_id":"d3141b83-9872-088b-1bb3-c0a8787efa37","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"sHh9818CglBHWXbwBJYNpEqc","creation_time":1702947321,"creation_ttl":1,"display_name":"token-token-short-ttl","entity_id":"","expire_time":"2023-12-19T00:55:22.356296505Z","explicit_max_ttl":1,"id":"token_short_ttl","issue_time":"2023-12-19T00:55:21.35631663Z","meta":null,"num_uses":0,"orphan":false,"path":"auth/token/create","policies":["root"],"renewable":true,"ttl":1,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "560"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 15
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"increment":1}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "3"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_short_ttl
+        url: http://127.0.0.1:8200/v1/auth/token/renew-self
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 417
+        uncompressed: false
+        body: '{"request_id":"a8a722c4-1d9c-1d84-5c86-1e01a2411b27","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"token_short_ttl","accessor":"sHh9818CglBHWXbwBJYNpEqc","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":1,"renewable":true,"entity_id":"","token_type":"service","orphan":false,"mfa_requirement":null,"num_uses":0}}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "417"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 15
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"increment":1}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_short_ttl
+        url: http://127.0.0.1:8200/v1/auth/token/renew-self
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 73
+        uncompressed: false
+        body: '{"errors":["1 error occurred:\n\t* past the max TTL, cannot renew\n\n"]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "73"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 500 Internal Server Error
+        code: 500
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 15
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"increment":1}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_short_ttl
+        url: http://127.0.0.1:8200/v1/auth/token/renew-self
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 33
+        uncompressed: false
+        body: '{"errors":["permission denied"]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "33"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 403 Forbidden
+        code: 403
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "6"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_short_ttl
+        url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 33
+        uncompressed: false
+        body: '{"errors":["permission denied"]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "33"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 403 Forbidden
+        code: 403
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "7"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_no_ttl
+        url: http://127.0.0.1:8200/v1/auth/token/lookup-self
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 528
+        uncompressed: false
+        body: '{"request_id":"77301611-bfaa-737a-386e-d5d3ee14a202","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"s79LRH2BavbjIPfTrlKtHznB","creation_time":1702943715,"creation_ttl":0,"display_name":"token-token-no-ttl","entity_id":"","expire_time":null,"explicit_max_ttl":0,"id":"token_no_ttl","issue_time":"2023-12-18T23:55:15.864599252Z","meta":null,"num_uses":0,"orphan":false,"path":"auth/token/create","policies":["root"],"renewable":false,"ttl":0,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "528"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs

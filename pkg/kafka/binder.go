@@ -3,11 +3,12 @@ package kafka
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tlsconfig"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
 	"errors"
 	"fmt"
 	"github.com/Shopify/sarama"
+	"io"
 	"math"
 	"strings"
 	"sync"
@@ -32,7 +33,8 @@ type SaramaKafkaBinder struct {
 	producerInterceptors []ProducerMessageInterceptor
 	consumerInterceptors []ConsumerDispatchInterceptor
 	handlerInterceptors  []ConsumerHandlerInterceptor
-	monitor              *loop.Loop
+	monitor         *loop.Loop
+	tlsCertsManager certs.Manager
 
 	// TODO consider mutex lock for following fields
 	producers      map[string]BindingLifecycle
@@ -41,9 +43,9 @@ type SaramaKafkaBinder struct {
 
 	// following fields are protected by mutex lock
 	globalClient      sarama.Client
-	adminClient       sarama.ClusterAdmin
-	tlsConfigProvider tlsconfig.Provider
-	provisioner       *saramaTopicProvisioner
+	adminClient sarama.ClusterAdmin
+	tlsSource   certs.Source
+	provisioner *saramaTopicProvisioner
 	closed            bool
 	monitorCtx        context.Context
 	monitorCancelFunc context.CancelFunc
@@ -56,8 +58,8 @@ type BinderOption struct {
 	Properties           KafkaProperties
 	ProducerInterceptors []ProducerMessageInterceptor
 	ConsumerInterceptors []ConsumerDispatchInterceptor
-	HandlerInterceptors  []ConsumerHandlerInterceptor
-	TlsProviderFactory   *tlsconfig.ProviderFactory
+	HandlerInterceptors []ConsumerHandlerInterceptor
+	TLSCertsManager     certs.Manager
 }
 
 func NewBinder(ctx context.Context, opts ...BinderOptions) *SaramaKafkaBinder {
@@ -79,9 +81,10 @@ func NewBinder(ctx context.Context, opts ...BinderOptions) *SaramaKafkaBinder {
 		producers:            make(map[string]BindingLifecycle),
 		subscribers:          make(map[string]BindingLifecycle),
 		consumerGroups:       make(map[string]BindingLifecycle),
+		tlsCertsManager:      opt.TLSCertsManager,
 	}
 
-	if e := s.Initialize(ctx, opt.TlsProviderFactory); e != nil {
+	if e := s.Initialize(ctx); e != nil {
 		panic(e)
 	}
 	return s
@@ -228,7 +231,7 @@ func (b *SaramaKafkaBinder) Client() sarama.Client {
 }
 
 // Initialize implements BinderLifecycle, prepare for use, negotiate default configs, etc.
-func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *tlsconfig.ProviderFactory) (err error) {
+func (b *SaramaKafkaBinder) Initialize(ctx context.Context) (err error) {
 	b.initOnce.Do(func() {
 		b.Lock()
 		defer b.Unlock()
@@ -236,14 +239,31 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context, tlsProviderFactory *
 			err = ErrorStartClosedBinding.WithMessage("attempt to initialize Binder after shutdown")
 			return
 		}
-
-		cfg, tlsConfigProvider, e := defaultSaramaConfig(ctx, b.properties, tlsProviderFactory)
+		cfg, e := defaultSaramaConfig(ctx, b.properties)
 		if e != nil {
 			err = NewKafkaError(ErrorCodeBindingInternal, fmt.Sprintf("unable to create kafka config: %v", e))
 			logger.WithContext(ctx).Errorf("%v", err)
 			return
 		}
-		b.tlsConfigProvider = tlsConfigProvider
+
+		// config TLS if enabled
+		if b.properties.Net.Tls.Enable {
+			if b.tlsCertsManager == nil {
+				err = fmt.Errorf("failed to initialize Binder: TLS Auth is enabled but certificate manager is not provisioned")
+				return
+			}
+			b.tlsSource, err = b.tlsCertsManager.Source(ctx, certs.WithSourceProperties(&b.properties.Net.Tls.Certs))
+			if err != nil {
+				logger.WithContext(ctx).Errorf("failed to get tls provider: %s", err.Error())
+				return
+			}
+			cfg.Net.TLS.Enable = true
+			cfg.Net.TLS.Config, err = b.tlsSource.TLSConfig(ctx)
+			if err != nil {
+				logger.WithContext(ctx).Errorf("Failed to initialize Kafka binder: %v", err)
+				return
+			}
+		}
 
 		// prepare defaults
 		b.prepareDefaults(ctx, cfg)
@@ -345,8 +365,8 @@ func (b *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
 		logger.WithContext(ctx).Errorf("error while closing kafka global client: %v", e)
 	}
 
-	if b.tlsConfigProvider != nil {
-		if e := b.tlsConfigProvider.Close(); e != nil {
+	if closer, ok := b.tlsSource.(io.Closer); ok {
+		if e := closer.Close(); e != nil {
 			logger.WithContext(ctx).Errorf("error while closing tls config provider: %v", e)
 		}
 	}
@@ -442,7 +462,8 @@ func (b *SaramaKafkaBinder) tryStartTaskFunc(loopCtx context.Context) loop.TaskF
 // when all bindings are successfully started, we reduce the repeating rate
 // S-shaped curve.
 // Logistic Function 	https://en.wikipedia.org/wiki/Logistic_function
-//						https://en.wikipedia.org/wiki/Generalised_logistic_function
+//
+//	https://en.wikipedia.org/wiki/Generalised_logistic_function
 func (b *SaramaKafkaBinder) tryStartRepeatIntervalFunc() loop.RepeatIntervalFunc {
 
 	var fn func(int) time.Duration
@@ -478,7 +499,8 @@ func (b *SaramaKafkaBinder) tryStartRepeatIntervalFunc() loop.RepeatIntervalFunc
 
 // logisticModel returns delay function f(n) using logistic model
 // Logistic Function 	https://en.wikipedia.org/wiki/Logistic_function
-//						https://en.wikipedia.org/wiki/Generalised_logistic_function
+//
+//	https://en.wikipedia.org/wiki/Generalised_logistic_function
 func (b *SaramaKafkaBinder) logisticModel(min, max, k, n0 float64, y0 time.Duration) func(n int) time.Duration {
 	// minK is calculated to make sure f(0) < min + y0 (first value is within y0 seconds of min value)
 	minK := math.Log((max-min)/float64(y0)-1) / n0

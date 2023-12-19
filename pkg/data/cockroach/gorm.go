@@ -2,6 +2,7 @@ package cockroach
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"fmt"
 	"go.uber.org/fx"
 	"gorm.io/driver/postgres"
@@ -19,33 +20,40 @@ const (
 	dsKeySslRootCert = "sslrootcert"
 	dsKeySslCert     = "sslcert"
 	dsKeySslKey      = "sslkey"
+	dsKeySslKeyPass  = "sslpassword "
 )
 
 type initDI struct {
 	fx.In
-	AppContext *bootstrap.ApplicationContext
-	Properties CockroachProperties
+	AppContext  *bootstrap.ApplicationContext
+	Properties   CockroachProperties
+	CertsManager certs.Manager `optional:"true"`
 }
 
 func NewGormDialetor(di initDI) gorm.Dialector {
 	//"host=localhost user=root password=root dbname=idm port=26257 sslmode=disable"
 	options := map[string]interface{}{
-		dsKeyHost:        di.Properties.Host,
-		dsKeyPort:        di.Properties.Port,
-		dsKeyDB:          di.Properties.Database,
-		dsKeySslMode:     di.Properties.SslMode,
+		dsKeyHost:    di.Properties.Host,
+		dsKeyPort:    di.Properties.Port,
+		dsKeyDB:      di.Properties.Database,
+		dsKeySslMode: di.Properties.SslMode,
 	}
-
-	if di.Properties.SslRootCert != "" {
-		options[dsKeySslRootCert] = di.Properties.SslRootCert
-	}
-
-	if di.Properties.SslCert != "" {
-		options[dsKeySslCert] = di.Properties.SslCert
-	}
-
-	if di.Properties.SslKey != "" {
-		options[dsKeySslKey] = di.Properties.SslKey
+	// Setup TLS properties
+	if di.Properties.Tls.Enable && di.CertsManager != nil {
+		source, e := di.CertsManager.Source(di.AppContext, certs.WithSourceProperties(&di.Properties.Tls.Certs))
+		if e == nil {
+			certFiles, e := source.Files(di.AppContext)
+			if e == nil {
+				options[dsKeySslRootCert] = strings.Join(certFiles.RootCAPaths, " ")
+				options[dsKeySslCert] = certFiles.CertificatePath
+				options[dsKeySslKey] = certFiles.PrivateKeyPath
+				if len(certFiles.PrivateKeyPassphrase) != 0 {
+					options[dsKeySslKeyPass] = certFiles.PrivateKeyPassphrase
+				}
+			}
+		} else {
+			logger.Errorf("Failed to provision TLS certificates: %v", e)
+		}
 	}
 
 	if di.Properties.Username != "" {
@@ -55,7 +63,7 @@ func NewGormDialetor(di initDI) gorm.Dialector {
 
 	config := postgres.Config{
 		//DriverName:           "postgres",
-		DSN:                  toDSN(options),
+		DSN: toDSN(options),
 	}
 	return NewGormDialectorWithConfig(config)
 }
@@ -68,4 +76,3 @@ func toDSN(options map[string]interface{}) string {
 	}
 	return strings.Join(opts, " ")
 }
-

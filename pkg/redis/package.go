@@ -3,6 +3,7 @@ package redis
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
 	"go.uber.org/fx"
 )
 
@@ -12,8 +13,8 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.RedisPrecedence,
 	Options: []fx.Option{
 		fx.Provide(BindRedisProperties),
-		fx.Provide(NewClientFactory),
-		fx.Provide(newDefaultClient),
+		fx.Provide(provideClientFactory),
+		fx.Provide(provideDefaultClient),
 		fx.Invoke(registerHealth),
 	},
 }
@@ -23,9 +24,29 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func newDefaultClient(ctx *bootstrap.ApplicationContext, f ClientFactory, p RedisProperties) Client {
-	c, e := f.New(ctx, func(opt *ClientOption) {
-		opt.DbIndex = p.DB
+type factoryDI struct {
+	fx.In
+	Props       RedisProperties
+	CertManager certs.Manager `optional:"true"`
+}
+
+func provideClientFactory(di factoryDI) ClientFactory {
+	return NewClientFactory(func(opt *FactoryOption) {
+		opt.Properties = di.Props
+		opt.TLSCertsManager = di.CertManager
+	})
+}
+
+type clientDI struct {
+	fx.In
+	AppCtx             *bootstrap.ApplicationContext
+	Factory            ClientFactory
+	Properties         RedisProperties
+}
+
+func provideDefaultClient(di clientDI) Client {
+	c, e := di.Factory.New(di.AppCtx, func(opt *ClientOption) {
+		opt.DbIndex = di.Properties.DB
 	})
 
 	if e != nil {

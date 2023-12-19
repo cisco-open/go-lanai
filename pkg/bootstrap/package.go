@@ -60,7 +60,7 @@ func bootstrap(lc fx.Lifecycle, ac *ApplicationContext) {
 		err = log.UpdateLoggingConfiguration(logProperties)
 	}
 	if err != nil {
-		logger.Error( "Error updating logging configuration", "error", err)
+		logger.Error("Error updating logging configuration", "error", err)
 	}
 
 	lc.Append(fx.Hook{
