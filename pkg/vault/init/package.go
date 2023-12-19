@@ -2,7 +2,6 @@ package vault
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	appconfigInit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -83,15 +82,3 @@ func manageClientLifecycle(di lcDI) {
 	}))
 }
 
-type healthDI struct {
-	fx.In
-	HealthRegistrar health.Registrar `optional:"true"`
-	VaultClient     *vault.Client    `optional:"true"`
-}
-
-func registerHealth(di healthDI) {
-	if di.HealthRegistrar == nil || di.VaultClient == nil {
-		return
-	}
-	di.HealthRegistrar.MustRegister(vaulthealth.New(di.VaultClient))
-}

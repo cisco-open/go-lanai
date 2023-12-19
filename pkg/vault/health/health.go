@@ -13,11 +13,11 @@ type HealthRegDI struct {
 	VaultClient     *vault.Client    `optional:"true"`
 }
 
-func Register(di HealthRegDI) {
+func Register(di HealthRegDI) error {
 	if di.HealthRegistrar == nil || di.VaultClient == nil {
-		return
+		return nil
 	}
-	di.HealthRegistrar.MustRegister(New(di.VaultClient))
+	return di.HealthRegistrar.Register(New(di.VaultClient))
 }
 
 func New(client *vault.Client) *HealthIndicator {

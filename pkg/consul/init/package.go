@@ -1,10 +1,10 @@
 package consul
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
+	consulhealth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/health"
 	"github.com/pkg/errors"
 	"go.uber.org/fx"
 )
@@ -17,7 +17,7 @@ var Module = &bootstrap.Module{
 		fx.Provide(ProvideDefaultClient),
 	},
 	Options: []fx.Option{
-		fx.Invoke(registerHealth),
+		fx.Invoke(consulhealth.Register),
 	},
 }
 
@@ -44,15 +44,3 @@ func ProvideDefaultClient(di clientDI) (*consul.Connection, error) {
 	return consul.New(opts...)
 }
 
-type regDI struct {
-	fx.In
-	HealthRegistrar  health.Registrar `optional:"true"`
-	ConsulConnection *consul.Connection
-}
-
-func registerHealth(di regDI) {
-	if di.HealthRegistrar == nil {
-		return
-	}
-	di.HealthRegistrar.MustRegister(consul.NewConsulHealthIndicator(di.ConsulConnection))
-}
