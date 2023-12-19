@@ -78,14 +78,14 @@ func SubTestCreateTokens(di *TestRefresherDI) test.SetupFunc {
 			client := NewTestClient(g, p, di.Recorder)
 
 			req := NewCreateTokenRequest("token_short_ttl", 1 * time.Second, true)
-			_, err = client.Logical(ctx).WithContext(ctx).Write("auth/token/create", req)
+			_, err = client.Logical(ctx).Write("auth/token/create", req)
 			if err != nil {
 				return
 			}
 
 			// note recreating token without ttl will fail, we don't care the result for HTTP replaying purpose
 			req = NewCreateTokenRequest("token_no_ttl", 0, false)
-			_, _ = client.Logical(ctx).WithContext(ctx).Write("auth/token/create", req)
+			_, _ = client.Logical(ctx).Write("auth/token/create", req)
 		})
 		return ctx, err
 	}
@@ -100,15 +100,13 @@ func SubTestRefresherWithK8s(di *TestRefresherDI) test.GomegaSubTestFunc {
 			Role:    "devweb-app",
 		}
 		client := NewTestClient(g, p, di.Recorder)
-
 		oldToken := client.Token()
-		refresher := vault.NewTokenRefresher(client)
-		refresher.Start(ctx)
+		client.AutoRenewToken(ctx)
 		time.Sleep(6 * time.Second)
 		newToken := client.Token()
 		g.Expect(newToken).NotTo(Equal(oldToken), "Token was not refreshed, before: %v, after: %v", oldToken, newToken)
 		//g.Expect(refresher.renewer).NotTo(gomega.BeNil(), "Renewer nilled")
-		refresher.Stop()
+		_ = client.Close()
 	}
 }
 
@@ -118,15 +116,13 @@ func SubTestRefresherWithNonRefreshableToken(di *TestRefresherDI) test.GomegaSub
 		p.Authentication = vault.Token
 		p.Token = "token_short_ttl"
 		client := NewTestClient(g, p, di.Recorder)
-
 		oldToken := client.Token()
-		refresher := vault.NewTokenRefresher(client)
-		refresher.Start(ctx)
+		client.AutoRenewToken(ctx)
 		time.Sleep(2500 * time.Millisecond)
 		newToken := client.Token()
 		g.Expect(newToken).To(Equal(oldToken), "Non-refreshable Token was refreshed, before: %v, after: %v", oldToken, newToken)
 		//g.Expect(refresher.renewer).NotTo(gomega.BeNil(), "Renewer nilled")
-		refresher.Stop()
+		_ = client.Close()
 	}
 }
 
@@ -138,13 +134,12 @@ func SubTestRefresherWithStaticToken(di *TestRefresherDI) test.GomegaSubTestFunc
 		client := NewTestClient(g, p, di.Recorder)
 
 		oldToken := client.Token()
-		refresher := vault.NewTokenRefresher(client)
-		refresher.Start(ctx)
+		client.AutoRenewToken(ctx)
 		time.Sleep(1500 * time.Millisecond)
 		newToken := client.Token()
 		g.Expect(newToken).To(Equal(oldToken), "Non-refreshable Token was refreshed, before: %v, after: %v", oldToken, newToken)
 		//g.Expect(refresher.renewer).NotTo(gomega.BeNil(), "Renewer nilled")
-		refresher.Stop()
+		_ = client.Close()
 	}
 }
 
@@ -156,13 +151,12 @@ func SubTestRefresherRestart(di *TestRefresherDI) test.GomegaSubTestFunc {
 		client := NewTestClient(g, p, di.Recorder)
 
 		oldToken := client.Token()
-		refresher := vault.NewTokenRefresher(client)
-		refresher.Start(ctx)
+		client.AutoRenewToken(ctx)
 		time.Sleep(1500 * time.Millisecond)
 		newToken := client.Token()
 		g.Expect(newToken).To(Equal(oldToken), "Non-refreshable Token was refreshed, before: %v, after: %v", oldToken, newToken)
 		//g.Expect(refresher.renewer).NotTo(gomega.BeNil(), "Renewer nilled")
-		refresher.Stop()
+		_ = client.Close()
 	}
 }
 

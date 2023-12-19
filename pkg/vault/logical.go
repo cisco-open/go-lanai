@@ -15,6 +15,7 @@ type Logical struct {
 	client *Client
 }
 
+// WithContext make a copy of current Logical with a new context
 func (l *Logical) WithContext(ctx context.Context) *Logical {
 	if ctx == nil {
 		panic("nil context is not allowed")

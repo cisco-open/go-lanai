@@ -7,13 +7,14 @@ const (
 )
 
 type ConnectionProperties struct {
-	Host           string           `json:"host"`
-	Port           int              `json:"port"`
-	Scheme         string           `json:"scheme"`
-	Authentication AuthMethod       `json:"authentication"`
-	SSL            SSLProperties    `json:"ssl"`
-	Kubernetes     KubernetesConfig `json:"kubernetes"`
-	Token          string           `json:"token"`
+	Host              string           `json:"host"`
+	Port              int              `json:"port"`
+	Scheme            string           `json:"scheme"`
+	Authentication    AuthMethod       `json:"authentication"`
+	SSL               SSLProperties    `json:"ssl"`
+	Kubernetes        KubernetesConfig `json:"kubernetes"`
+	Token             string           `json:"token"`
+	DisableTokenRenew bool             `json:"disable-token-renew"`
 }
 
 func (p ConnectionProperties) Address() string {

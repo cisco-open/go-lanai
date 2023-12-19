@@ -1,0 +1,314 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 31
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"message":"hello","ttl":"10s"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "0"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://127.0.0.1:8200/v1/secret/test/foo
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://127.0.0.1:8200/v1/secret/test/foo
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 190
+        uncompressed: false
+        body: '{"request_id":"e1ca502f-9c39-ced3-a3bf-f4d2702ab34b","lease_id":"","renewable":false,"lease_duration":10,"data":{"message":"hello","ttl":"10s"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "190"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://127.0.0.1:8200/v1/sys/seal-status
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 297
+        uncompressed: false
+        body: '{"type":"shamir","initialized":true,"sealed":false,"t":1,"n":1,"progress":0,"nonce":"","version":"1.12.6","build_date":"2023-04-25T13:23:35Z","migration":false,"cluster_name":"vault-cluster-f19adce7","cluster_id":"85c1f84f-5cd7-9b26-a031-bc987e50bd01","recovery_seal":false,"storage_type":"file"}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "297"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 178
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"id":"token_short_ttl","policies":["root"],"ttl":"5s","explicit_max_ttl":"5s","display_name":"token_short_ttl","num_uses":0,"renewable":false,"type":"service","entity_alias":""}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "3"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://127.0.0.1:8200/v1/auth/token/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 607
+        uncompressed: false
+        body: '{"request_id":"78254d3d-6265-d807-6c9b-c4820607e8f6","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":["Supplying a custom ID for the token uses the weaker SHA1 hashing instead of the more secure SHA2-256 HMAC for token obfuscation. SHA1 hashed tokens on the wire leads to less secure lookups."],"auth":{"client_token":"token_short_ttl","accessor":"fGO6Atgygpb0nVB7nMZEq6Fe","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":5,"renewable":false,"entity_id":"","token_type":"service","orphan":false,"mfa_requirement":null,"num_uses":0}}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "607"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 31
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"message":"hello","ttl":"10s"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "4"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_short_ttl
+        url: http://127.0.0.1:8200/v1/secret/test/foo
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_short_ttl
+        url: http://127.0.0.1:8200/v1/secret/test/foo
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 190
+        uncompressed: false
+        body: '{"request_id":"1bc8ab8b-292b-6617-12eb-60c8bcec723e","lease_id":"","renewable":false,"lease_duration":10,"data":{"message":"hello","ttl":"10s"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "190"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: 127.0.0.1:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "6"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - token_short_ttl
+        url: http://127.0.0.1:8200/v1/sys/seal-status
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 297
+        uncompressed: false
+        body: '{"type":"shamir","initialized":true,"sealed":false,"t":1,"n":1,"progress":0,"nonce":"","version":"1.12.6","build_date":"2023-04-25T13:23:35Z","migration":false,"cluster_name":"vault-cluster-f19adce7","cluster_id":"85c1f84f-5cd7-9b26-a031-bc987e50bd01","recovery_seal":false,"storage_type":"file"}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "297"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs

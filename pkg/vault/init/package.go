@@ -7,6 +7,7 @@ import (
 	appconfigInit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
+	vaulthealth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/health"
 	"embed"
 	"go.uber.org/fx"
 )
@@ -22,7 +23,7 @@ var Module = &bootstrap.Module{
 	},
 	Options: []fx.Option{
 		appconfigInit.FxEmbeddedDefaults(defaultConfigFS),
-		fx.Invoke(setupRenewal, registerHealth),
+		fx.Invoke(vaulthealth.Register, manageClientLifecycle),
 	},
 }
 
@@ -52,50 +53,45 @@ type clientDI struct {
 }
 
 func ProvideDefaultClient(di clientDI) *vault.Client {
-	opts := append([]vault.Options{vault.WithProperties(di.Props)}, di.Customizers...)
-	c, err := vault.New(opts...)
+	opts := append([]vault.Options{
+		vault.WithProperties(di.Props),
+	}, di.Customizers...)
+	client, err := vault.New(opts...)
 	if err != nil {
 		panic(err)
 	}
-	return c
+	return client
 }
 
-type renewDi struct {
+type lcDI struct {
 	fx.In
-	AppContext  *bootstrap.ApplicationContext
+	AppCtx      *bootstrap.ApplicationContext
+	Lifecycle   fx.Lifecycle
 	VaultClient *vault.Client `optional:"true"`
 }
 
-func setupRenewal(lc fx.Lifecycle, di renewDi) {
+func manageClientLifecycle(di lcDI) {
 	if di.VaultClient == nil {
 		return
 	}
-	client := di.VaultClient
-	refresher := vault.NewTokenRefresher(client)
-	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			//nolint:contextcheck // intended, we don't use passed in context, refresher will depend on application context
-			refresher.Start(di.AppContext)
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			refresher.Stop()
-			return nil
-		},
-	})
+	di.Lifecycle.Append(fx.StartHook(func(_ context.Context) {
+		//nolint:contextcheck // Non-inherited new context - intentional. Start hook context expires when startup finishes
+		di.VaultClient.AutoRenewToken(di.AppCtx)
+	}))
+	di.Lifecycle.Append(fx.StopHook(func(_ context.Context) error {
+		return di.VaultClient.Close()
+	}))
 }
 
-type regDI struct {
+type healthDI struct {
 	fx.In
 	HealthRegistrar health.Registrar `optional:"true"`
 	VaultClient     *vault.Client    `optional:"true"`
 }
 
-func registerHealth(di regDI) {
+func registerHealth(di healthDI) {
 	if di.HealthRegistrar == nil || di.VaultClient == nil {
 		return
 	}
-	di.HealthRegistrar.MustRegister(&vault.VaultHealthIndicator{
-		Client: di.VaultClient,
-	})
+	di.HealthRegistrar.MustRegister(vaulthealth.New(di.VaultClient))
 }

@@ -12,7 +12,7 @@ import (
 // renewal can occur when a token's ttl is completed,
 // refresh occurs when a token cannot be renewed (e.g max TTL is reached)
 type TokenRefresher struct {
-	client     Client
+	client     *Client
 	renewer    *api.Renewer
 	cancelFunc context.CancelFunc
 	cancelLock sync.Mutex
@@ -22,7 +22,7 @@ const renewerDescription = "vault client token"
 
 func NewTokenRefresher(client *Client) *TokenRefresher {
 	return &TokenRefresher{
-		client: *client,
+		client: client,
 	}
 }
 
@@ -62,7 +62,7 @@ func (r *TokenRefresher) monitorRenew(ctx context.Context) {
 			// Sleep for some time and see if the token valid now (i.e if the token is recreated by vault)
 			for {
 				var err error
-				if r.renewer, err = r.client.GetClientTokenRenewer(); err == nil {
+				if r.renewer, err = r.client.TokenRenewer(); err == nil {
 					break
 				} else if !errors.Is(err, errTokenNotRenewable) {
 					// Don't want to spam this message if the user is using a static token (where renewals aren't needed)

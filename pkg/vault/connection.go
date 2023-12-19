@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/hashicorp/vault/api"
+	"sync"
 )
 
 var (
@@ -13,15 +14,19 @@ var (
 
 type Options func(cfg *ClientConfig) error
 type ClientConfig struct {
+	// Config raw config of vault driver
 	*api.Config
-	Properties *ConnectionProperties
+	// Properties from bootstrap.BootstrapConfig. Typically set via WithProperties()
+	Properties ConnectionProperties
+	// ClientAuth used by the client and internal token refresher to authenticate with Vault server
 	ClientAuth ClientAuthentication
-	Hooks      []Hook
+	// Hooks instrumentation points
+	Hooks []Hook
 }
 
 func WithProperties(p ConnectionProperties) Options {
 	return func(cfg *ClientConfig) error {
-		cfg.Properties = &p
+		cfg.Properties = p
 		cfg.ClientAuth = newClientAuthentication(&p)
 		cfg.Address = p.Address()
 		if p.Scheme == "https" {
@@ -42,9 +47,11 @@ func WithProperties(p ConnectionProperties) Options {
 
 type Client struct {
 	*api.Client
-	properties *ConnectionProperties
+	properties ConnectionProperties
 	clientAuth ClientAuthentication
 	hooks      []Hook
+	mu         sync.Mutex // mutex protect fields below
+	refresher  *TokenRefresher
 }
 
 func New(opts ...Options) (*Client, error) {
@@ -75,7 +82,7 @@ func newClient(cfg *ClientConfig) (*Client, error) {
 	}
 
 	if err = ret.Authenticate(); err != nil {
-		logger.Warnf("vault apiClient cannot get token %v", err)
+		logger.Warnf("vault client cannot get token %v", err)
 	}
 	return ret, nil
 }
@@ -89,6 +96,7 @@ func (c *Client) Authenticate() error {
 
 	return nil
 }
+
 func (c *Client) AddHooks(_ context.Context, hooks ...Hook) {
 	c.hooks = append(c.hooks, hooks...)
 }
@@ -109,7 +117,20 @@ func (c *Client) Sys(ctx context.Context) *Sys {
 	}
 }
 
-func (c *Client) GetClientTokenRenewer() (*api.Renewer, error) {
+// AutoRenewToken start a TokenRefresher to automatically manage and renew vault token
+func (c *Client) AutoRenewToken(ctx context.Context) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.refresher != nil {
+		return
+	}
+	c.refresher = NewTokenRefresher(c)
+	c.refresher.Start(ctx)
+}
+
+// TokenRenewer returns api.Renewer for manual Token management.
+// Use AutoRenewToken auto-renew
+func (c *Client) TokenRenewer() (*api.Renewer, error) {
 	secret, err := c.Client.Auth().Token().LookupSelf()
 	if err != nil {
 		return nil, err
@@ -138,28 +159,30 @@ func (c *Client) GetClientTokenRenewer() (*api.Renewer, error) {
 	})
 }
 
+func (c *Client) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.refresher != nil {
+		c.refresher.Stop()
+		c.refresher = nil
+	}
+	return nil
+}
+
+// Clone make a copy of current Client with given customizations
 func (c *Client) Clone(opts ...Options) (*Client, error) {
 	cfg := ClientConfig{
 		Config:     c.Client.CloneConfig(),
-		Properties: c.cloneProperties(),
+		Properties: c.properties,
 		ClientAuth: c.clientAuth,
 		Hooks:      make([]Hook, len(c.hooks)),
 	}
-	for i := range c.hooks {
-		cfg.Hooks[i] = c.hooks[i]
-	}
+	copy(cfg.Hooks, c.hooks)
 	for _, fn := range opts {
 		if e := fn(&cfg); e != nil {
 			return nil, e
 		}
 	}
 	return newClient(&cfg)
-}
-
-func (c *Client) cloneProperties() *ConnectionProperties {
-	if c.properties == nil {
-		return nil
-	}
-	p := *c.properties
-	return &p
 }
