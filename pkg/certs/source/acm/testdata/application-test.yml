@@ -6,7 +6,7 @@ aws:
     id: "test"
     secret: "test"
 
-tls:
+certificates:
   sources:
     acm:
       type: acm

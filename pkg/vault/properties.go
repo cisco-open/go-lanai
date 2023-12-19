@@ -14,7 +14,6 @@ type ConnectionProperties struct {
 	SSL               SSLProperties    `json:"ssl"`
 	Kubernetes        KubernetesConfig `json:"kubernetes"`
 	Token             string           `json:"token"`
-	DisableTokenRenew bool             `json:"disable-token-renew"`
 }
 
 func (p ConnectionProperties) Address() string {

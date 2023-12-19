@@ -2,7 +2,7 @@
 # 1. The actual configurations for different certificate sources are defined by individual source's implementation.
 # 2. The actual TLS configurations for different components are defined by individual component's implementation
 # Configuration there is for testing only, and shall not be used as actual configuration
-tls:
+certificates:
   sources:
     vault:
       type: vault

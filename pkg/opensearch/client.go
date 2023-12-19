@@ -103,7 +103,7 @@ func NewConfig(ctx *bootstrap.ApplicationContext, di configDI) (opensearch.Confi
 		if di.TLSCertsManager == nil {
 			return conf, fmt.Errorf("TLS is enabled of OpenSearch, but certificate manager is not initialized")
 		}
-		tlsSrc, err := di.TLSCertsManager.Source(ctx, certs.WithSourceProperties(&di.Properties.TLS.Config))
+		tlsSrc, err := di.TLSCertsManager.Source(ctx, certs.WithSourceProperties(&di.Properties.TLS.Certs))
 		if err != nil {
 			return conf, err
 		}

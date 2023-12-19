@@ -12,7 +12,7 @@ import (
 	"io"
 )
 
-const PropertiesPrefix = `tls`
+const PropertiesPrefix = `certificates`
 
 var Module = &bootstrap.Module{
 	Name:       "certs",

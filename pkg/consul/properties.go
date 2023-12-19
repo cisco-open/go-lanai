@@ -5,9 +5,9 @@ import "fmt"
 type ConnectionProperties struct {
 	Host           string           `json:"host"`
 	Port           int              `json:"port"`
-	Scheme         string        `json:"scheme"`
-	SSL            SSLProperties `json:"ssl"`
-	Authentication AuthMethod    `json:"authentication"`
+	Scheme         string           `json:"scheme"`
+	SSL            SSLProperties    `json:"ssl"`
+	Authentication AuthMethod       `json:"authentication"`
 	Kubernetes     KubernetesConfig `json:"kubernetes"`
 	Token          string           `json:"token"`
 }

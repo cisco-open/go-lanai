@@ -27,7 +27,7 @@ type ManagerDI struct {
 
 func ProvideTestManager(di ManagerDI) (*certs.DefaultManager, certs.Properties, error) {
 	var props certs.Properties
-	if e := di.AppCfg.Bind(&props, "tls"); e != nil {
+	if e := di.AppCfg.Bind(&props, "certificates"); e != nil {
 		return nil, props, fmt.Errorf("failed to bind TLS properties")
 	}
 	manager := certs.NewDefaultManager(func(mgr *certs.DefaultManager) {

@@ -40,7 +40,7 @@ func NewGormDialetor(di initDI) gorm.Dialector {
 	}
 	// Setup TLS properties
 	if di.Properties.Tls.Enable && di.CertsManager != nil {
-		source, e := di.CertsManager.Source(di.AppContext, certs.WithSourceProperties(&di.Properties.Tls.Config))
+		source, e := di.CertsManager.Source(di.AppContext, certs.WithSourceProperties(&di.Properties.Tls.Certs))
 		if e == nil {
 			certFiles, e := source.Files(di.AppContext)
 			if e == nil {

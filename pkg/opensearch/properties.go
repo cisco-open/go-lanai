@@ -23,7 +23,7 @@ type Properties struct {
 
 type TLS struct {
 	Enable bool                   `json:"enable"`
-	Config certs.SourceProperties `json:"config"`
+	Certs  certs.SourceProperties `json:"certs"`
 }
 
 func NewOpenSearchProperties() *Properties {

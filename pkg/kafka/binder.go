@@ -252,7 +252,7 @@ func (b *SaramaKafkaBinder) Initialize(ctx context.Context) (err error) {
 				err = fmt.Errorf("failed to initialize Binder: TLS Auth is enabled but certificate manager is not provisioned")
 				return
 			}
-			b.tlsSource, err = b.tlsCertsManager.Source(ctx, certs.WithSourceProperties(&b.properties.Net.Tls.Config))
+			b.tlsSource, err = b.tlsCertsManager.Source(ctx, certs.WithSourceProperties(&b.properties.Net.Tls.Certs))
 			if err != nil {
 				logger.WithContext(ctx).Errorf("failed to get tls provider: %s", err.Error())
 				return
