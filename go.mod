@@ -15,7 +15,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.0
 	github.com/cockroachdb/copyist v1.6.0
 	github.com/crewjam/httperr v0.2.0
-	github.com/crewjam/saml v0.4.13
+	github.com/crewjam/saml v0.4.14
 	github.com/getkin/kin-openapi v0.120.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/gin-gonic/gin v1.9.1
