@@ -809,3 +809,11 @@ their corresponding packages.
 
 go-lanai is a CLI building tool that provides various commands:
 - [codegen](cmd/lanai-cli/codegen/README.md) - provides a code generator that generates code based on an OpenAPI contract
+
+# Contributing to `go-lanai`
+
+Thanks for your interest in contributing! There are many ways to contribute to this project. 
+
+Get started with our [Contributing Guide (WIP)](CONTRIBUTING.md).
+
+Please note that our contributing guide is still "work in progress".
