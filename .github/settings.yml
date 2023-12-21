@@ -11,11 +11,11 @@ repository:
   # homepage: 
 
   # Updates the default branch for this repository.
-  default_branch: develop
+  default_branch: main
 
   # Either `true` to enable automated security fixes, or `false` to disable
   # automated security fixes.
-  enable_automated_security_fixes: true
+  enable_automated_security_fixes: false
 
   # Either `true` to enable vulnerability alerts, or `false` to disable
   # vulnerability alerts.
