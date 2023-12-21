@@ -31,8 +31,14 @@ teams:
     # * `maintain` - Recommended for project managers who need to manage the repository without access to sensitive or destructive actions.
     permission: admin
 
-  - name: go-lanai
+  - name: go-lanai-admins
     permission: admin
+
+  - name: go-lanai-maintainers
+    permission: maintain
+
+  - name: go-lanai
+    permission: triage
 
 # Collaborators: give specific users access to this repository.
 # See https://docs.github.com/en/rest/reference/collaborators for available options
