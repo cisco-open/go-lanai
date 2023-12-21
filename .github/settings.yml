@@ -1,0 +1,43 @@
+repository:
+  # See https://developer.github.com/v3/repos/#edit for all available settings.
+
+  # The name of the repository. Changing this will rename the repository
+  name: go-lanai
+
+  # A short description of the repository that will show up on GitHub
+  description: Go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy
+
+  # A URL with more information about the repository
+  # homepage: 
+
+  # Updates the default branch for this repository.
+  default_branch: develop
+
+  # Either `true` to enable automated security fixes, or `false` to disable
+  # automated security fixes.
+  enable_automated_security_fixes: true
+
+  # Either `true` to enable vulnerability alerts, or `false` to disable
+  # vulnerability alerts.
+  enable_vulnerability_alerts: true
+
+# See https://docs.github.com/en/rest/reference/teams#add-or-update-team-repository-permissions for available options
+teams:
+  - name: org-admins
+    # The permission to grant the team. Can be one of:
+    # * `pull` - can pull, but not push to or administer this repository.
+    # * `push` - can pull and push, but not administer this repository.
+    # * `admin` - can pull, push and administer this repository.
+    # * `maintain` - Recommended for project managers who need to manage the repository without access to sensitive or destructive actions.
+    permission: admin
+
+  - name: go-lanai
+    permission: maintain
+
+# Collaborators: give specific users access to this repository.
+# See https://docs.github.com/en/rest/reference/collaborators for available options
+collaborators: 
+  - username: stonedu1011
+    permission: push
+  - username: TimShi
+    permission: push
