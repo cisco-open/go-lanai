@@ -22,6 +22,14 @@ possible, and, if possible, a test case.
 **If you discover a security bug, please do not report it through GitHub. Instead, please see security procedures in
 [SECURITY.md](/SECURITY.md).**
 
+## Getting Started
+
+After cloning the repository, please follow following step to ensure your development environment is ready to make changes:
+
+1. If not installed, install `GNU Make`. 
+2. Run `make init` to setup environment, install required CLI tools and generate additional Makefile targets (`Makefile-Generated`)
+3. Run `make test` and `make lint` to veryfy that everything are ready to go
+
 ## Sending Pull Requests
 
 Before sending a new pull request, take a look at existing pull requests and issues to see if the proposed change or fix
