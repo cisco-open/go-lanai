@@ -33,7 +33,7 @@ func SimpleTranslationRegFunc(tag, template string) func(*validator.Validate, ut
 		return validate.RegisterTranslation(tag, trans, func(ut ut.Translator) error {
 			return ut.Add(tag, template, true)
 		}, func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T(tag, fe.Field())
+			t, _ := ut.T(tag, fe.Field(), fe.Param())
 			return t
 		})
 	}
