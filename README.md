@@ -1,4 +1,9 @@
+
+
 # Writing Applications Using Go-Lanai
+
+[![Tests](https://dl.circleci.com/status-badge/img/circleci/Pxc2QQeohWwetsEPzwUdxt/FZSsSe6fcymUjshnjuPU4T/tree/main.svg?style=shield&circle-token=489c1092a1463c01f31d862d7cd6e2d4c1d8f24d)](https://dl.circleci.com/status-badge/redirect/circleci/Pxc2QQeohWwetsEPzwUdxt/FZSsSe6fcymUjshnjuPU4T/tree/main)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/license/apache-2-0/)
 
 Go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy. A module represents a feature provided by go-lanai. 
 Go-lanai's module framework is built on top 

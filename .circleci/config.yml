@@ -2,25 +2,52 @@
 # See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/configuration-reference/#jobs
+orbs:
+  go: circleci/go@1.10.0
+
 jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/configuration-reference/#executor-job
+  test_and_verify:
+#    executor:
+#      name: go/default
+#      tag: '1.21-node'
     docker:
-      - image: cimg/base:stable
-    # Add steps to the job
-    # See: https://circleci.com/docs/configuration-reference/#steps
+      - image: cimg/go:1.21-node
     steps:
-      - checkout
+      - checkout # checkout source code
+      - go/load-cache # Load cached Go modules.
+      - run: "make init"
+      - go/save-cache # Save Go modules to cache.
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+          name: "Run Tests"
+          command: "make test"
+      - run:
+          name: "Static Code Analysis"
+          command: "make lint"
+      - run:
+          name: "Make Report"
+          command: "make report"
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows
 workflows:
-  say-hello-workflow:
+  verify_branch:
+    when:
+      and:
+        - equal: [ "api", << pipeline.trigger_source >> ] # Only triggered by API/UI
     jobs:
-      - say-hello
+      - test_and_verify:
+          name: "Test and Verify"
+          post-steps:
+            - store_test_results:
+                path: dist/junit-report.xml
+
+  verify_pr:
+    when:
+      and:
+        - matches:
+            pattern: "^pull_request$"
+            value: << pipeline.trigger_parameters.circleci.event_type >>
+        - false # We currently disable this workflows
+    jobs:
+      - test_and_verify
+
