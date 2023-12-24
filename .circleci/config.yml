@@ -26,20 +26,34 @@ jobs:
       - run:
           name: "Make Report"
           command: "make report"
+  noop:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+    steps:
+      - run: echo noop
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows
 workflows:
-  verify_branch:
+  manual_verify:
     when:
-      and:
-        - equal: [ "api", << pipeline.trigger_source >> ] # Only triggered by API/UI
+      equal: [ "api", << pipeline.trigger_source >> ] # Only triggered by API/UI
     jobs:
       - test_and_verify:
           name: "Test and Verify"
+          pre-steps:
+            - run: echo Triggered by << pipeline.trigger_parameters.circleci.actor_id >>
           post-steps:
             - store_test_results:
                 path: dist/junit-report.xml
+  auto_verify:
+    when:
+      not:
+        equal: [ "api", << pipeline.trigger_source >> ]
+    jobs:
+      - test_and_verify:
+          type: approval
 
   verify_pr:
     when:
