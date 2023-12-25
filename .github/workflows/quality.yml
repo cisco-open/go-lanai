@@ -25,23 +25,28 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test_and_verify:
+    name: Tests & Code Quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref || inputs.branch || 'main' }}
-      - name: Setup Go
+      - name: "Setup Go"
         uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache-dependency-path: "**/*.sum"
-      - name: Prepare
+      - name: "Prepare"
         run: make init
-      - name: Run Tests with Coverage
+        shell: bash
+      - name: "Run Tests with Coverage"
         run: make test report
-      - name: Code Quality Analysis
+        shell: bash
+      - name: "Code Quality Analysis"
         run: make test report
-      - name: Upload Report
+        shell: bash
+      - name: "Upload Report"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
