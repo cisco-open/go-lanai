@@ -38,14 +38,11 @@ jobs:
           go-version-file: 'go.mod'
           cache-dependency-path: "**/*.sum"
       - name: "Prepare"
-        run: make init
-        shell: bash
+        run: make init SHELL=/bin/bash
       - name: "Run Tests with Coverage"
-        run: make test report
-        shell: bash
+        run: make test report SHELL=/bin/bash
       - name: "Code Quality Analysis"
-        run: make test report
-        shell: bash
+        run: make test report SHELL=/bin/bash
       - name: "Upload Report"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4

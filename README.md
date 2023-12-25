@@ -1,6 +1,6 @@
 # Writing Applications Using Go-Lanai
 
-![Tests](https://github.com/OWNER/REPOSITORY/actions/workflows/quality.yml/badge.svg?branch=main)
+![Tests](https://github.com/cisco-open/go-lanai/actions/workflows/quality.yml/badge.svg?branch=main)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/license/apache-2-0/)
 
 Go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy. A module represents a feature provided by go-lanai. 
