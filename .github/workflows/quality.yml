@@ -1,0 +1,50 @@
+# This is a basic workflow that is manually triggered
+
+name: Test
+run-name: Quality Analysis triggered by ${{ github.actor }}
+
+# Controls when the action will run.
+on:
+  # PR verification, we disabled it for now
+#  pull_request:
+#    branches: [ "main" ]
+  # Workflow runs when manually triggered using the UI or API.
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Target branch'
+        default: 'main'
+        required: true
+        type: string
+      reason:
+        description: 'Specify a reason to manually trigger this workflow'
+        default: 'Unknown'
+        required: false
+        type: string
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test_and_verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || inputs.branch || 'main' }}
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: "**/*.sum"
+      - name: Prepare
+        run: make init
+      - name: Run Tests with Coverage
+        run: make test report
+      - name: Code Quality Analysis
+        run: make test report
+      - name: Upload Report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: dist/**
+          retention-days: 30
