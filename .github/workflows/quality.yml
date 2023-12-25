@@ -42,7 +42,7 @@ jobs:
       - name: Code Quality Analysis
         run: make test report
       - name: Upload Report
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: reports
