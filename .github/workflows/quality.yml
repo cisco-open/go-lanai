@@ -41,9 +41,9 @@ jobs:
           go-version-file: 'go.mod'
           cache-dependency-path: "**/*.sum"
       - name: "Prepare"
-        run: make init SHELL=/bin/bash && go install github.com/boumenot/gocover-cobertura@latest
+        run: make init SHELL=/bin/bash
       - name: "Run Tests with Coverage"
-        run: make test SHELL=/bin/bash && gocover-cobertura -by-files -ignore-files "$COVERAGE_EXCLUSION_REGEX" < dist/coverage.out > dist/cobertura-coverage.xml
+        run: make test report SHELL=/bin/bash ARGS="-coverpkg $(go list ./pkg/... | grep -v .*/test | grep -v .*_test | paste -sd ',' -)"
       - name: "Code Quality Analysis"
         run: make lint SHELL=/bin/bash
       - name: "Code Coverage Report"
@@ -57,6 +57,13 @@ jobs:
             format: markdown
             output: both
             thresholds: '50 70'
+      - name: "Coverage Badge"
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: gaelgirodon/ci-badges-action@v1
+        with:
+          gist-id: 82b48469578014fc69d5aa64ef0a443f
+          token: ${{ secrets.COVERAGE_BADGE_GIST_TOKEN }}
+          ref: true
       - name: "Upload Report"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
