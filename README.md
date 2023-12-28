@@ -1,7 +1,7 @@
 # Writing Applications Using Go-Lanai
 
-![Tests](https://github.com/cisco-open/go-lanai/actions/workflows/quality.yml/badge.svg?branch=main)
-![Coverage](https://img.shields.io/endpoint?label=Coverage&url=https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/raw/go-lanai-main-cobertura-coverage.json)
+![Tests](https://github.com/cisco-open/go-lanai/actions/workflows/ci.yml/badge.svg?branch=main)
+[![Coverage](https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/raw/go-lanai-main-coverage.svg)](https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/raw/go-lanai-main-coverage.md)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/license/apache-2-0/)
 
 Go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy. A module represents a feature provided by go-lanai. 

@@ -1,7 +1,7 @@
 # This is a basic workflow that is manually triggered
 
-name: Test
-run-name: Quality Analysis triggered by ${{ github.actor }}
+name: CI
+run-name: Tests and Quality Analysis triggered by ${{ github.actor }}
 
 # Controls when the action will run.
 on:
@@ -12,13 +12,13 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Target branch'
+        description: 'Target Branch'
         default: 'main'
         required: true
         type: string
       reason:
-        description: 'Specify a reason to manually trigger this workflow'
-        default: 'Unknown'
+        description: 'Reason of manually triggering this workflow'
+        default: 'Unspecified'
         required: false
         type: string
 
@@ -31,7 +31,7 @@ jobs:
     name: Tests & Code Quality
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref || inputs.branch || 'main' }}
@@ -43,7 +43,12 @@ jobs:
       - name: "Prepare"
         run: make init SHELL=/bin/bash
       - name: "Run Tests with Coverage"
-        run: make test report SHELL=/bin/bash ARGS="-coverpkg $(go list ./pkg/... | grep -v .*/test | grep -v .*_test | paste -sd ',' -)"
+        run: |
+          make test report SHELL=/bin/bash ARGS="-coverpkg $(go list ./pkg/... | grep -v .*/test | grep -v .*_test | paste -sd ',' -)"
+          go tool cover -func=dist/coverage.out -o dist/coverage-func.out
+          export COVERAGE=$(tac dist/coverage-func.out | grep -m 1 -E '([0-9.]+)' -o)
+          export COVERAGE_COLOR=$(([[ "${COVERAGE}" -ge "70" ]] && echo "green") || ([[ "${COVERAGE}" -lt "50" ]] && echo "red") || echo "yellow")
+          curl https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COVERAGE_COLOR} > dist/coverage-badge.svg
       - name: "Code Quality Analysis"
         run: make lint SHELL=/bin/bash
       - name: "Code Coverage Report"
@@ -52,25 +57,25 @@ jobs:
         with:
             filename: dist/cobertura-coverage.xml
             badge: true
-            fail_below_min: false
+            fail_below_min: true
             indicators: false
             format: markdown
             output: both
             thresholds: '50 70'
-      - name: "Coverage Badge"
+      - name: "Code Coverage Badge"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: gaelgirodon/ci-badges-action@v1
+        uses: exuanbo/actions-deploy-gist@v1
         with:
-          gist-id: 82b48469578014fc69d5aa64ef0a443f
           token: ${{ secrets.COVERAGE_BADGE_GIST_TOKEN }}
-          ref: true
-      - name: "Upload Report"
+          gist_id: 82b48469578014fc69d5aa64ef0a443f
+          gist_file_name: go-lanai-${{ github.head_ref || inputs.branch || 'main' }}-coverage.svg
+          file_path: dist/coverage-badge.svg
+      - name: "Upload Reports"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v4
+        uses: exuanbo/actions-deploy-gist@v1
         with:
-          name: Reports
-          path: |
-            dist/cobertura-coverage.xml
-            dist/junit-report.xml
-            code-coverage-results.md
-          retention-days: 30
+          token: ${{ secrets.COVERAGE_BADGE_GIST_TOKEN }}
+          gist_id: 82b48469578014fc69d5aa64ef0a443f
+          gist_file_name: go-lanai-${{ github.head_ref || inputs.branch || 'main' }}-coverage.md
+          file_path: code-coverage-results.md
+
