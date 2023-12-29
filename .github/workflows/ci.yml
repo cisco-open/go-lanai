@@ -21,6 +21,16 @@ on:
         default: 'Unspecified'
         required: false
         type: string
+      low_cov:
+        description: 'Coverage percentage to pass'
+        default: '50'
+        required: false
+        type: int
+      high_cov:
+        description: 'Coverage percentage to warn'
+        default: '70'
+        required: false
+        type: int
 
 env:
   COVERAGE_EXCLUSION_REGEX: ^(.*\/test\/.*)|(.*\/cmd\/.*)|(.*\/testdata\/.*)
@@ -46,8 +56,8 @@ jobs:
         run: |
           make test report SHELL=/bin/bash ARGS="-coverpkg $(go list ./pkg/... | grep -v .*/test | grep -v .*_test | paste -sd ',' -)"
           go tool cover -func=dist/coverage.out -o dist/coverage-func.out
-          export COVERAGE=$(tac dist/coverage-func.out | grep -m 1 -E '([0-9.]+)' -o)
-          export COVERAGE_COLOR=$(([[ "${COVERAGE}" -ge "70" ]] && echo "green") || ([[ "${COVERAGE}" -lt "50" ]] && echo "red") || echo "yellow")
+          export COVERAGE=`tac dist/coverage-func.out | grep -m 1 -E '([0-9.]+)' -o`
+          export COVERAGE_COLOR=`((( `bc -e "${COVERAGE} >= ${{ inputs.high_cov }}"` )) && echo "green") || ((( `bc -e "${COVERAGE} < ${{ inputs.low_cov }}"` )) && echo "red") || echo "yellow"`
           curl https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COVERAGE_COLOR} > dist/coverage-badge.svg
       - name: "Code Quality Analysis"
         run: make lint SHELL=/bin/bash
@@ -61,7 +71,7 @@ jobs:
             indicators: false
             format: markdown
             output: both
-            thresholds: '50 70'
+            thresholds: "${{ inputs.low_cov }} ${{ inputs.high_cov }}"
       - name: "Code Coverage Badge"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: exuanbo/actions-deploy-gist@v1
