@@ -56,8 +56,8 @@ jobs:
         run: |
           make test report SHELL=/bin/bash ARGS="-coverpkg $(go list ./pkg/... | grep -v .*/test | grep -v .*_test | paste -sd ',' -)"
           go tool cover -func=dist/coverage.out -o dist/coverage-func.out
-          export COVERAGE=`tac dist/coverage-func.out | grep -m 1 -E '([0-9.]+)' -o`
-          export COVERAGE_COLOR=`((( `bc -e "${COVERAGE} >= ${{ inputs.high_cov }}"` )) && echo "green") || ((( `bc -e "${COVERAGE} < ${{ inputs.low_cov }}"` )) && echo "red") || echo "yellow"`
+          export COVERAGE=$(tac dist/coverage-func.out | grep -m 1 -E '([0-9.]+)' -o)
+          export COVERAGE_COLOR=$(((( `bc -e "${COVERAGE} >= ${{ inputs.high_cov }}"` )) && echo "green") || ((( `bc -e "${COVERAGE} < ${{ inputs.low_cov }}"` )) && echo "red") || echo "yellow")
           curl https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COVERAGE_COLOR} > dist/coverage-badge.svg
       - name: "Code Quality Analysis"
         run: make lint SHELL=/bin/bash
