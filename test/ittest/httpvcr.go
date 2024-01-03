@@ -47,7 +47,8 @@ func WithHttpPlayback(t *testing.T, opts ...HTTPVCROptions) test.Options {
 			NewRecorderHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook),
 			NewRecorderHook(SanitizingHook(), recorder.BeforeSaveHook),
 		},
-		indexAwareWrapper: newIndexAwareMatcherWrapper(), // enforce order
+		SkipRequestLatency: true,
+		indexAwareWrapper:  newIndexAwareMatcherWrapper(), // enforce order
 	}
 
 	var di RecorderDI
@@ -113,11 +114,13 @@ func AdditionalMatcherOptions(ctx context.Context, opts ...RecordMatcherOptions)
 // Note: this option has no effect to tests using DisableHttpRecordingMode
 // e.g.
 // <code>
-// 	func TestMain(m *testing.M) {
+//
+//	func TestMain(m *testing.M) {
 //		suitetest.RunTests(m,
 //			PackageHttpRecordingMode(),
 //		)
-// 	}
+//	}
+//
 // </code>
 func PackageHttpRecordingMode() suitetest.PackageOptions {
 	return suitetest.Setup(func() error {
@@ -129,7 +132,8 @@ func PackageHttpRecordingMode() suitetest.PackageOptions {
 // Normally recording mode should be enabled via `go test` argument `-record-http`
 // Note:	Record mode is forced off if flag is set to "-record-http=false" explicitly
 // IMPORTANT:	When Record mode is enabled, all sub tests interact with actual HTTP remote service.
-// 				So use this mode on LOCAL DEV ONLY
+//
+//	So use this mode on LOCAL DEV ONLY
 func HttpRecordingMode() HTTPVCROptions {
 	return func(opt *HTTPVCROption) {
 		opt.Mode = ModeRecording
@@ -184,6 +188,13 @@ func DisableHttpRecordOrdering() HTTPVCROptions {
 func HttpTransport(transport *http.Transport) HTTPVCROptions {
 	return func(opt *HTTPVCROption) {
 		opt.RealTransport = transport
+	}
+}
+
+// ApplyHttpLatency apply recorded HTTP latency. By default, HTTP latency is not applied for faster test run. This option has no effect in recording mode
+func ApplyHttpLatency() HTTPVCROptions {
+	return func(opt *HTTPVCROption) {
+		opt.SkipRequestLatency = false
 	}
 }
 
@@ -328,7 +339,7 @@ func toRecorderOptions(opt HTTPVCROption) *recorder.Options {
 		CassetteName:       name,
 		Mode:               mode,
 		RealTransport:      opt.RealTransport,
-		SkipRequestLatency: true,
+		SkipRequestLatency: opt.SkipRequestLatency,
 	}
 }
 

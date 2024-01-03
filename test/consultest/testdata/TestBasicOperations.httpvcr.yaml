@@ -1,0 +1,144 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 4
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: good
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "0"
+        url: http://localhost:8500/v1/kv/test/new-value
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+        url: http://localhost:8500/v1/kv/test/new-value
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 109
+        uncompressed: false
+        body: '[{"LockIndex":0,"Key":"test/new-value","Flags":0,"Value":"Z29vZA==","CreateIndex":99439,"ModifyIndex":99439}]'
+        headers:
+            Content-Length:
+                - "109"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "99439"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+        url: http://localhost:8500/v1/kv/test?recurse=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 109
+        uncompressed: false
+        body: '[{"LockIndex":0,"Key":"test/new-value","Flags":0,"Value":"Z29vZA==","CreateIndex":99439,"ModifyIndex":99439}]'
+        headers:
+            Content-Length:
+                - "109"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "99439"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs

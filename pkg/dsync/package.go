@@ -50,7 +50,7 @@ func provideSyncManager(di syncDI) (SyncManager, error) {
 	if di.Conn == nil {
 		return nil, fmt.Errorf("*consul.Connection is required for 'dsync' package")
 	}
-	return newConsulLockManager(di.AppCtx, di.Conn), nil
+	return NewConsulLockManager(di.AppCtx, di.Conn), nil
 }
 
 /**************************
