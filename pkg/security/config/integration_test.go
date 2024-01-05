@@ -116,7 +116,7 @@ func IntegrationTestMocksProvider(opts ...IntegrationTestOption) func(Integratio
 		}, "id-tenant-root")
 
 		integrationTestOut := IntegrationTestOut{
-			DiscoveryCustomizers: &discovery.Customizers{Customizers: utils.NewSet()},
+			DiscoveryCustomizers: &discovery.Customizers{},
 			IdpManager:           testdata.NewMockedIDPManager(),
 			AccountStore: sectest.NewMockedAccountStore(
 				testdata.MapValues(di.Mocking.Accounts),
