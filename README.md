@@ -1,11 +1,11 @@
-# Writing Applications Using Go-Lanai
+# go-lanai
 
 ![Tests](https://github.com/cisco-open/go-lanai/actions/workflows/ci.yml/badge.svg?branch=main)
 [![Coverage](https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/raw/go-lanai-main-coverage.svg)](https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/#file-go-lanai-main-coverage-md)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/license/apache-2-0/)
 
-Go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy. A module represents a feature provided by go-lanai. 
-Go-lanai's module framework is built on top 
+go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy. A module represents a feature provided by go-lanai. 
+go-lanai's module framework is built on top 
 of the [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) framework provided by [uber-go/fx](https://github.com/uber-go/fx). 
 Understanding of the fx framework is needed to understand the rest of the documentation, especially [fx.Provide](https://pkg.go.dev/go.uber.org/fx#Provide) and [fx.Invoke](https://pkg.go.dev/go.uber.org/fx#Invoke) 
 
@@ -36,10 +36,10 @@ Modules provided by go-lanai includes:
 # Quick Start
 
 In this quick start guide, we use an application that supports SAML single sign on to walk through the process of creating a web application
-using go-lanai. At the end of this documentation. You will have a web application that has a private API. You can use single sign on
+using go-lanai. By the end of this documentation, you will have a web application with a private API. You can use single sign on
 to get access to this API. As we write the application, the corresponding module that is used will be explained in detail. This includes
 bootstrap, web and security. The security module has a list of submodules, each corresponding to a feature. The security features that will be
-covered by this document is access, session and saml login.
+covered by this document is access, session and SAML login.
 
 **Additional Reading**
 
@@ -53,7 +53,7 @@ process that leverages GNU Make.
 When writing a go-lanai application, the developer selects the go-lanai module they want to use. [Bootstrap](pkg/bootstrap/README.md) refers to the process 
 during which the application instantiate the components needed by the modules and wires them together. 
 
-In each Go-Lanai module, you can usually find a `Use()` function. This function registers the module with Go-Lanai's bootstrapper. 
+In each go-lanai module, you can usually find a `Use()` function. This function registers the module with go-lanai's bootstrapper. 
 The application code calls this method to signal that this module should be activated.
 
 Create a project with the following project structure. At the end of this step, you will have an empty application
@@ -177,7 +177,7 @@ info:
 
 ## Step 2: Add a REST API
 
-One of the common use case of Go-Lanai is to write a web application. The [web](pkg/web/README.md) facilitates this by abstracting the boilerplate code
+One of the common use case of go-lanai is to write a web application. The [web](pkg/web/README.md) facilitates this by abstracting the boilerplate code
 for running a web application, allowing application code to focus on writing the API endpoints. In this step, we will turn the application
 into a web application, and add a REST endpoint to it.
 
@@ -478,7 +478,7 @@ security:
 
 At this point, if you visit the endpoint again and look at the network traffic, you will see the request and response contains a session cookie.
 
-## Step 5: Add Saml Login
+## Step 5: Add SAML Login
 
 Enable the SAML Login feature so that when user visits the /hello endpoint, they will be redirected to the single sign on
 page first. This feature adds a number of middleware and endpoints to allow your application to act as a SAML service provider. See [SAML login feature](pkg/security/saml/sp)
@@ -486,7 +486,7 @@ for the list of middleware and endpoints added by this feature.
 
 **init/package.go**
 
-Activate the saml login module with ```samlsp.Use()```. We also add a ```fx.Provide(authserver.BindAuthServerProperties)```.
+Activate the SAML login module with ```samlsp.Use()```. We also add a ```fx.Provide(authserver.BindAuthServerProperties)```.
 This binds the auth related properties into a struct which we will use when configuring the SAML login feature on the web security instance.
 
 We update the ```configureSecurity``` method to take these property structs as dependencies.
@@ -512,7 +512,7 @@ func Use() {
 	webinit.Use()
 	security.Use()
 	redis.Use() //needs redis for session store
-	samlsp.Use() // enable this service to act as saml sp
+	samlsp.Use() // enable this service to act as SAML sp
 
 	bootstrap.AddOptions(
 		fx.Provide(authserver.BindAuthServerProperties), //using the property already defined in go-lanai for convenience
@@ -775,7 +775,7 @@ func (c *helloController) Hello(ctx context.Context) (interface{}, error) {
 ## What's Next
 
 In addition to the [boostrap](pkg/bootstrap/README.md), [security](pkg/security/README.md) and [web](pkg/web/README.md)
-that are covered in this document, Go-Lanai provides a number of modules that can be used for different use cases. 
+that are covered in this document, go-lanai provides a number of modules that can be used for different use cases. 
 
 If you are interested in modules that facilitate writing micro-services, take a look at these modules:
 
