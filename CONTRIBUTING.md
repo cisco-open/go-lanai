@@ -26,9 +26,12 @@ possible, and, if possible, a test case.
 
 After cloning the repository, please follow following step to ensure your development environment is ready to make changes:
 
-1. If not installed, install `GNU Make`. 
+1. If not installed, install [GNU Make](https://www.gnu.org/software/make/). For mac users `GNU Make` is included in the [Xcode](https://developer.apple.com/xcode/) installation. 
+Type `make --version` from the terminal to check if it's already installed on your system.
 2. Run `make init` to setup environment, install required CLI tools and generate additional Makefile targets (`Makefile-Generated`)
 3. Run `make test` and `make lint` to veryfy that everything are ready to go
+
+Please refer to [Developer docs](/docs/Develop.md) for further guidance. 
 
 ## Sending Pull Requests
 

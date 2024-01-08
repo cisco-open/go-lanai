@@ -1,4 +1,4 @@
-# Go-lanai Code Generator
+# go-lanai Code Generator
 
 Codegen will read an openAPI contract, and generate structs & controllers for your go-lanai project.
 

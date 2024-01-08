@@ -53,7 +53,7 @@ Multiple modules are separated by ","
 
 Example: `PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop` or `PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v4.0.0-50`
 
-Default Value: `cto-github.cisco.com/NFV-BU/go-lanai@develop` for Services, empty string for GO-Lanai libraries
+Default Value: `cto-github.cisco.com/NFV-BU/go-lanai@develop` for Services, empty string for go-lanai libraries
 
 > This variable is REQUIRED in many CI/CD targets unless specified explicitly
 
@@ -90,7 +90,7 @@ If the process is successful, all `make` targets also guarantee following:
 
 <br>
 
-# CI/CD Scenarios for GO-Lanai Libraries
+# CI/CD Scenarios for go-lanai Libraries
 
 Applicable to `cto-github.cisco.com/NFV-BU/go-lanai`
 
@@ -157,11 +157,11 @@ Do:
 
 <br>
 
-# CI/CD Scenarios for GO-Lanai Services
+# CI/CD Scenarios for go-lanai Services
 
 During development cycle, service depends on go-lanai project using branch name.
 For example, service is being developed in develop (or feature) branch, and go-lanai is being developed in develop (or feature) branch as well.
-Service may have a "replace" directive that points to a local checked out version of Go-Lanai to help facilitate develop.
+Service may have a "replace" directive that points to a local checked out version of go-lanai to help facilitate develop.
 
 During most CI/CD scenarios, the `make` target would attempt to "fix" `go.mod` and `go.sum` by dropping `replace` directive
 and update corresponding dependency versions. 
@@ -179,7 +179,7 @@ Variables:
 
 - `CLI_TAG` required and should match the `PRIVATE_MODS`
 - `VERSION` is not required  
-- `PRIVATE_MODS` is required if the PR only works on particular branch of GO-Lanai
+- `PRIVATE_MODS` is required if the PR only works on particular branch of go-lanai
 
 Do:
 
@@ -253,7 +253,7 @@ When Service is being distributed/built, the general CICD process is below:
 
 1. Create a local temporary branch for build. 
 
-2. Update go.mod file so that the dependency on Go-Lanai points to the latest from the matching Go-Lanai branch or a given Go-Lanai tag.
+2. Update go.mod file so that the dependency on go-lanai points to the latest from the matching go-lanai branch or a given go-lanai tag.
  
 3. Create a commit (commit A). This commit has go.mod updated. But this go.mod may still have the replace directive. This commit can be used
 if we want to merge the update back to the working branch.
