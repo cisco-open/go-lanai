@@ -18,6 +18,7 @@ type saramaProducer struct {
 	msgLogger    MessageLogger
 	interceptors []ProducerMessageInterceptor
 	syncProducer sarama.SyncProducer
+	readyCh      chan struct{}
 	closed       bool
 }
 
@@ -37,6 +38,7 @@ func newSaramaProducer(topic string, addrs []string, config *bindingConfig) (*sa
 		keyEncoder:   config.producer.keyEncoder,
 		msgLogger:    config.msgLogger,
 		interceptors: config.producer.interceptors,
+		readyCh:      make(chan struct{}),
 	}
 	return p, nil
 }
@@ -94,6 +96,10 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 	return
 }
 
+func (p *saramaProducer) ReadyCh() <-chan struct{} {
+	return p.readyCh
+}
+
 func (p *saramaProducer) Start(_ context.Context) error {
 	p.Lock()
 	defer p.Unlock()
@@ -108,6 +114,7 @@ func (p *saramaProducer) Start(_ context.Context) error {
 		return translateSaramaBindingError(e, "unable to start producer: %v", e)
 	}
 	p.syncProducer = internal
+	close(p.readyCh)
 	return nil
 }
 

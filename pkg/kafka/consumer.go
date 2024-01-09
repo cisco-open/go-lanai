@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/Shopify/sarama"
 	"sync"
@@ -122,7 +123,7 @@ func (g *saramaGroupConsumer) monitorGroupErrors(ctx context.Context, group sara
 			if !ok {
 				return
 			}
-			if e == sarama.ErrClosedConsumerGroup {
+			if errors.Is(e, sarama.ErrClosedConsumerGroup) {
 				return
 			}
 			logger.WithContext(ctx).Warnf("Consumer Group Error: %v", e)
@@ -142,7 +143,7 @@ func (g *saramaGroupConsumer) handleGroup(ctx context.Context, group sarama.Cons
 	for {
 		// `Consume` should be called inside an infinite loop, when a server-side re-balance happens, the consumer session will need to be recreated to get the new claims
 		if e := group.Consume(ctx, []string{g.topic}, gh); e != nil {
-			if e == sarama.ErrClosedConsumerGroup {
+			if errors.Is(e, sarama.ErrClosedConsumerGroup) {
 				return
 			}
 			logger.WithContext(ctx).Warnf("Consumer Error: %v", e)
@@ -150,6 +151,7 @@ func (g *saramaGroupConsumer) handleGroup(ctx context.Context, group sarama.Cons
 	}
 }
 
+// saramaGroupHandler implements sarama.ConsumerGroupHandler
 type saramaGroupHandler struct {
 	owner      *saramaGroupConsumer
 	dispatcher *saramaDispatcher
