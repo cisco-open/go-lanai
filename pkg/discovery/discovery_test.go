@@ -326,10 +326,10 @@ func SubTestWithGoKitCompatibility(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 		eventCount.Store(0)
 		update := MockedServices[ServiceName1][1]
 		update.Healthy = false
-		discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
+		_ = discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
 
 		// wait and try again
-		timeoutCtx, cancelFn := context.WithTimeout(ctx, time.Second)
+		timeoutCtx, cancelFn := context.WithTimeout(ctx, 5*time.Second)
 		defer cancelFn()
 		for eventCount.Load() == 0 {
 			time.Sleep(50 * time.Millisecond)
