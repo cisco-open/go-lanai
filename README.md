@@ -14,7 +14,7 @@ Modules provided by go-lanai includes:
 - [appconfig](pkg/appconfig/README.md)
 - [bootstrap](pkg/bootstrap/README.md)
 - consul
-- data
+- [data](pkg/data/README.md)
 - discovery
 - dsync
 - integrate
