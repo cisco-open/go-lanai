@@ -1,0 +1,8 @@
+tracing:
+  enabled: true
+  jaeger:
+    host: localhost
+    port: 6831
+  sampler:
+    enabled: true
+

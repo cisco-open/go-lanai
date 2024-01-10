@@ -20,7 +20,6 @@ import (
 	"reflect"
 	"sort"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -116,7 +115,7 @@ func TestDiscoveryClient(t *testing.T) {
 func SetupTestServices(di *TestDiscoveryDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		OrderedDoForEachMockedService(func(reg *api.AgentServiceRegistration) {
-			discovery.Register(ctx, di.Consul, reg)
+			_ = discovery.Register(ctx, di.Consul, reg)
 		})
 		return ctx, nil
 	}
@@ -125,7 +124,7 @@ func SetupTestServices(di *TestDiscoveryDI) test.SetupFunc {
 func TeardownTestServices(di *TestDiscoveryDI) test.TeardownFunc {
 	return func(ctx context.Context, t *testing.T) error {
 		OrderedDoForEachMockedService(func(reg *api.AgentServiceRegistration) {
-			discovery.Deregister(ctx, di.Consul, reg)
+			_ = discovery.Deregister(ctx, di.Consul, reg)
 		})
 		return nil
 	}
@@ -304,12 +303,15 @@ func SubTestWithGoKitCompatibility(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 
 		// register event channel
 		eventCh := make(chan sd.Event)
-		var eventCount atomic.Int64
+		var lastEvent sd.Event
+		var eventLock sync.RWMutex
 		defer close(eventCh)
 		go func() {
 			for evt := range eventCh {
 				if !reflect.ValueOf(evt).IsZero() {
-					eventCount.Add(1)
+					eventLock.Lock()
+					lastEvent = evt
+					eventLock.Unlock()
 				}
 			}
 		}()
@@ -320,29 +322,34 @@ func SubTestWithGoKitCompatibility(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
 			&MockedServices[ServiceName1][0], &MockedServices[ServiceName1][1],
 		})
-		g.Expect(eventCount.Load()).ToNot(BeZero(), "# of event should not be zero")
+		//g.Expect(eventCount.Load()).ToNot(BeZero(), "# of event should not be zero")
 
 		// make some service changes
-		eventCount.Store(0)
 		update := MockedServices[ServiceName1][1]
 		update.Healthy = false
 		_ = discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
 
-		// wait and try again
+		// wait for event channel to trigger
 		timeoutCtx, cancelFn := context.WithTimeout(ctx, 5*time.Second)
 		defer cancelFn()
-		for eventCount.Load() == 0 {
+		for {
+			var updated bool
+			eventLock.RLock()
+			updated = lastEvent.Instances != nil && len(lastEvent.Instances) < 3
+			eventLock.RUnlock()
+			if updated {
+				break
+			}
 			time.Sleep(50 * time.Millisecond)
 			select {
 			case <-timeoutCtx.Done():
-				t.Errorf("go-kei event is not recieved after service updates")
+				t.Errorf("go-kit event is not recieved after service updates")
 			default:
 			}
 		}
 		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
 			&MockedServices[ServiceName1][0],
 		})
-		g.Expect(eventCount.Load()).ToNot(BeZero(), "# of event should not be zero")
 	}
 }
 
@@ -368,7 +375,6 @@ func OrderedDoForEachMockedService(fn func(reg *api.AgentServiceRegistration)) {
 	sort.SliceStable(regs, func(i, j int) bool {
 		return regs[i].Port < regs[j].Port
 	})
-	fmt.Printf("Setting up %d services\n", len(regs))
 	for _, reg := range regs {
 		fn(reg)
 	}

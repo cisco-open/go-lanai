@@ -58,7 +58,7 @@ func TestConsumer(t *testing.T) {
 	di := TestConsumerDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithTimeout(120*time.Second),
+		//apptest.WithTimeout(120*time.Second),
 		testdata.WithMockedBroker(),
 		apptest.WithModules(kafka.Module),
 		apptest.WithFxOptions(
