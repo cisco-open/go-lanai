@@ -14,7 +14,6 @@ import (
 	"go.uber.org/fx"
 	"io"
 	"testing"
-	"time"
 )
 
 /*************************
@@ -34,7 +33,7 @@ func TestSpanOperator(t *testing.T) {
 	di := TestTracerDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithTimeout(120*time.Second),
+		//apptest.WithTimeout(120*time.Second),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestForceNewSpan(&di), "TestNewSpan"),
 		test.GomegaSubTest(SubTestNewOrDescendant(&di), "TestNewOrDescendant"),
