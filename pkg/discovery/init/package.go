@@ -58,12 +58,12 @@ func setupServiceRegistration(lc fx.Lifecycle,
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			customizers.Apply(ctx, registration)
-			discovery.Register(ctx, connection, registration)
+			_ = discovery.Register(ctx, connection, registration)
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
 			customizers.Apply(ctx, registration)
-			discovery.Deregister(ctx, connection, registration)
+			_ = discovery.Deregister(ctx, connection, registration)
 			return nil
 		},
 	})
