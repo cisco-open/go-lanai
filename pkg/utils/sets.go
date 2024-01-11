@@ -122,7 +122,9 @@ func (s StringSet) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	s.Add(values...)
+	if s != nil {
+		s.Add(values...)
+	}
 	return nil
 }
 
@@ -233,7 +235,9 @@ func (s Set) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	s.Add(values...)
+	if s != nil {
+		s.Add(values...)
+	}
 	return nil
 }
 
@@ -317,6 +321,8 @@ func (s GenericSet[T]) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	s.Add(values...)
+	if s != nil {
+		s.Add(values...)
+	}
 	return nil
 }
