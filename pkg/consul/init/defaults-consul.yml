@@ -1,0 +1,3 @@
+cloud:
+  consul:
+    token: ${cloud.consul.config.acl-token}
