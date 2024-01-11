@@ -60,7 +60,7 @@ func newSaramaEncoder(v interface{}, enc Encoder) sarama.Encoder {
 	}
 }
 
-func (w saramaEncoderWrapper) Encode() (ret []byte, err error) {
+func (w *saramaEncoderWrapper) Encode() (ret []byte, err error) {
 	if w.cache != nil {
 		return w.cache, nil
 	}
@@ -71,7 +71,7 @@ func (w saramaEncoderWrapper) Encode() (ret []byte, err error) {
 	return
 }
 
-func (w saramaEncoderWrapper) Length() int {
+func (w *saramaEncoderWrapper) Length() int {
 	data, e := w.Encode()
 	if e != nil {
 		return 0

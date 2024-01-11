@@ -123,6 +123,9 @@ type Producer interface {
 	// 	- Message
 	//  - any type of body, the body will be serialized using value encoder from options
 	Send(ctx context.Context, message interface{}, options ...MessageOptions) error
+
+	// ReadyCh is used to monitor producer status. The channel is closed once the Producer is ready to send messages.
+	ReadyCh() <-chan struct{}
 }
 
 type ProducerMessageInterceptor interface {

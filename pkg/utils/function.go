@@ -13,20 +13,26 @@ var (
 	typeError = reflect.TypeOf((*error)(nil)).Elem()
 )
 
+// A SupportedRecoverableFunc is a function that can be converted by RecoverableFunc
+type SupportedRecoverableFunc interface {
+	~func() | ~func() error
+}
+
 // RecoverableFunc wrap a panicing function with following signature
 // - func()
 // - func() error
 // into a func() error, where the recovered value is converted to error
 // This function panics if the given function has incorrect signature
-func RecoverableFunc(panicingFunc interface{}) func() error {
+func RecoverableFunc[T SupportedRecoverableFunc](panicingFunc T) func() error {
 	rv := reflect.ValueOf(panicingFunc)
 	rt := rv.Type()
-	if rt.Kind() != reflect.Func {
-		panic("unable to recover a non-function type")
-	}
-	if rt.NumIn() != 0 {
-		panic(fmt.Sprintf(errTmplIncorrectSignature, panicingFunc))
-	}
+	// Note: with generic signature, following checks are unnecessary
+	//if rt.Kind() != reflect.Func {
+	//	panic("unable to recover a non-function type")
+	//}
+	//if rt.NumIn() != 0 {
+	//	panic(fmt.Sprintf(errTmplIncorrectSignature, panicingFunc))
+	//}
 
 	var fn func() error
 	switch rt.NumOut() {
@@ -57,7 +63,7 @@ func RecoverableFunc(panicingFunc interface{}) func() error {
 				err = v
 			case nil:
 			default:
-				err = fmt.Errorf("unable to run gateway: %v", v)
+				err = fmt.Errorf("%v", v)
 			}
 		}()
 

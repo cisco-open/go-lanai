@@ -1,0 +1,24 @@
+application:
+  name: testservice
+  build:
+    version: 0.0.0
+    build-time: 2024-01-04T16:41:25-05:00
+
+server:
+  port: 8080
+  context-path: /test
+
+info:
+  app:
+    msx:
+      # defaults to this services version, can be overridden in consul via installer
+      version: ${info.app.version}
+      show-build-info: true
+    name: test-service
+    description: Test Service
+    version: ${application.build.version}
+    build-time: ${application.build.build-time}
+    attributes:
+      displayName: TestService
+      parent: platform
+      type: platform

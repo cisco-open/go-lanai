@@ -28,3 +28,10 @@ func (p *MockedProducer) Send(_ context.Context, message interface{}, _ ...kafka
 	})
 	return nil
 }
+
+func(p *MockedProducer) ReadyCh() <-chan struct{} {
+	// always ready
+	ch := make(chan struct{}, 1)
+	close(ch)
+	return ch
+}

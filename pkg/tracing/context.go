@@ -105,6 +105,7 @@ func WithTracer(tracer opentracing.Tracer) *SpanOperator {
 }
 
 // Setters
+
 func (op *SpanOperator) WithOpName(name string) *SpanOperator {
 	op.name = name
 	return op
@@ -121,6 +122,7 @@ func (op *SpanOperator) WithOptions(exts ...SpanOption) *SpanOperator {
 }
 
 // Operations
+
 func (op SpanOperator) UpdateCurrentSpan(ctx context.Context) {
 	span := SpanFromContext(ctx)
 	if span == nil {

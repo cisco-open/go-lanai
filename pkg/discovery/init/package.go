@@ -20,8 +20,8 @@ var Module = &bootstrap.Module {
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(discovery.BindDiscoveryProperties,
-			discovery.NewRegistration,
 			discovery.NewCustomizers,
+			provideRegistration,
 			provideDiscoveryClient),
 		fx.Invoke(setupServiceRegistration),
 	},
@@ -33,6 +33,16 @@ func init() {
 
 func Use() {
 	// does nothing. Allow service to include this module in main()
+}
+
+type regDI struct {
+	fx.In
+	AppContext          *bootstrap.ApplicationContext
+	DiscoveryProperties discovery.DiscoveryProperties
+}
+
+func provideRegistration(di regDI) *api.AgentServiceRegistration {
+	return discovery.NewRegistration(discovery.RegistrationWithProperties(di.AppContext, di.DiscoveryProperties))
 }
 
 func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, conn *consul.Connection, props discovery.DiscoveryProperties) discovery.Client {
@@ -48,12 +58,12 @@ func setupServiceRegistration(lc fx.Lifecycle,
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			customizers.Apply(ctx, registration)
-			discovery.Register(ctx, connection, registration)
+			_ = discovery.Register(ctx, connection, registration)
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
 			customizers.Apply(ctx, registration)
-			discovery.Deregister(ctx, connection, registration)
+			_ = discovery.Deregister(ctx, connection, registration)
 			return nil
 		},
 	})

@@ -1,0 +1,1 @@
+create table if not exists migration_migrator_test(id text not null primary key);

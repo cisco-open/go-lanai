@@ -17,6 +17,7 @@ func GetIp(iface string) (string, error) {
 	var ip net.IP
 	for _, i := range ifaces {
 		name := i.Name
+		// TODO this would match the first non-"utun" interface, need to investigate if this is intended
 		if iface != name && strings.Contains(name, "utun") {
 			continue
 		}

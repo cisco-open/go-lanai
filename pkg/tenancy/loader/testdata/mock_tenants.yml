@@ -1,0 +1,33 @@
+tenants:
+  - id: root
+  # Level 1
+  - id: A
+    parent-id: root
+  - id: B
+    parent-id: root
+  # Level 2
+  - id: A-1
+    parent-id: A
+  - id: A-2
+    parent-id: A
+  - id: B-1
+    parent-id: B
+  - id: B-2
+    parent-id: B
+  # Level 3
+  - id: A-1-1
+    parent-id: A-1
+  - id: A-1-2
+    parent-id: A-1
+  - id: A-2-1
+    parent-id: A-2
+  - id: A-2-2
+    parent-id: A-2
+  - id: B-1-1
+    parent-id: B-1
+  - id: B-1-2
+    parent-id: B-1
+  - id: B-2-1
+    parent-id: B-2
+  - id: B-2-2
+    parent-id: B-2

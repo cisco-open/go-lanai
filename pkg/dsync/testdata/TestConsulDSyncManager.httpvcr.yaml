@@ -1,0 +1,1833 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 72
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"2000ms","Name":"testapp","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "0"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"71d2f6a2-4c94-5ded-ca16-c309fe83fab9"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "1"
+        url: http://localhost:8500/v1/kv/try-lock-test?acquire=71d2f6a2-4c94-5ded-ca16-c309fe83fab9&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+        url: http://localhost:8500/v1/kv/try-lock-test?consistent=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 222
+        uncompressed: false
+        body: '[{"LockIndex":11,"Key":"try-lock-test","Flags":2837033986114203673,"Value":"eyJuYW1lIjoiZGlzdHJpYnV0ZWQgbG9jayAtIHRlc3RhcHAifQ==","Session":"71d2f6a2-4c94-5ded-ca16-c309fe83fab9","CreateIndex":905141,"ModifyIndex":905517}]'
+        headers:
+            Content-Length:
+                - "222"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905517"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 72
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"2000ms","Name":"testapp","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "3"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"7d63b49f-baf8-6bd3-d733-6d221c05dada"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "4"
+        url: http://localhost:8500/v1/kv/try-lock-test?acquire=7d63b49f-baf8-6bd3-d733-6d221c05dada&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 5
+        uncompressed: false
+        body: "false"
+        headers:
+            Content-Length:
+                - "5"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+        url: http://localhost:8500/v1/kv/try-lock-test?wait=600000ms
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 222
+        uncompressed: false
+        body: '[{"LockIndex":11,"Key":"try-lock-test","Flags":2837033986114203673,"Value":"eyJuYW1lIjoiZGlzdHJpYnV0ZWQgbG9jayAtIHRlc3RhcHAifQ==","Session":"71d2f6a2-4c94-5ded-ca16-c309fe83fab9","CreateIndex":905141,"ModifyIndex":905517}]'
+        headers:
+            Content-Length:
+                - "222"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905517"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "6"
+        url: http://localhost:8500/v1/kv/try-lock-test?flags=2837033986114203673&release=7d63b49f-baf8-6bd3-d733-6d221c05dada
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 5
+        uncompressed: false
+        body: "false"
+        headers:
+            Content-Length:
+                - "5"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "7"
+        url: http://localhost:8500/v1/kv/try-lock-test?flags=2837033986114203673&release=71d2f6a2-4c94-5ded-ca16-c309fe83fab9
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 72
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"1000ms","Name":"testapp","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "8"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"4a74e568-8194-c0c3-ca71-3819624a976a"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "9"
+        url: http://localhost:8500/v1/kv/lock-test?acquire=4a74e568-8194-c0c3-ca71-3819624a976a&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 10
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "10"
+        url: http://localhost:8500/v1/kv/lock-test?consistent=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 218
+        uncompressed: false
+        body: '[{"LockIndex":21,"Key":"lock-test","Flags":2837033986114203673,"Value":"eyJuYW1lIjoiZGlzdHJpYnV0ZWQgbG9jayAtIHRlc3RhcHAifQ==","Session":"4a74e568-8194-c0c3-ca71-3819624a976a","CreateIndex":905147,"ModifyIndex":905523}]'
+        headers:
+            Content-Length:
+                - "218"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905523"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 72
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"1000ms","Name":"testapp","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "11"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"41ca27ed-4533-52e7-f522-24573dff424e"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 12
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "12"
+        url: http://localhost:8500/v1/kv/lock-test?acquire=41ca27ed-4533-52e7-f522-24573dff424e&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 5
+        uncompressed: false
+        body: "false"
+        headers:
+            Content-Length:
+                - "5"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 13
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "13"
+        url: http://localhost:8500/v1/kv/lock-test?wait=600000ms
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 218
+        uncompressed: false
+        body: '[{"LockIndex":21,"Key":"lock-test","Flags":2837033986114203673,"Value":"eyJuYW1lIjoiZGlzdHJpYnV0ZWQgbG9jayAtIHRlc3RhcHAifQ==","Session":"4a74e568-8194-c0c3-ca71-3819624a976a","CreateIndex":905147,"ModifyIndex":905523}]'
+        headers:
+            Content-Length:
+                - "218"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905523"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 14
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "14"
+        url: http://localhost:8500/v1/kv/lock-test?flags=2837033986114203673&release=4a74e568-8194-c0c3-ca71-3819624a976a
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 15
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "15"
+        url: http://localhost:8500/v1/kv/lock-test?index=905523&wait=600000ms
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 119
+        uncompressed: false
+        body: '[{"LockIndex":21,"Key":"lock-test","Flags":2837033986114203673,"Value":null,"CreateIndex":905147,"ModifyIndex":905526}]'
+        headers:
+            Content-Length:
+                - "119"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905526"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 16
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "16"
+        url: http://localhost:8500/v1/kv/lock-test?acquire=41ca27ed-4533-52e7-f522-24573dff424e&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 17
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "17"
+        url: http://localhost:8500/v1/kv/lock-test?flags=2837033986114203673&release=41ca27ed-4533-52e7-f522-24573dff424e
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 18
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 77
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"1000ms","Name":"test-session","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "18"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"b9c24ee2-ebc6-4d12-3848-804cf6acf3c1"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 19
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "19"
+        url: http://localhost:8500/v1/kv/session-renew-test?acquire=b9c24ee2-ebc6-4d12-3848-804cf6acf3c1&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 20
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "20"
+        url: http://localhost:8500/v1/kv/session-renew-test?consistent=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 226
+        uncompressed: false
+        body: '[{"LockIndex":2,"Key":"session-renew-test","Flags":2837033986114203673,"Value":"eyJuYW1lIjoiZGlzdHJpYnV0ZWQgbG9jayAtIHRlc3RhcHAifQ==","Session":"b9c24ee2-ebc6-4d12-3848-804cf6acf3c1","CreateIndex":905488,"ModifyIndex":905530}]'
+        headers:
+            Content-Length:
+                - "226"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905530"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 21
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "21"
+        url: http://localhost:8500/v1/session/list
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 1161
+        uncompressed: false
+        body: '[{"ID":"41ca27ed-4533-52e7-f522-24573dff424e","Name":"testapp","Node":"9a1f4a6e47c7","LockDelay":1000000000,"Behavior":"delete","TTL":"10s","NodeChecks":["serfHealth"],"ServiceChecks":null,"CreateIndex":905524,"ModifyIndex":905524},{"ID":"4a74e568-8194-c0c3-ca71-3819624a976a","Name":"testapp","Node":"9a1f4a6e47c7","LockDelay":1000000000,"Behavior":"delete","TTL":"10s","NodeChecks":["serfHealth"],"ServiceChecks":null,"CreateIndex":905522,"ModifyIndex":905522},{"ID":"71d2f6a2-4c94-5ded-ca16-c309fe83fab9","Name":"testapp","Node":"9a1f4a6e47c7","LockDelay":2000000000,"Behavior":"delete","TTL":"10s","NodeChecks":["serfHealth"],"ServiceChecks":null,"CreateIndex":905516,"ModifyIndex":905516},{"ID":"7d63b49f-baf8-6bd3-d733-6d221c05dada","Name":"testapp","Node":"9a1f4a6e47c7","LockDelay":2000000000,"Behavior":"delete","TTL":"10s","NodeChecks":["serfHealth"],"ServiceChecks":null,"CreateIndex":905518,"ModifyIndex":905518},{"ID":"b9c24ee2-ebc6-4d12-3848-804cf6acf3c1","Name":"test-session","Node":"9a1f4a6e47c7","LockDelay":1000000000,"Behavior":"delete","TTL":"10s","NodeChecks":["serfHealth"],"ServiceChecks":null,"CreateIndex":905529,"ModifyIndex":905529}]'
+        headers:
+            Content-Length:
+                - "1161"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905529"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 22
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "22"
+        url: http://localhost:8500/v1/session/destroy/b9c24ee2-ebc6-4d12-3848-804cf6acf3c1
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 23
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "23"
+        url: http://localhost:8500/v1/kv/session-renew-test?consistent=&index=905530
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905531"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 24
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "24"
+        url: http://localhost:8500/v1/kv/session-renew-test?acquire=b9c24ee2-ebc6-4d12-3848-804cf6acf3c1&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 5
+        uncompressed: false
+        body: "false"
+        headers:
+            Content-Length:
+                - "5"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 25
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "25"
+        url: http://localhost:8500/v1/kv/session-renew-test?wait=600000ms
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905531"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 26
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "26"
+        url: http://localhost:8500/v1/kv/session-renew-test?acquire=b9c24ee2-ebc6-4d12-3848-804cf6acf3c1&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 73
+        uncompressed: false
+        body: 'raft apply failed: invalid session "b9c24ee2-ebc6-4d12-3848-804cf6acf3c1"'
+        headers:
+            Content-Length:
+                - "73"
+            Content-Type:
+                - text/plain; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 500 Internal Server Error
+        code: 500
+        duration: 200µs
+    - id: 27
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "27"
+        url: http://localhost:8500/v1/kv/session-renew-test?acquire=b9c24ee2-ebc6-4d12-3848-804cf6acf3c1&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 73
+        uncompressed: false
+        body: 'raft apply failed: invalid session "b9c24ee2-ebc6-4d12-3848-804cf6acf3c1"'
+        headers:
+            Content-Length:
+                - "73"
+            Content-Type:
+                - text/plain; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 500 Internal Server Error
+        code: 500
+        duration: 200µs
+    - id: 28
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "28"
+        url: http://localhost:8500/v1/session/renew/b9c24ee2-ebc6-4d12-3848-804cf6acf3c1
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 59
+        uncompressed: false
+        body: Session id 'b9c24ee2-ebc6-4d12-3848-804cf6acf3c1' not found
+        headers:
+            Content-Length:
+                - "59"
+            Content-Type:
+                - text/plain; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 29
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 77
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"1000ms","Name":"test-session","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "29"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"6e50d7ba-1375-7d3f-26a2-ad125b6b9046"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 30
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "30"
+        url: http://localhost:8500/v1/kv/session-renew-test?acquire=6e50d7ba-1375-7d3f-26a2-ad125b6b9046&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 31
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "31"
+        url: http://localhost:8500/v1/kv/session-renew-test?flags=2837033986114203673&release=6e50d7ba-1375-7d3f-26a2-ad125b6b9046
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 32
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 71
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"2000ms","Name":"testapp","TTL":"1s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "32"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 63
+        uncompressed: false
+        body: Invalid Session TTL '1000000000', must be between [10s=24h0m0s]
+        headers:
+            Content-Length:
+                - "63"
+            Content-Type:
+                - text/plain; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 500 Internal Server Error
+        code: 500
+        duration: 200µs
+    - id: 33
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 72
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"2000ms","Name":"testapp","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "33"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"d4146ff3-6816-067f-a450-494e5aa53fb5"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 34
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "34"
+        url: http://localhost:8500/v1/kv/cancelled-context-test?acquire=d4146ff3-6816-067f-a450-494e5aa53fb5&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 35
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "35"
+        url: http://localhost:8500/v1/kv/cancelled-context-test?consistent=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 230
+        uncompressed: false
+        body: '[{"LockIndex":3,"Key":"cancelled-context-test","Flags":2837033986114203673,"Value":"eyJuYW1lIjoiZGlzdHJpYnV0ZWQgbG9jayAtIHRlc3RhcHAifQ==","Session":"d4146ff3-6816-067f-a450-494e5aa53fb5","CreateIndex":905371,"ModifyIndex":905539}]'
+        headers:
+            Content-Length:
+                - "230"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905539"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 36
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 72
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"2000ms","Name":"testapp","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "36"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"6f43df10-a364-6628-59db-4cbba58da234"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 37
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 37
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"name":"distributed lock - testapp"}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "37"
+        url: http://localhost:8500/v1/kv/cancelled-context-test?acquire=6f43df10-a364-6628-59db-4cbba58da234&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 5
+        uncompressed: false
+        body: "false"
+        headers:
+            Content-Length:
+                - "5"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 38
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "38"
+        url: http://localhost:8500/v1/kv/cancelled-context-test?wait=600000ms
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 230
+        uncompressed: false
+        body: '[{"LockIndex":3,"Key":"cancelled-context-test","Flags":2837033986114203673,"Value":"eyJuYW1lIjoiZGlzdHJpYnV0ZWQgbG9jayAtIHRlc3RhcHAifQ==","Session":"d4146ff3-6816-067f-a450-494e5aa53fb5","CreateIndex":905371,"ModifyIndex":905539}]'
+        headers:
+            Content-Length:
+                - "230"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "905539"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 39
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "39"
+        url: http://localhost:8500/v1/kv/cancelled-context-test?flags=2837033986114203673&release=6f43df10-a364-6628-59db-4cbba58da234
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 5
+        uncompressed: false
+        body: "false"
+        headers:
+            Content-Length:
+                - "5"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 40
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "40"
+        url: http://localhost:8500/v1/kv/cancelled-context-test?flags=2837033986114203673&release=d4146ff3-6816-067f-a450-494e5aa53fb5
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
