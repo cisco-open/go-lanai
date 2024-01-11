@@ -1,0 +1,3 @@
+security:
+  cache: # security related cache - currently just for tenant hierarchy data
+    db-index: 0

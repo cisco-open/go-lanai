@@ -56,12 +56,12 @@ func ParseDuration(v string) time.Duration {
 
 type Duration time.Duration
 
-// encoding.TextMarshaler
+// MarshalText implements encoding.TextMarshaler
 func (d Duration) MarshalText() (text []byte, err error) {
 	return []byte(time.Duration(d).String()), nil
 }
 
-// encoding.TextUnmarshaler
+// UnmarshalText implements encoding.TextUnmarshaler
 func (d *Duration) UnmarshalText(text []byte) error {
 	if d == nil {
 		return errors.New("duration pointer is nil")

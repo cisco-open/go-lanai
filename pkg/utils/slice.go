@@ -65,18 +65,18 @@ func ConvertSlice(slice []interface{}) interface{} {
 		return slice
 	}
 
-	var success bool
+	var failed bool
 	vSlice := reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(slice[0])), len(slice), len(slice))
 	for i, v := range slice {
 		rv := reflect.ValueOf(v)
 		ev := vSlice.Index(i)
 		if !rv.Type().ConvertibleTo(ev.Type()) {
-			success = false
+			failed = true
 			break
 		}
 		ev.Set(rv.Convert(ev.Type()))
 	}
-	if success {
+	if !failed {
 		return vSlice.Interface()
 	}
 	return slice
@@ -98,6 +98,7 @@ func (s CommaSeparatedSlice) MarshalText() ([]byte, error) {
 // UnmarshalText encoding.TextUnmarshaler
 func (s *CommaSeparatedSlice) UnmarshalText(data []byte) error {
 	if string(data) == "" {
+		*s = make([]string, 0)
 		return nil
 	}
 	var result []string

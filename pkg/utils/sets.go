@@ -132,13 +132,12 @@ func (s StringSet) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON json.Unmarshaler
-func (s StringSet) UnmarshalJSON(data []byte) error {
+func (s *StringSet) UnmarshalJSON(data []byte) error {
 	values := make([]string, 0)
 	if err := json.Unmarshal(data, &values); err != nil {
 		return err
 	}
-
-	s.Add(values...)
+	*s = NewStringSet(values...)
 	return nil
 }
 
@@ -243,13 +242,12 @@ func (s Set) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON json.Unmarshaler
-func (s Set) UnmarshalJSON(data []byte) error {
+func (s *Set) UnmarshalJSON(data []byte) error {
 	values := make([]interface{}, 0)
 	if err := json.Unmarshal(data, &values); err != nil {
 		return err
 	}
-
-	s.Add(values...)
+	*s = NewSet(values...)
 	return nil
 }
 
@@ -327,12 +325,12 @@ func (s GenericSet[T]) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON json.Unmarshaler
-func (s GenericSet[T]) UnmarshalJSON(data []byte) error {
+func (s *GenericSet[T]) UnmarshalJSON(data []byte) error {
 	values := make([]T, 0)
 	if err := json.Unmarshal(data, &values); err != nil {
 		return err
 	}
 
-	s.Add(values...)
+	*s = NewGenericSet(values...)
 	return nil
 }

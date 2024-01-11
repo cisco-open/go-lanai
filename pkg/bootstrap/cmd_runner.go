@@ -29,6 +29,22 @@ const (
 
 type CliRunner func(ctx context.Context) error
 
+func (r CliRunner) WithOrder(order int) OrderedCliRunner {
+	return OrderedCliRunner{
+		Precedence: order,
+		CliRunner:  r,
+	}
+}
+
+type OrderedCliRunner struct {
+	Precedence int
+	CliRunner CliRunner
+}
+
+func (r OrderedCliRunner) Order() int {
+	return r.Precedence
+}
+
 type CliRunnerEnabler interface {
 	// EnableCliRunnerMode see bootstrap.EnableCliRunnerMode
 	EnableCliRunnerMode(runnerProviders ...interface{})
@@ -42,14 +58,26 @@ type CliRunnerLifecycleHooks interface {
 
 // EnableCliRunnerMode should be called before Execute(), otherwise it won't run.
 // "runnerProviders" are standard FX lifecycle functions that typically used with fx.Provide(...)
-// signigure of "runnerProviders", but it should returns CliRunner, otherwise it won't run
+// signigure of "runnerProviders", but it should returns CliRunner or OrderedCliRunner, otherwise it won't run
 //
-// example runner provider:
+// example of runner provider:
 //
 //	func myRunner(di OtherDependencies) CliRunner {
 //		return func(ctx context.Context) error {
 //			// Do your stuff
 //			return err
+//		}
+//	}
+//
+// example of ordered runner provider:
+//
+//	func myRunner(di OtherDependencies) OrderedCliRunner {
+//		return bootstrap.OrderedCliRunner{
+//			Precedence: 0,
+//			CliRunner:  func(ctx context.Context) error {
+//				// Do your stuff
+//				return err
+//			},
 //		}
 //	}
 //
@@ -59,6 +87,7 @@ type CliRunnerLifecycleHooks interface {
 //  3. All other "OnStop" are executed regardless if any hook function returns error (graceful shutdown)
 //  4. If any hook functions returns error, it reflected as non-zero process exit code
 //  5. Each cli runner are separately traced if tracing is enabled
+//  6. Any CliRunner without order is considered as having order 0
 //
 // Note: calling this function repeatedly would override previous invocation (i.e. only the last invocation takes effect)
 func EnableCliRunnerMode(runnerProviders ...interface{}) {
@@ -102,27 +131,36 @@ LOOP:
 
 type cliDI struct {
 	fx.In
-	Hooks   []CliRunnerLifecycleHooks `group:"bootstrap_cli_runner"`
-	Runners []CliRunner               `group:"bootstrap_cli_runner"`
+	Hooks          []CliRunnerLifecycleHooks `group:"bootstrap_cli_runner"`
+	Runners        []CliRunner               `group:"bootstrap_cli_runner"`
+	OrderedRunners []OrderedCliRunner        `group:"bootstrap_cli_runner"`
 }
 
 func cliRunnerExec(lc fx.Lifecycle, shutdowner fx.Shutdowner, di cliDI) {
 	order.SortStable(di.Hooks, order.OrderedFirstCompare)
+	runners := make([]OrderedCliRunner, len(di.Runners), len(di.Runners)+len(di.OrderedRunners))
+	for i := range di.Runners {
+		runners[i] = di.Runners[i].WithOrder(0)
+	}
+	for i := range di.OrderedRunners {
+		runners = append(runners, di.OrderedRunners[i])
+	}
+	order.SortStable(runners, order.OrderedFirstCompare)
 	var err error
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			for _, runner := range di.Runners {
+			for _, runner := range runners {
 				c := ctx
 				// before hook
 				for _, before := range di.Hooks {
-					c = before.Before(c, runner)
+					c = before.Before(c, runner.CliRunner)
 				}
 				// run
-				err = runner(c)
+				err = runner.CliRunner(c)
 
 				// after hook
 				for _, after := range di.Hooks {
-					c = after.After(c, runner, err)
+					c = after.After(c, runner.CliRunner, err)
 				}
 				if err != nil {
 					break

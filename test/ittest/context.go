@@ -59,12 +59,13 @@ var (
 
 type HTTPVCROptions func(opt *HTTPVCROption)
 type HTTPVCROption struct {
-	Name           string
-	Mode           Mode
-	SavePath       string
-	RecordMatching []RecordMatcherOptions
-	Hooks          []RecorderHook
-	RealTransport  http.RoundTripper
+	Name               string
+	Mode               Mode
+	SavePath           string
+	RecordMatching     []RecordMatcherOptions
+	Hooks              []RecorderHook
+	RealTransport      http.RoundTripper
+	SkipRequestLatency bool
 	// special record matcher that enforce interaction order.
 	// to change, use DisableHttpRecordOrdering
 	indexAwareWrapper *indexAwareMatcherWrapper

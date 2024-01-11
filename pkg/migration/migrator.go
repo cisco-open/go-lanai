@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-func migrate(ctx context.Context, r *Registrar, v Versioner) error {
+func Migrate(ctx context.Context, r *Registrar, v Versioner) error {
 	err := v.CreateVersionTableIfNotExist(ctx)
 	if err != nil {
 		return err

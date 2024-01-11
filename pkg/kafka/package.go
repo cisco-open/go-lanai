@@ -93,7 +93,5 @@ func initialize(di initDI) {
 		return
 	}
 
-	di.HealthRegistrar.MustRegister(&HealthIndicator{
-		binder: di.Binder.(SaramaBinder),
-	})
+	di.HealthRegistrar.MustRegister(NewHealthIndicator(di.Binder))
 }

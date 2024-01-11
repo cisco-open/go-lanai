@@ -55,8 +55,8 @@ const (
 	SecurityIntegrationPrecedence
 	SwaggerPrecedence
 	StartupSummaryPrecedence
+	// CommandLineRunnerPrecedence invocation should happen after everything else, in case it needs functionality from any other modules
 	CommandLineRunnerPrecedence
-	MigrationPrecedence //migration's invocation should happen after everything else, in case it needs functionality from any other modules
 )
 
 type Module struct {

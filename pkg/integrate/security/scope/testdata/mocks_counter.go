@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package scope_test
+package testdata
 
 import (
 	"context"

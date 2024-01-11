@@ -42,6 +42,12 @@ type ContextOption func(ctx context.Context) context.Context
 	Singleton Pattern
  **************************/
 
+// GlobalBootstrapper returns globally configured Bootstrapper.
+// This bootstrapper is the one that being used by Execute, any package-level function works against this instance
+func GlobalBootstrapper() *Bootstrapper {
+	return bootstrapper()
+}
+
 func bootstrapper() *Bootstrapper {
 	once.Do(func() {
 		bootstrapperInstance = NewBootstrapper()

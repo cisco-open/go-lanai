@@ -1,0 +1,219 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 72
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"Behavior":"delete","LockDelay":"2000ms","Name":"testapp","TTL":"10s"}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "0"
+        url: http://localhost:8500/v1/session/create
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 45
+        uncompressed: false
+        body: '{"ID":"fcc19d1f-cf7d-2f6b-c830-771213b2fd2f"}'
+        headers:
+            Content-Length:
+                - "45"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 241
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"build":{"build-time":"2024-01-02T15:15:10-05:00","hash":"Unknown","modules":{"go-lanai":{"path":"cto-github.cisco.com/NFV-BU/go-lanai","version":"develop"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "1"
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=fcc19d1f-cf7d-2f6b-c830-771213b2fd2f&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "2"
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=fcc19d1f-cf7d-2f6b-c830-771213b2fd2f
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 241
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: '{"build":{"build-time":"2024-01-02T15:15:10-05:00","hash":"Unknown","modules":{"go-lanai":{"path":"cto-github.cisco.com/NFV-BU/go-lanai","version":"develop"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "3"
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=fcc19d1f-cf7d-2f6b-c830-771213b2fd2f&flags=2837033986114203673
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "4"
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=fcc19d1f-cf7d-2f6b-c830-771213b2fd2f
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs

@@ -1,0 +1,20 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"DROP TABLE IF EXISTS \"migration_versions\";"	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnExec	2:"CREATE DATABASE IF NOT EXISTS testdb"	1:nil
+5=ConnQuery	2:"SELECT count(*) FROM information_schema.tables WHERE table_schema = CURRENT_SCHEMA() AND table_name = $1 AND table_type = $2"	1:nil
+6=RowsColumns	9:["count"]
+7=RowsNext	11:[4:0]	1:nil
+8=RowsNext	11:[]	7:"EOF"
+9=ConnExec	2:"CREATE TABLE \"migration_versions\" (\"version\" text,\"description\" text,\"execution_time\" bigint,\"installed_on\" timestamptz,\"success\" boolean,PRIMARY KEY (\"version\"))"	1:nil
+10=ConnQuery	2:"SELECT * FROM \"migration_versions\""	1:nil
+11=RowsColumns	9:["version","description","execution_time","installed_on","success"]
+12=ConnExec	2:"create table if not exists migration_package_test(id uuid default gen_random_uuid() not null primary key);"	1:nil
+13=ConnExec	2:"UPDATE \"migration_versions\" SET \"description\"=$1,\"execution_time\"=$2,\"installed_on\"=$3,\"success\"=$4 WHERE \"version\" = $5"	1:nil
+14=ConnExec	2:"INSERT INTO \"migration_versions\" (\"version\",\"description\",\"execution_time\",\"installed_on\",\"success\") VALUES ($1,$2,$3,$4,$5) ON CONFLICT (\"version\") DO UPDATE SET \"description\"=\"excluded\".\"description\",\"execution_time\"=\"excluded\".\"execution_time\",\"installed_on\"=\"excluded\".\"installed_on\",\"success\"=\"excluded\".\"success\""	1:nil
+15=ResultRowsAffected	4:1	1:nil
+16=ConnQuery	2:"SELECT * FROM \"migration_versions\" ORDER BY version ASC"	1:nil
+17=RowsNext	11:[2:"1.0.0.1",2:"A test migration step",4:987042,8:2024-01-11T09:21:58.137758Z,6:true]	1:nil
+18=ConnExec	2:"SELECT * FROM public.migration_package_test;"	1:nil
+
+"TestModuleInit"=1,2,3,4,3,5,6,7,6,8,9,3,10,11,11,8,12,3,13,3,14,15,16,11,11,17,8,18,3

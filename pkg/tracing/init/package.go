@@ -52,16 +52,24 @@ type TracerClosingHook *fx.Hook
 
 var defaultTracerCloser fx.Hook
 
-func init() {
+type kCtxDefaultTracerCloser struct {}
+
+// Use does nothing. Allow service to include this module in main()
+func Use() {
 	bootstrap.Register(Module)
+	EnableBootstrapTracing(bootstrap.GlobalBootstrapper())
+}
+
+// EnableBootstrapTracing enable bootstrap tracing on a given bootstrapper.
+// bootstrap.GlobalBootstrapper() should be used for regular application that uses bootstrap.Execute()
+func EnableBootstrapTracing(bootstrapper *bootstrap.Bootstrapper) {
 	// logger extractor
 	log.RegisterContextLogFields(tracing.TracingLogValuers)
 
-	// bootstrap tracing
 	appTracer, closer := tracing.NewDefaultTracer()
-	bootstrap.AddInitialAppContextOptions(instrument.MakeBootstrapTracingOption(appTracer, tracing.OpNameBootstrap))
-	bootstrap.AddStartContextOptions(instrument.MakeStartTracingOption(appTracer, tracing.OpNameStart))
-	bootstrap.AddStopContextOptions(instrument.MakeStopTracingOption(appTracer, tracing.OpNameStop))
+	bootstrapper.AddInitialAppContextOptions(instrument.MakeBootstrapTracingOption(appTracer, tracing.OpNameBootstrap))
+	bootstrapper.AddStartContextOptions(instrument.MakeStartTracingOption(appTracer, tracing.OpNameStart))
+	bootstrapper.AddStopContextOptions(instrument.MakeStopTracingOption(appTracer, tracing.OpNameStop))
 	defaultTracerCloser = fx.Hook{
 		OnStop: func(ctx context.Context) error {
 			logger.WithContext(ctx).Infof("closing default Tracer...")
@@ -71,14 +79,11 @@ func init() {
 			}
 			logger.WithContext(ctx).Infof("default Tracer closed")
 			return e
-
 		},
 	}
-}
-
-// Use does nothing. Allow service to include this module in main()
-func Use() {
-	// trigger side-effect
+	bootstrapper.AddInitialAppContextOptions(func(ctx context.Context) context.Context {
+		return context.WithValue(ctx, kCtxDefaultTracerCloser{}, defaultTracerCloser)
+	})
 }
 
 /**************************
@@ -99,11 +104,11 @@ func provideTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingPrope
 		return
 	}
 
-	tracers := []opentracing.Tracer{}
+	tracers := make([]opentracing.Tracer, 0, 2)
 	if props.Jaeger.Enabled {
 		tracer, closer := tracing.NewJaegerTracer(ctx, &props.Jaeger, &props.Sampler)
 		tracers = append(tracers, tracer)
-		ret.FxHook = TracerClosingHook(&fx.Hook{
+		ret.FxHook = &fx.Hook{
 			OnStop: func(ctx context.Context) error {
 				logger.WithContext(ctx).Infof("closing Jaeger Tracer...")
 				e := closer.Close()
@@ -113,7 +118,7 @@ func provideTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingPrope
 				logger.WithContext(ctx).Infof("Jaeger Tracer closed")
 				return e
 			},
-		})
+		}
 	}
 
 	if props.Zipkin.Enabled {
@@ -175,7 +180,11 @@ func initialize(lc fx.Lifecycle, di regDI) {
 
 	// graceful closer
 	if di.FxHook != nil {
-		lc.Append(fx.Hook(*di.FxHook))
-		lc.Append(fx.Hook(defaultTracerCloser))
+		lc.Append(*di.FxHook)
+		if defaultCloserFromCtx, ok := di.AppContext.Value(kCtxDefaultTracerCloser{}).(fx.Hook); ok {
+			lc.Append(defaultCloserFromCtx)
+		} else {
+			lc.Append(defaultTracerCloser)
+		}
 	}
 }

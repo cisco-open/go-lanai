@@ -30,6 +30,10 @@ type Registrar struct {
 	versions 	   utils.StringSet
 }
 
+func NewRegistrar() *Registrar {
+	return &Registrar{}
+}
+
 func (r *Registrar) AddMigrations(m... *Migration) {
 	r.migrationSteps = append(r.migrationSteps, m...)
 }

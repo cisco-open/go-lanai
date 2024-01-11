@@ -21,9 +21,9 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
+	"errors"
 	"fmt"
 	"github.com/go-kit/kit/sd"
-	kitconsul "github.com/go-kit/kit/sd/consul"
 	"github.com/hashicorp/consul/api"
 	"reflect"
 	"sort"
@@ -48,12 +48,13 @@ type ConsulInstancerOption struct {
 // ConsulInstancer implements sd.Instancer and Instancer.
 // It yields service for a serviceName in Consul.
 // Note: implementing sd.Instancer is for compatibility reason, using it involves addtional Lock locking.
-// 		 Try use Instancer's callback capability instead
+//
+//	Try use Instancer's callback capability instead
 type ConsulInstancer struct {
-	readyCond 	*sync.Cond
+	readyCond   *sync.Cond
 	cacheMtx    sync.RWMutex // RW Lock for cache
 	stateMtx    sync.RWMutex // RW Mutext for state, such as start/stop, callback/subscription update
-	client      kitconsul.Client
+	consul      *consul.Connection
 	serviceName string
 	selector    InstanceMatcher
 	looper      *loop.Loop
@@ -69,14 +70,13 @@ type ConsulInstancer struct {
 
 // NewConsulInstancer returns a customized Consul instancer that publishes service for the
 // requested serviceName. It only returns service for which the passed tags are present.
-//func NewConsulInstancer(ctx context.Context, client kitconsul.Client, logger log.Logger, service string, tags []string, passingOnly bool) *ConsulInstancer {
 func NewConsulInstancer(ctx context.Context, opts ...ConsulInstancerOptions) *ConsulInstancer {
 	opt := ConsulInstancerOption{}
 	for _, f := range opts {
 		f(&opt)
 	}
 	i := &ConsulInstancer{
-		client:      kitconsul.NewClient(opt.ConsulConnection.Client()),
+		consul:      opt.ConsulConnection,
 		serviceName: opt.ServiceName,
 		selector:    opt.Selector,
 		logger:      opt.Logger,
@@ -112,7 +112,7 @@ func (i *ConsulInstancer) Instances(matcher InstanceMatcher) (ret []*Instance, e
 	defer i.cacheMtx.RUnlock()
 
 	svc := i.service()
-	if i.loopCtx.Err() == context.Canceled {
+	if errors.Is(i.loopCtx.Err(), context.Canceled) {
 		// looper is stopped, we can't trust our cached result anymore
 		return []*Instance{}, ErrInstancerStopped
 	} else if svc.Err != nil {
@@ -145,7 +145,7 @@ func (i *ConsulInstancer) RegisterCallback(id interface{}, cb Callback) {
 	i.stateMtx.Lock()
 	i.callbacks[id] = cb
 	i.stateMtx.Unlock()
-	cb(i)
+	//cb(i)
 }
 
 func (i *ConsulInstancer) DeregisterCallback(id interface{}) {
@@ -193,7 +193,7 @@ func (i *ConsulInstancer) Deregister(ch chan<- sd.Event) {
 // service is not goroutine-safe and returns non-nil *Service.
 // It would wait until first resolveInstancesTask finished and *Service become available
 func (i *ConsulInstancer) service() (svc *Service) {
-	for ; !i.cache.Has(i.serviceName);  {
+	for !i.cache.Has(i.serviceName) {
 		i.readyCond.Wait()
 	}
 	return i.cache.Get(i.serviceName)
@@ -217,7 +217,8 @@ func (i *ConsulInstancer) resolveInstancesTask() loop.TaskFunc {
 		opts := &api.QueryOptions{
 			WaitIndex: lastIndex,
 		}
-		entries, meta, e := i.client.Service(i.serviceName, "", false, opts.WithContext(ctx))
+		//entries, meta, e := i.client.Service(i.serviceName, "", false, opts.WithContext(ctx))
+		entries, meta, e := i.consul.Client().Health().Service(i.serviceName, "", false, opts.WithContext(ctx))
 
 		i.lastMeta = meta
 		i.processResolvedServiceEntries(ctx, entries, e)
@@ -356,9 +357,12 @@ func (b *kitBroadcaster) deregister(c chan<- sd.Event) {
 	delete(b.chs, c)
 }
 
-/***********************
-	Helpers
- ***********************/
+/*
+**********************
+
+		Helpers
+	 **********************
+*/
 func makeInstances(entries []*api.ServiceEntry, selector InstanceMatcher) []*Instance {
 	instances := make([]*Instance, 0)
 	for _, entry := range entries {

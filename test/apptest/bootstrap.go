@@ -20,6 +20,7 @@ import (
 	"context"
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"embed"
 	"github.com/spf13/cobra"
@@ -97,12 +98,16 @@ func NewFxTestRunner() test.InternalRunner {
 	}
 }
 
-func newTestCliRunner(t *test.T) bootstrap.CliRunner {
-	return func(ctx context.Context) error {
-		// run test
-		test.InternalRunSubTests(ctx, t)
-		// Note: in case of failed tests, we don't return error. GO's testing framework should be able to figure it out from t.Failed()
-		return nil
+func newTestCliRunner(t *test.T) bootstrap.OrderedCliRunner {
+	return bootstrap.OrderedCliRunner{
+		// Test runner always run last
+		Precedence: order.Lowest,
+		CliRunner: func(ctx context.Context) error {
+			// run test
+			test.InternalRunSubTests(ctx, t)
+			// Note: in case of failed tests, we don't return error. GO's testing framework should be able to figure it out from t.Failed()
+			return nil
+		},
 	}
 }
 
@@ -129,7 +134,7 @@ func testTeardown(ctx context.Context, t *testing.T, hooks []test.Hook) {
 
 func mergeInitContext(sources ...context.Context) bootstrap.ContextOption {
 	return func(ctx context.Context) context.Context {
-		srcs := make([]context.Context, len(sources) + 1)
+		srcs := make([]context.Context, len(sources)+1)
 		srcs[0] = ctx
 		for i := range sources {
 			srcs[i+1] = sources[i]

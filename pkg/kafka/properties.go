@@ -121,10 +121,10 @@ type ProvisioningProperties struct {
 	// AutoCreateTopic when topic doesn't exist, whether attempt to create one
 	AutoCreateTopic *bool `json:"auto-create-topic"`
 
-	// AutoAddPartitions when actual partition counts is less than partitionCount, whether attempt to add more partitions
+	// AutoAddPartitions when actual partition counts is less than PartitionCount, whether attempt to add more partitions
 	AutoAddPartitions *bool `json:"auto-add-partitions"`
 
-	// allowLowerPartitions when actual partition counts is less than partitionCount but autoAddPartitions is false,
+	// AllowLowerPartitions when actual partition counts is less than PartitionCount but AutoAddPartitions is false,
 	// whether return an error
 	AllowLowerPartitions *bool `json:"allow-lower-partitions"`
 

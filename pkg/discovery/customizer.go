@@ -19,7 +19,6 @@ package discovery
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
 	"fmt"
 	"github.com/hashicorp/consul/api"
@@ -30,14 +29,20 @@ type Customizer interface {
 	Customize(ctx context.Context, reg *api.AgentServiceRegistration)
 }
 
+type CustomizerFunc func(ctx context.Context, reg *api.AgentServiceRegistration)
+
+func (fn CustomizerFunc) Customize(ctx context.Context, reg *api.AgentServiceRegistration) {
+	fn(ctx, reg)
+}
+
 type Customizers struct {
-	Customizers utils.Set
+	Customizers []Customizer
 	applied bool
 }
 
 func NewCustomizers(ctx *bootstrap.ApplicationContext) *Customizers {
 	return &Customizers{
-		Customizers: utils.NewSet(NewDefaultCustomizer(ctx), buildInfoDiscoveryCustomizer{}),
+		Customizers: []Customizer{NewDefaultCustomizer(ctx), buildInfoDiscoveryCustomizer{}},
 	}
 }
 
@@ -45,7 +50,7 @@ func (r *Customizers) Add(c Customizer) {
 	if r.applied {
 		panic(errors.New("cannot add consul registration customizer because other customization has already been applied"))
 	}
-	r.Customizers.Add(c)
+	r.Customizers = append(r.Customizers, c)
 }
 
 func (r *Customizers) Apply(ctx context.Context, registration *api.AgentServiceRegistration) {
@@ -56,7 +61,7 @@ func (r *Customizers) Apply(ctx context.Context, registration *api.AgentServiceR
 		r.applied = true
 	}()
 
-	for c, _ := range r.Customizers {
+	for _, c := range r.Customizers {
 		c.(Customizer).Customize(ctx, registration)
 	}
 }

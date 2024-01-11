@@ -21,6 +21,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/xsync"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/consul/api"
 	"sync"
@@ -51,7 +52,7 @@ type ConsulSessionOption struct {
 	RetryDelay time.Duration
 }
 
-func newConsulLockManager(ctx *bootstrap.ApplicationContext, conn *consul.Connection, opts ...ConsulSessionOptions) (ret *ConsulSyncManager) {
+func NewConsulLockManager(ctx *bootstrap.ApplicationContext, conn *consul.Connection, opts ...ConsulSessionOptions) (ret *ConsulSyncManager) {
 	ret = &ConsulSyncManager{
 		appCtx: ctx,
 		client: conn.Client(),
@@ -236,10 +237,10 @@ func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) err
 		// goroutine to ensure a session stays valid.
 		wOpts := (*api.WriteOptions)(nil).WithContext(ctx)
 		e := m.client.Session().RenewPeriodic(m.option.TTL.String(), session, wOpts, ctx.Done())
-		switch e {
-		case nil:
+		switch {
+		case e == nil:
 			// just continue
-		case api.ErrSessionExpired:
+		case errors.Is(e, api.ErrSessionExpired):
 			logger.WithContext(ctx).Warnf("session expired")
 			return e
 		default:

@@ -103,3 +103,12 @@ func (c *testFxContext) Value(key interface{}) interface{} {
 	}
 	return c.Context.Value(key)
 }
+
+// TestBootstrapper returns current *bootstrap.Bootstrapper of the test context
+func TestBootstrapper(ctx context.Context) *bootstrap.Bootstrapper {
+	tb, ok :=  ctx.Value(ctxKeyTestBootstrapper).(*testBootstrapper)
+	if ok {
+		return &tb.Bootstrapper
+	}
+	panic("TestBootstrapper is used without apptest.Bootstrap()")
+}

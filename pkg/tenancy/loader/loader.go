@@ -42,19 +42,16 @@ func NewLoader(rc redis.Client, store TenantHierarchyStore, accessor tenancy.Acc
 func (l *TenancyLoader) LoadTenantHierarchy(ctx context.Context) (err error) {
 	//sets status to in progress
 	if cmd := l.rc.Set(ctx, tenancy.StatusKey, tenancy.STATUS_IN_PROGRESS, 0); cmd.Err() != nil {
-		err = cmd.Err()
-		return
+		return cmd.Err()
 	}
 
 	//clear out previously loaded data - this way in case the transaction below failed, we get empty data instead of stale data
 	if cmd := l.rc.Del(ctx, tenancy.ZsetKey); cmd.Err() != nil {
-		err = cmd.Err()
-		return
+		return cmd.Err()
 	}
 
 	if cmd := l.rc.Del(ctx, tenancy.RootTenantKey); cmd.Err() != nil {
-		err = cmd.Err()
-		return
+		return cmd.Err()
 	}
 
 	//deletes the zset, load its content and set status to loaded_{uuid}

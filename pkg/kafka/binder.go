@@ -394,7 +394,13 @@ func (b *SaramaKafkaBinder) Shutdown(ctx context.Context) error {
 func (b *SaramaKafkaBinder) Done() <-chan struct{} {
 	b.RLock()
 	defer b.RUnlock()
-	return b.monitorCtx.Done()
+	if b.monitorCtx != nil {
+		return b.monitorCtx.Done()
+	}
+	// called after "Shutdown", return a closed channel
+	done := make(chan struct{}, 1)
+	close(done)
+	return done
 }
 
 // loadProperties load properties for particular topic

@@ -25,6 +25,10 @@ type HealthIndicator struct {
 	binder SaramaBinder
 }
 
+func NewHealthIndicator(binder Binder) *HealthIndicator {
+	return &HealthIndicator{binder: binder.(SaramaBinder)}
+}
+
 func (i *HealthIndicator) Name() string {
 	return "kafka"
 }

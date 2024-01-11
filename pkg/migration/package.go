@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	TagPreUpgrade = "pre_upgrade"
+	TagPreUpgrade  = "pre_upgrade"
 	TagPostUpgrade = "post_upgrade"
 )
 
@@ -37,12 +37,12 @@ var filterFlag string
 var allowOutOfOrderFlag bool
 
 var Module = &bootstrap.Module{
-	Name: "migration",
-	Precedence: bootstrap.MigrationPrecedence,
+	Name:       "migration",
+	Precedence: bootstrap.CommandLineRunnerPrecedence,
 	Options: []fx.Option{
-		fx.Provide(newRegistrar),
-		fx.Provide(newVersioner),
-		fx.Invoke(applyMigrations),
+		fx.Provide(NewRegistrar),
+		fx.Provide(NewGormVersioner),
+		fx.Provide(provideMigrationRunner()),
 	},
 }
 
@@ -50,31 +50,22 @@ func Use() {
 	bootstrap.AddStringFlag(&filterFlag, "filter", "", fmt.Sprintf("filter the migration steps by tag value. supports %s or %s", TagPreUpgrade, TagPostUpgrade))
 	bootstrap.AddBoolFlag(&allowOutOfOrderFlag, "allow_out_of_order", false, fmt.Sprintf("allow migration steps to execute out of order"))
 	bootstrap.Register(Module)
+	// Note: migration CliRunner is provided in Module
+	bootstrap.EnableCliRunnerMode()
 }
 
-func newRegistrar() *Registrar {
-	return &Registrar{}
-}
-
-func newVersioner(db *gorm.DB) Versioner {
-	return &GormVersioner{
-		db: db,
+func provideMigrationRunner() fx.Annotated {
+	return fx.Annotated{
+		Group:  bootstrap.FxCliRunnerGroup,
+		Target: newMigrationRunner,
 	}
 }
 
-func applyMigrations(lc fx.Lifecycle, r *Registrar, v Versioner, db *gorm.DB, dbCreator data.DbCreator, shutdowner fx.Shutdowner) {
-	var err error
-	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			err = dbCreator.CreateDatabaseIfNotExist(ctx, db)
-			if err != nil {
-				return shutdowner.Shutdown()
-			}
-			err = migrate(ctx, r, v)
-			return shutdowner.Shutdown()
-		},
-		OnStop:  func(ctx context.Context) error {
+func newMigrationRunner(r *Registrar, v Versioner, db *gorm.DB, dbCreator data.DbCreator) bootstrap.CliRunner {
+	return func(ctx context.Context) error {
+		if err := dbCreator.CreateDatabaseIfNotExist(ctx, db); err != nil {
 			return err
-		},
-	})
+		}
+		return Migrate(ctx, r, v)
+	}
 }
