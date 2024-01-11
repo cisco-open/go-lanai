@@ -117,7 +117,7 @@ func AssertStringSet(g *gomega.WithT, set StringSet, expected...string) {
 
 	data, e := json.Marshal(set)
 	g.Expect(e).To(Succeed(), "JSON marshalling should not fail")
-	another := NewStringSet()
+	var another StringSet
 	e = json.Unmarshal(data, &another)
 	g.Expect(e).To(Succeed(), "JSON unmarshalling should not fail")
 	g.Expect(set.Equals(another)).To(BeTrue(), "unmarshalled set should equals to the original")
@@ -148,7 +148,7 @@ func AssertSet(g *gomega.WithT, set Set, expected...interface{}) {
 
 	data, e := json.Marshal(set)
 	g.Expect(e).To(Succeed(), "JSON marshalling should not fail")
-	another := NewSet()
+	var another Set
 	e = json.Unmarshal(data, &another)
 	g.Expect(e).To(Succeed(), "JSON unmarshalling should not fail")
 }
@@ -178,7 +178,7 @@ func AssertGenericSet[T comparable](g *gomega.WithT, set GenericSet[T], newFn fu
 
 	data, e := json.Marshal(set)
 	g.Expect(e).To(Succeed(), "JSON marshalling should not fail")
-	another := NewGenericSet[T]()
+	var another GenericSet[T]
 	e = json.Unmarshal(data, &another)
 	g.Expect(e).To(Succeed(), "JSON unmarshalling should not fail")
 	g.Expect(set.Equals(another)).To(BeTrue(), "unmarshalled set should equals to the original")

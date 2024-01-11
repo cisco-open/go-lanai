@@ -8,6 +8,7 @@ import (
 )
 
 func UnQuote(s string) string {
+	s = strings.TrimSpace(s)
 	if len(s) >= 2 {
 		if c := s[len(s)-1]; s[0] == c && (c == '"' || c == '\'') {
 			return s[1 : len(s)-1]

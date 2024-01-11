@@ -1,6 +1,12 @@
 package utils
 
 import (
+	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"encoding/json"
+	"fmt"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	"reflect"
 	"testing"
 )
@@ -347,5 +353,77 @@ func TestReverse(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestSliceUtils(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		test.GomegaSubTest(SubTestCommaSeparatedSlice(), "TestCommaSeparatedSlice"),
+		test.GomegaSubTest(SubTestConvertSlice(), "TestConvertSlice"),
+	)
+}
+
+/*************************
+	Sub-Test Cases
+ *************************/
+
+func SubTestCommaSeparatedSlice() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		texts := map[string][]string{
+			`"v1, v2,v3 , v4 "`:         {"v1", "v2", "v3", "v4"},
+			`["v1", "v2", "v3", "v4" ]`: {"v1", "v2", "v3", "v4"},
+			`v1, v2,v3 , v4 `:           nil,
+			`{"v":"v1, v2,v3 , v4 "}`:   nil,
+			`""`:                        {},
+		}
+
+		for text, expect := range texts {
+			var s CommaSeparatedSlice
+			e := json.Unmarshal([]byte(text), &s)
+			if expect == nil {
+				g.Expect(e).To(HaveOccurred(), "parsing %s should fail", text)
+				continue
+			}
+
+			g.Expect(e).To(Succeed(), "parsing %s should not fail", text)
+			g.Expect(s).To(BeEquivalentTo(expect), "parsed slice %s should be correct", text)
+
+			data, e := json.Marshal(s)
+			g.Expect(e).To(Succeed(), "marshalling %s should not fail", text)
+			g.Expect(data).To(Equal([]byte(fmt.Sprintf(`"%v"`, s.String()))), "marshalled %s should be correct", text)
+		}
+	}
+}
+
+func SubTestConvertSlice() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		type myStruct struct {
+			value string
+		}
+		type spec struct {
+			from []interface{}
+			to   interface{}
+		}
+		specs := []spec{
+			{from: []interface{}{"v1", "v2"}, to: []string{"v1", "v2"}},
+			{from: []interface{}{1, 2}, to: []int{1, 2}},
+			{from: []interface{}{"v1", []byte("v2")}, to: []string{"v1", "v2"}},
+			{from: []interface{}{myStruct{value: "v1"}, myStruct{value: "v2"}}, to: []myStruct{{value: "v1"}, {value: "v2"}}},
+			{from: []interface{}{&myStruct{value: "v1"}, &myStruct{value: "v2"}}, to: []*myStruct{{value: "v1"}, {value: "v2"}}},
+			{from: []interface{}{"v1", myStruct{value: "v2"}}, to: nil},
+			{from: []interface{}{1, "v2"}, to: nil},
+			{from: []interface{}{}, to: nil},
+		}
+
+		for _, spec := range specs {
+			rs := ConvertSlice(spec.from)
+			if spec.to == nil {
+				g.Expect(rs).To(BeAssignableToTypeOf(spec.from), "same type should be returned for `%v`", spec.from)
+				g.Expect(rs).To(Equal(spec.from), "same slice should be returned for `%v`", spec.from)
+				continue
+			}
+			g.Expect(rs).To(BeAssignableToTypeOf(spec.to), "converted type should be correct for `%v`", spec.from)
+			g.Expect(rs).To(Equal(spec.to), "converted values should be correct for `%v`", spec.from)
+		}
 	}
 }
