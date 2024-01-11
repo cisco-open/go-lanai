@@ -1,4 +1,4 @@
-package scope_test
+package testdata
 
 import (
 	"context"
@@ -22,7 +22,7 @@ type mocksDIOut struct {
 	Counter      InvocationCounter
 }
 
-func provideScopeMocksWithCounter(ctx *bootstrap.ApplicationContext) mocksDIOut {
+func ProvideScopeMocksWithCounter(ctx *bootstrap.ApplicationContext) mocksDIOut {
 	out := sectest.ProvideScopeMocks(ctx)
 	counter := counter{
 		AuthenticationClient: out.AuthClient,
@@ -51,6 +51,6 @@ func (m *noopScopeManager) End(ctx context.Context) context.Context {
 	return ctx
 }
 
-func provideNoopScopeManager() scope.ScopeManager {
+func ProvideNoopScopeManager() scope.ScopeManager {
 	return &noopScopeManager{}
 }

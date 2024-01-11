@@ -1,0 +1,50 @@
+tenants:
+  - name: root
+  # Level 1
+  - name: A
+    parent: root
+  - name: B
+    parent: root
+  # Level 2
+  - name: A-1
+    parent: A
+  - name: A-2
+    parent: A
+  - name: B-1
+    parent: B
+  - name: B-2
+    parent: B
+  # Level 3
+  - name: A-1-1
+    parent: A-1
+  - name: A-1-2
+    parent: A-1
+  - name: A-2-1
+    parent: A-2
+  - name: A-2-2
+    parent: A-2
+  - name: B-1-1
+    parent: B-1
+  - name: B-1-2
+    parent: B-1
+  - name: B-2-1
+    parent: B-2
+  - name: B-2-2
+    parent: B-2
+
+uuids:
+  root: 279b9ef4-adee-42b7-b0ea-1e8e30d71086
+  A: 67063f4a-a90e-4357-969a-5d51082cd566
+  B: 718020c1-39bc-4c23-9487-4c5d5b542b95
+  A-1: f00d43cb-f870-491b-aa3e-9d35529dd7be
+  A-2: e35c3f60-4ef7-4c0b-aca7-50a643885fda
+  B-1: 60e77fcb-ca43-4818-a11c-409452f53e06
+  B-2: 1e00e6cd-add7-4148-8cf6-c567b5bc07e8
+  A-1-1: 954733d6-5391-482d-9d2c-40a65ea89b84
+  A-1-2: c40ddb17-e1c2-4c2f-970e-b39f9af8f40a
+  A-2-1: bf4b84c8-3dc4-48f8-94ed-69aa267ba1a1
+  A-2-2: 6a3a27cb-6625-4b38-9bdc-8f2e91fdb45d
+  B-1-1: 63a8c60c-44cd-43e7-a433-2aee9320f0b5
+  B-1-2: 455de44a-7e3b-4832-a688-d8ae99e32627
+  B-2-1: a4b4b73b-7021-4b86-b53b-1e5d6c8c8bf7
+  B-2-2: 9d1d2292-4a55-406e-8244-a17ea9a71ac3

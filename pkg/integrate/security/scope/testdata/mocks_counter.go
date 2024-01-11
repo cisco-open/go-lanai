@@ -1,4 +1,4 @@
-package scope_test
+package testdata
 
 import (
 	"context"

@@ -3,6 +3,7 @@ package dsync
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/xsync"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/consul/api"
 	"sync"
@@ -146,8 +147,8 @@ func (l *ConsulLock) waitForState(ctx context.Context, stateMatcher func(consulL
 		if ok, e := stateMatcher(l.state); ok {
 			return e
 		}
-		switch e := l.stateCond.Wait(ctx); e {
-		case context.Canceled, context.DeadlineExceeded:
+		switch e := l.stateCond.Wait(ctx); {
+		case errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded):
 			return e
 		}
 	}
@@ -223,7 +224,7 @@ LOOP:
 		// 		 the release function will try to release lock using previously used session
 		session, e := l.option.SessionFunc(refreshCtx)
 		switch {
-		case e == context.Canceled || e == context.DeadlineExceeded:
+		case errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded):
 			// current acquisition is cancelled
 			continue
 		case e != nil:
@@ -234,11 +235,11 @@ LOOP:
 		}
 
 		// try to acquire lock
-		switch e := l.acquireLock(refreshCtx, session, 0); e {
-		case context.Canceled, context.DeadlineExceeded:
+		switch e := l.acquireLock(refreshCtx, session, 0); {
+		case errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded):
 			// current acquisition is cancelled
 			continue
-		case nil:
+		case e == nil:
 			// lock acquired, continue
 			logger.WithContext(refreshCtx).Debugf("acquired lock [%s]", l.option.Key)
 			l.updateState(stateAcquired, func() { l.lastErr = nil })
@@ -248,8 +249,8 @@ LOOP:
 		}
 
 		// up to this point, we have acquired the lock. enter monitor state
-		switch e := l.monitorLock(refreshCtx, session); e {
-		case context.Canceled, context.DeadlineExceeded:
+		switch e := l.monitorLock(refreshCtx, session); {
+		case errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded):
 			// current acquisition is cancelled
 			continue
 		default:
@@ -287,6 +288,10 @@ LOOP:
 		// try to acquire lock
 		switch acquired, _, e := kv.Acquire(pair, nil); {
 		case e != nil:
+			// we cannot acquire lock at the moment, possibly due to
+			// - network error
+			// - any 500 (e.g. session id is not valid)
+			l.delay(ctx, l.option.RetryDelay)
 			return fmt.Errorf("failed to acquire lock: %v", e)
 		case acquired:
 			break LOOP
@@ -303,9 +308,7 @@ LOOP:
 		}
 
 		// at this point, lock is not held by any session, but it may be in LockDelay period. pause and retry
-		select {
-		case <-time.After(l.option.RetryDelay):
-		case <-waitCtx.Done():
+		if !l.delay(ctx, l.option.RetryDelay) {
 			return context.Canceled
 		}
 	}
@@ -393,10 +396,8 @@ LOOP:
 		switch err = e; {
 		case e != nil && api.IsRetryableError(e):
 			// network error or something we can retry later
-			select {
-			case <-time.After(l.option.RetryDelay):
+			if l.delay(ctx, l.option.RetryDelay) {
 				opts.WaitIndex = 0
-			case <-ctx.Done():
 			}
 		case e == nil && pair != nil && pair.Session == session:
 			// everything is fine, we enter long wait monitoring
@@ -414,6 +415,16 @@ LOOP:
 		return context.Canceled
 	}
 	return err
+}
+
+// wait for given delay, return true if the delay is fulfilled (not cancelled by context)
+func (l *ConsulLock) delay(ctx context.Context, delay time.Duration) (success bool) {
+	select {
+	case <-time.After(delay):
+		return true
+	case <-ctx.Done():
+		return false
+	}
 }
 
 func (l *ConsulLock) release() error {

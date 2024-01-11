@@ -1,0 +1,2048 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 196
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8011","Name":"service1","Tags":["instance=1","legacy=true"],"Port":8011,"Address":"127.0.0.1","Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "0"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 166
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8012","Name":"service1","Tags":["instance=2"],"Port":8012,"Address":"127.0.0.1","Meta":{"instance":"2","version":"0.0.2"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "1"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 267
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8013","Name":"service1","Tags":["instance=3","legacy=true"],"Port":8013,"Address":"127.0.0.1","Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Check":{"Interval":"10s","HTTP":"http://localhost:8888/","SuccessBeforePassing":1},"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "2"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 148
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service2-8021","Name":"service2","Tags":["instance=1"],"Port":8021,"Address":"127.0.0.1","Meta":{"instance":"1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "3"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "4"
+        url: http://localhost:8500/v1/health/service/service1
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '[{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934911,"ModifyIndex":934911},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934912,"ModifyIndex":934912},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934913,"ModifyIndex":934913},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987},{"Node":"952ae14c79fe","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":934913,"ModifyIndex":934913}]}]'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Effective-Consistency:
+                - leader
+            X-Consul-Index:
+                - "934913"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8011
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "6"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8012
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "7"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8013
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "8"
+        url: http://localhost:8500/v1/agent/service/deregister/service2-8021
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 196
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8011","Name":"service1","Tags":["instance=1","legacy=true"],"Port":8011,"Address":"127.0.0.1","Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "9"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 10
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 166
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8012","Name":"service1","Tags":["instance=2"],"Port":8012,"Address":"127.0.0.1","Meta":{"instance":"2","version":"0.0.2"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "10"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 267
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8013","Name":"service1","Tags":["instance=3","legacy=true"],"Port":8013,"Address":"127.0.0.1","Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Check":{"Interval":"10s","HTTP":"http://localhost:8888/","SuccessBeforePassing":1},"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "11"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 12
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 148
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service2-8021","Name":"service2","Tags":["instance=1"],"Port":8021,"Address":"127.0.0.1","Meta":{"instance":"1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "12"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 13
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "13"
+        url: http://localhost:8500/v1/health/service/service1
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '[{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934919,"ModifyIndex":934919},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934920,"ModifyIndex":934920},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934921,"ModifyIndex":934921},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987},{"Node":"952ae14c79fe","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":934921,"ModifyIndex":934921}]}]'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Effective-Consistency:
+                - leader
+            X-Consul-Index:
+                - "934921"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 14
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "14"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8011
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 15
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "15"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8012
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 16
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "16"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8013
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 17
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "17"
+        url: http://localhost:8500/v1/agent/service/deregister/service2-8021
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 18
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 196
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8011","Name":"service1","Tags":["instance=1","legacy=true"],"Port":8011,"Address":"127.0.0.1","Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "18"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 19
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 166
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8012","Name":"service1","Tags":["instance=2"],"Port":8012,"Address":"127.0.0.1","Meta":{"instance":"2","version":"0.0.2"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "19"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 20
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 267
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8013","Name":"service1","Tags":["instance=3","legacy=true"],"Port":8013,"Address":"127.0.0.1","Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Check":{"Interval":"10s","HTTP":"http://localhost:8888/","SuccessBeforePassing":1},"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "20"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 21
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 148
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service2-8021","Name":"service2","Tags":["instance=1"],"Port":8021,"Address":"127.0.0.1","Meta":{"instance":"1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "21"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 22
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "22"
+        url: http://localhost:8500/v1/health/service/service1
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '[{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934927,"ModifyIndex":934927},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934928,"ModifyIndex":934928},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934929,"ModifyIndex":934929},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987},{"Node":"952ae14c79fe","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":934929,"ModifyIndex":934929}]}]'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Effective-Consistency:
+                - leader
+            X-Consul-Index:
+                - "934929"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 23
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "23"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8011
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 24
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "24"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8012
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 25
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "25"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8013
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 26
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "26"
+        url: http://localhost:8500/v1/agent/service/deregister/service2-8021
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 27
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 196
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8011","Name":"service1","Tags":["instance=1","legacy=true"],"Port":8011,"Address":"127.0.0.1","Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "27"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 28
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 166
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8012","Name":"service1","Tags":["instance=2"],"Port":8012,"Address":"127.0.0.1","Meta":{"instance":"2","version":"0.0.2"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "28"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 29
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 267
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8013","Name":"service1","Tags":["instance=3","legacy=true"],"Port":8013,"Address":"127.0.0.1","Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Check":{"Interval":"10s","HTTP":"http://localhost:8888/","SuccessBeforePassing":1},"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "29"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 30
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 148
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service2-8021","Name":"service2","Tags":["instance=1"],"Port":8021,"Address":"127.0.0.1","Meta":{"instance":"1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "30"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 31
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "31"
+        url: http://localhost:8500/v1/health/service/service1
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '[{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934935,"ModifyIndex":934935},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934936,"ModifyIndex":934936},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934937,"ModifyIndex":934937},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987},{"Node":"952ae14c79fe","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":934937,"ModifyIndex":934937}]}]'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Effective-Consistency:
+                - leader
+            X-Consul-Index:
+                - "934937"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 32
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "32"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8012
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 33
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "33"
+        url: http://localhost:8500/v1/health/service/service1?index=934937
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '[{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934935,"ModifyIndex":934935},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934937,"ModifyIndex":934937},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987},{"Node":"952ae14c79fe","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":934937,"ModifyIndex":934937}]}]'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Effective-Consistency:
+                - leader
+            X-Consul-Index:
+                - "934939"
+            X-Consul-Knownleader:
+                - "false"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - streaming
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 34
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "34"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8011
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 35
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "35"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8012
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 95
+        uncompressed: false
+        body: Unknown service ID "service1-8012". Ensure that the service ID is passed, not the service name.
+        headers:
+            Content-Length:
+                - "95"
+            Content-Type:
+                - text/plain; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 36
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "36"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8013
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 37
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "37"
+        url: http://localhost:8500/v1/agent/service/deregister/service2-8021
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 38
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 196
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8011","Name":"service1","Tags":["instance=1","legacy=true"],"Port":8011,"Address":"127.0.0.1","Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "38"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 39
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 166
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8012","Name":"service1","Tags":["instance=2"],"Port":8012,"Address":"127.0.0.1","Meta":{"instance":"2","version":"0.0.2"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "39"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 40
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 267
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service1-8013","Name":"service1","Tags":["instance=3","legacy=true"],"Port":8013,"Address":"127.0.0.1","Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Check":{"Interval":"10s","HTTP":"http://localhost:8888/","SuccessBeforePassing":1},"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "40"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 41
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 148
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"service2-8021","Name":"service2","Tags":["instance=1"],"Port":8021,"Address":"127.0.0.1","Meta":{"instance":"1"},"Check":null,"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "41"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 42
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "42"
+        url: http://localhost:8500/v1/health/service/service1
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '[{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934943,"ModifyIndex":934943},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934944,"ModifyIndex":934944},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934945,"ModifyIndex":934945},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987},{"Node":"952ae14c79fe","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":934945,"ModifyIndex":934945}]}]'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Effective-Consistency:
+                - leader
+            X-Consul-Index:
+                - "934945"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 43
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "43"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8012
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 44
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "44"
+        url: http://localhost:8500/v1/health/service/service1?index=934945
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '[{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934943,"ModifyIndex":934943},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987}]},{"Node":{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"952ae14c79fe","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":8,"ModifyIndex":928988},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":934945,"ModifyIndex":934945},"Checks":[{"Node":"952ae14c79fe","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":928987,"ModifyIndex":928987},{"Node":"952ae14c79fe","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":934945,"ModifyIndex":934945}]}]'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Effective-Consistency:
+                - leader
+            X-Consul-Index:
+                - "934947"
+            X-Consul-Knownleader:
+                - "false"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - streaming
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 45
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "45"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8011
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 46
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "46"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8012
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 95
+        uncompressed: false
+        body: Unknown service ID "service1-8012". Ensure that the service ID is passed, not the service name.
+        headers:
+            Content-Length:
+                - "95"
+            Content-Type:
+                - text/plain; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 47
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "47"
+        url: http://localhost:8500/v1/agent/service/deregister/service1-8013
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 48
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "48"
+        url: http://localhost:8500/v1/agent/service/deregister/service2-8021
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs

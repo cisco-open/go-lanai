@@ -1,0 +1,32 @@
+kafka:
+  brokers: localhost:19092
+  bindings:
+    default:
+      producer:
+        log-level: "debug"
+        provisioning:
+          auto-create-topic: true
+          auto-add-partitions: false
+      consumer:
+        log-level: "debug"
+    test-producer:
+      producer:
+        ack-mode: "none"
+        max-retry: 3
+    test-partition-add:
+      producer:
+        ack-mode: "none"
+        provisioning:
+          auto-create-topic: true
+          auto-add-partitions: true
+          partition-count: 2
+        max-retry: 3
+    test-subscriber:
+      consumer:
+        max-retry: 3
+        join-timeout: 60s
+    test-consumer:
+      consumer:
+        group: "test.group"
+        max-retry: 3
+        join-timeout: 60s

@@ -35,6 +35,12 @@ type GormVersioner struct {
 	db          *gorm.DB
 }
 
+func NewGormVersioner(db *gorm.DB) Versioner {
+	return &GormVersioner{
+		db: db,
+	}
+}
+
 func (v *GormVersioner) CreateVersionTableIfNotExist(ctx context.Context) error {
 	return v.db.WithContext(ctx).AutoMigrate(&MigrationVersion{})
 }
