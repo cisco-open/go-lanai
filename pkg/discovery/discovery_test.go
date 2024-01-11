@@ -92,6 +92,7 @@ func TestDiscoveryClient(t *testing.T) {
 					TestRegisterFuzzyJsonPathTags,
 					TestRegisterFuzzyJsonPathMeta,
 				)),
+				ittest.ApplyHttpLatency(),
 			),
 		),
 		apptest.WithBootstrapConfigFS(testdata.TestBootstrapFS),
@@ -280,7 +281,8 @@ func SubTestWithServiceUpdates(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 		wg.Add(1)
 		update := MockedServices[ServiceName1][1]
 		update.Healthy = false
-		discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
+		e = discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
+		g.Expect(e).To(Succeed(), "de-registering service should not fail")
 
 		// try again
 		wg.Wait()
@@ -322,20 +324,19 @@ func SubTestWithGoKitCompatibility(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
 			&MockedServices[ServiceName1][0], &MockedServices[ServiceName1][1],
 		})
-		//g.Expect(eventCount.Load()).ToNot(BeZero(), "# of event should not be zero")
 
 		// make some service changes
 		update := MockedServices[ServiceName1][1]
 		update.Healthy = false
-		_ = discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
+		e = discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
+		g.Expect(e).To(Succeed(), "de-registering service should not fail")
 
 		// wait for event channel to trigger
 		timeoutCtx, cancelFn := context.WithTimeout(ctx, 5*time.Second)
 		defer cancelFn()
 		for {
-			var updated bool
 			eventLock.RLock()
-			updated = lastEvent.Instances != nil && len(lastEvent.Instances) < 3
+			updated := len(lastEvent.Instances) > 1 && len(lastEvent.Instances) < 3
 			eventLock.RUnlock()
 			if updated {
 				break
