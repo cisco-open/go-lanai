@@ -54,7 +54,7 @@ jobs:
         run: make init SHELL=/bin/bash
       - name: "Run Tests with Coverage"
         run: |
-          make test report SHELL=/bin/bash ARGS="-coverpkg $(go list ./pkg/... | grep -v .*/test | grep -v .*_test | paste -sd ',' -)"
+          make test report SHELL=/bin/bash ARGS="-covermode atomic -coverpkg ./pkg/..."
           go tool cover -func=dist/coverage.out -o dist/coverage-func.out
           export COVERAGE=$(grep -E '([0-9]+[0-9.]+)' -o dist/coverage-func.out | tail -1)
           export COVERAGE_COLOR=$( \
