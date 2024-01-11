@@ -18,7 +18,6 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"testing"
-	"time"
 )
 
 /*************************
@@ -67,11 +66,11 @@ type TestAccessorDI struct {
 	Modifier        th_modifier.Modifier
 }
 
-func TestSpanOperator(t *testing.T) {
+func TestTenancyAccessor(t *testing.T) {
 	di := TestAccessorDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithTimeout(120*time.Second),
+		//apptest.WithTimeout(120*time.Second),
 		embedded.WithRedis(),
 		apptest.WithModules(tenancy.Module, th_modifier.Module, th_loader.Module, redis.Module),
 		apptest.WithFxOptions(
@@ -237,7 +236,7 @@ func SubTestTenancyModification(di *TestAccessorDI) test.GomegaSubTestFunc {
 
 		// TODO following test should not fail, maybe it's a bug?
 		//e = di.Modifier.AddTenant(ctx, IDOf(di, TenantA21), IDOf(di, TenantA2))
-		//g.Expect(e).To(Succeed(), "relocating leaf tenant should fail")
+		//g.Expect(e).To(HaveOccurred(), "relocating leaf tenant should fail")
 		//v, e = tenancy.GetParent(ctx, IDOf(di, TenantA21))
 		//g.Expect(e).To(Succeed(), "GetParent of relocated tenant should not fail")
 		//g.Expect(v).To(Equal(IDOf(di, TenantA2)), "GetParent of relocated tenant should be correct")
