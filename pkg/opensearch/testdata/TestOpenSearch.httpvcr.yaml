@@ -31,7 +31,7 @@ interactions:
         uncompressed: true
         body: |
             {
-              "name" : "6b76dfbbba65",
+              "name" : "a7b35ee409c0",
               "cluster_name" : "opensearch",
               "cluster_uuid" : "sNGevSvLRcyfM3mozmAAQQ",
               "version" : {
@@ -52,7 +52,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 261.792958ms
+        duration: 83.241666ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -87,7 +87,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 28.026333ms
+        duration: 29.164375ms
     - id: 2
       request:
         proto: HTTP/1.1
@@ -138,13 +138,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":54,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"oaQwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"oqQwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"o6QwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"pKQwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"paQwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"pqQwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"p6QwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"qKQwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"qaQwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"qqQwAI0BGkR_zLqBkY24","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":57,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"3VtqAI0BAcvskBKZl5r1","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"3ltqAI0BAcvskBKZl5r1","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"31tqAI0BAcvskBKZl5r1","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"4FtqAI0BAcvskBKZl5r1","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"4VtqAI0BAcvskBKZl5r1","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"4ltqAI0BAcvskBKZl5r1","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"41tqAI0BAcvskBKZl5r1","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5FtqAI0BAcvskBKZl5r2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5VtqAI0BAcvskBKZl5r2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5ltqAI0BAcvskBKZl5r2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 55.660083ms
+        duration: 63.690125ms
     - id: 3
       request:
         proto: HTTP/1.1
@@ -176,13 +176,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":1.4816045,"hits":[{"_index":"auditlog_test","_id":"qaQwAI0BGkR_zLqBkY24","_score":1.4816045,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"qqQwAI0BGkR_zLqBkY24","_score":1.4816045,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}}]}}'
+        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":1.4816045,"hits":[{"_index":"auditlog_test","_id":"5VtqAI0BAcvskBKZl5r2","_score":1.4816045,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"5ltqAI0BAcvskBKZl5r2","_score":1.4816045,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 2.936416ms
+        duration: 3.817834ms
     - id: 4
       request:
         proto: HTTP/1.1
@@ -214,15 +214,15 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"_index":"auditlog_test","_id":"rKQwAI0BGkR_zLqBko0I","_version":1,"result":"created","_shards":{"total":2,"successful":1,"failed":0},"_seq_no":10,"_primary_term":1}'
+        body: '{"_index":"auditlog_test","_id":"6FtqAI0BAcvskBKZmJpU","_version":1,"result":"created","_shards":{"total":2,"successful":1,"failed":0},"_seq_no":10,"_primary_term":1}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
             Location:
-                - /auditlog_test/_doc/rKQwAI0BGkR_zLqBko0I
+                - /auditlog_test/_doc/6FtqAI0BAcvskBKZmJpU
         status: 201 Created
         code: 201
-        duration: 4.157375ms
+        duration: 4.818625ms
     - id: 5
       request:
         proto: HTTP/1.1
@@ -255,14 +255,14 @@ interactions:
         content_length: -1
         uncompressed: true
         body: |-
-            {"took":12,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.2321435,"hits":[{"_index":"auditlog_test","_id":"qaQwAI0BGkR_zLqBkY24","_score":1.2321435,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"qqQwAI0BGkR_zLqBkY24","_score":1.2321435,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}},{"_index":"auditlog_test","_id":"rKQwAI0BGkR_zLqBko0I","_score":1.2321435,"_source":{"Client_ID":"TESTING TESTING","Description":"","Details":"","ID":"","Keywords":"","Orig_User":"","Owner_Tenant_ID":"","Parent_Span_ID":"","Provider_ID":"","Security":"","Service":"","Severity":"","Span_ID":"","SubType":"SYNCHRONIZED","Tenant_ID":"","Tenant_Name":"","Time":"2019-10-15T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"","Type":"","User_ID":"","Username":""}
+            {"took":4,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.2321435,"hits":[{"_index":"auditlog_test","_id":"5VtqAI0BAcvskBKZl5r2","_score":1.2321435,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"5ltqAI0BAcvskBKZl5r2","_score":1.2321435,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}},{"_index":"auditlog_test","_id":"6FtqAI0BAcvskBKZmJpU","_score":1.2321435,"_source":{"Client_ID":"TESTING TESTING","Description":"","Details":"","ID":"","Keywords":"","Orig_User":"","Owner_Tenant_ID":"","Parent_Span_ID":"","Provider_ID":"","Security":"","Service":"","Severity":"","Span_ID":"","SubType":"SYNCHRONIZED","Tenant_ID":"","Tenant_Name":"","Time":"2019-10-15T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"","Type":"","User_ID":"","Username":""}
             }]}}
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 28.264208ms
+        duration: 16.234ms
     - id: 6
       request:
         proto: HTTP/1.1
@@ -297,7 +297,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 36.865584ms
+        duration: 37.77575ms
     - id: 7
       request:
         proto: HTTP/1.1
@@ -348,13 +348,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":80,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"r6QwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"sKQwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"saQwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"sqQwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"s6QwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"tKQwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"taQwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"tqQwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"t6QwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"uKQwAI0BGkR_zLqBmI2x","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":64,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"61tqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"7FtqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"7VtqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"7ltqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"71tqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"8FtqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"8VtqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"8ltqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"81tqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9FtqAI0BAcvskBKZnprf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 84.359875ms
+        duration: 68.909375ms
     - id: 8
       request:
         proto: HTTP/1.1
@@ -386,13 +386,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"sKQwAI0BGkR_zLqBmI2x","_score":1.1451323,"_source":{"Client_ID":"dafhj","Description":"","Details":"","ID":"","Keywords":"bajda","Orig_User":"jacdd","Owner_Tenant_ID":"agfdj","Parent_Span_ID":"bejch","Provider_ID":"bhcfd","Security":"","Service":"","Severity":"","Span_ID":"hjgbd","SubType":"SCHEDULE_TASK","Tenant_ID":"ddgic","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hcejb","Type":"DP","User_ID":"dfegd","Username":"djbhi"}},{"_index":"auditlog_test","_id":"tKQwAI0BGkR_zLqBmI2x","_score":1.1451323,"_source":{"Client_ID":"cbife","Description":"","Details":"","ID":"","Keywords":"afaei","Orig_User":"gfbfc","Owner_Tenant_ID":"fbdfb","Parent_Span_ID":"ficaj","Provider_ID":"febbe","Security":"","Service":"","Severity":"","Span_ID":"gfifa","SubType":"SCHEDULE_TASK","Tenant_ID":"iiijj","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"efabh","Type":"DP","User_ID":"jhhbf","Username":"hebjc"}},{"_index":"auditlog_test","_id":"uKQwAI0BGkR_zLqBmI2x","_score":1.1451323,"_source":{"Client_ID":"ebiif","Description":"","Details":"","ID":"","Keywords":"cbdei","Orig_User":"ihfcd","Owner_Tenant_ID":"beeea","Parent_Span_ID":"ejfgg","Provider_ID":"ejcac","Security":"","Service":"","Severity":"","Span_ID":"gcgfi","SubType":"SYNCHRONIZED","Tenant_ID":"ifaag","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ggfjc","Type":"DP","User_ID":"caddi","Username":"cchec"}}]}}'
+        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"7FtqAI0BAcvskBKZnprf","_score":1.1451323,"_source":{"Client_ID":"dafhj","Description":"","Details":"","ID":"","Keywords":"bajda","Orig_User":"jacdd","Owner_Tenant_ID":"agfdj","Parent_Span_ID":"bejch","Provider_ID":"bhcfd","Security":"","Service":"","Severity":"","Span_ID":"hjgbd","SubType":"SCHEDULE_TASK","Tenant_ID":"ddgic","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hcejb","Type":"DP","User_ID":"dfegd","Username":"djbhi"}},{"_index":"auditlog_test","_id":"8FtqAI0BAcvskBKZnprf","_score":1.1451323,"_source":{"Client_ID":"cbife","Description":"","Details":"","ID":"","Keywords":"afaei","Orig_User":"gfbfc","Owner_Tenant_ID":"fbdfb","Parent_Span_ID":"ficaj","Provider_ID":"febbe","Security":"","Service":"","Severity":"","Span_ID":"gfifa","SubType":"SCHEDULE_TASK","Tenant_ID":"iiijj","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"efabh","Type":"DP","User_ID":"jhhbf","Username":"hebjc"}},{"_index":"auditlog_test","_id":"9FtqAI0BAcvskBKZnprf","_score":1.1451323,"_source":{"Client_ID":"ebiif","Description":"","Details":"","ID":"","Keywords":"cbdei","Orig_User":"ihfcd","Owner_Tenant_ID":"beeea","Parent_Span_ID":"ejfgg","Provider_ID":"ejcac","Security":"","Service":"","Severity":"","Span_ID":"gcgfi","SubType":"SYNCHRONIZED","Tenant_ID":"ifaag","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ggfjc","Type":"DP","User_ID":"caddi","Username":"cchec"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 3.017542ms
+        duration: 5.101666ms
     - id: 9
       request:
         proto: HTTP/1.1
@@ -427,7 +427,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 10.572209ms
+        duration: 13.570667ms
     - id: 10
       request:
         proto: HTTP/1.1
@@ -478,13 +478,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":39,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"vKQwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"vaQwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"vqQwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"v6QwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"wKQwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"waQwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"wqQwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"w6QwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"xKQwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"xaQwAI0BGkR_zLqBmY1b","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":50,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"-FtqAI0BAcvskBKZn5qK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-VtqAI0BAcvskBKZn5qK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-ltqAI0BAcvskBKZn5qK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-1tqAI0BAcvskBKZn5qK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_FtqAI0BAcvskBKZn5qK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_VtqAI0BAcvskBKZn5qK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_ltqAI0BAcvskBKZn5qK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_1tqAI0BAcvskBKZn5qK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"AFtqAI0BAcvskBKZn5uK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"AVtqAI0BAcvskBKZn5uK","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 41.220667ms
+        duration: 53.077334ms
     - id: 11
       request:
         proto: HTTP/1.1
@@ -516,13 +516,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"vKQwAI0BGkR_zLqBmY1b","_score":1.1451323,"_source":{"Client_ID":"beijb","Description":"","Details":"","ID":"","Keywords":"dieah","Orig_User":"cjcij","Owner_Tenant_ID":"ibfcb","Parent_Span_ID":"jiijc","Provider_ID":"cjeda","Security":"","Service":"","Severity":"","Span_ID":"gbheh","SubType":"SYNCHRONIZED","Tenant_ID":"icbbd","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gefdd","Type":"DP","User_ID":"ccgei","Username":"ajhbj"}},{"_index":"auditlog_test","_id":"vqQwAI0BGkR_zLqBmY1b","_score":1.1451323,"_source":{"Client_ID":"hgdch","Description":"","Details":"","ID":"","Keywords":"gadjd","Orig_User":"jhfja","Owner_Tenant_ID":"jeggd","Parent_Span_ID":"igghh","Provider_ID":"jddcf","Security":"","Service":"","Severity":"","Span_ID":"fbghb","SubType":"SYNCHRONIZED","Tenant_ID":"gfiac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"fjhag","Type":"GP","User_ID":"iffba","Username":"bbjga"}},{"_index":"auditlog_test","_id":"wKQwAI0BGkR_zLqBmY1b","_score":1.1451323,"_source":{"Client_ID":"jdbfa","Description":"","Details":"","ID":"","Keywords":"gefef","Orig_User":"jdcid","Owner_Tenant_ID":"ibeeb","Parent_Span_ID":"jcdag","Provider_ID":"adbcd","Security":"","Service":"","Severity":"","Span_ID":"cidhe","SubType":"SYNCHRONIZED","Tenant_ID":"dihej","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"igeee","Type":"DEVICE","User_ID":"cgcai","Username":"addea"}}]}}'
+        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"-FtqAI0BAcvskBKZn5qK","_score":1.1451323,"_source":{"Client_ID":"beijb","Description":"","Details":"","ID":"","Keywords":"dieah","Orig_User":"cjcij","Owner_Tenant_ID":"ibfcb","Parent_Span_ID":"jiijc","Provider_ID":"cjeda","Security":"","Service":"","Severity":"","Span_ID":"gbheh","SubType":"SYNCHRONIZED","Tenant_ID":"icbbd","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gefdd","Type":"DP","User_ID":"ccgei","Username":"ajhbj"}},{"_index":"auditlog_test","_id":"-ltqAI0BAcvskBKZn5qK","_score":1.1451323,"_source":{"Client_ID":"hgdch","Description":"","Details":"","ID":"","Keywords":"gadjd","Orig_User":"jhfja","Owner_Tenant_ID":"jeggd","Parent_Span_ID":"igghh","Provider_ID":"jddcf","Security":"","Service":"","Severity":"","Span_ID":"fbghb","SubType":"SYNCHRONIZED","Tenant_ID":"gfiac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"fjhag","Type":"GP","User_ID":"iffba","Username":"bbjga"}},{"_index":"auditlog_test","_id":"_FtqAI0BAcvskBKZn5qK","_score":1.1451323,"_source":{"Client_ID":"jdbfa","Description":"","Details":"","ID":"","Keywords":"gefef","Orig_User":"jdcid","Owner_Tenant_ID":"ibeeb","Parent_Span_ID":"jcdag","Provider_ID":"adbcd","Security":"","Service":"","Severity":"","Span_ID":"cidhe","SubType":"SYNCHRONIZED","Tenant_ID":"dihej","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"igeee","Type":"DEVICE","User_ID":"cgcai","Username":"addea"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 3.153208ms
+        duration: 3.710625ms
     - id: 12
       request:
         proto: HTTP/1.1
@@ -560,7 +560,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 400 Bad Request
         code: 400
-        duration: 907.542µs
+        duration: 1.552375ms
     - id: 13
       request:
         proto: HTTP/1.1
@@ -598,7 +598,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 876.625µs
+        duration: 2.022292ms
     - id: 14
       request:
         proto: HTTP/1.1
@@ -633,7 +633,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 11.205417ms
+        duration: 12.872583ms
     - id: 15
       request:
         proto: HTTP/1.1
@@ -684,13 +684,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":42,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"yaQwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"yqQwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"y6QwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"zKQwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"zaQwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"zqQwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"z6QwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"0KQwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"0aQwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"0qQwAI0BGkR_zLqBmY3Y","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":55,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"BVtqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"BltqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"B1tqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"CFtqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"CVtqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"CltqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"C1tqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DFtqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DVtqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DltqAI0BAcvskBKZoJsn","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 43.795333ms
+        duration: 57.567125ms
     - id: 16
       request:
         proto: HTTP/1.1
@@ -722,13 +722,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":7,"relation":"eq"},"max_score":0.38299224,"hits":[{"_index":"auditlog_test","_id":"yaQwAI0BGkR_zLqBmY3Y","_score":0.38299224,"_source":{"Client_ID":"hcidj","Description":"","Details":"","ID":"","Keywords":"debed","Orig_User":"hfbbb","Owner_Tenant_ID":"bcgda","Parent_Span_ID":"dhffh","Provider_ID":"haeig","Security":"","Service":"","Severity":"","Span_ID":"cddii","SubType":"SYNCHRONIZED","Tenant_ID":"fdeba","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djdjh","Type":"GP","User_ID":"jahed","Username":"ajcif"}},{"_index":"auditlog_test","_id":"y6QwAI0BGkR_zLqBmY3Y","_score":0.38299224,"_source":{"Client_ID":"ecfai","Description":"","Details":"","ID":"","Keywords":"gaged","Orig_User":"jedci","Owner_Tenant_ID":"dgide","Parent_Span_ID":"ceeag","Provider_ID":"ddbah","Security":"","Service":"","Severity":"","Span_ID":"gbcid","SubType":"SYNCHRONIZED","Tenant_ID":"dfdac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jfefe","Type":"DEVICE","User_ID":"gbbca","Username":"gcihb"}},{"_index":"auditlog_test","_id":"zKQwAI0BGkR_zLqBmY3Y","_score":0.38299224,"_source":{"Client_ID":"dhahc","Description":"","Details":"","ID":"","Keywords":"cbfbc","Orig_User":"ahcaa","Owner_Tenant_ID":"ehgcd","Parent_Span_ID":"ffbhe","Provider_ID":"abfea","Security":"","Service":"","Severity":"","Span_ID":"dgbcc","SubType":"SYNCHRONIZED","Tenant_ID":"affij","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djcdh","Type":"DP","User_ID":"heaae","Username":"hijce"}},{"_index":"auditlog_test","_id":"zaQwAI0BGkR_zLqBmY3Y","_score":0.38299224,"_source":{"Client_ID":"hgdfc","Description":"","Details":"","ID":"","Keywords":"eeiah","Orig_User":"jbffa","Owner_Tenant_ID":"ajgcj","Parent_Span_ID":"dfbgj","Provider_ID":"jagbb","Security":"","Service":"","Severity":"","Span_ID":"ieief","SubType":"SYNCHRONIZED","Tenant_ID":"bcjji","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"bijai","Type":"GP","User_ID":"bbchj","Username":"jchge"}},{"_index":"auditlog_test","_id":"zqQwAI0BGkR_zLqBmY3Y","_score":0.38299224,"_source":{"Client_ID":"igdhi","Description":"","Details":"","ID":"","Keywords":"bdadj","Orig_User":"aeeif","Owner_Tenant_ID":"achea","Parent_Span_ID":"gbihe","Provider_ID":"aeief","Security":"","Service":"","Severity":"","Span_ID":"deibf","SubType":"SYNCHRONIZED","Tenant_ID":"bjjib","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dhebj","Type":"DP","User_ID":"idcad","Username":"hfahc"}},{"_index":"auditlog_test","_id":"z6QwAI0BGkR_zLqBmY3Y","_score":0.38299224,"_source":{"Client_ID":"gceif","Description":"","Details":"","ID":"","Keywords":"ejbic","Orig_User":"cdecb","Owner_Tenant_ID":"eadgg","Parent_Span_ID":"ecbfe","Provider_ID":"agfgi","Security":"","Service":"","Severity":"","Span_ID":"adica","SubType":"SYNCHRONIZED","Tenant_ID":"jfdfg","Tenant_Name":"","Time":"2021-04-24T16:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jidee","Type":"DP","User_ID":"bhgjb","Username":"cehfb"}},{"_index":"auditlog_test","_id":"0KQwAI0BGkR_zLqBmY3Y","_score":0.38299224,"_source":{"Client_ID":"jdafg","Description":"","Details":"","ID":"","Keywords":"iibbc","Orig_User":"bcgag","Owner_Tenant_ID":"baedd","Parent_Span_ID":"dbdgg","Provider_ID":"jdgha","Security":"","Service":"","Severity":"","Span_ID":"eaehc","SubType":"SYNCHRONIZED","Tenant_ID":"ijcaa","Tenant_Name":"","Time":"2021-07-06T19:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"eehfh","Type":"GP","User_ID":"eejca","Username":"hhdec"}}]}}'
+        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":7,"relation":"eq"},"max_score":0.38299224,"hits":[{"_index":"auditlog_test","_id":"BVtqAI0BAcvskBKZoJsn","_score":0.38299224,"_source":{"Client_ID":"hcidj","Description":"","Details":"","ID":"","Keywords":"debed","Orig_User":"hfbbb","Owner_Tenant_ID":"bcgda","Parent_Span_ID":"dhffh","Provider_ID":"haeig","Security":"","Service":"","Severity":"","Span_ID":"cddii","SubType":"SYNCHRONIZED","Tenant_ID":"fdeba","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djdjh","Type":"GP","User_ID":"jahed","Username":"ajcif"}},{"_index":"auditlog_test","_id":"B1tqAI0BAcvskBKZoJsn","_score":0.38299224,"_source":{"Client_ID":"ecfai","Description":"","Details":"","ID":"","Keywords":"gaged","Orig_User":"jedci","Owner_Tenant_ID":"dgide","Parent_Span_ID":"ceeag","Provider_ID":"ddbah","Security":"","Service":"","Severity":"","Span_ID":"gbcid","SubType":"SYNCHRONIZED","Tenant_ID":"dfdac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jfefe","Type":"DEVICE","User_ID":"gbbca","Username":"gcihb"}},{"_index":"auditlog_test","_id":"CFtqAI0BAcvskBKZoJsn","_score":0.38299224,"_source":{"Client_ID":"dhahc","Description":"","Details":"","ID":"","Keywords":"cbfbc","Orig_User":"ahcaa","Owner_Tenant_ID":"ehgcd","Parent_Span_ID":"ffbhe","Provider_ID":"abfea","Security":"","Service":"","Severity":"","Span_ID":"dgbcc","SubType":"SYNCHRONIZED","Tenant_ID":"affij","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djcdh","Type":"DP","User_ID":"heaae","Username":"hijce"}},{"_index":"auditlog_test","_id":"CVtqAI0BAcvskBKZoJsn","_score":0.38299224,"_source":{"Client_ID":"hgdfc","Description":"","Details":"","ID":"","Keywords":"eeiah","Orig_User":"jbffa","Owner_Tenant_ID":"ajgcj","Parent_Span_ID":"dfbgj","Provider_ID":"jagbb","Security":"","Service":"","Severity":"","Span_ID":"ieief","SubType":"SYNCHRONIZED","Tenant_ID":"bcjji","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"bijai","Type":"GP","User_ID":"bbchj","Username":"jchge"}},{"_index":"auditlog_test","_id":"CltqAI0BAcvskBKZoJsn","_score":0.38299224,"_source":{"Client_ID":"igdhi","Description":"","Details":"","ID":"","Keywords":"bdadj","Orig_User":"aeeif","Owner_Tenant_ID":"achea","Parent_Span_ID":"gbihe","Provider_ID":"aeief","Security":"","Service":"","Severity":"","Span_ID":"deibf","SubType":"SYNCHRONIZED","Tenant_ID":"bjjib","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dhebj","Type":"DP","User_ID":"idcad","Username":"hfahc"}},{"_index":"auditlog_test","_id":"C1tqAI0BAcvskBKZoJsn","_score":0.38299224,"_source":{"Client_ID":"gceif","Description":"","Details":"","ID":"","Keywords":"ejbic","Orig_User":"cdecb","Owner_Tenant_ID":"eadgg","Parent_Span_ID":"ecbfe","Provider_ID":"agfgi","Security":"","Service":"","Severity":"","Span_ID":"adica","SubType":"SYNCHRONIZED","Tenant_ID":"jfdfg","Tenant_Name":"","Time":"2021-04-24T16:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jidee","Type":"DP","User_ID":"bhgjb","Username":"cehfb"}},{"_index":"auditlog_test","_id":"DFtqAI0BAcvskBKZoJsn","_score":0.38299224,"_source":{"Client_ID":"jdafg","Description":"","Details":"","ID":"","Keywords":"iibbc","Orig_User":"bcgag","Owner_Tenant_ID":"baedd","Parent_Span_ID":"dbdgg","Provider_ID":"jdgha","Security":"","Service":"","Severity":"","Span_ID":"eaehc","SubType":"SYNCHRONIZED","Tenant_ID":"ijcaa","Tenant_Name":"","Time":"2021-07-06T19:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"eehfh","Type":"GP","User_ID":"eejca","Username":"hhdec"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 2.681875ms
+        duration: 4.038375ms
     - id: 17
       request:
         proto: HTTP/1.1
@@ -766,7 +766,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 400 Bad Request
         code: 400
-        duration: 812.5µs
+        duration: 1.631041ms
     - id: 18
       request:
         proto: HTTP/1.1
@@ -801,7 +801,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 11.489792ms
+        duration: 14.087583ms
     - id: 19
       request:
         proto: HTTP/1.1
@@ -852,13 +852,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":40,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"1qQwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"16QwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"2KQwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"2aQwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"2qQwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"26QwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"3KQwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"3aQwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"3qQwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"36QwAI0BGkR_zLqBmo1T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":54,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"EltqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"E1tqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"FFtqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"FVtqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"FltqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"F1tqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GFtqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GVtqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GltqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"G1tqAI0BAcvskBKZoJvF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 41.869708ms
+        duration: 56.955583ms
     - id: 20
       request:
         proto: HTTP/1.1
@@ -895,7 +895,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 834.958µs
+        duration: 1.608458ms
     - id: 21
       request:
         proto: HTTP/1.1
@@ -930,7 +930,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 9.49375ms
+        duration: 14.501791ms
     - id: 22
       request:
         proto: HTTP/1.1
@@ -981,13 +981,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":42,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"46QwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5KQwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5aQwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"5qQwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"56QwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"6KQwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"6aQwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"6qQwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"66QwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"7KQwAI0BGkR_zLqBmo3A","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":57,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"H1tqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"IFtqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"IVtqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"IltqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"I1tqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"JFtqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"JVtqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"JltqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"J1tqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"KFtqAI0BAcvskBKZoZte","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 43.811291ms
+        duration: 59.751166ms
     - id: 23
       request:
         proto: HTTP/1.1
@@ -1019,13 +1019,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":5,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"auditlog_test","_id":"46QwAI0BGkR_zLqBmo3A","_score":0.0,"_source":{"Client_ID":"cbbbd","Description":"","Details":"","ID":"","Keywords":"dibgb","Orig_User":"cghbb","Owner_Tenant_ID":"fiaec","Parent_Span_ID":"cdcdf","Provider_ID":"bhhbf","Security":"","Service":"","Severity":"","Span_ID":"fjbjc","SubType":"SYNCHRONIZED","Tenant_ID":"bihha","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gicae","Type":"DEVICE","User_ID":"ihece","Username":"dbbac"}},{"_index":"auditlog_test","_id":"5KQwAI0BGkR_zLqBmo3A","_score":0.0,"_source":{"Client_ID":"didjj","Description":"","Details":"","ID":"","Keywords":"jbjjb","Orig_User":"gdife","Owner_Tenant_ID":"jffea","Parent_Span_ID":"gjicb","Provider_ID":"jffdj","Security":"","Service":"","Severity":"","Span_ID":"gbife","SubType":"SCHEDULE_TASK","Tenant_ID":"dgief","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"cdbja","Type":"DP","User_ID":"hgcec","Username":"bgfig"}},{"_index":"auditlog_test","_id":"5aQwAI0BGkR_zLqBmo3A","_score":0.0,"_source":{"Client_ID":"fbhab","Description":"","Details":"","ID":"","Keywords":"hefhj","Orig_User":"cghag","Owner_Tenant_ID":"agjhd","Parent_Span_ID":"hdegc","Provider_ID":"dfjbj","Security":"","Service":"","Severity":"","Span_ID":"jigaa","SubType":"SYNCHRONIZED","Tenant_ID":"figef","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ifgeh","Type":"DP","User_ID":"ahhii","Username":"idcab"}},{"_index":"auditlog_test","_id":"5qQwAI0BGkR_zLqBmo3A","_score":0.0,"_source":{"Client_ID":"ibied","Description":"","Details":"","ID":"","Keywords":"fgbja","Orig_User":"djiac","Owner_Tenant_ID":"dhbbb","Parent_Span_ID":"iacbh","Provider_ID":"gbabe","Security":"","Service":"","Severity":"","Span_ID":"ihgjd","SubType":"SYNCHRONIZED","Tenant_ID":"ibddd","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hagab","Type":"DEVICE","User_ID":"eebcf","Username":"hcgfg"}},{"_index":"auditlog_test","_id":"56QwAI0BGkR_zLqBmo3A","_score":0.0,"_source":{"Client_ID":"bfhec","Description":"","Details":"","ID":"","Keywords":"fahif","Orig_User":"ifdbj","Owner_Tenant_ID":"jahjb","Parent_Span_ID":"ggggb","Provider_ID":"jdagf","Security":"","Service":"","Severity":"","Span_ID":"gcjja","SubType":"W","Tenant_ID":"eiece","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"adief","Type":"GP","User_ID":"iddci","Username":"ciecf"}}]}}'
+        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":5,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"auditlog_test","_id":"H1tqAI0BAcvskBKZoZte","_score":0.0,"_source":{"Client_ID":"cbbbd","Description":"","Details":"","ID":"","Keywords":"dibgb","Orig_User":"cghbb","Owner_Tenant_ID":"fiaec","Parent_Span_ID":"cdcdf","Provider_ID":"bhhbf","Security":"","Service":"","Severity":"","Span_ID":"fjbjc","SubType":"SYNCHRONIZED","Tenant_ID":"bihha","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gicae","Type":"DEVICE","User_ID":"ihece","Username":"dbbac"}},{"_index":"auditlog_test","_id":"IFtqAI0BAcvskBKZoZte","_score":0.0,"_source":{"Client_ID":"didjj","Description":"","Details":"","ID":"","Keywords":"jbjjb","Orig_User":"gdife","Owner_Tenant_ID":"jffea","Parent_Span_ID":"gjicb","Provider_ID":"jffdj","Security":"","Service":"","Severity":"","Span_ID":"gbife","SubType":"SCHEDULE_TASK","Tenant_ID":"dgief","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"cdbja","Type":"DP","User_ID":"hgcec","Username":"bgfig"}},{"_index":"auditlog_test","_id":"IVtqAI0BAcvskBKZoZte","_score":0.0,"_source":{"Client_ID":"fbhab","Description":"","Details":"","ID":"","Keywords":"hefhj","Orig_User":"cghag","Owner_Tenant_ID":"agjhd","Parent_Span_ID":"hdegc","Provider_ID":"dfjbj","Security":"","Service":"","Severity":"","Span_ID":"jigaa","SubType":"SYNCHRONIZED","Tenant_ID":"figef","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ifgeh","Type":"DP","User_ID":"ahhii","Username":"idcab"}},{"_index":"auditlog_test","_id":"IltqAI0BAcvskBKZoZte","_score":0.0,"_source":{"Client_ID":"ibied","Description":"","Details":"","ID":"","Keywords":"fgbja","Orig_User":"djiac","Owner_Tenant_ID":"dhbbb","Parent_Span_ID":"iacbh","Provider_ID":"gbabe","Security":"","Service":"","Severity":"","Span_ID":"ihgjd","SubType":"SYNCHRONIZED","Tenant_ID":"ibddd","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hagab","Type":"DEVICE","User_ID":"eebcf","Username":"hcgfg"}},{"_index":"auditlog_test","_id":"I1tqAI0BAcvskBKZoZte","_score":0.0,"_source":{"Client_ID":"bfhec","Description":"","Details":"","ID":"","Keywords":"fahif","Orig_User":"ifdbj","Owner_Tenant_ID":"jahjb","Parent_Span_ID":"ggggb","Provider_ID":"jdagf","Security":"","Service":"","Severity":"","Span_ID":"gcjja","SubType":"W","Tenant_ID":"eiece","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"adief","Type":"GP","User_ID":"iddci","Username":"ciecf"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 3.196541ms
+        duration: 4.053125ms
     - id: 24
       request:
         proto: HTTP/1.1
@@ -1060,7 +1060,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 11.1325ms
+        duration: 13.222666ms
     - id: 25
       request:
         proto: HTTP/1.1
@@ -1111,13 +1111,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":40,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"8KQwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"8aQwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"8qQwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"86QwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9KQwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9aQwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9qQwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"96QwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-KQwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-aQwAI0BGkR_zLqBm40-","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":62,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"LFtqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"LVtqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"LltqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"L1tqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"MFtqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"MVtqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"MltqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"M1tqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"NFtqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"NVtqAI0BAcvskBKZopsE","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 41.8505ms
+        duration: 65.138667ms
     - id: 26
       request:
         proto: HTTP/1.1
@@ -1152,7 +1152,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 2.025375ms
+        duration: 2.436291ms
     - id: 27
       request:
         proto: HTTP/1.1
@@ -1187,7 +1187,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 2.744625ms
+        duration: 1.976709ms
     - id: 28
       request:
         proto: HTTP/1.1
@@ -1222,7 +1222,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 1.134417ms
+        duration: 1.5155ms
     - id: 29
       request:
         proto: HTTP/1.1
@@ -1257,7 +1257,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 950.709µs
+        duration: 1.74325ms
     - id: 30
       request:
         proto: HTTP/1.1
@@ -1297,7 +1297,7 @@ interactions:
                 - 299 OpenSearch-2.6.0-7203a5af21a8a009aece1474446b437a3c674db6 "index template [test_template] has index patterns [*generic_events*] matching patterns from existing older templates [tenant_template] with patterns (tenant_template => [.kibana_-*_*, .kibana_0*_*, .kibana_1*_*, .kibana_2*_*, .kibana_3*_*, .kibana_4*_*, .kibana_5*_*, .kibana_6*_*, .kibana_7*_*, .kibana_8*_*, .kibana_9*_*]); this template [test_template] will take precedence during new index creation"
         status: 200 OK
         code: 200
-        duration: 8.86625ms
+        duration: 16.481792ms
     - id: 31
       request:
         proto: HTTP/1.1
@@ -1335,7 +1335,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 42.428416ms
+        duration: 62.339041ms
     - id: 32
       request:
         proto: HTTP/1.1
@@ -1370,7 +1370,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 10.869458ms
+        duration: 11.613584ms
     - id: 33
       request:
         proto: HTTP/1.1
@@ -1399,13 +1399,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"generic_events_1_test":{"aliases":{"generic_event":{}},"mappings":{"properties":{"SubType":{"type":"text"}}},"settings":{"index":{"creation_date":"1705105202075","number_of_shards":"4","number_of_replicas":"4","uuid":"k38cvFMIS6-jilR59KtjoA","version":{"created":"136277827"},"provided_name":"generic_events_1_test"}}}}'
+        body: '{"generic_events_1_test":{"aliases":{"generic_event":{}},"mappings":{"properties":{"SubType":{"type":"text"}}},"settings":{"index":{"creation_date":"1705109004941","number_of_shards":"4","number_of_replicas":"4","uuid":"OzAi6fMGRYugJEHJH0ZXmw","version":{"created":"136277827"},"provided_name":"generic_events_1_test"}}}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 1.454041ms
+        duration: 2.164167ms
     - id: 34
       request:
         proto: HTTP/1.1
@@ -1440,7 +1440,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 9.552833ms
+        duration: 11.13675ms
     - id: 35
       request:
         proto: HTTP/1.1
@@ -1475,7 +1475,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 8.891625ms
+        duration: 13.075333ms
     - id: 36
       request:
         proto: HTTP/1.1
@@ -1510,7 +1510,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 11.664042ms
+        duration: 15.180959ms
     - id: 37
       request:
         proto: HTTP/1.1
@@ -1545,7 +1545,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 10.548459ms
+        duration: 14.194584ms
     - id: 38
       request:
         proto: HTTP/1.1
@@ -1596,13 +1596,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":40,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"CKQwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"CaQwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"CqQwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"C6QwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DKQwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DaQwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DqQwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"D6QwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"EKQwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"EaQwAI0BGkR_zLqBnI59","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":46,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"RFtqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"RVtqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"RltqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"R1tqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"SFtqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"SVtqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"SltqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"S1tqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"TFtqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"TVtqAI0BAcvskBKZo5u2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 42.043167ms
+        duration: 48.569541ms
     - id: 39
       request:
         proto: HTTP/1.1
@@ -1653,13 +1653,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":40,"errors":false,"items":[{"index":{"_index":"generic_events_test","_id":"FKQwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"FaQwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"FqQwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"F6QwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"GKQwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"GaQwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"GqQwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"G6QwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"HKQwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"HaQwAI0BGkR_zLqBnI7T","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":45,"errors":false,"items":[{"index":{"_index":"generic_events_test","_id":"UFtqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"UVtqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"UltqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"U1tqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"VFtqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"VVtqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"VltqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"V1tqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"WFtqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"WVtqAI0BAcvskBKZpJsf","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 42.392458ms
+        duration: 48.0685ms
     - id: 40
       request:
         proto: HTTP/1.1
@@ -1694,4 +1694,133 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 10.640625ms
+        duration: 12.939333ms
+    - id: 41
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: ""
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Basic YWRtaW46YWRtaW4=
+            User-Agent:
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.5)
+        url: http://localhost:9200/auditlog_test
+        method: DELETE
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '{"acknowledged":true}'
+        headers:
+            Content-Type:
+                - application/json; charset=UTF-8
+        status: 200 OK
+        code: 200
+        duration: 12.995291ms
+    - id: 42
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 4293
+        transfer_encoding: []
+        trailer: {}
+        host: ""
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"index":{}}
+            {"Client_ID":"dhdih","Description":"","Details":"","ID":"","Keywords":"hihia","Orig_User":"jbbcj","Owner_Tenant_ID":"gibhc","Parent_Span_ID":"gbjha","Provider_ID":"djfei","Security":"","Service":"","Severity":"","Span_ID":"eficb","SubType":"W","Tenant_ID":"ejcch","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ijfgc","Type":"DEVICE","User_ID":"gfcjg","Username":"beahd"}
+            {"index":{}}
+            {"Client_ID":"jacge","Description":"","Details":"","ID":"","Keywords":"fbiif","Orig_User":"bbgbh","Owner_Tenant_ID":"fbeic","Parent_Span_ID":"deadj","Provider_ID":"jgibe","Security":"","Service":"","Severity":"","Span_ID":"gjdfi","SubType":"W","Tenant_ID":"gjeaa","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jacib","Type":"GP","User_ID":"jihbi","Username":"fiadj"}
+            {"index":{}}
+            {"Client_ID":"gbhcj","Description":"","Details":"","ID":"","Keywords":"dghcg","Orig_User":"ddejj","Owner_Tenant_ID":"gfeei","Parent_Span_ID":"bggaf","Provider_ID":"bijeb","Security":"","Service":"","Severity":"","Span_ID":"habdg","SubType":"SYNCHRONIZED","Tenant_ID":"idbcf","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"fjbib","Type":"DP","User_ID":"ibebc","Username":"fhgjf"}
+            {"index":{}}
+            {"Client_ID":"aiihi","Description":"","Details":"","ID":"","Keywords":"ejbfe","Orig_User":"fdbih","Owner_Tenant_ID":"icggf","Parent_Span_ID":"jbace","Provider_ID":"iibee","Security":"","Service":"","Severity":"","Span_ID":"jjajb","SubType":"SYNCHRONIZED","Tenant_ID":"bbefe","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"egbdb","Type":"DP","User_ID":"jidhj","Username":"agadh"}
+            {"index":{}}
+            {"Client_ID":"ggdaj","Description":"","Details":"","ID":"","Keywords":"jfbhc","Orig_User":"cbiia","Owner_Tenant_ID":"fajcb","Parent_Span_ID":"dfgja","Provider_ID":"dihga","Security":"","Service":"","Severity":"","Span_ID":"ghdjh","SubType":"SCHEDULE_TASK","Tenant_ID":"daddb","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"afeff","Type":"GP","User_ID":"dabcb","Username":"jfgab"}
+            {"index":{}}
+            {"Client_ID":"fgfbg","Description":"","Details":"","ID":"","Keywords":"giiib","Orig_User":"cibhc","Owner_Tenant_ID":"hdafd","Parent_Span_ID":"bhbch","Provider_ID":"bgije","Security":"","Service":"","Severity":"","Span_ID":"aagih","SubType":"SCHEDULE_TASK","Tenant_ID":"hiegb","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"diegd","Type":"DP","User_ID":"chdje","Username":"geceg"}
+            {"index":{}}
+            {"Client_ID":"fjjgg","Description":"","Details":"","ID":"","Keywords":"hhbhi","Orig_User":"behea","Owner_Tenant_ID":"ceeca","Parent_Span_ID":"dcdbb","Provider_ID":"edige","Security":"","Service":"","Severity":"","Span_ID":"fiddh","SubType":"SCHEDULE_TASK","Tenant_ID":"haghj","Tenant_Name":"","Time":"2021-04-24T16:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ieiaa","Type":"GP","User_ID":"dbaee","Username":"dfcia"}
+            {"index":{}}
+            {"Client_ID":"hijef","Description":"","Details":"","ID":"","Keywords":"dgdce","Orig_User":"bcaeg","Owner_Tenant_ID":"ggebe","Parent_Span_ID":"aafhb","Provider_ID":"afidg","Security":"","Service":"","Severity":"","Span_ID":"ddhae","SubType":"SYNCHRONIZED","Tenant_ID":"idhgb","Tenant_Name":"","Time":"2021-07-06T19:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ecdba","Type":"DEVICE","User_ID":"fcfjh","Username":"cigdb"}
+            {"index":{}}
+            {"Client_ID":"bfgcj","Description":"","Details":"","ID":"","Keywords":"dbegc","Orig_User":"abchj","Owner_Tenant_ID":"eghce","Parent_Span_ID":"dbbbh","Provider_ID":"fdgfd","Security":"","Service":"","Severity":"","Span_ID":"iiecf","SubType":"SCHEDULE_TASK","Tenant_ID":"eigea","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"edbaf","Type":"DP","User_ID":"ijdfg","Username":"jeeij"}
+            {"index":{}}
+            {"Client_ID":"ibigd","Description":"","Details":"","ID":"","Keywords":"jfffe","Orig_User":"cihga","Owner_Tenant_ID":"ihgja","Parent_Span_ID":"abhhh","Provider_ID":"fjjai","Security":"","Service":"","Severity":"","Span_ID":"hhbga","SubType":"W","Tenant_ID":"fjhbg","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hjcfg","Type":"DEVICE","User_ID":"ijdbh","Username":"ciibb"}
+        form: {}
+        headers:
+            Authorization:
+                - Basic YWRtaW46YWRtaW4=
+            Content-Type:
+                - application/json
+            User-Agent:
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.5)
+        url: http://localhost:9200/auditlog_test/_bulk?refresh=true
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '{"took":50,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"XltqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"X1tqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"YFtqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"YVtqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"YltqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"Y1tqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ZFtqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ZVtqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ZltqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"Z1tqAI0BAcvskBKZpJu5","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        headers:
+            Content-Type:
+                - application/json; charset=UTF-8
+        status: 200 OK
+        code: 200
+        duration: 52.720375ms
+    - id: 43
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: ""
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Basic YWRtaW46YWRtaW4=
+            User-Agent:
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.5)
+        url: http://localhost:9200/
+        method: HEAD
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 562
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "562"
+            Content-Type:
+                - application/json; charset=UTF-8
+        status: 200 OK
+        code: 200
+        duration: 3.141042ms

@@ -45,7 +45,7 @@ type opensearchDI struct {
 	Properties    *opensearch.Properties
 }
 
-func TestScopeController(t *testing.T) {
+func TestOpenSearchPlayback(t *testing.T) {
 	di := &opensearchDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
