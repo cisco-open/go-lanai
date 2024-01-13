@@ -76,6 +76,7 @@ func toHTTPVCROptions(opt Option) ittest.HTTPVCROptions {
 			matcherOpt.BodyMatchers = append(matcherOpt.BodyMatchers, BulkJsonBodyMatcher{
 				Delegate: ittest.NewRecordJsonBodyMatcher(opt.FuzzyJsonPaths...),
 			})
+			matcherOpt.FuzzyHeaders = append(matcherOpt.FuzzyHeaders, "User-Agent")
 		})
 	}
 }
