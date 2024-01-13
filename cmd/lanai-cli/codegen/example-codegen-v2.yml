@@ -7,7 +7,7 @@ project:
   # Name of Project/Service. Used as main.go, application.yml, bootstrap.yml, etc.
   name: skeleton-service
   # Golang module name, also used as base import path when in the generated source code
-  module: cto-github.cisco.com/NFV-BU/go-lanai-examples/skeleton-service
+  module: cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service
   # Service port. Used in "bootstrap.yml"
   port: 9898
   # Service context-path. Used in "bootstrap.yml"

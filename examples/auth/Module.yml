@@ -1,0 +1,16 @@
+name: auth-service
+
+execs:
+  example-auth-service:
+    main: cmd/auth-service/main.go
+    port: 8900
+  migrate:
+    main: cmd/auth-service/migrate.go
+    type: migrator
+
+resources:
+  - pattern: "configs"
+    output: "configs"
+
+sources:
+  - path: "pkg"

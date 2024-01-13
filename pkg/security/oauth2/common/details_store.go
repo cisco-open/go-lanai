@@ -26,7 +26,7 @@ const (
 
 	/*
 		Original comment form Java implementation:
-		When specific token of a client is used (nfv-client), we look up the session and update
+		When specific token of a client is used, we look up the session and update
 		its last requested time
 		These records should have an expiry time equal to the token's expiry time
 	*/
