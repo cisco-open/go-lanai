@@ -1,4 +1,4 @@
-package opensearchtest
+package testdata
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func SetupPrepareOpenSearchData(
 ) (context.Context, error) {
 	// We don't care if we can't delete this indices - it might not exist
 	//nolint:errcheck
-	repo.IndicesDelete(ctx, []string{"auditlog"})
+	_ = repo.IndicesDelete(ctx, []string{"auditlog"})
 	events := []GenericAuditEvent{}
 	CreateData(10, startDate, endDate, &events)
 	_, err := repo.BulkIndexer(
