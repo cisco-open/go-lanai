@@ -22,12 +22,13 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/recorder"
 	"github.com/cockroachdb/copyist"
 	opensearchgo "github.com/opensearch-project/opensearch-go"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"github.com/opensearch-project/opensearch-go/opensearchutil"
 	"go.uber.org/fx"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
+	"net/http"
 	"testing"
 	"time"
 )
@@ -44,35 +45,54 @@ func IsRecording() bool {
 	return copyist.IsRecording()
 }
 
-// determineMode will take the mode and determine what mode it should be depending on
-// the commandline and environment variables
-func determineMode(mode *Mode) {
-	if *mode == ModeCommandline {
-		// We let the commandline override this mode. Otherwise, this mode is determined
-		// by the whatever it came in as
-		if IsRecording() {
-			*mode = ModeRecording
-		} else {
-			*mode = ModeReplaying
-		}
+type Options func(opt *Option)
+type Option struct {
+	Name               string
+	SavePath           string
+	Mode               Mode
+	RealTransport      http.RoundTripper
+	SkipRequestLatency bool
+	FuzzyJsonPaths     []string
+	RecordDelay        time.Duration
+}
+
+// SetRecordDelay add delay between each request.
+// Note: original request latency is applied by default. This is the additional delay between each requests
+func SetRecordDelay(delay time.Duration) Options {
+	return func(opt *Option) {
+		SkipRequestLatency(false)(opt)
+		opt.RecordDelay = delay
 	}
 }
 
-type OpenSearchPlaybackOptions func(o *OpenSearchPlaybackOption)
-type OpenSearchPlaybackOption struct {
-	Mode          Mode
-	RecordDelay   time.Duration
-	RecordOptions []RecordOptions
-}
-
-func SetRecordDelay(duration time.Duration) OpenSearchPlaybackOptions {
-	return func(o *OpenSearchPlaybackOption) {
-		o.RecordDelay = duration
-	}
-}
-func SetRecordMode(mode Mode) OpenSearchPlaybackOptions {
-	return func(o *OpenSearchPlaybackOption) {
+func SetRecordMode(mode Mode) Options {
+	return func(o *Option) {
 		o.Mode = mode
+	}
+}
+
+// SkipRequestLatency disable mimic request latency in playback mode. Has no effect during recording
+// By default, original request latency during recording is applied in playback mode.
+func SkipRequestLatency(skip bool) Options {
+	return func(o *Option) {
+		o.SkipRequestLatency = skip
+	}
+}
+
+// ReplayMode override recording/playback mode. Default is ModeCommandline
+func ReplayMode(mode Mode) Options {
+	return func(o *Option) {
+		o.Mode = mode
+	}
+}
+
+// FuzzyJsonPaths ignore part of JSON body with JSONPath notation during playback mode.
+// Useful for search queries with time-sensitive fields
+// e.g. FuzzyJsonPaths("$.query.*.Time")
+// JSONPath Syntax: https://goessner.net/articles/JsonPath/
+func FuzzyJsonPaths(jsonPaths...string) Options {
+	return func(o *Option) {
+		o.FuzzyJsonPaths = append(o.FuzzyJsonPaths, jsonPaths...)
 	}
 }
 
@@ -86,78 +106,65 @@ func SetRecordMode(mode Mode) OpenSearchPlaybackOptions {
 //
 // To control what is being matched in the http vcr, this function will provide a
 // *MatcherBodyModifiers to uber.FX.
-func WithOpenSearchPlayback(options ...OpenSearchPlaybackOptions) test.Options {
-	var openSearchOption OpenSearchPlaybackOption
+func WithOpenSearchPlayback(options ...Options) test.Options {
+	openSearchOption := Option {
+		Mode: ModeCommandline,
+	}
 	for _, fn := range options {
 		fn(&openSearchOption)
 	}
 
-	var modifiers MatcherBodyModifiers
-	openSearchOption.RecordOptions = append(
-		openSearchOption.RecordOptions,
-		func(c *RecordOption) {
-			c.Modifiers = &modifiers
-		},
-	)
+	//var modifiers MatcherBodyModifiers
+	//openSearchOption.RecordOptions = append(
+	//	openSearchOption.RecordOptions,
+	//	func(c *RecordOption) {
+	//		c.Modifiers = &modifiers
+	//	},
+	//)
 
-	determineMode(&openSearchOption.Mode)
-	rec := recorder.Recorder{}
+	var rec *recorder.Recorder
 	testOpts := []test.Options{
 		test.Setup(
-			getRecording(
-				&rec,
-				openSearchOption.Mode,
-				openSearchOption.RecordOptions...,
-			),
+			startRecording(&rec, options...),
 		),
 		apptest.WithFxOptions(
 			fx.Decorate(func(c opensearchgo.Config) opensearchgo.Config {
-				c.Transport = &rec
+				c.Transport = rec
 				return c
 			}),
 			fx.Provide(
 				IndexEditHookProvider(opensearch.FxGroup),
-				func() *MatcherBodyModifiers { return &modifiers },
+				//func() *MatcherBodyModifiers { return &MatcherBodyModifiers{} },
 			),
 		),
-		test.Teardown(stopRecording(&rec)),
+		test.Teardown(stopRecording()),
 	}
-	if openSearchOption.Mode == ModeRecording {
+	if openSearchOption.Mode == ModeRecording || openSearchOption.Mode == ModeCommandline && IsRecording(){
 		testOpts = append(testOpts, apptest.WithFxOptions(
-			fx.Provide(
-				SearchDelayerHookProvider(
-					opensearch.FxGroup,
-					opensearch.FxGroup,
-					openSearchOption.RecordDelay,
-				),
-			),
+			fx.Provide(SearchDelayerHookProvider(opensearch.FxGroup, openSearchOption.RecordDelay)),
 		))
 	}
 	return test.WithOptions(testOpts...)
 }
 
-func getRecording(rec *recorder.Recorder, mode Mode, options ...RecordOptions) test.SetupFunc {
+func startRecording(recRef **recorder.Recorder, options ...Options) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		r, err := GetRecorder(
-			append(
-				options,
-				CassetteLocation(GetCassetteLocation()),
-				ReplayMode(mode),
-			)...,
-		)
-		if err != nil {
-			return ctx, err
+		initial := func(c *Option) {
+			c.Mode = ModeCommandline
+			c.Name = t.Name()
+			c.SavePath = "testdata"
 		}
-		*rec = *r
-		return ctx, nil
+		opts := append([]Options{initial}, options...)
+		var err error
+		*recRef, err = NewRecorder(opts...)
+		return contextWithRecorder(ctx, *recRef), err
 	}
 }
 
-func stopRecording(rec *recorder.Recorder) test.TeardownFunc {
+func stopRecording() test.TeardownFunc {
 	return func(ctx context.Context, t *testing.T) error {
-		err := rec.Stop()
-		if err != nil {
-			return err
+		if rec, ok := ctx.Value(ckRecorder{}).(*recorder.Recorder); ok {
+			return rec.Stop()
 		}
 		return nil
 	}
@@ -167,7 +174,6 @@ func stopRecording(rec *recorder.Recorder) test.TeardownFunc {
 // will have a delay so that the search can find all the documents.
 type SearchDelayer struct {
 	Delay time.Duration
-
 	lastEvent opensearch.CommandType
 }
 
@@ -187,13 +193,13 @@ func SearchDelayerHook(delay time.Duration) *SearchDelayer {
 	return &SearchDelayer{Delay: delay}
 }
 
-func SearchDelayerHookProvider(beforeGroup string, afterGroup string, delay time.Duration) (fx.Annotated, fx.Annotated) {
+func SearchDelayerHookProvider(group string, delay time.Duration) (fx.Annotated, fx.Annotated) {
 	searchDelayer := SearchDelayerHook(delay)
 	return fx.Annotated{
-			Group: beforeGroup, Target: func() opensearch.BeforeHook { return searchDelayer },
+			Group: group, Target: func() opensearch.BeforeHook { return searchDelayer },
 		},
 		fx.Annotated{
-			Group: afterGroup, Target: func() opensearch.AfterHook { return searchDelayer },
+			Group: group, Target: func() opensearch.AfterHook { return searchDelayer },
 		}
 }
 
@@ -281,5 +287,32 @@ func IndexEditHookProvider(group string) fx.Annotated {
 	return fx.Annotated{
 		Group:  group,
 		Target: NewEditingIndexForTestingHook,
+	}
+}
+
+/******************
+	Context
+ ******************/
+
+type ckRecorder struct{}
+
+type recorderContext struct {
+	context.Context
+	rec *recorder.Recorder
+}
+
+func (c recorderContext) Value(k interface{}) interface{} {
+	switch k {
+	case ckRecorder{}:
+		return c.rec
+	default:
+		return c.Context.Value(k)
+	}
+}
+
+func contextWithRecorder(parent context.Context, rec *recorder.Recorder) context.Context {
+	return recorderContext{
+		Context: parent,
+		rec:     rec,
 	}
 }

@@ -17,11 +17,10 @@
 package opensearchtest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/httpvcr/recorder"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
 	"fmt"
 	"github.com/pkg/errors"
-	"net/http"
-	"path"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"runtime"
 	"strings"
 )
@@ -41,59 +40,20 @@ const (
 	ModeCommandline
 )
 
-// options is unexported because the Properties that these would edit
-// are unexported also, so there's no point in creating any options out of this package
-type RecordOptions func(c *RecordOption)
-type RecordOption struct {
-	CassetteLocation   string
-	Mode      Mode
-	Modifiers *MatcherBodyModifiers
-}
-
-func CassetteLocation(location string) RecordOptions {
-	return func(c *RecordOption) {
-		c.CassetteLocation = location
-	}
-}
-
-func ReplayMode(mode Mode) RecordOptions {
-	return func(c *RecordOption) {
-		c.Mode = mode
-	}
-}
-
-// GetCassetteLocation will look for the testdata/ directory where the test file is.
-// If that testdata/ directory does not exist, then this function will create it. The
-// recording file if named hello_test.go will be named hello.httpvcr
-func GetCassetteLocation() string {
-	fileName := findTestFile()
-	dirName := path.Join(path.Dir(fileName), "testdata")
-	fileName = path.Base(fileName[:len(fileName)-3]) + ".httpvcr"
-	pathName := path.Join(dirName, fileName)
-	return pathName
-}
-
-// WithRecorder will add a recorder configured by the RecordOptions to *opensearch.Properties
-func GetRecorder(options ...RecordOptions) (*recorder.Recorder, error) {
-	recordOption := RecordOption{}
+// NewRecorder will create a recorder configured by the RecordOptions
+func NewRecorder(options ...Options) (*recorder.Recorder, error) {
+	var recordOption Option
 	for _, fn := range options {
 		fn(&recordOption)
 	}
-	if recordOption.CassetteLocation == "" {
+	if recordOption.Name == "" {
 		return nil, ErrNoCassetteName
 	}
-	httpTransport := http.DefaultTransport
-	r, err := recorder.NewAsMode(
-		recordOption.CassetteLocation,
-		recorder.Mode(recordOption.Mode),
-		httpTransport,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("%w, %v", ErrCreatingRecorder, err)
+	rec, e := ittest.NewHttpRecorder(toHTTPVCROptions(recordOption))
+	if e != nil {
+		return nil, fmt.Errorf("%w, %v", ErrCreatingRecorder, e)
 	}
-	r.SetInOrderInteractions(true)
-	r.SetMatcher(MatchBody(recordOption.Modifiers))
-	return r, nil
+	return rec.Recorder, nil
 }
 
 // findTestFile - copied from copyist.go - Searches the call stack, looking for the test that called
@@ -111,5 +71,28 @@ func findTestFile() string {
 	if lastTestFilename != "" {
 		return lastTestFilename
 	}
-	panic(fmt.Errorf("Open was not called directly or indirectly from a test file"))
+	panic(fmt.Errorf("open was not called directly or indirectly from a test file"))
+}
+
+func toHTTPVCROptions(opt Option) ittest.HTTPVCROptions {
+	return func(vcrOpt *ittest.HTTPVCROption) {
+		vcrOpt.Mode = ittest.ModeReplaying
+		switch opt.Mode {
+		case ModeRecording:
+			vcrOpt.Mode = ittest.ModeRecording
+		case ModeCommandline:
+			if IsRecording() {
+				vcrOpt.Mode = ittest.ModeRecording
+			}
+		default:
+		}
+		vcrOpt.Name = opt.Name
+		vcrOpt.SavePath = opt.SavePath
+		vcrOpt.RecordMatching = append(vcrOpt.RecordMatching, func(matcherOpt *ittest.RecordMatcherOption) {
+			matcherOpt.BodyMatchers = append(matcherOpt.BodyMatchers, BulkJsonBodyMatcher{
+				Delegate: ittest.NewRecordJsonBodyMatcher(opt.FuzzyJsonPaths...),
+			})
+			matcherOpt.FuzzyHeaders = append(matcherOpt.FuzzyHeaders, "User-Agent")
+		})
+	}
 }

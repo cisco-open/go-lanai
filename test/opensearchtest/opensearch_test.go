@@ -59,16 +59,16 @@ type opensearchDI struct {
 	fx.In
 	FakeService   FakeService
 	Properties    *opensearch.Properties
-	BodyModifiers *MatcherBodyModifiers
 }
 
-func TestScopeController(t *testing.T) {
+func TestOpenSearchPlayback(t *testing.T) {
 	di := &opensearchDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		WithOpenSearchPlayback(
 			SetRecordMode(ModeCommandline),
 			SetRecordDelay(time.Millisecond*1500),
+			FuzzyJsonPaths("$.query.bool.filter.range.Time"),
 		),
 		apptest.WithTimeout(time.Minute),
 		apptest.WithModules(opensearch.Module),
@@ -555,10 +555,10 @@ func SubTestSearchTemplate(di *opensearchDI) test.GomegaSubTestFunc {
 // a portion of the request that is used to compare requests in the httpvcr/recorder.Recorder
 func SubTestTimeBasedQuery(di *opensearchDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		defer di.BodyModifiers.Clear()
-		di.BodyModifiers.Append(IgnoreGJSONPaths(t,
-			"query.bool.filter.range.Time",
-		))
+		//defer di.BodyModifiers.Clear()
+		//di.BodyModifiers.Append(IgnoreGJSONPaths(t,
+		//	"query.bool.filter.range.Time",
+		//))
 
 		var TimeQuery map[string]interface{}
 		// If we are recording, we want to use a valid time query, however to test
@@ -628,33 +628,33 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 		}
 
 		// The below 3 lines are used for debugging purposes, in the case that the test did not make a full run
-		di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
-		di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
-		di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
-		di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, "generic_events_template_1")
+		_ = di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
+		_ = di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
+		_ = di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
+		_ = di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, "generic_events_template_1")
 
 		// Create a Template
 		err := di.FakeService.Repo.IndicesPutIndexTemplate(ctx, fakeTemplateName, indexTemplate)
 		if err != nil {
-			t.Fatalf("unable to create index template")
+			t.Fatalf("unable to create index template: %v", err)
 		}
 
 		// Create an Index with template pattern
 		err = di.FakeService.Repo.IndicesCreate(ctx, fakeNewIndexName, indexMapping)
 		if err != nil {
-			t.Fatalf("unable to create index")
+			t.Fatalf("unable to create index: %v", err)
 		}
 
 		// Create an Alias for the template
 		err = di.FakeService.Repo.IndicesPutAlias(ctx, []string{fakeNewIndexName}, fakeIndexAlias)
 		if err != nil {
-			t.Fatalf("unable to create alias ")
+			t.Fatalf("unable to create alias: %v", err)
 		}
 
 		// Get the new index using the Alias and check the obj
 		resp, err := di.FakeService.Repo.IndicesGet(ctx, fakeIndexAlias)
 		if err != nil {
-			t.Fatalf("unable to get indices information using alias ")
+			t.Fatalf("unable to get indices information using alias: %v", err)
 		}
 
 		// This test proves that the index template works against the newly created indices
@@ -664,17 +664,17 @@ func SubTestTemplateAndAlias(di *opensearchDI) test.GomegaSubTestFunc {
 		// Delete Alias
 		err = di.FakeService.Repo.IndicesDeleteAlias(ctx, []string{fakeNewIndexName}, []string{fakeIndexAlias})
 		if err != nil {
-			t.Fatalf("unable to delete indices alias ")
+			t.Fatalf("unable to delete indices alias: %v", err)
 		}
 		// Delete Index Template
 		err = di.FakeService.Repo.IndicesDeleteIndexTemplate(ctx, fakeTemplateName)
 		if err != nil {
-			t.Fatalf("unable to delete index template ")
+			t.Fatalf("unable to delete index template: %v", err)
 		}
 		// Delete index
 		err = di.FakeService.Repo.IndicesDelete(ctx, []string{fakeNewIndexName})
 		if err != nil {
-			t.Fatalf("unable to delete index ")
+			t.Fatalf("unable to delete index: %v", err)
 		}
 	}
 }

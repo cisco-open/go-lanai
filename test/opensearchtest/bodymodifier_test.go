@@ -50,16 +50,14 @@ func TestSetPath(t *testing.T) {
 
 // TestBodyModifiers tests that we can Append and Clear the modifiers
 func TestBodyModifiers(t *testing.T) {
-	var modifiers MatcherBodyModifiers
-	var options RecordOption
-	options.Modifiers = &modifiers
+	modifiers := &MatcherBodyModifiers{}
 
-	for _, _ = range options.Modifiers.Modifier() {
+	for _, _ = range modifiers.Modifier() {
 		t.Errorf("Expected no MatchBodyModifiers to be in options")
 	}
 	modifiers.Append(func(i *[]byte) { /* no op*/ })
 	numberOfModifiers := 0
-	for _, o := range options.Modifiers.Modifier() {
+	for _, o := range modifiers.Modifier() {
 		numberOfModifiers++
 		if o == nil {
 			t.Errorf("o should not be nil right now")
@@ -69,14 +67,14 @@ func TestBodyModifiers(t *testing.T) {
 		t.Errorf("expected there to be exactly 1 modifier, not: %v", numberOfModifiers)
 	}
 	modifiers.Clear()
-	for _, _ = range options.Modifiers.Modifier() {
+	for _, _ = range modifiers.Modifier() {
 		t.Errorf("Expected no MatchBodyModifiers to be in options")
 	}
 	modifiers.Append(func(i *[]byte) {
 		// no op
 	})
 	numberOfModifiers = 0
-	for _, o := range options.Modifiers.Modifier() {
+	for _, o := range modifiers.Modifier() {
 		numberOfModifiers++
 		if o == nil {
 			t.Errorf("o should not be nil right now")

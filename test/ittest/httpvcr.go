@@ -44,8 +44,9 @@ func init() {
 type RecorderDI struct {
 	fx.In
 	Recorder        *recorder.Recorder
-	RecorderOption  *HTTPVCROption
+	RecorderOption  *recorder.Options
 	RecorderMatcher cassette.MatcherFunc
+	HTTPVCROption   *HTTPVCROption
 }
 
 // WithHttpPlayback enables remote HTTP server playback capabilities supported by `httpvcr`
@@ -251,7 +252,7 @@ func (c *recorderAwareContext) Value(k interface{}) interface{} {
 
 func recorderDISetup(di *RecorderDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		return contextWithRecorder(ctx, di.Recorder, di.RecorderOption), nil
+		return contextWithRecorder(ctx, di.Recorder, di.HTTPVCROption), nil
 	}
 }
 
@@ -271,6 +272,45 @@ func recorderReset(di *RecorderDI) test.TeardownFunc {
 	Internals
  *************************/
 
+// HttpRecorder wrapper of recorder.Recorder, used to hold some value that normally inaccessible via wrapped recorder.Recorder.
+// Note: Internal Use Only! this type is for other test utilities to re-configure recorder.Recorder
+type HttpRecorder struct {
+	*recorder.Recorder
+	RawOptions *recorder.Options
+	Matcher    cassette.MatcherFunc
+	Options    *HTTPVCROption
+}
+
+// NewHttpRecorder Internal Use Only! Create a new HttpRecorder, commonly used by other test utilities that relies on
+// http recording. (e.g. opensearchtest, consultest, etc.)
+func NewHttpRecorder(opts ...HTTPVCROptions) (*HttpRecorder, error) {
+	var opt HTTPVCROption
+	for _, fn := range opts {
+		fn(&opt)
+	}
+	rawOpts := toRecorderOptions(opt)
+	rec, e := recorder.NewWithOptions(rawOpts)
+	if e != nil {
+		return nil, e
+	}
+
+	// set matchers
+	matcher := newCassetteMatcherFunc(opt.RecordMatching, opt.indexAwareWrapper)
+	rec.SetMatcher(matcher)
+
+	//set hooks
+	order.SortStable(opt.Hooks, order.OrderedFirstCompare)
+	for _, h := range opt.Hooks {
+		rec.AddHook(h.Handler(), h.Kind())
+	}
+	return &HttpRecorder{
+		Recorder:   rec,
+		RawOptions: rawOpts,
+		Matcher:    matcher,
+		Options:    &opt,
+	}, nil
+}
+
 type vcrDI struct {
 	fx.In
 	VCROptions []HTTPVCROptions `group:"http-vcr"`
@@ -281,35 +321,26 @@ type vcrOut struct {
 	Recorder             *recorder.Recorder
 	CassetteMatcher      cassette.MatcherFunc
 	HttpVCROption        *HTTPVCROption
+	RawRecorderOption    *recorder.Options
 	HttpClientCustomizer httpclient.ClientCustomizer `group:"http-client"`
 }
 
 func httpRecorderProvider(initial HTTPVCROption, opts []HTTPVCROptions) func(di vcrDI) (vcrOut, error) {
 	return func(di vcrDI) (vcrOut, error) {
-		opt := initial
-		opts = append(opts, di.VCROptions...)
-		for _, fn := range opts {
-			fn(&opt)
+		initialOpt := func(opt *HTTPVCROption) {
+			*opt = initial
 		}
-		rec, e := recorder.NewWithOptions(toRecorderOptions(opt))
+		finalOpts := append([]HTTPVCROptions{initialOpt}, opts...)
+		finalOpts = append(finalOpts, di.VCROptions...)
+		rec, e := NewHttpRecorder(finalOpts...)
 		if e != nil {
 			return vcrOut{}, e
 		}
-
-		// set matchers
-		matcher := newCassetteMatcherFunc(opt.RecordMatching, opt.indexAwareWrapper)
-		rec.SetMatcher(matcher)
-
-		//set hooks
-		order.SortStable(opt.Hooks, order.OrderedFirstCompare)
-		for _, h := range opt.Hooks {
-			rec.AddHook(h.Handler(), h.Kind())
-		}
-
 		return vcrOut{
-			Recorder:        rec,
-			CassetteMatcher: matcher,
-			HttpVCROption:   &opt,
+			Recorder:          rec.Recorder,
+			CassetteMatcher:   rec.Matcher,
+			HttpVCROption:     rec.Options,
+			RawRecorderOption: rec.RawOptions,
 			HttpClientCustomizer: httpclient.ClientCustomizerFunc(func(opt *httpclient.ClientOption) {
 				opt.HTTPClient = rec.GetDefaultClient()
 			}),

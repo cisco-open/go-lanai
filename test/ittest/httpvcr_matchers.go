@@ -119,13 +119,11 @@ func resolveMatcherOption(opts []RecordMatcherOptions) *RecordMatcherOption {
 		opt.HeaderMatcher = RecordHeaderMatcherFunc(NewRecordHeaderMatcher(opt.FuzzyHeaders...))
 	}
 
-	if len(opt.BodyMatchers) == 0 {
-		opt.BodyMatchers = []RecordBodyMatcher{
-			NewRecordJsonBodyMatcher(opt.FuzzyJsonPaths...),
-			NewRecordFormBodyMatcher(opt.FuzzyPostForm...),
-			NewRecordLiteralBodyMatcher(),
-		}
-	}
+	opt.BodyMatchers = append(opt.BodyMatchers,
+		NewRecordJsonBodyMatcher(opt.FuzzyJsonPaths...),
+		NewRecordFormBodyMatcher(opt.FuzzyPostForm...),
+		NewRecordLiteralBodyMatcher(),
+	)
 
 	return &opt
 }
@@ -133,7 +131,7 @@ func resolveMatcherOption(opts []RecordMatcherOptions) *RecordMatcherOption {
 // indexAwareMatcherWrapper is a special matcher wrapper that ensure requests are executed in the recorded order
 type indexAwareMatcherWrapper struct {
 	// count for total actual request have seen
-	count    int
+	count int
 }
 
 func newIndexAwareMatcherWrapper() *indexAwareMatcherWrapper {
@@ -144,10 +142,13 @@ func newIndexAwareMatcherWrapper() *indexAwareMatcherWrapper {
 
 // MatcherFunc wrap given delegate with index enforcement
 // Note 1: because current httpvcr lib doesn't expose the interaction ID, we stored it in header
-// 		   using InteractionIndexAwareHook
+//
+//	using InteractionIndexAwareHook
+//
 // Note 2: This wrapper doesn't invoke delegate if expected ID doesn't match.
 // Note 3: The next expected ID would increase if delegate is a match. This means if recorder couldn't match the
-// 		   request with currently expected interaction, it would keep waiting on the same interaction
+//
+//	request with currently expected interaction, it would keep waiting on the same interaction
 func (w *indexAwareMatcherWrapper) MatcherFunc(delegate RecordMatcherFunc) GenericMatcherFunc[*http.Request, cassette.Request] {
 	return func(out *http.Request, record cassette.Request) error {
 		recordId, e := strconv.Atoi(record.Headers.Get(xInteractionIndexHeader))
@@ -159,11 +160,11 @@ func (w *indexAwareMatcherWrapper) MatcherFunc(delegate RecordMatcherFunc) Gener
 		if !seen {
 			// a new request, we adjust the expectation and set the request to be seen
 			out.Header.Set(xInteractionSeenHeader, "true")
-			w.count ++
+			w.count++
 		}
 
 		// do interaction match first
-		if w.count != recordId + 1 {
+		if w.count != recordId+1 {
 			return errInteractionIDMismatch
 		}
 
@@ -208,7 +209,6 @@ func FuzzyForm(formKeys ...string) RecordMatcherOptions {
 }
 
 // FuzzyJsonPaths returns RecordMatcherOptions that ignore fields in JSON body that matching the given JSONPaths
-// Note: still check if the header exists, only value comparison is skipped.
 // JSONPath Syntax: https://goessner.net/articles/JsonPath/
 func FuzzyJsonPaths(jsonPaths ...string) RecordMatcherOptions {
 	return func(opt *RecordMatcherOption) {
