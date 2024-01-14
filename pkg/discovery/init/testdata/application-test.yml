@@ -10,10 +10,7 @@ server:
 
 info:
   app:
-    msx:
-      # defaults to this services version, can be overridden in consul via installer
-      version: ${info.app.version}
-      show-build-info: true
+    show-build-info: true
     name: test-service
     description: Test Service
     version: ${application.build.version}

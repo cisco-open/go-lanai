@@ -16,4 +16,3 @@
 
 generates:
   - path: "pkg/swagger"
-  - path: "pkg/security/example"

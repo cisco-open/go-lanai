@@ -1,0 +1,23 @@
+name: opa-enabled-service
+
+execs:
+  skeleton-service:
+    main: cmd/opa-enabled-service/main.go
+    port: 9899
+  migrate:
+    main: cmd/opa-enabled-service/migrate.go
+    type: migrator
+
+resources:
+  - pattern: "configs"
+    output: "configs"
+
+sources:
+  - path: "pkg"
+
+#generates:
+#  - path: "pkg/controller"
+
+#binaries:
+#  - package: "github.com/golangci/golangci-lint/cmd/golangci-lint"
+#    version: "1.54.2"
