@@ -25,7 +25,7 @@ import (
 func ImportsUsedByPath(pathItem openapi3.PathItem, repositoryPath string) []string {
 	var allImports []string
 	for _, operation := range pathItem.Operations() {
-		responses := Responses{openapi.Responses(operation.Responses)}
+		responses := NewResponses(operation.Responses)
 		parameters := Parameters{openapi.Parameters(operation.Parameters)}
 		var requestBody RequestBody
 		if operation.RequestBody != nil {

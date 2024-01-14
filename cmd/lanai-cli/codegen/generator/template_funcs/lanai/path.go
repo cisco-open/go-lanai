@@ -37,7 +37,7 @@ const (
 
 func versionList(paths openapi3.Paths) []string {
 	var result []string
-	for p, _ := range paths {
+	for p, _ := range paths.Map() {
 		version := pathPart(p, VersionFromPath)
 		if !util.ListContains(result, version) {
 			result = append(result, version)

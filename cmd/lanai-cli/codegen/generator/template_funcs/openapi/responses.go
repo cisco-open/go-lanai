@@ -21,7 +21,9 @@ import (
 	"sort"
 )
 
-type Responses openapi3.Responses
+type Responses struct {
+	openapi3.Responses
+}
 
 func (r Responses) RefsUsed() (result []string) {
 	for _, response := range r.Sorted() {
@@ -34,14 +36,15 @@ func (r Responses) RefsUsed() (result []string) {
 	return result
 }
 func (r Responses) Sorted() (result []Response) {
-	keys := make([]string, 0, len(r))
-	for k := range r {
+	m := r.Map()
+	keys := make([]string, 0, len(m))
+	for k := range m {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		result = append(result, Response(*r[k]))
+		result = append(result, Response(*m[k]))
 	}
 
 	return result

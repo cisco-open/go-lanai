@@ -4,7 +4,7 @@ import future.keywords
 import data.mocks
 
 ### Tests ###
-{{range $path, $item := .OpenAPIData.Paths}}
+{{range $path, $item := .OpenAPIData.Paths.Map}}
     {{range $method, $op := $item.Operations}}
     {{- $policyName := print (lower $method) "_" (defaultNameFromPath $path | snakecase) }}
 # Test: {{$method}} {{$path}}

@@ -85,7 +85,7 @@ func (g *ApiGenerator) Generate(ctx context.Context, tmplDesc TemplateDescriptor
 
 	iterateOver := g.data[KDataOpenAPI].(*openapi3.T).Paths
 	var toGenerate []GenerationContext
-	for pathName, pathData := range iterateOver {
+	for pathName, pathData := range iterateOver.Map() {
 		data := copyOf(g.data)
 		data["PathData"] = pathData
 		data["PathName"] = pathName
