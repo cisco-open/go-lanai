@@ -7,7 +7,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"errors"
-	"golang.org/x/exp/slices"
 )
 
 /*
@@ -49,7 +48,7 @@ func ResolveClientUserTenants(ctx context.Context, a security.Account, c oauth2.
 		}
 	}
 
-	if slices.Contains(at.DesignatedTenantIds(), security.SpecialTenantIdWildcard) {
+	if contains(at.DesignatedTenantIds(), security.SpecialTenantIdWildcard) {
 		tenantSet = tenantSet.Add(c.AssignedTenantIds().Values()...)
 	} else {
 		for t, _ := range c.AssignedTenantIds() {
@@ -67,4 +66,13 @@ func ResolveClientUserTenants(ctx context.Context, a security.Account, c oauth2.
 
 	assignedTenants = tenantSet.Values()
 	return defaultTenantId, assignedTenants, nil
+}
+
+func contains[T comparable](slice []T, item T) bool {
+	for i := range slice {
+		if slice[i] == item {
+			return true
+		}
+	}
+	return false
 }

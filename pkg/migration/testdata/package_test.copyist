@@ -14,7 +14,7 @@
 14=ConnExec	2:"INSERT INTO \"migration_versions\" (\"version\",\"description\",\"execution_time\",\"installed_on\",\"success\") VALUES ($1,$2,$3,$4,$5) ON CONFLICT (\"version\") DO UPDATE SET \"description\"=\"excluded\".\"description\",\"execution_time\"=\"excluded\".\"execution_time\",\"installed_on\"=\"excluded\".\"installed_on\",\"success\"=\"excluded\".\"success\""	1:nil
 15=ResultRowsAffected	4:1	1:nil
 16=ConnQuery	2:"SELECT * FROM \"migration_versions\" ORDER BY version ASC"	1:nil
-17=RowsNext	11:[2:"1.0.0.1",2:"A test migration step",4:987042,8:2024-01-11T09:21:58.137758Z,6:true]	1:nil
+17=RowsNext	11:[2:"1.0.0.1",2:"A test migration step",4:1117042,8:2024-01-14T23:28:14.354874Z,6:true]	1:nil
 18=ConnExec	2:"SELECT * FROM public.migration_package_test;"	1:nil
 
 "TestModuleInit"=1,2,3,4,3,5,6,7,6,8,9,3,10,11,11,8,12,3,13,3,14,15,16,11,11,17,8,18,3
