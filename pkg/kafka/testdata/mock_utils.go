@@ -2,7 +2,7 @@ package testdata
 
 import (
 	"context"
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 func MockCreateTopic(ctx context.Context, topic string) {
@@ -45,7 +45,7 @@ func MockCreatePartition(ctx context.Context, topic string, partition int32) {
 func MockProduce(ctx context.Context, topic string, fail bool) {
 	mock := CurrentMockedBroker(ctx)
 	t := mock.t
-	resp := sarama.NewMockProduceResponse(t).SetVersion(3)
+	resp := sarama.NewMockProduceResponse(t)
 	if fail {
 		resp = resp.SetError(topic, 0, sarama.ErrUnknown)
 	} else {

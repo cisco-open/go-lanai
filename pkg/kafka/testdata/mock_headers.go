@@ -4,7 +4,7 @@ import (
     "context"
     "cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
     "cto-github.cisco.com/NFV-BU/go-lanai/test"
-    "github.com/Shopify/sarama"
+    "github.com/IBM/sarama"
     "go.uber.org/fx"
     "sync"
     "testing"

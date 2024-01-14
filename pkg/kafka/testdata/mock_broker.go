@@ -5,7 +5,7 @@ import (
     "cto-github.cisco.com/NFV-BU/go-lanai/test"
     "cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
     "fmt"
-    "github.com/Shopify/sarama"
+    "github.com/IBM/sarama"
     "go.uber.org/fx"
     "math/rand"
     "testing"
