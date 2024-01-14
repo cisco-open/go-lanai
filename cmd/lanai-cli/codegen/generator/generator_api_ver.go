@@ -51,7 +51,7 @@ func (g *ApiVersionGenerator) Generate(ctx context.Context, tmplDesc TemplateDes
 
 	// get all versions
 	iterateOver := make(map[string][]string)
-	for pathName, _ := range g.data[KDataOpenAPI].(*openapi3.T).Paths {
+	for pathName, _ := range g.data[KDataOpenAPI].(*openapi3.T).Paths.Map() {
 		version := apiVersion(pathName)
 		iterateOver[version] = append(iterateOver[version], pathName)
 	}

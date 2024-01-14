@@ -52,7 +52,7 @@ func register(lc fx.Lifecycle, r *web.Registrar) {
              {{- end}}
         {{- end }}
     {{- end }}
-    {{- range .Paths }}
+    {{- range .Paths.Map }}
         {{- template "registerRequestParameterValidation" .Get}}
         {{- template "registerRequestParameterValidation" .Delete}}
         {{- template "registerRequestParameterValidation" .Post}}

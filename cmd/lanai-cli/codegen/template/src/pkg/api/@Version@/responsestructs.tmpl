@@ -5,7 +5,7 @@
     {{- /* Have if there's more than just one, append the name */ -}}
     {{ $numCreatedStructs := 0 }}
 
-    {{- range $responseName, $response := $operation.Data.Responses }}
+    {{- range $responseName, $response := $operation.Data.Responses.Map }}
         {{- $isEmptyWrapper := containsSingularRef $response }}
         {{- $isEmpty := isEmpty $response }}
 

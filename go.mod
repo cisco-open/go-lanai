@@ -11,12 +11,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.16.12
 	github.com/aws/aws-sdk-go-v2/service/acm v1.22.5
 	github.com/aws/aws-sdk-go-v2/service/sts v1.26.5
-	github.com/beevik/etree v1.2.0
-	github.com/bmatcuk/doublestar/v4 v4.6.0
+	github.com/beevik/etree v1.3.0
+	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/cockroachdb/copyist v1.6.0
 	github.com/crewjam/httperr v0.2.0
 	github.com/crewjam/saml v0.4.14
-	github.com/getkin/kin-openapi v0.120.0
+	github.com/getkin/kin-openapi v0.122.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-git/go-git/v5 v5.11.0
