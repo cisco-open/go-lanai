@@ -1,4 +1,4 @@
-package example
+package service
 
 import (
 	"context"
@@ -129,11 +129,11 @@ func createAccount(props *PropertiesBasedAccount) *security.DefaultAccount {
 		Locked:                    props.Locked,
 		UseMFA:                    props.UseMFA,
 		DefaultDesignatedTenantId: props.DefaultTenantId,
-		DesignatedTenantIds:                   props.Tenants,
+		DesignatedTenantIds:       props.Tenants,
 		PolicyName:                props.AccountPolicyName,
 
 		LastLoginTime: startupTime.Add(-2 * time.Hour),
-		LoginFailures: []time.Time {
+		LoginFailures: []time.Time{
 			startupTime.Add(-115 * time.Minute), // 60 mins till next failure
 			startupTime.Add(-55 * time.Minute),  // 30 mins till next failure
 			startupTime.Add(-25 * time.Minute),  // 15 mins till next failure
@@ -153,7 +153,7 @@ func createAccount(props *PropertiesBasedAccount) *security.DefaultAccount {
 	}
 
 	if len(names) > 1 {
-		acct.AcctMetadata.LastName = names[len(names) - 1]
+		acct.AcctMetadata.LastName = names[len(names)-1]
 	}
 	acct.AcctMetadata.Email = props.Email
 	acct.AcctMetadata.RoleNames = props.Permissions
@@ -181,17 +181,16 @@ func populateAccountPolicy(acct *security.DefaultAccount, props *PropertiesBased
 }
 
 type InMemoryFederatedAccountStore struct {
-	
 }
 
 func (i *InMemoryFederatedAccountStore) LoadAccountByExternalId(ctx context.Context, externalIdName string, externalIdValue string, externalIdpName string, autoCreateUserDetails security.AutoCreateUserDetails, rawAssertion interface{}) (security.Account, error) {
 	return security.NewUsernamePasswordAccount(&security.AcctDetails{
-		ID:              "user-tishi",
-		Type:            security.AccountTypeFederated,
-		Username:        "tishi",
+		ID:          "user-tishi",
+		Type:        security.AccountTypeFederated,
+		Username:    "tishi",
 		Permissions: []string{"welcomed"}}), nil
 }
 
-func NewInMemoryFederatedAccountStore() security.FederatedAccountStore{
+func NewInMemoryFederatedAccountStore() security.FederatedAccountStore {
 	return &InMemoryFederatedAccountStore{}
 }

@@ -34,8 +34,8 @@ polices into Policy Service.
 
 ### 3. Run Service
 
-The generated service requires [Policy Service](https://cto-github.cisco.com/NFV-BU/cda-policy-service) 
-and [Auth Service](https://cto-github.cisco.com/NFV-BU/cda-auth-service) to run at localhost
+The generated service requires a OPA policy bundle server
+and [Auth Service](../auth) to run at localhost
 
 ## Appendix 1: Useful Admin Endpoints
 

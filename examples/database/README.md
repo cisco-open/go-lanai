@@ -129,4 +129,4 @@ go run cmd/skeleton-service/main.go
 ```
 
 Navigate to http://localhost:9898/skeleton/swagger. Use the GET API to retrieve all the items stored in the database. Use the POST
-API to add more items to the database.
+API to add more items to the database. You also need to run [auth service](../auth) in order to authenticate the user.

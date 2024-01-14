@@ -43,7 +43,7 @@
    - Service is registered with consul
    - Service is healthy
    - APIs are serving
-   - Swagger page can be accessed (this would require authservice)
+   - Swagger page can be accessed (this would require [auth service](../auth))
 
 ## Appendix 1:  Useful Admin Endpoints
 

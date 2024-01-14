@@ -2,7 +2,7 @@ package serviceinit
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/examples/auth-service/pkg/controller"
-	"cto-github.cisco.com/NFV-BU/go-lanai/examples/auth-service/pkg/example"
+	"cto-github.cisco.com/NFV-BU/go-lanai/examples/auth-service/pkg/service"
 	actuator "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/init"
 	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
@@ -33,7 +33,7 @@ func Use() {
 	resserver.Use()
 	passwdidp.Use()
 	controller.Use()
-	example.Use()
+	service.Use()
 	bootstrap.AddOptions(
 		fx.Provide(newAuthServerConfigurer),
 		fx.Provide(newResServerConfigurer),
