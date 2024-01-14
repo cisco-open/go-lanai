@@ -18,7 +18,7 @@ package appconfig
 
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 	"github.com/pkg/errors"
 	"reflect"
 	"strconv"

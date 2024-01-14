@@ -17,7 +17,7 @@
 package log
 
 import (
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 	"strings"
 )
 
