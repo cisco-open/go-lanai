@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 	"time"
 )
 
