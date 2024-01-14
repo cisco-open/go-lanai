@@ -1,0 +1,23 @@
+name: skeleton-service
+
+execs:
+  skeleton-service:
+    main: cmd/skeleton-service/main.go
+    port: 9898
+  migrate:
+    main: cmd/skeleton-service-migrate/migrate.go
+    type: migrator
+
+resources:
+  - pattern: "configs"
+    output: "configs"
+
+sources:
+  - path: "pkg"
+
+#generates:
+#  - path: "pkg/controller"
+
+#binaries:
+#  - package: "github.com/golangci/golangci-lint/cmd/golangci-lint"
+#    version: "1.54.2"

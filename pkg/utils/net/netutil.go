@@ -33,7 +33,10 @@ func GetIp(iface string) (string, error) {
 	var ip net.IP
 	for _, i := range ifaces {
 		name := i.Name
-		// TODO this would match the first non-"utun" interface, need to investigate if this is intended
+		// Generally we don't want the utun interface, because on mac this is the vpn or "Back to My Mac" interface.
+		// However, if the user specifically asked for this interface, we will honor that.
+		// After we get the ip address, we will break the loop early if iface == name
+		// Otherwise, we use the ip of the last interface we processed (which is not utun)
 		if iface != name && strings.Contains(name, "utun") {
 			continue
 		}

@@ -1,0 +1,101 @@
+openapi: 3.0.0
+info:
+  title: 'Example Contract'
+  version: '1'
+  termsOfService: 'https://www.cisco.com'
+  license:
+    name: 'MIT'
+paths:
+  '/skeleton/api/v1/example/friends':
+    get:
+      tags:
+        - Example
+      summary: Example of getting items from the db
+      description: Example of getting items from the db
+      operationId: GetItems
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ResponseItem'
+                type: array
+    post:
+      tags:
+        - Example
+      summary: Example of adding items into the db
+      description: Example of adding items into the db
+      operationId: PostItems
+      requestBody:
+        $ref: '#/components/requestBodies/ExampleRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+
+components:
+  schemas:
+    # Request Bodies Definitions
+    RequestItem:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          minLength: 0
+          maxLength: 128
+        lastName:
+          type: string
+          minLength: 0
+          maxLength: 128
+
+    # Response Bodies Definitions
+    ResponseItem:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          minLength: 0
+          maxLength: 128
+        lastName:
+          type: string
+          minLength: 0
+          maxLength: 128
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+  responses:
+    400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              BadRequestResponse:
+                $ref: '#/components/schemas/ErrorResponse'
+    204:
+      description: No content
+
+  requestBodies:
+    ExampleRequest:
+      description: Test Request
+      required: false
+      content:
+        "application/json":
+          schema:
+            $ref: '#/components/schemas/RequestItem'

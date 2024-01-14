@@ -26,13 +26,13 @@ import (
 )
 
 type TenancyModifer struct {
-	rc redis.Client
+	rc       redis.Client
 	accessor tenancy.Accessor
 }
 
 func newModifier(rc redis.Client, accessor tenancy.Accessor) *TenancyModifer {
 	return &TenancyModifer{
-		rc: rc,
+		rc:       rc,
 		accessor: accessor,
 	}
 }
@@ -73,11 +73,27 @@ func (m *TenancyModifer) RemoveTenant(ctx context.Context, tenantId string) erro
 }
 
 func (m *TenancyModifer) AddTenant(ctx context.Context, tenantId string, parentId string) error {
-	if tenantId == "" || parentId == ""{
+	if tenantId == "" || parentId == "" {
 		return errors.New("tenantId and parentId should not be empty")
 	}
 
 	logger.Debugf("add tenantId %s parentId %s", tenantId, parentId)
+
+	p, err := m.accessor.GetParent(ctx, tenantId)
+	if err != nil {
+		return err
+	}
+	if p != "" {
+		return errors.New("this tenant already have a parent")
+	}
+
+	root, err := m.accessor.GetRoot(ctx)
+	if err != nil {
+		return err
+	}
+	if tenantId == root {
+		return errors.New("this tenant is the root")
+	}
 
 	ancestors, err := m.accessor.GetAncestors(ctx, parentId)
 	if err != nil {
@@ -93,7 +109,6 @@ func (m *TenancyModifer) AddTenant(ctx context.Context, tenantId string, parentI
 	relations := []*r.Z{
 		{Member: tenancy.BuildSpsString(tenantId, tenancy.IsChildrenOfPredict, parentId)},
 		{Member: tenancy.BuildSpsString(parentId, tenancy.IsParentOfPredict, tenantId)}}
-
 
 	cmd := m.rc.ZAdd(ctx, tenancy.ZsetKey, relations...)
 	return cmd.Err()

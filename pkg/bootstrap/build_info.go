@@ -99,7 +99,7 @@ func (m *BuildInfoMetadata) ToMap() map[string]interface{} {
 }
 
 const (
-	propPrefix = "info.app.msx"
+	propPrefix = "info.app"
 )
 
 type buildInfoProperties struct {
@@ -127,7 +127,7 @@ func (r defaultBuildInfoResolver) Resolve() BuildInfoMetadata {
 	}
 
 	/**
-	 * DE9198: remove the build info from the version unless info.app.msx.show-build-info=true
+	 * DE9198: remove the build info from the version unless info.app.show-build-info=true
 	 * @return
 	 */
 	if !r.properties.ShowDetails {
