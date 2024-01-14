@@ -160,10 +160,7 @@ consul or vault.
 # standarized information on the service
 info:
   app:
-    msx:
-      # defaults to this services version, can be overridden in consul via installer
-      version: ${info.app.version}
-      show-build-info: true
+    show-build-info: true
     name: example
     description: A example go-lanai service
     version: ${project.version}

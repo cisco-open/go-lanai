@@ -1,10 +1,7 @@
 # information on the service
 info:
   app:
-    msx:
-      # defaults to this services version, can be overridden in consul via installer
-      version: ${info.app.version}
-      show-build-info: true
+    show-build-info: true
     name: "{{.Project.Name}}"
     description: "{{.Project.Description}}"
     version: ${application.build.version}
@@ -51,5 +48,5 @@ swagger:
   security:
     sso:
       base-url: ${swagger.security.sso.baseurl:http://localhost:8900/auth}
-      client-id: nfv-client
+      client-id: swagger-client
 {{end}}

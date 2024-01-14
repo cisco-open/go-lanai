@@ -235,17 +235,8 @@ func SubTestTenancyModification(di *TestAccessorDI) test.GomegaSubTestFunc {
 		g.Expect(multiV).To(HaveLen(3), "GetChildren of added tenant's parent should be correct")
 
 		// TODO following test should not fail, maybe it's a bug?
-		//e = di.Modifier.AddTenant(ctx, IDOf(di, TenantA21), IDOf(di, TenantA2))
-		//g.Expect(e).To(HaveOccurred(), "relocating leaf tenant should fail")
-		//v, e = tenancy.GetParent(ctx, IDOf(di, TenantA21))
-		//g.Expect(e).To(Succeed(), "GetParent of relocated tenant should not fail")
-		//g.Expect(v).To(Equal(IDOf(di, TenantA2)), "GetParent of relocated tenant should be correct")
-		//multiV, e = tenancy.GetChildren(ctx, IDOf(di, TenantB2))
-		//g.Expect(e).To(Succeed(), "GetChildren of relocated tenant's old parent should not fail")
-		//g.Expect(multiV).To(HaveLen(2), "GetChildren of relocated old tenant's parent should be correct")
-		//multiV, e = tenancy.GetChildren(ctx, IDOf(di, TenantA2))
-		//g.Expect(e).To(Succeed(), "GetChildren of relocated tenant's new parent should not fail")
-		//g.Expect(multiV).To(HaveLen(2), "GetChildren of relocated new tenant's parent should be correct")
+		e = di.Modifier.AddTenant(ctx, IDOf(di, TenantA21), IDOf(di, TenantA2))
+		g.Expect(e).To(HaveOccurred(), "relocating leaf tenant should fail")
 	}
 }
 

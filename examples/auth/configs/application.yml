@@ -1,0 +1,127 @@
+# standarized information on the service
+info:
+  app:
+    name: auth-service
+    description: Auth Service
+    version: ${application.build.version}
+    build-time: ${application.build.build-time}
+    attributes:
+      displayName: "auth-service"
+      parent: unknown
+      type: unknown
+
+redis:
+  addrs: ${spring.redis.host:localhost}:6379
+  db: 0
+
+tracing:
+  enabled: true
+  jaeger:
+    host: localhost
+    port: 6831
+  sampler:
+    enabled: true
+    limit-per-second: 50
+
+server:
+  logging:
+    default-level: "info"
+    levels:
+      login-ui:
+        method: "*"
+        pattern: "/app/**"
+        level: "off"
+
+management:
+  enabled: true
+  endpoint:
+    health:
+      show-components: always # authorized | always | never | custom
+      show-details: always # authorized | always | never | custom
+  security:
+    enabled-by-default: false
+
+security:
+  keys:
+    jwt:
+      id: dev
+      format: pem
+      file: "configs/jwtkeys.pem"
+      password: TheCakeIsaLie
+  jwt:
+    key-name: "jwt"
+  auth:
+    issuer:
+      domain: localhost
+      protocol: http
+      port: 8900
+      context-path: ${server.context-path}
+      include-port: true
+    saml:
+      certificate-file: "configs/saml.cert"
+      key-file: "configs/saml.key"
+      key-password: "foobar"
+#    redirect-whitelist:
+#    session-timeout:
+#      idle-timeout-seconds: 5400
+#      absolute-timeout-seconds: 10800
+  session:
+    cookie:
+      domain: ${security.auth.issuer.domain}
+    max-concurrent-sessions: 0
+    idle-timeout: "${security.auth.session-timeout.idle-timeout-seconds:5400}s"
+    absolute-timeout: "${security.auth.session-timeout.absolute-timeout-seconds:10800}s"
+  idp:
+    internal:
+      domain: ${security.auth.issuer.domain}
+      session-expired-redirect-url: "http://localhost:9003"
+      endpoints:
+        form-login: "/login#/login"
+        form-login-error: "/login?error=true#/login"
+        otp-verify: "/login/mfa#/otpverify"
+        otp-verify-resend: "/login/mfa/refresh"
+        otp-verify-error: "/login/mfa?error=true#/otpverify"
+      #        reset-password-page-url: "http://localhost:9003/#/forgotpassword"
+      mfa:
+        enabled: true
+    saml:
+      enabled: true # set to true if you want to configure certain domian to use external SAML IDP for authentication.
+    openid:
+  in-memory:
+    tenants:
+      tenant-1:
+        id: tenant-id-1
+        external-id: tenant-ext-1
+        name: "tenant 1"
+    clients:
+      swagger-client:
+        client-id: "swagger-client"
+        grant-types: [ "authorization_code", "refresh_token"]
+        scopes: [ "read", "write" ]
+        redirect-uris: [ "/**" ]
+        access-token-validity: 90m
+        refresh-token-validity: 3h
+    accounts:
+      my-user:
+        id: my-user-id
+        type: user
+        username: my-user
+        password: my-user
+        permissions: ["permission-a", "permission-b"]
+        mfa-enabled: false
+        default-tenant-id: tenant-id-1
+        tenants: ["tenant-id-1"]
+        full-name: "my user"
+        email: "my_user@email.com"
+
+#This section will refresh the logger configuration after bootstrap is invoked.
+#log:
+#  levels:
+#    Bootstrap: debug
+#    Web: debug
+#    Security: debug
+#    SEC: debug
+#    OAuth2: debug
+#    Actuator: info
+#    ACTR: debug
+#    internal: debug

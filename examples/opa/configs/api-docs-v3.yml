@@ -1,0 +1,262 @@
+openapi: 3.0.0
+info:
+  title: 'Example Contract'
+  version: '1'
+  termsOfService: 'https://www.cisco.com'
+  license:
+    name: 'MIT'
+paths:
+  '/opaenabled/api/v1/example/binding/{pathvar}':
+    get:
+      tags:
+        - Request Binding Examples
+      summary: Example Path Var Binding
+      description: Example of binding values from request's path, validated against UUID format
+      operationId: PathVarBinding
+      parameters:
+        - name: pathvar
+          in: path
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseExample'
+    post:
+      tags:
+        - Request Binding Examples
+      summary: Example Mixed Binding
+      description: Example of bind values from request's path, query and JSON body.
+      operationId: MixedBinding
+      parameters:
+        - name: pathvar
+          in: path
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - $ref: '#/components/parameters/RequiredQueryParam'
+        - $ref: '#/components/parameters/OptionalQueryParam'
+      requestBody:
+        $ref: '#/components/requestBodies/ExampleRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+
+  '/opaenabled/api/v1/example/binding/header':
+    get:
+      tags:
+        - Request Binding Examples
+      summary: Example Header Binding
+      description: Example of binding values from request's header
+      operationId: HeaderBinding
+      parameters:
+        - name: HEADER-PARAM
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseExample'
+
+  '/opaenabled/api/v1/example/binding/query':
+    get:
+      tags:
+        - Request Binding Examples
+      summary: Example Query Binding
+      description: Example of binding values from request's query/form data
+      operationId: QueryVarBinding
+      parameters:
+        - $ref: '#/components/parameters/RequiredQueryParam'
+        - $ref: '#/components/parameters/OptionalQueryParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseExample'
+
+  '/opaenabled/api/v1/example/binding/json':
+    post:
+      tags:
+        - Request Binding Examples
+      summary: Example JSON Binding
+      operationId: JSONBinding
+      description: Example of binding values from request's body as JSON
+      requestBody:
+        $ref: '#/components/requestBodies/ExampleRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+
+  '/opaenabled/api/v2/example/response/object':
+    get:
+      tags:
+        - Response Binding Examples
+      summary: Example Object Response
+      description: Example of binding values from request's body as JSON
+      operationId: JSONObjectExample
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseExample'
+
+  '/opaenabled/api/v2/example/response/array':
+    get:
+      tags:
+        - Response Binding Examples
+      summary: Example Object Response
+      description: Example of binding values from request's body as JSON
+      operationId: JSONArrayExample
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ResponseReusableItem'
+                type: array
+
+components:
+  schemas:
+    # Request Bodies Definitions
+    RequestReusableItem:
+      type: object
+      required:
+        - stringField
+        - intField
+        - booleanField
+      properties:
+        stringField:
+          type: string
+          minLength: 0
+          maxLength: 128
+        intField:
+          type: integer
+          maximum: 10
+        booleanField:
+          type: boolean
+
+    RequestExampleBase:
+      type: object
+      required:
+        - objectField
+        - arrayField
+      properties:
+        stringField:
+          type: string
+          minLength: 0
+          maxLength: 128
+        numberField:
+          type: number
+          maximum: 10
+        arrayField:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestReusableItem'
+          maxItems: 10
+        objectField:
+          allOf:
+            - $ref: '#/components/schemas/RequestReusableItem'
+
+    RequestExample:
+      allOf:
+        - $ref: '#/components/schemas/RequestExampleBase'
+        - properties:
+            datetimeField:
+              type: string
+              format: date-time
+
+    # Response Bodies Definitions
+    ResponseReusableItem:
+      type: object
+      required:
+        - stringField
+        - intField
+        - booleanField
+      properties:
+        stringField:
+          type: string
+          minLength: 0
+          maxLength: 128
+        intField:
+          type: integer
+          maximum: 10
+        booleanField:
+          type: boolean
+
+    ResponseExample:
+      allOf:
+        - $ref: "#/components/schemas/ResponseReusableItem"
+        - properties:
+            dateField:
+              type: string
+              format: date
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+  responses:
+    400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              BadRequestResponse:
+                $ref: '#/components/schemas/ErrorResponse'
+    204:
+      description: No content
+
+  parameters:
+    RequiredQueryParam:
+      name: q1
+      in: query
+      description: Example query parameter, enum, required
+      schema:
+        description: asc | desc | (empty value)
+        format: "^$|^[Aa][Ss][Cc]|[Dd][Ee][Ss][Cc]$"
+        maxLength: 32
+        type: string
+    OptionalQueryParam:
+      name: q2
+      in: query
+      description: Example query parameter, optional
+      required: false
+      deprecated: false
+      allowEmptyValue: true
+      schema:
+        type: string
+        minLength: 0
+        maxLength: 128
+
+  requestBodies:
+    ExampleRequest:
+      description: Test Request
+      required: false
+      content:
+        "application/json":
+          schema:
+            $ref: '#/components/schemas/RequestExample'

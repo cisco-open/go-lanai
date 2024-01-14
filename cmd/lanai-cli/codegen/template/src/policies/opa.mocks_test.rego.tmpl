@@ -15,7 +15,7 @@ allowed_auth := {
 	"roles": ["MOCKED_ROLE"],
 	"accessible_tenants": ["7b3934fc-edc4-4a1c-9249-3dc7055eb124"],
 	"client": {
-		"client_id": "nfv-client",
+		"client_id": "my-client",
 		"scopes": [
 			"read",
 			"write",
@@ -33,7 +33,7 @@ denied_auth := {
 	"roles": ["MOCKED_ROLE"],
 	"accessible_tenants": ["7b3934fc-edc4-4a1c-9249-3dc7055eb124"],
 	"client": {
-		"client_id": "nfv-client",
+		"client_id": "my-client",
 		"scopes": [
 			"read",
 			"write",
