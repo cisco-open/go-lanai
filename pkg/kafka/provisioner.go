@@ -18,7 +18,7 @@ package kafka
 
 import (
 	"fmt"
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type globalClientProviderFunc func() (sarama.Client, error)

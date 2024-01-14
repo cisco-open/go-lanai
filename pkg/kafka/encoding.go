@@ -19,7 +19,7 @@ package kafka
 import (
 	"encoding"
 	"encoding/json"
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 )
 
 type jsonEncoder struct{}

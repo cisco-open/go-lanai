@@ -21,7 +21,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"time"
 )
 
