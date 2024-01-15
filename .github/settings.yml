@@ -5,7 +5,7 @@ repository:
   name: go-lanai
 
   # A short description of the repository that will show up on GitHub
-  description: go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy
+  description: go-lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy
 
   # A URL with more information about the repository
   # homepage: 
