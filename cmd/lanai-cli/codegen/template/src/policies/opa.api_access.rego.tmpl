@@ -15,7 +15,7 @@ import data.actuator.allow_health_details
 #import data.rbac.has_any_permission
 
 # API access Rules
-{{range $path, $item := .OpenAPIData.Paths}}
+{{range $path, $item := .OpenAPIData.Paths.Map}}
     {{range $method, $op := $item.Operations}}
 # METADATA
 # description: {{$method}} {{$path}}

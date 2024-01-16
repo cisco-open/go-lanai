@@ -49,7 +49,7 @@ func (o Operation) RequestRefsUsed() (result []string) {
 }
 
 func (o Operation) ResponseRefsUsed() (result []string) {
-	responses := openapi.Responses(o.Data.Responses).Sorted()
+	responses := NewResponses(o.Data.Responses).Sorted()
 	for _, resp := range responses {
 		if resp.CountFields() == 1 && resp.ContainsRef() {
 			result = append(result, resp.RefsUsed()...)
@@ -107,7 +107,7 @@ func (o Operation) ResponseStruct(structRegistry map[string]string) *_go.Struct 
 }
 
 func (o Operation) AllResponseContent() (result []*openapi3.MediaType) {
-	responses := openapi.Responses(o.Data.Responses).Sorted()
+	responses := NewResponses(o.Data.Responses).Sorted()
 	for _, response := range responses {
 		for _, content := range response.Value.Content {
 			result = append(result, content)

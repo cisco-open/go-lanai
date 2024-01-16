@@ -3,7 +3,7 @@ package cors
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	cors "github.com/rs/cors/wrapper/gin"
+	"github.com/rs/cors"
 	"time"
 )
 
@@ -18,12 +18,12 @@ func newCustomizer(properties CorsProperties) web.Customizer {
 	}
 }
 
-func (c *Customizer) Customize(ctx context.Context, r *web.Registrar) (err error) {
+func (c *Customizer) Customize(_ context.Context, r *web.Registrar) (err error) {
 	if !c.properties.Enabled {
 		return
 	}
 
-	mw := cors.New(cors.Options{
+	mw := New(cors.Options{
 		AllowedOrigins:     c.properties.AllowedOrigins(),
 		AllowedMethods:     c.properties.AllowedMethods(),
 		AllowedHeaders:     c.properties.AllowedHeaders(),

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"reflect"
 	"strings"
 )

@@ -7,7 +7,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding/json"
 	"fmt"
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 	"github.com/open-policy-agent/opa/download"
 	opakeys "github.com/open-policy-agent/opa/keys"
 	"github.com/open-policy-agent/opa/plugins/bundle"

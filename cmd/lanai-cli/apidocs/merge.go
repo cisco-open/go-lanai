@@ -3,7 +3,7 @@ package apidocs
 import (
 	"context"
 	"fmt"
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 )
 
 const (

@@ -10,7 +10,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"errors"
 	"github.com/ghodss/yaml"
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 	"go.uber.org/fx"
 	"io"
 	"io/fs"

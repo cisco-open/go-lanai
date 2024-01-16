@@ -122,7 +122,7 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         {{- $operation := toLower $opName | toTitle | concat $nameFromPath | operation $opData }}
 
         {{ $defaultResponse := "" }}
-        {{ range $respName, $respData := $operation.Data.Responses }}
+        {{ range $respName, $respData := $operation.Data.Responses.Map }}
             {{ $defaultResponse = $respName}}
             {{- break -}}
         {{- end }}
