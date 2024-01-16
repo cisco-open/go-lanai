@@ -34,7 +34,7 @@ func newCustomizer(properties CorsProperties) web.Customizer {
 	}
 }
 
-func (c *Customizer) Customize(ctx context.Context, r *web.Registrar) (err error) {
+func (c *Customizer) Customize(_ context.Context, r *web.Registrar) (err error) {
 	if !c.properties.Enabled {
 		return
 	}

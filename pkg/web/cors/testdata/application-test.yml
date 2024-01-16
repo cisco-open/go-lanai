@@ -1,0 +1,9 @@
+security:
+  cors:
+    enabled: true
+    allowed-origins: "*"
+    allowed-methods: "GET,POST"
+    allowed-headers: "X-Test-Header"
+    exposed-headers: "X-Test-Header"
+    allow-credentials: true
+    max-age: 1h
