@@ -2,6 +2,19 @@
 
 Assorted go-lanai examples
 
+### Auth Service
+
+Location: [auth](./auth)
+
+Example of implementing an authorization service that is capable of serving as an OAuth2 authorization server using the features
+from security package.
+
+### Database Service
+
+Location: [database](./database)
+
+Example of a web service that reads and writes to database.
+
 ### Skeleton Service 
 
 Location: [skeleton](./skeleton)
