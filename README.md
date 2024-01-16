@@ -771,6 +771,9 @@ func (c *helloController) Hello(ctx context.Context) (interface{}, error) {
 
 ## What's Next
 
+Explore the [examples](examples) directory to see more examples such as authorization, database access, scaffolding project
+and using open policy agent in service.
+
 In addition to the [boostrap](pkg/bootstrap/README.md), [security](pkg/security/README.md) and [web](pkg/web/README.md)
 that are covered in this document, go-lanai provides a number of modules that can be used for different use cases. 
 
