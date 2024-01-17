@@ -54,7 +54,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spyzhov/ajson v0.9.0
 	github.com/stretchr/testify v1.8.4
-	github.com/tidwall/sjson v1.2.5
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	go.step.sm/crypto v0.41.0
 	go.uber.org/fx v1.20.1
