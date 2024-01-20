@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -210,6 +211,10 @@ func newKitLoggerWithWriter(w io.Writer, props *LoggerProperties) (log.Logger, e
 func openOrCreateFile(location string) (*os.File, error) {
 	if location == "" {
 		return nil, fmt.Errorf("location is missing for file logger")
+	}
+	dir := filepath.Dir(location)
+	if e := os.MkdirAll(dir, 0744); e != nil {
+		return nil, e
 	}
 	return os.OpenFile(location, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 }

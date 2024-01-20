@@ -71,7 +71,8 @@ type Leveler interface {
 
 type loggerFactory interface {
 	createLogger (name string) ContextualLogger
-	addContextValuers(extractors...ContextValuers)
-	setLevel (name string, logLevel LoggingLevel)
+	addContextValuers(valuers ...ContextValuers)
+	setRootLevel(logLevel LoggingLevel) (affected int)
+	setLevel(prefix string, logLevel *LoggingLevel) (affected int)
 	refresh (properties *Properties)
 }
