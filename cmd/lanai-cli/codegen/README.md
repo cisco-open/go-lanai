@@ -3,7 +3,7 @@
 Codegen will read an openAPI contract, and generate structs & controllers for your go-lanai project.
 
 ### What it will do:
-- Reads an openAPI spec and:
+- Reads an [openAPI spec](https://spec.openapis.org/oas/latest.html) and:
   - generates structs for each component, request & response defined
     - generate struct bindings from a field's required-ness, input validation and min/max fields
   - generates controllers for each path, with function stubs for each operation

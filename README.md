@@ -4,7 +4,7 @@
 [![Coverage](https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/raw/go-lanai-main-coverage.svg)](https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/#file-go-lanai-main-coverage-md)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/license/apache-2-0/)
 
-go-Lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy. A module represents a feature provided by go-lanai. 
+go-lanai is a set of application frameworks and modules that make writing applications (especially micro-services) easy. A module represents a feature provided by go-lanai. 
 go-lanai's module framework is built on top 
 of the [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) framework provided by [uber-go/fx](https://github.com/uber-go/fx). 
 Understanding of the fx framework is needed to understand the rest of the documentation, especially [fx.Provide](https://pkg.go.dev/go.uber.org/fx#Provide) and [fx.Invoke](https://pkg.go.dev/go.uber.org/fx#Invoke) 
@@ -70,6 +70,7 @@ that starts. It will be used as the base to add on more features in the later se
 ```
 
 **cmd/main.go** 
+
 This is the entry point of the application. Here we create a new app and execute it. Notice the ```appconfig.Use()```
 call in the ```init()``` function. We are declaring that we want to use the **appconfig** module. This module allows reading
 configuration values from various sources (yaml files, consul, vault, etc) into golang structs. 
@@ -130,8 +131,6 @@ cloud:
 server:
   port: 8090
   context-path: /example
-  # should use bridged
-#  context-path: ${server.servlet.context-path:/auth}
 
 # This section will refresh the logger configuration after bootstrap is invoked.
 log:
@@ -142,17 +141,6 @@ log:
     Kafka: info
     SEC.Session: info
     OAuth2.Auth: info
-#  loggers:
-#    text-file:
-#      type: file
-#      format: text
-#      location: "logs/text.log"
-#      template: '{{pad .time -25}} {{lvl . 5}} [{{pad .caller 25 | blue}}] {{pad .logger 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
-#      fixed-keys: "spanId, traceId, parentId, http"
-#    json-file:
-#      type: file
-#      format: json
-#      location: "logs/json.log"
 ```
 
 **configs/application.yml**
@@ -355,7 +343,7 @@ func configureSecurity(di secDI) {
 
 **init/security.go**
 
-Here we implement our WebSecurity configurer. Our configurer specifies that requests to paths that starts with "/api/"
+Here we implement our WebSecurity configurer. Our configurer specifies that requests to paths that starts with `/api/`
 should be authenticated.
 
 ```go
@@ -381,6 +369,7 @@ func (c *securityConfigurer) Configure(ws security.WebSecurity) {
 ```
 
 **main.go**
+
 We update our main file with ```serviceinit.Use()``` to make our security configuration active.
 ```go
 package main
@@ -413,7 +402,7 @@ At this point if you run the application and visit the application again, you sh
 
 ## Step 4: Add Session
 
-Because we have restricted access to the /hello endpoint to authenticated user only, we need way to determine if the
+Because we have restricted access to the `/hello` endpoint to authenticated user only, we need way to determine if the
 request is authenticated or not. In order to do that we need to enable session. When session is enabled, session cookie
 will be set on the response and sent with the request. We can then save the authentication state of the user in the session.
 When session feature is enabled on a WebSecurity configuration, the request and response to those endpoints will load
@@ -421,7 +410,7 @@ and persist session information.
 
 **init/package.go**
 
-Session is stored in redis so we add ```redis.Use()``` activate the redis module.
+Session is stored in redis, so we add ```redis.Use()``` activate the redis module.
 
 ```go
 func Use() {
@@ -439,6 +428,7 @@ func Use() {
 ```
 
 **security.go**
+
 Enable session on the web security configuration.
 
 ```go
@@ -477,7 +467,7 @@ At this point, if you visit the endpoint again and look at the network traffic, 
 
 ## Step 5: Add SAML Login
 
-Enable the SAML Login feature so that when user visits the /hello endpoint, they will be redirected to the single sign on
+Enable the SAML Login feature so that when user visits the `/hello` endpoint, they will be redirected to the single sign on
 page first. This feature adds a number of middleware and endpoints to allow your application to act as a SAML service provider. See [SAML login feature](pkg/security/saml/sp)
 for the list of middleware and endpoints added by this feature.
 
@@ -535,6 +525,7 @@ func configureSecurity(di secDI) {
 ```
 
 **init/security.go**
+
 Enable the SAML login feature on the web security configuration. This indicates that when authentication is needed,
 we want to use SAML login.
 
@@ -599,9 +590,19 @@ security:
 
 **configs/saml.cert** and **configs/saml.key**
 
-You'll also need to add a cert and key pair to the configs directory.
+You'll also need to add a cert and key pair to the configs directory. You can create them using `openssl`. For example:
 
-Note: You could copy both from [Usermanagementservice config](https://cto-github.cisco.com/NFV-BU/usermanagementservice/tree/develop/configs)
+Generating the saml.key
+
+```shell
+openssl genrsa -out saml.key -aes256 1024
+```
+
+Generating saml.cert from the key
+
+```shell
+openssl req -key saml.key -new -x509 -days 36500 -out saml.cert
+```
 
 At this point, if you run the service you will get errors complaining about missing dependencies. This is because the SAML features
 don't know where to load identity provider data and user data. For this the SAML feature defines the following interfaces. You will
@@ -636,6 +637,7 @@ Add a service directory and put the implementation in there.
 ```
 
 **service/account_store.go**
+
 This example implementation loads a user based on the value in the incoming assertion. A real implementation may need to 
 create the user record in the database, or look up existing user.
 
@@ -755,7 +757,7 @@ func Use() {
 }
 ```
 
-At this point, when you visit the /api/v1/hello endpoint, you should be redirected to SSO login and visit the page (if your IDP is running).
+At this point, when you visit the `/api/v1/hello` endpoint, you should be redirected to SSO login and visit the page (if your IDP is running).
 
 You can also update the controller so that it prints the current user's name.
 
@@ -774,7 +776,7 @@ func (c *helloController) Hello(ctx context.Context) (interface{}, error) {
 Explore the [examples](examples) directory to see more examples such as authorization, database access, scaffolding project
 and using open policy agent in service.
 
-In addition to the [boostrap](pkg/bootstrap/README.md), [security](pkg/security/README.md) and [web](pkg/web/README.md)
+In addition to the [bootstrap](pkg/bootstrap/README.md), [security](pkg/security/README.md) and [web](pkg/web/README.md)
 that are covered in this document, go-lanai provides a number of modules that can be used for different use cases. 
 
 If you are interested in modules that facilitate writing micro-services, take a look at these modules:
