@@ -1,6 +1,6 @@
 # Prerequisites for CI/CD Worker VM
 
-- GO 1.16+
+- GO 1.21+
 - Git 2.23.0+
 - GNU Make 3.81+
 - Docker 20.10.5+
