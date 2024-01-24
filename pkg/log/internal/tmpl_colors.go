@@ -2,7 +2,7 @@ package internal
 
 import (
 	"fmt"
-	"github.com/go-kit/kit/log/term"
+	"golang.org/x/term"
 	"io"
 	"text/template"
 )
@@ -97,10 +97,18 @@ func init() {
 	}
 }
 
+// fder matches os.File.Fd()
+type fder interface {
+	Fd() uintptr
+}
+
 // IsTerminal returns true if w writes to a terminal.
 // Implementations adopted from github.com/go-kit/kit/log/term
 func IsTerminal(w io.Writer) bool {
-	return term.IsTerminal(w)
+	if v, ok := w.(fder); ok {
+		return term.IsTerminal(int(v.Fd()))
+	}
+	return false
 }
 
 func ColoredWithCode(s interface{}, fg, bg Color) string {

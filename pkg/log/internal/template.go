@@ -9,6 +9,15 @@ import (
 )
 
 const (
+	LogKeyMessage   = "msg"
+	LogKeyName      = "logger"
+	LogKeyTimestamp = "time"
+	LogKeyCaller    = "caller"
+	LogKeyLevel     = "level"
+	LogKeyContext   = "ctx"
+)
+
+const (
 	logTemplate = "lanai-log-template"
 )
 

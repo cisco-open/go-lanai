@@ -79,6 +79,11 @@ func (l *configurableLogger) setLevel(lv LoggingLevel) {
 	l.swappable.Swap(level.NewFilter(l.template, opt))
 }
 
+// IsTerminal implements internal.TerminalAware
+func (l *configurableLogger) IsTerminal() bool {
+	return l.isTerm
+}
+
 func isTerminal(l log.Logger) bool {
 	switch l.(type) {
 	case *internal.KitTextLoggerAdapter:

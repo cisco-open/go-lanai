@@ -5,8 +5,8 @@ import (
 )
 
 func IsTerminal(l Logger) bool {
-	logger, ok := l.(*configurableLogger)
-	return ok && logger.isTerm
+	v, ok := l.(internal.TerminalAware)
+	return ok && v.IsTerminal()
 }
 
 // Capped truncate given value to specified length, with tailing "..." if truncated

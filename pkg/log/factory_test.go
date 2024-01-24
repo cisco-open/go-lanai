@@ -3,6 +3,7 @@ package log
 import (
 	"bufio"
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"io/fs"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -26,8 +28,8 @@ const (
 )
 
 const (
-	StaticLoggedCtxKey = `k-ctx-test`
-	StaticKeyInLog = `from-ctx`
+	StaticLoggedCtxKey   = `k-ctx-test`
+	StaticKeyInLog       = `from-ctx`
 	StaticLoggedCtxValue = `test-value-in-ctx`
 )
 
@@ -39,7 +41,33 @@ func TestGoKitLogger(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		test.SubTestSetup(SubSetupClearLogOutput()),
 		test.SubTestSetup(SubSetupTestContext()),
-		test.GomegaSubTest(SubTestDebug(GoKitFactoryCreator()), "TestDebug"),
+		test.GomegaSubTest(SubTestLoggingWithContext(GoKitFactoryCreator(), LevelDebug), "DebugWithContext"),
+		test.GomegaSubTest(SubTestLoggingWithoutContext(GoKitFactoryCreator(), LevelDebug), "DebugWithoutContext"),
+		test.GomegaSubTest(SubTestLoggingWithContext(GoKitFactoryCreator(), LevelInfo), "InfoWithContext"),
+		test.GomegaSubTest(SubTestLoggingWithoutContext(GoKitFactoryCreator(), LevelInfo), "InfoWithoutContext"),
+		test.GomegaSubTest(SubTestLoggingWithContext(GoKitFactoryCreator(), LevelWarn), "WarnWithContext"),
+		test.GomegaSubTest(SubTestLoggingWithoutContext(GoKitFactoryCreator(), LevelWarn), "WarnWithoutContext"),
+		test.GomegaSubTest(SubTestLoggingWithContext(GoKitFactoryCreator(), LevelError), "ErrorWithContext"),
+		test.GomegaSubTest(SubTestLoggingWithoutContext(GoKitFactoryCreator(), LevelError), "ErrorWithoutContext"),
+		test.GomegaSubTest(SubTestWithCaller(GoKitFactoryCreator(), LevelInfo), "WithCaller"),
+		test.GomegaSubTest(SubTestTerminal(GoKitFactoryCreator()), "IsTerminal"),
+	)
+}
+
+func TestZapLogger(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		test.SubTestSetup(SubSetupClearLogOutput()),
+		test.SubTestSetup(SubSetupTestContext()),
+		test.GomegaSubTest(SubTestLoggingWithContext(ZapFactoryCreator(), LevelDebug), "DebugWithContext"),
+		test.GomegaSubTest(SubTestLoggingWithoutContext(ZapFactoryCreator(), LevelDebug), "DebugWithoutContext"),
+		test.GomegaSubTest(SubTestLoggingWithContext(ZapFactoryCreator(), LevelInfo), "InfoWithContext"),
+		test.GomegaSubTest(SubTestLoggingWithoutContext(ZapFactoryCreator(), LevelInfo), "InfoWithoutContext"),
+		test.GomegaSubTest(SubTestLoggingWithContext(ZapFactoryCreator(), LevelWarn), "WarnWithContext"),
+		test.GomegaSubTest(SubTestLoggingWithoutContext(ZapFactoryCreator(), LevelWarn), "WarnWithoutContext"),
+		test.GomegaSubTest(SubTestLoggingWithContext(ZapFactoryCreator(), LevelError), "ErrorWithContext"),
+		test.GomegaSubTest(SubTestLoggingWithoutContext(ZapFactoryCreator(), LevelError), "ErrorWithoutContext"),
+		test.GomegaSubTest(SubTestWithCaller(ZapFactoryCreator(), LevelInfo), "WithCaller"),
+		test.GomegaSubTest(SubTestTerminal(ZapFactoryCreator()), "IsTerminal"),
 	)
 }
 
@@ -66,32 +94,68 @@ func SubSetupTestContext() test.SetupFunc {
 	}
 }
 
-func SubTestDebug(fn TestFactoryCreateFunc) test.GomegaSubTestFunc {
+func SubTestLoggingWithContext(fn TestFactoryCreateFunc, level LoggingLevel) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const LoggerName = `TestLogger`
+		expectText := NewExpectedLog(
+			ExpectName(LoggerName),
+			ExpectLevel(level),
+			ExpectCaller(`factory_test\.go:[0-9]+`),
+			ExpectFields(StaticKeyInLog, "test-value-in-ctx"),
+		)
+		expectJson := CopyOf(expectText)
+
+		f := fn(g, os.DirFS("testdata"), "multi-dest.yml")
+		logger := f.createLogger(LoggerName)
+
+		// With Context
+		AssertLeveledLogging(g, logger.WithContext(ctx), level, expectJson, expectText)
+	}
+}
+
+func SubTestLoggingWithoutContext(fn TestFactoryCreateFunc, level LoggingLevel) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const LoggerName = `TestLogger`
+		expectText := NewExpectedLog(
+			ExpectName(LoggerName),
+			ExpectLevel(level),
+			ExpectCaller(`factory_test\.go:[0-9]+`),
+			ExpectFields(StaticKeyInLog, nil),
+		)
+		expectJson := CopyOf(expectText)
+
+		f := fn(g, os.DirFS("testdata"), "multi-dest.yml")
+		logger := f.createLogger(LoggerName)
+
+		// Without Context
+		AssertLeveledLogging(g, logger, level, expectJson, expectText)
+	}
+}
+
+func SubTestWithCaller(fn TestFactoryCreateFunc, level LoggingLevel) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const LoggerName = `TestLogger`
+		const staticCaller = `SubTest`
+		expectText := NewExpectedLog(
+			ExpectName(LoggerName),
+			ExpectLevel(level),
+			ExpectCaller(`SubTest`),
+			ExpectFields(StaticKeyInLog, nil),
+		)
+		expectJson := CopyOf(expectText)
+
+		f := fn(g, os.DirFS("testdata"), "multi-dest.yml")
+		logger := f.createLogger(LoggerName)
+		AssertLeveledLogging(g, logger.WithCaller(staticCaller), level, expectJson, expectText)
+	}
+}
+
+func SubTestTerminal(fn TestFactoryCreateFunc) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const LoggerName = `TestLogger`
 		f := fn(g, os.DirFS("testdata"), "multi-dest.yml")
 		logger := f.createLogger(LoggerName)
-		expectJson := NewExpectedLog(ExpectFields(
-			"logger", LoggerName,
-			"level", "debug",
-			StaticKeyInLog, "test-value-in-ctx",
-		))
-		expectText := NewExpectedLog(
-			ExpectTextRegex(LoggerName, LevelDebug, "test-log"),
-			ExpectFields(
-				StaticKeyInLog, "test-value-in-ctx",
-			),
-		)
-
-		logger.WithContext(ctx).Debugf("test-log")
-		AssertLastJsonLogEntry(g, expectJson)
-		AssertLastTextLogEntry(g, expectText)
-		logger.WithContext(ctx).Debug("test-log", "test-key", "test-value")
-		AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectFields("test-key", "test-value")))
-		AssertLastTextLogEntry(g, CopyOf(expectText, ExpectFields("test-key", "test-value")))
-		logger.WithContext(ctx).WithKV("adhoc-key", "adhoc-value").Debug("test-log", "test-key", "test-value")
-		AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectFields("test-key", "test-value", "adhoc-key", "adhoc-value")))
-		AssertLastTextLogEntry(g, CopyOf(expectText, ExpectFields("test-key", "test-value", "adhoc-key", "adhoc-value")))
+		g.Expect(IsTerminal(logger)).To(BeFalse(), "IsTerminal should be false for multi-dest logger")
 	}
 }
 
@@ -112,14 +176,59 @@ func GoKitFactoryCreator() TestFactoryCreateFunc {
 	}
 }
 
+func ZapFactoryCreator() TestFactoryCreateFunc {
+	return func(g *WithT, fsys fs.FS, path string) loggerFactory {
+		data, e := fs.ReadFile(fsys, path)
+		g.Expect(e).To(Succeed(), "reading logger config file should not fail")
+		var p Properties
+		e = yaml.Unmarshal(data, &p)
+		g.Expect(e).To(Succeed(), "parsing logger config file should not fail")
+		return newZapLoggerFactory(&p)
+	}
+}
+
+func DoLeveledLogf(l Logger, lvl LoggingLevel, tmpl string, args ...interface{}) {
+	switch lvl {
+	case LevelDebug:
+		l.Debugf(tmpl, args...)
+	case LevelInfo:
+		l.Infof(tmpl, args...)
+	case LevelWarn:
+		l.Warnf(tmpl, args...)
+	case LevelError:
+		l.Errorf(tmpl, args...)
+	default:
+		// do nothing
+	}
+}
+
+func DoLeveledLogKV(l Logger, lvl LoggingLevel, msg string, kvs ...interface{}) {
+	switch lvl {
+	case LevelDebug:
+		l.Debug(msg, kvs...)
+	case LevelInfo:
+		l.Info(msg, kvs...)
+	case LevelWarn:
+		l.Warn(msg, kvs...)
+	case LevelError:
+		l.Error(msg, kvs...)
+	default:
+		// do nothing
+	}
+}
+
 type ExpectedLog struct {
-	Regex  string
-	Fields map[string]interface{}
+	Name        string
+	Level       LoggingLevel
+	Msg         string
+	CallerRegex string
+	Fields      map[string]interface{}
 }
 
 func NewExpectedLog(opts ...func(expect *ExpectedLog)) *ExpectedLog {
 	expect := ExpectedLog{
-		Fields: map[string]interface{}{},
+		CallerRegex: `*[a-zA-Z0-9_\-]+.go:[0-9]+`,
+		Fields:      map[string]interface{}{},
 	}
 	for _, fn := range opts {
 		fn(&expect)
@@ -128,16 +237,38 @@ func NewExpectedLog(opts ...func(expect *ExpectedLog)) *ExpectedLog {
 }
 
 func CopyOf(log *ExpectedLog, opts ...func(expect *ExpectedLog)) *ExpectedLog {
-	expect := *log
-	for _, fn := range opts {
-		fn(&expect)
+	cpy := *log
+	cpy.Fields = map[string]interface{}{}
+	for k, v := range log.Fields {
+		cpy.Fields[k] = v
 	}
-	return &expect
+	for _, fn := range opts {
+		fn(&cpy)
+	}
+	return &cpy
 }
 
-func ExpectRegex(regex string) func(expect *ExpectedLog) {
+func ExpectName(name string) func(expect *ExpectedLog) {
 	return func(expect *ExpectedLog) {
-		expect.Regex = regex
+		expect.Name = name
+	}
+}
+
+func ExpectLevel(lvl LoggingLevel) func(expect *ExpectedLog) {
+	return func(expect *ExpectedLog) {
+		expect.Level = lvl
+	}
+}
+
+func ExpectMsg(msg string) func(expect *ExpectedLog) {
+	return func(expect *ExpectedLog) {
+		expect.Msg = msg
+	}
+}
+
+func ExpectCaller(callerRegex string) func(expect *ExpectedLog) {
+	return func(expect *ExpectedLog) {
+		expect.CallerRegex = callerRegex
 	}
 }
 
@@ -160,19 +291,60 @@ func ExpectFields(kvs ...interface{}) func(expect *ExpectedLog) {
 	}
 }
 
-func ExpectTextRegex(loggerName string, level LoggingLevel, msg string) func(expect *ExpectedLog) {
-	regex := fmt.Sprintf(`[0-9\-]+T[0-9:.]+Z +%s +\[ *[a-zA-Z0-9_\-]+.go:[0-9]+\] +%s: .*%s.*`, level.String(), loggerName, msg)
-	return ExpectRegex(regex)
+func AssertLeveledLogging(g *gomega.WithT, ctxLogger Logger, level LoggingLevel, expectJson, expectText *ExpectedLog) {
+	const StaticMsg = `test log with random token`
+	var token string
+	var msg string
+
+	token = utils.RandomString(10)
+	msg = fmt.Sprintf("%s [%s]", StaticMsg, token)
+	DoLeveledLogf(ctxLogger, level, "%s [%s]", StaticMsg, token)
+	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg), ExpectFields(LogKeyMessage, msg)))
+	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg)))
+
+	DoLeveledLogf(ctxLogger.WithKV("adhoc-key", "adhoc-value"),
+		level, "%s [%s]", StaticMsg, token)
+	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg), ExpectFields("adhoc-key", "adhoc-value")))
+	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg), ExpectFields("adhoc-key", "adhoc-value")))
+
+	DoLeveledLogKV(ctxLogger, level, msg, "test-key", "test-value")
+	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg), ExpectFields("test-key", "test-value")))
+	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg), ExpectFields("test-key", "test-value")))
+
+	DoLeveledLogKV(ctxLogger.WithKV("adhoc-key", "adhoc-value"),
+		level, msg, "test-key", "test-value")
+	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg), ExpectFields("test-key", "test-value", "adhoc-key", "adhoc-value")))
+	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg), ExpectFields("test-key", "test-value", "adhoc-key", "adhoc-value")))
+
+	e := ctxLogger.WithLevel(level).Log(LogKeyMessage, msg)
+	g.Expect(e).To(Succeed(), "Log() should not fail")
+	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg)))
+	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg)))
+
+	ctxLogger.WithLevel(level).Printf("%s [%s]", StaticMsg, token)
+	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg)))
+	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg)))
+
+	ctxLogger.WithLevel(level).Print(msg)
+	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg)))
+	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg)))
+
+	ctxLogger.WithLevel(level).Println(msg)
+	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg+"\n")))
 }
 
 func AssertJsonLogEntry(g *gomega.WithT, logEntry string, expect *ExpectedLog) {
 	g.Expect(logEntry).ToNot(BeEmpty(), "log should not be empty")
-	if len(expect.Regex) != 0 {
-		g.Expect(logEntry).To(MatchRegexp(expect.Regex), "log should have correct pattern")
-	}
 	var decoded map[string]interface{}
 	e := json.Unmarshal([]byte(logEntry), &decoded)
 	g.Expect(e).To(Succeed(), "parsing JSON log should not fail")
+
+	g.Expect(decoded).To(HaveKeyWithValue(LogKeyLevel, strings.ToLower(expect.Level.String())), "log should have correct level")
+	g.Expect(decoded).To(HaveKeyWithValue(LogKeyName, expect.Name), "log should have correct logger name")
+	g.Expect(decoded).To(HaveKeyWithValue(LogKeyMessage, expect.Msg), "log should have correct message")
+	if len(expect.CallerRegex) != 0 {
+		g.Expect(decoded).To(HaveKeyWithValue(LogKeyCaller, MatchRegexp(expect.CallerRegex)), "log should have correct caller")
+	}
 	for k, v := range expect.Fields {
 		if v != nil {
 			g.Expect(decoded).To(HaveKeyWithValue(k, v), "JSON log should have correct KV pair")
@@ -189,11 +361,19 @@ func AssertLastJsonLogEntry(g *gomega.WithT, expect *ExpectedLog) {
 
 func AssertTextLogEntry(g *gomega.WithT, logEntry string, expect *ExpectedLog) {
 	g.Expect(logEntry).ToNot(BeEmpty(), "log should not be empty")
-	if len(expect.Regex) != 0 {
-		g.Expect(logEntry).To(MatchRegexp(expect.Regex), "log should have correct pattern")
+	if len(expect.CallerRegex) == 0 {
+		expect.CallerRegex = `*[a-zA-Z0-9_\-]+.go:[0-9]+`
 	}
+
+	regex := fmt.Sprintf(`[0-9\-]+T[0-9:.]+Z +%s +\[ *%s\] +%s: .*%s.*`,
+		regexp.QuoteMeta(expect.Level.String()), expect.CallerRegex, regexp.QuoteMeta(expect.Name), regexp.QuoteMeta(expect.Msg))
+
+	g.Expect(logEntry).To(MatchRegexp(regex), "log should have correct pattern")
 	for k, v := range expect.Fields {
 		switch p := v.(type) {
+		case nil:
+			regex := fmt.Sprintf(`%s *= *[^ ]+`, regexp.QuoteMeta(k))
+			g.Expect(logEntry).ToNot(MatchRegexp(regex), "log should not have field [%s]", k)
 		case regexp.Regexp:
 			g.Expect(logEntry).To(MatchRegexp(p.String()), "log should have correct fields")
 		default:

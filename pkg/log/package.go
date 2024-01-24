@@ -14,7 +14,7 @@ import (
 
 // factory is created by init, and used to create new loggers.
 var (
-	factory       *kitLoggerFactory
+	factory       *zapLoggerFactory
 	defaultConfig *Properties
 )
 
@@ -50,7 +50,8 @@ func init() {
 		defaultConfig = newProperties()
 	}
 
-	factory = newKitLoggerFactory(defaultConfig)
+	//factory = newKitLoggerFactory(defaultConfig)
+	factory = newZapLoggerFactory(defaultConfig)
 
 	// a test run for dev
 	//DebugShowcase()

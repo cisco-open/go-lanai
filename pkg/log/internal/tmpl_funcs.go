@@ -4,7 +4,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"encoding"
 	"fmt"
-	"github.com/go-kit/kit/log/level"
 	"math"
 	"reflect"
 	"strconv"
@@ -76,7 +75,7 @@ func MakeKVFunc(ignored utils.StringSet) func(Fields) string {
 func MakeLevelFunc(term bool) func(padding int, kvs Fields) string {
 	if term {
 		return func(padding int, kvs Fields) string {
-			lv, _ := kvs[level.Key().(string)]
+			lv, _ := kvs[LogKeyLevel]
 			lvStr := Sprint(lv)
 			if funcs, ok := levelFuncsMap[lvStr]; ok {
 				return funcs.color(funcs.text(padding))
@@ -85,7 +84,7 @@ func MakeLevelFunc(term bool) func(padding int, kvs Fields) string {
 		}
 	} else {
 		return func(padding int, kvs Fields) string {
-			lv, _ := kvs[level.Key().(string)]
+			lv, _ := kvs[LogKeyLevel]
 			lvStr := Sprint(lv)
 			if funcs, ok := levelFuncsMap[lvStr]; ok {
 				return funcs.text(padding)
