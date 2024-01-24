@@ -1,5 +1,5 @@
 1=DriverOpen	1:nil
-2=ConnExec	2:"-- Table test_cats\nCREATE TABLE IF NOT EXISTS security_clients\n(\n    id   uuid DEFAULT gen_random_uuid() NOT NULL,\n    oauth_client_id text                           NOT NULL,\n    CONSTRAINT \"primary\" PRIMARY KEY (id),\n    CONSTRAINT idx_oauth_clint_id UNIQUE (oauth_client_id)\n);"	1:nil
+2=ConnExec	2:"-- Table test_cats\nCREATE TABLE IF NOT EXISTS security_clients\n(\n    id   uuid DEFAULT gen_random_uuid() NOT NULL,\n    oauth_client_id text                           NOT NULL,\n    CONSTRAINT \"primary\" PRIMARY KEY (id),\n    CONSTRAINT idx_oauth_clint_id UNIQUE (oauth_client_id)\n)"	1:nil
 3=ResultRowsAffected	4:0	1:nil
 4=ConnExec	2:"TRUNCATE TABLE \"security_clients\" CASCADE;"	1:nil
 5=ConnBegin	1:nil
