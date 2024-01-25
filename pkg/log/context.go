@@ -3,7 +3,6 @@ package log
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
-	"github.com/go-kit/kit/log"
 )
 
 // common fields added by us
@@ -20,13 +19,15 @@ type ContextValuers map[string]ContextValuer
 type ContextValuer func(ctx context.Context) interface{}
 
 type Logger interface {
-	log.Logger
 	FmtLogger
 	KVLogger
 	KeyValuer
 	Leveler
 	CallerValuer
 	StdLogger
+	// Log is go-kit log.Logger interface
+	// Deprecated: go-kit is fading out. Use FmtLogger, KVLogger instead
+	Log(keyvals ...interface{}) error
 }
 
 type ContextualLogger interface {

@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/onsi/gomega"
 	"io/fs"
 	"testing"

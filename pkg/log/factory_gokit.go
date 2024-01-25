@@ -4,7 +4,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
 	"fmt"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"io"
 	"os"
 	"strings"

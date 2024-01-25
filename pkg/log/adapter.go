@@ -20,6 +20,6 @@ func (w writerAdapter) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
-	msg := strings.TrimSpace(string(p))
-	return len(p), w.logger.Log(LogKeyMessage, msg)
+	w.logger.Print(strings.TrimSpace(string(p)))
+	return len(p), nil
 }
