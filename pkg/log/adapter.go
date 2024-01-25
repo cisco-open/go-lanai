@@ -12,7 +12,7 @@ type writerAdapter struct {
 
 func NewWriterAdapter(logger Logger, lvl LoggingLevel) io.Writer {
 	return &writerAdapter{
-		logger: logger.WithLevel(lvl),
+		logger: logger.WithCaller(RuntimeCaller(5)).WithLevel(lvl),
 	}
 }
 

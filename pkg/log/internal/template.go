@@ -10,12 +10,13 @@ import (
 )
 
 const (
-	LogKeyMessage   = "msg"
-	LogKeyName      = "logger"
-	LogKeyTimestamp = "time"
-	LogKeyCaller    = "caller"
-	LogKeyLevel     = "level"
-	LogKeyContext   = "ctx"
+	LogKeyMessage    = "msg"
+	LogKeyName       = "logger"
+	LogKeyTimestamp  = "time"
+	LogKeyCaller     = "caller"
+	LogKeyLevel      = "level"
+	LogKeyContext    = "ctx"
+	LogKeyStacktrace = "stacktrace"
 )
 
 const (

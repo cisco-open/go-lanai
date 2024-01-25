@@ -13,6 +13,7 @@ const (
 	LogKeyCaller    = internal.LogKeyCaller
 	LogKeyLevel     = internal.LogKeyLevel
 	LogKeyContext   = internal.LogKeyContext
+	LogKeyStacktrace   = internal.LogKeyStacktrace
 )
 
 type ContextValuers map[string]ContextValuer

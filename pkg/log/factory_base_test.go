@@ -19,8 +19,8 @@ import (
 	This file only defines sub tests that applicable to all factories implementation
 */
 
-const ExpectedDefaultCaller = `utils_test\.go:[0-9]+`
-const ExpectedDirectCaller = `factory_base_test\.go:[0-9]+`
+const ExpectedDefaultCaller = `(log/)?utils_test\.go:[0-9]+`
+const ExpectedDirectCaller = `(log/)?factory_base_test\.go:[0-9]+`
 
 /*************************
 	Sub-Test Cases
@@ -112,8 +112,8 @@ func SubTestWithCaller(fn TestFactoryCreateFunc, runtimeCaller interface{}) test
 
 		// runtime caller with different skip depth
 		msg, _ = RandomMessage()
-		expectText = CopyOf(expectText, ExpectCaller(`(testing|test|subtest)\.go:[0-9]+`))
-		expectJson = CopyOf(expectJson, ExpectCaller(`(testing|test|subtest)\.go:[0-9]+`))
+		expectText = CopyOf(expectText, ExpectCaller(`((testing|test)/)?(testing|test|subtest)\.go:[0-9]+`))
+		expectJson = CopyOf(expectJson, ExpectCaller(`((testing|test)/)?(testing|test|subtest)\.go:[0-9]+`))
 		logger.WithCaller(runtimeCaller).Info(msg)
 		AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg)))
 		AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg)))

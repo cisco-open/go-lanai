@@ -33,7 +33,7 @@ func SubTestWrite(level LoggingLevel) test.GomegaSubTestFunc {
 		expectText := NewExpectedLog(
 			ExpectName(LoggerName),
 			ExpectLevel(level),
-			ExpectCaller(`[a-zA-Z_]+\.go:[0-9]+`),
+			ExpectCaller(`log/adapter_test\.go:[0-9]+`),
 		)
 		expectJson := CopyOf(expectText)
 

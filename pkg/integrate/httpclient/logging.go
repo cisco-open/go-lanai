@@ -30,7 +30,7 @@ func logRequest(ctx context.Context, r *http.Request, logger log.ContextualLogge
 	}
 
 	kv, msg := constructRequestLog(r, logging)
-	_ = logger.WithContext(ctx).WithKV(logKey, &kv).WithLevel(logging.Level).Log(log.LogKeyMessage, msg)
+	logger.WithContext(ctx).WithKV(logKey, &kv).WithLevel(logging.Level).Printf(msg)
 }
 
 func logResponse(ctx context.Context, resp *http.Response, logger log.ContextualLogger, logging *LoggingConfig) {
@@ -39,7 +39,7 @@ func logResponse(ctx context.Context, resp *http.Response, logger log.Contextual
 	}
 
 	kv, msg := constructResponseLog(ctx, resp, logging)
-	_ = logger.WithContext(ctx).WithKV(logKey, &kv).WithLevel(logging.Level).Log(log.LogKeyMessage, msg)
+	logger.WithContext(ctx).WithKV(logKey, &kv).WithLevel(logging.Level).Printf(msg)
 }
 
 func constructRequestLog(r *http.Request, logging *LoggingConfig) (*requestLog, string) {

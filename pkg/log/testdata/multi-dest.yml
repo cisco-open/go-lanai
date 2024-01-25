@@ -6,14 +6,14 @@ loggers:
   console:
     type: console
     format: text
-    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -25 .caller | pad 25 | blue}}] {{cap -12 .logger | pad 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -30 .caller | pad 30 | blue}}] {{cap -12 .logger | pad 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
     fixed-keys: "spanId, traceId, parentId, http, db, remote-http"
 
   text-file:
     type: file
     format: text
     location: "testdata/.tmp/logs/text.log"
-    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -25 .caller | pad 25 | blue}}] {{cap -12 .logger | pad 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -30 .caller | pad 30 | blue}}] {{cap -12 .logger | pad 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
     fixed-keys: "spanId, traceId, parentId, http, db, remote-http"
 
   json-file:

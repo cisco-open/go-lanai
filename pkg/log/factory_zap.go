@@ -7,7 +7,6 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -19,7 +18,7 @@ var zapEncoderConfig = zapcore.EncoderConfig{
 	CallerKey:      LogKeyCaller,
 	FunctionKey:    zapcore.OmitKey,
 	MessageKey:     LogKeyMessage,
-	StacktraceKey:  "stacktrace",
+	StacktraceKey:  LogKeyStacktrace,
 	LineEnding:     zapcore.DefaultLineEnding,
 	EncodeLevel:    zapcore.LowercaseLevelEncoder,
 	EncodeTime: func(time time.Time, encoder zapcore.PrimitiveArrayEncoder) {
@@ -27,13 +26,7 @@ var zapEncoderConfig = zapcore.EncoderConfig{
 		encoder.AppendString(time.UTC().Format(`2006-01-02T15:04:05.999Z07:00`))
 	},
 	EncodeDuration: zapcore.SecondsDurationEncoder,
-	EncodeCaller: func(ec zapcore.EntryCaller, encoder zapcore.PrimitiveArrayEncoder) {
-		if !ec.Defined || len(ec.File) == 0 {
-			return
-		}
-		idx := strings.LastIndexByte(ec.File, '/')
-		encoder.AppendString(ec.File[idx+1:] + ":" + strconv.Itoa(ec.Line))
-	},
+	EncodeCaller: zapcore.ShortCallerEncoder,
 }
 
 type zapCoreCreator func(level zap.AtomicLevel) zapcore.Core
