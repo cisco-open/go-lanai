@@ -3,8 +3,8 @@ package log
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"time"
 )
 
@@ -15,9 +15,9 @@ var (
 	)
 )
 
-// configurableLogger implements Logger and Contextual
-type configurableLogger struct {
-	logger
+// configurableKitLogger implements Logger and Contextual
+type configurableKitLogger struct {
+	kitLogger
 	name      string
 	lvl       LoggingLevel
 	template  log.Logger
@@ -26,10 +26,10 @@ type configurableLogger struct {
 	isTerm    bool
 }
 
-func newConfigurableLogger(name string, templateLogger log.Logger, logLevel LoggingLevel, valuers ContextValuers) *configurableLogger {
+func newConfigurableLogger(name string, templateLogger log.Logger, logLevel LoggingLevel, valuers ContextValuers) *configurableKitLogger {
 	swap := log.SwapLogger{}
-	k := &configurableLogger{
-		logger: logger{
+	k := &configurableKitLogger{
+		kitLogger: kitLogger{
 			Logger: log.With(&swap,
 				LogKeyTimestamp, timestampUTC,
 				LogKeyCaller, log.Caller(4),
@@ -46,7 +46,7 @@ func newConfigurableLogger(name string, templateLogger log.Logger, logLevel Logg
 	return k
 }
 
-func (l *configurableLogger) WithContext(ctx context.Context) Logger {
+func (l *configurableKitLogger) WithContext(ctx context.Context) Logger {
 	if ctx == nil {
 		return l
 	}
@@ -59,7 +59,7 @@ func (l *configurableLogger) WithContext(ctx context.Context) Logger {
 	return l.withKV(fields)
 }
 
-func (l *configurableLogger) setLevel(lv LoggingLevel) {
+func (l *configurableKitLogger) setLevel(lv LoggingLevel) {
 	var opt level.Option
 	switch lv {
 	case LevelOff:
@@ -79,6 +79,11 @@ func (l *configurableLogger) setLevel(lv LoggingLevel) {
 	l.swappable.Swap(level.NewFilter(l.template, opt))
 }
 
+// IsTerminal implements internal.TerminalAware
+func (l *configurableKitLogger) IsTerminal() bool {
+	return l.isTerm
+}
+
 func isTerminal(l log.Logger) bool {
 	switch l.(type) {
 	case *internal.KitTextLoggerAdapter:
@@ -90,8 +95,8 @@ func isTerminal(l log.Logger) bool {
 			}
 		}
 		return true
-	case *configurableLogger:
-		return l.(*configurableLogger).isTerm
+	case *configurableKitLogger:
+		return l.(*configurableKitLogger).isTerm
 	default:
 		return false
 	}

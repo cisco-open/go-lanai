@@ -3,9 +3,8 @@ package log
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"io"
 	"os"
 	"strings"
@@ -23,7 +22,7 @@ type kitLoggerFactory struct {
 	templateLogger   log.Logger
 	effectiveValuers ContextValuers
 	extraValuers     ContextValuers
-	registry         map[string]*configurableLogger
+	registry         map[string]*configurableKitLogger
 }
 
 func newKitLoggerFactory(properties *Properties) *kitLoggerFactory {
@@ -34,9 +33,9 @@ func newKitLoggerFactory(properties *Properties) *kitLoggerFactory {
 
 	return &kitLoggerFactory{
 		rootLogLevel:     rootLogLevel,
-		logLevels:        properties.Levels,
+		logLevels:        convertLevelsNameToKey(properties.Levels),
 		templateLogger:   buildTemplateLoggerFromConfig(properties),
-		registry:         map[string]*configurableLogger{},
+		registry:         map[string]*configurableKitLogger{},
 		extraValuers:     ContextValuers{},
 		effectiveValuers: buildContextValuerFromConfig(properties),
 	}
@@ -102,7 +101,7 @@ func (f *kitLoggerFactory) setLevel(prefix string, logLevel *LoggingLevel) (affe
 	return
 }
 
-func (f *kitLoggerFactory) refresh(properties *Properties) {
+func (f *kitLoggerFactory) refresh(properties *Properties) error  {
 	rootLogLevel, ok := properties.Levels[keyLevelDefault]
 	if !ok {
 		rootLogLevel = LevelInfo
@@ -110,7 +109,7 @@ func (f *kitLoggerFactory) refresh(properties *Properties) {
 
 	f.templateLogger = buildTemplateLoggerFromConfig(properties)
 	f.rootLogLevel = rootLogLevel
-	f.logLevels = properties.Levels
+	f.logLevels = convertLevelsNameToKey(properties.Levels)
 	f.effectiveValuers = buildContextValuerFromConfig(properties)
 
 	// merge valuers, note: we don't delete extra valuers during refresh
@@ -124,6 +123,7 @@ func (f *kitLoggerFactory) refresh(properties *Properties) {
 		l.valuers = f.effectiveValuers
 		l.setLevel(ll)
 	}
+	return nil
 }
 
 func (f *kitLoggerFactory) resolveEffectiveLevel(key string) LoggingLevel {
@@ -135,10 +135,6 @@ func (f *kitLoggerFactory) resolveEffectiveLevel(key string) LoggingLevel {
 		}
 	}
 	return f.rootLogLevel
-}
-
-func loggerKey(name string) string {
-	return utils.CamelToSnakeCase(name)
 }
 
 func buildContextValuerFromConfig(properties *Properties) ContextValuers {
@@ -207,9 +203,3 @@ func newKitLoggerWithWriter(w io.Writer, props *LoggerProperties) (log.Logger, e
 	return nil, fmt.Errorf("unsupported logger format: %v", props.Format)
 }
 
-func openOrCreateFile(location string) (*os.File, error) {
-	if location == "" {
-		return nil, fmt.Errorf("location is missing for file logger")
-	}
-	return os.OpenFile(location, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
-}

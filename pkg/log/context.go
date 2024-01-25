@@ -2,30 +2,33 @@ package log
 
 import (
 	"context"
-	"github.com/go-kit/kit/log"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
 )
 
-//common fields added by us
+// common fields added by us
 const (
-	LogKeyMessage   = "msg"
-	LogKeyName      = "logger"
-	LogKeyTimestamp = "time"
-	LogKeyCaller    = "caller"
-	LogKeyLevel     = "level"
-	LogKeyContext   = "ctx"
+	LogKeyMessage   = internal.LogKeyMessage
+	LogKeyName      = internal.LogKeyName
+	LogKeyTimestamp = internal.LogKeyTimestamp
+	LogKeyCaller    = internal.LogKeyCaller
+	LogKeyLevel     = internal.LogKeyLevel
+	LogKeyContext   = internal.LogKeyContext
+	LogKeyStacktrace   = internal.LogKeyStacktrace
 )
 
 type ContextValuers map[string]ContextValuer
 type ContextValuer func(ctx context.Context) interface{}
 
 type Logger interface {
-	log.Logger
 	FmtLogger
 	KVLogger
 	KeyValuer
 	Leveler
 	CallerValuer
 	StdLogger
+	// Log is go-kit log.Logger interface
+	// Deprecated: go-kit is fading out. Use FmtLogger, KVLogger instead
+	Log(keyvals ...interface{}) error
 }
 
 type ContextualLogger interface {
@@ -38,7 +41,7 @@ type Contextual interface {
 }
 
 type KeyValuer interface {
-	WithKV(keyvals...interface{}) Logger
+	WithKV(keyvals ...interface{}) Logger
 }
 
 type CallerValuer interface {
@@ -46,17 +49,17 @@ type CallerValuer interface {
 }
 
 type KVLogger interface {
-	Debug(msg string, keyvals... interface{})
-	Info(msg string, keyvals... interface{})
-	Warn(msg string, keyvals... interface{})
-	Error(msg string, keyvals... interface{})
+	Debug(msg string, keyvals ...interface{})
+	Info(msg string, keyvals ...interface{})
+	Warn(msg string, keyvals ...interface{})
+	Error(msg string, keyvals ...interface{})
 }
 
 type FmtLogger interface {
-	Debugf(msg string, args... interface{})
-	Infof(msg string, args... interface{})
-	Warnf(msg string, args... interface{})
-	Errorf(msg string, args... interface{})
+	Debugf(msg string, args ...interface{})
+	Infof(msg string, args ...interface{})
+	Warnf(msg string, args ...interface{})
+	Errorf(msg string, args ...interface{})
 }
 
 type StdLogger interface {
@@ -70,8 +73,9 @@ type Leveler interface {
 }
 
 type loggerFactory interface {
-	createLogger (name string) ContextualLogger
-	addContextValuers(extractors...ContextValuers)
-	setLevel (name string, logLevel LoggingLevel)
-	refresh (properties *Properties)
+	createLogger(name string) ContextualLogger
+	addContextValuers(valuers ...ContextValuers)
+	setRootLevel(logLevel LoggingLevel) (affected int)
+	setLevel(prefix string, logLevel *LoggingLevel) (affected int)
+	refresh(properties *Properties) error
 }

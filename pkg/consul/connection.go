@@ -36,10 +36,6 @@ func (c *Connection) ListKeyValuePairs(ctx context.Context, path string) (result
 	entries, _, err := c.client.KV().List(path, queryOptions.WithContext(ctx))
 	if err != nil {
 		return nil, err
-	} else if entries == nil {
-		logger.WithContext(ctx).Warnf("No appconfig retrieved from consul (%s): %s", c.host(), path)
-	} else {
-		logger.WithContext(ctx).Infof("Retrieved %d configs from consul (%s): %s", len(entries), c.host(), path)
 	}
 
 	prefix := path + "/"
@@ -70,17 +66,11 @@ func (c *Connection) GetKeyValue(ctx context.Context, path string) (value []byte
 	if err != nil {
 		return nil, err
 	} else if data == nil {
-		logger.WithContext(ctx).Warnf("No kv pair retrieved from consul %q: %s", c.host(), path)
 		value = nil
 	} else {
-		logger.WithContext(ctx).Infof("Retrieved kv pair from consul %q: %s", c.host(), path)
 		value = data.Value
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
+	logger.WithContext(ctx).Debugf("Retrieved kv pair from consul %q: %s", c.host(), path)
 	return
 }
 
@@ -96,7 +86,7 @@ func (c *Connection) SetKeyValue(ctx context.Context, path string, value []byte)
 		return err
 	}
 
-	logger.WithContext(ctx).Infof("Stored kv pair to consul %q: %s", c.host(), path)
+	logger.WithContext(ctx).Debugf("Stored kv pair to consul %q: %s", c.host(), path)
 	return nil
 }
 

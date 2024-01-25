@@ -30,11 +30,13 @@ type KvSecretEngineV1 struct {
 	backend  string
 }
 
+// ContextPath
 //key value v1 API expects GET /secret/:path (as opposed to the v2 API which expects GET /secret/data/:path?version=:version-number)
 func (engine *KvSecretEngineV1) ContextPath(secretPath string) string {
 	return fmt.Sprintf("%s/%s", engine.backend, secretPath)
 }
 
+// ListSecrets implements KvSecretEngine
 /*
 Vault key value v1 API has the following response
 we return the kv in the data field
@@ -70,12 +72,9 @@ func (engine *KvSecretEngineV1) ListSecrets(ctx context.Context, secretPath stri
 	if secrets, err := engine.client.Logical(ctx).Read(path); err != nil {
 		return nil, err
 	} else if secrets != nil {
-		logger.WithContext(ctx).Infof("Retrieved %d configs from vault path: %s", len(secrets.Data), path)
 		for key, val := range secrets.Data {
 			results[key] = utils.ParseString(val.(string))
 		}
-	} else {
-		logger.WithContext(ctx).Warnf("No secrets retrieved from vault (%s)", path)
 	}
 	return results, nil
 }

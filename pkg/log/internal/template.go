@@ -3,9 +3,20 @@ package internal
 import (
 	"bytes"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"go.uber.org/zap/buffer"
 	"io"
 	"strings"
 	"text/template"
+)
+
+const (
+	LogKeyMessage    = "msg"
+	LogKeyName       = "logger"
+	LogKeyTimestamp  = "time"
+	LogKeyCaller     = "caller"
+	LogKeyLevel      = "level"
+	LogKeyContext    = "ctx"
+	LogKeyStacktrace = "stacktrace"
 )
 
 const (
@@ -60,16 +71,21 @@ func (f *TemplatedFormatter) init() {
 }
 
 func (f *TemplatedFormatter) Format(kvs Fields, w io.Writer) error {
-	// from documents of template.Template.Execute:
-	// 		A template may be executed safely in parallel, although if parallel
-	// 		executions share a Writer the output may be interleaved.
-	// to prevent this from happening, we use an in-memory buffer. Hopefully this is faster than mutex locking
-	var buf bytes.Buffer
-	if e := f.tmpl.Execute(&buf, kvs); e != nil {
-		return e
+	switch w.(type) {
+	case *buffer.Buffer:
+		return f.tmpl.Execute(w, kvs)
+	default:
+		// from documents of template.Template.Execute:
+		// 		A template may be executed safely in parallel, although if parallel
+		// 		executions share a Writer the output may be interleaved.
+		// to prevent this from happening, we use an in-memory buffer. Hopefully this is faster than mutex locking
+		var buf bytes.Buffer
+		if e := f.tmpl.Execute(&buf, kvs); e != nil {
+			return e
+		}
+		if _, e := w.Write(buf.Bytes()); e != nil {
+			return e
+		}
+		return nil
 	}
-	if _, e := w.Write(buf.Bytes()); e != nil {
-		return e
-	}
-	return nil
 }
