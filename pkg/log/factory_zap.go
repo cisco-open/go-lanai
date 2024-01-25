@@ -3,12 +3,10 @@ package log
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -59,7 +57,7 @@ func newZapLoggerFactory(properties *Properties) *zapLoggerFactory {
 	var e error
 	f := &zapLoggerFactory{
 		rootLogLevel:     rootLogLevel,
-		logLevels:        properties.Levels,
+		logLevels:        convertLevelsNameToKey(properties.Levels),
 		properties:       properties,
 		registry:         map[string]*configurableZapLogger{},
 		extraValuers:     ContextValuers{},
@@ -73,7 +71,7 @@ func newZapLoggerFactory(properties *Properties) *zapLoggerFactory {
 }
 
 func (f *zapLoggerFactory) createLogger(name string) ContextualLogger {
-	key := f.loggerKey(name)
+	key := loggerKey(name)
 	if l, ok := f.registry[key]; ok {
 		return l
 	}
@@ -105,8 +103,8 @@ func (f *zapLoggerFactory) setRootLevel(logLevel LoggingLevel) (affected int) {
 }
 
 func (f *zapLoggerFactory) setLevel(prefix string, logLevel *LoggingLevel) (affected int) {
-	key := f.loggerKey(prefix)
-	if (key == "" || key == keyLevelDefault || key == f.loggerKey(nameLevelDefault)) && logLevel != nil {
+	key := loggerKey(prefix)
+	if (key == "" || key == keyLevelDefault || key == loggerKey(nameLevelDefault)) && logLevel != nil {
 		return f.setRootLevel(*logLevel)
 	}
 
@@ -140,7 +138,7 @@ func (f *zapLoggerFactory) refresh(properties *Properties) error {
 	}
 
 	f.rootLogLevel = rootLogLevel
-	f.logLevels = properties.Levels
+	f.logLevels = convertLevelsNameToKey(properties.Levels)
 	f.effectiveValuers = buildContextValuerFromConfig(properties)
 	var e error
 	if f.coreCreator, e = f.buildZapCoreCreator(properties); e != nil {
@@ -170,10 +168,6 @@ func (f *zapLoggerFactory) resolveEffectiveLevel(key string) LoggingLevel {
 		}
 	}
 	return f.rootLogLevel
-}
-
-func (f *zapLoggerFactory) loggerKey(name string) string {
-	return utils.CamelToSnakeCase(name)
 }
 
 func (f *zapLoggerFactory) buildContextValuer(properties *Properties) ContextValuers {
@@ -254,7 +248,7 @@ func (f *zapLoggerFactory) newZapWriteSyncer(props *LoggerProperties) (zapcore.W
 	case TypeConsole:
 		return internal.NewZapWriterWrapper(os.Stdout), nil
 	case TypeFile:
-		file, e := f.openOrCreateFile(props.Location)
+		file, e := openOrCreateFile(props.Location)
 		if e != nil {
 			return nil, e
 		}
@@ -268,13 +262,3 @@ func (f *zapLoggerFactory) newZapWriteSyncer(props *LoggerProperties) (zapcore.W
 	}
 }
 
-func (f *zapLoggerFactory) openOrCreateFile(location string) (*os.File, error) {
-	if location == "" {
-		return nil, fmt.Errorf("location is missing for file logger")
-	}
-	dir := filepath.Dir(location)
-	if e := os.MkdirAll(dir, 0744); e != nil {
-		return nil, e
-	}
-	return os.OpenFile(location, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
-}

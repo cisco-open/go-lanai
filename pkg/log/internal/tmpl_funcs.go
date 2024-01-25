@@ -117,10 +117,12 @@ func Capped(cap int, v interface{}) string {
 	}
 	if cap > 0 {
 		return fmt.Sprintf("%." + strconv.Itoa(c - 3) + "s...", s)
-	} else {
+	} else if cap < 0 {
 		lead := (c - 3) / 2
 		tail := c - lead - 3
 		return fmt.Sprintf("%." + strconv.Itoa(lead) + "s...%s", s, s[len(s)-tail:])
+	} else {
+		return ""
 	}
 }
 
