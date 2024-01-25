@@ -18,7 +18,7 @@ type ZapFormattedEncoder struct {
 	IsTerminal bool
 }
 
-func NewZapFormattedEncoder(cfg zapcore.EncoderConfig, formatter TextFormatter, isTerm bool ) zapcore.Encoder {
+func NewZapFormattedEncoder(cfg zapcore.EncoderConfig, formatter TextFormatter, isTerm bool) zapcore.Encoder {
 	return &ZapFormattedEncoder{
 		MapObjectEncoder: zapcore.NewMapObjectEncoder(),
 		Formatter:        formatter,

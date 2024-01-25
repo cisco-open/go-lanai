@@ -73,7 +73,7 @@ func newZapLoggerFactory(properties *Properties) *zapLoggerFactory {
 }
 
 func (f *zapLoggerFactory) createLogger(name string) ContextualLogger {
-	key := loggerKey(name)
+	key := f.loggerKey(name)
 	if l, ok := f.registry[key]; ok {
 		return l
 	}
@@ -105,8 +105,8 @@ func (f *zapLoggerFactory) setRootLevel(logLevel LoggingLevel) (affected int) {
 }
 
 func (f *zapLoggerFactory) setLevel(prefix string, logLevel *LoggingLevel) (affected int) {
-	key := loggerKey(prefix)
-	if (key == "" || key == keyLevelDefault || key == loggerKey(nameLevelDefault)) && logLevel != nil {
+	key := f.loggerKey(prefix)
+	if (key == "" || key == keyLevelDefault || key == f.loggerKey(nameLevelDefault)) && logLevel != nil {
 		return f.setRootLevel(*logLevel)
 	}
 
@@ -133,7 +133,7 @@ func (f *zapLoggerFactory) setLevel(prefix string, logLevel *LoggingLevel) (affe
 	return
 }
 
-func (f *zapLoggerFactory) refresh(properties *Properties) {
+func (f *zapLoggerFactory) refresh(properties *Properties) error {
 	rootLogLevel, ok := properties.Levels[keyLevelDefault]
 	if !ok {
 		rootLogLevel = LevelInfo
@@ -142,6 +142,10 @@ func (f *zapLoggerFactory) refresh(properties *Properties) {
 	f.rootLogLevel = rootLogLevel
 	f.logLevels = properties.Levels
 	f.effectiveValuers = buildContextValuerFromConfig(properties)
+	var e error
+	if f.coreCreator, e = f.buildZapCoreCreator(properties); e != nil {
+		return e
+	}
 
 	// merge valuers, note: we don't delete extra valuers during refresh
 	for k, v := range f.extraValuers {
@@ -150,9 +154,11 @@ func (f *zapLoggerFactory) refresh(properties *Properties) {
 
 	for key, l := range f.registry {
 		ll := f.resolveEffectiveLevel(key)
+		l.core = f.coreCreator(l.leveler)
 		l.valuers = f.effectiveValuers
 		l.setMinLevel(ll)
 	}
+	return nil
 }
 
 func (f *zapLoggerFactory) resolveEffectiveLevel(key string) LoggingLevel {
@@ -184,11 +190,13 @@ func (f *zapLoggerFactory) buildContextValuer(properties *Properties) ContextVal
 
 func (f *zapLoggerFactory) buildZapCoreCreator(properties *Properties) (zapCoreCreator, error) {
 	if len(properties.Loggers) == 0 {
-		properties.Loggers["default"] = &LoggerProperties{
-			Type:      TypeConsole,
-			Format:    FormatText,
-			Template:  defaultTemplate,
-			FixedKeys: defaultFixedFields.Values(),
+		properties.Loggers = map[string]*LoggerProperties{
+			"default": {
+				Type:      TypeConsole,
+				Format:    FormatText,
+				Template:  defaultTemplate,
+				FixedKeys: defaultFixedFields.Values(),
+			},
 		}
 	}
 	encoders := make([]zapcore.Encoder, len(properties.Loggers))
@@ -246,7 +254,7 @@ func (f *zapLoggerFactory) newZapWriteSyncer(props *LoggerProperties) (zapcore.W
 	case TypeConsole:
 		return internal.NewZapWriterWrapper(os.Stdout), nil
 	case TypeFile:
-		file, e := openOrCreateFile(props.Location)
+		file, e := f.openOrCreateFile(props.Location)
 		if e != nil {
 			return nil, e
 		}

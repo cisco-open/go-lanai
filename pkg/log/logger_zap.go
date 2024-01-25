@@ -70,8 +70,14 @@ func (l *zapLogger) WithCaller(caller interface{}) Logger {
 		cpy.stacktracer = fn
 	case Stacktracer:
 		cpy.stacktracer = fn
+	case func() interface{}:
+		cpy.stacktracer = func() (frames []*runtime.Frame, fallback interface{}) {
+			return nil, fn()
+		}
 	default:
-		cpy.stacktracer = NoopStacktracer(caller)
+		cpy.stacktracer = func() (frames []*runtime.Frame, fallback interface{}) {
+			return nil, caller
+		}
 	}
 	return cpy
 }

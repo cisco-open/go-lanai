@@ -103,7 +103,7 @@ func (f *kitLoggerFactory) setLevel(prefix string, logLevel *LoggingLevel) (affe
 	return
 }
 
-func (f *kitLoggerFactory) refresh(properties *Properties) {
+func (f *kitLoggerFactory) refresh(properties *Properties) error  {
 	rootLogLevel, ok := properties.Levels[keyLevelDefault]
 	if !ok {
 		rootLogLevel = LevelInfo
@@ -125,6 +125,7 @@ func (f *kitLoggerFactory) refresh(properties *Properties) {
 		l.valuers = f.effectiveValuers
 		l.setLevel(ll)
 	}
+	return nil
 }
 
 func (f *kitLoggerFactory) resolveEffectiveLevel(key string) LoggingLevel {

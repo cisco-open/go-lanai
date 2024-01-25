@@ -1,6 +1,5 @@
 levels:
-  default: debug
-  TestLogger: debug
+  default: warn
 
 loggers:
   console:
@@ -23,5 +22,5 @@ loggers:
 
 # Context Mapping indicate which key-value should be extracted from given context.Context when logger is used
 context-mappings:
-  k-ctx-test: "from-ctx"
+  k-ctx-test: "from-ctx-alt"
 

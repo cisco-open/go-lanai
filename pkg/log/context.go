@@ -75,5 +75,5 @@ type loggerFactory interface {
 	addContextValuers(valuers ...ContextValuers)
 	setRootLevel(logLevel LoggingLevel) (affected int)
 	setLevel(prefix string, logLevel *LoggingLevel) (affected int)
-	refresh(properties *Properties)
+	refresh(properties *Properties) error
 }
