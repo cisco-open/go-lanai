@@ -66,6 +66,7 @@ func (p *KeyValueConfigProvider) Load(ctx context.Context) (loadError error) {
 
 	p.Settings = unFlattenedSettings
 
+	logger.WithContext(ctx).Infof("Retrieved %d secrets from vault path: %s", len(defaultSettings), p.secretEngine.ContextPath(p.secretPath))
 	return nil
 }
 

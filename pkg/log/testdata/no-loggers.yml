@@ -1,0 +1,7 @@
+levels:
+  default: debug
+
+# Context Mapping indicate which key-value should be extracted from given context.Context when logger is used
+context-mappings:
+  k-ctx-test: "from-ctx-alt"
+

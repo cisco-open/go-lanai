@@ -20,8 +20,11 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"fmt"
 )
+
+var logger = log.New("Config.Consul")
 
 const (
 	ConsulConfigPrefix = "cloud.consul.config"
@@ -73,6 +76,7 @@ func (configProvider *ConfigProvider) Load(ctx context.Context) (loadError error
 
 	configProvider.Settings = unFlattenedSettings
 
+	logger.WithContext(ctx).Infof("Retrieved %d configs from consul: %s", len(defaultSettings), configProvider.contextPath)
 	return nil
 }
 

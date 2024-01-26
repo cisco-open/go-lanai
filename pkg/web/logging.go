@@ -182,7 +182,7 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) {
 	}
 
 	// do log
-	_ = f.logger.WithContext(ctx).WithLevel(logLevel).Log(log.LogKeyMessage, msg, LogKeyHttp, httpEntry)
+	f.logger.WithContext(ctx).WithLevel(logLevel).WithKV(LogKeyHttp, httpEntry).Printf(msg)
 	return
 }
 

@@ -18,8 +18,8 @@ package log
 
 import (
 	"fmt"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 /************************
@@ -43,16 +43,17 @@ func (c *compositeKitLogger) Log(keyvals ...interface{}) error {
 /************************
 	logger
  ************************/
-// logger implements Logger
-type logger struct {
+
+// kitLogger implements Logger
+type kitLogger struct {
 	log.Logger
 }
 
-func (l *logger) WithKV(keyvals...interface{}) Logger {
+func (l *kitLogger) WithKV(keyvals...interface{}) Logger {
 	return l.withKV(keyvals)
 }
 
-func (l *logger) WithLevel(lvl LoggingLevel) Logger {
+func (l *kitLogger) WithLevel(lvl LoggingLevel) Logger {
 	var leveled log.Logger
 	switch lvl {
 	case LevelDebug:
@@ -69,93 +70,93 @@ func (l *logger) WithLevel(lvl LoggingLevel) Logger {
 		return l
 	}
 
-	return &logger{
+	return &kitLogger{
 		Logger: leveled,
 	}
 }
 
-func (l *logger) WithCaller(caller interface{}) Logger {
+func (l *kitLogger) WithCaller(caller interface{}) Logger {
 	switch fn := caller.(type) {
 	case func() interface{}:
 		// untyped function
 		caller = log.Valuer(fn)
 	}
-	return &logger{
+	return &kitLogger{
 		Logger: log.WithSuffix(l.Logger, LogKeyCaller, caller),
 	}
 }
 
-func (l *logger) Debugf(msg string, args ...interface{}) {
+func (l *kitLogger) Debugf(msg string, args ...interface{}) {
 	_ = l.debugLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
 	}).Log()
 }
 
-func (l *logger) Infof(msg string, args ...interface{}) {
+func (l *kitLogger) Infof(msg string, args ...interface{}) {
 	_ = l.infoLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
 	}).Log()
 }
 
-func (l *logger) Warnf(msg string, args ...interface{}) {
+func (l *kitLogger) Warnf(msg string, args ...interface{}) {
 	_ = l.warnLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
 	}).Log()
 }
 
-func (l *logger) Errorf(msg string, args ...interface{}) {
+func (l *kitLogger) Errorf(msg string, args ...interface{}) {
 	_ = l.errorLogger([]interface{}{
 		LogKeyMessage, fmt.Sprintf(msg, args...),
 	}).Log()
 }
 
-func (l *logger) Debug(msg string, keyvals... interface{}) {
+func (l *kitLogger) Debug(msg string, keyvals... interface{}) {
 	_ = l.debugLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
-func (l *logger) Info(msg string, keyvals... interface{}) {
+func (l *kitLogger) Info(msg string, keyvals... interface{}) {
 	_ = l.infoLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
-func (l *logger) Warn(msg string, keyvals... interface{}) {
+func (l *kitLogger) Warn(msg string, keyvals... interface{}) {
 	_ = l.warnLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
-func (l *logger) Error(msg string, keyvals... interface{}) {
+func (l *kitLogger) Error(msg string, keyvals... interface{}) {
 	_ = l.errorLogger(keyvals).Log(LogKeyMessage, msg)
 }
 
 
-func (l *logger) Print(args ...interface{})  {
+func (l *kitLogger) Print(args ...interface{})  {
 	_ = l.Log(LogKeyMessage, fmt.Sprint(args...))
 }
 
-func (l *logger) Printf(format string, args ...interface{}) {
+func (l *kitLogger) Printf(format string, args ...interface{}) {
 	_ = l.Log(LogKeyMessage, fmt.Sprintf(format, args...))
 }
 
-func (l *logger) Println(args ...interface{}) {
+func (l *kitLogger) Println(args ...interface{}) {
 	_ = l.Log(LogKeyMessage, fmt.Sprintln(args...))
 }
 
-func (l *logger) withKV(keyvals []interface{}) Logger {
-	return &logger{
+func (l *kitLogger) withKV(keyvals []interface{}) Logger {
+	return &kitLogger{
 		Logger: log.WithPrefix(l.Logger, keyvals...),
 	}
 }
 
-func (l *logger) debugLogger(keyvals []interface{}) log.Logger {
+func (l *kitLogger) debugLogger(keyvals []interface{}) log.Logger {
 	return log.WithPrefix(level.Debug(l.Logger), keyvals...)
 }
 
-func (l *logger) infoLogger(keyvals []interface{}) log.Logger {
+func (l *kitLogger) infoLogger(keyvals []interface{}) log.Logger {
 	return log.WithPrefix(level.Info(l.Logger), keyvals...)
 }
 
-func (l *logger) warnLogger(keyvals []interface{}) log.Logger {
+func (l *kitLogger) warnLogger(keyvals []interface{}) log.Logger {
 	return log.WithPrefix(level.Warn(l.Logger), keyvals...)
 }
 
-func (l *logger) errorLogger(keyvals []interface{}) log.Logger {
+func (l *kitLogger) errorLogger(keyvals []interface{}) log.Logger {
 	return log.WithPrefix(level.Error(l.Logger), keyvals...)
 }

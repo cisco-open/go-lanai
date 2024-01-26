@@ -70,7 +70,7 @@ func (l saramaMessageLogger) LogSentMessage(ctx context.Context, msg interface{}
 		if m.Key != nil && m.Key.Length() != 0 {
 			logMsg = logMsg + fmt.Sprintf(" KeyLength=%dB", m.Key.Length())
 		}
-		_ = logger.WithContext(ctx).WithLevel(l.level).Log(log.LogKeyMessage, logMsg)
+		logger.WithContext(ctx).WithLevel(l.level).Printf(logMsg)
 	}
 }
 
@@ -82,6 +82,6 @@ func (l saramaMessageLogger) LogReceivedMessage(ctx context.Context, msg interfa
 		if len(m.Key) != 0 {
 			logMsg = logMsg + fmt.Sprintf(" Key=%x", m.Key)
 		}
-		_ = logger.WithContext(ctx).WithLevel(l.level).Log(log.LogKeyMessage, logMsg)
+		logger.WithContext(ctx).WithLevel(l.level).Printf(logMsg)
 	}
 }
