@@ -18,12 +18,12 @@ package internal
 
 import (
 	"fmt"
-	"github.com/go-kit/kit/log/term"
+	"golang.org/x/term"
 	"io"
 	"text/template"
 )
 
-// color code generation and terminal check is adopted from github.com/go-kit/kit/log/term
+// color code generation and terminal check is adopted from github.com/go-kit/log/term
 
 // ColorNames names can be used for generic color function.
 // quick foreground color function with same name is also availalbe in template
@@ -84,7 +84,7 @@ var (
 	ResetColor = "\x1b[39;49;22m"
 )
 
-// Implementations adopted from github.com/go-kit/kit/log/term
+// Implementations adopted from github.com/go-kit/log/term
 func init() {
 	// Default
 	//FgColors = append(FgColors, "\x1b[39m")
@@ -113,10 +113,18 @@ func init() {
 	}
 }
 
+// fder matches os.File.Fd()
+type fder interface {
+	Fd() uintptr
+}
+
 // IsTerminal returns true if w writes to a terminal.
-// Implementations adopted from github.com/go-kit/kit/log/term
+// Implementations adopted from github.com/go-kit/log/term
 func IsTerminal(w io.Writer) bool {
-	return term.IsTerminal(w)
+	if v, ok := w.(fder); ok {
+		return term.IsTerminal(int(v.Fd()))
+	}
+	return false
 }
 
 func ColoredWithCode(s interface{}, fg, bg Color) string {

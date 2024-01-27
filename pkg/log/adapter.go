@@ -17,32 +17,18 @@
 package log
 
 import (
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"io"
 	"strings"
 )
 
 // writerAdapter implements io.Writer and wrap around our Logger interface
 type writerAdapter struct {
-	logger log.Logger
+	logger Logger
 }
 
-func NewWriterAdapter(logger Logger, lvl LoggingLevel) *writerAdapter {
-	kitLogger := log.Logger(logger)
-	switch lvl {
-	case LevelDebug:
-		kitLogger = level.Debug(logger)
-	case LevelInfo:
-		kitLogger = level.Info(logger)
-	case LevelWarn:
-		kitLogger = level.Warn(logger)
-	case LevelError:
-		kitLogger = level.Error(logger)
-	default:
-		// TODO should be a noop kit logger
-	}
+func NewWriterAdapter(logger Logger, lvl LoggingLevel) io.Writer {
 	return &writerAdapter{
-		logger: kitLogger,
+		logger: logger.WithCaller(RuntimeCaller(5)).WithLevel(lvl),
 	}
 }
 
@@ -50,6 +36,6 @@ func (w writerAdapter) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
-	msg := strings.TrimSpace(string(p))
-	return len(p), w.logger.Log(LogKeyMessage, msg)
+	w.logger.Print(strings.TrimSpace(string(p)))
+	return len(p), nil
 }

@@ -16,8 +16,9 @@
 
 levels:
   default: debug
-  Bootstrap: debug
-  Config: debug
+  Bootstrap: info
+  Config: info
+  CFG: info
   Web: info
   Security: debug
   SEC: debug
@@ -26,19 +27,22 @@ levels:
   Actuator: info
   ACTR: info
   Data: info
+  Consul: info
+  Vault: info
+  Redis: info
 
 loggers:
   console:
     type: console
     format: text
-    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -20 .caller | pad 20 | blue}}] {{cap -12 .logger | pad 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -30 .caller | pad 30 | blue}}] {{cap -15 .logger | pad 15 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
     fixed-keys: "spanId, traceId, parentId, http, db, remote-http"
 
 #  text-file:
 #    type: file
 #    format: text
 #    location: "logs/text.log"
-#    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -20 .caller | pad 20 | blue}}] {{cap -12 .logger | pad 12 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
+#    template: '{{pad -25 .time}} {{lvl 5 .}} [{{cap -30 .caller | pad 30 | blue}}] {{cap -15 .logger | pad 15 | green}}: [{{trace .traceId .spanId .parentId}}] {{.msg}} {{kv .}}'
 #    fixed-keys: "spanId, traceId, parentId, http"
 
 #  json-file:

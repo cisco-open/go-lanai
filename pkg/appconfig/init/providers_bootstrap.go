@@ -74,7 +74,7 @@ func newBootstrapFileProviderGroup() bootstrapProvidersOut {
 	}
 	group.ProcessFunc = func(ctx context.Context, providers []appconfig.Provider) []appconfig.Provider {
 		if len(providers) != 0 {
-			logger.WithContext(ctx).Infof("found %d bootstrap configuration files", len(providers))
+			logger.WithContext(ctx).Infof("Found %d bootstrap configuration files", len(providers))
 		}
 		return providers
 	}

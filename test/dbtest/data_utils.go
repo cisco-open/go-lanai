@@ -18,19 +18,20 @@ package dbtest
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"errors"
 	"fmt"
-	"github.com/ghodss/yaml"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"gorm.io/gorm"
 	"io"
 	"io/fs"
 	"regexp"
 	"strings"
 	"sync"
 	"testing"
+
+	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"github.com/ghodss/yaml"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"gorm.io/gorm"
 )
 
 // PrepareData is a convenient function that returns a test.SetupFunc that executes given DataSetupStep in provided order
@@ -92,7 +93,7 @@ func SetupUsingSQLQueries(queries ...string) DataSetupStep {
 // SetupUsingModelSeedFile returns a DataSetupStep that load provided yaml file
 // and parse it directly into provided model and save them.
 // when "closures" is provided, it's invoked after seeding is done.
-func SetupUsingModelSeedFile(fsys fs.FS, dest interface{}, filename string, closures...func(ctx context.Context, db *gorm.DB)) DataSetupStep {
+func SetupUsingModelSeedFile(fsys fs.FS, dest interface{}, filename string, closures ...func(ctx context.Context, db *gorm.DB)) DataSetupStep {
 	return func(ctx context.Context, t *testing.T, db *gorm.DB) context.Context {
 		g := gomega.NewWithT(t)
 		e := loadSeedData(fsys, dest, filename)
@@ -151,7 +152,7 @@ func SetupWithGormScopes(scopes ...func(*gorm.DB) *gorm.DB) DataSetupScope {
 	}
 }
 
-var sqlStatementSep = regexp.MustCompile(`; *$`)
+var sqlStatementSep = regexp.MustCompile(`(?m); *$`)
 
 func execSqlFile(ctx context.Context, fsys fs.FS, db *gorm.DB, g *gomega.WithT, filename string) {
 	file, e := fsys.Open(filename)

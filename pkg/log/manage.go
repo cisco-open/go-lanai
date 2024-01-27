@@ -85,6 +85,5 @@ func UpdateLoggingConfiguration(properties *Properties) error {
 	if err != nil {
 		return err
 	}
-	factory.refresh(mergedProperties)
-	return err
+	return factory.refresh(mergedProperties)
 }
