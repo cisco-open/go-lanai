@@ -3,21 +3,6 @@
 name: CI
 run-name: Tests and Quality Analysis triggered by ${{ github.actor }}
 
-inputs:
-  branch:
-    description: 'Target Branch'
-    default: 'main'
-    required: true
-    type: string
-  low_cov:
-    description: 'Coverage percentage to pass'
-    default: '50'
-    type: int
-  high_cov:
-    description: 'Coverage percentage to warn'
-    default: '70'
-    type: int
-
 # Controls when the action will run.
 on:
   # Workflow runs when manually triggered using the UI or API.
@@ -28,6 +13,21 @@ on:
         default: 'Unspecified'
         required: false
         type: string
+      branch:
+        description: 'Target Branch'
+        default: 'main'
+        required: true
+        type: string
+      low_cov:
+        description: 'Coverage percentage to pass'
+        default: '50'
+        required: false
+        type: int
+      high_cov:
+        description: 'Coverage percentage to warn'
+        default: '70'
+        required: false
+        type: int
   # Workflow runs on scheduled time
   schedule:
     - cron: '0 6 * * 1,3,5'

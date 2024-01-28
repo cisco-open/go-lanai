@@ -3,11 +3,8 @@
 name: PR Verification
 run-name: PR Verification triggered by ${{ github.actor }}
 
-inputs:
-  low_cov:
-    description: 'Coverage percentage to pass'
-    default: '70'
-    type: int
+env:
+  COV_THRESHOLD: '70'
 
 # Controls when the action will run.
 on:
@@ -45,8 +42,8 @@ jobs:
           COVERAGE_FILE: dist/cobertura-coverage.xml
           BADGE_ENABLED: "true"
           BADGE_FILENAME: dist/coverage-comment-badge.json
-          MINIMUM_GREEN: ${{ inputs.low_cov }}
-          MINIMUM_ORANGE: ${{ inputs.low_cov }}
+          MINIMUM_GREEN: ${{ env.COV_THRESHOLD }}
+          MINIMUM_ORANGE: ${{ env.COV_THRESHOLD }}
           # [Advanced] Specify a different template for the comments that will be written on the PR.
           COMMENT_TEMPLATE: ""
           # [Advanced] Additional args to pass to diff cover (one per line)
@@ -56,7 +53,7 @@ jobs:
         with:
           cov_mode: coverage
           cov_file: dist/coverage.out
-          cov_threshold: ${{ inputs.low_cov }}
+          cov_threshold: ${{ env.COV_THRESHOLD }}
           main_branch: ${{ github.event.repository.default_branch }}
 
 
