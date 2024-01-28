@@ -45,16 +45,12 @@ jobs:
       - name: "Checkout Actions"
         uses: actions/checkout@v4
         with:
+          # For security reasons, we only uses actions in "main" branch
           ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: .github/actions
           path: actions
       - name: "Prepare"
         uses: ./actions/.github/actions/prepare
-      - name: "DEBUG"
-        run: |
-          ls -la ./
-          ls -la ./actions
-          ls -la ./actions/verify
       - name: "Test & Code Quality"
         uses: ./actions/.github/actions/verify
       - name: "Generate Code Coverage Badge"
