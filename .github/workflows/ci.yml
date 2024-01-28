@@ -38,10 +38,12 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout"
+      - name: "Checkout Actions"
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || inputs.branch || 'main' }}
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: .github/actions
+          path: actions
       - name: "Prepare"
         uses: ./actions/.github/actions/prepare
       - name: "Test & Code Quality"
