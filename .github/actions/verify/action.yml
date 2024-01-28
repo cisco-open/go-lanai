@@ -5,10 +5,6 @@ description: 'Perform tests and code quality analysis. All outputs are written i
 author: "Livan Du"
 
 inputs:
-  branch:
-    description: 'Target Branch'
-    default: 'main'
-    required: true
   coverpkg:
     description: 'Packages for test coverage calculation'
     default: './pkg/...'

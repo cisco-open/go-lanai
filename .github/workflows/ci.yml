@@ -38,14 +38,14 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || inputs.branch || 'main' }}
       - name: "Prepare"
         uses: ./actions/.github/actions/prepare
-        with:
-          branch: ${{ github.head_ref || inputs.branch || 'main' }}
       - name: "Test & Code Quality"
         uses: ./actions/.github/actions/verify
-        with:
-          branch: ${{ github.head_ref || inputs.branch || 'main' }}
       - name: "Generate Code Coverage Badge"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         run: |
