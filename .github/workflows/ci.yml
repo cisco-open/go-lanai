@@ -5,9 +5,6 @@ run-name: Tests and Quality Analysis triggered by ${{ github.actor }}
 
 # Controls when the action will run.
 on:
-  # PR verification, we disabled it for now
-#  pull_request:
-#    branches: [ "main" ]
   # Workflow runs when manually triggered using the UI or API.
   workflow_dispatch:
     inputs:
@@ -34,6 +31,7 @@ on:
 
 env:
   COVERAGE_EXCLUSION_REGEX: ^(.*\/test\/.*)|(.*\/cmd\/.*)|(.*\/testdata\/.*)
+  INTERMEDIATE_ARTIFACT_NAME: dist
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -49,7 +47,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '~1.21.5' # go 1.20 has issues: `go test -covermode=atomic` fails when files doesn't have empty line at the end
-          go-version-file: 'go.mod'
+#          go-version-file: 'go.mod'
           cache-dependency-path: "**/*.sum"
       - name: "Prepare"
         run: make init SHELL=/bin/bash
@@ -57,27 +55,53 @@ jobs:
         run: |
           make test report SHELL=/bin/bash ARGS="-covermode atomic -coverpkg ./pkg/..."
           go tool cover -func=dist/coverage.out -o dist/coverage-func.out
-          export COVERAGE=$(grep -E '([0-9]+[0-9.]+)' -o dist/coverage-func.out | tail -1)
-          export COVERAGE_COLOR=$( \
-            ( (( $(echo "${COVERAGE} >= ${{ inputs.high_cov }}" | bc) )) && echo "green" ) || \
-            ( (( $(echo "${COVERAGE} < ${{ inputs.low_cov }}" | bc) )) && echo "red" ) || \
-            echo "yellow" \
-          )
-          curl https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COVERAGE_COLOR} > dist/coverage-badge.svg
+#          export COVERAGE=$(grep -E '([0-9]+[0-9.]+)' -o dist/coverage-func.out | tail -1)
+#          export COVERAGE_COLOR=$( \
+#            ( (( $(echo "${COVERAGE} >= ${{ inputs.high_cov }}" | bc) )) && echo "green" ) || \
+#            ( (( $(echo "${COVERAGE} < ${{ inputs.low_cov }}" | bc) )) && echo "red" ) || \
+#            echo "yellow" \
+#          )
+#          curl https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COVERAGE_COLOR} > dist/coverage-badge.svg
       - name: "Code Quality Analysis"
         run: make lint SHELL=/bin/bash
-      - name: "Code Coverage Report"
+      - name: "Cache Intermediate Files"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{env.INTERMEDIATE_ARTIFACT_NAME}}
+          path: ./dist/
+          retention-days: 1
+
+  main:
+    name: Report
+    needs: test_and_verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Retrieve Intermediate Files"
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{env.INTERMEDIATE_ARTIFACT_NAME}}
+          merge-multiple: true
+      - name: "Generate Code Coverage Badge"
+        run: |
+            export COVERAGE=$(grep -E '([0-9]+[0-9.]+)' -o dist/coverage-func.out | tail -1)
+            export COVERAGE_COLOR=$( \
+              ( (( $(echo "${COVERAGE} >= ${{ inputs.high_cov }}" | bc) )) && echo "green" ) || \
+              ( (( $(echo "${COVERAGE} < ${{ inputs.low_cov }}" | bc) )) && echo "red" ) || \
+              echo "yellow" \
+            )
+            curl https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COVERAGE_COLOR} > dist/coverage-badge.svg
+      - name: "Generate Code Coverage Report"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-            filename: dist/cobertura-coverage.xml
-            badge: true
-            fail_below_min: true
-            indicators: false
-            format: markdown
-            output: both
-            thresholds: "${{ inputs.low_cov }} ${{ inputs.high_cov }}"
-      - name: "Code Coverage Badge"
+          filename: dist/cobertura-coverage.xml
+          badge: true
+          fail_below_min: true
+          indicators: false
+          format: markdown
+          output: both
+          thresholds: "${{ inputs.low_cov }} ${{ inputs.high_cov }}"
+      - name: "Upload Badges"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: exuanbo/actions-deploy-gist@v1
         with:
