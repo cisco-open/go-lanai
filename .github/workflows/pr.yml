@@ -1,0 +1,62 @@
+# This is a basic workflow that is manually triggered
+
+name: PR Verification
+run-name: PR Verification triggered by ${{ github.actor }}
+
+inputs:
+  low_cov:
+    description: 'Coverage percentage to pass'
+    default: '70'
+    type: int
+
+# Controls when the action will run.
+on:
+  pull_request:
+    branches: ['main']
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  main:
+    name: Test, Analyze Code & Report
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: "Checkout Actions"
+        uses: actions/checkout@v4
+        with:
+          # For security reasons, we only uses actions in "main" branch
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: .github/actions
+          path: actions
+      - name: "Prepare"
+        uses: ./actions/.github/actions/prepare
+      - name: "Test & Code Quality"
+        uses: ./actions/.github/actions/verify
+        with:
+          coverpkg: './pkg/...,./test/...'
+          fail_lint: 'true'
+      - name: "Post Test Coverage"
+        uses: ewjoachim/coverage-comment-action@v1
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          COVERAGE_FILE: dist/cobertura-coverage.xml
+          BADGE_ENABLED: "true"
+          BADGE_FILENAME: dist/coverage-comment-badge.json
+          MINIMUM_GREEN: ${{ inputs.low_cov }}
+          MINIMUM_ORANGE: ${{ inputs.low_cov }}
+          # [Advanced] Specify a different template for the comments that will be written on the PR.
+          COMMENT_TEMPLATE: ""
+          # [Advanced] Additional args to pass to diff cover (one per line)
+          DIFF_COVER_ARGS: ""
+      - name: "Verify Test Coverage"
+        uses: PaloAltoNetworks/cov@3.0.0
+        with:
+          cov_mode: coverage
+          cov_file: dist/coverage.out
+          cov_threshold: ${{ inputs.low_cov }}
+          main_branch: ${{ github.event.repository.default_branch }}
+
+
