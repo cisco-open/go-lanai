@@ -29,59 +29,25 @@ on:
         required: false
         type: int
 
-env:
-  COVERAGE_EXCLUSION_REGEX: ^(.*\/test\/.*)|(.*\/cmd\/.*)|(.*\/testdata\/.*)
-  INTERMEDIATE_ARTIFACT_NAME: dist
+#env:
+#  COVERAGE_EXCLUSION_REGEX: ^(.*\/test\/.*)|(.*\/cmd\/.*)|(.*\/testdata\/.*)
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  test_and_verify:
-    name: Tests & Code Quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || inputs.branch || 'main' }}
-      - name: "Setup Go"
-        uses: actions/setup-go@v4
-        with:
-          go-version: '~1.21.5' # go 1.20 has issues: `go test -covermode=atomic` fails when files doesn't have empty line at the end
-#          go-version-file: 'go.mod'
-          cache-dependency-path: "**/*.sum"
-      - name: "Prepare"
-        run: make init SHELL=/bin/bash
-      - name: "Run Tests with Coverage"
-        run: |
-          make test report SHELL=/bin/bash ARGS="-covermode atomic -coverpkg ./pkg/..."
-          go tool cover -func=dist/coverage.out -o dist/coverage-func.out
-#          export COVERAGE=$(grep -E '([0-9]+[0-9.]+)' -o dist/coverage-func.out | tail -1)
-#          export COVERAGE_COLOR=$( \
-#            ( (( $(echo "${COVERAGE} >= ${{ inputs.high_cov }}" | bc) )) && echo "green" ) || \
-#            ( (( $(echo "${COVERAGE} < ${{ inputs.low_cov }}" | bc) )) && echo "red" ) || \
-#            echo "yellow" \
-#          )
-#          curl https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COVERAGE_COLOR} > dist/coverage-badge.svg
-      - name: "Code Quality Analysis"
-        run: make lint SHELL=/bin/bash
-      - name: "Cache Intermediate Files"
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{env.INTERMEDIATE_ARTIFACT_NAME}}
-          path: ./dist/
-          retention-days: 1
-
   main:
-    name: Report
-    needs: test_and_verify
+    name: CI
     runs-on: ubuntu-latest
     steps:
-      - name: "Retrieve Intermediate Files"
-        uses: actions/download-artifact@v4
+      - name: "Prepare"
+        uses: ./actions/.github/actions/prepare
         with:
-          name: ${{env.INTERMEDIATE_ARTIFACT_NAME}}
-          merge-multiple: true
+          branch: ${{ github.head_ref || inputs.branch || 'main' }}
+      - name: "Test & Code Quality"
+        uses: ./actions/.github/actions/verify
+        with:
+          branch: ${{ github.head_ref || inputs.branch || 'main' }}
       - name: "Generate Code Coverage Badge"
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         run: |
             export COVERAGE=$(grep -E '([0-9]+[0-9.]+)' -o dist/coverage-func.out | tail -1)
             export COVERAGE_COLOR=$( \

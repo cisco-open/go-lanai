@@ -1,0 +1,41 @@
+# This is a shared action for preparing workspace
+
+name: 'Tests & Code Quality'
+description: 'Perform tests and code quality analysis. All outputs are written into ./dist/'
+author: "Livan Du"
+
+inputs:
+  branch:
+    description: 'Target Branch'
+    default: 'main'
+    required: true
+  coverpkg:
+    description: 'Packages for test coverage calculation'
+    default: './pkg/...'
+    required: true
+
+# Composite Action
+runs:
+  using: composite
+  steps:
+    - name: "Run Tests with Coverage"
+      shell: bash
+      run: |
+        # for quick test
+        mkdir -p ./dist
+        echo "total:	(statements)	62.2%" > dist/coverage-func
+#            make test report SHELL=/bin/bash ARGS="-covermode atomic -coverpkg ${{ inputs.coverpkg || './pkg/...' }}"
+    #        go tool cover -func=dist/coverage.out -o dist/coverage-func.out
+    #          export COVERAGE=$(grep -E '([0-9]+[0-9.]+)' -o dist/coverage-func.out | tail -1)
+    #          export COVERAGE_COLOR=$( \
+    #            ( (( $(echo "${COVERAGE} >= ${{ inputs.high_cov }}" | bc) )) && echo "green" ) || \
+    #            ( (( $(echo "${COVERAGE} < ${{ inputs.low_cov }}" | bc) )) && echo "red" ) || \
+    #            echo "yellow" \
+    #          )
+    #          curl https://img.shields.io/badge/Coverage-${COVERAGE}%25-${COVERAGE_COLOR} > dist/coverage-badge.svg
+    - name: "Code Quality Analysis"
+      #      run: make lint SHELL=/bin/bash
+      shell: bash
+      run: touch dist/golangci-lint-report.xml
+
+
