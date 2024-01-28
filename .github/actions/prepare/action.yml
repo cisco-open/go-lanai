@@ -8,10 +8,6 @@ author: "Livan Du"
 runs:
   using: composite
   steps:
-    - name: "Checkout"
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.head_ref || inputs.branch || 'main' }}
     - name: "Setup Go"
       uses: actions/setup-go@v4
       with:
