@@ -20,7 +20,6 @@ import (
 	cryptorand "crypto/rand"
 	"math/big"
 	"math/rand"
-	"time"
 )
 
 const (
@@ -29,7 +28,7 @@ const (
 )
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
 }
 
 // RandomCharset is a string containing all acceptable UTF-8 characters for random string generation
