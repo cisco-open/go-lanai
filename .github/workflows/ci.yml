@@ -38,16 +38,16 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout Actions"
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          sparse-checkout: .github/actions
-          path: actions
+#      - name: "Checkout Actions"
+#        uses: actions/checkout@v4
+#        with:
+#          ref: ${{ github.event.repository.default_branch }}
+#          sparse-checkout: .github/actions
+#          path: actions
       - name: "Prepare"
-        uses: ./actions/.github/actions/prepare
+        uses: actions/cisco-open/go-lanai/.github/actions/prepare@main
       - name: "Test & Code Quality"
-        uses: ./actions/.github/actions/verify
+        uses: actions/cisco-open/go-lanai/.github/actions/verify@main
       - name: "Generate Code Coverage Badge"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         run: |
