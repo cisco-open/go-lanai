@@ -38,10 +38,10 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     steps:
-      - - name: "Checkout"
-          uses: actions/checkout@v4
-          with:
-            ref: ${{ github.head_ref || inputs.branch || 'main' }}
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || inputs.branch || 'main' }}
       - name: "Checkout Actions"
         uses: actions/checkout@v4
         with:
