@@ -40,7 +40,7 @@ jobs:
         run: |
           BASE_REPO="${{github.repositoryUrl}}"
           BASE_REPO_URL="${BASE_REPO//git:\/\//https:\/\/}"
-          git remote add base_repo BASE_REPO_URL
+          git remote add base_repo $BASE_REPO_URL
           git fetch base_repo ${{github.base_ref}}
           go install github.com/PaloAltoNetworks/cov@3.2.0
           cov dist/coverage.out -b base_repo/${{github.base_ref}} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
