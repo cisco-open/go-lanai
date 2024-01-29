@@ -17,11 +17,17 @@ runs:
     # For security reason, we need to preserve actions being overridden by incoming branch. (especially during PR where incoming actions might get changed)
     - name: "Preserve Actions"
       shell: bash
-      run: cp -rf .github/actions .tmp/actions
+      run: |
+        mkdir -p .tmp
+        cp -rf .github/actions .tmp/actions
     - name: "Checkout"
       uses: actions/checkout@v4
       with:
         ref: ${{ github.head_ref || inputs.branch || 'main' }}
+    - name: "Restore Actions"
+      shell: bash
+      run: |
+        cp -rf .tmp/actions .github/actions
     - name: "Setup Go"
       uses: actions/setup-go@v4
       with:
@@ -31,6 +37,3 @@ runs:
     - name: "Install CI Tools"
       shell: bash
       run: make init SHELL=/bin/bash
-    - name: "Restore Actions"
-      shell: bash
-      run: cp -rf .tmp/actions .github/actions
