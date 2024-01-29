@@ -29,13 +29,12 @@ jobs:
         with:
           branch: ${{ github.head_ref }}
       # Fetch base_ref for later use. We need to detect changed files and only consider test coverage on those files.
-      - name: "Prepare PR Test Coverage"
-        shell: bash
+      - name: "Prepare PR Verification"
+        id: prepare_pr
+        uses: ./.tmp/.github/actions/prepare_pr
+      - name: "PR Verification Plans"
         run: |
-          BASE_REPO_URL="${{ github.server_url }}/${{ github.repository }}.git"
-          git remote add base_repo $BASE_REPO_URL
-          git fetch base_repo ${{github.base_ref}}
-          go install github.com/PaloAltoNetworks/cov@3.2.0
+          echo ${{ toJSON(steps.prepare_pr.outputs)}}
       - name: "Test & Code Quality"
         uses: ./.tmp/.github/actions/verify
         with:
@@ -44,6 +43,7 @@ jobs:
       - name: "Verify PR Test Coverage"
         shell: bash
         run: |
-          cov dist/coverage.out -b base_repo/${{github.base_ref}} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
+          go install github.com/PaloAltoNetworks/cov@3.2.0
+          cov dist/coverage.out -b ${{ steps.prepare_pr.outputs.base_ref }} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
           
           
