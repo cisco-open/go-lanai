@@ -36,10 +36,13 @@ jobs:
           coverpkg: './pkg/...,./test/...'
           fail_lint: 'true'
       - name: "Verify Test Coverage"
+        shell: bash
         run: |
+          BASE_REPO="${{github.repositoryUrl}}"
+          BASE_REPO_URL="${BASE_REPO//git:\/\//https:\/\/}"
+          git remote add base_repo BASE_REPO_URL
+          git fetch base_repo ${{github.base_ref}}
           go install github.com/PaloAltoNetworks/cov@3.2.0
-          git remote set-url origin "${{github.repositoryUrl}}"
-          git fetch origin ${{github.base_ref}}
-          cov dist/coverage.out -b origin/${{github.base_ref}} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
+          cov dist/coverage.out -b base_repo/${{github.base_ref}} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
           cov --report-path 'dist/pr-coverage.json' --send-repo "${{github.repository}}@${{github.event.pull_request.head.sha}}" --send-token "${{github.token}}"
           
