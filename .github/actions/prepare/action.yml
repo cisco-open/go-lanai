@@ -24,6 +24,7 @@ runs:
       uses: actions/checkout@v4
       with:
         ref: ${{ github.head_ref || inputs.branch || 'main' }}
+        clean: false
     - name: "Restore Actions"
       shell: bash
       run: |
