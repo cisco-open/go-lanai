@@ -23,8 +23,11 @@ runs:
       run: |
         mkdir -p ~/.tmp
         ls -la ${{ inputs.preserve_actions_path }}/*
-        cp -rfv ${{ inputs.preserve_actions_path }} ~/.tmp/actions
+        cp -rfpv ${{ inputs.preserve_actions_path }} ~/.tmp/actions
         ls -la ~/.tmp/actions/*
+        mkdir -p .tmp/test-actions
+        cp -rfpv ~/.tmp/actions .tmp/test-actions
+        ls -la .tmp/test-actions
     - name: "Checkout"
       uses: actions/checkout@v4
       with:
@@ -41,8 +44,12 @@ runs:
     - name: "Restore Actions"
       shell: bash
       run: |
-        mkdir -p dirname ${{ inputs.preserve_actions_path }}
+        #mkdir -p dirname ${{ inputs.preserve_actions_path }}
+        mkdir -p .tmp/
         ls -la ~/.tmp/actions/*
         pwd
-        cp -rfv ~/.tmp/actions ${{ inputs.preserve_actions_path }}
+        cp -rfpv ~/.tmp/actions ${{ inputs.preserve_actions_path }}
         ls -la ${{ inputs.preserve_actions_path }}/*
+        cp -rfpv ~/.tmp/actions .tmp/test-actions
+        ls -la .tmp/test-actions
+        ls -la ${{ inputs.preserve_actions_path }}/verify/
