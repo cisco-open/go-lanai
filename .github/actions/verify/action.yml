@@ -25,7 +25,6 @@ runs:
 
     - name: "Code Quality Analysis"
       shell: bash
-#      run: make lint SHELL=/bin/bash ARGS="--issues-exit-code ${{ inputs.fail_lint == 'true' && 1 || 0 }}"
-      run: echo '<?xml version="1.0" encoding="UTF-8"?><checkstyle version="5.0"></checkstyle>' > dist/golangci-lint-report.xml
+      run: make lint SHELL=/bin/bash ARGS="--issues-exit-code ${{ inputs.fail_lint == 'true' && 1 || 0 }}"
 
 

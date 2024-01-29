@@ -17,10 +17,6 @@ jobs:
     name: Verify PR
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
       - name: "Checkout Actions"
         uses: actions/checkout@v4
         with:
@@ -30,6 +26,8 @@ jobs:
           path: actions
       - name: "Prepare"
         uses: ./actions/.github/actions/prepare
+        with:
+          branch: ${{ github.head_ref }}
       # Fetch base_ref for later use. We need to detect changed files and only consider test coverage on those files.
       - name: "Prepare PR Test Coverage"
         shell: bash
