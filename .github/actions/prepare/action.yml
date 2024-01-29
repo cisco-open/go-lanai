@@ -42,6 +42,7 @@ runs:
       shell: bash
       run: |
         mkdir -p dirname ${{ inputs.preserve_actions_path }}
-        cp -rf ~/.tmp/actions ${{ inputs.preserve_actions_path }}
+        ls -la ~/.tmp/actions/*
         pwd
+        cp -rf ~/.tmp/actions ${{ inputs.preserve_actions_path }}
         ls -la ${{ inputs.preserve_actions_path }}/*
