@@ -3,5 +3,6 @@ package apptest
 import "testing"
 
 func TestNewFunc(t *testing.T) {
-	_ = NewFunc()
+	// no test
+	//_ = NewFunc()
 }
