@@ -23,7 +23,7 @@ runs:
       run: |
         mkdir -p ~/.tmp
         ls -la ${{ inputs.preserve_actions_path }}/*
-        cp -rfvg ${{ inputs.preserve_actions_path }} ~/.tmp/actions
+        cp -rfv ${{ inputs.preserve_actions_path }} ~/.tmp/actions
         ls -la ~/.tmp/actions/*
     - name: "Checkout"
       uses: actions/checkout@v4
