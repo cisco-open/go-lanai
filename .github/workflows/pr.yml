@@ -9,7 +9,7 @@ env:
 # Controls when the action will run.
 on:
   pull_request:
-    branches: ['main']
+    branches: [ 'main' ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -30,6 +30,15 @@ jobs:
           path: actions
       - name: "Prepare"
         uses: ./actions/.github/actions/prepare
+      # Fetch base_ref for later use. We need to detect changed files and only consider test coverage on those files.
+      - name: "Prepare PR Coverage"
+        shell: bash
+        run: |
+          BASE_REPO="${{github.repositoryUrl}}"
+          BASE_REPO_URL="${BASE_REPO//git:\/\//https:\/\/}"
+          git remote add base_repo $BASE_REPO_URL
+          git fetch base_repo ${{github.base_ref}}
+          go install github.com/PaloAltoNetworks/cov@3.2.0
       - name: "Test & Code Quality"
         uses: ./actions/.github/actions/verify
         with:
@@ -38,11 +47,6 @@ jobs:
       - name: "Verify Test Coverage"
         shell: bash
         run: |
-          BASE_REPO="${{github.repositoryUrl}}"
-          BASE_REPO_URL="${BASE_REPO//git:\/\//https:\/\/}"
-          git remote add base_repo $BASE_REPO_URL
-          git fetch base_repo ${{github.base_ref}}
-          go install github.com/PaloAltoNetworks/cov@3.2.0
           cov dist/coverage.out -b base_repo/${{github.base_ref}} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
           cov --report-path 'dist/pr-coverage.json' --send-repo "${{github.repository}}@${{github.event.pull_request.head.sha}}" --send-token "${{github.token}}"
           
