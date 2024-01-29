@@ -28,6 +28,8 @@ runs:
       shell: bash
       run: |
         cp -rf ~/.tmp/actions .github/actions
+        pwd
+        ls -la ./
     - name: "Setup Go"
       uses: actions/setup-go@v4
       with:
