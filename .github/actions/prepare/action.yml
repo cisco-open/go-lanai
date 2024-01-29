@@ -9,6 +9,9 @@ inputs:
     description: 'Target Branch'
     default: 'main'
     required: true
+  preserve_actions_path:
+    description: "The path to current actions folder. Prepare action will try to preserve the content during checkout"
+    default: '.tmp/.github/actions'
 
 # Composite Action
 runs:
@@ -18,8 +21,7 @@ runs:
     - name: "Preserve Actions"
       shell: bash
       run: |
-        mkdir -p ~/.tmp
-        cp -rf .github/actions ~/.tmp/actions
+        cp -rf ${{ inputs.preserve_actions_path }} ~/.tmp/actions
     - name: "Checkout"
       uses: actions/checkout@v4
       with:
@@ -27,9 +29,8 @@ runs:
     - name: "Restore Actions"
       shell: bash
       run: |
-        cp -rf ~/.tmp/actions .github/actions
-        pwd
-        ls -la ./
+        mkdir -p ${{ inputs.preserve_actions_path }}
+        cp -rf ~/.tmp/actions ${{ inputs.preserve_actions_path }}
     - name: "Setup Go"
       uses: actions/setup-go@v4
       with:

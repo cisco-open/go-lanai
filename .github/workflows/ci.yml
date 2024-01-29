@@ -44,12 +44,13 @@ jobs:
           # For security reasons, we only uses actions in "main" branch
           ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: .github/actions
+          path: .tmp
       - name: "Prepare"
-        uses: ./.github/actions/prepare
+        uses: ./.tmp/.github/actions/prepare
         with:
           branch: ${{ github.head_ref || inputs.branch || 'main' }}
       - name: "Test & Code Quality"
-        uses: ./.github/actions/verify
+        uses: ./.tmp/.github/actions/verify
       - name: "Generate Code Coverage Badge"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         run: |
