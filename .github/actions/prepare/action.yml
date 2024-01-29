@@ -21,6 +21,7 @@ runs:
     - name: "Preserve Actions"
       shell: bash
       run: |
+        mkdir -p ~/.tmp
         cp -rf ${{ inputs.preserve_actions_path }} ~/.tmp/actions
     - name: "Checkout"
       uses: actions/checkout@v4
