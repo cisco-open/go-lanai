@@ -14,10 +14,10 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   main:
-    name: Test, Analyze Code & Report
+    name: Verify Pull Request
     runs-on: ubuntu-latest
     permissions:
-      contents: read # Must have this to get actions/checkout@v4 to work
+      contents: read # Must have this to get actions/checkout@v4 to work (if private repo)
       issues: write
       pull-requests: write
     steps:
@@ -41,7 +41,7 @@ jobs:
           fail_lint: 'true'
       - name: "Publish Test Coverage"
         uses: ewjoachim/coverage-comment-action@v1
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        if: ${{ !cancelled() }}
         with:
           GITHUB_TOKEN: ${{ github.token }}
           COVERAGE_FILE: dist/cobertura-coverage.xml
@@ -55,7 +55,7 @@ jobs:
           DIFF_COVER_ARGS: ""
       - name: "Verify Test Coverage"
         uses: PaloAltoNetworks/cov@3.0.0
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        if: ${{ !cancelled() }}
         with:
           cov_mode: coverage
           cov_file: dist/coverage.out
@@ -63,7 +63,7 @@ jobs:
           main_branch: ${{ github.event.repository.default_branch }}
       - name: "Send Test Coverage"
         uses: PaloAltoNetworks/cov@3.0.0
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        if: ${{ !cancelled() }}
         with:
           cov_mode: send-status
           workflow_run_id: ${{github.event.workflow_run.id}}
