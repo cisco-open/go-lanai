@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: PR Verification
+name: PR
 run-name: PR Verification triggered by ${{ github.actor }}
 
 env:
@@ -14,7 +14,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   main:
-    name: Test, Analyze Code & Report
+    name: Verify PR
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
@@ -37,7 +37,7 @@ jobs:
           fail_lint: 'true'
       - name: "Verify Test Coverage"
         run: |
-          go install github.com/PaloAltoNetworks/cov@latest
+          go install github.com/PaloAltoNetworks/cov@v3.2.0
           cov dist/coverage.out -b ${{github.base_ref}} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
           cov --report-path 'dist/pr-coverage.json' --send-repo "${{github.repository}}@${{github.event.pull_request.head.sha}}" --send-token "${{github.token}}"
           
