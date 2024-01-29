@@ -22,7 +22,9 @@ runs:
       shell: bash
       run: |
         mkdir -p ~/.tmp
+        ls -la ${{ inputs.preserve_actions_path }}/*
         cp -rf ${{ inputs.preserve_actions_path }} ~/.tmp/actions
+        ls -la ~/.tmp/actions/*
     - name: "Checkout"
       uses: actions/checkout@v4
       with:
@@ -42,4 +44,4 @@ runs:
         mkdir -p ${{ inputs.preserve_actions_path }}
         cp -rf ~/.tmp/actions ${{ inputs.preserve_actions_path }}
         pwd
-        ls -la ${{ inputs.preserve_actions_path }}
+        ls -la ${{ inputs.preserve_actions_path }}/*
