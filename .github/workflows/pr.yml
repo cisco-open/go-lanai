@@ -31,7 +31,7 @@ jobs:
       - name: "Prepare"
         uses: ./actions/.github/actions/prepare
       # Fetch base_ref for later use. We need to detect changed files and only consider test coverage on those files.
-      - name: "Prepare PR Coverage"
+      - name: "Prepare PR Test Coverage"
         shell: bash
         run: |
           BASE_REPO="${{github.repositoryUrl}}"
@@ -44,9 +44,9 @@ jobs:
         with:
           coverpkg: './pkg/...,./test/...'
           fail_lint: 'true'
-      - name: "Verify Test Coverage"
+      - name: "Verify PR Test Coverage"
         shell: bash
         run: |
           cov dist/coverage.out -b base_repo/${{github.base_ref}} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
-          cov --report-path 'dist/pr-coverage.json' --send-repo "${{github.repository}}@${{github.event.pull_request.head.sha}}" --send-token "${{github.token}}"
+          
           
