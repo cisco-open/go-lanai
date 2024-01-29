@@ -27,11 +27,6 @@ runs:
       uses: actions/checkout@v4
       with:
         ref: ${{ github.head_ref || inputs.branch || 'main' }}
-    - name: "Restore Actions"
-      shell: bash
-      run: |
-        mkdir -p ${{ inputs.preserve_actions_path }}
-        cp -rf ~/.tmp/actions ${{ inputs.preserve_actions_path }}
     - name: "Setup Go"
       uses: actions/setup-go@v4
       with:
@@ -41,3 +36,8 @@ runs:
     - name: "Install CI Tools"
       shell: bash
       run: make init SHELL=/bin/bash
+    - name: "Restore Actions"
+      shell: bash
+      run: |
+        mkdir -p ${{ inputs.preserve_actions_path }}
+        cp -rf ~/.tmp/actions ${{ inputs.preserve_actions_path }}
