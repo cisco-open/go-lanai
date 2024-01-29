@@ -18,17 +18,16 @@ runs:
     - name: "Preserve Actions"
       shell: bash
       run: |
-        mkdir -p .tmp
-        cp -rf .github/actions .tmp/actions
+        mkdir -p ~/.tmp
+        cp -rf .github/actions ~/.tmp/actions
     - name: "Checkout"
       uses: actions/checkout@v4
       with:
         ref: ${{ github.head_ref || inputs.branch || 'main' }}
-        clean: false
     - name: "Restore Actions"
       shell: bash
       run: |
-        cp -rf .tmp/actions .github/actions
+        cp -rf ~/.tmp/actions .github/actions
     - name: "Setup Go"
       uses: actions/setup-go@v4
       with:
