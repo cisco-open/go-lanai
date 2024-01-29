@@ -17,6 +17,7 @@ jobs:
     name: Test, Analyze Code & Report
     runs-on: ubuntu-latest
     permissions:
+      contents: read # Must have this to get actions/checkout@v4 to work
       issues: write
       pull-requests: write
     steps:
