@@ -44,10 +44,10 @@ runs:
     - name: "Restore Actions"
       shell: bash
       run: |
-        mkdir -p dirname ${{ inputs.preserve_actions_path }}
+        mkdir -p $(dirname ${{ inputs.preserve_actions_path }})
         ls -la ~/.tmp/actions/*
         pwd
-        cp -rfpv ~/.tmp/actions dirname ${{ inputs.preserve_actions_path }}
+        cp -rfpv ~/.tmp/actions ${{ inputs.preserve_actions_path }}
         ls -la ${{ inputs.preserve_actions_path }}/*
         cp -rfpv ~/.tmp/actions .tmp/test-actions
         ls -la .tmp/test-actions
