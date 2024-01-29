@@ -32,7 +32,7 @@ jobs:
       - name: "Prepare PR Verification"
         id: prepare_pr
         uses: ./.tmp/.github/actions/prepare_pr
-      - name: "PR Verification Plans"
+      - name: "PR Verification Facts"
         run: |
           echo ${{ toJSON(steps.prepare_pr.outputs)}}
       - name: "Test & Code Quality"
