@@ -37,7 +37,7 @@ jobs:
           fail_lint: 'true'
       - name: "Verify Test Coverage"
         run: |
-          go install github.com/PaloAltoNetworks/cov@v3.2.0
+          go install github.com/PaloAltoNetworks/cov@3.2.0
           cov dist/coverage.out -b ${{github.base_ref}} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
           cov --report-path 'dist/pr-coverage.json' --send-repo "${{github.repository}}@${{github.event.pull_request.head.sha}}" --send-token "${{github.token}}"
           
