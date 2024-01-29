@@ -24,7 +24,7 @@ jobs:
           ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: .github/actions
       - name: "Prepare"
-        uses: .github/actions/prepare
+        uses: ./.github/actions/prepare
         with:
           branch: ${{ github.head_ref }}
       # Fetch base_ref for later use. We need to detect changed files and only consider test coverage on those files.
@@ -37,7 +37,7 @@ jobs:
           git fetch base_repo ${{github.base_ref}}
           go install github.com/PaloAltoNetworks/cov@3.2.0
       - name: "Test & Code Quality"
-        uses: .github/actions/verify
+        uses: ./.github/actions/verify
         with:
           coverpkg: './pkg/...,./test/...'
           fail_lint: 'true'
