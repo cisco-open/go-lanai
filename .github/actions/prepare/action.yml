@@ -21,6 +21,7 @@ runs:
     - name: "Preserve Actions"
       shell: bash
       run: |
+        echo ${{ github.action_path }}
         mkdir -p ~/.tmp
         cp -rfpv ${{ inputs.preserve_actions_path }} ~/.tmp/actions
     - name: "Checkout"
