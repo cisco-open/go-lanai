@@ -32,8 +32,7 @@ jobs:
       - name: "Prepare PR Test Coverage"
         shell: bash
         run: |
-          BASE_REPO="${{github.api_url}}/${{github.repository}}"
-          BASE_REPO_URL="${BASE_REPO//git:\/\//https:\/\/}"
+          BASE_REPO_URL="${{ github.server_url }}/${{ github.repository }}.git"
           git remote add base_repo $BASE_REPO_URL
           git fetch base_repo ${{github.base_ref}}
           go install github.com/PaloAltoNetworks/cov@3.2.0

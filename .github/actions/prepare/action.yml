@@ -9,9 +9,6 @@ inputs:
     description: 'Target Branch'
     default: 'main'
     required: true
-  preserve_actions_path:
-    description: "The path to current actions folder. Prepare action will try to preserve the content during checkout"
-    default: '.tmp/.github/actions'
 
 # Composite Action
 runs:
@@ -21,9 +18,8 @@ runs:
     - name: "Preserve Actions"
       shell: bash
       run: |
-        echo ${{ github.action_path }}
         mkdir -p ~/.tmp
-        cp -rfpv ${{ inputs.preserve_actions_path }} ~/.tmp/actions
+        cp -rfpv $(dirname ${{ github.action_path }}) ~/.tmp/actions
     - name: "Checkout"
       uses: actions/checkout@v4
       with:
@@ -40,5 +36,5 @@ runs:
     - name: "Restore Actions"
       shell: bash
       run: |
-        mkdir -p $(dirname ${{ inputs.preserve_actions_path }})
-        cp -rfpv ~/.tmp/actions ${{ inputs.preserve_actions_path }}
+        mkdir -p $(dirname $(dirname ${{ github.action_path }}))
+        cp -rfpv ~/.tmp/actions $(dirname ${{ github.action_path }})
