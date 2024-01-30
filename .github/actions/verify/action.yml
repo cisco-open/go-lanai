@@ -9,9 +9,12 @@ inputs:
     description: 'Packages for test coverage calculation. Default to "./pkg/..."'
     default: './pkg/...'
     required: true
-  fail_lint:
+  fail_on_lint_issues:
     description: "Fail when linters report issues. Default to false"
     default: 'false'
+  lint_files:
+    description: "Files/patterns to run linters against, separated by spaces"
+    default: './...'
 
 # Composite Action
 runs:
@@ -25,7 +28,9 @@ runs:
 
     - name: "Code Quality Analysis"
       shell: bash
-#      run: make lint SHELL=/bin/bash ARGS="--issues-exit-code ${{ inputs.fail_lint == 'true' && 1 || 0 }}"
-      run: echo '<?xml version="1.0" encoding="UTF-8"?><checkstyle version="5.0"></checkstyle>' > dist/golangci-lint-report.xml
+      run: |
+        make lint SHELL=/bin/bash \
+          ARGS="--issues-exit-code ${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}" \
+          PKGS="${{ lint_files | "./..." }}"
 
 

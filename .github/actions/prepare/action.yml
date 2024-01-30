@@ -1,19 +1,40 @@
 # This is a shared action for preparing workspace
 
 name: 'Prepare Workspace'
-description: 'Prepare the workspace including installing golang, downloading dependencies, etc.'
+description: 'Prepare the workspace including checking out branch, preserve composite actions, installing golang, downloading dependencies, etc.'
 author: "Livan Du"
+
+inputs:
+  branch:
+    description: 'Target Branch'
+    default: 'main'
+    required: true
 
 # Composite Action
 runs:
   using: composite
   steps:
+    # For security reason, we need to preserve actions being overridden by incoming branch. (especially during PR where incoming actions might get changed)
+    - name: "Preserve Actions"
+      shell: bash
+      run: |
+        mkdir -p ~/.tmp
+        cp -rfpv $(dirname ${{ github.action_path }}) ~/.tmp/actions
+    - name: "Checkout"
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref || inputs.branch || 'main' }}
     - name: "Setup Go"
       uses: actions/setup-go@v4
       with:
         go-version: '~1.21.5' # go 1.20 has issues: `go test -covermode=atomic` fails when files doesn't have empty line at the end
         # go-version-file: 'go.mod'
         cache-dependency-path: "**/*.sum"
-    - name: "Initialize"
+    - name: "Install CI Tools"
       shell: bash
       run: make init SHELL=/bin/bash
+    - name: "Restore Actions"
+      shell: bash
+      run: |
+        mkdir -p $(dirname $(dirname ${{ github.action_path }}))
+        cp -rfpv ~/.tmp/actions $(dirname ${{ github.action_path }})

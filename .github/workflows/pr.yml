@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: PR Verification
+name: PR
 run-name: PR Verification triggered by ${{ github.actor }}
 
 env:
@@ -9,51 +9,51 @@ env:
 # Controls when the action will run.
 on:
   pull_request:
-    branches: ['main']
+    branches: [ 'main' ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   main:
-    name: Test, Analyze Code & Report
+    name: Verify PR
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
       - name: "Checkout Actions"
         uses: actions/checkout@v4
         with:
           # For security reasons, we only uses actions in "main" branch
           ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: .github/actions
-          path: actions
+          path: .tmp
       - name: "Prepare"
-        uses: ./actions/.github/actions/prepare
+        uses: ./.tmp/.github/actions/prepare
+        with:
+          branch: ${{ github.head_ref }}
+      # Fetch base_ref for later use. We need to detect changed files and only consider test coverage on those files.
+      - name: "Prepare PR Verification"
+        id: prepare_pr
+        uses: ./.tmp/.github/actions/prepare_pr
+      - name: "PR Summary"
+        env:
+          PR_DIFF: ${{ steps.prepare_pr.outputs.diff }}
+          CHANGED_GO_FILES: ${{ steps.prepare_pr.outputs.changed_go_files }}
+        run: |
+          echo "Base Branch: ${{ steps.prepare_pr.outputs.base_ref }}"
+          echo "Changed Files(.go): "
+          for f in "CHANGED_GO_FILES"; do
+              echo "$f"
+          done
+          echo "Diff:"
+          echo $PR_DIFF
       - name: "Test & Code Quality"
-        uses: ./actions/.github/actions/verify
+        uses: ./.tmp/.github/actions/verify
         with:
           coverpkg: './pkg/...,./test/...'
-          fail_lint: 'true'
-      - name: "Post Test Coverage"
-        uses: ewjoachim/coverage-comment-action@v1
-        with:
-          GITHUB_TOKEN: ${{ github.token }}
-          COVERAGE_FILE: dist/cobertura-coverage.xml
-          BADGE_ENABLED: "true"
-          BADGE_FILENAME: dist/coverage-comment-badge.json
-          MINIMUM_GREEN: ${{ env.COV_THRESHOLD }}
-          MINIMUM_ORANGE: ${{ env.COV_THRESHOLD }}
-          # [Advanced] Specify a different template for the comments that will be written on the PR.
-          COMMENT_TEMPLATE: ""
-          # [Advanced] Additional args to pass to diff cover (one per line)
-          DIFF_COVER_ARGS: ""
-      - name: "Verify Test Coverage"
-        uses: PaloAltoNetworks/cov@3.0.0
-        with:
-          cov_mode: coverage
-          cov_file: dist/coverage.out
-          cov_threshold: ${{ env.COV_THRESHOLD }}
-          main_branch: ${{ github.event.repository.default_branch }}
-
-
+          lint_files: ${{ steps.prepare_pr.outputs.changed_go_files }}
+          fail_on_lint_issues: 'true'
+      - name: "Verify PR Test Coverage"
+        shell: bash
+        run: |
+          go install github.com/PaloAltoNetworks/cov@3.2.0
+          cov dist/coverage.out -b ${{ steps.prepare_pr.outputs.base_ref }} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
+          
+          

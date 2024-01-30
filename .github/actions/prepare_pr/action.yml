@@ -1,0 +1,44 @@
+# This is a shared action for preparing workspace
+
+name: 'Prepare PR Verification'
+description: 'Prepare the PR Verification, including checking out base branch, find changed file, etc.'
+author: "Livan Du"
+
+outputs:
+  base_ref:
+    description: "Fetched base ref including remote. e.g. base_repo/main"
+    value: ${{ steps.fetch_base.outputs.base_ref }}
+  diff:
+    description: "Difference between PR head_ref and base_ref. See https://github.com/marketplace/actions/changed-files#outputs- for more info"
+    value: ${{ toJSON(steps.changed_files.outputs) }}
+  changed_files:
+    description: "all changed files"
+    value: ${{ steps.changed_files.outputs.all_changed_files }}
+  changed_go_files:
+    description: "changed go files"
+    value: ${{ steps.changed_files.outputs.go_all_changed_files }}
+
+
+# Composite Action
+runs:
+  using: composite
+  steps:
+    # For security reason, we need to preserve actions being overridden by incoming branch. (especially during PR where incoming actions might get changed)
+    - name: "Fetch Base Branch"
+      id: fetch_base
+      shell: bash
+      run: |
+        BASE_REPO_URL="${{ github.server_url }}/${{ github.repository }}.git"
+        git remote add base_repo $BASE_REPO_URL
+        git fetch base_repo ${{github.base_ref}}
+        echo "base_ref=base_repo/${{github.base_ref}}" >> $GITHUB_OUTPUT
+    - name: "Resolve Changed Files"
+      id: changed_files
+      uses: tj-actions/changed-files@v42
+      with:
+        files_yaml: |
+          go:
+            - '**.go'
+
+
+
