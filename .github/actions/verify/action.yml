@@ -36,5 +36,6 @@ runs:
         version: v1.55.2
         args: -c=build/ci/golangci.yml --timeout=10m --issues-exit-code=${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}
         only-new-issues: ${{ inputs.fail_on_lint_issues == 'true' && 'true' || 'false' }}
+        skip-pkg-cache: true
 
 

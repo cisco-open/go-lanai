@@ -16,3 +16,7 @@
 
 generates:
   - path: "pkg/swagger"
+
+binaries:
+  - package: github.com/golangci/golangci-lint/cmd/golangci-lint
+    version: v1.55.2
