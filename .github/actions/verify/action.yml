@@ -12,9 +12,6 @@ inputs:
   fail_on_lint_issues:
     description: "Fail when linters report issues. Default to false"
     default: 'false'
-  lint_files:
-    description: "Files/patterns to run linters against, separated by spaces"
-    default: './...'
 
 # Composite Action
 runs:
@@ -26,11 +23,18 @@ runs:
         make test report SHELL=/bin/bash ARGS="-covermode atomic -coverpkg ${{ inputs.coverpkg || './pkg/...' }}"
         go tool cover -func=dist/coverage.out -o dist/coverage-func.out
 
+#    - name: "Code Quality Analysis"
+#      shell: bash
+#      run: |
+#        make lint SHELL=/bin/bash \
+#          ARGS="--issues-exit-code ${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}" \
+#          PKGS="${{ inputs.lint_files || './...' }}"
+
     - name: "Code Quality Analysis"
-      shell: bash
-      run: |
-        make lint SHELL=/bin/bash \
-          ARGS="--issues-exit-code ${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}" \
-          PKGS="${{ inputs.lint_files || './...' }}"
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.55.2
+        args: -c=build/ci/golangci.yml --timeout=10m --issues-exit-code=${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}
+        only-new-issues: ${{ inputs.fail_on_lint_issues == 'true' && 'true' || 'false' }}
 
 

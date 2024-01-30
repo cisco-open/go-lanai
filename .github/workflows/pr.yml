@@ -11,6 +11,11 @@ on:
   pull_request:
     branches: [ 'main' ]
 
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   main:
@@ -48,7 +53,6 @@ jobs:
         uses: ./.tmp/.github/actions/verify
         with:
           coverpkg: './pkg/...,./test/...'
-          lint_files: ${{ steps.prepare_pr.outputs.changed_go_files }}
           fail_on_lint_issues: 'true'
       - name: "Verify PR Test Coverage"
         shell: bash
