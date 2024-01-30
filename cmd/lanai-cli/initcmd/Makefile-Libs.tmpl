@@ -42,29 +42,41 @@ generate: $(GEN_LIST)
 # test:
 # 	Invoke "go test" on defined modules.
 # 	This target typically run on CI/CD working machine
-# 	Optional parameter: ARGS="..."
+# 	Optional parameters:
+#		- ARGS="..."
+#		  e.g. ARGS="-coverpkg ./pkg/... -covermode atomic"
+# 		- PKGS="..." Override packages to run for test. Default: $(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/...
+#		  e.g. PKGS="./pkg/... ./teset/..."
+test: PKGS ?= $(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/...
 test:
 	set -o pipefail; \
 	gotestsum -f pkgname --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \
   		$(GO) test -json -count=1 -failfast -timeout=0 -coverprofile $(DESTDIR)/coverage.out \
   		-coverpkg $(MODULE)/pkg/...,$(MODULE)/cmd/...,$(MODULE)/test/... \
-  		$(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/... $(ARGS)
+  		$(PKGS) $(ARGS)
 
 # report:
 # 	Test and generate report. Intended to be used by verification.
 report: test
 	$(GO) tool cover -html=$(DESTDIR)/coverage.out -o $(DESTDIR)/coverage.html
+	$(GO) tool cover -func=dist/coverage.out -o dist/coverage-func.out
 	gotestsum --junitfile="$(DESTDIR)/junit-report.xml" --raw-command -- cat $(DESTDIR)/tests.json 2>&1 1>/dev/null
 	gocov convert $(DESTDIR)/coverage.out | gocov-xml > $(DESTDIR)/cobertura-coverage.xml
 
 # lint:
 # 	Invoke "go vet" and other linters
+# 	Optional parameters:
+#		- ARGS="..."
+#		  e.g. ARGS="--issues-exit-code 0"
+# 		- PKGS="..." Override packages to lint. Default: ./...
+#		  e.g. PKGS="./pkg/... ./teset/..."
+lint: PKGS ?= "./..."
 lint:
-	$(GO) vet ./... 2>&1 | tee $(DESTDIR)/go-vet-report.out
+	$(GO) vet $(PKGS) 2>&1 | tee $(DESTDIR)/go-vet-report.out
 	golangci-lint -c build/ci/golangci.yml \
 	  --timeout 10m \
 	  --out-format colored-line-number,checkstyle:$(DESTDIR)/golangci-lint-report.xml \
-	  --issues-exit-code 0 run ./...
+	  --issues-exit-code 0 $(ARGS) run $(PKGS)
 
 # clean:
 # 	Undo previous "build".  clean $(DESTDIR) and build cache

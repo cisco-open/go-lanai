@@ -11,12 +11,12 @@ outputs:
   diff:
     description: "Difference between PR head_ref and base_ref. See https://github.com/marketplace/actions/changed-files#outputs- for more info"
     value: ${{ toJSON(steps.changed_files.outputs) }}
-  lint_files:
-    description: "files need to be linted"
-    value: ${{ steps.changed_files.outputs.go_any_changed }}
-  test_files:
-    description: "files need to be tested"
-    value: ${{ steps.changed_files.outputs.go_any_changed }}
+  changed_files:
+    description: "all changed files"
+    value: ${{ steps.changed_files.outputs.all_changed_files }}
+  changed_go_files:
+    description: "changed go files"
+    value: ${{ steps.changed_files.outputs.go_all_changed_files }}
 
 
 # Composite Action
