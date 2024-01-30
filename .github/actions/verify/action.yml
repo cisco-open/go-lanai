@@ -23,19 +23,14 @@ runs:
         make test report SHELL=/bin/bash ARGS="-covermode atomic -coverpkg ${{ inputs.coverpkg || './pkg/...' }}"
         go tool cover -func=dist/coverage.out -o dist/coverage-func.out
 
-#    - name: "Code Quality Analysis"
-#      shell: bash
-#      run: |
-#        make lint SHELL=/bin/bash \
-#          ARGS="--issues-exit-code ${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}" \
-#          PKGS="${{ inputs.lint_files || './...' }}"
-
     - name: "Code Quality Analysis"
       uses: golangci/golangci-lint-action@v3
       with:
         version: v1.55.2
         args: -c=build/ci/golangci.yml --timeout=10m --issues-exit-code=${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}
+        # if fail_on_lint_issues == true, we assume it's a PR verification
         only-new-issues: ${{ inputs.fail_on_lint_issues == 'true' && 'true' || 'false' }}
+        # ~/go/pkg cache conflict with actions/setup-go@v4
         skip-pkg-cache: true
 
 
