@@ -31,6 +31,6 @@ runs:
       run: |
         make lint SHELL=/bin/bash \
           ARGS="--issues-exit-code ${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}" \
-          PKGS="${{ inputs.lint_files || "./..." }}"
+          PKGS="${{ inputs.lint_files || './...' }}"
 
 
