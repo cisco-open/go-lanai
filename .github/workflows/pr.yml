@@ -39,8 +39,8 @@ jobs:
         run: |
           echo "Base Branch: ${{ steps.prepare_pr.outputs.base_ref }}"
           echo "Changed Files(.go): "
-          for f in "CHANGED_GO_FILES"; do
-              echo "$f"
+          for f in "$CHANGED_GO_FILES"; do
+              echo "  $f"
           done
           echo "Diff:"
           echo $PR_DIFF
