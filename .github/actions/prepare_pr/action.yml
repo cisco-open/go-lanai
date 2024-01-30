@@ -9,8 +9,14 @@ outputs:
     description: "Fetched base ref including remote. e.g. base_repo/main"
     value: ${{ steps.fetch_base.outputs.base_ref }}
   diff:
-    description: "Difference bewteen PR head_ref and base_ref. See https://github.com/marketplace/actions/changed-files#outputs- for more info"
-    value: ${{ fromJSON(toJSON(steps.changed_files.outputs)) }}
+    description: "Difference between PR head_ref and base_ref. See https://github.com/marketplace/actions/changed-files#outputs- for more info"
+    value: ${{ toJSON(steps.changed_files.outputs) }}
+  lint_files:
+    description: "files need to be linted"
+    value: ${{ steps.changed_files.outputs.go_any_changed }}
+  test_files:
+    description: "files need to be tested"
+    value: ${{ steps.changed_files.outputs.go_any_changed }}
 
 
 # Composite Action
