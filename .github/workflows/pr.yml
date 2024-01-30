@@ -36,7 +36,7 @@ jobs:
         env:
           PREPARE_PR_OUTPUTS: ${{ toJSON(steps.prepare_pr.outputs) }}
         run: |
-          echo ${{ env.PREPARE_PR_OUTPUTS }}
+          echo "${{ env.PREPARE_PR_OUTPUTS }}"
       - name: "Test & Code Quality"
         uses: ./.tmp/.github/actions/verify
         with:
