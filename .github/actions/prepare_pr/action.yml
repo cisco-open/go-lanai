@@ -8,9 +8,9 @@ outputs:
   base_ref:
     description: "Fetched base ref including remote. e.g. base_repo/main"
     value: ${{ steps.fetch_base.outputs.base_ref }}
-  diff:
-    description: "Difference bewteen PR head_ref and base_ref. See https://github.com/marketplace/actions/changed-files#outputs- for more info"
-    value: ${{ steps.changed_files.outputs }}
+#  diff:
+#    description: "Difference bewteen PR head_ref and base_ref. See https://github.com/marketplace/actions/changed-files#outputs- for more info"
+#    value: ${{ steps.changed_files.outputs }}
 
 
 # Composite Action
