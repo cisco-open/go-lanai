@@ -18,6 +18,8 @@ the application starts.
 
 # Web Tests
 
+Examples on how to write web tests can be found [here](../../test/webtest/examples/examples_test.go).
+
 ## FAQs:
 
 1. When running web-tests, if you ever encounter the following error: 
@@ -26,4 +28,3 @@ pq: no database or schema specified
 ```
 Follow the documentation [here](../../test/dbtest/README.md) to configure local database for testing.
 
-2. An example on how to write web tests can be found [here](https://cto-github.cisco.com/NFV-BU/secretsservice/blob/develop/pkg/controller/v2/secretspolicy_test.go).

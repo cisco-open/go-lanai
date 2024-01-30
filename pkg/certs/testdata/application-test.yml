@@ -63,7 +63,7 @@ data:
 #      #id: test
 #      #secret: test
 #      type: sts
-#      token-file: /Users/chrholme/go/src/cto-github.cisco.com/chrholme/testgolanai/k8s_jwt
+#      token-file: ./path/to/file/containing/sts/token
 #      role-arn: 123jk1j221ljk1lk12038102981blah
 #      role-session-name: blah
 #    region: us-east-1

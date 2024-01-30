@@ -11,7 +11,7 @@
   },
   "keywords": [],
   "author": "Livan Du, dilipkrish",
-  "repository": "https://cto-github.cisco.com/NFV-BU/nfvusvcssupport",
+  "repository": "https://github.com/cisco-open/go-lanai",
   "license": "SEE LICENSE IN https://github.com/springfox/springfox/blob/master/LICENSE",
   "devDependencies": {
     "@babel/core": "^7.21.8",
