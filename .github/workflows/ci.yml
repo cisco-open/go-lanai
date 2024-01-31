@@ -20,14 +20,14 @@ on:
         type: string
       low_cov:
         description: 'Coverage percentage to pass'
-        default: '50'
+        default: 50
         required: false
-        type: int
+        type: number
       high_cov:
         description: 'Coverage percentage to warn'
-        default: '70'
+        default: 70
         required: false
-        type: int
+        type: number
   # Workflow runs on scheduled time
   schedule:
     - cron: '0 6 * * 1,3,5'
