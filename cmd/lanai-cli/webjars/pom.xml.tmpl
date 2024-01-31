@@ -24,23 +24,27 @@
     </dependencies>
 
     <repositories>
+        {{- range $i, $url := .MavenRepos }}
         <repository>
-            <id>virtual_repo</id>
-            <url>https://engci-maven-master.cisco.com/artifactory/symphony-group/</url>
+            <id>virtual_repo_{{$i}}</id>
+            <url>{{$url}}</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        {{- end }}
     </repositories>
 
     <pluginRepositories>
+        {{- range $i, $url := .MavenRepos }}
         <pluginRepository>
-            <id>virtual_repo</id>
-            <url>https://engci-maven-master.cisco.com/artifactory/symphony-group/</url>
+            <id>virtual_repo_{{$i}}</id>
+            <url>{{$url}}</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
+        {{- end }}
     </pluginRepositories>
 
     <build>
