@@ -31,4 +31,4 @@ swagger:
 #         candidate-json-path:
 
   ui:
-    title: CDA
+    title: ${application.name:API}
