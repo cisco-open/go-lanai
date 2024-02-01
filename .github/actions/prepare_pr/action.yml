@@ -55,11 +55,11 @@ runs:
       id: coverpkg_arg
       shell: bash
       env:
-        CHANGED_COV_GO_FILES: ${{ steps.changed_files.outputs.changed_cov_go_files }}
+        CHANGED_COV_GO_FILES: ${{ steps.changed_files.outputs.cov_go_all_changed_files }}
       run: |
         for f in "$CHANGED_COV_GO_FILES"; do
             [[ ! -z "$coverpkg" ]] && coverpkg="$coverpkg,"
-            coverpkg="$coverpkg./$f"
+            [[ ! -z "$f" ]] && coverpkg="$coverpkg./$f"
         done
         echo "resolved_arg=$coverpkg" >> $GITHUB_OUTPUT
 
