@@ -38,6 +38,11 @@ jobs:
     name: Test, Analyze Code & Report
     runs-on: ubuntu-latest
     steps:
+      - name: "Context"
+        shell: bash
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: "Checkout Actions"
         uses: actions/checkout@v4
         with:

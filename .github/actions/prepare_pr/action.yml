@@ -49,10 +49,5 @@ runs:
             - 'pkg/**/*.go'
             - 'test/**/*.go'
         separator: ','
-        write_output_files: true
-    - name: "Print Changed Files Result"
-      shell: bash
-      run: |
-        cat '.github/outputs/*.txt'
 
 
