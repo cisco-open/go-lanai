@@ -44,9 +44,9 @@ runs:
       with:
         files_yaml: |
           go:
-            - '**.go'
+            - '**/*.go'
           cov_go:
-            - 'pkg/**.go'
-            - 'test/**.go'
+            - 'pkg/**/*.go'
+            - 'test/**/*.go'
 
 
