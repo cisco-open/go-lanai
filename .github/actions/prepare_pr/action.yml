@@ -17,9 +17,12 @@ outputs:
   changed_go_files:
     description: "changed go files"
     value: ${{ steps.changed_files.outputs.go_all_changed_files }}
+  changed_cov_go_files:
+    description: "changed go files that need to be covered by test"
+    value: ${{ steps.changed_files.outputs.cov_go_all_changed_files }}
   skip_coverage_check:
     description: "should skip coverage check. (PR may not contains any file changes that need to covered by test)"
-    value: ${{ steps.changed_files.outputs.cov_go_any_changed }}
+    value: ${{ steps.changed_files.outputs.cov_go_any_changed != 'true' }}
 
 
 # Composite Action

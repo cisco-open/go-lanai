@@ -41,11 +41,16 @@ jobs:
         env:
           PR_DIFF: ${{ steps.prepare_pr.outputs.diff }}
           CHANGED_GO_FILES: ${{ steps.prepare_pr.outputs.changed_go_files }}
+          CHANGED_COV_GO_FILES: ${{ steps.prepare_pr.outputs.changed_cov_go_files }}
           SKIP_COV_CHECK: ${{ steps.prepare_pr.outputs.skip_coverage_check }}
         run: |
           echo "Base Branch: ${{ steps.prepare_pr.outputs.base_ref }}"
           echo "Changed Files(.go): "
           for f in "$CHANGED_GO_FILES"; do
+              echo "  $f"
+          done
+          echo "To-Be-Tested Files(.go): "
+          for f in "$CHANGED_COV_GO_FILES"; do
               echo "  $f"
           done
           echo "Skip Coverage Check: $SKIP_COV_CHECK"
