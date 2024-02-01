@@ -14,12 +14,15 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: "Action Context"
+      shell: bash
+      run: echo "$GITHUB_CONTEXT"
     # For security reason, we need to preserve actions being overridden by incoming branch. (especially during PR where incoming actions might get changed)
     - name: "Preserve Actions"
       shell: bash
       run: |
         mkdir -p ~/.tmp
-        cp -rfpv $(dirname ${{ github.action_path }}) ~/.tmp/actions
+        cp -rfp $(dirname ${{ github.action_path }}) ~/.tmp/actions
     - name: "Checkout"
       uses: actions/checkout@v4
       with:
@@ -37,4 +40,4 @@ runs:
       shell: bash
       run: |
         mkdir -p $(dirname $(dirname ${{ github.action_path }}))
-        cp -rfpv ~/.tmp/actions $(dirname ${{ github.action_path }})
+        cp -rfp ~/.tmp/actions $(dirname ${{ github.action_path }})

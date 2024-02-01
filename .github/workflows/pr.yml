@@ -13,7 +13,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
   checks: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -61,6 +61,13 @@ jobs:
         with:
           coverpkg: './pkg/...,./test/...'
           fail_on_lint_issues: 'true'
+      - name: "PR Test Coverage Report"
+        uses: 5monkeys/cobertura-action@master
+        with:
+          path: dist/cobertura-coverage.xml
+          minimum_coverage: 70
+          fail_below_threshold: false
+          only_changed_files: true
       - name: "Verify PR Test Coverage"
         if: steps.prepare_pr.outputs.skip_coverage_check != 'true'
         shell: bash
