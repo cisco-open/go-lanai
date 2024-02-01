@@ -25,7 +25,7 @@ RUN if [ ! -z "$GITKEY" -a -e $GITKEY ]; then \
     fi
 
 RUN --mount=type=ssh \
-    make init-once init-cli && \
+    make init-once init && \
     make drop-replace && go mod tidy && \
     make clean build PRIVATE_MODS="$PRIVATE_MODS" VERSION="$VERSION";
 
