@@ -16,6 +16,8 @@ runs:
   steps:
     - name: "Action Context"
       shell: bash
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
       run: echo "$GITHUB_CONTEXT"
     # For security reason, we need to preserve actions being overridden by incoming branch. (especially during PR where incoming actions might get changed)
     - name: "Preserve Actions"

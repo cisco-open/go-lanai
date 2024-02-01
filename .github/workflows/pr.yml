@@ -59,7 +59,7 @@ jobs:
       - name: "Test & Code Quality"
         uses: ./.tmp/.github/actions/verify
         with:
-          coverpkg: './pkg/...,./test/...'
+          coverpkg: ${{ steps.prepare_pr.outputs.changed_cov_go_files }}
           fail_on_lint_issues: 'true'
       - name: "PR Test Coverage Report"
         uses: 5monkeys/cobertura-action@master
