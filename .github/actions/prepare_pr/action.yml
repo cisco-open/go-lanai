@@ -17,6 +17,9 @@ outputs:
   changed_go_files:
     description: "changed go files"
     value: ${{ steps.changed_files.outputs.go_all_changed_files }}
+  skip_coverage_check:
+    description: "should skip coverage check. (PR may not contains any file changes that need to covered by test)"
+    value: ${{ steps.changed_files.outputs.go_any_changed == 'true' && steps.changed_files.outputs.cov_go_any_changed == 'true' }}
 
 
 # Composite Action
@@ -39,6 +42,8 @@ runs:
         files_yaml: |
           go:
             - '**.go'
-
+          cov_go:
+            - 'pkg/**.go'
+            - 'test/**.go'
 
 

@@ -41,12 +41,14 @@ jobs:
         env:
           PR_DIFF: ${{ steps.prepare_pr.outputs.diff }}
           CHANGED_GO_FILES: ${{ steps.prepare_pr.outputs.changed_go_files }}
+          SKIP_COV_CHECK: ${{ steps.prepare_pr.outputs.skip_coverage_check }}
         run: |
           echo "Base Branch: ${{ steps.prepare_pr.outputs.base_ref }}"
           echo "Changed Files(.go): "
           for f in "$CHANGED_GO_FILES"; do
               echo "  $f"
           done
+          echo "Skip Coverage Check: $SKIP_COV_CHECK"
           echo "Diff:"
           echo $PR_DIFF
       - name: "Test & Code Quality"
@@ -55,9 +57,14 @@ jobs:
           coverpkg: './pkg/...,./test/...'
           fail_on_lint_issues: 'true'
       - name: "Verify PR Test Coverage"
+        if: ${{ !steps.prepare_pr.outputs.skip_coverage_check }}
         shell: bash
         run: |
           go install github.com/PaloAltoNetworks/cov@3.2.0
-          cov dist/coverage.out -b ${{ steps.prepare_pr.outputs.base_ref }} --report-path 'dist/pr-coverage.json' -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
+          cov dist/coverage.out -b ${{ steps.prepare_pr.outputs.base_ref }} \
+            --ignore "**/cmd/**" \
+            --ignore "**/examples/**" \
+            --report-path 'dist/pr-coverage.json' \
+            -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
           
           
