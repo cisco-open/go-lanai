@@ -3,8 +3,8 @@ ARG BUILDER_IMAGE=golang:1.21-bookworm
 
 ## Build Container ##
 FROM ${BUILDER_IMAGE} AS builder
-ARG PRIVATE_MODS
 ARG VERSION
+ARG PRIVATE_MODS
 ARG GITKEY
 WORKDIR /go/src/
 ADD . /go/src/

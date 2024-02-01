@@ -4,7 +4,7 @@
 DESTDIR = dist
 MODULE = cto-github.cisco.com/NFV-BU/go-lanai/examples/auth-service
 
-EXECS = example-auth-service migrate
+EXECS = example-auth-service
 
 GEN_LIST = \
 
@@ -83,9 +83,6 @@ $(GEN_LIST):
 # Build
 example-auth-service:
 	$(CLI) build -v "$(VERSION)" --deps "$(PRIVATE_MODS)" -- -o $(DESTDIR)/$@ cmd/auth-service/main.go
-	
-migrate:
-	$(CLI) build -v "$(VERSION)" --deps "$(PRIVATE_MODS)" -- -o $(DESTDIR)/$@ cmd/auth-service/migrate.go
 	
 
 # Copy Resources
