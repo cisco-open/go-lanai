@@ -57,7 +57,7 @@ jobs:
           coverpkg: './pkg/...,./test/...'
           fail_on_lint_issues: 'true'
       - name: "Verify PR Test Coverage"
-        if: ${{ !steps.prepare_pr.outputs.skip_coverage_check }}
+        if: steps.prepare_pr.outputs.skip_coverage_check != 'true'
         shell: bash
         run: |
           go install github.com/PaloAltoNetworks/cov@3.2.0
