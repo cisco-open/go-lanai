@@ -47,7 +47,6 @@ jobs:
           PR_DIFF: ${{ steps.prepare_pr.outputs.diff }}
           CHANGED_GO_FILES: ${{ steps.prepare_pr.outputs.changed_go_files }}
           CHANGED_COV_GO_FILES: ${{ steps.prepare_pr.outputs.changed_cov_go_files }}
-          COVERPKG_ARG: ${{ steps.prepare_pr.outputs.coverpkg_arg }}
           SKIP_COV_CHECK: ${{ steps.prepare_pr.outputs.skip_coverage_check }}
         run: |
           echo "Base Branch: ${{ steps.prepare_pr.outputs.base_ref }}"
@@ -59,7 +58,6 @@ jobs:
           for f in $CHANGED_COV_GO_FILES; do
               echo "  $f"
           done
-          echo "Coverage Arg: $COVERPKG_ARG"
           echo "Skip Coverage Check: $SKIP_COV_CHECK"
           echo "Diff:"
           echo $PR_DIFF
