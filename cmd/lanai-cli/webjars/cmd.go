@@ -43,6 +43,7 @@ type Arguments struct {
 	ArtifactId string   `flag:"artifact,a,required" desc:"Webjar's Artifact ID"`
 	Version    string   `flag:"version,v,required" desc:"Webjar's Version"`
 	Resources  []string `flag:"resources,r" desc:"Comma delimited list of additional resources from unpacked webjar. META-INF/resources/webjars is implicit"`
+	MavenRepos []string `flag:"maven-repos" desc:"Comma delimited list of additional maven repository URLs"`
 }
 
 //go:embed pom.xml.tmpl

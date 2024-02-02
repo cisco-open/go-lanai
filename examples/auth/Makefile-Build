@@ -2,9 +2,9 @@
 .SECONDEXPANSION:
 
 DESTDIR = dist
-MODULE = cto-github.cisco.com/NFV-BU/go-lanai-examples/auth-service
+MODULE = cto-github.cisco.com/NFV-BU/go-lanai/examples/auth-service
 
-EXECS = example-auth-service migrate
+EXECS = example-auth-service
 
 GEN_LIST = \
 
@@ -40,8 +40,8 @@ test: generate
 	set -o pipefail; \
 	gotestsum -f pkgname --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \
   		$(GO) test -json -count=1 -failfast -timeout=0 -coverprofile $(DESTDIR)/coverage.out \
-  		-coverpkg \
-  		$(ARGS)
+  		-coverpkg $(MODULE)/pkg/...,\
+  		$(MODULE)/pkg/... $(ARGS)
 endif
 
 # lint:
@@ -83,9 +83,6 @@ $(GEN_LIST):
 # Build
 example-auth-service:
 	$(CLI) build -v "$(VERSION)" --deps "$(PRIVATE_MODS)" -- -o $(DESTDIR)/$@ cmd/auth-service/main.go
-	
-migrate:
-	$(CLI) build -v "$(VERSION)" --deps "$(PRIVATE_MODS)" -- -o $(DESTDIR)/$@ cmd/auth-service/migrate.go
 	
 
 # Copy Resources

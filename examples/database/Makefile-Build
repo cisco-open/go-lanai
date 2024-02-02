@@ -2,7 +2,7 @@
 .SECONDEXPANSION:
 
 DESTDIR = dist
-MODULE = cto-github.cisco.com/NFV-BU/go-lanai-examples/skeleton-service
+MODULE = cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service
 
 EXECS = migrate skeleton-service
 
@@ -40,8 +40,8 @@ test: generate
 	set -o pipefail; \
 	gotestsum -f pkgname --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \
   		$(GO) test -json -count=1 -failfast -timeout=0 -coverprofile $(DESTDIR)/coverage.out \
-  		-coverpkg \
-  		$(ARGS)
+  		-coverpkg $(MODULE)/pkg/...,\
+  		$(MODULE)/pkg/... $(ARGS)
 endif
 
 # lint:

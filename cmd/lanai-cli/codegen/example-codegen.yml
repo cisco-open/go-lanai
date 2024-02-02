@@ -21,7 +21,7 @@ contract: ./testdata/test.yaml
 #templateDirectory: template/src
 
 # The import path of this project
-repositoryRootPath: cto-github.cisco.com/NFV-BU/testservice
+repositoryRootPath: github.com/repo_owner/testservice
 projectName: testservice
 
 # Rule for what happens if a generate a file would overwrite an existing one (default: overwrite)

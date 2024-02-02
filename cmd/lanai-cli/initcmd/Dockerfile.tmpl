@@ -1,21 +1,33 @@
-ARG BASE_IMAGE=dockerhub.cisco.com/vms-platform-dev-docker/go-scratch:1.20
+ARG BASE_IMAGE=debian:bookworm
+ARG BUILDER_IMAGE=golang:1.21-bookworm
+
 ## Build Container ##
-FROM dockerhub.cisco.com/vms-platform-dev-docker/golang:1.20 AS builder
-ARG PRIVATE_MODS
+FROM ${BUILDER_IMAGE} AS builder
 ARG VERSION
+ARG PRIVATE_MODS
 ARG GITKEY
 WORKDIR /go/src/
 ADD . /go/src/
-RUN mkdir -p -m 0600 ~/.ssh && \
-    echo "StrictHostKeyChecking no " > /root/.ssh/config && \
-    echo "Host cto-github.cisco.com" >> ~/.ssh/config  && \
-    echo "              HostName cto-github.cisco.com" >> ~/.ssh/config  && \
-    echo "              User git" >> ~/.ssh/config  && \
-    echo "             IdentityFile /root/github.key" >> ~/.ssh/config
-COPY ${GITKEY} /root/github.key
-RUN chmod 600 /root/github.key
-RUN make init-once init-cli drop-replace; \
-    make clean build PRIVATE_MODS="$PRIVATE_MODS" VERSION="$VERSION"
+RUN mkdir -p -m 0600 ~/.ssh; \
+    echo "StrictHostKeyChecking no " > /root/.ssh/config; \
+    ssh-keyscan github.com >> ~/.ssh/known_hosts;
+
+RUN if [ ! -z "$GITKEY" -a -e $GITKEY ]; then \
+      cp -fp /go/src/$GITKEY /root/github.key; \
+      chmod 400 /root/github.key; \
+      IFS=,; for mod in $PRIVATE_MODS; do \
+          hostname=`echo "$mod"| awk -F/ '{print $1}'`; \
+          echo "Host $hostname" >> ~/.ssh/config; \
+          echo "              HostName $hostname" >> ~/.ssh/config; \
+          echo "              User git" >> ~/.ssh/config; \
+          echo "              IdentityFile /root/github.key" >> ~/.ssh/config; \
+      done; \
+    fi
+
+RUN --mount=type=ssh \
+    make init-once init && \
+    make drop-replace && go mod tidy && \
+    make clean build PRIVATE_MODS="$PRIVATE_MODS" VERSION="$VERSION";
 
 FROM ${BASE_IMAGE}
 {{- range $_, $elem := .Executables }}
