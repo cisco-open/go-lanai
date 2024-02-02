@@ -87,10 +87,14 @@ jobs:
         shell: bash
         env:
           PR_STATEMENTS: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_num_stmt }}
+          PR_COVER_COUNT: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_cover_count }}
           PR_COVERAGE: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_coverage }}
         run: |
           FORMATTED_COV=$(printf "%.1f" 32.12345566)
-          echo "formatted_cov=$FORMATTED_COV" >> $GITHUB_OUTPUT
+          echo "pr_statements=$PR_STATEMENTS" >> $GITHUB_OUTPUT
+          echo "pr_cover_count=$PR_COVER_COUNT" >> $GITHUB_OUTPUT
+          echo "pr_coverage=$FORMATTED_COV" >> $GITHUB_OUTPUT
+          
           echo Statements: $PR_STATEMENTS 
           echo Expected:   $COV_THRESHOLD
           echo Actual:     $FORMATTED_COV
@@ -100,15 +104,22 @@ jobs:
         if: ${{ !cancelled() }}
         uses: mshick/add-pr-comment@v2
         env:
-          PR_STATEMENTS: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_num_stmt }}
-          PR_COVER_COUNT: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_cover_count }}
-          PR_COVERAGE: ${{ steps.process_pr_coverage.formatted_cov }}
+          PR_STATEMENTS: ${{ steps.process_pr_coverage.pr_statements }}
+          PR_COVER_COUNT: ${{ steps.process_pr_coverage.pr_cover_count }}
+          PR_COVERAGE: ${{ steps.process_pr_coverage.pr_coverage }}
         with:
           message: |
-            |----------------------|---------|
-            | Changed Statements   | ${{ env.PR_STATEMENTS }} |
-            | Covered Statements   | ${{ env.PR_COVER_COUNT }} |
-            | Test Coverage        | ${{ env.PR_COVERAGE }}% |
+            | PR Coverage Summary     |        |
+            |:------------------------|-------:|
+            | Changed Statements      | ${{ env.PR_STATEMENTS }} |
+            | Covered Statements      | ${{ env.PR_COVER_COUNT }} |
+            | Test Coverage           | ${{ env.PR_COVERAGE }}% |
+          message-failure: |
+            | PR Coverage Summary     |         |
+            |:------------------------|--------:|
+            | Changed Statements      | Unknown |
+            | Covered Statements      | Unknown |
+            | Test Coverage           | 0.0% |
 #      - name: "Verify PR Test Coverage"
 #        if: steps.prepare_pr.outputs.skip_coverage_check != 'true'
 #        shell: bash
