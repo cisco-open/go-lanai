@@ -92,8 +92,7 @@ jobs:
           echo Expected:   $COV_THRESHOLD
           echo Actual:     $FORMATTED_COV
           (( $(echo "${PR_STATEMENTS} == 0" | bc) )) || \
-          (( $(echo "${PR_COVERAGE} >= ${{ env.COV_THRESHOLD }}" | bc) )) || \
-          echo "Insufficient Coverage: expect $COV_THRESHOLD% but got $FORMATTED_COV%" && exit 1
+          (( $(echo "${PR_COVERAGE} >= ${{ env.COV_THRESHOLD }}" | bc) ))
       - name: "Report PR Test Coverage"
         if: ${{ !cancelled() }}
         uses: mshick/add-pr-comment@v2
