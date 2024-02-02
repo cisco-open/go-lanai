@@ -52,11 +52,11 @@ jobs:
         run: |
           echo "Base Branch: ${{ steps.prepare_pr.outputs.base_ref }}"
           echo "Changed Files(.go): "
-          for f in "$CHANGED_GO_FILES"; do
+          for f in $CHANGED_GO_FILES; do
               echo "  $f"
           done
           echo "To-Be-Tested Files(.go): "
-          for f in "$CHANGED_COV_GO_FILES"; do
+          for f in $CHANGED_COV_GO_FILES; do
               echo "  $f"
           done
           echo "Coverage Arg: $COVERPKG_ARG"
@@ -66,7 +66,7 @@ jobs:
       - name: "Test & Code Quality"
         uses: ./.tmp/.github/actions/verify
         with:
-          coverpkg: ${{ steps.prepare_pr.outputs.coverpkg_arg }}
+          coverpkg: './pkg/...,./test/...'
           fail_on_lint_issues: 'true'
       - name: "PR Test Coverage Report"
         uses: 5monkeys/cobertura-action@master

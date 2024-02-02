@@ -20,9 +20,6 @@ outputs:
   changed_cov_go_files:
     description: "changed go files that need to be covered by test"
     value: ${{ steps.changed_files.outputs.cov_go_all_changed_files }}
-  coverpkg_arg:
-    description: "coverpkg argument to use in 'verify' action"
-    value: ${{ steps.coverpkg_arg.outputs.resolved_arg }}
   skip_coverage_check:
     description: "should skip coverage check. (PR may not contains any file changes that need to covered by test)"
     value: ${{ steps.changed_files.outputs.cov_go_any_changed != 'true' }}
@@ -51,16 +48,4 @@ runs:
           cov_go:
             - 'pkg/**/*.go'
             - 'test/**/*.go'
-    - name: "Resolve Coverage Arg"
-      id: coverpkg_arg
-      shell: bash
-      env:
-        CHANGED_COV_GO_FILES: ${{ steps.changed_files.outputs.cov_go_all_changed_files }}
-      run: |
-        for f in "$CHANGED_COV_GO_FILES"; do
-            [[ ! -z "$coverpkg" ]] && coverpkg="$coverpkg,"
-            [[ ! -z "$f" ]] && coverpkg="$coverpkg./$f"
-        done
-        echo "resolved_arg=$coverpkg" >> $GITHUB_OUTPUT
-
 
