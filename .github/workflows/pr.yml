@@ -83,7 +83,7 @@ jobs:
           PR_COVER_COUNT: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_cover_count }}
           PR_COVERAGE: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_coverage }}
         run: |
-          FORMATTED_COV=$(printf "%.1f" 32.12345566)
+          FORMATTED_COV=$(printf "%.1f" $PR_COVERAGE)
           echo "pr_statements=$PR_STATEMENTS" >> $GITHUB_OUTPUT
           echo "pr_cover_count=$PR_COVER_COUNT" >> $GITHUB_OUTPUT
           echo "pr_coverage=$FORMATTED_COV" >> $GITHUB_OUTPUT
