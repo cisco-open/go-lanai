@@ -75,15 +75,41 @@ jobs:
           minimum_coverage: 70
           fail_below_threshold: false
           only_changed_files: true
-      - name: "Verify PR Test Coverage"
+      - name: "Calculate PR Test Coverage"
+        id: pr_coverage
         if: steps.prepare_pr.outputs.skip_coverage_check != 'true'
         shell: bash
         run: |
-          go install github.com/PaloAltoNetworks/cov@3.2.0
-          cov dist/coverage.out -b ${{ steps.prepare_pr.outputs.base_ref }} \
-            --ignore "**/cmd/**" \
-            --ignore "**/examples/**" \
-            --report-path 'dist/pr-coverage.json' \
-            -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
+          git diff ${{ steps.prepare_pr.outputs.base_ref }}... -U0 --no-color -- pkg/** test/**
+          go install "github.com/seriousben/go-patch-cover/cmd/go-patch-cover@v0.2.0"
+          echo "summary=$(go-patch-cover -o json dist/coverage.out dist/pr.diff)" >> $GITHUB_OUTPUT
+      - name: "Report PR Test Coverage"
+        uses: mshick/add-pr-comment@v2
+        env:
+          PR_COVERAGE_SUMMARY: ${{ fromJSON(steps.pr_coverage.outputs.summary) }}
+        with:
+          message: |
+            |--------------------|---------|
+            | Changed Statements | ${{ env.PR_COVERAGE_SUMMARY.patch_num_stmt }} |
+            | Covered Statements | ${{ env.PR_COVERAGE_SUMMARY.patch_cover_count }} |
+            | Test Coverage      | ${{ env.PR_COVERAGE_SUMMARY.patch_cover_count }}% |
+      - name: "Verify PR Test Coverage"
+        shell: bash
+        env:
+          PATCH_COVERAGE: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_coverage }}
+        run: |
+          echo Expected: ${{ env.COV_THRESHOLD }}
+          echo Actual: ${PATCH_COVERAGE} 
+          (( $(echo "${PATCH_COVERAGE} >= ${{ env.COV_THRESHOLD }}" | bc) ))
+#      - name: "Verify PR Test Coverage"
+#        if: steps.prepare_pr.outputs.skip_coverage_check != 'true'
+#        shell: bash
+#        run: |
+#          go install github.com/PaloAltoNetworks/cov@3.2.0
+#          cov dist/coverage.out -b ${{ steps.prepare_pr.outputs.base_ref }} \
+#            --ignore "**/cmd/**" \
+#            --ignore "**/examples/**" \
+#            --report-path 'dist/pr-coverage.json' \
+#            -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
           
           
