@@ -95,7 +95,7 @@ jobs:
           (( $(echo "${{env.PR_COVERAGE_SUMMARY.patch_num_stmt}} == 0" | bc) )) || \
           (( $(echo "${env.PR_COVERAGE_SUMMARY.patch_coverage} >= ${{ env.COV_THRESHOLD }}" | bc) ))
       - name: "Report PR Test Coverage"
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         uses: mshick/add-pr-comment@v2
         env:
           PR_COVERAGE_SUMMARY: ${{ fromJSON(steps.pr_coverage.outputs.summary) }}
