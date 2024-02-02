@@ -99,7 +99,8 @@ jobs:
           echo Expected:   $COV_THRESHOLD
           echo Actual:     $FORMATTED_COV
           (( $(echo "${PR_STATEMENTS} == 0" | bc) )) || \
-          (( $(echo "${PR_COVERAGE} >= ${{ env.COV_THRESHOLD }}" | bc) ))
+          (( $(echo "${PR_COVERAGE} >= ${{ env.COV_THRESHOLD }}" | bc) )) || \
+          echo "Insufficient Coverage: expect $COV_THRESHOLD% but got $FORMATTED_COV%"
       - name: "Report PR Test Coverage"
         if: ${{ !cancelled() }}
         uses: mshick/add-pr-comment@v2
@@ -114,21 +115,14 @@ jobs:
             | Changed Statements      | ${{ env.PR_STATEMENTS }} |
             | Covered Statements      | ${{ env.PR_COVER_COUNT }} |
             | Test Coverage           | ${{ env.PR_COVERAGE }}% |
+            
+            PR Verification Succeeded: Coverage >= `${{ env.COV_THRESHOLD }}%`
           message-failure: |
-            | PR Coverage Summary     |         |
-            |:------------------------|--------:|
-            | Changed Statements      | Unknown |
-            | Covered Statements      | Unknown |
-            | Test Coverage           | 0.0% |
-#      - name: "Verify PR Test Coverage"
-#        if: steps.prepare_pr.outputs.skip_coverage_check != 'true'
-#        shell: bash
-#        run: |
-#          go install github.com/PaloAltoNetworks/cov@3.2.0
-#          cov dist/coverage.out -b ${{ steps.prepare_pr.outputs.base_ref }} \
-#            --ignore "**/cmd/**" \
-#            --ignore "**/examples/**" \
-#            --report-path 'dist/pr-coverage.json' \
-#            -t ${{ env.COV_THRESHOLD }} -e 1 --write-report
-          
+            | PR Coverage Summary     |        |
+            |:------------------------|-------:|
+            | Changed Statements      | ${{ env.PR_STATEMENTS }} |
+            | Covered Statements      | ${{ env.PR_COVER_COUNT }} |
+            | Test Coverage           | ${{ env.PR_COVERAGE }}% |
+            
+            PR Verification Failed: Minimum `${{ env.COV_THRESHOLD }}%`
           
