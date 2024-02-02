@@ -77,30 +77,35 @@ jobs:
           only_changed_files: true
       - name: "Calculate PR Test Coverage"
         id: pr_coverage
-        if: steps.prepare_pr.outputs.skip_coverage_check != 'true'
         shell: bash
         run: |
-          git diff ${{ steps.prepare_pr.outputs.base_ref }}... -U0 --no-color -- pkg/** test/**
+          git diff ${{ steps.prepare_pr.outputs.base_ref }}... -U0 --no-color -- pkg/** test/** > dist/pr.diff
           go install "github.com/seriousben/go-patch-cover/cmd/go-patch-cover@v0.2.0"
           echo "summary=$(go-patch-cover -o json dist/coverage.out dist/pr.diff)" >> $GITHUB_OUTPUT
+      - name: "Process PR Test Coverage"
+        id: process_pr_coverage
+        shell: bash
+        env:
+          PR_COVERAGE_SUMMARY: ${{ fromJSON(steps.pr_coverage.outputs.summary) }}
+        run: |
+          echo Statements: ${PATCH_STATEMENTS} 
+          echo Expected:   ${{ env.COV_THRESHOLD }}
+          echo Actual:     ${PATCH_COVERAGE}
+          echo "formatted_cov=$(printf "%.1f" 32.12345566)" >> $GITHUB_OUTPUT
+          (( $(echo "${{env.PR_COVERAGE_SUMMARY.patch_num_stmt}} == 0" | bc) )) || \
+          (( $(echo "${env.PR_COVERAGE_SUMMARY.patch_coverage} >= ${{ env.COV_THRESHOLD }}" | bc) ))
       - name: "Report PR Test Coverage"
+        if: !cancelled()
         uses: mshick/add-pr-comment@v2
         env:
           PR_COVERAGE_SUMMARY: ${{ fromJSON(steps.pr_coverage.outputs.summary) }}
+          FORMATTED_PR_COVERAGE: ${{ steps.process_pr_coverage.formatted_cov }}
         with:
           message: |
             |--------------------|---------|
             | Changed Statements | ${{ env.PR_COVERAGE_SUMMARY.patch_num_stmt }} |
             | Covered Statements | ${{ env.PR_COVERAGE_SUMMARY.patch_cover_count }} |
-            | Test Coverage      | ${{ env.PR_COVERAGE_SUMMARY.patch_cover_count }}% |
-      - name: "Verify PR Test Coverage"
-        shell: bash
-        env:
-          PATCH_COVERAGE: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_coverage }}
-        run: |
-          echo Expected: ${{ env.COV_THRESHOLD }}
-          echo Actual: ${PATCH_COVERAGE} 
-          (( $(echo "${PATCH_COVERAGE} >= ${{ env.COV_THRESHOLD }}" | bc) ))
+            | Test Coverage      | ${{ env.FORMATTED_PR_COVERAGE }}% |
 #      - name: "Verify PR Test Coverage"
 #        if: steps.prepare_pr.outputs.skip_coverage_check != 'true'
 #        shell: bash
