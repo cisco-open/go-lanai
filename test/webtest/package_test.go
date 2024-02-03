@@ -102,6 +102,7 @@ func TestCustomRealTestServer(t *testing.T) {
 		apptest.Bootstrap(),
 		WithRealServer(
 			UseContextPath(altContextPath),
+			UsePort(0),
 			UseLogLevel(log.LevelDebug),
 			AddDefaultRequestOptions(Queries("q", ValidQuery)),
 		),

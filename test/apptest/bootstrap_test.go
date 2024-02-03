@@ -24,7 +24,6 @@ import (
 	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"embed"
 	"fmt"
 	"github.com/onsi/gomega"
@@ -111,12 +110,6 @@ func (c *controller) Test(_ context.Context, _ *http.Request) (response interfac
 	Test Main Setup
  *************************/
 
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		suitetest.TestOptions(WithModules(webinit.Module)),
-	)
-}
-
 /*************************
 	Test Cases
  *************************/
@@ -127,6 +120,7 @@ func TestBootstrapWithDefaults(t *testing.T) {
 	acDI := &appconfigDI{}
 	test.RunTest(context.Background(), t,
 		Bootstrap(),
+		WithModules(webinit.Module),
 		WithDI(bDI, acDI),
 		test.Setup(counter.setup),
 		test.Teardown(counter.teardown),
@@ -155,6 +149,7 @@ func TestBootstrapWithCustomSettings(t *testing.T) {
 	wDI := &webDI{}
 	test.RunTest(context.Background(), t,
 		Bootstrap(),
+		WithModules(webinit.Module),
 		WithTimeout(30*time.Second),
 		WithConfigFS(testConfigFS),
 		WithConfigFS(TestApplicationConfigFS),
@@ -185,6 +180,7 @@ func TestRepeatedBootstrapWithCustomSettings(t *testing.T) {
 	wDI := &webDI{}
 	test.RunTest(context.Background(), t,
 		Bootstrap(),
+		WithModules(webinit.Module),
 		WithTimeout(30*time.Second),
 		WithProperties(
 			"info.source: 200",
@@ -210,6 +206,25 @@ func TestRepeatedBootstrapWithCustomSettings(t *testing.T) {
 
 	g := gomega.NewWithT(t)
 	g.Expect(counter.fxInvokeCount).To(gomega.Equal(2), "fx invoke func should be invoked twice, 1 for regular order, 1 for priority order")
+}
+
+func TestBootstrapWithoutSettings(t *testing.T) {
+	counter := &testHookCounter{}
+	test.RunTest(context.Background(), t,
+		Bootstrap(),
+		test.Setup(counter.setup),
+		test.Teardown(counter.teardown),
+		test.SubTestSetup(counter.subSetup),
+		test.SubTestTeardown(counter.subTeardown),
+		test.GomegaSubTest(SubTestAlwaysSucceed(), "SubTestAlwaysSucceed"),
+	)
+
+	g := gomega.NewWithT(t)
+	g.Expect(counter.setupCount).To(gomega.Equal(1), "Test setup should invoked once per test")
+	g.Expect(counter.teardownCount).To(gomega.Equal(1), "Test teardown should invoked once per test")
+	g.Expect(counter.subSetupCount).To(gomega.Equal(1), "SubTest setup should invoked once per sub test")
+	g.Expect(counter.subTeardownCount).To(gomega.Equal(1), "SubTest teardown should invoked once per sub test")
+	g.Expect(counter.fxInvokeCount).To(gomega.Equal(0), "fx invoke func should be be triggerred")
 }
 
 func TestBootstrapWithMixedResults(t *testing.T) {

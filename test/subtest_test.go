@@ -25,9 +25,13 @@ import (
 func TestWithSubTests(t *testing.T) {
 	RunTest(context.Background(), t,
 		GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest-1"),
-		GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest-2"),
-		GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest-3"),
-		GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest-4"),
+		// will be removed by RemoveSubTests
+		GomegaSubTest(SubTestAlwaysFail(), "WillFail"),
+		// without specific name
+		GomegaSubTest(SubTestAlwaysSucceed()),
+		// with name arguments
+		GomegaSubTest(SubTestAlwaysSucceed(), "SuccessfulTest %s", "4"),
+		RemoveSubTests("WillFail"),
 	)
 }
 
@@ -55,5 +59,13 @@ func SubTestAlwaysSucceed() GomegaSubTestFunc {
 func SubTestAlwaysFail() GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(true).To(gomega.BeFalse())
+	}
+}
+
+func RemoveSubTests(names...string) Options {
+	return func(opt *T) {
+		for _, name := range names {
+			opt.SubTests.Delete(name)
+		}
 	}
 }

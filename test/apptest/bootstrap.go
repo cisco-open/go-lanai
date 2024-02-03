@@ -68,8 +68,7 @@ func NewFxTestRunner() test.InternalRunner {
 		// 		application.
 		tb, ok := ctx.Value(ctxKeyTestBootstrapper).(*testBootstrapper)
 		if !ok || tb == nil {
-			t.Fatalf("Failed to start test %s due to invalid test bootstrap configuration", t.Name())
-			return
+			ctx, tb = withTestModule(ctx)
 		}
 
 		// default modules and context

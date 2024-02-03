@@ -23,6 +23,8 @@
 //
 // Golden Files are populated and asserted based on the current runs test name
 // t should be of a type *testing.T ref:[https://pkg.go.dev/testing#T]
+// TODO this package has many limitations, e.g. only works with JSON and Structs, and it's not currently used by anyone.
+//      Consider to remove it or improve it
 package golden
 
 import (
@@ -50,6 +52,7 @@ type GoldenFileTestingT interface {
 // PopulateGoldenFiles will write golden files to the according path returned from
 // the GetGoldenFilePath function. The function will marshal the data into JSON.
 // data should be of a type struct and not []byte or string.
+// TODO review this function: if the function fails the test at beginning, what's the point to have it?
 func PopulateGoldenFiles(t GoldenFileTestingT, data interface{}) {
 	t.Errorf("Running PopulateGoldenFiles will result in a failed test.")
 	if reflect.ValueOf(data).Kind() != reflect.Struct {

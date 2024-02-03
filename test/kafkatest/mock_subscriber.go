@@ -38,7 +38,7 @@ func (s *MockedSubscriber) Topic() string {
 }
 
 func (s *MockedSubscriber) Partitions() []int32 {
-	return []int32{}
+	return s.Parts
 }
 
 func (s *MockedSubscriber) AddHandler(handlerFunc kafka.MessageHandlerFunc, opts ...kafka.DispatchOptions) error {

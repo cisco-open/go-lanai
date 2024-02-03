@@ -20,10 +20,12 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"errors"
+	"fmt"
 	"github.com/onsi/gomega"
+	"os"
 	"path/filepath"
 	"testing"
-	"time"
 )
 
 func TestGetGoldenFilePath(t *testing.T) {
@@ -52,7 +54,6 @@ func TestGetGoldenFilePath(t *testing.T) {
 func TestWithAppTest(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		apptest.WithTimeout(300*time.Second),
 		test.GomegaSubTest(SubTestWithoutTableDriven(), "SubTestWithoutTableDriven"),
 		test.GomegaSubTest(SubTestWithTableDriven(), "SubTestWithTableDriven"),
 	)
@@ -98,7 +99,7 @@ func SubTestWithTableDriven() test.GomegaSubTestFunc {
 
 type MockTestingT struct {
 	*testing.T
-	FatalfCalled bool
+	Failed bool
 }
 
 const (
@@ -107,29 +108,53 @@ const (
 
 // Fatalf will not actually fatal the test, but will panic to exit the execution
 func (c *MockTestingT) Fatalf(format string, args ...any) {
-	c.FatalfCalled = true
+	c.Failed = true
 	panic(MockFatalPanic)
 }
+
+// Errorf will not actually fail the test
+func (c *MockTestingT) Errorf(format string, args ...any) {
+	c.Failed = true
+}
+
+type GoodStruct struct {
+	Hello string
+}
+
+type NoJsonStruct GoodStruct
+
+func (NoJsonStruct) MarshalJSON() ([]byte, error) {
+	return nil, errors.New("oops")
+}
+
 func TestAssert(t *testing.T) {
 	type args struct {
 		t    *testing.T
 		data interface{}
 	}
 	tests := []struct {
-		name              string
-		args              args
-		expectFatalCalled bool
+		name       string
+		args       args
+		expectFail bool
 	}{
 		{
-			name: "Test Struct Data, expects no error",
+			name: "Test Correct Struct Data, expects no error",
 			args: args{
 				t: t,
-				data: struct {
-					Hello string
-				}{
+				data: GoodStruct{
 					Hello: "some string",
 				},
 			},
+		},
+		{
+			name: "Test Incorrect Struct Data, expects no error",
+			args: args{
+				t: t,
+				data: GoodStruct{
+					Hello: "something else",
+				},
+			},
+			expectFail: true,
 		},
 		{
 			name: "Test nil Data, expects fatal error",
@@ -137,7 +162,7 @@ func TestAssert(t *testing.T) {
 				t:    t,
 				data: nil,
 			},
-			expectFatalCalled: true,
+			expectFail: true,
 		},
 		{
 			name: "Test Non Struct Data, expects fatal error",
@@ -145,21 +170,65 @@ func TestAssert(t *testing.T) {
 				t:    t,
 				data: []byte("hello"),
 			},
-			expectFatalCalled: true,
+			expectFail: true,
+		},
+		{
+			name: "Test Struct Data with marshalling error, expects fatal error",
+			args: args{
+				t:    t,
+				data: NoJsonStruct{Hello: "hi"},
+			},
+			expectFail: true,
 		},
 	}
 	for _, tt := range tests {
 		mT := MockTestingT{t, false}
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
-				if r := recover(); r != MockFatalPanic {
+				if r := recover(); r != nil && r != MockFatalPanic {
 					t.Errorf("only expected %v, did not expect :%v panic", MockFatalPanic, r)
 				}
-				if tt.expectFatalCalled && mT.FatalfCalled != true {
+				if tt.expectFail != mT.Failed {
 					t.Errorf("expected fatal error but did not receive fatal error")
 				}
 			}()
 			Assert(&mT, tt.args.data)
 		})
+	}
+}
+
+const PopulateTestOutputDir = `testdata/golden/TestPopulateGoldenFiles`
+
+func TestPopulateGoldenFiles(t *testing.T) {
+	test.RunTest(context.Background(), t,
+		test.Setup(CleanGoldenOutputDir()),
+		test.GomegaSubTest(SubTestPopulateGoldenFiles(GoodStruct{Hello: "string"}, "good_struct.json", true), "GoodStruct"),
+		test.GomegaSubTest(SubTestPopulateGoldenFiles(NoJsonStruct{Hello: "string"}, "bad_struct.json", false), "BadStruct"),
+		test.GomegaSubTest(SubTestPopulateGoldenFiles("just string", "just_string.json", false), "JustString"),
+		test.GomegaSubTest(SubTestPopulateGoldenFiles([]byte("just string"), "just_bytes.json", false), "JustBytes"),
+	)
+}
+
+func CleanGoldenOutputDir() test.SetupFunc {
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		return ctx, os.RemoveAll(PopulateTestOutputDir)
+	}
+}
+
+func SubTestPopulateGoldenFiles(data interface{}, expectedFile string, expectExists bool) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		mockT := &MockTestingT{T: t}
+		func() {
+			defer func() { recover() }()
+			PopulateGoldenFiles(mockT, data)
+		}()
+		expectedPath := fmt.Sprintf(`%s/%s`, PopulateTestOutputDir, expectedFile)
+		if expectExists {
+			_, e := os.Stat(expectedPath)
+			g.Expect(e).To(gomega.Succeed(), "file should exist [%s]", expectedPath)
+		} else {
+			_, e := os.Stat(expectedPath)
+			g.Expect(os.IsNotExist(e)).To(gomega.BeTrue(), "file should not exist [%s]", expectedPath)
+		}
 	}
 }
