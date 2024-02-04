@@ -35,7 +35,10 @@ const (
 )
 
 var (
+	// DataGroups collected profiles to return in "data" endpoint
 	DataGroups = []DataGroup{GroupBytesAllocated, GroupGCPauses, GroupCPUUsage, GroupPprof}
+	// PongTimeout is the time data feed would wait for pong message before it close the websocket connection
+	PongTimeout             = time.Minute
 	errWSWriterNotAvailable = errors.New("WebSocket writer not available")
 )
 
@@ -126,7 +129,7 @@ func (c *ChartController) DataFeed(gc *gin.Context) {
 		return
 	}
 	defer func() {
-		_ = ws.WriteControl(websocket.PingMessage, nil, time.Now().Add(time.Second))
+		_ = ws.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "connection closed by server"), time.Now().Add(time.Second))
 		_ = ws.Close()
 	}()
 
@@ -151,12 +154,14 @@ LOOP:
 		case <-gc.Request.Context().Done():
 			break LOOP
 		}
-		if i % 10 != 0 {
+		if i%10 != 0 {
 			continue
 		}
+		i = 0
 
-		// If we didn't receive Pong after 1 mins, we quit loop and close connection
-		if lastPing.Sub(lastPong) > time.Minute {
+		// If we didn't receive Pong after PongTimeout, we quit loop and close connection
+		if lastPing.Sub(lastPong) > PongTimeout {
+			logger.WithContext(gc.Request.Context()).Debugf("No 'pong' message received after %v, closing connection...", PongTimeout)
 			break LOOP
 		}
 
