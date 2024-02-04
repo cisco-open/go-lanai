@@ -27,18 +27,20 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
 	"net/http"
 	"testing"
 	"time"
 )
 
 const (
-	kContentType      = `Content-Type`
-	ContentTypeBinary = `application/octet-stream`
-	ContentTypeHTML   = `text/html`
-	ContentTypeText   = `text/plain`
-	ContentTypeJS     = `application/javascript`
-	ContentTypeJSON   = `application/json`
+	kContentType = `Content-Type`
+)
+
+var (
+	ContentTypeMatcherHTML = HavePrefix(`text/html`)
+	ContentTypeMatcherJS   = Or(HavePrefix(`text/javascript`), HavePrefix(`application/javascript`))
+	ContentTypeMatcherJSON = HavePrefix(`application/json`)
 )
 
 /*************************
@@ -66,19 +68,19 @@ func TestController(t *testing.T) {
 
 func SubTestStaticAssets() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		AssertEndpoint(ctx, g, http.MethodGet, "debug/charts/static/main.js", http.StatusOK, ContentTypeJS)
+		AssertEndpoint(ctx, g, http.MethodGet, "debug/charts/static/main.js", http.StatusOK, ContentTypeMatcherJS)
 	}
 }
 
 func SubTestChartUI() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		AssertEndpoint(ctx, g, http.MethodGet, "debug/charts/", http.StatusOK, ContentTypeHTML)
+		AssertEndpoint(ctx, g, http.MethodGet, "debug/charts/", http.StatusOK, ContentTypeMatcherHTML)
 	}
 }
 
 func SubTestData() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		AssertEndpoint(ctx, g, http.MethodGet, "debug/charts/data", http.StatusOK, ContentTypeJSON)
+		AssertEndpoint(ctx, g, http.MethodGet, "debug/charts/data", http.StatusOK, ContentTypeMatcherJSON)
 	}
 }
 
@@ -94,17 +96,17 @@ func SubTestDataFeed() test.GomegaSubTestFunc {
 		g.Expect(resp.StatusCode).To(Equal(http.StatusSwitchingProtocols), "websocket upgrade response should have correct status code")
 
 		// verify feed
-        const msgCount = 10
-        for i := 0; i < msgCount; i++ {
-        	// try to send messages, messages should be discarded
-            e := ws.WriteMessage(websocket.TextMessage, []byte("doesn't matter"))
-            g.Expect(e).To(Succeed(), "sending message to data feed shouldn't affect anything")
+		const msgCount = 10
+		for i := 0; i < msgCount; i++ {
+			// try to send messages, messages should be discarded
+			e := ws.WriteMessage(websocket.TextMessage, []byte("doesn't matter"))
+			g.Expect(e).To(Succeed(), "sending message to data feed shouldn't affect anything")
 			// try read feed
 			var feed Feed
 			e = ws.ReadJSON(&feed)
 			g.Expect(e).To(Succeed(), "reading message from data feed should not fail")
 			g.Expect(feed).ToNot(BeZero(), "data feed should not be zero valued")
-        }
+		}
 
 		// validate ping-pong behavior
 		// 1. we start to drain feeds (this is required to allow incoming control messages being processed)
@@ -117,7 +119,7 @@ func SubTestDataFeed() test.GomegaSubTestFunc {
 		closedCh := make(chan int, 1)
 		defer close(closedCh)
 		ws.SetCloseHandler(func(code int, text string) error {
-			closedCh<-code
+			closedCh <- code
 			return nil
 		})
 		select {
@@ -133,7 +135,7 @@ func SubTestDataFeed() test.GomegaSubTestFunc {
 	Sub Tests
  *************************/
 
-func AssertEndpoint(ctx context.Context, g *gomega.WithT, method, path string, expectedSC int, expectedCT string) {
+func AssertEndpoint(ctx context.Context, g *gomega.WithT, method, path string, expectedSC int, contentTypeMatcher types.GomegaMatcher) {
 	req := webtest.NewRequest(ctx, method, path, nil)
 	resp := webtest.MustExec(ctx, req).Response
 	g.Expect(resp).ToNot(BeNil(), "response should not be nil")
@@ -141,7 +143,7 @@ func AssertEndpoint(ctx context.Context, g *gomega.WithT, method, path string, e
 	if expectedSC < 200 || expectedSC > 300 {
 		return
 	}
-	g.Expect(resp.Header.Get(kContentType)).To(HavePrefix(expectedCT), "[%s %s] should respond correct content type", req.Method, req.URL.Path)
+	g.Expect(resp.Header.Get(kContentType)).To(contentTypeMatcher, "[%s %s] should respond correct content type", req.Method, req.URL.Path)
 }
 
 func WSDrainIncomingMessage(ctx context.Context, ws *websocket.Conn) {
