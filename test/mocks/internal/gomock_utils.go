@@ -18,7 +18,6 @@
 package internal
 
 import (
-    "fmt"
     "github.com/golang/mock/gomock"
     "github.com/onsi/gomega"
     . "github.com/onsi/gomega"
@@ -64,7 +63,6 @@ func AssertGoMockGeneratedMethod(g *gomega.WithT, method reflect.Method, receive
     for i, isVariadic, lastIdx := 1, ft.IsVariadic(), ft.NumIn()-1; i <= lastIdx; i++ {
         v := MockValue(ft.In(i), isVariadic && i == lastIdx)
         actualIn = append(actualIn, v)
-        fmt.Printf("method=%s, IsVariadic=%v, in=%T\n", method.Name, ft.IsVariadic(), v.Interface())
         if isVariadic && i == lastIdx {
             // this is a varargs, the expectIn should be []interface{}{gomock.Any()}
             expectIn = append(expectIn, reflect.ValueOf([]interface{}{gomock.Any()}))
