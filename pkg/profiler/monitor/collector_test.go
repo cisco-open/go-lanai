@@ -22,7 +22,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -34,13 +33,6 @@ import (
 	Setup
  *************************/
 
-// TestMain is the only place we should kick off embedded redis
-func TestMain(m *testing.M) {
-	suitetest.RunTests(m,
-		embedded.Redis(),
-	)
-}
-
 /*************************
 	Test
  *************************/
@@ -50,11 +42,12 @@ type testDI struct {
 	DataCollector *dataCollector
 }
 
-func TestLogoutMiddleware(t *testing.T) {
-	SamplingRate = 100 * time.Microsecond
+func TestDataCollector(t *testing.T) {
+	SamplingRate = 10 * time.Millisecond
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		embedded.WithRedis(),
 		apptest.WithModules(Module, redis.Module),
 		apptest.WithDI(di),
 		test.GomegaSubTest(SubTestSubscribe(di), "TestSubscribe"),

@@ -131,11 +131,7 @@ func UseLogLevel(lvl log.LoggingLevel) TestServerOptions {
 // created via NewRequest.
 func AddDefaultRequestOptions(opts...RequestOptions) TestServerOptions {
 	return func(conf *TestServerConfig) {
-		if conf.RequestOptions == nil {
-			conf.RequestOptions = opts
-		} else {
-			conf.RequestOptions = append(conf.RequestOptions, opts...)
-		}
+		conf.RequestOptions = append(conf.RequestOptions, opts...)
 	}
 }
 

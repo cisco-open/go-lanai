@@ -14,36 +14,25 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package kafkatest
+package sessionmock
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+    "cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/internal"
+    "github.com/golang/mock/gomock"
+    "github.com/onsi/gomega"
+    "testing"
 )
 
-type MockedSubscriber struct {
-	T     string
-	Parts []int32
+// TestMockStore test generated mocks in following aspects:
+// - make sure the mock implements the intended interfaces
+// - make sure implemented methods doesn't panic
+// - make sure implemented methods invocation can be mocked and recorded
+func TestMockStore(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mock := NewMockStore(ctrl)
+
+	internal.AssertGoMockGenerated[session.Store](g, mock, ctrl)
 }
-
-func NewMockedSubscriber(topic string) *MockedSubscriber {
-	return &MockedSubscriber{
-		T:     topic,
-		Parts: []int32{int32(utils.RandomIntN(0xffff))},
-	}
-}
-
-func (s *MockedSubscriber) Topic() string {
-	return s.T
-}
-
-func (s *MockedSubscriber) Partitions() []int32 {
-	return s.Parts
-}
-
-func (s *MockedSubscriber) AddHandler(handlerFunc kafka.MessageHandlerFunc, opts ...kafka.DispatchOptions) error {
-	// noop
-	return nil
-}
-
-

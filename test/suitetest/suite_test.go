@@ -26,12 +26,14 @@ import (
 var counter = &testHookCounter{}
 
 type testHookCounter struct {
-	setupCount       int
-	pkgSetupCount    int
-	subSetupCount    int
-	teardownCount    int
-	pkgTeardownCount int
-	subTeardownCount int
+	setupCount              int
+	pkgSetupCount           int
+	pkgOrderedSetupCount    int
+	subSetupCount           int
+	teardownCount           int
+	pkgTeardownCount        int
+	pkgOrderedTeardownCount int
+	subTeardownCount        int
 }
 
 func (c *testHookCounter) mainSetup() error {
@@ -41,6 +43,16 @@ func (c *testHookCounter) mainSetup() error {
 
 func (c *testHookCounter) mainTeardown() error {
 	c.pkgTeardownCount ++
+	return nil
+}
+
+func (c *testHookCounter) mainOrderedSetup() error {
+	c.pkgOrderedSetupCount++
+	return nil
+}
+
+func (c *testHookCounter) mainOrderedTeardown() error {
+	c.pkgOrderedTeardownCount++
 	return nil
 }
 
@@ -71,9 +83,12 @@ func (c *testHookCounter) subTeardown(_ context.Context, _ *testing.T) error {
 func TestMain(m *testing.M) {
 	RunTests(m,
 		Setup(counter.mainSetup), Teardown(counter.mainTeardown),
+		SetupWithOrder(10, counter.mainOrderedSetup), TeardownWithOrder(10, counter.mainOrderedTeardown),
 		TestSetup(counter.setup), TestTeardown(counter.teardown),
-		TestOptions(test.SubTestSetup(counter.subSetup)),
-		TestOptions(test.SubTestTeardown(counter.subTeardown)),
+		WithOptions(
+			TestOptions(test.SubTestSetup(counter.subSetup)),
+			TestOptions(test.SubTestTeardown(counter.subTeardown)),
+		),
 	)
 }
 
@@ -101,7 +116,9 @@ func TestAllHookInvocations(t *testing.T) {
 
 	g := gomega.NewWithT(t)
 	g.Expect(counter.pkgSetupCount).To(gomega.Equal(1), "Suite setup should be invoked once for entire package")
+	g.Expect(counter.pkgOrderedSetupCount).To(gomega.Equal(1), "Suite setup with order should be invoked once for entire package")
 	g.Expect(counter.pkgTeardownCount).To(gomega.Equal(0), "Suite teardown should be invoked once for entire package")
+	g.Expect(counter.pkgOrderedTeardownCount).To(gomega.Equal(0), "Suite teardown with order should be invoked once for entire package")
 
 	g.Expect(counter.setupCount).To(gomega.Equal(1), "Suite's test setup should be invoked once per test")
 	g.Expect(counter.teardownCount).To(gomega.Equal(1), "Suite's test teardown should be invoked once per test")
