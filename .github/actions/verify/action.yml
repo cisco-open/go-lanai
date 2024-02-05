@@ -7,7 +7,7 @@ author: "Livan Du"
 inputs:
   coverpkg:
     description: 'Packages for test coverage calculation. Default to "./pkg/..."'
-    default: './pkg/...'
+    default: './pkg/...,./test/...'
     required: true
   fail_on_lint_issues:
     description: "Fail when linters report issues. Default to false"

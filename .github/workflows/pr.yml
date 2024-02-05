@@ -65,7 +65,6 @@ jobs:
       - name: "Test & Code Quality"
         uses: ./.tmp/.github/actions/verify
         with:
-          coverpkg: './pkg/...,./test/...'
           fail_on_lint_issues: 'true'
       - name: "Calculate PR Test Coverage"
         id: pr_coverage
