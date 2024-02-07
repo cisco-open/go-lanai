@@ -101,8 +101,8 @@ func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *MockedAccount) oauth2.
 	})
 	details := NewMockedSecurityDetails(func(d *SecurityDetailsMock) {
 		*d = SecurityDetailsMock{
-			Username:         mt.UName,
-			UserId:           mt.UID,
+			Username:         acct.Username(),
+			UserId:           acct.UserId,
 			TenantExternalId: mt.TExternalId,
 			TenantId:         mt.TID,
 			Exp:              mt.ExpTime,

@@ -149,12 +149,12 @@ type mockedAccounts struct {
 	lookup   map[string]*MockedAccount
 }
 
-func newMockedAccounts(props *mockingProperties) *mockedAccounts {
+func newMockedAccounts(acctProps map[string]*MockedAccountProperties) *mockedAccounts {
 	accts := mockedAccounts{
 		idLookup: map[string]*MockedAccount{},
 		lookup:   map[string]*MockedAccount{},
 	}
-	for _, v := range props.Accounts {
+	for _, v := range acctProps {
 		acct := newMockedAccount(v)
 		if acct.MockedAccountDetails.Username != "" {
 			accts.lookup[acct.MockedAccountDetails.Username] = acct
@@ -225,12 +225,12 @@ type mockedTenants struct {
 	extIdLookup map[string]*mockedTenant
 }
 
-func newMockedTenants(props *mockingProperties) *mockedTenants {
+func newMockedTenants(tenantProps map[string]*MockedTenantProperties) *mockedTenants {
 	tenants := mockedTenants{
 		idLookup:    map[string]*mockedTenant{},
 		extIdLookup: map[string]*mockedTenant{},
 	}
-	for _, v := range props.Tenants {
+	for _, v := range tenantProps {
 		t := newMockedTenant(v)
 		if t.ExternalId != "" {
 			tenants.extIdLookup[t.ExternalId] = t

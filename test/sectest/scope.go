@@ -78,8 +78,8 @@ type MocksDIOut struct {
 // Try use WithMockedScopes instead
 func ProvideScopeMocks(ctx *bootstrap.ApplicationContext) MocksDIOut {
 	props := bindMockingProperties(ctx)
-	accounts := newMockedAccounts(props)
-	tenants := newMockedTenants(props)
+	accounts := newMockedAccounts(props.Accounts)
+	tenants := newMockedTenants(props.Tenants)
 	base := mockedBase{
 		accounts: accounts,
 		tenants:  tenants,

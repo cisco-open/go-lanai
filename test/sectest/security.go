@@ -90,6 +90,13 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 				opt.ClientId = details.ClientID
 				opt.Scopes = details.Scopes
 				opt.Approved = true
+				for k, v := range details.OAuth2Parameters {
+					opt.Parameters[k] = v
+					opt.Extensions[k] = v
+				}
+				for k, v := range details.OAuth2Extensions {
+					opt.Extensions[k] = v
+				}
 			})
 			opt.Token = token
 			opt.UserAuth = user

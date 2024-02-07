@@ -47,6 +47,8 @@ type SecurityDetailsMock struct {
 	KVs                      map[string]interface{}
 	ClientID                 string
 	Scopes                   utils.StringSet
+	OAuth2Parameters         map[string]string
+	OAuth2Extensions         map[string]interface{}
 }
 
 // MockedSecurityDetails implements
@@ -174,11 +176,11 @@ func (d *MockedSecurityDetails) EffectiveAssignedTenantIds() utils.StringSet {
 }
 
 func (d *MockedSecurityDetails) LocaleCode() string {
-	return ""
+	return valueFromMap[string](d.KVs, "LocaleCode")
 }
 
 func (d *MockedSecurityDetails) CurrencyCode() string {
-	return ""
+	return valueFromMap[string](d.KVs, "CurrencyCode")
 }
 
 func (d *MockedSecurityDetails) FirstName() string {
@@ -190,5 +192,16 @@ func (d *MockedSecurityDetails) LastName() string {
 }
 
 func (d *MockedSecurityDetails) Email() string {
-	return ""
+	return valueFromMap[string](d.KVs, "Email")
+}
+
+func valueFromMap[T any](m map[string]interface{}, key string) T {
+	var zero T
+	if m == nil {
+		return zero
+	}
+	if v, ok := m[key].(T); ok {
+		return v
+	}
+	return zero
 }

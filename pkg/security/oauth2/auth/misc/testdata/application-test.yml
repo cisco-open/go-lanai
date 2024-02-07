@@ -1,0 +1,36 @@
+mocking:
+  clients:
+    super:
+      id: "super-client"
+      grant-types: []
+      scopes: ["read", "write", "token_details", "tenant_hierarchy"]
+      redirect-uris: []
+      access-token-validity: 1m
+      refresh-token-validity: 2m
+      tenants: ["id-root"]
+    minor:
+      id: "minor-client"
+      grant-types: [ ]
+      scopes: [ "read", "write"]
+      redirect-uris: [ ]
+      access-token-validity: 1m
+      refresh-token-validity: 2m
+      tenants: []
+  accounts:
+    user1:
+      username: "test-user-1"
+      user-id: "id-test-user-1"
+      default-tenant: "id-root"
+      tenants: ["id-root"]
+      permissions: [ "VIEW_OPERATOR_LOGIN_AS_CUSTOMER", "SWITCH_TENANT" ]
+    user2:
+      username: "test-user-2"
+      user-id: "id-test-user-2"
+      default-tenant: "id-root"
+      tenants: ["id-root"]
+      permissions: ["SWITCH_TENANT"]
+  tenants:
+    tenant:
+      id: "id-root"
+      name: "root-tenant"
+

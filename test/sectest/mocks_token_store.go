@@ -19,11 +19,26 @@ package sectest
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 )
 
 type mockedTokenStoreReader struct {
 	*mockedBase
+}
+
+// NewMockedTokenStoreReader create a mocked oauth2.TokenStoreReader based on properties,
+// The returned reader also implements MockedTokenRevoker
+func NewMockedTokenStoreReader(acctsProps map[string]*MockedAccountProperties, tenantProps map[string]*MockedTenantProperties) oauth2.TokenStoreReader {
+	accounts := newMockedAccounts(acctsProps)
+	tenants := newMockedTenants(tenantProps)
+	return &mockedTokenStoreReader{
+		mockedBase: &mockedBase{
+			accounts: accounts,
+			tenants:  tenants,
+			revoked:  utils.NewStringSet(),
+		},
+	}
 }
 
 func newMockedTokenStoreReader(base *mockedBase) oauth2.TokenStoreReader {
