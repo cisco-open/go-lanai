@@ -18,6 +18,8 @@
 
 import './csrf'
 import SwaggerUI from 'swagger-ui'
+import SwaggerUIStandalonePreset from 'swagger-ui/dist/swagger-ui-standalone-preset'
+
 import {
   NfvOAuth2SsoPlugin
 } from './plugins/sso-plugin'
@@ -57,6 +59,7 @@ window.onload = () => {
       plugins: plugins,
       presets: [
         SwaggerUI.presets.apis,
+        SwaggerUIStandalonePreset
       ],
       /*--------------------------------------------*\
        * Display

@@ -25,7 +25,7 @@ module.exports = env => {
   return {
     entry: {
       "swagger-ui-bundle": {
-        import: ['swagger-ui']
+        import: ['swagger-ui', 'swagger-ui/dist/swagger-ui-standalone-preset']
       },
       "nfv-swagger-ui": {
         import: './js/nfv-swagger-ui.js',
