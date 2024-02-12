@@ -49,3 +49,33 @@ go run cmd/auth-service/main.go
 Navigate to http://localhost:8900/auth/login, you will see the login page. To see the auth service in full action, run it
 together with another example such as the [database example](../database). Auth service will be used to authenticate the user
 in those examples. See `configs/application.yml`'s ```security.in-memory.accounts``` property to see the user you can use with this example.
+
+## Appendix
+
+### Example Commands to Generate the JWT Key Pair
+
+Generate the private key:
+
+```shell
+openssl genrsa -out jwtkeys.pem -aes256 1024
+```
+
+Extract the public key:
+
+```shell
++openssl rsa -in jwtkeys.pem -pubout > jwtpubkey.pem
+```
+
+### Example Commands to Generate the SAML Key and Certificate
+
+Generate the private key:
+
+```shell
+openssl genrsa -out saml.key -aes256 1024
+```
+
+Generate the certificate:
+
+```shell
+openssl req -key saml.key -new -x509 -days 36500 -out saml.cert
+```

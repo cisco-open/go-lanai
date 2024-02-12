@@ -3,7 +3,7 @@ security:
     jwt:
       id: dev
       format: pem
-      file: "testdata/jwtkeys.pem"
+      file: "testdata/jwt_test_keys.pem"
       password: TheCakeIsaLie
   jwt:
     key-name: "jwt"
