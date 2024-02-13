@@ -16,9 +16,12 @@
 
 package utils
 
-import "context"
+import (
+	"context"
+)
 
-// MutableContext matches *gin.Context.
+// MutableContext wraps context.Context with an internal KV pairs storage.
+// KV pairs stored in this context can be changed in later time.  
 type MutableContext interface {
 	context.Context
 	Set(key string, value interface{})
@@ -37,6 +40,10 @@ type ExtendedMutableContext interface {
 
 type ContextValuer func(key interface{}) interface{}
 
+// ckMutableContext is the key for itself
+type mutableContextKey struct{}
+var ckMutableContext = mutableContextKey{}
+
 // mutableContext implements GinContext, ListableContext and MutableContext
 type mutableContext struct {
 	context.Context
@@ -45,6 +52,11 @@ type mutableContext struct {
 }
 
 func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
+	switch key {
+	case ckMutableContext:
+		return ctx
+	}
+
 	// get value from value map first, in case the key-value pair is overwritten
 	ret, ok := ctx.values[key]
 	if !ok || ret == nil {
@@ -79,27 +91,35 @@ func (ctx *mutableContext) SetKV(key interface{}, value interface{}) {
 	}
 }
 
-func NewMutableContext() MutableContext {
-	return &mutableContext{
-		Context: context.Background(),
-		values: make(map[interface{}]interface{}),
-	}
-}
-
 func (ctx *mutableContext) Values() map[interface{}]interface{} {
 	return ctx.values
 }
 
+func NewMutableContext() MutableContext {
+	return &mutableContext{
+		Context: context.Background(),
+		values:  make(map[interface{}]interface{}),
+	}
+}
+
 // MakeMutableContext return the context itself if it's already a MutableContext and no additional ContextValuer are specified.
 // Otherwise, wrap the given context as MutableContext.
+// Note: If given context hierarchy contains MutableContext as parent context, their mutable store (map) is shared
 func MakeMutableContext(parent context.Context, valuers ...ContextValuer) MutableContext {
-	if mutable, ok := parent.(MutableContext); ok && len(valuers) == 0 {
+	if mutable, ok := parent.(*mutableContext); ok && len(valuers) == 0 {
 		return mutable
 	}
-
 	return &mutableContext{
 		Context: parent,
 		values:  make(map[interface{}]interface{}),
 		valuers: valuers,
 	}
+}
+
+// FindMutableContext return MutableContext from given context.Context's inheritance hierarchy.
+// Important: this function may returns parent context of the given one. T
+//			  Therefore, the returned context is only for mutating KV pairs and SHOULD NOT be passed along.
+func FindMutableContext(ctx context.Context) MutableContext {
+	mc, _ := ctx.Value(ckMutableContext).(MutableContext)
+	return mc
 }

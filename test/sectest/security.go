@@ -20,6 +20,7 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 )
 
 /**************************
@@ -39,10 +40,11 @@ func ContextWithSecurity(ctx context.Context, opts ...SecurityContextOptions) co
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	return &testScopeContext{
-		Context: ctx,
-		auth:    opt.Authentication,
-	}
+	// with a no-op valuer, we force a new utils.MutableContext is created,
+	// in order to preserve any security context in the original "ctx"
+	testCtx := utils.MakeMutableContext(ctx, func(key interface{}) interface{} { return nil})
+	security.MustSet(testCtx, opt.Authentication)
+	return testCtx
 }
 
 // WithMockedSecurity used to mock an oauth2.Authentication in the given context, returning a new context
@@ -71,6 +73,7 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 			for perm := range details.Permissions() {
 				opt.Permissions[perm] = true
 			}
+			opt.Details = details.KVs
 		})
 		token := &MockedToken{
 			MockedTokenInfo: MockedTokenInfo{
@@ -90,6 +93,8 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 				opt.ClientId = details.ClientID
 				opt.Scopes = details.Scopes
 				opt.Approved = true
+				opt.GrantType = details.OAuth2GrantType
+				opt.ResponseTypes = utils.NewStringSetFrom(details.OAuth2ResponseTypes)
 				for k, v := range details.OAuth2Parameters {
 					opt.Parameters[k] = v
 					opt.Extensions[k] = v
@@ -106,19 +111,4 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 	}
 }
 
-/**************************
-	Context
- **************************/
 
-// testScopeContext override security of parent context
-type testScopeContext struct {
-	context.Context
-	auth security.Authentication
-}
-
-func (c testScopeContext) Value(key interface{}) interface{} {
-	if key == security.ContextKeySecurity {
-		return c.auth
-	}
-	return c.Context.Value(key)
-}

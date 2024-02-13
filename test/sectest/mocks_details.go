@@ -27,6 +27,7 @@ type SecurityMockOptions func(d *SecurityDetailsMock)
 type SecurityDetailsMock struct {
 	Username                 string
 	UserId                   string
+	AccountType              security.AccountType
 	TenantExternalId         string
 	TenantId                 string
 	ProviderName             string
@@ -47,6 +48,8 @@ type SecurityDetailsMock struct {
 	KVs                      map[string]interface{}
 	ClientID                 string
 	Scopes                   utils.StringSet
+	OAuth2GrantType          string
+	OAuth2ResponseTypes      utils.StringSet
 	OAuth2Parameters         map[string]string
 	OAuth2Extensions         map[string]interface{}
 }
@@ -66,6 +69,7 @@ type MockedSecurityDetails struct {
 func NewMockedSecurityDetails(opts ...SecurityMockOptions) *MockedSecurityDetails {
 	ret := MockedSecurityDetails{
 		SecurityDetailsMock{
+			AccountType: security.AccountTypeDefault,
 			ClientID: "mock",
 		},
 	}
@@ -160,7 +164,7 @@ func (d *MockedSecurityDetails) Username() string {
 }
 
 func (d *MockedSecurityDetails) AccountType() security.AccountType {
-	return security.AccountTypeDefault
+	return d.SecurityDetailsMock.AccountType
 }
 
 // Deprecated: the interface is deprecated

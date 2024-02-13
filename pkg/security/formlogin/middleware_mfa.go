@@ -117,8 +117,7 @@ func (mw *MfaAuthenticationMiddleware) currentAuth(ctx *gin.Context) (passwd.Use
 
 func (mw *MfaAuthenticationMiddleware) handleSuccess(c *gin.Context, before, new security.Authentication) {
 	if new != nil {
-		c.Set(gin.AuthUserKey, new.Principal())
-		c.Set(security.ContextKeySecurity, new)
+		security.MustSet(c, new)
 	}
 	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, new)
 	if c.Writer.Written() {
@@ -128,7 +127,7 @@ func (mw *MfaAuthenticationMiddleware) handleSuccess(c *gin.Context, before, new
 
 func (mw *MfaAuthenticationMiddleware) handleError(c *gin.Context, err error, candidate security.Candidate) {
 	if mw.shouldClear(err) {
-		security.Clear(c)
+		security.MustClear(c)
 	}
 	_ = c.Error(err)
 	c.Abort()

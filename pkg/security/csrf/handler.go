@@ -34,19 +34,24 @@ func (h *ChangeCsrfHandler) HandleAuthenticationSuccess(c context.Context, _ *ht
 	}
 
 	// TODO: review error handling of this block
-	if mc, ok := c.(utils.MutableContext); ok {
-		t, err := h.csrfTokenStore.LoadToken(c)
+	t, err := h.csrfTokenStore.LoadToken(c)
 
-		if err != nil {
+	if err != nil {
+		panic(security.NewInternalError(err.Error()))
+	}
+
+	if t != nil {
+		t = h.csrfTokenStore.Generate(c, t.ParameterName, t.HeaderName)
+		if e := h.csrfTokenStore.SaveToken(c, t); e != nil {
 			panic(security.NewInternalError(err.Error()))
 		}
+	}
 
-		if t != nil {
-			t = h.csrfTokenStore.Generate(c, t.ParameterName, t.HeaderName)
-			if e := h.csrfTokenStore.SaveToken(c, t); e != nil {
-				panic(security.NewInternalError(err.Error()))
-			}
-			mc.Set(web.ContextKeyCsrf, t)
-		}
+	if mc := utils.FindMutableContext(c); mc != nil {
+		mc.Set(web.ContextKeyCsrf, t)
+	}
+
+	if gc := web.GinContext(c); gc != nil {
+		gc.Set(web.ContextKeyCsrf, t)
 	}
 }

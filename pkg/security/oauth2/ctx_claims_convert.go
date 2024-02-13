@@ -69,6 +69,8 @@ func claimUnmarshalConvert(v reflect.Value, fieldType reflect.Type) (reflect.Val
 		return toAddr(v)
 	case v.Type().AssignableTo(mapType) && isStructOrStructPtr(fieldType):
 		return mapToStruct(v, fieldType)
+	case sSliceType.AssignableTo(fieldType):
+		return toStringSlice(v)
 
 	// special source types
 	case v.Type().AssignableTo(float32Type):
@@ -175,6 +177,26 @@ func toAddr(v reflect.Value) (reflect.Value, error) {
 		return reflect.ValueOf(utils.Float64Ptr(v.Float())), nil
 	default:
 		return reflect.Value{}, fmt.Errorf("value [%v, %T] cannot be addressed", v.Interface(), v.Interface())
+	}
+}
+
+func toStringSlice(v reflect.Value) (reflect.Value, error) {
+	switch {
+	case v.Type().ConvertibleTo(sSliceType):
+		return v.Convert(sSliceType), nil
+	case v.Type().ConvertibleTo(iSliceType):
+		srcSlice := v.Convert(iSliceType)
+		slice := reflect.MakeSlice(sSliceType, srcSlice.Len(), srcSlice.Len())
+		for i := 0; i < srcSlice.Len(); i++ {
+			elem := srcSlice.Index(i).Elem()
+			if !elem.Type().ConvertibleTo(stringType) {
+				return reflect.Value{}, fmt.Errorf("type %T cannot be converted to []string, source contains non-string type %T", v.Interface(), elem.Interface())
+			}
+			slice.Index(i).Set(elem.Convert(stringType))
+		}
+		return slice, nil
+	default:
+		return reflect.Value{}, fmt.Errorf("type %T cannot be converted to []string", v.Interface())
 	}
 }
 

@@ -128,7 +128,7 @@ func (store *InMemoryAccountStore) tryLoadPolicy(ctx context.Context, account *s
 	}
 
 	// try to cache loaded policy in context
-	if mutable, ok := ctx.(utils.MutableContext); ok {
+	if mutable := utils.FindMutableContext(ctx); mutable != nil {
 		mutable.Set(ctxKey, policy)
 	}
 	return policy, nil

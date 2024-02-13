@@ -84,7 +84,7 @@ func (h TokenRevokingLogoutHandler) HandleLogout(ctx context.Context, r *http.Re
 
 func (h TokenRevokingLogoutHandler) handleGetOrPost(ctx context.Context, auth security.Authentication) error {
 	defer func() {
-		security.Clear(ctx)
+		security.MustClear(ctx)
 		session.Clear(ctx)
 	}()
 	s := session.Get(ctx)

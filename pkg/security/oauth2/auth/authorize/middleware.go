@@ -276,22 +276,13 @@ func (mw *AuthorizeEndpointMiddleware) parseApproval(ctx *gin.Context) (approval
 	return
 }
 
-func (mw *AuthorizeEndpointMiddleware) transferContextValues(src context.Context, dst *gin.Context) {
+func (mw *AuthorizeEndpointMiddleware) transferContextValues(src context.Context, dst context.Context) {
+	mutable := utils.FindMutableContext(dst)
 	listable, ok := src.(utils.ListableContext)
-	if !ok {
+	if !ok || mutable == nil{
 		return
 	}
-
 	for k, v := range listable.Values() {
-		key := ""
-		switch k.(type) {
-		case string:
-			key = k.(string)
-		case fmt.Stringer:
-			key = k.(fmt.Stringer).String()
-		default:
-			continue
-		}
-		dst.Set(key, v)
+		mutable.(utils.ExtendedMutableContext).SetKV(k, v)
 	}
 }

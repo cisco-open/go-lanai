@@ -934,8 +934,8 @@ func (m MockAutoCreateUserDetails) GetRegularUserRoleNames() []string {
 
 func authorizeReqOptions(clientId string) webtest.RequestOptions {
 	return func(req *http.Request) {
-		req.Host = fmt.Sprintf("http://%s", testdata.IdpDomainExtSAML)
-		req.URL.Host = fmt.Sprintf("http://%s", testdata.IdpDomainExtSAML)
+		req.Host = testdata.IdpDomainExtSAML
+		req.URL.Host = testdata.IdpDomainExtSAML
 		values := url.Values{}
 		values.Set(oauth2.ParameterGrantType, oauth2.GrantTypeAuthCode)
 		values.Set(oauth2.ParameterResponseType, "code")

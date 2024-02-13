@@ -29,8 +29,7 @@ type MockAuthenticationMiddleware struct {
 }
 
 // NewMockAuthenticationMiddleware
-// deprecated, directly set MWMocker field with MWMocker interface or MWMockFunc
-// Recommended to use WithMockedMiddleware test options
+// Deprecated, directly set MWMocker field with MWMocker interface or MWMockFunc, Recommended to use WithMockedMiddleware test options
 func NewMockAuthenticationMiddleware(authentication security.Authentication) *MockAuthenticationMiddleware {
 	return &MockAuthenticationMiddleware{
 		MockedAuthentication: authentication,
@@ -51,7 +50,7 @@ func (m *MockAuthenticationMiddleware) AuthenticationHandlerFunc() gin.HandlerFu
 		if auth == nil {
 			auth = m.MockedAuthentication
 		}
-		ctx.Set(security.ContextKeySecurity, auth)
+		security.MustSet(ctx, auth)
 	}
 }
 

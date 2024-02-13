@@ -36,11 +36,8 @@ func Get(c context.Context) *Session {
 }
 
 func Clear(c context.Context) {
-	if mc, ok := c.(utils.MutableContext); ok {
+	if mc := utils.FindMutableContext(c); mc != nil {
 		mc.Set(contextKeySession, nil)
-	}
-	if gc := web.GinContext(c); gc != nil {
-		gc.Set(contextKeySession, nil)
 	}
 }
 
@@ -100,9 +97,9 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 		}
 
 		if auth, ok := current.Get(sessionKeySecurity).(security.Authentication); ok {
-			c.Set(security.ContextKeySecurity, auth)
+			security.MustSet(c, auth)
 		} else {
-			c.Set(security.ContextKeySecurity, nil)
+			security.MustClear(c)
 		}
 	}
 }

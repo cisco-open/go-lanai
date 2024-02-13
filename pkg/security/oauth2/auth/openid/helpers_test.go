@@ -1,4 +1,4 @@
-package misc_test
+package openid
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -21,21 +20,22 @@ import (
 
 const (
 	IssuerDomain  = `misc.test`
-	IssuerPath  = `/auth`
+	IssuerPath    = `/auth`
 	TestUser1     = `test-user-1`
 	TestUser2     = `test-user-2`
 	TestTenantID  = `id-root`
 	ClientIDSuper = `super-client`
 	ClientIDMinor = `minor-client`
-	JwtKID        = `test-key`
+	JwtKID    = `test-key`
+	TestNonce = "please give it back"
 )
 
 const MockingPrefix = "mocking"
 
 type MockingProperties struct {
-	Accounts    map[string]*sectest.MockedAccountProperties       `json:"accounts"`
-	Tenants     map[string]*sectest.MockedTenantProperties        `json:"tenants"`
-	Clients     map[string]*sectest.MockedClientProperties        `json:"clients"`
+	Accounts map[string]*sectest.MockedAccountProperties `json:"accounts"`
+	Tenants  map[string]*sectest.MockedTenantProperties  `json:"tenants"`
+	Clients  map[string]*sectest.MockedClientProperties  `json:"clients"`
 }
 
 func BindMockingProperties(appCtx *bootstrap.ApplicationContext) MockingProperties {
@@ -156,8 +156,7 @@ func ContextWithClient(ctx context.Context, g *gomega.WithT, di *AuthDI, clientI
 	client, e := di.ClientStore.LoadClientByClientId(ctx, clientId)
 	g.Expect(e).To(Succeed(), "client [%s] should exists", clientId)
 	auth := MockedClientAuth{Client: client}
-	ctx = utils.MakeMutableContext(ctx)
-	security.MustSet(ctx, auth)
+	ctx = context.WithValue(ctx, security.ContextKeySecurity, auth)
 	return context.WithValue(ctx, oauth2.CtxKeyAuthenticatedClient, client)
 }
 

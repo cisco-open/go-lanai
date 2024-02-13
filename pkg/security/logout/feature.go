@@ -134,6 +134,6 @@ func New() *LogoutFeature {
 type DefaultLogoutHandler struct{}
 
 func (h DefaultLogoutHandler) HandleLogout(ctx context.Context, _ *http.Request, _ http.ResponseWriter, _ security.Authentication) error {
-	security.Clear(ctx)
+	security.MustClear(ctx)
 	return nil
 }

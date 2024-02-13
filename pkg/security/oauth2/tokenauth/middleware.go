@@ -68,7 +68,7 @@ func (mw *TokenAuthMiddleware) AuthenticateHandlerFunc() gin.HandlerFunc {
 
 		// We always re-authenticate by clearing current auth
 		before := security.Get(ctx)
-		security.Clear(ctx)
+		security.MustClear(ctx)
 
 		// grab bearer token and create candidate
 		tokenValue, e := mw.extractAccessToken(ctx)
@@ -96,8 +96,7 @@ func (mw *TokenAuthMiddleware) AuthenticateHandlerFunc() gin.HandlerFunc {
 
 func (mw *TokenAuthMiddleware) handleSuccess(c *gin.Context, before, new security.Authentication) {
 	if new != nil {
-		c.Set(gin.AuthUserKey, new.Principal())
-		c.Set(security.ContextKeySecurity, new)
+		security.MustSet(c, new)
 	}
 
 	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, new)
@@ -124,7 +123,7 @@ func (mw *TokenAuthMiddleware) handleError(c *gin.Context, err error) {
 		err = oauth2.NewInvalidAccessTokenError(err)
 	}
 
-	security.Clear(c)
+	security.MustClear(c)
 	_ = c.Error(err)
 	c.Abort()
 }

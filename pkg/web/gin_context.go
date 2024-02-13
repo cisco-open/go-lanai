@@ -76,26 +76,27 @@ func MustHttpRequest(ctx context.Context) *http.Request {
 	return MustGinContext(ctx).Request
 }
 
-// SetKV set a kv pair to given context.
-// The value can be obtained via context.Context.Value(key)
-// - When Key is string, put it in gin.Context
-// - When Key is not string, try MutableKVContext
-// - Fallback to use fmt.Sprintf(`%v`, key) as key and put it in gin.Context
+// SetKV set a kv pair to given context if it is a utils.MutableContext or has a parent of utils.MutableContext.
+// The value then can be obtained via context.Context.Value(key)
+// This function uses utils.FindMutableContext and store KV pair using following rule:
+// - When utils.FindMutableContext returns nil, does nothing.
+// - When Key is string, KV pair is set as-is
+// - When Key is not string but the mutable context also implement utils.ExtendedMutableContext, KV pair is set as-is
+// - Otherwise, uses fmt.Sprintf(`%v`, key) as key and set KV pair via utils.MutableContext interface
 func SetKV(ctx context.Context, key interface{}, value interface{}) {
-	if strKey, ok := key.(string); ok {
-		switch c := ctx.(type) {
-		case utils.MutableContext:
-			c.Set(strKey, value)
+	mc := utils.FindMutableContext(ctx)
+	if mc == nil {
+		return
+	}
+	switch k := key.(type) {
+	case string:
+		mc.Set(k, value)
+	default:
+		if c, ok := mc.(utils.ExtendedMutableContext); ok {
+			c.SetKV(key, value)
+		} else {
+			c.SetKV(fmt.Sprintf("%v", key), value)
 		}
-		return
-	}
-	if c, ok := ctx.(utils.ExtendedMutableContext); ok {
-		c.SetKV(key, value)
-		return
-	}
-	// fallback
-	if gc := GinContext(ctx); gc != nil {
-		gc.Set(fmt.Sprintf(`%v`, key), value)
 	}
 }
 

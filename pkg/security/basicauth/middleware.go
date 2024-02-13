@@ -91,15 +91,14 @@ func (basic *BasicAuthMiddleware) HandlerFunc() gin.HandlerFunc {
 
 func (basic *BasicAuthMiddleware) handleSuccess(c *gin.Context, before, new security.Authentication) {
 	if new != nil {
-		c.Set(gin.AuthUserKey, new.Principal())
-		c.Set(security.ContextKeySecurity, new)
+		security.MustSet(c, new)
 		basic.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, new)
 	}
 	c.Next()
 }
 
 func (basic *BasicAuthMiddleware) handleError(c *gin.Context, err error) {
-	security.Clear(c)
+	security.MustClear(c)
 	_ = c.Error(err)
 	c.Abort()
 }

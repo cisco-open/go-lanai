@@ -195,6 +195,8 @@ func (t *DefaultAccessToken) SetExpireTime(v time.Time) *DefaultAccessToken {
 func (t *DefaultAccessToken) SetRefreshToken(v RefreshToken) *DefaultAccessToken {
 	if refresh, ok := v.(*DefaultRefreshToken); ok {
 		t.refreshToken = refresh
+	} else if v == nil {
+		t.refreshToken = nil
 	} else {
 		t.refreshToken = FromRefreshToken(v)
 	}

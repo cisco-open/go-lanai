@@ -94,8 +94,7 @@ func (mw *FormAuthenticationMiddleware) LoginProcessHandlerFunc() gin.HandlerFun
 
 func (mw *FormAuthenticationMiddleware) handleSuccess(c *gin.Context, before, new security.Authentication) {
 	if new != nil {
-		c.Set(gin.AuthUserKey, new.Principal())
-		c.Set(security.ContextKeySecurity, new)
+		security.MustSet(c, new)
 	}
 	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, new)
 	if c.Writer.Written() {
@@ -104,7 +103,7 @@ func (mw *FormAuthenticationMiddleware) handleSuccess(c *gin.Context, before, ne
 }
 
 func (mw *FormAuthenticationMiddleware) handleError(c *gin.Context, err error, candidate security.Candidate) {
-	security.Clear(c)
+	security.MustClear(c)
 	if candidate != nil {
 		s := session.Get(c)
 		if s != nil {

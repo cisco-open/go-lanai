@@ -109,23 +109,40 @@ func Get(ctx context.Context) Authentication {
 	return secCtx
 }
 
-func Clear(ctx context.Context) {
-	_ = TryClear(ctx)
+func MustSet(ctx context.Context, auth Authentication) {
+	if e := Set(ctx, auth); e != nil {
+		panic(e)
+	}
 }
 
-// TryClear attempt to clear security context. Return true if succeeded
-func TryClear(ctx context.Context) (ret bool) {
-	if mc, ok := ctx.(utils.MutableContext); ok {
-		mc.Set(gin.AuthUserKey, nil)
-		mc.Set(ContextKeySecurity, nil)
-		ret = true
+func Set(ctx context.Context, auth Authentication) error {
+	mc := utils.FindMutableContext(ctx)
+	if mc == nil {
+		return fmt.Errorf(`unable to set security into context: given context [%T] is not mutable`, ctx)
 	}
+	mc.Set(ContextKeySecurity, auth)
+
+	// optionally, set AuthUserKey into gin context if available
 	if gc := web.GinContext(ctx); gc != nil {
-		gc.Set(gin.AuthUserKey, nil)
-		gc.Set(ContextKeySecurity, nil)
-		ret = true
+		if auth == nil {
+			mc.Set(gin.AuthUserKey, nil)
+		} else {
+			mc.Set(gin.AuthUserKey, auth.Principal())
+		}
 	}
-	return
+	return nil
+}
+
+// MustClear remove security context.
+func MustClear(ctx context.Context) {
+	if e := Clear(ctx); e != nil {
+		panic(e)
+	}
+}
+
+// Clear attempt to clear security context. Return error if not possible
+func Clear(ctx context.Context) error {
+	return Set(ctx, nil)
 }
 
 func HasPermissions(auth Authentication, permissions ...string) bool {

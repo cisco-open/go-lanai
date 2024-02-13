@@ -68,7 +68,7 @@ func TestSPInitiatedSso(t *testing.T) {
 
 	authnReq, e := sp.MakeAuthenticationRequest(targetSSOUrl, saml.HTTPPostBinding, saml.HTTPPostBinding)
 	g.Expect(e).To(gomega.Succeed())
-	req, _ := http.NewRequest("POST", "/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", nil)
+	req := httptest.NewRequest("POST", "/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", nil)
 	samltest.RequestWithSAMLPostBinding(authnReq, "")(req)
 
 	w := httptest.NewRecorder()
@@ -104,7 +104,7 @@ func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
 
 	authnReq, e := unknownSp.MakeAuthenticationRequest(targetSSOUrl, saml.HTTPPostBinding, saml.HTTPPostBinding)
 	g.Expect(e).To(gomega.Succeed())
-	req, _ := http.NewRequest("POST", "/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", nil)
+	req := httptest.NewRequest("POST", "/europa/v2/authorize?grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer", nil)
 	samltest.RequestWithSAMLPostBinding(authnReq, "")(req)
 
 	w := httptest.NewRecorder()
@@ -136,7 +136,7 @@ func TestIDPInitiatedSso(t *testing.T) {
 	r := setupServerForTest(testClientStore, testAccountStore)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/europa/v2/authorize", nil)
+	req := httptest.NewRequest("GET", "/europa/v2/authorize", nil)
 	q := req.URL.Query()
 	q.Add("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
 	q.Add("idp_init", "true")
@@ -168,7 +168,7 @@ func TestMetadata(t *testing.T) {
 
 	r := setupServerForTest(testClientStore, testAccountStore)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/europa/metadata", nil)
+	req := httptest.NewRequest("GET", "/europa/metadata", nil)
 
 	r.ServeHTTP(w, req)
 
@@ -177,6 +177,8 @@ func TestMetadata(t *testing.T) {
 	g.Expect(w).To(MetadataMatcher{})
 }
 
+// FIXME: this test setup is not same as our normally "web" package initialized web server.
+// 		  Should use webtest and sectest package to mimic exact configuration
 func setupServerForTest(testClientStore samlctx.SamlClientStore, testAccountStore security.AccountStore) *gin.Engine {
 	prop := samlctx.NewSamlProperties()
 	prop.KeyFile = "testdata/saml_test.key"
@@ -205,6 +207,8 @@ func setupServerForTest(testClientStore samlctx.SamlClientStore, testAccountStor
 	mw := NewSamlAuthorizeEndpointMiddleware(metaMw, c.accountStore, c.attributeGenerator)
 
 	r := gin.Default()
+	r.ContextWithFallback = true
+	r.Use(web.GinContextMerger())
 	r.GET(serverProp.ContextPath+f.metadataPath, mw.MetadataHandlerFunc())
 	r.Use(samlErrorHandlerFunc())
 	r.Use(sectest.NewMockAuthenticationMiddleware(sectest.NewMockedUserAuthentication(func(opt *sectest.MockUserAuthOption) {
