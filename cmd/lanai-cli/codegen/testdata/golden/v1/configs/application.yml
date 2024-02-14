@@ -43,7 +43,6 @@ security:
       id: dev
       format: pem
       file: "configs/jwtpubkey.pem"
-      password: TheCakeIsaLie
   jwt:
     key-name: "jwt"
   session:

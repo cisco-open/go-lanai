@@ -46,7 +46,7 @@ security:
     jwt:
       id: dev
       format: pem
-      file: "configs/jwtkeys.pem"
+      file: "configs/jwtkeys_example.pem"
       password: TheCakeIsaLie
   jwt:
     key-name: "jwt"
@@ -58,8 +58,8 @@ security:
       context-path: ${server.context-path}
       include-port: true
     saml:
-      certificate-file: "configs/saml.cert"
-      key-file: "configs/saml.key"
+      certificate-file: "configs/saml_example.cert"
+      key-file: "configs/saml_example.key"
       key-password: "foobar"
 #    redirect-whitelist:
 #    session-timeout:
