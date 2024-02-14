@@ -21,12 +21,12 @@ import (
 )
 
 // MutableContext wraps context.Context with an internal KV pairs storage.
-// KV pairs stored in this context can be changed in later time.  
+// KV pairs stored in this context can be changed in later time.
 type MutableContext interface {
 	context.Context
 	Set(key string, value interface{})
 }
-
+// ListableContext is supplementary interface of MutableContext, listing all values stored in the context
 type ListableContext interface {
 	context.Context
 	Values() map[interface{}]interface{}

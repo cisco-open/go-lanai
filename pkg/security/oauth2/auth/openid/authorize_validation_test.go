@@ -64,6 +64,8 @@ func TestOpenIDAuthorizeRequestProcessor(t *testing.T) {
 		test.GomegaSubTest(SubTestProcessWithACR(&di), "ProcessWithClaimsRequest"),
 		test.GomegaSubTest(SubTestProcessWithMaxAge(&di), "ProcessWithMaxAge"),
 		test.GomegaSubTest(SubTestProcessWithPrompt(&di), "ProcessWithPrompt"),
+		test.GomegaSubTest(SubTestProcessWithRequestObject(&di), "ProcessWithRequestObject"),
+		test.GomegaSubTest(SubTestProcessWithRequestUri(&di), "ProcessWithRequestUri"),
 	)
 }
 
@@ -260,7 +262,7 @@ func SubTestProcessWithPrompt(di *ARProcessorDI) test.GomegaSubTestFunc {
 				})
 				ctx = sectest.ContextWithSecurity(ctx, sectest.Authentication(userAuth))
 			}
-			ctx, _ = MockGinContext(ctx, cond.request)
+			ctx= MockGinContext(ctx, cond.request)
 			req = NewOpenIDAuthorizeRequest(ctx, func(req *auth.AuthorizeRequest) {
 				req.Parameters[oauth2.ParameterPrompt] = cond.prompt
 			})
@@ -280,25 +282,76 @@ func SubTestProcessWithPrompt(di *ARProcessorDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestProcessWithRequestObject(di *ARProcessorDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *auth.AuthorizeRequest
+		type reqObjCond struct {
+			success bool
+			obj     string
+			uri     string
+		}
+		reqObj := []reqObjCond{
+			{obj: NewRequestObjectJwt(di.JwtEncoder), success: true},
+			{obj: NewRequestObjectJwt(di.JwtEncoder), uri: "http://localhost:0/authorize/request", success: false},
+			{obj: NewRequestObjectJwt(di.JwtEncoder, ARResponseTypes("token")), success: false},
+			{obj: NewRequestObjectJwt(di.JwtEncoder, ARScopes("read", "write")), success: false},
+			{obj: "malformed", success: false},
+		}
+		for _, cond := range reqObj {
+			req = auth.NewAuthorizeRequest(func(req *auth.AuthorizeRequest) {
+				req.Scopes.Add(oauth2.ScopeOidc)
+				req.ResponseTypes.Add("code")
+				if len(cond.obj) != 0 {
+					req.Parameters[oauth2.ParameterRequestObj] = cond.obj
+				}
+				if len(cond.uri) != 0 {
+					req.Parameters[oauth2.ParameterRequestUri] = cond.uri
+				}
+			}).WithContext(ctx)
+			AssertProcessor(ctx, g, di, req, cond.success, fmt.Sprintf("req obj [%s], req uri [%s]", cond.obj, cond.uri))
+		}
+	}
+}
+
+func SubTestProcessWithRequestUri(di *ARProcessorDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		var req *auth.AuthorizeRequest
+		// setup an authorize request CDN server
+		const path = `/authorize/request`
+		handler := &RequestUriHandler{Path: path}
+		server := httptest.NewServer(handler)
+		defer server.Close()
+		// do tests
+		type reqObjCond struct {
+			success bool
+			obj     string
+			uri     string
+		}
+		reqObj := []reqObjCond{
+			{uri: server.URL + path, obj: NewRequestObjectJwt(di.JwtEncoder), success: true},
+			{uri: server.URL + "/not/exists", obj: NewRequestObjectJwt(di.JwtEncoder), success: false},
+			{uri: server.URL + path, obj: NewRequestObjectJwt(di.JwtEncoder, ARResponseTypes("token")), success: false},
+			{uri: server.URL + path, obj: NewRequestObjectJwt(di.JwtEncoder, ARScopes("read", "write")), success: false},
+			{uri: server.URL + path, obj: "malformed", success: false},
+		}
+		for _, cond := range reqObj {
+			req = auth.NewAuthorizeRequest(func(req *auth.AuthorizeRequest) {
+				req.Scopes.Add(oauth2.ScopeOidc)
+				req.ResponseTypes.Add("code")
+				req.Parameters[oauth2.ParameterRequestUri] = cond.uri
+			}).WithContext(ctx)
+			handler.JWTValue = cond.obj
+			AssertProcessor(ctx, g, di, req, cond.success, fmt.Sprintf("req uri [%s], jwt [%s]", cond.uri, cond.obj))
+		}
+	}
+}
+
 /*************************
 	Helpers
  *************************/
 
-func MockGinContext(ctx context.Context, opts ...webtest.RequestOptions) (*gin.Context, http.ResponseWriter) {
-	gin.SetMode(gin.ReleaseMode)
-	rw := httptest.NewRecorder()
-	engine := gin.Default()
-	engine.ContextWithFallback = true
-	gc := gin.CreateTestContextOnly(rw, engine)
-	req := httptest.NewRequest(http.MethodGet, "/test", nil).WithContext(ctx)
-	for _, fn := range opts {
-		if fn != nil {
-			fn(req)
-		}
-	}
-	// note: utils.MakeMutableContext(ctx) is required for clearing security
-	gc.Request = req.WithContext(utils.MakeMutableContext(ctx))
-	return gc, rw
+func MockGinContext(ctx context.Context, opts ...webtest.RequestOptions) *gin.Context {
+	return webtest.NewGinContext(ctx, http.MethodGet, "/test", nil, opts...)
 }
 
 func ACRValue(lvl int) string {
@@ -320,11 +373,9 @@ func (c *MockedARProcessChain) Next(_ context.Context, request *auth.AuthorizeRe
 
 func NewOpenIDAuthorizeRequest(ctx context.Context, opts ...func(req *auth.AuthorizeRequest)) *auth.AuthorizeRequest {
 	defaultOpts := []func(req *auth.AuthorizeRequest){
-		func(req *auth.AuthorizeRequest) {
-			req.ClientId = ClientIDMinor
-			req.Scopes.Add("read", "write", oauth2.ScopeOidc)
-			req.ResponseTypes.Add("code")
-		},
+		ARClientID(ClientIDMinor),
+		ARResponseTypes("code"),
+		ARScopes("read", "write", oauth2.ScopeOidc),
 	}
 	defaultOpts = append(defaultOpts, opts...)
 	return auth.NewAuthorizeRequest(defaultOpts...).WithContext(ctx)
@@ -339,5 +390,57 @@ func AssertProcessor(ctx context.Context, g *gomega.WithT, di *ARProcessorDI, ar
 		g.Expect(processed).ToNot(BeNil(), "processed request should not be nil with %s", desc)
 	} else {
 		g.Expect(e).To(HaveOccurred(), "Process() should fail with %s", desc)
+	}
+}
+
+func NewRequestObjectJwt(encoder jwt.JwtEncoder, opts ...func(req *auth.AuthorizeRequest)) string {
+
+	ar := NewOpenIDAuthorizeRequest(context.Background(), opts...)
+	claims := oauth2.MapClaims{
+		oauth2.ParameterClientId:     ar.ClientId,
+		oauth2.ParameterResponseType: strings.Join(ar.ResponseTypes.Values(), " "),
+		oauth2.ParameterScope:        strings.Join(ar.Scopes.Values(), " "),
+		oauth2.ParameterRedirectUri:  ar.RedirectUri,
+		oauth2.ParameterState:        ar.State,
+	}
+	for k, v := range ar.Parameters {
+		claims.Set(k, v)
+	}
+	for k, v := range ar.Extensions {
+		claims.Set(k, v)
+	}
+	str, _ := encoder.Encode(context.Background(), claims)
+	return str
+}
+
+type RequestUriHandler struct {
+	Path     string
+	JWTValue string
+}
+
+func (h *RequestUriHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != h.Path {
+		rw.WriteHeader(http.StatusNotFound)
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+	_, _ = rw.Write([]byte(h.JWTValue))
+}
+
+func ARClientID(value string) func(req *auth.AuthorizeRequest) {
+	return func(req *auth.AuthorizeRequest) {
+		req.ClientId = value
+	}
+}
+
+func ARResponseTypes(values ...string) func(req *auth.AuthorizeRequest) {
+	return func(req *auth.AuthorizeRequest) {
+		req.ResponseTypes = utils.NewStringSet(values...)
+	}
+}
+
+func ARScopes(values ...string) func(req *auth.AuthorizeRequest) {
+	return func(req *auth.AuthorizeRequest) {
+		req.Scopes = utils.NewStringSet(values...)
 	}
 }

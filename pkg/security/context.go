@@ -115,6 +115,7 @@ func MustSet(ctx context.Context, auth Authentication) {
 	}
 }
 
+// Set security context, return error if not possible
 func Set(ctx context.Context, auth Authentication) error {
 	mc := utils.FindMutableContext(ctx)
 	if mc == nil {
@@ -133,16 +134,16 @@ func Set(ctx context.Context, auth Authentication) error {
 	return nil
 }
 
-// MustClear remove security context.
+// MustClear force security context as "unauthenticated".
 func MustClear(ctx context.Context) {
 	if e := Clear(ctx); e != nil {
 		panic(e)
 	}
 }
 
-// Clear attempt to clear security context. Return error if not possible
+// Clear attempt to force security context as "unauthenticated". Return error if not possible
 func Clear(ctx context.Context) error {
-	return Set(ctx, nil)
+	return Set(ctx, EmptyAuthentication("EmptyAuthentication"))
 }
 
 func HasPermissions(auth Authentication, permissions ...string) bool {

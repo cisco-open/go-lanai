@@ -23,11 +23,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"encoding/gob"
-	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
-	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
@@ -45,12 +44,11 @@ func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	s, _ := sessionStore.New(common.DefaultName)
 	s.isNew = false //if session is new it won't get changed
 
-	recorder := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
 	//The actual request is not important
-	c.Request = httptest.NewRequest("POST", "/something", nil)
-
+	c := webtest.NewGinContext(context.Background(),
+		"POST", "/something", nil,
+	)
+	c.Set(web.ContextKeySession, s)
 	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
 
@@ -73,7 +71,7 @@ func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 
 	handler.HandleAuthenticationSuccess(c, c.Request, c.Writer, mockFrom, mockTo)
 
-	resp := recorder.Result()
+	resp := webtest.GinContextRecorder(c).Result()
 	if resp.Header.Get("Set-Cookie") == "" {
 		t.Errorf("Should set new session in response header")
 	}
@@ -97,11 +95,11 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 
 	s, _ := sessionStore.New(common.DefaultName)
 
-	recorder := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
 	//The actual request is not important
-	c.Request = httptest.NewRequest("POST", "/something", nil)
+	c := webtest.NewGinContext(context.Background(),
+		"POST", "/something", nil,
+	)
+	c.Set(web.ContextKeySession, s)
 
 	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
@@ -186,11 +184,11 @@ func TestDeleteSessionOnLogoutHandler_HandleAuthenticationSuccess(t *testing.T) 
 
 	s, _ := sessionStore.New(common.DefaultName)
 
-	recorder := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
 	//The actual request is not important
-	c.Request = httptest.NewRequest("POST", "/something", nil)
+	c := webtest.NewGinContext(context.Background(),
+		"POST", "/something", nil,
+	)
+	c.Set(web.ContextKeySession, s)
 
 	principalName := "principal1"
 	mockFrom := authmock.NewMockAuthentication(ctrl)

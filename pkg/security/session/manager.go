@@ -99,7 +99,7 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 		if auth, ok := current.Get(sessionKeySecurity).(security.Authentication); ok {
 			security.MustSet(c, auth)
 		} else {
-			security.MustClear(c)
+			security.MustSet(c, nil)
 		}
 	}
 }
