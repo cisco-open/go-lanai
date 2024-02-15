@@ -50,11 +50,7 @@ func (b *managerBase) DoStartScope(ctx context.Context, scope *Scope, authFunc a
 	}
 
 	// set new security auth and return
-	scoped := &scopedContext{
-		Context: ctx,
-		scope:   scope,
-		auth:    auth,
-	}
+	scoped := newScopedContext(ctx, scope, auth)
 	return scoped, nil
 }
 

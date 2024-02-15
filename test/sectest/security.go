@@ -40,9 +40,9 @@ func ContextWithSecurity(ctx context.Context, opts ...SecurityContextOptions) co
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	// with a no-op valuer, we force a new utils.MutableContext is created,
+	// We force a new utils.MutableContext is created,
 	// in order to preserve any security context in the original "ctx"
-	testCtx := utils.MakeMutableContext(ctx, func(key interface{}) interface{} { return nil})
+	testCtx := utils.NewMutableContext(ctx)
 	security.MustSet(testCtx, opt.Authentication)
 	return testCtx
 }

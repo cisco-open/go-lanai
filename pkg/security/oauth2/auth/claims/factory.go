@@ -197,7 +197,7 @@ func tryReloadAccount(ctx context.Context, opt *FactoryOption) security.Account 
 	}
 
 	// cache it in context if possible
-	if mc, ok := ctx.(utils.MutableContext); ok {
+	if mc := utils.FindMutableContext(ctx); mc != nil {
 		mc.Set(oauth2.CtxKeyAuthenticatedAccount, user)
 	}
 	return user

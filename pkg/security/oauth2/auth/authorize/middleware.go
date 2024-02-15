@@ -221,7 +221,7 @@ func (mw *AuthorizeEndpointMiddleware) loadAuthorizeRequest(ctx *gin.Context) (*
 	}
 
 	if request, ok := s.Get(sessionKeyAuthorizeRequest).(*auth.AuthorizeRequest); ok {
-		return request.WithContext(utils.NewMutableContext()), nil
+		return request.WithContext(context.Background()), nil
 	}
 	return nil, oauth2.NewInternalError("failed to load authorize request for approval")
 }
@@ -283,6 +283,6 @@ func (mw *AuthorizeEndpointMiddleware) transferContextValues(src context.Context
 		return
 	}
 	for k, v := range listable.Values() {
-		mutable.(utils.ExtendedMutableContext).SetKV(k, v)
+		mutable.Set(k, v)
 	}
 }

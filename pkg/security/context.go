@@ -104,18 +104,19 @@ func GobRegister() {
 func Get(ctx context.Context) Authentication {
 	secCtx, ok := ctx.Value(ContextKeySecurity).(Authentication)
 	if !ok {
-		secCtx = EmptyAuthentication("EmptyAuthentication")
+		secCtx = EmptyAuthentication("not authenticated")
 	}
 	return secCtx
 }
 
+// MustSet is the panicking version of Set.
 func MustSet(ctx context.Context, auth Authentication) {
 	if e := Set(ctx, auth); e != nil {
 		panic(e)
 	}
 }
 
-// Set security context, return error if not possible
+// Set security context, return error if the given context is not backed by utils.MutableContext.
 func Set(ctx context.Context, auth Authentication) error {
 	mc := utils.FindMutableContext(ctx)
 	if mc == nil {
@@ -126,24 +127,24 @@ func Set(ctx context.Context, auth Authentication) error {
 	// optionally, set AuthUserKey into gin context if available
 	if gc := web.GinContext(ctx); gc != nil {
 		if auth == nil {
-			mc.Set(gin.AuthUserKey, nil)
+			gc.Set(gin.AuthUserKey, nil)
 		} else {
-			mc.Set(gin.AuthUserKey, auth.Principal())
+			gc.Set(gin.AuthUserKey, auth.Principal())
 		}
 	}
 	return nil
 }
 
-// MustClear force security context as "unauthenticated".
+// MustClear set security context as "unauthenticated".
 func MustClear(ctx context.Context) {
 	if e := Clear(ctx); e != nil {
 		panic(e)
 	}
 }
 
-// Clear attempt to force security context as "unauthenticated". Return error if not possible
+// Clear attempt to set security context as "unauthenticated". Return error if not possible
 func Clear(ctx context.Context) error {
-	return Set(ctx, EmptyAuthentication("EmptyAuthentication"))
+	return Set(ctx, EmptyAuthentication("not authenticated"))
 }
 
 func HasPermissions(auth Authentication, permissions ...string) bool {

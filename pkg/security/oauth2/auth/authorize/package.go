@@ -45,7 +45,7 @@ type initDI struct {
 
 func register(di initDI) {
 	if di.SecRegistrar != nil {
-		configurer := newOAuth2AuhtorizeEndpointConfigurer()
+		configurer := newOAuth2AuthorizeEndpointConfigurer()
 		di.SecRegistrar.(security.FeatureRegistrar).RegisterFeature(FeatureId, configurer)
 	}
 }

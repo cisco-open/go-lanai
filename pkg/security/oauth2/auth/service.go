@@ -213,36 +213,36 @@ func (s *DefaultAuthorizationService) createContextDetails(ctx context.Context,
 		return nil, e
 	}
 
-	mutableCtx, ok := ctx.(utils.MutableContext)
-	if !ok {
+	mutableSetter := utils.FindMutableContext(ctx)
+	if mutableSetter == nil {
 		return nil, newImmutableContextError()
 	}
 
-	mutableCtx.Set(oauth2.CtxKeyAuthenticatedClient, facts.client)
-	mutableCtx.Set(oauth2.CtxKeyAuthenticatedAccount, facts.account)
-	mutableCtx.Set(oauth2.CtxKeyAuthorizedTenant, facts.tenant)
-	mutableCtx.Set(oauth2.CtxKeyAuthorizedProvider, facts.provider)
-	mutableCtx.Set(oauth2.CtxKeyUserAuthentication, facts.userAuth)
-	mutableCtx.Set(oauth2.CtxKeyAuthorizationIssueTime, now)
+	mutableSetter.Set(oauth2.CtxKeyAuthenticatedClient, facts.client)
+	mutableSetter.Set(oauth2.CtxKeyAuthenticatedAccount, facts.account)
+	mutableSetter.Set(oauth2.CtxKeyAuthorizedTenant, facts.tenant)
+	mutableSetter.Set(oauth2.CtxKeyAuthorizedProvider, facts.provider)
+	mutableSetter.Set(oauth2.CtxKeyUserAuthentication, facts.userAuth)
+	mutableSetter.Set(oauth2.CtxKeyAuthorizationIssueTime, now)
 	if src != nil {
 		facts.source = src
-		mutableCtx.Set(oauth2.CtxKeySourceAuthentication, src)
+		mutableSetter.Set(oauth2.CtxKeySourceAuthentication, src)
 	}
 
 	// expiry
 	expiry := s.determineExpiryTime(ctx, request, facts)
 	if !expiry.IsZero() {
-		mutableCtx.Set(oauth2.CtxKeyAuthorizationExpiryTime, expiry)
+		mutableSetter.Set(oauth2.CtxKeyAuthorizationExpiryTime, expiry)
 	}
 
 	// auth time
 	authTime := s.determineAuthenticationTime(ctx, userAuth, facts)
 	if !authTime.IsZero() {
-		mutableCtx.Set(oauth2.CtxKeyAuthenticationTime, authTime)
+		mutableSetter.Set(oauth2.CtxKeyAuthenticationTime, authTime)
 	}
 
 	// create context details
-	return s.detailsFactory.New(mutableCtx, request) //nolint:contextcheck // this is expected usage of MutableCtx
+	return s.detailsFactory.New(ctx, request) //nolint:contextcheck // this is expected usage of MutableCtx
 }
 
 func (s *DefaultAuthorizationService) createUserAuthentication(ctx context.Context, _ oauth2.OAuth2Request, userAuth oauth2.UserAuthentication) (oauth2.UserAuthentication, error) {

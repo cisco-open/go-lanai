@@ -77,7 +77,7 @@ func NewAuthorizeRequest(opts ...func(req *AuthorizeRequest)) *AuthorizeRequest 
 		ResponseTypes: utils.NewStringSet(),
 		Scopes:        utils.NewStringSet(),
 		Extensions:    map[string]interface{}{},
-		context:       utils.NewMutableContext(),
+		context:       utils.NewMutableContext(context.Background()),
 	}
 	for _, fn := range opts {
 		fn(&ar)

@@ -19,6 +19,7 @@ package scope
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"time"
 )
@@ -180,6 +181,20 @@ type scopeCtxKey struct{}
 
 var ctxKeyRollback = rollbackCtxKey{}
 var ctxKeyScope = scopeCtxKey{}
+
+func newScopedContext(parent context.Context, scope *Scope, auth security.Authentication) context.Context {
+	scoped := utils.NewMutableContext(parent, func(key interface{}) interface{} {
+		switch key {
+		case ctxKeyRollback:
+			return parent
+		case ctxKeyScope:
+			return scope
+		default: return nil
+		}
+	})
+	security.MustSet(scoped, auth)
+	return scoped
+}
 
 // scopedContext helps managerBase to backtrace context used for managerBase.DoStartScope and keep track of Scope
 type scopedContext struct {

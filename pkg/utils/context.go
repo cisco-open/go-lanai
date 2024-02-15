@@ -22,9 +22,12 @@ import (
 
 // MutableContext wraps context.Context with an internal KV pairs storage.
 // KV pairs stored in this context can be changed in later time.
+// To change/list KV pairs on any context.Context that inherit from MutableContext,
+// use FindMutableContext to obtain a MutableContextAccessor.
+// See FindMutableContext and MutableContextAccessor for more details
 type MutableContext interface {
 	context.Context
-	Set(key string, value interface{})
+	Set(key, value any)
 }
 // ListableContext is supplementary interface of MutableContext, listing all values stored in the context
 type ListableContext interface {
@@ -32,12 +35,10 @@ type ListableContext interface {
 	Values() map[interface{}]interface{}
 }
 
-// ExtendedMutableContext additional interface, can set KV without wrapping new context
-type ExtendedMutableContext interface {
-	MutableContext
-	SetKV(key interface{}, value interface{})
-}
-
+// ContextValuer is an additional source of context.Context.Value(any)) used by MutableContext to search values with key.
+// When MutableContext cannot find given key in its internal store, it will go through all ContextValuers
+// before pass along the key-value searching to its parent context.
+// See NewMutableContext and MakeMutableContext
 type ContextValuer func(key interface{}) interface{}
 
 // ckMutableContext is the key for itself
@@ -75,15 +76,7 @@ func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
 	return
 }
 
-func (ctx *mutableContext) Set(key string, value interface{}) {
-	if key != "" && value != nil {
-		ctx.values[key] = value
-	} else if key != "" {
-		delete(ctx.values, key)
-	}
-}
-
-func (ctx *mutableContext) SetKV(key interface{}, value interface{}) {
+func (ctx *mutableContext) Set(key any, value any) {
 	if key != nil && value != nil {
 		ctx.values[key] = value
 	} else if key != nil {
@@ -91,14 +84,30 @@ func (ctx *mutableContext) SetKV(key interface{}, value interface{}) {
 	}
 }
 
-func (ctx *mutableContext) Values() map[interface{}]interface{} {
-	return ctx.values
+func (ctx *mutableContext) Values() (values map[interface{}]interface{}) {
+	hierarchy := make([]*mutableContext, 0, 5)
+	for mc := ctx; mc != nil; mc, _ = mc.Context.Value(ckMutableContext).(*mutableContext) {
+		hierarchy = append(hierarchy, mc)
+	}
+
+	// go over the inheritance hierarchy from root to current, in case the value is overridden
+	values = make(map[interface{}]interface{})
+	for i := len(hierarchy) - 1; i >= 0; i-- {
+		for k, v := range hierarchy[i].values {
+			values [k] = v
+		}
+	}
+	return values
 }
 
-func NewMutableContext() MutableContext {
+func NewMutableContext(parent context.Context, valuers ...ContextValuer) MutableContext {
+	if parent == nil {
+		parent = context.Background()
+	}
 	return &mutableContext{
-		Context: context.Background(),
+		Context: parent,
 		values:  make(map[interface{}]interface{}),
+		valuers: valuers,
 	}
 }
 
@@ -109,17 +118,22 @@ func MakeMutableContext(parent context.Context, valuers ...ContextValuer) Mutabl
 	if mutable, ok := parent.(*mutableContext); ok && len(valuers) == 0 {
 		return mutable
 	}
-	return &mutableContext{
-		Context: parent,
-		values:  make(map[interface{}]interface{}),
-		valuers: valuers,
-	}
+	return NewMutableContext(parent, valuers...)
 }
 
-// FindMutableContext return MutableContext from given context.Context's inheritance hierarchy.
-// Important: this function may returns parent context of the given one. T
-//			  Therefore, the returned context is only for mutating KV pairs and SHOULD NOT be passed along.
-func FindMutableContext(ctx context.Context) MutableContext {
-	mc, _ := ctx.Value(ckMutableContext).(MutableContext)
-	return mc
+type MutableContextAccessor interface {
+	Set(key, value any)
+	Values() (values map[any]any)
+}
+
+// FindMutableContext search for MutableContext from given context.Context's inheritance hierarchy,
+// and return a MutableContextAccessor for key-values manipulation.
+// If MutableContext is not found, nil is returned.
+// Important: this function may returns parent context of the given one.
+//			  Therefore, changing values may affect parent context.
+func FindMutableContext(ctx context.Context) MutableContextAccessor {
+	if mc, ok := ctx.Value(ckMutableContext).(*mutableContext); ok {
+		return mc
+	}
+	return nil
 }

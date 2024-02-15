@@ -1,7 +1,6 @@
 package openid
 
 import (
-	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
@@ -10,8 +9,6 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
-	"go.uber.org/fx"
-	"time"
 )
 
 /*************************
@@ -47,12 +44,6 @@ func BindMockingProperties(appCtx *bootstrap.ApplicationContext) MockingProperti
 		panic(e)
 	}
 	return props
-}
-
-type AuthDI struct {
-	fx.In
-	ClientStore oauth2.OAuth2ClientStore
-	Mocking     MockingProperties
 }
 
 func NewTestIssuer() security.Issuer {
@@ -104,61 +95,9 @@ func NewJwkStore() jwt.JwkStore {
 	return jwt.NewSingleJwkStore(JwtKID)
 }
 
-type MockedClientAuth struct {
-	Client oauth2.OAuth2Client
-}
-
-func MockedTokenValue(username, tenantId string, exp time.Time, scopes ...string) string {
-	now := time.Now()
-	t := sectest.MockedToken{
-		MockedTokenInfo: sectest.MockedTokenInfo{
-			UName: username,
-			TID:   tenantId,
-			Exp:   now.Unix(),
-			Iss:   now.Unix(),
-		},
-		ExpTime:      exp,
-		IssTime:      now,
-		MockedScopes: append([]string{"read", "write"}, scopes...),
-	}
-	text, e := t.MarshalText()
-	if e != nil {
-		return ""
-	}
-	return string(text)
-}
-
-func (a MockedClientAuth) Principal() interface{} {
-	return a.Client
-}
-
-func (a MockedClientAuth) Permissions() security.Permissions {
-	perms := security.Permissions{}
-	for scope := range a.Client.Scopes() {
-		perms[scope] = true
-	}
-	return perms
-}
-
-func (a MockedClientAuth) State() security.AuthenticationState {
-	return security.StateAuthenticated
-}
-
-func (a MockedClientAuth) Details() interface{} {
-	return nil
-}
-
 /*************************
 	Common Helpers
  *************************/
-
-func ContextWithClient(ctx context.Context, g *gomega.WithT, di *AuthDI, clientId string) context.Context {
-	client, e := di.ClientStore.LoadClientByClientId(ctx, clientId)
-	g.Expect(e).To(Succeed(), "client [%s] should exists", clientId)
-	auth := MockedClientAuth{Client: client}
-	ctx = context.WithValue(ctx, security.ContextKeySecurity, auth)
-	return context.WithValue(ctx, oauth2.CtxKeyAuthenticatedClient, client)
-}
 
 type ExpectedClaims struct {
 	KVs map[string]interface{}
