@@ -131,7 +131,7 @@ func newCookieFromOptions(name, value string, options *Options) *http.Cookie {
 
 }
 
-// id returns the name used to register the session.
+// GetID returns the name used to register the session.
 func (s *Session) GetID() string {
 	return s.id
 }

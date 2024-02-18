@@ -19,6 +19,7 @@ package csrf
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 	"go.uber.org/fx"
 )
 
@@ -32,6 +33,7 @@ var Module = &bootstrap.Module{
 
 func init() {
 	bootstrap.Register(Module)
+	template.RegisterGlobalModelValuer(template.ModelKeyCsrf, template.ContextModelValuer(Get))
 }
 
 type initDI struct {

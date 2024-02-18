@@ -34,10 +34,7 @@ const (
 
 	ErrorTemplate = "error.tmpl"
 
-	ContextKeySecurity    = "Security"
-	ContextKeySession     = "Session"
 	ContextKeyContextPath = "ContextPath"
-	ContextKeyCsrf        = "CSRF"
 
 	MethodAny = "ANY"
 )

@@ -20,25 +20,39 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 const (
 	sessionKeySecurity = "Security"
-	contextKeySession  = web.ContextKeySession
 )
 
+type sessionCtxKey struct {}
+var	contextKeySession  = sessionCtxKey{}
+
+// Get returns Session stored in given context. May return nil
 func Get(c context.Context) *Session {
 	session, _ := c.Value(contextKeySession).(*Session)
 	return session
 }
 
-func Clear(c context.Context) {
-	if mc := utils.FindMutableContext(c); mc != nil {
-		mc.Set(contextKeySession, nil)
+// MustSet is the panicking version of Set
+func MustSet(c context.Context, s *Session) {
+	if e := Set(c, s); e != nil {
+		panic(e)
 	}
+}
+
+// Set given Session into given context. The function returns error if the given context is not backed by utils.MutableContext.
+func Set(c context.Context, s *Session) error {
+	mc := utils.FindMutableContext(c)
+	if mc == nil {
+		return security.NewInternalError(fmt.Sprintf(`unable to set session into context: given context [%T] is not mutable`, c))
+	}
+	mc.Set(contextKeySession, s)
+	return nil
 }
 
 type Manager struct {
@@ -78,7 +92,10 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 			http.SetCookie(c.Writer, NewCookie(session.Name(), session.id, session.options, c.Request))
 		}
 
-		m.registerSession(c, session)
+		if e := Set(c, session); e != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 	}
 }
 
@@ -102,10 +119,6 @@ func (m *Manager) AuthenticationPersistenceHandlerFunc() gin.HandlerFunc {
 			security.MustSet(c, nil)
 		}
 	}
-}
-
-func (m *Manager) registerSession(c *gin.Context, s *Session) {
-	c.Set(contextKeySession, s)
 }
 
 func (m *Manager) saveSession(c *gin.Context) {

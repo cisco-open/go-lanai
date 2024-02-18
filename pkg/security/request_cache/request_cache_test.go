@@ -47,7 +47,9 @@ func TestSaveAndGetCachedRequest(t *testing.T) {
 		"POST", "/something", strings.NewReader("a=b&c=d"),
 		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	SaveRequest(c)
 	cached := GetCachedRequest(c)
 
@@ -117,7 +119,9 @@ func TestSavedRequestAuthenticationSuccessHandler_HandleAuthenticationSuccess(t 
 		"POST", "/something", strings.NewReader("a=b&c=d"),
 		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 
 	SaveRequest(c)
 
@@ -154,7 +158,9 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	c := webtest.NewGinContext(context.Background(),
 		"GET", "/something/favicon.jpg", nil,
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	c.Set(web.ContextKeyContextPath, "")
 
 	entryPoint := NewSaveRequestEntryPoint(&noOpEntryPoint{})
@@ -169,7 +175,9 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		"GET", "/something", nil,
 		webtest.Headers("X-Requested-With", "XMLHttpRequest"),
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
@@ -181,7 +189,9 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		"GET", "/something", nil,
 		webtest.Headers("Trailer", "anything"),
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
@@ -193,7 +203,9 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		"GET", "/something", nil,
 		webtest.Headers("Content-Type", "multipart/form-data something"),
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
@@ -205,7 +217,9 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		"POST", "/something", strings.NewReader("a=b&c=d"),
 		webtest.Headers("Content-Type", "application/x-www-form-urlencoded", security.CsrfHeaderName, "something"),
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
@@ -217,7 +231,9 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		"POST", "/something", strings.NewReader(security.CsrfParamName + "=something"),
 		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
@@ -229,7 +245,9 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 		"POST", "/something", strings.NewReader("a=b&c=d"),
 		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 

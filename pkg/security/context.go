@@ -101,8 +101,12 @@ func GobRegister() {
 	Common Functions
  **********************************/
 
+type securityCtxKey struct{}
+
+var contextKeySecurity = securityCtxKey{}
+
 func Get(ctx context.Context) Authentication {
-	secCtx, ok := ctx.Value(ContextKeySecurity).(Authentication)
+	secCtx, ok := ctx.Value(contextKeySecurity).(Authentication)
 	if !ok {
 		secCtx = EmptyAuthentication("not authenticated")
 	}
@@ -120,9 +124,9 @@ func MustSet(ctx context.Context, auth Authentication) {
 func Set(ctx context.Context, auth Authentication) error {
 	mc := utils.FindMutableContext(ctx)
 	if mc == nil {
-		return fmt.Errorf(`unable to set security into context: given context [%T] is not mutable`, ctx)
+		return NewInternalError(fmt.Sprintf(`unable to set security into context: given context [%T] is not mutable`, ctx))
 	}
-	mc.Set(ContextKeySecurity, auth)
+	mc.Set(contextKeySecurity, auth)
 
 	// optionally, set AuthUserKey into gin context if available
 	if gc := web.GinContext(ctx); gc != nil {

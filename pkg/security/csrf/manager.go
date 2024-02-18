@@ -19,15 +19,43 @@ package csrf
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
+type csrfCtxKey struct {}
+var contextKeyCsrf = csrfCtxKey{}
+
 var DefaultProtectionMatcher = matcher.NotRequest(matcher.RequestWithMethods("GET", "HEAD", "TRACE", "OPTIONS"))
 var DefaultIgnoreMatcher = matcher.NoneRequest()
+
+// Get returns Token stored in given context. May return nil
+func Get(c context.Context) *Token {
+	t, _ := c.Value(contextKeyCsrf).(*Token)
+	return t
+}
+
+// MustSet is the panicking version of Set
+func MustSet(c context.Context, t *Token) {
+	if e := Set(c, t); e != nil {
+		panic(e)
+	}
+}
+
+// Set given Token into given context. The function returns error if the given context is not backed by utils.MutableContext.
+func Set(c context.Context, t *Token) error {
+	mc := utils.FindMutableContext(c)
+	if mc == nil {
+		return security.NewInternalError(fmt.Sprintf(`unable to set CSRF token into context: given context [%T] is not mutable`, c))
+	}
+	mc.Set(contextKeyCsrf, t)
+	return nil
+}
 
 type manager struct {
 	tokenStore TokenStore
@@ -78,7 +106,10 @@ func (m *manager) CsrfHandlerFunc() gin.HandlerFunc {
 
 		//This so that the templates knows what to render to
 		//we don't depend on the value being stored in session to decouple it from the store implementation.
-		c.Set(web.ContextKeyCsrf, expectedToken)
+		if e := Set(c, expectedToken); e != nil {
+			_ = c.Error(security.NewInternalError("request has invalid csrf token"))
+			c.Abort()
+		}
 
 		matches, err := m.requireProtection.MatchesWithContext(c, c.Request)
 		if err != nil {
@@ -115,12 +146,12 @@ type CsrfDeniedHandler struct {
 	delegate security.AccessDeniedHandler
 }
 
-// implement order.Ordered
+// Order implement order.Ordered
 func (h *CsrfDeniedHandler) Order() int {
 	return 0
 }
 
-// implement security.AccessDeniedHandler
+// HandleAccessDenied implement security.AccessDeniedHandler
 func (h *CsrfDeniedHandler) HandleAccessDenied(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, security.ErrorSubTypeCsrf):

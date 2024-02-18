@@ -20,7 +20,6 @@ import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
@@ -48,7 +47,9 @@ func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	c := webtest.NewGinContext(context.Background(),
 		"POST", "/something", nil,
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
 
@@ -99,7 +100,9 @@ func TestConcurrentSessionHandler_HandleAuthenticationSuccess(t *testing.T) {
 	c := webtest.NewGinContext(context.Background(),
 		"POST", "/something", nil,
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 
 	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
@@ -188,7 +191,9 @@ func TestDeleteSessionOnLogoutHandler_HandleAuthenticationSuccess(t *testing.T) 
 	c := webtest.NewGinContext(context.Background(),
 		"POST", "/something", nil,
 	)
-	c.Set(web.ContextKeySession, s)
+	if e := Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 
 	principalName := "principal1"
 	mockFrom := authmock.NewMockAuthentication(ctrl)

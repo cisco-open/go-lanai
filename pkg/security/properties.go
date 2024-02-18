@@ -28,6 +28,7 @@ import (
 /***********************
 	Session
 ************************/
+
 const SessionPropertiesPrefix = "security.session"
 
 type SessionProperties struct {
@@ -60,7 +61,7 @@ func (cp CookieProperties) SameSite() http.SameSite {
 	}
 }
 
-//NewSessionProperties create a SessionProperties with default values
+// NewSessionProperties create a SessionProperties with default values
 func NewSessionProperties() *SessionProperties {
 	return &SessionProperties{
 		Cookie: CookieProperties{
@@ -73,7 +74,7 @@ func NewSessionProperties() *SessionProperties {
 	}
 }
 
-//BindSessionProperties create and bind SessionProperties, with a optional prefix
+// BindSessionProperties create and bind SessionProperties, with a optional prefix
 func BindSessionProperties(ctx *bootstrap.ApplicationContext) SessionProperties {
 	props := NewSessionProperties()
 	if err := ctx.Config().Bind(props, SessionPropertiesPrefix); err != nil {

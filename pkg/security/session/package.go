@@ -23,6 +23,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 	"encoding/gob"
 	"go.uber.org/fx"
 	"path"
@@ -47,6 +48,7 @@ func init() {
 	GobRegister()
 	security.GobRegister()
 	passwd.GobRegister()
+	template.RegisterGlobalModelValuer(template.ModelKeySession, template.ContextModelValuer(Get))
 }
 
 func GobRegister() {

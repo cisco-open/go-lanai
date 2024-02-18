@@ -60,20 +60,19 @@ func (ctx *mutableContext) Value(key interface{}) (ret interface{}) {
 
 	// get value from value map first, in case the key-value pair is overwritten
 	ret, ok := ctx.values[key]
-	if !ok || ret == nil {
-		ret = ctx.Context.Value(key)
+	if ok && ret != nil {
+		return
 	}
 
-	if ret == nil && ctx.valuers != nil {
-		// use valuers to get
-		for _, valuer := range ctx.valuers {
-			if ret = valuer(key); ret != nil {
-				return
-			}
+	// use valuers to get
+	for _, valuer := range ctx.valuers {
+		if ret = valuer(key); ret != nil {
+			return
 		}
 	}
 
-	return
+	// pass along to parent
+	return ctx.Context.Value(key)
 }
 
 func (ctx *mutableContext) Set(key any, value any) {
@@ -94,12 +93,13 @@ func (ctx *mutableContext) Values() (values map[interface{}]interface{}) {
 	values = make(map[interface{}]interface{})
 	for i := len(hierarchy) - 1; i >= 0; i-- {
 		for k, v := range hierarchy[i].values {
-			values [k] = v
+			values[k] = v
 		}
 	}
 	return values
 }
 
+// NewMutableContext TODO
 func NewMutableContext(parent context.Context, valuers ...ContextValuer) MutableContext {
 	if parent == nil {
 		parent = context.Background()
@@ -129,8 +129,8 @@ type MutableContextAccessor interface {
 // FindMutableContext search for MutableContext from given context.Context's inheritance hierarchy,
 // and return a MutableContextAccessor for key-values manipulation.
 // If MutableContext is not found, nil is returned.
-// Important: this function may returns parent context of the given one.
-//			  Therefore, changing values may affect parent context.
+//
+// Important: This function may returns parent context of the given one. Therefore, changing values may affect parent context.
 func FindMutableContext(ctx context.Context) MutableContextAccessor {
 	if mc, ok := ctx.Value(ckMutableContext).(*mutableContext); ok {
 		return mc

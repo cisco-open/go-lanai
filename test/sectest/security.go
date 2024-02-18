@@ -21,7 +21,12 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 )
+
+func init() {
+	template.RegisterGlobalModelValuer(template.ModelKeySecurity, template.ContextModelValuer(security.Get))
+}
 
 /**************************
 	Function

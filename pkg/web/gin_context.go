@@ -76,6 +76,11 @@ func MustHttpRequest(ctx context.Context) *http.Request {
 	return MustGinContext(ctx).Request
 }
 
+func ContextPath(ctx context.Context) string {
+	ctxPath, _ := ctx.Value(ContextKeyContextPath).(string)
+	return ctxPath
+}
+
 // SetKV set a kv pair to given context if:
 // - The context is a utils.MutableContext
 // - The context has utils.MutableContext as parent/ancestors
@@ -250,8 +255,8 @@ func integrateGinContextFinalizer(ctx context.Context, _ int, r *http.Request) {
 
 func ginContextValuer(gc *gin.Context) func(key interface{}) interface{} {
 	return func(key interface{}) interface{} {
-		switch strKey, ok := key.(string); ok {
-		case strKey == gin.ContextKey:
+		switch strKey, _ := key.(string); strKey {
+		case gin.ContextKey:
 			return gc
 		default:
 			v, _ := gc.Get(strKey)

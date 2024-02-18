@@ -182,6 +182,7 @@ type scopeCtxKey struct{}
 var ctxKeyRollback = rollbackCtxKey{}
 var ctxKeyScope = scopeCtxKey{}
 
+// scopedContext helps managerBase to backtrace context used for managerBase.DoStartScope and keep track of Scope
 func newScopedContext(parent context.Context, scope *Scope, auth security.Authentication) context.Context {
 	scoped := utils.NewMutableContext(parent, func(key interface{}) interface{} {
 		switch key {
@@ -196,24 +197,3 @@ func newScopedContext(parent context.Context, scope *Scope, auth security.Authen
 	return scoped
 }
 
-// scopedContext helps managerBase to backtrace context used for managerBase.DoStartScope and keep track of Scope
-type scopedContext struct {
-	context.Context
-	scope *Scope
-	auth security.Authentication
-}
-
-func (c scopedContext) Value(key interface{}) interface{} {
-	if key == security.ContextKeySecurity {
-		return c.auth
-	}
-
-	switch key.(type) {
-	case rollbackCtxKey:
-		return c.Context
-	case scopeCtxKey:
-		return c.scope
-	default:
-		return c.Context.Value(key)
-	}
-}

@@ -19,8 +19,6 @@ package csrf
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"net/http"
 )
 
@@ -47,11 +45,5 @@ func (h *ChangeCsrfHandler) HandleAuthenticationSuccess(c context.Context, _ *ht
 		}
 	}
 
-	if mc := utils.FindMutableContext(c); mc != nil {
-		mc.Set(web.ContextKeyCsrf, t)
-	}
-
-	if gc := web.GinContext(c); gc != nil {
-		gc.Set(web.ContextKeyCsrf, t)
-	}
+	MustSet(c, t)
 }
