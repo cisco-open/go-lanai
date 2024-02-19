@@ -30,11 +30,10 @@ const (
 )
 
 type sessionCtxKey struct {}
-var	contextKeySession  = sessionCtxKey{}
 
 // Get returns Session stored in given context. May return nil
 func Get(c context.Context) *Session {
-	session, _ := c.Value(contextKeySession).(*Session)
+	session, _ := c.Value(sessionCtxKey{}).(*Session)
 	return session
 }
 
@@ -51,7 +50,7 @@ func Set(c context.Context, s *Session) error {
 	if mc == nil {
 		return security.NewInternalError(fmt.Sprintf(`unable to set session into context: given context [%T] is not mutable`, c))
 	}
-	mc.Set(contextKeySession, s)
+	mc.Set(sessionCtxKey{}, s)
 	return nil
 }
 

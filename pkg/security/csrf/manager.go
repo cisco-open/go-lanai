@@ -28,15 +28,14 @@ import (
 	"net/http"
 )
 
-type csrfCtxKey struct {}
-var contextKeyCsrf = csrfCtxKey{}
+type csrfCtxKey struct{}
 
 var DefaultProtectionMatcher = matcher.NotRequest(matcher.RequestWithMethods("GET", "HEAD", "TRACE", "OPTIONS"))
 var DefaultIgnoreMatcher = matcher.NoneRequest()
 
 // Get returns Token stored in given context. May return nil
 func Get(c context.Context) *Token {
-	t, _ := c.Value(contextKeyCsrf).(*Token)
+	t, _ := c.Value(csrfCtxKey{}).(*Token)
 	return t
 }
 
@@ -53,7 +52,7 @@ func Set(c context.Context, t *Token) error {
 	if mc == nil {
 		return security.NewInternalError(fmt.Sprintf(`unable to set CSRF token into context: given context [%T] is not mutable`, c))
 	}
-	mc.Set(contextKeyCsrf, t)
+	mc.Set(csrfCtxKey{}, t)
 	return nil
 }
 

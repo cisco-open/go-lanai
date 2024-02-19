@@ -21,7 +21,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
@@ -201,7 +200,6 @@ func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 	mw := manager.CsrfHandlerFunc()
 	mw(c)
 
@@ -217,7 +215,6 @@ func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 	mw(c)
 
 	if len(c.Errors) != 0 {

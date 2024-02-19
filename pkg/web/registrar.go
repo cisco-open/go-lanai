@@ -91,9 +91,8 @@ func (r *Registrar) Initialize(ctx context.Context) (err error) {
 		return fmt.Errorf("attempting to initialize web engine multiple times")
 	}
 
-	// first, we add some manditory customizers and middleware
+	// first, we add some mandatory customizers and middleware
 	r.MustRegister(NewPriorityGinContextCustomizer(&r.properties))
-	r.MustRegister(NewGinContextCustomizer(&r.properties))
 
 	// apply customizers before install mappings
 	if err = r.applyCustomizers(ctx); err != nil {
@@ -419,9 +418,6 @@ func (r *Registrar) registerErrorTranslator(t ErrorTranslator) error {
 }
 
 func (r *Registrar) applyCustomizers(ctx context.Context) error {
-	if r.customizers == nil {
-		return nil
-	}
 	for _, c := range r.customizers {
 		if e := c.Customize(ctx, r); e != nil {
 			return e

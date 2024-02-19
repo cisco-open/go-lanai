@@ -127,9 +127,8 @@ func redirect(ctx context.Context, mv *ModelView) (int, string) {
 		return sc, loc.String()
 	}
 
-	if ctxPath, ok := ctx.Value(web.ContextKeyContextPath).(string); ok {
-		loc.Path = path.Join(ctxPath, loc.Path)
-	}
+	ctxPath := web.ContextPath(ctx)
+	loc.Path = path.Join(ctxPath, loc.Path)
 	return sc, loc.String()
 }
 
@@ -204,7 +203,7 @@ func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 }
 
 func AddGlobalModelData(ctx context.Context, model Model, r *http.Request) {
-	model[ModelKeyRequestContext] = MakeRequestContext(ctx, r, web.ContextKeyContextPath)
+	model[ModelKeyRequestContext] = MakeRequestContext(ctx, r)
 	applyGlobalModelValuers(ctx, r, model)
 }
 

@@ -258,7 +258,7 @@ func (g simpleMapping) Method() string {
 	return g.method
 }
 
-func (g *simpleMapping) Group() string {
+func (g simpleMapping) Group() string {
 	return g.group
 }
 
@@ -273,6 +273,7 @@ func (g simpleMapping) Name() string {
 /*********************************
 	orderedServerOption
  *********************************/
+
 // orderedServerOption wraps go-kit's httptransport.ServerOption and provide ordering
 type orderedServerOption struct {
 	httptransport.ServerOption

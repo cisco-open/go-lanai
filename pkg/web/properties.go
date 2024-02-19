@@ -64,7 +64,7 @@ func NewServerProperties() *ServerProperties {
 	}
 }
 
-//BindServerProperties create and bind a ServerProperties using default prefix
+// BindServerProperties create and bind a ServerProperties using default prefix
 func BindServerProperties(ctx *bootstrap.ApplicationContext) ServerProperties {
 	props := NewServerProperties()
 	if err := ctx.Config().Bind(props, ServerPropertiesPrefix); err != nil {

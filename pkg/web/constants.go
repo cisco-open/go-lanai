@@ -34,8 +34,6 @@ const (
 
 	ErrorTemplate = "error.tmpl"
 
-	ContextKeyContextPath = "ContextPath"
-
 	MethodAny = "ANY"
 )
 

@@ -21,7 +21,6 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
@@ -161,7 +160,6 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 
 	entryPoint := NewSaveRequestEntryPoint(&noOpEntryPoint{})
 
@@ -178,7 +176,6 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with  XMLHttpRequest should not be cached")
@@ -192,7 +189,6 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with  XMLHttpRequest should not be cached")
@@ -206,7 +202,6 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with multipart/form-data should not be cached")
@@ -220,7 +215,6 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with csrf header should not be cached")
@@ -234,7 +228,6 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with csrf param should not be cached")
@@ -248,7 +241,6 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 	if e := session.Set(c, s); e != nil {
 		t.Errorf("failed to set session into context")
 	}
-	c.Set(web.ContextKeyContextPath, "")
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 
 	if GetCachedRequest(c) == nil {

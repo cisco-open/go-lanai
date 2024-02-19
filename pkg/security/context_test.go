@@ -121,7 +121,9 @@ func SubTestHasErrorAccessingTenant(di *contextTestDI) test.GomegaSubTestFunc {
 						assignedTenantIds: tt.assignedTenantIds,
 					},
 				}
-				ctx = context.WithValue(ctx, contextKeySecurity, mockedAuth)
+				//ctx = context.WithValue(ctx, contextKeySecurity, mockedAuth)
+				ctx := utils.MakeMutableContext(ctx)
+				MustSet(ctx, mockedAuth)
 				err := HasErrorAccessingTenant(ctx, tt.tenantId)
 				g.Expect(errors.Is(err, tt.expectedErr)).To(gomega.BeTrue())
 			})
