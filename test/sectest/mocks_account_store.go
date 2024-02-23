@@ -26,12 +26,26 @@ import (
 
 type MockAccountStoreWithFinalize struct {
 	MockAccountStore
+	tenantIDLookup    map[string]*mockedTenant
+	tenantExtIDLookup map[string]*mockedTenant
 }
 
 func NewMockedAccountStoreWithFinalize(accountProps []*MockedAccountProperties, tenantProps []*MockedTenantProperties, modifiers ...MockedAccountModifier) *MockAccountStoreWithFinalize {
-	return &MockAccountStoreWithFinalize{
-		MockAccountStore: *NewMockedAccountStore(accountProps, tenantProps, modifiers...),
+	store := &MockAccountStoreWithFinalize{
+		MockAccountStore:  *NewMockedAccountStore(accountProps, modifiers...),
+		tenantIDLookup:    map[string]*mockedTenant{},
+		tenantExtIDLookup: map[string]*mockedTenant{},
 	}
+	for _, v := range tenantProps {
+		t := newTenant(v)
+		if len(t.ExternalId) != 0 {
+			store.tenantExtIDLookup[t.ExternalId] = t
+		}
+		if len(t.ID) != 0 {
+			store.tenantIDLookup[t.ID] = t
+		}
+	}
+	return store
 }
 
 // Finalize will read the tenant details from the security.AccountFinalizeOption and
@@ -76,17 +90,13 @@ type MockedAccountModifier func(acct security.Account) security.Account
 type MockAccountStore struct {
 	accountLookupByUsername map[string]*MockedAccount
 	accountLookupById       map[interface{}]*MockedAccount
-	tenantIDLookup          map[string]*mockedTenant
-	tenantExtIDLookup       map[string]*mockedTenant
 	modifiers               []MockedAccountModifier
 }
 
-func NewMockedAccountStore(accountProps []*MockedAccountProperties, tenantProps []*MockedTenantProperties, modifiers ...MockedAccountModifier) *MockAccountStore {
+func NewMockedAccountStore(accountProps []*MockedAccountProperties, modifiers ...MockedAccountModifier) *MockAccountStore {
 	store := &MockAccountStore{
 		accountLookupById:       make(map[interface{}]*MockedAccount),
 		accountLookupByUsername: make(map[string]*MockedAccount),
-		tenantIDLookup:          map[string]*mockedTenant{},
-		tenantExtIDLookup:       map[string]*mockedTenant{},
 		modifiers:               modifiers,
 	}
 	for _, v := range accountProps {
@@ -96,15 +106,6 @@ func NewMockedAccountStore(accountProps []*MockedAccountProperties, tenantProps 
 		}
 		if acct.UserId != "" {
 			store.accountLookupById[acct.UserId] = acct
-		}
-	}
-	for _, v := range tenantProps {
-		t := newTenant(v)
-		if len(t.ExternalId) != 0 {
-			store.tenantExtIDLookup[t.ExternalId] = t
-		}
-		if len(t.ID) != 0 {
-			store.tenantIDLookup[t.ID] = t
 		}
 	}
 	return store
@@ -140,7 +141,14 @@ func (m *MockAccountStore) LoadAccountByUsername(_ context.Context, username str
 	return acct, nil
 }
 
-func (m *MockAccountStore) LoadLockingRules(_ context.Context, _ security.Account) (security.AccountLockingRule, error) {
+func (m *MockAccountStore) LoadLockingRules(ctx context.Context, acct security.Account) (security.AccountLockingRule, error) {
+	loaded, e := m.LoadAccountById(ctx, acct.ID())
+	if e != nil {
+		return nil, e
+	}
+	if v, ok := loaded.(security.AccountLockingRule); ok {
+		return v, nil
+	}
 	return &security.DefaultAccount{
 		AcctLockingRule: security.AcctLockingRule{
 			Name: "test-noop",
@@ -148,7 +156,14 @@ func (m *MockAccountStore) LoadLockingRules(_ context.Context, _ security.Accoun
 	}, nil
 }
 
-func (m *MockAccountStore) LoadPwdAgingRules(_ context.Context, _ security.Account) (security.AccountPwdAgingRule, error) {
+func (m *MockAccountStore) LoadPwdAgingRules(ctx context.Context, acct security.Account) (security.AccountPwdAgingRule, error) {
+	loaded, e := m.LoadAccountById(ctx, acct.ID())
+	if e != nil {
+		return nil, e
+	}
+	if v, ok := loaded.(security.AccountPwdAgingRule); ok {
+		return v, nil
+	}
 	return &security.DefaultAccount{
 		AcctPasswordPolicy: security.AcctPasswordPolicy{
 			Name: "test-noop",

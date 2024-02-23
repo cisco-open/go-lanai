@@ -61,7 +61,6 @@ func TestSPInitiatedSso(t *testing.T) {
 	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
 	testAccountStore := sectest.NewMockedAccountStore(
 		[]*sectest.MockedAccountProperties{},
-		[]*sectest.MockedTenantProperties{},
 	)
 	g := gomega.NewWithT(t)
 	r := setupServerForTest(testClientStore, testAccountStore)
@@ -96,7 +95,6 @@ func TestSPInitiatedSsoAuthRequestWithBadSignature(t *testing.T) {
 	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
 	testAccountStore := sectest.NewMockedAccountStore(
 		[]*sectest.MockedAccountProperties{},
-		[]*sectest.MockedTenantProperties{},
 	)
 	g := gomega.NewWithT(t)
 	r := setupServerForTest(testClientStore, testAccountStore)
@@ -130,7 +128,6 @@ func TestIDPInitiatedSso(t *testing.T) {
 	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(&sp))
 	testAccountStore := sectest.NewMockedAccountStore(
 		[]*sectest.MockedAccountProperties{},
-		[]*sectest.MockedTenantProperties{},
 	)
 
 	r := setupServerForTest(testClientStore, testAccountStore)
@@ -163,7 +160,6 @@ func TestMetadata(t *testing.T) {
 	testClientStore := samltest.NewMockedClientStore(samltest.ClientsWithSPs(knownSP))
 	testAccountStore := sectest.NewMockedAccountStore(
 		[]*sectest.MockedAccountProperties{},
-		[]*sectest.MockedTenantProperties{},
 	)
 
 	r := setupServerForTest(testClientStore, testAccountStore)

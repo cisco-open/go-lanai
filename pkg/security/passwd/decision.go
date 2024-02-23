@@ -40,7 +40,7 @@ type AuthenticationDecisionMaker interface {
 	// 	 - The security.Authentication is non-nil when credentials has been validated (post check).
 	//     The non-nil value is the proposed authentication to be returned by Authenticator
 	//
-	// If any of input paramters are mutable, AuthenticationDecisionMaker is allowed to change it
+	// If any of input parameters are mutable, AuthenticationDecisionMaker is allowed to change it
 	Decide(context.Context, security.Candidate, security.Account, security.Authentication) error
 }
 
@@ -104,31 +104,31 @@ func isPostCredentialsCheck(_ context.Context, _ security.Candidate, _ security.
 	return auth != nil
 }
 
-func isPreMFAVerify(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
-	if auth != nil {
-		return false
-	}
+//func isPreMFAVerify(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
+//	if auth != nil {
+//		return false
+//	}
+//
+//	if _, isMFAVerify := can.(*MFAOtpVerification); isMFAVerify {
+//		return true
+//	}
+//
+//	_, isMFARefresh := can.(*MFAOtpRefresh)
+//	return isMFARefresh
+//}
 
-	if _, isMFAVerify := can.(*MFAOtpVerification); isMFAVerify {
-		return true
-	}
-
-	_, isMFARefresh := can.(*MFAOtpRefresh)
-	return isMFARefresh
-}
-
-func isPostMFAVerify(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
-	if auth == nil {
-		return false
-	}
-
-	if _, isMFAVerify := can.(*MFAOtpVerification); isMFAVerify {
-		return true
-	}
-
-	_, isMFARefresh := can.(*MFAOtpRefresh)
-	return isMFARefresh
-}
+//func isPostMFAVerify(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
+//	if auth == nil {
+//		return false
+//	}
+//
+//	if _, isMFAVerify := can.(*MFAOtpVerification); isMFAVerify {
+//		return true
+//	}
+//
+//	_, isMFARefresh := can.(*MFAOtpRefresh)
+//	return isMFARefresh
+//}
 
 func isFinalStage(_ context.Context, can security.Candidate, _ security.Account, auth security.Authentication) bool {
 	return auth != nil && auth.State() >= security.StateAuthenticated

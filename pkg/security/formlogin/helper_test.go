@@ -173,12 +173,12 @@ func (r *MFAEventRecorder) Reset() {
 	r.Records = make([]MFAEventRecord, 0, 10)
 }
 
-func NewMockedAccountStore(accts sectest.MockedPropertiesAccounts, tenants sectest.MockedPropertiesTenants) *sectest.MockAccountStore {
-	return sectest.NewMockedAccountStore(accts.Values(), tenants.Values())
+func NewMockedAccountStore(accts sectest.MockedPropertiesAccounts) *sectest.MockAccountStore {
+	return sectest.NewMockedAccountStore(accts.Values())
 }
 
-func NewMockedAccountStoreWithMFA(accts sectest.MockedPropertiesAccounts, tenants sectest.MockedPropertiesTenants) *sectest.MockAccountStore {
-	return sectest.NewMockedAccountStore(accts.Values(), tenants.Values(), func(acct security.Account) security.Account {
+func NewMockedAccountStoreWithMFA(accts sectest.MockedPropertiesAccounts) *sectest.MockAccountStore {
+	return sectest.NewMockedAccountStore(accts.Values(), func(acct security.Account) security.Account {
 		return MFAEnabledAccount{Account: acct}
 	})
 }

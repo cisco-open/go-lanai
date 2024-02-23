@@ -18,7 +18,7 @@ package security
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/internal"
+	securityinternal "cto-github.cisco.com/NFV-BU/go-lanai/internal/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -200,7 +200,7 @@ func HasErrorAccessingTenant(ctx context.Context, tenantId string) error {
 	}
 
 	auth := Get(ctx)
-	if ud, ok := auth.Details().(internal.TenantAccessDetails); ok {
+	if ud, ok := auth.Details().(securityinternal.TenantAccessDetails); ok {
 		if ud.EffectiveAssignedTenantIds().Has(SpecialTenantIdWildcard) {
 			return nil
 		}

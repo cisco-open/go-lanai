@@ -57,8 +57,8 @@ func ConfigureTestWithBasicAuth(di cfgDI) {
 	}))
 }
 
-func NewMockedAccountStore(accts sectest.MockedPropertiesAccounts, tenants sectest.MockedPropertiesTenants) *sectest.MockAccountStore {
-	return sectest.NewMockedAccountStore(accts.Values(), tenants.Values())
+func NewMockedAccountStore(accts sectest.MockedPropertiesAccounts) *sectest.MockAccountStore {
+	return sectest.NewMockedAccountStore(accts.Values())
 }
 
 /*************************
@@ -78,7 +78,6 @@ func TestAuthenticator(t *testing.T) {
 		apptest.WithFxOptions(
 			fx.Provide(
                 sectest.MockedPropertiesBinder[sectest.MockedPropertiesAccounts]("accounts"),
-                sectest.MockedPropertiesBinder[sectest.MockedPropertiesTenants]("tenants"),
                 NewMockedAccountStore,
 			),
 			fx.Invoke(ConfigureTestWithBasicAuth),

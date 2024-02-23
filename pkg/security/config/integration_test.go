@@ -134,11 +134,11 @@ func IntegrationTestMocksProvider(opts ...IntegrationTestOption) func(Integratio
 		integrationTestOut := IntegrationTestOut{
 			DiscoveryCustomizers: &discovery.Customizers{},
 			IdpManager:           testdata.NewMockedIDPManager(),
-			AccountStore: sectest.NewMockedAccountStore(di.Mocking.Accounts.Values(), di.Mocking.Tenants.Values()),
-			PasswordEncoder: passwd.NewNoopPasswordEncoder(),
-			FedAccountStore: sectest.NewMockedFederatedAccountStore(di.Mocking.FederatedUsers.Values()...),
-			SamlClientStore: samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
-			TenancyAccessor: mockTenantAccessor,
+			AccountStore:         sectest.NewMockedAccountStore(di.Mocking.Accounts.Values()),
+			PasswordEncoder:      passwd.NewNoopPasswordEncoder(),
+			FedAccountStore:      sectest.NewMockedFederatedAccountStore(di.Mocking.FederatedUsers.Values()...),
+			SamlClientStore:      samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
+			TenancyAccessor:      mockTenantAccessor,
 		}
 		for _, opt := range opts {
 			opt(di, &integrationTestOut)

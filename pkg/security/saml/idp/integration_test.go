@@ -324,7 +324,6 @@ func provideMockAccountStore() security.AccountStore {
 		[]*sectest.MockedAccountProperties{
 			testUser1, testUser2, testUser3,
 		},
-		[]*sectest.MockedTenantProperties{},
 	)
 }
 

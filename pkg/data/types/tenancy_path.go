@@ -17,7 +17,7 @@
 package types
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/internal"
+	securityinternal "cto-github.cisco.com/NFV-BU/go-lanai/internal/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
@@ -163,7 +163,7 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 
 func requiredTenancyFiltering(stmt *gorm.Statement) (tenantIDs []uuid.UUID) {
 	auth := security.Get(stmt.Context)
-	ta, _ := auth.Details().(internal.TenantAccessDetails)
+	ta, _ := auth.Details().(securityinternal.TenantAccessDetails)
 	if ta != nil {
 		idsStr := ta.EffectiveAssignedTenantIds()
 		if idsStr.Has(security.SpecialTenantIdWildcard) {

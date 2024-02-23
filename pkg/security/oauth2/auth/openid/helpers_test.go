@@ -39,7 +39,7 @@ func NewTestIssuer() security.Issuer {
 }
 
 func NewTestAccountStore(props sectest.MockingProperties) security.AccountStore {
-	return sectest.NewMockedAccountStore(props.Accounts.Values(), props.Tenants.Values())
+	return sectest.NewMockedAccountStore(props.Accounts.Values())
 }
 
 func NewJwtEncoder(jwks jwt.JwkStore) jwt.JwtEncoder {
