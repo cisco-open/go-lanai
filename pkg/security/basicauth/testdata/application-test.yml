@@ -1,0 +1,21 @@
+mocking:
+  accounts:
+    user1:
+      username: "test-user-1"
+      user-id: "id-test-user-1"
+      password: "TheCakeIsALie"
+      default-tenant: "id-root"
+      tenants: ["id-root"]
+      permissions: [ "VIEW_OPERATOR_LOGIN_AS_CUSTOMER", "SWITCH_TENANT" ]
+    user2:
+      username: "test-user-2"
+      user-id: "id-test-user-2"
+      password: "!@#$%^&*()_+"
+      default-tenant: "id-root"
+      tenants: ["id-root"]
+      permissions: ["SWITCH_TENANT"]
+  tenants:
+    tenant:
+      id: "id-root"
+      name: "root-tenant"
+

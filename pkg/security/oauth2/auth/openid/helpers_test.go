@@ -1,7 +1,6 @@
 package openid
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
@@ -27,25 +26,6 @@ const (
 	TestNonce = "please give it back"
 )
 
-const MockingPrefix = "mocking"
-
-type MockingProperties struct {
-	Accounts map[string]*sectest.MockedAccountProperties `json:"accounts"`
-	Tenants  map[string]*sectest.MockedTenantProperties  `json:"tenants"`
-	Clients  map[string]*sectest.MockedClientProperties  `json:"clients"`
-}
-
-func BindMockingProperties(appCtx *bootstrap.ApplicationContext) MockingProperties {
-	props := MockingProperties{
-		Accounts: map[string]*sectest.MockedAccountProperties{},
-		Tenants:  map[string]*sectest.MockedTenantProperties{},
-	}
-	if e := appCtx.Config().Bind(&props, MockingPrefix); e != nil {
-		panic(e)
-	}
-	return props
-}
-
 func NewTestIssuer() security.Issuer {
 	return security.NewIssuer(func(details *security.DefaultIssuerDetails) {
 		*details = security.DefaultIssuerDetails{
@@ -58,29 +38,8 @@ func NewTestIssuer() security.Issuer {
 	})
 }
 
-func NewTestTokenStoreReader(props MockingProperties) oauth2.TokenStoreReader {
-	return sectest.NewMockedTokenStoreReader(props.Accounts, props.Tenants)
-}
-
-func NewTestClientStore(props MockingProperties) oauth2.OAuth2ClientStore {
-	clients := make([]*sectest.MockedClientProperties, 0, len(props.Clients))
-	for _, c := range props.Clients {
-		clients = append(clients, c)
-	}
-	return sectest.NewMockedClientStore(clients...)
-}
-
-func NewTestAccountStore(props MockingProperties) security.AccountStore {
-	accts := make([]*sectest.MockedAccountProperties, 0, len(props.Accounts))
-	for _, acct := range props.Accounts {
-		accts = append(accts, acct)
-	}
-
-	tenants := make([]*sectest.MockedTenantProperties, 0, len(props.Tenants))
-	for _, t := range props.Tenants {
-		tenants = append(tenants, t)
-	}
-	return sectest.NewMockedAccountStore(accts, tenants)
+func NewTestAccountStore(props sectest.MockingProperties) security.AccountStore {
+	return sectest.NewMockedAccountStore(props.Accounts.Values(), props.Tenants.Values())
 }
 
 func NewJwtEncoder(jwks jwt.JwkStore) jwt.JwtEncoder {

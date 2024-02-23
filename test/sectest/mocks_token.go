@@ -34,22 +34,23 @@ const (
  *************************/
 
 type MockedTokenInfo struct {
-	UName       string `json:"UName"`
-	UID         string `json:"UID"`
-	TID         string `json:"TID"`
-	TExternalId string `json:"TExternalId"`
-	OrigU       string `json:"OrigU"`
-	Exp         int64  `json:"Exp"`
-	Iss         int64  `json:"Iss"`
+	ClientID    string   `json:"ClientID"`
+	UName       string   `json:"UName"`
+	UID         string   `json:"UID"`
+	TID         string   `json:"TID"`
+	TExternalId string   `json:"TExternalId"`
+	OrigU       string   `json:"OrigU"`
+	Exp         int64    `json:"Exp"`
+	Iss         int64    `json:"Iss"`
+	Scopes      []string `json:Scopes`
 }
 
 // MockedToken implements oauth2.AccessToken
 type MockedToken struct {
 	MockedTokenInfo
-	Token        string
-	ExpTime      time.Time `json:"-"`
-	IssTime      time.Time `json:"-"`
-	MockedScopes []string  `json:"-"`
+	Token   string
+	ExpTime time.Time `json:"-"`
+	IssTime time.Time `json:"-"`
 }
 
 func (mt MockedToken) MarshalText() (text []byte, err error) {
@@ -112,7 +113,7 @@ func (mt *MockedToken) IssueTime() time.Time {
 }
 
 func (mt *MockedToken) Scopes() utils.StringSet {
-	return utils.NewStringSet(mt.MockedScopes...)
+	return utils.NewStringSet(mt.MockedTokenInfo.Scopes...)
 }
 
 func (mt *MockedToken) RefreshToken() oauth2.RefreshToken {

@@ -97,10 +97,7 @@ func (c *FormLoginConfigurer) validate(f *FormLoginFeature, _ security.WebSecuri
 	}
 
 	if f.successHandler == nil {
-		f.successHandler = request_cache.NewSavedRequestAuthenticationSuccessHandler(
-			redirect.NewRedirectWithRelativePath("/", true),
-			security.IsBeingAuthenticated,
-		)
+		f.successHandler = c.defaultSavedRequestSuccessHandler()
 	}
 
 	if f.loginProcessUrl == "" {
@@ -292,4 +289,16 @@ func (c *FormLoginConfigurer) effectiveSuccessHandler(f *FormLoginFeature, ws se
 	} else {
 		return security.NewAuthenticationSuccessHandler(rememberUsernameHandler, f.successHandler)
 	}
+}
+
+func (c *FormLoginConfigurer) defaultSavedRequestSuccessHandler() security.AuthenticationSuccessHandler {
+	return request_cache.NewSavedRequestAuthenticationSuccessHandler(
+		redirect.NewRedirectWithRelativePath("/", true),
+		func(from, to security.Authentication) bool {
+			// Note: we changed the condition from security.IsBeingAuthenticated(from, to) to security.IsFullyAuthenticated(to)
+			// 		 to handle re-authenticate cases:
+			// 		 We allow authenticated user to re-authenticate with same or different user credentials,
+			// 		 in such case security.IsBeingAuthenticated would skip the redirect
+			return security.IsFullyAuthenticated(to)
+		})
 }

@@ -92,6 +92,3 @@ func flattenMap[T any](m map[string]T, prefix string) []string {
 	return lines
 }
 
-func kvLine(prefix, k string, v interface{}) {
-
-}

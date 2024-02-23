@@ -107,7 +107,7 @@ type IntegrationTestDI struct {
 	AppCtx  *bootstrap.ApplicationContext
 	SecReg  security.Registrar
 	WebReg  *web.Registrar
-	Mocking testdata.MockingProperties
+	Mocking sectest.MockingProperties
 }
 
 type IntegrationTestOut struct {
@@ -134,13 +134,9 @@ func IntegrationTestMocksProvider(opts ...IntegrationTestOption) func(Integratio
 		integrationTestOut := IntegrationTestOut{
 			DiscoveryCustomizers: &discovery.Customizers{},
 			IdpManager:           testdata.NewMockedIDPManager(),
-			AccountStore: sectest.NewMockedAccountStore(
-				testdata.MapValues(di.Mocking.Accounts),
-				testdata.MapValues(di.Mocking.Tenants),
-			),
+			AccountStore: sectest.NewMockedAccountStore(di.Mocking.Accounts.Values(), di.Mocking.Tenants.Values()),
 			PasswordEncoder: passwd.NewNoopPasswordEncoder(),
-
-			FedAccountStore: sectest.NewMockedFederatedAccountStore(testdata.MapValues(di.Mocking.FedAccounts)...),
+			FedAccountStore: sectest.NewMockedFederatedAccountStore(di.Mocking.FederatedUsers.Values()...),
 			SamlClientStore: samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
 			TenancyAccessor: mockTenantAccessor,
 		}
@@ -159,7 +155,7 @@ func IntegrationTestMocksProvider(opts ...IntegrationTestOption) func(Integratio
 type intDI struct {
 	fx.In
 	FedAccountStore security.FederatedAccountStore
-	Mocking         testdata.MockingProperties
+	Mocking         sectest.MockingProperties
 	TokenReader     oauth2.TokenStoreReader
 }
 
@@ -185,11 +181,11 @@ func TestWithMockedServer(t *testing.T) {
 			fx.Provide(
 				IntegrationTestMocksProvider(func(di IntegrationTestDI, out *IntegrationTestOut) {
 					out.AccountStore = sectest.NewMockedAccountStoreWithFinalize(
-						testdata.MapValues(di.Mocking.Accounts),
-						testdata.MapValues(di.Mocking.Tenants),
+						di.Mocking.Accounts.Values(),
+						di.Mocking.Tenants.Values(),
 					)
 				}),
-				testdata.BindMockingProperties,
+				sectest.BindMockingProperties,
 				testdata.NewAuthServerConfigurer, //This configurer will set up mocked client store, mocked tenant store etc.
 				testdata.NewResServerConfigurer,
 			),
@@ -231,7 +227,7 @@ func TestWithMockedServerWithoutFinalizer(t *testing.T) {
 		apptest.WithFxOptions(
 			fx.Provide(
 				IntegrationTestMocksProvider(),
-				testdata.BindMockingProperties,
+				sectest.BindMockingProperties,
 				testdata.NewAuthServerConfigurer,
 				testdata.NewResServerConfigurer,
 			),
@@ -287,7 +283,7 @@ func SubTestSamlSSOAuthorizeWithPasswdIDP(_ *intDI) test.GomegaSubTestFunc {
 func SubTestOAuth2AuthCode(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// mock authentication
-		fedAccount := di.Mocking.FedAccounts["fed1"]
+		fedAccount := di.Mocking.FederatedUsers.MapValues()["fed1"]
 		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
 		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
 
@@ -322,7 +318,7 @@ func SubTestOAuth2AuthCode(di *intDI) test.GomegaSubTestFunc {
 func SubTestOAuth2AuthCodeWithoutTenant(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// mock authentication
-		fedAccount := di.Mocking.FedAccounts["fed2"]
+		fedAccount := di.Mocking.FederatedUsers.MapValues()["fed2"]
 		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
 		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
 
@@ -363,7 +359,7 @@ type AuthCodeWithTenantClientTestStruct struct {
 
 func SubTestOAuth2AuthCodeWithTenantClient(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		fedAccount := di.Mocking.FedAccounts["fed1"] //this user has access to 2 tenants
+		fedAccount := di.Mocking.FederatedUsers.MapValues()["fed1"] //this user has access to 2 tenants
 		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
 		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
 
@@ -567,7 +563,7 @@ func SubTestTenantClientCredential(di *intDI) test.GomegaSubTestFunc {
 func SubTestOauth2AccessCodeSwitchTenant(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// mock authentication
-		fedAccount := di.Mocking.FedAccounts["fed3"]
+		fedAccount := di.Mocking.FederatedUsers.MapValues()["fed3"]
 		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
 		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
 
@@ -628,7 +624,7 @@ type SwitchTenantTestStruct struct {
 // it switches
 func SubTestOauth2SwitchTenantWithPerTenantPermission(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
-		fedAccount := di.Mocking.FedAccounts["fed3"]
+		fedAccount := di.Mocking.FederatedUsers.MapValues()["fed3"]
 		tests := []SwitchTenantTestStruct{
 			{
 				name:     "tenant-1",
@@ -667,7 +663,7 @@ func SubTestOauth2SwitchTenantWithPerTenantPermission(di *intDI) test.GomegaSubT
 // yield no change in permissions
 func SubTestOAuth2SwitchTenantNoFinalizer(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		fedAccount := di.Mocking.FedAccounts["fed3"]
+		fedAccount := di.Mocking.FederatedUsers.MapValues()["fed3"]
 		tests := []SwitchTenantTestStruct{
 			{
 				name:     "tenant-1",

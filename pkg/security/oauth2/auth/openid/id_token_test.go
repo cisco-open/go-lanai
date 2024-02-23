@@ -72,7 +72,7 @@ func TestOpenIDTokenEnhancer(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithFxOptions(
 			fx.Provide(
-				BindMockingProperties, NewTestIssuer, NewTestAccountStore,
+				sectest.BindMockingProperties, NewTestIssuer, NewTestAccountStore,
 				NewJwkStore, NewJwtEncoder, NewJwtDecoder,
 				ProvideOpenIDTokenEnhancer,
 			),

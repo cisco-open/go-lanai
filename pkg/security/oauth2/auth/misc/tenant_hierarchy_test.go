@@ -8,6 +8,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -64,7 +65,7 @@ func TestTenantHierarchyEndpoint(t *testing.T) {
 		apptest.WithModules(tenancy.Module),
 		apptest.WithFxOptions(
 			fx.Provide(
-				BindMockingProperties, NewTestClientStore, NewMockedTenancyAccessor,
+				sectest.BindMockingProperties, NewTestClientStore, NewMockedTenancyAccessor,
 				misc.NewTenantHierarchyEndpoint,
 			),
 		),

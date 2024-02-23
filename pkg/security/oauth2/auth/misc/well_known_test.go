@@ -36,7 +36,7 @@ func TestWellKnownEndpoint(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithFxOptions(
 			fx.Provide(
-				BindMockingProperties,
+				sectest.BindMockingProperties,
 				NewTestIssuer, NewTestClientStore,
 			),
 		),

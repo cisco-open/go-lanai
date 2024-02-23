@@ -24,7 +24,7 @@ import (
 )
 
 type mockedTokenStoreReader struct {
-	*mockedBase
+	*mockedTokenBase
 }
 
 // NewMockedTokenStoreReader create a mocked oauth2.TokenStoreReader based on properties,
@@ -33,7 +33,7 @@ func NewMockedTokenStoreReader(acctsProps map[string]*MockedAccountProperties, t
 	accounts := newMockedAccounts(acctsProps)
 	tenants := newMockedTenants(tenantProps)
 	return &mockedTokenStoreReader{
-		mockedBase: &mockedBase{
+		mockedTokenBase: &mockedTokenBase{
 			accounts: accounts,
 			tenants:  tenants,
 			revoked:  utils.NewStringSet(),
@@ -41,9 +41,9 @@ func NewMockedTokenStoreReader(acctsProps map[string]*MockedAccountProperties, t
 	}
 }
 
-func newMockedTokenStoreReader(base *mockedBase) oauth2.TokenStoreReader {
+func newMockedTokenStoreReader(base *mockedTokenBase) oauth2.TokenStoreReader {
 	return &mockedTokenStoreReader{
-		mockedBase: base,
+		mockedTokenBase: base,
 	}
 }
 

@@ -19,18 +19,67 @@ package sectest
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
+	"strings"
 	"time"
 )
 
 const (
-	PropertiesPrefix = "mocking"
+	MockingPropertiesPrefix = "mocking"
 )
 
-type mockingProperties struct {
-	Accounts      map[string]*MockedAccountProperties `json:"accounts"`
-	Tenants       map[string]*MockedTenantProperties  `json:"tenants"`
-	TokenValidity utils.Duration                      `json:"token-validity"`
+type MockingProperties struct {
+	Accounts       MockedPropertiesAccounts       `json:"accounts"`
+	Tenants        MockedPropertiesTenants        `json:"tenants"`
+	Clients        MockedPropertiesClients        `json:"clients"`
+	FederatedUsers MockedPropertiesFederatedUsers `json:"fed-users"`
+}
+
+// BindMockingProperties is a FX provider that bind all mocked properties as MockingProperties.
+// All mocked properties should be under the yaml section defined as MockingPropertiesPrefix
+// e.g. "mocking.accounts" defines all account mocks
+func BindMockingProperties(ctx *bootstrap.ApplicationContext) (MockingProperties, error) {
+	return MockedPropertiesBinder[MockingProperties]("")(ctx)
+}
+
+type MockedProperties[T any] map[string]*T
+
+func (p MockedProperties[T]) Values() []*T {
+	values := make([]*T, 0, len(p))
+	for _, v := range p {
+		values = append(values, v)
+	}
+	return values
+}
+
+func (p MockedProperties[T]) MapValues() map[string]*T {
+	return p
+}
+
+func (p *MockedProperties[T]) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, (*map[string]*T)(p))
+}
+
+// MockedPropertiesBinder returns a FX provider that bind specific mocked properties type from the properties sub-section
+// specified by "prefix". The root section prefix is defined by MockingPropertiesPrefix
+// e.g. MockedPropertiesBinder[MockedPropertiesAccounts]("accounts"):
+//	    The returned binder binds MockedPropertiesAccounts from "mocking.accounts"
+func MockedPropertiesBinder[T any](prefix string) func(ctx *bootstrap.ApplicationContext) (T, error) {
+	return func(ctx *bootstrap.ApplicationContext) (T, error) {
+		prefix = MockingPropertiesPrefix + "." + prefix
+		prefix = strings.Trim(prefix, ".")
+		var props T
+		if err := ctx.Config().Bind(&props, prefix); err != nil {
+			return props, errors.Wrap(err, fmt.Sprintf("failed to bind mocking properties %T from [%s]", props, prefix))
+		}
+		return props, nil
+	}
+}
+
+type MockedPropertiesClients struct {
+	MockedProperties[MockedClientProperties]
 }
 
 type MockedClientProperties struct {
@@ -44,6 +93,10 @@ type MockedClientProperties struct {
 	AssignedTenantIds utils.CommaSeparatedSlice `json:"tenants"`
 }
 
+type MockedPropertiesAccounts struct {
+	MockedProperties[MockedAccountProperties]
+}
+
 type MockedAccountProperties struct {
 	UserId        string   `json:"id"` // optional field
 	Username      string   `json:"username"`
@@ -53,11 +106,19 @@ type MockedAccountProperties struct {
 	Perms         []string `json:"permissions"`
 }
 
+type MockedPropertiesFederatedUsers struct {
+	MockedProperties[MockedFederatedUserProperties]
+}
+
 type MockedFederatedUserProperties struct {
 	MockedAccountProperties
 	ExtIdpName string `json:"ext-idp-name"`
 	ExtIdName  string `json:"ext-id-name"`
 	ExtIdValue string `json:"ext-id-value"`
+}
+
+type MockedPropertiesTenants struct {
+	MockedProperties[MockedTenantProperties]
 }
 
 type MockedTenantProperties struct {
@@ -66,13 +127,16 @@ type MockedTenantProperties struct {
 	Perms      map[string][]string `json:"permissions"` // permissions are MockedAccountProperties.UserId to permissions
 }
 
-func bindMockingProperties(ctx *bootstrap.ApplicationContext) *mockingProperties {
-	props := mockingProperties{
-		Accounts:      map[string]*MockedAccountProperties{},
-		Tenants:       map[string]*MockedTenantProperties{},
+type scopeMockingProperties struct {
+	MockingProperties
+	TokenValidity utils.Duration `json:"token-validity"`
+}
+
+func bindScopeMockingProperties(ctx *bootstrap.ApplicationContext) *scopeMockingProperties {
+	props := scopeMockingProperties{
 		TokenValidity: utils.Duration(120 * time.Second),
 	}
-	if err := ctx.Config().Bind(&props, PropertiesPrefix); err != nil {
+	if err := ctx.Config().Bind(&props, MockingPropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind mocking properties"))
 	}
 	return &props

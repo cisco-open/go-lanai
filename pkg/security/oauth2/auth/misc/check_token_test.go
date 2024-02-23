@@ -36,7 +36,7 @@ func TestCheckTokenEndpoint(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithFxOptions(
 			fx.Provide(
-				BindMockingProperties,
+				sectest.BindMockingProperties,
 				NewTestIssuer,
 				NewTestTokenStoreReader,
 				NewTestClientStore,

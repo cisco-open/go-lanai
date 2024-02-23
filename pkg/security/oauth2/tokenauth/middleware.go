@@ -100,7 +100,7 @@ func (mw *TokenAuthMiddleware) handleSuccess(c *gin.Context, before, new securit
 	}
 
 	mw.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, new)
-	// we don't explicitly write any thig on success
+	// we don't explicitly write any thing on success
 }
 
 func (mw *TokenAuthMiddleware) extractAccessToken(ctx *gin.Context) (ret string, err error) {

@@ -28,9 +28,9 @@ type MockAccountStoreWithFinalize struct {
 	MockAccountStore
 }
 
-func NewMockedAccountStoreWithFinalize(accountProps []*MockedAccountProperties, tenantProps []*MockedTenantProperties) *MockAccountStoreWithFinalize {
+func NewMockedAccountStoreWithFinalize(accountProps []*MockedAccountProperties, tenantProps []*MockedTenantProperties, modifiers ...MockedAccountModifier) *MockAccountStoreWithFinalize {
 	return &MockAccountStoreWithFinalize{
-		MockAccountStore: *NewMockedAccountStore(accountProps, tenantProps),
+		MockAccountStore: *NewMockedAccountStore(accountProps, tenantProps, modifiers...),
 	}
 }
 
@@ -70,19 +70,24 @@ func (m *MockAccountStoreWithFinalize) Finalize(
 	return ret, nil
 }
 
+// MockedAccountModifier works with MockAccountStore. It allows tests to modify the mocked account after load
+type MockedAccountModifier func(acct security.Account) security.Account
+
 type MockAccountStore struct {
 	accountLookupByUsername map[string]*MockedAccount
 	accountLookupById       map[interface{}]*MockedAccount
 	tenantIDLookup          map[string]*mockedTenant
 	tenantExtIDLookup       map[string]*mockedTenant
+	modifiers               []MockedAccountModifier
 }
 
-func NewMockedAccountStore(accountProps []*MockedAccountProperties, tenantProps []*MockedTenantProperties) *MockAccountStore {
+func NewMockedAccountStore(accountProps []*MockedAccountProperties, tenantProps []*MockedTenantProperties, modifiers ...MockedAccountModifier) *MockAccountStore {
 	store := &MockAccountStore{
 		accountLookupById:       make(map[interface{}]*MockedAccount),
 		accountLookupByUsername: make(map[string]*MockedAccount),
 		tenantIDLookup:          map[string]*mockedTenant{},
 		tenantExtIDLookup:       map[string]*mockedTenant{},
+		modifiers:               modifiers,
 	}
 	for _, v := range accountProps {
 		acct := newMockedAccount(v)
@@ -108,10 +113,16 @@ func NewMockedAccountStore(accountProps []*MockedAccountProperties, tenantProps 
 func (m *MockAccountStore) LoadAccountById(_ context.Context, id interface{}) (security.Account, error) {
 	u, ok := m.accountLookupById[id]
 	if !ok {
-		return nil, errors.New("user Domain not found")
+		return nil, errors.New("user ID not found")
 	}
-
-	return u, nil
+	var acct security.Account = u
+	for _, modifier := range m.modifiers {
+		acct = modifier(acct)
+	}
+	if acct == nil {
+		return nil, errors.New("user ID not found")
+	}
+	return acct, nil
 }
 
 func (m *MockAccountStore) LoadAccountByUsername(_ context.Context, username string) (security.Account, error) {
@@ -119,8 +130,14 @@ func (m *MockAccountStore) LoadAccountByUsername(_ context.Context, username str
 	if !ok {
 		return nil, errors.New("username not found")
 	}
-
-	return u, nil
+	var acct security.Account = u
+	for _, modifier := range m.modifiers {
+		acct = modifier(acct)
+	}
+	if acct == nil {
+		return nil, errors.New("username not found")
+	}
+	return acct, nil
 }
 
 func (m *MockAccountStore) LoadLockingRules(_ context.Context, _ security.Account) (security.AccountLockingRule, error) {
