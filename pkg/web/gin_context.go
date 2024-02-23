@@ -132,6 +132,7 @@ func (c PriorityGinContextCustomizer) PriorityOrder() int {
 	return 0
 }
 
+//nolint:contextcheck // context is not relevant here - should pass the context parameter
 func (c PriorityGinContextCustomizer) Customize(_ context.Context, r *Registrar) error {
 	if e := r.AddGlobalMiddlewares(GinContextMerger()); e != nil {
 		return e

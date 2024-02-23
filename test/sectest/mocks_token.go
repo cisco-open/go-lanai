@@ -42,7 +42,7 @@ type MockedTokenInfo struct {
 	OrigU       string   `json:"OrigU"`
 	Exp         int64    `json:"Exp"`
 	Iss         int64    `json:"Iss"`
-	Scopes      []string `json:Scopes`
+	Scopes      []string `json:"Scopes"`
 }
 
 // MockedToken implements oauth2.AccessToken

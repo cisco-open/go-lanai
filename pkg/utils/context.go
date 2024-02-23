@@ -99,7 +99,8 @@ func (ctx *mutableContext) Values() (values map[interface{}]interface{}) {
 	return values
 }
 
-// NewMutableContext TODO
+// NewMutableContext Wrap given context.Context with a mutable store and optionally additional KV sources defined as ContextValuer
+//nolint:contextcheck // false positive - Non-inherited new context, use function like `context.WithXXX` instead
 func NewMutableContext(parent context.Context, valuers ...ContextValuer) MutableContext {
 	if parent == nil {
 		parent = context.Background()

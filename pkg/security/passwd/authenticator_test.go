@@ -10,7 +10,6 @@ import (
 	. "cto-github.cisco.com/NFV-BU/go-lanai/test/utils/gomega"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
 	"testing"
 	"time"
 )
@@ -29,10 +28,6 @@ const (
 /*************************
 	Test
  *************************/
-
-type AuthDI struct {
-	fx.In
-}
 
 func TestAuthenticator(t *testing.T) {
 	test.RunTest(context.Background(), t,
