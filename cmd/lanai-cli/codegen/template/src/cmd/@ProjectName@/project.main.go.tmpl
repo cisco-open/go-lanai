@@ -2,7 +2,7 @@
 package main
 
 {{ $imports := NewImports }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/bootstrap" }}
 {{ $imports = $imports.AddWithAlias (concat .Project.Module "/pkg/init" ) "serviceinit" }}
 {{ $imports = $imports.Add "go.uber.org/fx" }}
 {{ $imports = $imports.Add "time" }}

@@ -2,7 +2,7 @@ package serviceinit
 
 {{ $imports := NewImports }}
 {{if (.Project.EnabledModules.Has "resserver")}}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/security/config/resserver" }}
 {{end}}
 {{ if eq .Security.Access.Preset "opa" }}
 {{ template "security-preset/opa/init/imports" $imports }}

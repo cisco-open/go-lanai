@@ -41,6 +41,7 @@ type TestPlan struct {
 }
 
 func TestGenerateTemplates(t *testing.T) {
+	const update = false
 	plans := []TestPlan{
 		{
 			name:       "TestV2Configuration",
@@ -48,7 +49,7 @@ func TestGenerateTemplates(t *testing.T) {
 			wantErr:    false,
 			outputDir:  "testdata/output/v2",
 			goldenDir:  "testdata/golden/v2",
-			update:     false,
+			update:     update,
 		},
 		{
 			name:       "TestV1Configuration",
@@ -56,7 +57,7 @@ func TestGenerateTemplates(t *testing.T) {
 			wantErr:    false,
 			outputDir:  "testdata/output/v1",
 			goldenDir:  "testdata/golden/v1",
-			update:     false,
+			update:     update,
 		},
 		{
 			name:       "TestV2OPAConfiguration",
@@ -64,7 +65,7 @@ func TestGenerateTemplates(t *testing.T) {
 			wantErr:    false,
 			outputDir:  "testdata/output/opa",
 			goldenDir:  "testdata/golden/opa",
-			update:     false,
+			update:     update,
 		},
 		{
 			name:       "TestV2NoSecConfiguration",
@@ -72,7 +73,7 @@ func TestGenerateTemplates(t *testing.T) {
 			wantErr:    false,
 			outputDir:  "testdata/output/nosec",
 			goldenDir:  "testdata/golden/nosec",
-			update:     false,
+			update:     update,
 		},
 	}
 

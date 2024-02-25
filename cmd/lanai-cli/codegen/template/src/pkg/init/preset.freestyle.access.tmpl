@@ -2,14 +2,14 @@
 {{ $imports := . }}
 {{ $imports = $imports.Add "context" }}
 {{ $imports = $imports.Add "go.uber.org/fx" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/security" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/actuator" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/actuator/health" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/security/access" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/security/errorhandling" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/security/config/resserver" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/security/oauth2/tokenauth" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/web/matcher" }}
 {{end}}
 
 {{define "security-preset/freestyle/init/sourcecode"}}

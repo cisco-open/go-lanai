@@ -1,21 +1,21 @@
 package serviceinit
 
 import (
-    "cto-github.cisco.com/NFV-BU/test-service/pkg/controller"
-    actuator "github.com/cisco-open/go-lanai/pkg/actuator/init"
-    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    consul "github.com/cisco-open/go-lanai/pkg/consul/init"
-    discovery "github.com/cisco-open/go-lanai/pkg/discovery/init"
-    opainit "github.com/cisco-open/go-lanai/pkg/opa/init"
-    "github.com/cisco-open/go-lanai/pkg/redis"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/config/resserver"
-    "github.com/cisco-open/go-lanai/pkg/swagger"
-    tracing "github.com/cisco-open/go-lanai/pkg/tracing/init"
-    vault "github.com/cisco-open/go-lanai/pkg/vault/init"
-    web "github.com/cisco-open/go-lanai/pkg/web/init"
-    "go.uber.org/fx"
+	actuator "github.com/cisco-open/go-lanai/pkg/actuator/init"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	consul "github.com/cisco-open/go-lanai/pkg/consul/init"
+	discovery "github.com/cisco-open/go-lanai/pkg/discovery/init"
+	opainit "github.com/cisco-open/go-lanai/pkg/opa/init"
+	"github.com/cisco-open/go-lanai/pkg/redis"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/config/resserver"
+	"github.com/cisco-open/go-lanai/pkg/swagger"
+	tracing "github.com/cisco-open/go-lanai/pkg/tracing/init"
+	vault "github.com/cisco-open/go-lanai/pkg/vault/init"
+	web "github.com/cisco-open/go-lanai/pkg/web/init"
+	"github.com/cisco-open/test-service/pkg/controller"
+	"go.uber.org/fx"
 )
 
 var Module = &bootstrap.Module{

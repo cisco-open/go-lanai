@@ -3,8 +3,8 @@
 package v1
 
 import (
-	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
 	"encoding/json"
+	"github.com/cisco-open/test-service/pkg/api"
 	"github.com/google/uuid"
 )
 

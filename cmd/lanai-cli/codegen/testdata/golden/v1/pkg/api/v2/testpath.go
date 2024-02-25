@@ -3,7 +3,7 @@
 package v2
 
 import (
-	"cto-github.cisco.com/NFV-BU/test-service/pkg/api"
+	"github.com/cisco-open/test-service/pkg/api"
 )
 
 type GetAllTestPathsRequest struct {
