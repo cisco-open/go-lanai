@@ -89,19 +89,13 @@ func (mw *SamlAuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Re
 			}
 		}
 
-		auth, exist := ctx.Get(security.ContextKeySecurity)
+		authentication := security.Get(ctx)
 		//sanity check
-		if !exist {
+		if authentication == nil {
 			mw.handleError(ctx, nil, NewSamlInternalError("no authentication found", err))
 			return
 		}
 
-		authentication, ok := auth.(security.Authentication)
-		//sanity check
-		if !ok {
-			mw.handleError(ctx, nil, NewSamlInternalError("authentication type is not supported"))
-			return
-		}
 		//sanity check
 		if authentication.State() < security.StateAuthenticated {
 			mw.handleError(ctx, nil, NewSamlInternalError("session is not authenticated"))

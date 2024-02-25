@@ -55,6 +55,37 @@ type ModelView struct {
 	Model Model
 }
 
+type ModelValuer interface{
+	~func() interface{} | ~func(ctx context.Context) interface{} | ~func(req *http.Request) interface{}
+}
+
+func StaticModelValuer(value interface{}) func() interface{} {
+	return func() interface{} {
+		return value
+	}
+}
+
+func ContextModelValuer[T any](fn func(ctx context.Context) T) func(context.Context) interface{} {
+	return func(ctx context.Context) interface{} {
+		return fn(ctx)
+	}
+}
+
+func RequestModelValuer[T any](fn func(req *http.Request) T) func(req *http.Request) interface{} {
+	return func(req *http.Request) interface{} {
+		return fn(req)
+	}
+}
+
+var globalModelValuers = map[string]interface{}{}
+
+// RegisterGlobalModelValuer register a ModelValuer with given model key. The registered ModelValuer is applied
+// before any ModelView is rendered.
+// Use StaticModelValuer, ContextModelValuer or RequestModelValuer to wrap values/functions as ModelValuer
+func RegisterGlobalModelValuer[T ModelValuer](key string, valuer T) {
+	globalModelValuers[key] = any(valuer)
+}
+
 func RedirectView(location string, statusCode int, ignoreContextPath bool) *ModelView {
 	if statusCode < 300 || statusCode > 399 {
 		statusCode = http.StatusFound
@@ -96,9 +127,8 @@ func redirect(ctx context.Context, mv *ModelView) (int, string) {
 		return sc, loc.String()
 	}
 
-	if ctxPath, ok := ctx.Value(web.ContextKeyContextPath).(string); ok {
-		loc.Path = path.Join(ctxPath, loc.Path)
-	}
+	ctxPath := web.ContextPath(ctx)
+	loc.Path = path.Join(ctxPath, loc.Path)
 	return sc, loc.String()
 }
 
@@ -173,8 +203,24 @@ func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 }
 
 func AddGlobalModelData(ctx context.Context, model Model, r *http.Request) {
-	model[ModelKeyRequestContext] = MakeRequestContext(ctx, r, web.ContextKeyContextPath)
-	model[ModelKeySession] = ctx.Value(web.ContextKeySession)
-	model[ModelKeySecurity] = ctx.Value(web.ContextKeySecurity)
-	model[ModelKeyCsrf] = ctx.Value(web.ContextKeyCsrf)
+	model[ModelKeyRequestContext] = MakeRequestContext(ctx, r)
+	applyGlobalModelValuers(ctx, r, model)
+}
+
+func applyGlobalModelValuers(ctx context.Context, r *http.Request, model Model) {
+	for k, valuer := range globalModelValuers {
+		var v interface{}
+		switch fn := valuer.(type) {
+		case func() interface{}:
+			v = fn()
+		case func(ctx context.Context) interface{}:
+			v = fn(ctx)
+		case func(req *http.Request) interface{}:
+			v = fn(r)
+		}
+		if v != nil {
+			model[k] = v
+		}
+	}
+
 }

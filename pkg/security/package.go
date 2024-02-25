@@ -20,6 +20,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
 	"go.uber.org/fx"
 )
 
@@ -37,6 +38,7 @@ var Module = &bootstrap.Module{
 // Use Maker func, does nothing. Allow service to include this module in main()
 func Use() {
 	bootstrap.Register(Module)
+	template.RegisterGlobalModelValuer(template.ModelKeySecurity, template.ContextModelValuer(Get))
 }
 
 /**************************

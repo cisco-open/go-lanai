@@ -19,14 +19,16 @@ package testdata
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
+	"dario.cat/mergo"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 )
 
 func IndexPage(_ context.Context, _ *http.Request) (template.ModelView, error) {
 	return template.ModelView{
-		View:  "index.html.tmpl",
+		View: "index.html.tmpl",
 		Model: template.Model{
 			"Title": "TemplateMVCTest",
 		},
@@ -36,7 +38,6 @@ func IndexPage(_ context.Context, _ *http.Request) (template.ModelView, error) {
 func RedirectPage(_ context.Context, _ *http.Request) (*template.ModelView, error) {
 	return template.RedirectView("/index", http.StatusFound, false), nil
 }
-
 
 const ModelPrintTmpl = `%s=%v`
 
@@ -52,11 +53,11 @@ func flattenMap[T any](m map[string]T, prefix string) []string {
 		var unknown interface{} = val
 		switch v := unknown.(type) {
 		case template.RequestContext:
-			lines = append(lines, flattenMap(v, prefix + "." + k)...)
+			lines = append(lines, flattenMap(v, prefix+"."+k)...)
 		case map[string]any:
-			lines = append(lines, flattenMap(v, prefix + "." + k)...)
+			lines = append(lines, flattenMap(v, prefix+"."+k)...)
 		case map[string]string:
-			lines = append(lines, flattenMap(v, prefix + "." + k)...)
+			lines = append(lines, flattenMap(v, prefix+"."+k)...)
 		case []any:
 			for i := range v {
 				k = fmt.Sprintf(`%s.%d`, prefix, i)
@@ -67,10 +68,27 @@ func flattenMap[T any](m map[string]T, prefix string) []string {
 				k = fmt.Sprintf(`%s.%d`, prefix, i)
 				lines = append(lines, fmt.Sprintf(ModelPrintTmpl, k, v[i]))
 			}
-		default:
+		case fmt.Stringer, fmt.GoStringer, error:
 			k = fmt.Sprintf(`%s.%s`, prefix, k)
 			lines = append(lines, fmt.Sprintf(ModelPrintTmpl, k, v))
+		case nil:
+			// do nothing
+		default:
+			var converted map[string]interface{}
+			switch reflect.Indirect(reflect.ValueOf(v)).Kind() {
+			case reflect.Struct:
+				converted = map[string]interface{}{}
+				_ = mergo.Map(&converted, v)
+			default:
+			}
+			if len(converted) != 0 {
+				lines = append(lines, flattenMap(converted, prefix+"."+k)...)
+			} else {
+				k = fmt.Sprintf(`%s.%s`, prefix, k)
+				lines = append(lines, fmt.Sprintf(ModelPrintTmpl, k, v))
+			}
 		}
 	}
 	return lines
 }
+

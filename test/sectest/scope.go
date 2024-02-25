@@ -28,6 +28,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
 	"embed"
 	"go.uber.org/fx"
+	"time"
 )
 
 //var logger = log.New("SEC.Test")
@@ -77,17 +78,17 @@ type MocksDIOut struct {
 // ProvideScopeMocks is for internal usage. Exported for cross-package reference
 // Try use WithMockedScopes instead
 func ProvideScopeMocks(ctx *bootstrap.ApplicationContext) MocksDIOut {
-	props := bindMockingProperties(ctx)
-	accounts := newMockedAccounts(props)
-	tenants := newMockedTenants(props)
-	base := mockedBase{
+	props := bindScopeMockingProperties(ctx)
+	accounts := newMockedAccounts(props.Accounts.MapValues())
+	tenants := newMockedTenants(props.Tenants.MapValues())
+	base := mockedTokenBase{
 		accounts: accounts,
 		tenants:  tenants,
 		revoked:  utils.NewStringSet(),
 	}
 
 	return MocksDIOut{
-		AuthClient:   newMockedAuthClient(props, &base),
+		AuthClient:   newMockedAuthClient(&base, time.Duration(props.TokenValidity)),
 		TokenReader:  newMockedTokenStoreReader(&base),
 		TokenRevoker: &base,
 	}

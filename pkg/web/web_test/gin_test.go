@@ -48,7 +48,7 @@ func TestGinMiddlewares(t *testing.T) {
 	var di TestDI
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		webtest.WithUtilities(),
+		webtest.WithUtilities(webtest.UseContextPath("/custom-prefix")),
 		apptest.WithDI(&di),
 		apptest.WithFxOptions(
 			fx.Provide(web.NewEngine),
@@ -90,16 +90,8 @@ func SubTestGinContextAvailability(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestContextDefaultKV(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		kvs := []kv{
-			makeKV(web.ContextKeyContextPath, webtest.DefaultContextPath, nil, kvSrcAll),
-			makeKV(web.ContextKeyContextPath, webtest.CurrentContextPath(ctx), nil, kvSrcAll),
-		}
-
 		assertion := func(ctx context.Context, req *http.Request) {
-			for _, kv := range kvs {
-				g.Expect(ctx.Value(kv.k)).To(Equal(kv.v), "context should contain correct K%s=%s", kv.k, kv.v)
-				g.Expect(req.Context().Value(kv.k)).To(Equal(kv.v), "Request context should contain correct K%s=%s", kv.k, kv.v)
-			}
+			g.Expect(web.ContextPath(ctx)).To(Equal(webtest.CurrentContextPath(ctx)), "web.ContextPath should return correct value")
 		}
 
 		// execute test

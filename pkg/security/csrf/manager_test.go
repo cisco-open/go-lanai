@@ -17,17 +17,16 @@
 package csrf
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"errors"
-	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -43,9 +42,10 @@ func TestCsrfMiddlewareShouldGenerateToken(t *testing.T) {
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, common.DefaultName)
 
-	c, _ := gin.CreateTestContext(httptest.NewRecorder())
-	c.Set(web.ContextKeySession, s)
-	c.Request = httptest.NewRequest("GET", "/form", nil)
+	c := webtest.NewGinContext(context.Background(), "GET", "/form", nil)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 
 	mockSessionStore.EXPECT().Save(gomock.Any()).Do(func(s *session.Session) {
 		savedCsrfToken := s.Get(SessionKeyCsrfToken)
@@ -66,9 +66,9 @@ func TestCsrfMiddlewareShouldGenerateToken(t *testing.T) {
 	mw := manager.CsrfHandlerFunc()
 	mw(c)
 
-	csrfToken , ok := c.Get(web.ContextKeyCsrf)
+	csrfToken := Get(c)
 
-	if !ok || csrfToken == ""{
+	if csrfToken == nil || csrfToken.Value == "" {
 		t.Errorf("expected to have session")
 	}
 }
@@ -85,14 +85,15 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	s := session.NewSession(mockSessionStore, common.DefaultName)
 
 	//RequestDetails with a invalid csrf token
-	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c := webtest.NewGinContext(context.Background(),
+		"POST", "/process", strings.NewReader("_csrf="+uuid.New().String()),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"))
 	existingCsrfToken := csrfStore.Generate(c, "_csrf", "X-CSRF-TOKEN")
 	s.Set(SessionKeyCsrfToken, existingCsrfToken)
 
-	c.Set(web.ContextKeySession, s)
-	r := httptest.NewRequest("POST", "/process", strings.NewReader("_csrf=" + uuid.New().String()))
-	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	c.Request = r
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	mw := manager.CsrfHandlerFunc()
 	mw(c)
 
@@ -105,12 +106,13 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	}
 
 	//RequestDetails without csrf token
-	c, _ = gin.CreateTestContext(httptest.NewRecorder())
-	c.Set(web.ContextKeySession, s)
-	r = httptest.NewRequest("POST", "/process", strings.NewReader("a=b"))
-	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	c.Request = r
-
+	c = webtest.NewGinContext(context.Background(),
+		"POST", "/process", strings.NewReader("a=b"),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	mw(c)
 
 	if len(c.Errors) != 1 {
@@ -122,12 +124,13 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	}
 
 	//RequestDetails with expected csrf token
-	c, _ = gin.CreateTestContext(httptest.NewRecorder())
-	c.Set(web.ContextKeySession, s)
-	r = httptest.NewRequest("POST", "/process", strings.NewReader("_csrf=" + existingCsrfToken.Value))
-	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	c.Request = r
-
+	c = webtest.NewGinContext(context.Background(),
+		"POST", "/process", strings.NewReader("_csrf="+existingCsrfToken.Value),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	mw(c)
 
 	if len(c.Errors) != 0 {
@@ -135,12 +138,13 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	}
 
 	//RequestDetails with expected csrf token in header instead of form parameter
-	c, _ = gin.CreateTestContext(httptest.NewRecorder())
-	c.Set(web.ContextKeySession, s)
-	r = httptest.NewRequest("POST", "/process", nil)
-	r.Header.Set("X-CSRF-TOKEN", existingCsrfToken.Value)
-	c.Request = r
-
+	c = webtest.NewGinContext(context.Background(),
+		"POST", "/process", nil,
+		webtest.Headers("X-CSRF-TOKEN", existingCsrfToken.Value),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	mw(c)
 
 	if len(c.Errors) != 0 {
@@ -148,12 +152,14 @@ func TestCsrfMiddlewareShouldCheckToken(t *testing.T) {
 	}
 
 	//RequestDetails without a csrf token associated with it
-	c, _ = gin.CreateTestContext(httptest.NewRecorder())
+	c = webtest.NewGinContext(context.Background(),
+		"POST", "/process", nil,
+		webtest.Headers("X-CSRF-TOKEN", uuid.New().String()),
+	)
 	s.Delete(SessionKeyCsrfToken) //remove the csrf token from the session
-	c.Set(web.ContextKeySession, s)
-	r = httptest.NewRequest("POST", "/process", nil)
-	r.Header.Set("X-CSRF-TOKEN", uuid.New().String())
-	c.Request = r
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 
 	mockSessionStore.EXPECT().Save(gomock.Any()) //since this request's session doesn't have a csrf token, one will be generated
 
@@ -184,15 +190,16 @@ func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
 	s := session.NewSession(mockSessionStore, common.DefaultName)
 
 	//RequestDetails with a invalid csrf token against the protected path
-	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c := webtest.NewGinContext(context.Background(),
+		"POST", "/process", strings.NewReader("_csrf="+uuid.New().String()),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
+	)
 	existingCsrfToken := csrfStore.Generate(c, "_csrf", "X-CSRF-TOKEN")
 	s.Set(SessionKeyCsrfToken, existingCsrfToken)
 
-	c.Set(web.ContextKeySession, s)
-	r := httptest.NewRequest("POST", "/process", strings.NewReader("_csrf=" + uuid.New().String()))
-	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	c.Request = r
-	c.Set(web.ContextKeyContextPath, "")
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	mw := manager.CsrfHandlerFunc()
 	mw(c)
 
@@ -201,12 +208,13 @@ func TestCsrfMiddlewareProtectionAndIgnoreMatcher(t *testing.T) {
 	}
 
 	//RequestDetails with a invalid csrf token against the ignored path
-	c, _ = gin.CreateTestContext(httptest.NewRecorder())
-	c.Set(web.ContextKeySession, s)
-	r = httptest.NewRequest("POST", "/ignore", strings.NewReader("_csrf=" + uuid.New().String()))
-	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	c.Request = r
-	c.Set(web.ContextKeyContextPath, "")
+	c = webtest.NewGinContext(context.Background(),
+		"POST", "/ignore", strings.NewReader("_csrf="+uuid.New().String()),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	mw(c)
 
 	if len(c.Errors) != 0 {

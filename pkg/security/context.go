@@ -18,7 +18,7 @@ package security
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/internal"
+	securityinternal "cto-github.cisco.com/NFV-BU/go-lanai/internal/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
@@ -101,31 +101,52 @@ func GobRegister() {
 	Common Functions
  **********************************/
 
+type securityCtxKey struct{}
+
 func Get(ctx context.Context) Authentication {
-	secCtx, ok := ctx.Value(ContextKeySecurity).(Authentication)
+	secCtx, ok := ctx.Value(securityCtxKey{}).(Authentication)
 	if !ok {
-		secCtx = EmptyAuthentication("EmptyAuthentication")
+		secCtx = EmptyAuthentication("not authenticated")
 	}
 	return secCtx
 }
 
-func Clear(ctx context.Context) {
-	_ = TryClear(ctx)
+// MustSet is the panicking version of Set.
+func MustSet(ctx context.Context, auth Authentication) {
+	if e := Set(ctx, auth); e != nil {
+		panic(e)
+	}
 }
 
-// TryClear attempt to clear security context. Return true if succeeded
-func TryClear(ctx context.Context) (ret bool) {
-	if mc, ok := ctx.(utils.MutableContext); ok {
-		mc.Set(gin.AuthUserKey, nil)
-		mc.Set(ContextKeySecurity, nil)
-		ret = true
+// Set security context, return error if the given context is not backed by utils.MutableContext.
+func Set(ctx context.Context, auth Authentication) error {
+	mc := utils.FindMutableContext(ctx)
+	if mc == nil {
+		return NewInternalError(fmt.Sprintf(`unable to set security into context: given context [%T] is not mutable`, ctx))
 	}
+	mc.Set(securityCtxKey{}, auth)
+
+	// optionally, set AuthUserKey into gin context if available
 	if gc := web.GinContext(ctx); gc != nil {
-		gc.Set(gin.AuthUserKey, nil)
-		gc.Set(ContextKeySecurity, nil)
-		ret = true
+		if auth == nil {
+			gc.Set(gin.AuthUserKey, nil)
+		} else {
+			gc.Set(gin.AuthUserKey, auth.Principal())
+		}
 	}
-	return
+	return nil
+}
+
+// MustClear set security context as "unauthenticated".
+func MustClear(ctx context.Context) {
+	if e := Clear(ctx); e != nil {
+		panic(e)
+	}
+}
+
+// Clear attempt to set security context as "unauthenticated". Return error if not possible
+func Clear(ctx context.Context) error {
+	return Set(ctx, EmptyAuthentication("not authenticated"))
 }
 
 func HasPermissions(auth Authentication, permissions ...string) bool {
@@ -179,7 +200,7 @@ func HasErrorAccessingTenant(ctx context.Context, tenantId string) error {
 	}
 
 	auth := Get(ctx)
-	if ud, ok := auth.Details().(internal.TenantAccessDetails); ok {
+	if ud, ok := auth.Details().(securityinternal.TenantAccessDetails); ok {
 		if ud.EffectiveAssignedTenantIds().Has(SpecialTenantIdWildcard) {
 			return nil
 		}

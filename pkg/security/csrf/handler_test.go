@@ -17,16 +17,15 @@
 package csrf
 
 import (
+	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
-	"github.com/gin-gonic/gin"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -43,16 +42,17 @@ func TestChangeCsrfHanlderShouldChangeCSRFTokenWhenAuthenticated(t *testing.T) {
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, common.DefaultName)
 
-	c, _ := gin.CreateTestContext(httptest.NewRecorder())
-	c.Set(web.ContextKeySession, s)
+	//The request itself is not important
+	c := webtest.NewGinContext(context.Background(), "GET", "/something", nil)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	token := &Token{
 		uuid.New().String(),
 		security.CsrfParamName,
 		security.CsrfHeaderName,
 	}
 	s.Set(SessionKeyCsrfToken, token)
-	//The request itself is not important
-	c.Request = httptest.NewRequest("GET", "/something", nil)
 
 	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAnonymous)
@@ -95,16 +95,17 @@ func TestChangeCsrfHanlderShouldNotChangeCSRFTokenIfNotAuthenticated(t *testing.
 	mockSessionStore.EXPECT().Options().Return(&session.Options{})
 	s := session.NewSession(mockSessionStore, common.DefaultName)
 
-	c, _ := gin.CreateTestContext(httptest.NewRecorder())
-	c.Set(web.ContextKeySession, s)
+	//The request itself is not important
+	c := webtest.NewGinContext(context.Background(), "GET", "/something", nil)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	token := &Token{
 		uuid.New().String(),
 		security.CsrfParamName,
 		security.CsrfHeaderName,
 	}
 	s.Set(SessionKeyCsrfToken, token)
-	//The request itself is not important
-	c.Request = httptest.NewRequest("GET", "/something", nil)
 
 	mockFrom := authmock.NewMockAuthentication(ctrl)
 	mockFrom.EXPECT().State().Return(security.StateAuthenticated)

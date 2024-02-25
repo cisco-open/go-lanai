@@ -19,16 +19,11 @@ package security
 import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 )
 
 const (
 	MinSecurityPrecedence = bootstrap.SecurityPrecedence
 	MaxSecurityPrecedence = bootstrap.SecurityPrecedence + bootstrap.FrameworkModulePrecedenceBandwidth
-)
-
-const (
-	ContextKeySecurity = web.ContextKeySecurity
 )
 
 const (

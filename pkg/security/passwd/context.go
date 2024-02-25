@@ -72,7 +72,7 @@ func GobRegister() {
 type MFAMode int
 
 const (
-	MFAModeSkip = iota
+	MFAModeSkip MFAMode = iota
 	MFAModeOptional
 	MFAModeMust
 )

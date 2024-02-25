@@ -34,6 +34,12 @@ import (
 	"testing"
 )
 
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		dbtest.EnableDBRecordMode(),
+//	)
+//}
+
 type exampleDI struct {
 	fx.In
 	MockAccessor tenancy.Accessor
@@ -61,14 +67,14 @@ func TestGormModel(t *testing.T) {
 func SetupWithMockedSecurity(di *exampleDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		_ = di.DB.Exec(exampleTableSQL)
-		ctx = sectest.WithMockedSecurity(ctx, func(d *sectest.SecurityDetailsMock) {
+		ctx = sectest.ContextWithSecurity(ctx, sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
 			d.Username = "any-username"
 			d.UserId = "any-user-id"
 			d.TenantExternalId = "any-tenant-ext-id"
 			d.TenantId = MockedTenantIdA.String()
 			d.Tenants = utils.NewStringSet(MockedTenantIdA.String())
 			d.Permissions = utils.NewStringSet()
-		})
+		}))
 		return ctx, nil
 	}
 }
@@ -228,13 +234,13 @@ func newExampleModel(tenantIO uuid.UUID) *ExampleModel {
 }
 
 func mockAccessAllTenants(ctx context.Context) context.Context {
-	return sectest.WithMockedSecurity(ctx, func(d *sectest.SecurityDetailsMock) {
+	return sectest.ContextWithSecurity(ctx, sectest.MockedAuthentication(func(d *sectest.SecurityDetailsMock) {
 		d.Username = "any-username"
 		d.UserId = "any-user-id"
 		d.TenantExternalId = "any-tenant-ext-id"
 		d.TenantId = MockedRootTenantId.String()
 		d.Tenants = utils.NewStringSet(MockedRootTenantId.String())
-	})
+	}))
 }
 
 /*************************

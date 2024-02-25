@@ -46,6 +46,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"testing"
 )
@@ -374,10 +375,8 @@ func (m SLORequestMatcher) compareValue(elem *etree.Element, expected string) er
 type WarningsAwareSuccessHandler string
 
 func (h WarningsAwareSuccessHandler) HandleAuthenticationSuccess(ctx context.Context, r *http.Request, rw http.ResponseWriter, _, _ security.Authentication) {
-	redirectUrl := string(h)
-	if contextPath, ok := ctx.Value(web.ContextKeyContextPath).(string); ok {
-		redirectUrl = contextPath + redirectUrl
-	}
+	contextPath := web.ContextPath(ctx)
+	redirectUrl := path.Join(contextPath, string(h))
 	redirectUrl = h.appendWarnings(ctx, redirectUrl)
 	http.Redirect(rw, r, redirectUrl, http.StatusFound)
 	_, _ = rw.Write([]byte{})

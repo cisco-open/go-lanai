@@ -19,8 +19,6 @@ package session
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"net/http"
 	"sort"
 )
@@ -131,13 +129,7 @@ func (h *DeleteSessionOnLogoutHandler) HandleAuthenticationSuccess(c context.Con
 	s := Get(c)
 
 	defer func() {
-		// clean context
-		if mc, ok := c.(utils.MutableContext); ok {
-			mc.Set(contextKeySession, nil)
-		}
-		if gc := web.GinContext(c); gc != nil {
-			gc.Set(contextKeySession, nil)
-		}
+		MustSet(c, nil)
 	}()
 
 	if s == nil {
@@ -146,6 +138,4 @@ func (h *DeleteSessionOnLogoutHandler) HandleAuthenticationSuccess(c context.Con
 	if e := h.sessionStore.Invalidate(s); e != nil {
 		panic(e)
 	}
-
-
 }

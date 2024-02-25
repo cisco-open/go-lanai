@@ -170,8 +170,7 @@ func (sp *SPLoginMiddleware) Commence(c context.Context, r *http.Request, w http
 
 func (sp *SPLoginMiddleware) handleSuccess(c *gin.Context, before, new security.Authentication) {
 	if new != nil {
-		c.Set(gin.AuthUserKey, new.Principal())
-		c.Set(security.ContextKeySecurity, new)
+		security.MustSet(c, new)
 	}
 	sp.successHandler.HandleAuthenticationSuccess(c, c.Request, c.Writer, before, new)
 	if c.Writer.Written() {
@@ -183,7 +182,7 @@ func (sp *SPLoginMiddleware) handleError(c *gin.Context, err error) {
 	if trackedRequestIndex := c.Request.Form.Get("RelayState"); trackedRequestIndex != "" {
 		_ = sp.requestTracker.StopTrackingRequest(c.Writer, c.Request, trackedRequestIndex)
 	}
-	security.Clear(c)
+	security.MustClear(c)
 	_ = c.Error(err)
 	c.Abort()
 }

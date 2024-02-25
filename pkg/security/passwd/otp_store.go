@@ -79,6 +79,7 @@ type OTPStore interface {
 /*****************************
 	Common Implements
  *****************************/
+
 // timeBasedOtp implements OTP
 type timeBasedOtp struct {
 	Identifier   string
@@ -214,7 +215,7 @@ func (m *totpManager) Verify(id, passcode string) (loaded OTP, hasMoreChances bo
 }
 
 func (m *totpManager) Refresh(id string) (loaded OTP, hasMoreChances bool, err error) {
-	// load OTP by Domain
+	// load OTP by id
 	loaded, e := m.store.Load(id)
 	if e != nil {
 		return nil, false, security.NewCredentialsExpiredError("Passcode expired", e)

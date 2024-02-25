@@ -36,7 +36,7 @@ var (
 type AuthorizeEndpointConfigurer struct {
 }
 
-func newOAuth2AuhtorizeEndpointConfigurer() *AuthorizeEndpointConfigurer {
+func newOAuth2AuthorizeEndpointConfigurer() *AuthorizeEndpointConfigurer {
 	return &AuthorizeEndpointConfigurer{
 	}
 }

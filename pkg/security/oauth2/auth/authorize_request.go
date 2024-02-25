@@ -71,14 +71,18 @@ func (r *AuthorizeRequest) String() string {
 		r.ClientId, r.ResponseTypes, r.RedirectUri, r.Scopes, r.Extensions)
 }
 
-func NewAuthorizeRequest() *AuthorizeRequest {
-	return &AuthorizeRequest{
+func NewAuthorizeRequest(opts ...func(req *AuthorizeRequest)) *AuthorizeRequest {
+	ar := AuthorizeRequest{
 		Parameters:    map[string]string{},
 		ResponseTypes: utils.NewStringSet(),
 		Scopes:        utils.NewStringSet(),
 		Extensions:    map[string]interface{}{},
-		context:       utils.NewMutableContext(),
+		context:       utils.NewMutableContext(context.Background()),
 	}
+	for _, fn := range opts {
+		fn(&ar)
+	}
+	return &ar
 }
 
 func ParseAuthorizeRequest(req *http.Request) (*AuthorizeRequest, error) {

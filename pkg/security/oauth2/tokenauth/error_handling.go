@@ -39,8 +39,8 @@ func (h *OAuth2ErrorHandler) HandleError(c context.Context, r *http.Request, rw 
 }
 
 func (h *OAuth2ErrorHandler) handleError(c context.Context, r *http.Request, rw http.ResponseWriter, err error) {
-	//nolint:errorlint
-	switch oe, ok := err.(oauth2.OAuth2ErrorTranslator); {
+	var oe oauth2.OAuth2ErrorTranslator
+	switch ok := errors.As(err, &oe); {
 	case ok && errors.Is(err, oauth2.ErrorTypeOAuth2):
 		writeOAuth2Error(c, r, rw, oe)
 	}
@@ -56,7 +56,7 @@ func writeOAuth2Error(c context.Context, r *http.Request, rw http.ResponseWriter
 	security.WriteError(c, r, rw, sc, err)
 }
 
-func writeAdditionalHeader(c context.Context, r *http.Request, rw http.ResponseWriter, challenge string) {
+func writeAdditionalHeader(_ context.Context, _ *http.Request, rw http.ResponseWriter, challenge string) {
 	if security.IsResponseWritten(rw) {
 		return
 	}

@@ -19,8 +19,6 @@ package csrf
 import (
 	"context"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"net/http"
 )
 
@@ -34,19 +32,18 @@ func (h *ChangeCsrfHandler) HandleAuthenticationSuccess(c context.Context, _ *ht
 	}
 
 	// TODO: review error handling of this block
-	if mc, ok := c.(utils.MutableContext); ok {
-		t, err := h.csrfTokenStore.LoadToken(c)
+	t, err := h.csrfTokenStore.LoadToken(c)
 
-		if err != nil {
+	if err != nil {
+		panic(security.NewInternalError(err.Error()))
+	}
+
+	if t != nil {
+		t = h.csrfTokenStore.Generate(c, t.ParameterName, t.HeaderName)
+		if e := h.csrfTokenStore.SaveToken(c, t); e != nil {
 			panic(security.NewInternalError(err.Error()))
 		}
-
-		if t != nil {
-			t = h.csrfTokenStore.Generate(c, t.ParameterName, t.HeaderName)
-			if e := h.csrfTokenStore.SaveToken(c, t); e != nil {
-				panic(security.NewInternalError(err.Error()))
-			}
-			mc.Set(web.ContextKeyCsrf, t)
-		}
 	}
+
+	MustSet(c, t)
 }

@@ -23,9 +23,12 @@ import (
 	"github.com/gin-gonic/gin"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
+	"path"
 )
 
-// Functions, HandlerFuncs and go-kit ServerOptions that make sure *gin.Context is availalble in endpoints and
+type contextPathCtxKey struct {}
+
+// Functions, HandlerFuncs and go-kit ServerOptions that make sure *gin.Context is available in endpoints and
 // context is properly propagated in Request
 
 // SimpleGinMapping simple mapping of gin.HandlerFunc
@@ -76,26 +79,36 @@ func MustHttpRequest(ctx context.Context) *http.Request {
 	return MustGinContext(ctx).Request
 }
 
-// SetKV set a kv pair to given context.
-// The value can be obtained via context.Context.Value(key)
-// - When Key is string, put it in gin.Context
-// - When Key is not string, try MutableKVContext
-// - Fallback to use fmt.Sprintf(`%v`, key) as key and put it in gin.Context
+// ContextPath returns the "server.context-path" from properties with leading "/".
+// This function returns empty string if context-path is root or not set
+func ContextPath(ctx context.Context) string {
+	ctxPath, _ := ctx.Value(contextPathCtxKey{}).(string)
+	return ctxPath
+}
+
+// SetKV set a kv pair to given context if:
+// - The context is a utils.MutableContext
+// - The context has utils.MutableContext as parent/ancestors
+// - The context contains *gin.Context
+// The value then can be obtained via context.Context.Value(key)
+//
+// This function uses utils.FindMutableContext and GinContext() to find KV storage. Then store KV pair using following rule:
+// - If utils.FindMutableContext returns non-nil, utils.MutableContext interface is used
+// - If utils.FindMutableContext returns nil but *gin.Context is found:
+// 		+ If the key is string, KV pair is set as-is
+// 		+ Otherwise, uses fmt.Sprintf(`%v`, key) as key and set KV pair
+// - If none of conditions met, this function does nothing
 func SetKV(ctx context.Context, key interface{}, value interface{}) {
-	if strKey, ok := key.(string); ok {
-		switch c := ctx.(type) {
-		case utils.MutableContext:
-			c.Set(strKey, value)
-		}
-		return
+	if mc := utils.FindMutableContext(ctx); mc != nil {
+		mc.Set(key, value)
 	}
-	if c, ok := ctx.(utils.ExtendedMutableContext); ok {
-		c.SetKV(key, value)
-		return
-	}
-	// fallback
 	if gc := GinContext(ctx); gc != nil {
-		gc.Set(fmt.Sprintf(`%v`, key), value)
+		switch k := key.(type) {
+		case string:
+			gc.Set(k, value)
+		default:
+			gc.Set(fmt.Sprintf("%v", key), value)
+		}
 	}
 }
 
@@ -119,28 +132,12 @@ func (c PriorityGinContextCustomizer) PriorityOrder() int {
 	return 0
 }
 
+//nolint:contextcheck // context is not relevant here - should pass the context parameter
 func (c PriorityGinContextCustomizer) Customize(_ context.Context, r *Registrar) error {
-	return r.AddGlobalMiddlewares(GinContextPathAware(c.properties))
-}
-
-// GinContextCustomizer implements Customizer and order.Ordered
-type GinContextCustomizer struct {
-	properties *ServerProperties
-}
-
-func NewGinContextCustomizer(properties *ServerProperties) *GinContextCustomizer {
-	return &GinContextCustomizer{
-		properties: properties,
-	}
-}
-
-func (c GinContextCustomizer) Order() int {
-	// medium precedence, makes this customizer before any non-ordered customizers
-	return 0
-}
-
-func (c GinContextCustomizer) Customize(_ context.Context, r *Registrar) error {
 	if e := r.AddGlobalMiddlewares(GinContextMerger()); e != nil {
+		return e
+	}
+	if e := r.AddGlobalMiddlewares(PropertiesAware(c.properties)); e != nil {
 		return e
 	}
 	return r.AddEngineOptions(func(engine *Engine) {
@@ -149,14 +146,20 @@ func (c GinContextCustomizer) Customize(_ context.Context, r *Registrar) error {
 }
 
 /**************************
-	Handler Funcs
+	Handler Func
  **************************/
 
-// GinContextPathAware is a Gin middleware mandatory for all mappings.
-// It save the context path into context. The context path can be used in many components/utilities.
-func GinContextPathAware(props *ServerProperties) gin.HandlerFunc {
+// PropertiesAware is a Gin middleware mandatory for all mappings.
+// It save necessary properties into request's context. e.g. context-path
+// The saved properties can be used in many components/utilities.
+func PropertiesAware(props *ServerProperties) gin.HandlerFunc {
 	return func(gc *gin.Context) {
-		gc.Set(ContextKeyContextPath, props.ContextPath)
+		if mc := utils.FindMutableContext(gc); mc != nil {
+			ctxPath := path.Clean("/" + props.ContextPath)
+			if ctxPath != "/" && ctxPath != "." {
+				mc.Set(contextPathCtxKey{}, ctxPath)
+			}
+		}
 	}
 }
 
@@ -247,8 +250,8 @@ func integrateGinContextFinalizer(ctx context.Context, _ int, r *http.Request) {
 
 func ginContextValuer(gc *gin.Context) func(key interface{}) interface{} {
 	return func(key interface{}) interface{} {
-		switch strKey, ok := key.(string); ok {
-		case strKey == gin.ContextKey:
+		switch strKey, _ := key.(string); strKey {
+		case gin.ContextKey:
 			return gc
 		default:
 			v, _ := gc.Get(strKey)

@@ -166,7 +166,7 @@ func (init *initializer) build(ctx context.Context, configurer Configurer) (WebS
 
 		// apply configurer
 		if err := fc.Apply(f, ws); err != nil {
-			return nil, nil, fmt.Errorf("Error during process WebSecurity [%v]: %v", ws, err)
+			return nil, nil, fmt.Errorf("error during process WebSecurity [%v]: %v", ws, err)
 		}
 
 		// the applied configurer may have enabled more features. (ws.Features() is different)
@@ -176,7 +176,7 @@ func (init *initializer) build(ctx context.Context, configurer Configurer) (WebS
 
 		// handle feature change
 		if err := init.handleFeaturesChanged(i, f, ws.Features()); err != nil {
-			return nil, nil, fmt.Errorf("Error during process WebSecurity [%v]: %v", ws, err)
+			return nil, nil, fmt.Errorf("error during process WebSecurity [%v]: %v", ws, err)
 		}
 	}
 

@@ -110,8 +110,7 @@ func (mw *Middleware) ErrorTranslationHandlerFunc() gin.HandlerFunc {
 func (mw *Middleware) handleSuccess(c context.Context, r *http.Request, rw http.ResponseWriter, before, new security.Authentication) {
 	gc := web.GinContext(c)
 	if new != nil {
-		gc.Set(gin.AuthUserKey, new.Principal())
-		gc.Set(security.ContextKeySecurity, new)
+		security.MustSet(c, new)
 		mw.successHandler.HandleAuthenticationSuccess(c, r, rw, before, new)
 	}
 	gc.Next()
@@ -120,7 +119,7 @@ func (mw *Middleware) handleSuccess(c context.Context, r *http.Request, rw http.
 //nolint:contextcheck
 func (mw *Middleware) handleError(c context.Context, err error) {
 	gc := web.GinContext(c)
-	security.Clear(gc)
+	security.MustClear(gc)
 	_ = gc.Error(err)
 	gc.Abort()
 }

@@ -27,6 +27,7 @@ type SecurityMockOptions func(d *SecurityDetailsMock)
 type SecurityDetailsMock struct {
 	Username                 string
 	UserId                   string
+	AccountType              security.AccountType
 	TenantExternalId         string
 	TenantId                 string
 	ProviderName             string
@@ -47,6 +48,10 @@ type SecurityDetailsMock struct {
 	KVs                      map[string]interface{}
 	ClientID                 string
 	Scopes                   utils.StringSet
+	OAuth2GrantType          string
+	OAuth2ResponseTypes      utils.StringSet
+	OAuth2Parameters         map[string]string
+	OAuth2Extensions         map[string]interface{}
 }
 
 // MockedSecurityDetails implements
@@ -64,6 +69,7 @@ type MockedSecurityDetails struct {
 func NewMockedSecurityDetails(opts ...SecurityMockOptions) *MockedSecurityDetails {
 	ret := MockedSecurityDetails{
 		SecurityDetailsMock{
+			AccountType: security.AccountTypeDefault,
 			ClientID: "mock",
 		},
 	}
@@ -158,7 +164,7 @@ func (d *MockedSecurityDetails) Username() string {
 }
 
 func (d *MockedSecurityDetails) AccountType() security.AccountType {
-	return security.AccountTypeDefault
+	return d.SecurityDetailsMock.AccountType
 }
 
 // Deprecated: the interface is deprecated
@@ -174,11 +180,11 @@ func (d *MockedSecurityDetails) EffectiveAssignedTenantIds() utils.StringSet {
 }
 
 func (d *MockedSecurityDetails) LocaleCode() string {
-	return ""
+	return valueFromMap[string](d.KVs, "LocaleCode")
 }
 
 func (d *MockedSecurityDetails) CurrencyCode() string {
-	return ""
+	return valueFromMap[string](d.KVs, "CurrencyCode")
 }
 
 func (d *MockedSecurityDetails) FirstName() string {
@@ -190,5 +196,16 @@ func (d *MockedSecurityDetails) LastName() string {
 }
 
 func (d *MockedSecurityDetails) Email() string {
-	return ""
+	return valueFromMap[string](d.KVs, "Email")
+}
+
+func valueFromMap[T any](m map[string]interface{}, key string) T {
+	var zero T
+	if m == nil {
+		return zero
+	}
+	if v, ok := m[key].(T); ok {
+		return v
+	}
+	return zero
 }

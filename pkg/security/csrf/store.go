@@ -26,6 +26,7 @@ import (
 
 const SessionKeyCsrfToken = "CsrfToken"
 
+// Token CSRF token with value and other useful metadata
 /**
  The header name and parameter name are part of the token in case some components down the line needs them.
  For example, if the token is used as a hidden variable in a form, the parameter name would be needed.
@@ -40,7 +41,7 @@ type Token struct {
 	HeaderName string
 }
 
-//TokenStore
+// TokenStore
 /**
 	The store is responsible for reading the CSRF token associated to the request.
 	How the CSRF token is associated to the request is the implementation's discretion.

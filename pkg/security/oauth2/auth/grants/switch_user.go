@@ -18,7 +18,7 @@ package grants
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/internal"
+	securityinternal "cto-github.cisco.com/NFV-BU/go-lanai/internal/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
@@ -141,7 +141,7 @@ func (g *SwitchUserGranter) validate(ctx context.Context, request *auth.TokenReq
 		return e
 	}
 
-	srcTenants, ok := stored.Details().(internal.TenantAccessDetails)
+	srcTenants, ok := stored.Details().(securityinternal.TenantAccessDetails)
 	if !ok {
 		return oauth2.NewInvalidGrantError("access token is not associated with a list of tenants")
 	}

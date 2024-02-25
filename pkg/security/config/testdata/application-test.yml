@@ -114,7 +114,7 @@ mocking:
       default-tenant: ""
       tenants: ["id-tenant-1", "id-tenant-2", "id-tenant-3"]
       permissions: ["SWITCH_TENANT"]
-  fed-accounts:
+  fed-users:
     fed1:
       ext-idp-name: "cci"
       ext-id-name: "email"

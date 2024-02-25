@@ -38,8 +38,9 @@ type MockedTokenRevoker interface {
 	Base
  *************************/
 
-// mockedBase implements MockedTokenRevoker
-type mockedBase struct {
+// mockedTokenBase implements MockedTokenRevoker, this serves as a base of multiple mock implementation.
+// e.g. mockedTokenStoreReader, mockedAuthClient
+type mockedTokenBase struct {
 	sync.RWMutex
 	accounts  *mockedAccounts
 	tenants   *mockedTenants
@@ -47,25 +48,25 @@ type mockedBase struct {
 	notBefore time.Time
 }
 
-func (b *mockedBase) Revoke(value string) {
+func (b *mockedTokenBase) Revoke(value string) {
 	b.Lock()
 	defer b.Unlock()
 	b.revoked.Add(value)
 }
 
-func (b *mockedBase) RevokeAll() {
+func (b *mockedTokenBase) RevokeAll() {
 	b.Lock()
 	defer b.Unlock()
 	b.notBefore = time.Now().UTC()
 }
 
-func (b *mockedBase) isTokenRevoked(token *MockedToken, value string) bool {
+func (b *mockedTokenBase) isTokenRevoked(token *MockedToken, value string) bool {
 	b.RLock()
 	defer b.RUnlock()
 	return token.IssTime.Before(b.notBefore) || b.revoked.Has(value)
 }
 
-func (b *mockedBase) newMockedToken(acct *MockedAccount, tenant *mockedTenant, exp time.Time, origUser string) *MockedToken {
+func (b *mockedTokenBase) newMockedToken(acct *MockedAccount, tenant *mockedTenant, exp time.Time, origUser string) *MockedToken {
 	return &MockedToken{
 		MockedTokenInfo: MockedTokenInfo{
 			UName:       acct.MockedAccountDetails.Username,
@@ -79,7 +80,7 @@ func (b *mockedBase) newMockedToken(acct *MockedAccount, tenant *mockedTenant, e
 	}
 }
 
-func (b *mockedBase) parseMockedToken(value string) (*MockedToken, error) {
+func (b *mockedTokenBase) parseMockedToken(value string) (*MockedToken, error) {
 	mt := &MockedToken{}
 	if e := mt.UnmarshalText([]byte(value)); e != nil {
 		return nil, e
@@ -90,7 +91,7 @@ func (b *mockedBase) parseMockedToken(value string) (*MockedToken, error) {
 	return mt, nil
 }
 
-func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *MockedAccount) oauth2.Authentication {
+func (b *mockedTokenBase) newMockedAuth(mt *MockedToken, acct *MockedAccount) oauth2.Authentication {
 	user := oauth2.NewUserAuthentication(func(opt *oauth2.UserAuthOption) {
 		opt.Principal = mt.UName
 		opt.State = security.StateAuthenticated
@@ -101,8 +102,8 @@ func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *MockedAccount) oauth2.
 	})
 	details := NewMockedSecurityDetails(func(d *SecurityDetailsMock) {
 		*d = SecurityDetailsMock{
-			Username:         mt.UName,
-			UserId:           mt.UID,
+			Username:         acct.Username(),
+			UserId:           acct.UserId,
 			TenantExternalId: mt.TExternalId,
 			TenantId:         mt.TID,
 			Exp:              mt.ExpTime,
@@ -114,8 +115,12 @@ func (b *mockedBase) newMockedAuth(mt *MockedToken, acct *MockedAccount) oauth2.
 	})
 	return oauth2.NewAuthentication(func(opt *oauth2.AuthOption) {
 		opt.Request = oauth2.NewOAuth2Request(func(opt *oauth2.RequestDetails) {
-			opt.ClientId = "mock"
+			opt.ClientId = mt.ClientID
+			if len(mt.ClientID) == 0 {
+				opt.ClientId = "mock"
+			}
 			opt.Approved = true
+			opt.Scopes = utils.NewStringSet(mt.MockedTokenInfo.Scopes...)
 		})
 		opt.Token = mt
 		opt.UserAuth = user

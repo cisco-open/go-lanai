@@ -58,7 +58,7 @@ func NewTokenRequest() *TokenRequest {
 		Parameters:    map[string]string{},
 		Scopes:        utils.NewStringSet(),
 		Extensions:    map[string]interface{}{},
-		context:       utils.NewMutableContext(),
+		context:       utils.NewMutableContext(context.Background()),
 	}
 }
 

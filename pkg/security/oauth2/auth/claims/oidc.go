@@ -136,7 +136,7 @@ func EmailVerified(_ context.Context, opt *FactoryOption) (v interface{}, err er
 	if !ok {
 		return nil, errorMissingDetails
 	}
-	return utils.BoolPtr(strings.TrimSpace(details.Email()) != ""), nil
+	return utils.ToPtr(strings.TrimSpace(details.Email()) != ""), nil
 }
 
 func ZoneInfo(_ context.Context, _ *FactoryOption) (v interface{}, err error) {

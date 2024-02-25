@@ -21,11 +21,10 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
-	"github.com/gin-gonic/gin"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"github.com/golang/mock/gomock"
 	"net/http"
 	"net/http/httptest"
@@ -43,12 +42,13 @@ func TestSaveAndGetCachedRequest(t *testing.T) {
 	sessionStore := session.NewRedisStore(mockRedis)
 	s, _ := sessionStore.New(common.DefaultName)
 
-	recorder := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Request = httptest.NewRequest("POST", "/something", strings.NewReader("a=b&c=d"))
-	c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
+	c := webtest.NewGinContext(context.Background(),
+		"POST", "/something", strings.NewReader("a=b&c=d"),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	SaveRequest(c)
 	cached := GetCachedRequest(c)
 
@@ -114,11 +114,13 @@ func TestSavedRequestAuthenticationSuccessHandler_HandleAuthenticationSuccess(t 
 	sessionStore := session.NewRedisStore(mockRedis)
 	s, _ := sessionStore.New(common.DefaultName)
 
-	recorder := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Request = httptest.NewRequest("POST", "/something", strings.NewReader("a=b&c=d"))
-	c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	c := webtest.NewGinContext(context.Background(),
+		"POST", "/something", strings.NewReader("a=b&c=d"),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 
 	SaveRequest(c)
 
@@ -132,6 +134,7 @@ func TestSavedRequestAuthenticationSuccessHandler_HandleAuthenticationSuccess(t 
 
 	handler.HandleAuthenticationSuccess(c, c.Request, c.Writer, mockFrom, mockTo)
 
+	recorder := webtest.GinContextRecorder(c)
 	if recorder.Result().StatusCode != 302 {
 		t.Errorf("expected 302 but got %v ", recorder.Result().StatusCode )
 	}
@@ -151,87 +154,93 @@ func TestSaveRequestEntryPoint_Commence(t *testing.T) {
 
 	sessionStore := session.NewRedisStore(mockRedis)
 	s, _ := sessionStore.New(common.DefaultName)
-	recorder := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Set(web.ContextKeyContextPath, "")
+	c := webtest.NewGinContext(context.Background(),
+		"GET", "/something/favicon.jpg", nil,
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 
 	entryPoint := NewSaveRequestEntryPoint(&noOpEntryPoint{})
 
-	c.Request = httptest.NewRequest("GET", "/something/favicon.jpg", nil)
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request for favicon should not be cached")
 	}
 
 	s, _ = sessionStore.New(common.DefaultName)
-	recorder = httptest.NewRecorder()
-	c, _ = gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Set(web.ContextKeyContextPath, "")
-	c.Request = httptest.NewRequest("GET", "/something", nil)
-	c.Request.Header.Set("X-Requested-With", "XMLHttpRequest")
+	c = webtest.NewGinContext(context.Background(),
+		"GET", "/something", nil,
+		webtest.Headers("X-Requested-With", "XMLHttpRequest"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with  XMLHttpRequest should not be cached")
 	}
 
 	s, _ = sessionStore.New(common.DefaultName)
-	recorder = httptest.NewRecorder()
-	c, _ = gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Set(web.ContextKeyContextPath, "")
-	c.Request = httptest.NewRequest("GET", "/something", nil)
-	c.Request.Header.Set("Trailer", "anything")
+	c = webtest.NewGinContext(context.Background(),
+		"GET", "/something", nil,
+		webtest.Headers("Trailer", "anything"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with  XMLHttpRequest should not be cached")
 	}
 
 	s, _ = sessionStore.New(common.DefaultName)
-	recorder = httptest.NewRecorder()
-	c, _ = gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Set(web.ContextKeyContextPath, "")
-	c.Request = httptest.NewRequest("GET", "/something", nil)
-	c.Request.Header.Set("Content-Type", "multipart/form-data something")
+	c = webtest.NewGinContext(context.Background(),
+		"GET", "/something", nil,
+		webtest.Headers("Content-Type", "multipart/form-data something"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with multipart/form-data should not be cached")
 	}
 
 	s, _ = sessionStore.New(common.DefaultName)
-	recorder = httptest.NewRecorder()
-	c, _ = gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Set(web.ContextKeyContextPath, "")
-	c.Request = httptest.NewRequest("POST", "/something", strings.NewReader("a=b&c=d"))
-	c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	c.Request.Header.Set(security.CsrfHeaderName, "something")
+	c = webtest.NewGinContext(context.Background(),
+		"POST", "/something", strings.NewReader("a=b&c=d"),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded", security.CsrfHeaderName, "something"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with csrf header should not be cached")
 	}
 
 	s, _ = sessionStore.New(common.DefaultName)
-	recorder = httptest.NewRecorder()
-	c, _ = gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Set(web.ContextKeyContextPath, "")
-	c.Request = httptest.NewRequest("POST", "/something", strings.NewReader(security.CsrfParamName + "=something"))
-	c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	c = webtest.NewGinContext(context.Background(),
+		"POST", "/something", strings.NewReader(security.CsrfParamName + "=something"),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 	if GetCachedRequest(c) != nil {
 		t.Errorf("request with csrf param should not be cached")
 	}
 
 	s, _ = sessionStore.New(common.DefaultName)
-	recorder = httptest.NewRecorder()
-	c, _ = gin.CreateTestContext(recorder)
-	c.Set(web.ContextKeySession, s)
-	c.Set(web.ContextKeyContextPath, "")
-	c.Request = httptest.NewRequest("POST", "/something", strings.NewReader("a=b&c=d"))
-	c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	c = webtest.NewGinContext(context.Background(),
+		"POST", "/something", strings.NewReader("a=b&c=d"),
+		webtest.Headers("Content-Type", "application/x-www-form-urlencoded"),
+	)
+	if e := session.Set(c, s); e != nil {
+		t.Errorf("failed to set session into context")
+	}
 	entryPoint.Commence(c, c.Request, c.Writer, security.NewAccessDeniedError("access denied"))
 
 	if GetCachedRequest(c) == nil {

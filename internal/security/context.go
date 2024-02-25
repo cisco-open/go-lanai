@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package internal
+package securityinternal
 
 import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 

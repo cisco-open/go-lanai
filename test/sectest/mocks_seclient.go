@@ -29,7 +29,7 @@ import (
  *************************/
 
 type mockedAuthClient struct {
-	*mockedBase
+	*mockedTokenBase
 	tokenExp time.Duration
 }
 
@@ -53,18 +53,20 @@ func (c *mockedAuthClient) ClientCredentials(ctx context.Context, opts ...seclie
 	return &seclient.Result{
 		Request: nil,
 		Token: &MockedToken{
-			ExpTime:      exp,
-			IssTime:      now,
-			MockedScopes: opt.Scopes,
+			MockedTokenInfo: MockedTokenInfo{
+				Scopes: opt.Scopes,
+			},
+			ExpTime: exp,
+			IssTime: now,
 		},
 	}, nil
 
 }
 
-func newMockedAuthClient(props *mockingProperties, base *mockedBase) seclient.AuthenticationClient {
+func newMockedAuthClient(base *mockedTokenBase, tokenValidity time.Duration) seclient.AuthenticationClient {
 	return &mockedAuthClient{
-		mockedBase: base,
-		tokenExp:   time.Duration(props.TokenValidity),
+		mockedTokenBase: base,
+		tokenExp:        tokenValidity,
 	}
 }
 

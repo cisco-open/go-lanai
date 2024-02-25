@@ -60,6 +60,7 @@ type Issuer interface {
 /***************************
 	Default Impl.
  ***************************/
+
 type DefaultIssuerDetails struct {
 	Protocol    string
 	Domain      string

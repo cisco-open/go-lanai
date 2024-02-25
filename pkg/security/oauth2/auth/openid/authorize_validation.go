@@ -261,7 +261,7 @@ func (p *OpenIDAuthorizeRequestProcessor) processMaxAge(ctx context.Context, req
 	}
 
 	if authTime.Add(maxAge).Before(time.Now()) {
-		security.Clear(ctx)
+		security.MustClear(ctx)
 	}
 	return nil
 }
@@ -281,7 +281,7 @@ func (p *OpenIDAuthorizeRequestProcessor) processPrompt(ctx context.Context, req
 	// handle "login"
 	// to break the login loop, we put a special header to current http request and it will be saved by request cache
 	if prompts.Has(PromptLogin) && !isPromptLoginProcessed(ctx) && isCurrentlyAuthenticated(ctx) {
-		security.Clear(ctx)
+		security.MustClear(ctx)
 		if e := setPromptLoginProcessed(ctx); e != nil {
 			return NewLoginRequiredError("unable to initiate login")
 		}

@@ -18,6 +18,9 @@ package web_test
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/csrf"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/assets"
@@ -25,6 +28,7 @@ import (
 	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/web_test/testdata"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
 	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
 	"embed"
 	"errors"
@@ -42,6 +46,11 @@ import (
 //go:embed testdata/tmpl/*
 var TmplFS embed.FS
 
+const (
+	kModelTestRequest = "from-request"
+	kModelTestStatic  = "static"
+)
+
 /*************************
 	Tests
  *************************/
@@ -55,6 +64,7 @@ func TestTemplateRegistration(t *testing.T) {
 		apptest.WithFxOptions(
 			fx.Provide(web.NewEngine),
 		),
+		test.Setup(SetupTestRegisterModelValuers()),
 		test.SubTestSetup(ResetEngine(&di)),
 		test.GomegaSubTest(SubTestStaticAssets(&di), "TestStaticAssets"),
 		test.GomegaSubTest(SubTestCompressedAssets(&di), "TestCompressedAssets"),
@@ -67,6 +77,16 @@ func TestTemplateRegistration(t *testing.T) {
 /*************************
 	Sub Tests
  *************************/
+
+func SetupTestRegisterModelValuers() test.SetupFunc {
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		template.RegisterGlobalModelValuer(kModelTestStatic, template.StaticModelValuer("static-value"))
+		template.RegisterGlobalModelValuer(kModelTestRequest, template.RequestModelValuer(func(_ *http.Request) string {
+			return "request-value"
+		}))
+		return ctx, nil
+	}
+}
 
 func SubTestStaticAssets(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
@@ -123,17 +143,19 @@ func SubTestTemplateMVC(di *TestDI) test.GomegaSubTestFunc {
 		})
 
 		mc := utils.MakeMutableContext(ctx)
-		mc.Set(web.ContextKeySession, "session-value")
-		mc.Set(web.ContextKeySecurity, "security-value")
-		mc.Set(web.ContextKeyCsrf, "csrf-value")
+		security.MustSet(mc, security.EmptyAuthentication("security-value"))
+		session.MustSet(mc, session.CreateSession(sectest.NewMockedSessionStore(), "session-value"))
+		csrf.MustSet(mc, &csrf.Token{Value: "csrf-value"})
 		testTextEndpoint(mc, t, g, http.MethodGet, "/index",
 			expectTextContentType("text/html; charset=utf-8"),
 			expectBodyModels(map[string]string{
-				".Title":                  "TemplateMVCTest",
-				".rc.ContextPath":         "/test",
-				template.ModelKeySession:  "session-value",
-				template.ModelKeySecurity: "security-value",
-				template.ModelKeyCsrf:     "csrf-value",
+				".Title":          "TemplateMVCTest",
+				".rc.ContextPath": "/test",
+				kModelTestStatic:  "static-value",
+				kModelTestRequest: "request-value",
+				"session":        `.+`,
+				"security":       "security-value",
+				"csrf.value":     "csrf-value",
 			}),
 		)
 	}
@@ -157,9 +179,9 @@ func SubTestTemplateError(di *TestDI) test.GomegaSubTestFunc {
 		})
 
 		mc := utils.MakeMutableContext(ctx)
-		mc.Set(web.ContextKeySession, "session-value")
-		mc.Set(web.ContextKeySecurity, "security-value")
-		mc.Set(web.ContextKeyCsrf, "csrf-value")
+		security.MustSet(mc, security.EmptyAuthentication("security-value"))
+		session.MustSet(mc, session.CreateSession(sectest.NewMockedSessionStore(), "session-value"))
+		csrf.MustSet(mc, &csrf.Token{Value: "csrf-value"})
 		testTextEndpoint(mc, t, g, http.MethodGet, "/error",
 			expectTextSC(http.StatusInternalServerError),
 			expectTextContentType("text/html; charset=utf-8"),
@@ -169,9 +191,11 @@ func SubTestTemplateError(di *TestDI) test.GomegaSubTestFunc {
 				template.ModelKeyMessage:    DefaultErrorMsg,
 				template.ModelKeyStatusCode: "500",
 				template.ModelKeyStatusText: http.StatusText(http.StatusInternalServerError),
-				template.ModelKeySession:    "session-value",
-				template.ModelKeySecurity:   "security-value",
-				template.ModelKeyCsrf:       "csrf-value",
+				kModelTestStatic:            "static-value",
+				kModelTestRequest:           "request-value",
+				"session":                  `.+`,
+				"security":                 "security-value",
+				"csrf.value":               "csrf-value",
 			}),
 		)
 	}
@@ -226,8 +250,8 @@ func expectBodyModels(kvs map[string]string) func(expect *textExpectation) {
 	return func(expect *textExpectation) {
 		expect.body = make([]string, 0, len(kvs))
 		for k, v := range kvs {
-			pattern := fmt.Sprintf(testdata.ModelPrintTmpl, k, v)
-			expect.body = append(expect.body, regexp.QuoteMeta(pattern))
+			pattern := fmt.Sprintf(testdata.ModelPrintTmpl, regexp.QuoteMeta(k), v)
+			expect.body = append(expect.body, pattern)
 		}
 	}
 }

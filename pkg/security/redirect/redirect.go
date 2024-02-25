@@ -112,8 +112,8 @@ func (ep *RedirectHandler) doRedirect(c context.Context, r *http.Request, rw htt
 	location, _ := urlutils.Parse(ep.location)
 	if !location.IsAbs() {
 		// relative path was used, try to add context path
-		contextPath, ok := c.Value(web.ContextKeyContextPath).(string)
-		if !ep.ignoreCtxPath && ok {
+		contextPath := web.ContextPath(c)
+		if !ep.ignoreCtxPath {
 			location.Path = path.Join(contextPath, location.Path)
 		}
 	}

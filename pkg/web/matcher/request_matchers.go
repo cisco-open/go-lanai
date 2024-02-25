@@ -278,10 +278,7 @@ func method(_ context.Context, r *http.Request) (interface{}, error) {
 
 func path(c context.Context, r *http.Request) (interface{}, error) {
 	path := r.URL.Path
-	ctxPath, ok := c.Value(web.ContextKeyContextPath).(string)
-	if !ok {
-		return nil, fmt.Errorf("context is required to match request path")
-	}
+	ctxPath := web.ContextPath(c)
 	return strings.TrimPrefix(path, ctxPath), nil
 }
 

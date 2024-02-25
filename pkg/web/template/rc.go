@@ -18,6 +18,7 @@ package template
 
 import (
 	"context"
+	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"net/http"
 	"reflect"
 )
@@ -25,7 +26,7 @@ import (
 type RequestContext map[string]interface{}
 
 // MakeRequestContext collect http.Request's exported fields and additional context values
-func MakeRequestContext(ctx context.Context, r *http.Request, contextKeys...string) RequestContext {
+func MakeRequestContext(ctx context.Context, r *http.Request) RequestContext {
 	rc := RequestContext{}
 	rval := reflect.ValueOf(r).Elem()
 	rtype := rval.Type()
@@ -38,12 +39,6 @@ func MakeRequestContext(ctx context.Context, r *http.Request, contextKeys...stri
 			rc[f.Name] = v
 		}
 	}
-
-	for _,key := range contextKeys {
-		v := ctx.Value(key)
-		if v != nil {
-			rc[key] = v
-		}
-	}
+	rc["ContextPath"] = web.ContextPath(ctx)
 	return rc
 }

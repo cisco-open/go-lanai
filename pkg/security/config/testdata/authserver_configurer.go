@@ -41,7 +41,7 @@ const (
 
 type authDI struct {
 	fx.In
-	MockingProperties   MockingProperties
+	MockingProperties   sectest.MockingProperties
 	IdpManager          idp.IdentityProviderManager
 	AccountStore        security.AccountStore
 	PasswordEncoder     passwd.PasswordEncoder
@@ -63,10 +63,10 @@ func NewAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 		config.AddIdp(unknownIdp.NewNoIdpSecurityConfigurer())
 
 		config.IdpManager = di.IdpManager
-		config.ClientStore = sectest.NewMockedClientStore(MapValues(di.MockingProperties.Clients)...)
+		config.ClientStore = sectest.NewMockedClientStore(di.MockingProperties.Clients.Values()...)
 		config.ClientSecretEncoder = di.PasswordEncoder
 		config.UserAccountStore = di.AccountStore
-		config.TenantStore = sectest.NewMockedTenantStore(MapValues(di.MockingProperties.Tenants)...)
+		config.TenantStore = sectest.NewMockedTenantStore(di.MockingProperties.Tenants.Values()...)
 		config.ProviderStore = sectest.MockedProviderStore{}
 		config.UserPasswordEncoder = di.PasswordEncoder
 		config.SessionSettingService = StaticSessionSettingService(1)
