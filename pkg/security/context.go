@@ -18,13 +18,13 @@ package security
 
 import (
 	"context"
-	securityinternal "cto-github.cisco.com/NFV-BU/go-lanai/internal/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
 	"encoding/gob"
 	"errors"
 	"fmt"
+	securityinternal "github.com/cisco-open/go-lanai/internal/security"
+	"github.com/cisco-open/go-lanai/pkg/tenancy"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
 	"time"
 )

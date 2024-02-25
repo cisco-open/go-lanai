@@ -17,9 +17,9 @@
 package passwd
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"fmt"
-	"time"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "time"
 )
 
 type PasswordAuthFeature struct {

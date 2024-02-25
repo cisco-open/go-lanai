@@ -17,14 +17,14 @@
 package cmdutils
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/log"
 	"os"
 	"path"
 	"path/filepath"
 )
 
 const (
-	ModulePath = "cto-github.cisco.com/NFV-BU/go-lanai"
+	ModulePath = "github.com/cisco-open/go-lanai"
 )
 
 var (

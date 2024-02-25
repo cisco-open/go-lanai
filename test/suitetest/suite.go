@@ -17,12 +17,12 @@
 package suitetest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"fmt"
-	"os"
-	"sort"
-	"testing"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/cisco-open/go-lanai/test"
+    "os"
+    "sort"
+    "testing"
 )
 
 const (

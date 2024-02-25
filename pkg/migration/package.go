@@ -17,13 +17,13 @@
 package migration
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"fmt"
-	"go.uber.org/fx"
-	"gorm.io/gorm"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "go.uber.org/fx"
+    "gorm.io/gorm"
 )
 
 const (

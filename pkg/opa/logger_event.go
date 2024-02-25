@@ -17,13 +17,13 @@
 package opa
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"encoding/json"
-	"fmt"
-	"github.com/open-policy-agent/opa/plugins"
-	opalogs "github.com/open-policy-agent/opa/plugins/logs"
-	"github.com/open-policy-agent/opa/rego"
+    "context"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/open-policy-agent/opa/plugins"
+    opalogs "github.com/open-policy-agent/opa/plugins/logs"
+    "github.com/open-policy-agent/opa/rego"
 )
 
 var evtLogger = log.New("OPA.Event")

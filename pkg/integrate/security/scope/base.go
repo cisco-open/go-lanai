@@ -17,15 +17,15 @@
 package scope
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"errors"
-	"fmt"
-	"reflect"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+    "github.com/cisco-open/go-lanai/pkg/integrate/security/seclient"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "reflect"
+    "time"
 )
 
 type authenticateFunc func(ctx context.Context, pKey *cKey) (security.Authentication, error)

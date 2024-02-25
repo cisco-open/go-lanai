@@ -17,14 +17,14 @@
 package dbtest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/cockroach"
-	"fmt"
-	"go.uber.org/fx"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	gormtest "gorm.io/gorm/utils/tests"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/cisco-open/go-lanai/pkg/data/cockroach"
+    "go.uber.org/fx"
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+    gormtest "gorm.io/gorm/utils/tests"
+    "strings"
 )
 
 /*****************************

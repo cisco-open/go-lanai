@@ -17,8 +17,8 @@
 package embedded
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
 )
 
 var logger = log.New("T.Embedded")

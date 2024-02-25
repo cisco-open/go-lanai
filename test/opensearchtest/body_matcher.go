@@ -17,8 +17,8 @@
 package opensearchtest
 
 import (
-    "cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
     "fmt"
+    "github.com/cisco-open/go-lanai/test/ittest"
     "strings"
 )
 

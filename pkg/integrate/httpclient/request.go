@@ -17,17 +17,17 @@
 package httpclient
 
 import (
-	"bytes"
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"io"
-	"net/http"
-	"net/url"
-	"strings"
+    "bytes"
+    "context"
+    "encoding/base64"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    httptransport "github.com/go-kit/kit/transport/http"
+    "io"
+    "net/http"
+    "net/url"
+    "strings"
 )
 
 type RequestOptions func(r *Request)

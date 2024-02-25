@@ -17,15 +17,15 @@
 package opensearch
 
 import (
-	"bytes"
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/opensearch-project/opensearch-go/opensearchapi"
-	"io"
-	"net/http"
+    "bytes"
+    "context"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/opensearch-project/opensearch-go/opensearchapi"
+    "io"
+    "net/http"
 )
 
 var (

@@ -17,11 +17,11 @@
 package data
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"fmt"
-	"go.uber.org/fx"
-	"gorm.io/gorm"
-	"sort"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "go.uber.org/fx"
+    "gorm.io/gorm"
+    "sort"
 )
 
 const (

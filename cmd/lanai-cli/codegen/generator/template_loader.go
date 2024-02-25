@@ -17,10 +17,10 @@
 package generator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs"
-	"github.com/bmatcuk/doublestar/v4"
-	"io/fs"
-	"text/template"
+    "github.com/bmatcuk/doublestar/v4"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs"
+    "io/fs"
+    "text/template"
 )
 
 /**********************

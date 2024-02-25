@@ -17,11 +17,11 @@
 package openid
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	"errors"
-	"net/http"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
+    "net/http"
 )
 
 const (

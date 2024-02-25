@@ -17,16 +17,16 @@
 package embedded
 
 import (
-	"context"
-	"crypto/tls"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
-	"fmt"
-	"github.com/alicebob/miniredis/v2"
-	"math/rand"
-	"testing"
-	"time"
+    "context"
+    "crypto/tls"
+    "fmt"
+    "github.com/alicebob/miniredis/v2"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/suitetest"
+    "math/rand"
+    "testing"
+    "time"
 )
 
 var kCtxEmbeddedRedis = struct{}{}

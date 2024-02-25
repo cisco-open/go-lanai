@@ -18,7 +18,7 @@ package repo
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
+	"github.com/cisco-open/go-lanai/pkg/data"
 	"reflect"
 )
 

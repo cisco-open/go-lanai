@@ -16,7 +16,7 @@
 
 package internal
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+import "github.com/cisco-open/go-lanai/pkg/security/oauth2"
 
 // ExtendedClaims imlements oauth2.Claims. It's used only for access token decoding
 type ExtendedClaims struct {

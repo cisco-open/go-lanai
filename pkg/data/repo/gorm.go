@@ -17,11 +17,11 @@
 package repo
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
-	"database/sql"
-	"gorm.io/gorm"
+    "context"
+    "database/sql"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/cisco-open/go-lanai/pkg/data/tx"
+    "gorm.io/gorm"
 )
 
 type TxWithGormFunc func(ctx context.Context, tx *gorm.DB) error

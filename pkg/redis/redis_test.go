@@ -17,21 +17,21 @@
 package redis_test
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	certsinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
-	"embed"
-	goRedis "github.com/go-redis/redis/v8"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"testing"
+    "context"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/actuator"
+    "github.com/cisco-open/go-lanai/pkg/actuator/health"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    certsinit "github.com/cisco-open/go-lanai/pkg/certs/init"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/embedded"
+    goRedis "github.com/go-redis/redis/v8"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "testing"
 )
 
 /*************************

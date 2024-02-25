@@ -17,14 +17,14 @@
 package basicauth
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	"encoding/base64"
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"strconv"
-	"strings"
+    "context"
+    "encoding/base64"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/passwd"
+    "github.com/gin-gonic/gin"
+    "net/http"
+    "strconv"
+    "strings"
 )
 
 //goland:noinspection GoNameStartsWithPackageName

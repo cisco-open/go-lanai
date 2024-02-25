@@ -18,8 +18,8 @@ package opaactuator
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
+	"github.com/cisco-open/go-lanai/pkg/actuator/health"
+	"github.com/cisco-open/go-lanai/pkg/opa"
 )
 
 func NewHealthDisclosureControlWithOPA(opts ...opa.QueryOptions) health.DisclosureControl {

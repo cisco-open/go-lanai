@@ -1,14 +1,14 @@
 package serviceinit
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/unknownIdp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/config/authserver"
+	"github.com/cisco-open/go-lanai/pkg/security/idp"
+	"github.com/cisco-open/go-lanai/pkg/security/idp/extsamlidp"
+	"github.com/cisco-open/go-lanai/pkg/security/idp/passwdidp"
+	"github.com/cisco-open/go-lanai/pkg/security/idp/unknownIdp"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/passwd"
 	"go.uber.org/fx"
 )
 

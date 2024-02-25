@@ -25,9 +25,9 @@
 package healthep
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/actuator"
+	"github.com/cisco-open/go-lanai/pkg/actuator/health"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"go.uber.org/fx"
 )
 

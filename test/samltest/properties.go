@@ -16,7 +16,7 @@
 
 package samltest
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+import "github.com/cisco-open/go-lanai/pkg/utils"
 
 type ProviderProperties struct {
 	EntityID         string `json:"entity-id"`

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	serviceinit "cto-github.cisco.com/NFV-BU/test-service/pkg/init"
-	"go.uber.org/fx"
-	"time"
+    serviceinit "cto-github.cisco.com/NFV-BU/test-service/pkg/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "go.uber.org/fx"
+    "time"
 )
 
 func init() {

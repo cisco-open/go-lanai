@@ -17,13 +17,13 @@
 package samlidp
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	"errors"
-	"fmt"
-	"github.com/crewjam/saml"
-	"net/http"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
+    "github.com/crewjam/saml"
+    "net/http"
 )
 
 const CtxKeySamlAuthnRequest = "kSamlAuthnRequest"

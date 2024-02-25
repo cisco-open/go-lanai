@@ -18,7 +18,7 @@ package session
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security"
 )
 
 type DefaultSettingService struct {

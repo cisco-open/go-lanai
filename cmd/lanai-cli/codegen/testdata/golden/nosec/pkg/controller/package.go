@@ -2,15 +2,15 @@
 package controller
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/validation"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	controllerv1 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v1"
-	controllerv2 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v2"
-	controllerv3 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v3"
-	controllerv4 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v4"
-	"github.com/go-playground/validator/v10/non-standard/validators"
-	"go.uber.org/fx"
+    controllerv1 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v1"
+    controllerv2 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v2"
+    controllerv3 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v3"
+    controllerv4 "cto-github.cisco.com/NFV-BU/test-service/pkg/controller/v4"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/utils/validation"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/go-playground/validator/v10/non-standard/validators"
+    "go.uber.org/fx"
 )
 
 var Module = &bootstrap.Module{

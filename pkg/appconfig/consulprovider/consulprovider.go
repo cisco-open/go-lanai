@@ -17,11 +17,11 @@
 package consulprovider
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"fmt"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/consul"
+    "github.com/cisco-open/go-lanai/pkg/log"
 )
 
 var logger = log.New("Config.Consul")

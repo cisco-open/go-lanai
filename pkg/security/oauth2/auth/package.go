@@ -17,8 +17,8 @@
 package auth
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"encoding/gob"
+    "encoding/gob"
+    "github.com/cisco-open/go-lanai/pkg/log"
 )
 
 var logger = log.New("OAuth2.Auth")

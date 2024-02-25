@@ -17,11 +17,11 @@
 package tokenauth
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"errors"
-	"github.com/gin-gonic/gin"
-	"strings"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/gin-gonic/gin"
+    "strings"
 )
 
 const (

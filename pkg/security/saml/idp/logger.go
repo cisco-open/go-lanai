@@ -17,9 +17,9 @@
 package samlidp
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"fmt"
-	"os"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "os"
 )
 
 type loggerAdapter struct {

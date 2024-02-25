@@ -17,14 +17,14 @@
 package idp
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	util_matcher "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"fmt"
-	"net/http"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    util_matcher "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    netutil "github.com/cisco-open/go-lanai/pkg/utils/net"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "net/http"
 )
 
 var logger = log.New("SEC.IDP")

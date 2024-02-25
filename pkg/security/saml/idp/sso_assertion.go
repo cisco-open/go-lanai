@@ -17,15 +17,15 @@
 package samlidp
 
 import (
-	"context"
-	"crypto/tls"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-	"fmt"
-	"github.com/beevik/etree"
-	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/xmlenc"
-	dsig "github.com/russellhaering/goxmldsig"
+    "context"
+    "crypto/tls"
+    "fmt"
+    "github.com/beevik/etree"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+    "github.com/crewjam/saml"
+    "github.com/crewjam/saml/xmlenc"
+    dsig "github.com/russellhaering/goxmldsig"
 )
 
 const canonicalizerPrefixList = ""

@@ -17,10 +17,10 @@
 package service
 
 import (
-	"context"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	samlidp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
-	"errors"
+    "context"
+    "errors"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    samlidp "github.com/cisco-open/go-lanai/pkg/security/saml/idp"
 )
 
 type InMemorySamlClientStore struct {

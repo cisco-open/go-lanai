@@ -17,11 +17,11 @@
 package pqcrypt
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"github.com/pkg/errors"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/pkg/errors"
+    "strings"
 )
 
 const (

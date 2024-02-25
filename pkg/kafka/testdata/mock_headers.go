@@ -18,9 +18,9 @@ package testdata
 
 import (
     "context"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test"
     "github.com/IBM/sarama"
+    "github.com/cisco-open/go-lanai/pkg/kafka"
+    "github.com/cisco-open/go-lanai/test"
     "go.uber.org/fx"
     "sync"
     "testing"

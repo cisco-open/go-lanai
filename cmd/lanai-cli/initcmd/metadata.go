@@ -17,12 +17,12 @@
 package initcmd
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"fmt"
-	"path"
-	"path/filepath"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "path"
+    "path/filepath"
+    "strings"
 )
 
 type ModuleMetadata struct {

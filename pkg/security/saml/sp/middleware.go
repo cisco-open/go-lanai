@@ -17,15 +17,15 @@
 package sp
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/xml"
-	"github.com/crewjam/saml"
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"net/url"
+    "encoding/xml"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    samlutils "github.com/cisco-open/go-lanai/pkg/security/saml/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/crewjam/saml"
+    "github.com/gin-gonic/gin"
+    "net/http"
+    "net/url"
 )
 
 var SupportedBindings = utils.NewStringSet(saml.HTTPRedirectBinding, saml.HTTPPostBinding)

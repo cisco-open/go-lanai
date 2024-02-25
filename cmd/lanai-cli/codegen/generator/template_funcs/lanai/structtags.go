@@ -17,11 +17,11 @@
 package lanai
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai/lanaiutil"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
-	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai/lanaiutil"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
+    "github.com/getkin/kin-openapi/openapi3"
+    "strings"
 )
 
 func structTags(p Property) string {

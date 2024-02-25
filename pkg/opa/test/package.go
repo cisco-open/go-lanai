@@ -17,20 +17,20 @@
 package opatest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	opainit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/init"
-	opatestserver "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/test/server"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"embed"
-	"fmt"
-	"github.com/open-policy-agent/opa/plugins/bundle"
-	oparest "github.com/open-policy-agent/opa/plugins/rest"
-	sdktest "github.com/open-policy-agent/opa/sdk/test"
-	"go.uber.org/fx"
-	"io/fs"
+    "context"
+    "embed"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    opainit "github.com/cisco-open/go-lanai/pkg/opa/init"
+    opatestserver "github.com/cisco-open/go-lanai/pkg/opa/test/server"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/open-policy-agent/opa/plugins/bundle"
+    oparest "github.com/open-policy-agent/opa/plugins/rest"
+    sdktest "github.com/open-policy-agent/opa/sdk/test"
+    "go.uber.org/fx"
+    "io/fs"
 )
 
 //go:embed bundle/**

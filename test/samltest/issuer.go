@@ -17,8 +17,8 @@
 package samltest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/test/webtest"
 )
 
 var DefaultIssuer = security.NewIssuer(func(opt *security.DefaultIssuerDetails) {

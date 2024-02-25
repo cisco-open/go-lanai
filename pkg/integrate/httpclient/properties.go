@@ -17,13 +17,13 @@
 package httpclient
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"embed"
-	"github.com/pkg/errors"
-	"strings"
-	"time"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/pkg/errors"
+    "strings"
+    "time"
 )
 
 const (

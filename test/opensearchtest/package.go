@@ -18,10 +18,10 @@ package opensearchtest
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/pkg/opensearch"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/cockroachdb/copyist"
 	opensearchgo "github.com/opensearch-project/opensearch-go"
 	"github.com/opensearch-project/opensearch-go/opensearchapi"

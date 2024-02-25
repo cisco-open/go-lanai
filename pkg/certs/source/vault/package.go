@@ -17,14 +17,14 @@
 package vaultcerts
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
-	"encoding/json"
-	"fmt"
-	"go.uber.org/fx"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    certsource "github.com/cisco-open/go-lanai/pkg/certs/source"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/vault"
+    "go.uber.org/fx"
 )
 
 var logger = log.New("Certs.Vault")

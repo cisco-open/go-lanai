@@ -3,7 +3,7 @@
 package v1
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service/pkg/api"
+	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/api"
 )
 
 type PostItemsRequest struct {

@@ -17,9 +17,9 @@
 package acm
 
 import (
-	"context"
-	awsclient "cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws"
-	"github.com/aws/aws-sdk-go-v2/service/acm"
+    "context"
+    "github.com/aws/aws-sdk-go-v2/service/acm"
+    awsclient "github.com/cisco-open/go-lanai/pkg/aws"
 )
 
 type ClientFactory interface {

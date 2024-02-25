@@ -1,7 +1,7 @@
 ### Global Variables
 WORK_DIR = $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 TMP_DIR = $(WORK_DIR).tmp
-PRIVATE_REPOS = cto-github.cisco.com
+PRIVATE_REPOS =
 
 # patterns
 null  =

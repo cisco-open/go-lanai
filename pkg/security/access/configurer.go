@@ -17,11 +17,11 @@
 package access
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/web/middleware"
 	"sort"
 )
 

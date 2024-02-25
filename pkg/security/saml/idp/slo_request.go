@@ -17,13 +17,13 @@
 package samlidp
 
 import (
-	"crypto/x509"
-	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
-	"encoding/base64"
-	"github.com/crewjam/saml"
-	"net/http"
-	"regexp"
-	"time"
+    "crypto/x509"
+    "encoding/base64"
+    samlutils "github.com/cisco-open/go-lanai/pkg/security/saml/utils"
+    "github.com/crewjam/saml"
+    "net/http"
+    "regexp"
+    "time"
 )
 
 type SamlLogoutRequest struct {

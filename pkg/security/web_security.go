@@ -17,12 +17,12 @@
 package security
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"fmt"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/mapping"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/cisco-open/go-lanai/pkg/web/middleware"
 )
 
 /*****************************

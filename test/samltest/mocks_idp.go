@@ -19,8 +19,8 @@ package samltest
 import (
 	"crypto/rsa"
 	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
 	"github.com/crewjam/saml"
 	dsig "github.com/russellhaering/goxmldsig"
 	"net/url"

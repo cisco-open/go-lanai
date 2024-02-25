@@ -17,11 +17,11 @@
 package redis
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	"fmt"
-	"github.com/go-redis/redis/v8"
-	"github.com/pkg/errors"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    "github.com/go-redis/redis/v8"
+    "github.com/pkg/errors"
 )
 
 // KeepTTL is an option for Set command to keep key's existing TTL.

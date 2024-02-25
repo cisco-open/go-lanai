@@ -17,16 +17,16 @@
 package regoexpr
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"errors"
-	"fmt"
-	"github.com/onsi/gomega"
-	"github.com/open-policy-agent/opa/rego"
-	"sort"
-	"strings"
-	"testing"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/onsi/gomega"
+    "github.com/open-policy-agent/opa/rego"
+    "sort"
+    "strings"
+    "testing"
 )
 
 /*************************

@@ -17,18 +17,18 @@
 package csrf
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"errors"
-	"github.com/golang/mock/gomock"
-	"github.com/google/uuid"
-	"strings"
-	"testing"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/session"
+    "github.com/cisco-open/go-lanai/pkg/security/session/common"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/cisco-open/go-lanai/test/mocks/sessionmock"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/golang/mock/gomock"
+    "github.com/google/uuid"
+    "strings"
+    "testing"
 )
 
 func TestCsrfMiddlewareShouldGenerateToken(t *testing.T) {

@@ -17,10 +17,10 @@
 package acm
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"github.com/aws/aws-sdk-go-v2/service/acm"
-	"go.uber.org/fx"
+    "context"
+    "github.com/aws/aws-sdk-go-v2/service/acm"
+    "github.com/cisco-open/go-lanai/pkg/actuator/health"
+    "go.uber.org/fx"
 )
 
 type regDI struct {

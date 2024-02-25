@@ -17,16 +17,16 @@
 package swagger
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/assets"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	"encoding/json"
-	"fmt"
-	"io/fs"
-	"net/http"
-	"strings"
+    "context"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/assets"
+    "github.com/cisco-open/go-lanai/pkg/web/rest"
+    "io/fs"
+    "net/http"
+    "strings"
 )
 
 type UiConfiguration struct {

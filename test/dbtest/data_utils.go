@@ -27,7 +27,7 @@ import (
 	"sync"
 	"testing"
 
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test"
 	"github.com/ghodss/yaml"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"

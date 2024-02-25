@@ -17,11 +17,11 @@
 package samltest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"errors"
-	"github.com/crewjam/saml"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "github.com/crewjam/saml"
 )
 
 type ClientStoreMockOptions func(opt *ClientStoreMockOption)

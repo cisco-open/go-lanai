@@ -17,10 +17,10 @@
 package tokenauth
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"fmt"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/access"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
 )
 
 /************************

@@ -17,12 +17,12 @@
 package discovery
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"fmt"
-	"strings"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    "strings"
+    "time"
 )
 
 const (

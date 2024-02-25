@@ -18,10 +18,10 @@ package consultest
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
+	"github.com/cisco-open/go-lanai/pkg/consul"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/ittest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"

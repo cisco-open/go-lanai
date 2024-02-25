@@ -17,12 +17,12 @@
 package appconfig
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"dario.cat/mergo"
-	"github.com/pkg/errors"
-	"reflect"
-	"strconv"
-	"strings"
+    "dario.cat/mergo"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/pkg/errors"
+    "reflect"
+    "strconv"
+    "strings"
 )
 
 // Options the flatten options.

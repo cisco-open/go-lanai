@@ -18,11 +18,11 @@ package misc
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/claims"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/openid"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/idp"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/claims"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/openid"
 	"net/http"
 )
 

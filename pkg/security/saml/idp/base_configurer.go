@@ -17,12 +17,12 @@
 package samlidp
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-	"fmt"
-	dsig "github.com/russellhaering/goxmldsig"
-	"net/url"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+    dsig "github.com/russellhaering/goxmldsig"
+    "net/url"
 )
 
 type samlConfigurer struct {

@@ -17,10 +17,10 @@
 package web
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"net/http"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/gin-gonic/gin"
+    "net/http"
 )
 
 type RequestPreProcessorName string

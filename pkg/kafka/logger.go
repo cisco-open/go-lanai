@@ -17,10 +17,10 @@
 package kafka
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"fmt"
-	"github.com/IBM/sarama"
+    "context"
+    "fmt"
+    "github.com/IBM/sarama"
+    "github.com/cisco-open/go-lanai/pkg/log"
 )
 
 type MessageLogger interface {

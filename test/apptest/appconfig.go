@@ -17,14 +17,14 @@
 package apptest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	appconfiginit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"embed"
-	"go.uber.org/fx"
-	"strings"
+    "context"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    appconfiginit "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/test"
+    "go.uber.org/fx"
+    "strings"
 )
 
 /*************************

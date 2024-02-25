@@ -17,13 +17,13 @@
 package dev
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"github.com/bmatcuk/doublestar/v4"
-	"path/filepath"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/bmatcuk/doublestar/v4"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "path/filepath"
+    "strings"
 )
 
 // resolveLocalMods search for given search paths and find all go.mod files

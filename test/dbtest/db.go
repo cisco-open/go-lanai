@@ -17,17 +17,17 @@
 package dbtest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/cockroach"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"flag"
-	"fmt"
-	"github.com/cockroachdb/copyist"
-	"go.uber.org/fx"
-	"io"
-	"sync"
-	"testing"
+    "context"
+    "flag"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data/cockroach"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cockroachdb/copyist"
+    "go.uber.org/fx"
+    "io"
+    "sync"
+    "testing"
 )
 
 const (

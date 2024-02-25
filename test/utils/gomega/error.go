@@ -1,9 +1,9 @@
 package gomegautils
 
 import (
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"fmt"
+	errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
 	"github.com/onsi/gomega/format"
 	"github.com/onsi/gomega/types"
 )

@@ -18,7 +18,7 @@ package kafkatest
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
+	"github.com/cisco-open/go-lanai/pkg/kafka"
 )
 
 type MockedProducer struct {

@@ -17,11 +17,11 @@
 package filecerts
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
-	"encoding/json"
-	"fmt"
-	"go.uber.org/fx"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    certsource "github.com/cisco-open/go-lanai/pkg/certs/source"
+    "go.uber.org/fx"
 )
 
 const (

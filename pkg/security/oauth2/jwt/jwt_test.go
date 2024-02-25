@@ -17,15 +17,15 @@
 package jwt
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"errors"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
-	. "github.com/onsi/gomega"
-	"reflect"
-	"testing"
-	"time"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/golang-jwt/jwt/v4"
+    "github.com/google/uuid"
+    . "github.com/onsi/gomega"
+    "reflect"
+    "testing"
+    "time"
 )
 
 const (

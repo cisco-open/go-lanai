@@ -17,13 +17,13 @@
 package cockroach
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	"fmt"
-	"go.uber.org/fx"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    "go.uber.org/fx"
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+    "strings"
 )
 
 const (

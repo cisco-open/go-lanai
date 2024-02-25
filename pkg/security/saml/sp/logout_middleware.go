@@ -17,16 +17,16 @@
 package sp
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"encoding/gob"
-	"errors"
-	"github.com/crewjam/saml"
-	"github.com/gin-gonic/gin"
-	"net/http"
+    "context"
+    "encoding/gob"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
+    samlutils "github.com/cisco-open/go-lanai/pkg/security/saml/utils"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/crewjam/saml"
+    "github.com/gin-gonic/gin"
+    "net/http"
 )
 
 const (

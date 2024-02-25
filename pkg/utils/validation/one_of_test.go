@@ -18,7 +18,7 @@ package validation
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test"
 	"github.com/go-playground/validator/v10"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"

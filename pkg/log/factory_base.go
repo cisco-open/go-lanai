@@ -17,10 +17,10 @@
 package log
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"os"
-	"path/filepath"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "os"
+    "path/filepath"
 )
 
 /*

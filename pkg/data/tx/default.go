@@ -17,11 +17,11 @@
 package tx
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"database/sql"
-	"errors"
-	"gorm.io/gorm"
+    "context"
+    "database/sql"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "gorm.io/gorm"
 )
 
 var (

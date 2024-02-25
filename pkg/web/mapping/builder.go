@@ -17,11 +17,11 @@
 package mapping
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"errors"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"net/http"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/gin-gonic/gin"
+    "net/http"
 )
 
 /*********************************

@@ -18,9 +18,9 @@ package generator
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
 	"io/fs"
 	"text/template"
 )

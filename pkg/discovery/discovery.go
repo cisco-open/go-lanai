@@ -17,10 +17,10 @@
 package discovery
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-	"fmt"
-	"sync"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/consul"
+    "sync"
 )
 
 type consulDiscoveryClient struct {

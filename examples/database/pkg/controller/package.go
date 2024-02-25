@@ -2,10 +2,10 @@
 package controller
 
 import (
-	controllerv1 "cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service/pkg/controller/v1"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/validation"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	controllerv1 "github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/controller/v1"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/utils/validation"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/go-playground/validator/v10/non-standard/validators"
 	"go.uber.org/fx"
 )

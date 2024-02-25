@@ -17,12 +17,12 @@
 package utils
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"errors"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"testing"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "testing"
 )
 
 func TestRecoverableFunc(t *testing.T) {

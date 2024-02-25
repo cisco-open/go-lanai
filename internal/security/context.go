@@ -16,7 +16,7 @@
 
 package securityinternal
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+import "github.com/cisco-open/go-lanai/pkg/utils"
 
 type TenantAccessDetails interface {
 	EffectiveAssignedTenantIds() utils.StringSet

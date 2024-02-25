@@ -17,13 +17,13 @@
 package log
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
-	"fmt"
-	"github.com/go-kit/log"
-	"io"
-	"os"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log/internal"
+    "github.com/go-kit/log"
+    "io"
+    "os"
+    "strings"
 )
 
 const (

@@ -17,18 +17,18 @@
 package types
 
 import (
-	securityinternal "cto-github.cisco.com/NFV-BU/go-lanai/internal/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
-	"database/sql/driver"
-	"fmt"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
-	"reflect"
-	"strings"
+    "database/sql/driver"
+    "fmt"
+    securityinternal "github.com/cisco-open/go-lanai/internal/security"
+    "github.com/cisco-open/go-lanai/pkg/data/types/pqx"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/utils/reflectutils"
+    "github.com/google/uuid"
+    "gorm.io/gorm"
+    "gorm.io/gorm/clause"
+    "gorm.io/gorm/schema"
+    "reflect"
+    "strings"
 )
 
 /****************************

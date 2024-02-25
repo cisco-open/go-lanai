@@ -17,15 +17,15 @@
 package claims
 
 import (
-	"context"
-	"crypto"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/base64"
-	"fmt"
-	"strings"
+    "context"
+    "crypto"
+    "encoding/base64"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "strings"
 )
 
 // AddressClaim is defined at https://openid.net/specs/openid-connect-core-1_0.html#AddressClaim

@@ -17,21 +17,21 @@
 package opadata
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/regoexpr"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"database/sql"
-	"encoding/json"
-	"fmt"
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/sdk"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
-	"reflect"
-	"strings"
-	"time"
+    "context"
+    "database/sql"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/opa/regoexpr"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/open-policy-agent/opa/ast"
+    "github.com/open-policy-agent/opa/rego"
+    "github.com/open-policy-agent/opa/sdk"
+    "gorm.io/gorm"
+    "gorm.io/gorm/clause"
+    "gorm.io/gorm/schema"
+    "reflect"
+    "strings"
+    "time"
 )
 
 var (

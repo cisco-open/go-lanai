@@ -18,7 +18,7 @@ package initcmd
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
 	"path/filepath"
 	"text/template"
 )

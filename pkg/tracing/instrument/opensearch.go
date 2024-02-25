@@ -18,8 +18,8 @@ package instrument
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
+	"github.com/cisco-open/go-lanai/pkg/opensearch"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"go.uber.org/fx"

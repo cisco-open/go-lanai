@@ -17,12 +17,12 @@
 package scope
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"fmt"
-	"sync"
-	"sync/atomic"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "sync"
+    "sync/atomic"
+    "time"
 )
 
 type cKey struct {

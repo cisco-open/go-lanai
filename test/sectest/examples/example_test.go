@@ -17,24 +17,24 @@
 package examples
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"embed"
-	"github.com/google/uuid"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"net/http"
-	"testing"
+    "context"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/access"
+    "github.com/cisco-open/go-lanai/pkg/security/basicauth"
+    "github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/sectest"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/google/uuid"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "net/http"
+    "testing"
 )
 
 /*************************
@@ -53,7 +53,7 @@ func TestUseDefaultSecurityScopeMocking(t *testing.T) {
 		sectest.WithMockedScopes(),
 		test.GomegaSubTest(SubTestExampleUseScope(), "UseScope"),
 	)
-	// Any sub tests can use "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope" as usual
+	// Any sub tests can use "github.com/cisco-open/go-lanai/pkg/integrate/security/scope" as usual
 }
 
 //go:embed example-custom-scopes.yml
@@ -67,7 +67,7 @@ func TestUseCustomSecurityScopeMocking(t *testing.T) {
 		sectest.WithMockedScopes(customMockingConfigFS), // use custom config as embeded configuration
 		test.GomegaSubTest(SubTestExampleUseScope(), "UseScope"),
 	)
-	// Any sub tests can use "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope" as usual
+	// Any sub tests can use "github.com/cisco-open/go-lanai/pkg/integrate/security/scope" as usual
 }
 
 // TestCurrentSecurityContextMocking

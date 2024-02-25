@@ -17,7 +17,7 @@
 package appconfig
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"github.com/cisco-open/go-lanai/pkg/appconfig"
 	"go.uber.org/fx"
 )
 

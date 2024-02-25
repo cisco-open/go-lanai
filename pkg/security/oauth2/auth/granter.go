@@ -17,9 +17,9 @@
 package auth
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"fmt"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
 )
 
 type TokenGranter interface {

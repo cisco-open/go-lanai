@@ -1,11 +1,11 @@
-module cto-github.cisco.com/NFV-BU/go-lanai/examples/auth-service
+module github.com/cisco-open/go-lanai/examples/auth-service
 
 go 1.21.4
 
-replace cto-github.cisco.com/NFV-BU/go-lanai => ./../../../go-lanai
+replace github.com/cisco-open/go-lanai => ./../../../go-lanai
 
 require (
-	cto-github.cisco.com/NFV-BU/go-lanai v0.12.0
+	github.com/cisco-open/go-lanai v0.12.0
 	github.com/pkg/errors v0.9.1
 	go.uber.org/fx v1.20.1
 )

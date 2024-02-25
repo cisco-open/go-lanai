@@ -17,10 +17,10 @@
 package constraints
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"database/sql/driver"
-	"github.com/google/uuid"
+    "database/sql/driver"
+    "github.com/cisco-open/go-lanai/pkg/data/types/pqx"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    "github.com/google/uuid"
 )
 
 const (

@@ -17,14 +17,14 @@
 package certsource
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/pem"
-	"fmt"
-	"os"
-	"path/filepath"
+    "crypto/tls"
+    "crypto/x509"
+    "encoding/pem"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "os"
+    "path/filepath"
 )
 
 const (

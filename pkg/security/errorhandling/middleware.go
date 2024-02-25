@@ -17,11 +17,11 @@
 package errorhandling
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	"errors"
-	"github.com/gin-gonic/gin"
-	"strings"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
+    "github.com/gin-gonic/gin"
+    "strings"
 )
 
 //goland:noinspection GoNameStartsWithPackageName

@@ -17,10 +17,10 @@
 package passwd
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"fmt"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "time"
 )
 
 /******************************

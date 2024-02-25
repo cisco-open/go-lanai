@@ -18,10 +18,10 @@ package dev
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/bmatcuk/doublestar/v4"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"

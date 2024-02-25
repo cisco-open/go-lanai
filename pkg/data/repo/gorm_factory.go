@@ -17,7 +17,7 @@
 package repo
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
+	"github.com/cisco-open/go-lanai/pkg/data/tx"
 	"gorm.io/gorm"
 )
 

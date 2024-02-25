@@ -17,18 +17,18 @@
 package openid
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"errors"
-	"net/http"
-	"net/url"
-	"strings"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
+    "github.com/cisco-open/go-lanai/pkg/security/redirect"
+    netutil "github.com/cisco-open/go-lanai/pkg/utils/net"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "net/http"
+    "net/url"
+    "strings"
 )
 
 // The OIDC RP initiated SLO is implemented by a set of handlers

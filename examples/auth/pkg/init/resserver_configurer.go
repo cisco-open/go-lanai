@@ -1,6 +1,6 @@
 package serviceinit
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
+import "github.com/cisco-open/go-lanai/pkg/security/config/resserver"
 
 // newResServerConfigurer provide over configuration on oauth.
 // resserver.ResourceServerConfigurer is required in DI container to enable resserver.Use

@@ -17,9 +17,9 @@
 package formlogin
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/passwd"
+	errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
 	"github.com/gin-gonic/gin"
 )
 

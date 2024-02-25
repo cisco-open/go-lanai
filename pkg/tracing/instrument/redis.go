@@ -18,7 +18,7 @@ package instrument
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"

@@ -1,18 +1,18 @@
 package serviceinit
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	opaaccess "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/access"
-	opaactuator "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/actuator"
+	"github.com/cisco-open/go-lanai/pkg/actuator/health"
+	"github.com/cisco-open/go-lanai/pkg/opa"
+	opaaccess "github.com/cisco-open/go-lanai/pkg/opa/access"
+	opaactuator "github.com/cisco-open/go-lanai/pkg/opa/actuator"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/access"
+	"github.com/cisco-open/go-lanai/pkg/security/config/resserver"
+	"github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/tokenauth"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
 	"go.uber.org/fx"
 )
 

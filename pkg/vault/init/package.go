@@ -17,14 +17,14 @@
 package vault
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	appconfigInit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
-	vaulthealth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/health"
-	"embed"
-	"go.uber.org/fx"
+    "context"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    appconfigInit "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/vault"
+    vaulthealth "github.com/cisco-open/go-lanai/pkg/vault/health"
+    "go.uber.org/fx"
 )
 
 //go:embed defaults-vault.yml

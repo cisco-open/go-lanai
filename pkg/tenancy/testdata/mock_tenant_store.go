@@ -17,13 +17,13 @@
 package testdata
 
 import (
-	"context"
-	th_loader "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy/loader"
-	"fmt"
-	"github.com/ghodss/yaml"
-	"github.com/google/uuid"
-	"io"
-	"io/fs"
+    "context"
+    "fmt"
+    th_loader "github.com/cisco-open/go-lanai/pkg/tenancy/loader"
+    "github.com/ghodss/yaml"
+    "github.com/google/uuid"
+    "io"
+    "io/fs"
 )
 
 type TestData struct {

@@ -17,8 +17,8 @@
 package actuatortest
 
 import (
-	. "cto-github.cisco.com/NFV-BU/go-lanai/test/utils/gomega"
 	"fmt"
+	. "github.com/cisco-open/go-lanai/test/utils/gomega"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"io"

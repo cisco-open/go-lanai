@@ -17,11 +17,11 @@
 package logout
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"errors"
-	"fmt"
-	"github.com/gin-gonic/gin"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/gin-gonic/gin"
 )
 
 var ctxKeyWarnings = "logout.Warnings"

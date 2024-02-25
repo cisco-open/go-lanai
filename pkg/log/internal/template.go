@@ -18,7 +18,7 @@ package internal
 
 import (
 	"bytes"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"go.uber.org/zap/buffer"
 	"io"
 	"strings"

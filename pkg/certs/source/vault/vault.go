@@ -17,20 +17,20 @@
 package vaultcerts
 
 import (
-	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
-	"fmt"
-	"io"
-	"path"
-	"strings"
-	"sync"
-	"time"
+    "context"
+    "crypto/tls"
+    "crypto/x509"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    certsource "github.com/cisco-open/go-lanai/pkg/certs/source"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/loop"
+    "github.com/cisco-open/go-lanai/pkg/vault"
+    "io"
+    "path"
+    "strings"
+    "sync"
+    "time"
 )
 
 type VaultProvider struct {

@@ -17,7 +17,7 @@
 package redismock
 
 import (
-    "cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/internal"
+    "github.com/cisco-open/go-lanai/test/mocks/internal"
     "github.com/go-redis/redis/v8"
     "github.com/golang/mock/gomock"
     "github.com/onsi/gomega"

@@ -17,15 +17,15 @@
 package unknownIdp
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"fmt"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/access"
+    "github.com/cisco-open/go-lanai/pkg/security/config/authserver"
+    "github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
+    "github.com/cisco-open/go-lanai/pkg/security/redirect"
+    "github.com/cisco-open/go-lanai/pkg/security/session"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
 )
 
 type NoIdpSecurityConfigurer struct {

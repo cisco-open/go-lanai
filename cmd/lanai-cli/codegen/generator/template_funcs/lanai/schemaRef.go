@@ -17,7 +17,7 @@
 package lanai
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/openapi"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/openapi"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 

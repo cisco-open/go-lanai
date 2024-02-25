@@ -17,11 +17,11 @@
 package csrf
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"encoding/gob"
-	"errors"
-	"github.com/google/uuid"
+    "context"
+    "encoding/gob"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security/session"
+    "github.com/google/uuid"
 )
 
 const SessionKeyCsrfToken = "CsrfToken"

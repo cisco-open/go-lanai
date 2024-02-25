@@ -17,19 +17,19 @@
 package dbtest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"embed"
-	"github.com/google/uuid"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"gorm.io/gorm"
-	"sync"
-	"testing"
-	"time"
+    "context"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/data/repo"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/google/uuid"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "gorm.io/gorm"
+    "sync"
+    "testing"
+    "time"
 )
 
 /*************************

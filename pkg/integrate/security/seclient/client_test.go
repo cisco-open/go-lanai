@@ -17,12 +17,12 @@
 package seclient
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
-	"encoding/base64"
-	"net/url"
-	"reflect"
-	"strings"
-	"testing"
+    "encoding/base64"
+    "github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+    "net/url"
+    "reflect"
+    "strings"
+    "testing"
 )
 
 func Test_remoteAuthClient_withClientAuth(t *testing.T) {

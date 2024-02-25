@@ -18,10 +18,10 @@ package instrument
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
-	util_matcher "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
+	util_matcher "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	"net/http"
 	"strings"

@@ -17,11 +17,11 @@
 package samlidp
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	"errors"
-	"github.com/crewjam/saml"
-	"net/http"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
+    "github.com/crewjam/saml"
+    "net/http"
 )
 
 //errors maps to the status code described in section 3.2.2 of http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf

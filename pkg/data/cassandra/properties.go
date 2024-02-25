@@ -17,10 +17,10 @@
 package cassandra
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"strings"
-	"time"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "strings"
+    "time"
 )
 
 const (

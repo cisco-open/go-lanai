@@ -17,17 +17,17 @@
 package sp
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
-	netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
-	"fmt"
-	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/samlsp"
-	"github.com/gin-gonic/gin"
-	"net/http"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
+    "github.com/cisco-open/go-lanai/pkg/security/redirect"
+    samlutils "github.com/cisco-open/go-lanai/pkg/security/saml/utils"
+    netutil "github.com/cisco-open/go-lanai/pkg/utils/net"
+    "github.com/crewjam/saml"
+    "github.com/crewjam/saml/samlsp"
+    "github.com/gin-gonic/gin"
+    "net/http"
 )
 
 // SPLoginMiddleware

@@ -17,9 +17,9 @@
 package extsamlidp
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	samlsp "github.com/cisco-open/go-lanai/pkg/security/saml/sp"
 	"go.uber.org/fx"
 )
 

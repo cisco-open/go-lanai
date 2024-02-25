@@ -17,16 +17,16 @@
 package repo
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"errors"
-	"fmt"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
-	"reflect"
-	"sort"
-	"strings"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "gorm.io/gorm"
+    "gorm.io/gorm/clause"
+    "gorm.io/gorm/schema"
+    "reflect"
+    "sort"
+    "strings"
 )
 
 // index is used for Utility to specify index key.

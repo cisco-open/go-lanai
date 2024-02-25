@@ -17,12 +17,12 @@
 package opensearchtest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
-	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/dnaeon/go-vcr.v3/recorder"
-	"runtime"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/test/ittest"
+    "github.com/pkg/errors"
+    "gopkg.in/dnaeon/go-vcr.v3/recorder"
+    "runtime"
+    "strings"
 )
 
 var (

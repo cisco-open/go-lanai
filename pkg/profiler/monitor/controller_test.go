@@ -17,20 +17,20 @@
 package monitor
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/embedded"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/types"
-	"net/http"
-	"testing"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/embedded"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/gorilla/websocket"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "github.com/onsi/gomega/types"
+    "net/http"
+    "testing"
+    "time"
 )
 
 const (

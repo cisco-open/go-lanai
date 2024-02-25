@@ -17,10 +17,10 @@
 package lanai
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/openapi"
-	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"reflect"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/openapi"
+    "github.com/getkin/kin-openapi/openapi3"
+    "reflect"
 )
 
 type RefChecker interface {

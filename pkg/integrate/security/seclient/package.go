@@ -17,11 +17,11 @@
 package seclient
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
-	securityint "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+	securityint "github.com/cisco-open/go-lanai/pkg/integrate/security"
+	"github.com/cisco-open/go-lanai/pkg/log"
 	"go.uber.org/fx"
 )
 

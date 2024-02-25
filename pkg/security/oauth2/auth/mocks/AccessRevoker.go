@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	auth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	auth "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
 
 	mock "github.com/stretchr/testify/mock"
 )

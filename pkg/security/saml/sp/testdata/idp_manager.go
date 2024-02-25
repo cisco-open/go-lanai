@@ -17,9 +17,9 @@
 package testdata
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"github.com/cisco-open/go-lanai/pkg/security/idp"
+	"github.com/cisco-open/go-lanai/test/samltest"
+	"github.com/cisco-open/go-lanai/test/sectest"
 )
 
 var DefaultIdpProviders = []idp.IdentityProvider {

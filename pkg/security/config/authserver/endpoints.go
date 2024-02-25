@@ -17,15 +17,15 @@
 package authserver
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/misc"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/openid"
-	utils_matcher "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
-	"fmt"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/misc"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/openid"
+    utils_matcher "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/cisco-open/go-lanai/pkg/web/rest"
+    "github.com/cisco-open/go-lanai/pkg/web/template"
 )
 
 func registerEndpoints(registrar *web.Registrar, config *Configuration) {

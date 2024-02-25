@@ -17,16 +17,16 @@
 package generator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"errors"
-	"fmt"
-	"github.com/bmatcuk/doublestar/v4"
-	"io"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
-	"text/template"
+    "errors"
+    "fmt"
+    "github.com/bmatcuk/doublestar/v4"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "io"
+    "os"
+    "path"
+    "path/filepath"
+    "strings"
+    "text/template"
 )
 
 func fileExists(filename string) bool {

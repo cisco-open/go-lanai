@@ -18,7 +18,7 @@ package dsyncmock
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/dsync"
+	"github.com/cisco-open/go-lanai/pkg/dsync"
 	"go.uber.org/fx"
 	"sync"
 )

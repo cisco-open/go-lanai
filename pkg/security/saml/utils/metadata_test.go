@@ -17,15 +17,15 @@
 package samlutils
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"fmt"
-	"github.com/crewjam/saml"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"net/http"
-	"net/http/httptest"
-	"testing"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/crewjam/saml"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "net/http"
+    "net/http/httptest"
+    "testing"
 )
 
 const validXML = `<?xml version="1.0" encoding="UTF-8"?>\n<md:EntityDescriptor entityID="some_entity_id" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">\n\t<md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">\n\t\t<md:KeyDescriptor use="signing">\n\t\t\t<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">\n\t\t\t\t<ds:X509Data>\n\t\t\t\t\t<ds:X509Certificate>some_certificate</ds:X509Certificate>\n\t\t\t\t</ds:X509Data>\n\t\t\t</ds:KeyInfo>\n\t\t</md:KeyDescriptor>\n\t\t<md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>\n\t\t<md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>\n\t\t<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://some_url"/>\n\t\t<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="http://some_url"/>\n\t</md:IDPSSODescriptor>\n</md:EntityDescriptor>`

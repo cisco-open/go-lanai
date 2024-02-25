@@ -17,18 +17,18 @@
 package codegen
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"fmt"
-	"github.com/google/go-cmp/cmp"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"io/fs"
-	"os"
-	"path"
-	"path/filepath"
-	"testing"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/google/go-cmp/cmp"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "io/fs"
+    "os"
+    "path"
+    "path/filepath"
+    "testing"
 )
 
 type TestPlan struct {

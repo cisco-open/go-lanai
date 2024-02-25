@@ -18,7 +18,7 @@ package kafka
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
+	"github.com/cisco-open/go-lanai/pkg/actuator/health"
 )
 
 type HealthIndicator struct {

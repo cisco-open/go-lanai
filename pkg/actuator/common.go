@@ -17,15 +17,15 @@
 package actuator
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	"fmt"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"net/http"
-	"reflect"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/rest"
+    httptransport "github.com/go-kit/kit/transport/http"
+    "net/http"
+    "reflect"
+    "strings"
 )
 
 var (

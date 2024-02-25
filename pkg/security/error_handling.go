@@ -17,16 +17,16 @@
 package security
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
-	"errors"
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"sort"
-	"strings"
-	"sync"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/template"
+    "github.com/gin-gonic/gin"
+    "net/http"
+    "sort"
+    "strings"
+    "sync"
 )
 
 // AccessDeniedHandler handles ErrorSubTypeAccessDenied

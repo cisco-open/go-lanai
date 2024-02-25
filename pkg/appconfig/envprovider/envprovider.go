@@ -18,8 +18,8 @@ package envprovider
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/appconfig"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"os"
 	"strings"
 )

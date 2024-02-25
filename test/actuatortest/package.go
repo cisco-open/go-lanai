@@ -17,17 +17,17 @@
 package actuatortest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/env"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	healthep "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health/endpoint"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/info"
-	actuatorinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/pkg/actuator"
+	"github.com/cisco-open/go-lanai/pkg/actuator/env"
+	"github.com/cisco-open/go-lanai/pkg/actuator/health"
+	healthep "github.com/cisco-open/go-lanai/pkg/actuator/health/endpoint"
+	"github.com/cisco-open/go-lanai/pkg/actuator/info"
+	actuatorinit "github.com/cisco-open/go-lanai/pkg/actuator/init"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/access"
+	"github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
 	"go.uber.org/fx"
 )
 

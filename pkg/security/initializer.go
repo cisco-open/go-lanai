@@ -17,15 +17,15 @@
 package security
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"fmt"
-	"go.uber.org/fx"
-	"reflect"
-	"sort"
-	"sync"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "go.uber.org/fx"
+    "reflect"
+    "sort"
+    "sync"
 )
 
 /************************************

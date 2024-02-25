@@ -17,10 +17,10 @@
 package dbtest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
-	"database/sql"
-	"gorm.io/gorm"
+    "context"
+    "database/sql"
+    "github.com/cisco-open/go-lanai/pkg/data/tx"
+    "gorm.io/gorm"
 )
 
 type noopTxManager struct {}

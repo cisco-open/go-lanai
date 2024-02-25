@@ -18,7 +18,7 @@ package cors
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/rs/cors"
 	"time"
 )

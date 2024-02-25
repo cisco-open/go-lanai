@@ -16,7 +16,7 @@
 
 package codegen
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator"
+import "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator"
 
 var DefaultConfigV2 = ConfigV2{
 	Components: ComponentsV2{

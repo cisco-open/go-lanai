@@ -17,17 +17,17 @@
 package passwd
 
 import (
-	"bytes"
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"encoding/gob"
-	"fmt"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	"io"
-	"strings"
-	"time"
+    "bytes"
+    "context"
+    "encoding/gob"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/google/uuid"
+    "github.com/pkg/errors"
+    "io"
+    "strings"
+    "time"
 )
 
 const (

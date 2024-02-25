@@ -17,16 +17,16 @@
 package types
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
-	"errors"
-	"fmt"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-	"reflect"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/tenancy"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/reflectutils"
+    "github.com/google/uuid"
+    "gorm.io/gorm"
+    "reflect"
 )
 
 const (

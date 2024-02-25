@@ -18,7 +18,7 @@ package web
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
+	"github.com/cisco-open/go-lanai/pkg/utils/matcher"
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"

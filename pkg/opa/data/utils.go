@@ -17,10 +17,10 @@
 package opadata
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"fmt"
-	"gorm.io/gorm"
-	"reflect"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    "gorm.io/gorm"
+    "reflect"
 )
 
 

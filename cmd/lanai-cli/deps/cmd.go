@@ -18,8 +18,8 @@ package deps
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/spf13/cobra"
 	"strings"
 )

@@ -17,10 +17,10 @@
 package tenancy
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"errors"
-	"go.uber.org/fx"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "go.uber.org/fx"
 )
 
 var internalAccessor Accessor

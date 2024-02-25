@@ -17,7 +17,7 @@
 package util
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/log"
 	"strings"
 	"text/template"
 )

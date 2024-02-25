@@ -16,7 +16,7 @@
 
 package passwdidp
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
+import "github.com/cisco-open/go-lanai/pkg/security/idp"
 
 type PasswdIdpDetails struct {
 	Domain           string

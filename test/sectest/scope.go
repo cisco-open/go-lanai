@@ -17,18 +17,18 @@
 package sectest
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	securityint "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"embed"
-	"go.uber.org/fx"
-	"time"
+    "embed"
+    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    securityint "github.com/cisco-open/go-lanai/pkg/integrate/security"
+    "github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
+    "github.com/cisco-open/go-lanai/pkg/integrate/security/seclient"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "go.uber.org/fx"
+    "time"
 )
 
 //var logger = log.New("SEC.Test")
@@ -40,7 +40,7 @@ var defaultMockingConfigFS embed.FS
 	Options
  **************************/
 
-// WithMockedScopes is a test.Options that initialize cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope
+// WithMockedScopes is a test.Options that initialize github.com/cisco-open/go-lanai/pkg/integrate/security/scope
 // This option configure mocked security scopes based on yaml provided as embed.FS.
 // If no config is provided, the default config is used
 func WithMockedScopes(mocksConfigFS ...embed.FS) test.Options {

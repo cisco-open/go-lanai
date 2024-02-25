@@ -17,9 +17,9 @@
 package instrument
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/pkg/data"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"go.uber.org/fx"

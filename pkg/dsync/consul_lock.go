@@ -17,13 +17,13 @@
 package dsync
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/xsync"
-	"errors"
-	"fmt"
-	"github.com/hashicorp/consul/api"
-	"sync"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/xsync"
+    "github.com/hashicorp/consul/api"
+    "sync"
+    "time"
 )
 
 const (

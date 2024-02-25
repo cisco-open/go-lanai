@@ -16,7 +16,7 @@
 
 package appconfig
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+import "github.com/cisco-open/go-lanai/pkg/bootstrap"
 
 const (
 	PropertyKeyActiveProfiles       = "application.profiles.active"

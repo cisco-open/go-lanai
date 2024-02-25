@@ -17,13 +17,13 @@
 package appconfig
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/fileprovider"
-	"embed"
-	"fmt"
-	"go.uber.org/fx"
-	"path/filepath"
-	"reflect"
+    "embed"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/fileprovider"
+    "go.uber.org/fx"
+    "path/filepath"
+    "reflect"
 )
 
 const (

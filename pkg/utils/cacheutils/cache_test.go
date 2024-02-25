@@ -17,18 +17,18 @@
 package cacheutils
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"fmt"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/types"
-	"math"
-	"sync"
-	"sync/atomic"
-	"testing"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "github.com/onsi/gomega/types"
+    "math"
+    "sync"
+    "sync/atomic"
+    "testing"
+    "time"
 )
 
 type cacheCounter struct {

@@ -17,18 +17,18 @@
 package discovery
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
-	"errors"
-	"fmt"
-	"github.com/go-kit/kit/sd"
-	"github.com/hashicorp/consul/api"
-	"reflect"
-	"sort"
-	"sync"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/consul"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils/loop"
+    "github.com/go-kit/kit/sd"
+    "github.com/hashicorp/consul/api"
+    "reflect"
+    "sort"
+    "sync"
+    "time"
 )
 
 const (

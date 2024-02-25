@@ -18,12 +18,12 @@ package csrf
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/sessionmock"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/session"
+	"github.com/cisco-open/go-lanai/pkg/security/session/common"
+	"github.com/cisco-open/go-lanai/test/mocks/authmock"
+	"github.com/cisco-open/go-lanai/test/mocks/sessionmock"
+	"github.com/cisco-open/go-lanai/test/webtest"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"testing"

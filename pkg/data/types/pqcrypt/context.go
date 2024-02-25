@@ -17,13 +17,13 @@
 package pqcrypt
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqx"
-	"database/sql/driver"
-	"encoding/json"
-	"fmt"
-	"strings"
+    "context"
+    "database/sql/driver"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/cisco-open/go-lanai/pkg/data/types/pqx"
+    "strings"
 )
 
 var (

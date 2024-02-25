@@ -17,16 +17,16 @@
 package opadata
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"errors"
-	"fmt"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
-	"sync"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/cisco-open/go-lanai/pkg/data/types"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    "gorm.io/gorm"
+    "gorm.io/gorm/clause"
+    "gorm.io/gorm/schema"
+    "sync"
 )
 
 /****************************

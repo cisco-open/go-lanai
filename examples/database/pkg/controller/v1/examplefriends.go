@@ -4,12 +4,12 @@ package v1
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service/pkg/api"
-	apiv1 "cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service/pkg/api/v1"
-	"cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service/pkg/model"
-	"cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service/pkg/repository"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
+	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/api"
+	apiv1 "github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/api/v1"
+	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/model"
+	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/repository"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/rest"
 	"go.uber.org/fx"
 	"net/http"
 )

@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service/pkg/model"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
+	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/model"
+	"github.com/cisco-open/go-lanai/pkg/data/repo"
 )
 
 type FriendsRepository struct {

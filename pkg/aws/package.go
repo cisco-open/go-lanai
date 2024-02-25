@@ -17,8 +17,8 @@
 package aws
 
 import (
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
     "github.com/aws/aws-sdk-go-v2/config"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
     "go.uber.org/fx"
 )
 

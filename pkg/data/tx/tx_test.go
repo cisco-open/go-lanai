@@ -17,14 +17,14 @@
 package tx
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"database/sql"
-	"github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"gorm.io/gorm"
-	"testing"
+    "context"
+    "database/sql"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "gorm.io/gorm"
+    "testing"
 )
 
 type noopTxManager struct {}

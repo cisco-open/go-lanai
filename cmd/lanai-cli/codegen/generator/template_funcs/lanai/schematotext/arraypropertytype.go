@@ -16,7 +16,7 @@
 
 package schematotext
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai/lanaiutil"
+import "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai/lanaiutil"
 
 type arrayType struct {
 	data                  interface{}

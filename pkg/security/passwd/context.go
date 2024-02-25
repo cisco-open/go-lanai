@@ -17,9 +17,9 @@
 package passwd
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"encoding/gob"
-	"time"
+    "encoding/gob"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "time"
 )
 
 const (

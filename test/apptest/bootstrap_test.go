@@ -17,20 +17,20 @@
 package apptest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"embed"
-	"fmt"
-	"github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"net/http"
-	"testing"
-	"time"
+    "context"
+    "embed"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    webinit "github.com/cisco-open/go-lanai/pkg/web/init"
+    "github.com/cisco-open/go-lanai/pkg/web/rest"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "net/http"
+    "testing"
+    "time"
 )
 
 type testHookCounter struct {

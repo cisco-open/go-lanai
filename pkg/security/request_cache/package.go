@@ -17,10 +17,10 @@
 package request_cache
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"encoding/gob"
-	"go.uber.org/fx"
+    "encoding/gob"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "go.uber.org/fx"
 )
 
 var Module = &bootstrap.Module{

@@ -17,14 +17,14 @@
 package opatestserver
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"fmt"
-	sdktest "github.com/open-policy-agent/opa/sdk/test"
-	"go.uber.org/fx"
-	"io/fs"
-	"path/filepath"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    sdktest "github.com/open-policy-agent/opa/sdk/test"
+    "go.uber.org/fx"
+    "io/fs"
+    "path/filepath"
+    "strings"
 )
 
 var logger = log.New("OPA.Test")

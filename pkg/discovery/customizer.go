@@ -17,12 +17,12 @@
 package discovery
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"errors"
-	"fmt"
-	"github.com/hashicorp/consul/api"
-	"strings"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/hashicorp/consul/api"
+    "strings"
 )
 
 type Customizer interface {

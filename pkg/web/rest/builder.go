@@ -17,12 +17,12 @@
 package rest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"errors"
-	"fmt"
-	"github.com/go-kit/kit/endpoint"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"net/http"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/go-kit/kit/endpoint"
+    httptransport "github.com/go-kit/kit/transport/http"
+    "net/http"
 )
 
 // EndpointFunc is a function with following signature

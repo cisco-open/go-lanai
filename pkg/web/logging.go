@@ -17,17 +17,17 @@
 package web
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"io"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    "github.com/gin-gonic/gin"
+    "io"
+    "net/http"
+    "strconv"
+    "strings"
+    "time"
 )
 
 var logger = log.New("Web")

@@ -17,16 +17,16 @@
 package opainit
 
 import (
-	"context"
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	opainput "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/input"
-	"embed"
-	"fmt"
-	"github.com/open-policy-agent/opa/sdk"
-	"go.uber.org/fx"
+    "context"
+    "embed"
+    "fmt"
+    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    opainput "github.com/cisco-open/go-lanai/pkg/opa/input"
+    "github.com/open-policy-agent/opa/sdk"
+    "go.uber.org/fx"
 )
 
 var logger = log.New("OPA.Init")

@@ -17,8 +17,8 @@
 package controller
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/formlogin"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/security/formlogin"
+	"github.com/cisco-open/go-lanai/pkg/web"
 )
 
 func NewLoginFormController() web.Controller {

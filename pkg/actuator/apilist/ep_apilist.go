@@ -17,13 +17,13 @@
 package apilist
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"encoding/json"
-	"fmt"
-	"io/fs"
-	"net/http"
+    "context"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/actuator"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "io/fs"
+    "net/http"
 )
 
 const (

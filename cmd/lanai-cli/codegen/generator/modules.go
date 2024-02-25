@@ -17,10 +17,10 @@
 package generator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"reflect"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "reflect"
+    "strings"
 )
 
 /**********************

@@ -17,18 +17,18 @@
 package testdata
 
 import (
-	"bytes"
-	"compress/flate"
-	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"encoding/base64"
-	"fmt"
-	"github.com/beevik/etree"
-	"github.com/crewjam/saml"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"strings"
+    "bytes"
+    "compress/flate"
+    "encoding/base64"
+    "fmt"
+    "github.com/beevik/etree"
+    lanaisaml "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "github.com/crewjam/saml"
+    "io"
+    "net/http"
+    "net/http/httptest"
+    "net/url"
+    "strings"
 )
 
 type ActualSamlRequest struct {

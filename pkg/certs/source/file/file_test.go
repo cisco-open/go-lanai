@@ -17,18 +17,18 @@
 package filecerts_test
 
 import (
-	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/file"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"fmt"
-	"go.uber.org/fx"
-	"os"
-	"testing"
+    "context"
+    "crypto/tls"
+    "crypto/x509"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    filecerts "github.com/cisco-open/go-lanai/pkg/certs/source/file"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "go.uber.org/fx"
+    "os"
+    "testing"
 )
 import . "github.com/onsi/gomega"
 

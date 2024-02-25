@@ -17,13 +17,13 @@
 package opensearch
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"encoding/json"
-	"github.com/opensearch-project/opensearch-go"
-	"github.com/opensearch-project/opensearch-go/opensearchutil"
-	"strconv"
-	"strings"
+    "context"
+    "encoding/json"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/opensearch-project/opensearch-go"
+    "github.com/opensearch-project/opensearch-go/opensearchutil"
+    "strconv"
+    "strings"
 )
 
 // BulkAction is intended to be used as an enum type for bulk actions
