@@ -1,8 +1,6 @@
 ### Global Variables
 WORK_DIR = $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 TMP_DIR = $(WORK_DIR).tmp
-PRIVATE_REPOS = \
-	cto-github.cisco.com
 
 # patterns
 null  =
@@ -41,11 +39,18 @@ CLI_MOD_PATH ?= $(shell realpath `$(GO) list -f='{{or .Replace ""}}' -m $(CLI_MO
 # init-once:
 #	Used to setup local dev environment, and should be used only once per environment.
 # 	This target assumes local environment has proper access to $PRIVATE_REPOS
+#	Required Vars:
+#		- PRIVATE_REPOS space delimited private git servers. e.g. PRIVATE_REPOS="private-github.my-domain.org"
+ifneq ($(strip $(value PRIVATE_REPOS)),)
 init-once:
 	$(GO) env -w GOPRIVATE="$(subst $(space),$(comma),$(strip $(value PRIVATE_REPOS)))"
 	$(foreach repo,$(PRIVATE_REPOS),\
 		$(GIT) config --global url."ssh://git@$(repo)/".insteadOf "https://$(repo)/";\
 	)
+else
+init-once:
+	@echo "Nothing to be done. Did you forget to set PRIVATE_REPOS?"
+endif
 
 # init-ws:
 # 	create tmp folders
@@ -60,7 +65,7 @@ init-ws:
 # 	Required Vars:
 #		- CLI_MOD_PATH the path of the go-lanai module on local file system. If provided, it would override CLI_TAG
 #		  e.g. CLI_MOD_PATH=./../go-lanai
-#		- CLI_TAG branch/tag to use to install "lanai-cli", typically same branch/tag of cto-github.cisco.com/NFV-BU/go-lanai
+#		- CLI_TAG branch/tag to use to install "lanai-cli", typically same branch/tag of github.com/cisco-open/go-lanai
 #		  e.g. CLI_TAG=develop
 ifneq ("$(wildcard $(CLI_MOD_PATH)/go.mod)","")
 # For Contributors or Service Dev who have go-lanai checked out (either by-side or as parent) and have proper "replace" directive in go.mod

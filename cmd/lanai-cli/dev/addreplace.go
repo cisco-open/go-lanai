@@ -61,7 +61,7 @@ func RunAddReplace(cmd *cobra.Command, _ []string) error {
 	toBeReplaced := utils.NewStringSet()
 	for _, m := range AddReplaceArgs.Modules {
 		if !doublestar.ValidatePathPattern(m) {
-			return fmt.Errorf(`expected comma separated list of module pattern. e.g. cto-github.cisco.com/NFV-BU/**. But got "%s"`, m)
+			return fmt.Errorf(`expected comma separated list of module pattern. e.g. github.com/<organization>/**. But got "%s"`, m)
 		}
 		toBeReplaced.Add(m)
 	}

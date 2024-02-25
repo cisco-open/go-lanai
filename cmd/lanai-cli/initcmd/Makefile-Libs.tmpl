@@ -25,7 +25,7 @@ VERSION ?= 0.0.0-SNAPSHOT
 #				This value is required only if CI/CD want to merge go.mod and go.sum back to source branch
 SRC_BRANCH ?=
 # PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules
-# 				e.g. PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v0.1.0,cto-github.cisco.com/NFV-BU/swagger-go@0.2.1
+# 				e.g. PRIVATE_MODS=github.com/<org>/<private-repo>@v0.1.0,github.my-domain.com/<org>/<repo>@0.2.1
 PRIVATE_MODS ?=
 
 ## Required Variables by Local Targets
@@ -98,7 +98,7 @@ $(GEN_LIST):
 # 	Optional Vars:
 #		- PRIVATE_MODS
 #	Example:
-# 		make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+# 		make verify PRIVATE_MODS=github.com/<org>/<private-repo>@develop
 verify: SAVEPOINT_MARK = tmp/pre-verify
 verify: pre-verify clean test lint report post-verify
 
@@ -185,7 +185,7 @@ post-verify: post
 # 	Required Vars:
 #		- VERSION
 # 	Optional Vars:
-#		- PRIVATE_MODS e.g. make pre-dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+#		- PRIVATE_MODS e.g. make pre-dist PRIVATE_MODS=github.com/<org>/<private-repo>@develop
 pre-dist: UPDATE_DEPS_MARK ?= tmp/$(VERSION)/update-deps
 pre-dist: DROP_REPLACE_MARK ?= tmp/$(VERSION)/drop-replace
 pre-dist: SAVEPOINT_MARK ?= tmp/pre-dist
@@ -213,7 +213,7 @@ post-dist: post git-tag-version git-merge-back
 #		- UPDATE_DEPS_MARK: when set, the target will create a git commit for result go.mod/go.sum file and tag it as UPDATE_DEPS_MARK
 # 		  Note: the create commit is not tracked by current branch HEAD
 #	Example:
-# 		make update-dependency PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+# 		make update-dependency PRIVATE_MODS=github.com/<org>/<private-repo>@develop
 update-dependency:
 	$(CLI) deps update --modules=$(PRIVATE_MODS) --mark=$(UPDATE_DEPS_MARK)
 
@@ -227,7 +227,7 @@ update-dependency:
 #		- DROP_REPLACE_MARK: when set, the target will create a git commit for result go.mod/go.sum file and tag it as UPDATE_DEPS_MARK
 # 		  Note: the create commit is not tracked by current branch HEAD
 #	Example:
-# 		make drop-replace PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+# 		make drop-replace PRIVATE_MODS=github.com/<org>/<private-repo>@develop
 drop-replace:
 	$(CLI) deps drop-replace --modules=$(PRIVATE_MODS) --mark=$(DROP_REPLACE_MARK)
 
