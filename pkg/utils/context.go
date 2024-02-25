@@ -83,6 +83,8 @@ func (ctx *mutableContext) Set(key any, value any) {
 	}
 }
 
+// Values recursively gather all KVs stored in MutableContext and its parent contexts.
+// In case of overridden keys, the value of outermost context is used.
 func (ctx *mutableContext) Values() (values map[interface{}]interface{}) {
 	hierarchy := make([]*mutableContext, 0, 5)
 	for mc := ctx; mc != nil; mc, _ = mc.Context.Value(ckMutableContext).(*mutableContext) {
@@ -114,7 +116,8 @@ func NewMutableContext(parent context.Context, valuers ...ContextValuer) Mutable
 
 // MakeMutableContext return the context itself if it's already a MutableContext and no additional ContextValuer are specified.
 // Otherwise, wrap the given context as MutableContext.
-// Note: If given context hierarchy contains MutableContext as parent context, their mutable store (map) is shared
+// Note: If the given context itself is not a MutableContext but its hierarchy contains MutableContext as parent context,
+// 		 a new MutableContext is created and its mutable store (map) is not shared with the one from the hierarchy.
 func MakeMutableContext(parent context.Context, valuers ...ContextValuer) MutableContext {
 	if mutable, ok := parent.(*mutableContext); ok && len(valuers) == 0 {
 		return mutable
