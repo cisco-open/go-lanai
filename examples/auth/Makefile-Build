@@ -2,7 +2,7 @@
 .SECONDEXPANSION:
 
 DESTDIR = dist
-MODULE = cto-github.cisco.com/NFV-BU/go-lanai/examples/auth-service
+MODULE = github.com/cisco-open/go-lanai/examples/auth-service
 
 EXECS = example-auth-service
 

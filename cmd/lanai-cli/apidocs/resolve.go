@@ -30,7 +30,7 @@ var (
 	ResolveCmd = &cobra.Command{
 		Use:                "resolve <space_delimited_source_files>",
 		Short:              "Generate OAS3 document from contract definitions and external references",
-		Example:            `lanai-cli apidocs resolve -O configs/api-docs.yaml -T $GITHUB_TOKEN -R https://api.swaggerhub.com/domains/Cisco-Systems46/msx-common-domain/8=>github://cto-github.cisco.com/raw/NFV-BU/msx-platform-specs/v1.0.8/common-domain-8.yaml contracts/service-8.yaml contracts/service-1.json`,
+		Example:            `lanai-cli apidocs resolve -O configs/api-docs.yaml -T $GITHUB_TOKEN -R https://api.swaggerhub.com/domains/<organization>/<project>/8=>github://github.com/raw/<organization>/<project>/<tag/branch>/common-domain-8.yaml contracts/service-8.yaml contracts/service-1.json`,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		Args:               ValidatePositionalArgs,
 		RunE:               RunMerge,
@@ -46,7 +46,7 @@ type ResolveArguments struct {
 	KeepExtRef        bool     `flag:"keep-external-ref,k" desc:"Keep external $ref as-is (skip resolving external $ref)"`
 	ConfigPath        string   `flag:"config,c" desc:"Path of configuration YAML, relative to working directory. \nThis is an alternative way of providing GitHub Token and external source replacement. \nNote: the value of GitHub Token can be an environment variable $EVN_VAR."`
 	GitHubPATs        []string `flag:"github-token,T" desc:"GitHub's Personal Access Token(PAT). \nFormat: \"<token>[@<hostname>]\". \nWhen <hostname> is not specified, the token is used as default."`
-	ReplaceExtSources []string `flag:"replace-external-source,R" desc:"Replace external reference sources with an alternative location. \nFormat: \"<original_url>=>[replaced_loc]\". \nSupported <replaced_loc> are 'http://', 'https://', 'github://' and local file. \ne.g. https://api.swaggerhub.com/domains/Cisco-Systems46/msx-common-domain/8=>github://cto-github.cisco.com/raw/NFV-BU/msx-platform-specs/v1.0.8/common-domain-8.yaml"`
+	ReplaceExtSources []string `flag:"replace-external-source,R" desc:"Replace external reference sources with an alternative location. \nFormat: \"<original_url>=>[replaced_loc]\". \nSupported <replaced_loc> are 'http://', 'https://', 'github://' and local file. \ne.g. https://api.swaggerhub.com/domains/<organization>/<project>/8=>github://github.com/raw/<organization>/<project>/<tag/branch>/common-domain-8.yaml"`
 }
 
 func init() {

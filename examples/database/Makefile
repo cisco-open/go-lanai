@@ -1,8 +1,7 @@
 ### Global Variables
 WORK_DIR = $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 TMP_DIR = $(WORK_DIR).tmp
-PRIVATE_REPOS = \
-	cto-github.cisco.com
+PRIVATE_REPOS =
 
 # patterns
 null  =
@@ -21,7 +20,7 @@ default: init-cli
 -include Makefile-Generated
 
 ## Required Variables from command-line
-CLI_MOD ?= cto-github.cisco.com/NFV-BU/go-lanai
+CLI_MOD ?= github.com/cisco-open/go-lanai
 CLI_TAG ?=
 FORCE ?=
 UPGRADE ?=
@@ -60,7 +59,7 @@ init-ws:
 # 	Required Vars:
 #		- CLI_MOD_PATH the path of the go-lanai module on local file system. If provided, it would override CLI_TAG
 #		  e.g. CLI_MOD_PATH=./../go-lanai
-#		- CLI_TAG branch/tag to use to install "lanai-cli", typically same branch/tag of cto-github.cisco.com/NFV-BU/go-lanai
+#		- CLI_TAG branch/tag to use to install "lanai-cli", typically same branch/tag of github.com/cisco-open/go-lanai
 #		  e.g. CLI_TAG=develop
 ifneq ("$(wildcard $(CLI_MOD_PATH)/go.mod)","")
 # For Contributors or Service Dev who have go-lanai checked out (either by-side or as parent) and have proper "replace" directive in go.mod

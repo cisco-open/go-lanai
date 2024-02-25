@@ -30,7 +30,7 @@ interactions:
         trailer: {}
         content_length: 45
         uncompressed: false
-        body: '{"ID":"fcc19d1f-cf7d-2f6b-c830-771213b2fd2f"}'
+        body: '{"ID":"f5981ae5-181d-9306-3e46-c1fc313cf4ab"}'
         headers:
             Content-Length:
                 - "45"
@@ -50,20 +50,20 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 241
+        content_length: 235
         transfer_encoding: []
         trailer: {}
         host: localhost:8500
         remote_addr: ""
         request_uri: ""
-        body: '{"build":{"build-time":"2024-01-02T15:15:10-05:00","hash":"Unknown","modules":{"go-lanai":{"path":"cto-github.cisco.com/NFV-BU/go-lanai","version":"develop"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
+        body: '{"build":{"build-time":"2024-02-25T15:05:11-05:00","hash":"Unknown","modules":{"go-lanai":{"path":"github.com/cisco-open/go-lanai","version":"develop"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
         form: {}
         headers:
             Content-Type:
                 - application/octet-stream
             X-Http-Record-Index:
                 - "1"
-        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=fcc19d1f-cf7d-2f6b-c830-771213b2fd2f&flags=2837033986114203673
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=f5981ae5-181d-9306-3e46-c1fc313cf4ab&flags=2837033986114203673
         method: PUT
       response:
         proto: HTTP/1.1
@@ -106,7 +106,7 @@ interactions:
                 - application/octet-stream
             X-Http-Record-Index:
                 - "2"
-        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=fcc19d1f-cf7d-2f6b-c830-771213b2fd2f
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=f5981ae5-181d-9306-3e46-c1fc313cf4ab
         method: PUT
       response:
         proto: HTTP/1.1
@@ -136,20 +136,20 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 241
+        content_length: 235
         transfer_encoding: []
         trailer: {}
         host: localhost:8500
         remote_addr: ""
         request_uri: ""
-        body: '{"build":{"build-time":"2024-01-02T15:15:10-05:00","hash":"Unknown","modules":{"go-lanai":{"path":"cto-github.cisco.com/NFV-BU/go-lanai","version":"develop"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
+        body: '{"build":{"build-time":"2024-02-25T15:05:11-05:00","hash":"Unknown","modules":{"go-lanai":{"path":"github.com/cisco-open/go-lanai","version":"develop"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
         form: {}
         headers:
             Content-Type:
                 - application/octet-stream
             X-Http-Record-Index:
                 - "3"
-        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=fcc19d1f-cf7d-2f6b-c830-771213b2fd2f&flags=2837033986114203673
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=f5981ae5-181d-9306-3e46-c1fc313cf4ab&flags=2837033986114203673
         method: PUT
       response:
         proto: HTTP/1.1
@@ -192,7 +192,7 @@ interactions:
                 - application/octet-stream
             X-Http-Record-Index:
                 - "4"
-        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=fcc19d1f-cf7d-2f6b-c830-771213b2fd2f
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=f5981ae5-181d-9306-3e46-c1fc313cf4ab
         method: PUT
       response:
         proto: HTTP/1.1

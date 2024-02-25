@@ -42,7 +42,7 @@ var (
 )
 
 type AddReplaceArguments struct {
-	Modules     []string `flag:"modules,m" desc:"Comma delimited list of module pattern. e.g. cto-github.cisco.com/NFV-BU/**"`
+	Modules     []string `flag:"modules,m" desc:"Comma delimited list of module pattern. e.g. github.com/<organization>/**"`
 	SearchPaths []string `flag:"paths,p" desc:"Comma delimited list of relative paths for searching local replacement"`
 }
 
