@@ -18,10 +18,10 @@ package testdata
 
 import (
     "context"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
     "fmt"
     "github.com/IBM/sarama"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
     "go.uber.org/fx"
     "math/rand"
     "testing"

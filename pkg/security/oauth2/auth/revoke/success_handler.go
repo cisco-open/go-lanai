@@ -18,12 +18,12 @@ package revoke
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/logout"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/logout"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
+	"github.com/cisco-open/go-lanai/pkg/security/redirect"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"net/http"
 	"net/url"
 )

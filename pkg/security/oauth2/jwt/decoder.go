@@ -17,10 +17,10 @@
 package jwt
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"fmt"
-	"github.com/golang-jwt/jwt/v4"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/golang-jwt/jwt/v4"
 )
 
 /*********************

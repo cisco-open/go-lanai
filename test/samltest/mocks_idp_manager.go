@@ -17,12 +17,12 @@
 package samltest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"errors"
-	"sort"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "sort"
 )
 
 type MockedIdpManager struct {

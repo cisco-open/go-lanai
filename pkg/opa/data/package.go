@@ -17,12 +17,12 @@
 package opadata
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"fmt"
-	"gorm.io/gorm"
-	"reflect"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    "gorm.io/gorm"
+    "reflect"
+    "strings"
 )
 
 //var logger = log.New("OPA.Data")

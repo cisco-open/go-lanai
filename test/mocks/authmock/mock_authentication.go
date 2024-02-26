@@ -5,7 +5,7 @@
 package authmock
 
 import (
-	security "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	security "github.com/cisco-open/go-lanai/pkg/security"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

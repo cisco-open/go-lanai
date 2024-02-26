@@ -17,7 +17,7 @@
 package oauth2
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"strings"
 	"time"
 )

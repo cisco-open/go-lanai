@@ -17,13 +17,13 @@
 package consul
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"errors"
-	"fmt"
-	"github.com/hashicorp/consul/api"
-	"strings"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/hashicorp/consul/api"
+    "strings"
 )
 
 var logger = log.New("Consul")

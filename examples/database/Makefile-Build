@@ -2,7 +2,7 @@
 .SECONDEXPANSION:
 
 DESTDIR = dist
-MODULE = cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service
+MODULE = github.com/cisco-open/go-lanai/examples/skeleton-service
 
 EXECS = migrate skeleton-service
 

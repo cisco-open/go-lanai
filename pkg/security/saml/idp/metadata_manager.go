@@ -17,17 +17,17 @@
 package samlidp
 
 import (
-	"context"
-	"crypto/x509"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-	"errors"
-	"fmt"
-	"github.com/crewjam/saml"
-	"net/http"
-	"reflect"
-	"sync"
+    "context"
+    "crypto/x509"
+    "errors"
+    "fmt"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    samlutils "github.com/cisco-open/go-lanai/pkg/security/saml/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+    "github.com/crewjam/saml"
+    "net/http"
+    "reflect"
+    "sync"
 )
 
 type SpMetadataManager struct {

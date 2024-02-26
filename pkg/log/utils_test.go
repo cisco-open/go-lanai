@@ -17,21 +17,21 @@
 package log
 
 import (
-	"bufio"
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"encoding/json"
-	"fmt"
-	"github.com/ghodss/yaml"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"io"
-	"io/fs"
-	"os"
-	"regexp"
-	"strings"
-	"testing"
+    "bufio"
+    "context"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/ghodss/yaml"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "io"
+    "io/fs"
+    "os"
+    "regexp"
+    "strings"
+    "testing"
 )
 
 const (

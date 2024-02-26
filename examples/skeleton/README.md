@@ -15,7 +15,7 @@
 2. Update [go.mod](go.mod) to make sure latest `go-lanai` library is used 
 3. Run
    ```shell
-   make init CLI_TAG="develop"
+   make init CLI_TAG="main"
    ```
    *Note*: If using released version of `go-lanai`, "version" can be used instead of "branch" in `CLI_TAG="..."`
 
@@ -31,7 +31,7 @@
 5. Update OpenAPI contract document [configs/api-docs-v3.yml](configs/api-docs-v3.yml)
 6. Run
    ```shell
-   lanai-cli codegen -o ./    
+   lanai-cli codegen -o ./
    ```
    This step would generate skeleton code based on provided OpenAPI contract and `codegen.yml`.
 7. Review `configs/application.yml` and `configs/bootstrap.yml` 

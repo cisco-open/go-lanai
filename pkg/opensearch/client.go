@@ -17,20 +17,20 @@
 package opensearch
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"errors"
-	"fmt"
-	"github.com/opensearch-project/opensearch-go"
-	"github.com/opensearch-project/opensearch-go/opensearchapi"
-	"github.com/opensearch-project/opensearch-go/opensearchutil"
-	"go.uber.org/fx"
-	"io"
-	"net/http"
-	"reflect"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/opensearch-project/opensearch-go"
+    "github.com/opensearch-project/opensearch-go/opensearchapi"
+    "github.com/opensearch-project/opensearch-go/opensearchutil"
+    "go.uber.org/fx"
+    "io"
+    "net/http"
+    "reflect"
 )
 
 var (

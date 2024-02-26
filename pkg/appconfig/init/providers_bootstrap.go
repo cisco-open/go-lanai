@@ -17,14 +17,14 @@
 package appconfig
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/cliprovider"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/envprovider"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/fileprovider"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"fmt"
-	"go.uber.org/fx"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/cliprovider"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/envprovider"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/fileprovider"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "go.uber.org/fx"
 )
 
 type bootstrapProvidersOut struct {

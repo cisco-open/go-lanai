@@ -17,14 +17,14 @@
 package internal
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding"
-	"fmt"
-	"math"
-	"reflect"
-	"strconv"
-	"strings"
-	"text/template"
+    "encoding"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "math"
+    "reflect"
+    "strconv"
+    "strings"
+    "text/template"
 )
 
 // Note: https://pkg.go.dev/text/template#hdr-Pipelines chainable argument should be the last parameter of any function

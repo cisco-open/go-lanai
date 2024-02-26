@@ -374,7 +374,7 @@ func tmpGoModFile() string {
 func isInvalidReplace(replace *Replace) bool {
 	replaced := replace.New.Path
 	// we only care if the replaced path start with "/" or ".",
-	// i.e. we will ignore url path such as "cto-github.cisco.com/NFV-BU/go-lanai"
+	// i.e. we will ignore url path such as "github.com/cisco-open/go-lanai"
 	if replaced == "" || !filepath.IsAbs(replaced) && !strings.HasPrefix(replaced, ".") {
 		return false
 	}

@@ -18,10 +18,10 @@ package dev
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
 	"fmt"
 	"github.com/bmatcuk/doublestar/v4"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
@@ -42,7 +42,7 @@ var (
 )
 
 type AddReplaceArguments struct {
-	Modules     []string `flag:"modules,m" desc:"Comma delimited list of module pattern. e.g. cto-github.cisco.com/NFV-BU/**"`
+	Modules     []string `flag:"modules,m" desc:"Comma delimited list of module pattern. e.g. github.com/<organization>/**"`
 	SearchPaths []string `flag:"paths,p" desc:"Comma delimited list of relative paths for searching local replacement"`
 }
 
@@ -61,7 +61,7 @@ func RunAddReplace(cmd *cobra.Command, _ []string) error {
 	toBeReplaced := utils.NewStringSet()
 	for _, m := range AddReplaceArgs.Modules {
 		if !doublestar.ValidatePathPattern(m) {
-			return fmt.Errorf(`expected comma separated list of module pattern. e.g. cto-github.cisco.com/NFV-BU/**. But got "%s"`, m)
+			return fmt.Errorf(`expected comma separated list of module pattern. e.g. github.com/<organization>/**. But got "%s"`, m)
 		}
 		toBeReplaced.Add(m)
 	}

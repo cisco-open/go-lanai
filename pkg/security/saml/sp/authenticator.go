@@ -18,8 +18,8 @@ package sp
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
 	"github.com/crewjam/saml"
 )
 

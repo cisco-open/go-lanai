@@ -17,15 +17,15 @@
 package samlidp
 
 import (
-	"bytes"
-	"crypto/x509"
-	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
-	"encoding/xml"
-	"fmt"
-	"github.com/crewjam/saml"
-	xrv "github.com/mattermost/xml-roundtrip-validator"
-	"net/http"
-	"strconv"
+    "bytes"
+    "crypto/x509"
+    "encoding/xml"
+    "fmt"
+    samlutils "github.com/cisco-open/go-lanai/pkg/security/saml/utils"
+    "github.com/crewjam/saml"
+    xrv "github.com/mattermost/xml-roundtrip-validator"
+    "net/http"
+    "strconv"
 )
 
 func UnmarshalRequest(req *saml.IdpAuthnRequest) error {

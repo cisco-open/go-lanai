@@ -17,10 +17,10 @@
 package oauth2
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/json"
-	"reflect"
-	"time"
+    "encoding/json"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "reflect"
+    "time"
 )
 
 const (

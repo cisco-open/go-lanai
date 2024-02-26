@@ -17,9 +17,9 @@
 package data
 
 import (
-	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	"errors"
-	"gorm.io/gorm"
+    "errors"
+    . "github.com/cisco-open/go-lanai/pkg/utils/error"
+    "gorm.io/gorm"
 )
 
 const (

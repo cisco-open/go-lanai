@@ -17,15 +17,15 @@
 package actuator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"go.uber.org/fx"
-	"net/http"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/mapping"
+    "github.com/gin-gonic/gin"
+    "go.uber.org/fx"
+    "net/http"
 )
 
 type constructDI struct {

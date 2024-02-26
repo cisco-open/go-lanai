@@ -17,10 +17,10 @@
 package pqcrypt
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"fmt"
-	"reflect"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "reflect"
+    "strings"
 )
 
 func newInvalidFormatError(text string, args...interface{}) error {

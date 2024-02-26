@@ -17,15 +17,15 @@
 package webtest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"fmt"
-	"go.uber.org/fx"
-	"testing"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    webinit "github.com/cisco-open/go-lanai/pkg/web/init"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "go.uber.org/fx"
+    "testing"
 )
 
 const (

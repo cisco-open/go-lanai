@@ -17,13 +17,13 @@
 package opa
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"fmt"
-	opalogging "github.com/open-policy-agent/opa/logging"
-	"github.com/open-policy-agent/opa/plugins"
-	"github.com/open-policy-agent/opa/sdk"
-	"io"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    opalogging "github.com/open-policy-agent/opa/logging"
+    "github.com/open-policy-agent/opa/plugins"
+    "github.com/open-policy-agent/opa/sdk"
+    "io"
 )
 
 var embeddedOPA struct {

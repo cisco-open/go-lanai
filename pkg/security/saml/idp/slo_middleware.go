@@ -17,17 +17,17 @@
 package samlidp
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"fmt"
-	"github.com/crewjam/saml"
-	"github.com/gin-gonic/gin"
-	"net/http"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    samlutils "github.com/cisco-open/go-lanai/pkg/security/saml/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/crewjam/saml"
+    "github.com/gin-gonic/gin"
+    "net/http"
 )
 
 var (

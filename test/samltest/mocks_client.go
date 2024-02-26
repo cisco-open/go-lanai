@@ -17,9 +17,9 @@
 package samltest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/xml"
-	"github.com/crewjam/saml"
+    "encoding/xml"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/crewjam/saml"
 )
 
 type MockedClientOptions func(opt *MockedClientOption)

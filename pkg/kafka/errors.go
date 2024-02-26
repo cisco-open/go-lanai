@@ -17,11 +17,11 @@
 package kafka
 
 import (
-	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"fmt"
 	"github.com/IBM/sarama"
+	. "github.com/cisco-open/go-lanai/pkg/utils/error"
+	errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
 )
 
 const (

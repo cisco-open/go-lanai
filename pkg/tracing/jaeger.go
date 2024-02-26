@@ -17,12 +17,12 @@
 package tracing
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"fmt"
-	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go"
-	"io"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/opentracing/opentracing-go"
+    "github.com/uber/jaeger-client-go"
+    "io"
 )
 
 func NewDefaultTracer() (opentracing.Tracer, io.Closer) {

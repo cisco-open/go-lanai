@@ -18,10 +18,10 @@ package filter_tests
 
 import (
     "context"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-    opadata "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/data"
     "errors"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    opadata "github.com/cisco-open/go-lanai/pkg/opa/data"
     "github.com/google/uuid"
     "github.com/onsi/gomega"
     . "github.com/onsi/gomega"

@@ -17,12 +17,12 @@
 package pqx
 
 import (
-	"bytes"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"database/sql/driver"
-	"fmt"
-	"github.com/lib/pq"
-	"time"
+    "bytes"
+    "database/sql/driver"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/lib/pq"
+    "time"
 )
 
 // TimeArray register driver.Valuer & sql.Scanner

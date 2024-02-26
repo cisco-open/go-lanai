@@ -17,11 +17,11 @@
 package acm
 
 import (
-	awsclient "cto-github.cisco.com/NFV-BU/go-lanai/pkg/aws"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"github.com/aws/aws-sdk-go-v2/service/acm"
-	"go.uber.org/fx"
+    "github.com/aws/aws-sdk-go-v2/service/acm"
+    awsclient "github.com/cisco-open/go-lanai/pkg/aws"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "go.uber.org/fx"
 )
 
 var logger = log.New("Aws")

@@ -17,21 +17,21 @@
 package web_test
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"io"
-	"net/http"
-	"net/url"
-	"strings"
-	"testing"
+    "context"
+    "encoding/json"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/gin-gonic/gin"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "io"
+    "net/http"
+    "net/url"
+    "strings"
+    "testing"
 )
 
 /*************************

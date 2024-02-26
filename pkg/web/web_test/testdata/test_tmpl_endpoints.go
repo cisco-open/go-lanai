@@ -17,13 +17,13 @@
 package testdata
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
-	"dario.cat/mergo"
-	"fmt"
-	"net/http"
-	"reflect"
-	"strings"
+    "context"
+    "dario.cat/mergo"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/web/template"
+    "net/http"
+    "reflect"
+    "strings"
 )
 
 func IndexPage(_ context.Context, _ *http.Request) (template.ModelView, error) {

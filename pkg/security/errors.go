@@ -17,8 +17,8 @@
 package security
 
 import (
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	"errors"
+    "errors"
+    errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
 )
 
 const (

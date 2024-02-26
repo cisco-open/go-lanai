@@ -17,7 +17,7 @@
 package acmcerts
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 )
 
 type SourceProperties struct {

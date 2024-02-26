@@ -17,14 +17,14 @@
 package repo
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"fmt"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"reflect"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/google/uuid"
+    "gorm.io/gorm"
+    "gorm.io/gorm/clause"
+    "reflect"
 )
 
 const (

@@ -17,10 +17,10 @@
 package pqx
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"database/sql/driver"
-	"encoding/json"
-	"fmt"
+    "database/sql/driver"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
 )
 
 // JsonbScan helps models to implement sql.Scanner

@@ -17,14 +17,14 @@
 package build
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"github.com/spf13/cobra"
-	"os"
-	"strings"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/spf13/cobra"
+    "os"
+    "strings"
+    "time"
 )
 
 var (

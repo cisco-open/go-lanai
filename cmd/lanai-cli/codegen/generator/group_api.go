@@ -17,10 +17,10 @@
 package generator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/getkin/kin-openapi/openapi3"
 )
 
 /**********************

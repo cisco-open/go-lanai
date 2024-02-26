@@ -17,14 +17,14 @@
 package cliprovider
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/args"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"github.com/spf13/pflag"
-	"sync"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/args"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/spf13/pflag"
+    "sync"
 )
 
 var (

@@ -2,11 +2,11 @@ package misc_test
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/misc"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/misc"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/sectest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"

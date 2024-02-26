@@ -6,7 +6,7 @@ package sessionmock
 
 import (
 	context "context"
-	session "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
+	session "github.com/cisco-open/go-lanai/pkg/security/session"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

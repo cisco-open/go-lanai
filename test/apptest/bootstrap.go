@@ -17,17 +17,17 @@
 package apptest
 
 import (
-	"context"
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"embed"
-	"github.com/spf13/cobra"
-	"go.uber.org/fx"
-	"reflect"
-	"testing"
-	"time"
+    "context"
+    "embed"
+    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/spf13/cobra"
+    "go.uber.org/fx"
+    "reflect"
+    "testing"
+    "time"
 )
 
 //go:embed test-defaults.yml

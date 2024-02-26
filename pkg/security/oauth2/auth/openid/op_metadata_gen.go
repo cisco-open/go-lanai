@@ -17,12 +17,12 @@
 package openid
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth/claims"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/claims"
+    "github.com/cisco-open/go-lanai/pkg/utils"
 )
 
 /************************

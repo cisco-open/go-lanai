@@ -19,8 +19,8 @@ package generator
 import (
     "bytes"
     "context"
-    "cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
     "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
     "path/filepath"
     "regexp"
     "strings"

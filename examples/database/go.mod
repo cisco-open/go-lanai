@@ -1,11 +1,11 @@
-module cto-github.cisco.com/NFV-BU/go-lanai/examples/skeleton-service
+module github.com/cisco-open/go-lanai/examples/skeleton-service
 
 go 1.20
 
-replace cto-github.cisco.com/NFV-BU/go-lanai => ./../../../go-lanai
+replace github.com/cisco-open/go-lanai => ./../../../go-lanai
 
 require (
-	cto-github.cisco.com/NFV-BU/go-lanai v0.12.0
+	github.com/cisco-open/go-lanai v0.12.0
 	github.com/go-playground/validator/v10 v10.17.0
 	github.com/google/uuid v1.6.0
 	go.uber.org/fx v1.20.1

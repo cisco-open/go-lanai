@@ -17,11 +17,11 @@
 package session
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"fmt"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/session/common"
+    "github.com/cisco-open/go-lanai/pkg/web/middleware"
 )
 
 var (

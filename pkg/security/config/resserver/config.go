@@ -17,14 +17,14 @@
 package resserver
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/redis"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/common"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/tokenauth"
 	"go.uber.org/fx"
 )
 

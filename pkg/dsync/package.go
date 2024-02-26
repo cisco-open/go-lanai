@@ -17,14 +17,14 @@
 package dsync
 
 import (
-	"context"
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"embed"
-	"fmt"
-	"go.uber.org/fx"
+    "context"
+    "embed"
+    "fmt"
+    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/consul"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "go.uber.org/fx"
 )
 
 //go:embed defaults-dsync.yml

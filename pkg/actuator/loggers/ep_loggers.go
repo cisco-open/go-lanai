@@ -17,13 +17,13 @@
 package loggers
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"fmt"
-	"net/http"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/actuator"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "net/http"
+    "strings"
 )
 
 const (

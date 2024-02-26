@@ -17,7 +17,7 @@
 package log
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
+	"github.com/cisco-open/go-lanai/pkg/log/internal"
 )
 
 func IsTerminal(l Logger) bool {

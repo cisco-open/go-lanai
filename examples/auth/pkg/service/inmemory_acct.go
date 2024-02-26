@@ -17,12 +17,12 @@
 package service
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"errors"
-	"strings"
-	"time"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "strings"
+    "time"
 )
 
 var (

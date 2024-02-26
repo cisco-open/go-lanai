@@ -2,9 +2,9 @@ package serviceinit
 
 {{ $imports := NewImports }}
 {{ $imports = $imports.Add "go.uber.org/fx" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/bootstrap" }}
 {{ range (.LanaiModules.Modules.FilterByName .Project.EnabledModules) }}
-{{ $imports = $imports.Add (.ImportPath "cto-github.cisco.com/NFV-BU/go-lanai/pkg") .ImportAlias }}
+{{ $imports = $imports.Add (.ImportPath "github.com/cisco-open/go-lanai/pkg") .ImportAlias }}
 {{ end }}
 {{ $imports = $imports.Add (concat .Project.Module "/pkg/controller") }}
 {{ template "imports" $imports }}

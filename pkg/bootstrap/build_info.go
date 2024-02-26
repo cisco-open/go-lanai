@@ -17,11 +17,11 @@
 package bootstrap
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/json"
-	"path"
-	"strings"
-	"time"
+    "encoding/json"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "path"
+    "strings"
+    "time"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 	BuildVersion = "Unknown"
 	BuildTime    = time.Now().Format(utils.ISO8601Seconds)
 	BuildHash    = "Unknown"
-	BuildDeps    = "cto-github.cisco.com/NFV-BU/go-lanai@develop"
+	BuildDeps    = "github.com/cisco-open/go-lanai@develop"
 )
 
 var (

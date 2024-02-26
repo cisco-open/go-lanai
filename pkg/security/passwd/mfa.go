@@ -16,7 +16,7 @@
 
 package passwd
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+import "github.com/cisco-open/go-lanai/pkg/security"
 
 type MFAEvent int
 

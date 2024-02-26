@@ -17,22 +17,22 @@
 package acmcerts
 
 import (
-	"context"
-	"crypto/ecdsa"
-	"crypto/rsa"
-	"crypto/tls"
-	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
-	"encoding/pem"
-	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/acm"
-	"go.step.sm/crypto/pemutil"
-	"regexp"
-	"strings"
-	"sync"
-	"time"
+    "context"
+    "crypto/ecdsa"
+    "crypto/rsa"
+    "crypto/tls"
+    "crypto/x509"
+    "encoding/pem"
+    "fmt"
+    "github.com/aws/aws-sdk-go-v2/service/acm"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    certsource "github.com/cisco-open/go-lanai/pkg/certs/source"
+    "github.com/cisco-open/go-lanai/pkg/utils/loop"
+    "go.step.sm/crypto/pemutil"
+    "regexp"
+    "strings"
+    "sync"
+    "time"
 )
 
 type AcmProvider struct {

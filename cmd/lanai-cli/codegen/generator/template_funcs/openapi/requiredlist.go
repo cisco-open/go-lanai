@@ -17,9 +17,9 @@
 package openapi
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
-	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
+    "github.com/getkin/kin-openapi/openapi3"
 )
 
 func requiredList(val interface{}) ([]string, error) {

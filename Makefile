@@ -1,7 +1,6 @@
 ### Global Variables
 WORK_DIR = $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 TMP_DIR = $(WORK_DIR).tmp
-PRIVATE_REPOS = cto-github.cisco.com
 
 # patterns
 null  =
@@ -29,11 +28,18 @@ INIT_TMP_DIR = $(TMP_DIR)/init
 # init-once:
 #	Used to setup local dev environment, and should be used only once per environment.
 # 	This target assumes local environment has proper access to $PRIVATE_REPOS
+#	Required Vars:
+#		- PRIVATE_REPOS space delimited private git servers. e.g. PRIVATE_REPOS="private-github.my-domain.org"
+ifneq ($(strip $(value PRIVATE_REPOS)),)
 init-once:
 	$(GO) env -w GOPRIVATE="$(subst $(space),$(comma),$(strip $(value PRIVATE_REPOS)))"
 	$(foreach repo,$(PRIVATE_REPOS),\
 		$(GIT) config --global url."ssh://git@$(repo)/".insteadOf "https://$(repo)/";\
 	)
+else
+init-once:
+	@echo "Nothing to be done. Did you forget to set PRIVATE_REPOS?"
+endif
 
 # init-cli:
 #	Used to bootstrap any targets other than init-once

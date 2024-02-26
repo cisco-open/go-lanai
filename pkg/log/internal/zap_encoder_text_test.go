@@ -18,7 +18,7 @@ package internal
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test"
 	"github.com/onsi/gomega"
 	"go.uber.org/zap/zapcore"
 	"testing"

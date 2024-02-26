@@ -17,13 +17,13 @@
 package web
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"net/http"
-	"path"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/gin-gonic/gin"
+    httptransport "github.com/go-kit/kit/transport/http"
+    "net/http"
+    "path"
 )
 
 type contextPathCtxKey struct {}

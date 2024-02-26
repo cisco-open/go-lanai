@@ -18,9 +18,9 @@ package grants
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
 )
 
 var logger = log.New("OAuth2.Grant")

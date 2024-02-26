@@ -17,14 +17,14 @@
 package pqcrypt
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"encoding/json"
-	"errors"
-	"github.com/google/uuid"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"testing"
+    "context"
+    "encoding/json"
+    "errors"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/google/uuid"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "testing"
 )
 
 const (

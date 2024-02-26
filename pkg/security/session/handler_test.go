@@ -17,18 +17,18 @@
 package session
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/authmock"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"encoding/gob"
-	"github.com/go-redis/redis/v8"
-	"github.com/golang/mock/gomock"
-	"strconv"
-	"testing"
-	"time"
+    "context"
+    "encoding/gob"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/session/common"
+    "github.com/cisco-open/go-lanai/test/mocks/authmock"
+    "github.com/cisco-open/go-lanai/test/mocks/redismock"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/go-redis/redis/v8"
+    "github.com/golang/mock/gomock"
+    "strconv"
+    "testing"
+    "time"
 )
 
 func TestChangeSessionHandler_HandleAuthenticationSuccess(t *testing.T) {

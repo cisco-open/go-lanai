@@ -17,20 +17,20 @@
 package swagger
 
 import (
-	"context"
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"embed"
-	"fmt"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"io"
-	"net/http"
-	"testing"
+    "context"
+    "embed"
+    "fmt"
+    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "io"
+    "net/http"
+    "testing"
 )
 
 /*************************

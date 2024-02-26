@@ -17,14 +17,14 @@
 package regoexpr
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/json"
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
-	"reflect"
+    "context"
+    "encoding/json"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/open-policy-agent/opa/ast"
+    "github.com/open-policy-agent/opa/rego"
+    "reflect"
 )
 
 var logger = log.New("OPA.AST")

@@ -18,12 +18,12 @@ package common
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"github.com/cisco-open/go-lanai/pkg/tenancy"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/mocks"
+	"github.com/cisco-open/go-lanai/test/sectest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"

@@ -17,17 +17,17 @@
 package codegen
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"embed"
-	"fmt"
-	"github.com/ghodss/yaml"
-	"github.com/spf13/cobra"
-	"io/fs"
-	"os"
-	"path/filepath"
+    "context"
+    "embed"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/ghodss/yaml"
+    "github.com/spf13/cobra"
+    "io/fs"
+    "os"
+    "path/filepath"
 )
 
 var logger = log.New("Codegen")

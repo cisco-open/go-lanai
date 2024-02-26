@@ -17,18 +17,18 @@
 package pqcrypt
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"embed"
-	"fmt"
-	"github.com/google/uuid"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"testing"
+    "context"
+    "embed"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/dbtest"
+    "github.com/google/uuid"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "testing"
 )
 
 const (

@@ -17,10 +17,10 @@
 package healthep
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"encoding/json"
+    "context"
+    "encoding/json"
+    "github.com/cisco-open/go-lanai/pkg/actuator"
+    "github.com/cisco-open/go-lanai/pkg/actuator/health"
 )
 
 const (

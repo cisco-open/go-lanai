@@ -4,9 +4,9 @@ package v2
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	apiv2 "cto-github.cisco.com/NFV-BU/test-service/pkg/api/v2"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/rest"
+	apiv2 "github.com/cisco-open/test-service/pkg/api/v2"
 	"go.uber.org/fx"
 )
 

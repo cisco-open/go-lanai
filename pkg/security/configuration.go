@@ -17,12 +17,12 @@
 package security
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"fmt"
-	"go.uber.org/fx"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/mapping"
+    "github.com/cisco-open/go-lanai/pkg/web/middleware"
+    "go.uber.org/fx"
 )
 
 /************************************

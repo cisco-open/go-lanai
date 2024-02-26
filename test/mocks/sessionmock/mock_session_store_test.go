@@ -17,8 +17,8 @@
 package sessionmock
 
 import (
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/internal"
+    "github.com/cisco-open/go-lanai/pkg/security/session"
+    "github.com/cisco-open/go-lanai/test/mocks/internal"
     "github.com/golang/mock/gomock"
     "github.com/onsi/gomega"
     "testing"

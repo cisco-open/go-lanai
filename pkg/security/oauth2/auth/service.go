@@ -17,15 +17,15 @@
 package auth
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"github.com/google/uuid"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/common"
+    "github.com/cisco-open/go-lanai/pkg/tenancy"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/google/uuid"
+    "time"
 )
 
 var (

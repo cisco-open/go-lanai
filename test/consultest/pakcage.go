@@ -19,11 +19,11 @@
 package consultest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-	consulinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
+	"github.com/cisco-open/go-lanai/pkg/consul"
+	consulinit "github.com/cisco-open/go-lanai/pkg/consul/init"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/ittest"
 	"go.uber.org/fx"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"testing"

@@ -17,11 +17,11 @@
 package gittools
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/spf13/cobra"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "github.com/go-git/go-git/v5"
+    "github.com/spf13/cobra"
+    "strings"
 )
 
 var (

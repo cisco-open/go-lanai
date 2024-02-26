@@ -7,7 +7,7 @@ project:
   # Name of Project/Service. Used as main.go, application.yml, bootstrap.yml, etc.
   name: testservice
   # Golang module name, also used as base import path when in the generated source code
-  module: cto-github.cisco.com/NFV-BU/test-service
+  module: github.com/cisco-open/test-service
   # Service port. Used in "bootstrap.yml"
   port: 8989
   # Service context-path. Used in "bootstrap.yml"

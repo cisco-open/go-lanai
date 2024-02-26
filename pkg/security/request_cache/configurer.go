@@ -17,11 +17,11 @@
 package request_cache
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"fmt"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/session"
+    "github.com/cisco-open/go-lanai/pkg/security/session/common"
+    "github.com/cisco-open/go-lanai/pkg/web"
 )
 
 var (

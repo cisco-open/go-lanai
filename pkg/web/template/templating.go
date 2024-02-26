@@ -17,14 +17,14 @@
 package template
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"errors"
-	"github.com/gin-gonic/gin"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"net/http"
-	"net/url"
-	"path"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/gin-gonic/gin"
+    httptransport "github.com/go-kit/kit/transport/http"
+    "net/http"
+    "net/url"
+    "path"
 )
 
 const (

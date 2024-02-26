@@ -17,13 +17,13 @@
 package instrument
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
-	"fmt"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"go.uber.org/fx"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/kafka"
+    "github.com/cisco-open/go-lanai/pkg/tracing"
+    "github.com/opentracing/opentracing-go"
+    "github.com/opentracing/opentracing-go/ext"
+    "go.uber.org/fx"
 )
 
 func KafkaTracingTracingProvider() fx.Annotated {

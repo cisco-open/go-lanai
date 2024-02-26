@@ -17,11 +17,11 @@
 package auth
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"net/http"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "net/http"
 )
 
 type TokenRequest struct {

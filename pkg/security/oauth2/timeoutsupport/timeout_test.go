@@ -17,17 +17,17 @@
 package timeoutsupport
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
-	"fmt"
-	"github.com/go-redis/redis/v8"
-	"github.com/golang/mock/gomock"
-	"github.com/onsi/gomega"
-	"github.com/stretchr/testify/mock"
-	"strconv"
-	"testing"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/session/common"
+    "github.com/cisco-open/go-lanai/test/mocks/redismock"
+    "github.com/go-redis/redis/v8"
+    "github.com/golang/mock/gomock"
+    "github.com/onsi/gomega"
+    "github.com/stretchr/testify/mock"
+    "strconv"
+    "testing"
+    "time"
 )
 
 func TestApplyTimeout_WhenSessionExpired(t *testing.T) {

@@ -1,11 +1,11 @@
 package migration_v1
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/migration"
-	"embed"
-	"go.uber.org/fx"
-	"gorm.io/gorm"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/migration"
+    "go.uber.org/fx"
+    "gorm.io/gorm"
 )
 
 //go:embed *.sql

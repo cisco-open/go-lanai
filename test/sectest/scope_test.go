@@ -18,12 +18,12 @@ package sectest
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"testing"

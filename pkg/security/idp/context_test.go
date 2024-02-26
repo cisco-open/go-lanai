@@ -17,11 +17,11 @@
 package idp
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"errors"
-	"net/http"
-	"testing"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "net/http"
+    "testing"
 )
 
 func TestRequestWithAuthenticationFlow(t *testing.T) {

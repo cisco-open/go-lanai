@@ -17,14 +17,14 @@
 package tenancy
 
 import (
-	"container/list"
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"errors"
-	"fmt"
-	r "github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
-	"strings"
+    "container/list"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    r "github.com/go-redis/redis/v8"
+    "github.com/google/uuid"
+    "strings"
 )
 
 const (

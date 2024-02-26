@@ -18,12 +18,12 @@ package discovery
 
 import (
     "context"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-    netutil "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/net"
     "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/consul"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+    netutil "github.com/cisco-open/go-lanai/pkg/utils/net"
     "github.com/google/uuid"
     "github.com/hashicorp/consul/api"
     "strings"

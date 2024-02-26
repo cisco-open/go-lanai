@@ -17,17 +17,17 @@
 package monitor
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"github.com/google/uuid"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/process"
-	"os"
-	"runtime"
-	"runtime/pprof"
-	"sync"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/google/uuid"
+    "github.com/shirou/gopsutil/v3/cpu"
+    "github.com/shirou/gopsutil/v3/process"
+    "os"
+    "runtime"
+    "runtime/pprof"
+    "sync"
+    "time"
 )
 
 var (

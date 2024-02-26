@@ -17,7 +17,7 @@
 package migration
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
+	"github.com/cisco-open/go-lanai/pkg/data"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
 )

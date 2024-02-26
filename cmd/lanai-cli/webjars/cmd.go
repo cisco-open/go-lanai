@@ -17,9 +17,9 @@
 package webjars
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"embed"
-	"github.com/spf13/cobra"
+    "embed"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "github.com/spf13/cobra"
 )
 
 const (

@@ -17,14 +17,14 @@
 package generator
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"fmt"
-	"io/fs"
-	"path/filepath"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "io/fs"
+    "path/filepath"
 )
 
 var logger = log.New("Codegen")

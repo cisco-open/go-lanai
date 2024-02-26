@@ -5,7 +5,7 @@ contract: ./test-api-docs.yml
 #templateDirectory: template/src
 
 # The import path of this project
-repositoryRootPath: cto-github.cisco.com/NFV-BU/test-service
+repositoryRootPath: github.com/cisco-open/test-service
 projectName: testservice
 
 # Rule for what happens if a generate a file would overwrite an existing one (default: overwrite)

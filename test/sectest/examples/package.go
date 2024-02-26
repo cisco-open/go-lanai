@@ -21,18 +21,18 @@
 package examples
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	"fmt"
-	"net/http"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/access"
+    "github.com/cisco-open/go-lanai/pkg/security/basicauth"
+    "github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+    "github.com/cisco-open/go-lanai/pkg/security/redirect"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/cisco-open/go-lanai/pkg/web/rest"
+    "net/http"
 )
 
 /*************************

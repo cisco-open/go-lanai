@@ -18,7 +18,7 @@ package bootstrap
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"go.uber.org/fx"
 	"os"
 	"sort"

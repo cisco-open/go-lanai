@@ -17,13 +17,13 @@
 package matcher
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"fmt"
-	"net/url"
-	pathutils "path"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "net/url"
+    pathutils "path"
+    "strings"
 )
 
 // routeMatcher implement web.RouteMatcher

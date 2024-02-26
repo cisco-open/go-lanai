@@ -17,13 +17,13 @@
 package misc
 
 import (
-	"bytes"
-	"context"
-	"crypto/rsa"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/jwt"
-	"encoding/base64"
-	"encoding/binary"
+    "bytes"
+    "context"
+    "crypto/rsa"
+    "encoding/base64"
+    "encoding/binary"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
 )
 
 const (

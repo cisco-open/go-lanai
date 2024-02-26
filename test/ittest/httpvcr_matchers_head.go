@@ -17,10 +17,10 @@
 package ittest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"net/http"
-	"net/url"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "net/http"
+    "net/url"
 )
 
 // NewRecordURLMatcher returns RecordURLMatcherFunc that compares Method, Path, Host and Port

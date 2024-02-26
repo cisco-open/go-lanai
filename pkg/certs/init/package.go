@@ -19,13 +19,13 @@
 package certsinit
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	filecerts "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source/file"
-	"fmt"
-	"go.uber.org/fx"
-	"io"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    filecerts "github.com/cisco-open/go-lanai/pkg/certs/source/file"
+    "go.uber.org/fx"
+    "io"
 )
 
 const PropertiesPrefix = `certificates`

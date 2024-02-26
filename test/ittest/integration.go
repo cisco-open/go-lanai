@@ -17,13 +17,13 @@
 package ittest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
-	secit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+	secit "github.com/cisco-open/go-lanai/pkg/integrate/security"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/seclient"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
 	"go.uber.org/fx"
 	"gopkg.in/dnaeon/go-vcr.v3/cassette"
 	"gopkg.in/dnaeon/go-vcr.v3/recorder"

@@ -17,12 +17,12 @@
 package opadata
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"gorm.io/gorm/schema"
-	"reflect"
-	"strings"
-	"sync"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "gorm.io/gorm/schema"
+    "reflect"
+    "strings"
+    "sync"
 )
 
 var (

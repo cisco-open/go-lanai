@@ -18,7 +18,7 @@ package log
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
+	"github.com/cisco-open/go-lanai/pkg/log/internal"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

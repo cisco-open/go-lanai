@@ -17,19 +17,19 @@
 package migration_test
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/cockroach"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/migration"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"embed"
-	"fmt"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"gorm.io/gorm"
-	"testing"
+    "context"
+    "embed"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data/cockroach"
+    "github.com/cisco-open/go-lanai/pkg/migration"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/dbtest"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "gorm.io/gorm"
+    "testing"
 )
 
 /*************************

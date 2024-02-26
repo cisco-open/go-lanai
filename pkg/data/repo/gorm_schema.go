@@ -17,13 +17,13 @@
 package repo
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
-	"reflect"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "gorm.io/gorm"
+    "gorm.io/gorm/clause"
+    "gorm.io/gorm/schema"
+    "reflect"
+    "strings"
 )
 
 // GormSchemaResolver extends SchemaResolver to expose more schema related functions

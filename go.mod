@@ -1,4 +1,4 @@
-module cto-github.cisco.com/NFV-BU/go-lanai
+module github.com/cisco-open/go-lanai
 
 go 1.20
 

@@ -17,16 +17,16 @@
 package common
 
 import (
-	"context"
-	"crypto/sha256"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/common/internal"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"time"
+    "context"
+    "crypto/sha256"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/common/internal"
+    "time"
 )
 
 const (

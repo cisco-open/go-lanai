@@ -17,19 +17,19 @@
 package samltest
 
 import (
-	"bytes"
-	"compress/flate"
-	samlutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"encoding/base64"
-	"encoding/xml"
-	"fmt"
-	"github.com/beevik/etree"
-	"github.com/crewjam/saml"
-	"io"
-	"net/http"
-	"net/url"
-	"strings"
+    "bytes"
+    "compress/flate"
+    "encoding/base64"
+    "encoding/xml"
+    "fmt"
+    "github.com/beevik/etree"
+    samlutils "github.com/cisco-open/go-lanai/pkg/security/saml/utils"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/crewjam/saml"
+    "io"
+    "net/http"
+    "net/url"
+    "strings"
 )
 
 type BindableSamlTypes interface {

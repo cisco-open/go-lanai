@@ -17,12 +17,12 @@
 package th_loader
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"fmt"
-	r "github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "github.com/cisco-open/go-lanai/pkg/tenancy"
+    r "github.com/go-redis/redis/v8"
+    "github.com/google/uuid"
 )
 
 type TenancyLoader struct {

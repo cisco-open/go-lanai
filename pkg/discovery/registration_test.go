@@ -17,21 +17,21 @@
 package discovery_test
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery/testdata"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/consultest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/ittest"
-	"fmt"
-	"github.com/hashicorp/consul/api"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"testing"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/consul"
+    "github.com/cisco-open/go-lanai/pkg/discovery"
+    "github.com/cisco-open/go-lanai/pkg/discovery/testdata"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/consultest"
+    "github.com/cisco-open/go-lanai/test/ittest"
+    "github.com/hashicorp/consul/api"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "testing"
 )
 
 const TestRegisterFuzzyJsonPathTags = `$.Tags`

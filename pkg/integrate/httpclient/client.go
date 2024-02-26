@@ -17,17 +17,17 @@
 package httpclient
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"errors"
-	"fmt"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/sd/lb"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"net/url"
-	"path"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/discovery"
+    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/go-kit/kit/endpoint"
+    "github.com/go-kit/kit/sd/lb"
+    httptransport "github.com/go-kit/kit/transport/http"
+    "net/url"
+    "path"
 )
 
 var (

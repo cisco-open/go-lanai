@@ -17,18 +17,18 @@
 package kafka
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
-	"errors"
-	"fmt"
-	"github.com/IBM/sarama"
-	"io"
-	"math"
-	"strings"
-	"sync"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/IBM/sarama"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    "github.com/cisco-open/go-lanai/pkg/utils/loop"
+    "io"
+    "math"
+    "strings"
+    "sync"
+    "time"
 )
 
 const (

@@ -17,22 +17,22 @@
 package samlidp
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	"errors"
-	"fmt"
-	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/samlsp"
-	"github.com/gin-gonic/gin"
-	"github.com/onsi/gomega"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"testing"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/cisco-open/go-lanai/test/samltest"
+    "github.com/cisco-open/go-lanai/test/sectest"
+    "github.com/crewjam/saml"
+    "github.com/crewjam/saml/samlsp"
+    "github.com/gin-gonic/gin"
+    "github.com/onsi/gomega"
+    "net/http"
+    "net/http/httptest"
+    "net/url"
+    "testing"
 )
 
 const (

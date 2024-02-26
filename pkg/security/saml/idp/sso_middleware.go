@@ -17,17 +17,17 @@
 package samlidp
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"errors"
-	"fmt"
-	"github.com/crewjam/saml"
-	"github.com/gin-gonic/gin"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "github.com/cisco-open/go-lanai/pkg/tenancy"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/crewjam/saml"
+    "github.com/gin-gonic/gin"
 )
 
 type SamlAuthorizeEndpointMiddleware struct {

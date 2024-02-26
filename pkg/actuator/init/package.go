@@ -17,17 +17,17 @@
 package actuator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/alive"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/apilist"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/env"
-	health "cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health/endpoint"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/info"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/loggers"
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"embed"
-	"go.uber.org/fx"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/actuator"
+    "github.com/cisco-open/go-lanai/pkg/actuator/alive"
+    "github.com/cisco-open/go-lanai/pkg/actuator/apilist"
+    "github.com/cisco-open/go-lanai/pkg/actuator/env"
+    health "github.com/cisco-open/go-lanai/pkg/actuator/health/endpoint"
+    "github.com/cisco-open/go-lanai/pkg/actuator/info"
+    "github.com/cisco-open/go-lanai/pkg/actuator/loggers"
+    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "go.uber.org/fx"
 )
 
 //go:embed defaults-actuator.yml

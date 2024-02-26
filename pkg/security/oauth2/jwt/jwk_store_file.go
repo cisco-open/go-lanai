@@ -17,14 +17,14 @@
 package jwt
 
 import (
-	"context"
-	"crypto/rsa"
-	"crypto/sha256"
-	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-	"encoding/binary"
-	"encoding/hex"
-	"fmt"
+    "context"
+    "crypto/rsa"
+    "crypto/sha256"
+    "crypto/x509"
+    "encoding/binary"
+    "encoding/hex"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
 )
 
 const (

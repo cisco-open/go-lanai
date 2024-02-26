@@ -17,14 +17,14 @@
 package samltest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-	"encoding/base64"
-	"fmt"
-	"github.com/beevik/etree"
-	"github.com/crewjam/saml"
-	"github.com/google/uuid"
-	"net/url"
-	"time"
+    "encoding/base64"
+    "fmt"
+    "github.com/beevik/etree"
+    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+    "github.com/crewjam/saml"
+    "github.com/google/uuid"
+    "net/url"
+    "time"
 )
 
 // MakeAuthnRequest create a SAML AuthnRequest, sign it and returns

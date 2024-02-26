@@ -17,15 +17,15 @@
 package actuatortest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	. "cto-github.cisco.com/NFV-BU/go-lanai/test/utils/gomega"
-	"fmt"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"io"
-	"net/http"
-	"testing"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/actuator"
+    "github.com/cisco-open/go-lanai/pkg/actuator/health"
+    . "github.com/cisco-open/go-lanai/test/utils/gomega"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "io"
+    "net/http"
+    "testing"
 )
 
 type ExpectedHealthOptions func(h *ExpectedHealth)

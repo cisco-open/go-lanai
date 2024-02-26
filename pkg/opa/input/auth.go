@@ -18,10 +18,10 @@ package opainput
 
 import (
 	"context"
-	securityinternal "cto-github.cisco.com/NFV-BU/go-lanai/internal/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
+	securityinternal "github.com/cisco-open/go-lanai/internal/security"
+	"github.com/cisco-open/go-lanai/pkg/opa"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
 )
 
 func PopulateAuthenticationClause(ctx context.Context, input *opa.Input) error {

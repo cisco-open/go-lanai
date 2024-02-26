@@ -17,17 +17,17 @@
 package apidocs
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"encoding/json"
-	"fmt"
-	"github.com/ghodss/yaml"
-	"mime"
-	"net/http"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
+    "context"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "github.com/ghodss/yaml"
+    "mime"
+    "net/http"
+    "os"
+    "path"
+    "path/filepath"
+    "strings"
 )
 
 const (

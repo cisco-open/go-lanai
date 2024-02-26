@@ -17,14 +17,14 @@
 package clientauth
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"errors"
-	"github.com/gin-gonic/gin"
-	"net/http"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/security/passwd"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/gin-gonic/gin"
+    "net/http"
 )
 
 type Middleware struct {

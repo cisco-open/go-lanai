@@ -17,15 +17,15 @@
 package scope
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	securityint "cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	"go.uber.org/fx"
-	"time"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    securityint "github.com/cisco-open/go-lanai/pkg/integrate/security"
+    "github.com/cisco-open/go-lanai/pkg/integrate/security/seclient"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "go.uber.org/fx"
+    "time"
 )
 
 var logger = log.New("SEC.Scope")

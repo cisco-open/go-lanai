@@ -17,21 +17,21 @@
 package examples
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"embed"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"net/http"
-	"testing"
-	"time"
+    "context"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/data/tx"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/rest"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/dbtest"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "net/http"
+    "testing"
+    "time"
 )
 
 /*************************

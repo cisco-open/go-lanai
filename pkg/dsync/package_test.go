@@ -17,16 +17,16 @@
 package dsync_test
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/dsync"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/consultest"
+    "context"
     "fmt"
+    "github.com/cisco-open/go-lanai/pkg/dsync"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/consultest"
     "github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"testing"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "testing"
 )
 
 /*************************

@@ -17,9 +17,9 @@
 package sectest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"fmt"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
 )
 
 type MockedPasswdIdentityProvider struct {

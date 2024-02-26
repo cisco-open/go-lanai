@@ -17,12 +17,12 @@
 package opaactuator
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	opaaccess "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/actuator"
+	"github.com/cisco-open/go-lanai/pkg/opa"
+	opaaccess "github.com/cisco-open/go-lanai/pkg/opa/access"
+	"github.com/cisco-open/go-lanai/pkg/security/access"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
 	"regexp"
 )
 

@@ -17,11 +17,11 @@
 package samlidp
 
 import (
-	"crypto/tls"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-	"fmt"
-	"github.com/crewjam/saml"
-	dsig "github.com/russellhaering/goxmldsig"
+    "crypto/tls"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+    "github.com/crewjam/saml"
+    dsig "github.com/russellhaering/goxmldsig"
 )
 
 func MakeErrorResponse(req *saml.IdpAuthnRequest, code string, message string) error {

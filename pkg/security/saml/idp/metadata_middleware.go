@@ -17,16 +17,16 @@
 package samlidp
 
 import (
-	"crypto"
-	"crypto/x509"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"encoding/xml"
-	"github.com/crewjam/saml"
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"net/url"
-	"sort"
+    "crypto"
+    "crypto/x509"
+    "encoding/xml"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/crewjam/saml"
+    "github.com/gin-gonic/gin"
+    "net/http"
+    "net/url"
+    "sort"
 )
 
 type Options struct {

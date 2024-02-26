@@ -19,11 +19,11 @@ package consul
 import (
 	"embed"
 
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	appconfigInit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul"
-	consulhealth "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/health"
+	"github.com/cisco-open/go-lanai/pkg/appconfig"
+	appconfigInit "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/consul"
+	consulhealth "github.com/cisco-open/go-lanai/pkg/consul/health"
 	"github.com/pkg/errors"
 	"go.uber.org/fx"
 )

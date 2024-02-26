@@ -17,12 +17,12 @@
 package data
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/repo"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/tx"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types/pqcrypt"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/data"
+	"github.com/cisco-open/go-lanai/pkg/data/repo"
+	"github.com/cisco-open/go-lanai/pkg/data/tx"
+	"github.com/cisco-open/go-lanai/pkg/data/types/pqcrypt"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"go.uber.org/fx"
 	"reflect"
 )

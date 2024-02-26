@@ -17,11 +17,11 @@
 package pqcrypt
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
-	"encoding/json"
-	"fmt"
-	"strconv"
+    "context"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/vault"
+    "strconv"
 )
 
 // vaultEncryptor implements Encryptor and KeyOperations

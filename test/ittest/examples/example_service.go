@@ -18,11 +18,11 @@ package examples
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
+	"github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
+	"github.com/cisco-open/go-lanai/pkg/security/access"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/rest"
 	"net/http"
 )
 

@@ -17,10 +17,10 @@
 package middleware
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"net/http"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/gin-gonic/gin"
+    "net/http"
 )
 
 type MappingBuilder struct {

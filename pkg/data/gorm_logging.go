@@ -18,7 +18,7 @@ package data
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/log"
 	gormlogger "gorm.io/gorm/logger"
 	"time"
 )

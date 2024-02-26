@@ -17,13 +17,13 @@
 package oauth2
 
 import (
-	"bytes"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-	"encoding/gob"
-	"encoding/json"
-	"errors"
-	"net/http"
+    "bytes"
+    "encoding/gob"
+    "encoding/json"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
+    "net/http"
 )
 
 // All "SubType" values are used as mask

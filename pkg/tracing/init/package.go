@@ -18,14 +18,14 @@ package tracing
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/scheduler"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing/instrument"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/redis"
+	"github.com/cisco-open/go-lanai/pkg/scheduler"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
+	"github.com/cisco-open/go-lanai/pkg/tracing/instrument"
+	"github.com/cisco-open/go-lanai/pkg/vault"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/fx"
 )

@@ -17,12 +17,12 @@
 package security
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"fmt"
-	"net/http"
-	"sort"
-	"sync"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "net/http"
+    "sort"
+    "sync"
 )
 
 /*****************************

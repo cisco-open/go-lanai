@@ -17,11 +17,11 @@
 package validation
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"encoding"
-	"fmt"
-	"github.com/go-playground/validator/v10"
+    "context"
+    "encoding"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/go-playground/validator/v10"
 )
 
 func TenantAccess() validator.FuncCtx {

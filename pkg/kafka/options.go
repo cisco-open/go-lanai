@@ -17,12 +17,12 @@
 package kafka
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"github.com/IBM/sarama"
-	"time"
+    "context"
+    "github.com/IBM/sarama"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    "time"
 )
 
 func defaultSaramaConfig(_ context.Context, properties *KafkaProperties) (c *sarama.Config, err error) {

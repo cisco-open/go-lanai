@@ -17,21 +17,21 @@
 package ittest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
-	"errors"
-	"flag"
-	"fmt"
-	"go.uber.org/fx"
-	"gopkg.in/dnaeon/go-vcr.v3/cassette"
-	"gopkg.in/dnaeon/go-vcr.v3/recorder"
-	"net/http"
-	"strconv"
-	"testing"
+    "context"
+    "errors"
+    "flag"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/suitetest"
+    "go.uber.org/fx"
+    "gopkg.in/dnaeon/go-vcr.v3/cassette"
+    "gopkg.in/dnaeon/go-vcr.v3/recorder"
+    "net/http"
+    "strconv"
+    "testing"
 )
 
 func init() {

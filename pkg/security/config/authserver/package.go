@@ -17,14 +17,14 @@
 package authserver
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/timeoutsupport"
-	samlidp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/idp"
-	th_loader "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy/loader"
-	"embed"
-	"go.uber.org/fx"
+    "embed"
+    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/timeoutsupport"
+    samlidp "github.com/cisco-open/go-lanai/pkg/security/saml/idp"
+    th_loader "github.com/cisco-open/go-lanai/pkg/tenancy/loader"
+    "go.uber.org/fx"
 )
 
 //go:embed defaults-authserver.yml

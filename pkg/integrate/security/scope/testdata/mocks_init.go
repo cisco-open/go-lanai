@@ -18,11 +18,11 @@ package testdata
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/scope"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/security/seclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/seclient"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/test/sectest"
 	"go.uber.org/fx"
 )
 

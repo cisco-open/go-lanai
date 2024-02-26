@@ -17,13 +17,13 @@
 package appconfig
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/consulprovider"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/vaultprovider"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"embed"
-	"go.uber.org/fx"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/consulprovider"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/vaultprovider"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "go.uber.org/fx"
 )
 
 const (

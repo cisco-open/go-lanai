@@ -17,13 +17,13 @@
 package opensearch
 
 import (
-	"bytes"
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"encoding/json"
-	"fmt"
-	"github.com/opensearch-project/opensearch-go/opensearchapi"
-	"io"
+    "bytes"
+    "context"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/opensearch-project/opensearch-go/opensearchapi"
+    "io"
 )
 
 func (c *RepoImpl[T]) SearchTemplate(ctx context.Context, dest *[]T, body interface{}, o ...Option[opensearchapi.SearchTemplateRequest]) (hits int, err error) {

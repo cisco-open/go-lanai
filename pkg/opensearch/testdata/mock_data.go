@@ -18,7 +18,7 @@ package testdata
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
+	"github.com/cisco-open/go-lanai/pkg/opensearch"
 	"math/rand"
 	"strings"
 	"time"

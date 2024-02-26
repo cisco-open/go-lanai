@@ -17,13 +17,13 @@
 package template
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"errors"
-	"fmt"
-	"github.com/go-kit/kit/endpoint"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"net/http"
-	"reflect"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/go-kit/kit/endpoint"
+    httptransport "github.com/go-kit/kit/transport/http"
+    "net/http"
+    "reflect"
 )
 
 var supportedResponseTypes = []reflect.Type {

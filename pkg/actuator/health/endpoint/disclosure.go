@@ -17,11 +17,11 @@
 package healthep
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/health"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"errors"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/actuator/health"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/utils"
 )
 
 // DefaultDisclosureControl implements health.DetailsDisclosureControl and health.ComponentsDisclosureControl

@@ -17,9 +17,9 @@
 package opadata
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
-	"fmt"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/opa"
+    "strings"
 )
 
 /*****************

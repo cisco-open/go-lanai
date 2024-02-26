@@ -17,10 +17,10 @@
 package actuator_tests
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
+	"github.com/cisco-open/go-lanai/pkg/actuator"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/test/sectest"
+	"github.com/cisco-open/go-lanai/test/webtest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"

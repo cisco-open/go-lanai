@@ -16,7 +16,7 @@
 
 package log
 
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+import "github.com/cisco-open/go-lanai/pkg/utils"
 
 const (
 	defaultTemplate = `{{pad -25 .time}} {{lvl 5 .}} [{{cap -20 .caller | pad 20 | blue}}] {{cap -12 .logger | pad 12 | green}}: {{.msg}} {{kv .}}`

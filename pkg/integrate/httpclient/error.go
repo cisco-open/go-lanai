@@ -17,9 +17,9 @@
 package httpclient
 
 import (
-	. "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
 	"errors"
 	"fmt"
+	. "github.com/cisco-open/go-lanai/pkg/utils/error"
 	"net/http"
 )
 

@@ -17,8 +17,8 @@
 package instrument
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
 	kitopentracing "github.com/go-kit/kit/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"

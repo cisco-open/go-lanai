@@ -18,8 +18,8 @@ package timeoutsupport
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
+	"github.com/cisco-open/go-lanai/pkg/redis"
+	"github.com/cisco-open/go-lanai/pkg/security/session/common"
 	"strconv"
 	"time"
 )

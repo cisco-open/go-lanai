@@ -17,12 +17,12 @@
 package swagger
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/tokenauth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/access"
+	"github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/tokenauth"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
 )
 
 type swaggerSecurityConfigurer struct {

@@ -17,8 +17,8 @@
 package testdata
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/resserver"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/config/resserver"
 	"go.uber.org/fx"
 )
 

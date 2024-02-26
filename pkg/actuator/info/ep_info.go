@@ -18,8 +18,8 @@ package info
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
+	"github.com/cisco-open/go-lanai/pkg/actuator"
+	"github.com/cisco-open/go-lanai/pkg/appconfig"
 )
 
 const (

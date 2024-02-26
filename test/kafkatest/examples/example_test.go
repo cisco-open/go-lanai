@@ -17,17 +17,17 @@
 package examples
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/kafkatest"
-	"fmt"
-	"github.com/google/uuid"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
-	"testing"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/kafka"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/kafkatest"
+    "github.com/google/uuid"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "go.uber.org/fx"
+    "testing"
 )
 
 const (

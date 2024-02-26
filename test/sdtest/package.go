@@ -19,18 +19,18 @@
 package sdtest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"errors"
-	"github.com/ghodss/yaml"
-	"dario.cat/mergo"
-	"go.uber.org/fx"
-	"io"
-	"io/fs"
-	"testing"
+    "context"
+    "dario.cat/mergo"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/discovery"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/ghodss/yaml"
+    "go.uber.org/fx"
+    "io"
+    "io/fs"
+    "testing"
 )
 
 type DI struct {

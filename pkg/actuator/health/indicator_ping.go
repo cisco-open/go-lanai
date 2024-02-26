@@ -18,7 +18,7 @@ package health
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web"
 )
 
 type PingIndicator struct {

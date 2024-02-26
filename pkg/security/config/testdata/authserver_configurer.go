@@ -18,15 +18,15 @@ package testdata
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/unknownIdp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/config/authserver"
+	"github.com/cisco-open/go-lanai/pkg/security/idp"
+	"github.com/cisco-open/go-lanai/pkg/security/idp/extsamlidp"
+	"github.com/cisco-open/go-lanai/pkg/security/idp/passwdidp"
+	"github.com/cisco-open/go-lanai/pkg/security/idp/unknownIdp"
+	"github.com/cisco-open/go-lanai/pkg/security/passwd"
+	"github.com/cisco-open/go-lanai/test/samltest"
+	"github.com/cisco-open/go-lanai/test/sectest"
 	"go.uber.org/fx"
 )
 

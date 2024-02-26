@@ -17,15 +17,15 @@
 package logout
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/mapping"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"fmt"
-	"net/http"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/redirect"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/cisco-open/go-lanai/pkg/web/mapping"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/cisco-open/go-lanai/pkg/web/middleware"
+    "net/http"
 )
 
 var (

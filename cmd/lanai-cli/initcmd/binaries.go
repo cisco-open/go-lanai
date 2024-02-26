@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"os"
 
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
 )
 
 var defaultBinaries = map[string]string{

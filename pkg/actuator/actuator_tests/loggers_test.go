@@ -17,22 +17,22 @@
 package actuator_tests
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/actuator_tests/testdata"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/actuator/loggers"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/actuatortest"
-	. "cto-github.cisco.com/NFV-BU/go-lanai/test/actuatortest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"fmt"
-	. "github.com/onsi/gomega"
-	"net/http"
-	"strings"
-	"testing"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/actuator"
+    "github.com/cisco-open/go-lanai/pkg/actuator/actuator_tests/testdata"
+    "github.com/cisco-open/go-lanai/pkg/actuator/loggers"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/actuatortest"
+    . "github.com/cisco-open/go-lanai/test/actuatortest"
+    "github.com/cisco-open/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/sectest"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    . "github.com/onsi/gomega"
+    "net/http"
+    "strings"
+    "testing"
 )
 
 var _ = log.New("Test")

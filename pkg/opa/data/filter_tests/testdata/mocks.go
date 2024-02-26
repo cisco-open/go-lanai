@@ -17,14 +17,14 @@
 package testdata
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	testutils "cto-github.cisco.com/NFV-BU/go-lanai/test/utils"
-	"embed"
-	"github.com/google/uuid"
+    "context"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/tenancy"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/test/mocks"
+    "github.com/cisco-open/go-lanai/test/sectest"
+    testutils "github.com/cisco-open/go-lanai/test/utils"
+    "github.com/google/uuid"
 )
 
 //go:embed *.sql *.yml uuid_pool.txt

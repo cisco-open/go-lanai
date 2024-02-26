@@ -17,11 +17,11 @@
 package oauth2
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/json"
-	"fmt"
-	"testing"
-	"time"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "testing"
+    "time"
 )
 
 func TestAccessTokenJSONSerialization(t *testing.T) {

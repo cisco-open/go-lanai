@@ -17,12 +17,12 @@
 package kafka
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"errors"
-	"fmt"
-	"github.com/IBM/sarama"
-	"sync"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/IBM/sarama"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "sync"
 )
 
 type saramaProducer struct {

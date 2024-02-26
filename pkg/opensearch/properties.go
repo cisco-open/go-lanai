@@ -17,10 +17,10 @@
 package opensearch
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	"embed"
-	"github.com/pkg/errors"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    "github.com/pkg/errors"
 )
 
 const (

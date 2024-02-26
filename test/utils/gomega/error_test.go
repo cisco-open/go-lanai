@@ -2,9 +2,9 @@ package gomegautils
 
 import (
     "context"
-    errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test"
     "errors"
+    errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
+    "github.com/cisco-open/go-lanai/test"
     "github.com/onsi/gomega"
     . "github.com/onsi/gomega"
     "testing"

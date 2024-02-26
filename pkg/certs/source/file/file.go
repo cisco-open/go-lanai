@@ -17,15 +17,15 @@
 package filecerts
 
 import (
-	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	certsource "cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs/source"
-	"encoding/pem"
-	"io"
-	"os"
-	"path/filepath"
+    "context"
+    "crypto/tls"
+    "crypto/x509"
+    "encoding/pem"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    certsource "github.com/cisco-open/go-lanai/pkg/certs/source"
+    "io"
+    "os"
+    "path/filepath"
 )
 
 type FileProvider struct {

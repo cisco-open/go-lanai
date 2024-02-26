@@ -17,14 +17,14 @@
 package utils
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"encoding/json"
-	"fmt"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"testing"
-	"time"
+    "context"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "testing"
+    "time"
 )
 
 func TestTimeUtils(t *testing.T) {

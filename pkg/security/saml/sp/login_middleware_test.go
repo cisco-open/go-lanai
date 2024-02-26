@@ -17,21 +17,21 @@
 package sp
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	lanaisaml "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp/testdata"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/samltest"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/sectest"
-	"errors"
-	"github.com/crewjam/saml"
-	"github.com/gin-gonic/gin"
-	"github.com/onsi/gomega"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    lanaisaml "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "github.com/cisco-open/go-lanai/pkg/security/saml/sp/testdata"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/test/samltest"
+    "github.com/cisco-open/go-lanai/test/sectest"
+    "github.com/crewjam/saml"
+    "github.com/gin-gonic/gin"
+    "github.com/onsi/gomega"
+    "net/http"
+    "net/http/httptest"
+    "strings"
+    "testing"
 )
 
 func TestAcsEndpoint(t *testing.T) {

@@ -17,14 +17,14 @@
 package errorhandling
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/redirect"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/template"
-	"errors"
-	"fmt"
-	"net/http"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/redirect"
+    "github.com/cisco-open/go-lanai/pkg/security/session"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/template"
+    "net/http"
 )
 
 func ErrorWithStatus(ctx context.Context, _ web.EmptyRequest) (int, *template.ModelView, error) {

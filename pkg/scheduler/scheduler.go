@@ -17,10 +17,10 @@
 package scheduler
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"fmt"
-	"time"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "time"
 )
 
 var logger = log.New("Scheduler")

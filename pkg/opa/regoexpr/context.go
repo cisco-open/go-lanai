@@ -18,7 +18,7 @@ package regoexpr
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/opa"
+	"github.com/cisco-open/go-lanai/pkg/opa"
 	"github.com/open-policy-agent/opa/ast"
 )
 

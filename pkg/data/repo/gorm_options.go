@@ -18,11 +18,11 @@ package repo
 
 import "C"
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"fmt"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "gorm.io/gorm"
+    "gorm.io/gorm/clause"
 )
 
 const (

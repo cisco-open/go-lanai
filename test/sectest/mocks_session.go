@@ -17,13 +17,13 @@
 package sectest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	sessioncommon "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/webtest"
-	"fmt"
-	"github.com/google/uuid"
-	"net/http"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/session"
+    sessioncommon "github.com/cisco-open/go-lanai/pkg/security/session/common"
+    "github.com/cisco-open/go-lanai/test/webtest"
+    "github.com/google/uuid"
+    "net/http"
 )
 
 /*******************

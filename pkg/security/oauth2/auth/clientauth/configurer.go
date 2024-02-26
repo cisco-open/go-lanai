@@ -17,15 +17,15 @@
 package clientauth
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/basicauth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/errorhandling"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/middleware"
-	"fmt"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/access"
+    "github.com/cisco-open/go-lanai/pkg/security/basicauth"
+    "github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
+    "github.com/cisco-open/go-lanai/pkg/security/passwd"
+    "github.com/cisco-open/go-lanai/pkg/web/matcher"
+    "github.com/cisco-open/go-lanai/pkg/web/middleware"
 )
 
 var (

@@ -17,8 +17,8 @@
 package certs_test
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/certs"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 )
 
 // No test cases here, just bunch of test properties. See Manager tests

@@ -17,14 +17,14 @@
 package sdtest
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/discovery"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"errors"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"testing"
-	"time"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/discovery"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "testing"
+    "time"
 )
 
 const (

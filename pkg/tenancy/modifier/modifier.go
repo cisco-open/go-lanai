@@ -17,12 +17,12 @@
 package th_modifier
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"errors"
-	r "github.com/go-redis/redis/v8"
+    "context"
+    "errors"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "github.com/cisco-open/go-lanai/pkg/tenancy"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    r "github.com/go-redis/redis/v8"
 )
 
 type TenancyModifer struct {

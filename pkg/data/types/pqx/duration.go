@@ -17,11 +17,11 @@
 package pqx
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"database/sql/driver"
-	"fmt"
-	"time"
+    "database/sql/driver"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "time"
 )
 
 // Duration is also an alias of time.Duration

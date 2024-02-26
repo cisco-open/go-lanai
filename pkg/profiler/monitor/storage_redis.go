@@ -17,12 +17,12 @@
 package monitor
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"fmt"
-	goRedis "github.com/go-redis/redis/v8"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    goRedis "github.com/go-redis/redis/v8"
+    "time"
 )
 
 const (

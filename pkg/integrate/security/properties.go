@@ -17,11 +17,11 @@
 package security
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"embed"
-	"github.com/pkg/errors"
-	"time"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/pkg/errors"
+    "time"
 )
 
 const (

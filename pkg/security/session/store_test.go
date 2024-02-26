@@ -17,19 +17,19 @@
 package session
 
 import (
-	"bytes"
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session/common"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test/mocks/redismock"
-	"encoding/gob"
-	"fmt"
-	goRedis "github.com/go-redis/redis/v8"
-	"github.com/golang/mock/gomock"
-	"strconv"
-	"testing"
-	"time"
+    "bytes"
+    "context"
+    "encoding/gob"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/passwd"
+    "github.com/cisco-open/go-lanai/pkg/security/session/common"
+    "github.com/cisco-open/go-lanai/test/mocks/redismock"
+    goRedis "github.com/go-redis/redis/v8"
+    "github.com/golang/mock/gomock"
+    "strconv"
+    "testing"
+    "time"
 )
 
 type testUser struct {

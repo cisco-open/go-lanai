@@ -18,8 +18,8 @@ package opadata
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/types"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/reflectutils"
+	"github.com/cisco-open/go-lanai/pkg/data/types"
+	"github.com/cisco-open/go-lanai/pkg/utils/reflectutils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"

@@ -17,10 +17,10 @@
 package cockroach
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"fmt"
-	"gorm.io/gorm"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "gorm.io/gorm"
 )
 
 type GormDbCreator struct {

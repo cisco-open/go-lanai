@@ -1,12 +1,12 @@
 package service
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	th_loader "cto-github.cisco.com/NFV-BU/go-lanai/pkg/tenancy/loader"
-	"errors"
-	"fmt"
-	"go.uber.org/fx"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    th_loader "github.com/cisco-open/go-lanai/pkg/tenancy/loader"
+    "go.uber.org/fx"
 )
 
 const (

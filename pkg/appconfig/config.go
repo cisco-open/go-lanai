@@ -17,16 +17,16 @@
 package appconfig
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
-	"encoding/json"
-	"fmt"
-	"dario.cat/mergo"
-	"github.com/pkg/errors"
-	"strconv"
-	"strings"
+    "context"
+    "dario.cat/mergo"
+    "encoding/json"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
+    "github.com/pkg/errors"
+    "strconv"
+    "strings"
 )
 
 var (

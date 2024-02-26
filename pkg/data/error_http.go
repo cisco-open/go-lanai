@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"regexp"
 
-	errorutils "cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/error"
+	errorutils "github.com/cisco-open/go-lanai/pkg/utils/error"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 )

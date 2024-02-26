@@ -17,10 +17,10 @@
 package tracing
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"fmt"
-	"github.com/uber/jaeger-client-go"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/uber/jaeger-client-go"
 )
 
 var TracingLogValuers = log.ContextValuers{

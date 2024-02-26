@@ -17,11 +17,11 @@
 package oauth2
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"encoding/json"
-	. "github.com/onsi/gomega"
-	"testing"
-	"time"
+    "encoding/json"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    . "github.com/onsi/gomega"
+    "testing"
+    "time"
 )
 
 const ExtraKey = "additional"

@@ -17,12 +17,12 @@
 package schematotext
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/go"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai/lanaiutil"
-	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"path"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/go"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai/lanaiutil"
+    "github.com/getkin/kin-openapi/openapi3"
+    "path"
+    "strings"
 )
 
 type objectType struct {

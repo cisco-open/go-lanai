@@ -17,14 +17,14 @@
 package auth
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/matcher"
-	"fmt"
-	"github.com/bmatcuk/doublestar/v4"
-	"net/url"
-	"regexp"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/bmatcuk/doublestar/v4"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
+    "net/url"
+    "regexp"
+    "strings"
 )
 
 const (

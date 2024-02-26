@@ -17,10 +17,10 @@
 package service
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/passwdidp"
-	"fmt"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
+    "github.com/cisco-open/go-lanai/pkg/security/idp/passwdidp"
 )
 
 var (

@@ -17,10 +17,10 @@
 package tx
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data"
-	"database/sql"
-	"go.uber.org/fx"
+    "context"
+    "database/sql"
+    "github.com/cisco-open/go-lanai/pkg/data"
+    "go.uber.org/fx"
 )
 
 var txManager TxManager

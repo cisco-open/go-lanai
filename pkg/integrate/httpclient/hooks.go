@@ -17,14 +17,14 @@
 package httpclient
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2"
-	"fmt"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"net/http"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+    httptransport "github.com/go-kit/kit/transport/http"
+    "net/http"
+    "time"
 )
 
 const (

@@ -18,9 +18,9 @@ package instrument
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/integrate/httpclient"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/tracing"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
 	kitopentracing "github.com/go-kit/kit/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"

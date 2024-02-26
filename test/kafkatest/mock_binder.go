@@ -17,8 +17,8 @@
 package kafkatest
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/kafka"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/kafka"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"go.uber.org/fx"
 	"sync"
 )

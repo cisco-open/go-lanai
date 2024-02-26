@@ -11,7 +11,7 @@
 
 ## Variables from make command-line
 # PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules
-# 				e.g. PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v0.1.0,cto-github.cisco.com/NFV-BU/swagger-go@0.2.1
+# 				e.g. PRIVATE_MODS=github.com/<org>/<my-private-dependency>@v0.1.0,github.my-domain.com/<org>/<repo>@0.2.1
 PRIVATE_MODS ?= {{.CliModPath}}@develop
 # VERSION:	application version to be distributed/build (without leading "v").
 # 			e.g. VERSION=4.0.0-50
@@ -45,7 +45,7 @@ report: test
 # 	Required Vars:
 #		- PRIVATE_MODS
 #	Example:
-# 		make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+# 		make verify PRIVATE_MODS=github.com/<org>/<my-private-dependency>@develop
 verify: SAVEPOINT_MARK = tmp/pre-verify
 verify: pre-verify clean test lint build report post-verify
 
@@ -60,7 +60,7 @@ verify: pre-verify clean test lint build report post-verify
 #		- SRC_BRANCH source branch this distribution originated from.
 # 		  If set, post-dist would behave differently
 #	Example:
-# 		make dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop VERSION=4.0.0-20 SRC_BRANCH=develop
+# 		make dist PRIVATE_MODS=github.com/<org>/<my-private-dependency>@develop VERSION=4.0.0-20 SRC_BRANCH=develop
 dist: UPDATE_DEPS_MARK = tmp/$(VERSION)/update-deps
 dist: DROP_REPLACE_MARK = tmp/$(VERSION)/drop-replace
 dist: SAVEPOINT_MARK = tmp/pre-dist
@@ -71,7 +71,7 @@ dist: pre-dist clean test pre-build-docker build-docker post-dist
 # 	Required Vars:
 # 		- VERSION
 #	Example:
-#		(after make dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop VERSION=4.0.0-20 SRC_BRANCH=develop)
+#		(after make dist PRIVATE_MODS=github.com/<org>/<my-private-dependency>@develop VERSION=4.0.0-20 SRC_BRANCH=develop)
 # 		make publish VERSION=4.0.0-20
 publish: push-docker git-push-tag
 
@@ -108,7 +108,7 @@ pre-build-docker:
 # build-docker:
 # 	Build docker image. Typically run on CI/CD worker machine
 #       Required Vars: for non-buildkit build
-#               - GITKEY ssh key for cto-github.cisco.com
+#               - GITKEY ssh key for any private git repositories
 # 	Optional Vars:
 #		- PRIVATE_MODS used for populating build info
 #		- VERSION application version also used as Docker's image tag. Default to "latest" if not specified
@@ -177,7 +177,7 @@ post-verify: post
 #	 3. update go.mod to drop "replace" directives for modules listed in PRIVATE_MODS, and create a local git commit to record the result.
 # 		the commit is tagged as $(DROP_REPLACE_MARK), and can be used for make release git tag
 # 	Required Vars:
-#		- PRIVATE_MODS e.g. make pre-dist PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+#		- PRIVATE_MODS e.g. make pre-dist PRIVATE_MODS=github.com/<org>/<my-private-dependency>@develop
 #		- VERSION
 pre-dist: UPDATE_DEPS_MARK ?= tmp/$(VERSION)/update-deps
 pre-dist: DROP_REPLACE_MARK ?= tmp/$(VERSION)/drop-replace
@@ -206,7 +206,7 @@ post-dist: post git-tag-version git-merge-back
 #		- UPDATE_DEPS_MARK: when set, the target will create a git commit for result go.mod/go.sum file and tag it as UPDATE_DEPS_MARK
 # 		  Note: the create commit is not tracked by current branch HEAD
 #	Example:
-# 		make update-dependency PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+# 		make update-dependency PRIVATE_MODS=github.com/<org>/<my-private-dependency>@develop
 update-dependency:
 	$(CLI) deps update --modules=$(PRIVATE_MODS) --mark=$(UPDATE_DEPS_MARK)
 
@@ -220,7 +220,7 @@ update-dependency:
 #		- DROP_REPLACE_MARK: when set, the target will create a git commit for result go.mod/go.sum file and tag it as UPDATE_DEPS_MARK
 # 		  Note: the create commit is not tracked by current branch HEAD
 #	Example:
-# 		make drop-replace PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop
+# 		make drop-replace PRIVATE_MODS=github.com/<org>/<my-private-dependency>@develop
 drop-replace:
 	$(CLI) deps drop-replace --modules=$(PRIVATE_MODS) --mark=$(DROP_REPLACE_MARK)
 

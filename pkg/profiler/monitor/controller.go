@@ -17,17 +17,17 @@
 package monitor
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/profiler"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/assets"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"net/http"
-	"time"
+    "context"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/profiler"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "github.com/cisco-open/go-lanai/pkg/web/assets"
+    "github.com/gin-gonic/gin"
+    "github.com/gorilla/websocket"
+    "net/http"
+    "time"
 )
 
 const (

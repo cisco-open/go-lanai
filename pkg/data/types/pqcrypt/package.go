@@ -17,12 +17,12 @@
 package pqcrypt
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
-	"embed"
-	"fmt"
-	"go.uber.org/fx"
+    "embed"
+    "fmt"
+    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/vault"
+    "go.uber.org/fx"
 )
 
 //var logger = log.New("Data.Enc")

@@ -17,14 +17,14 @@
 package log
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log/internal"
-	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"os"
-	"strings"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log/internal"
+    "go.uber.org/zap"
+    "go.uber.org/zap/zapcore"
+    "os"
+    "strings"
+    "time"
 )
 
 var zapEncoderConfig = zapcore.EncoderConfig{

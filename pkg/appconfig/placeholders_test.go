@@ -17,15 +17,15 @@
 package appconfig
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/parser"
-	"fmt"
-	. "github.com/onsi/gomega"
-	"io"
-	"os"
-	"reflect"
-	"testing"
-	"time"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/parser"
+    . "github.com/onsi/gomega"
+    "io"
+    "os"
+    "reflect"
+    "testing"
+    "time"
 )
 
 func TestResolvePlaceHolders(t *testing.T) {

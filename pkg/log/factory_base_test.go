@@ -17,18 +17,18 @@
 package log
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"cto-github.cisco.com/NFV-BU/go-lanai/test"
-	"errors"
-	"fmt"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
-	"os"
-	"regexp"
-	"sync"
-	"testing"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/onsi/gomega"
+    . "github.com/onsi/gomega"
+    "os"
+    "regexp"
+    "sync"
+    "testing"
+    "time"
 )
 
 /*

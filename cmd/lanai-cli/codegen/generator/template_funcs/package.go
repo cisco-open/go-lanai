@@ -17,12 +17,12 @@
 package template_funcs
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/go"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/openapi"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
-	"github.com/Masterminds/sprig/v3"
-	"text/template"
+    "github.com/Masterminds/sprig/v3"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/go"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/lanai"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/openapi"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
+    "text/template"
 )
 
 var (

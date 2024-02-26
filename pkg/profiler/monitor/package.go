@@ -17,13 +17,13 @@
 package monitor
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"embed"
-	"go.uber.org/fx"
+    "context"
+    "embed"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/redis"
+    "github.com/cisco-open/go-lanai/pkg/web"
+    "go.uber.org/fx"
 )
 
 var logger = log.New("PProf.Charts")

@@ -17,7 +17,7 @@
 package authserver
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/oauth2/auth"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
 	"go.uber.org/fx"
 )
 

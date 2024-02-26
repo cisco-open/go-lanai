@@ -9,8 +9,8 @@ package {{ $version }}
 
 {{ $imports := NewImports }}
 {{ $imports = $imports.Add "context" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web" }}
-{{ $imports = $imports.Add "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/web" }}
+{{ $imports = $imports.Add "github.com/cisco-open/go-lanai/pkg/web/rest" }}
 {{- template "controllerImports" args $rootData $imports -}}
 {{ $imports = $imports.Add "go.uber.org/fx" }}
 {{ template "imports" $imports }}

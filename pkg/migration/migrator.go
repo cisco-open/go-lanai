@@ -17,12 +17,12 @@
 package migration
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils"
-	"errors"
-	"fmt"
-	"sort"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/utils"
+    "sort"
+    "time"
 )
 
 func Migrate(ctx context.Context, r *Registrar, v Versioner) error {

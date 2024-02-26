@@ -17,17 +17,17 @@
 package certsource
 
 import (
-	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/certs"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/loop"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"dario.cat/mergo"
-	"time"
+    "context"
+    "crypto/tls"
+    "crypto/x509"
+    "dario.cat/mergo"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/certs"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/cisco-open/go-lanai/pkg/utils/loop"
+    "time"
 )
 
 var tlsVersions = map[string]uint16{

@@ -17,10 +17,10 @@
 package vaultprovider
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"fmt"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/log"
 )
 
 var logger = log.New("Config.Vault")

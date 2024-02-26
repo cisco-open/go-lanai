@@ -17,10 +17,10 @@
 package dsync
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"fmt"
-	"sync"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "sync"
 )
 
 const (

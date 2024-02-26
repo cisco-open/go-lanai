@@ -17,8 +17,8 @@
 package tokenauth
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"fmt"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
 )
 
 //goland:noinspection GoNameStartsWithPackageName

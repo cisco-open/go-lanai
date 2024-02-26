@@ -17,13 +17,13 @@
 package generator
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/cmdutils"
-	"fmt"
-	"io/fs"
-	"os"
-	"regexp"
-	"strings"
+    "context"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+    "io/fs"
+    "os"
+    "regexp"
+    "strings"
 )
 
 // CleanupGenerator will read delete.*.tmpl files, and delete any generated

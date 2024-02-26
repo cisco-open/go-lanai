@@ -17,12 +17,12 @@
 package appconfig
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/vaultprovider"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault"
-	"fmt"
-	"go.uber.org/fx"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/vaultprovider"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/vault"
+    "go.uber.org/fx"
 )
 
 type vaultDi struct {

@@ -17,17 +17,17 @@
 package fileprovider
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/parser"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"embed"
-	"fmt"
-	"io"
-	"os"
-	"path"
-	"strings"
+    "context"
+    "embed"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/appconfig"
+    "github.com/cisco-open/go-lanai/pkg/appconfig/parser"
+    "github.com/cisco-open/go-lanai/pkg/bootstrap"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "io"
+    "os"
+    "path"
+    "strings"
 )
 
 var logger = log.New("Config.File")

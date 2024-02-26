@@ -17,12 +17,12 @@
 package opa
 
 import (
-	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"errors"
-	"fmt"
-	"github.com/open-policy-agent/opa/sdk"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/log"
+    "github.com/open-policy-agent/opa/sdk"
+    "time"
 )
 
 type ContextAwarePartialQueryMapper interface {

@@ -2,8 +2,8 @@ package passwd_test
 
 import (
     "context"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/passwd"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test"
+    "github.com/cisco-open/go-lanai/pkg/security/passwd"
+    "github.com/cisco-open/go-lanai/test"
     "github.com/onsi/gomega"
     . "github.com/onsi/gomega"
     "testing"

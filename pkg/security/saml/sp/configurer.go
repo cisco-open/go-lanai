@@ -17,19 +17,19 @@
 package sp
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	samlctx "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/utils/cryptoutils"
-	"fmt"
-	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/samlsp"
-	"github.com/golang-jwt/jwt/v4"
-	dsig "github.com/russellhaering/goxmldsig"
-	"net/http"
-	"net/url"
+    "crypto/rsa"
+    "crypto/x509"
+    "fmt"
+    "github.com/cisco-open/go-lanai/pkg/security"
+    "github.com/cisco-open/go-lanai/pkg/security/idp"
+    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+    "github.com/crewjam/saml"
+    "github.com/crewjam/saml/samlsp"
+    "github.com/golang-jwt/jwt/v4"
+    dsig "github.com/russellhaering/goxmldsig"
+    "net/http"
+    "net/url"
 )
 
 type spOptionsHashable struct {

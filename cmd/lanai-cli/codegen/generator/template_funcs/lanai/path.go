@@ -17,12 +17,12 @@
 package lanai
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
-	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"regexp"
-	"sort"
-	"strings"
+    "fmt"
+    "github.com/cisco-open/go-lanai/cmd/lanai-cli/codegen/generator/template_funcs/util"
+    "github.com/getkin/kin-openapi/openapi3"
+    "regexp"
+    "sort"
+    "strings"
 )
 
 const (
