@@ -248,7 +248,7 @@ Do:
 
 <br>
 
-# Appendix: Original Design Notes (Please Ignore)
+# Appendix: Original Design Notes
 
 When Service is being distributed/built, the general CICD process is below:
 

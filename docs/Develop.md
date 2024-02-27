@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- GO 1.16+
+- GO 1.21+
 - Git 2.23.0+
 - GNU Make 3.81+
 - Docker 20.10.5+
@@ -61,7 +61,7 @@ To help with access to any private module, the `Makefile` from previous section 
 up the development environment. If the local environment is already setup, this step can be skipped:
 
 ```shell
-make init-once
+make init-once PRIVATE_MODS="<module path>[@<branch/tag/version>][,... more modules]"
 ```
 
 > Note 1: The target configure the GO CLI Tool to use `SSH` instead of `https` to get modules in `PRIVATE_MODS`.
@@ -85,6 +85,8 @@ make init CLI_TAG=main
 ```
 
 The value `CLI_TAG` is usually `main` which point to the latest snapshot version or any stable/released version Git Tag.
+Note that if `go-lanai` is checked out side-by-side and a `replace` directive is used to point to it, this command will
+ignore `CLI_TAG` and use the checked out copy. If `CLI_TAG` is not provided, the last released version will be used.
 
 The target will:
 
