@@ -12,7 +12,7 @@
 ## Variables from make command-line
 # PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules
 # 				e.g. PRIVATE_MODS=github.com/<org>/<my-private-dependency>@v0.1.0,github.my-domain.com/<org>/<repo>@0.2.1
-PRIVATE_MODS ?= {{.CliModPath}}@develop
+PRIVATE_MODS ?=
 # VERSION:	application version to be distributed/build (without leading "v").
 # 			e.g. VERSION=4.0.0-50
 VERSION ?= 0.0.0-SNAPSHOT
@@ -131,7 +131,7 @@ build-docker: init-docker
 #		- DOCKER_TAG: default to $(VERSION)
 #		- DOCKER_REPO: Docker repository path/url without tailing "/"
 push-docker: DOCKER_TAG ?= $(VERSION)
-push-docker: DOCKER_REPO ?= dockerhub.cisco.com/vms-platform-dev-docker
+push-docker: DOCKER_REPO ?= registry-1.docker.io
 push-docker:
 	$(DOCKER) tag {{.Name}}:$(DOCKER_TAG) $(DOCKER_REPO)/{{.Name}}:$(DOCKER_TAG)
 	$(DOCKER) push $(DOCKER_REPO)/{{.Name}}:$(DOCKER_TAG)
