@@ -5,7 +5,7 @@ go 1.21.4
 replace github.com/cisco-open/go-lanai => ./../../../go-lanai
 
 require (
-	github.com/cisco-open/go-lanai v0.12.0
+	github.com/cisco-open/go-lanai v0.12.1-0.20240226213016-e059ad9dadea
 	github.com/pkg/errors v0.9.1
 	go.uber.org/fx v1.20.1
 )

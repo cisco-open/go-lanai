@@ -24,6 +24,7 @@ CLI_TAG ?=
 FORCE ?=
 UPGRADE ?=
 DEV ?=
+PRIVATE_MODS ?=
 
 ## Required Variables by Local Targets
 GO ?= go
@@ -38,19 +39,18 @@ CLI_MOD_PATH ?= $(shell realpath `$(GO) list -f='{{or .Replace ""}}' -m $(CLI_MO
 
 # init-once:
 #	Used to setup local dev environment, and should be used only once per environment.
-# 	This target assumes local environment has proper access to $PRIVATE_REPOS
+# 	This target assumes local environment has proper SSH access to $PRIVATE_MODS
 #	Required Vars:
-#		- PRIVATE_REPOS space delimited private git servers. e.g. PRIVATE_REPOS="private-github.my-domain.org"
-ifneq ($(strip $(value PRIVATE_REPOS)),)
+#		- PRIVATE_MODS space delimited private golang modules.
+# 		  e.g. PRIVATE_REPOS="github.com/<org>/<private-repo>"
+#			   PRIVATE_REPOS="private-github.my-domain.org/path/to/module/repo"
+init-once: PRIVATE_REPOS := $(foreach mod,$(subst $(comma),$(space),$(PRIVATE_MODS)),$(firstword $(subst @, ,$(mod))))
+init-once: GOPRIVATE := $(sort $(PRIVATE_REPOS) $(subst $(comma),$(space),$(shell $(GO) env GOPRIVATE)))
 init-once:
-	$(GO) env -w GOPRIVATE="$(subst $(space),$(comma),$(strip $(value PRIVATE_REPOS)))"
 	$(foreach repo,$(PRIVATE_REPOS),\
-		$(GIT) config --global url."ssh://git@$(repo)/".insteadOf "https://$(repo)/";\
+		$(GIT) config --global url."ssh://git@$(repo)".insteadOf "https://$(repo)"; \
 	)
-else
-init-once:
-	@echo "Nothing to be done. Did you forget to set PRIVATE_REPOS?"
-endif
+	$(GO) env -w GOPRIVATE="$(subst $(space),$(comma),$(strip $(GOPRIVATE)))"
 
 # init-ws:
 # 	create tmp folders

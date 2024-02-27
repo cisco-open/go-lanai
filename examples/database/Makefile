@@ -38,19 +38,17 @@ CLI_MOD_PATH ?= $(shell realpath `$(GO) list -f='{{or .Replace ""}}' -m $(CLI_MO
 
 # init-once:
 #	Used to setup local dev environment, and should be used only once per environment.
-# 	This target assumes local environment has proper access to $PRIVATE_REPOS
-#	Required Vars:
-#		- PRIVATE_REPOS space delimited private git servers. e.g. PRIVATE_REPOS="private-github.my-domain.org"
-ifneq ($(strip $(value PRIVATE_REPOS)),)
+# 	This target assumes local environment has proper SSH access to $PRIVATE_MODS
+#	Optional Vars:
+#		- PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules.
+# 		  e.g. PRIVATE_MODS="github.com/<org>/<my-private-dependency>@v0.1.0,github.my-domain.com/<org>/<repo>@0.2.1"
+init-once: PRIVATE_REPOS := $(foreach mod,$(subst $(comma),$(space),$(PRIVATE_MODS)),$(firstword $(subst @, ,$(mod))))
+init-once: GOPRIVATE := $(sort $(PRIVATE_REPOS) $(subst $(comma),$(space),$(shell $(GO) env GOPRIVATE)))
 init-once:
-	$(GO) env -w GOPRIVATE="$(subst $(space),$(comma),$(strip $(value PRIVATE_REPOS)))"
 	$(foreach repo,$(PRIVATE_REPOS),\
-		$(GIT) config --global url."ssh://git@$(repo)/".insteadOf "https://$(repo)/";\
+		$(GIT) config --global url."ssh://git@$(repo)".insteadOf "https://$(repo)"; \
 	)
-else
-init-once:
-	@echo "Nothing to be done. Did you forget to set PRIVATE_REPOS?"
-endif
+	$(GO) env -w GOPRIVATE="$(subst $(space),$(comma),$(strip $(GOPRIVATE)))"
 
 # init-ws:
 # 	create tmp folders
@@ -66,11 +64,11 @@ init-ws:
 #		- CLI_MOD_PATH the path of the go-lanai module on local file system. If provided, it would override CLI_TAG
 #		  e.g. CLI_MOD_PATH=./../go-lanai
 #		- CLI_TAG branch/tag to use to install "lanai-cli", typically same branch/tag of github.com/cisco-open/go-lanai
-#		  e.g. CLI_TAG=develop
+#		  e.g. CLI_TAG=main
 ifneq ("$(wildcard $(CLI_MOD_PATH)/go.mod)","")
 # For Contributors or Service Dev who have go-lanai checked out (either by-side or as parent) and have proper "replace" directive in go.mod
 init-cli: CLI_PKG = cmd/lanai-cli
-init-cli: CLI_PKG_PATH = $(CLI_MOD_PATH)/cmd/lanai-cli
+init-cli: CLI_PKG_PATH = $(CLI_MOD_PATH)/$(CLI_PKG)
 init-cli: CLI_VERSION = 0.0.0-$(shell cd $(CLI_MOD_PATH); date +"%Y%m%d%H%M%S")-$(shell $(GIT) rev-parse --short=12 HEAD || echo "SNAPSHOT")
 init-cli: print
 	@echo Installing $(CLI_MOD_PATH)/$(CLI_PKG)@$(CLI_VERSION) ...
