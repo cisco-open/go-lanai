@@ -16,16 +16,16 @@
 The `go.mod` should have at least following content:
 
 ```
-module cto-github.cisco.com/orgnization/europa
+module github.com/my_organization/my_module
 
 go 1.16
 
 require (
-	cto-github.cisco.com/NFV-BU/go-lanai develop
+	github.com/cisco-open/go-lanai v0.12.0
 )
 ```
 
-It's optional, but recommended for platform developers, to clone `cto-github.cisco.com/NFV-BU/go-lanai` 
+It's optional, but recommended for platform developers, to clone `github.com/cisco-open/go-lanai` 
 alongside service projects, and add `replace` using relative path in `go.mod`. 
 
 See `go.mod` [Example](res/Example-Go-Mod.mod)
@@ -57,17 +57,15 @@ See `.gitignore` [Example](res/Example-gitignore)
 
 ### Private GO Repository
 
-Access to `cto-github.cisco.com` is required for getting GO Lanai libraries and CLI tools. If the local environment
-is already setup, this step can be skipped
-
-The `Makefile` from previous section provides with an automated target to setup the development environment:
+To help with access to any private module, the `Makefile` from previous section provides with an automated target to set
+up the development environment. If the local environment is already setup, this step can be skipped:
 
 ```shell
 make init-once
 ```
 
-> Note 1: The target configure the GO CLI Tool to use `SSH` instead of `https` to get modules from `cto-github.cisco.com`.
-> So the local environment need to be properly configured to access `git@cto-github.cisco.com:NFV-BU/go-lanai.git` 
+> Note 1: The target configure the GO CLI Tool to use `SSH` instead of `https` to get modules in `PRIVATE_MODS`.
+> So the local environment need to be properly configured to access the modules in `PRIVATE_MODS` 
 
 > Note 2: This is only required to run once per machine
 
@@ -75,18 +73,18 @@ make init-once
 
 ## Tooling
 
-`cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli` is a command line tool to help with common build/code generation/git tasks. 
-It is required to properly setup the project and perform common development tasks.
+`github.com/cisco-open/go-lanai/cmd/lanai-cli` is a command line tool to help with common build/code generation/git tasks. 
+It is required to properly set up the project and perform common development tasks.
 
 ### Install using GNU Make
 
 Assuming `Makefile` exists (copied from this document):
 
 ```
-make init CLI_TAG=develop
+make init CLI_TAG=main
 ```
 
-The value `CLI_TAG` is usually `develop` which point to the latest snapshot version or any stable/released version Git Tag.
+The value `CLI_TAG` is usually `main` which point to the latest snapshot version or any stable/released version Git Tag.
 
 The target will:
 
@@ -105,10 +103,10 @@ The target will:
 This operation is only required when bootstrapping a new Service at the first time without `Makefile`.
 
 ```
-go install cto-github.cisco.com/NFV-BU/go-lanai/cmd/lanai-cli@develop
+go install github.com/cisco-open/go-lanai/cmd/lanai-cli@main
 ```
 
-> Note: `@develop` can be changed to the latest stable version
+> Note: `@main` can be changed to the latest stable version
 
 After successfully install the CLI, it can be used to generate bootstrapping Makefiles to the current directory:
 
@@ -171,7 +169,7 @@ This can be easily done by following step
 
   ```
   require (
-      cto-github.cisco.com/NFV-BU/go-lanai develop
+      github.com/cisco-open/go-lanai main
   )
   ```
 

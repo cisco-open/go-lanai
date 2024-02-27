@@ -57,13 +57,13 @@ in those examples. See `configs/application.yml`'s ```security.in-memory.account
 Generate the private key:
 
 ```shell
-openssl genrsa -out jwtkeys.pem -aes256 1024
+openssl genrsa -out jwtkeys_example.pem -aes256 1024
 ```
 
 Extract the public key:
 
 ```shell
-+openssl rsa -in jwtkeys.pem -pubout > jwtpubkey.pem
++openssl rsa -in jwtkeys_example.pem -pubout > jwtpubkey_example.pem
 ```
 
 ### Example Commands to Generate the SAML Key and Certificate
@@ -71,11 +71,11 @@ Extract the public key:
 Generate the private key:
 
 ```shell
-openssl genrsa -out saml.key -aes256 1024
+openssl genrsa -out saml_example.key -aes256 1024
 ```
 
 Generate the certificate:
 
 ```shell
-openssl req -key saml.key -new -x509 -days 36500 -out saml.cert
+openssl req -key saml_example.key -new -x509 -days 365 -out saml_example.cert
 ```

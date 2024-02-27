@@ -22,7 +22,7 @@ make init-cli [CLI_TAG=git_brand_or_tag]
 ```
 
 Where the `CLI_TAG` is supported and optional for Services. 
-It typically should match the branch/version of `cto-github.cisco.com/NFV-BU/go-lanai`
+It typically should match the branch/version of `github.com/cisco-open/go-lanai`
 
 <br>
 
@@ -49,13 +49,13 @@ Default Value: `0.0.0-SNAPSHOT`
 Private Modules' path and branch/version which the current project depends on, in format of `private.url/path/to/module@branch_or_tag`.
 Multiple modules are separated by ","
 
-> "Private Module" means extra modules that are developed/released by same team and are under rapid development.
+> "Private Module" means extra modules that are not public and is developed/released by same team and are under rapid development.
 
-Example: `PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@develop` or `PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v4.0.0-50`
+Example: `PRIVATE_MODS=private.url/path/to/module@my_feature_branch` or `PRIVATE_MODS=private.url/path/to/module@@v4.0.0-50`
 
-Default Value: `cto-github.cisco.com/NFV-BU/go-lanai@develop` for Services, empty string for go-lanai libraries
+Default Value: empty string.
 
-> This variable is REQUIRED in many CI/CD targets unless specified explicitly
+> This variable is required in many CI/CD targets if your project has such dependencies
 
 ### `SRC_BRANCH`
 
@@ -84,7 +84,7 @@ During the process, all `make` targets guarantee following behaviors:
    
 If the process is successful, all `make` targets also guarantee following:
 
-1. All changes during the process are unstaged 
+1. All changes during the process are un-staged 
 
 > **Note**: the Git local Worktree should be discarded after use. 
 
@@ -92,7 +92,7 @@ If the process is successful, all `make` targets also guarantee following:
 
 # CI/CD Scenarios for go-lanai Libraries
 
-Applicable to `cto-github.cisco.com/NFV-BU/go-lanai`
+Applicable to `github.com/cisco-open/go-lanai`
 
 ## PR Verify
 
@@ -159,9 +159,10 @@ Do:
 
 # CI/CD Scenarios for go-lanai Services
 
-During development cycle, service depends on go-lanai project using branch name.
-For example, service is being developed in develop (or feature) branch, and go-lanai is being developed in develop (or feature) branch as well.
-Service may have a "replace" directive that points to a local checked out version of go-lanai to help facilitate develop.
+During development cycle, if service depends on any other module that's being developed in parallel, ```PRIVATE_MODS```
+can be used to support it.
+For example, service is being developed in develop (or feature) branch, the dependent module is being developed in develop (or feature) branch as well.
+Service may have a "replace" directive that points to a local checked out version of the dependent module to help facilitate develop.
 
 During most CI/CD scenarios, the `make` target would attempt to "fix" `go.mod` and `go.sum` by dropping `replace` directive
 and update corresponding dependency versions. 
@@ -172,7 +173,7 @@ Command:
 
 ```shell
 make init CLI_TAG=feature/branch
-make verify PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@feature/branch
+make verify PRIVATE_MODS=private.url/path/to/module@my_feature_branch
 ```
 
 Variables: 
@@ -196,8 +197,8 @@ Command:
 
 ```shell
 make init CLI_TAG=4.0.0-90
-make dist VERSION=4.0.0-20 PRIVATE_MODS=cto-github.cisco.com/NFV-BU/go-lanai@v4.0.0-90 #SRC_BRANCH=any_branch
-make publish VERSION=4.0.0-20 DOCKER_REPO=dockerhub.cisco.com/vms-platform-dev-docker
+make dist VERSION=4.0.0-20 PRIVATE_MODS=private.url/path/to/module@my_feature_branch@v4.0.0-90 #SRC_BRANCH=any_branch
+make publish VERSION=4.0.0-20 DOCKER_REPO=dockerhub.url/my_docker_repository
 ```
 
 Variables:
@@ -229,7 +230,7 @@ Command:
 ```shell
 make init
 make redist VERSION=4.0.0
-make publish VERSION=4.0.0 DOCKER_REPO=dockerhub.cisco.com/vms-platform-dev-docker
+make publish VERSION=4.0.0 DOCKER_REPO=dockerhub.url/my_docker_repository
 ```
 
 Variables: 

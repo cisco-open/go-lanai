@@ -51,14 +51,14 @@ package main
 
 import (
     "testing"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test/dbtest"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test/suitetest"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test"
-    "cto-github.cisco.com/NFV-BU/go-lanai/test/apptest"
+    "github.com/cisco-open/go-lanai/test/dbtest"
+    "github.com/cisco-open/go-lanai/test/suitetest"
+    "github.com/cisco-open/go-lanai/test"
+    "github.com/cisco-open/go-lanai/test/apptest"
     "go.uber.org/fx"
     "github.com/onsi/gomega"
     "github.com/opensearch-project/opensearch-go/opensearchapi"
-    "cto-github.cisco.com/NFV-BU/go-lanai/pkg/opensearch"
+    "github.com/cisco-open/go-lanai/pkg/opensearch"
     "context"
 )
 
