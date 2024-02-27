@@ -1,6 +1,6 @@
-#Data Migration
+# Data Migration
 
-##Setup Migration App
+## Setup Migration App
 To use data migration, first create a main method in your project.
 
 For example
@@ -9,15 +9,15 @@ For example
 package main
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	consul "cto-github.cisco.com/NFV-BU/go-lanai/pkg/consul/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/cassandra"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/cockroach"
-	data "cto-github.cisco.com/NFV-BU/go-lanai/pkg/data/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/migration"
-	vault "cto-github.cisco.com/NFV-BU/go-lanai/pkg/vault/init"
-	"cto-github.cisco.com/livdu/europa/internal/migrations/v4_0"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	consul "github.com/cisco-open/go-lanai/pkg/consul/init"
+	"github.com/cisco-open/go-lanai/pkg/data/cassandra"
+	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
+	data "github.com/cisco-open/go-lanai/pkg/data/init"
+	"github.com/cisco-open/go-lanai/pkg/migration"
+	vault "github.com/cisco-open/go-lanai/pkg/vault/init"
+	"github.com/cisco-open/example/internal/migrations/v4_0"
 	"go.uber.org/fx"
 	"time"
 )
@@ -51,7 +51,7 @@ steps are defined. In this case, this is v4_0.Use()
    
 2. In the main() method, bootstrap the migration application.
 
-##Add Migration Step
+## Add Migration Step
 
 Create a package and add the migration steps
 
@@ -61,9 +61,9 @@ For example
 package v4_0
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/log"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/migration"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/migration"
 	"github.com/gocql/gocql"
 	"go.uber.org/fx"
 	"gorm.io/gorm"

@@ -21,7 +21,7 @@ To enable `pprof` over HTTP, add following code before application start, usuall
 
 ```go
 package main
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/profiler"
+import "github.com/cisco-open/go-lanai/pkg/profiler"
 func init() {
 	profiler.Use()
 }
@@ -85,7 +85,7 @@ To enable it:
 
 ```go
 package main
-import "cto-github.cisco.com/NFV-BU/go-lanai/pkg/profiler/monitor"
+import "github.com/cisco-open/go-lanai/pkg/profiler/monitor"
 func init() {
 	monitor.Use()
 }

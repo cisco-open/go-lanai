@@ -2,8 +2,8 @@ module github.com/orgnization/europa
 
 go 1.16
 
-replace cto-github.cisco.com/NFV-BU/go-lanai => ./../go-lanai
+replace github.com/cisco-open/go-lanai => ./../go-lanai
 
 require (
-	cto-github.cisco.com/NFV-BU/go-lanai main
+	github.com/cisco-open/go-lanai main
 )

@@ -79,8 +79,8 @@ configuration values from various sources (yaml files, consul, vault, etc) into 
 package main
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"go.uber.org/fx"
 	"time"
 )
@@ -191,8 +191,8 @@ package controller
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/rest"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/rest"
 )
 
 type helloController struct{}
@@ -222,8 +222,8 @@ is a ```fx.Option``` that injects the controllers to the web module's registrar.
 package controller
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/web"
 )
 
 func Use() {
@@ -241,10 +241,10 @@ In the main file, we call ```web.Use()``` and ```controller.Use``` to activate t
 package main
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	web "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
-	"cto-github.cisco.com/tishi/example/pkg/controller"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	web "github.com/cisco-open/go-lanai/pkg/web/init"
+	"github.com/cisco-open/example/pkg/controller"
 	"go.uber.org/fx"
 	"time"
 )
@@ -311,11 +311,11 @@ our WebSecurity configurer.
 package serviceinit
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	web "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
-	"cto-github.cisco.com/tishi/example/pkg/controller"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	web "github.com/cisco-open/go-lanai/pkg/web/init"
+	"github.com/cisco-open/example/pkg/controller"
 	"go.uber.org/fx"
 )
 
@@ -350,9 +350,9 @@ should be authenticated.
 package serviceinit
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/access"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
 )
 
 type securityConfigurer struct{}
@@ -375,8 +375,8 @@ We update our main file with ```serviceinit.Use()``` to make our security config
 package main
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	serviceinit "cto-github.cisco.com/tishi/example/pkg/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	serviceinit "github.com/cisco-open/example/pkg/init"
 	"go.uber.org/fx"
 	"time"
 )
@@ -482,15 +482,15 @@ We update the ```configureSecurity``` method to take these property structs as d
 package serviceinit
 
 import (
-	appconfig "cto-github.cisco.com/NFV-BU/go-lanai/pkg/appconfig/init"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/redis"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	webinit "cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/init"
-	"cto-github.cisco.com/tishi/example/pkg/controller"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/redis"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/config/authserver"
+	samlsp "github.com/cisco-open/go-lanai/pkg/security/saml/sp"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	webinit "github.com/cisco-open/go-lanai/pkg/web/init"
+	"github.cisco.com/cisco-open/example/pkg/controller"
 	"go.uber.org/fx"
 )
 
@@ -533,13 +533,13 @@ we want to use SAML login.
 package serviceinit
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/access"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/config/authserver"
-	samlsp "cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/saml/sp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/session"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/access"
+	"github.com/cisco-open/go-lanai/pkg/security/config/authserver"
+	samlsp "github.com/cisco-open/go-lanai/pkg/security/saml/sp"
+	"github.com/cisco-open/go-lanai/pkg/security/session"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
 )
 
 type securityConfigurer struct {
@@ -601,7 +601,7 @@ openssl genrsa -out saml.key -aes256 1024
 Generating saml.cert from the key
 
 ```shell
-openssl req -key saml.key -new -x509 -days 36500 -out saml.cert
+openssl req -key saml.key -new -x509 -days 365 -out saml.cert
 ```
 
 At this point, if you run the service you will get errors complaining about missing dependencies. This is because the SAML features
@@ -646,7 +646,7 @@ package service
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security"
 	"fmt"
 )
 
@@ -677,8 +677,8 @@ package service
 
 import (
 	"context"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp"
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/security/idp/extsamlidp"
+	"github.com/cisco-open/go-lanai/pkg/security/idp"
+	"github.com/cisco-open/go-lanai/pkg/security/idp/extsamlidp"
 )
 
 var targetIdp = extsamlidp.SamlIdentityProvider{
@@ -721,7 +721,7 @@ Provide our implementations in a ```Use()``` function.
 package service
 
 import (
-	"cto-github.cisco.com/NFV-BU/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"go.uber.org/fx"
 )
 
