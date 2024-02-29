@@ -14,38 +14,40 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package consulappconfig
+package vaultappconfig
 
 import (
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/appconfig"
 	appconfiginit "github.com/cisco-open/go-lanai/pkg/appconfig/init"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
-	"github.com/cisco-open/go-lanai/pkg/consul"
+	"github.com/cisco-open/go-lanai/pkg/vault"
 )
 
 type ProviderGroupOptions func(opt *ProviderGroupOption)
 
 type ProviderGroupOption struct {
 	Precedence       int
-	Prefix           string
+	Backend          string
+	BackendVersion   int
 	Path             string
 	ProfileSeparator string
-	Connection       *consul.Connection
+	VaultClient      *vault.Client
 }
 
-// NewProviderGroup create a Consul KV store backed appconfig.ProviderGroup.
-// The provider group is responsible to load application properties from Consul KV store at paths:
-// <ProviderGroupOption.Prefix>/<ProviderGroupOption.Path>[<ProviderGroupOption.ProfileSeparator><any active profile>]
+// NewProviderGroup create a Vault KV engine backed appconfig.ProviderGroup.
+// The provider group is responsible to load application properties from Vault KV engine at paths:
+// <ProviderGroupOption.Backend>/<ProviderGroupOption.Path>[<ProviderGroupOption.ProfileSeparator><any active profile>]
 // e.g.
-// - "userviceconfiguration/defaultapplication"
-// - "userviceconfiguration/defaultapplication,prod"
-// - "userviceconfiguration/my-service"
-// - "userviceconfiguration/my-service,staging"
-func NewProviderGroup(opts ...ProviderGroupOptions) appconfig.ProviderGroup {
+// - "secret/defaultapplication"
+// - "secret/defaultapplication/prod"
+// - "secret/my-service"
+// - "secret/my-service/staging"
+func NewProviderGroup(opts ...ProviderGroupOptions) (appconfig.ProviderGroup, error) {
 	opt := ProviderGroupOption{
 		Precedence:       appconfiginit.PrecedenceExternalDefaultContext,
-		Prefix:           DefaultConfigPathPrefix,
+		Backend:          DefaultBackend,
+		BackendVersion:   DefaultBackendVersion,
 		Path:             DefaultConfigPath,
 		ProfileSeparator: DefaultProfileSeparator,
 	}
@@ -53,20 +55,20 @@ func NewProviderGroup(opts ...ProviderGroupOptions) appconfig.ProviderGroup {
 		fn(&opt)
 	}
 
+	kvSecretEngine, e := NewKvSecretEngine(opt.BackendVersion, opt.Backend, opt.VaultClient)
+	if e != nil {
+		return nil, e
+	}
+
 	group := appconfig.NewProfileBasedProviderGroup(opt.Precedence)
 	group.KeyFunc = func(profile string) string {
 		if profile == "" {
-			return fmt.Sprintf("%s/%s", opt.Prefix, opt.Path)
+			return opt.Path
 		}
-		return fmt.Sprintf("%s/%s%s%s", opt.Prefix, opt.Path, opt.ProfileSeparator, profile)
+		return fmt.Sprintf("%s%s%s", opt.Path, opt.ProfileSeparator, profile)
 	}
 	group.CreateFunc = func(name string, order int, _ bootstrap.ApplicationConfig) appconfig.Provider {
-		ptr := NewConfigProvider(order, name, opt.Connection)
-		if ptr == nil {
-			return nil
-		}
-		return ptr
+		return NewVaultKvProvider(order, name, kvSecretEngine)
 	}
-	return group
+	return group, nil
 }
-

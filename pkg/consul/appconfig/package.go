@@ -29,7 +29,6 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.AppConfigPrecedence,
 	PriorityOptions: []fx.Option{
 		fx.Provide(
-			// Consul
 			bindConsulConfigProperties,
 			fxNewConsulDefaultContextProviderGroup,
 			fxNewConsulAppContextProviderGroup,

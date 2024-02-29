@@ -19,7 +19,6 @@ package appconfig
 import (
 	"embed"
 	"github.com/cisco-open/go-lanai/pkg/appconfig"
-	"github.com/cisco-open/go-lanai/pkg/appconfig/vaultprovider"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"go.uber.org/fx"
@@ -63,10 +62,6 @@ var Module = &bootstrap.Module{
 			// Application file & adhoc
 			newApplicationFileProviderGroup,
 			newApplicationAdHocProviderGroup,
-			// Vault
-			newVaultDefaultContextProviderGroup,
-			newVaultAppContextProviderGroup,
-			newVaultConfigProperties,
 			// App Config
 			newApplicationConfig,
 			newGlobalProperties,
@@ -143,18 +138,4 @@ func newGlobalProperties(cfg *appconfig.ApplicationConfig) bootstrap.Properties 
 		panic(e)
 	}
 	return props
-}
-
-func newVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *vaultprovider.KvConfigProperties {
-	p := &vaultprovider.KvConfigProperties{
-		Backend:          "secret",
-		DefaultContext:   "defaultapplication",
-		ProfileSeparator: "/",
-		Enabled:          true,
-		BackendVersion:   1,
-	}
-	if e := bootstrapConfig.Bind(p, vaultprovider.KvConfigPrefix); e != nil {
-		panic(e)
-	}
-	return p
 }

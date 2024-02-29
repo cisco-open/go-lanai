@@ -14,20 +14,40 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package vaultprovider
+package vaultappconfig
+
+import "github.com/cisco-open/go-lanai/pkg/appconfig"
 
 const (
-	KvConfigPrefix = "cloud.vault.kv"
+	PropertiesPrefix = "cloud.vault.kv"
+	DefaultBackend = `secret`
+	DefaultBackendVersion = 1
+	DefaultConfigPath = "defaultapplication"
+	DefaultProfileSeparator = "/"
 )
 
-// KvConfigProperties currently only supports v1 kv secret engine
+// VaultConfigProperties currently only supports v1 kv secret engine
 // TODO review property path and prefix
-type KvConfigProperties struct {
+type VaultConfigProperties struct {
 	Enabled     bool `json:"enabled"`
 	Backend          string `json:"backend"`
+	BackendVersion   int    `json:"backend-version"`
 	DefaultContext   string `json:"default-context"`
 	ProfileSeparator string `json:"profile-separator"`
-	ApplicationName  string `json:"application-name"`
-	BackendVersion   int    `json:"backend-version"`
 }
+
+func bindVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) VaultConfigProperties {
+	p := VaultConfigProperties{
+		Enabled:          true,
+		Backend:          DefaultBackend,
+		BackendVersion:   DefaultBackendVersion,
+		DefaultContext:   DefaultConfigPath,
+		ProfileSeparator: DefaultProfileSeparator,
+	}
+	if e := bootstrapConfig.Bind(&p, PropertiesPrefix); e != nil {
+		panic(e)
+	}
+	return p
+}
+
 

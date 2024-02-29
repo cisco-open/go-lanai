@@ -1,16 +1,18 @@
-package consulappconfig_test
+package vaultappconfig_test
 
 import (
 	"context"
 	"embed"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
-	"github.com/cisco-open/go-lanai/pkg/consul"
+	"github.com/cisco-open/go-lanai/pkg/vault"
+	vaultinit "github.com/cisco-open/go-lanai/pkg/vault/init"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
-	"github.com/cisco-open/go-lanai/test/consultest"
+	"github.com/cisco-open/go-lanai/test/ittest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 	"testing"
 )
 
@@ -29,13 +31,32 @@ type TestProperties struct {
 	FromAppProfile     string `json:"from-app-profile"`
 }
 
+func RecordedVaultProvider() fx.Annotated {
+	return fx.Annotated{
+		Group: "vault",
+		Target: func(recorder *recorder.Recorder) vault.Options {
+			return func(cfg *vault.ClientConfig) error {
+				recorder.SetRealTransport(cfg.HttpClient.Transport)
+				cfg.HttpClient.Transport = recorder
+				return nil
+			}
+		},
+	}
+}
+
 /*************************
 	Tests
  *************************/
 
+//func TestMain(m *testing.M) {
+//	suitetest.RunTests(m,
+//		ittest.PackageHttpRecordingMode(),
+//	)
+//}
+
 type TestAppConfigDI struct {
 	fx.In
-	Consul    *consul.Connection
+	Vault     *vault.Client
 	AppConfig bootstrap.ApplicationConfig
 }
 
@@ -43,10 +64,12 @@ func TestAppConfig(t *testing.T) {
 	di := TestAppConfigDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		consultest.WithHttpPlayback(t,
-			//consultest.HttpRecordingMode(),
-		),
+		ittest.WithHttpPlayback(t, ittest.DisableHttpRecordOrdering()),
 		apptest.WithBootstrapConfigFS(TestBootstrapFS),
+		apptest.WithModules(vaultinit.Module),
+		apptest.WithFxOptions(
+			fx.Provide(RecordedVaultProvider()),
+		),
 		apptest.WithDI(&di),
 		test.SubTestSetup(SetupTestPrepareProperties(&di)),
 		test.GomegaSubTest(SubTestPropertiesBinding(&di), "PropertiesBinding"),
@@ -59,19 +82,27 @@ func TestAppConfig(t *testing.T) {
 
 func SetupTestPrepareProperties(di *TestAppConfigDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/default/test.from-default", []byte("default-context"))
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/default/test.from-default-profile", []byte("default-context"))
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/default/test.from-app", []byte("default-context"))
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/default/test.from-app-profile", []byte("default-context"))
+		_, _ = di.Vault.Logical(ctx).Write("secret/default", map[string]interface{}{
+			"test.from-default": "default-context",
+			"test.from-default-profile": "default-context",
+			"test.from-app": "default-context",
+			"test.from-app-profile": "default-context",
+		})
 
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/default,testprofile/test.from-default-profile", []byte("default-context-profile"))
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/default,testprofile/test.from-app", []byte("default-context-profile"))
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/default,testprofile/test.from-app-profile", []byte("default-context-profile"))
+		_, _ = di.Vault.Logical(ctx).Write("secret/default/testprofile", map[string]interface{}{
+			"test.from-default-profile": "default-context-profile",
+			"test.from-app": "default-context-profile",
+			"test.from-app-profile": "default-context-profile",
+		})
 
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/test-app/test.from-app", []byte("test-app"))
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/test-app/test.from-app-profile", []byte("test-app"))
+		_, _ = di.Vault.Logical(ctx).Write("secret/test-app", map[string]interface{}{
+			"test.from-app": "test-app",
+			"test.from-app-profile": "test-app",
+		})
 
-		_ = di.Consul.SetKeyValue(ctx, "testconfig/test-app,testprofile/test.from-app-profile", []byte("test-app-profile"))
+		_, _ = di.Vault.Logical(ctx).Write("secret/test-app/testprofile", map[string]interface{}{
+			"test.from-app-profile": "test-app-profile",
+		})
 		return ctx, nil
 	}
 }
