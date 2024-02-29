@@ -33,7 +33,7 @@ var Module = &bootstrap.Module{
 func Use() {
 	// basic modules
 	appconfig.Use()
-	consul.Use()
+	consul.Use()j
 	vault.Use()
 	redis.Use()
 	tracing.Use()

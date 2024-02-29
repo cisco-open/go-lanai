@@ -81,7 +81,7 @@ func AddStopContextOptions(options ...ContextOption) {
 
 // Bootstrapper stores application configurations for bootstrapping
 type Bootstrapper struct {
-	modules      utils.Set
+	modules      utils.GenericSet[*Module]
 	adhocModule  *Module
 	initCtxOpts  []ContextOption
 	startCtxOpts []ContextOption
@@ -94,7 +94,7 @@ type Bootstrapper struct {
 //	This function is exported for test packages to use
 func NewBootstrapper() *Bootstrapper {
 	return &Bootstrapper{
-		modules:     utils.NewSet(),
+		modules:     utils.NewGenericSet[*Module](),
 		adhocModule: newAnonymousModule(),
 	}
 }
@@ -146,22 +146,29 @@ func (b *Bootstrapper) NewApp(cliCtx *CliExecContext, priorityOptions []fx.Optio
 		mainModule.Options = append(mainModule.Options, o)
 	}
 
-	// Decide modules' fx options
-	modules := append(b.modules.Values(), initModule, mainModule, b.adhocModule)
-	for _, misc := range miscModules {
-		modules = append(modules, misc)
+	// Expand and resolve modules
+	resolvedModules := b.modules.Copy()
+	resolvedModules.Add(initModule, mainModule, b.adhocModule)
+	resolvedModules.Add(miscModules...)
+	for changed := true; changed;  {
+		before := len(resolvedModules)
+		for module := range resolvedModules {
+			resolvedModules.Add(module.Modules...)
+		}
+		changed = before != len(resolvedModules)
 	}
-	sort.SliceStable(modules, func(i, j int) bool { return modules[i].(*Module).Precedence < modules[j].(*Module).Precedence })
+	modules := resolvedModules.Values()
+	sort.SliceStable(modules, func(i, j int) bool { return modules[i].Precedence < modules[j].Precedence })
 
 	// add priority options first
 	var options []fx.Option
 	for _, m := range modules {
-		options = append(options, m.(*Module).PriorityOptions...)
+		options = append(options, m.PriorityOptions...)
 	}
 
 	// add other options later
 	for _, m := range modules {
-		options = append(options, m.(*Module).Options...)
+		options = append(options, m.Options...)
 	}
 
 	// create fx.App, which will kick off all fx options

@@ -18,6 +18,7 @@ package consul
 
 import (
 	"embed"
+	consulappconfig "github.com/cisco-open/go-lanai/pkg/consul/appconfig"
 
 	"github.com/cisco-open/go-lanai/pkg/appconfig"
 	appconfigInit "github.com/cisco-open/go-lanai/pkg/appconfig/init"
@@ -41,6 +42,9 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		appconfigInit.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Invoke(consulhealth.Register),
+	},
+	Modules: []*bootstrap.Module{
+		consulappconfig.Module,
 	},
 }
 

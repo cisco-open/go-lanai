@@ -44,7 +44,7 @@ func newVaultDefaultContextProviderGroup(di vaultDi) appConfigProvidersOut {
 		panic(err)
 	}
 
-	group := appconfig.NewProfileBasedProviderGroup(externalDefaultContextPrecedence)
+	group := appconfig.NewProfileBasedProviderGroup(PrecedenceExternalDefaultContext)
 	group.KeyFunc = func(profile string) string {
 		if profile == "" {
 			return di.VaultConfigProperties.DefaultContext
@@ -74,7 +74,7 @@ func newVaultAppContextProviderGroup(di vaultDi) appConfigProvidersOut {
 
 	appName := di.BootstrapConfig.Value(bootstrap.PropertyKeyApplicationName)
 
-	group := appconfig.NewProfileBasedProviderGroup(externalAppContextPrecedence)
+	group := appconfig.NewProfileBasedProviderGroup(PrecedenceExternalAppContext)
 	group.KeyFunc = func(profile string) string {
 		if profile == "" {
 			return fmt.Sprintf("%s", appName)

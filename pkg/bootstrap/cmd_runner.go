@@ -106,9 +106,8 @@ func enableCliRunnerMode(b *Bootstrapper, runnerProviders []interface{}) {
 	// first find existing runner module or register one
 	var cliRunnerModule *Module
 LOOP:
-	for v := range b.modules {
-		switch m, ok := v.(*Module); {
-		case ok && m != nil && m.Name == CliRunnerModuleName:
+	for m := range b.modules {
+		if m != nil && m.Name == CliRunnerModuleName {
 			cliRunnerModule = m
 			break LOOP
 		}

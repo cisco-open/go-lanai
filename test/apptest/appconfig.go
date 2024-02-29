@@ -40,21 +40,21 @@ type PropertyValuerFunc func(ctx context.Context) interface{}
 func WithConfigFS(fs ...embed.FS) test.Options {
 	opts := make([]fx.Option, len(fs))
 	for i, fs := range fs {
-		opts[i] = appconfiginit.FxEmbeddedApplicationAdHoc(fs)
+		opts[i] = appconfiginit.FxEmbeddedApplicationAdHoc(fs, ".", "testdata")
 	}
 	return WithFxOptions(opts...)
 }
 
 // WithBootstrapConfigFS provides per-test config capability.
-// It register an embed.FS as bootstrap config, in which properties like "config.file.search-path" can be overrided.
+// It register an embed.FS as bootstrap config, in which properties like "config.file.search-path" can be overridden.
 // the given embed.FS should contains at least one yml file.
 // see appconfig.FxEmbeddedBootstrapAdHoc
 func WithBootstrapConfigFS(fs ...embed.FS) test.Options {
 	opts := make([]fx.Option, len(fs))
 	for i, fs := range fs {
-		opts[i] = appconfiginit.FxEmbeddedBootstrapAdHoc(fs)
+		opts[i] = appconfiginit.FxEmbeddedBootstrapAdHoc(fs, ".", "testdata")
 	}
-	return WithFxOptions(opts...)
+	return WithFxPriorityOptions(opts...)
 }
 
 // WithProperties provides per-test config capability.

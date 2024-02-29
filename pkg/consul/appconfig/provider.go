@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package consulprovider
+package consulappconfig
 
 import (
     "context"
@@ -25,18 +25,6 @@ import (
 )
 
 var logger = log.New("Config.Consul")
-
-const (
-	ConsulConfigPrefix = "cloud.consul.config"
-	ConfigKeyAppName   = "application.name"
-)
-
-type ConsulConfigProperties struct {
-	Enabled        bool   `json:"enabled"`
-	Prefix         string `json:"prefix"`
-	DefaultContext string `json:"default-context"`
-	ProfileSeparator string `json:"profile-separator"`
-}
 
 type ConfigProvider struct {
 	appconfig.ProviderMeta
@@ -80,7 +68,7 @@ func (configProvider *ConfigProvider) Load(ctx context.Context) (loadError error
 	return nil
 }
 
-func NewConsulProvider(precedence int, contextPath string, conn *consul.Connection) *ConfigProvider {
+func NewConfigProvider(precedence int, contextPath string, conn *consul.Connection) *ConfigProvider {
 	return &ConfigProvider{
 			ProviderMeta: appconfig.ProviderMeta{Precedence: precedence},
 			contextPath:  contextPath, //fmt.Sprintf("%s/%s", f.sourceConfig.Prefix, f.contextPath)

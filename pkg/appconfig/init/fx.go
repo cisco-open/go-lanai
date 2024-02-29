@@ -35,18 +35,18 @@ const (
 
 
 // FxEmbeddedDefaults returns a specialized fx.Option that take a given embed.FS and load *.yml as default properties
-func FxEmbeddedDefaults(fs embed.FS) fx.Option {
-	return embeddedFileProviderFxOptions(FxGroupDefaults, fs)
+func FxEmbeddedDefaults(fs embed.FS, searchPaths...string) fx.Option {
+	return embeddedFileProviderFxOptions(FxGroupDefaults, fs, searchPaths...)
 }
 
 // FxEmbeddedApplicationAdHoc returns a specialized fx.Option that take a given embed.FS and load *.yml as application properties
-func FxEmbeddedApplicationAdHoc(fs embed.FS) fx.Option {
-	return embeddedFileProviderFxOptions(FxGroupApplication, fs)
+func FxEmbeddedApplicationAdHoc(fs embed.FS, searchPaths...string) fx.Option {
+	return embeddedFileProviderFxOptions(FxGroupApplication, fs, searchPaths...)
 }
 
 // FxEmbeddedBootstrapAdHoc returns a specialized fx.Option that take a given embed.FS and load *.yml as bootstrap properties
-func FxEmbeddedBootstrapAdHoc(fs embed.FS) fx.Option {
-	return embeddedFileProviderFxOptions(FxGroupBootstrap, fs)
+func FxEmbeddedBootstrapAdHoc(fs embed.FS, searchPaths...string) fx.Option {
+	return embeddedFileProviderFxOptions(FxGroupBootstrap, fs, searchPaths...)
 }
 
 // FxProvideDefaults wraps given interface{} as a fx.Provide of appconfig.Provider with order of default properties
@@ -99,26 +99,34 @@ func providerFxOptions(fxGroup string, providers []interface{}) fx.Option {
 	return fx.Provide(annotated...)
 }
 
-func embeddedFileProviderFxOptions(fxGroup string, fs embed.FS) fx.Option {
-	files, e := fs.ReadDir(".")
-	if e != nil {
-		return fx.Supply()
+func embeddedFileProviderFxOptions(fxGroup string, fs embed.FS, searchPaths...string) fx.Option {
+	if len(searchPaths) == 0 {
+		searchPaths = []string{"."}
 	}
-
 	const ext = "yml"
 	providers := make([]interface{}, 0)
-	for _, f := range files {
-		if !f.IsDir() || filepath.Ext(f.Name()) == ext {
-			providers = append(providers, fxEmbeddedFileProvider(fxGroup, f.Name(), fs))
+	for _, searchPath := range searchPaths {
+		files, e := fs.ReadDir(searchPath)
+		if e != nil {
+			continue
+		}
+		for _, f := range files {
+			if !f.IsDir() || filepath.Ext(f.Name()) == ext {
+				providers = append(providers, fxEmbeddedFileProvider(fxGroup, filepath.Join(searchPath, f.Name()), fs))
+			}
 		}
 	}
 	return fx.Provide(providers...)
 }
 
+var embeddedFileCount int
+
 func fxEmbeddedFileProvider(fxGroup string, filepath string, fs embed.FS) fx.Annotated {
 	fn := func() appconfig.Provider{
 		// Note order will be overwritten by corresponding provider group
-		provider, _ := fileprovider.NewEmbeddedFSProvider(0, filepath, fs)
+		// the precedence here is used to record the natural order within the group
+		provider, _ := fileprovider.NewEmbeddedFSProvider(embeddedFileCount, filepath, fs)
+		embeddedFileCount++
 		return provider
 	}
 

@@ -27,7 +27,7 @@ import (
 func newApplicationFileProviderGroup() appConfigProvidersOut {
 	const name = "application"
 	const ext = "yml"
-	group := appconfig.NewProfileBasedProviderGroup(applicationLocalFilePrecedence)
+	group := appconfig.NewProfileBasedProviderGroup(PrecedenceApplicationLocalFile)
 	group.KeyFunc = func(profile string) string {
 		if profile == "" {
 			return name

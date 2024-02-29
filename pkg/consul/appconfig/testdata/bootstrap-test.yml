@@ -1,0 +1,11 @@
+application:
+  name: test-app
+
+cloud:
+  consul:
+    host: localhost
+    port: 8500
+    config:
+      enabled: true
+      prefix: testconfig
+      default-context: default
