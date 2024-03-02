@@ -59,6 +59,8 @@ func TestAppConfig(t *testing.T) {
 
 func SetupTestPrepareProperties(di *TestAppConfigDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		// Note: This code is to populate required KV values. It actually runs AFTER all properties are bond.
+		//		 So first run in "recording" mode with empty KV store would always fail. Just run it again.
 		_ = di.Consul.SetKeyValue(ctx, "testconfig/default/test.from-default", []byte("default-context"))
 		_ = di.Consul.SetKeyValue(ctx, "testconfig/default/test.from-default-profile", []byte("default-context"))
 		_ = di.Consul.SetKeyValue(ctx, "testconfig/default/test.from-app", []byte("default-context"))

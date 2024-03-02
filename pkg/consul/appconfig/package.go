@@ -80,7 +80,7 @@ func fxNewConsulAppContextProviderGroup(di groupDI) appConfigProvidersOut {
 	return appConfigProvidersOut{
 		ProviderGroup: NewProviderGroup(withProperties(&di.ConsulConfigProperties),
 			func(opt *ProviderGroupOption) {
-				opt.Precedence = appconfiginit.PrecedenceExternalDefaultContext
+				opt.Precedence = appconfiginit.PrecedenceExternalAppContext
 				opt.Path = appName
 				opt.Connection = di.ConsulConnection
 			},

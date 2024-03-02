@@ -48,12 +48,6 @@ func RecordedVaultProvider() fx.Annotated {
 	Tests
  *************************/
 
-//func TestMain(m *testing.M) {
-//	suitetest.RunTests(m,
-//		ittest.PackageHttpRecordingMode(),
-//	)
-//}
-
 type TestAppConfigDI struct {
 	fx.In
 	Vault     *vault.Client
@@ -64,7 +58,9 @@ func TestAppConfig(t *testing.T) {
 	di := TestAppConfigDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		ittest.WithHttpPlayback(t, ittest.DisableHttpRecordOrdering()),
+		ittest.WithHttpPlayback(t,
+			//ittest.HttpRecordingMode(),
+		),
 		apptest.WithBootstrapConfigFS(TestBootstrapFS),
 		apptest.WithModules(vaultinit.Module),
 		apptest.WithFxOptions(
@@ -83,20 +79,20 @@ func TestAppConfig(t *testing.T) {
 func SetupTestPrepareProperties(di *TestAppConfigDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
 		_, _ = di.Vault.Logical(ctx).Write("secret/default", map[string]interface{}{
-			"test.from-default": "default-context",
+			"test.from-default":         "default-context",
 			"test.from-default-profile": "default-context",
-			"test.from-app": "default-context",
-			"test.from-app-profile": "default-context",
+			"test.from-app":             "default-context",
+			"test.from-app-profile":     "default-context",
 		})
 
 		_, _ = di.Vault.Logical(ctx).Write("secret/default/testprofile", map[string]interface{}{
 			"test.from-default-profile": "default-context-profile",
-			"test.from-app": "default-context-profile",
-			"test.from-app-profile": "default-context-profile",
+			"test.from-app":             "default-context-profile",
+			"test.from-app-profile":     "default-context-profile",
 		})
 
 		_, _ = di.Vault.Logical(ctx).Write("secret/test-app", map[string]interface{}{
-			"test.from-app": "test-app",
+			"test.from-app":         "test-app",
 			"test.from-app-profile": "test-app",
 		})
 
