@@ -14,28 +14,26 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package discovery_test
+package consulsd_test
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/consul"
-    "github.com/cisco-open/go-lanai/pkg/discovery"
-    "github.com/cisco-open/go-lanai/pkg/discovery/testdata"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/consultest"
-    "github.com/cisco-open/go-lanai/test/ittest"
-    "github.com/hashicorp/consul/api"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "testing"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/consul"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd"
+	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd/testdata"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/consultest"
+	"github.com/cisco-open/go-lanai/test/ittest"
+	"github.com/hashicorp/consul/api"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"testing"
 )
-
-const TestRegisterFuzzyJsonPathTags = `$.Tags`
-const TestRegisterFuzzyJsonPathMeta = `$.Meta`
 
 /*************************
 	Tests
@@ -45,8 +43,7 @@ type TestRegDI struct {
 	fx.In
 	Consul              *consul.Connection
 	AppContext          *bootstrap.ApplicationContext
-	DiscoveryProperties discovery.DiscoveryProperties
-	Customizers         *discovery.Customizers
+	DiscoveryProperties consulsd.DiscoveryProperties
 }
 
 func TestRegistration(t *testing.T) {
@@ -64,11 +61,11 @@ func TestRegistration(t *testing.T) {
 		apptest.WithBootstrapConfigFS(testdata.TestBootstrapFS),
 		apptest.WithConfigFS(testdata.TestApplicationFS),
 		apptest.WithFxOptions(
-			fx.Provide(discovery.BindDiscoveryProperties),
-			fx.Provide(discovery.NewCustomizers),
+			fx.Provide(consulsd.BindDiscoveryProperties),
 		),
 
 		apptest.WithDI(&di),
+		test.GomegaSubTest(SubTestNewRegistration(&di), "TestNewRegistration"),
 		test.GomegaSubTest(SubTestRegisterWithProperties(&di), "TestRegisterWithProperties"),
 		test.GomegaSubTest(SubTestRegisterWithCustomizers(&di), "TestRegisterWithCustomizers"),
 		//test.GomegaSubTest(SubTestDeregister(&di), "TestDeregister"),
@@ -82,17 +79,21 @@ func TestRegistration(t *testing.T) {
 func SubTestRegisterWithProperties(di *TestRegDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const serviceIdOverride = `testservice-8080-664d91a5ba`
-		registration := discovery.NewRegistration(discovery.RegistrationWithProperties(di.AppContext, di.DiscoveryProperties))
+		registrar := consulsd.NewServiceRegistrar(di.Consul)
+		registration := consulsd.NewRegistration(ctx,
+			consulsd.RegistrationWithProperties(&di.DiscoveryProperties),
+			consulsd.RegistrationWithAppContext(di.AppContext),
+		)
 		AssertRegistration(g, registration, NewExpectedReg())
 
 		ApplyServiceIDOverride(registration, serviceIdOverride)
-		e := discovery.Register(ctx, di.Consul, registration)
+		e := registrar.Register(ctx, registration)
 		g.Expect(e).To(Succeed(), "register should not fail")
 		VerifyConsul(ctx, g, di.Consul, NewExpectedReg(func(reg *ExpectedReg) {
 			reg.ServiceID = serviceIdOverride
 		}))
 
-		e = discovery.Deregister(ctx, di.Consul, registration)
+		e = registrar.Deregister(ctx, registration)
 		g.Expect(e).To(Succeed(), "deregister should not fail")
 		VerifyConsul(ctx, g, di.Consul, NewExpectedReg(func(reg *ExpectedReg) {
 			reg.ServiceID = serviceIdOverride
@@ -104,23 +105,57 @@ func SubTestRegisterWithProperties(di *TestRegDI) test.GomegaSubTestFunc {
 func SubTestRegisterWithCustomizers(di *TestRegDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const serviceIdOverride = `testservice-8080-d8755f792d`
-		registration := discovery.NewRegistration(discovery.RegistrationWithProperties(di.AppContext, di.DiscoveryProperties))
-		di.Customizers.Apply(ctx, registration)
+		registrar := consulsd.NewServiceRegistrar(di.Consul)
+		registration := consulsd.NewRegistration(ctx,
+			consulsd.RegistrationWithProperties(&di.DiscoveryProperties),
+			consulsd.RegistrationWithAppContext(di.AppContext),
+			consulsd.RegistrationWithCustomizers(
+				discovery.NewPropertiesBasedCustomizer(di.AppContext, nil),
+				discovery.NewBuildInfoCustomizer(),
+			),
+		)
 		AssertRegistration(g, registration, NewExpectedReg(WithComponentInfo(), WithBuildInfo()))
 
 		ApplyServiceIDOverride(registration, serviceIdOverride)
-		e := discovery.Register(ctx, di.Consul, registration)
+		e := registrar.Register(ctx, registration)
 		g.Expect(e).To(Succeed(), "register should not fail")
 		VerifyConsul(ctx, g, di.Consul, NewExpectedReg(WithComponentInfo(), WithBuildInfo(), func(reg *ExpectedReg) {
 			reg.ServiceID = serviceIdOverride
 		}))
 
-		e = discovery.Deregister(ctx, di.Consul, registration)
+		e = registrar.Deregister(ctx, registration)
 		g.Expect(e).To(Succeed(), "deregister should not fail")
 		VerifyConsul(ctx, g, di.Consul, NewExpectedReg(func(reg *ExpectedReg) {
 			reg.ServiceID = serviceIdOverride
 			reg.Absent = true
 		}))
+	}
+}
+
+func SubTestNewRegistration(di *TestRegDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		reg := consulsd.NewRegistration(ctx,
+			consulsd.RegistrationWithProperties(&di.DiscoveryProperties),
+			consulsd.RegistrationWithAppContext(di.AppContext),
+		).(*consulsd.ServiceRegistration)
+		AssertRegistration(g, reg, NewExpectedReg())
+		reg.SetID("override-id")
+		g.Expect(reg.AgentServiceRegistration.ID).To(Equal("override-id"), `[%s] should be correct`, "ID")
+		reg.SetName("override-name")
+		g.Expect(reg.AgentServiceRegistration.Name).To(Equal("override-name"), `[%s] should be correct`, "Name")
+		reg.SetAddress("0.0.0.0")
+		g.Expect(reg.AgentServiceRegistration.Address).To(Equal("0.0.0.0"), `[%s] should be correct`, "Name")
+		reg.SetPort(9999)
+		g.Expect(reg.AgentServiceRegistration.Port).To(Equal(9999), `[%s] should be correct`, "Port")
+		reg.AddTags("tag1", "tag2", "tag1", "tag1", "tag2")
+		g.Expect(reg.AgentServiceRegistration.Tags).To(ContainElements("tag1", "tag2"), `[%s] should be correct`, "Tags")
+		reg.RemoveTags("tag1", "tag2", "tag1", "tag2")
+		g.Expect(reg.AgentServiceRegistration.Tags).ToNot(ContainElement("tag1"), `[%s] should be correct`, "Tags")
+		g.Expect(reg.AgentServiceRegistration.Tags).ToNot(ContainElement("tag2"), `[%s] should be correct`, "Tags")
+		reg.SetMeta("test", "value")
+		g.Expect(reg.AgentServiceRegistration.Meta).To(HaveKeyWithValue("test", "value"), `[%s] should be correct`, "Meta")
+		reg.SetMeta("test", nil)
+		g.Expect(reg.AgentServiceRegistration.Meta).ToNot(HaveKeyWithValue("test", "value"), `[%s] should be correct`, "Meta")
 	}
 }
 
@@ -148,7 +183,7 @@ func NewExpectedReg(opts ...func(reg *ExpectedReg)) *ExpectedReg {
 	reg := ExpectedReg{
 		Name: "testservice",
 		TagRegExps: []string{
-			"secure=false", "contextPath=/test", "test1=true", "test2=true",
+			"secure=false", "test1=true", "test2=true",
 		},
 		Port:                    8080,
 		Address:                 "127.0.0.1",
@@ -165,10 +200,9 @@ func NewExpectedReg(opts ...func(reg *ExpectedReg)) *ExpectedReg {
 func WithComponentInfo() func(reg *ExpectedReg) {
 	return func(reg *ExpectedReg) {
 		reg.TagRegExps = append(reg.TagRegExps,
-			discovery.TAG_MANAGED_SERVICE,
-			discovery.TAG_INSTANCE_ID+`=[0-9a-f\-]+`,
-			discovery.TAG_SERVICE_NAME+`=.+`,
-			discovery.TAG_COMPONENT_ATTRIBUTES+`=.+`,
+			discovery.TagInstanceUUID+`=[0-9a-f\-]+`,
+			discovery.TagServiceName+`=.+`,
+			discovery.TagComponentAttributes+`=.+`,
 		)
 	}
 }
@@ -176,29 +210,31 @@ func WithComponentInfo() func(reg *ExpectedReg) {
 func WithBuildInfo() func(reg *ExpectedReg) {
 	return func(reg *ExpectedReg) {
 		reg.TagRegExps = append(reg.TagRegExps,
-			discovery.TAG_BUILD_DATE_TIME+`=.+`,
+			discovery.TagBuildDateTime+`=.+`,
 		)
 	}
 }
 
-func ApplyServiceIDOverride(reg *api.AgentServiceRegistration, serviceID string) {
-	reg.ID = serviceID
-	reg.Tags = append(reg.Tags, serviceID)
+func ApplyServiceIDOverride(reg discovery.ServiceRegistration, serviceID string) {
+	reg.SetID(serviceID)
+	reg.AddTags(serviceID)
 }
 
-func AssertRegistration(g *gomega.WithT, reg *api.AgentServiceRegistration, expected *ExpectedReg) {
+func AssertRegistration(g *gomega.WithT, registration discovery.ServiceRegistration, expected *ExpectedReg) {
+	g.Expect(registration).To(BeAssignableToTypeOf(&consulsd.ServiceRegistration{}), "registration should be correct type")
+	reg := registration.(*consulsd.ServiceRegistration)
 	g.Expect(reg).ToNot(BeNil(), "registration should not be nil")
 	g.Expect(reg.Kind).To(Equal(api.ServiceKindTypical), "registration should have correct '%s'", "Kind")
-	g.Expect(reg.ID).To(MatchRegexp(expected.IDRegExp()), "registration should have correct '%s'", "ID")
-	g.Expect(reg.Name).To(Equal(expected.Name), "registration should have correct '%s'", "Name")
-	g.Expect(reg.Port).To(Equal(expected.Port), "registration should have correct '%s'", "Port")
-	g.Expect(reg.Address).To(Equal(expected.Address), "registration should have correct '%s'", "Address")
+	g.Expect(reg.ID()).To(MatchRegexp(expected.IDRegExp()), "registration should have correct '%s'", "ID")
+	g.Expect(reg.Name()).To(Equal(expected.Name), "registration should have correct '%s'", "Name")
+	g.Expect(reg.Port()).To(Equal(expected.Port), "registration should have correct '%s'", "Port")
+	g.Expect(reg.Address()).To(Equal(expected.Address), "registration should have correct '%s'", "Address")
 	g.Expect(reg.Check).ToNot(BeNil(), "registration should have non-nil '%s'", "Check")
 	g.Expect(reg.Check.HTTP).To(Equal(expected.HealthURL), "registration should have correct '%s'", "Check.HTTP")
 	g.Expect(reg.Check.Interval).To(Equal(expected.HealthInterval), "registration should have correct '%s'", "Check.Interval")
 	g.Expect(reg.Check.DeregisterCriticalServiceAfter).To(Equal(expected.HealthDeregisterTimeout), "registration should have correct '%s'", "Check.DeregisterCriticalServiceAfter")
 	for _, tag := range expected.TagRegExps {
-		g.Expect(reg.Tags).To(ContainElement(MatchRegexp(tag)), "registration tags should contain '%s'", tag)
+		g.Expect(reg.Tags()).To(ContainElement(MatchRegexp(tag)), "registration tags should contain '%s'", tag)
 	}
 }
 

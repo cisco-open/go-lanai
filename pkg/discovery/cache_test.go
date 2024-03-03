@@ -43,7 +43,7 @@ func SubTestSetWithTTL() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const name = `testservice`
 		var ttl = 250 * time.Millisecond
-		cache := newSimpleServiceCache()
+		cache := NewSimpleServiceCache()
 		svc := &Service{
 			Name: name,
 			Time: time.Now(),

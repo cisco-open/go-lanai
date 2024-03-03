@@ -27,7 +27,9 @@ type simpleServiceCache struct {
 	exp   map[string]time.Time
 }
 
-func newSimpleServiceCache() ServiceCache {
+// NewSimpleServiceCache returns a ServiceCache with map[string]*Service as a back storage
+// This ServiceCache is not goroutine-safe
+func NewSimpleServiceCache() ServiceCache {
 	// prepare cache
 	return &simpleServiceCache{
 		cache: map[string]*Service{},

@@ -30,7 +30,7 @@ var (
 	BuildVersion = "Unknown"
 	BuildTime    = time.Now().Format(utils.ISO8601Seconds)
 	BuildHash    = "Unknown"
-	BuildDeps    = "github.com/cisco-open/go-lanai@develop"
+	BuildDeps    = "github.com/cisco-open/go-lanai@main"
 )
 
 var (

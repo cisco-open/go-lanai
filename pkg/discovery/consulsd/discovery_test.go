@@ -14,30 +14,31 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package discovery_test
+package consulsd_test
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/consul"
-    "github.com/cisco-open/go-lanai/pkg/discovery"
-    "github.com/cisco-open/go-lanai/pkg/discovery/testdata"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/consultest"
-    "github.com/cisco-open/go-lanai/test/ittest"
-    "github.com/go-kit/kit/sd"
-    "github.com/hashicorp/consul/api"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "io"
-    "reflect"
-    "sort"
-    "sync"
-    "testing"
-    "time"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/consul"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd"
+	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd/testdata"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/consultest"
+	"github.com/cisco-open/go-lanai/test/ittest"
+	"github.com/go-kit/kit/sd"
+	"github.com/hashicorp/consul/api"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"io"
+	"reflect"
+	"sort"
+	"sync"
+	"testing"
+	"time"
 )
 
 const (
@@ -94,6 +95,7 @@ type TestDiscoveryDI struct {
 	fx.In
 	Consul     *consul.Connection
 	AppContext *bootstrap.ApplicationContext
+	Registrar  discovery.ServiceRegistrar
 }
 
 func TestDiscoveryClient(t *testing.T) {
@@ -113,7 +115,7 @@ func TestDiscoveryClient(t *testing.T) {
 		),
 		apptest.WithBootstrapConfigFS(testdata.TestBootstrapFS),
 		apptest.WithConfigFS(testdata.TestApplicationFS),
-		apptest.WithFxOptions(),
+		apptest.WithFxOptions(fx.Provide(consulsd.NewServiceRegistrar)),
 		apptest.WithDI(&di),
 		test.SubTestSetup(SetupTestServices(&di)),
 		test.SubTestTeardown(TeardownTestServices(&di)),
@@ -131,8 +133,8 @@ func TestDiscoveryClient(t *testing.T) {
 
 func SetupTestServices(di *TestDiscoveryDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		OrderedDoForEachMockedService(func(reg *api.AgentServiceRegistration) {
-			_ = discovery.Register(ctx, di.Consul, reg)
+		OrderedDoForEachMockedService(func(reg *consulsd.ServiceRegistration) {
+			_ = di.Registrar.Register(ctx, reg)
 		})
 		return ctx, nil
 	}
@@ -140,8 +142,8 @@ func SetupTestServices(di *TestDiscoveryDI) test.SetupFunc {
 
 func TeardownTestServices(di *TestDiscoveryDI) test.TeardownFunc {
 	return func(ctx context.Context, t *testing.T) error {
-		OrderedDoForEachMockedService(func(reg *api.AgentServiceRegistration) {
-			_ = discovery.Deregister(ctx, di.Consul, reg)
+		OrderedDoForEachMockedService(func(reg *consulsd.ServiceRegistration) {
+			_ = di.Registrar.Deregister(ctx, reg)
 		})
 		return nil
 	}
@@ -149,7 +151,7 @@ func TeardownTestServices(di *TestDiscoveryDI) test.TeardownFunc {
 
 func SubTestInstancerManagement(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client := discovery.NewConsulDiscoveryClient(ctx, di.Consul)
+		client := consulsd.NewConsulDiscoveryClient(ctx, di.Consul)
 		g.Expect(client.Context()).To(Equal(ctx), "client's context should be correct")
 
 		// get instancer
@@ -182,7 +184,7 @@ func SubTestInstancerManagement(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 
 func SubTestWithDefaultSelector(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client := discovery.NewConsulDiscoveryClient(ctx, di.Consul, func(opt *discovery.ClientConfig) {
+		client := consulsd.NewConsulDiscoveryClient(ctx, di.Consul, func(opt *consulsd.ClientConfig) {
 			opt.DefaultSelector = discovery.InstanceIsHealthy()
 			opt.Verbose = true
 		})
@@ -210,7 +212,7 @@ func SubTestWithDefaultSelector(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 
 func SubTestWithSelectors(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client := discovery.NewConsulDiscoveryClient(ctx, di.Consul)
+		client := consulsd.NewConsulDiscoveryClient(ctx, di.Consul)
 		defer func() { _ = client.(io.Closer).Close() }()
 		instancer, e := client.Instancer(ServiceName1)
 		g.Expect(e).To(Succeed(), "getting instancer should not fail")
@@ -260,11 +262,11 @@ func SubTestWithSelectors(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 			})
 
 		// with properties
-		props := discovery.SelectorProperties{
+		props := consulsd.SelectorProperties{
 			Tags: []string{"LeGaCy=true"},
 			Meta: map[string]string{"instance": "3"},
 		}
-		TryInstancerWithMatcher(g, instancer, discovery.InstanceWithProperties(&props), []*MockedService{
+		TryInstancerWithMatcher(g, instancer, consulsd.InstanceWithProperties(&props), []*MockedService{
 			&MockedServices[ServiceName1][2],
 		})
 	}
@@ -272,7 +274,7 @@ func SubTestWithSelectors(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 
 func SubTestWithServiceUpdates(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client := discovery.NewConsulDiscoveryClient(ctx, di.Consul, func(opt *discovery.ClientConfig) {
+		client := consulsd.NewConsulDiscoveryClient(ctx, di.Consul, func(opt *consulsd.ClientConfig) {
 			opt.Verbose = true
 		})
 		defer func() { _ = client.(io.Closer).Close() }()
@@ -297,7 +299,7 @@ func SubTestWithServiceUpdates(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 		wg.Add(1)
 		update := MockedServices[ServiceName1][1]
 		update.Healthy = false
-		e = discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
+		e = di.Registrar.Deregister(ctx, NewTestRegistration(&update))
 		g.Expect(e).To(Succeed(), "de-registering service should not fail")
 
 		// try again
@@ -310,14 +312,14 @@ func SubTestWithServiceUpdates(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 
 func SubTestWithGoKitCompatibility(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client := discovery.NewConsulDiscoveryClient(ctx, di.Consul, func(opt *discovery.ClientConfig) {
+		client := consulsd.NewConsulDiscoveryClient(ctx, di.Consul, func(opt *consulsd.ClientConfig) {
 			opt.Verbose = true
 		})
 		defer func() { _ = client.(io.Closer).Close() }()
 		v, e := client.Instancer(ServiceName1)
 		g.Expect(e).To(Succeed(), "getting instancer should not fail")
-		g.Expect(v).To(BeAssignableToTypeOf(&discovery.ConsulInstancer{}), "instancer should be correct type")
-		instancer := v.(*discovery.ConsulInstancer)
+		g.Expect(v).To(BeAssignableToTypeOf(&consulsd.ConsulInstancer{}), "instancer should be correct type")
+		instancer := v.(*consulsd.ConsulInstancer)
 
 		// register event channel
 		eventCh := make(chan sd.Event)
@@ -344,7 +346,7 @@ func SubTestWithGoKitCompatibility(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 		// make some service changes
 		update := MockedServices[ServiceName1][1]
 		update.Healthy = false
-		e = discovery.Deregister(ctx, di.Consul, NewTestRegistration(&update))
+		e = di.Registrar.Deregister(ctx, NewTestRegistration(&update))
 		g.Expect(e).To(Succeed(), "de-registering service should not fail")
 
 		// wait for event channel to trigger
@@ -382,29 +384,29 @@ type MockedService struct {
 	Healthy bool
 }
 
-func OrderedDoForEachMockedService(fn func(reg *api.AgentServiceRegistration)) {
-	regs := make([]*api.AgentServiceRegistration, 0, 6)
+func OrderedDoForEachMockedService(fn func(reg *consulsd.ServiceRegistration)) {
+	regs := make([]*consulsd.ServiceRegistration, 0, 6)
 	for _, svcs := range MockedServices {
 		for _, svc := range svcs {
 			regs = append(regs, NewTestRegistration(&svc))
 		}
 	}
 	sort.SliceStable(regs, func(i, j int) bool {
-		return regs[i].Port < regs[j].Port
+		return regs[i].Port() < regs[j].Port()
 	})
 	for _, reg := range regs {
 		fn(reg)
 	}
 }
 
-func NewTestRegistration(svc *MockedService) *api.AgentServiceRegistration {
-	registration := discovery.NewRegistration(func(cfg *discovery.RegistrationConfig) {
+func NewTestRegistration(svc *MockedService) *consulsd.ServiceRegistration {
+	registration := consulsd.NewRegistration(context.Background(), func(cfg *consulsd.RegistrationConfig) {
 		cfg.ApplicationName = svc.Name
 		cfg.IPAddress = "127.0.0.1"
 		cfg.NetworkInterface = "lo"
 		cfg.Port = svc.Port
 		cfg.Tags = svc.Tags
-	})
+	}).(*consulsd.ServiceRegistration)
 	registration.Check = nil
 	if svc.Healthy {
 		registration.Check = nil
@@ -415,13 +417,10 @@ func NewTestRegistration(svc *MockedService) *api.AgentServiceRegistration {
 			SuccessBeforePassing: 1,
 		}
 	}
-	if registration.Meta == nil {
-		registration.Meta = make(map[string]string)
-	}
 	for k, v := range svc.Meta {
-		registration.Meta[k] = v
+		registration.SetMeta(k, v)
 	}
-	registration.ID = fmt.Sprintf("%s-%d", svc.Name, svc.Port)
+	registration.SetID(fmt.Sprintf("%s-%d", svc.Name, svc.Port))
 	return registration
 }
 

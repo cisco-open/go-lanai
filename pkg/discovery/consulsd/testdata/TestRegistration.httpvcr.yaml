@@ -6,14 +6,14 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 320
+        content_length: 300
         transfer_encoding: []
         trailer: {}
         host: localhost:8500
         remote_addr: ""
         request_uri: ""
         body: |
-            {"ID":"testservice-8080-664d91a5ba","Name":"testservice","Tags":["test1=true","test2=true","secure=false","contextPath=/test","testservice-8080-664d91a5ba"],"Port":8080,"Address":"127.0.0.1","Check":{"Interval":"1s","HTTP":"http://127.0.0.1:8080/test/admin/health","DeregisterCriticalServiceAfter":"15s"},"Checks":null}
+            {"ID":"testservice-8080-664d91a5ba","Name":"testservice","Tags":["secure=false","test1=true","test2=true","testservice-8080-664d91a5ba"],"Port":8080,"Address":"127.0.0.1","Check":{"Interval":"1s","HTTP":"http://127.0.0.1:8080/test/admin/health","DeregisterCriticalServiceAfter":"15s"},"Checks":null}
         form: {}
         headers:
             Content-Type:
@@ -67,12 +67,12 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 850
+        content_length: 830
         uncompressed: false
-        body: '[{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"e0aeb9526f77","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"NodeMeta":{"consul-network-segment":""},"ServiceKind":"","ServiceID":"testservice-8080-664d91a5ba","ServiceName":"testservice","ServiceTags":["test1=true","test2=true","secure=false","contextPath=/test","testservice-8080-664d91a5ba"],"ServiceAddress":"127.0.0.1","ServiceTaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8080},"wan_ipv4":{"Address":"127.0.0.1","Port":8080}},"ServiceWeights":{"Passing":1,"Warning":1},"ServiceMeta":{},"ServicePort":8080,"ServiceSocketPath":"","ServiceEnableTagOverride":false,"ServiceProxy":{"Mode":"","MeshGateway":{},"Expose":{}},"ServiceConnect":{},"CreateIndex":914979,"ModifyIndex":914979}]'
+        body: '[{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"NodeMeta":{"consul-network-segment":""},"ServiceKind":"","ServiceID":"testservice-8080-664d91a5ba","ServiceName":"testservice","ServiceTags":["secure=false","test1=true","test2=true","testservice-8080-664d91a5ba"],"ServiceAddress":"127.0.0.1","ServiceTaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8080},"wan_ipv4":{"Address":"127.0.0.1","Port":8080}},"ServiceWeights":{"Passing":1,"Warning":1},"ServiceMeta":{},"ServicePort":8080,"ServiceSocketPath":"","ServiceEnableTagOverride":false,"ServiceProxy":{"Mode":"","MeshGateway":{},"Expose":{}},"ServiceConnect":{},"CreateIndex":226110,"ModifyIndex":226110}]'
         headers:
             Content-Length:
-                - "850"
+                - "830"
             Content-Type:
                 - application/json
             Date:
@@ -84,7 +84,7 @@ interactions:
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "914979"
+                - "226110"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -174,7 +174,7 @@ interactions:
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "914980"
+                - "226111"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -189,14 +189,14 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 912
+        content_length: 866
         transfer_encoding: []
         trailer: {}
         host: localhost:8500
         remote_addr: ""
         request_uri: ""
         body: |
-            {"ID":"testservice-8080-d8755f792d","Name":"testservice","Tags":["test1=true","test2=true","secure=false","contextPath=/test","instanceUuid=e78ccca2-2f64-4ae0-91eb-33f90cdf4951","managedMicroservice","componentAttributes=parent:\u003cnil\u003e~type:\u003cnil\u003e~serviceName:testservice~context:/test~name:\u003cnil\u003e~description:\u003cnil\u003e","name=\u003cnil\u003e","version=Unknown","buildDateTime=2024-01-05T14:28:23-05:00","testservice-8080-d8755f792d"],"Port":8080,"Address":"127.0.0.1","Meta":{"buildDateTime":"2024-01-05T14:28:23-05:00","context":"/test","description":"\u003cnil\u003e","instanceUuid":"e78ccca2-2f64-4ae0-91eb-33f90cdf4951","name":"\u003cnil\u003e","parent":"\u003cnil\u003e","serviceName":"testservice","type":"\u003cnil\u003e","version":"Unknown"},"Check":{"Interval":"1s","HTTP":"http://127.0.0.1:8080/test/admin/health","DeregisterCriticalServiceAfter":"15s"},"Checks":null}
+            {"ID":"testservice-8080-d8755f792d","Name":"testservice","Tags":["secure=false","test1=true","test2=true","instanceUuid=f7979b79-f365-413e-9a57-8e8c788bfc2e","name=testservice","contextPath=/test","componentAttributes=description:Test Service~parent:platform~type:platform~serviceName:testservice~context:/test~name:TestService","version=Unknown","buildDateTime=2024-03-03T15:51:55-05:00","testservice-8080-d8755f792d"],"Port":8080,"Address":"127.0.0.1","Meta":{"buildDateTime":"2024-03-03T15:51:55-05:00","context":"/test","contextPath":"/test","description":"Test Service","instanceUuid":"f7979b79-f365-413e-9a57-8e8c788bfc2e","name":"TestService","parent":"platform","serviceName":"testservice","type":"platform","version":"Unknown"},"Check":{"Interval":"1s","HTTP":"http://127.0.0.1:8080/test/admin/health","DeregisterCriticalServiceAfter":"15s"},"Checks":null}
         form: {}
         headers:
             Content-Type:
@@ -250,10 +250,12 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: -1
-        uncompressed: true
-        body: '[{"ID":"5f3a2831-d061-c469-49d9-d66bbd2b0a1b","Node":"e0aeb9526f77","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"NodeMeta":{"consul-network-segment":""},"ServiceKind":"","ServiceID":"testservice-8080-d8755f792d","ServiceName":"testservice","ServiceTags":["test1=true","test2=true","secure=false","contextPath=/test","instanceUuid=e78ccca2-2f64-4ae0-91eb-33f90cdf4951","managedMicroservice","componentAttributes=parent:\u003cnil\u003e~type:\u003cnil\u003e~serviceName:testservice~context:/test~name:\u003cnil\u003e~description:\u003cnil\u003e","name=\u003cnil\u003e","version=Unknown","buildDateTime=2024-01-05T14:28:23-05:00","testservice-8080-d8755f792d"],"ServiceAddress":"127.0.0.1","ServiceTaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8080},"wan_ipv4":{"Address":"127.0.0.1","Port":8080}},"ServiceWeights":{"Passing":1,"Warning":1},"ServiceMeta":{"buildDateTime":"2024-01-05T14:28:23-05:00","context":"/test","description":"\u003cnil\u003e","instanceUuid":"e78ccca2-2f64-4ae0-91eb-33f90cdf4951","name":"\u003cnil\u003e","parent":"\u003cnil\u003e","serviceName":"testservice","type":"\u003cnil\u003e","version":"Unknown"},"ServicePort":8080,"ServiceSocketPath":"","ServiceEnableTagOverride":false,"ServiceProxy":{"Mode":"","MeshGateway":{},"Expose":{}},"ServiceConnect":{},"CreateIndex":914981,"ModifyIndex":914981}]'
+        content_length: 1386
+        uncompressed: false
+        body: '[{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"NodeMeta":{"consul-network-segment":""},"ServiceKind":"","ServiceID":"testservice-8080-d8755f792d","ServiceName":"testservice","ServiceTags":["secure=false","test1=true","test2=true","instanceUuid=f7979b79-f365-413e-9a57-8e8c788bfc2e","name=testservice","contextPath=/test","componentAttributes=description:Test Service~parent:platform~type:platform~serviceName:testservice~context:/test~name:TestService","version=Unknown","buildDateTime=2024-03-03T15:51:55-05:00","testservice-8080-d8755f792d"],"ServiceAddress":"127.0.0.1","ServiceTaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8080},"wan_ipv4":{"Address":"127.0.0.1","Port":8080}},"ServiceWeights":{"Passing":1,"Warning":1},"ServiceMeta":{"buildDateTime":"2024-03-03T15:51:55-05:00","context":"/test","contextPath":"/test","description":"Test Service","instanceUuid":"f7979b79-f365-413e-9a57-8e8c788bfc2e","name":"TestService","parent":"platform","serviceName":"testservice","type":"platform","version":"Unknown"},"ServicePort":8080,"ServiceSocketPath":"","ServiceEnableTagOverride":false,"ServiceProxy":{"Mode":"","MeshGateway":{},"Expose":{}},"ServiceConnect":{},"CreateIndex":226112,"ModifyIndex":226112}]'
         headers:
+            Content-Length:
+                - "1386"
             Content-Type:
                 - application/json
             Date:
@@ -265,7 +267,7 @@ interactions:
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "914981"
+                - "226112"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -355,7 +357,7 @@ interactions:
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "914982"
+                - "226113"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:

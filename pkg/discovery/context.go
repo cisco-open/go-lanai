@@ -17,20 +17,36 @@
 package discovery
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
-    "strings"
-    "time"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils/matcher"
+	"strings"
+	"time"
 )
 
 const (
-	InstanceMetaKeyVersion     = "version"
-	InstanceMetaKeyContextPath = "context"
-	InstanceMetaKeySMCR        = "SMCR"
-	InstanceMetaKeySecure      = "secure"
-	//InstanceMetaKey = ""
+	FxGroup = "discovery"
+)
+
+const (
+	TagInstanceUUID        = `instanceUuid`
+	TagContextPath         = `contextPath`
+	TagComponentAttributes = `componentAttributes`
+	TagServiceName         = `name`
+	TagBuildVersion        = `version`
+	TagBuildNumber         = `buildNumber`
+	TagBuildDateTime       = `buildDateTime`
+	TagSecure              = `secure`
+
+	ComponentAttributeDelimiter         = `~`
+	ComponentAttributeKeyValueSeparator = `:`
+)
+
+const (
+	InstanceMetaKeyVersion     = `version`
+	InstanceMetaKeyContextPath = `context`
+	InstanceMetaKeySMCR        = `SMCR`
+	//InstanceMetaKey = ``
 )
 
 const (
@@ -44,14 +60,6 @@ const (
 var (
 	ErrInstancerStopped = fmt.Errorf("instancer is already stopped")
 )
-
-type ClientOptions func(opt *ClientConfig)
-
-type ClientConfig struct {
-	Logger          log.Logger
-	Verbose         bool
-	DefaultSelector InstanceMatcher
-}
 
 type Client interface {
 	Context() context.Context
@@ -226,25 +234,6 @@ func InstanceWithTagKV(key, value string, caseInsensitive bool) InstanceMatcher 
 			return false, nil
 		},
 	}
-}
-
-// InstanceWithProperties returns an InstanceMatcher that matches instances described in given selector properties
-// could return nil
-func InstanceWithProperties(props *SelectorProperties) InstanceMatcher {
-	matchers := make([]matcher.Matcher, 0, len(props.Tags) + len(props.Meta))
-	for _, tag := range props.Tags {
-		if len(tag) != 0 {
-			matchers = append(matchers, InstanceWithTag(tag, true))
-		}
-	}
-	for k, v := range props.Meta {
-		matchers = append(matchers, InstanceWithMetaKV(k, v))
-	}
-
-	if len(matchers) == 0 {
-		return nil
-	}
-	return matcher.And(matchers[0], matchers[1:]...)
 }
 
 // instanceMatcher implements InstanceMatcher and accept *Instance and Instance

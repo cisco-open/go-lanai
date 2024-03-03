@@ -17,28 +17,29 @@
 package authserver
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/discovery"
-    "github.com/cisco-open/go-lanai/pkg/redis"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/idp"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/grants"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/openid"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/revoke"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/common"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/tokenauth"
-    "github.com/cisco-open/go-lanai/pkg/security/passwd"
-    samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
-    "github.com/cisco-open/go-lanai/pkg/security/session"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/cisco-open/go-lanai/pkg/web/matcher"
-    "go.uber.org/fx"
-    "net/url"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/redis"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/config/compatibility"
+	"github.com/cisco-open/go-lanai/pkg/security/idp"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/grants"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/openid"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/revoke"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/common"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/tokenauth"
+	"github.com/cisco-open/go-lanai/pkg/security/passwd"
+	samlctx "github.com/cisco-open/go-lanai/pkg/security/saml"
+	"github.com/cisco-open/go-lanai/pkg/security/session"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
+	"go.uber.org/fx"
+	"net/url"
 )
 
 const (
@@ -65,7 +66,8 @@ type configDI struct {
 
 type authServerOut struct {
 	fx.Out
-	Config *Configuration
+	Config                  *Configuration
+	CompatibilityCustomizer discovery.ServiceRegistrationCustomizer `group:"discovery"`
 }
 
 //goland:noinspection GoExportedFuncWithUnexportedType
@@ -105,24 +107,19 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 	di.Configurer(&config)
 	return authServerOut{
 		Config: &config,
+		CompatibilityCustomizer: compatibility.CompatibilityDiscoveryCustomizer{},
 	}
 }
 
 type initDI struct {
 	fx.In
-	Config               *Configuration
-	WebRegistrar         *web.Registrar
-	SecurityRegistrar    security.Registrar
-	DiscoveryCustomizers *discovery.Customizers `optional:"true"`
+	Config            *Configuration
+	WebRegistrar      *web.Registrar
+	SecurityRegistrar security.Registrar
 }
 
 // ConfigureAuthorizationServer is the Configuration entry point
 func ConfigureAuthorizationServer(di initDI) {
-	// SMCR only applicable when discovery is on
-	if di.DiscoveryCustomizers != nil {
-		di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
-	}
-
 	// Securities
 	di.SecurityRegistrar.Register(&ClientAuthEndpointsConfigurer{config: di.Config})
 	di.SecurityRegistrar.Register(&TokenAuthEndpointsConfigurer{config: di.Config})

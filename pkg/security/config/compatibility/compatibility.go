@@ -14,12 +14,21 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package testdata
+package compatibility
 
-import "embed"
+import (
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/security"
+)
 
-//go:embed bootstrap-test.yml
-var TestBootstrapFS embed.FS
+// CompatibilityDiscoveryCustomizer implements discovery.ServiceRegistrationCustomizer
+type CompatibilityDiscoveryCustomizer struct {}
 
-//go:embed application-test.yml
-var TestApplicationFS embed.FS
+func (c CompatibilityDiscoveryCustomizer) Customize(_ context.Context, reg discovery.ServiceRegistration) {
+	tag := fmt.Sprintf("%s=%s", security.CompatibilityReferenceTag, security.CompatibilityReference)
+	reg.AddTags(tag)
+	reg.SetMeta(security.CompatibilityReferenceTag, security.CompatibilityReference)
+}
+

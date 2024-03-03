@@ -14,15 +14,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package discovery_test
+package consulsd_test
 
 import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"github.com/cisco-open/go-lanai/pkg/consul"
 	"github.com/cisco-open/go-lanai/pkg/discovery"
-	discoveryinit "github.com/cisco-open/go-lanai/pkg/discovery/init"
-	"github.com/cisco-open/go-lanai/pkg/discovery/init/testdata"
+	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd"
+	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd/testdata"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/cisco-open/go-lanai/test/consultest"
@@ -35,17 +35,18 @@ import (
 )
 
 const TestRegisterFuzzyJsonPathTags = `$.Tags`
+const TestRegisterFuzzyJsonPathMeta = `$.Meta`
 const TestServiceID = `testservice-8080-d8755f792d`
 
 /*************************
 	Test Setup
  *************************/
 
-func OverrideTestServiceID(customizers *discovery.Customizers) {
-	customizers.Add(discovery.CustomizerFunc(func(ctx context.Context, reg *api.AgentServiceRegistration) {
-		reg.ID = TestServiceID
-		reg.Tags = append(reg.Tags, TestServiceID)
-	}))
+func NewTestServiceIDOverrider() discovery.ServiceRegistrationCustomizer {
+	return discovery.ServiceRegistrationCustomizerFunc(func(ctx context.Context, reg discovery.ServiceRegistration) {
+		reg.SetID(TestServiceID)
+		reg.AddTags(TestServiceID)
+	})
 }
 
 /*************************
@@ -56,10 +57,10 @@ type TestModuleDI struct {
 	fx.In
 	Consul              *consul.Connection
 	AppContext          *bootstrap.ApplicationContext
-	DiscoveryProperties discovery.DiscoveryProperties
+	DiscoveryProperties consulsd.DiscoveryProperties
 	DiscoveryClient     discovery.Client
-	Registration        *api.AgentServiceRegistration
-	Customizers         *discovery.Customizers
+	Registration        discovery.ServiceRegistration
+	Registrar           discovery.ServiceRegistrar
 }
 
 func TestModuleInit(t *testing.T) {
@@ -71,13 +72,14 @@ func TestModuleInit(t *testing.T) {
 			// Note: tags may contains build time, should be ignored
 			consultest.MoreHTTPVCROptions(ittest.HttpRecordMatching(ittest.FuzzyJsonPaths(
 				TestRegisterFuzzyJsonPathTags,
+				TestRegisterFuzzyJsonPathMeta,
 			))),
 		),
 		apptest.WithBootstrapConfigFS(testdata.TestBootstrapFS),
 		apptest.WithConfigFS(testdata.TestApplicationFS),
-		apptest.WithModules(discoveryinit.Module),
+		apptest.WithModules(consulsd.Module),
 		apptest.WithFxOptions(
-			fx.Invoke(OverrideTestServiceID),
+			fx.Provide(fx.Annotate(NewTestServiceIDOverrider, fx.ResultTags(`group:"discovery"`))),
 		),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestVerifyRegistration(&di), "TestVerifyRegistration"),

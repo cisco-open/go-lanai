@@ -14,14 +14,24 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package discovery
+package consulsd
 
 import (
     "context"
     "fmt"
     "github.com/cisco-open/go-lanai/pkg/consul"
-    "sync"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"sync"
 )
+
+type ClientOptions func(opt *ClientConfig)
+
+type ClientConfig struct {
+	Logger          log.Logger
+	Verbose         bool
+	DefaultSelector discovery.InstanceMatcher
+}
 
 type consulDiscoveryClient struct {
 	ctx        context.Context
@@ -31,7 +41,7 @@ type consulDiscoveryClient struct {
 	config     ClientConfig
 }
 
-func NewConsulDiscoveryClient(ctx context.Context, conn *consul.Connection, opts ...ClientOptions) Client {
+func NewConsulDiscoveryClient(ctx context.Context, conn *consul.Connection, opts ...ClientOptions) discovery.Client {
 	if ctx == nil {
 		panic("creating ConsulDiscoveryClient with nil context")
 	}
@@ -56,7 +66,7 @@ func (c *consulDiscoveryClient) Context() context.Context {
 	return c.ctx
 }
 
-func (c *consulDiscoveryClient) Instancer(serviceName string) (Instancer, error) {
+func (c *consulDiscoveryClient) Instancer(serviceName string) (discovery.Instancer, error) {
 	if serviceName == "" {
 		return nil, fmt.Errorf("empty service name")
 	}

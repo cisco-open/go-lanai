@@ -21,6 +21,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/config/compatibility"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/common"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
@@ -32,17 +33,18 @@ type ResourceServerConfigurer func(*Configuration)
 
 type resServerConfigDI struct {
 	fx.In
-	AppContext           *bootstrap.ApplicationContext
-	RedisClientFactory   redis.ClientFactory
-	CryptoProperties     jwt.CryptoProperties
-	TimeoutSupport 	 	 oauth2.TimeoutApplier `optional:"true"`
-	Configurer           ResourceServerConfigurer
+	AppContext         *bootstrap.ApplicationContext
+	RedisClientFactory redis.ClientFactory
+	CryptoProperties   jwt.CryptoProperties
+	TimeoutSupport     oauth2.TimeoutApplier `optional:"true"`
+	Configurer         ResourceServerConfigurer
 }
 
 type resServerOut struct {
 	fx.Out
-	Config *Configuration
-	TokenStore oauth2.TokenStoreReader
+	Config                  *Configuration
+	TokenStore              oauth2.TokenStoreReader
+	CompatibilityCustomizer discovery.ServiceRegistrationCustomizer `group:"discovery"`
 }
 
 //goland:noinspection GoExportedFuncWithUnexportedType,HttpUrlsUsage
@@ -61,8 +63,9 @@ func ProvideResServerDI(di resServerConfigDI) resServerOut {
 	}
 	di.Configurer(&config)
 	return resServerOut{
-		Config: &config,
-		TokenStore: config.SharedTokenStoreReader(),
+		Config:                  &config,
+		TokenStore:              config.SharedTokenStoreReader(),
+		CompatibilityCustomizer: compatibility.CompatibilityDiscoveryCustomizer{},
 	}
 }
 
@@ -70,17 +73,11 @@ type resServerDI struct {
 	fx.In
 	Config               *Configuration
 	SecurityRegistrar    security.Registrar
-	DiscoveryCustomizers *discovery.Customizers `optional:"true"`
 }
 
 // ConfigureResourceServer configuration entry point
 func ConfigureResourceServer(di resServerDI) {
-	// SMCR only applicable when discovery is on
-	if di.DiscoveryCustomizers != nil {
-		di.DiscoveryCustomizers.Add(security.CompatibilityDiscoveryCustomizer)
-	}
-
-	// reigester token auth feature
+	// register token auth feature
 	configurer := tokenauth.NewTokenAuthConfigurer(func(opt *tokenauth.TokenAuthOption) {
 		opt.TokenStoreReader = di.Config.tokenStoreReader()
 	})
@@ -112,7 +109,7 @@ type Configuration struct {
 	sharedErrorHandler        *tokenauth.OAuth2ErrorHandler
 	sharedContextDetailsStore security.ContextDetailsStore
 	sharedJwtDecoder          jwt.JwtDecoder
-	timeoutSupport 			  oauth2.TimeoutApplier
+	timeoutSupport            oauth2.TimeoutApplier
 }
 
 func (c *Configuration) SharedTokenStoreReader() oauth2.TokenStoreReader {

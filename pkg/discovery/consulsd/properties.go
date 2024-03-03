@@ -14,13 +14,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package discovery
+package consulsd
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/pkg/errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/utils/matcher"
+	"github.com/pkg/errors"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -30,7 +32,9 @@ const (
 
 //goland:noinspection GoNameStartsWithPackageName
 type DiscoveryProperties struct {
+	HealthCheckScheme          string                    `json:"health-check-scheme"`
 	HealthCheckPath            string                    `json:"health-check-path"`
+	HealthCheckPort            int                       `json:"health-check-port"`
 	HealthCheckInterval        string                    `json:"health-check-interval"`
 	Tags                       utils.CommaSeparatedSlice `json:"tags"`
 	AclToken                   string                    `json:"acl-token"`
@@ -63,4 +67,23 @@ func BindDiscoveryProperties(ctx *bootstrap.ApplicationContext) DiscoveryPropert
 		panic(errors.Wrap(err, "failed to bind DiscoveryProperties"))
 	}
 	return *props
+}
+
+// InstanceWithProperties returns an InstanceMatcher that matches instances described in given selector properties
+// could return nil
+func InstanceWithProperties(props *SelectorProperties) discovery.InstanceMatcher {
+	matchers := make([]matcher.Matcher, 0, len(props.Tags)+len(props.Meta))
+	for _, tag := range props.Tags {
+		if len(tag) != 0 {
+			matchers = append(matchers, discovery.InstanceWithTag(tag, true))
+		}
+	}
+	for k, v := range props.Meta {
+		matchers = append(matchers, discovery.InstanceWithMetaKV(k, v))
+	}
+
+	if len(matchers) == 0 {
+		return nil
+	}
+	return matcher.And(matchers[0], matchers[1:]...)
 }

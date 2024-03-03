@@ -23,12 +23,12 @@ import (
 
 type provideDI struct {
 	fx.In
-	Config         *Configuration
+	Config *Configuration
 }
 
 type provideOut struct {
 	fx.Out
-	AccessRevoker       auth.AccessRevoker
+	AccessRevoker auth.AccessRevoker
 }
 
 func provide(di provideDI) provideOut {

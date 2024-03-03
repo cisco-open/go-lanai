@@ -14,21 +14,22 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package discovery
+package consulsd
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/consul"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "github.com/cisco-open/go-lanai/pkg/utils/loop"
-    "github.com/go-kit/kit/sd"
-    "github.com/hashicorp/consul/api"
-    "reflect"
-    "sort"
-    "sync"
-    "time"
+	"context"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/consul"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/utils/loop"
+	"github.com/go-kit/kit/sd"
+	"github.com/hashicorp/consul/api"
+	"reflect"
+	"sort"
+	"sync"
+	"time"
 )
 
 const (
@@ -41,35 +42,34 @@ type ConsulInstancerOption struct {
 	ServiceName      string
 	ConsulConnection *consul.Connection
 	Logger           log.Logger
-	Selector         InstanceMatcher
+	Selector         discovery.InstanceMatcher
 	Verbose          bool
 }
 
-// ConsulInstancer implements sd.Instancer and Instancer.
+// ConsulInstancer implements discovery.Instancer and sd.Instancer.
 // It yields service for a serviceName in Consul.
-// Note: implementing sd.Instancer is for compatibility reason, using it involves addtional Lock locking.
-//
-//	Try use Instancer's callback capability instead
+// See discovery.Instancer
+// Note: Implementing sd.Instancer is for compatibility reason, using it involves additional Lock locking. Try use instancer's callback capability instead
 type ConsulInstancer struct {
 	readyCond   *sync.Cond
 	cacheMtx    sync.RWMutex // RW Lock for cache
 	stateMtx    sync.RWMutex // RW Mutext for state, such as start/stop, callback/subscription update
 	consul      *consul.Connection
 	serviceName string
-	selector    InstanceMatcher
+	selector    discovery.InstanceMatcher
 	looper      *loop.Loop
 	loopCtx     context.Context
 	cancelFunc  context.CancelFunc
 	lastMeta    *api.QueryMeta
-	cache       ServiceCache
-	callbacks   map[interface{}]Callback
+	cache       discovery.ServiceCache
+	callbacks   map[interface{}]discovery.Callback
 	broadcaster *kitBroadcaster
 	logger      log.Logger
 	verbose     bool
 }
 
-// NewConsulInstancer returns a customized Consul instancer that publishes service for the
-// requested serviceName. It only returns service for which the passed tags are present.
+// NewConsulInstancer returns a discovery.Instancer with Consul service discovery APIs.
+// See discovery.Instancer
 func NewConsulInstancer(ctx context.Context, opts ...ConsulInstancerOptions) *ConsulInstancer {
 	opt := ConsulInstancerOption{}
 	for _, f := range opts {
@@ -82,8 +82,8 @@ func NewConsulInstancer(ctx context.Context, opts ...ConsulInstancerOptions) *Co
 		logger:      opt.Logger,
 		verbose:     opt.Verbose,
 		looper:      loop.NewLoop(),
-		cache:       newSimpleServiceCache(),
-		callbacks:   map[interface{}]Callback{},
+		cache:       discovery.NewSimpleServiceCache(),
+		callbacks:   map[interface{}]discovery.Callback{},
 		broadcaster: &kitBroadcaster{
 			chs: map[chan<- sd.Event]struct{}{},
 		},
@@ -98,7 +98,7 @@ func (i *ConsulInstancer) ServiceName() string {
 }
 
 // Service implements Instancer
-func (i *ConsulInstancer) Service() (svc *Service) {
+func (i *ConsulInstancer) Service() (svc *discovery.Service) {
 	// read lock only
 	i.cacheMtx.RLock()
 	defer i.cacheMtx.RUnlock()
@@ -106,7 +106,7 @@ func (i *ConsulInstancer) Service() (svc *Service) {
 }
 
 // Instances implements Instancer
-func (i *ConsulInstancer) Instances(matcher InstanceMatcher) (ret []*Instance, err error) {
+func (i *ConsulInstancer) Instances(matcher discovery.InstanceMatcher) (ret []*discovery.Instance, err error) {
 	// read lock only
 	i.cacheMtx.RLock()
 	defer i.cacheMtx.RUnlock()
@@ -114,7 +114,7 @@ func (i *ConsulInstancer) Instances(matcher InstanceMatcher) (ret []*Instance, e
 	svc := i.service()
 	if errors.Is(i.loopCtx.Err(), context.Canceled) {
 		// looper is stopped, we can't trust our cached result anymore
-		return []*Instance{}, ErrInstancerStopped
+		return []*discovery.Instance{}, discovery.ErrInstancerStopped
 	} else if svc.Err != nil {
 		err = svc.Err
 	}
@@ -137,7 +137,7 @@ func (i *ConsulInstancer) Start(ctx context.Context) {
 	)
 }
 
-func (i *ConsulInstancer) RegisterCallback(id interface{}, cb Callback) {
+func (i *ConsulInstancer) RegisterCallback(id interface{}, cb discovery.Callback) {
 	if id == nil || cb == nil {
 		return
 	}
@@ -192,7 +192,7 @@ func (i *ConsulInstancer) Deregister(ch chan<- sd.Event) {
 
 // service is not goroutine-safe and returns non-nil *Service.
 // It would wait until first resolveInstancesTask finished and *Service become available
-func (i *ConsulInstancer) service() (svc *Service) {
+func (i *ConsulInstancer) service() (svc *discovery.Service) {
 	for !i.cache.Has(i.serviceName) {
 		i.readyCond.Wait()
 	}
@@ -228,7 +228,7 @@ func (i *ConsulInstancer) resolveInstancesTask() loop.TaskFunc {
 
 func (i *ConsulInstancer) processResolvedServiceEntries(_ context.Context, entries []*api.ServiceEntry, err error) {
 	insts := makeInstances(entries, i.selector)
-	service := &Service{
+	service := &discovery.Service{
 		Name:  i.serviceName,
 		Insts: insts,
 		Time:  time.Now(),
@@ -268,7 +268,7 @@ func (i *ConsulInstancer) invokeCallbacks() {
 	}
 }
 
-func (i *ConsulInstancer) determineFirstErrTime(err error, old *Service) time.Time {
+func (i *ConsulInstancer) determineFirstErrTime(err error, old *discovery.Service) time.Time {
 	switch {
 	case err == nil:
 		// happy path, there is no new error, zero time
@@ -282,7 +282,7 @@ func (i *ConsulInstancer) determineFirstErrTime(err error, old *Service) time.Ti
 	}
 }
 
-func (i *ConsulInstancer) shouldNotify(new, old *Service) bool {
+func (i *ConsulInstancer) shouldNotify(new, old *discovery.Service) bool {
 	switch {
 	case old == nil && new == nil:
 		return false
@@ -298,7 +298,7 @@ func (i *ConsulInstancer) shouldNotify(new, old *Service) bool {
 		new.Err == nil && old.Err != nil
 }
 
-func (i *ConsulInstancer) logUpdate(new, old *Service) {
+func (i *ConsulInstancer) logUpdate(new, old *discovery.Service) {
 	if i.verbose {
 		i.verboseLog(new, old)
 	}
@@ -306,10 +306,10 @@ func (i *ConsulInstancer) logUpdate(new, old *Service) {
 	// for regular log, we only log if healthy service changes between 0 and non-zero
 	var before, now int
 	if old != nil {
-		before = old.InstanceCount(InstanceIsHealthy())
+		before = old.InstanceCount(discovery.InstanceIsHealthy())
 	}
 	if new != nil {
-		now = new.InstanceCount(InstanceIsHealthy())
+		now = new.InstanceCount(discovery.InstanceIsHealthy())
 	}
 	if before == 0 && now > 0 {
 		i.logger.Infof("service [%s] became available", i.serviceName)
@@ -318,7 +318,7 @@ func (i *ConsulInstancer) logUpdate(new, old *Service) {
 	}
 }
 
-func (i *ConsulInstancer) verboseLog(new, old *Service) {
+func (i *ConsulInstancer) verboseLog(new, old *discovery.Service) {
 	// verbose
 	if new.Err != nil && old.Err == nil {
 		i.logger.Infof("error when finding instances for service %s: %v", i.serviceName, new.Err)
@@ -363,14 +363,14 @@ func (b *kitBroadcaster) deregister(c chan<- sd.Event) {
 		Helpers
 	 **********************
 */
-func makeInstances(entries []*api.ServiceEntry, selector InstanceMatcher) []*Instance {
-	instances := make([]*Instance, 0)
+func makeInstances(entries []*api.ServiceEntry, selector discovery.InstanceMatcher) []*discovery.Instance {
+	instances := make([]*discovery.Instance, 0)
 	for _, entry := range entries {
 		addr := entry.Service.Address
 		if addr == "" {
 			addr = entry.Node.Address
 		}
-		inst := &Instance{
+		inst := &discovery.Instance{
 			ID:       entry.Service.ID,
 			Service:  entry.Service.Service,
 			Address:  addr,
@@ -393,7 +393,7 @@ func makeInstances(entries []*api.ServiceEntry, selector InstanceMatcher) []*Ins
 	return instances
 }
 
-func makeEvent(svc *Service) sd.Event {
+func makeEvent(svc *discovery.Service) sd.Event {
 	instances := make([]string, len(svc.Insts))
 	for i, inst := range svc.Insts {
 		instances[i] = fmt.Sprintf("%s:%d", inst.Address, inst.Port)
@@ -404,18 +404,18 @@ func makeEvent(svc *Service) sd.Event {
 	}
 }
 
-func parseHealth(entry *api.ServiceEntry) HealthStatus {
+func parseHealth(entry *api.ServiceEntry) discovery.HealthStatus {
 	switch status := entry.Checks.AggregatedStatus(); status {
 	case api.HealthPassing:
-		return HealthPassing
+		return discovery.HealthPassing
 	case api.HealthWarning:
-		return HealthWarning
+		return discovery.HealthWarning
 	case api.HealthCritical:
-		return HealthCritical
+		return discovery.HealthCritical
 	case api.HealthMaint:
-		return HealthMaintenance
+		return discovery.HealthMaintenance
 	default:
-		return HealthAny
+		return discovery.HealthAny
 	}
 }
 
@@ -438,10 +438,10 @@ type svcDiff struct {
 	unchanged,
 	updated,
 	added,
-	deleted []*Instance
+	deleted []*discovery.Instance
 }
 
-func diff(new, old *Service) (ret *svcDiff) {
+func diff(new, old *discovery.Service) (ret *svcDiff) {
 	ret = &svcDiff{}
 	switch {
 	case new == nil && old != nil:
@@ -450,7 +450,7 @@ func diff(new, old *Service) (ret *svcDiff) {
 	case new != nil && old == nil:
 		ret.added = new.Insts
 		for _, inst := range ret.added {
-			if inst.Health == HealthPassing {
+			if inst.Health == discovery.HealthPassing {
 				ret.healthy = append(ret.healthy, inst)
 			}
 		}
@@ -482,7 +482,7 @@ func diff(new, old *Service) (ret *svcDiff) {
 	}
 
 	for _, inst := range new.Insts {
-		if inst.Health == HealthPassing {
+		if inst.Health == discovery.HealthPassing {
 			ret.healthy = append(ret.healthy, inst)
 		}
 	}
