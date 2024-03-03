@@ -5,7 +5,7 @@ import (
 	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	consul "github.com/cisco-open/go-lanai/pkg/consul/init"
-	discovery "github.com/cisco-open/go-lanai/pkg/discovery/init"
+	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd"
 	opainit "github.com/cisco-open/go-lanai/pkg/opa/init"
 	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/pkg/security"
@@ -46,7 +46,7 @@ func Use() {
 	//cockroach.Use()
 
 	// service-to-service integration related
-	discovery.Use()
+	consulsd.Use()
 	//httpclient.Use()
 	//scope.Use()
 	//kafka.Use()
