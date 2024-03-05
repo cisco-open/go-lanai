@@ -32,6 +32,7 @@ CLI ?= lanai-cli
 
 INIT_TMP_DIR = $(TMP_DIR)/init
 CLI_GOMOD_FILE = $(INIT_TMP_DIR)/go.mod
+CLI_MOD_RELATIVE_PATH = $(shell $(GO) list -f='{{or .Replace ""}}' -m $(CLI_MOD))
 CLI_MOD_PATH ?= $(shell realpath `$(GO) list -f='{{or .Replace ""}}' -m $(CLI_MOD)`)
 
 ## Local Targets
@@ -65,13 +66,13 @@ init-ws:
 #		  e.g. CLI_MOD_PATH=./../go-lanai
 #		- CLI_TAG branch/tag to use to install "lanai-cli", typically same branch/tag of github.com/cisco-open/go-lanai
 #		  e.g. CLI_TAG=main
-ifneq ("$(wildcard $(CLI_MOD_PATH)/go.mod)","")
+ifneq ("$(and $(CLI_MOD_RELATIVE_PATH), $(wildcard $(CLI_MOD_PATH)/go.mod))", "")
 # For Contributors or Service Dev who have go-lanai checked out (either by-side or as parent) and have proper "replace" directive in go.mod
 init-cli: CLI_PKG = cmd/lanai-cli
 init-cli: CLI_PKG_PATH = $(CLI_MOD_PATH)/$(CLI_PKG)
-init-cli: CLI_VERSION = 0.0.0-$(shell cd $(CLI_MOD_PATH); date +"%Y%m%d%H%M%S")-$(shell $(GIT) rev-parse --short=12 HEAD || echo "SNAPSHOT")
+init-cli: CLI_VERSION = 0.0.0-$(shell date +"%Y%m%d%H%M%S")-$(shell cd $(CLI_MOD_PATH); $(GIT) rev-parse --short=12 HEAD || echo "SNAPSHOT")
 init-cli: print
-	@echo Installing $(CLI_MOD_PATH)/$(CLI_PKG)@$(CLI_VERSION) ...
+	@echo Installing $(CLI_PKG_PATH)@$(CLI_VERSION) including local modifications ...
 	@cd $(CLI_MOD_PATH); $(GO) install -ldflags="-X main.BuildVersion=$(CLI_VERSION)" $(CLI_PKG_PATH)
 
 else
@@ -94,8 +95,9 @@ init: init-cli
 	$(CLI) init -o ./ $(if $(filter true True TRUE,$(FORCE)),--force) $(if $(filter true True TRUE,$(UPGRADE)),--upgrade)
 
 print:
+	@echo "WORK_DIR:    $(WORK_DIR)"
 	@echo "CLI_VERSION:  $(CLI_VERSION)"
 	@echo "CLI_PKG_PATH: $(CLI_PKG_PATH)"
 	@echo "CLI_TAG:      $(CLI_TAG)"
+	@echo "CLI_MOD_RELATIVE_PATH: $(CLI_MOD_RELATIVE_PATH)"
 	@echo "CLI_MOD_PATH: $(CLI_MOD_PATH)"
-

@@ -114,7 +114,7 @@ func FindModule(ctx context.Context, opts []GoCmdOptions, modules ...string) ([]
 }
 
 func FindPackages(ctx context.Context, opts []GoCmdOptions, modules ...string) (map[string]*GoPackage, error) {
-	cmd := "go list -json"
+	cmd := "go list -json -find"
 	for _, f := range opts {
 		f(&cmd)
 	}
@@ -397,16 +397,10 @@ func prepareTargetGoModFile(ctx context.Context) (string, error) {
 	}
 
 	// drop invalid replace
-	replaces, e := DropInvalidReplace(ctx, GoCmdModFile(tmpModFile))
+	_, e := DropInvalidReplace(ctx, GoCmdModFile(tmpModFile))
 	if e != nil {
 		return "", fmt.Errorf("error when drop invalid replaces: %v", e)
 	}
 
-	// drop require as well (we don't need to to resolve local packages
-	for _, v := range replaces {
-		if e := DropRequire(ctx, v.Old.Path, GoCmdModFile(tmpModFile)); e != nil {
-			return "", fmt.Errorf("error when dropping require %s: %v", v.Old.Path, e)
-		}
-	}
 	return tmpModFile, nil
 }
