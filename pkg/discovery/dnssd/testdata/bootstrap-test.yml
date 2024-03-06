@@ -1,0 +1,10 @@
+application:
+  name: testservice
+
+cloud:
+  discovery:
+    dns:
+      addr: "8.8.8.8:53"
+      srv-name-template: "{{.ServiceName}}.test.mock"
+#      srv-proto: "_tcp"
+#      srv-service: "_http"

@@ -26,9 +26,10 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"go.uber.org/fx"
+	"io"
 )
 
-var logger = log.New("Consul.SD")
+var logger = log.New("SD.Consul")
 
 //go:embed defaults-discovery.yml
 var defaultConfigFS embed.FS
@@ -45,7 +46,7 @@ var Module = &bootstrap.Module{
 			NewServiceRegistrar,
 			provideRegistration,
 			provideDiscoveryClient),
-		fx.Invoke(registerService),
+		fx.Invoke(registerService, closeDiscoveryClient),
 	},
 }
 
@@ -77,7 +78,7 @@ func provideRegistration(di regDI) discovery.ServiceRegistration {
 }
 
 func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, conn *consul.Connection, props DiscoveryProperties) discovery.Client {
-	return NewConsulDiscoveryClient(ctx, conn, func(opt *ClientConfig) {
+	return NewDiscoveryClient(ctx, conn, func(opt *ClientConfig) {
 		opt.DefaultSelector = InstanceWithProperties(&props.DefaultSelector)
 	})
 }
@@ -92,4 +93,10 @@ func registerService(lc fx.Lifecycle, registrar discovery.ServiceRegistrar, regi
 			return registrar.Deregister(ctx, registration)
 		},
 	})
+}
+
+func closeDiscoveryClient(lc fx.Lifecycle, client discovery.Client) {
+	lc.Append(fx.StopHook(func(ctx context.Context) error {
+		return client.(io.Closer).Close()
+	}))
 }

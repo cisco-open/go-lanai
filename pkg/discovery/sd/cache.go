@@ -14,44 +14,45 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package discovery
+package sd
 
 import (
+	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"time"
 )
 
 // simpleServiceCache implements ServiceCache with map[string]*Service as a back storage
 // simpleServiceCache is not goroutine-safe
 type simpleServiceCache struct {
-	cache map[string]*Service
+	cache map[string]*discovery.Service
 	exp   map[string]time.Time
 }
 
 // NewSimpleServiceCache returns a ServiceCache with map[string]*Service as a back storage
 // This ServiceCache is not goroutine-safe
-func NewSimpleServiceCache() ServiceCache {
+func NewSimpleServiceCache() discovery.ServiceCache {
 	// prepare cache
 	return &simpleServiceCache{
-		cache: map[string]*Service{},
+		cache: map[string]*discovery.Service{},
 		exp:   map[string]time.Time{},
 	}
 }
 
-func (c *simpleServiceCache) Get(key string) *Service {
+func (c *simpleServiceCache) Get(key string) *discovery.Service {
 	if c.isExpired(key, time.Now()) {
 		return nil
 	}
 	return c.cache[key]
 }
 
-func (c *simpleServiceCache) Set(key string, svc *Service) *Service {
+func (c *simpleServiceCache) Set(key string, svc *discovery.Service) *discovery.Service {
 	existing := c.Get(key)
 	c.cache[key] = svc
 	return existing
 }
 
 
-func (c *simpleServiceCache) SetWithTTL(key string, svc *Service, ttl time.Duration) *Service {
+func (c *simpleServiceCache) SetWithTTL(key string, svc *discovery.Service, ttl time.Duration) *discovery.Service {
 	if ttl <= 0 {
 		return c.Set(key, svc)
 	}
@@ -66,8 +67,8 @@ func (c *simpleServiceCache) Has(key string) bool {
 	return v != nil
 }
 
-func (c *simpleServiceCache) Entries() map[string]*Service {
-	ret := make(map[string]*Service)
+func (c *simpleServiceCache) Entries() map[string]*discovery.Service {
+	ret := make(map[string]*discovery.Service)
 	now := time.Now()
 	for k, v := range c.cache {
 		if c.isExpired(k, now) {

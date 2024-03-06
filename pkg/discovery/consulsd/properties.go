@@ -27,7 +27,7 @@ import (
 
 //goland:noinspection GoNameStartsWithPackageName
 const (
-	DiscoveryPropertiesPrefix = "cloud.consul.discovery"
+	PropertiesPrefix = "cloud.consul.discovery"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -63,7 +63,7 @@ func NewDiscoveryProperties() *DiscoveryProperties {
 
 func BindDiscoveryProperties(ctx *bootstrap.ApplicationContext) DiscoveryProperties {
 	props := NewDiscoveryProperties()
-	if err := ctx.Config().Bind(props, DiscoveryPropertiesPrefix); err != nil {
+	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind DiscoveryProperties"))
 	}
 	return *props

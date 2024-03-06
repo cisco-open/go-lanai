@@ -14,11 +14,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package discovery
+package sd
 
 import (
     "context"
-    "github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/test"
     "github.com/onsi/gomega"
     . "github.com/onsi/gomega"
     "testing"
@@ -44,7 +45,7 @@ func SubTestSetWithTTL() test.GomegaSubTestFunc {
 		const name = `testservice`
 		var ttl = 250 * time.Millisecond
 		cache := NewSimpleServiceCache()
-		svc := &Service{
+		svc := &discovery.Service{
 			Name: name,
 			Time: time.Now(),
 		}
@@ -59,7 +60,7 @@ func SubTestSetWithTTL() test.GomegaSubTestFunc {
 	Helpers
  *************************/
 
-func AssertCacheEntry(g *gomega.WithT, cache ServiceCache, name string, expected bool) {
+func AssertCacheEntry(g *gomega.WithT, cache discovery.ServiceCache, name string, expected bool) {
 	if expected {
 		g.Expect(cache.Has(name)).To(BeTrue(), "cache.Has() should be correct")
 		g.Expect(cache.Get(name)).ToNot(BeNil(), "cache.Get() should be correct")

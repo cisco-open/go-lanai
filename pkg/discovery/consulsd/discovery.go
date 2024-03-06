@@ -36,12 +36,12 @@ type ClientConfig struct {
 type consulDiscoveryClient struct {
 	ctx        context.Context
 	conn       *consul.Connection
-	instancers map[string]*ConsulInstancer
+	instancers map[string]*Instancer
 	mutex      sync.Mutex
 	config     ClientConfig
 }
 
-func NewConsulDiscoveryClient(ctx context.Context, conn *consul.Connection, opts ...ClientOptions) discovery.Client {
+func NewDiscoveryClient(ctx context.Context, conn *consul.Connection, opts ...ClientOptions) discovery.Client {
 	if ctx == nil {
 		panic("creating ConsulDiscoveryClient with nil context")
 	}
@@ -49,7 +49,7 @@ func NewConsulDiscoveryClient(ctx context.Context, conn *consul.Connection, opts
 	client := consulDiscoveryClient{
 		ctx:        ctx,
 		conn:       conn,
-		instancers: map[string]*ConsulInstancer{},
+		instancers: map[string]*Instancer{},
 		config: ClientConfig{
 			Logger:  logger.WithContext(ctx),
 			Verbose: false,
@@ -77,9 +77,9 @@ func (c *consulDiscoveryClient) Instancer(serviceName string) (discovery.Instanc
 	if ok {
 		return instancer, nil
 	}
-	instancer = NewConsulInstancer(c.ctx, func(opt *ConsulInstancerOption) {
+	instancer = NewInstancer(c.ctx, func(opt *InstancerOption) {
 		opt.ConsulConnection = c.conn
-		opt.ServiceName = serviceName
+		opt.Name = serviceName
 		opt.Logger = c.config.Logger
 		opt.Verbose = c.config.Verbose
 		opt.Selector = c.config.DefaultSelector
