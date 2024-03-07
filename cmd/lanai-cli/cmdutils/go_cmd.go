@@ -397,9 +397,30 @@ func prepareTargetGoModFile(ctx context.Context) (string, error) {
 	}
 
 	// drop invalid replace
-	_, e := DropInvalidReplace(ctx, GoCmdModFile(tmpModFile))
+	replaces, e := DropInvalidReplace(ctx, GoCmdModFile(tmpModFile))
 	if e != nil {
 		return "", fmt.Errorf("error when drop invalid replaces: %v", e)
+	}
+
+	// drop require as well
+	// This is because when there is a "replace" directive in the go.mod, the go.sum
+	// file usually doesn't include the entries that were "replaced" by local copy.
+	// i.e. running "go mod tidy" on such a go.mod file will result in the replaced entry
+	// being removed from go.sum.
+	// When the go.sum is in this state, the result of the "go list" command depends on
+	// if the "replace" directive points to a valid local directory.
+	// If the local directory doesn't exist, the command will result in error.
+	// If the non-existent "replace" directive is dropped, but the "require" directive is not dropped,
+	// we would get an error complaining about the missing go.sum entry.
+	// Therefor we drop the "require" directive as well.
+	// This is ok because how we intend to use the resulting go.mod file.
+	// We will use this go.mod to find packages in the current service. So its dependencies are not important.
+	// However, we need to be careful to not use go commands that resolves dependencies.
+	// For example, in FindPackages we use the "-find" tag in the "go list -json -find" to not resolve dependencies.
+	for _, v := range replaces {
+		if e := DropRequire(ctx, v.Old.Path, GoCmdModFile(tmpModFile)); e != nil {
+			return "", fmt.Errorf("error when dropping require %s: %v", v.Old.Path, e)
+		}
 	}
 
 	return tmpModFile, nil
