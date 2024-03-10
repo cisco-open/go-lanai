@@ -66,7 +66,7 @@ func httpClientStartSpanHook(tracer opentracing.Tracer) httpclient.BeforeHook {
 			WithOptions(opts...).
 			DescendantOrNoSpan(ctx)
 	}
-	return httpclient.Before(order.Highest, fn)
+	return httpclient.BeforeHookWithOrder(order.Highest, httpclient.BeforeHookFunc(fn))
 }
 
 func httpClientTracePropagationHook(tracer opentracing.Tracer) httpclient.BeforeHook {
@@ -74,7 +74,7 @@ func httpClientTracePropagationHook(tracer opentracing.Tracer) httpclient.Before
 		reqFunc := kitopentracing.ContextToHTTP(tracer, logger.WithContext(ctx))
 		return reqFunc(ctx, request)
 	}
-	return httpclient.Before(order.Lowest, fn)
+	return httpclient.BeforeHookWithOrder(order.Lowest, httpclient.BeforeHookFunc(fn))
 }
 
 func httpClientFinishSpanHook(tracer opentracing.Tracer) httpclient.AfterHook {
@@ -83,5 +83,5 @@ func httpClientFinishSpanHook(tracer opentracing.Tracer) httpclient.AfterHook {
 			WithOptions(tracing.SpanTag("sc", response.StatusCode))
 		return op.FinishAndRewind(ctx)
 	}
-	return httpclient.After(order.Lowest, fn)
+	return httpclient.AfterHookWithOrder(order.Lowest, httpclient.AfterHookFunc(fn))
 }

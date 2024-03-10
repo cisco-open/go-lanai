@@ -17,38 +17,45 @@
 package httpclient
 
 import (
-    "bytes"
-    "context"
-    "encoding/base64"
-    "encoding/json"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    httptransport "github.com/go-kit/kit/transport/http"
-    "io"
-    "net/http"
-    "net/url"
-    "strings"
+	"bytes"
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
 )
 
+// CreateRequestFunc is a function to create http.Request with given context, method and target URL
+type CreateRequestFunc func(ctx context.Context, method string, target *url.URL) (*http.Request, error)
+
+// EncodeRequestFunc is a function to modify http.Request for encoding given value
+type EncodeRequestFunc func(ctx context.Context, req *http.Request, val interface{}) error
+
+// RequestOptions used to configure Request in NewRequest
 type RequestOptions func(r *Request)
 
 // Request is wraps all information about the request
 type Request struct {
-	Path       string
-	Method     string
-	Params     map[string]string
-	Headers    http.Header
-	Body       interface{}
-	EncodeFunc httptransport.EncodeRequestFunc
+	Path           string
+	Method         string
+	Params         map[string]string
+	Headers        http.Header
+	Body           interface{}
+	BodyEncodeFunc EncodeRequestFunc
+	CreateFunc     CreateRequestFunc
 }
 
 func NewRequest(path, method string, opts ...RequestOptions) *Request {
 	r := Request{
-		Path:       path,
-		Method:     method,
-		Params:     map[string]string{},
-		Headers:    http.Header{},
-		EncodeFunc: EncodeJSONRequest,
+		Path:           path,
+		Method:         method,
+		Params:         map[string]string{},
+		Headers:        http.Header{},
+		BodyEncodeFunc: EncodeJSONRequestBody,
+		CreateFunc:     defaultRequestCreateFunc,
 	}
 	for _, f := range opts {
 		f(&r)
@@ -56,22 +63,51 @@ func NewRequest(path, method string, opts ...RequestOptions) *Request {
 	return &r
 }
 
-func EncodeJSONRequest(c context.Context, r *http.Request, request interface{}) error {
-	if request == nil {
+func (r Request) encodeHTTPRequest(ctx context.Context, req *http.Request) error {
+	// set headers
+	for k := range r.Headers {
+		req.Header.Set(k, r.Headers.Get(k))
+	}
+
+	// set params
+	r.applyParams(req)
+
+	return r.BodyEncodeFunc(ctx, req, r.Body)
+}
+
+func (r Request) applyParams(req *http.Request) {
+	if len(r.Params) == 0 {
+		return
+	}
+
+	queries := make([]string, len(r.Params))
+	i := 0
+	for k, v := range r.Params {
+		queries[i] = k + "=" + url.QueryEscape(v)
+		i++
+	}
+	req.URL.RawQuery = strings.Join(queries, "&")
+}
+
+/**********************
+	Defaults
+ **********************/
+
+func EncodeJSONRequestBody(_ context.Context, r *http.Request, body interface{}) error {
+	if body == nil {
 		r.Body = nil
 		r.GetBody = nil
 		r.ContentLength = 0
 		return nil
 	}
-	r.Header.Set("Content-Type", "application/json; charset=utf-8")
-	if headerer, ok := request.(web.Headerer); ok {
-		for k := range headerer.Headers() {
-			r.Header.Set(k, headerer.Headers().Get(k))
-		}
+
+	if len(r.Header.Values(HeaderContentType)) == 0 {
+		r.Header.Set(HeaderContentType, MediaTypeJson)
 	}
+
 	var b bytes.Buffer
 	r.Body = io.NopCloser(&b)
-	err := json.NewEncoder(&b).Encode(request)
+	err := json.NewEncoder(&b).Encode(body)
 	if err != nil {
 		return err
 	}
@@ -85,27 +121,33 @@ func EncodeJSONRequest(c context.Context, r *http.Request, request interface{}) 
 	return nil
 }
 
-func effectiveEncodeFunc(ctx context.Context, req *http.Request, val interface{}) error {
-	var r *Request
-	switch v := val.(type) {
-	case *Request:
-		r = v
-	case Request:
-		r = &v
-	default:
-		return NewRequestSerializationError(fmt.Errorf("request encoder expects *Request but got %T", val))
+func EncodeURLEncodedRequestBody(_ context.Context, r *http.Request, body interface{}) error {
+	values, ok := body.(url.Values)
+	if !ok {
+		return NewRequestSerializationError(fmt.Errorf("www-form-urlencoded body expects url.Values but got %T", body))
 	}
 
-	// set headers
-	for k := range r.Headers {
-		req.Header.Set(k, r.Headers.Get(k))
+	if len(r.Header.Values(HeaderContentType)) == 0 {
+		r.Header.Set(HeaderContentType, MediaTypeFormUrlEncoded)
 	}
 
-	// set params
-	applyParams(req, r.Params)
-
-	return r.EncodeFunc(ctx, req, r.Body)
+	encoded := values.Encode()
+	r.GetBody = func() (io.ReadCloser, error) {
+		r := strings.NewReader(encoded)
+		return io.NopCloser(r), nil
+	}
+	r.Body, _ = r.GetBody()
+	r.ContentLength = int64(len(encoded))
+	return nil
 }
+
+func defaultRequestCreateFunc(ctx context.Context, method string, target *url.URL) (*http.Request, error) {
+	return http.NewRequestWithContext(ctx, method, target.String(), nil)
+}
+
+/**********************
+	Request Options
+ **********************/
 
 func WithoutHeader(key string) RequestOptions {
 	switch {
@@ -150,9 +192,21 @@ func WithBody(body interface{}) RequestOptions {
 	}
 }
 
-func WithRequestEncodeFunc(enc httptransport.EncodeRequestFunc) RequestOptions {
+func WithRequestBodyEncoder(enc EncodeRequestFunc) RequestOptions {
 	return func(r *Request) {
-		r.EncodeFunc = enc
+		r.BodyEncodeFunc = enc
+		if r.BodyEncodeFunc == nil {
+			r.BodyEncodeFunc = EncodeJSONRequestBody
+		}
+	}
+}
+
+func WithRequestCreator(enc CreateRequestFunc) RequestOptions {
+	return func(r *Request) {
+		r.CreateFunc = enc
+		if r.CreateFunc == nil {
+			r.CreateFunc = defaultRequestCreateFunc
+		}
 	}
 }
 
@@ -164,35 +218,15 @@ func WithBasicAuth(username, password string) RequestOptions {
 }
 
 func WithUrlEncodedBody(body url.Values) RequestOptions {
+	return mergeRequestOptions(WithBody(body), WithRequestBodyEncoder(EncodeURLEncodedRequestBody))
+}
+
+func mergeRequestOptions(opts...RequestOptions) RequestOptions {
 	return func(r *Request) {
-		r.Headers.Set(HeaderContentType, MediaTypeFormUrlEncoded)
-		r.Body = body
-		r.EncodeFunc = urlEncodedBodyEncoder
+		for _, fn := range opts {
+			fn(r)
+		}
 	}
-}
-
-func urlEncodedBodyEncoder(_ context.Context, r *http.Request, v interface{}) error {
-	values, ok := v.(url.Values)
-	if !ok {
-		return NewRequestSerializationError(fmt.Errorf("www-form-urlencoded body expects url.Values but got %T", v))
-	}
-	reader := strings.NewReader(values.Encode())
-	r.Body = io.NopCloser(reader)
-	return nil
-}
-
-func applyParams(req *http.Request, params map[string]string) {
-	if len(params) == 0 {
-		return
-	}
-
-	queries := make([]string, len(params))
-	i := 0
-	for k, v := range params {
-		queries[i] = k + "=" + url.QueryEscape(v)
-		i++
-	}
-	req.URL.RawQuery = strings.Join(queries, "&")
 }
 
 func noop() func(r *Request) {

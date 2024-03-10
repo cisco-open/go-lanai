@@ -64,7 +64,6 @@ func NewInstancer(ctx context.Context, opts ...InstancerOptions) (*Instancer, er
 			*baseOpt = opt.InstancerOption
 		}),
 		resolver: &net.Resolver{
-			PreferGo: true,
 			Dial:     dial,
 		},
 		srvTarget:  target,

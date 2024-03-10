@@ -21,10 +21,8 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/pkg/utils"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/sd"
-	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -40,7 +38,7 @@ type Client interface {
 	// The returned client is responsible to track service instance changes with help of discovery package,
 	// and to perform load-balancing and retrying.
 	// The returned client is goroutine-safe and can be reused
-	WithService(service string, selectors ...discovery.InstanceMatcher) (Client, error)
+	WithService(service string, selectors ...SDOptions) (Client, error)
 
 	// WithBaseUrl create a client with specific base URL.
 	// The returned client is responsible to perform retrying.
@@ -49,7 +47,7 @@ type Client interface {
 
 	// WithConfig create a shallow copy of the client with specified config.
 	// Service (with LB) or BaseURL cannot be changed with this method.
-	// If non-primitive field of provided config is zero value, this value is not applied.
+	// If any field of provided config is zero value, this value is not applied.
 	// The returned client is goroutine-safe and can be reused
 	WithConfig(config *ClientConfig) Client
 }
@@ -60,6 +58,7 @@ type ClientOptions func(opt *ClientOption)
 // ClientOption carries initial configurations of Clients
 type ClientOption struct {
 	ClientConfig
+	SDClient           discovery.Client
 	DefaultSelector    discovery.InstanceMatcher
 	DefaultBeforeHooks []BeforeHook
 	DefaultAfterHooks  []AfterHook
@@ -67,13 +66,27 @@ type ClientOption struct {
 
 // ClientConfig is used to change Client's config
 type ClientConfig struct {
-	HTTPClient  *http.Client // underlying http.Client to use
+	// HTTPClient underlying http.Client to use
+	HTTPClient *http.Client
+	// BeforeHooks hooks to use before sending HTTP request
 	BeforeHooks []BeforeHook
-	AfterHooks  []AfterHook
-	MaxRetries  int // negative value means no retry
-	Timeout     time.Duration
-	Logger      log.ContextualLogger
-	Logging     LoggingConfig
+	// AfterHooks hooks to use before sending HTTP request
+	AfterHooks []AfterHook
+	// MaxRetries number of retries in case of error. Negative value means no retry.
+	// Note: by default, non-2XX response status code error is not retried
+	MaxRetries int
+	// RetryBackoff time to wait between retries. Negative means retry immediately
+	RetryBackoff time.Duration
+	// RetryCallback allows fine control when and how to retry.
+	// If set, this override MaxRetries and RetryBackoff
+	RetryCallback RetryCallback
+	// Timeout how long to wait for each execution.
+	// Note: this is total duration including RetryBackoff between each attempt, not per-retry timeout.
+	Timeout time.Duration
+	// Logger used for logging request/response
+	Logger log.ContextualLogger
+	// Logging configuration of request/response logging
+	Logging LoggingConfig
 }
 
 type LoggingConfig struct {
@@ -88,20 +101,26 @@ type ClientCustomizer interface {
 }
 
 type ClientCustomizerFunc func(opt *ClientOption)
+
 func (fn ClientCustomizerFunc) Customize(opt *ClientOption) {
 	fn(opt)
 }
 
-// BeforeHook is used for ClientConfig and ClientOptions, the RequestFunc is invoked before request is sent
-// implementing class could also implement order.Ordered interface. Highest order is invoked first
-type BeforeHook interface {
-	RequestFunc() httptransport.RequestFunc
+// Hook is used for intercepting is used for ClientConfig and ClientOptions,
+type Hook interface {
+	// Before is invoked after the HTTP request is encoded and before the request is sent.
+	// The implementing class could also implement order.Ordered interface. Highest order is invoked first
+	Before(context.Context, *http.Request) context.Context
+	// After is invoked after HTTP response is returned and before the response is decoded.
+	// The implementing class could also implement order.Ordered interface. Highest order is invoked first
+	After(context.Context, *http.Response) context.Context
 }
 
-// AfterHook is used for ClientConfig and ClientOptions, the ResponseFunc is invoked after response is returned
-// implementing class could also implement order.Ordered interface. Highest order is invoked first
-type AfterHook interface {
-	ResponseFunc() httptransport.ClientResponseFunc
+// BeforeHook is used for ClientConfig and ClientOptions,
+// The implementing class could also implement order.Ordered interface. Highest order is invoked first
+type BeforeHook interface {
+	// Before is invoked after the HTTP request is encoded and before the request is sent.
+	Before(context.Context, *http.Request) context.Context
 }
 
 // ConfigurableBeforeHook is an additional interface that BeforeHook can implement
@@ -109,20 +128,26 @@ type ConfigurableBeforeHook interface {
 	WithConfig(cfg *ClientConfig) BeforeHook
 }
 
+// AfterHook is used for ClientConfig and ClientOptions,
+// The implementing class could also implement order.Ordered interface. Highest order is invoked first
+type AfterHook interface {
+	// After is invoked after HTTP response is returned and before the response is decoded.
+	After(context.Context, *http.Response) context.Context
+}
+
 // ConfigurableAfterHook is an additional interface that AfterHook can implement
 type ConfigurableAfterHook interface {
 	WithConfig(cfg *ClientConfig) AfterHook
 }
 
-// EndpointFactory takes a instance descriptor and create endpoint.Endpoint
-// Supported instance type could be :
-//		- *discovery.Instance
-//		- *url.URL as base url
-type EndpointFactory func(instDesp interface{}) (endpoint.Endpoint, error)
+type TargetResolver interface {
+	Resolve(ctx context.Context, req *Request) (*url.URL, error)
+}
 
-type Endpointer interface {
-	sd.Endpointer
-	WithConfig(config *EndpointerConfig) Endpointer
+type TargetResolverFunc func(ctx context.Context, req *Request) (*url.URL, error)
+
+func (fn TargetResolverFunc) Resolve(ctx context.Context, req *Request) (*url.URL, error) {
+	return fn(ctx, req)
 }
 
 /************************
@@ -183,6 +208,17 @@ func mergeConfig(dst *ClientConfig, src *ClientConfig) {
 		dst.MaxRetries = 0
 	case dst.MaxRetries == 0:
 		dst.MaxRetries = src.MaxRetries
+	}
+
+	switch {
+	case dst.RetryBackoff < 0:
+		dst.RetryBackoff = 0
+	case dst.RetryBackoff == 0:
+		dst.RetryBackoff = src.RetryBackoff
+	}
+
+	if dst.RetryCallback == nil {
+		dst.RetryCallback = src.RetryCallback
 	}
 
 	if dst.Logging.SanitizeHeaders == nil {

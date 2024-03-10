@@ -105,10 +105,8 @@ func (i *InstancerMock) MockInstances(count int, opts ...InstanceMockOptions) []
 			Service:  i.SName,
 			Address:  "127.0.0.1",
 			Port:     utils.RandomIntN(32767) + 32768,
-			Tags:     []string{"secure=false","version=mock"},
-			Meta:     map[string]string{
-				"version": "mock",
-			},
+			Tags:     []string{},
+			Meta:     map[string]string{},
 			Health:   discovery.HealthPassing,
 		}
 		for _, fn := range opts {

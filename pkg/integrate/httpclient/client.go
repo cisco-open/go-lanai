@@ -17,17 +17,12 @@
 package httpclient
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/discovery"
-    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
-    "github.com/cisco-open/go-lanai/pkg/utils/order"
-    "github.com/go-kit/kit/endpoint"
-    "github.com/go-kit/kit/sd/lb"
-    httptransport "github.com/go-kit/kit/transport/http"
-    "net/url"
-    "path"
+	"context"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"time"
 )
 
 var (
@@ -41,77 +36,72 @@ type clientDefaults struct {
 }
 
 type client struct {
-	defaults   *clientDefaults
-	config     *ClientConfig
-	discClient discovery.Client
-	endpointer Endpointer
-	options    []httptransport.ClientOption
+	defaults *clientDefaults
+	config   *ClientConfig
+	sdClient discovery.Client
+	before   []BeforeHook
+	after    []AfterHook
+	resolver TargetResolver
 }
 
-func newClient(discClient discovery.Client, opts ...ClientOptions) Client {
+func NewClient(opts ...ClientOptions) Client {
 	config := DefaultConfig()
 	opt := ClientOption{
 		ClientConfig:       *config,
 		DefaultSelector:    discovery.InstanceIsHealthy(),
-		DefaultBeforeHooks: []BeforeHook{HookRequestLogger(config.Logger, &config.Logging)},
-		DefaultAfterHooks:  []AfterHook{HookResponseLogger(config.Logger, &config.Logging)},
+		DefaultBeforeHooks: []BeforeHook{HookRequestLogger(config)},
+		DefaultAfterHooks:  []AfterHook{HookResponseLogger(config)},
 	}
 	for _, f := range opts {
 		f(&opt)
 	}
 
-	ret := &client {
-		config: &opt.ClientConfig,
-		discClient: discClient,
+	ret := &client{
+		config:   &opt.ClientConfig,
+		sdClient: opt.SDClient,
 		defaults: &clientDefaults{
 			selector: opt.DefaultSelector,
-			before: opt.DefaultBeforeHooks,
-			after: opt.DefaultAfterHooks,
+			before:   opt.DefaultBeforeHooks,
+			after:    opt.DefaultAfterHooks,
 		},
 	}
 	ret.updateConfig(&opt.ClientConfig)
 	return ret
 }
 
-func (c *client) WithService(service string, selectors ...discovery.InstanceMatcher) (Client, error) {
-	instancer, e := c.discClient.Instancer(service)
+func (c *client) WithService(service string, opts ...SDOptions) (Client, error) {
+	if c.sdClient == nil {
+		return nil, NewNoEndpointFoundError("cannot create client with service name: service discovery client is not configured")
+	}
+
+	instancer, e := c.sdClient.Instancer(service)
 	if e != nil {
 		return nil, NewNoEndpointFoundError("cannot create client with service name: %v", e)
 	}
 
-	// determine selector
-	effectiveSelector := c.defaults.selector
-	if len(selectors) != 0 {
-		matchers := make([]matcher.Matcher, len(selectors))
-		for i, m := range selectors {
-			matchers[i] = m
-		}
-		effectiveSelector = matcher.And(matchers[0], matchers[1:]...)
-	}
-
-	endpointer, e := NewKitEndpointer(instancer, func(opts *EndpointerOption) {
-		opts.ServiceName = service
-		opts.Selector = effectiveSelector
+	defaultOpts := func(opts *SDOption) {
+		opts.Selector = c.defaults.selector
 		opts.InvalidateOnError = true
-		opts.Logger = c.config.Logger
-	})
+	}
+	opts = append([]SDOptions{defaultOpts}, opts...)
+	targetResolver, e := NewSDTargetResolver(instancer, opts...)
 	if e != nil {
 		return nil, NewNoEndpointFoundError("cannot create client with service name: %v", e)
 	}
 
 	cp := c.shallowCopy()
-	cp.endpointer = endpointer
+	cp.resolver = targetResolver
 	return cp.WithConfig(defaultServiceConfig()), nil
 }
 
 func (c *client) WithBaseUrl(baseUrl string) (Client, error) {
-	endpointer, e := NewSimpleEndpointer(baseUrl)
+	endpointer, e := NewStaticTargetResolver(baseUrl)
 	if e != nil {
 		return nil, NewNoEndpointFoundError("cannot create client with base URL: %v", e)
 	}
 
 	cp := c.shallowCopy()
-	cp.endpointer = endpointer
+	cp.resolver = endpointer
 	return cp.WithConfig(defaultExtHostConfig()), nil
 }
 
@@ -132,15 +122,13 @@ func (c *client) Execute(ctx context.Context, request *Request, opts ...Response
 	// apply fallback options
 	fallbackResponseOptions(&opt)
 
-	// create endpoint
-	epConfig := EndpointerConfig{
-		EndpointFactory: c.makeEndpointFactory(ctx, request, &opt),
+	// execute
+	executor := c.executor(request, c.resolver, opt.decodeFunc)
+	retryCB := c.config.RetryCallback
+	if retryCB == nil {
+		retryCB = c.retryCallback()
 	}
-	b := lb.NewRoundRobin(c.endpointer.WithConfig(&epConfig))
-	ep := lb.RetryWithCallback(c.config.Timeout, b, c.retryCallback(c.config.MaxRetries))
-
-	// execute endpoint and handle error
-	resp, e := ep(ctx, request)
+	resp, e := executor.Try(ctx, c.config.Timeout, retryCB)
 	if e != nil {
 		err = c.translateError(request, e)
 	}
@@ -161,117 +149,87 @@ func (c *client) Execute(ctx context.Context, request *Request, opts ...Response
 
 // retryCallback is a retry control func.
 // It keep trying in case that error is not ErrorTypeResponse and not reached max value
-func (c *client) retryCallback(max int) lb.Callback {
-	return func(n int, received error) (keepTrying bool, replacement error) {
-		return n < max && !errors.Is(received, ErrorTypeResponse), nil
+func (c *client) retryCallback() RetryCallback {
+	return func(n int, rs interface{}, err error) (bool, time.Duration) {
+		return n < c.config.MaxRetries && !errors.Is(err, ErrorTypeResponse), c.config.RetryBackoff
 	}
 }
 
-//nolint:errorlint
-func (c *client) translateError(req *Request, err error) *Error {
-	switch retry := err.(type) {
-	case lb.RetryError:
-		err = retry.Final
-	case *lb.RetryError:
-		err = retry.Final
-	}
-
+func (c *client) translateError(req *Request, err error) (ret *Error) {
 	switch {
-	case errors.Is(err, ErrorCategoryHttpClient):
-		return err.(*Error)
-	case err == context.Canceled:
+	case errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded):
 		e := fmt.Errorf("remote HTTP call [%s] %s timed out after %v", req.Method, req.Path, c.config.Timeout)
 		return NewServerTimeoutError(e)
-	case err == lb.ErrNoEndpoints:
-		e := fmt.Errorf("remote HTTP call [%s] %s: no endpoints available", req.Method, req.Path)
-		return NewNoEndpointFoundError(e)
+	case errors.Is(err, ErrorSubTypeDiscovery):
+		errors.As(err, &ret)
+		return ret.WithMessage("remote HTTP call [%s] %s: no endpoints available", req.Method, req.Path)
+	case errors.Is(err, ErrorCategoryHttpClient):
+		errors.As(err, &ret)
+		return
 	default:
 		e := fmt.Errorf("uncategrized remote HTTP call [%s] %s error: %v", req.Method, req.Path, err)
 		return NewInternalError(e)
 	}
 }
 
-func (c *client) makeEndpointFactory(_ context.Context, req *Request, opt *responseOption) EndpointFactory {
-	return func(instDesp interface{}) (endpoint.Endpoint, error) {
-		switch inst := instDesp.(type) {
-		case *discovery.Instance:
-			return c.endpoint(inst, req, opt)
-		case discovery.Instance:
-			return c.endpoint(&inst, req, opt)
-		case *url.URL:
-			return c.simpleEndpoint(inst, req, opt)
-		case url.URL:
-			return c.simpleEndpoint(&inst, req, opt)
-		default:
-			return nil, NewInternalError("endpoint is not properly configured: endpoint factory doesn't support instance descriptor %T", instDesp)
-		}
-	}
-}
-
-func (c *client) endpoint(inst *discovery.Instance, req *Request, opt *responseOption) (endpoint.Endpoint, error) {
-	ctxPath := ""
-	if inst.Meta != nil {
-		ctxPath = inst.Meta[discovery.InstanceMetaKeyContextPath]
-	}
-
-	scheme := "https"
-	if m, e := insecureInstanceMatcher.Matches(inst); m && e == nil {
-		scheme = "http"
-	}
-	uri := &url.URL{
-		Scheme: scheme,
-		Host: fmt.Sprintf("%s:%d", inst.Address, inst.Port),
-		Path: path.Clean(fmt.Sprintf("%s%s", ctxPath, req.Path)),
-	}
-
-	cl := httptransport.NewClient(req.Method, uri, effectiveEncodeFunc, opt.decodeFunc, c.options...)
-
-	return cl.Endpoint(), nil
-}
-
-func (c *client) simpleEndpoint(baseUrl *url.URL, req *Request, opt *responseOption) (endpoint.Endpoint, error) {
-	// make a copy first
-	uri := *baseUrl
-	// join path
-	uri.Path = path.Clean(path.Join(baseUrl.Path, req.Path))
-	cl := httptransport.NewClient(req.Method, &uri, effectiveEncodeFunc, opt.decodeFunc, c.options...)
-
-	return cl.Endpoint(), nil
-}
-
 func (c *client) updateConfig(config *ClientConfig) {
 	c.config = config
-	c.options = make([]httptransport.ClientOption, 0)
 
-	if config.HTTPClient != nil {
-		c.options = append(c.options, httptransport.SetClient(config.HTTPClient))
-	}
-
-	before := append(c.defaults.before, config.BeforeHooks...)
-	order.SortStable(before, order.OrderedFirstCompare)
-	for _, h := range before {
-		if configurable, ok := h.(ConfigurableBeforeHook); ok {
-			h = configurable.WithConfig(config)
+	c.before = make([]BeforeHook, len(c.defaults.before)+len(config.BeforeHooks))
+	copy(c.before, c.defaults.before)
+	copy(c.before[len(c.defaults.before):], config.BeforeHooks)
+	for i := range c.before {
+		if configurable, ok := c.before[i].(ConfigurableBeforeHook); ok {
+			c.before[i] = configurable.WithConfig(config)
 		}
-		c.options = append(c.options, httptransport.ClientBefore(h.RequestFunc()))
 	}
+	order.SortStable(c.before, order.OrderedFirstCompare)
 
-	after := append(c.defaults.after, config.AfterHooks...)
-	order.SortStable(after, order.OrderedFirstCompare)
-	for _, h := range after {
-		if configurable, ok := h.(ConfigurableAfterHook); ok {
-			h = configurable.WithConfig(config)
+	c.after = make([]AfterHook, len(c.defaults.after)+len(config.AfterHooks))
+	copy(c.after, c.defaults.after)
+	copy(c.after[len(c.defaults.after):], config.AfterHooks)
+	for i := range c.after {
+		if configurable, ok := c.after[i].(ConfigurableAfterHook); ok {
+			c.after[i] = configurable.WithConfig(config)
 		}
-		c.options = append(c.options, httptransport.ClientAfter(h.ResponseFunc()))
 	}
+	order.SortStable(c.after, order.OrderedFirstCompare)
 }
 
 func (c *client) shallowCopy() *client {
-	return &client {
-		config: c.config,
-		discClient: c.discClient,
-		endpointer: c.endpointer,
-		options: c.options,
-		defaults: c.defaults,
+	cpy := *c
+	return &cpy
+}
+
+func (c *client) executor(request *Request, resolver TargetResolver, dec DecodeResponseFunc) Retryable {
+	return func(ctx context.Context) (interface{}, error) {
+		target, e := resolver.Resolve(ctx, request)
+		if e != nil {
+			return nil, e
+		}
+
+		req, e := request.CreateFunc(ctx, request.Method, target)
+		if e != nil {
+			return nil, e
+		}
+
+		if e := request.encodeHTTPRequest(ctx, req); e != nil {
+			return nil, e
+		}
+
+		for _, hook := range c.before {
+			ctx = hook.Before(ctx, req)
+		}
+
+		resp, e := c.config.HTTPClient.Do(req.WithContext(ctx))
+		if e != nil {
+			return nil, e
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		for _, hook := range c.after {
+			ctx = hook.After(ctx, resp)
+		}
+		return dec(ctx, resp)
 	}
 }

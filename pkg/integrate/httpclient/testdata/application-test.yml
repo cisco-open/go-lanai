@@ -11,13 +11,26 @@ mocks:
       - ID: 0-mock-inst
         Address: 127.0.0.1
         Port: 0
-        Tags: [""]
+        Tags: ["secure=false", "version=mock"]
         Meta:
+          version: "mock"
           context: ${server.context-path}
       - ID: 1-mock-inst
         Address: 127.0.0.1
         Port: 8080
         Health: 3 # HealthCritical
-        Tags: [ "bad instance" ]
+        Tags: [ "secure=false", "version=mock", "bad instance" ]
         Meta:
+          version: "mock"
           context: ${server.context-path}
+    mockedserver-port-only:
+      - ID: 0-mock-inst
+        Address: 127.0.0.1
+        Port: 0
+    mockedserver-no-info:
+      - ID: 0-mock-inst
+        Address: 127.0.0.1
+        Port: 0
+
+
+

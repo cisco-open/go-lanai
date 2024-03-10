@@ -29,7 +29,7 @@ import (
 var logger = log.New("HttpClient")
 
 var Module = &bootstrap.Module{
-	Name: "http-client",
+	Name:       "http-client",
 	Precedence: bootstrap.HttpClientPrecedence,
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
@@ -57,12 +57,13 @@ func FxClientCustomizers(providers ...interface{}) []fx.Annotated {
 type clientDI struct {
 	fx.In
 	Properties  HttpClientProperties
-	DiscClient  discovery.Client
+	DiscClient  discovery.Client   `optional:"true"`
 	Customizers []ClientCustomizer `group:"http-client"`
 }
 
 func provideHttpClient(di clientDI) Client {
 	options := []ClientOptions{func(opt *ClientOption) {
+		opt.SDClient = di.DiscClient
 		opt.MaxRetries = di.Properties.MaxRetries
 		opt.Timeout = time.Duration(di.Properties.Timeout)
 		opt.Logging.Level = di.Properties.Logger.Level
@@ -74,5 +75,5 @@ func provideHttpClient(di clientDI) Client {
 		options = append(options, customizer.Customize)
 	}
 
-	return newClient(di.DiscClient, options...)
+	return NewClient(options...)
 }

@@ -19,13 +19,15 @@ package httpclient
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	httptransport "github.com/go-kit/kit/transport/http"
 	"io"
 	"mime"
 	"net/http"
 	"reflect"
 )
+
+type DecodeResponseFunc func(context.Context, *http.Response) (response interface{}, err error)
 
 type Response struct {
 	StatusCode int
@@ -39,7 +41,7 @@ type ResponseOptions func(opt *responseOption)
 type responseOption struct {
 	body       interface{}
 	errBody    ErrorResponseBody
-	decodeFunc httptransport.DecodeResponseFunc
+	decodeFunc DecodeResponseFunc
 }
 
 func fallbackResponseOptions(opt *responseOption) {
@@ -70,14 +72,13 @@ func JsonErrorBody(errBody ErrorResponseBody) ResponseOptions {
 
 // CustomResponseDecoder returns a ResponseOptions that specify custom decoding function of http.Response
 // this options overwrite JsonBody and JsonErrorBody
-func CustomResponseDecoder(dec httptransport.DecodeResponseFunc) ResponseOptions {
+func CustomResponseDecoder(dec DecodeResponseFunc) ResponseOptions {
 	return func(opt *responseOption) {
-		//opt.decodeFunc = makeJsonDecodeResponseFunc(body)
 		opt.decodeFunc = dec
 	}
 }
 
-func makeJsonDecodeResponseFunc(opt *responseOption) httptransport.DecodeResponseFunc {
+func makeJsonDecodeResponseFunc(opt *responseOption) DecodeResponseFunc {
 	if opt.decodeFunc != nil {
 		return opt.decodeFunc
 	}
@@ -118,8 +119,8 @@ func makeJsonDecodeResponseFunc(opt *responseOption) httptransport.DecodeRespons
 func handleStatusCodeError(resp *http.Response, errBody interface{}) error {
 	raw, e := decodeJsonBody(resp, errBody)
 	if e != nil {
-		//nolint:errorlint
-		if httpE, ok := e.(*Error); ok {
+		var httpE *Error
+		if errors.As(e, &httpE) {
 			return httpE.WithMessage("unable to parse error response: %v", e)
 		} else {
 			return e
@@ -131,7 +132,7 @@ func handleStatusCodeError(resp *http.Response, errBody interface{}) error {
 // decodeJsonBody read body from http.Response and decode into given "body"
 // function panic if "body" is nil
 func decodeJsonBody(resp *http.Response, body interface{}) ([]byte, error) {
-	defer resp.Body.Close()
+	defer func() {_ = resp.Body.Close()}()
 
 	// check media type
 	if e := validateMediaType(MediaTypeJson, resp); e != nil {
