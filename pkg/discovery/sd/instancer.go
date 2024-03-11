@@ -37,15 +37,14 @@ const (
 type InstancerOptions func(opt *InstancerOption)
 type InstancerOption struct {
 	// Name service name
-	Name                 string
+	Name string
 	// Logger logger to use for
-	Logger               log.Logger
+	Logger log.Logger
 	// Verbose whether to create logs for internal state changes
-	Verbose              bool
-	// RefreshBackoffFactor controls how service refresher to retry refreshing attempt in case of failure.
-	// loop.ExponentialRepeatIntervalOnError with this value is used to calculate retry internal
-	// Default is 1.5
-	RefreshBackoffFactor float64
+	Verbose bool
+	// RefresherOptions controls how service refresher to retry refreshing attempt in case of failure.
+	// Default is loop.ExponentialRepeatIntervalOnError with initial interval 50ms and factor 1.5
+	RefresherOptions []loop.TaskOptions
 }
 
 // CachedInstancer implements discovery.Instancer and sd.Instancer.
@@ -71,7 +70,9 @@ type CachedInstancer struct {
 // See discovery.Instancer
 func MakeCachedInstancer(opts ...InstancerOptions) CachedInstancer {
 	opt := InstancerOption{
-		RefreshBackoffFactor: DefaultRefreshBackoffFactor,
+		RefresherOptions: []loop.TaskOptions{
+			loop.ExponentialRepeatIntervalOnError(50*time.Millisecond, DefaultRefreshBackoffFactor),
+		},
 	}
 	for _, f := range opts {
 		f(&opt)
@@ -126,10 +127,7 @@ func (i *CachedInstancer) Start(ctx context.Context) {
 	}
 	i.readyCond = sync.NewCond(i.cacheMtx.RLocker())
 	i.loopCtx, i.cancelFunc = i.looper.Run(ctx)
-	i.looper.Repeat(
-		i.refreshTask(),
-		loop.ExponentialRepeatIntervalOnError(50*time.Millisecond, i.RefreshBackoffFactor),
-	)
+	i.looper.Repeat(i.refreshTask(), i.RefresherOptions...)
 }
 
 func (i *CachedInstancer) RegisterCallback(id interface{}, cb discovery.Callback) {
@@ -183,6 +181,16 @@ func (i *CachedInstancer) Deregister(ch chan<- sd.Event) {
 	defer i.stateMtx.Unlock()
 
 	i.broadcaster.deregister(ch)
+}
+
+// RefreshNow invoke refresh task immediately in current goroutine.
+// Note: refresh function is run in refresher's loop, and may block depending on RefreshFunc
+func (i *CachedInstancer) RefreshNow(ctx context.Context) (*discovery.Service, error) {
+	v, e := i.refreshTask()(ctx, i.looper)
+	if e != nil {
+		return nil, e
+	}
+	return v.(*discovery.Service), nil
 }
 
 // service is not goroutine-safe and returns non-nil *Service.
@@ -261,7 +269,7 @@ func (i *CachedInstancer) shouldNotify(new, old *discovery.Service) bool {
 	// 1. service instances changed
 	// 2. new service have error and old doesn't
 	// 3. old service have error but new doesn't
-	return !reflect.DeepEqual(new.Instances, old.Instances) ||
+	return !reflect.DeepEqual(new.Insts, old.Insts) ||
 		new.Err != nil && old.Err == nil ||
 		new.Err == nil && old.Err != nil
 }
@@ -288,11 +296,11 @@ func (i *CachedInstancer) logUpdate(new, old *discovery.Service) {
 
 func (i *CachedInstancer) verboseLog(new, old *discovery.Service) {
 	// verbose
-	if new.Err != nil && old.Err == nil {
+	if new != nil && new.Err != nil && (old == nil || old.Err == nil) {
 		i.Logger.Infof("error when finding instances for service %s: %v", i.Name, new.Err)
 	} else {
 		diff := diff(new, old)
-		i.Logger.Debugf(`refreshed instances %s[healthy=%d]: =%d !%d +%d -%d`, i.Name,
+		i.Logger.Debugf(`refreshed instances %s: [healthy=%d] [unchanged=%d] [updated=%d] [new=%d] [removed=%d]`, i.Name,
 			len(diff.healthy), len(diff.unchanged), len(diff.updated), len(diff.added), len(diff.deleted))
 	}
 }

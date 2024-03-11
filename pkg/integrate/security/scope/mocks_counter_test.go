@@ -14,10 +14,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package testdata
+package scope_test
 
 import (
 	"context"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
 	"github.com/cisco-open/go-lanai/pkg/integrate/security/seclient"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
 	"reflect"
@@ -32,9 +33,13 @@ type InvocationCounter interface {
 	ResetAll()
 }
 
+func NewCounter() InvocationCounter {
+	return &counter{
+		counts: map[interface{}]*uint64{},
+	}
+}
+
 type counter struct {
-	seclient.AuthenticationClient
-	oauth2.TokenStoreReader
 	mtx sync.RWMutex
 	counts map[interface{}]*uint64
 }
@@ -93,33 +98,57 @@ func (c *counter) new(fn interface{}) *uint64 {
 	return p
 }
 
-func (c *counter) PasswordLogin(ctx context.Context, opts ...seclient.AuthOptions) (*seclient.Result, error) {
-	c.Increase(seclient.AuthenticationClient.PasswordLogin, 1)
+type MockedAuthenticationClient struct {
+	seclient.AuthenticationClient
+	Counter InvocationCounter
+}
+
+func (c *MockedAuthenticationClient) PasswordLogin(ctx context.Context, opts ...seclient.AuthOptions) (*seclient.Result, error) {
+	c.Counter.Increase(seclient.AuthenticationClient.PasswordLogin, 1)
 	return c.AuthenticationClient.PasswordLogin(ctx, opts...)
 }
 
-func (c *counter) SwitchUser(ctx context.Context, opts ...seclient.AuthOptions) (*seclient.Result, error) {
-	c.Increase(seclient.AuthenticationClient.SwitchUser, 1)
+func (c *MockedAuthenticationClient) SwitchUser(ctx context.Context, opts ...seclient.AuthOptions) (*seclient.Result, error) {
+	c.Counter.Increase(seclient.AuthenticationClient.SwitchUser, 1)
 	return c.AuthenticationClient.SwitchUser(ctx, opts...)
 }
 
-func (c *counter) SwitchTenant(ctx context.Context, opts ...seclient.AuthOptions) (*seclient.Result, error) {
-	c.Increase(seclient.AuthenticationClient.SwitchTenant, 1)
+func (c *MockedAuthenticationClient) SwitchTenant(ctx context.Context, opts ...seclient.AuthOptions) (*seclient.Result, error) {
+	c.Counter.Increase(seclient.AuthenticationClient.SwitchTenant, 1)
 	return c.AuthenticationClient.SwitchTenant(ctx, opts...)
 }
 
-func (c *counter) ReadAuthentication(ctx context.Context, tokenValue string, hint oauth2.TokenHint) (oauth2.Authentication, error) {
-	c.Increase(oauth2.TokenStoreReader.ReadAuthentication, 1)
+type MockedTokenStoreReader struct {
+	oauth2.TokenStoreReader
+	Counter InvocationCounter
+}
+
+func (c *MockedTokenStoreReader) ReadAuthentication(ctx context.Context, tokenValue string, hint oauth2.TokenHint) (oauth2.Authentication, error) {
+	c.Counter.Increase(oauth2.TokenStoreReader.ReadAuthentication, 1)
 	return c.TokenStoreReader.ReadAuthentication(ctx, tokenValue, hint)
 }
 
-func (c *counter) ReadAccessToken(ctx context.Context, value string) (oauth2.AccessToken, error) {
-	c.Increase(oauth2.TokenStoreReader.ReadAccessToken, 1)
+func (c *MockedTokenStoreReader) ReadAccessToken(ctx context.Context, value string) (oauth2.AccessToken, error) {
+	c.Counter.Increase(oauth2.TokenStoreReader.ReadAccessToken, 1)
 	return c.TokenStoreReader.ReadAccessToken(ctx, value)
 }
 
-func (c *counter) ReadRefreshToken(ctx context.Context, value string) (oauth2.RefreshToken, error) {
-	c.Increase(oauth2.TokenStoreReader.ReadRefreshToken, 1)
+func (c *MockedTokenStoreReader) ReadRefreshToken(ctx context.Context, value string) (oauth2.RefreshToken, error) {
+	c.Counter.Increase(oauth2.TokenStoreReader.ReadRefreshToken, 1)
 	return c.TokenStoreReader.ReadRefreshToken(ctx, value)
 }
 
+
+type TestScopeManagerHook struct {
+	Counter InvocationCounter
+}
+
+func (h TestScopeManagerHook) Before(ctx context.Context, scope *scope.Scope) context.Context {
+	h.Counter.Increase(TestScopeManagerHook.Before, 1)
+	return ctx
+}
+
+func (h TestScopeManagerHook) After(ctx context.Context, scope *scope.Scope) context.Context {
+	h.Counter.Increase(TestScopeManagerHook.After, 1)
+	return ctx
+}

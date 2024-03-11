@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package testdata
+package scope_test
 
 import (
 	"context"
@@ -40,16 +40,18 @@ type mocksDIOut struct {
 
 func ProvideScopeMocksWithCounter(ctx *bootstrap.ApplicationContext) mocksDIOut {
 	out := sectest.ProvideScopeMocks(ctx)
-	counter := counter{
-		AuthenticationClient: out.AuthClient,
-		TokenStoreReader:     out.TokenReader,
-		counts:               map[interface{}]*uint64{},
-	}
+	c := NewCounter()
 	return mocksDIOut{
-		AuthClient:   &counter,
-		TokenReader:  &counter,
+		AuthClient: &MockedAuthenticationClient{
+			AuthenticationClient: out.AuthClient,
+			Counter:              c,
+		},
+		TokenReader: &MockedTokenStoreReader{
+			TokenStoreReader: out.TokenReader,
+			Counter:          c,
+		},
 		TokenRevoker: out.TokenRevoker,
-		Counter:      &counter,
+		Counter:      c,
 	}
 }
 
@@ -69,4 +71,13 @@ func (m *noopScopeManager) End(ctx context.Context) context.Context {
 
 func ProvideNoopScopeManager() scope.ScopeManager {
 	return &noopScopeManager{}
+}
+
+func NewCustomizer(c InvocationCounter) scope.ManagerCustomizer {
+	return scope.ManagerCustomizerFunc(func() []scope.ManagerOptions {
+		hook := TestScopeManagerHook{
+			Counter: c,
+		}
+		return []scope.ManagerOptions{scope.BeforeStartHook(hook.Before), scope.AfterEndHook(hook.After)}
+	})
 }

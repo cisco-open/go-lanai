@@ -30,7 +30,7 @@ type securityScopeManagerCustomizer struct {
 }
 
 func SecurityScopeTracingProvider() fx.Annotated {
-	return scope.FxManagerCustomizers(newSecurityScopeManagerCustomizer)[0]
+	return scope.FxManagerCustomizer(newSecurityScopeManagerCustomizer)
 }
 
 func newSecurityScopeManagerCustomizer(tracer opentracing.Tracer) scope.ManagerCustomizer {

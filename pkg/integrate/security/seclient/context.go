@@ -44,7 +44,6 @@ type AuthenticationClient interface {
 }
 
 type Result struct {
-	Request oauth2.OAuth2Request
 	Token   oauth2.AccessToken
 }
 
@@ -125,9 +124,9 @@ func WithUserId(userId string) AuthOptions {
 	}
 }
 
-func WithScope(scope []string) AuthOptions {
+func WithScopes(scopes ...string) AuthOptions {
 	return func(opt *AuthOption) {
-		opt.Scopes = scope
+		opt.Scopes = scopes
 	}
 }
 

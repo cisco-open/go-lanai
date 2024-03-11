@@ -85,7 +85,7 @@ type TestDI struct {
 	MockedController *MockedController
 }
 
-func TestExampleMockedServerTestWithSecurity(t *testing.T) {
+func TestWithMockedServer(t *testing.T) {
 	var di TestDI
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),

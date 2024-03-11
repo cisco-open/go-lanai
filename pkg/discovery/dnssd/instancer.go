@@ -7,6 +7,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/discovery/sd"
 	"github.com/cisco-open/go-lanai/pkg/utils/loop"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -17,6 +18,11 @@ const (
 	kMetaSRVName    = "_srv_name"
 	kMetaSRVService = "_srv_service"
 	kMetaSRVProto   = "_srv_proto"
+)
+
+var (
+	defaultRefreshInterval = 1 * time.Minute
+	defaultLookupTimeout = 1 * time.Second
 )
 
 type InstancerOptions func(opt *InstancerOption)
@@ -41,7 +47,7 @@ func NewInstancer(ctx context.Context, opts ...InstancerOptions) (*Instancer, er
 	opt := InstancerOption{
 		InstancerOption: sd.InstancerOption{
 			Logger: logger,
-			RefreshBackoffFactor: sd.DefaultRefreshBackoffFactor,
+			RefresherOptions: []loop.TaskOptions{loop.FixedRepeatInterval(defaultRefreshInterval)},
 		},
 	}
 	for _, f := range opts {
@@ -75,8 +81,20 @@ func NewInstancer(ctx context.Context, opts ...InstancerOptions) (*Instancer, er
 	return i, nil
 }
 
+func (i *Instancer) Service() (svc *discovery.Service) {
+	_, _ = i.RefreshNow(context.Background())
+	return i.CachedInstancer.Service()
+}
+
+func (i *Instancer) Instances(matcher discovery.InstanceMatcher) (ret []*discovery.Instance, err error) {
+	_, _ = i.RefreshNow(context.Background())
+	return i.CachedInstancer.Instances(matcher)
+}
+
 func (i *Instancer) resolveInstancesTask() func(ctx context.Context, _ *loop.Loop) (*discovery.Service, error) {
 	return func(ctx context.Context, _ *loop.Loop) (*discovery.Service, error) {
+		ctx, cancel := context.WithTimeout(ctx, defaultLookupTimeout)
+		defer cancel()
 		name, srvs, e := i.resolver.LookupSRV(ctx, i.srvService, i.srvProto, i.srvTarget)
 		instances := i.makeInstances(name, srvs)
 		svc := &discovery.Service{
@@ -90,23 +108,25 @@ func (i *Instancer) resolveInstancesTask() func(ctx context.Context, _ *loop.Loo
 }
 
 func (i *Instancer) makeInstances(name string, srvs []*net.SRV) []*discovery.Instance {
-	instances := make([]*discovery.Instance, 0)
-	for _, srv := range srvs {
-		inst := &discovery.Instance{
-			ID:      net.JoinHostPort(srv.Target, strconv.Itoa(int(srv.Port))),
+	instances := make([]*discovery.Instance, len(srvs))
+	for j := range srvs {
+		instances[j] = &discovery.Instance{
+			ID:      net.JoinHostPort(srvs[j].Target, strconv.Itoa(int(srvs[j].Port))),
 			Service: i.Name,
-			Address: srv.Target,
-			Port:    int(srv.Port),
+			Address: srvs[j].Target,
+			Port:    int(srvs[j].Port),
 			Meta: map[string]string{
 				kMetaSRVService: i.srvService,
 				kMetaSRVProto:   i.srvProto,
 				kMetaSRVName:    name,
 			},
 			Health:   discovery.HealthPassing,
-			RawEntry: srv,
+			RawEntry: *srvs[j],
 		}
-		instances = append(instances, inst)
 	}
+	sort.SliceStable(instances, func(i, j int) bool {
+		return instances[i].ID < instances[j].ID
+	})
 	return instances
 }
 
@@ -132,3 +152,4 @@ func srvTargetWithTemplate(opt InstancerOption) (string, error) {
 	}
 	return buf.String(), nil
 }
+

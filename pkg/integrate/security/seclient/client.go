@@ -37,6 +37,8 @@ type AuthClientOptions func(opt *AuthClientOption)
 type AuthClientOption struct {
 	Client            httpclient.Client
 	ServiceName       string
+	Scheme            string
+	ContextPath       string
 	BaseUrl           string
 	PwdLoginPath      string
 	SwitchContextPath string
@@ -52,7 +54,7 @@ type remoteAuthClient struct {
 	switchCtxPath string
 }
 
-func NewRemoteAuthClient(opts ...AuthClientOptions) *remoteAuthClient {
+func NewRemoteAuthClient(opts ...AuthClientOptions) AuthenticationClient {
 	opt := AuthClientOption{
 		PwdLoginPath:      "/v2/token",
 		SwitchContextPath: "/v2/token",
@@ -67,7 +69,10 @@ func NewRemoteAuthClient(opts ...AuthClientOptions) *remoteAuthClient {
 	if opt.BaseUrl != "" {
 		client, err = opt.Client.WithBaseUrl(opt.BaseUrl)
 	} else {
-		client, err = opt.Client.WithService(opt.ServiceName)
+		client, err = opt.Client.WithService(opt.ServiceName, func(sdOpt *httpclient.SDOption) {
+			sdOpt.Scheme = opt.Scheme
+			sdOpt.ContextPath = opt.ContextPath
+		})
 	}
 	if err != nil {
 		panic(err)

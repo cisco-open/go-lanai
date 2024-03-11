@@ -20,7 +20,7 @@ var logger = log.New("SD.DNS")
 var kCtxDNSServer = struct{}{}
 
 const (
-	TestProto = `_tcp`
+	TestProto   = `_tcp`
 	TestService = `_http`
 )
 
@@ -241,15 +241,19 @@ func (s *MockedDNSServer) Start(ctx context.Context) error {
 	// start server
 	startCH := make(chan struct{}, 1)
 	s.Server = &dns.Server{
-		Addr: addrStr,
-		Net:  "udp",
+		Addr:      addrStr,
+		Net:       "udp",
+		ReuseAddr: true,
 		NotifyStartedFunc: func() {
 			close(startCH)
 		},
 	}
 	go func() {
 		logger.WithContext(ctx).Infof("Starting mocked DNS server at 127.0.0.1%s", addrStr)
-		_ = s.Server.ListenAndServe()
+		e := s.Server.ListenAndServe()
+		if e != nil {
+			logger.WithContext(ctx).Warnf("DNS server stopped with error: %v", e)
+		}
 	}()
 	// wait for server to start
 	shudownFunc := func() { _ = s.Server.Shutdown() }

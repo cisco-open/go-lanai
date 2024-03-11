@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/utils/loop"
 	"sync"
+	"time"
 )
 
 type ClientOptions func(opt *ClientConfig)
@@ -22,6 +24,11 @@ type ClientConfig struct {
 	SRVProto string
 	// SRVService see DiscoveryProperties.SRVService
 	SRVService string
+	// RefreshInterval interval for background refresher.
+	// Note: Foreground refresh happens everytime when Instancer.Service or Instancer.Instances is invoked.
+	//       Background refresh is for callbacks only
+	// Default: 30s
+	RefreshInterval time.Duration
 }
 
 type dnsDiscoveryClient struct {
@@ -38,6 +45,7 @@ func NewDiscoveryClient(ctx context.Context, opts ...ClientOptions) discovery.Cl
 		config: ClientConfig{
 			Logger:  logger.WithContext(ctx),
 			Verbose: false,
+			RefreshInterval: defaultRefreshInterval,
 		},
 	}
 
@@ -71,6 +79,7 @@ func (c *dnsDiscoveryClient) Instancer(serviceName string) (discovery.Instancer,
 		opt.SRVTargetTemplate = c.config.SRVTargetTemplate
 		opt.SRVProto = c.config.SRVProto
 		opt.SRVService = c.config.SRVService
+		opt.RefresherOptions = []loop.TaskOptions{loop.FixedRepeatInterval(c.config.RefreshInterval)}
 	})
 	if e == nil {
 		c.instancers[serviceName] = instancer

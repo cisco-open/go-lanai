@@ -228,6 +228,7 @@ func SubTestWithServiceUpdates(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
 			opt.SRVTargetTemplate = "{{.ServiceName}}.test.mock"
 			opt.Verbose = true
+			opt.RefreshInterval = 50 * time.Millisecond
 		})
 		defer func() { _ = client.(io.Closer).Close() }()
 		instancer, e := client.Instancer(ServiceName1)
@@ -266,6 +267,7 @@ func SubTestWithGoKitCompatibility(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
 			opt.SRVTargetTemplate = "{{.ServiceName}}.test.mock"
 			opt.Verbose = true
+			opt.RefreshInterval = 50 * time.Millisecond
 		})
 		defer func() { _ = client.(io.Closer).Close() }()
 		v, e := client.Instancer(ServiceName1)

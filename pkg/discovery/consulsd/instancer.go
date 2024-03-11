@@ -55,7 +55,9 @@ func NewInstancer(ctx context.Context, opts ...InstancerOptions) *Instancer {
 	opt := InstancerOption{
 		InstancerOption: sd.InstancerOption{
 			Logger: logger,
-			RefreshBackoffFactor: sd.DefaultRefreshBackoffFactor,
+			RefresherOptions: []loop.TaskOptions{
+				loop.ExponentialRepeatIntervalOnError(50*time.Millisecond, sd.DefaultRefreshBackoffFactor),
+			},
 		},
 	}
 	for _, f := range opts {
