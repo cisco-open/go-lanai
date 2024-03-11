@@ -33,7 +33,7 @@ CLI ?= lanai-cli
 INIT_TMP_DIR = $(TMP_DIR)/init
 CLI_GOMOD_FILE = $(INIT_TMP_DIR)/go.mod
 CLI_MOD_RELATIVE_PATH = $(shell $(GO) list -f='{{or .Replace ""}}' -m $(CLI_MOD))
-CLI_MOD_PATH ?= $(shell realpath `$(GO) list -f='{{or .Replace ""}}' -m $(CLI_MOD)`)
+CLI_MOD_PATH ?= $(if $(CLI_MOD_RELATIVE_PATH), $(shell realpath $(CLI_MOD_RELATIVE_PATH)), "")
 
 ## Local Targets
 
@@ -66,7 +66,7 @@ init-ws:
 #		  e.g. CLI_MOD_PATH=./../go-lanai
 #		- CLI_TAG branch/tag to use to install "lanai-cli", typically same branch/tag of github.com/cisco-open/go-lanai
 #		  e.g. CLI_TAG=main
-ifneq ("$(and $(CLI_MOD_RELATIVE_PATH), $(wildcard $(CLI_MOD_PATH)/go.mod))", "")
+ifneq ("$(and $(CLI_MOD_PATH), $(wildcard $(CLI_MOD_PATH)/go.mod))", "")
 # For Contributors or Service Dev who have go-lanai checked out (either by-side or as parent) and have proper "replace" directive in go.mod
 init-cli: CLI_PKG = cmd/lanai-cli
 init-cli: CLI_PKG_PATH = $(CLI_MOD_PATH)/$(CLI_PKG)
