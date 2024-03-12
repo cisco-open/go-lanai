@@ -64,25 +64,25 @@ func NewInstancer(ctx context.Context, opts ...InstancerOptions) *Instancer {
 		f(&opt)
 	}
 	i := &Instancer{
-		CachedInstancer: sd.MakeCachedInstancer(func(baseOpt *sd.InstancerOption) {
-			*baseOpt = opt.InstancerOption
+		CachedInstancer: sd.MakeCachedInstancer(func(baseOpt *sd.CachedInstancerOption) {
+			baseOpt.InstancerOption = opt.InstancerOption
 		}),
 		consul:   opt.ConsulConnection,
 		selector: opt.Selector,
 	}
-	i.RefreshFunc = i.resolveInstancesTask()
+	i.BackgroundRefreshFunc = i.resolveInstancesTask()
 	i.Start(ctx)
 	return i
 }
 
-func (i *Instancer) resolveInstancesTask() func(ctx context.Context, _ *loop.Loop) (*discovery.Service, error) {
+func (i *Instancer) resolveInstancesTask() func(ctx context.Context) (*discovery.Service, error) {
 	// Note:
 	// 		Consul doesn't support more than one tag in its serviceName query method.
 	// 		https://github.com/hashicorp/consul/issues/294
 	// 		Hashi suggest prepared queries, but they don't support blocking.
 	// 		https://www.consul.io/docs/agent/http/query.html#execute
 	// 		If we want blocking for efficiency, we can use single tag
-	return func(ctx context.Context, _ *loop.Loop) (*discovery.Service, error) {
+	return func(ctx context.Context) (*discovery.Service, error) {
 		// Note: i.lastMeta is only updated in this function, and this function is executed via loop.Loop.
 		// 		 because loop.Loop guarantees that all tasks are executed one-by-one,
 		// 		 there is no need to use Lock or locking

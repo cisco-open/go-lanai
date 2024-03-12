@@ -43,9 +43,6 @@ const (
 	Service1Port1 = 8011
 	Service1Port2 = 8012
 	Service1Port3 = 8013
-	Service2Port1 = 8021
-	//Service2Port2 = 8022
-	//Service2Port3 = 8023
 )
 
 var MockedServices = map[string][]MockedService{
@@ -72,15 +69,6 @@ var MockedServices = map[string][]MockedService{
 			Healthy: false,
 		},
 	},
-	ServiceName2: {
-		MockedService{
-			Name:    ServiceName2,
-			Port:    Service2Port1,
-			Tags:    []string{"instance=1"},
-			Meta:    map[string]string{"instance": "1"},
-			Healthy: true,
-		},
-	},
 }
 
 /*************************
@@ -103,6 +91,7 @@ func TestDiscoveryClient(t *testing.T) {
 		test.GomegaSubTest(SubTestInstancerManagement(&di), "TestInstancerManagement"),
 		test.GomegaSubTest(SubTestWithoutProto(&di), "TestWithoutProto"),
 		test.GomegaSubTest(SubTestWithProtoAndService(&di), "TestWithProtoAndService"),
+		test.GomegaSubTest(SubTestWithFQDNFallback(&di), "TestWithFQDNFallback"),
 		test.GomegaSubTest(SubTestWithServiceUpdates(&di), "TestWithServiceUpdates"),
 		test.GomegaSubTest(SubTestWithGoKitCompatibility(&di), "TestWithGoKitCompatibility"),
 	)
@@ -132,10 +121,10 @@ func TeardownTestServices() test.TeardownFunc {
 
 func SubTestInstancerManagement(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-
 		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
-			opt.SRVTargetTemplate = "{{.ServiceName}}.test.mock"
+			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
+			opt.Verbose = true
 		})
 		g.Expect(client.Context()).To(Equal(ctx), "client's context should be correct")
 
@@ -155,7 +144,6 @@ func SubTestInstancerManagement(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 		g.Expect(e).To(HaveOccurred(), "instancer without service name should fail")
 
 		// try close
-		// note: we wait for the instancer finish the initial service update to ensure recorded HTTP order
 		_ = instancer.Service()
 		e = client.(io.Closer).Close()
 		g.Expect(e).To(Succeed(), "closing client should not fail")
@@ -170,7 +158,7 @@ func SubTestWithoutProto(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
-			opt.SRVTargetTemplate = "{{.ServiceName}}.test.mock"
+			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
 			opt.Verbose = true
 		})
 		defer func() { _ = client.(io.Closer).Close() }()
@@ -197,7 +185,7 @@ func SubTestWithProtoAndService(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
-			opt.SRVTargetTemplate = "{{.ServiceName}}.test.mock"
+			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
 			opt.SRVProto = TestProto
 			opt.SRVService = TestService
 			opt.Verbose = true
@@ -222,11 +210,47 @@ func SubTestWithProtoAndService(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestWithFQDNFallback(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
+			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
+			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
+			opt.SRVProto = TestProto
+			opt.SRVService = TestService
+			opt.Verbose = true
+			opt.FQDNFallback = true
+		})
+		defer func() { _ = client.(io.Closer).Close() }()
+		instancer, e := client.Instancer(ServiceName2)
+		g.Expect(e).To(Succeed(), "getting instancer should not fail")
+		g.Expect(instancer).ToNot(BeNil(), "instancer should not be nil")
+
+		// via service
+		svc := instancer.Service()
+		g.Expect(svc).ToNot(BeNil(), "instancer should return non-nil service")
+		g.Expect(svc.Insts).To(HaveLen(1), "instancer should return services with fallback FQDN instance")
+
+		// without additional selector
+		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
+			{
+				AlternativeID: ServiceName2 + ".test.mock:0",
+				AlternativeAddr: ServiceName2 + ".test.mock",
+				Name:          ServiceName2,
+				Port:          0,
+				Healthy:       true,
+			},
+		})
+
+		//with additional selector
+		TryInstancerWithMatcher(g, instancer, discovery.InstanceWithHealth(discovery.HealthCritical), []*MockedService{})
+	}
+}
+
 func SubTestWithServiceUpdates(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
-			opt.SRVTargetTemplate = "{{.ServiceName}}.test.mock"
+			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
 			opt.Verbose = true
 			opt.RefreshInterval = 50 * time.Millisecond
 		})
@@ -265,7 +289,7 @@ func SubTestWithGoKitCompatibility(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
-			opt.SRVTargetTemplate = "{{.ServiceName}}.test.mock"
+			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
 			opt.Verbose = true
 			opt.RefreshInterval = 50 * time.Millisecond
 		})
@@ -332,11 +356,13 @@ func SubTestWithGoKitCompatibility(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
  *************************/
 
 type MockedService struct {
-	Name    string
-	Port    int
-	Tags    []string
-	Meta    map[string]string
-	Healthy bool
+	AlternativeID   string // only used for assertion
+	AlternativeAddr string // only used for assertion
+	Name            string
+	Port            int
+	Tags            []string
+	Meta            map[string]string
+	Healthy         bool
 }
 
 func OrderedDoForEachMockedService(fn func(reg *MockedSRV)) {
@@ -359,13 +385,19 @@ func TryInstancerWithMatcher(g *gomega.WithT, instancer discovery.Instancer, mat
 	g.Expect(e).To(Succeed(), "Instances should not fail")
 	g.Expect(insts).To(HaveLen(len(expected)), "instancer should return correct # of instances")
 	for _, svc := range expected {
-		expectedID := net.JoinHostPort(NewMockedSRV(svc).Address(), strconv.Itoa(svc.Port))
+		expectedID := svc.AlternativeID
+		if len(expectedID) == 0 {
+			expectedID = net.JoinHostPort(NewMockedSRV(svc).Address(), strconv.Itoa(svc.Port))
+		}
 		var found bool
 		for _, inst := range insts {
 			if inst.ID != expectedID {
 				continue
 			}
-			expectedAddr := AddrToDomain("127.0.0.1", ServiceFQDN(svc.Name) + ".")
+			expectedAddr := svc.AlternativeAddr
+			if len(expectedAddr) == 0 {
+				expectedAddr = AddrToDomain("127.0.0.1", ServiceFQDN(svc.Name)+".")
+			}
 			g.Expect(inst.Service).To(Equal(svc.Name), "instance with ID [%s] should have correct %s", expectedID, "Service")
 			g.Expect(inst.Address).To(Equal(expectedAddr), "instance with ID [%s] should have correct %s", expectedID, "Address")
 			g.Expect(inst.Port).To(Equal(svc.Port), "instance with ID [%s] should have correct %s", expectedID, "Port")

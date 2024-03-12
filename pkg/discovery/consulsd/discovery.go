@@ -28,7 +28,7 @@ import (
 type ClientOptions func(opt *ClientConfig)
 
 type ClientConfig struct {
-	Logger          log.Logger
+	Logger          log.ContextualLogger
 	Verbose         bool
 	DefaultSelector discovery.InstanceMatcher
 }
@@ -51,7 +51,7 @@ func NewDiscoveryClient(ctx context.Context, conn *consul.Connection, opts ...Cl
 		conn:       conn,
 		instancers: map[string]*Instancer{},
 		config: ClientConfig{
-			Logger:  logger.WithContext(ctx),
+			Logger:  logger,
 			Verbose: false,
 		},
 	}

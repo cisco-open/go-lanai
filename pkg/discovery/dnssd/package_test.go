@@ -49,9 +49,6 @@ func TestModuleInit(t *testing.T) {
 		test.SubTestSetup(SetupTestServices()),
 		test.SubTestTeardown(TeardownTestServices()),
 		test.GomegaSubTest(SubTestDiscoveryClient(&di), "TestDiscoveryClient"),
-		//test.GomegaSubTest(SubTestWithoutProto(&di), "TestWithDefaultSelector"),
-		//test.GomegaSubTest(SubTestWithServiceUpdates(&di), "TestWithServiceUpdates"),
-		//test.GomegaSubTest(SubTestWithGoKitCompatibility(&di), "TestWithGoKitCompatibility"),
 	)
 }
 

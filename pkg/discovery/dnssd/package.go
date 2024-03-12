@@ -35,9 +35,10 @@ func Use() {
 func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, props DiscoveryProperties) discovery.Client {
 	return NewDiscoveryClient(ctx, func(opt *ClientConfig) {
 		opt.DNSServerAddr = props.Addr
-		opt.SRVTargetTemplate = props.SRVTargetTemplate
+		opt.FQDNTemplate = props.FQDNTemplate
 		opt.SRVProto = props.SRVProto
 		opt.SRVService = props.SRVService
+		opt.FQDNFallback = props.FQDNFallback
 	})
 }
 

@@ -34,17 +34,39 @@ const (
 	DefaultRefreshBackoffFactor float64 = 1.5
 )
 
-type InstancerOptions func(opt *InstancerOption)
+// InstancerOption general options applicable to any cache based instancer implementation
 type InstancerOption struct {
 	// Name service name
 	Name string
 	// Logger logger to use for
-	Logger log.Logger
+	Logger log.ContextualLogger
 	// Verbose whether to create logs for internal state changes
 	Verbose bool
 	// RefresherOptions controls how service refresher to retry refreshing attempt in case of failure.
 	// Default is loop.ExponentialRepeatIntervalOnError with initial interval 50ms and factor 1.5
 	RefresherOptions []loop.TaskOptions
+}
+
+// RefreshFunc is the function to use when CachedInstancer try to refresh internal cache.
+// The refresh result is automatically saved and notified (if there is change)
+type RefreshFunc func(ctx context.Context) (*discovery.Service, error)
+
+// CachedInstancerOptions used to create CachedInstancer
+type CachedInstancerOptions func(opt *CachedInstancerOption)
+
+type CachedInstancerOption struct {
+	InstancerOption
+
+	// BackgroundRefreshFunc is used for background cache refresh.
+	// This function is repeated in a loop.Loop, so following behavior is guaranteed:
+	// - Sequential execution is guaranteed, no concurrent conditions between execution need to considered.
+	// - Next execution is not scheduled until current execution finishes. So this function can block current goroutine.
+	//   The repeat interval is configurable via InstancerOption.RefresherOptions
+	BackgroundRefreshFunc RefreshFunc
+	// ForegroundRefreshFunc is used for foreground cache refresh, directly invoked via CachedInstancer.RefreshNow.
+	// This function always invoked in current goroutine. So concurrent conditions need to be considered,
+	// and cancellation/timeout need to be taken care of
+	ForegroundRefreshFunc RefreshFunc
 }
 
 // CachedInstancer implements discovery.Instancer and sd.Instancer.
@@ -53,8 +75,8 @@ type InstancerOption struct {
 // See discovery.Instancer
 // Note: Implementing sd.Instancer is for compatibility reason, using it involves additional Lock locking. Try use instancer's callback capability instead
 type CachedInstancer struct {
-	InstancerOption
-	RefreshFunc func(ctx context.Context, _ *loop.Loop) (*discovery.Service, error)
+	CachedInstancerOption
+	ctx         context.Context
 	readyCond   *sync.Cond
 	cacheMtx    sync.RWMutex // RW Lock for cache
 	stateMtx    sync.RWMutex // RW Mutex for state, such as start/stop, callback/subscription update
@@ -68,20 +90,22 @@ type CachedInstancer struct {
 
 // MakeCachedInstancer returns a CachedInstancer that provide basic implementation of discovery.Instancer
 // See discovery.Instancer
-func MakeCachedInstancer(opts ...InstancerOptions) CachedInstancer {
-	opt := InstancerOption{
-		RefresherOptions: []loop.TaskOptions{
-			loop.ExponentialRepeatIntervalOnError(50*time.Millisecond, DefaultRefreshBackoffFactor),
+func MakeCachedInstancer(opts ...CachedInstancerOptions) CachedInstancer {
+	opt := CachedInstancerOption{
+		InstancerOption: InstancerOption{
+			RefresherOptions: []loop.TaskOptions{
+				loop.ExponentialRepeatIntervalOnError(50*time.Millisecond, DefaultRefreshBackoffFactor),
+			},
 		},
 	}
 	for _, f := range opts {
 		f(&opt)
 	}
 	return CachedInstancer{
-		InstancerOption: opt,
-		looper:          loop.NewLoop(),
-		cache:           NewSimpleServiceCache(),
-		callbacks:       map[interface{}]discovery.Callback{},
+		CachedInstancerOption: opt,
+		looper:                loop.NewLoop(),
+		cache:                 NewSimpleServiceCache(),
+		callbacks:             map[interface{}]discovery.Callback{},
 		broadcaster: &kitBroadcaster{
 			chs: map[chan<- sd.Event]struct{}{},
 		},
@@ -184,13 +208,9 @@ func (i *CachedInstancer) Deregister(ch chan<- sd.Event) {
 }
 
 // RefreshNow invoke refresh task immediately in current goroutine.
-// Note: refresh function is run in refresher's loop, and may block depending on RefreshFunc
+// Note: refresh function is run in current goroutine
 func (i *CachedInstancer) RefreshNow(ctx context.Context) (*discovery.Service, error) {
-	v, e := i.refreshTask()(ctx, i.looper)
-	if e != nil {
-		return nil, e
-	}
-	return v.(*discovery.Service), nil
+	return i.refresh(ctx, i.ForegroundRefreshFunc)
 }
 
 // service is not goroutine-safe and returns non-nil *Service.
@@ -203,14 +223,18 @@ func (i *CachedInstancer) service() (svc *discovery.Service) {
 }
 
 func (i *CachedInstancer) refreshTask() loop.TaskFunc {
-	return func(ctx context.Context, l *loop.Loop) (ret interface{}, err error) {
-		service, e := i.RefreshFunc(ctx, l)
-		i.onRefresh(ctx, service, e)
-		return service, e
+	return func(ctx context.Context, _ *loop.Loop) (ret interface{}, err error) {
+		return i.refresh(ctx, i.BackgroundRefreshFunc)
 	}
 }
 
-func (i *CachedInstancer) onRefresh(_ context.Context, service *discovery.Service, err error) {
+func (i *CachedInstancer) refresh(ctx context.Context, fn RefreshFunc) (*discovery.Service, error) {
+	service, e := fn(ctx)
+	i.onRefresh(ctx, service, e)
+	return service, e
+}
+
+func (i *CachedInstancer) onRefresh(ctx context.Context, service *discovery.Service, err error) {
 	i.cacheMtx.Lock()
 	var notify bool
 	defer func() {
@@ -228,7 +252,7 @@ func (i *CachedInstancer) onRefresh(_ context.Context, service *discovery.Servic
 
 	notify = i.shouldNotify(service, existing)
 	if notify {
-		i.logUpdate(service, existing)
+		i.logUpdate(ctx, service, existing)
 		// for go-kit compatibility
 		evt := makeEvent(service)
 		i.broadcaster.broadcast(evt)
@@ -274,9 +298,9 @@ func (i *CachedInstancer) shouldNotify(new, old *discovery.Service) bool {
 		new.Err == nil && old.Err != nil
 }
 
-func (i *CachedInstancer) logUpdate(new, old *discovery.Service) {
+func (i *CachedInstancer) logUpdate(ctx context.Context, new, old *discovery.Service) {
 	if i.Verbose {
-		i.verboseLog(new, old)
+		i.verboseLog(ctx, new, old)
 	}
 
 	// for regular log, we only log if healthy service changes between 0 and non-zero
@@ -288,19 +312,19 @@ func (i *CachedInstancer) logUpdate(new, old *discovery.Service) {
 		now = new.InstanceCount(discovery.InstanceIsHealthy())
 	}
 	if before == 0 && now > 0 {
-		i.Logger.Infof("service [%s] became available", i.Name)
+		i.Logger.WithContext(ctx).Infof("service [%s] became available", i.Name)
 	} else if before > 0 && now == 0 {
-		i.Logger.Warnf("service [%s] healthy instances dropped to 0", i.Name)
+		i.Logger.WithContext(ctx).Warnf("service [%s] healthy instances dropped to 0", i.Name)
 	}
 }
 
-func (i *CachedInstancer) verboseLog(new, old *discovery.Service) {
+func (i *CachedInstancer) verboseLog(ctx context.Context, new, old *discovery.Service) {
 	// verbose
 	if new != nil && new.Err != nil && (old == nil || old.Err == nil) {
-		i.Logger.Infof("error when finding instances for service %s: %v", i.Name, new.Err)
+		i.Logger.WithContext(ctx).Infof("error when finding instances for service %s: %v", i.Name, new.Err)
 	} else {
 		diff := diff(new, old)
-		i.Logger.Debugf(`refreshed instances %s: [healthy=%d] [unchanged=%d] [updated=%d] [new=%d] [removed=%d]`, i.Name,
+		i.Logger.WithContext(ctx).Debugf(`refreshed instances %s: [healthy=%d] [unchanged=%d] [updated=%d] [new=%d] [removed=%d]`, i.Name,
 			len(diff.healthy), len(diff.unchanged), len(diff.updated), len(diff.added), len(diff.deleted))
 	}
 }

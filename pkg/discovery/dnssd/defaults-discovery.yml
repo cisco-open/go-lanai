@@ -17,7 +17,9 @@
 cloud:
   discovery:
     dns:
-#      addr: "8.8.8.8:53"
-      srv-name-template: "{{.ServiceName}}.default.svc.cluster.local"
-#      srv-proto: "_tcp"
-#      srv-service: "_http"
+      # Note: Resolving DNS server address may also require DNS lookup. Please set this value with caution
+      #      addr: "8.8.8.8:53"
+      fqdn-template: "{{.ServiceName}}.default.svc.cluster.local"
+      #      srv-proto: "_tcp"
+      #      srv-service: "_http"
+      fqdn-fallback: true

@@ -13,13 +13,13 @@ import (
 type ClientOptions func(opt *ClientConfig)
 
 type ClientConfig struct {
-	Logger  log.Logger
+	Logger  log.ContextualLogger
 	Verbose bool
 
 	// DNSServerAddr is the address and port of DNS server. e.g. "8.8.8.8:53"
 	DNSServerAddr string
-	// SRVTargetTemplate see DiscoveryProperties.SRVTargetTemplate
-	SRVTargetTemplate string
+	// FQDNTemplate see DiscoveryProperties.FQDNTemplate
+	FQDNTemplate string
 	// SRVProto see DiscoveryProperties.SRVProto
 	SRVProto string
 	// SRVService see DiscoveryProperties.SRVService
@@ -29,6 +29,8 @@ type ClientConfig struct {
 	//       Background refresh is for callbacks only
 	// Default: 30s
 	RefreshInterval time.Duration
+	// FQDNFallback see DiscoveryProperties.FQDNFallback
+	FQDNFallback bool
 }
 
 type dnsDiscoveryClient struct {
@@ -43,8 +45,8 @@ func NewDiscoveryClient(ctx context.Context, opts ...ClientOptions) discovery.Cl
 		ctx:        ctx,
 		instancers: map[string]*Instancer{},
 		config: ClientConfig{
-			Logger:  logger.WithContext(ctx),
-			Verbose: false,
+			Logger:          logger,
+			Verbose:         false,
 			RefreshInterval: defaultRefreshInterval,
 		},
 	}
@@ -76,9 +78,10 @@ func (c *dnsDiscoveryClient) Instancer(serviceName string) (discovery.Instancer,
 		opt.Logger = c.config.Logger
 		opt.Verbose = c.config.Verbose
 		opt.DNSServerAddr = c.config.DNSServerAddr
-		opt.SRVTargetTemplate = c.config.SRVTargetTemplate
+		opt.FQDNTemplate = c.config.FQDNTemplate
 		opt.SRVProto = c.config.SRVProto
 		opt.SRVService = c.config.SRVService
+		opt.FQDNFallback = c.config.FQDNFallback
 		opt.RefresherOptions = []loop.TaskOptions{loop.FixedRepeatInterval(c.config.RefreshInterval)}
 	})
 	if e == nil {

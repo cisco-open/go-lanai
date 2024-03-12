@@ -6,13 +6,13 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/miekg/dns"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/miekg/dns"
+	"time"
 )
 
 var logger = log.New("SD.DNS")
@@ -58,9 +58,11 @@ func CurrentMockedDNSServer(ctx context.Context) *MockedDNSServer {
 }
 
 func CurrentMockedDNSAddr(ctx context.Context) string {
-	return doWithMockedDNSServer(ctx, func(server *MockedDNSServer) interface{} {
-		return fmt.Sprintf(`127.0.0.1:%d`, server.Port)
-	}).(string)
+	server := CurrentMockedDNSServer(ctx)
+	if server == nil {
+		return ""
+	}
+	return server.currentAddr().String()
 }
 
 func doWithMockedDNSServer(ctx context.Context, fn func(server *MockedDNSServer) interface{}) interface{} {
@@ -167,12 +169,21 @@ func (s *MockedDNSServer) deregisterSRV(key string, srv *MockedSRV) {
 
 func (s *MockedDNSServer) HandlerFunc() func(rw dns.ResponseWriter, r *dns.Msg) {
 	return func(rw dns.ResponseWriter, r *dns.Msg) {
+		var resp *dns.Msg
 		switch r.Opcode {
 		case dns.OpcodeQuery:
-			resp := s.handleQuery(r)
-			_ = rw.WriteMsg(resp)
+			resp = s.handleQuery(r)
 		default:
-			_ = rw.WriteMsg(&dns.Msg{})
+			resp = &dns.Msg{}
+		}
+		for _, q := range r.Question {
+			logger.Debugf(`Question: %v`, &q)
+		}
+		for _, a := range resp.Answer {
+			logger.Debugf(`Answer:   %v`, a)
+		}
+		if e := rw.WriteMsg(resp); e != nil {
+			logger.Debugf("Failed to write DNS message: %v", e)
 		}
 	}
 }
@@ -184,6 +195,10 @@ func (s *MockedDNSServer) handleQuery(req *dns.Msg) *dns.Msg {
 		switch q.Qtype {
 		case dns.TypeA:
 			if answer, e := s.answerA(q); e == nil {
+				resp.Answer = append(resp.Answer, answer...)
+			}
+		case dns.TypeAAAA:
+			if answer, e := s.answerAAAA(q); e == nil {
 				resp.Answer = append(resp.Answer, answer...)
 			}
 		case dns.TypeSRV:
@@ -198,13 +213,32 @@ func (s *MockedDNSServer) handleQuery(req *dns.Msg) *dns.Msg {
 // answerA
 // dig @localhost -p XXXX <domain>
 func (s *MockedDNSServer) answerA(q dns.Question) ([]dns.RR, error) {
-	answer := make([]dns.RR, 0, 1)
-	// always map to localhost
-	rr, e := dns.NewRR(fmt.Sprintf("%s A %s", q.Name, "127.0.0.1"))
-	if e != nil {
-		return nil, e
+	const total = 2
+	answer := make([]dns.RR, 0, total)
+	for i := 0; i < total; i++ {
+		// always map to localhost
+		rr, e := dns.NewRR(fmt.Sprintf("%s IN 0 A %s", q.Name, "127.0.0.1"))
+		if e != nil {
+			return nil, e
+		}
+		answer = append(answer, rr)
 	}
-	answer = append(answer, rr)
+	return answer, nil
+}
+
+// answerAAAA
+// dig @localhost -p XXXX <domain>
+func (s *MockedDNSServer) answerAAAA(q dns.Question) ([]dns.RR, error) {
+	const total = 2
+	answer := make([]dns.RR, 0, total)
+	for i := 0; i < total; i++ {
+		// always map to localhost
+		rr, e := dns.NewRR(fmt.Sprintf("%s IN 0 AAAA %s", q.Name, "::1"))
+		if e != nil {
+			return nil, e
+		}
+		answer = append(answer, rr)
+	}
 	return answer, nil
 }
 
@@ -232,8 +266,24 @@ func (s *MockedDNSServer) answerSRV(q dns.Question) ([]dns.RR, error) {
 }
 
 func (s *MockedDNSServer) Start(ctx context.Context) error {
+	const retry = 3
 	dns.HandleFunc(".", s.HandlerFunc())
+	var err error
+	for i := 0; i < retry; i++ {
+		if err = s.start(ctx); err == nil {
+			time.Sleep(100 * time.Millisecond)
+			logger.WithContext(ctx).Infof("DNS server started at 127.0.0.1:%d", s.Port)
+			return nil
+		}
+	}
+	return err
+}
 
+func (s *MockedDNSServer) Stop(ctx context.Context) error {
+	return s.Server.ShutdownContext(ctx)
+}
+
+func (s *MockedDNSServer) start(ctx context.Context) error {
 	addrStr := ":0"
 	if s.Port > 0x7fff {
 		addrStr = fmt.Sprintf(":%d", s.Port)
@@ -241,19 +291,21 @@ func (s *MockedDNSServer) Start(ctx context.Context) error {
 	// start server
 	startCH := make(chan struct{}, 1)
 	s.Server = &dns.Server{
-		Addr:      addrStr,
-		Net:       "udp",
-		ReuseAddr: true,
+		Addr:        addrStr,
+		Net:         "udp",
+		ReadTimeout: time.Minute,
+		ReusePort:   true,
+		ReuseAddr:   true,
 		NotifyStartedFunc: func() {
 			close(startCH)
 		},
 	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	go func() {
 		logger.WithContext(ctx).Infof("Starting mocked DNS server at 127.0.0.1%s", addrStr)
 		e := s.Server.ListenAndServe()
-		if e != nil {
-			logger.WithContext(ctx).Warnf("DNS server stopped with error: %v", e)
-		}
+		logger.WithContext(ctx).Infof("DNS server stopped - Error[%v]", e)
 	}()
 	// wait for server to start
 	shudownFunc := func() { _ = s.Server.Shutdown() }
@@ -264,22 +316,54 @@ func (s *MockedDNSServer) Start(ctx context.Context) error {
 		return fmt.Errorf(`unable to start mocked DNS server: %v`, ctx.Err())
 	}
 
-	if s.Server.PacketConn == nil {
+	addr := s.currentAddr()
+	if addr == nil {
 		defer shudownFunc()
-		return fmt.Errorf(`unable to start mocked DNS server: PacketConn is nil`)
+		return fmt.Errorf(`unable to start mocked DNS server: unknown UDP address`)
+	}
+
+	if e := s.TestLookup(ctx); e != nil {
+		defer shudownFunc()
+		return e
+	}
+	s.Port = addr.Port
+	return nil
+}
+
+func (s *MockedDNSServer) TestLookup(ctx context.Context) error {
+	addr := s.currentAddr()
+	if addr == nil {
+		return fmt.Errorf("unknown UDP address")
+	}
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	// try lookup once to make sure it's started
+	resolver := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			var d net.Dialer
+			conn, e := d.DialContext(ctx, network, addr.String())
+			logger.WithContext(ctx).Debugf("Dialing [%p] %s %s: %T[%v] - Error[%v]", &d, network, addr.String(), conn, conn, e)
+			return conn, e
+		},
+	}
+
+	addrs, e := resolver.LookupNetIP(ctx, "ip4", "anything.test")
+	logger.WithContext(ctx).Infof("Test lookup result: IP%v Error[%v]", addrs, e)
+	return e
+}
+
+func (s *MockedDNSServer) currentAddr() *net.UDPAddr {
+	if s.Server.PacketConn == nil {
+		return nil
 	}
 	addr := s.Server.PacketConn.LocalAddr()
 	switch v := addr.(type) {
 	case *net.UDPAddr:
-		s.Port = v.Port
+		return v
 	default:
-		defer shudownFunc()
-		return fmt.Errorf(`unable to start mocked DNS server: connection is not UDP`)
+		return nil
 	}
-	logger.WithContext(ctx).Infof("DNS server started at 127.0.0.1:%d", s.Port)
-	return nil
 }
 
-func (s *MockedDNSServer) Stop(ctx context.Context) error {
-	return s.Server.ShutdownContext(ctx)
-}
+
