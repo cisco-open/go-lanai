@@ -169,12 +169,6 @@ func initialize(lc fx.Lifecycle, di regDI) {
 		di.RedisFactory.AddHooks(di.AppContext, hook)
 	}
 
-	// vault instrumentation
-	if di.VaultClient != nil {
-		hook := instrument.NewVaultTracingHook(di.Tracer)
-		di.VaultClient.AddHooks(di.AppContext, hook)
-	}
-
 	// scheduler instrumentation
 	scheduler.AddDefaultHook(instrument.NewTracingTaskHook(di.Tracer))
 

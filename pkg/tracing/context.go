@@ -32,7 +32,6 @@ const (
 	OpNameStop       = "shutdown"
 	OpNameHttp       = "http"
 	OpNameRedis      = "redis"
-	OpNameVault      = "vault"
 	OpNameDB         = "db"
 	OpNameCli        = "cli"
 	OpNameHttpClient = "remote-http"

@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package instrument
+package vaulttracing
 
 import (
 	"context"
@@ -23,30 +23,32 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-type vaultTracingHook struct {
+const OpName = "vault"
+
+type Hook struct {
 	tracer opentracing.Tracer
 }
 
-func NewVaultTracingHook(tracer opentracing.Tracer) *vaultTracingHook {
-	return &vaultTracingHook{
+func NewHook(tracer opentracing.Tracer) *Hook {
+	return &Hook{
 		tracer: tracer,
 	}
 }
 
-func (v *vaultTracingHook) BeforeOperation(ctx context.Context, cmd string) context.Context {
-	name := tracing.OpNameVault + " " + cmd
+func (h *Hook) BeforeOperation(ctx context.Context, cmd string) context.Context {
+	name := OpName + " " + cmd
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCClientEnum),
 		tracing.SpanTag("cmd", cmd),
 	}
-	return tracing.WithTracer(v.tracer).
+	return tracing.WithTracer(h.tracer).
 		WithOpName(name).
 		WithOptions(opts...).
 		DescendantOrNoSpan(ctx)
 }
 
-func (v *vaultTracingHook) AfterOperation(ctx context.Context, err error)  {
-	op := tracing.WithTracer(v.tracer)
+func (h *Hook) AfterOperation(ctx context.Context, err error) {
+	op := tracing.WithTracer(h.tracer)
 	if err != nil {
 		op.WithOptions(tracing.SpanTag("err", err))
 	}

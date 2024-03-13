@@ -25,7 +25,8 @@ import (
     "github.com/cisco-open/go-lanai/pkg/vault"
 	vaultappconfig "github.com/cisco-open/go-lanai/pkg/vault/appconfig"
 	vaulthealth "github.com/cisco-open/go-lanai/pkg/vault/health"
-    "go.uber.org/fx"
+	vaulttracing "github.com/cisco-open/go-lanai/pkg/vault/tracing"
+	"go.uber.org/fx"
 )
 
 //go:embed defaults-vault.yml
@@ -43,6 +44,7 @@ var Module = &bootstrap.Module{
 	},
 	Modules: []*bootstrap.Module{
 		vaultappconfig.Module,
+		vaulttracing.Module,
 	},
 }
 
