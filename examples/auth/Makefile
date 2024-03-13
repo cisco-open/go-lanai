@@ -24,7 +24,6 @@ CLI_TAG ?=
 FORCE ?=
 UPGRADE ?=
 DEV ?=
-PRIVATE_MODS ?=
 
 ## Required Variables by Local Targets
 GO ?= go
@@ -33,17 +32,17 @@ CLI ?= lanai-cli
 
 INIT_TMP_DIR = $(TMP_DIR)/init
 CLI_GOMOD_FILE = $(INIT_TMP_DIR)/go.mod
-CLI_MOD_PATH ?= $(shell realpath `$(GO) list -f='{{or .Replace ""}}' -m $(CLI_MOD)`)
+CLI_MOD_RELATIVE_PATH = $(shell $(GO) list -f='{{or .Replace ""}}' -m $(CLI_MOD))
+CLI_MOD_PATH ?= $(if $(CLI_MOD_RELATIVE_PATH), $(shell realpath $(CLI_MOD_RELATIVE_PATH)), "")
 
 ## Local Targets
 
 # init-once:
 #	Used to setup local dev environment, and should be used only once per environment.
 # 	This target assumes local environment has proper SSH access to $PRIVATE_MODS
-#	Required Vars:
-#		- PRIVATE_MODS space delimited private golang modules.
-# 		  e.g. PRIVATE_REPOS="github.com/<org>/<private-repo>"
-#			   PRIVATE_REPOS="private-github.my-domain.org/path/to/module/repo"
+#	Optional Vars:
+#		- PRIVATE_MODS:	private modules and its version/branch/tag to use. comma delimited if multiple modules.
+# 		  e.g. PRIVATE_MODS="github.com/<org>/<my-private-dependency>@v0.1.0,github.my-domain.com/<org>/<repo>@0.2.1"
 init-once: PRIVATE_REPOS := $(foreach mod,$(subst $(comma),$(space),$(PRIVATE_MODS)),$(firstword $(subst @, ,$(mod))))
 init-once: GOPRIVATE := $(sort $(PRIVATE_REPOS) $(subst $(comma),$(space),$(shell $(GO) env GOPRIVATE)))
 init-once:
@@ -66,14 +65,14 @@ init-ws:
 #		- CLI_MOD_PATH the path of the go-lanai module on local file system. If provided, it would override CLI_TAG
 #		  e.g. CLI_MOD_PATH=./../go-lanai
 #		- CLI_TAG branch/tag to use to install "lanai-cli", typically same branch/tag of github.com/cisco-open/go-lanai
-#		  e.g. CLI_TAG=develop
-ifneq ("$(wildcard $(CLI_MOD_PATH)/go.mod)","")
+#		  e.g. CLI_TAG=main
+ifneq ("$(and $(CLI_MOD_PATH), $(wildcard $(CLI_MOD_PATH)/go.mod))", "")
 # For Contributors or Service Dev who have go-lanai checked out (either by-side or as parent) and have proper "replace" directive in go.mod
 init-cli: CLI_PKG = cmd/lanai-cli
-init-cli: CLI_PKG_PATH = $(CLI_MOD_PATH)/cmd/lanai-cli
-init-cli: CLI_VERSION = 0.0.0-$(shell cd $(CLI_MOD_PATH); date +"%Y%m%d%H%M%S")-$(shell $(GIT) rev-parse --short=12 HEAD || echo "SNAPSHOT")
+init-cli: CLI_PKG_PATH = $(CLI_MOD_PATH)/$(CLI_PKG)
+init-cli: CLI_VERSION = 0.0.0-$(shell date +"%Y%m%d%H%M%S")-$(shell cd $(CLI_MOD_PATH); $(GIT) rev-parse --short=12 HEAD || echo "SNAPSHOT")
 init-cli: print
-	@echo Installing $(CLI_MOD_PATH)/$(CLI_PKG)@$(CLI_VERSION) ...
+	@echo Installing $(CLI_PKG_PATH)@$(CLI_VERSION) including local modifications ...
 	@cd $(CLI_MOD_PATH); $(GO) install -ldflags="-X main.BuildVersion=$(CLI_VERSION)" $(CLI_PKG_PATH)
 
 else
@@ -96,8 +95,9 @@ init: init-cli
 	$(CLI) init -o ./ $(if $(filter true True TRUE,$(FORCE)),--force) $(if $(filter true True TRUE,$(UPGRADE)),--upgrade)
 
 print:
+	@echo "WORK_DIR:    $(WORK_DIR)"
 	@echo "CLI_VERSION:  $(CLI_VERSION)"
 	@echo "CLI_PKG_PATH: $(CLI_PKG_PATH)"
 	@echo "CLI_TAG:      $(CLI_TAG)"
+	@echo "CLI_MOD_RELATIVE_PATH: $(CLI_MOD_RELATIVE_PATH)"
 	@echo "CLI_MOD_PATH: $(CLI_MOD_PATH)"
-
