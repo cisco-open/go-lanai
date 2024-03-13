@@ -431,11 +431,19 @@ func assertResponse(_ *testing.T, g *gomega.WithT, resp *httpclient.Response, ex
 
 	respBody := resp.Body.(*EchoResponse)
 	for k, v := range expectedBody.Headers {
-		g.Expect(respBody.Headers).To(HaveKeyWithValue(k, v), ".Headers should contains %s=%s", k, v)
+		if len(v) != 0 {
+			g.Expect(respBody.Headers).To(HaveKeyWithValue(k, v), ".Headers should contains %s=%s", k, v)
+		} else {
+			g.Expect(respBody.Headers).ToNot(HaveKey(k), ".Headers should not contains %s", k)
+		}
 	}
 
 	for k, v := range expectedBody.Form {
-		g.Expect(respBody.Form).To(HaveKeyWithValue(k, v), ".Headers should contains %s=%s", k, v)
+		if len(v) != 0 {
+			g.Expect(respBody.Form).To(HaveKeyWithValue(k, v), ".Form should contains %s=%s", k, v)
+		} else {
+			g.Expect(respBody.Form).ToNot(HaveKey(k), ".Form should not contains %s", k)
+		}
 	}
 
 	g.Expect(respBody.ReqBody).To(BeEquivalentTo(expectedBody.ReqBody), ".ReqBody should correct")

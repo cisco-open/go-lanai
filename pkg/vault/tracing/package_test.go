@@ -55,7 +55,7 @@ type TestTracingDI struct {
 	MockTracer *mocktracer.MockTracer
 }
 
-func TestAppConfig(t *testing.T) {
+func TestVaultTracing(t *testing.T) {
 	di := TestTracingDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),

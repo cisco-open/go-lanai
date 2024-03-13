@@ -35,6 +35,7 @@ var Module = &bootstrap.Module{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(bindHttpClientProperties),
 		fx.Provide(provideHttpClient),
+		fx.Provide(tracingProvider()),
 	},
 }
 

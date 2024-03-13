@@ -35,6 +35,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.SecurityIntegrationPrecedence,
 	Options: []fx.Option{
 		fx.Provide(provideDefaultScopeManager),
+		fx.Provide(tracingProvider()),
 		fx.Invoke(configureScopeManagers),
 	},
 }

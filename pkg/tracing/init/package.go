@@ -24,7 +24,6 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/scheduler"
 	"github.com/cisco-open/go-lanai/pkg/tracing"
 	"github.com/cisco-open/go-lanai/pkg/tracing/instrument"
-	"github.com/cisco-open/go-lanai/pkg/vault"
 	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/fx"
@@ -40,8 +39,6 @@ var Module = &bootstrap.Module{
 		fx.Provide(provideTracer),
 		fx.Provide(instrument.GormTracingProvider()),
 		fx.Provide(instrument.CliRunnerTracingProvider()),
-		fx.Provide(instrument.HttpClientTracingProvider()),
-		fx.Provide(instrument.SecurityScopeTracingProvider()),
 		fx.Provide(instrument.KafkaTracingTracingProvider()),
 		fx.Provide(instrument.OpenSearchTracingProvider()),
 		fx.Invoke(initialize),
@@ -146,7 +143,6 @@ type regDI struct {
 	FxHook       TracerClosingHook   `optional:"true"`
 	Registrar    *web.Registrar      `optional:"true"`
 	RedisFactory redis.ClientFactory `optional:"true"`
-	VaultClient  *vault.Client       `optional:"true"`
 	// we could include security configurations, customizations here
 }
 

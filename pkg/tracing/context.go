@@ -34,7 +34,6 @@ const (
 	OpNameRedis      = "redis"
 	OpNameDB         = "db"
 	OpNameCli        = "cli"
-	OpNameHttpClient = "remote-http"
 	OpNameSecScope   = "security"
 	OpNameKafka      = "kafka"
 	OpNameScheduler  = "scheduler"
