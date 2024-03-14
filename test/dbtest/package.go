@@ -76,14 +76,10 @@ func WithNoopMocks() test.Options {
 
 func withData() []test.Options {
 	return []test.Options{
-		apptest.WithModules(tx.Module),
+		apptest.WithModules(data.Module, tx.Module),
 		apptest.WithFxOptions(
 			appconfig.FxEmbeddedDefaults(defaultConfigFS),
-			fx.Provide(data.BindDataProperties),
-			fx.Provide(data.NewGorm),
-			fx.Provide(data.ErrorHandlingGormConfigurer()),
 			fx.Provide(pqErrorTranslatorProvider()),
-			fx.Provide(gormErrTranslatorProvider()),
 		),
 	}
 }

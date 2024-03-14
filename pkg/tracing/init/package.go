@@ -37,10 +37,8 @@ var Module = &bootstrap.Module{
 	PriorityOptions: []fx.Option{
 		fx.Provide(tracing.BindTracingProperties),
 		fx.Provide(provideTracer),
-		fx.Provide(instrument.GormTracingProvider()),
 		fx.Provide(instrument.CliRunnerTracingProvider()),
 		fx.Provide(instrument.KafkaTracingTracingProvider()),
-		fx.Provide(instrument.OpenSearchTracingProvider()),
 		fx.Invoke(initialize),
 	},
 }

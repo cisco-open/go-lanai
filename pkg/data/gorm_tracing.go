@@ -14,35 +14,23 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package instrument
+package data
 
 import (
-	"github.com/cisco-open/go-lanai/pkg/data"
 	"github.com/cisco-open/go-lanai/pkg/tracing"
 	"github.com/cisco-open/go-lanai/pkg/utils/order"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"go.uber.org/fx"
 	"gorm.io/gorm"
 )
 
-const (
-	gormCallbackPrefix = "lanai:"
-	gormPluginName     = gormCallbackPrefix + "tracing"
-)
+const gormPluginTracing = gormCallbackPrefix + "tracing"
 
 type gormConfigurer struct {
 	tracer opentracing.Tracer
 }
 
-func GormTracingProvider() fx.Annotated {
-	return fx.Annotated{
-		Group:  data.GormConfigurerGroup,
-		Target: newGormTracingConfigurer,
-	}
-}
-
-func newGormTracingConfigurer(tracer opentracing.Tracer) data.GormConfigurer {
+func NewGormTracingConfigurer(tracer opentracing.Tracer) GormConfigurer {
 	return &gormConfigurer{
 		tracer: tracer,
 	}
@@ -56,7 +44,7 @@ func (c gormConfigurer) Configure(config *gorm.Config) {
 	if config.Plugins == nil {
 		config.Plugins = map[string]gorm.Plugin{}
 	}
-	config.Plugins[gormPluginName] = &gormPlugin{
+	config.Plugins[gormPluginTracing] = &gormPlugin{
 		tracer: c.tracer,
 	}
 }
@@ -75,34 +63,34 @@ func (p gormPlugin) Name() string {
 // Initialize implements gorm.Plugin. This function register tracing related callbacks
 // Default callbacks can be found at github.com/go-gorm/gorm/callbacks/callbacks.go
 func (p gormPlugin) Initialize(db *gorm.DB) error {
-	_ = db.Callback().Create().Before(data.GormCallbackBeforeCreate).
+	_ = db.Callback().Create().Before(GormCallbackBeforeCreate).
 		Register(p.cbBeforeName("create"), p.makeBeforeCallback("create"))
-	_ = db.Callback().Create().After(data.GormCallbackAfterCreate).
+	_ = db.Callback().Create().After(GormCallbackAfterCreate).
 		Register(p.cbAfterName("create"), p.makeAfterCallback("create"))
 
-	_ = db.Callback().Query().Before(data.GormCallbackBeforeQuery).
+	_ = db.Callback().Query().Before(GormCallbackBeforeQuery).
 		Register(p.cbBeforeName("query"), p.makeBeforeCallback("select"))
-	_ = db.Callback().Query().After(data.GormCallbackAfterQuery).
+	_ = db.Callback().Query().After(GormCallbackAfterQuery).
 		Register(p.cbAfterName("query"), p.makeAfterCallback("select"))
 
-	_ = db.Callback().Update().Before(data.GormCallbackBeforeUpdate).
+	_ = db.Callback().Update().Before(GormCallbackBeforeUpdate).
 		Register(p.cbBeforeName("update"), p.makeBeforeCallback("update"))
-	_ = db.Callback().Update().After(data.GormCallbackAfterUpdate).
+	_ = db.Callback().Update().After(GormCallbackAfterUpdate).
 		Register(p.cbAfterName("update"), p.makeAfterCallback("update"))
 
-	_ = db.Callback().Delete().Before(data.GormCallbackBeforeDelete).
+	_ = db.Callback().Delete().Before(GormCallbackBeforeDelete).
 		Register(p.cbBeforeName("delete"), p.makeBeforeCallback("delete"))
-	_ = db.Callback().Delete().After(data.GormCallbackAfterDelete).
+	_ = db.Callback().Delete().After(GormCallbackAfterDelete).
 		Register(p.cbAfterName("delete"), p.makeAfterCallback("delete"))
 
-	_ = db.Callback().Row().Before(data.GormCallbackBeforeRow).
+	_ = db.Callback().Row().Before(GormCallbackBeforeRow).
 		Register(p.cbBeforeName("row"), p.makeBeforeCallback("row"))
-	_ = db.Callback().Row().After(data.GormCallbackAfterRow).
+	_ = db.Callback().Row().After(GormCallbackAfterRow).
 		Register(p.cbAfterName("row"), p.makeAfterCallback("row"))
 
-	_ = db.Callback().Raw().Before(data.GormCallbackBeforeRaw).
+	_ = db.Callback().Raw().Before(GormCallbackBeforeRaw).
 		Register(p.cbBeforeName("raw"), p.makeBeforeCallback("sql"))
-	_ = db.Callback().Raw().After(data.GormCallbackAfterRaw).
+	_ = db.Callback().Raw().After(GormCallbackAfterRaw).
 		Register(p.cbAfterName("raw"), p.makeAfterCallback("sql"))
 
 	return nil

@@ -19,24 +19,8 @@ package data
 import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/actuator/health"
-	"go.uber.org/fx"
 	"gorm.io/gorm"
 )
-
-type regDI struct {
-	fx.In
-	HealthRegistrar health.Registrar `optional:"true"`
-	GormDB *gorm.DB `optional:"true"`
-}
-
-func registerHealth(di regDI) {
-	if di.HealthRegistrar == nil || di.GormDB == nil {
-		return
-	}
-	di.HealthRegistrar.MustRegister(&DbHealthIndicator{
-		db: di.GormDB,
-	})
-}
 
 // DbHealthIndicator
 // Note: we currently only support one database

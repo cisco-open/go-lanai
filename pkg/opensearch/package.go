@@ -33,6 +33,7 @@ var Module = &bootstrap.Module{
 		fx.Provide(BindOpenSearchProperties),
 		fx.Provide(NewConfig),
 		fx.Provide(NewClient),
+		fx.Provide(tracingProvider()),
 		fx.Invoke(registerHealth),
 	},
 }

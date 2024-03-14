@@ -6,10 +6,10 @@ import (
 	actuator "github.com/cisco-open/go-lanai/pkg/actuator/init"
 	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
-	consul "github.com/cisco-open/go-lanai/pkg/consul/init"
 	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
 	data "github.com/cisco-open/go-lanai/pkg/data/init"
-	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd"
+	"github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
 	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/pkg/security"
 	"github.com/cisco-open/go-lanai/pkg/security/config/resserver"
@@ -33,7 +33,7 @@ var Module = &bootstrap.Module{
 func Use() {
 	// basic modules
 	appconfig.Use()
-	consul.Use()
+	//consul.Use()
 	vault.Use()
 	redis.Use()
 	tracing.Use()
@@ -48,9 +48,10 @@ func Use() {
 	cockroach.Use()
 
 	// service-to-service integration related
-	consulsd.Use()
-	//httpclient.Use()
-	//scope.Use()
+	//consulsd.Use()
+	//dnssd.Use()
+	httpclient.Use()
+	scope.Use()
 	//kafka.Use()
 
 	// security related modules

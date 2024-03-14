@@ -14,36 +14,41 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package instrument
+package opensearch
 
 import (
 	"context"
-	"github.com/cisco-open/go-lanai/pkg/opensearch"
 	"github.com/cisco-open/go-lanai/pkg/tracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"go.uber.org/fx"
 )
 
-// OpensearchTracer will provide some opensearch.HookContainer to provide tracing
-type OpenSearchTracer struct {
+// Tracer will provide some opensearch.HookContainer to provide tracing
+type Tracer struct {
 	tracer opentracing.Tracer
 }
 
-func (o *OpenSearchTracer) Before(ctx context.Context, before opensearch.BeforeContext) context.Context {
+func (t *Tracer) Before(ctx context.Context, before BeforeContext) context.Context {
+	if t.tracer == nil {
+		return ctx
+	}
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCClientEnum),
 		tracing.SpanTag("command", before.CommandType()),
 	}
-	ctx = tracing.WithTracer(o.tracer).
+	ctx = tracing.WithTracer(t.tracer).
 		WithOpName("opensearch " + before.CommandType().String()).
 		WithOptions(opts...).
 		DescendantOrNoSpan(ctx)
 	return ctx
 }
 
-func (o *OpenSearchTracer) After(ctx context.Context, afterContext opensearch.AfterContext) context.Context {
-	op := tracing.WithTracer(o.tracer)
+func (t *Tracer) After(ctx context.Context, afterContext AfterContext) context.Context {
+	if t.tracer == nil {
+		return ctx
+	}
+	op := tracing.WithTracer(t.tracer)
 
 	if (afterContext.Resp) != nil && (afterContext.Resp).IsError() {
 		op = op.WithOptions(
@@ -54,8 +59,8 @@ func (o *OpenSearchTracer) After(ctx context.Context, afterContext opensearch.Af
 			tracing.SpanTag("error", afterContext.Err),
 		)
 	} else {
-		if afterContext.CommandType() == opensearch.CmdSearch {
-			resp, err := opensearch.UnmarshalResponse[opensearch.SearchResponse[any]](afterContext.Resp)
+		if afterContext.CommandType() == CmdSearch {
+			resp, err := UnmarshalResponse[SearchResponse[any]](afterContext.Resp)
 			if err != nil {
 				logger.Errorf("unable to unmarshal error: %v", err)
 			} else {
@@ -71,18 +76,23 @@ func (o *OpenSearchTracer) After(ctx context.Context, afterContext opensearch.Af
 	return ctx
 }
 
-func OpenSearchTracerHook(tracer opentracing.Tracer) *OpenSearchTracer {
-	o := OpenSearchTracer{
+func TracerHook(tracer opentracing.Tracer) *Tracer {
+	o := Tracer{
 		tracer: tracer,
 	}
 	return &o
 }
 
-func OpenSearchTracingProvider() fx.Annotated {
+type tracingDI struct {
+	fx.In
+	Tracer opentracing.Tracer `optional:"true"`
+}
+
+func tracingProvider() fx.Annotated {
 	return fx.Annotated{
-		Group: opensearch.FxGroup,
-		Target: func(tracer opentracing.Tracer) (opensearch.BeforeHook, opensearch.AfterHook) {
-			tracerHook := OpenSearchTracerHook(tracer)
+		Group: FxGroup,
+		Target: func(di tracingDI) (BeforeHook, AfterHook) {
+			tracerHook := TracerHook(di.Tracer)
 			return tracerHook, tracerHook
 		},
 	}

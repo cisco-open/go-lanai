@@ -22,6 +22,16 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	_ = iota
+	ErrorTranslatorOrderGorm // gorm error -> data error
+	ErrorTranslatorOrderData // data error -> data error with status code
+)
+
+const (
+	GormConfigurerGroup = "gorm_config"
+)
+
 // ErrorTranslator redefines web.ErrorTranslator and order.Ordered
 // having this redefinition is to break dependency between data and web package
 type ErrorTranslator interface {
