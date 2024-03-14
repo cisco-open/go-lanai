@@ -156,12 +156,6 @@ func initialize(lc fx.Lifecycle, di regDI) {
 		}
 	}
 
-	// redis instrumentation
-	if di.RedisFactory != nil {
-		hook := instrument.NewRedisTrackingHook(di.Tracer)
-		di.RedisFactory.AddHooks(di.AppContext, hook)
-	}
-
 	// scheduler instrumentation
 	scheduler.AddDefaultHook(instrument.NewTracingTaskHook(di.Tracer))
 

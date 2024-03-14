@@ -47,7 +47,7 @@ type TestTracingDI struct {
 	MockTracer *mocktracer.MockTracer
 }
 
-func TestGormTracingWithExistingSpan(t *testing.T) {
+func TestKafkaTracing(t *testing.T) {
 	di := TestTracingDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
