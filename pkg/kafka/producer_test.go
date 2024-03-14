@@ -66,7 +66,7 @@ func SubTestSendWithLocalAck(di *TestProducerDI) test.GomegaSubTestFunc {
 		const topic = `test.producer-local-ack`
 		var e error
 		encoder := &TestEncoder{}
-		producer := TryBindTestProducer(ctx, t, g, di, topic, kafka.RequireLocalAck(), kafka.AckTimeout(1 * time.Second))
+		producer := TryBindTestProducer(ctx, t, g, &di.TestBinderDI, topic, kafka.RequireLocalAck(), kafka.AckTimeout(1 * time.Second))
 		g.Expect(producer.Topic()).To(Equal(topic), "producer's topic should be correct")
 
 		// send some messages
@@ -91,7 +91,7 @@ func SubTestSendWithoutAck(di *TestProducerDI) test.GomegaSubTestFunc {
 		const topic = `test.producer-no-ack`
 		var e error
 		keyEncoder := &TestEncoder{}
-		producer := TryBindTestProducer(ctx, t, g, di, topic, kafka.KeyEncoder(keyEncoder), kafka.RequireNoAck())
+		producer := TryBindTestProducer(ctx, t, g, &di.TestBinderDI, topic, kafka.KeyEncoder(keyEncoder), kafka.RequireNoAck())
 		g.Expect(producer.Topic()).To(Equal(topic), "producer's topic should be correct")
 
 		// send some messages
@@ -117,7 +117,7 @@ func SubTestSendWithAllAck(di *TestProducerDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const topic = `test.producer-all-ack`
 		var e error
-		producer := TryBindTestProducer(ctx, t, g, di, topic, kafka.RequireAllAck(), kafka.AckTimeout(1 * time.Second))
+		producer := TryBindTestProducer(ctx, t, g, &di.TestBinderDI, topic, kafka.RequireAllAck(), kafka.AckTimeout(1 * time.Second))
 		g.Expect(producer.Topic()).To(Equal(topic), "producer's topic should be correct")
 
 		// send some messages
@@ -138,7 +138,7 @@ func SubTestSendWithAllAck(di *TestProducerDI) test.GomegaSubTestFunc {
 	Helpers
  *************************/
 
-func TryBindTestProducer(ctx context.Context, t *testing.T, g *gomega.WithT, di *TestProducerDI, topic string, opts...kafka.ProducerOptions) kafka.Producer {
+func TryBindTestProducer(ctx context.Context, t *testing.T, g *gomega.WithT, di *TestBinderDI, topic string, opts...kafka.ProducerOptions) kafka.Producer {
 	testdata.MockCreateTopic(ctx, topic)
 	producer, e := di.Binder.Produce(topic, opts...)
 	g.Expect(e).To(Succeed(), "bind producer should not fail")

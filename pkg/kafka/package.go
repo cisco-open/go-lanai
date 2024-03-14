@@ -23,6 +23,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/certs"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"go.uber.org/fx"
+	"reflect"
 )
 
 var logger = log.New("Kafka")
@@ -31,6 +32,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.KafkaPrecedence,
 	Options: []fx.Option{
 		fx.Provide(BindKafkaProperties, ProvideKafkaBinder),
+		fx.Provide(tracingProvider()),
 		fx.Invoke(initialize),
 	},
 }
@@ -59,9 +61,9 @@ func ProvideKafkaBinder(di binderDI) Binder {
 		*opt = BinderOption{
 			ApplicationConfig:    di.AppContext.Config(),
 			Properties:           di.Properties,
-			ProducerInterceptors: append(opt.ProducerInterceptors, di.ProducerInterceptors...),
-			ConsumerInterceptors: append(opt.ConsumerInterceptors, di.ConsumerInterceptors...),
-			HandlerInterceptors:  append(opt.HandlerInterceptors, di.HandlerInterceptors...),
+			ProducerInterceptors: append(opt.ProducerInterceptors, filterZeroValues(di.ProducerInterceptors)...),
+			ConsumerInterceptors: append(opt.ConsumerInterceptors, filterZeroValues(di.ConsumerInterceptors)...),
+			HandlerInterceptors:  append(opt.HandlerInterceptors, filterZeroValues(di.HandlerInterceptors)...),
 			TLSCertsManager:      di.TLSCertsManager,
 		}
 	})
@@ -94,4 +96,15 @@ func initialize(di initDI) {
 	}
 
 	di.HealthRegistrar.MustRegister(NewHealthIndicator(di.Binder))
+}
+
+func filterZeroValues[T any](values []T) []T {
+	filtered := make([]T, 0, len(values))
+	for i := range values {
+		rv := reflect.ValueOf(values[i])
+		if rv.IsValid() && !rv.IsZero() {
+			filtered = append(filtered, values[i])
+		}
+	}
+	return filtered
 }

@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/IBM/sarama"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
 	"sync"
 )
 
@@ -43,6 +44,8 @@ func newSaramaGroupConsumer(topic string, group string, addrs []string, config *
 		return nil, ErrorSubTypeBindingInternal.WithMessage("group is required and cannot be empty")
 	}
 
+	order.SortStable(config.consumer.dispatchInterceptors, order.OrderedFirstCompare)
+	order.SortStable(config.consumer.handlerInterceptors, order.OrderedFirstCompare)
 	//config.Consumer.Return.Errors = true
 	return &saramaGroupConsumer{
 		topic:       topic,

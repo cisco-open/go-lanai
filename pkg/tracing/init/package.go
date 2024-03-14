@@ -38,7 +38,6 @@ var Module = &bootstrap.Module{
 		fx.Provide(tracing.BindTracingProperties),
 		fx.Provide(provideTracer),
 		fx.Provide(instrument.CliRunnerTracingProvider()),
-		fx.Provide(instrument.KafkaTracingTracingProvider()),
 		fx.Invoke(initialize),
 	},
 }

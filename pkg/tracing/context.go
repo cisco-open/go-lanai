@@ -35,7 +35,6 @@ const (
 	OpNameDB         = "db"
 	OpNameCli        = "cli"
 	OpNameSecScope   = "security"
-	OpNameKafka      = "kafka"
 	OpNameScheduler  = "scheduler"
 	//OpName = ""
 )
@@ -177,7 +176,7 @@ func (op SpanOperator) NewSpanOrDescendant(ctx context.Context) context.Context 
 	}, true)
 }
 
-// NewSpanOrDescendant create new span if not currently have one,
+// NewSpanOrFollows create new span if not currently have one,
 // spawn a child span using opentracing.FollowsFrom(span.Context()) if span exists
 func (op SpanOperator) NewSpanOrFollows(ctx context.Context) context.Context {
 	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {

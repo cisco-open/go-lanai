@@ -14,26 +14,37 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package instrument
+package kafka
 
 import (
     "context"
     "fmt"
-    "github.com/cisco-open/go-lanai/pkg/kafka"
-    "github.com/cisco-open/go-lanai/pkg/tracing"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
     "github.com/opentracing/opentracing-go"
     "github.com/opentracing/opentracing-go/ext"
     "go.uber.org/fx"
 )
 
-func KafkaTracingTracingProvider() fx.Annotated {
+const tracingOpName = "kafka"
+
+type tracingDI struct {
+	fx.In
+	Tracer opentracing.Tracer `optional:"true"`
+}
+
+func tracingProvider() fx.Annotated {
 	return fx.Annotated{
-		Group:  kafka.FxGroup,
-		Target: newKafkaInterceptors,
+		Group:  FxGroup,
+		Target: func(di tracingDI) (ProducerMessageInterceptor, ConsumerDispatchInterceptor, ConsumerHandlerInterceptor) {
+			if di.Tracer != nil {
+				return newKafkaInterceptors(di.Tracer)
+			}
+			return nil, nil, nil
+		},
 	}
 }
 
-func newKafkaInterceptors(tracer opentracing.Tracer) (kafka.ProducerMessageInterceptor, kafka.ConsumerDispatchInterceptor, kafka.ConsumerHandlerInterceptor) {
+func newKafkaInterceptors(tracer opentracing.Tracer) (ProducerMessageInterceptor, ConsumerDispatchInterceptor, ConsumerHandlerInterceptor) {
 	return &kafkaProducerInterceptor{
 			tracer: tracer,
 		}, &kafkaConsumerInterceptor{
@@ -48,9 +59,9 @@ type kafkaProducerInterceptor struct {
 	tracer opentracing.Tracer
 }
 
-func (i kafkaProducerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafka.MessageContext, error) {
+func (i kafkaProducerInterceptor) Intercept(msgCtx *MessageContext) (*MessageContext, error) {
 	cmdStr := "send"
-	name := tracing.OpNameKafka + " " + cmdStr
+	name := tracingOpName + " " + cmdStr
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCClientEnum),
 		tracing.SpanTag("topic", msgCtx.Topic),
@@ -70,7 +81,7 @@ func (i kafkaProducerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafk
 	return msgCtx, nil
 }
 
-func (i kafkaProducerInterceptor) Finalize(msgCtx *kafka.MessageContext, p int32, offset int64, err error) (*kafka.MessageContext, error) {
+func (i kafkaProducerInterceptor) Finalize(msgCtx *MessageContext, p int32, offset int64, err error) (*MessageContext, error) {
 	op := tracing.WithTracer(i.tracer)
 	if err != nil {
 		op = op.WithOptions(tracing.SpanTag("err", err))
@@ -83,7 +94,7 @@ func (i kafkaProducerInterceptor) Finalize(msgCtx *kafka.MessageContext, p int32
 	return msgCtx, err
 }
 
-func (i kafkaProducerInterceptor) spanPropagation(msgCtx *kafka.MessageContext) tracing.SpanOption {
+func (i kafkaProducerInterceptor) spanPropagation(msgCtx *MessageContext) tracing.SpanOption {
 	return func(span opentracing.Span) {
 		// we ignore error, since we can't do anything about it
 		_ = i.tracer.Inject(span.Context(), opentracing.TextMap, opentracing.TextMapCarrier(msgCtx.Message.Headers))
@@ -95,7 +106,7 @@ type kafkaConsumerInterceptor struct {
 	tracer opentracing.Tracer
 }
 
-func (i kafkaConsumerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafka.MessageContext, error) {
+func (i kafkaConsumerInterceptor) Intercept(msgCtx *MessageContext) (*MessageContext, error) {
 
 	// first extract span from message
 	ctx := tracing.WithTracer(i.tracer).
@@ -105,12 +116,12 @@ func (i kafkaConsumerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafk
 	// second, start a follower span
 	cmdStr := "recv"
 	switch msgCtx.Source.(type) {
-	case kafka.Subscriber:
+	case Subscriber:
 		cmdStr = "subscribe"
-	case kafka.GroupConsumer:
+	case GroupConsumer:
 		cmdStr = "consume"
 	}
-	name := tracing.OpNameKafka + " " + cmdStr
+	name := tracingOpName + " " + cmdStr
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCServerEnum),
 		tracing.SpanTag("topic", msgCtx.Topic),
@@ -129,7 +140,7 @@ func (i kafkaConsumerInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafk
 	return msgCtx, nil
 }
 
-func (i kafkaConsumerInterceptor) Finalize(msgCtx *kafka.MessageContext, err error) (*kafka.MessageContext, error) {
+func (i kafkaConsumerInterceptor) Finalize(msgCtx *MessageContext, err error) (*MessageContext, error) {
 	op := tracing.WithTracer(i.tracer)
 	if err != nil {
 		op = op.WithOptions(tracing.SpanTag("err", err))
@@ -138,9 +149,11 @@ func (i kafkaConsumerInterceptor) Finalize(msgCtx *kafka.MessageContext, err err
 	return msgCtx, err
 }
 
-func (i kafkaConsumerInterceptor) spanPropagation(msgCtx *kafka.MessageContext) opentracing.StartSpanOption {
-	// we ignore error because there is nothing we could do
-	spanCtx, _ := i.tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(msgCtx.Message.Headers))
+func (i kafkaConsumerInterceptor) spanPropagation(msgCtx *MessageContext) opentracing.StartSpanOption {
+	spanCtx, e := i.tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(msgCtx.Message.Headers))
+	if e != nil {
+		return noopStartSpanOption{}
+	}
 	return ext.RPCServerOption(spanCtx)
 }
 
@@ -149,9 +162,9 @@ type kafkaHandlerInterceptor struct {
 	tracer opentracing.Tracer
 }
 
-func (i kafkaHandlerInterceptor) BeforeHandling(ctx context.Context, _ *kafka.Message) (context.Context, error) {
+func (i kafkaHandlerInterceptor) BeforeHandling(ctx context.Context, _ *Message) (context.Context, error) {
 	cmdStr := "handle"
-	name := tracing.OpNameKafka + " " + cmdStr
+	name := tracingOpName + " " + cmdStr
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCServerEnum),
 		tracing.SpanTag("cmd", cmdStr),
@@ -165,7 +178,7 @@ func (i kafkaHandlerInterceptor) BeforeHandling(ctx context.Context, _ *kafka.Me
 	return ctx, nil
 }
 
-func (i kafkaHandlerInterceptor) AfterHandling(ctx context.Context, _ *kafka.Message, err error) (context.Context, error) {
+func (i kafkaHandlerInterceptor) AfterHandling(ctx context.Context, _ *Message, err error) (context.Context, error) {
 	op := tracing.WithTracer(i.tracer)
 	if err != nil {
 		op = op.WithOptions(tracing.SpanTag("err", err))
@@ -173,3 +186,7 @@ func (i kafkaHandlerInterceptor) AfterHandling(ctx context.Context, _ *kafka.Mes
 	ctx = op.FinishAndRewind(ctx)
 	return ctx, err
 }
+
+type noopStartSpanOption struct{}
+
+func (o noopStartSpanOption) Apply(*opentracing.StartSpanOptions){}
