@@ -17,10 +17,11 @@
 package scheduler
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "github.com/cisco-open/go-lanai/pkg/utils/order"
-    "time"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"github.com/opentracing/opentracing-go"
+	"time"
 )
 
 var logger = log.New("Scheduler")
@@ -48,6 +49,13 @@ func RunOnce(taskFunc TaskFunc, opts ...TaskOptions) (TaskCanceller, error) {
 func AddDefaultHook(hooks ...TaskHook) {
 	defaultTaskHooks = append(defaultTaskHooks, hooks...)
 	order.SortStable(defaultTaskHooks, order.OrderedFirstCompare)
+}
+
+// EnableTracing add a default hook with provided openstracing.Tracer start/end/propagate spans during execution
+func EnableTracing(tracer opentracing.Tracer) {
+	if tracer != nil {
+		AddDefaultHook(newTracingTaskHook(tracer))
+	}
 }
 
 /**************************

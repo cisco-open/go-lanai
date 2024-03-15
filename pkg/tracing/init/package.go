@@ -20,11 +20,8 @@ import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"github.com/cisco-open/go-lanai/pkg/log"
-	"github.com/cisco-open/go-lanai/pkg/redis"
-	"github.com/cisco-open/go-lanai/pkg/scheduler"
 	"github.com/cisco-open/go-lanai/pkg/tracing"
 	"github.com/cisco-open/go-lanai/pkg/tracing/instrument"
-	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/fx"
 )
@@ -138,8 +135,6 @@ type regDI struct {
 	AppContext   *bootstrap.ApplicationContext
 	Tracer       opentracing.Tracer  `optional:"true"`
 	FxHook       TracerClosingHook   `optional:"true"`
-	Registrar    *web.Registrar      `optional:"true"`
-	RedisFactory redis.ClientFactory `optional:"true"`
 	// we could include security configurations, customizations here
 }
 
@@ -147,17 +142,6 @@ func initialize(lc fx.Lifecycle, di regDI) {
 	if di.Tracer == nil {
 		return
 	}
-
-	// web instrumentation
-	if di.Registrar != nil {
-		customizer := instrument.NewTracingWebCustomizer(di.Tracer)
-		if e := di.Registrar.Register(customizer); e != nil {
-			panic(e)
-		}
-	}
-
-	// scheduler instrumentation
-	scheduler.AddDefaultHook(instrument.NewTracingTaskHook(di.Tracer))
 
 	// graceful closer
 	if di.FxHook != nil {

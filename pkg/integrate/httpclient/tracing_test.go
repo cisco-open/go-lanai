@@ -149,23 +149,25 @@ func ExpectedOpName(method string) string {
 }
 
 func AssertSpans(ctx context.Context, g *gomega.WithT, spans []*mocktracer.MockSpan, expectedParent *mocktracer.MockSpan, expectedMethod string, expectedSC int) *mocktracer.MockSpan {
-	if expectedParent == nil || len(expectedMethod) == 0 {
-		g.Expect(spans).To(BeEmpty(), "recorded span should be empty")
-		return nil
-	}
 	span := Last(spans)
 	g.Expect(span).ToNot(BeNil(), "recorded span should be available")
-	g.Expect(span.OperationName).To(Equal(ExpectedOpName(expectedMethod)), "recorded span should have correct '%s'", "OpName")
-	g.Expect(span.SpanContext.TraceID).To(Equal(expectedParent.SpanContext.TraceID), "recorded span should have correct '%s'", "TraceID")
-	g.Expect(span.ParentID).To(Equal(expectedParent.SpanContext.SpanID), "recorded span should have correct '%s'", "ParentID")
-	g.Expect(span.Tags()).To(HaveKeyWithValue("span.kind", BeEquivalentTo("client")), "recorded span should have correct '%s'", "Tags")
-	g.Expect(span.Tags()).To(HaveKeyWithValue("method", expectedMethod), "recorded span should have correct '%s'", "Tags")
-	g.Expect(span.Tags()).To(HaveKeyWithValue("http.method", expectedMethod), "recorded span should have correct '%s'", "Tags")
-	g.Expect(span.Tags()).To(HaveKey("url"), "recorded span should have correct '%s'", "Tags")
-	g.Expect(span.Tags()).To(HaveKey("http.url"), "recorded span should have correct '%s'", "Tags")
-	g.Expect(span.Tags()).To(HaveKeyWithValue("peer.hostname", "localhost"), "recorded span should have correct '%s'", "Tags")
-	g.Expect(span.Tags()).To(HaveKeyWithValue("peer.port", BeEquivalentTo(webtest.CurrentPort(ctx))), "recorded span should have correct '%s'", "Tags")
-	g.Expect(span.Tags()).To(HaveKeyWithValue("sc", expectedSC), "recorded span should have correct '%s'", "Tags")
-	g.Expect(span.Tags()).To(HaveKeyWithValue("http.status_code", BeEquivalentTo(expectedSC)), "recorded span should have correct '%s'", "Tags")
+	if expectedParent != nil {
+		g.Expect(span.OperationName).To(Equal(ExpectedOpName(expectedMethod)), "recorded span should have correct '%s'", "OpName")
+		g.Expect(span.SpanContext.TraceID).To(Equal(expectedParent.SpanContext.TraceID), "recorded span should have correct '%s'", "TraceID")
+		g.Expect(span.ParentID).To(Equal(expectedParent.SpanContext.SpanID), "recorded span should have correct '%s'", "ParentID")
+		g.Expect(span.Tags()).To(HaveKeyWithValue("span.kind", BeEquivalentTo("client")), "recorded span should have correct '%s'", "Tags")
+		g.Expect(span.Tags()).To(HaveKeyWithValue("method", expectedMethod), "recorded span should have correct '%s'", "Tags")
+		g.Expect(span.Tags()).To(HaveKeyWithValue("http.method", expectedMethod), "recorded span should have correct '%s'", "Tags")
+		g.Expect(span.Tags()).To(HaveKey("url"), "recorded span should have correct '%s'", "Tags")
+		g.Expect(span.Tags()).To(HaveKey("http.url"), "recorded span should have correct '%s'", "Tags")
+		g.Expect(span.Tags()).To(HaveKeyWithValue("peer.hostname", "localhost"), "recorded span should have correct '%s'", "Tags")
+		g.Expect(span.Tags()).To(HaveKeyWithValue("peer.port", BeEquivalentTo(webtest.CurrentPort(ctx))), "recorded span should have correct '%s'", "Tags")
+		g.Expect(span.Tags()).To(HaveKeyWithValue("sc", expectedSC), "recorded span should have correct '%s'", "Tags")
+		g.Expect(span.Tags()).To(HaveKeyWithValue("http.status_code", BeEquivalentTo(expectedSC)), "recorded span should have correct '%s'", "Tags")
+	} else {
+		// because we use real server, server-side tracing is always enabled.
+		g.Expect(span.ParentID).To(BeZero(), "recorded span should have correct '%s'", "ParentID")
+	}
+
 	return span
 }

@@ -84,7 +84,7 @@ as opposed to the v2 API where the response is
 func (engine *KvSecretEngineV1) ListSecrets(ctx context.Context, secretPath string) (results map[string]interface{}, err error) {
 	path := engine.ContextPath(secretPath)
 	results = make(map[string]interface{})
-
+	//nolint:contextcheck // false positive
 	if secrets, err := engine.client.Logical(ctx).Read(path); err != nil {
 		return nil, err
 	} else if secrets != nil {

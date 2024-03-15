@@ -35,7 +35,6 @@ const (
 	OpNameDB         = "db"
 	OpNameCli        = "cli"
 	OpNameSecScope   = "security"
-	OpNameScheduler  = "scheduler"
 	//OpName = ""
 )
 

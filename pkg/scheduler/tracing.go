@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package instrument
+package scheduler
 
 import (
 	"context"
@@ -23,18 +23,20 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-type TracingTaskHook struct {
+const tracingOpName  = "scheduler"
+
+type tracingTaskHook struct {
 	tracer opentracing.Tracer
 }
 
-func NewTracingTaskHook(tracer opentracing.Tracer) *TracingTaskHook {
-	return &TracingTaskHook{
+func newTracingTaskHook(tracer opentracing.Tracer) *tracingTaskHook {
+	return &tracingTaskHook{
 		tracer: tracer,
 	}
 }
 
-func (h *TracingTaskHook) BeforeTrigger(ctx context.Context, id string) context.Context {
-	name := tracing.OpNameScheduler
+func (h *tracingTaskHook) BeforeTrigger(ctx context.Context, id string) context.Context {
+	name := tracingOpName
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCClientEnum),
 		tracing.SpanTag("task", id),
@@ -46,7 +48,7 @@ func (h *TracingTaskHook) BeforeTrigger(ctx context.Context, id string) context.
 		NewSpanOrFollows(ctx)
 }
 
-func (h *TracingTaskHook) AfterTrigger(ctx context.Context, _ string, err error) {
+func (h *tracingTaskHook) AfterTrigger(ctx context.Context, _ string, err error) {
 	op := tracing.WithTracer(h.tracer)
 	if err != nil {
 		op.WithOptions(tracing.SpanTag("err", err))
