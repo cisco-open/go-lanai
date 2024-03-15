@@ -8,14 +8,11 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
 	data "github.com/cisco-open/go-lanai/pkg/data/init"
-	"github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
-	"github.com/cisco-open/go-lanai/pkg/integrate/security/scope"
 	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/pkg/security"
 	"github.com/cisco-open/go-lanai/pkg/security/config/resserver"
 	"github.com/cisco-open/go-lanai/pkg/swagger"
 	tracing "github.com/cisco-open/go-lanai/pkg/tracing/init"
-	vault "github.com/cisco-open/go-lanai/pkg/vault/init"
 	web "github.com/cisco-open/go-lanai/pkg/web/init"
 	"go.uber.org/fx"
 )
@@ -34,7 +31,7 @@ func Use() {
 	// basic modules
 	appconfig.Use()
 	//consul.Use()
-	vault.Use()
+	//vault.Use()
 	redis.Use()
 	tracing.Use()
 
@@ -48,10 +45,11 @@ func Use() {
 	cockroach.Use()
 
 	// service-to-service integration related
-	//consulsd.Use()
+	//consulsd.Use() // requires consul.Use()
+	// Or
 	//dnssd.Use()
-	httpclient.Use()
-	scope.Use()
+	//httpclient.Use()
+	//scope.Use()
 	//kafka.Use()
 
 	// security related modules
