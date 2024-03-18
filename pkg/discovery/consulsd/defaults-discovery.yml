@@ -15,8 +15,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cloud:
-  consul:
-    discovery:
+  discovery:
+    consul:
       port: ${server.port}
       scheme: http
       health-check-path: "${server.context-path}/admin/health"

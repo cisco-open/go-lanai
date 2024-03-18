@@ -49,7 +49,7 @@ type SamplerProperties struct {
 	LowestRate  float64 `json:"lowest-per-second"`
 }
 
-//NewSessionProperties create a SessionProperties with default values
+// NewTracingProperties create a SessionProperties with default values
 func NewTracingProperties() *TracingProperties {
 	return &TracingProperties{
 		Enabled: true,

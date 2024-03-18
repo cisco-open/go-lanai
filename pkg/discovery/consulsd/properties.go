@@ -25,9 +25,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-//goland:noinspection GoNameStartsWithPackageName
 const (
-	PropertiesPrefix = "cloud.consul.discovery"
+	PropertiesPrefix = "cloud.discovery.consul"
 )
 
 //goland:noinspection GoNameStartsWithPackageName

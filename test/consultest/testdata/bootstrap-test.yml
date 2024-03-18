@@ -1,7 +1,8 @@
 cloud:
+  discovery:
+    consul:
+      health-check-critical-timeout: 1h
+      ip-address: 127.0.0.1
   consul:
     host: localhost
     port: 8500
-    discovery:
-      health-check-critical-timeout: 1h
-      ip-address: 127.0.0.1

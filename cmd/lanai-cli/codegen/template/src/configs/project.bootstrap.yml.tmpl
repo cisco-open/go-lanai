@@ -6,15 +6,26 @@ config:
     search-path: ["configs", "configs/profiles"]
 
 cloud:
+  discovery:
+{{if (.Project.EnabledModules.Has "consul")}}
+    consul:
+      health-check-critical-timeout: 2m # de-registers an unhealthy instance after certain time
+      ip-address: ${spring.cloud.consul.discovery.ipaddress:}
+{{else}}
+    dns:
+      # Note: Resolving DNS server address may also require DNS lookup. Please set this value with caution
+      #addr: "8.8.8.8:53"
+      fqdn-template: "{{`{{.ServiceName}}`}}.default.svc.cluster.local"
+      fqdn-fallback: true
+      #srv-proto: "_tcp"
+      #srv-service: "_http"
+{{end}}
 {{if (.Project.EnabledModules.Has "consul")}}
   consul:
     host: ${spring.cloud.consul.host:localhost}
     port: 8500
     config:
       enabled: true
-    discovery:
-      health-check-critical-timeout: 2m # de-registers an unhealthy instance after certain time
-      ip-address: ${spring.cloud.consul.discovery.ipaddress:}
 {{end}}
 {{if (.Project.EnabledModules.Has "vault")}}
   vault:

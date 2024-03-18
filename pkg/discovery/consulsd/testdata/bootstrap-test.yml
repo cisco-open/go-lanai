@@ -2,12 +2,8 @@ application:
   name: testservice
 
 cloud:
-  consul:
-    host: localhost
-    port: 8500
-    config:
-      enabled: false
-    discovery:
+  discovery:
+    consul:
       ip-address: 127.0.0.1
       port: ${server.port:1234}
       scheme: http
@@ -17,3 +13,8 @@ cloud:
       tags: "test1=true,test2=true"
       default-selector:
         tags: ""
+  consul:
+    host: localhost
+    port: 8500
+    config:
+      enabled: false

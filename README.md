@@ -112,13 +112,14 @@ application:
   name: example
 
 cloud:
+  discovery:
+    consul:
+        ip-address: ${spring.cloud.consul.discovery.ipaddress:}
   consul:
     host: ${spring.cloud.consul.host:localhost}
     port: 8500
     config:
       enabled: true
-    discovery:
-      ip-address: ${spring.cloud.consul.discovery.ipaddress:}
   vault:
     kv:
       enabled: true
