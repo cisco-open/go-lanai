@@ -112,5 +112,5 @@ so that developer does not need to write custom json unmarshalling code. This is
 * utils.Duration
 * utils.CommaSeparatedSlice
 * utils.StringSet
-* uitls.Set
+* utils.Set
 * utils.GenericSet[T]
