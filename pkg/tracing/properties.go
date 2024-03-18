@@ -64,7 +64,7 @@ func NewTracingProperties() *TracingProperties {
 	}
 }
 
-//BindManagementProperties create and bind SessionProperties, with a optional prefix
+// BindTracingProperties create and bind SessionProperties, with a optional prefix
 func BindTracingProperties(ctx *bootstrap.ApplicationContext) TracingProperties {
 	props := NewTracingProperties()
 	if err := ctx.Config().Bind(props, TracingPropertiesPrefix); err != nil {

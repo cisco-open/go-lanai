@@ -24,25 +24,29 @@ import (
 	"time"
 )
 
-var logger = log.New("Tracing")
-
 const (
-	OpNameBootstrap  = "bootstrap"
-	OpNameStart      = "startup"
-	OpNameStop       = "shutdown"
-	OpNameHttp       = "http"
-	OpNameRedis      = "redis"
-	OpNameDB         = "db"
-	OpNameCli        = "cli"
-	OpNameSecScope   = "security"
+	OpNameBootstrap = "bootstrap"
+	OpNameStart     = "startup"
+	OpNameStop      = "shutdown"
+	OpNameHttp      = "http"
+	OpNameRedis     = "redis"
+	OpNameDB        = "db"
+	OpNameCli       = "cli"
+	OpNameSecScope  = "security"
 	//OpName = ""
 )
 
-type spanKey string
-var (
-	spanFinisherKey spanKey = "SF"
-)
+type spanKey struct{}
 
+var spanFinisherKey = spanKey{}
+
+// DefaultLogValuers is used by log package to extract tracing information in log templates.
+// This variable is properly set by "tracing/init".
+var DefaultLogValuers = LogValuers{
+	TraceIDValuer:  func(context.Context) interface{} { return nil },
+	SpanIDValuer:   func(context.Context) interface{} { return nil },
+	ParentIDValuer: func(context.Context) interface{} { return nil },
+}
 
 type SpanOption func(opentracing.Span)
 
@@ -51,6 +55,20 @@ type SpanRewinder func() context.Context
 /**********************
 	Context
  **********************/
+
+type LogValuers struct {
+	TraceIDValuer  log.ContextValuer
+	SpanIDValuer   log.ContextValuer
+	ParentIDValuer log.ContextValuer
+}
+
+func (v LogValuers) ContextValuers() log.ContextValuers {
+	return log.ContextValuers{
+		"traceId":  v.TraceIDValuer,
+		"spanId":   v.SpanIDValuer,
+		"parentId": v.ParentIDValuer,
+	}
+}
 
 //nolint:contextcheck
 func SpanFromContext(ctx context.Context) (span opentracing.Span) {
@@ -85,15 +103,15 @@ func ContextWithSpanRewinder(ctx context.Context, finisher SpanRewinder) context
 }
 
 func TraceIdFromContext(ctx context.Context) (ret interface{}) {
-	return traceIdContextValuer(ctx)
+	return DefaultLogValuers.TraceIDValuer(ctx)
 }
 
 func SpanIdFromContext(ctx context.Context) (ret interface{}) {
-	return spanIdContextValuer(ctx)
+	return DefaultLogValuers.SpanIDValuer(ctx)
 }
 
 func ParentIdFromContext(ctx context.Context) (ret interface{}) {
-	return parentIdContextValuer(ctx)
+	return DefaultLogValuers.ParentIDValuer(ctx)
 }
 
 /**********************
@@ -135,7 +153,7 @@ func (op *SpanOperator) WithOptions(exts ...SpanOption) *SpanOperator {
 
 // Operations
 
-func (op SpanOperator) UpdateCurrentSpan(ctx context.Context) {
+func (op *SpanOperator) UpdateCurrentSpan(ctx context.Context) {
 	span := SpanFromContext(ctx)
 	if span == nil {
 		return
@@ -146,8 +164,9 @@ func (op SpanOperator) UpdateCurrentSpan(ctx context.Context) {
 
 // Finish finish current span if exist.
 // Note: The finished span is still counted as "current span".
-//		 If caller want to rewind to previous span, use FinishAndRewind instead
-func (op SpanOperator) Finish(ctx context.Context) {
+//
+//	If caller want to rewind to previous span, use FinishAndRewind instead
+func (op *SpanOperator) Finish(ctx context.Context) {
 	if span := SpanFromContext(ctx); span != nil {
 		op.applyUpdateOptions(span)
 		op.finishOptions.FinishTime = time.Now().UTC()
@@ -158,7 +177,7 @@ func (op SpanOperator) Finish(ctx context.Context) {
 // FinishAndRewind finish current span if exist and restore context with parent span if possible (no garantees)
 // callers shall not continue to use the old context after this call
 // Note: all values in given context added during the current span will be lost. It's like rewind operation
-func (op SpanOperator) FinishAndRewind(ctx context.Context) context.Context {
+func (op *SpanOperator) FinishAndRewind(ctx context.Context) context.Context {
 	op.Finish(ctx)
 	rewinder := SpanRewinderFromContext(ctx)
 	if rewinder == nil {
@@ -169,7 +188,7 @@ func (op SpanOperator) FinishAndRewind(ctx context.Context) context.Context {
 
 // NewSpanOrDescendant create new span if not currently have one,
 // spawn a child span using opentracing.ChildOf(span.Context()) if span exists
-func (op SpanOperator) NewSpanOrDescendant(ctx context.Context) context.Context {
+func (op *SpanOperator) NewSpanOrDescendant(ctx context.Context) context.Context {
 	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {
 		return opentracing.ChildOf(span.Context())
 	}, true)
@@ -177,7 +196,7 @@ func (op SpanOperator) NewSpanOrDescendant(ctx context.Context) context.Context 
 
 // NewSpanOrFollows create new span if not currently have one,
 // spawn a child span using opentracing.FollowsFrom(span.Context()) if span exists
-func (op SpanOperator) NewSpanOrFollows(ctx context.Context) context.Context {
+func (op *SpanOperator) NewSpanOrFollows(ctx context.Context) context.Context {
 	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {
 		return opentracing.FollowsFrom(span.Context())
 	}, true)
@@ -185,7 +204,7 @@ func (op SpanOperator) NewSpanOrFollows(ctx context.Context) context.Context {
 
 // DescendantOrNoSpan spawn a child span using opentracing.ChildOf(span.Context()) if there is a span exists
 // otherwise do nothing
-func (op SpanOperator) DescendantOrNoSpan(ctx context.Context) context.Context {
+func (op *SpanOperator) DescendantOrNoSpan(ctx context.Context) context.Context {
 	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {
 		return opentracing.ChildOf(span.Context())
 	}, false)
@@ -193,7 +212,7 @@ func (op SpanOperator) DescendantOrNoSpan(ctx context.Context) context.Context {
 
 // FollowsOrNoSpan spawn a child span using opentracing.FollowsFrom(span.Context()) if there is a span exists
 // otherwise do nothing
-func (op SpanOperator) FollowsOrNoSpan(ctx context.Context) context.Context {
+func (op *SpanOperator) FollowsOrNoSpan(ctx context.Context) context.Context {
 	return op.newSpan(ctx, func(span opentracing.Span) opentracing.SpanReference {
 		return opentracing.FollowsFrom(span.Context())
 	}, false)
@@ -201,11 +220,11 @@ func (op SpanOperator) FollowsOrNoSpan(ctx context.Context) context.Context {
 
 // ForceNewSpan force to create a new span and discard any existing span
 // Warning: Internal usage, use with caution
-func (op SpanOperator) ForceNewSpan(ctx context.Context) context.Context {
+func (op *SpanOperator) ForceNewSpan(ctx context.Context) context.Context {
 	return op.newSpan(ctx, nil, true)
 }
 
-func (op SpanOperator) createSpanRewinder(ctx context.Context) SpanRewinder {
+func (op *SpanOperator) createSpanRewinder(ctx context.Context) SpanRewinder {
 	return func() context.Context {
 		return ctx
 	}
@@ -233,7 +252,7 @@ func (op *SpanOperator) newSpan(ctx context.Context, referencer spanReferencer, 
 	return opentracing.ContextWithSpan(ContextWithSpanRewinder(ctx, rewinder), span)
 }
 
-func (op SpanOperator) applyUpdateOptions(span opentracing.Span) {
+func (op *SpanOperator) applyUpdateOptions(span opentracing.Span) {
 	for _, ext := range op.updateOptions {
 		ext(span)
 	}

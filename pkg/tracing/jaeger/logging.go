@@ -14,23 +14,25 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package tracing
+package jaegertracing
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "github.com/uber/jaeger-client-go"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
+	"github.com/uber/jaeger-client-go"
 )
 
-var TracingLogValuers = log.ContextValuers{
-	"traceId":  traceIdContextValuer,
-	"spanId":   spanIdContextValuer,
-	"parentId": parentIdContextValuer,
+func init() {
+	tracing.DefaultLogValuers = tracing.LogValuers{
+		TraceIDValuer:  traceIdContextValuer,
+		SpanIDValuer:   spanIdContextValuer,
+		ParentIDValuer: parentIdContextValuer,
+	}
 }
 
 func traceIdContextValuer(ctx context.Context) (ret interface{}) {
-	span := SpanFromContext(ctx)
+	span := tracing.SpanFromContext(ctx)
 	if span == nil {
 		return
 	}
@@ -45,7 +47,7 @@ func traceIdContextValuer(ctx context.Context) (ret interface{}) {
 }
 
 func spanIdContextValuer(ctx context.Context) (ret interface{}) {
-	span := SpanFromContext(ctx)
+	span := tracing.SpanFromContext(ctx)
 	if span == nil {
 		return
 	}
@@ -58,7 +60,7 @@ func spanIdContextValuer(ctx context.Context) (ret interface{}) {
 }
 
 func parentIdContextValuer(ctx context.Context) (ret interface{}) {
-	span := SpanFromContext(ctx)
+	span := tracing.SpanFromContext(ctx)
 	if span == nil {
 		return
 	}

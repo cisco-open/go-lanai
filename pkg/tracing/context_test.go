@@ -20,6 +20,7 @@ import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"github.com/cisco-open/go-lanai/pkg/tracing"
+	jaegertracing "github.com/cisco-open/go-lanai/pkg/tracing/jaeger"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/onsi/gomega"
@@ -215,7 +216,7 @@ func NewTestTracer(appCtx *bootstrap.ApplicationContext) (opentracing.Tracer, io
 	props := tracing.NewTracingProperties()
 	// note: tags is only injected when the span is sampled
 	props.Sampler.Enabled = true
-	return tracing.NewJaegerTracer(appCtx, &props.Jaeger, &props.Sampler)
+	return jaegertracing.NewTracer(appCtx, &props.Jaeger, &props.Sampler)
 }
 
 func AssertNoSpan(ctx context.Context, g *gomega.WithT) {

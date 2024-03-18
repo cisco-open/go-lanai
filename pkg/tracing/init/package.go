@@ -22,6 +22,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/pkg/tracing"
 	"github.com/cisco-open/go-lanai/pkg/tracing/instrument"
+	jaegertracing "github.com/cisco-open/go-lanai/pkg/tracing/jaeger"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/fx"
 )
@@ -55,9 +56,9 @@ func Use() {
 // bootstrap.GlobalBootstrapper() should be used for regular application that uses bootstrap.Execute()
 func EnableBootstrapTracing(bootstrapper *bootstrap.Bootstrapper) {
 	// logger extractor
-	log.RegisterContextLogFields(tracing.TracingLogValuers)
+	log.RegisterContextLogFields(tracing.DefaultLogValuers.ContextValuers())
 
-	appTracer, closer := tracing.NewDefaultTracer()
+	appTracer, closer := jaegertracing.NewDefaultTracer()
 	bootstrapper.AddInitialAppContextOptions(instrument.MakeBootstrapTracingOption(appTracer, tracing.OpNameBootstrap))
 	bootstrapper.AddStartContextOptions(instrument.MakeStartTracingOption(appTracer, tracing.OpNameStart))
 	bootstrapper.AddStopContextOptions(instrument.MakeStopTracingOption(appTracer, tracing.OpNameStop))
@@ -97,7 +98,7 @@ func provideTracer(ctx *bootstrap.ApplicationContext, props tracing.TracingPrope
 
 	tracers := make([]opentracing.Tracer, 0, 2)
 	if props.Jaeger.Enabled {
-		tracer, closer := tracing.NewJaegerTracer(ctx, &props.Jaeger, &props.Sampler)
+		tracer, closer := jaegertracing.NewTracer(ctx, &props.Jaeger, &props.Sampler)
 		tracers = append(tracers, tracer)
 		ret.FxHook = &fx.Hook{
 			OnStop: func(ctx context.Context) error {

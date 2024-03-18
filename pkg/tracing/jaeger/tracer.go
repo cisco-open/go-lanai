@@ -14,32 +14,36 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package tracing
+package jaegertracing
 
 import (
     "context"
     "fmt"
     "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/opentracing/opentracing-go"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/tracing"
+	"github.com/opentracing/opentracing-go"
     "github.com/uber/jaeger-client-go"
     "io"
 )
 
+var logger = log.New("Tracing")
+
 func NewDefaultTracer() (opentracing.Tracer, io.Closer) {
-	return newJaegerTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
+	return newTracer("lanai", jaeger.NewConstSampler(false), jaeger.NewNullReporter())
 }
 
-func NewJaegerTracer(ctx *bootstrap.ApplicationContext, jp *JaegerProperties, sp *SamplerProperties) (opentracing.Tracer, io.Closer) {
+func NewTracer(ctx *bootstrap.ApplicationContext, jp *tracing.JaegerProperties, sp *tracing.SamplerProperties) (opentracing.Tracer, io.Closer) {
 	name := ctx.Name()
 	sampler := newSampler(ctx, sp)
 	reporter := newReporter(ctx, jp, sp)
-	return newJaegerTracer(name, sampler, reporter)
+	return newTracer(name, sampler, reporter)
 }
 
-// newJaegerTracer we use B3 single header compatible format, this is compatible with Spring-Sleuth powered services
+// newTracer we use B3 single header compatible format, this is compatible with Spring-Sleuth powered services
 // See https://github.com/openzipkin/b3-propagation#single-header
 // See https://github.com/jaegertracing/jaeger-client-go/blob/master/zipkin/README.md#NewZipkinB3HTTPHeaderPropagator
-func newJaegerTracer(serviceName string, sampler jaeger.Sampler, reporter jaeger.Reporter,) (opentracing.Tracer, io.Closer) {
+func newTracer(serviceName string, sampler jaeger.Sampler, reporter jaeger.Reporter,) (opentracing.Tracer, io.Closer) {
 	b3HttpPropagator := NewZipkinB3Propagator()
 	b3SingleHeaderPropagator := NewZipkinB3Propagator(SingleHeader())
 	zipkinOpts := []jaeger.TracerOption {
@@ -53,7 +57,7 @@ func newJaegerTracer(serviceName string, sampler jaeger.Sampler, reporter jaeger
 	return jaeger.NewTracer(serviceName, sampler, reporter, zipkinOpts...)
 }
 
-func newSampler(ctx context.Context, sp *SamplerProperties) jaeger.Sampler {
+func newSampler(ctx context.Context, sp *tracing.SamplerProperties) jaeger.Sampler {
 	if !sp.Enabled {
 		return jaeger.NewConstSampler(false)
 	}
@@ -88,7 +92,7 @@ func newSampler(ctx context.Context, sp *SamplerProperties) jaeger.Sampler {
 	return jaeger.NewConstSampler(false)
 }
 
-func newReporter(ctx context.Context, jp *JaegerProperties, sp *SamplerProperties) jaeger.Reporter {
+func newReporter(ctx context.Context, jp *tracing.JaegerProperties, sp *tracing.SamplerProperties) jaeger.Reporter {
 	if !sp.Enabled || jp.Host == "" || jp.Port == 0 {
 		return jaeger.NewNullReporter()
 	}
