@@ -64,12 +64,12 @@ func NewInstancer(ctx context.Context, opts ...InstancerOptions) (*Instancer, er
 		dial = dialWithAddrOverride(opt.DNSServerAddr)
 	}
 
-	fqdn, e := execTemplate(opt.FQDNTemplate, opt)
+	fqdn, e := fqdnWithTemplate(&opt)
 	if e != nil {
 		return nil, fmt.Errorf(`failed to execute FQDN template "%s": %v`, opt.FQDNTemplate, e)
 	}
 
-	fallback, e := staticInstancesWithTemplates(opt)
+	fallback, e := staticInstancesWithTemplates(&opt)
 	if e != nil {
 		return nil, fmt.Errorf(`failed to process fallback: %v`, e)
 	}
@@ -198,7 +198,7 @@ type tmplData struct {
 	ServiceName string
 }
 
-func execTemplate(tmplText string, opt InstancerOption) (string, error) {
+func execTemplate(tmplText string, opt *InstancerOption) (string, error) {
 	tmpl, e := template.New("single-line").Parse(tmplText)
 	if e != nil {
 		return "", e
@@ -213,7 +213,16 @@ func execTemplate(tmplText string, opt InstancerOption) (string, error) {
 	return buf.String(), nil
 }
 
-func staticInstancesWithTemplates(opt InstancerOption) ([]*discovery.Instance, error) {
+func fqdnWithTemplate(opt *InstancerOption) (string, error) {
+	host, e := execTemplate(opt.FQDNTemplate, opt)
+	if e != nil {
+		return "", e
+	}
+	fqdn, _, e := splitAddrAndPort(host)
+	return fqdn, e
+}
+
+func staticInstancesWithTemplates(opt *InstancerOption) ([]*discovery.Instance, error) {
 	instances := make([]*discovery.Instance, len(opt.HostTemplates))
 	for j, tmplText := range opt.HostTemplates {
 		host, e := execTemplate(tmplText, opt)

@@ -159,7 +159,7 @@ func SubTestWithoutProto(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
-			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
+			opt.FQDNTemplate = "{{.ServiceName}}.test.mock:9999"
 			opt.Verbose = true
 		})
 		defer func() { _ = client.(io.Closer).Close() }()
@@ -186,7 +186,7 @@ func SubTestWithProtoAndService(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
-			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
+			opt.FQDNTemplate = "{{.ServiceName}}.test.mock:9999"
 			opt.SRVProto = TestProto
 			opt.SRVService = TestService
 			opt.Verbose = true
