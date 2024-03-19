@@ -6,6 +6,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/pkg/utils/loop"
+	"regexp"
 	"sync"
 	"time"
 )
@@ -29,8 +30,18 @@ type ClientConfig struct {
 	//       Background refresh is for callbacks only
 	// Default: 30s
 	RefreshInterval time.Duration
-	// FQDNFallback see DiscoveryProperties.FQDNFallback
-	FQDNFallback bool
+	// FallbackHostMappings known host mappings including default template. Used when DNS lookup fails.
+	// See DiscoveryProperties.Fallback.
+	// Note: Default mapping should be at the end of the list with `.*` as service name pattern
+	FallbackHostMappings []HostMapping
+}
+
+type HostMapping struct {
+	// ServiceRegex the compiled regular expression HostMappingProperties.Service
+	ServiceRegex *regexp.Regexp
+	// Hosts is a list of known hosts. Each entry should be a golang template with single-line output.
+	// See HostMappingProperties.Hosts
+	Hosts []string
 }
 
 type dnsDiscoveryClient struct {
@@ -81,7 +92,7 @@ func (c *dnsDiscoveryClient) Instancer(serviceName string) (discovery.Instancer,
 		opt.FQDNTemplate = c.config.FQDNTemplate
 		opt.SRVProto = c.config.SRVProto
 		opt.SRVService = c.config.SRVService
-		opt.FQDNFallback = c.config.FQDNFallback
+		opt.HostTemplates = c.findFallbackHostTemplates(serviceName)
 		opt.RefresherOptions = []loop.TaskOptions{loop.FixedRepeatInterval(c.config.RefreshInterval)}
 	})
 	if e == nil {
@@ -95,6 +106,15 @@ func (c *dnsDiscoveryClient) Close() error {
 	defer c.mutex.Unlock()
 	for _, v := range c.instancers {
 		v.Stop()
+	}
+	return nil
+}
+
+func (c *dnsDiscoveryClient) findFallbackHostTemplates(svcName string) []string {
+	for _, mapping := range c.config.FallbackHostMappings {
+		if mapping.ServiceRegex.Match([]byte(svcName)) {
+			return mapping.Hosts
+		}
 	}
 	return nil
 }

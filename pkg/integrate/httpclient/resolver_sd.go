@@ -57,7 +57,7 @@ type SDOption struct {
 	ContextPath string
 }
 
-// SDTargetResolver implements sd.Endpointer interface and works with discovery.Instancer.
+// SDTargetResolver implements TargetResolver interface and works with discovery.Instancer.
 // When created with NewSDTargetResolver function, it automatically registers
 // as a subscriber to events from the Instances and maintains a list
 // of active Endpoints.

@@ -30,6 +30,7 @@ import (
 	"io"
 	"net"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"sync"
@@ -91,7 +92,7 @@ func TestDiscoveryClient(t *testing.T) {
 		test.GomegaSubTest(SubTestInstancerManagement(&di), "TestInstancerManagement"),
 		test.GomegaSubTest(SubTestWithoutProto(&di), "TestWithoutProto"),
 		test.GomegaSubTest(SubTestWithProtoAndService(&di), "TestWithProtoAndService"),
-		test.GomegaSubTest(SubTestWithFQDNFallback(&di), "TestWithFQDNFallback"),
+		test.GomegaSubTest(SubTestWithFallback(&di), "TestWithFallback"),
 		test.GomegaSubTest(SubTestWithServiceUpdates(&di), "TestWithServiceUpdates"),
 		test.GomegaSubTest(SubTestWithGoKitCompatibility(&di), "TestWithGoKitCompatibility"),
 	)
@@ -210,7 +211,7 @@ func SubTestWithProtoAndService(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestWithFQDNFallback(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
+func SubTestWithFallback(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
 			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
@@ -218,9 +219,19 @@ func SubTestWithFQDNFallback(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 			opt.SRVProto = TestProto
 			opt.SRVService = TestService
 			opt.Verbose = true
-			opt.FQDNFallback = true
+			opt.FallbackHostMappings = []dnssd.HostMapping{
+				{
+					ServiceRegex: regexp.MustCompilePOSIX(ServiceName2),
+					Hosts:        []string{"inst-1.{{.ServiceName}}.test.mock:9999", "inst-2.{{.ServiceName}}.test.mock:8888"},
+				},
+				{
+					ServiceRegex: regexp.MustCompilePOSIX(`.+`),
+					Hosts:        []string{"{{.ServiceName}}.test.mock"},
+				},
+			}
 		})
 		defer func() { _ = client.(io.Closer).Close() }()
+		// Matched Service
 		instancer, e := client.Instancer(ServiceName2)
 		g.Expect(e).To(Succeed(), "getting instancer should not fail")
 		g.Expect(instancer).ToNot(BeNil(), "instancer should not be nil")
@@ -228,19 +239,48 @@ func SubTestWithFQDNFallback(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 		// via service
 		svc := instancer.Service()
 		g.Expect(svc).ToNot(BeNil(), "instancer should return non-nil service")
-		g.Expect(svc.Insts).To(HaveLen(1), "instancer should return services with fallback FQDN instance")
+		g.Expect(svc.Insts).To(HaveLen(2), "instancer should return services with fallback instances")
 
 		// without additional selector
 		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
 			{
-				AlternativeID: ServiceName2 + ".test.mock:0",
-				AlternativeAddr: ServiceName2 + ".test.mock",
+				AlternativeID: "inst-1." + ServiceName2 + ".test.mock:9999",
+				AlternativeAddr: "inst-1." + ServiceName2 + ".test.mock",
 				Name:          ServiceName2,
+				Port:          9999,
+				Healthy:       true,
+			},
+			{
+				AlternativeID: "inst-2." + ServiceName2 + ".test.mock:8888",
+				AlternativeAddr: "inst-2." + ServiceName2 + ".test.mock",
+				Name:          ServiceName2,
+				Port:          8888,
+				Healthy:       true,
+			},
+		})
+		//with additional selector
+		TryInstancerWithMatcher(g, instancer, discovery.InstanceWithHealth(discovery.HealthCritical), []*MockedService{})
+
+		// Default Service
+		instancer, e = client.Instancer("unknown-service")
+		g.Expect(e).To(Succeed(), "getting instancer should not fail")
+		g.Expect(instancer).ToNot(BeNil(), "instancer should not be nil")
+
+		// via service
+		svc = instancer.Service()
+		g.Expect(svc).ToNot(BeNil(), "instancer should return non-nil service")
+		g.Expect(svc.Insts).To(HaveLen(1), "instancer should return services with fallback instances")
+
+		// without additional selector
+		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
+			{
+				AlternativeID: "unknown-service.test.mock:0",
+				AlternativeAddr: "unknown-service.test.mock",
+				Name:          "unknown-service",
 				Port:          0,
 				Healthy:       true,
 			},
 		})
-
 		//with additional selector
 		TryInstancerWithMatcher(g, instancer, discovery.InstanceWithHealth(discovery.HealthCritical), []*MockedService{})
 	}

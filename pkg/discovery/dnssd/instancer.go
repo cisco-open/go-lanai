@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"github.com/cisco-open/go-lanai/pkg/discovery/sd"
 	"github.com/cisco-open/go-lanai/pkg/utils/loop"
@@ -34,17 +35,17 @@ type InstancerOption struct {
 	FQDNTemplate  string
 	SRVProto      string
 	SRVService    string
-	FQDNFallback  bool
+	HostTemplates []string
 }
 
 type Instancer struct {
 	sd.CachedInstancer
-	context      context.Context
-	resolver     *net.Resolver
-	fqdn         string
-	srvProto     string
-	srvService   string
-	fqdnFallback bool
+	context    context.Context
+	resolver   *net.Resolver
+	fqdn       string
+	srvProto   string
+	srvService string
+	fallback   []*discovery.Instance
 }
 
 func NewInstancer(ctx context.Context, opts ...InstancerOptions) (*Instancer, error) {
@@ -63,11 +64,15 @@ func NewInstancer(ctx context.Context, opts ...InstancerOptions) (*Instancer, er
 		dial = dialWithAddrOverride(opt.DNSServerAddr)
 	}
 
-	target, e := fqdnWithTemplate(opt)
+	fqdn, e := execTemplate(opt.FQDNTemplate, opt)
 	if e != nil {
-		return nil, e
+		return nil, fmt.Errorf(`failed to execute FQDN template "%s": %v`, opt.FQDNTemplate, e)
 	}
 
+	fallback, e := staticInstancesWithTemplates(opt)
+	if e != nil {
+		return nil, fmt.Errorf(`failed to process fallback: %v`, e)
+	}
 	i := &Instancer{
 		CachedInstancer: sd.MakeCachedInstancer(func(baseOpt *sd.CachedInstancerOption) {
 			baseOpt.InstancerOption = opt.InstancerOption
@@ -77,10 +82,10 @@ func NewInstancer(ctx context.Context, opts ...InstancerOptions) (*Instancer, er
 			PreferGo: dial != nil,
 			Dial:     dial,
 		},
-		fqdn:         target,
-		srvProto:     strings.TrimLeft(strings.TrimSpace(opt.SRVProto), "_"),
-		srvService:   strings.TrimLeft(strings.TrimSpace(opt.SRVService), "_"),
-		fqdnFallback: opt.FQDNFallback,
+		fqdn:       fqdn,
+		srvProto:   strings.TrimLeft(strings.TrimSpace(opt.SRVProto), "_"),
+		srvService: strings.TrimLeft(strings.TrimSpace(opt.SRVService), "_"),
+		fallback:   fallback,
 	}
 	i.BackgroundRefreshFunc = i.resolveInstancesTask()
 	i.ForegroundRefreshFunc = i.resolveInstancesTask()
@@ -101,8 +106,8 @@ func (i *Instancer) Instances(matcher discovery.InstanceMatcher) (ret []*discove
 func (i *Instancer) resolveInstancesTask() func(ctx context.Context) (*discovery.Service, error) {
 	return func(ctx context.Context) (*discovery.Service, error) {
 		instances, e := i.trySRVRecord(ctx)
-		if (e != nil || len(instances) == 0) && i.fqdnFallback {
-			instances = i.makeInstancesFromAddrs([]string{i.fqdn})
+		if (e != nil || len(instances) == 0) && len(i.fallback) != 0 {
+			instances = i.makeInstancesFromFallback()
 			e = nil
 		}
 		svc := &discovery.Service{
@@ -149,21 +154,12 @@ func (i *Instancer) makeInstancesFromSRVs(name string, srvs []*net.SRV) []*disco
 	return instances
 }
 
-func (i *Instancer) makeInstancesFromAddrs(addrs []string) []*discovery.Instance {
-	instances := make([]*discovery.Instance, len(addrs))
-	for j := range addrs {
-		instances[j] = &discovery.Instance{
-			ID:       net.JoinHostPort(addrs[j], "0"),
-			Service:  i.Name,
-			Address:  addrs[j],
-			Meta:     map[string]string{},
-			Health:   discovery.HealthPassing,
-			RawEntry: addrs[j],
-		}
+func (i *Instancer) makeInstancesFromFallback() []*discovery.Instance {
+	// just make a shallow copy
+	instances := make([]*discovery.Instance, len(i.fallback))
+	for j := range i.fallback {
+		instances[j] = i.fallback[j]
 	}
-	sort.SliceStable(instances, func(i, j int) bool {
-		return instances[i].ID < instances[j].ID
-	})
 	return instances
 }
 
@@ -198,21 +194,65 @@ func dialWithAddrOverride(addr string) func(ctx context.Context, network, addres
 	}
 }
 
-type srvTmplData struct {
+type tmplData struct {
 	ServiceName string
 }
 
-func fqdnWithTemplate(opt InstancerOption) (string, error) {
-	tmpl, e := template.New("srv-name").Parse(opt.FQDNTemplate)
+func execTemplate(tmplText string, opt InstancerOption) (string, error) {
+	tmpl, e := template.New("single-line").Parse(tmplText)
 	if e != nil {
 		return "", e
 	}
 	var buf bytes.Buffer
-	data := srvTmplData{
+	data := tmplData{
 		ServiceName: opt.Name,
 	}
 	if e := tmpl.Execute(&buf, data); e != nil {
 		return "", e
 	}
 	return buf.String(), nil
+}
+
+func staticInstancesWithTemplates(opt InstancerOption) ([]*discovery.Instance, error) {
+	instances := make([]*discovery.Instance, len(opt.HostTemplates))
+	for j, tmplText := range opt.HostTemplates {
+		host, e := execTemplate(tmplText, opt)
+		if e != nil {
+			return nil, e
+		}
+		addr, port, e := splitAddrAndPort(host)
+		if e != nil {
+			return nil, fmt.Errorf(`unable to parse host "%s": %v`, host, e)
+		}
+		instances[j] = &discovery.Instance{
+			ID:       net.JoinHostPort(addr, strconv.Itoa(port)),
+			Service:  opt.Name,
+			Address:  addr,
+			Port:     port,
+			Meta:     map[string]string{},
+			Health:   discovery.HealthPassing,
+			RawEntry: host,
+		}
+	}
+	sort.SliceStable(instances, func(i, j int) bool {
+		return instances[i].ID < instances[j].ID
+	})
+	return instances, nil
+}
+
+func splitAddrAndPort(value string) (string, int, error) {
+	switch i := strings.LastIndexByte(value, ':'); {
+	case i < 0:
+		return value, 0, nil
+	default:
+		addr, portStr, e := net.SplitHostPort(value)
+		if e != nil {
+			return "", 0, e
+		}
+		port, e := strconv.Atoi(portStr)
+		if e != nil {
+			return "", 0, e
+		}
+		return addr, port, nil
+	}
 }

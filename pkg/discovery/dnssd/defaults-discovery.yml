@@ -22,4 +22,5 @@ cloud:
       fqdn-template: "{{.ServiceName}}.default.svc.cluster.local"
       # srv-proto: "_tcp"
       # srv-service: "_http"
-      fqdn-fallback: true
+      fallback:
+        default: ${cloud.discovery.dns.fqdn-template:}

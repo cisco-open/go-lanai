@@ -32,14 +32,18 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, props DiscoveryProperties) discovery.Client {
+func provideDiscoveryClient(ctx *bootstrap.ApplicationContext, props DiscoveryProperties) (discovery.Client, error) {
+	mappings, e := props.Fallback.CompileMappings()
+	if e != nil {
+		return nil, e
+	}
 	return NewDiscoveryClient(ctx, func(opt *ClientConfig) {
 		opt.DNSServerAddr = props.Addr
 		opt.FQDNTemplate = props.FQDNTemplate
 		opt.SRVProto = props.SRVProto
 		opt.SRVService = props.SRVService
-		opt.FQDNFallback = props.FQDNFallback
-	})
+		opt.FallbackHostMappings = mappings
+	}), nil
 }
 
 func closeDiscoveryClient(lc fx.Lifecycle, client discovery.Client) {

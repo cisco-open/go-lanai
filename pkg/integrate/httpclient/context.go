@@ -38,7 +38,7 @@ type Client interface {
 	// The returned client is responsible to track service instance changes with help of discovery package,
 	// and to perform load-balancing and retrying.
 	// The returned client is goroutine-safe and can be reused
-	WithService(service string, selectors ...SDOptions) (Client, error)
+	WithService(service string, opts ...SDOptions) (Client, error)
 
 	// WithBaseUrl create a client with specific base URL.
 	// The returned client is responsible to perform retrying.

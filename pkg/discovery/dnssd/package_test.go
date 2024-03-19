@@ -48,7 +48,9 @@ func TestModuleInit(t *testing.T) {
 		apptest.WithDI(&di),
 		test.SubTestSetup(SetupTestServices()),
 		test.SubTestTeardown(TeardownTestServices()),
-		test.GomegaSubTest(SubTestDiscoveryClient(&di), "TestDiscoveryClient"),
+		test.GomegaSubTest(SubTestDiscoveryClientWithDNS(&di), "TestDiscoveryClientWithDNS"),
+		test.GomegaSubTest(SubTestDiscoveryClientWithFallback(&di), "TestDiscoveryClientWithFallback"),
+		test.GomegaSubTest(SubTestDiscoveryClientWithUnknownService(&di), "TestDiscoveryClientWithUnknownService"),
 	)
 }
 
@@ -56,7 +58,7 @@ func TestModuleInit(t *testing.T) {
 	Sub-Test Cases
  *************************/
 
-func SubTestDiscoveryClient(di *TestModuleDI) test.GomegaSubTestFunc {
+func SubTestDiscoveryClientWithDNS(di *TestModuleDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.DiscoveryClient).To(BeAssignableToTypeOf(dnssd.NewDiscoveryClient(ctx)))
 
@@ -74,6 +76,70 @@ func SubTestDiscoveryClient(di *TestModuleDI) test.GomegaSubTestFunc {
 		// without additional selector
 		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
 			&MockedServices[ServiceName1][0], &MockedServices[ServiceName1][1],
+		})
+	}
+}
+
+func SubTestDiscoveryClientWithFallback(di *TestModuleDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.DiscoveryClient).To(BeAssignableToTypeOf(dnssd.NewDiscoveryClient(ctx)))
+
+		// get instancer
+		instancer, e := di.DiscoveryClient.Instancer(ServiceName2)
+		g.Expect(e).To(Succeed(), "getting instancer should not fail")
+		g.Expect(instancer).ToNot(BeNil(), "instancer should not be nil")
+		g.Expect(instancer.ServiceName()).To(Equal(ServiceName2), "instancer's service name should be correct")
+
+		// via service
+		svc := instancer.Service()
+		g.Expect(svc).ToNot(BeNil(), "instancer should return non-nil service")
+		g.Expect(svc.Insts).To(HaveLen(2), "instancer should return services with all matching instances")
+
+		// without additional selector
+		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
+			{
+				AlternativeID: "inst-1." + ServiceName2 + ".test.mock:9999",
+				AlternativeAddr: "inst-1." + ServiceName2 + ".test.mock",
+				Name:          ServiceName2,
+				Port:          9999,
+				Healthy:       true,
+			},
+			{
+				AlternativeID: "inst-2." + ServiceName2 + ".test.mock:8888",
+				AlternativeAddr: "inst-2." + ServiceName2 + ".test.mock",
+				Name:          ServiceName2,
+				Port:          8888,
+				Healthy:       true,
+			},
+		})
+	}
+}
+
+func SubTestDiscoveryClientWithUnknownService(di *TestModuleDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		g.Expect(di.DiscoveryClient).To(BeAssignableToTypeOf(dnssd.NewDiscoveryClient(ctx)))
+
+		// get instancer
+		const svcName = `unknown-service`
+		instancer, e := di.DiscoveryClient.Instancer(svcName)
+		g.Expect(e).To(Succeed(), "getting instancer should not fail")
+		g.Expect(instancer).ToNot(BeNil(), "instancer should not be nil")
+		g.Expect(instancer.ServiceName()).To(Equal(svcName), "instancer's service name should be correct")
+
+		// via service
+		svc := instancer.Service()
+		g.Expect(svc).ToNot(BeNil(), "instancer should return non-nil service")
+		g.Expect(svc.Insts).To(HaveLen(1), "instancer should return services with all matching instances")
+
+		// without additional selector
+		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
+			{
+				AlternativeID: svcName + ".test.mock:0",
+				AlternativeAddr: svcName + ".test.mock",
+				Name:          svcName,
+				Port:          0,
+				Healthy:       true,
+			},
 		})
 	}
 }

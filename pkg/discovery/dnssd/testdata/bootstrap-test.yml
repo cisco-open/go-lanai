@@ -8,3 +8,11 @@ cloud:
       fqdn-template: "{{.ServiceName}}.test.mock"
 #      srv-proto: "_tcp"
 #      srv-service: "_http"
+      fallback:
+        default: ${cloud.discovery.dns.fqdn-template:}
+        mappings:
+          service2:
+            service: service[0-9]+
+            hosts:
+              - "inst-1.{{.ServiceName}}.test.mock:9999"
+              - "inst-2.{{.ServiceName}}.test.mock:8888"
