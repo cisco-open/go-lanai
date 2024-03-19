@@ -96,12 +96,3 @@ $(GEN_LIST):
 resource@{{ .Output }}:
 	cp -rf {{ .Pattern }} $(DESTDIR)/{{ .Output }}
 	{{ end }}
-
-# Runs contract-verifier precheck to verify service contract against CPX guidelines
-contract:
-	ccv precheck
-
-# Runs contract-verify to check if implementation matches the contract
-# precheck disabled as we expect pipeline to perform that separately via preceding target
-verify-contract:
-	ccv check  --enable-precheck=false
