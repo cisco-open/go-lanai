@@ -73,6 +73,7 @@ func (c *ApplicationContext) Name() string {
 /**************************
  context.Context Interface
  **************************/
+
 func (_ *ApplicationContext) String() string {
 	return "application context"
 }
@@ -94,6 +95,7 @@ func (c *ApplicationContext) Value(key interface{}) interface{} {
 /**********************
 * unexported methods
 ***********************/
+
 func (c *ApplicationContext) withContext(parent context.Context) *ApplicationContext {
 	c.Context = parent
 	return c
