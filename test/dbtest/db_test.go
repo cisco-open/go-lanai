@@ -26,6 +26,7 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
+	"sync"
 	"testing"
 )
 
@@ -34,12 +35,12 @@ import (
  *************************/
 
 type Client struct {
-	ID                          uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-	OAuthClientId               string    `gorm:"uniqueIndex;column:oauth_client_id;not null;"`
+	ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	OAuthClientId string    `gorm:"column:oauth_client_id;not null;"`
 }
 
 func (Client) TableName() string {
-	return "security_clients"
+	return "clients"
 }
 
 /*************************
@@ -54,7 +55,7 @@ func (Client) TableName() string {
 
 type testDI struct {
 	fx.In
-	DB *gorm.DB        `optional:"true"`
+	DB *gorm.DB `optional:"true"`
 }
 
 func TestDBPlayback(t *testing.T) {
@@ -63,6 +64,7 @@ func TestDBPlayback(t *testing.T) {
 		apptest.Bootstrap(),
 		WithDBPlayback("testdb"),
 		apptest.WithDI(di),
+		test.SubTestSetup(SetupTestPrepareData(di)),
 		test.GomegaSubTest(SubTestExampleSelect(di), "Select"),
 		test.GomegaSubTest(SubTestExampleTxSave(di), "TransactionalSave"),
 	)
@@ -71,6 +73,27 @@ func TestDBPlayback(t *testing.T) {
 /*************************
 	Sub Tests
  *************************/
+
+func SetupTestPrepareData(di *testDI) test.SetupFunc {
+	var once sync.Once
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		var err error
+		once.Do(func() {
+			err = di.DB.WithContext(ctx).Exec(`DROP TABLE IF EXISTS clients`).Error
+			if err != nil {
+				return
+			}
+			err = di.DB.WithContext(ctx).AutoMigrate(&Client{})
+			if err != nil {
+				return
+			}
+			err = di.DB.WithContext(ctx).Create([]*Client{
+				{ID: uuid.MustParse("015831a9-978f-437f-b89c-ee4ad960dcdb"), OAuthClientId: "test-client"},
+			}).Error
+		})
+		return ctx, err
+	}
+}
 
 func SubTestExampleSelect(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {

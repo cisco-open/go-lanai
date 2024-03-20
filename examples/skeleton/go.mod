@@ -1,6 +1,8 @@
 module github.com/cisco-open/go-lanai/examples/skeleton-service
 
-go 1.20
+go 1.21
+
+toolchain go1.21.6
 
 replace github.com/cisco-open/go-lanai => ./../../../go-lanai
 
