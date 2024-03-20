@@ -54,7 +54,7 @@ type remoteAuthClient struct {
 	switchCtxPath string
 }
 
-func NewRemoteAuthClient(opts ...AuthClientOptions) AuthenticationClient {
+func NewRemoteAuthClient(opts ...AuthClientOptions) (AuthenticationClient, error) {
 	opt := AuthClientOption{
 		PwdLoginPath:      "/v2/token",
 		SwitchContextPath: "/v2/token",
@@ -75,7 +75,7 @@ func NewRemoteAuthClient(opts ...AuthClientOptions) AuthenticationClient {
 		})
 	}
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &remoteAuthClient{
@@ -95,7 +95,7 @@ func NewRemoteAuthClient(opts ...AuthClientOptions) AuthenticationClient {
 		clientSecret:  opt.ClientSecret,
 		pwdLoginPath:  opt.PwdLoginPath,
 		switchCtxPath: opt.SwitchContextPath,
-	}
+	}, nil
 }
 
 func (c *remoteAuthClient) ClientCredentials(ctx context.Context, opts ...AuthOptions) (*Result, error) {

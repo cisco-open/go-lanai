@@ -48,7 +48,7 @@ type clientDI struct {
 	Properties securityint.SecurityIntegrationProperties
 }
 
-func provideAuthClient(di clientDI) AuthenticationClient {
+func provideAuthClient(di clientDI) (AuthenticationClient, error) {
 	return NewRemoteAuthClient(func(opt *AuthClientOption) {
 		opt.Client = di.HttpClient
 		opt.ClientId = di.Properties.Client.ClientId
