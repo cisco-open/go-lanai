@@ -24,7 +24,10 @@ import (
 	"gorm.io/gorm"
 )
 
-const gormPluginTracing = gormCallbackPrefix + "tracing"
+const (
+	gormPluginTracing = gormCallbackPrefix + "tracing"
+	tracingOpName = "db"
+)
 
 type gormConfigurer struct {
 	tracer opentracing.Tracer
@@ -99,7 +102,7 @@ func (p gormPlugin) Initialize(db *gorm.DB) error {
 func (p gormPlugin) makeBeforeCallback(opName string) gormCallbackFunc {
 	return func(db *gorm.DB) {
 		ctx := db.Statement.Context
-		name := tracing.OpNameDB + " " + opName
+		name := tracingOpName + " " + opName
 		table := db.Statement.Table
 		if db.Statement.TableExpr != nil {
 			table = db.Statement.TableExpr.SQL

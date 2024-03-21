@@ -28,6 +28,8 @@ import (
 	"net/http"
 )
 
+const opName = "http"
+
 var (
 	healthMatcher = matcher.RequestWithPattern("**/health")
 	corsPreflightMatcher = matcher.RequestWithMethods(http.MethodOptions)
@@ -51,7 +53,7 @@ func (c tracingWebCustomizer) Order() int {
 
 func (c tracingWebCustomizer) Customize(_ context.Context, r *web.Registrar) error {
 	//nolint:contextcheck // false positive
-	if e := r.AddGlobalMiddlewares(GinTracing(c.tracer, tracing.OpNameHttp, excludeRequest)); e != nil {
+	if e := r.AddGlobalMiddlewares(GinTracing(c.tracer, opName, excludeRequest)); e != nil {
 		return e
 	}
 	return nil

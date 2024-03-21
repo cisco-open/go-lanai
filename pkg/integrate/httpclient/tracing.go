@@ -28,7 +28,7 @@ import (
 	"strconv"
 )
 
-const TracingOpName = "remote-http"
+const tracingOpName = "remote-http"
 
 type tracingCustomizer struct {
 	tracer opentracing.Tracer
@@ -63,8 +63,7 @@ func (c *tracingCustomizer) Customize(opt *ClientOption) {
 
 func startSpanHook(tracer opentracing.Tracer) BeforeHook {
 	fn := func(ctx context.Context, req *http.Request) context.Context {
-		name := TracingOpName + " " + req.Method
-
+		name := tracingOpName + " " + req.Method
 		opts := []tracing.SpanOption{
 			tracing.SpanKind(ext.SpanKindRPCClientEnum),
 			tracing.SpanTag("method", req.Method),

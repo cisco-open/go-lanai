@@ -24,6 +24,8 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+const tracingOpName = "redis"
+
 // redisTracingHook implements redis.Hook and redis.OptionsAwareHook
 type redisTracingHook struct {
 	tracer opentracing.Tracer
@@ -48,7 +50,7 @@ func (h redisTracingHook) WithClientOption(opts *goredis.UniversalOptions) gored
 
 // BeforeProcess implements redis.Hook
 func (h redisTracingHook) BeforeProcess(ctx context.Context, cmd goredis.Cmder) (context.Context, error) {
-	name := tracing.OpNameRedis + " " + cmd.Name()
+	name := tracingOpName + " " + cmd.Name()
 	cmdStr := cmd.Name()
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCClientEnum),
@@ -74,9 +76,9 @@ func (h redisTracingHook) AfterProcess(ctx context.Context, cmd goredis.Cmder) e
 	return nil
 }
 
-// AfterProcessPipeline implements redis.Hook
+// BeforeProcessPipeline implements redis.Hook
 func (h redisTracingHook) BeforeProcessPipeline(ctx context.Context, cmds []goredis.Cmder) (context.Context, error) {
-	name := tracing.OpNameRedis + "-batch"
+	name := tracingOpName + "-batch"
 	cmdNames := make([]string, len(cmds))
 	for i, v := range cmds {
 		cmdNames[i] = v.Name()

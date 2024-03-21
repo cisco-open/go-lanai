@@ -23,7 +23,7 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-const OpName = "vault"
+const opName = "vault"
 
 type Hook struct {
 	tracer opentracing.Tracer
@@ -36,7 +36,7 @@ func NewHook(tracer opentracing.Tracer) *Hook {
 }
 
 func (h *Hook) BeforeOperation(ctx context.Context, cmd string) context.Context {
-	name := OpName + " " + cmd
+	name := opName + " " + cmd
 	opts := []tracing.SpanOption{
 		tracing.SpanKind(ext.SpanKindRPCClientEnum),
 		tracing.SpanTag("cmd", cmd),

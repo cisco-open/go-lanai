@@ -24,6 +24,8 @@ import (
 	"go.uber.org/fx"
 )
 
+const tracingOpName = "security"
+
 type tracingManagerCustomizer struct {
 	tracer opentracing.Tracer
 }
@@ -55,7 +57,7 @@ func (c *tracingManagerCustomizer) Customize() []ManagerOptions {
 
 func startSpanHook(tracer opentracing.Tracer) ScopeOperationHook {
 	return func(ctx context.Context, scope *Scope) context.Context {
-		name := tracing.OpNameSecScope
+		name := tracingOpName
 		opts := []tracing.SpanOption{
 			tracing.SpanKind(ext.SpanKindRPCServerEnum),
 		}

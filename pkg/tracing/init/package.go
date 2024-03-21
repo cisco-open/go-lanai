@@ -40,11 +40,9 @@ var Module = &bootstrap.Module{
 	},
 }
 
-type TracerClosingHook *fx.Hook
-
-var defaultTracerCloser fx.Hook
-
-type kCtxDefaultTracerCloser struct {}
+func init() {
+	log.RegisterContextLogFields(tracing.DefaultLogValuers.ContextValuers())
+}
 
 // Use does nothing. Allow service to include this module in main()
 func Use() {
@@ -52,16 +50,18 @@ func Use() {
 	EnableBootstrapTracing(bootstrap.GlobalBootstrapper())
 }
 
+type TracerClosingHook *fx.Hook
+
+var defaultTracerCloser fx.Hook
+
+type kCtxDefaultTracerCloser struct {}
+
+
 // EnableBootstrapTracing enable bootstrap tracing on a given bootstrapper.
 // bootstrap.GlobalBootstrapper() should be used for regular application that uses bootstrap.Execute()
 func EnableBootstrapTracing(bootstrapper *bootstrap.Bootstrapper) {
-	// logger extractor
-	log.RegisterContextLogFields(tracing.DefaultLogValuers.ContextValuers())
-
 	appTracer, closer := jaegertracing.NewDefaultTracer()
-	bootstrapper.AddInitialAppContextOptions(instrument.MakeBootstrapTracingOption(appTracer, tracing.OpNameBootstrap))
-	bootstrapper.AddStartContextOptions(instrument.MakeStartTracingOption(appTracer, tracing.OpNameStart))
-	bootstrapper.AddStopContextOptions(instrument.MakeStopTracingOption(appTracer, tracing.OpNameStop))
+	instrument.EnableBootstrapTracing(bootstrapper, appTracer)
 	defaultTracerCloser = fx.Hook{
 		OnStop: func(ctx context.Context) error {
 			logger.WithContext(ctx).Infof("closing default Tracer...")

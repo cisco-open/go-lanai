@@ -24,6 +24,18 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+const (
+	opNameBootstrap = "bootstrap"
+	opNameStart     = "startup"
+	opNameStop      = "shutdown"
+)
+
+func EnableBootstrapTracing(bootstrapper *bootstrap.Bootstrapper, tracer opentracing.Tracer) {
+	bootstrapper.AddInitialAppContextOptions(MakeBootstrapTracingOption(tracer, opNameBootstrap))
+	bootstrapper.AddStartContextOptions(MakeStartTracingOption(tracer, opNameStart))
+	bootstrapper.AddStopContextOptions(MakeStopTracingOption(tracer, opNameStop))
+}
+
 func MakeBootstrapTracingOption(tracer opentracing.Tracer, opName string) bootstrap.ContextOption {
 	return func(ctx context.Context) context.Context {
 		return tracing.WithTracer(tracer).

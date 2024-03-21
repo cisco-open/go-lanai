@@ -57,20 +57,19 @@ type SDOption struct {
 	ContextPath string
 }
 
-// SDTargetResolver implements TargetResolver interface and works with discovery.Instancer.
-// When created with NewSDTargetResolver function, it automatically registers
-// as a subscriber to events from the Instances and maintains a list
-// of active Endpoints.
+// SDTargetResolver implements TargetResolver interface that use the discovery.Instancer to resolve target's address.
+// It also attempts to resolve the http scheme and context path from instance's tags/meta.
+// In case of failed service discovery with error, this resolver keeps using previously found instances assuming they
+// are still good of period of time configured by SDOption.
+// Currently, this resolver only support round-robin load balancing.
 type SDTargetResolver struct {
 	SDOption
 	instancer discovery.Instancer
 	balancer balancer[*discovery.Instance]
 }
 
-// NewSDTargetResolver creates a slim custom sd.Endpointer that work with discovery.Instancer
-// and uses factory f to create Endpoints. If src notifies of an error, the TargetResolver
-// keeps returning previously created Endpoints assuming they are still good, unless
-// this behavior is disabled via InvalidateOnError option.
+// NewSDTargetResolver creates a TargetResolver that work with discovery.Instancer.
+// See SDTargetResolver
 func NewSDTargetResolver(instancer discovery.Instancer, opts ...SDOptions) (*SDTargetResolver, error) {
 	opt := SDOption{
 		Selector:          discovery.InstanceIsHealthy(),

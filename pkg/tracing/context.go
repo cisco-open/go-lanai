@@ -24,18 +24,6 @@ import (
 	"time"
 )
 
-const (
-	OpNameBootstrap = "bootstrap"
-	OpNameStart     = "startup"
-	OpNameStop      = "shutdown"
-	OpNameHttp      = "http"
-	OpNameRedis     = "redis"
-	OpNameDB        = "db"
-	OpNameCli       = "cli"
-	OpNameSecScope  = "security"
-	//OpName = ""
-)
-
 type spanKey struct{}
 
 var spanFinisherKey = spanKey{}
