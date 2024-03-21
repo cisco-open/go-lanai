@@ -62,7 +62,7 @@ const (
 type ManagerTestDI struct {
 	fx.In
 	Revoker sectest.MockedTokenRevoker
-	Counter testdata.InvocationCounter `optional:"true"`
+	Counter InvocationCounter `optional:"true"`
 }
 
 /*************************
@@ -75,7 +75,11 @@ func TestScopeManagerBasicBehavior(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithModules(scope.Module),
 		apptest.WithDI(&di),
+		apptest.WithFxOptions(
+			fx.Provide(NewCounter, scope.FxManagerCustomizer(NewCustomizer)),
+		),
 		sectest.WithMockedScopes(testdata.TestAcctsFS, testdata.TestBasicFS),
+		test.GomegaSubTest(SubTestHookInvocation(&di), "HookInvocation"),
 		test.GomegaSubTest(SubTestSysAcctLogin(), "SystemAccountLogin"),
 		test.GomegaSubTest(SubTestSysAcctWithTenant(), "SystemAccountWithTenant"),
 		test.GomegaSubTest(SubTestSwitchUserUsingSysAcct(), "SwitchUserUsingSysAcct"),
@@ -95,7 +99,7 @@ func TestScopeManagerWithAltSettings(t *testing.T) {
 			appconfig.FxEmbeddedApplicationAdHoc(testdata.TestAcctsFS),
 			appconfig.FxEmbeddedApplicationAdHoc(testdata.TestAltFS),
 			fx.Provide(securityint.BindSecurityIntegrationProperties),
-			fx.Provide(testdata.ProvideScopeMocksWithCounter),
+			fx.Provide(ProvideScopeMocksWithCounter),
 		),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestBackoffOnError(&di), "BackoffOnError"),
@@ -114,8 +118,7 @@ func TestOverridingDefaultScopeManager(t *testing.T) {
 		apptest.Bootstrap(),
 		apptest.WithModules(scope.Module),
 		apptest.WithFxOptions(
-			fx.Provide(securityint.BindSecurityIntegrationProperties),
-			fx.Decorate(testdata.ProvideNoopScopeManager),
+			fx.Decorate(ProvideNoopScopeManager),
 		),
 		test.GomegaSubTest(SubTestNoopScopeManager(), "VerifyNoopScopeManager"),
 	)
@@ -126,6 +129,26 @@ func TestOverridingDefaultScopeManager(t *testing.T) {
  *************************/
 
 /* System Accounts */
+
+func SubTestHookInvocation(di *ManagerTestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		ctx = sectest.ContextWithSecurity(ctx, sectest.MockedAuthentication(securityMockRegular()))
+		di.Counter.ResetAll()
+		ctx = ContextWithMockedSecurity(ctx, securityMockRegular())
+		e := scope.Do(ctx, func(ctx context.Context) {
+			doAssertCurrentScope(ctx, g, "SysAcctLogin",
+				assertAuthenticated(),
+				assertWithUser(systemUsername, systemUserId),
+				assertWithTenant(defaultTenantId, defaultTenantExternalId),
+				assertNotProxyAuth(),
+				assertValidityGreaterThan(validity),
+			)
+			g.Expect(di.Counter.Get(TestScopeManagerHook.Before)).To(BeNumerically(">", 0), "before hook should be executed")
+		}, scope.UseSystemAccount())
+		g.Expect(e).To(Succeed(), "scope manager shouldn't returns error")
+		g.Expect(di.Counter.Get(TestScopeManagerHook.After)).To(BeNumerically(">", 0), "before hook should be executed")
+	}
+}
 
 func SubTestSysAcctLogin() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
@@ -353,7 +376,7 @@ func SubTestBackoffOnError(di *ManagerTestDI) test.GomegaSubTestFunc {
 		{
 			// first invocation
 			e := scope.Do(ctx, func(ctx context.Context) {
-				t.Errorf("scoped function should be be invoked in case of error")
+				t.Errorf("scoped function should not be invoked in case of error")
 			}, scope.WithTenantId(badTenantId))
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
@@ -364,7 +387,7 @@ func SubTestBackoffOnError(di *ManagerTestDI) test.GomegaSubTestFunc {
 		{
 			// immediate replay
 			e := scope.Do(ctx, func(ctx context.Context) {
-				t.Errorf("scoped function should be be invoked in case of error")
+				t.Errorf("scoped function should not be invoked in case of error")
 			}, scope.WithTenantId(badTenantId))
 
 			g.Expect(e).To(Not(Succeed()), "scope manager should returns error")
@@ -581,6 +604,7 @@ func SubTestNoopScopeManager() test.GomegaSubTestFunc {
 type assertion func(g *gomega.WithT, auth security.Authentication, msg string)
 
 func doAssertCurrentScope(ctx context.Context, g *gomega.WithT, msg string, assertions ...assertion) {
+	g.Expect(scope.Describe(ctx)).ToNot(Equal("no scope"), "current scope should be available")
 	auth := security.Get(ctx)
 	for _, fn := range assertions {
 		fn(g, auth, msg)
@@ -700,4 +724,3 @@ func securityMockRegular() sectest.SecurityMockOptions {
 func ContextWithMockedSecurity(ctx context.Context, opts ...sectest.SecurityMockOptions) context.Context {
 	return sectest.ContextWithSecurity(ctx, sectest.MockedAuthentication(opts...))
 }
-

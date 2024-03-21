@@ -60,11 +60,16 @@ const (
 )
 
 type Module struct {
-	// Precedence basically govern the order or invokers between different Bootstrapper
 	Name            string
+	// Precedence basically govern the order or invokers between different Modules
 	Precedence      int
+	// PriorityOptions are fx.Options applied before any regular Options
 	PriorityOptions []fx.Option
+	// Options is a collection fx.Option: fx.Provide, fx.Invoke, etc.
 	Options         []fx.Option
+	// Modules is a collection of *Module that will also be initialized.
+	// They are not necessarily sub-modules. During bootstrapping, all modules are flattened and Precedence are calculated at the end
+	Modules 		[]*Module
 }
 
 // newAnonymousModule has lower precedence than framework modules.

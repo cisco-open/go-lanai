@@ -19,15 +19,19 @@ package swagger
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/consul/api"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
 )
 
 const (
-	TAG_SWAGGER_PATH = "swaggerPath"
+	TagSwaggerPath = "swaggerPath"
 )
+
+func newSwaggerInfoDiscoveryCustomizer() discovery.ServiceRegistrationCustomizer {
+	return swaggerInfoDiscoveryCustomizer{}
+}
 
 type swaggerInfoDiscoveryCustomizer struct {}
 
-func (s swaggerInfoDiscoveryCustomizer) Customize(ctx context.Context, reg *api.AgentServiceRegistration) {
-	reg.Tags = append(reg.Tags, fmt.Sprintf("%s=%s", TAG_SWAGGER_PATH, "/swagger"))
+func (s swaggerInfoDiscoveryCustomizer) Customize(_ context.Context, reg discovery.ServiceRegistration) {
+	reg.AddTags(fmt.Sprintf("%s=%s", TagSwaggerPath, "/swagger"))
 }

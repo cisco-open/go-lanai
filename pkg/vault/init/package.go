@@ -23,8 +23,10 @@ import (
     appconfigInit "github.com/cisco-open/go-lanai/pkg/appconfig/init"
     "github.com/cisco-open/go-lanai/pkg/bootstrap"
     "github.com/cisco-open/go-lanai/pkg/vault"
-    vaulthealth "github.com/cisco-open/go-lanai/pkg/vault/health"
-    "go.uber.org/fx"
+	vaultappconfig "github.com/cisco-open/go-lanai/pkg/vault/appconfig"
+	vaulthealth "github.com/cisco-open/go-lanai/pkg/vault/health"
+	vaulttracing "github.com/cisco-open/go-lanai/pkg/vault/tracing"
+	"go.uber.org/fx"
 )
 
 //go:embed defaults-vault.yml
@@ -39,6 +41,10 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		appconfigInit.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Invoke(vaulthealth.Register, manageClientLifecycle),
+	},
+	Modules: []*bootstrap.Module{
+		vaultappconfig.Module,
+		vaulttracing.Module,
 	},
 }
 

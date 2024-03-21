@@ -7,7 +7,7 @@ import (
 	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	consul "github.com/cisco-open/go-lanai/pkg/consul/init"
-	discoveryinit "github.com/cisco-open/go-lanai/pkg/discovery/init"
+	"github.com/cisco-open/go-lanai/pkg/discovery/consulsd"
 	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/pkg/security/config/authserver"
 	"github.com/cisco-open/go-lanai/pkg/security/config/resserver"
@@ -27,7 +27,7 @@ func Use() {
 	redis.Use()
 	actuator.Use()
 	tracing.Use()
-	discoveryinit.Use()
+	consulsd.Use()
 
 	authserver.Use()
 	resserver.Use()

@@ -6,14 +6,15 @@ config:
     search-path: ["configs", "configs/profiles"]
 
 cloud:
+  discovery:
+    consul:
+      health-check-critical-timeout: 2m # de-registers an unhealthy instance after certain time
+      ip-address: ${spring.cloud.consul.discovery.ipaddress:}
   consul:
     host: ${spring.cloud.consul.host:localhost}
     port: 8500
     config:
       enabled: true
-    discovery:
-      health-check-critical-timeout: 2m # de-registers an unhealthy instance after certain time
-      ip-address: ${spring.cloud.consul.discovery.ipaddress:}
   vault:
     kv:
       enabled: true

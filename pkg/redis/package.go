@@ -17,10 +17,11 @@
 package redis
 
 import (
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/certs"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "go.uber.org/fx"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/certs"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/opentracing/opentracing-go"
+	"go.uber.org/fx"
 )
 
 var logger = log.New("Redis")
@@ -42,22 +43,28 @@ func Use() {
 
 type factoryDI struct {
 	fx.In
+	AppCtx      *bootstrap.ApplicationContext
 	Props       RedisProperties
-	CertManager certs.Manager `optional:"true"`
+	CertManager certs.Manager      `optional:"true"`
+	Tracer      opentracing.Tracer `optional:"true"`
 }
 
 func provideClientFactory(di factoryDI) ClientFactory {
-	return NewClientFactory(func(opt *FactoryOption) {
+	factory := NewClientFactory(func(opt *FactoryOption) {
 		opt.Properties = di.Props
 		opt.TLSCertsManager = di.CertManager
 	})
+	if di.Tracer != nil {
+		factory.AddHooks(di.AppCtx, NewRedisTrackingHook(di.Tracer))
+	}
+	return factory
 }
 
 type clientDI struct {
 	fx.In
-	AppCtx             *bootstrap.ApplicationContext
-	Factory            ClientFactory
-	Properties         RedisProperties
+	AppCtx     *bootstrap.ApplicationContext
+	Factory    ClientFactory
+	Properties RedisProperties
 }
 
 func provideDefaultClient(di clientDI) Client {

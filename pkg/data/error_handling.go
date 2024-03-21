@@ -17,36 +17,22 @@
 package data
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils/order"
-    "go.uber.org/fx"
-    "gorm.io/gorm"
-    "sort"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"gorm.io/gorm"
+	"sort"
 )
 
 const (
-	gormCallbackPrefix = "lanai:error:"
-	gormPluginName = gormCallbackPrefix + "translate"
+	gormPluginErrorTranslation = gormCallbackPrefix + "error:translate"
 )
 
 // errorHandlingGormConfigurer implement a GormConfigurer that installs errorTranslatorGormPlugin for error handling/transformation
 // see errorTranslatorGormPlugin for more details
 type errorHandlingGormConfigurer []ErrorTranslator
 
-func ErrorHandlingGormConfigurer() fx.Annotated {
-	return fx.Annotated{
-		Group:  GormConfigurerGroup,
-		Target: newErrHandlingGormConfigurer,
-	}
-}
-
-type ehDI struct {
-	fx.In
-	Translators []ErrorTranslator `group:"gorm_config"`
-}
-
-func newErrHandlingGormConfigurer(di ehDI) GormConfigurer {
-	return errorHandlingGormConfigurer(di.Translators)
+func NewGormErrorHandlingConfigurer(translators...ErrorTranslator) GormConfigurer {
+	return errorHandlingGormConfigurer(translators)
 }
 
 func (c errorHandlingGormConfigurer) Order() int {
@@ -57,7 +43,7 @@ func (c errorHandlingGormConfigurer) Configure(config *gorm.Config) {
 	if config.Plugins == nil {
 		config.Plugins = map[string]gorm.Plugin{}
 	}
-	config.Plugins[gormPluginName] = newErrorHandlingGormPlugin(c...)
+	config.Plugins[gormPluginErrorTranslation] = newErrorHandlingGormPlugin(c...)
 }
 
 // errorTranslatorGormPlugin installs gorm callbacks of all operations and give ErrorTranslator a chance to handle errors
@@ -72,12 +58,12 @@ func newErrorHandlingGormPlugin(translators ...ErrorTranslator) errorTranslatorG
 }
 
 func (errorTranslatorGormPlugin) Name() string {
-	return gormPluginName
+	return gormPluginErrorTranslation
 }
 
 func (p errorTranslatorGormPlugin) Initialize(db *gorm.DB) error {
 	errs := map[string]error{}
-	cbName := gormCallbackPrefix + "translate"
+	cbName := gormPluginErrorTranslation
 	errs["Create"] = db.Callback().Create().After("*").Register(cbName, p.translateErrorCallback())
 	errs["Query"] = db.Callback().Query().After("*").Register(cbName, p.translateErrorCallback())
 	errs["Update"] = db.Callback().Update().After("*").Register(cbName, p.translateErrorCallback())

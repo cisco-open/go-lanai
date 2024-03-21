@@ -1,7 +1,9 @@
 module github.com/cisco-open/go-lanai/examples/opa-enabled-service
 
-go 1.20
+go 1.21
+
+toolchain go1.21.6
 
 replace github.com/cisco-open/go-lanai => ./../../../go-lanai
 
-require github.com/cisco-open/go-lanai v0.12.1-0.20240226213016-e059ad9dadea
+require github.com/cisco-open/go-lanai v0.13.1-0.20240311221150-2525faca9482

@@ -49,7 +49,7 @@ type SamplerProperties struct {
 	LowestRate  float64 `json:"lowest-per-second"`
 }
 
-//NewSessionProperties create a SessionProperties with default values
+// NewTracingProperties create a SessionProperties with default values
 func NewTracingProperties() *TracingProperties {
 	return &TracingProperties{
 		Enabled: true,
@@ -64,7 +64,7 @@ func NewTracingProperties() *TracingProperties {
 	}
 }
 
-//BindManagementProperties create and bind SessionProperties, with a optional prefix
+// BindTracingProperties create and bind SessionProperties, with a optional prefix
 func BindTracingProperties(ctx *bootstrap.ApplicationContext) TracingProperties {
 	props := NewTracingProperties()
 	if err := ctx.Config().Bind(props, TracingPropertiesPrefix); err != nil {

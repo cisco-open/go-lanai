@@ -17,20 +17,21 @@
 package init
 
 import (
-    "context"
-    "embed"
-    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/cisco-open/go-lanai/pkg/web/cors"
-    "go.uber.org/fx"
+	"context"
+	"embed"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/cors"
+	webtracing "github.com/cisco-open/go-lanai/pkg/web/tracing"
+	"go.uber.org/fx"
 )
 
 //go:embed defaults-web.yml
 var defaultConfigFS embed.FS
 
 var Module = &bootstrap.Module{
-	Name: "web",
+	Name:       "web",
 	Precedence: web.MinWebPrecedence,
 	PriorityOptions: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
@@ -40,21 +41,27 @@ var Module = &bootstrap.Module{
 			web.NewRegistrar),
 		fx.Invoke(setup),
 	},
+	Modules: []*bootstrap.Module{
+		cors.Module, webtracing.Module,
+	},
 }
 
 // Use Allow service to include this module in main()
 func Use() {
 	bootstrap.Register(Module)
-	bootstrap.Register(cors.Module)
 }
 
 /**************************
 	Provide dependencies
 ***************************/
 
-/**************************
+/*
+*************************
+
 	Setup
-***************************/
+
+**************************
+*/
 type initDI struct {
 	fx.In
 	Registrar        *web.Registrar

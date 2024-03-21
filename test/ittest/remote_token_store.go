@@ -17,17 +17,17 @@
 package ittest
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/misc"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/cisco-open/go-lanai/test/sectest"
-    "net/http"
-    "net/url"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/misc"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/test/sectest"
+	"net/http"
+	"net/url"
 )
 
 //nolint:gosec // G101: Potential hardcoded credentials, false positive
@@ -54,6 +54,8 @@ type RemoteTokenStoreOption struct {
 	HttpClientConfig *httpclient.ClientConfig
 	BaseUrl          string
 	ServiceName      string // auth service's name for LB
+	Scheme           string
+	ContextPath      string
 	ClientId         string
 	ClientSecret     string
 	SkipRemoteCheck  bool
@@ -70,7 +72,10 @@ func NewRemoteTokenStoreReader(opts ...RemoteTokenStoreOptions) oauth2.TokenStor
 	if opt.BaseUrl != "" {
 		client, e = opt.HttpClient.WithBaseUrl(opt.BaseUrl)
 	} else {
-		client, e = opt.HttpClient.WithService(opt.ServiceName)
+		client, e = opt.HttpClient.WithService(opt.ServiceName, func(sdOpt *httpclient.SDOption) {
+			sdOpt.Scheme = opt.Scheme
+			sdOpt.ContextPath = opt.ContextPath
+		})
 	}
 	if e != nil {
 		panic(e)
@@ -183,9 +188,9 @@ func (r *RemoteTokenStoreReader) readAuthenticationFromAccessToken(ctx context.C
 
 func (r *RemoteTokenStoreReader) remoteAccessTokenCheck(ctx context.Context, value string, dest *misc.CheckTokenClaims) error {
 	form := url.Values{
-		"token": []string{value},
+		"token":           []string{value},
 		"token_type_hint": []string{"access_token"},
-		"no_details": []string{fmt.Sprintf("%v", dest == nil)},
+		"no_details":      []string{fmt.Sprintf("%v", dest == nil)},
 	}
 	req := httpclient.NewRequest(CheckTokenPath, http.MethodPost,
 		httpclient.WithUrlEncodedBody(form),

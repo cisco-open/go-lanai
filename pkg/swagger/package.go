@@ -17,15 +17,16 @@
 package swagger
 
 import (
-    "embed"
-    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/discovery"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/pkg/errors"
-    "go.uber.org/fx"
+	"embed"
+	"fmt"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/pkg/errors"
+	"go.uber.org/fx"
 )
 
 //go:generate npm install --prefix nodejs
@@ -46,7 +47,10 @@ var Module = &bootstrap.Module{
 	},
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
-		fx.Provide(bindSwaggerProperties),
+		fx.Provide(
+			bindSwaggerProperties,
+			fx.Annotate(newSwaggerInfoDiscoveryCustomizer, fx.ResultTags(fmt.Sprintf(`group:"%s"`, discovery.FxGroup))),
+		),
 		fx.Invoke(initialize),
 	},
 }
@@ -60,16 +64,11 @@ type initDI struct {
 	Registrar            *web.Registrar
 	Properties           SwaggerProperties
 	Resolver             bootstrap.BuildInfoResolver `optional:"true"`
-	DiscoveryCustomizers *discovery.Customizers      `optional:"true"`
 }
 
 func initialize(di initDI) {
 	di.Registrar.MustRegister(Content)
 	di.Registrar.MustRegister(NewSwaggerController(di.Properties, di.Resolver))
-
-	if di.DiscoveryCustomizers != nil {
-		di.DiscoveryCustomizers.Add(swaggerInfoDiscoveryCustomizer{})
-	}
 }
 
 func bindSwaggerProperties(ctx *bootstrap.ApplicationContext) SwaggerProperties {
@@ -96,5 +95,5 @@ func configureSecurity(di secDI) {
 type DiscoveryCustomizerDIOut struct {
 	fx.Out
 
-	Customizer discovery.Customizer `group:"discovery_customizer"`
+	Customizer discovery.ServiceRegistrationCustomizer `group:"discovery_customizer"`
 }

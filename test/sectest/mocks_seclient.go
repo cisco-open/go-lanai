@@ -51,7 +51,6 @@ func (c *mockedAuthClient) ClientCredentials(ctx context.Context, opts ...seclie
 	now := time.Now()
 	exp := now.UTC().Add(tokenExp)
 	return &seclient.Result{
-		Request: nil,
 		Token: &MockedToken{
 			MockedTokenInfo: MockedTokenInfo{
 				Scopes: opt.Scopes,

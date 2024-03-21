@@ -1,0 +1,711 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "0"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/default
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 327
+        uncompressed: false
+        body: '{"request_id":"6d336d66-ee88-941e-143a-097e832ee21b","lease_id":"","renewable":false,"lease_duration":315360000,"data":{"test.from-app":"default-context","test.from-app-profile":"default-context","test.from-default":"default-context","test.from-default-profile":"default-context"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "327"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/testapp
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 14
+        uncompressed: false
+        body: '{"errors":[]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "14"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/default/test
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 14
+        uncompressed: false
+        body: '{"errors":[]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "14"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "3"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/testapp/test
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 14
+        uncompressed: false
+        body: '{"errors":[]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "14"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "4"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 191
+        uncompressed: false
+        body: '{"request_id":"21c56b19-50a1-cd8d-693a-549156614196","lease_id":"","renewable":false,"lease_duration":315360000,"data":{"test-key":"test-value"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "191"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/auth/token/lookup-self
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 659
+        uncompressed: false
+        body: '{"request_id":"a369579b-64f2-14bd-9aa1-844ff9a358b4","lease_id":"","renewable":false,"lease_duration":0,"data":{"accessor":"5avPefpt8IguXtHZelF4wp1d","creation_time":1705442662,"creation_ttl":315360000,"display_name":"token-dev-default","entity_id":"","expire_time":"2034-01-13T22:03:54.24618905Z","explicit_max_ttl":0,"id":"replace_with_token_value","issue_time":"2024-01-16T22:04:22.254887794Z","last_renewal":"2024-03-13T17:25:12.246189217Z","last_renewal_time":1710350712,"meta":null,"num_uses":0,"orphan":true,"path":"auth/token/create","policies":["root"],"renewable":true,"ttl":310451897,"type":"service"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "659"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "6"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 191
+        uncompressed: false
+        body: '{"request_id":"9e70c65d-0f6f-c9da-9ef4-5bd978aa5a0b","lease_id":"","renewable":false,"lease_duration":315360000,"data":{"test-key":"test-value"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "191"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 25
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"test-key":"test-value"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "7"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 23
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"increment":310451897}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "8"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/auth/token/renew-self
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 433
+        uncompressed: false
+        body: '{"request_id":"35667fcb-50ef-4954-7fa5-a464731736c4","lease_id":"","renewable":false,"lease_duration":0,"data":null,"wrap_info":null,"warnings":null,"auth":{"client_token":"replace_with_token_value","accessor":"5avPefpt8IguXtHZelF4wp1d","policies":["root"],"token_policies":["root"],"metadata":null,"lease_duration":310451897,"renewable":true,"entity_id":"","token_type":"service","orphan":true,"mfa_requirement":null,"num_uses":0}}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "433"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 25
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"test-key":"test-value"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "9"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 10
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 25
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"test-key":"test-value"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "10"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "11"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 191
+        uncompressed: false
+        body: '{"request_id":"ee8c19eb-b42c-f85e-ec08-8b15ab07bf97","lease_id":"","renewable":false,"lease_duration":315360000,"data":{"test-key":"test-value"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "191"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 12
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "12"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 191
+        uncompressed: false
+        body: '{"request_id":"ca426158-eb5f-a968-46de-686a000af9cf","lease_id":"","renewable":false,"lease_duration":315360000,"data":{"test-key":"test-value"},"wrap_info":null,"warnings":null,"auth":null}'
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "191"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 13
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 25
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"test-key":"test-value"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "13"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 14
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 25
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"test-key":"test-value"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "14"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: POST
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs
+    - id: 15
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 25
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8200
+        remote_addr: ""
+        request_uri: ""
+        body: '{"test-key":"test-value"}'
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "15"
+            X-Vault-Request:
+                - "true"
+            X-Vault-Token:
+                - replace_with_token_value
+        url: http://localhost:8200/v1/secret/test/tracing
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Cache-Control:
+                - no-store
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+        status: 204 No Content
+        code: 204
+        duration: 200µs

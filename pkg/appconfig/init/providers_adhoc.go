@@ -18,6 +18,7 @@ package appconfig
 
 import (
 	"github.com/cisco-open/go-lanai/pkg/appconfig"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
 	"go.uber.org/fx"
 )
 
@@ -27,18 +28,19 @@ type adhocBootstrapDI struct {
 }
 
 func newBootstrapAdHocProviderGroup(di adhocBootstrapDI) bootstrapProvidersOut {
+	order.SortStable(di.Providers, order.OrderedFirstCompare)
 	providers := make([]appconfig.Provider, 0)
 	for _, p := range di.Providers {
 		if p == nil {
 			continue
 		}
 		if reorder, ok := p.(appconfig.ProviderReorderer); ok {
-			reorder.Reorder(bootstrapAdHocPrecedence)
+			reorder.Reorder(PrecedenceBootstrapAdHoc)
 		}
 		providers =  append(providers, p)
 	}
 	return bootstrapProvidersOut {
-		ProviderGroup: appconfig.NewStaticProviderGroup(bootstrapAdHocPrecedence, providers...),
+		ProviderGroup: appconfig.NewStaticProviderGroup(PrecedenceBootstrapAdHoc, providers...),
 	}
 }
 
@@ -48,17 +50,18 @@ type adhocApplicationDI struct {
 }
 
 func newApplicationAdHocProviderGroup(di adhocApplicationDI) appConfigProvidersOut {
+	order.SortStable(di.Providers, order.OrderedFirstCompare)
 	providers := make([]appconfig.Provider, 0)
 	for _, p := range di.Providers {
 		if p == nil {
 			continue
 		}
 		if reorder, ok := p.(appconfig.ProviderReorderer); ok {
-			reorder.Reorder(applicationAdHocPrecedence)
+			reorder.Reorder(PrecedenceApplicationAdHoc)
 		}
 		providers =  append(providers, p)
 	}
 	return appConfigProvidersOut {
-		ProviderGroup: appconfig.NewStaticProviderGroup(applicationAdHocPrecedence, providers...),
+		ProviderGroup: appconfig.NewStaticProviderGroup(PrecedenceApplicationAdHoc, providers...),
 	}
 }

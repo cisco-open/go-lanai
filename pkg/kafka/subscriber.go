@@ -21,7 +21,8 @@ import (
     "fmt"
     "github.com/IBM/sarama"
     "github.com/cisco-open/go-lanai/pkg/utils"
-    "reflect"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"reflect"
     "sync"
 )
 
@@ -40,6 +41,8 @@ type saramaSubscriber struct {
 }
 
 func newSaramaSubscriber(topic string, addrs []string, config *bindingConfig, provisioner *saramaTopicProvisioner) (*saramaSubscriber, error) {
+	order.SortStable(config.consumer.dispatchInterceptors, order.OrderedFirstCompare)
+	order.SortStable(config.consumer.handlerInterceptors, order.OrderedFirstCompare)
 	return &saramaSubscriber{
 		topic:       topic,
 		brokers:     addrs,

@@ -45,7 +45,7 @@ func (g ProjectGroup) CustomizeTemplate() (TemplateOptions, error) {
 }
 
 func (g ProjectGroup) CustomizeData(data GenerationData) error {
-	basic := ResolveEnabledLanaiModules(LanaiAppConfig, LanaiConsul, LanaiVault, LanaiRedis, LanaiTracing, LanaiDiscovery)
+	basic := ResolveEnabledLanaiModules(LanaiAppConfig, LanaiConsul, LanaiVault, LanaiRedis, LanaiTracing, LanaiConsulSD)
 	pInit := data.ProjectMetadata()
 	pInit.EnabledModules.Add(basic.Values()...)
 	return nil

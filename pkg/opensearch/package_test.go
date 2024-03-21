@@ -23,7 +23,6 @@ import (
     "github.com/cisco-open/go-lanai/pkg/opensearch"
     "github.com/cisco-open/go-lanai/pkg/opensearch/testdata"
     "github.com/cisco-open/go-lanai/pkg/tracing"
-    "github.com/cisco-open/go-lanai/pkg/tracing/instrument"
     "github.com/cisco-open/go-lanai/test"
     "github.com/cisco-open/go-lanai/test/apptest"
     "github.com/cisco-open/go-lanai/test/opensearchtest"
@@ -451,7 +450,7 @@ func SubTestTracer(di *opensearchDI) test.GomegaSubTestFunc {
         for _, tt := range tests {
             t.Run(tt.name, func(t *testing.T) {
                 tracer := mocktracer.New()
-                openTracer := instrument.OpenSearchTracerHook(tracer)
+                openTracer := opensearch.TracerHook(tracer)
                 di.FakeService.Repo.AddBeforeHook(openTracer)
                 di.FakeService.Repo.AddAfterHook(openTracer)
 

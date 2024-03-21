@@ -6,16 +6,13 @@ import (
 	actuator "github.com/cisco-open/go-lanai/pkg/actuator/init"
 	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
-	consul "github.com/cisco-open/go-lanai/pkg/consul/init"
 	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
 	data "github.com/cisco-open/go-lanai/pkg/data/init"
-	discovery "github.com/cisco-open/go-lanai/pkg/discovery/init"
 	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/pkg/security"
 	"github.com/cisco-open/go-lanai/pkg/security/config/resserver"
 	"github.com/cisco-open/go-lanai/pkg/swagger"
 	tracing "github.com/cisco-open/go-lanai/pkg/tracing/init"
-	vault "github.com/cisco-open/go-lanai/pkg/vault/init"
 	web "github.com/cisco-open/go-lanai/pkg/web/init"
 	"go.uber.org/fx"
 )
@@ -33,8 +30,8 @@ var Module = &bootstrap.Module{
 func Use() {
 	// basic modules
 	appconfig.Use()
-	consul.Use()
-	vault.Use()
+	//consul.Use()
+	//vault.Use()
 	redis.Use()
 	tracing.Use()
 
@@ -48,7 +45,9 @@ func Use() {
 	cockroach.Use()
 
 	// service-to-service integration related
-	discovery.Use()
+	//consulsd.Use() // requires consul.Use()
+	// Or
+	//dnssd.Use()
 	//httpclient.Use()
 	//scope.Use()
 	//kafka.Use()

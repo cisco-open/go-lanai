@@ -20,6 +20,7 @@ import (
     "context"
     "github.com/IBM/sarama"
     "github.com/cisco-open/go-lanai/pkg/kafka"
+    "github.com/cisco-open/go-lanai/pkg/utils/order"
     "github.com/cisco-open/go-lanai/test"
     "go.uber.org/fx"
     "sync"
@@ -68,6 +69,10 @@ func CurrentHeadersMocker(ctx context.Context) *MockedHeadersInterceptor {
 type MockedHeadersInterceptor struct {
     mtx sync.Mutex
     Headers map[string]map[int32]map[int64]kafka.Headers
+}
+
+func (i *MockedHeadersInterceptor) Order() int {
+    return order.Highest
 }
 
 func (i *MockedHeadersInterceptor) Intercept(msgCtx *kafka.MessageContext) (*kafka.MessageContext, error) {

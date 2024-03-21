@@ -17,11 +17,11 @@
 package security
 
 import (
-    "embed"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/pkg/errors"
-    "time"
+	"embed"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/pkg/errors"
+	"time"
 )
 
 const (
@@ -42,10 +42,9 @@ type SecurityIntegrationProperties struct {
 	// we use FailureBackOff and re-request new token after `back-off` passes
 	GuaranteedValidity utils.Duration `json:"guaranteed-validity"`
 
-	ServiceName string                      `json:"service-name"`
-	Endpoints   AuthEndpointsProperties     `json:"endpoints"`
-	Client      ClientCredentialsProperties `json:"client"`
-	Accounts    AccountsProperties          `json:"accounts"`
+	Endpoints AuthEndpointsProperties     `json:"endpoints"`
+	Client    ClientCredentialsProperties `json:"client"`
+	Accounts  AccountsProperties          `json:"accounts"`
 }
 
 type ClientCredentialsProperties struct {
@@ -54,9 +53,18 @@ type ClientCredentialsProperties struct {
 }
 
 type AuthEndpointsProperties struct {
-	// BaseUrl is used to override service discovery and load-balancing, it should kept empty in production
-	BaseUrl       string `json:"base-url"`
+	// BaseUrl is used to override service discovery and load-balancing
+	// When set, ServiceName, Scheme and ContextPath are ignored
+	BaseUrl string `json:"base-url"`
+	// ServiceName The name of auth service, used by service discovery to authentication/authorization URL
+	ServiceName string `json:"service-name"`
+	// Scheme HTTP scheme ("http"/"https") of auth service, in case it's not resolvable from service registry
+	Scheme string `json:"scheme"`
+	// ContextPath The path prefix of all endpoints, in case it's not resolvable from service registry
+	ContextPath string `json:"context-path"`
+	// PasswordLogin Path of password login endpoint
 	PasswordLogin string `json:"password-login"`
+	// SwitchContext Path of switch tenant/user endpoint
 	SwitchContext string `json:"switch-context"`
 }
 
@@ -71,22 +79,23 @@ type AccountCredentialsProperties struct {
 	SystemAccount bool   `json:"system-account"`
 }
 
-//NewSecurityIntegrationProperties create a DataProperties with default values
+// NewSecurityIntegrationProperties create a DataProperties with default values
 func NewSecurityIntegrationProperties() *SecurityIntegrationProperties {
 	return &SecurityIntegrationProperties{
 		FailureBackOff:     utils.Duration(300 * time.Second),
 		GuaranteedValidity: utils.Duration(30 * time.Second),
-		ServiceName:        "europa",
-		Endpoints:          AuthEndpointsProperties{
+		Endpoints: AuthEndpointsProperties{
+			ServiceName:   "authservice",
+			Scheme:        "http",
 			PasswordLogin: "/v2/token",
 			SwitchContext: "/v2/token",
 		},
-		Client:             ClientCredentialsProperties{
+		Client: ClientCredentialsProperties{
 			ClientId:     "nfv-service",
 			ClientSecret: "nfv-service-secret",
 		},
-		Accounts:           AccountsProperties{
-			Default:    AccountCredentialsProperties{
+		Accounts: AccountsProperties{
+			Default: AccountCredentialsProperties{
 				Username:      "system",
 				Password:      "system",
 				SystemAccount: true,
@@ -95,7 +104,7 @@ func NewSecurityIntegrationProperties() *SecurityIntegrationProperties {
 	}
 }
 
-//BindSecurityIntegrationProperties create and bind SessionProperties, with a optional prefix
+// BindSecurityIntegrationProperties create and bind SessionProperties, with a optional prefix
 func BindSecurityIntegrationProperties(ctx *bootstrap.ApplicationContext) SecurityIntegrationProperties {
 	props := NewSecurityIntegrationProperties()
 	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
@@ -103,5 +112,3 @@ func BindSecurityIntegrationProperties(ctx *bootstrap.ApplicationContext) Securi
 	}
 	return *props
 }
-
-

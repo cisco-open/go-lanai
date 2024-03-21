@@ -21,7 +21,6 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/data"
 	"github.com/cisco-open/go-lanai/pkg/data/repo"
 	"github.com/cisco-open/go-lanai/pkg/data/tx"
-	"github.com/cisco-open/go-lanai/pkg/data/types/pqcrypt"
 	"github.com/cisco-open/go-lanai/pkg/web"
 	"go.uber.org/fx"
 	"reflect"
@@ -34,23 +33,19 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
 		fx.Provide(
-			data.NewGorm,
-			data.ErrorHandlingGormConfigurer(),
-			gormErrTranslatorProvider(),
 			transactionMaxRetry(),
 		),
 		web.FxErrorTranslatorProviders(
 			webErrTranslatorProvider(data.NewWebDataErrorTranslator),
 		),
 	},
+	Modules: []*bootstrap.Module{
+		data.Module, tx.Module, repo.Module,
+	},
 }
 
 func Use() {
 	bootstrap.Register(Module)
-	bootstrap.Register(data.Module)
-	bootstrap.Register(tx.Module)
-	bootstrap.Register(repo.Module)
-	bootstrap.Register(pqcrypt.Module)
 }
 
 /**************************
@@ -62,15 +57,6 @@ func webErrTranslatorProvider(provider interface{}) func() web.ErrorTranslator {
 		fnv := reflect.ValueOf(provider)
 		ret := fnv.Call(nil)
 		return ret[0].Interface().(web.ErrorTranslator)
-	}
-}
-
-func gormErrTranslatorProvider() fx.Annotated {
-	return fx.Annotated{
-		Group: data.GormConfigurerGroup,
-		Target: func() data.ErrorTranslator {
-			return data.NewGormErrorTranslator()
-		},
 	}
 }
 

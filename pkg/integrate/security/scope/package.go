@@ -17,15 +17,15 @@
 package scope
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    securityint "github.com/cisco-open/go-lanai/pkg/integrate/security"
-    "github.com/cisco-open/go-lanai/pkg/integrate/security/seclient"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "go.uber.org/fx"
-    "time"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	securityint "github.com/cisco-open/go-lanai/pkg/integrate/security"
+	"github.com/cisco-open/go-lanai/pkg/integrate/security/seclient"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"go.uber.org/fx"
+	"time"
 )
 
 var logger = log.New("SEC.Scope")
@@ -35,6 +35,7 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.SecurityIntegrationPrecedence,
 	Options: []fx.Option{
 		fx.Provide(provideDefaultScopeManager),
+		fx.Provide(tracingProvider()),
 		fx.Invoke(configureScopeManagers),
 	},
 }
@@ -44,16 +45,12 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-// FxManagerCustomizers takes providers of ManagerCustomizer and wrap them with FxGroup
-func FxManagerCustomizers(providers ...interface{}) []fx.Annotated {
-	annotated := make([]fx.Annotated, len(providers))
-	for i, t := range providers {
-		annotated[i] = fx.Annotated{
-			Group:  FxGroup,
-			Target: t,
-		}
+// FxManagerCustomizer takes providers of ManagerCustomizer and wrap them with FxGroup
+func FxManagerCustomizer(constructor interface{}) fx.Annotated {
+	return fx.Annotated{
+		Group:  FxGroup,
+		Target: constructor,
 	}
-	return annotated
 }
 
 type defaultDI struct {
@@ -64,9 +61,9 @@ type defaultDI struct {
 	Customizers      []ManagerCustomizer                       `group:"security-scope"`
 }
 
-func provideDefaultScopeManager(di defaultDI) ScopeManager {
+func provideDefaultScopeManager(di defaultDI) (ScopeManager, error) {
 	if di.TokenStoreReader == nil || di.AuthClient == nil {
-		return nil
+		return nil, fmt.Errorf(`security scope managers requires "resserver" and "seclient", but not configured`)
 	}
 
 	// default options
@@ -107,14 +104,9 @@ func provideDefaultScopeManager(di defaultDI) ScopeManager {
 		opts = append(opts, c.Customize()...)
 	}
 
-	return newDefaultScopeManager(opts...)
+	return newDefaultScopeManager(opts...), nil
 }
 
 func configureScopeManagers(EffectiveScopeManager ScopeManager) {
-	if EffectiveScopeManager == nil {
-		msg := fmt.Sprintf(`Security Scope managers requires "resserver" and "seclient", but not configured`)
-		logger.Warnf(msg)
-		panic(msg)
-	}
 	scopeManager = EffectiveScopeManager
 }

@@ -19,7 +19,6 @@ package data
 import (
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/pkg/utils/order"
-	"go.uber.org/fx"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 	"time"
@@ -40,12 +39,9 @@ const (
 	GormCallbackAfterRaw     = "gorm:raw"
 )
 
-type gormInitDI struct {
-	fx.In
-	Dialector gorm.Dialector
-	Properties DataProperties
-	Configurers [] GormConfigurer `group:"gorm_config"`
-}
+const (
+	gormCallbackPrefix = "lanai:"
+)
 
 type GormErrorTranslator interface {
 	TranslateWithDB(db *gorm.DB) error
@@ -55,9 +51,23 @@ type GormConfigurer interface {
 	Configure(config *gorm.Config)
 }
 
-func NewGorm(di gormInitDI) *gorm.DB {
+type GormOptions func(cfg *GormConfig)
+type GormConfig struct {
+	Dialector             gorm.Dialector
+	LogLevel              log.LoggingLevel
+	LogSlowQueryThreshold time.Duration
+	Configurers           []GormConfigurer
+}
+
+func NewGorm(opts ...GormOptions) *gorm.DB {
+	cfg := GormConfig{
+		LogSlowQueryThreshold: 15 * time.Second,
+	}
+	for _, fn := range opts {
+		fn(&cfg)
+	}
 	level := gormlogger.Warn
-	switch di.Properties.Logging.Level {
+	switch cfg.LogLevel {
 	case log.LevelOff:
 		level = gormlogger.Silent
 	case log.LevelDebug, log.LevelInfo:
@@ -68,22 +78,17 @@ func NewGorm(di gormInitDI) *gorm.DB {
 		level = gormlogger.Error
 	}
 
-	slow := time.Duration(di.Properties.Logging.SlowThreshold)
-	if slow == 0 {
-		slow = 15 * time.Second
-	}
-
 	config := gorm.Config{
-		Logger: newGormLogger(level, slow),
+		Logger: newGormLogger(level, cfg.LogSlowQueryThreshold),
 	}
 
 	// gave configurer an chance
-	order.SortStable(di.Configurers, order.OrderedFirstCompare)
-	for _, c := range di.Configurers {
+	order.SortStable(cfg.Configurers, order.OrderedFirstCompare)
+	for _, c := range cfg.Configurers {
 		c.Configure(&config)
 	}
 
-	db, e := gorm.Open(di.Dialector, &config)
+	db, e := gorm.Open(cfg.Dialector, &config)
 	if e != nil {
 		panic(e)
 	}

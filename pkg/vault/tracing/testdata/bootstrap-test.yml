@@ -1,0 +1,9 @@
+cloud:
+  vault:
+    kv:
+      enabled: true
+      default-context: default
+    host: localhost
+    port: 8200
+    scheme: http
+    token: replace_with_token_value # replace with actual token value or provide this value via other property source (i.e. env variable or commandline args)

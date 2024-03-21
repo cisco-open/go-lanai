@@ -74,7 +74,7 @@ func SubTestSubscriberDispatchWithRawMessage(di *TestSubscriberDI) test.GomegaSu
 		const topic = `test-pubsub-raw`
 		var e error
 		var v HandlerParams
-		subscriber := TryBindTestSubscriber(ctx, g, di, topic)
+		subscriber := TryBindTestSubscriber(ctx, g, &di.TestBinderDI, topic)
 		// add handler
 		ch := make(chan HandlerParams, 1)
 		defer close(ch)
@@ -108,7 +108,7 @@ func SubTestSubscriberDispatchWithMetadata(di *TestSubscriberDI) test.GomegaSubT
 		const topic = `test-pubsub-meta`
 		var e error
 		var v HandlerParams
-		subscriber := TryBindTestSubscriber(ctx, g, di, topic)
+		subscriber := TryBindTestSubscriber(ctx, g, &di.TestBinderDI, topic)
 		// add handler
 		ch := make(chan HandlerParams, 1)
 		defer close(ch)
@@ -141,7 +141,7 @@ func SubTestSubscriberDispatchWithHeaders(di *TestSubscriberDI) test.GomegaSubTe
 		const headerKey = `x-header`
 		var e error
 		var v HandlerParams
-		subscriber := TryBindTestSubscriber(ctx, g, di, topic)
+		subscriber := TryBindTestSubscriber(ctx, g, &di.TestBinderDI, topic)
 
 		// add two handlers with different header filter
 		ch1 := make(chan HandlerParams, 1)
@@ -185,7 +185,7 @@ func SubTestSubscriberDispatchWithErrorResult(di *TestSubscriberDI) test.GomegaS
 		const topic = `test-pubsub-error`
 		var e error
 		var v HandlerParams
-		subscriber := TryBindTestSubscriber(ctx, g, di, topic)
+		subscriber := TryBindTestSubscriber(ctx, g, &di.TestBinderDI, topic)
 		// add handler
 		ch := make(chan HandlerParams, 1)
 		defer close(ch)
@@ -284,7 +284,7 @@ func AssertHeaders(g *gomega.WithT, headers kafka.Headers, expectedKVs ...string
 	}
 }
 
-func TryBindTestSubscriber(ctx context.Context, g *gomega.WithT, di *TestSubscriberDI, topic string, opts ...kafka.ConsumerOptions) kafka.Subscriber {
+func TryBindTestSubscriber(ctx context.Context, g *gomega.WithT, di *TestBinderDI, topic string, opts ...kafka.ConsumerOptions) kafka.Subscriber {
 	testdata.MockExistingTopic(ctx, topic, 0)
 	testdata.MockExistingTopic(ctx, topic, 1)
 	subscriber, e := di.Binder.Subscribe(topic, opts...)
@@ -293,14 +293,15 @@ func TryBindTestSubscriber(ctx context.Context, g *gomega.WithT, di *TestSubscri
 	return subscriber
 }
 
-func WaitForHandlerInvocation(ctx context.Context, ch chan HandlerParams, timeout time.Duration) (HandlerParams, error) {
+func WaitForHandlerInvocation[T any](ctx context.Context, ch chan T, timeout time.Duration) (T, error) {
 	timeoutCtx, cancelFn := context.WithTimeout(ctx, timeout)
 	defer cancelFn()
 	select {
 	case v := <-ch:
 		return v, nil
 	case <-timeoutCtx.Done():
-		return HandlerParams{}, context.DeadlineExceeded
+		var zero T
+		return zero, context.DeadlineExceeded
 	}
 }
 

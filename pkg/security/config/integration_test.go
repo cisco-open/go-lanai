@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
-	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/pkg/security"
 	"github.com/cisco-open/go-lanai/pkg/security/access"
@@ -112,7 +111,6 @@ type IntegrationTestDI struct {
 
 type IntegrationTestOut struct {
 	fx.Out
-	DiscoveryCustomizers *discovery.Customizers
 	IdpManager           idp.IdentityProviderManager
 	AccountStore         security.AccountStore
 	PasswordEncoder      passwd.PasswordEncoder
@@ -132,7 +130,6 @@ func IntegrationTestMocksProvider(opts ...IntegrationTestOption) func(Integratio
 		}, "id-tenant-root")
 
 		integrationTestOut := IntegrationTestOut{
-			DiscoveryCustomizers: &discovery.Customizers{},
 			IdpManager:           testdata.NewMockedIDPManager(),
 			AccountStore:         sectest.NewMockedAccountStore(di.Mocking.Accounts.Values()),
 			PasswordEncoder:      passwd.NewNoopPasswordEncoder(),

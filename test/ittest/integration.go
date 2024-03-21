@@ -70,7 +70,9 @@ func provideScopeDI(di scopeDI) scopeDIOut {
 		opt.SkipRemoteCheck = true
 		opt.HttpClient = di.HttpClient
 		opt.BaseUrl = di.ItProperties.Endpoints.BaseUrl
-		opt.ServiceName = di.ItProperties.ServiceName
+		opt.ServiceName = di.ItProperties.Endpoints.ServiceName
+		opt.Scheme = di.ItProperties.Endpoints.Scheme
+		opt.ContextPath = di.ItProperties.Endpoints.ContextPath
 		opt.ClientId = di.ItProperties.Client.ClientId
 		opt.ClientSecret = di.ItProperties.Client.ClientSecret
 		if di.Recorder != nil {

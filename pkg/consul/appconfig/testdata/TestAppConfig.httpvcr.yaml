@@ -1,0 +1,727 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "0"
+        url: http://localhost:8500/v1/kv/testconfig/default?recurse=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 1327
+        uncompressed: false
+        body: '[{"LockIndex":0,"Key":"testconfig/default,testprofile/","Flags":0,"Value":null,"CreateIndex":215243,"ModifyIndex":215243},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-app","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215304,"ModifyIndex":215304},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-app-profile","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215255,"ModifyIndex":215305},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-default-profile","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215303,"ModifyIndex":215303},{"LockIndex":0,"Key":"testconfig/default/","Flags":0,"Value":null,"CreateIndex":215230,"ModifyIndex":215230},{"LockIndex":0,"Key":"testconfig/default/test.from-app","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0","CreateIndex":215301,"ModifyIndex":215301},{"LockIndex":0,"Key":"testconfig/default/test.from-app-profile","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0","CreateIndex":215302,"ModifyIndex":215302},{"LockIndex":0,"Key":"testconfig/default/test.from-default","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0","CreateIndex":215299,"ModifyIndex":215299},{"LockIndex":0,"Key":"testconfig/default/test.from-default-profile","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0","CreateIndex":215300,"ModifyIndex":215300}]'
+        headers:
+            Content-Length:
+                - "1327"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "215305"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+        url: http://localhost:8500/v1/kv/testconfig/test-app?recurse=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 672
+        uncompressed: false
+        body: '[{"LockIndex":0,"Key":"testconfig/test-app,testprofile/","Flags":0,"Value":null,"CreateIndex":215240,"ModifyIndex":215240},{"LockIndex":0,"Key":"testconfig/test-app,testprofile/test.from-app-profile","Flags":0,"Value":"dGVzdC1hcHAtcHJvZmlsZQ==","CreateIndex":215246,"ModifyIndex":215246},{"LockIndex":0,"Key":"testconfig/test-app/","Flags":0,"Value":null,"CreateIndex":215238,"ModifyIndex":215238},{"LockIndex":0,"Key":"testconfig/test-app/test.from-app","Flags":0,"Value":"dGVzdC1hcHA=","CreateIndex":215251,"ModifyIndex":215251},{"LockIndex":0,"Key":"testconfig/test-app/test.from-app-profile","Flags":0,"Value":"dGVzdC1hcHA=","CreateIndex":215250,"ModifyIndex":215250}]'
+        headers:
+            Content-Length:
+                - "672"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "215251"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+        url: http://localhost:8500/v1/kv/testconfig/default,test?recurse=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 634
+        uncompressed: false
+        body: '[{"LockIndex":0,"Key":"testconfig/default,testprofile/","Flags":0,"Value":null,"CreateIndex":215243,"ModifyIndex":215243},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-app","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215304,"ModifyIndex":215304},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-app-profile","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215255,"ModifyIndex":215305},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-default-profile","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215303,"ModifyIndex":215303}]'
+        headers:
+            Content-Length:
+                - "634"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "215305"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "3"
+        url: http://localhost:8500/v1/kv/testconfig/test-app,test?recurse=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 288
+        uncompressed: false
+        body: '[{"LockIndex":0,"Key":"testconfig/test-app,testprofile/","Flags":0,"Value":null,"CreateIndex":215240,"ModifyIndex":215240},{"LockIndex":0,"Key":"testconfig/test-app,testprofile/test.from-app-profile","Flags":0,"Value":"dGVzdC1hcHAtcHJvZmlsZQ==","CreateIndex":215246,"ModifyIndex":215246}]'
+        headers:
+            Content-Length:
+                - "288"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "215246"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "4"
+        url: http://localhost:8500/v1/kv/testconfig/default,testprofile?recurse=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 634
+        uncompressed: false
+        body: '[{"LockIndex":0,"Key":"testconfig/default,testprofile/","Flags":0,"Value":null,"CreateIndex":215243,"ModifyIndex":215243},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-app","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215304,"ModifyIndex":215304},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-app-profile","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215255,"ModifyIndex":215305},{"LockIndex":0,"Key":"testconfig/default,testprofile/test.from-default-profile","Flags":0,"Value":"ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=","CreateIndex":215303,"ModifyIndex":215303}]'
+        headers:
+            Content-Length:
+                - "634"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "215305"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+        url: http://localhost:8500/v1/kv/testconfig/test-app,testprofile?recurse=
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 288
+        uncompressed: false
+        body: '[{"LockIndex":0,"Key":"testconfig/test-app,testprofile/","Flags":0,"Value":null,"CreateIndex":215240,"ModifyIndex":215240},{"LockIndex":0,"Key":"testconfig/test-app,testprofile/test.from-app-profile","Flags":0,"Value":"dGVzdC1hcHAtcHJvZmlsZQ==","CreateIndex":215246,"ModifyIndex":215246}]'
+        headers:
+            Content-Length:
+                - "288"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Index:
+                - "215246"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 15
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: default-context
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "6"
+        url: http://localhost:8500/v1/kv/testconfig/default/test.from-default
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 15
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: default-context
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "7"
+        url: http://localhost:8500/v1/kv/testconfig/default/test.from-default-profile
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 15
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: default-context
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "8"
+        url: http://localhost:8500/v1/kv/testconfig/default/test.from-app
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 15
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: default-context
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "9"
+        url: http://localhost:8500/v1/kv/testconfig/default/test.from-app-profile
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 10
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 23
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: default-context-profile
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "10"
+        url: http://localhost:8500/v1/kv/testconfig/default,testprofile/test.from-default-profile
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 23
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: default-context-profile
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "11"
+        url: http://localhost:8500/v1/kv/testconfig/default,testprofile/test.from-app
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 12
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 23
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: default-context-profile
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "12"
+        url: http://localhost:8500/v1/kv/testconfig/default,testprofile/test.from-app-profile
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 13
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 8
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: test-app
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "13"
+        url: http://localhost:8500/v1/kv/testconfig/test-app/test.from-app
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 14
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 8
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: test-app
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "14"
+        url: http://localhost:8500/v1/kv/testconfig/test-app/test.from-app-profile
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 15
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 16
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: test-app-profile
+        form: {}
+        headers:
+            Content-Type:
+                - application/octet-stream
+            X-Http-Record-Index:
+                - "15"
+        url: http://localhost:8500/v1/kv/testconfig/test-app,testprofile/test.from-app-profile
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 4
+        uncompressed: false
+        body: "true"
+        headers:
+            Content-Length:
+                - "4"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs

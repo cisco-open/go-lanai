@@ -17,14 +17,14 @@
 package dbtest
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/data"
-    "github.com/cisco-open/go-lanai/pkg/data/cockroach"
-    "go.uber.org/fx"
-    "gorm.io/driver/postgres"
-    "gorm.io/gorm"
-    gormtest "gorm.io/gorm/utils/tests"
-    "strings"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/data"
+	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
+	"go.uber.org/fx"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	gormtest "gorm.io/gorm/utils/tests"
+	"strings"
 )
 
 /*****************************
@@ -100,15 +100,6 @@ func pqErrorTranslatorProvider() fx.Annotated {
 		Group: data.GormConfigurerGroup,
 		Target: func() data.ErrorTranslator {
 			return cockroach.PostgresErrorTranslator{}
-		},
-	}
-}
-
-func gormErrTranslatorProvider() fx.Annotated {
-	return fx.Annotated{
-		Group:  data.GormConfigurerGroup,
-		Target: func() data.ErrorTranslator {
-			return data.NewGormErrorTranslator()
 		},
 	}
 }

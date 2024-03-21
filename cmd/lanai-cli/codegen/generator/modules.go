@@ -17,10 +17,10 @@
 package generator
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "reflect"
-    "strings"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"reflect"
+	"strings"
 )
 
 /**********************
@@ -67,8 +67,8 @@ var (
 	LanaiResServer     = &LanaiModule{Name: "resserver", InitPackage: "security/config/resserver"}
 	LanaiWeb           = &LanaiModule{Name: "web", InitPackage: "web/init"}
 	LanaiConsul        = &LanaiModule{Name: "consul", InitPackage: "consul/init"}
+	LanaiConsulSD      = &LanaiModule{Name: "consulsd", InitPackage: "discovery/consulsd"}
 	LanaiVault         = &LanaiModule{Name: "vault", InitPackage: "vault/init"}
-	LanaiDiscovery     = &LanaiModule{Name: "discovery", InitPackage: "discovery/init"}
 	LanaiActuator      = &LanaiModule{Name: "actuator", InitPackage: "actuator/init"}
 	LanaiSwagger       = &LanaiModule{Name: "swagger", InitPackage: "swagger"}
 	LanaiTracing       = &LanaiModule{Name: "tracing", InitPackage: "tracing/init"}
@@ -120,7 +120,7 @@ var SupportedLanaiModules = LanaiModules{
 	Basic:       []*LanaiModule{LanaiAppConfig, LanaiConsul, LanaiVault, LanaiRedis, LanaiTracing},
 	Web:         []*LanaiModule{LanaiWeb, LanaiActuator, LanaiSwagger},
 	Data:        []*LanaiModule{LanaiData, LanaiCockroach},
-	Integration: []*LanaiModule{LanaiDiscovery, LanaiHttpClient, LanaiSecurityScope, LanaiKafka},
+	Integration: []*LanaiModule{LanaiConsulSD, LanaiHttpClient, LanaiSecurityScope, LanaiKafka},
 	Security:    []*LanaiModule{LanaiSecurity, LanaiResServer, LanaiOPA},
 	Others:      []*LanaiModule{LanaiDSync},
 }
@@ -130,7 +130,7 @@ var SupportedLanaiModules = LanaiModules{
 var LanaiModuleDependencies = map[*LanaiModule][]*LanaiModule{
 	LanaiSecurity:      {LanaiRedis},
 	LanaiResServer:     {LanaiSecurity},
-	LanaiDiscovery:     {LanaiConsul},
+	LanaiConsulSD:      {LanaiConsul},
 	LanaiActuator:      {LanaiWeb},
 	LanaiSwagger:       {LanaiWeb},
 	LanaiCockroach:     {LanaiData},

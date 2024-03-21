@@ -1,0 +1,10 @@
+application:
+  profiles:
+    additional: ["testprofile"]
+
+test:
+  from-local-file: "application-test"
+  from-default: "application-test"
+  from-default-profile: "application-test"
+  from-app: "application-test"
+  from-app-profile: "application-test"

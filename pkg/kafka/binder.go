@@ -17,18 +17,18 @@
 package kafka
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "github.com/IBM/sarama"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/certs"
-    "github.com/cisco-open/go-lanai/pkg/utils/loop"
-    "io"
-    "math"
-    "strings"
-    "sync"
-    "time"
+	"context"
+	"errors"
+	"fmt"
+	"github.com/IBM/sarama"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/certs"
+	"github.com/cisco-open/go-lanai/pkg/utils/loop"
+	"io"
+	"math"
+	"strings"
+	"sync"
+	"time"
 )
 
 const (
@@ -49,8 +49,8 @@ type SaramaKafkaBinder struct {
 	producerInterceptors []ProducerMessageInterceptor
 	consumerInterceptors []ConsumerDispatchInterceptor
 	handlerInterceptors  []ConsumerHandlerInterceptor
-	monitor         *loop.Loop
-	tlsCertsManager certs.Manager
+	monitor              *loop.Loop
+	tlsCertsManager      certs.Manager
 
 	// TODO consider mutex lock for following fields
 	producers      map[string]BindingLifecycle
@@ -59,9 +59,9 @@ type SaramaKafkaBinder struct {
 
 	// following fields are protected by mutex lock
 	globalClient      sarama.Client
-	adminClient sarama.ClusterAdmin
-	tlsSource   certs.Source
-	provisioner *saramaTopicProvisioner
+	adminClient       sarama.ClusterAdmin
+	tlsSource         certs.Source
+	provisioner       *saramaTopicProvisioner
 	closed            bool
 	monitorCtx        context.Context
 	monitorCancelFunc context.CancelFunc
@@ -74,8 +74,8 @@ type BinderOption struct {
 	Properties           KafkaProperties
 	ProducerInterceptors []ProducerMessageInterceptor
 	ConsumerInterceptors []ConsumerDispatchInterceptor
-	HandlerInterceptors []ConsumerHandlerInterceptor
-	TLSCertsManager     certs.Manager
+	HandlerInterceptors  []ConsumerHandlerInterceptor
+	TLSCertsManager      certs.Manager
 }
 
 func NewBinder(ctx context.Context, opts ...BinderOptions) *SaramaKafkaBinder {

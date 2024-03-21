@@ -17,13 +17,11 @@
 package appconfig
 
 import (
-    "embed"
-    "github.com/cisco-open/go-lanai/pkg/appconfig"
-    "github.com/cisco-open/go-lanai/pkg/appconfig/consulprovider"
-    "github.com/cisco-open/go-lanai/pkg/appconfig/vaultprovider"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "go.uber.org/fx"
+	"embed"
+	"github.com/cisco-open/go-lanai/pkg/appconfig"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"go.uber.org/fx"
 )
 
 const (
@@ -32,15 +30,15 @@ const (
 
 	//lower integer means higher precedence, therefore the list here is high to low in terms of precedence
 	_ = iota * precedenceGap
-	externalAppContextPrecedence
-	externalDefaultContextPrecedence
-	applicationAdHocPrecedence
-	bootstrapAdHocPrecedence
-	commandlinePrecedence
-	osEnvPrecedence
-	applicationLocalFilePrecedence
-	bootstrapLocalFilePrecedence
-	defaultPrecedence
+	PrecedenceExternalAppContext
+	PrecedenceExternalDefaultContext
+	PrecedenceApplicationAdHoc
+	PrecedenceBootstrapAdHoc
+	PrecedenceCommandline
+	PrecedenceOSEnv
+	PrecedenceApplicationLocalFile
+	PrecedenceBootstrapLocalFile
+	PrecedenceDefault
 )
 
 var logger = log.New("Config")
@@ -64,14 +62,6 @@ var Module = &bootstrap.Module{
 			// Application file & adhoc
 			newApplicationFileProviderGroup,
 			newApplicationAdHocProviderGroup,
-			// Consul
-			newConsulDefaultContextProviderGroup,
-			newConsulAppContextProviderGroup,
-			newConsulConfigProperties,
-			// Vault
-			newVaultDefaultContextProviderGroup,
-			newVaultAppContextProviderGroup,
-			newVaultConfigProperties,
 			// App Config
 			newApplicationConfig,
 			newGlobalProperties,
@@ -148,31 +138,4 @@ func newGlobalProperties(cfg *appconfig.ApplicationConfig) bootstrap.Properties 
 		panic(e)
 	}
 	return props
-}
-
-func newConsulConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *consulprovider.ConsulConfigProperties {
-	p := &consulprovider.ConsulConfigProperties{
-		Prefix:           "userviceconfiguration",
-		DefaultContext:   "defaultapplication",
-		ProfileSeparator: ",",
-		Enabled:          true,
-	}
-	if e := bootstrapConfig.Bind(p, consulprovider.ConsulConfigPrefix); e != nil {
-		panic(e)
-	}
-	return p
-}
-
-func newVaultConfigProperties(bootstrapConfig *appconfig.BootstrapConfig) *vaultprovider.KvConfigProperties {
-	p := &vaultprovider.KvConfigProperties{
-		Backend:          "secret",
-		DefaultContext:   "defaultapplication",
-		ProfileSeparator: "/",
-		Enabled:          true,
-		BackendVersion:   1,
-	}
-	if e := bootstrapConfig.Bind(p, vaultprovider.KvConfigPrefix); e != nil {
-		panic(e)
-	}
-	return p
 }

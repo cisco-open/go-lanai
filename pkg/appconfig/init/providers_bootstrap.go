@@ -42,23 +42,23 @@ type appConfigProvidersOut struct {
  *********************/
 
 func newCommandProviderGroup(execCtx *bootstrap.CliExecContext) bootstrapProvidersOut {
-	p := cliprovider.NewCobraProvider(commandlinePrecedence, execCtx, "cli.flag.")
+	p := cliprovider.NewCobraProvider(PrecedenceCommandline, execCtx, "cli.flag.")
 	return bootstrapProvidersOut {
-		ProviderGroup: appconfig.NewStaticProviderGroup(commandlinePrecedence, p),
+		ProviderGroup: appconfig.NewStaticProviderGroup(PrecedenceCommandline, p),
 	}
 }
 
 func newOsEnvProviderGroup() bootstrapProvidersOut {
-	p := envprovider.NewEnvProvider(osEnvPrecedence)
+	p := envprovider.NewEnvProvider(PrecedenceOSEnv)
 	return bootstrapProvidersOut {
-		ProviderGroup: appconfig.NewStaticProviderGroup(osEnvPrecedence, p),
+		ProviderGroup: appconfig.NewStaticProviderGroup(PrecedenceOSEnv, p),
 	}
 }
 
 func newBootstrapFileProviderGroup() bootstrapProvidersOut {
 	const name = "bootstrap"
 	const ext = "yml"
-	group := appconfig.NewProfileBasedProviderGroup(bootstrapLocalFilePrecedence)
+	group := appconfig.NewProfileBasedProviderGroup(PrecedenceBootstrapLocalFile)
 	group.KeyFunc = func(profile string) string {
 		if profile == "" {
 			return name
@@ -91,18 +91,18 @@ type defaultProviderGroupDI struct {
 }
 
 func newDefaultProviderGroup(di defaultProviderGroupDI) bootstrapProvidersOut {
-	p := cliprovider.NewStaticConfigProvider(defaultPrecedence, di.ExecCtx)
+	p := cliprovider.NewStaticConfigProvider(PrecedenceDefault, di.ExecCtx)
 	providers := []appconfig.Provider{p}
 	for _, p := range di.Providers {
 		if p == nil {
 			continue
 		}
 		if reorder, ok := p.(appconfig.ProviderReorderer); ok {
-			reorder.Reorder(defaultPrecedence)
+			reorder.Reorder(PrecedenceDefault)
 		}
 		providers =  append(providers, p)
 	}
 	return bootstrapProvidersOut {
-		ProviderGroup: appconfig.NewStaticProviderGroup(defaultPrecedence, providers...),
+		ProviderGroup: appconfig.NewStaticProviderGroup(PrecedenceDefault, providers...),
 	}
 }

@@ -16,10 +16,12 @@
 
 integrate:
   security:
-    service-name: "authservice"
     failure-back-off: 5m
     guaranteed-validity: 30s
     endpoints:
+      service-name: "authservice"
+      scheme: "http"
+      context-path: "/auth"
       password-login: "/v2/token"
       switch-context: "/v2/token"
     client:

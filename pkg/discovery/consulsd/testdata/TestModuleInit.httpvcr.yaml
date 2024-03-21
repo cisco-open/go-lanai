@@ -1,0 +1,135 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 866
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: |
+            {"ID":"testservice-8080-d8755f792d","Name":"testservice","Tags":["secure=false","test1=true","test2=true","version=Unknown","buildDateTime=2024-03-03T15:43:05-05:00","testservice-8080-d8755f792d","instanceUuid=74d6c77d-65f0-431b-8234-6deb35e41588","name=testservice","contextPath=/test","componentAttributes=description:Test Service~parent:platform~type:platform~serviceName:testservice~context:/test~name:TestService"],"Port":8080,"Address":"127.0.0.1","Meta":{"buildDateTime":"2024-03-03T15:43:05-05:00","context":"/test","contextPath":"/test","description":"Test Service","instanceUuid":"74d6c77d-65f0-431b-8234-6deb35e41588","name":"TestService","parent":"platform","serviceName":"testservice","type":"platform","version":"Unknown"},"Check":{"Interval":"1s","HTTP":"http://127.0.0.1:8080/test/admin/health","DeregisterCriticalServiceAfter":"15s"},"Checks":null}
+        form: {}
+        headers:
+            Content-Type:
+                - application/json
+            X-Http-Record-Index:
+                - "0"
+        url: http://localhost:8500/v1/agent/service/register
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+        url: http://localhost:8500/v1/catalog/service/testservice?tag=testservice-8080-d8755f792d
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 1386
+        uncompressed: false
+        body: '[{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"NodeMeta":{"consul-network-segment":""},"ServiceKind":"","ServiceID":"testservice-8080-d8755f792d","ServiceName":"testservice","ServiceTags":["secure=false","test1=true","test2=true","version=Unknown","buildDateTime=2024-03-03T15:43:05-05:00","testservice-8080-d8755f792d","instanceUuid=74d6c77d-65f0-431b-8234-6deb35e41588","name=testservice","contextPath=/test","componentAttributes=description:Test Service~parent:platform~type:platform~serviceName:testservice~context:/test~name:TestService"],"ServiceAddress":"127.0.0.1","ServiceTaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8080},"wan_ipv4":{"Address":"127.0.0.1","Port":8080}},"ServiceWeights":{"Passing":1,"Warning":1},"ServiceMeta":{"buildDateTime":"2024-03-03T15:43:05-05:00","context":"/test","contextPath":"/test","description":"Test Service","instanceUuid":"74d6c77d-65f0-431b-8234-6deb35e41588","name":"TestService","parent":"platform","serviceName":"testservice","type":"platform","version":"Unknown"},"ServicePort":8080,"ServiceSocketPath":"","ServiceEnableTagOverride":false,"ServiceProxy":{"Mode":"","MeshGateway":{},"Expose":{}},"ServiceConnect":{},"CreateIndex":226069,"ModifyIndex":226069}]'
+        headers:
+            Content-Length:
+                - "1386"
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+            X-Consul-Effective-Consistency:
+                - leader
+            X-Consul-Index:
+                - "226069"
+            X-Consul-Knownleader:
+                - "true"
+            X-Consul-Lastcontact:
+                - "0"
+            X-Consul-Query-Backend:
+                - blocking-query
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8500
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+        url: http://localhost:8500/v1/agent/service/deregister/testservice-8080-d8755f792d
+        method: PUT
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 0
+        uncompressed: false
+        body: ""
+        headers:
+            Content-Length:
+                - "0"
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Accept-Encoding
+            X-Consul-Default-Acl-Policy:
+                - deny
+        status: 200 OK
+        code: 200
+        duration: 200µs

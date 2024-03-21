@@ -25,10 +25,11 @@ import (
 	"go.uber.org/fx"
 )
 
+const opNameCli = "cli"
+
 type cliRunnerTracingHooks struct {
 	tracer opentracing.Tracer
 }
-
 
 func CliRunnerTracingProvider() fx.Annotated {
 	return fx.Annotated{
@@ -43,7 +44,7 @@ func newCliRunnerTracingHooks(tracer opentracing.Tracer) bootstrap.CliRunnerLife
 
 func (h cliRunnerTracingHooks) Before(ctx context.Context, runner bootstrap.CliRunner) context.Context {
 	return tracing.WithTracer(h.tracer).
-		WithOpName(tracing.OpNameCli).
+		WithOpName(opNameCli).
 		WithOptions(tracing.SpanKind(ext.SpanKindRPCServerEnum)).
 		//WithOptions(tracing.SpanTag("runner", fmt.Sprintf("%v", reflect.ValueOf(runner).String()))).
 		ForceNewSpan(ctx)
@@ -56,4 +57,3 @@ func (h cliRunnerTracingHooks) After(ctx context.Context, runner bootstrap.CliRu
 	}
 	return op.FinishAndRewind(ctx)
 }
-

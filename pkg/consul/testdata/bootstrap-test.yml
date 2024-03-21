@@ -1,7 +1,8 @@
 cloud:
+  discovery:
+    consul:
+      health-check-critical-timeout: 1h
+      ip-address: ${spring.cloud.consul.discovery.ipaddress:}
   consul:
     host: localhost
     port: 8500
-    discovery:
-      health-check-critical-timeout: 1h
-      ip-address: ${spring.cloud.consul.discovery.ipaddress:}

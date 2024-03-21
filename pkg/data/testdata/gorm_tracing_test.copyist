@@ -1,0 +1,27 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"\nCREATE TABLE IF NOT EXISTS public.test_model (\n\tid UUID NOT NULL DEFAULT gen_random_uuid(),\n\t\"uk\" STRING NOT NULL,\n\t\"value\" STRING NOT NULL,\n\tCONSTRAINT \"primary\" PRIMARY KEY (id ASC),\n\tUNIQUE INDEX idx_unique_key (uk ASC),\n\tFAMILY \"primary\" (id, uk, value)\n);"	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnExec	2:"TRUNCATE TABLE \"test_model\" RESTRICT"	1:nil
+5=ConnBegin	1:nil
+6=ConnQuery	2:"INSERT INTO \"test_model\" (\"uk\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	1:nil
+7=RowsColumns	9:["id"]
+8=RowsNext	11:[10:OTJkMjIzNTktNmU2MS00NDA3LWFkZjEtY2VlMmFlOGI4MjYy]	1:nil
+9=TxCommit	1:nil
+10=RowsNext	11:[10:MzQ2OGQyMjMtMTFlZC00ZGZjLTllNTAtZmQzODVkYzU3MDk5]	1:nil
+11=ConnQuery	2:"INSERT INTO \"test_model\" (\"uk\",\"value\",\"id\") VALUES ($1,$2,$3) RETURNING \"id\""	100:"SERROR\x00C23505\x00Mduplicate key value violates unique constraint \"primary\"\x00DKey (id)=('92d22359-6e61-4407-adf1-cee2ae8b8262') already exists.\x00nprimary\x00Ferrors.go\x00L146\x00RNewUniquenessConstraintViolationError\x00\x00"
+12=TxRollback	1:nil
+13=ConnQuery	2:"SELECT * FROM \"test_model\""	1:nil
+14=RowsColumns	9:["id","uk","value"]
+15=RowsNext	11:[10:OTJkMjIzNTktNmU2MS00NDA3LWFkZjEtY2VlMmFlOGI4MjYy,2:"Model-1",2:"Value of Model-1"]	1:nil
+16=RowsNext	11:[]	7:"EOF"
+17=ConnQuery	2:"SELECT * FROM \"test_model\" WHERE non_exist_field = $1"	100:"SERROR\x00C42703\x00Mcolumn \"non_exist_field\" does not exist\x00Fcolumn_resolver.go\x00L196\x00RNewUndefinedColumnError\x00\x00"
+18=ConnExec	2:"UPDATE \"test_model\" SET \"value\"=$1 WHERE \"id\" = $2"	1:nil
+19=ResultRowsAffected	4:1	1:nil
+20=ConnExec	2:"UPDATE \"test_model\" SET \"not_exist\"=$1 WHERE \"id\" = $2"	100:"SERROR\x00C42703\x00Mcolumn \"not_exist\" does not exist\x00Fcolumn_resolver.go\x00L196\x00RNewUndefinedColumnError\x00\x00"
+21=ConnExec	2:"DELETE FROM \"test_model\" WHERE \"test_model\".\"id\" = $1"	1:nil
+22=ConnExec	2:"SELECT id FROM test_model;"	1:nil
+23=ConnExec	2:"SELECT unknown_col FROM test_model;"	100:"SERROR\x00C42703\x00Mcolumn \"unknown_col\" does not exist\x00Fcolumn_resolver.go\x00L196\x00RNewUndefinedColumnError\x00\x00"
+
+"TestGormTracing"=1,2,3,4,3,5,6,7,7,8,9,5,6,7,7,10,9,5,11,12,2,3,4,3,5,6,7,7,8,9,13,14,14,15,16,17,2,3,4,3,5,6,7,7,8,9,5,18,19,9,5,20,12,2,3,4,3,5,6,7,7,8,9,5,21,19,9,5,12,2,3,4,3,5,6,7,7,8,9,22,19,23
+"TestGormTracingWithExistingSpan"=1,2,3,4,3,5,6,7,7,8,9,5,6,7,7,10,9,5,11,12,2,3,4,3,5,6,7,7,8,9,13,14,14,15,16,17,2,3,4,3,5,6,7,7,8,9,5,18,19,9,5,20,12,2,3,4,3,5,6,7,7,8,9,5,21,19,9,5,12,2,3,4,3,5,6,7,7,8,9,22,19,23
+"TestGormTracingWithoutExistingSpan"=1,2,3,4,3,5,6,7,7,8,9,5,6,7,7,10,9,5,11,12,2,3,4,3,5,6,7,7,8,9,13,14,14,15,16,17,2,3,4,3,5,6,7,7,8,9,5,18,19,9,5,20,12,2,3,4,3,5,6,7,7,8,9,5,21,19,9,5,12,2,3,4,3,5,6,7,7,8,9,22,19,23

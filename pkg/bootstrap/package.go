@@ -60,9 +60,29 @@ func MiscModules() []*Module {
 	}
 }
 
-func provideApplicationContext(app *App, config ApplicationConfig) *ApplicationContext {
-	app.ctx.config = config
-	return app.ctx
+type noopAppConfig struct{}
+
+func (c noopAppConfig) Value(_ string) interface{} {
+	return nil
+}
+
+func (c noopAppConfig) Bind(_ interface{}, _ string) error {
+	return nil
+}
+
+type appCtxDI struct {
+	fx.In
+	App *App
+	AppConfig ApplicationConfig `optional:"true"`
+}
+
+func provideApplicationContext(di appCtxDI) *ApplicationContext {
+	di.App.ctx.config = di.AppConfig
+	if di.App.ctx.config == nil {
+		logger.WithContext(di.App.ctx).Warnf(`bootstrap.ApplicationConfig is not available`)
+		di.App.ctx.config = noopAppConfig{}
+	}
+	return di.App.ctx
 }
 
 func provideBuildInfoResolver(appCtx *ApplicationContext) BuildInfoResolver {
