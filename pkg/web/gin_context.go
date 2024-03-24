@@ -17,19 +17,18 @@
 package web
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/gin-gonic/gin"
-    httptransport "github.com/go-kit/kit/transport/http"
-    "net/http"
-    "path"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"path"
 )
 
 type contextPathCtxKey struct {}
 
-// Functions, HandlerFuncs and go-kit ServerOptions that make sure *gin.Context is available in endpoints and
-// context is properly propagated in Request
+// Interfaces, functions, HandlerFunc wrappers and gin middlewares that make sure *gin.Context available in endpoints and
+// context properly propagated in Request
 
 // SimpleGinMapping simple mapping of gin.HandlerFunc
 type SimpleGinMapping interface {
@@ -194,17 +193,12 @@ func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
 	return handler
 }
 
-// NewKitGinHandlerFunc Integrate go-kit Server with GIN handler
-func NewKitGinHandlerFunc(s *httptransport.Server) gin.HandlerFunc {
-	if s == nil {
-		panic(fmt.Errorf("cannot wrap a nil hanlder"))
+// NewGinHandlerFunc Wrap HandlerFunc as gin.HandlerFunc
+func NewGinHandlerFunc(fn HandlerFunc) gin.HandlerFunc {
+	return func(gc *gin.Context) {
+		gc = preProcessGinContext(gc)
+		fn(gc.Writer, gc.Request)
 	}
-
-	handler := func(c *gin.Context) {
-		c = preProcessGinContext(c)
-		s.ServeHTTP(c.Writer, c.Request)
-	}
-	return handler
 }
 
 func preProcessGinContext(gc *gin.Context) *gin.Context {
@@ -218,30 +212,6 @@ func preProcessGinContext(gc *gin.Context) *gin.Context {
 	// note, we could also make a copy of gin context in case we want to use it out of request scope
 	// but currently, we don't have such requirement
 	return gc
-}
-
-/**************************
-	go-kit options
- **************************/
-// integrateGinContextBefore Makes sure the context sent to go-kit's encoders/decoders/endpoints/errorHandlers
-// contains values stored in gin.Context
-func integrateGinContextBefore(ctx context.Context, _ *http.Request) (ret context.Context) {
-	ret = utils.MakeMutableContext(ctx)
-	return
-}
-
-// integrateGinContextFinalizer Makes sure the context processed by go-kit is set back to request,
-// whose value would becomes accessible outside the go-kit realm
-func integrateGinContextFinalizer(ctx context.Context, _ int, r *http.Request) {
-	gc := GinContext(ctx)
-	if gc == nil {
-		return
-	}
-	// updates Request with final ctx
-	// Note:
-	// 	this update is important, because when the execution flow exit go-kit realm, all information stored in ctx
-	//	would be lost if we don't set it to Request
-	gc.Request = r.WithContext(ctx)
 }
 
 /**************************

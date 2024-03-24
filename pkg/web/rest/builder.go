@@ -17,25 +17,25 @@
 package rest
 
 import (
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/go-kit/kit/endpoint"
-    httptransport "github.com/go-kit/kit/transport/http"
-    "net/http"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"net/http"
 )
 
 // EndpointFunc is a function with following signature
-// 	- one or two input parameters with the 1st as context.Context and the 2nd as <request>
-// 	- at least two output parameters with the 2nd last as <response> and the last as error
+//   - one or two input parameters with the 1st as context.Context and the 2nd as <request>
+//   - at least two output parameters with the 2nd last as <response> and the last as error
+//
 // where
 // <request>:   a struct or a pointer to a struct whose fields are properly tagged
 // <response>:  supported types are (will support more in the future):
-//				- a struct or a pointer to a struct whose fields are properly tagged.
-//				- interface{}, if decoding is not supported (rest not used by any go client)
-//				- map[string]interface{}
-//				- string
-//				- []byte
+//   - a struct or a pointer to a struct whose fields are properly tagged.
+//   - interface{}, if decoding is not supported (rest not used by any go client)
+//   - map[string]interface{}
+//   - string
+//   - []byte
+//
 // e.g.: func(context.Context, request *AnyStructWithTag) (response *AnyStructWithTag, error) {...}
 type EndpointFunc web.MvcHandlerFunc
 
@@ -46,11 +46,9 @@ type MappingBuilder struct {
 	method             string
 	condition          web.RequestMatcher
 	endpointFunc       EndpointFunc
-	endpoint           endpoint.Endpoint
-	decodeRequestFunc  httptransport.DecodeRequestFunc
-	encodeRequestFunc  httptransport.EncodeRequestFunc
-	decodeResponseFunc httptransport.DecodeResponseFunc
-	encodeResponseFunc httptransport.EncodeResponseFunc
+	decodeRequestFunc  web.DecodeRequestFunc
+	encodeResponseFunc web.EncodeResponseFunc
+	encodeErrorFunc    web.EncodeErrorFunc
 }
 
 func New(names ...string) *MappingBuilder {
@@ -101,6 +99,7 @@ func Head(path string) *MappingBuilder {
 /*****************************
 	Public
 ******************************/
+
 func (b *MappingBuilder) Name(name string) *MappingBuilder {
 	b.name = name
 	return b
@@ -132,6 +131,7 @@ func (b *MappingBuilder) EndpointFunc(endpointFunc EndpointFunc) *MappingBuilder
 }
 
 // Convenient setters
+
 func (b *MappingBuilder) Get(path string) *MappingBuilder {
 	return b.Path(path).Method(http.MethodGet)
 }
@@ -161,30 +161,22 @@ func (b *MappingBuilder) Head(path string) *MappingBuilder {
 }
 
 // Overrides
-func (b *MappingBuilder) Endpoint(endpoint endpoint.Endpoint) *MappingBuilder {
-	b.endpoint = endpoint
-	return b
-}
 
-func (b *MappingBuilder) DecodeRequestFunc(f httptransport.DecodeRequestFunc) *MappingBuilder {
+func (b *MappingBuilder) DecodeRequestFunc(f web.DecodeRequestFunc) *MappingBuilder {
 	b.decodeRequestFunc = f
 	return b
 }
 
-func (b *MappingBuilder) EncodeRequestFunc(f httptransport.EncodeRequestFunc) *MappingBuilder {
-	b.encodeRequestFunc = f
-	return b
-}
-
-func (b *MappingBuilder) DecodeResponseFunc(f httptransport.DecodeResponseFunc) *MappingBuilder {
-	b.decodeResponseFunc = f
-	return b
-}
-
-func (b *MappingBuilder) EncodeResponseFunc(f httptransport.EncodeResponseFunc) *MappingBuilder {
+func (b *MappingBuilder) EncodeResponseFunc(f web.EncodeResponseFunc) *MappingBuilder {
 	b.encodeResponseFunc = f
 	return b
 }
+
+func (b *MappingBuilder) EncodeErrorFunc(f web.EncodeErrorFunc) *MappingBuilder {
+	b.encodeErrorFunc = f
+	return b
+}
+
 
 func (b *MappingBuilder) Build() web.EndpointMapping {
 	if err := b.validate(); err != nil {
@@ -196,19 +188,15 @@ func (b *MappingBuilder) Build() web.EndpointMapping {
 /*****************************
 	Private
 ******************************/
-type mapping struct {
-	endpoint           endpoint.Endpoint
-	decodeRequestFunc  httptransport.DecodeRequestFunc
-	encodeRequestFunc  httptransport.EncodeRequestFunc
-	decodeResponseFunc httptransport.DecodeResponseFunc
-	encodeResponseFunc httptransport.EncodeResponseFunc
-}
 
-func (b *MappingBuilder) validate() (err error) {
+func (b *MappingBuilder) validate() error {
 	if b.path == "" && (b.group == "" || b.group == "/") {
-		err = errors.New("empty path")
+		return errors.New("empty path")
 	}
-	return
+	if b.endpointFunc == nil {
+		return errors.New("missing endpoint function")
+	}
+	return nil
 }
 
 func (b *MappingBuilder) buildMapping() web.MvcMapping {
@@ -220,44 +208,25 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 		b.name = fmt.Sprintf("%s %s%s", b.method, b.group, b.path)
 	}
 
-	m := &mapping{
-		decodeRequestFunc:  httptransport.NopRequestDecoder,
-		encodeRequestFunc:  jsonEncodeRequestFunc,
-		decodeResponseFunc: nil, // TODO
-		encodeResponseFunc: web.JsonResponseEncoder(),
+	metadata := web.MakeFuncMetadata(b.endpointFunc, nil)
+	decReq := b.decodeRequestFunc
+	if decReq == nil {
+		decReq = web.MakeGinBindingDecodeRequestFunc(metadata)
 	}
 
-	if b.endpointFunc != nil {
-		metadata := web.MakeFuncMetadata(b.endpointFunc, nil)
-		m.endpoint = web.MakeEndpoint(metadata)
-		m.decodeRequestFunc = web.MakeGinBindingDecodeRequestFunc(metadata)
+	encResp := b.encodeResponseFunc
+	if encResp == nil {
+		encResp = web.JsonResponseEncoder()
 	}
 
-	b.customize(m)
-	return web.NewMvcMapping(b.name, b.group, b.path, b.method, b.condition,
-		m.endpoint, m.decodeRequestFunc, m.encodeRequestFunc,
-		m.decodeResponseFunc, m.encodeResponseFunc,
-		web.JsonErrorEncoder())
+	encErr := b.encodeErrorFunc
+	if encErr == nil {
+		encErr = web.JsonErrorEncoder()
+	}
+
+	return web.NewMvcMapping(
+		b.name, b.group, b.path, b.method, b.condition,
+		metadata, decReq, encResp, encErr,
+	)
 }
 
-func (b *MappingBuilder) customize(m *mapping) {
-	if b.endpoint != nil {
-		m.endpoint = b.endpoint
-	}
-
-	if b.encodeRequestFunc != nil {
-		m.encodeRequestFunc = b.encodeRequestFunc
-	}
-
-	if b.decodeRequestFunc != nil {
-		m.decodeRequestFunc = b.decodeRequestFunc
-	}
-
-	if b.encodeResponseFunc != nil {
-		m.encodeResponseFunc = b.encodeResponseFunc
-	}
-
-	if b.decodeResponseFunc != nil {
-		m.decodeResponseFunc = b.decodeResponseFunc
-	}
-}

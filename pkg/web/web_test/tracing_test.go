@@ -52,7 +52,7 @@ type TestTracingDI struct {
 	MockTracer *mocktracer.MockTracer
 }
 
-func TestRedisTracingWithExistingSpan(t *testing.T) {
+func TestWebTracingWithExistingSpan(t *testing.T) {
 	di := TestTracingDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),

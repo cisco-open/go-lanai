@@ -19,8 +19,6 @@ package web
 import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/utils/matcher"
-	"github.com/go-kit/kit/endpoint"
-	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
 	"regexp"
 )
@@ -55,6 +53,10 @@ type EngineOptions func(*Engine)
 	Request
  *********************************/
 
+// DecodeRequestFunc extracts a payload from a http.Request. It's designed to be used by MvcMapping.
+// Example of common implementation includes JSON decoder or form data extractor
+type DecodeRequestFunc func(ctx context.Context, httpReq *http.Request) (req interface{}, err error)
+
 // RequestRewriter handles request rewrite. e.g. rewrite http.Request.URL.Path
 type RequestRewriter interface {
 	// HandleRewrite take the rewritten request and put it through the entire handling cycle.
@@ -67,22 +69,24 @@ type RequestRewriter interface {
 	Response
  *********************************/
 
-// StatusCoder is same interface defined in "github.com/go-kit/kit/transport/http"
-// this interface is majorly used internally with error handling
+// EncodeResponseFunc encodes a user response object into http.ResponseWriter. It's designed to be used by MvcMapping.
+// Example of common implementation includes JSON encoder or template based HTML generator.
+type EncodeResponseFunc func(ctx context.Context, rw http.ResponseWriter, resp interface{}) error
+
+// StatusCoder is an additional interface that a user response object or error could implement.
+// EncodeResponseFunc and EncodeErrorFunc should typically check for this interface and manipulate response status code accordingly
 type StatusCoder interface {
 	StatusCode() int
 }
 
-// Headerer is same interface defined in "github.com/go-kit/kit/transport/http"
-// this interface is majorly used internally with error handling
-// If an error value implements Headerer, the provided headers will be applied to the response writer, after
-// the Content-Type is set.
+// Headerer is an additional interface that a user response object or error could implement.
+// EncodeResponseFunc and EncodeErrorFunc should typically check for this interface and manipulate response headers accordingly
 type Headerer interface {
 	Headers() http.Header
 }
 
-// BodyContainer is a reponse body wrapping interface.
-// this interface is majorly used internally for mapping
+// BodyContainer is an additional interface that a user response object or error could implement.
+// This interface is majorly used internally for mapping
 type BodyContainer interface {
 	Body() interface{}
 }
@@ -90,6 +94,10 @@ type BodyContainer interface {
 /*********************************
 	Error Translator
  *********************************/
+
+// EncodeErrorFunc is responsible for encoding an error to the ResponseWriter. It's designed to be used by MvcMapping.
+// Example of common implementation includes JSON encoder or template based HTML generator.
+type EncodeErrorFunc func(ctx context.Context, err error, w http.ResponseWriter)
 
 // ErrorTranslator can be registered via web.Registrar
 // it will contribute our MvcMapping's error handling process.
@@ -162,12 +170,10 @@ type SimpleMapping interface {
 // could be EndpointMapping or TemplateMapping
 type MvcMapping interface {
 	RoutedMapping
-	Endpoint() endpoint.Endpoint
-	DecodeRequestFunc() httptransport.DecodeRequestFunc
-	EncodeRequestFunc() httptransport.EncodeRequestFunc
-	DecodeResponseFunc() httptransport.DecodeResponseFunc
-	EncodeResponseFunc() httptransport.EncodeResponseFunc
-	ErrorEncoder() httptransport.ErrorEncoder
+	DecodeRequestFunc() DecodeRequestFunc
+	EncodeResponseFunc() EncodeResponseFunc
+	EncodeErrorFunc() EncodeErrorFunc
+	HandlerFunc() HandlerFunc
 }
 
 // EndpointMapping defines REST API mapping.
@@ -270,20 +276,3 @@ func (g simpleMapping) Name() string {
 	return g.name
 }
 
-/*********************************
-	orderedServerOption
- *********************************/
-
-// orderedServerOption wraps go-kit's httptransport.ServerOption and provide ordering
-type orderedServerOption struct {
-	httptransport.ServerOption
-	order int
-}
-
-func (o orderedServerOption) Order() int {
-	return o.order
-}
-
-func newOrderedServerOption(opt httptransport.ServerOption, order int) *orderedServerOption {
-	return &orderedServerOption{ServerOption: opt, order: order}
-}

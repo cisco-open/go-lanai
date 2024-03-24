@@ -105,14 +105,18 @@ func SubTestContextDefaultKV(di *TestDI) test.GomegaSubTestFunc {
 
 // SubTestContextSetKV test setting KVs in context.
 // Due to the incompatibility between gin and go-kit, the behavior is complicated,
-// There are three "context" are relevant: func's ctx, http.Request.Context(), gin.Context.
+// There are three "context" are relevant: handler/endpoint's ctx, http.Request.Context(), gin.Context.
 // For Gin <1.8.0 + go-kit 0.11.0:
 // 1. set KV via gin.Context anywhere would be reflected in all three contexts
-// 2. set KV via web.SetKV on both func's ctx and http.Request.Context() anywhere would not be reflected on gin.Context
+// 2. set KV via web.SetKV on both handler/endpoint's ctx and http.Request.Context() anywhere would not be reflected on gin.Context
 // 3. set KV to http.Request.Context() in middlewares would not be reflected on gin.Context
-// 4. set KV to http.Request.Context() in endpoint would not take any effect after endpoint execution (thanks to go-kit...)
+// 4. set KV to http.Request.Context() in endpoint would not take any effect after endpoint execution
+//
 // For Gin >=1.8.0 + go-kit 0.11.0 with gin.Engine.ContextWithFallback enabled, all above rules are same except for
-// - 2. would also reflacted in gin.Context
+// 2. set KV via web.SetKV on both handler/endpoint's ctx and http.Request.Context() anywhere except for within endpoint (rule 4)
+//    would also be reflected in gin.Context
+//
+// For Gin>=1.8.0 without go-kit (go-lanai >= v0.14.0), the behavior remains unchanged
 func SubTestContextSetKV(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		// determine expected behaviors

@@ -17,15 +17,14 @@
 package misc
 
 import (
-    "context"
-    "encoding/json"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/claims"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/openid"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    httptransport "github.com/go-kit/kit/transport/http"
+	"context"
+	"encoding/json"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/claims"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/openid"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
+	"github.com/cisco-open/go-lanai/pkg/web"
 )
 
 var (
@@ -169,7 +168,7 @@ func (ep *UserInfoEndpoint) determineRequestedClaims(request oauth2.OAuth2Reques
 	return cr.UserInfo
 }
 
-func JwtResponseEncoder() httptransport.EncodeResponseFunc {
+func JwtResponseEncoder() web.EncodeResponseFunc {
 	return web.CustomResponseEncoder(func(opt *web.EncodeOption) {
 		opt.ContentType = "application/jwt; charset=utf-8"
 		opt.WriteFunc = web.TextWriteFunc

@@ -17,13 +17,11 @@
 package template
 
 import (
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/go-kit/kit/endpoint"
-    httptransport "github.com/go-kit/kit/transport/http"
-    "net/http"
-    "reflect"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"net/http"
+	"reflect"
 )
 
 var supportedResponseTypes = []reflect.Type {
@@ -148,27 +146,19 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 		b.name = fmt.Sprintf("%s %s", b.method, b.path)
 	}
 
-	// For templated HTMLs, it's usually browser-to-service communication
-	// Since we don't usually need to do service-to-service communication,
-	//we don't need to apply endpoint request encoder and response decoder
-	var e endpoint.Endpoint
-	var decodeRequestFunc = httptransport.NopRequestDecoder
-	var encodeResponseFunc = TemplateEncodeResponseFunc
-
-	if b.handlerFunc != nil {
-		metadata := web.MakeFuncMetadata(b.handlerFunc, validateHandlerFunc)
-		e = web.MakeEndpoint(metadata)
-		decodeRequestFunc = web.MakeGinBindingDecodeRequestFunc(metadata)
-	}
+	metadata := web.MakeFuncMetadata(b.handlerFunc, validateHandlerFunc)
+	decReq := web.MakeGinBindingDecodeRequestFunc(metadata)
+	encResp := TemplateEncodeResponseFunc
 
 	return web.NewMvcMapping(b.name, b.group, b.path, b.method, b.condition,
-		e, decodeRequestFunc, nil,
-		nil, encodeResponseFunc,
-		TemplateErrorEncoder)
+		metadata,decReq, encResp, TemplateErrorEncoder)
 }
 
 // this is an additional validator, we assume basic validation is done (meaning given value web.MvcHandlerFunc)
 func validateHandlerFunc(f *reflect.Value) error {
+	if !f.IsValid() || f.IsZero() {
+		return errors.New("missing ModelViewHandlerFunc")
+	}
 	t := f.Type()
 	// check response type
 	foundMV := false

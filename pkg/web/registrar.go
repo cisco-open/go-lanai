@@ -17,25 +17,24 @@
 package web
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/cisco-open/go-lanai/pkg/utils/order"
-    "github.com/cisco-open/go-lanai/pkg/utils/reflectutils"
-    "github.com/gin-gonic/gin"
-    "github.com/gin-gonic/gin/binding"
-    httptransport "github.com/go-kit/kit/transport/http"
-    "go.uber.org/fx"
-    "html/template"
-    "io/fs"
-    "net"
-    "net/http"
-    pathutils "path"
-    "reflect"
-    "sort"
-    "strings"
-    "time"
+	"context"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/pkg/utils/reflectutils"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"go.uber.org/fx"
+	"html/template"
+	"io/fs"
+	"net"
+	"net/http"
+	pathutils "path"
+	"reflect"
+	"sort"
+	"strings"
+	"time"
 )
 
 //goland:noinspection GoUnusedConst
@@ -49,7 +48,6 @@ type Registrar struct {
 	server           *http.Server
 	port             int
 	properties       ServerProperties
-	options          []*orderedServerOption // options go-kit server options
 	validator        *Validate
 	requestRewriter  RequestRewriter
 	middlewares      []MiddlewareMapping // middlewares gin-gonic middleware providers
@@ -71,10 +69,10 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		engine:     g,
 		router:     g.Group(contextPath),
 		properties: properties,
-		options: []*orderedServerOption{
-			newOrderedServerOption(httptransport.ServerBefore(integrateGinContextBefore), order.Lowest),
-			newOrderedServerOption(httptransport.ServerFinalizer(integrateGinContextFinalizer), order.Lowest),
-		},
+		//options: []*orderedServerOption{
+		//	newOrderedServerOption(httptransport.ServerBefore(integrateGinContextBefore), order.Lowest),
+		//	newOrderedServerOption(httptransport.ServerFinalizer(integrateGinContextFinalizer), order.Lowest),
+		//},
 		validator:        bindingValidator,
 		requestRewriter:  newGinRequestRewriter(g.Engine),
 		routedMappings:   routedMappings{},
@@ -138,23 +136,6 @@ func (r *Registrar) Cleanup(ctx context.Context) (err error) {
 // AddGlobalMiddlewares add middleware to all mapping
 func (r *Registrar) AddGlobalMiddlewares(handlerFuncs ...gin.HandlerFunc) error {
 	r.engine.Use(handlerFuncs...)
-	return nil
-}
-
-// AddOption calls AddOptionWithOrder with 0 order value
-func (r *Registrar) AddOption(opt httptransport.ServerOption) error {
-	return r.AddOptionWithOrder(opt, 0)
-}
-
-// AddOptionWithOrder add go-kit ServerOption with order.
-// httptransport.ServerOption are ordered using order.OrderedFirstCompare
-func (r *Registrar) AddOptionWithOrder(opt httptransport.ServerOption, o int) error {
-	if r.initialized {
-		return fmt.Errorf("cannot register options after web engine have initialized")
-	}
-
-	r.options = append(r.options, newOrderedServerOption(opt, o))
-	order.SortStable(r.options, order.OrderedFirstCompare)
 	return nil
 }
 
@@ -512,7 +493,6 @@ func (r *Registrar) installRoutedMappings(ctx context.Context, method, group str
 
 	// resolve gin.HandlerFunc to register
 	handlerFuncs := make([]gin.HandlerFunc, len(mappings))
-	options := r.kitServerOptions()
 	unconditionalFound := false
 	for i, m := range mappings {
 		// validate method and path with best efforts
@@ -529,7 +509,7 @@ func (r *Registrar) installRoutedMappings(ctx context.Context, method, group str
 		// create handler func
 		switch m.(type) {
 		case MvcMapping:
-			handlerFuncs[i] = r.makeHandlerFuncFromMvcMapping(m.(MvcMapping), errTranslators, options)
+			handlerFuncs[i] = r.makeHandlerFuncFromMvcMapping(m.(MvcMapping), errTranslators)
 		case SimpleGinMapping:
 			handlerFuncs[i] = r.makeGinConditionalHandlerFunc(m.(SimpleGinMapping).GinHandlerFunc(), m.Condition())
 		case SimpleMapping:
@@ -622,14 +602,6 @@ func (r *Registrar) routeMatches(matcher RouteMatcher, group, relativePath strin
 	return false, nil
 }
 
-func (r *Registrar) kitServerOptions() []httptransport.ServerOption {
-	opts := make([]httptransport.ServerOption, len(r.options))
-	for i, opt := range r.options {
-		opts[i] = opt.ServerOption
-	}
-	return opts
-}
-
 func (r *Registrar) loadHtmlTemplates(ctx context.Context) {
 	osFS := NewOSDirFS("web/", DirFSAllowListDirectory)
 	mFs := NewMergedFS(osFS, r.embedFs...)
@@ -647,25 +619,13 @@ func (r *Registrar) loadHtmlTemplates(ctx context.Context) {
 	Helpers
 ***************************/
 
-func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, errTranslators []ErrorTranslator, options []httptransport.ServerOption) gin.HandlerFunc {
-	// create error encoder
-	errenc := m.ErrorEncoder()
-	if errenc == nil {
-		errenc = JsonErrorEncoder()
+func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, errTranslators []ErrorTranslator) gin.HandlerFunc {
+	// try to add error translators
+	if mapping, ok := m.(*mvcMapping); ok {
+		mapping.errTranslators = append(mapping.errTranslators, errTranslators...)
 	}
-
-	options = append(options, httptransport.ServerErrorEncoder(
-		newErrorEncoder(errenc, errTranslators...),
-	))
-
-	s := httptransport.NewServer(
-		m.Endpoint(),
-		m.DecodeRequestFunc(),
-		m.EncodeResponseFunc(),
-		options...,
-	)
-
-	return r.makeGinConditionalHandlerFunc(NewKitGinHandlerFunc(s), m.Condition()) //nolint:contextcheck
+	handler := NewGinHandlerFunc(m.HandlerFunc())
+	return r.makeGinConditionalHandlerFunc(handler, m.Condition())
 }
 
 // makeGinConditionalHandlerFunc wraps given handler with a request matcher

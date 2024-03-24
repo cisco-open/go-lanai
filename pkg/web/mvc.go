@@ -19,12 +19,12 @@ package web
 import (
 	"context"
 	"errors"
-	"github.com/go-kit/kit/endpoint"
-	httptransport "github.com/go-kit/kit/transport/http"
 	"io"
 	"net/http"
 	"reflect"
 )
+
+type endpointFunc func(c context.Context, request interface{}) (response interface{}, err error)
 
 type mvcMapping struct {
 	name               string
@@ -32,34 +32,31 @@ type mvcMapping struct {
 	path               string
 	method             string
 	condition          RequestMatcher
-	endpoint           endpoint.Endpoint
-	decodeRequestFunc  httptransport.DecodeRequestFunc
-	encodeRequestFunc  httptransport.EncodeRequestFunc
-	decodeResponseFunc httptransport.DecodeResponseFunc
-	encodeResponseFunc httptransport.EncodeResponseFunc
-	errorEncoder       httptransport.ErrorEncoder
+	decodeRequestFunc  DecodeRequestFunc
+	encodeResponseFunc EncodeResponseFunc
+	encodeErrorFunc    EncodeErrorFunc
+	errTranslators     []ErrorTranslator
+	endpoint           endpointFunc
 }
 
 // NewMvcMapping exported for inter-package usage only. Use builders.
 func NewMvcMapping(name, group, path, method string, condition RequestMatcher,
-	endpoint endpoint.Endpoint,
-	decodeRequestFunc httptransport.DecodeRequestFunc,
-	encodeRequestFunc httptransport.EncodeRequestFunc,
-	decodeResponseFunc httptransport.DecodeResponseFunc,
-	encodeResponseFunc httptransport.EncodeResponseFunc,
-	errorEncoder httptransport.ErrorEncoder) MvcMapping { //SuppressWarnings go:S107 This function is internal use only, converting params to a struct provide no additional benefit
+	metadata *mvcMetadata,
+	decodeRequestFunc DecodeRequestFunc,
+	encodeResponseFunc EncodeResponseFunc,
+	errorEncoder EncodeErrorFunc,
+	errorTranslators ...ErrorTranslator) MvcMapping {
 	return &mvcMapping{
 		name:               name,
 		group:              group,
 		path:               path,
 		method:             method,
 		condition:          condition,
-		endpoint:           endpoint,
+		endpoint:           makeEndpointFunc(metadata),
 		decodeRequestFunc:  decodeRequestFunc,
-		encodeRequestFunc:  encodeRequestFunc,
-		decodeResponseFunc: decodeResponseFunc,
 		encodeResponseFunc: encodeResponseFunc,
-		errorEncoder:       errorEncoder,
+		encodeErrorFunc:    errorEncoder,
+		errTranslators:     errorTranslators,
 	}
 }
 
@@ -87,28 +84,20 @@ func (m *mvcMapping) Condition() RequestMatcher {
 	return m.condition
 }
 
-func (m *mvcMapping) Endpoint() endpoint.Endpoint {
-	return m.endpoint
-}
-
-func (m *mvcMapping) DecodeRequestFunc() httptransport.DecodeRequestFunc {
+func (m *mvcMapping) DecodeRequestFunc() DecodeRequestFunc {
 	return m.decodeRequestFunc
 }
 
-func (m *mvcMapping) EncodeRequestFunc() httptransport.EncodeRequestFunc {
-	return m.encodeRequestFunc
-}
-
-func (m *mvcMapping) DecodeResponseFunc() httptransport.DecodeResponseFunc {
-	return m.decodeResponseFunc
-}
-
-func (m *mvcMapping) EncodeResponseFunc() httptransport.EncodeResponseFunc {
+func (m *mvcMapping) EncodeResponseFunc() EncodeResponseFunc {
 	return m.encodeResponseFunc
 }
 
-func (m *mvcMapping) ErrorEncoder() httptransport.ErrorEncoder {
-	return m.errorEncoder
+func (m *mvcMapping) EncodeErrorFunc() EncodeErrorFunc {
+	return newErrorEncoder(m.encodeErrorFunc, m.errTranslators...)
+}
+
+func (m *mvcMapping) HandlerFunc() HandlerFunc {
+	return makeMvcHandlerFunc(m)
 }
 
 /*********************
@@ -121,7 +110,7 @@ type Response struct {
 	B  interface{}
 }
 
-// StatusCode implements httptransport.StatusCoder and StatusCoder
+// StatusCode implements StatusCoder
 func (r Response) StatusCode() int {
 	if i, ok := r.B.(StatusCoder); ok {
 		return i.StatusCode()
@@ -129,7 +118,7 @@ func (r Response) StatusCode() int {
 	return r.SC
 }
 
-// Headers implements httptransport.Headerer and Headerer
+// Headers implements Headerer
 func (r Response) Headers() http.Header {
 	if i, ok := r.B.(Headerer); ok {
 		return i.Headers()
@@ -189,12 +178,35 @@ func NewLazyHeaderWriter(w http.ResponseWriter) *LazyHeaderWriter {
 }
 
 /*********************
-	go-kit Endpoint
+	MVC Handler
 **********************/
 
-// MakeEndpoint convert given mvcMetadata to kit/endpoint.Endpoint
-func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
-	// Note: we assume given metadata is valid, so we don't do out-of-index or type check
+func makeMvcHandlerFunc(m *mvcMapping) HandlerFunc {
+	decReq := m.DecodeRequestFunc()
+	encResp := m.EncodeResponseFunc()
+	encErr := m.EncodeErrorFunc()
+	return func(rw http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		request, e := decReq(ctx, r)
+		if e != nil {
+			encErr(ctx, e, rw)
+			return
+		}
+
+		response, e := m.endpoint(ctx, request)
+		if e != nil {
+			encErr(ctx, e, rw)
+			return
+		}
+
+		if e := encResp(ctx, rw, response); e != nil {
+			encErr(ctx, e, rw)
+			return
+		}
+	}
+}
+
+func makeEndpointFunc(m *mvcMetadata) func(c context.Context, request interface{}) (response interface{}, err error) {
 	return func(c context.Context, request interface{}) (response interface{}, err error) {
 		// prepare input params
 		in := make([]reflect.Value, m.in.count)
@@ -227,12 +239,12 @@ func MakeEndpoint(m *mvcMetadata) endpoint.Endpoint {
 }
 
 /**********************************
-	go-kit RequestDetails Decoder
+	Request Decoder
 ***********************************/
 
 // MakeGinBindingDecodeRequestFunc
 // bindable requestType can only be struct or pointer of struct
-func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) httptransport.DecodeRequestFunc {
+func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) DecodeRequestFunc {
 	// No need to decode
 	if s.request == nil || isHttpRequestPtr(s.request) {
 		return func(c context.Context, r *http.Request) (request interface{}, err error) {
