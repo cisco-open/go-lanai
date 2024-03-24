@@ -69,10 +69,6 @@ func NewRegistrar(g *Engine, properties ServerProperties) *Registrar {
 		engine:     g,
 		router:     g.Group(contextPath),
 		properties: properties,
-		//options: []*orderedServerOption{
-		//	newOrderedServerOption(httptransport.ServerBefore(integrateGinContextBefore), order.Lowest),
-		//	newOrderedServerOption(httptransport.ServerFinalizer(integrateGinContextFinalizer), order.Lowest),
-		//},
 		validator:        bindingValidator,
 		requestRewriter:  newGinRequestRewriter(g.Engine),
 		routedMappings:   routedMappings{},
