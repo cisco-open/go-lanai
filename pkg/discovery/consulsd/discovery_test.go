@@ -28,17 +28,14 @@ import (
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/cisco-open/go-lanai/test/consultest"
 	"github.com/cisco-open/go-lanai/test/ittest"
-	"github.com/go-kit/kit/sd"
 	"github.com/hashicorp/consul/api"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"io"
-	"reflect"
 	"sort"
 	"sync"
 	"testing"
-	"time"
 )
 
 const (
@@ -123,7 +120,6 @@ func TestDiscoveryClient(t *testing.T) {
 		test.GomegaSubTest(SubTestWithDefaultSelector(&di), "TestWithDefaultSelector"),
 		test.GomegaSubTest(SubTestWithSelectors(&di), "TestWithSelectors"),
 		test.GomegaSubTest(SubTestWithServiceUpdates(&di), "TestWithServiceUpdates"),
-		test.GomegaSubTest(SubTestWithGoKitCompatibility(&di), "TestWithGoKitCompatibility"),
 	)
 }
 
@@ -304,70 +300,6 @@ func SubTestWithServiceUpdates(di *TestDiscoveryDI) test.GomegaSubTestFunc {
 
 		// try again
 		wg.Wait()
-		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
-			&MockedServices[ServiceName1][0],
-		})
-	}
-}
-
-func SubTestWithGoKitCompatibility(di *TestDiscoveryDI) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client := consulsd.NewDiscoveryClient(ctx, di.Consul, func(opt *consulsd.ClientConfig) {
-			opt.Verbose = true
-		})
-		defer func() { _ = client.(io.Closer).Close() }()
-		v, e := client.Instancer(ServiceName1)
-		g.Expect(e).To(Succeed(), "getting instancer should not fail")
-		g.Expect(v).To(BeAssignableToTypeOf(&consulsd.Instancer{}), "instancer should be correct type")
-		instancer := v.(*consulsd.Instancer)
-
-		// register event channel
-		eventCh := make(chan sd.Event)
-		var lastEvent sd.Event
-		var eventLock sync.RWMutex
-		defer close(eventCh)
-		go func() {
-			for evt := range eventCh {
-				if !reflect.ValueOf(evt).IsZero() {
-					eventLock.Lock()
-					lastEvent = evt
-					eventLock.Unlock()
-				}
-			}
-		}()
-		instancer.Register(eventCh)
-		defer instancer.Deregister(eventCh)
-
-		// try some invocation
-		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
-			&MockedServices[ServiceName1][0], &MockedServices[ServiceName1][1],
-		})
-
-		// make some service changes
-		before := len(lastEvent.Instances)
-		update := MockedServices[ServiceName1][1]
-		update.Healthy = false
-		e = di.Registrar.Deregister(ctx, NewTestRegistration(&update))
-		g.Expect(e).To(Succeed(), "de-registering service should not fail")
-
-		// wait for event channel to trigger
-		timeoutCtx, cancelFn := context.WithTimeout(ctx, 5*time.Second)
-		defer cancelFn()
-		for {
-			eventLock.RLock()
-			updated := len(lastEvent.Instances) != before
-			eventLock.RUnlock()
-			if updated {
-				break
-			}
-			time.Sleep(50 * time.Millisecond)
-			select {
-			case <-timeoutCtx.Done():
-				t.Errorf("go-kit event is not recieved after service updates")
-				return
-			default:
-			}
-		}
 		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
 			&MockedServices[ServiceName1][0],
 		})

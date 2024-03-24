@@ -23,13 +23,11 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/discovery/dnssd"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
-	"github.com/go-kit/kit/sd"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"io"
 	"net"
-	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -94,7 +92,6 @@ func TestDiscoveryClient(t *testing.T) {
 		test.GomegaSubTest(SubTestWithProtoAndService(&di), "TestWithProtoAndService"),
 		test.GomegaSubTest(SubTestWithFallback(&di), "TestWithFallback"),
 		test.GomegaSubTest(SubTestWithServiceUpdates(&di), "TestWithServiceUpdates"),
-		test.GomegaSubTest(SubTestWithGoKitCompatibility(&di), "TestWithGoKitCompatibility"),
 	)
 }
 
@@ -319,72 +316,6 @@ func SubTestWithServiceUpdates(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 
 		// try again
 		wg.Wait()
-		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
-			&MockedServices[ServiceName1][0],
-		})
-	}
-}
-
-func SubTestWithGoKitCompatibility(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client := dnssd.NewDiscoveryClient(ctx, func(opt *dnssd.ClientConfig) {
-			opt.DNSServerAddr = CurrentMockedDNSAddr(ctx)
-			opt.FQDNTemplate = "{{.ServiceName}}.test.mock"
-			opt.Verbose = true
-			opt.RefreshInterval = 50 * time.Millisecond
-		})
-		defer func() { _ = client.(io.Closer).Close() }()
-		v, e := client.Instancer(ServiceName1)
-		g.Expect(e).To(Succeed(), "getting instancer should not fail")
-		g.Expect(v).To(BeAssignableToTypeOf(&dnssd.Instancer{}), "instancer should be correct type")
-		instancer := v.(*dnssd.Instancer)
-
-		// register event channel
-		eventCh := make(chan sd.Event)
-		var lastEvent sd.Event
-		var eventLock sync.RWMutex
-		defer close(eventCh)
-		go func() {
-			for evt := range eventCh {
-				if !reflect.ValueOf(evt).IsZero() {
-					eventLock.Lock()
-					lastEvent = evt
-					eventLock.Unlock()
-				}
-			}
-		}()
-		instancer.Register(eventCh)
-		defer instancer.Deregister(eventCh)
-
-		// try some invocation
-		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
-			&MockedServices[ServiceName1][0], &MockedServices[ServiceName1][1],
-		})
-
-		// make some service changes
-		before := len(lastEvent.Instances)
-		update := MockedServices[ServiceName1][1]
-		update.Healthy = false
-		CurrentMockedDNSServer(ctx).DeregisterSRV(NewMockedSRV(&update))
-
-		// wait for event channel to trigger
-		timeoutCtx, cancelFn := context.WithTimeout(ctx, 5*time.Second)
-		defer cancelFn()
-		for {
-			eventLock.RLock()
-			updated := len(lastEvent.Instances) != before
-			eventLock.RUnlock()
-			if updated {
-				break
-			}
-			time.Sleep(50 * time.Millisecond)
-			select {
-			case <-timeoutCtx.Done():
-				t.Errorf("go-kit event is not recieved after service updates")
-				return
-			default:
-			}
-		}
 		TryInstancerWithMatcher(g, instancer, discovery.InstanceIsHealthy(), []*MockedService{
 			&MockedServices[ServiceName1][0],
 		})

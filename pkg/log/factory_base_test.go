@@ -339,12 +339,6 @@ func AssertLeveledLogging(g *gomega.WithT, l Logger, level LoggingLevel, expectJ
 
 	// following logging statements has one less caller stack, therefore the "caller" would be different
 	msg, token = RandomMessage()
-	e := l.WithLevel(level).Log(LogKeyMessage, msg)
-	g.Expect(e).To(Succeed(), "Log() should not fail")
-	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg), ExpectCaller(ExpectedDirectCaller)))
-	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg), ExpectCaller(ExpectedDirectCaller)))
-
-	msg, token = RandomMessage()
 	l.WithLevel(level).Printf("%s [%s]", StaticMsg, token)
 	AssertLastJsonLogEntry(g, CopyOf(expectJson, ExpectMsg(msg), ExpectCaller(ExpectedDirectCaller)))
 	AssertLastTextLogEntry(g, CopyOf(expectText, ExpectMsg(msg), ExpectCaller(ExpectedDirectCaller)))
