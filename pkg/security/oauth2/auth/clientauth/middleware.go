@@ -53,7 +53,7 @@ func NewClientAuthMiddleware(opts...MWOptions) *Middleware {
 	}
 }
 
-func (mw *Middleware) ClientAuthFormHandlerFunc() web.HandlerFunc {
+func (mw *Middleware) ClientAuthFormHandlerFunc() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		if e := r.ParseForm(); e != nil {
 			return

@@ -268,7 +268,7 @@ func (mw *TestMW) Reset() {
 	mw.Invocation = nil
 }
 
-func (mw *TestMW) HandlerFunc() web.HandlerFunc {
+func (mw *TestMW) HandlerFunc() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		mw.Invocation = append(mw.Invocation, mwInvocation{rw: rw, r: r, gc: web.GinContext(r.Context())})
 	}

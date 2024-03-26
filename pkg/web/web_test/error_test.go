@@ -384,7 +384,7 @@ func registerErrorMW(method, pattern string, err error) WebInitFunc {
 	}
 }
 
-func errorEndpointFunc(err error) web.MvcHandlerFunc {
+func errorEndpointFunc(err error) func(ctx context.Context, req *http.Request) (interface{}, error) {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
 		return nil, err
 	}

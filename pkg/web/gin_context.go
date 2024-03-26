@@ -30,12 +30,15 @@ type contextPathCtxKey struct {}
 // Interfaces, functions, HandlerFunc wrappers and gin middlewares that make sure *gin.Context available in endpoints and
 // context properly propagated in Request
 
-// SimpleGinMapping simple mapping of gin.HandlerFunc
+// SimpleGinMapping is a SimpleMapping that supported by gin.HandlerFunc
+// See mapping.MappingBuilder
 type SimpleGinMapping interface {
 	SimpleMapping
 	GinHandlerFunc() gin.HandlerFunc
 }
 
+// MiddlewareGinMapping is a MiddlewareMapping that supported by gin.HandlerFunc
+// See middleware.MappingBuilder
 type MiddlewareGinMapping interface {
 	MiddlewareMapping
 	GinHandlerFunc() gin.HandlerFunc
@@ -180,7 +183,7 @@ func GinContextMerger() gin.HandlerFunc {
 	}
 }
 
-// NewHttpGinHandlerFunc Integrate http.HandlerFunc with GIN handler
+// NewHttpGinHandlerFunc integrate http.HandlerFunc with GIN handler
 func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
 	if handlerFunc == nil {
 		panic(fmt.Errorf("cannot wrap a nil hanlder"))
@@ -193,13 +196,6 @@ func NewHttpGinHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
 	return handler
 }
 
-// NewGinHandlerFunc Wrap HandlerFunc as gin.HandlerFunc
-func NewGinHandlerFunc(fn HandlerFunc) gin.HandlerFunc {
-	return func(gc *gin.Context) {
-		gc = preProcessGinContext(gc)
-		fn(gc.Writer, gc.Request)
-	}
-}
 
 func preProcessGinContext(gc *gin.Context) *gin.Context {
 	// because of GinContextMerger is mandatory middleware for all mappings, we are sure gc.Request.Context() contains gin.Context.
@@ -240,6 +236,12 @@ type simpleGinMapping struct {
 	handlerFunc gin.HandlerFunc
 }
 
+// NewSimpleGinMapping create a SimpleGinMapping.
+// It's recommended to use mapping.MappingBuilder instead of this function:
+// e.g.
+// <code>
+// mapping.Post("/path/to/api").HandlerFunc(func...).Build()
+// </code>
 func NewSimpleGinMapping(name, group, path, method string, condition RequestMatcher, handlerFunc gin.HandlerFunc) SimpleGinMapping {
 	return &simpleGinMapping{
 		simpleMapping: *NewSimpleMapping(name, group, path, method, condition, nil).(*simpleMapping),
@@ -253,7 +255,7 @@ func (m simpleGinMapping) GinHandlerFunc() gin.HandlerFunc {
 	}
 
 	if m.simpleMapping.handlerFunc != nil {
-		return NewHttpGinHandlerFunc(http.HandlerFunc(m.simpleMapping.handlerFunc))
+		return NewHttpGinHandlerFunc(m.simpleMapping.handlerFunc)
 	}
 	return nil
 }
@@ -268,6 +270,12 @@ type middlewareGinMapping struct {
 	handlerFunc gin.HandlerFunc
 }
 
+// NewMiddlewareGinMapping create a MiddlewareGinMapping with gin.HandlerFunc
+// It's recommended to use middleware.MappingBuilder instead of this function:
+// e.g.
+// <code>
+// middleware.NewBuilder("my-auth").Order(-10).Use(func...).Build()
+// </code>
 func NewMiddlewareGinMapping(name string, order int, matcher RouteMatcher, cond RequestMatcher, handlerFunc gin.HandlerFunc) MiddlewareGinMapping {
 	return &middlewareGinMapping{
 		middlewareMapping: *NewMiddlewareMapping(name, order, matcher, cond, nil).(*middlewareMapping),
@@ -281,7 +289,7 @@ func (m middlewareGinMapping) GinHandlerFunc() gin.HandlerFunc {
 	}
 
 	if m.middlewareMapping.handlerFunc != nil {
-		return NewHttpGinHandlerFunc(http.HandlerFunc(m.middlewareMapping.handlerFunc))
+		return NewHttpGinHandlerFunc(m.middlewareMapping.handlerFunc)
 	}
 	return nil
 }

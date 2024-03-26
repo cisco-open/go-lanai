@@ -17,14 +17,8 @@
 package web
 
 import (
-	"context"
-	"errors"
-	"io"
 	"net/http"
-	"reflect"
 )
-
-type endpointFunc func(c context.Context, request interface{}) (response interface{}, err error)
 
 type mvcMapping struct {
 	name               string
@@ -34,29 +28,32 @@ type mvcMapping struct {
 	condition          RequestMatcher
 	decodeRequestFunc  DecodeRequestFunc
 	encodeResponseFunc EncodeResponseFunc
-	encodeErrorFunc    EncodeErrorFunc
-	errTranslators     []ErrorTranslator
-	endpoint           endpointFunc
+	encodeErrorFunc EncodeErrorFunc
+	endpoint        MvcHandlerFunc
 }
 
-// NewMvcMapping exported for inter-package usage only. Use builders.
+// NewMvcMapping create a MvcMapping
+// It's recommended to use rest.MappingBuilder or template.MappingBuilder instead of this function:
+// e.g.
+// <code>
+// rest.Put("/path/to/api").EndpointFunc(func...).Build()
+// template.Post("/path/to/page").HandlerFunc(func...).Build()
+// </code>
 func NewMvcMapping(name, group, path, method string, condition RequestMatcher,
-	metadata *mvcMetadata,
+	mvcHandlerFunc MvcHandlerFunc,
 	decodeRequestFunc DecodeRequestFunc,
 	encodeResponseFunc EncodeResponseFunc,
-	errorEncoder EncodeErrorFunc,
-	errorTranslators ...ErrorTranslator) MvcMapping {
+	errorEncoder EncodeErrorFunc) MvcMapping {
 	return &mvcMapping{
 		name:               name,
 		group:              group,
 		path:               path,
 		method:             method,
 		condition:          condition,
-		endpoint:           makeEndpointFunc(metadata),
+		endpoint:           mvcHandlerFunc,
 		decodeRequestFunc:  decodeRequestFunc,
 		encodeResponseFunc: encodeResponseFunc,
 		encodeErrorFunc:    errorEncoder,
-		errTranslators:     errorTranslators,
 	}
 }
 
@@ -93,11 +90,11 @@ func (m *mvcMapping) EncodeResponseFunc() EncodeResponseFunc {
 }
 
 func (m *mvcMapping) EncodeErrorFunc() EncodeErrorFunc {
-	return newErrorEncoder(m.encodeErrorFunc, m.errTranslators...)
+	return m.encodeErrorFunc
 }
 
-func (m *mvcMapping) HandlerFunc() HandlerFunc {
-	return makeMvcHandlerFunc(m)
+func (m *mvcMapping) HandlerFunc() MvcHandlerFunc {
+	return m.endpoint
 }
 
 /*********************
@@ -181,148 +178,41 @@ func NewLazyHeaderWriter(w http.ResponseWriter) *LazyHeaderWriter {
 	MVC Handler
 **********************/
 
-func makeMvcHandlerFunc(m *mvcMapping) HandlerFunc {
-	decReq := m.DecodeRequestFunc()
-	encResp := m.EncodeResponseFunc()
-	encErr := m.EncodeErrorFunc()
+type mvcHandler struct {
+	reqDecoder     DecodeRequestFunc
+	respEncoder    EncodeResponseFunc
+	errEncoder  EncodeErrorFunc
+	handlerFunc MvcHandlerFunc
+}
+
+func makeMvcHttpHandlerFunc(m MvcMapping, opts ...func(h *mvcHandler)) http.HandlerFunc {
+	handler := &mvcHandler{
+		reqDecoder:     m.DecodeRequestFunc(),
+		respEncoder:    m.EncodeResponseFunc(),
+		errEncoder:     m.EncodeErrorFunc(),
+		handlerFunc:    m.HandlerFunc(),
+	}
+	for _, fn := range opts {
+		fn(handler)
+	}
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		request, e := decReq(ctx, r)
+		request, e := handler.reqDecoder(ctx, r)
 		if e != nil {
-			encErr(ctx, e, rw)
+			handler.errEncoder(ctx, e, rw)
 			return
 		}
 
-		response, e := m.endpoint(ctx, request)
+		response, e := handler.handlerFunc(ctx, request)
 		if e != nil {
-			encErr(ctx, e, rw)
+			handler.errEncoder(ctx, e, rw)
 			return
 		}
 
-		if e := encResp(ctx, rw, response); e != nil {
-			encErr(ctx, e, rw)
+		if e := handler.respEncoder(ctx, rw, response); e != nil {
+			handler.errEncoder(ctx, e, rw)
 			return
 		}
 	}
 }
 
-func makeEndpointFunc(m *mvcMetadata) func(c context.Context, request interface{}) (response interface{}, err error) {
-	return func(c context.Context, request interface{}) (response interface{}, err error) {
-		// prepare input params
-		in := make([]reflect.Value, m.in.count)
-		in[m.in.context.i] = reflect.ValueOf(c)
-		if m.in.request.isValid() {
-			in[m.in.request.i] = reflect.ValueOf(request)
-		}
-
-		out := m.function.Call(in)
-
-		// post process output
-		err, _ = out[m.out.error.i].Interface().(error)
-		response = out[m.out.response.i].Interface()
-		if !m.out.sc.isValid() && !m.out.header.isValid() {
-			return response, err
-		}
-
-		// if necessary, wrap the response
-		wrapper := &Response{B: response}
-		if m.out.sc.isValid() {
-			wrapper.SC = int(out[m.out.sc.i].Int())
-		}
-
-		if m.out.header.isValid() {
-			wrapper.H, _ = out[m.out.header.i].Interface().(http.Header)
-		}
-
-		return wrapper, err
-	}
-}
-
-/**********************************
-	Request Decoder
-***********************************/
-
-// MakeGinBindingDecodeRequestFunc
-// bindable requestType can only be struct or pointer of struct
-func MakeGinBindingDecodeRequestFunc(s *mvcMetadata) DecodeRequestFunc {
-	// No need to decode
-	if s.request == nil || isHttpRequestPtr(s.request) {
-		return func(c context.Context, r *http.Request) (request interface{}, err error) {
-			return r, nil
-		}
-	}
-	// decode request using GinBinding
-	return func(c context.Context, r *http.Request) (request interface{}, err error) {
-		ginCtx := GinContext(c)
-		if ginCtx == nil {
-			return nil, NewHttpError(http.StatusInternalServerError, errors.New("context issue"))
-		}
-
-		toBind, toRet := instantiateByType(s.request)
-
-		// We always try to bind H, Uri and Query. other bindings are determined by Content-Type (in ShouldBind)
-		err = bind(toBind,
-			ginCtx.ShouldBindHeader,
-			ginCtx.ShouldBindUri,
-			ginCtx.ShouldBindQuery)
-
-		if err != nil {
-			return nil, translateBindingError(err)
-		}
-
-		err = ginCtx.ShouldBind(toBind)
-
-		if err != nil && !(errors.Is(err, io.EOF) && r.ContentLength <= 0) {
-			return nil, translateBindingError(err)
-		}
-		return toRet.Interface(), validateBinding(c, toBind)
-	}
-}
-
-type bindingFunc func(interface{}) error
-
-func bind(obj interface{}, bindings ...bindingFunc) (err error) {
-	for _, b := range bindings {
-		if err = b(obj); err != nil {
-			return
-		}
-	}
-	return
-}
-
-func translateBindingError(err error) error {
-	return NewBindingError(err)
-}
-
-func validateBinding(ctx context.Context, obj interface{}) error {
-	if bindingValidator == nil {
-		return nil
-	}
-
-	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	switch v.Kind() {
-	case reflect.Struct:
-		return bindingValidator.StructCtx(ctx, obj)
-	default:
-		return nil
-	}
-}
-
-// returned ptr is the pointer regardless if given type is Ptr or other type
-// returned value is actually the value with given type
-func instantiateByType(t reflect.Type) (ptr interface{}, value *reflect.Value) {
-	var p reflect.Value
-	switch t.Kind() {
-	case reflect.Ptr:
-		t = t.Elem()
-		p = reflect.New(t)
-		return p.Interface(), &p
-	default:
-		p = reflect.New(t)
-		v := p.Elem()
-		return p.Interface(), &v
-	}
-}

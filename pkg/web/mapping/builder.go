@@ -28,6 +28,13 @@ import (
 	SimpleMappingBuilder
  *********************************/
 
+// MappingBuilder builds web.SimpleMapping
+// MappingBuilder.Path, MappingBuilder.Method and MappingBuilder.HandlerFunc are required to successfully build a mapping.
+// Supported handler function are gin.HandlerFunc or http.HandlerFunc
+// Example:
+// <code>
+// mapping.Post("/path/to/api").HandlerFunc(func...).Build()
+// </code>
 //goland:noinspection GoNameStartsWithPackageName
 type MappingBuilder struct {
 	name        string
@@ -115,10 +122,9 @@ func (b *MappingBuilder) Condition(condition web.RequestMatcher) *MappingBuilder
 // HandlerFunc support
 // - gin.HandlerFunc
 // - http.HandlerFunc
-// - web.HandlerFunc
 func (b *MappingBuilder) HandlerFunc(handlerFunc interface{}) *MappingBuilder {
 	switch handlerFunc.(type) {
-	case gin.HandlerFunc, http.HandlerFunc, web.HandlerFunc:
+	case gin.HandlerFunc, http.HandlerFunc:
 		b.handlerFunc = handlerFunc
 	default:
 		panic(fmt.Errorf("unsupported HandlerFunc type: %T", handlerFunc))
@@ -187,6 +193,7 @@ func (b *MappingBuilder) GetName() string {
 /*****************************
 	Private
 ******************************/
+
 func (b *MappingBuilder) validate() (err error) {
 	switch {
 	case b.path == "" && (b.group == "" || b.group == "/"):
@@ -206,11 +213,11 @@ func (b *MappingBuilder) buildMapping() web.SimpleMapping {
 		b.name = fmt.Sprintf("%s %s%s", b.method, b.group, b.path)
 	}
 
-	switch b.handlerFunc.(type) {
+	switch handlerFunc := b.handlerFunc.(type) {
 	case gin.HandlerFunc:
-		return web.NewSimpleGinMapping(b.name, b.group, b.path, b.method, b.condition, b.handlerFunc.(gin.HandlerFunc))
-	case http.HandlerFunc, web.HandlerFunc:
-		return web.NewSimpleMapping(b.name, b.group, b.path, b.method, b.condition, b.handlerFunc.(web.HandlerFunc))
+		return web.NewSimpleGinMapping(b.name, b.group, b.path, b.method, b.condition, handlerFunc)
+	case http.HandlerFunc:
+		return web.NewSimpleMapping(b.name, b.group, b.path, b.method, b.condition, handlerFunc)
 	default:
 		panic(fmt.Errorf("unsupported HandlerFunc type: %T", b.handlerFunc))
 	}

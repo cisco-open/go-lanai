@@ -123,26 +123,23 @@ func (fn ErrorTranslateFunc) Translate(ctx context.Context, err error) error {
 	Mappings
  *********************************/
 
+// Controller is usually implemented by user-domain types to provide a group of HTTP handling logics.
+// Each Controller provides a list of Mapping that defines how HTTP requests should be handled.
+// See Mapping
 type Controller interface {
 	Mappings() []Mapping
 }
 
-// HandlerFunc have same signature as http.HandlerFunc with additional assurance:
-// - the http.Request used on this HandlerFunc version contains a mutable context utils.MutableContext
-type HandlerFunc http.HandlerFunc
-
-// MvcHandlerFunc is a function with following signature
-// 	- one or two input parameters with 1st as context.Context and 2nd as <request>
-// 	- at least two output parameters with 2nd last as <response> and last as error
-// See rest.EndpointFunc, template.ModelViewHandlerFunc
-type MvcHandlerFunc interface{}
-
-// Mapping generic interface for all kind of endpoint mappings
+// Mapping is generic interface for all kind of HTTP mappings.
+// User-domain do not typically to implement this interface. Instead, predefined implementation and their builders
+// should be used.
+// See StaticMapping, RoutedMapping, MvcMapping, SimpleMapping, etc.
 type Mapping interface {
 	Name() string
 }
 
-// StaticMapping defines static assets mapping. e.g. javascripts, css, images, etc
+// StaticMapping defines static assets handling. e.g. javascripts, css, images, etc.
+// See assets.New()
 type StaticMapping interface {
 	Mapping
 	Path() string
@@ -151,7 +148,8 @@ type StaticMapping interface {
 	AddAlias(path, filePath string) StaticMapping
 }
 
-// RoutedMapping for endpoints that matches specific path, method and optionally a RequestMatcher as condition
+// RoutedMapping defines dynamic HTTP handling with specific HTTP Route (path and method) and optionally a RequestMatcher as condition.
+// RoutedMapping includes SimpleMapping, MvcMapping, etc.
 type RoutedMapping interface {
 	Mapping
 	Group() string
@@ -160,38 +158,58 @@ type RoutedMapping interface {
 	Condition() RequestMatcher
 }
 
-// SimpleMapping endpoints that are directly implemented as HandlerFunc
+// SimpleMapping endpoints that are directly implemented as HandlerFunc.
+// See mapping.MappingBuilder
 type SimpleMapping interface {
 	RoutedMapping
-	HandlerFunc() HandlerFunc
+	HandlerFunc() http.HandlerFunc
 }
 
-// MvcMapping defines HTTP handling that follows MVC pattern
-// could be EndpointMapping or TemplateMapping
+// MvcHandlerFunc is the generic function to be used for MvcMapping.
+// See MvcMapping, rest.EndpointFunc, template.ModelViewHandlerFunc
+type MvcHandlerFunc func(c context.Context, request interface{}) (response interface{}, err error)
+
+// MvcMapping defines HTTP handling that follows MVC pattern:
+// 1. The http.Request is decoded in to a request model object using MvcMapping.DecodeRequestFunc().
+// 2. The request model object is processed by MvcMapping.HandlerFunc() and a response model object is returned.
+// 3. The response model object is rendered into http.ResponseWriter using MvcMapping.EncodeResponseFunc().
+// 4. If any steps yield error, the error is rendered into http.ResponseWriter using MvcMapping.EncodeErrorFunc()
+//
+// Note:
+// Functions here are all weakly typed signature. User-domain developers typically should use mapping builders
+// (rest.MappingBuilder, template.MappingBuilder, etc) to create concrete MvcMapping instances.
+// See EndpointMapping or TemplateMapping
 type MvcMapping interface {
 	RoutedMapping
 	DecodeRequestFunc() DecodeRequestFunc
 	EncodeResponseFunc() EncodeResponseFunc
 	EncodeErrorFunc() EncodeErrorFunc
-	HandlerFunc() HandlerFunc
+	HandlerFunc() MvcHandlerFunc
 }
 
 // EndpointMapping defines REST API mapping.
 // REST API is usually implemented by Controller and accept/produce JSON objects
+// See rest.MappingBuilder
 type EndpointMapping MvcMapping
 
 // TemplateMapping defines templated MVC mapping. e.g. html templates
-// Templated MVC is usually implemented by Controller and produce a template and model for dynamic html generation
+// Templated MVC is usually implemented by Controller and produce a template and model for dynamic html generation.
+// See template.MappingBuilder
 type TemplateMapping MvcMapping
 
+// MiddlewareMapping defines middlewares that applies to all or selected set (via Matcher and Condition) of requests.
+// Middlewares are often used for task like security, pre/post processing request or response, metrics measurements, etc.
+// See middleware.MappingBuilder
 type MiddlewareMapping interface {
 	Mapping
 	Matcher() RouteMatcher
 	Order() int
 	Condition() RequestMatcher
-	HandlerFunc() HandlerFunc
+	HandlerFunc() http.HandlerFunc
 }
 
+// ErrorTranslateMapping defines how errors should be handled before it's rendered into http.ResponseWriter.
+// See weberror.MappingBuilder
 type ErrorTranslateMapping interface {
 	Mapping
 	Matcher() RouteMatcher
@@ -238,10 +256,16 @@ type simpleMapping struct {
 	path        string
 	method      string
 	condition   RequestMatcher
-	handlerFunc HandlerFunc
+	handlerFunc http.HandlerFunc
 }
 
-func NewSimpleMapping(name, group, path, method string, condition RequestMatcher, handlerFunc HandlerFunc) SimpleMapping {
+// NewSimpleMapping create a SimpleMapping.
+// It's recommended to use mapping.MappingBuilder instead of this function:
+// e.g.
+// <code>
+// mapping.Post("/path/to/api").HandlerFunc(func...).Build()
+// </code>
+func NewSimpleMapping(name, group, path, method string, condition RequestMatcher, handlerFunc http.HandlerFunc) SimpleMapping {
 	return &simpleMapping{
 		name:        name,
 		group:       group,
@@ -252,7 +276,7 @@ func NewSimpleMapping(name, group, path, method string, condition RequestMatcher
 	}
 }
 
-func (g simpleMapping) HandlerFunc() HandlerFunc {
+func (g simpleMapping) HandlerFunc() http.HandlerFunc {
 	return g.handlerFunc
 }
 

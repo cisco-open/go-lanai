@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/internal/mvc"
 	"net/http"
 	"reflect"
 )
@@ -36,8 +37,15 @@ var supportedResponseTypes = []reflect.Type {
 // <request>:   a struct or a pointer to a struct whose fields are properly tagged
 // <response>:  a pointer to a ModelView.
 // e.g.: func(context.Context, request *AnyStructWithTag) (response *ModelView, error) {...}
-type ModelViewHandlerFunc web.MvcHandlerFunc
+type ModelViewHandlerFunc interface{}
 
+// MappingBuilder builds web.TemplateMapping using web.GinBindingRequestDecoder, TemplateEncodeResponseFunc and TemplateErrorEncoder
+// MappingBuilder.Path, MappingBuilder.Method and MappingBuilder.HandlerFunc are required to successfully build a mapping.
+// See ModelViewHandlerFunc for supported strongly typed function signatures.
+// Example:
+// <code>
+// template.Post("/path/to/page").HandlerFunc(func...).Build()
+// </code>
 type MappingBuilder struct {
 	name        string
 	group       string
@@ -146,15 +154,15 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 		b.name = fmt.Sprintf("%s %s", b.method, b.path)
 	}
 
-	metadata := web.MakeFuncMetadata(b.handlerFunc, validateHandlerFunc)
-	decReq := web.MakeGinBindingDecodeRequestFunc(metadata)
+	metadata := mvc.NewFuncMetadata(b.handlerFunc, validateHandlerFunc)
+	decReq := mvc.GinBindingRequestDecoder(metadata)
 	encResp := TemplateEncodeResponseFunc
 
 	return web.NewMvcMapping(b.name, b.group, b.path, b.method, b.condition,
-		metadata,decReq, encResp, TemplateErrorEncoder)
+		metadata.HandlerFunc(), decReq, encResp, TemplateErrorEncoder)
 }
 
-// this is an additional validator, we assume basic validation is done (meaning given value web.MvcHandlerFunc)
+// this is an additional validator, to make sure the response value is supported type
 func validateHandlerFunc(f *reflect.Value) error {
 	if !f.IsValid() || f.IsZero() {
 		return errors.New("missing ModelViewHandlerFunc")

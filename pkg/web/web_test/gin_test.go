@@ -236,14 +236,14 @@ func registerAssertingGinMW(method, pattern string, fn gin.HandlerFunc) WebInitF
 
 type assertionFunc func(ctx context.Context, req *http.Request)
 
-func assertingEndpointFunc(assertFn assertionFunc) web.MvcHandlerFunc {
+func assertingEndpointFunc(assertFn assertionFunc) func(ctx context.Context, req *http.Request) (interface{}, error) {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
 		assertFn(ctx, req)
 		return testdata.Raw(ctx, req)
 	}
 }
 
-func assertingMWFunc(assertFn assertionFunc) web.HandlerFunc {
+func assertingMWFunc(assertFn assertionFunc) http.HandlerFunc {
 	return func(_ http.ResponseWriter, req *http.Request) {
 		assertFn(req.Context(), req)
 	}

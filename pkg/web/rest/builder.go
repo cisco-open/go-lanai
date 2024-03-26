@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/internal/mvc"
 	"net/http"
 )
 
@@ -37,8 +38,15 @@ import (
 //   - []byte
 //
 // e.g.: func(context.Context, request *AnyStructWithTag) (response *AnyStructWithTag, error) {...}
-type EndpointFunc web.MvcHandlerFunc
+type EndpointFunc interface{}
 
+// MappingBuilder builds web.EndpointMapping using web.GinBindingRequestDecoder, web.JsonResponseEncoder and web.JsonErrorEncoder
+// MappingBuilder.Path, MappingBuilder.Method and MappingBuilder.EndpointFunc are required to successfully build a mapping.
+// See EndpointFunc for supported strongly typed function signatures.
+// Example:
+// <code>
+// rest.Put("/path/to/api").EndpointFunc(func...).Build()
+// </code>
 type MappingBuilder struct {
 	name               string
 	group              string
@@ -208,10 +216,10 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 		b.name = fmt.Sprintf("%s %s%s", b.method, b.group, b.path)
 	}
 
-	metadata := web.MakeFuncMetadata(b.endpointFunc, nil)
+	metadata := mvc.NewFuncMetadata(b.endpointFunc, nil)
 	decReq := b.decodeRequestFunc
 	if decReq == nil {
-		decReq = web.MakeGinBindingDecodeRequestFunc(metadata)
+		decReq = mvc.GinBindingRequestDecoder(metadata)
 	}
 
 	encResp := b.encodeResponseFunc
@@ -226,7 +234,7 @@ func (b *MappingBuilder) buildMapping() web.MvcMapping {
 
 	return web.NewMvcMapping(
 		b.name, b.group, b.path, b.method, b.condition,
-		metadata, decReq, encResp, encErr,
+		metadata.HandlerFunc(), decReq, encResp, encErr,
 	)
 }
 

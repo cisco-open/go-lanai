@@ -21,27 +21,11 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"net/http"
-	"reflect"
 )
 
 const (
-	templateInvalidMvcHandlerFunc = "invalid MVC handler function signature: %v, but got <%v>"
 	templateValidationFieldError = "validation failed on '%s' with criteria '%s'"
 )
-
-/*****************************
-	Error definitions
-******************************/
-
-// mapping related
-type errorInvalidMvcHandlerFunc struct {
-	reason error
-	target *reflect.Value
-}
-
-func (e *errorInvalidMvcHandlerFunc) Error() string {
-	return fmt.Sprintf(templateInvalidMvcHandlerFunc, e.reason.Error(), e.target.Type())
-}
 
 /**************************
 	Generic Http Error

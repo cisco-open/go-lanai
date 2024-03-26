@@ -509,7 +509,7 @@ func (r *Registrar) installRoutedMappings(ctx context.Context, method, group str
 		case SimpleGinMapping:
 			handlerFuncs[i] = r.makeGinConditionalHandlerFunc(m.(SimpleGinMapping).GinHandlerFunc(), m.Condition())
 		case SimpleMapping:
-			f := NewHttpGinHandlerFunc(http.HandlerFunc(m.(SimpleMapping).HandlerFunc()))
+			f := NewHttpGinHandlerFunc(m.(SimpleMapping).HandlerFunc())
 			handlerFuncs[i] = r.makeGinConditionalHandlerFunc(f, m.Condition())
 		}
 	}
@@ -616,12 +616,10 @@ func (r *Registrar) loadHtmlTemplates(ctx context.Context) {
 ***************************/
 
 func (r *Registrar) makeHandlerFuncFromMvcMapping(m MvcMapping, errTranslators []ErrorTranslator) gin.HandlerFunc {
-	// try to add error translators
-	if mapping, ok := m.(*mvcMapping); ok {
-		mapping.errTranslators = append(mapping.errTranslators, errTranslators...)
-	}
-	handler := NewGinHandlerFunc(m.HandlerFunc())
-	return r.makeGinConditionalHandlerFunc(handler, m.Condition())
+	handlerFunc := makeMvcHttpHandlerFunc(m, func(h *mvcHandler) {
+		h.errEncoder = newErrorEncoder(h.errEncoder, errTranslators...)
+	})
+	return r.makeGinConditionalHandlerFunc(NewHttpGinHandlerFunc(handlerFunc), m.Condition())
 }
 
 // makeGinConditionalHandlerFunc wraps given handler with a request matcher
