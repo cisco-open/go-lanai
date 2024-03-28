@@ -16,7 +16,6 @@
 
 package repo
 
-import "C"
 import (
     "fmt"
     "github.com/cisco-open/go-lanai/pkg/data"
