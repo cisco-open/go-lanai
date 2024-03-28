@@ -19,7 +19,7 @@ package web
 import (
 	"context"
 	"encoding/json"
-	httptransport "github.com/go-kit/kit/transport/http"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"net/http"
 )
@@ -70,7 +70,7 @@ func (m errorTranslateMapping) TranslateFunc() ErrorTranslateFunc {
 	Error Translation
  *************************/
 
-func newErrorEncoder(encoder httptransport.ErrorEncoder, translators ...ErrorTranslator) httptransport.ErrorEncoder {
+func newErrorEncoder(encoder EncodeErrorFunc, translators ...ErrorTranslator) EncodeErrorFunc {
 	return func(ctx context.Context, err error, rw http.ResponseWriter) {
 		for _, t := range translators {
 			err = t.Translate(ctx, err)
@@ -130,14 +130,35 @@ func newDefaultErrorTranslator() defaultErrorTranslator {
 	Error Encoder
 ******************************/
 
-func JsonErrorEncoder() httptransport.ErrorEncoder {
+func JsonErrorEncoder() EncodeErrorFunc {
 	return jsonErrorEncoder
 }
 
-func jsonErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
-	//nolint:errorlint
+//nolint:errorlint
+func jsonErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
+	// body
 	if _, ok := err.(json.Marshaler); !ok {
 		err = NewHttpError(0, err)
 	}
-	httptransport.DefaultErrorEncoder(c, err, w)
+	body, e := json.Marshal(err)
+	if e != nil {
+		body = []byte(fmt.Sprintf(`{"error":"%s"}`, err.Error()))
+	}
+	// headers
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if headerer, ok := err.(Headerer); ok {
+		for k, values := range headerer.Headers() {
+			for _, v := range values {
+				w.Header().Add(k, v)
+			}
+		}
+	}
+	// status code
+	code := http.StatusInternalServerError
+	if sc, ok := err.(StatusCoder); ok {
+		code = sc.StatusCode()
+	}
+	// write response
+	w.WriteHeader(code)
+	_, _ = w.Write(body)
 }

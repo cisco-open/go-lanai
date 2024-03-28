@@ -5,7 +5,7 @@ go 1.21.4
 replace github.com/cisco-open/go-lanai => ./../../../go-lanai
 
 require (
-	github.com/cisco-open/go-lanai v0.13.1-0.20240311221150-2525faca9482
+	github.com/cisco-open/go-lanai v0.13.1-0.20240324131552-56de4d9db8c1
 	github.com/pkg/errors v0.9.1
 	go.uber.org/fx v1.21.0
 )
@@ -29,9 +29,6 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.9.1 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
-	github.com/go-kit/kit v0.13.0 // indirect
-	github.com/go-kit/log v0.2.1 // indirect
-	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.19.0 // indirect

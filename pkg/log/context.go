@@ -21,15 +21,15 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/log/internal"
 )
 
-// common fields added by us
+//goland:noinspection GoNameStartsWithPackageName
 const (
-	LogKeyMessage   = internal.LogKeyMessage
-	LogKeyName      = internal.LogKeyName
-	LogKeyTimestamp = internal.LogKeyTimestamp
-	LogKeyCaller    = internal.LogKeyCaller
-	LogKeyLevel     = internal.LogKeyLevel
-	LogKeyContext   = internal.LogKeyContext
-	LogKeyStacktrace   = internal.LogKeyStacktrace
+	LogKeyMessage    = internal.LogKeyMessage
+	LogKeyName       = internal.LogKeyName
+	LogKeyTimestamp  = internal.LogKeyTimestamp
+	LogKeyCaller     = internal.LogKeyCaller
+	LogKeyLevel      = internal.LogKeyLevel
+	LogKeyContext    = internal.LogKeyContext
+	LogKeyStacktrace = internal.LogKeyStacktrace
 )
 
 type ContextValuers map[string]ContextValuer
@@ -42,9 +42,6 @@ type Logger interface {
 	Leveler
 	CallerValuer
 	StdLogger
-	// Log is go-kit log.Logger interface
-	// Deprecated: go-kit is fading out. Use FmtLogger, KVLogger instead
-	Log(keyvals ...interface{}) error
 }
 
 type ContextualLogger interface {

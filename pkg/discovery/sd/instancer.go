@@ -20,11 +20,9 @@ package sd
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/pkg/utils/loop"
-	"github.com/go-kit/kit/sd"
 	"reflect"
 	"sync"
 	"time"
@@ -69,11 +67,10 @@ type CachedInstancerOption struct {
 	ForegroundRefreshFunc RefreshFunc
 }
 
-// CachedInstancer implements discovery.Instancer and sd.Instancer.
+// CachedInstancer implements discovery.Instancer
 // CachedInstancer provides common implementation of discovery.Instancer with an internal cache and a background goroutine
 // to periodically refresh service cache using provided RefreshFunc.
 // See discovery.Instancer
-// Note: Implementing sd.Instancer is for compatibility reason, using it involves additional Lock locking. Try use instancer's callback capability instead
 type CachedInstancer struct {
 	CachedInstancerOption
 	ctx         context.Context
@@ -85,7 +82,6 @@ type CachedInstancer struct {
 	cancelFunc  context.CancelFunc
 	cache       discovery.ServiceCache
 	callbacks   map[interface{}]discovery.Callback
-	broadcaster *kitBroadcaster
 }
 
 // MakeCachedInstancer returns a CachedInstancer that provide basic implementation of discovery.Instancer
@@ -106,9 +102,6 @@ func MakeCachedInstancer(opts ...CachedInstancerOptions) CachedInstancer {
 		looper:                loop.NewLoop(),
 		cache:                 NewSimpleServiceCache(),
 		callbacks:             map[interface{}]discovery.Callback{},
-		broadcaster: &kitBroadcaster{
-			chs: map[chan<- sd.Event]struct{}{},
-		},
 	}
 }
 
@@ -175,36 +168,13 @@ func (i *CachedInstancer) DeregisterCallback(id interface{}) {
 	delete(i.callbacks, id)
 }
 
-// Stop implements sd.Instancer and CachedInstancer.
+// Stop implements discovery.Instancer.
 func (i *CachedInstancer) Stop() {
 	i.stateMtx.Lock()
 	defer i.stateMtx.Unlock()
 	if i.cancelFunc != nil {
 		i.cancelFunc()
 	}
-}
-
-// Register implements sd.Instancer.
-func (i *CachedInstancer) Register(ch chan<- sd.Event) {
-	i.stateMtx.Lock()
-	i.cacheMtx.RLock()
-	defer i.stateMtx.Unlock()
-	defer i.cacheMtx.RUnlock()
-
-	var event sd.Event
-	svc := i.cache.Get(i.Name)
-	if svc != nil {
-		event = makeEvent(svc)
-	}
-	i.broadcaster.register(ch, event)
-}
-
-// Deregister implements sd.Instancer.
-func (i *CachedInstancer) Deregister(ch chan<- sd.Event) {
-	i.stateMtx.Lock()
-	defer i.stateMtx.Unlock()
-
-	i.broadcaster.deregister(ch)
 }
 
 // RefreshNow invoke refresh task immediately in current goroutine.
@@ -253,9 +223,6 @@ func (i *CachedInstancer) onRefresh(ctx context.Context, service *discovery.Serv
 	notify = i.shouldNotify(service, existing)
 	if notify {
 		i.logUpdate(ctx, service, existing)
-		// for go-kit compatibility
-		evt := makeEvent(service)
-		i.broadcaster.broadcast(evt)
 	}
 }
 
@@ -330,61 +297,8 @@ func (i *CachedInstancer) verboseLog(ctx context.Context, new, old *discovery.Se
 }
 
 /***********************
-	go-kit event
- ***********************/
-// kitBroadcaster is not goroutine safe
-type kitBroadcaster struct {
-	chs map[chan<- sd.Event]struct{}
-}
-
-func (b *kitBroadcaster) broadcast(event sd.Event) {
-	for c := range b.chs {
-		b.send(event, c)
-	}
-}
-
-func (b *kitBroadcaster) send(event sd.Event, ch chan<- sd.Event) {
-	eventCopy := copyEvent(event)
-	ch <- eventCopy
-}
-
-func (b *kitBroadcaster) register(c chan<- sd.Event, lastEvent sd.Event) {
-	b.chs[c] = struct{}{}
-	b.send(lastEvent, c)
-}
-
-func (b *kitBroadcaster) deregister(c chan<- sd.Event) {
-	delete(b.chs, c)
-}
-
-/***********************
 	Helpers
 ***********************/
-
-func makeEvent(svc *discovery.Service) sd.Event {
-	instances := make([]string, len(svc.Insts))
-	for i, inst := range svc.Insts {
-		instances[i] = fmt.Sprintf("%s:%d", inst.Address, inst.Port)
-	}
-	return sd.Event{
-		Instances: instances,
-		Err:       svc.Err,
-	}
-}
-
-// copyEvent does a deep copy on sd.Event
-func copyEvent(e sd.Event) sd.Event {
-	// observers all need their own copy of event
-	// because they can directly modify event.Instances
-	// for example, by calling sort.Strings
-	if e.Instances == nil {
-		return e
-	}
-	instances := make([]string, len(e.Instances))
-	copy(instances, e.Instances)
-	e.Instances = instances
-	return e
-}
 
 type svcDiff struct {
 	healthy,

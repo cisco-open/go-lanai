@@ -222,7 +222,7 @@ func SubTestTemplateRedirect(di *TestDI) test.GomegaSubTestFunc {
 	Helpers
  *************************/
 
-func errorTmplEndpointFunc(err error) web.MvcHandlerFunc {
+func errorTmplEndpointFunc(err error) func(ctx context.Context, req *http.Request) (*template.ModelView, error) {
 	return func(ctx context.Context, req *http.Request) (*template.ModelView, error) {
 		return nil, err
 	}

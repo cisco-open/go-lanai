@@ -43,7 +43,7 @@ func UniversalTranslator() *ut.UniversalTranslator {
 }
 
 // SimpleTranslationRegFunc returns a translation registration function for simple validation translate template
-// the return ed function could used to register custom translation override
+// the returned function could be used to register custom translation override
 func SimpleTranslationRegFunc(tag, template string) func(*validator.Validate, ut.Translator) error {
 	return func(validate *validator.Validate, trans ut.Translator) error {
 		return validate.RegisterTranslation(tag, trans, func(ut ut.Translator) error {

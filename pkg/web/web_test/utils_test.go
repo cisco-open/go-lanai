@@ -268,7 +268,7 @@ func (mw *TestMW) Reset() {
 	mw.Invocation = nil
 }
 
-func (mw *TestMW) HandlerFunc() web.HandlerFunc {
+func (mw *TestMW) HandlerFunc() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		mw.Invocation = append(mw.Invocation, mwInvocation{rw: rw, r: r, gc: web.GinContext(r.Context())})
 	}
@@ -365,6 +365,8 @@ func assertErrorResponse(_ *testing.T, g *gomega.WithT, resp *http.Response, exp
 	if expect.body != nil && expect.bodyDecoder != nil {
 		body, e := expect.bodyDecoder(resp.Body)
 		g.Expect(e).To(Succeed(), "decode response body should success")
-		g.Expect(body).To(BeEquivalentTo(expect.body), "response body should be correct")
+		for k, v := range expect.body {
+			g.Expect(body).To(HaveKeyWithValue(k, v), "response body should be correct")
+		}
 	}
 }

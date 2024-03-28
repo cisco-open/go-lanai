@@ -16,12 +16,17 @@
 
 package web
 
+import "net/http"
+
+// ConditionalMiddleware is an additional interface that a Middleware can implement to control when the middleware is applied.
+// e.g. a middleware want to be applied if request's header contains "Authorization"
 type ConditionalMiddleware interface {
 	Condition() RequestMatcher
 }
 
+// Middleware defines a http.HandlerFunc to be used by MiddlewareMapping and middleware.MappingBuilder
 type Middleware interface {
-	HandlerFunc() HandlerFunc
+	HandlerFunc() http.HandlerFunc
 }
 
 type middlewareMapping struct {
@@ -29,10 +34,16 @@ type middlewareMapping struct {
 	order       int
 	matcher     RouteMatcher
 	condition   RequestMatcher
-	handlerFunc HandlerFunc
+	handlerFunc http.HandlerFunc
 }
 
-func NewMiddlewareMapping(name string, order int, matcher RouteMatcher, cond RequestMatcher, handlerFunc HandlerFunc) MiddlewareMapping {
+// NewMiddlewareMapping create a MiddlewareMapping with http.HandlerFunc
+// It's recommended to use middleware.MappingBuilder instead of this function:
+// e.g.
+// <code>
+// middleware.NewBuilder("my-auth").Order(-10).Use(func...).Build()
+// </code>
+func NewMiddlewareMapping(name string, order int, matcher RouteMatcher, cond RequestMatcher, handlerFunc http.HandlerFunc) MiddlewareMapping {
 	return &middlewareMapping {
 		name: name,
 		matcher: matcher,
@@ -58,7 +69,7 @@ func (mm middlewareMapping) Condition() RequestMatcher {
 	return mm.condition
 }
 
-func (mm middlewareMapping) HandlerFunc() HandlerFunc {
+func (mm middlewareMapping) HandlerFunc() http.HandlerFunc {
 	return mm.handlerFunc
 }
 

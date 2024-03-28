@@ -39,6 +39,8 @@ const (
 	logTemplate = "lanai-log-template"
 )
 
+type Fields map[string]interface{}
+
 type TextFormatter interface {
 	Format(kvs Fields, w io.Writer) error
 }

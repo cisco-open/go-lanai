@@ -22,7 +22,6 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
 	"github.com/cisco-open/go-lanai/pkg/tenancy"
 	"github.com/cisco-open/go-lanai/pkg/web"
-	httptransport "github.com/go-kit/kit/transport/http"
 )
 
 type TenantHierarchyEndpoint struct {
@@ -116,7 +115,7 @@ func allowAccess(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func StringResponseEncoder() httptransport.EncodeResponseFunc {
+func StringResponseEncoder() web.EncodeResponseFunc {
 	return web.CustomResponseEncoder(func(opt *web.EncodeOption) {
 		opt.ContentType = "application/json; charset=utf-8"
 		opt.WriteFunc = web.TextWriteFunc

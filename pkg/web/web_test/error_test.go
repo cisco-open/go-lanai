@@ -17,28 +17,31 @@
 package web_test
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils/validation"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/cisco-open/go-lanai/pkg/web/matcher"
-    "github.com/cisco-open/go-lanai/pkg/web/middleware"
-    "github.com/cisco-open/go-lanai/pkg/web/rest"
-    "github.com/cisco-open/go-lanai/pkg/web/weberror"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/webtest"
-    "github.com/gin-gonic/gin"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "io"
-    "net/http"
-    "net/url"
-    "strconv"
-    "strings"
-    "testing"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils/validation"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/web/middleware"
+	"github.com/cisco-open/go-lanai/pkg/web/rest"
+	"github.com/cisco-open/go-lanai/pkg/web/weberror"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/webtest"
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	en_trans "github.com/go-playground/validator/v10/translations/en"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"io"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"testing"
 )
 
 /*************************
@@ -94,19 +97,31 @@ func SubTestBindingError(di *TestDI) test.GomegaSubTestFunc {
 					rest.Post("/picky").EndpointFunc(PickyEndpoint).Build(),
 				}
 				reg.MustRegister(mappings)
-				_ = web.Validator().RegisterValidationCtx("custom", validation.Regex("^[z]*$"))
+				// custom validator and translation
+				e := web.Validator().RegisterValidationCtx("custom", validation.Regex("^[z]*$"))
+				g.Expect(e).To(Succeed(), "registering custom validation should not fail")
+				trans := validation.DefaultTranslator()
+				e = web.Validator().SetTranslations(trans, validation.SimpleTranslationRegFunc("custom", `{0} is bad`))
+				g.Expect(e).To(Succeed(), "registering translation for custom validation should not fail")
+				// default translation
+				e = web.Validator().SetTranslations(trans, en_trans.RegisterDefaultTranslations)
+				g.Expect(e).To(Succeed(), "setting validator translations should no fail")
+				reg.MustRegister(weberror.New("validation").
+					ApplyTo(matcher.RouteWithPattern("/picky")).
+					Use(testBindingErrorTranslator()).
+					Build())
 			},
 		)
-		testBindingErrorEndpoint(ctx, t, g, http.MethodPost, "/picky", func(req *http.Request) {
+		testBindingErrorEndpoint(ctx, t, g, http.MethodPost, "/picky", HavePrefix(`JsonInt`), func(req *http.Request) {
 			req.Body = io.NopCloser(strings.NewReader(`{"string":"zzzzz","int":1}`))
 		})
-		testBindingErrorEndpoint(ctx, t, g, http.MethodPost, "/picky", func(req *http.Request) {
+		testBindingErrorEndpoint(ctx, t, g, http.MethodPost, "/picky", `JsonString is bad`, func(req *http.Request) {
 			req.Body = io.NopCloser(strings.NewReader(`{"string":"not good enough","int":65536}`))
 		})
-		testBindingErrorEndpoint(ctx, t, g, http.MethodPost, "/picky", func(req *http.Request) {
+		testBindingErrorEndpoint(ctx, t, g, http.MethodPost, "/picky", HavePrefix(`invalid character`), func(req *http.Request) {
 			req.Body = io.NopCloser(strings.NewReader(`bad json`))
 		})
-		testBindingErrorEndpoint(ctx, t, g, http.MethodPost, "/picky", func(req *http.Request) {
+		testBindingErrorEndpoint(ctx, t, g, http.MethodPost, "/picky", HavePrefix(`json:`), func(req *http.Request) {
 			req.Body = io.NopCloser(strings.NewReader(`"valid but not quite right"`))
 		})
 	}
@@ -328,6 +343,28 @@ func SubTestMWCustomTextError(di *TestDI) test.GomegaSubTestFunc {
 	Helper
  *************************/
 
+func testBindingErrorTranslator() web.ErrorTranslateFunc {
+	return func(ctx context.Context, err error) error {
+		var bindingErr web.BindingError
+		var verr validator.ValidationErrors
+		var jsonErr *json.SyntaxError
+		switch {
+		case errors.As(err, &verr):
+			// just return first error
+			for _, fe := range verr {
+				return web.NewBindingError(errors.New(fe.Translate(validation.DefaultTranslator())))
+			}
+			return err
+		case errors.As(err, &jsonErr):
+			return  web.NewBindingError(jsonErr)
+		case errors.As(err, &bindingErr):
+			return bindingErr
+		default:
+			return err
+		}
+	}
+}
+
 func registerErrorEndpoint(method, path string, err error) WebInitFunc {
 	return func(reg *web.Registrar) {
 		reg.MustRegister(rest.New(path).
@@ -347,7 +384,7 @@ func registerErrorMW(method, pattern string, err error) WebInitFunc {
 	}
 }
 
-func errorEndpointFunc(err error) web.MvcHandlerFunc {
+func errorEndpointFunc(err error) func(ctx context.Context, req *http.Request) (interface{}, error) {
 	return func(ctx context.Context, req *http.Request) (interface{}, error) {
 		return nil, err
 	}
@@ -376,11 +413,15 @@ func expectErrorHeader(header http.Header) func(expect *errExpectation) {
 	}
 }
 
-func testBindingErrorEndpoint(ctx context.Context, t *testing.T, g *gomega.WithT, method, path string, opts ...webtest.RequestOptions) {
+func testBindingErrorEndpoint(ctx context.Context, t *testing.T, g *gomega.WithT, method, path string, expectedMsg interface{}, opts ...webtest.RequestOptions) {
 	resp := invokeEndpoint(ctx, t, g, method, path, opts...)
 	expect := errExpectation{
 		status:      http.StatusBadRequest,
 		bodyDecoder: jsonBodyDecoder(),
+		body: map[string]interface{}{
+			"error": "Bad Request",
+			"message": expectedMsg,
+		},
 	}
 	assertErrorResponse(t, g, resp, expect)
 }

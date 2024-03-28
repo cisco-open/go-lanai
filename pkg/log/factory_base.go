@@ -17,15 +17,22 @@
 package log
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "os"
-    "path/filepath"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"os"
+	"path/filepath"
 )
 
 /*
 	Common functions that useful to any logger factory
  */
+
+const (
+	keyLevelDefault  = "default"
+	keySeparator     = "."
+	nameLevelDefault = "ROOT"
+)
 
 func loggerKey(name string) string {
 	return utils.CamelToSnakeCase(name)
@@ -48,4 +55,15 @@ func openOrCreateFile(location string) (*os.File, error) {
 		return nil, e
 	}
 	return os.OpenFile(location, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+}
+
+func buildContextValuerFromConfig(properties *Properties) ContextValuers {
+	valuers := ContextValuers{}
+	// k is context-key, v is log-key
+	for k, v := range properties.Mappings {
+		valuers[v] = func(ctx context.Context) interface{} {
+			return ctx.Value(k)
+		}
+	}
+	return valuers
 }

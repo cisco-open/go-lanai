@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
 )
 
@@ -39,19 +38,19 @@ type EncodeOption struct {
 	WriteFunc   func(rw http.ResponseWriter, v interface{}) error
 }
 
-func JsonResponseEncoder() httptransport.EncodeResponseFunc {
+func JsonResponseEncoder() EncodeResponseFunc {
 	return jsonEncodeResponseFunc
 }
 
-func TextResponseEncoder() httptransport.EncodeResponseFunc {
+func TextResponseEncoder() EncodeResponseFunc {
 	return textEncodeResponseFunc
 }
 
-func BytesResponseEncoder() httptransport.EncodeResponseFunc {
+func BytesResponseEncoder() EncodeResponseFunc {
 	return bytesEncodeResponseFunc
 }
 
-func CustomResponseEncoder(opts ...EncodeOptions) httptransport.EncodeResponseFunc {
+func CustomResponseEncoder(opts ...EncodeOptions) EncodeResponseFunc {
 	return func(c context.Context, rw http.ResponseWriter, response interface{}) error {
 		opts := append([]EncodeOptions{
 			func(opt *EncodeOption) {
@@ -161,7 +160,7 @@ func encodeResponse(_ context.Context, opts ...EncodeOptions) error {
 	}
 
 	// overwrite headers
-	if headerer, ok := opt.Response.(httptransport.Headerer); ok {
+	if headerer, ok := opt.Response.(Headerer); ok {
 		opt.Writer = NewLazyHeaderWriter(opt.Writer)
 		overwriteHeaders(opt.Writer, headerer)
 	}
@@ -170,7 +169,7 @@ func encodeResponse(_ context.Context, opts ...EncodeOptions) error {
 	opt.Writer.Header().Set("Content-Type", opt.ContentType)
 
 	// write header and status code
-	if coder, ok := opt.Response.(httptransport.StatusCoder); ok {
+	if coder, ok := opt.Response.(StatusCoder); ok {
 		opt.Writer.WriteHeader(coder.StatusCode())
 	}
 
@@ -187,7 +186,7 @@ func encodeResponse(_ context.Context, opts ...EncodeOptions) error {
 	}
 }
 
-func overwriteHeaders(w http.ResponseWriter, h httptransport.Headerer) {
+func overwriteHeaders(w http.ResponseWriter, h Headerer) {
 	for key, values := range h.Headers() {
 		for i, val := range values {
 			if i == 0 {
@@ -199,8 +198,3 @@ func overwriteHeaders(w http.ResponseWriter, h httptransport.Headerer) {
 	}
 }
 
-/**********************************
-	Generic Response Decoder
-***********************************/
-
-// TODO Response Decode function, used for client

@@ -19,8 +19,6 @@ package web
 import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/utils/matcher"
-	"github.com/go-kit/kit/endpoint"
-	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
 	"regexp"
 )
@@ -55,6 +53,10 @@ type EngineOptions func(*Engine)
 	Request
  *********************************/
 
+// DecodeRequestFunc extracts a payload from a http.Request. It's designed to be used by MvcMapping.
+// Example of common implementation includes JSON decoder or form data extractor
+type DecodeRequestFunc func(ctx context.Context, httpReq *http.Request) (req interface{}, err error)
+
 // RequestRewriter handles request rewrite. e.g. rewrite http.Request.URL.Path
 type RequestRewriter interface {
 	// HandleRewrite take the rewritten request and put it through the entire handling cycle.
@@ -67,22 +69,24 @@ type RequestRewriter interface {
 	Response
  *********************************/
 
-// StatusCoder is same interface defined in "github.com/go-kit/kit/transport/http"
-// this interface is majorly used internally with error handling
+// EncodeResponseFunc encodes a user response object into http.ResponseWriter. It's designed to be used by MvcMapping.
+// Example of common implementation includes JSON encoder or template based HTML generator.
+type EncodeResponseFunc func(ctx context.Context, rw http.ResponseWriter, resp interface{}) error
+
+// StatusCoder is an additional interface that a user response object or error could implement.
+// EncodeResponseFunc and EncodeErrorFunc should typically check for this interface and manipulate response status code accordingly
 type StatusCoder interface {
 	StatusCode() int
 }
 
-// Headerer is same interface defined in "github.com/go-kit/kit/transport/http"
-// this interface is majorly used internally with error handling
-// If an error value implements Headerer, the provided headers will be applied to the response writer, after
-// the Content-Type is set.
+// Headerer is an additional interface that a user response object or error could implement.
+// EncodeResponseFunc and EncodeErrorFunc should typically check for this interface and manipulate response headers accordingly
 type Headerer interface {
 	Headers() http.Header
 }
 
-// BodyContainer is a reponse body wrapping interface.
-// this interface is majorly used internally for mapping
+// BodyContainer is an additional interface that a user response object or error could implement.
+// This interface is majorly used internally for mapping
 type BodyContainer interface {
 	Body() interface{}
 }
@@ -90,6 +94,10 @@ type BodyContainer interface {
 /*********************************
 	Error Translator
  *********************************/
+
+// EncodeErrorFunc is responsible for encoding an error to the ResponseWriter. It's designed to be used by MvcMapping.
+// Example of common implementation includes JSON encoder or template based HTML generator.
+type EncodeErrorFunc func(ctx context.Context, err error, w http.ResponseWriter)
 
 // ErrorTranslator can be registered via web.Registrar
 // it will contribute our MvcMapping's error handling process.
@@ -115,26 +123,23 @@ func (fn ErrorTranslateFunc) Translate(ctx context.Context, err error) error {
 	Mappings
  *********************************/
 
+// Controller is usually implemented by user-domain types to provide a group of HTTP handling logics.
+// Each Controller provides a list of Mapping that defines how HTTP requests should be handled.
+// See Mapping
 type Controller interface {
 	Mappings() []Mapping
 }
 
-// HandlerFunc have same signature as http.HandlerFunc with additional assurance:
-// - the http.Request used on this HandlerFunc version contains a mutable context utils.MutableContext
-type HandlerFunc http.HandlerFunc
-
-// MvcHandlerFunc is a function with following signature
-// 	- one or two input parameters with 1st as context.Context and 2nd as <request>
-// 	- at least two output parameters with 2nd last as <response> and last as error
-// See rest.EndpointFunc, template.ModelViewHandlerFunc
-type MvcHandlerFunc interface{}
-
-// Mapping generic interface for all kind of endpoint mappings
+// Mapping is generic interface for all kind of HTTP mappings.
+// User-domain do not typically to implement this interface. Instead, predefined implementation and their builders
+// should be used.
+// See StaticMapping, RoutedMapping, MvcMapping, SimpleMapping, etc.
 type Mapping interface {
 	Name() string
 }
 
-// StaticMapping defines static assets mapping. e.g. javascripts, css, images, etc
+// StaticMapping defines static assets handling. e.g. javascripts, css, images, etc.
+// See assets.New()
 type StaticMapping interface {
 	Mapping
 	Path() string
@@ -143,7 +148,8 @@ type StaticMapping interface {
 	AddAlias(path, filePath string) StaticMapping
 }
 
-// RoutedMapping for endpoints that matches specific path, method and optionally a RequestMatcher as condition
+// RoutedMapping defines dynamic HTTP handling with specific HTTP Route (path and method) and optionally a RequestMatcher as condition.
+// RoutedMapping includes SimpleMapping, MvcMapping, etc.
 type RoutedMapping interface {
 	Mapping
 	Group() string
@@ -152,40 +158,58 @@ type RoutedMapping interface {
 	Condition() RequestMatcher
 }
 
-// SimpleMapping endpoints that are directly implemented as HandlerFunc
+// SimpleMapping endpoints that are directly implemented as HandlerFunc.
+// See mapping.MappingBuilder
 type SimpleMapping interface {
 	RoutedMapping
-	HandlerFunc() HandlerFunc
+	HandlerFunc() http.HandlerFunc
 }
 
-// MvcMapping defines HTTP handling that follows MVC pattern
-// could be EndpointMapping or TemplateMapping
+// MvcHandlerFunc is the generic function to be used for MvcMapping.
+// See MvcMapping, rest.EndpointFunc, template.ModelViewHandlerFunc
+type MvcHandlerFunc func(c context.Context, request interface{}) (response interface{}, err error)
+
+// MvcMapping defines HTTP handling that follows MVC pattern:
+// 1. The http.Request is decoded in to a request model object using MvcMapping.DecodeRequestFunc().
+// 2. The request model object is processed by MvcMapping.HandlerFunc() and a response model object is returned.
+// 3. The response model object is rendered into http.ResponseWriter using MvcMapping.EncodeResponseFunc().
+// 4. If any steps yield error, the error is rendered into http.ResponseWriter using MvcMapping.EncodeErrorFunc()
+//
+// Note:
+// Functions here are all weakly typed signature. User-domain developers typically should use mapping builders
+// (rest.MappingBuilder, template.MappingBuilder, etc) to create concrete MvcMapping instances.
+// See EndpointMapping or TemplateMapping
 type MvcMapping interface {
 	RoutedMapping
-	Endpoint() endpoint.Endpoint
-	DecodeRequestFunc() httptransport.DecodeRequestFunc
-	EncodeRequestFunc() httptransport.EncodeRequestFunc
-	DecodeResponseFunc() httptransport.DecodeResponseFunc
-	EncodeResponseFunc() httptransport.EncodeResponseFunc
-	ErrorEncoder() httptransport.ErrorEncoder
+	DecodeRequestFunc() DecodeRequestFunc
+	EncodeResponseFunc() EncodeResponseFunc
+	EncodeErrorFunc() EncodeErrorFunc
+	HandlerFunc() MvcHandlerFunc
 }
 
 // EndpointMapping defines REST API mapping.
 // REST API is usually implemented by Controller and accept/produce JSON objects
+// See rest.MappingBuilder
 type EndpointMapping MvcMapping
 
 // TemplateMapping defines templated MVC mapping. e.g. html templates
-// Templated MVC is usually implemented by Controller and produce a template and model for dynamic html generation
+// Templated MVC is usually implemented by Controller and produce a template and model for dynamic html generation.
+// See template.MappingBuilder
 type TemplateMapping MvcMapping
 
+// MiddlewareMapping defines middlewares that applies to all or selected set (via Matcher and Condition) of requests.
+// Middlewares are often used for task like security, pre/post processing request or response, metrics measurements, etc.
+// See middleware.MappingBuilder
 type MiddlewareMapping interface {
 	Mapping
 	Matcher() RouteMatcher
 	Order() int
 	Condition() RequestMatcher
-	HandlerFunc() HandlerFunc
+	HandlerFunc() http.HandlerFunc
 }
 
+// ErrorTranslateMapping defines how errors should be handled before it's rendered into http.ResponseWriter.
+// See weberror.MappingBuilder
 type ErrorTranslateMapping interface {
 	Mapping
 	Matcher() RouteMatcher
@@ -232,10 +256,16 @@ type simpleMapping struct {
 	path        string
 	method      string
 	condition   RequestMatcher
-	handlerFunc HandlerFunc
+	handlerFunc http.HandlerFunc
 }
 
-func NewSimpleMapping(name, group, path, method string, condition RequestMatcher, handlerFunc HandlerFunc) SimpleMapping {
+// NewSimpleMapping create a SimpleMapping.
+// It's recommended to use mapping.MappingBuilder instead of this function:
+// e.g.
+// <code>
+// mapping.Post("/path/to/api").HandlerFunc(func...).Build()
+// </code>
+func NewSimpleMapping(name, group, path, method string, condition RequestMatcher, handlerFunc http.HandlerFunc) SimpleMapping {
 	return &simpleMapping{
 		name:        name,
 		group:       group,
@@ -246,7 +276,7 @@ func NewSimpleMapping(name, group, path, method string, condition RequestMatcher
 	}
 }
 
-func (g simpleMapping) HandlerFunc() HandlerFunc {
+func (g simpleMapping) HandlerFunc() http.HandlerFunc {
 	return g.handlerFunc
 }
 
@@ -270,20 +300,3 @@ func (g simpleMapping) Name() string {
 	return g.name
 }
 
-/*********************************
-	orderedServerOption
- *********************************/
-
-// orderedServerOption wraps go-kit's httptransport.ServerOption and provide ordering
-type orderedServerOption struct {
-	httptransport.ServerOption
-	order int
-}
-
-func (o orderedServerOption) Order() int {
-	return o.order
-}
-
-func newOrderedServerOption(opt httptransport.ServerOption, order int) *orderedServerOption {
-	return &orderedServerOption{ServerOption: opt, order: order}
-}

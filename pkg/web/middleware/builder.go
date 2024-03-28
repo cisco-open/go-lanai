@@ -17,12 +17,20 @@
 package middleware
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/gin-gonic/gin"
-    "net/http"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
+// MappingBuilder builds web.MiddlewareMapping
+// Either MappingBuilder.Use or MappingBuilder.With should be set in order to successfully build a mapping.
+// If MappingBuilder.ApplyTo is not set, the middleware intercept all routes.
+// Supported handler function are gin.HandlerFunc or http.HandlerFunc
+// Example:
+// <code>
+// middleware.NewBuilder("my-auth").Order(-10).ApplyTo(matcher.RequestWithPattern("/api/v1/**")).Use(func...).Build()
+// </code>
 type MappingBuilder struct {
 	name       string
 	middleware web.Middleware
@@ -39,7 +47,7 @@ func NewBuilder(names ...string) *MappingBuilder {
 		name = names[0]
 	}
 	return &MappingBuilder{
-		name: name,
+		name:  name,
 		order: 0,
 	}
 }
@@ -71,10 +79,9 @@ func (b *MappingBuilder) ApplyTo(matcher web.RouteMatcher) *MappingBuilder {
 // Use set middleware handler. Support:
 // - gin.HandlerFunc
 // - http.HandlerFunc
-// - web.HandlerFunc
 func (b *MappingBuilder) Use(handlerFunc interface{}) *MappingBuilder {
 	switch handlerFunc.(type) {
-	case gin.HandlerFunc, http.HandlerFunc, web.HandlerFunc:
+	case gin.HandlerFunc, http.HandlerFunc:
 		b.handlerFunc = handlerFunc
 	default:
 		panic(fmt.Errorf("unsupported HandlerFunc type: %T", handlerFunc))
@@ -92,7 +99,7 @@ func (b *MappingBuilder) Build() web.MiddlewareMapping {
 	var handlerFunc interface{}
 	if b.middleware != nil {
 		handlerFunc = b.middleware.HandlerFunc()
-		if conditional,ok := b.middleware.(web.ConditionalMiddleware); ok {
+		if conditional, ok := b.middleware.(web.ConditionalMiddleware); ok {
 			condition = conditional.Condition()
 		}
 	}
@@ -109,8 +116,6 @@ func (b *MappingBuilder) Build() web.MiddlewareMapping {
 	case gin.HandlerFunc:
 		return web.NewMiddlewareGinMapping(b.name, b.order, b.matcher, condition, v)
 	case http.HandlerFunc:
-		return web.NewMiddlewareMapping(b.name, b.order, b.matcher, condition, web.HandlerFunc(v))
-	case web.HandlerFunc:
 		return web.NewMiddlewareMapping(b.name, b.order, b.matcher, condition, v)
 	default:
 		panic(fmt.Errorf("unable to build '%s' middleware mapping: unsupported HandlerFunc type %v. please use With(...) or Use(...)", b.name, handlerFunc))
@@ -140,6 +145,3 @@ func (b *MappingBuilder) GetOrder() int {
 /*****************************
 	Helpers
 ******************************/
-
-
-

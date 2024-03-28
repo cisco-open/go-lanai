@@ -51,11 +51,11 @@ func (c *ExampleFriendsController) GetItems(ctx context.Context) (int, interface
 		return 0, nil, err
 	}
 
-	var resp []api.ResponseItem
-	for _, f := range friends {
+	resp := make([]api.ResponseItem, len(friends))
+	for i := range friends {
 		resp = append(resp, api.ResponseItem{
-			FirstName: &f.FirstName,
-			LastName:  &f.LastName,
+			FirstName: &friends[i].FirstName,
+			LastName:  &friends[i].LastName,
 		})
 	}
 	return 0, resp, nil

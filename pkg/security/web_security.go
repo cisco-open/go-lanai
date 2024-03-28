@@ -52,11 +52,11 @@ func newWebSecurity(ctx context.Context, authenticator Authenticator, shared map
 }
 
 /* WebSecurity interface */
-func (t webSecurity) Context() context.Context {
-	if t.context == nil {
+func (ws *webSecurity) Context() context.Context {
+	if ws.context == nil {
 		return context.TODO()
 	}
-	return t.context
+	return ws.context
 }
 
 func (ws *webSecurity) Features() []Feature {
@@ -179,26 +179,24 @@ func (ws *webSecurity) GetHandlers() []interface{} {
 func (ws *webSecurity) Build() []web.Mapping {
 	mappings := make([]web.Mapping, len(ws.handlers))
 
-	for i, v := range ws.handlers {
-		var mapping web.Mapping
-
-		switch v.(type) {
+	for i, handler := range ws.handlers {
+		var m web.Mapping
+		switch v := handler.(type) {
 		case MiddlewareTemplate:
-			mapping = ws.buildFromMiddlewareTemplate(v.(MiddlewareTemplate))
+			m = ws.buildFromMiddlewareTemplate(handler.(MiddlewareTemplate))
 		case SimpleMappingTemplate:
-			mapping = ws.buildFromSimpleMappingTemplate(v.(SimpleMappingTemplate))
-		case web.SimpleMapping:
-			mapping = v.(web.SimpleMapping)
+			m = ws.buildFromSimpleMappingTemplate(handler.(SimpleMappingTemplate))
+		// Note: we don't use web.Mapping here because the interface is too simple and may have false positive
+		case web.RoutedMapping:
+			m = v
 		case web.StaticMapping:
-			mapping = v.(web.StaticMapping)
-		case web.MvcMapping:
-			mapping = v.(web.MvcMapping)
+			m = v
 		case web.MiddlewareMapping:
-			mapping = v.(web.MiddlewareMapping)
+			m = v
 		default:
 			panic(fmt.Errorf("unable to build security mappings from unsupported WebSecurity handler [%T]", v))
 		}
-		mappings[i] = mapping
+		mappings[i] = m
 	}
 	return mappings
 }
@@ -258,9 +256,9 @@ func (ws *webSecurity) toAcceptedHandler(v interface{}) (interface{}, error) {
 		switch v.(type) {
 		case MiddlewareTemplate:
 		case SimpleMappingTemplate:
-		case web.SimpleMapping:
+		// Note: we don't use web.Mapping here because the interface is too simple and may have false positive
+		case web.RoutedMapping:
 		case web.StaticMapping:
-		case web.MvcMapping:
 		case web.MiddlewareMapping:
 		default:
 			return nil, fmt.Errorf("unsupported WebSecurity handler [%T]", v)
