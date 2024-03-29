@@ -26,8 +26,9 @@ func GinBindingRequestDecoder(s *Metadata) web.DecodeRequestFunc {
 	})
 }
 
-// returned ptr is the pointer regardless if given type is Ptr or other type
-// returned value is actually the value with given type
+// allocate memory space of given type.
+// If the given type is a pointer, the returned value is non-nil.
+// Otherwise, a zero value is returned
 func instantiateByType(t reflect.Type) reflect.Value {
 	switch t.Kind() {
 	case reflect.Ptr:
