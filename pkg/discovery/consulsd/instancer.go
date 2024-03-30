@@ -38,10 +38,9 @@ type InstancerOption struct {
 	ConsulConnection *consul.Connection
 }
 
-// Instancer implements discovery.Instancer and sd.Instancer.
+// Instancer implements discovery.Instancer
 // It yields service for a serviceName in Consul.
 // See discovery.Instancer
-// Note: Implementing sd.Instancer is for compatibility reason, using it involves additional Lock locking. Try use instancer's callback capability instead
 type Instancer struct {
 	sd.CachedInstancer
 	consul   *consul.Connection

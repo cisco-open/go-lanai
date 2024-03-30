@@ -17,15 +17,14 @@
 package actuator
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils/matcher"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/cisco-open/go-lanai/pkg/web/rest"
-    httptransport "github.com/go-kit/kit/transport/http"
-    "net/http"
-    "reflect"
-    "strings"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils/matcher"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/rest"
+	"net/http"
+	"reflect"
+	"strings"
 )
 
 var (
@@ -255,7 +254,7 @@ type MappingNameFunc func(op Operation) string
 type WebEndpointBase struct {
 	EndpointBase
 	properties *WebEndpointsProperties
-	formats    map[string]httptransport.EncodeResponseFunc
+	formats    map[string]web.EncodeResponseFunc
 }
 
 func MakeWebEndpointBase(opts ...EndpointOptions) WebEndpointBase {
@@ -263,7 +262,7 @@ func MakeWebEndpointBase(opts ...EndpointOptions) WebEndpointBase {
 	return WebEndpointBase{
 		EndpointBase: base,
 		properties:   &base.properties.Web,
-		formats: map[string]httptransport.EncodeResponseFunc{
+		formats: map[string]web.EncodeResponseFunc{
 			ContentTypeSpringBootV3: SpringBootRespEncoderV3(),
 			ContentTypeSpringBootV2: SpringBootRespEncoderV2(),
 			"application/json":      web.JsonResponseEncoder(),
@@ -336,7 +335,7 @@ func (b WebEndpointBase) NegotiateFormat(ctx context.Context) string {
 	return ContentTypeSpringBootV3
 }
 
-func (b WebEndpointBase) NegotiableResponseEncoder() httptransport.EncodeResponseFunc {
+func (b WebEndpointBase) NegotiableResponseEncoder() web.EncodeResponseFunc {
 	return func(ctx context.Context, rw http.ResponseWriter, i interface{}) error {
 		format := b.NegotiateFormat(ctx)
 		if enc, ok := b.formats[format]; ok {
@@ -346,14 +345,14 @@ func (b WebEndpointBase) NegotiableResponseEncoder() httptransport.EncodeRespons
 	}
 }
 
-func SpringBootRespEncoderV3() httptransport.EncodeResponseFunc {
+func SpringBootRespEncoderV3() web.EncodeResponseFunc {
 	return web.CustomResponseEncoder(func(opt *web.EncodeOption) {
 		opt.ContentType = ContentTypeSpringBootV3
 		opt.WriteFunc = web.JsonWriteFunc
 	})
 }
 
-func SpringBootRespEncoderV2() httptransport.EncodeResponseFunc {
+func SpringBootRespEncoderV2() web.EncodeResponseFunc {
 	return web.CustomResponseEncoder(func(opt *web.EncodeOption) {
 		opt.ContentType = ContentTypeSpringBootV2
 		opt.WriteFunc = web.JsonWriteFunc

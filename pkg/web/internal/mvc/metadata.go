@@ -14,12 +14,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package web
+package mvc
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"net/http"
 	"reflect"
 )
@@ -28,24 +29,37 @@ import (
 	Func Metadata
 ******************************/
 const (
+	templateInvalidMvcHandlerFunc = "invalid MVC handler function signature: %v, but got <%v>"
 	errorMsgExpectFunc       = "expecting a function"
 	errorMsgInputParams      = "function should have one or two input parameters, where the first is context.Context and the second is a struct or pointer to struct"
 	errorMsgOutputParams     = "function should have at least two output parameters, where the the last is error"
 	errorMsgInvalidSignature = "unable to find request or response type"
 )
 
+// mapping related
+type errorInvalidMvcHandlerFunc struct {
+	reason error
+	target *reflect.Value
+}
+
+func (e *errorInvalidMvcHandlerFunc) Error() string {
+	return fmt.Sprintf(templateInvalidMvcHandlerFunc, e.reason.Error(), e.target.Type())
+}
+
 var (
 	specialTypeContext        = reflect.TypeOf((*context.Context)(nil)).Elem()
 	specialTypeHttpRequestPtr = reflect.TypeOf(&http.Request{})
-	specialTypeInt            = reflect.TypeOf(int(0))
+	specialTypeInt            = reflect.TypeOf(0)
 	specialTypeHttpHeader     = reflect.TypeOf((*http.Header)(nil)).Elem()
 	specialTypeError          = reflect.TypeOf((*error)(nil)).Elem()
 )
 
-// MvcHandlerFuncValidator validate MvcHandlerFunc signature
-type MvcHandlerFuncValidator func(f *reflect.Value) error
+// HandlerFuncValidator validate HandlerFunc signature
+type HandlerFuncValidator func(f *reflect.Value) error
 
-type MvcHandlerFuncReturnMapper func(*[]reflect.Value) (interface{}, error)
+// HandlerFunc is a function with supported signature to handle MVC request and returns MVC response or error
+// See rest.MappingBuilder and template.MappingBuilder for supported function signatures
+type HandlerFunc interface{}
 
 type param struct {
 	i int
@@ -72,7 +86,7 @@ type mvcIn struct {
 	request param
 }
 
-type mvcMetadata struct {
+type Metadata struct {
 	function *reflect.Value
 	request  reflect.Type
 	response reflect.Type
@@ -80,10 +94,10 @@ type mvcMetadata struct {
 	out      mvcOut
 }
 
-// MakeFuncMetadata uses reflect to analyze the given rest function and create a endpointFuncMetadata
+// NewFuncMetadata uses reflect to analyze the given handler function and create a Metadata.
 // this function panic if given function have incorrect signature
 // Caller can provide an optional validator to further validate function signature on top of default validation
-func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValidator) *mvcMetadata {
+func NewFuncMetadata(endpointFunc HandlerFunc, validator HandlerFuncValidator) *Metadata {
 	f := reflect.ValueOf(endpointFunc)
 	err := validateFunc(&f, validator)
 	if err != nil {
@@ -93,7 +107,7 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 
 	t := f.Type()
 	unknown := param{-1, nil}
-	meta := mvcMetadata{
+	meta := Metadata{
 		function: &f,
 		in: mvcIn{
 			context: unknown, request: unknown,
@@ -153,7 +167,39 @@ func MakeFuncMetadata(endpointFunc MvcHandlerFunc, validator MvcHandlerFuncValid
 	return &meta
 }
 
-func validateFunc(f *reflect.Value, validator MvcHandlerFuncValidator) (err error) {
+func (m Metadata) HandlerFunc() web.MvcHandlerFunc {
+	return func(c context.Context, request interface{}) (response interface{}, err error) {
+		// prepare input params
+		in := make([]reflect.Value, m.in.count)
+		in[m.in.context.i] = reflect.ValueOf(c)
+		if m.in.request.isValid() {
+			in[m.in.request.i] = reflect.ValueOf(request)
+		}
+
+		out := m.function.Call(in)
+
+		// post process output
+		err, _ = out[m.out.error.i].Interface().(error)
+		response = out[m.out.response.i].Interface()
+		if !m.out.sc.isValid() && !m.out.header.isValid() {
+			return response, err
+		}
+
+		// if necessary, wrap the response
+		wrapper := &web.Response{B: response}
+		if m.out.sc.isValid() {
+			wrapper.SC = int(out[m.out.sc.i].Int())
+		}
+
+		if m.out.header.isValid() {
+			wrapper.H, _ = out[m.out.header.i].Interface().(http.Header)
+		}
+
+		return wrapper, err
+	}
+}
+
+func validateFunc(f *reflect.Value, validator HandlerFuncValidator) (err error) {
 	// For now, we check function signature at runtime.
 	// I wish there is a way to check it at compile-time that I didn't know of
 	t := f.Type()

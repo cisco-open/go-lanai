@@ -17,14 +17,13 @@
 package template
 
 import (
-    "context"
-    "errors"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/gin-gonic/gin"
-    httptransport "github.com/go-kit/kit/transport/http"
-    "net/http"
-    "net/url"
-    "path"
+	"context"
+	"errors"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"net/url"
+	"path"
 )
 
 const (
@@ -145,7 +144,7 @@ func TemplateEncodeResponseFunc(ctx context.Context, _ http.ResponseWriter, resp
 
 	// get status code
 	status := 200
-	if coder, ok := response.(httptransport.StatusCoder); ok {
+	if coder, ok := response.(web.StatusCoder); ok {
 		status = coder.StatusCode()
 	}
 
@@ -177,18 +176,28 @@ func TemplateEncodeResponseFunc(ctx context.Context, _ http.ResponseWriter, resp
 	JSON Error Encoder
 ******************************/
 
+//nolint:errorlint
 //goland:noinspection GoNameStartsWithPackageName
 func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
-	ctx := web.GinContext(c)
-	if ctx == nil {
-		httptransport.DefaultErrorEncoder(c, err, w)
-		return
+	if headerer, ok := err.(web.Headerer); ok {
+		for k, values := range headerer.Headers() {
+			for _, v := range values {
+				w.Header().Add(k, v)
+			}
+		}
 	}
 
 	code := http.StatusInternalServerError
-	//nolint:errorlint
-	if sc, ok := err.(httptransport.StatusCoder); ok {
+	if sc, ok := err.(web.StatusCoder); ok {
 		code = sc.StatusCode()
+	}
+
+	gc := web.GinContext(c)
+	if gc == nil {
+		w.Header().Set(web.HeaderContentType, "text/plain; charset=utf-8")
+		w.WriteHeader(code)
+		_, _ = w.Write([]byte(err.Error()))
+		return
 	}
 
 	model := Model{
@@ -198,8 +207,8 @@ func TemplateErrorEncoder(c context.Context, err error, w http.ResponseWriter) {
 		ModelKeyStatusText: http.StatusText(code),
 	}
 
-	AddGlobalModelData(c, model, ctx.Request)
-	ctx.HTML(code, web.ErrorTemplate, model)
+	AddGlobalModelData(c, model, gc.Request)
+	gc.HTML(code, web.ErrorTemplate, model)
 }
 
 func AddGlobalModelData(ctx context.Context, model Model, r *http.Request) {
