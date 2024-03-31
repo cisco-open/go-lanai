@@ -14,13 +14,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package dsync_test
+package consuldsync_test
 
 import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"github.com/cisco-open/go-lanai/pkg/consul"
 	"github.com/cisco-open/go-lanai/pkg/dsync"
+	consuldsync "github.com/cisco-open/go-lanai/pkg/dsync/consul"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/cisco-open/go-lanai/test/consultest"
@@ -111,7 +112,7 @@ func SubTestConsulTryLock(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
 func SubTestConsulLockAndRelease(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const lockKey = "lock-test"
-		mgts := NewConsulManagers(di, g, func(opt *dsync.ConsulSessionOption) {
+		mgts := NewConsulManagers(di, g, func(opt *consuldsync.ConsulSessionOption) {
 			// minimum TTL and lock delay (1sec) for faster test
 			opt.TTL = 10 * time.Second
 			opt.LockDelay = 1 * time.Second
@@ -157,7 +158,7 @@ func SubTestConsulSessionRecovery(di *TestConsulDsyncDI) test.GomegaSubTestFunc 
 		const lockKey = "session-renew-test"
 		const sessionName = `test-session`
 		var ttl = 10 * time.Second
-		mgts := NewConsulManagers(di, g, func(opt *dsync.ConsulSessionOption) {
+		mgts := NewConsulManagers(di, g, func(opt *consuldsync.ConsulSessionOption) {
 			opt.Name = sessionName
 			// minimum TTL and lock delay (1sec) for faster test. Lower retry rate to avoid too many retries.
 			opt.TTL = ttl
@@ -210,7 +211,7 @@ func SubTestConsulSessionRecovery(di *TestConsulDsyncDI) test.GomegaSubTestFunc 
 func SubTestConsulInvalidSession(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const lockKey = "invalid-session-test"
-		mgts := NewConsulManagers(di, g, func(opt *dsync.ConsulSessionOption) {
+		mgts := NewConsulManagers(di, g, func(opt *consuldsync.ConsulSessionOption) {
 			// minimum TTL is 10s. Creating session will time out if TTL is invalid
 			opt.TTL = 1 * time.Second
 		})
@@ -301,14 +302,14 @@ func RemoveSession(g *WithT, consulConn *consul.Connection, sessionName string) 
 
 // TestConsulManagers to mimic distributed environment, we always needs multiple managers
 type TestConsulManagers struct {
-	Main      *dsync.ConsulSyncManager
-	Secondary *dsync.ConsulSyncManager
+	Main      *consuldsync.ConsulSyncManager
+	Secondary *consuldsync.ConsulSyncManager
 }
 
-func NewConsulManagers(di *TestConsulDsyncDI, g *gomega.WithT, opts ...dsync.ConsulSessionOptions) TestConsulManagers {
+func NewConsulManagers(di *TestConsulDsyncDI, g *gomega.WithT, opts ...consuldsync.ConsulSessionOptions) TestConsulManagers {
 	ret := TestConsulManagers{
-		Main:      dsync.NewConsulLockManager(di.AppCtx, di.Consul, opts...),
-		Secondary: dsync.NewConsulLockManager(di.AppCtx, di.Consul, opts...),
+		Main:      consuldsync.NewConsulLockManager(di.AppCtx, di.Consul, opts...),
+		Secondary: consuldsync.NewConsulLockManager(di.AppCtx, di.Consul, opts...),
 	}
 	g.Expect(ret.Main).ToNot(BeNil(), "major consul sync manager should not be nil")
 	g.Expect(ret.Secondary).ToNot(BeNil(), "minor consul sync manager should not be nil")

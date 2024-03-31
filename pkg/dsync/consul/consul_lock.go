@@ -14,13 +14,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package dsync
+package consuldsync
 
 import (
     "context"
     "errors"
     "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils/xsync"
+	"github.com/cisco-open/go-lanai/pkg/dsync"
+	"github.com/cisco-open/go-lanai/pkg/utils/xsync"
     "github.com/hashicorp/consul/api"
     "sync"
     "time"
@@ -37,7 +38,7 @@ type ConsulLockOption struct {
 	Context       context.Context
 	SessionFunc   func(context.Context) (string, error)
 	Key           string        // Must be set and have write permissions
-	Valuer        LockValuer    // cannot be nil, valuer to associate with the lock. Default to static json marshaller
+	Valuer        dsync.LockValuer    // cannot be nil, valuer to associate with the lock. Default to static json marshaller
 	QueryWaitTime time.Duration // how long we block per GET to check if lock acquisition is possible
 	RetryDelay    time.Duration // how long we wait after a retryable error (usually network error)
 }
@@ -76,7 +77,7 @@ func newConsulLock(client *api.Client, opts ...ConsulLockOptions) *ConsulLock {
 			Context: context.Background(),
 			QueryWaitTime: 10 * time.Minute,
 			RetryDelay:    2 * time.Second,
-			Valuer: NewJsonLockValuer(map[string]string{
+			Valuer: dsync.NewJsonLockValuer(map[string]string{
 				"name": "consul distributed lock",
 			}),
 		},
@@ -244,7 +245,7 @@ LOOP:
 			// current acquisition is cancelled
 			continue
 		case e != nil:
-			l.updateState(stateError, func() { l.lastErr = ErrSessionUnavailable })
+			l.updateState(stateError, func() { l.lastErr = dsync.ErrSessionUnavailable })
 			continue
 		default:
 			l.updateState(-1, func() { l.session = session })
@@ -320,7 +321,7 @@ LOOP:
 		case current == session:
 			break LOOP
 		case current != "" && !waitUntilAvailable:
-			return ErrLockUnavailable
+			return dsync.ErrLockUnavailable.WithMessage(`lock [%s] is held by another session`, l.option.Key)
 		}
 
 		// at this point, lock is not held by any session, but it may be in LockDelay period. pause and retry
@@ -375,7 +376,7 @@ func (l *ConsulLock) handleAcquisitionFailure(ctx context.Context, session strin
 			return owner, nil
 		default:
 			// update error state and retry
-			l.updateState(stateError, func() { l.lastErr = ErrLockUnavailable })
+			l.updateState(stateError, func() { l.lastErr = dsync.ErrLockUnavailable.WithMessage(`lock [%s] is held by another session`, l.option.Key) })
 		}
 
 		// see if cancelled
@@ -468,7 +469,7 @@ func (l *ConsulLock) release() error {
 
 	_, _, err := l.client.KV().Release(pair, nil)
 	if err != nil {
-		return fmt.Errorf("failed to release lock: %v", err)
+		return dsync.ErrUnlockFailed.WithCause(err)
 	}
 
 	return nil

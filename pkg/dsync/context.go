@@ -26,16 +26,17 @@ import (
 )
 
 var (
-	ErrLockUnavailable    = fmt.Errorf("lock is held by another session")
-	ErrSessionUnavailable = fmt.Errorf("session is not available")
-	ErrSyncManagerStopped = fmt.Errorf("sync manager stopped")
+	ErrLockUnavailable    = newError("lock is held by another session")
+	ErrUnlockFailed       = newError("failed to release lock")
+	ErrSessionUnavailable = newError("session is not available")
+	ErrSyncManagerStopped = newError("sync manager stopped")
 )
 
 type SyncManager interface {
 	// Lock returns a distributed lock for given key.
 	// For same key, the same Lock is returned. The returned Lock is goroutines-safe
 	// Note: the returned Lock is in idle mode
-	Lock(key string, opts...LockOptions) (Lock, error)
+	Lock(key string, opts ...LockOptions) (Lock, error)
 }
 
 type SyncManagerLifecycle interface {
@@ -85,14 +86,13 @@ type Lock interface {
 	Lost() <-chan struct{}
 }
 
-
 /*********************
 	Common Impl
  *********************/
 
 // LockWithKey returns a distributed Lock with given key
 // this function panic if internal SyncManager is not initialized yet or key is not provided
-func LockWithKey(key string, opts...LockOptions) Lock {
+func LockWithKey(key string, opts ...LockOptions) Lock {
 	if syncManager == nil {
 		panic("SyncManager is not initialized")
 	}

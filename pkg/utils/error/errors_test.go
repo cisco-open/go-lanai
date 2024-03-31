@@ -17,13 +17,15 @@
 package errorutils
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"testing"
 )
 
-func TestTypeComparison(t *testing.T) {
+func TestCodedErrorTypeComparison(t *testing.T) {
 	g := gomega.NewWithT(t)
 	g.Expect(errors.Is(ErrorTypeA, ErrorCategoryTest)).To(BeTrue(), "ErrorType should match ErrorCategoryTest")
 	g.Expect(errors.Is(ErrorTypeA, ErrorTypeA)).To(BeTrue(), "ErrorType should match itself")
@@ -39,9 +41,12 @@ func TestTypeComparison(t *testing.T) {
 	g.Expect(ErrorTypeA.RootCause()).To(BeNil(), "ErrorSubType shouldn't have root cause")
 }
 
-func TestConcreteError(t *testing.T) {
+func TestConcreteCodedError(t *testing.T) {
 	g := gomega.NewWithT(t)
-	actual := NewCodedError(ErrorCodeA1_1, "whatever message")
+	// test marshalling of concrete error
+	orig := NewCodedError(ErrorCodeA1_1, "whatever message")
+	actual := assertGobEncodeAndDecode(g, orig)
+
 	ref := ErrorA1_1
 	cause := CauseA1_1
 	nonCoded := errors.New("non-coded error")
@@ -60,9 +65,12 @@ func TestConcreteError(t *testing.T) {
 	g.Expect(errors.Is(actual, ErrorSubTypeB1)).To(BeFalse(), "actual error should not match ErrorSubTypeB1")
 }
 
-func TestConcreteTypeError(t *testing.T) {
+func TestConcreteCodedTypeError(t *testing.T) {
 	g := gomega.NewWithT(t)
-	actual := NewCodedError(ErrorSubTypeCodeA2, "whatever message")
+	// test marshalling of concrete error
+	orig := NewCodedError(ErrorSubTypeCodeA2, "whatever message")
+	actual := assertGobEncodeAndDecode(g, orig)
+
 	ref := ErrorA2
 	cause := CauseA2
 	nonCoded := errors.New("non-coded error")
@@ -84,10 +92,16 @@ func TestConcreteTypeError(t *testing.T) {
 	//g.Expect(errors.Is(ErrorSubTypeA2, actual)).To(BeFalse(), "concrete sub type error should not match its own type as a target")
 }
 
-func TestNestedError(t *testing.T) {
+func TestCodedErrorWithCausesChain(t *testing.T) {
 	g := gomega.NewWithT(t)
-	cause := ErrorB1_1
-	actual := NewCodedError(ErrorSubTypeCodeA2, cause)
+	causeDirect := ErrorB1_1
+	causeIntermediate := ErrorB1_2
+	causeRoot := ErrorA1_1
+	expectedCauseRoot := CauseA1_1
+	// Note: by design, the nested errors are not serialized
+	actual := NewCodedError(ErrorSubTypeCodeA2, causeDirect, causeIntermediate, causeRoot)
+	_ = assertGobEncodeAndDecode(g, actual)
+
 	ref := ErrorA2
 	nonCoded := errors.New("non-coded error")
 
@@ -98,10 +112,15 @@ func TestNestedError(t *testing.T) {
 	g.Expect(errors.Is(ref, actual)).To(BeTrue(), "two ErrorA2 should match each other regardless of actual message and comparison order")
 
 	g.Expect(errors.Is(actual, nonCoded)).To(BeFalse(), "actual error should not match non-coded error")
-	g.Expect(errors.Is(actual, cause)).To(BeFalse(), "actual error should not match error's cause")
+	g.Expect(errors.Is(actual, causeDirect)).To(BeFalse(), "actual error should not match error's direct cause")
+	g.Expect(errors.Is(actual, causeIntermediate)).To(BeFalse(), "actual error should not match error's intermediate cause")
+	g.Expect(errors.Is(actual, causeRoot)).To(BeFalse(), "actual error should not match error's root cause")
 	g.Expect(errors.Is(actual, ErrorTypeB)).To(BeFalse(), "actual error should not match coded cause's type (ErrorTypeB)")
 	g.Expect(errors.Is(actual, ErrorSubTypeA1)).To(BeFalse(), "actual error should not match ErrorSubTypeA1")
 	g.Expect(errors.Is(actual, ErrorSubTypeB1)).To(BeFalse(), "actual error should not match ErrorSubTypeB1")
+
+	g.Expect(errors.Is(actual.Cause(), causeDirect)).To(BeTrue(), "actual error's direct cause should be correct")
+	g.Expect(errors.Is(actual.RootCause(), expectedCauseRoot)).To(BeTrue(), "actual error's root cause should be correct")
 }
 
 func TestWrappedError(t *testing.T) {
@@ -148,6 +167,17 @@ func tryReserve(v interface{}) (err error) {
 	}()
 	Reserve(v)
 	return
+}
+
+func assertGobEncodeAndDecode[T error](g *gomega.WithT, orig T) T {
+	var buf bytes.Buffer
+	e := gob.NewEncoder(&buf).Encode(orig)
+	g.Expect(e).To(Succeed(), "encoding error to binary should not fail")
+	var decoded T
+	e = gob.NewDecoder(&buf).Decode(&decoded)
+	g.Expect(e).To(Succeed(), "decoding error from binary should not fail")
+	g.Expect(errors.Is(decoded, orig), "decoded error should be original error")
+	return decoded
 }
 
 /************************

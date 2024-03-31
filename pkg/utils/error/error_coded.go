@@ -132,7 +132,7 @@ func (e CodedError) Is(target error) bool {
 	return false
 }
 
-// nestedError implements error, NestedError, encoding.BinaryMarshaler, encoding.BinaryUnmarshaler
+// nestedError implements error, NestedError
 type nestedError struct {
 	error
 	nested error
@@ -156,33 +156,6 @@ func (e nestedError) RootCause() error {
 		}
 	}
 	return e.error
-}
-
-// MarshalBinary implements encoding.BinaryMarshaler interface
-// error.Error(), is written into byte array in the mentioned order
-// Note: currently we don't serialize Cause() to avoid cyclic reference
-func (e nestedError) MarshalBinary() ([]byte, error) {
-
-	buffer := bytes.NewBuffer([]byte{})
-	if _, err := buffer.WriteString(e.Error()); err != nil {
-		return nil, err
-	}
-	if err := buffer.WriteByte(byte(0)); err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
-}
-
-// UnmarshalBinary implements encoding.BinaryUnmarshaler interface
-func (e *nestedError) UnmarshalBinary(data []byte) (err error) {
-	buffer := bytes.NewBuffer(data)
-	errBytes, err := buffer.ReadString(byte(0))
-	if err != nil {
-		return err
-	}
-	e.error = errors.New(errBytes[:len(errBytes)-1])
-	return
 }
 
 /************************
@@ -231,10 +204,7 @@ func construct(e interface{}) error {
 // NewCodedError creates concrete error. it cannot be used as ErrorType or ErrorSubType comparison
 // supported item are string, error, fmt.Stringer
 func NewCodedError(code int64, e interface{}, causes ...interface{}) *CodedError {
-	// special case, cause is not specified, use "e" as cause
-	if len(causes) == 0 {
-		causes = []interface{}{e}
-	}
+	causes = append([]interface{}{e}, causes...)
 
 	// chain causes
 	var cause error
@@ -244,8 +214,8 @@ func NewCodedError(code int64, e interface{}, causes ...interface{}) *CodedError
 			cause = current
 		} else {
 			cause = &nestedError{
-				error:  cause,
-				nested: current,
+				error:  current,
+				nested: cause,
 			}
 		}
 	}

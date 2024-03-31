@@ -17,14 +17,12 @@
 package dsync
 
 import (
-    "context"
-    "embed"
-    "fmt"
-    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/consul"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "go.uber.org/fx"
+	"context"
+	"embed"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"go.uber.org/fx"
 )
 
 //go:embed defaults-dsync.yml
@@ -39,7 +37,6 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.DistributedLockPrecedence,
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
-		fx.Provide(provideSyncManager),
 		fx.Invoke(initialize),
 	},
 }
@@ -52,22 +49,6 @@ func Use() {
 	Provider
 ***************************/
 
-type syncDI struct {
-	fx.In
-	AppCtx          *bootstrap.ApplicationContext
-	Conn            *consul.Connection `optional:"true"`
-	TestSyncManager []SyncManager      `group:"test"`
-}
-
-func provideSyncManager(di syncDI) (SyncManager, error) {
-	if len(di.TestSyncManager) != 0 {
-		return di.TestSyncManager[0], nil
-	}
-	if di.Conn == nil {
-		return nil, fmt.Errorf("*consul.Connection is required for 'dsync' package")
-	}
-	return NewConsulLockManager(di.AppCtx, di.Conn), nil
-}
 
 /**************************
 	Initialize
