@@ -14,20 +14,21 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package consuldsync_test
+package redisdsync_test
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/dsync"
-	consuldsync "github.com/cisco-open/go-lanai/pkg/dsync/consul"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/dsync"
+	redisdsync "github.com/cisco-open/go-lanai/pkg/dsync/redis"
+	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/consultest"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "testing"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/embedded"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"testing"
 )
 
 /*************************
@@ -43,10 +44,8 @@ func TestModuleInit(t *testing.T) {
 	di := TestModuleDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		consultest.WithHttpPlayback(t,
-			//consultest.HttpRecordingMode(),
-		),
-		apptest.WithModules(consuldsync.Module),
+		embedded.WithRedis(),
+		apptest.WithModules(redis.Module, redisdsync.Module),
 		apptest.WithFxOptions(),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestGettingLock(&di), "TestGettingLock"),

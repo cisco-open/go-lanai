@@ -100,6 +100,12 @@ func CurrentRedisPort(ctx context.Context) (port int) {
 	return
 }
 
+// CurrentRedisServer getter to return embedded redis. returns nil if it's not initialized or started
+func CurrentRedisServer(ctx context.Context) *miniredis.Miniredis {
+	srv, _ := ctx.Value(kCtxEmbeddedRedis).(*miniredis.Miniredis)
+	return srv
+}
+
 /*******************
 	Internals
  *******************/

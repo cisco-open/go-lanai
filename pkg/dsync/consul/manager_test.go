@@ -54,7 +54,7 @@ func TestConsulDSyncManager(t *testing.T) {
 			// - Latency is also required because consul lock is heavily rely on blocking HTTP transactions
 			consultest.MoreHTTPVCROptions(ittest.DisableHttpRecordOrdering(), ittest.ApplyHttpLatency()),
 		),
-		apptest.WithTimeout(2*time.Minute),
+		//apptest.WithTimeout(2*time.Minute),
 		apptest.WithFxOptions(),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestConsulTryLock(&di), "TestTryLock"),

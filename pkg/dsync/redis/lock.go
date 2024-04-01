@@ -12,11 +12,6 @@ import (
 	"time"
 )
 
-const (
-	maxExtendRetry   = 3
-	maxExtendTimeout = 100 * time.Millisecond
-)
-
 type lockState int
 
 const (
@@ -30,9 +25,15 @@ type RedisLockOption struct {
 	Context context.Context
 	Name    string
 	Valuer  dsync.LockValuer
-	// TODO
-	//CmdWaitTime time.Duration // how long we block per GET to check if lock acquisition is possible
-	RetryDelay  time.Duration // how long we wait after a retryable error (usually network error)
+	// AutoExpiry how long the acquired lock expires (released) in case the application crashes
+	AutoExpiry time.Duration
+	// RetryDelay how long we wait after a retryable error (usually network error)
+	RetryDelay time.Duration
+	// TimeoutFactor used to calculate redis CMD timeout when acquiring, extending and releasing lock.
+	// timeout = AutoExpiry * TimeoutFactor
+	TimeoutFactor float64
+	// MaxExtendRetries how many times we attempt to extend the lock before give up
+	MaxExtendRetries int
 }
 
 type RedisLock struct {
@@ -49,14 +50,24 @@ type RedisLock struct {
 }
 
 func newRedisLock(rs *redsync.Redsync, opts ...RedisLockOptions) (lock *RedisLock) {
-	opt := RedisLockOption{}
+	opt := RedisLockOption{
+		Valuer: dsync.NewJsonLockValuer(map[string]string{
+			"name": "redis distributed lock",
+		}),
+		AutoExpiry:       10 * time.Second,
+		RetryDelay:       500 * time.Millisecond,
+		MaxExtendRetries: 3,
+		TimeoutFactor:    0.05,
+	}
 	for _, fn := range opts {
 		fn(&opt)
 	}
-	// TODO tweak the options
+	// Note: we only use TryLock and perform indefinite retries, so WithTries is set to 1 in order get proper error
+	// See redsync.Mutex.TryLockContext for details
 	rsMutex := rs.NewMutex(opt.Name,
-		redsync.WithTries(maxExtendRetry),
-		redsync.WithExpiry(20*time.Second),
+		redsync.WithExpiry(opt.AutoExpiry),
+		redsync.WithTries(1),
+		redsync.WithTimeoutFactor(opt.TimeoutFactor),
 		redsync.WithShufflePools(true),
 		redsync.WithGenValueFunc(genValueFunc(opt.Valuer)),
 	)
@@ -174,7 +185,9 @@ func (l *RedisLock) startLoop() {
 
 // stopLoop stop lock loop. mutex lock is required when call this function
 func (l *RedisLock) stopLoop() {
-	l.loopCancelFunc()
+	if l.loopCancelFunc != nil {
+		l.loopCancelFunc()
+	}
 	l.loopContext = nil
 	l.loopCancelFunc = nil
 }
@@ -185,6 +198,13 @@ func (l *RedisLock) stopLoop() {
 // Note: given context may also be cancelled outside, e.g. lock is released
 func (l *RedisLock) lockLoop(ctx context.Context, cancelFunc context.CancelFunc) {
 	defer cancelFunc()
+	defer func() {
+		// we've quited the loop, need some cleaning up:
+		// 1. in case the lock is still locked (e.g. context canceled after lock is acquired), we need to explicitly release lock.
+		_, _ = l.rsMutex.Unlock()
+		l.updateState(stateUnknown)
+	}()
+
 LOOP:
 	for {
 		select {
@@ -203,7 +223,9 @@ LOOP:
 			logger.WithContext(ctx).Debugf("acquired lock [%s]", l.option.Name)
 			l.updateState(stateAcquired, func() { l.lastErr = nil })
 		default:
-			l.updateState(stateError, func() { l.lastErr = dsync.ErrLockUnavailable.WithMessage(`lock [%s] is held by another session`, l.option.Name).WithCause(e) })
+			l.updateState(stateError, func() {
+				l.lastErr = dsync.ErrLockUnavailable.WithMessage(`lock [%s] is held by another session`, l.option.Name).WithCause(e)
+			})
 			l.delay(ctx, l.option.RetryDelay)
 			continue
 		}
@@ -219,9 +241,6 @@ LOOP:
 			l.updateState(stateError, func() { l.lastErr = e })
 		}
 	}
-
-	// we lost lock
-	l.updateState(stateUnknown)
 }
 
 // monitorLock is a long-running routine to monitor a lock ownership and try to extend lock periodically
@@ -229,13 +248,14 @@ LOOP:
 func (l *RedisLock) monitorLock(ctx context.Context) error {
 	var err error
 	var failedAttempts int
+	timeout := time.Duration(float64(l.option.AutoExpiry) * l.option.TimeoutFactor)
 LOOP:
 	for {
 		var waitForExpiry bool
 		expire := time.Until(l.rsMutex.Until())
 		wait := expire / 2
 		// Check if we have enough time to extend it. If not, we enter "wait for expiry" mode
-		if wait < maxExtendTimeout || failedAttempts >= maxExtendRetry {
+		if wait < timeout || failedAttempts >= l.option.MaxExtendRetries {
 			waitForExpiry = true
 			wait = expire
 		}
@@ -250,7 +270,7 @@ LOOP:
 			err = dsync.ErrLockUnavailable.WithMessage(`failed to extend lock with unknown reason`)
 		}
 		if err != nil {
-			failedAttempts ++
+			failedAttempts++
 			logger.WithContext(ctx).Debugf(e.Error())
 		}
 	}
@@ -280,17 +300,8 @@ func (l *RedisLock) release() error {
 		return nil
 	}
 
-	// Stop lock loop
+	// Stop lock loop. Releasing the lock happens in the loop
 	l.stopLoop()
-
-	// Release the lock explicitly
-	switch ok, e := l.rsMutex.Unlock(); {
-	case e != nil:
-		return dsync.ErrUnlockFailed.WithCause(e)
-	case e == nil && !ok:
-		return dsync.ErrUnlockFailed.WithMessage("failed to unlock due to unknown reason")
-	}
-
 	return nil
 }
 
@@ -313,15 +324,15 @@ func genValueFunc(valuer dsync.LockValuer) func() (string, error) {
 	if e := json.Unmarshal(value, &meta); e != nil {
 		meta = value
 	}
+	v := lockValue{
+		Metadata: meta,
+		Token:    utils.RandomString(16),
+	}
+	data, e := json.Marshal(v)
+	if e != nil {
+		data = []byte(v.Token)
+	}
 	return func() (string, error) {
-		v := lockValue{
-			Metadata: meta,
-			Token:    utils.RandomString(16),
-		}
-		data, e := json.Marshal(v)
-		if e != nil {
-			data = []byte(v.Token)
-		}
 		return string(data), nil
 	}
 }

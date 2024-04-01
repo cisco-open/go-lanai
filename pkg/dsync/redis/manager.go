@@ -15,16 +15,18 @@ import (
 
 type RedisSyncOptions func(opt *RedisSyncOption)
 type RedisSyncOption struct {
-	Name       string
-	TTL        time.Duration
-	LockDelay  time.Duration
-	RetryDelay time.Duration
-	DB         int
+	TTL           time.Duration // see RedisLockOption.AutoExpiry
+	RetryDelay    time.Duration // see RedisLockOption.RetryDelay
+	TimeoutFactor float64       // see RedisLockOption.TimeoutFactor
+	DB            int
 }
 
 func NewRedisSyncManager(appCtx *bootstrap.ApplicationContext, factory redis.ClientFactory, opts ...RedisSyncOptions) *RedisSyncManager {
 	opt := RedisSyncOption{
-		DB: 0,
+		TTL:           10 * time.Second,
+		RetryDelay:    1 * time.Second,
+		TimeoutFactor: 0.05,
+		DB:            1,
 	}
 	for _, fn := range opts {
 		fn(&opt)
@@ -76,6 +78,9 @@ func (m *RedisSyncManager) Lock(key string, opts ...dsync.LockOptions) (dsync.Lo
 	m.locks[key] = newRedisLock(m.syncer, func(opt *RedisLockOption) {
 		opt.Context = m.appCtx
 		opt.Name = key
+		opt.AutoExpiry = m.options.TTL
+		opt.RetryDelay = m.options.RetryDelay
+		opt.TimeoutFactor = m.options.TimeoutFactor
 	})
 	return m.locks[key], nil
 }

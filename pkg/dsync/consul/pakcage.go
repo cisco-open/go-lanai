@@ -15,9 +15,9 @@ var Module = &bootstrap.Module{
 	Name:       "distributed",
 	Precedence: bootstrap.DistributedLockPrecedence,
 	Options: []fx.Option{
-		//appconfig.FxEmbeddedDefaults(defaultConfigFS),
 		fx.Provide(provideSyncManager),
 	},
+	Modules: []*bootstrap.Module{dsync.Module},
 }
 
 func Use() {
