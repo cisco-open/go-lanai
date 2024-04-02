@@ -32,13 +32,10 @@ type syncDI struct {
 	fx.In
 	AppCtx          *bootstrap.ApplicationContext
 	Conn            *consul.Connection  `optional:"true"`
-	TestSyncManager []dsync.SyncManager `group:"test"`
+
 }
 
 func provideSyncManager(di syncDI) (dsync.SyncManager, error) {
-	if len(di.TestSyncManager) != 0 {
-		return di.TestSyncManager[0], nil
-	}
 	if di.Conn == nil {
 		return nil, fmt.Errorf("*consul.Connection is required for 'dsync' package")
 	}

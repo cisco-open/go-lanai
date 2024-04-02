@@ -49,27 +49,36 @@ func Use() {
 	Provider
 ***************************/
 
-
 /**************************
 	Initialize
 ***************************/
 
 type initDI struct {
 	fx.In
-	Lifecycle fx.Lifecycle
-	AppCtx    *bootstrap.ApplicationContext
-	Manager   SyncManager
+	Lifecycle   fx.Lifecycle
+	AppCtx      *bootstrap.ApplicationContext
+	Manager     SyncManager   `optional:"true"`
+	TestManager []SyncManager `group:"test"`
 }
 
-func initialize(di initDI) {
+func initialize(di initDI) error {
 	// set global variable
 	syncManager = di.Manager
-	syncLc, ok := di.Manager.(SyncManagerLifecycle)
+	if len(di.TestManager) != 0 {
+		syncManager = di.TestManager[0]
+	}
+	if syncManager == nil {
+		return ErrFailedInitialization.WithMessage(`unable to initialize distributed lock system and leadership lock. ` +
+			`Hint: provide a dsync.SyncManager with 'consuldsync.Use()' or 'redisdsync.Use()' or with your own implementation `)
+	}
+	syncLc, ok := syncManager.(SyncManagerLifecycle)
+
+	// start/stop hooks
 	di.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			if ok {
 				if e := syncLc.Start(ctx); e != nil {
-					return e
+					return ErrFailedInitialization.WithCause(e)
 				}
 			}
 			// start leader election lock
@@ -82,4 +91,5 @@ func initialize(di initDI) {
 			return nil
 		},
 	})
+	return nil
 }

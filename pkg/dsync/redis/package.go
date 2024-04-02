@@ -32,13 +32,9 @@ type syncDI struct {
 	fx.In
 	AppCtx *bootstrap.ApplicationContext
 	Redis  redis.ClientFactory `optional:"true"`
-	//TestSyncManager []dsync.SyncManager `group:"test"`
 }
 
 func provideSyncManager(di syncDI) (dsync.SyncManager, error) {
-	//if len(di.TestSyncManager) != 0 {
-	//	return di.TestSyncManager[0], nil
-	//}
 	if di.Redis == nil {
 		return nil, fmt.Errorf("redis.ClientFactory is required for 'redisdsync' package")
 	}

@@ -97,16 +97,9 @@ func (l *ConsulLock) Key() string {
 	return l.option.Key
 }
 
-// Lock attempts to acquire the lock and blocks while doing so.
-// Providing a cancellable context.Context can be used to abort the lock attempt.
-//
-// Returns a channel that is closed if our lock is lost or an error.
-// This channel could be closed at any time due to session invalidation,
-// communication errors, operator intervention, etc. It is NOT safe to
-// assume that the lock is held until Unlock() unless the Session is specifically
-// created without any associated health checks. By default Consul sessions
-// prefer liveness over safety and an application must be able to handle
-// the lock being lost.
+// Lock implements dsync.Lock
+// The acquired lock may get revoked from server-side, unless the session is specifically created without any
+// associated health checks.
 func (l *ConsulLock) Lock(ctx context.Context) error {
 	l.lazyStart()
 	return l.waitForState(ctx, func(state consulLockState) (bool, error) {

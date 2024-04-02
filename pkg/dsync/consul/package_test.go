@@ -58,7 +58,7 @@ func TestModuleInit(t *testing.T) {
 	Sub-Test Cases
  *************************/
 
-func SubTestGettingLock(di *TestModuleDI) test.GomegaSubTestFunc {
+func SubTestGettingLock(_ *TestModuleDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const (
 			key1 = "test-lock"
@@ -90,7 +90,7 @@ func SubTestGettingLock(di *TestModuleDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestLeadershipLock(di *TestModuleDI) test.GomegaSubTestFunc {
+func SubTestLeadershipLock(_ *TestModuleDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		lock := dsync.LeadershipLock()
 		g.Expect(lock).ToNot(BeNil(), "leadership lock should not be nil")

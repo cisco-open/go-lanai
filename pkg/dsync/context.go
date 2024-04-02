@@ -26,16 +26,20 @@ import (
 )
 
 var (
-	ErrLockUnavailable    = newError("lock is held by another session")
-	ErrUnlockFailed       = newError("failed to release lock")
-	ErrSessionUnavailable = newError("session is not available")
-	ErrSyncManagerStopped = newError("sync manager stopped")
+	ErrLockUnavailable      = newError("lock is held by another session")
+	ErrUnlockFailed         = newError("failed to release lock")
+	ErrSessionUnavailable   = newError("session is not available")
+	ErrSyncManagerStopped   = newError("sync manager stopped")
+	ErrFailedInitialization = newError("sync manager failed to start")
 )
 
+// SyncManager manage distributed locks across the application.
 type SyncManager interface {
-	// Lock returns a distributed lock for given key.
-	// For same key, the same Lock is returned. The returned Lock is goroutines-safe
-	// Note: the returned Lock is in idle mode
+	// Lock returns a distributed lock with given key. If the Lock already exists with same key,
+	// the options are ignored and the same Lock is returned.
+	//
+	// The returned Lock is goroutines-safe, but locking/releasing same lock from different goroutine may cause
+	// complicated scenarios. It's application's responsibility to coordinate such concurrent usage.
 	Lock(key string, opts ...LockOptions) (Lock, error)
 }
 
@@ -54,8 +58,9 @@ type LockOption struct {
 type LockValuer func() []byte
 
 // Lock distributed mutex lock backed by external infrastructure service such as consul or redis.
-// After the lock is acquired (Lock.Lock or Lock.TryLock returns without error), the lock might be revoked by operator or external infra service.
-// The Lock would keep trying to acquire/re-acquire the lock until Lock.Release is manually invoked.
+// Once lock acquisition is started (Lock.Lock or Lock.TryLock), regardless the result, the Lock would keep trying
+// to acquire/re-acquire the lock until Lock.Release is manually invoked, because the lock might be revoked by operator
+// or external infra service.
 //
 // Long-running goroutine should monitor Lost channel after the lock is acquired.
 // When Lost channel is signalled, there is no need to re-invoke Lock.Lock or Lock.TryLock, since internal loop would try
@@ -65,24 +70,42 @@ type Lock interface {
 	// Key the unique identifier of the lock
 	Key() string
 
-	// Lock blocks until lock is acquired or context is cancelled/timed out.
-	// Invoking Lock after lock is acquired (or re-acquired after some error) returns immediately
+	// Lock attempts to acquire the lock and blocks until lock is acquired or context is cancelled/timed out.
+	// Invoking Lock after lock is acquired (or re-acquired after some error) returns immediately.
+	//
+	// A cancellable context.Context can be used to abort the current attempt, but it won't stop the lock to keep
+	// trying in the background.
+	//
+	// It is NOT safe to assume that the lock is guaranteed to be held until Release(). The lock might be lost
+	// due to session invalidation, communication errors, operator intervention, etc.
+	//
+	// Lost() returns a channel that is closed if our lock is lost or an error occurred.
+	// By default, dsync implementations prefer liveness over safety and an application must be able to handle
+	// the lock being lost.
+	//
+	// Important: A paring call of Release() is always required regardless the result.
 	Lock(ctx context.Context) error
 
 	// TryLock differs from Lock in following ways:
-	// - TryLock stop loop blocking when lock is held by other instance/session
-	// - TryLock stop loop blocking when unrecoverable error happens during lock acquisition
+	// - TryLock stop blocking when lock is held by other instance/session
+	// - TryLock stop blocking when unrecoverable error happens during lock acquisition
 	// Note: TryLock may temporarily block when connectivity to external infra service is not available
 	TryLock(ctx context.Context) error
 
-	// Release releases the lock. Stop the process from maintaining the active lock.
-	// Release must be used after Lock or TryLock is used. Invoking Release multiple time takes no effect
-	// Note: Lost channel would stopLoop signalling after Release, until Lock or TryLock is called again
+	// Release stops the attempt to acquire the lock and releases the lock if already held
+	// Release must be used everytime after Lock or TryLock is called, unless the application is intended
+	// to hold the lock indefinitely.
+	//
+	// Invoking Release multiple time takes no effect.
+	//
+	// Note: Lost channel would stop signalling after Release, until Lock or TryLock is called again.
 	Release() error
 
-	// Lost channel signals long-running goroutine when lock is lost (due to network error or operator intervention)
-	// When Lost channel is signalled, there is no need to re-invoke Lock.Lock or Lock.TryLock for lock re-acquisition,
-	// but all relying-tasks should stopLoop.
+	// Lost channel signals long-running goroutine when lock is lost (due to network error, operator intervention,
+	// manual Release() call from other goroutine, etc).
+	//
+	// When Lost channel is signalled, there is no need to re-invoke Lock.Lock or Lock.TryLock for lock re-acquisition
+	// unless it's caused by manual Release() call, but all relying-tasks should pause.
 	Lost() <-chan struct{}
 }
 
@@ -90,8 +113,13 @@ type Lock interface {
 	Common Impl
  *********************/
 
-// LockWithKey returns a distributed Lock with given key
-// this function panic if internal SyncManager is not initialized yet or key is not provided
+// LockWithKey returns a distributed Lock with given key. If the Lock already exists with same key,
+// the options are ignored and the same Lock is returned.
+//
+// The returned Lock is goroutines-safe, but locking/releasing same lock from different goroutine may cause
+// complicated scenarios. It's application's responsibility to coordinate such concurrent usage.
+//
+// This function panic if internal SyncManager is not initialized yet or key is not provided.
 func LockWithKey(key string, opts ...LockOptions) Lock {
 	if syncManager == nil {
 		panic("SyncManager is not initialized")
