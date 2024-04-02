@@ -41,10 +41,6 @@ var Module = &bootstrap.Module{
 	},
 }
 
-func Use() {
-	bootstrap.Register(Module)
-}
-
 /**************************
 	Provider
 ***************************/
