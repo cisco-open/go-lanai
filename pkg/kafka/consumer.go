@@ -131,7 +131,7 @@ func (g *saramaGroupConsumer) Closed() bool {
 }
 
 func (g *saramaGroupConsumer) AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error {
-	return g.dispatcher.addHandler(handlerFunc, &g.config.consumer, opts)
+	return g.dispatcher.AddHandler(handlerFunc, &g.config.consumer, opts)
 }
 
 // monitorGroupErrors should be run in separate goroutine
@@ -209,7 +209,7 @@ func (h saramaGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 
 // handleMessage intended to run in separate goroutine
 func (h saramaGroupHandler) handleMessage(ctx context.Context, session sarama.ConsumerGroupSession, raw *sarama.ConsumerMessage) {
-	if e := h.dispatcher.dispatch(ctx, raw, h.owner); e != nil {
+	if e := h.dispatcher.Dispatch(ctx, raw, h.owner); e != nil {
 		logger.WithContext(ctx).Warnf("failed to handle message: %v", e)
 		// TODO we should consider limit retry count, or let Handler decide whether to retry by specifying a special error type
 		session.ResetOffset(raw.Topic, raw.Partition, raw.Offset, e.Error())

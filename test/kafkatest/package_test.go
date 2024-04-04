@@ -17,17 +17,17 @@
 package kafkatest
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/kafka"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/google/uuid"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "testing"
-    "time"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/kafka"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/google/uuid"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"testing"
+	"time"
 )
 
 const (
@@ -51,6 +51,7 @@ type TestMessage struct {
 
 type TestService struct {
 	producer kafka.Producer
+	received []*TestMessage
 }
 
 func NewTestService(di tsDI) (*TestService, error) {
@@ -99,8 +100,8 @@ func (s *TestService) GenerateSomeMessages(ctx context.Context, count int) error
 	return nil
 }
 
-func (s *TestService) Handle(_ context.Context, _ *kafka.Message) error {
-	//noop
+func (s *TestService) Handle(_ context.Context, msg *TestMessage, _ *kafka.Message) error {
+	s.received = append(s.received, msg)
 	return nil
 }
 
@@ -111,6 +112,7 @@ func (s *TestService) Handle(_ context.Context, _ *kafka.Message) error {
 type testDI struct {
 	fx.In
 	Recorder MessageRecorder `optional:"true"`
+	Mocker   MessageMocker   `optional:"true"`
 	Service  *TestService    `optional:"true"`
 	Binder   kafka.Binder
 }
@@ -170,6 +172,21 @@ func SubTestSubscriber(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(di.Binder.ListTopics()).To(ContainElement(topic), "binder ListTopics() should be correct")
 		e = s.AddHandler(di.Service.Handle)
 		g.Expect(e).To(Succeed(), "subscriber's AddHandler should not fail")
+
+		// mock some message
+		mock := &kafka.Message{
+			Payload: &TestMessage{
+				Int:    10,
+				String: "mya",
+			},
+		}
+		di.Service.received = nil
+		e = di.Mocker.Mock(ctx, topic, mock)
+		g.Expect(e).To(Succeed(), "mocking incoming message should not fail")
+		e = di.Mocker.Mock(ctx, `another topic`, mock)
+		g.Expect(e).To(Succeed(), "mocking incoming message should not fail")
+		g.Expect(di.Service.received).To(HaveLen(1), "subscriber should received correct message count")
+		g.Expect(di.Service.received).To(ContainElement(BeEquivalentTo(mock.Payload)), "subscriber should received correct messages")
 	}
 }
 
@@ -184,6 +201,23 @@ func SubTestConsumer(di *testDI) test.GomegaSubTestFunc {
 		g.Expect(di.Binder.ListTopics()).To(ContainElement(topic), "binder ListTopics() should be correct")
 		e = c.AddHandler(di.Service.Handle)
 		g.Expect(e).To(Succeed(), "consumer's AddHandler should not fail")
+
+		// mock some message
+		mock := &kafka.Message{
+			Payload: &TestMessage{
+				Int:    10,
+				String: "mya",
+			},
+		}
+		di.Service.received = nil
+		e = di.Mocker.MockWithGroup(ctx, topic, group, mock)
+		g.Expect(e).To(Succeed(), "mocking incoming message should not fail")
+		e = di.Mocker.MockWithGroup(ctx, `another topic`, group, mock)
+		g.Expect(e).To(Succeed(), "mocking incoming message should not fail")
+		e = di.Mocker.MockWithGroup(ctx, topic, "another group", mock)
+		g.Expect(e).To(Succeed(), "mocking incoming message should not fail")
+		g.Expect(di.Service.received).To(HaveLen(1), "subscriber should received correct message count")
+		g.Expect(di.Service.received).To(ContainElement(BeEquivalentTo(mock.Payload)), "subscriber should received correct messages")
 	}
 }
 

@@ -135,7 +135,7 @@ func (s *saramaSubscriber) Closed() bool {
 }
 
 func (s *saramaSubscriber) AddHandler(handlerFunc MessageHandlerFunc, opts ...DispatchOptions) error {
-	return s.dispatcher.addHandler(handlerFunc, &s.config.consumer, opts)
+	return s.dispatcher.AddHandler(handlerFunc, &s.config.consumer, opts)
 }
 
 // handlePartitions intended to run in separate goroutine
@@ -170,7 +170,7 @@ func (s *saramaSubscriber) handlePartitions(ctx context.Context, partitions []sa
 
 // handleMessage intended to run in separate goroutine
 func (s *saramaSubscriber) handleMessage(ctx context.Context, raw *sarama.ConsumerMessage) {
-	if e := s.dispatcher.dispatch(ctx, raw, s); e != nil {
+	if e := s.dispatcher.Dispatch(ctx, raw, s); e != nil {
 		logger.WithContext(ctx).Warnf("failed to handle message: %v", e)
 	}
 }

@@ -83,7 +83,7 @@ func (p *saramaProducer) Send(ctx context.Context, message interface{}, options 
 		optionFunc(&msgCtx.messageConfig)
 	}
 
-	// apply interceptors
+	// apply Interceptors
 	for _, interceptor := range p.interceptors {
 		if msgCtx, err = interceptor.Intercept(msgCtx); err != nil {
 			return ErrorSubTypeProducerGeneral.WithMessage("producer interceptor error: %v", err)

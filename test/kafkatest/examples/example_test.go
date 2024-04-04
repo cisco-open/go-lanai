@@ -17,17 +17,17 @@
 package examples
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/kafka"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/kafkatest"
-    "github.com/google/uuid"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "testing"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/kafka"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/kafkatest"
+	"github.com/google/uuid"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"testing"
 )
 
 const (
@@ -51,6 +51,7 @@ type TestMessage struct {
 
 type TestService struct {
 	producer kafka.Producer
+	lastMsg  *TestMessage
 }
 
 func NewTestService(di tsDI) *TestService {
@@ -92,8 +93,8 @@ func (s *TestService) GenerateSomeMessages(ctx context.Context, count int) error
 	return nil
 }
 
-func (s *TestService) Handle(_ context.Context, _ *kafka.Message) error {
-	//noop
+func (s *TestService) Handle(_ context.Context, msg *TestMessage, _ *kafka.Message) error {
+	s.lastMsg = msg
 	return nil
 }
 
@@ -105,6 +106,7 @@ type testDI struct {
 	fx.In
 	Service  *TestService
 	Recorder kafkatest.MessageRecorder
+	Mocker   kafkatest.MessageMocker
 }
 
 func TestMockedBinder(t *testing.T) {
@@ -117,6 +119,8 @@ func TestMockedBinder(t *testing.T) {
 			fx.Provide(NewTestService),
 		),
 		test.GomegaSubTest(SubTestExampleProducerRecording(di), "ExampleProducerRecording"),
+		test.GomegaSubTest(SubTestExampleSubscriberMessageMocking(di), "ExampleSubscriberMessageMocking"),
+		test.GomegaSubTest(SubTestExampleConsumerMessageMocking(di), "ExampleConsumerMessageMocking"),
 	)
 }
 
@@ -146,4 +150,38 @@ func SubTestExampleProducerRecording(di *testDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestExampleSubscriberMessageMocking(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// reset service
+		di.Service.lastMsg = nil
+		// mock some message
+		mock := &kafka.Message{
+			Payload: &TestMessage{
+				Int:    10,
+				String: "mya",
+			},
+		}
+		e := di.Mocker.Mock(ctx, ExampleTopic, mock)
+		g.Expect(e).To(Succeed(), "mocking incoming message should not fail")
+		// verify
+		g.Expect(di.Service.lastMsg).ToNot(BeNil(), "handler should already handled the message")
+	}
+}
 
+func SubTestExampleConsumerMessageMocking(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		// reset service
+		di.Service.lastMsg = nil
+		// mock some message
+		mock := &kafka.Message{
+			Payload: &TestMessage{
+				Int:    10,
+				String: "mya",
+			},
+		}
+		e := di.Mocker.MockWithGroup(ctx, ExampleTopic, ExampleGroup, mock)
+		g.Expect(e).To(Succeed(), "mocking incoming message should not fail")
+		// verify
+		g.Expect(di.Service.lastMsg).ToNot(BeNil(), "handler should already handled the message")
+	}
+}

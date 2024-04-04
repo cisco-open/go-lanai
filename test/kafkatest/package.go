@@ -17,10 +17,17 @@
 package kafkatest
 
 import (
+	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"go.uber.org/fx"
 )
+
+var logger = log.New("KafkaTest")
+var messageLogger = msgLogger{
+	logger: logger,
+	level: log.LevelInfo,
+}
 
 // WithMockedBinder returns a test.Options that provides mocked kafka.Binder and a MessageRecorder.
 // Tests can wire the MessageRecorder and verify invocation of kafka.Producer

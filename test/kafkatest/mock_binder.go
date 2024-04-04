@@ -17,6 +17,7 @@
 package kafkatest
 
 import (
+	"context"
 	"github.com/cisco-open/go-lanai/pkg/kafka"
 	"github.com/cisco-open/go-lanai/pkg/utils"
 	"go.uber.org/fx"
@@ -28,27 +29,29 @@ type mockedBinderOut struct {
 	Binder   kafka.Binder
 	Mock     *MockedBinder
 	Recorder MessageRecorder
+	Mocker   MessageMocker
 }
 
 func provideMockedBinder() mockedBinderOut {
 	mock := MockedBinder{
-		producers:   make(map[string]kafka.Producer),
-		subscribers: make(map[string]kafka.Subscriber),
-		consumers:   make(map[string]kafka.GroupConsumer),
+		producers:   make(map[string]*MockedProducer),
+		subscribers: make(map[string]*MockedSubscriber),
+		consumers:   make(map[string]map[string]*MockedConsumer),
 	}
 	return mockedBinderOut{
 		Binder:   &mock,
 		Mock:     &mock,
 		Recorder: &mock,
+		Mocker: &mock,
 	}
 }
 
 // MockedBinder implements kafka.Binder and messageRecorder
 type MockedBinder struct {
 	mtx         sync.Mutex
-	producers   map[string]kafka.Producer
-	subscribers map[string]kafka.Subscriber
-	consumers   map[string]kafka.GroupConsumer
+	producers   map[string]*MockedProducer
+	subscribers map[string]*MockedSubscriber
+	consumers   map[string]map[string]*MockedConsumer
 	recordings  []*MessageRecord
 }
 
@@ -64,6 +67,8 @@ func (b *MockedBinder) Produce(topic string, _ ...kafka.ProducerOptions) (kafka.
 }
 
 func (b *MockedBinder) Subscribe(topic string, _ ...kafka.ConsumerOptions) (kafka.Subscriber, error) {
+	b.mtx.Lock()
+	defer b.mtx.Unlock()
 	ret, ok := b.subscribers[topic]
 	if !ok {
 		ret = NewMockedSubscriber(topic)
@@ -73,10 +78,17 @@ func (b *MockedBinder) Subscribe(topic string, _ ...kafka.ConsumerOptions) (kafk
 }
 
 func (b *MockedBinder) Consume(topic string, group string, _ ...kafka.ConsumerOptions) (kafka.GroupConsumer, error) {
-	ret, ok := b.consumers[topic]
+	b.mtx.Lock()
+	defer b.mtx.Unlock()
+	grouped, ok := b.consumers[topic]
+	if !ok {
+		grouped = make(map[string]*MockedConsumer)
+		b.consumers[topic] = grouped
+	}
+	ret, ok := grouped[group]
 	if !ok {
 		ret = NewMockedConsumer(topic, group)
-		b.consumers[topic] = ret
+		grouped[group] = ret
 	}
 	return ret, nil
 }
@@ -127,4 +139,40 @@ func (b *MockedBinder) Record(record *MessageRecord) {
 	b.mtx.Lock()
 	defer b.mtx.Unlock()
 	b.recordings = append(b.recordings, record)
+}
+
+func (b *MockedBinder) Mock(ctx context.Context, topic string, msg *kafka.Message) error {
+	msgCtx := b.mockMessageContext(ctx, topic, msg)
+	b.mtx.Lock()
+	defer b.mtx.Unlock()
+	dispatcher, ok := b.subscribers[topic]
+	if !ok {
+		return nil
+	}
+	return dispatcher.Dispatch(msgCtx)
+}
+
+func (b *MockedBinder) MockWithGroup(ctx context.Context, topic, group string, msg *kafka.Message) error {
+	msgCtx := b.mockMessageContext(ctx, topic, msg)
+	b.mtx.Lock()
+	defer b.mtx.Unlock()
+	consumers, ok := b.consumers[topic]
+	if !ok {
+		return nil
+	}
+	dispatcher, ok := consumers[group]
+	if !ok {
+		return nil
+	}
+	return dispatcher.Dispatch(msgCtx)
+}
+
+func (b *MockedBinder) mockMessageContext(ctx context.Context, topic string, msg *kafka.Message) *kafka.MessageContext {
+	return &kafka.MessageContext{
+		Context:    ctx,
+		Source:     b,
+		Topic:      topic,
+		Message:    *msg,
+		RawMessage: msg,
+	}
 }

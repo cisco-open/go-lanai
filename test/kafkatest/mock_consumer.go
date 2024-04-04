@@ -21,12 +21,16 @@ import (
 )
 
 type MockedConsumer struct {
-	T  string
+	kafka.Dispatcher
+	T string
 	G string
 }
 
 func NewMockedConsumer(topic, group string) *MockedConsumer {
 	return &MockedConsumer{
+		Dispatcher: kafka.Dispatcher{
+			Logger: messageLogger,
+		},
 		T: topic,
 		G: group,
 	}
@@ -40,7 +44,3 @@ func (c *MockedConsumer) Group() string {
 	return c.G
 }
 
-func (c *MockedConsumer) AddHandler(handlerFunc kafka.MessageHandlerFunc, opts ...kafka.DispatchOptions) error {
-	// noop for now
-	return nil
-}
