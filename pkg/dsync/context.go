@@ -83,13 +83,17 @@ type Lock interface {
 	// By default, dsync implementations prefer liveness over safety and an application must be able to handle
 	// the lock being lost.
 	//
-	// Important: A paring call of Release() is always required regardless the result.
+	// Important: Regardless the result, the lock would keep trying to acquire the lock in the background.
+	// So a pairing call of Release() is always required after the lock is no longer needed, even if the context is canceled
 	Lock(ctx context.Context) error
 
 	// TryLock differs from Lock in following ways:
 	// - TryLock stop blocking when lock is held by other instance/session
 	// - TryLock stop blocking when unrecoverable error happens during lock acquisition
 	// Note: TryLock may temporarily block when connectivity to external infra service is not available
+	//
+	// Important: Regardless the result, the lock would keep trying to acquire the lock in the background.
+	// So a pairing call of Release() is always required after the lock is no longer needed, even if the context is canceled
 	TryLock(ctx context.Context) error
 
 	// Release stops the attempt to acquire the lock and releases the lock if already held

@@ -25,14 +25,20 @@ type RedisLockOption struct {
 	Context context.Context
 	Name    string
 	Valuer  dsync.LockValuer
-	// AutoExpiry how long the acquired lock expires (released) in case the application crashes
+	// AutoExpiry how long the acquired lock expires (released) in case the application crashes.
+	// It's recommended to keep this value larger than 5 seconds
+	// Default is 10 seconds
 	AutoExpiry time.Duration
 	// RetryDelay how long we wait after a retryable error (usually network error)
+	// Default is 500 milliseconds
 	RetryDelay time.Duration
 	// TimeoutFactor used to calculate redis CMD timeout when acquiring, extending and releasing lock.
 	// timeout = AutoExpiry * TimeoutFactor
+	// Note: the value should be smaller than 0.5 and recommended to be between 0.01 to 0.1 depending on the AutoExpiry.
+	// Default is 0.05
 	TimeoutFactor float64
-	// MaxExtendRetries how many times we attempt to extend the lock before give up
+	// MaxExtendRetries how many times we attempt to extend the lock before give up.
+	// Default is 3
 	MaxExtendRetries int
 }
 
