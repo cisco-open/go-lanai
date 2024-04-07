@@ -17,16 +17,16 @@
 package sectest
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/session"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/cisco-open/go-lanai/pkg/web/matcher"
-    "github.com/cisco-open/go-lanai/pkg/web/middleware"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "go.uber.org/fx"
-    "net/http"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/session"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/web/middleware"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"go.uber.org/fx"
+	"net/http"
 )
 
 /**************************
@@ -50,12 +50,13 @@ type MWMocker interface {
 type MWMockOptions func(opt *MWMockOption)
 
 type MWMockOption struct {
-	Route      web.RouteMatcher
-	Condition  web.RequestMatcher
-	MWMocker   MWMocker
-	MWOrder    int
-	Configurer security.Configurer
-	Session    bool
+	Route         web.RouteMatcher
+	Condition     web.RequestMatcher
+	MWMocker      MWMocker
+	MWOrder       int
+	Configurer    security.Configurer
+	Session       bool
+	ForceOverride bool
 }
 
 var defaultMWMockOption = MWMockOption{
@@ -153,6 +154,8 @@ func MWEnableSession() MWMockOptions {
 	}
 }
 
+// MWForcePreOAuth2AuthValidation returns option for WithMockedMiddleware.
+// Decrease the order of mocking middleware such that it runs before OAuth2 authorize validation.
 func MWForcePreOAuth2AuthValidation() MWMockOptions {
 	return func(opt *MWMockOption) {
 		opt.MWOrder = security.MWOrderOAuth2AuthValidation - 5
@@ -160,11 +163,10 @@ func MWForcePreOAuth2AuthValidation() MWMockOptions {
 }
 
 // MWForceOverride returns option for WithMockedMiddleware.
-// Increase the order of mocking middleware to be the last auth middleware before access control.
-// Use this would override any other installed authenticators
+// Add a middleware after the last auth middleware (before access control) that override any other installed authenticators.
 func MWForceOverride() MWMockOptions {
 	return func(opt *MWMockOption) {
-		opt.MWOrder = security.MWOrderAccessControl - 5
+		opt.ForceOverride = true
 	}
 }
 
@@ -228,6 +230,7 @@ func registerSecTest(di regDI) {
 type Feature struct {
 	MWOrder  int
 	MWMocker MWMocker
+	Override bool
 }
 
 // NewMockedMW Standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
@@ -245,6 +248,11 @@ func (f *Feature) Order(mwOrder int) *Feature {
 
 func (f *Feature) Mocker(mocker MWMocker) *Feature {
 	f.MWMocker = mocker
+	return f
+}
+
+func (f *Feature) ForceOverride(override bool) *Feature {
+	f.Override = override
 	return f
 }
 
@@ -282,6 +290,13 @@ func (c *FeatureConfigurer) Apply(feature security.Feature, ws security.WebSecur
 		Use(mock.AuthenticationHandlerFunc())
 	ws.Add(mw)
 
+	if f.Override {
+		overrideMW := middleware.NewBuilder("mocked-auth-override-mw").
+			Order(security.MWOrderAccessControl - 5).
+			Use(mock.ForceOverrideHandlerFunc())
+		ws.Add(overrideMW)
+	}
+
 	return nil
 }
 
@@ -313,7 +328,8 @@ func newTestSecurityConfigurer(opt *MWMockOption) func(ws security.WebSecurity) 
 	return func(ws security.WebSecurity) {
 		ws = ws.Route(opt.Route).With(NewMockedMW().
 			Order(opt.MWOrder).
-			Mocker(opt.MWMocker),
+			Mocker(opt.MWMocker).
+			ForceOverride(opt.ForceOverride),
 		)
 		if opt.Condition != nil {
 			ws.Condition(opt.Condition)
