@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
 	"github.com/cisco-open/go-lanai/pkg/dsync"
-	"github.com/cisco-open/go-lanai/pkg/redis"
 	redislib "github.com/go-redis/redis/v8"
 	"github.com/go-redsync/redsync/v4"
+	redsyncredis "github.com/go-redsync/redsync/v4/redis"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 	"sync"
 	"time"
@@ -15,36 +15,43 @@ import (
 
 type RedisSyncOptions func(opt *RedisSyncOption)
 type RedisSyncOption struct {
-	TTL           time.Duration // see RedisLockOption.AutoExpiry
-	RetryDelay    time.Duration // see RedisLockOption.RetryDelay
-	TimeoutFactor float64       // see RedisLockOption.TimeoutFactor
-	DB            int
+	// Clients are go-redis/v8 clients.
+	// Each client should be able to connect to an independent Redis master/cluster/sentinel-master to form quorum
+	Clients []redislib.UniversalClient
+	// TTL see RedisLockOption.AutoExpiry
+	TTL time.Duration
+	// RetryDelay see RedisLockOption.RetryDelay
+	RetryDelay time.Duration
+	// TimeoutFactor see RedisLockOption.TimeoutFactor
+	TimeoutFactor float64
 }
 
-func NewRedisSyncManager(appCtx *bootstrap.ApplicationContext, factory redis.ClientFactory, opts ...RedisSyncOptions) *RedisSyncManager {
+func NewRedisSyncManager(appCtx *bootstrap.ApplicationContext, opts ...RedisSyncOptions) *RedisSyncManager {
 	opt := RedisSyncOption{
 		TTL:           10 * time.Second,
 		RetryDelay:    1 * time.Second,
 		TimeoutFactor: 0.05,
-		DB:            1,
 	}
 	for _, fn := range opts {
 		fn(&opt)
 	}
 
+	pools := make([]redsyncredis.Pool, len(opt.Clients))
+	for i := range opt.Clients {
+		pools[i] = goredis.NewPool(opt.Clients[i])
+	}
+
 	return &RedisSyncManager{
 		appCtx:  appCtx,
 		options: opt,
-		factory: factory,
+		syncer:  redsync.New(pools...),
 		locks:   make(map[string]*RedisLock),
 	}
 }
 
 type RedisSyncManager struct {
-	initOnce sync.Once
 	appCtx   *bootstrap.ApplicationContext
 	options  RedisSyncOption
-	factory  redis.ClientFactory
 	mtx      sync.Mutex
 	syncer   *redsync.Redsync
 	locks    map[string]*RedisLock
@@ -64,10 +71,6 @@ func (m *RedisSyncManager) Lock(key string, opts ...dsync.LockOptions) (dsync.Lo
 		fn(&opt)
 	}
 
-	if e := m.lazyInit(m.appCtx); e != nil {
-		return nil, e
-	}
-
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -83,21 +86,6 @@ func (m *RedisSyncManager) Lock(key string, opts ...dsync.LockOptions) (dsync.Lo
 		opt.TimeoutFactor = m.options.TimeoutFactor
 	})
 	return m.locks[key], nil
-}
-
-func (m *RedisSyncManager) lazyInit(ctx context.Context) (err error) {
-	m.initOnce.Do(func() {
-		client, e := m.factory.New(ctx, func(cOpt *redis.ClientOption) {
-			cOpt.DbIndex = m.options.DB
-		})
-		if e != nil {
-			err = dsync.ErrSyncManagerStopped.WithMessage("unable to initialize").WithCause(e)
-			return
-		}
-		pool := goredis.NewPool(redislib.UniversalClient(client))
-		m.syncer = redsync.New(pool)
-	})
-	return
 }
 
 func (m *RedisSyncManager) Start(_ context.Context) error {

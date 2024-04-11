@@ -25,6 +25,7 @@ import (
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/cisco-open/go-lanai/test/embedded"
+	redislib "github.com/go-redis/redis/v8"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -183,7 +184,6 @@ func SubTestLockRecovery(di *TestRedisDsyncDI, serverDown bool) test.GomegaSubTe
 			defer MockRedisServerError(ctx, g, "")
 		}
 
-
 		// Wait until revoked, validate Lost() channel works properly
 		timeoutCtx, cancelFn = context.WithTimeout(ctx, ttl*2)
 		defer cancelFn()
@@ -201,7 +201,6 @@ func SubTestLockRecovery(di *TestRedisDsyncDI, serverDown bool) test.GomegaSubTe
 		} else {
 			go MockRedisServerError(ctx, g, "")
 		}
-
 
 		// Try to re-acquire after redis is recovered
 		timeoutCtx, cancelFn = context.WithTimeout(ctx, 5*time.Second)
@@ -291,12 +290,19 @@ type TestRedisManagers struct {
 }
 
 func NewSyncManagers(di *TestRedisDsyncDI, g *gomega.WithT, opts ...redisdsync.RedisSyncOptions) TestRedisManagers {
+	client, e := di.Redis.New(di.AppCtx, func(cOpt *redis.ClientOption) {
+		cOpt.DbIndex = 1
+	})
+	g.Expect(e).To(Succeed(), "creating redis client for sync manager should not fail")
+	opts = append(opts, func(opt *redisdsync.RedisSyncOption) {
+		opt.Clients = []redislib.UniversalClient{client}
+	})
 	ret := TestRedisManagers{
-		Main:      redisdsync.NewRedisSyncManager(di.AppCtx, di.Redis, opts...),
-		Secondary: redisdsync.NewRedisSyncManager(di.AppCtx, di.Redis, opts...),
+		Main:      redisdsync.NewRedisSyncManager(di.AppCtx, opts...),
+		Secondary: redisdsync.NewRedisSyncManager(di.AppCtx, opts...),
 	}
-	g.Expect(ret.Main).ToNot(BeNil(), "major consul sync manager should not be nil")
-	g.Expect(ret.Secondary).ToNot(BeNil(), "minor consul sync manager should not be nil")
+	g.Expect(ret.Main).ToNot(BeNil(), "major redis sync manager should not be nil")
+	g.Expect(ret.Secondary).ToNot(BeNil(), "minor redis sync manager should not be nil")
 	return ret
 }
 

@@ -25,6 +25,9 @@ import (
 	"fmt"
 )
 
+// FxGroup is a group name for uber.fx
+const FxGroup = `dsync`
+
 var (
 	ErrLockUnavailable      = newError("lock is held by another session")
 	ErrUnlockFailed         = newError("failed to release lock")

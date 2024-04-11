@@ -51,17 +51,17 @@ var Module = &bootstrap.Module{
 
 type initDI struct {
 	fx.In
-	Lifecycle   fx.Lifecycle
-	AppCtx      *bootstrap.ApplicationContext
-	Manager     SyncManager   `optional:"true"`
-	TestManager []SyncManager `group:"test"`
+	Lifecycle        fx.Lifecycle
+	AppCtx           *bootstrap.ApplicationContext
+	Manager          SyncManager   `optional:"true"`
+	ManagerOverrides []SyncManager `group:"dsync"`
 }
 
 func initialize(di initDI) error {
 	// set global variable
 	syncManager = di.Manager
-	if len(di.TestManager) != 0 {
-		syncManager = di.TestManager[0]
+	if len(di.ManagerOverrides) != 0 {
+		syncManager = di.ManagerOverrides[0]
 	}
 	if syncManager == nil {
 		return ErrFailedInitialization.WithMessage(`unable to initialize distributed lock system and leadership lock. ` +
