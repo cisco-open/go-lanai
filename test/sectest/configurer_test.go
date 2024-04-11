@@ -26,6 +26,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/utils"
 	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/cisco-open/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/web/middleware"
 	"github.com/cisco-open/go-lanai/pkg/web/rest"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
@@ -125,9 +126,25 @@ func TestCustomMWMocking(t *testing.T) {
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Provide(newCustomMocker),
-			fx.Invoke(registerTestController, registerTestSecurity),
+			fx.Invoke(registerTestAuthMW, registerTestController, registerTestSecurity),
 		),
 		test.GomegaSubTest(SubTestCustomOptions(di), "TestCustomOptions"),
+	)
+}
+
+func TestForceOverrideMWMocking(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		webtest.WithMockedServer(),
+		WithMockedMiddleware(MWForceOverride()),
+		apptest.WithModules(basicauth.Module, access.Module, errorhandling.Module),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			fx.Invoke(registerTestAuthMW, registerTestController, registerTestSecurity),
+		),
+		test.GomegaSubTest(SubTestWithoutMockedContext(di), "TestWithoutMockedContext"),
+		test.GomegaSubTest(SubTestWithMockedContext(di), "TestWithMockedContext"),
 	)
 }
 
@@ -187,7 +204,7 @@ func SubTestWithoutMockedContext(_ *testDI) test.GomegaSubTestFunc {
 
 func SubTestWithMockedContext(_ *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		ctx = WithMockedSecurity(ctx, securityMock())
+		ctx = ContextWithSecurity(ctx, MockedAuthentication(securityMock()))
 		var req *http.Request
 		var resp *http.Response
 		req = webtest.NewRequest(ctx, http.MethodGet, TestSecuredURL, nil)
@@ -244,6 +261,18 @@ func SubTestFailedWithRealServer(_ *testDI) test.GomegaSubTestFunc {
 /*************************
 	Helpers
  *************************/
+
+// registerTestAuthMW register an auth middleware that force cleaning any existing authentication.
+func registerTestAuthMW(reg security.Registrar) {
+	authClearingMW := middleware.NewBuilder("test MW").
+		Order(security.MWOrderOAuth2TokenAuth).
+		Use(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			security.MustClear(r.Context())
+		}))
+	reg.Register(security.ConfigurerFunc(func(ws security.WebSecurity) {
+		ws.Add(authClearingMW)
+	}))
+}
 
 func securityMock() SecurityMockOptions {
 	return func(d *SecurityDetailsMock) {

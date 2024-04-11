@@ -16,11 +16,18 @@
 
 package kafkatest
 
+import (
+	"context"
+	"github.com/cisco-open/go-lanai/pkg/kafka"
+	"github.com/cisco-open/go-lanai/pkg/log"
+)
+
 type MessageRecord struct {
-	Topic string
+	Topic   string
 	Payload interface{}
 }
 
+// MessageRecorder interface for retrieve messages produced by MockedProducer
 type MessageRecorder interface {
 	Reset()
 	Records(topic string) []*MessageRecord
@@ -30,4 +37,30 @@ type MessageRecorder interface {
 type messageRecorder interface {
 	MessageRecorder
 	Record(msg *MessageRecord)
+}
+
+// MessageMocker interface for mocking incoming messages.
+type MessageMocker interface {
+	Mock(ctx context.Context, topic string, msg *kafka.Message) error
+	MockWithGroup(ctx context.Context, topic, group string, msg *kafka.Message) error
+}
+
+type msgLogger struct {
+	logger log.ContextualLogger
+	level  log.LoggingLevel
+}
+
+func (l msgLogger) WithLevel(level log.LoggingLevel) kafka.MessageLogger {
+	return msgLogger{
+		logger: l.logger,
+		level:  level,
+	}
+}
+
+func (l msgLogger) LogSentMessage(ctx context.Context, msg interface{}) {
+	l.logger.WithContext(ctx).WithLevel(l.level).Printf(`Sent: %v`, msg)
+}
+
+func (l msgLogger) LogReceivedMessage(ctx context.Context, msg interface{}) {
+	l.logger.WithContext(ctx).WithLevel(l.level).Printf(`Received: %v`, msg)
 }

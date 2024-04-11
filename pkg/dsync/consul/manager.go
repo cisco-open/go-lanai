@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package dsync
+package consuldsync
 
 import (
     "context"
@@ -22,7 +22,8 @@ import (
     "fmt"
     "github.com/cisco-open/go-lanai/pkg/bootstrap"
     "github.com/cisco-open/go-lanai/pkg/consul"
-    "github.com/cisco-open/go-lanai/pkg/utils/xsync"
+	"github.com/cisco-open/go-lanai/pkg/dsync"
+	"github.com/cisco-open/go-lanai/pkg/utils/xsync"
     "github.com/hashicorp/consul/api"
     "sync"
     "time"
@@ -93,13 +94,13 @@ func (m *ConsulSyncManager) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (m *ConsulSyncManager) Lock(key string, opts ...LockOptions) (Lock, error) {
+func (m *ConsulSyncManager) Lock(key string, opts ...dsync.LockOptions) (dsync.Lock, error) {
 	if key == "" {
 		return nil, fmt.Errorf(`cannot create distributed lock: key is required but missing`)
 	}
 
-	option := LockOption{
-		Valuer: NewJsonLockValuer(map[string]string{
+	option := dsync.LockOption{
+		Valuer: dsync.NewJsonLockValuer(map[string]string{
 			"name": fmt.Sprintf("distributed lock - %s", m.appCtx.Name()),
 		}),
 	}
@@ -111,7 +112,7 @@ func (m *ConsulSyncManager) Lock(key string, opts ...LockOptions) (Lock, error) 
 	defer m.mtx.Unlock()
 
 	if m.shutdown {
-		return nil, ErrSyncManagerStopped
+		return nil, dsync.ErrSyncManagerStopped
 	} else if lock, ok := m.locks[key]; ok {
 		return lock, nil
 	}
@@ -128,7 +129,7 @@ func (m *ConsulSyncManager) Lock(key string, opts ...LockOptions) (Lock, error) 
 // startLoop requires mutex lock
 func (m *ConsulSyncManager) startLoop() error {
 	if m.shutdown {
-		return ErrSyncManagerStopped
+		return dsync.ErrSyncManagerStopped
 	}
 	if m.cancelFunc == nil {
 		ctx, cf := context.WithCancel(m.appCtx)

@@ -104,7 +104,7 @@ func (b *Bootstrapper) Register(m *Module) {
 }
 
 func (b *Bootstrapper) AddOptions(options ...fx.Option) {
-	b.adhocModule.PriorityOptions = append(b.adhocModule.PriorityOptions, options...)
+	b.adhocModule.Options = append(b.adhocModule.Options, options...)
 }
 
 func (b *Bootstrapper) AddInitialAppContextOptions(options ...ContextOption) {

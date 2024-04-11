@@ -17,14 +17,12 @@
 package dsync
 
 import (
-    "context"
-    "embed"
-    "fmt"
-    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/consul"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "go.uber.org/fx"
+	"context"
+	"embed"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"go.uber.org/fx"
 )
 
 //go:embed defaults-dsync.yml
@@ -39,35 +37,13 @@ var Module = &bootstrap.Module{
 	Precedence: bootstrap.DistributedLockPrecedence,
 	Options: []fx.Option{
 		appconfig.FxEmbeddedDefaults(defaultConfigFS),
-		fx.Provide(provideSyncManager),
 		fx.Invoke(initialize),
 	},
-}
-
-func Use() {
-	bootstrap.Register(Module)
 }
 
 /**************************
 	Provider
 ***************************/
-
-type syncDI struct {
-	fx.In
-	AppCtx          *bootstrap.ApplicationContext
-	Conn            *consul.Connection `optional:"true"`
-	TestSyncManager []SyncManager      `group:"test"`
-}
-
-func provideSyncManager(di syncDI) (SyncManager, error) {
-	if len(di.TestSyncManager) != 0 {
-		return di.TestSyncManager[0], nil
-	}
-	if di.Conn == nil {
-		return nil, fmt.Errorf("*consul.Connection is required for 'dsync' package")
-	}
-	return NewConsulLockManager(di.AppCtx, di.Conn), nil
-}
 
 /**************************
 	Initialize
@@ -75,20 +51,30 @@ func provideSyncManager(di syncDI) (SyncManager, error) {
 
 type initDI struct {
 	fx.In
-	Lifecycle fx.Lifecycle
-	AppCtx    *bootstrap.ApplicationContext
-	Manager   SyncManager
+	Lifecycle        fx.Lifecycle
+	AppCtx           *bootstrap.ApplicationContext
+	Manager          SyncManager   `optional:"true"`
+	ManagerOverrides []SyncManager `group:"dsync"`
 }
 
-func initialize(di initDI) {
+func initialize(di initDI) error {
 	// set global variable
 	syncManager = di.Manager
-	syncLc, ok := di.Manager.(SyncManagerLifecycle)
+	if len(di.ManagerOverrides) != 0 {
+		syncManager = di.ManagerOverrides[0]
+	}
+	if syncManager == nil {
+		return ErrFailedInitialization.WithMessage(`unable to initialize distributed lock system and leadership lock. ` +
+			`Hint: provide a dsync.SyncManager with 'consuldsync.Use()' or 'redisdsync.Use()' or with your own implementation `)
+	}
+	syncLc, ok := syncManager.(SyncManagerLifecycle)
+
+	// start/stop hooks
 	di.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			if ok {
 				if e := syncLc.Start(ctx); e != nil {
-					return e
+					return ErrFailedInitialization.WithCause(e)
 				}
 			}
 			// start leader election lock
@@ -101,4 +87,5 @@ func initialize(di initDI) {
 			return nil
 		},
 	})
+	return nil
 }

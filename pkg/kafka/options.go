@@ -251,6 +251,13 @@ func FilterOnHeader(header string, matcher matcher.StringMatcher) DispatchOption
 	}
 }
 
+// AddInterceptors returns a DispatchOptions that add ConsumerHandlerInterceptor to a MessageHandlerFunc
+func AddInterceptors(interceptors ...ConsumerHandlerInterceptor) DispatchOptions {
+	return func(h *handler) {
+		h.interceptors = append(h.interceptors, interceptors...)
+	}
+}
+
 func noop() func(h *handler) {
 	return func(_ *handler) {
 		// noop

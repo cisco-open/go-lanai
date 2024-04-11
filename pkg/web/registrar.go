@@ -225,15 +225,6 @@ func (r *Registrar) MustRegister(items ...interface{}) {
 	}
 }
 
-// RegisterWithLifecycle is a convenient function to schedule item registration in FX lifecycle
-func (r *Registrar) RegisterWithLifecycle(lc fx.Lifecycle, items ...interface{}) {
-	lc.Append(fx.Hook{
-		OnStart: func(context.Context) (err error) {
-			return r.Register(items...)
-		},
-	})
-}
-
 func (r *Registrar) listenAndServe() (*net.TCPAddr, error) {
 	ln, err := net.Listen("tcp", r.server.Addr)
 	if err != nil {

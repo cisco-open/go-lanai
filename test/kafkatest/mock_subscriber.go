@@ -22,12 +22,16 @@ import (
 )
 
 type MockedSubscriber struct {
-	T     string
-	Parts []int32
+	kafka.Dispatcher
+	T          string
+	Parts      []int32
 }
 
 func NewMockedSubscriber(topic string) *MockedSubscriber {
 	return &MockedSubscriber{
+		Dispatcher: kafka.Dispatcher{
+			Logger: messageLogger,
+		},
 		T:     topic,
 		Parts: []int32{int32(utils.RandomIntN(0xffff))},
 	}
@@ -39,11 +43,6 @@ func (s *MockedSubscriber) Topic() string {
 
 func (s *MockedSubscriber) Partitions() []int32 {
 	return s.Parts
-}
-
-func (s *MockedSubscriber) AddHandler(handlerFunc kafka.MessageHandlerFunc, opts ...kafka.DispatchOptions) error {
-	// noop
-	return nil
 }
 
 

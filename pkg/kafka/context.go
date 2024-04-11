@@ -56,7 +56,7 @@ type Encoder interface {
 	Encode(v interface{}) ([]byte, error)
 }
 
-// MessageContext internal use only, used by interceptors and processors
+// MessageContext internal use only, used by Interceptors and processors
 type MessageContext struct {
 	context.Context
 	messageConfig

@@ -18,8 +18,11 @@ package sectest
 
 import (
 	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/gin-gonic/gin"
 )
+
+type ckMockedAuth struct{}
 
 type MockAuthenticationMiddleware struct {
 	MWMocker             MWMocker
@@ -51,6 +54,16 @@ func (m *MockAuthenticationMiddleware) AuthenticationHandlerFunc() gin.HandlerFu
 			auth = m.MockedAuthentication
 		}
 		security.MustSet(ctx, auth)
+		web.SetKV(ctx, ckMockedAuth{}, auth)
+	}
+}
+
+func (m *MockAuthenticationMiddleware) ForceOverrideHandlerFunc() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		auth, ok := ctx.Value(ckMockedAuth{}).(security.Authentication)
+		if ok {
+			security.MustSet(ctx, auth)
+		}
 	}
 }
 

@@ -87,21 +87,19 @@ type handler struct {
 	interceptors []ConsumerHandlerInterceptor
 }
 
-type saramaDispatcher struct {
+/**************************
+	Dispatcher
+ **************************/
+
+// Dispatcher process MessageContext and dispatch it to registered MessageHandlerFunc.
+// This struct is intended for Subscriber or GroupConsumer implementors. It should not be directly used by application.
+type Dispatcher struct {
 	handlers     []*handler
-	interceptors []ConsumerDispatchInterceptor
-	msgLogger    MessageLogger
+	Interceptors []ConsumerDispatchInterceptor
+	Logger       MessageLogger
 }
 
-func newSaramaDispatcher(cfg *bindingConfig) *saramaDispatcher {
-	return &saramaDispatcher{
-		handlers:     []*handler{},
-		interceptors: cfg.consumer.dispatchInterceptors,
-		msgLogger:    cfg.msgLogger,
-	}
-}
-
-func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, cfg *consumerConfig, opts []DispatchOptions) error {
+func (d *Dispatcher) AddHandler(fn MessageHandlerFunc, opts ...DispatchOptions) error {
 	if fn == nil {
 		return nil
 	}
@@ -109,8 +107,7 @@ func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, cfg *consumerConfig
 	// apply options
 	f := reflect.ValueOf(fn)
 	h := handler{
-		fn:           f,
-		interceptors: cfg.handlerInterceptors,
+		fn: f,
 	}
 	for _, optFn := range opts {
 		optFn(&h)
@@ -154,7 +151,7 @@ func (d *saramaDispatcher) addHandler(fn MessageHandlerFunc, cfg *consumerConfig
 }
 
 //nolint:contextcheck // context is passed inside msgCtx
-func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMessage, source interface{}) (err error) {
+func (d *Dispatcher) Dispatch(msgCtx *MessageContext) (err error) {
 	defer func() {
 		switch e := recover().(type) {
 		case error:
@@ -164,29 +161,8 @@ func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMess
 		}
 	}()
 
-	// parse header
-	headers := Headers{}
-	for _, rh := range raw.Headers {
-		if rh == nil || len(rh.Key) == 0 || len(rh.Value) == 0 {
-			continue
-		}
-		headers[string(rh.Key)] = string(rh.Value)
-	}
-
-	// create message context
-	msgCtx := &MessageContext{
-		Context: ctx,
-		Message: Message{
-			Headers: headers,
-			Payload: raw.Value,
-		},
-		Source:     source,
-		Topic:      raw.Topic,
-		RawMessage: raw,
-	}
-
-	// invoke interceptors
-	for _, interceptor := range d.interceptors {
+	// invoke Interceptors
+	for _, interceptor := range d.Interceptors {
 		msgCtx, err = interceptor.Intercept(msgCtx)
 		if err != nil {
 			return ErrorSubTypeConsumerGeneral.WithMessage("consumer dispatch interceptor error: %v", err)
@@ -198,33 +174,31 @@ func (d saramaDispatcher) dispatch(ctx context.Context, raw *sarama.ConsumerMess
 	}()
 
 	// log message
-	if d.msgLogger != nil {
-		d.msgLogger.LogReceivedMessage(msgCtx.Context, raw)
+	if d.Logger != nil {
+		d.Logger.LogReceivedMessage(msgCtx.Context, msgCtx.RawMessage)
 	}
 
 	for _, h := range d.handlers {
-		// reset message payload
-		msgCtx.Message.Payload = raw.Value
-
-		// filter
+		// apply filters
 		if h.filterFunc != nil {
 			if ok := h.filterFunc(msgCtx.Context, &msgCtx.Message); !ok {
 				continue
 			}
 		}
 
-		if err = d.doDispatch(msgCtx, h); err != nil {
+		if err = d.dispatch(msgCtx, h); err != nil {
 			return
 		}
 	}
 	return nil
 }
 
-func (d saramaDispatcher) doDispatch(msgCtx *MessageContext, h *handler) (err error) {
-	// invoke handler interceptors
-	ctx, msg := msgCtx.Context, &msgCtx.Message
+func (d *Dispatcher) dispatch(msgCtx *MessageContext, h *handler) (err error) {
+	// invoke handler Interceptors.
+	// note: we need to make a shallow copy of message because we need to decode the payload
+	ctx, msg := msgCtx.Context, msgCtx.Message
 	for _, interceptor := range h.interceptors {
-		ctx, err = interceptor.BeforeHandling(ctx, msg)
+		ctx, err = interceptor.BeforeHandling(ctx, &msg)
 		if err != nil {
 			return ErrorSubTypeConsumerGeneral.WithMessage("consumer handler interceptor error: %v", err)
 		}
@@ -232,21 +206,21 @@ func (d saramaDispatcher) doDispatch(msgCtx *MessageContext, h *handler) (err er
 
 	defer func() {
 		for _, interceptor := range h.interceptors {
-			ctx, err = interceptor.AfterHandling(ctx, msg, err)
+			ctx, err = interceptor.AfterHandling(ctx, &msg, err)
 		}
 	}()
 
 	// decode payload
-	if err = d.decodePayload(ctx, h.params.payload.t, msg); err != nil {
+	if err = d.decodePayload(ctx, h.params.payload.t, &msg); err != nil {
 		return
 	}
 
-	err = d.invokeHandler(ctx, h, msg, msgCtx)
+	err = d.invokeHandler(ctx, h, &msg, msgCtx)
 	return
 }
 
-func (d saramaDispatcher) finalizeDispatch(msgCtx *MessageContext, err error) error {
-	for _, interceptor := range d.interceptors {
+func (d *Dispatcher) finalizeDispatch(msgCtx *MessageContext, err error) error {
+	for _, interceptor := range d.Interceptors {
 		switch finalizer := interceptor.(type) {
 		case ConsumerDispatchFinalizer:
 			msgCtx, err = finalizer.Finalize(msgCtx, err)
@@ -268,7 +242,7 @@ func (d saramaDispatcher) finalizeDispatch(msgCtx *MessageContext, err error) er
 	Helpers
  ********************/
 
-func (d saramaDispatcher) decodePayload(_ context.Context, typ reflect.Type, msg *Message) error {
+func (d *Dispatcher) decodePayload(_ context.Context, typ reflect.Type, msg *Message) error {
 	if _, ok := msg.Payload.([]byte); !ok || typ == nil {
 		return nil
 	}
@@ -290,7 +264,7 @@ func (d saramaDispatcher) decodePayload(_ context.Context, typ reflect.Type, msg
 	return nil
 }
 
-func (d saramaDispatcher) invokeHandler(ctx context.Context, handler *handler, msg *Message, msgCtx *MessageContext) (err error) {
+func (d *Dispatcher) invokeHandler(ctx context.Context, handler *handler, msg *Message, msgCtx *MessageContext) (err error) {
 	// prepare input params
 	in := make([]reflect.Value, handler.params.count)
 	in[0] = reflect.ValueOf(ctx)
@@ -335,7 +309,7 @@ func (d saramaDispatcher) invokeHandler(ctx context.Context, handler *handler, m
 // instantiateByType
 // "ptr" is the pointer regardless if given type is Ptr or other type
 // "value" is actually the value with given type
-func (d saramaDispatcher) instantiateByType(t reflect.Type) (ptr reflect.Value, value reflect.Value) {
+func (d *Dispatcher) instantiateByType(t reflect.Type) (ptr reflect.Value, value reflect.Value) {
 	switch t.Kind() {
 	case reflect.Ptr:
 		pp := reflect.New(t)
@@ -348,7 +322,7 @@ func (d saramaDispatcher) instantiateByType(t reflect.Type) (ptr reflect.Value, 
 	}
 }
 
-func (d saramaDispatcher) isSupportedMessagePayloadType(t reflect.Type) bool {
+func (d *Dispatcher) isSupportedMessagePayloadType(t reflect.Type) bool {
 	switch t.Kind() {
 	case reflect.Ptr:
 		if t.Elem().Kind() == reflect.Ptr {
@@ -360,4 +334,52 @@ func (d saramaDispatcher) isSupportedMessagePayloadType(t reflect.Type) bool {
 	default:
 		return true
 	}
+}
+
+/**************************
+	sarama dispatcher
+ **************************/
+
+type saramaDispatcher struct {
+	Dispatcher
+}
+
+func newSaramaDispatcher(cfg *bindingConfig) *saramaDispatcher {
+	return &saramaDispatcher{
+		Dispatcher{
+			handlers:     []*handler{},
+			Interceptors: cfg.consumer.dispatchInterceptors,
+			Logger:       cfg.msgLogger,
+		},
+	}
+}
+
+func (d *saramaDispatcher) Dispatch(ctx context.Context, raw *sarama.ConsumerMessage, source interface{}) (err error) {
+	// parse header
+	headers := Headers{}
+	for _, rh := range raw.Headers {
+		if rh == nil || len(rh.Key) == 0 || len(rh.Value) == 0 {
+			continue
+		}
+		headers[string(rh.Key)] = string(rh.Value)
+	}
+
+	// create message context
+	msgCtx := &MessageContext{
+		Context: ctx,
+		Message: Message{
+			Headers: headers,
+			Payload: raw.Value,
+		},
+		Source:     source,
+		Topic:      raw.Topic,
+		RawMessage: raw,
+	}
+
+	return d.Dispatcher.Dispatch(msgCtx)
+}
+
+func (d *saramaDispatcher) AddHandler(fn MessageHandlerFunc, cfg *consumerConfig, opts []DispatchOptions) error {
+	opts = append([]DispatchOptions{AddInterceptors(cfg.handlerInterceptors...)}, opts...)
+	return d.Dispatcher.AddHandler(fn, opts...)
 }

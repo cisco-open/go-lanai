@@ -14,13 +14,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package dsync_test
+package consuldsync_test
 
 import (
     "context"
     "fmt"
     "github.com/cisco-open/go-lanai/pkg/dsync"
-    "github.com/cisco-open/go-lanai/test"
+	consuldsync "github.com/cisco-open/go-lanai/pkg/dsync/consul"
+	"github.com/cisco-open/go-lanai/test"
     "github.com/cisco-open/go-lanai/test/apptest"
     "github.com/cisco-open/go-lanai/test/consultest"
     "github.com/onsi/gomega"
@@ -45,7 +46,7 @@ func TestModuleInit(t *testing.T) {
 		consultest.WithHttpPlayback(t,
 			//consultest.HttpRecordingMode(),
 		),
-		apptest.WithModules(dsync.Module),
+		apptest.WithModules(consuldsync.Module),
 		apptest.WithFxOptions(),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestGettingLock(&di), "TestGettingLock"),
@@ -57,7 +58,7 @@ func TestModuleInit(t *testing.T) {
 	Sub-Test Cases
  *************************/
 
-func SubTestGettingLock(di *TestModuleDI) test.GomegaSubTestFunc {
+func SubTestGettingLock(_ *TestModuleDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const (
 			key1 = "test-lock"
@@ -89,7 +90,7 @@ func SubTestGettingLock(di *TestModuleDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestLeadershipLock(di *TestModuleDI) test.GomegaSubTestFunc {
+func SubTestLeadershipLock(_ *TestModuleDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		lock := dsync.LeadershipLock()
 		g.Expect(lock).ToNot(BeNil(), "leadership lock should not be nil")

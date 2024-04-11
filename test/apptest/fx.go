@@ -53,7 +53,7 @@ func WithTimeout(timeout time.Duration) test.Options {
 func WithFxOptions(opts ...fx.Option) test.Options {
 	return test.Setup(func(ctx context.Context, t *testing.T) (context.Context, error) {
 		ret, tb := withTestModule(ctx)
-		tb.AddOptions(opts...)
+		tb.AppOptions = append(tb.AppOptions, opts...)
 		return ret, nil
 	})
 }
@@ -63,7 +63,6 @@ func WithFxOptions(opts ...fx.Option) test.Options {
 func WithFxPriorityOptions(opts ...fx.Option) test.Options {
 	return test.Setup(func(ctx context.Context, t *testing.T) (context.Context, error) {
 		ret, tb := withTestModule(ctx)
-		tb.AddOptions()
 		tb.AppPriorityOptions = append(tb.AppPriorityOptions, opts...)
 		return ret, nil
 	})

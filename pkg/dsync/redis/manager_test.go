@@ -14,17 +14,18 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package dsync_test
+package redisdsync_test
 
 import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
-	"github.com/cisco-open/go-lanai/pkg/consul"
 	"github.com/cisco-open/go-lanai/pkg/dsync"
+	redisdsync "github.com/cisco-open/go-lanai/pkg/dsync/redis"
+	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
-	"github.com/cisco-open/go-lanai/test/consultest"
-	"github.com/cisco-open/go-lanai/test/ittest"
+	"github.com/cisco-open/go-lanai/test/embedded"
+	redislib "github.com/go-redis/redis/v8"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
@@ -36,31 +37,25 @@ import (
 	Tests
  *************************/
 
-type TestConsulDsyncDI struct {
+type TestRedisDsyncDI struct {
 	fx.In
-	ittest.RecorderDI
 	AppCtx *bootstrap.ApplicationContext
-	Consul *consul.Connection
+	Redis  redis.ClientFactory
 }
 
-func TestConsulDSyncManager(t *testing.T) {
-	di := TestConsulDsyncDI{}
+func TestRedisDSyncManager(t *testing.T) {
+	di := TestRedisDsyncDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		consultest.WithHttpPlayback(t,
-			//consultest.HttpRecordingMode(),
-			// - Too many concurrent operations, ordering is different every time.
-			// - Latency is also required because consul lock is heavily rely on blocking HTTP transactions
-			consultest.MoreHTTPVCROptions(ittest.DisableHttpRecordOrdering(), ittest.ApplyHttpLatency()),
-		),
-		apptest.WithTimeout(2*time.Minute),
-		apptest.WithFxOptions(),
+		embedded.WithRedis(),
+		apptest.WithModules(redis.Module),
+		//apptest.WithTimeout(2*time.Minute),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestConsulTryLock(&di), "TestTryLock"),
-		test.GomegaSubTest(SubTestConsulLockAndRelease(&di), "TestLockAndRelease"),
-		test.GomegaSubTest(SubTestConsulSessionRecovery(&di), "TestSessionRecovery"),
-		test.GomegaSubTest(SubTestConsulInvalidSession(&di), "TestInvalidSession"),
-		test.GomegaSubTest(SubTestConsulCancelledContext(&di), "TestCancelledContext"),
+		test.GomegaSubTest(SubTestTryLock(&di), "TestTryLock"),
+		test.GomegaSubTest(SubTestLockAndRelease(&di), "TestLockAndRelease"),
+		test.GomegaSubTest(SubTestLockRecovery(&di, true), "TestRedisDownRecovery"),
+		test.GomegaSubTest(SubTestLockRecovery(&di, false), "TestRedisErrorRecovery"),
+		test.GomegaSubTest(SubTestCancelledContext(&di), "TestCancelledContext"),
 	)
 }
 
@@ -68,10 +63,10 @@ func TestConsulDSyncManager(t *testing.T) {
 	Sub-Test Cases
  *************************/
 
-func SubTestConsulTryLock(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
+func SubTestTryLock(di *TestRedisDsyncDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const lockKey = "try-lock-test"
-		mgts := NewConsulManagers(di, g)
+		mgts := NewSyncManagers(di, g)
 		mgts.Start(ctx, g)
 		defer mgts.Stop(ctx, g)
 
@@ -108,13 +103,12 @@ func SubTestConsulTryLock(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestConsulLockAndRelease(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
+func SubTestLockAndRelease(di *TestRedisDsyncDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const lockKey = "lock-test"
-		mgts := NewConsulManagers(di, g, func(opt *dsync.ConsulSessionOption) {
-			// minimum TTL and lock delay (1sec) for faster test
-			opt.TTL = 10 * time.Second
-			opt.LockDelay = 1 * time.Second
+		mgts := NewSyncManagers(di, g, func(opt *redisdsync.RedisSyncOption) {
+			opt.TTL = 1 * time.Second
+			opt.RetryDelay = 10 * time.Millisecond
 		})
 		mgts.Start(ctx, g)
 		defer mgts.Stop(ctx, g)
@@ -152,17 +146,14 @@ func SubTestConsulLockAndRelease(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestConsulSessionRecovery(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
+func SubTestLockRecovery(di *TestRedisDsyncDI, serverDown bool) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		const lockKey = "session-renew-test"
-		const sessionName = `test-session`
-		var ttl = 10 * time.Second
-		mgts := NewConsulManagers(di, g, func(opt *dsync.ConsulSessionOption) {
-			opt.Name = sessionName
-			// minimum TTL and lock delay (1sec) for faster test. Lower retry rate to avoid too many retries.
+		const lockKey = "lock-recovery-test"
+		var ttl = 300 * time.Millisecond
+		mgts := NewSyncManagers(di, g, func(opt *redisdsync.RedisSyncOption) {
 			opt.TTL = ttl
-			opt.LockDelay = 1 * time.Second
-			opt.RetryDelay = 3 * time.Second
+			opt.RetryDelay = 10 * time.Millisecond
+			opt.TimeoutFactor = 0.01
 		})
 		mgts.Start(ctx, g)
 		defer mgts.Stop(ctx, g)
@@ -181,65 +172,49 @@ func SubTestConsulSessionRecovery(di *TestConsulDsyncDI) test.GomegaSubTestFunc 
 		// main lock - acquire
 		timeoutCtx, cancelFn = context.WithTimeout(ctx, timeout)
 		defer cancelFn()
-		e = lock1.TryLock(timeoutCtx)
+		e = lock1.Lock(timeoutCtx)
 		g.Expect(e).To(Succeed(), "TryLock should not fail when lock is acquirable")
 
-		// remove session
-		go RemoveSession(g, di.Consul, sessionName)
+		// cause some interruption
+		if serverDown {
+			go StopRedisServer(ctx, g)
+			defer RestartRedisServer(ctx, g) // just in case
+		} else {
+			go MockRedisServerError(ctx, g, "oops")
+			defer MockRedisServerError(ctx, g, "")
+		}
 
 		// Wait until revoked, validate Lost() channel works properly
-		timeoutCtx, cancelFn = context.WithTimeout(ctx, ttl)
+		timeoutCtx, cancelFn = context.WithTimeout(ctx, ttl*2)
 		defer cancelFn()
 		select {
 		case <-lock1.Lost():
 			e = lock1.TryLock(timeoutCtx)
-			g.Expect(e).To(HaveOccurred(), "TryLock should fail when session is revoked")
+			g.Expect(e).To(HaveOccurred(), "TryLock should fail when redis become unavailable")
 		case <-timeoutCtx.Done():
 			t.Errorf("expect signal of lost lock after session revocation, got nothing")
 		}
 
-		// Try to re-acquire after session is recovered
-		// Note: Session is usually recovered within half of the TTL, see consul's api.Session.RenewPeriodic().
-		timeoutCtx, cancelFn = context.WithTimeout(ctx, 6 * time.Second)
+		// finish interruption
+		if serverDown {
+			go RestartRedisServer(ctx, g)
+		} else {
+			go MockRedisServerError(ctx, g, "")
+		}
+
+		// Try to re-acquire after redis is recovered
+		timeoutCtx, cancelFn = context.WithTimeout(ctx, 5*time.Second)
 		defer cancelFn()
 		e = lock1.Lock(timeoutCtx)
+		defer stopFn()
 		g.Expect(e).To(Succeed(), "Lock should be eventually acquirable after session is recovered")
 	}
 }
 
-func SubTestConsulInvalidSession(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		const lockKey = "invalid-session-test"
-		mgts := NewConsulManagers(di, g, func(opt *dsync.ConsulSessionOption) {
-			// minimum TTL is 10s. Creating session will time out if TTL is invalid
-			opt.TTL = 1 * time.Second
-		})
-		mgts.Start(ctx, g)
-		defer mgts.Stop(ctx, g)
-
-		var timeout = 100 * time.Millisecond
-		var timeoutCtx context.Context
-		var cancelFn context.CancelFunc
-		var e error
-		var lock1 dsync.Lock
-		var stopFn func()
-
-		// obtain locks
-		lock1, stopFn = GetTestLock(g, mgts.Main, lockKey)
-		defer stopFn()
-
-		// main lock - acquire
-		timeoutCtx, cancelFn = context.WithTimeout(ctx, timeout)
-		defer cancelFn()
-		e = lock1.Lock(timeoutCtx)
-		g.Expect(e).To(HaveOccurred(), "Lock should fail when session is not valid")
-	}
-}
-
-func SubTestConsulCancelledContext(di *TestConsulDsyncDI) test.GomegaSubTestFunc {
+func SubTestCancelledContext(di *TestRedisDsyncDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const lockKey = "cancelled-context-test"
-		mgts := NewConsulManagers(di, g)
+		mgts := NewSyncManagers(di, g)
 		mgts.Start(ctx, g)
 		defer mgts.Stop(ctx, g)
 
@@ -262,8 +237,8 @@ func SubTestConsulCancelledContext(di *TestConsulDsyncDI) test.GomegaSubTestFunc
 
 		// release lock1 AFTER context is cancelled,
 		timeoutCtx, cancelFn = context.WithTimeout(ctx, timeout)
-		time.AfterFunc(100 * time.Millisecond, cancelFn)
-		time.AfterFunc(200 * time.Millisecond, stopFn1)
+		time.AfterFunc(100*time.Millisecond, cancelFn)
+		time.AfterFunc(200*time.Millisecond, stopFn1)
 		e = lock2.Lock(timeoutCtx)
 		defer stopFn2()
 		g.Expect(e).To(HaveOccurred(), "Lock should fail before the lock become acquirable (cancelled)")
@@ -284,45 +259,61 @@ func GetTestLock(g *WithT, manager dsync.SyncManager, lockName string, opts ...d
 	}
 }
 
-func RemoveSession(g *WithT, consulConn *consul.Connection, sessionName string) {
-	entries, _, e := consulConn.Client().Session().List(nil)
-	g.Expect(e).To(Succeed(), "listing current sessions should not fail")
-	var sid string
-	for i := range entries {
-		if entries[i].Name == sessionName {
-			sid = entries[i].ID
-			break
-		}
-	}
-	g.Expect(sid).ToNot(BeEmpty(), "session with name [%s] should exist", sessionName)
-	_, e = consulConn.Client().Session().Destroy(sid, nil)
-	g.Expect(e).To(Succeed(), "deleting session [%s](%s) should not fail", sessionName, sid)
+func StopRedisServer(ctx context.Context, g *WithT) {
+	server := embedded.CurrentRedisServer(ctx)
+	g.Expect(server).ToNot(BeNil(), "embedded redis server should be available")
+	server.Close()
 }
 
-// TestConsulManagers to mimic distributed environment, we always needs multiple managers
-type TestConsulManagers struct {
-	Main      *dsync.ConsulSyncManager
-	Secondary *dsync.ConsulSyncManager
+func RestartRedisServer(ctx context.Context, g *WithT) {
+	server := embedded.CurrentRedisServer(ctx)
+	g.Expect(server).ToNot(BeNil(), "embedded redis server should be available")
+	server.Lock()
+	stopped := server.Server() == nil
+	server.Unlock()
+	if stopped {
+		e := server.Restart()
+		g.Expect(e).To(Succeed(), "restart embedded redis should not fail")
+	}
 }
 
-func NewConsulManagers(di *TestConsulDsyncDI, g *gomega.WithT, opts ...dsync.ConsulSessionOptions) TestConsulManagers {
-	ret := TestConsulManagers{
-		Main:      dsync.NewConsulLockManager(di.AppCtx, di.Consul, opts...),
-		Secondary: dsync.NewConsulLockManager(di.AppCtx, di.Consul, opts...),
+func MockRedisServerError(ctx context.Context, g *WithT, errMsg string) {
+	server := embedded.CurrentRedisServer(ctx)
+	g.Expect(server).ToNot(BeNil(), "embedded redis server should be available")
+	server.SetError(errMsg)
+}
+
+// TestRedisManagers to mimic distributed environment, we always needs multiple managers
+type TestRedisManagers struct {
+	Main      *redisdsync.RedisSyncManager
+	Secondary *redisdsync.RedisSyncManager
+}
+
+func NewSyncManagers(di *TestRedisDsyncDI, g *gomega.WithT, opts ...redisdsync.RedisSyncOptions) TestRedisManagers {
+	client, e := di.Redis.New(di.AppCtx, func(cOpt *redis.ClientOption) {
+		cOpt.DbIndex = 1
+	})
+	g.Expect(e).To(Succeed(), "creating redis client for sync manager should not fail")
+	opts = append(opts, func(opt *redisdsync.RedisSyncOption) {
+		opt.Clients = []redislib.UniversalClient{client}
+	})
+	ret := TestRedisManagers{
+		Main:      redisdsync.NewRedisSyncManager(di.AppCtx, opts...),
+		Secondary: redisdsync.NewRedisSyncManager(di.AppCtx, opts...),
 	}
-	g.Expect(ret.Main).ToNot(BeNil(), "major consul sync manager should not be nil")
-	g.Expect(ret.Secondary).ToNot(BeNil(), "minor consul sync manager should not be nil")
+	g.Expect(ret.Main).ToNot(BeNil(), "major redis sync manager should not be nil")
+	g.Expect(ret.Secondary).ToNot(BeNil(), "minor redis sync manager should not be nil")
 	return ret
 }
 
-func (m TestConsulManagers) Start(ctx context.Context, g *gomega.WithT) {
+func (m TestRedisManagers) Start(ctx context.Context, g *gomega.WithT) {
 	e := m.Main.Start(ctx)
 	g.Expect(e).To(Succeed(), "starting major manager should not fail")
 	e = m.Secondary.Start(ctx)
 	g.Expect(e).To(Succeed(), "starting minor manager should not fail")
 }
 
-func (m TestConsulManagers) Stop(ctx context.Context, g *gomega.WithT) {
+func (m TestRedisManagers) Stop(ctx context.Context, g *gomega.WithT) {
 	e := m.Main.Stop(ctx)
 	g.Expect(e).To(Succeed(), "stopping major manager should not fail")
 	e = m.Secondary.Stop(ctx)
