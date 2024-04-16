@@ -27,7 +27,7 @@ type SimpleSyncManagerMock struct {}
 
 type NoopOut struct {
 	fx.Out
-	TestSyncManager dsync.SyncManager `group:"test"`
+	TestSyncManager dsync.SyncManager `group:"dsync"`
 }
 
 func ProvideNoopSyncManager() NoopOut {

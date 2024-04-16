@@ -18,24 +18,27 @@ package dsyncmock
 
 import (
 	"context"
+	"github.com/cisco-open/go-lanai/pkg/dsync"
 	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
 	"testing"
 )
 
 func TestSyncManager(t *testing.T) {
 	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithModules(dsync.Module),
+		apptest.WithFxOptions(fx.Provide(ProvideNoopSyncManager)),
 		test.GomegaSubTest(SubTestNoopSyncManager(), "TestNoopSyncManager"),
 	)
 }
 
 func SubTestNoopSyncManager() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		out := ProvideNoopSyncManager()
-		manager := out.TestSyncManager
-		l, e := manager.Lock("test-key")
-		g.Expect(e).To(Succeed())
+		l := dsync.LockWithKey("test-key")
 		g.Expect(l.Key()).To(BeEquivalentTo("test-key"))
 		g.Expect(l.Lock(ctx)).To(Succeed())
 		g.Expect(l.TryLock(ctx)).To(Succeed())
