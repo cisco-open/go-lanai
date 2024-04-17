@@ -176,9 +176,12 @@ func (e Error) WithMessage(msg string, args ...interface{}) *Error {
 	return newError(NewCodedError(e.CodedError.Code(), fmt.Errorf(msg, args...)), e.Response)
 }
 
-/**********************
-	Constructors
- **********************/
+/*
+*********************
+
+		Constructors
+	 *********************
+*/
 func newError(codedErr *CodedError, errResp *ErrorResponse) *Error {
 	err := &Error{
 		CodedError: *codedErr,
@@ -218,7 +221,7 @@ func NewErrorWithStatusCode(e interface{}, resp *http.Response, rawBody []byte, 
 	case resp.StatusCode >= 500 && resp.StatusCode <= 599:
 		code = ErrorCodeGenericServerSide
 	default:
-		return NewError(ErrorCodeInternal, "attempt to create response error with non error status code %d", resp.StatusCode)
+		return NewError(ErrorCodeInternal, fmt.Errorf("attempt to create response error with non error status code %d", resp.StatusCode))
 	}
 	return NewErrorWithResponse(code, e, resp, rawBody, causes...)
 }

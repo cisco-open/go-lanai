@@ -103,7 +103,10 @@ func TestWithMockedServer(t *testing.T) {
 		test.GomegaSubTest(SubTestWithNoInfoSD(&di), "TestWithNoInfoSD"),
 		test.GomegaSubTest(SubTestWithSDNoResponseContent(&di), "TestWithSDNoResponseContent"),
 		test.GomegaSubTest(SubTestWithBaseURL(&di), "TestWithBaseURL"),
+		test.GomegaSubTest(SubTestWithBaseURLFailure(&di), "TestWithBaseUrlFailure"),
+		test.GomegaSubTest(SubTestWithSDFailure(&di), "TestWithSDFailure"),
 		test.GomegaSubTest(SubTestWithErrorResponse(&di), "TestWithErrorResponse"),
+		test.GomegaSubTest(SubTestWithUnexpectedStatusCodeInErrorResponse(&di), "TestWithUnexpectedStatusCodeInErrorResponse"),
 		test.GomegaSubTest(SubTestWithNoContentErrorResponse(&di), "SubTestWithNoContentErrorResponse"),
 		test.GomegaSubTest(SubTestWithFailedSD(&di), "TestWithFailedSD"),
 		test.GomegaSubTest(SubTestWithRetry(&di), "TestWithRetry"),
@@ -164,7 +167,7 @@ func SubTestWithNoInfoSD(di *TestDI) test.GomegaSubTestFunc {
 			if len(target.Port()) != 0 {
 				return nil, fmt.Errorf("target URL [%s] should not have port", target.String())
 			}
-			target.Host = fmt.Sprintf(`%s:%d`,target.Host, webtest.CurrentPort(ctx))
+			target.Host = fmt.Sprintf(`%s:%d`, target.Host, webtest.CurrentPort(ctx))
 			return http.NewRequestWithContext(ctx, method, target.String(), nil)
 		}
 		performEchoTest(ctx, t, g, client, httpclient.WithRequestCreator(urlRewriteCreator))
@@ -179,12 +182,34 @@ func SubTestWithSDNoResponseContent(di *TestDI) test.GomegaSubTestFunc {
 	}
 }
 
+func SubTestWithSDFailure(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		_, e := di.HttpClient.WithService("")
+		//checking the error type, ignoring the error message
+		g.Expect(e).To(MatchError(httpclient.NewNoEndpointFoundError("error message doesn't matter")))
+		//check that the message is formatted
+		g.Expect(e).To(MatchError(Not(ContainSubstring("%"))))
+	}
+}
+
 func SubTestWithBaseURL(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		baseUrl := fmt.Sprintf(`http://localhost:%d%s`, webtest.CurrentPort(ctx), webtest.CurrentContextPath(ctx))
 		client, e := di.HttpClient.WithBaseUrl(baseUrl)
 		g.Expect(e).To(Succeed(), "client with base URL should be available")
 		performEchoTest(ctx, t, g, client)
+	}
+}
+
+func SubTestWithBaseURLFailure(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		baseUrl := webtest.CurrentContextPath(ctx)
+		_, e := di.HttpClient.WithBaseUrl(baseUrl)
+		//checking the error type, ignoring the error message
+		g.Expect(e).To(MatchError(httpclient.NewNoEndpointFoundError("error message doesn't matter")))
+		//check that the message is formatted
+		g.Expect(e).To(MatchError(Not(ContainSubstring("%"))))
+		g.Expect(e).To(MatchError(ContainSubstring(baseUrl)))
 	}
 }
 
@@ -202,6 +227,26 @@ func SubTestWithErrorResponse(di *TestDI) test.GomegaSubTestFunc {
 
 		_, err := client.Execute(ctx, req, httpclient.JsonBody(&EchoResponse{}))
 		assertErrorResponse(t, g, err, sc)
+	}
+}
+
+func SubTestWithUnexpectedStatusCodeInErrorResponse(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		client, e := di.HttpClient.WithService(SDServiceNameFullInfo)
+		g.Expect(e).To(Succeed(), "client with service name should be available")
+
+		sc := 300 + utils.RandomIntN(10)
+		reqBody := makeEchoRequestBody()
+		req := httpclient.NewRequest(TestErrorPath, http.MethodPut,
+			httpclient.WithParam("sc", fmt.Sprintf("%d", sc)),
+			httpclient.WithBody(reqBody),
+		)
+
+		_, err := client.Execute(ctx, req, httpclient.JsonBody(&EchoResponse{}))
+		// check the error type is the expected type
+		g.Expect(err).To(MatchError(httpclient.ErrorSubTypeInternalError))
+		// check the error message is formatted
+		g.Expect(err).To(MatchError(Not(ContainSubstring("%"))))
 	}
 }
 
