@@ -17,24 +17,26 @@
 package authorize
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
-    "github.com/cisco-open/go-lanai/pkg/security/session"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/gin-gonic/gin"
-    "strconv"
-    "strings"
+	"context"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
+	"github.com/cisco-open/go-lanai/pkg/security/session"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/gin-gonic/gin"
+	"strconv"
+	"strings"
 )
 
 const (
 	sessionKeyAuthorizeRequest = "kAuthorizeRequest"
-	scopeParamPrefix = "scope."
+	sessionKeyApprovedRequests = "kApprovedRequests"
+	scopeParamPrefix           = "scope."
 )
+
 /***********************
 	Authorize Endpoint
  ***********************/
@@ -56,7 +58,7 @@ type AuthorizeMWOption struct {
 	ApprovalMatcher  web.RequestMatcher
 }
 
-func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpointMiddleware {
+func NewAuthorizeEndpointMiddleware(opts ...AuthorizeMWOptions) *AuthorizeEndpointMiddleware {
 	opt := AuthorizeMWOption{
 		RequestProcessor: auth.NewAuthorizeRequestProcessor(),
 	}
@@ -74,7 +76,7 @@ func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpoin
 
 func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+		if matches, err := condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
 			return
 		}
 
@@ -115,7 +117,7 @@ func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.
 
 func (mw *AuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+		if matches, err := condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
 			return
 		}
 
@@ -130,7 +132,12 @@ func (mw *AuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Reques
 		// check auto-approval and create response
 		var respFunc auth.ResponseHandlerFunc
 		e = auth.ValidateAllAutoApprovalScopes(ctx, client, request.Scopes)
+		needsApproval := false
 		if e != nil {
+			needsApproval = !mw.authRequestHasSavedApproval(ctx, request)
+		}
+
+		if needsApproval {
 			// save request
 			if e := mw.saveAuthorizeRequest(ctx, request); e != nil {
 				mw.handleError(ctx, e)
@@ -152,7 +159,7 @@ func (mw *AuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Reques
 func (mw *AuthorizeEndpointMiddleware) ApproveOrDenyHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// no matter what happen, this is the last step. so clear saved request after done
-		defer func() {_ = mw.clearAuthorizeRequest(ctx)}()
+		defer func() { _ = mw.clearAuthorizeRequest(ctx) }()
 
 		// sanity checks
 		request, client, user, e := mw.endpointSanityCheck(ctx)
@@ -163,12 +170,16 @@ func (mw *AuthorizeEndpointMiddleware) ApproveOrDenyHandlerFunc() gin.HandlerFun
 		logger.WithContext(ctx).Debug(fmt.Sprintf("AuthorizeRequest: %s", request))
 
 		// parse approval params and check
-		approval := mw.parseApproval(ctx)
+		approval, remember := mw.parseApproval(ctx)
 		if e := auth.ValidateApproval(ctx, approval, client, request.Scopes); e != nil {
 			mw.handleError(ctx, e)
 			return
 		}
 		request.Approved = true
+
+		if remember {
+			_ = mw.saveApprovedRequest(ctx, request)
+		}
 
 		// write response
 		respFunc, e := mw.authorizeHandler.HandleApproved(ctx, request, user)
@@ -238,6 +249,32 @@ func (mw *AuthorizeEndpointMiddleware) clearAuthorizeRequest(ctx *gin.Context) e
 	return nil
 }
 
+func (mw *AuthorizeEndpointMiddleware) saveApprovedRequest(ctx *gin.Context, request *auth.AuthorizeRequest) error {
+	if !request.Approved {
+		return nil
+	}
+	s := session.Get(ctx)
+	if s == nil {
+		return oauth2.NewInternalError("failed to save approved request")
+	}
+	approved, _ := s.Get(sessionKeyApprovedRequests).([]*auth.AuthorizeRequest)
+	approved = append(approved, request)
+	s.Set(sessionKeyApprovedRequests, approved)
+	if e := s.Save(); e != nil {
+		return oauth2.NewInternalError("failed to save approved request", e)
+	}
+	return nil
+}
+
+func (mw *AuthorizeEndpointMiddleware) loadApprovedRequests(ctx *gin.Context) ([]*auth.AuthorizeRequest, error) {
+	s := session.Get(ctx)
+	if s == nil {
+		return nil, oauth2.NewInternalError("failed to load approved requests")
+	}
+	approved, _ := s.Get(sessionKeyApprovedRequests).([]*auth.AuthorizeRequest)
+	return approved, nil
+}
+
 func (mw *AuthorizeEndpointMiddleware) endpointSanityCheck(ctx *gin.Context) (
 	*auth.AuthorizeRequest, oauth2.OAuth2Client, security.Authentication, error) {
 
@@ -260,8 +297,18 @@ func (mw *AuthorizeEndpointMiddleware) endpointSanityCheck(ctx *gin.Context) (
 	return request, client, user, nil
 }
 
-func (mw *AuthorizeEndpointMiddleware) parseApproval(ctx *gin.Context) (approval map[string]bool) {
+func (mw *AuthorizeEndpointMiddleware) parseApproval(ctx *gin.Context) (approval map[string]bool, remember bool) {
+	approved := false
 	approval = make(map[string]bool)
+	if v, ok := ctx.Request.PostForm[oauth2.ParameterUserApproval]; ok {
+		approved, _ = strconv.ParseBool(v[len(v)-1])
+	}
+	if !approved {
+		return
+	}
+	if v, ok := ctx.Request.PostForm[oauth2.ParameterRememberUserApproval]; ok {
+		remember, _ = strconv.ParseBool(v[len(v)-1])
+	}
 	for k, v := range ctx.Request.PostForm {
 		if !strings.HasPrefix(k, scopeParamPrefix) {
 			continue
@@ -279,10 +326,23 @@ func (mw *AuthorizeEndpointMiddleware) parseApproval(ctx *gin.Context) (approval
 func (mw *AuthorizeEndpointMiddleware) transferContextValues(src context.Context, dst context.Context) {
 	mutable := utils.FindMutableContext(dst)
 	listable, ok := src.(utils.ListableContext)
-	if !ok || mutable == nil{
+	if !ok || mutable == nil {
 		return
 	}
 	for k, v := range listable.Values() {
 		mutable.Set(k, v)
 	}
+}
+
+func (mw *AuthorizeEndpointMiddleware) authRequestHasSavedApproval(ctx *gin.Context, request *auth.AuthorizeRequest) bool {
+	approvedRequests, _ := mw.loadApprovedRequests(ctx)
+	for _, r := range approvedRequests {
+		if request.ClientId == r.ClientId &&
+			request.RedirectUri == r.RedirectUri &&
+			request.Scopes.Equals(r.Scopes) &&
+			r.Approved {
+			return true
+		}
+	}
+	return false
 }

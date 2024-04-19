@@ -17,13 +17,14 @@
 package auth
 
 import (
-    "encoding/gob"
-    "github.com/cisco-open/go-lanai/pkg/log"
+	"encoding/gob"
+	"github.com/cisco-open/go-lanai/pkg/log"
 )
 
 var logger = log.New("OAuth2.Auth")
 
 func init() {
 	gob.Register((*AuthorizeRequest)(nil))
+	gob.Register([]*AuthorizeRequest(nil))
 	gob.Register((*TokenRequest)(nil))
 }

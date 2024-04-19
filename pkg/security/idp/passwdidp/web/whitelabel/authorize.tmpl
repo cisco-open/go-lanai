@@ -1,4 +1,4 @@
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
@@ -24,6 +24,16 @@
                         <li class="list-group-item">{{ . }}</li>
                         {{- end }}
                     </ul>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" class="form-control" id="remember_approval" name="remember_approval"
+                               form="confirmationForm" value="true"
+                        />
+                        <label for="remember_approval">Remember Approval</label>
+                    </div>
                 </div>
             </div>
             <div class="row mt-3">

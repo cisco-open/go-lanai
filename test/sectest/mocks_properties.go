@@ -17,13 +17,13 @@
 package sectest
 
 import (
-    "encoding/json"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/pkg/errors"
-    "strings"
-    "time"
+	"encoding/json"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/pkg/errors"
+	"strings"
+	"time"
 )
 
 const (
@@ -65,7 +65,8 @@ func (p *MockedProperties[T]) UnmarshalJSON(data []byte) error {
 // MockedPropertiesBinder returns a FX provider that bind specific mocked properties type from the properties sub-section
 // specified by "prefix". The root section prefix is defined by MockingPropertiesPrefix
 // e.g. MockedPropertiesBinder[MockedPropertiesAccounts]("accounts"):
-//	    The returned binder binds MockedPropertiesAccounts from "mocking.accounts"
+//
+//	The returned binder binds MockedPropertiesAccounts from "mocking.accounts"
 func MockedPropertiesBinder[T any](prefix string) func(ctx *bootstrap.ApplicationContext) (T, error) {
 	return func(ctx *bootstrap.ApplicationContext) (T, error) {
 		prefix = MockingPropertiesPrefix + "." + prefix
@@ -87,6 +88,7 @@ type MockedClientProperties struct {
 	Secret            string                    `json:"secret"`
 	GrantTypes        utils.CommaSeparatedSlice `json:"grant-types"`
 	Scopes            utils.CommaSeparatedSlice `json:"scopes"`
+	AutoApproveScopes utils.CommaSeparatedSlice `json:"auto-approve-scopes"`
 	RedirectUris      utils.CommaSeparatedSlice `json:"redirect-uris"`
 	ATValidity        utils.Duration            `json:"access-token-validity"`
 	RTValidity        utils.Duration            `json:"refresh-token-validity"`

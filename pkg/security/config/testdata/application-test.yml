@@ -56,6 +56,22 @@ mocking:
       redirect-uris: ["localhost:*/**"]
       tenants: ["id-tenant-root"]
       scopes: "scope_a"
+    approval_client:
+      id: "test-approval-client"
+      secret: "test-secret"
+      access-token-validity: 3600s
+      redirect-uris: ["localhost:*/**"]
+      tenants: ["id-tenant-root"]
+      scopes: "read, write"
+      auto-approve-scopes: "read"
+    approval_client_2:
+      id: "test-approval-client-2"
+      secret: "test-secret"
+      access-token-validity: 3600s
+      redirect-uris: ["localhost:*/**"]
+      tenants: ["id-tenant-root"]
+      scopes: "read, write"
+      auto-approve-scopes: "read"
     tenanted-client-1:
       id: "tenant-client-1"
       secret: "test-secret"
