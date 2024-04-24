@@ -330,6 +330,24 @@ func SubTestAuthorizeRequestApproval(di *intDI) test.GomegaSubTestFunc {
 		resp = webtest.MustExec(ctx, req)
 		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
 
+		// this time approve with incomplete scopes and try to remember the decision
+		// expect to get error, and expect the next authorize request to still ask for approval
+		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,
+			approveRequestBody("true", []string{"scope.read"}, "true", token),
+			approvalReqOptions(),
+			cookieOptions(s.Name(), s.GetID()))
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeResponse(t, g, resp.Response, true)
+
+		//execute the authorize request again, expect to see the request for approval page again.
+		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID),
+			func(req *http.Request) {
+				cookie := session.NewCookie(s.Name(), s.GetID(), &session.Options{}, req)
+				req.AddCookie(cookie)
+			})
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
+
 		// this time approve and remember the decision
 		// expect to get the auth code, and expect the next authorize request to not ask for approval
 		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,

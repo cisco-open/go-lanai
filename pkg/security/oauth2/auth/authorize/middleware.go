@@ -87,7 +87,7 @@ func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.
 		case e == nil && approve:
 			// approve or deny request
 			if request, err = mw.loadAuthorizeRequest(ctx); err != nil {
-				err = oauth2.NewInvalidAuthorizeRequestError("approval endpoint should be accessed via POST form", e)
+				err = oauth2.NewInvalidAuthorizeRequestError("error loading authorize request for approval", e)
 			}
 		default:
 			if request, err = auth.ParseAuthorizeRequest(ctx.Request); err != nil {
