@@ -76,7 +76,7 @@ func (c *client) WithService(service string, opts ...SDOptions) (Client, error) 
 
 	instancer, e := c.sdClient.Instancer(service)
 	if e != nil {
-		return nil, NewNoEndpointFoundError("cannot create client with service name: %v", e)
+		return nil, NewNoEndpointFoundError(fmt.Errorf("cannot create client with service name: %s", service), e)
 	}
 
 	defaultOpts := func(opts *SDOption) {
@@ -86,7 +86,7 @@ func (c *client) WithService(service string, opts ...SDOptions) (Client, error) 
 	opts = append([]SDOptions{defaultOpts}, opts...)
 	targetResolver, e := NewSDTargetResolver(instancer, opts...)
 	if e != nil {
-		return nil, NewNoEndpointFoundError("cannot create client with service name: %v", e)
+		return nil, NewNoEndpointFoundError(fmt.Errorf("cannot create client with service name: %s", service), e)
 	}
 
 	cp := c.shallowCopy()
@@ -97,7 +97,7 @@ func (c *client) WithService(service string, opts ...SDOptions) (Client, error) 
 func (c *client) WithBaseUrl(baseUrl string) (Client, error) {
 	endpointer, e := NewStaticTargetResolver(baseUrl)
 	if e != nil {
-		return nil, NewNoEndpointFoundError("cannot create client with base URL: %v", e)
+		return nil, NewNoEndpointFoundError(fmt.Errorf("cannot create client with base URL: %s", baseUrl), e)
 	}
 
 	cp := c.shallowCopy()

@@ -18,18 +18,19 @@ package sdtest
 
 import (
 	"context"
+	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/discovery"
 	"time"
 )
 
 type ClientMock struct {
-	ctx context.Context
+	ctx        context.Context
 	Instancers map[string]*InstancerMock
 }
 
 func NewMockClient(ctx context.Context) *ClientMock {
 	return &ClientMock{
-		ctx: ctx,
+		ctx:        ctx,
 		Instancers: map[string]*InstancerMock{},
 	}
 }
@@ -41,6 +42,10 @@ func (c *ClientMock) Context() context.Context {
 }
 
 func (c *ClientMock) Instancer(serviceName string) (discovery.Instancer, error) {
+	if serviceName == "" {
+		return nil, fmt.Errorf("empty service name")
+	}
+
 	if instancer, ok := c.Instancers[serviceName]; ok {
 		return instancer, nil
 	}
