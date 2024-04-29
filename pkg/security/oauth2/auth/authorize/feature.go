@@ -17,13 +17,14 @@
 package authorize
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
-    "github.com/cisco-open/go-lanai/pkg/web"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
+	"github.com/cisco-open/go-lanai/pkg/web"
 )
 
 // AuthorizeFeature configures authorization endpoints
+//
 //goland:noinspection GoNameStartsWithPackageName
 type AuthorizeFeature struct {
 	path             string
@@ -32,6 +33,7 @@ type AuthorizeFeature struct {
 	requestProcessor auth.AuthorizeRequestProcessor
 	authorizeHandler auth.AuthorizeHandler
 	errorHandler     *auth.OAuth2ErrorHandler
+	approvalStore    auth.ApprovalStore
 }
 
 func (f *AuthorizeFeature) Identifier() security.FeatureIdentifier {
@@ -49,8 +51,7 @@ func Configure(ws security.WebSecurity) *AuthorizeFeature {
 
 // NewEndpoint is standard security.Feature entrypoint, DSL style. Used with security.WebSecurity
 func NewEndpoint() *AuthorizeFeature {
-	return &AuthorizeFeature{
-	}
+	return &AuthorizeFeature{}
 }
 
 /** Setters **/
@@ -87,5 +88,10 @@ func (f *AuthorizeFeature) ErrorHandler(errorHandler *auth.OAuth2ErrorHandler) *
 
 func (f *AuthorizeFeature) AuthorizeHanlder(authHanlder auth.AuthorizeHandler) *AuthorizeFeature {
 	f.authorizeHandler = authHanlder
+	return f
+}
+
+func (f *AuthorizeFeature) ApprovalStore(store auth.ApprovalStore) *AuthorizeFeature {
+	f.approvalStore = store
 	return f
 }

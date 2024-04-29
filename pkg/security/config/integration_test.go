@@ -188,6 +188,7 @@ func TestWithMockedServer(t *testing.T) {
 				sectest.BindMockingProperties,
 				testdata.NewAuthServerConfigurer, //This configurer will set up mocked client store, mocked tenant store etc.
 				testdata.NewResServerConfigurer,
+				sectest.NewMockedApprovalStore,
 			),
 		),
 		test.GomegaSubTest(SubTestOAuth2AuthorizeWithPasswdIDP(di), "TestOAuth2AuthorizeWithPasswdIDP"),
@@ -285,20 +286,8 @@ func SubTestSamlSSOAuthorizeWithPasswdIDP(_ *intDI) test.GomegaSubTestFunc {
 
 func SubTestAuthorizeRequestApproval(di *intDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		//mock session and csrf token
-		sStore := di.SessionStore
-		s, err := sStore.New("SESSION")
-		g.Expect(err).ToNot(HaveOccurred())
-
-		token := &csrf.Token{
-			Value:         uuid.New().String(),
-			ParameterName: security.CsrfParamName,
-			HeaderName:    security.CsrfHeaderName,
-		}
-		s.Set(csrf.SessionKeyCsrfToken, token)
-		err = s.Save()
-		g.Expect(err).ToNot(HaveOccurred())
-
+		s, token, err := newSessionWithCsrfToken(di.SessionStore)
+		g.Expect(err).ToNot(HaveOccurred(), "session should be created")
 		// mock authentication
 		fedAccount := di.Mocking.FederatedUsers.MapValues()["fed1"]
 		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
@@ -311,29 +300,11 @@ func SubTestAuthorizeRequestApproval(di *intDI) test.GomegaSubTestFunc {
 		resp := webtest.MustExec(ctx, req)
 		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
 
-		//submit the approval without asking to remember the decision
-		//expect to get the auth code response
 		approvalUri := fmt.Sprintf("http://%s/test/v2/approve", testdata.IdpDomainExtSAML)
-		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,
-			approveRequestBody("true", []string{"scope.read", "scope.write"}, "false", token),
-			cookieOptions(s.Name(), s.GetID()),
-			approvalReqOptions())
-		resp = webtest.MustExec(ctx, req)
-		assertAuthorizeResponse(t, g, resp.Response, false)
 
-		//execute the authorize request again, expect to see the request for approval page again.
-		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID),
-			func(req *http.Request) {
-				cookie := session.NewCookie(s.Name(), s.GetID(), &session.Options{}, req)
-				req.AddCookie(cookie)
-			})
-		resp = webtest.MustExec(ctx, req)
-		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
-
-		// this time approve with incomplete scopes and try to remember the decision
-		// expect to get error, and expect the next authorize request to still ask for approval
+		//submit incomplete approval, expect error page
 		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,
-			approveRequestBody("true", []string{"scope.read"}, "true", token),
+			approveRequestBody("true", []string{"scope.read"}, token),
 			approvalReqOptions(),
 			cookieOptions(s.Name(), s.GetID()))
 		resp = webtest.MustExec(ctx, req)
@@ -348,12 +319,13 @@ func SubTestAuthorizeRequestApproval(di *intDI) test.GomegaSubTestFunc {
 		resp = webtest.MustExec(ctx, req)
 		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
 
-		// this time approve and remember the decision
-		// expect to get the auth code, and expect the next authorize request to not ask for approval
+		//submit the approval
+		//expect to get the auth code response
+		//expect the approval to be stored
 		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,
-			approveRequestBody("true", []string{"scope.read", "scope.write"}, "true", token),
-			approvalReqOptions(),
-			cookieOptions(s.Name(), s.GetID()))
+			approveRequestBody("true", []string{"scope.read", "scope.write"}, token),
+			cookieOptions(s.Name(), s.GetID()),
+			approvalReqOptions())
 		resp = webtest.MustExec(ctx, req)
 		assertAuthorizeResponse(t, g, resp.Response, false)
 
@@ -363,16 +335,15 @@ func SubTestAuthorizeRequestApproval(di *intDI) test.GomegaSubTestFunc {
 		resp = webtest.MustExec(ctx, req)
 		assertAuthorizeResponse(t, g, resp.Response, false)
 
-		//send a different authorize request, expect it to not be affected by the remembered decision.
+		//send a different authorize request, expect it to not be affected by the stored approval.
 		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID2),
 			cookieOptions(s.Name(), s.GetID()))
 		resp = webtest.MustExec(ctx, req)
 		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
 
-		//deny this request, expect the remember decision to be ignored.
-		//expect the next authorize request to still show the approval page.
+		//deny this request
 		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,
-			approveRequestBody("false", nil, "true", token),
+			approveRequestBody("false", nil, token),
 			approvalReqOptions(),
 			cookieOptions(s.Name(), s.GetID()))
 		resp = webtest.MustExec(ctx, req)
@@ -380,6 +351,19 @@ func SubTestAuthorizeRequestApproval(di *intDI) test.GomegaSubTestFunc {
 
 		//send authorize request again, expect to be asked for approval again
 		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID2),
+			cookieOptions(s.Name(), s.GetID()))
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
+
+		//send the approved request again using a different user, expect to see the approval page
+		s, token, err = newSessionWithCsrfToken(di.SessionStore)
+		g.Expect(err).ToNot(HaveOccurred(), "session should be created")
+		// mock authentication
+		fedAccount = di.Mocking.FederatedUsers.MapValues()["fed2"]
+		ctx, e = contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
+		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
+
+		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID),
 			cookieOptions(s.Name(), s.GetID()))
 		resp = webtest.MustExec(ctx, req)
 		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
@@ -997,6 +981,26 @@ func contextWithSamlAuth(ctx context.Context, fedAcctStore security.FederatedAcc
 	), nil
 }
 
+func newSessionWithCsrfToken(store session.Store) (*session.Session, *csrf.Token, error) {
+	//mock session and csrf token
+	s, err := store.New("SESSION")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	token := &csrf.Token{
+		Value:         uuid.New().String(),
+		ParameterName: security.CsrfParamName,
+		HeaderName:    security.CsrfHeaderName,
+	}
+	s.Set(csrf.SessionKeyCsrfToken, token)
+	err = s.Save()
+	if err != nil {
+		return nil, nil, err
+	}
+	return s, token, nil
+}
+
 func mockAssertion(mock *sectest.MockedFederatedUserProperties) *saml.Assertion {
 	return samltest.MockAssertion(func(opt *samltest.AssertionOption) {
 		opt.NameIDFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:email"
@@ -1114,13 +1118,12 @@ func switchTenantBody(accessToken string, tenantId string) io.Reader {
 	return strings.NewReader(values.Encode())
 }
 
-func approveRequestBody(approval string, approvedScopes []string, remember string, csrfToken *csrf.Token) io.Reader {
+func approveRequestBody(approval string, approvedScopes []string, csrfToken *csrf.Token) io.Reader {
 	values := url.Values{}
 	values.Set(oauth2.ParameterUserApproval, approval)
 	for _, s := range approvedScopes {
 		values.Set(s, "true")
 	}
-	values.Set(oauth2.ParameterRememberUserApproval, remember)
 	values.Set(csrfToken.ParameterName, csrfToken.Value)
 
 	return strings.NewReader(values.Encode())

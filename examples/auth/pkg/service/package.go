@@ -22,5 +22,6 @@ func Use() {
 		fx.Provide(NewProviderStore),
 		fx.Provide(NewInMemoryIdpManager),
 		fx.Provide(NewInMemSpManager),
+		fx.Provide(NewInMemoryApprovalStore),
 	)
 }

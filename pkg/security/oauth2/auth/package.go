@@ -25,6 +25,5 @@ var logger = log.New("OAuth2.Auth")
 
 func init() {
 	gob.Register((*AuthorizeRequest)(nil))
-	gob.Register([]*AuthorizeRequest(nil))
 	gob.Register((*TokenRequest)(nil))
 }

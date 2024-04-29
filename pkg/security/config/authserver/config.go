@@ -62,6 +62,7 @@ type configDI struct {
 	CryptoProperties   jwt.CryptoProperties
 	SessionStore       session.Store
 	TimeoutSupport     oauth2.TimeoutApplier `optional:"true"`
+	ApprovalStore      auth.ApprovalStore    `optional:"true"`
 }
 
 type authServerOut struct {
@@ -82,6 +83,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 		cryptoProperties:   di.CryptoProperties,
 		Issuer:             newIssuer(&di.Properties.Issuer, &di.ServerProperties),
 		timeoutSupport:     di.TimeoutSupport,
+		ApprovalStore:      di.ApprovalStore,
 		Endpoints: Endpoints{
 			Authorize: ConditionalEndpoint{
 				Location:  &url.URL{Path: di.Properties.Endpoints.Authorize},
@@ -106,7 +108,7 @@ func ProvideAuthServerDI(di configDI) authServerOut {
 	}
 	di.Configurer(&config)
 	return authServerOut{
-		Config: &config,
+		Config:                  &config,
 		CompatibilityCustomizer: compatibility.CompatibilityDiscoveryCustomizer{},
 	}
 }
@@ -178,6 +180,7 @@ type Configuration struct {
 	Issuer                security.Issuer
 	OpenIDSSOEnabled      bool
 	SamlIdpSigningMethod  string
+	ApprovalStore         auth.ApprovalStore
 
 	// not directly configurable items
 	appContext                *bootstrap.ApplicationContext
@@ -419,4 +422,8 @@ func (c *Configuration) accessRevoker() auth.AccessRevoker {
 		})
 	}
 	return c.sharedAccessRevoker
+}
+
+func (c *Configuration) approvalStore() auth.ApprovalStore {
+	return c.ApprovalStore
 }
