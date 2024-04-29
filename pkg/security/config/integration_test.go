@@ -188,7 +188,7 @@ func TestWithMockedServer(t *testing.T) {
 				sectest.BindMockingProperties,
 				testdata.NewAuthServerConfigurer, //This configurer will set up mocked client store, mocked tenant store etc.
 				testdata.NewResServerConfigurer,
-				sectest.NewMockedApprovalStore,
+				testdata.NewMockedApprovalStore,
 			),
 		),
 		test.GomegaSubTest(SubTestOAuth2AuthorizeWithPasswdIDP(di), "TestOAuth2AuthorizeWithPasswdIDP"),

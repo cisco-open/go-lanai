@@ -1,4 +1,4 @@
-package sectest
+package testdata
 
 import (
 	"context"
