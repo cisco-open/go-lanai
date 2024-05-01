@@ -52,6 +52,29 @@ import (
 	Test
  *************************/
 
+func TestOPAFilterWithCustomConfigPostgresql(t *testing.T) {
+	di := &TestDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithTimeout(10*time.Minute),
+		dbtest.WithDBPlayback("testdb", dbtest.DBPort(5432), dbtest.DBCredentials("postgres", "")),
+		opatest.WithBundles(opatest.DefaultBundleFS, testdata.ModelCBundleFS),
+		apptest.WithModules(tenancy.Module),
+		apptest.WithConfigFS(testdata.ConfigFS),
+		apptest.WithFxOptions(
+			fx.Provide(testdata.ProvideMockedTenancyAccessor),
+		),
+		apptest.WithDI(di),
+		test.SubTestSetup(SetupTestPrepareModelC(&di.DI)),
+		test.GomegaSubTest(SubTestModelCCreate(di), "TestModelCreate"),
+		test.GomegaSubTest(SubTestModelCList(di), "TestModelList"),
+		test.GomegaSubTest(SubTestModelCGet(di), "TestModelGet"),
+		test.GomegaSubTest(SubTestModelCUpdate(di), "TestModelUpdate"),
+		test.GomegaSubTest(SubTestModelCDelete(di), "TestModelDelete"),
+		test.GomegaSubTest(SubTestModelCSave(di), "TestModelSave"),
+	)
+}
+
 func TestOPAFilterWithCustomConfig(t *testing.T) {
 	di := &TestDI{}
 	test.RunTest(context.Background(), t,

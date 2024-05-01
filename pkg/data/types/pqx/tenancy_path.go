@@ -14,21 +14,21 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package types
+package pqx
 
 import (
-    "database/sql/driver"
-    "fmt"
-    securityinternal "github.com/cisco-open/go-lanai/internal/security"
-    "github.com/cisco-open/go-lanai/pkg/data/types/pqx"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/utils/reflectutils"
-    "github.com/google/uuid"
-    "gorm.io/gorm"
-    "gorm.io/gorm/clause"
-    "gorm.io/gorm/schema"
-    "reflect"
-    "strings"
+	"database/sql/driver"
+	"fmt"
+	securityinternal "github.com/cisco-open/go-lanai/internal/security"
+	"github.com/cisco-open/go-lanai/pkg/data/types"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/utils/reflectutils"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
+	"reflect"
+	"strings"
 )
 
 /****************************
@@ -45,16 +45,16 @@ import (
 // - schema.UpdateClausesInterface
 // - schema.DeleteClausesInterface
 // this data type adds "WHERE" clause for tenancy filtering
-type TenantPath pqx.UUIDArray
+type TenantPath UUIDArray
 
 // Value implements driver.Valuer
 func (t TenantPath) Value() (driver.Value, error) {
-	return pqx.UUIDArray(t).Value()
+	return UUIDArray(t).Value()
 }
 
 // Scan implements sql.Scanner
 func (t *TenantPath) Scan(src interface{}) error {
-	return (*pqx.UUIDArray)(t).Scan(src)
+	return (*UUIDArray)(t).Scan(src)
 }
 
 func (t TenantPath) GormDataType() string {
@@ -79,7 +79,7 @@ func (t TenantPath) DeleteClauses(f *schema.Field) []clause.Interface {
 // tenancyFilterClause implements clause.Interface and gorm.StatementModifier, where gorm.StatementModifier do the real work.
 // See gorm.DeletedAt for impl. reference
 type tenancyFilterClause struct {
-	NoopStatementModifier
+	types.NoopStatementModifier
 	Flag  TenancyCheckFlag
 	Mode  tcMode
 	Field *schema.Field
@@ -112,7 +112,7 @@ func newTenancyFilterClause(f *schema.Field, isRead bool) *tenancyFilterClause {
 }
 
 func extractTenancyFilterTag(f *schema.Field) string {
-	if tag, ok := f.Tag.Lookup(TagFilter); ok {
+	if tag, ok := f.Tag.Lookup(types.TagFilter); ok {
 		return strings.ToLower(strings.TrimSpace(tag))
 	}
 	// check if tag is available on embedded Tenancy
@@ -120,7 +120,7 @@ func extractTenancyFilterTag(f *schema.Field) string {
 		return t.Anonymous && (t.Type.AssignableTo(typeTenancy) || t.Type.AssignableTo(typeTenancyPtr))
 	})
 	if ok {
-		return sf.Tag.Get(TagFilter)
+		return sf.Tag.Get(types.TagFilter)
 	}
 	return ""
 }
@@ -138,7 +138,7 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	// special fix for db.Model(&model{}).Where(&model{f1:v1}).Or(&model{f2:v2})...
 	// Ref:	https://github.com/go-gorm/gorm/issues/3627
 	//		https://github.com/go-gorm/gorm/commit/9b2181199d88ed6f74650d73fa9d20264dd134c0#diff-e3e9193af67f3a706b3fe042a9f121d3609721da110f6a585cdb1d1660fd5a3c
-	FixWhereClausesForStatementModifier(stmt)
+	types.FixWhereClausesForStatementModifier(stmt)
 
 	// add tenancy filter condition
 	colExpr := stmt.Quote(clause.Column{Table: clause.CurrentTable, Name: c.Field.DBName})
@@ -147,7 +147,7 @@ func (c tenancyFilterClause) ModifyStatement(stmt *gorm.Statement) {
 	for _, id := range tenantIDs {
 		conditions = append(conditions, clause.Expr{
 			SQL:  sql,
-			Vars: []interface{}{pqx.UUIDArray{id}},
+			Vars: []interface{}{UUIDArray{id}},
 		})
 	}
 	if len(conditions) == 1 {

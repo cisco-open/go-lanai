@@ -2,7 +2,7 @@ data:
   logging:
     level: debug
     slow-threshold: 5s
-  cockroach:
+  db:
     host: localhost
     port: 26257
     sslmode: disable

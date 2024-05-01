@@ -1,16 +1,16 @@
 package migrate
 
 import (
-    "embed"
-    "github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/migrate/migration_v1"
-    appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/data"
-    "github.com/cisco-open/go-lanai/pkg/data/cockroach"
-    datainit "github.com/cisco-open/go-lanai/pkg/data/init"
-    "github.com/cisco-open/go-lanai/pkg/migration"
-    "go.uber.org/fx"
-    "gorm.io/gorm"
+	"embed"
+	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/migrate/migration_v1"
+	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/data"
+	datainit "github.com/cisco-open/go-lanai/pkg/data/init"
+	"github.com/cisco-open/go-lanai/pkg/data/postgresql/cockroach"
+	"github.com/cisco-open/go-lanai/pkg/migration"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
 )
 
 //go:embed application-migrate.yml

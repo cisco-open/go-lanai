@@ -14,27 +14,28 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package types
+package pqx
 
 import (
-    "context"
-    "database/sql"
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/tenancy"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/dbtest"
-    "github.com/cisco-open/go-lanai/test/mocks"
-    "github.com/cisco-open/go-lanai/test/sectest"
-    "github.com/google/uuid"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "gorm.io/gorm"
-    "testing"
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/data/types"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/tenancy"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/dbtest"
+	"github.com/cisco-open/go-lanai/test/mocks"
+	"github.com/cisco-open/go-lanai/test/sectest"
+	"github.com/google/uuid"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
+	"testing"
 )
 
 const (
@@ -78,11 +79,43 @@ type testDI struct {
 	TA tenancy.Accessor
 }
 
-func TestTenancyEnforcement(t *testing.T) {
+func TestTenancyEnforcementCRDB(t *testing.T) {
 	di := &testDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		dbtest.WithDBPlayback("testdb"),
+		dbtest.WithDBPlayback("testdb", dbtest.DBPort(26257)),
+		apptest.WithModules(tenancy.Module),
+		apptest.WithProperties(
+			"data.logging.level: debug",
+			"log.levels.data: debug",
+		),
+		apptest.WithFxOptions(
+			fx.Provide(provideMockedTenancyAccessor),
+		),
+		apptest.WithDI(di),
+		test.SubTestSetup(SetupTestCreateTenancyModels(di)),
+		test.GomegaSubTest(SubTestSkipTenancyCheck(di), "TestSkipTenancyCheck"),
+		test.GomegaSubTest(SubTestTenancySave(di, loadModelForTenantId), "TestSaveLoadedModel"),
+		test.GomegaSubTest(SubTestTenancySaveNoAccess(di, loadModelForTenantId), "TestSaveLoadedModelNoAccess"),
+		test.GomegaSubTest(SubTestTenancySave(di, synthesizeModelForTenantId), "TestSaveSynthesizedModel"),
+		test.GomegaSubTest(SubTestTenancySaveNoAccess(di, synthesizeModelForTenantId), "TestSaveSynthesizedModelNoAccess"),
+		test.GomegaSubTest(SubTestTenancyUpdates(di), "TestUpdates"),
+		test.GomegaSubTest(SubTestTenancyUpdatesNoAccess(di), "TestUpdatesNoAccess"),
+		test.GomegaSubTest(SubTestTenancyUpdatesInvalidTarget(di), "TestUpdatesInvalidTarget"),
+		test.GomegaSubTest(SubTestTenancyDelete(di, loadModelForTenantId), "TestDeleteLoadedModel"),
+		test.GomegaSubTest(SubTestTenancyDelete(di, synthesizeModelForTenantId), "TestDeleteSynthesizedModel"),
+		test.GomegaSubTest(SubTestTenancyDeleteNoAccess(di, loadModelForTenantId), "TestDeleteLoadedModelNoAccess"),
+		test.GomegaSubTest(SubTestTenancyDeleteNoAccess(di, synthesizeModelForTenantId), "TestDeleteSynthesizedModelNoAccess"),
+		test.GomegaSubTest(SubTestRWModeFiltering(di), "TestRWModeFiltering"),
+		test.GomegaSubTest(SubTestTenancyWithoutSecurity(di), "TestWithoutSecurity"),
+	)
+}
+
+func TestTenancyEnforcementPostgres(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		dbtest.WithDBPlayback("testdb", dbtest.DBPort(5432), dbtest.DBCredentials("postgres", "")),
 		apptest.WithModules(tenancy.Module),
 		apptest.WithProperties(
 			"data.logging.level: debug",
@@ -672,8 +705,8 @@ func provideMockedTenancyAccessor() tenancy.Accessor {
 const tableSQL = `
 CREATE TABLE IF NOT EXISTS public.test_tenancy (
 	id UUID NOT NULL DEFAULT gen_random_uuid(),
-	"tenant_name" STRING NOT NULL,
-	"value" STRING NOT NULL,
+	"tenant_name" TEXT NOT NULL,
+	"value" TEXT NOT NULL,
 	tenant_id UUID NULL,
 	tenant_path UUID[] NULL,
 	created_at TIMESTAMPTZ NULL,
@@ -681,10 +714,7 @@ CREATE TABLE IF NOT EXISTS public.test_tenancy (
 	created_by UUID NULL,
 	updated_by UUID NULL,
 	deleted_at TIMESTAMPTZ NULL,
-	CONSTRAINT "primary" PRIMARY KEY (id ASC),
-	INVERTED INDEX idx_tenant_path (tenant_path),
-	INDEX idx_tenant_name (tenant_name ASC),
-	FAMILY "primary" (id, tenant_name, value, tenant_id, tenant_path, created_at, updated_at, created_by, updated_by, deleted_at)
+	CONSTRAINT "primary" PRIMARY KEY (id)
 );`
 
 func prepareTable(db *gorm.DB, g *gomega.WithT) {
@@ -697,7 +727,7 @@ type TenancyModel struct {
 	TenantName string
 	Value      string
 	Tenancy
-	Audit
+	types.Audit
 }
 
 func (TenancyModel) TableName() string {
@@ -716,8 +746,8 @@ type TenancySoftDeleteModel struct {
 	TenantName string
 	Value      string
 	Tenancy
-	Audit
-	SoftDelete
+	types.Audit
+	types.SoftDelete
 }
 
 func (TenancySoftDeleteModel) TableName() string {
@@ -729,7 +759,7 @@ type TenancyRWModel struct {
 	TenantName string
 	Value      string
 	Tenancy    `filter:"rw"`
-	Audit
+	types.Audit
 }
 
 func (TenancyRWModel) TableName() string {

@@ -18,7 +18,7 @@ package dbtest
 
 import (
 	"context"
-	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
+	"github.com/cisco-open/go-lanai/pkg/data/postgresql"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/onsi/gomega"
@@ -43,7 +43,7 @@ func TestGormWithDBPlayback(t *testing.T) {
 		apptest.Bootstrap(),
 		WithDBPlayback("testdb"),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestGormDialetorValidation(&di, &cockroach.GormDialector{}), "GormDialetorValidation"),
+		test.GomegaSubTest(SubTestGormDialetorValidation(&di, &postgresql.GormDialector{}), "GormDialetorValidation"),
 	)
 }
 

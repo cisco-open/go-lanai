@@ -34,6 +34,7 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		fx.Provide(
 			BindDataProperties,
+			BindDatabaseProperties,
 			provideGorm,
 			gormErrTranslatorProvider(),
 		),

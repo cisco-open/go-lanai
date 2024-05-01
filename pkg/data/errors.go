@@ -17,9 +17,9 @@
 package data
 
 import (
-    "errors"
-    . "github.com/cisco-open/go-lanai/pkg/utils/error"
-    "gorm.io/gorm"
+	"errors"
+	. "github.com/cisco-open/go-lanai/pkg/utils/error"
+	"gorm.io/gorm"
 )
 
 const (
@@ -176,9 +176,11 @@ type DataError interface {
 	Details() interface{}
 	WithDetails(interface{}) DataError
 	WithMessage(msg string, args ...interface{}) DataError
+	WithCause(cause error, msg string, args ...interface{}) DataError
 }
 
 // dataError implements DataError and errorutils.Unwrapper
+//
 //goland:noinspection GoNameStartsWithPackageName
 type dataError struct {
 	*CodedError
@@ -198,7 +200,15 @@ func (e dataError) WithDetails(details interface{}) DataError {
 
 func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
 	return dataError{
-		CodedError: e.CodedError.WithMessage(msg, args...),
+		// Use WithCause because we want to modify message but preserve the cause
+		CodedError: e.CodedError.WithCause(e.CodedError.Cause(), msg, args...),
+		details:    e.details,
+	}
+}
+
+func (e dataError) WithCause(cause error, msg string, args ...interface{}) DataError {
+	return dataError{
+		CodedError: e.CodedError.WithCause(cause, msg, args...),
 		details:    e.details,
 	}
 }
@@ -215,6 +225,7 @@ func (e dataError) Unwrap() error {
 }
 
 // webDataError also implements web.StatusCoder
+//
 //goland:noinspection GoNameStartsWithPackageName
 type webDataError struct {
 	dataError

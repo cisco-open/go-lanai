@@ -23,13 +23,14 @@ import (
 )
 
 const (
-	_ = iota
+	_                        = iota
 	ErrorTranslatorOrderGorm // gorm error -> data error
 	ErrorTranslatorOrderData // data error -> data error with status code
 )
 
 const (
-	GormConfigurerGroup = "gorm_config"
+	GormConfigurerGroup  = "gorm_config"
+	DatabaseCreatorGroup = "db_creator"
 )
 
 // ErrorTranslator redefines web.ErrorTranslator and order.Ordered

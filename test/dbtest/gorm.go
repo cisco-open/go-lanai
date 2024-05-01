@@ -19,7 +19,7 @@ package dbtest
 import (
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/data"
-	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
+	"github.com/cisco-open/go-lanai/pkg/data/postgresql"
 	"go.uber.org/fx"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -37,7 +37,6 @@ type dialectorDI struct {
 
 func testGormDialectorProvider(opt *DBOption) func(di dialectorDI) gorm.Dialector {
 	return func(di dialectorDI) gorm.Dialector {
-		//"host=localhost user=root password=root dbname=idm port=26257 ssl=disable"
 		ssl := "disable"
 		if opt.SSL {
 			ssl = "enable"
@@ -58,7 +57,7 @@ func testGormDialectorProvider(opt *DBOption) func(di dialectorDI) gorm.Dialecto
 			DriverName: "copyist_postgres",
 			DSN:        toDSN(options),
 		}
-		return cockroach.NewGormDialectorWithConfig(config)
+		return postgresql.NewGormDialectorWithConfig(config)
 	}
 }
 
@@ -99,7 +98,7 @@ func pqErrorTranslatorProvider() fx.Annotated {
 	return fx.Annotated{
 		Group: data.GormConfigurerGroup,
 		Target: func() data.ErrorTranslator {
-			return cockroach.PostgresErrorTranslator{}
+			return postgresql.PostgresErrorTranslator{}
 		},
 	}
 }
@@ -108,9 +107,7 @@ func pqErrorTranslatorProvider() fx.Annotated {
 	gorm dry run
  *****************************/
 
-func enableGormDryRun(db *gorm.DB){
+func enableGormDryRun(db *gorm.DB) {
 	db.DryRun = true
 	db.SkipDefaultTransaction = true
 }
-
-

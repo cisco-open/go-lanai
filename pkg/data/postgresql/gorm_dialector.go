@@ -14,33 +14,27 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package cockroach
+package postgresql
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/data"
-    "gorm.io/gorm"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-type GormDbCreator struct {
-	dbUser string
-	dbName string
+/*************************
+	Custom GormDialector
+ *************************/
+
+type GormDialector struct {
+	postgres.Dialector
 }
 
-func NewGormDbCreator(properties CockroachProperties) data.DbCreator {
-	return &GormDbCreator{
-		dbUser: properties.Username,
-		dbName: properties.Database,
+func NewGormDialectorWithConfig(config postgres.Config) *GormDialector {
+	return &GormDialector{
+		Dialector: *postgres.New(config).(*postgres.Dialector),
 	}
 }
 
-func (g *GormDbCreator) CreateDatabaseIfNotExist(ctx context.Context, db *gorm.DB) error {
-	if g.dbUser != "root" {
-		logger.WithContext(ctx).Info("db user is not a privileged account, skipped db creation.")
-		return nil
-	}
-	result := db.WithContext(ctx).Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", g.dbName))
-	return result.Error
-
+func (d GormDialector) Migrator(db *gorm.DB) gorm.Migrator {
+	return NewGormMigrator(db, d)
 }

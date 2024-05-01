@@ -2,12 +2,13 @@ package serviceinit
 
 import (
 	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/controller"
+	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/controller/errorhandling"
 	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/repository"
 	actuator "github.com/cisco-open/go-lanai/pkg/actuator/init"
 	appconfig "github.com/cisco-open/go-lanai/pkg/appconfig/init"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
-	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
 	data "github.com/cisco-open/go-lanai/pkg/data/init"
+	"github.com/cisco-open/go-lanai/pkg/data/postgresql/cockroach"
 	"github.com/cisco-open/go-lanai/pkg/redis"
 	"github.com/cisco-open/go-lanai/pkg/security"
 	"github.com/cisco-open/go-lanai/pkg/security/config/resserver"
@@ -63,6 +64,6 @@ func Use() {
 	for _, m := range controller.SubModules {
 		bootstrap.Register(m)
 	}
-
+	errorhandling.Use()
 	repository.Use()
 }

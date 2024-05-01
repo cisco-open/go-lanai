@@ -54,6 +54,31 @@ type TestDI struct {
 	TA tenancy.Accessor
 }
 
+func TestOPAFilterWithAllFieldsPostgresql(t *testing.T) {
+	di := &TestDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithTimeout(10*time.Minute),
+		dbtest.WithDBPlayback("testdb", dbtest.DBPort(5432), dbtest.DBCredentials("postgres", "")),
+		opatest.WithBundles(opatest.DefaultBundleFS, testdata.ModelABundleFS),
+		apptest.WithModules(tenancy.Module),
+		apptest.WithConfigFS(testdata.ConfigFS),
+		apptest.WithFxOptions(
+			fx.Provide(testdata.ProvideMockedTenancyAccessor),
+		),
+		apptest.WithDI(di),
+		test.SubTestSetup(SetupTestPrepareModelA(&di.DI)),
+		test.GomegaSubTest(SubTestModelCreate(di), "TestModelCreate"),
+		test.GomegaSubTest(SubTestModelCreateByMap(di), "TestModelCreateByMap"),
+		test.GomegaSubTest(SubTestModelList(di), "TestModelList"),
+		test.GomegaSubTest(SubTestModelGet(di), "TestModelGet"),
+		test.GomegaSubTest(SubTestModelUpdate(di), "TestModelUpdate"),
+		test.GomegaSubTest(SubTestModelUpdateWithDelta(di), "TestModelUpdateWithDelta"),
+		test.GomegaSubTest(SubTestModelDelete(di), "TestModelDelete"),
+		test.GomegaSubTest(SubTestModelSave(di), "TestModelSave"),
+	)
+}
+
 func TestOPAFilterWithAllFields(t *testing.T) {
 	di := &TestDI{}
 	test.RunTest(context.Background(), t,
@@ -427,13 +452,13 @@ func SubTestModelSave(di *TestDI) test.GomegaSubTestFunc {
  *************************/
 
 type ModelA struct {
-	ID              uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
-	Value           string
-	TenantName      string
-	OwnerName       string
-	TenantID        uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
-	TenantPath      pqx.UUIDArray        `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
-	OwnerID               uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+	ID                    uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	Value                 string
+	TenantName            string
+	OwnerName             string
+	TenantID              uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:tenant_id"`
+	TenantPath            pqx.UUIDArray `gorm:"type:uuid[];index:,type:gin;not null" opa:"field:tenant_path"`
+	OwnerID               uuid.UUID     `gorm:"type:KeyID;not null" opa:"field:owner_id"`
 	opadata.FilteredModel `opa:"type:model"`
 	types.Audit
 	types.SoftDelete

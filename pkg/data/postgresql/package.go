@@ -14,23 +14,26 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package cassandra
+package postgresql
+
+import "go.uber.org/fx"
 
 import (
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/data"
 	"github.com/cisco-open/go-lanai/pkg/log"
-	"github.com/gocql/gocql"
-	"go.uber.org/fx"
-	"time"
 )
 
-var logger = log.New("Cassandra")
+var logger = log.New("postgresql")
 
 var Module = &bootstrap.Module{
-	Name:       "cassandra",
+	Name:       "postgres-compatible",
 	Precedence: bootstrap.DatabasePrecedence,
 	Options: []fx.Option{
-		fx.Provide(BindCassandraProperties, NewSession),
+		fx.Provide(NewGormDialetor,
+			pqErrorTranslatorProvider(),
+			newAnnotatedGormDbCreator(),
+		),
 	},
 }
 
@@ -38,25 +41,13 @@ func Use() {
 	bootstrap.Register(Module)
 }
 
-func NewSession(p CassandraProperties) *gocql.Session {
-	cluster := gocql.NewCluster(p.Hosts()...)
-	cluster.Keyspace = p.KeySpaceName
-	cluster.Consistency = gocql.ParseConsistency(p.Consistency)
-	cluster.Timeout = time.Duration(p.Timeout)
-	cluster.Authenticator = gocql.PasswordAuthenticator{
-		Username: p.Username,
-		Password: p.Password,
-	}
+/**************************
+	Provider
+***************************/
 
-	session, err := cluster.CreateSession()
-	if err != nil {
-		logger.Errorf("unable to create session: %v", err)
+func pqErrorTranslatorProvider() fx.Annotated {
+	return fx.Annotated{
+		Group:  data.GormConfigurerGroup,
+		Target: NewPqErrorTranslator,
 	}
-	return session
-}
-
-func BindCassandraProperties(ctx *bootstrap.ApplicationContext) CassandraProperties {
-	p := NewCassandraProperties()
-	_ = ctx.Config().Bind(p, CassandraPropertiesPrefix) // Note, we don't panic if this bind is missing
-	return *p
 }

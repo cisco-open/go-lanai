@@ -17,24 +17,24 @@
 package filter_tests
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/data/types"
-    "github.com/cisco-open/go-lanai/pkg/data/types/pqx"
-    opadata "github.com/cisco-open/go-lanai/pkg/opa/data"
-    "github.com/cisco-open/go-lanai/pkg/opa/data/filter_tests/testdata"
-    opatest "github.com/cisco-open/go-lanai/pkg/opa/test"
-    "github.com/cisco-open/go-lanai/pkg/tenancy"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/dbtest"
-    "github.com/google/uuid"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "gorm.io/gorm"
-    "testing"
-    "time"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/data/types"
+	"github.com/cisco-open/go-lanai/pkg/data/types/pqx"
+	opadata "github.com/cisco-open/go-lanai/pkg/opa/data"
+	"github.com/cisco-open/go-lanai/pkg/opa/data/filter_tests/testdata"
+	opatest "github.com/cisco-open/go-lanai/pkg/opa/test"
+	"github.com/cisco-open/go-lanai/pkg/tenancy"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/dbtest"
+	"github.com/google/uuid"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
+	"testing"
+	"time"
 )
 
 /*************************
@@ -60,6 +60,31 @@ func SetupCustomRefTable(db *gorm.DB) error {
 /*************************
 	Test
  *************************/
+
+func TestOPAFilterOnRelationsPostgresql(t *testing.T) {
+	di := &TestDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithTimeout(10*time.Minute),
+		dbtest.WithDBPlayback("testdb", dbtest.DBPort(5432), dbtest.DBCredentials("postgres", "")),
+		opatest.WithBundles(opatest.DefaultBundleFS, testdata.ModelDBundleFS),
+		apptest.WithModules(tenancy.Module),
+		apptest.WithConfigFS(testdata.ConfigFS),
+		apptest.WithFxOptions(
+			fx.Provide(testdata.ProvideMockedTenancyAccessor),
+			fx.Invoke(SetupCustomRefTable),
+		),
+		apptest.WithDI(di),
+		test.SubTestSetup(SetupTestPrepareModelD(&di.DI)),
+		test.GomegaSubTest(SubTestModelDNewRelations(di), "TestModelNewRelations"),
+		test.GomegaSubTest(SubTestModelDNewForeignRelations(di), "TestModelNewForeignRelations"),
+		test.GomegaSubTest(SubTestModelDListByPreload(di), "TestModelListByPreload"),
+		test.GomegaSubTest(SubTestModelDListWithPreload(di), "TestModelListWithPreload"),
+		test.GomegaSubTest(SubTestModelDListByRef(di), "TestModelListByRef"),
+		test.GomegaSubTest(SubTestModelDRemoveRelations(di), "TestModelRemoveRelations"),
+		test.GomegaSubTest(SubTestModelDRemoveForeignRelations(di), "TestModelRemoveForeignRelations"),
+	)
+}
 
 func TestOPAFilterOnRelations(t *testing.T) {
 	di := &TestDI{}
@@ -118,18 +143,18 @@ func SetupModelDRelationshipData(usersPtr *[]*ModelDUser, modelsPtr *[]*ModelD) 
 		models := *modelsPtr
 		resetIdLookup()
 		extra := make([]*ModelD, 0, len(models)*more)
-		refs := make([]*ModelDRef, 0, len(users) * len(models) * perUser)
+		refs := make([]*ModelDRef, 0, len(users)*len(models)*perUser)
 		for _, m := range models {
-			dups := make([]*ModelD, more + 1)
+			dups := make([]*ModelD, more+1)
 			dups[0] = m
 			// duplicate more models with same template
 			for i := 0; i < more; i++ {
 				newM := ModelD{
-					ID:            pool.PopOrNew(),
-					Value:         fmt.Sprintf("%s - Dup %d", m.Value, i),
-					TenantName:    m.TenantName,
-					TenantID:      m.TenantID,
-					TenantPath:    m.TenantPath,
+					ID:         pool.PopOrNew(),
+					Value:      fmt.Sprintf("%s - Dup %d", m.Value, i),
+					TenantName: m.TenantName,
+					TenantID:   m.TenantID,
+					TenantPath: m.TenantPath,
 				}
 				extra = append(extra, &newM)
 				dups[i+1] = &newM
@@ -285,7 +310,7 @@ func SubTestModelDListByRef(di *TestDI) test.GomegaSubTestFunc {
 		count = 0
 		for _, m := range models {
 			if m.Model != nil {
-				count ++
+				count++
 			}
 		}
 		g.Expect(count).To(Equal(16), "user1 should see %d models", 16)
@@ -298,7 +323,7 @@ func SubTestModelDListByRef(di *TestDI) test.GomegaSubTestFunc {
 		count = 0
 		for _, m := range models {
 			if m.Model != nil {
-				count ++
+				count++
 			}
 		}
 		g.Expect(count).To(Equal(40), "user1 should see %d models", 40)
@@ -381,7 +406,7 @@ func SubTestModelDRemoveForeignRelations(di *TestDI) test.GomegaSubTestFunc {
  *************************/
 
 type ModelDUser struct {
-	ID               uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
+	ID       uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 	Username string
 	Models   []*ModelD `gorm:"many2many:test_opa_model_d_ref;joinForeignKey:user_id;joinReferences:model_id;"`
 	// ModelDRelations is read-only, don't set associations via this field
@@ -419,9 +444,9 @@ type ModelDRef struct {
 	//UserID               uuid.UUID   `gorm:"primaryKey;type:uuid;default:gen_random_uuid();" opa:"field:owner_id"`
 	//ModelID              uuid.UUID   `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 
-	UserID               uuid.UUID   `gorm:"primaryKey;type:uuid;" opa:"field:owner_id"`
-	ModelID              uuid.UUID   `gorm:"primaryKey;type:uuid;"`
-	User                 *ModelDUser `gorm:"foreignKey:user_id"`
+	UserID                uuid.UUID   `gorm:"primaryKey;type:uuid;" opa:"field:owner_id"`
+	ModelID               uuid.UUID   `gorm:"primaryKey;type:uuid;"`
+	User                  *ModelDUser `gorm:"foreignKey:user_id"`
 	Model                 *ModelD     `gorm:"foreignKey:model_id"`
 	opadata.FilteredModel `opa:"type:user_model_ref,read:filter_read"`
 	types.Audit

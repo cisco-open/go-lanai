@@ -14,16 +14,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package cockroach
+package postgresql
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/certs"
-    "go.uber.org/fx"
-    "gorm.io/driver/postgres"
-    "gorm.io/gorm"
-    "strings"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/certs"
+	"github.com/cisco-open/go-lanai/pkg/data"
+	"go.uber.org/fx"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"strings"
 )
 
 const (
@@ -41,8 +42,8 @@ const (
 
 type initDI struct {
 	fx.In
-	AppContext  *bootstrap.ApplicationContext
-	Properties   CockroachProperties
+	AppContext   *bootstrap.ApplicationContext
+	Properties   data.DatabaseProperties
 	CertsManager certs.Manager `optional:"true"`
 }
 

@@ -18,6 +18,7 @@ package data
 
 import (
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/certs"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
@@ -25,7 +26,8 @@ import (
 )
 
 const (
-	ManagementPropertiesPrefix = "data"
+	PropertiesPrefix         = "data"
+	DatabasePropertiesPrefix = "data.db"
 )
 
 type DataProperties struct {
@@ -58,8 +60,44 @@ func NewDataProperties() *DataProperties {
 // BindDataProperties create and bind SessionProperties, with a optional prefix
 func BindDataProperties(ctx *bootstrap.ApplicationContext) DataProperties {
 	props := NewDataProperties()
-	if err := ctx.Config().Bind(props, ManagementPropertiesPrefix); err != nil {
+	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind DataProperties"))
+	}
+	return *props
+}
+
+type DatabaseProperties struct {
+	//Enabled       bool                               `json:"enabled"`
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Database string `json:"database"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	SslMode  string `json:"sslmode"`
+	Tls      TLS    `json:"tls"`
+}
+
+type TLS struct {
+	Enable bool                   `json:"enabled"`
+	Certs  certs.SourceProperties `json:"certs"`
+}
+
+// NewDatabaseProperties create a DatabaseProperties with default values
+func NewDatabaseProperties() *DatabaseProperties {
+	return &DatabaseProperties{
+		Host:     "localhost",
+		Port:     26257,
+		Username: "root",
+		Password: "root",
+		SslMode:  "disable",
+	}
+}
+
+// BindDatabaseProperties create and bind DatabaseProperties
+func BindDatabaseProperties(ctx *bootstrap.ApplicationContext) DatabaseProperties {
+	props := NewDatabaseProperties()
+	if err := ctx.Config().Bind(props, DatabasePropertiesPrefix); err != nil {
+		panic(errors.Wrap(err, "failed to bind DatabaseProperties"))
 	}
 	return *props
 }
