@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/data"
 	"github.com/cisco-open/go-lanai/pkg/data/postgresql"
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
 )
@@ -37,21 +36,9 @@ func (g *GormDbCreator) Order() int {
 
 func (g *GormDbCreator) CreateDatabaseIfNotExist(ctx context.Context, db *gorm.DB) error {
 	result := db.WithContext(ctx).Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", db.Statement.Quote(g.dbName)))
-	if result.Error != nil && errors.Is(result.Error, data.ErrorSubTypeQuery) {
-		var de data.DataError
-		ok := errors.As(result.Error, &de)
-		if !ok {
-			return result.Error
-		}
-
-		var cause *pgconn.PgError
-		ok = errors.As(de.RootCause(), &cause)
-		if ok && cause.Code == "42501" {
-			// If user does not have permission to create database, skip the error.
-			// Assume the database already exists.
-			logger.Warnf("Skipped creating database because %v", result.Error)
-			return nil
-		}
+	if result.Error != nil && errors.Is(result.Error, data.ErrorInsufficientPrivilege) {
+		logger.Warnf("Skipped creating database because %v", result.Error)
+		return nil
 	}
 	return result.Error
 }

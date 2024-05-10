@@ -75,6 +75,7 @@ const (
 	_                   = iota
 	ErrorCodeInvalidSQL = ErrorSubTypeCodeQuery + iota
 	ErrorCodeInvalidPagination
+	ErrorCodeInsufficientPrivilege
 )
 
 // ErrorSubTypeCodeApi
@@ -159,10 +160,11 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
-	ErrorSortByUnknownColumn  = NewDataError(ErrorCodeOrmMapping, "SortBy column unknown")
-	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
-	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
-	ErrorDuplicateKey         = NewDataError(ErrorCodeDuplicateKey, "duplicate key")
+	ErrorSortByUnknownColumn   = NewDataError(ErrorCodeOrmMapping, "SortBy column unknown")
+	ErrorRecordNotFound        = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
+	ErrorIncorrectRecordCount  = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
+	ErrorDuplicateKey          = NewDataError(ErrorCodeDuplicateKey, "duplicate key")
+	ErrorInsufficientPrivilege = NewDataError(ErrorCodeInsufficientPrivilege, "insufficient privilege")
 )
 
 func init() {

@@ -64,7 +64,7 @@ func (t PostgresErrorTranslator) Translate(_ context.Context, err error) error {
 	de := data.NewDataError(ec, err)
 
 	switch {
-	case errors.Is(err, data.ErrorDuplicateKey):
+	case errors.Is(de, data.ErrorDuplicateKey):
 		return t.translateDuplicateKeyErrorMessage(de)
 	default:
 		return de
@@ -94,12 +94,12 @@ func (t PostgresErrorTranslator) translateDuplicateKeyErrorMessage(e data.DataEr
 		}
 		if name == "value" {
 			if matches[i] != "" {
-				valMsg = fmt.Sprintf("duplicate value: %s", matches[i])
+				valMsg = fmt.Sprintf("duplicate keys: %s", matches[i])
 			}
 		}
 		if name == "col" {
 			if matches[i] != "" {
-				colMsg = fmt.Sprintf("duplicate value in column: %s", matches[i])
+				colMsg = fmt.Sprintf("duplicate key in column: %s", matches[i])
 			}
 		}
 	}
@@ -125,7 +125,12 @@ func (t PostgresErrorTranslator) translateErrorCode(code string) int64 {
 	switch errCls {
 	// data.ErrorSubTypeCodeQuery
 	case "22", "26", "42":
-		return data.ErrorSubTypeCodeQuery
+		switch code {
+		case "42501":
+			return data.ErrorCodeInsufficientPrivilege
+		default:
+			return data.ErrorSubTypeCodeQuery
+		}
 	// data.ErrorSubTypeCodeDataRetrieval
 	case "24":
 		return data.ErrorCodeIncorrectRecordCount

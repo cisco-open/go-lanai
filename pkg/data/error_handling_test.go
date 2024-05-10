@@ -116,6 +116,17 @@ func SubTestServerSideErrorTranslation(di *errTestDI) test.GomegaSubTestFunc {
 		ok := errors.As(r.Error, &dataE)
 		g.Expect(ok).To(BeTrue(), "error should be data.DataError type")
 		g.Expect(dataE.RootCause()).To(BeAssignableToTypeOf(&pq.Error{}), "error should have cause with pq.Error type")
+		g.Expect(dataE.Error()).To(ContainSubstring("Model-1"), "error message should contain the duplicated key")
+		g.Expect(dataE.Error()).To(ContainSubstring("uk"), "error message should contain the column name")
+
+		// record not found
+		// expect the error message to be different
+		dest := TestModel{}
+		r = di.DB.First(&dest, TestModel{UniqueKey: "Non-Exist-Model-Number"})
+		g.Expect(r.Error).To(HaveOccurred())
+		g.Expect(r.Error).To(gomegautils.IsError(data.ErrorRecordNotFound), "error should be record not found")
+		ok = errors.As(r.Error, &dataE)
+		g.Expect(dataE.Error()).To(ContainSubstring("record not found"), "error message should contain record not found")
 	}
 }
 
