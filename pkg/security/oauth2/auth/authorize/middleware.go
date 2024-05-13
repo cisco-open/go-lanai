@@ -251,7 +251,8 @@ func (mw *AuthorizeEndpointMiddleware) clearAuthorizeRequest(ctx *gin.Context) e
 
 func (mw *AuthorizeEndpointMiddleware) saveApprovedRequest(ctx *gin.Context, u security.Authentication, r *auth.AuthorizeRequest) error {
 	if mw.approvalStore == nil {
-		return oauth2.NewInternalError("approval store is not available")
+		// no approval store is provided, nothing to save
+		return nil
 	}
 
 	if !r.Approved {
@@ -263,10 +264,17 @@ func (mw *AuthorizeEndpointMiddleware) saveApprovedRequest(ctx *gin.Context, u s
 		Scopes:      r.Scopes,
 	}
 	userAccount, ok := u.Principal().(security.Account)
-	if !ok {
-		return oauth2.NewInternalError("can't save approval without user account")
+	if ok {
+		approval.Username = userAccount.Username()
+		approval.UserId = userAccount.ID()
+	} else {
+		username, e := security.GetUsername(u)
+		if e != nil {
+			return oauth2.NewInternalError("can't save approval without user id or username")
+		}
+		approval.Username = username
 	}
-	if e := mw.approvalStore.SaveApproval(ctx, userAccount, approval); e != nil {
+	if e := mw.approvalStore.SaveApproval(ctx, approval); e != nil {
 		return oauth2.NewInternalError("failed to save approved request", e)
 	}
 	return nil
@@ -333,17 +341,23 @@ func (mw *AuthorizeEndpointMiddleware) hasSavedApproval(ctx *gin.Context, user s
 		return false
 	}
 
+	opts := []auth.ApprovalLoadOptions{auth.WithClientId(request.ClientId)}
 	userAccount, ok := user.Principal().(security.Account)
-	if !ok {
-		return false
+	if ok {
+		opts = append(opts, auth.WithUsername(userAccount.Username()), auth.WithUserId(userAccount.ID()))
+	} else {
+		username, e := security.GetUsername(user)
+		if e != nil {
+			return false
+		}
+		opts = append(opts, auth.WithUsername(username))
 	}
-	approvals, err := mw.approvalStore.LoadApprovalsByClientId(ctx, userAccount, request.ClientId)
+	approvals, err := mw.approvalStore.LoadUserApprovalsByClientId(ctx, opts...)
 	if err != nil {
 		return false
 	}
 	for _, a := range approvals {
-		if request.ClientId == a.ClientId &&
-			request.RedirectUri == a.RedirectUri &&
+		if request.RedirectUri == a.RedirectUri &&
 			request.Scopes.Equals(a.Scopes) {
 			return true
 		}

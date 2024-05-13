@@ -2,7 +2,6 @@ package testdata
 
 import (
 	"context"
-	"github.com/cisco-open/go-lanai/pkg/security"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
 )
 
@@ -16,18 +15,22 @@ func NewMockedApprovalStore() auth.ApprovalStore {
 	}
 }
 
-func (m *MockedApprovalStore) SaveApproval(c context.Context, user security.Account, a *auth.Approval) error {
-	approvals := m.userApproval[user.Username()]
+func (m *MockedApprovalStore) SaveApproval(c context.Context, a *auth.Approval) error {
+	approvals := m.userApproval[a.Username]
 	approvals = append(approvals, a)
-	m.userApproval[user.Username()] = approvals
+	m.userApproval[a.Username] = approvals
 	return nil
 }
 
-func (m *MockedApprovalStore) LoadApprovalsByClientId(c context.Context, user security.Account, clientId string) ([]*auth.Approval, error) {
-	approvals := m.userApproval[user.Username()]
+func (m *MockedApprovalStore) LoadUserApprovalsByClientId(c context.Context, opts ...auth.ApprovalLoadOptions) ([]*auth.Approval, error) {
+	opt := &auth.Approval{}
+	for _, f := range opts {
+		f(opt)
+	}
+	approvals := m.userApproval[opt.Username]
 	var ret []*auth.Approval
 	for _, a := range approvals {
-		if a.ClientId == clientId {
+		if a.ClientId == opt.ClientId {
 			ret = append(ret, a)
 		}
 	}
