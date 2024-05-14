@@ -17,15 +17,15 @@
 package authorize
 
 import (
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/errorhandling"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
-    "github.com/cisco-open/go-lanai/pkg/web/mapping"
-    "github.com/cisco-open/go-lanai/pkg/web/matcher"
-    "github.com/cisco-open/go-lanai/pkg/web/middleware"
-    "net/http"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/errorhandling"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
+	"github.com/cisco-open/go-lanai/pkg/web/mapping"
+	"github.com/cisco-open/go-lanai/pkg/web/matcher"
+	"github.com/cisco-open/go-lanai/pkg/web/middleware"
+	"net/http"
 )
 
 var (
@@ -37,8 +37,7 @@ type AuthorizeEndpointConfigurer struct {
 }
 
 func newOAuth2AuthorizeEndpointConfigurer() *AuthorizeEndpointConfigurer {
-	return &AuthorizeEndpointConfigurer{
-	}
+	return &AuthorizeEndpointConfigurer{}
 }
 
 func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws security.WebSecurity) (err error) {
@@ -62,6 +61,7 @@ func (c *AuthorizeEndpointConfigurer) Apply(feature security.Feature, ws securit
 		opts.RequestProcessor = f.requestProcessor
 		opts.AuthorizeHandler = f.authorizeHandler
 		opts.ApprovalMatcher = approveRequestMatcher
+		opts.ApprovalStore = f.approvalStore
 	})
 
 	// install middlewares
@@ -107,6 +107,3 @@ func (c *AuthorizeEndpointConfigurer) validate(f *AuthorizeFeature, ws security.
 	//}
 	return nil
 }
-
-
-

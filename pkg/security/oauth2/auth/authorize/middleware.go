@@ -17,24 +17,25 @@
 package authorize
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
-    "github.com/cisco-open/go-lanai/pkg/security/session"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/gin-gonic/gin"
-    "strconv"
-    "strings"
+	"context"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
+	"github.com/cisco-open/go-lanai/pkg/security/session"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/gin-gonic/gin"
+	"strconv"
+	"strings"
 )
 
 const (
 	sessionKeyAuthorizeRequest = "kAuthorizeRequest"
-	scopeParamPrefix = "scope."
+	scopeParamPrefix           = "scope."
 )
+
 /***********************
 	Authorize Endpoint
  ***********************/
@@ -44,6 +45,8 @@ type AuthorizeEndpointMiddleware struct {
 	requestProcessor auth.AuthorizeRequestProcessor
 	authorizeHandler auth.AuthorizeHandler
 	approveMatcher   web.RequestMatcher
+
+	approvalStore auth.ApprovalStore
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -54,9 +57,10 @@ type AuthorizeMWOption struct {
 	RequestProcessor auth.AuthorizeRequestProcessor
 	AuthorizeHandler auth.AuthorizeHandler
 	ApprovalMatcher  web.RequestMatcher
+	ApprovalStore    auth.ApprovalStore
 }
 
-func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpointMiddleware {
+func NewAuthorizeEndpointMiddleware(opts ...AuthorizeMWOptions) *AuthorizeEndpointMiddleware {
 	opt := AuthorizeMWOption{
 		RequestProcessor: auth.NewAuthorizeRequestProcessor(),
 	}
@@ -69,12 +73,13 @@ func NewAuthorizeEndpointMiddleware(opts...AuthorizeMWOptions) *AuthorizeEndpoin
 		requestProcessor: opt.RequestProcessor,
 		authorizeHandler: opt.AuthorizeHandler,
 		approveMatcher:   opt.ApprovalMatcher,
+		approvalStore:    opt.ApprovalStore,
 	}
 }
 
 func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+		if matches, err := condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
 			return
 		}
 
@@ -85,7 +90,7 @@ func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.
 		case e == nil && approve:
 			// approve or deny request
 			if request, err = mw.loadAuthorizeRequest(ctx); err != nil {
-				err = oauth2.NewInvalidAuthorizeRequestError("approval endpoint should be accessed via POST form", e)
+				err = oauth2.NewInvalidAuthorizeRequestError("error loading authorize request for approval", e)
 			}
 		default:
 			if request, err = auth.ParseAuthorizeRequest(ctx.Request); err != nil {
@@ -115,7 +120,7 @@ func (mw *AuthorizeEndpointMiddleware) PreAuthenticateHandlerFunc(condition web.
 
 func (mw *AuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.RequestMatcher) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if matches, err :=condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
+		if matches, err := condition.MatchesWithContext(ctx, ctx.Request); !matches || err != nil {
 			return
 		}
 
@@ -130,7 +135,12 @@ func (mw *AuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Reques
 		// check auto-approval and create response
 		var respFunc auth.ResponseHandlerFunc
 		e = auth.ValidateAllAutoApprovalScopes(ctx, client, request.Scopes)
+		needsApproval := false
 		if e != nil {
+			needsApproval = !mw.hasSavedApproval(ctx, user, request)
+		}
+
+		if needsApproval {
 			// save request
 			if e := mw.saveAuthorizeRequest(ctx, request); e != nil {
 				mw.handleError(ctx, e)
@@ -152,7 +162,7 @@ func (mw *AuthorizeEndpointMiddleware) AuthorizeHandlerFunc(condition web.Reques
 func (mw *AuthorizeEndpointMiddleware) ApproveOrDenyHandlerFunc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// no matter what happen, this is the last step. so clear saved request after done
-		defer func() {_ = mw.clearAuthorizeRequest(ctx)}()
+		defer func() { _ = mw.clearAuthorizeRequest(ctx) }()
 
 		// sanity checks
 		request, client, user, e := mw.endpointSanityCheck(ctx)
@@ -169,6 +179,7 @@ func (mw *AuthorizeEndpointMiddleware) ApproveOrDenyHandlerFunc() gin.HandlerFun
 			return
 		}
 		request.Approved = true
+		_ = mw.saveApprovedRequest(ctx, user, request)
 
 		// write response
 		respFunc, e := mw.authorizeHandler.HandleApproved(ctx, request, user)
@@ -238,6 +249,37 @@ func (mw *AuthorizeEndpointMiddleware) clearAuthorizeRequest(ctx *gin.Context) e
 	return nil
 }
 
+func (mw *AuthorizeEndpointMiddleware) saveApprovedRequest(ctx *gin.Context, u security.Authentication, r *auth.AuthorizeRequest) error {
+	if mw.approvalStore == nil {
+		// no approval store is provided, nothing to save
+		return nil
+	}
+
+	if !r.Approved {
+		return oauth2.NewInternalError("attempting to save unapproved request")
+	}
+	approval := &auth.Approval{
+		ClientId:    r.ClientId,
+		RedirectUri: r.RedirectUri,
+		Scopes:      r.Scopes,
+	}
+	userAccount, ok := u.Principal().(security.Account)
+	if ok {
+		approval.Username = userAccount.Username()
+		approval.UserId = userAccount.ID()
+	} else {
+		username, e := security.GetUsername(u)
+		if e != nil {
+			return oauth2.NewInternalError("can't save approval without user id or username")
+		}
+		approval.Username = username
+	}
+	if e := mw.approvalStore.SaveApproval(ctx, approval); e != nil {
+		return oauth2.NewInternalError("failed to save approved request", e)
+	}
+	return nil
+}
+
 func (mw *AuthorizeEndpointMiddleware) endpointSanityCheck(ctx *gin.Context) (
 	*auth.AuthorizeRequest, oauth2.OAuth2Client, security.Authentication, error) {
 
@@ -251,7 +293,7 @@ func (mw *AuthorizeEndpointMiddleware) endpointSanityCheck(ctx *gin.Context) (
 		return nil, nil, nil, oauth2.NewInternalError("authorize endpoint is called without user authentication")
 	}
 
-	// retrieve client from context. It's should be populated by pre-auth MW
+	// retrieve client from context. It should be populated by pre-auth MW
 	client := auth.RetrieveAuthenticatedClient(ctx)
 	if client == nil {
 		return nil, nil, nil, oauth2.NewInternalError("client is not loaded")
@@ -261,7 +303,14 @@ func (mw *AuthorizeEndpointMiddleware) endpointSanityCheck(ctx *gin.Context) (
 }
 
 func (mw *AuthorizeEndpointMiddleware) parseApproval(ctx *gin.Context) (approval map[string]bool) {
+	approved := false
 	approval = make(map[string]bool)
+	if v, ok := ctx.Request.PostForm[oauth2.ParameterUserApproval]; ok {
+		approved, _ = strconv.ParseBool(v[len(v)-1])
+	}
+	if !approved {
+		return
+	}
 	for k, v := range ctx.Request.PostForm {
 		if !strings.HasPrefix(k, scopeParamPrefix) {
 			continue
@@ -279,10 +328,39 @@ func (mw *AuthorizeEndpointMiddleware) parseApproval(ctx *gin.Context) (approval
 func (mw *AuthorizeEndpointMiddleware) transferContextValues(src context.Context, dst context.Context) {
 	mutable := utils.FindMutableContext(dst)
 	listable, ok := src.(utils.ListableContext)
-	if !ok || mutable == nil{
+	if !ok || mutable == nil {
 		return
 	}
 	for k, v := range listable.Values() {
 		mutable.Set(k, v)
 	}
+}
+
+func (mw *AuthorizeEndpointMiddleware) hasSavedApproval(ctx *gin.Context, user security.Authentication, request *auth.AuthorizeRequest) bool {
+	if mw.approvalStore == nil {
+		return false
+	}
+
+	opts := []auth.ApprovalLoadOptions{auth.WithClientId(request.ClientId)}
+	userAccount, ok := user.Principal().(security.Account)
+	if ok {
+		opts = append(opts, auth.WithUsername(userAccount.Username()), auth.WithUserId(userAccount.ID()))
+	} else {
+		username, e := security.GetUsername(user)
+		if e != nil {
+			return false
+		}
+		opts = append(opts, auth.WithUsername(username))
+	}
+	approvals, err := mw.approvalStore.LoadApprovals(ctx, opts...)
+	if err != nil {
+		return false
+	}
+	for _, a := range approvals {
+		if request.RedirectUri == a.RedirectUri &&
+			request.Scopes.Equals(a.Scopes) {
+			return true
+		}
+	}
+	return false
 }

@@ -46,7 +46,6 @@ type IssuerProperties struct {
 }
 
 type EndpointsProperties struct {
-	// TODO check_session is necessary and should be implemented. Java: SessionInfoEndpoint
 	Authorize       string `json:"authorize"`
 	Token           string `json:"token"`
 	Approval        string `json:"approval"`
@@ -60,7 +59,7 @@ type EndpointsProperties struct {
 	SamlMetadata    string `json:"saml-metadata"`
 }
 
-//NewAuthServerProperties create a SessionProperties with default values
+// NewAuthServerProperties create a SessionProperties with default values
 func NewAuthServerProperties() *AuthServerProperties {
 	return &AuthServerProperties{
 		Issuer: IssuerProperties{
@@ -87,7 +86,7 @@ func NewAuthServerProperties() *AuthServerProperties {
 	}
 }
 
-//BindAuthServerProperties create and bind AuthServerProperties, with a optional prefix
+// BindAuthServerProperties create and bind AuthServerProperties, with a optional prefix
 func BindAuthServerProperties(ctx *bootstrap.ApplicationContext) AuthServerProperties {
 	props := NewAuthServerProperties()
 	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {

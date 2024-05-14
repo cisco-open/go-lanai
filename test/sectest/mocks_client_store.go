@@ -17,12 +17,12 @@
 package sectest
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "time"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"time"
 )
 
 var (
@@ -120,7 +120,10 @@ func (m MockedClient) Scopes() utils.StringSet {
 }
 
 func (m MockedClient) AutoApproveScopes() utils.StringSet {
-	return m.Scopes()
+	if m.MockedClientProperties.AutoApproveScopes == nil {
+		return m.Scopes()
+	}
+	return utils.NewStringSet(m.MockedClientProperties.AutoApproveScopes...)
 }
 
 func (m MockedClient) AccessTokenValidity() time.Duration {

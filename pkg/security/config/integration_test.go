@@ -84,6 +84,8 @@ const (
 	TestTenantedClientID1     = "tenant-client-1"
 	TestTenantedClientID2     = "tenant-client-2"
 	TestTenantedClientID3     = "tenant-client-3"
+	TestApprovalClientID      = "test-approval-client"
+	TestApprovalClientID2     = "test-approval-client-2"
 	TestClientSecret          = "test-secret"
 	TestOAuth2CallbackURL     = "http://localhost/oauth/callback"
 )
@@ -111,12 +113,12 @@ type IntegrationTestDI struct {
 
 type IntegrationTestOut struct {
 	fx.Out
-	IdpManager           idp.IdentityProviderManager
-	AccountStore         security.AccountStore
-	PasswordEncoder      passwd.PasswordEncoder
-	FedAccountStore      security.FederatedAccountStore
-	SamlClientStore      samlctx.SamlClientStore
-	TenancyAccessor      tenancy.Accessor
+	IdpManager      idp.IdentityProviderManager
+	AccountStore    security.AccountStore
+	PasswordEncoder passwd.PasswordEncoder
+	FedAccountStore security.FederatedAccountStore
+	SamlClientStore samlctx.SamlClientStore
+	TenancyAccessor tenancy.Accessor
 }
 
 type IntegrationTestOption func(di IntegrationTestDI, out *IntegrationTestOut)
@@ -130,12 +132,12 @@ func IntegrationTestMocksProvider(opts ...IntegrationTestOption) func(Integratio
 		}, "id-tenant-root")
 
 		integrationTestOut := IntegrationTestOut{
-			IdpManager:           testdata.NewMockedIDPManager(),
-			AccountStore:         sectest.NewMockedAccountStore(di.Mocking.Accounts.Values()),
-			PasswordEncoder:      passwd.NewNoopPasswordEncoder(),
-			FedAccountStore:      sectest.NewMockedFederatedAccountStore(di.Mocking.FederatedUsers.Values()...),
-			SamlClientStore:      samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
-			TenancyAccessor:      mockTenantAccessor,
+			IdpManager:      testdata.NewMockedIDPManager(),
+			AccountStore:    sectest.NewMockedAccountStore(di.Mocking.Accounts.Values()),
+			PasswordEncoder: passwd.NewNoopPasswordEncoder(),
+			FedAccountStore: sectest.NewMockedFederatedAccountStore(di.Mocking.FederatedUsers.Values()...),
+			SamlClientStore: samltest.NewMockedClientStore(samltest.ClientsWithPropertiesPrefix(di.AppCtx.Config(), "mocking.clients")),
+			TenancyAccessor: mockTenantAccessor,
 		}
 		for _, opt := range opts {
 			opt(di, &integrationTestOut)
@@ -154,6 +156,7 @@ type intDI struct {
 	FedAccountStore security.FederatedAccountStore
 	Mocking         sectest.MockingProperties
 	TokenReader     oauth2.TokenStoreReader
+	SessionStore    session.Store
 }
 
 func TestWithMockedServer(t *testing.T) {
@@ -185,11 +188,15 @@ func TestWithMockedServer(t *testing.T) {
 				sectest.BindMockingProperties,
 				testdata.NewAuthServerConfigurer, //This configurer will set up mocked client store, mocked tenant store etc.
 				testdata.NewResServerConfigurer,
+				testdata.NewMockedApprovalStore,
 			),
 		),
 		test.GomegaSubTest(SubTestOAuth2AuthorizeWithPasswdIDP(di), "TestOAuth2AuthorizeWithPasswdIDP"),
 		test.GomegaSubTest(SubTestOAuth2AuthorizeWithSamlSSO(di), "TestOAuth2AuthorizeWithSamlSSO"),
 		test.GomegaSubTest(SubTestSamlSSOAuthorizeWithPasswdIDP(di), "TestSamlSSOAuthorizeWithPasswdIDP"),
+
+		test.GomegaSubTest(SubTestAuthorizeRequestApproval(di), "TestAuthorizeRequestApproval"),
+
 		//token tests
 		test.GomegaSubTest(SubTestOAuth2AuthCode(di), "TestOAuth2AuthCode"),
 		test.GomegaSubTest(SubTestOAuth2AuthCodeWithoutTenant(di), "TestOAuth2AuthCodeWithoutTenant"),
@@ -274,6 +281,92 @@ func SubTestSamlSSOAuthorizeWithPasswdIDP(_ *intDI) test.GomegaSubTestFunc {
 		resp = webtest.MustExec(ctx, req).Response
 		fmt.Printf("%v\n", resp)
 		assertRedirectResponse(t, g, resp, "/test/login")
+	}
+}
+
+func SubTestAuthorizeRequestApproval(di *intDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		s, token, err := newSessionWithCsrfToken(di.SessionStore)
+		g.Expect(err).ToNot(HaveOccurred(), "session should be created")
+		// mock authentication
+		fedAccount := di.Mocking.FederatedUsers.MapValues()["fed1"]
+		ctx, e := contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
+		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
+
+		// send authorize request, expect the request approval page to be shown
+		req := webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil,
+			authorizeReqOptions(TestApprovalClientID),
+			cookieOptions(s.Name(), s.GetID()))
+		resp := webtest.MustExec(ctx, req)
+		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
+
+		approvalUri := fmt.Sprintf("http://%s/test/v2/approve", testdata.IdpDomainExtSAML)
+
+		//submit incomplete approval, expect error page
+		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,
+			approveRequestBody("true", []string{"scope.read"}, token),
+			approvalReqOptions(),
+			cookieOptions(s.Name(), s.GetID()))
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeResponse(t, g, resp.Response, true)
+
+		//execute the authorize request again, expect to see the request for approval page again.
+		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID),
+			func(req *http.Request) {
+				cookie := session.NewCookie(s.Name(), s.GetID(), &session.Options{}, req)
+				req.AddCookie(cookie)
+			})
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
+
+		//submit the approval
+		//expect to get the auth code response
+		//expect the approval to be stored
+		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,
+			approveRequestBody("true", []string{"scope.read", "scope.write"}, token),
+			cookieOptions(s.Name(), s.GetID()),
+			approvalReqOptions())
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeResponse(t, g, resp.Response, false)
+
+		// authorize again, this time expect to get the auth code immediately
+		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID),
+			cookieOptions(s.Name(), s.GetID()))
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeResponse(t, g, resp.Response, false)
+
+		//send a different authorize request, expect it to not be affected by the stored approval.
+		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID2),
+			cookieOptions(s.Name(), s.GetID()))
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
+
+		//deny this request
+		req = webtest.NewRequest(ctx, http.MethodPost, approvalUri,
+			approveRequestBody("false", nil, token),
+			approvalReqOptions(),
+			cookieOptions(s.Name(), s.GetID()))
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeResponse(t, g, resp.Response, true)
+
+		//send authorize request again, expect to be asked for approval again
+		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID2),
+			cookieOptions(s.Name(), s.GetID()))
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
+
+		//send the approved request again using a different user, expect to see the approval page
+		s, token, err = newSessionWithCsrfToken(di.SessionStore)
+		g.Expect(err).ToNot(HaveOccurred(), "session should be created")
+		// mock authentication
+		fedAccount = di.Mocking.FederatedUsers.MapValues()["fed2"]
+		ctx, e = contextWithSamlAuth(ctx, di.FedAccountStore, fedAccount)
+		g.Expect(e).To(Succeed(), "SAML auth should be stored correctly")
+
+		req = webtest.NewRequest(ctx, http.MethodGet, "/v2/authorize", nil, authorizeReqOptions(TestApprovalClientID),
+			cookieOptions(s.Name(), s.GetID()))
+		resp = webtest.MustExec(ctx, req)
+		assertAuthorizeRequireApprovalResponse(t, g, resp.Response)
 	}
 }
 
@@ -888,6 +981,26 @@ func contextWithSamlAuth(ctx context.Context, fedAcctStore security.FederatedAcc
 	), nil
 }
 
+func newSessionWithCsrfToken(store session.Store) (*session.Session, *csrf.Token, error) {
+	//mock session and csrf token
+	s, err := store.New("SESSION")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	token := &csrf.Token{
+		Value:         uuid.New().String(),
+		ParameterName: security.CsrfParamName,
+		HeaderName:    security.CsrfHeaderName,
+	}
+	s.Set(csrf.SessionKeyCsrfToken, token)
+	err = s.Save()
+	if err != nil {
+		return nil, nil, err
+	}
+	return s, token, nil
+}
+
 func mockAssertion(mock *sectest.MockedFederatedUserProperties) *saml.Assertion {
 	return samltest.MockAssertion(func(opt *samltest.AssertionOption) {
 		opt.NameIDFormat = "urn:oasis:names:tc:SAML:1.1:nameid-format:email"
@@ -935,6 +1048,19 @@ func authorizeReqOptions(clientId string) webtest.RequestOptions {
 		values.Set(oauth2.ParameterClientId, clientId)
 		values.Set(oauth2.ParameterRedirectUri, "http://localhost/test/callback")
 		req.URL.RawQuery = values.Encode()
+	}
+}
+
+func approvalReqOptions() webtest.RequestOptions {
+	return func(req *http.Request) {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+}
+
+func cookieOptions(name string, value string) webtest.RequestOptions {
+	return func(req *http.Request) {
+		c := session.NewCookie(name, value, &session.Options{}, req)
+		req.AddCookie(c)
 	}
 }
 
@@ -992,6 +1118,17 @@ func switchTenantBody(accessToken string, tenantId string) io.Reader {
 	return strings.NewReader(values.Encode())
 }
 
+func approveRequestBody(approval string, approvedScopes []string, csrfToken *csrf.Token) io.Reader {
+	values := url.Values{}
+	values.Set(oauth2.ParameterUserApproval, approval)
+	for _, s := range approvedScopes {
+		values.Set(s, "true")
+	}
+	values.Set(csrfToken.ParameterName, csrfToken.Value)
+
+	return strings.NewReader(values.Encode())
+}
+
 func requestNewAccessToken(refreshToken string) io.Reader {
 	values := url.Values{}
 	values.Set(oauth2.ParameterGrantType, oauth2.GrantTypeRefresh)
@@ -1037,6 +1174,14 @@ func assertAuthorizeResponse(t *testing.T, g *gomega.WithT, resp *http.Response,
 	default:
 		g.Expect(q.Get("code")).To(Not(BeEmpty()), "authorize redirect queries should have code")
 	}
+}
+
+func assertAuthorizeRequireApprovalResponse(t *testing.T, g *gomega.WithT, resp *http.Response) {
+	g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+	g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
+	body, err := io.ReadAll(resp.Body)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(body).To(ContainSubstring("Do you authorize"))
 }
 
 // This interface is not exposed, we declared it in test to check the internal implementation
