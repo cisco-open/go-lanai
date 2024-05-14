@@ -22,7 +22,7 @@ func (m *InMemoryApprovalStore) SaveApproval(c context.Context, a *auth.Approval
 	return nil
 }
 
-func (m *InMemoryApprovalStore) LoadUserApprovalsByClientId(c context.Context, opts ...auth.ApprovalLoadOptions) ([]*auth.Approval, error) {
+func (m *InMemoryApprovalStore) LoadApprovals(c context.Context, opts ...auth.ApprovalLoadOptions) ([]*auth.Approval, error) {
 	opt := &auth.Approval{}
 	for _, f := range opts {
 		f(opt)

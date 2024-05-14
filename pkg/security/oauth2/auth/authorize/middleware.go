@@ -352,7 +352,7 @@ func (mw *AuthorizeEndpointMiddleware) hasSavedApproval(ctx *gin.Context, user s
 		}
 		opts = append(opts, auth.WithUsername(username))
 	}
-	approvals, err := mw.approvalStore.LoadUserApprovalsByClientId(ctx, opts...)
+	approvals, err := mw.approvalStore.LoadApprovals(ctx, opts...)
 	if err != nil {
 		return false
 	}

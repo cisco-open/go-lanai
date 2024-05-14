@@ -17,7 +17,7 @@ type ApprovalLoadOptions func(*Approval)
 
 type ApprovalStore interface {
 	SaveApproval(c context.Context, a *Approval) error
-	LoadUserApprovalsByClientId(c context.Context, opts ...ApprovalLoadOptions) ([]*Approval, error)
+	LoadApprovals(c context.Context, opts ...ApprovalLoadOptions) ([]*Approval, error)
 }
 
 func WithUserId(userId interface{}) ApprovalLoadOptions {
