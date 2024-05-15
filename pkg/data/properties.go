@@ -79,7 +79,6 @@ func NewDataProperties() *DataProperties {
 	}
 }
 
-// BindDataProperties create and bind SessionProperties, with a optional prefix
 func BindDataProperties(ctx *bootstrap.ApplicationContext) DataProperties {
 	props := NewDataProperties()
 	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
