@@ -67,7 +67,7 @@ type migrationRunnerIn struct {
 	R          *Registrar
 	V          Versioner
 	DB         *gorm.DB
-	DbCreators []data.DbCreator `group:"db_creator"`
+	DbCreators []data.DbCreator `group:"gorm_config"`
 }
 
 func newMigrationRunner(di migrationRunnerIn) bootstrap.CliRunner {

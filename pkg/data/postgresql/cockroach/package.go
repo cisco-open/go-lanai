@@ -15,9 +15,11 @@ var Module = &bootstrap.Module{
 	Options: []fx.Option{
 		fx.Provide(newAnnotatedGormDbCreator()),
 	},
+	Modules: []*bootstrap.Module{
+		postgresql.Module,
+	},
 }
 
 func Use() {
-	bootstrap.Register(postgresql.Module)
 	bootstrap.Register(Module)
 }

@@ -202,8 +202,7 @@ func (e dataError) WithDetails(details interface{}) DataError {
 
 func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
 	return dataError{
-		// Use WithCause because we want to modify message but preserve the cause
-		CodedError: e.CodedError.WithCause(e.CodedError.Cause(), msg, args...),
+		CodedError: e.CodedError.WithMessage(msg, args...),
 		details:    e.details,
 	}
 }

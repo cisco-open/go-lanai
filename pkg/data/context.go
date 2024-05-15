@@ -29,8 +29,7 @@ const (
 )
 
 const (
-	GormConfigurerGroup  = "gorm_config"
-	DatabaseCreatorGroup = "db_creator"
+	GormConfigurerGroup = "gorm_config"
 )
 
 // ErrorTranslator redefines web.ErrorTranslator and order.Ordered

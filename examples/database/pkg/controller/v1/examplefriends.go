@@ -53,10 +53,10 @@ func (c *ExampleFriendsController) GetItems(ctx context.Context) (int, interface
 
 	resp := make([]api.ResponseItem, len(friends))
 	for i := range friends {
-		resp = append(resp, api.ResponseItem{
+		resp[i] = api.ResponseItem{
 			FirstName: &friends[i].FirstName,
 			LastName:  &friends[i].LastName,
-		})
+		}
 	}
 	return 0, resp, nil
 }

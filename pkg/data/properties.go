@@ -26,13 +26,13 @@ import (
 )
 
 const (
-	PropertiesPrefix         = "data"
-	DatabasePropertiesPrefix = "data.db"
+	PropertiesPrefix = "data"
 )
 
 type DataProperties struct {
 	Logging     LoggingProperties     `json:"logging"`
 	Transaction TransactionProperties `json:"transaction"`
+	DB          DatabaseProperties    `json:"db"`
 }
 
 type TransactionProperties struct {
@@ -44,30 +44,7 @@ type LoggingProperties struct {
 	SlowThreshold utils.Duration   `json:"slow-threshold"`
 }
 
-// NewDataProperties create a DataProperties with default values
-func NewDataProperties() *DataProperties {
-	return &DataProperties{
-		Logging: LoggingProperties{
-			Level:         log.LevelWarn,
-			SlowThreshold: utils.Duration(15 * time.Second),
-		},
-		Transaction: TransactionProperties{
-			MaxRetry: 5,
-		},
-	}
-}
-
-// BindDataProperties create and bind SessionProperties, with a optional prefix
-func BindDataProperties(ctx *bootstrap.ApplicationContext) DataProperties {
-	props := NewDataProperties()
-	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
-		panic(errors.Wrap(err, "failed to bind DataProperties"))
-	}
-	return *props
-}
-
 type DatabaseProperties struct {
-	//Enabled       bool                               `json:"enabled"`
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
 	Database string `json:"database"`
@@ -82,22 +59,31 @@ type TLS struct {
 	Certs  certs.SourceProperties `json:"certs"`
 }
 
-// NewDatabaseProperties create a DatabaseProperties with default values
-func NewDatabaseProperties() *DatabaseProperties {
-	return &DatabaseProperties{
-		Host:     "localhost",
-		Port:     26257,
-		Username: "root",
-		Password: "root",
-		SslMode:  "disable",
+// NewDataProperties create a DataProperties with default values
+func NewDataProperties() *DataProperties {
+	return &DataProperties{
+		Logging: LoggingProperties{
+			Level:         log.LevelWarn,
+			SlowThreshold: utils.Duration(15 * time.Second),
+		},
+		Transaction: TransactionProperties{
+			MaxRetry: 5,
+		},
+		DB: DatabaseProperties{
+			Host:     "localhost",
+			Port:     26257,
+			Username: "root",
+			Password: "",
+			SslMode:  "disable",
+		},
 	}
 }
 
-// BindDatabaseProperties create and bind DatabaseProperties
-func BindDatabaseProperties(ctx *bootstrap.ApplicationContext) DatabaseProperties {
-	props := NewDatabaseProperties()
-	if err := ctx.Config().Bind(props, DatabasePropertiesPrefix); err != nil {
-		panic(errors.Wrap(err, "failed to bind DatabaseProperties"))
+// BindDataProperties create and bind SessionProperties, with a optional prefix
+func BindDataProperties(ctx *bootstrap.ApplicationContext) DataProperties {
+	props := NewDataProperties()
+	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
+		panic(errors.Wrap(err, "failed to bind DataProperties"))
 	}
 	return *props
 }

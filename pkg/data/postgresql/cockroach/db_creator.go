@@ -43,15 +43,15 @@ func (g *GormDbCreator) CreateDatabaseIfNotExist(ctx context.Context, db *gorm.D
 	return result.Error
 }
 
-func NewGormDbCreator(properties data.DatabaseProperties) data.DbCreator {
+func NewGormDbCreator(properties data.DataProperties) data.DbCreator {
 	return &GormDbCreator{
-		dbName: properties.Database,
+		dbName: properties.DB.Database,
 	}
 }
 
 func newAnnotatedGormDbCreator() fx.Annotated {
 	return fx.Annotated{
-		Group:  data.DatabaseCreatorGroup,
+		Group:  data.GormConfigurerGroup,
 		Target: NewGormDbCreator,
 	}
 }

@@ -43,21 +43,21 @@ const (
 type initDI struct {
 	fx.In
 	AppContext   *bootstrap.ApplicationContext
-	Properties   data.DatabaseProperties
+	Properties   data.DataProperties
 	CertsManager certs.Manager `optional:"true"`
 }
 
 func NewGormDialetor(di initDI) gorm.Dialector {
 	//"host=localhost user=root password=root dbname=idm port=26257 sslmode=disable"
 	options := map[string]interface{}{
-		dsKeyHost:    di.Properties.Host,
-		dsKeyPort:    di.Properties.Port,
-		dsKeyDB:      di.Properties.Database,
-		dsKeySslMode: di.Properties.SslMode,
+		dsKeyHost:    di.Properties.DB.Host,
+		dsKeyPort:    di.Properties.DB.Port,
+		dsKeyDB:      di.Properties.DB.Database,
+		dsKeySslMode: di.Properties.DB.SslMode,
 	}
 	// Setup TLS properties
-	if di.Properties.Tls.Enable && di.CertsManager != nil {
-		source, e := di.CertsManager.Source(di.AppContext, certs.WithSourceProperties(&di.Properties.Tls.Certs))
+	if di.Properties.DB.Tls.Enable && di.CertsManager != nil {
+		source, e := di.CertsManager.Source(di.AppContext, certs.WithSourceProperties(&di.Properties.DB.Tls.Certs))
 		if e == nil {
 			certFiles, e := source.Files(di.AppContext)
 			if e == nil {
@@ -73,9 +73,9 @@ func NewGormDialetor(di initDI) gorm.Dialector {
 		}
 	}
 
-	if di.Properties.Username != "" {
-		options[dsKeyUsername] = di.Properties.Username
-		options[dsKeyPassword] = di.Properties.Password
+	if di.Properties.DB.Username != "" {
+		options[dsKeyUsername] = di.Properties.DB.Username
+		options[dsKeyPassword] = di.Properties.DB.Password
 	}
 
 	config := postgres.Config{

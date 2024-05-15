@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/data"
-	"github.com/cisco-open/go-lanai/pkg/data/postgresql"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/cisco-open/go-lanai/test/dbtest"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
-	"go.uber.org/fx"
 	"testing"
 )
 
@@ -28,9 +26,6 @@ func TestDBCreator(t *testing.T) {
 		apptest.Bootstrap(),
 		dbtest.WithDBPlayback("testdb"),
 		apptest.WithDI(di),
-		apptest.WithFxOptions(
-			fx.Provide(pqErrorTranslatorProvider()),
-		),
 		test.SubTestTeardown(TearDownWithDropDatabase(di)),
 		test.GomegaSubTest(SubTestCreateDB(di), "TestCreateDB"),
 	)
@@ -46,8 +41,10 @@ func TearDownWithDropDatabase(di *dbtest.DI) test.TeardownFunc {
 
 func SubTestCreateDB(di *dbtest.DI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		p := data.DatabaseProperties{
-			Database: dbName,
+		p := data.DataProperties{
+			DB: data.DatabaseProperties{
+				Database: dbName,
+			},
 		}
 		dbCreator := NewGormDbCreator(p)
 
@@ -78,18 +75,18 @@ func TestDBCreatorWithoutCreateDBPermission(t *testing.T) {
 		apptest.Bootstrap(),
 		dbtest.WithDBPlayback("testdb", dbtest.DBCredentials("testuser", "")),
 		apptest.WithDI(di),
-		apptest.WithFxOptions(
-			fx.Provide(pqErrorTranslatorProvider()),
-		),
+		apptest.WithFxOptions(),
 		test.SubTestTeardown(TearDownWithDropDatabase(di)),
-		test.GomegaSubTest(SubTestCreateDBIgnoreFailure(di), "TestCreateDB"),
+		test.GomegaSubTest(SubTestCreateDBIgnoreFailure(di), "TestCreateDBIgnoreFailure"),
 	)
 }
 
 func SubTestCreateDBIgnoreFailure(di *dbtest.DI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		p := data.DatabaseProperties{
-			Database: dbName,
+		p := data.DataProperties{
+			DB: data.DatabaseProperties{
+				Database: dbName,
+			},
 		}
 		dbCreator := NewGormDbCreator(p)
 
@@ -101,11 +98,4 @@ func SubTestCreateDBIgnoreFailure(di *dbtest.DI) test.GomegaSubTestFunc {
 
 type DBRecord struct {
 	DbName string `gorm:"column:database_name;type:text;not null;"`
-}
-
-func pqErrorTranslatorProvider() fx.Annotated {
-	return fx.Annotated{
-		Group:  data.GormConfigurerGroup,
-		Target: postgresql.NewPqErrorTranslator,
-	}
 }

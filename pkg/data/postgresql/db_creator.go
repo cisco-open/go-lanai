@@ -28,7 +28,7 @@ func NewGormDbCreator() data.DbCreator {
 
 func newAnnotatedGormDbCreator() fx.Annotated {
 	return fx.Annotated{
-		Group:  data.DatabaseCreatorGroup,
+		Group:  data.GormConfigurerGroup,
 		Target: NewGormDbCreator,
 	}
 }
