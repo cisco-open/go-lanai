@@ -19,7 +19,7 @@ package migration_test
 import (
 	"context"
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
-	"github.com/cisco-open/go-lanai/pkg/data/cockroach"
+	"github.com/cisco-open/go-lanai/pkg/data/postgresql/cockroach"
 	"github.com/cisco-open/go-lanai/pkg/migration"
 	"github.com/cisco-open/go-lanai/pkg/utils/order"
 	"github.com/cisco-open/go-lanai/test"
@@ -32,9 +32,12 @@ import (
 	"testing"
 )
 
-/*************************
-	Setup Test
- *************************/
+/*
+************************
+
+		Setup Test
+	 ************************
+*/
 func ProvideMigrationTableDropper() fx.Annotated {
 	return fx.Annotated{
 		Group: bootstrap.FxCliRunnerGroup,

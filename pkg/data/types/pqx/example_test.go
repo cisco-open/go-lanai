@@ -14,24 +14,25 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package types
+package pqx
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/tenancy"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/dbtest"
-    "github.com/cisco-open/go-lanai/test/sectest"
-    "github.com/google/uuid"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "gorm.io/gorm"
-    "testing"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/data/types"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/tenancy"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/dbtest"
+	"github.com/cisco-open/go-lanai/test/sectest"
+	"github.com/google/uuid"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
+	"testing"
 )
 
 //func TestMain(m *testing.M) {
@@ -252,8 +253,8 @@ type ExampleModel struct {
 	TenantName string
 	Value      string
 	Tenancy
-	Audit
-	SoftDelete
+	types.Audit
+	types.SoftDelete
 }
 
 func (ExampleModel) TableName() string {

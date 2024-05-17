@@ -61,6 +61,27 @@ type OwnerTestDI struct {
 	dbtest.DI
 }
 
+func TestOPAFilterWithOwnershipPostgresql(t *testing.T) {
+	di := &OwnerTestDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithTimeout(10*time.Minute),
+		dbtest.WithDBPlayback("testdb", dbtest.DBPort(5432), dbtest.DBCredentials("postgres", "")),
+		opatest.WithBundles(opatest.DefaultBundleFS, testdata.ModelBBundleFS),
+		apptest.WithConfigFS(testdata.ConfigFS),
+		apptest.WithFxOptions(),
+		apptest.WithDI(di),
+		test.SubTestSetup(SetupTestPrepareModelB(&di.DI)),
+		test.GomegaSubTest(SubTestModelBCreate(di), "TestModelBCreate"),
+		test.GomegaSubTest(SubTestModelBCreateByMap(di), "TestModelBCreateByMap"),
+		test.GomegaSubTest(SubTestModelBList(di), "TestModelBList"),
+		test.GomegaSubTest(SubTestModelBUpdate(di), "TestModelBUpdate"),
+		test.GomegaSubTest(SubTestModelBDelete(di), "TestModelBDelete"),
+		test.GomegaSubTest(SubTestModelBUpdateOwner(di), "TestModelBUpdateOwner"),
+		test.GomegaSubTest(SubTestModelBUpdateSharing(di), "TestModelBUpdateSharing"),
+	)
+}
+
 func TestOPAFilterWithOwnership(t *testing.T) {
 	di := &OwnerTestDI{}
 	test.RunTest(context.Background(), t,
@@ -331,9 +352,9 @@ type ModelB struct {
 	ID        uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 	Value     string
 	OwnerName string
-	OwnerID   uuid.UUID            `gorm:"type:KeyID;not null" opa:"field:owner_id"`
-	Sharing   constraints.Sharing   `opa:"field:sharing"`
-	OPAFilter opadata.Filter `gorm:"-" opa:"type:model"`
+	OwnerID   uuid.UUID           `gorm:"type:KeyID;not null" opa:"field:owner_id"`
+	Sharing   constraints.Sharing `opa:"field:sharing"`
+	OPAFilter opadata.Filter      `gorm:"-" opa:"type:model"`
 	types.Audit
 	// For testing utils only
 	Shared []*Shared `gorm:"foreignKey:ResID;references:ID" opa:"field:shared"`

@@ -17,17 +17,16 @@
 package dbtest
 
 import (
-    "context"
-    "flag"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/data/cockroach"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cockroachdb/copyist"
-    "go.uber.org/fx"
-    "io"
-    "sync"
-    "testing"
+	"context"
+	"flag"
+	"fmt"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cockroachdb/copyist"
+	"go.uber.org/fx"
+	"io"
+	"sync"
+	"testing"
 )
 
 const (
@@ -69,15 +68,14 @@ func withDB(mode mode, dbName string, opts []DBOptions) []test.Options {
 		test.Setup(openCopyistConn(&opt)),
 		test.Teardown(closeCopyistConn()),
 		apptest.WithFxOptions(
-			fx.Provide(cockroach.BindCockroachProperties),
 			fx.Provide(testGormDialectorProvider(&opt)),
 		),
 		apptest.WithProperties(
-			fmt.Sprintf("data.cockroach.host: %s", opt.Host),
-			fmt.Sprintf("data.cockroach.port: %d", opt.Port),
-			fmt.Sprintf("data.cockroach.database: %s", opt.DBName),
-			fmt.Sprintf("data.cockroach.username: %s", opt.Username),
-			fmt.Sprintf("data.cockroach.password: %s", opt.Password),
+			fmt.Sprintf("data.db.host: %s", opt.Host),
+			fmt.Sprintf("data.db.port: %d", opt.Port),
+			fmt.Sprintf("data.db.database: %s", opt.DBName),
+			fmt.Sprintf("data.db.username: %s", opt.Username),
+			fmt.Sprintf("data.db.password: %s", opt.Password),
 		),
 	}
 }

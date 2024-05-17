@@ -17,9 +17,9 @@
 package data
 
 import (
-    "errors"
-    . "github.com/cisco-open/go-lanai/pkg/utils/error"
-    "gorm.io/gorm"
+	"errors"
+	. "github.com/cisco-open/go-lanai/pkg/utils/error"
+	"gorm.io/gorm"
 )
 
 const (
@@ -75,6 +75,7 @@ const (
 	_                   = iota
 	ErrorCodeInvalidSQL = ErrorSubTypeCodeQuery + iota
 	ErrorCodeInvalidPagination
+	ErrorCodeInsufficientPrivilege
 )
 
 // ErrorSubTypeCodeApi
@@ -159,10 +160,11 @@ var (
 
 // Concrete error, can be used in errors.Is for exact match
 var (
-	ErrorSortByUnknownColumn  = NewDataError(ErrorCodeOrmMapping, "SortBy column unknown")
-	ErrorRecordNotFound       = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
-	ErrorIncorrectRecordCount = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
-	ErrorDuplicateKey         = NewDataError(ErrorCodeDuplicateKey, "duplicate key")
+	ErrorSortByUnknownColumn   = NewDataError(ErrorCodeOrmMapping, "SortBy column unknown")
+	ErrorRecordNotFound        = NewDataError(ErrorCodeRecordNotFound, gorm.ErrRecordNotFound)
+	ErrorIncorrectRecordCount  = NewDataError(ErrorCodeIncorrectRecordCount, "incorrect record count")
+	ErrorDuplicateKey          = NewDataError(ErrorCodeDuplicateKey, "duplicate key")
+	ErrorInsufficientPrivilege = NewDataError(ErrorCodeInsufficientPrivilege, "insufficient privilege")
 )
 
 func init() {
@@ -176,9 +178,11 @@ type DataError interface {
 	Details() interface{}
 	WithDetails(interface{}) DataError
 	WithMessage(msg string, args ...interface{}) DataError
+	WithCause(cause error, msg string, args ...interface{}) DataError
 }
 
 // dataError implements DataError and errorutils.Unwrapper
+//
 //goland:noinspection GoNameStartsWithPackageName
 type dataError struct {
 	*CodedError
@@ -203,6 +207,13 @@ func (e dataError) WithMessage(msg string, args ...interface{}) DataError {
 	}
 }
 
+func (e dataError) WithCause(cause error, msg string, args ...interface{}) DataError {
+	return dataError{
+		CodedError: e.CodedError.WithCause(cause, msg, args...),
+		details:    e.details,
+	}
+}
+
 func (e dataError) Unwrap() error {
 	cause := e.Cause()
 	//nolint:errorlint
@@ -215,6 +226,7 @@ func (e dataError) Unwrap() error {
 }
 
 // webDataError also implements web.StatusCoder
+//
 //goland:noinspection GoNameStartsWithPackageName
 type webDataError struct {
 	dataError

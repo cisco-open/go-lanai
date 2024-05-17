@@ -17,30 +17,41 @@
 package cockroach
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/data"
-    "gorm.io/gorm"
+	"context"
+	"errors"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/data"
+	"github.com/cisco-open/go-lanai/pkg/data/postgresql"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
 )
 
 type GormDbCreator struct {
-	dbUser string
 	dbName string
 }
 
-func NewGormDbCreator(properties CockroachProperties) data.DbCreator {
-	return &GormDbCreator{
-		dbUser: properties.Username,
-		dbName: properties.Database,
-	}
+func (g *GormDbCreator) Order() int {
+	return postgresql.DBCreatorPostgresOrder - 1
 }
 
 func (g *GormDbCreator) CreateDatabaseIfNotExist(ctx context.Context, db *gorm.DB) error {
-	if g.dbUser != "root" {
-		logger.WithContext(ctx).Info("db user is not a privileged account, skipped db creation.")
+	result := db.WithContext(ctx).Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", db.Statement.Quote(g.dbName)))
+	if result.Error != nil && errors.Is(result.Error, data.ErrorInsufficientPrivilege) {
+		logger.Warnf("Skipped creating database because %v", result.Error)
 		return nil
 	}
-	result := db.WithContext(ctx).Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", g.dbName))
 	return result.Error
+}
 
+func NewGormDbCreator(properties data.DataProperties) data.DbCreator {
+	return &GormDbCreator{
+		dbName: properties.DB.Database,
+	}
+}
+
+func newAnnotatedGormDbCreator() fx.Annotated {
+	return fx.Annotated{
+		Group:  data.GormConfigurerGroup,
+		Target: NewGormDbCreator,
+	}
 }

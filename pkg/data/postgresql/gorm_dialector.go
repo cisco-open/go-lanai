@@ -14,35 +14,27 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package cockroach
+package postgresql
 
 import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/migrator"
 )
 
 /*************************
-	Custom Migrator
+	Custom GormDialector
  *************************/
 
-// GormMigrator
-// Inverted index support:
-// for now, use PostgreSQL-compatible syntax: https://www.cockroachlabs.com/docs/v20.2/inverted-indexes#creation
-type GormMigrator struct {
-	postgres.Migrator
+type GormDialector struct {
+	postgres.Dialector
 }
 
-func NewGormMigrator(db *gorm.DB, dialector gorm.Dialector) *GormMigrator {
-	return &GormMigrator{
-		Migrator: postgres.Migrator{
-			Migrator: migrator.Migrator{
-				Config: migrator.Config{
-					DB:                          db,
-					Dialector:                   dialector,
-					CreateIndexAfterCreateTable: true,
-				},
-			},
-		},
+func NewGormDialectorWithConfig(config postgres.Config) *GormDialector {
+	return &GormDialector{
+		Dialector: *postgres.New(config).(*postgres.Dialector),
 	}
+}
+
+func (d GormDialector) Migrator(db *gorm.DB) gorm.Migrator {
+	return NewGormMigrator(db, d)
 }

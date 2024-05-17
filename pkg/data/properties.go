@@ -18,6 +18,7 @@ package data
 
 import (
 	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/certs"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"github.com/cisco-open/go-lanai/pkg/utils"
 	"github.com/pkg/errors"
@@ -25,12 +26,13 @@ import (
 )
 
 const (
-	ManagementPropertiesPrefix = "data"
+	PropertiesPrefix = "data"
 )
 
 type DataProperties struct {
 	Logging     LoggingProperties     `json:"logging"`
 	Transaction TransactionProperties `json:"transaction"`
+	DB          DatabaseProperties    `json:"db"`
 }
 
 type TransactionProperties struct {
@@ -40,6 +42,21 @@ type TransactionProperties struct {
 type LoggingProperties struct {
 	Level         log.LoggingLevel `json:"level"`
 	SlowThreshold utils.Duration   `json:"slow-threshold"`
+}
+
+type DatabaseProperties struct {
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Database string `json:"database"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	SslMode  string `json:"sslmode"`
+	Tls      TLS    `json:"tls"`
+}
+
+type TLS struct {
+	Enable bool                   `json:"enabled"`
+	Certs  certs.SourceProperties `json:"certs"`
 }
 
 // NewDataProperties create a DataProperties with default values
@@ -52,13 +69,19 @@ func NewDataProperties() *DataProperties {
 		Transaction: TransactionProperties{
 			MaxRetry: 5,
 		},
+		DB: DatabaseProperties{
+			Host:     "localhost",
+			Port:     26257,
+			Username: "root",
+			Password: "",
+			SslMode:  "disable",
+		},
 	}
 }
 
-// BindDataProperties create and bind SessionProperties, with a optional prefix
 func BindDataProperties(ctx *bootstrap.ApplicationContext) DataProperties {
 	props := NewDataProperties()
-	if err := ctx.Config().Bind(props, ManagementPropertiesPrefix); err != nil {
+	if err := ctx.Config().Bind(props, PropertiesPrefix); err != nil {
 		panic(errors.Wrap(err, "failed to bind DataProperties"))
 	}
 	return *props

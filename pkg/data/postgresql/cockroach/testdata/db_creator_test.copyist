@@ -1,0 +1,18 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"CREATE DATABASE IF NOT EXISTS \"new_test_db\""	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnQuery	2:"show databases;"	1:nil
+5=RowsColumns	9:["database_name","owner","primary_region","secondary_region","regions","survival_goal"]
+6=RowsNext	11:[2:"defaultdb",10:cm9vdA,1:nil,1:nil,10:e30,1:nil]	1:nil
+7=RowsNext	11:[2:"new_test_db",10:cm9vdA,1:nil,1:nil,10:e30,1:nil]	1:nil
+8=RowsNext	11:[2:"postgres",10:cm9vdA,1:nil,1:nil,10:e30,1:nil]	1:nil
+9=RowsNext	11:[2:"skeleton",10:cm9vdA,1:nil,1:nil,10:e30,1:nil]	1:nil
+10=RowsNext	11:[2:"skeleton-test",10:cm9vdA,1:nil,1:nil,10:e30,1:nil]	1:nil
+11=RowsNext	11:[2:"system",10:bm9kZQ,1:nil,1:nil,10:e30,1:nil]	1:nil
+12=RowsNext	11:[2:"testdb",10:cm9vdA,1:nil,1:nil,10:e30,1:nil]	1:nil
+13=RowsNext	11:[]	7:"EOF"
+14=ConnExec	2:"DROP DATABASE IF EXISTS \"new_test_db\""	1:nil
+15=ConnExec	2:"CREATE DATABASE IF NOT EXISTS \"new_test_db\""	100:"SERROR\x00C42501\x00Mpermission denied to create database\x00Fcreate_database.go\x00L132\x00RCreateDatabase\x00\x00"
+
+"TestDBCreator"=1,2,3,4,5,6,5,7,8,9,10,11,12,13,14,3
+"TestDBCreatorWithoutCreateDBPermission"=1,15,14,3

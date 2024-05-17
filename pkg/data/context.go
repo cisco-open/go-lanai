@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	_ = iota
+	_                        = iota
 	ErrorTranslatorOrderGorm // gorm error -> data error
 	ErrorTranslatorOrderData // data error -> data error with status code
 )

@@ -14,15 +14,22 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package cockroach
+package postgresql
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/cisco-open/go-lanai/pkg/data"
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/lib/pq"
+)
+
+var (
+	dataIntegrityRegexp = regexp.MustCompile(`\((?P<col>[^()]+)\) *= *\((?P<value>[^()]*)\)`)
 )
 
 // PostgresErrorTranslator implements data.ErrorTranslator
@@ -54,7 +61,55 @@ func (t PostgresErrorTranslator) Translate(_ context.Context, err error) error {
 	default:
 		return err
 	}
-	return data.NewDataError(ec, err)
+	de := data.NewDataError(ec, err)
+
+	switch {
+	case errors.Is(de, data.ErrorDuplicateKey):
+		return t.translateDuplicateKeyErrorMessage(de)
+	default:
+		return de
+	}
+}
+
+func (t PostgresErrorTranslator) translateDuplicateKeyErrorMessage(e data.DataError) data.DataError {
+	cause := e.Cause()
+	var details string
+	//nolint:errorlint // we don't consider wrapped error here
+	switch ce := cause.(type) {
+	case *pgconn.PgError:
+		details = ce.Detail
+	case *pq.Error:
+		details = ce.Detail
+	default:
+		return e
+	}
+
+	msg := "duplicate keys"
+	colMsg := ""
+	valMsg := ""
+	matches := dataIntegrityRegexp.FindStringSubmatch(details)
+	for i, name := range dataIntegrityRegexp.SubexpNames() {
+		if i >= len(matches) {
+			break
+		}
+		if name == "value" {
+			if matches[i] != "" {
+				valMsg = fmt.Sprintf("duplicate keys: %s", matches[i])
+			}
+		}
+		if name == "col" {
+			if matches[i] != "" {
+				colMsg = fmt.Sprintf("duplicate key in column: %s", matches[i])
+			}
+		}
+	}
+	if colMsg != "" {
+		msg = fmt.Sprintf("%s; %s", msg, colMsg)
+	}
+	if valMsg != "" {
+		msg = fmt.Sprintf("%s; %s", msg, valMsg)
+	}
+	return e.WithCause(e.Cause(), msg)
 }
 
 // translateErrorCode translate postgres error code to data.DataError code
@@ -70,7 +125,12 @@ func (t PostgresErrorTranslator) translateErrorCode(code string) int64 {
 	switch errCls {
 	// data.ErrorSubTypeCodeQuery
 	case "22", "26", "42":
-		return data.ErrorSubTypeCodeQuery
+		switch code {
+		case "42501":
+			return data.ErrorCodeInsufficientPrivilege
+		default:
+			return data.ErrorSubTypeCodeQuery
+		}
 	// data.ErrorSubTypeCodeDataRetrieval
 	case "24":
 		return data.ErrorCodeIncorrectRecordCount

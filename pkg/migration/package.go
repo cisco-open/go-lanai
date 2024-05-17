@@ -17,13 +17,14 @@
 package migration
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/data"
-    "github.com/cisco-open/go-lanai/pkg/log"
-    "go.uber.org/fx"
-    "gorm.io/gorm"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/data"
+	"github.com/cisco-open/go-lanai/pkg/log"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
 )
 
 const (
@@ -61,11 +62,23 @@ func provideMigrationRunner() fx.Annotated {
 	}
 }
 
-func newMigrationRunner(r *Registrar, v Versioner, db *gorm.DB, dbCreator data.DbCreator) bootstrap.CliRunner {
+type migrationRunnerIn struct {
+	fx.In
+	R          *Registrar
+	V          Versioner
+	DB         *gorm.DB
+	DbCreators []data.DbCreator `group:"gorm_config"`
+}
+
+func newMigrationRunner(di migrationRunnerIn) bootstrap.CliRunner {
 	return func(ctx context.Context) error {
-		if err := dbCreator.CreateDatabaseIfNotExist(ctx, db); err != nil {
-			return err
+		if len(di.DbCreators) > 0 {
+			order.SortStable(di.DbCreators, order.OrderedFirstCompare)
+			dbCreator := di.DbCreators[0]
+			if err := dbCreator.CreateDatabaseIfNotExist(ctx, di.DB); err != nil {
+				return err
+			}
 		}
-		return Migrate(ctx, r, v)
+		return Migrate(ctx, di.R, di.V)
 	}
 }

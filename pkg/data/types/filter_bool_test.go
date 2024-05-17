@@ -17,18 +17,18 @@
 package types
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/dbtest"
-    "github.com/google/uuid"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "gorm.io/gorm"
-    "testing"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/dbtest"
+	"github.com/google/uuid"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
+	"testing"
 )
 
 var (
@@ -84,9 +84,6 @@ func TestBoolFilter(t *testing.T) {
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
 		dbtest.WithDBPlayback("testdb"),
-		apptest.WithFxOptions(
-			fx.Provide(provideMockedTenancyAccessor),
-		),
 		apptest.WithProperties(
 			"data.logging.level: debug",
 			"log.levels.data: debug",
@@ -203,7 +200,6 @@ func SubTestOptInFilterWithoutJoin(di *testBoolDI) test.GomegaSubTestFunc {
 		tx = di.DB.Scopes(BoolFiltering(true)).Find(&models)
 		g.Expect(tx.Error).To(Succeed(), "SELECT * with opt-in filter without join shouldn't return error")
 		g.Expect(models).To(HaveLen(1), "SELECT * with opt-in filter without join shouldn't filter")
-
 
 	}
 }
