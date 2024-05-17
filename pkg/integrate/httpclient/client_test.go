@@ -235,18 +235,33 @@ func SubTestWithUnexpectedStatusCodeInErrorResponse(di *TestDI) test.GomegaSubTe
 		client, e := di.HttpClient.WithService(SDServiceNameFullInfo)
 		g.Expect(e).To(Succeed(), "client with service name should be available")
 
-		sc := 300 + utils.RandomIntN(10)
-		reqBody := makeEchoRequestBody()
-		req := httpclient.NewRequest(TestErrorPath, http.MethodPut,
-			httpclient.WithParam("sc", fmt.Sprintf("%d", sc)),
-			httpclient.WithBody(reqBody),
-		)
+		expectedErrorForSC := map[int]error{
+			300: httpclient.ErrorSubTypeInternalError,
+			301: httpclient.ErrorSubTypeInternalError,
+			// in our test, the mock server doesn't give a valid redirect location,
+			// so we expect error response
+			302: httpclient.ErrorSubTypeInternalError,
+			303: httpclient.ErrorSubTypeInternalError,
+			307: httpclient.ErrorSubTypeInternalError,
+			308: httpclient.ErrorSubTypeInternalError,
+			// when 304 is returned, the response will not contain content type header,
+			// therefore it will result in a media type error
+			304: httpclient.ErrorSubTypeMedia,
+		}
 
-		_, err := client.Execute(ctx, req, httpclient.JsonBody(&EchoResponse{}))
-		// check the error type is the expected type
-		g.Expect(err).To(MatchError(httpclient.ErrorSubTypeInternalError))
-		// check the error message is formatted
-		g.Expect(err).To(MatchError(Not(ContainSubstring("%"))))
+		for sc, expectedErr := range expectedErrorForSC {
+			reqBody := makeEchoRequestBody()
+			req := httpclient.NewRequest(TestErrorPath, http.MethodPut,
+				httpclient.WithParam("sc", fmt.Sprintf("%d", sc)),
+				httpclient.WithBody(reqBody),
+			)
+
+			_, err := client.Execute(ctx, req, httpclient.JsonBody(&EchoResponse{}))
+			// check the error type is the expected type
+			g.Expect(err).To(MatchError(expectedErr))
+			// check the error message is formatted
+			g.Expect(err).To(MatchError(Not(ContainSubstring("%"))))
+		}
 	}
 }
 
