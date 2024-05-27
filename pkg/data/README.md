@@ -1,8 +1,8 @@
 # Data
 
 The ```data``` package is designed to provide a consistent programming model for data access regardless of the underlying data store.
-It contains sub packages that are specific to given database. CockroachDB is the database that is supported by default. Application can 
-enable other databases as long as they are supported by [Gorm](https://gorm.io/docs/connecting_to_the_database.html).
+It contains sub packages that are specific to given database. Postgresql and CockroachDB are the databases that are supported by default. 
+Application can enable other databases as long as they are supported by [Gorm](https://gorm.io/docs/connecting_to_the_database.html).
 
 ## Example Usage
 
@@ -21,7 +21,7 @@ data:
   logging:
     level: warn
     slow-threshold: 5s
-  cockroach:
+  db:
     host: localhost
     port: 26257
     sslmode: disable
@@ -77,7 +77,7 @@ func Use() {
 
 ## CRUD Repository
 The `CrudRepository` interface is an abstraction that defines the most commonly used data access operations such as Create,
-Read, Update, Delete. `go-lanai` provides implementation for these implementations, so they don't have to be repeated in 
+Read, Update, Delete. `go-lanai` provides implementation for these methods, so they don't have to be repeated in 
 application code. This is all that is required to instantiate a `CrudRepository` for a model.
 
 ```go
@@ -132,7 +132,7 @@ func (t WebDataErrorTranslator) Translate(ctx context.Context, err error) error 
 	case errors.Is(err, ErrorRecordNotFound), errors.Is(err, ErrorIncorrectRecordCount):
 		return t.errorWithStatusCode(ctx, err, http.StatusNotFound)
 	case errors.Is(err, ErrorSubTypeDataIntegrity):
-		return t.dataIntegrityErrorWithStatusCode(ctx, err, http.StatusConflict)
+        return t.errorWithStatusCode(ctx, err, http.StatusConflict)
 	case errors.Is(err, ErrorSubTypeQuery):
 		return t.errorWithStatusCode(ctx, err, http.StatusBadRequest)
 	case errors.Is(err, ErrorSubTypeTimeout):
@@ -169,34 +169,34 @@ e = tx.Transaction(ctx, func(ctx context.Context) (err error) {
 Alternatively, application code can also handle transaction manually using the following set of methods.
 
 ```go
-// Begin start a transaction. the returned context.Context should be used for any transactional operations
-// if returns an error, the returned context.Context should be discarded.
+// Begin start a transaction. the returned context.Context should be used for any transactional operations.
+// If an error is returned, the returned context.Context should be discarded.
 func Begin(ctx context.Context, opts ...*sql.TxOptions) (context.Context, error) 
 ```
 
 ```go
 // Rollback rollbacks a transaction. The returned context.Context is the original provided context when Begin is called.
-// if returns an error, the returned context.Context should be discarded
+// If an error is returned, the returned context.Context should be discarded.
 func Rollback(ctx context.Context) (context.Context, error)
 ```
 
 ```go
 // Commit commits a transaction. the returned context.Context is the original provided context when Begin is called.
-// if returns an error, the returned context.Context should be discarded
+// If an error is returned, the returned context.Context should be discarded.
 func Commit(ctx context.Context) (context.Context, error)
 ```
 
 ```go
 // SavePoint works with RollbackTo and have to be within a transaction.
-// the returned context.Context should be used for any transactional operations between corresponding SavePoint and RollbackTo
-// if returns an error, the returned context.Context should be discarded
+// The returned context.Context should be used for any transactional operations between corresponding SavePoint and RollbackTo.
+// If an error is returned, the returned context.Context should be discarded.
 func SavePoint(ctx context.Context, name string) (context.Context, error)
 ```
 
 ```go
 // RollbackTo works with SavePoint and have to be within a transaction.
-// the returned context.Context should be used for any transactional operations between corresponding SavePoint and RollbackTo
-// if returns an error, the returned context.Context should be discarded
+// The returned context.Context should be used for any transactional operations between corresponding SavePoint and RollbackTo.
+// If an error is returned, the returned context.Context should be discarded.
 func RollbackTo(ctx context.Context, name string) (context.Context, error)
 ```
 
