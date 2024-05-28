@@ -61,7 +61,7 @@ require (
 	go.uber.org/fx v1.21.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.21.0
-	golang.org/x/net v0.22.0
+	golang.org/x/net v0.23.0
 	golang.org/x/term v0.18.0
 	golang.org/x/text v0.14.0
 	gopkg.in/dnaeon/go-vcr.v3 v3.2.0
