@@ -1,0 +1,19 @@
+1=DriverOpen	1:nil
+2=ConnExec	2:"CREATE TABLE IF NOT EXISTS friends\n(\n    id                  UUID NOT NULL DEFAULT gen_random_uuid(),\n    first_name          TEXT NOT NULL,\n    last_name           TEXT NOT NULL,\n    created_at          timestamp with time zone,\n    updated_at          timestamp with time zone,\n    created_by          TEXT,\n    updated_by          TEXT,\n    CONSTRAINT          \"primary\" PRIMARY KEY (id)\n)"	1:nil
+3=ResultRowsAffected	4:0	1:nil
+4=ConnExec	2:"CREATE UNIQUE INDEX IF NOT EXISTS idx_friends_name ON friends (first_name, last_name)"	1:nil
+5=ConnExec	2:"TRUNCATE TABLE \"friends\" CASCADE;"	1:nil
+6=ConnBegin	1:nil
+7=ConnQuery	2:"INSERT INTO \"friends\" (\"first_name\",\"last_name\",\"created_at\",\"updated_at\",\"created_by\",\"updated_by\") VALUES ($1,$2,$3,$4,$5,$6) RETURNING \"id\""	1:nil
+8=RowsColumns	9:["id"]
+9=RowsNext	11:[10:ZTIzOTc5MmUtYTQ4MS00YmMwLWE1ODgtNWNkZGI4ZjExNDM5]	1:nil
+10=TxCommit	1:nil
+11=ConnQuery	2:"SELECT * FROM \"friends\" WHERE \"friends\".\"first_name\" = $1 AND \"friends\".\"last_name\" = $2"	1:nil
+12=RowsColumns	9:["id","first_name","last_name","created_at","updated_at","created_by","updated_by"]
+13=RowsNext	11:[10:ZTIzOTc5MmUtYTQ4MS00YmMwLWE1ODgtNWNkZGI4ZjExNDM5,2:"John",2:"Doe",8:2024-05-31T14:08:52.964058Z,8:2024-05-31T14:08:52.964058Z,2:"testuser",2:"testuser"]	1:nil
+14=RowsNext	11:[]	7:"EOF"
+15=RowsNext	11:[10:MTBlMTc4M2MtMWY2OC00M2JlLTlmNzgtYTgwOTc5ODlmMGNm]	1:nil
+16=RowsNext	11:[10:MTBlMTc4M2MtMWY2OC00M2JlLTlmNzgtYTgwOTc5ODlmMGNm,2:"John",2:"Doe",8:2024-05-31T14:09:58.638292Z,8:2024-05-31T14:09:58.638292Z,2:"testuser",2:"testuser"]	1:nil
+
+"TestControllerDirectly"=1,2,3,4,3,5,3,6,7,8,8,9,10,11,12,12,13,14
+"TestControllerWithHttpRequest"=1,2,3,4,3,5,3,6,7,8,8,15,10,11,12,12,16,14

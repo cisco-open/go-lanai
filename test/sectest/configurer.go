@@ -71,8 +71,7 @@ var defaultMWMockOption = MWMockOption{
 // This test option works with webtest.WithMockedServer without any additional settings:
 // - By default extract security.Authentication from request's context.
 // Note: 	Since gin-gonic v1.8.0+, this test option is not required anymore for webtest.WithMockedServer. Values in
-//
-//	request's context is automatically linked with gin.Context.
+// request's context is automatically linked with gin.Context.
 //
 // When using with webtest.WithRealServer, a custom MWMocker is required. The MWMocker can be provided by:
 //   - Using MWCustomMocker option
