@@ -206,7 +206,8 @@ See the [examples](sectest/examples) directory for examples of using this option
 ## ittest
 Some application needs to interact with other services via HTTP. The ```httpclient``` package provides a way to do this.
 In order to test the application code that uses this package, the ```ittest``` package provides a way to record and playback
-the HTTP requests and responses.
+the HTTP requests and responses. In addition to this, the ```ittest``` package works for any situation where a `http.Client`
+is used to make HTTP requests. 
 
 ```ittest.WithHttpPlayback```:
 
@@ -214,7 +215,7 @@ This option enables the HTTP playback feature by switching the HTTP client to a 
 ```http.RoundTripper``` that is capable of recording and playing back HTTP requests and responses. 
 
 By default, this option is in playback mode. To enable record mode, use one of the following options:
-1. Set the `-record` flag when running the test from command line using ```go test``` or ```make test``` similar to the 
+1. Set the `--record-http` flag when running the test from command line using ```go test``` or ```make test``` similar to the 
    ```dbtest``` package.
 2. Use the ```ittest.HttpRecordingMode()``` option in ```ittest.WithHttpPlayback``` to enable record mode for that test.
 3. Use the ```ittest.PackageHttpRecordingMode``` option in ```TestMain``` to enable record mode for all tests in the package. 
@@ -236,8 +237,14 @@ interaction with the authorization server instead of mocking the scopes.
 
 See the [examples](ittest/examples) directory for examples of using the ```ittest``` package.
 
-In addition, ```consultest``` and ```opensearchtest``` packages uses the same mechanism to record and playback the HTTP requests
-and responses made by consul client and opensearch client respectively.
+### Usage of ittest in Other Packages and Scenarios
+In general ```ittest``` can be used to record and playback any situation that uses `http.Client`. When ```ittest.WithHttpPlayback```
+is present, a ```*recorder.Recorder``` is available for injection. This recorder instance can be used to create a `http.Client` that 
+is capable of recording and playback. It can also be used to wrap an existing `http.Client`'s transport so that it's capable of recording
+and playback.
+
+```consultest``` and ```opensearchtest``` packages uses this principal to record and playback the HTTP requests
+and responses made by consul client and open search client respectively.
 
 ## Misc
 In addition to these packages, there are other packages that provides test utilities that facilitates testing in go-lanai.
