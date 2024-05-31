@@ -11,6 +11,6 @@ type Friend struct {
 	LastName  string    `gorm:"column:last_name;uniqueIndex:idx_friends_name;type:text;not null;"`
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	UpdatedAt time.Time `json:"updatedAt,omitempty"`
-	CreatedBy string    `gorm:"type:KeyID;" json:"createdBy,omitempty"`
-	UpdatedBy string    `gorm:"type:KeyID;" json:"updatedBy,omitempty"`
+	CreatedBy string    `json:"createdBy,omitempty"`
+	UpdatedBy string    `json:"updatedBy,omitempty"`
 }
