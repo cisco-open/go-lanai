@@ -8,9 +8,9 @@ import (
 	apiv1 "github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/api/v1"
 	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/model"
 	"github.com/cisco-open/go-lanai/examples/skeleton-service/pkg/repository"
+	"github.com/cisco-open/go-lanai/pkg/security"
 	"github.com/cisco-open/go-lanai/pkg/web"
 	"github.com/cisco-open/go-lanai/pkg/web/rest"
-	"go.uber.org/fx"
 	"net/http"
 )
 
@@ -18,14 +18,9 @@ type ExampleFriendsController struct {
 	friendRepo *repository.FriendsRepository
 }
 
-type exampleFriendsControllerDI struct {
-	fx.In
-	FriendsRepo *repository.FriendsRepository
-}
-
-func NewExampleFriendsController(di exampleFriendsControllerDI) web.Controller {
+func NewExampleFriendsController(r *repository.FriendsRepository) *ExampleFriendsController {
 	return &ExampleFriendsController{
-		friendRepo: di.FriendsRepo,
+		friendRepo: r,
 	}
 }
 
@@ -66,6 +61,12 @@ func (c *ExampleFriendsController) PostItems(ctx context.Context, req apiv1.Post
 	f := &model.Friend{
 		FirstName: *req.FirstName,
 		LastName:  *req.LastName,
+	}
+
+	authn := security.Get(ctx)
+	if user, ok := authn.Details().(security.UserDetails); ok {
+		f.CreatedBy = user.Username()
+		f.UpdatedBy = user.Username()
 	}
 
 	err := c.friendRepo.Save(ctx, f)

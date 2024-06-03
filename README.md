@@ -33,7 +33,7 @@ API, while using SAML sign on as the authentication method.
 - [cmd/lanai-cli/initcmd/README.md](cmd/lanai-cli/initcmd/README.md) - documentation for the make file templates and cli tools provided by go-lanai.
 - [cmd/lanai-cli/codegen/README.md](cmd/lanai-cli/codegen/README.md) - documentation for cli tool that generates code based on an OpenAPI contract.
 
-## What's Next
+### Documentation for go-lanai Modules
 
 Explore the go-lanai modules:
 
@@ -61,6 +61,7 @@ Explore the go-lanai modules:
 - tracing
 - vault
 - [web](pkg/web/README.md)
+- [test](test/README.md)
 
 # Contributing to `go-lanai`
 

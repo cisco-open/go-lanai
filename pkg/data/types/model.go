@@ -23,10 +23,10 @@ import (
 )
 
 type Audit struct {
-	CreatedAt time.Time      `json:"createdAt,omitempty"`
-	UpdatedAt time.Time      `json:"updatedAt,omitempty"`
-	CreatedBy uuid.UUID      `type:"KeyID;" json:"createdBy,omitempty"`
-	UpdatedBy uuid.UUID      `type:"KeyID;" json:"updatedBy,omitempty"`
+	CreatedAt time.Time `json:"createdAt,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt,omitempty"`
+	CreatedBy uuid.UUID `json:"createdBy,omitempty"`
+	UpdatedBy uuid.UUID `json:"updatedBy,omitempty"`
 }
 
 type SoftDelete struct {

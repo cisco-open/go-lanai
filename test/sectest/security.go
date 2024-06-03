@@ -62,12 +62,14 @@ func WithMockedSecurity(ctx context.Context, opts ...SecurityMockOptions) contex
 	Options
  **************************/
 
+// Authentication provides a SecurityContextOptions that sets the authentication to the given value
 func Authentication(auth security.Authentication) SecurityContextOptions {
 	return func(opt *SecurityContextOption) {
 		opt.Authentication = auth
 	}
 }
 
+// MockedAuthentication provides a SecurityContextOptions that sets the authentication to a mocked oauth2.Authentication
 func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 	return func(opt *SecurityContextOption) {
 		details := NewMockedSecurityDetails(opts...)
@@ -88,7 +90,7 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 				TExternalId: details.TenantExternalId(),
 				OrigU:       details.OrigUsername,
 			},
-			Token: details.AccessToken,
+			Token:   details.AccessToken,
 			ExpTime: details.Exp,
 			IssTime: details.Iss,
 		}
@@ -115,5 +117,3 @@ func MockedAuthentication(opts ...SecurityMockOptions) SecurityContextOptions {
 		opt.Authentication = auth
 	}
 }
-
-

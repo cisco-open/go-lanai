@@ -17,21 +17,21 @@
 package ittest
 
 import (
-    "context"
-    "errors"
-    "flag"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
-    "github.com/cisco-open/go-lanai/pkg/utils/order"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/suitetest"
-    "go.uber.org/fx"
-    "gopkg.in/dnaeon/go-vcr.v3/cassette"
-    "gopkg.in/dnaeon/go-vcr.v3/recorder"
-    "net/http"
-    "strconv"
-    "testing"
+	"context"
+	"errors"
+	"flag"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/integrate/httpclient"
+	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/suitetest"
+	"go.uber.org/fx"
+	"gopkg.in/dnaeon/go-vcr.v3/cassette"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
+	"net/http"
+	"strconv"
+	"testing"
 )
 
 func init() {
@@ -52,7 +52,7 @@ type RecorderDI struct {
 // WithHttpPlayback enables remote HTTP server playback capabilities supported by `httpvcr`
 // This mode requires apptest.Bootstrap to work
 // Each top-level test should have corresponding recorded HTTP responses in `testdata` folder, or the test will fail.
-// To enable record mode, use `go test ... -record` at CLI, or do it programmatically with HttpRecordingMode
+// To enable record mode, use `go test ... --record-http` at CLI, or do it programmatically with HttpRecordingMode
 // See https://github.com/cockroachdb/copyist for more details
 func WithHttpPlayback(t *testing.T, opts ...HTTPVCROptions) test.Options {
 	initial := HTTPVCROption{

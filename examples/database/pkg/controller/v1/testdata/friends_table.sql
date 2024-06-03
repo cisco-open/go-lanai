@@ -1,4 +1,4 @@
-CREATE TABLE friends
+CREATE TABLE IF NOT EXISTS friends
 (
     id                  UUID NOT NULL DEFAULT gen_random_uuid(),
     first_name          TEXT NOT NULL,

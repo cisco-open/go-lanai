@@ -8,7 +8,7 @@ import (
 )
 
 var Module = &bootstrap.Module{
-	Name:       "v1-controller",
+	Name:       "v1-Controller",
 	Precedence: bootstrap.AnonymousModulePrecedence,
 	Options: []fx.Option{
 		web.FxControllerProviders(
