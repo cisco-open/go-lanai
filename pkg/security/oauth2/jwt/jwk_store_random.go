@@ -18,50 +18,70 @@ package jwt
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"fmt"
+	"github.com/golang-jwt/jwt/v4"
+	"sync"
 )
 
 // SingleJwkStore implements JwkStore
-// This store always returns single JWK if kid matches, return error if not
+// This store always returns single JWK if Kid matches, return error if not
 // This store is majorly for testing
 type SingleJwkStore struct {
-	kid string
-	jwk Jwk
+	initOnce      sync.Once
+	Kid           string
+	SigningMethod jwt.SigningMethod
+	jwk           Jwk
+}
+
+func NewSingleJwkStoreWithOptions(opts ...func(s *SingleJwkStore)) *SingleJwkStore {
+	store := SingleJwkStore{
+		SigningMethod: jwt.SigningMethodRS256,
+	}
+	for _, fn := range opts {
+		fn(&store)
+	}
+	return &store
 }
 
 func NewSingleJwkStore(kid string) *SingleJwkStore {
-	return &SingleJwkStore{
-		kid: kid,
-		jwk: newJwk(kid),
-	}
+	return NewSingleJwkStoreWithOptions(func(s *SingleJwkStore) {
+		s.Kid = kid
+	})
 }
 
 func (s *SingleJwkStore) LoadByKid(_ context.Context, kid string) (Jwk, error) {
-	if s.kid == kid {
+	if e := s.LazyInit(); e != nil {
+		return nil, e
+	}
+	if s.Kid == kid {
 		return s.jwk, nil
 	}
-	return nil, fmt.Errorf("Cannot find JWK with kid [%s]", kid)
+	return nil, fmt.Errorf("cannot find JWK with Kid [%s]", kid)
 }
 
 func (s *SingleJwkStore) LoadByName(_ context.Context, name string) (Jwk, error) {
-	if s.kid == name {
+	if e := s.LazyInit(); e != nil {
+		return nil, e
+	}
+	if s.Kid == name {
 		return s.jwk, nil
 	}
-	return nil, fmt.Errorf("Cannot find JWK with name [%s]", name)
+	return nil, fmt.Errorf("cannot find JWK with name [%s]", name)
 }
 
-func (s *SingleJwkStore) LoadAll(ctx context.Context, names ...string) ([]Jwk, error) {
+func (s *SingleJwkStore) LoadAll(_ context.Context, _ ...string) ([]Jwk, error) {
+	if e := s.LazyInit(); e != nil {
+		return nil, e
+	}
 	return []Jwk{s.jwk}, nil
 }
 
-func newJwk(kid string) Jwk {
-	key, e := rsa.GenerateKey(rand.Reader, rsaKeySize)
-	if e != nil {
-		panic(e)
-	}
-
-	return NewRsaPrivateJwk(kid, kid, key)
+func (s *SingleJwkStore) LazyInit() (err error) {
+	s.initOnce.Do(func() {
+		s.jwk, err = generateRandomJwk(s.SigningMethod, s.Kid, s.Kid)
+		if err != nil {
+			return
+		}
+	})
+	return
 }
-

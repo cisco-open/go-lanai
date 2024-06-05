@@ -95,7 +95,7 @@ func (s *FileJwkStore) LoadAll(_ context.Context, names ...string) ([]Jwk, error
 	for k, v := range s.cacheByName {
 		match := len(names) == 0 // if names is empty, match all
 		for i := 0; !match && i < len(names); i++ {
-			match = match || names[i] == k
+			match = names[i] == k
 		}
 		if !match {
 			continue
@@ -171,12 +171,12 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 			return nil, fmt.Errorf(errTmplPubPrivMixed)
 		case privKey == nil:
 			kid := calculateKid(props, name, i, pubKey)
-			pubJwks = append(pubJwks, NewRsaJwk(kid, name, pubKey))
+			pubJwks = append(pubJwks, NewJwk(kid, name, pubKey))
 		case len(pubJwks) != 0:
 			return nil, fmt.Errorf(errTmplPubPrivMixed)
 		default:
 			kid := calculateKid(props, name, i, &privKey.PublicKey)
-			privJwks = append(privJwks, NewRsaPrivateJwk(kid, name, privKey))
+			privJwks = append(privJwks, NewPrivateJwk(kid, name, privKey))
 		}
 	}
 

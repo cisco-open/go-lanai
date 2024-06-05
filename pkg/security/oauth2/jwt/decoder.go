@@ -17,10 +17,10 @@
 package jwt
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/golang-jwt/jwt/v4"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 /*********************
@@ -34,26 +34,74 @@ type JwtDecoder interface {
 }
 
 /*********************
+	Constructors
+ *********************/
+
+var allSigningMethods = []jwt.SigningMethod{
+	jwt.SigningMethodHS256, jwt.SigningMethodHS384, jwt.SigningMethodHS512,
+	jwt.SigningMethodRS256, jwt.SigningMethodRS384, jwt.SigningMethodRS512,
+	jwt.SigningMethodES256, jwt.SigningMethodES384, jwt.SigningMethodES512,
+	jwt.SigningMethodPS256, jwt.SigningMethodPS384, jwt.SigningMethodPS512,
+	jwt.SigningMethodEdDSA,
+}
+
+type VerifyOptions func(opt *VerifyOption)
+type VerifyOption struct {
+	JwkStore      JwkStore
+	JwkName       string
+	Methods       []jwt.SigningMethod
+	ParserOptions []jwt.ParserOption
+}
+
+// VerifyWithJwkStore is a VerifyOptions that set JwkStore and default key name to use when verifying.
+// the provided key name is used as fallback if the to-be-verified JWT doesn't have "kid" in header
+func VerifyWithJwkStore(store JwkStore, jwkName string) VerifyOptions {
+	return func(opt *VerifyOption) {
+		opt.JwkStore = store
+		opt.JwkName = jwkName
+	}
+}
+
+// VerifyWithMethods is a VerifyOptions that specify all allowed signing method ("alg" header).
+// By default, it accepts all available signing methods except for plaintext JWT.
+func VerifyWithMethods(methods ...jwt.SigningMethod) VerifyOptions {
+	return func(opt *VerifyOption) {
+		opt.Methods = methods
+	}
+}
+
+func NewSignedJwtDecoder(opts ...VerifyOptions) *SignedJwtDecoder {
+	opt := VerifyOption{
+		Methods:       allSigningMethods,
+		ParserOptions: []jwt.ParserOption{jwt.WithoutClaimsValidation()},
+	}
+	for _, fn := range opts {
+		fn(&opt)
+	}
+	methods := make([]string, len(opt.Methods))
+	for i := range opt.Methods {
+		methods[i] = opt.Methods[i].Alg()
+	}
+	parserOpts := append(opt.ParserOptions, jwt.WithValidMethods(methods))
+	return &SignedJwtDecoder{
+		jwkName:  opt.JwkName,
+		jwkStore: opt.JwkStore,
+		parser:   jwt.NewParser(parserOpts...),
+	}
+}
+
+/*********************
 	Implements
  *********************/
 
-// RSJwtDecoder implements JwtEncoder
-type RSJwtDecoder struct {
+// SignedJwtDecoder implements JwtEncoder
+type SignedJwtDecoder struct {
 	jwkName  string
 	jwkStore JwkStore
 	parser   *jwt.Parser
 }
 
-func NewRS256JwtDecoder(jwkStore JwkStore, defaultJwkName string) *RSJwtDecoder {
-	parser := jwt.NewParser(jwt.WithoutClaimsValidation(), jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
-	return &RSJwtDecoder{
-		jwkName:  defaultJwkName,
-		jwkStore: jwkStore,
-		parser:   parser,
-	}
-}
-
-func (dec *RSJwtDecoder) Decode(ctx context.Context, tokenString string) (oauth2.Claims, error) {
+func (dec *SignedJwtDecoder) Decode(ctx context.Context, tokenString string) (oauth2.Claims, error) {
 	claims := oauth2.MapClaims{}
 	if e := dec.DecodeWithClaims(ctx, tokenString, &claims); e != nil {
 		return nil, e
@@ -61,7 +109,7 @@ func (dec *RSJwtDecoder) Decode(ctx context.Context, tokenString string) (oauth2
 	return claims, nil
 }
 
-func (dec *RSJwtDecoder) DecodeWithClaims(ctx context.Context, tokenString string, claims interface{}) (err error) {
+func (dec *SignedJwtDecoder) DecodeWithClaims(ctx context.Context, tokenString string, claims interface{}) (err error) {
 	// type checks
 	switch claims.(type) {
 	case jwt.Claims:
@@ -75,7 +123,7 @@ func (dec *RSJwtDecoder) DecodeWithClaims(ctx context.Context, tokenString strin
 	return
 }
 
-func (dec *RSJwtDecoder) keyFunc(ctx context.Context) jwt.Keyfunc {
+func (dec *SignedJwtDecoder) keyFunc(ctx context.Context) jwt.Keyfunc {
 	return func(unverified *jwt.Token) (interface{}, error) {
 		var jwk Jwk
 		var e error
