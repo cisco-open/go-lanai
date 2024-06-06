@@ -127,6 +127,7 @@ func (s *FileJwkStore) Rotate(_ context.Context, name string) error {
 /*************************
 	Helpers
  *************************/
+
 func loadJwks(name string, props CryptoKeyProperties) ([]Jwk, error) {
 	switch props.Format() {
 	case KeyFileFormatPem:
