@@ -2,11 +2,13 @@ package jwt
 
 import (
 	"context"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 /*************************
@@ -18,6 +20,15 @@ const (
 	DefaultPEMKeyPassword = "TheCakeIsALie"
 	DefaultPEMKeyName     = "test-name"
 )
+
+var basicClaims = oauth2.BasicClaims{
+	ExpiresAt:         time.Now().Add(120 * time.Minute),
+	IssuedAt:          time.Now(),
+	Issuer:            "test",
+	NotBefore:         time.Now(),
+	Subject:           "test-user",
+	ClientId:          "test-client",
+}
 
 /*************************
 	Test Cases
@@ -182,9 +193,14 @@ func AssertLoadedFileJwkStore(ctx context.Context, g *gomega.WithT, store *FileJ
 	} else {
 		g.Expect(jwk.Id()).To(Equal(next.Id()), `LoadByName should return same JWK after Rotate`)
 	}
+
+	// assert loaded JWKs with JwtEncoder if applicable (to make sure the loaded JWK has recognized types)
+	if privCount > 0 {
+		AssertLoadedJwks(ctx, g, store)
+	}
 }
 
-func AssertEmptyFileJwkStore(ctx context.Context, g *gomega.WithT, store *FileJwkStore, src TestPEMKey) {
+func AssertEmptyFileJwkStore(ctx context.Context, g *gomega.WithT, store *FileJwkStore, _ TestPEMKey) {
 	all, e := store.LoadAll(ctx)
 	g.Expect(e).To(Succeed(), `[empty key store] LoadAll should not fail`)
 	g.Expect(all).To(BeEmpty(), `[empty key store] LoadAll should return no JWKs`)
@@ -195,5 +211,11 @@ func AssertEmptyFileJwkStore(ctx context.Context, g *gomega.WithT, store *FileJw
 	g.Expect(e).To(HaveOccurred(), "[empty key store] LoadByName should fail")
 	e = store.Rotate(ctx, DefaultPEMKeyName)
 	g.Expect(e).To(HaveOccurred(), `[empty key store] Rotate should fail`)
+}
 
+func AssertLoadedJwks(ctx context.Context, g *gomega.WithT, store *FileJwkStore) {
+	encoder := NewSignedJwtEncoder(SignWithJwkStore(store, DefaultPEMKeyName))
+	t, e := encoder.Encode(ctx, basicClaims)
+	g.Expect(e).To(Succeed(), "using loaded JWK to encode JWT should not fail")
+	g.Expect(t).To(Not(BeEmpty()), "using loaded JWK to encode JWT should return empty string")
 }

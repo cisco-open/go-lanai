@@ -61,15 +61,6 @@ type JwkRotator interface {
 	Implements Base
  *********************/
 
-type publicKey interface {
-	Equal(x crypto.PublicKey) bool
-}
-
-type privateKey interface {
-	Public() crypto.PublicKey
-	Equal(x crypto.PrivateKey) bool
-}
-
 // GenericJwk implements Jwk and PrivateJwk
 type GenericJwk struct {
 	kid    string
@@ -103,7 +94,16 @@ func (k *GenericPrivateJwk) Private() crypto.PrivateKey {
 	Constructors
  *********************/
 
-var typeOfBytes = reflect.TypeFor[[]byte]()
+var typeOfBytes = reflect.TypeOf((*[]byte)(nil)).Elem()
+
+type publicKey interface {
+	Equal(x crypto.PublicKey) bool
+}
+
+type privateKey interface {
+	Public() crypto.PublicKey
+	Equal(x crypto.PrivateKey) bool
+}
 
 // NewJwk new Jwk with specified public key
 // Supported public key types:
