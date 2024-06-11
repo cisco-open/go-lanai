@@ -17,6 +17,7 @@ const (
 	JwkTypeEC    = `EC`
 	JwkTypeRSA   = `RSA`
 	JwkTypeOctet = `oct`
+	JwkTypeEdDSA = `OKP`
 )
 
 func marshalJwk(jwk Jwk) ([]byte, error) {
@@ -28,8 +29,8 @@ func marshalJwk(jwk Jwk) ([]byte, error) {
 		val = makeRSAPublicJwk(v, params)
 	case *ecdsa.PublicKey:
 		val = makeECPublicJwk(v, params)
-	case ed25519.PrivateKey:
-		// TODO
+	case ed25519.PublicKey:
+		val = makeOKPJwk(v, params)
 	case []byte:
 		val = makeOctetJwk(v, params)
 	default:
@@ -43,23 +44,21 @@ func unmarshalJwk(data []byte) (Jwk, error) {
 	if e := json.Unmarshal(data, &meta); e != nil {
 		return nil, e
 	}
-	var err error
 	var jwk publicJwk
 	switch meta.Type {
 	case JwkTypeRSA:
 		jwk = &rsaPublicJwk{}
-		err = json.Unmarshal(data, jwk)
 	case JwkTypeEC:
 		jwk = &ecPublicJwk{}
-		err = json.Unmarshal(data, jwk)
 	case JwkTypeOctet:
 		jwk = &octetJwk{}
-		err = json.Unmarshal(data, jwk)
+	case JwkTypeEdDSA:
+		jwk = &okpJwk{}
 	default:
 		return nil, fmt.Errorf(`invalid 'kty': %s`, meta.Type)
 	}
-	if err != nil {
-		return nil, err
+	if e := json.Unmarshal(data, jwk); e != nil {
+		return nil, e
 	}
 	return jwk.toJwk()
 }
@@ -101,6 +100,8 @@ type publicJwk interface {
 	toJwk() (Jwk, error)
 }
 
+// For EC key
+// RFC 7518: https://datatracker.ietf.org/doc/html/rfc7518#section-6.2
 type ecPublicJwk struct {
 	generalJwk
 	Curve       string   `json:"crv"`
@@ -149,6 +150,8 @@ func makeECPublicJwk(key *ecdsa.PublicKey, params generalJwk) ecPublicJwk {
 	}
 }
 
+// For RSA key
+// RFC 7518: https://datatracker.ietf.org/doc/html/rfc7518#section-6.3
 type rsaPublicJwk struct {
 	generalJwk
 	Modulus  jwkBytes `json:"n"`
@@ -173,6 +176,8 @@ func makeRSAPublicJwk(key *rsa.PublicKey, params generalJwk) rsaPublicJwk {
 	}
 }
 
+// For symmetric key
+// RFC 7518: https://datatracker.ietf.org/doc/html/rfc7518#section-6.4
 type octetJwk struct {
 	generalJwk
 	Key jwkBytes `json:"k"`
@@ -187,6 +192,27 @@ func makeOctetJwk(key []byte, params generalJwk) octetJwk {
 	return octetJwk{
 		generalJwk: params,
 		Key:        key,
+	}
+}
+
+// For ed25519 key. "OKP" (Octet Public Pair)
+// RFC 8037: https://datatracker.ietf.org/doc/html/rfc8037#section-2
+type okpJwk struct {
+	generalJwk
+	Curve     string   `json:"crv"`
+	PublicKey jwkBytes `json:"x"`
+}
+
+func (j okpJwk) toJwk() (Jwk, error) {
+	return NewJwk(j.Id, j.Id, ed25519.PublicKey(j.PublicKey)), nil
+}
+
+func makeOKPJwk(key ed25519.PublicKey, params generalJwk) okpJwk {
+	params.Type = JwkTypeEdDSA
+	return okpJwk{
+		generalJwk: params,
+		Curve:      "Ed25519",
+		PublicKey:  jwkBytes(key),
 	}
 }
 

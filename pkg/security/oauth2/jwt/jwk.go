@@ -19,6 +19,7 @@ package jwt
 import (
 	"context"
 	"crypto"
+	"encoding/json"
 	"reflect"
 )
 
@@ -89,10 +90,11 @@ func (k *GenericJwk) UnmarshalJSON(data []byte) error {
 	if e != nil {
 		return e
 	}
-	*k = GenericJwk{
-		kid:    jwk.Id(),
-		name:   jwk.Name(),
-		public: jwk.Public(),
+	switch v := jwk.(type) {
+	case *GenericJwk:
+		*k = *v
+	default:
+		*k = GenericJwk{kid: jwk.Id(), name: jwk.Name(), public: jwk.Public()}
 	}
 	return nil
 }
@@ -124,14 +126,14 @@ type privateKey interface {
 
 // NewJwk new Jwk with specified public key
 // Supported public key types:
-// - *rsa.PublicKey
-// - *ecdsa.PublicKey
-// - ed25519.PublicKey
-// - []byte (MAC secret)
-// - any key implementing:
-//	 interface{
-//	     Equal(x crypto.PublicKey) bool
-//	 }
+//   - *rsa.PublicKey
+//   - *ecdsa.PublicKey
+//   - ed25519.PublicKey
+//   - []byte (MAC secret)
+//   - any key implementing:
+//     interface{
+//     Equal(x crypto.PublicKey) bool
+//     }
 func NewJwk(kid string, name string, pubKey crypto.PublicKey) Jwk {
 	return &GenericJwk{
 		kid:    kid,
@@ -140,17 +142,34 @@ func NewJwk(kid string, name string, pubKey crypto.PublicKey) Jwk {
 	}
 }
 
+// ParseJwk parse Jwk from JSON as specified in RFC 7517 and RFC 7518.
+// Note: Private key information is ignored in the parsed Jwk.
+// Supported public key types:
+// - *rsa.PublicKey
+// - *ecdsa.PublicKey
+// - []byte (symmetric key, e.g. MAC secret)
+//
+// See: RFC7517 https://datatracker.ietf.org/doc/html/rfc7517
+// See: RFC7518 https://datatracker.ietf.org/doc/html/rfc7518
+func ParseJwk(jsonData []byte) (Jwk, error) {
+	var jwk GenericJwk
+	if e := json.Unmarshal(jsonData, &jwk); e != nil {
+		return nil, e
+	}
+	return &jwk, nil
+}
+
 // NewPrivateJwk new PrivateJwk with specified private key
 // Supported private key types:
-// - *rsa.PrivateKey
-// - *ecdsa.PrivateKey
-// - ed25519.PrivateKey
-// - []byte (MAC secret)
-// - any key implementing:
-//	 interface{
-//	     Public() crypto.PublicKey
-//	     Equal(x crypto.PrivateKey) bool
-//	 }
+//   - *rsa.PrivateKey
+//   - *ecdsa.PrivateKey
+//   - ed25519.PrivateKey
+//   - []byte (MAC secret)
+//   - any key implementing:
+//     interface{
+//     Public() crypto.PublicKey
+//     Equal(x crypto.PrivateKey) bool
+//     }
 func NewPrivateJwk(kid string, name string, privKey crypto.PrivateKey) PrivateJwk {
 	var pubKey crypto.PublicKey
 	switch v := privKey.(type) {
@@ -172,7 +191,3 @@ func NewPrivateJwk(kid string, name string, privKey crypto.PrivateKey) PrivateJw
 		private: privKey,
 	}
 }
-
-
-
-

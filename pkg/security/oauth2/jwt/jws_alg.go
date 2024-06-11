@@ -41,6 +41,7 @@ func resolveSigningMethod(key crypto.PrivateKey) (jwt.SigningMethod, error) {
 			return nil, fmt.Errorf(`invalid MAC secret. Expect 256B or more, but got %dB`, len(v))
 		}
 	default:
+		// Note: *ecdh.PrivateKey is not supported by github.com/golang-jwt/jwt/v4
 		return nil, fmt.Errorf(`unable to find proper signing method: unrecognized private key type: %T`, key)
 	}
 }
