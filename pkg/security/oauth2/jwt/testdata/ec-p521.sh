@@ -19,10 +19,10 @@ done
 
 # multi-block PEM
 echo "Merging PEM blocks..."
-cat `find $TMP_DIR -type f -name 'ec-p521-priv-key-*.pem' -a ! -name '*ec-p521-priv-key-aes256-*.pem'` > ec-p521-priv-key.pem
-cat `find $TMP_DIR -type f -name 'ec-p521-priv-key-aes256-*.pem'` > ec-p521-priv-key-aes256.pem
-cat `find $TMP_DIR -type f -name 'ec-p521-pub-key-*.pem'` > ec-p521-pub-key.pem
-cat `find $TMP_DIR -type f -name 'ec-p521-*.crt'` > ec-p521-cert.pem
+cat `find $TMP_DIR -type f -name 'ec-p521-priv-key-*.pem' -a ! -name '*ec-p521-priv-key-aes256-*.pem' | sort` > ec-p521-priv-key.pem
+cat `find $TMP_DIR -type f -name 'ec-p521-priv-key-aes256-*.pem' | sort` > ec-p521-priv-key-aes256.pem
+cat `find $TMP_DIR -type f -name 'ec-p521-pub-key-*.pem' | sort` > ec-p521-pub-key.pem
+cat `find $TMP_DIR -type f -name 'ec-p521-*.crt' | sort` > ec-p521-cert.pem
 
 # wrong password
 echo "Finalizing..."

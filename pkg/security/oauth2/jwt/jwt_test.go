@@ -179,7 +179,7 @@ func SubTestJwtEncodeWithDynamicMethod(jwkStore JwkStore, kid string) test.Gomeg
 
 func SubTestJwtDecodeSuccessWithSameKey(jwkStore JwkStore) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid))
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 		parsed, err := dec.Decode(context.Background(), jwtFromContext(ctx))
 
 		assertDecodeResult(g, parsed, err)
@@ -192,7 +192,7 @@ func SubTestJwtDecodeSuccessWithRotatedKey(jwkStore JwkRotator) test.GomegaSubTe
 		if err := jwkStore.Rotate(context.Background(), ""); err != nil {
 			t.Errorf("StaticJwkStore key roation should not have error, but got %v", err)
 		}
-		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid))
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 		parsed, err := dec.Decode(context.Background(), jwtFromContext(ctx))
 
 		assertDecodeResult(g, parsed, err)
@@ -202,7 +202,7 @@ func SubTestJwtDecodeSuccessWithRotatedKey(jwkStore JwkRotator) test.GomegaSubTe
 
 func SubTestJwtDecodeSuccessWithCustomClaims(jwkStore JwkStore) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid))
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 
 		custom := customClaims{}
 		err := dec.DecodeWithClaims(context.Background(), jwtFromContext(ctx), &custom)
@@ -222,7 +222,7 @@ func SubTestJwtDecodeFailedWithWrongKey(method jwt.SigningMethod, kid string) te
 			s.Kid = kid
 			s.SigningMethod = method
 		})
-		dec := NewSignedJwtDecoder(VerifyWithJwkStore(store, testDefaultKid))
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(store, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 		_, err := dec.Decode(context.Background(), jwtFromContext(ctx))
 		g.Expect(err).NotTo(Succeed(), "decode with different JWK should return validation error")
 	}
@@ -231,7 +231,7 @@ func SubTestJwtDecodeFailedWithWrongKey(method jwt.SigningMethod, kid string) te
 func SubTestJwtDecodeFailedWithNonExistingKey() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		store := NewSingleJwkStore("whatever")
-		dec := NewSignedJwtDecoder(VerifyWithJwkStore(store, testDefaultKid))
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(store, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 		_, err := dec.Decode(context.Background(), jwtFromContext(ctx))
 		g.Expect(err).NotTo(Succeed(), "decode with non-existing JWK should return validation error")
 	}
@@ -247,7 +247,7 @@ func SubTestJwtDecodeFailsWithWrongAlg(jwkStore JwkStore) test.GomegaSubTestFunc
 		g.Expect(plainValue).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
 
 		// another decorder
-		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid))
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 		_, e := dec.Decode(context.Background(), plainValue)
 
 		var validationError *jwt.ValidationError
