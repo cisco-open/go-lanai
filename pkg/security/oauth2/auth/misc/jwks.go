@@ -55,6 +55,10 @@ func NewJwkSetEndpoint(jwkStore jwt.JwkStore) *JwkSetEndpoint {
 	}
 }
 
+func (ep *JwkSetEndpoint) JwkByKid(c context.Context, _ *JwkSetRequest) (response *JwkSetResponse, err error) {
+	// TODO
+}
+
 func (ep *JwkSetEndpoint) JwkSet(c context.Context, _ *JwkSetRequest) (response *JwkSetResponse, err error) {
 	jwks, e := ep.jwkStore.LoadAll(c)
 	if e != nil {

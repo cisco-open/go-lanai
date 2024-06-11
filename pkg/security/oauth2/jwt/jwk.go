@@ -80,6 +80,23 @@ func (k *GenericJwk) Public() crypto.PublicKey {
 	return k.public
 }
 
+func (k *GenericJwk) MarshalJSON() ([]byte, error) {
+	return marshalJwk(k)
+}
+
+func (k *GenericJwk) UnmarshalJSON(data []byte) error {
+	jwk, e := unmarshalJwk(data)
+	if e != nil {
+		return e
+	}
+	*k = GenericJwk{
+		kid:    jwk.Id(),
+		name:   jwk.Name(),
+		public: jwk.Public(),
+	}
+	return nil
+}
+
 // GenericPrivateJwk implements Jwk and PrivateJwk
 type GenericPrivateJwk struct {
 	GenericJwk
