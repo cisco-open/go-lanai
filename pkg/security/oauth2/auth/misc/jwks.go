@@ -22,7 +22,8 @@ import (
     "crypto/rsa"
     "encoding/base64"
     "encoding/binary"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
     "github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
 )
 
@@ -56,7 +57,7 @@ func NewJwkSetEndpoint(jwkStore jwt.JwkStore) *JwkSetEndpoint {
 }
 
 func (ep *JwkSetEndpoint) JwkByKid(c context.Context, _ *JwkSetRequest) (response *JwkSetResponse, err error) {
-	// TODO
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (ep *JwkSetEndpoint) JwkSet(c context.Context, _ *JwkSetRequest) (response *JwkSetResponse, err error) {

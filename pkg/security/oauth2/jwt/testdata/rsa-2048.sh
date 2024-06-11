@@ -19,10 +19,10 @@ done
 
 # multi-block PEM
 echo "Merging PEM blocks..."
-cat `find $TMP_DIR -type f -name 'rsa-2048-priv-key-*.pem' -a ! -name '*rsa-2048-priv-key-aes256-*.pem'` > rsa-2048-priv-key.pem
-cat `find $TMP_DIR -type f -name 'rsa-2048-priv-key-aes256-*.pem'` > rsa-2048-priv-key-aes256.pem
-cat `find $TMP_DIR -type f -name 'rsa-2048-pub-key-*.pem'` > rsa-2048-pub-key.pem
-cat `find $TMP_DIR -type f -name 'rsa-2048-*.crt'` > rsa-2048-cert.pem
+cat `find $TMP_DIR -type f -name 'rsa-2048-priv-key-*.pem' -a ! -name '*rsa-2048-priv-key-aes256-*.pem' | sort` > rsa-2048-priv-key.pem
+cat `find $TMP_DIR -type f -name 'rsa-2048-priv-key-aes256-*.pem' | sort` > rsa-2048-priv-key-aes256.pem
+cat `find $TMP_DIR -type f -name 'rsa-2048-pub-key-*.pem' | sort` > rsa-2048-pub-key.pem
+cat `find $TMP_DIR -type f -name 'rsa-2048-*.crt' | sort` > rsa-2048-cert.pem
 
 # wrong password
 echo "Finalizing..."

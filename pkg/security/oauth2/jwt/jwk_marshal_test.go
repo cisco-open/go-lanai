@@ -115,7 +115,7 @@ func AssertJwkPair(ctx context.Context, g *gomega.WithT, pub Jwk, priv PrivateJw
 	privStore := &TestJwkStore{Jwk: priv}
 	encoder := NewSignedJwtEncoder(SignWithJwkStore(privStore, testDefaultKid), SignWithMethod(nil))
 	pubStore := &TestJwkStore{Jwk: pub}
-	decoder := NewSignedJwtDecoder(VerifyWithJwkStore(pubStore, testDefaultKid))
+	decoder := NewSignedJwtDecoder(VerifyWithJwkStore(pubStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 	token, e := encoder.Encode(ctx, claims)
 	g.Expect(e).To(Succeed(), "encode JWT with private JWK should not fail")
 	decoded, e := decoder.Decode(ctx, token)

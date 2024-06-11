@@ -37,13 +37,19 @@ type JwtDecoder interface {
 	Constructors
  *********************/
 
-var allSigningMethods = []jwt.SigningMethod{
-	jwt.SigningMethodHS256, jwt.SigningMethodHS384, jwt.SigningMethodHS512,
-	jwt.SigningMethodRS256, jwt.SigningMethodRS384, jwt.SigningMethodRS512,
-	jwt.SigningMethodES256, jwt.SigningMethodES384, jwt.SigningMethodES512,
-	jwt.SigningMethodPS256, jwt.SigningMethodPS384, jwt.SigningMethodPS512,
-	jwt.SigningMethodEdDSA,
-}
+var (
+	SymmetricSigningMethods = []jwt.SigningMethod{
+		jwt.SigningMethodHS256, jwt.SigningMethodHS384, jwt.SigningMethodHS512,
+	}
+
+	AsymmetricSigningMethods = []jwt.SigningMethod{
+		jwt.SigningMethodRS256, jwt.SigningMethodRS384, jwt.SigningMethodRS512,
+		jwt.SigningMethodES256, jwt.SigningMethodES384, jwt.SigningMethodES512,
+		jwt.SigningMethodPS256, jwt.SigningMethodPS384, jwt.SigningMethodPS512,
+		jwt.SigningMethodEdDSA,
+	}
+	SupportedSigningMethods = append(AsymmetricSigningMethods, SymmetricSigningMethods...)
+)
 
 type VerifyOptions func(opt *VerifyOption)
 type VerifyOption struct {
@@ -72,7 +78,7 @@ func VerifyWithMethods(methods ...jwt.SigningMethod) VerifyOptions {
 
 func NewSignedJwtDecoder(opts ...VerifyOptions) *SignedJwtDecoder {
 	opt := VerifyOption{
-		Methods:       allSigningMethods,
+		Methods:       AsymmetricSigningMethods,
 		ParserOptions: []jwt.ParserOption{jwt.WithoutClaimsValidation()},
 	}
 	for _, fn := range opts {
