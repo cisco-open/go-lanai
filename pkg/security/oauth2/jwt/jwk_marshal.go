@@ -221,5 +221,13 @@ func bigEndian(i int) []byte {
 	if e := binary.Write(buf, binary.BigEndian, uint64(i)); e != nil {
 		return nil
 	}
-	return buf.Bytes()
+	// remove leading zeros
+	data := buf.Bytes()
+	for j := range data {
+		if data[j] != 0 {
+			data = data[j:]
+			break
+		}
+	}
+	return data
 }
