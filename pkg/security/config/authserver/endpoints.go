@@ -38,7 +38,7 @@ func registerEndpoints(registrar *web.Registrar, config *Configuration) {
 		template.New().Get(config.Endpoints.Error).HandlerFunc(errorhandling.ErrorWithStatus).Build(),
 
 		rest.New("jwks").Get(config.Endpoints.JwkSet).EndpointFunc(jwks.JwkSet).Build(),
-		rest.New("jwks/:kid").Get(config.Endpoints.JwkSet).EndpointFunc(jwks.JwkByKid).Build(),
+		rest.New("jwks/kid").Get(config.Endpoints.JwkSet+"/:kid").EndpointFunc(jwks.JwkByKid).Build(),
 		rest.New("check_token").Post(config.Endpoints.CheckToken).EndpointFunc(ct.CheckToken).Build(),
 		rest.New("userinfo GET").Get(config.Endpoints.UserInfo).
 			Condition(acceptJwtMatcher()).

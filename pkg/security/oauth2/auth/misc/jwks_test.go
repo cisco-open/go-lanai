@@ -2,14 +2,24 @@ package misc_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/misc"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/jwt"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/pkg/web/rest"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/cisco-open/go-lanai/test/apptest"
 	"github.com/cisco-open/go-lanai/test/sectest"
+	. "github.com/cisco-open/go-lanai/test/utils/gomega"
+	"github.com/cisco-open/go-lanai/test/webtest"
+	gojwt "github.com/golang-jwt/jwt/v4"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
 	"go.uber.org/fx"
+	"io"
+	"net/http"
+	"reflect"
 	"testing"
 )
 
@@ -17,26 +27,68 @@ import (
 	Setup Test
  *************************/
 
-/*************************
-	Test
- *************************/
+type ExpectedJwk struct {
+	PathPrefix   string
+	Alg          gojwt.SigningMethod
+	Kid          string
+	Type         string
+	JsonFields map[string]types.GomegaMatcher
+}
+
+var ExpectedJwks = []ExpectedJwk{
+	{ PathPrefix: "/rsa", Alg: gojwt.SigningMethodRS256, Kid: JwtKID, Type: "RSA", JsonFields: map[string]types.GomegaMatcher{
+		"e": Not(BeEmpty()),
+		"n": Not(BeEmpty()),
+	}},
+	{ PathPrefix: "/ec", Alg: gojwt.SigningMethodES256, Kid: JwtKID, Type: "EC", JsonFields: map[string]types.GomegaMatcher{
+		"crv": Not(BeEmpty()),
+		"x": Not(BeEmpty()),
+		"y": Not(BeEmpty()),
+
+	}},
+	{ PathPrefix: "/ed", Alg: gojwt.SigningMethodEdDSA, Kid: JwtKID, Type: "OKP", JsonFields: map[string]types.GomegaMatcher{
+		"x": Not(BeEmpty()),
+	}},
+	{ PathPrefix: "/mac", Alg: gojwt.SigningMethodHS256, Kid: JwtKID, Type: "oct", JsonFields: map[string]types.GomegaMatcher{
+		"k": Not(BeEmpty()),
+	}},
+}
 
 type JwksDI struct {
 	fx.In
-	JwkStore jwt.JwkStore
+	WebReg   *web.Registrar
 }
+
+func RegisterJwksEndpoint(di JwksDI) {
+	for i := range ExpectedJwks {
+		store := jwt.NewSingleJwkStoreWithOptions(func(s *jwt.SingleJwkStore) {
+			s.Kid = JwtKID
+			s.SigningMethod = ExpectedJwks[i].Alg
+		})
+		ep := misc.NewJwkSetEndpoint(store)
+		di.WebReg.MustRegister(rest.Get(ExpectedJwks[i].PathPrefix + "/jwks").EndpointFunc(ep.JwkSet).Build())
+		di.WebReg.MustRegister(rest.Get(ExpectedJwks[i].PathPrefix + "/jwks/:kid").EndpointFunc(ep.JwkByKid).Build())
+	}
+
+}
+
+/*************************
+	Test
+ *************************/
 
 func TestJwkSetEndpoint(t *testing.T) {
 	var di JwksDI
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		webtest.WithMockedServer(),
 		apptest.WithFxOptions(
-			fx.Provide(
-				sectest.BindMockingProperties, NewJwkStore,
-			),
+			fx.Provide(sectest.BindMockingProperties),
+			fx.Invoke(RegisterJwksEndpoint),
 		),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestJwkSet(&di), "JwkSet"),
+		test.GomegaSubTest(SubTestJwkSetWithType(), "JwkSet"),
+		test.GomegaSubTest(SubTestJwkByKidWithType(), "JwkByKid"),
+		test.GomegaSubTest(SubTestJwkByKidFailure(), "JwkByKidFailure"),
 	)
 }
 
@@ -44,26 +96,47 @@ func TestJwkSetEndpoint(t *testing.T) {
 	Sub Tests
  *************************/
 
-func SubTestJwkSet(di *JwksDI) test.GomegaSubTestFunc {
-	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		var req misc.JwkSetRequest
-		var resp *misc.JwkSetResponse
-		var e error
-		endpoint := misc.NewJwkSetEndpoint(di.JwkStore)
-		resp, e = endpoint.JwkSet(ctx, &req)
-		g.Expect(e).To(Succeed(), "JwkSet should not fail without authentication")
-		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
-		g.Expect(resp.Keys).ToNot(BeEmpty(), "response should contains keys")
-		var found bool
-		for _, key := range resp.Keys {
-			g.Expect(key.Type).To(Equal("RSA"))
-			g.Expect(key.Modulus).ToNot(BeEmpty())
-			g.Expect(key.Exponent).ToNot(BeEmpty())
-			if key.Id == JwtKID {
-				found = true
-			}
+func SubTestJwkSetWithType() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *WithT) {
+		tests := make([]test.Options, len(ExpectedJwks))
+		for i := range ExpectedJwks {
+			tests[i] = test.GomegaSubTest(SubTestJwkSet(ExpectedJwks[i]), "JwkSet"+ExpectedJwks[i].Type)
 		}
-		g.Expect(found).To(BeTrue(), "response should contains a key with KID = %s", JwtKID)
+		test.RunTest(ctx, t, tests...)
+	}
+}
+
+func SubTestJwkByKidWithType() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *WithT) {
+		tests := make([]test.Options, len(ExpectedJwks))
+		for i := range ExpectedJwks {
+			tests[i] = test.GomegaSubTest(SubTestJwkByKidSuccess(ExpectedJwks[i]), "JwkByKid"+ExpectedJwks[i].Type)
+		}
+		test.RunTest(ctx, t, tests...)
+	}
+}
+
+func SubTestJwkByKidFailure() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		req := webtest.NewRequest(ctx, http.MethodGet, "/rsa/jwks/not-exist", nil)
+		resp := webtest.MustExec(ctx, req).Response
+		AssertJwkResponse(g, resp, ExpectedJwk{})
+	}
+}
+
+func SubTestJwkSet(expect ExpectedJwk) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		req := webtest.NewRequest(ctx, http.MethodGet, expect.PathPrefix + "/jwks", nil)
+		resp := webtest.MustExec(ctx, req).Response
+		AssertJwkSetResponse(g, resp, expect)
+	}
+}
+
+func SubTestJwkByKidSuccess(expect ExpectedJwk) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		req := webtest.NewRequest(ctx, http.MethodGet, expect.PathPrefix + "/jwks/" + expect.Kid, nil)
+		resp := webtest.MustExec(ctx, req).Response
+		AssertJwkResponse(g, resp, expect)
 	}
 }
 
@@ -71,3 +144,43 @@ func SubTestJwkSet(di *JwksDI) test.GomegaSubTestFunc {
 	Helpers
  *************************/
 
+func AssertJwkSetResponse(g *gomega.WithT, resp *http.Response, expect ExpectedJwk) {
+	g.Expect(resp).ToNot(BeNil(), "jwks endpoint should have response")
+	g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "jwks endpoint should not fail")
+	body, e := io.ReadAll(resp.Body)
+	g.Expect(e).To(Succeed(), "read response body should not fail")
+	g.Expect(body).To(JwkSetJsonPathMatcher("kid", expect.Kid, false), "body should have correct kid")
+	g.Expect(body).To(JwkSetJsonPathMatcher("kty", expect.Type, true), "body should have correct kty")
+	for k, v := range expect.JsonFields {
+		g.Expect(body).To(JwkSetJsonPathMatcher(k, v, true), "body should have correct %s", k)
+	}
+}
+
+func AssertJwkResponse(g *gomega.WithT, resp *http.Response, expect ExpectedJwk) {
+	g.Expect(resp).ToNot(BeNil(), "jwks/<kid> endpoint should have response")
+	if reflect.ValueOf(expect).IsZero() {
+		g.Expect(resp.StatusCode).To(Equal(http.StatusNotFound), "jwks/<kid> endpoint should fail")
+		return
+	}
+	g.Expect(resp.StatusCode).To(Equal(http.StatusOK), "jwks/<kid> endpoint should not fail")
+	body, e := io.ReadAll(resp.Body)
+	g.Expect(e).To(Succeed(), "read response body should not fail")
+	g.Expect(body).To(JwkJsonPathMatcher("kid", expect.Kid), "body should have correct kid")
+	g.Expect(body).To(JwkJsonPathMatcher("kty", expect.Type), "body should have correct kty")
+	for k, v := range expect.JsonFields {
+		g.Expect(body).To(JwkJsonPathMatcher(k, v), "body should have correct %s", k)
+	}
+}
+
+func JwkSetJsonPathMatcher(jwkField string, value interface{}, all bool) types.GomegaMatcher {
+	jsonPath := fmt.Sprintf(`$.keys[*].%s`, jwkField)
+	if all {
+		return HaveJsonPathWithValue(jsonPath, HaveEach(value))
+	}
+	return HaveJsonPathWithValue(jsonPath, ContainElements(value))
+}
+
+func JwkJsonPathMatcher(jwkField string, value interface{}) types.GomegaMatcher {
+	jsonPath := fmt.Sprintf(`$.%s`, jwkField)
+	return HaveJsonPathWithValue(jsonPath, HaveEach(value))
+}
