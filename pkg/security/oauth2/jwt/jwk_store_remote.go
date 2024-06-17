@@ -30,7 +30,8 @@ type RemoteJwkConfig struct {
 
 // NewRemoteJwkStore creates a JwkStore that load JWK with public key from an external JWKSet endpoint.
 // Note: Use RemoteJwkStore with JwtDecoder ONLY.
-//       RemoteJwkStore is not capable of decrypt private key from JWK response
+//       RemoteJwkStore is not capable of decrypt private key from JWK response.
+// See RemoteJwkStore for more details
 func NewRemoteJwkStore(opts ...RemoteJwkOptions) *RemoteJwkStore {
 	store := RemoteJwkStore{
 		RemoteJwkConfig: RemoteJwkConfig{
@@ -61,8 +62,11 @@ func NewRemoteJwkStore(opts ...RemoteJwkOptions) *RemoteJwkStore {
 }
 
 // RemoteJwkStore implements JwkStore and load JWK with public key from an external JWKSet endpoint.
-// Note: Use RemoteJwkStore with JwtDecoder ONLY.
-//       RemoteJwkStore is not capable of decrypt private key from JWK response
+// Important: Use RemoteJwkStore with JwtDecoder ONLY.
+//            RemoteJwkStore is not capable of decrypt private key from JWK response
+// Note: LoadByName and LoadAll would treat Jwk's "name" as "kid". Because "name" is introduced for managing
+//       key rotation, which is not applicable JwtDecoder: JwtDecoder strictly use `kid` if present in header
+//       or default "name" (in such case, should be hard coded globally known "kid")
 type RemoteJwkStore struct {
 	RemoteJwkConfig
 	cache cacheutils.MemCache
