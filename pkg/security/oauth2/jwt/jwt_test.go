@@ -17,15 +17,17 @@
 package jwt
 
 import (
-    "context"
-    "errors"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/golang-jwt/jwt/v4"
-    "github.com/google/uuid"
-    . "github.com/onsi/gomega"
-    "reflect"
-    "testing"
-    "time"
+	"context"
+	"errors"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"reflect"
+	"testing"
+	"time"
 )
 
 const (
@@ -42,89 +44,39 @@ var claims = oauth2.MapClaims{
 	"sub": "user",
 }
 
-type SubTest func(*testing.T)
-
 /*************************
 	Test Cases
  *************************/
+
 func TestJwtWithKid(t *testing.T) {
-
-	kids := []string{"kid1", "kid2", "kid3"}
-	staticJwkStore := NewStaticJwkStore(kids...)
-	enc := NewRS256JwtEncoder(staticJwkStore, testDefaultKid)
-
-	// encoding
-	value, err := enc.Encode(context.Background(), claims)
-	g := NewWithT(t)
-	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
-	g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
-
-	// plain text encoding
-	plainEnc := newPlainJwtEncoder()
-	plainValue, err := plainEnc.Encode(context.Background(), claims)
-	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't return error")
-	g.Expect(plainValue).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
-
-	t.Logf("JWT: %s", value)
-
-	// decode, happy path
-	t.Run("JwtDecodeSuccessWithSameKey",
-		SubTestJwtDecodeSuccessWithSameKey(value, staticJwkStore))
-	t.Run("JwtDecodeSuccessWithRotatedKey",
-		SubTestJwtDecodeSuccessWithRotatedKey(value, staticJwkStore))
-	t.Run("JwtDecodeSuccessWithCustomClaims",
-		SubTestJwtDecodeSuccessWithCustomClaims(value, staticJwkStore))
-
-	// decode, not so happey, kid exists, but not same key
-	t.Run("JwtDecodeFailedWithWrongKey",
-		SubTestJwtDecodeFailedWithWrongKey(value, kids[0]))
-	t.Run("JwtDecodeFailedWithNonExistingKey",
-		SubTestJwtDecodeFailedWithNonExistingKey(value))
-
-	// decode, not happy, alg is not supported by the decoder
-	t.Run("JwtDecodeFailsWithWrongAlg",
-		SubTestJwtDecodeFailsWithWrongAlg(plainValue, staticJwkStore))
+	test.RunTest(context.Background(), t,
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodHS256), "HS256"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodHS384), "HS384"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodHS512), "HS512"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodRS256), "RS256"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodRS384), "RS384"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodRS512), "RS512"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodES256), "ES256"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodES384), "ES384"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodES512), "ES512"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodPS256), "PS256"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodPS384), "PS384"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodPS512), "PS512"),
+		test.SubTest(SubTestJwtWithKid(jwt.SigningMethodEdDSA), "EdDSA"),
+	)
 }
 
 func TestJwtWithoutKid(t *testing.T) {
-	// Note, when using default "kid" defined in Encoder, "kid" field is omitted in the JWT
-	nonRotatingJwkStore := NewSingleJwkStore(testDefaultKid)
-	enc := NewRS256JwtEncoder(nonRotatingJwkStore, testDefaultKid)
-
-	// encoding
-	value, err := enc.Encode(context.Background(), claims)
-	g := NewWithT(t)
-	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
-	g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
-
-	// plain text encoding
-	plainEnc := newPlainJwtEncoder()
-	plainValue, err := plainEnc.Encode(context.Background(), claims)
-	g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't return error")
-	g.Expect(plainValue).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
-
-	t.Logf("JWT: %s", value)
-
-	// decode, happy path
-	t.Run("JwtDecodeSuccessWithSameKey",
-		SubTestJwtDecodeSuccessWithSameKey(value, nonRotatingJwkStore))
-	t.Run("JwtDecodeSuccessWithCustomClaims",
-		SubTestJwtDecodeSuccessWithCustomClaims(value, nonRotatingJwkStore))
-
-	// decode, not so happey, kid exists, but not same key
-	t.Run("JwtDecodeFailedWithWrongKey",
-		SubTestJwtDecodeFailedWithWrongKey(value, testDefaultKid))
-	t.Run("JwtDecodeFailedWithNonExistingKey",
-		SubTestJwtDecodeFailedWithNonExistingKey(value))
-
-	// decode, not happy, alg is not supported by the decoder
-	t.Run("JwtDecodeFailsWithWrongAlg",
-		SubTestJwtDecodeFailsWithWrongAlg(plainValue, nonRotatingJwkStore))
+	test.RunTest(context.Background(), t,
+		test.GomegaSubTest(SubTestJwtWithoutKid(jwt.SigningMethodHS256), "HS256"),
+		test.GomegaSubTest(SubTestJwtWithoutKid(jwt.SigningMethodRS256), "RS256"),
+		test.GomegaSubTest(SubTestJwtWithoutKid(jwt.SigningMethodES256), "ES256"),
+	)
 }
 
 func TestPlainJwt(t *testing.T) {
 	nonRotatingJwkStore := NewSingleJwkStore(testDefaultKid)
-	enc := NewRS256JwtEncoder(nonRotatingJwkStore, testDefaultKid)
+	enc := NewSignedJwtEncoder(SignWithJwkStore(nonRotatingJwkStore, testDefaultKid), SignWithMethod(jwt.SigningMethodRS256))
 
 	// encoding
 	value, err := enc.Encode(context.Background(), claims)
@@ -140,109 +92,185 @@ func TestPlainJwt(t *testing.T) {
 
 	t.Logf("JWT: %s", plainValue)
 
-	t.Run("SubTestPlainJwdDecodeSucceeds", SubTestPlainJwdDecodeSucceeds(plainValue))
-	t.Run("SubTestPlainJwtDecodeFailsWithWrongAlg", SubTestPlainJwtDecodeFailsWithWrongAlg(value))
+	test.RunTest(context.Background(), t,
+		test.GomegaSubTest(SubTestPlainJwdDecodeSucceeds(plainValue), "SubTestPlainJwdDecodeSucceeds"),
+		test.GomegaSubTest(SubTestPlainJwtDecodeFailsWithWrongAlg(value), "SubTestPlainJwtDecodeFailsWithWrongAlg"),
+	)
 }
 
 /*************************
 	Sub-Test Cases
  *************************/
-func SubTestJwtDecodeSuccessWithSameKey(jwtVal string, jwkStore JwkStore) SubTest {
-	return func(t *testing.T) {
-		dec := NewRS256JwtDecoder(jwkStore, testDefaultKid)
-		parsed, err := dec.Decode(context.Background(), jwtVal)
 
-		g := NewWithT(t)
+func SubTestSetupEncodeJwt(method jwt.SigningMethod, jwkStore JwkStore, kid string) test.SetupFunc {
+	return func(ctx context.Context, t *testing.T) (context.Context, error) {
+		g := gomega.NewWithT(t)
+		enc := NewSignedJwtEncoder(SignWithJwkStore(jwkStore, kid), SignWithMethod(method))
+
+		// encoding
+		value, err := enc.Encode(ctx, claims)
+		g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
+		g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
+		t.Logf("JWT: %s", value)
+		headers, e := ParseJwtHeaders(value)
+		g.Expect(e).To(Succeed(), "parsing JWT header should not fail")
+		g.Expect(headers).To(HaveKeyWithValue("alg", method.Alg()), "encoded JWT should have correct 'alg' in header")
+		return contextWithJwt(ctx, value), nil
+	}
+}
+
+func SubTestJwtWithKid(method jwt.SigningMethod) test.SubTestFunc {
+	return func(ctx context.Context, t *testing.T) {
+		kids := []string{"kid1", "kid2", "kid3"}
+		staticJwkStore := NewStaticJwkStoreWithOptions(func(s *StaticJwkStore) {
+			s.KIDs = kids
+			s.SigningMethod = method
+		})
+
+		test.RunTest(ctx, t,
+			test.SubTestSetup(SubTestSetupEncodeJwt(method, staticJwkStore, testDefaultKid)),
+			// decode, happy path
+			test.GomegaSubTest(SubTestJwtEncodeWithDynamicMethod(staticJwkStore, testDefaultKid), "JwtEncodeWithDynamicMethod"),
+			test.GomegaSubTest(SubTestJwtDecodeSuccessWithSameKey(staticJwkStore), "JwtDecodeSuccessWithSameKey"),
+			test.GomegaSubTest(SubTestJwtDecodeSuccessWithRotatedKey(staticJwkStore), "JwtDecodeSuccessWithRotatedKey"),
+			test.GomegaSubTest(SubTestJwtDecodeSuccessWithCustomClaims(staticJwkStore), "JwtDecodeSuccessWithCustomClaims"),
+			// decode, not so happy, Kid exists, but not same key
+			test.GomegaSubTest(SubTestJwtDecodeFailedWithWrongKey(method, kids[0]), "JwtDecodeFailedWithWrongKey"),
+			test.GomegaSubTest(SubTestJwtDecodeFailedWithNonExistingKey(), "JwtDecodeFailedWithNonExistingKey"),
+			// decode, not happy, alg is not supported by the decoder
+			test.GomegaSubTest(SubTestJwtDecodeFailsWithWrongAlg(staticJwkStore), "JwtDecodeFailsWithWrongAlg"),
+		)
+	}
+}
+
+func SubTestJwtWithoutKid(method jwt.SigningMethod) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *WithT) {
+		// Note, when using default "kid" defined in Encoder, "kid" field is omitted in the JWT
+		nonRotatingJwkStore := NewSingleJwkStoreWithOptions(func(s *SingleJwkStore) {
+			s.Kid = testDefaultKid
+			s.SigningMethod = method
+		})
+
+		test.RunTest(ctx, t,
+			test.SubTestSetup(SubTestSetupEncodeJwt(method, nonRotatingJwkStore, testDefaultKid)),
+			// decode, happy path
+			test.GomegaSubTest(SubTestJwtEncodeWithDynamicMethod(nonRotatingJwkStore, testDefaultKid), "JwtEncodeWithDynamicMethod"),
+			test.GomegaSubTest(SubTestJwtDecodeSuccessWithSameKey(nonRotatingJwkStore), "JwtDecodeSuccessWithSameKey"),
+			test.GomegaSubTest(SubTestJwtDecodeSuccessWithCustomClaims(nonRotatingJwkStore), "nonRotatingJwkStore"),
+			// decode, not so happy, Kid exists, but not same key
+			test.GomegaSubTest(SubTestJwtDecodeFailedWithWrongKey(method, testDefaultKid), "JwtDecodeFailedWithWrongKey"),
+			test.GomegaSubTest(SubTestJwtDecodeFailedWithNonExistingKey(), "JwtDecodeFailedWithNonExistingKey"),
+			// decode, not happy, alg is not supported by the decoder
+			test.GomegaSubTest(SubTestJwtDecodeFailsWithWrongAlg(nonRotatingJwkStore), "JwtDecodeFailsWithWrongAlg"),
+		)
+	}
+}
+
+func SubTestJwtEncodeWithDynamicMethod(jwkStore JwkStore, kid string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		enc := NewSignedJwtEncoder(SignWithJwkStore(jwkStore, kid), SignWithMethod(nil))
+
+		// encoding
+		value, err := enc.Encode(ctx, claims)
+		g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
+		g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
+	}
+}
+
+func SubTestJwtDecodeSuccessWithSameKey(jwkStore JwkStore) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
+		parsed, err := dec.Decode(context.Background(), jwtFromContext(ctx))
+
 		assertDecodeResult(g, parsed, err)
 		assertMapClaims(g, claims, parsed)
 	}
 }
 
-func SubTestJwtDecodeSuccessWithRotatedKey(jwtVal string, jwkStore JwkRotator) SubTest {
-	return func(t *testing.T) {
+func SubTestJwtDecodeSuccessWithRotatedKey(jwkStore JwkRotator) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		if err := jwkStore.Rotate(context.Background(), ""); err != nil {
 			t.Errorf("StaticJwkStore key roation should not have error, but got %v", err)
 		}
-		dec := NewRS256JwtDecoder(jwkStore, testDefaultKid)
-		parsed, err := dec.Decode(context.Background(), jwtVal)
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
+		parsed, err := dec.Decode(context.Background(), jwtFromContext(ctx))
 
-		g := NewWithT(t)
 		assertDecodeResult(g, parsed, err)
 		assertMapClaims(g, claims, parsed)
 	}
 }
 
-func SubTestJwtDecodeSuccessWithCustomClaims(jwtVal string, jwkStore JwkStore) SubTest {
-	return func(t *testing.T) {
-		g := NewWithT(t)
-		dec := NewRS256JwtDecoder(jwkStore, testDefaultKid)
+func SubTestJwtDecodeSuccessWithCustomClaims(jwkStore JwkStore) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 
 		custom := customClaims{}
-		err := dec.DecodeWithClaims(context.Background(), jwtVal, &custom)
+		err := dec.DecodeWithClaims(context.Background(), jwtFromContext(ctx), &custom)
 		assertDecodeResult(g, custom, err)
 		assertCustomClaims(g, claims, custom)
 
 		compatible := customCompatibleClaims{}
-		err = dec.DecodeWithClaims(context.Background(), jwtVal, &compatible)
+		err = dec.DecodeWithClaims(context.Background(), jwtFromContext(ctx), &compatible)
 		assertDecodeResult(g, custom, err)
 		assertCustomClaims(g, claims, compatible.customClaims)
 	}
 }
 
-func SubTestJwtDecodeFailedWithWrongKey(jwtVal string, kid string) SubTest {
-	return func(t *testing.T) {
-
-		store := NewSingleJwkStore(kid)
-		dec := NewRS256JwtDecoder(store, testDefaultKid)
-		_, err := dec.Decode(context.Background(), jwtVal)
-
-		g := NewWithT(t)
-		g.Expect(err).
-			NotTo(Succeed(), "decode with different JWK should return validation error")
+func SubTestJwtDecodeFailedWithWrongKey(method jwt.SigningMethod, kid string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		store := NewSingleJwkStoreWithOptions(func(s *SingleJwkStore) {
+			s.Kid = kid
+			s.SigningMethod = method
+		})
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(store, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
+		_, err := dec.Decode(context.Background(), jwtFromContext(ctx))
+		g.Expect(err).NotTo(Succeed(), "decode with different JWK should return validation error")
 	}
 }
 
-func SubTestJwtDecodeFailedWithNonExistingKey(jwtVal string) SubTest {
-	return func(t *testing.T) {
+func SubTestJwtDecodeFailedWithNonExistingKey() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		store := NewSingleJwkStore("whatever")
-		dec := NewRS256JwtDecoder(store, testDefaultKid)
-		_, err := dec.Decode(context.Background(), jwtVal)
-
-		g := NewWithT(t)
-		g.Expect(err).
-			NotTo(Succeed(), "decode with non-existing JWK should return validation error")
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(store, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
+		_, err := dec.Decode(context.Background(), jwtFromContext(ctx))
+		g.Expect(err).NotTo(Succeed(), "decode with non-existing JWK should return validation error")
 	}
 }
 
-func SubTestJwtDecodeFailsWithWrongAlg(jwtVal string, jwkStore JwkStore) SubTest {
-	return func(t *testing.T) {
-		dec := NewRS256JwtDecoder(jwkStore, testDefaultKid)
-		_, err := dec.Decode(context.Background(), jwtVal)
+func SubTestJwtDecodeFailsWithWrongAlg(jwkStore JwkStore) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 
-		g := NewWithT(t)
+		// plain text encoding
+		plainEnc := newPlainJwtEncoder()
+		plainValue, err := plainEnc.Encode(context.Background(), claims)
+		g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't return error")
+		g.Expect(plainValue).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
+
+		// another decorder
+		dec := NewSignedJwtDecoder(VerifyWithJwkStore(jwkStore, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
+		_, e := dec.Decode(context.Background(), plainValue)
+
 		var validationError *jwt.ValidationError
-		g.Expect(errors.As(err, &validationError)).To(BeTrue())
+		g.Expect(errors.As(e, &validationError)).To(BeTrue())
 		g.Expect(validationError.Is(jwt.ErrTokenSignatureInvalid))
 	}
 }
 
-func SubTestPlainJwdDecodeSucceeds(jwtVal string) SubTest {
-	return func(t *testing.T) {
+func SubTestPlainJwdDecodeSucceeds(jwtVal string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		dec := NewPlaintextJwtDecoder()
 		parsed, err := dec.Decode(context.Background(), jwtVal)
 
-		g := NewWithT(t)
 		assertDecodeResult(g, parsed, err)
 		assertMapClaims(g, claims, parsed)
 	}
 }
 
-func SubTestPlainJwtDecodeFailsWithWrongAlg(jwtVal string) SubTest {
-	return func(t *testing.T) {
+func SubTestPlainJwtDecodeFailsWithWrongAlg(jwtVal string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		dec := NewPlaintextJwtDecoder()
 		_, err := dec.Decode(context.Background(), jwtVal)
 
-		g := NewWithT(t)
 		var validationError *jwt.ValidationError
 		g.Expect(errors.As(err, &validationError)).To(BeTrue())
 		g.Expect(validationError.Is(jwt.ErrTokenSignatureInvalid))
@@ -252,6 +280,18 @@ func SubTestPlainJwtDecodeFailsWithWrongAlg(jwtVal string) SubTest {
 /*************************
 	Helpers
  *************************/
+
+type ckJwt struct{}
+
+func contextWithJwt(ctx context.Context, jwt string) context.Context {
+	return context.WithValue(ctx, ckJwt{}, jwt)
+}
+
+func jwtFromContext(ctx context.Context) string {
+	v, _ := ctx.Value(ckJwt{}).(string)
+	return v
+}
+
 func assertDecodeResult(g *WithT, decoded oauth2.Claims, err error) {
 	g.Expect(err).NotTo(HaveOccurred(), "Decode should not return error.")
 	g.Expect(decoded).NotTo(BeNil(), "Decode should return non-nil claims")

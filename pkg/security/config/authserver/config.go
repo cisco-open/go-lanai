@@ -344,14 +344,14 @@ func (c *Configuration) jwkStore() jwt.JwkStore {
 
 func (c *Configuration) jwtEncoder() jwt.JwtEncoder {
 	if c.sharedJwtEncoder == nil {
-		c.sharedJwtEncoder = jwt.NewRS256JwtEncoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
+		c.sharedJwtEncoder = jwt.NewSignedJwtEncoder(jwt.SignWithJwkStore(c.jwkStore(), c.cryptoProperties.Jwt.KeyName))
 	}
 	return c.sharedJwtEncoder
 }
 
 func (c *Configuration) jwtDecoder() jwt.JwtDecoder {
 	if c.sharedJwtDecoder == nil {
-		c.sharedJwtDecoder = jwt.NewRS256JwtDecoder(c.jwkStore(), c.cryptoProperties.Jwt.KeyName)
+		c.sharedJwtDecoder = jwt.NewSignedJwtDecoder(jwt.VerifyWithJwkStore(c.jwkStore(), c.cryptoProperties.Jwt.KeyName))
 	}
 	return c.sharedJwtDecoder
 }

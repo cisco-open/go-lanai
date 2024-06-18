@@ -59,8 +59,8 @@ const (
 
 var (
 	jwtStore = jwt.NewSingleJwkStore(TestDefaultKid)
-	jwtDec   = jwt.NewRS256JwtDecoder(jwtStore, TestDefaultKid)
-	jwtEnc   = jwt.NewRS256JwtEncoder(jwtStore, TestDefaultKid)
+	jwtDec   = jwt.NewSignedJwtDecoder(jwt.VerifyWithJwkStore(jwtStore, TestDefaultKid))
+	jwtEnc   = jwt.NewSignedJwtEncoder(jwt.SignWithJwkStore(jwtStore, TestDefaultKid))
 	issuer   = security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
 		*opt = security.DefaultIssuerDetails{
 			Protocol:    TestAuthServerProtocol,
@@ -204,7 +204,7 @@ func SubTestLogoutWithWrongIdTokenHint() test.GomegaSubTestFunc {
 func SubTestLogoutWithInvalidIdTokenHint() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		anotherJwtStore := jwt.NewSingleJwkStore(TestDefaultKid)
-		anotherEnc := jwt.NewRS256JwtEncoder(anotherJwtStore, TestDefaultKid)
+		anotherEnc := jwt.NewSignedJwtEncoder(jwt.SignWithJwkStore(anotherJwtStore, TestDefaultKid))
 
 		claims := oauth2.MapClaims{
 			"aud": TestClientID,

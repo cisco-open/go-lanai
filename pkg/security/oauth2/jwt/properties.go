@@ -57,14 +57,14 @@ func (p CryptoKeyProperties) Format() KeyFormatType {
 	return KeyFormatType(strings.ToLower(p.KeyFormat))
 }
 
-//CryptoProperties create a SessionProperties with default values
+// NewCryptoProperties create a CryptoProperties with default values
 func NewCryptoProperties() *CryptoProperties {
 	return &CryptoProperties {
 		Keys: map[string]CryptoKeyProperties{},
 	}
 }
 
-//BindCryptoProperties create and bind CryptoProperties, with a optional prefix
+// BindCryptoProperties create and bind CryptoProperties, with a optional prefix
 func BindCryptoProperties(ctx *bootstrap.ApplicationContext) CryptoProperties {
 	props := NewCryptoProperties()
 	if err := ctx.Config().Bind(props, CryptoKeysPropertiesPrefix); err != nil {

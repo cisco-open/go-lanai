@@ -1,0 +1,199 @@
+package jwt
+
+import (
+	"bytes"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
+	"crypto/rsa"
+	"encoding/base64"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"math/big"
+)
+
+const (
+	JwkTypeEC    = `EC`
+	JwkTypeRSA   = `RSA`
+	JwkTypeOctet = `oct`
+)
+
+func marshalJwk(jwk Jwk) ([]byte, error) {
+	params := generalJwk{Id: jwk.Id()}
+	key := jwk.Public()
+	var val interface{}
+	switch v := key.(type) {
+	case *rsa.PublicKey:
+		val = makeRSAPublicJwk(v, params)
+	case *ecdsa.PublicKey:
+		val = makeECPublicJwk(v, params)
+	case ed25519.PrivateKey:
+		// TODO
+	case []byte:
+		val = makeOctetJwk(v, params)
+	default:
+		return nil, fmt.Errorf(`unable to marshal JWK: unrecognized public key type: %T`, key)
+	}
+	return json.Marshal(val)
+}
+
+func unmarshalJwk(data []byte) (Jwk, error) {
+	var meta generalJwk
+	if e := json.Unmarshal(data, &meta); e != nil {
+		return nil, e
+	}
+	var err error
+	var jwk publicJwk
+	switch meta.Type {
+	case JwkTypeRSA:
+		jwk = &rsaPublicJwk{}
+		err = json.Unmarshal(data, jwk)
+	case JwkTypeEC:
+		jwk = &ecPublicJwk{}
+		err = json.Unmarshal(data, jwk)
+	case JwkTypeOctet:
+		jwk = &octetJwk{}
+		err = json.Unmarshal(data, jwk)
+	default:
+		return nil, fmt.Errorf(`invalid 'kty': %s`, meta.Type)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return jwk.toJwk()
+}
+
+type jwkBytes []byte
+
+func (b jwkBytes) String() string {
+	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+func (b jwkBytes) BigInt() *big.Int {
+	if len(b) == 0 {
+		return nil
+	}
+	i := big.NewInt(0)
+	i.SetBytes(b)
+	return i
+}
+
+func (b jwkBytes) MarshalText() ([]byte, error) {
+	return []byte(b.String()), nil
+}
+
+func (b *jwkBytes) UnmarshalText(data []byte) error {
+	v, e := base64.RawURLEncoding.DecodeString(string(data))
+	if e != nil {
+		return e
+	}
+	*b = v
+	return nil
+}
+
+type generalJwk struct {
+	Id   string `json:"kid"`
+	Type string `json:"kty"`
+}
+
+type publicJwk interface {
+	toJwk() (Jwk, error)
+}
+
+type ecPublicJwk struct {
+	generalJwk
+	Curve       string   `json:"crv"`
+	CoordinateX jwkBytes `json:"x"`
+	CoordinateY jwkBytes `json:"y,omitempty"`
+}
+
+func (j ecPublicJwk) toJwk() (Jwk, error) {
+	var curve elliptic.Curve
+	switch j.Curve {
+	case "P-256":
+		curve = elliptic.P256()
+	case "P-384":
+		curve = elliptic.P384()
+	case "P-521":
+		curve = elliptic.P521()
+	default:
+		return nil, fmt.Errorf(`unsupported 'crv' of EC JWK`)
+	}
+	key := &ecdsa.PublicKey{
+		Curve: curve,
+		X:     j.CoordinateX.BigInt(),
+		Y:     j.CoordinateY.BigInt(),
+	}
+	return NewJwk(j.Id, j.Id, key), nil
+}
+
+func makeECPublicJwk(key *ecdsa.PublicKey, params generalJwk) ecPublicJwk {
+	var x, y []byte
+	if key.X != nil {
+		x = key.X.Bytes()
+	}
+	if key.Y != nil {
+		y = key.Y.Bytes()
+	}
+	var crv string
+	if key.Curve.Params() != nil {
+		crv = key.Curve.Params().Name
+	}
+	params.Type = JwkTypeEC
+	return ecPublicJwk{
+		generalJwk:  params,
+		Curve:       crv,
+		CoordinateX: x,
+		CoordinateY: y,
+	}
+}
+
+type rsaPublicJwk struct {
+	generalJwk
+	Modulus  jwkBytes `json:"n"`
+	Exponent jwkBytes `json:"e"`
+}
+
+func (j rsaPublicJwk) toJwk() (Jwk, error) {
+	key := &rsa.PublicKey{
+		N: j.Modulus.BigInt(),
+		E: int(j.Exponent.BigInt().Uint64()),
+	}
+	return NewJwk(j.Id, j.Id, key), nil
+}
+
+func makeRSAPublicJwk(key *rsa.PublicKey, params generalJwk) rsaPublicJwk {
+	params.Type = JwkTypeRSA
+	return rsaPublicJwk{
+		generalJwk: params,
+		Modulus:    key.N.Bytes(),
+		// Exponent convert to two's-complement in big-endian byte-order
+		Exponent: bigEndian(key.E),
+	}
+}
+
+type octetJwk struct {
+	generalJwk
+	Key jwkBytes `json:"k"`
+}
+
+func (j octetJwk) toJwk() (Jwk, error) {
+	return NewJwk(j.Id, j.Id, []byte(j.Key)), nil
+}
+
+func makeOctetJwk(key []byte, params generalJwk) octetJwk {
+	params.Type = JwkTypeOctet
+	return octetJwk{
+		generalJwk: params,
+		Key:        key,
+	}
+}
+
+func bigEndian(i int) []byte {
+	buf := bytes.NewBuffer(make([]byte, 0, 8))
+	if e := binary.Write(buf, binary.BigEndian, uint64(i)); e != nil {
+		return nil
+	}
+	return buf.Bytes()
+}

@@ -17,8 +17,6 @@
 package jwt
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"github.com/golang-jwt/jwt/v4"
@@ -32,13 +30,19 @@ func ParseJwtHeaders(jwtValue string) (map[string]interface{}, error) {
 		return nil, jwt.NewValidationError("token contains an invalid number of segments", jwt.ValidationErrorMalformed)
 	}
 
-	// parse Header
-	//nolint:staticcheck
-	headerBytes, e := jwt.DecodeSegment(parts[0])
+	// decode header
+	encoded := parts[0]
+	b64 := base64.RawURLEncoding
+	if l := len(encoded) % 4; l > 0 {
+		encoded += strings.Repeat("=", 4-l)
+		b64 = base64.URLEncoding
+	}
+	headerBytes, e := b64.DecodeString(encoded)
 	if e != nil {
 		return nil, &jwt.ValidationError{Inner: e, Errors: jwt.ValidationErrorMalformed}
 	}
 
+	// unmarshal header
 	var headers map[string]interface{}
 	if e := json.Unmarshal(headerBytes, &headers); e != nil {
 		return nil, &jwt.ValidationError{Inner: e, Errors: jwt.ValidationErrorMalformed}
@@ -46,13 +50,13 @@ func ParseJwtHeaders(jwtValue string) (map[string]interface{}, error) {
 	return headers, nil
 }
 
-func printPrivateKey(key *rsa.PrivateKey) string {
-	//bytes := x509.MarshalPKCS1PrivateKey(key)
-	bytes, _ := x509.MarshalPKCS8PrivateKey(key)
-	return base64.StdEncoding.EncodeToString(bytes)
-}
-
-func printPublicKey(key *rsa.PublicKey) string {
-	bytes := x509.MarshalPKCS1PublicKey(key)
-	return base64.StdEncoding.EncodeToString(bytes)
-}
+//func printPrivateKey(key *rsa.PrivateKey) string {
+//	//bytes := x509.MarshalPKCS1PrivateKey(key)
+//	bytes, _ := x509.MarshalPKCS8PrivateKey(key)
+//	return base64.StdEncoding.EncodeToString(bytes)
+//}
+//
+//func printPublicKey(key *rsa.PublicKey) string {
+//	bytes := x509.MarshalPKCS1PublicKey(key)
+//	return base64.StdEncoding.EncodeToString(bytes)
+//}

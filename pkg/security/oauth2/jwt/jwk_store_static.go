@@ -18,8 +18,7 @@ package jwt
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 var (
@@ -27,26 +26,37 @@ var (
 )
 
 // StaticJwkStore implements JwkStore and JwkRotator
-// This store uses "kid" as seed to generate PrivateJwk. For same "kid" the returned key is same
+// This store uses "kid" as seed to generate PrivateJwk. For same "kid" the returned key is same.
 // this one is not thread safe
 type StaticJwkStore struct {
-	kids    []string
-	current int
-	lookup  map[string]Jwk
+	KIDs          []string
+	SigningMethod jwt.SigningMethod
+	current       int
+	lookup        map[string]Jwk
 }
 
-func NewStaticJwkStore(kids...string) *StaticJwkStore {
-	if len(kids) == 0 {
-		kids = kidRoundRobin
+func NewStaticJwkStoreWithOptions(opts ...func(s *StaticJwkStore)) *StaticJwkStore {
+	store := StaticJwkStore{
+		KIDs:          kidRoundRobin,
+		SigningMethod: jwt.SigningMethodRS256,
+		lookup:        map[string]Jwk{},
 	}
-	return &StaticJwkStore{
-		kids: kids,
-		lookup: map[string]Jwk{},
+	for _, fn := range opts {
+		fn(&store)
 	}
+	return &store
 }
 
-func (s *StaticJwkStore) Rotate(ctx context.Context, name string) error {
-	s.current = (s.current + 1) % len(kidRoundRobin)
+func NewStaticJwkStore(kids ...string) *StaticJwkStore {
+	return NewStaticJwkStoreWithOptions(func(s *StaticJwkStore) {
+		if len(kids) != 0 {
+			s.KIDs = kids
+		}
+	})
+}
+
+func (s *StaticJwkStore) Rotate(_ context.Context, _ string) error {
+	s.current = (s.current + 1) % len(s.KIDs)
 	return nil
 }
 
@@ -54,11 +64,11 @@ func (s *StaticJwkStore) LoadByKid(_ context.Context, kid string) (Jwk, error) {
 	return s.getOrNew(kid)
 }
 
-func (s *StaticJwkStore) LoadByName(_ context.Context, name string) (Jwk, error) {
-	return s.getOrNew(kidRoundRobin[s.current])
+func (s *StaticJwkStore) LoadByName(_ context.Context, _ string) (Jwk, error) {
+	return s.getOrNew(s.KIDs[s.current])
 }
 
-func (s *StaticJwkStore) LoadAll(ctx context.Context, names ...string) ([]Jwk, error) {
+func (s *StaticJwkStore) LoadAll(_ context.Context, _ ...string) ([]Jwk, error) {
 	jwks := make([]Jwk, len(s.lookup))
 
 	i := 0
@@ -74,13 +84,10 @@ func (s *StaticJwkStore) getOrNew(kid string) (Jwk, error) {
 		return jwk, nil
 	}
 
-	key, e := rsa.GenerateKey(rand.Reader, rsaKeySize)
+	jwk, e := generateRandomJwk(s.SigningMethod, kid, kid)
 	if e != nil {
 		return nil, e
 	}
-
-	jwk := NewRsaPrivateJwk(kid, kid, key)
 	s.lookup[kid] = jwk
-
 	return jwk, nil
 }

@@ -43,11 +43,11 @@ func NewTestAccountStore(props sectest.MockingProperties) security.AccountStore 
 }
 
 func NewJwtEncoder(jwks jwt.JwkStore) jwt.JwtEncoder {
-	return jwt.NewRS256JwtEncoder(jwks, JwtKID)
+	return jwt.NewSignedJwtEncoder(jwt.SignWithJwkStore(jwks, JwtKID))
 }
 
 func NewJwtDecoder(jwks jwt.JwkStore) jwt.JwtDecoder {
-	return jwt.NewRS256JwtDecoder(jwks, JwtKID)
+	return jwt.NewSignedJwtDecoder(jwt.VerifyWithJwkStore(jwks, JwtKID))
 }
 
 func NewJwkStore() jwt.JwkStore {
