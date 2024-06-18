@@ -60,6 +60,9 @@ func SignWithMethod(method jwt.SigningMethod) SigningOptions {
 
 // NewSignedJwtEncoder create a JwtEncoder that sign JWT with provided method.
 // Depending on the sign method, provided JwkStore should supply proper private keys.
+// Note: When using HS algorithms, the HMAC secret is treated as both public and private key,
+//       and it would be exposed via JWKS endpoint. It is service implementer's responsibility to
+//       protect the JWKS endpoint to prevent accidental leaking of HMAC secret.
 func NewSignedJwtEncoder(opts ...SigningOptions) *SignedJwtEncoder {
 	opt := SigningOption{
 		Method: jwt.SigningMethodRS256,
