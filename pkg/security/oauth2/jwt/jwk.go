@@ -45,6 +45,11 @@ type JwkStore interface {
 	// LoadByName returns the JWK associated with given name.
 	// The method might return different JWK for same name, if the store is also support rotation
 	// This method is usually used when encoding/encrypt JWT token
+	// Note: if the store does not support rotation (i.e. it doest not implement JwkRotator),
+	// this store could use the name as the jwk id. Doing so would allow the encoder to not
+	// add a "kid" header to the JWT token. This allows the use case where the JWT key is agreed upon by
+	// both the encoder and decoder through an out-of-band mechanism without using "kid".
+	// See the comment in SignedJwtEncoder.Encode for more details
 	LoadByName(ctx context.Context, name string) (Jwk, error)
 
 	// LoadAll return all JWK with given names. If name is not provided, all JWK is returned
@@ -61,7 +66,7 @@ type JwkRotator interface {
 	Implements Base
  *********************/
 
-// GenericJwk implements Jwk and PrivateJwk
+// GenericJwk implements Jwk
 type GenericJwk struct {
 	kid    string
 	name   string
@@ -124,14 +129,14 @@ type privateKey interface {
 
 // NewJwk new Jwk with specified public key
 // Supported public key types:
-// - *rsa.PublicKey
-// - *ecdsa.PublicKey
-// - ed25519.PublicKey
-// - []byte (MAC secret)
-// - any key implementing:
-//	 interface{
-//	     Equal(x crypto.PublicKey) bool
-//	 }
+//   - *rsa.PublicKey
+//   - *ecdsa.PublicKey
+//   - ed25519.PublicKey
+//   - []byte (MAC secret)
+//   - any key implementing:
+//     interface{
+//     Equal(x crypto.PublicKey) bool
+//     }
 func NewJwk(kid string, name string, pubKey crypto.PublicKey) Jwk {
 	return &GenericJwk{
 		kid:    kid,
@@ -142,15 +147,15 @@ func NewJwk(kid string, name string, pubKey crypto.PublicKey) Jwk {
 
 // NewPrivateJwk new PrivateJwk with specified private key
 // Supported private key types:
-// - *rsa.PrivateKey
-// - *ecdsa.PrivateKey
-// - ed25519.PrivateKey
-// - []byte (MAC secret)
-// - any key implementing:
-//	 interface{
-//	     Public() crypto.PublicKey
-//	     Equal(x crypto.PrivateKey) bool
-//	 }
+//   - *rsa.PrivateKey
+//   - *ecdsa.PrivateKey
+//   - ed25519.PrivateKey
+//   - []byte (MAC secret)
+//   - any key implementing:
+//     interface{
+//     Public() crypto.PublicKey
+//     Equal(x crypto.PrivateKey) bool
+//     }
 func NewPrivateJwk(kid string, name string, privKey crypto.PrivateKey) PrivateJwk {
 	var pubKey crypto.PublicKey
 	switch v := privKey.(type) {
@@ -172,7 +177,3 @@ func NewPrivateJwk(kid string, name string, privKey crypto.PrivateKey) PrivateJw
 		private: privKey,
 	}
 }
-
-
-
-

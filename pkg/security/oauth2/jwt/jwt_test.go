@@ -130,7 +130,7 @@ func SubTestJwtWithKid(method jwt.SigningMethod) test.SubTestFunc {
 		test.RunTest(ctx, t,
 			test.SubTestSetup(SubTestSetupEncodeJwt(method, staticJwkStore, testDefaultKid)),
 			// decode, happy path
-			test.GomegaSubTest(SubTestJwtEncodeWithDynamicMethod(staticJwkStore, testDefaultKid), "JwtEncodeWithDynamicMethod"),
+			test.GomegaSubTest(SubTestJwtEncodeWithDynamicMethod(staticJwkStore, method, testDefaultKid), "JwtEncodeWithDynamicMethod"),
 			test.GomegaSubTest(SubTestJwtDecodeSuccessWithSameKey(staticJwkStore), "JwtDecodeSuccessWithSameKey"),
 			test.GomegaSubTest(SubTestJwtDecodeSuccessWithRotatedKey(staticJwkStore), "JwtDecodeSuccessWithRotatedKey"),
 			test.GomegaSubTest(SubTestJwtDecodeSuccessWithCustomClaims(staticJwkStore), "JwtDecodeSuccessWithCustomClaims"),
@@ -154,7 +154,7 @@ func SubTestJwtWithoutKid(method jwt.SigningMethod) test.GomegaSubTestFunc {
 		test.RunTest(ctx, t,
 			test.SubTestSetup(SubTestSetupEncodeJwt(method, nonRotatingJwkStore, testDefaultKid)),
 			// decode, happy path
-			test.GomegaSubTest(SubTestJwtEncodeWithDynamicMethod(nonRotatingJwkStore, testDefaultKid), "JwtEncodeWithDynamicMethod"),
+			test.GomegaSubTest(SubTestJwtEncodeWithDynamicMethod(nonRotatingJwkStore, method, testDefaultKid), "JwtEncodeWithDynamicMethod"),
 			test.GomegaSubTest(SubTestJwtDecodeSuccessWithSameKey(nonRotatingJwkStore), "JwtDecodeSuccessWithSameKey"),
 			test.GomegaSubTest(SubTestJwtDecodeSuccessWithCustomClaims(nonRotatingJwkStore), "nonRotatingJwkStore"),
 			// decode, not so happy, Kid exists, but not same key
@@ -166,7 +166,7 @@ func SubTestJwtWithoutKid(method jwt.SigningMethod) test.GomegaSubTestFunc {
 	}
 }
 
-func SubTestJwtEncodeWithDynamicMethod(jwkStore JwkStore, kid string) test.GomegaSubTestFunc {
+func SubTestJwtEncodeWithDynamicMethod(jwkStore JwkStore, storeMethod jwt.SigningMethod, kid string) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		enc := NewSignedJwtEncoder(SignWithJwkStore(jwkStore, kid), SignWithMethod(nil))
 
@@ -174,6 +174,17 @@ func SubTestJwtEncodeWithDynamicMethod(jwkStore JwkStore, kid string) test.Gomeg
 		value, err := enc.Encode(ctx, claims)
 		g.Expect(err).NotTo(HaveOccurred(), "Encode shouldn't returns error")
 		g.Expect(value).NotTo(BeZero(), "Encoded jwt shouldn't be empty")
+
+		var claims jwt.MapClaims
+		p := jwt.NewParser(jwt.WithoutClaimsValidation())
+		token, _, err := p.ParseUnverified(value, claims)
+		switch storeMethod {
+		case jwt.SigningMethodRS256, jwt.SigningMethodRS384, jwt.SigningMethodRS512, jwt.SigningMethodPS256, jwt.SigningMethodPS384, jwt.SigningMethodPS512:
+			g.Expect(token.Header["alg"]).To(Equal(jwt.SigningMethodRS256.Alg()))
+		default:
+			g.Expect(token.Header["alg"]).To(Equal(storeMethod.Alg()))
+		}
+		g.Expect(err).ToNot(HaveOccurred())
 	}
 }
 

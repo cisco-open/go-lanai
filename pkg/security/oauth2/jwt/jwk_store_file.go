@@ -17,14 +17,20 @@
 package jwt
 
 import (
-    "context"
-    "crypto/rsa"
-    "crypto/sha256"
-    "crypto/x509"
-    "encoding/binary"
-    "encoding/hex"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+	"context"
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/hmac"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/binary"
+	"encoding/hex"
+	"encoding/pem"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/utils/cryptoutils"
+	"hash"
 )
 
 const (
@@ -39,6 +45,27 @@ const (
 // FileJwkStore implements JwkStore and JwkRotator
 // This store uses load key files for public and private keys.
 // File locations and "kids" are read from properties. And rotate between pre-defined keys
+// The properties are structured as follows:
+//
+//	keys:
+//	 my-key-name:
+//	   id: my-key-id
+//	   format: pem
+//	   file: my-key-file.pem
+//
+// Keys loaded under the same key name will all have the same name. The LoadByName method will load one of the keys.
+// Which key will be loaded is determined by the current index for that name. The Rotate method will increment the index
+// for that name.
+// If id property is provided, the actual key id will be the property id plus an integer suffix.
+// If id property is not provided, the actual key id will be the key name plus a UUID suffix.
+//
+// Supports PEM format.
+// Supports:
+// 1. pkcs8 unencrypted private key - because golang standard library does not support this
+// 2. traditional unencrypted private key and encrypted private key
+// 3. traditional public key (pkcs1 rsa or pkix for ecdsa)
+// 4. x509 certificate
+// 5. HMAC key (using custom label "HMAC KEY", i.e. -----BEGIN HMAC KEY-----)
 type FileJwkStore struct {
 	cacheById   map[string]Jwk
 	cacheByName map[string][]Jwk
@@ -146,8 +173,8 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 	privJwks := make([]Jwk, 0)
 	pubJwks := make([]Jwk, 0)
 	for i, v := range items {
-		var privKey *rsa.PrivateKey
-		var pubKey *rsa.PublicKey
+		var privKey crypto.PrivateKey
+		var pubKey crypto.PublicKey
 
 		// get private or public key
 		switch v.(type) {
@@ -155,13 +182,34 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 			privKey = v.(*rsa.PrivateKey)
 		case *rsa.PublicKey:
 			pubKey = v.(*rsa.PublicKey)
+		case *ecdsa.PrivateKey:
+			privKey = v.(*ecdsa.PrivateKey)
+		case *ecdsa.PublicKey:
+			pubKey = v.(*ecdsa.PublicKey)
+		case ed25519.PrivateKey:
+			privKey = v.(ed25519.PrivateKey)
+		case ed25519.PublicKey:
+			pubKey = v.(ed25519.PublicKey)
 		case *x509.Certificate:
 			cert := v.(*x509.Certificate)
-			k, ok := cert.PublicKey.(*rsa.PublicKey)
-			if !ok {
+			switch cert.PublicKey.(type) {
+			case *rsa.PublicKey:
+				pubKey = cert.PublicKey.(*rsa.PublicKey)
+			case *ecdsa.PublicKey:
+				pubKey = cert.PublicKey.(*ecdsa.PublicKey)
+			case ed25519.PublicKey:
+				pubKey = cert.PublicKey.(ed25519.PublicKey)
+			default:
 				return nil, fmt.Errorf(errTmplUnsupportedPubKey, cert.PublicKey)
 			}
-			pubKey = k
+		case *pem.Block:
+			switch v.(*pem.Block).Type {
+			case "HMAC KEY":
+				logger.Warnf("File contains HMAC keys, please make sure the jwks end point is secured")
+				privKey = v.(*pem.Block).Bytes
+			default:
+				return nil, fmt.Errorf(errTmplUnsupportedBlock, v)
+			}
 		default:
 			return nil, fmt.Errorf(errTmplUnsupportedBlock, v)
 		}
@@ -171,12 +219,12 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 		case privKey == nil && len(privJwks) != 0:
 			return nil, fmt.Errorf(errTmplPubPrivMixed)
 		case privKey == nil:
-			kid := calculateKid(props, name, i, pubKey)
+			kid := calculateKid(props, name, i, len(items), pubKey)
 			pubJwks = append(pubJwks, NewJwk(kid, name, pubKey))
 		case len(pubJwks) != 0:
 			return nil, fmt.Errorf(errTmplPubPrivMixed)
 		default:
-			kid := calculateKid(props, name, i, &privKey.PublicKey)
+			kid := calculateKid(props, name, i, len(items), privKey)
 			privJwks = append(privJwks, NewPrivateJwk(kid, name, privKey))
 		}
 	}
@@ -196,17 +244,58 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 	}
 }
 
-func calculateKid(props CryptoKeyProperties, name string, blockIndex int, key *rsa.PublicKey) string {
+func calculateKid(props CryptoKeyProperties, name string, blockIndex int, numBlocks int, key any) string {
+	if numBlocks == 1 {
+		return name
+	}
+
 	if props.Id != "" {
 		return fmt.Sprintf("%s-%d", props.Id, blockIndex)
 	}
 
-	// best effort to create a unique suffix for the kid
+	//best effort to generate a kid that is consistent across restarts
+	var hash hash.Hash
+	switch key.(type) {
+	case *rsa.PrivateKey:
+		privKey := key.(*rsa.PrivateKey)
+		hash = hashForRSA(&privKey.PublicKey)
+	case *rsa.PublicKey:
+		hash = hashForRSA(key.(*rsa.PublicKey))
+	case *ecdsa.PrivateKey:
+		privKey := key.(*ecdsa.PrivateKey)
+		hash = hashForEcdsa(privKey.Public().(*ecdsa.PublicKey))
+	case *ecdsa.PublicKey:
+		hash = hashForEcdsa(key.(*ecdsa.PublicKey))
+	case ed25519.PrivateKey:
+		privKey := key.(ed25519.PrivateKey)
+		hash = hashForEd25519(privKey.Public().(ed25519.PublicKey))
+	case ed25519.PublicKey:
+		hash = hashForEd25519(key.(ed25519.PublicKey))
+	case []byte:
+		hash = hmac.New(sha256.New, key.([]byte))
+		hash.Write([]byte(name))
+	}
+	sum := hash.Sum(nil)
+	suffix := hex.EncodeToString(sum)
+	return name + "-" + suffix
+}
+
+func hashForRSA(key *rsa.PublicKey) hash.Hash {
 	hash := sha256.New224()
 	_, _ = hash.Write(key.N.Bytes())
 	_ = binary.Write(hash, binary.LittleEndian, int64(key.E))
-	sum := hash.Sum(nil)
-	suffix := hex.EncodeToString(sum)
+	return hash
+}
 
-	return name + "-" + suffix
+func hashForEd25519(key ed25519.PublicKey) hash.Hash {
+	hash := sha256.New224()
+	_, _ = hash.Write(key)
+	return hash
+}
+
+func hashForEcdsa(key *ecdsa.PublicKey) hash.Hash {
+	hash := sha256.New224()
+	_, _ = hash.Write(key.X.Bytes())
+	_, _ = hash.Write(key.Y.Bytes())
+	return hash
 }

@@ -2,7 +2,11 @@ package jwt
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -22,12 +26,12 @@ const (
 )
 
 var basicClaims = oauth2.BasicClaims{
-	ExpiresAt:         time.Now().Add(120 * time.Minute),
-	IssuedAt:          time.Now(),
-	Issuer:            "test",
-	NotBefore:         time.Now(),
-	Subject:           "test-user",
-	ClientId:          "test-client",
+	ExpiresAt: time.Now().Add(120 * time.Minute),
+	IssuedAt:  time.Now(),
+	Issuer:    "test",
+	NotBefore: time.Now(),
+	Subject:   "test-user",
+	ClientId:  "test-client",
 }
 
 /*************************
@@ -36,44 +40,81 @@ var basicClaims = oauth2.BasicClaims{
 
 func TestFileJwkStore(t *testing.T) {
 	test.RunTest(context.Background(), t,
-		test.GomegaSubTest(SubTestMultiBlockPEM("rsa-2048", false), "RSA-2048"),
-		// TODO ECDSA should be supported
-		//test.GomegaSubTest(SubTestMultiBlockPEM("ec-p256", false), "ECDSA-P-256"),
-		//test.GomegaSubTest(SubTestMultiBlockPEM("ec-p384", false), "ECDSA-P-384"),
-		//test.GomegaSubTest(SubTestMultiBlockPEM("ec-p521", false), "ECDSA-P-521"),
-		// TODO more tests for MAC secret
-		// TODO ed25519 should be supported
-		//test.GomegaSubTest(SubTestMultiBlockPEM("ed25519", true), "ED25519"),
-		// TODO find a way to decrypt password protected private key (any kind) without using x509.DecryptPEMBlock
-	)
+		test.GomegaSubTest(SubTestMultiBlockAsymmetricPEM("rsa-2048", false), "RSA-2048"),
+		test.GomegaSubTest(SubTestMultiBlockAsymmetricPEM("ec-p256", false), "ECDSA-P-256"),
+		test.GomegaSubTest(SubTestMultiBlockAsymmetricPEM("ec-p384", false), "ECDSA-P-384"),
+		test.GomegaSubTest(SubTestMultiBlockAsymmetricPEM("ec-p521", false), "ECDSA-P-521"),
 
+		test.GomegaSubTest(SubTestMultiBlockSymmetricPem("hmac-256"), "HMAC-256"),
+		test.GomegaSubTest(SubTestMultiBlockSymmetricPem("hmac-384"), "HMAC-384"),
+		test.GomegaSubTest(SubTestMultiBlockSymmetricPem("hmac-512"), "HMAC-512"),
+
+		// for ed25519, there is no "traditional format" for private key (from openSSL).
+		// openSSL also doesn't support password protected private key for ed25519 in non-pkcs8 format.
+		// but golang doesn't support pkcs8 encrypted format. so we have to skip the password tests here.
+		test.GomegaSubTest(SubTestMultiBlockAsymmetricPEM("ed25519", true), "ED25519"),
+
+		test.GomegaSubTest(SubTestSingleBlockPem("hmac-256"), "single-key"),
+	)
 }
 
 /*************************
 	Sub-Test Cases
  *************************/
 
-func SubTestMultiBlockPEM(prefix string, skipPasswd bool) test.GomegaSubTestFunc {
+func SubTestMultiBlockSymmetricPem(prefix string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const b = 3
+		cases := []TestPEMKey{
+			{Name: "SymmetricKeyWithID", Prefix: prefix, File: prefix + ".pem", ID: true, Expect: PrivateBlocks(b)},
+			{Name: "SymmetricKeyWithoutID", Prefix: prefix, File: prefix + ".pem", ID: false, Expect: PrivateBlocks(b)},
+		}
+		opts := make([]test.Options, len(cases))
+		for i := range cases {
+			opts[i] = test.GomegaSubTest(SubTestLoadPEM(cases[i]), cases[i].Name)
+		}
+		test.RunTest(ctx, t, opts...)
+	}
+}
+
+func SubTestMultiBlockAsymmetricPEM(prefix string, skipPasswd bool) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const b = 3
 		cases := []TestPEMKey{
 			// with ID
-			{Name: "PrivateKeyWithID", File: prefix + "-priv-key.pem", ID: true, Expect: PrivateBlocks(b)},
-			{Name: "PublicKeyWithID", File: prefix + "-pub-key.pem", ID: true, Expect: PublicBlocks(b)},
-			{Name: "CertificateWithID", File: prefix + "-cert.pem", ID: true, Expect: PublicBlocks(b)},
+			{Name: "PrivateKeyWithID", Prefix: prefix, File: prefix + "-priv-key.pem", ID: true, Expect: PrivateBlocks(b)},
+			{Name: "PrivateKeyTraditionalWithID", Prefix: prefix, File: prefix + "-priv-key-trad.pem", ID: true, Expect: PrivateBlocks(b)},
+			{Name: "PublicKeyWithID", Prefix: prefix, File: prefix + "-pub-key.pem", ID: true, Expect: PublicBlocks(b)},
+			{Name: "CertificateWithID", Prefix: prefix, File: prefix + "-cert.pem", ID: true, Expect: PublicBlocks(b)},
 			// without ID
-			{Name: "PrivateKeyWithoutID", File: prefix + "-priv-key.pem", ID: false, Expect: PrivateBlocks(b)},
-			{Name: "PublicKeyWithoutID", File: prefix + "-pub-key.pem", ID: false, Expect: PublicBlocks(b)},
-			{Name: "CertificateWithoutID", File: prefix + "-cert.pem", ID: false, Expect: PublicBlocks(b)},
+			{Name: "PrivateKeyWithoutID", Prefix: prefix, File: prefix + "-priv-key.pem", ID: false, Expect: PrivateBlocks(b)},
+			{Name: "PrivateKeyTraditionalWithoutID", Prefix: prefix, File: prefix + "-priv-key-trad.pem", ID: true, Expect: PrivateBlocks(b)},
+			{Name: "PublicKeyWithoutID", Prefix: prefix, File: prefix + "-pub-key.pem", ID: false, Expect: PublicBlocks(b)},
+			{Name: "CertificateWithoutID", Prefix: prefix, File: prefix + "-cert.pem", ID: false, Expect: PublicBlocks(b)},
 		}
 		if !skipPasswd {
 			// with password (encrypted)
 			cases = append(cases,
-				TestPEMKey{Name: "EncryptedPrivateKeyWithPasswd", File: prefix + "-priv-key-aes256.pem", ID: true, Passwd: true, Expect: PrivateBlocks(b)},
-				TestPEMKey{Name: "EncryptedPrivateKeyWithWrongPasswd", File: prefix + "-priv-key-aes256-bad.pem", ID: true, Passwd: true, Expect: ExpectError()},
+				TestPEMKey{Name: "EncryptedPrivateKeyWithPasswd", Prefix: prefix, File: prefix + "-priv-key-aes256.pem", ID: true, Passwd: true, Expect: PrivateBlocks(b)},
+				TestPEMKey{Name: "EncryptedPrivateKeyWithWrongPasswd", Prefix: prefix, File: prefix + "-priv-key-aes256-bad.pem", ID: true, Passwd: true, Expect: ExpectError()},
 			)
 		}
 
+		opts := make([]test.Options, len(cases))
+		for i := range cases {
+			opts[i] = test.GomegaSubTest(SubTestLoadPEM(cases[i]), cases[i].Name)
+		}
+		test.RunTest(ctx, t, opts...)
+	}
+}
+
+func SubTestSingleBlockPem(prefix string) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		const b = 1
+		cases := []TestPEMKey{
+			{Name: "SingleKeyWithID", Prefix: prefix, File: prefix + "-single-key.pem", ID: true, Expect: PrivateBlocks(b)},
+			{Name: "SingleKeyWithoutID", Prefix: prefix, File: prefix + "-single-key.pem", ID: false, Expect: PrivateBlocks(b)},
+		}
 		opts := make([]test.Options, len(cases))
 		for i := range cases {
 			opts[i] = test.GomegaSubTest(SubTestLoadPEM(cases[i]), cases[i].Name)
@@ -89,7 +130,7 @@ func SubTestLoadPEM(src TestPEMKey) test.GomegaSubTestFunc {
 		if src.Expect.Error {
 			AssertEmptyFileJwkStore(ctx, g, store, src)
 		} else {
-			AssertLoadedFileJwkStore(ctx, g, store, src)
+			AssertLoadedFileJwkStore(ctx, g, store, props, src)
 		}
 	}
 }
@@ -99,6 +140,7 @@ func SubTestLoadPEM(src TestPEMKey) test.GomegaSubTestFunc {
  *************************/
 
 type TestPEMKey struct {
+	Prefix string
 	Name   string
 	File   string
 	ID     bool
@@ -153,24 +195,33 @@ func MakePEMCryptoKeyProperties(key TestPEMKey) CryptoKeyProperties {
 	return v
 }
 
-func AssertLoadedFileJwkStore(ctx context.Context, g *gomega.WithT, store *FileJwkStore, src TestPEMKey) {
+func AssertLoadedFileJwkStore(ctx context.Context, g *gomega.WithT, store *FileJwkStore, props CryptoProperties, src TestPEMKey) {
 	// LoadAll
+	kids := utils.NewStringSet()
 	all, e := store.LoadAll(ctx, DefaultPEMKeyName)
 	g.Expect(e).To(Succeed(), "LoadAll should not fail")
 	g.Expect(all).To(HaveLen(src.Expect.Blocks), `LoadAll should return correct number of JWKs`)
 	var privCount int
 	for _, jwk := range all {
+		AssertJwkType(ctx, g, src.Prefix, jwk)
+		kids.Add(jwk.Id())
 		if _, ok := jwk.(PrivateJwk); ok {
 			privCount++
 		}
 		g.Expect(jwk.Name()).To(Equal(DefaultPEMKeyName), "JWK's name should be correct")
-		if src.ID {
-			g.Expect(jwk.Id()).To(HavePrefix(DefaultPEMKeyID+"-"), `kid should have correct format'`)
+		if src.Expect.Blocks > 1 {
+			if src.ID {
+				g.Expect(jwk.Id()).To(HavePrefix(DefaultPEMKeyID+"-"), `kid should have correct format'`)
+			} else {
+				g.Expect(jwk.Id()).To(HavePrefix(DefaultPEMKeyName+"-"), `kid should have correct format'`)
+			}
 		} else {
-			g.Expect(jwk.Id()).To(HavePrefix(DefaultPEMKeyName+"-"), `kid should have correct format'`)
+			g.Expect(jwk.Id()).To(Equal(DefaultPEMKeyName), `kid should be the same as name for single block pem`)
 		}
 	}
 	g.Expect(privCount).To(Equal(src.Expect.Private), `Private JWK count should be correct`)
+	g.Expect(len(all)).To(Equal(src.Expect.Blocks), `JWK count should be correct`) //this means the public key count is correct as well
+	g.Expect(len(all)).To(Equal(len(kids.Values())), "JWK IDs should be unique")
 
 	// LoadByKid
 	kid := all[0].Id()
@@ -178,7 +229,7 @@ func AssertLoadedFileJwkStore(ctx context.Context, g *gomega.WithT, store *FileJ
 	g.Expect(e).To(Succeed(), `LoadByKid should not fail`)
 	g.Expect(jwk).ToNot(BeZero(), `LoadByKid should return zero value`)
 
-	// LoadByKid
+	// LoadByName
 	jwk, e = store.LoadByName(ctx, DefaultPEMKeyName)
 	g.Expect(e).To(Succeed(), `LoadByName should not fail`)
 	g.Expect(jwk).ToNot(BeZero(), `LoadByName should return zero value`)
@@ -214,8 +265,28 @@ func AssertEmptyFileJwkStore(ctx context.Context, g *gomega.WithT, store *FileJw
 }
 
 func AssertLoadedJwks(ctx context.Context, g *gomega.WithT, store *FileJwkStore) {
-	encoder := NewSignedJwtEncoder(SignWithJwkStore(store, DefaultPEMKeyName))
+	encoder := NewSignedJwtEncoder(SignWithJwkStore(store, DefaultPEMKeyName), SignWithMethod(nil))
 	t, e := encoder.Encode(ctx, basicClaims)
 	g.Expect(e).To(Succeed(), "using loaded JWK to encode JWT should not fail")
 	g.Expect(t).To(Not(BeEmpty()), "using loaded JWK to encode JWT should return empty string")
+}
+
+func AssertJwkType(_ context.Context, g *gomega.WithT, expectedType string, jwk Jwk) {
+	pubKey := jwk.Public()
+	switch expectedType {
+	case "ec-p256", "ec-p384", "ec-p521":
+		_, ok := pubKey.(*ecdsa.PublicKey)
+		g.Expect(ok).To(BeTrue())
+	case "ed25519":
+		_, ok := pubKey.(ed25519.PublicKey)
+		g.Expect(ok).To(BeTrue())
+	case "hmac-256", "hmac-384", "hmac-512":
+		_, ok := pubKey.([]byte)
+		g.Expect(ok).To(BeTrue())
+	case "rsa-2048":
+		_, ok := pubKey.(*rsa.PublicKey)
+		g.Expect(ok).To(BeTrue())
+	default:
+		g.Fail("unexpected file prefix")
+	}
 }
