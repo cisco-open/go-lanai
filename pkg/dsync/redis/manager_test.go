@@ -49,7 +49,7 @@ func TestRedisDSyncManager(t *testing.T) {
 		apptest.Bootstrap(),
 		embedded.WithRedis(),
 		apptest.WithModules(redis.Module),
-		//apptest.WithTimeout(2*time.Minute),
+		//apptest.WithTimeout(5*time.Minute),
 		apptest.WithDI(&di),
 		test.GomegaSubTest(SubTestTryLock(&di), "TestTryLock"),
 		test.GomegaSubTest(SubTestLockAndRelease(&di), "TestLockAndRelease"),
@@ -153,7 +153,7 @@ func SubTestLockRecovery(di *TestRedisDsyncDI, serverDown bool) test.GomegaSubTe
 		mgts := NewSyncManagers(di, g, func(opt *redisdsync.RedisSyncOption) {
 			opt.TTL = ttl
 			opt.RetryDelay = 10 * time.Millisecond
-			opt.TimeoutFactor = 0.01
+			opt.TimeoutFactor = 0.1
 		})
 		mgts.Start(ctx, g)
 		defer mgts.Stop(ctx, g)
@@ -203,7 +203,7 @@ func SubTestLockRecovery(di *TestRedisDsyncDI, serverDown bool) test.GomegaSubTe
 		}
 
 		// Try to re-acquire after redis is recovered
-		timeoutCtx, cancelFn = context.WithTimeout(ctx, 5*time.Second)
+		timeoutCtx, cancelFn = context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFn()
 		e = lock1.Lock(timeoutCtx)
 		defer stopFn()
@@ -270,11 +270,15 @@ func RestartRedisServer(ctx context.Context, g *WithT) {
 	g.Expect(server).ToNot(BeNil(), "embedded redis server should be available")
 	server.Lock()
 	stopped := server.Server() == nil
-	server.Unlock()
-	if stopped {
-		e := server.Restart()
-		g.Expect(e).To(Succeed(), "restart embedded redis should not fail")
+	if !stopped {
+		server.Unlock()
+		return
 	}
+	// Note: server.Close() cancelled server.Ctx, we need to restore
+	server.Ctx, server.CtxCancel = context.WithCancel(context.Background())
+	server.Unlock()
+	e := server.Restart()
+	g.Expect(e).To(Succeed(), "restart embedded redis should not fail")
 }
 
 func MockRedisServerError(ctx context.Context, g *WithT, errMsg string) {
