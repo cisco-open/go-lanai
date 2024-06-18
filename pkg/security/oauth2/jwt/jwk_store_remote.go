@@ -65,7 +65,7 @@ func NewRemoteJwkStore(opts ...RemoteJwkOptions) *RemoteJwkStore {
 // Important: Use RemoteJwkStore with JwtDecoder ONLY.
 //            RemoteJwkStore is not capable of decrypt private key from JWK response
 // Note: LoadByName and LoadAll would treat Jwk's "name" as "kid". Because "name" is introduced for managing
-//       key rotation, which is not applicable JwtDecoder: JwtDecoder strictly use `kid` if present in header
+//       key rotation, which is not applicable to JwtDecoder: JwtDecoder strictly use `kid` if present in header
 //       or default "name" (in such case, should be hard coded globally known "kid")
 type RemoteJwkStore struct {
 	RemoteJwkConfig

@@ -145,9 +145,10 @@ func NewJwk(kid string, name string, pubKey crypto.PublicKey) Jwk {
 // ParseJwk parse Jwk from JSON as specified in RFC 7517 and RFC 7518.
 // Note: Private key information is ignored in the parsed Jwk.
 // Supported public key types:
-// - *rsa.PublicKey
-// - *ecdsa.PublicKey
-// - []byte (symmetric key, e.g. MAC secret)
+// - *rsa.PublicKey (kty = RSA)
+// - *ecdsa.PublicKey (kty = EC)
+// - ed25519.PublicKey (kty = OKP)
+// - []byte (symmetric key, e.g. MAC secret) ((kty = oct)
 //
 // See: RFC7517 https://datatracker.ietf.org/doc/html/rfc7517
 // See: RFC7518 https://datatracker.ietf.org/doc/html/rfc7518
