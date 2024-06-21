@@ -41,7 +41,7 @@ interactions:
                 - Fri, 19 Aug 2022 8:51:32 GMT
         status: 200 OK
         code: 200
-        duration: 26.538791ms
+        duration: 200µs
     - id: 1
       request:
         proto: HTTP/1.1
@@ -82,7 +82,7 @@ interactions:
                 - Fri, 19 Aug 2022 8:51:32 GMT
         status: 200 OK
         code: 200
-        duration: 374.333µs
+        duration: 200µs
     - id: 2
       request:
         proto: HTTP/1.1
@@ -131,4 +131,4 @@ interactions:
                 - Fri, 19 Aug 2022 8:51:32 GMT
         status: 200 OK
         code: 200
-        duration: 192.791µs
+        duration: 200µs

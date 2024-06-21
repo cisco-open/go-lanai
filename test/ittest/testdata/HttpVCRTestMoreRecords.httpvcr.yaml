@@ -16,12 +16,12 @@ interactions:
         form: {}
         headers:
             Authorization:
-                - OvYGcxDI7ieChSQnQ0tP
+                - '******'
             Content-Type:
                 - application/x-www-form-urlencoded; charset=utf-8
             X-Http-Record-Index:
                 - "0"
-        url: http://webservice/test/knock?access_token=ExzoS2H1im&important=value+should+match&nonce=emYqjG2mzw&password=iNYFfKTMNZ&secret=axKs0OHAPS&token=lYJhEy8R9B
+        url: http://webservice/test/knock?access_token=_hidden&important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: GET
       response:
         proto: HTTP/1.1
@@ -31,15 +31,14 @@ interactions:
         trailer: {}
         content_length: 223
         uncompressed: false
-        body: |
-            {"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z","slice":[{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}],"object":{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}}
+        body: '{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z","slice":[{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}],"object":{"string":"","number":0,"bool":false,"time":"0001-01-01T00:00:00Z"}}'
         headers:
             Content-Length:
                 - "223"
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Fri, 21 Jun 2024 19:55:14 GMT
+                - Fri, 19 Aug 2022 8:51:32 GMT
         status: 200 OK
         code: 200
         duration: 200µs
@@ -58,12 +57,12 @@ interactions:
         form: {}
         headers:
             Authorization:
-                - rUG8JktXfuS0yHDTrkv1
+                - '******'
             Content-Type:
                 - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
-        url: http://webservice/test/knock?access_token=IBXcWIXvxP&important=value+should+match&nonce=27Fsydqbtj&password=VypLKZvIq2&secret=DHLe3mOoC2&token=iuM2rdIFpB
+        url: http://webservice/test/knock?access_token=_hidden&important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: POST
       response:
         proto: HTTP/1.1
@@ -73,15 +72,14 @@ interactions:
         trailer: {}
         content_length: 241
         uncompressed: false
-        body: |
-            {"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}
+        body: '{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}'
         headers:
             Content-Length:
                 - "241"
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Fri, 21 Jun 2024 19:55:14 GMT
+                - Fri, 19 Aug 2022 8:51:32 GMT
         status: 200 OK
         code: 200
         duration: 200µs
@@ -96,7 +94,7 @@ interactions:
         host: webservice
         remote_addr: ""
         request_uri: ""
-        body: string=correct&number=1&bool=true&time=2022-10-11T00%3A00%3A00Z
+        body: bool=true&number=1&string=correct&time=2022-10-11T00%3A00%3A00Z
         form:
             bool:
                 - "true"
@@ -108,12 +106,12 @@ interactions:
                 - "2022-10-11T00:00:00Z"
         headers:
             Authorization:
-                - Iz1Gp24bPgd4SL6w2qRS
+                - '******'
             Content-Type:
                 - application/x-www-form-urlencoded; charset=utf-8
             X-Http-Record-Index:
                 - "2"
-        url: http://webservice/test/knock?access_token=MT9nxmRxn8&important=value+should+match&nonce=Bm2Q35SfDd&password=nnMvCCkdcc&secret=GjKhBPbTVh&token=K0QLNvCRnj
+        url: http://webservice/test/knock?access_token=_hidden&important=value+should+match&nonce=_hidden&password=_hidden&secret=_hidden&token=_hidden
         method: POST
       response:
         proto: HTTP/1.1
@@ -123,15 +121,14 @@ interactions:
         trailer: {}
         content_length: 241
         uncompressed: false
-        body: |
-            {"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}
+        body: '{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z","slice":[{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}],"object":{"string":"correct","number":1,"bool":true,"time":"2022-10-11T00:00:00Z"}}'
         headers:
             Content-Length:
                 - "241"
             Content-Type:
                 - application/json; charset=utf-8
             Date:
-                - Fri, 21 Jun 2024 19:55:14 GMT
+                - Fri, 19 Aug 2022 8:51:32 GMT
         status: 200 OK
         code: 200
         duration: 200µs
