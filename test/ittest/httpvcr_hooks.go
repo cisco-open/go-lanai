@@ -139,7 +139,11 @@ func InteractionIndexAwareHook() func(i *cassette.Interaction) error {
 	}
 }
 
-// SanitizingHook is a httpvcr hook that sanitize values in header, query, body (x-form-urlencoded/json)
+// SanitizingHook is an HTTP VCR hook that sanitize values in header, query, body (x-form-urlencoded/json).
+// Values to sanitize are globally configured via HeaderSanitizers, QuerySanitizers, BodySanitizers.
+// Note: Sanitized values cannot be exactly matched. If the configuration of sanitizers is changed, make sure
+//       to configure fuzzy matching accordingly.
+// See NewRecordMatcher, FuzzyHeaders, FuzzyQueries, FuzzyForm and FuzzyJsonPaths
 func SanitizingHook() func(i *cassette.Interaction) error {
 	reqJsonPaths := parseJsonPaths(FuzzyRequestJsonPaths.Values())
 	respJsonPaths := parseJsonPaths(FuzzyResponseJsonPaths.Values())

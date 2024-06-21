@@ -32,6 +32,7 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func init() {
@@ -49,36 +50,34 @@ type RecorderDI struct {
 	HTTPVCROption   *HTTPVCROption
 }
 
+type recorderDI struct {
+	fx.In
+	RecorderDI
+	HTTPRecorder *HttpRecorder
+}
+
 // WithHttpPlayback enables remote HTTP server playback capabilities supported by `httpvcr`
 // This mode requires apptest.Bootstrap to work
 // Each top-level test should have corresponding recorded HTTP responses in `testdata` folder, or the test will fail.
 // To enable record mode, use `go test ... --record-http` at CLI, or do it programmatically with HttpRecordingMode
 // See https://github.com/cockroachdb/copyist for more details
 func WithHttpPlayback(t *testing.T, opts ...HTTPVCROptions) test.Options {
-	initial := HTTPVCROption{
-		Name:           t.Name(),
-		SavePath:       "testdata",
-		RecordMatching: nil,
-		Hooks: []RecorderHook{
-			NewRecorderHook(FixedDurationHook(DefaultHTTPDuration), recorder.BeforeSaveHook),
-			NewRecorderHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook),
-			NewRecorderHook(SanitizingHook(), recorder.BeforeSaveHook),
-		},
-		SkipRequestLatency: true,
-		indexAwareWrapper:  newIndexAwareMatcherWrapper(), // enforce order
-	}
+	opts = append([]HTTPVCROptions{
+		HttpRecordName(t.Name()),
+		SanitizeHttpRecord(),
+	}, opts...)
 
-	var di RecorderDI
+	var di recorderDI
 	testOpts := []test.Options{
 		apptest.WithDI(&di),
 		apptest.WithFxOptions(
 			fx.Provide(
-				httpRecorderProvider(initial, opts),
+				httpRecorderProvider(opts),
 			),
 			fx.Invoke(httpRecorderCleanup),
 		),
 		test.SubTestSetup(recorderDISetup(&di)),
-		test.SubTestTeardown(recorderReset(&di)),
+		test.SubTestTeardown(recorderReset()),
 	}
 	return test.WithOptions(testOpts...)
 }
@@ -87,9 +86,17 @@ func WithHttpPlayback(t *testing.T, opts ...HTTPVCROptions) test.Options {
 	Functions
  ****************************/
 
+// Recorder extract HttpRecorder from given context. If HttpRecorder is not available, it returns nil
+func Recorder(ctx context.Context) *HttpRecorder {
+	if rec, ok := ctx.Value(ckRecorder).(*HttpRecorder); ok && rec.Recorder != nil {
+		return rec
+	}
+	return nil
+}
+
 // Client extract http.Client that provided by Recorder. If Recorder is not available, it returns nil
 func Client(ctx context.Context) *http.Client {
-	if rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder); ok && rec != nil {
+	if rec, ok := ctx.Value(ckRecorder).(*HttpRecorder); ok && rec.Recorder != nil {
 		return rec.GetDefaultClient()
 	}
 	return nil
@@ -97,29 +104,46 @@ func Client(ctx context.Context) *http.Client {
 
 // IsRecording returns true if HTTP VCR is in recording mode
 func IsRecording(ctx context.Context) bool {
-	if rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder); ok && rec != nil {
+	if rec, ok := ctx.Value(ckRecorder).(*HttpRecorder); ok && rec.Recorder != nil {
 		return rec.IsRecording()
 	}
 	return false
 }
 
-// AdditionalMatcherOptions temporarily add additional RecordMatcherOptions to the current test context
-// on top of test's HTTPVCROptions.
-// Note: The additional options take effect within the scope of sub-test. For test level options, use HttpRecordMatching
+// AdditionalMatcherOptions temporarily add additional RecordMatcherOptions to the current test context on top of test's HTTPVCROptions.
+// Any changes made with this method can be reset via ResetRecorder. When using with WithHttpPlayback(), the reset is automatic per sub-test
+// Note: The additional options take effect within the scope of sub-test. For test level options, use HttpRecordMatching.
 func AdditionalMatcherOptions(ctx context.Context, opts ...RecordMatcherOptions) {
-	rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder)
-	if !ok || rec == nil {
+	rec, ok := ctx.Value(ckRecorder).(*HttpRecorder)
+	if !ok || rec.Recorder == nil {
 		return
 	}
 	// merge matching options
-	opt := ctx.Value(ckRecorderOption).(*HTTPVCROption)
-	newOpts := make([]RecordMatcherOptions, len(opt.RecordMatching), len(opt.RecordMatching)+len(opts))
-	copy(newOpts, opt.RecordMatching)
+	newOpts := make([]RecordMatcherOptions, len(rec.Options.RecordMatching), len(rec.Options.RecordMatching)+len(opts))
+	copy(newOpts, rec.Options.RecordMatching)
 	newOpts = append(newOpts, opts...)
 
 	// construct and set new matcher
-	newMatcher := newCassetteMatcherFunc(newOpts, opt.indexAwareWrapper)
+	newMatcher := newCassetteMatcherFunc(newOpts, rec.Options.indexAwareWrapper)
 	rec.SetMatcher(newMatcher)
+}
+
+// ResetRecorder revert the change made by AdditionalMatcherOptions.
+func ResetRecorder(ctx context.Context) {
+	rec, ok := ctx.Value(ckRecorder).(*HttpRecorder)
+	if !ok || rec.Recorder == nil {
+		return
+	}
+	rec.SetMatcher(rec.Matcher)
+}
+
+// StopRecorder stops the recorder extracted from the given context.
+func StopRecorder(ctx context.Context) error {
+	rec, ok := ctx.Value(ckRecorder).(*HttpRecorder)
+	if !ok || rec.Recorder == nil {
+		return fmt.Errorf("failed to stop recorder: no recorder found in context")
+	}
+	return rec.Stop()
 }
 
 /*************************
@@ -192,17 +216,29 @@ func HttpRecordIgnoreHost() HTTPVCROptions {
 	return HttpRecordMatching(IgnoreHost())
 }
 
+// HttpRecordOrdering toggles HTTP interactions order matching.
+// When enforced, HTTP interactions have to happen in the recorded order.
+// Otherwise, HTTP interactions can happen in any order, but each matched record can only replay once
+// By default, record ordering is enabled
+func HttpRecordOrdering(enforced bool) HTTPVCROptions {
+	return func(opt *HTTPVCROption) {
+		if enforced && opt.indexAwareWrapper == nil {
+			opt.indexAwareWrapper = newIndexAwareMatcherWrapper()
+		} else if !enforced {
+			opt.indexAwareWrapper = nil
+		}
+	}
+}
+
 // DisableHttpRecordOrdering disable HTTP interactions order matching.
 // By default, HTTP interactions have to happen in the recorded order.
 // When this option is used, HTTP interactions can happen in any order. However, each matched record can only replay once
 func DisableHttpRecordOrdering() HTTPVCROptions {
-	return func(opt *HTTPVCROption) {
-		opt.indexAwareWrapper = nil
-	}
+	return HttpRecordOrdering(false)
 }
 
 // HttpTransport override the RealTransport during recording mode. This option has no effect in playback mode
-func HttpTransport(transport *http.Transport) HTTPVCROptions {
+func HttpTransport(transport http.RoundTripper) HTTPVCROptions {
 	return func(opt *HTTPVCROption) {
 		opt.RealTransport = transport
 	}
@@ -215,27 +251,44 @@ func ApplyHttpLatency() HTTPVCROptions {
 	}
 }
 
+// SanitizeHttpRecord install a hook to sanitize request and response before they are saved in file.
+// See SanitizingHook for details.
+func SanitizeHttpRecord() HTTPVCROptions {
+	return func(opt *HTTPVCROption) {
+		opt.Hooks = append(opt.Hooks, NewRecorderHook(SanitizingHook(), recorder.BeforeSaveHook))
+	}
+}
+
+// FixedHttpRecordDuration install a hook to set a fixed duration on interactions before they are saved.
+// Otherwise, the actual latency will be recorded.
+// When HTTPVCROption.SkipRequestLatency is set to false, the recorded duration will be applied during playback
+// See FixedDurationHook for details.
+func FixedHttpRecordDuration(duration time.Duration) HTTPVCROptions {
+	return func(opt *HTTPVCROption) {
+		opt.Hooks = append(opt.Hooks, NewRecorderHook(FixedDurationHook(duration), recorder.BeforeSaveHook))
+	}
+}
+
 /****************************
-	Recorder Aware Context
+	RawRecorder Aware Context
  ****************************/
 
 type recorderCtxKey struct{}
-type optionCtxKey struct{}
 
 var ckRecorder = recorderCtxKey{}
-var ckRecorderOption = optionCtxKey{}
 
 type recorderAwareContext struct {
 	context.Context
-	recorder   *recorder.Recorder
-	origOption *HTTPVCROption
+	recorder *HttpRecorder
 }
 
-func contextWithRecorder(parent context.Context, rec *recorder.Recorder, opt *HTTPVCROption) *recorderAwareContext {
+func contextWithRecorder(parent context.Context, rec *HttpRecorder) context.Context {
+	if rec == nil {
+		return parent
+	}
 	return &recorderAwareContext{
-		Context:    parent,
-		recorder:   rec,
-		origOption: opt,
+		Context:  parent,
+		recorder: rec,
 	}
 }
 
@@ -243,37 +296,31 @@ func (c *recorderAwareContext) Value(k interface{}) interface{} {
 	switch k {
 	case ckRecorder:
 		return c.recorder
-	case ckRecorderOption:
-		return c.origOption
 	default:
 		return c.Context.Value(k)
 	}
 }
 
-func recorderDISetup(di *RecorderDI) test.SetupFunc {
+func recorderDISetup(di *recorderDI) test.SetupFunc {
 	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		return contextWithRecorder(ctx, di.Recorder, di.HTTPVCROption), nil
+		return contextWithRecorder(ctx, di.HTTPRecorder), nil
 	}
 }
 
-// recorderReset reset recorder to original state in case it changed
-func recorderReset(di *RecorderDI) test.TeardownFunc {
+// recorderReset automatically reset recorder to original state in case it changed
+func recorderReset() test.TeardownFunc {
 	return func(ctx context.Context, t *testing.T) error {
-		rec, ok := ctx.Value(ckRecorder).(*recorder.Recorder)
-		if !ok {
-			return nil
-		}
-		rec.SetMatcher(di.RecorderMatcher)
+		ResetRecorder(ctx)
 		return nil
 	}
 }
 
 /*************************
-	Internals
+	HttpRecorder
  *************************/
 
-// HttpRecorder wrapper of recorder.Recorder, used to hold some value that normally inaccessible via wrapped recorder.Recorder.
-// Note: Internal Use Only! this type is for other test utilities to re-configure recorder.Recorder
+// HttpRecorder wrapper of recorder.RawRecorder, used to hold some value that normally inaccessible via wrapped recorder.RawRecorder.
+// Note: This type is for other test utilities to re-configure recorder.RawRecorder
 type HttpRecorder struct {
 	*recorder.Recorder
 	RawOptions *recorder.Options
@@ -281,10 +328,29 @@ type HttpRecorder struct {
 	Options    *HTTPVCROption
 }
 
-// NewHttpRecorder Internal Use Only! Create a new HttpRecorder, commonly used by other test utilities that relies on
-// http recording. (e.g. opensearchtest, consultest, etc.)
+// ContextWithNewHttpRecorder is a convenient function that create a new HTTP recorder and store it in context.
+// The returned context can be used with context value accessor such as Client(ctx), IsRecording(ctx), AdditionalMatcherOptions(ctx), etc.
+// See NewHttpRecorder
+func ContextWithNewHttpRecorder(ctx context.Context, opts ...HTTPVCROptions) (context.Context, error) {
+	rec, e := NewHttpRecorder(opts...)
+	if e != nil {
+		return nil, e
+	}
+	return contextWithRecorder(ctx, rec), nil
+}
+
+// NewHttpRecorder create a new HttpRecorder. Commonly used by:
+// - other test utilities that relies on http recording. (e.g. opensearchtest, consultest, etc.)
+// - unit tests that doesn't bootstrap dependency injection
 func NewHttpRecorder(opts ...HTTPVCROptions) (*HttpRecorder, error) {
-	var opt HTTPVCROption
+	opt := HTTPVCROption{
+		SavePath: "testdata",
+		Hooks: []RecorderHook{
+			NewRecorderHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook),
+		},
+		SkipRequestLatency: true,
+		indexAwareWrapper:  newIndexAwareMatcherWrapper(), // enforce order
+	}
 	for _, fn := range opts {
 		fn(&opt)
 	}
@@ -311,6 +377,10 @@ func NewHttpRecorder(opts ...HTTPVCROptions) (*HttpRecorder, error) {
 	}, nil
 }
 
+/*************************
+	Internals
+ *************************/
+
 type vcrDI struct {
 	fx.In
 	VCROptions []HTTPVCROptions `group:"http-vcr"`
@@ -318,26 +388,24 @@ type vcrDI struct {
 
 type vcrOut struct {
 	fx.Out
-	Recorder             *recorder.Recorder
+	HTTPRecorder         *HttpRecorder
+	RawRecorder          *recorder.Recorder
 	CassetteMatcher      cassette.MatcherFunc
 	HttpVCROption        *HTTPVCROption
 	RawRecorderOption    *recorder.Options
 	HttpClientCustomizer httpclient.ClientCustomizer `group:"http-client"`
 }
 
-func httpRecorderProvider(initial HTTPVCROption, opts []HTTPVCROptions) func(di vcrDI) (vcrOut, error) {
+func httpRecorderProvider(opts []HTTPVCROptions) func(di vcrDI) (vcrOut, error) {
 	return func(di vcrDI) (vcrOut, error) {
-		initialOpt := func(opt *HTTPVCROption) {
-			*opt = initial
-		}
-		finalOpts := append([]HTTPVCROptions{initialOpt}, opts...)
-		finalOpts = append(finalOpts, di.VCROptions...)
+		finalOpts := append(opts, di.VCROptions...)
 		rec, e := NewHttpRecorder(finalOpts...)
 		if e != nil {
 			return vcrOut{}, e
 		}
 		return vcrOut{
-			Recorder:          rec.Recorder,
+			HTTPRecorder:      rec,
+			RawRecorder:       rec.Recorder,
 			CassetteMatcher:   rec.Matcher,
 			HttpVCROption:     rec.Options,
 			RawRecorderOption: rec.RawOptions,
@@ -378,7 +446,7 @@ func toRecorderOptions(opt HTTPVCROption) *recorder.Options {
 	default:
 	}
 
-	name := opt.Name
+	name := opt.Name + ".httpvcr"
 	if len(opt.SavePath) != 0 {
 		name = opt.SavePath + "/" + opt.Name + ".httpvcr"
 	}
