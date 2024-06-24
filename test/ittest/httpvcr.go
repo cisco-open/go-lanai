@@ -65,6 +65,7 @@ func WithHttpPlayback(t *testing.T, opts ...HTTPVCROptions) test.Options {
 	opts = append([]HTTPVCROptions{
 		HttpRecordName(t.Name()),
 		SanitizeHttpRecord(),
+		FixedHttpRecordDuration(DefaultHTTPDuration),
 	}, opts...)
 
 	var di recorderDI
@@ -206,7 +207,32 @@ func HttpRecordMatching(opts ...RecordMatcherOptions) HTTPVCROptions {
 // the order will be respected
 func HttpRecorderHooks(hooks ...RecorderHook) HTTPVCROptions {
 	return func(opt *HTTPVCROption) {
-		opt.Hooks = append(opt.Hooks, hooks...)
+LOOP:
+		for i := range hooks {
+			for j := range opt.Hooks {
+				if hooks[i].Name() == opt.Hooks[j].Name() {
+					opt.Hooks[j] = hooks[i]
+					continue LOOP
+				}
+			}
+			opt.Hooks = append(opt.Hooks, hooks[i])
+		}
+	}
+}
+
+// DisableHttpRecorderHooks returns a HTTPVCROptions that removes installed hooks by name
+func DisableHttpRecorderHooks(names ...string) HTTPVCROptions {
+	return func(opt *HTTPVCROption) {
+	LOOP:
+		for i := range names {
+			for j := range opt.Hooks {
+				if names[i] == opt.Hooks[j].Name() {
+					opt.Hooks[j] = opt.Hooks[len(opt.Hooks)-1]
+					opt.Hooks = opt.Hooks[:len(opt.Hooks)-1]
+					continue LOOP
+				}
+			}
+		}
 	}
 }
 
@@ -254,19 +280,18 @@ func ApplyHttpLatency() HTTPVCROptions {
 // SanitizeHttpRecord install a hook to sanitize request and response before they are saved in file.
 // See SanitizingHook for details.
 func SanitizeHttpRecord() HTTPVCROptions {
-	return func(opt *HTTPVCROption) {
-		opt.Hooks = append(opt.Hooks, NewRecorderHook(SanitizingHook(), recorder.BeforeSaveHook))
-	}
+	return HttpRecorderHooks(SanitizingHook())
 }
 
 // FixedHttpRecordDuration install a hook to set a fixed duration on interactions before they are saved.
-// Otherwise, the actual latency will be recorded.
+// If the duration is less or equal to 0, the actual latency will be recorded.
 // When HTTPVCROption.SkipRequestLatency is set to false, the recorded duration will be applied during playback
 // See FixedDurationHook for details.
 func FixedHttpRecordDuration(duration time.Duration) HTTPVCROptions {
-	return func(opt *HTTPVCROption) {
-		opt.Hooks = append(opt.Hooks, NewRecorderHook(FixedDurationHook(duration), recorder.BeforeSaveHook))
+	if duration <= 0 {
+		return DisableHttpRecorderHooks(HookNameFixedDuration)
 	}
+	return HttpRecorderHooks(FixedDurationHook(duration))
 }
 
 /****************************
@@ -346,7 +371,7 @@ func NewHttpRecorder(opts ...HTTPVCROptions) (*HttpRecorder, error) {
 	opt := HTTPVCROption{
 		SavePath: "testdata",
 		Hooks: []RecorderHook{
-			NewRecorderHook(InteractionIndexAwareHook(), recorder.BeforeSaveHook),
+			InteractionIndexAwareHook(),
 		},
 		SkipRequestLatency: true,
 		indexAwareWrapper:  newIndexAwareMatcherWrapper(), // enforce order

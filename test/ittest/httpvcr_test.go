@@ -114,14 +114,13 @@ func TestHttpVCRRecording(t *testing.T) {
 		webtest.WithRealServer(),
 		WithHttpPlayback(t, HttpRecordName(RecordName),
 			HttpRecordingMode(),
-			FixedHttpRecordDuration(DefaultHTTPDuration),
-			HttpRecorderHooks(NewRecorderHookWithOrder(LocalhostRewriteHook(), recorder.BeforeSaveHook, 0)),
-			),
+			HttpRecorderHooks(LocalhostRewriteHook()),
+		),
 		apptest.WithDI(&di),
 		apptest.WithFxOptions(
 			web.FxControllerProviders(NewTestController),
 		),
-		test.GomegaSubTest(SubTestDI(&di), "TestDI"),
+		test.GomegaSubTest(SubTestVcrDI(&di), "TestDI"),
 		test.GomegaSubTest(SubTestHttpVCRMode(true), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestNormalGet(), "TestHttpVCRRecordGet"),
 		test.GomegaSubTest(SubTestNormalPostJson(), "TestHttpVCRRecordPostJson"),
@@ -135,7 +134,7 @@ func TestHttpVCRPlaybackExact(t *testing.T) {
 		apptest.Bootstrap(),
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestDI(&di), "TestDI"),
+		test.GomegaSubTest(SubTestVcrDI(&di), "TestDI"),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestNormalGet(), "TestNormalGet"),
 		test.GomegaSubTest(SubTestNormalPostJson(), "TestNormalPostJson"),
@@ -149,7 +148,7 @@ func TestHttpVCRPlaybackEquivalent(t *testing.T) {
 		apptest.Bootstrap(),
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestDI(&di), "TestDI"),
+		test.GomegaSubTest(SubTestVcrDI(&di), "TestDI"),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestEquivalentGet(), "TestEquivalentGet"),
 		test.GomegaSubTest(SubTestEquivalentPostJson(), "TestEquivalentPostJson"),
@@ -163,7 +162,7 @@ func TestHttpVCRPlaybackIncorrectOrder(t *testing.T) {
 		apptest.Bootstrap(),
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestDI(&di), "TestDI"),
+		test.GomegaSubTest(SubTestVcrDI(&di), "TestDI"),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestDifferentRequestOrder(false), "TestDifferentRequestOrder"),
 	)
@@ -175,7 +174,7 @@ func TestHttpVCRPlaybackWithOrderDisabled(t *testing.T) {
 		apptest.Bootstrap(),
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost(), DisableHttpRecordOrdering()),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestDI(&di), "TestDI"),
+		test.GomegaSubTest(SubTestVcrDI(&di), "TestDI"),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestDifferentRequestOrder(true), "TestDifferentRequestOrder"),
 	)
@@ -187,7 +186,7 @@ func TestHttpVCRPlaybackIncorrectQuery(t *testing.T) {
 		apptest.Bootstrap(),
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestDI(&di), "TestDI"),
+		test.GomegaSubTest(SubTestVcrDI(&di), "TestDI"),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestIncorrectRequestQuery(), "TestIncorrectRequestQuery"),
 	)
@@ -199,7 +198,7 @@ func TestHttpVCRPlaybackIncorrectBody(t *testing.T) {
 		apptest.Bootstrap(),
 		WithHttpPlayback(t, HttpRecordName(RecordName), DisableHttpRecordingMode(), HttpRecordIgnoreHost()),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestDI(&di), "TestDI"),
+		test.GomegaSubTest(SubTestVcrDI(&di), "TestDI"),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestIncorrectRequestJsonBody(), "TestIncorrectRequestJsonBody"),
 		test.GomegaSubTest(SubTestIncorrectRequestFormBody(), "TestIncorrectRequestFormBody"),
@@ -214,8 +213,10 @@ func TestHttpVCRRecordingAltUsage(t *testing.T) {
 		test.Setup(SetupVCR(
 			HttpRecordingMode(),
 			HttpRecordName(RecordAltName),
-			HttpRecorderHooks(NewRecorderHookWithOrder(LocalhostRewriteHook(), recorder.BeforeSaveHook, 0)),
+			HttpRecorderHooks(LocalhostRewriteHook()),
 			SanitizeHttpRecord(),
+			FixedHttpRecordDuration(DefaultHTTPDuration),
+			FixedHttpRecordDuration(0),
 			FixedHttpRecordDuration(DefaultHTTPDuration),
 			HttpTransport(http.DefaultTransport),
 		)),
@@ -223,6 +224,7 @@ func TestHttpVCRRecordingAltUsage(t *testing.T) {
 		apptest.WithFxOptions(
 			web.FxControllerProviders(NewTestController),
 		),
+		test.GomegaSubTest(SubTestVcrContext(), "TestVcrContext"),
 		test.GomegaSubTest(SubTestHttpVCRMode(true), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestNormalGet(), "TestHttpVCRRecordGet"),
 		test.GomegaSubTest(SubTestNormalPostJson(), "TestHttpVCRRecordPostJson"),
@@ -238,6 +240,7 @@ func TestHttpVCRPlaybackAltUsage(t *testing.T) {
 			ApplyHttpLatency(),
 		)),
 		test.Teardown(TeardownVCR()),
+		test.GomegaSubTest(SubTestVcrContext(), "TestVcrContext"),
 		test.GomegaSubTest(SubTestHttpVCRMode(false), "TestHttpVCRMode"),
 		test.GomegaSubTest(SubTestNormalGet(), "TestNormalGet"),
 		test.GomegaSubTest(SubTestNormalPostJson(), "TestNormalPostJson"),
@@ -268,13 +271,33 @@ func TeardownVCR() test.TeardownFunc {
 	}
 }
 
-func SubTestDI(di *RecorderDI) test.GomegaSubTestFunc {
+func SubTestVcrDI(di *RecorderDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		g.Expect(di.Recorder).To(Not(BeNil()), "Recorder should be injected")
 		g.Expect(di.RecorderOption).To(Not(BeZero()), "RecorderOption should be injected")
 		g.Expect(di.RecorderMatcher).To(Not(BeZero()), "RecorderMatcher should be injected")
 		g.Expect(di.HTTPVCROption).To(Not(BeZero()), "HTTPVCROption should be injected")
 		g.Expect(Recorder(ctx)).To(Not(BeNil()), "Recorder from context should be available")
+		if IsRecording(ctx) {
+			g.Expect(di.HTTPVCROption.Hooks).To(HaveLen(4), "HTTPVCROption.Hooks should have correct length")
+		} else {
+			g.Expect(di.HTTPVCROption.Hooks).To(HaveLen(3), "HTTPVCROption.Hooks should have correct length")
+		}
+	}
+}
+
+func SubTestVcrContext() test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		rec := Recorder(ctx)
+		g.Expect(rec).To(Not(BeNil()), "Recorder from context should be available")
+		g.Expect(rec.RawOptions).To(Not(BeZero()), "RawOptions should be available")
+		g.Expect(rec.Matcher).To(Not(BeZero()), "Matcher should be available")
+		g.Expect(rec.Options).To(Not(BeZero()), "Options should be available")
+		if IsRecording(ctx) {
+			g.Expect(rec.Options.Hooks).To(HaveLen(4), "Options.Hooks should have correct length")
+		} else {
+			g.Expect(rec.Options.Hooks).To(HaveLen(1), "Options.Hooks should have correct length")
+		}
 	}
 }
 
