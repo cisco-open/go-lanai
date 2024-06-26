@@ -51,7 +51,9 @@ func NewJwtDecoder(jwks jwt.JwkStore) jwt.JwtDecoder {
 }
 
 func NewJwkStore() jwt.JwkStore {
-	return jwt.NewSingleJwkStore(JwtKID)
+	return jwt.NewSingleJwkStoreWithOptions(func(s *jwt.SingleJwkStore) {
+		s.Kid = JwtKID
+	})
 }
 
 /*************************

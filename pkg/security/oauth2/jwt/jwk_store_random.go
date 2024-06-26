@@ -43,6 +43,8 @@ func NewSingleJwkStoreWithOptions(opts ...func(s *SingleJwkStore)) *SingleJwkSto
 	return &store
 }
 
+// NewSingleJwkStore
+// Deprecated: Use NewSingleJwkStoreWithOptions
 func NewSingleJwkStore(kid string) *SingleJwkStore {
 	return NewSingleJwkStoreWithOptions(func(s *SingleJwkStore) {
 		s.Kid = kid

@@ -99,3 +99,9 @@ Certificate:
 openssl req -new -sha256 -key ed25519-priv-key.pem -out ed25519.csr -config ca.cnf
 openssl req -x509 -sha256 -days 36500 -key ed25519-priv-key.pem -in ed25519.csr -out ed25519.crt
 ```
+
+## JWK & JWT
+
+JWK JSON files are generated using [Online JWK Generator](https://jwkset.com/generate) with the first block of corresponding public key files.
+
+JWT are generated using [Online JWT Builder](https://dinochiesa.github.io/jwt/) with the first block of corresponding private key files.

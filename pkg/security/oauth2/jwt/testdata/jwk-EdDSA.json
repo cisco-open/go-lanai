@@ -1,0 +1,7 @@
+{
+  "kty": "OKP",
+  "alg": "EdDSA",
+  "kid": "dummy-kid",
+  "crv": "Ed25519",
+  "x": "Exm90xQDq10kSkb7SbwPUZOU-1J6YWa_6kODDW8Vw-s"
+}

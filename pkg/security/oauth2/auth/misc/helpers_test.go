@@ -26,7 +26,8 @@ const (
 	TestTenantID  = `id-root`
 	ClientIDSuper = `super-client`
 	ClientIDMinor = `minor-client`
-	JwtKID        = `test-key`
+	TestJwtKID1 = `test-key-1`
+	TestJwtKID2 = `test-key-2`
 )
 
 type AuthDI struct {
@@ -60,15 +61,17 @@ func NewTestAccountStore(props sectest.MockingProperties) security.AccountStore 
 }
 
 func NewJwtEncoder(jwks jwt.JwkStore) jwt.JwtEncoder {
-	return jwt.NewSignedJwtEncoder(jwt.SignWithJwkStore(jwks, JwtKID))
+	return jwt.NewSignedJwtEncoder(jwt.SignWithJwkStore(jwks, TestJwtKID1))
 }
 
 func NewJwtDecoder(jwks jwt.JwkStore) jwt.JwtDecoder {
-	return jwt.NewSignedJwtDecoder(jwt.VerifyWithJwkStore(jwks, JwtKID))
+	return jwt.NewSignedJwtDecoder(jwt.VerifyWithJwkStore(jwks, TestJwtKID1))
 }
 
 func NewJwkStore() jwt.JwkStore {
-	return jwt.NewSingleJwkStore(JwtKID)
+	return jwt.NewSingleJwkStoreWithOptions(func(s *jwt.SingleJwkStore) {
+		s.Kid = TestJwtKID1
+	})
 }
 
 type MockedClientAuth struct {

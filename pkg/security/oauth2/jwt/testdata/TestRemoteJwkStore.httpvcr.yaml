@@ -1,0 +1,2285 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "0"
+        url: http://localhost:8900/auth/v2/jwks/dev-0
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 217
+        uncompressed: false
+        body: '{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}'
+        headers:
+            Content-Length:
+                - "217"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "1"
+        url: http://localhost:8900/auth/v2/jwks/non-exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 70
+        uncompressed: false
+        body: '{"error":"Not Found","message":"cannot find JWK with kid [non-exist]"}'
+        headers:
+            Content-Length:
+                - "70"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "2"
+        url: http://localhost:8900/auth/v2/jwks/
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 48
+        uncompressed: false
+        body: |+
+            <a href="/auth/v2/jwks">Moved Permanently</a>.
+
+        headers:
+            Content-Length:
+                - "48"
+            Content-Type:
+                - text/html; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Location:
+                - /auth/v2/jwks
+        status: 301 Moved Permanently
+        code: 301
+        duration: 200µs
+    - id: 3
+      request:
+        proto: ""
+        proto_major: 0
+        proto_minor: 0
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: ""
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Referer:
+                - http://localhost:8900/auth/v2/jwks/
+            X-Http-Record-Index:
+                - "3"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "4"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "5"
+        url: http://localhost:8900/auth/v2/jwks/dev-0
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 217
+        uncompressed: false
+        body: '{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}'
+        headers:
+            Content-Length:
+                - "217"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "6"
+        url: http://localhost:8900/auth/v2/jwks/dev-0
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 217
+        uncompressed: false
+        body: '{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}'
+        headers:
+            Content-Length:
+                - "217"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "7"
+        url: http://localhost:8900/auth/v2/jwks/non-exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 70
+        uncompressed: false
+        body: '{"error":"Not Found","message":"cannot find JWK with kid [non-exist]"}'
+        headers:
+            Content-Length:
+                - "70"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "8"
+        url: http://localhost:8900/auth/v2/jwks/non-exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 70
+        uncompressed: false
+        body: '{"error":"Not Found","message":"cannot find JWK with kid [non-exist]"}'
+        headers:
+            Content-Length:
+                - "70"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "9"
+        url: http://localhost:8900/auth/v2/jwks/
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 48
+        uncompressed: false
+        body: |+
+            <a href="/auth/v2/jwks">Moved Permanently</a>.
+
+        headers:
+            Content-Length:
+                - "48"
+            Content-Type:
+                - text/html; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Location:
+                - /auth/v2/jwks
+        status: 301 Moved Permanently
+        code: 301
+        duration: 200µs
+    - id: 10
+      request:
+        proto: ""
+        proto_major: 0
+        proto_minor: 0
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: ""
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Referer:
+                - http://localhost:8900/auth/v2/jwks/
+            X-Http-Record-Index:
+                - "10"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 11
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "11"
+        url: http://localhost:8900/auth/v2/jwks/
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 48
+        uncompressed: false
+        body: |+
+            <a href="/auth/v2/jwks">Moved Permanently</a>.
+
+        headers:
+            Content-Length:
+                - "48"
+            Content-Type:
+                - text/html; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Location:
+                - /auth/v2/jwks
+        status: 301 Moved Permanently
+        code: 301
+        duration: 200µs
+    - id: 12
+      request:
+        proto: ""
+        proto_major: 0
+        proto_minor: 0
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: ""
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Referer:
+                - http://localhost:8900/auth/v2/jwks/
+            X-Http-Record-Index:
+                - "12"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 13
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "13"
+        url: http://localhost:8900/auth/v2/jwks/non-exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 70
+        uncompressed: false
+        body: '{"error":"Not Found","message":"cannot find JWK with kid [non-exist]"}'
+        headers:
+            Content-Length:
+                - "70"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 14
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "14"
+        url: http://localhost:8900/auth/v2/jwks/non-exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 70
+        uncompressed: false
+        body: '{"error":"Not Found","message":"cannot find JWK with kid [non-exist]"}'
+        headers:
+            Content-Length:
+                - "70"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 15
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "15"
+        url: http://localhost:8900/auth/v2/jwks/
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 48
+        uncompressed: false
+        body: |+
+            <a href="/auth/v2/jwks">Moved Permanently</a>.
+
+        headers:
+            Content-Length:
+                - "48"
+            Content-Type:
+                - text/html; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Location:
+                - /auth/v2/jwks
+        status: 301 Moved Permanently
+        code: 301
+        duration: 200µs
+    - id: 16
+      request:
+        proto: ""
+        proto_major: 0
+        proto_minor: 0
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: ""
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Referer:
+                - http://localhost:8900/auth/v2/jwks/
+            X-Http-Record-Index:
+                - "16"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 17
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "17"
+        url: http://localhost:8900/auth/v2/jwks/
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 48
+        uncompressed: false
+        body: |+
+            <a href="/auth/v2/jwks">Moved Permanently</a>.
+
+        headers:
+            Content-Length:
+                - "48"
+            Content-Type:
+                - text/html; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Location:
+                - /auth/v2/jwks
+        status: 301 Moved Permanently
+        code: 301
+        duration: 200µs
+    - id: 18
+      request:
+        proto: ""
+        proto_major: 0
+        proto_minor: 0
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: ""
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Referer:
+                - http://localhost:8900/auth/v2/jwks/
+            X-Http-Record-Index:
+                - "18"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 19
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "19"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 20
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "20"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 21
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "21"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 22
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "22"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 23
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "23"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 24
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "24"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 25
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "25"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 26
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "26"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 27
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "27"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 28
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "28"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 29
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "29"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 30
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "30"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 31
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "31"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 32
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "32"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 33
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "33"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 34
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "34"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 35
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "35"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 36
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "36"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 37
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "37"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 38
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "38"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 39
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "39"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 40
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "40"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 41
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "41"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 42
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "42"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 43
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "43"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 44
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "44"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 45
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "45"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 46
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "46"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 47
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "47"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 48
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "48"
+        url: http://localhost:8900/auth/v2/jwks
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 228
+        uncompressed: false
+        body: '{"keys":[{"kid":"dev-0","kty":"RSA","n":"5DcHxMJu4q0pJ3TyakZor3nJ-IW9vLQtkJ4C4MR-FLNSgbFIMH1jKEQWZ1LAHqGrp8UyCgdKanrnerXf1WMl7v7NENhukW5qkLxE_WCOz-Wfz06AXVNUVxZknwZzvdd3hyHdqswaJitBQPMY21jEZ3VCiWfDN3p3jY5TgLkK_HU","e":"AQAB"}]}'
+        headers:
+            Content-Length:
+                - "228"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 200µs
+    - id: 49
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "49"
+        url: http://localhost:8900/auth/not/exist/
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 50
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "50"
+        url: http://localhost:8900/auth/not/exist/non-exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 51
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "51"
+        url: http://localhost:8900/auth/not/exist/
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 52
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "52"
+        url: http://localhost:8900/auth/not/exist/
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 53
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "53"
+        url: http://localhost:8900/auth/not/exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 54
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "54"
+        url: http://localhost:8900/auth/not/exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 55
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "55"
+        url: http://localhost:8900/auth/not/exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 56
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "56"
+        url: http://localhost:8900/auth/not/exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
+    - id: 57
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: localhost:8900
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            X-Http-Record-Index:
+                - "57"
+        url: http://localhost:8900/auth/not/exist
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 18
+        uncompressed: false
+        body: 404 page not found
+        headers:
+            Content-Length:
+                - "18"
+            Content-Type:
+                - text/plain
+            Date:
+                - Fri, 19 Aug 2022 8:51:32 GMT
+            Vary:
+                - Origin
+        status: 404 Not Found
+        code: 404
+        duration: 200µs
