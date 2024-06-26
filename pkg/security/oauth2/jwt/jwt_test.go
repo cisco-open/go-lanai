@@ -75,7 +75,9 @@ func TestJwtWithoutKid(t *testing.T) {
 }
 
 func TestPlainJwt(t *testing.T) {
-	nonRotatingJwkStore := NewSingleJwkStore(testDefaultKid)
+	nonRotatingJwkStore := NewSingleJwkStoreWithOptions(func(s *SingleJwkStore) {
+		s.Kid = testDefaultKid
+	})
 	enc := NewSignedJwtEncoder(SignWithJwkStore(nonRotatingJwkStore, testDefaultKid), SignWithMethod(jwt.SigningMethodRS256))
 
 	// encoding
@@ -230,7 +232,9 @@ func SubTestJwtDecodeFailedWithWrongKey(method jwt.SigningMethod, kid string) te
 
 func SubTestJwtDecodeFailedWithNonExistingKey() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		store := NewSingleJwkStore("whatever")
+		store := NewSingleJwkStoreWithOptions(func(s *SingleJwkStore) {
+			s.Kid = "whatever"
+		})
 		dec := NewSignedJwtDecoder(VerifyWithJwkStore(store, testDefaultKid), VerifyWithMethods(SupportedSigningMethods...))
 		_, err := dec.Decode(context.Background(), jwtFromContext(ctx))
 		g.Expect(err).NotTo(Succeed(), "decode with non-existing JWK should return validation error")

@@ -17,27 +17,43 @@ type jwkSet struct {
 
 type RemoteJwkOptions func(cfg *RemoteJwkConfig)
 type RemoteJwkConfig struct {
-	HttpClient        *http.Client
-	JwkSetURL         string
-	JwkBaseURL        string
+	// HttpClient the underlying http.Client to use. Default: http.DefaultClient
+	HttpClient *http.Client
+	// JwkSetURL the URL of JWKSet endpoint for getting all JWKs. Default: "http://localhost:8900/auth/v2/jwks"
+	// e.g. http://localhost:8900/auth/v2/jwks
+	JwkSetURL string
+	// JwkBaseURL the base URL of the endpoint for getting JWK by kid (without tailing slash). The actual URL would be "JwkBaseURL/<kid>".
+	// (Optional) When not set (empty string), the JwkSetURL is used. Default: "http://localhost:8900/auth/v2/jwks"
+	// e.g. JwkBaseURL = "http://localhost:8900/auth/v2/jwks", actual URL is "http://localhost:8900/auth/v2/jwks/<kid>"
+	JwkBaseURL string
+	// JwkSetRequestFunc a function that create http.Request for JWKSet endpoint. When set, override JwkSetURL.
+	// (Optional) When not set, JwkSetURL is used with GET method.
 	JwkSetRequestFunc func(ctx context.Context) *http.Request
-	JwkRequestFunc    func(ctx context.Context, kid string) *http.Request
-	DisableCache      bool
-	TTL               time.Duration
-	RetryBackoff      time.Duration
-	Retry             int
+	// JwkRequestFunc a function that create http.Request for "get JWK by kid". When set, override JwkBaseURL.
+	// (Optional) When not set, JwkBaseURL is used with GET method. If JwkBaseURL is not set either, JWKSet endpoint is used.
+	JwkRequestFunc func(ctx context.Context, kid string) *http.Request
+	// DisableCache disable internal caching. If the cache is disabled, the store would invoke an external HTTP transaction
+	// everytime when any of store's method is called. Default: false
+	DisableCache bool
+	// TTL cache setting. TTL controls how long the HTTP result is kept in cache.
+	TTL time.Duration
+	// RetryBackoff cache setting. It controls how long to wait between failed HTTP retries.
+	RetryBackoff time.Duration
+	// Retry cache setting. It controls how many times the cache would retry for failed HTTP transaction.
+	Retry int
 }
 
 // NewRemoteJwkStore creates a JwkStore that load JWK with public key from an external JWKSet endpoint.
 // Note: Use RemoteJwkStore with JwtDecoder ONLY.
-//       RemoteJwkStore is not capable of decrypt private key from JWK response.
+//
+//	RemoteJwkStore is not capable of decrypt private key from JWK response.
+//
 // See RemoteJwkStore for more details
 func NewRemoteJwkStore(opts ...RemoteJwkOptions) *RemoteJwkStore {
 	store := RemoteJwkStore{
 		RemoteJwkConfig: RemoteJwkConfig{
 			HttpClient:   http.DefaultClient,
 			JwkSetURL:    "http://localhost:8900/auth/v2/jwks",
-			JwkBaseURL:   "http://localhost:8900/auth/v2/jwks",
 			TTL:          60 * time.Minute,
 			RetryBackoff: 2 * time.Second,
 			Retry:        2,
@@ -55,7 +71,7 @@ func NewRemoteJwkStore(opts ...RemoteJwkOptions) *RemoteJwkStore {
 	if store.JwkSetRequestFunc == nil {
 		store.JwkSetRequestFunc = remoteJwkSetRequestFuncWithUrl(store.JwkSetURL)
 	}
-	if store.JwkRequestFunc == nil {
+	if store.JwkRequestFunc == nil && len(store.JwkBaseURL) != 0 {
 		store.JwkRequestFunc = remoteJwkRequestFuncWithUrl(store.JwkBaseURL)
 	}
 	return &store
@@ -63,10 +79,13 @@ func NewRemoteJwkStore(opts ...RemoteJwkOptions) *RemoteJwkStore {
 
 // RemoteJwkStore implements JwkStore and load JWK with public key from an external JWKSet endpoint.
 // Important: Use RemoteJwkStore with JwtDecoder ONLY.
-//            RemoteJwkStore is not capable of decrypt private key from JWK response
+//
+//	RemoteJwkStore is not capable of decrypt private key from JWK response
+//
 // Note: LoadByName and LoadAll would treat Jwk's "name" as "kid". Because "name" is introduced for managing
-//       key rotation, which is not applicable to JwtDecoder: JwtDecoder strictly use `kid` if present in header
-//       or default "name" (in such case, should be hard coded globally known "kid")
+//
+//	key rotation, which is not applicable to JwtDecoder: JwtDecoder strictly use `kid` if present in header
+//	or default "name" (in such case, should be hard coded globally known "kid")
 type RemoteJwkStore struct {
 	RemoteJwkConfig
 	cache cacheutils.MemCache
@@ -128,6 +147,19 @@ func (s *RemoteJwkStore) loadJwkSet(ctx context.Context, _ cacheutils.Key) (v in
 }
 
 func (s *RemoteJwkStore) fetchJwkByKid(ctx context.Context, kid string) (Jwk, error) {
+	if s.JwkRequestFunc == nil {
+		// JWK by kid is not available, use JWKSet endpoint
+		jwks, e := s.fetchJwkSet(ctx)
+		if e != nil {
+			return nil, e
+		}
+		for _, jwk := range jwks {
+			if kid == jwk.Id() {
+				return jwk, nil
+			}
+		}
+		return nil, fmt.Errorf(`failed to fetch JWK with kid [%s]: kid does not exist`, kid)
+	}
 	req := s.JwkRequestFunc(ctx, kid)
 	if req == nil {
 		return nil, fmt.Errorf(`unable to resolve HTTP request for JWK with kid [%s]`, kid)

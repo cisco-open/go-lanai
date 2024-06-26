@@ -36,20 +36,20 @@ type ExpectedJwk struct {
 }
 
 var ExpectedJwks = []ExpectedJwk{
-	{ PathPrefix: "/rsa", Alg: gojwt.SigningMethodRS256, Kid: JwtKID, Type: "RSA", JsonFields: map[string]types.GomegaMatcher{
+	{ PathPrefix: "/rsa", Alg: gojwt.SigningMethodRS256, Kid: TestJwtKID1, Type: "RSA", JsonFields: map[string]types.GomegaMatcher{
 		"e": Not(BeEmpty()),
 		"n": Not(BeEmpty()),
 	}},
-	{ PathPrefix: "/ec", Alg: gojwt.SigningMethodES256, Kid: JwtKID, Type: "EC", JsonFields: map[string]types.GomegaMatcher{
+	{ PathPrefix: "/ec", Alg: gojwt.SigningMethodES256, Kid: TestJwtKID1, Type: "EC", JsonFields: map[string]types.GomegaMatcher{
 		"crv": Not(BeEmpty()),
 		"x": Not(BeEmpty()),
 		"y": Not(BeEmpty()),
 
 	}},
-	{ PathPrefix: "/ed", Alg: gojwt.SigningMethodEdDSA, Kid: JwtKID, Type: "OKP", JsonFields: map[string]types.GomegaMatcher{
+	{ PathPrefix: "/ed", Alg: gojwt.SigningMethodEdDSA, Kid: TestJwtKID1, Type: "OKP", JsonFields: map[string]types.GomegaMatcher{
 		"x": Not(BeEmpty()),
 	}},
-	{ PathPrefix: "/mac", Alg: gojwt.SigningMethodHS256, Kid: JwtKID, Type: "oct", JsonFields: map[string]types.GomegaMatcher{
+	{ PathPrefix: "/mac", Alg: gojwt.SigningMethodHS256, Kid: TestJwtKID1, Type: "oct", JsonFields: map[string]types.GomegaMatcher{
 		"k": Not(BeEmpty()),
 	}},
 }
@@ -61,8 +61,8 @@ type JwksDI struct {
 
 func RegisterJwksEndpoint(di JwksDI) {
 	for i := range ExpectedJwks {
-		store := jwt.NewSingleJwkStoreWithOptions(func(s *jwt.SingleJwkStore) {
-			s.Kid = JwtKID
+		store := jwt.NewStaticJwkStoreWithOptions(func(s *jwt.StaticJwkStore) {
+			s.KIDs = []string{TestJwtKID1, TestJwtKID2}
 			s.SigningMethod = ExpectedJwks[i].Alg
 		})
 		ep := misc.NewJwkSetEndpoint(store)

@@ -58,7 +58,9 @@ const (
 )
 
 var (
-	jwtStore = jwt.NewSingleJwkStore(TestDefaultKid)
+	jwtStore = jwt.NewSingleJwkStoreWithOptions(func(s *jwt.SingleJwkStore) {
+		s.Kid = TestDefaultKid
+	})
 	jwtDec   = jwt.NewSignedJwtDecoder(jwt.VerifyWithJwkStore(jwtStore, TestDefaultKid))
 	jwtEnc   = jwt.NewSignedJwtEncoder(jwt.SignWithJwkStore(jwtStore, TestDefaultKid))
 	issuer   = security.NewIssuer(func(opt *security.DefaultIssuerDetails) {
@@ -203,7 +205,9 @@ func SubTestLogoutWithWrongIdTokenHint() test.GomegaSubTestFunc {
 
 func SubTestLogoutWithInvalidIdTokenHint() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		anotherJwtStore := jwt.NewSingleJwkStore(TestDefaultKid)
+		anotherJwtStore := jwt.NewSingleJwkStoreWithOptions(func(s *jwt.SingleJwkStore) {
+			s.Kid = TestDefaultKid
+		})
 		anotherEnc := jwt.NewSignedJwtEncoder(jwt.SignWithJwkStore(anotherJwtStore, TestDefaultKid))
 
 		claims := oauth2.MapClaims{

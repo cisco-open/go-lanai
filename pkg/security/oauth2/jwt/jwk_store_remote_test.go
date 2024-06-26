@@ -35,10 +35,15 @@ func TestRemoteJwkStore(t *testing.T) {
 			//ittest.HttpRecordingMode(), // uncomment for record mode with httpPlayback
 		),
 		apptest.WithDI(&di),
-		test.GomegaSubTest(SubTestRemoteJwkStore(&di, true), "WithCache"),
-		test.GomegaSubTest(SubTestRemoteJwkStore(&di, false), "WithoutCache"),
-		test.GomegaSubTest(SubTestRemoteJwkStoreWithBadServer(&di, true), "BadServerWithCache"),
-		test.GomegaSubTest(SubTestRemoteJwkStoreWithBadServer(&di, false), "BadServerWithoutCache"),
+		test.GomegaSubTest(SubTestRemoteJwkStore(&di, true, true), "JwkByKidEpWithCache"),
+		test.GomegaSubTest(SubTestRemoteJwkStore(&di, true, false), "JwkByKidEpWithoutCache"),
+		test.GomegaSubTest(SubTestRemoteJwkStore(&di, false, true), "NoJwkByKidWithCache"),
+		test.GomegaSubTest(SubTestRemoteJwkStore(&di, false, false), "NoJwkByKidWithoutCache"),
+
+		test.GomegaSubTest(SubTestRemoteJwkStoreWithBadServer(&di, true, true), "JwkByKidEpBadServerWithCache"),
+		test.GomegaSubTest(SubTestRemoteJwkStoreWithBadServer(&di, true, false), "JwkByKidEpBadServerWithoutCache"),
+		test.GomegaSubTest(SubTestRemoteJwkStoreWithBadServer(&di, false, true), "NoJwkByKidBadServerWithCache"),
+		test.GomegaSubTest(SubTestRemoteJwkStoreWithBadServer(&di, false, false), "NoJwkByKidBadServerWithoutCache"),
 	)
 }
 
@@ -46,13 +51,15 @@ func TestRemoteJwkStore(t *testing.T) {
 	Sub-Test Cases
  *************************/
 
-func SubTestRemoteJwkStore(di *RemoteTestDI, cache bool) test.GomegaSubTestFunc {
+func SubTestRemoteJwkStore(di *RemoteTestDI, byKid bool, cache bool) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		store := jwt.NewRemoteJwkStore(func(cfg *jwt.RemoteJwkConfig) {
 			cfg.HttpClient = di.Recorder.GetDefaultClient()
 			cfg.DisableCache = !cache
 			cfg.JwkSetURL = "http://localhost:8900/auth/v2/jwks"
-			cfg.JwkBaseURL = "http://localhost:8900/auth/v2/jwks"
+			if byKid {
+				cfg.JwkBaseURL = "http://localhost:8900/auth/v2/jwks"
+			}
 		})
 
 		test.RunTest(ctx, t,
@@ -70,13 +77,15 @@ func SubTestRemoteJwkStore(di *RemoteTestDI, cache bool) test.GomegaSubTestFunc 
 	}
 }
 
-func SubTestRemoteJwkStoreWithBadServer(di *RemoteTestDI, cache bool) test.GomegaSubTestFunc {
+func SubTestRemoteJwkStoreWithBadServer(di *RemoteTestDI, byKid bool, cache bool) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *WithT) {
 		store := jwt.NewRemoteJwkStore(func(cfg *jwt.RemoteJwkConfig) {
 			cfg.HttpClient = di.Recorder.GetDefaultClient()
 			cfg.DisableCache = !cache
 			cfg.JwkSetRequestFunc = BadRemoteJwkSetRequestFunc()
-			cfg.JwkRequestFunc = BadRemoteJwkRequestFunc()
+			if byKid {
+				cfg.JwkRequestFunc = BadRemoteJwkRequestFunc()
+			}
 		})
 
 		test.RunTest(ctx, t,
@@ -167,7 +176,7 @@ func BadRemoteJwkSetRequestFunc() func(ctx context.Context) *http.Request {
 	var i int
 	return func(ctx context.Context) *http.Request {
 		defer func() {i++}()
-		switch i {
+		switch i%3 {
 		case 0:
 			return nil
 		case 1:
@@ -185,7 +194,7 @@ func BadRemoteJwkRequestFunc() func(ctx context.Context, kid string) *http.Reque
 	var i int
 	return func(ctx context.Context, kid string) *http.Request {
 		defer func() {i++}()
-		switch i {
+		switch i%3 {
 		case 0:
 			return nil
 		case 1:

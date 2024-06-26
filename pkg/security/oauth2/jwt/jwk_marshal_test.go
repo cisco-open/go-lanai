@@ -124,6 +124,8 @@ func SubTestJwkMarshal(method jwt.SigningMethod, publicOnly bool, expect Marshal
 
 		if !publicOnly {
 			AssertJwkPair(ctx, g, &parsed, jwk.(PrivateJwk))
+		} else {
+			g.Expect(&parsed).To(BeEquivalentTo(jwk), "unmarshalled JWK should be identical to the original")
 		}
 	}
 }

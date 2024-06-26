@@ -18,6 +18,7 @@ package jwt
 
 import (
 	"context"
+	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -47,6 +48,8 @@ func NewStaticJwkStoreWithOptions(opts ...func(s *StaticJwkStore)) *StaticJwkSto
 	return &store
 }
 
+// NewStaticJwkStore
+// Deprecated: Use NewStaticJwkStoreWithOptions
 func NewStaticJwkStore(kids ...string) *StaticJwkStore {
 	return NewStaticJwkStoreWithOptions(func(s *StaticJwkStore) {
 		if len(kids) != 0 {
@@ -61,7 +64,12 @@ func (s *StaticJwkStore) Rotate(_ context.Context, _ string) error {
 }
 
 func (s *StaticJwkStore) LoadByKid(_ context.Context, kid string) (Jwk, error) {
-	return s.getOrNew(kid)
+	for i := range s.KIDs {
+		if s.KIDs[i] == kid {
+			return s.getOrNew(kid)
+		}
+	}
+	return nil, fmt.Errorf("JWK with name '%s' is not available", kid)
 }
 
 func (s *StaticJwkStore) LoadByName(_ context.Context, _ string) (Jwk, error) {
@@ -69,11 +77,11 @@ func (s *StaticJwkStore) LoadByName(_ context.Context, _ string) (Jwk, error) {
 }
 
 func (s *StaticJwkStore) LoadAll(_ context.Context, _ ...string) ([]Jwk, error) {
-	jwks := make([]Jwk, len(s.lookup))
+	jwks := make([]Jwk, len(s.KIDs))
 
 	i := 0
-	for _, v := range s.lookup {
-		jwks[i] = v
+	for _, v := range s.KIDs {
+		jwks[i], _ = s.getOrNew(v)
 		i++
 	}
 	return jwks, nil
