@@ -93,7 +93,7 @@ type scopeVCROptionsOut struct {
 
 func provideScopeVCROptions() scopeVCROptionsOut {
 	return scopeVCROptionsOut{
-		VCROptions: HttpRecorderHooks(NewRecorderHook(extendedTokenValidityHook(), recorder.BeforeResponseReplayHook)),
+		VCROptions: HttpRecorderHooks(extendedTokenValidityHook()),
 	}
 }
 
@@ -105,7 +105,7 @@ func provideScopeVCROptions() scopeVCROptionsOut {
 // During scope switching, token's expiry time is used to determine if token need to be refreshed.
 // This would cause inconsistent HTTP interactions between recording time and replay time (after token expires)
 // "expiry" and "expires_in" are JSON fields in `/v2/token` response and `exp` is a standard claim in `/v2/check_token` response
-func extendedTokenValidityHook() func(i *cassette.Interaction) error {
+func extendedTokenValidityHook() RecorderHook {
 	longValidity := 100 * 24 * 365 * time.Hour
 	expiry := time.Now().Add(longValidity)
 	tokenBodySanitizers := map[string]ValueSanitizer{
@@ -114,7 +114,7 @@ func extendedTokenValidityHook() func(i *cassette.Interaction) error {
 		"exp":        SubstituteValueSanitizer(expiry.Unix()),
 	}
 	tokenBodyJsonPaths := parseJsonPaths([]string{"$.expiry", "$.expires_in", "$.exp"})
-	return func(i *cassette.Interaction) error {
+	fn := func(i *cassette.Interaction) error {
 		if i.Response.Code != http.StatusOK ||
 			!strings.Contains(i.Request.URL, "/v2/token") && !strings.Contains(i.Request.URL, "/v2/check_token") {
 			return nil
@@ -122,4 +122,5 @@ func extendedTokenValidityHook() func(i *cassette.Interaction) error {
 		i.Response.Body = sanitizeJsonBody(i.Response.Body, tokenBodySanitizers, tokenBodyJsonPaths)
 		return nil
 	}
+	return NewRecorderHook("extend-token-validity", fn, recorder.BeforeResponseReplayHook)
 }

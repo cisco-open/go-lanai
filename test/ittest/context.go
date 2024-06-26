@@ -93,6 +93,7 @@ type RecordBodyMatcher interface {
 
 // RecorderHook wrapper of recorder.Hook
 type RecorderHook interface {
+	Name() string
 	Handler() recorder.HookFunc
 	Kind() recorder.HookKind
 }

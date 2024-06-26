@@ -49,7 +49,7 @@ func NewRecorder(options ...Options) (*recorder.Recorder, error) {
 	if recordOption.Name == "" {
 		return nil, ErrNoCassetteName
 	}
-	rec, e := ittest.NewHttpRecorder(toHTTPVCROptions(recordOption))
+	rec, e := ittest.NewHttpRecorder(ittest.HttpRecordOrdering(false), toHTTPVCROptions(recordOption))
 	if e != nil {
 		return nil, fmt.Errorf("%w, %v", ErrCreatingRecorder, e)
 	}
