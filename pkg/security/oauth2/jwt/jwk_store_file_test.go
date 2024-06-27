@@ -49,11 +49,10 @@ func TestFileJwkStore(t *testing.T) {
 		test.GomegaSubTest(SubTestMultiBlockSymmetricPem("hmac-384"), "HMAC-384"),
 		test.GomegaSubTest(SubTestMultiBlockSymmetricPem("hmac-512"), "HMAC-512"),
 
-		// for ed25519, there is no "traditional format" for private key (from openSSL).
-		// openSSL also doesn't support password protected private key for ed25519 in non-pkcs8 format.
-		// but golang doesn't support pkcs8 encrypted format. so we have to skip the password tests here.
+		// For ed25519, openssl doesn't have a command to generate private key (either encrypted or unencrypted) in "traditional" format.
+		// It can only generate an encrypted private key in pkcs8 format. However, golang standard library doesn't support
+		// decoding pem with pkcs8 encrypted format. Therefore, we don't have a test case for encrypted ed25519 private key
 		test.GomegaSubTest(SubTestMultiBlockAsymmetricPEM("ed25519", true), "ED25519"),
-
 		test.GomegaSubTest(SubTestSingleBlockPem("hmac-256"), "single-key"),
 	)
 }

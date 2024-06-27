@@ -56,16 +56,24 @@ const (
 // Keys loaded under the same key name will all have the same name. The LoadByName method will load one of the keys.
 // Which key will be loaded is determined by the current index for that name. The Rotate method will increment the index
 // for that name.
-// If id property is provided, the actual key id will be the property id plus an integer suffix.
-// If id property is not provided, the actual key id will be the key name plus a UUID suffix.
+// If the pem file contains one key, the key id will be the same as the key name.
+//
+// If the pem file contains multiple keys, the following rules will be used to generate the key id:
+//
+//	If id property is provided, the actual key id will be the property id plus an integer suffix.
+//	If id property is not provided, the actual key id will be generated based on elements of the public key. The ID value
+//	will be consistent across restarts.
 //
 // Supports PEM format.
 // Supports:
-// 1. pkcs8 unencrypted private key - because golang standard library does not support this
-// 2. traditional unencrypted private key and encrypted private key
-// 3. traditional public key (pkcs1 rsa or pkix for ecdsa)
-// 4. x509 certificate
+// 1. PKCS8 unencrypted private key (rsa, ecdsa, ed25519)
+// 2. traditional unencrypted private key and encrypted private key (rsa and ecdsa)
+// 3. traditional public key (pkcs1 for rsa or pkix for rsa, ecdsa and ed25519)
+// 4. x509 certificate (rsa, ecdsa, ed25519)
 // 5. HMAC key (using custom label "HMAC KEY", i.e. -----BEGIN HMAC KEY-----)
+//
+// Note that if HMAC is used, the application must be responsible for securing the jwks endpoint, or encrypt the jwks content.
+// This is because HMAC keys are symmetric and should not be exposed to public. By default, the jwks endpoint is not secured.
 type FileJwkStore struct {
 	cacheById   map[string]Jwk
 	cacheByName map[string][]Jwk
