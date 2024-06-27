@@ -68,7 +68,7 @@ const (
 // Supports:
 // 1. PKCS8 unencrypted private key (rsa, ecdsa, ed25519)
 // 2. traditional unencrypted private key and encrypted private key (rsa and ecdsa)
-// 3. traditional public key (pkcs1 for rsa or pkix for rsa, ecdsa and ed25519)
+// 3. traditional public key (pkcs1 for rsa or pkix for rsa, PKIX for ecdsa and ed25519)
 // 4. x509 certificate (rsa, ecdsa, ed25519)
 // 5. HMAC key (using custom label "HMAC KEY", i.e. -----BEGIN HMAC KEY-----)
 //
