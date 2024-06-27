@@ -43,6 +43,16 @@ be generated based on elements of the public key. In this example, since `id` is
 The FileJwkStore supports key rotation. If the pem file contains multiple keys, the `LoadByName` will return the current key for that name.
 After `Rotate` is called, the current key will be moved to the next key in the pem file.
 
+#### Supported Key Types
+The FileJwkStore supports the following key types:
+
+- RSA: PKCS8 unencrypted format. Tradition encrypted and unencrypted format. 
+- ECDSA: PKCS8 unencrypted format. Tradition encrypted and unencrypted format.
+- ED25519: PKCS8 unencrypted format. 
+- HMAC: Custom unencrypted format.
+
+See the [testdata](testdata/README.md) directory for examples of pem files and how to generate them using `openssl`.
+
 #### Use HMAC Key with Caution
 HMAC key is a symmetric key. This file store supports HMAC key. However, it should be used with caution. By default, the HMAC key
 is included in the jwks endpoint which is by default public. If you want to use HMAC key, you should secure the jwks endpoint in 
