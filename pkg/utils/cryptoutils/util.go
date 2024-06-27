@@ -54,7 +54,7 @@ func LoadCert(file string) ([]*x509.Certificate, error) {
 	return result, err
 }
 
-func LoadPrivateKey(file string, keyPassword string) (*rsa.PrivateKey, error){
+func LoadPrivateKey(file string, keyPassword string) (*rsa.PrivateKey, error) {
 	keyFile, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -102,9 +102,9 @@ func RandomBytes(n int) []byte {
 
 // LoadMultiBlockPem load items (cert, private key, public key, etc.) from pem file.
 // Supported block types are
-// 	- * PRIVATE KEY
-//  - PUBLIC KEY
-// 	- CERTIFICATE
+//   - * PRIVATE KEY
+//   - PUBLIC KEY
+//   - CERTIFICATE
 func LoadMultiBlockPem(path string, password string) ([]interface{}, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -128,7 +128,7 @@ func LoadMultiBlockPem(path string, password string) ([]interface{}, error) {
 		case block.Type == "CERTIFICATE":
 			item, e = parseX509Cert(block)
 		default:
-			continue
+			item = block
 		}
 		if e != nil {
 			return nil, e
@@ -142,7 +142,7 @@ func parsePrivateKey(block *pem.Block, password string) (interface{}, error) {
 	data := block.Bytes
 	if password != "" {
 		//nolint:staticcheck // TODO find alternative
-		decrypted, e := x509.DecryptPEMBlock(block, []byte(password));
+		decrypted, e := x509.DecryptPEMBlock(block, []byte(password))
 		if e != nil {
 			return nil, e
 		}
@@ -155,16 +155,21 @@ func parsePrivateKey(block *pem.Block, password string) (interface{}, error) {
 	}
 
 	// fallback to PKCS1
-	return x509.ParsePKCS1PrivateKey(data)
+	// this only handles RSA keys
+	if key, e := x509.ParsePKCS1PrivateKey(data); e == nil {
+		return key, nil
+	}
+	// this handles EC keys
+	return x509.ParseECPrivateKey(data)
 }
 
 func parsePublicKey(block *pem.Block) (interface{}, error) {
-	// try PKCS1 first
-	if key, e := x509.ParsePKCS1PublicKey(block.Bytes); e == nil {
+	// try PKIX first (there's no pkcs8 for public keys because it's for private keys only)
+	if key, e := x509.ParsePKIXPublicKey(block.Bytes); e == nil {
 		return key, nil
 	}
-	// fallback to PKIX
-	return x509.ParsePKIXPublicKey(block.Bytes)
+	// fallback to PKCS1
+	return x509.ParsePKCS1PublicKey(block.Bytes)
 }
 
 func parseX509Cert(block *pem.Block) (*x509.Certificate, error) {

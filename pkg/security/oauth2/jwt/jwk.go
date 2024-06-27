@@ -46,6 +46,11 @@ type JwkStore interface {
 	// LoadByName returns the JWK associated with given name.
 	// The method might return different JWK for same name, if the store is also support rotation
 	// This method is usually used when encoding/encrypt JWT token
+	// Note: if the store does not support rotation (i.e. it doest not implement JwkRotator),
+	// this store could use the name as the jwk id. Doing so would allow the encoder to not
+	// add a "kid" header to the JWT token. This allows the use case where the JWT key is agreed upon by
+	// both the encoder and decoder through an out-of-band mechanism without using "kid".
+	// See the comment in SignedJwtEncoder.Encode for more details
 	LoadByName(ctx context.Context, name string) (Jwk, error)
 
 	// LoadAll return all JWK with given names. If name is not provided, all JWK is returned
@@ -62,7 +67,7 @@ type JwkRotator interface {
 	Implements Base
  *********************/
 
-// GenericJwk implements Jwk and PrivateJwk
+// GenericJwk implements Jwk
 type GenericJwk struct {
 	kid    string
 	name   string
