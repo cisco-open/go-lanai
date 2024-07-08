@@ -31,11 +31,11 @@ func resolveSigningMethod(key crypto.PrivateKey) (jwt.SigningMethod, error) {
 		return jwt.SigningMethodEdDSA, nil
 	case []byte:
 		switch {
-		case len(v) >= 512:
+		case len(v) >= 512/8:
 			return jwt.SigningMethodHS512, nil
-		case len(v) >= 384:
+		case len(v) >= 384/8:
 			return jwt.SigningMethodHS384, nil
-		case len(v) >= 256:
+		case len(v) >= 256/8:
 			return jwt.SigningMethodHS256, nil
 		default:
 			return nil, fmt.Errorf(`invalid MAC secret. Expect 256B or more, but got %dB`, len(v))
@@ -67,11 +67,11 @@ func generateCompatiblePrivateKey(method jwt.SigningMethod) (crypto.PrivateKey, 
 		var secret []byte
 		switch method {
 		case jwt.SigningMethodHS256:
-			secret = make([]byte, 256)
+			secret = make([]byte, 256/8)
 		case jwt.SigningMethodHS384:
-			secret = make([]byte, 384)
+			secret = make([]byte, 384/8)
 		case jwt.SigningMethodHS512:
-			secret = make([]byte, 512)
+			secret = make([]byte, 512/8)
 		}
 		if _, e := rand.Reader.Read(secret); e != nil {
 			return nil, e

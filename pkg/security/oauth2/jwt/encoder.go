@@ -113,7 +113,16 @@ func (enc *SignedJwtEncoder) Encode(ctx context.Context, claims interface{}) (st
 		token = jwt.NewWithClaims(method, &jwtGoCompatibleClaims{claims: claims})
 	}
 
-	// set Kid if not default
+	// jwk.Name() could be an alias for more than one kid to support rotation.
+	//
+	// We expect the store implementation to return jwk whose ID is the same as its name if the store only has
+	// one key for that name (i.e. no-rotation), and intend to pass the decoder the key out of band.
+	// In this case, we don't need to set kid in the header, because we expect the decoder side can get this key
+	// because there is no ambiguity.
+	//
+	// We expect the store to return jwk whose ID is not the same as its name if the store has multiple key for that name
+	// (i.e. rotation).
+	// In this case, we need to set kid in the header.
 	if jwk.Id() != enc.jwkName {
 		token.Header[JwtHeaderKid] = jwk.Id()
 	}
