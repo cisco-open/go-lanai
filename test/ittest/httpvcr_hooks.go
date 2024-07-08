@@ -34,12 +34,20 @@ const (
 	DefaultHost = "webservice"
 )
 
+const (
+	HookNameIndexAware       = "index-aware"
+	HookNameSanitize         = "sanitize"
+	HookNameFixedDuration    = "fixed-duration"
+	HookNameLocalhostRewrite = "localhost-rewrite"
+)
+
 /************************
 	Common
  ************************/
 
-func NewRecorderHook(fn recorder.HookFunc, kind recorder.HookKind) RecorderHook {
+func NewRecorderHook(name string, fn recorder.HookFunc, kind recorder.HookKind) RecorderHook {
 	return recorderHook{
+		name: name,
 		hook: recorder.Hook{
 			Handler: fn,
 			Kind:    kind,
@@ -48,20 +56,26 @@ func NewRecorderHook(fn recorder.HookFunc, kind recorder.HookKind) RecorderHook 
 }
 
 type recorderHook struct {
+	name string
 	hook recorder.Hook
 }
 
-func (w recorderHook) Handler() recorder.HookFunc {
-	return w.hook.Handler
+func (h recorderHook) Name() string {
+	return h.name
 }
 
-func (w recorderHook) Kind() recorder.HookKind {
-	return w.hook.Kind
+func (h recorderHook) Handler() recorder.HookFunc {
+	return h.hook.Handler
 }
 
-func NewRecorderHookWithOrder(fn recorder.HookFunc, kind recorder.HookKind, order int) RecorderHook {
+func (h recorderHook) Kind() recorder.HookKind {
+	return h.hook.Kind
+}
+
+func NewRecorderHookWithOrder(name string, fn recorder.HookFunc, kind recorder.HookKind, order int) RecorderHook {
 	return orderedRecorderHook{
 		recorderHook: recorderHook{
+			name: name,
 			hook: recorder.Hook{
 				Handler: fn,
 				Kind:    kind,
@@ -90,14 +104,14 @@ var (
 		"Date":          SubstituteValueSanitizer("Fri, 19 Aug 2022 8:51:32 GMT"),
 	}
 	QuerySanitizers = map[string]ValueSanitizer{
-		"password": DefaultValueSanitizer(),
-		"secret":   DefaultValueSanitizer(),
-		"nonce":    DefaultValueSanitizer(),
-		"token":    DefaultValueSanitizer(),
-		"access_token":  DefaultValueSanitizer(),
+		"password":     DefaultValueSanitizer(),
+		"secret":       DefaultValueSanitizer(),
+		"nonce":        DefaultValueSanitizer(),
+		"token":        DefaultValueSanitizer(),
+		"access_token": DefaultValueSanitizer(),
 	}
 	BodySanitizers = map[string]ValueSanitizer{
-		"access_token":  DefaultValueSanitizer(),
+		"access_token": DefaultValueSanitizer(),
 	}
 )
 
@@ -130,20 +144,27 @@ func DefaultValueSanitizer() ValueSanitizer {
  ************************/
 
 // InteractionIndexAwareHook inject interaction index into stored header:
-// httpvcr store interaction's ID but doesn't expose it to cassette.MatchFunc,
+// httpvcr store interaction's ID but doesn't expose it to cassette.MatcherFunc,
 // so we need to store it in request for request matchers to access
-func InteractionIndexAwareHook() func(i *cassette.Interaction) error {
-	return func(i *cassette.Interaction) error {
+func InteractionIndexAwareHook() RecorderHook {
+	fn := func(i *cassette.Interaction) error {
 		i.Request.Headers.Set(xInteractionIndexHeader, strconv.Itoa(i.ID))
 		return nil
 	}
+	return NewRecorderHook(HookNameIndexAware, fn, recorder.BeforeSaveHook)
 }
 
-// SanitizingHook is a httpvcr hook that sanitize values in header, query, body (x-form-urlencoded/json)
-func SanitizingHook() func(i *cassette.Interaction) error {
+// SanitizingHook is an HTTP VCR hook that sanitize values in header, query, body (x-form-urlencoded/json).
+// Values to sanitize are globally configured via HeaderSanitizers, QuerySanitizers, BodySanitizers.
+// Note: Sanitized values cannot be exactly matched. If the configuration of sanitizers is changed, make sure
+//
+//	to configure fuzzy matching accordingly.
+//
+// See NewRecordMatcher, FuzzyHeaders, FuzzyQueries, FuzzyForm and FuzzyJsonPaths
+func SanitizingHook() RecorderHook {
 	reqJsonPaths := parseJsonPaths(FuzzyRequestJsonPaths.Values())
 	respJsonPaths := parseJsonPaths(FuzzyResponseJsonPaths.Values())
-	return func(i *cassette.Interaction) error {
+	fn := func(i *cassette.Interaction) error {
 		i.Request.Headers = sanitizeHeaders(i.Request.Headers, FuzzyRequestHeaders)
 		i.Request.URL = sanitizeUrl(i.Request.URL, FuzzyRequestQueries)
 		switch mediaType(i.Request.Headers) {
@@ -160,11 +181,12 @@ func SanitizingHook() func(i *cassette.Interaction) error {
 		}
 		return nil
 	}
+	return NewRecorderHookWithOrder(HookNameSanitize, fn, recorder.BeforeSaveHook, 0)
 }
 
 // LocalhostRewriteHook changes the host of request to a pre-defined constant if it is localhost, in order to avoid randomness
-func LocalhostRewriteHook() func(i *cassette.Interaction) error {
-	return func(i *cassette.Interaction) error {
+func LocalhostRewriteHook() RecorderHook {
+	fn := func(i *cassette.Interaction) error {
 		if strings.HasPrefix(i.Request.Host, "localhost") || strings.HasPrefix(i.Request.Host, "127.0.0.1") {
 			i.Request.URL = strings.Replace(i.Request.URL, i.Request.Host, DefaultHost, 1)
 			i.Request.Host = DefaultHost
@@ -172,14 +194,16 @@ func LocalhostRewriteHook() func(i *cassette.Interaction) error {
 
 		return nil
 	}
+	return NewRecorderHook(HookNameLocalhostRewrite, fn, recorder.BeforeSaveHook)
 }
 
 // FixedDurationHook changes the duration of record HTTP interaction to constant, to avoid randomness
-func FixedDurationHook(duration time.Duration) func(i *cassette.Interaction) error {
-	return func(i *cassette.Interaction) error {
+func FixedDurationHook(duration time.Duration) RecorderHook {
+	fn := func(i *cassette.Interaction) error {
 		i.Response.Duration = duration
 		return nil
 	}
+	return NewRecorderHook(HookNameFixedDuration, fn, recorder.BeforeSaveHook)
 }
 
 /************************
