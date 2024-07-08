@@ -185,32 +185,17 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 		var pubKey crypto.PublicKey
 
 		// get private or public key
-		switch v.(type) {
-		case *rsa.PrivateKey:
-			privKey = v.(*rsa.PrivateKey)
-		case *rsa.PublicKey:
-			pubKey = v.(*rsa.PublicKey)
-		case *ecdsa.PrivateKey:
-			privKey = v.(*ecdsa.PrivateKey)
-		case *ecdsa.PublicKey:
-			pubKey = v.(*ecdsa.PublicKey)
-		case ed25519.PrivateKey:
-			privKey = v.(ed25519.PrivateKey)
-		case ed25519.PublicKey:
-			pubKey = v.(ed25519.PublicKey)
-		case *x509.Certificate:
+		var ok bool
+		if privKey, ok = v.(privateKey); ok {
+			// got private key, do nothing
+		} else if pubKey, ok = v.(publicKey); ok {
+			// got public key, do nothing
+		} else if _, ok = v.(*x509.Certificate); ok {
 			cert := v.(*x509.Certificate)
-			switch cert.PublicKey.(type) {
-			case *rsa.PublicKey:
-				pubKey = cert.PublicKey.(*rsa.PublicKey)
-			case *ecdsa.PublicKey:
-				pubKey = cert.PublicKey.(*ecdsa.PublicKey)
-			case ed25519.PublicKey:
-				pubKey = cert.PublicKey.(ed25519.PublicKey)
-			default:
+			if pubKey, ok = cert.PublicKey.(publicKey); !ok {
 				return nil, fmt.Errorf(errTmplUnsupportedPubKey, cert.PublicKey)
 			}
-		case *pem.Block:
+		} else if _, ok = v.(*pem.Block); ok {
 			switch v.(*pem.Block).Type {
 			case "HMAC KEY":
 				logger.Warnf("File contains HMAC keys, please make sure the jwks end point is secured")
@@ -218,7 +203,7 @@ func loadJwksFromPem(name string, props CryptoKeyProperties) ([]Jwk, error) {
 			default:
 				return nil, fmt.Errorf(errTmplUnsupportedBlock, v)
 			}
-		default:
+		} else {
 			return nil, fmt.Errorf(errTmplUnsupportedBlock, v)
 		}
 
