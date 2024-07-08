@@ -130,15 +130,17 @@ func AdditionalMatcherOptions(ctx context.Context, opts ...RecordMatcherOptions)
 }
 
 // ResetRecorder revert the change made by AdditionalMatcherOptions.
+// Note: If tests configured via WithHttpPlayback, this method is automatically invoked at sub-test teardown.
 func ResetRecorder(ctx context.Context) {
 	rec, ok := ctx.Value(ckRecorder).(*HttpRecorder)
 	if !ok || rec.Recorder == nil {
 		return
 	}
-	rec.SetMatcher(rec.Matcher)
+	rec.SetMatcher(rec.InitMatcher)
 }
 
 // StopRecorder stops the recorder extracted from the given context.
+// Note: If tests configured via WithHttpPlayback, this method is automatically invoked at test teardown.
 func StopRecorder(ctx context.Context) error {
 	rec, ok := ctx.Value(ckRecorder).(*HttpRecorder)
 	if !ok || rec.Recorder == nil {
@@ -270,7 +272,8 @@ func HttpTransport(transport http.RoundTripper) HTTPVCROptions {
 	}
 }
 
-// ApplyHttpLatency apply recorded HTTP latency. By default, HTTP latency is not applied for faster test run. This option has no effect in recording mode
+// ApplyHttpLatency apply recorded HTTP latency. By default, HTTP latency is not applied for faster test run.
+// This option has no effect in recording mode.
 func ApplyHttpLatency() HTTPVCROptions {
 	return func(opt *HTTPVCROption) {
 		opt.SkipRequestLatency = false
@@ -285,8 +288,9 @@ func SanitizeHttpRecord() HTTPVCROptions {
 
 // FixedHttpRecordDuration install a hook to set a fixed duration on interactions before they are saved.
 // If the duration is less or equal to 0, the actual latency will be recorded.
-// When HTTPVCROption.SkipRequestLatency is set to false, the recorded duration will be applied during playback
+// When HTTPVCROption.SkipRequestLatency is set to false (via ApplyHttpLatency option), the recorded duration will be applied during playback
 // See FixedDurationHook for details.
+// This option has no effect in playback mode.
 func FixedHttpRecordDuration(duration time.Duration) HTTPVCROptions {
 	if duration <= 0 {
 		return DisableHttpRecorderHooks(HookNameFixedDuration)
@@ -348,9 +352,9 @@ func recorderReset() test.TeardownFunc {
 // Note: This type is for other test utilities to re-configure recorder.RawRecorder
 type HttpRecorder struct {
 	*recorder.Recorder
-	RawOptions *recorder.Options
-	Matcher    cassette.MatcherFunc
-	Options    *HTTPVCROption
+	RawOptions  *recorder.Options
+	InitMatcher cassette.MatcherFunc
+	Options     *HTTPVCROption
 }
 
 // ContextWithNewHttpRecorder is a convenient function that create a new HTTP recorder and store it in context.
@@ -395,10 +399,10 @@ func NewHttpRecorder(opts ...HTTPVCROptions) (*HttpRecorder, error) {
 		rec.AddHook(h.Handler(), h.Kind())
 	}
 	return &HttpRecorder{
-		Recorder:   rec,
-		RawOptions: rawOpts,
-		Matcher:    matcher,
-		Options:    &opt,
+		Recorder:    rec,
+		RawOptions:  rawOpts,
+		InitMatcher: matcher,
+		Options:     &opt,
 	}, nil
 }
 
@@ -431,7 +435,7 @@ func httpRecorderProvider(opts []HTTPVCROptions) func(di vcrDI) (vcrOut, error) 
 		return vcrOut{
 			HTTPRecorder:      rec,
 			RawRecorder:       rec.Recorder,
-			CassetteMatcher:   rec.Matcher,
+			CassetteMatcher:   rec.InitMatcher,
 			HttpVCROption:     rec.Options,
 			RawRecorderOption: rec.RawOptions,
 			HttpClientCustomizer: httpclient.ClientCustomizerFunc(func(opt *httpclient.ClientOption) {

@@ -144,7 +144,7 @@ func DefaultValueSanitizer() ValueSanitizer {
  ************************/
 
 // InteractionIndexAwareHook inject interaction index into stored header:
-// httpvcr store interaction's ID but doesn't expose it to cassette.MatchFunc,
+// httpvcr store interaction's ID but doesn't expose it to cassette.MatcherFunc,
 // so we need to store it in request for request matchers to access
 func InteractionIndexAwareHook() RecorderHook {
 	fn := func(i *cassette.Interaction) error {

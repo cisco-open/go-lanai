@@ -291,7 +291,7 @@ func SubTestVcrContext() test.GomegaSubTestFunc {
 		rec := Recorder(ctx)
 		g.Expect(rec).To(Not(BeNil()), "Recorder from context should be available")
 		g.Expect(rec.RawOptions).To(Not(BeZero()), "RawOptions should be available")
-		g.Expect(rec.Matcher).To(Not(BeZero()), "Matcher should be available")
+		g.Expect(rec.InitMatcher).To(Not(BeZero()), "InitMatcher should be available")
 		g.Expect(rec.Options).To(Not(BeZero()), "Options should be available")
 		if IsRecording(ctx) {
 			g.Expect(rec.Options.Hooks).To(HaveLen(4), "Options.Hooks should have correct length")
